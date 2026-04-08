@@ -14,6 +14,7 @@ import HallOfFamePage from "@/pages/HallOfFamePage";
 import MyPage from "@/pages/MyPage";
 import CoachDashboard from "@/pages/CoachDashboard";
 import SettingsPage from "@/pages/SettingsPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
 
@@ -57,6 +58,7 @@ const AppRoutes = () => {
     <>
       <Routes>
         <Route path="/" element={user ? <Navigate to="/home" replace /> : <LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
         <Route path="/quests" element={<Navigate to="/missions" replace />} />
