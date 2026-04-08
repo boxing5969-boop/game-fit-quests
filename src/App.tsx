@@ -7,8 +7,9 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import LoginPage from "@/pages/LoginPage";
 import HomePage from "@/pages/HomePage";
-import QuestsPage from "@/pages/QuestsPage";
+import MissionsPage from "@/pages/MissionsPage";
 import LevelMapPage from "@/pages/LevelMapPage";
+import RewardsPage from "@/pages/RewardsPage";
 import HallOfFamePage from "@/pages/HallOfFamePage";
 import MyPage from "@/pages/MyPage";
 import CoachDashboard from "@/pages/CoachDashboard";
@@ -56,10 +57,11 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={user ? <Navigate to="/home" replace /> : <LoginPage />} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-        <Route path="/quests" element={<ProtectedRoute><QuestsPage /></ProtectedRoute>} />
+        <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
+        <Route path="/quests" element={<Navigate to="/missions" replace />} />
         <Route path="/levelmap" element={<ProtectedRoute><LevelMapPage /></ProtectedRoute>} />
+        <Route path="/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
         <Route path="/halloffame" element={<ProtectedRoute><HallOfFamePage /></ProtectedRoute>} />
-        <Route path="/rewards" element={<Navigate to="/halloffame" replace />} />
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/coach" element={<ProtectedRoute><CoachRoute><CoachDashboard /></CoachRoute></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
