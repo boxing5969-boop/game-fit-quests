@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMissions, useMyMissionSubmissions, useSubmitMission } from "@/hooks/useMissionData";
 import { useLevels } from "@/hooks/useQuestData";
+import { supabase } from "@/integrations/supabase/client";
 import MissionCard from "@/components/MissionCard";
 import VideoPlayer from "@/components/VideoPlayer";
 import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { celebrateSmall } from "@/lib/celebrations";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Enums } from "@/integrations/supabase/types";
 
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
