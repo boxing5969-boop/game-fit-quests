@@ -54,12 +54,30 @@ const cardContents = [
     title: "채용에서 바로 쓰이는\n실제 가점도 있습니다",
     mainCopy: "인정단체 발급 단증은\n실제 채용에서 힘이 될 수 있습니다",
     body: [
-      "경찰, 청원경찰, 방호 관련 채용에서 인정단체 발급 무도단증이 반영될 수 있습니다.",
-      "단수에 따라 차이가 있고, 공고 기준이 다를 수 있습니다.",
+      "경찰, 해양경찰, 군 특임 전형 등에서 복싱단증이 실제 점수로 반영된 사례가 있습니다.",
+      "단수에 따라 배점이 달라지며, 4단 이상에서 가장 높은 점수가 부여됩니다.",
       '"막연한 자부심"이 아니라 "실제 활용 가능성"입니다.',
     ],
     highlight: "실제 가점은 기준으로 결정됩니다",
-    cta: "실제 가점 예시 보기",
+    cta: "아래에서 상세 정보 확인",
+    detailAccordions: [
+      {
+        title: "경찰공무원 — 체력검사에서 실제 점수 반영",
+        content: "경찰 채용 FAQ 기준으로 무도단증은 체력검사 평가단계 성적 계산 시 반영되며, 2·3단은 1점, 4단 이상은 2점이 부여됩니다. 2026년 경찰 채용 체력시험 점수 인정 무도단체 현황에는 대한복싱협회가 포함되어 있어, 대한복싱협회 발급 복싱단증 4단은 경찰 채용에서 실제 점수로 연결될 수 있습니다. 단, 적용 여부는 해당 연도 공고를 기준으로 확인해야 합니다.",
+      },
+      {
+        title: "해양경찰 — 면접시험 가산 자격증 배점 적용",
+        content: "해양경찰청 채용 면접시험 가산 자격증 배점기준표에는 무도 분야가 별도로 있고, 1·2단은 1점, 3단은 2점, 4단 이상은 3점으로 구분됩니다. 2026년 해양경찰 채용 공고의 무도분야 인정 단체 목록에는 대한복싱협회가 포함되어 있어, 복싱단증 4단은 해양경찰 준비생에게 매우 강한 실전 가치로 전달할 수 있습니다.",
+      },
+      {
+        title: "군 모집 전형 — 일부 특임·특기 전형에서 정량 배점 사례",
+        content: "육군 특임군사경찰 전형은 무도단증 배점을 별도로 두고 있으며, 1단 9점 / 2단 11점 / 3단 13점 / 4단 이상 15점으로 안내합니다. 인정 단체 목록에 대한복싱협회가 포함되어 있어, 이 전형에서는 복싱단증 4단이 매우 강한 경쟁력으로 작동할 수 있습니다. 다만 이 내용은 군 전체 공통 규정이 아니라 특정 모집·특기 전형 사례입니다.",
+      },
+      {
+        title: "군 전형은 전부 같지 않습니다 — 최신 공고 확인 필수",
+        content: "해군 일반기술병은 무도단증을 인정하지만 태권도·유도·검도·합기도·특공무술만 명시하고 단수와 관계없이 동일 배점을 적용합니다. 공군 일반기술병도 무도단증을 인정하지만 단수와 관계없이 동일 배점이며, 인정 종목은 별도 지원요건 검색을 확인하도록 안내합니다. 해병대는 2026년 1월 입영 모집부터 병 모집에서 무도단증 별도 가산점 항목을 폐지했습니다. 따라서 '군 전체 가산점'보다 '일부 모집·특기 전형에서 배점 사례가 있다'로 이해하는 것이 정확합니다.",
+      },
+    ],
   },
   {
     icon: GraduationCap,
@@ -206,7 +224,28 @@ const CertBenefitsPage = () => {
                         </p>
                       </div>
 
+                      {/* Detail Accordions */}
+                      {card.detailAccordions && (
+                        <Accordion type="single" collapsible className="mt-5 space-y-1.5">
+                          {card.detailAccordions.map((item, k) => (
+                            <AccordionItem
+                              key={k}
+                              value={`detail-${i}-${k}`}
+                              className="rounded-lg border border-white/10 bg-white/5 px-3"
+                            >
+                              <AccordionTrigger className="text-left text-[13px] font-medium text-white/90 py-3 hover:no-underline">
+                                {item.title}
+                              </AccordionTrigger>
+                              <AccordionContent className="text-[12px] leading-relaxed text-white/60">
+                                {item.content}
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      )}
+
                       {/* CTA */}
+                      {!card.detailAccordions && (
                       <Button
                         variant="outline"
                         className="mt-4 w-full border-white/20 bg-white/5 text-white hover:bg-white/10"
@@ -214,6 +253,7 @@ const CertBenefitsPage = () => {
                         {card.cta}
                         <ArrowRight className="ml-1 h-4 w-4" />
                       </Button>
+                      )}
                     </div>
                   </Card>
                 </CarouselItem>
@@ -274,9 +314,10 @@ const CertBenefitsPage = () => {
       <section className="px-4 pb-8 pt-2">
         <div className="rounded-xl border border-border bg-muted/50 p-4">
           <p className="text-xs leading-relaxed text-muted-foreground">
-            ※ 153 레벨업은 내부 성장 시스템입니다. 실제 가산점·우대·공식 인정
-            여부는 발급 단체, 단수, 채용공고 및 기관 기준에 따라 달라질 수
-            있습니다.
+            ※ 복싱단증의 실제 가점·우대 여부는 발급 단체, 단수, 모집 분야,
+            기관별 최신 공고 기준에 따라 달라질 수 있습니다. 153 레벨업은 내부
+            성장 시스템이며, 공식 단증 및 외부 전형 적용 여부는 별도 기준으로
+            판단됩니다.
           </p>
         </div>
       </section>
