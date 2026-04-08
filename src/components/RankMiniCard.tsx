@@ -1,5 +1,3 @@
-import type { Enums } from "@/integrations/supabase/types";
-
 const RANK_ICONS: Record<string, string> = { white: "⚪", blue: "🔵", red: "🔴", black: "⚫" };
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
@@ -12,18 +10,23 @@ interface RankMiniCardProps {
   xp?: number;
   isMe?: boolean;
   isRival?: boolean;
+  isHallOfFame?: boolean;
   onSetRival?: () => void;
   extra?: string;
 }
 
-const RankMiniCard = ({ nickname, rank, level, position, avatarUrl, xp, isMe, isRival, onSetRival, extra }: RankMiniCardProps) => {
+const RankMiniCard = ({ nickname, rank, level, position, avatarUrl, xp, isMe, isRival, isHallOfFame, onSetRival, extra }: RankMiniCardProps) => {
   const positionLabel = position <= 3
     ? ["🥇", "🥈", "🥉"][position - 1]
     : `${position}위`;
 
   return (
     <div className={`flex items-center gap-3 rounded-2xl border p-3 transition-all ${
-      isMe ? "border-primary bg-primary/5 shadow-sm" : isRival ? "border-accent/50 bg-accent/5" : "border-border bg-card"
+      isHallOfFame
+        ? "border-amber-500/40 bg-gradient-to-r from-amber-500/10 to-yellow-500/5 shadow-sm"
+        : isMe ? "border-primary bg-primary/5 shadow-sm"
+        : isRival ? "border-accent/50 bg-accent/5"
+        : "border-border bg-card"
     }`}>
       {/* Position */}
       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center">
@@ -34,27 +37,34 @@ const RankMiniCard = ({ nickname, rank, level, position, avatarUrl, xp, isMe, is
 
       {/* Avatar */}
       <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-lg ${
-        isMe ? "bg-primary/15" : "bg-secondary"
+        isHallOfFame ? "bg-amber-500/20 ring-2 ring-amber-500/30" : isMe ? "bg-primary/15" : "bg-secondary"
       }`}>
         {avatarUrl ? (
           <img src={avatarUrl} alt="" className="h-full w-full rounded-full object-cover" />
         ) : (
-          <span>{RANK_ICONS[rank] || "⚪"}</span>
+          <span>{isHallOfFame ? "👑" : RANK_ICONS[rank] || "⚪"}</span>
         )}
       </div>
 
       {/* Info */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className={`truncate text-sm font-bold ${isMe ? "text-primary" : "text-foreground"}`}>
+          <span className={`truncate text-sm font-bold ${
+            isHallOfFame ? "text-amber-600 dark:text-amber-400" : isMe ? "text-primary" : "text-foreground"
+          }`}>
             {nickname}
             {isMe && <span className="ml-1 text-xs text-primary">(나)</span>}
           </span>
+          {isHallOfFame && (
+            <span className="flex-shrink-0 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+              153명예코치
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span>{RANK_ICONS[rank]}</span>
           <span>{RANK_LABELS[rank]} Lv.{level}</span>
-          {extra && <span>· {extra}</span>}
+          {extra && extra !== "153명예코치" && <span>· {extra}</span>}
           {xp !== undefined && <span>· {xp.toLocaleString()} XP</span>}
         </div>
       </div>
