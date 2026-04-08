@@ -55,6 +55,9 @@ const CoachDashboard = () => {
   const [detailMember, setDetailMember] = useState<any | null>(null);
   const [branchInput, setBranchInput] = useState("");
   const [editingBranch, setEditingBranch] = useState<{ id: string; name: string } | null>(null);
+  const [levelSetModal, setLevelSetModal] = useState<{ show: boolean; memberId: string; memberName: string; currentRank: string; currentLevel: number }>({ show: false, memberId: "", memberName: "", currentRank: "white", currentLevel: 1 });
+  const [setRank, setSetRank] = useState("white");
+  const [setLevel, setSetLevel] = useState(1);
 
   const handleApprove = async (subId: string) => {
     try {
