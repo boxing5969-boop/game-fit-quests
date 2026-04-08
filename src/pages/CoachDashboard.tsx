@@ -220,6 +220,12 @@ const CoachDashboard = () => {
             🏢 지점
           </button>
         )}
+        {role === "admin" && (
+          <button onClick={() => setActiveTab("coach-requests")}
+            className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "coach-requests" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}>
+            🥊 관장 {coachRequests?.length ? `(${coachRequests.length})` : ""}
+          </button>
+        )}
       </div>
 
       {/* Pending Tab */}
