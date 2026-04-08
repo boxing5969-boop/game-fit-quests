@@ -471,7 +471,7 @@ const CoachDashboard = () => {
             <EmptyState icon="✅" message="승인 대기 중인 관장님 요청이 없습니다" />
           ) : (
             coachRequests.map((req: any) => (
-              <div key={req.id} className="rounded-2xl border border-amber-500/30 bg-card p-4 shadow-sm">
+              <div key={req.id} className="rounded-2xl border border-status-pending/30 bg-card p-4 shadow-sm">
                 <div className="mb-3">
                   <p className="text-sm font-bold text-foreground">{req.profile?.nickname || req.profile?.name || "이름 없음"}</p>
                   <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
