@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useQuests, useMySubmissions, useSubmitQuest } from "@/hooks/useQuestData";
+import { useAuth } from "@/contexts/AuthContext";
 import QuestCard from "@/components/QuestCard";
-import { User } from "lucide-react";
+import { User, Pencil, Trash2, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { celebrateSmall } from "@/lib/celebrations";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Enums } from "@/integrations/supabase/types";
 
 type TabKey = "today" | "weekly" | "boss";
@@ -17,9 +20,12 @@ const tabs: { key: TabKey; label: string; icon: string; types: Enums<"quest_type
 const QuestsPage = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("today");
   const navigate = useNavigate();
+  const { role } = useAuth();
   const { data: quests, isLoading } = useQuests();
   const { data: submissions } = useMySubmissions();
   const submitQuest = useSubmitQuest();
+  const qc = useQueryClient();
+  const isAdmin = role === "admin";
 
   const currentTypes = tabs.find(t => t.key === activeTab)!.types;
   const filtered = (quests || []).filter(q => currentTypes.includes(q.quest_type));
@@ -40,6 +46,15 @@ const QuestsPage = () => {
     }
   };
 
+  const handleDeleteQuest = async (id: string, title: string) => {
+    if (!confirm(`"${title}" 퀘스트를 삭제하시겠습니까?`)) return;
+    try {
+      const { error } = await supabase.from("quests").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("퀘스트 삭제 완료");
+      qc.invalidateQueries({ queryKey: ["quests"] });
+    } catch { toast.error("삭제 실패"); }
+  };
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
       <div className="mb-5 flex items-center justify-between">
