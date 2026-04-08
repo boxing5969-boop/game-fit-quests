@@ -55,6 +55,7 @@ const FINAL_REWARDS = [
 const LevelMapPage = () => {
   const [selectedNode, setSelectedNode] = useState<Tables<"levels"> | null>(null);
   const [showSecretDetail, setShowSecretDetail] = useState<typeof SECRET_MISSIONS[0] | null>(null);
+  const [danChallengeOpen, setDanChallengeOpen] = useState<typeof DAN_CHALLENGES[0] | null>(null);
   const navigate = useNavigate();
   const { progress, role, user, refreshProgress } = useAuth();
   const { data: levels, isLoading } = useLevels();
