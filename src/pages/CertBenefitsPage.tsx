@@ -224,7 +224,28 @@ const CertBenefitsPage = () => {
                         </p>
                       </div>
 
+                      {/* Detail Accordions */}
+                      {card.detailAccordions && (
+                        <Accordion type="single" collapsible className="mt-5 space-y-1.5">
+                          {card.detailAccordions.map((item, k) => (
+                            <AccordionItem
+                              key={k}
+                              value={`detail-${i}-${k}`}
+                              className="rounded-lg border border-white/10 bg-white/5 px-3"
+                            >
+                              <AccordionTrigger className="text-left text-[13px] font-medium text-white/90 py-3 hover:no-underline">
+                                {item.title}
+                              </AccordionTrigger>
+                              <AccordionContent className="text-[12px] leading-relaxed text-white/60">
+                                {item.content}
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      )}
+
                       {/* CTA */}
+                      {!card.detailAccordions && (
                       <Button
                         variant="outline"
                         className="mt-4 w-full border-white/20 bg-white/5 text-white hover:bg-white/10"
@@ -232,6 +253,7 @@ const CertBenefitsPage = () => {
                         {card.cta}
                         <ArrowRight className="ml-1 h-4 w-4" />
                       </Button>
+                      )}
                     </div>
                   </Card>
                 </CarouselItem>
@@ -292,9 +314,10 @@ const CertBenefitsPage = () => {
       <section className="px-4 pb-8 pt-2">
         <div className="rounded-xl border border-border bg-muted/50 p-4">
           <p className="text-xs leading-relaxed text-muted-foreground">
-            ※ 153 레벨업은 내부 성장 시스템입니다. 실제 가산점·우대·공식 인정
-            여부는 발급 단체, 단수, 채용공고 및 기관 기준에 따라 달라질 수
-            있습니다.
+            ※ 복싱단증의 실제 가점·우대 여부는 발급 단체, 단수, 모집 분야,
+            기관별 최신 공고 기준에 따라 달라질 수 있습니다. 153 레벨업은 내부
+            성장 시스템이며, 공식 단증 및 외부 전형 적용 여부는 별도 기준으로
+            판단됩니다.
           </p>
         </div>
       </section>
