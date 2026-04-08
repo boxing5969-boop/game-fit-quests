@@ -16,10 +16,7 @@ const HallOfFameShowcase = () => {
           <Crown className="h-4 w-4 text-amber-500" />
           명예의 전당
         </h2>
-        <button
-          onClick={() => navigate("/halloffame")}
-          className="text-xs font-medium text-primary"
-        >
+        <button onClick={() => navigate("/halloffame")} className="text-xs font-medium text-primary">
           전체보기 →
         </button>
       </div>
@@ -28,7 +25,7 @@ const HallOfFameShowcase = () => {
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-amber-300/30 bg-gradient-to-b from-amber-50/50 to-card p-6 text-center">
           <span className="text-3xl">👑</span>
           <p className="text-sm font-bold text-foreground">아직 명예의 전당 회원이 없습니다</p>
-          <p className="text-xs text-muted-foreground">블랙벨트 Lv.10 + 마스터 미션 달성 시 등극!</p>
+          <p className="text-xs text-muted-foreground">블랙 레벨 10 + 마스터 미션 달성 시 등극!</p>
         </div>
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
@@ -39,9 +36,7 @@ const HallOfFameShowcase = () => {
             >
               <div className="relative">
                 <Avatar className="h-14 w-14 border-2 border-amber-400/50 shadow-md">
-                  {m.r_avatar_url ? (
-                    <AvatarImage src={m.r_avatar_url} alt={m.r_nickname} />
-                  ) : null}
+                  {m.r_avatar_url ? <AvatarImage src={m.r_avatar_url} alt={m.r_nickname} /> : null}
                   <AvatarFallback className="bg-amber-100 text-lg">👑</AvatarFallback>
                 </Avatar>
                 <Crown className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 text-amber-500" />

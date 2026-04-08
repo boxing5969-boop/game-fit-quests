@@ -40,16 +40,19 @@ export type Database = {
       }
       branches: {
         Row: {
+          code: string | null
           created_at: string
           id: string
           name: string
         }
         Insert: {
+          code?: string | null
           created_at?: string
           id?: string
           name: string
         }
         Update: {
+          code?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -173,6 +176,42 @@ export type Database = {
         }
         Relationships: []
       }
+      level_status: {
+        Row: {
+          approval_note: string | null
+          approved_by: string | null
+          completed_at: string | null
+          id: string
+          level_number: number
+          rank_name: Database["public"]["Enums"]["rank_name"]
+          status: Database["public"]["Enums"]["level_status_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approval_note?: string | null
+          approved_by?: string | null
+          completed_at?: string | null
+          id?: string
+          level_number: number
+          rank_name: Database["public"]["Enums"]["rank_name"]
+          status?: Database["public"]["Enums"]["level_status_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approval_note?: string | null
+          approved_by?: string | null
+          completed_at?: string | null
+          id?: string
+          level_number?: number
+          rank_name?: Database["public"]["Enums"]["rank_name"]
+          status?: Database["public"]["Enums"]["level_status_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       levels: {
         Row: {
           display_order: number
@@ -203,6 +242,33 @@ export type Database = {
           reward_name?: string | null
           title?: string
           xp_required?: number
+        }
+        Relationships: []
+      }
+      manager_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          manager_id: string
+          note_type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          manager_id: string
+          note_type?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          manager_id?: string
+          note_type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -402,6 +468,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       phone_verifications: {
         Row: {
@@ -631,6 +724,10 @@ export type Database = {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: Json
       }
+      create_notification: {
+        Args: { _body?: string; _title: string; _user_id: string }
+        Returns: string
+      }
       get_boss_conquerors: {
         Args: { _branch_name: string; _limit?: number }
         Returns: {
@@ -643,6 +740,7 @@ export type Database = {
           rank_position: number
         }[]
       }
+      get_branch_stats: { Args: { _branch_name: string }; Returns: Json }
       get_division_ranking: {
         Args: { _branch_name: string; _limit?: number }
         Returns: {
@@ -737,10 +835,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_branch_manager_of: {
+        Args: { _manager_id: string; _member_id: string }
+        Returns: boolean
+      }
       is_coach_of: {
         Args: { _coach_id: string; _member_id: string }
         Returns: boolean
       }
+      is_same_branch: { Args: { _user_id: string }; Returns: boolean }
       manual_level_down: { Args: { _member_id: string }; Returns: Json }
       manual_level_up: { Args: { _member_id: string }; Returns: Json }
       pass_boss_battle: {
@@ -764,6 +867,20 @@ export type Database = {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
       }
+      request_mission_revision: {
+        Args: { _coach_note?: string; _submission_id: string }
+        Returns: undefined
+      }
+      set_level_status: {
+        Args: {
+          _level: number
+          _member_id: string
+          _note?: string
+          _rank: Database["public"]["Enums"]["rank_name"]
+          _status: Database["public"]["Enums"]["level_status_type"]
+        }
+        Returns: Json
+      }
       set_member_level: {
         Args: {
           _level: number
@@ -775,10 +892,22 @@ export type Database = {
       set_rival: { Args: { _rival_id: string }; Returns: undefined }
     }
     Enums: {
-      app_role: "member" | "coach" | "admin"
+      app_role: "member" | "coach" | "admin" | "branch_manager" | "super_admin"
+      level_status_type:
+        | "locked"
+        | "in_progress"
+        | "pending"
+        | "approved"
+        | "revision_requested"
+        | "rejected"
+        | "boss_cleared"
       quest_type: "main" | "sub" | "weekly" | "boss"
       rank_name: "white" | "blue" | "red" | "black"
-      submission_status: "pending" | "approved" | "rejected"
+      submission_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "revision_requested"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -906,10 +1035,24 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["member", "coach", "admin"],
+      app_role: ["member", "coach", "admin", "branch_manager", "super_admin"],
+      level_status_type: [
+        "locked",
+        "in_progress",
+        "pending",
+        "approved",
+        "revision_requested",
+        "rejected",
+        "boss_cleared",
+      ],
       quest_type: ["main", "sub", "weekly", "boss"],
       rank_name: ["white", "blue", "red", "black"],
-      submission_status: ["pending", "approved", "rejected"],
+      submission_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "revision_requested",
+      ],
     },
   },
 } as const
