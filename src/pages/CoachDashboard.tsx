@@ -31,6 +31,8 @@ const CoachDashboard = () => {
   const grantXpMutation = useGrantManualXp();
   const bossBattleMutation = usePassBossBattle();
   const levelUpMutation = useManualLevelUp();
+  const levelDownMutation = useManualLevelDown();
+  const setLevelMutation = useSetMemberLevel();
   const updateMastery = useUpdateHiddenMastery();
   const updateCert = useUpdateCertProgress();
 
