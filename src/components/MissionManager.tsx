@@ -336,14 +336,40 @@ const MissionManager = () => {
 
               {/* Video */}
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">🎬 영상 URL</label>
-                <Input value={form.video_url} onChange={e => setForm(f => ({ ...f, video_url: e.target.value }))}
-                  placeholder="https://youtube.com/..." className="rounded-xl" />
+                <label className="mb-1 block text-xs text-muted-foreground">🎬 영상</label>
+                <input ref={videoInputRef} type="file" accept="video/*" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, "video"); }} />
+                <div className="flex gap-2">
+                  <Input value={form.video_url} onChange={e => setForm(f => ({ ...f, video_url: e.target.value }))}
+                    placeholder="URL 직접 입력 또는 파일 업로드" className="flex-1 rounded-xl" />
+                  <button type="button" onClick={() => videoInputRef.current?.click()} disabled={uploadingVideo}
+                    className="flex shrink-0 items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground active:scale-95 disabled:opacity-50">
+                    {uploadingVideo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {uploadingVideo ? "업로드중" : "업로드"}
+                  </button>
+                </div>
+                {form.video_url && (
+                  <p className="mt-1 truncate text-[10px] text-status-complete">✅ 영상 설정됨</p>
+                )}
               </div>
+
+              {/* Poster */}
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">🖼️ 포스터 URL (선택)</label>
-                <Input value={form.poster_url} onChange={e => setForm(f => ({ ...f, poster_url: e.target.value }))}
-                  placeholder="https://..." className="rounded-xl" />
+                <label className="mb-1 block text-xs text-muted-foreground">🖼️ 포스터 이미지 (선택)</label>
+                <input ref={posterInputRef} type="file" accept="image/*" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, "poster"); }} />
+                <div className="flex gap-2">
+                  <Input value={form.poster_url} onChange={e => setForm(f => ({ ...f, poster_url: e.target.value }))}
+                    placeholder="URL 직접 입력 또는 파일 업로드" className="flex-1 rounded-xl" />
+                  <button type="button" onClick={() => posterInputRef.current?.click()} disabled={uploadingPoster}
+                    className="flex shrink-0 items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground active:scale-95 disabled:opacity-50">
+                    {uploadingPoster ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
+                    {uploadingPoster ? "업로드중" : "업로드"}
+                  </button>
+                </div>
+                {form.poster_url && (
+                  <img src={form.poster_url} alt="포스터 미리보기" className="mt-2 h-24 w-full rounded-xl object-cover" />
+                )}
               </div>
 
               {/* Save */}
