@@ -22,7 +22,7 @@ const QuestCard = ({ quest }: { quest: Quest }) => {
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <div className="mb-1 flex items-center gap-2">
-            {quest.isBoss && <span className="text-sm">⚔️</span>}
+            {quest.isBoss && <span className="text-sm">🏆</span>}
             <h3 className="font-display text-base font-bold">{quest.title}</h3>
           </div>
           <p className="text-sm text-muted-foreground">{quest.description}</p>

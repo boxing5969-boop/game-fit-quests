@@ -1,6 +1,6 @@
 import { levelMap, currentUser } from "@/lib/mockData";
 import RankBadge from "@/components/RankBadge";
-import { Lock, Star, Sword } from "lucide-react";
+import { Lock, Star, Trophy } from "lucide-react";
 
 const LevelMapPage = () => {
   return (
@@ -29,7 +29,7 @@ const LevelMapPage = () => {
                 }`}
               >
                 {node.isBoss ? (
-                  <Sword className={`h-6 w-6 ${node.unlocked ? "text-destructive" : "text-muted-foreground"}`} />
+                  <Trophy className={`h-6 w-6 ${node.unlocked ? "text-destructive" : "text-muted-foreground"}`} />
                 ) : node.unlocked ? (
                   <Star className={`h-5 w-5 ${node.current ? "text-primary" : "text-foreground"}`} />
                 ) : (
@@ -42,7 +42,7 @@ const LevelMapPage = () => {
 
               {node.isBoss && (
                 <span className="rounded-md bg-destructive/20 px-2 py-0.5 font-display text-xs font-semibold text-destructive">
-                  BOSS
+                  타이틀매치
                 </span>
               )}
               {node.current && (
