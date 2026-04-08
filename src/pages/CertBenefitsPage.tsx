@@ -206,28 +206,7 @@ const CertBenefitsPage = () => {
                         </p>
                       </div>
 
-                      {/* Detail Accordions */}
-                      {card.detailAccordions && (
-                        <Accordion type="single" collapsible className="mt-5 space-y-1.5">
-                          {card.detailAccordions.map((item, k) => (
-                            <AccordionItem
-                              key={k}
-                              value={`detail-${i}-${k}`}
-                              className="rounded-lg border border-white/10 bg-white/5 px-3"
-                            >
-                              <AccordionTrigger className="text-left text-[13px] font-medium text-white/90 py-3 hover:no-underline">
-                                {item.title}
-                              </AccordionTrigger>
-                              <AccordionContent className="text-[12px] leading-relaxed text-white/60">
-                                {item.content}
-                              </AccordionContent>
-                            </AccordionItem>
-                          ))}
-                        </Accordion>
-                      )}
-
                       {/* CTA */}
-                      {!card.detailAccordions && (
                       <Button
                         variant="outline"
                         className="mt-4 w-full border-white/20 bg-white/5 text-white hover:bg-white/10"
@@ -235,7 +214,6 @@ const CertBenefitsPage = () => {
                         {card.cta}
                         <ArrowRight className="ml-1 h-4 w-4" />
                       </Button>
-                      )}
                     </div>
                   </Card>
                 </CarouselItem>
