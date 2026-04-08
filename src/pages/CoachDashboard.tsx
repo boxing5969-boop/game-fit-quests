@@ -53,7 +53,7 @@ const CoachDashboard = () => {
   });
 
   const { data: coachRequests, isLoading: coachReqLoading } = useQuery({
-    queryKey: ["coach-requests"],
+    queryKey: ["coach-requests", role],
     enabled: role === "admin",
     queryFn: async () => {
       const { data, error } = await supabase
