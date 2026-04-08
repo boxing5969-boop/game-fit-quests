@@ -403,6 +403,27 @@ export type Database = {
         }
         Relationships: []
       }
+      privacy_consents: {
+        Row: {
+          consented_at: string
+          id: string
+          signature_data: string
+          user_id: string
+        }
+        Insert: {
+          consented_at?: string
+          id?: string
+          signature_data: string
+          user_id: string
+        }
+        Update: {
+          consented_at?: string
+          id?: string
+          signature_data?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
