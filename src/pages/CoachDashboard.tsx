@@ -2,7 +2,7 @@ import { usePendingMissionSubmissions, useApproveMission, useRejectMission, useH
 import { useAssignedMembers, useGrantManualXp, usePassBossBattle, useManualLevelUp, useManualLevelDown, useSetMemberLevel } from "@/hooks/useQuestData";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, X, User, Zap, Trophy, Eye, Shield, BookOpen, Heart, Target, ArrowUp, ArrowDown, Plus, Pencil, Trash2, Phone, Mail, MapPin, Calendar, Settings2 } from "lucide-react";
 import MissionManager from "@/components/MissionManager";
 import { useNavigate } from "react-router-dom";
@@ -52,7 +52,48 @@ const CoachDashboard = () => {
     },
   });
 
-  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions">("pending");
+  const { data: coachRequests, isLoading: coachReqLoading } = useQuery({
+    queryKey: ["coach-requests"],
+    enabled: role === "admin",
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("coach_requests")
+        .select("*")
+        .eq("status", "pending")
+        .order("requested_at", { ascending: false });
+      if (error) throw error;
+      if (!data?.length) return [];
+      const userIds = data.map(r => r.user_id);
+      const { data: profiles } = await supabase.from("profiles").select("*").in("user_id", userIds);
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+      return data.map(r => ({ ...r, profile: profileMap.get(r.user_id) }));
+    },
+  });
+
+  const approveCoachMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase.rpc("approve_coach_request", { _request_id: requestId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["coach-requests"] });
+      qc.invalidateQueries({ queryKey: ["assigned-members"] });
+      toast.success("관장님 승인 완료! 코치 권한이 부여되었습니다.");
+    },
+  });
+
+  const rejectCoachMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase.rpc("reject_coach_request", { _request_id: requestId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["coach-requests"] });
+      toast.info("관장님 가입 거절 완료");
+    },
+  });
+
+  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions" | "coach-requests">("pending");
   const [rankUpInfo, setRankUpInfo] = useState<{ show: boolean; oldRank: string; newRank: string; memberName: string }>({ show: false, oldRank: "", newRank: "", memberName: "" });
   const [xpModal, setXpModal] = useState<{ show: boolean; memberId: string; memberName: string }>({ show: false, memberId: "", memberName: "" });
   const [xpAmount, setXpAmount] = useState(10);
@@ -177,6 +218,12 @@ const CoachDashboard = () => {
           <button onClick={() => setActiveTab("branches")}
             className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "branches" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}>
             🏢 지점
+          </button>
+        )}
+        {role === "admin" && (
+          <button onClick={() => setActiveTab("coach-requests")}
+            className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "coach-requests" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}>
+            🥊 관장 {coachRequests?.length ? `(${coachRequests.length})` : ""}
           </button>
         )}
       </div>
@@ -411,6 +458,40 @@ const CoachDashboard = () => {
             </div>
           )) : (
             <EmptyState icon="🏢" message="등록된 지점이 없습니다" />
+          )}
+        </div>
+      )}
+
+      {/* Coach Requests Tab */}
+      {activeTab === "coach-requests" && role === "admin" && (
+        <div className="space-y-3">
+          {coachReqLoading ? (
+            [1, 2].map(i => <div key={i} className="h-24 animate-pulse rounded-2xl bg-muted" />)
+          ) : !coachRequests?.length ? (
+            <EmptyState icon="✅" message="승인 대기 중인 관장님 요청이 없습니다" />
+          ) : (
+            coachRequests.map((req: any) => (
+              <div key={req.id} className="rounded-2xl border border-status-pending/30 bg-card p-4 shadow-sm">
+                <div className="mb-3">
+                  <p className="text-sm font-bold text-foreground">{req.profile?.nickname || req.profile?.name || "이름 없음"}</p>
+                  <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                    <p>📍 {req.profile?.branch_name || "지점 미설정"}</p>
+                    {req.profile?.phone_number && <p>📞 {req.profile.phone_number}</p>}
+                    <p>📅 {new Date(req.requested_at).toLocaleDateString("ko-KR")} 신청</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => approveCoachMutation.mutate(req.id)} disabled={approveCoachMutation.isPending}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-status-complete py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50">
+                    <Check className="h-4 w-4" /> 승인
+                  </button>
+                  <button onClick={() => rejectCoachMutation.mutate(req.id)} disabled={rejectCoachMutation.isPending}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-destructive py-2.5 text-sm font-bold text-destructive-foreground transition-all active:scale-95 disabled:opacity-50">
+                    <X className="h-4 w-4" /> 거절
+                  </button>
+                </div>
+              </div>
+            ))
           )}
         </div>
       )}
