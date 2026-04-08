@@ -1,11 +1,14 @@
 import { usePendingMissionSubmissions, useApproveMission, useRejectMission, useHiddenMastery, useExternalCertProgress, useUpdateHiddenMastery, useUpdateCertProgress } from "@/hooks/useMissionData";
 import { useAssignedMembers, useGrantManualXp, usePassBossBattle, useManualLevelUp } from "@/hooks/useQuestData";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Check, X, User, Zap, Trophy, Eye, Shield, BookOpen, Heart, Target, ArrowUp } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Check, X, User, Zap, Trophy, Eye, Shield, BookOpen, Heart, Target, ArrowUp, Plus, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import RankUpCeremony from "@/components/RankUpCeremony";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
