@@ -13,7 +13,7 @@ interface AuthContextType {
   progress: Tables<"member_progress"> | null;
   loading: boolean;
   refreshProgress: () => Promise<void>;
-  signUp: (email: string, password: string, name: string, nickname: string, phoneNumber: string, isCoach?: boolean) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, [fetchUserData]);
 
-  const signUp = async (email: string, password: string, name: string, nickname: string, phoneNumber: string, isCoach?: boolean) => {
+  const signUp = async (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean) => {
     // Check phone uniqueness first
     const { data: existing } = await supabase
       .from("profiles")
@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
       options: {
-        data: { name, nickname, phone_number: phoneNumber, is_coach_request: isCoach || false },
+        data: { name, nickname, phone_number: phoneNumber, branch_name: branchName, is_coach_request: isCoach || false },
         emailRedirectTo: window.location.origin,
       },
     });
