@@ -58,6 +58,7 @@ const AppRoutes = () => {
     <>
       <Routes>
         <Route path="/" element={user ? <Navigate to="/home" replace /> : <LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
         <Route path="/quests" element={<Navigate to="/missions" replace />} />
