@@ -1,11 +1,11 @@
-import { Home, Target, Map, Trophy } from "lucide-react";
+import { Home, Target, Map, Gift } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const tabs = [
   { path: "/home", icon: Home, label: "홈" },
-  { path: "/quests", icon: Target, label: "퀘스트" },
+  { path: "/missions", icon: Target, label: "미션" },
   { path: "/levelmap", icon: Map, label: "계급도" },
-  { path: "/halloffame", icon: Trophy, label: "명예의 전당" },
+  { path: "/rewards", icon: Gift, label: "보상" },
 ];
 
 const hiddenPaths = ["/", "/mypage", "/coach"];

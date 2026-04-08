@@ -1,19 +1,29 @@
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
 import { useAuth } from "@/contexts/AuthContext";
 import XPBar from "@/components/XPBar";
-import { User } from "lucide-react";
+import RankBadge from "@/components/RankBadge";
+import { User, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import type { Enums } from "@/integrations/supabase/types";
+
+const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
 const RewardsPage = () => {
   const navigate = useNavigate();
   const { progress } = useAuth();
   const { data: allBadges, isLoading: badgesLoading } = useBadges();
   const { data: myBadges } = useMyBadges();
-  const { data: xpLogs } = useXpLogs();
+  const { data: xpLogs } = useXpLogs(30);
 
   const earnedIds = new Set((myBadges || []).map(mb => mb.badge_id));
   const earned = (allBadges || []).filter(b => earnedIds.has(b.id));
   const locked = (allBadges || []).filter(b => !earnedIds.has(b.id));
+
+  // MASTER 40 check
+  const isMaster40 = progress && progress.current_rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
+
+  // Level-up logs
+  const levelUpLogs = (xpLogs || []).filter(l => l.reason.includes("클리어") || l.reason.includes("타이틀매치"));
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
@@ -25,43 +35,45 @@ const RewardsPage = () => {
       </div>
 
       <div className="space-y-5">
-        {/* Stats */}
-        {progress && (
-          <div className="grid grid-cols-3 gap-3 animate-slide-up">
-            <StatCard icon="⚡" label="누적 XP" value={progress.total_xp.toLocaleString()} />
-            <StatCard icon="🔥" label="연속 출석" value={`${progress.streak_days}일`} />
-            <StatCard icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
+        {/* MASTER 40 */}
+        {isMaster40 && (
+          <div className="animate-bounce-in rounded-2xl border-2 border-accent bg-gradient-to-br from-accent/20 via-primary/10 to-accent/20 p-6 text-center shadow-lg">
+            <span className="text-5xl">🏆</span>
+            <h2 className="mt-2 text-xl text-foreground">MASTER 40</h2>
+            <p className="text-sm text-muted-foreground">모든 계급과 레벨을 정복한 마스터</p>
           </div>
         )}
 
-        {/* XP Bar */}
+        {/* Current rank badge */}
         {progress && (
-          <div className="animate-slide-up rounded-2xl border border-border bg-card p-4 shadow-sm" style={{ animationDelay: "0.05s" }}>
-            <p className="mb-2 text-sm text-muted-foreground">다음 레벨까지</p>
-            <XPBar current={progress.total_xp} max={getXpToNext(progress.current_level, progress.current_rank)} />
-          </div>
-        )}
-
-        {/* Recent XP */}
-        {xpLogs && xpLogs.length > 0 && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
-            <h2 className="mb-3 text-base font-bold text-foreground">⚡ 최근 XP 획득</h2>
-            <div className="rounded-2xl border border-border bg-card shadow-sm">
-              {xpLogs.slice(0, 5).map((log, idx) => (
-                <div key={log.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(xpLogs.length, 5) - 1 ? "border-b border-border" : ""}`}>
-                  <div>
-                    <p className="text-sm text-foreground">{log.reason}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")}</p>
-                  </div>
-                  <span className="text-sm font-bold text-primary">+{log.amount} XP</span>
-                </div>
-              ))}
+          <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">현재 계급</p>
+                <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-foreground">{progress.total_xp.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">총 XP</p>
+              </div>
+            </div>
+            <div className="mt-3">
+              <XPBar current={progress.total_xp} max={getXpToNext(progress.current_level, progress.current_rank)} />
             </div>
           </div>
         )}
 
+        {/* Stats */}
+        {progress && (
+          <div className="grid grid-cols-3 gap-3 animate-slide-up" style={{ animationDelay: "0.05s" }}>
+            <StatCard icon="🔥" label="연속 출석" value={`${progress.streak_days}일`} />
+            <StatCard icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
+            <StatCard icon="🏅" label="배지" value={`${earned.length}개`} />
+          </div>
+        )}
+
         {/* Earned Badges */}
-        <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
+        <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
           <h2 className="mb-3 text-base font-bold text-foreground">🏅 획득한 배지</h2>
           {badgesLoading ? (
             <div className="grid grid-cols-3 gap-3">
@@ -71,7 +83,7 @@ const RewardsPage = () => {
             <div className="rounded-2xl border border-dashed border-border p-8 text-center">
               <span className="text-3xl">🥊</span>
               <p className="mt-2 text-sm text-muted-foreground">아직 획득한 배지가 없습니다</p>
-              <p className="text-xs text-muted-foreground">퀘스트를 완료하고 배지를 모아보세요!</p>
+              <p className="text-xs text-muted-foreground">미션을 완료하고 배지를 모아보세요!</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
@@ -87,13 +99,52 @@ const RewardsPage = () => {
 
         {/* Locked Badges */}
         {locked.length > 0 && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
+          <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
             <h2 className="mb-3 text-base font-bold text-muted-foreground">🔒 미획득</h2>
             <div className="grid grid-cols-3 gap-3">
               {locked.map(b => (
                 <div key={b.id} className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-muted/30 p-3 text-center opacity-50">
                   <span className="text-3xl grayscale">{b.image_url || "🏅"}</span>
                   <span className="text-xs font-bold text-foreground">{b.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Level-up history */}
+        {levelUpLogs.length > 0 && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
+            <h2 className="mb-3 text-base font-bold text-foreground">📜 레벨업 기록</h2>
+            <div className="rounded-2xl border border-border bg-card shadow-sm">
+              {levelUpLogs.slice(0, 10).map((log, idx) => (
+                <div key={log.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(levelUpLogs.length, 10) - 1 ? "border-b border-border" : ""}`}>
+                  <div className="flex items-center gap-2">
+                    <Award className="h-4 w-4 text-primary" />
+                    <div>
+                      <p className="text-sm text-foreground">{log.reason}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")}</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-primary">+{log.amount} XP</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent XP */}
+        {xpLogs && xpLogs.length > 0 && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.25s" }}>
+            <h2 className="mb-3 text-base font-bold text-foreground">⚡ 최근 XP 획득</h2>
+            <div className="rounded-2xl border border-border bg-card shadow-sm">
+              {xpLogs.slice(0, 5).map((log, idx) => (
+                <div key={log.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(xpLogs.length, 5) - 1 ? "border-b border-border" : ""}`}>
+                  <div>
+                    <p className="text-sm text-foreground">{log.reason}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")}</p>
+                  </div>
+                  <span className="text-sm font-bold text-primary">+{log.amount} XP</span>
                 </div>
               ))}
             </div>
