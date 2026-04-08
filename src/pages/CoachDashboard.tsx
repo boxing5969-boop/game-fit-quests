@@ -12,6 +12,11 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
+const ROLE_LABELS: Record<string, { label: string; color: string }> = {
+  admin: { label: "관리자", color: "bg-destructive/15 text-destructive" },
+  coach: { label: "코치", color: "bg-accent/15 text-accent-foreground" },
+  member: { label: "회원", color: "bg-muted text-muted-foreground" },
+};
 
 const MASTERY_FIELDS = [
   { key: "technique_score", label: "기술", icon: Target, color: "text-rank-blue" },
@@ -219,6 +224,8 @@ const CoachDashboard = () => {
           ) : (
             members.map((member: any) => {
               const prog = Array.isArray(member.member_progress) ? member.member_progress[0] : member.member_progress;
+              const memberRole = Array.isArray(member.user_roles) ? member.user_roles[0]?.role : member.user_roles?.role;
+              const roleInfo = ROLE_LABELS[memberRole] || ROLE_LABELS.member;
               const isBossReady = prog?.current_level === 10;
               return (
                 <div key={member.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
@@ -231,7 +238,12 @@ const CoachDashboard = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">{member.nickname || member.name || "이름 없음"}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-bold text-foreground truncate">{member.nickname || member.name || "이름 없음"}</p>
+                        {memberRole && memberRole !== "member" && (
+                          <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${roleInfo.color}`}>{roleInfo.label}</span>
+                        )}
+                      </div>
                       {prog && (
                         <div className="mt-1 flex items-center gap-2">
                           <span className="rounded-full bg-rank-blue/15 px-2 py-0.5 text-[10px] font-bold text-rank-blue">

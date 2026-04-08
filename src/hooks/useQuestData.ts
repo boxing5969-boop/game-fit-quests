@@ -244,11 +244,14 @@ export const useAssignedMembers = () => {
     enabled: (role === "coach" || role === "admin") && !!user,
     queryFn: async () => {
       if (role === "admin") {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*, member_progress(*)");
-        if (error) throw error;
-        return data;
+        const [profilesRes, rolesRes] = await Promise.all([
+          supabase.from("profiles").select("*, member_progress(*)"),
+          supabase.from("user_roles").select("user_id, role"),
+        ]);
+        if (profilesRes.error) throw profilesRes.error;
+        if (rolesRes.error) throw rolesRes.error;
+        const roleMap = new Map(rolesRes.data?.map(r => [r.user_id, r.role]) || []);
+        return (profilesRes.data || []).map(p => ({ ...p, user_roles: { role: roleMap.get(p.user_id) || "member" } }));
       }
       const { data: assignments, error: aErr } = await supabase
         .from("coach_assignments")
