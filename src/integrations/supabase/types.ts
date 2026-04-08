@@ -40,16 +40,19 @@ export type Database = {
       }
       branches: {
         Row: {
+          code: string | null
           created_at: string
           id: string
           name: string
         }
         Insert: {
+          code?: string | null
           created_at?: string
           id?: string
           name: string
         }
         Update: {
+          code?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -173,6 +176,42 @@ export type Database = {
         }
         Relationships: []
       }
+      level_status: {
+        Row: {
+          approval_note: string | null
+          approved_by: string | null
+          completed_at: string | null
+          id: string
+          level_number: number
+          rank_name: Database["public"]["Enums"]["rank_name"]
+          status: Database["public"]["Enums"]["level_status_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approval_note?: string | null
+          approved_by?: string | null
+          completed_at?: string | null
+          id?: string
+          level_number: number
+          rank_name: Database["public"]["Enums"]["rank_name"]
+          status?: Database["public"]["Enums"]["level_status_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approval_note?: string | null
+          approved_by?: string | null
+          completed_at?: string | null
+          id?: string
+          level_number?: number
+          rank_name?: Database["public"]["Enums"]["rank_name"]
+          status?: Database["public"]["Enums"]["level_status_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       levels: {
         Row: {
           display_order: number
@@ -203,6 +242,33 @@ export type Database = {
           reward_name?: string | null
           title?: string
           xp_required?: number
+        }
+        Relationships: []
+      }
+      manager_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          manager_id: string
+          note_type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          manager_id: string
+          note_type?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          manager_id?: string
+          note_type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -402,6 +468,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       phone_verifications: {
         Row: {
@@ -775,10 +868,22 @@ export type Database = {
       set_rival: { Args: { _rival_id: string }; Returns: undefined }
     }
     Enums: {
-      app_role: "member" | "coach" | "admin"
+      app_role: "member" | "coach" | "admin" | "branch_manager" | "super_admin"
+      level_status_type:
+        | "locked"
+        | "in_progress"
+        | "pending"
+        | "approved"
+        | "revision_requested"
+        | "rejected"
+        | "boss_cleared"
       quest_type: "main" | "sub" | "weekly" | "boss"
       rank_name: "white" | "blue" | "red" | "black"
-      submission_status: "pending" | "approved" | "rejected"
+      submission_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "revision_requested"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -906,10 +1011,24 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["member", "coach", "admin"],
+      app_role: ["member", "coach", "admin", "branch_manager", "super_admin"],
+      level_status_type: [
+        "locked",
+        "in_progress",
+        "pending",
+        "approved",
+        "revision_requested",
+        "rejected",
+        "boss_cleared",
+      ],
       quest_type: ["main", "sub", "weekly", "boss"],
       rank_name: ["white", "blue", "red", "black"],
-      submission_status: ["pending", "approved", "rejected"],
+      submission_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "revision_requested",
+      ],
     },
   },
 } as const
