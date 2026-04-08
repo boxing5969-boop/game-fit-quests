@@ -319,6 +319,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_quest_submission: {
+        Args: { _coach_note?: string; _submission_id: string }
+        Returns: Json
+      }
+      get_quest_xp: {
+        Args: { qt: Database["public"]["Enums"]["quest_type"] }
+        Returns: number
+      }
+      grant_manual_xp: {
+        Args: { _amount: number; _member_id: string; _reason?: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -329,6 +341,15 @@ export type Database = {
       is_coach_of: {
         Args: { _coach_id: string; _member_id: string }
         Returns: boolean
+      }
+      pass_boss_battle: {
+        Args: { _coach_note?: string; _member_id: string }
+        Returns: Json
+      }
+      record_attendance: { Args: { _user_id: string }; Returns: undefined }
+      reject_quest_submission: {
+        Args: { _coach_note?: string; _submission_id: string }
+        Returns: undefined
       }
     }
     Enums: {

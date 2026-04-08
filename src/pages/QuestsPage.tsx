@@ -3,6 +3,8 @@ import { useQuests, useMySubmissions, useSubmitQuest } from "@/hooks/useQuestDat
 import QuestCard from "@/components/QuestCard";
 import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { celebrateSmall } from "@/lib/celebrations";
+import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 
 type TabKey = "today" | "weekly" | "boss";
@@ -22,14 +24,21 @@ const QuestsPage = () => {
   const currentTypes = tabs.find(t => t.key === activeTab)!.types;
   const filtered = (quests || []).filter(q => currentTypes.includes(q.quest_type));
 
-  const submissionMap = new Map(
-    (submissions || []).map(s => [s.quest_id, s.status])
-  );
+  const submissionMap = new Map((submissions || []).map(s => [s.quest_id, s.status]));
 
-  // Completion rate
   const allMainSub = (quests || []).filter(q => ["main", "sub", "weekly"].includes(q.quest_type));
   const completed = allMainSub.filter(q => submissionMap.get(q.id) === "approved").length;
   const completionRate = allMainSub.length > 0 ? Math.round((completed / allMainSub.length) * 100) : 0;
+
+  const handleSubmit = async (questId: string) => {
+    try {
+      await submitQuest.mutateAsync(questId);
+      celebrateSmall();
+      toast.success("완료 요청을 보냈습니다! 🥊");
+    } catch {
+      toast.error("요청 실패");
+    }
+  };
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
@@ -78,16 +87,27 @@ const QuestsPage = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((q, idx) => (
-            <div key={q.id} className="animate-slide-up" style={{ animationDelay: `${idx * 0.05}s` }}>
-              <QuestCard
-                quest={q}
-                submissionStatus={submissionMap.get(q.id) || null}
-                onSubmit={() => submitQuest.mutate(q.id)}
-                isSubmitting={submitQuest.isPending}
-              />
-            </div>
-          ))}
+          {filtered.map((q, idx) => {
+            const subStatus = submissionMap.get(q.id) || null;
+            const isBoss = q.quest_type === "boss";
+            return (
+              <div key={q.id} className={`animate-slide-up ${isBoss ? "" : ""}`} style={{ animationDelay: `${idx * 0.05}s` }}>
+                {isBoss && (
+                  <div className="mb-1 flex items-center gap-1.5 px-1">
+                    <span className="text-xs font-bold text-accent-foreground">🏆 타이틀매치</span>
+                  </div>
+                )}
+                <div className={isBoss ? "rounded-2xl border-2 border-accent/40 bg-accent/5 p-1" : ""}>
+                  <QuestCard
+                    quest={q}
+                    submissionStatus={subStatus}
+                    onSubmit={() => handleSubmit(q.id)}
+                    isSubmitting={submitQuest.isPending}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

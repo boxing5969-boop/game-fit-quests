@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import type { Tables, Enums } from "@/integrations/supabase/types";
@@ -12,6 +12,7 @@ interface AuthContextType {
   role: AppRole | null;
   progress: Tables<"member_progress"> | null;
   loading: boolean;
+  refreshProgress: () => Promise<void>;
   signUp: (email: string, password: string, name: string, nickname: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -33,7 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [progress, setProgress] = useState<Tables<"member_progress"> | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = useCallback(async (userId: string) => {
     const [profileRes, roleRes, progressRes] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).single(),
       supabase.from("user_roles").select("role").eq("user_id", userId).single(),
@@ -43,16 +44,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (profileRes.data) setProfile(profileRes.data);
     if (roleRes.data) setRole(roleRes.data.role);
     if (progressRes.data) setProgress(progressRes.data);
-  };
+  }, []);
+
+  const refreshProgress = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("member_progress")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+    if (data) setProgress(data);
+  }, [user]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-
         if (session?.user) {
-          // Use setTimeout to avoid potential deadlock with Supabase auth
           setTimeout(() => fetchUserData(session.user.id), 0);
         } else {
           setProfile(null);
@@ -73,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchUserData]);
 
   const signUp = async (email: string, password: string, name: string, nickname: string) => {
     const { error } = await supabase.auth.signUp({
@@ -102,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, role, progress, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, profile, role, progress, loading, refreshProgress, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

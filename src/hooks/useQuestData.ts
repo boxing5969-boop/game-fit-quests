@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Tables, Enums } from "@/integrations/supabase/types";
 
 // ─── Levels ────
 export const useLevels = () =>
@@ -58,7 +57,7 @@ export const useSubmitQuest = () => {
       const { error } = await supabase.from("quest_submissions").insert({
         user_id: user!.id,
         quest_id: questId,
-        status: "pending",
+        status: "pending" as const,
       });
       if (error) throw error;
     },
@@ -96,11 +95,11 @@ export const useMyBadges = () => {
   });
 };
 
-// ─── XP Logs ────
-export const useXpLogs = () => {
+// ─── XP Logs (last 7 days for activity history) ────
+export const useXpLogs = (limit = 20) => {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ["xp-logs", user?.id],
+    queryKey: ["xp-logs", user?.id, limit],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -108,9 +107,27 @@ export const useXpLogs = () => {
         .select("*")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(limit);
       if (error) throw error;
       return data;
+    },
+  });
+};
+
+// ─── Record Attendance ────
+export const useRecordAttendance = () => {
+  const { user, refreshProgress } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("record_attendance", {
+        _user_id: user!.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refreshProgress();
+      qc.invalidateQueries({ queryKey: ["xp-logs"] });
     },
   });
 };
@@ -124,7 +141,7 @@ export const usePendingSubmissions = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("quest_submissions")
-        .select("*, quests(*), profiles!quest_submissions_user_id_fkey(*)")
+        .select("*, quests(*)")
         .eq("status", "pending")
         .order("requested_at", { ascending: false });
       if (error) throw error;
@@ -133,26 +150,88 @@ export const usePendingSubmissions = () => {
   });
 };
 
-// ─── Coach: Review Submission ────
-export const useReviewSubmission = () => {
-  const { user } = useAuth();
+// ─── Coach: Approve Submission (uses DB function) ────
+export const useApproveSubmission = () => {
+  const { refreshProgress } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, status, coachNote }: { id: string; status: "approved" | "rejected"; coachNote?: string }) => {
-      const { error } = await supabase
-        .from("quest_submissions")
-        .update({
-          status,
-          coach_note: coachNote || null,
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: user!.id,
-        })
-        .eq("id", id);
+    mutationFn: async ({ id, coachNote }: { id: string; coachNote?: string }) => {
+      const { data, error } = await supabase.rpc("approve_quest_submission", {
+        _submission_id: id,
+        _coach_note: coachNote || null,
+      });
+      if (error) throw error;
+      return data as {
+        xp_granted: number;
+        leveled_up: boolean;
+        ranked_up: boolean;
+        new_level: number;
+        new_rank: string;
+        total_xp: number;
+      };
+    },
+    onSuccess: () => {
+      refreshProgress();
+      qc.invalidateQueries({ queryKey: ["pending-submissions"] });
+      qc.invalidateQueries({ queryKey: ["my-submissions"] });
+      qc.invalidateQueries({ queryKey: ["xp-logs"] });
+      qc.invalidateQueries({ queryKey: ["assigned-members"] });
+    },
+  });
+};
+
+// ─── Coach: Reject Submission ────
+export const useRejectSubmission = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, coachNote }: { id: string; coachNote?: string }) => {
+      const { error } = await supabase.rpc("reject_quest_submission", {
+        _submission_id: id,
+        _coach_note: coachNote || "다시 도전해보세요",
+      });
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["pending-submissions"] });
       qc.invalidateQueries({ queryKey: ["my-submissions"] });
+    },
+  });
+};
+
+// ─── Coach: Manual XP Grant ────
+export const useGrantManualXp = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ memberId, amount, reason }: { memberId: string; amount: number; reason?: string }) => {
+      const { error } = await supabase.rpc("grant_manual_xp", {
+        _member_id: memberId,
+        _amount: amount,
+        _reason: reason || "수동 XP 지급",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assigned-members"] });
+      qc.invalidateQueries({ queryKey: ["xp-logs"] });
+    },
+  });
+};
+
+// ─── Coach: Boss Battle Pass ────
+export const usePassBossBattle = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ memberId, coachNote }: { memberId: string; coachNote?: string }) => {
+      const { data, error } = await supabase.rpc("pass_boss_battle", {
+        _member_id: memberId,
+        _coach_note: coachNote || "타이틀매치 합격",
+      });
+      if (error) throw error;
+      return data as { ranked_up: boolean; new_rank: string; new_level: number };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assigned-members"] });
+      qc.invalidateQueries({ queryKey: ["pending-submissions"] });
     },
   });
 };
@@ -165,14 +244,12 @@ export const useAssignedMembers = () => {
     enabled: (role === "coach" || role === "admin") && !!user,
     queryFn: async () => {
       if (role === "admin") {
-        // Admin sees all profiles
         const { data, error } = await supabase
           .from("profiles")
           .select("*, member_progress(*)");
         if (error) throw error;
         return data;
       }
-      // Coach sees assigned members via their profiles (RLS handles it)
       const { data: assignments, error: aErr } = await supabase
         .from("coach_assignments")
         .select("member_id")
