@@ -258,6 +258,9 @@ const LevelMapPage = () => {
                             <span className="text-sm font-black text-primary-foreground">{mission.emoji} {mission.title}</span>
                           </div>
                           <p className="mt-0.5 text-xs text-primary-foreground/50">{mission.subtitle}</p>
+                          {isMaxLevel && (
+                            <p className="mt-0.5 text-[10px] text-accent/70 font-medium">탭하여 도전하기 →</p>
+                          )}
                         </div>
                         {isMaxLevel && (
                           <Crown className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite" }} />
