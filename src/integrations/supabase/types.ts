@@ -14,16 +14,328 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      badges: {
+        Row: {
+          code: string
+          description: string
+          id: string
+          image_url: string | null
+          name: string
+        }
+        Insert: {
+          code: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          name: string
+        }
+        Update: {
+          code?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
+      coach_assignments: {
+        Row: {
+          coach_id: string
+          created_at: string
+          id: string
+          member_id: string
+        }
+        Insert: {
+          coach_id: string
+          created_at?: string
+          id?: string
+          member_id: string
+        }
+        Update: {
+          coach_id?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+        }
+        Relationships: []
+      }
+      levels: {
+        Row: {
+          display_order: number
+          id: string
+          is_boss: boolean
+          level_number: number
+          rank_name: Database["public"]["Enums"]["rank_name"]
+          reward_name: string | null
+          title: string
+          xp_required: number
+        }
+        Insert: {
+          display_order?: number
+          id?: string
+          is_boss?: boolean
+          level_number: number
+          rank_name: Database["public"]["Enums"]["rank_name"]
+          reward_name?: string | null
+          title: string
+          xp_required?: number
+        }
+        Update: {
+          display_order?: number
+          id?: string
+          is_boss?: boolean
+          level_number?: number
+          rank_name?: Database["public"]["Enums"]["rank_name"]
+          reward_name?: string | null
+          title?: string
+          xp_required?: number
+        }
+        Relationships: []
+      }
+      member_badges: {
+        Row: {
+          awarded_at: string
+          badge_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          badge_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          badge_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_progress: {
+        Row: {
+          bosses_cleared: number
+          current_level: number
+          current_rank: Database["public"]["Enums"]["rank_name"]
+          id: string
+          streak_days: number
+          total_xp: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bosses_cleared?: number
+          current_level?: number
+          current_rank?: Database["public"]["Enums"]["rank_name"]
+          id?: string
+          streak_days?: number
+          total_xp?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bosses_cleared?: number
+          current_level?: number
+          current_rank?: Database["public"]["Enums"]["rank_name"]
+          id?: string
+          streak_days?: number
+          total_xp?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          branch_name: string
+          created_at: string
+          id: string
+          name: string
+          nickname: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          branch_name?: string
+          created_at?: string
+          id?: string
+          name?: string
+          nickname?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          branch_name?: string
+          created_at?: string
+          id?: string
+          name?: string
+          nickname?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quest_submissions: {
+        Row: {
+          coach_note: string | null
+          id: string
+          quest_id: string
+          requested_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          user_id: string
+        }
+        Insert: {
+          coach_note?: string | null
+          id?: string
+          quest_id: string
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          user_id: string
+        }
+        Update: {
+          coach_note?: string | null
+          id?: string
+          quest_id?: string
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_submissions_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quests: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          level_id: string | null
+          needs_coach_approval: boolean
+          quest_type: Database["public"]["Enums"]["quest_type"]
+          title: string
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          level_id?: string | null
+          needs_coach_approval?: boolean
+          quest_type?: Database["public"]["Enums"]["quest_type"]
+          title: string
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          level_id?: string | null
+          needs_coach_approval?: boolean
+          quest_type?: Database["public"]["Enums"]["quest_type"]
+          title?: string
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quests_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      xp_logs: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_coach_of: {
+        Args: { _coach_id: string; _member_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "member" | "coach" | "admin"
+      quest_type: "main" | "sub" | "weekly" | "boss"
+      rank_name: "white" | "blue" | "red" | "black"
+      submission_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +462,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["member", "coach", "admin"],
+      quest_type: ["main", "sub", "weekly", "boss"],
+      rank_name: ["white", "blue", "red", "black"],
+      submission_status: ["pending", "approved", "rejected"],
+    },
   },
 } as const
