@@ -1,7 +1,7 @@
 import { usePendingMissionSubmissions, useApproveMission, useRejectMission, useHiddenMastery, useExternalCertProgress, useUpdateHiddenMastery, useUpdateCertProgress } from "@/hooks/useMissionData";
-import { useAssignedMembers, useGrantManualXp, usePassBossBattle } from "@/hooks/useQuestData";
+import { useAssignedMembers, useGrantManualXp, usePassBossBattle, useManualLevelUp } from "@/hooks/useQuestData";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Check, X, User, Zap, Trophy, Eye, Shield, BookOpen, Heart, Target } from "lucide-react";
+import { ArrowLeft, Check, X, User, Zap, Trophy, Eye, Shield, BookOpen, Heart, Target, ArrowUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import RankUpCeremony from "@/components/RankUpCeremony";
