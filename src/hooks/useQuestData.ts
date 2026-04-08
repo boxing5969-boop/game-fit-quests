@@ -246,7 +246,7 @@ export const useAssignedMembers = () => {
       if (role === "admin") {
         const { data, error } = await supabase
           .from("profiles")
-          .select("*, member_progress(*)");
+          .select("*, member_progress(*), user_roles(role)");
         if (error) throw error;
         return data;
       }
