@@ -70,11 +70,37 @@ const MissionsPage = () => {
 
   const handleSubmit = async (missionId: string) => {
     try {
-      await submitMission.mutateAsync(missionId);
-      celebrateSmall();
-      toast.success("완료 요청을 보냈습니다! 🥊");
+      if (role === "admin" && user) {
+        // Admin: submit then instantly approve
+        setAdminClearing(true);
+        await submitMission.mutateAsync(missionId);
+        // Find the submission we just created and approve it
+        const { data: sub } = await supabase
+          .from("mission_submissions")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("mission_id", missionId)
+          .eq("status", "pending")
+          .order("requested_at", { ascending: false })
+          .limit(1)
+          .single();
+        if (sub) {
+          await supabase.rpc("approve_mission_submission", { _submission_id: sub.id });
+        }
+        refreshProgress();
+        qc.invalidateQueries({ queryKey: ["my-mission-submissions"] });
+        qc.invalidateQueries({ queryKey: ["xp-logs"] });
+        setAdminClearing(false);
+        celebrateSmall();
+        toast.success("즉시 클리어! ⚡🥊");
+      } else {
+        await submitMission.mutateAsync(missionId);
+        celebrateSmall();
+        toast.success("완료 요청을 보냈습니다! 🥊");
+      }
       setVideoModal(null);
     } catch {
+      setAdminClearing(false);
       toast.error("요청 실패");
     }
   };
