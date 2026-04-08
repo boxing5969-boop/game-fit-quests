@@ -45,9 +45,8 @@ const CoachRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const HomeRouter = () => {
-  const { role, loading } = useAuth();
+  const { loading } = useAuth();
   if (loading) return null;
-  if (role === "coach" || role === "admin") return <Navigate to="/coach" replace />;
   return <HomePage />;
 };
 
