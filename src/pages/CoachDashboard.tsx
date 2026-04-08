@@ -12,6 +12,11 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
+const ROLE_LABELS: Record<string, { label: string; color: string }> = {
+  admin: { label: "관리자", color: "bg-destructive/15 text-destructive" },
+  coach: { label: "코치", color: "bg-accent/15 text-accent-foreground" },
+  member: { label: "회원", color: "bg-muted text-muted-foreground" },
+};
 
 const MASTERY_FIELDS = [
   { key: "technique_score", label: "기술", icon: Target, color: "text-rank-blue" },
