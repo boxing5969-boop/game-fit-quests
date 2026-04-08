@@ -401,6 +401,42 @@ const LevelMapPage = () => {
         </DrawerContent>
       </Drawer>
 
+      {/* Dan Challenge Dialog */}
+      <Dialog open={!!danChallengeOpen} onOpenChange={(open) => !open && setDanChallengeOpen(null)}>
+        <DialogContent className="mx-auto max-w-sm rounded-3xl border-2 border-accent/30 bg-card p-0 overflow-hidden">
+          <div className="relative bg-gradient-to-br from-accent/20 via-primary/10 to-accent/10 p-6 text-center">
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              <div className="absolute -left-4 -top-4 h-24 w-24 rounded-full bg-accent/20 blur-3xl" />
+              <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-primary/20 blur-3xl" />
+            </div>
+            <span className="relative text-5xl">{danChallengeOpen?.emoji}</span>
+            <h3 className="relative mt-3 whitespace-pre-line text-xl font-black text-foreground" style={{ fontFamily: "'Black Han Sans', sans-serif" }}>
+              {danChallengeOpen?.message}
+            </h3>
+            <p className="relative mt-2 text-xs text-muted-foreground">
+              승단 심사 신청서를 작성하고 공식 {danChallengeOpen?.dan}에 도전하세요
+            </p>
+          </div>
+          <div className="flex gap-3 p-5">
+            <button
+              onClick={() => setDanChallengeOpen(null)}
+              className="flex-1 rounded-xl border border-border bg-secondary py-3 text-sm font-bold text-secondary-foreground transition-all active:scale-95"
+            >
+              다음에 할게요
+            </button>
+            <button
+              onClick={() => {
+                window.open("https://korea-boxing.lovable.app", "_blank");
+                setDanChallengeOpen(null);
+              }}
+              className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-95"
+            >
+              🥊 도전하기!
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Secret Mission Detail Drawer */}
       <Drawer open={!!showSecretDetail} onOpenChange={(open) => !open && setShowSecretDetail(null)}>
         <DrawerContent className="mx-auto max-w-lg pb-safe">
