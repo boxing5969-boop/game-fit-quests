@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, X, User, Zap, Trophy, Eye, Shield, BookOpen, Heart, Target, ArrowUp, ArrowDown, Plus, Pencil, Trash2, Phone, Mail, MapPin, Calendar, Settings2 } from "lucide-react";
 import MissionManager from "@/components/MissionManager";
+import QuestManager from "@/components/admin/QuestManager";
+import LevelManager from "@/components/admin/LevelManager";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import RankUpCeremony from "@/components/RankUpCeremony";
@@ -93,7 +95,7 @@ const CoachDashboard = () => {
     },
   });
 
-  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions" | "coach-requests">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions" | "quests" | "levels" | "coach-requests">("pending");
   const [rankUpInfo, setRankUpInfo] = useState<{ show: boolean; oldRank: string; newRank: string; memberName: string }>({ show: false, oldRank: "", newRank: "", memberName: "" });
   const [xpModal, setXpModal] = useState<{ show: boolean; memberId: string; memberName: string }>({ show: false, memberId: "", memberName: "" });
   const [xpAmount, setXpAmount] = useState(10);
@@ -199,32 +201,38 @@ const CoachDashboard = () => {
       </div>
 
       {/* Tabs */}
-      <div className="mb-5 flex gap-2">
+      <div className="mb-5 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
         <button onClick={() => setActiveTab("pending")}
-          className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "pending" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}>
-          📋 승인 대기 {pendingSubmissions?.length ? `(${pendingSubmissions.length})` : ""}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "pending" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+          📋 승인 {pendingSubmissions?.length ? `(${pendingSubmissions.length})` : ""}
         </button>
         <button onClick={() => setActiveTab("members")}
-          className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "members" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}>
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "members" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
           👥 회원
         </button>
         {role === "admin" && (
-          <button onClick={() => setActiveTab("missions")}
-            className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "missions" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}>
-            🥊 미션
-          </button>
-        )}
-        {role === "admin" && (
-          <button onClick={() => setActiveTab("branches")}
-            className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "branches" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}>
-            🏢 지점
-          </button>
-        )}
-        {role === "admin" && (
-          <button onClick={() => setActiveTab("coach-requests")}
-            className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "coach-requests" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}>
-            🥊 관장 {coachRequests?.length ? `(${coachRequests.length})` : ""}
-          </button>
+          <>
+            <button onClick={() => setActiveTab("quests")}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "quests" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+              🥊 퀘스트
+            </button>
+            <button onClick={() => setActiveTab("missions")}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "missions" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+              🎯 미션
+            </button>
+            <button onClick={() => setActiveTab("levels")}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "levels" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+              🗺️ 레벨
+            </button>
+            <button onClick={() => setActiveTab("branches")}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "branches" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+              🏢 지점
+            </button>
+            <button onClick={() => setActiveTab("coach-requests")}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "coach-requests" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+              🥊 관장 {coachRequests?.length ? `(${coachRequests.length})` : ""}
+            </button>
+          </>
         )}
       </div>
 
@@ -388,8 +396,14 @@ const CoachDashboard = () => {
         </div>
       )}
 
+      {/* Quests Tab (Admin only) */}
+      {activeTab === "quests" && role === "admin" && <QuestManager />}
+
       {/* Missions Tab (Admin only) */}
       {activeTab === "missions" && role === "admin" && <MissionManager />}
+
+      {/* Levels Tab (Admin only) */}
+      {activeTab === "levels" && role === "admin" && <LevelManager />}
 
       {/* Branches Tab (Admin only) */}
       {activeTab === "branches" && role === "admin" && (

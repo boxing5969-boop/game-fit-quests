@@ -4,6 +4,7 @@ import { useMissions, useMyMissionSubmissions, useSubmitMission } from "@/hooks/
 import { useLevels } from "@/hooks/useQuestData";
 import { supabase } from "@/integrations/supabase/client";
 import MissionCard from "@/components/MissionCard";
+import { Pencil } from "lucide-react";
 import VideoPlayer from "@/components/VideoPlayer";
 import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -134,9 +135,16 @@ const MissionsPage = () => {
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-2xl text-foreground">🥊 미션</h1>
-        <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
-          <User className="h-5 w-5 text-secondary-foreground" />
-        </button>
+        <div className="flex items-center gap-2">
+          {role === "admin" && (
+            <button onClick={() => navigate("/coach")} className="flex h-10 items-center gap-1 rounded-full bg-primary/10 px-3 text-xs font-bold text-primary transition-all active:scale-95">
+              <Pencil className="h-3.5 w-3.5" /> 관리
+            </button>
+          )}
+          <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
+            <User className="h-5 w-5 text-secondary-foreground" />
+          </button>
+        </div>
       </div>
 
       {/* Progress */}
