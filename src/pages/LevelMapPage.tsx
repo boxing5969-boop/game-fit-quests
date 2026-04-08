@@ -37,6 +37,13 @@ const SECRET_MISSIONS = [
   },
 ];
 
+const DAN_CHALLENGES = [
+  { rank: "white", dan: "1단", message: "화이트 10레벨 달성! 🥊\n1단 단증에 도전하세요!", emoji: "🥇" },
+  { rank: "blue", dan: "2단", message: "블루 10레벨 달성! 🥊\n2단 단증에 도전하세요!", emoji: "🥈" },
+  { rank: "red", dan: "3단", message: "레드 10레벨 달성! 🥊\n3단 단증에 도전하세요!", emoji: "🥉" },
+  { rank: "black", dan: "4단", message: "블랙 10레벨 달성! 🥊\n4단 단증에 도전하세요!", emoji: "🏆" },
+];
+
 const FINAL_REWARDS = [
   { emoji: "💰", label: "153복싱짐 50% 영구 할인" },
   { emoji: "🏆", label: "명예의 전당 입성" },
