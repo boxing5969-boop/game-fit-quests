@@ -76,7 +76,7 @@ export const usePendingMissionSubmissions = () => {
   const { role } = useAuth();
   return useQuery({
     queryKey: ["pending-mission-submissions"],
-    enabled: role === "coach" || role === "admin",
+    enabled: role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin",
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mission_submissions")
@@ -142,7 +142,7 @@ export const useHiddenMastery = (userId?: string) => {
   const { role } = useAuth();
   return useQuery({
     queryKey: ["hidden-mastery", userId],
-    enabled: (role === "coach" || role === "admin") && !!userId,
+    enabled: (role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin") && !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hidden_mastery")
@@ -160,7 +160,7 @@ export const useExternalCertProgress = (userId?: string) => {
   const { role } = useAuth();
   return useQuery({
     queryKey: ["external-cert", userId],
-    enabled: (role === "coach" || role === "admin") && !!userId,
+    enabled: (role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin") && !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("external_cert_progress")

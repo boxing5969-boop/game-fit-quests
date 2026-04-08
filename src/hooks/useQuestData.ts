@@ -137,7 +137,7 @@ export const usePendingSubmissions = () => {
   const { role } = useAuth();
   return useQuery({
     queryKey: ["pending-submissions"],
-    enabled: role === "coach" || role === "admin",
+    enabled: role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin",
     queryFn: async () => {
       const { data, error } = await supabase
         .from("quest_submissions")
@@ -241,9 +241,9 @@ export const useAssignedMembers = () => {
   const { user, role } = useAuth();
   return useQuery({
     queryKey: ["assigned-members", user?.id, role],
-    enabled: (role === "coach" || role === "admin") && !!user,
+    enabled: (role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin") && !!user,
     queryFn: async () => {
-      if (role === "admin") {
+      if (role === "admin" || role === "super_admin") {
         const [profilesRes, rolesRes] = await Promise.all([
           supabase.from("profiles").select("*, member_progress(*)"),
           supabase.from("user_roles").select("user_id, role"),
