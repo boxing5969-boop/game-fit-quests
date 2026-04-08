@@ -1,4 +1,45 @@
-import { Award, Shield, Briefcase, GraduationCap, Users, Target, Heart, Star, Zap, Trophy } from "lucide-react";
+import { Award, Shield, Briefcase, GraduationCap, Users, Target, Heart, Star, Zap, Trophy, Crown, Dumbbell, Medal, Gem } from "lucide-react";
+
+export const levelProgression = [
+  {
+    rank: "화이트",
+    color: "hsl(0,0%,85%)",
+    levels: "레벨 1 ~ 10",
+    danTarget: "1단",
+    description: "복싱 기초 자세, 기본 펀치, 풋워크를 익히고 1단 심사에 도전할 수 있는 수준까지 성장합니다.",
+  },
+  {
+    rank: "블루",
+    color: "hsl(210,80%,55%)",
+    levels: "레벨 11 ~ 20",
+    danTarget: "2단",
+    description: "콤비네이션, 디펜스 기술을 체계적으로 습득하고 2단 심사 준비가 완료되는 단계입니다.",
+  },
+  {
+    rank: "레드",
+    color: "hsl(0,75%,50%)",
+    levels: "레벨 21 ~ 30",
+    danTarget: "3단",
+    description: "실전 스파링 능력, 전술적 사고를 갖추고 3단 심사에 도전할 수 있는 실력을 완성합니다.",
+  },
+  {
+    rank: "블랙",
+    color: "hsl(0,0%,15%)",
+    levels: "레벨 31 ~ 40",
+    danTarget: "4단",
+    description: "지도 역량, 경기 분석, 코칭 능력까지 갖추고 최종 목표인 4단에 도전합니다.",
+  },
+];
+
+export const ultimateRewards = [
+  { icon: Award, title: "복싱 공인단증 4단", description: "대한복싱협회 공식 4단 심사 도전 자격 — 채용 가점, 체육관 개설의 기준" },
+  { icon: Medal, title: "한국복싱코치협회 코치 자격증 레벨1", description: "복싱 코치로 활동할 수 있는 공식 자격 — 코치 커리어의 시작" },
+  { icon: Shield, title: "한국복싱협회 공인 단증 심사관 자격증", description: "다음 세대를 심사하는 권위 — 심사관으로서의 신뢰와 책임" },
+  { icon: Gem, title: "153복싱짐 50% 평생 할인권", description: "마스터 달성자에게만 주어지는 평생 멤버십 특별 혜택" },
+  { icon: Dumbbell, title: "평생 운동복 무료 지급", description: "153복싱짐 공식 운동복을 평생 무료로 제공받는 특전" },
+  { icon: Crown, title: "153 명예코치 인증", description: "153복싱짐 명예코치로 인증 — 후배 회원 멘토링 자격 부여" },
+  { icon: Trophy, title: "153 홈페이지 명예의전당 등극", description: "153복싱짐 공식 홈페이지 명예의전당에 영구 기록 — 전설로 남다" },
+];
 
 export const heroBadges = [
   { label: "실제 가점", icon: Award },

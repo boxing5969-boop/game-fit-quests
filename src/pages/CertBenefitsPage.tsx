@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, ArrowRight } from "lucide-react";
+import { ChevronLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import {
   CarouselItem,
   type CarouselApi,
 } from "@/components/ui/carousel";
-import { heroBadges, cardContents, detailAccordions, faqItems } from "@/data/certBenefitsData";
+import { heroBadges, cardContents, detailAccordions, faqItems, levelProgression, ultimateRewards } from "@/data/certBenefitsData";
 
 const CertBenefitsPage = () => {
   const navigate = useNavigate();
