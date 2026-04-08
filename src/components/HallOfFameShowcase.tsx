@@ -7,7 +7,7 @@ const HallOfFameShowcase = () => {
   const { data: hallMembers } = useHallOfFame();
   const navigate = useNavigate();
 
-  if (!hallMembers || hallMembers.length === 0) return null;
+  const isEmpty = !hallMembers || hallMembers.length === 0;
 
   return (
     <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
