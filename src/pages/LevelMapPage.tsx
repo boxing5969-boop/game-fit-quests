@@ -324,8 +324,32 @@ const LevelMapPage = () => {
           {selectedNode && (
             <div className="space-y-3 px-4 pb-6">
               <div className="rounded-xl bg-secondary p-4">
-                <p className="text-sm font-bold text-foreground">{selectedNode.title}</p>
-                <p className="mt-1 text-xs text-muted-foreground">필요 XP: {selectedNode.xp_required}</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-foreground">{selectedNode.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">필요 XP: {selectedNode.xp_required}</p>
+                  </div>
+                  {isAdmin && (
+                    <div className="flex gap-1">
+                      <button onClick={() => {
+                        setEditLevelForm({ title: selectedNode.title, xp_required: selectedNode.xp_required, reward_name: selectedNode.reward_name || "", is_boss: selectedNode.is_boss });
+                        setEditLevelModal(true);
+                      }} className="rounded-lg bg-card p-2 active:scale-95">
+                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
+                      <button onClick={async () => {
+                        if (!confirm(`이 레벨을 삭제하시겠습니까?`)) return;
+                        const { error } = await supabase.from("levels").delete().eq("id", selectedNode.id);
+                        if (error) { toast.error("삭제 실패"); return; }
+                        toast.success("레벨 삭제 완료");
+                        qc.invalidateQueries({ queryKey: ["levels"] });
+                        setSelectedNode(null);
+                      }} className="rounded-lg bg-destructive/10 p-2 active:scale-95">
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {selectedNode.reward_name && (
