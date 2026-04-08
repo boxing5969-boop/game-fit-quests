@@ -9,7 +9,7 @@ import LoginPage from "@/pages/LoginPage";
 import HomePage from "@/pages/HomePage";
 import QuestsPage from "@/pages/QuestsPage";
 import LevelMapPage from "@/pages/LevelMapPage";
-import RewardsPage from "@/pages/RewardsPage";
+import HallOfFamePage from "@/pages/HallOfFamePage";
 import MyPage from "@/pages/MyPage";
 import CoachDashboard from "@/pages/CoachDashboard";
 import NotFound from "@/pages/NotFound";
@@ -57,7 +57,8 @@ const AppRoutes = () => {
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/quests" element={<ProtectedRoute><QuestsPage /></ProtectedRoute>} />
         <Route path="/levelmap" element={<ProtectedRoute><LevelMapPage /></ProtectedRoute>} />
-        <Route path="/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
+        <Route path="/halloffame" element={<ProtectedRoute><HallOfFamePage /></ProtectedRoute>} />
+        <Route path="/rewards" element={<Navigate to="/halloffame" replace />} />
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/coach" element={<ProtectedRoute><CoachRoute><CoachDashboard /></CoachRoute></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
@@ -80,6 +81,5 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
-
 
 export default App;
