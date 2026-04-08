@@ -44,6 +44,13 @@ const CoachRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const HomeRouter = () => {
+  const { role, loading } = useAuth();
+  if (loading) return null;
+  if (role === "coach" || role === "admin") return <Navigate to="/coach" replace />;
+  return <HomePage />;
+};
+
 const AppRoutes = () => {
   const { user, loading } = useAuth();
 
