@@ -364,6 +364,7 @@ export type Database = {
           rank_position: number
         }[]
       }
+      get_my_branch: { Args: never; Returns: string }
       get_quest_xp: {
         Args: { qt: Database["public"]["Enums"]["quest_type"] }
         Returns: number
