@@ -113,8 +113,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error ? new Error(error.message) : null };
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: new Error(error.message) };
+
+    // Check if user has a pending coach request — block login
+    if (data.user) {
+      const { data: pendingReq } = await supabase
+        .from("coach_requests")
+        .select("status")
+        .eq("user_id", data.user.id)
+        .eq("status", "pending")
+        .maybeSingle();
+      if (pendingReq) {
+        await supabase.auth.signOut();
+        return { error: new Error("관장님 가입 승인 대기 중입니다. 관리자 승인 후 로그인 가능합니다.") };
+      }
+    }
+
+    return { error: null };
   };
 
   const signOut = async () => {
