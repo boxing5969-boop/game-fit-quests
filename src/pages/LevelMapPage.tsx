@@ -172,6 +172,28 @@ const LevelMapPage = () => {
                     );
                   })}
                 </div>
+                {/* Dan Challenge Card */}
+                {(() => {
+                  const rankIdx = RANK_ORDER.indexOf(rank);
+                  const rankMaxGlobal = (rankIdx + 1) * 10;
+                  const challenge = DAN_CHALLENGES.find(c => c.rank === rank);
+                  if (!challenge || currentGlobal < rankMaxGlobal) return null;
+                  return (
+                    <button
+                      onClick={() => setDanChallengeOpen(challenge)}
+                      className="mt-3 w-full rounded-2xl border-2 border-accent/40 bg-gradient-to-r from-accent/10 via-primary/10 to-accent/10 p-4 text-left transition-all active:scale-[0.98] hover:border-accent/60"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{challenge.emoji}</span>
+                        <div className="flex-1">
+                          <p className="text-sm font-black text-foreground">{challenge.dan} 단증 도전 가능! 🔥</p>
+                          <p className="text-xs text-muted-foreground">{RANK_LABELS[rank]} 마스터 완료 — 탭하여 도전하기</p>
+                        </div>
+                        <ExternalLink className="h-5 w-5 text-accent" />
+                      </div>
+                    </button>
+                  );
+                })()}
               </div>
             );
           })}
