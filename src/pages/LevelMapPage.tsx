@@ -3,7 +3,8 @@ import { useLevels, useManualLevelUp, usePassBossBattle } from "@/hooks/useQuest
 import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
 import { useAuth } from "@/contexts/AuthContext";
 import RankBadge from "@/components/RankBadge";
-import { Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp, Crown, Shield, Award, Sparkles } from "lucide-react";
+import { Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp, Crown, Shield, Award, Sparkles, ExternalLink, X } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -36,6 +37,13 @@ const SECRET_MISSIONS = [
   },
 ];
 
+const DAN_CHALLENGES = [
+  { rank: "white", dan: "1단", message: "화이트 10레벨 달성! 🥊\n1단 단증에 도전하세요!", emoji: "🥇" },
+  { rank: "blue", dan: "2단", message: "블루 10레벨 달성! 🥊\n2단 단증에 도전하세요!", emoji: "🥈" },
+  { rank: "red", dan: "3단", message: "레드 10레벨 달성! 🥊\n3단 단증에 도전하세요!", emoji: "🥉" },
+  { rank: "black", dan: "4단", message: "블랙 10레벨 달성! 🥊\n4단 단증에 도전하세요!", emoji: "🏆" },
+];
+
 const FINAL_REWARDS = [
   { emoji: "💰", label: "153복싱짐 50% 영구 할인" },
   { emoji: "🏆", label: "명예의 전당 입성" },
@@ -47,6 +55,7 @@ const FINAL_REWARDS = [
 const LevelMapPage = () => {
   const [selectedNode, setSelectedNode] = useState<Tables<"levels"> | null>(null);
   const [showSecretDetail, setShowSecretDetail] = useState<typeof SECRET_MISSIONS[0] | null>(null);
+  const [danChallengeOpen, setDanChallengeOpen] = useState<typeof DAN_CHALLENGES[0] | null>(null);
   const navigate = useNavigate();
   const { progress, role, user, refreshProgress } = useAuth();
   const { data: levels, isLoading } = useLevels();
@@ -163,6 +172,28 @@ const LevelMapPage = () => {
                     );
                   })}
                 </div>
+                {/* Dan Challenge Card */}
+                {(() => {
+                  const rankIdx = RANK_ORDER.indexOf(rank);
+                  const rankMaxGlobal = (rankIdx + 1) * 10;
+                  const challenge = DAN_CHALLENGES.find(c => c.rank === rank);
+                  if (!challenge || currentGlobal < rankMaxGlobal) return null;
+                  return (
+                    <button
+                      onClick={() => setDanChallengeOpen(challenge)}
+                      className="mt-3 w-full rounded-2xl border-2 border-accent/40 bg-gradient-to-r from-accent/10 via-primary/10 to-accent/10 p-4 text-left transition-all active:scale-[0.98] hover:border-accent/60"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{challenge.emoji}</span>
+                        <div className="flex-1">
+                          <p className="text-sm font-black text-foreground">{challenge.dan} 단증 도전 가능! 🔥</p>
+                          <p className="text-xs text-muted-foreground">{RANK_LABELS[rank]} 마스터 완료 — 탭하여 도전하기</p>
+                        </div>
+                        <ExternalLink className="h-5 w-5 text-accent" />
+                      </div>
+                    </button>
+                  );
+                })()}
               </div>
             );
           })}
@@ -369,6 +400,42 @@ const LevelMapPage = () => {
           )}
         </DrawerContent>
       </Drawer>
+
+      {/* Dan Challenge Dialog */}
+      <Dialog open={!!danChallengeOpen} onOpenChange={(open) => !open && setDanChallengeOpen(null)}>
+        <DialogContent className="mx-auto max-w-sm rounded-3xl border-2 border-accent/30 bg-card p-0 overflow-hidden">
+          <div className="relative bg-gradient-to-br from-accent/20 via-primary/10 to-accent/10 p-6 text-center">
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              <div className="absolute -left-4 -top-4 h-24 w-24 rounded-full bg-accent/20 blur-3xl" />
+              <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-primary/20 blur-3xl" />
+            </div>
+            <span className="relative text-5xl">{danChallengeOpen?.emoji}</span>
+            <h3 className="relative mt-3 whitespace-pre-line text-xl font-black text-foreground" style={{ fontFamily: "'Black Han Sans', sans-serif" }}>
+              {danChallengeOpen?.message}
+            </h3>
+            <p className="relative mt-2 text-xs text-muted-foreground">
+              승단 심사 신청서를 작성하고 공식 {danChallengeOpen?.dan}에 도전하세요
+            </p>
+          </div>
+          <div className="flex gap-3 p-5">
+            <button
+              onClick={() => setDanChallengeOpen(null)}
+              className="flex-1 rounded-xl border border-border bg-secondary py-3 text-sm font-bold text-secondary-foreground transition-all active:scale-95"
+            >
+              다음에 할게요
+            </button>
+            <button
+              onClick={() => {
+                window.open("https://korea-boxing.lovable.app", "_blank");
+                setDanChallengeOpen(null);
+              }}
+              className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-95"
+            >
+              🥊 도전하기!
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Secret Mission Detail Drawer */}
       <Drawer open={!!showSecretDetail} onOpenChange={(open) => !open && setShowSecretDetail(null)}>
