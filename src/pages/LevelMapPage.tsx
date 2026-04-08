@@ -385,7 +385,7 @@ const LevelMapPage = () => {
                 </div>
               )}
 
-              {role === "admin" && user && !selectedNode.is_boss && (
+              {isAdmin && user && !selectedNode.is_boss && (
                 <button
                   onClick={async () => {
                     try {
@@ -405,7 +405,7 @@ const LevelMapPage = () => {
                 </button>
               )}
 
-              {role === "admin" && user && selectedNode.is_boss && (
+              {isAdmin && user && selectedNode.is_boss && (
                 <button
                   onClick={async () => {
                     try {
@@ -431,7 +431,7 @@ const LevelMapPage = () => {
 
               <button
                 onClick={() => { setSelectedNode(null); navigate("/missions"); }}
-                className={`w-full rounded-xl ${role === "admin" ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"} py-3 text-sm font-bold shadow-md transition-all active:scale-[0.98]`}
+                className={`w-full rounded-xl ${isAdmin ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"} py-3 text-sm font-bold shadow-md transition-all active:scale-[0.98]`}
               >
                 미션 보러가기
               </button>

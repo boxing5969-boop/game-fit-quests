@@ -37,7 +37,7 @@ const HallOfFamePage = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("official");
   const setRival = useSetRival();
   const qc = useQueryClient();
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "super_admin";
 
   const { data: officialRanking, isLoading: officialLoading } = useDivisionRanking();
   const { data: weeklyRanking } = useWeeklyActivityRanking();
