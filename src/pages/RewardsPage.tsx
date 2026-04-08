@@ -37,10 +37,33 @@ const RewardsPage = () => {
       <div className="space-y-5">
         {/* MASTER 40 */}
         {isMaster40 && (
-          <div className="animate-bounce-in rounded-2xl border-2 border-accent bg-gradient-to-br from-accent/20 via-primary/10 to-accent/20 p-6 text-center shadow-lg">
-            <span className="text-5xl">🏆</span>
-            <h2 className="mt-2 text-xl text-foreground">MASTER 40</h2>
-            <p className="text-sm text-muted-foreground">모든 계급과 레벨을 정복한 마스터</p>
+          <div className="animate-bounce-in space-y-4">
+            <div className="rounded-2xl border-2 border-accent bg-gradient-to-br from-accent/20 via-primary/10 to-accent/20 p-6 text-center shadow-lg">
+              <span className="text-5xl">🏆</span>
+              <h2 className="mt-2 text-xl font-bold text-foreground">MASTER 40 달성</h2>
+              <p className="text-sm text-muted-foreground">모든 계급과 레벨을 정복한 최종 마스터</p>
+            </div>
+
+            {/* Final Master Missions */}
+            <div className="rounded-2xl border border-primary/30 bg-card p-5 shadow-sm">
+              <h3 className="mb-4 text-base font-bold text-foreground">🥇 최종 마스터 미션</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 p-4 border border-primary/20">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">1</span>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">한국복싱협회 단증 심사관</p>
+                    <p className="mt-1 text-xs text-muted-foreground">한국복싱협회 공인 단증 심사관이 되세요</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 p-4 border border-primary/20">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-foreground">2</span>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">정식 코치 자격증 취득</p>
+                    <p className="mt-1 text-xs text-muted-foreground">한국복싱코치협회 인증 정식 코치 자격증을 취득하세요</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
