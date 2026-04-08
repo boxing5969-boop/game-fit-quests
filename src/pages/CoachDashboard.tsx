@@ -238,7 +238,12 @@ const CoachDashboard = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">{member.nickname || member.name || "이름 없음"}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-bold text-foreground truncate">{member.nickname || member.name || "이름 없음"}</p>
+                        {memberRole && memberRole !== "member" && (
+                          <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${roleInfo.color}`}>{roleInfo.label}</span>
+                        )}
+                      </div>
                       {prog && (
                         <div className="mt-1 flex items-center gap-2">
                           <span className="rounded-full bg-rank-blue/15 px-2 py-0.5 text-[10px] font-bold text-rank-blue">
