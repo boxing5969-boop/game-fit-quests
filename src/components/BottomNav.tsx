@@ -1,11 +1,11 @@
-import { Home, Target, Map, Gift } from "lucide-react";
+import { Home, Target, Map, Trophy } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const tabs = [
   { path: "/home", icon: Home, label: "홈" },
   { path: "/quests", icon: Target, label: "퀘스트" },
-  { path: "/levelmap", icon: Map, label: "레벨맵" },
-  { path: "/rewards", icon: Gift, label: "보상" },
+  { path: "/levelmap", icon: Map, label: "계급도" },
+  { path: "/halloffame", icon: Trophy, label: "명예의 전당" },
 ];
 
 const hiddenPaths = ["/", "/mypage", "/coach"];
@@ -25,11 +25,11 @@ const BottomNav = () => {
             <button
               key={path}
               onClick={() => navigate(path)}
-              className={`flex flex-col items-center gap-0.5 px-4 py-1.5 transition-all active:scale-95 ${
+              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 transition-all active:scale-95 ${
                 active ? "text-primary" : "text-muted-foreground"
               }`}
             >
-              <Icon className={`h-6 w-6 ${active ? "drop-shadow-[0_0_6px_hsl(14,90%,55%,0.4)]" : ""}`} />
+              <Icon className={`h-5 w-5 ${active ? "drop-shadow-[0_0_6px_hsl(14,90%,55%,0.4)]" : ""}`} />
               <span className="text-[10px] font-medium">{label}</span>
             </button>
           );
