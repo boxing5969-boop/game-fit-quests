@@ -16,10 +16,12 @@ const RANK_ICONS: Record<string, string> = { white: "⚪", blue: "🔵", red: "�
 const LevelMapPage = () => {
   const [selectedNode, setSelectedNode] = useState<Tables<"levels"> | null>(null);
   const navigate = useNavigate();
-  const { progress } = useAuth();
+  const { progress, role, user, refreshProgress } = useAuth();
   const { data: levels, isLoading } = useLevels();
   const { data: missions } = useMissions();
   const { data: missionSubs } = useMyMissionSubmissions();
+  const levelUpMutation = useManualLevelUp();
+  const bossBattleMutation = usePassBossBattle();
 
   if (!progress) return null;
 
