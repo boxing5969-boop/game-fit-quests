@@ -519,6 +519,53 @@ const LevelMapPage = () => {
         </DrawerContent>
       </Drawer>
     </div>
+
+      {/* Admin: Edit Level Modal */}
+      {editLevelModal && selectedNode && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setEditLevelModal(false)}>
+          <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg text-foreground">✏️ 레벨 수정</h3>
+              <button onClick={() => setEditLevelModal(false)} className="rounded-full bg-secondary p-2 active:scale-95">
+                <X className="h-4 w-4 text-secondary-foreground" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">제목</label>
+                <Input value={editLevelForm.title} onChange={e => setEditLevelForm(f => ({ ...f, title: e.target.value }))} className="rounded-xl" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">필요 XP</label>
+                <Input type="number" value={editLevelForm.xp_required} onChange={e => setEditLevelForm(f => ({ ...f, xp_required: Number(e.target.value) }))} className="rounded-xl" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">보상</label>
+                <Input value={editLevelForm.reward_name} onChange={e => setEditLevelForm(f => ({ ...f, reward_name: e.target.value }))} placeholder="보상명 (선택)" className="rounded-xl" />
+              </div>
+              <button onClick={async () => {
+                setEditLevelSaving(true);
+                try {
+                  const { error } = await supabase.from("levels").update({
+                    title: editLevelForm.title.trim(), xp_required: editLevelForm.xp_required,
+                    reward_name: editLevelForm.reward_name.trim() || null,
+                  }).eq("id", selectedNode.id);
+                  if (error) throw error;
+                  toast.success("레벨 수정 완료 ✅");
+                  qc.invalidateQueries({ queryKey: ["levels"] });
+                  setEditLevelModal(false);
+                  setSelectedNode(null);
+                } catch { toast.error("수정 실패"); }
+                finally { setEditLevelSaving(false); }
+              }} disabled={editLevelSaving}
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                {editLevelSaving ? "저장 중..." : "수정 완료"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
