@@ -1,11 +1,157 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Tab = "login" | "member" | "coach";
 
+const useBranches = () =>
+  useQuery({
+    queryKey: ["branches"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("branches").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+// ─── Signature Pad ────
+const SignaturePad = ({ onSignatureChange }: { onSignatureChange: (data: string | null) => void }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
+
+  const getPos = (e: React.TouchEvent | React.MouseEvent) => {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    if ("touches" in e) {
+      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    }
+    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+  };
+
+  const startDraw = (e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const { x, y } = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setIsDrawing(true);
+  };
+
+  const draw = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const { x, y } = getPos(e);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = "hsl(var(--foreground))";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.stroke();
+    setHasDrawn(true);
+  };
+
+  const endDraw = () => {
+    setIsDrawing(false);
+    if (hasDrawn && canvasRef.current) {
+      onSignatureChange(canvasRef.current.toDataURL("image/png"));
+    }
+  };
+
+  const clear = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawn(false);
+    onSignatureChange(null);
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    const ctx = canvas.getContext("2d");
+    if (ctx) ctx.scale(2, 2);
+  }, []);
+
+  return (
+    <div className="space-y-2">
+      <canvas
+        ref={canvasRef}
+        className="h-28 w-full rounded-xl border border-border bg-card touch-none cursor-crosshair"
+        onMouseDown={startDraw}
+        onMouseMove={draw}
+        onMouseUp={endDraw}
+        onMouseLeave={endDraw}
+        onTouchStart={startDraw}
+        onTouchMove={draw}
+        onTouchEnd={endDraw}
+      />
+      {hasDrawn && (
+        <button type="button" onClick={clear} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+          서명 지우기
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ─── Privacy Modal ────
+const PrivacyConsentModal = ({ onAccept, onClose }: { onAccept: (sig: string) => void; onClose: () => void }) => {
+  const [signature, setSignature] = useState<string | null>(null);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl">
+        <h2 className="mb-4 text-lg font-bold text-foreground">📋 개인정보 수집·이용 동의</h2>
+        <div className="mb-4 max-h-48 overflow-y-auto rounded-xl bg-muted/50 p-4 text-sm leading-relaxed text-muted-foreground">
+          <p className="mb-2 font-semibold text-foreground">1. 수집 항목</p>
+          <p className="mb-3">이름, 닉네임, 이메일, 전화번호, 소속 지점</p>
+          <p className="mb-2 font-semibold text-foreground">2. 수집 목적</p>
+          <p className="mb-3">서비스 제공, 회원 관리, 레벨/랭킹 운영, 본인 확인</p>
+          <p className="mb-2 font-semibold text-foreground">3. 보유 기간</p>
+          <p className="mb-3">회원 탈퇴 시까지 보유하며, 탈퇴 후 즉시 파기합니다.</p>
+          <p className="mb-2 font-semibold text-foreground">4. 동의 거부 권리</p>
+          <p>동의를 거부할 수 있으나, 이 경우 회원가입이 제한됩니다.</p>
+        </div>
+
+        <p className="mb-2 text-sm font-medium text-foreground">아래에 서명해주세요</p>
+        <SignaturePad onSignatureChange={setSignature} />
+
+        <div className="mt-4 flex gap-3">
+          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground transition-all active:scale-[0.98]">
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={() => signature && onAccept(signature)}
+            disabled={!signature}
+            className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+          >
+            동의 및 서명 완료
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Main LoginPage ────
 const LoginPage = () => {
   const [tab, setTab] = useState<Tab>("login");
   const [email, setEmail] = useState("");
@@ -14,11 +160,15 @@ const LoginPage = () => {
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
   const [phone, setPhone] = useState("");
+  const [branch, setBranch] = useState("");
+  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const { data: branches } = useBranches();
 
   const isSignUp = tab === "member" || tab === "coach";
 
@@ -30,54 +180,49 @@ const LoginPage = () => {
   };
 
   const resetForm = () => {
-    setEmail(""); setPassword(""); setConfirmPassword(""); setName(""); setNickname(""); setPhone(""); setError(""); setSignUpSuccess(false);
+    setEmail(""); setPassword(""); setConfirmPassword(""); setName(""); setNickname("");
+    setPhone(""); setBranch(""); setSignatureData(null); setError(""); setSignUpSuccess(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setIsLoading(true);
 
-    try {
-      if (isSignUp) {
-        if (password !== confirmPassword) {
-          setError("비밀번호가 일치하지 않습니다");
-          return;
-        }
-        if (password.length < 6) {
-          setError("비밀번호는 6자 이상이어야 합니다");
-          return;
-        }
-        const rawPhone = phone.replace(/-/g, "");
-        if (rawPhone.length < 10) {
-          setError("올바른 전화번호를 입력해주세요");
-          return;
-        }
-        const { error } = await signUp(email, password, name, nickname, rawPhone, tab === "coach");
-        if (error) {
-          setError(error.message);
-          return;
-        }
-        setSignUpSuccess(true);
-        toast.success("가입 완료! 이메일 인증을 확인해주세요 📧");
-      } else {
+    if (!isSignUp) {
+      setIsLoading(true);
+      try {
         const { error } = await signIn(email, password);
-        if (error) {
-          setError(error.message);
-          return;
-        }
+        if (error) { setError(error.message); return; }
         navigate("/home");
-      }
-    } finally {
-      setIsLoading(false);
+      } finally { setIsLoading(false); }
+      return;
     }
+
+    // Signup validations
+    if (password !== confirmPassword) { setError("비밀번호가 일치하지 않습니다"); return; }
+    if (password.length < 6) { setError("비밀번호는 6자 이상이어야 합니다"); return; }
+    const rawPhone = phone.replace(/-/g, "");
+    if (rawPhone.length < 10) { setError("올바른 전화번호를 입력해주세요"); return; }
+    if (!branch) { setError("소속 체육관을 선택해주세요"); return; }
+    if (!signatureData) { setShowPrivacy(true); return; }
+
+    // Proceed with signup
+    setIsLoading(true);
+    try {
+      const { error } = await signUp(email, password, name, nickname, rawPhone, branch, tab === "coach");
+      if (error) { setError(error.message); return; }
+      setSignUpSuccess(true);
+      toast.success("가입 완료! 이메일 인증을 확인해주세요 📧");
+    } finally { setIsLoading(false); }
+  };
+
+  const handlePrivacyAccept = (sig: string) => {
+    setSignatureData(sig);
+    setShowPrivacy(false);
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      setError("비밀번호를 재설정할 이메일을 입력해주세요");
-      return;
-    }
+    if (!email) { setError("비밀번호를 재설정할 이메일을 입력해주세요"); return; }
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -85,11 +230,8 @@ const LoginPage = () => {
       });
       if (error) throw error;
       toast.success("비밀번호 재설정 링크를 이메일로 보냈습니다 📧");
-    } catch (err: any) {
-      setError(err.message || "요청 실패");
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (err: any) { setError(err.message || "요청 실패"); }
+    finally { setIsLoading(false); }
   };
 
   if (signUpSuccess) {
@@ -103,7 +245,7 @@ const LoginPage = () => {
             메일의 링크를 클릭하면 가입이 완료됩니다.
           </p>
           {tab === "coach" && (
-            <div className="mb-6 rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 text-sm text-amber-700">
+            <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-700">
               관장님 권한은 관리자 승인 후 부여됩니다.
             </div>
           )}
@@ -121,20 +263,16 @@ const LoginPage = () => {
   const inputClass = "w-full rounded-xl border border-border bg-card px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all";
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6">
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
       {/* Logo */}
-      <div className="mb-6 animate-bounce-in text-center">
-        <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-3xl bg-primary text-5xl shadow-lg">
-          🥊
-        </div>
-        <h1 className="text-3xl tracking-tight text-foreground">153 QUEST</h1>
-        <p className="mt-2 text-base text-muted-foreground">
-          오늘의 퀘스트를 깨고 레벨업하세요
-        </p>
+      <div className="mb-5 animate-bounce-in text-center">
+        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-4xl shadow-lg">🥊</div>
+        <h1 className="text-2xl tracking-tight text-foreground">153 QUEST</h1>
+        <p className="mt-1 text-sm text-muted-foreground">오늘의 퀘스트를 깨고 레벨업하세요</p>
       </div>
 
-      {/* Tab selector */}
-      <div className="mb-5 flex w-full max-w-sm gap-1 rounded-xl bg-muted p-1">
+      {/* Tab */}
+      <div className="mb-4 flex w-full max-w-sm gap-1 rounded-xl bg-muted p-1">
         {([["login", "로그인"], ["member", "회원가입"], ["coach", "관장님 가입"]] as [Tab, string][]).map(([key, label]) => (
           <button
             key={key}
@@ -150,44 +288,79 @@ const LoginPage = () => {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-3.5 animate-slide-up">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-3 animate-slide-up">
         {isSignUp && (
           <>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-muted-foreground">이름</label>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">이름</label>
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="실명을 입력하세요" required className={inputClass} />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-muted-foreground">닉네임</label>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">닉네임</label>
               <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="링 위의 이름을 정하세요" required className={inputClass} />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-muted-foreground">전화번호</label>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">전화번호</label>
               <input type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" required className={inputClass} />
-              <p className="mt-1 text-xs text-muted-foreground">한 번호당 하나의 계정만 가능합니다</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">한 번호당 하나의 계정만 가능합니다</p>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">소속 체육관</label>
+              {branches && branches.length > 0 ? (
+                <Select value={branch} onValueChange={setBranch}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="체육관을 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branches.map((b) => (
+                      <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-muted-foreground">등록된 체육관이 없습니다</p>
+              )}
             </div>
           </>
         )}
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-muted-foreground">이메일</label>
+          <label className="mb-1 block text-sm font-medium text-muted-foreground">이메일</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="이메일 입력" required className={inputClass} />
         </div>
-
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-muted-foreground">비밀번호</label>
+          <label className="mb-1 block text-sm font-medium text-muted-foreground">비밀번호</label>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호 입력" required minLength={6} className={inputClass} />
         </div>
-
         {isSignUp && (
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-muted-foreground">비밀번호 확인</label>
+            <label className="mb-1 block text-sm font-medium text-muted-foreground">비밀번호 확인</label>
             <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="비밀번호를 다시 입력하세요" required className={inputClass} />
           </div>
         )}
 
+        {/* Privacy consent status */}
+        {isSignUp && (
+          <div
+            onClick={() => setShowPrivacy(true)}
+            className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-all ${
+              signatureData
+                ? "border-green-500/30 bg-green-500/10"
+                : "border-border bg-card hover:border-primary/30"
+            }`}
+          >
+            <span className="text-lg">{signatureData ? "✅" : "📋"}</span>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">개인정보 수집·이용 동의</p>
+              <p className="text-xs text-muted-foreground">
+                {signatureData ? "동의 및 서명 완료" : "터치하여 동의서 확인 및 서명"}
+              </p>
+            </div>
+          </div>
+        )}
+
         {tab === "coach" && (
-          <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 text-sm text-amber-700">
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-700">
             ⚠️ 관장님 가입은 관리자 승인 후 코치 권한이 부여됩니다.
           </div>
         )}
@@ -215,6 +388,14 @@ const LoginPage = () => {
           </button>
         )}
       </form>
+
+      {/* Privacy consent modal */}
+      {showPrivacy && (
+        <PrivacyConsentModal
+          onAccept={handlePrivacyAccept}
+          onClose={() => setShowPrivacy(false)}
+        />
+      )}
     </div>
   );
 };
