@@ -224,6 +224,8 @@ const CoachDashboard = () => {
           ) : (
             members.map((member: any) => {
               const prog = Array.isArray(member.member_progress) ? member.member_progress[0] : member.member_progress;
+              const memberRole = Array.isArray(member.user_roles) ? member.user_roles[0]?.role : member.user_roles?.role;
+              const roleInfo = ROLE_LABELS[memberRole] || ROLE_LABELS.member;
               const isBossReady = prog?.current_level === 10;
               return (
                 <div key={member.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
