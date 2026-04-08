@@ -180,8 +180,8 @@ const MissionsPage = () => {
                           status={status}
                           onWatch={() => openVideo(mission)}
                           onSubmit={() => handleSubmit(mission.id)}
-                          isSubmitting={submitMission.isPending}
-                        />
+                          isSubmitting={submitMission.isPending || adminClearing}
+                          adminMode={role === "admin"}
                       );
                     })
                   )}
