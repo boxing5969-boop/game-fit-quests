@@ -4,10 +4,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import BottomNav from "@/components/BottomNav";
+import StartPage from "@/pages/StartPage";
 import HomePage from "@/pages/HomePage";
 import QuestsPage from "@/pages/QuestsPage";
 import LevelMapPage from "@/pages/LevelMapPage";
 import RewardsPage from "@/pages/RewardsPage";
+import MyPage from "@/pages/MyPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,10 +21,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<StartPage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/quests" element={<QuestsPage />} />
           <Route path="/levelmap" element={<LevelMapPage />} />
           <Route path="/rewards" element={<RewardsPage />} />
+          <Route path="/mypage" element={<MyPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomNav />
