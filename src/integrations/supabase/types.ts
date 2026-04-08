@@ -626,6 +626,20 @@ export type Database = {
           rank_position: number
         }[]
       }
+      get_hall_of_fame: {
+        Args: { _limit?: number }
+        Returns: {
+          r_avatar_url: string
+          r_bosses_cleared: number
+          r_branch_name: string
+          r_current_level: number
+          r_current_rank: Database["public"]["Enums"]["rank_name"]
+          r_nickname: string
+          r_total_xp: number
+          r_user_id: string
+          rank_position: number
+        }[]
+      }
       get_monthly_risers: {
         Args: { _branch_name: string; _limit?: number }
         Returns: {
