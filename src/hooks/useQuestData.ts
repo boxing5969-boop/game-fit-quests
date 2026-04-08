@@ -240,7 +240,7 @@ export const usePassBossBattle = () => {
 export const useAssignedMembers = () => {
   const { user, role } = useAuth();
   return useQuery({
-    queryKey: ["assigned-members", user?.id],
+    queryKey: ["assigned-members", user?.id, role],
     enabled: (role === "coach" || role === "admin") && !!user,
     queryFn: async () => {
       if (role === "admin") {
