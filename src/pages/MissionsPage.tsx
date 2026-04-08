@@ -36,7 +36,7 @@ const MissionsPage = () => {
   const { data: levels } = useLevels();
   const qc = useQueryClient();
   const [adminClearing, setAdminClearing] = useState(false);
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "super_admin";
 
   // Admin form state
   const [showForm, setShowForm] = useState(false);
@@ -249,7 +249,7 @@ const MissionsPage = () => {
               <div key={rank} className="animate-slide-up" style={{ animationDelay: `${sectionIdx * 0.08}s` }}>
                 <h2 className="mb-3 flex items-center gap-2 text-lg text-foreground">
                   <span>{rank === "white" ? "⚪" : rank === "blue" ? "🔵" : rank === "red" ? "🔴" : "⚫"}</span>
-                  {RANK_LABELS[rank]} 벨트
+                  {RANK_LABELS[rank]}
                 </h2>
                 <div className="space-y-3">
                   {rankLevels.map(({ level, missions: levelMissions }) =>

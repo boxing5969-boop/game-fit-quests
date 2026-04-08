@@ -7,7 +7,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assista
 
 const WELCOME_MSG: Msg = {
   role: "assistant",
-  content: "안녕하세요! 🥊 153 QUEST 코치봇입니다.\n\n앱의 기능, 계급 시스템, 레벨업 방법 등 궁금한 점을 물어보세요!",
+  content: "안녕하세요! 🥊 153랭크업 코치봇입니다.\n\n앱의 기능, 계급 시스템, 레벨업 방법 등 궁금한 점을 물어보세요!",
 };
 
 const ChatAssistant = () => {

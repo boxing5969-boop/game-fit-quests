@@ -267,8 +267,8 @@ const LoginPage = () => {
       {/* Logo */}
       <div className="mb-5 animate-bounce-in text-center">
         <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-4xl shadow-lg">🥊</div>
-        <h1 className="text-2xl tracking-tight text-foreground">153 QUEST</h1>
-        <p className="mt-1 text-sm text-muted-foreground">오늘의 퀘스트를 깨고 레벨업하세요</p>
+        <h1 className="text-2xl tracking-tight text-foreground">153랭크업 시스템</h1>
+        <p className="mt-1 text-sm text-muted-foreground">오늘의 미션을 클리어하고 랭크업하세요</p>
       </div>
 
       {/* Tab */}

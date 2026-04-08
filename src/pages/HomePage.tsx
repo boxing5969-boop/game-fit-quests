@@ -185,13 +185,13 @@ const HomePage = () => {
         </button>
 
         {/* Coach shortcut */}
-        {(role === "coach" || role === "admin") && (
-          <button onClick={() => navigate("/coach")} className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]">
+        {(role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin") && (
+          <button onClick={() => navigate("/manager")} className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">📋</span>
                 <div>
-                  <p className="text-sm font-bold text-foreground">{role === "admin" ? "관리자 대시보드" : "코치 대시보드"}</p>
+                  <p className="text-sm font-bold text-foreground">회원 관리</p>
                   <p className="text-xs text-muted-foreground">미션 승인 및 회원 관리</p>
                 </div>
               </div>

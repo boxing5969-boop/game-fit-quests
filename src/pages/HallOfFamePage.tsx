@@ -37,7 +37,7 @@ const HallOfFamePage = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("official");
   const setRival = useSetRival();
   const qc = useQueryClient();
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "super_admin";
 
   const { data: officialRanking, isLoading: officialLoading } = useDivisionRanking();
   const { data: weeklyRanking } = useWeeklyActivityRanking();
@@ -246,7 +246,7 @@ const HallOfFamePage = () => {
               <span className="text-4xl">🏅</span>
               <h2 className="mt-2 text-lg font-bold text-foreground">명예의 전당</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                블랙벨트 Lv.10 달성 + 최종 마스터 미션 완료자
+                블랙 레벨 10 달성 + 최종 마스터 미션 완료자
               </p>
             </div>
             {officialLoading ? <SkeletonList /> : hallOfFameMembers.length > 0 ? (
@@ -269,7 +269,7 @@ const HallOfFamePage = () => {
               <div className="rounded-2xl border border-dashed border-accent/30 p-8 text-center">
                 <span className="text-3xl">🥊</span>
                 <p className="mt-2 text-sm text-muted-foreground">아직 명예의 전당 멤버가 없습니다</p>
-                <p className="mt-1 text-xs text-muted-foreground">블랙벨트 Lv.10 + 마스터 미션 달성 시 입성!</p>
+                <p className="mt-1 text-xs text-muted-foreground">블랙 레벨 10 + 마스터 미션 달성 시 입성!</p>
               </div>
             )}
           </>
