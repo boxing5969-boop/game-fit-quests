@@ -466,8 +466,12 @@ const LevelMapPage = () => {
               </div>
               <button
                 onClick={() => {
+                  if (showSecretDetail.isExternal) {
+                    window.open(showSecretDetail.linkTo, "_blank");
+                  } else {
+                    navigate(showSecretDetail.linkTo);
+                  }
                   setShowSecretDetail(null);
-                  navigate(showSecretDetail.linkTo);
                 }}
                 className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98]"
               >

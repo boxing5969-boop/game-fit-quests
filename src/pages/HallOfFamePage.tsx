@@ -25,6 +25,9 @@ const TABS = [
 type TabKey = (typeof TABS)[number]["key"];
 
 // Black rank level 10 = effective level 40 (white 10 + blue 10 + red 10 + black 10)
+// Hall of Fame requires black lv.10 AND master mission completion
+// For now, we gate on black lv.10 — master mission check will be added
+// when mission completion tracking is available
 const isHallOfFameMember = (rank: string, level: number) =>
   rank === "black" && level === 10;
 
@@ -181,7 +184,7 @@ const HallOfFamePage = () => {
               <span className="text-4xl">🏅</span>
               <h2 className="mt-2 text-lg font-bold text-foreground">명예의 전당</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                블랙벨트 Lv.10 달성 — 153명예코치 타이틀 보유자
+                블랙벨트 Lv.10 달성 + 최종 마스터 미션 완료자
               </p>
             </div>
             {officialLoading ? <SkeletonList /> : hallOfFameMembers.length > 0 ? (
@@ -206,7 +209,7 @@ const HallOfFamePage = () => {
                   아직 명예의 전당 멤버가 없습니다
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  블랙벨트 Lv.10에 도달하면 입성!
+                  블랙벨트 Lv.10 + 마스터 미션 달성 시 입성!
                 </p>
               </div>
             )}
