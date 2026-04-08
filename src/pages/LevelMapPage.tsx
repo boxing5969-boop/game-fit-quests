@@ -68,6 +68,13 @@ const LevelMapPage = () => {
   const { data: missionSubs } = useMyMissionSubmissions();
   const levelUpMutation = useManualLevelUp();
   const bossBattleMutation = usePassBossBattle();
+  const qc = useQueryClient();
+  const isAdmin = role === "admin";
+
+  // Admin level edit state
+  const [editLevelModal, setEditLevelModal] = useState(false);
+  const [editLevelForm, setEditLevelForm] = useState({ title: "", xp_required: 0, reward_name: "", is_boss: false });
+  const [editLevelSaving, setEditLevelSaving] = useState(false);
 
   if (!progress) return null;
 
