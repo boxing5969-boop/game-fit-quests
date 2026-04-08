@@ -192,7 +192,7 @@ const CoachDashboard = () => {
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
       <div className="mb-5 flex items-center gap-3">
-        <button onClick={() => navigate("/home")} className="rounded-full bg-secondary p-2 active:scale-95">
+        <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
         <h1 className="text-xl text-foreground">{role === "admin" ? "관리자 대시보드" : "코치 대시보드"}</h1>
