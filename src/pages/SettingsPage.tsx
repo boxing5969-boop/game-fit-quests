@@ -30,7 +30,7 @@ const useBranches = () =>
 
 const SettingsPage = () => {
   const navigate = useNavigate();
-  const { profile, user } = useAuth();
+  const { profile, user, role } = useAuth();
   const { data: branches } = useBranches();
   const qc = useQueryClient();
 
@@ -38,6 +38,12 @@ const SettingsPage = () => {
   const [nickname, setNickname] = useState("");
   const [branchName, setBranchName] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Branch management (admin only)
+  const [newBranch, setNewBranch] = useState("");
+  const [addingBranch, setAddingBranch] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   useEffect(() => {
     if (profile) {
