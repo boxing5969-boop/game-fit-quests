@@ -59,6 +59,75 @@ export type Database = {
         }
         Relationships: []
       }
+      external_cert_progress: {
+        Row: {
+          age_gate: boolean
+          coach_approval: boolean
+          coach_cert_ready: boolean
+          dan4_ready: boolean
+          examiner_ready: boolean
+          id: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age_gate?: boolean
+          coach_approval?: boolean
+          coach_cert_ready?: boolean
+          dan4_ready?: boolean
+          examiner_ready?: boolean
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age_gate?: boolean
+          coach_approval?: boolean
+          coach_cert_ready?: boolean
+          dan4_ready?: boolean
+          examiner_ready?: boolean
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hidden_mastery: {
+        Row: {
+          conditioning_score: number
+          evaluation_score: number
+          id: string
+          safety_score: number
+          teaching_score: number
+          technique_score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conditioning_score?: number
+          evaluation_score?: number
+          id?: string
+          safety_score?: number
+          teaching_score?: number
+          technique_score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conditioning_score?: number
+          evaluation_score?: number
+          id?: string
+          safety_score?: number
+          teaching_score?: number
+          technique_score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       levels: {
         Row: {
           display_order: number
@@ -156,6 +225,138 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      mission_submissions: {
+        Row: {
+          coach_note: string | null
+          id: string
+          mission_id: string
+          requested_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          coach_note?: string | null
+          id?: string
+          mission_id: string
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          coach_note?: string | null
+          id?: string
+          mission_id?: string
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_submissions_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mission_videos: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          mission_id: string
+          poster_url: string | null
+          source_type: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          mission_id: string
+          poster_url?: string | null
+          source_type?: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          mission_id?: string
+          poster_url?: string | null
+          source_type?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_videos_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      missions: {
+        Row: {
+          created_at: string
+          description: string
+          difficulty: number
+          id: string
+          is_active: boolean
+          key_point_1: string
+          key_point_2: string
+          key_point_3: string
+          level_id: string
+          sort_order: number
+          title: string
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          difficulty?: number
+          id?: string
+          is_active?: boolean
+          key_point_1?: string
+          key_point_2?: string
+          key_point_3?: string
+          level_id: string
+          sort_order?: number
+          title: string
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          difficulty?: number
+          id?: string
+          is_active?: boolean
+          key_point_1?: string
+          key_point_2?: string
+          key_point_3?: string
+          level_id?: string
+          sort_order?: number
+          title?: string
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missions_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -322,6 +523,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_mission_submission: {
+        Args: { _coach_note?: string; _submission_id: string }
+        Returns: Json
+      }
       approve_quest_submission: {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: Json
@@ -431,6 +636,10 @@ export type Database = {
         Returns: number
       }
       record_attendance: { Args: { _user_id: string }; Returns: undefined }
+      reject_mission_submission: {
+        Args: { _coach_note?: string; _submission_id: string }
+        Returns: undefined
+      }
       reject_quest_submission: {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
