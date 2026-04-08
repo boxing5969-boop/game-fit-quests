@@ -442,6 +442,43 @@ const CoachDashboard = () => {
         </div>
       )}
 
+      {/* Level Set Modal */}
+      {levelSetModal.show && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setLevelSetModal({ show: false, memberId: "", memberName: "", currentRank: "white", currentLevel: 1 })}>
+          <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="mb-4 text-lg text-foreground">⚙️ 레벨 직접 설정</h3>
+            <p className="mb-3 text-sm text-muted-foreground">대상: <strong className="text-foreground">{levelSetModal.memberName}</strong></p>
+            <p className="mb-3 text-xs text-muted-foreground">현재: {RANK_LABELS[levelSetModal.currentRank] || levelSetModal.currentRank} Lv.{levelSetModal.currentLevel}</p>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">랭크</label>
+                <div className="flex gap-2">
+                  {(["white", "blue", "red", "black"] as const).map(r => (
+                    <button key={r} onClick={() => setSetRank(r)}
+                      className={`flex-1 rounded-xl py-2 text-sm font-bold transition-all ${setRank === r ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+                    >{RANK_LABELS[r]}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">레벨 (1~10)</label>
+                <div className="flex gap-1.5 flex-wrap">
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map(l => (
+                    <button key={l} onClick={() => setSetLevel(l)}
+                      className={`h-9 w-9 rounded-lg text-sm font-bold transition-all ${setLevel === l ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+                    >{l}</button>
+                  ))}
+                </div>
+              </div>
+              <button onClick={handleSetLevel} disabled={setLevelMutation.isPending}
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                {setLevelMutation.isPending ? "설정 중..." : `${RANK_LABELS[setRank] || setRank} Lv.${setLevel}로 설정`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <RankUpCeremony
         isOpen={rankUpInfo.show}
         onClose={() => setRankUpInfo({ show: false, oldRank: "", newRank: "", memberName: "" })}
