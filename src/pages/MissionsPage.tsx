@@ -201,9 +201,9 @@ const MissionsPage = () => {
           title={videoModal.title}
           keyPoints={videoModal.keyPoints}
           onClose={() => setVideoModal(null)}
-          onStartChallenge={videoModal.canSubmit ? () => handleSubmit(videoModal.missionId) : undefined}
-          challengeDisabled={submitMission.isPending}
-          challengeLabel={submitMission.isPending ? "요청 중..." : "🥊 도전 시작"}
+          onStartChallenge={videoModal.canSubmit || role === "admin" ? () => handleSubmit(videoModal.missionId) : undefined}
+          challengeDisabled={submitMission.isPending || adminClearing}
+          challengeLabel={submitMission.isPending || adminClearing ? "처리 중..." : role === "admin" ? "⚡ 즉시 클리어" : "🥊 도전 시작"}
         />
       )}
     </div>
