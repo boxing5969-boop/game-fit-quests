@@ -9,6 +9,7 @@ interface MissionCardProps {
   onWatch?: () => void;
   onSubmit?: () => void;
   isSubmitting?: boolean;
+  adminMode?: boolean;
 }
 
 const statusConfig = {
@@ -27,6 +28,7 @@ const MissionCard = ({
   onWatch,
   onSubmit,
   isSubmitting,
+  adminMode,
 }: MissionCardProps) => {
   const cfg = statusConfig[status];
   const Icon = cfg.icon;
@@ -105,13 +107,15 @@ const MissionCard = ({
           >
             <Play className="h-4 w-4" /> 미션 보기
           </button>
-          {status === "active" && onSubmit && (
+          {(status === "active" || (adminMode && status !== "complete")) && onSubmit && (
             <button
               onClick={onSubmit}
               disabled={isSubmitting}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-95 disabled:opacity-50"
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 ${
+                adminMode ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground"
+              }`}
             >
-              {isSubmitting ? "..." : "완료 요청"}
+              {isSubmitting ? "..." : adminMode ? "⚡ 즉시 클리어" : "완료 요청"}
             </button>
           )}
         </div>

@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMissions, useMyMissionSubmissions, useSubmitMission } from "@/hooks/useMissionData";
 import { useLevels } from "@/hooks/useQuestData";
+import { supabase } from "@/integrations/supabase/client";
 import MissionCard from "@/components/MissionCard";
 import VideoPlayer from "@/components/VideoPlayer";
 import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { celebrateSmall } from "@/lib/celebrations";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Enums } from "@/integrations/supabase/types";
 
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
@@ -15,11 +17,13 @@ const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루"
 
 const MissionsPage = () => {
   const navigate = useNavigate();
-  const { progress } = useAuth();
+  const { progress, role, user, refreshProgress } = useAuth();
   const { data: missions, isLoading } = useMissions();
   const { data: submissions } = useMyMissionSubmissions();
   const submitMission = useSubmitMission();
   const { data: levels } = useLevels();
+  const qc = useQueryClient();
+  const [adminClearing, setAdminClearing] = useState(false);
 
   const [videoModal, setVideoModal] = useState<{
     show: boolean;
@@ -66,11 +70,37 @@ const MissionsPage = () => {
 
   const handleSubmit = async (missionId: string) => {
     try {
-      await submitMission.mutateAsync(missionId);
-      celebrateSmall();
-      toast.success("완료 요청을 보냈습니다! 🥊");
+      if (role === "admin" && user) {
+        // Admin: submit then instantly approve
+        setAdminClearing(true);
+        await submitMission.mutateAsync(missionId);
+        // Find the submission we just created and approve it
+        const { data: sub } = await supabase
+          .from("mission_submissions")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("mission_id", missionId)
+          .eq("status", "pending")
+          .order("requested_at", { ascending: false })
+          .limit(1)
+          .single();
+        if (sub) {
+          await supabase.rpc("approve_mission_submission", { _submission_id: sub.id });
+        }
+        refreshProgress();
+        qc.invalidateQueries({ queryKey: ["my-mission-submissions"] });
+        qc.invalidateQueries({ queryKey: ["xp-logs"] });
+        setAdminClearing(false);
+        celebrateSmall();
+        toast.success("즉시 클리어! ⚡🥊");
+      } else {
+        await submitMission.mutateAsync(missionId);
+        celebrateSmall();
+        toast.success("완료 요청을 보냈습니다! 🥊");
+      }
       setVideoModal(null);
     } catch {
+      setAdminClearing(false);
       toast.error("요청 실패");
     }
   };
@@ -150,8 +180,9 @@ const MissionsPage = () => {
                           status={status}
                           onWatch={() => openVideo(mission)}
                           onSubmit={() => handleSubmit(mission.id)}
-                          isSubmitting={submitMission.isPending}
-                        />
+                          isSubmitting={submitMission.isPending || adminClearing}
+                          adminMode={role === "admin"}
+                         />
                       );
                     })
                   )}
@@ -170,9 +201,9 @@ const MissionsPage = () => {
           title={videoModal.title}
           keyPoints={videoModal.keyPoints}
           onClose={() => setVideoModal(null)}
-          onStartChallenge={videoModal.canSubmit ? () => handleSubmit(videoModal.missionId) : undefined}
-          challengeDisabled={submitMission.isPending}
-          challengeLabel={submitMission.isPending ? "요청 중..." : "🥊 도전 시작"}
+          onStartChallenge={videoModal.canSubmit || role === "admin" ? () => handleSubmit(videoModal.missionId) : undefined}
+          challengeDisabled={submitMission.isPending || adminClearing}
+          challengeLabel={submitMission.isPending || adminClearing ? "처리 중..." : role === "admin" ? "⚡ 즉시 클리어" : "🥊 도전 시작"}
         />
       )}
     </div>

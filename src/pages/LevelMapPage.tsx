@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { useLevels } from "@/hooks/useQuestData";
+import { useLevels, useManualLevelUp, usePassBossBattle } from "@/hooks/useQuestData";
 import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
 import { useAuth } from "@/contexts/AuthContext";
 import RankBadge from "@/components/RankBadge";
-import { Lock, Star, Trophy, User, Play, CheckCircle2 } from "lucide-react";
+import { Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { toast } from "sonner";
 
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
@@ -15,10 +16,12 @@ const RANK_ICONS: Record<string, string> = { white: "⚪", blue: "🔵", red: "�
 const LevelMapPage = () => {
   const [selectedNode, setSelectedNode] = useState<Tables<"levels"> | null>(null);
   const navigate = useNavigate();
-  const { progress } = useAuth();
+  const { progress, role, user, refreshProgress } = useAuth();
   const { data: levels, isLoading } = useLevels();
   const { data: missions } = useMissions();
   const { data: missionSubs } = useMyMissionSubmissions();
+  const levelUpMutation = useManualLevelUp();
+  const bossBattleMutation = usePassBossBattle();
 
   if (!progress) return null;
 
@@ -186,9 +189,56 @@ const LevelMapPage = () => {
                 </div>
               )}
 
+              {/* Admin instant level-up */}
+              {role === "admin" && user && !selectedNode.is_boss && (
+                <button
+                  onClick={async () => {
+                    try {
+                      const result = await levelUpMutation.mutateAsync(user.id);
+                      toast.success(`Lv.${result.new_level}로 레벨업! 🥊`);
+                      refreshProgress();
+                      setSelectedNode(null);
+                    } catch (e: any) {
+                      toast.error(e?.message || "레벨업 실패");
+                    }
+                  }}
+                  disabled={levelUpMutation.isPending}
+                  className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+                >
+                  <ArrowUp className="mr-1 inline h-4 w-4" />
+                  {levelUpMutation.isPending ? "레벨업 중..." : "⚡ 즉시 레벨업 (관리자)"}
+                </button>
+              )}
+
+              {/* Admin boss battle pass */}
+              {role === "admin" && user && selectedNode.is_boss && (
+                <button
+                  onClick={async () => {
+                    try {
+                      const result = await bossBattleMutation.mutateAsync({ memberId: user.id });
+                      if (result?.ranked_up) {
+                        toast.success(`${result.new_rank} 벨트로 승급! 🏆`);
+                      } else {
+                        toast.success("타이틀매치 클리어! 🏆");
+                      }
+                      refreshProgress();
+                      setSelectedNode(null);
+                    } catch (e: any) {
+                      toast.error(e?.message || "타이틀매치 처리 실패");
+                    }
+                  }}
+                  disabled={bossBattleMutation.isPending}
+                  className="w-full rounded-xl bg-accent py-3 text-sm font-bold text-accent-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+                >
+                  <Trophy className="mr-1 inline h-4 w-4" />
+                  {bossBattleMutation.isPending ? "처리 중..." : "🏆 즉시 타이틀매치 클리어 (관리자)"}
+                </button>
+              )}
+
+              {/* Regular button */}
               <button
                 onClick={() => { setSelectedNode(null); navigate("/missions"); }}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98]"
+                className={`w-full rounded-xl ${role === "admin" ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"} py-3 text-sm font-bold shadow-md transition-all active:scale-[0.98]`}
               >
                 미션 보러가기
               </button>
