@@ -1,8 +1,10 @@
-import { usePendingSubmissions, useAssignedMembers, useReviewSubmission } from "@/hooks/useQuestData";
+import { usePendingSubmissions, useAssignedMembers, useApproveSubmission, useRejectSubmission, useGrantManualXp, usePassBossBattle } from "@/hooks/useQuestData";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Check, X, User } from "lucide-react";
+import { ArrowLeft, Check, X, User, Zap, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import RankUpCeremony from "@/components/RankUpCeremony";
+import { toast } from "sonner";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
@@ -11,41 +13,95 @@ const CoachDashboard = () => {
   const { role } = useAuth();
   const { data: pendingSubmissions, isLoading: pendingLoading } = usePendingSubmissions();
   const { data: members, isLoading: membersLoading } = useAssignedMembers();
-  const reviewMutation = useReviewSubmission();
+  const approveMutation = useApproveSubmission();
+  const rejectMutation = useRejectSubmission();
+  const grantXpMutation = useGrantManualXp();
+  const bossBattleMutation = usePassBossBattle();
   const [activeTab, setActiveTab] = useState<"pending" | "members">("pending");
+  const [rankUpInfo, setRankUpInfo] = useState<{ show: boolean; oldRank: string; newRank: string; memberName: string }>({ show: false, oldRank: "", newRank: "", memberName: "" });
+  const [xpModal, setXpModal] = useState<{ show: boolean; memberId: string; memberName: string }>({ show: false, memberId: "", memberName: "" });
+  const [xpAmount, setXpAmount] = useState(10);
+  const [xpReason, setXpReason] = useState("");
+
+  const handleApprove = async (subId: string) => {
+    try {
+      const result = await approveMutation.mutateAsync({ id: subId });
+      if (result?.leveled_up) {
+        toast.success(`레벨 업! Lv.${result.new_level} (+${result.xp_granted} XP)`);
+      } else {
+        toast.success(`승인 완료! +${result?.xp_granted || 0} XP`);
+      }
+    } catch {
+      toast.error("승인 실패");
+    }
+  };
+
+  const handleReject = async (subId: string) => {
+    try {
+      await rejectMutation.mutateAsync({ id: subId, coachNote: "다시 도전해보세요" });
+      toast.info("반려 완료");
+    } catch {
+      toast.error("반려 실패");
+    }
+  };
+
+  const handleGrantXp = async () => {
+    if (!xpModal.memberId || xpAmount <= 0) return;
+    try {
+      await grantXpMutation.mutateAsync({ memberId: xpModal.memberId, amount: xpAmount, reason: xpReason || "수동 XP 지급" });
+      toast.success(`${xpModal.memberName}에게 ${xpAmount} XP 지급 완료`);
+      setXpModal({ show: false, memberId: "", memberName: "" });
+      setXpAmount(10);
+      setXpReason("");
+    } catch {
+      toast.error("XP 지급 실패");
+    }
+  };
+
+  const handleBossPass = async (member: any) => {
+    const prog = Array.isArray(member.member_progress) ? member.member_progress[0] : member.member_progress;
+    if (!prog || prog.current_level !== 10) {
+      toast.error("Lv.10 회원만 타이틀매치 합격 처리 가능합니다");
+      return;
+    }
+    try {
+      const result = await bossBattleMutation.mutateAsync({ memberId: member.user_id });
+      if (result?.ranked_up) {
+        setRankUpInfo({ show: true, oldRank: prog.current_rank, newRank: result.new_rank, memberName: member.nickname || member.name });
+      } else {
+        toast.success("보스전 합격 처리 완료");
+      }
+    } catch {
+      toast.error("합격 처리 실패");
+    }
+  };
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
-      {/* Header */}
       <div className="mb-5 flex items-center gap-3">
         <button onClick={() => navigate("/home")} className="rounded-full bg-secondary p-2 active:scale-95">
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
-        <h1 className="text-xl text-foreground">
-          {role === "admin" ? "관리자 대시보드" : "코치 대시보드"}
-        </h1>
+        <h1 className="text-xl text-foreground">{role === "admin" ? "관리자 대시보드" : "코치 대시보드"}</h1>
       </div>
 
       {/* Tabs */}
       <div className="mb-5 flex gap-2">
         <button
           onClick={() => setActiveTab("pending")}
-          className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${
-            activeTab === "pending" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"
-          }`}
+          className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "pending" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}
         >
           📋 승인 대기 {pendingSubmissions?.length ? `(${pendingSubmissions.length})` : ""}
         </button>
         <button
           onClick={() => setActiveTab("members")}
-          className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${
-            activeTab === "members" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"
-          }`}
+          className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "members" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}
         >
-          👥 회원 목록
+          👥 회원 관리
         </button>
       </div>
 
+      {/* Pending Tab */}
       {activeTab === "pending" && (
         <div className="space-y-3">
           {pendingLoading ? (
@@ -54,18 +110,43 @@ const CoachDashboard = () => {
             <EmptyState icon="✅" message="승인 대기 중인 퀘스트가 없습니다" />
           ) : (
             pendingSubmissions.map((sub: any) => (
-              <PendingCard
-                key={sub.id}
-                submission={sub}
-                onApprove={() => reviewMutation.mutate({ id: sub.id, status: "approved" })}
-                onReject={() => reviewMutation.mutate({ id: sub.id, status: "rejected", coachNote: "다시 도전해보세요" })}
-                isLoading={reviewMutation.isPending}
-              />
+              <div key={sub.id} className="rounded-2xl border border-status-pending/30 bg-card p-4 shadow-sm">
+                <div className="mb-3">
+                  <p className="text-sm font-bold text-foreground">{sub.quests?.title || "퀘스트"}</p>
+                  <p className="text-xs text-muted-foreground">{sub.quests?.description}</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(sub.requested_at).toLocaleDateString("ko-KR")}
+                    </span>
+                    <span className="text-xs font-bold text-primary">+{sub.quests?.xp_reward || 0} XP</span>
+                    {sub.quests?.quest_type === "boss" && (
+                      <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent-foreground">🏆 타이틀매치</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleApprove(sub.id)}
+                    disabled={approveMutation.isPending}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-status-complete py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    <Check className="h-4 w-4" /> 승인
+                  </button>
+                  <button
+                    onClick={() => handleReject(sub.id)}
+                    disabled={rejectMutation.isPending}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-destructive py-2.5 text-sm font-bold text-destructive-foreground transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    <X className="h-4 w-4" /> 반려
+                  </button>
+                </div>
+              </div>
             ))
           )}
         </div>
       )}
 
+      {/* Members Tab */}
       {activeTab === "members" && (
         <div className="space-y-3">
           {membersLoading ? (
@@ -75,72 +156,114 @@ const CoachDashboard = () => {
           ) : (
             members.map((member: any) => {
               const prog = Array.isArray(member.member_progress) ? member.member_progress[0] : member.member_progress;
+              const isBossReady = prog?.current_level === 10;
               return (
                 <div key={member.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-xl">
                       <User className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-foreground">{member.nickname || member.name}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-foreground truncate">{member.nickname || member.name}</p>
                       <p className="text-xs text-muted-foreground">{member.branch_name || "미설정"}</p>
+                      {prog && (
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="rounded-full bg-rank-blue/15 px-2 py-0.5 text-[10px] font-bold text-rank-blue">
+                            {RANK_LABELS[prog.current_rank] || prog.current_rank} Lv.{prog.current_level}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">{prog.total_xp} XP</span>
+                          <span className="text-[10px] text-muted-foreground">🔥{prog.streak_days}일</span>
+                        </div>
+                      )}
                     </div>
-                    {prog && (
-                      <div className="text-right">
-                        <span className="inline-block rounded-full bg-rank-blue/15 px-2 py-0.5 text-xs font-bold text-rank-blue">
-                          {RANK_LABELS[prog.current_rank] || prog.current_rank} Lv.{prog.current_level}
-                        </span>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{prog.total_xp} XP</p>
-                      </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => setXpModal({ show: true, memberId: member.user_id, memberName: member.nickname || member.name })}
+                      className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95"
+                    >
+                      <Zap className="h-3.5 w-3.5" /> XP 지급
+                    </button>
+                    {isBossReady && (
+                      <button
+                        onClick={() => handleBossPass(member)}
+                        disabled={bossBattleMutation.isPending}
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-accent py-2 text-xs font-bold text-accent-foreground transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        <Trophy className="h-3.5 w-3.5" /> 타이틀매치 합격
+                      </button>
                     )}
                   </div>
+
+                  {/* XP Progress Bar */}
+                  {prog && (
+                    <div className="mt-2">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-xp-bg">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all"
+                          style={{ width: `${Math.min((prog.total_xp / ((["white","blue","red","black"].indexOf(prog.current_rank) * 10 + prog.current_level + 1) * 50)) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })
           )}
         </div>
       )}
+
+      {/* Manual XP Modal */}
+      {xpModal.show && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setXpModal({ show: false, memberId: "", memberName: "" })}>
+          <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="mb-4 text-lg text-foreground">⚡ XP 수동 지급</h3>
+            <p className="mb-3 text-sm text-muted-foreground">대상: <strong className="text-foreground">{xpModal.memberName}</strong></p>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">XP 양</label>
+                <div className="flex gap-2">
+                  {[10, 20, 30, 50].map(v => (
+                    <button key={v} onClick={() => setXpAmount(v)}
+                      className={`flex-1 rounded-xl py-2 text-sm font-bold transition-all ${xpAmount === v ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+                    >{v}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">사유</label>
+                <input
+                  value={xpReason}
+                  onChange={e => setXpReason(e.target.value)}
+                  placeholder="예: 수업 태도 우수"
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+              <button
+                onClick={handleGrantXp}
+                disabled={grantXpMutation.isPending}
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {grantXpMutation.isPending ? "지급 중..." : `${xpAmount} XP 지급하기`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rank Up Ceremony */}
+      <RankUpCeremony
+        isOpen={rankUpInfo.show}
+        onClose={() => setRankUpInfo({ show: false, oldRank: "", newRank: "", memberName: "" })}
+        oldRank={rankUpInfo.oldRank}
+        newRank={rankUpInfo.newRank}
+        memberName={rankUpInfo.memberName}
+      />
     </div>
   );
 };
-
-const PendingCard = ({
-  submission,
-  onApprove,
-  onReject,
-  isLoading,
-}: {
-  submission: any;
-  onApprove: () => void;
-  onReject: () => void;
-  isLoading: boolean;
-}) => (
-  <div className="rounded-2xl border border-status-pending/30 bg-card p-4 shadow-sm">
-    <div className="mb-3">
-      <p className="text-sm font-bold text-foreground">{submission.quests?.title || "퀘스트"}</p>
-      <p className="text-xs text-muted-foreground">{submission.quests?.description}</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        요청: {new Date(submission.requested_at).toLocaleDateString("ko-KR")}
-      </p>
-    </div>
-    <div className="flex gap-2">
-      <button
-        onClick={onApprove}
-        disabled={isLoading}
-        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-status-complete py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
-      >
-        <Check className="h-4 w-4" /> 승인
-      </button>
-      <button
-        onClick={onReject}
-        disabled={isLoading}
-        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-destructive py-2.5 text-sm font-bold text-destructive-foreground transition-all active:scale-95 disabled:opacity-50"
-      >
-        <X className="h-4 w-4" /> 반려
-      </button>
-    </div>
-  </div>
-);
 
 const EmptyState = ({ icon, message }: { icon: string; message: string }) => (
   <div className="rounded-2xl border border-dashed border-border p-8 text-center">
