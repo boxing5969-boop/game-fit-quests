@@ -44,6 +44,13 @@ const CoachRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const HomeRouter = () => {
+  const { role, loading } = useAuth();
+  if (loading) return null;
+  if (role === "coach" || role === "admin") return <Navigate to="/coach" replace />;
+  return <HomePage />;
+};
+
 const AppRoutes = () => {
   const { user, loading } = useAuth();
 
@@ -60,7 +67,7 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={user ? <Navigate to="/home" replace /> : <LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/home" element={<ProtectedRoute><HomeRouter /></ProtectedRoute>} />
         <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
         <Route path="/quests" element={<Navigate to="/missions" replace />} />
         <Route path="/levelmap" element={<ProtectedRoute><LevelMapPage /></ProtectedRoute>} />
