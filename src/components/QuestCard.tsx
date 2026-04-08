@@ -1,28 +1,46 @@
 import { Lock, Clock, CheckCircle2, Zap } from "lucide-react";
-import type { Quest, QuestStatus } from "@/lib/mockData";
+import type { Tables, Enums } from "@/integrations/supabase/types";
 
-const statusConfig: Record<QuestStatus, { label: string; buttonLabel: string; icon: typeof Lock; colorClass: string }> = {
+type SubmissionStatus = Enums<"submission_status"> | null;
+
+interface QuestCardProps {
+  quest: Tables<"quests">;
+  submissionStatus?: SubmissionStatus;
+  onSubmit?: () => void;
+  isSubmitting?: boolean;
+}
+
+const getDisplayStatus = (quest: Tables<"quests">, submissionStatus: SubmissionStatus) => {
+  if (submissionStatus === "approved") return "complete";
+  if (submissionStatus === "pending") return "pending";
+  if (submissionStatus === "rejected") return "active"; // Can retry
+  return "active";
+};
+
+const statusConfig = {
   locked: { label: "잠김", buttonLabel: "잠김", icon: Lock, colorClass: "text-status-locked bg-status-locked/10" },
   active: { label: "진행중", buttonLabel: "도전하기", icon: Zap, colorClass: "text-status-active bg-status-active/10" },
   pending: { label: "승인대기", buttonLabel: "승인대기", icon: Clock, colorClass: "text-status-pending bg-status-pending/10" },
   complete: { label: "완료", buttonLabel: "완료됨", icon: CheckCircle2, colorClass: "text-status-complete bg-status-complete/10" },
 };
 
-const QuestCard = ({ quest }: { quest: Quest }) => {
-  const cfg = statusConfig[quest.status];
+const QuestCard = ({ quest, submissionStatus = null, onSubmit, isSubmitting }: QuestCardProps) => {
+  const displayStatus = getDisplayStatus(quest, submissionStatus);
+  const cfg = statusConfig[displayStatus];
   const Icon = cfg.icon;
-  const isLocked = quest.status === "locked";
+
+  const canSubmit = displayStatus === "active" && !!onSubmit;
 
   return (
-    <div
-      className={`rounded-2xl border p-4 transition-all ${
-        isLocked ? "border-border/50 bg-muted/20 opacity-60" : "border-border bg-card shadow-sm"
-      } ${quest.status === "active" ? "border-primary/30" : ""}`}
-    >
+    <div className={`rounded-2xl border p-4 transition-all ${
+      displayStatus === "complete" ? "border-status-complete/20 bg-card shadow-sm" :
+      displayStatus === "pending" ? "border-status-pending/20 bg-card shadow-sm" :
+      "border-border bg-card shadow-sm"
+    } ${displayStatus === "active" ? "border-primary/30" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <div className="mb-1 flex items-center gap-2">
-            {quest.isBoss && <span className="text-sm">🏆</span>}
+            {quest.quest_type === "boss" && <span className="text-sm">🏆</span>}
             <h3 className="text-base font-bold text-foreground">{quest.title}</h3>
           </div>
           <p className="text-sm text-muted-foreground">{quest.description}</p>
@@ -31,24 +49,27 @@ const QuestCard = ({ quest }: { quest: Quest }) => {
               <Icon className="h-3 w-3" />
               {cfg.label}
             </span>
-            <span className="text-xs font-bold text-primary">+{quest.xpReward} XP</span>
+            <span className="text-xs font-bold text-primary">+{quest.xp_reward} XP</span>
+            {quest.needs_coach_approval && (
+              <span className="text-xs text-muted-foreground">코치 승인 필요</span>
+            )}
           </div>
         </div>
 
-        {/* Status Button */}
         <button
-          disabled={isLocked || quest.status === "complete" || quest.status === "pending"}
+          onClick={canSubmit ? onSubmit : undefined}
+          disabled={!canSubmit || isSubmitting}
           className={`mt-1 shrink-0 rounded-xl px-4 py-2.5 text-sm font-bold transition-all active:scale-95 ${
-            quest.status === "active"
+            canSubmit
               ? "bg-primary text-primary-foreground shadow-md"
-              : quest.status === "pending"
+              : displayStatus === "pending"
               ? "bg-status-pending/15 text-status-pending"
-              : quest.status === "complete"
+              : displayStatus === "complete"
               ? "bg-status-complete/15 text-status-complete"
               : "bg-muted text-muted-foreground"
           }`}
         >
-          {quest.status === "active" ? "도전하기" : quest.status === "pending" ? "승인대기" : quest.status === "complete" ? "완료됨" : "잠김"}
+          {isSubmitting ? "..." : canSubmit ? (quest.needs_coach_approval ? "완료 요청" : "도전하기") : cfg.buttonLabel}
         </button>
       </div>
     </div>

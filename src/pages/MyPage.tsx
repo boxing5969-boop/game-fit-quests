@@ -1,14 +1,24 @@
-import { currentUser, clearHistory, RANK_LABELS, RANK_ICONS } from "@/lib/mockData";
+import { useAuth } from "@/contexts/AuthContext";
 import RankBadge from "@/components/RankBadge";
 import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useXpLogs } from "@/hooks/useQuestData";
+import type { Enums } from "@/integrations/supabase/types";
 
 const MyPage = () => {
   const navigate = useNavigate();
+  const { profile, progress, role, signOut } = useAuth();
+  const { data: xpLogs } = useXpLogs();
+
+  if (!profile || !progress) return null;
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
-      {/* Header */}
       <div className="mb-6 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
@@ -20,45 +30,47 @@ const MyPage = () => {
         {/* Profile Card */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-3xl">
-              🥊
-            </div>
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-3xl">🥊</div>
             <div className="flex-1">
-              <h2 className="text-lg text-foreground">{currentUser.name}</h2>
-              <p className="text-sm text-muted-foreground">{currentUser.title}</p>
-              <RankBadge rank={currentUser.rank} level={currentUser.level} />
+              <h2 className="text-lg text-foreground">{profile.nickname || profile.name}</h2>
+              <p className="text-sm text-muted-foreground">{profile.name}</p>
+              <div className="mt-1 flex items-center gap-2">
+                <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} />
+                {role && role !== "member" && (
+                  <span className="rounded-full bg-accent/30 px-2 py-0.5 text-xs font-bold text-accent-foreground">
+                    {role === "coach" ? "코치" : "관리자"}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Info */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.05s" }}>
-          <InfoRow icon={<MapPin className="h-4 w-4" />} label="소속 지점" value={currentUser.branch} />
-          <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={currentUser.joinDate} />
-          <InfoRow icon={<span className="text-sm">🔥</span>} label="최고 연속 출석" value={`${currentUser.maxStreak}일`} />
-          <InfoRow icon={<span className="text-sm">⚡</span>} label="누적 XP" value={`${currentUser.totalXp.toLocaleString()} XP`} last />
+          <InfoRow icon={<MapPin className="h-4 w-4" />} label="소속 지점" value={profile.branch_name || "미설정"} />
+          <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} />
+          <InfoRow icon={<span className="text-sm">🔥</span>} label="연속 출석" value={`${progress.streak_days}일`} />
+          <InfoRow icon={<span className="text-sm">⚡</span>} label="누적 XP" value={`${progress.total_xp.toLocaleString()} XP`} last />
         </div>
 
         {/* Recent Clears */}
-        <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          <h2 className="mb-3 text-base font-bold text-foreground">📋 최근 클리어 이력</h2>
-          <div className="rounded-2xl border border-border bg-card shadow-sm">
-            {clearHistory.map((item, idx) => (
-              <div
-                key={item.id}
-                className={`flex items-center justify-between px-4 py-3 ${
-                  idx !== clearHistory.length - 1 ? "border-b border-border" : ""
-                }`}
-              >
-                <div>
-                  <p className="text-sm font-medium text-foreground">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">{item.date}</p>
+        {xpLogs && xpLogs.length > 0 && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
+            <h2 className="mb-3 text-base font-bold text-foreground">📋 최근 클리어 이력</h2>
+            <div className="rounded-2xl border border-border bg-card shadow-sm">
+              {xpLogs.slice(0, 5).map((item, idx) => (
+                <div key={item.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(xpLogs.length, 5) - 1 ? "border-b border-border" : ""}`}>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{item.reason}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(item.created_at).toLocaleDateString("ko-KR")}</p>
+                  </div>
+                  <span className="text-xs font-bold text-primary">+{item.amount} XP</span>
                 </div>
-                <span className="text-xs font-bold text-primary">+{item.xp} XP</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Actions */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.15s" }}>
@@ -69,10 +81,7 @@ const MyPage = () => {
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
-          <button
-            onClick={() => navigate("/")}
-            className="flex w-full items-center gap-3 px-4 py-4 active:bg-secondary/50"
-          >
+          <button onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-4 active:bg-secondary/50">
             <LogOut className="h-4 w-4 text-destructive" />
             <span className="text-sm text-destructive">로그아웃</span>
           </button>
@@ -82,17 +91,7 @@ const MyPage = () => {
   );
 };
 
-const InfoRow = ({
-  icon,
-  label,
-  value,
-  last = false,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  last?: boolean;
-}) => (
+const InfoRow = ({ icon, label, value, last = false }: { icon: React.ReactNode; label: string; value: string; last?: boolean }) => (
   <div className={`flex items-center justify-between px-4 py-3.5 ${!last ? "border-b border-border" : ""}`}>
     <div className="flex items-center gap-2.5">
       <span className="text-muted-foreground">{icon}</span>
