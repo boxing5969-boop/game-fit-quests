@@ -7,6 +7,7 @@ const tabs = [
   { path: "/levelmap", icon: Map, label: "계급도" },
   { path: "/halloffame", icon: Trophy, label: "랭킹" },
   { path: "/rewards", icon: Gift, label: "보상" },
+  { path: "/cert-benefits", icon: ScrollText, label: "단증혜택" },
 ];
 
 const hiddenPaths = ["/", "/mypage", "/coach", "/settings"];
