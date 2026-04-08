@@ -78,7 +78,7 @@ const SettingsPage = () => {
 
   if (!profile) return null;
 
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "super_admin";
 
   const handleAddBranch = async () => {
     const trimmed = newBranch.trim();

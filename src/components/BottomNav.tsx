@@ -10,13 +10,13 @@ const tabs = [
   { path: "/cert-benefits", icon: ScrollText, label: "단증혜택" },
 ];
 
-const hiddenPaths = ["/", "/mypage", "/settings"];
+const hiddenPaths = ["/", "/mypage", "/settings", "/manager", "/coach"];
 
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  if (hiddenPaths.includes(location.pathname)) return null;
+  if (hiddenPaths.includes(location.pathname) || location.pathname.startsWith("/manager/")) return null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md safe-area-bottom">

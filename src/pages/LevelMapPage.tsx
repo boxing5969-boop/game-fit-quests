@@ -69,7 +69,7 @@ const LevelMapPage = () => {
   const levelUpMutation = useManualLevelUp();
   const bossBattleMutation = usePassBossBattle();
   const qc = useQueryClient();
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "super_admin";
 
   // Admin level edit state
   const [editLevelModal, setEditLevelModal] = useState(false);
@@ -138,7 +138,7 @@ const LevelMapPage = () => {
               <div key={rank} className="animate-slide-up" style={{ animationDelay: `${sectionIdx * 0.1}s` }}>
                 <div className="mb-3 flex items-center gap-2">
                   <span className="text-lg">{RANK_ICONS[rank]}</span>
-                  <h2 className="text-lg text-foreground">{RANK_LABELS[rank]} 벨트</h2>
+                  <h2 className="text-lg text-foreground">{RANK_LABELS[rank]}</h2>
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   {nodes.map(node => {
@@ -230,7 +230,7 @@ const LevelMapPage = () => {
                 <h3 className="text-xl font-black text-primary-foreground" style={{ fontFamily: "'Black Han Sans', sans-serif" }}>
                   🏆 최종 마스터 미션
                 </h3>
-                <p className="mt-1 text-xs text-primary-foreground/60">블랙벨트 Lv.10 달성 후 도전할 수 있는 시크릿 미션</p>
+                <p className="mt-1 text-xs text-primary-foreground/60">블랙 레벨 10 달성 후 도전할 수 있는 시크릿 미션</p>
               </div>
 
               {/* Mission Cards */}
@@ -244,7 +244,7 @@ const LevelMapPage = () => {
                         if (isMaxLevel) {
                           setShowSecretDetail(mission);
                         } else {
-                          toast("블랙벨트 Lv.10 달성 후 도전할 수 있습니다! 🥊");
+                          toast("블랙 레벨 10 달성 후 도전할 수 있습니다! 🥊");
                         }
                       }}
                       className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-all active:scale-[0.98] ${
@@ -300,7 +300,7 @@ const LevelMapPage = () => {
               {!isMaxLevel && (
                 <div className="relative mt-4 flex items-center justify-center gap-2 rounded-xl bg-primary-foreground/5 py-2.5">
                   <Lock className="h-4 w-4 text-primary-foreground/40" />
-                  <span className="text-xs font-bold text-primary-foreground/40">블랙벨트 Lv.10 달성 시 해금</span>
+                  <span className="text-xs font-bold text-primary-foreground/40">블랙 레벨 10 달성 시 해금</span>
                 </div>
               )}
             </div>
@@ -411,7 +411,7 @@ const LevelMapPage = () => {
                     try {
                       const result = await bossBattleMutation.mutateAsync({ memberId: user.id });
                       if (result?.ranked_up) {
-                        toast.success(`${result.new_rank} 벨트로 승급! 🏆`);
+                        toast.success(`${RANK_LABELS[result.new_rank] || result.new_rank} 랭크로 승급! 🏆`);
                       } else {
                         toast.success("타이틀매치 클리어! 🏆");
                       }

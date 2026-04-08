@@ -39,7 +39,7 @@ const MyPage = () => {
                 <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} />
                 {role && role !== "member" && (
                   <span className="rounded-full bg-accent/30 px-2 py-0.5 text-xs font-bold text-accent-foreground">
-                    {role === "coach" ? "코치" : "관리자"}
+                    {role === "branch_manager" || role === "coach" ? "관장님" : role === "super_admin" || role === "admin" ? "전체 관리자" : role}
                   </span>
                 )}
               </div>
