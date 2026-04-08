@@ -396,8 +396,14 @@ const CoachDashboard = () => {
         </div>
       )}
 
+      {/* Quests Tab (Admin only) */}
+      {activeTab === "quests" && role === "admin" && <QuestManager />}
+
       {/* Missions Tab (Admin only) */}
       {activeTab === "missions" && role === "admin" && <MissionManager />}
+
+      {/* Levels Tab (Admin only) */}
+      {activeTab === "levels" && role === "admin" && <LevelManager />}
 
       {/* Branches Tab (Admin only) */}
       {activeTab === "branches" && role === "admin" && (
