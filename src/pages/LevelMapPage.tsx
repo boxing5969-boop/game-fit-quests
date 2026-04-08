@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { useLevels } from "@/hooks/useQuestData";
+import { useLevels, useManualLevelUp, usePassBossBattle } from "@/hooks/useQuestData";
 import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
 import { useAuth } from "@/contexts/AuthContext";
 import RankBadge from "@/components/RankBadge";
-import { Lock, Star, Trophy, User, Play, CheckCircle2 } from "lucide-react";
+import { Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { toast } from "sonner";
 
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
