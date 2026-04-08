@@ -267,3 +267,21 @@ export const useAssignedMembers = () => {
     },
   });
 };
+
+// ─── Admin: Manual Level Up ────
+export const useManualLevelUp = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (memberId: string) => {
+      const { data, error } = await supabase.rpc("manual_level_up", {
+        _member_id: memberId,
+      });
+      if (error) throw error;
+      return data as { new_level: number; current_rank: string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assigned-members"] });
+      qc.invalidateQueries({ queryKey: ["xp-logs"] });
+    },
+  });
+};

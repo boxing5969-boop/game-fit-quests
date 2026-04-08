@@ -645,6 +645,7 @@ export type Database = {
         Args: { _coach_id: string; _member_id: string }
         Returns: boolean
       }
+      manual_level_up: { Args: { _member_id: string }; Returns: Json }
       pass_boss_battle: {
         Args: { _coach_note?: string; _member_id: string }
         Returns: Json

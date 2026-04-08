@@ -1,7 +1,7 @@
 import { usePendingMissionSubmissions, useApproveMission, useRejectMission, useHiddenMastery, useExternalCertProgress, useUpdateHiddenMastery, useUpdateCertProgress } from "@/hooks/useMissionData";
-import { useAssignedMembers, useGrantManualXp, usePassBossBattle } from "@/hooks/useQuestData";
+import { useAssignedMembers, useGrantManualXp, usePassBossBattle, useManualLevelUp } from "@/hooks/useQuestData";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Check, X, User, Zap, Trophy, Eye, Shield, BookOpen, Heart, Target } from "lucide-react";
+import { ArrowLeft, Check, X, User, Zap, Trophy, Eye, Shield, BookOpen, Heart, Target, ArrowUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import RankUpCeremony from "@/components/RankUpCeremony";
@@ -26,6 +26,7 @@ const CoachDashboard = () => {
   const rejectMutation = useRejectMission();
   const grantXpMutation = useGrantManualXp();
   const bossBattleMutation = usePassBossBattle();
+  const levelUpMutation = useManualLevelUp();
   const updateMastery = useUpdateHiddenMastery();
   const updateCert = useUpdateCertProgress();
 
@@ -78,6 +79,19 @@ const CoachDashboard = () => {
         toast.success("보스전 합격 처리 완료");
       }
     } catch { toast.error("합격 처리 실패"); }
+  };
+
+  const handleLevelUp = async (member: any) => {
+    try {
+      const result = await levelUpMutation.mutateAsync(member.user_id);
+      toast.success(`${member.nickname || member.name} → Lv.${result.new_level} 레벨업! 🥊`);
+    } catch (e: any) {
+      if (e?.message?.includes("boss battle")) {
+        toast.error("Lv.10은 타이틀매치로 승급해야 합니다");
+      } else {
+        toast.error("레벨업 실패");
+      }
+    }
   };
 
   return (
@@ -166,7 +180,7 @@ const CoachDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => setDetailMember(member)}
                       className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95">
                       <Eye className="h-3.5 w-3.5" /> 상세보기
@@ -175,6 +189,12 @@ const CoachDashboard = () => {
                       className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95">
                       <Zap className="h-3.5 w-3.5" /> XP 지급
                     </button>
+                    {!isBossReady && prog?.current_level < 10 && (
+                      <button onClick={() => handleLevelUp(member)} disabled={levelUpMutation.isPending}
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-primary py-2 text-xs font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50">
+                        <ArrowUp className="h-3.5 w-3.5" /> 레벨업
+                      </button>
+                    )}
                     {isBossReady && (
                       <button onClick={() => handleBossPass(member)} disabled={bossBattleMutation.isPending}
                         className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-accent py-2 text-xs font-bold text-accent-foreground transition-all active:scale-95 disabled:opacity-50">
