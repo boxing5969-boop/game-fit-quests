@@ -49,6 +49,8 @@ const MissionsPage = () => {
     if (level) {
       const missionGlobal = RANK_ORDER.indexOf(level.rank_name) * 10 + level.level_number;
       if (missionGlobal > currentGlobal) return "locked";
+      // Already passed this level → treat as complete
+      if (missionGlobal < currentGlobal) return "complete";
     }
     return "active";
   };
