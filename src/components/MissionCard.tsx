@@ -28,6 +28,7 @@ const MissionCard = ({
   onWatch,
   onSubmit,
   isSubmitting,
+  adminMode,
 }: MissionCardProps) => {
   const cfg = statusConfig[status];
   const Icon = cfg.icon;
