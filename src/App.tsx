@@ -13,6 +13,7 @@ import HallOfFamePage from "@/pages/HallOfFamePage";
 import MyPage from "@/pages/MyPage";
 import CoachDashboard from "@/pages/CoachDashboard";
 import NotFound from "@/pages/NotFound";
+import ChatAssistant from "@/components/ChatAssistant";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ const AppRoutes = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomNav />
+      <ChatAssistant />
     </>
   );
 };
