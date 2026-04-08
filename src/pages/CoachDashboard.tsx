@@ -224,31 +224,81 @@ const CoachDashboard = () => {
                 <div key={member.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-xl">
-                      <User className="h-5 w-5 text-primary" />
+                      {member.avatar_url ? (
+                        <img src={member.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover" />
+                      ) : (
+                        <User className="h-5 w-5 text-primary" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">{member.nickname || member.name}</p>
-                      <p className="text-xs text-muted-foreground">{member.branch_name || "미설정"}</p>
+                      <p className="text-sm font-bold text-foreground truncate">{member.nickname || member.name || "이름 없음"}</p>
                       {prog && (
                         <div className="mt-1 flex items-center gap-2">
                           <span className="rounded-full bg-rank-blue/15 px-2 py-0.5 text-[10px] font-bold text-rank-blue">
                             {RANK_LABELS[prog.current_rank] || prog.current_rank} Lv.{prog.current_level}
                           </span>
                           <span className="text-[10px] text-muted-foreground">{prog.total_xp} XP</span>
-                          <span className="text-[10px] text-muted-foreground">🔥{prog.streak_days}일</span>
                         </div>
                       )}
                     </div>
                   </div>
 
+                  {/* Full Member Info */}
+                  <div className="mt-3 space-y-1.5 rounded-xl bg-secondary/50 p-3">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <User className="h-3 w-3" />
+                      <span className="text-foreground font-medium">{member.name || "미입력"}</span>
+                      <span className="text-muted-foreground">({member.nickname || "닉네임 없음"})</span>
+                    </div>
+                    {member.phone_number && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        <span>{member.phone_number}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span>{member.branch_name || "지점 미설정"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>가입: {new Date(member.created_at).toLocaleDateString("ko-KR")}</span>
+                    </div>
+                    {prog && (
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>🔥 {prog.streak_days}일 연속</span>
+                        <span>🏆 보스 {prog.bosses_cleared}회</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => setDetailMember(member)}
                       className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95">
-                      <Eye className="h-3.5 w-3.5" /> 상세보기
+                      <Eye className="h-3.5 w-3.5" /> 상세
                     </button>
                     <button onClick={() => setXpModal({ show: true, memberId: member.user_id, memberName: member.nickname || member.name })}
                       className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95">
-                      <Zap className="h-3.5 w-3.5" /> XP 지급
+                      <Zap className="h-3.5 w-3.5" /> XP
+                    </button>
+                    {role === "admin" && (
+                      <button onClick={() => {
+                        setLevelSetModal({ show: true, memberId: member.user_id, memberName: member.nickname || member.name, currentRank: prog?.current_rank || "white", currentLevel: prog?.current_level || 1 });
+                        setSetRank(prog?.current_rank || "white");
+                        setSetLevel(prog?.current_level || 1);
+                      }}
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95">
+                        <Settings2 className="h-3.5 w-3.5" /> 레벨설정
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Level Control Buttons */}
+                  <div className="mt-2 flex gap-2">
+                    <button onClick={() => handleLevelDown(member)} disabled={levelDownMutation.isPending || (prog?.current_rank === "white" && prog?.current_level === 1)}
+                      className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-destructive/10 py-2 text-xs font-bold text-destructive transition-all active:scale-95 disabled:opacity-30">
+                      <ArrowDown className="h-3.5 w-3.5" /> 강등
                     </button>
                     {!isBossReady && prog?.current_level < 10 && (
                       <button onClick={() => handleLevelUp(member)} disabled={levelUpMutation.isPending}
