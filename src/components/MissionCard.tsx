@@ -9,6 +9,7 @@ interface MissionCardProps {
   onWatch?: () => void;
   onSubmit?: () => void;
   isSubmitting?: boolean;
+  adminMode?: boolean;
 }
 
 const statusConfig = {
