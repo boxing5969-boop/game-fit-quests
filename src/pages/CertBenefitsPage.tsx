@@ -229,6 +229,9 @@ const CertBenefitsPage = () => {
             <ArrowRight className="ml-1 h-4 w-4" />
           </Button>
         </div>
+      </section>
+
+      {/* 실제 가점 상세 정보 */}
       <section className="px-4 py-4">
         <h3 className="mb-3 font-display text-lg font-bold">📋 실제 가점 상세 정보</h3>
         <Accordion type="single" collapsible className="space-y-2">
