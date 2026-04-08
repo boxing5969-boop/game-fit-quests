@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, X, User, Zap, Trophy, Eye, Shield, BookOpen, Heart, Target, ArrowUp, ArrowDown, Plus, Pencil, Trash2, Phone, Mail, MapPin, Calendar, Settings2 } from "lucide-react";
 import MissionManager from "@/components/MissionManager";
+import QuestManager from "@/components/admin/QuestManager";
+import LevelManager from "@/components/admin/LevelManager";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import RankUpCeremony from "@/components/RankUpCeremony";
@@ -93,7 +95,7 @@ const CoachDashboard = () => {
     },
   });
 
-  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions" | "coach-requests">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions" | "quests" | "levels" | "coach-requests">("pending");
   const [rankUpInfo, setRankUpInfo] = useState<{ show: boolean; oldRank: string; newRank: string; memberName: string }>({ show: false, oldRank: "", newRank: "", memberName: "" });
   const [xpModal, setXpModal] = useState<{ show: boolean; memberId: string; memberName: string }>({ show: false, memberId: "", memberName: "" });
   const [xpAmount, setXpAmount] = useState(10);
