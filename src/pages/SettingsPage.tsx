@@ -30,7 +30,7 @@ const useBranches = () =>
 
 const SettingsPage = () => {
   const navigate = useNavigate();
-  const { profile, user, role } = useAuth();
+  const { profile, user, role, refreshProfile } = useAuth();
   const { data: branches } = useBranches();
   const qc = useQueryClient();
 
@@ -66,7 +66,7 @@ const SettingsPage = () => {
         })
         .eq("user_id", user.id);
       if (error) throw error;
-      qc.invalidateQueries({ queryKey: ["profile"] });
+      await refreshProfile();
       toast.success("프로필이 저장되었습니다 ✅");
       navigate("/mypage");
     } catch {
