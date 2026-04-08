@@ -3,9 +3,10 @@ import { useLevels } from "@/hooks/useQuestData";
 import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
 import { useAuth } from "@/contexts/AuthContext";
 import RankBadge from "@/components/RankBadge";
-import { Lock, Star, Trophy, X, User, Play, CheckCircle2 } from "lucide-react";
+import { Lock, Star, Trophy, User, Play, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Tables, Enums } from "@/integrations/supabase/types";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
@@ -132,24 +133,21 @@ const LevelMapPage = () => {
         </div>
       )}
 
-      {/* Detail Modal */}
-      {selectedNode && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setSelectedNode(null)}>
-          <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{RANK_ICONS[selectedNode.rank_name]}</span>
-                <h3 className="text-lg text-foreground">{RANK_LABELS[selectedNode.rank_name]} Lv.{selectedNode.level_number}</h3>
-                {selectedNode.is_boss && (
-                  <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-bold text-accent-foreground">🏆 타이틀매치</span>
-                )}
-              </div>
-              <button onClick={() => setSelectedNode(null)} className="rounded-full bg-secondary p-2 active:scale-95">
-                <X className="h-4 w-4 text-secondary-foreground" />
-              </button>
+      {/* Detail Drawer */}
+      <Drawer open={!!selectedNode} onOpenChange={(open) => !open && setSelectedNode(null)}>
+        <DrawerContent className="mx-auto max-w-lg pb-safe">
+          <DrawerHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{selectedNode ? RANK_ICONS[selectedNode.rank_name] : ""}</span>
+              <DrawerTitle>{selectedNode ? `${RANK_LABELS[selectedNode.rank_name]} Lv.${selectedNode.level_number}` : ""}</DrawerTitle>
+              {selectedNode?.is_boss && (
+                <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-bold text-accent-foreground">🏆 타이틀매치</span>
+              )}
             </div>
+          </DrawerHeader>
 
-            <div className="space-y-3">
+          {selectedNode && (
+            <div className="space-y-3 px-4 pb-6">
               <div className="rounded-xl bg-secondary p-4">
                 <p className="text-sm font-bold text-foreground">{selectedNode.title}</p>
                 <p className="mt-1 text-xs text-muted-foreground">필요 XP: {selectedNode.xp_required}</p>
@@ -162,7 +160,6 @@ const LevelMapPage = () => {
                 </div>
               )}
 
-              {/* Level missions */}
               {selectedMissions.length > 0 && (
                 <div>
                   <p className="mb-2 text-xs font-bold text-muted-foreground">미션 목록</p>
@@ -196,9 +193,9 @@ const LevelMapPage = () => {
                 미션 보러가기
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
