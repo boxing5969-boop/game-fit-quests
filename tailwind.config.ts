@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Rajdhani", "Noto Sans KR", "sans-serif"],
-        body: ["Noto Sans KR", "sans-serif"],
+        display: ["'Black Han Sans'", "'Noto Sans KR'", "sans-serif"],
+        body: ["'Noto Sans KR'", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -93,19 +93,26 @@ export default {
           to: { height: "0" },
         },
         "pulse-glow": {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.6" },
+          "0%, 100%": { boxShadow: "0 0 8px hsl(14 90% 55% / 0.3)" },
+          "50%": { boxShadow: "0 0 20px hsl(14 90% 55% / 0.5)" },
         },
         "slide-up": {
-          from: { transform: "translateY(10px)", opacity: "0" },
+          from: { transform: "translateY(16px)", opacity: "0" },
           to: { transform: "translateY(0)", opacity: "1" },
+        },
+        "bounce-in": {
+          "0%": { transform: "scale(0.3)", opacity: "0" },
+          "50%": { transform: "scale(1.05)" },
+          "70%": { transform: "scale(0.95)" },
+          "100%": { transform: "scale(1)", opacity: "1" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
-        "slide-up": "slide-up 0.3s ease-out",
+        "slide-up": "slide-up 0.35s ease-out",
+        "bounce-in": "bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
       },
     },
   },
