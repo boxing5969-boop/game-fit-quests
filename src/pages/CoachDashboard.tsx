@@ -240,7 +240,78 @@ const CoachDashboard = () => {
         </div>
       )}
 
-      {/* Member Detail Modal (Hidden Mastery + Cert) */}
+      {/* Branches Tab (Admin only) */}
+      {activeTab === "branches" && role === "admin" && (
+        <div className="space-y-3">
+          {/* Add / Edit Branch */}
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <h3 className="mb-3 text-sm font-bold text-foreground">
+              {editingBranch ? "✏️ 지점 수정" : "➕ 새 지점 추가"}
+            </h3>
+            <div className="flex gap-2">
+              <Input
+                value={editingBranch ? editingBranch.name : branchInput}
+                onChange={(e) => editingBranch ? setEditingBranch({ ...editingBranch, name: e.target.value }) : setBranchInput(e.target.value)}
+                placeholder="지점 이름"
+                className="rounded-xl"
+              />
+              <button
+                onClick={async () => {
+                  if (editingBranch) {
+                    if (!editingBranch.name.trim()) return;
+                    const { error } = await supabase.from("branches").update({ name: editingBranch.name.trim() }).eq("id", editingBranch.id);
+                    if (error) { toast.error("수정 실패"); return; }
+                    toast.success("지점 수정 완료");
+                    setEditingBranch(null);
+                  } else {
+                    if (!branchInput.trim()) return;
+                    const { error } = await supabase.from("branches").insert({ name: branchInput.trim() });
+                    if (error) { toast.error("추가 실패"); return; }
+                    toast.success("지점 추가 완료");
+                    setBranchInput("");
+                  }
+                  qc.invalidateQueries({ queryKey: ["branches"] });
+                }}
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground active:scale-95"
+              >
+                {editingBranch ? "수정" : "추가"}
+              </button>
+              {editingBranch && (
+                <button onClick={() => setEditingBranch(null)} className="rounded-xl bg-secondary px-3 py-2 text-sm text-secondary-foreground active:scale-95">
+                  취소
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Branch List */}
+          {branches?.length ? branches.map((b) => (
+            <div key={b.id} className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
+              <span className="text-sm font-medium text-foreground">🏢 {b.name}</span>
+              <div className="flex gap-2">
+                <button onClick={() => setEditingBranch({ id: b.id, name: b.name })}
+                  className="rounded-lg bg-secondary p-2 active:scale-95">
+                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+                <button onClick={async () => {
+                  if (!confirm(`"${b.name}" 지점을 삭제하시겠습니까?`)) return;
+                  const { error } = await supabase.from("branches").delete().eq("id", b.id);
+                  if (error) { toast.error("삭제 실패"); return; }
+                  toast.success("지점 삭제 완료");
+                  qc.invalidateQueries({ queryKey: ["branches"] });
+                }}
+                  className="rounded-lg bg-destructive/10 p-2 active:scale-95">
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                </button>
+              </div>
+            </div>
+          )) : (
+            <EmptyState icon="🏢" message="등록된 지점이 없습니다" />
+          )}
+        </div>
+      )}
+
+
       {detailMember && (
         <MemberDetailModal
           member={detailMember}
