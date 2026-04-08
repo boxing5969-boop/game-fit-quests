@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useLevels, useManualLevelUp, usePassBossBattle } from "@/hooks/useQuestData";
 import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import RankBadge from "@/components/RankBadge";
-import { Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp, Crown, Shield, Award, Sparkles, ExternalLink, X, Pencil } from "lucide-react";
+import { Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp, Crown, Shield, Award, Sparkles, ExternalLink, X, Pencil, Trash2, Plus } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
@@ -65,6 +68,13 @@ const LevelMapPage = () => {
   const { data: missionSubs } = useMyMissionSubmissions();
   const levelUpMutation = useManualLevelUp();
   const bossBattleMutation = usePassBossBattle();
+  const qc = useQueryClient();
+  const isAdmin = role === "admin";
+
+  // Admin level edit state
+  const [editLevelModal, setEditLevelModal] = useState(false);
+  const [editLevelForm, setEditLevelForm] = useState({ title: "", xp_required: 0, reward_name: "", is_boss: false });
+  const [editLevelSaving, setEditLevelSaving] = useState(false);
 
   if (!progress) return null;
 
@@ -89,16 +99,9 @@ const LevelMapPage = () => {
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-2xl text-foreground">🗺️ 계급도</h1>
-        <div className="flex items-center gap-2">
-          {role === "admin" && (
-            <button onClick={() => navigate("/coach")} className="flex h-10 items-center gap-1 rounded-full bg-primary/10 px-3 text-xs font-bold text-primary transition-all active:scale-95">
-              <Pencil className="h-3.5 w-3.5" /> 관리
-            </button>
-          )}
-          <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
-            <User className="h-5 w-5 text-secondary-foreground" />
-          </button>
-        </div>
+        <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
+          <User className="h-5 w-5 text-secondary-foreground" />
+        </button>
       </div>
 
       {/* Current position */}
@@ -321,8 +324,32 @@ const LevelMapPage = () => {
           {selectedNode && (
             <div className="space-y-3 px-4 pb-6">
               <div className="rounded-xl bg-secondary p-4">
-                <p className="text-sm font-bold text-foreground">{selectedNode.title}</p>
-                <p className="mt-1 text-xs text-muted-foreground">필요 XP: {selectedNode.xp_required}</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-foreground">{selectedNode.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">필요 XP: {selectedNode.xp_required}</p>
+                  </div>
+                  {isAdmin && (
+                    <div className="flex gap-1">
+                      <button onClick={() => {
+                        setEditLevelForm({ title: selectedNode.title, xp_required: selectedNode.xp_required, reward_name: selectedNode.reward_name || "", is_boss: selectedNode.is_boss });
+                        setEditLevelModal(true);
+                      }} className="rounded-lg bg-card p-2 active:scale-95">
+                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
+                      <button onClick={async () => {
+                        if (!confirm(`이 레벨을 삭제하시겠습니까?`)) return;
+                        const { error } = await supabase.from("levels").delete().eq("id", selectedNode.id);
+                        if (error) { toast.error("삭제 실패"); return; }
+                        toast.success("레벨 삭제 완료");
+                        qc.invalidateQueries({ queryKey: ["levels"] });
+                        setSelectedNode(null);
+                      }} className="rounded-lg bg-destructive/10 p-2 active:scale-95">
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {selectedNode.reward_name && (
@@ -491,6 +518,52 @@ const LevelMapPage = () => {
           )}
         </DrawerContent>
       </Drawer>
+
+      {/* Admin: Edit Level Modal */}
+      {editLevelModal && selectedNode && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setEditLevelModal(false)}>
+          <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg text-foreground">✏️ 레벨 수정</h3>
+              <button onClick={() => setEditLevelModal(false)} className="rounded-full bg-secondary p-2 active:scale-95">
+                <X className="h-4 w-4 text-secondary-foreground" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">제목</label>
+                <Input value={editLevelForm.title} onChange={e => setEditLevelForm(f => ({ ...f, title: e.target.value }))} className="rounded-xl" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">필요 XP</label>
+                <Input type="number" value={editLevelForm.xp_required} onChange={e => setEditLevelForm(f => ({ ...f, xp_required: Number(e.target.value) }))} className="rounded-xl" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">보상</label>
+                <Input value={editLevelForm.reward_name} onChange={e => setEditLevelForm(f => ({ ...f, reward_name: e.target.value }))} placeholder="보상명 (선택)" className="rounded-xl" />
+              </div>
+              <button onClick={async () => {
+                setEditLevelSaving(true);
+                try {
+                  const { error } = await supabase.from("levels").update({
+                    title: editLevelForm.title.trim(), xp_required: editLevelForm.xp_required,
+                    reward_name: editLevelForm.reward_name.trim() || null,
+                  }).eq("id", selectedNode.id);
+                  if (error) throw error;
+                  toast.success("레벨 수정 완료 ✅");
+                  qc.invalidateQueries({ queryKey: ["levels"] });
+                  setEditLevelModal(false);
+                  setSelectedNode(null);
+                } catch { toast.error("수정 실패"); }
+                finally { setEditLevelSaving(false); }
+              }} disabled={editLevelSaving}
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                {editLevelSaving ? "저장 중..." : "수정 완료"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
