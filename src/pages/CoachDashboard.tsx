@@ -46,7 +46,7 @@ const CoachDashboard = () => {
   const qc = useQueryClient();
   const { data: branches } = useQuery({
     queryKey: ["branches"],
-    enabled: role === "admin",
+    enabled: role === "admin" || role === "super_admin",
     queryFn: async () => {
       const { data, error } = await supabase.from("branches").select("*").order("name");
       if (error) throw error;
@@ -56,7 +56,7 @@ const CoachDashboard = () => {
 
   const { data: coachRequests, isLoading: coachReqLoading } = useQuery({
     queryKey: ["coach-requests", role],
-    enabled: role === "admin",
+    enabled: role === "admin" || role === "super_admin",
     queryFn: async () => {
       const { data, error } = await supabase
         .from("coach_requests")
@@ -197,7 +197,7 @@ const CoachDashboard = () => {
         <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
-        <h1 className="text-xl text-foreground">{role === "admin" ? "관리자 대시보드" : "코치 대시보드"}</h1>
+        <h1 className="text-xl text-foreground">{(role === "admin" || role === "super_admin") ? "관리자 대시보드" : "관장님 대시보드"}</h1>
       </div>
 
       {/* Tabs */}
@@ -210,7 +210,7 @@ const CoachDashboard = () => {
           className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "members" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
           👥 회원
         </button>
-        {role === "admin" && (
+        {(role === "admin" || role === "super_admin") && (
           <>
             <button onClick={() => setActiveTab("quests")}
               className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "quests" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
@@ -349,7 +349,7 @@ const CoachDashboard = () => {
                       className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95">
                       <Zap className="h-3.5 w-3.5" /> XP
                     </button>
-                    {role === "admin" && (
+                    {(role === "admin" || role === "super_admin") && (
                       <button onClick={() => {
                         setLevelSetModal({ show: true, memberId: member.user_id, memberName: member.nickname || member.name, currentRank: prog?.current_rank || "white", currentLevel: prog?.current_level || 1 });
                         setSetRank(prog?.current_rank || "white");
@@ -397,16 +397,16 @@ const CoachDashboard = () => {
       )}
 
       {/* Quests Tab (Admin only) */}
-      {activeTab === "quests" && role === "admin" && <QuestManager />}
+      {activeTab === "quests" && (role === "admin" || role === "super_admin") && <QuestManager />}
 
       {/* Missions Tab (Admin only) */}
-      {activeTab === "missions" && role === "admin" && <MissionManager />}
+      {activeTab === "missions" && (role === "admin" || role === "super_admin") && <MissionManager />}
 
       {/* Levels Tab (Admin only) */}
-      {activeTab === "levels" && role === "admin" && <LevelManager />}
+      {activeTab === "levels" && (role === "admin" || role === "super_admin") && <LevelManager />}
 
       {/* Branches Tab (Admin only) */}
-      {activeTab === "branches" && role === "admin" && (
+      {activeTab === "branches" && (role === "admin" || role === "super_admin") && (
         <div className="space-y-3">
           {/* Add / Edit Branch */}
           <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
@@ -477,7 +477,7 @@ const CoachDashboard = () => {
       )}
 
       {/* Coach Requests Tab */}
-      {activeTab === "coach-requests" && role === "admin" && (
+      {activeTab === "coach-requests" && (role === "admin" || role === "super_admin") && (
         <div className="space-y-3">
           {coachReqLoading ? (
             [1, 2].map(i => <div key={i} className="h-24 animate-pulse rounded-2xl bg-muted" />)
