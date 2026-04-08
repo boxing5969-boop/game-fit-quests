@@ -291,8 +291,8 @@ const HallOfFamePage = () => {
 
       {/* Admin: Level Set Modal */}
       {levelSetModal?.show && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setLevelSetModal(null)}>
-          <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setLevelSetModal(null)}>
+          <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 pb-24 shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg text-foreground">⚙️ 레벨 설정</h3>
               <button onClick={() => setLevelSetModal(null)} className="rounded-full bg-secondary p-2 active:scale-95">
