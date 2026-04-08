@@ -285,3 +285,41 @@ export const useManualLevelUp = () => {
     },
   });
 };
+
+// ─── Admin: Manual Level Down ────
+export const useManualLevelDown = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (memberId: string) => {
+      const { data, error } = await supabase.rpc("manual_level_down", {
+        _member_id: memberId,
+      });
+      if (error) throw error;
+      return data as { new_level: number; new_rank: string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assigned-members"] });
+      qc.invalidateQueries({ queryKey: ["xp-logs"] });
+    },
+  });
+};
+
+// ─── Admin: Set Member Level ────
+export const useSetMemberLevel = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ memberId, rank, level }: { memberId: string; rank: string; level: number }) => {
+      const { data, error } = await supabase.rpc("set_member_level", {
+        _member_id: memberId,
+        _rank: rank as any,
+        _level: level,
+      });
+      if (error) throw error;
+      return data as { new_level: number; new_rank: string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assigned-members"] });
+      qc.invalidateQueries({ queryKey: ["xp-logs"] });
+    },
+  });
+};
