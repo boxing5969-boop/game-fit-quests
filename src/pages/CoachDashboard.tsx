@@ -52,6 +52,47 @@ const CoachDashboard = () => {
     },
   });
 
+  const { data: coachRequests, isLoading: coachReqLoading } = useQuery({
+    queryKey: ["coach-requests"],
+    enabled: role === "admin",
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("coach_requests")
+        .select("*")
+        .eq("status", "pending")
+        .order("requested_at", { ascending: false });
+      if (error) throw error;
+      if (!data?.length) return [];
+      const userIds = data.map(r => r.user_id);
+      const { data: profiles } = await supabase.from("profiles").select("*").in("user_id", userIds);
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+      return data.map(r => ({ ...r, profile: profileMap.get(r.user_id) }));
+    },
+  });
+
+  const approveCoachMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase.rpc("approve_coach_request", { _request_id: requestId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["coach-requests"] });
+      qc.invalidateQueries({ queryKey: ["assigned-members"] });
+      toast.success("관장님 승인 완료! 코치 권한이 부여되었습니다.");
+    },
+  });
+
+  const rejectCoachMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase.rpc("reject_coach_request", { _request_id: requestId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["coach-requests"] });
+      toast.info("관장님 가입 거절 완료");
+    },
+  });
+
   const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions" | "coach-requests">("pending");
   const [rankUpInfo, setRankUpInfo] = useState<{ show: boolean; oldRank: string; newRank: string; memberName: string }>({ show: false, oldRank: "", newRank: "", memberName: "" });
   const [xpModal, setXpModal] = useState<{ show: boolean; memberId: string; memberName: string }>({ show: false, memberId: "", memberName: "" });
