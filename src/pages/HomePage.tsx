@@ -9,6 +9,7 @@ import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestDat
 import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
 import { useNavigate } from "react-router-dom";
 import { User, ChevronRight, TrendingUp, Play } from "lucide-react";
+import HallOfFameShowcase from "@/components/HallOfFameShowcase";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 
@@ -156,7 +157,10 @@ const HomePage = () => {
           <StatBox icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
         </div>
 
-        {/* ── 5. 최근 배지 ── */}
+        {/* ── 5. 명예의 전당 ── */}
+        <HallOfFameShowcase />
+
+        {/* ── 6. 최근 배지 ── */}
         {recentBadges.length > 0 && (
           <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
             <h2 className="mb-3 text-base font-bold text-foreground">🏅 최근 획득 배지</h2>
