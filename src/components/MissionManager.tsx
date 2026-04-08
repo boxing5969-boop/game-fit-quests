@@ -79,8 +79,7 @@ const MissionManager = () => {
     }
   };
 
-
-    setForm(emptyForm);
+  const openCreate = () => {
     setEditingId(null);
     setShowForm(true);
   };
