@@ -247,6 +247,9 @@ const CoachDashboard = () => {
         </div>
       )}
 
+      {/* Missions Tab (Admin only) */}
+      {activeTab === "missions" && role === "admin" && <MissionManager />}
+
       {/* Branches Tab (Admin only) */}
       {activeTab === "branches" && role === "admin" && (
         <div className="space-y-3">
