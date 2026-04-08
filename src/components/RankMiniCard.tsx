@@ -1,5 +1,4 @@
-const RANK_ICONS: Record<string, string> = { white: "⚪", blue: "🔵", red: "🔴", black: "⚫" };
-const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
+import { RANK_ICONS, RANK_LABELS, formatRank } from "@/lib/rankLabels";
 
 interface RankMiniCardProps {
   nickname: string;
@@ -28,14 +27,12 @@ const RankMiniCard = ({ nickname, rank, level, position, avatarUrl, xp, isMe, is
         : isRival ? "border-accent/50 bg-accent/5"
         : "border-border bg-card"
     }`}>
-      {/* Position */}
       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center">
         <span className={`text-sm font-bold ${position <= 3 ? "text-lg" : "text-muted-foreground"}`}>
           {positionLabel}
         </span>
       </div>
 
-      {/* Avatar */}
       <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-lg ${
         isHallOfFame ? "bg-amber-500/20 ring-2 ring-amber-500/30" : isMe ? "bg-primary/15" : "bg-secondary"
       }`}>
@@ -46,7 +43,6 @@ const RankMiniCard = ({ nickname, rank, level, position, avatarUrl, xp, isMe, is
         )}
       </div>
 
-      {/* Info */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className={`truncate text-sm font-bold ${
@@ -63,13 +59,12 @@ const RankMiniCard = ({ nickname, rank, level, position, avatarUrl, xp, isMe, is
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span>{RANK_ICONS[rank]}</span>
-          <span>{RANK_LABELS[rank]} Lv.{level}</span>
+          <span>{formatRank(rank, level)}</span>
           {extra && extra !== "153명예코치" && <span>· {extra}</span>}
           {xp !== undefined && <span>· {xp.toLocaleString()} XP</span>}
         </div>
       </div>
 
-      {/* Rival button */}
       {onSetRival && !isMe && (
         <button
           onClick={(e) => { e.stopPropagation(); onSetRival(); }}

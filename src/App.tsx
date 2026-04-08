@@ -16,8 +16,11 @@ import CoachDashboard from "@/pages/CoachDashboard";
 import SettingsPage from "@/pages/SettingsPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import CertBenefitsPage from "@/pages/CertBenefitsPage";
+import BranchManagerHome from "@/pages/BranchManagerHome";
+import MemberDetailPage from "@/pages/MemberDetailPage";
 import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
+import { isManagerRole } from "@/lib/rankLabels";
 
 const queryClient = new QueryClient();
 
@@ -37,17 +40,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const CoachRoute = ({ children }: { children: React.ReactNode }) => {
+const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   const { role, loading } = useAuth();
   if (loading) return null;
-  if (role !== "coach" && role !== "admin") return <Navigate to="/home" replace />;
+  if (!isManagerRole(role)) return <Navigate to="/home" replace />;
   return <>{children}</>;
 };
 
-const HomeRouter = () => {
-  const { loading } = useAuth();
+/** Redirect after login based on role */
+const RoleBasedRedirect = () => {
+  const { role, loading } = useAuth();
   if (loading) return null;
-  return <HomePage />;
+  if (role === "branch_manager" || role === "coach") return <Navigate to="/manager" replace />;
+  if (role === "super_admin" || role === "admin") return <Navigate to="/manager" replace />;
+  return <Navigate to="/home" replace />;
 };
 
 const AppRoutes = () => {
@@ -64,9 +70,9 @@ const AppRoutes = () => {
   return (
     <>
       <Routes>
-        <Route path="/" element={user ? <Navigate to="/home" replace /> : <LoginPage />} />
+        <Route path="/" element={user ? <RoleBasedRedirect /> : <LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/home" element={<ProtectedRoute><HomeRouter /></ProtectedRoute>} />
+        <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
         <Route path="/quests" element={<Navigate to="/missions" replace />} />
         <Route path="/levelmap" element={<ProtectedRoute><LevelMapPage /></ProtectedRoute>} />
@@ -75,7 +81,9 @@ const AppRoutes = () => {
         <Route path="/cert-benefits" element={<ProtectedRoute><CertBenefitsPage /></ProtectedRoute>} />
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-        <Route path="/coach" element={<ProtectedRoute><CoachRoute><CoachDashboard /></CoachRoute></ProtectedRoute>} />
+        <Route path="/coach" element={<ProtectedRoute><ManagerRoute><CoachDashboard /></ManagerRoute></ProtectedRoute>} />
+        <Route path="/manager" element={<ProtectedRoute><ManagerRoute><BranchManagerHome /></ManagerRoute></ProtectedRoute>} />
+        <Route path="/manager/member/:memberId" element={<ProtectedRoute><ManagerRoute><MemberDetailPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomNav />
