@@ -124,9 +124,10 @@ const LevelMapPage = () => {
                     const globalLvl = sectionIdx * 10 + node.level_number;
                     const unlocked = globalLvl <= currentGlobal;
                     const isCurrent = globalLvl === currentGlobal;
+                    const isPassed = globalLvl < currentGlobal;
                     const completed = completedForLevel(node.id);
                     const total = totalForLevel(node.id);
-                    const allDone = total > 0 && completed === total;
+                    const allDone = isPassed || (total > 0 && completed === total);
 
                     return (
                       <button
