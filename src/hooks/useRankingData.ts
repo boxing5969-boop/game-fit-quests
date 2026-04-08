@@ -165,6 +165,29 @@ export const useSetRival = () => {
   });
 };
 
+interface HallOfFameMember {
+  r_user_id: string;
+  r_nickname: string;
+  r_avatar_url: string | null;
+  r_current_rank: string;
+  r_current_level: number;
+  r_bosses_cleared: number;
+  r_total_xp: number;
+  r_branch_name: string;
+  rank_position: number;
+}
+
+export const useHallOfFame = (limit = 20) => {
+  return useQuery({
+    queryKey: ["hall-of-fame", limit],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_hall_of_fame", { _limit: limit });
+      if (error) throw error;
+      return (data || []) as HallOfFameMember[];
+    },
+  });
+};
+
 export const useMyRankPosition = () => {
   const { user } = useAuth();
   const { data: ranking } = useDivisionRanking();
