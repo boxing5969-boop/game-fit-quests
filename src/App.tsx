@@ -15,6 +15,7 @@ import MyPage from "@/pages/MyPage";
 import CoachDashboard from "@/pages/CoachDashboard";
 import SettingsPage from "@/pages/SettingsPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
+import CertBenefitsPage from "@/pages/CertBenefitsPage";
 import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
 
@@ -65,6 +66,7 @@ const AppRoutes = () => {
         <Route path="/levelmap" element={<ProtectedRoute><LevelMapPage /></ProtectedRoute>} />
         <Route path="/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
         <Route path="/halloffame" element={<ProtectedRoute><HallOfFamePage /></ProtectedRoute>} />
+        <Route path="/cert-benefits" element={<ProtectedRoute><CertBenefitsPage /></ProtectedRoute>} />
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/coach" element={<ProtectedRoute><CoachRoute><CoachDashboard /></CoachRoute></ProtectedRoute>} />
