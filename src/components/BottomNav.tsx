@@ -8,12 +8,13 @@ const tabs = [
   { path: "/rewards", icon: Gift, label: "보상" },
 ];
 
+const hiddenPaths = ["/", "/mypage", "/coach"];
+
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Don't show on start page or mypage
-  if (location.pathname === "/" || location.pathname === "/mypage") return null;
+  if (hiddenPaths.includes(location.pathname)) return null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md safe-area-bottom">

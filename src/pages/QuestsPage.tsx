@@ -1,67 +1,64 @@
 import { useState } from "react";
-import { todayQuests, weeklyQuests, bossQuests, getWeeklyCompletionRate } from "@/lib/mockData";
+import { useQuests, useMySubmissions, useSubmitQuest } from "@/hooks/useQuestData";
 import QuestCard from "@/components/QuestCard";
 import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import type { Enums } from "@/integrations/supabase/types";
 
 type TabKey = "today" | "weekly" | "boss";
-
-const tabs: { key: TabKey; label: string; icon: string }[] = [
-  { key: "today", label: "오늘", icon: "🥊" },
-  { key: "weekly", label: "주간", icon: "📅" },
-  { key: "boss", label: "타이틀매치", icon: "🏆" },
+const tabs: { key: TabKey; label: string; icon: string; types: Enums<"quest_type">[] }[] = [
+  { key: "today", label: "오늘", icon: "🥊", types: ["main", "sub"] },
+  { key: "weekly", label: "주간", icon: "📅", types: ["weekly"] },
+  { key: "boss", label: "타이틀매치", icon: "🏆", types: ["boss"] },
 ];
 
 const QuestsPage = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("today");
   const navigate = useNavigate();
-  const completionRate = getWeeklyCompletionRate();
+  const { data: quests, isLoading } = useQuests();
+  const { data: submissions } = useMySubmissions();
+  const submitQuest = useSubmitQuest();
 
-  const questsByTab: Record<TabKey, typeof todayQuests> = {
-    today: todayQuests,
-    weekly: weeklyQuests,
-    boss: bossQuests,
-  };
+  const currentTypes = tabs.find(t => t.key === activeTab)!.types;
+  const filtered = (quests || []).filter(q => currentTypes.includes(q.quest_type));
 
-  const quests = questsByTab[activeTab];
+  const submissionMap = new Map(
+    (submissions || []).map(s => [s.quest_id, s.status])
+  );
+
+  // Completion rate
+  const allMainSub = (quests || []).filter(q => ["main", "sub", "weekly"].includes(q.quest_type));
+  const completed = allMainSub.filter(q => submissionMap.get(q.id) === "approved").length;
+  const completionRate = allMainSub.length > 0 ? Math.round((completed / allMainSub.length) * 100) : 0;
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
-      {/* Header */}
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-2xl text-foreground">🥊 퀘스트</h1>
-        <button
-          onClick={() => navigate("/mypage")}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95"
-        >
+        <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
           <User className="h-5 w-5 text-secondary-foreground" />
         </button>
       </div>
 
-      {/* Weekly completion rate */}
+      {/* Completion Rate */}
       <div className="mb-5 animate-slide-up rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm text-muted-foreground">이번 주 완료율</span>
           <span className="text-sm font-bold text-primary">{completionRate}%</span>
         </div>
         <div className="h-2.5 w-full overflow-hidden rounded-full bg-xp-bg">
-          <div
-            className="h-full rounded-full bg-status-complete transition-all duration-500"
-            style={{ width: `${completionRate}%` }}
-          />
+          <div className="h-full rounded-full bg-status-complete transition-all duration-500" style={{ width: `${completionRate}%` }} />
         </div>
       </div>
 
       {/* Tabs */}
       <div className="mb-5 flex gap-2">
-        {tabs.map((tab) => (
+        {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.97] ${
-              activeTab === tab.key
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "bg-secondary text-secondary-foreground"
+              activeTab === tab.key ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"
             }`}
           >
             {tab.icon} {tab.label}
@@ -70,18 +67,29 @@ const QuestsPage = () => {
       </div>
 
       {/* Quest List */}
-      <div className="space-y-3">
-        {quests.map((q, idx) => (
-          <div key={q.id} className="animate-slide-up" style={{ animationDelay: `${idx * 0.05}s` }}>
-            <QuestCard quest={q} />
-          </div>
-        ))}
-        {quests.length === 0 && (
-          <div className="py-12 text-center text-muted-foreground">
-            퀘스트가 없습니다
-          </div>
-        )}
-      </div>
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => <div key={i} className="h-24 animate-pulse rounded-2xl bg-muted" />)}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="py-12 text-center">
+          <span className="text-4xl">🥊</span>
+          <p className="mt-3 text-muted-foreground">퀘스트가 없습니다</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((q, idx) => (
+            <div key={q.id} className="animate-slide-up" style={{ animationDelay: `${idx * 0.05}s` }}>
+              <QuestCard
+                quest={q}
+                submissionStatus={submissionMap.get(q.id) || null}
+                onSubmit={() => submitQuest.mutate(q.id)}
+                isSubmitting={submitQuest.isPending}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
