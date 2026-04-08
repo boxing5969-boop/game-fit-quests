@@ -3,7 +3,8 @@ import { useLevels, useManualLevelUp, usePassBossBattle } from "@/hooks/useQuest
 import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
 import { useAuth } from "@/contexts/AuthContext";
 import RankBadge from "@/components/RankBadge";
-import { Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp, Crown, Shield, Award, Sparkles } from "lucide-react";
+import { Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp, Crown, Shield, Award, Sparkles, ExternalLink, X } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
