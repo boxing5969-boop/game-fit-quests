@@ -491,6 +491,7 @@ const CoachDashboard = () => {
       )}
 
 
+      {detailMember && (
         <MemberDetailModal
           member={detailMember}
           onClose={() => setDetailMember(null)}
