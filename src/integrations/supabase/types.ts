@@ -710,6 +710,7 @@ export type Database = {
         Args: { _coach_id: string; _member_id: string }
         Returns: boolean
       }
+      manual_level_down: { Args: { _member_id: string }; Returns: Json }
       manual_level_up: { Args: { _member_id: string }; Returns: Json }
       pass_boss_battle: {
         Args: { _coach_note?: string; _member_id: string }
@@ -727,6 +728,14 @@ export type Database = {
       reject_quest_submission: {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
+      }
+      set_member_level: {
+        Args: {
+          _level: number
+          _member_id: string
+          _rank: Database["public"]["Enums"]["rank_name"]
+        }
+        Returns: Json
       }
       set_rival: { Args: { _rival_id: string }; Returns: undefined }
     }

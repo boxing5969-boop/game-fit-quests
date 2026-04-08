@@ -1,9 +1,9 @@
 import { usePendingMissionSubmissions, useApproveMission, useRejectMission, useHiddenMastery, useExternalCertProgress, useUpdateHiddenMastery, useUpdateCertProgress } from "@/hooks/useMissionData";
-import { useAssignedMembers, useGrantManualXp, usePassBossBattle, useManualLevelUp } from "@/hooks/useQuestData";
+import { useAssignedMembers, useGrantManualXp, usePassBossBattle, useManualLevelUp, useManualLevelDown, useSetMemberLevel } from "@/hooks/useQuestData";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, X, User, Zap, Trophy, Eye, Shield, BookOpen, Heart, Target, ArrowUp, Plus, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, X, User, Zap, Trophy, Eye, Shield, BookOpen, Heart, Target, ArrowUp, ArrowDown, Plus, Pencil, Trash2, Phone, Mail, MapPin, Calendar, Settings2 } from "lucide-react";
 import MissionManager from "@/components/MissionManager";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -31,6 +31,8 @@ const CoachDashboard = () => {
   const grantXpMutation = useGrantManualXp();
   const bossBattleMutation = usePassBossBattle();
   const levelUpMutation = useManualLevelUp();
+  const levelDownMutation = useManualLevelDown();
+  const setLevelMutation = useSetMemberLevel();
   const updateMastery = useUpdateHiddenMastery();
   const updateCert = useUpdateCertProgress();
 
@@ -53,6 +55,9 @@ const CoachDashboard = () => {
   const [detailMember, setDetailMember] = useState<any | null>(null);
   const [branchInput, setBranchInput] = useState("");
   const [editingBranch, setEditingBranch] = useState<{ id: string; name: string } | null>(null);
+  const [levelSetModal, setLevelSetModal] = useState<{ show: boolean; memberId: string; memberName: string; currentRank: string; currentLevel: number }>({ show: false, memberId: "", memberName: "", currentRank: "white", currentLevel: 1 });
+  const [setRank, setSetRank] = useState("white");
+  const [setLevel, setSetLevel] = useState(1);
 
   const handleApprove = async (subId: string) => {
     try {
@@ -108,6 +113,33 @@ const CoachDashboard = () => {
       } else {
         toast.error("레벨업 실패");
       }
+    }
+  };
+
+  const handleLevelDown = async (member: any) => {
+    const prog = Array.isArray(member.member_progress) ? member.member_progress[0] : member.member_progress;
+    if (!prog) return;
+    if (prog.current_rank === "white" && prog.current_level === 1) {
+      toast.error("화이트 Lv.1 이하로 강등할 수 없습니다");
+      return;
+    }
+    if (!confirm(`${member.nickname || member.name}을(를) 1레벨 강등하시겠습니까?`)) return;
+    try {
+      const result = await levelDownMutation.mutateAsync(member.user_id);
+      toast.success(`${member.nickname || member.name} → ${RANK_LABELS[result.new_rank] || result.new_rank} Lv.${result.new_level}로 강등`);
+    } catch (e: any) {
+      toast.error(e?.message || "강등 실패");
+    }
+  };
+
+  const handleSetLevel = async () => {
+    if (!levelSetModal.memberId) return;
+    try {
+      const result = await setLevelMutation.mutateAsync({ memberId: levelSetModal.memberId, rank: setRank, level: setLevel });
+      toast.success(`${levelSetModal.memberName} → ${RANK_LABELS[result.new_rank] || result.new_rank} Lv.${result.new_level} 설정 완료`);
+      setLevelSetModal({ show: false, memberId: "", memberName: "", currentRank: "white", currentLevel: 1 });
+    } catch (e: any) {
+      toast.error(e?.message || "레벨 설정 실패");
     }
   };
 
@@ -192,31 +224,81 @@ const CoachDashboard = () => {
                 <div key={member.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-xl">
-                      <User className="h-5 w-5 text-primary" />
+                      {member.avatar_url ? (
+                        <img src={member.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover" />
+                      ) : (
+                        <User className="h-5 w-5 text-primary" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">{member.nickname || member.name}</p>
-                      <p className="text-xs text-muted-foreground">{member.branch_name || "미설정"}</p>
+                      <p className="text-sm font-bold text-foreground truncate">{member.nickname || member.name || "이름 없음"}</p>
                       {prog && (
                         <div className="mt-1 flex items-center gap-2">
                           <span className="rounded-full bg-rank-blue/15 px-2 py-0.5 text-[10px] font-bold text-rank-blue">
                             {RANK_LABELS[prog.current_rank] || prog.current_rank} Lv.{prog.current_level}
                           </span>
                           <span className="text-[10px] text-muted-foreground">{prog.total_xp} XP</span>
-                          <span className="text-[10px] text-muted-foreground">🔥{prog.streak_days}일</span>
                         </div>
                       )}
                     </div>
                   </div>
 
+                  {/* Full Member Info */}
+                  <div className="mt-3 space-y-1.5 rounded-xl bg-secondary/50 p-3">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <User className="h-3 w-3" />
+                      <span className="text-foreground font-medium">{member.name || "미입력"}</span>
+                      <span className="text-muted-foreground">({member.nickname || "닉네임 없음"})</span>
+                    </div>
+                    {member.phone_number && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        <span>{member.phone_number}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span>{member.branch_name || "지점 미설정"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>가입: {new Date(member.created_at).toLocaleDateString("ko-KR")}</span>
+                    </div>
+                    {prog && (
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>🔥 {prog.streak_days}일 연속</span>
+                        <span>🏆 보스 {prog.bosses_cleared}회</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => setDetailMember(member)}
                       className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95">
-                      <Eye className="h-3.5 w-3.5" /> 상세보기
+                      <Eye className="h-3.5 w-3.5" /> 상세
                     </button>
                     <button onClick={() => setXpModal({ show: true, memberId: member.user_id, memberName: member.nickname || member.name })}
                       className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95">
-                      <Zap className="h-3.5 w-3.5" /> XP 지급
+                      <Zap className="h-3.5 w-3.5" /> XP
+                    </button>
+                    {role === "admin" && (
+                      <button onClick={() => {
+                        setLevelSetModal({ show: true, memberId: member.user_id, memberName: member.nickname || member.name, currentRank: prog?.current_rank || "white", currentLevel: prog?.current_level || 1 });
+                        setSetRank(prog?.current_rank || "white");
+                        setSetLevel(prog?.current_level || 1);
+                      }}
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95">
+                        <Settings2 className="h-3.5 w-3.5" /> 레벨설정
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Level Control Buttons */}
+                  <div className="mt-2 flex gap-2">
+                    <button onClick={() => handleLevelDown(member)} disabled={levelDownMutation.isPending || (prog?.current_rank === "white" && prog?.current_level === 1)}
+                      className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-destructive/10 py-2 text-xs font-bold text-destructive transition-all active:scale-95 disabled:opacity-30">
+                      <ArrowDown className="h-3.5 w-3.5" /> 강등
                     </button>
                     {!isBossReady && prog?.current_level < 10 && (
                       <button onClick={() => handleLevelUp(member)} disabled={levelUpMutation.isPending}
@@ -354,6 +436,43 @@ const CoachDashboard = () => {
               <button onClick={handleGrantXp} disabled={grantXpMutation.isPending}
                 className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
                 {grantXpMutation.isPending ? "지급 중..." : `${xpAmount} XP 지급하기`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Level Set Modal */}
+      {levelSetModal.show && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setLevelSetModal({ show: false, memberId: "", memberName: "", currentRank: "white", currentLevel: 1 })}>
+          <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="mb-4 text-lg text-foreground">⚙️ 레벨 직접 설정</h3>
+            <p className="mb-3 text-sm text-muted-foreground">대상: <strong className="text-foreground">{levelSetModal.memberName}</strong></p>
+            <p className="mb-3 text-xs text-muted-foreground">현재: {RANK_LABELS[levelSetModal.currentRank] || levelSetModal.currentRank} Lv.{levelSetModal.currentLevel}</p>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">랭크</label>
+                <div className="flex gap-2">
+                  {(["white", "blue", "red", "black"] as const).map(r => (
+                    <button key={r} onClick={() => setSetRank(r)}
+                      className={`flex-1 rounded-xl py-2 text-sm font-bold transition-all ${setRank === r ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+                    >{RANK_LABELS[r]}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">레벨 (1~10)</label>
+                <div className="flex gap-1.5 flex-wrap">
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map(l => (
+                    <button key={l} onClick={() => setSetLevel(l)}
+                      className={`h-9 w-9 rounded-lg text-sm font-bold transition-all ${setLevel === l ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+                    >{l}</button>
+                  ))}
+                </div>
+              </div>
+              <button onClick={handleSetLevel} disabled={setLevelMutation.isPending}
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                {setLevelMutation.isPending ? "설정 중..." : `${RANK_LABELS[setRank] || setRank} Lv.${setLevel}로 설정`}
               </button>
             </div>
           </div>
