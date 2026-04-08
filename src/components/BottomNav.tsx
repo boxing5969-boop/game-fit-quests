@@ -8,7 +8,7 @@ const tabs = [
   { path: "/rewards", icon: Gift, label: "보상" },
 ];
 
-const hiddenPaths = ["/", "/mypage", "/coach"];
+const hiddenPaths = ["/", "/mypage", "/coach", "/settings"];
 
 const BottomNav = () => {
   const location = useLocation();

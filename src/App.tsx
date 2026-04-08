@@ -13,6 +13,7 @@ import RewardsPage from "@/pages/RewardsPage";
 import HallOfFamePage from "@/pages/HallOfFamePage";
 import MyPage from "@/pages/MyPage";
 import CoachDashboard from "@/pages/CoachDashboard";
+import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
 
@@ -63,6 +64,7 @@ const AppRoutes = () => {
         <Route path="/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
         <Route path="/halloffame" element={<ProtectedRoute><HallOfFamePage /></ProtectedRoute>} />
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/coach" element={<ProtectedRoute><CoachRoute><CoachDashboard /></CoachRoute></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>

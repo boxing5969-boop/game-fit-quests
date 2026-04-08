@@ -74,7 +74,7 @@ const MyPage = () => {
 
         {/* Actions */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.15s" }}>
-          <button className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
+          <button onClick={() => navigate("/settings")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
             <div className="flex items-center gap-3">
               <Settings className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-foreground">설정</span>

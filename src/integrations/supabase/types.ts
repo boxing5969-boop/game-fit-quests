@@ -38,6 +38,24 @@ export type Database = {
         }
         Relationships: []
       }
+      branches: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       coach_assignments: {
         Row: {
           coach_id: string
