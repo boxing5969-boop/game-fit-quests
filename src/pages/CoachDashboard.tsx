@@ -127,8 +127,14 @@ const CoachDashboard = () => {
         </button>
         <button onClick={() => setActiveTab("members")}
           className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "members" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}>
-          👥 회원 관리
+          👥 회원
         </button>
+        {role === "admin" && (
+          <button onClick={() => setActiveTab("branches")}
+            className={`flex-1 rounded-xl py-3 text-sm font-bold transition-all ${activeTab === "branches" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-secondary-foreground"}`}>
+            🏢 지점
+          </button>
+        )}
       </div>
 
       {/* Pending Tab */}
