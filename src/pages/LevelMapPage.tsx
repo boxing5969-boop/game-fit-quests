@@ -518,7 +518,6 @@ const LevelMapPage = () => {
           )}
         </DrawerContent>
       </Drawer>
-    </div>
 
       {/* Admin: Edit Level Modal */}
       {editLevelModal && selectedNode && (
