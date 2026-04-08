@@ -94,7 +94,7 @@ const HallOfFamePage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
+    <div className="mx-auto max-w-lg px-4 pb-32 pt-4">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-2xl text-foreground">🏆 랭킹</h1>
         <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
