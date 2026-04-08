@@ -724,6 +724,10 @@ export type Database = {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: Json
       }
+      create_notification: {
+        Args: { _body?: string; _title: string; _user_id: string }
+        Returns: string
+      }
       get_boss_conquerors: {
         Args: { _branch_name: string; _limit?: number }
         Returns: {
@@ -736,6 +740,7 @@ export type Database = {
           rank_position: number
         }[]
       }
+      get_branch_stats: { Args: { _branch_name: string }; Returns: Json }
       get_division_ranking: {
         Args: { _branch_name: string; _limit?: number }
         Returns: {
@@ -830,10 +835,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_branch_manager_of: {
+        Args: { _manager_id: string; _member_id: string }
+        Returns: boolean
+      }
       is_coach_of: {
         Args: { _coach_id: string; _member_id: string }
         Returns: boolean
       }
+      is_same_branch: { Args: { _user_id: string }; Returns: boolean }
       manual_level_down: { Args: { _member_id: string }; Returns: Json }
       manual_level_up: { Args: { _member_id: string }; Returns: Json }
       pass_boss_battle: {
@@ -856,6 +866,20 @@ export type Database = {
       reject_quest_submission: {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
+      }
+      request_mission_revision: {
+        Args: { _coach_note?: string; _submission_id: string }
+        Returns: undefined
+      }
+      set_level_status: {
+        Args: {
+          _level: number
+          _member_id: string
+          _note?: string
+          _rank: Database["public"]["Enums"]["rank_name"]
+          _status: Database["public"]["Enums"]["level_status_type"]
+        }
+        Returns: Json
       }
       set_member_level: {
         Args: {
