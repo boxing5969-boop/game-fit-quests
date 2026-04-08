@@ -84,12 +84,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, [fetchUserData]);
 
-  const signUp = async (email: string, password: string, name: string, nickname: string) => {
+  const signUp = async (email: string, password: string, name: string, nickname: string, phoneNumber: string, isCoach?: boolean) => {
+    // Check phone uniqueness first
+    const { data: existing } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("phone_number", phoneNumber)
+      .maybeSingle();
+    if (existing) {
+      return { error: new Error("이미 등록된 전화번호입니다. 한 번호당 하나의 계정만 가능합니다.") };
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name, nickname },
+        data: { name, nickname, phone_number: phoneNumber, is_coach_request: isCoach || false },
         emailRedirectTo: window.location.origin,
       },
     });
