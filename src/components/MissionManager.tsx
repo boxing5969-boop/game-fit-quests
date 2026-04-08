@@ -57,8 +57,29 @@ const MissionManager = () => {
     const level = (levels || []).find(l => l.id === m.level_id);
     return level?.rank_name === filterRank;
   });
+  const handleFileUpload = async (file: File, type: "video" | "poster") => {
+    const setUploading = type === "video" ? setUploadingVideo : setUploadingPoster;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || (type === "video" ? "mp4" : "jpg");
+      const path = `${type}s/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from("mission-videos").upload(path, file);
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("mission-videos").getPublicUrl(path);
+      if (type === "video") {
+        setForm(f => ({ ...f, video_url: urlData.publicUrl }));
+      } else {
+        setForm(f => ({ ...f, poster_url: urlData.publicUrl }));
+      }
+      toast.success(type === "video" ? "영상 업로드 완료" : "포스터 업로드 완료");
+    } catch (e: any) {
+      toast.error(e?.message || "업로드 실패");
+    } finally {
+      setUploading(false);
+    }
+  };
 
-  const openCreate = () => {
+
     setForm(emptyForm);
     setEditingId(null);
     setShowForm(true);
