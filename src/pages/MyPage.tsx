@@ -1,5 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import RankBadge from "@/components/RankBadge";
+import AvatarUpload from "@/components/AvatarUpload";
 import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useXpLogs } from "@/hooks/useQuestData";
@@ -30,7 +31,7 @@ const MyPage = () => {
         {/* Profile Card */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-3xl">🥊</div>
+            <AvatarUpload size="lg" />
             <div className="flex-1">
               <h2 className="text-lg text-foreground">{profile.nickname || profile.name}</h2>
               <p className="text-sm text-muted-foreground">{profile.name}</p>

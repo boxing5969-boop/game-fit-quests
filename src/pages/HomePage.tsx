@@ -9,6 +9,7 @@ import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestDat
 import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
 import { useNavigate } from "react-router-dom";
 import { User, ChevronRight, TrendingUp, Play } from "lucide-react";
+import HallOfFameShowcase from "@/components/HallOfFameShowcase";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 
