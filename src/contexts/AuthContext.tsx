@@ -57,6 +57,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (data) setProgress(data);
   }, [user]);
 
+  const refreshProfile = useCallback(async () => {
+    if (!user) return;
+    await fetchUserData(user.id);
+  }, [user, fetchUserData]);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
@@ -122,7 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, role, progress, loading, refreshProgress, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, profile, role, progress, loading, refreshProgress, refreshProfile, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
