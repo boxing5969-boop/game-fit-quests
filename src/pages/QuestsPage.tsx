@@ -57,11 +57,18 @@ const QuestsPage = () => {
   };
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
-      <div className="mb-5 flex items-center justify-between">
+       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-2xl text-foreground">🥊 퀘스트</h1>
-        <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
-          <User className="h-5 w-5 text-secondary-foreground" />
-        </button>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button onClick={() => navigate("/coach")} className="flex h-10 items-center gap-1 rounded-full bg-primary/10 px-3 text-xs font-bold text-primary transition-all active:scale-95">
+              <Pencil className="h-3.5 w-3.5" /> 관리
+            </button>
+          )}
+          <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
+            <User className="h-5 w-5 text-secondary-foreground" />
+          </button>
+        </div>
       </div>
 
       {/* Completion Rate */}
@@ -113,12 +120,22 @@ const QuestsPage = () => {
                   </div>
                 )}
                 <div className={isBoss ? "rounded-2xl border-2 border-accent/40 bg-accent/5 p-1" : ""}>
-                  <QuestCard
-                    quest={q}
-                    submissionStatus={subStatus}
-                    onSubmit={() => handleSubmit(q.id)}
-                    isSubmitting={submitQuest.isPending}
-                  />
+                  <div className="relative">
+                    <QuestCard
+                      quest={q}
+                      submissionStatus={subStatus}
+                      onSubmit={() => handleSubmit(q.id)}
+                      isSubmitting={submitQuest.isPending}
+                    />
+                    {isAdmin && (
+                      <div className="absolute right-2 top-2 flex gap-1">
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteQuest(q.id, q.title); }}
+                          className="rounded-lg bg-destructive/80 p-1.5 text-destructive-foreground shadow-sm active:scale-95">
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
