@@ -3,27 +3,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import XPBar from "@/components/XPBar";
 import RankBadge from "@/components/RankBadge";
 import RankMiniCard from "@/components/RankMiniCard";
-import QuestCard from "@/components/QuestCard";
 import LevelUpModal from "@/components/LevelUpModal";
-import { useQuests, useMySubmissions, useSubmitQuest, useRecordAttendance, useLevels } from "@/hooks/useQuestData";
-import { useDivisionRanking, useRivalsAbove, useSetRival } from "@/hooks/useRankingData";
+import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
+import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestData";
+import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
 import { useNavigate } from "react-router-dom";
-import { User, ChevronRight, TrendingUp } from "lucide-react";
-import { celebrateSmall } from "@/lib/celebrations";
+import { User, ChevronRight, TrendingUp, Play } from "lucide-react";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
+const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 
 const HomePage = () => {
   const { user, profile, progress, role, refreshProgress } = useAuth();
   const navigate = useNavigate();
-  const { data: quests } = useQuests();
-  const { data: submissions } = useMySubmissions();
+  const { data: missions } = useMissions();
+  const { data: missionSubs } = useMyMissionSubmissions();
   const { data: levels } = useLevels();
   const { data: ranking } = useDivisionRanking();
   const { data: rivalsAbove } = useRivalsAbove();
-  const submitQuest = useSubmitQuest();
+  const { data: myBadges } = useMyBadges();
   const attendance = useRecordAttendance();
   const setRival = useSetRival();
   const [levelUpModal, setLevelUpModal] = useState<{ show: boolean; level: number; rank: string; xp: number }>({ show: false, level: 0, rank: "", xp: 0 });
@@ -40,22 +40,23 @@ const HomePage = () => {
     || (progress.current_level === 10 ? currentLevel : null);
   const xpToNext = nextLevel?.xp_required || currentLevel?.xp_required || (progress.current_level * 50);
   const xpRemaining = Math.max(0, xpToNext - progress.total_xp);
-
-  // My position
   const myPosition = ranking?.find(r => r.r_user_id === user?.id)?.rank_position;
 
-  // Quest status
-  const submissionMap = new Map((submissions || []).map(s => [s.quest_id, s.status]));
-  const questsWithStatus = (quests || []).map(q => ({ ...q, subStatus: submissionMap.get(q.id) || null }));
-  const todayQuest = questsWithStatus.find(q => (q.quest_type === "main" || q.quest_type === "sub") && !q.subStatus);
+  // Today's mission - first uncompleted mission at current level
+  const currentGlobal = RANK_ORDER.indexOf(rank) * 10 + progress.current_level;
+  const subMap = new Map((missionSubs || []).map(s => [s.mission_id, s.status]));
+  const todayMission = (missions || []).find(m => {
+    const level = (m as any).levels;
+    if (!level) return false;
+    const mGlobal = RANK_ORDER.indexOf(level.rank_name) * 10 + level.level_number;
+    return mGlobal <= currentGlobal && subMap.get(m.id) !== "approved";
+  });
 
-  const handleSubmit = async (questId: string) => {
-    try {
-      await submitQuest.mutateAsync(questId);
-      celebrateSmall();
-      toast.success("완료 요청을 보냈습니다! 🥊");
-    } catch { toast.error("요청 실패"); }
-  };
+  // Recent badges
+  const recentBadges = (myBadges || []).slice(0, 3);
+
+  // MASTER 40 check
+  const isMaster40 = rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
@@ -71,7 +72,16 @@ const HomePage = () => {
       </div>
 
       <div className="space-y-5">
-        {/* ── 1. 내 계급/레벨 대형 배지 + 순위 ── */}
+        {/* ── MASTER 40 ── */}
+        {isMaster40 && (
+          <div className="animate-bounce-in rounded-2xl border-2 border-accent bg-gradient-to-r from-accent/20 to-primary/20 p-5 text-center shadow-lg">
+            <span className="text-4xl">🏆</span>
+            <h2 className="mt-2 text-xl text-foreground">MASTER 40 달성!</h2>
+            <p className="text-sm text-muted-foreground">모든 계급을 정복했습니다</p>
+          </div>
+        )}
+
+        {/* ── 1. 내 계급/레벨 배지 + 순위 ── */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <RankBadge rank={rank} level={progress.current_level} size="lg" />
@@ -92,15 +102,32 @@ const HomePage = () => {
           </p>
         </div>
 
-        {/* ── 2. 승급 조건 요약 ── */}
-        <NextPromotionCard rank={rank} level={progress.current_level} xpRemaining={xpRemaining} />
-
-        {/* ── 3. 내 위 추격 대상 ── */}
-        {rivalsAbove && rivalsAbove.length > 0 && (
+        {/* ── 2. 오늘의 미션 ── */}
+        {todayMission && (
           <div className="animate-slide-up" style={{ animationDelay: "0.05s" }}>
-            <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-foreground">
-              🎯 추격 대상
-            </h2>
+            <h2 className="mb-3 text-base font-bold text-foreground">🥊 오늘의 미션</h2>
+            <button
+              onClick={() => navigate("/missions")}
+              className="w-full rounded-2xl border border-primary/30 bg-card p-4 shadow-sm transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <Play className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-bold text-foreground">{todayMission.title}</p>
+                  <p className="text-xs text-muted-foreground">+{todayMission.xp_reward} XP</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* ── 3. 추격 대상 ── */}
+        {rivalsAbove && rivalsAbove.length > 0 && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
+            <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-foreground">🎯 추격 대상</h2>
             <div className="space-y-2">
               {rivalsAbove.map(rival => (
                 <RankMiniCard
@@ -123,31 +150,35 @@ const HomePage = () => {
         )}
 
         {/* ── 4. Stats Row ── */}
-        <div className="grid grid-cols-3 gap-2.5 animate-slide-up" style={{ animationDelay: "0.1s" }}>
+        <div className="grid grid-cols-3 gap-2.5 animate-slide-up" style={{ animationDelay: "0.15s" }}>
           <StatBox icon={progress.streak_days >= 3 ? "🔥" : "💪"} label="연속 출석" value={`${progress.streak_days}일`} />
           <StatBox icon="⚡" label="누적 XP" value={progress.total_xp.toLocaleString()} />
           <StatBox icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
         </div>
 
-        {/* ── 5. CTA ── */}
-        <button
-          onClick={() => navigate("/quests")}
-          className="w-full animate-slide-up rounded-2xl bg-primary py-5 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
-          style={{ animationDelay: "0.15s" }}
-        >
-          🥊 오늘 도전 시작
-        </button>
-
-        {/* ── 6. 오늘 퀘스트 ── */}
-        {todayQuest && (
+        {/* ── 5. 최근 배지 ── */}
+        {recentBadges.length > 0 && (
           <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
-            <h2 className="mb-3 text-base font-bold text-foreground">🥊 오늘의 퀘스트</h2>
-            <QuestCard quest={todayQuest} submissionStatus={null} onSubmit={() => handleSubmit(todayQuest.id)} isSubmitting={submitQuest.isPending} />
+            <h2 className="mb-3 text-base font-bold text-foreground">🏅 최근 획득 배지</h2>
+            <div className="flex gap-2">
+              {recentBadges.map((mb: any) => (
+                <div key={mb.id} className="flex flex-col items-center gap-1 rounded-2xl border border-primary/20 bg-card p-3 shadow-sm">
+                  <span className="text-2xl">{mb.badges?.image_url || "🏅"}</span>
+                  <span className="text-[10px] font-bold text-foreground">{mb.badges?.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* ── 7. 최근 승급자 ── */}
-        <RecentPromotions ranking={ranking} />
+        {/* ── 6. CTA ── */}
+        <button
+          onClick={() => navigate("/missions")}
+          className="w-full animate-slide-up rounded-2xl bg-primary py-5 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
+          style={{ animationDelay: "0.25s" }}
+        >
+          🥊 오늘 도전 시작
+        </button>
 
         {/* Coach shortcut */}
         {(role === "coach" || role === "admin") && (
@@ -157,7 +188,7 @@ const HomePage = () => {
                 <span className="text-2xl">📋</span>
                 <div>
                   <p className="text-sm font-bold text-foreground">{role === "admin" ? "관리자 대시보드" : "코치 대시보드"}</p>
-                  <p className="text-xs text-muted-foreground">승인 대기 퀘스트 관리</p>
+                  <p className="text-xs text-muted-foreground">미션 승인 및 회원 관리</p>
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
@@ -177,12 +208,10 @@ const HomePage = () => {
   );
 };
 
-/* ── Sub Components ── */
-
 const LoadingState = () => (
   <div className="flex min-h-screen items-center justify-center">
     <div className="text-center">
-      <div className="mx-auto mb-4 h-16 w-16 animate-pulse rounded-2xl bg-primary/20" />
+      <div className="mx-auto mb-4 h-16 w-16 animate-pulse rounded-2xl bg-primary/20 flex items-center justify-center text-3xl">🥊</div>
       <p className="text-muted-foreground">로딩 중...</p>
     </div>
   </div>
@@ -195,72 +224,5 @@ const StatBox = ({ icon, label, value }: { icon: string; label: string; value: s
     <span className="text-lg font-bold text-foreground">{value}</span>
   </div>
 );
-
-const NextPromotionCard = ({ rank, level, xpRemaining }: { rank: string; level: number; xpRemaining: number }) => {
-  const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
-  const isBossLevel = level === 10;
-  const nextRankMap: Record<string, string> = { white: "블루", blue: "레드", red: "블랙", black: "블랙" };
-
-  return (
-    <div className="animate-slide-up rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-4">
-      <p className="mb-2 text-xs font-bold text-primary">
-        {isBossLevel ? `🏆 ${nextRankMap[rank]} 승급 조건` : `⬆️ Lv.${level + 1} 승급 조건`}
-      </p>
-      <div className="space-y-1.5 text-xs text-foreground">
-        <div className="flex items-center gap-2">
-          <span className={xpRemaining <= 0 ? "text-green-500" : "text-muted-foreground"}>
-            {xpRemaining <= 0 ? "✅" : "⬜"}
-          </span>
-          <span>필요 XP 달성 {xpRemaining > 0 && `(${xpRemaining} XP 부족)`}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">⬜</span>
-          <span>메인 퀘스트 1개 승인</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">⬜</span>
-          <span>서브 퀘스트 1개 승인</span>
-        </div>
-        {isBossLevel && (
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">⬜</span>
-            <span>🥊 타이틀매치 클리어</span>
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">⬜</span>
-          <span>코치 최종 승인</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const RecentPromotions = ({ ranking }: { ranking?: any[] }) => {
-  // Show top 3 high-level members as "role models"
-  const topMembers = (ranking || []).slice(0, 3);
-  if (topMembers.length === 0) return null;
-
-  return (
-    <div className="animate-slide-up" style={{ animationDelay: "0.25s" }}>
-      <h2 className="mb-3 text-base font-bold text-foreground">👑 상위 랭커</h2>
-      <div className="rounded-2xl border border-border bg-card shadow-sm">
-        {topMembers.map((m, idx) => (
-          <div key={m.r_user_id} className={`flex items-center gap-3 px-4 py-3 ${idx < topMembers.length - 1 ? "border-b border-border" : ""}`}>
-            <span className="text-lg">{["🥇", "🥈", "🥉"][idx]}</span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-foreground">{m.r_nickname}</p>
-              <p className="text-xs text-muted-foreground">
-                {RANK_LABELS[m.r_current_rank] || m.r_current_rank} Lv.{m.r_current_level} · {m.r_total_xp} XP
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const RANK_LABELS_TOP: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
 export default HomePage;
