@@ -116,6 +116,33 @@ const CoachDashboard = () => {
     }
   };
 
+  const handleLevelDown = async (member: any) => {
+    const prog = Array.isArray(member.member_progress) ? member.member_progress[0] : member.member_progress;
+    if (!prog) return;
+    if (prog.current_rank === "white" && prog.current_level === 1) {
+      toast.error("화이트 Lv.1 이하로 강등할 수 없습니다");
+      return;
+    }
+    if (!confirm(`${member.nickname || member.name}을(를) 1레벨 강등하시겠습니까?`)) return;
+    try {
+      const result = await levelDownMutation.mutateAsync(member.user_id);
+      toast.success(`${member.nickname || member.name} → ${RANK_LABELS[result.new_rank] || result.new_rank} Lv.${result.new_level}로 강등`);
+    } catch (e: any) {
+      toast.error(e?.message || "강등 실패");
+    }
+  };
+
+  const handleSetLevel = async () => {
+    if (!levelSetModal.memberId) return;
+    try {
+      const result = await setLevelMutation.mutateAsync({ memberId: levelSetModal.memberId, rank: setRank, level: setLevel });
+      toast.success(`${levelSetModal.memberName} → ${RANK_LABELS[result.new_rank] || result.new_rank} Lv.${result.new_level} 설정 완료`);
+      setLevelSetModal({ show: false, memberId: "", memberName: "", currentRank: "white", currentLevel: 1 });
+    } catch (e: any) {
+      toast.error(e?.message || "레벨 설정 실패");
+    }
+  };
+
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
       <div className="mb-5 flex items-center gap-3">
