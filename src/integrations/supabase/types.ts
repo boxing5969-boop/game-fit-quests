@@ -127,6 +127,7 @@ export type Database = {
           current_level: number
           current_rank: Database["public"]["Enums"]["rank_name"]
           id: string
+          rival_id: string | null
           streak_days: number
           total_xp: number
           updated_at: string
@@ -137,6 +138,7 @@ export type Database = {
           current_level?: number
           current_rank?: Database["public"]["Enums"]["rank_name"]
           id?: string
+          rival_id?: string | null
           streak_days?: number
           total_xp?: number
           updated_at?: string
@@ -147,6 +149,7 @@ export type Database = {
           current_level?: number
           current_rank?: Database["public"]["Enums"]["rank_name"]
           id?: string
+          rival_id?: string | null
           streak_days?: number
           total_xp?: number
           updated_at?: string
@@ -323,9 +326,85 @@ export type Database = {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: Json
       }
+      get_boss_conquerors: {
+        Args: { _branch_name: string; _limit?: number }
+        Returns: {
+          r_avatar_url: string
+          r_bosses_cleared: number
+          r_current_level: number
+          r_current_rank: Database["public"]["Enums"]["rank_name"]
+          r_nickname: string
+          r_user_id: string
+          rank_position: number
+        }[]
+      }
+      get_division_ranking: {
+        Args: { _branch_name: string; _limit?: number }
+        Returns: {
+          r_avatar_url: string
+          r_bosses_cleared: number
+          r_current_level: number
+          r_current_rank: Database["public"]["Enums"]["rank_name"]
+          r_nickname: string
+          r_streak_days: number
+          r_total_xp: number
+          r_user_id: string
+          rank_position: number
+        }[]
+      }
+      get_monthly_risers: {
+        Args: { _branch_name: string; _limit?: number }
+        Returns: {
+          monthly_xp: number
+          r_avatar_url: string
+          r_current_level: number
+          r_current_rank: Database["public"]["Enums"]["rank_name"]
+          r_nickname: string
+          r_user_id: string
+          rank_position: number
+        }[]
+      }
       get_quest_xp: {
         Args: { qt: Database["public"]["Enums"]["quest_type"] }
         Returns: number
+      }
+      get_rivals_above: {
+        Args: { _count?: number; _user_id: string }
+        Returns: {
+          r_avatar_url: string
+          r_bosses_cleared: number
+          r_current_level: number
+          r_current_rank: Database["public"]["Enums"]["rank_name"]
+          r_nickname: string
+          r_streak_days: number
+          r_total_xp: number
+          r_user_id: string
+          rank_position: number
+        }[]
+      }
+      get_streak_ranking: {
+        Args: { _branch_name: string; _limit?: number }
+        Returns: {
+          r_avatar_url: string
+          r_current_level: number
+          r_current_rank: Database["public"]["Enums"]["rank_name"]
+          r_nickname: string
+          r_streak_days: number
+          r_user_id: string
+          rank_position: number
+        }[]
+      }
+      get_weekly_activity_ranking: {
+        Args: { _branch_name: string; _limit?: number }
+        Returns: {
+          r_avatar_url: string
+          r_current_level: number
+          r_current_rank: Database["public"]["Enums"]["rank_name"]
+          r_nickname: string
+          r_user_id: string
+          rank_position: number
+          weekly_xp: number
+        }[]
       }
       grant_manual_xp: {
         Args: { _amount: number; _member_id: string; _reason?: string }
@@ -346,11 +425,16 @@ export type Database = {
         Args: { _coach_note?: string; _member_id: string }
         Returns: Json
       }
+      rank_order: {
+        Args: { _rank: Database["public"]["Enums"]["rank_name"] }
+        Returns: number
+      }
       record_attendance: { Args: { _user_id: string }; Returns: undefined }
       reject_quest_submission: {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
       }
+      set_rival: { Args: { _rival_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "member" | "coach" | "admin"
