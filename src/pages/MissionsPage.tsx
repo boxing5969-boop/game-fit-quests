@@ -182,7 +182,8 @@ const MissionsPage = () => {
                           onSubmit={() => handleSubmit(mission.id)}
                           isSubmitting={submitMission.isPending || adminClearing}
                           adminMode={role === "admin"}
-                        />
+                         />
+                      );
                     })
                   )}
                 </div>
