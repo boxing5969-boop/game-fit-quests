@@ -376,6 +376,33 @@ export type Database = {
           },
         ]
       }
+      phone_verifications: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          phone_number: string
+          verified: boolean
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          phone_number: string
+          verified?: boolean
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          phone_number?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -384,6 +411,7 @@ export type Database = {
           id: string
           name: string
           nickname: string
+          phone_number: string | null
           updated_at: string
           user_id: string
         }
@@ -394,6 +422,7 @@ export type Database = {
           id?: string
           name?: string
           nickname?: string
+          phone_number?: string | null
           updated_at?: string
           user_id: string
         }
@@ -404,6 +433,7 @@ export type Database = {
           id?: string
           name?: string
           nickname?: string
+          phone_number?: string | null
           updated_at?: string
           user_id?: string
         }
