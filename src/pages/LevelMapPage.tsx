@@ -21,9 +21,10 @@ const SECRET_MISSIONS = [
     emoji: "🏅",
     title: "한국복싱협회 단증 심사관",
     subtitle: "심사관이 되어 후배를 이끄세요",
-    description: "한국복싱협회 공인 단증 심사관 자격을 취득하세요. 미션 탭에서 심사관 시험 방법을 확인할 수 있습니다.",
-    cta: "미션탭에서 확인하기",
-    linkTo: "/missions",
+    description: "한국복싱협회 공인 단증 심사관 자격을 취득하세요. 승단 신청서를 작성하고 도전하세요!",
+    cta: "🥊 도전하기!",
+    linkTo: "https://korea-boxing.lovable.app",
+    isExternal: true,
   },
   {
     id: "secret-2",
@@ -31,9 +32,10 @@ const SECRET_MISSIONS = [
     emoji: "🛡️",
     title: "인증 복싱코치 자격증",
     subtitle: "공식 코치로 인정받으세요",
-    description: "한국 코치협회 인증 복싱코치 자격증을 획득하세요. 코칭의 끝판왕에 도전하세요.",
-    cta: "코치 자격 트랙 보기",
-    linkTo: "/cert-benefits",
+    description: "한국 코치협회 인증 복싱코치 자격증을 획득하세요. 승단 신청서를 작성하고 도전하세요!",
+    cta: "🥊 도전하기!",
+    linkTo: "https://korea-boxing.lovable.app",
+    isExternal: true,
   },
 ];
 
@@ -464,8 +466,12 @@ const LevelMapPage = () => {
               </div>
               <button
                 onClick={() => {
+                  if (showSecretDetail.isExternal) {
+                    window.open(showSecretDetail.linkTo, "_blank");
+                  } else {
+                    navigate(showSecretDetail.linkTo);
+                  }
                   setShowSecretDetail(null);
-                  navigate(showSecretDetail.linkTo);
                 }}
                 className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98]"
               >

@@ -28,7 +28,7 @@ const HallOfFameShowcase = () => {
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-amber-300/30 bg-gradient-to-b from-amber-50/50 to-card p-6 text-center">
           <span className="text-3xl">👑</span>
           <p className="text-sm font-bold text-foreground">아직 명예의 전당 회원이 없습니다</p>
-          <p className="text-xs text-muted-foreground">블랙벨트 Lv.10을 달성하면 이곳에 등극!</p>
+          <p className="text-xs text-muted-foreground">블랙벨트 Lv.10 + 마스터 미션 달성 시 등극!</p>
         </div>
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
