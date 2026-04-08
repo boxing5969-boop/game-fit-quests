@@ -13,6 +13,7 @@ interface AuthContextType {
   progress: Tables<"member_progress"> | null;
   loading: boolean;
   refreshProgress: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   signUp: (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
