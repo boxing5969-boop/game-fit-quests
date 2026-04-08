@@ -17,11 +17,13 @@ const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루"
 
 const MissionsPage = () => {
   const navigate = useNavigate();
-  const { progress } = useAuth();
+  const { progress, role, user, refreshProgress } = useAuth();
   const { data: missions, isLoading } = useMissions();
   const { data: submissions } = useMyMissionSubmissions();
   const submitMission = useSubmitMission();
   const { data: levels } = useLevels();
+  const qc = useQueryClient();
+  const [adminClearing, setAdminClearing] = useState(false);
 
   const [videoModal, setVideoModal] = useState<{
     show: boolean;
