@@ -161,7 +161,74 @@ const CertBenefitsPage = () => {
         </div>
       </section>
 
-      {/* 실제 가점 상세 정보 */}
+      {/* 레벨 → 단증 로드맵 */}
+      <section className="px-4 py-6">
+        <h3 className="mb-2 font-display text-lg font-bold">🥊 153 레벨업 → 단증 로드맵</h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          각 벨트 레벨을 마스터하면 해당 단수 심사에 도전할 수 있는 실력이 완성됩니다.
+        </p>
+        <div className="space-y-3">
+          {levelProgression.map((item, i) => (
+            <div
+              key={i}
+              className="flex gap-4 rounded-xl border border-border bg-card p-4"
+            >
+              <div className="flex flex-col items-center gap-1">
+                <div
+                  className="flex h-12 w-12 items-center justify-center rounded-full border-2 font-display text-lg font-bold text-white"
+                  style={{ borderColor: item.color, backgroundColor: `${item.color}20` }}
+                >
+                  {item.danTarget}
+                </div>
+                {i < levelProgression.length - 1 && (
+                  <div className="h-full w-0.5 bg-border" />
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-display text-sm font-bold">{item.rank} 벨트</span>
+                  <span className="text-xs text-muted-foreground">{item.levels}</span>
+                </div>
+                <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+                  {item.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 올 마스터 보상 */}
+      <section className="px-4 py-6">
+        <div className="rounded-2xl bg-gradient-to-br from-[hsl(14,90%,15%)] to-[hsl(14,40%,8%)] p-5 text-white">
+          <h3 className="font-display text-lg font-bold">🏆 블랙 레벨 마스터 달성 시</h3>
+          <p className="mt-1 text-sm text-white/70">
+            153 레벨업 전 과정을 완주하면 받게 되는 특별 혜택
+          </p>
+          <div className="mt-5 space-y-3">
+            {ultimateRewards.map((reward, i) => {
+              const Icon = reward.icon;
+              return (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10">
+                    <Icon className="h-4.5 w-4.5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">{reward.title}</p>
+                    <p className="text-[12px] leading-relaxed text-white/60">{reward.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <Button
+            onClick={() => navigate("/level-map")}
+            className="mt-5 w-full rounded-full"
+          >
+            내 레벨 확인하기
+            <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
       <section className="px-4 py-4">
         <h3 className="mb-3 font-display text-lg font-bold">📋 실제 가점 상세 정보</h3>
         <Accordion type="single" collapsible className="space-y-2">
