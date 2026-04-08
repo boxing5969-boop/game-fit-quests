@@ -42,6 +42,10 @@ const MissionManager = () => {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filterRank, setFilterRank] = useState<string>("all");
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingPoster, setUploadingPoster] = useState(false);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const posterInputRef = useRef<HTMLInputElement>(null);
 
   const sortedLevels = (levels || []).sort((a, b) => {
     const ri = RANK_ORDER.indexOf(a.rank_name) - RANK_ORDER.indexOf(b.rank_name);
