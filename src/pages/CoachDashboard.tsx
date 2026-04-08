@@ -81,6 +81,19 @@ const CoachDashboard = () => {
     } catch { toast.error("합격 처리 실패"); }
   };
 
+  const handleLevelUp = async (member: any) => {
+    try {
+      const result = await levelUpMutation.mutateAsync(member.user_id);
+      toast.success(`${member.nickname || member.name} → Lv.${result.new_level} 레벨업! 🥊`);
+    } catch (e: any) {
+      if (e?.message?.includes("boss battle")) {
+        toast.error("Lv.10은 타이틀매치로 승급해야 합니다");
+      } else {
+        toast.error("레벨업 실패");
+      }
+    }
+  };
+
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
       <div className="mb-5 flex items-center gap-3">
