@@ -9,7 +9,7 @@ const QuestsPage = () => {
 
   return (
     <div className="mx-auto max-w-lg space-y-6 px-4 pb-24 pt-6">
-      <h1 className="text-2xl">⚔️ 퀘스트</h1>
+      <h1 className="text-2xl">🥊 퀘스트</h1>
 
       {active.length > 0 && (
         <section>

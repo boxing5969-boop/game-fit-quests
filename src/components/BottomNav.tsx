@@ -1,9 +1,9 @@
-import { Home, Sword, Map, Gift } from "lucide-react";
+import { Home, Target, Map, Gift } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const tabs = [
   { path: "/", icon: Home, label: "홈" },
-  { path: "/quests", icon: Sword, label: "퀘스트" },
+  { path: "/quests", icon: Target, label: "퀘스트" },
   { path: "/levelmap", icon: Map, label: "레벨맵" },
   { path: "/rewards", icon: Gift, label: "보상" },
 ];

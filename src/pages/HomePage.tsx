@@ -29,7 +29,7 @@ const HomePage = () => {
       {/* Today's Featured Quest */}
       {activeQuest && (
         <div>
-          <h2 className="mb-3 text-lg">🎯 오늘의 퀘스트</h2>
+          <h2 className="mb-3 text-lg">🥊 오늘의 퀘스트</h2>
           <QuestCard quest={activeQuest} />
         </div>
       )}
