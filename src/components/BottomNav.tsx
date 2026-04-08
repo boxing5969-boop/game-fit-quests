@@ -1,4 +1,4 @@
-import { Home, Target, Map, Trophy, Gift } from "lucide-react";
+import { Home, Target, Map, Trophy, Gift, ScrollText } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const tabs = [
