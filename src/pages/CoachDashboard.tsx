@@ -52,7 +52,7 @@ const CoachDashboard = () => {
     },
   });
 
-  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions" | "coach-requests">("pending");
   const [rankUpInfo, setRankUpInfo] = useState<{ show: boolean; oldRank: string; newRank: string; memberName: string }>({ show: false, oldRank: "", newRank: "", memberName: "" });
   const [xpModal, setXpModal] = useState<{ show: boolean; memberId: string; memberName: string }>({ show: false, memberId: "", memberName: "" });
   const [xpAmount, setXpAmount] = useState(10);
