@@ -3,7 +3,7 @@ import { useLevels, useManualLevelUp, usePassBossBattle } from "@/hooks/useQuest
 import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
 import { useAuth } from "@/contexts/AuthContext";
 import RankBadge from "@/components/RankBadge";
-import { Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp } from "lucide-react";
+import { Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp, Crown, Shield, Award, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -13,8 +13,40 @@ const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 const RANK_ICONS: Record<string, string> = { white: "⚪", blue: "🔵", red: "🔴", black: "⚫" };
 
+const SECRET_MISSIONS = [
+  {
+    id: "secret-1",
+    icon: Award,
+    emoji: "🏅",
+    title: "한국복싱협회 단증 심사관",
+    subtitle: "심사관이 되어 후배를 이끄세요",
+    description: "한국복싱협회 공인 단증 심사관 자격을 취득하세요. 미션 탭에서 심사관 시험 방법을 확인할 수 있습니다.",
+    cta: "미션탭에서 확인하기",
+    linkTo: "/missions",
+  },
+  {
+    id: "secret-2",
+    icon: Shield,
+    emoji: "🛡️",
+    title: "인증 복싱코치 자격증",
+    subtitle: "공식 코치로 인정받으세요",
+    description: "한국 코치협회 인증 복싱코치 자격증을 획득하세요. 코칭의 끝판왕에 도전하세요.",
+    cta: "코치 자격 트랙 보기",
+    linkTo: "/cert-benefits",
+  },
+];
+
+const FINAL_REWARDS = [
+  { emoji: "💰", label: "153복싱짐 50% 영구 할인" },
+  { emoji: "🏆", label: "명예의 전당 입성" },
+  { emoji: "🔐", label: "명예의 전당 전용 락카" },
+  { emoji: "👕", label: "운동복 평생 무료 제공" },
+  { emoji: "🌐", label: "153복싱짐 홈페이지 명예의 전당" },
+];
+
 const LevelMapPage = () => {
   const [selectedNode, setSelectedNode] = useState<Tables<"levels"> | null>(null);
+  const [showSecretDetail, setShowSecretDetail] = useState<typeof SECRET_MISSIONS[0] | null>(null);
   const navigate = useNavigate();
   const { progress, role, user, refreshProgress } = useAuth();
   const { data: levels, isLoading } = useLevels();
@@ -27,8 +59,8 @@ const LevelMapPage = () => {
 
   const currentGlobal = RANK_ORDER.indexOf(progress.current_rank as Enums<"rank_name">) * 10 + progress.current_level;
   const subMap = new Map((missionSubs || []).map(s => [s.mission_id, s.status]));
+  const isMaxLevel = progress.current_rank === "black" && progress.current_level === 10;
 
-  // Missions for selected node
   const selectedMissions = selectedNode
     ? (missions || []).filter(m => m.level_id === selectedNode.id)
     : [];
@@ -133,6 +165,99 @@ const LevelMapPage = () => {
               </div>
             );
           })}
+
+          {/* ═══ SECRET FINAL MASTER MISSION ═══ */}
+          <div className="animate-slide-up" style={{ animationDelay: "0.5s" }}>
+            <div className="relative overflow-hidden rounded-3xl border-2 border-accent/40 bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90 p-5 shadow-2xl">
+              {/* Sparkle effects */}
+              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute -left-4 -top-4 h-32 w-32 rounded-full bg-accent/20 blur-3xl" />
+                <div className="absolute -bottom-4 -right-4 h-32 w-32 rounded-full bg-primary/20 blur-3xl" />
+                <div className="absolute left-1/2 top-1/3 h-16 w-16 rounded-full bg-accent/10 blur-2xl" style={{ animation: "pulse 3s ease-in-out infinite" }} />
+              </div>
+
+              {/* Header */}
+              <div className="relative mb-4 text-center">
+                <div className="mb-2 flex items-center justify-center gap-2">
+                  <Sparkles className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite" }} />
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Secret Mission</span>
+                  <Sparkles className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
+                </div>
+                <h3 className="text-xl font-black text-primary-foreground" style={{ fontFamily: "'Black Han Sans', sans-serif" }}>
+                  🏆 최종 마스터 미션
+                </h3>
+                <p className="mt-1 text-xs text-primary-foreground/60">블랙벨트 Lv.10 달성 후 도전할 수 있는 시크릿 미션</p>
+              </div>
+
+              {/* Mission Cards */}
+              <div className="relative space-y-3">
+                {SECRET_MISSIONS.map((mission, idx) => {
+                  const MIcon = mission.icon;
+                  return (
+                    <button
+                      key={mission.id}
+                      onClick={() => {
+                        if (isMaxLevel) {
+                          setShowSecretDetail(mission);
+                        } else {
+                          toast("블랙벨트 Lv.10 달성 후 도전할 수 있습니다! 🥊");
+                        }
+                      }}
+                      className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-all active:scale-[0.98] ${
+                        isMaxLevel
+                          ? "border-accent/30 bg-accent/10 hover:border-accent/50"
+                          : "border-primary-foreground/10 bg-primary-foreground/5"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 p-4">
+                        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+                          isMaxLevel ? "bg-accent/20" : "bg-primary-foreground/10"
+                        }`}>
+                          {isMaxLevel ? (
+                            <MIcon className="h-6 w-6 text-accent" />
+                          ) : (
+                            <Lock className="h-6 w-6 text-primary-foreground/30" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-black text-primary-foreground">{mission.emoji} {mission.title}</span>
+                          </div>
+                          <p className="mt-0.5 text-xs text-primary-foreground/50">{mission.subtitle}</p>
+                        </div>
+                        {isMaxLevel && (
+                          <Crown className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite" }} />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Rewards Preview */}
+              <div className="relative mt-4 rounded-2xl border border-accent/20 bg-accent/5 p-4">
+                <p className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-accent">
+                  ✨ 최종 미션 달성 보상 ✨
+                </p>
+                <div className="space-y-2">
+                  {FINAL_REWARDS.map((r, i) => (
+                    <div key={i} className="flex items-center gap-2.5 rounded-xl bg-primary-foreground/5 px-3 py-2">
+                      <span className="text-base">{r.emoji}</span>
+                      <span className="text-xs font-bold text-primary-foreground/80">{r.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Lock overlay for non-max */}
+              {!isMaxLevel && (
+                <div className="relative mt-4 flex items-center justify-center gap-2 rounded-xl bg-primary-foreground/5 py-2.5">
+                  <Lock className="h-4 w-4 text-primary-foreground/40" />
+                  <span className="text-xs font-bold text-primary-foreground/40">블랙벨트 Lv.10 달성 시 해금</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -189,7 +314,6 @@ const LevelMapPage = () => {
                 </div>
               )}
 
-              {/* Admin instant level-up */}
               {role === "admin" && user && !selectedNode.is_boss && (
                 <button
                   onClick={async () => {
@@ -210,7 +334,6 @@ const LevelMapPage = () => {
                 </button>
               )}
 
-              {/* Admin boss battle pass */}
               {role === "admin" && user && selectedNode.is_boss && (
                 <button
                   onClick={async () => {
@@ -235,12 +358,50 @@ const LevelMapPage = () => {
                 </button>
               )}
 
-              {/* Regular button */}
               <button
                 onClick={() => { setSelectedNode(null); navigate("/missions"); }}
                 className={`w-full rounded-xl ${role === "admin" ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"} py-3 text-sm font-bold shadow-md transition-all active:scale-[0.98]`}
               >
                 미션 보러가기
+              </button>
+            </div>
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      {/* Secret Mission Detail Drawer */}
+      <Drawer open={!!showSecretDetail} onOpenChange={(open) => !open && setShowSecretDetail(null)}>
+        <DrawerContent className="mx-auto max-w-lg pb-safe">
+          <DrawerHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{showSecretDetail?.emoji}</span>
+              <DrawerTitle>{showSecretDetail?.title}</DrawerTitle>
+            </div>
+          </DrawerHeader>
+          {showSecretDetail && (
+            <div className="space-y-4 px-4 pb-6">
+              <div className="rounded-xl bg-gradient-to-br from-accent/10 to-primary/10 p-4">
+                <p className="text-sm font-bold text-foreground">{showSecretDetail.description}</p>
+              </div>
+              <div className="rounded-xl bg-secondary p-4">
+                <p className="mb-2 text-xs font-bold text-muted-foreground">🎁 달성 보상</p>
+                <div className="space-y-1.5">
+                  {FINAL_REWARDS.map((r, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-foreground">
+                      <span>{r.emoji}</span>
+                      <span>{r.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowSecretDetail(null);
+                  navigate(showSecretDetail.linkTo);
+                }}
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98]"
+              >
+                {showSecretDetail.cta}
               </button>
             </div>
           )}
