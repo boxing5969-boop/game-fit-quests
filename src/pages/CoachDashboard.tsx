@@ -33,12 +33,25 @@ const CoachDashboard = () => {
   const updateMastery = useUpdateHiddenMastery();
   const updateCert = useUpdateCertProgress();
 
-  const [activeTab, setActiveTab] = useState<"pending" | "members">("pending");
+  const qc = useQueryClient();
+  const { data: branches } = useQuery({
+    queryKey: ["branches"],
+    enabled: role === "admin",
+    queryFn: async () => {
+      const { data, error } = await supabase.from("branches").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches">("pending");
   const [rankUpInfo, setRankUpInfo] = useState<{ show: boolean; oldRank: string; newRank: string; memberName: string }>({ show: false, oldRank: "", newRank: "", memberName: "" });
   const [xpModal, setXpModal] = useState<{ show: boolean; memberId: string; memberName: string }>({ show: false, memberId: "", memberName: "" });
   const [xpAmount, setXpAmount] = useState(10);
   const [xpReason, setXpReason] = useState("");
   const [detailMember, setDetailMember] = useState<any | null>(null);
+  const [branchInput, setBranchInput] = useState("");
+  const [editingBranch, setEditingBranch] = useState<{ id: string; name: string } | null>(null);
 
   const handleApprove = async (subId: string) => {
     try {
