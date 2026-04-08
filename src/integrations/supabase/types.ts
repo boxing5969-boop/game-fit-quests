@@ -77,6 +77,33 @@ export type Database = {
         }
         Relationships: []
       }
+      coach_requests: {
+        Row: {
+          id: string
+          requested_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       external_cert_progress: {
         Row: {
           age_gate: boolean
@@ -592,6 +619,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_coach_request: {
+        Args: { _request_id: string }
+        Returns: undefined
+      }
       approve_mission_submission: {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: Json
@@ -721,6 +752,10 @@ export type Database = {
         Returns: number
       }
       record_attendance: { Args: { _user_id: string }; Returns: undefined }
+      reject_coach_request: {
+        Args: { _request_id: string }
+        Returns: undefined
+      }
       reject_mission_submission: {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
