@@ -180,7 +180,7 @@ const CoachDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => setDetailMember(member)}
                       className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95">
                       <Eye className="h-3.5 w-3.5" /> 상세보기
@@ -189,6 +189,12 @@ const CoachDashboard = () => {
                       className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-secondary py-2 text-xs font-bold text-secondary-foreground transition-all active:scale-95">
                       <Zap className="h-3.5 w-3.5" /> XP 지급
                     </button>
+                    {!isBossReady && prog?.current_level < 10 && (
+                      <button onClick={() => handleLevelUp(member)} disabled={levelUpMutation.isPending}
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-primary py-2 text-xs font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50">
+                        <ArrowUp className="h-3.5 w-3.5" /> 레벨업
+                      </button>
+                    )}
                     {isBossReady && (
                       <button onClick={() => handleBossPass(member)} disabled={bossBattleMutation.isPending}
                         className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-accent py-2 text-xs font-bold text-accent-foreground transition-all active:scale-95 disabled:opacity-50">
