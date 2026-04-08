@@ -10,7 +10,7 @@ const tabs = [
   { path: "/cert-benefits", icon: ScrollText, label: "단증혜택" },
 ];
 
-const hiddenPaths = ["/", "/mypage", "/settings", "/manager", "/coach"];
+const hiddenPaths = ["/", "/mypage", "/settings", "/manager", "/coach", "/member"];
 
 const BottomNav = () => {
   const location = useLocation();
