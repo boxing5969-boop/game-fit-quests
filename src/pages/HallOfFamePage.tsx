@@ -28,8 +28,7 @@ type TabKey = (typeof TABS)[number]["key"];
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
-const isHallOfFameMember = (rank: string, level: number) =>
-  rank === "black" && level === 10;
+import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION } from "@/lib/rankLabels";
 
 const HallOfFamePage = () => {
   const navigate = useNavigate();
@@ -246,7 +245,7 @@ const HallOfFamePage = () => {
               <span className="text-4xl">🏅</span>
               <h2 className="mt-2 text-lg font-bold text-foreground">명예의 전당</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                블랙 레벨 10 달성 + 최종 마스터 미션 완료자
+                {HALL_OF_FAME_DESCRIPTION}
               </p>
             </div>
             {officialLoading ? <SkeletonList /> : hallOfFameMembers.length > 0 ? (
