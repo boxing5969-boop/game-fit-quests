@@ -9,6 +9,7 @@ import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import LevelStatusActionSheet from "@/components/LevelStatusActionSheet";
+import MissionVideoUpload from "@/components/MissionVideoUpload";
 
 type TabKey = "overview" | "missions" | "levelmap" | "activity" | "notes";
 
@@ -322,6 +323,18 @@ const MemberDetailPage = () => {
                     <p className="mt-1 text-xs text-muted-foreground italic">💬 {sub.coach_note}</p>
                   )}
                 </div>
+
+                {/* Video evidence */}
+                {((sub as any).video_url || sub.status === "pending") && (
+                  <div className="mb-3">
+                    <MissionVideoUpload
+                      submissionId={sub.id}
+                      videoUrl={(sub as any).video_url}
+                      timestampComments={((sub as any).video_timestamp_comments as any[]) || []}
+                      isManager={true}
+                    />
+                  </div>
+                )}
 
                 {sub.status === "pending" && (
                   <div className="space-y-2">
