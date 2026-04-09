@@ -126,10 +126,8 @@ const ChatAssistant = () => {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-24 right-4 z-50 group active:[&>span]:animate-ping"
+          className="fixed bottom-24 right-4 z-50 group"
         >
-          {/* 펄스 링 - 클릭 시에만 */}
-          <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-red-500 to-orange-400 opacity-0 active:opacity-30" />
           <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-red-600 to-orange-500 shadow-[0_4px_20px_rgba(232,85,58,0.45)] transition-transform active:scale-90 group-hover:scale-105">
             <span className="text-2xl">🥊</span>
             {/* 뱃지 */}
