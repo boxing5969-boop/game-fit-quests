@@ -18,6 +18,7 @@ import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import CertBenefitsPage from "@/pages/CertBenefitsPage";
 import BranchManagerHome from "@/pages/BranchManagerHome";
 import MemberDetailPage from "@/pages/MemberDetailPage";
+import MemberPreviewPage from "@/pages/MemberPreviewPage";
 import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
 import { isManagerRole } from "@/lib/rankLabels";
@@ -84,6 +85,7 @@ const AppRoutes = () => {
         <Route path="/coach" element={<ProtectedRoute><ManagerRoute><CoachDashboard /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager" element={<ProtectedRoute><ManagerRoute><BranchManagerHome /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/member/:memberId" element={<ProtectedRoute><ManagerRoute><MemberDetailPage /></ManagerRoute></ProtectedRoute>} />
+        <Route path="/manager/member/:memberId/preview" element={<ProtectedRoute><ManagerRoute><MemberPreviewPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomNav />
