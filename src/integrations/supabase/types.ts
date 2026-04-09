@@ -212,6 +212,53 @@ export type Database = {
         }
         Relationships: []
       }
+      level_status_history: {
+        Row: {
+          change_reason: string | null
+          changed_by: string
+          created_at: string
+          id: string
+          level_number: number
+          level_status_id: string
+          new_status: Database["public"]["Enums"]["level_status_type"]
+          previous_status: Database["public"]["Enums"]["level_status_type"]
+          rank_name: Database["public"]["Enums"]["rank_name"]
+          user_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_by: string
+          created_at?: string
+          id?: string
+          level_number: number
+          level_status_id: string
+          new_status: Database["public"]["Enums"]["level_status_type"]
+          previous_status: Database["public"]["Enums"]["level_status_type"]
+          rank_name: Database["public"]["Enums"]["rank_name"]
+          user_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_by?: string
+          created_at?: string
+          id?: string
+          level_number?: number
+          level_status_id?: string
+          new_status?: Database["public"]["Enums"]["level_status_type"]
+          previous_status?: Database["public"]["Enums"]["level_status_type"]
+          rank_name?: Database["public"]["Enums"]["rank_name"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "level_status_history_level_status_id_fkey"
+            columns: ["level_status_id"]
+            isOneToOne: false
+            referencedRelation: "level_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       levels: {
         Row: {
           display_order: number
