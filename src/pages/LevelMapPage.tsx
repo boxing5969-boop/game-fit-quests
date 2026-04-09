@@ -12,6 +12,7 @@ import type { Tables, Enums } from "@/integrations/supabase/types";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { isManagerRole } from "@/lib/rankLabels";
 
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
@@ -63,6 +64,7 @@ const LevelMapPage = () => {
   const [danChallengeOpen, setDanChallengeOpen] = useState<typeof DAN_CHALLENGES[0] | null>(null);
   const navigate = useNavigate();
   const { progress, role, user, refreshProgress } = useAuth();
+  const isManager = isManagerRole(role);
   const { data: levels, isLoading } = useLevels();
   const { data: missions } = useMissions();
   const { data: missionSubs } = useMyMissionSubmissions();
@@ -78,9 +80,9 @@ const LevelMapPage = () => {
 
   if (!progress) return null;
 
-  const currentGlobal = RANK_ORDER.indexOf(progress.current_rank as Enums<"rank_name">) * 10 + progress.current_level;
+  const currentGlobal = isManager ? 40 : RANK_ORDER.indexOf(progress.current_rank as Enums<"rank_name">) * 10 + progress.current_level;
   const subMap = new Map((missionSubs || []).map(s => [s.mission_id, s.status]));
-  const isMaxLevel = progress.current_rank === "black" && progress.current_level === 10;
+  const isMaxLevel = isManager || (progress.current_rank === "black" && progress.current_level === 10);
 
   const selectedMissions = selectedNode
     ? (missions || []).filter(m => m.level_id === selectedNode.id)
@@ -88,6 +90,7 @@ const LevelMapPage = () => {
 
   const completedForLevel = (levelId: string) => {
     const levelMissions = (missions || []).filter(m => m.level_id === levelId);
+    if (isManager) return levelMissions.length;
     return levelMissions.filter(m => subMap.get(m.id) === "approved").length;
   };
 
@@ -109,9 +112,17 @@ const LevelMapPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <span className="text-sm text-muted-foreground">현재 위치</span>
-            <p className="text-lg font-bold text-foreground">레벨 {currentGlobal} / 40</p>
+            {isManager ? (
+              <p className="text-lg font-bold text-accent">👑 마스터</p>
+            ) : (
+              <p className="text-lg font-bold text-foreground">레벨 {currentGlobal} / 40</p>
+            )}
           </div>
-          <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" />
+          {isManager ? (
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/20 text-2xl">👑</div>
+          ) : (
+            <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" />
+          )}
         </div>
         <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-xp-bg">
           <div className="h-full rounded-full bg-xp-bar transition-all" style={{ width: `${(currentGlobal / 40) * 100}%` }} />
