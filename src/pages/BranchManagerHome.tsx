@@ -37,36 +37,34 @@ const BranchManagerHome = () => {
     queryKey: ["branch-members", branchName],
     enabled: !!branchName && isManagerRole(role),
     queryFn: async () => {
-      const { data: profiles, error } = await supabase
+      // Fetch profiles and progress separately (no FK between tables)
+      const { data: profiles, error: profErr } = await supabase
         .from("profiles")
-        .select("*, member_progress(*)")
+        .select("*")
         .eq("branch_name", branchName)
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (profErr) throw profErr;
 
-      // Get pending counts per member
       const userIds = (profiles || []).map(p => p.user_id);
       if (!userIds.length) return [];
 
-      const { data: missionPending } = await supabase
-        .from("mission_submissions")
-        .select("user_id")
-        .in("user_id", userIds)
-        .eq("status", "pending");
+      // Fetch progress, pending missions, pending quests in parallel
+      const [progressRes, missionPendingRes, questPendingRes] = await Promise.all([
+        supabase.from("member_progress").select("*").in("user_id", userIds),
+        supabase.from("mission_submissions").select("user_id").in("user_id", userIds).eq("status", "pending"),
+        supabase.from("quest_submissions").select("user_id").in("user_id", userIds).eq("status", "pending"),
+      ]);
 
-      const { data: questPending } = await supabase
-        .from("quest_submissions")
-        .select("user_id")
-        .in("user_id", userIds)
-        .eq("status", "pending");
+      const progressMap = new Map<string, typeof progressRes.data extends (infer T)[] | null ? T : never>();
+      (progressRes.data || []).forEach(p => progressMap.set(p.user_id, p));
 
       const pendingMap = new Map<string, number>();
-      [...(missionPending || []), ...(questPending || [])].forEach(s => {
+      [...(missionPendingRes.data || []), ...(questPendingRes.data || [])].forEach(s => {
         pendingMap.set(s.user_id, (pendingMap.get(s.user_id) || 0) + 1);
       });
 
       return (profiles || []).map(p => {
-        const prog = Array.isArray(p.member_progress) ? p.member_progress[0] : p.member_progress;
+        const prog = progressMap.get(p.user_id) || null;
         return {
           ...p,
           prog,
