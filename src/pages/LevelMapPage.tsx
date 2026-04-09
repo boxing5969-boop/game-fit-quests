@@ -80,9 +80,9 @@ const LevelMapPage = () => {
 
   if (!progress) return null;
 
-  const currentGlobal = RANK_ORDER.indexOf(progress.current_rank as Enums<"rank_name">) * 10 + progress.current_level;
+  const currentGlobal = isManager ? 40 : RANK_ORDER.indexOf(progress.current_rank as Enums<"rank_name">) * 10 + progress.current_level;
   const subMap = new Map((missionSubs || []).map(s => [s.mission_id, s.status]));
-  const isMaxLevel = progress.current_rank === "black" && progress.current_level === 10;
+  const isMaxLevel = isManager || (progress.current_rank === "black" && progress.current_level === 10);
 
   const selectedMissions = selectedNode
     ? (missions || []).filter(m => m.level_id === selectedNode.id)
