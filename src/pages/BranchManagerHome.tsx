@@ -21,6 +21,7 @@ const BranchManagerHome = () => {
   const [filter, setFilter] = useState<FilterType>("all");
   const [sort, setSort] = useState<SortType>("level_desc");
   const [mainTab, setMainTab] = useState<MainTab>("members");
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
   const branchName = profile?.branch_name || "";
 
@@ -119,195 +120,319 @@ const BranchManagerHome = () => {
     { key: "active", label: "최근 활동" },
   ];
 
-  return (
-    <div className="mx-auto max-w-lg px-4 pb-32 pt-4">
-      {/* Header */}
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">{branchName}</p>
-          <h1 className="text-2xl text-foreground">우리 지점 회원관리</h1>
+  const handleMemberClick = (userId: string) => {
+    // On wide screens, select member in right panel; on mobile, navigate
+    if (window.innerWidth >= 1024) {
+      setSelectedMemberId(userId);
+    } else {
+      navigate(`/manager/member/${userId}`);
+    }
+  };
+
+  // ── Member List Panel (shared between mobile and desktop) ──
+  const MemberListContent = () => (
+    <>
+      {/* Search */}
+      <div className="mb-3 relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="이름, 닉네임, 전화번호 검색"
+          className="pl-9 rounded-xl"
+        />
+      </div>
+
+      {/* Filters */}
+      <div className="mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
+        {FILTERS.map(f => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+              filter === f.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Sort */}
+      <div className="mb-4 flex gap-1.5">
+        {([
+          { key: "level_desc" as SortType, label: "레벨순" },
+          { key: "pending_count" as SortType, label: "승인대기순" },
+        ]).map(s => (
+          <button
+            key={s.key}
+            onClick={() => setSort(s.key)}
+            className={`rounded-lg px-2.5 py-1 text-[10px] font-medium transition-all ${
+              sort === s.key ? "bg-primary/10 text-primary" : "text-muted-foreground"
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Member List */}
+      <div className="space-y-2">
+        {isLoading ? (
+          Array(5).fill(0).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />)
+        ) : filtered.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border p-8 text-center">
+            <span className="text-3xl">👥</span>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {search ? "검색 결과가 없습니다" : "회원이 없습니다"}
+            </p>
+          </div>
+        ) : (
+          filtered.map(m => (
+            <button
+              key={m.id}
+              onClick={() => handleMemberClick(m.user_id)}
+              className={`w-full rounded-2xl border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98] ${
+                selectedMemberId === m.user_id ? "border-primary ring-2 ring-primary/20" : "border-border"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg">
+                  {m.avatar_url ? (
+                    <img src={m.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
+                  ) : (
+                    <span>{m.prog ? RANK_ICONS[m.prog.current_rank] : "⚪"}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold text-foreground truncate">{m.nickname || m.name}</span>
+                    {m.pendingCount > 0 && (
+                      <span className="shrink-0 rounded-full bg-status-pending/20 px-1.5 py-0.5 text-[9px] font-bold text-status-pending">
+                        {m.pendingCount}건 대기
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                    {m.prog && (
+                      <>
+                        <span className="font-medium">{formatRank(m.prog.current_rank, m.prog.current_level)}</span>
+                        <span>·</span>
+                        <span>{m.globalLevel}/40</span>
+                      </>
+                    )}
+                    {m.phone_number && (
+                      <>
+                        <span>·</span>
+                        <span>{m.phone_number.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+
+      {/* Quick action: go to member app */}
+      <div className="mt-6">
+        <button
+          onClick={() => navigate("/home")}
+          className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📱</span>
+              <div>
+                <p className="text-sm font-bold text-foreground">회원 앱으로 보기</p>
+                <p className="text-xs text-muted-foreground">내 회원 화면 확인하기</p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </div>
+        </button>
+      </div>
+    </>
+  );
+
+  // ── Desktop Right Panel (iframe preview) ──
+  const DesktopDetailPanel = () => {
+    if (!selectedMemberId) {
+      return (
+        <div className="flex h-full items-center justify-center text-center">
+          <div>
+            <span className="text-5xl">👈</span>
+            <p className="mt-4 text-lg font-bold text-foreground">회원을 선택하세요</p>
+            <p className="mt-1 text-sm text-muted-foreground">좌측에서 회원을 클릭하면 상세 정보가 여기에 표시됩니다</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => navigate("/mypage")} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
-            <Bell className="h-5 w-5 text-secondary-foreground" />
-            {unreadCount && unreadCount > 0 ? (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
-                {unreadCount > 9 ? "9+" : unreadCount}
+      );
+    }
+
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3">
+          <p className="text-sm font-bold text-foreground">회원 상세</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate(`/manager/member/${selectedMemberId}/preview`)}
+              className="rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-all active:scale-95"
+            >
+              📱 회원 앱 보기
+            </button>
+            <button
+              onClick={() => navigate(`/manager/member/${selectedMemberId}`)}
+              className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground transition-all active:scale-95"
+            >
+              전체 화면
+            </button>
+          </div>
+        </div>
+        <iframe
+          key={selectedMemberId}
+          src={`/manager/member/${selectedMemberId}`}
+          className="flex-1 w-full border-0"
+          title="Member Detail"
+        />
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {/* ── Mobile Layout (< lg) ── */}
+      <div className="lg:hidden mx-auto max-w-lg px-4 pb-32 pt-4">
+        {/* Header */}
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">{branchName}</p>
+            <h1 className="text-2xl text-foreground">우리 지점 회원관리</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate("/mypage")} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
+              <Bell className="h-5 w-5 text-secondary-foreground" />
+              {unreadCount && unreadCount > 0 ? (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              ) : null}
+            </button>
+            <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
+              <User className="h-5 w-5 text-secondary-foreground" />
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="mb-5 grid grid-cols-2 gap-2.5">
+          <StatCard icon="👥" label="전체 회원" value={stats?.total_members ?? "-"} />
+          <button onClick={() => setMainTab("inbox")} className="text-left">
+            <StatCard icon="⏳" label="승인대기" value={stats?.pending_count ?? "-"} highlight />
+          </button>
+          <StatCard icon="🔥" label="이번 주 승급" value={stats?.weekly_levelups ?? "-"} />
+          <StatCard icon="📝" label="오늘 제출" value={stats?.today_submissions ?? "-"} />
+        </div>
+
+        {/* Main Tab Switch */}
+        <div className="mb-4 flex gap-1.5 rounded-2xl border border-border bg-muted/30 p-1">
+          <button
+            onClick={() => setMainTab("members")}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+              mainTab === "members" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <Users className="h-4 w-4" />
+            회원 리스트
+          </button>
+          <button
+            onClick={() => setMainTab("inbox")}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+              mainTab === "inbox" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <Inbox className="h-4 w-4" />
+            승인대기
+            {stats?.pending_count && stats.pending_count > 0 ? (
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-status-pending px-1.5 text-[10px] font-bold text-white">
+                {stats.pending_count}
               </span>
             ) : null}
           </button>
-          <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
-            <User className="h-5 w-5 text-secondary-foreground" />
-          </button>
         </div>
+
+        {mainTab === "inbox" && <ApprovalInbox />}
+        {mainTab === "members" && <MemberListContent />}
       </div>
 
-      {/* Stats Cards */}
-      <div className="mb-5 grid grid-cols-2 gap-2.5">
-        <StatCard icon="👥" label="전체 회원" value={stats?.total_members ?? "-"} />
-        <button onClick={() => setMainTab("inbox")} className="text-left">
-          <StatCard icon="⏳" label="승인대기" value={stats?.pending_count ?? "-"} highlight />
-        </button>
-        <StatCard icon="🔥" label="이번 주 승급" value={stats?.weekly_levelups ?? "-"} />
-        <StatCard icon="📝" label="오늘 제출" value={stats?.today_submissions ?? "-"} />
-      </div>
-
-      {/* Main Tab Switch */}
-      <div className="mb-4 flex gap-1.5 rounded-2xl border border-border bg-muted/30 p-1">
-        <button
-          onClick={() => setMainTab("members")}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
-            mainTab === "members" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-          }`}
-        >
-          <Users className="h-4 w-4" />
-          회원 리스트
-        </button>
-        <button
-          onClick={() => setMainTab("inbox")}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
-            mainTab === "inbox" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-          }`}
-        >
-          <Inbox className="h-4 w-4" />
-          승인대기
-          {stats?.pending_count && stats.pending_count > 0 ? (
-            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-status-pending px-1.5 text-[10px] font-bold text-white">
-              {stats.pending_count}
-            </span>
-          ) : null}
-        </button>
-      </div>
-
-      {/* ── Inbox Tab ── */}
-      {mainTab === "inbox" && <ApprovalInbox />}
-
-      {/* ── Members Tab ── */}
-      {mainTab === "members" && (
-        <>
-          {/* Search */}
-          <div className="mb-3 relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="이름, 닉네임, 전화번호 검색"
-              className="pl-9 rounded-xl"
-            />
-          </div>
-
-          {/* Filters */}
-          <div className="mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
-            {FILTERS.map(f => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
-                  filter === f.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                }`}
-              >
-                {f.label}
+      {/* ── Desktop 2-Column Layout (>= lg) ── */}
+      <div className="hidden lg:flex h-screen">
+        {/* Left: Member List */}
+        <div className="w-[420px] shrink-0 overflow-y-auto border-r border-border bg-background px-4 pb-8 pt-4">
+          {/* Header */}
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">{branchName}</p>
+              <h1 className="text-xl text-foreground">회원관리</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => navigate("/mypage")} className="relative flex h-9 w-9 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
+                <Bell className="h-4 w-4 text-secondary-foreground" />
+                {unreadCount && unreadCount > 0 ? (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                ) : null}
               </button>
-            ))}
+            </div>
           </div>
 
-          {/* Sort */}
-          <div className="mb-4 flex gap-1.5">
-            {([
-              { key: "level_desc" as SortType, label: "레벨순" },
-              { key: "pending_count" as SortType, label: "승인대기순" },
-            ]).map(s => (
-              <button
-                key={s.key}
-                onClick={() => setSort(s.key)}
-                className={`rounded-lg px-2.5 py-1 text-[10px] font-medium transition-all ${
-                  sort === s.key ? "bg-primary/10 text-primary" : "text-muted-foreground"
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Member List */}
-          <div className="space-y-2">
-            {isLoading ? (
-              Array(5).fill(0).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />)
-            ) : filtered.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-                <span className="text-3xl">👥</span>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {search ? "검색 결과가 없습니다" : "회원이 없습니다"}
-                </p>
-              </div>
-            ) : (
-              filtered.map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => navigate(`/manager/member/${m.user_id}`)}
-                  className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg">
-                      {m.avatar_url ? (
-                        <img src={m.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
-                      ) : (
-                        <span>{m.prog ? RANK_ICONS[m.prog.current_rank] : "⚪"}</span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-foreground truncate">{m.nickname || m.name}</span>
-                        {m.pendingCount > 0 && (
-                          <span className="shrink-0 rounded-full bg-status-pending/20 px-1.5 py-0.5 text-[9px] font-bold text-status-pending">
-                            {m.pendingCount}건 대기
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                        {m.prog && (
-                          <>
-                            <span className="font-medium">{formatRank(m.prog.current_rank, m.prog.current_level)}</span>
-                            <span>·</span>
-                            <span>{m.globalLevel}/40</span>
-                          </>
-                        )}
-                        {m.phone_number && (
-                          <>
-                            <span>·</span>
-                            <span>{m.phone_number.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-
-          {/* Quick action: go to member app */}
-          <div className="mt-6">
-            <button
-              onClick={() => navigate("/home")}
-              className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">📱</span>
-                  <div>
-                    <p className="text-sm font-bold text-foreground">회원 앱으로 보기</p>
-                    <p className="text-xs text-muted-foreground">내 회원 화면 확인하기</p>
-                  </div>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
-              </div>
+          {/* Stats */}
+          <div className="mb-4 grid grid-cols-2 gap-2">
+            <StatCard icon="👥" label="전체 회원" value={stats?.total_members ?? "-"} />
+            <button onClick={() => setMainTab("inbox")} className="text-left">
+              <StatCard icon="⏳" label="승인대기" value={stats?.pending_count ?? "-"} highlight />
             </button>
           </div>
-        </>
-      )}
-    </div>
+
+          {/* Tabs */}
+          <div className="mb-4 flex gap-1.5 rounded-2xl border border-border bg-muted/30 p-1">
+            <button
+              onClick={() => setMainTab("members")}
+              className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold transition-all ${
+                mainTab === "members" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              <Users className="h-3.5 w-3.5" />
+              회원
+            </button>
+            <button
+              onClick={() => setMainTab("inbox")}
+              className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold transition-all ${
+                mainTab === "inbox" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              <Inbox className="h-3.5 w-3.5" />
+              승인대기
+              {stats?.pending_count && stats.pending_count > 0 ? (
+                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-status-pending px-1 text-[9px] font-bold text-white">
+                  {stats.pending_count}
+                </span>
+              ) : null}
+            </button>
+          </div>
+
+          {mainTab === "inbox" && <ApprovalInbox />}
+          {mainTab === "members" && <MemberListContent />}
+        </div>
+
+        {/* Right: Detail Panel */}
+        <div className="flex-1 overflow-hidden bg-muted/20">
+          <DesktopDetailPanel />
+        </div>
+      </div>
+    </>
   );
 };
 

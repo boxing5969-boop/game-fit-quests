@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Send, AlertTriangle, Sparkles } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 type Msg = { role: "user" | "assistant"; content: string; isError?: boolean };
 
@@ -35,11 +37,15 @@ const ChatAssistant = () => {
     let assistantSoFar = "";
 
     try {
+      // Get current session token for personalized context
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           messages: [...messages, userMsg]
@@ -130,7 +136,6 @@ const ChatAssistant = () => {
         >
           <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-red-600 to-orange-500 shadow-[0_4px_20px_rgba(232,85,58,0.45)] transition-transform active:scale-90 group-hover:scale-105">
             <span className="text-2xl">🥊</span>
-            {/* 뱃지 */}
             <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-black text-red-600 shadow ring-2 ring-red-500">
               AI
             </span>
@@ -144,7 +149,6 @@ const ChatAssistant = () => {
           
           {/* ── 헤더 ── */}
           <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black px-5 py-4">
-            {/* 장식 패턴 */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-2 right-8 text-6xl">🥊</div>
               <div className="absolute bottom-1 left-4 text-4xl rotate-12">💪</div>
@@ -163,7 +167,7 @@ const ChatAssistant = () => {
                       온라인
                     </span>
                   </div>
-                  <p className="text-[11px] text-gray-400 font-medium">153 랭크업 시스템 · 24시간 코칭</p>
+                  <p className="text-[11px] text-gray-400 font-medium">153 랭크업 시스템 · 맞춤 코칭</p>
                 </div>
               </div>
               <button
@@ -174,9 +178,8 @@ const ChatAssistant = () => {
               </button>
             </div>
 
-            {/* 퀵 액션 칩 */}
             <div className="relative mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {["레벨업 방법", "계급 시스템", "오늘의 퀘스트"].map((chip) => (
+              {["다음 레벨업 방법", "내 반려 이력", "오늘의 퀘스트", "타이틀매치 준비"].map((chip) => (
                 <button
                   key={chip}
                   onClick={() => {
@@ -199,7 +202,6 @@ const ChatAssistant = () => {
                 key={i}
                 className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                {/* AI 아바타 */}
                 {m.role === "assistant" && (
                   <div className="mr-2 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-md">
                     <span className="text-sm">🥊</span>
@@ -226,7 +228,6 @@ const ChatAssistant = () => {
               </div>
             ))}
 
-            {/* 타이핑 인디케이터 */}
             {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex items-start gap-2">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-md">
