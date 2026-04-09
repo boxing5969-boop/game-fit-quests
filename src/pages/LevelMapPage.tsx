@@ -111,9 +111,17 @@ const LevelMapPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <span className="text-sm text-muted-foreground">현재 위치</span>
-            <p className="text-lg font-bold text-foreground">레벨 {currentGlobal} / 40</p>
+            {isManager ? (
+              <p className="text-lg font-bold text-accent">👑 마스터</p>
+            ) : (
+              <p className="text-lg font-bold text-foreground">레벨 {currentGlobal} / 40</p>
+            )}
           </div>
-          <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" />
+          {isManager ? (
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/20 text-2xl">👑</div>
+          ) : (
+            <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" />
+          )}
         </div>
         <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-xp-bg">
           <div className="h-full rounded-full bg-xp-bar transition-all" style={{ width: `${(currentGlobal / 40) * 100}%` }} />
