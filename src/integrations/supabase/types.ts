@@ -38,6 +38,42 @@ export type Database = {
         }
         Relationships: []
       }
+      branch_transfer_requests: {
+        Row: {
+          created_at: string
+          from_branch: string
+          id: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          to_branch: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_branch: string
+          id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          to_branch: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_branch?: string
+          id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          to_branch?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       branches: {
         Row: {
           code: string | null
@@ -394,6 +430,8 @@ export type Database = {
           reviewed_by: string | null
           status: string
           user_id: string
+          video_timestamp_comments: Json | null
+          video_url: string | null
         }
         Insert: {
           coach_note?: string | null
@@ -404,6 +442,8 @@ export type Database = {
           reviewed_by?: string | null
           status?: string
           user_id: string
+          video_timestamp_comments?: Json | null
+          video_url?: string | null
         }
         Update: {
           coach_note?: string | null
@@ -414,6 +454,8 @@ export type Database = {
           reviewed_by?: string | null
           status?: string
           user_id?: string
+          video_timestamp_comments?: Json | null
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -759,6 +801,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_branch_transfer: {
+        Args: { _note?: string; _request_id: string }
+        Returns: undefined
+      }
       approve_coach_request: {
         Args: { _request_id: string }
         Returns: undefined
@@ -902,6 +948,10 @@ export type Database = {
         Returns: number
       }
       record_attendance: { Args: { _user_id: string }; Returns: undefined }
+      reject_branch_transfer: {
+        Args: { _note?: string; _request_id: string }
+        Returns: undefined
+      }
       reject_coach_request: {
         Args: { _request_id: string }
         Returns: undefined
@@ -914,6 +964,7 @@ export type Database = {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
       }
+      request_branch_transfer: { Args: { _to_branch: string }; Returns: string }
       request_mission_revision: {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
