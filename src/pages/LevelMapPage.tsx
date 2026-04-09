@@ -90,6 +90,7 @@ const LevelMapPage = () => {
 
   const completedForLevel = (levelId: string) => {
     const levelMissions = (missions || []).filter(m => m.level_id === levelId);
+    if (isManager) return levelMissions.length;
     return levelMissions.filter(m => subMap.get(m.id) === "approved").length;
   };
 
