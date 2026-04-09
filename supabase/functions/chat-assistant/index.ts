@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,6 +51,44 @@ const SYSTEM_PROMPT = `당신은 153 QUEST 앱의 안내 도우미 "코치봇"�
 - 짧고 핵심적으로 답변하세요 (3-4문장 이내)
 - 이모지를 적절히 사용하세요 🥊`;
 
+function buildPersonalContext(profile: any, progress: any, recentRejections: any[], nextLevel: any) {
+  const rankLabels: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
+  const lines: string[] = [];
+
+  if (profile && progress) {
+    const rankLabel = rankLabels[progress.current_rank] || progress.current_rank;
+    lines.push(`## 현재 회원 정보`);
+    lines.push(`- 닉네임: ${profile.nickname || profile.name}`);
+    lines.push(`- 계급: ${rankLabel} Lv.${progress.current_level} (총 XP: ${progress.total_xp})`);
+    lines.push(`- 보스전 클리어: ${progress.bosses_cleared}회`);
+    lines.push(`- 연속 출석: ${progress.streak_days}일`);
+
+    if (progress.current_level === 10) {
+      lines.push(`- ⚡ 현재 레벨 10! 타이틀매치(보스전)에 도전할 수 있습니다`);
+    }
+
+    const globalLevel = (["white", "blue", "red", "black"].indexOf(progress.current_rank)) * 10 + progress.current_level;
+    lines.push(`- 전체 진행도: ${globalLevel}/40 레벨`);
+  }
+
+  if (recentRejections && recentRejections.length > 0) {
+    lines.push(`\n## 최근 반려/수정요청 이력 (최근 5건)`);
+    recentRejections.forEach((r: any) => {
+      const title = r.missions?.title || r.quests?.title || "미션";
+      lines.push(`- ${title}: ${r.coach_note || "피드백 없음"} (${r.status})`);
+    });
+    lines.push(`→ 이 이력을 참고해서 격려하고, 개선 포인트를 안내해주세요`);
+  }
+
+  if (nextLevel) {
+    lines.push(`\n## 다음 목표`);
+    lines.push(`- 다음 레벨: ${nextLevel.title} (필요 XP: ${nextLevel.xp_required})`);
+    if (nextLevel.is_boss) lines.push(`- 🏆 보스 레벨입니다!`);
+  }
+
+  return lines.length > 0 ? "\n\n" + lines.join("\n") : "";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -57,6 +96,51 @@ serve(async (req) => {
     const { messages } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // Try to get user context from auth token
+    let personalContext = "";
+    const authHeader = req.headers.get("authorization");
+    if (authHeader) {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+        const supabase = createClient(supabaseUrl, supabaseKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const [profileRes, progressRes, rejectionsRes] = await Promise.all([
+            supabase.from("profiles").select("*").eq("user_id", user.id).single(),
+            supabase.from("member_progress").select("*").eq("user_id", user.id).single(),
+            supabase.from("mission_submissions").select("*, missions(title)")
+              .eq("user_id", user.id)
+              .in("status", ["rejected", "revision_requested"])
+              .order("requested_at", { ascending: false })
+              .limit(5),
+          ]);
+
+          let nextLevel = null;
+          if (progressRes.data) {
+            const { data: lvl } = await supabase.from("levels")
+              .select("*")
+              .eq("rank_name", progressRes.data.current_rank)
+              .eq("level_number", progressRes.data.current_level)
+              .single();
+            nextLevel = lvl;
+          }
+
+          personalContext = buildPersonalContext(
+            profileRes.data, progressRes.data,
+            rejectionsRes.data || [], nextLevel
+          );
+        }
+      } catch (e) {
+        console.error("Context fetch error (non-fatal):", e);
+      }
+    }
+
+    const systemMessage = SYSTEM_PROMPT + personalContext;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -67,7 +151,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: systemMessage },
           ...messages,
         ],
         stream: true,
