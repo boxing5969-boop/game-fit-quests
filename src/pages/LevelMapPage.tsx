@@ -63,6 +63,7 @@ const LevelMapPage = () => {
   const [danChallengeOpen, setDanChallengeOpen] = useState<typeof DAN_CHALLENGES[0] | null>(null);
   const navigate = useNavigate();
   const { progress, role, user, refreshProgress } = useAuth();
+  const isManager = isManagerRole(role);
   const { data: levels, isLoading } = useLevels();
   const { data: missions } = useMissions();
   const { data: missionSubs } = useMyMissionSubmissions();
