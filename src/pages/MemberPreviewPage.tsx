@@ -179,7 +179,7 @@ const MemberPreviewPage = () => {
   const TABS: { key: PreviewTab; label: string; icon: any }[] = [
     { key: "home", label: "홈", icon: Home },
     { key: "missions", label: "미션", icon: Swords },
-    { key: "levelmap", label: "계급도", icon: Map },
+    { key: "levelmap", label: "계급도", icon: MapIcon },
     { key: "rewards", label: "보상", icon: Gift },
   ];
 
