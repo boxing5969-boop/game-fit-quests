@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { error: new Error("이미 등록된 전화번호입니다. 한 번호당 하나의 계정만 가능합니다.") };
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { error, data } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -109,7 +109,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         emailRedirectTo: window.location.origin,
       },
     });
-    return { error: error ? new Error(error.message) : null };
+    if (error) return { error: new Error(error.message) };
+
+    // If coach signup, sign out immediately so they wait for admin approval
+    if (isCoach && data.user) {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setRole(null);
+      setProgress(null);
+    }
+
+    return { error: null };
   };
 
   const signIn = async (email: string, password: string) => {
