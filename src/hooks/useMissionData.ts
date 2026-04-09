@@ -52,17 +52,19 @@ export const useMyMissionSubmissions = () => {
   });
 };
 
-// ─── Submit Mission ────
+// ─── Submit Mission (with optional video URL) ────
 export const useSubmitMission = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (missionId: string) => {
-      const { error } = await supabase.from("mission_submissions").insert({
+    mutationFn: async ({ missionId, videoUrl }: { missionId: string; videoUrl?: string }) => {
+      const insertData: any = {
         user_id: user!.id,
         mission_id: missionId,
         status: "pending",
-      });
+      };
+      if (videoUrl) insertData.video_url = videoUrl;
+      const { error } = await supabase.from("mission_submissions").insert(insertData);
       if (error) throw error;
     },
     onSuccess: () => {

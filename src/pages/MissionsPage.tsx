@@ -93,7 +93,7 @@ const MissionsPage = () => {
     try {
       if (isAdmin && user) {
         setAdminClearing(true);
-        await submitMission.mutateAsync(missionId);
+        await submitMission.mutateAsync({ missionId });
         const { data: sub } = await supabase
           .from("mission_submissions").select("id")
           .eq("user_id", user.id).eq("mission_id", missionId).eq("status", "pending")
@@ -106,7 +106,7 @@ const MissionsPage = () => {
         celebrateSmall();
         toast.success("즉시 클리어! ⚡🥊");
       } else {
-        await submitMission.mutateAsync(missionId);
+        await submitMission.mutateAsync({ missionId });
         celebrateSmall();
         toast.success("완료 요청을 보냈습니다! 🥊");
       }
