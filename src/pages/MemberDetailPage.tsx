@@ -3,11 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User } from "lucide-react";
+import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
+import LevelStatusActionSheet from "@/components/LevelStatusActionSheet";
 
 type TabKey = "overview" | "missions" | "levelmap" | "activity" | "notes";
 
@@ -30,6 +31,7 @@ const MemberDetailPage = () => {
   const [noteContent, setNoteContent] = useState("");
   const [noteType, setNoteType] = useState<"internal" | "visible">("internal");
   const [actionNote, setActionNote] = useState("");
+  const [actionSheet, setActionSheet] = useState<{ rank: Enums<"rank_name">; level: number; status: string } | null>(null);
 
   // Member profile + progress
   const { data: member, isLoading } = useQuery({
@@ -278,6 +280,12 @@ const MemberDetailPage = () => {
             <div className="grid grid-cols-2 gap-2">
               <ActionBtn label="승인대기 보기" onClick={() => setActiveTab("missions")} count={pendingSubs.length} />
               <ActionBtn label="계급도 체크" onClick={() => setActiveTab("levelmap")} />
+              <button
+                onClick={() => navigate(`/manager/member/${memberId}/preview`)}
+                className="col-span-2 flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-3 text-sm font-bold text-primary transition-all active:scale-[0.98]"
+              >
+                <Eye className="h-4 w-4" /> 회원 앱으로 보기
+              </button>
               {prog.current_level === 10 && (
                 <button
                   onClick={() => bossBattleMut.mutate()}
@@ -364,17 +372,14 @@ const MemberDetailPage = () => {
                   return (
                     <button
                       key={lvl}
-                      onClick={() => {
-                        // Cycle status
-                        const nextStatus = status === "approved" ? "locked" : "approved";
-                        setLevelStatusMut.mutate({ rank, level: lvl, status: nextStatus });
-                      }}
+                      onClick={() => setActionSheet({ rank: rank as Enums<"rank_name">, level: lvl, status })}
                       className={`flex flex-col items-center rounded-xl border-2 p-1.5 text-center transition-all active:scale-95 ${
                         isCurrent ? "border-primary bg-primary/10" :
                         status === "approved" || status === "boss_cleared" ? "border-status-complete/30 bg-status-complete/5" :
                         status === "pending" ? "border-status-pending/30 bg-status-pending/5" :
                         status === "revision_requested" ? "border-amber-500/30 bg-amber-500/5" :
                         status === "rejected" ? "border-destructive/30 bg-destructive/5" :
+                        status === "in_progress" ? "border-primary/30 bg-primary/5" :
                         "border-border bg-card"
                       }`}
                     >
@@ -390,8 +395,20 @@ const MemberDetailPage = () => {
           ))}
 
           <p className="text-[10px] text-muted-foreground text-center">
-            노드를 탭하면 완료↔잠금 토글. 세부 상태 변경은 길게 누르세요.
+            노드를 탭하면 상태 변경 액션시트가 열립니다. 변경 이력과 되돌리기가 가능합니다.
           </p>
+
+          {/* Action Sheet */}
+          {actionSheet && memberId && (
+            <LevelStatusActionSheet
+              open={!!actionSheet}
+              onOpenChange={(open) => !open && setActionSheet(null)}
+              memberId={memberId}
+              rank={actionSheet.rank}
+              level={actionSheet.level}
+              currentStatus={actionSheet.status}
+            />
+          )}
         </div>
       )}
 
