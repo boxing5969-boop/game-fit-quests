@@ -2,6 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import RankBadge from "@/components/RankBadge";
 import AvatarUpload from "@/components/AvatarUpload";
 import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight } from "lucide-react";
+import { isManagerRole } from "@/lib/rankLabels";
 import { useNavigate } from "react-router-dom";
 import { useXpLogs } from "@/hooks/useQuestData";
 import type { Enums } from "@/integrations/supabase/types";
@@ -36,7 +37,7 @@ const MyPage = () => {
               <h2 className="text-lg text-foreground">{profile.nickname || profile.name}</h2>
               <p className="text-sm text-muted-foreground">{profile.name}</p>
               <div className="mt-1 flex items-center gap-2">
-                <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} />
+                <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} isMaster={isManagerRole(role)} />
                 {role && role !== "member" && (
                   <span className="rounded-full bg-accent/30 px-2 py-0.5 text-xs font-bold text-accent-foreground">
                     {role === "branch_manager" || role === "coach" ? "관장님" : role === "super_admin" || role === "admin" ? "전체 관리자" : role}
