@@ -12,6 +12,7 @@ import { User, ChevronRight, TrendingUp, Play } from "lucide-react";
 import HallOfFameShowcase from "@/components/HallOfFameShowcase";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
+import { isManagerRole } from "@/lib/rankLabels";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
@@ -85,7 +86,7 @@ const HomePage = () => {
         {/* ── 1. 내 계급/레벨 배지 + 순위 ── */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
-            <RankBadge rank={rank} level={progress.current_level} size="lg" />
+            <RankBadge rank={rank} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
             {myPosition && (
               <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5">
                 <TrendingUp className="h-3.5 w-3.5 text-primary" />
@@ -94,7 +95,7 @@ const HomePage = () => {
             )}
           </div>
           <div className="mb-2 text-xs text-muted-foreground">
-            {currentLevel?.title || `${RANK_LABELS[rank]} Lv.${progress.current_level}`}
+            {isManagerRole(role) ? "👑 마스터 · 모든 레벨 달성" : (currentLevel?.title || `${RANK_LABELS[rank]} Lv.${progress.current_level}`)}
             {profile.branch_name && <span className="ml-1.5 text-muted-foreground/60">· {profile.branch_name}</span>}
           </div>
           <XPBar current={progress.total_xp} max={xpToNext} />

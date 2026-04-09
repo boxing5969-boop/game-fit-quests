@@ -5,6 +5,7 @@ interface RankBadgeProps {
   rank: Enums<"rank_name">;
   level: number;
   size?: "sm" | "lg";
+  isMaster?: boolean;
 }
 
 const rankColors: Record<string, string> = {
@@ -14,8 +15,19 @@ const rankColors: Record<string, string> = {
   black: "bg-rank-black/15 border-rank-black/30 text-foreground",
 };
 
-const RankBadge = ({ rank, level, size = "sm" }: RankBadgeProps) => {
+const RankBadge = ({ rank, level, size = "sm", isMaster }: RankBadgeProps) => {
   const isLg = size === "lg";
+
+  if (isMaster) {
+    return (
+      <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 border-accent bg-gradient-to-r from-accent/20 to-primary/20 shadow-sm ${isLg ? "px-4 py-1.5" : ""}`}>
+        <span className={isLg ? "text-lg" : "text-sm"}>👑</span>
+        <span className={`font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent ${isLg ? "text-base" : "text-xs"}`}>
+          마스터
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 ${rankColors[rank]}`}>
