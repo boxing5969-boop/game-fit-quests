@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, X, Pencil, Trophy, ChevronUp, Home, Swords, Map, Gift } from "lucide-react";
+import { ArrowLeft, Check, X, Pencil, Trophy, ChevronUp, Home, Swords, Map as MapIcon, Gift } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
