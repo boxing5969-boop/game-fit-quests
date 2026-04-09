@@ -5,12 +5,13 @@ import RankBadge from "@/components/RankBadge";
 import { User, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Enums } from "@/integrations/supabase/types";
+import { isManagerRole } from "@/lib/rankLabels";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
 const RewardsPage = () => {
   const navigate = useNavigate();
-  const { progress } = useAuth();
+  const { progress, role } = useAuth();
   const { data: allBadges, isLoading: badgesLoading } = useBadges();
   const { data: myBadges } = useMyBadges();
   const { data: xpLogs } = useXpLogs(30);
@@ -73,7 +74,7 @@ const RewardsPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="mb-1 text-xs text-muted-foreground">현재 계급</p>
-                <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" />
+                <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold text-foreground">{progress.total_xp.toLocaleString()}</p>
