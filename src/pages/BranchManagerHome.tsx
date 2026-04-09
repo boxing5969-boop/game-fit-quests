@@ -3,14 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Filter, Users, Clock, TrendingUp, FileText, User, ChevronRight, Bell } from "lucide-react";
+import { Search, Users, User, ChevronRight, Bell, Inbox } from "lucide-react";
 import { formatRank, RANK_ICONS, isManagerRole } from "@/lib/rankLabels";
 import { Input } from "@/components/ui/input";
+import ApprovalInbox from "@/components/ApprovalInbox";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
 
-type FilterType = "all" | "pending" | "active" | "boss_ready" | "recent";
+type FilterType = "all" | "pending" | "active" | "boss_ready";
 type SortType = "recent_submission" | "level_desc" | "pending_count";
+type MainTab = "members" | "inbox";
 
 const BranchManagerHome = () => {
   const navigate = useNavigate();
@@ -18,6 +20,7 @@ const BranchManagerHome = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [sort, setSort] = useState<SortType>("level_desc");
+  const [mainTab, setMainTab] = useState<MainTab>("members");
 
   const branchName = profile?.branch_name || "";
 
@@ -37,7 +40,6 @@ const BranchManagerHome = () => {
     queryKey: ["branch-members", branchName],
     enabled: !!branchName && isManagerRole(role),
     queryFn: async () => {
-      // Fetch profiles and progress separately (no FK between tables)
       const { data: profiles, error: profErr } = await supabase
         .from("profiles")
         .select("*")
@@ -48,7 +50,6 @@ const BranchManagerHome = () => {
       const userIds = (profiles || []).map(p => p.user_id);
       if (!userIds.length) return [];
 
-      // Fetch progress, pending missions, pending quests in parallel
       const [progressRes, missionPendingRes, questPendingRes] = await Promise.all([
         supabase.from("member_progress").select("*").in("user_id", userIds),
         supabase.from("mission_submissions").select("user_id").in("user_id", userIds).eq("status", "pending"),
@@ -92,7 +93,6 @@ const BranchManagerHome = () => {
     if (!members) return [];
     let list = [...members];
 
-    // Search
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(m =>
@@ -102,12 +102,10 @@ const BranchManagerHome = () => {
       );
     }
 
-    // Filter
     if (filter === "pending") list = list.filter(m => m.pendingCount > 0);
     else if (filter === "boss_ready") list = list.filter(m => m.prog?.current_level === 10);
     else if (filter === "active") list = list.filter(m => m.prog && m.prog.streak_days > 0);
 
-    // Sort
     if (sort === "level_desc") list.sort((a, b) => b.globalLevel - a.globalLevel);
     else if (sort === "pending_count") list.sort((a, b) => b.pendingCount - a.pendingCount);
 
@@ -147,131 +145,168 @@ const BranchManagerHome = () => {
       {/* Stats Cards */}
       <div className="mb-5 grid grid-cols-2 gap-2.5">
         <StatCard icon="👥" label="전체 회원" value={stats?.total_members ?? "-"} />
-        <StatCard icon="⏳" label="승인대기" value={stats?.pending_count ?? "-"} highlight />
+        <button onClick={() => setMainTab("inbox")} className="text-left">
+          <StatCard icon="⏳" label="승인대기" value={stats?.pending_count ?? "-"} highlight />
+        </button>
         <StatCard icon="🔥" label="이번 주 승급" value={stats?.weekly_levelups ?? "-"} />
         <StatCard icon="📝" label="오늘 제출" value={stats?.today_submissions ?? "-"} />
       </div>
 
-      {/* Search */}
-      <div className="mb-3 relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="이름, 닉네임, 전화번호 검색"
-          className="pl-9 rounded-xl"
-        />
-      </div>
-
-      {/* Filters */}
-      <div className="mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
-        {FILTERS.map(f => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
-              filter === f.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Sort */}
-      <div className="mb-4 flex gap-1.5">
-        {([
-          { key: "level_desc" as SortType, label: "레벨순" },
-          { key: "pending_count" as SortType, label: "승인대기순" },
-        ]).map(s => (
-          <button
-            key={s.key}
-            onClick={() => setSort(s.key)}
-            className={`rounded-lg px-2.5 py-1 text-[10px] font-medium transition-all ${
-              sort === s.key ? "bg-primary/10 text-primary" : "text-muted-foreground"
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Member List */}
-      <div className="space-y-2">
-        {isLoading ? (
-          Array(5).fill(0).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />)
-        ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-            <span className="text-3xl">👥</span>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {search ? "검색 결과가 없습니다" : "회원이 없습니다"}
-            </p>
-          </div>
-        ) : (
-          filtered.map(m => (
-            <button
-              key={m.id}
-              onClick={() => navigate(`/manager/member/${m.user_id}`)}
-              className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg">
-                  {m.avatar_url ? (
-                    <img src={m.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
-                  ) : (
-                    <span>{m.prog ? RANK_ICONS[m.prog.current_rank] : "⚪"}</span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-foreground truncate">{m.nickname || m.name}</span>
-                    {m.pendingCount > 0 && (
-                      <span className="shrink-0 rounded-full bg-status-pending/20 px-1.5 py-0.5 text-[9px] font-bold text-status-pending">
-                        {m.pendingCount}건 대기
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                    {m.prog && (
-                      <>
-                        <span className="font-medium">{formatRank(m.prog.current_rank, m.prog.current_level)}</span>
-                        <span>·</span>
-                        <span>{m.globalLevel}/40</span>
-                      </>
-                    )}
-                    {m.phone_number && (
-                      <>
-                        <span>·</span>
-                        <span>{m.phone_number.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </div>
-            </button>
-          ))
-        )}
-      </div>
-
-      {/* Quick action: go to member app */}
-      <div className="mt-6">
+      {/* Main Tab Switch */}
+      <div className="mb-4 flex gap-1.5 rounded-2xl border border-border bg-muted/30 p-1">
         <button
-          onClick={() => navigate("/home")}
-          className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+          onClick={() => setMainTab("members")}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            mainTab === "members" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          }`}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">📱</span>
-              <div>
-                <p className="text-sm font-bold text-foreground">회원 앱으로 보기</p>
-                <p className="text-xs text-muted-foreground">내 회원 화면 확인하기</p>
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </div>
+          <Users className="h-4 w-4" />
+          회원 리스트
+        </button>
+        <button
+          onClick={() => setMainTab("inbox")}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            mainTab === "inbox" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          }`}
+        >
+          <Inbox className="h-4 w-4" />
+          승인대기
+          {stats?.pending_count && stats.pending_count > 0 ? (
+            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-status-pending px-1.5 text-[10px] font-bold text-white">
+              {stats.pending_count}
+            </span>
+          ) : null}
         </button>
       </div>
+
+      {/* ── Inbox Tab ── */}
+      {mainTab === "inbox" && <ApprovalInbox />}
+
+      {/* ── Members Tab ── */}
+      {mainTab === "members" && (
+        <>
+          {/* Search */}
+          <div className="mb-3 relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="이름, 닉네임, 전화번호 검색"
+              className="pl-9 rounded-xl"
+            />
+          </div>
+
+          {/* Filters */}
+          <div className="mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
+            {FILTERS.map(f => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+                  filter === f.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort */}
+          <div className="mb-4 flex gap-1.5">
+            {([
+              { key: "level_desc" as SortType, label: "레벨순" },
+              { key: "pending_count" as SortType, label: "승인대기순" },
+            ]).map(s => (
+              <button
+                key={s.key}
+                onClick={() => setSort(s.key)}
+                className={`rounded-lg px-2.5 py-1 text-[10px] font-medium transition-all ${
+                  sort === s.key ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Member List */}
+          <div className="space-y-2">
+            {isLoading ? (
+              Array(5).fill(0).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />)
+            ) : filtered.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-8 text-center">
+                <span className="text-3xl">👥</span>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {search ? "검색 결과가 없습니다" : "회원이 없습니다"}
+                </p>
+              </div>
+            ) : (
+              filtered.map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => navigate(`/manager/member/${m.user_id}`)}
+                  className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg">
+                      {m.avatar_url ? (
+                        <img src={m.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
+                      ) : (
+                        <span>{m.prog ? RANK_ICONS[m.prog.current_rank] : "⚪"}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-foreground truncate">{m.nickname || m.name}</span>
+                        {m.pendingCount > 0 && (
+                          <span className="shrink-0 rounded-full bg-status-pending/20 px-1.5 py-0.5 text-[9px] font-bold text-status-pending">
+                            {m.pendingCount}건 대기
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                        {m.prog && (
+                          <>
+                            <span className="font-medium">{formatRank(m.prog.current_rank, m.prog.current_level)}</span>
+                            <span>·</span>
+                            <span>{m.globalLevel}/40</span>
+                          </>
+                        )}
+                        {m.phone_number && (
+                          <>
+                            <span>·</span>
+                            <span>{m.phone_number.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+
+          {/* Quick action: go to member app */}
+          <div className="mt-6">
+            <button
+              onClick={() => navigate("/home")}
+              className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">📱</span>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">회원 앱으로 보기</p>
+                    <p className="text-xs text-muted-foreground">내 회원 화면 확인하기</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
