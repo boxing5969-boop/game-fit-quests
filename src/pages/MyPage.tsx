@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import RankBadge from "@/components/RankBadge";
 import AvatarUpload from "@/components/AvatarUpload";
-import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useNavigate } from "react-router-dom";
 import { useXpLogs } from "@/hooks/useQuestData";
+import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 
 const MyPage = () => {
