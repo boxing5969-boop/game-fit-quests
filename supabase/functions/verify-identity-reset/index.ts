@@ -12,11 +12,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { name, phone, birthDate, newPassword } = await req.json();
+    const { username, name, phone, birthDate, newPassword } = await req.json();
 
-    if (!name || !phone || !birthDate || !newPassword) {
+    if (!username || !name || !phone || !newPassword) {
       return new Response(
-        JSON.stringify({ error: "모든 항목을 입력해주세요" }),
+        JSON.stringify({ error: "아이디, 이름, 전화번호를 모두 입력해주세요" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -37,42 +37,64 @@ Deno.serve(async (req) => {
 
     // Clean phone number (remove dashes)
     const cleanPhone = phone.replace(/\D/g, "");
-    const cleanBirthDate = birthDate.replace(/\D/g, "");
+    const cleanBirthDate = birthDate ? birthDate.replace(/\D/g, "") : null;
+    const fakeEmail = `${username.toLowerCase().trim()}@153rankup.app`;
 
-    // Find user by name + phone in profiles
-    const { data: profiles, error: profileError } = await supabaseAdmin
+    // Look up the auth user by email to get user_id
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+    if (authError) {
+      console.error("Auth list error:", authError);
+      throw authError;
+    }
+    const authUser = authData.users.find((u) => u.email === fakeEmail);
+    if (!authUser) {
+      return new Response(
+        JSON.stringify({ error: "입력한 아이디와 일치하는 계정을 찾을 수 없습니다" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify name and phone from profiles
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("user_id, name, phone_number, birth_date")
-      .eq("name", name.trim());
+      .eq("user_id", authUser.id)
+      .maybeSingle();
 
     if (profileError) {
       console.error("Profile query error:", profileError);
       throw profileError;
     }
 
-    // Match phone and optionally birth_date
-    const matched = profiles?.find((p) => {
-      const pPhone = p.phone_number?.replace(/\D/g, "") || "";
-      if (pPhone !== cleanPhone) return false;
-      // If profile has birth_date stored, verify it matches
-      if (p.birth_date) {
-        const pBirth = p.birth_date.replace(/\D/g, "");
-        return pBirth === cleanBirthDate;
-      }
-      // If no birth_date in profile, match by name + phone only
-      return true;
-    });
-
-    if (!matched) {
+    if (!profile || profile.name !== name.trim()) {
       return new Response(
         JSON.stringify({ error: "입력한 정보와 일치하는 계정을 찾을 수 없습니다" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    const pPhone = profile.phone_number?.replace(/\D/g, "") || "";
+    if (pPhone !== cleanPhone) {
+      return new Response(
+        JSON.stringify({ error: "전화번호가 일치하지 않습니다" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // If birth_date provided and stored, verify it
+    if (cleanBirthDate && profile.birth_date) {
+      const pBirth = profile.birth_date.replace(/\D/g, "");
+      if (pBirth !== cleanBirthDate) {
+        return new Response(
+          JSON.stringify({ error: "생년월일이 일치하지 않습니다" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // Update password using admin API
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      matched.user_id,
+      authUser.id,
       { password: newPassword }
     );
 
