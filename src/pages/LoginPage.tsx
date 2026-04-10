@@ -193,7 +193,7 @@ const LoginPage = () => {
 
   const resetForm = () => {
     setUsername(""); setPassword(""); setConfirmPassword(""); setName(""); setNickname("");
-    setPhone(""); setBranch(""); setRealEmail(""); setSignatureData(null); setError(""); setSignUpSuccess(false);
+    setPhone(""); setBranch(""); setBirthDate(""); setSignatureData(null); setError(""); setSignUpSuccess(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -238,24 +238,37 @@ const LoginPage = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!forgotUsername.trim()) {
-      toast.error("아이디를 입력해주세요");
+    setForgotError("");
+    if (!forgotName.trim() || !forgotPhone.trim() || !forgotBirthDate.trim()) {
+      setForgotError("모든 항목을 입력해주세요");
+      return;
+    }
+    if (forgotNewPassword.length < 6) {
+      setForgotError("새 비밀번호는 6자 이상이어야 합니다");
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotError("비밀번호가 일치하지 않습니다");
       return;
     }
     setForgotLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("reset-password-request", {
+      const { data, error } = await supabase.functions.invoke("verify-identity-reset", {
         body: {
-          username: forgotUsername.trim(),
-          redirectTo: `${window.location.origin}/reset-password`,
+          name: forgotName.trim(),
+          phone: forgotPhone.trim(),
+          birthDate: forgotBirthDate.trim(),
+          newPassword: forgotNewPassword,
         },
       });
       if (error) throw error;
-      toast.success("등록된 이메일로 비밀번호 재설정 링크가 발송되었습니다. 이메일을 확인해주세요.");
-      setShowForgotPassword(false);
-      setForgotUsername("");
+      if (data?.error) {
+        setForgotError(data.error);
+        return;
+      }
+      setForgotStep("success");
     } catch (err: any) {
-      toast.error("이메일 발송에 실패했습니다. 아이디를 확인해주세요.");
+      setForgotError("처리 중 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setForgotLoading(false);
     }
