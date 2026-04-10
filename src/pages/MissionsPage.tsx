@@ -12,7 +12,9 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import type { Enums } from "@/integrations/supabase/types";
+import WhiteLeagueTab from "@/components/WhiteLeagueTab";
 
+type MissionTab = "white" | "missions";
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
