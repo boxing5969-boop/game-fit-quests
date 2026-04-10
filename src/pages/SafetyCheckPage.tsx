@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { SAFETY_QUESTIONS, STARTER_MODE_MESSAGE, SAFETY_DISCLAIMER } from "@/data/safetyCheckData";
-import { ArrowLeft, ShieldCheck, AlertTriangle } from "lucide-react";
+import { ShieldCheck, AlertTriangle } from "lucide-react";
 
 const SafetyCheckPage = () => {
   const navigate = useNavigate();
