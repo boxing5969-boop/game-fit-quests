@@ -50,11 +50,17 @@ Deno.serve(async (req) => {
       throw profileError;
     }
 
-    // Match phone and birth_date
+    // Match phone and optionally birth_date
     const matched = profiles?.find((p) => {
       const pPhone = p.phone_number?.replace(/\D/g, "") || "";
-      const pBirth = p.birth_date?.replace(/\D/g, "") || "";
-      return pPhone === cleanPhone && pBirth === cleanBirthDate;
+      if (pPhone !== cleanPhone) return false;
+      // If profile has birth_date stored, verify it matches
+      if (p.birth_date) {
+        const pBirth = p.birth_date.replace(/\D/g, "");
+        return pBirth === cleanBirthDate;
+      }
+      // If no birth_date in profile, match by name + phone only
+      return true;
     });
 
     if (!matched) {
