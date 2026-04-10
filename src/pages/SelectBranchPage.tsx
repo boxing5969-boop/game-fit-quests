@@ -64,7 +64,8 @@ const SelectBranchPage = () => {
 
       // If coach request, insert coach_requests
       if (isCoach) {
-        await supabase.from("coach_requests").insert({ user_id: user!.id, status: "pending" });
+        const { error: coachErr } = await supabase.from("coach_requests").insert({ user_id: user!.id, status: "pending" });
+        if (coachErr) throw coachErr;
       }
 
       await refreshProfile();
