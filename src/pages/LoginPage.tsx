@@ -161,6 +161,9 @@ const LoginPage = () => {
   const [nickname, setNickname] = useState("");
   const [phone, setPhone] = useState("");
   const [branch, setBranch] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotName, setForgotName] = useState("");
   const [forgotPhone, setForgotPhone] = useState("");
@@ -169,6 +172,7 @@ const LoginPage = () => {
   const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotStep, setForgotStep] = useState<"verify" | "success">("verify");
+  const [forgotError, setForgotError] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
