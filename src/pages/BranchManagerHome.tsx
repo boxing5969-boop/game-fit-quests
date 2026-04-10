@@ -26,6 +26,7 @@ const BranchManagerHome = () => {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
   const branchName = profile?.branch_name || "";
+  const isSuperAdmin = role === "super_admin" || role === "admin";
 
   // Branch stats
   const { data: stats } = useQuery({
