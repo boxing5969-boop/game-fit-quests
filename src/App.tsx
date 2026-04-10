@@ -21,6 +21,7 @@ import MemberDetailPage from "@/pages/MemberDetailPage";
 import MemberPreviewPage from "@/pages/MemberPreviewPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import SelectBranchPage from "@/pages/SelectBranchPage";
+import WaitingApprovalPage from "@/pages/WaitingApprovalPage";
 import SafetyCheckPage from "@/pages/SafetyCheckPage";
 import GuidePage from "@/pages/GuidePage";
 import GuideProgramPage from "@/pages/guide/GuideProgramPage";
@@ -93,6 +94,8 @@ const AppRoutes = () => {
     <>
       <Routes>
         <Route path="/" element={user ? <RoleBasedRedirect /> : <LoginPage />} />
+        <Route path="/select-branch" element={<ProtectedRoute><SelectBranchPage /></ProtectedRoute>} />
+        <Route path="/waiting-approval" element={<ProtectedRoute><WaitingApprovalPage /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
         <Route path="/safety-check" element={<ProtectedRoute><SafetyCheckPage /></ProtectedRoute>} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
