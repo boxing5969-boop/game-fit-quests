@@ -331,7 +331,7 @@ const BranchManagerHome = () => {
           <button onClick={() => setMainTab("inbox")} className="text-left">
             <StatCard icon="⏳" label="승인대기" value={stats?.pending_count ?? "-"} highlight />
           </button>
-          <StatCard icon="🔥" label="이번 주 승급" value={stats?.weekly_levelups ?? "-"} />
+          <StatCard icon="🔥" label="이번 주 승격" value={stats?.weekly_levelups ?? "-"} />
           <StatCard icon="📝" label="오늘 제출" value={stats?.today_submissions ?? "-"} />
         </div>
 

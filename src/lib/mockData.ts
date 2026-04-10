@@ -216,7 +216,7 @@ export const levelMap: LevelNode[] = generateLevelMap();
 export const badges: Badge[] = [
   { id: "b1", name: "첫 라운드", icon: "🥊", earned: true, description: "첫 퀘스트 완료", earnedDate: "2025-01-16" },
   { id: "b2", name: "3일 연속", icon: "🔥", earned: true, description: "3일 연속 퀘스트 수행", earnedDate: "2025-01-19" },
-  { id: "b3", name: "블루 승급", icon: "🔵", earned: true, description: "블루 계급 달성", earnedDate: "2025-03-10" },
+  { id: "b3", name: "블루 승격", icon: "🔵", earned: true, description: "블루 리그 달성", earnedDate: "2025-03-10" },
   { id: "b4", name: "아이언피스트", icon: "👊", earned: false, description: "체력 테스트 만점" },
   { id: "b5", name: "꾸준한 파이터", icon: "🏆", earned: false, description: "30일 연속 출석" },
   { id: "b6", name: "챔피언", icon: "🏅", earned: false, description: "타이틀매치 클리어" },
