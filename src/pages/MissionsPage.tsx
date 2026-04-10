@@ -227,72 +227,98 @@ const MissionsPage = () => {
         </div>
       </div>
 
-      {/* Progress */}
-      <div className="mb-5 animate-slide-up rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">전체 진행률</span>
-          <span className="text-sm font-bold text-primary">{completedCount}/{totalMissions} ({progressPct}%)</span>
-        </div>
-        <div className="h-2.5 w-full overflow-hidden rounded-full bg-xp-bg">
-          <div className="h-full rounded-full bg-xp-bar transition-all duration-500" style={{ width: `${progressPct}%` }} />
-        </div>
+      {/* Tab Switcher */}
+      <div className="mb-5 flex gap-1 rounded-2xl bg-secondary p-1">
+        <button
+          onClick={() => setMissionTab("white")}
+          className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
+            missionTab === "white" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          }`}
+        >
+          ⚪ 화이트 리그
+        </button>
+        <button
+          onClick={() => setMissionTab("missions")}
+          className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
+            missionTab === "missions" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          }`}
+        >
+          🥊 미션
+        </button>
       </div>
 
-      {/* Mission List grouped by rank/level */}
-      {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-48 animate-pulse rounded-2xl bg-muted" />)}
-        </div>
+      {missionTab === "white" ? (
+        <WhiteLeagueTab />
       ) : (
-        <div className="space-y-6">
-          {grouped.map(({ rank, levels: rankLevels }, sectionIdx) => {
-            const hasAnyMission = rankLevels.some(rl => rl.missions.length > 0);
-            if (!hasAnyMission) return null;
-            return (
-              <div key={rank} className="animate-slide-up" style={{ animationDelay: `${sectionIdx * 0.08}s` }}>
-                <h2 className="mb-3 flex items-center gap-2 text-lg text-foreground">
-                  <span>{rank === "white" ? "⚪" : rank === "blue" ? "🔵" : rank === "red" ? "🔴" : "⚫"}</span>
-                  {RANK_LABELS[rank]}
-                </h2>
-                <div className="space-y-3">
-                  {rankLevels.map(({ level, missions: levelMissions }) =>
-                    levelMissions.map(mission => {
-                      const status = getMissionStatus(mission);
-                      const video = mission.mission_videos?.[0];
-                      return (
-                        <div key={mission.id} className="relative">
-                          <MissionCard
-                            title={`Lv.${level.level_number} ${mission.title}`}
-                            posterUrl={video?.poster_url}
-                            difficulty={mission.difficulty}
-                            xpReward={mission.xp_reward}
-                            status={status}
-                            onWatch={() => openVideo(mission)}
-                            onSubmit={() => handleSubmit(mission.id)}
-                            isSubmitting={submitMission.isPending || adminClearing}
-                            adminMode={isAdmin}
-                          />
-                          {isAdmin && (
-                            <div className="absolute right-2 top-2 z-10 flex gap-1">
-                              <button onClick={() => openEditMission(mission)}
-                                className="rounded-lg bg-secondary/90 p-1.5 text-foreground shadow-sm active:scale-95 backdrop-blur-sm">
-                                <Pencil className="h-3 w-3" />
-                              </button>
-                              <button onClick={() => handleDeleteMission(mission.id, mission.title)}
-                                className="rounded-lg bg-destructive/80 p-1.5 text-destructive-foreground shadow-sm active:scale-95">
-                                <Trash2 className="h-3 w-3" />
-                              </button>
+        <>
+          {/* Progress */}
+          <div className="mb-5 animate-slide-up rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">전체 진행률</span>
+              <span className="text-sm font-bold text-primary">{completedCount}/{totalMissions} ({progressPct}%)</span>
+            </div>
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-xp-bg">
+              <div className="h-full rounded-full bg-xp-bar transition-all duration-500" style={{ width: `${progressPct}%` }} />
+            </div>
+          </div>
+
+          {/* Mission List grouped by rank/level */}
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => <div key={i} className="h-48 animate-pulse rounded-2xl bg-muted" />)}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {grouped.map(({ rank, levels: rankLevels }, sectionIdx) => {
+                const hasAnyMission = rankLevels.some(rl => rl.missions.length > 0);
+                if (!hasAnyMission) return null;
+                return (
+                  <div key={rank} className="animate-slide-up" style={{ animationDelay: `${sectionIdx * 0.08}s` }}>
+                    <h2 className="mb-3 flex items-center gap-2 text-lg text-foreground">
+                      <span>{rank === "white" ? "⚪" : rank === "blue" ? "🔵" : rank === "red" ? "🔴" : "⚫"}</span>
+                      {RANK_LABELS[rank]}
+                    </h2>
+                    <div className="space-y-3">
+                      {rankLevels.map(({ level, missions: levelMissions }) =>
+                        levelMissions.map(mission => {
+                          const status = getMissionStatus(mission);
+                          const video = mission.mission_videos?.[0];
+                          return (
+                            <div key={mission.id} className="relative">
+                              <MissionCard
+                                title={`Lv.${level.level_number} ${mission.title}`}
+                                posterUrl={video?.poster_url}
+                                difficulty={mission.difficulty}
+                                xpReward={mission.xp_reward}
+                                status={status}
+                                onWatch={() => openVideo(mission)}
+                                onSubmit={() => handleSubmit(mission.id)}
+                                isSubmitting={submitMission.isPending || adminClearing}
+                                adminMode={isAdmin}
+                              />
+                              {isAdmin && (
+                                <div className="absolute right-2 top-2 z-10 flex gap-1">
+                                  <button onClick={() => openEditMission(mission)}
+                                    className="rounded-lg bg-secondary/90 p-1.5 text-foreground shadow-sm active:scale-95 backdrop-blur-sm">
+                                    <Pencil className="h-3 w-3" />
+                                  </button>
+                                  <button onClick={() => handleDeleteMission(mission.id, mission.title)}
+                                    className="rounded-lg bg-destructive/80 p-1.5 text-destructive-foreground shadow-sm active:scale-95">
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {/* Video Player Modal */}
