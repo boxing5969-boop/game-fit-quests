@@ -253,4 +253,14 @@ const StatBox = ({ icon, label, value }: { icon: string; label: string; value: s
   </div>
 );
 
+const QuickLink = ({ emoji, label, desc, onClick }: { emoji: string; label: string; desc: string; onClick: () => void }) => (
+  <button onClick={onClick} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-sm transition-all active:scale-[0.97]">
+    <span className="text-2xl">{emoji}</span>
+    <div className="text-left">
+      <p className="text-sm font-bold text-foreground">{label}</p>
+      <p className="text-[10px] text-muted-foreground">{desc}</p>
+    </div>
+  </button>
+);
+
 export default HomePage;
