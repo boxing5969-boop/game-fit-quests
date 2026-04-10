@@ -165,6 +165,7 @@ const LoginPage = () => {
   const [signatureData, setSignatureData] = useState<string | null>(null);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotUsername, setForgotUsername] = useState("");
   const [forgotName, setForgotName] = useState("");
   const [forgotPhone, setForgotPhone] = useState("");
   const [forgotBirthDate, setForgotBirthDate] = useState("");
@@ -239,8 +240,8 @@ const LoginPage = () => {
 
   const handleForgotPassword = async () => {
     setForgotError("");
-    if (!forgotName.trim() || !forgotPhone.trim() || !forgotBirthDate.trim()) {
-      setForgotError("모든 항목을 입력해주세요");
+    if (!forgotUsername.trim() || !forgotName.trim() || !forgotPhone.trim()) {
+      setForgotError("아이디, 이름, 전화번호를 모두 입력해주세요");
       return;
     }
     if (forgotNewPassword.length < 6) {
@@ -255,9 +256,10 @@ const LoginPage = () => {
     try {
       const { data, error } = await supabase.functions.invoke("verify-identity-reset", {
         body: {
+          username: forgotUsername.trim(),
           name: forgotName.trim(),
           phone: forgotPhone.trim(),
-          birthDate: forgotBirthDate.trim(),
+          birthDate: forgotBirthDate.trim() || null,
           newPassword: forgotNewPassword,
         },
       });
@@ -454,7 +456,7 @@ const LoginPage = () => {
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500/20 text-3xl">✅</div>
                 <h2 className="mb-2 text-lg font-bold text-foreground">비밀번호 변경 완료!</h2>
                 <p className="mb-4 text-sm text-muted-foreground">새 비밀번호로 로그인해주세요.</p>
-                <button type="button" onClick={() => { setShowForgotPassword(false); setForgotStep("verify"); setForgotName(""); setForgotPhone(""); setForgotBirthDate(""); setForgotNewPassword(""); setForgotConfirmPassword(""); setForgotError(""); }}
+                <button type="button" onClick={() => { setShowForgotPassword(false); setForgotStep("verify"); setForgotUsername(""); setForgotName(""); setForgotPhone(""); setForgotBirthDate(""); setForgotNewPassword(""); setForgotConfirmPassword(""); setForgotError(""); }}
                   className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md active:scale-[0.98]">
                   확인
                 </button>
@@ -462,11 +464,12 @@ const LoginPage = () => {
             ) : (
               <>
                 <h2 className="mb-2 text-lg font-bold text-foreground">🔑 비밀번호 찾기</h2>
-                <p className="mb-4 text-sm text-muted-foreground">가입 시 등록한 이름, 전화번호, 생년월일을 입력하세요.</p>
+                <p className="mb-4 text-sm text-muted-foreground">가입 시 등록한 아이디, 이름, 전화번호를 입력하세요.</p>
                 <div className="space-y-3">
+                  <input type="text" value={forgotUsername} onChange={(e) => setForgotUsername(e.target.value)} placeholder="아이디" className={inputClass} autoCapitalize="none" autoCorrect="off" />
                   <input type="text" value={forgotName} onChange={(e) => setForgotName(e.target.value)} placeholder="이름" className={inputClass} />
                   <input type="tel" value={forgotPhone} onChange={(e) => setForgotPhone(formatPhone(e.target.value))} placeholder="전화번호 (010-0000-0000)" className={inputClass} />
-                  <input type="text" value={forgotBirthDate} onChange={(e) => setForgotBirthDate(e.target.value)} placeholder="생년월일 (예: 19990315)" className={inputClass} maxLength={8} inputMode="numeric" />
+                  <input type="text" value={forgotBirthDate} onChange={(e) => setForgotBirthDate(e.target.value)} placeholder="생년월일 (선택, 예: 19990315)" className={inputClass} maxLength={8} inputMode="numeric" />
                   <div className="border-t border-border pt-3">
                     <p className="mb-2 text-sm font-medium text-foreground">새 비밀번호 설정</p>
                     <input type="password" value={forgotNewPassword} onChange={(e) => setForgotNewPassword(e.target.value)} placeholder="새 비밀번호 (6자 이상)" className={inputClass} />
@@ -475,7 +478,7 @@ const LoginPage = () => {
                 </div>
                 {forgotError && <p className="mt-2 text-sm text-destructive">{forgotError}</p>}
                 <div className="mt-4 flex gap-3">
-                  <button type="button" onClick={() => { setShowForgotPassword(false); setForgotError(""); setForgotName(""); setForgotPhone(""); setForgotBirthDate(""); setForgotNewPassword(""); setForgotConfirmPassword(""); }}
+                  <button type="button" onClick={() => { setShowForgotPassword(false); setForgotError(""); setForgotUsername(""); setForgotName(""); setForgotPhone(""); setForgotBirthDate(""); setForgotNewPassword(""); setForgotConfirmPassword(""); }}
                     className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground transition-all active:scale-[0.98]">
                     취소
                   </button>
