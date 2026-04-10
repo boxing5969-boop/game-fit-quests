@@ -161,12 +161,18 @@ const LoginPage = () => {
   const [nickname, setNickname] = useState("");
   const [phone, setPhone] = useState("");
   const [branch, setBranch] = useState("");
-  const [realEmail, setRealEmail] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [signatureData, setSignatureData] = useState<string | null>(null);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [forgotUsername, setForgotUsername] = useState("");
+  const [forgotName, setForgotName] = useState("");
+  const [forgotPhone, setForgotPhone] = useState("");
+  const [forgotBirthDate, setForgotBirthDate] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotStep, setForgotStep] = useState<"verify" | "success">("verify");
+  const [forgotError, setForgotError] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
@@ -187,7 +193,7 @@ const LoginPage = () => {
 
   const resetForm = () => {
     setUsername(""); setPassword(""); setConfirmPassword(""); setName(""); setNickname("");
-    setPhone(""); setBranch(""); setRealEmail(""); setSignatureData(null); setError(""); setSignUpSuccess(false);
+    setPhone(""); setBranch(""); setBirthDate(""); setSignatureData(null); setError(""); setSignUpSuccess(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -219,7 +225,7 @@ const LoginPage = () => {
     // Proceed with signup
     setIsLoading(true);
     try {
-      const { error } = await signUp(toFakeEmail(username), password, name, nickname, rawPhone, branch, tab === "coach", realEmail);
+      const { error } = await signUp(toFakeEmail(username), password, name, nickname, rawPhone, branch, tab === "coach", birthDate);
       if (error) { setError(error.message); return; }
       setSignUpSuccess(true);
       toast.success(tab === "coach" ? "가입 완료! 관리자 승인을 기다려주세요" : "가입 완료! 관장님 승인을 기다려주세요 🥊");
@@ -232,24 +238,37 @@ const LoginPage = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!forgotUsername.trim()) {
-      toast.error("아이디를 입력해주세요");
+    setForgotError("");
+    if (!forgotName.trim() || !forgotPhone.trim() || !forgotBirthDate.trim()) {
+      setForgotError("모든 항목을 입력해주세요");
+      return;
+    }
+    if (forgotNewPassword.length < 6) {
+      setForgotError("새 비밀번호는 6자 이상이어야 합니다");
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotError("비밀번호가 일치하지 않습니다");
       return;
     }
     setForgotLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("reset-password-request", {
+      const { data, error } = await supabase.functions.invoke("verify-identity-reset", {
         body: {
-          username: forgotUsername.trim(),
-          redirectTo: `${window.location.origin}/reset-password`,
+          name: forgotName.trim(),
+          phone: forgotPhone.trim(),
+          birthDate: forgotBirthDate.trim(),
+          newPassword: forgotNewPassword,
         },
       });
       if (error) throw error;
-      toast.success("등록된 이메일로 비밀번호 재설정 링크가 발송되었습니다. 이메일을 확인해주세요.");
-      setShowForgotPassword(false);
-      setForgotUsername("");
+      if (data?.error) {
+        setForgotError(data.error);
+        return;
+      }
+      setForgotStep("success");
     } catch (err: any) {
-      toast.error("이메일 발송에 실패했습니다. 아이디를 확인해주세요.");
+      setForgotError("처리 중 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setForgotLoading(false);
     }
@@ -346,9 +365,9 @@ const LoginPage = () => {
               )}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-muted-foreground">이메일 (비밀번호 재설정용)</label>
-              <input type="email" value={realEmail} onChange={(e) => setRealEmail(e.target.value)} placeholder="example@email.com" required className={inputClass} />
-              <p className="mt-0.5 text-xs text-muted-foreground">비밀번호 분실 시 재설정 링크가 발송됩니다</p>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">생년월일</label>
+              <input type="text" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} placeholder="예: 19990315" required className={inputClass} maxLength={8} inputMode="numeric" />
+              <p className="mt-0.5 text-xs text-muted-foreground">비밀번호 분실 시 본인확인에 사용됩니다</p>
             </div>
           </>
         )}
@@ -430,34 +449,43 @@ const LoginPage = () => {
       {showForgotPassword && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl">
-            <h2 className="mb-2 text-lg font-bold text-foreground">🔑 비밀번호 재설정</h2>
-            <p className="mb-4 text-sm text-muted-foreground">가입 시 사용한 아이디를 입력하면 등록된 이메일로 재설정 링크를 보내드립니다.</p>
-            <input
-              type="text"
-              value={forgotUsername}
-              onChange={(e) => setForgotUsername(e.target.value)}
-              placeholder="아이디 입력"
-              className={inputClass}
-              autoCapitalize="none"
-              autoCorrect="off"
-            />
-            <div className="mt-4 flex gap-3">
-              <button
-                type="button"
-                onClick={() => { setShowForgotPassword(false); setForgotUsername(""); }}
-                className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground transition-all active:scale-[0.98]"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                disabled={forgotLoading || !forgotUsername.trim()}
-                className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
-              >
-                {forgotLoading ? "발송 중..." : "재설정 이메일 발송"}
-              </button>
-            </div>
+            {forgotStep === "success" ? (
+              <div className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500/20 text-3xl">✅</div>
+                <h2 className="mb-2 text-lg font-bold text-foreground">비밀번호 변경 완료!</h2>
+                <p className="mb-4 text-sm text-muted-foreground">새 비밀번호로 로그인해주세요.</p>
+                <button type="button" onClick={() => { setShowForgotPassword(false); setForgotStep("verify"); setForgotName(""); setForgotPhone(""); setForgotBirthDate(""); setForgotNewPassword(""); setForgotConfirmPassword(""); setForgotError(""); }}
+                  className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md active:scale-[0.98]">
+                  확인
+                </button>
+              </div>
+            ) : (
+              <>
+                <h2 className="mb-2 text-lg font-bold text-foreground">🔑 비밀번호 찾기</h2>
+                <p className="mb-4 text-sm text-muted-foreground">가입 시 등록한 이름, 전화번호, 생년월일을 입력하세요.</p>
+                <div className="space-y-3">
+                  <input type="text" value={forgotName} onChange={(e) => setForgotName(e.target.value)} placeholder="이름" className={inputClass} />
+                  <input type="tel" value={forgotPhone} onChange={(e) => setForgotPhone(formatPhone(e.target.value))} placeholder="전화번호 (010-0000-0000)" className={inputClass} />
+                  <input type="text" value={forgotBirthDate} onChange={(e) => setForgotBirthDate(e.target.value)} placeholder="생년월일 (예: 19990315)" className={inputClass} maxLength={8} inputMode="numeric" />
+                  <div className="border-t border-border pt-3">
+                    <p className="mb-2 text-sm font-medium text-foreground">새 비밀번호 설정</p>
+                    <input type="password" value={forgotNewPassword} onChange={(e) => setForgotNewPassword(e.target.value)} placeholder="새 비밀번호 (6자 이상)" className={inputClass} />
+                  </div>
+                  <input type="password" value={forgotConfirmPassword} onChange={(e) => setForgotConfirmPassword(e.target.value)} placeholder="새 비밀번호 확인" className={inputClass} />
+                </div>
+                {forgotError && <p className="mt-2 text-sm text-destructive">{forgotError}</p>}
+                <div className="mt-4 flex gap-3">
+                  <button type="button" onClick={() => { setShowForgotPassword(false); setForgotError(""); setForgotName(""); setForgotPhone(""); setForgotBirthDate(""); setForgotNewPassword(""); setForgotConfirmPassword(""); }}
+                    className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground transition-all active:scale-[0.98]">
+                    취소
+                  </button>
+                  <button type="button" onClick={handleForgotPassword} disabled={forgotLoading}
+                    className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                    {forgotLoading ? "확인 중..." : "비밀번호 변경"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

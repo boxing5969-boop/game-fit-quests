@@ -64,15 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // Intercept PASSWORD_RECOVERY — redirect to reset page before setting user
-        if (event === "PASSWORD_RECOVERY") {
-          setSession(session);
-          setUser(null); // Don't set user so ProtectedRoute won't trigger
-          setLoading(false);
-          window.location.replace("/reset-password#recovery=true");
-          return;
-        }
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -98,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, [fetchUserData]);
 
-  const signUp = async (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean, realEmail?: string) => {
+  const signUp = async (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean, birthDate?: string) => {
     // Check phone uniqueness first
     const { data: existing } = await supabase
       .from("profiles")
@@ -113,7 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
       options: {
-        data: { name, nickname, phone_number: phoneNumber, branch_name: branchName, is_coach_request: isCoach || false, real_email: realEmail || null },
+        data: { name, nickname, phone_number: phoneNumber, branch_name: branchName, is_coach_request: isCoach || false, birth_date: birthDate || null },
         emailRedirectTo: window.location.origin,
       },
     });
@@ -148,27 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    let { error, data } = await supabase.auth.signInWithPassword({ email, password });
-    
-    // If login failed and using fake email, try looking up real email (during password reset window)
-    if (error && error.message.includes("Invalid login") && email.endsWith("@153rankup.app")) {
-      const username = email.split("@")[0];
-      // Try to find user's real email from profiles (via edge function since we're not authenticated)
-      try {
-        const { data: resolveData } = await supabase.functions.invoke("resolve-login-email", {
-          body: { username },
-        });
-        if (resolveData?.authEmail && resolveData.authEmail !== email) {
-          const retry = await supabase.auth.signInWithPassword({ email: resolveData.authEmail, password });
-          if (!retry.error) {
-            error = null;
-            data = retry.data;
-          }
-        }
-      } catch {
-        // Fallback failed, keep original error
-      }
-    }
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
       if (error.message.includes("Invalid login")) {
