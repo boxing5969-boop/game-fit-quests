@@ -33,7 +33,8 @@ import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION } from "@/lib/rankLabels";
 const HallOfFamePage = () => {
   const navigate = useNavigate();
   const { user, progress, role } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabKey>("official");
+  const [topTab, setTopTab] = useState<TopTab>("ranking");
+  const [activeTab, setActiveTab] = useState<RankingTabKey>("official");
   const setRival = useSetRival();
   const qc = useQueryClient();
   const isAdmin = role === "admin" || role === "super_admin";
