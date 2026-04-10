@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { SAFETY_QUESTIONS, STARTER_MODE_MESSAGE, SAFETY_DISCLAIMER } from "@/data/safetyCheckData";
-import { ArrowLeft, ShieldCheck, AlertTriangle } from "lucide-react";
+import { ShieldCheck, AlertTriangle } from "lucide-react";
 
 const SafetyCheckPage = () => {
   const navigate = useNavigate();
-  const { completeSafety } = useOnboardingState();
+  const { completeSafety, safetyDone } = useOnboardingState();
   const [answers, setAnswers] = useState<Record<string, boolean | null>>({});
   const [showResult, setShowResult] = useState(false);
 
@@ -30,11 +30,13 @@ const SafetyCheckPage = () => {
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
-      <div className="mb-6 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
-          <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
-        </button>
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-bold text-foreground">안전 체크</h1>
+        {safetyDone && (
+          <button onClick={() => navigate("/home", { replace: true })} className="rounded-full bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground active:scale-95">
+            홈으로
+          </button>
+        )}
       </div>
 
       <div className="mb-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
