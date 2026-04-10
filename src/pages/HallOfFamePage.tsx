@@ -15,16 +15,16 @@ import {
 } from "@/hooks/useRankingData";
 import { toast } from "sonner";
 
-const TABS = [
-  { key: "official", label: "🏆 공식 랭킹" },
+const RANKING_TABS = [
+  { key: "official", label: "🏆 공식" },
   { key: "weekly", label: "⚡ 이번 주" },
   { key: "monthly", label: "📈 상승왕" },
   { key: "streak", label: "🔥 출석" },
   { key: "boss", label: "🥊 보스전" },
-  { key: "halloffame", label: "🏅 명예의 전당" },
 ] as const;
 
-type TabKey = (typeof TABS)[number]["key"];
+type RankingTabKey = (typeof RANKING_TABS)[number]["key"];
+type TopTab = "ranking" | "halloffame";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
