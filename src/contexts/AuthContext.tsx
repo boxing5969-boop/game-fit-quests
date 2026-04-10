@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, [fetchUserData]);
 
-  const signUp = async (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean, realEmail?: string) => {
+  const signUp = async (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean, birthDate?: string) => {
     // Check phone uniqueness first
     const { data: existing } = await supabase
       .from("profiles")
@@ -113,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
       options: {
-        data: { name, nickname, phone_number: phoneNumber, branch_name: branchName, is_coach_request: isCoach || false, real_email: realEmail || null },
+        data: { name, nickname, phone_number: phoneNumber, branch_name: branchName, is_coach_request: isCoach || false, birth_date: birthDate || null },
         emailRedirectTo: window.location.origin,
       },
     });
