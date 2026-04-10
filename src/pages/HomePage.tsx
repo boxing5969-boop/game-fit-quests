@@ -1,29 +1,40 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocalProgress } from "@/hooks/useLocalProgress";
 import XPBar from "@/components/XPBar";
 import RankBadge from "@/components/RankBadge";
-import RankMiniCard from "@/components/RankMiniCard";
 import LevelUpModal from "@/components/LevelUpModal";
-import WeeklyDashboard from "@/components/WeeklyDashboard";
-import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
 import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestData";
 import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useNavigate } from "react-router-dom";
-import { User, ChevronRight, TrendingUp, Play } from "lucide-react";
+import { User, ChevronRight, TrendingUp, Play, Clock, CalendarDays, Target, CheckCircle2 } from "lucide-react";
 import HallOfFameShowcase from "@/components/HallOfFameShowcase";
+import RankMiniCard from "@/components/RankMiniCard";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import { isManagerRole } from "@/lib/rankLabels";
+import {
+  WHITE_LV1_META,
+  HOME_MESSAGES,
+  QUICK_ACTIONS,
+  PROMOTION_METRICS,
+  formatMicrocopy,
+} from "@/data/whiteLevel1Data";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 
+const STATUS_STYLE: Record<string, { bg: string; text: string }> = {
+  "진행중": { bg: "bg-primary/10", text: "text-primary" },
+  "승급 심사 가능": { bg: "bg-status-complete/10", text: "text-status-complete" },
+  "보완 필요": { bg: "bg-status-pending/10", text: "text-status-pending" },
+  "승급 완료": { bg: "bg-accent/10", text: "text-accent-foreground" },
+};
+
 const HomePage = () => {
   const { user, profile, progress, role, refreshProgress } = useAuth();
   const navigate = useNavigate();
-  const { data: missions } = useMissions();
-  const { data: missionSubs } = useMyMissionSubmissions();
   const { data: levels } = useLevels();
   const { data: ranking } = useDivisionRanking();
   const { data: rivalsAbove } = useRivalsAbove();
@@ -31,15 +42,12 @@ const HomePage = () => {
   const attendance = useRecordAttendance();
   const setRival = useSetRival();
   const { onboardingDone, safetyDone } = useOnboardingState();
+  const { totalXp, status, metrics } = useLocalProgress();
   const [levelUpModal, setLevelUpModal] = useState<{ show: boolean; level: number; rank: string; xp: number }>({ show: false, level: 0, rank: "", xp: 0 });
 
-  // Redirect to onboarding if not done
   useEffect(() => {
-    if (!onboardingDone) {
-      navigate("/onboarding", { replace: true });
-    } else if (!safetyDone) {
-      navigate("/safety-check", { replace: true });
-    }
+    if (!onboardingDone) navigate("/onboarding", { replace: true });
+    else if (!safetyDone) navigate("/safety-check", { replace: true });
   }, [onboardingDone, safetyDone, navigate]);
 
   useEffect(() => {
@@ -50,24 +58,19 @@ const HomePage = () => {
 
   const rank = progress.current_rank as Enums<"rank_name">;
   const currentLevel = levels?.find(l => l.rank_name === rank && l.level_number === progress.current_level);
-  const nextLevel = levels?.find(l => l.rank_name === rank && l.level_number === progress.current_level + 1)
-    || (progress.current_level === 10 ? currentLevel : null);
-  const xpToNext = nextLevel?.xp_required || currentLevel?.xp_required || (progress.current_level * 50);
-  const xpRemaining = Math.max(0, xpToNext - progress.total_xp);
+  const isWhiteLv1 = rank === "white" && progress.current_level === 1;
   const myPosition = ranking?.find(r => r.r_user_id === user?.id)?.rank_position;
-
-  // Today's mission
-  const currentGlobal = RANK_ORDER.indexOf(rank) * 10 + progress.current_level;
-  const subMap = new Map((missionSubs || []).map(s => [s.mission_id, s.status]));
-  const todayMission = (missions || []).find(m => {
-    const level = (m as any).levels;
-    if (!level) return false;
-    const mGlobal = RANK_ORDER.indexOf(level.rank_name) * 10 + level.level_number;
-    return mGlobal <= currentGlobal && subMap.get(m.id) !== "approved";
-  });
-
   const recentBadges = (myBadges || []).slice(0, 3);
   const isMaster40 = rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
+
+  // Dynamic microcopy
+  const sessionsRemaining = Math.max(0, metrics.sessions.target - metrics.sessions.current);
+  const microcopyLines = [
+    sessionsRemaining > 0
+      ? formatMicrocopy("승급까지 {remaining}회 남았습니다", { remaining: sessionsRemaining })
+      : "승급 심사가 가능합니다!",
+    "자세와 리듬이 점점 안정되고 있어요",
+  ];
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
@@ -92,53 +95,132 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* 1. League/Level badge + rank */}
+        {/* 1. League/Level Card */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <RankBadge rank={rank} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
-            {myPosition && (
-              <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5">
-                <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                <span className="text-sm font-bold text-primary">{myPosition}위</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {myPosition && (
+                <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5">
+                  <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-sm font-bold text-primary">{myPosition}위</span>
+                </div>
+              )}
+              {/* Rank-up status badge */}
+              {isWhiteLv1 && (
+                <div className={`rounded-full px-3 py-1.5 ${STATUS_STYLE[status]?.bg || "bg-muted"}`}>
+                  <span className={`text-xs font-bold ${STATUS_STYLE[status]?.text || "text-muted-foreground"}`}>{status}</span>
+                </div>
+              )}
+            </div>
           </div>
           <div className="mb-2 text-xs text-muted-foreground">
-            {isManagerRole(role) ? "👑 마스터 · 모든 레벨 달성" : (currentLevel?.title || `${RANK_LABELS[rank]} 리그 · 레벨 ${progress.current_level}`)}
+            {isManagerRole(role) ? "👑 마스터 · 모든 레벨 달성" : (
+              isWhiteLv1 ? WHITE_LV1_META.title : (currentLevel?.title || `${RANK_LABELS[rank]} 리그 · 레벨 ${progress.current_level}`)
+            )}
             {profile.branch_name && <span className="ml-1.5 text-muted-foreground/60">· {profile.branch_name}</span>}
           </div>
-          <XPBar current={progress.total_xp} max={xpToNext} />
-          <p className="mt-1.5 text-right text-xs text-muted-foreground">
-            다음 레벨까지 <strong className="text-primary">{xpRemaining} XP</strong>
-          </p>
+          {isWhiteLv1 ? (
+            <>
+              <XPBar current={totalXp} max={metrics.xp.target} />
+              <p className="mt-1.5 text-right text-xs text-muted-foreground">
+                <strong className="text-primary">{totalXp}</strong> / {metrics.xp.target} XP
+              </p>
+            </>
+          ) : (
+            <>
+              <XPBar current={progress.total_xp} max={currentLevel?.xp_required || 500} />
+              <p className="mt-1.5 text-right text-xs text-muted-foreground">
+                <strong className="text-primary">{progress.total_xp}</strong> XP
+              </p>
+            </>
+          )}
         </div>
 
-        {/* 2. Weekly dashboard */}
-        {/* Weekly dashboard removed */}
-
-        {/* 3. Today's mission */}
-        {todayMission && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
-            <h2 className="mb-3 text-base font-bold text-foreground">🥊 오늘의 미션</h2>
-            <button
-              onClick={() => navigate("/missions")}
-              className="w-full rounded-2xl border border-primary/30 bg-card p-4 shadow-sm transition-all active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                  <Play className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-bold text-foreground">{todayMission.title}</p>
-                  <p className="text-xs text-muted-foreground">+{todayMission.xp_reward} XP</p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
-              </div>
-            </button>
+        {/* 2. White Lv.1 Progression Metrics */}
+        {isWhiteLv1 && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.05s" }}>
+            <div className="grid grid-cols-2 gap-2.5">
+              {PROMOTION_METRICS.map(m => {
+                const met = metrics[m.id as keyof typeof metrics];
+                const pct = met ? Math.min(100, Math.round((met.current / met.target) * 100)) : 0;
+                const done = met && met.current >= met.target;
+                return (
+                  <div key={m.id} className={`rounded-2xl border p-3.5 shadow-sm transition-all ${done ? "border-status-complete/30 bg-status-complete/5" : "border-border bg-card"}`}>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">{m.emoji} {m.label}</span>
+                      {done && <CheckCircle2 className="h-3.5 w-3.5 text-status-complete" />}
+                    </div>
+                    <p className="text-lg font-bold text-foreground">
+                      {met?.current ?? 0}<span className="text-sm text-muted-foreground">/{m.target}{m.unit}</span>
+                    </p>
+                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
+                      <div className={`h-full rounded-full transition-all duration-500 ${done ? "bg-status-complete" : "bg-primary"}`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
-        {/* 4. Rivals */}
+        {/* 3. Microcopy & Messages */}
+        {isWhiteLv1 && (
+          <div className="animate-slide-up rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-4" style={{ animationDelay: "0.08s" }}>
+            <p className="mb-2 text-xs font-bold text-primary">💬 오늘의 한마디</p>
+            <p className="text-sm leading-relaxed text-foreground">{microcopyLines[0]}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{microcopyLines[1]}</p>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {HOME_MESSAGES.map((msg, i) => (
+                <span key={i} className="rounded-full bg-card px-2.5 py-1 text-[10px] text-muted-foreground shadow-sm">{msg}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 4. Quick Actions */}
+        {isWhiteLv1 && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
+            <div className="grid grid-cols-3 gap-2">
+              {QUICK_ACTIONS.map(action => (
+                <button
+                  key={action.id}
+                  onClick={() => navigate(action.route)}
+                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card p-3.5 shadow-sm transition-all active:scale-[0.96]"
+                >
+                  <span className="text-2xl">{action.emoji}</span>
+                  <span className="text-xs font-bold text-foreground leading-tight text-center">{action.label}</span>
+                  <span className="text-[9px] text-muted-foreground text-center">{action.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 5. Recommended Path Chips */}
+        {isWhiteLv1 && (
+          <div className="animate-slide-up flex gap-2" style={{ animationDelay: "0.12s" }}>
+            <div className="flex-1 rounded-2xl border border-border bg-card p-3 shadow-sm">
+              <p className="text-[10px] font-bold text-muted-foreground">📋 일반 경로</p>
+              <p className="text-sm font-bold text-foreground">주 3회 · 약 2주 · 5~6회</p>
+            </div>
+            <div className="flex-1 rounded-2xl border border-primary/20 bg-primary/5 p-3 shadow-sm">
+              <p className="text-[10px] font-bold text-primary">⚡ 빠른 경로</p>
+              <p className="text-sm font-bold text-foreground">주 5회 · 약 1주 · 5회</p>
+            </div>
+          </div>
+        )}
+
+        {/* 6. Attendance note */}
+        {isWhiteLv1 && (
+          <div className="animate-slide-up rounded-xl bg-muted/50 px-4 py-2.5" style={{ animationDelay: "0.14s" }}>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              ℹ️ 하루 2번 운동해도 승급 출석은 하루 1회만 인정됩니다. 짧게 몰아서 하기보다 여러 날에 걸쳐 반복하는 것이 더 중요합니다.
+            </p>
+          </div>
+        )}
+
+        {/* 7. Rivals (existing) */}
         {rivalsAbove && rivalsAbove.length > 0 && (
           <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
             <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-foreground">🎯 추격 대상</h2>
@@ -163,14 +245,14 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* 5. Stats Row */}
+        {/* 8. Stats Row */}
         <div className="grid grid-cols-3 gap-2.5 animate-slide-up" style={{ animationDelay: "0.2s" }}>
           <StatBox icon={progress.streak_days >= 3 ? "🔥" : "💪"} label="연속 출석" value={`${progress.streak_days}일`} />
-          <StatBox icon="⚡" label="누적 XP" value={progress.total_xp.toLocaleString()} />
+          <StatBox icon="⚡" label="누적 XP" value={totalXp.toLocaleString()} />
           <StatBox icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
         </div>
 
-        {/* 6. Quick Links */}
+        {/* 9. Quick Links */}
         <div className="animate-slide-up" style={{ animationDelay: "0.22s" }}>
           <h2 className="mb-3 text-base font-bold text-foreground">📌 바로가기</h2>
           <div className="grid grid-cols-2 gap-2.5">
@@ -181,10 +263,10 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* 6. Hall of fame */}
+        {/* 10. Hall of Fame */}
         <HallOfFameShowcase />
 
-        {/* 7. Recent badges */}
+        {/* 11. Recent badges */}
         {recentBadges.length > 0 && (
           <div className="animate-slide-up" style={{ animationDelay: "0.25s" }}>
             <h2 className="mb-3 text-base font-bold text-foreground">🏅 최근 획득 배지</h2>
@@ -199,7 +281,7 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* 8. CTA */}
+        {/* 12. CTA */}
         <button
           onClick={() => navigate("/missions")}
           className="w-full animate-slide-up rounded-2xl bg-primary py-5 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
