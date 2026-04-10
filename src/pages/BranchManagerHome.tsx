@@ -18,6 +18,7 @@ type MainTab = "members" | "inbox";
 const BranchManagerHome = () => {
   const navigate = useNavigate();
   const { profile, role } = useAuth();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [sort, setSort] = useState<SortType>("level_desc");
@@ -105,6 +106,7 @@ const BranchManagerHome = () => {
     }
 
     if (filter === "pending") list = list.filter(m => m.pendingCount > 0);
+    else if (filter === "unapproved") list = list.filter(m => !(m as any).is_approved);
     else if (filter === "boss_ready") list = list.filter(m => m.prog?.current_level === 10);
     else if (filter === "active") list = list.filter(m => m.prog && m.prog.streak_days > 0);
 
@@ -114,12 +116,39 @@ const BranchManagerHome = () => {
     return list;
   }, [members, search, filter, sort]);
 
+  const unapprovedCount = useMemo(() => members?.filter(m => !(m as any).is_approved).length || 0, [members]);
+
   const FILTERS: { key: FilterType; label: string }[] = [
     { key: "all", label: "전체" },
-    { key: "pending", label: "승인대기" },
+    { key: "unapproved", label: `가입승인 (${unapprovedCount})` },
+    { key: "pending", label: "미션대기" },
     { key: "boss_ready", label: "보스전 대기" },
     { key: "active", label: "최근 활동" },
   ];
+
+  const handleApproveMember = async (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase.rpc("approve_member", { _member_id: userId });
+      if (error) throw error;
+      toast.success("회원 가입을 승인했습니다");
+      queryClient.invalidateQueries({ queryKey: ["branch-members"] });
+    } catch (err: any) {
+      toast.error(err.message || "승인 실패");
+    }
+  };
+
+  const handleRejectMember = async (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase.rpc("reject_member", { _member_id: userId });
+      if (error) throw error;
+      toast.success("회원 가입을 거절했습니다");
+      queryClient.invalidateQueries({ queryKey: ["branch-members"] });
+    } catch (err: any) {
+      toast.error(err.message || "거절 실패");
+    }
+  };
 
   const handleMemberClick = (userId: string) => {
     // On wide screens, select member in right panel; on mobile, navigate
