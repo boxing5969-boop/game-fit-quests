@@ -114,7 +114,7 @@ const HomePage = () => {
         </div>
 
         {/* 2. Weekly dashboard */}
-        <WeeklyDashboard />
+        {/* Weekly dashboard removed */}
 
         {/* 3. Today's mission */}
         {todayMission && (
