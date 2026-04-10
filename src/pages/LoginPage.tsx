@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,7 +121,7 @@ const PrivacyConsentModal = ({ onAccept, onClose }: { onAccept: (sig: string) =>
         <h2 className="mb-4 text-lg font-bold text-foreground">📋 개인정보 수집·이용 동의</h2>
         <div className="mb-4 max-h-48 overflow-y-auto rounded-xl bg-muted/50 p-4 text-sm leading-relaxed text-muted-foreground">
           <p className="mb-2 font-semibold text-foreground">1. 수집 항목</p>
-          <p className="mb-3">이름, 닉네임, 이메일, 전화번호, 소속 지점</p>
+          <p className="mb-3">이름, 닉네임, 아이디, 전화번호, 소속 지점</p>
           <p className="mb-2 font-semibold text-foreground">2. 수집 목적</p>
           <p className="mb-3">서비스 제공, 회원 관리, 레벨/랭킹 운영, 본인 확인</p>
           <p className="mb-2 font-semibold text-foreground">3. 보유 기간</p>
@@ -154,7 +154,7 @@ const PrivacyConsentModal = ({ onAccept, onClose }: { onAccept: (sig: string) =>
 // ─── Main LoginPage ────
 const LoginPage = () => {
   const [tab, setTab] = useState<Tab>("login");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
@@ -172,6 +172,8 @@ const LoginPage = () => {
 
   const isSignUp = tab === "member" || tab === "coach";
 
+  const toFakeEmail = (id: string) => `${id.toLowerCase().trim()}@153rankup.app`;
+
   const formatPhone = (val: string) => {
     const digits = val.replace(/\D/g, "").slice(0, 11);
     if (digits.length <= 3) return digits;
@@ -180,7 +182,7 @@ const LoginPage = () => {
   };
 
   const resetForm = () => {
-    setEmail(""); setPassword(""); setConfirmPassword(""); setName(""); setNickname("");
+    setUsername(""); setPassword(""); setConfirmPassword(""); setName(""); setNickname("");
     setPhone(""); setBranch(""); setSignatureData(null); setError(""); setSignUpSuccess(false);
   };
 
@@ -189,9 +191,10 @@ const LoginPage = () => {
     setError("");
 
     if (!isSignUp) {
+      if (!username.trim()) { setError("아이디를 입력해주세요"); return; }
       setIsLoading(true);
       try {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(toFakeEmail(username), password);
         if (error) { setError(error.message); return; }
         navigate("/home");
       } finally { setIsLoading(false); }
@@ -199,6 +202,9 @@ const LoginPage = () => {
     }
 
     // Signup validations
+    if (!username.trim()) { setError("아이디를 입력해주세요"); return; }
+    if (/[^a-zA-Z0-9_]/.test(username.trim())) { setError("아이디는 영문, 숫자, 밑줄(_)만 사용 가능합니다"); return; }
+    if (username.trim().length < 4) { setError("아이디는 4자 이상이어야 합니다"); return; }
     if (password !== confirmPassword) { setError("비밀번호가 일치하지 않습니다"); return; }
     if (password.length < 6) { setError("비밀번호는 6자 이상이어야 합니다"); return; }
     const rawPhone = phone.replace(/-/g, "");
@@ -209,7 +215,7 @@ const LoginPage = () => {
     // Proceed with signup
     setIsLoading(true);
     try {
-      const { error } = await signUp(email, password, name, nickname, rawPhone, branch, tab === "coach");
+      const { error } = await signUp(toFakeEmail(username), password, name, nickname, rawPhone, branch, tab === "coach");
       if (error) { setError(error.message); return; }
       setSignUpSuccess(true);
       toast.success(tab === "coach" ? "가입 완료! 관리자 승인을 기다려주세요" : "가입 완료! 관장님 승인을 기다려주세요 🥊");
@@ -221,17 +227,8 @@ const LoginPage = () => {
     setShowPrivacy(false);
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) { setError("비밀번호를 재설정할 이메일을 입력해주세요"); return; }
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) throw error;
-      toast.success("비밀번호 재설정 링크를 이메일로 보냈습니다 📧");
-    } catch (err: any) { setError(err.message || "요청 실패"); }
-    finally { setIsLoading(false); }
+  const handleForgotPassword = () => {
+    toast.info("비밀번호를 잊으셨다면 관장님께 문의해주세요");
   };
 
   if (signUpSuccess) {
@@ -328,8 +325,8 @@ const LoginPage = () => {
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-muted-foreground">이메일</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="이메일 입력" required className={inputClass} />
+          <label className="mb-1 block text-sm font-medium text-muted-foreground">아이디</label>
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={isSignUp ? "영문, 숫자 4자 이상" : "아이디 입력"} required className={inputClass} autoCapitalize="none" autoCorrect="off" />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-muted-foreground">비밀번호</label>
