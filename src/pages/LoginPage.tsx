@@ -238,12 +238,14 @@ const LoginPage = () => {
     }
     setForgotLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        toFakeEmail(forgotUsername),
-        { redirectTo: `${window.location.origin}/reset-password` }
-      );
+      const { data, error } = await supabase.functions.invoke("reset-password-request", {
+        body: {
+          username: forgotUsername.trim(),
+          redirectTo: `${window.location.origin}/reset-password`,
+        },
+      });
       if (error) throw error;
-      toast.success("비밀번호 재설정 이메일이 발송되었습니다. 이메일을 확인해주세요.");
+      toast.success("등록된 이메일로 비밀번호 재설정 링크가 발송되었습니다. 이메일을 확인해주세요.");
       setShowForgotPassword(false);
       setForgotUsername("");
     } catch (err: any) {
