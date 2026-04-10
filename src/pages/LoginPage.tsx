@@ -225,7 +225,7 @@ const LoginPage = () => {
     // Proceed with signup
     setIsLoading(true);
     try {
-      const { error } = await signUp(toFakeEmail(username), password, name, nickname, rawPhone, branch, tab === "coach");
+      const { error } = await signUp(toFakeEmail(username), password, name, nickname, rawPhone, branch, tab === "coach", birthDate);
       if (error) { setError(error.message); return; }
       setSignUpSuccess(true);
       toast.success(tab === "coach" ? "가입 완료! 관리자 승인을 기다려주세요" : "가입 완료! 관장님 승인을 기다려주세요 🥊");
