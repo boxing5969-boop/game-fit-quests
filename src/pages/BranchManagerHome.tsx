@@ -273,6 +273,12 @@ const BranchManagerHome = () => {
                       )}
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                      {isSuperAdmin && m.branch_name && (
+                        <>
+                          <span className="font-medium text-primary/70">{m.branch_name}</span>
+                          <span>·</span>
+                        </>
+                      )}
                       {m.prog && (
                         <>
                           <span className="font-medium">{formatRank(m.prog.current_rank, m.prog.current_level)}</span>
