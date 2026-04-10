@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { isManagerRole } from "@/lib/rankLabels";
 import type { Tables, Enums } from "@/integrations/supabase/types";
+import { useLocalProgress } from "@/hooks/useLocalProgress";
+import { PROMOTION_METRICS, RECOMMENDED_PATHS } from "@/data/whiteLevel1Data";
 
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
