@@ -46,7 +46,7 @@ const BranchManagerHome = () => {
         const unapproved = profiles.filter(p => !p.is_approved).length;
         return {
           total_members: profiles.length,
-          pending_count: unapproved,
+          pending_count: unapproved + (pendingMissionsRes.count || 0) + (pendingQuestsRes.count || 0),
           weekly_levelups: xpRes.count || 0,
           today_submissions: submissionsRes.count || 0,
         };
@@ -150,8 +150,13 @@ const BranchManagerHome = () => {
     try {
       const { error } = await supabase.rpc("approve_member", { _member_id: userId });
       if (error) throw error;
-      toast.success("회원 가입을 승인했습니다");
-      queryClient.invalidateQueries({ queryKey: ["branch-members"] });
+       toast.success("회원 가입을 승인했습니다");
+       queryClient.invalidateQueries({ queryKey: ["branch-members"] });
+       queryClient.invalidateQueries({ queryKey: ["branch-stats"] });
+       queryClient.invalidateQueries({ queryKey: ["approval-inbox"] });
+       queryClient.refetchQueries({ queryKey: ["branch-members"] });
+       queryClient.refetchQueries({ queryKey: ["branch-stats"] });
+       queryClient.refetchQueries({ queryKey: ["approval-inbox"] });
     } catch (err: any) {
       toast.error(err.message || "승인 실패");
     }
@@ -162,8 +167,13 @@ const BranchManagerHome = () => {
     try {
       const { error } = await supabase.rpc("reject_member", { _member_id: userId });
       if (error) throw error;
-      toast.success("회원 가입을 거절했습니다");
-      queryClient.invalidateQueries({ queryKey: ["branch-members"] });
+       toast.success("회원 가입을 거절했습니다");
+       queryClient.invalidateQueries({ queryKey: ["branch-members"] });
+       queryClient.invalidateQueries({ queryKey: ["branch-stats"] });
+       queryClient.invalidateQueries({ queryKey: ["approval-inbox"] });
+       queryClient.refetchQueries({ queryKey: ["branch-members"] });
+       queryClient.refetchQueries({ queryKey: ["branch-stats"] });
+       queryClient.refetchQueries({ queryKey: ["approval-inbox"] });
     } catch (err: any) {
       toast.error(err.message || "거절 실패");
     }
