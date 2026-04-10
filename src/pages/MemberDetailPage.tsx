@@ -39,11 +39,19 @@ const MemberDetailPage = () => {
     queryKey: ["member-detail", memberId],
     enabled: !!memberId && isManagerRole(role),
     queryFn: async () => {
-      const [profileRes, progressRes] = await Promise.all([
+      const [profileRes, progressRes, roleRes, providerRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", memberId!).single(),
         supabase.from("member_progress").select("*").eq("user_id", memberId!).single(),
+        supabase.from("user_roles").select("role").eq("user_id", memberId!).single(),
+        supabase.rpc("get_signup_providers", { _user_ids: [memberId!] }),
       ]);
-      return { profile: profileRes.data, progress: progressRes.data };
+      const provider = (providerRes.data || [])[0]?.signup_provider || "email";
+      return {
+        profile: profileRes.data,
+        progress: progressRes.data,
+        memberRole: roleRes.data?.role || "member",
+        signupProvider: provider,
+      };
     },
   });
 
@@ -235,8 +243,21 @@ const MemberDetailPage = () => {
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
         <div className="flex-1">
-          <h1 className="text-lg text-foreground">{p.nickname || p.name}</h1>
-          <p className="text-xs text-muted-foreground">{p.branch_name}</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg text-foreground">{p.nickname || p.name}</h1>
+            {member.memberRole === "branch_manager" || member.memberRole === "coach" ? (
+              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">관장님</span>
+            ) : member.memberRole === "super_admin" || member.memberRole === "admin" ? (
+              <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-bold text-destructive">관리자</span>
+            ) : (
+              <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground">회원</span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {p.branch_name}
+            {" · "}
+            {member.signupProvider === "google" ? "Google 가입" : member.signupProvider === "apple" ? "Apple 가입" : "일반 가입"}
+          </p>
         </div>
         <RankBadge rank={prog.current_rank as Enums<"rank_name">} level={prog.current_level} size="sm" />
       </div>
