@@ -72,10 +72,12 @@ const BranchManagerHome = () => {
       const userIds = (profiles || []).map(p => p.user_id);
       if (!userIds.length) return [];
 
-      const [progressRes, missionPendingRes, questPendingRes] = await Promise.all([
+      const [progressRes, missionPendingRes, questPendingRes, rolesRes, providerRes] = await Promise.all([
         supabase.from("member_progress").select("*").in("user_id", userIds),
         supabase.from("mission_submissions").select("user_id").in("user_id", userIds).eq("status", "pending"),
         supabase.from("quest_submissions").select("user_id").in("user_id", userIds).eq("status", "pending"),
+        supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
+        supabase.rpc("get_signup_providers", { _user_ids: userIds }),
       ]);
 
       const progressMap = new Map<string, typeof progressRes.data extends (infer T)[] | null ? T : never>();
@@ -86,6 +88,11 @@ const BranchManagerHome = () => {
         pendingMap.set(s.user_id, (pendingMap.get(s.user_id) || 0) + 1);
       });
 
+      const roleMap = new Map<string, string>();
+      (rolesRes.data || []).forEach((r: any) => roleMap.set(r.user_id, r.role));
+      const providerMap = new Map<string, string>();
+      (providerRes.data || []).forEach((r: any) => providerMap.set(r.user_id, r.signup_provider));
+
       return (profiles || []).map(p => {
         const prog = progressMap.get(p.user_id) || null;
         return {
@@ -93,6 +100,8 @@ const BranchManagerHome = () => {
           prog,
           pendingCount: pendingMap.get(p.user_id) || 0,
           globalLevel: prog ? RANK_ORDER_MAP[prog.current_rank] * 10 + prog.current_level : 0,
+          memberRole: roleMap.get(p.user_id) || "member",
+          signupProvider: providerMap.get(p.user_id) || "email",
         };
       });
     },
@@ -271,6 +280,9 @@ const BranchManagerHome = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-bold text-foreground truncate">{m.nickname || m.name}</span>
+                      {(m as any).memberRole === "branch_manager" || (m as any).memberRole === "coach" ? (
+                        <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold text-primary">관장님</span>
+                      ) : null}
                       {!isApproved && (
                         <span className="shrink-0 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-bold text-amber-600">
                           승인대기
@@ -289,6 +301,8 @@ const BranchManagerHome = () => {
                           <span>·</span>
                         </>
                       )}
+                      <span className="text-[10px]">{(m as any).signupProvider === "google" ? "Google" : (m as any).signupProvider === "apple" ? "Apple" : "일반"}</span>
+                      <span>·</span>
                       {m.prog && (
                         <>
                           <span className="font-medium">{formatRank(m.prog.current_rank, m.prog.current_level)}</span>
