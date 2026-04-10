@@ -98,21 +98,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("Sending recovery to:", realEmail, "for user:", user.id);
+    console.log("Sending recovery to:", realEmail, "for user:", user.id, "current auth email:", user.email);
 
-    // Save original auth email in user metadata so we can restore it later
-    const originalEmail = user.email!;
+    const currentAuthEmail = user.email!;
     
-    // Store original email in app_metadata for later restoration
-    await supabaseAdmin.auth.admin.updateUserById(user.id, {
-      app_metadata: { original_auth_email: originalEmail },
-    });
+    // Only swap if current auth email is NOT already the real email
+    if (currentAuthEmail.toLowerCase() !== realEmail.toLowerCase()) {
+      // Store original email in app_metadata for later restoration (only if not already stored)
+      if (!user.app_metadata?.original_auth_email) {
+        await supabaseAdmin.auth.admin.updateUserById(user.id, {
+          app_metadata: { original_auth_email: currentAuthEmail },
+        });
+      }
 
-    // Update auth email to the real email
-    const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
-      email: realEmail,
-      email_confirm: true,
-    });
+      // Update auth email to the real email
+      const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        email: realEmail,
+        email_confirm: true,
+      });
+      if (updateErr) {
+        console.error("Failed to update email:", updateErr);
+        throw updateErr;
+      }
+    } else {
+      console.log("Auth email already matches real email, skipping swap");
+    }
     if (updateErr) {
       console.error("Failed to update email:", updateErr);
       throw updateErr;
