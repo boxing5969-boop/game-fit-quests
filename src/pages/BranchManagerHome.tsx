@@ -450,8 +450,8 @@ const BranchManagerHome = () => {
           {/* Header */}
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">{branchName}</p>
-              <h1 className="text-xl text-foreground">회원관리</h1>
+              <p className="text-sm text-muted-foreground">{isSuperAdmin ? "전체 지점" : branchName}</p>
+              <h1 className="text-xl text-foreground">{isSuperAdmin ? "전체 회원관리" : "회원관리"}</h1>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => navigate("/mypage")} className="relative flex h-9 w-9 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
