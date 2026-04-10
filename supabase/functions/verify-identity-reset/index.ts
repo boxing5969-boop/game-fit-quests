@@ -50,11 +50,17 @@ Deno.serve(async (req) => {
       throw profileError;
     }
 
-    // Match phone and birth_date
+    // Match phone and optionally birth_date
     const matched = profiles?.find((p) => {
       const pPhone = p.phone_number?.replace(/\D/g, "") || "";
-      const pBirth = p.birth_date?.replace(/\D/g, "") || "";
-      return pPhone === cleanPhone && pBirth === cleanBirthDate;
+      if (pPhone !== cleanPhone) return false;
+      // If profile has birth_date stored, verify it matches
+      if (p.birth_date) {
+        const pBirth = p.birth_date.replace(/\D/g, "");
+        return pBirth === cleanBirthDate;
+      }
+      // If no birth_date in profile, match by name + phone only
+      return true;
     });
 
     if (!matched) {
@@ -72,9 +78,12 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       console.error("Password update error:", updateError);
+      const msg = updateError.message?.includes("weak") || updateError.message?.includes("Weak")
+        ? "비밀번호가 너무 쉽습니다. 더 복잡한 비밀번호를 사용해주세요."
+        : "비밀번호 변경에 실패했습니다. 다시 시도해주세요.";
       return new Response(
-        JSON.stringify({ error: "비밀번호 변경에 실패했습니다. 다시 시도해주세요." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: msg }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
