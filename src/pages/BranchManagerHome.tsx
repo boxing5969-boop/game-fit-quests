@@ -59,14 +59,14 @@ const BranchManagerHome = () => {
 
   // Members list
   const { data: members, isLoading } = useQuery({
-    queryKey: ["branch-members", branchName],
-    enabled: !!branchName && isManagerRole(role),
+    queryKey: ["branch-members", branchName, isSuperAdmin],
+    enabled: (!!branchName || isSuperAdmin) && isManagerRole(role),
     queryFn: async () => {
-      const { data: profiles, error: profErr } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("branch_name", branchName)
-        .order("created_at", { ascending: false });
+      let query = supabase.from("profiles").select("*").order("created_at", { ascending: false });
+      if (!isSuperAdmin) {
+        query = query.eq("branch_name", branchName);
+      }
+      const { data: profiles, error: profErr } = await query;
       if (profErr) throw profErr;
 
       const userIds = (profiles || []).map(p => p.user_id);
