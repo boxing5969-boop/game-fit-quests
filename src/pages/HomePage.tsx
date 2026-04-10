@@ -170,6 +170,17 @@ const HomePage = () => {
           <StatBox icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
         </div>
 
+        {/* 6. Quick Links */}
+        <div className="animate-slide-up" style={{ animationDelay: "0.22s" }}>
+          <h2 className="mb-3 text-base font-bold text-foreground">📌 바로가기</h2>
+          <div className="grid grid-cols-2 gap-2.5">
+            <QuickLink emoji="🗺️" label="레벨맵" desc="전체 레벨 현황" onClick={() => navigate("/levelmap")} />
+            <QuickLink emoji="🎁" label="보상" desc="배지 & XP 기록" onClick={() => navigate("/rewards")} />
+            <QuickLink emoji="🏆" label="명예의전당" desc="전체 랭킹 보기" onClick={() => navigate("/halloffame")} />
+            <QuickLink emoji="🥋" label="단증 혜택" desc="자격증 & 혜택" onClick={() => navigate("/cert-benefits")} />
+          </div>
+        </div>
+
         {/* 6. Hall of fame */}
         <HallOfFameShowcase />
 
@@ -240,6 +251,16 @@ const StatBox = ({ icon, label, value }: { icon: string; label: string; value: s
     <span className="text-xs text-muted-foreground">{label}</span>
     <span className="text-lg font-bold text-foreground">{value}</span>
   </div>
+);
+
+const QuickLink = ({ emoji, label, desc, onClick }: { emoji: string; label: string; desc: string; onClick: () => void }) => (
+  <button onClick={onClick} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-sm transition-all active:scale-[0.97]">
+    <span className="text-2xl">{emoji}</span>
+    <div className="text-left">
+      <p className="text-sm font-bold text-foreground">{label}</p>
+      <p className="text-[10px] text-muted-foreground">{desc}</p>
+    </div>
+  </button>
 );
 
 export default HomePage;
