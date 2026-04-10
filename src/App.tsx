@@ -20,6 +20,8 @@ import BranchManagerHome from "@/pages/BranchManagerHome";
 import MemberDetailPage from "@/pages/MemberDetailPage";
 import MemberPreviewPage from "@/pages/MemberPreviewPage";
 import OnboardingPage from "@/pages/OnboardingPage";
+import SelectBranchPage from "@/pages/SelectBranchPage";
+import WaitingApprovalPage from "@/pages/WaitingApprovalPage";
 import SafetyCheckPage from "@/pages/SafetyCheckPage";
 import GuidePage from "@/pages/GuidePage";
 import GuideProgramPage from "@/pages/guide/GuideProgramPage";
@@ -36,7 +38,7 @@ import { isManagerRole } from "@/lib/rankLabels";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -48,6 +50,23 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   if (!user) return <Navigate to="/" replace />;
+  
+  // Allow select-branch and waiting-approval pages without checks
+  const path = window.location.pathname;
+  if (path === "/select-branch" || path === "/waiting-approval") {
+    return <>{children}</>;
+  }
+  
+  // Social login users without branch → select branch
+  if (profile && !profile.branch_name) {
+    return <Navigate to="/select-branch" replace />;
+  }
+  
+  // Unapproved users → waiting page
+  if (profile && !profile.is_approved) {
+    return <Navigate to="/waiting-approval" replace />;
+  }
+  
   return <>{children}</>;
 };
 
@@ -59,8 +78,19 @@ const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const RoleBasedRedirect = () => {
-  const { role, loading } = useAuth();
+  const { role, profile, loading } = useAuth();
   if (loading) return null;
+  
+  // Social login users without branch need to select one
+  if (profile && !profile.branch_name) {
+    return <Navigate to="/select-branch" replace />;
+  }
+  
+  // Unapproved users see a waiting message
+  if (profile && !profile.is_approved) {
+    return <Navigate to="/waiting-approval" replace />;
+  }
+  
   if (role === "branch_manager" || role === "coach") return <Navigate to="/manager" replace />;
   if (role === "super_admin" || role === "admin") return <Navigate to="/manager" replace />;
   return <Navigate to="/home" replace />;
@@ -81,6 +111,8 @@ const AppRoutes = () => {
     <>
       <Routes>
         <Route path="/" element={user ? <RoleBasedRedirect /> : <LoginPage />} />
+        <Route path="/select-branch" element={<ProtectedRoute><SelectBranchPage /></ProtectedRoute>} />
+        <Route path="/waiting-approval" element={<ProtectedRoute><WaitingApprovalPage /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
         <Route path="/safety-check" element={<ProtectedRoute><SafetyCheckPage /></ProtectedRoute>} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
