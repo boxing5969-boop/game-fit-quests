@@ -2,21 +2,23 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Users, User, ChevronRight, Bell, Inbox } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search, Users, User, ChevronRight, Bell, Inbox, UserCheck, UserX } from "lucide-react";
 import { formatRank, RANK_ICONS, isManagerRole } from "@/lib/rankLabels";
 import { Input } from "@/components/ui/input";
 import ApprovalInbox from "@/components/ApprovalInbox";
+import { toast } from "sonner";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
 
-type FilterType = "all" | "pending" | "active" | "boss_ready";
+type FilterType = "all" | "pending" | "active" | "boss_ready" | "unapproved";
 type SortType = "recent_submission" | "level_desc" | "pending_count";
 type MainTab = "members" | "inbox";
 
 const BranchManagerHome = () => {
   const navigate = useNavigate();
   const { profile, role } = useAuth();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [sort, setSort] = useState<SortType>("level_desc");
@@ -104,6 +106,7 @@ const BranchManagerHome = () => {
     }
 
     if (filter === "pending") list = list.filter(m => m.pendingCount > 0);
+    else if (filter === "unapproved") list = list.filter(m => !(m as any).is_approved);
     else if (filter === "boss_ready") list = list.filter(m => m.prog?.current_level === 10);
     else if (filter === "active") list = list.filter(m => m.prog && m.prog.streak_days > 0);
 
@@ -113,12 +116,39 @@ const BranchManagerHome = () => {
     return list;
   }, [members, search, filter, sort]);
 
+  const unapprovedCount = useMemo(() => members?.filter(m => !(m as any).is_approved).length || 0, [members]);
+
   const FILTERS: { key: FilterType; label: string }[] = [
     { key: "all", label: "전체" },
-    { key: "pending", label: "승인대기" },
+    { key: "unapproved", label: `가입승인 (${unapprovedCount})` },
+    { key: "pending", label: "미션대기" },
     { key: "boss_ready", label: "보스전 대기" },
     { key: "active", label: "최근 활동" },
   ];
+
+  const handleApproveMember = async (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase.rpc("approve_member", { _member_id: userId });
+      if (error) throw error;
+      toast.success("회원 가입을 승인했습니다");
+      queryClient.invalidateQueries({ queryKey: ["branch-members"] });
+    } catch (err: any) {
+      toast.error(err.message || "승인 실패");
+    }
+  };
+
+  const handleRejectMember = async (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase.rpc("reject_member", { _member_id: userId });
+      if (error) throw error;
+      toast.success("회원 가입을 거절했습니다");
+      queryClient.invalidateQueries({ queryKey: ["branch-members"] });
+    } catch (err: any) {
+      toast.error(err.message || "거절 실패");
+    }
+  };
 
   const handleMemberClick = (userId: string) => {
     // On wide screens, select member in right panel; on mobile, navigate
@@ -188,51 +218,79 @@ const BranchManagerHome = () => {
             </p>
           </div>
         ) : (
-          filtered.map(m => (
-            <button
+          filtered.map(m => {
+            const isApproved = (m as any).is_approved;
+            return (
+            <div
               key={m.id}
-              onClick={() => handleMemberClick(m.user_id)}
-              className={`w-full rounded-2xl border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98] ${
+              className={`rounded-2xl border bg-card shadow-sm transition-all ${
                 selectedMemberId === m.user_id ? "border-primary ring-2 ring-primary/20" : "border-border"
-              }`}
+              } ${!isApproved ? "border-amber-500/30 bg-amber-50/50" : ""}`}
             >
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg">
-                  {m.avatar_url ? (
-                    <img src={m.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
-                  ) : (
-                    <span>{m.prog ? RANK_ICONS[m.prog.current_rank] : "⚪"}</span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-foreground truncate">{m.nickname || m.name}</span>
-                    {m.pendingCount > 0 && (
-                      <span className="shrink-0 rounded-full bg-status-pending/20 px-1.5 py-0.5 text-[9px] font-bold text-status-pending">
-                        {m.pendingCount}건 대기
-                      </span>
+              <button
+                onClick={() => handleMemberClick(m.user_id)}
+                className="w-full p-4 text-left active:scale-[0.98] transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg">
+                    {m.avatar_url ? (
+                      <img src={m.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
+                    ) : (
+                      <span>{m.prog ? RANK_ICONS[m.prog.current_rank] : "⚪"}</span>
                     )}
                   </div>
-                  <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                    {m.prog && (
-                      <>
-                        <span className="font-medium">{formatRank(m.prog.current_rank, m.prog.current_level)}</span>
-                        <span>·</span>
-                        <span>{m.globalLevel}/40</span>
-                      </>
-                    )}
-                    {m.phone_number && (
-                      <>
-                        <span>·</span>
-                        <span>{m.phone_number.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")}</span>
-                      </>
-                    )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-bold text-foreground truncate">{m.nickname || m.name}</span>
+                      {!isApproved && (
+                        <span className="shrink-0 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-bold text-amber-600">
+                          승인대기
+                        </span>
+                      )}
+                      {isApproved && m.pendingCount > 0 && (
+                        <span className="shrink-0 rounded-full bg-status-pending/20 px-1.5 py-0.5 text-[9px] font-bold text-status-pending">
+                          {m.pendingCount}건 대기
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                      {m.prog && (
+                        <>
+                          <span className="font-medium">{formatRank(m.prog.current_rank, m.prog.current_level)}</span>
+                          <span>·</span>
+                          <span>{m.globalLevel}/40</span>
+                        </>
+                      )}
+                      {m.phone_number && (
+                        <>
+                          <span>·</span>
+                          <span>{m.phone_number.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </div>
-            </button>
-          ))
+              </button>
+              {!isApproved && (
+                <div className="flex gap-2 border-t border-border px-4 py-2.5">
+                  <button
+                    onClick={(e) => handleApproveMember(m.user_id, e)}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-95"
+                  >
+                    <UserCheck className="h-4 w-4" /> 승인
+                  </button>
+                  <button
+                    onClick={(e) => handleRejectMember(m.user_id, e)}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-destructive/10 py-2.5 text-sm font-bold text-destructive transition-all active:scale-95"
+                  >
+                    <UserX className="h-4 w-4" /> 거절
+                  </button>
+                </div>
+              )}
+            </div>
+            );
+          })
         )}
       </div>
 
