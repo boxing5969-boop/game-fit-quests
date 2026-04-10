@@ -20,6 +20,7 @@ import BranchManagerHome from "@/pages/BranchManagerHome";
 import MemberDetailPage from "@/pages/MemberDetailPage";
 import MemberPreviewPage from "@/pages/MemberPreviewPage";
 import OnboardingPage from "@/pages/OnboardingPage";
+import SelectBranchPage from "@/pages/SelectBranchPage";
 import SafetyCheckPage from "@/pages/SafetyCheckPage";
 import GuidePage from "@/pages/GuidePage";
 import GuideProgramPage from "@/pages/guide/GuideProgramPage";
@@ -59,8 +60,19 @@ const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const RoleBasedRedirect = () => {
-  const { role, loading } = useAuth();
+  const { role, profile, loading } = useAuth();
   if (loading) return null;
+  
+  // Social login users without branch need to select one
+  if (profile && !profile.branch_name) {
+    return <Navigate to="/select-branch" replace />;
+  }
+  
+  // Unapproved users see a waiting message
+  if (profile && !profile.is_approved) {
+    return <Navigate to="/waiting-approval" replace />;
+  }
+  
   if (role === "branch_manager" || role === "coach") return <Navigate to="/manager" replace />;
   if (role === "super_admin" || role === "admin") return <Navigate to="/manager" replace />;
   return <Navigate to="/home" replace />;
