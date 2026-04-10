@@ -123,10 +123,6 @@ Deno.serve(async (req) => {
     } else {
       console.log("Auth email already matches real email, skipping swap");
     }
-    if (updateErr) {
-      console.error("Failed to update email:", updateErr);
-      throw updateErr;
-    }
 
     // Trigger password recovery — sends email to real address
     const recoverRes = await fetch(`${supabaseUrl}/auth/v1/recover`, {
