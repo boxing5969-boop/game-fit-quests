@@ -15,9 +15,13 @@ export const RANK_ICONS: Record<string, string> = {
 
 export const RANK_ORDER = ["white", "blue", "red", "black"] as const;
 
-/** Format rank display: "화이트 레벨 3" */
+/** Format rank display: "화이트 리그 · 레벨 3" */
 export const formatRank = (rank: string, level: number) =>
-  `${RANK_LABELS[rank] || rank} 레벨 ${level}`;
+  `${RANK_LABELS[rank] || rank} 리그 · 레벨 ${level}`;
+
+/** Short format for badges/cards: "화이트 L3" */
+export const formatRankShort = (rank: string, level: number) =>
+  `${RANK_LABELS[rank] || rank} L${level}`;
 
 /** Role labels for UI */
 export const ROLE_LABELS: Record<string, { label: string; color: string }> = {
@@ -44,8 +48,8 @@ export const isHallOfFameMember = (rank: string, level: number) =>
 
 /** 통일 문구 */
 export const MASTER_TITLE = "MASTER 40";
-export const MASTER_DESCRIPTION = "블랙 레벨 10 달성 + 모든 타이틀매치 클리어";
-export const HALL_OF_FAME_DESCRIPTION = "블랙 레벨 10 달성 · 최종 마스터 미션 완료자";
+export const MASTER_DESCRIPTION = "블랙 리그 레벨 10 달성 + 모든 타이틀매치 클리어";
+export const HALL_OF_FAME_DESCRIPTION = "블랙 리그 레벨 10 달성 · 최종 마스터 미션 완료자";
 
 /** 승인대기 템플릿 코멘트 */
 export const TEMPLATE_COMMENTS = [

@@ -165,7 +165,7 @@ const CertBenefitsPage = () => {
       <section className="px-4 py-6">
         <h3 className="mb-2 font-display text-lg font-bold">🥊 153 랭크업 → 단증 로드맵</h3>
         <p className="mb-4 text-sm text-muted-foreground">
-          각 랭크 레벨을 마스터하면 해당 단수 심사에 도전할 수 있는 실력이 완성됩니다.
+          각 리그 레벨을 마스터하면 해당 단수 심사에 도전할 수 있는 실력이 완성됩니다.
         </p>
         <div className="space-y-3">
           {levelProgression.map((item, i) => (

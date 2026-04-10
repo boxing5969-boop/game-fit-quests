@@ -120,7 +120,7 @@ const MemberPreviewPage = () => {
     },
     onSuccess: (result) => {
       if (result?.ranked_up) {
-        toast.success(`승급! ${RANK_LABELS[result.new_rank]} 레벨 1 해금! 🏆`);
+        toast.success(`리그 승격! ${RANK_LABELS[result.new_rank]} 리그 레벨 1 해금! 🏆`);
       } else {
         toast.success("보스전 합격! 🏆");
       }
@@ -179,7 +179,7 @@ const MemberPreviewPage = () => {
   const TABS: { key: PreviewTab; label: string; icon: any }[] = [
     { key: "home", label: "홈", icon: Home },
     { key: "missions", label: "미션", icon: Swords },
-    { key: "levelmap", label: "계급도", icon: MapIcon },
+    { key: "levelmap", label: "리그맵", icon: MapIcon },
     { key: "rewards", label: "보상", icon: Gift },
   ];
 
@@ -230,7 +230,7 @@ const MemberPreviewPage = () => {
               onClick={() => setActiveTab("levelmap")}
               className="shrink-0 rounded-full bg-primary/20 px-2.5 py-1 text-[10px] font-bold text-primary"
             >
-              🗺️ 계급도 체크
+              🗺️ 리그맵 체크
             </button>
           </div>
         </div>
@@ -337,11 +337,11 @@ const MemberPreviewPage = () => {
         {/* ── Level Map Tab ── */}
         {activeTab === "levelmap" && (
           <div className="space-y-5">
-            <h2 className="text-lg font-bold text-foreground">🗺️ 계급도 (회원 시점)</h2>
+            <h2 className="text-lg font-bold text-foreground">🗺️ 리그맵 (회원 시점)</h2>
             {RANK_ORDER_ARR.map((rank, ri) => (
               <div key={rank}>
                 <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-foreground">
-                  <span>{RANK_ICONS[rank]}</span> {RANK_LABELS[rank]}
+                  <span>{RANK_ICONS[rank]}</span> {RANK_LABELS[rank]} 리그
                 </h3>
                 <div className="grid grid-cols-5 gap-1.5">
                   {Array.from({ length: 10 }, (_, i) => i + 1).map(lvl => {

@@ -157,7 +157,7 @@ const CoachDashboard = () => {
       toast.success(`${member.nickname || member.name} → Lv.${result.new_level} 레벨업! 🥊`);
     } catch (e: any) {
       if (e?.message?.includes("boss battle")) {
-        toast.error("Lv.10은 타이틀매치로 승급해야 합니다");
+        toast.error("Lv.10은 타이틀매치로 리그 승격해야 합니다");
       } else {
         toast.error("레벨업 실패");
       }

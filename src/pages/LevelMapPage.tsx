@@ -101,7 +101,7 @@ const LevelMapPage = () => {
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-2xl text-foreground">🗺️ 계급도</h1>
+        <h1 className="text-2xl text-foreground">🗺️ 리그맵</h1>
         <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
           <User className="h-5 w-5 text-secondary-foreground" />
         </button>
@@ -149,7 +149,7 @@ const LevelMapPage = () => {
               <div key={rank} className="animate-slide-up" style={{ animationDelay: `${sectionIdx * 0.1}s` }}>
                 <div className="mb-3 flex items-center gap-2">
                   <span className="text-lg">{RANK_ICONS[rank]}</span>
-                  <h2 className="text-lg text-foreground">{RANK_LABELS[rank]}</h2>
+                  <h2 className="text-lg text-foreground">{RANK_LABELS[rank]} 리그</h2>
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   {nodes.map(node => {
@@ -422,7 +422,7 @@ const LevelMapPage = () => {
                     try {
                       const result = await bossBattleMutation.mutateAsync({ memberId: user.id });
                       if (result?.ranked_up) {
-                        toast.success(`${RANK_LABELS[result.new_rank] || result.new_rank} 랭크로 승급! 🏆`);
+                        toast.success(`${RANK_LABELS[result.new_rank] || result.new_rank} 리그로 승격! 🏆`);
                       } else {
                         toast.success("타이틀매치 클리어! 🏆");
                       }

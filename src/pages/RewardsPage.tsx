@@ -42,7 +42,7 @@ const RewardsPage = () => {
             <div className="rounded-2xl border-2 border-accent bg-gradient-to-br from-accent/20 via-primary/10 to-accent/20 p-6 text-center shadow-lg">
               <span className="text-5xl">🏆</span>
               <h2 className="mt-2 text-xl font-bold text-foreground">MASTER 40 달성</h2>
-              <p className="text-sm text-muted-foreground">모든 계급과 레벨을 정복한 최종 마스터</p>
+              <p className="text-sm text-muted-foreground">모든 리그와 레벨을 정복한 최종 마스터</p>
             </div>
 
             {/* Final Master Missions */}
@@ -73,7 +73,7 @@ const RewardsPage = () => {
           <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="mb-1 text-xs text-muted-foreground">현재 계급</p>
+                <p className="mb-1 text-xs text-muted-foreground">현재 리그</p>
                 <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
               </div>
               <div className="text-right">

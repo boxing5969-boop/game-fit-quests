@@ -41,17 +41,17 @@ const RankUpCeremony = ({ isOpen, onClose, oldRank, newRank, memberName }: RankU
           <div className="text-5xl animate-pulse">{RANK_ICONS[newRank]}</div>
         </div>
 
-        <h2 className="text-2xl text-foreground">🏆 승급 완료!</h2>
+        <h2 className="text-2xl text-foreground">🏆 리그 승격 완료!</h2>
 
         <p className="text-lg font-bold text-primary">
-          {RANK_LABELS[newRank]} 랭크 획득
+          {RANK_LABELS[newRank]} 리그 획득
         </p>
 
         <div className={`mx-auto rounded-2xl bg-gradient-to-b ${RANK_COLORS[newRank] || "from-primary to-accent"} p-6 text-center shadow-lg`}>
           <p className="text-xs text-white/70 mb-2">153랭크업 시스템 인증서</p>
           <p className="text-lg font-bold text-white">{memberName}</p>
           <div className="my-3 text-4xl">{RANK_ICONS[newRank]}</div>
-          <p className="text-sm font-bold text-white">{RANK_LABELS[newRank]} 랭크</p>
+          <p className="text-sm font-bold text-white">{RANK_LABELS[newRank]} 리그</p>
           <p className="mt-1 text-xs text-white/70">
             {new Date().toLocaleDateString("ko-KR")} 달성
           </p>

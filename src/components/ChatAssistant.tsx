@@ -9,7 +9,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assista
 
 const WELCOME_MSG: Msg = {
   role: "assistant",
-  content: "안녕하세요! 🥊 153복싱짐 AI 코치입니다.\n\n퀘스트, 계급 시스템, 동작 요령 등 궁금한 점을 자유롭게 물어보세요!",
+  content: "안녕하세요! 🥊 153복싱짐 AI 코치입니다.\n\n퀘스트, 리그 시스템, 동작 요령 등 궁금한 점을 자유롭게 물어보세요!",
 };
 
 const ChatAssistant = () => {
