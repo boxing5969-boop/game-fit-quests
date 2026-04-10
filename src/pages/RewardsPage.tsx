@@ -36,18 +36,18 @@ const RewardsPage = () => {
       </div>
 
       <div className="space-y-5">
-        {/* MASTER 40 */}
+        {/* 마스터 리그 */}
         {isMaster40 && (
           <div className="animate-bounce-in space-y-4">
             <div className="rounded-2xl border-2 border-accent bg-gradient-to-br from-accent/20 via-primary/10 to-accent/20 p-6 text-center shadow-lg">
-              <span className="text-5xl">🏆</span>
-              <h2 className="mt-2 text-xl font-bold text-foreground">MASTER 40 달성</h2>
-              <p className="text-sm text-muted-foreground">모든 리그와 레벨을 정복한 최종 마스터</p>
+              <span className="text-5xl">👑</span>
+              <h2 className="mt-2 text-xl font-bold text-foreground">마스터 리그 달성</h2>
+              <p className="text-sm text-muted-foreground">블랙 리그 레벨 10 달성 + 모든 타이틀매치 클리어</p>
             </div>
 
-            {/* Final Master Missions */}
+            {/* 마스터 리그 최종 미션 */}
             <div className="rounded-2xl border border-primary/30 bg-card p-5 shadow-sm">
-              <h3 className="mb-4 text-base font-bold text-foreground">🥇 최종 마스터 미션</h3>
+              <h3 className="mb-4 text-base font-bold text-foreground">👑 마스터 리그 최종 미션</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 p-4 border border-primary/20">
                   <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">1</span>
