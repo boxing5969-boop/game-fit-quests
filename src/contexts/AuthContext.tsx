@@ -109,10 +109,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         emailRedirectTo: window.location.origin,
       },
     });
-    if (error) return { error: new Error(error.message) };
+    if (error) {
+      // Translate common errors to Korean
+      if (error.message.includes("duplicate key") || error.message.includes("phone_number")) {
+        return { error: new Error("이미 등록된 전화번호입니다. 한 번호당 하나의 계정만 가능합니다.") };
+      }
+      if (error.message.includes("already registered") || error.message.includes("already been registered")) {
+        return { error: new Error("이미 사용 중인 아이디입니다. 다른 아이디를 사용해주세요.") };
+      }
+      if (error.message.includes("password")) {
+        return { error: new Error("비밀번호가 보안 기준에 맞지 않습니다. 다른 비밀번호를 사용해주세요.") };
+      }
+      if (error.message.includes("Database error")) {
+        return { error: new Error("가입 처리 중 오류가 발생했습니다. 전화번호나 아이디가 이미 사용 중일 수 있습니다.") };
+      }
+      return { error: new Error(error.message) };
+    }
 
-    // If coach signup, sign out immediately so they wait for admin approval
-    if (isCoach && data.user) {
+    // Always sign out after signup — all new members need manager approval before login
+    if (data.user) {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
@@ -126,8 +141,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     const { error, data } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: new Error(error.message) };
-
+    if (error) {
+      if (error.message.includes("Invalid login")) {
+        return { error: new Error("아이디 또는 비밀번호가 올바르지 않습니다.") };
+      }
+      return { error: new Error(error.message) };
+    }
     if (data.user) {
       // Check if user has a pending coach request — block login
       const { data: pendingReq } = await supabase
