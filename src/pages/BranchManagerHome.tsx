@@ -2,15 +2,16 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Users, User, ChevronRight, Bell, Inbox } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search, Users, User, ChevronRight, Bell, Inbox, UserCheck, UserX } from "lucide-react";
 import { formatRank, RANK_ICONS, isManagerRole } from "@/lib/rankLabels";
 import { Input } from "@/components/ui/input";
 import ApprovalInbox from "@/components/ApprovalInbox";
+import { toast } from "sonner";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
 
-type FilterType = "all" | "pending" | "active" | "boss_ready";
+type FilterType = "all" | "pending" | "active" | "boss_ready" | "unapproved";
 type SortType = "recent_submission" | "level_desc" | "pending_count";
 type MainTab = "members" | "inbox";
 

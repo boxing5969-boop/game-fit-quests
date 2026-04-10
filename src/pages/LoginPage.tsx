@@ -212,7 +212,7 @@ const LoginPage = () => {
       const { error } = await signUp(email, password, name, nickname, rawPhone, branch, tab === "coach");
       if (error) { setError(error.message); return; }
       setSignUpSuccess(true);
-      toast.success("가입 완료! 이메일 인증을 확인해주세요 📧");
+      toast.success(tab === "coach" ? "가입 완료! 관리자 승인을 기다려주세요" : "가입 완료! 관장님 승인을 기다려주세요 🥊");
     } finally { setIsLoading(false); }
   };
 
@@ -238,11 +238,14 @@ const LoginPage = () => {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-6">
         <div className="animate-bounce-in text-center">
-          <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-3xl bg-primary/20 text-5xl">📧</div>
-          <h1 className="mb-2 text-2xl text-foreground">이메일 인증을 확인하세요</h1>
+          <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-3xl bg-primary/20 text-5xl">✅</div>
+          <h1 className="mb-2 text-2xl text-foreground">가입이 완료되었습니다!</h1>
           <p className="mb-6 text-muted-foreground">
-            <strong>{email}</strong>로 인증 메일을 보냈습니다.<br />
-            메일의 링크를 클릭하면 가입이 완료됩니다.
+            {tab === "coach" ? (
+              <>관리자 승인 후 로그인할 수 있습니다.<br />승인 완료 시 알림을 받으실 수 있습니다.</>
+            ) : (
+              <>관장님이 가입을 승인하면 로그인할 수 있습니다.<br />승인까지 잠시 기다려주세요.</>
+            )}
           </p>
           {tab === "coach" && (
             <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-700">
