@@ -639,6 +639,7 @@ export type Database = {
           branch_name: string
           created_at: string
           id: string
+          is_approved: boolean
           name: string
           nickname: string
           phone_number: string | null
@@ -650,6 +651,7 @@ export type Database = {
           branch_name?: string
           created_at?: string
           id?: string
+          is_approved?: boolean
           name?: string
           nickname?: string
           phone_number?: string | null
@@ -661,6 +663,7 @@ export type Database = {
           branch_name?: string
           created_at?: string
           id?: string
+          is_approved?: boolean
           name?: string
           nickname?: string
           phone_number?: string | null
@@ -809,6 +812,7 @@ export type Database = {
         Args: { _request_id: string }
         Returns: undefined
       }
+      approve_member: { Args: { _member_id: string }; Returns: undefined }
       approve_mission_submission: {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: Json
@@ -956,6 +960,7 @@ export type Database = {
         Args: { _request_id: string }
         Returns: undefined
       }
+      reject_member: { Args: { _member_id: string }; Returns: undefined }
       reject_mission_submission: {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
