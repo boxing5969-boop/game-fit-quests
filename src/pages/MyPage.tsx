@@ -14,12 +14,46 @@ const MyPage = () => {
   const navigate = useNavigate();
   const { profile, progress, role, signOut } = useAuth();
   const { data: xpLogs } = useXpLogs();
+  const [showPwChange, setShowPwChange] = useState(false);
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwError, setPwError] = useState("");
 
   if (!profile || !progress) return null;
 
   const handleLogout = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handlePasswordChange = async () => {
+    setPwError("");
+    if (newPw.length < 6) { setPwError("새 비밀번호는 6자 이상이어야 합니다"); return; }
+    if (newPw !== confirmPw) { setPwError("새 비밀번호가 일치하지 않습니다"); return; }
+
+    setPwLoading(true);
+    try {
+      // Verify current password by re-signing in
+      const { data: userData } = await supabase.auth.getUser();
+      const email = userData.user?.email;
+      if (!email) throw new Error("이메일을 찾을 수 없습니다");
+
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password: currentPw });
+      if (signInErr) { setPwError("현재 비밀번호가 올바르지 않습니다"); return; }
+
+      const { error: updateErr } = await supabase.auth.updateUser({ password: newPw });
+      if (updateErr) throw updateErr;
+
+      toast.success("비밀번호가 변경되었습니다 ✅");
+      setShowPwChange(false);
+      setCurrentPw(""); setNewPw(""); setConfirmPw("");
+    } catch (err: any) {
+      setPwError(err.message || "비밀번호 변경 실패");
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   return (
