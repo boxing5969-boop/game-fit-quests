@@ -64,15 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // Intercept PASSWORD_RECOVERY — redirect to reset page before setting user
-        if (event === "PASSWORD_RECOVERY") {
-          setSession(session);
-          setUser(null); // Don't set user so ProtectedRoute won't trigger
-          setLoading(false);
-          window.location.replace("/reset-password#recovery=true");
-          return;
-        }
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
