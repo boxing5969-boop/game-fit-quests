@@ -14,7 +14,7 @@ interface AuthContextType {
   loading: boolean;
   refreshProgress: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  signUp: (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean, realEmail?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, [fetchUserData]);
 
-  const signUp = async (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean) => {
+  const signUp = async (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean, realEmail?: string) => {
     // Check phone uniqueness first
     const { data: existing } = await supabase
       .from("profiles")
@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
       options: {
-        data: { name, nickname, phone_number: phoneNumber, branch_name: branchName, is_coach_request: isCoach || false },
+        data: { name, nickname, phone_number: phoneNumber, branch_name: branchName, is_coach_request: isCoach || false, real_email: realEmail || null },
         emailRedirectTo: window.location.origin,
       },
     });
