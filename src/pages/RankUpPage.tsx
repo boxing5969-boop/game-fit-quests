@@ -61,7 +61,7 @@ type TabType = "valuemap" | "levelmap";
 const RankUpPage = () => {
   const navigate = useNavigate();
   const { progress, role, user, refreshProgress } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>("valuemap");
+  const [activeTab, setActiveTab] = useState<TabType>("levelmap");
   const [expandedRank, setExpandedRank] = useState<string | null>(null);
 
   // LevelMap state
