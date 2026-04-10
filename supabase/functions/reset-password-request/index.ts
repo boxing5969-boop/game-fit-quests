@@ -45,9 +45,33 @@ Deno.serve(async (req) => {
 
     if (userError) throw userError;
 
-    const user = userData.users.find((u) =>
+    // Try to find user by auth email
+    let user = userData.users.find((u) =>
       possibleEmails.includes(u.email?.toLowerCase() ?? "")
     );
+
+    // If not found, user might be in password-reset state (email swapped to real email)
+    // Try finding by original_auth_email in app_metadata
+    if (!user) {
+      user = userData.users.find((u) =>
+        possibleEmails.includes(u.app_metadata?.original_auth_email?.toLowerCase() ?? "")
+      );
+    }
+
+    // Still not found? Try looking up by profile email
+    if (!user) {
+      const fakeEmail = possibleEmails.find(e => e.endsWith("@153rankup.app")) || possibleEmails[0];
+      const usernameFromEmail = fakeEmail.split("@")[0];
+      // Search profiles for matching real email
+      const { data: profileMatch } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id")
+        .or(`email.eq.${trimmed}`)
+        .maybeSingle();
+      if (profileMatch) {
+        user = userData.users.find(u => u.id === profileMatch.user_id) || null;
+      }
+    }
 
     if (!user) {
       console.log("User not found for emails:", possibleEmails);
