@@ -144,7 +144,14 @@ const ApprovalInbox = () => {
         });
       });
 
+      // Collect coach request user IDs to exclude from member list
+      const coachRequestUserIds = new Set(
+        (coachReqRes && "data" in coachReqRes ? coachReqRes.data : [])?.map((r: any) => r.user_id) || []
+      );
+
       (profilesRes.data || []).forEach((p) => {
+        // Skip users who have a pending coach request (they show as coach_request instead)
+        if (coachRequestUserIds.has(p.user_id)) return;
         const prog = progressMap.get(p.user_id);
         items.push({
           id: p.user_id,
