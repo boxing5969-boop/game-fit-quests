@@ -161,8 +161,12 @@ const LoginPage = () => {
   const [nickname, setNickname] = useState("");
   const [phone, setPhone] = useState("");
   const [branch, setBranch] = useState("");
+  const [realEmail, setRealEmail] = useState("");
   const [signatureData, setSignatureData] = useState<string | null>(null);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotUsername, setForgotUsername] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
@@ -183,7 +187,7 @@ const LoginPage = () => {
 
   const resetForm = () => {
     setUsername(""); setPassword(""); setConfirmPassword(""); setName(""); setNickname("");
-    setPhone(""); setBranch(""); setSignatureData(null); setError(""); setSignUpSuccess(false);
+    setPhone(""); setBranch(""); setRealEmail(""); setSignatureData(null); setError(""); setSignUpSuccess(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -215,7 +219,7 @@ const LoginPage = () => {
     // Proceed with signup
     setIsLoading(true);
     try {
-      const { error } = await signUp(toFakeEmail(username), password, name, nickname, rawPhone, branch, tab === "coach");
+      const { error } = await signUp(toFakeEmail(username), password, name, nickname, rawPhone, branch, tab === "coach", realEmail);
       if (error) { setError(error.message); return; }
       setSignUpSuccess(true);
       toast.success(tab === "coach" ? "가입 완료! 관리자 승인을 기다려주세요" : "가입 완료! 관장님 승인을 기다려주세요 🥊");
@@ -227,8 +231,26 @@ const LoginPage = () => {
     setShowPrivacy(false);
   };
 
-  const handleForgotPassword = () => {
-    toast.info("비밀번호를 잊으셨다면 관장님께 문의해주세요");
+  const handleForgotPassword = async () => {
+    if (!forgotUsername.trim()) {
+      toast.error("아이디를 입력해주세요");
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        toFakeEmail(forgotUsername),
+        { redirectTo: `${window.location.origin}/reset-password` }
+      );
+      if (error) throw error;
+      toast.success("비밀번호 재설정 이메일이 발송되었습니다. 이메일을 확인해주세요.");
+      setShowForgotPassword(false);
+      setForgotUsername("");
+    } catch (err: any) {
+      toast.error("이메일 발송에 실패했습니다. 아이디를 확인해주세요.");
+    } finally {
+      setForgotLoading(false);
+    }
   };
 
   if (signUpSuccess) {
