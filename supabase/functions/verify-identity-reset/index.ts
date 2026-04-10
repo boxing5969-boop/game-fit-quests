@@ -38,15 +38,24 @@ Deno.serve(async (req) => {
     // Clean phone number (remove dashes)
     const cleanPhone = phone.replace(/\D/g, "");
     const cleanBirthDate = birthDate ? birthDate.replace(/\D/g, "") : null;
-    const fakeEmail = `${username.toLowerCase().trim()}@153rankup.app`;
+    const usernameClean = username.toLowerCase().trim();
+    const fakeEmail = `${usernameClean}@153rankup.app`;
 
-    // Look up the auth user by email to get user_id
+    // Try to find auth user: first by fake email, then by real email (username might be a full email)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
     if (authError) {
       console.error("Auth list error:", authError);
       throw authError;
     }
-    const authUser = authData.users.find((u) => u.email === fakeEmail);
+    let authUser = authData.users.find((u) => u.email === fakeEmail);
+    if (!authUser) {
+      // Try matching username as full email
+      authUser = authData.users.find((u) => u.email === usernameClean);
+    }
+    if (!authUser) {
+      // Try matching username as email prefix (e.g. user entered "boxing" and email is "boxing@naver.com")
+      authUser = authData.users.find((u) => u.email?.split("@")[0] === usernameClean);
+    }
     if (!authUser) {
       return new Response(
         JSON.stringify({ error: "입력한 아이디와 일치하는 계정을 찾을 수 없습니다" }),
