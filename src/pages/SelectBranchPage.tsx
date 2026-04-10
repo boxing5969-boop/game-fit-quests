@@ -73,7 +73,8 @@ const SelectBranchPage = () => {
       await supabase.auth.signOut();
       navigate("/", { replace: true });
     } catch (err: any) {
-      toast.error("등록 중 오류가 발생했습니다.");
+      const msg = err?.message || err?.details || String(err);
+      toast.error(`오류: ${msg}`);
     } finally {
       setIsLoading(false);
     }
