@@ -70,6 +70,12 @@ const ResetPasswordPage = () => {
   };
 
   if (!isRecovery) {
+    const hashLooksLikeRecovery = window.location.hash.includes("type=recovery") || window.location.hash.includes("recovery=true");
+
+    if (hashLooksLikeRecovery) {
+      return null;
+    }
+
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-6">
         <div className="text-center">
