@@ -2,28 +2,28 @@ import { Award, Shield, Briefcase, GraduationCap, Users, Target, Heart, Star, Za
 
 export const levelProgression = [
   {
-    rank: "화이트",
+    rank: "화이트 리그",
     color: "hsl(0,0%,85%)",
     levels: "레벨 1 ~ 10",
     danTarget: "1단",
     description: "복싱 기초 자세, 기본 펀치, 풋워크를 익히고 1단 심사에 도전할 수 있는 수준까지 성장합니다.",
   },
   {
-    rank: "블루",
+    rank: "블루 리그",
     color: "hsl(210,80%,55%)",
     levels: "레벨 11 ~ 20",
     danTarget: "2단",
     description: "콤비네이션, 디펜스 기술을 체계적으로 습득하고 2단 심사 준비가 완료되는 단계입니다.",
   },
   {
-    rank: "레드",
+    rank: "레드 리그",
     color: "hsl(0,75%,50%)",
     levels: "레벨 21 ~ 30",
     danTarget: "3단",
     description: "실전 스파링 능력, 전술적 사고를 갖추고 3단 심사에 도전할 수 있는 실력을 완성합니다.",
   },
   {
-    rank: "블랙",
+    rank: "블랙 리그",
     color: "hsl(0,0%,15%)",
     levels: "레벨 31 ~ 40",
     danTarget: "4단",
