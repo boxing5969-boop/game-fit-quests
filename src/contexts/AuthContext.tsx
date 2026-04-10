@@ -141,8 +141,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     const { error, data } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: new Error(error.message) };
-
+    if (error) {
+      if (error.message.includes("Invalid login")) {
+        return { error: new Error("아이디 또는 비밀번호가 올바르지 않습니다.") };
+      }
+      return { error: new Error(error.message) };
+    }
     if (data.user) {
       // Check if user has a pending coach request — block login
       const { data: pendingReq } = await supabase
