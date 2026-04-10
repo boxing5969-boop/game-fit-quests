@@ -111,6 +111,32 @@ const MyPage = () => {
           </div>
         )}
 
+        {/* Password Change */}
+        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.12s" }}>
+          <button onClick={() => setShowPwChange(!showPwChange)} className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50">
+            <div className="flex items-center gap-3">
+              <KeyRound className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-foreground">비밀번호 변경</span>
+            </div>
+            <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${showPwChange ? "rotate-90" : ""}`} />
+          </button>
+          {showPwChange && (
+            <div className="space-y-3 border-t border-border px-4 py-4">
+              <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} placeholder="현재 비밀번호"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+              <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="새 비밀번호 (6자 이상)"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="새 비밀번호 확인"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+              {pwError && <p className="text-xs text-destructive">{pwError}</p>}
+              <button onClick={handlePasswordChange} disabled={pwLoading}
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                {pwLoading ? "처리 중..." : "비밀번호 변경 🥊"}
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Actions */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.15s" }}>
           <button onClick={() => navigate("/guide")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
