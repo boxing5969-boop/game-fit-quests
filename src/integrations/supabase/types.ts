@@ -903,6 +903,13 @@ export type Database = {
           rank_position: number
         }[]
       }
+      get_signup_providers: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          signup_provider: string
+          user_id: string
+        }[]
+      }
       get_streak_ranking: {
         Args: { _branch_name: string; _limit?: number }
         Returns: {
