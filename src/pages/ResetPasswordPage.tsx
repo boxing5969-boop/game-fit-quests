@@ -12,7 +12,6 @@ const ResetPasswordPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for recovery token in URL hash
     const hash = window.location.hash;
     if (hash.includes("type=recovery")) {
       setIsRecovery(true);
@@ -44,8 +43,18 @@ const ResetPasswordPage = () => {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
+
+      // Restore the original auth email (fake email) after password reset
+      try {
+        await supabase.functions.invoke("restore-auth-email");
+      } catch (restoreErr) {
+        console.error("Failed to restore auth email:", restoreErr);
+        // Non-critical — don't block the user
+      }
+
       toast.success("비밀번호가 변경되었습니다 ✅");
-      navigate("/home");
+      await supabase.auth.signOut();
+      navigate("/");
     } catch (err: any) {
       setError(err.message || "비밀번호 변경 실패");
     } finally {

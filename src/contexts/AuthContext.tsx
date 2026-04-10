@@ -140,7 +140,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+    let { error, data } = await supabase.auth.signInWithPassword({ email, password });
+    
+    // If login failed and using fake email, try looking up real email (during password reset window)
+    if (error && error.message.includes("Invalid login") && email.endsWith("@153rankup.app")) {
+      const username = email.split("@")[0];
+      // Try to find user's real email from profiles (via edge function since we're not authenticated)
+      try {
+        const { data: resolveData } = await supabase.functions.invoke("resolve-login-email", {
+          body: { username },
+        });
+        if (resolveData?.authEmail && resolveData.authEmail !== email) {
+          const retry = await supabase.auth.signInWithPassword({ email: resolveData.authEmail, password });
+          if (!retry.error) {
+            error = null;
+            data = retry.data;
+          }
+        }
+      } catch {
+        // Fallback failed, keep original error
+      }
+    }
+    
     if (error) {
       if (error.message.includes("Invalid login")) {
         return { error: new Error("아이디 또는 비밀번호가 올바르지 않습니다.") };
