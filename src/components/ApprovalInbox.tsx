@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 
 interface PendingItem {
   id: string;
-  type: "mission" | "quest";
+  type: "mission" | "quest" | "member" | "coach_request";
   title: string;
   user_id: string;
   nickname: string;
@@ -18,25 +18,28 @@ interface PendingItem {
   level: number;
   requested_at: string;
   xp_reward: number;
+  branch_name?: string;
+  phone_number?: string | null;
 }
 
 const ApprovalInbox = () => {
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const branchName = profile?.branch_name || "";
+  const isSuperAdmin = role === "super_admin" || role === "admin";
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [commentMap, setCommentMap] = useState<Record<string, string>>({});
   const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"recent" | "today">("today");
 
-  // Fetch all pending submissions
+  // Fetch all pending approvals
   const { data: pendingItems, isLoading } = useQuery({
-    queryKey: ["approval-inbox", branchName],
-    enabled: !!branchName,
+    queryKey: ["approval-inbox", branchName, isSuperAdmin],
+    enabled: !!branchName || isSuperAdmin,
     queryFn: async () => {
-      const [missionRes, questRes] = await Promise.all([
+      const [missionRes, questRes, profilesRes, coachReqRes] = await Promise.all([
         supabase
           .from("mission_submissions")
           .select("id, user_id, mission_id, requested_at, missions(title, xp_reward)")
@@ -47,20 +50,50 @@ const ApprovalInbox = () => {
           .select("id, user_id, quest_id, requested_at, quests(title, xp_reward)")
           .eq("status", "pending")
           .order("requested_at", { ascending: false }),
+        (() => {
+          let query = supabase
+            .from("profiles")
+            .select("user_id, nickname, name, avatar_url, branch_name, phone_number, created_at")
+            .eq("is_approved", false)
+            .order("created_at", { ascending: false });
+
+          if (!isSuperAdmin) {
+            query = query.eq("branch_name", branchName);
+          }
+
+          return query;
+        })(),
+        isSuperAdmin
+          ? supabase
+              .from("coach_requests")
+              .select("id, user_id, requested_at, status")
+              .eq("status", "pending")
+              .order("requested_at", { ascending: false })
+          : Promise.resolve({ data: [], error: null }),
       ]);
+
+      if (missionRes.error) throw missionRes.error;
+      if (questRes.error) throw questRes.error;
+      if (profilesRes.error) throw profilesRes.error;
+      if (coachReqRes && "error" in coachReqRes && coachReqRes.error) throw coachReqRes.error;
 
       const userIds = new Set<string>();
       (missionRes.data || []).forEach(s => userIds.add(s.user_id));
       (questRes.data || []).forEach(s => userIds.add(s.user_id));
+      (profilesRes.data || []).forEach(p => userIds.add(p.user_id));
+      ((coachReqRes && "data" in coachReqRes ? coachReqRes.data : []) || []).forEach((r: any) => userIds.add(r.user_id));
 
       if (userIds.size === 0) return [];
 
-      const [profilesRes, progressRes] = await Promise.all([
-        supabase.from("profiles").select("user_id, nickname, avatar_url, branch_name").in("user_id", [...userIds]),
+      const [profileDetailsRes, progressRes] = await Promise.all([
+        supabase.from("profiles").select("user_id, nickname, name, avatar_url, branch_name, phone_number").in("user_id", [...userIds]),
         supabase.from("member_progress").select("user_id, current_rank, current_level").in("user_id", [...userIds]),
       ]);
 
-      const profileMap = new Map((profilesRes.data || []).map(p => [p.user_id, p]));
+      if (profileDetailsRes.error) throw profileDetailsRes.error;
+      if (progressRes.error) throw progressRes.error;
+
+      const profileMap = new Map((profileDetailsRes.data || []).map(p => [p.user_id, p]));
       const progressMap = new Map((progressRes.data || []).map(p => [p.user_id, p]));
 
       const items: PendingItem[] = [];
@@ -80,6 +113,8 @@ const ApprovalInbox = () => {
           level: prog?.current_level || 1,
           requested_at: s.requested_at,
           xp_reward: (s.missions as any)?.xp_reward || 0,
+          branch_name: p.branch_name,
+          phone_number: p.phone_number,
         });
       });
 
@@ -98,8 +133,49 @@ const ApprovalInbox = () => {
           level: prog?.current_level || 1,
           requested_at: s.requested_at,
           xp_reward: (s.quests as any)?.xp_reward || 0,
+          branch_name: p.branch_name,
+          phone_number: p.phone_number,
         });
       });
+
+      (profilesRes.data || []).forEach((p) => {
+        const prog = progressMap.get(p.user_id);
+        items.push({
+          id: p.user_id,
+          type: "member",
+          title: "회원 가입 승인 요청",
+          user_id: p.user_id,
+          nickname: p.nickname || p.name || "회원",
+          avatar_url: p.avatar_url,
+          rank: prog?.current_rank || "white",
+          level: prog?.current_level || 1,
+          requested_at: p.created_at,
+          xp_reward: 0,
+          branch_name: p.branch_name,
+          phone_number: p.phone_number,
+        });
+      });
+
+      if (coachReqRes && "data" in coachReqRes) {
+        (coachReqRes.data || []).forEach((r: any) => {
+          const p = profileMap.get(r.user_id);
+          const prog = progressMap.get(r.user_id);
+          items.push({
+            id: r.id,
+            type: "coach_request",
+            title: "관장님 가입 승인 요청",
+            user_id: r.user_id,
+            nickname: p?.nickname || p?.name || "관장님 신청자",
+            avatar_url: p?.avatar_url || null,
+            rank: prog?.current_rank || "white",
+            level: prog?.current_level || 1,
+            requested_at: r.requested_at,
+            xp_reward: 0,
+            branch_name: p?.branch_name,
+            phone_number: p?.phone_number,
+          });
+        });
+      }
 
       return items;
     },
@@ -158,8 +234,14 @@ const ApprovalInbox = () => {
           if (item.type === "mission") {
             const { error } = await supabase.rpc("approve_mission_submission", { _submission_id: item.id, _coach_note: note });
             if (error) throw error;
-          } else {
+          } else if (item.type === "quest") {
             const { error } = await supabase.rpc("approve_quest_submission", { _submission_id: item.id, _coach_note: note });
+            if (error) throw error;
+          } else if (item.type === "member") {
+            const { error } = await supabase.rpc("approve_member", { _member_id: item.user_id });
+            if (error) throw error;
+          } else if (item.type === "coach_request") {
+            const { error } = await supabase.rpc("approve_coach_request", { _request_id: item.id });
             if (error) throw error;
           }
         })
@@ -181,8 +263,14 @@ const ApprovalInbox = () => {
       if (item.type === "mission") {
         const { error } = await supabase.rpc("approve_mission_submission", { _submission_id: item.id, _coach_note: note });
         if (error) throw error;
-      } else {
+      } else if (item.type === "quest") {
         const { error } = await supabase.rpc("approve_quest_submission", { _submission_id: item.id, _coach_note: note });
+        if (error) throw error;
+      } else if (item.type === "member") {
+        const { error } = await supabase.rpc("approve_member", { _member_id: item.user_id });
+        if (error) throw error;
+      } else if (item.type === "coach_request") {
+        const { error } = await supabase.rpc("approve_coach_request", { _request_id: item.id });
         if (error) throw error;
       }
     },
@@ -194,9 +282,11 @@ const ApprovalInbox = () => {
       if (item.type === "mission") {
         const { error } = await supabase.rpc("request_mission_revision", { _submission_id: item.id, _coach_note: note || "보완이 필요합니다" });
         if (error) throw error;
-      } else {
+      } else if (item.type === "quest") {
         const { error } = await supabase.rpc("reject_quest_submission", { _submission_id: item.id, _coach_note: note || "보완이 필요합니다" });
         if (error) throw error;
+      } else if (item.type === "member" || item.type === "coach_request") {
+        throw new Error("가입 승인은 수정요청을 지원하지 않습니다");
       }
     },
     onSuccess: () => { toast.info("수정요청 완료"); invalidateAll(); },
@@ -207,8 +297,14 @@ const ApprovalInbox = () => {
       if (item.type === "mission") {
         const { error } = await supabase.rpc("reject_mission_submission", { _submission_id: item.id, _coach_note: note || "다시 도전해보세요" });
         if (error) throw error;
-      } else {
+      } else if (item.type === "quest") {
         const { error } = await supabase.rpc("reject_quest_submission", { _submission_id: item.id, _coach_note: note || "다시 도전해보세요" });
+        if (error) throw error;
+      } else if (item.type === "member") {
+        const { error } = await supabase.rpc("reject_member", { _member_id: item.user_id });
+        if (error) throw error;
+      } else if (item.type === "coach_request") {
+        const { error } = await supabase.rpc("reject_coach_request", { _request_id: item.id });
         if (error) throw error;
       }
     },
@@ -220,6 +316,7 @@ const ApprovalInbox = () => {
     qc.invalidateQueries({ queryKey: ["branch-stats"] });
     qc.invalidateQueries({ queryKey: ["branch-members"] });
     qc.invalidateQueries({ queryKey: ["member-mission-subs"] });
+    qc.invalidateQueries({ queryKey: ["coach-requests"] });
   };
 
   const isToday = (dateStr: string) => new Date(dateStr).toDateString() === new Date().toDateString();
@@ -337,9 +434,21 @@ const ApprovalInbox = () => {
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm font-bold text-foreground truncate">{item.nickname}</span>
                   <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
-                    item.type === "mission" ? "bg-primary/10 text-primary" : "bg-accent/10 text-accent-foreground"
+                    item.type === "mission"
+                      ? "bg-primary/10 text-primary"
+                      : item.type === "quest"
+                      ? "bg-accent/10 text-accent-foreground"
+                      : item.type === "member"
+                      ? "bg-amber-500/15 text-amber-700"
+                      : "bg-destructive/10 text-destructive"
                   }`}>
-                    {item.type === "mission" ? "미션" : "퀘스트"}
+                    {item.type === "mission"
+                      ? "미션"
+                      : item.type === "quest"
+                      ? "퀘스트"
+                      : item.type === "member"
+                      ? "회원가입"
+                      : "관장승인"}
                   </span>
                   {isToday(item.requested_at) && (
                     <span className="shrink-0 rounded-full bg-status-pending/15 px-1.5 py-0.5 text-[9px] font-bold text-status-pending">
@@ -347,50 +456,61 @@ const ApprovalInbox = () => {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground truncate">{item.title}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {item.title}
+                  {item.branch_name ? ` · ${item.branch_name}` : ""}
+                </p>
+                {item.phone_number && (
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">{item.phone_number}</p>
+                )}
               </div>
             </button>
 
             <div className="shrink-0 text-right">
-              <p className="text-xs font-bold text-primary">+{item.xp_reward} XP</p>
+              {item.xp_reward > 0 ? (
+                <p className="text-xs font-bold text-primary">+{item.xp_reward} XP</p>
+              ) : (
+                <p className="text-xs font-bold text-muted-foreground">가입 요청</p>
+              )}
               <p className="text-[10px] text-muted-foreground">
                 {formatRank(item.rank, item.level)}
               </p>
             </div>
           </div>
 
-          {/* Template comment selector */}
-          <div className="mt-3 space-y-2">
-            <button
-              onClick={() => setExpandedTemplate(expandedTemplate === item.id ? null : item.id)}
-              className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground active:scale-[0.98]"
-            >
-              <span>{commentMap[item.id] || "💬 코멘트 선택/입력..."}</span>
-              <ChevronDown className={`h-3 w-3 transition-transform ${expandedTemplate === item.id ? "rotate-180" : ""}`} />
-            </button>
+          {(item.type === "mission" || item.type === "quest") && (
+            <div className="mt-3 space-y-2">
+              <button
+                onClick={() => setExpandedTemplate(expandedTemplate === item.id ? null : item.id)}
+                className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground active:scale-[0.98]"
+              >
+                <span>{commentMap[item.id] || "💬 코멘트 선택/입력..."}</span>
+                <ChevronDown className={`h-3 w-3 transition-transform ${expandedTemplate === item.id ? "rotate-180" : ""}`} />
+              </button>
 
-            {expandedTemplate === item.id && (
-              <div className="space-y-1.5 rounded-xl border border-border bg-background p-2">
-                <div className="flex flex-wrap gap-1">
-                  {TEMPLATE_COMMENTS.map(tc => (
-                    <button
-                      key={tc.label}
-                      onClick={() => { setComment(item.id, tc.text); setExpandedTemplate(null); }}
-                      className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-medium text-secondary-foreground active:scale-95 hover:bg-primary/10"
-                    >
-                      {tc.label}
-                    </button>
-                  ))}
+              {expandedTemplate === item.id && (
+                <div className="space-y-1.5 rounded-xl border border-border bg-background p-2">
+                  <div className="flex flex-wrap gap-1">
+                    {TEMPLATE_COMMENTS.map(tc => (
+                      <button
+                        key={tc.label}
+                        onClick={() => { setComment(item.id, tc.text); setExpandedTemplate(null); }}
+                        className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-medium text-secondary-foreground active:scale-95 hover:bg-primary/10"
+                      >
+                        {tc.label}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    value={commentMap[item.id] || ""}
+                    onChange={e => setComment(item.id, e.target.value)}
+                    placeholder="직접 입력..."
+                    className="w-full rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+                  />
                 </div>
-                <input
-                  value={commentMap[item.id] || ""}
-                  onChange={e => setComment(item.id, e.target.value)}
-                  placeholder="직접 입력..."
-                  className="w-full rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
-                />
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Action buttons */}
           <div className="mt-2 flex gap-2">
@@ -401,13 +521,15 @@ const ApprovalInbox = () => {
             >
               <Check className="h-3 w-3" /> 승인
             </button>
-            <button
-              onClick={() => revisionSingle.mutate({ item, note: commentMap[item.id] || "보완이 필요합니다" })}
-              disabled={revisionSingle.isPending}
-              className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-xs font-bold text-white active:scale-95 disabled:opacity-50"
-            >
-              <Pencil className="h-3 w-3" /> 수정요청
-            </button>
+            {(item.type === "mission" || item.type === "quest") && (
+              <button
+                onClick={() => revisionSingle.mutate({ item, note: commentMap[item.id] || "보완이 필요합니다" })}
+                disabled={revisionSingle.isPending}
+                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-xs font-bold text-white active:scale-95 disabled:opacity-50"
+              >
+                <Pencil className="h-3 w-3" /> 수정요청
+              </button>
+            )}
             <button
               onClick={() => rejectSingle.mutate({ item, note: commentMap[item.id] || "다시 도전해보세요" })}
               disabled={rejectSingle.isPending}
