@@ -638,6 +638,7 @@ export type Database = {
           avatar_url: string | null
           branch_name: string
           created_at: string
+          email: string | null
           id: string
           is_approved: boolean
           name: string
@@ -650,6 +651,7 @@ export type Database = {
           avatar_url?: string | null
           branch_name?: string
           created_at?: string
+          email?: string | null
           id?: string
           is_approved?: boolean
           name?: string
@@ -662,6 +664,7 @@ export type Database = {
           avatar_url?: string | null
           branch_name?: string
           created_at?: string
+          email?: string | null
           id?: string
           is_approved?: boolean
           name?: string
