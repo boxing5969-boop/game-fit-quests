@@ -373,7 +373,7 @@ const MemberDetailPage = () => {
             <div key={rank}>
               <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-foreground">
                 <span>{RANK_ICONS[rank]}</span>
-                {RANK_LABELS[rank]}
+                {RANK_LABELS[rank]} 리그
               </h3>
               <div className="grid grid-cols-5 gap-1.5">
                 {Array.from({ length: 10 }, (_, i) => i + 1).map(lvl => {
