@@ -79,11 +79,11 @@ const HomePage = () => {
           <div className="animate-bounce-in rounded-2xl border-2 border-accent bg-gradient-to-r from-accent/20 to-primary/20 p-5 text-center shadow-lg">
             <span className="text-4xl">🏆</span>
             <h2 className="mt-2 text-xl text-foreground">MASTER 40 달성!</h2>
-            <p className="text-sm text-muted-foreground">모든 계급을 정복했습니다</p>
+            <p className="text-sm text-muted-foreground">모든 리그를 정복했습니다</p>
           </div>
         )}
 
-        {/* ── 1. 내 계급/레벨 배지 + 순위 ── */}
+        {/* ── 1. 내 리그/레벨 배지 + 순위 ── */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <RankBadge rank={rank} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
@@ -95,7 +95,7 @@ const HomePage = () => {
             )}
           </div>
           <div className="mb-2 text-xs text-muted-foreground">
-            {isManagerRole(role) ? "👑 마스터 · 모든 레벨 달성" : (currentLevel?.title || `${RANK_LABELS[rank]} Lv.${progress.current_level}`)}
+            {isManagerRole(role) ? "👑 마스터 · 모든 레벨 달성" : (currentLevel?.title || `${RANK_LABELS[rank]} 리그 · 레벨 ${progress.current_level}`)}
             {profile.branch_name && <span className="ml-1.5 text-muted-foreground/60">· {profile.branch_name}</span>}
           </div>
           <XPBar current={progress.total_xp} max={xpToNext} />

@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 const tabs = [
   { path: "/home", icon: Home, label: "홈" },
   { path: "/missions", icon: Target, label: "미션" },
-  { path: "/levelmap", icon: Map, label: "계급도" },
+  { path: "/levelmap", icon: Map, label: "리그맵" },
   { path: "/halloffame", icon: Trophy, label: "랭킹" },
   { path: "/rewards", icon: Gift, label: "보상" },
   { path: "/cert-benefits", icon: ScrollText, label: "단증혜택" },
