@@ -26,12 +26,31 @@ const BranchManagerHome = () => {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
   const branchName = profile?.branch_name || "";
+  const isSuperAdmin = role === "super_admin" || role === "admin";
 
   // Branch stats
   const { data: stats } = useQuery({
-    queryKey: ["branch-stats", branchName],
+    queryKey: ["branch-stats", branchName, isSuperAdmin],
     enabled: !!branchName && isManagerRole(role),
     queryFn: async () => {
+      if (isSuperAdmin) {
+        // Super admin: aggregate stats from all branches
+        const [profilesRes, pendingMissionsRes, pendingQuestsRes, xpRes, submissionsRes] = await Promise.all([
+          supabase.from("profiles").select("user_id, is_approved", { count: "exact" }),
+          supabase.from("mission_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
+          supabase.from("quest_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
+          supabase.from("xp_logs").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString()),
+          supabase.from("mission_submissions").select("id", { count: "exact", head: true }).gte("requested_at", new Date().toISOString().split("T")[0]),
+        ]);
+        const profiles = profilesRes.data || [];
+        const unapproved = profiles.filter(p => !p.is_approved).length;
+        return {
+          total_members: profiles.length,
+          pending_count: unapproved,
+          weekly_levelups: xpRes.count || 0,
+          today_submissions: submissionsRes.count || 0,
+        };
+      }
       const { data, error } = await supabase.rpc("get_branch_stats", { _branch_name: branchName });
       if (error) throw error;
       return data as { total_members: number; pending_count: number; weekly_levelups: number; today_submissions: number };
@@ -40,14 +59,14 @@ const BranchManagerHome = () => {
 
   // Members list
   const { data: members, isLoading } = useQuery({
-    queryKey: ["branch-members", branchName],
-    enabled: !!branchName && isManagerRole(role),
+    queryKey: ["branch-members", branchName, isSuperAdmin],
+    enabled: (!!branchName || isSuperAdmin) && isManagerRole(role),
     queryFn: async () => {
-      const { data: profiles, error: profErr } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("branch_name", branchName)
-        .order("created_at", { ascending: false });
+      let query = supabase.from("profiles").select("*").order("created_at", { ascending: false });
+      if (!isSuperAdmin) {
+        query = query.eq("branch_name", branchName);
+      }
+      const { data: profiles, error: profErr } = await query;
       if (profErr) throw profErr;
 
       const userIds = (profiles || []).map(p => p.user_id);
@@ -254,6 +273,12 @@ const BranchManagerHome = () => {
                       )}
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                      {isSuperAdmin && m.branch_name && (
+                        <>
+                          <span className="font-medium text-primary/70">{m.branch_name}</span>
+                          <span>·</span>
+                        </>
+                      )}
                       {m.prog && (
                         <>
                           <span className="font-medium">{formatRank(m.prog.current_rank, m.prog.current_level)}</span>
@@ -365,8 +390,8 @@ const BranchManagerHome = () => {
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">{branchName}</p>
-            <h1 className="text-2xl text-foreground">우리 지점 회원관리</h1>
+            <p className="text-sm text-muted-foreground">{isSuperAdmin ? "전체 지점" : branchName}</p>
+            <h1 className="text-2xl text-foreground">{isSuperAdmin ? "전체 회원관리" : "우리 지점 회원관리"}</h1>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => navigate("/mypage")} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
@@ -431,8 +456,8 @@ const BranchManagerHome = () => {
           {/* Header */}
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">{branchName}</p>
-              <h1 className="text-xl text-foreground">회원관리</h1>
+              <p className="text-sm text-muted-foreground">{isSuperAdmin ? "전체 지점" : branchName}</p>
+              <h1 className="text-xl text-foreground">{isSuperAdmin ? "전체 회원관리" : "회원관리"}</h1>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => navigate("/mypage")} className="relative flex h-9 w-9 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
