@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Gift, ChevronDown, Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp, Crown, Shield, Award, Sparkles, ExternalLink, X, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { LEAGUE_SUMMARIES, LEVEL_VALUE_MAP, UNLOCK_REWARDS } from "@/data/valueMapData";
+import { LEAGUE_SUMMARIES, FULL_VALUE_MAP } from "@/data/valueMapData";
 import { useLevels, useManualLevelUp, usePassBossBattle } from "@/hooks/useQuestData";
 import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
 import { supabase } from "@/integrations/supabase/client";
@@ -138,8 +138,7 @@ const RankUpPage = () => {
         <div className="space-y-4">
           {LEAGUE_SUMMARIES.map(league => {
             const isExpanded = expandedRank === league.rank;
-            const lvls = LEVEL_VALUE_MAP.filter(l => l.rank === league.rank);
-            const reward = UNLOCK_REWARDS.find(r => r.rank === league.rank);
+            const lvls = FULL_VALUE_MAP.filter(l => l.league === league.rank);
             const rankIdx = RANK_ORDER.indexOf(league.rank as Enums<"rank_name">);
             const isCurrentLeague = currentRank === league.rank;
             const isCompleted = RANK_ORDER.indexOf(currentRank as Enums<"rank_name">) > rankIdx;
@@ -167,9 +166,12 @@ const RankUpPage = () => {
                       {lvls.map(lv => {
                         const isReached = lv.level <= globalLevel;
                         return (
-                          <div key={lv.level} className={`flex items-start gap-3 rounded-xl p-2.5 ${isReached ? "bg-primary/5" : "bg-muted/30"}`}>
+                           <div key={lv.level} className={`flex items-start gap-3 rounded-xl p-2.5 ${isReached ? "bg-primary/5" : "bg-muted/30"}`}>
                             <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${isReached ? "bg-primary text-primary-foreground" : "bg-border text-muted-foreground"}`}>{lv.level}</div>
-                            <p className={`text-sm pt-0.5 ${isReached ? "text-foreground" : "text-muted-foreground"}`}>{lv.title}</p>
+                            <div>
+                              <p className={`text-sm ${isReached ? "text-foreground font-bold" : "text-muted-foreground"}`}>{lv.shortValueTitle}</p>
+                              <p className="text-[11px] text-muted-foreground">{lv.valueDescription}</p>
+                            </div>
                           </div>
                         );
                       })}
@@ -178,13 +180,14 @@ const RankUpPage = () => {
                       <p className="mb-1.5 text-xs font-bold text-foreground">{league.label} 완료 가치</p>
                       {league.completionValues.map(v => <p key={v} className="text-xs text-muted-foreground">✓ {v}</p>)}
                     </div>
-                    {reward && (
+                    {/* Boss level unlock benefit */}
+                    {lvls.length > 0 && (
                       <div className="rounded-xl border border-accent/20 bg-accent/5 p-3">
                         <div className="mb-1.5 flex items-center gap-1.5">
                           <Gift className="h-3.5 w-3.5 text-accent" />
-                          <p className="text-xs font-bold text-foreground">Lv {reward.level} 해금 보상</p>
+                          <p className="text-xs font-bold text-foreground">Lv {lvls[lvls.length - 1].level} 해금 보상</p>
                         </div>
-                        {reward.rewards.map(r => <p key={r} className="text-xs text-muted-foreground">🎁 {r}</p>)}
+                        <p className="text-xs text-muted-foreground">🎁 {lvls[lvls.length - 1].unlockedBenefit}</p>
                       </div>
                     )}
                   </div>

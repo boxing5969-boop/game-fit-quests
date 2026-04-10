@@ -25,9 +25,9 @@ const GuideExercisePurposePage = () => {
               <span className="text-2xl">{ex.emoji}</span>
               <h3 className="text-base font-bold text-foreground">{ex.name}</h3>
             </div>
-            <p className="mb-3 text-sm text-muted-foreground leading-relaxed">{ex.purposeSummary}</p>
+            <p className="mb-3 text-sm text-muted-foreground leading-relaxed">{ex.whyDoIt}</p>
             <div className="flex flex-wrap gap-1.5">
-              {ex.purposeTags.map(tag => (
+              {ex.whatImproves.map(tag => (
                 <span key={tag} className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-medium text-primary">
                   {tag}
                 </span>
