@@ -58,18 +58,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Still not found? Try looking up by profile email
+    // Still not found? Try looking up by profile — match username to email prefix
     if (!user) {
-      const fakeEmail = possibleEmails.find(e => e.endsWith("@153rankup.app")) || possibleEmails[0];
-      const usernameFromEmail = fakeEmail.split("@")[0];
-      // Search profiles for matching real email
-      const { data: profileMatch } = await supabaseAdmin
+      const { data: profileMatches } = await supabaseAdmin
         .from("profiles")
-        .select("user_id")
-        .or(`email.eq.${trimmed}`)
-        .maybeSingle();
-      if (profileMatch) {
-        user = userData.users.find(u => u.id === profileMatch.user_id) || null;
+        .select("user_id, email")
+        .not("email", "is", null);
+      
+      if (profileMatches) {
+        // Find profile whose email starts with the username or matches exactly
+        const match = profileMatches.find(p => {
+          if (!p.email) return false;
+          const profileEmailLower = p.email.toLowerCase();
+          return profileEmailLower === trimmed || 
+                 profileEmailLower.split("@")[0] === trimmed ||
+                 possibleEmails.includes(profileEmailLower);
+        });
+        if (match) {
+          user = userData.users.find(u => u.id === match.user_id) || null;
+          if (user) console.log("Found user via profile lookup:", user.id);
+        }
       }
     }
 
