@@ -204,6 +204,31 @@ const MemberDetailPage = () => {
     },
   });
 
+  const deleteUserMut = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ targetUserId: memberId }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "삭제 실패");
+      return result;
+    },
+    onSuccess: () => {
+      toast.success("계정이 삭제되었습니다");
+      qc.invalidateQueries({ queryKey: ["branch-members"] });
+      qc.invalidateQueries({ queryKey: ["approval-inbox"] });
+      navigate(-1);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   if (isLoading || !member?.profile || !member?.progress) {
     return (
       <div className="mx-auto max-w-lg px-4 pt-4">
