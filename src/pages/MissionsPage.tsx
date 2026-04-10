@@ -38,6 +38,7 @@ const MissionsPage = () => {
   const { data: levels } = useLevels();
   const qc = useQueryClient();
   const [adminClearing, setAdminClearing] = useState(false);
+  const [missionTab, setMissionTab] = useState<MissionTab>("white");
   const isAdmin = role === "admin" || role === "super_admin";
 
   // Admin form state
