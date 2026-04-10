@@ -343,6 +343,11 @@ const LoginPage = () => {
                 <p className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-muted-foreground">등록된 체육관이 없습니다</p>
               )}
             </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">이메일 (비밀번호 재설정용)</label>
+              <input type="email" value={realEmail} onChange={(e) => setRealEmail(e.target.value)} placeholder="example@email.com" required className={inputClass} />
+              <p className="mt-0.5 text-xs text-muted-foreground">비밀번호 분실 시 재설정 링크가 발송됩니다</p>
+            </div>
           </>
         )}
 
@@ -402,7 +407,7 @@ const LoginPage = () => {
         {tab === "login" && (
           <button
             type="button"
-            onClick={handleForgotPassword}
+            onClick={() => setShowForgotPassword(true)}
             disabled={isLoading}
             className="w-full py-2 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
@@ -417,6 +422,42 @@ const LoginPage = () => {
           onAccept={handlePrivacyAccept}
           onClose={() => setShowPrivacy(false)}
         />
+      )}
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl">
+            <h2 className="mb-2 text-lg font-bold text-foreground">🔑 비밀번호 재설정</h2>
+            <p className="mb-4 text-sm text-muted-foreground">가입 시 사용한 아이디를 입력하면 등록된 이메일로 재설정 링크를 보내드립니다.</p>
+            <input
+              type="text"
+              value={forgotUsername}
+              onChange={(e) => setForgotUsername(e.target.value)}
+              placeholder="아이디 입력"
+              className={inputClass}
+              autoCapitalize="none"
+              autoCorrect="off"
+            />
+            <div className="mt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={() => { setShowForgotPassword(false); setForgotUsername(""); }}
+                className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground transition-all active:scale-[0.98]"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={forgotLoading || !forgotUsername.trim()}
+                className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {forgotLoading ? "발송 중..." : "재설정 이메일 발송"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
