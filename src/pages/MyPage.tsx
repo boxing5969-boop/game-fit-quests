@@ -3,17 +3,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import RankBadge from "@/components/RankBadge";
 import AvatarUpload from "@/components/AvatarUpload";
-import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound } from "lucide-react";
+import XPBar from "@/components/XPBar";
+import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound, Award } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useNavigate } from "react-router-dom";
-import { useXpLogs } from "@/hooks/useQuestData";
+import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 
 const MyPage = () => {
   const navigate = useNavigate();
   const { profile, progress, role, signOut } = useAuth();
-  const { data: xpLogs } = useXpLogs();
+  const { data: xpLogs } = useXpLogs(30);
+  const { data: allBadges, isLoading: badgesLoading } = useBadges();
+  const { data: myBadges } = useMyBadges();
   const [showPwChange, setShowPwChange] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -22,6 +25,12 @@ const MyPage = () => {
   const [pwError, setPwError] = useState("");
 
   if (!profile || !progress) return null;
+
+  const earnedIds = new Set((myBadges || []).map(mb => mb.badge_id));
+  const earned = (allBadges || []).filter(b => earnedIds.has(b.id));
+  const locked = (allBadges || []).filter(b => !earnedIds.has(b.id));
+  const isMaster40 = progress.current_rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
+  const levelUpLogs = (xpLogs || []).filter(l => l.reason.includes("클리어") || l.reason.includes("타이틀매치"));
 
   const handleLogout = async () => {
     await signOut();
@@ -32,28 +41,19 @@ const MyPage = () => {
     setPwError("");
     if (newPw.length < 6) { setPwError("새 비밀번호는 6자 이상이어야 합니다"); return; }
     if (newPw !== confirmPw) { setPwError("새 비밀번호가 일치하지 않습니다"); return; }
-
     setPwLoading(true);
     try {
-      // Verify current password by re-signing in
       const { data: userData } = await supabase.auth.getUser();
       const email = userData.user?.email;
       if (!email) throw new Error("이메일을 찾을 수 없습니다");
-
       const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password: currentPw });
       if (signInErr) { setPwError("현재 비밀번호가 올바르지 않습니다"); return; }
-
       const { error: updateErr } = await supabase.auth.updateUser({ password: newPw });
       if (updateErr) throw updateErr;
-
       toast.success("비밀번호가 변경되었습니다 ✅");
-      setShowPwChange(false);
-      setCurrentPw(""); setNewPw(""); setConfirmPw("");
-    } catch (err: any) {
-      setPwError(err.message || "비밀번호 변경 실패");
-    } finally {
-      setPwLoading(false);
-    }
+      setShowPwChange(false); setCurrentPw(""); setNewPw(""); setConfirmPw("");
+    } catch (err: any) { setPwError(err.message || "비밀번호 변경 실패"); }
+    finally { setPwLoading(false); }
   };
 
   return (
@@ -85,26 +85,111 @@ const MyPage = () => {
           </div>
         </div>
 
-        {/* Info */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.05s" }}>
-          <InfoRow icon={<MapPin className="h-4 w-4" />} label="소속 지점" value={profile.branch_name || "미설정"} />
-          <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} />
-          <InfoRow icon={<span className="text-sm">🔥</span>} label="연속 출석" value={`${progress.streak_days}일`} />
-          <InfoRow icon={<span className="text-sm">⚡</span>} label="누적 XP" value={`${progress.total_xp.toLocaleString()} XP`} last />
+        {/* XP & Stats */}
+        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm" style={{ animationDelay: "0.03s" }}>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-2xl font-bold text-foreground">{progress.total_xp.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">총 XP</p>
+            </div>
+            <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
+          </div>
+          <XPBar current={progress.total_xp} max={getXpToNext(progress.current_level, progress.current_rank)} />
         </div>
 
-        {/* Recent Clears */}
-        {xpLogs && xpLogs.length > 0 && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
-            <h2 className="mb-3 text-base font-bold text-foreground">📋 최근 클리어 이력</h2>
+        {/* Stats grid */}
+        <div className="grid grid-cols-3 gap-3 animate-slide-up" style={{ animationDelay: "0.05s" }}>
+          <StatCard icon="🔥" label="연속 출석" value={`${progress.streak_days}일`} />
+          <StatCard icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
+          <StatCard icon="🏅" label="배지" value={`${earned.length}개`} />
+        </div>
+
+        {/* Info */}
+        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.07s" }}>
+          <InfoRow icon={<MapPin className="h-4 w-4" />} label="소속 지점" value={profile.branch_name || "미설정"} />
+          <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} last />
+        </div>
+
+        {/* Master League */}
+        {isMaster40 && (
+          <div className="animate-bounce-in rounded-2xl border-2 border-accent bg-gradient-to-br from-accent/20 via-primary/10 to-accent/20 p-6 text-center shadow-lg">
+            <span className="text-5xl">👑</span>
+            <h2 className="mt-2 text-xl font-bold text-foreground">마스터 리그 달성</h2>
+            <p className="text-sm text-muted-foreground">블랙 리그 레벨 10 달성 + 모든 타이틀매치 클리어</p>
+          </div>
+        )}
+
+        {/* Earned Badges */}
+        <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
+          <h2 className="mb-3 text-base font-bold text-foreground">🏅 획득한 배지</h2>
+          {badgesLoading ? (
+            <div className="grid grid-cols-3 gap-3">{[1, 2, 3].map(i => <div key={i} className="h-24 animate-pulse rounded-2xl bg-muted" />)}</div>
+          ) : earned.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border p-8 text-center">
+              <span className="text-3xl">🥊</span>
+              <p className="mt-2 text-sm text-muted-foreground">아직 획득한 배지가 없습니다</p>
+              <p className="text-xs text-muted-foreground">미션을 완료하고 배지를 모아보세요!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              {earned.map(b => (
+                <div key={b.id} className="flex flex-col items-center gap-1.5 rounded-2xl border border-primary/20 bg-card p-3 shadow-sm text-center">
+                  <span className="text-3xl">{b.image_url || "🏅"}</span>
+                  <span className="text-xs font-bold text-foreground">{b.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Locked Badges */}
+        {locked.length > 0 && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
+            <h2 className="mb-3 text-base font-bold text-muted-foreground">🔒 미획득</h2>
+            <div className="grid grid-cols-3 gap-3">
+              {locked.map(b => (
+                <div key={b.id} className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-muted/30 p-3 text-center opacity-50">
+                  <span className="text-3xl grayscale">{b.image_url || "🏅"}</span>
+                  <span className="text-xs font-bold text-foreground">{b.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Level-up history */}
+        {levelUpLogs.length > 0 && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
+            <h2 className="mb-3 text-base font-bold text-foreground">📜 레벨업 기록</h2>
             <div className="rounded-2xl border border-border bg-card shadow-sm">
-              {xpLogs.slice(0, 5).map((item, idx) => (
-                <div key={item.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(xpLogs.length, 5) - 1 ? "border-b border-border" : ""}`}>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{item.reason}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(item.created_at).toLocaleDateString("ko-KR")}</p>
+              {levelUpLogs.slice(0, 10).map((log, idx) => (
+                <div key={log.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(levelUpLogs.length, 10) - 1 ? "border-b border-border" : ""}`}>
+                  <div className="flex items-center gap-2">
+                    <Award className="h-4 w-4 text-primary" />
+                    <div>
+                      <p className="text-sm text-foreground">{log.reason}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")}</p>
+                    </div>
                   </div>
-                  <span className="text-xs font-bold text-primary">+{item.amount} XP</span>
+                  <span className="text-sm font-bold text-primary">+{log.amount} XP</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent XP */}
+        {xpLogs && xpLogs.length > 0 && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.18s" }}>
+            <h2 className="mb-3 text-base font-bold text-foreground">⚡ 최근 XP 획득</h2>
+            <div className="rounded-2xl border border-border bg-card shadow-sm">
+              {xpLogs.slice(0, 5).map((log, idx) => (
+                <div key={log.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(xpLogs.length, 5) - 1 ? "border-b border-border" : ""}`}>
+                  <div>
+                    <p className="text-sm text-foreground">{log.reason}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")}</p>
+                  </div>
+                  <span className="text-sm font-bold text-primary">+{log.amount} XP</span>
                 </div>
               ))}
             </div>
@@ -112,7 +197,7 @@ const MyPage = () => {
         )}
 
         {/* Password Change */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.12s" }}>
+        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.2s" }}>
           <button onClick={() => setShowPwChange(!showPwChange)} className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50">
             <div className="flex items-center gap-3">
               <KeyRound className="h-4 w-4 text-muted-foreground" />
@@ -138,7 +223,7 @@ const MyPage = () => {
         </div>
 
         {/* Actions */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.15s" }}>
+        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.22s" }}>
           <button onClick={() => navigate("/guide")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
             <div className="flex items-center gap-3">
               <span className="text-muted-foreground">📖</span>
@@ -179,5 +264,18 @@ const InfoRow = ({ icon, label, value, last = false }: { icon: React.ReactNode; 
     <span className="text-sm font-medium text-foreground">{value}</span>
   </div>
 );
+
+const StatCard = ({ icon, label, value }: { icon: string; label: string; value: string }) => (
+  <div className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card p-3 shadow-sm text-center">
+    <span className="text-xl">{icon}</span>
+    <span className="text-xs text-muted-foreground">{label}</span>
+    <span className="text-base font-bold text-foreground">{value}</span>
+  </div>
+);
+
+function getXpToNext(level: number, rank: string): number {
+  const rankIdx = ["white", "blue", "red", "black"].indexOf(rank);
+  return ((rankIdx * 10 + level) + 1) * 50;
+}
 
 export default MyPage;

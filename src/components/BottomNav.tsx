@@ -5,8 +5,6 @@ const tabs = [
   { path: "/home", icon: Home, label: "홈" },
   { path: "/missions", icon: Target, label: "훈련" },
   { path: "/rank-up", icon: TrendingUp, label: "랭크업" },
-  { path: "/levelmap", icon: Map, label: "레벨맵" },
-  { path: "/rewards", icon: Gift, label: "보상" },
   { path: "/halloffame", icon: Trophy, label: "명예의전당" },
   { path: "/cert-benefits", icon: Award, label: "단증혜택" },
   { path: "/guide", icon: BookOpen, label: "가이드" },
