@@ -133,6 +133,11 @@ const RankUpPage = () => {
         </div>
       </div>
 
+      {/* White Lv.1 → Lv.2 Progression Card */}
+      {currentRank === "white" && currentLevel === 1 && !isManager && (
+        <WhiteLv1ProgressionCard />
+      )}
+
       {activeTab === "valuemap" ? (
         /* ════ Value Map Tab ════ */
         <div className="space-y-4">
