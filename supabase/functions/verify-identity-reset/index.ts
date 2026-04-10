@@ -78,9 +78,12 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       console.error("Password update error:", updateError);
+      const msg = updateError.message?.includes("weak") || updateError.message?.includes("Weak")
+        ? "비밀번호가 너무 쉽습니다. 더 복잡한 비밀번호를 사용해주세요."
+        : "비밀번호 변경에 실패했습니다. 다시 시도해주세요.";
       return new Response(
-        JSON.stringify({ error: "비밀번호 변경에 실패했습니다. 다시 시도해주세요." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: msg }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
