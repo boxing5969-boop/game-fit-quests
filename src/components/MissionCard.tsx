@@ -1,4 +1,5 @@
 import { Play, Lock, Clock, CheckCircle2, Star } from "lucide-react";
+import ExerciseWhyCard from "@/components/ExerciseWhyCard";
 
 interface MissionCardProps {
   title: string;
@@ -10,6 +11,8 @@ interface MissionCardProps {
   onSubmit?: () => void;
   isSubmitting?: boolean;
   adminMode?: boolean;
+  purposeSummary?: string;
+  purposeTags?: string[];
 }
 
 const statusConfig = {
@@ -29,6 +32,8 @@ const MissionCard = ({
   onSubmit,
   isSubmitting,
   adminMode,
+  purposeSummary,
+  purposeTags,
 }: MissionCardProps) => {
   const cfg = statusConfig[status];
   const Icon = cfg.icon;
@@ -85,7 +90,6 @@ const MissionCard = ({
         </div>
 
         <div className="mb-3 flex items-center gap-3">
-          {/* Difficulty */}
           <div className="flex items-center gap-0.5">
             {Array.from({ length: 5 }, (_, i) => (
               <div
@@ -119,6 +123,11 @@ const MissionCard = ({
             </button>
           )}
         </div>
+
+        {/* "왜 하나요?" component */}
+        {purposeSummary && purposeTags && purposeTags.length > 0 && (
+          <ExerciseWhyCard purposeSummary={purposeSummary} purposeTags={purposeTags} />
+        )}
       </div>
     </div>
   );

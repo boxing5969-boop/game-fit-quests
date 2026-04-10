@@ -4,9 +4,11 @@ import XPBar from "@/components/XPBar";
 import RankBadge from "@/components/RankBadge";
 import RankMiniCard from "@/components/RankMiniCard";
 import LevelUpModal from "@/components/LevelUpModal";
+import WeeklyDashboard from "@/components/WeeklyDashboard";
 import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
 import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestData";
 import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
+import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useNavigate } from "react-router-dom";
 import { User, ChevronRight, TrendingUp, Play } from "lucide-react";
 import HallOfFameShowcase from "@/components/HallOfFameShowcase";
@@ -28,7 +30,17 @@ const HomePage = () => {
   const { data: myBadges } = useMyBadges();
   const attendance = useRecordAttendance();
   const setRival = useSetRival();
+  const { onboardingDone, safetyDone } = useOnboardingState();
   const [levelUpModal, setLevelUpModal] = useState<{ show: boolean; level: number; rank: string; xp: number }>({ show: false, level: 0, rank: "", xp: 0 });
+
+  // Redirect to onboarding if not done
+  useEffect(() => {
+    if (!onboardingDone) {
+      navigate("/onboarding", { replace: true });
+    } else if (!safetyDone) {
+      navigate("/safety-check", { replace: true });
+    }
+  }, [onboardingDone, safetyDone, navigate]);
 
   useEffect(() => {
     if (progress) attendance.mutate();
@@ -44,7 +56,7 @@ const HomePage = () => {
   const xpRemaining = Math.max(0, xpToNext - progress.total_xp);
   const myPosition = ranking?.find(r => r.r_user_id === user?.id)?.rank_position;
 
-  // Today's mission - first uncompleted mission at current level
+  // Today's mission
   const currentGlobal = RANK_ORDER.indexOf(rank) * 10 + progress.current_level;
   const subMap = new Map((missionSubs || []).map(s => [s.mission_id, s.status]));
   const todayMission = (missions || []).find(m => {
@@ -54,10 +66,7 @@ const HomePage = () => {
     return mGlobal <= currentGlobal && subMap.get(m.id) !== "approved";
   });
 
-  // Recent badges
   const recentBadges = (myBadges || []).slice(0, 3);
-
-  // MASTER 40 check
   const isMaster40 = rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
 
   return (
@@ -74,16 +83,16 @@ const HomePage = () => {
       </div>
 
       <div className="space-y-5">
-        {/* ── MASTER 40 ── */}
+        {/* MASTER 40 */}
         {isMaster40 && (
           <div className="animate-bounce-in rounded-2xl border-2 border-accent bg-gradient-to-r from-accent/20 to-primary/20 p-5 text-center shadow-lg">
             <span className="text-4xl">🏆</span>
-            <h2 className="mt-2 text-xl text-foreground">MASTER 40 달성!</h2>
+            <h2 className="mt-2 text-xl text-foreground">마스터 리그 달성!</h2>
             <p className="text-sm text-muted-foreground">모든 리그를 정복했습니다</p>
           </div>
         )}
 
-        {/* ── 1. 내 리그/레벨 배지 + 순위 ── */}
+        {/* 1. League/Level badge + rank */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <RankBadge rank={rank} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
@@ -104,9 +113,12 @@ const HomePage = () => {
           </p>
         </div>
 
-        {/* ── 2. 오늘의 미션 ── */}
+        {/* 2. Weekly dashboard */}
+        <WeeklyDashboard />
+
+        {/* 3. Today's mission */}
         {todayMission && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.05s" }}>
+          <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
             <h2 className="mb-3 text-base font-bold text-foreground">🥊 오늘의 미션</h2>
             <button
               onClick={() => navigate("/missions")}
@@ -126,9 +138,9 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* ── 3. 추격 대상 ── */}
+        {/* 4. Rivals */}
         {rivalsAbove && rivalsAbove.length > 0 && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
+          <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
             <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-foreground">🎯 추격 대상</h2>
             <div className="space-y-2">
               {rivalsAbove.map(rival => (
@@ -151,19 +163,19 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* ── 4. Stats Row ── */}
-        <div className="grid grid-cols-3 gap-2.5 animate-slide-up" style={{ animationDelay: "0.15s" }}>
+        {/* 5. Stats Row */}
+        <div className="grid grid-cols-3 gap-2.5 animate-slide-up" style={{ animationDelay: "0.2s" }}>
           <StatBox icon={progress.streak_days >= 3 ? "🔥" : "💪"} label="연속 출석" value={`${progress.streak_days}일`} />
           <StatBox icon="⚡" label="누적 XP" value={progress.total_xp.toLocaleString()} />
           <StatBox icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
         </div>
 
-        {/* ── 5. 명예의 전당 ── */}
+        {/* 6. Hall of fame */}
         <HallOfFameShowcase />
 
-        {/* ── 6. 최근 배지 ── */}
+        {/* 7. Recent badges */}
         {recentBadges.length > 0 && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
+          <div className="animate-slide-up" style={{ animationDelay: "0.25s" }}>
             <h2 className="mb-3 text-base font-bold text-foreground">🏅 최근 획득 배지</h2>
             <div className="flex gap-2">
               {recentBadges.map((mb: any) => (
@@ -176,11 +188,11 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* ── 6. CTA ── */}
+        {/* 8. CTA */}
         <button
           onClick={() => navigate("/missions")}
           className="w-full animate-slide-up rounded-2xl bg-primary py-5 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
-          style={{ animationDelay: "0.25s" }}
+          style={{ animationDelay: "0.3s" }}
         >
           🥊 오늘 도전 시작
         </button>

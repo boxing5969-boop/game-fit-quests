@@ -19,6 +19,16 @@ import CertBenefitsPage from "@/pages/CertBenefitsPage";
 import BranchManagerHome from "@/pages/BranchManagerHome";
 import MemberDetailPage from "@/pages/MemberDetailPage";
 import MemberPreviewPage from "@/pages/MemberPreviewPage";
+import OnboardingPage from "@/pages/OnboardingPage";
+import SafetyCheckPage from "@/pages/SafetyCheckPage";
+import GuidePage from "@/pages/GuidePage";
+import GuideProgramPage from "@/pages/guide/GuideProgramPage";
+import GuideSciencePage from "@/pages/guide/GuideSciencePage";
+import GuideValueMapPage from "@/pages/guide/GuideValueMapPage";
+import GuideExercisePurposePage from "@/pages/guide/GuideExercisePurposePage";
+import GuideSafetyPage from "@/pages/guide/GuideSafetyPage";
+import GuideFaqPage from "@/pages/guide/GuideFaqPage";
+import RankUpPage from "@/pages/RankUpPage";
 import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
 import { isManagerRole } from "@/lib/rankLabels";
@@ -48,7 +58,6 @@ const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-/** Redirect after login based on role */
 const RoleBasedRedirect = () => {
   const { role, loading } = useAuth();
   if (loading) return null;
@@ -73,13 +82,23 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={user ? <RoleBasedRedirect /> : <LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+        <Route path="/safety-check" element={<ProtectedRoute><SafetyCheckPage /></ProtectedRoute>} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
         <Route path="/quests" element={<Navigate to="/missions" replace />} />
         <Route path="/levelmap" element={<ProtectedRoute><LevelMapPage /></ProtectedRoute>} />
+        <Route path="/rank-up" element={<ProtectedRoute><RankUpPage /></ProtectedRoute>} />
         <Route path="/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
         <Route path="/halloffame" element={<ProtectedRoute><HallOfFamePage /></ProtectedRoute>} />
         <Route path="/cert-benefits" element={<ProtectedRoute><CertBenefitsPage /></ProtectedRoute>} />
+        <Route path="/guide" element={<ProtectedRoute><GuidePage /></ProtectedRoute>} />
+        <Route path="/guide/program" element={<ProtectedRoute><GuideProgramPage /></ProtectedRoute>} />
+        <Route path="/guide/science" element={<ProtectedRoute><GuideSciencePage /></ProtectedRoute>} />
+        <Route path="/guide/value-map" element={<ProtectedRoute><GuideValueMapPage /></ProtectedRoute>} />
+        <Route path="/guide/exercise-purpose" element={<ProtectedRoute><GuideExercisePurposePage /></ProtectedRoute>} />
+        <Route path="/guide/safety" element={<ProtectedRoute><GuideSafetyPage /></ProtectedRoute>} />
+        <Route path="/guide/faq" element={<ProtectedRoute><GuideFaqPage /></ProtectedRoute>} />
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/coach" element={<ProtectedRoute><ManagerRoute><CoachDashboard /></ManagerRoute></ProtectedRoute>} />
