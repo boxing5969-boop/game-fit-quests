@@ -38,7 +38,7 @@ import { isManagerRole } from "@/lib/rankLabels";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -50,6 +50,23 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   if (!user) return <Navigate to="/" replace />;
+  
+  // Allow select-branch and waiting-approval pages without checks
+  const path = window.location.pathname;
+  if (path === "/select-branch" || path === "/waiting-approval") {
+    return <>{children}</>;
+  }
+  
+  // Social login users without branch → select branch
+  if (profile && !profile.branch_name) {
+    return <Navigate to="/select-branch" replace />;
+  }
+  
+  // Unapproved users → waiting page
+  if (profile && !profile.is_approved) {
+    return <Navigate to="/waiting-approval" replace />;
+  }
+  
   return <>{children}</>;
 };
 
