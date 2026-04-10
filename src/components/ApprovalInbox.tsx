@@ -20,6 +20,7 @@ interface PendingItem {
   xp_reward: number;
   branch_name?: string;
   phone_number?: string | null;
+  signup_provider?: string;
 }
 
 const ApprovalInbox = () => {
@@ -85,16 +86,19 @@ const ApprovalInbox = () => {
 
       if (userIds.size === 0) return [];
 
-      const [profileDetailsRes, progressRes] = await Promise.all([
+      const [profileDetailsRes, progressRes, providerRes] = await Promise.all([
         supabase.from("profiles").select("user_id, nickname, name, avatar_url, branch_name, phone_number").in("user_id", [...userIds]),
         supabase.from("member_progress").select("user_id, current_rank, current_level").in("user_id", [...userIds]),
+        supabase.rpc("get_signup_providers", { _user_ids: [...userIds] }),
       ]);
 
       if (profileDetailsRes.error) throw profileDetailsRes.error;
       if (progressRes.error) throw progressRes.error;
+      if (providerRes.error) throw providerRes.error;
 
       const profileMap = new Map((profileDetailsRes.data || []).map(p => [p.user_id, p]));
       const progressMap = new Map((progressRes.data || []).map(p => [p.user_id, p]));
+      const providerMap = new Map((providerRes.data || []).map((p) => [p.user_id, p.signup_provider]));
 
       const items: PendingItem[] = [];
 
@@ -115,6 +119,7 @@ const ApprovalInbox = () => {
           xp_reward: (s.missions as any)?.xp_reward || 0,
           branch_name: p.branch_name,
           phone_number: p.phone_number,
+          signup_provider: providerMap.get(s.user_id),
         });
       });
 
@@ -135,6 +140,7 @@ const ApprovalInbox = () => {
           xp_reward: (s.quests as any)?.xp_reward || 0,
           branch_name: p.branch_name,
           phone_number: p.phone_number,
+          signup_provider: providerMap.get(s.user_id),
         });
       });
 
@@ -153,6 +159,7 @@ const ApprovalInbox = () => {
           xp_reward: 0,
           branch_name: p.branch_name,
           phone_number: p.phone_number,
+          signup_provider: providerMap.get(p.user_id),
         });
       });
 
@@ -173,6 +180,7 @@ const ApprovalInbox = () => {
             xp_reward: 0,
             branch_name: p?.branch_name,
             phone_number: p?.phone_number,
+            signup_provider: providerMap.get(r.user_id),
           });
         });
       }
@@ -317,6 +325,9 @@ const ApprovalInbox = () => {
     qc.invalidateQueries({ queryKey: ["branch-members"] });
     qc.invalidateQueries({ queryKey: ["member-mission-subs"] });
     qc.invalidateQueries({ queryKey: ["coach-requests"] });
+    qc.refetchQueries({ queryKey: ["approval-inbox"] });
+    qc.refetchQueries({ queryKey: ["branch-stats"] });
+    qc.refetchQueries({ queryKey: ["branch-members"] });
   };
 
   const isToday = (dateStr: string) => new Date(dateStr).toDateString() === new Date().toDateString();
@@ -460,6 +471,11 @@ const ApprovalInbox = () => {
                   {item.title}
                   {item.branch_name ? ` · ${item.branch_name}` : ""}
                 </p>
+                {item.signup_provider && (item.type === "member" || item.type === "coach_request") && (
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    가입방식: {item.signup_provider === "google" ? "Google" : item.signup_provider === "apple" ? "Apple" : item.signup_provider === "microsoft" ? "Microsoft" : "일반회원가입"}
+                  </p>
+                )}
                 {item.phone_number && (
                   <p className="mt-0.5 text-[10px] text-muted-foreground">{item.phone_number}</p>
                 )}
