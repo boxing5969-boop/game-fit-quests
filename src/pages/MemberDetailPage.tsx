@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye } from "lucide-react";
+import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2 } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
@@ -204,6 +204,31 @@ const MemberDetailPage = () => {
     },
   });
 
+  const deleteUserMut = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ targetUserId: memberId }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "삭제 실패");
+      return result;
+    },
+    onSuccess: () => {
+      toast.success("계정이 삭제되었습니다");
+      qc.invalidateQueries({ queryKey: ["branch-members"] });
+      qc.invalidateQueries({ queryKey: ["approval-inbox"] });
+      navigate(-1);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   if (isLoading || !member?.profile || !member?.progress) {
     return (
       <div className="mx-auto max-w-lg px-4 pt-4">
@@ -319,6 +344,25 @@ const MemberDetailPage = () => {
               )}
             </div>
           </div>
+
+          {/* Delete Account (super_admin only) */}
+          {role === "super_admin" && (
+            <div className="pt-4 border-t border-border">
+              <button
+                onClick={() => {
+                  if (confirm(`"${p.nickname || p.name}" 계정을 완전히 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+                    deleteUserMut.mutate();
+                  }
+                }}
+                disabled={deleteUserMut.isPending}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-destructive py-3 text-sm font-bold text-destructive-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                {deleteUserMut.isPending ? "삭제 중..." : "계정 삭제"}
+              </button>
+              <p className="mt-1 text-center text-[10px] text-muted-foreground">모든 데이터가 영구 삭제됩니다</p>
+            </div>
+          )}
         </div>
       )}
 
