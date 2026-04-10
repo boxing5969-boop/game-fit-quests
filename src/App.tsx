@@ -66,21 +66,10 @@ const RoleBasedRedirect = () => {
   return <Navigate to="/home" replace />;
 };
 
-const RecoveryRedirect = () => {
-  const isRecovery = window.location.hash.includes("type=recovery");
-
-  if (isRecovery) {
-    return <Navigate to={{ pathname: "/reset-password", hash: window.location.hash }} replace />;
-  }
-
-  return null;
-};
-
 const AppRoutes = () => {
   const { user, loading } = useAuth();
-  const isRecovery = window.location.hash.includes("type=recovery");
 
-  if (loading && !isRecovery) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-primary/20 text-3xl">🥊</div>
@@ -91,8 +80,7 @@ const AppRoutes = () => {
   return (
     <>
       <Routes>
-        <Route path="/" element={isRecovery ? <RecoveryRedirect /> : user ? <RoleBasedRedirect /> : <LoginPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/" element={user ? <RoleBasedRedirect /> : <LoginPage />} />
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
         <Route path="/safety-check" element={<ProtectedRoute><SafetyCheckPage /></ProtectedRoute>} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
