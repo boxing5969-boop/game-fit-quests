@@ -30,9 +30,27 @@ const BranchManagerHome = () => {
 
   // Branch stats
   const { data: stats } = useQuery({
-    queryKey: ["branch-stats", branchName],
+    queryKey: ["branch-stats", branchName, isSuperAdmin],
     enabled: !!branchName && isManagerRole(role),
     queryFn: async () => {
+      if (isSuperAdmin) {
+        // Super admin: aggregate stats from all branches
+        const [profilesRes, pendingMissionsRes, pendingQuestsRes, xpRes, submissionsRes] = await Promise.all([
+          supabase.from("profiles").select("user_id, is_approved", { count: "exact" }),
+          supabase.from("mission_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
+          supabase.from("quest_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
+          supabase.from("xp_logs").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString()),
+          supabase.from("mission_submissions").select("id", { count: "exact", head: true }).gte("requested_at", new Date().toISOString().split("T")[0]),
+        ]);
+        const profiles = profilesRes.data || [];
+        const unapproved = profiles.filter(p => !p.is_approved).length;
+        return {
+          total_members: profiles.length,
+          pending_count: unapproved,
+          weekly_levelups: xpRes.count || 0,
+          today_submissions: submissionsRes.count || 0,
+        };
+      }
       const { data, error } = await supabase.rpc("get_branch_stats", { _branch_name: branchName });
       if (error) throw error;
       return data as { total_members: number; pending_count: number; weekly_levelups: number; today_submissions: number };
