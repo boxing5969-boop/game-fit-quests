@@ -29,20 +29,34 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const fakeEmail = `${username.toLowerCase().trim()}@153rankup.app`;
+    const trimmed = username.toLowerCase().trim();
 
-    // Find user by fake email
+    // Build possible auth emails to search for
+    const possibleEmails: string[] = [];
+
+    if (trimmed.includes("@")) {
+      // User entered a full email — try it directly AND as fake email
+      possibleEmails.push(trimmed);
+      const localPart = trimmed.split("@")[0];
+      possibleEmails.push(`${localPart}@153rankup.app`);
+    } else {
+      // User entered just a username
+      possibleEmails.push(`${trimmed}@153rankup.app`);
+    }
+
+    // Find user by any of the possible emails
     const { data: userData, error: userError } =
       await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
 
     if (userError) throw userError;
 
-    const user = userData.users.find(
-      (u) => u.email?.toLowerCase() === fakeEmail.toLowerCase()
+    const user = userData.users.find((u) =>
+      possibleEmails.includes(u.email?.toLowerCase() ?? "")
     );
 
     if (!user) {
-      // Don't reveal whether user exists - return success anyway
+      console.log("User not found for emails:", possibleEmails);
+      // Don't reveal whether user exists
       return new Response(
         JSON.stringify({ success: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -56,23 +70,32 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .single();
 
-    if (!profile?.email) {
-      // No real email registered - return generic success (don't reveal info)
+    const realEmail = profile?.email;
+
+    if (!realEmail) {
+      console.log("No real email for user:", user.id);
       return new Response(
         JSON.stringify({ success: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const realEmail = profile.email;
+    console.log("Sending recovery to:", realEmail, "for user:", user.id);
 
-    // Temporarily update auth email to real email
-    await supabaseAdmin.auth.admin.updateUserById(user.id, {
+    // Save original auth email
+    const originalEmail = user.email!;
+
+    // Temporarily update auth email to the real email
+    const { error: updateErr1 } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
       email: realEmail,
       email_confirm: true,
     });
+    if (updateErr1) {
+      console.error("Failed to update email:", updateErr1);
+      throw updateErr1;
+    }
 
-    // Trigger password recovery email via GoTrue API
+    // Trigger password recovery via GoTrue API — this sends the actual email
     const recoverRes = await fetch(`${supabaseUrl}/auth/v1/recover`, {
       method: "POST",
       headers: {
@@ -81,21 +104,25 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         email: realEmail,
-        gotrue_meta_security: {},
         ...(redirectTo ? { redirect_to: redirectTo } : {}),
       }),
     });
 
     if (!recoverRes.ok) {
       const errBody = await recoverRes.text();
-      console.error("Recovery API error:", errBody);
+      console.error("Recovery API error:", recoverRes.status, errBody);
+    } else {
+      console.log("Recovery email triggered successfully");
     }
 
-    // Switch email back to fake email
-    await supabaseAdmin.auth.admin.updateUserById(user.id, {
-      email: fakeEmail,
+    // Switch email back to original
+    const { error: updateErr2 } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+      email: originalEmail,
       email_confirm: true,
     });
+    if (updateErr2) {
+      console.error("Failed to restore email:", updateErr2);
+    }
 
     return new Response(
       JSON.stringify({ success: true }),
