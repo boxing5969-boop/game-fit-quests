@@ -14,7 +14,7 @@ import HallOfFamePage from "@/pages/HallOfFamePage";
 import MyPage from "@/pages/MyPage";
 import CoachDashboard from "@/pages/CoachDashboard";
 import SettingsPage from "@/pages/SettingsPage";
-import ResetPasswordPage from "@/pages/ResetPasswordPage";
+
 import CertBenefitsPage from "@/pages/CertBenefitsPage";
 import BranchManagerHome from "@/pages/BranchManagerHome";
 import MemberDetailPage from "@/pages/MemberDetailPage";
