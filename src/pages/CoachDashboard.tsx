@@ -274,6 +274,9 @@ const CoachDashboard = () => {
         </div>
       )}
 
+      {/* Level Review Tab */}
+      {activeTab === "level-review" && <CoachLevelReviewInbox />}
+
       {/* Members Tab */}
       {activeTab === "members" && (
         <div className="space-y-3">
