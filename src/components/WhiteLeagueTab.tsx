@@ -1,31 +1,31 @@
 import { useState } from "react";
 import { whiteLevels, WhiteLevelDetail } from "@/data/whiteLevelData";
 import {
-  WHITE_LV1_META,
-  WHITE_LV1_SESSION,
-  WHITE_LV1_CHECKLIST,
-  WHITE_LV1_PURPOSE,
-  WHITE_LV1_VALUE,
-  XP_RULES,
-  PROMOTION_METRICS,
-  RECOMMENDED_PATHS,
-  BEGINNER_ALTERNATIVES,
-  COACH_POINTS,
-  SUPPLEMENT_RULES,
-  PROMOTION_RULES,
-  type SessionBlock,
-  type ChecklistItem,
+  WHITE_LV1_META, WHITE_LV1_SESSION, WHITE_LV1_CHECKLIST,
+  WHITE_LV1_PURPOSE, WHITE_LV1_VALUE, XP_RULES,
+  PROMOTION_METRICS, RECOMMENDED_PATHS, BEGINNER_ALTERNATIVES,
+  COACH_POINTS, WHITE_LV1_LEARNING, WHITE_LV1_HOME_MISSIONS,
+  type SessionBlock, type ChecklistItem,
 } from "@/data/whiteLevel1Data";
+import {
+  WHITE_LV2_META, WHITE_LV2_SESSION, WHITE_LV2_CHECKLIST,
+  WHITE_LV2_PURPOSE, WHITE_LV2_VALUE, WHITE_LV2_XP_RULES,
+  WHITE_LV2_PROMOTION_METRICS, WHITE_LV2_RECOMMENDED_PATHS,
+  WHITE_LV2_BEGINNER_ALTS, WHITE_LV2_COACH_POINTS,
+  WHITE_LV2_LEARNING, WHITE_LV2_HOME_MISSIONS,
+} from "@/data/whiteLevel2Data";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
+import SessionRunner from "@/components/SessionRunner";
 import {
   CheckCircle2, Lock, ChevronRight, ChevronDown, Clock, Zap, Target,
-  ArrowLeft, Star, Shield, Info, Dumbbell, Eye, Award,
+  ArrowLeft, Star, Shield, Info, Dumbbell, Eye, Award, Play,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import whiteLv1Hero from "@/assets/white-lv1-hero.jpg";
 
 type LevelState = "complete" | "active" | "locked";
+type DetailView = null | "lv1" | "lv2" | WhiteLevelDetail;
 
 const INTENSITY_STYLE: Record<string, string> = {
   "가볍게": "bg-status-complete/10 text-status-complete",
@@ -35,8 +35,7 @@ const INTENSITY_STYLE: Record<string, string> = {
 
 const WhiteLeagueTab = () => {
   const { progress } = useAuth();
-  const [selectedLevel, setSelectedLevel] = useState<WhiteLevelDetail | null>(null);
-  const [showLv1Detail, setShowLv1Detail] = useState(false);
+  const [detailView, setDetailView] = useState<DetailView>(null);
 
   const currentRank = progress?.current_rank || "white";
   const currentLevel = progress?.current_level || 1;
@@ -51,14 +50,10 @@ const WhiteLeagueTab = () => {
   const completedCount = whiteLevels.filter(l => getLevelState(l.level) === "complete").length;
   const progressPct = Math.round((completedCount / whiteLevels.length) * 100);
 
-  // Show White Lv.1 full detail
-  if (showLv1Detail) {
-    return <WhiteLv1DetailView onBack={() => setShowLv1Detail(false)} />;
-  }
-
-  // Show other level detail
-  if (selectedLevel) {
-    return <LevelDetailView level={selectedLevel} state={getLevelState(selectedLevel.level)} onBack={() => setSelectedLevel(null)} />;
+  if (detailView === "lv1") return <WhiteLevelDetailView levelNum={1} onBack={() => setDetailView(null)} />;
+  if (detailView === "lv2") return <WhiteLevelDetailView levelNum={2} onBack={() => setDetailView(null)} />;
+  if (detailView && typeof detailView === "object" && "level" in detailView) {
+    return <LevelDetailView level={detailView} state={getLevelState(detailView.level)} onBack={() => setDetailView(null)} />;
   }
 
   return (
@@ -76,14 +71,11 @@ const WhiteLeagueTab = () => {
           {whiteLevels.map(l => {
             const state = getLevelState(l.level);
             return (
-              <div
-                key={l.level}
-                className={`h-2 w-2 rounded-full transition-all ${
-                  state === "complete" ? "bg-primary" :
-                  state === "active" ? "bg-primary animate-pulse ring-2 ring-primary/30" :
-                  "bg-muted-foreground/20"
-                }`}
-              />
+              <div key={l.level} className={`h-2 w-2 rounded-full transition-all ${
+                state === "complete" ? "bg-primary" :
+                state === "active" ? "bg-primary animate-pulse ring-2 ring-primary/30" :
+                "bg-muted-foreground/20"
+              }`} />
             );
           })}
         </div>
@@ -95,22 +87,23 @@ const WhiteLeagueTab = () => {
           const state = getLevelState(level.level);
           const isLocked = state === "locked";
           const isLv1 = level.level === 1;
+          const isLv2 = level.level === 2;
+          const meta = isLv1 ? WHITE_LV1_META : isLv2 ? WHITE_LV2_META : null;
 
           return (
             <button
               key={level.level}
               onClick={() => {
                 if (isLocked) return;
-                if (isLv1) setShowLv1Detail(true);
-                else setSelectedLevel(level);
+                if (isLv1) setDetailView("lv1");
+                else if (isLv2) setDetailView("lv2");
+                else setDetailView(level);
               }}
               disabled={isLocked}
               className={`group w-full animate-slide-up rounded-2xl border p-4 text-left transition-all active:scale-[0.98] ${
-                state === "complete"
-                  ? "border-primary/20 bg-card shadow-sm"
-                  : state === "active"
-                  ? "border-primary/40 bg-card shadow-md ring-1 ring-primary/20"
-                  : "border-border bg-muted/50 opacity-60"
+                state === "complete" ? "border-primary/20 bg-card shadow-sm"
+                : state === "active" ? "border-primary/40 bg-card shadow-md ring-1 ring-primary/20"
+                : "border-border bg-muted/50 opacity-60"
               }`}
               style={{ animationDelay: `${idx * 0.04}s` }}
             >
@@ -126,23 +119,23 @@ const WhiteLeagueTab = () => {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-muted-foreground">{level.levelLabel}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground">{meta ? meta.levelLabel : level.levelLabel}</span>
                     {level.level === 10 && (
                       <span className="rounded-full bg-accent px-1.5 py-0.5 text-[9px] font-bold text-accent-foreground">리그 승격</span>
                     )}
                   </div>
                   <h3 className={`text-sm font-bold leading-tight ${isLocked ? "text-muted-foreground" : "text-foreground"}`}>
-                    {isLv1 ? WHITE_LV1_META.title : level.title}
+                    {meta ? meta.title : level.title}
                   </h3>
                   <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-                    {isLv1 ? WHITE_LV1_META.shortGoal : level.shortGoal}
+                    {meta ? meta.shortGoal : level.shortGoal}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
-                  <span className="text-xs font-bold text-primary">+{isLv1 ? WHITE_LV1_META.baseXp : level.xpReward} XP</span>
+                  <span className="text-xs font-bold text-primary">+{meta ? meta.baseXp : level.xpReward} XP</span>
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    <span className="text-[10px]">{isLv1 ? WHITE_LV1_META.duration : level.duration}</span>
+                    <span className="text-[10px]">{meta ? meta.duration : level.duration}</span>
                   </div>
                 </div>
                 {!isLocked && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
@@ -156,23 +149,50 @@ const WhiteLeagueTab = () => {
 };
 
 /* ═══════════════════════════════════════════════════════
-   White Lv.1 Full Detail View
+   White Lv.1 & Lv.2 Detail View (Unified)
    ═══════════════════════════════════════════════════════ */
-const WhiteLv1DetailView = ({ onBack }: { onBack: () => void }) => {
-  const { metrics, status, totalXp, canAttemptChecklist, submitChecklist } = useLocalProgress();
+const WhiteLevelDetailView = ({ levelNum, onBack }: { levelNum: 1 | 2; onBack: () => void }) => {
+  const isLv1 = levelNum === 1;
+  const meta = isLv1 ? WHITE_LV1_META : WHITE_LV2_META;
+  const session = isLv1 ? WHITE_LV1_SESSION : WHITE_LV2_SESSION;
+  const checklist = isLv1 ? WHITE_LV1_CHECKLIST : WHITE_LV2_CHECKLIST;
+  const purpose = isLv1 ? WHITE_LV1_PURPOSE : WHITE_LV2_PURPOSE;
+  const value = isLv1 ? WHITE_LV1_VALUE : WHITE_LV2_VALUE;
+  const xpRules = isLv1 ? XP_RULES : WHITE_LV2_XP_RULES;
+  const promoMetrics = isLv1 ? PROMOTION_METRICS : WHITE_LV2_PROMOTION_METRICS;
+  const recPaths = isLv1 ? RECOMMENDED_PATHS : WHITE_LV2_RECOMMENDED_PATHS;
+  const beginnerAlts = isLv1 ? BEGINNER_ALTERNATIVES : WHITE_LV2_BEGINNER_ALTS;
+  const coachPoints = isLv1 ? COACH_POINTS : WHITE_LV2_COACH_POINTS;
+  const learning = isLv1 ? WHITE_LV1_LEARNING : WHITE_LV2_LEARNING;
+
+  const { metrics, status, canAttemptChecklist, submitChecklist } = useLocalProgress();
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
   const [showChecklist, setShowChecklist] = useState(false);
-  const [checkResults, setCheckResults] = useState<boolean[]>([false, false, false, false, false, false]);
+  const [showSession, setShowSession] = useState(false);
+  const [checkResults, setCheckResults] = useState<boolean[]>(checklist.map(() => false));
+  const [activeSection, setActiveSection] = useState<"learn" | "session" | "check">("learn");
 
   const handleChecklistSubmit = () => {
     const passed = submitChecklist(checkResults);
     if (passed) {
-      toast.success("🎉 체크테스트 통과! 화이트 Lv.2 승급 가능!");
+      toast.success(`🎉 체크테스트 통과! 화이트 Lv.${levelNum + 1} 준비 완료!`);
     } else {
-      toast("보완 포인트를 확인하고 6회차에서 다시 도전하세요");
+      toast("보완 포인트를 확인하고 다시 도전하세요");
     }
     setShowChecklist(false);
   };
+
+  // Session runner view
+  if (showSession) {
+    return (
+      <div className="animate-slide-up space-y-4">
+        <button onClick={() => setShowSession(false)} className="flex items-center gap-1.5 text-sm font-bold text-primary active:scale-95">
+          <ArrowLeft className="h-4 w-4" /> 돌아가기
+        </button>
+        <SessionRunner blocks={session} levelLabel={meta.levelLabel} onComplete={() => setShowSession(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="animate-slide-up space-y-4">
@@ -183,14 +203,20 @@ const WhiteLv1DetailView = ({ onBack }: { onBack: () => void }) => {
 
       {/* 1. Hero Card */}
       <div className="relative overflow-hidden rounded-2xl shadow-md">
-        <img src={whiteLv1Hero} alt="White Lv.1" className="h-44 w-full object-cover" width={800} height={512} />
+        {isLv1 ? (
+          <img src={whiteLv1Hero} alt={meta.levelLabel} className="h-44 w-full object-cover" width={800} height={512} />
+        ) : (
+          <div className="flex h-44 items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
+            <span className="text-6xl">🥊</span>
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <span className="mb-1 inline-block rounded-full bg-card/90 px-2.5 py-0.5 text-[10px] font-bold text-primary backdrop-blur-sm">
-            {WHITE_LV1_META.levelLabel}
+            {meta.levelLabel}
           </span>
-          <h2 className="text-xl font-bold text-white">{WHITE_LV1_META.title}</h2>
-          <p className="text-xs text-white/80">{WHITE_LV1_META.shortGoal}</p>
+          <h2 className="text-xl font-bold text-white">{meta.title}</h2>
+          <p className="text-xs text-white/80">{meta.shortGoal}</p>
         </div>
       </div>
 
@@ -200,204 +226,335 @@ const WhiteLv1DetailView = ({ onBack }: { onBack: () => void }) => {
           <Clock className="h-4 w-4 text-primary" />
           <div>
             <p className="text-[10px] text-muted-foreground">소요 시간</p>
-            <p className="text-sm font-bold text-foreground">{WHITE_LV1_META.duration}</p>
+            <p className="text-sm font-bold text-foreground">{meta.duration}</p>
           </div>
         </div>
         <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-card p-3">
           <Zap className="h-4 w-4 text-primary" />
           <div>
             <p className="text-[10px] text-muted-foreground">보상</p>
-            <p className="text-sm font-bold text-primary">+{WHITE_LV1_META.baseXp} XP</p>
+            <p className="text-sm font-bold text-primary">+{meta.baseXp} XP</p>
           </div>
         </div>
       </div>
 
-      {/* 2. 오늘의 목적 */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2">
-          <Target className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-foreground">오늘의 목적</span>
-        </div>
-        <div className="space-y-2">
-          {WHITE_LV1_PURPOSE.map((p, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">{i + 1}</div>
-              <p className="text-sm text-foreground">{p}</p>
-            </div>
-          ))}
-        </div>
+      {/* Section tabs */}
+      <div className="flex gap-1 rounded-2xl bg-secondary p-1">
+        {([
+          { key: "learn" as const, label: "📖 배우기", icon: null },
+          { key: "session" as const, label: "🥊 수업 실행", icon: null },
+          { key: "check" as const, label: "✅ 심사", icon: null },
+        ]).map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveSection(tab.key)}
+            className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all ${
+              activeSection === tab.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* 3. 50분 수업 구성 */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2">
-          <Clock className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-foreground">50분 수업 구성</span>
-        </div>
-        <div className="space-y-2">
-          {WHITE_LV1_SESSION.map(block => {
-            const isExpanded = expandedBlock === block.id;
-            return (
-              <div key={block.id} className="overflow-hidden rounded-xl border border-border">
-                <button
-                  onClick={() => setExpandedBlock(isExpanded ? null : block.id)}
-                  className="flex w-full items-center gap-3 p-3 text-left transition-all active:bg-muted/50"
-                >
-                  <span className="text-lg">{block.emoji}</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-muted-foreground">{block.timeRange}</span>
-                      <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${INTENSITY_STYLE[block.intensity]}`}>
-                        {block.intensity}
-                      </span>
-                    </div>
-                    <p className="text-xs font-bold text-foreground">{block.title}</p>
+      {/* ═══ 배우기 Section ═══ */}
+      {activeSection === "learn" && (
+        <>
+          {/* Learning modules */}
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">학습 모듈</span>
+            </div>
+            <div className="space-y-3">
+              {learning.map(mod => (
+                <div key={mod.id} className="rounded-xl border border-border p-3">
+                  <p className="mb-1 text-xs font-bold text-foreground">{mod.title}</p>
+                  <div className="space-y-0.5">
+                    {mod.keyPoints.map((kp, i) => (
+                      <p key={i} className="text-[10px] text-muted-foreground">· {kp}</p>
+                    ))}
                   </div>
-                  <span className="text-[10px] text-muted-foreground">{block.durationMin}분</span>
-                  <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                </button>
-                {isExpanded && (
-                  <div className="border-t border-border bg-muted/20 px-3 pb-3 pt-2">
-                    <p className="mb-2 text-xs text-muted-foreground">{block.description}</p>
-                    <div className="space-y-1">
-                      {block.drills.map((drill, di) => (
-                        <div key={di} className="flex items-start gap-2">
-                          <div className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/40" />
-                          <p className="text-xs text-foreground">
-                            {drill.name}{drill.detail ? <span className="text-muted-foreground"> · {drill.detail}</span> : ""}
-                          </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Purpose */}
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">오늘의 목적</span>
+            </div>
+            <div className="space-y-2">
+              {purpose.map((p, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">{i + 1}</div>
+                  <p className="text-sm text-foreground">{p}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Value */}
+          <div className="rounded-2xl border-2 border-primary/20 bg-primary/5 p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-base">💎</span>
+              <span className="text-sm font-bold text-primary">오늘 얻는 가치</span>
+            </div>
+            <div className="space-y-1">
+              {value.map((v, i) => <p key={i} className="text-sm text-foreground">· {v}</p>)}
+            </div>
+          </div>
+
+          {/* Beginner alts */}
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <Info className="h-4 w-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">초보자 대체 동작</span>
+            </div>
+            <div className="space-y-2">
+              {beginnerAlts.map((alt, i) => (
+                <div key={i} className="flex items-start gap-2 rounded-lg bg-muted/30 p-2.5">
+                  <span className="text-xs font-bold text-primary">{alt.original}</span>
+                  <span className="text-xs text-muted-foreground">→</span>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">{alt.alt}</p>
+                    <p className="text-[10px] text-muted-foreground">{alt.note}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Coach Points */}
+          <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Eye className="h-4 w-4 text-accent-foreground" />
+              <span className="text-sm font-bold text-accent-foreground">코치 포인트</span>
+            </div>
+            <div className="space-y-1.5">
+              {coachPoints.map((point, i) => <p key={i} className="text-xs text-foreground">👁️ {point}</p>)}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ═══ 수업 실행 Section ═══ */}
+      {activeSection === "session" && (
+        <>
+          {/* Session block overview */}
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="text-sm font-bold text-foreground">50분 수업 구성</span>
+              </div>
+              <button
+                onClick={() => setShowSession(true)}
+                className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition-all active:scale-95"
+              >
+                <Play className="h-3 w-3" /> 수업 시작
+              </button>
+            </div>
+            <div className="space-y-2">
+              {session.map(block => {
+                const isExpanded = expandedBlock === block.id;
+                return (
+                  <div key={block.id} className="overflow-hidden rounded-xl border border-border">
+                    <button
+                      onClick={() => setExpandedBlock(isExpanded ? null : block.id)}
+                      className="flex w-full items-center gap-3 p-3 text-left transition-all active:bg-muted/50"
+                    >
+                      <span className="text-lg">{block.emoji}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono text-muted-foreground">{block.timeRange}</span>
+                          <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${INTENSITY_STYLE[block.intensity]}`}>
+                            {block.intensity}
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                    {block.beginnerAlt && (
-                      <div className="mt-2 rounded-lg bg-primary/5 px-2.5 py-1.5">
-                        <p className="text-[10px] text-primary">💡 초보자: {block.beginnerAlt}</p>
+                        <p className="text-xs font-bold text-foreground">{block.title}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">{block.durationMin}분</span>
+                      <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                    </button>
+                    {isExpanded && (
+                      <div className="border-t border-border bg-muted/20 px-3 pb-3 pt-2">
+                        <p className="mb-2 text-xs text-muted-foreground">{block.description}</p>
+                        <div className="space-y-1">
+                          {block.drills.map((drill, di) => (
+                            <div key={di} className="flex items-start gap-2">
+                              <div className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/40" />
+                              <p className="text-xs text-foreground">
+                                {drill.name}{drill.detail ? <span className="text-muted-foreground"> · {drill.detail}</span> : ""}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                        {block.beginnerAlt && (
+                          <div className="mt-2 rounded-lg bg-primary/5 px-2.5 py-1.5">
+                            <p className="text-[10px] text-primary">💡 초보자: {block.beginnerAlt}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 4. XP 규칙 */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2">
-          <Zap className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-foreground">XP 규칙</span>
-        </div>
-        <div className="space-y-1.5">
-          {XP_RULES.map(rule => (
-            <div key={rule.label} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
-              <div>
-                <p className="text-xs font-bold text-foreground">{rule.label}</p>
-                {rule.note && <p className="text-[10px] text-muted-foreground">{rule.note}</p>}
-              </div>
-              <span className={`text-sm font-bold ${rule.xp > 0 ? "text-primary" : "text-muted-foreground"}`}>
-                {rule.xp > 0 ? `+${rule.xp}` : "0"} XP
-              </span>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* 5. 승급 조건 */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2">
-          <Award className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-foreground">승급 조건 (Lv.1 → Lv.2)</span>
-        </div>
-        <div className="space-y-2">
-          {PROMOTION_METRICS.map(m => {
-            const met = metrics[m.id as keyof typeof metrics];
-            const done = met && met.current >= met.target;
-            return (
-              <div key={m.id} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{m.emoji}</span>
-                  <span className="text-xs text-foreground">{m.label}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold ${done ? "text-status-complete" : "text-muted-foreground"}`}>
-                    {met?.current ?? 0}/{m.target}{m.unit}
+          {/* XP 규칙 */}
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">XP 규칙</span>
+            </div>
+            <div className="space-y-1.5">
+              {xpRules.map(rule => (
+                <div key={rule.label} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+                  <div>
+                    <p className="text-xs font-bold text-foreground">{rule.label}</p>
+                    {rule.note && <p className="text-[10px] text-muted-foreground">{rule.note}</p>}
+                  </div>
+                  <span className={`text-sm font-bold ${rule.xp > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                    {rule.xp > 0 ? `+${rule.xp}` : "0"} XP
                   </span>
-                  {done && <CheckCircle2 className="h-3.5 w-3.5 text-status-complete" />}
                 </div>
-              </div>
-            );
-          })}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">✅</span>
-              <span className="text-xs text-foreground">체크테스트 통과</span>
+              ))}
             </div>
-            <span className="text-xs font-bold text-muted-foreground">6개 중 5개 이상</span>
           </div>
-        </div>
 
-        {/* Recommended paths */}
-        <div className="mt-3 flex gap-2">
-          {RECOMMENDED_PATHS.map(path => (
-            <div key={path.label} className="flex-1 rounded-xl bg-muted/30 p-2.5 text-center">
-              <p className="text-[10px] font-bold text-muted-foreground">{path.label}</p>
-              <p className="text-xs font-bold text-foreground">{path.frequency}</p>
-              <p className="text-[10px] text-muted-foreground">{path.duration} · {path.sessions}</p>
+          {/* Home missions */}
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="text-sm">🏠</span>
+              <span className="text-sm font-bold text-foreground">홈미션 옵션</span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 6. 최종 체크테스트 */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-primary" />
-            <span className="text-sm font-bold text-foreground">최종 체크테스트</span>
+            <div className="space-y-2">
+              {(isLv1 ? WHITE_LV1_HOME_MISSIONS : WHITE_LV2_HOME_MISSIONS).map(hm => (
+                <div key={hm.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                  <span className="text-xl">{hm.emoji}</span>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">{hm.title}</p>
+                    <p className="text-[10px] text-muted-foreground">{hm.description}</p>
+                  </div>
+                  <span className="ml-auto text-xs font-bold text-primary">+20 XP</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <span className="text-[10px] text-muted-foreground">6개 중 5개 이상 통과</span>
-        </div>
-        <div className="space-y-2">
-          {WHITE_LV1_CHECKLIST.map((item, idx) => (
-            <div key={item.id} className="rounded-xl border border-border p-3">
+        </>
+      )}
+
+      {/* ═══ 심사 Section ═══ */}
+      {activeSection === "check" && (
+        <>
+          {/* 레벨업 조건 */}
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <Award className="h-4 w-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">레벨업 조건 (Lv.{levelNum} → Lv.{levelNum + 1})</span>
+            </div>
+            <div className="space-y-2">
+              {promoMetrics.map(m => {
+                const met = metrics[m.id as keyof typeof metrics];
+                const done = met && met.current >= met.target;
+                return (
+                  <div key={m.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{m.emoji}</span>
+                      <span className="text-xs text-foreground">{m.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold ${done ? "text-status-complete" : "text-muted-foreground"}`}>
+                        {met?.current ?? 0}/{m.target}{m.unit}
+                      </span>
+                      {done && <CheckCircle2 className="h-3.5 w-3.5 text-status-complete" />}
+                    </div>
+                  </div>
+                );
+              })}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-muted-foreground">{item.id}.</span>
-                  <span className="text-xs font-bold text-foreground">{item.title}</span>
+                  <span className="text-sm">✅</span>
+                  <span className="text-xs text-foreground">체크테스트 통과</span>
                 </div>
-                {item.mandatory && (
-                  <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[9px] font-bold text-destructive">필수</span>
-                )}
+                <span className="text-xs font-bold text-muted-foreground">6개 중 5개 이상</span>
               </div>
-              {item.details.length > 0 && (
-                <div className="mt-1 ml-5 space-y-0.5">
-                  {item.details.map((d, di) => (
-                    <p key={di} className="text-[10px] text-muted-foreground">· {d}</p>
-                  ))}
-                </div>
-              )}
             </div>
-          ))}
-        </div>
+            <div className="mt-3 flex gap-2">
+              {recPaths.map(path => (
+                <div key={path.label} className="flex-1 rounded-xl bg-muted/30 p-2.5 text-center">
+                  <p className="text-[10px] font-bold text-muted-foreground">{path.label}</p>
+                  <p className="text-xs font-bold text-foreground">{path.frequency}</p>
+                  <p className="text-[10px] text-muted-foreground">{path.duration} · {path.sessions}</p>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        {canAttemptChecklist && (
-          <button
-            onClick={() => setShowChecklist(true)}
-            className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]"
-          >
-            ✅ 체크테스트 시작
-          </button>
-        )}
-      </div>
+          {/* Checklist */}
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="text-sm font-bold text-foreground">최종 체크테스트</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">6개 중 5개 이상 통과</span>
+            </div>
+            <div className="space-y-2">
+              {checklist.map(item => (
+                <div key={item.id} className="rounded-xl border border-border p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-muted-foreground">{item.id}.</span>
+                      <span className="text-xs font-bold text-foreground">{item.title}</span>
+                    </div>
+                    {item.mandatory && (
+                      <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[9px] font-bold text-destructive">필수</span>
+                    )}
+                  </div>
+                  {item.details.length > 0 && (
+                    <div className="mt-1 ml-5 space-y-0.5">
+                      {item.details.map((d, di) => <p key={di} className="text-[10px] text-muted-foreground">· {d}</p>)}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {canAttemptChecklist && (
+              <button
+                onClick={() => setShowChecklist(true)}
+                className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]"
+              >
+                ✅ 체크테스트 시작
+              </button>
+            )}
+          </div>
+
+          {/* Status */}
+          <div className={`rounded-xl p-3 text-center text-sm font-bold ${
+            status === "레벨업 완료" ? "bg-status-complete/10 text-status-complete"
+            : status === "레벨업 심사 가능" ? "bg-primary text-primary-foreground"
+            : status === "보완 필요" ? "bg-status-pending/10 text-status-pending"
+            : status === "코치 확인 필요" ? "bg-destructive/10 text-destructive"
+            : "bg-muted text-muted-foreground"
+          }`}>
+            {status === "진행중" ? "🥊 현재 진행 중" : status}
+          </div>
+        </>
+      )}
 
       {/* Checklist Modal */}
       {showChecklist && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setShowChecklist(false)}>
           <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h3 className="mb-4 text-lg font-bold text-foreground">✅ 체크테스트</h3>
+            <h3 className="mb-4 text-lg font-bold text-foreground">✅ 체크테스트 — {meta.levelLabel}</h3>
             <div className="space-y-3">
-              {WHITE_LV1_CHECKLIST.map((item, idx) => (
+              {checklist.map((item, idx) => (
                 <button
                   key={item.id}
                   onClick={() => {
@@ -425,63 +582,6 @@ const WhiteLv1DetailView = ({ onBack }: { onBack: () => void }) => {
           </div>
         </div>
       )}
-
-      {/* 7. 오늘 얻는 가치 */}
-      <div className="rounded-2xl border-2 border-primary/20 bg-primary/5 p-4">
-        <div className="mb-2 flex items-center gap-2">
-          <span className="text-base">💎</span>
-          <span className="text-sm font-bold text-primary">오늘 얻는 가치</span>
-        </div>
-        <div className="space-y-1">
-          {WHITE_LV1_VALUE.map((v, i) => (
-            <p key={i} className="text-sm text-foreground">· {v}</p>
-          ))}
-        </div>
-      </div>
-
-      {/* 8. 초보자 대체 동작 */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2">
-          <Info className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-foreground">초보자 대체 동작</span>
-        </div>
-        <div className="space-y-2">
-          {BEGINNER_ALTERNATIVES.map((alt, i) => (
-            <div key={i} className="flex items-start gap-2 rounded-lg bg-muted/30 p-2.5">
-              <span className="text-xs font-bold text-primary">{alt.original}</span>
-              <span className="text-xs text-muted-foreground">→</span>
-              <div>
-                <p className="text-xs font-bold text-foreground">{alt.alt}</p>
-                <p className="text-[10px] text-muted-foreground">{alt.note}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 9. 코치 포인트 */}
-      <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <Eye className="h-4 w-4 text-accent-foreground" />
-          <span className="text-sm font-bold text-accent-foreground">코치 포인트</span>
-        </div>
-        <div className="space-y-1.5">
-          {COACH_POINTS.map((point, i) => (
-            <p key={i} className="text-xs text-foreground">👁️ {point}</p>
-          ))}
-        </div>
-      </div>
-
-      {/* Status */}
-      <div className={`rounded-xl p-3 text-center text-sm font-bold ${
-        status === "레벨업 완료" ? "bg-status-complete/10 text-status-complete"
-        : status === "레벨업 심사 가능" ? "bg-primary text-primary-foreground"
-        : status === "보완 필요" ? "bg-status-pending/10 text-status-pending"
-        : status === "코치 확인 필요" ? "bg-destructive/10 text-destructive"
-        : "bg-muted text-muted-foreground"
-      }`}>
-        {status === "진행중" ? "🥊 현재 진행 중" : status}
-      </div>
     </div>
   );
 };

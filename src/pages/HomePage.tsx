@@ -4,11 +4,13 @@ import { useLocalProgress } from "@/hooks/useLocalProgress";
 import XPBar from "@/components/XPBar";
 import RankBadge from "@/components/RankBadge";
 import LevelUpModal from "@/components/LevelUpModal";
+import WeeklyPrescriptionCard from "@/components/WeeklyPrescriptionCard";
+import RetentionBanner from "@/components/RetentionBanner";
 import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestData";
 import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useNavigate } from "react-router-dom";
-import { User, ChevronRight, TrendingUp, Play, Clock, CalendarDays, Target, CheckCircle2 } from "lucide-react";
+import { User, ChevronRight, TrendingUp, CheckCircle2 } from "lucide-react";
 import HallOfFameShowcase from "@/components/HallOfFameShowcase";
 import RankMiniCard from "@/components/RankMiniCard";
 import { toast } from "sonner";
@@ -16,20 +18,21 @@ import type { Enums } from "@/integrations/supabase/types";
 import { isManagerRole } from "@/lib/rankLabels";
 import {
   WHITE_LV1_META,
-  HOME_MESSAGES,
   QUICK_ACTIONS,
   PROMOTION_METRICS,
   formatMicrocopy,
 } from "@/data/whiteLevel1Data";
+import { WHITE_LV2_META, WHITE_LV2_PROMOTION_METRICS } from "@/data/whiteLevel2Data";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 
 const STATUS_STYLE: Record<string, { bg: string; text: string }> = {
   "진행중": { bg: "bg-primary/10", text: "text-primary" },
-  "승급 심사 가능": { bg: "bg-status-complete/10", text: "text-status-complete" },
+  "레벨업 심사 가능": { bg: "bg-status-complete/10", text: "text-status-complete" },
   "보완 필요": { bg: "bg-status-pending/10", text: "text-status-pending" },
-  "승급 완료": { bg: "bg-accent/10", text: "text-accent-foreground" },
+  "레벨업 완료": { bg: "bg-accent/10", text: "text-accent-foreground" },
+  "코치 확인 필요": { bg: "bg-destructive/10", text: "text-destructive" },
 };
 
 const HomePage = () => {
@@ -42,7 +45,7 @@ const HomePage = () => {
   const attendance = useRecordAttendance();
   const setRival = useSetRival();
   const { onboardingDone, safetyDone } = useOnboardingState();
-  const { totalXp, status, metrics } = useLocalProgress();
+  const { totalXp, status, metrics, activeLevelId } = useLocalProgress();
   const [levelUpModal, setLevelUpModal] = useState<{ show: boolean; level: number; rank: string; xp: number }>({ show: false, level: 0, rank: "", xp: 0 });
 
   useEffect(() => {
@@ -59,16 +62,22 @@ const HomePage = () => {
   const rank = progress.current_rank as Enums<"rank_name">;
   const currentLevel = levels?.find(l => l.rank_name === rank && l.level_number === progress.current_level);
   const isWhiteLv1 = rank === "white" && progress.current_level === 1;
+  const isWhiteLv2 = rank === "white" && progress.current_level === 2;
+  const isWhiteLevel = isWhiteLv1 || isWhiteLv2;
   const myPosition = ranking?.find(r => r.r_user_id === user?.id)?.rank_position;
   const recentBadges = (myBadges || []).slice(0, 3);
   const isMaster40 = rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
+
+  // Select correct promotion metrics based on level
+  const activePromoMetrics = isWhiteLv2 ? WHITE_LV2_PROMOTION_METRICS : PROMOTION_METRICS;
+  const levelMeta = isWhiteLv2 ? WHITE_LV2_META : WHITE_LV1_META;
 
   // Dynamic microcopy
   const sessionsRemaining = Math.max(0, metrics.sessions.target - metrics.sessions.current);
   const microcopyLines = [
     sessionsRemaining > 0
-      ? formatMicrocopy("승급까지 {remaining}회 남았습니다", { remaining: sessionsRemaining })
-      : "승급 심사가 가능합니다!",
+      ? formatMicrocopy("레벨업까지 {remaining}회 남았습니다", { remaining: sessionsRemaining })
+      : "레벨업 심사가 가능합니다!",
     "자세와 리듬이 점점 안정되고 있어요",
   ];
 
@@ -106,8 +115,7 @@ const HomePage = () => {
                   <span className="text-sm font-bold text-primary">{myPosition}위</span>
                 </div>
               )}
-              {/* Rank-up status badge */}
-              {isWhiteLv1 && (
+              {isWhiteLevel && (
                 <div className={`rounded-full px-3 py-1.5 ${STATUS_STYLE[status]?.bg || "bg-muted"}`}>
                   <span className={`text-xs font-bold ${STATUS_STYLE[status]?.text || "text-muted-foreground"}`}>{status}</span>
                 </div>
@@ -116,11 +124,11 @@ const HomePage = () => {
           </div>
           <div className="mb-2 text-xs text-muted-foreground">
             {isManagerRole(role) ? "👑 마스터 · 모든 레벨 달성" : (
-              isWhiteLv1 ? WHITE_LV1_META.title : (currentLevel?.title || `${RANK_LABELS[rank]} 리그 · 레벨 ${progress.current_level}`)
+              isWhiteLevel ? levelMeta.title : (currentLevel?.title || `${RANK_LABELS[rank]} 리그 · 레벨 ${progress.current_level}`)
             )}
             {profile.branch_name && <span className="ml-1.5 text-muted-foreground/60">· {profile.branch_name}</span>}
           </div>
-          {isWhiteLv1 ? (
+          {isWhiteLevel ? (
             <>
               <XPBar current={totalXp} max={metrics.xp.target} />
               <p className="mt-1.5 text-right text-xs text-muted-foreground">
@@ -137,11 +145,11 @@ const HomePage = () => {
           )}
         </div>
 
-        {/* 2. White Lv.1 Progression Metrics */}
-        {isWhiteLv1 && (
+        {/* 2. Level Progression Metrics */}
+        {isWhiteLevel && (
           <div className="animate-slide-up" style={{ animationDelay: "0.05s" }}>
             <div className="grid grid-cols-2 gap-2.5">
-              {PROMOTION_METRICS.map(m => {
+              {activePromoMetrics.map(m => {
                 const met = metrics[m.id as keyof typeof metrics];
                 const pct = met ? Math.min(100, Math.round((met.current / met.target) * 100)) : 0;
                 const done = met && met.current >= met.target;
@@ -164,23 +172,23 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* 3. Microcopy & Messages */}
-        {isWhiteLv1 && (
-          <div className="animate-slide-up rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-4" style={{ animationDelay: "0.08s" }}>
-            <p className="mb-2 text-xs font-bold text-primary">💬 오늘의 한마디</p>
-            <p className="text-sm leading-relaxed text-foreground">{microcopyLines[0]}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{microcopyLines[1]}</p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {HOME_MESSAGES.map((msg, i) => (
-                <span key={i} className="rounded-full bg-card px-2.5 py-1 text-[10px] text-muted-foreground shadow-sm">{msg}</span>
-              ))}
-            </div>
+        {/* 3. Retention Banner */}
+        {isWhiteLevel && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.08s" }}>
+            <RetentionBanner />
           </div>
         )}
 
-        {/* 4. Quick Actions */}
-        {isWhiteLv1 && (
+        {/* 4. Weekly Prescription */}
+        {isWhiteLevel && (
           <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
+            <WeeklyPrescriptionCard />
+          </div>
+        )}
+
+        {/* 5. Quick Actions */}
+        {isWhiteLevel && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
             <div className="grid grid-cols-3 gap-2">
               {QUICK_ACTIONS.map(action => (
                 <button
@@ -197,30 +205,16 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* 5. Recommended Path Chips */}
-        {isWhiteLv1 && (
-          <div className="animate-slide-up flex gap-2" style={{ animationDelay: "0.12s" }}>
-            <div className="flex-1 rounded-2xl border border-border bg-card p-3 shadow-sm">
-              <p className="text-[10px] font-bold text-muted-foreground">📋 일반 경로</p>
-              <p className="text-sm font-bold text-foreground">주 3회 · 약 2주 · 5~6회</p>
-            </div>
-            <div className="flex-1 rounded-2xl border border-primary/20 bg-primary/5 p-3 shadow-sm">
-              <p className="text-[10px] font-bold text-primary">⚡ 빠른 경로</p>
-              <p className="text-sm font-bold text-foreground">주 5회 · 약 1주 · 5회</p>
-            </div>
-          </div>
-        )}
-
         {/* 6. Attendance note */}
-        {isWhiteLv1 && (
+        {isWhiteLevel && (
           <div className="animate-slide-up rounded-xl bg-muted/50 px-4 py-2.5" style={{ animationDelay: "0.14s" }}>
             <p className="text-[11px] text-muted-foreground leading-relaxed">
-              ℹ️ 하루 2번 운동해도 승급 출석은 하루 1회만 인정됩니다. 짧게 몰아서 하기보다 여러 날에 걸쳐 반복하는 것이 더 중요합니다.
+              ℹ️ 하루 2번 운동해도 레벨업 출석은 하루 1회만 인정됩니다. 짧게 몰아서 하기보다 여러 날에 걸쳐 반복하는 것이 더 중요합니다.
             </p>
           </div>
         )}
 
-        {/* 7. Rivals (existing) */}
+        {/* 7. Rivals */}
         {rivalsAbove && rivalsAbove.length > 0 && (
           <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
             <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-foreground">🎯 추격 대상</h2>

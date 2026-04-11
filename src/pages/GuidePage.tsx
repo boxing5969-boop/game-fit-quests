@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, FlaskConical, Map, Dumbbell, ShieldCheck, Play, ChevronDown, Lock, CheckCircle2 } from "lucide-react";
+import { BookOpen, FlaskConical, Map, Dumbbell, ShieldCheck, Play, ChevronDown, Lock, CheckCircle2, HelpCircle } from "lucide-react";
 import { LEAGUE_SUMMARIES, FULL_VALUE_MAP } from "@/data/valueMapData";
 import { EXERCISE_REASONS } from "@/data/exerciseReasonsData";
 import { SAFETY_BLOCKS } from "@/data/safetyCheckData";
 import { GUIDE_CARDS } from "@/data/whiteLevel1Data";
 import { useAuth } from "@/contexts/AuthContext";
 
-type GuideTab = "program" | "science" | "valuemap" | "exercise" | "safety";
+type GuideTab = "program" | "science" | "valuemap" | "exercise" | "safety" | "whitefaq";
 
 const TABS: { id: GuideTab; label: string; icon: typeof BookOpen }[] = [
   { id: "program", label: "프로그램", icon: BookOpen },
+  { id: "whitefaq", label: "화이트 FAQ", icon: HelpCircle },
   { id: "science", label: "과학설계", icon: FlaskConical },
   { id: "valuemap", label: "가치맵", icon: Map },
   { id: "exercise", label: "왜 하나요", icon: Dumbbell },
@@ -45,6 +46,7 @@ const GuidePage = () => {
       </div>
 
       {activeTab === "program" && <ProgramTab />}
+      {activeTab === "whitefaq" && <WhiteFaqTab />}
       {activeTab === "science" && <ScienceTab />}
       {activeTab === "valuemap" && <ValueMapTab />}
       {activeTab === "exercise" && <ExerciseTab />}
@@ -103,6 +105,31 @@ const ProgramTab = () => (
             <span key={v} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{v}</span>
           ))}
         </div>
+      </div>
+    ))}
+  </div>
+);
+
+/* ═══════════ White FAQ Tab ═══════════ */
+const WHITE_FAQ = [
+  { q: "White는 왜 쉽게 시작하나요?", a: "화이트는 운동 습관과 기본 리듬을 만드는 단계입니다. 너무 어려우면 포기하기 쉽기 때문에, 쉽지만 의미 있는 성취를 느낄 수 있도록 설계되었습니다." },
+  { q: "White Lv.1에서 왜 잽을 배우나요?", a: "너무 지루하지 않도록 Lv.1부터 잽을 포함합니다. 첫 잽 경험은 복싱 정체성과 자신감을 만들어줍니다." },
+  { q: "사다리 훈련은 왜 넣나요?", a: "사다리 훈련은 체력 메인보다 발놀림, 리듬, 협응을 위한 훈련입니다. 복싱에서 스텝과 리듬은 기본기의 핵심입니다." },
+  { q: "주간 처방은 어떻게 정해지나요?", a: "최근 7일간 인정 세션 수를 기준으로 라이트/기본/빠른 경로 중 하나를 자동 추천합니다. 주간 활동량과 반복은 여러 날에 나누어 쌓는 것이 중요합니다." },
+  { q: "짧게 쉬운 복귀도 가치가 있는 이유", a: "짧은 복귀 세션도 다시 리듬을 잡는 데 도움이 됩니다. 완벽한 50분보다 10분이라도 다시 시작하는 것이 더 중요합니다." },
+];
+
+const WhiteFaqTab = () => (
+  <div className="space-y-3 animate-slide-up">
+    <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+      <p className="text-xs text-foreground leading-relaxed">
+        화이트 리그에 대해 자주 묻는 질문을 모았습니다. 화이트는 쉽지만 의미 없이 쉬운 단계가 아닙니다.
+      </p>
+    </div>
+    {WHITE_FAQ.map((item, i) => (
+      <div key={i} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <p className="mb-2 text-sm font-bold text-foreground">❓ {item.q}</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">{item.a}</p>
       </div>
     ))}
   </div>
