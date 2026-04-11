@@ -512,9 +512,10 @@ const WhiteLv1ProgressionCard = () => {
 
   const STATUS_STYLE: Record<string, string> = {
     "진행중": "bg-primary/10 text-primary",
-    "승급 심사 가능": "bg-status-complete/10 text-status-complete",
+    "레벨업 심사 가능": "bg-status-complete/10 text-status-complete",
     "보완 필요": "bg-status-pending/10 text-status-pending",
-    "승급 완료": "bg-accent/10 text-accent-foreground",
+    "레벨업 완료": "bg-accent/10 text-accent-foreground",
+    "코치 확인 필요": "bg-destructive/10 text-destructive",
   };
 
   return (
