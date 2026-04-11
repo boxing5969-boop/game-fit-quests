@@ -474,9 +474,10 @@ const WhiteLv1DetailView = ({ onBack }: { onBack: () => void }) => {
 
       {/* Status */}
       <div className={`rounded-xl p-3 text-center text-sm font-bold ${
-        status === "승급 완료" ? "bg-status-complete/10 text-status-complete"
-        : status === "승급 심사 가능" ? "bg-primary text-primary-foreground"
+        status === "레벨업 완료" ? "bg-status-complete/10 text-status-complete"
+        : status === "레벨업 심사 가능" ? "bg-primary text-primary-foreground"
         : status === "보완 필요" ? "bg-status-pending/10 text-status-pending"
+        : status === "코치 확인 필요" ? "bg-destructive/10 text-destructive"
         : "bg-muted text-muted-foreground"
       }`}>
         {status === "진행중" ? "🥊 현재 진행 중" : status}
