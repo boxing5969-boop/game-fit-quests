@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,7 @@ const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, blac
 
 type FilterType = "all" | "pending" | "active" | "boss_ready" | "unapproved";
 type SortType = "recent_submission" | "level_desc" | "pending_count";
-type MainTab = "members" | "inbox";
+type MainTab = "members" | "inbox" | "level_review";
 
 const BranchManagerHome = () => {
   const navigate = useNavigate();
@@ -451,7 +452,7 @@ const BranchManagerHome = () => {
             }`}
           >
             <Users className="h-4 w-4" />
-            회원 리스트
+            회원
           </button>
           <button
             onClick={() => setMainTab("inbox")}
@@ -460,17 +461,26 @@ const BranchManagerHome = () => {
             }`}
           >
             <Inbox className="h-4 w-4" />
-            승인대기
+            승인
             {stats?.pending_count && stats.pending_count > 0 ? (
               <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-status-pending px-1.5 text-[10px] font-bold text-white">
                 {stats.pending_count}
               </span>
             ) : null}
           </button>
+          <button
+            onClick={() => setMainTab("level_review")}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+              mainTab === "level_review" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            📋 심사
+          </button>
         </div>
 
         {mainTab === "inbox" && <ApprovalInbox />}
         {mainTab === "members" && <MemberListContent />}
+        {mainTab === "level_review" && <CoachLevelReviewInbox />}
       </div>
 
       {/* ── Desktop 2-Column Layout (>= lg) ── */}
@@ -521,17 +531,26 @@ const BranchManagerHome = () => {
               }`}
             >
               <Inbox className="h-3.5 w-3.5" />
-              승인대기
+              승인
               {stats?.pending_count && stats.pending_count > 0 ? (
                 <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-status-pending px-1 text-[9px] font-bold text-white">
                   {stats.pending_count}
                 </span>
               ) : null}
             </button>
+            <button
+              onClick={() => setMainTab("level_review")}
+              className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold transition-all ${
+                mainTab === "level_review" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              📋 심사
+            </button>
           </div>
 
           {mainTab === "inbox" && <ApprovalInbox />}
           {mainTab === "members" && <MemberListContent />}
+          {mainTab === "level_review" && <CoachLevelReviewInbox />}
         </div>
 
         {/* Right: Detail Panel */}
