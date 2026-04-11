@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, FlaskConical, Map, Dumbbell, ShieldCheck, Play, ChevronDown, Lock, CheckCircle2 } from "lucide-react";
+import { BookOpen, FlaskConical, Map, Dumbbell, ShieldCheck, Play, ChevronDown, Lock, CheckCircle2, HelpCircle } from "lucide-react";
 import { LEAGUE_SUMMARIES, FULL_VALUE_MAP } from "@/data/valueMapData";
 import { EXERCISE_REASONS } from "@/data/exerciseReasonsData";
 import { SAFETY_BLOCKS } from "@/data/safetyCheckData";
 import { GUIDE_CARDS } from "@/data/whiteLevel1Data";
 import { useAuth } from "@/contexts/AuthContext";
 
-type GuideTab = "program" | "science" | "valuemap" | "exercise" | "safety";
+type GuideTab = "program" | "science" | "valuemap" | "exercise" | "safety" | "whitefaq";
 
 const TABS: { id: GuideTab; label: string; icon: typeof BookOpen }[] = [
   { id: "program", label: "프로그램", icon: BookOpen },
+  { id: "whitefaq", label: "화이트 FAQ", icon: HelpCircle },
   { id: "science", label: "과학설계", icon: FlaskConical },
   { id: "valuemap", label: "가치맵", icon: Map },
   { id: "exercise", label: "왜 하나요", icon: Dumbbell },
