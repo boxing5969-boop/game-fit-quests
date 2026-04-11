@@ -1,17 +1,46 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { PROMOTION_RULES, getRankUpStatus, type RankUpStatus } from "@/data/whiteLevel1Data";
+import {
+  PROMOTION_RULES,
+  type RankUpStatus,
+} from "@/data/whiteLevel1Data";
+import { WHITE_LV2_PROMOTION_RULES } from "@/data/whiteLevel2Data";
+import {
+  LEVEL_RULES,
+  calculateLevelStatus,
+  calculateSessionXp,
+  isQualifyingSession,
+  evaluateChecklist,
+  createDefaultLevelProgress,
+  type LevelCycleProgress,
+  type LevelProgressionStatus,
+} from "@/data/levelRuleEngine";
 
 /* ─── Local Progress State ─────────────────────────────
    Hybrid: reads from Supabase when available,
-   supplements with localStorage for White Lv.1 metrics.
+   supplements with localStorage for White Lv.1/Lv.2 metrics.
    Can be migrated to Supabase later.
 ──────────────────────────────────────────────────────── */
 
+export interface TrainingSession {
+  id: string;
+  date: string;
+  startedAt: string;
+  endedAt: string | null;
+  plannedMinutes: number;
+  actualMinutes: number;
+  qualifies: boolean;
+  xpAwarded: number;
+  intensity: "easy" | "normal" | "hard";
+  completedBlocks: string[];
+  levelId: string;
+}
+
 export interface LocalProgress {
+  // Global (legacy compat)
   totalXp: number;
-  rankSessions: number;       // sessions >= 45 min
-  attendanceDays: number;     // unique days with rank sessions
+  rankSessions: number;
+  attendanceDays: number;
   totalMinutes: number;
   homeMissionsToday: number;
   checklistPassed: boolean;
@@ -19,32 +48,72 @@ export interface LocalProgress {
   checklistResults: boolean[];
   lastSessionDate: string | null;
   attendanceDateSet: string[];
+
+  // Per-level cycle (new)
+  currentLevelId: string; // "white-1" or "white-2"
+  levelProgress: Record<string, LevelCycleProgress>;
+
+  // Session log
+  sessions: TrainingSession[];
 }
 
 const STORAGE_KEY = "white-lv1-progress";
 
-const defaultProgress: LocalProgress = {
-  totalXp: 0,
-  rankSessions: 0,
-  attendanceDays: 0,
-  totalMinutes: 0,
-  homeMissionsToday: 0,
-  checklistPassed: false,
-  checklistAttempted: false,
-  checklistResults: [false, false, false, false, false, false],
-  lastSessionDate: null,
-  attendanceDateSet: [],
-};
+function getDefaultProgress(): LocalProgress {
+  return {
+    totalXp: 0,
+    rankSessions: 0,
+    attendanceDays: 0,
+    totalMinutes: 0,
+    homeMissionsToday: 0,
+    checklistPassed: false,
+    checklistAttempted: false,
+    checklistResults: [false, false, false, false, false, false],
+    lastSessionDate: null,
+    attendanceDateSet: [],
+    currentLevelId: "white-1",
+    levelProgress: {
+      "white-1": createDefaultLevelProgress(),
+      "white-2": createDefaultLevelProgress(),
+    },
+    sessions: [],
+  };
+}
 
 function loadProgress(): LocalProgress {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      return { ...defaultProgress, ...parsed };
+      const defaults = getDefaultProgress();
+      // Merge with defaults for backward compat
+      const result = { ...defaults, ...parsed };
+      // Ensure levelProgress exists
+      if (!result.levelProgress) {
+        result.levelProgress = defaults.levelProgress;
+      }
+      if (!result.levelProgress["white-1"]) {
+        result.levelProgress["white-1"] = createDefaultLevelProgress();
+        // Migrate existing data
+        result.levelProgress["white-1"].currentLevelXp = result.totalXp || 0;
+        result.levelProgress["white-1"].qualifyingSessions = result.rankSessions || 0;
+        result.levelProgress["white-1"].attendanceDays = result.attendanceDays || 0;
+        result.levelProgress["white-1"].trainingMinutes = result.totalMinutes || 0;
+        result.levelProgress["white-1"].checklistPassed = result.checklistPassed || false;
+        result.levelProgress["white-1"].checklistAttempted = result.checklistAttempted || false;
+        result.levelProgress["white-1"].checklistResults = result.checklistResults || [];
+        result.levelProgress["white-1"].sessionDates = result.attendanceDateSet || [];
+        result.levelProgress["white-1"].lastSessionDate = result.lastSessionDate || null;
+      }
+      if (!result.levelProgress["white-2"]) {
+        result.levelProgress["white-2"] = createDefaultLevelProgress();
+      }
+      if (!result.currentLevelId) result.currentLevelId = "white-1";
+      if (!result.sessions) result.sessions = [];
+      return result;
     }
   } catch { /* ignore */ }
-  return { ...defaultProgress };
+  return getDefaultProgress();
 }
 
 function saveProgress(p: LocalProgress) {
@@ -60,93 +129,159 @@ export function useLocalProgress() {
     saveProgress(local);
   }, [local]);
 
+  // Determine current level from Supabase if available
+  const currentLevel = supabaseProgress?.current_level ?? 1;
+  const currentRank = supabaseProgress?.current_rank ?? "white";
+  const activeLevelId = currentRank === "white"
+    ? `white-${currentLevel}`
+    : local.currentLevelId;
+
+  // Get the active level's progress
+  const activeProgress = local.levelProgress[activeLevelId] || createDefaultLevelProgress();
+  const rules = LEVEL_RULES[activeLevelId] || LEVEL_RULES["white-1"];
+
   // Merge with Supabase XP if available
   const totalXp = Math.max(local.totalXp, supabaseProgress?.total_xp ?? 0);
 
-  const status: RankUpStatus = getRankUpStatus(
-    totalXp,
-    local.rankSessions,
-    local.attendanceDays,
-    local.totalMinutes,
-    local.checklistPassed,
-    local.checklistAttempted,
-  );
+  // Calculate status using the rule engine
+  const status: LevelProgressionStatus = calculateLevelStatus(rules, activeProgress);
 
-  const recordSession = useCallback((minutes: number) => {
+  const recordSession = useCallback((minutes: number, completedBlocks: string[] = [], intensity: "easy" | "normal" | "hard" = "normal") => {
     const today = new Date().toISOString().slice(0, 10);
+    const xp = calculateSessionXp(minutes);
+    const qualifies = isQualifyingSession(minutes);
 
     setLocal(prev => {
-      // Calculate XP based on minutes
-      let xpGained = 0;
-      if (minutes >= 50) xpGained = 100;
-      else if (minutes >= 40) xpGained = 80;
-      else if (minutes >= 30) xpGained = 60;
+      const levelId = currentRank === "white" ? `white-${currentLevel}` : prev.currentLevelId;
+      const prevLp = prev.levelProgress[levelId] || createDefaultLevelProgress();
 
-      // Rank session: only count if >= 45 min and max 1 per day
-      const isRankSession = minutes >= 45 && prev.lastSessionDate !== today;
-      const newDates = isRankSession && !prev.attendanceDateSet.includes(today)
+      // Max 1 qualifying session per day for the level
+      const alreadyQualifiedToday = qualifies && prevLp.lastSessionDate === today;
+      const isNewQualifying = qualifies && !alreadyQualifiedToday;
+      const newDates = isNewQualifying && !prevLp.sessionDates.includes(today)
+        ? [...prevLp.sessionDates, today]
+        : prevLp.sessionDates;
+
+      // Session record
+      const session: TrainingSession = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        date: today,
+        startedAt: new Date(Date.now() - minutes * 60000).toISOString(),
+        endedAt: new Date().toISOString(),
+        plannedMinutes: 50,
+        actualMinutes: minutes,
+        qualifies: isNewQualifying,
+        xpAwarded: xp,
+        intensity,
+        completedBlocks,
+        levelId,
+      };
+
+      const updatedLp: LevelCycleProgress = {
+        ...prevLp,
+        currentLevelXp: prevLp.currentLevelXp + xp,
+        trainingMinutes: prevLp.trainingMinutes + minutes,
+        qualifyingSessions: isNewQualifying ? prevLp.qualifyingSessions + 1 : prevLp.qualifyingSessions,
+        attendanceDays: newDates.length,
+        sessionDates: newDates,
+        lastSessionDate: isNewQualifying ? today : prevLp.lastSessionDate,
+      };
+
+      // Also update global counters
+      const globalDates = isNewQualifying && !prev.attendanceDateSet.includes(today)
         ? [...prev.attendanceDateSet, today]
         : prev.attendanceDateSet;
 
       return {
         ...prev,
-        totalXp: prev.totalXp + xpGained,
+        totalXp: prev.totalXp + xp,
         totalMinutes: prev.totalMinutes + minutes,
-        rankSessions: isRankSession ? prev.rankSessions + 1 : prev.rankSessions,
-        attendanceDays: newDates.length,
-        attendanceDateSet: newDates,
-        lastSessionDate: isRankSession ? today : prev.lastSessionDate,
+        rankSessions: isNewQualifying ? prev.rankSessions + 1 : prev.rankSessions,
+        attendanceDays: globalDates.length,
+        attendanceDateSet: globalDates,
+        lastSessionDate: isNewQualifying ? today : prev.lastSessionDate,
+        levelProgress: {
+          ...prev.levelProgress,
+          [levelId]: updatedLp,
+        },
+        sessions: [...prev.sessions, session],
       };
     });
-  }, []);
+  }, [currentLevel, currentRank]);
 
   const recordHomeMission = useCallback(() => {
     const today = new Date().toISOString().slice(0, 10);
     setLocal(prev => {
-      // Reset daily count if new day
-      const homeMissionsToday = prev.lastSessionDate === today ? prev.homeMissionsToday : 0;
-      if (homeMissionsToday >= 1) return prev;
+      const levelId = currentRank === "white" ? `white-${currentLevel}` : prev.currentLevelId;
+      const prevLp = prev.levelProgress[levelId] || createDefaultLevelProgress();
+      const missionsToday = prevLp.lastSessionDate === today ? prevLp.homeMissionsToday : 0;
+      if (missionsToday >= 1) return prev;
       return {
         ...prev,
         totalXp: prev.totalXp + 20,
-        homeMissionsToday: homeMissionsToday + 1,
+        levelProgress: {
+          ...prev.levelProgress,
+          [levelId]: {
+            ...prevLp,
+            currentLevelXp: prevLp.currentLevelXp + 20,
+            homeMissionsToday: missionsToday + 1,
+          },
+        },
       };
     });
-  }, []);
+  }, [currentLevel, currentRank]);
 
   const submitChecklist = useCallback((results: boolean[]) => {
-    const mandatoryPassed = PROMOTION_RULES.mandatoryItems.every(i => results[i]);
-    const passCount = results.filter(Boolean).length;
-    const passed = mandatoryPassed && passCount >= PROMOTION_RULES.checklistPassCount;
+    const { passed } = evaluateChecklist(rules, results);
 
-    setLocal(prev => ({
-      ...prev,
-      checklistAttempted: true,
-      checklistPassed: passed,
-      checklistResults: results,
-    }));
+    setLocal(prev => {
+      const levelId = currentRank === "white" ? `white-${currentLevel}` : prev.currentLevelId;
+      const prevLp = prev.levelProgress[levelId] || createDefaultLevelProgress();
+
+      const updatedLp: LevelCycleProgress = {
+        ...prevLp,
+        checklistAttempted: true,
+        checklistPassed: passed,
+        checklistResults: results,
+        remediationUsed: prevLp.checklistAttempted && !passed ? true : prevLp.remediationUsed,
+        remediationDueAt: !passed && !prevLp.remediationUsed
+          ? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+          : prevLp.remediationDueAt,
+      };
+
+      return {
+        ...prev,
+        checklistPassed: passed,
+        checklistAttempted: true,
+        checklistResults: results,
+        levelProgress: {
+          ...prev.levelProgress,
+          [levelId]: updatedLp,
+        },
+      };
+    });
 
     return passed;
-  }, []);
+  }, [rules, currentLevel, currentRank]);
 
   const resetProgress = useCallback(() => {
-    setLocal({ ...defaultProgress });
+    setLocal(getDefaultProgress());
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
-  // Computed metrics for UI
-  const metrics = {
-    xp: { current: totalXp, target: PROMOTION_RULES.xpRequired },
-    sessions: { current: local.rankSessions, target: PROMOTION_RULES.sessionsRequired },
-    days: { current: local.attendanceDays, target: PROMOTION_RULES.attendanceDaysRequired },
-    minutes: { current: local.totalMinutes, target: PROMOTION_RULES.totalMinutesRequired },
-  };
+  // Computed metrics for UI (compatible with existing code)
+  const metrics = useMemo(() => ({
+    xp: { current: activeProgress.currentLevelXp, target: rules.minXp },
+    sessions: { current: activeProgress.qualifyingSessions, target: rules.minQualifyingSessions },
+    days: { current: activeProgress.attendanceDays, target: rules.minAttendanceDays },
+    minutes: { current: activeProgress.trainingMinutes, target: rules.minTrainingMinutes },
+  }), [activeProgress, rules]);
 
   const canAttemptChecklist =
-    totalXp >= PROMOTION_RULES.xpRequired &&
-    local.rankSessions >= PROMOTION_RULES.sessionsRequired &&
-    local.attendanceDays >= PROMOTION_RULES.attendanceDaysRequired &&
-    local.totalMinutes >= PROMOTION_RULES.totalMinutesRequired;
+    activeProgress.currentLevelXp >= rules.minXp &&
+    activeProgress.qualifyingSessions >= rules.minQualifyingSessions &&
+    activeProgress.attendanceDays >= rules.minAttendanceDays &&
+    activeProgress.trainingMinutes >= rules.minTrainingMinutes;
 
   return {
     local,
@@ -158,5 +293,9 @@ export function useLocalProgress() {
     recordHomeMission,
     submitChecklist,
     resetProgress,
+    activeLevelId,
+    activeProgress,
+    rules,
+    sessions: local.sessions,
   };
 }
