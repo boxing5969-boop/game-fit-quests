@@ -10,6 +10,7 @@ import LevelManager from "@/components/admin/LevelManager";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import RankUpCeremony from "@/components/RankUpCeremony";
+import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
@@ -95,7 +96,7 @@ const CoachDashboard = () => {
     },
   });
 
-  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions" | "quests" | "levels" | "coach-requests">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions" | "quests" | "levels" | "coach-requests" | "level-review">("pending");
   const [rankUpInfo, setRankUpInfo] = useState<{ show: boolean; oldRank: string; newRank: string; memberName: string }>({ show: false, oldRank: "", newRank: "", memberName: "" });
   const [xpModal, setXpModal] = useState<{ show: boolean; memberId: string; memberName: string }>({ show: false, memberId: "", memberName: "" });
   const [xpAmount, setXpAmount] = useState(10);
@@ -209,6 +210,10 @@ const CoachDashboard = () => {
         <button onClick={() => setActiveTab("members")}
           className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "members" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
           👥 회원
+        </button>
+        <button onClick={() => setActiveTab("level-review")}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "level-review" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+          📋 레벨업 심사
         </button>
         {(role === "admin" || role === "super_admin") && (
           <>
