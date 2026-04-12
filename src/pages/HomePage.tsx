@@ -143,7 +143,15 @@ const HomePage = () => {
         )}
 
         {/* 1. League/Level Card */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm relative overflow-hidden">
+          {/* Sparkle effects */}
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute top-2 right-8 h-1.5 w-1.5 rounded-full bg-accent animate-ping" style={{ animationDuration: "2s" }} />
+            <div className="absolute top-6 right-3 h-1 w-1 rounded-full bg-primary animate-ping" style={{ animationDuration: "2.5s", animationDelay: "0.5s" }} />
+            <div className="absolute bottom-4 left-6 h-1.5 w-1.5 rounded-full bg-accent animate-ping" style={{ animationDuration: "3s", animationDelay: "1s" }} />
+            <div className="absolute top-3 left-12 h-1 w-1 rounded-full bg-primary/60 animate-ping" style={{ animationDuration: "2.8s", animationDelay: "1.5s" }} />
+            <div className="absolute bottom-6 right-12 h-1 w-1 rounded-full bg-accent/70 animate-ping" style={{ animationDuration: "2.2s", animationDelay: "0.8s" }} />
+          </div>
           <div className="mb-3 flex items-center justify-between">
             <RankBadge rank={rank} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
             <div className="flex items-center gap-2">
@@ -214,7 +222,7 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* 5. Quick Actions + 더보기 */}
+        {/* 5. Quick Actions */}
         <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
           <div className="grid grid-cols-3 gap-2">
             {QUICK_ACTIONS.map(action => (
@@ -229,13 +237,6 @@ const HomePage = () => {
               </button>
             ))}
           </div>
-          <button
-            onClick={() => setShowAllMenu(true)}
-            className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl bg-muted/50 py-2 text-xs font-medium text-muted-foreground transition-all active:scale-[0.98]"
-          >
-            더보기
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
         </div>
 
         {/* All menu sheet */}
@@ -318,6 +319,14 @@ const HomePage = () => {
             <QuickLink emoji="🏆" label="명예의전당" desc="전체 랭킹 보기" onClick={() => navigate("/halloffame")} />
             <QuickLink emoji="🥋" label="단증 혜택" desc="자격증 & 혜택" onClick={() => navigate("/cert-benefits")} />
           </div>
+          <button
+            onClick={() => setShowAllMenu(true)}
+            className="group mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-2.5 text-xs font-bold text-muted-foreground shadow-sm transition-all duration-300 hover:bg-primary/5 hover:text-primary hover:border-primary/30 active:scale-[0.97]"
+          >
+            <span className="transition-transform duration-300 group-hover:scale-110">📋</span>
+            전체 메뉴 더보기
+            <ChevronRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+          </button>
         </div>
 
         {/* 10. Hall of Fame */}
