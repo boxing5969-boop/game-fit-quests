@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     });
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(jwt);
+    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims();
     const userId = claimsData?.claims?.sub;
 
     if (claimsError || !userId) {
