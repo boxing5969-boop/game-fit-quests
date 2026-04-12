@@ -48,7 +48,7 @@ function saveTodayVisitors(visitors: TodayVisitor[]) {
 }
 
 const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
-  self_challenge: { bg: "bg-status-complete/10", text: "text-status-complete", label: "자가 도전 완료" },
+  self_challenge: { bg: "bg-status-complete/10", text: "text-status-complete", label: "오늘 도전 완료" },
   coach_backup: { bg: "bg-primary/10", text: "text-primary", label: "코치 확인 완료" },
   partial: { bg: "bg-status-pending/10", text: "text-status-pending", label: "부분 완료" },
   needs_review: { bg: "bg-destructive/10", text: "text-destructive", label: "보완 필요" },
@@ -109,7 +109,7 @@ const DailyOperationsBoard = () => {
       {/* Metrics — 2 rows */}
       <div className="grid grid-cols-3 gap-2">
         <MetricCard icon={<Users className="h-4 w-4 text-primary" />} label="오늘 방문" value={metrics.total} />
-        <MetricCard icon={<CheckCircle2 className="h-4 w-4 text-status-complete" />} label="자가 도전" value={metrics.selfComplete} />
+        <MetricCard icon={<CheckCircle2 className="h-4 w-4 text-status-complete" />} label="오늘 도전" value={metrics.selfComplete} />
         <MetricCard icon={<Clock className="h-4 w-4 text-status-pending" />} label="미처리" value={metrics.pending} highlight={metrics.pending > 0} />
       </div>
       <div className="grid grid-cols-4 gap-2">
@@ -210,7 +210,7 @@ const DailyOperationsBoard = () => {
                     </div>
                   </div>
                   {v.selfChallengeComplete && (
-                    <span className="text-[9px] font-bold text-status-complete">자가 도전</span>
+                    <span className="text-[9px] font-bold text-status-complete">오늘 도전</span>
                   )}
                 </div>
               );

@@ -377,14 +377,14 @@ const HomePage = () => {
                 {unifiedLevel?.title || `${RANK_LABELS[rank]} 리그 · 레벨 ${progress.current_level}`}
               </p>
               <p className="text-xs text-muted-foreground mb-3">
-                자가 도전으로 완료 시 +{SELF_CHALLENGE_BONUS_XP}XP 보너스. 레벨업 진행은 동일합니다.
+                오늘 도전으로 완료 시 +{SELF_CHALLENGE_BONUS_XP}XP 보너스. 레벨업 진행은 동일합니다.
               </p>
               <button
                 onClick={() => setShowChallenge(true)}
                 className="w-full rounded-2xl bg-primary py-4 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
                 style={{ fontFamily: "'Black Han Sans', sans-serif" }}
               >
-                🥊 자가 도전 시작
+                🥊 오늘 도전 시작
               </button>
             </div>
           </div>
