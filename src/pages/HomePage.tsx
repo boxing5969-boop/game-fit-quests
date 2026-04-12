@@ -185,15 +185,19 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* 3. Retention Banner */}
-        <div className="animate-slide-up" style={{ animationDelay: "0.08s" }}>
-          <RetentionBanner />
-        </div>
+        {/* 3. Retention Banner (hidden if restart routine toggled off) */}
+        {widgetPrefs.showRestartRoutine && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.08s" }}>
+            <RetentionBanner />
+          </div>
+        )}
 
-        {/* 4. Weekly Prescription */}
-        <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          <WeeklyPrescriptionCard />
-        </div>
+        {/* 4. Weekly Prescription (hidden if toggled off) */}
+        {widgetPrefs.showWeeklyPrescription && (
+          <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
+            <WeeklyPrescriptionCard />
+          </div>
+        )}
 
         {/* 5. Quick Actions */}
         <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
