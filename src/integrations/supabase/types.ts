@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_logs: {
+        Row: {
+          branch_name: string
+          checked_in_at: string
+          created_at: string
+          display_name_snapshot: string
+          id: string
+          is_duplicate: boolean
+          league_snapshot: string
+          level_snapshot: number
+          method: string
+          user_id: string
+          xp_granted: number
+        }
+        Insert: {
+          branch_name: string
+          checked_in_at?: string
+          created_at?: string
+          display_name_snapshot?: string
+          id?: string
+          is_duplicate?: boolean
+          league_snapshot?: string
+          level_snapshot?: number
+          method?: string
+          user_id: string
+          xp_granted?: number
+        }
+        Update: {
+          branch_name?: string
+          checked_in_at?: string
+          created_at?: string
+          display_name_snapshot?: string
+          id?: string
+          is_duplicate?: boolean
+          league_snapshot?: string
+          level_snapshot?: number
+          method?: string
+          user_id?: string
+          xp_granted?: number
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           code: string
@@ -35,6 +77,39 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+        }
+        Relationships: []
+      }
+      branch_display_settings: {
+        Row: {
+          animation_level: string
+          branch_name: string
+          display_name_mode: string
+          id: string
+          show_avatar: boolean
+          show_rank: boolean
+          sound_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          animation_level?: string
+          branch_name: string
+          display_name_mode?: string
+          id?: string
+          show_avatar?: boolean
+          show_rank?: boolean
+          sound_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          animation_level?: string
+          branch_name?: string
+          display_name_mode?: string
+          id?: string
+          show_avatar?: boolean
+          show_rank?: boolean
+          sound_enabled?: boolean
+          updated_at?: string
         }
         Relationships: []
       }
@@ -675,6 +750,36 @@ export type Database = {
           phone_number?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      qr_checkin_tokens: {
+        Row: {
+          branch_name: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          token: string
+        }
+        Insert: {
+          branch_name: string
+          created_at?: string
+          created_by: string
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          token: string
+        }
+        Update: {
+          branch_name?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          token?: string
         }
         Relationships: []
       }
