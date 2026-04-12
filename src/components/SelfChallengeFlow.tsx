@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// SelfChallengeFlow — 원탭 시작/종료 자가 도전 모드
+// SelfChallengeFlow — 원탭 시작/종료 오늘 도전 모드
 // 운동 중 폰 조작 최소화: 시작 1탭 + 종료 1탭
 // ═══════════════════════════════════════════════════════
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -48,7 +48,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose }: SelfC
   const handleStart = useCallback(() => {
     setStartTime(Date.now());
     setState("active");
-    toast.success("🥊 자가 도전 시작!");
+    toast.success("🥊 오늘 도전 시작!");
   }, []);
 
   const handleFinish = useCallback(() => {
@@ -97,9 +97,9 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose }: SelfC
 
         {/* Self-challenge bonus explainer */}
         <div className="rounded-xl bg-status-complete/5 border border-status-complete/20 px-4 py-3">
-          <p className="text-xs font-bold text-status-complete mb-1">🏆 자가 도전 보너스</p>
+          <p className="text-xs font-bold text-status-complete mb-1">🏆 오늘 도전 보너스</p>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            자가 도전으로 완료하면 추가 {SELF_CHALLENGE_BONUS_XP}XP와 연속 기록을 얻을 수 있어요.
+            오늘 도전으로 완료하면 추가 {SELF_CHALLENGE_BONUS_XP}XP와 연속 기록을 얻을 수 있어요.
             레벨업 진행은 동일하지만, 적극적인 참여에 보너스 보상이 주어집니다.
           </p>
         </div>
@@ -147,7 +147,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose }: SelfC
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-5 text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.97]"
           style={{ fontFamily: "'Black Han Sans', sans-serif" }}
         >
-          <Play className="h-6 w-6" /> 자가 도전 시작
+          <Play className="h-6 w-6" /> 오늘 도전 시작
         </button>
 
         {onClose && (
@@ -202,15 +202,15 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose }: SelfC
       <div className="space-y-4 animate-slide-up">
         <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-accent/10 p-6 text-center">
           <span className="text-5xl">🎉</span>
-          <h3 className="mt-3 text-xl font-bold text-foreground">자가 도전 완료!</h3>
+          <h3 className="mt-3 text-xl font-bold text-foreground">오늘 도전 완료!</h3>
           <p className="mt-1 text-sm text-muted-foreground">{level.title}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
           <ResultCard icon={<Clock className="h-5 w-5 text-primary" />} value={`${result.minutes}분`} label="실제 훈련" />
           <ResultCard icon={<Zap className="h-5 w-5 text-primary" />} value={`+${result.xp}`} label="기본 XP" highlight />
-          <ResultCard icon={<Flame className="h-5 w-5 text-status-pending" />} value={`+${result.bonusXp}`} label="자가 도전 보너스" highlight={result.bonusXp > 0} />
-          <ResultCard icon={<Trophy className="h-5 w-5 text-accent" />} value={`${result.streak}회`} label="자가 도전 연속" />
+          <ResultCard icon={<Flame className="h-5 w-5 text-status-pending" />} value={`+${result.bonusXp}`} label="오늘 도전 보너스" highlight={result.bonusXp > 0} />
+          <ResultCard icon={<Trophy className="h-5 w-5 text-accent" />} value={`${result.streak}회`} label="오늘 도전 연속" />
         </div>
 
         {result.qualifies ? (
