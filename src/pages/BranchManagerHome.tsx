@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
 import DailyOperationsBoard from "@/components/DailyOperationsBoard";
+import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Users, User, ChevronRight, Bell, Inbox, UserCheck, UserX } from "lucide-react";
+import { Search, Users, User, ChevronRight, Bell, Inbox, UserCheck, UserX, Download, AlertTriangle, BarChart3 } from "lucide-react";
 import { formatRank, RANK_ICONS, isManagerRole } from "@/lib/rankLabels";
 import { Input } from "@/components/ui/input";
 import ApprovalInbox from "@/components/ApprovalInbox";
@@ -15,7 +16,7 @@ const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, blac
 
 type FilterType = "all" | "pending" | "active" | "boss_ready" | "unapproved";
 type SortType = "recent_submission" | "level_desc" | "pending_count";
-type MainTab = "members" | "inbox" | "level_review" | "operations";
+type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk";
 
 const BranchManagerHome = () => {
   const navigate = useNavigate();
@@ -190,8 +191,25 @@ const BranchManagerHome = () => {
     }
   };
 
+  const handleExportCsv = () => {
+    if (!filtered?.length) { toast.info("내보낼 데이터가 없습니다"); return; }
+    const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
+    const header = "이름,닉네임,지점,리그,레벨,XP,연속일,승인\n";
+    const rows = filtered.map(m => [
+      m.name, m.nickname, m.branch_name,
+      RANK_LABELS[m.prog?.current_rank || "white"],
+      m.prog?.current_level || 1, m.prog?.total_xp || 0,
+      m.prog?.streak_days || 0, (m as any).is_approved ? "Y" : "N",
+    ].join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url;
+    a.download = `회원목록_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    toast.success("CSV 내보내기 완료");
+  };
+
   const handleMemberClick = (userId: string) => {
-    // On wide screens, select member in right panel; on mobile, navigate
     if (window.innerWidth >= 1024) {
       setSelectedMemberId(userId);
     } else {
@@ -345,7 +363,7 @@ const BranchManagerHome = () => {
         )}
       </div>
 
-      {/* Quick action: checkin board + member app */}
+      {/* Quick action: checkin board + member app + admin */}
       <div className="mt-6 space-y-2">
         <button
           onClick={() => navigate("/manager/checkin-board")}
@@ -360,6 +378,38 @@ const BranchManagerHome = () => {
               </div>
             </div>
             <ChevronRight className="h-5 w-5 text-primary" />
+          </div>
+        </button>
+        {isSuperAdmin && (
+          <button
+            onClick={() => navigate("/admin")}
+            className="w-full rounded-2xl border border-accent/30 bg-accent/5 p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📊</span>
+                <div>
+                  <p className="text-sm font-bold text-foreground">전체관리자 대시보드</p>
+                  <p className="text-xs text-muted-foreground">지점 비교 · 위험 회원 · 공지 · 이전 승인</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-accent-foreground" />
+            </div>
+          </button>
+        )}
+        <button
+          onClick={handleExportCsv}
+          className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Download className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-bold text-foreground">회원 목록 CSV 내보내기</p>
+                <p className="text-xs text-muted-foreground">현재 필터 적용된 회원 목록 다운로드</p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </div>
         </button>
         <button
@@ -500,12 +550,22 @@ const BranchManagerHome = () => {
           >
             ⚡ 운영
           </button>
+          <button
+            onClick={() => setMainTab("at_risk")}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+              mainTab === "at_risk" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <AlertTriangle className="h-4 w-4" />
+            위험
+          </button>
         </div>
 
         {mainTab === "inbox" && <ApprovalInbox />}
         {mainTab === "members" && <MemberListContent />}
         {mainTab === "level_review" && <CoachLevelReviewInbox />}
         {mainTab === "operations" && <DailyOperationsBoard />}
+        {mainTab === "at_risk" && <AtRiskMembersPanel />}
       </div>
 
       {/* ── Desktop 2-Column Layout (>= lg) ── */}
