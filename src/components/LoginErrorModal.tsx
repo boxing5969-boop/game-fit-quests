@@ -1,6 +1,6 @@
 import { AlertTriangle, Clock, ShieldAlert, WifiOff, KeyRound, HelpCircle } from "lucide-react";
 
-type ErrorType = "approval_pending" | "coach_approval_pending" | "email_verify" | "invalid_credentials" | "network" | "unknown";
+export type ErrorType = "approval_pending" | "coach_approval_pending" | "email_verify" | "invalid_credentials" | "network" | "unknown";
 
 interface LoginErrorModalProps {
   type: ErrorType;
