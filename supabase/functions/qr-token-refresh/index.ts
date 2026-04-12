@@ -33,14 +33,14 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
     const jwt = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(jwt);
-    if (claimsError || !claimsData?.claims?.sub) {
-      console.error("[qr-token-refresh] Auth failed:", claimsError?.message);
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(jwt);
+    if (authError || !authUser) {
+      console.error("[qr-token-refresh] Auth failed:", authError?.message);
       return new Response(JSON.stringify({ error: "인증 실패" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const user = { id: claimsData.claims.sub as string };
+    const user = authUser;
 
     // Get user role
     const { data: roleData } = await supabaseAdmin
