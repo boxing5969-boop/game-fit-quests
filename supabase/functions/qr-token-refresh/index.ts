@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify branch_manager or super_admin role
+    // Get user role
     const { data: roleData } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -54,31 +54,50 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get manager's branch
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("branch_name")
-      .eq("user_id", user.id)
-      .single();
+    const isSuperAdmin = roleData.role === "super_admin" || roleData.role === "admin";
 
-    if (!profile?.branch_name) {
-      console.error("[qr-token-refresh] No branch for user:", user.id);
-      return new Response(JSON.stringify({ error: "지점 정보를 찾을 수 없습니다" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const branchName = profile.branch_name;
-
-    // Parse optional expiry duration from body (default 5 min)
-    let expirySeconds = 300; // 5 minutes default
+    // Parse body
+    let expirySeconds = 300;
+    let targetBranch: string | null = null;
     try {
       const body = await req.json();
       if (body?.expiry_seconds && typeof body.expiry_seconds === "number") {
-        expirySeconds = Math.min(Math.max(body.expiry_seconds, 10), 600); // 10s ~ 10min
+        expirySeconds = Math.min(Math.max(body.expiry_seconds, 10), 600);
+      }
+      if (body?.branch_name && typeof body.branch_name === "string") {
+        targetBranch = body.branch_name;
       }
     } catch {
       // no body, use default
+    }
+
+    // Determine branch
+    let branchName: string;
+    if (targetBranch && isSuperAdmin) {
+      // super_admin can specify any branch
+      branchName = targetBranch;
+    } else {
+      // branch_manager uses their own branch
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("branch_name")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!profile?.branch_name) {
+        console.error("[qr-token-refresh] No branch for user:", user.id);
+        return new Response(JSON.stringify({ error: "지점 정보를 찾을 수 없습니다" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      branchName = profile.branch_name;
+
+      // If non-super_admin tried to specify a different branch, reject
+      if (targetBranch && targetBranch !== branchName) {
+        return new Response(JSON.stringify({ error: "다른 지점의 QR을 생성할 권한이 없습니다" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Deactivate existing tokens for this branch
@@ -116,7 +135,7 @@ Deno.serve(async (req) => {
       .from("branch_display_settings")
       .upsert({ branch_name: branchName }, { onConflict: "branch_name" });
 
-    console.log(`[qr-token-refresh] Token created for ${branchName}, expires in ${expirySeconds}s`);
+    console.log(`[qr-token-refresh] Token created for ${branchName} by ${user.id} (${roleData.role}), expires in ${expirySeconds}s`);
 
     return new Response(JSON.stringify({
       token: newToken.token,
