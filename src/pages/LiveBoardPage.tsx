@@ -45,7 +45,6 @@ interface HallMember {
   r_current_rank: string;
   r_current_level: number;
   r_bosses_cleared: number;
-  r_total_xp: number;
 }
 
 const LiveBoardPage = () => {
