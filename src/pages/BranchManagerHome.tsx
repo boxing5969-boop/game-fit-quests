@@ -345,9 +345,24 @@ const BranchManagerHome = () => {
         )}
       </div>
 
-      {/* Quick action: go to member app */}
-      <div className="mt-6">
-        <button
+      {/* Quick action: checkin board + member app */}
+349:       <div className="mt-6 space-y-2">
+350:         <button
+351:           onClick={() => navigate("/manager/checkin-board")}
+352:           className="w-full rounded-2xl border border-primary/30 bg-primary/5 p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+353:         >
+354:           <div className="flex items-center justify-between">
+355:             <div className="flex items-center gap-3">
+356:               <span className="text-2xl">📷</span>
+357:               <div>
+358:                 <p className="text-sm font-bold text-foreground">체크인 보드 관리</p>
+359:                 <p className="text-xs text-muted-foreground">QR 체크인 · 라이브 보드 · 로그</p>
+360:               </div>
+361:             </div>
+362:             <ChevronRight className="h-5 w-5 text-primary" />
+363:           </div>
+364:         </button>
+365:         <button
           onClick={() => navigate("/home")}
           className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
         >
