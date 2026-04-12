@@ -452,9 +452,10 @@ const HomePage = () => {
           setCheckinResult(result);
           setShowCheckinSuccess(true);
           if (!result.is_duplicate) {
+            setCheckedInToday(true);
             refreshProgress();
             toast.success(`출석 완료! +${result.xp_granted}XP 🥊`);
-            // Auto-start today's challenge after successful checkin
+            // Check auto_start setting - for now default to auto-start
             setTimeout(() => {
               toast.success("오늘 도전 시작! 💪");
               setShowChallenge(true);
