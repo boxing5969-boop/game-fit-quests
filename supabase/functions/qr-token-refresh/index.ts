@@ -35,16 +35,17 @@ Deno.serve(async (req) => {
     });
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims();
-    const userId = claimsData?.claims?.sub;
+    const { data: { user: authUser }, error: authError } = await supabaseUser.auth.getUser();
 
-    if (claimsError || !userId) {
-      console.error("[qr-token-refresh] Auth failed:", claimsError?.message ?? "missing claims");
+    if (authError || !authUser) {
+      console.error("[qr-token-refresh] Auth failed:", authError?.message ?? "no user");
       return new Response(JSON.stringify({ error: "인증 실패" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const userId = authUser.id;
 
     const { data: roleData } = await supabaseAdmin
       .from("user_roles")
