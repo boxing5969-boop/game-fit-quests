@@ -6,16 +6,18 @@ import RankBadge from "@/components/RankBadge";
 import LevelUpModal from "@/components/LevelUpModal";
 import WeeklyPrescriptionCard from "@/components/WeeklyPrescriptionCard";
 import RetentionBanner from "@/components/RetentionBanner";
+import SelfChallengeFlow from "@/components/SelfChallengeFlow";
 import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestData";
 import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useNavigate } from "react-router-dom";
-import { User, ChevronRight, TrendingUp, CheckCircle2 } from "lucide-react";
+import { User, ChevronRight, TrendingUp, CheckCircle2, Flame } from "lucide-react";
 import HallOfFameShowcase from "@/components/HallOfFameShowcase";
 import RankMiniCard from "@/components/RankMiniCard";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import { isManagerRole } from "@/lib/rankLabels";
+import { getLevelById, SELF_CHALLENGE_BONUS_XP } from "@/data/allLevelsData";
 import {
   WHITE_LV1_META,
   QUICK_ACTIONS,
@@ -45,7 +47,8 @@ const HomePage = () => {
   const attendance = useRecordAttendance();
   const setRival = useSetRival();
   const { onboardingDone, safetyDone } = useOnboardingState();
-  const { totalXp, status, metrics, activeLevelId } = useLocalProgress();
+  const { totalXp, status, metrics, activeLevelId, selfChallengeStreak } = useLocalProgress();
+  const [showChallenge, setShowChallenge] = useState(false);
   const [levelUpModal, setLevelUpModal] = useState<{ show: boolean; level: number; rank: string; xp: number }>({ show: false, level: 0, rank: "", xp: 0 });
 
   useEffect(() => {
@@ -275,14 +278,56 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* 12. CTA */}
-        <button
-          onClick={() => navigate("/missions")}
-          className="w-full animate-slide-up rounded-2xl bg-primary py-5 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
-          style={{ animationDelay: "0.3s" }}
-        >
-          🥊 오늘 도전 시작
-        </button>
+        {/* 12. Self-Challenge CTA */}
+        {showChallenge && isWhiteLevel ? (
+          <div className="animate-slide-up" style={{ animationDelay: "0.3s" }}>
+            <SelfChallengeFlow
+              league={rank}
+              levelInLeague={progress.current_level}
+              onComplete={() => setShowChallenge(false)}
+              onClose={() => setShowChallenge(false)}
+            />
+          </div>
+        ) : (
+          <div className="space-y-2 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+            {/* Recommended routine card */}
+            {isWhiteLevel && (
+              <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">📋</span>
+                    <span className="text-sm font-bold text-foreground">오늘의 추천 루틴</span>
+                  </div>
+                  {selfChallengeStreak > 0 && (
+                    <div className="flex items-center gap-1 rounded-full bg-status-pending/10 px-2 py-0.5">
+                      <Flame className="h-3 w-3 text-status-pending" />
+                      <span className="text-[10px] font-bold text-status-pending">{selfChallengeStreak}회 연속</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  자가 도전으로 완료 시 +{SELF_CHALLENGE_BONUS_XP}XP 보너스. 레벨업 진행은 동일합니다.
+                </p>
+                <button
+                  onClick={() => setShowChallenge(true)}
+                  className="w-full rounded-2xl bg-primary py-4 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
+                  style={{ fontFamily: "'Black Han Sans', sans-serif" }}
+                >
+                  🥊 자가 도전 시작
+                </button>
+              </div>
+            )}
+            {!isWhiteLevel && (
+              <button
+                onClick={() => navigate("/missions")}
+                className="w-full rounded-2xl bg-primary py-5 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
+                style={{ animationDelay: "0.3s" }}
+              >
+                🥊 오늘 도전 시작
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Coach shortcut */}
         {(role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin") && (
