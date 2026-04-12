@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import LevelStatusActionSheet from "@/components/LevelStatusActionSheet";
 import MissionVideoUpload from "@/components/MissionVideoUpload";
+import BulkCompleteModal from "@/components/BulkCompleteModal";
 
 type TabKey = "overview" | "missions" | "levelmap" | "activity" | "notes";
 
