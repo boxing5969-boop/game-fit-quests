@@ -9,6 +9,7 @@ import RetentionBanner from "@/components/RetentionBanner";
 import SelfChallengeFlow from "@/components/SelfChallengeFlow";
 import QRScannerModal from "@/components/QRScannerModal";
 import CheckinSuccessModal from "@/components/CheckinSuccessModal";
+import { loadHomeWidgetPrefs } from "@/pages/SettingsPage";
 import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestData";
 import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
