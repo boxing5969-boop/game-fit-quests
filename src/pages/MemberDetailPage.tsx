@@ -34,6 +34,7 @@ const MemberDetailPage = () => {
   const [noteType, setNoteType] = useState<"internal" | "visible">("internal");
   const [actionNote, setActionNote] = useState("");
   const [actionSheet, setActionSheet] = useState<{ rank: Enums<"rank_name">; level: number; status: string } | null>(null);
+  const [showBulkComplete, setShowBulkComplete] = useState(false);
 
   // Member profile + progress
   const { data: member, isLoading } = useQuery({
