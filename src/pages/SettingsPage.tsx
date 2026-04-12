@@ -55,6 +55,7 @@ const SettingsPage = () => {
   const navigate = useNavigate();
   const { profile, user, role, refreshProfile } = useAuth();
   const { data: branches } = useBranches();
+  const { resetOnboarding } = useOnboardingState();
   const qc = useQueryClient();
 
   const [name, setName] = useState("");
