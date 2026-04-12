@@ -522,6 +522,15 @@ const LoginPage = () => {
         )}
       </form>
 
+      {/* Login Error Modal */}
+      {loginErrorType && (
+        <LoginErrorModal
+          type={loginErrorType}
+          onClose={() => setLoginErrorType(null)}
+          onRetry={loginErrorType !== "approval_pending" && loginErrorType !== "coach_approval_pending" ? () => { setLoginErrorType(null); setError(""); } : undefined}
+        />
+      )}
+
       {/* Privacy consent modal */}
       {showPrivacy && (
         <PrivacyConsentModal
