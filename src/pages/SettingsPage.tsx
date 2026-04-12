@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,7 +14,28 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { isManagerRole } from "@/lib/rankLabels";
+
+// ── Home widget toggle helpers ──
+const HOME_PREFS_KEY = "home-widget-prefs";
+
+export interface HomeWidgetPrefs {
+  showRestartRoutine: boolean;
+  showWeeklyPrescription: boolean;
+}
+
+export function loadHomeWidgetPrefs(): HomeWidgetPrefs {
+  try {
+    const raw = localStorage.getItem(HOME_PREFS_KEY);
+    if (raw) return { ...{ showRestartRoutine: true, showWeeklyPrescription: true }, ...JSON.parse(raw) };
+  } catch {}
+  return { showRestartRoutine: true, showWeeklyPrescription: true };
+}
+
+function saveHomeWidgetPrefs(prefs: HomeWidgetPrefs) {
+  localStorage.setItem(HOME_PREFS_KEY, JSON.stringify(prefs));
+}
 
 const useBranches = () =>
   useQuery({
@@ -38,6 +59,16 @@ const SettingsPage = () => {
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Home widget prefs
+  const [widgetPrefs, setWidgetPrefs] = useState<HomeWidgetPrefs>(loadHomeWidgetPrefs);
+  const toggleWidget = useCallback((key: keyof HomeWidgetPrefs) => {
+    setWidgetPrefs(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      saveHomeWidgetPrefs(next);
+      return next;
+    });
+  }, []);
 
   // Branch transfer
   const [transferBranch, setTransferBranch] = useState("");
@@ -201,8 +232,29 @@ const SettingsPage = () => {
       </div>
 
       <div className="space-y-5">
-        {/* Profile Edit */}
+        {/* Home Widget Toggles */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h2 className="mb-4 text-base font-bold text-foreground">🏠 홈 화면 설정</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">리스타트 루틴</p>
+                <p className="text-[11px] text-muted-foreground">복귀 배너 표시 (5일+ 미활동 시)</p>
+              </div>
+              <Switch checked={widgetPrefs.showRestartRoutine} onCheckedChange={() => toggleWidget("showRestartRoutine")} />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">이번 주 추천</p>
+                <p className="text-[11px] text-muted-foreground">주간 처방 카드 표시</p>
+              </div>
+              <Switch checked={widgetPrefs.showWeeklyPrescription} onCheckedChange={() => toggleWidget("showWeeklyPrescription")} />
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Edit */}
+        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm" style={{ animationDelay: "0.03s" }}>
           <h2 className="mb-4 text-base font-bold text-foreground">👤 프로필 수정</h2>
           <div className="space-y-4">
             <div className="space-y-2">
