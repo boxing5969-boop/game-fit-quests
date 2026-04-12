@@ -99,6 +99,23 @@ const HomePage = () => {
       </div>
 
       <div className="space-y-5">
+        {/* QR Checkin Button */}
+        <button
+          onClick={() => setShowQRScanner(true)}
+          className="w-full animate-slide-up rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 p-4 shadow-sm transition-all active:scale-[0.98]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20">
+              <QrCode className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-bold text-foreground">체육관 체크인</p>
+              <p className="text-xs text-muted-foreground">QR 스캔으로 출석 + 10XP</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-primary" />
+          </div>
+        </button>
+
         {/* MASTER 40 */}
         {isMaster40 && (
           <div className="animate-bounce-in rounded-2xl border-2 border-accent bg-gradient-to-r from-accent/20 to-primary/20 p-5 text-center shadow-lg">
