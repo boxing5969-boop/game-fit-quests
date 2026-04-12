@@ -40,6 +40,20 @@ const STATUS_STYLE: Record<string, { bg: string; text: string }> = {
   "코치 확인 필요": { bg: "bg-destructive/10", text: "text-destructive" },
 };
 
+const ALL_MENU_ITEMS = [
+  { path: "/home", emoji: "🏠", label: "홈" },
+  { path: "/missions", emoji: "🎯", label: "훈련" },
+  { path: "/rank-up", emoji: "📈", label: "랭크업" },
+  { path: "/halloffame", emoji: "🏆", label: "명예의전당" },
+  { path: "/cert-benefits", emoji: "🏅", label: "단증혜택" },
+  { path: "/guide", emoji: "📖", label: "가이드" },
+  { path: "/mypage", emoji: "👤", label: "내정보" },
+  { path: "/settings", emoji: "⚙️", label: "설정" },
+  { path: "/level-map", emoji: "🗺️", label: "리그맵" },
+  { path: "/rewards", emoji: "🎁", label: "보상" },
+  { path: "/quests", emoji: "⚡", label: "퀘스트" },
+];
+
 const HomePage = () => {
   const { user, profile, progress, role, refreshProgress } = useAuth();
   const navigate = useNavigate();
