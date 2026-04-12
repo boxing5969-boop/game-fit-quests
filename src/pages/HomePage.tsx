@@ -389,7 +389,7 @@ const HomePage = () => {
         ) : (
           <div className="space-y-2 animate-slide-up" style={{ animationDelay: "0.3s" }}>
             {/* Recommended routine card */}
-            <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 p-4">
+            <div className={`rounded-2xl border p-4 ${checkedInToday ? "border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5" : "border-border bg-muted/30"}`}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">📋</span>
@@ -406,14 +406,34 @@ const HomePage = () => {
                 {unifiedLevel?.title || `${RANK_LABELS[rank]} 리그 · 레벨 ${progress.current_level}`}
               </p>
               <p className="text-xs text-muted-foreground mb-3">
-                오늘 도전으로 완료 시 +{SELF_CHALLENGE_BONUS_XP}XP 보너스. 레벨업 진행은 동일합니다.
+                {checkedInToday
+                  ? `오늘 도전으로 완료 시 +${SELF_CHALLENGE_BONUS_XP}XP 보너스. 레벨업 진행은 동일합니다.`
+                  : "체육관 체크인 후 도전을 시작할 수 있어요"}
               </p>
               <button
-                onClick={() => setShowChallenge(true)}
-                className="w-full rounded-2xl bg-primary py-4 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
+                onClick={() => {
+                  if (checkedInToday) {
+                    setShowChallenge(true);
+                  } else {
+                    toast.error("체육관 QR 체크인 후 도전을 시작할 수 있어요 🥊");
+                  }
+                }}
+                disabled={!checkedInToday}
+                className={`w-full rounded-2xl py-4 text-center text-lg font-bold shadow-lg transition-all ${
+                  checkedInToday
+                    ? "bg-primary text-primary-foreground active:scale-[0.98]"
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                }`}
                 style={{ fontFamily: "'Black Han Sans', sans-serif" }}
               >
-                🥊 오늘 도전 시작
+                {checkedInToday ? (
+                  "🥊 오늘 도전 시작"
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <Lock className="h-5 w-5" />
+                    오늘 도전 시작
+                  </span>
+                )}
               </button>
             </div>
           </div>
