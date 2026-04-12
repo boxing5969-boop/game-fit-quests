@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,7 +14,28 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { isManagerRole } from "@/lib/rankLabels";
+
+// ── Home widget toggle helpers ──
+const HOME_PREFS_KEY = "home-widget-prefs";
+
+export interface HomeWidgetPrefs {
+  showRestartRoutine: boolean;
+  showWeeklyPrescription: boolean;
+}
+
+export function loadHomeWidgetPrefs(): HomeWidgetPrefs {
+  try {
+    const raw = localStorage.getItem(HOME_PREFS_KEY);
+    if (raw) return { ...{ showRestartRoutine: true, showWeeklyPrescription: true }, ...JSON.parse(raw) };
+  } catch {}
+  return { showRestartRoutine: true, showWeeklyPrescription: true };
+}
+
+function saveHomeWidgetPrefs(prefs: HomeWidgetPrefs) {
+  localStorage.setItem(HOME_PREFS_KEY, JSON.stringify(prefs));
+}
 
 const useBranches = () =>
   useQuery({
@@ -38,6 +59,16 @@ const SettingsPage = () => {
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Home widget prefs
+  const [widgetPrefs, setWidgetPrefs] = useState<HomeWidgetPrefs>(loadHomeWidgetPrefs);
+  const toggleWidget = useCallback((key: keyof HomeWidgetPrefs) => {
+    setWidgetPrefs(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      saveHomeWidgetPrefs(next);
+      return next;
+    });
+  }, []);
 
   // Branch transfer
   const [transferBranch, setTransferBranch] = useState("");
