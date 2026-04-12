@@ -477,6 +477,14 @@ const BranchManagerHome = () => {
           >
             📋 심사
           </button>
+          <button
+            onClick={() => setMainTab("operations")}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+              mainTab === "operations" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            ⚡ 운영
+          </button>
         </div>
 
         {mainTab === "inbox" && <ApprovalInbox />}
