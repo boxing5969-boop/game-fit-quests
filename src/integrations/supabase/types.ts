@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_bulk_actions: {
+        Row: {
+          action_type: string
+          can_rollback: boolean
+          created_at: string
+          executed_by: string
+          id: string
+          payload_json: Json
+          reason: string
+          summary: string
+          target_user_id: string
+        }
+        Insert: {
+          action_type?: string
+          can_rollback?: boolean
+          created_at?: string
+          executed_by: string
+          id?: string
+          payload_json?: Json
+          reason?: string
+          summary?: string
+          target_user_id: string
+        }
+        Update: {
+          action_type?: string
+          can_rollback?: boolean
+          created_at?: string
+          executed_by?: string
+          id?: string
+          payload_json?: Json
+          reason?: string
+          summary?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       attendance_logs: {
         Row: {
           branch_name: string
@@ -930,6 +966,15 @@ export type Database = {
       }
       approve_quest_submission: {
         Args: { _coach_note?: string; _submission_id: string }
+        Returns: Json
+      }
+      bulk_complete_member: {
+        Args: {
+          _member_id: string
+          _options?: Json
+          _reason?: string
+          _send_notification?: boolean
+        }
         Returns: Json
       }
       create_notification: {
