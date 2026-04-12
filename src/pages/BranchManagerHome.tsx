@@ -490,6 +490,7 @@ const BranchManagerHome = () => {
         {mainTab === "inbox" && <ApprovalInbox />}
         {mainTab === "members" && <MemberListContent />}
         {mainTab === "level_review" && <CoachLevelReviewInbox />}
+        {mainTab === "operations" && <DailyOperationsBoard />}
       </div>
 
       {/* ── Desktop 2-Column Layout (>= lg) ── */}
