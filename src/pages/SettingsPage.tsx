@@ -254,6 +254,22 @@ const SettingsPage = () => {
           </div>
         </div>
 
+        {/* Onboarding replay */}
+        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm" style={{ animationDelay: "0.01s" }}>
+          <h2 className="mb-3 text-base font-bold text-foreground">📖 온보딩</h2>
+          <p className="mb-3 text-xs text-muted-foreground">153 랭크업 시스템 소개를 다시 볼 수 있습니다.</p>
+          <button
+            onClick={() => {
+              const { resetOnboarding } = useOnboardingState();
+              resetOnboarding();
+              navigate("/onboarding");
+            }}
+            className="rounded-xl bg-primary/10 px-4 py-2.5 text-sm font-bold text-primary transition-all active:scale-95"
+          >
+            온보딩 다시 보기
+          </button>
+        </div>
+
         {/* Profile Edit */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm" style={{ animationDelay: "0.03s" }}>
           <h2 className="mb-4 text-base font-bold text-foreground">👤 프로필 수정</h2>
