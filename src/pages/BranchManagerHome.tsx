@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
+import DailyOperationsBoard from "@/components/DailyOperationsBoard";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,7 @@ const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, blac
 
 type FilterType = "all" | "pending" | "active" | "boss_ready" | "unapproved";
 type SortType = "recent_submission" | "level_desc" | "pending_count";
-type MainTab = "members" | "inbox" | "level_review";
+type MainTab = "members" | "inbox" | "level_review" | "operations";
 
 const BranchManagerHome = () => {
   const navigate = useNavigate();
