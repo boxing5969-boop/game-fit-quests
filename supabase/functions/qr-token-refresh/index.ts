@@ -32,8 +32,8 @@ Deno.serve(async (req) => {
     });
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token);
+    const jwt = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(jwt);
     if (claimsError || !claimsData?.claims?.sub) {
       console.error("[qr-token-refresh] Auth failed:", claimsError?.message);
       return new Response(JSON.stringify({ error: "인증 실패" }), {
