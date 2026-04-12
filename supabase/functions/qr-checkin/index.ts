@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "인증이 필요합니다" }), {
+      return new Response(JSON.stringify({ error: "인증이 필요합니다", code: "NO_AUTH" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -27,35 +27,46 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "유효하지 않은 사용자입니다" }), {
+      console.error("[qr-checkin] Auth failed:", authError?.message);
+      return new Response(JSON.stringify({ error: "유효하지 않은 사용자입니다", code: "INVALID_USER" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const { token } = await req.json();
     if (!token || typeof token !== "string") {
-      return new Response(JSON.stringify({ error: "토큰이 필요합니다" }), {
+      return new Response(JSON.stringify({ error: "토큰이 필요합니다", code: "NO_TOKEN" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log(`[qr-checkin] User ${user.id} scanning token ${token.substring(0, 6)}...`);
 
     // 1. Validate QR token
     const { data: qrToken, error: tokenError } = await supabaseAdmin
       .from("qr_checkin_tokens")
       .select("*")
       .eq("token", token)
-      .eq("is_active", true)
       .single();
 
     if (tokenError || !qrToken) {
-      return new Response(JSON.stringify({ error: "유효하지 않은 QR입니다" }), {
+      console.error("[qr-checkin] Token not found:", token.substring(0, 6));
+      return new Response(JSON.stringify({ error: "유효하지 않은 QR입니다", code: "INVALID_QR" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!qrToken.is_active) {
+      console.error("[qr-checkin] Token inactive:", token.substring(0, 6));
+      return new Response(JSON.stringify({ error: "만료된 QR입니다. 새 QR을 스캔해주세요", code: "INACTIVE_QR" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     // Check expiry
     if (new Date(qrToken.expires_at) < new Date()) {
-      return new Response(JSON.stringify({ error: "만료된 QR입니다. 새 QR을 스캔해주세요" }), {
+      console.error("[qr-checkin] Token expired:", qrToken.expires_at);
+      return new Response(JSON.stringify({ error: "만료된 QR입니다. 새 QR을 스캔해주세요", code: "EXPIRED_QR" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -68,13 +79,15 @@ Deno.serve(async (req) => {
       .single();
 
     if (!profile) {
-      return new Response(JSON.stringify({ error: "프로필을 찾을 수 없습니다" }), {
+      console.error("[qr-checkin] Profile not found for user:", user.id);
+      return new Response(JSON.stringify({ error: "프로필을 찾을 수 없습니다", code: "NO_PROFILE" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (profile.branch_name !== qrToken.branch_name) {
-      return new Response(JSON.stringify({ error: "다른 지점의 QR입니다" }), {
+      console.error(`[qr-checkin] Branch mismatch: user=${profile.branch_name}, qr=${qrToken.branch_name}`);
+      return new Response(JSON.stringify({ error: "다른 지점의 QR입니다", code: "WRONG_BRANCH" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -82,7 +95,7 @@ Deno.serve(async (req) => {
     // 3. Get member progress
     const { data: progress } = await supabaseAdmin
       .from("member_progress")
-      .select("current_rank, current_level, total_xp")
+      .select("current_rank, current_level, total_xp, streak_days")
       .eq("user_id", user.id)
       .single();
 
@@ -134,25 +147,29 @@ Deno.serve(async (req) => {
       .single();
 
     if (logError) {
-      return new Response(JSON.stringify({ error: "체크인 처리 중 오류가 발생했습니다" }), {
+      console.error("[qr-checkin] Insert attendance_logs failed:", logError.message);
+      return new Response(JSON.stringify({ error: "체크인 처리 중 오류가 발생했습니다", code: "INSERT_FAILED", detail: logError.message }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     // 7. Grant XP if not duplicate and approved
     if (xpAmount > 0) {
-      await supabaseAdmin.from("xp_logs").insert({
+      const { error: xpError } = await supabaseAdmin.from("xp_logs").insert({
         user_id: user.id,
         amount: xpAmount,
         reason: "QR 체크인 출석",
       });
-      await supabaseAdmin
+      if (xpError) console.error("[qr-checkin] xp_logs insert failed:", xpError.message);
+
+      const { error: progressError } = await supabaseAdmin
         .from("member_progress")
         .update({ 
           total_xp: (progress?.total_xp || 0) + xpAmount,
-          streak_days: ((progress as any)?.streak_days || 0) + 1,
+          streak_days: (progress?.streak_days || 0) + 1,
         })
         .eq("user_id", user.id);
+      if (progressError) console.error("[qr-checkin] member_progress update failed:", progressError.message);
 
       // Create notification
       await supabaseAdmin.from("notifications").insert({
@@ -161,6 +178,8 @@ Deno.serve(async (req) => {
         body: "오늘도 복싱 레벨업 중!",
       });
     }
+
+    console.log(`[qr-checkin] Success: user=${user.id}, duplicate=${isDuplicate}, xp=${xpAmount}`);
 
     return new Response(JSON.stringify({
       success: true,
@@ -175,7 +194,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: "서버 오류가 발생했습니다" }), {
+    console.error("[qr-checkin] Unexpected error:", e);
+    return new Response(JSON.stringify({ error: "서버 오류가 발생했습니다", code: "SERVER_ERROR" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

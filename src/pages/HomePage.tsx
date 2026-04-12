@@ -424,7 +424,12 @@ const HomePage = () => {
           setShowCheckinSuccess(true);
           if (!result.is_duplicate) {
             refreshProgress();
-            toast.success(`출석 완료! +${result.xp_granted}XP`);
+            toast.success(`출석 완료! +${result.xp_granted}XP 🥊`);
+            // Auto-start today's challenge after successful checkin
+            setTimeout(() => {
+              toast.success("오늘 도전 시작! 💪");
+              setShowChallenge(true);
+            }, 1500);
           }
         }}
       />

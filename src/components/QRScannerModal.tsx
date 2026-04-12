@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { X, Camera, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface QRScannerModalProps {
   open: boolean;
@@ -15,6 +14,68 @@ interface QRScannerModalProps {
     level: number;
   }) => void;
 }
+
+/**
+ * Parse scanned QR text to extract a token.
+ * Supports:
+ *  - JSON: {"token":"..."}
+ *  - URL:  /checkin?token=...&branch=...  or full https://...
+ *  - Raw string (fallback)
+ */
+function extractToken(raw: string): { token: string | null; error?: string } {
+  const trimmed = raw.trim();
+  if (!trimmed) return { token: null, error: "빈 QR 코드입니다" };
+
+  // 1. Try JSON
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (parsed.token && typeof parsed.token === "string") {
+      return { token: parsed.token };
+    }
+  } catch {
+    // not JSON, continue
+  }
+
+  // 2. Try URL with query params
+  try {
+    let url: URL;
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      url = new URL(trimmed);
+    } else if (trimmed.startsWith("/")) {
+      url = new URL(trimmed, "https://placeholder.com");
+    } else {
+      // Could be a raw token string
+      if (trimmed.length >= 16 && /^[A-Za-z0-9]+$/.test(trimmed)) {
+        return { token: trimmed };
+      }
+      return { token: null, error: "유효하지 않은 QR입니다" };
+    }
+    const token = url.searchParams.get("token");
+    if (token) return { token };
+  } catch {
+    // not a URL
+  }
+
+  // 3. Raw alphanumeric string (token-like)
+  if (trimmed.length >= 16 && /^[A-Za-z0-9]+$/.test(trimmed)) {
+    return { token: trimmed };
+  }
+
+  return { token: null, error: "유효하지 않은 QR입니다" };
+}
+
+const ERROR_MESSAGES: Record<string, string> = {
+  NO_AUTH: "로그인이 필요합니다",
+  INVALID_USER: "유효하지 않은 사용자입니다",
+  NO_TOKEN: "토큰이 없습니다",
+  INVALID_QR: "유효하지 않은 QR입니다",
+  INACTIVE_QR: "만료된 QR입니다. 새 QR을 스캔해주세요",
+  EXPIRED_QR: "만료된 QR입니다. 새 QR을 스캔해주세요",
+  NO_PROFILE: "프로필을 찾을 수 없습니다",
+  WRONG_BRANCH: "다른 지점의 QR입니다",
+  INSERT_FAILED: "체크인 처리 중 오류가 발생했습니다",
+  SERVER_ERROR: "잠시 후 다시 시도해주세요",
+};
 
 const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
   const [error, setError] = useState<string | null>(null);
@@ -43,28 +104,41 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
     await stopScanner();
 
     try {
-      // Parse QR data - expects JSON with token
-      let token: string;
-      try {
-        const data = JSON.parse(decodedText);
-        token = data.token;
-      } catch {
-        token = decodedText; // fallback: raw token string
+      // Parse QR data
+      const { token, error: parseError } = extractToken(decodedText);
+      if (!token) {
+        setError(parseError || "유효하지 않은 QR입니다");
+        setProcessing(false);
+        return;
       }
+
+      console.log("[QR Scanner] Token extracted, calling qr-checkin...");
 
       const { data, error: fnError } = await supabase.functions.invoke("qr-checkin", {
         body: { token },
       });
 
-      if (fnError || data?.error) {
-        setError(data?.error || "체크인 처리 중 오류가 발생했습니다");
+      if (fnError) {
+        console.error("[QR Scanner] Function invoke error:", fnError);
+        setError("네트워크 오류가 발생했습니다");
         setProcessing(false);
         return;
       }
 
+      if (data?.error) {
+        const code = data?.code as string;
+        const message = (code && ERROR_MESSAGES[code]) || data.error;
+        console.error("[QR Scanner] Server error:", code, data.error);
+        setError(message);
+        setProcessing(false);
+        return;
+      }
+
+      console.log("[QR Scanner] Checkin success:", data);
       onSuccess(data);
-    } catch {
-      setError("네트워크 연결을 확인해주세요");
+    } catch (e) {
+      console.error("[QR Scanner] Unexpected error:", e);
+      setError("네트워크 오류가 발생했습니다");
       setProcessing(false);
     }
   }, [processing, stopScanner, onSuccess]);
@@ -97,8 +171,11 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
           () => {} // ignore errors during scanning
         );
       } catch (err: any) {
-        if (err?.toString().includes("Permission")) {
-          setError("카메라 접근 권한이 필요합니다. 설정에서 카메라 권한을 허용해주세요.");
+        const errStr = err?.toString() || "";
+        if (errStr.includes("Permission") || errStr.includes("NotAllowedError")) {
+          setError("카메라 권한이 필요합니다. 설정에서 카메라 권한을 허용해주세요.");
+        } else if (errStr.includes("NotFoundError") || errStr.includes("DevicesNotFoundError")) {
+          setError("카메라를 찾을 수 없습니다");
         } else {
           setError("카메라를 사용할 수 없습니다");
         }
@@ -115,6 +192,31 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
   }, [open]); // eslint-disable-line
 
   if (!open) return null;
+
+  const retryScanner = () => {
+    setError(null);
+    setProcessing(false);
+    // Re-open scanner by triggering effect
+    stopScanner().then(() => {
+      const startScanner = async () => {
+        setScanning(true);
+        try {
+          const scanner = new Html5Qrcode("qr-reader");
+          scannerRef.current = scanner;
+          await scanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
+            handleScan,
+            () => {}
+          );
+        } catch {
+          setError("카메라를 사용할 수 없습니다");
+          setScanning(false);
+        }
+      };
+      setTimeout(startScanner, 200);
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90">
@@ -152,7 +254,7 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
               <div>
                 <p className="text-sm font-medium text-white">{error}</p>
                 <button
-                  onClick={() => { setError(null); setProcessing(false); window.location.reload(); }}
+                  onClick={retryScanner}
                   className="mt-2 rounded-lg bg-white/20 px-4 py-2 text-sm font-bold text-white transition-all active:scale-95"
                 >
                   다시 시도
