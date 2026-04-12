@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import XPBar from "@/components/XPBar";
@@ -14,7 +14,7 @@ import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestDat
 import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useNavigate } from "react-router-dom";
-import { User, ChevronRight, TrendingUp, CheckCircle2, Flame, QrCode, X } from "lucide-react";
+import { User, ChevronRight, TrendingUp, CheckCircle2, Flame, QrCode, X, Lock } from "lucide-react";
 import HallOfFameShowcase from "@/components/HallOfFameShowcase";
 import RankMiniCard from "@/components/RankMiniCard";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ import {
   formatMicrocopy,
 } from "@/data/whiteLevel1Data";
 import { WHITE_LV2_META, WHITE_LV2_PROMOTION_METRICS } from "@/data/whiteLevel2Data";
+import { supabase } from "@/integrations/supabase/client";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
