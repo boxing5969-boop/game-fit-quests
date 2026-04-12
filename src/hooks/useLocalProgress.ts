@@ -36,6 +36,15 @@ export interface TrainingSession {
   levelId: string;
 }
 
+export interface DailyParticipationRecord {
+  date: string;
+  mode: "self_challenge" | "coach_backup" | "partial" | "needs_review";
+  xpAwarded: number;
+  bonusXp: number;
+  actualMinutes: number;
+  selfChallengeStreak: number;
+}
+
 export interface LocalProgress {
   // Global (legacy compat)
   totalXp: number;
@@ -50,11 +59,16 @@ export interface LocalProgress {
   attendanceDateSet: string[];
 
   // Per-level cycle (new)
-  currentLevelId: string; // "white-1" or "white-2"
+  currentLevelId: string;
   levelProgress: Record<string, LevelCycleProgress>;
 
   // Session log
   sessions: TrainingSession[];
+
+  // Self-challenge tracking
+  selfChallengeStreak: number;
+  lastSelfChallengeDate: string | null;
+  dailyParticipations: DailyParticipationRecord[];
 }
 
 const STORAGE_KEY = "white-lv1-progress";
