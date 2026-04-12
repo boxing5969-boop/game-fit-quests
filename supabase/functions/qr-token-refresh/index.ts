@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
     if (authError || !user) {
+      console.error("[qr-token-refresh] Auth failed:", authError?.message);
       return new Response(JSON.stringify({ error: "인증 실패" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -47,6 +48,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (!roleData || !["branch_manager", "super_admin", "admin"].includes(roleData.role)) {
+      console.error("[qr-token-refresh] Unauthorized role:", roleData?.role);
       return new Response(JSON.stringify({ error: "권한이 없습니다" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -60,12 +62,24 @@ Deno.serve(async (req) => {
       .single();
 
     if (!profile?.branch_name) {
+      console.error("[qr-token-refresh] No branch for user:", user.id);
       return new Response(JSON.stringify({ error: "지점 정보를 찾을 수 없습니다" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const branchName = profile.branch_name;
+
+    // Parse optional expiry duration from body (default 5 min)
+    let expirySeconds = 300; // 5 minutes default
+    try {
+      const body = await req.json();
+      if (body?.expiry_seconds && typeof body.expiry_seconds === "number") {
+        expirySeconds = Math.min(Math.max(body.expiry_seconds, 10), 600); // 10s ~ 10min
+      }
+    } catch {
+      // no body, use default
+    }
 
     // Deactivate existing tokens for this branch
     await supabaseAdmin
@@ -74,9 +88,9 @@ Deno.serve(async (req) => {
       .eq("branch_name", branchName)
       .eq("is_active", true);
 
-    // Generate new token with 30-second expiry
+    // Generate new token
     const token = generateToken();
-    const expiresAt = new Date(Date.now() + 30 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + expirySeconds * 1000).toISOString();
 
     const { data: newToken, error: insertError } = await supabaseAdmin
       .from("qr_checkin_tokens")
@@ -91,6 +105,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (insertError) {
+      console.error("[qr-token-refresh] Insert failed:", insertError.message);
       return new Response(JSON.stringify({ error: "토큰 생성 실패" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -101,14 +116,18 @@ Deno.serve(async (req) => {
       .from("branch_display_settings")
       .upsert({ branch_name: branchName }, { onConflict: "branch_name" });
 
+    console.log(`[qr-token-refresh] Token created for ${branchName}, expires in ${expirySeconds}s`);
+
     return new Response(JSON.stringify({
       token: newToken.token,
       expires_at: newToken.expires_at,
       branch_name: branchName,
+      expiry_seconds: expirySeconds,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    console.error("[qr-token-refresh] Unexpected error:", e);
     return new Response(JSON.stringify({ error: "서버 오류" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
