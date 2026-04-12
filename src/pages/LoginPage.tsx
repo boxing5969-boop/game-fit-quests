@@ -6,8 +6,6 @@ import { lovable } from "@/integrations/lovable/index";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import LoginErrorModal, { classifyLoginError } from "@/components/LoginErrorModal";
-import type { ErrorType } from "@/components/LoginErrorModal";
-import { toast } from "sonner";
 import {
   Select,
   SelectContent,
