@@ -3,13 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import LevelStatusActionSheet from "@/components/LevelStatusActionSheet";
 import MissionVideoUpload from "@/components/MissionVideoUpload";
+import BulkCompleteModal from "@/components/BulkCompleteModal";
 
 type TabKey = "overview" | "missions" | "levelmap" | "activity" | "notes";
 
@@ -33,6 +34,7 @@ const MemberDetailPage = () => {
   const [noteType, setNoteType] = useState<"internal" | "visible">("internal");
   const [actionNote, setActionNote] = useState("");
   const [actionSheet, setActionSheet] = useState<{ rank: Enums<"rank_name">; level: number; status: string } | null>(null);
+  const [showBulkComplete, setShowBulkComplete] = useState(false);
 
   // Member profile + progress
   const { data: member, isLoading } = useQuery({
@@ -345,9 +347,18 @@ const MemberDetailPage = () => {
             </div>
           </div>
 
-          {/* Delete Account (super_admin only) */}
+          {/* Super Admin: Bulk Complete */}
           {role === "super_admin" && (
-            <div className="pt-4 border-t border-border">
+            <div className="space-y-2 pt-2 border-t border-border">
+              <h3 className="text-sm font-bold text-destructive flex items-center gap-1.5">
+                <Shield className="h-4 w-4" /> 전체관리자 전용
+              </h3>
+              <button
+                onClick={() => setShowBulkComplete(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-destructive/30 bg-destructive/5 py-3 text-sm font-bold text-destructive transition-all active:scale-[0.98] hover:bg-destructive/10"
+              >
+                <Crown className="h-4 w-4" /> 회원 전체 완료 처리
+              </button>
               <button
                 onClick={() => {
                   if (confirm(`"${p.nickname || p.name}" 계정을 완전히 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
@@ -360,7 +371,7 @@ const MemberDetailPage = () => {
                 <Trash2 className="h-4 w-4" />
                 {deleteUserMut.isPending ? "삭제 중..." : "계정 삭제"}
               </button>
-              <p className="mt-1 text-center text-[10px] text-muted-foreground">모든 데이터가 영구 삭제됩니다</p>
+              <p className="text-center text-[10px] text-muted-foreground">모든 데이터가 영구 삭제됩니다</p>
             </div>
           )}
         </div>
@@ -555,6 +566,20 @@ const MemberDetailPage = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Bulk Complete Modal (super_admin only) */}
+      {role === "super_admin" && memberId && (
+        <BulkCompleteModal
+          open={showBulkComplete}
+          onClose={() => setShowBulkComplete(false)}
+          memberId={memberId}
+          memberName={p.nickname || p.name}
+          currentRank={prog.current_rank}
+          currentLevel={prog.current_level}
+          currentXp={prog.total_xp}
+          bossesCleard={prog.bosses_cleared}
+        />
       )}
     </div>
   );
