@@ -46,7 +46,21 @@ const GuidePage = () => {
       </div>
 
       {activeTab === "program" && <ProgramTab />}
-      {activeTab === "whitefaq" && <WhiteFaqTab />}
+      {activeTab === "whitefaq" && (
+        <div className="space-y-3 animate-slide-up">
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+            <p className="text-xs text-foreground leading-relaxed">
+              프로그램에 대해 자주 묻는 질문을 모았습니다. 자가 도전, 코치 백업, 1~40 전체 경로에 대한 설명을 확인하세요.
+            </p>
+          </div>
+          {WHITE_FAQ.map((item, i) => (
+            <div key={i} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <p className="mb-2 text-sm font-bold text-foreground">❓ {item.q}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{item.a}</p>
+            </div>
+          ))}
+        </div>
+      )}
       {activeTab === "science" && <ScienceTab />}
       {activeTab === "valuemap" && <ValueMapTab />}
       {activeTab === "exercise" && <ExerciseTab />}
