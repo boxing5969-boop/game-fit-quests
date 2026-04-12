@@ -286,6 +286,41 @@ export function useLocalProgress() {
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
+  const recordSelfChallenge = useCallback((minutes: number, xp: number, bonusXp: number): number => {
+    const today = new Date().toISOString().slice(0, 10);
+    let newStreak = 0;
+
+    setLocal(prev => {
+      // Calculate streak
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const isConsecutive = prev.lastSelfChallengeDate === yesterday || prev.lastSelfChallengeDate === today;
+      newStreak = prev.lastSelfChallengeDate === today
+        ? prev.selfChallengeStreak
+        : isConsecutive
+          ? prev.selfChallengeStreak + 1
+          : 1;
+
+      const participation: DailyParticipationRecord = {
+        date: today,
+        mode: "self_challenge",
+        xpAwarded: xp,
+        bonusXp,
+        actualMinutes: minutes,
+        selfChallengeStreak: newStreak,
+      };
+
+      return {
+        ...prev,
+        totalXp: prev.totalXp + bonusXp, // base XP already recorded via recordSession
+        selfChallengeStreak: newStreak,
+        lastSelfChallengeDate: today,
+        dailyParticipations: [...prev.dailyParticipations, participation],
+      };
+    });
+
+    return newStreak;
+  }, []);
+
   // Computed metrics for UI (compatible with existing code)
   const metrics = useMemo(() => ({
     xp: { current: activeProgress.currentLevelXp, target: rules.minXp },
@@ -308,11 +343,14 @@ export function useLocalProgress() {
     canAttemptChecklist,
     recordSession,
     recordHomeMission,
+    recordSelfChallenge,
     submitChecklist,
     resetProgress,
     activeLevelId,
     activeProgress,
     rules,
     sessions: local.sessions,
+    selfChallengeStreak: local.selfChallengeStreak,
+    dailyParticipations: local.dailyParticipations,
   };
 }
