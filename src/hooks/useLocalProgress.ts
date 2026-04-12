@@ -91,6 +91,9 @@ function getDefaultProgress(): LocalProgress {
       "white-2": createDefaultLevelProgress(),
     },
     sessions: [],
+    selfChallengeStreak: 0,
+    lastSelfChallengeDate: null,
+    dailyParticipations: [],
   };
 }
 
