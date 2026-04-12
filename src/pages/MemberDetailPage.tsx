@@ -347,9 +347,18 @@ const MemberDetailPage = () => {
             </div>
           </div>
 
-          {/* Delete Account (super_admin only) */}
+          {/* Super Admin: Bulk Complete */}
           {role === "super_admin" && (
-            <div className="pt-4 border-t border-border">
+            <div className="space-y-2 pt-2 border-t border-border">
+              <h3 className="text-sm font-bold text-destructive flex items-center gap-1.5">
+                <Shield className="h-4 w-4" /> 전체관리자 전용
+              </h3>
+              <button
+                onClick={() => setShowBulkComplete(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-destructive/30 bg-destructive/5 py-3 text-sm font-bold text-destructive transition-all active:scale-[0.98] hover:bg-destructive/10"
+              >
+                <Crown className="h-4 w-4" /> 회원 전체 완료 처리
+              </button>
               <button
                 onClick={() => {
                   if (confirm(`"${p.nickname || p.name}" 계정을 완전히 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
@@ -362,7 +371,7 @@ const MemberDetailPage = () => {
                 <Trash2 className="h-4 w-4" />
                 {deleteUserMut.isPending ? "삭제 중..." : "계정 삭제"}
               </button>
-              <p className="mt-1 text-center text-[10px] text-muted-foreground">모든 데이터가 영구 삭제됩니다</p>
+              <p className="text-center text-[10px] text-muted-foreground">모든 데이터가 영구 삭제됩니다</p>
             </div>
           )}
         </div>
