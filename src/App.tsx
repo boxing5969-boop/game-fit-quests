@@ -33,6 +33,8 @@ import GuideFaqPage from "@/pages/guide/GuideFaqPage";
 import RankUpPage from "@/pages/RankUpPage";
 import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
+import CheckinBoardPage from "@/pages/CheckinBoardPage";
+import LiveBoardPage from "@/pages/LiveBoardPage";
 import { isManagerRole } from "@/lib/rankLabels";
 
 const queryClient = new QueryClient();
@@ -136,6 +138,8 @@ const AppRoutes = () => {
         <Route path="/manager" element={<ProtectedRoute><ManagerRoute><BranchManagerHome /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/member/:memberId" element={<ProtectedRoute><ManagerRoute><MemberDetailPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/member/:memberId/preview" element={<ProtectedRoute><ManagerRoute><MemberPreviewPage /></ManagerRoute></ProtectedRoute>} />
+        <Route path="/manager/checkin-board" element={<ProtectedRoute><ManagerRoute><CheckinBoardPage /></ManagerRoute></ProtectedRoute>} />
+        <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomNav />

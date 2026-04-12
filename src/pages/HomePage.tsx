@@ -345,6 +345,26 @@ const HomePage = () => {
         newRank={levelUpModal.rank}
         xpGranted={levelUpModal.xp}
       />
+
+      <QRScannerModal
+        open={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onSuccess={(result) => {
+          setShowQRScanner(false);
+          setCheckinResult(result);
+          setShowCheckinSuccess(true);
+          if (!result.is_duplicate) {
+            refreshProgress();
+            toast.success(`출석 완료! +${result.xp_granted}XP`);
+          }
+        }}
+      />
+
+      <CheckinSuccessModal
+        open={showCheckinSuccess}
+        onClose={() => setShowCheckinSuccess(false)}
+        result={checkinResult}
+      />
     </div>
   );
 };
