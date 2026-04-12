@@ -567,6 +567,20 @@ const MemberDetailPage = () => {
           ))}
         </div>
       )}
+
+      {/* Bulk Complete Modal (super_admin only) */}
+      {role === "super_admin" && memberId && (
+        <BulkCompleteModal
+          open={showBulkComplete}
+          onClose={() => setShowBulkComplete(false)}
+          memberId={memberId}
+          memberName={p.nickname || p.name}
+          currentRank={prog.current_rank}
+          currentLevel={prog.current_level}
+          currentXp={prog.total_xp}
+          bossesCleard={prog.bosses_cleared}
+        />
+      )}
     </div>
   );
 };
