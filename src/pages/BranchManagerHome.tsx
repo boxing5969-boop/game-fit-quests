@@ -346,7 +346,7 @@ const BranchManagerHome = () => {
         )}
       </div>
 
-      {/* Quick action: checkin board + member app */}
+      {/* Quick action: checkin board + member app + admin */}
       <div className="mt-6 space-y-2">
         <button
           onClick={() => navigate("/manager/checkin-board")}
@@ -361,6 +361,38 @@ const BranchManagerHome = () => {
               </div>
             </div>
             <ChevronRight className="h-5 w-5 text-primary" />
+          </div>
+        </button>
+        {isSuperAdmin && (
+          <button
+            onClick={() => navigate("/admin")}
+            className="w-full rounded-2xl border border-accent/30 bg-accent/5 p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📊</span>
+                <div>
+                  <p className="text-sm font-bold text-foreground">전체관리자 대시보드</p>
+                  <p className="text-xs text-muted-foreground">지점 비교 · 위험 회원 · 공지 · 이전 승인</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-accent-foreground" />
+            </div>
+          </button>
+        )}
+        <button
+          onClick={handleExportCsv}
+          className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Download className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-bold text-foreground">회원 목록 CSV 내보내기</p>
+                <p className="text-xs text-muted-foreground">현재 필터 적용된 회원 목록 다운로드</p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </div>
         </button>
         <button
