@@ -191,8 +191,25 @@ const BranchManagerHome = () => {
     }
   };
 
+  const handleExportCsv = () => {
+    if (!filtered?.length) { toast.info("내보낼 데이터가 없습니다"); return; }
+    const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
+    const header = "이름,닉네임,지점,리그,레벨,XP,연속일,승인\n";
+    const rows = filtered.map(m => [
+      m.name, m.nickname, m.branch_name,
+      RANK_LABELS[m.prog?.current_rank || "white"],
+      m.prog?.current_level || 1, m.prog?.total_xp || 0,
+      m.prog?.streak_days || 0, (m as any).is_approved ? "Y" : "N",
+    ].join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url;
+    a.download = `회원목록_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    toast.success("CSV 내보내기 완료");
+  };
+
   const handleMemberClick = (userId: string) => {
-    // On wide screens, select member in right panel; on mobile, navigate
     if (window.innerWidth >= 1024) {
       setSelectedMemberId(userId);
     } else {
