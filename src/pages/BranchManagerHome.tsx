@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
 import DailyOperationsBoard from "@/components/DailyOperationsBoard";
+import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Users, User, ChevronRight, Bell, Inbox, UserCheck, UserX } from "lucide-react";
+import { Search, Users, User, ChevronRight, Bell, Inbox, UserCheck, UserX, Download, AlertTriangle, BarChart3 } from "lucide-react";
 import { formatRank, RANK_ICONS, isManagerRole } from "@/lib/rankLabels";
 import { Input } from "@/components/ui/input";
 import ApprovalInbox from "@/components/ApprovalInbox";
@@ -15,7 +16,7 @@ const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, blac
 
 type FilterType = "all" | "pending" | "active" | "boss_ready" | "unapproved";
 type SortType = "recent_submission" | "level_desc" | "pending_count";
-type MainTab = "members" | "inbox" | "level_review" | "operations";
+type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk";
 
 const BranchManagerHome = () => {
   const navigate = useNavigate();

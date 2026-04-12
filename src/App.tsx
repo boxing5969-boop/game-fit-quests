@@ -35,6 +35,7 @@ import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
 import CheckinBoardPage from "@/pages/CheckinBoardPage";
 import LiveBoardPage from "@/pages/LiveBoardPage";
+import SuperAdminDashboard from "@/pages/SuperAdminDashboard";
 import { isManagerRole } from "@/lib/rankLabels";
 
 const queryClient = new QueryClient();
