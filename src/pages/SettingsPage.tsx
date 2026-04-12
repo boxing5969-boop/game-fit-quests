@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
