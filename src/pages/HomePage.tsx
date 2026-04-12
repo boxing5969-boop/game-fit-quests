@@ -199,7 +199,7 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* 5. Quick Actions */}
+        {/* 5. Quick Actions + 더보기 */}
         <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
           <div className="grid grid-cols-3 gap-2">
             {QUICK_ACTIONS.map(action => (
@@ -214,7 +214,46 @@ const HomePage = () => {
               </button>
             ))}
           </div>
+          <button
+            onClick={() => setShowAllMenu(true)}
+            className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl bg-muted/50 py-2 text-xs font-medium text-muted-foreground transition-all active:scale-[0.98]"
+          >
+            더보기
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
         </div>
+
+        {/* All menu sheet */}
+        {showAllMenu && (
+          <div className="fixed inset-0 z-[60] flex flex-col" onClick={() => setShowAllMenu(false)}>
+            <div className="flex-1 bg-background/60 backdrop-blur-sm" />
+            <div className="relative z-[61] rounded-t-2xl border-t border-border bg-card px-4 pb-8 pt-4 shadow-2xl safe-area-bottom animate-slide-up" onClick={e => e.stopPropagation()}>
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-sm font-bold text-foreground">전체 메뉴</span>
+                <button onClick={() => setShowAllMenu(false)} className="rounded-full bg-muted p-1.5 active:scale-95">
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                {ALL_MENU_ITEMS.map(item => {
+                  const active = location.pathname === item.path;
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => { navigate(item.path); setShowAllMenu(false); }}
+                      className={`flex flex-col items-center gap-1.5 rounded-xl p-3 transition-all active:scale-95 ${
+                        active ? "bg-primary/10 text-primary" : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <span className="text-xl">{item.emoji}</span>
+                      <span className="text-[10px] font-medium">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 6. Attendance note */}
         <div className="animate-slide-up rounded-xl bg-muted/50 px-4 py-2.5" style={{ animationDelay: "0.14s" }}>
