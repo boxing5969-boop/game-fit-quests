@@ -163,11 +163,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   const [showChecklist, setShowChecklist] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
   const [showSession, setShowSession] = useState(false);
-
-  if (!ul) return <div className="p-4 text-center text-muted-foreground">레벨 데이터를 불러올 수 없습니다</div>;
-
   const checklist = getChecklistForLevel(`${league}-${levelNum}`);
   const [checkResults, setCheckResults] = useState<boolean[]>(checklist.map(() => false));
+
+  if (!ul) return <div className="p-4 text-center text-muted-foreground">레벨 데이터를 불러올 수 없습니다</div>;
 
   // Use whiteLevel1/2 detailed session data if available, else use routineA
   const isWhiteLv1 = league === "white" && levelNum === 1;
