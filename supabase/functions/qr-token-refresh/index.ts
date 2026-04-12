@@ -35,8 +35,7 @@ Deno.serve(async (req) => {
     });
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-    const jwt = authHeader.replace("Bearer ", "");
-    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(jwt);
+    const { data: { user: authUser }, error: authError } = await supabaseUser.auth.getUser();
 
     if (authError || !authUser) {
       console.error("[qr-token-refresh] Auth failed:", authError?.message ?? "no user");
