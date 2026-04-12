@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { QrCode, Monitor, RefreshCw, Trash2, ChevronLeft, Settings } from "lucide-react";
+import { QrCode, Monitor, RefreshCw, Trash2, ChevronLeft, Settings, Bug, Zap, Clock, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { formatRank } from "@/lib/rankLabels";
@@ -16,6 +16,7 @@ interface AttendanceLog {
   checked_in_at: string;
   xp_granted: number;
   is_duplicate: boolean;
+  method: string;
 }
 
 const CheckinBoardPage = () => {
@@ -26,12 +27,15 @@ const CheckinBoardPage = () => {
 
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [qrExpiry, setQrExpiry] = useState<Date | null>(null);
+  const [expirySeconds, setExpirySeconds] = useState(300);
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [showQrFull, setShowQrFull] = useState(false);
   const [displayMode, setDisplayMode] = useState<string>("nickname");
   const [showSettings, setShowSettings] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [tokenPreview, setTokenPreview] = useState<string>("");
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const autoRefreshRef = useRef<ReturnType<typeof setInterval>>();
 
@@ -65,24 +69,52 @@ const CheckinBoardPage = () => {
 
   useEffect(() => { loadLogs(); }, [loadLogs]);
 
+  // Realtime subscription for attendance logs
+  useEffect(() => {
+    if (!branchName) return;
+    const channel = supabase
+      .channel(`checkin-board-${branchName}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "attendance_logs",
+          filter: `branch_name=eq.${branchName}`,
+        },
+        (payload) => {
+          const newLog = payload.new as AttendanceLog;
+          setLogs(prev => [newLog, ...prev]);
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [branchName]);
+
   // Generate QR token
   const refreshToken = useCallback(async () => {
     setRefreshing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("qr-token-refresh");
+      const { data, error } = await supabase.functions.invoke("qr-token-refresh", {
+        body: { expiry_seconds: expirySeconds },
+      });
       if (error || data?.error) {
         toast.error(data?.error || "QR 생성 실패");
+        console.error("[CheckinBoard] Token refresh failed:", error || data?.error);
         return;
       }
       setQrToken(data.token);
+      setTokenPreview(data.token.substring(0, 8) + "...");
       setQrExpiry(new Date(data.expires_at));
-      setTimeLeft(30);
-    } catch {
+      setTimeLeft(data.expiry_seconds || expirySeconds);
+      toast.success("QR 코드 생성 완료");
+    } catch (e) {
+      console.error("[CheckinBoard] Network error:", e);
       toast.error("네트워크 오류");
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [expirySeconds]);
 
   // Countdown timer
   useEffect(() => {
@@ -98,14 +130,15 @@ const CheckinBoardPage = () => {
     return () => clearInterval(intervalRef.current);
   }, [qrExpiry]);
 
-  // Auto-refresh QR every 25 seconds
+  // Auto-refresh QR before expiry (10 seconds before)
   useEffect(() => {
-    if (!qrToken) return;
+    if (!qrToken || !qrExpiry) return;
+    const refreshDelay = Math.max(0, (expirySeconds - 10) * 1000);
     autoRefreshRef.current = setInterval(() => {
       refreshToken();
-    }, 25000);
+    }, refreshDelay);
     return () => clearInterval(autoRefreshRef.current);
-  }, [qrToken, refreshToken]);
+  }, [qrToken, qrExpiry, expirySeconds, refreshToken]);
 
   // Save display mode
   const updateDisplayMode = async (mode: string) => {
@@ -132,9 +165,20 @@ const CheckinBoardPage = () => {
 
   const uniqueToday = logs.filter(l => !l.is_duplicate).length;
   const duplicateToday = logs.filter(l => l.is_duplicate).length;
+  const successToday = logs.filter(l => !l.is_duplicate && l.xp_granted > 0).length;
+
+  // QR value: JSON with token
+  const qrValue = qrToken ? JSON.stringify({ token: qrToken }) : "";
 
   // Resolve branch code for live board URL
   const liveBoardUrl = `/live-board/${encodeURIComponent(branchName)}`;
+
+  // Format time remaining
+  const formatTimeLeft = (s: number) => {
+    const min = Math.floor(s / 60);
+    const sec = s % 60;
+    return min > 0 ? `${min}분 ${sec.toString().padStart(2, '0')}초` : `${sec}초`;
+  };
 
   // QR fullscreen overlay
   if (showQrFull) {
@@ -144,13 +188,13 @@ const CheckinBoardPage = () => {
         {qrToken ? (
           <>
             <QRCodeSVG
-              value={JSON.stringify({ token: qrToken })}
+              value={qrValue}
               size={Math.min(window.innerWidth * 0.7, 500)}
               level="M"
             />
             <div className="mt-4 flex items-center gap-2">
-              <div className={`h-3 w-3 rounded-full ${timeLeft > 5 ? "bg-green-500" : "bg-red-500 animate-pulse"}`} />
-              <span className="text-lg font-mono font-bold text-foreground">{timeLeft}초</span>
+              <div className={`h-3 w-3 rounded-full ${timeLeft > 30 ? "bg-green-500" : timeLeft > 10 ? "bg-yellow-500" : "bg-red-500 animate-pulse"}`} />
+              <span className="text-lg font-mono font-bold text-foreground">{formatTimeLeft(timeLeft)}</span>
             </div>
           </>
         ) : (
@@ -172,6 +216,9 @@ const CheckinBoardPage = () => {
           <h1 className="text-xl font-bold text-foreground">체크인 보드 관리</h1>
           <p className="text-xs text-muted-foreground">{branchName}</p>
         </div>
+        <button onClick={() => setShowDebug(!showDebug)} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
+          <Bug className="h-5 w-5" />
+        </button>
         <button onClick={() => setShowSettings(!showSettings)} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
           <Settings className="h-5 w-5" />
         </button>
@@ -199,15 +246,15 @@ const CheckinBoardPage = () => {
           <h2 className="text-sm font-bold text-foreground">지점 QR 코드</h2>
           {qrToken && (
             <div className="flex items-center gap-1.5">
-              <div className={`h-2 w-2 rounded-full ${timeLeft > 5 ? "bg-green-500" : "bg-red-500 animate-pulse"}`} />
-              <span className="text-xs font-mono text-muted-foreground">{timeLeft}초</span>
+              <div className={`h-2 w-2 rounded-full ${timeLeft > 30 ? "bg-green-500" : timeLeft > 10 ? "bg-yellow-500" : "bg-red-500 animate-pulse"}`} />
+              <span className="text-xs font-mono text-muted-foreground">{formatTimeLeft(timeLeft)}</span>
             </div>
           )}
         </div>
 
         {qrToken ? (
           <div className="flex flex-col items-center">
-            <QRCodeSVG value={JSON.stringify({ token: qrToken })} size={200} level="M" />
+            <QRCodeSVG value={qrValue} size={200} level="M" />
             <div className="mt-4 flex gap-2">
               <button onClick={refreshToken} disabled={refreshing}
                 className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50">
@@ -239,6 +286,102 @@ const CheckinBoardPage = () => {
           </div>
         </div>
       </button>
+
+      {/* Debug Panel */}
+      {showDebug && (
+        <div className="mb-5 rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-5 space-y-4">
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <Bug className="h-4 w-4 text-yellow-500" /> 디버그 도구
+          </h3>
+
+          {/* Token info */}
+          <div className="rounded-xl bg-card border border-border p-3 space-y-2">
+            <p className="text-xs font-bold text-muted-foreground">현재 토큰</p>
+            {qrToken ? (
+              <>
+                <p className="text-sm font-mono text-foreground">{tokenPreview}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>만료: {qrExpiry?.toLocaleTimeString("ko-KR") || "-"}</span>
+                  <span>({formatTimeLeft(timeLeft)} 남음)</span>
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">토큰 없음 - QR을 생성해주세요</p>
+            )}
+          </div>
+
+          {/* Expiry duration setting */}
+          <div className="rounded-xl bg-card border border-border p-3">
+            <p className="text-xs font-bold text-muted-foreground mb-2">만료 시간 설정</p>
+            <div className="flex gap-2">
+              {[
+                { label: "30초", value: 30 },
+                { label: "1분", value: 60 },
+                { label: "5분", value: 300 },
+                { label: "10분", value: 600 },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setExpirySeconds(opt.value)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                    expirySeconds === opt.value 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Test buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={refreshToken}
+              disabled={refreshing}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-yellow-500/20 py-2.5 text-xs font-bold text-yellow-700 transition-all active:scale-95"
+            >
+              <Zap className="h-3.5 w-3.5" /> 샘플 QR 생성
+            </button>
+            <button
+              onClick={loadLogs}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-blue-500/20 py-2.5 text-xs font-bold text-blue-700 transition-all active:scale-95"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> 로그 새로고침
+            </button>
+          </div>
+
+          {/* Recent logs with status */}
+          <div className="rounded-xl bg-card border border-border p-3">
+            <p className="text-xs font-bold text-muted-foreground mb-2">최근 체크인 로그 (최대 10건)</p>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              {logs.slice(0, 10).map(log => (
+                <div key={log.id} className="flex items-center gap-2 text-xs">
+                  {log.is_duplicate ? (
+                    <AlertTriangle className="h-3 w-3 text-yellow-500 shrink-0" />
+                  ) : log.xp_granted > 0 ? (
+                    <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />
+                  ) : (
+                    <XCircle className="h-3 w-3 text-muted-foreground shrink-0" />
+                  )}
+                  <span className="font-medium text-foreground truncate">{log.display_name_snapshot}</span>
+                  <span className="text-muted-foreground">
+                    {new Date(log.checked_in_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                  </span>
+                  <span className={`ml-auto font-mono ${log.xp_granted > 0 ? "text-green-600" : "text-muted-foreground"}`}>
+                    {log.is_duplicate ? "중복" : `+${log.xp_granted}XP`}
+                  </span>
+                </div>
+              ))}
+              {logs.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-2">아직 로그가 없습니다</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings Panel */}
       {showSettings && (
