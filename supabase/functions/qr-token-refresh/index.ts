@@ -2,14 +2,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 function generateToken(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const arr = new Uint8Array(32);
   crypto.getRandomValues(arr);
-  return Array.from(arr, b => chars[b % chars.length]).join("");
+  return Array.from(arr, (b) => chars[b % chars.length]).join("");
 }
 
 Deno.serve(async (req) => {
@@ -19,28 +19,35 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "인증이 필요합니다" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseUser = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    const jwt = authHeader.replace("Bearer ", "");
+
+    const supabaseUser = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-    const jwt = authHeader.replace("Bearer ", "");
-    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(jwt);
-    if (authError || !authUser) {
-      console.error("[qr-token-refresh] Auth failed:", authError?.message);
+    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(jwt);
+    const userId = claimsData?.claims?.sub;
+
+    if (claimsError || !userId) {
+      console.error("[qr-token-refresh] Auth failed:", claimsError?.message ?? "missing claims");
       return new Response(JSON.stringify({ error: "인증 실패" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const user = authUser;
+
+    const user = { id: userId };
 
     // Get user role
     const { data: roleData } = await supabaseAdmin
