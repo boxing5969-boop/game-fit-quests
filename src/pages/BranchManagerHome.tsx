@@ -550,12 +550,22 @@ const BranchManagerHome = () => {
           >
             ⚡ 운영
           </button>
+          <button
+            onClick={() => setMainTab("at_risk")}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+              mainTab === "at_risk" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <AlertTriangle className="h-4 w-4" />
+            위험
+          </button>
         </div>
 
         {mainTab === "inbox" && <ApprovalInbox />}
         {mainTab === "members" && <MemberListContent />}
         {mainTab === "level_review" && <CoachLevelReviewInbox />}
         {mainTab === "operations" && <DailyOperationsBoard />}
+        {mainTab === "at_risk" && <AtRiskMembersPanel />}
       </div>
 
       {/* ── Desktop 2-Column Layout (>= lg) ── */}
