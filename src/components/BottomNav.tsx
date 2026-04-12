@@ -11,7 +11,7 @@ const tabs = [
   { path: "/mypage", icon: User, label: "내정보" },
 ];
 
-const hiddenPaths = ["/", "/onboarding", "/safety-check", "/settings", "/manager", "/coach", "/member", "/select-branch", "/waiting-approval"];
+const hiddenPaths = ["/", "/onboarding", "/safety-check", "/settings", "/manager", "/coach", "/member", "/select-branch", "/waiting-approval", "/live-board"];
 
 const BottomNav = () => {
   const location = useLocation();

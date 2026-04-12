@@ -345,8 +345,23 @@ const BranchManagerHome = () => {
         )}
       </div>
 
-      {/* Quick action: go to member app */}
-      <div className="mt-6">
+      {/* Quick action: checkin board + member app */}
+      <div className="mt-6 space-y-2">
+        <button
+          onClick={() => navigate("/manager/checkin-board")}
+          className="w-full rounded-2xl border border-primary/30 bg-primary/5 p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📷</span>
+              <div>
+                <p className="text-sm font-bold text-foreground">체크인 보드 관리</p>
+                <p className="text-xs text-muted-foreground">QR 체크인 · 라이브 보드 · 로그</p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-primary" />
+          </div>
+        </button>
         <button
           onClick={() => navigate("/home")}
           className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
