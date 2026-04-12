@@ -7,11 +7,13 @@ import LevelUpModal from "@/components/LevelUpModal";
 import WeeklyPrescriptionCard from "@/components/WeeklyPrescriptionCard";
 import RetentionBanner from "@/components/RetentionBanner";
 import SelfChallengeFlow from "@/components/SelfChallengeFlow";
+import QRScannerModal from "@/components/QRScannerModal";
+import CheckinSuccessModal from "@/components/CheckinSuccessModal";
 import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestData";
 import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useNavigate } from "react-router-dom";
-import { User, ChevronRight, TrendingUp, CheckCircle2, Flame } from "lucide-react";
+import { User, ChevronRight, TrendingUp, CheckCircle2, Flame, QrCode } from "lucide-react";
 import HallOfFameShowcase from "@/components/HallOfFameShowcase";
 import RankMiniCard from "@/components/RankMiniCard";
 import { toast } from "sonner";
@@ -49,6 +51,9 @@ const HomePage = () => {
   const { onboardingDone, safetyDone } = useOnboardingState();
   const { totalXp, status, metrics, activeLevelId, selfChallengeStreak } = useLocalProgress();
   const [showChallenge, setShowChallenge] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [checkinResult, setCheckinResult] = useState<any>(null);
+  const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
   const [levelUpModal, setLevelUpModal] = useState<{ show: boolean; level: number; rank: string; xp: number }>({ show: false, level: 0, rank: "", xp: 0 });
 
   useEffect(() => {
