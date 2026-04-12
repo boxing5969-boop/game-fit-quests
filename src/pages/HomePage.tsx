@@ -72,7 +72,35 @@ const HomePage = () => {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [checkinResult, setCheckinResult] = useState<any>(null);
   const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
+  const [checkedInToday, setCheckedInToday] = useState(false);
+  const [checkingAttendance, setCheckingAttendance] = useState(true);
   const [levelUpModal, setLevelUpModal] = useState<{ show: boolean; level: number; rank: string; xp: number }>({ show: false, level: 0, rank: "", xp: 0 });
+
+  // Check today's QR attendance
+  const checkTodayAttendance = useCallback(async () => {
+    if (!user?.id || !profile?.branch_name) return;
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const { data, error } = await supabase
+      .from("attendance_logs")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("branch_name", profile.branch_name)
+      .eq("method", "qr")
+      .eq("is_duplicate", false)
+      .gte("checked_in_at", todayStart.toISOString())
+      .limit(1);
+    if (!error && data && data.length > 0) {
+      setCheckedInToday(true);
+    } else {
+      setCheckedInToday(false);
+    }
+    setCheckingAttendance(false);
+  }, [user?.id, profile?.branch_name]);
+
+  useEffect(() => {
+    checkTodayAttendance();
+  }, [checkTodayAttendance]);
 
   useEffect(() => {
     if (!onboardingDone) navigate("/onboarding", { replace: true });
