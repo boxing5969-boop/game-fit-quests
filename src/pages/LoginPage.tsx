@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import LoginErrorModal, { classifyLoginError } from "@/components/LoginErrorModal";
 import {
   Select,
   SelectContent,
@@ -176,6 +177,7 @@ const LoginPage = () => {
   const [forgotStep, setForgotStep] = useState<"verify" | "success">("verify");
   const [forgotError, setForgotError] = useState("");
   const [error, setError] = useState("");
+  const [loginErrorType, setLoginErrorType] = useState<ReturnType<typeof classifyLoginError> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
   const { signIn, signUp } = useAuth();
@@ -196,6 +198,7 @@ const LoginPage = () => {
   const resetForm = () => {
     setUsername(""); setPassword(""); setConfirmPassword(""); setName(""); setNickname("");
     setPhone(""); setBranch(""); setBirthDate(""); setSignatureData(null); setError(""); setSignUpSuccess(false);
+    setLoginErrorType(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -207,7 +210,12 @@ const LoginPage = () => {
       setIsLoading(true);
       try {
         const { error } = await signIn(toFakeEmail(username), password);
-        if (error) { setError(error.message); return; }
+        if (error) {
+          const errorType = classifyLoginError(error.message);
+          setLoginErrorType(errorType);
+          setError(error.message);
+          return;
+        }
         navigate("/home");
       } finally { setIsLoading(false); }
       return;
@@ -513,6 +521,15 @@ const LoginPage = () => {
           </>
         )}
       </form>
+
+      {/* Login Error Modal */}
+      {loginErrorType && (
+        <LoginErrorModal
+          type={loginErrorType}
+          onClose={() => setLoginErrorType(null)}
+          onRetry={loginErrorType !== "approval_pending" && loginErrorType !== "coach_approval_pending" ? () => { setLoginErrorType(null); setError(""); } : undefined}
+        />
+      )}
 
       {/* Privacy consent modal */}
       {showPrivacy && (
