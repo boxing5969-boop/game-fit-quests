@@ -14,7 +14,7 @@ import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestDat
 import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useNavigate } from "react-router-dom";
-import { User, ChevronRight, TrendingUp, CheckCircle2, Flame, QrCode } from "lucide-react";
+import { User, ChevronRight, TrendingUp, CheckCircle2, Flame, QrCode, X } from "lucide-react";
 import HallOfFameShowcase from "@/components/HallOfFameShowcase";
 import RankMiniCard from "@/components/RankMiniCard";
 import { toast } from "sonner";
@@ -53,6 +53,7 @@ const HomePage = () => {
   const { totalXp, status, metrics, activeLevelId, selfChallengeStreak } = useLocalProgress();
   const widgetPrefs = loadHomeWidgetPrefs();
   const [showChallenge, setShowChallenge] = useState(false);
+  const [showAllMenu, setShowAllMenu] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [checkinResult, setCheckinResult] = useState<any>(null);
   const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
