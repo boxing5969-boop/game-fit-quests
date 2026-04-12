@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS } from "@/lib/rankLabels";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Building2 } from "lucide-react";
 
 const RANK_COLORS: Record<string, string> = {
   white: "border-gray-400 bg-gray-100 text-gray-800",
@@ -35,11 +37,30 @@ const LiveBoardPage = () => {
   const popupTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const [connected, setConnected] = useState(true);
 
+  // super_admin branch switching
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
+  const [showBranchSwitch, setShowBranchSwitch] = useState(false);
+
+  // Check if current user is super_admin
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("user_roles").select("role").eq("user_id", user.id).single().then(({ data }) => {
+        if (data && (data.role === "super_admin" || data.role === "admin")) {
+          setIsSuperAdmin(true);
+          supabase.from("branches").select("id, name").order("name").then(({ data: b }) => {
+            if (b) setBranches(b);
+          });
+        }
+      });
+    });
+  }, []);
+
   // Resolve branch name from code
   useEffect(() => {
     if (!branchCode) return;
     const loadBranch = async () => {
-      // Try by code first, then by name
       const { data } = await supabase
         .from("branches")
         .select("name, code")
@@ -74,7 +95,6 @@ const LiveBoardPage = () => {
 
   useEffect(() => { loadToday(); }, [loadToday]);
 
-  // Show popup animation
   const triggerPopup = useCallback((event: CheckinEvent) => {
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
     setLatestPopup(event);
@@ -85,7 +105,6 @@ const LiveBoardPage = () => {
   // Realtime subscription
   useEffect(() => {
     if (!branchName) return;
-
     const channel = supabase
       .channel(`live-board-${branchName}`)
       .on(
@@ -99,7 +118,6 @@ const LiveBoardPage = () => {
         (payload) => {
           const newEvent = payload.new as any;
           if (newEvent.is_duplicate) return;
-
           const event: CheckinEvent = {
             id: newEvent.id,
             display_name_snapshot: newEvent.display_name_snapshot,
@@ -108,7 +126,6 @@ const LiveBoardPage = () => {
             checked_in_at: newEvent.checked_in_at,
             user_id: newEvent.user_id,
           };
-
           setTodayCheckins(prev => [event, ...prev]);
           triggerPopup(event);
         }
@@ -116,17 +133,20 @@ const LiveBoardPage = () => {
       .subscribe((status) => {
         setConnected(status === "SUBSCRIBED");
       });
-
     return () => { supabase.removeChannel(channel); };
   }, [branchName, triggerPopup]);
 
-  // Auto-reconnect check
   useEffect(() => {
     const interval = setInterval(() => {
       if (!connected) loadToday();
     }, 10000);
     return () => clearInterval(interval);
   }, [connected, loadToday]);
+
+  const handleBranchSwitch = (newBranch: string) => {
+    // Navigate to new branch live board
+    window.location.href = `/live-board/${encodeURIComponent(newBranch)}`;
+  };
 
   const formatTime = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -145,6 +165,39 @@ const LiveBoardPage = () => {
           </div>
         </div>
         <div className="flex items-center gap-6">
+          {/* super_admin branch switcher */}
+          {isSuperAdmin && branches.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setShowBranchSwitch(!showBranchSwitch)}
+                className="flex items-center gap-2 rounded-lg bg-gray-800 px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+              >
+                <Building2 className="h-4 w-4" />
+                <span>지점 전환</span>
+              </button>
+              {showBranchSwitch && (
+                <div className="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl bg-gray-800 border border-gray-700 shadow-2xl overflow-hidden">
+                  <div className="p-2 border-b border-gray-700">
+                    <p className="text-xs text-gray-400 px-2">지점 선택</p>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto">
+                    {branches.map(b => (
+                      <button
+                        key={b.id}
+                        onClick={() => handleBranchSwitch(b.name)}
+                        className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-700 transition-colors ${
+                          b.name === branchName ? "text-primary font-bold bg-gray-700/50" : "text-gray-300"
+                        }`}
+                      >
+                        {b.name}
+                        {b.name === branchName && " ✓"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           <div className="text-right">
             <p className="text-4xl font-black text-primary tabular-nums">{todayCheckins.length}</p>
             <p className="text-xs text-gray-500">오늘 방문</p>

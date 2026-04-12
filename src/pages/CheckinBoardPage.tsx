@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { QrCode, Monitor, RefreshCw, Trash2, ChevronLeft, Settings, Bug, Zap, Clock, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { QrCode, Monitor, RefreshCw, Trash2, ChevronLeft, Settings, Bug, Zap, Clock, CheckCircle2, XCircle, AlertTriangle, Building2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { formatRank } from "@/lib/rankLabels";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AttendanceLog {
   id: string;
@@ -19,11 +20,24 @@ interface AttendanceLog {
   method: string;
 }
 
+interface Branch {
+  id: string;
+  name: string;
+  code: string | null;
+}
+
 const CheckinBoardPage = () => {
   const { profile, role } = useAuth();
   const navigate = useNavigate();
-  const branchName = profile?.branch_name || "";
   const isSuperAdmin = role === "super_admin" || role === "admin";
+
+  // Branch selection state
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>("");
+  const [branchesLoading, setBranchesLoading] = useState(false);
+
+  // The active branch used for all operations
+  const activeBranch = isSuperAdmin ? selectedBranch : (profile?.branch_name || "");
 
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [qrExpiry, setQrExpiry] = useState<Date | null>(null);
@@ -39,48 +53,74 @@ const CheckinBoardPage = () => {
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const autoRefreshRef = useRef<ReturnType<typeof setInterval>>();
 
+  // Load branches for super_admin
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    setBranchesLoading(true);
+    supabase.from("branches").select("id, name, code").order("name").then(({ data }) => {
+      if (data) {
+        setBranches(data);
+        // Auto-select first branch or user's own branch
+        if (data.length > 0) {
+          const own = data.find(b => b.name === profile?.branch_name);
+          setSelectedBranch(own ? own.name : data[0].name);
+        }
+      }
+      setBranchesLoading(false);
+    });
+  }, [isSuperAdmin, profile?.branch_name]);
+
+  // Reset QR state when branch changes
+  useEffect(() => {
+    setQrToken(null);
+    setQrExpiry(null);
+    setTimeLeft(0);
+    setTokenPreview("");
+    setLogs([]);
+  }, [activeBranch]);
+
   // Load settings
   useEffect(() => {
-    if (!branchName) return;
+    if (!activeBranch) return;
     supabase
       .from("branch_display_settings")
       .select("display_name_mode")
-      .eq("branch_name", branchName)
+      .eq("branch_name", activeBranch)
       .single()
       .then(({ data }) => {
         if (data) setDisplayMode(data.display_name_mode);
       });
-  }, [branchName]);
+  }, [activeBranch]);
 
   // Load today's logs
   const loadLogs = useCallback(async () => {
-    if (!branchName) return;
+    if (!activeBranch) return;
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const { data } = await supabase
       .from("attendance_logs")
       .select("*")
-      .eq("branch_name", branchName)
+      .eq("branch_name", activeBranch)
       .gte("checked_in_at", todayStart.toISOString())
       .order("checked_in_at", { ascending: false })
       .limit(200);
     if (data) setLogs(data as AttendanceLog[]);
-  }, [branchName]);
+  }, [activeBranch]);
 
   useEffect(() => { loadLogs(); }, [loadLogs]);
 
   // Realtime subscription for attendance logs
   useEffect(() => {
-    if (!branchName) return;
+    if (!activeBranch) return;
     const channel = supabase
-      .channel(`checkin-board-${branchName}`)
+      .channel(`checkin-board-${activeBranch}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "attendance_logs",
-          filter: `branch_name=eq.${branchName}`,
+          filter: `branch_name=eq.${activeBranch}`,
         },
         (payload) => {
           const newLog = payload.new as AttendanceLog;
@@ -89,15 +129,21 @@ const CheckinBoardPage = () => {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [branchName]);
+  }, [activeBranch]);
 
   // Generate QR token
   const refreshToken = useCallback(async () => {
+    if (!activeBranch) {
+      toast.error("지점을 먼저 선택해주세요");
+      return;
+    }
     setRefreshing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("qr-token-refresh", {
-        body: { expiry_seconds: expirySeconds },
-      });
+      const body: Record<string, any> = { expiry_seconds: expirySeconds };
+      if (isSuperAdmin) {
+        body.branch_name = activeBranch;
+      }
+      const { data, error } = await supabase.functions.invoke("qr-token-refresh", { body });
       if (error || data?.error) {
         toast.error(data?.error || "QR 생성 실패");
         console.error("[CheckinBoard] Token refresh failed:", error || data?.error);
@@ -107,14 +153,14 @@ const CheckinBoardPage = () => {
       setTokenPreview(data.token.substring(0, 8) + "...");
       setQrExpiry(new Date(data.expires_at));
       setTimeLeft(data.expiry_seconds || expirySeconds);
-      toast.success("QR 코드 생성 완료");
+      toast.success(`${activeBranch} QR 코드 생성 완료`);
     } catch (e) {
       console.error("[CheckinBoard] Network error:", e);
       toast.error("네트워크 오류");
     } finally {
       setRefreshing(false);
     }
-  }, [expirySeconds]);
+  }, [expirySeconds, activeBranch, isSuperAdmin]);
 
   // Countdown timer
   useEffect(() => {
@@ -123,20 +169,16 @@ const CheckinBoardPage = () => {
     intervalRef.current = setInterval(() => {
       const remaining = Math.max(0, Math.floor((qrExpiry.getTime() - Date.now()) / 1000));
       setTimeLeft(remaining);
-      if (remaining <= 0) {
-        clearInterval(intervalRef.current);
-      }
+      if (remaining <= 0) clearInterval(intervalRef.current);
     }, 1000);
     return () => clearInterval(intervalRef.current);
   }, [qrExpiry]);
 
-  // Auto-refresh QR before expiry (10 seconds before)
+  // Auto-refresh QR before expiry
   useEffect(() => {
     if (!qrToken || !qrExpiry) return;
     const refreshDelay = Math.max(0, (expirySeconds - 10) * 1000);
-    autoRefreshRef.current = setInterval(() => {
-      refreshToken();
-    }, refreshDelay);
+    autoRefreshRef.current = setInterval(() => { refreshToken(); }, refreshDelay);
     return () => clearInterval(autoRefreshRef.current);
   }, [qrToken, qrExpiry, expirySeconds, refreshToken]);
 
@@ -145,16 +187,13 @@ const CheckinBoardPage = () => {
     setDisplayMode(mode);
     await supabase
       .from("branch_display_settings")
-      .upsert({ branch_name: branchName, display_name_mode: mode }, { onConflict: "branch_name" });
+      .upsert({ branch_name: activeBranch, display_name_mode: mode }, { onConflict: "branch_name" });
     toast.success("표시 설정 저장됨");
   };
 
   // Cancel checkin
   const cancelCheckin = async (logId: string) => {
-    const { error } = await supabase
-      .from("attendance_logs")
-      .delete()
-      .eq("id", logId);
+    const { error } = await supabase.from("attendance_logs").delete().eq("id", logId);
     if (error) {
       toast.error("취소 실패");
     } else {
@@ -165,15 +204,10 @@ const CheckinBoardPage = () => {
 
   const uniqueToday = logs.filter(l => !l.is_duplicate).length;
   const duplicateToday = logs.filter(l => l.is_duplicate).length;
-  const successToday = logs.filter(l => !l.is_duplicate && l.xp_granted > 0).length;
 
-  // QR value: JSON with token
   const qrValue = qrToken ? JSON.stringify({ token: qrToken }) : "";
+  const liveBoardUrl = `/live-board/${encodeURIComponent(activeBranch)}`;
 
-  // Resolve branch code for live board URL
-  const liveBoardUrl = `/live-board/${encodeURIComponent(branchName)}`;
-
-  // Format time remaining
   const formatTimeLeft = (s: number) => {
     const min = Math.floor(s / 60);
     const sec = s % 60;
@@ -184,14 +218,10 @@ const CheckinBoardPage = () => {
   if (showQrFull) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white" onClick={() => setShowQrFull(false)}>
-        <p className="mb-4 text-sm text-muted-foreground">{branchName} · 체크인 QR</p>
+        <p className="mb-4 text-sm text-muted-foreground">{activeBranch} · 체크인 QR</p>
         {qrToken ? (
           <>
-            <QRCodeSVG
-              value={qrValue}
-              size={Math.min(window.innerWidth * 0.7, 500)}
-              level="M"
-            />
+            <QRCodeSVG value={qrValue} size={Math.min(window.innerWidth * 0.7, 500)} level="M" />
             <div className="mt-4 flex items-center gap-2">
               <div className={`h-3 w-3 rounded-full ${timeLeft > 30 ? "bg-green-500" : timeLeft > 10 ? "bg-yellow-500" : "bg-red-500 animate-pulse"}`} />
               <span className="text-lg font-mono font-bold text-foreground">{formatTimeLeft(timeLeft)}</span>
@@ -214,7 +244,7 @@ const CheckinBoardPage = () => {
         </button>
         <div className="flex-1">
           <h1 className="text-xl font-bold text-foreground">체크인 보드 관리</h1>
-          <p className="text-xs text-muted-foreground">{branchName}</p>
+          <p className="text-xs text-muted-foreground">{activeBranch || "지점을 선택해주세요"}</p>
         </div>
         <button onClick={() => setShowDebug(!showDebug)} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
           <Bug className="h-5 w-5" />
@@ -223,6 +253,38 @@ const CheckinBoardPage = () => {
           <Settings className="h-5 w-5" />
         </button>
       </div>
+
+      {/* Branch Selector for super_admin */}
+      {isSuperAdmin && (
+        <div className="mb-5 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Building2 className="h-4 w-4 text-primary" />
+            <span className="text-sm font-bold text-foreground">지점 선택</span>
+            <span className="text-xs text-muted-foreground">(전체관리자)</span>
+          </div>
+          {branchesLoading ? (
+            <div className="text-xs text-muted-foreground">지점 목록 로딩 중...</div>
+          ) : branches.length === 0 ? (
+            <div className="text-xs text-muted-foreground">등록된 지점이 없습니다</div>
+          ) : (
+            <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+              <SelectTrigger className="w-full bg-background">
+                <SelectValue placeholder="지점을 선택해주세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {branches.map(b => (
+                  <SelectItem key={b.id} value={b.name}>
+                    {b.name} {b.code ? `(${b.code})` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {selectedBranch && (
+            <p className="mt-2 text-xs text-primary font-medium">선택된 지점: {selectedBranch}</p>
+          )}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="mb-5 grid grid-cols-3 gap-2">
@@ -243,7 +305,9 @@ const CheckinBoardPage = () => {
       {/* QR Section */}
       <div className="mb-5 rounded-2xl border border-border bg-card p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-bold text-foreground">지점 QR 코드</h2>
+          <h2 className="text-sm font-bold text-foreground">
+            {activeBranch ? `${activeBranch} QR 코드` : "지점 QR 코드"}
+          </h2>
           {qrToken && (
             <div className="flex items-center gap-1.5">
               <div className={`h-2 w-2 rounded-full ${timeLeft > 30 ? "bg-green-500" : timeLeft > 10 ? "bg-yellow-500" : "bg-red-500 animate-pulse"}`} />
@@ -252,7 +316,11 @@ const CheckinBoardPage = () => {
           )}
         </div>
 
-        {qrToken ? (
+        {!activeBranch ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            지점을 먼저 선택해주세요
+          </div>
+        ) : qrToken ? (
           <div className="flex flex-col items-center">
             <QRCodeSVG value={qrValue} size={200} level="M" />
             <div className="mt-4 flex gap-2">
@@ -267,21 +335,24 @@ const CheckinBoardPage = () => {
             </div>
           </div>
         ) : (
-          <button onClick={refreshToken} disabled={refreshing}
+          <button onClick={refreshToken} disabled={refreshing || !activeBranch}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-4 text-sm font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50">
             <QrCode className="h-5 w-5" />
-            {refreshing ? "생성 중..." : "QR 코드 생성"}
+            {refreshing ? "생성 중..." : `이 지점 QR 코드 생성`}
           </button>
         )}
       </div>
 
       {/* Live Board Link */}
-      <button onClick={() => window.open(liveBoardUrl, "_blank")}
-        className="mb-5 w-full rounded-2xl border border-border bg-card p-4 text-left transition-all active:scale-[0.98]">
+      <button onClick={() => activeBranch && window.open(liveBoardUrl, "_blank")}
+        disabled={!activeBranch}
+        className="mb-5 w-full rounded-2xl border border-border bg-card p-4 text-left transition-all active:scale-[0.98] disabled:opacity-50">
         <div className="flex items-center gap-3">
           <Monitor className="h-6 w-6 text-primary" />
           <div>
-            <p className="text-sm font-bold text-foreground">라이브 보드 열기</p>
+            <p className="text-sm font-bold text-foreground">
+              {activeBranch ? `${activeBranch} 라이브 보드 열기` : "라이브 보드 열기"}
+            </p>
             <p className="text-xs text-muted-foreground">모니터/TV에서 체크인 현황 표시</p>
           </div>
         </div>
@@ -293,8 +364,6 @@ const CheckinBoardPage = () => {
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
             <Bug className="h-4 w-4 text-yellow-500" /> 디버그 도구
           </h3>
-
-          {/* Token info */}
           <div className="rounded-xl bg-card border border-border p-3 space-y-2">
             <p className="text-xs font-bold text-muted-foreground">현재 토큰</p>
             {qrToken ? (
@@ -311,7 +380,6 @@ const CheckinBoardPage = () => {
             )}
           </div>
 
-          {/* Expiry duration setting */}
           <div className="rounded-xl bg-card border border-border p-3">
             <p className="text-xs font-bold text-muted-foreground mb-2">만료 시간 설정</p>
             <div className="flex gap-2">
@@ -321,39 +389,27 @@ const CheckinBoardPage = () => {
                 { label: "5분", value: 300 },
                 { label: "10분", value: 600 },
               ].map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => setExpirySeconds(opt.value)}
+                <button key={opt.value} onClick={() => setExpirySeconds(opt.value)}
                   className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                    expirySeconds === opt.value 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
+                    expirySeconds === opt.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  }`}>
                   {opt.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Test buttons */}
           <div className="flex gap-2">
-            <button
-              onClick={refreshToken}
-              disabled={refreshing}
-              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-yellow-500/20 py-2.5 text-xs font-bold text-yellow-700 transition-all active:scale-95"
-            >
+            <button onClick={refreshToken} disabled={refreshing || !activeBranch}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-yellow-500/20 py-2.5 text-xs font-bold text-yellow-700 transition-all active:scale-95 disabled:opacity-50">
               <Zap className="h-3.5 w-3.5" /> 샘플 QR 생성
             </button>
-            <button
-              onClick={loadLogs}
-              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-blue-500/20 py-2.5 text-xs font-bold text-blue-700 transition-all active:scale-95"
-            >
+            <button onClick={loadLogs}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-blue-500/20 py-2.5 text-xs font-bold text-blue-700 transition-all active:scale-95">
               <RefreshCw className="h-3.5 w-3.5" /> 로그 새로고침
             </button>
           </div>
 
-          {/* Recent logs with status */}
           <div className="rounded-xl bg-card border border-border p-3">
             <p className="text-xs font-bold text-muted-foreground mb-2">최근 체크인 로그 (최대 10건)</p>
             <div className="space-y-1.5 max-h-48 overflow-y-auto">
@@ -386,7 +442,7 @@ const CheckinBoardPage = () => {
       {/* Settings Panel */}
       {showSettings && (
         <div className="mb-5 rounded-2xl border border-border bg-card p-5">
-          <h3 className="mb-3 text-sm font-bold text-foreground">표시 설정</h3>
+          <h3 className="mb-3 text-sm font-bold text-foreground">표시 설정 ({activeBranch})</h3>
           <div className="space-y-2">
             {[
               { key: "nickname", label: "닉네임만", desc: "닉네임으로 표시" },
