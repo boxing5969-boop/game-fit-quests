@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════
 // DailyOperationsBoard — 코치 백업 모드 운영 보드
 // 오늘 방문자 큐, 원탭 처리, 퀵 태그, 대시보드 메트릭
+// 레벨업/리그 승격 체크 액션 추가
 // ═══════════════════════════════════════════════════════
 import { useState, useMemo } from "react";
 import { COACH_QUICK_TAGS, COACH_QUICK_ACTIONS, type DailyParticipation, type ParticipationMode } from "@/data/allLevelsData";
-import { CheckCircle2, Clock, Users, AlertTriangle, TrendingUp, ChevronDown } from "lucide-react";
+import { CheckCircle2, Clock, Users, AlertTriangle, TrendingUp, ChevronDown, ArrowUpCircle, Shield } from "lucide-react";
 
-// Mock today's visitors for localStorage-based demo
 interface TodayVisitor {
   userId: string;
   nickname: string;
@@ -22,6 +22,7 @@ interface TodayVisitor {
 }
 
 const STORAGE_KEY = "daily-operations";
+const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
 function loadTodayVisitors(): TodayVisitor[] {
   try {
@@ -32,13 +33,12 @@ function loadTodayVisitors(): TodayVisitor[] {
       if (parsed.date === today) return parsed.visitors || [];
     }
   } catch {}
-  // Demo data
   return [
     { userId: "demo-1", nickname: "김복서", currentLevel: 1, currentRank: "white", status: "self_challenge", selfChallengeComplete: true, coachTags: [], startedAt: "09:30", finishedAt: "10:20" },
     { userId: "demo-2", nickname: "이도전", currentLevel: 2, currentRank: "white", status: "pending", selfChallengeComplete: false, coachTags: [] },
-    { userId: "demo-3", nickname: "박파이터", currentLevel: 1, currentRank: "white", status: "pending", selfChallengeComplete: false, coachTags: [] },
+    { userId: "demo-3", nickname: "박파이터", currentLevel: 5, currentRank: "white", status: "pending", selfChallengeComplete: false, coachTags: [] },
     { userId: "demo-4", nickname: "최잽왕", currentLevel: 3, currentRank: "white", status: "self_challenge", selfChallengeComplete: true, coachTags: ["잽", "가드"], startedAt: "11:00", finishedAt: "11:50" },
-    { userId: "demo-5", nickname: "정가드", currentLevel: 1, currentRank: "white", status: "pending", selfChallengeComplete: false, coachTags: [] },
+    { userId: "demo-5", nickname: "정가드", currentLevel: 1, currentRank: "blue", status: "pending", selfChallengeComplete: false, coachTags: [] },
   ];
 }
 
@@ -56,9 +56,13 @@ const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> 
   not_completed: { bg: "bg-muted", text: "text-muted-foreground", label: "미완료" },
 };
 
+const EXTENDED_ACTIONS = [
+  ...COACH_QUICK_ACTIONS,
+  { id: "league_promotion", label: "승격 체크", emoji: "🏆", color: "bg-accent" },
+];
+
 const DailyOperationsBoard = () => {
   const [visitors, setVisitors] = useState<TodayVisitor[]>(loadTodayVisitors);
-  const [selectedVisitor, setSelectedVisitor] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showTagPicker, setShowTagPicker] = useState<string | null>(null);
 
@@ -82,6 +86,7 @@ const DailyOperationsBoard = () => {
           partial: "partial",
           needs_review: "needs_review",
           levelup_check: "needs_review",
+          league_promotion: "needs_review",
         };
         return { ...v, status: statusMap[action] || v.status, coachTags: selectedTags.length > 0 ? selectedTags : v.coachTags };
       });
@@ -101,17 +106,17 @@ const DailyOperationsBoard = () => {
 
   return (
     <div className="space-y-4">
-      {/* Metrics */}
+      {/* Metrics — 2 rows */}
       <div className="grid grid-cols-3 gap-2">
         <MetricCard icon={<Users className="h-4 w-4 text-primary" />} label="오늘 방문" value={metrics.total} />
         <MetricCard icon={<CheckCircle2 className="h-4 w-4 text-status-complete" />} label="자가 도전" value={metrics.selfComplete} />
         <MetricCard icon={<Clock className="h-4 w-4 text-status-pending" />} label="미처리" value={metrics.pending} highlight={metrics.pending > 0} />
       </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        <MetricCard icon={<TrendingUp className="h-4 w-4 text-primary" />} label="자가 참여율" value={`${metrics.selfRate}%`} />
-        <MetricCard icon={<CheckCircle2 className="h-4 w-4 text-primary" />} label="코치 처리" value={metrics.coachComplete} />
-        <MetricCard icon={<AlertTriangle className="h-4 w-4 text-destructive" />} label="보완 필요" value={metrics.needsReview} />
+      <div className="grid grid-cols-4 gap-2">
+        <MetricCard icon={<TrendingUp className="h-3.5 w-3.5 text-primary" />} label="참여율" value={`${metrics.selfRate}%`} />
+        <MetricCard icon={<CheckCircle2 className="h-3.5 w-3.5 text-primary" />} label="코치" value={metrics.coachComplete} />
+        <MetricCard icon={<Shield className="h-3.5 w-3.5 text-status-pending" />} label="부분" value={metrics.partial} />
+        <MetricCard icon={<AlertTriangle className="h-3.5 w-3.5 text-destructive" />} label="보완" value={metrics.needsReview} />
       </div>
 
       {/* Pending Queue */}
@@ -128,18 +133,18 @@ const DailyOperationsBoard = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-foreground">{v.nickname}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      화이트 Lv.{v.currentLevel}
+                      {RANK_LABELS[v.currentRank] || v.currentRank} Lv.{v.currentLevel}
                     </p>
                   </div>
                 </div>
 
-                {/* Quick actions */}
-                <div className="flex gap-1.5 border-t border-border px-3 py-2.5">
-                  {COACH_QUICK_ACTIONS.map(action => (
+                {/* Quick actions — 5 buttons */}
+                <div className="flex gap-1 border-t border-border px-2 py-2">
+                  {EXTENDED_ACTIONS.map(action => (
                     <button
                       key={action.id}
                       onClick={() => handleQuickAction(v.userId, action.id)}
-                      className={`flex-1 rounded-xl py-2 text-[10px] font-bold text-white transition-all active:scale-95 ${action.color}`}
+                      className={`flex-1 rounded-lg py-1.5 text-[9px] font-bold text-white transition-all active:scale-95 ${action.color}`}
                     >
                       {action.emoji} {action.label}
                     </button>
@@ -189,7 +194,10 @@ const DailyOperationsBoard = () => {
                     {v.nickname.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-foreground">{v.nickname}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs font-bold text-foreground">{v.nickname}</p>
+                      <span className="text-[9px] text-muted-foreground">{RANK_LABELS[v.currentRank]} Lv.{v.currentLevel}</span>
+                    </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${style.bg} ${style.text}`}>
                         {style.label}

@@ -64,25 +64,21 @@ const HomePage = () => {
 
   const rank = progress.current_rank as Enums<"rank_name">;
   const currentLevel = levels?.find(l => l.rank_name === rank && l.level_number === progress.current_level);
-  const isWhiteLv1 = rank === "white" && progress.current_level === 1;
-  const isWhiteLv2 = rank === "white" && progress.current_level === 2;
-  const isWhiteLevel = isWhiteLv1 || isWhiteLv2;
   const myPosition = ranking?.find(r => r.r_user_id === user?.id)?.rank_position;
   const recentBadges = (myBadges || []).slice(0, 3);
   const isMaster40 = rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
 
+  // Get unified level data for current level
+  const unifiedLevel = getLevelById(rank, progress.current_level);
+
   // Select correct promotion metrics based on level
+  const isWhiteLv1 = rank === "white" && progress.current_level === 1;
+  const isWhiteLv2 = rank === "white" && progress.current_level === 2;
   const activePromoMetrics = isWhiteLv2 ? WHITE_LV2_PROMOTION_METRICS : PROMOTION_METRICS;
   const levelMeta = isWhiteLv2 ? WHITE_LV2_META : WHITE_LV1_META;
 
   // Dynamic microcopy
   const sessionsRemaining = Math.max(0, metrics.sessions.target - metrics.sessions.current);
-  const microcopyLines = [
-    sessionsRemaining > 0
-      ? formatMicrocopy("레벨업까지 {remaining}회 남았습니다", { remaining: sessionsRemaining })
-      : "레벨업 심사가 가능합니다!",
-    "자세와 리듬이 점점 안정되고 있어요",
-  ];
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
@@ -118,104 +114,86 @@ const HomePage = () => {
                   <span className="text-sm font-bold text-primary">{myPosition}위</span>
                 </div>
               )}
-              {isWhiteLevel && (
-                <div className={`rounded-full px-3 py-1.5 ${STATUS_STYLE[status]?.bg || "bg-muted"}`}>
-                  <span className={`text-xs font-bold ${STATUS_STYLE[status]?.text || "text-muted-foreground"}`}>{status}</span>
-                </div>
-              )}
+              <div className={`rounded-full px-3 py-1.5 ${STATUS_STYLE[status]?.bg || "bg-muted"}`}>
+                <span className={`text-xs font-bold ${STATUS_STYLE[status]?.text || "text-muted-foreground"}`}>{status}</span>
+              </div>
             </div>
           </div>
           <div className="mb-2 text-xs text-muted-foreground">
             {isManagerRole(role) ? "👑 마스터 · 모든 레벨 달성" : (
-              isWhiteLevel ? levelMeta.title : (currentLevel?.title || `${RANK_LABELS[rank]} 리그 · 레벨 ${progress.current_level}`)
+              unifiedLevel ? unifiedLevel.title : (currentLevel?.title || `${RANK_LABELS[rank]} 리그 · 레벨 ${progress.current_level}`)
             )}
             {profile.branch_name && <span className="ml-1.5 text-muted-foreground/60">· {profile.branch_name}</span>}
           </div>
-          {isWhiteLevel ? (
-            <>
-              <XPBar current={totalXp} max={metrics.xp.target} />
-              <p className="mt-1.5 text-right text-xs text-muted-foreground">
-                <strong className="text-primary">{totalXp}</strong> / {metrics.xp.target} XP
-              </p>
-            </>
-          ) : (
-            <>
-              <XPBar current={progress.total_xp} max={currentLevel?.xp_required || 500} />
-              <p className="mt-1.5 text-right text-xs text-muted-foreground">
-                <strong className="text-primary">{progress.total_xp}</strong> XP
-              </p>
-            </>
-          )}
+          <XPBar current={totalXp} max={metrics.xp.target} />
+          <p className="mt-1.5 text-right text-xs text-muted-foreground">
+            <strong className="text-primary">{totalXp}</strong> / {metrics.xp.target} XP
+          </p>
         </div>
 
-        {/* 2. Level Progression Metrics */}
-        {isWhiteLevel && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.05s" }}>
-            <div className="grid grid-cols-2 gap-2.5">
-              {activePromoMetrics.map(m => {
-                const met = metrics[m.id as keyof typeof metrics];
-                const pct = met ? Math.min(100, Math.round((met.current / met.target) * 100)) : 0;
-                const done = met && met.current >= met.target;
-                return (
-                  <div key={m.id} className={`rounded-2xl border p-3.5 shadow-sm transition-all ${done ? "border-status-complete/30 bg-status-complete/5" : "border-border bg-card"}`}>
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{m.emoji} {m.label}</span>
-                      {done && <CheckCircle2 className="h-3.5 w-3.5 text-status-complete" />}
-                    </div>
-                    <p className="text-lg font-bold text-foreground">
-                      {met?.current ?? 0}<span className="text-sm text-muted-foreground">/{m.target}{m.unit}</span>
-                    </p>
-                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div className={`h-full rounded-full transition-all duration-500 ${done ? "bg-status-complete" : "bg-primary"}`} style={{ width: `${pct}%` }} />
-                    </div>
+        {/* 2. Level Progression Metrics — all levels */}
+        <div className="animate-slide-up" style={{ animationDelay: "0.05s" }}>
+          <div className="grid grid-cols-2 gap-2.5">
+            {[
+              { id: "xp", label: "현재 레벨 XP", emoji: "⚡", target: metrics.xp.target, unit: "XP" },
+              { id: "sessions", label: "인정 세션", emoji: "🥊", target: metrics.sessions.target, unit: "회" },
+              { id: "days", label: "인정 출석일", emoji: "📅", target: metrics.days.target, unit: "일" },
+              { id: "minutes", label: "훈련 시간", emoji: "⏱️", target: metrics.minutes.target, unit: "분" },
+            ].map(m => {
+              const met = metrics[m.id as keyof typeof metrics];
+              const pct = met ? Math.min(100, Math.round((met.current / met.target) * 100)) : 0;
+              const done = met && met.current >= met.target;
+              return (
+                <div key={m.id} className={`rounded-2xl border p-3.5 shadow-sm transition-all ${done ? "border-status-complete/30 bg-status-complete/5" : "border-border bg-card"}`}>
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{m.emoji} {m.label}</span>
+                    {done && <CheckCircle2 className="h-3.5 w-3.5 text-status-complete" />}
                   </div>
-                );
-              })}
-            </div>
+                  <p className="text-lg font-bold text-foreground">
+                    {met?.current ?? 0}<span className="text-sm text-muted-foreground">/{m.target}{m.unit}</span>
+                  </p>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div className={`h-full rounded-full transition-all duration-500 ${done ? "bg-status-complete" : "bg-primary"}`} style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
+        </div>
 
         {/* 3. Retention Banner */}
-        {isWhiteLevel && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.08s" }}>
-            <RetentionBanner />
-          </div>
-        )}
+        <div className="animate-slide-up" style={{ animationDelay: "0.08s" }}>
+          <RetentionBanner />
+        </div>
 
         {/* 4. Weekly Prescription */}
-        {isWhiteLevel && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
-            <WeeklyPrescriptionCard />
-          </div>
-        )}
+        <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
+          <WeeklyPrescriptionCard />
+        </div>
 
         {/* 5. Quick Actions */}
-        {isWhiteLevel && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
-            <div className="grid grid-cols-3 gap-2">
-              {QUICK_ACTIONS.map(action => (
-                <button
-                  key={action.id}
-                  onClick={() => navigate(action.route)}
-                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card p-3.5 shadow-sm transition-all active:scale-[0.96]"
-                >
-                  <span className="text-2xl">{action.emoji}</span>
-                  <span className="text-xs font-bold text-foreground leading-tight text-center">{action.label}</span>
-                  <span className="text-[9px] text-muted-foreground text-center">{action.description}</span>
-                </button>
-              ))}
-            </div>
+        <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
+          <div className="grid grid-cols-3 gap-2">
+            {QUICK_ACTIONS.map(action => (
+              <button
+                key={action.id}
+                onClick={() => navigate(action.route)}
+                className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card p-3.5 shadow-sm transition-all active:scale-[0.96]"
+              >
+                <span className="text-2xl">{action.emoji}</span>
+                <span className="text-xs font-bold text-foreground leading-tight text-center">{action.label}</span>
+                <span className="text-[9px] text-muted-foreground text-center">{action.description}</span>
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* 6. Attendance note */}
-        {isWhiteLevel && (
-          <div className="animate-slide-up rounded-xl bg-muted/50 px-4 py-2.5" style={{ animationDelay: "0.14s" }}>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              ℹ️ 하루 2번 운동해도 레벨업 출석은 하루 1회만 인정됩니다. 짧게 몰아서 하기보다 여러 날에 걸쳐 반복하는 것이 더 중요합니다.
-            </p>
-          </div>
-        )}
+        <div className="animate-slide-up rounded-xl bg-muted/50 px-4 py-2.5" style={{ animationDelay: "0.14s" }}>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            ℹ️ 하루 2번 운동해도 레벨업 출석은 하루 1회만 인정됩니다. 짧게 몰아서 하기보다 여러 날에 걸쳐 반복하는 것이 더 중요합니다.
+          </p>
+        </div>
 
         {/* 7. Rivals */}
         {rivalsAbove && rivalsAbove.length > 0 && (
@@ -279,7 +257,7 @@ const HomePage = () => {
         )}
 
         {/* 12. Self-Challenge CTA */}
-        {showChallenge && isWhiteLevel ? (
+        {showChallenge ? (
           <div className="animate-slide-up" style={{ animationDelay: "0.3s" }}>
             <SelfChallengeFlow
               league={rank}
@@ -291,41 +269,33 @@ const HomePage = () => {
         ) : (
           <div className="space-y-2 animate-slide-up" style={{ animationDelay: "0.3s" }}>
             {/* Recommended routine card */}
-            {isWhiteLevel && (
-              <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">📋</span>
-                    <span className="text-sm font-bold text-foreground">오늘의 추천 루틴</span>
-                  </div>
-                  {selfChallengeStreak > 0 && (
-                    <div className="flex items-center gap-1 rounded-full bg-status-pending/10 px-2 py-0.5">
-                      <Flame className="h-3 w-3 text-status-pending" />
-                      <span className="text-[10px] font-bold text-status-pending">{selfChallengeStreak}회 연속</span>
-                    </div>
-                  )}
+            <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📋</span>
+                  <span className="text-sm font-bold text-foreground">오늘의 추천 루틴</span>
                 </div>
-                <p className="text-xs text-muted-foreground mb-3">
-                  자가 도전으로 완료 시 +{SELF_CHALLENGE_BONUS_XP}XP 보너스. 레벨업 진행은 동일합니다.
-                </p>
-                <button
-                  onClick={() => setShowChallenge(true)}
-                  className="w-full rounded-2xl bg-primary py-4 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
-                  style={{ fontFamily: "'Black Han Sans', sans-serif" }}
-                >
-                  🥊 자가 도전 시작
-                </button>
+                {selfChallengeStreak > 0 && (
+                  <div className="flex items-center gap-1 rounded-full bg-status-pending/10 px-2 py-0.5">
+                    <Flame className="h-3 w-3 text-status-pending" />
+                    <span className="text-[10px] font-bold text-status-pending">{selfChallengeStreak}회 연속</span>
+                  </div>
+                )}
               </div>
-            )}
-            {!isWhiteLevel && (
+              <p className="text-xs text-muted-foreground mb-1">
+                {unifiedLevel?.title || `${RANK_LABELS[rank]} 리그 · 레벨 ${progress.current_level}`}
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">
+                자가 도전으로 완료 시 +{SELF_CHALLENGE_BONUS_XP}XP 보너스. 레벨업 진행은 동일합니다.
+              </p>
               <button
-                onClick={() => navigate("/missions")}
-                className="w-full rounded-2xl bg-primary py-5 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
-                style={{ animationDelay: "0.3s" }}
+                onClick={() => setShowChallenge(true)}
+                className="w-full rounded-2xl bg-primary py-4 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
+                style={{ fontFamily: "'Black Han Sans', sans-serif" }}
               >
-                🥊 오늘 도전 시작
+                🥊 자가 도전 시작
               </button>
-            )}
+            </div>
           </div>
         )}
 

@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════
 // White Lv.2 — 전진·후진 스텝과 잽 반복
+// Updated: 3-day/3-session/150-min pacing. Home missions removed.
 // ═══════════════════════════════════════════════════════
 import type { SessionBlock, ChecklistItem, XpRule, PromotionMetric, RecommendedPath, LearningModule, HomeMission, GuideCard } from "@/data/whiteLevel1Data";
 
@@ -48,12 +49,8 @@ export const WHITE_LV2_LEARNING: LearningModule[] = [
   },
 ];
 
-/* ─── Home Mission Options ────────────────────────────── */
-export const WHITE_LV2_HOME_MISSIONS: HomeMission[] = [
-  { id: "forward-jab", title: "전진 잽 10회 영상", description: "전진 후 잽 10회 정확하게 수행", emoji: "👊" },
-  { id: "back-guard", title: "후진 후 가드 복귀 10회 영상", description: "후진 스텝 후 가드 복귀 반복", emoji: "🛡️" },
-  { id: "step-3min", title: "3분 제자리/사이드 스텝 영상", description: "다양한 방향 스텝 3분 유지", emoji: "🦶" },
-];
+/* ─── Home Mission Options (deprecated) ───────────────── */
+export const WHITE_LV2_HOME_MISSIONS: HomeMission[] = [];
 
 /* ─── Session Template (50분) ─────────────────────────── */
 export const WHITE_LV2_SESSION: SessionBlock[] = [
@@ -188,37 +185,36 @@ export const WHITE_LV2_SESSION: SessionBlock[] = [
   },
 ];
 
-/* ─── XP Rules (same as Lv.1) ─────────────────────────── */
+/* ─── XP Rules ────────────────────────────────────────── */
 export const WHITE_LV2_XP_RULES: XpRule[] = [
   { label: "프로그램 완수", minutes: "50분", xp: 100 },
   { label: "40~49분 완료", minutes: "40~49분", xp: 80 },
   { label: "30~39분 완료", minutes: "30~39분", xp: 60 },
   { label: "30분 미만", minutes: "30분 미만", xp: 0, note: "레벨업용 출석 미인정" },
-  { label: "홈미션 제출", minutes: "3분", xp: 20, note: "하루 최대 1회" },
 ];
 
-/* ─── Promotion Rules (Lv.2 → Lv.3) ──────────────────── */
+/* ─── Promotion Rules (Lv.2 → Lv.3) — 3일 페이싱 ──────── */
 export const WHITE_LV2_PROMOTION_METRICS: PromotionMetric[] = [
-  { id: "xp", label: "현재 레벨 XP", target: 600, unit: "XP", emoji: "⚡" },
-  { id: "sessions", label: "인정 세션", target: 6, unit: "회", emoji: "🥊" },
-  { id: "days", label: "인정 출석일", target: 5, unit: "일", emoji: "📅" },
-  { id: "minutes", label: "현재 레벨 훈련 시간", target: 300, unit: "분", emoji: "⏱️" },
+  { id: "xp", label: "현재 레벨 XP", target: 300, unit: "XP", emoji: "⚡" },
+  { id: "sessions", label: "인정 세션", target: 3, unit: "회", emoji: "🥊" },
+  { id: "days", label: "인정 출석일", target: 3, unit: "일", emoji: "📅" },
+  { id: "minutes", label: "현재 레벨 훈련 시간", target: 150, unit: "분", emoji: "⏱️" },
 ];
 
 export const WHITE_LV2_PROMOTION_RULES = {
-  xpRequired: 600,
-  sessionsRequired: 6,
-  attendanceDaysRequired: 5,
-  totalMinutesRequired: 300,
+  xpRequired: 300,
+  sessionsRequired: 3,
+  attendanceDaysRequired: 3,
+  totalMinutesRequired: 150,
   checklistPassCount: 5,
-  mandatoryItems: [0, 3], // 전진·후진 스텝(0), 전진 잽+후진 복귀(3)
-  movementJabBlockMinSessions: 4,
+  mandatoryItems: [0, 3],
+  movementJabBlockMinSessions: 2,
 };
 
 /* ─── Recommended Paths ───────────────────────────────── */
 export const WHITE_LV2_RECOMMENDED_PATHS: RecommendedPath[] = [
-  { label: "일반 경로", frequency: "주 3회", duration: "약 2주", sessions: "6회" },
-  { label: "빠른 경로", frequency: "주 5회", duration: "약 8~10일", sessions: "6회" },
+  { label: "일반 경로", frequency: "주 3회", duration: "약 1주", sessions: "3회" },
+  { label: "빠른 경로", frequency: "주 5회", duration: "약 3~4일", sessions: "3회" },
 ];
 
 /* ─── Final Checklist ─────────────────────────────────── */
@@ -303,7 +299,7 @@ export const WHITE_LV2_SUPPLEMENT_RULES = {
 
 /* ─── Internal Progression ────────────────────────────── */
 export const WHITE_LV2_SESSION_PHASES = [
-  { sessions: "1–2", focus: "블록 연습 (분리)" },
-  { sessions: "3–4", focus: "전진/후진 스텝 + 잽 연결" },
-  { sessions: "5–6", focus: "가벼운 랜덤 큐잉 (전진, 후진, 잽, 정지)" },
+  { sessions: "1", focus: "블록 연습 (분리)" },
+  { sessions: "2", focus: "전진/후진 스텝 + 잽 연결" },
+  { sessions: "3", focus: "가벼운 랜덤 큐잉 (전진, 후진, 잽, 정지)" },
 ];

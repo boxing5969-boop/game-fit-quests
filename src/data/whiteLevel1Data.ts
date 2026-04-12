@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════
 // White Lv.1 — 스탠스·가드·잽 입문 + 기초체력과 리듬
-// All data for session template, checklist, XP, promotion
+// Updated: 3-day/3-session/150-min pacing. Home missions removed.
 // ═══════════════════════════════════════════════════════
 
 /* ─── Leagues ─────────────────────────────────────────── */
@@ -60,7 +60,7 @@ export const WHITE_LV1_LEARNING: LearningModule[] = [
   },
 ];
 
-/* ─── Home Mission Options ────────────────────────────── */
+/* ─── Home Mission Options (deprecated — kept for compat) */
 export interface HomeMission {
   id: string;
   title: string;
@@ -68,11 +68,7 @@ export interface HomeMission {
   emoji: string;
 }
 
-export const WHITE_LV1_HOME_MISSIONS: HomeMission[] = [
-  { id: "guard-hold", title: "2분 가드 유지 영상", description: "가드 자세를 2분간 유지하며 촬영", emoji: "🛡️" },
-  { id: "jab-20", title: "잽 20회 영상", description: "거울 앞에서 잽 20회 정확하게 수행", emoji: "👊" },
-  { id: "step-3min", title: "3분 제자리 스텝", description: "제자리에서 복서 스텝 3분 유지", emoji: "🦶" },
-];
+export const WHITE_LV1_HOME_MISSIONS: HomeMission[] = [];
 
 /* ─── Session Template (50분) ─────────────────────────── */
 export type IntensityLevel = "가볍게" | "보통" | "조금 힘듦";
@@ -243,10 +239,9 @@ export const XP_RULES: XpRule[] = [
   { label: "40~49분 완료", minutes: "40~49분", xp: 80 },
   { label: "30~39분 완료", minutes: "30~39분", xp: 60 },
   { label: "30분 미만", minutes: "30분 미만", xp: 0, note: "레벨업용 출석 미인정" },
-  { label: "홈미션 제출", minutes: "3분", xp: 20, note: "하루 최대 1회" },
 ];
 
-/* ─── Promotion Rules (Lv.1 → Lv.2) ──────────────────── */
+/* ─── Promotion Rules (Lv.1 → Lv.2) — 3일 페이싱 ──────── */
 export interface PromotionMetric {
   id: string;
   label: string;
@@ -256,19 +251,19 @@ export interface PromotionMetric {
 }
 
 export const PROMOTION_METRICS: PromotionMetric[] = [
-  { id: "xp", label: "현재 레벨 XP", target: 500, unit: "XP", emoji: "⚡" },
-  { id: "sessions", label: "인정 세션", target: 5, unit: "회", emoji: "🥊" },
-  { id: "days", label: "인정 출석일", target: 5, unit: "일", emoji: "📅" },
-  { id: "minutes", label: "현재 레벨 훈련 시간", target: 250, unit: "분", emoji: "⏱️" },
+  { id: "xp", label: "현재 레벨 XP", target: 300, unit: "XP", emoji: "⚡" },
+  { id: "sessions", label: "인정 세션", target: 3, unit: "회", emoji: "🥊" },
+  { id: "days", label: "인정 출석일", target: 3, unit: "일", emoji: "📅" },
+  { id: "minutes", label: "현재 레벨 훈련 시간", target: 150, unit: "분", emoji: "⏱️" },
 ];
 
 export const PROMOTION_RULES = {
-  xpRequired: 500,
-  sessionsRequired: 5,
-  attendanceDaysRequired: 5,
-  totalMinutesRequired: 250,
+  xpRequired: 300,
+  sessionsRequired: 3,
+  attendanceDaysRequired: 3,
+  totalMinutesRequired: 150,
   checklistPassCount: 5,
-  mandatoryItems: [0, 3], // indices: 가드 자세(0), 잽 정확도(3)
+  mandatoryItems: [0, 3],
 };
 
 /* ─── Recommended Paths ───────────────────────────────── */
@@ -280,8 +275,8 @@ export interface RecommendedPath {
 }
 
 export const RECOMMENDED_PATHS: RecommendedPath[] = [
-  { label: "일반 경로", frequency: "주 3회", duration: "약 2주", sessions: "5~6회" },
-  { label: "빠른 경로", frequency: "주 5회", duration: "약 1주", sessions: "5회" },
+  { label: "일반 경로", frequency: "주 3회", duration: "약 1주", sessions: "3회" },
+  { label: "빠른 경로", frequency: "주 5회", duration: "약 3~4일", sessions: "3회" },
 ];
 
 /* ─── Final Checklist ─────────────────────────────────── */
@@ -368,8 +363,7 @@ export const MICROCOPY: Microcopy[] = [
   { id: "sessions-progress", text: "현재 {current}/{target}회 완료", condition: "sessions" },
   { id: "sessions-remaining", text: "레벨업까지 {remaining}회 남았습니다", condition: "sessions" },
   { id: "xp-today", text: "오늘 50분을 채우면 100XP" },
-  { id: "review-available", text: "5회 완료 시 레벨업 심사 가능" },
-  { id: "supplement", text: "6회차는 부족한 부분만 보완하면 됩니다" },
+  { id: "review-available", text: "3회 완료 시 레벨업 심사 가능" },
   { id: "jab-improving", text: "첫 잽이 점점 자연스러워지고 있어요" },
   { id: "posture-improving", text: "자세와 리듬이 점점 안정되고 있어요" },
   { id: "accuracy-first", text: "빠르게보다 정확하게" },
@@ -382,9 +376,9 @@ export function formatMicrocopy(template: string, vars: Record<string, string | 
 
 /* ─── Home Message Cards ──────────────────────────────── */
 export const HOME_MESSAGES = [
-  "주 3회 회원은 약 2주, 주 5회 회원은 약 1주 안에 레벨업 가능",
+  "주 3회 회원은 약 1주 안에 레벨업 가능",
   "오늘 50분을 채우면 100XP",
-  "5회 완료 시 레벨업 심사 가능",
+  "3회 완료 시 레벨업 심사 가능",
 ];
 
 /* ─── Quick Actions ───────────────────────────────────── */
@@ -397,8 +391,7 @@ export interface QuickAction {
 }
 
 export const QUICK_ACTIONS: QuickAction[] = [
-  { id: "start-session", emoji: "🥊", label: "오늘 수업 시작", description: "White Lv.1 수업 보기", route: "/missions" },
-  { id: "home-mission", emoji: "🏠", label: "홈미션 제출", description: "+20XP 보너스", route: "/missions" },
+  { id: "start-session", emoji: "🥊", label: "오늘 수업 시작", description: "수업 보기", route: "/missions" },
   { id: "checklist", emoji: "✅", label: "체크테스트 보기", description: "레벨업 심사 확인", route: "/missions" },
   { id: "weekly-plan", emoji: "📋", label: "이번 주 추천", description: "주간 처방 보기", route: "/missions" },
 ];
@@ -475,61 +468,13 @@ export const GUIDE_CARDS: GuideCard[] = [
     id: "ladder-training",
     emoji: "🪜",
     title: "사다리 훈련은 왜 넣나요?",
-    body: "사다리 훈련은 체력 메인보다 발놀림, 리듬, 협응을 위한 훈련입니다.",
+    body: "사다리는 체력이 아니라 발놀림·리듬·협응 훈련입니다. 복싱에서 스텝과 리듬은 기본기의 핵심입니다.",
   },
   {
-    id: "weekly-prescription",
+    id: "3day-pacing",
     emoji: "📅",
-    title: "주간 처방은 어떻게 정해지나요?",
-    body: "주간 활동량과 반복은 여러 날에 나누어 쌓는 것이 중요합니다. 최근 7일 활동 기반으로 라이트/기본/빠른 경로를 추천합니다.",
-  },
-  {
-    id: "easy-return",
-    emoji: "🔄",
-    title: "짧게 쉬운 복귀도 가치가 있는 이유",
-    body: "짧은 복귀 세션도 다시 리듬을 잡는 데 도움이 됩니다. 완벽한 세션보다 다시 나오는 것이 더 중요합니다.",
-  },
-  {
-    id: "blue-preview",
-    emoji: "🔵",
-    title: "Blue League 예고",
-    body: "블루부터는 출석형 레벨업이 아니라 기술 반복과 테스트 중심으로 바뀝니다.",
+    title: "왜 3일 기준 레벨업인가요?",
+    body: "주 3회 훈련하면 약 1주 만에 레벨업이 가능합니다. 여러 날에 걸쳐 반복하며 자연스럽게 몸에 익히는 것이 중요합니다.",
     accent: true,
   },
 ];
-
-/* ─── Session Recognition Rules ───────────────────────── */
-export const SESSION_RULES = {
-  sessionMinutes: 50,
-  rankSessionMinMinutes: 45,
-  maxRankSessionsPerDay: 1,
-  homeMissionMaxPerDay: 1,
-  homeMissionXp: 20,
-  supplementWindowDays: 7,
-};
-
-/* ─── Supplement / Retry Rules ────────────────────────── */
-export const SUPPLEMENT_RULES = {
-  maxExtraSessions: 1,
-  retryWindowDays: 7,
-  passMessage: "화이트 Lv.2 준비 완료\n자세와 리듬, 첫 잽이 잡히고 있습니다",
-  holdMessage: "보완 포인트를 확인하고 6회차에서 다시 도전하세요\n부족한 항목만 다시 채우면 됩니다",
-  failMessage: "코치 확인 필요",
-};
-
-/* ─── Coach Feedback Templates ────────────────────────── */
-export const COACH_FEEDBACK_TEMPLATES = [
-  "가드가 얼굴에서 멀어집니다",
-  "잽 후 손이 늦게 돌아옵니다",
-  "전진/후진 스텝에서 발이 교차됩니다",
-  "스텝 후 자세 복구가 느립니다",
-  "줄넘기 리듬은 좋지만 가드 유지가 더 필요합니다",
-  "다음 수업에서 부족한 항목만 보완하면 됩니다",
-];
-
-/* ─── Intensity Labels ────────────────────────────────── */
-export const INTENSITY_LABELS = [
-  { value: "easy", label: "가볍게", rpe: "3-4" },
-  { value: "normal", label: "보통", rpe: "4-5" },
-  { value: "hard", label: "조금 힘듦", rpe: "5-6" },
-] as const;

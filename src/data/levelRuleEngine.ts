@@ -1,14 +1,15 @@
 // ═══════════════════════════════════════════════════════
 // Level Progression Rule Engine
-// Reusable for all 40 levels. White Lv.1 & Lv.2 first.
+// Reusable for all 40 levels. 3-day/3-session/150-min pacing.
 // ═══════════════════════════════════════════════════════
 
-import { PROMOTION_RULES, WHITE_LV1_CHECKLIST, type ChecklistItem } from "@/data/whiteLevel1Data";
-import { WHITE_LV2_PROMOTION_RULES, WHITE_LV2_CHECKLIST } from "@/data/whiteLevel2Data";
+import { PROMOTION_RULES } from "@/data/whiteLevel1Data";
+import { WHITE_LV2_PROMOTION_RULES } from "@/data/whiteLevel2Data";
+import { ALL_LEVELS, type UnifiedLevel } from "@/data/allLevelsData";
 
 /* ─── Types ───────────────────────────────────────────── */
 export interface LevelRuleConfig {
-  levelId: string; // e.g. "white-1"
+  levelId: string;
   league: string;
   level: number;
   minXp: number;
@@ -46,44 +47,80 @@ export type LevelProgressionStatus =
   | "레벨업 완료"
   | "코치 확인 필요";
 
-/* ─── Level Rule Configs ──────────────────────────────── */
-export const LEVEL_RULES: Record<string, LevelRuleConfig> = {
-  "white-1": {
-    levelId: "white-1",
-    league: "white",
-    level: 1,
+export interface ChecklistItem {
+  id: number;
+  title: string;
+  details: string[];
+  mandatory: boolean;
+}
+
+/* ─── Generate rule config from UnifiedLevel ──────────── */
+function buildRuleFromLevel(ul: UnifiedLevel): LevelRuleConfig {
+  const pc = ul.progressionConfig;
+  const isMilestone = ul.levelInLeague === 10;
+  return {
+    levelId: `${ul.league}-${ul.levelInLeague}`,
+    league: ul.league,
+    level: ul.levelInLeague,
+    minXp: pc.minXp,
+    minQualifyingSessions: pc.minSessions,
+    minAttendanceDays: pc.minDays,
+    minTrainingMinutes: pc.minMinutes,
+    checklistPassCount: pc.checklistPassCount,
+    mandatoryCheckItems: pc.mandatoryItems,
+    remediationWindowDays: 7,
+    remediationExtraSessions: 1,
+    additionalRules: isMilestone ? { isBossLevel: true } : undefined,
+  };
+}
+
+/* ─── Level Rule Configs (auto-generated for all 40) ──── */
+export const LEVEL_RULES: Record<string, LevelRuleConfig> = (() => {
+  const map: Record<string, LevelRuleConfig> = {};
+  ALL_LEVELS.forEach(ul => {
+    const id = `${ul.league}-${ul.levelInLeague}`;
+    map[id] = buildRuleFromLevel(ul);
+  });
+  // Override white-1 and white-2 with existing detailed data for backward compat
+  map["white-1"] = {
+    ...map["white-1"],
     minXp: PROMOTION_RULES.xpRequired,
     minQualifyingSessions: PROMOTION_RULES.sessionsRequired,
     minAttendanceDays: PROMOTION_RULES.attendanceDaysRequired,
     minTrainingMinutes: PROMOTION_RULES.totalMinutesRequired,
     checklistPassCount: PROMOTION_RULES.checklistPassCount,
     mandatoryCheckItems: PROMOTION_RULES.mandatoryItems,
-    remediationWindowDays: 7,
-    remediationExtraSessions: 1,
-  },
-  "white-2": {
-    levelId: "white-2",
-    league: "white",
-    level: 2,
+  };
+  map["white-2"] = {
+    ...map["white-2"],
     minXp: WHITE_LV2_PROMOTION_RULES.xpRequired,
     minQualifyingSessions: WHITE_LV2_PROMOTION_RULES.sessionsRequired,
     minAttendanceDays: WHITE_LV2_PROMOTION_RULES.attendanceDaysRequired,
     minTrainingMinutes: WHITE_LV2_PROMOTION_RULES.totalMinutesRequired,
     checklistPassCount: WHITE_LV2_PROMOTION_RULES.checklistPassCount,
     mandatoryCheckItems: WHITE_LV2_PROMOTION_RULES.mandatoryItems,
-    remediationWindowDays: 7,
-    remediationExtraSessions: 1,
     additionalRules: {
       movementJabBlockMinSessions: WHITE_LV2_PROMOTION_RULES.movementJabBlockMinSessions,
     },
-  },
-};
+  };
+  return map;
+})();
 
 /* ─── Get checklist for a level ───────────────────────── */
 export function getChecklistForLevel(levelId: string): ChecklistItem[] {
-  if (levelId === "white-1") return WHITE_LV1_CHECKLIST;
-  if (levelId === "white-2") return WHITE_LV2_CHECKLIST;
-  return [];
+  // Find the unified level data
+  const parts = levelId.split("-");
+  if (parts.length !== 2) return [];
+  const league = parts[0];
+  const lvNum = parseInt(parts[1], 10);
+  const ul = ALL_LEVELS.find(l => l.league === league && l.levelInLeague === lvNum);
+  if (!ul) return [];
+  return ul.reviewCriteria.map((rc, i) => ({
+    id: i + 1,
+    title: rc.title,
+    details: rc.details,
+    mandatory: rc.mandatory,
+  }));
 }
 
 /* ─── Calculate Level Status ──────────────────────────── */
