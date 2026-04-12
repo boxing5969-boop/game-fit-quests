@@ -261,7 +261,6 @@ const SettingsPage = () => {
           <p className="mb-3 text-xs text-muted-foreground">153 랭크업 시스템 소개를 다시 볼 수 있습니다.</p>
           <button
             onClick={() => {
-              const { resetOnboarding } = useOnboardingState();
               resetOnboarding();
               navigate("/onboarding");
             }}
