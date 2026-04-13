@@ -70,7 +70,7 @@ const LiveBoardPage = () => {
   const [branchName, setBranchName] = useState("");
   const [todayCheckins, setTodayCheckins] = useState<CheckinEvent[]>([]);
   const [activeMembers, setActiveMembers] = useState<ActiveMember[]>([]);
-  const [completedMembers, setCompletedMembers] = useState<CompletedMember[]>([]);
+  // completedMembers removed — completed sessions no longer shown on live board
   const [hallMembers, setHallMembers] = useState<HallMember[]>([]);
   const [latestPopup, setLatestPopup] = useState<CheckinEvent | null>(null);
   const [showPopup, setShowPopup] = useState(false);

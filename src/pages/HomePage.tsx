@@ -499,20 +499,26 @@ const HomePage = () => {
       <QRScannerModal
         open={showQRScanner}
         onClose={() => setShowQRScanner(false)}
-        onSuccess={(result) => {
+        onSuccess={async (result) => {
           setShowQRScanner(false);
           setCheckinResult(result);
           setShowCheckinSuccess(true);
+          setCheckedInToday(true);
+
           if (!result.is_duplicate) {
-            setCheckedInToday(true);
             refreshProgress();
             toast.success(`출석 완료! +${result.xp_granted}XP 🥊`);
-            // Auto-start challenge using shared logic
-            setTimeout(async () => {
-              await handleStartChallenge();
-              toast.success("오늘 도전 시작! 💪");
-            }, 1500);
+          } else {
+            toast("오늘은 이미 출석 완료했어요. 라이브보드에 다시 입장했어요!");
           }
+
+          // Edge function already created an active session.
+          // Refresh local state to pick it up, then show challenge UI.
+          setTimeout(async () => {
+            await activitySession.refreshSession();
+            setShowChallenge(true);
+            toast.success(result.is_duplicate ? "오늘 도전 다시 시작! 💪" : "오늘 도전 시작! 💪");
+          }, 1500);
         }}
       />
 
