@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Building2, Clock, X, Trophy, CheckCircle2 } from "lucide-react";
+import { Building2, Clock, X, Trophy } from "lucide-react";
 
 const RANK_COLORS: Record<string, string> = {
   white: "border-gray-400 bg-gray-200 text-gray-900",
