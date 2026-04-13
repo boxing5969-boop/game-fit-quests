@@ -437,18 +437,6 @@ const HomePage = () => {
         {/* 12. Self-Challenge CTA */}
         {showChallenge ? (
           <div className="animate-slide-up" style={{ animationDelay: "0.3s" }}>
-            {/* Active session timer banner */}
-            {activitySession.isActive && (
-              <div className="mb-3 rounded-2xl border-2 border-primary/30 bg-card p-4 text-center shadow-md">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Clock className="h-4 w-4 text-primary animate-pulse" />
-                  <span className="text-xs font-bold text-primary">오늘 도전 진행 중</span>
-                </div>
-                <p className="text-3xl font-bold tabular-nums text-foreground" style={{ fontFamily: "monospace" }}>
-                  {String(activitySession.elapsedMinutes).padStart(2, "0")}:{String(activitySession.elapsedSeconds).padStart(2, "0")}
-                </p>
-              </div>
-            )}
             <SelfChallengeFlow
               league={rank}
               levelInLeague={progress.current_level}
