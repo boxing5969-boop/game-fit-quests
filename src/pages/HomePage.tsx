@@ -67,6 +67,7 @@ const HomePage = () => {
   const setRival = useSetRival();
   const { onboardingDone, safetyDone } = useOnboardingState();
   const { totalXp, status, metrics, activeLevelId, selfChallengeStreak } = useLocalProgress();
+  const activitySession = useActivitySession(user?.id, profile?.branch_name);
   const widgetPrefs = loadHomeWidgetPrefs();
   const [showChallenge, setShowChallenge] = useState(false);
   const [showAllMenu, setShowAllMenu] = useState(false);
