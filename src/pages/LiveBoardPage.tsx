@@ -417,7 +417,7 @@ const LiveBoardPage = () => {
                 <div className="space-y-1">
                   {todayCheckins.map((c) => (
                     <div key={c.id} className="flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-gray-800/30 transition-colors">
-                      <MemberAvatar url={avatarCache.current[c.user_id]} name={c.display_name_snapshot} sizeClass="h-11 w-11" />
+                      <MemberAvatar url={avatarMap[c.user_id]} name={c.display_name_snapshot} sizeClass="h-11 w-11" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xl font-black text-gray-200 truncate leading-tight">{c.display_name_snapshot}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
