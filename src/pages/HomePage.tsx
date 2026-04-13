@@ -146,11 +146,16 @@ const HomePage = () => {
       refreshProgress();
     }
 
-    const session = await activitySession.refreshSession();
+    // Always show challenge flow — edge function guarantees an active session
+    setShowChallenge(true);
 
-    if (session) {
-      setShowChallenge(true);
-    }
+    // Refresh session state in background (retry once if not found immediately)
+    activitySession.refreshSession().then(session => {
+      if (!session) {
+        // Retry after small delay — edge function commit may not be visible yet
+        setTimeout(() => activitySession.refreshSession(), 500);
+      }
+    });
 
     setCheckinResult(result);
     setShowCheckinSuccess(true);
