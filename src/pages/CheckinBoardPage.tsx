@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { QrCode, Monitor, RefreshCw, Trash2, ChevronLeft, Settings, Bug, Zap, Clock, CheckCircle2, XCircle, AlertTriangle, Building2 } from "lucide-react";
+import { QrCode, Monitor, RefreshCw, Trash2, ChevronLeft, Settings, Bug, Zap, Clock, CheckCircle2, XCircle, AlertTriangle, Building2, RotateCcw } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { formatRank } from "@/lib/rankLabels";
@@ -50,6 +50,41 @@ const CheckinBoardPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [tokenPreview, setTokenPreview] = useState<string>("");
+  const [activeSessions, setActiveSessions] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const autoRefreshRef = useRef<ReturnType<typeof setInterval>>();
+
+  // Load active session count
+  const loadActiveSessions = useCallback(async () => {
+    if (!activeBranch) return;
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const { count } = await supabase
+      .from("activity_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("branch_name", activeBranch)
+      .eq("status", "active")
+      .gte("started_at", todayStart.toISOString());
+    setActiveSessions(count || 0);
+  }, [activeBranch]);
+
+  useEffect(() => { loadActiveSessions(); }, [loadActiveSessions]);
+
+  // Reset active sessions
+  const handleResetActiveSessions = async () => {
+    if (!activeBranch) return;
+    const { error } = await supabase
+      .from("activity_sessions")
+      .update({ status: "auto_ended", ended_at: new Date().toISOString() })
+      .eq("branch_name", activeBranch)
+      .eq("status", "active");
+    if (error) {
+      toast.error("초기화 실패");
+    } else {
+      toast.success("현재 활동 중 초기화 완료");
+      setActiveSessions(0);
+    }
+  };
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const autoRefreshRef = useRef<ReturnType<typeof setInterval>>();
 
