@@ -578,9 +578,9 @@ const LiveBoardPage = () => {
                         <p className="text-xl font-black text-gray-200 truncate leading-tight">{v.display_name}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className={`inline-flex px-1.5 py-0.5 rounded text-xs font-black ${RANK_BADGE_COLORS[v.league] || "bg-gray-700 text-gray-300"}`}>
-                            {RANK_LABELS[v.league] || v.league}
+                            {RANK_LABELS[v.league] || v.league} 리그
                           </span>
-                          <span className="text-sm text-gray-500 font-bold">L{v.level}</span>
+                          <span className="text-sm text-gray-500 font-bold">레벨 {v.level}</span>
                         </div>
                       </div>
                       <span className="text-lg text-gray-500 tabular-nums font-black">{fmtTime(v.last_checkin_at)}</span>
