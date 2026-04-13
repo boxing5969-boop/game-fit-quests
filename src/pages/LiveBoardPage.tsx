@@ -427,7 +427,7 @@ const LiveBoardPage = () => {
                       </div>
                       <span className="text-lg text-gray-500 tabular-nums font-black">{fmtTime(c.checked_in_at)}</span>
                     </div>
-                  ))
+                  ))}
                 </div>
               )}
             </div>
