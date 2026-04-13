@@ -130,6 +130,18 @@ const HomePage = () => {
     }
   }, []);
 
+  const ensureActiveSession = useCallback(async () => {
+    let session = await activitySession.refreshSession();
+    if (session) return session;
+
+    await new Promise(resolve => setTimeout(resolve, 250));
+    session = await activitySession.refreshSession();
+    if (session) return session;
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return activitySession.refreshSession();
+  }, [activitySession]);
+
   // Shared challenge start logic — used by both manual button and QR auto-start
   const handleStartChallenge = useCallback(async () => {
     const session = await activitySession.startChallenge();
@@ -146,21 +158,16 @@ const HomePage = () => {
       refreshProgress();
     }
 
-    // Always show challenge flow — edge function guarantees an active session
     setShowChallenge(true);
+    await ensureActiveSession();
 
-    // Refresh session state in background (retry once if not found immediately)
-    activitySession.refreshSession().then(session => {
-      if (!session) {
-        // Retry after small delay — edge function commit may not be visible yet
-        setTimeout(() => activitySession.refreshSession(), 500);
-      }
-    });
+    if (!result.is_duplicate) {
+      setCheckinResult(result);
+      setShowCheckinSuccess(true);
+    }
 
-    setCheckinResult(result);
-    setShowCheckinSuccess(true);
     handleCheckinFeedback(result.is_duplicate, result.xp_granted);
-  }, [activitySession, handleCheckinFeedback, refreshProgress]);
+  }, [ensureActiveSession, handleCheckinFeedback, refreshProgress]);
 
   if (!profile || !progress) return <LoadingState />;
 

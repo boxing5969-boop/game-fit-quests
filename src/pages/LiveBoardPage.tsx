@@ -140,8 +140,6 @@ const LiveBoardPage = () => {
   // Load active sessions — only status='active', skip ghost profiles
   const loadActivitySessions = useCallback(async () => {
     if (!branchName) return;
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
 
     // Auto-end stale sessions (>2 hours old)
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
@@ -150,6 +148,7 @@ const LiveBoardPage = () => {
       .update({ status: "auto_ended", ended_at: new Date().toISOString() })
       .eq("branch_name", branchName)
       .eq("status", "active")
+      .is("ended_at", null)
       .lt("started_at", twoHoursAgo);
 
     const { data: activeSessions } = await supabase
@@ -157,7 +156,7 @@ const LiveBoardPage = () => {
       .select("id, user_id, started_at")
       .eq("branch_name", branchName)
       .eq("status", "active")
-      .gte("started_at", todayStart.toISOString());
+      .is("ended_at", null);
 
     if (!activeSessions || activeSessions.length === 0) {
       setActiveMembers([]);
@@ -304,6 +303,7 @@ const LiveBoardPage = () => {
             return [{ user_id: n.user_id, display_name: n.display_name_snapshot, league: n.league_snapshot, level: n.level_snapshot, last_checkin_at: n.checked_in_at }, ...prev];
           });
           triggerPopup(event);
+          void loadActivitySessions();
         })
       .on("postgres_changes", { event: "*", schema: "public", table: "activity_sessions", filter: `branch_name=eq.${branchName}` },
         () => {
