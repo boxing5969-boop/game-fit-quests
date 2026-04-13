@@ -88,12 +88,12 @@ const LiveBoardPage = () => {
 
   const getAvatarUrl = useCallback(async (userId: string): Promise<string | null> => {
     if (avatarCacheRef.current[userId] !== undefined) {
-      // Ensure state is also set for rendering
       if (avatarMap[userId] === undefined) {
         setAvatarMap(prev => ({ ...prev, [userId]: avatarCacheRef.current[userId] }));
       }
       return avatarCacheRef.current[userId];
     }
+    // Try profiles (may fail for anon due to RLS)
     const { data } = await supabase.from("profiles").select("avatar_url").eq("user_id", userId).single();
     const url = data?.avatar_url || null;
     avatarCacheRef.current[userId] = url;
