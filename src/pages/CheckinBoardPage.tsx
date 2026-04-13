@@ -51,6 +51,7 @@ const CheckinBoardPage = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [tokenPreview, setTokenPreview] = useState<string>("");
   const [activeSessions, setActiveSessions] = useState(0);
+  const [showAllLogs, setShowAllLogs] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const autoRefreshRef = useRef<ReturnType<typeof setInterval>>();
 
