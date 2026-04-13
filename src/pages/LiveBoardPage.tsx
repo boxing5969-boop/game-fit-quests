@@ -74,14 +74,16 @@ const LiveBoardPage = () => {
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
   const [showBranchSwitch, setShowBranchSwitch] = useState(false);
 
-  // Avatar cache
-  const avatarCache = useRef<Record<string, string | null>>({});
+  // Avatar cache — use state to trigger re-renders when avatars load
+  const avatarCacheRef = useRef<Record<string, string | null>>({});
+  const [avatarMap, setAvatarMap] = useState<Record<string, string | null>>({});
 
   const getAvatarUrl = useCallback(async (userId: string): Promise<string | null> => {
-    if (avatarCache.current[userId] !== undefined) return avatarCache.current[userId];
+    if (avatarCacheRef.current[userId] !== undefined) return avatarCacheRef.current[userId];
     const { data } = await supabase.from("profiles").select("avatar_url").eq("user_id", userId).single();
     const url = data?.avatar_url || null;
-    avatarCache.current[userId] = url;
+    avatarCacheRef.current[userId] = url;
+    setAvatarMap(prev => ({ ...prev, [userId]: url }));
     return url;
   }, []);
 
