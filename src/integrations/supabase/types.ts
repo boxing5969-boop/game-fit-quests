@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_sessions: {
+        Row: {
+          branch_name: string
+          created_at: string
+          ended_at: string | null
+          expires_from_board_at: string | null
+          id: string
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          branch_name: string
+          created_at?: string
+          ended_at?: string | null
+          expires_from_board_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          branch_name?: string
+          created_at?: string
+          ended_at?: string | null
+          expires_from_board_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_bulk_actions: {
         Row: {
           action_type: string
