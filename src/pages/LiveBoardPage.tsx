@@ -45,16 +45,7 @@ interface ActiveMember {
   avatar_url?: string | null;
 }
 
-interface CompletedMember {
-  id: string;
-  user_id: string;
-  name: string;
-  league: string;
-  level: number;
-  completedAt: number;
-  expiresAt: number;
-  avatar_url?: string | null;
-}
+// CompletedMember interface removed — completed sessions immediately leave the board
 
 interface HallMember {
   r_user_id: string;
@@ -161,34 +152,7 @@ const LiveBoardPage = () => {
       setActiveMembers(members);
     }
 
-    // Completed sessions (within 1 hour of completion)
-    const { data: completedSessions } = await supabase
-      .from("activity_sessions")
-      .select("*")
-      .eq("branch_name", branchName)
-      .eq("status", "completed")
-      .gte("expires_from_board_at", new Date().toISOString())
-      .gte("started_at", todayStart.toISOString());
-
-    if (completedSessions) {
-      const members: CompletedMember[] = [];
-      for (const s of completedSessions as any[]) {
-        const avatar = await getAvatarUrl(s.user_id);
-        const { data: profile } = await supabase.from("profiles").select("nickname, name").eq("user_id", s.user_id).single();
-        const { data: progress } = await supabase.from("member_progress").select("current_rank, current_level").eq("user_id", s.user_id).single();
-        members.push({
-          id: s.id,
-          user_id: s.user_id,
-          name: profile?.nickname || profile?.name || "회원",
-          league: progress?.current_rank || "white",
-          level: progress?.current_level || 1,
-          completedAt: new Date(s.ended_at).getTime(),
-          expiresAt: new Date(s.expires_from_board_at).getTime(),
-          avatar_url: avatar,
-        });
-      }
-      setCompletedMembers(members);
-    }
+    // No completed members section — completed = immediately gone
   }, [branchName, getAvatarUrl]);
 
   // Load today checkins
