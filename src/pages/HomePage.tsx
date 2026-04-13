@@ -441,11 +441,14 @@ const HomePage = () => {
             <SelfChallengeFlow
               league={rank}
               levelInLeague={progress.current_level}
+              autoStart={qrAutoStarted}
+              resumeStartedAt={activitySession.activeSession?.started_at}
               onComplete={async () => {
                 await activitySession.completeChallenge();
                 setShowChallenge(false);
+                setQrAutoStarted(false);
               }}
-              onClose={() => setShowChallenge(false)}
+              onClose={() => { setShowChallenge(false); setQrAutoStarted(false); }}
             />
           </div>
         ) : (
