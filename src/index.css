@@ -155,79 +155,67 @@
   display: none;
 }
 
-/* ═══ SD Boxer Character Animations ═══ */
-@keyframes boxer-enter {
-  0% { opacity: 0; transform: scale(0.3) translateY(40px); }
-  60% { opacity: 1; transform: scale(1.08) translateY(-8px); }
-  80% { transform: scale(0.96) translateY(2px); }
+/* ═══ Emoticon Boxer Animations ═══ */
+@keyframes emote-enter {
+  0% { opacity: 0; transform: scale(0.3) translateY(30px); }
+  50% { opacity: 1; transform: scale(1.12) translateY(-6px); }
+  70% { transform: scale(0.95) translateY(2px); }
   100% { transform: scale(1) translateY(0); }
 }
-@keyframes boxer-exit {
+@keyframes emote-exit {
   0% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.5) translateY(20px); }
+  100% { opacity: 0; transform: scale(0.4) translateY(20px); }
 }
-@keyframes boxer-idle-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-@keyframes boxer-head-bob {
+@keyframes emote-idle {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-2px) rotate(-1.5deg); }
-  75% { transform: translateY(-1px) rotate(1.5deg); }
+  25% { transform: translateY(-3px) rotate(-0.8deg); }
+  50% { transform: translateY(-5px) rotate(0deg); }
+  75% { transform: translateY(-3px) rotate(0.8deg); }
 }
-@keyframes boxer-jab-left {
-  0%, 65%, 100% { transform: translateX(0) rotate(0deg); }
-  72% { transform: translateX(-22px) rotate(-10deg); }
-  80% { transform: translateX(-8px) rotate(-3deg); }
-  88% { transform: translateX(0) rotate(0deg); }
+@keyframes emote-punch {
+  0% { transform: translateX(0) scaleX(1) rotate(0deg); }
+  15% { transform: translateX(8px) scaleX(1.06) rotate(2deg); }
+  25% { transform: translateX(-2px) scaleX(0.97) rotate(-1deg); }
+  40% { transform: translateX(-8px) scaleX(1.06) rotate(-2deg); }
+  55% { transform: translateX(2px) scaleX(0.97) rotate(1deg); }
+  70% { transform: translateX(0) scaleX(1) rotate(0deg); }
+  100% { transform: translateX(0) scaleX(1) rotate(0deg); }
 }
-@keyframes boxer-jab-right {
-  0%, 35%, 100% { transform: translateX(0) rotate(0deg); }
-  42% { transform: translateX(22px) rotate(10deg); }
-  50% { transform: translateX(8px) rotate(3deg); }
-  58% { transform: translateX(0) rotate(0deg); }
+@keyframes emote-glow {
+  0%, 100% { opacity: 0.3; transform: scale(0.7); }
+  50% { opacity: 0.55; transform: scale(0.75); }
 }
-@keyframes boxer-shadow-pulse {
-  0%, 100% { rx: 38; opacity: 0.18; }
-  50% { rx: 34; opacity: 0.28; }
+@keyframes emote-speed-line {
+  0% { opacity: 0; transform: translateX(-8px); }
+  30% { opacity: 0.8; transform: translateX(4px); }
+  100% { opacity: 0; transform: translateX(12px); }
 }
-@keyframes boxer-aura-pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
+@keyframes emote-speed-line-r {
+  0% { opacity: 0; transform: translateX(8px); }
+  30% { opacity: 0.8; transform: translateX(-4px); }
+  100% { opacity: 0; transform: translateX(-12px); }
 }
-@keyframes boxer-speed-line-l {
-  0%, 60%, 100% { opacity: 0; }
-  72% { opacity: 0.7; }
-  80% { opacity: 0; }
-}
-@keyframes boxer-speed-line-r {
-  0%, 30%, 100% { opacity: 0; }
-  42% { opacity: 0.7; }
-  50% { opacity: 0; }
+@keyframes emote-sparkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8) rotate(0deg); }
+  50% { opacity: 0.8; transform: scale(1.1) rotate(45deg); }
 }
 
-.animate-boxer-enter { animation: boxer-enter 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-.animate-boxer-exit { animation: boxer-exit 0.4s ease-in forwards; }
-.animate-boxer-idle { animation: boxer-idle-bob 2.5s ease-in-out infinite; }
-.animate-boxer-body { animation: boxer-idle-bob 2.5s ease-in-out infinite; }
-.animate-boxer-head { animation: boxer-head-bob 2.5s ease-in-out infinite; }
-.animate-boxer-jab-left { animation: boxer-jab-left 3.5s ease-in-out infinite; }
-.animate-boxer-jab-right { animation: boxer-jab-right 3.5s ease-in-out infinite; }
-.animate-boxer-shadow { animation: boxer-shadow-pulse 2.5s ease-in-out infinite; }
-.animate-boxer-aura { animation: boxer-aura-pulse 3s ease-in-out infinite; }
-.animate-boxer-speed-line-l { animation: boxer-speed-line-l 3.5s ease-in-out infinite; }
-.animate-boxer-speed-line-r { animation: boxer-speed-line-r 3.5s ease-in-out infinite; }
+.animate-emote-enter { animation: emote-enter 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.animate-emote-exit { animation: emote-exit 0.4s ease-in forwards; }
+.animate-emote-idle { animation: emote-idle 2.8s ease-in-out infinite; }
+.animate-emote-punch { animation: emote-punch 0.6s ease-in-out; }
+.animate-emote-glow { animation: emote-glow 3s ease-in-out infinite; }
+.animate-emote-speed-line { animation: emote-speed-line 0.35s ease-out forwards; }
+.animate-emote-speed-line-r { animation: emote-speed-line-r 0.35s ease-out 0.15s forwards; }
+.animate-emote-sparkle { animation: emote-sparkle 2.5s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-boxer-enter,
-  .animate-boxer-exit,
-  .animate-boxer-idle,
-  .animate-boxer-body,
-  .animate-boxer-head,
-  .animate-boxer-jab-left,
-  .animate-boxer-jab-right,
-  .animate-boxer-shadow,
-  .animate-boxer-aura,
-  .animate-boxer-speed-line-l,
-  .animate-boxer-speed-line-r { animation: none; }
+  .animate-emote-enter,
+  .animate-emote-exit,
+  .animate-emote-idle,
+  .animate-emote-punch,
+  .animate-emote-glow,
+  .animate-emote-speed-line,
+  .animate-emote-speed-line-r,
+  .animate-emote-sparkle { animation: none; }
 }
