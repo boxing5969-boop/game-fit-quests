@@ -159,6 +159,8 @@ const HomePage = () => {
       refreshProgress();
     }
 
+    // QR → auto-start the SelfChallengeFlow timer (skip "ready" screen)
+    setQrAutoStarted(true);
     setShowChallenge(true);
     await ensureActiveSession();
 
