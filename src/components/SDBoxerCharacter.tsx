@@ -1,5 +1,43 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { formatRank } from "@/lib/rankLabels";
+
+// Import all cropped boxer emoticons
+import boxer1 from "@/assets/boxers/boxer_1.png";
+import boxer2 from "@/assets/boxers/boxer_2.png";
+import boxer3 from "@/assets/boxers/boxer_3.png";
+import boxer4 from "@/assets/boxers/boxer_4.png";
+import boxer5 from "@/assets/boxers/boxer_5.png";
+import boxer6 from "@/assets/boxers/boxer_6.png";
+import boxer7 from "@/assets/boxers/boxer_7.png";
+import boxer8 from "@/assets/boxers/boxer_8.png";
+import boxer9 from "@/assets/boxers/boxer_9.png";
+import boxer10 from "@/assets/boxers/boxer_10.png";
+import boxer11 from "@/assets/boxers/boxer_11.png";
+import boxer12 from "@/assets/boxers/boxer_12.png";
+import boxer13 from "@/assets/boxers/boxer_13.png";
+import boxer14 from "@/assets/boxers/boxer_14.png";
+import boxer15 from "@/assets/boxers/boxer_15.png";
+import boxer16 from "@/assets/boxers/boxer_16.png";
+import boxer17 from "@/assets/boxers/boxer_17.png";
+import boxer18 from "@/assets/boxers/boxer_18.png";
+import boxer19 from "@/assets/boxers/boxer_19.png";
+import boxer20 from "@/assets/boxers/boxer_20.png";
+import boxer21 from "@/assets/boxers/boxer_21.png";
+import boxer22 from "@/assets/boxers/boxer_22.png";
+import boxer23 from "@/assets/boxers/boxer_23.png";
+import boxer24 from "@/assets/boxers/boxer_24.png";
+import boxer25 from "@/assets/boxers/boxer_25.png";
+import boxer26 from "@/assets/boxers/boxer_26.png";
+import boxer27 from "@/assets/boxers/boxer_27.png";
+import boxer28 from "@/assets/boxers/boxer_28.png";
+import boxer29 from "@/assets/boxers/boxer_29.png";
+
+const BOXER_IMAGES = [
+  boxer1, boxer2, boxer3, boxer4, boxer5, boxer6, boxer7, boxer8, boxer9,
+  boxer10, boxer11, boxer12, boxer13, boxer14, boxer15, boxer16, boxer17,
+  boxer18, boxer19, boxer20, boxer21, boxer22, boxer23, boxer24, boxer25,
+  boxer26, boxer27, boxer28, boxer29,
+];
 
 type League = "white" | "blue" | "red" | "black";
 type CharState = "enter" | "idle" | "exit";
@@ -13,181 +51,103 @@ interface SDBoxerCharacterProps {
   branchName?: string;
 }
 
-const LEAGUE_THEME: Record<League, { glove: string; glow: string; accent: string; highlight: string; shorts: string; aura: string }> = {
-  white: { glove: "#b8b8b8", glow: "rgba(200,200,200,0.25)", accent: "#d4d4d4", highlight: "#ffffff", shorts: "#e0e0e0", aura: "rgba(255,255,255,0.15)" },
-  blue:  { glove: "#3b82f6", glow: "rgba(59,130,246,0.3)",  accent: "#60a5fa", highlight: "#93c5fd", shorts: "#2563eb", aura: "rgba(59,130,246,0.12)" },
-  red:   { glove: "#ef4444", glow: "rgba(239,68,68,0.3)",   accent: "#f87171", highlight: "#fca5a5", shorts: "#dc2626", aura: "rgba(239,68,68,0.12)" },
-  black: { glove: "#1a1a1a", glow: "rgba(234,179,8,0.35)",  accent: "#eab308", highlight: "#fde047", shorts: "#111111", aura: "rgba(234,179,8,0.12)" },
+const LEAGUE_GLOW: Record<League, string> = {
+  white: "0 0 30px rgba(200,200,200,0.4), 0 0 60px rgba(255,255,255,0.15)",
+  blue: "0 0 30px rgba(59,130,246,0.5), 0 0 60px rgba(59,130,246,0.2)",
+  red: "0 0 30px rgba(239,68,68,0.5), 0 0 60px rgba(239,68,68,0.2)",
+  black: "0 0 30px rgba(234,179,8,0.5), 0 0 60px rgba(234,179,8,0.25)",
 };
+
+/** Deterministic character selection based on nickname */
+function getCharacterIndex(nickname: string): number {
+  let hash = 0;
+  for (let i = 0; i < nickname.length; i++) {
+    hash = ((hash << 5) - hash + nickname.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % BOXER_IMAGES.length;
+}
 
 const SDBoxerCharacter: React.FC<SDBoxerCharacterProps> = ({
   league, nickname, level, state, subtitle, branchName,
 }) => {
   const [animState, setAnimState] = useState<CharState>(state);
-  const [blink, setBlink] = useState(false);
-  const theme = LEAGUE_THEME[league] || LEAGUE_THEME.white;
+  const [showPunchEffect, setShowPunchEffect] = useState(false);
+
+  const characterImg = useMemo(() => BOXER_IMAGES[getCharacterIndex(nickname)], [nickname]);
 
   useEffect(() => {
     setAnimState(state);
     if (state === "enter") {
-      const t = setTimeout(() => setAnimState("idle"), 1200);
-      return () => clearTimeout(t);
+      setShowPunchEffect(true);
+      const t1 = setTimeout(() => setAnimState("idle"), 1200);
+      const t2 = setTimeout(() => setShowPunchEffect(false), 800);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
   }, [state]);
 
-  // Blink loop
+  // Periodic punch effect in idle
   useEffect(() => {
+    if (animState !== "idle") return;
     const interval = setInterval(() => {
-      setBlink(true);
-      setTimeout(() => setBlink(false), 150);
-    }, 3500 + Math.random() * 2000);
+      setShowPunchEffect(true);
+      setTimeout(() => setShowPunchEffect(false), 600);
+    }, 5000 + Math.random() * 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [animState]);
 
-  const wrapperClass =
-    animState === "enter"
-      ? "animate-boxer-enter"
-      : animState === "exit"
-      ? "animate-boxer-exit"
-      : "";
-
-  const eyeH = blink ? 1.5 : 11;
-  const eyeY = blink ? 105 : 100;
+  const wrapperAnim =
+    animState === "enter" ? "animate-emote-enter"
+    : animState === "exit" ? "animate-emote-exit"
+    : "";
 
   return (
-    <div className={`flex flex-col items-center select-none ${wrapperClass}`} style={{ willChange: "transform, opacity" }}>
-      <svg
-        viewBox="0 0 200 240"
-        className="w-[clamp(120px,15vw,220px)] h-auto animate-boxer-idle"
-        style={{ willChange: "transform" }}
-        aria-label="SD Boxer Character"
-      >
-        <defs>
-          {/* Glove gradient */}
-          <radialGradient id={`gloveGrad-${league}`} cx="40%" cy="35%">
-            <stop offset="0%" stopColor={theme.highlight} stopOpacity="0.6" />
-            <stop offset="100%" stopColor={theme.glove} />
-          </radialGradient>
-          {/* Body shadow */}
-          <filter id="softShadow">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.15" />
-          </filter>
-        </defs>
+    <div className={`flex flex-col items-center select-none ${wrapperAnim}`}>
+      {/* Character image with animations */}
+      <div className="relative">
+        {/* Glow ring behind character */}
+        <div
+          className="absolute inset-0 rounded-full blur-2xl opacity-40 animate-emote-glow"
+          style={{ boxShadow: LEAGUE_GLOW[league], transform: "scale(0.7)" }}
+        />
 
-        {/* Floor shadow */}
-        <ellipse cx="100" cy="232" rx="38" ry="6" fill="rgba(0,0,0,0.18)" className="animate-boxer-shadow" />
+        {/* Character image */}
+        <div className={`relative ${showPunchEffect ? "animate-emote-punch" : "animate-emote-idle"}`}>
+          <img
+            src={characterImg}
+            alt={nickname}
+            className="w-[clamp(80px,10vw,140px)] h-auto object-contain drop-shadow-lg"
+            style={{ imageRendering: "auto", willChange: "transform" }}
+            draggable={false}
+          />
 
-        {/* Aura ring */}
-        <circle cx="100" cy="140" r="55" fill="none" stroke={theme.aura} strokeWidth="18" opacity="0.5" className="animate-boxer-aura" />
-
-        {/* ── BODY GROUP ── */}
-        <g className="animate-boxer-body" filter="url(#softShadow)">
-          {/* Legs - short & cute */}
-          <rect x="82" y="188" width="13" height="26" rx="6" fill="#f5d0b0" />
-          <rect x="105" y="188" width="13" height="26" rx="6" fill="#f5d0b0" />
-
-          {/* Shoes */}
-          <rect x="78" y="210" width="20" height="10" rx="5" fill="#333" />
-          <rect x="102" y="210" width="20" height="10" rx="5" fill="#333" />
-          <rect x="79" y="210" width="8" height="4" rx="2" fill="#555" />
-          <rect x="103" y="210" width="8" height="4" rx="2" fill="#555" />
-
-          {/* Shorts */}
-          <path d="M75 178 Q100 184 125 178 L122 196 Q100 200 78 196 Z" fill={theme.shorts} />
-          <path d="M75 178 Q100 184 125 178 L124 183 Q100 188 76 183 Z" fill={theme.accent} opacity="0.4" />
-          {/* Shorts stripe */}
-          <rect x="95" y="178" width="10" height="18" rx="2" fill="white" opacity="0.15" />
-
-          {/* Torso - tank top */}
-          <rect x="76" y="148" width="48" height="34" rx="10" fill="#333" />
-          {/* Tank top neckline */}
-          <path d="M84 148 Q100 156 116 148" fill="#444" />
-          <rect x="82" y="148" width="36" height="30" rx="7" fill="#444" />
-          {/* Tank top stripe */}
-          <rect x="96" y="148" width="8" height="30" rx="2" fill={theme.accent} opacity="0.2" />
-
-          {/* Left arm + glove */}
-          <g className="animate-boxer-jab-left" style={{ transformOrigin: "72px 158px" }}>
-            <rect x="52" y="152" width="12" height="24" rx="5" fill="#f5d0b0" />
-            {/* Wrist wrap */}
-            <rect x="50" y="148" width="16" height="6" rx="3" fill="white" opacity="0.7" />
-            {/* Glove */}
-            <circle cx="58" cy="144" r="16" fill={`url(#gloveGrad-${league})`} />
-            <circle cx="58" cy="144" r="12" fill={theme.glove} opacity="0.4" />
-            {/* Glove shine */}
-            <ellipse cx="52" cy="138" rx="4" ry="5" fill="white" opacity="0.35" />
-            {/* Speed line on jab */}
-            <line x1="30" y1="142" x2="42" y2="144" stroke={theme.accent} strokeWidth="1.5" opacity="0.5" strokeLinecap="round" className="animate-boxer-speed-line-l" />
-          </g>
-
-          {/* Right arm + glove */}
-          <g className="animate-boxer-jab-right" style={{ transformOrigin: "128px 158px" }}>
-            <rect x="136" y="152" width="12" height="24" rx="5" fill="#f5d0b0" />
-            <rect x="134" y="148" width="16" height="6" rx="3" fill="white" opacity="0.7" />
-            <circle cx="142" cy="144" r="16" fill={`url(#gloveGrad-${league})`} />
-            <circle cx="142" cy="144" r="12" fill={theme.glove} opacity="0.4" />
-            <ellipse cx="136" cy="138" rx="4" ry="5" fill="white" opacity="0.35" />
-            <line x1="170" y1="142" x2="158" y2="144" stroke={theme.accent} strokeWidth="1.5" opacity="0.5" strokeLinecap="round" className="animate-boxer-speed-line-r" />
-          </g>
-        </g>
-
-        {/* ── HEAD GROUP (big = cute SD ratio) ── */}
-        <g className="animate-boxer-head">
-          {/* Head - large for 2:1 ratio */}
-          <circle cx="100" cy="96" r="52" fill="#f5d0b0" />
-          {/* Cheek blush */}
-          <ellipse cx="72" cy="110" rx="8" ry="5" fill="#ffb4a2" opacity="0.45" />
-          <ellipse cx="128" cy="110" rx="8" ry="5" fill="#ffb4a2" opacity="0.45" />
-
-          {/* Hair */}
-          <ellipse cx="100" cy="56" rx="46" ry="24" fill="#2d2d2d" />
-          <rect x="54" y="52" width="92" height="24" rx="12" fill="#2d2d2d" />
-          {/* Hair highlights */}
-          <ellipse cx="80" cy="50" rx="12" ry="4" fill="#444" opacity="0.5" />
-          <ellipse cx="115" cy="48" rx="8" ry="3" fill="#444" opacity="0.4" />
-          {/* Side hair tufts */}
-          <ellipse cx="56" cy="80" rx="6" ry="14" fill="#2d2d2d" />
-          <ellipse cx="144" cy="80" rx="6" ry="14" fill="#2d2d2d" />
-
-          {/* Headband */}
-          <rect x="54" y="72" width="92" height="9" rx="4.5" fill={theme.glove} />
-          <rect x="54" y="72" width="92" height="9" rx="4.5" fill={theme.glow} />
-          {/* Headband knot */}
-          <ellipse cx="148" cy="77" rx="6" ry="4" fill={theme.accent} />
-          <line x1="150" y1="73" x2="156" y2="68" stroke={theme.accent} strokeWidth="2.5" strokeLinecap="round" />
-          <line x1="150" y1="81" x2="155" y2="86" stroke={theme.accent} strokeWidth="2.5" strokeLinecap="round" />
-
-          {/* Eyes - big & sparkly */}
-          <ellipse cx="82" cy={eyeY} rx="10" ry={eyeH} fill="white" />
-          <ellipse cx="118" cy={eyeY} rx="10" ry={eyeH} fill="white" />
-          {!blink && (
+          {/* Punch effect lines */}
+          {showPunchEffect && (
             <>
-              <circle cx="84" cy="101" r="6" fill="#1a1a1a" />
-              <circle cx="120" cy="101" r="6" fill="#1a1a1a" />
-              {/* Eye sparkle */}
-              <circle cx="87" cy="97" r="2.5" fill="white" />
-              <circle cx="123" cy="97" r="2.5" fill="white" />
-              <circle cx="82" cy="103" r="1.2" fill="white" opacity="0.6" />
-              <circle cx="118" cy="103" r="1.2" fill="white" opacity="0.6" />
+              <div className="absolute top-1/3 -right-3 animate-emote-speed-line">
+                <svg width="24" height="8" viewBox="0 0 24 8">
+                  <line x1="0" y1="2" x2="18" y2="2" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+                  <line x1="4" y1="6" x2="14" y2="6" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+                </svg>
+              </div>
+              <div className="absolute top-1/4 -left-2 animate-emote-speed-line-r">
+                <svg width="20" height="6" viewBox="0 0 20 6">
+                  <line x1="20" y1="3" x2="6" y2="3" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                </svg>
+              </div>
             </>
           )}
+        </div>
 
-          {/* Eyebrows - determined */}
-          <line x1="74" y1="86" x2="90" y2="88" stroke="#2d2d2d" strokeWidth="2.5" strokeLinecap="round" />
-          <line x1="110" y1="88" x2="126" y2="86" stroke="#2d2d2d" strokeWidth="2.5" strokeLinecap="round" />
+        {/* Sparkle */}
+        <div className="absolute -top-1 -right-1 animate-emote-sparkle">
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <path d="M8 0 L9.5 6.5 L16 8 L9.5 9.5 L8 16 L6.5 9.5 L0 8 L6.5 6.5Z" fill="white" opacity="0.6" />
+          </svg>
+        </div>
+      </div>
 
-          {/* Mouth - confident grin */}
-          <path d="M 90 118 Q 100 126 110 118" stroke="#8B4513" strokeWidth="2" fill="none" strokeLinecap="round" />
-          {/* Little fang */}
-          <path d="M 104 118 L 106 122 L 108 118" fill="white" stroke="#8B4513" strokeWidth="0.5" />
-
-          {/* Nose */}
-          <ellipse cx="100" cy="110" rx="2" ry="1.5" fill="#dba88a" />
-        </g>
-      </svg>
-
-      {/* ── Nameplate ── */}
-      <div className="mt-1 text-center" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
+      {/* Nameplate */}
+      <div className="mt-3 text-center" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
         <p className="text-[clamp(2rem,4vw,4rem)] font-black leading-none tracking-tight text-white">
           {nickname}
         </p>
