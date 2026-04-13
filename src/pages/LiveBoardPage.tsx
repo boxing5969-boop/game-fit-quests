@@ -210,6 +210,7 @@ const LiveBoardPage = () => {
           const n = payload.new as any;
           if (n.is_duplicate) return;
           const event: CheckinEvent = { id: n.id, display_name_snapshot: n.display_name_snapshot, league_snapshot: n.league_snapshot, level_snapshot: n.level_snapshot, checked_in_at: n.checked_in_at, user_id: n.user_id };
+          getAvatarUrl(n.user_id); // prefetch avatar for this user
           setTodayCheckins(prev => [event, ...prev]);
           triggerPopup(event);
         })
