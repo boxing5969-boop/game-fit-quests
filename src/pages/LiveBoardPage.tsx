@@ -74,14 +74,16 @@ const LiveBoardPage = () => {
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
   const [showBranchSwitch, setShowBranchSwitch] = useState(false);
 
-  // Avatar cache
-  const avatarCache = useRef<Record<string, string | null>>({});
+  // Avatar cache — use state to trigger re-renders when avatars load
+  const avatarCacheRef = useRef<Record<string, string | null>>({});
+  const [avatarMap, setAvatarMap] = useState<Record<string, string | null>>({});
 
   const getAvatarUrl = useCallback(async (userId: string): Promise<string | null> => {
-    if (avatarCache.current[userId] !== undefined) return avatarCache.current[userId];
+    if (avatarCacheRef.current[userId] !== undefined) return avatarCacheRef.current[userId];
     const { data } = await supabase.from("profiles").select("avatar_url").eq("user_id", userId).single();
     const url = data?.avatar_url || null;
-    avatarCache.current[userId] = url;
+    avatarCacheRef.current[userId] = url;
+    setAvatarMap(prev => ({ ...prev, [userId]: url }));
     return url;
   }, []);
 
@@ -163,7 +165,7 @@ const LiveBoardPage = () => {
     const { data } = await supabase
       .from("attendance_logs")
       .select("id, display_name_snapshot, league_snapshot, level_snapshot, checked_in_at, user_id")
-      .eq("branch_name", branchName).eq("is_duplicate", false)
+      .eq("branch_name", branchName)
       .gte("checked_in_at", todayStart.toISOString())
       .order("checked_in_at", { ascending: false }).limit(100);
     if (data) {
@@ -208,7 +210,6 @@ const LiveBoardPage = () => {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "attendance_logs", filter: `branch_name=eq.${branchName}` },
         (payload) => {
           const n = payload.new as any;
-          if (n.is_duplicate) return;
           const event: CheckinEvent = { id: n.id, display_name_snapshot: n.display_name_snapshot, league_snapshot: n.league_snapshot, level_snapshot: n.level_snapshot, checked_in_at: n.checked_in_at, user_id: n.user_id };
           getAvatarUrl(n.user_id); // prefetch avatar for this user
           setTodayCheckins(prev => [event, ...prev]);
@@ -416,7 +417,7 @@ const LiveBoardPage = () => {
                 <div className="space-y-1">
                   {todayCheckins.map((c) => (
                     <div key={c.id} className="flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-gray-800/30 transition-colors">
-                      <MemberAvatar url={avatarCache.current[c.user_id]} name={c.display_name_snapshot} sizeClass="h-11 w-11" />
+                      <MemberAvatar url={avatarMap[c.user_id]} name={c.display_name_snapshot} sizeClass="h-11 w-11" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xl font-black text-gray-200 truncate leading-tight">{c.display_name_snapshot}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
