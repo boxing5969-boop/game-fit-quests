@@ -514,7 +514,7 @@ const CheckinBoardPage = () => {
       {/* Checkin Logs */}
       <div className="rounded-2xl border border-border bg-card">
         <div className="border-b border-border px-5 py-3">
-          <h3 className="text-sm font-bold text-foreground">오늘 체크인 로그</h3>
+          <h3 className="text-sm font-bold text-foreground">오늘 체크인 로그 {logs.length > 0 && `(${logs.length})`}</h3>
         </div>
         <div className="divide-y divide-border">
           {logs.length === 0 ? (
@@ -523,26 +523,36 @@ const CheckinBoardPage = () => {
               <p className="text-sm">아직 체크인 기록이 없습니다</p>
             </div>
           ) : (
-            logs.map(log => (
-              <div key={log.id} className="flex items-center gap-3 px-5 py-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-foreground truncate">{log.display_name_snapshot}</span>
-                    {log.is_duplicate && (
-                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-bold text-muted-foreground">중복</span>
-                    )}
+            <>
+              {(showAllLogs ? logs : logs.slice(0, 5)).map(log => (
+                <div key={log.id} className="flex items-center gap-3 px-5 py-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-foreground truncate">{log.display_name_snapshot}</span>
+                      {log.is_duplicate && (
+                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-bold text-muted-foreground">중복</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {formatRank(log.league_snapshot, log.level_snapshot)} · {new Date(log.checked_in_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                      {log.xp_granted > 0 && ` · +${log.xp_granted}XP`}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {formatRank(log.league_snapshot, log.level_snapshot)} · {new Date(log.checked_in_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
-                    {log.xp_granted > 0 && ` · +${log.xp_granted}XP`}
-                  </p>
+                  <button onClick={() => cancelCheckin(log.id)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 text-destructive transition-all active:scale-95">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-                <button onClick={() => cancelCheckin(log.id)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 text-destructive transition-all active:scale-95">
-                  <Trash2 className="h-3.5 w-3.5" />
+              ))}
+              {logs.length > 5 && (
+                <button
+                  onClick={() => setShowAllLogs(prev => !prev)}
+                  className="w-full py-3 text-xs font-bold text-primary hover:bg-muted/50 transition-colors"
+                >
+                  {showAllLogs ? "접기" : `더보기 (+${logs.length - 5}건)`}
                 </button>
-              </div>
-            ))
+              )}
+            </>
           )}
         </div>
       </div>
