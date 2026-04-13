@@ -120,6 +120,18 @@ const HomePage = () => {
     }
   }, [activitySession.isActive]); // eslint-disable-line
 
+  const handleCheckinFeedback = useCallback((isDuplicate: boolean, xpGranted: number) => {
+    if (isDuplicate) {
+      toast("오늘은 이미 출석 완료했어요");
+      toast.success("라이브보드에 다시 입장합니다");
+      toast.success("오늘 도전을 다시 시작합니다");
+      return;
+    }
+
+    toast.success(`출석 완료! +${xpGranted}XP 🥊`);
+    toast.success("오늘 도전 시작! 💪");
+  }, []);
+
   // Shared challenge start logic — used by both manual button and QR auto-start
   const handleStartChallenge = useCallback(async () => {
     const session = await activitySession.startChallenge();
@@ -127,6 +139,25 @@ const HomePage = () => {
       setShowChallenge(true);
     }
   }, [activitySession]);
+
+  const handleQrCheckinSuccess = useCallback(async (result: any) => {
+    setShowQRScanner(false);
+    setCheckedInToday(true);
+
+    if (!result.is_duplicate) {
+      refreshProgress();
+    }
+
+    const session = await activitySession.refreshSession();
+
+    if (session) {
+      setShowChallenge(true);
+    }
+
+    setCheckinResult(result);
+    setShowCheckinSuccess(true);
+    handleCheckinFeedback(result.is_duplicate, result.xp_granted);
+  }, [activitySession, handleCheckinFeedback, refreshProgress]);
 
   if (!profile || !progress) return <LoadingState />;
 
@@ -499,27 +530,7 @@ const HomePage = () => {
       <QRScannerModal
         open={showQRScanner}
         onClose={() => setShowQRScanner(false)}
-        onSuccess={async (result) => {
-          setShowQRScanner(false);
-          setCheckinResult(result);
-          setShowCheckinSuccess(true);
-          setCheckedInToday(true);
-
-          if (!result.is_duplicate) {
-            refreshProgress();
-            toast.success(`출석 완료! +${result.xp_granted}XP 🥊`);
-          } else {
-            toast("오늘은 이미 출석 완료했어요. 라이브보드에 다시 입장했어요!");
-          }
-
-          // Edge function already created an active session.
-          // Refresh local state to pick it up, then show challenge UI.
-          setTimeout(async () => {
-            await activitySession.refreshSession();
-            setShowChallenge(true);
-            toast.success(result.is_duplicate ? "오늘 도전 다시 시작! 💪" : "오늘 도전 시작! 💪");
-          }, 1500);
-        }}
+        onSuccess={handleQrCheckinSuccess}
       />
 
       <CheckinSuccessModal
