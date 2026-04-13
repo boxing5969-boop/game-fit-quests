@@ -58,14 +58,12 @@ const CheckinBoardPage = () => {
   // Load active session count
   const loadActiveSessions = useCallback(async () => {
     if (!activeBranch) return;
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
     const { count } = await supabase
       .from("activity_sessions")
       .select("id", { count: "exact", head: true })
       .eq("branch_name", activeBranch)
       .eq("status", "active")
-      .gte("started_at", todayStart.toISOString());
+      .is("ended_at", null);
     setActiveSessions(count || 0);
   }, [activeBranch]);
 
