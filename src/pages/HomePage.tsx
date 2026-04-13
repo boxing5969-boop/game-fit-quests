@@ -113,6 +113,21 @@ const HomePage = () => {
     if (progress) attendance.mutate();
   }, [progress?.user_id]); // eslint-disable-line
 
+  // If there's an active session already, show the challenge flow
+  useEffect(() => {
+    if (activitySession.isActive && !showChallenge) {
+      setShowChallenge(true);
+    }
+  }, [activitySession.isActive]); // eslint-disable-line
+
+  // Shared challenge start logic — used by both manual button and QR auto-start
+  const handleStartChallenge = useCallback(async () => {
+    const session = await activitySession.startChallenge();
+    if (session) {
+      setShowChallenge(true);
+    }
+  }, [activitySession]);
+
   if (!profile || !progress) return <LoadingState />;
 
   const rank = progress.current_rank as Enums<"rank_name">;
