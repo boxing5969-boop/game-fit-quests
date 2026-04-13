@@ -283,9 +283,6 @@ const LiveBoardPage = () => {
               <p className="text-5xl font-black text-orange-400 tabular-nums leading-none">{todayCheckins.length}</p>
               <p className="text-base text-gray-500 mt-1 font-bold">오늘 방문</p>
             </div>
-              <p className="text-5xl font-black text-orange-400 tabular-nums leading-none">{todayCheckins.length}</p>
-              <p className="text-base text-gray-500 mt-1 font-bold">오늘 방문</p>
-            </div>
           </div>
           <div className="text-right">
             <p className="text-3xl font-black text-gray-500 tabular-nums">
