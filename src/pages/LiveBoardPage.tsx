@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Building2, Clock, X, Trophy, CheckCircle2 } from "lucide-react";
+import { Building2, Clock, X, Trophy } from "lucide-react";
 
 const RANK_COLORS: Record<string, string> = {
   white: "border-gray-400 bg-gray-200 text-gray-900",
@@ -45,16 +45,7 @@ interface ActiveMember {
   avatar_url?: string | null;
 }
 
-interface CompletedMember {
-  id: string;
-  user_id: string;
-  name: string;
-  league: string;
-  level: number;
-  completedAt: number;
-  expiresAt: number;
-  avatar_url?: string | null;
-}
+// CompletedMember interface removed — completed sessions immediately leave the board
 
 interface HallMember {
   r_user_id: string;
@@ -70,7 +61,7 @@ const LiveBoardPage = () => {
   const [branchName, setBranchName] = useState("");
   const [todayCheckins, setTodayCheckins] = useState<CheckinEvent[]>([]);
   const [activeMembers, setActiveMembers] = useState<ActiveMember[]>([]);
-  const [completedMembers, setCompletedMembers] = useState<CompletedMember[]>([]);
+  // completedMembers removed — completed sessions no longer shown on live board
   const [hallMembers, setHallMembers] = useState<HallMember[]>([]);
   const [latestPopup, setLatestPopup] = useState<CheckinEvent | null>(null);
   const [showPopup, setShowPopup] = useState(false);
@@ -161,34 +152,7 @@ const LiveBoardPage = () => {
       setActiveMembers(members);
     }
 
-    // Completed sessions (within 1 hour of completion)
-    const { data: completedSessions } = await supabase
-      .from("activity_sessions")
-      .select("*")
-      .eq("branch_name", branchName)
-      .eq("status", "completed")
-      .gte("expires_from_board_at", new Date().toISOString())
-      .gte("started_at", todayStart.toISOString());
-
-    if (completedSessions) {
-      const members: CompletedMember[] = [];
-      for (const s of completedSessions as any[]) {
-        const avatar = await getAvatarUrl(s.user_id);
-        const { data: profile } = await supabase.from("profiles").select("nickname, name").eq("user_id", s.user_id).single();
-        const { data: progress } = await supabase.from("member_progress").select("current_rank, current_level").eq("user_id", s.user_id).single();
-        members.push({
-          id: s.id,
-          user_id: s.user_id,
-          name: profile?.nickname || profile?.name || "회원",
-          league: progress?.current_rank || "white",
-          level: progress?.current_level || 1,
-          completedAt: new Date(s.ended_at).getTime(),
-          expiresAt: new Date(s.expires_from_board_at).getTime(),
-          avatar_url: avatar,
-        });
-      }
-      setCompletedMembers(members);
-    }
+    // No completed members section — completed = immediately gone
   }, [branchName, getAvatarUrl]);
 
   // Load today checkins
@@ -221,14 +185,7 @@ const LiveBoardPage = () => {
 
   useEffect(() => { loadToday(); loadHall(); loadActivitySessions(); }, [loadToday, loadHall, loadActivitySessions]);
 
-  // Auto-remove expired completed members every 30s
-  useEffect(() => {
-    const i = setInterval(() => {
-      const now = Date.now();
-      setCompletedMembers(prev => prev.filter(m => now < m.expiresAt));
-    }, 30000);
-    return () => clearInterval(i);
-  }, []);
+  // No auto-remove needed — completed members are not shown
 
   const triggerPopup = useCallback(async (event: CheckinEvent) => {
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
@@ -321,10 +278,6 @@ const LiveBoardPage = () => {
             <div className="text-center">
               <p className="text-5xl font-black text-green-400 tabular-nums leading-none">{activeMembers.length}</p>
               <p className="text-base text-gray-500 mt-1 font-bold">활동 중</p>
-            </div>
-            <div className="text-center">
-              <p className="text-5xl font-black text-blue-400 tabular-nums leading-none">{completedMembers.length}</p>
-              <p className="text-base text-gray-500 mt-1 font-bold">최근 완료</p>
             </div>
             <div className="text-center">
               <p className="text-5xl font-black text-orange-400 tabular-nums leading-none">{todayCheckins.length}</p>
@@ -441,38 +394,7 @@ const LiveBoardPage = () => {
             </div>
           </div>
 
-          {/* Recently completed members */}
-          <div className="flex-shrink-0 border-b border-gray-800/60">
-            <div className="px-5 py-4 flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-blue-400" />
-              <h2 className="text-2xl font-black text-blue-400">최근 완료 ({completedMembers.length})</h2>
-            </div>
-            <div className="max-h-[20vh] overflow-y-auto px-3 pb-3">
-              {completedMembers.length === 0 ? (
-                <div className="text-center py-4 text-gray-600"><p className="text-base">최근 완료한 회원 없음</p></div>
-              ) : (
-                <div className="space-y-2">
-                  {completedMembers.map((m) => (
-                    <div key={m.user_id} className="flex items-center gap-4 rounded-xl bg-blue-950/20 border border-blue-900/30 px-4 py-3">
-                      <MemberAvatar url={m.avatar_url} name={m.name} sizeClass="h-12 w-12" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xl font-black text-blue-200 truncate leading-tight">{m.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className={`inline-flex px-2 py-0.5 rounded text-xs font-black ${RANK_BADGE_COLORS[m.league] || "bg-gray-700 text-gray-300"}`}>
-                            {RANK_LABELS[m.league] || m.league}
-                          </span>
-                          <span className="text-sm text-gray-400 font-bold">L{m.level}</span>
-                          <span className="text-gray-600">·</span>
-                          <span className="text-sm text-blue-400 font-bold">오늘 도전 완료</span>
-                        </div>
-                      </div>
-                      <span className="text-xs text-gray-500 font-bold whitespace-nowrap">{remainingMin(m.expiresAt)}분 후 정리</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Recently completed section removed — completed = immediate exit */}
 
           {/* Today visit log */}
           <div className="flex-1 overflow-y-auto">
