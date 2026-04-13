@@ -58,14 +58,12 @@ const CheckinBoardPage = () => {
   // Load active session count
   const loadActiveSessions = useCallback(async () => {
     if (!activeBranch) return;
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
     const { count } = await supabase
       .from("activity_sessions")
       .select("id", { count: "exact", head: true })
       .eq("branch_name", activeBranch)
       .eq("status", "active")
-      .gte("started_at", todayStart.toISOString());
+      .is("ended_at", null);
     setActiveSessions(count || 0);
   }, [activeBranch]);
 
@@ -143,7 +141,7 @@ const CheckinBoardPage = () => {
 
   useEffect(() => { loadLogs(); }, [loadLogs]);
 
-  // Realtime subscription for attendance logs
+  // Realtime subscription for attendance logs AND activity sessions
   useEffect(() => {
     if (!activeBranch) return;
     const channel = supabase
@@ -159,11 +157,24 @@ const CheckinBoardPage = () => {
         (payload) => {
           const newLog = payload.new as AttendanceLog;
           setLogs(prev => [newLog, ...prev]);
+          loadActiveSessions();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "activity_sessions",
+          filter: `branch_name=eq.${activeBranch}`,
+        },
+        () => {
+          loadActiveSessions();
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [activeBranch]);
+  }, [activeBranch, loadActiveSessions]);
 
   // Generate QR token
   const refreshToken = useCallback(async () => {
