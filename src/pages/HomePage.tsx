@@ -122,14 +122,12 @@ const HomePage = () => {
 
   const handleCheckinFeedback = useCallback((isDuplicate: boolean, xpGranted: number) => {
     if (isDuplicate) {
-      toast("오늘은 이미 출석 완료했어요");
       toast.success("라이브보드에 다시 입장합니다");
-      toast.success("오늘 도전을 다시 시작합니다");
-      return;
+      toast.success("오늘 도전을 다시 시작합니다 🥊");
+    } else {
+      toast.success(`출석 완료! +${xpGranted}XP 🥊`);
+      toast.success("오늘 도전 시작! 💪");
     }
-
-    toast.success(`출석 완료! +${xpGranted}XP 🥊`);
-    toast.success("오늘 도전 시작! 💪");
   }, []);
 
   // Shared challenge start logic — used by both manual button and QR auto-start

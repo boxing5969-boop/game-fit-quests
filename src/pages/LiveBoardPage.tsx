@@ -163,7 +163,7 @@ const LiveBoardPage = () => {
     const { data } = await supabase
       .from("attendance_logs")
       .select("id, display_name_snapshot, league_snapshot, level_snapshot, checked_in_at, user_id")
-      .eq("branch_name", branchName).eq("is_duplicate", false)
+      .eq("branch_name", branchName)
       .gte("checked_in_at", todayStart.toISOString())
       .order("checked_in_at", { ascending: false }).limit(100);
     if (data) {
@@ -208,7 +208,6 @@ const LiveBoardPage = () => {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "attendance_logs", filter: `branch_name=eq.${branchName}` },
         (payload) => {
           const n = payload.new as any;
-          if (n.is_duplicate) return;
           const event: CheckinEvent = { id: n.id, display_name_snapshot: n.display_name_snapshot, league_snapshot: n.league_snapshot, level_snapshot: n.level_snapshot, checked_in_at: n.checked_in_at, user_id: n.user_id };
           getAvatarUrl(n.user_id); // prefetch avatar for this user
           setTodayCheckins(prev => [event, ...prev]);

@@ -41,13 +41,17 @@ const CheckinSuccessModal = ({ open, onClose, result }: CheckinSuccessModalProps
       >
         {result.is_duplicate ? (
           <>
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-              <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-400/20 to-primary/20">
+              <CheckCircle2 className="h-10 w-10 text-green-500" />
             </div>
-            <h2 className="text-xl font-bold text-foreground">오늘은 이미 출석 완료했어요</h2>
+            <h2 className="text-2xl font-bold text-foreground">다시 입장! 🥊</h2>
             <div className="mt-3 space-y-1 text-sm text-muted-foreground">
               <p>라이브보드에 다시 입장합니다</p>
-              <p>오늘 도전을 다시 시작합니다 🥊</p>
+              <p>오늘 도전을 다시 시작합니다</p>
+            </div>
+            <div className="mt-4 flex items-center justify-center gap-1 text-sm text-muted-foreground">
+              <Flame className="h-4 w-4 text-primary" />
+              <span>출석 XP는 이미 지급되었어요</span>
             </div>
           </>
         ) : (
