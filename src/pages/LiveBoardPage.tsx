@@ -455,39 +455,29 @@ const LiveBoardPage = () => {
           {/* Main popup / idle */}
           <div className="flex-1 flex items-center justify-center relative px-8">
             {showPopup && latestPopup ? (
-              <div
-                className={`rounded-3xl border-4 px-20 py-16 ${RANK_COLORS[latestPopup.league_snapshot] || RANK_COLORS.white} ${RANK_GLOW[latestPopup.league_snapshot] || ""}`}
-                style={{ minWidth: "55vw", maxWidth: "75vw", animation: "popIn 0.5s cubic-bezier(0.34,1.56,0.64,1)" }}
-              >
-                <div className="text-center">
-                  <div className="flex justify-center mb-6">
-                    <MemberAvatar url={popupAvatarUrl} name={latestPopup.display_name_snapshot} sizeClass="h-28 w-28" />
-                  </div>
-                  <p className="text-[8rem] font-black leading-none tracking-tight mb-6" style={{ textShadow: "0 4px 24px rgba(0,0,0,0.15)" }}>
-                    {latestPopup.display_name_snapshot}
-                  </p>
-                  <p className="text-5xl font-black opacity-80 mb-10">
-                    {RANK_LABELS[latestPopup.league_snapshot] || latestPopup.league_snapshot} 리그 · 레벨 {latestPopup.level_snapshot}
-                  </p>
-                  <div className="inline-flex items-center gap-4 rounded-full bg-black/10 px-10 py-5">
-                    <span className="text-4xl">🥊</span>
-                    <span className="text-3xl font-black">복싱 레벨업 중</span>
-                  </div>
-                </div>
-              </div>
+              <SDBoxerCharacter
+                league={(latestPopup.league_snapshot as "white" | "blue" | "red" | "black") || "white"}
+                nickname={latestPopup.display_name_snapshot}
+                level={latestPopup.level_snapshot}
+                state="enter"
+              />
+            ) : activeMembers.length > 0 ? (
+              <SDBoxerCharacter
+                league={(activeMembers[0].league as "white" | "blue" | "red" | "black") || "white"}
+                nickname={activeMembers[0].displayName}
+                level={activeMembers[0].level}
+                state="idle"
+                branchName={branchName}
+              />
             ) : (
-              <div className="text-center">
-                <p className="text-9xl mb-8">🥊</p>
-                <p className="text-6xl font-black text-gray-600 leading-tight">153 랭크업 시스템</p>
-                <p className="mt-6 text-4xl text-gray-700 font-black">오늘도 복싱 레벨업 중</p>
-                <p className="mt-3 text-2xl text-gray-800 font-bold">{branchName}</p>
-                {hallMembers.length > 0 && (
-                  <div className="mt-8 inline-flex items-center gap-3 text-yellow-600/60">
-                    <Trophy className="h-6 w-6" />
-                    <span className="text-lg font-bold">명예의 전당 {hallMembers.length}명 등록</span>
-                  </div>
-                )}
-              </div>
+              <SDBoxerCharacter
+                league="white"
+                nickname="153 랭크업"
+                level={1}
+                state="idle"
+                subtitle="오늘도 복싱 레벨업 중"
+                branchName={branchName}
+              />
             )}
           </div>
 
