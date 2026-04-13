@@ -70,6 +70,7 @@ const HomePage = () => {
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
   const widgetPrefs = loadHomeWidgetPrefs();
   const [showChallenge, setShowChallenge] = useState(false);
+  const [qrAutoStarted, setQrAutoStarted] = useState(false);
   const [showAllMenu, setShowAllMenu] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [checkinResult, setCheckinResult] = useState<any>(null);
