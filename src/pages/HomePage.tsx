@@ -70,6 +70,7 @@ const HomePage = () => {
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
   const widgetPrefs = loadHomeWidgetPrefs();
   const [showChallenge, setShowChallenge] = useState(false);
+  const [qrAutoStarted, setQrAutoStarted] = useState(false);
   const [showAllMenu, setShowAllMenu] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [checkinResult, setCheckinResult] = useState<any>(null);
@@ -158,6 +159,8 @@ const HomePage = () => {
       refreshProgress();
     }
 
+    // QR → auto-start the SelfChallengeFlow timer (skip "ready" screen)
+    setQrAutoStarted(true);
     setShowChallenge(true);
     await ensureActiveSession();
 
@@ -438,11 +441,14 @@ const HomePage = () => {
             <SelfChallengeFlow
               league={rank}
               levelInLeague={progress.current_level}
+              autoStart={qrAutoStarted}
+              resumeStartedAt={activitySession.activeSession?.started_at}
               onComplete={async () => {
                 await activitySession.completeChallenge();
                 setShowChallenge(false);
+                setQrAutoStarted(false);
               }}
-              onClose={() => setShowChallenge(false)}
+              onClose={() => { setShowChallenge(false); setQrAutoStarted(false); }}
             />
           </div>
         ) : (

@@ -17,13 +17,19 @@ interface SelfChallengeFlowProps {
   levelInLeague: number;
   onComplete?: () => void;
   onClose?: () => void;
+  /** When true, skip "ready" screen and immediately start the timer (used after QR checkin) */
+  autoStart?: boolean;
+  /** If resuming an existing session, pass its started_at timestamp */
+  resumeStartedAt?: string;
 }
 
-const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose }: SelfChallengeFlowProps) => {
+const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, autoStart, resumeStartedAt }: SelfChallengeFlowProps) => {
   const level = getLevelById(league, levelInLeague);
   const { recordSession, recordSelfChallenge } = useLocalProgress();
-  const [state, setState] = useState<FlowState>("ready");
-  const [startTime, setStartTime] = useState<number | null>(null);
+  const [state, setState] = useState<FlowState>(autoStart ? "active" : "ready");
+  const [startTime, setStartTime] = useState<number | null>(
+    autoStart ? (resumeStartedAt ? new Date(resumeStartedAt).getTime() : Date.now()) : null
+  );
   const [elapsed, setElapsed] = useState(0);
   const [showRoutineA, setShowRoutineA] = useState(true);
   const [routineExpanded, setRoutineExpanded] = useState(false);
