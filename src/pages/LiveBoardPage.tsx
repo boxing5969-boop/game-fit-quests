@@ -141,15 +141,15 @@ const LiveBoardPage = () => {
   const loadActivitySessions = useCallback(async () => {
     if (!branchName) return;
 
-    // Auto-end stale sessions (>2 hours old)
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    // Auto-end stale sessions (>60 minutes old)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     await supabase
       .from("activity_sessions")
       .update({ status: "auto_ended", ended_at: new Date().toISOString() })
       .eq("branch_name", branchName)
       .eq("status", "active")
       .is("ended_at", null)
-      .lt("started_at", twoHoursAgo);
+      .lt("started_at", oneHourAgo);
 
     const { data: activeSessions } = await supabase
       .from("activity_sessions")
@@ -348,6 +348,20 @@ const LiveBoardPage = () => {
     window.location.href = `/live-board/${encodeURIComponent(name)}`;
   };
 
+  // Force-exit a single member (admin/manager)
+  const handleForceExit = async (sessionId: string, memberName: string) => {
+    const { error } = await supabase
+      .from("activity_sessions")
+      .update({ status: "force_ended", ended_at: new Date().toISOString() })
+      .eq("id", sessionId);
+    if (error) {
+      toast.error("퇴장 처리 실패");
+    } else {
+      toast.success(`${memberName} 퇴장 처리 완료`);
+      loadActivitySessions();
+    }
+  };
+
   // Reset all active sessions for this branch (admin tool)
   const handleResetActiveSessions = async () => {
     if (!branchName) return;
@@ -520,14 +534,23 @@ const LiveBoardPage = () => {
                         <p className="text-2xl font-black text-white truncate leading-tight">{m.name}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className={`inline-flex px-2 py-0.5 rounded text-sm font-black ${RANK_BADGE_COLORS[m.league] || "bg-gray-700 text-gray-300"}`}>
-                            {RANK_LABELS[m.league] || m.league}
+                            {RANK_LABELS[m.league] || m.league} 리그
                           </span>
-                          <span className="text-lg text-gray-400 font-bold">L{m.level}</span>
+                          <span className="text-lg text-gray-400 font-bold">레벨 {m.level}</span>
                           <span className="text-gray-600">·</span>
                           <Clock className="h-4 w-4 text-gray-500 inline" />
                           <span className="text-lg text-gray-500 font-bold">{elapsedMin(m.startedAt)}분</span>
                         </div>
                       </div>
+                      {isBranchManager && (
+                        <button
+                          onClick={() => handleForceExit(m.id, m.name)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity rounded-lg bg-red-600/20 px-3 py-2 text-xs font-bold text-red-400 hover:bg-red-600/40"
+                          title="퇴장 처리"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -555,9 +578,9 @@ const LiveBoardPage = () => {
                         <p className="text-xl font-black text-gray-200 truncate leading-tight">{v.display_name}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className={`inline-flex px-1.5 py-0.5 rounded text-xs font-black ${RANK_BADGE_COLORS[v.league] || "bg-gray-700 text-gray-300"}`}>
-                            {RANK_LABELS[v.league] || v.league}
+                            {RANK_LABELS[v.league] || v.league} 리그
                           </span>
-                          <span className="text-sm text-gray-500 font-bold">L{v.level}</span>
+                          <span className="text-sm text-gray-500 font-bold">레벨 {v.level}</span>
                         </div>
                       </div>
                       <span className="text-lg text-gray-500 tabular-nums font-black">{fmtTime(v.last_checkin_at)}</span>

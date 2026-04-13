@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { calculateSessionXp, isQualifyingSession } from "@/data/levelRuleEngine";
 import { getLevelById, SELF_CHALLENGE_BONUS_XP, type UnifiedLevel, type RoutineBlock } from "@/data/allLevelsData";
-import { Play, Square, Clock, Zap, CheckCircle2, Trophy, Flame, ChevronDown } from "lucide-react";
+import { Play, Square, Clock, Zap, CheckCircle2, Trophy, Flame, ChevronDown, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { celebrateSmall } from "@/lib/celebrations";
 
@@ -17,13 +17,15 @@ interface SelfChallengeFlowProps {
   levelInLeague: number;
   onComplete?: () => void;
   onClose?: () => void;
+  /** Called when user wants to leave the live board without completing */
+  onLeave?: () => void;
   /** When true, skip "ready" screen and immediately start the timer (used after QR checkin) */
   autoStart?: boolean;
   /** If resuming an existing session, pass its started_at timestamp */
   resumeStartedAt?: string;
 }
 
-const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, autoStart, resumeStartedAt }: SelfChallengeFlowProps) => {
+const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave, autoStart, resumeStartedAt }: SelfChallengeFlowProps) => {
   const level = getLevelById(league, levelInLeague);
   const { recordSession, recordSelfChallenge } = useLocalProgress();
   const [state, setState] = useState<FlowState>(autoStart ? "active" : "ready");
@@ -196,8 +198,18 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, autoSta
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-5 text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.97]"
           style={{ fontFamily: "'Black Han Sans', sans-serif" }}
         >
-          <Square className="h-5 w-5" /> 도전 완료
+          <Square className="h-5 w-5" /> 오늘 도전 완료
         </button>
+
+        {/* Leave button */}
+        {onLeave && (
+          <button
+            onClick={onLeave}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-muted py-3.5 text-sm font-bold text-muted-foreground transition-all active:scale-[0.97]"
+          >
+            <LogOut className="h-4 w-4" /> 라이브보드 나가기
+          </button>
+        )}
       </div>
     );
   }

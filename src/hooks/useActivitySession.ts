@@ -133,6 +133,31 @@ export function useActivitySession(userId?: string, branchName?: string) {
   }, [activeSession]);
 
   /**
+   * Leave the live board without completing the challenge.
+   * Sets status to 'cancelled' and ends the session immediately.
+   */
+  const leaveChallenge = useCallback(async (): Promise<boolean> => {
+    if (!activeSession) return false;
+
+    const { error } = await supabase
+      .from("activity_sessions")
+      .update({
+        status: "cancelled",
+        ended_at: new Date().toISOString(),
+      })
+      .eq("id", activeSession.id);
+
+    if (error) {
+      console.error("[useActivitySession] Leave failed:", error.message);
+      return false;
+    }
+
+    setActiveSession(null);
+    setElapsed(0);
+    return true;
+  }, [activeSession]);
+
+  /**
    * Reload session state — called after QR checkin to pick up the new session
    * created by the edge function.
    */
@@ -153,6 +178,7 @@ export function useActivitySession(userId?: string, branchName?: string) {
     elapsedSeconds,
     startChallenge,
     completeChallenge,
+    leaveChallenge,
     refreshSession,
   };
 }
