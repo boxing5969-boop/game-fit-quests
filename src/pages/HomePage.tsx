@@ -161,10 +161,8 @@ const HomePage = () => {
     setShowChallenge(true);
     await ensureActiveSession();
 
-    if (!result.is_duplicate) {
-      setCheckinResult(result);
-      setShowCheckinSuccess(true);
-    }
+    setCheckinResult(result);
+    setShowCheckinSuccess(true);
 
     handleCheckinFeedback(result.is_duplicate, result.xp_granted);
   }, [ensureActiveSession, handleCheckinFeedback, refreshProgress]);
