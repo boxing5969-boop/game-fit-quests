@@ -137,7 +137,7 @@ const LiveBoardPage = () => {
     })();
   }, [branchCode]);
 
-  // Load active sessions — only status='active', skip ghost profiles
+  // Load active sessions — only status='active', use attendance_logs as fallback for display data
   const loadActivitySessions = useCallback(async () => {
     if (!branchName) return;
 
@@ -174,7 +174,7 @@ const LiveBoardPage = () => {
 
     const userIds = Array.from(latestByUser.keys());
 
-    // Batch fetch profiles and progress
+    // Batch fetch profiles and progress (may fail for anon users due to RLS)
     const { data: profiles } = await supabase
       .from("profiles")
       .select("user_id, nickname, name, avatar_url")
@@ -188,23 +188,48 @@ const LiveBoardPage = () => {
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
     const progressMap = new Map((progressData || []).map(p => [p.user_id, p]));
 
+    // Fallback: fetch today's attendance_logs for display info (anon CAN read these)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const { data: todayLogs } = await supabase
+      .from("attendance_logs")
+      .select("user_id, display_name_snapshot, league_snapshot, level_snapshot")
+      .eq("branch_name", branchName)
+      .in("user_id", userIds)
+      .gte("checked_in_at", todayStart.toISOString())
+      .order("checked_in_at", { ascending: false });
+
+    // Build attendance fallback map (latest log per user)
+    const attendanceMap = new Map<string, { display_name: string; league: string; level: number }>();
+    for (const log of (todayLogs || [])) {
+      if (!attendanceMap.has(log.user_id)) {
+        attendanceMap.set(log.user_id, {
+          display_name: log.display_name_snapshot,
+          league: log.league_snapshot,
+          level: log.level_snapshot,
+        });
+      }
+    }
+
     const members: ActiveMember[] = [];
     for (const [userId, session] of latestByUser) {
       const profile = profileMap.get(userId);
-      // Skip ghost sessions — no profile = don't show
-      if (!profile || (!profile.nickname && !profile.name)) continue;
-
       const progress = progressMap.get(userId);
-      const avatarUrl = profile.avatar_url || null;
-      // Update avatar cache
+      const attendanceFallback = attendanceMap.get(userId);
+
+      // Determine display name: profile > attendance_log > skip
+      const displayName = profile?.nickname || profile?.name || attendanceFallback?.display_name;
+      if (!displayName) continue; // truly unknown user — skip
+
+      const avatarUrl = profile?.avatar_url || null;
       avatarCacheRef.current[userId] = avatarUrl;
 
       members.push({
         id: session.id,
         user_id: userId,
-        name: profile.nickname || profile.name,
-        league: progress?.current_rank || "white",
-        level: progress?.current_level || 1,
+        name: displayName,
+        league: progress?.current_rank || attendanceFallback?.league || "white",
+        level: progress?.current_level || attendanceFallback?.level || 1,
         startedAt: new Date(session.started_at).getTime(),
         avatar_url: avatarUrl,
       });

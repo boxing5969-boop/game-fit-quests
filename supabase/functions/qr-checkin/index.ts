@@ -216,11 +216,16 @@ Deno.serve(async (req) => {
       is_duplicate: isDuplicate,
       xp_granted: xpAmount,
       display_name: displayName,
+      nickname: profile.nickname || "",
+      name: profile.name || "",
       league: progress?.current_rank || "white",
       level: progress?.current_level || 1,
       avatar_url: profile.avatar_url,
       attendance_id: log.id,
       session_id: ensuredSession?.id || null,
+      session_status: ensuredSession?.status || null,
+      session_action: currentActiveSession ? "refreshed" : "created",
+      branch_name: qrToken.branch_name,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
