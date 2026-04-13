@@ -287,10 +287,10 @@ const CheckinBoardPage = () => {
       )}
 
       {/* Stats */}
-      <div className="mb-5 grid grid-cols-3 gap-2">
+      <div className="mb-5 grid grid-cols-4 gap-2">
         <div className="rounded-2xl border border-border bg-card p-4 text-center">
           <p className="text-2xl font-black text-primary">{uniqueToday}</p>
-          <p className="text-[10px] text-muted-foreground">오늘 체크인</p>
+          <p className="text-[10px] text-muted-foreground">오늘 방문(명)</p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-4 text-center">
           <p className="text-2xl font-black text-foreground">{logs.length}</p>
@@ -298,9 +298,26 @@ const CheckinBoardPage = () => {
         </div>
         <div className="rounded-2xl border border-border bg-card p-4 text-center">
           <p className="text-2xl font-black text-muted-foreground">{duplicateToday}</p>
-          <p className="text-[10px] text-muted-foreground">중복 차단</p>
+          <p className="text-[10px] text-muted-foreground">재스캔</p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-4 text-center">
+          <p className="text-2xl font-black text-green-600">{activeSessions}</p>
+          <p className="text-[10px] text-muted-foreground">활동 중</p>
         </div>
       </div>
+
+      {/* Admin: Reset active sessions */}
+      {(isSuperAdmin || role === "branch_manager") && (
+        <div className="mb-5 flex gap-2">
+          <button
+            onClick={handleResetActiveSessions}
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-destructive/10 py-3 text-sm font-bold text-destructive transition-all active:scale-95"
+          >
+            <RotateCcw className="h-4 w-4" />
+            현재 활동 중 초기화
+          </button>
+        </div>
+      )}
 
       {/* QR Section */}
       <div className="mb-5 rounded-2xl border border-border bg-card p-5">
