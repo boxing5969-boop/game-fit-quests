@@ -85,8 +85,6 @@ const CheckinBoardPage = () => {
       setActiveSessions(0);
     }
   };
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
-  const autoRefreshRef = useRef<ReturnType<typeof setInterval>>();
 
   // Load branches for super_admin
   useEffect(() => {
