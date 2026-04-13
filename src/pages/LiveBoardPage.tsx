@@ -155,7 +155,7 @@ const LiveBoardPage = () => {
     // No completed members section — completed = immediately gone
   }, [branchName, getAvatarUrl]);
 
-  // Load today checkins
+  // Load today checkins + prefetch avatars
   const loadToday = useCallback(async () => {
     if (!branchName) return;
     const todayStart = new Date();
@@ -168,8 +168,12 @@ const LiveBoardPage = () => {
       .order("checked_in_at", { ascending: false }).limit(100);
     if (data) {
       setTodayCheckins(data);
+      // Prefetch avatars for all checkin users
+      for (const c of data) {
+        getAvatarUrl(c.user_id);
+      }
     }
-  }, [branchName]);
+  }, [branchName, getAvatarUrl]);
 
   // Load hall of fame
   const loadHall = useCallback(async () => {
@@ -206,6 +210,7 @@ const LiveBoardPage = () => {
           const n = payload.new as any;
           if (n.is_duplicate) return;
           const event: CheckinEvent = { id: n.id, display_name_snapshot: n.display_name_snapshot, league_snapshot: n.league_snapshot, level_snapshot: n.level_snapshot, checked_in_at: n.checked_in_at, user_id: n.user_id };
+          getAvatarUrl(n.user_id); // prefetch avatar for this user
           setTodayCheckins(prev => [event, ...prev]);
           triggerPopup(event);
         })
@@ -411,9 +416,7 @@ const LiveBoardPage = () => {
                 <div className="space-y-1">
                   {todayCheckins.map((c) => (
                     <div key={c.id} className="flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-gray-800/30 transition-colors">
-                      <div className={`flex h-11 w-11 items-center justify-center rounded-full text-lg font-black border-2 ${RANK_COLORS[c.league_snapshot] || "border-gray-600 bg-gray-800 text-white"}`}>
-                        {c.display_name_snapshot.charAt(0)}
-                      </div>
+                      <MemberAvatar url={avatarCache.current[c.user_id]} name={c.display_name_snapshot} sizeClass="h-11 w-11" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xl font-black text-gray-200 truncate leading-tight">{c.display_name_snapshot}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
