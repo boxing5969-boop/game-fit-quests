@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { formatRank } from "@/lib/rankLabels";
 
-// Import all cropped boxer emoticons
 import boxer1 from "@/assets/boxers/boxer_1.png";
 import boxer2 from "@/assets/boxers/boxer_2.png";
 import boxer3 from "@/assets/boxers/boxer_3.png";
@@ -14,29 +13,10 @@ import boxer9 from "@/assets/boxers/boxer_9.png";
 import boxer10 from "@/assets/boxers/boxer_10.png";
 import boxer11 from "@/assets/boxers/boxer_11.png";
 import boxer12 from "@/assets/boxers/boxer_12.png";
-import boxer13 from "@/assets/boxers/boxer_13.png";
-import boxer14 from "@/assets/boxers/boxer_14.png";
-import boxer15 from "@/assets/boxers/boxer_15.png";
-import boxer16 from "@/assets/boxers/boxer_16.png";
-import boxer17 from "@/assets/boxers/boxer_17.png";
-import boxer18 from "@/assets/boxers/boxer_18.png";
-import boxer19 from "@/assets/boxers/boxer_19.png";
-import boxer20 from "@/assets/boxers/boxer_20.png";
-import boxer21 from "@/assets/boxers/boxer_21.png";
-import boxer22 from "@/assets/boxers/boxer_22.png";
-import boxer23 from "@/assets/boxers/boxer_23.png";
-import boxer24 from "@/assets/boxers/boxer_24.png";
-import boxer25 from "@/assets/boxers/boxer_25.png";
-import boxer26 from "@/assets/boxers/boxer_26.png";
-import boxer27 from "@/assets/boxers/boxer_27.png";
-import boxer28 from "@/assets/boxers/boxer_28.png";
-import boxer29 from "@/assets/boxers/boxer_29.png";
 
 const BOXER_IMAGES = [
-  boxer1, boxer2, boxer3, boxer4, boxer5, boxer6, boxer7, boxer8, boxer9,
-  boxer10, boxer11, boxer12, boxer13, boxer14, boxer15, boxer16, boxer17,
-  boxer18, boxer19, boxer20, boxer21, boxer22, boxer23, boxer24, boxer25,
-  boxer26, boxer27, boxer28, boxer29,
+  boxer1, boxer2, boxer3, boxer4, boxer5, boxer6,
+  boxer7, boxer8, boxer9, boxer10, boxer11, boxer12,
 ];
 
 type League = "white" | "blue" | "red" | "black";
