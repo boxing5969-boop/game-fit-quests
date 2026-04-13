@@ -348,6 +348,20 @@ const LiveBoardPage = () => {
     window.location.href = `/live-board/${encodeURIComponent(name)}`;
   };
 
+  // Force-exit a single member (admin/manager)
+  const handleForceExit = async (sessionId: string, memberName: string) => {
+    const { error } = await supabase
+      .from("activity_sessions")
+      .update({ status: "force_ended", ended_at: new Date().toISOString() })
+      .eq("id", sessionId);
+    if (error) {
+      toast.error("퇴장 처리 실패");
+    } else {
+      toast.success(`${memberName} 퇴장 처리 완료`);
+      loadActivitySessions();
+    }
+  };
+
   // Reset all active sessions for this branch (admin tool)
   const handleResetActiveSessions = async () => {
     if (!branchName) return;
