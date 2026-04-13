@@ -155,7 +155,7 @@ const LiveBoardPage = () => {
     // No completed members section — completed = immediately gone
   }, [branchName, getAvatarUrl]);
 
-  // Load today checkins
+  // Load today checkins + prefetch avatars
   const loadToday = useCallback(async () => {
     if (!branchName) return;
     const todayStart = new Date();
@@ -168,8 +168,12 @@ const LiveBoardPage = () => {
       .order("checked_in_at", { ascending: false }).limit(100);
     if (data) {
       setTodayCheckins(data);
+      // Prefetch avatars for all checkin users
+      for (const c of data) {
+        getAvatarUrl(c.user_id);
+      }
     }
-  }, [branchName]);
+  }, [branchName, getAvatarUrl]);
 
   // Load hall of fame
   const loadHall = useCallback(async () => {
