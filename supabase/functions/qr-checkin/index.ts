@@ -94,8 +94,10 @@ Deno.serve(async (req) => {
       displayName = profile.name || profile.nickname || "회원";
     }
 
-    // 5. Check duplicate attendance today (XP is 1x/day only)
-    const todayStart = new Date();
+    // 5. Attendance: duplicate check only affects XP
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const todayStart = new Date(now);
     todayStart.setHours(0, 0, 0, 0);
     const { data: existingToday } = await supabaseAdmin
       .from("attendance_logs").select("id")
@@ -106,7 +108,77 @@ Deno.serve(async (req) => {
     const isDuplicate = !!(existingToday && existingToday.length > 0);
     const xpAmount = isDuplicate ? 0 : (profile.is_approved ? 10 : 0);
 
-    // 6. Insert attendance log
+    // 6. Presence/session: always ensure an active session before publishing attendance event
+    const { data: activeSessions, error: sessionLookupError } = await supabaseAdmin
+      .from("activity_sessions")
+      .select("id, started_at")
+      .eq("user_id", user.id)
+      .eq("branch_name", qrToken.branch_name)
+      .eq("status", "active")
+      .is("ended_at", null)
+      .order("started_at", { ascending: false });
+
+    if (sessionLookupError) {
+      return new Response(JSON.stringify({ error: "활동 세션 처리 중 오류가 발생했습니다", code: "INSERT_FAILED" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const [currentActiveSession, ...staleActiveSessions] = activeSessions || [];
+
+    if (staleActiveSessions.length > 0) {
+      await supabaseAdmin
+        .from("activity_sessions")
+        .update({ status: "auto_ended", ended_at: nowIso })
+        .in("id", staleActiveSessions.map(session => session.id));
+    }
+
+    let ensuredSession = null;
+
+    if (currentActiveSession) {
+      const { data: refreshedSession, error: refreshSessionError } = await supabaseAdmin
+        .from("activity_sessions")
+        .update({
+          status: "active",
+          started_at: nowIso,
+          ended_at: null,
+          expires_from_board_at: null,
+        })
+        .eq("id", currentActiveSession.id)
+        .select()
+        .single();
+
+      if (refreshSessionError) {
+        return new Response(JSON.stringify({ error: "활동 세션 갱신 중 오류가 발생했습니다", code: "INSERT_FAILED" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      ensuredSession = refreshedSession;
+    } else {
+      const { data: createdSession, error: createSessionError } = await supabaseAdmin
+        .from("activity_sessions")
+        .insert({
+          user_id: user.id,
+          branch_name: qrToken.branch_name,
+          status: "active",
+          started_at: nowIso,
+          ended_at: null,
+          expires_from_board_at: null,
+        })
+        .select()
+        .single();
+
+      if (createSessionError) {
+        return new Response(JSON.stringify({ error: "활동 세션 생성 중 오류가 발생했습니다", code: "INSERT_FAILED" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      ensuredSession = createdSession;
+    }
+
+    // 7. Insert attendance log after session is ready so live board popup only appears after re-entry is valid
     const { data: log, error: logError } = await supabaseAdmin
       .from("attendance_logs").insert({
         user_id: user.id,
@@ -137,21 +209,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 8. End any existing active session for this user today, then create new one
-    await supabaseAdmin.from("activity_sessions")
-      .update({ status: "auto_ended", ended_at: new Date().toISOString() })
-      .eq("user_id", user.id).eq("branch_name", qrToken.branch_name)
-      .eq("status", "active").gte("started_at", todayStart.toISOString());
-
-    // Create new active session (always, even on re-entry)
-    const { data: newSession } = await supabaseAdmin.from("activity_sessions").insert({
-      user_id: user.id,
-      branch_name: qrToken.branch_name,
-      status: "active",
-      started_at: new Date().toISOString(),
-    }).select().single();
-
-    console.log(`[qr-checkin] Success: user=${user.id}, duplicate=${isDuplicate}, xp=${xpAmount}, session=${newSession?.id}`);
+    console.log(`[qr-checkin] Success: user=${user.id}, duplicate=${isDuplicate}, xp=${xpAmount}, session=${ensuredSession?.id}`);
 
     return new Response(JSON.stringify({
       success: true,
@@ -162,7 +220,7 @@ Deno.serve(async (req) => {
       level: progress?.current_level || 1,
       avatar_url: profile.avatar_url,
       attendance_id: log.id,
-      session_id: newSession?.id || null,
+      session_id: ensuredSession?.id || null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -34,16 +34,13 @@ export function useActivitySession(userId?: string, branchName?: string) {
       return null;
     }
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
     const { data } = await supabase
       .from("activity_sessions")
       .select("*")
       .eq("user_id", userId)
       .eq("branch_name", branchName)
       .eq("status", "active")
-      .gte("started_at", todayStart.toISOString())
+      .is("ended_at", null)
       .order("started_at", { ascending: false })
       .limit(1);
 
