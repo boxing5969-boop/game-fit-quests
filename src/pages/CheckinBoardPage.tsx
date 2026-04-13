@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { QrCode, Monitor, RefreshCw, Trash2, ChevronLeft, Settings, Bug, Zap, Clock, CheckCircle2, XCircle, AlertTriangle, Building2 } from "lucide-react";
+import { QrCode, Monitor, RefreshCw, Trash2, ChevronLeft, Settings, Bug, Zap, Clock, CheckCircle2, XCircle, AlertTriangle, Building2, RotateCcw } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { formatRank } from "@/lib/rankLabels";
@@ -50,8 +50,41 @@ const CheckinBoardPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [tokenPreview, setTokenPreview] = useState<string>("");
+  const [activeSessions, setActiveSessions] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const autoRefreshRef = useRef<ReturnType<typeof setInterval>>();
+
+  // Load active session count
+  const loadActiveSessions = useCallback(async () => {
+    if (!activeBranch) return;
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const { count } = await supabase
+      .from("activity_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("branch_name", activeBranch)
+      .eq("status", "active")
+      .gte("started_at", todayStart.toISOString());
+    setActiveSessions(count || 0);
+  }, [activeBranch]);
+
+  useEffect(() => { loadActiveSessions(); }, [loadActiveSessions]);
+
+  // Reset active sessions
+  const handleResetActiveSessions = async () => {
+    if (!activeBranch) return;
+    const { error } = await supabase
+      .from("activity_sessions")
+      .update({ status: "auto_ended", ended_at: new Date().toISOString() })
+      .eq("branch_name", activeBranch)
+      .eq("status", "active");
+    if (error) {
+      toast.error("초기화 실패");
+    } else {
+      toast.success("현재 활동 중 초기화 완료");
+      setActiveSessions(0);
+    }
+  };
 
   // Load branches for super_admin
   useEffect(() => {
@@ -287,10 +320,10 @@ const CheckinBoardPage = () => {
       )}
 
       {/* Stats */}
-      <div className="mb-5 grid grid-cols-3 gap-2">
+      <div className="mb-5 grid grid-cols-4 gap-2">
         <div className="rounded-2xl border border-border bg-card p-4 text-center">
           <p className="text-2xl font-black text-primary">{uniqueToday}</p>
-          <p className="text-[10px] text-muted-foreground">오늘 체크인</p>
+          <p className="text-[10px] text-muted-foreground">오늘 방문(명)</p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-4 text-center">
           <p className="text-2xl font-black text-foreground">{logs.length}</p>
@@ -298,9 +331,26 @@ const CheckinBoardPage = () => {
         </div>
         <div className="rounded-2xl border border-border bg-card p-4 text-center">
           <p className="text-2xl font-black text-muted-foreground">{duplicateToday}</p>
-          <p className="text-[10px] text-muted-foreground">중복 차단</p>
+          <p className="text-[10px] text-muted-foreground">재스캔</p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-4 text-center">
+          <p className="text-2xl font-black text-green-600">{activeSessions}</p>
+          <p className="text-[10px] text-muted-foreground">활동 중</p>
         </div>
       </div>
+
+      {/* Admin: Reset active sessions */}
+      {(isSuperAdmin || role === "branch_manager") && (
+        <div className="mb-5 flex gap-2">
+          <button
+            onClick={handleResetActiveSessions}
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-destructive/10 py-3 text-sm font-bold text-destructive transition-all active:scale-95"
+          >
+            <RotateCcw className="h-4 w-4" />
+            현재 활동 중 초기화
+          </button>
+        </div>
+      )}
 
       {/* QR Section */}
       <div className="mb-5 rounded-2xl border border-border bg-card p-5">

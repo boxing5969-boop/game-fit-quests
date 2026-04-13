@@ -3,7 +3,8 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Building2, Clock, X, Trophy } from "lucide-react";
+import { Building2, Clock, X, Trophy, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 
 const RANK_COLORS: Record<string, string> = {
   white: "border-gray-400 bg-gray-200 text-gray-900",
@@ -35,6 +36,15 @@ interface CheckinEvent {
   user_id: string;
 }
 
+/** Deduplicated daily visit: one row per user */
+interface DailyVisit {
+  user_id: string;
+  display_name: string;
+  league: string;
+  level: number;
+  last_checkin_at: string;
+}
+
 interface ActiveMember {
   id: string;
   user_id: string;
@@ -44,8 +54,6 @@ interface ActiveMember {
   startedAt: number;
   avatar_url?: string | null;
 }
-
-// CompletedMember interface removed — completed sessions immediately leave the board
 
 interface HallMember {
   r_user_id: string;
@@ -59,9 +67,8 @@ interface HallMember {
 const LiveBoardPage = () => {
   const { branchCode } = useParams<{ branchCode: string }>();
   const [branchName, setBranchName] = useState("");
-  const [todayCheckins, setTodayCheckins] = useState<CheckinEvent[]>([]);
+  const [dailyVisits, setDailyVisits] = useState<DailyVisit[]>([]);
   const [activeMembers, setActiveMembers] = useState<ActiveMember[]>([]);
-  // completedMembers removed — completed sessions no longer shown on live board
   const [hallMembers, setHallMembers] = useState<HallMember[]>([]);
   const [latestPopup, setLatestPopup] = useState<CheckinEvent | null>(null);
   const [showPopup, setShowPopup] = useState(false);
@@ -71,21 +78,28 @@ const LiveBoardPage = () => {
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
 
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isBranchManager, setIsBranchManager] = useState(false);
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
   const [showBranchSwitch, setShowBranchSwitch] = useState(false);
 
-  // Avatar cache — use state to trigger re-renders when avatars load
+  // Avatar cache with state to trigger re-renders
   const avatarCacheRef = useRef<Record<string, string | null>>({});
   const [avatarMap, setAvatarMap] = useState<Record<string, string | null>>({});
 
   const getAvatarUrl = useCallback(async (userId: string): Promise<string | null> => {
-    if (avatarCacheRef.current[userId] !== undefined) return avatarCacheRef.current[userId];
+    if (avatarCacheRef.current[userId] !== undefined) {
+      // Ensure state is also set for rendering
+      if (avatarMap[userId] === undefined) {
+        setAvatarMap(prev => ({ ...prev, [userId]: avatarCacheRef.current[userId] }));
+      }
+      return avatarCacheRef.current[userId];
+    }
     const { data } = await supabase.from("profiles").select("avatar_url").eq("user_id", userId).single();
     const url = data?.avatar_url || null;
     avatarCacheRef.current[userId] = url;
     setAvatarMap(prev => ({ ...prev, [userId]: url }));
     return url;
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Clock
   useEffect(() => {
@@ -93,7 +107,7 @@ const LiveBoardPage = () => {
     return () => clearInterval(t);
   }, []);
 
-  // Check super_admin
+  // Check admin/manager role
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
@@ -103,6 +117,9 @@ const LiveBoardPage = () => {
           supabase.from("branches").select("id, name").order("name").then(({ data: b }) => {
             if (b) setBranches(b);
           });
+        }
+        if (data && (data.role === "branch_manager" || data.role === "super_admin" || data.role === "admin")) {
+          setIsBranchManager(true);
         }
       });
     });
@@ -120,44 +137,93 @@ const LiveBoardPage = () => {
     })();
   }, [branchCode]);
 
-  // Load activity sessions (active + recently completed)
+  // Load active sessions — only status='active', skip ghost profiles
   const loadActivitySessions = useCallback(async () => {
     if (!branchName) return;
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    // Active sessions
+    // Auto-end stale sessions (>2 hours old)
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    await supabase
+      .from("activity_sessions")
+      .update({ status: "auto_ended", ended_at: new Date().toISOString() })
+      .eq("branch_name", branchName)
+      .eq("status", "active")
+      .lt("started_at", twoHoursAgo);
+
     const { data: activeSessions } = await supabase
       .from("activity_sessions")
-      .select("*")
+      .select("id, user_id, started_at")
       .eq("branch_name", branchName)
       .eq("status", "active")
       .gte("started_at", todayStart.toISOString());
 
-    if (activeSessions) {
-      const members: ActiveMember[] = [];
-      for (const s of activeSessions as any[]) {
-        const avatar = await getAvatarUrl(s.user_id);
-        // Get display name from checkins or profiles
-        const { data: profile } = await supabase.from("profiles").select("nickname, name").eq("user_id", s.user_id).single();
-        const { data: progress } = await supabase.from("member_progress").select("current_rank, current_level").eq("user_id", s.user_id).single();
-        members.push({
-          id: s.id,
-          user_id: s.user_id,
-          name: profile?.nickname || profile?.name || "회원",
-          league: progress?.current_rank || "white",
-          level: progress?.current_level || 1,
-          startedAt: new Date(s.started_at).getTime(),
-          avatar_url: avatar,
-        });
-      }
-      setActiveMembers(members);
+    if (!activeSessions || activeSessions.length === 0) {
+      setActiveMembers([]);
+      return;
     }
 
-    // No completed members section — completed = immediately gone
-  }, [branchName, getAvatarUrl]);
+    // Deduplicate by user_id (keep latest session)
+    const latestByUser = new Map<string, typeof activeSessions[0]>();
+    for (const s of activeSessions) {
+      const existing = latestByUser.get(s.user_id);
+      if (!existing || new Date(s.started_at) > new Date(existing.started_at)) {
+        latestByUser.set(s.user_id, s);
+      }
+    }
 
-  // Load today checkins + prefetch avatars
+    const userIds = Array.from(latestByUser.keys());
+
+    // Batch fetch profiles and progress
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, nickname, name, avatar_url")
+      .in("user_id", userIds);
+
+    const { data: progressData } = await supabase
+      .from("member_progress")
+      .select("user_id, current_rank, current_level")
+      .in("user_id", userIds);
+
+    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+    const progressMap = new Map((progressData || []).map(p => [p.user_id, p]));
+
+    const members: ActiveMember[] = [];
+    for (const [userId, session] of latestByUser) {
+      const profile = profileMap.get(userId);
+      // Skip ghost sessions — no profile = don't show
+      if (!profile || (!profile.nickname && !profile.name)) continue;
+
+      const progress = progressMap.get(userId);
+      const avatarUrl = profile.avatar_url || null;
+      // Update avatar cache
+      avatarCacheRef.current[userId] = avatarUrl;
+
+      members.push({
+        id: session.id,
+        user_id: userId,
+        name: profile.nickname || profile.name,
+        league: progress?.current_rank || "white",
+        level: progress?.current_level || 1,
+        startedAt: new Date(session.started_at).getTime(),
+        avatar_url: avatarUrl,
+      });
+    }
+
+    // Update avatar map in batch
+    setAvatarMap(prev => {
+      const next = { ...prev };
+      for (const m of members) {
+        next[m.user_id] = m.avatar_url || null;
+      }
+      return next;
+    });
+
+    setActiveMembers(members);
+  }, [branchName]);
+
+  // Load today visits — deduplicated by user_id
   const loadToday = useCallback(async () => {
     if (!branchName) return;
     const todayStart = new Date();
@@ -167,13 +233,31 @@ const LiveBoardPage = () => {
       .select("id, display_name_snapshot, league_snapshot, level_snapshot, checked_in_at, user_id")
       .eq("branch_name", branchName)
       .gte("checked_in_at", todayStart.toISOString())
-      .order("checked_in_at", { ascending: false }).limit(100);
-    if (data) {
-      setTodayCheckins(data);
-      // Prefetch avatars for all checkin users
+      .order("checked_in_at", { ascending: false }).limit(500);
+
+    if (data && data.length > 0) {
+      // Deduplicate by user_id — keep last checkin time
+      const userMap = new Map<string, DailyVisit>();
       for (const c of data) {
-        getAvatarUrl(c.user_id);
+        if (!userMap.has(c.user_id)) {
+          userMap.set(c.user_id, {
+            user_id: c.user_id,
+            display_name: c.display_name_snapshot,
+            league: c.league_snapshot,
+            level: c.level_snapshot,
+            last_checkin_at: c.checked_in_at,
+          });
+        }
       }
+      const visits = Array.from(userMap.values());
+      setDailyVisits(visits);
+
+      // Prefetch avatars
+      for (const v of visits) {
+        getAvatarUrl(v.user_id);
+      }
+    } else {
+      setDailyVisits([]);
     }
   }, [branchName, getAvatarUrl]);
 
@@ -191,8 +275,6 @@ const LiveBoardPage = () => {
 
   useEffect(() => { loadToday(); loadHall(); loadActivitySessions(); }, [loadToday, loadHall, loadActivitySessions]);
 
-  // No auto-remove needed — completed members are not shown
-
   const triggerPopup = useCallback(async (event: CheckinEvent) => {
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
     const avatar = await getAvatarUrl(event.user_id);
@@ -202,7 +284,7 @@ const LiveBoardPage = () => {
     popupTimeoutRef.current = setTimeout(() => setShowPopup(false), 7000);
   }, [getAvatarUrl]);
 
-  // Realtime: attendance_logs
+  // Realtime subscriptions
   useEffect(() => {
     if (!branchName) return;
     const channel = supabase
@@ -211,18 +293,25 @@ const LiveBoardPage = () => {
         (payload) => {
           const n = payload.new as any;
           const event: CheckinEvent = { id: n.id, display_name_snapshot: n.display_name_snapshot, league_snapshot: n.league_snapshot, level_snapshot: n.level_snapshot, checked_in_at: n.checked_in_at, user_id: n.user_id };
-          getAvatarUrl(n.user_id); // prefetch avatar for this user
-          setTodayCheckins(prev => [event, ...prev]);
+          getAvatarUrl(n.user_id);
+          // Update daily visits (deduplicated)
+          setDailyVisits(prev => {
+            const exists = prev.find(v => v.user_id === n.user_id);
+            if (exists) {
+              // Update last checkin time
+              return prev.map(v => v.user_id === n.user_id ? { ...v, last_checkin_at: n.checked_in_at, display_name: n.display_name_snapshot, league: n.league_snapshot, level: n.level_snapshot } : v);
+            }
+            return [{ user_id: n.user_id, display_name: n.display_name_snapshot, league: n.league_snapshot, level: n.level_snapshot, last_checkin_at: n.checked_in_at }, ...prev];
+          });
           triggerPopup(event);
         })
       .on("postgres_changes", { event: "*", schema: "public", table: "activity_sessions", filter: `branch_name=eq.${branchName}` },
         () => {
-          // Reload activity sessions on any change
           loadActivitySessions();
         })
       .subscribe((status) => setConnected(status === "SUBSCRIBED"));
     return () => { supabase.removeChannel(channel); };
-  }, [branchName, triggerPopup, loadActivitySessions]);
+  }, [branchName, triggerPopup, loadActivitySessions, getAvatarUrl]);
 
   // Reconnect fallback
   useEffect(() => {
@@ -234,9 +323,24 @@ const LiveBoardPage = () => {
     window.location.href = `/live-board/${encodeURIComponent(name)}`;
   };
 
+  // Reset all active sessions for this branch (admin tool)
+  const handleResetActiveSessions = async () => {
+    if (!branchName) return;
+    const { error } = await supabase
+      .from("activity_sessions")
+      .update({ status: "auto_ended", ended_at: new Date().toISOString() })
+      .eq("branch_name", branchName)
+      .eq("status", "active");
+    if (error) {
+      toast.error("초기화 실패");
+    } else {
+      toast.success("현재 활동 중 초기화 완료");
+      loadActivitySessions();
+    }
+  };
+
   const fmtTime = (s: string) => new Date(s).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
   const elapsedMin = (t: number) => Math.floor((Date.now() - t) / 60000);
-  const remainingMin = (expiresAt: number) => Math.max(0, Math.ceil((expiresAt - Date.now()) / 60000));
 
   const MemberAvatar = ({ url, name, sizeClass = "h-14 w-14" }: { url?: string | null; name: string; sizeClass?: string }) => (
     <Avatar className={`${sizeClass} border-2 border-gray-700`}>
@@ -280,13 +384,20 @@ const LiveBoardPage = () => {
               )}
             </div>
           )}
+          {/* Admin reset button */}
+          {isBranchManager && (
+            <button onClick={handleResetActiveSessions} className="flex items-center gap-2 rounded-lg bg-gray-800 px-3 py-2 text-sm text-gray-400 hover:bg-gray-700 hover:text-red-400 transition-colors" title="현재 활동 중 초기화">
+              <RotateCcw className="h-4 w-4" />
+              <span className="hidden xl:inline">초기화</span>
+            </button>
+          )}
           <div className="flex items-center gap-8">
             <div className="text-center">
               <p className="text-5xl font-black text-green-400 tabular-nums leading-none">{activeMembers.length}</p>
               <p className="text-base text-gray-500 mt-1 font-bold">활동 중</p>
             </div>
             <div className="text-center">
-              <p className="text-5xl font-black text-orange-400 tabular-nums leading-none">{todayCheckins.length}</p>
+              <p className="text-5xl font-black text-orange-400 tabular-nums leading-none">{dailyVisits.length}</p>
               <p className="text-base text-gray-500 mt-1 font-bold">오늘 방문</p>
             </div>
           </div>
@@ -310,7 +421,6 @@ const LiveBoardPage = () => {
                 style={{ minWidth: "55vw", maxWidth: "75vw", animation: "popIn 0.5s cubic-bezier(0.34,1.56,0.64,1)" }}
               >
                 <div className="text-center">
-                  {/* Avatar in popup */}
                   <div className="flex justify-center mb-6">
                     <MemberAvatar url={popupAvatarUrl} name={latestPopup.display_name_snapshot} sizeClass="h-28 w-28" />
                   </div>
@@ -400,34 +510,32 @@ const LiveBoardPage = () => {
             </div>
           </div>
 
-          {/* Recently completed section removed — completed = immediate exit */}
-
-          {/* Today visit log */}
+          {/* Today visits — deduplicated */}
           <div className="flex-1 overflow-y-auto">
             <div className="px-5 py-4 border-b border-gray-800/40 sticky top-0 bg-gray-900/90 backdrop-blur-sm z-10">
-              <h2 className="text-2xl font-black text-gray-400">📋 오늘 방문 ({todayCheckins.length})</h2>
+              <h2 className="text-2xl font-black text-gray-400">📋 오늘 방문 ({dailyVisits.length})</h2>
             </div>
             <div className="px-3 py-2">
-              {todayCheckins.length === 0 ? (
+              {dailyVisits.length === 0 ? (
                 <div className="text-center py-10 text-gray-600">
                   <p className="text-4xl mb-3">🥊</p>
                   <p className="text-xl font-bold">아직 체크인이 없습니다</p>
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {todayCheckins.map((c) => (
-                    <div key={c.id} className="flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-gray-800/30 transition-colors">
-                      <MemberAvatar url={avatarMap[c.user_id]} name={c.display_name_snapshot} sizeClass="h-11 w-11" />
+                  {dailyVisits.map((v) => (
+                    <div key={v.user_id} className="flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-gray-800/30 transition-colors">
+                      <MemberAvatar url={avatarMap[v.user_id]} name={v.display_name} sizeClass="h-11 w-11" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xl font-black text-gray-200 truncate leading-tight">{c.display_name_snapshot}</p>
+                        <p className="text-xl font-black text-gray-200 truncate leading-tight">{v.display_name}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className={`inline-flex px-1.5 py-0.5 rounded text-xs font-black ${RANK_BADGE_COLORS[c.league_snapshot] || "bg-gray-700 text-gray-300"}`}>
-                            {RANK_LABELS[c.league_snapshot] || c.league_snapshot}
+                          <span className={`inline-flex px-1.5 py-0.5 rounded text-xs font-black ${RANK_BADGE_COLORS[v.league] || "bg-gray-700 text-gray-300"}`}>
+                            {RANK_LABELS[v.league] || v.league}
                           </span>
-                          <span className="text-sm text-gray-500 font-bold">L{c.level_snapshot}</span>
+                          <span className="text-sm text-gray-500 font-bold">L{v.level}</span>
                         </div>
                       </div>
-                      <span className="text-lg text-gray-500 tabular-nums font-black">{fmtTime(c.checked_in_at)}</span>
+                      <span className="text-lg text-gray-500 tabular-nums font-black">{fmtTime(v.last_checkin_at)}</span>
                     </div>
                   ))}
                 </div>
