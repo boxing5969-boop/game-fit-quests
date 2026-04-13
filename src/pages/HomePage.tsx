@@ -492,10 +492,10 @@ const HomePage = () => {
             setCheckedInToday(true);
             refreshProgress();
             toast.success(`출석 완료! +${result.xp_granted}XP 🥊`);
-            // Check auto_start setting - for now default to auto-start
-            setTimeout(() => {
+            // Auto-start challenge using shared logic
+            setTimeout(async () => {
+              await handleStartChallenge();
               toast.success("오늘 도전 시작! 💪");
-              setShowChallenge(true);
             }, 1500);
           }
         }}
