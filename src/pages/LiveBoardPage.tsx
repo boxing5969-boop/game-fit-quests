@@ -415,9 +415,7 @@ const LiveBoardPage = () => {
                 <div className="space-y-1">
                   {todayCheckins.map((c) => (
                     <div key={c.id} className="flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-gray-800/30 transition-colors">
-                      <div className={`flex h-11 w-11 items-center justify-center rounded-full text-lg font-black border-2 ${RANK_COLORS[c.league_snapshot] || "border-gray-600 bg-gray-800 text-white"}`}>
-                        {c.display_name_snapshot.charAt(0)}
-                      </div>
+                      <MemberAvatar url={avatarCache.current[c.user_id]} name={c.display_name_snapshot} sizeClass="h-11 w-11" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xl font-black text-gray-200 truncate leading-tight">{c.display_name_snapshot}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -429,7 +427,7 @@ const LiveBoardPage = () => {
                       </div>
                       <span className="text-lg text-gray-500 tabular-nums font-black">{fmtTime(c.checked_in_at)}</span>
                     </div>
-                  ))}
+                  ))
                 </div>
               )}
             </div>
