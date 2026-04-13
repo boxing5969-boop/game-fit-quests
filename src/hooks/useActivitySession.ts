@@ -28,8 +28,11 @@ export function useActivitySession(userId?: string, branchName?: string) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load today's active session on mount
-  const loadActiveSession = useCallback(async () => {
-    if (!userId || !branchName) { setLoading(false); return; }
+  const loadActiveSession = useCallback(async (): Promise<ActivitySession | null> => {
+    if (!userId || !branchName) {
+      setLoading(false);
+      return null;
+    }
 
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -44,12 +47,10 @@ export function useActivitySession(userId?: string, branchName?: string) {
       .order("started_at", { ascending: false })
       .limit(1);
 
-    if (data && data.length > 0) {
-      setActiveSession(data[0] as unknown as ActivitySession);
-    } else {
-      setActiveSession(null);
-    }
+    const nextSession = data && data.length > 0 ? (data[0] as unknown as ActivitySession) : null;
+    setActiveSession(nextSession);
     setLoading(false);
+    return nextSession;
   }, [userId, branchName]);
 
   useEffect(() => {
@@ -139,7 +140,7 @@ export function useActivitySession(userId?: string, branchName?: string) {
    * created by the edge function.
    */
   const refreshSession = useCallback(async () => {
-    await loadActiveSession();
+    return loadActiveSession();
   }, [loadActiveSession]);
 
   const isActive = !!activeSession && activeSession.status === "active";

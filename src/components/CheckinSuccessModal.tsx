@@ -45,7 +45,10 @@ const CheckinSuccessModal = ({ open, onClose, result }: CheckinSuccessModalProps
               <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
             </div>
             <h2 className="text-xl font-bold text-foreground">오늘은 이미 출석 완료했어요</h2>
-            <p className="mt-2 text-sm text-muted-foreground">내일도 복싱 레벨업! 🥊</p>
+            <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+              <p>라이브보드에 다시 입장합니다</p>
+              <p>오늘 도전을 다시 시작합니다 🥊</p>
+            </div>
           </>
         ) : (
           <>
