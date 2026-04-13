@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS } from "@/lib/rankLabels";
-import { Building2, Clock, X, Trophy } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Building2, Clock, X, Trophy, CheckCircle2 } from "lucide-react";
 
 const RANK_COLORS: Record<string, string> = {
   white: "border-gray-400 bg-gray-200 text-gray-900",
@@ -25,8 +26,6 @@ const RANK_BADGE_COLORS: Record<string, string> = {
   black: "bg-gray-900 text-yellow-400 border border-yellow-600",
 };
 
-const AUTO_REMOVE_MS = 40 * 60 * 1000;
-
 interface CheckinEvent {
   id: string;
   display_name_snapshot: string;
@@ -43,6 +42,18 @@ interface ActiveMember {
   league: string;
   level: number;
   startedAt: number;
+  avatar_url?: string | null;
+}
+
+interface CompletedMember {
+  id: string;
+  user_id: string;
+  name: string;
+  league: string;
+  level: number;
+  completedAt: number;
+  expiresAt: number;
+  avatar_url?: string | null;
 }
 
 interface HallMember {
@@ -59,16 +70,29 @@ const LiveBoardPage = () => {
   const [branchName, setBranchName] = useState("");
   const [todayCheckins, setTodayCheckins] = useState<CheckinEvent[]>([]);
   const [activeMembers, setActiveMembers] = useState<ActiveMember[]>([]);
+  const [completedMembers, setCompletedMembers] = useState<CompletedMember[]>([]);
   const [hallMembers, setHallMembers] = useState<HallMember[]>([]);
   const [latestPopup, setLatestPopup] = useState<CheckinEvent | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const popupTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const [connected, setConnected] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
 
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
   const [showBranchSwitch, setShowBranchSwitch] = useState(false);
+
+  // Avatar cache
+  const avatarCache = useRef<Record<string, string | null>>({});
+
+  const getAvatarUrl = useCallback(async (userId: string): Promise<string | null> => {
+    if (avatarCache.current[userId] !== undefined) return avatarCache.current[userId];
+    const { data } = await supabase.from("profiles").select("avatar_url").eq("user_id", userId).single();
+    const url = data?.avatar_url || null;
+    avatarCache.current[userId] = url;
+    return url;
+  }, []);
 
   // Clock
   useEffect(() => {
@@ -103,6 +127,70 @@ const LiveBoardPage = () => {
     })();
   }, [branchCode]);
 
+  // Load activity sessions (active + recently completed)
+  const loadActivitySessions = useCallback(async () => {
+    if (!branchName) return;
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    // Active sessions
+    const { data: activeSessions } = await supabase
+      .from("activity_sessions")
+      .select("*")
+      .eq("branch_name", branchName)
+      .eq("status", "active")
+      .gte("started_at", todayStart.toISOString());
+
+    if (activeSessions) {
+      const members: ActiveMember[] = [];
+      for (const s of activeSessions as any[]) {
+        const avatar = await getAvatarUrl(s.user_id);
+        // Get display name from checkins or profiles
+        const { data: profile } = await supabase.from("profiles").select("nickname, name").eq("user_id", s.user_id).single();
+        const { data: progress } = await supabase.from("member_progress").select("current_rank, current_level").eq("user_id", s.user_id).single();
+        members.push({
+          id: s.id,
+          user_id: s.user_id,
+          name: profile?.nickname || profile?.name || "회원",
+          league: progress?.current_rank || "white",
+          level: progress?.current_level || 1,
+          startedAt: new Date(s.started_at).getTime(),
+          avatar_url: avatar,
+        });
+      }
+      setActiveMembers(members);
+    }
+
+    // Completed sessions (within 1 hour of completion)
+    const { data: completedSessions } = await supabase
+      .from("activity_sessions")
+      .select("*")
+      .eq("branch_name", branchName)
+      .eq("status", "completed")
+      .gte("expires_from_board_at", new Date().toISOString())
+      .gte("started_at", todayStart.toISOString());
+
+    if (completedSessions) {
+      const members: CompletedMember[] = [];
+      for (const s of completedSessions as any[]) {
+        const avatar = await getAvatarUrl(s.user_id);
+        const { data: profile } = await supabase.from("profiles").select("nickname, name").eq("user_id", s.user_id).single();
+        const { data: progress } = await supabase.from("member_progress").select("current_rank, current_level").eq("user_id", s.user_id).single();
+        members.push({
+          id: s.id,
+          user_id: s.user_id,
+          name: profile?.nickname || profile?.name || "회원",
+          league: progress?.current_rank || "white",
+          level: progress?.current_level || 1,
+          completedAt: new Date(s.ended_at).getTime(),
+          expiresAt: new Date(s.expires_from_board_at).getTime(),
+          avatar_url: avatar,
+        });
+      }
+      setCompletedMembers(members);
+    }
+  }, [branchName, getAvatarUrl]);
+
   // Load today checkins
   const loadToday = useCallback(async () => {
     if (!branchName) return;
@@ -116,20 +204,10 @@ const LiveBoardPage = () => {
       .order("checked_in_at", { ascending: false }).limit(100);
     if (data) {
       setTodayCheckins(data);
-      const now = Date.now();
-      const seen = new Set<string>();
-      const active: ActiveMember[] = [];
-      for (const c of data) {
-        if (now - new Date(c.checked_in_at).getTime() < AUTO_REMOVE_MS && !seen.has(c.user_id)) {
-          seen.add(c.user_id);
-          active.push({ id: c.id, user_id: c.user_id, name: c.display_name_snapshot, league: c.league_snapshot, level: c.level_snapshot, startedAt: new Date(c.checked_in_at).getTime() });
-        }
-      }
-      setActiveMembers(active);
     }
   }, [branchName]);
 
-  // Load hall of fame for this branch
+  // Load hall of fame
   const loadHall = useCallback(async () => {
     if (!branchName) return;
     const { data } = await supabase.rpc("get_boss_conquerors", { _branch_name: branchName, _limit: 20 });
@@ -141,29 +219,27 @@ const LiveBoardPage = () => {
     }
   }, [branchName]);
 
-  useEffect(() => { loadToday(); loadHall(); }, [loadToday, loadHall]);
+  useEffect(() => { loadToday(); loadHall(); loadActivitySessions(); }, [loadToday, loadHall, loadActivitySessions]);
 
-  // Auto-remove expired active members
+  // Auto-remove expired completed members every 30s
   useEffect(() => {
     const i = setInterval(() => {
       const now = Date.now();
-      setActiveMembers(prev => prev.filter(m => now - m.startedAt < AUTO_REMOVE_MS));
+      setCompletedMembers(prev => prev.filter(m => now < m.expiresAt));
     }, 30000);
     return () => clearInterval(i);
   }, []);
 
-  const triggerPopup = useCallback((event: CheckinEvent) => {
+  const triggerPopup = useCallback(async (event: CheckinEvent) => {
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
+    const avatar = await getAvatarUrl(event.user_id);
+    setPopupAvatarUrl(avatar);
     setLatestPopup(event);
     setShowPopup(true);
     popupTimeoutRef.current = setTimeout(() => setShowPopup(false), 7000);
-  }, []);
+  }, [getAvatarUrl]);
 
-  const removeActiveMember = useCallback((userId: string) => {
-    setActiveMembers(prev => prev.filter(m => m.user_id !== userId));
-  }, []);
-
-  // Realtime
+  // Realtime: attendance_logs
   useEffect(() => {
     if (!branchName) return;
     const channel = supabase
@@ -174,21 +250,22 @@ const LiveBoardPage = () => {
           if (n.is_duplicate) return;
           const event: CheckinEvent = { id: n.id, display_name_snapshot: n.display_name_snapshot, league_snapshot: n.league_snapshot, level_snapshot: n.level_snapshot, checked_in_at: n.checked_in_at, user_id: n.user_id };
           setTodayCheckins(prev => [event, ...prev]);
-          setActiveMembers(prev => {
-            const filtered = prev.filter(m => m.user_id !== event.user_id);
-            return [{ id: event.id, user_id: event.user_id, name: event.display_name_snapshot, league: event.league_snapshot, level: event.level_snapshot, startedAt: Date.now() }, ...filtered];
-          });
           triggerPopup(event);
+        })
+      .on("postgres_changes", { event: "*", schema: "public", table: "activity_sessions", filter: `branch_name=eq.${branchName}` },
+        () => {
+          // Reload activity sessions on any change
+          loadActivitySessions();
         })
       .subscribe((status) => setConnected(status === "SUBSCRIBED"));
     return () => { supabase.removeChannel(channel); };
-  }, [branchName, triggerPopup]);
+  }, [branchName, triggerPopup, loadActivitySessions]);
 
   // Reconnect fallback
   useEffect(() => {
-    const i = setInterval(() => { if (!connected) loadToday(); }, 10000);
+    const i = setInterval(() => { if (!connected) { loadToday(); loadActivitySessions(); } }, 10000);
     return () => clearInterval(i);
-  }, [connected, loadToday]);
+  }, [connected, loadToday, loadActivitySessions]);
 
   const handleBranchSwitch = (name: string) => {
     window.location.href = `/live-board/${encodeURIComponent(name)}`;
@@ -196,6 +273,16 @@ const LiveBoardPage = () => {
 
   const fmtTime = (s: string) => new Date(s).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
   const elapsedMin = (t: number) => Math.floor((Date.now() - t) / 60000);
+  const remainingMin = (expiresAt: number) => Math.max(0, Math.ceil((expiresAt - Date.now()) / 60000));
+
+  const MemberAvatar = ({ url, name, sizeClass = "h-14 w-14" }: { url?: string | null; name: string; sizeClass?: string }) => (
+    <Avatar className={`${sizeClass} border-2 border-gray-700`}>
+      {url ? <AvatarImage src={url} alt={name} /> : null}
+      <AvatarFallback className="bg-gray-800 text-white text-lg font-black">
+        {name.charAt(0)}
+      </AvatarFallback>
+    </Avatar>
+  );
 
   return (
     <div className="fixed inset-0 bg-gray-950 text-white overflow-hidden select-none" style={{ fontFamily: "'Black Han Sans', 'Noto Sans KR', sans-serif" }}>
@@ -236,6 +323,10 @@ const LiveBoardPage = () => {
               <p className="text-base text-gray-500 mt-1 font-bold">활동 중</p>
             </div>
             <div className="text-center">
+              <p className="text-5xl font-black text-blue-400 tabular-nums leading-none">{completedMembers.length}</p>
+              <p className="text-base text-gray-500 mt-1 font-bold">최근 완료</p>
+            </div>
+            <div className="text-center">
               <p className="text-5xl font-black text-orange-400 tabular-nums leading-none">{todayCheckins.length}</p>
               <p className="text-base text-gray-500 mt-1 font-bold">오늘 방문</p>
             </div>
@@ -260,6 +351,10 @@ const LiveBoardPage = () => {
                 style={{ minWidth: "55vw", maxWidth: "75vw", animation: "popIn 0.5s cubic-bezier(0.34,1.56,0.64,1)" }}
               >
                 <div className="text-center">
+                  {/* Avatar in popup */}
+                  <div className="flex justify-center mb-6">
+                    <MemberAvatar url={popupAvatarUrl} name={latestPopup.display_name_snapshot} sizeClass="h-28 w-28" />
+                  </div>
                   <p className="text-[8rem] font-black leading-none tracking-tight mb-6" style={{ textShadow: "0 4px 24px rgba(0,0,0,0.15)" }}>
                     {latestPopup.display_name_snapshot}
                   </p>
@@ -299,7 +394,7 @@ const LiveBoardPage = () => {
               <div className="flex flex-wrap gap-4">
                 {hallMembers.map((m) => (
                   <div key={m.r_user_id} className="flex items-center gap-4 rounded-xl border border-yellow-700/30 bg-yellow-900/20 px-6 py-4">
-                    <span className="text-3xl">🏆</span>
+                    <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-12 w-12" />
                     <div>
                       <p className="text-2xl font-black text-yellow-200 leading-tight">{m.r_nickname}</p>
                       <p className="text-base text-yellow-500/80 font-black">MASTER 40</p>
@@ -312,23 +407,21 @@ const LiveBoardPage = () => {
         </div>
 
         {/* ═══ Right panel ═══ */}
-        <div className="w-[24rem] bg-gray-900/60 border-l border-gray-800/60 flex flex-col">
+        <div className="w-[26rem] bg-gray-900/60 border-l border-gray-800/60 flex flex-col">
           {/* Active members */}
           <div className="flex-shrink-0 border-b border-gray-800/60">
             <div className="px-5 py-4 flex items-center gap-3">
               <span className="h-4 w-4 rounded-full bg-green-400 animate-pulse" />
               <h2 className="text-2xl font-black text-green-400">현재 활동 중 ({activeMembers.length})</h2>
             </div>
-            <div className="max-h-[35vh] overflow-y-auto px-3 pb-3">
+            <div className="max-h-[28vh] overflow-y-auto px-3 pb-3">
               {activeMembers.length === 0 ? (
                 <div className="text-center py-6 text-gray-600"><p className="text-xl">활동 중인 회원 없음</p></div>
               ) : (
                 <div className="space-y-2">
                   {activeMembers.map((m) => (
                     <div key={m.user_id} className="flex items-center gap-4 rounded-xl bg-gray-800/40 px-4 py-4 group">
-                      <div className={`flex h-14 w-14 items-center justify-center rounded-full text-2xl font-black border-2 ${RANK_COLORS[m.league] || "border-gray-600 bg-gray-800 text-white"}`}>
-                        {m.name.charAt(0)}
-                      </div>
+                      <MemberAvatar url={m.avatar_url} name={m.name} />
                       <div className="flex-1 min-w-0">
                         <p className="text-2xl font-black text-white truncate leading-tight">{m.name}</p>
                         <div className="flex items-center gap-2 mt-1">
@@ -341,9 +434,39 @@ const LiveBoardPage = () => {
                           <span className="text-lg text-gray-500 font-bold">{elapsedMin(m.startedAt)}분</span>
                         </div>
                       </div>
-                      <button onClick={() => removeActiveMember(m.user_id)} className="opacity-0 group-hover:opacity-100 p-2 rounded-lg hover:bg-gray-700 transition-all" title="운동 종료">
-                        <X className="h-5 w-5 text-gray-500" />
-                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recently completed members */}
+          <div className="flex-shrink-0 border-b border-gray-800/60">
+            <div className="px-5 py-4 flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-blue-400" />
+              <h2 className="text-2xl font-black text-blue-400">최근 완료 ({completedMembers.length})</h2>
+            </div>
+            <div className="max-h-[20vh] overflow-y-auto px-3 pb-3">
+              {completedMembers.length === 0 ? (
+                <div className="text-center py-4 text-gray-600"><p className="text-base">최근 완료한 회원 없음</p></div>
+              ) : (
+                <div className="space-y-2">
+                  {completedMembers.map((m) => (
+                    <div key={m.user_id} className="flex items-center gap-4 rounded-xl bg-blue-950/20 border border-blue-900/30 px-4 py-3">
+                      <MemberAvatar url={m.avatar_url} name={m.name} sizeClass="h-12 w-12" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xl font-black text-blue-200 truncate leading-tight">{m.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className={`inline-flex px-2 py-0.5 rounded text-xs font-black ${RANK_BADGE_COLORS[m.league] || "bg-gray-700 text-gray-300"}`}>
+                            {RANK_LABELS[m.league] || m.league}
+                          </span>
+                          <span className="text-sm text-gray-400 font-bold">L{m.level}</span>
+                          <span className="text-gray-600">·</span>
+                          <span className="text-sm text-blue-400 font-bold">오늘 도전 완료</span>
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500 font-bold whitespace-nowrap">{remainingMin(m.expiresAt)}분 후 정리</span>
                     </div>
                   ))}
                 </div>

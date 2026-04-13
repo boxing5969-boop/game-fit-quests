@@ -13,8 +13,9 @@ import { loadHomeWidgetPrefs } from "@/pages/SettingsPage";
 import { useRecordAttendance, useLevels, useMyBadges } from "@/hooks/useQuestData";
 import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRankingData";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
+import { useActivitySession } from "@/hooks/useActivitySession";
 import { useNavigate } from "react-router-dom";
-import { User, ChevronRight, TrendingUp, CheckCircle2, Flame, QrCode, X, Lock } from "lucide-react";
+import { User, ChevronRight, TrendingUp, CheckCircle2, Flame, QrCode, X, Lock, Clock } from "lucide-react";
 import HallOfFameShowcase from "@/components/HallOfFameShowcase";
 import RankMiniCard from "@/components/RankMiniCard";
 import { toast } from "sonner";
@@ -66,6 +67,7 @@ const HomePage = () => {
   const setRival = useSetRival();
   const { onboardingDone, safetyDone } = useOnboardingState();
   const { totalXp, status, metrics, activeLevelId, selfChallengeStreak } = useLocalProgress();
+  const activitySession = useActivitySession(user?.id, profile?.branch_name);
   const widgetPrefs = loadHomeWidgetPrefs();
   const [showChallenge, setShowChallenge] = useState(false);
   const [showAllMenu, setShowAllMenu] = useState(false);
@@ -110,6 +112,21 @@ const HomePage = () => {
   useEffect(() => {
     if (progress) attendance.mutate();
   }, [progress?.user_id]); // eslint-disable-line
+
+  // If there's an active session already, show the challenge flow
+  useEffect(() => {
+    if (activitySession.isActive && !showChallenge) {
+      setShowChallenge(true);
+    }
+  }, [activitySession.isActive]); // eslint-disable-line
+
+  // Shared challenge start logic — used by both manual button and QR auto-start
+  const handleStartChallenge = useCallback(async () => {
+    const session = await activitySession.startChallenge();
+    if (session) {
+      setShowChallenge(true);
+    }
+  }, [activitySession]);
 
   if (!profile || !progress) return <LoadingState />;
 
@@ -379,10 +396,25 @@ const HomePage = () => {
         {/* 12. Self-Challenge CTA */}
         {showChallenge ? (
           <div className="animate-slide-up" style={{ animationDelay: "0.3s" }}>
+            {/* Active session timer banner */}
+            {activitySession.isActive && (
+              <div className="mb-3 rounded-2xl border-2 border-primary/30 bg-card p-4 text-center shadow-md">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Clock className="h-4 w-4 text-primary animate-pulse" />
+                  <span className="text-xs font-bold text-primary">오늘 도전 진행 중</span>
+                </div>
+                <p className="text-3xl font-bold tabular-nums text-foreground" style={{ fontFamily: "monospace" }}>
+                  {String(activitySession.elapsedMinutes).padStart(2, "0")}:{String(activitySession.elapsedSeconds).padStart(2, "0")}
+                </p>
+              </div>
+            )}
             <SelfChallengeFlow
               league={rank}
               levelInLeague={progress.current_level}
-              onComplete={() => setShowChallenge(false)}
+              onComplete={async () => {
+                await activitySession.completeChallenge();
+                setShowChallenge(false);
+              }}
               onClose={() => setShowChallenge(false)}
             />
           </div>
@@ -411,9 +443,9 @@ const HomePage = () => {
                   : "체육관 체크인 후 도전을 시작할 수 있어요"}
               </p>
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (checkedInToday) {
-                    setShowChallenge(true);
+                    await handleStartChallenge();
                   } else {
                     toast.error("체육관 QR 체크인 후 도전을 시작할 수 있어요 🥊");
                   }
@@ -475,10 +507,10 @@ const HomePage = () => {
             setCheckedInToday(true);
             refreshProgress();
             toast.success(`출석 완료! +${result.xp_granted}XP 🥊`);
-            // Check auto_start setting - for now default to auto-start
-            setTimeout(() => {
+            // Auto-start challenge using shared logic
+            setTimeout(async () => {
+              await handleStartChallenge();
               toast.success("오늘 도전 시작! 💪");
-              setShowChallenge(true);
             }, 1500);
           }
         }}

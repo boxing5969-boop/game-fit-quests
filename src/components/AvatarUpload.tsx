@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
 import { toast } from "sonner";
+import { compressImage } from "@/lib/imageCompression";
 
 interface AvatarUploadProps {
   size?: "sm" | "md" | "lg";
@@ -30,19 +31,23 @@ const AvatarUpload = ({ size = "md", editable = true }: AvatarUploadProps) => {
       toast.error("이미지 파일만 업로드 가능합니다");
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("2MB 이하 이미지만 가능합니다");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("10MB 이하 이미지만 가능합니다");
       return;
     }
 
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `${user.id}/avatar.${ext}`;
+      // Compress image: max 512px, JPEG quality 0.7
+      const compressed = await compressImage(file, 512, 0.7);
+      const path = `${user.id}/avatar.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(path, file, { upsert: true });
+        .upload(path, compressed, { 
+          upsert: true,
+          contentType: "image/jpeg",
+        });
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
