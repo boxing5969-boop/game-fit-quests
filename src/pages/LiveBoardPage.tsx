@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import SDBoxerCharacter from "@/components/SDBoxerCharacter";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS } from "@/lib/rankLabels";
@@ -464,7 +465,7 @@ const LiveBoardPage = () => {
             ) : activeMembers.length > 0 ? (
               <SDBoxerCharacter
                 league={(activeMembers[0].league as "white" | "blue" | "red" | "black") || "white"}
-                nickname={activeMembers[0].displayName}
+                nickname={activeMembers[0].name}
                 level={activeMembers[0].level}
                 state="idle"
                 branchName={branchName}
