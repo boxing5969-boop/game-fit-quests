@@ -141,15 +141,15 @@ const LiveBoardPage = () => {
   const loadActivitySessions = useCallback(async () => {
     if (!branchName) return;
 
-    // Auto-end stale sessions (>2 hours old)
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    // Auto-end stale sessions (>60 minutes old)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     await supabase
       .from("activity_sessions")
       .update({ status: "auto_ended", ended_at: new Date().toISOString() })
       .eq("branch_name", branchName)
       .eq("status", "active")
       .is("ended_at", null)
-      .lt("started_at", twoHoursAgo);
+      .lt("started_at", oneHourAgo);
 
     const { data: activeSessions } = await supabase
       .from("activity_sessions")

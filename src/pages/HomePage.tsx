@@ -448,6 +448,16 @@ const HomePage = () => {
                 setShowChallenge(false);
                 setQrAutoStarted(false);
               }}
+              onLeave={async () => {
+                const ok = await activitySession.leaveChallenge();
+                if (ok) {
+                  toast.success("라이브보드에서 퇴장했습니다");
+                  setShowChallenge(false);
+                  setQrAutoStarted(false);
+                } else {
+                  toast.error("퇴장 처리 실패");
+                }
+              }}
               onClose={() => { setShowChallenge(false); setQrAutoStarted(false); }}
             />
           </div>
