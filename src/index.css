@@ -158,7 +158,8 @@
 /* ═══ SD Boxer Character Animations ═══ */
 @keyframes boxer-enter {
   0% { opacity: 0; transform: scale(0.3) translateY(40px); }
-  60% { opacity: 1; transform: scale(1.1) translateY(-10px); }
+  60% { opacity: 1; transform: scale(1.08) translateY(-8px); }
+  80% { transform: scale(0.96) translateY(2px); }
   100% { transform: scale(1) translateY(0); }
 }
 @keyframes boxer-exit {
@@ -167,41 +168,55 @@
 }
 @keyframes boxer-idle-bob {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-4px); }
 }
 @keyframes boxer-head-bob {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-2px) rotate(-1deg); }
-  75% { transform: translateY(-1px) rotate(1deg); }
+  25% { transform: translateY(-2px) rotate(-1.5deg); }
+  75% { transform: translateY(-1px) rotate(1.5deg); }
 }
 @keyframes boxer-jab-left {
-  0%, 70%, 100% { transform: translateX(0) rotate(0deg); }
-  80% { transform: translateX(-18px) rotate(-8deg); }
-  90% { transform: translateX(-6px) rotate(-2deg); }
+  0%, 65%, 100% { transform: translateX(0) rotate(0deg); }
+  72% { transform: translateX(-22px) rotate(-10deg); }
+  80% { transform: translateX(-8px) rotate(-3deg); }
+  88% { transform: translateX(0) rotate(0deg); }
 }
 @keyframes boxer-jab-right {
-  0%, 40%, 100% { transform: translateX(0) rotate(0deg); }
-  50% { transform: translateX(18px) rotate(8deg); }
-  60% { transform: translateX(6px) rotate(2deg); }
+  0%, 35%, 100% { transform: translateX(0) rotate(0deg); }
+  42% { transform: translateX(22px) rotate(10deg); }
+  50% { transform: translateX(8px) rotate(3deg); }
+  58% { transform: translateX(0) rotate(0deg); }
 }
 @keyframes boxer-shadow-pulse {
-  0%, 100% { rx: 50; opacity: 0.25; }
-  50% { rx: 45; opacity: 0.35; }
+  0%, 100% { rx: 38; opacity: 0.18; }
+  50% { rx: 34; opacity: 0.28; }
 }
 @keyframes boxer-aura-pulse {
-  0%, 100% { opacity: 0.2; r: 70; }
-  50% { opacity: 0.5; r: 75; }
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+@keyframes boxer-speed-line-l {
+  0%, 60%, 100% { opacity: 0; }
+  72% { opacity: 0.7; }
+  80% { opacity: 0; }
+}
+@keyframes boxer-speed-line-r {
+  0%, 30%, 100% { opacity: 0; }
+  42% { opacity: 0.7; }
+  50% { opacity: 0; }
 }
 
 .animate-boxer-enter { animation: boxer-enter 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
 .animate-boxer-exit { animation: boxer-exit 0.4s ease-in forwards; }
-.animate-boxer-idle { animation: boxer-idle-bob 3s ease-in-out infinite; }
-.animate-boxer-body { animation: boxer-idle-bob 3s ease-in-out infinite; }
-.animate-boxer-head { animation: boxer-head-bob 3s ease-in-out infinite; }
-.animate-boxer-jab-left { animation: boxer-jab-left 4s ease-in-out infinite; }
-.animate-boxer-jab-right { animation: boxer-jab-right 4s ease-in-out infinite; }
-.animate-boxer-shadow { animation: boxer-shadow-pulse 3s ease-in-out infinite; }
+.animate-boxer-idle { animation: boxer-idle-bob 2.5s ease-in-out infinite; }
+.animate-boxer-body { animation: boxer-idle-bob 2.5s ease-in-out infinite; }
+.animate-boxer-head { animation: boxer-head-bob 2.5s ease-in-out infinite; }
+.animate-boxer-jab-left { animation: boxer-jab-left 3.5s ease-in-out infinite; }
+.animate-boxer-jab-right { animation: boxer-jab-right 3.5s ease-in-out infinite; }
+.animate-boxer-shadow { animation: boxer-shadow-pulse 2.5s ease-in-out infinite; }
 .animate-boxer-aura { animation: boxer-aura-pulse 3s ease-in-out infinite; }
+.animate-boxer-speed-line-l { animation: boxer-speed-line-l 3.5s ease-in-out infinite; }
+.animate-boxer-speed-line-r { animation: boxer-speed-line-r 3.5s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-boxer-enter,
@@ -212,5 +227,7 @@
   .animate-boxer-jab-left,
   .animate-boxer-jab-right,
   .animate-boxer-shadow,
-  .animate-boxer-aura { animation: none; }
+  .animate-boxer-aura,
+  .animate-boxer-speed-line-l,
+  .animate-boxer-speed-line-r { animation: none; }
 }
