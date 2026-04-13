@@ -143,7 +143,7 @@ const CheckinBoardPage = () => {
 
   useEffect(() => { loadLogs(); }, [loadLogs]);
 
-  // Realtime subscription for attendance logs
+  // Realtime subscription for attendance logs AND activity sessions
   useEffect(() => {
     if (!activeBranch) return;
     const channel = supabase
@@ -159,11 +159,24 @@ const CheckinBoardPage = () => {
         (payload) => {
           const newLog = payload.new as AttendanceLog;
           setLogs(prev => [newLog, ...prev]);
+          loadActiveSessions();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "activity_sessions",
+          filter: `branch_name=eq.${activeBranch}`,
+        },
+        () => {
+          loadActiveSessions();
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [activeBranch]);
+  }, [activeBranch, loadActiveSessions]);
 
   // Generate QR token
   const refreshToken = useCallback(async () => {
