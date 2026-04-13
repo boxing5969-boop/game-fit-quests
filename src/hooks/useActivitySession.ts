@@ -1,6 +1,12 @@
 /**
  * useActivitySession — shared challenge start/complete logic.
  * Used by both QR checkin auto-start and manual "오늘 도전 시작" button.
+ *
+ * Rules:
+ * - QR checkin always creates a new active session (edge function handles this)
+ * - Manual start creates a session if none active
+ * - Complete ends the active session → immediate removal from live board
+ * - Re-entry: after completing, a new QR scan creates a fresh session
  */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,32 +28,33 @@ export function useActivitySession(userId?: string, branchName?: string) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load today's active session on mount
-  useEffect(() => {
+  const loadActiveSession = useCallback(async () => {
     if (!userId || !branchName) { setLoading(false); return; }
 
-    const loadActive = async () => {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-      const { data } = await supabase
-        .from("activity_sessions")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("branch_name", branchName)
-        .eq("status", "active")
-        .gte("started_at", todayStart.toISOString())
-        .order("started_at", { ascending: false })
-        .limit(1);
+    const { data } = await supabase
+      .from("activity_sessions")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("branch_name", branchName)
+      .eq("status", "active")
+      .gte("started_at", todayStart.toISOString())
+      .order("started_at", { ascending: false })
+      .limit(1);
 
-      if (data && data.length > 0) {
-        const session = data[0] as unknown as ActivitySession;
-        setActiveSession(session);
-      }
-      setLoading(false);
-    };
-
-    loadActive();
+    if (data && data.length > 0) {
+      setActiveSession(data[0] as unknown as ActivitySession);
+    } else {
+      setActiveSession(null);
+    }
+    setLoading(false);
   }, [userId, branchName]);
+
+  useEffect(() => {
+    loadActiveSession();
+  }, [loadActiveSession]);
 
   // Timer: tick every second when active session exists
   useEffect(() => {
@@ -66,13 +73,13 @@ export function useActivitySession(userId?: string, branchName?: string) {
   }, [activeSession]);
 
   /**
-   * Start a challenge session. Used by both QR auto-start and manual button.
-   * Returns the created session or null if already active.
+   * Start a challenge session (manual button).
+   * If already active, return existing session.
    */
   const startChallenge = useCallback(async (): Promise<ActivitySession | null> => {
     if (!userId || !branchName) return null;
 
-    // Prevent duplicate: check if already active today
+    // If already active, return it
     if (activeSession && activeSession.status === "active") {
       return activeSession;
     }
@@ -100,20 +107,19 @@ export function useActivitySession(userId?: string, branchName?: string) {
 
   /**
    * Complete the active challenge session.
-   * Sets status to 'completed' and expires_from_board_at to now + 1 hour.
+   * Sets status to 'completed' and ended_at to now.
+   * No 1-hour retention — immediately removed from live board.
    */
   const completeChallenge = useCallback(async (): Promise<{ minutes: number } | null> => {
     if (!activeSession) return null;
 
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + 60 * 60 * 1000); // +1 hour
 
     const { error } = await supabase
       .from("activity_sessions")
       .update({
         status: "completed",
         ended_at: now.toISOString(),
-        expires_from_board_at: expiresAt.toISOString(),
       })
       .eq("id", activeSession.id);
 
@@ -128,6 +134,14 @@ export function useActivitySession(userId?: string, branchName?: string) {
     return { minutes };
   }, [activeSession]);
 
+  /**
+   * Reload session state — called after QR checkin to pick up the new session
+   * created by the edge function.
+   */
+  const refreshSession = useCallback(async () => {
+    await loadActiveSession();
+  }, [loadActiveSession]);
+
   const isActive = !!activeSession && activeSession.status === "active";
   const elapsedMinutes = Math.floor(elapsed / 60);
   const elapsedSeconds = elapsed % 60;
@@ -141,5 +155,6 @@ export function useActivitySession(userId?: string, branchName?: string) {
     elapsedSeconds,
     startChallenge,
     completeChallenge,
+    refreshSession,
   };
 }
