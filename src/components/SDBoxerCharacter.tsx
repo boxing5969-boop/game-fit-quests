@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { formatRank } from "@/lib/rankLabels";
+import BlackLeagueAura from "@/components/BlackLeagueAura";
 
 import boxer1 from "@/assets/boxers/boxer_1.png";
 import boxer2 from "@/assets/boxers/boxer_2.png";
@@ -83,6 +84,15 @@ const SDBoxerCharacter: React.FC<SDBoxerCharacterProps> = ({
     <div className={`flex flex-col items-center select-none ${wrapperAnim}`}>
       {/* Character image with animations */}
       <div className="relative" style={{ transformOrigin: "center bottom" }}>
+        {/* Black League rainbow aura */}
+        {league === "black" && (
+          <BlackLeagueAura
+            mode="detail"
+            level={level >= 10 ? "master" : "halo"}
+            className="scale-[1.3]"
+          />
+        )}
+
         {/* Glow ring behind character */}
         <div
           className="absolute inset-0 rounded-full blur-2xl animate-emote-glow"
