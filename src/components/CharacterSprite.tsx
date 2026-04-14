@@ -11,6 +11,7 @@ import {
   TITLE_LABELS,
 } from "@/data/characterCustomizationData";
 import PresetOverlayRenderer from "@/components/PresetOverlayRenderer";
+import { usePresetVariants } from "@/hooks/usePresetVariants";
 import type { PresetVariant } from "@/hooks/usePresetVariants";
 
 interface CharacterSpriteProps {
@@ -56,6 +57,11 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   const presetStyle = partsJson?.style || style;
   const customization = customizationProp || partsJson?.customization;
 
+  // Self-fetch preset variants if not provided externally and we have customization
+  const needsSelfFetch = !presetVariants && !!customization && !!(customization.gloveStyle || customization.accessory);
+  const { data: selfFetchedVariants } = usePresetVariants(needsSelfFetch ? presetStyle : undefined);
+  const resolvedVariants = presetVariants || selfFetchedVariants || [];
+
   const imgSrc = useMemo(() => {
     if (isLayered) return null;
     if (presetStyle) return getCharacterImage(presetStyle);
@@ -82,7 +88,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
     return sel;
   }, [customization?.gloveStyle, customization?.accessory]);
 
-  const hasDBOverlays = presetVariants && presetVariants.length > 0 && Object.keys(overlaySelections).length > 0;
+  const hasDBOverlays = resolvedVariants.length > 0 && Object.keys(overlaySelections).length > 0;
 
   return (
     <div
@@ -128,7 +134,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         {/* === DB-DRIVEN PRESET OVERLAYS (gloves, accessories) === */}
         {hasDBOverlays && showOverlays && (
           <PresetOverlayRenderer
-            variants={presetVariants!}
+            variants={resolvedVariants}
             selections={overlaySelections}
             containerSize={SIZE_PX[size]}
           />

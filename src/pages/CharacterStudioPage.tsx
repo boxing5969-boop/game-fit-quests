@@ -360,14 +360,19 @@ function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, c
 }
 
 // ========== CUSTOMIZE TAB — PRESET-AWARE ==========
+const SUPPORTED_PRESETS = new Set(["male_01", "female_01", "male_02", "female_02"]);
+
 function CustomizeTab({ customization, onChange, presetVariants, selectedPreset }: {
   customization: CharacterCustomization;
   onChange: (c: CharacterCustomization) => void;
   presetVariants: import("@/hooks/usePresetVariants").PresetVariant[];
   selectedPreset: string;
 }) {
+  const isSupported = SUPPORTED_PRESETS.has(selectedPreset);
+
   // Build combined categories: DB-driven (gloves, accessory) + static (effect, frame, title)
   const dbCategories = useMemo(() => {
+    if (!isSupported) return [];
     const cats = getVariantCategories(presetVariants);
     return cats.map(code => ({
       code,
@@ -375,7 +380,7 @@ function CustomizeTab({ customization, onChange, presetVariants, selectedPreset 
       icon: VARIANT_CATEGORY_META[code]?.icon || "🎨",
       isDB: true as const,
     }));
-  }, [presetVariants]);
+  }, [presetVariants, isSupported]);
 
   const staticCategories = CUSTOMIZATION_CATEGORIES.map(c => ({
     code: c.code,
@@ -395,7 +400,6 @@ function CustomizeTab({ customization, onChange, presetVariants, selectedPreset 
   const isDBCategory = dbCategories.some(c => c.code === validCat);
 
   const handleSelect = (catCode: string, optionKey: string) => {
-    // Map DB categories to customization fields
     const fieldMap: Record<string, keyof CharacterCustomization> = {
       gloves: "gloveStyle",
       accessory: "accessory",
@@ -414,6 +418,16 @@ function CustomizeTab({ customization, onChange, presetVariants, selectedPreset 
 
   return (
     <div className="space-y-4 animate-slide-up">
+      {/* Unsupported preset banner */}
+      {!isSupported && (
+        <div className="rounded-2xl border border-dashed border-amber-400/40 bg-amber-50/50 dark:bg-amber-900/10 p-5 text-center">
+          <span className="text-3xl">🔧</span>
+          <p className="mt-2 text-sm font-bold text-foreground">이 프리셋은 꾸미기 준비 중</p>
+          <p className="text-xs text-muted-foreground mt-1">글러브 · 액세서리 꾸미기는 곧 지원될 예정이에요</p>
+          <p className="text-[10px] text-muted-foreground mt-1">이펙트 · 프레임 · 칭호는 지금도 사용할 수 있어요!</p>
+        </div>
+      )}
+
       {/* Category chips */}
       <div className="flex gap-1.5 overflow-x-auto pb-1">
         {allCategories.map(cat => {
@@ -510,7 +524,7 @@ function CustomizeTab({ customization, onChange, presetVariants, selectedPreset 
         )}
       </div>
 
-      {/* Empty state for presets without variants */}
+      {/* Empty state for DB categories with no variants */}
       {isDBCategory && getVariantOptions(presetVariants, validCat).length === 0 && (
         <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-6 text-center">
           <span className="text-2xl">🔒</span>
