@@ -6,6 +6,7 @@ import { PREBUILT_CHARACTERS, getRandomCharacter } from "@/data/characterPresets
 import { getCurrentMilestone, UNLOCK_MILESTONES, getUnlockedPartKeys } from "@/data/characterUnlockData";
 import { useTemplatePresets, useAssignCharacter, useMemberCharacterAssignment, useSaveCustomization } from "@/hooks/useCharacterData";
 import { useWallet } from "@/hooks/useWallet";
+import { usePresetVariants, getVariantCategories, getVariantOptions, VARIANT_CATEGORY_META, VARIANT_OPTION_LABELS } from "@/hooks/usePresetVariants";
 import CharacterSprite from "@/components/CharacterSprite";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
@@ -64,8 +65,10 @@ const CharacterStudioPage = () => {
   const [activeTab, setActiveTab] = useState<string>("my");
   const [selectedStyle, setSelectedStyle] = useState<string>(currentStyle || "male_01");
   const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female">("all");
-  // Customization state
   const [pendingCustomization, setPendingCustomization] = useState<CharacterCustomization>(currentCustomization);
+
+  // Fetch preset-specific variants for the selected style
+  const { data: presetVariants } = usePresetVariants(selectedStyle);
 
   const filteredCharacters = genderFilter === "all"
     ? PREBUILT_CHARACTERS
@@ -120,7 +123,6 @@ const CharacterStudioPage = () => {
   const isSaving = assignCharacter.isPending || saveCustomization.isPending;
   const isCurrentPreset = currentStyle === selectedStyle;
 
-  // Determine which customization to show in preview
   const previewCustomization = activeTab === "customize" ? pendingCustomization : currentCustomization;
 
   return (
@@ -155,7 +157,7 @@ const CharacterStudioPage = () => {
         </div>
       </div>
 
-      {/* Live Preview — Always PNG preset + overlay */}
+      {/* Live Preview */}
       <div className="px-4 pt-4">
         <div className="relative rounded-3xl border border-border bg-gradient-to-b from-card to-secondary/30 p-5 shadow-sm">
           <div className="relative mx-auto flex h-44 w-44 items-center justify-center">
@@ -168,6 +170,7 @@ const CharacterStudioPage = () => {
               league={currentLeague as any}
               level={currentLevel}
               customization={previewCustomization}
+              presetVariants={presetVariants || []}
               className="relative z-10 !w-40 !h-40"
             />
           </div>
@@ -180,7 +183,6 @@ const CharacterStudioPage = () => {
               )}
             </div>
           </div>
-          {/* Save button for preset tab */}
           {activeTab === "preset" && (
             <button
               onClick={handleSavePreset}
@@ -198,7 +200,6 @@ const CharacterStudioPage = () => {
               )}
             </button>
           )}
-          {/* Save button for customize tab */}
           {activeTab === "customize" && (
             <button
               onClick={handleSaveCustomization}
@@ -213,7 +214,7 @@ const CharacterStudioPage = () => {
         </div>
       </div>
 
-      {/* Segmented Tabs */}
+      {/* Tabs */}
       <div className="px-4 mt-4">
         <div className="flex rounded-2xl border border-border bg-secondary/50 p-1 overflow-x-auto">
           {TABS.map(tab => (
@@ -261,6 +262,8 @@ const CharacterStudioPage = () => {
           <CustomizeTab
             customization={pendingCustomization}
             onChange={setPendingCustomization}
+            presetVariants={presetVariants || []}
+            selectedPreset={selectedStyle}
           />
         )}
         {activeTab === "growth" && <GrowthTab league={currentLeague} level={currentLevel} unlockedKeys={unlockedKeys} />}
@@ -282,7 +285,6 @@ function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, c
   currentCustomization: CharacterCustomization;
 }) {
   const hasCharacter = !!currentStyle;
-  const totalUnlocked = unlockedKeys.size;
   const customCount = Object.values(currentCustomization).filter(Boolean).length;
 
   return (
@@ -295,7 +297,6 @@ function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, c
         </div>
       )}
 
-      {/* Status cards */}
       <div className="grid grid-cols-3 gap-2">
         <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-3">
           <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${LEAGUE_COLORS[league]}`}>
@@ -316,7 +317,6 @@ function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, c
         </div>
       </div>
 
-      {/* Next unlock */}
       {nextMilestone && (
         <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 p-4">
           <div className="flex items-center gap-3">
@@ -333,7 +333,6 @@ function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, c
         </div>
       )}
 
-      {/* Quick links */}
       <div className="space-y-2">
         <button onClick={() => navigate("/avatar")} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4 active:scale-[0.98] transition-all">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/20">
@@ -360,19 +359,51 @@ function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, c
   );
 }
 
-// ========== CUSTOMIZE TAB ==========
-function CustomizeTab({ customization, onChange }: {
+// ========== CUSTOMIZE TAB — PRESET-AWARE ==========
+function CustomizeTab({ customization, onChange, presetVariants, selectedPreset }: {
   customization: CharacterCustomization;
   onChange: (c: CharacterCustomization) => void;
+  presetVariants: import("@/hooks/usePresetVariants").PresetVariant[];
+  selectedPreset: string;
 }) {
-  const [activeCat, setActiveCat] = useState(CUSTOMIZATION_CATEGORIES[0].code);
-  const category = CUSTOMIZATION_CATEGORIES.find(c => c.code === activeCat)!;
+  // Build combined categories: DB-driven (gloves, accessory) + static (effect, frame, title)
+  const dbCategories = useMemo(() => {
+    const cats = getVariantCategories(presetVariants);
+    return cats.map(code => ({
+      code,
+      label: VARIANT_CATEGORY_META[code]?.label || code,
+      icon: VARIANT_CATEGORY_META[code]?.icon || "🎨",
+      isDB: true as const,
+    }));
+  }, [presetVariants]);
+
+  const staticCategories = CUSTOMIZATION_CATEGORIES.map(c => ({
+    code: c.code,
+    label: c.label,
+    icon: c.icon,
+    isDB: false as const,
+  }));
+
+  const allCategories = [...dbCategories, ...staticCategories];
+
+  const [activeCat, setActiveCat] = useState(allCategories[0]?.code || "effect");
+
+  // Reset category if current selection doesn't exist
+  const validCat = allCategories.find(c => c.code === activeCat) ? activeCat : (allCategories[0]?.code || "effect");
+  if (validCat !== activeCat) setActiveCat(validCat);
+
+  const isDBCategory = dbCategories.some(c => c.code === validCat);
 
   const handleSelect = (catCode: string, optionKey: string) => {
-    const current = (customization as any)[catCode];
-    // Toggle: click again to deselect
+    // Map DB categories to customization fields
+    const fieldMap: Record<string, keyof CharacterCustomization> = {
+      gloves: "gloveStyle",
+      accessory: "accessory",
+    };
+    const field = fieldMap[catCode] || catCode;
+    const current = (customization as any)[field];
     const newVal = current === optionKey ? undefined : optionKey;
-    onChange({ ...customization, [catCode]: newVal });
+    onChange({ ...customization, [field]: newVal });
   };
 
   const handleClearAll = () => {
@@ -385,9 +416,11 @@ function CustomizeTab({ customization, onChange }: {
     <div className="space-y-4 animate-slide-up">
       {/* Category chips */}
       <div className="flex gap-1.5 overflow-x-auto pb-1">
-        {CUSTOMIZATION_CATEGORIES.map(cat => {
-          const isActive = activeCat === cat.code;
-          const hasSelection = !!(customization as any)[cat.code];
+        {allCategories.map(cat => {
+          const isActive = validCat === cat.code;
+          const fieldMap: Record<string, string> = { gloves: "gloveStyle", accessory: "accessory" };
+          const field = fieldMap[cat.code] || cat.code;
+          const hasSelection = !!(customization as any)[field];
           return (
             <button
               key={cat.code}
@@ -409,29 +442,83 @@ function CustomizeTab({ customization, onChange }: {
 
       {/* Options grid */}
       <div className="grid grid-cols-4 gap-2">
-        {category.options.map(opt => {
-          const isSelected = (customization as any)[activeCat] === opt.key;
-          return (
-            <button
-              key={opt.key}
-              onClick={() => handleSelect(activeCat, opt.key)}
-              className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
-                isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
-              }`}
-            >
-              {isSelected && (
-                <div className="absolute -top-1 -right-1 rounded-full bg-primary p-0.5">
-                  <Check className="h-2.5 w-2.5 text-primary-foreground" />
+        {isDBCategory ? (
+          // DB-driven preset-specific options
+          getVariantOptions(presetVariants, validCat).map(variant => {
+            const fieldMap: Record<string, string> = { gloves: "gloveStyle", accessory: "accessory" };
+            const field = fieldMap[validCat] || validCat;
+            const isSelected = (customization as any)[field] === variant.option_key;
+            const label = VARIANT_OPTION_LABELS[variant.option_key] || variant.option_key;
+
+            return (
+              <button
+                key={variant.id}
+                onClick={() => handleSelect(validCat, variant.option_key)}
+                className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
+                  isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
+                }`}
+              >
+                {isSelected && (
+                  <div className="absolute -top-1 -right-1 rounded-full bg-primary p-0.5">
+                    <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                  </div>
+                )}
+                {/* Real PNG thumbnail from DB */}
+                <div className="relative h-10 w-10 flex items-center justify-center">
+                  {variant.asset_url ? (
+                    <img
+                      src={variant.asset_url}
+                      alt={label}
+                      className="h-full w-full object-contain"
+                      draggable={false}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span className="text-lg">🎨</span>
+                  )}
                 </div>
-              )}
-              <OptionPreview category={activeCat} optionKey={opt.key} />
-              <span className="text-[9px] font-bold text-foreground/80 truncate w-full text-center">{opt.label}</span>
-            </button>
-          );
-        })}
+                <span className="text-[9px] font-bold text-foreground/80 truncate w-full text-center">{label}</span>
+              </button>
+            );
+          })
+        ) : (
+          // Static categories (effect, frame, title)
+          (() => {
+            const staticCat = CUSTOMIZATION_CATEGORIES.find(c => c.code === validCat);
+            if (!staticCat) return null;
+            return staticCat.options.map(opt => {
+              const isSelected = (customization as any)[validCat] === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  onClick={() => handleSelect(validCat, opt.key)}
+                  className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
+                    isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
+                  }`}
+                >
+                  {isSelected && (
+                    <div className="absolute -top-1 -right-1 rounded-full bg-primary p-0.5">
+                      <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                    </div>
+                  )}
+                  <OptionPreview category={validCat} optionKey={opt.key} />
+                  <span className="text-[9px] font-bold text-foreground/80 truncate w-full text-center">{opt.label}</span>
+                </button>
+              );
+            });
+          })()
+        )}
       </div>
 
-      {/* Clear all */}
+      {/* Empty state for presets without variants */}
+      {isDBCategory && getVariantOptions(presetVariants, validCat).length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-6 text-center">
+          <span className="text-2xl">🔒</span>
+          <p className="mt-2 text-sm font-bold text-foreground">준비 중</p>
+          <p className="text-xs text-muted-foreground">이 프리셋의 {VARIANT_CATEGORY_META[validCat]?.label || validCat} 옵션이 곧 추가됩니다</p>
+        </div>
+      )}
+
       {activeCount > 0 && (
         <button
           onClick={handleClearAll}
@@ -448,26 +535,8 @@ function CustomizeTab({ customization, onChange }: {
   );
 }
 
-// Visual preview for each option type — uses real PNG thumbnails where available
+// Visual preview for static option types
 function OptionPreview({ category, optionKey }: { category: string; optionKey: string }) {
-  // Find the option from categories to get its thumb
-  const cat = CUSTOMIZATION_CATEGORIES.find(c => c.code === category);
-  const opt = cat?.options.find(o => o.key === optionKey);
-
-  // If option has a real thumbnail image, use it
-  if (opt?.thumb) {
-    return (
-      <div className="relative h-10 w-10 flex items-center justify-center">
-        <img
-          src={opt.thumb}
-          alt={opt.label}
-          className="h-full w-full object-contain"
-          draggable={false}
-        />
-      </div>
-    );
-  }
-
   if (category === "effect") {
     const emoji = EFFECT_EMOJIS[optionKey] || "✨";
     return <span className="text-2xl">{emoji}</span>;
