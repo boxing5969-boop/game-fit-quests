@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, Target, TrendingUp, Trophy, Award, Menu, BookOpen, User, Settings, Map, Gift, X, Palette, Sparkles } from "lucide-react";
+import { Home, Target, TrendingUp, Trophy, Award, Menu, BookOpen, User, Settings, Map, Gift, X, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const mainTabs = [
