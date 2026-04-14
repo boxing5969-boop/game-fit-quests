@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, Target, TrendingUp, Trophy, Award, Menu, BookOpen, User, Settings, Map, Gift, X, Palette, Sparkles } from "lucide-react";
+import { Home, Target, TrendingUp, Trophy, Award, Menu, BookOpen, User, Settings, Map, Gift, X, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const mainTabs = [
@@ -21,7 +21,6 @@ const allMenuItems = [
   { path: "/settings", icon: Settings, label: "설정" },
   { path: "/level-map", icon: Map, label: "리그맵" },
   { path: "/rewards", icon: Gift, label: "보상" },
-  { path: "/avatar", icon: Palette, label: "꾸미기" },
   { path: "/character-studio", icon: Sparkles, label: "캐릭터" },
 ];
 

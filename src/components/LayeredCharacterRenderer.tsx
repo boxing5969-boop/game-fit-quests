@@ -32,6 +32,9 @@ const LayeredCharacterRenderer: React.FC<LayeredCharacterRendererProps> = ({
   const accessory = cfg(parts, "accessory");
   const effect = cfg(parts, "effect");
 
+  // Generate unique IDs for gradients
+  const uid = useMemo(() => Math.random().toString(36).slice(2, 8), []);
+
   return (
     <svg
       viewBox="0 0 128 128"
@@ -40,23 +43,55 @@ const LayeredCharacterRenderer: React.FC<LayeredCharacterRendererProps> = ({
       className={`select-none ${className}`}
       style={{ imageRendering: "auto" }}
     >
+      <defs>
+        {/* Skin gradient */}
+        <radialGradient id={`skin-${uid}`} cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stopColor={skin.fill} />
+          <stop offset="100%" stopColor={skin.shadow} />
+        </radialGradient>
+        {/* Glove gradient */}
+        <radialGradient id={`glove-l-${uid}`} cx="35%" cy="35%" r="65%">
+          <stop offset="0%" stopColor={gloves.fill} />
+          <stop offset="100%" stopColor={gloves.shadow} />
+        </radialGradient>
+        <radialGradient id={`glove-r-${uid}`} cx="65%" cy="35%" r="65%">
+          <stop offset="0%" stopColor={gloves.fill} />
+          <stop offset="100%" stopColor={gloves.shadow} />
+        </radialGradient>
+        {/* Top gradient */}
+        <linearGradient id={`top-${uid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={top.fill} />
+          <stop offset="100%" stopColor={top.shadow} />
+        </linearGradient>
+        {/* Shorts gradient */}
+        <linearGradient id={`shorts-${uid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={shorts.fill} />
+          <stop offset="100%" stopColor={shorts.shadow} />
+        </linearGradient>
+        {/* Shoe gradient */}
+        <linearGradient id={`shoe-${uid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={shoes.fill} />
+          <stop offset="80%" stopColor={shoes.sole} stopOpacity="0.6" />
+        </linearGradient>
+      </defs>
+
       {/* === HAIR BACK === */}
       {hairBack && <HairBackLayer config={hairBack} />}
 
       {/* === BODY / TORSO === */}
-      <BodyLayer skin={skin} top={top} />
+      <BodyLayer skin={skin} top={top} uid={uid} />
 
       {/* === SHORTS === */}
-      <ShortsLayer config={shorts} />
+      <ShortsLayer config={shorts} uid={uid} />
 
       {/* === SHOES === */}
-      <ShoesLayer config={shoes} />
+      <ShoesLayer config={shoes} uid={uid} />
 
       {/* === GLOVES === */}
-      <GlovesLayer config={gloves} />
+      <GlovesLayer config={gloves} uid={uid} />
 
       {/* === HEAD === */}
-      <HeadLayer skin={skin} />
+      <HeadLayer skin={skin} uid={uid} />
 
       {/* === EYEBROWS === */}
       <EyebrowsLayer config={eyebrows} />
@@ -81,22 +116,24 @@ const LayeredCharacterRenderer: React.FC<LayeredCharacterRendererProps> = ({
 
 // ========== SUB-COMPONENTS ==========
 
-function HeadLayer({ skin }: { skin: Record<string, any> }) {
+function HeadLayer({ skin, uid }: { skin: Record<string, any>; uid: string }) {
   return (
     <g>
       {/* Head */}
-      <ellipse cx="64" cy="38" rx="22" ry="24" fill={skin.fill} />
+      <ellipse cx="64" cy="38" rx="22" ry="24" fill={`url(#skin-${uid})`} />
+      {/* Glossy highlight */}
+      <ellipse cx="58" cy="28" rx="10" ry="8" fill="white" opacity="0.12" />
       {/* Ear left */}
       <ellipse cx="42" cy="40" rx="4" ry="5" fill={skin.fill} />
-      <ellipse cx="42" cy="40" rx="2.5" ry="3" fill={skin.shadow} />
+      <ellipse cx="42" cy="40" rx="2.5" ry="3" fill={skin.shadow} opacity="0.4" />
       {/* Ear right */}
       <ellipse cx="86" cy="40" rx="4" ry="5" fill={skin.fill} />
-      <ellipse cx="86" cy="40" rx="2.5" ry="3" fill={skin.shadow} />
-      {/* Nose */}
-      <ellipse cx="64" cy="44" rx="2" ry="1.5" fill={skin.shadow} opacity="0.5" />
+      <ellipse cx="86" cy="40" rx="2.5" ry="3" fill={skin.shadow} opacity="0.4" />
+      {/* Nose — subtle */}
+      <ellipse cx="64" cy="44" rx="2" ry="1.5" fill={skin.shadow} opacity="0.35" />
       {/* Blush */}
-      <ellipse cx="52" cy="46" rx="4" ry="2.5" fill="#FFB6C1" opacity="0.3" />
-      <ellipse cx="76" cy="46" rx="4" ry="2.5" fill="#FFB6C1" opacity="0.3" />
+      <ellipse cx="52" cy="46" rx="4.5" ry="2.5" fill="#FFB6C1" opacity="0.25" />
+      <ellipse cx="76" cy="46" rx="4.5" ry="2.5" fill="#FFB6C1" opacity="0.25" />
     </g>
   );
 }
@@ -123,14 +160,18 @@ function EyesLayer({ config }: { config: Record<string, any> }) {
     <g>
       {/* Left eye */}
       <ellipse cx="56" cy="38" rx={rx} ry={ry} fill="white" />
-      <ellipse cx="56" cy="38" rx={rx * 0.6} ry={ry * 0.65} fill={config.iris} />
-      <ellipse cx="56" cy="38" rx={rx * 0.3} ry={ry * 0.35} fill={config.pupil} />
-      <ellipse cx="54.5" cy="36" rx="1.2" ry="1.5" fill="white" opacity="0.8" />
+      <ellipse cx="56" cy="38.5" rx={rx * 0.6} ry={ry * 0.65} fill={config.iris} />
+      <ellipse cx="56" cy="38.5" rx={rx * 0.3} ry={ry * 0.35} fill={config.pupil} />
+      {/* Highlight */}
+      <ellipse cx="54.5" cy="36" rx="1.4" ry="1.8" fill="white" opacity="0.85" />
+      <ellipse cx="57.5" cy="40" rx="0.7" ry="0.9" fill="white" opacity="0.4" />
       {/* Right eye */}
       <ellipse cx="72" cy="38" rx={rx} ry={ry} fill="white" />
-      <ellipse cx="72" cy="38" rx={rx * 0.6} ry={ry * 0.65} fill={config.iris} />
-      <ellipse cx="72" cy="38" rx={rx * 0.3} ry={ry * 0.35} fill={config.pupil} />
-      <ellipse cx="70.5" cy="36" rx="1.2" ry="1.5" fill="white" opacity="0.8" />
+      <ellipse cx="72" cy="38.5" rx={rx * 0.6} ry={ry * 0.65} fill={config.iris} />
+      <ellipse cx="72" cy="38.5" rx={rx * 0.3} ry={ry * 0.35} fill={config.pupil} />
+      {/* Highlight */}
+      <ellipse cx="70.5" cy="36" rx="1.4" ry="1.8" fill="white" opacity="0.85" />
+      <ellipse cx="73.5" cy="40" rx="0.7" ry="0.9" fill="white" opacity="0.4" />
     </g>
   );
 }
@@ -142,7 +183,12 @@ function MouthLayer({ config }: { config: Record<string, any> }) {
     case "serious":
       return <line x1="59" y1="49" x2="69" y2="49" stroke={config.fill} strokeWidth="1.5" strokeLinecap="round" />;
     case "shout":
-      return <ellipse cx="64" cy="49" rx="4" ry="3.5" fill={config.fill} />;
+      return (
+        <g>
+          <ellipse cx="64" cy="49" rx="4" ry="3.5" fill={config.fill} />
+          <ellipse cx="64" cy="48" rx="3" ry="1.5" fill="white" opacity="0.3" />
+        </g>
+      );
     case "smirk":
       return <path d="M60 48 Q65 51, 70 47" stroke={config.fill} strokeWidth="1.5" fill="none" strokeLinecap="round" />;
     case "pout":
@@ -152,7 +198,7 @@ function MouthLayer({ config }: { config: Record<string, any> }) {
   }
 }
 
-function BodyLayer({ skin, top }: { skin: Record<string, any>; top: Record<string, any> }) {
+function BodyLayer({ skin, top, uid }: { skin: Record<string, any>; top: Record<string, any>; uid: string }) {
   const isHoodie = top.style === "hoodie";
   const isRobe = top.style === "robe";
   return (
@@ -160,11 +206,11 @@ function BodyLayer({ skin, top }: { skin: Record<string, any>; top: Record<strin
       {/* Neck */}
       <rect x="59" y="58" width="10" height="6" rx="2" fill={skin.fill} />
       {/* Torso */}
-      <path d="M46 64 L48 62 L80 62 L82 64 L82 88 L46 88 Z" fill={top.fill} />
-      {/* Shadow */}
-      <path d="M46 84 L82 84 L82 88 L46 88 Z" fill={top.shadow} opacity="0.5" />
+      <path d="M46 64 L48 62 L80 62 L82 64 L82 88 L46 88 Z" fill={`url(#top-${uid})`} />
+      {/* Gloss highlight on torso */}
+      <path d="M50 64 L56 62 L58 62 L54 72 Z" fill="white" opacity="0.1" />
       {/* Accent stripe or detail */}
-      {!isRobe && <line x1="64" y1="64" x2="64" y2="86" stroke={top.accent} strokeWidth="1" opacity="0.3" />}
+      {!isRobe && <line x1="64" y1="64" x2="64" y2="86" stroke={top.accent} strokeWidth="1" opacity="0.25" />}
       {isHoodie && (
         <>
           <path d="M56 62 Q64 58, 72 62" stroke={top.accent} strokeWidth="1" fill="none" opacity="0.5" />
@@ -181,6 +227,9 @@ function BodyLayer({ skin, top }: { skin: Record<string, any>; top: Record<strin
       {/* Arms */}
       <rect x="38" y="64" width="8" height="20" rx="4" fill={skin.fill} />
       <rect x="82" y="64" width="8" height="20" rx="4" fill={skin.fill} />
+      {/* Arm highlight */}
+      <rect x="39" y="65" width="3" height="8" rx="1.5" fill="white" opacity="0.08" />
+      <rect x="84" y="65" width="3" height="8" rx="1.5" fill="white" opacity="0.08" />
       {/* Sleeve cuffs */}
       <rect x="38" y="64" width="8" height="4" rx="2" fill={top.fill} />
       <rect x="82" y="64" width="8" height="4" rx="2" fill={top.fill} />
@@ -188,16 +237,14 @@ function BodyLayer({ skin, top }: { skin: Record<string, any>; top: Record<strin
   );
 }
 
-function ShortsLayer({ config }: { config: Record<string, any> }) {
+function ShortsLayer({ config, uid }: { config: Record<string, any>; uid: string }) {
   const hasStripe = config.style === "stripe";
   return (
     <g>
-      {/* Shorts */}
-      <path d="M46 88 L46 100 L62 100 L64 88 L66 100 L82 100 L82 88 Z" fill={config.fill} />
-      {/* Shadow/crease */}
-      <path d="M64 88 L62 100" stroke={config.shadow} strokeWidth="1" opacity="0.4" />
-      <path d="M64 88 L66 100" stroke={config.shadow} strokeWidth="1" opacity="0.4" />
-      {/* Stripe */}
+      <path d="M46 88 L46 100 L62 100 L64 88 L66 100 L82 100 L82 88 Z" fill={`url(#shorts-${uid})`} />
+      {/* Crease shadow */}
+      <path d="M64 88 L62 100" stroke={config.shadow} strokeWidth="1" opacity="0.3" />
+      <path d="M64 88 L66 100" stroke={config.shadow} strokeWidth="1" opacity="0.3" />
       {hasStripe && (
         <>
           <line x1="48" y1="90" x2="48" y2="100" stroke={config.stripe} strokeWidth="2" opacity="0.6" />
@@ -205,12 +252,14 @@ function ShortsLayer({ config }: { config: Record<string, any> }) {
         </>
       )}
       {/* Waistband */}
-      <rect x="46" y="87" width="36" height="3" rx="1" fill={config.stripe} opacity="0.3" />
+      <rect x="46" y="87" width="36" height="3" rx="1" fill={config.stripe} opacity="0.25" />
+      {/* Highlight */}
+      <path d="M48 89 L52 88 L52 94 L48 95 Z" fill="white" opacity="0.06" />
     </g>
   );
 }
 
-function ShoesLayer({ config }: { config: Record<string, any> }) {
+function ShoesLayer({ config, uid }: { config: Record<string, any>; uid: string }) {
   const isSneaker = config.style === "sneaker";
   return (
     <g>
@@ -223,6 +272,8 @@ function ShoesLayer({ config }: { config: Record<string, any> }) {
         ? "M42 114 L40 112 L46 112 L58 114 Z"
         : "M44 112 L42 110 L46 110 L58 112 Z"
       } fill={config.sole} />
+      {/* Left shoe highlight */}
+      <path d="M48 101 L54 100 L54 104 L48 105 Z" fill="white" opacity="0.1" />
       {/* Right shoe */}
       <path d={isSneaker
         ? "M66 110 L66 100 L82 100 L82 110 L86 114 L70 114 L68 112 Z"
@@ -232,6 +283,8 @@ function ShoesLayer({ config }: { config: Record<string, any> }) {
         ? "M70 114 L68 112 L82 112 L86 114 Z"
         : "M70 112 L68 110 L82 110 L84 112 Z"
       } fill={config.sole} />
+      {/* Right shoe highlight */}
+      <path d="M68 101 L74 100 L74 104 L68 105 Z" fill="white" opacity="0.1" />
       {/* Laces */}
       <line x1="52" y1="102" x2="56" y2="102" stroke={config.lace} strokeWidth="0.8" />
       <line x1="52" y1="105" x2="56" y2="105" stroke={config.lace} strokeWidth="0.8" />
@@ -241,20 +294,21 @@ function ShoesLayer({ config }: { config: Record<string, any> }) {
   );
 }
 
-function GlovesLayer({ config }: { config: Record<string, any> }) {
+function GlovesLayer({ config, uid }: { config: Record<string, any>; uid: string }) {
   return (
     <g>
       {/* Left glove */}
-      <ellipse cx="40" cy="88" rx="7" ry="8" fill={config.fill} />
-      <ellipse cx="40" cy="88" rx="5" ry="6" fill={config.shadow} opacity="0.3" />
+      <ellipse cx="40" cy="88" rx="7" ry="8" fill={`url(#glove-l-${uid})`} />
+      <ellipse cx="40" cy="88" rx="5" ry="6" fill={config.shadow} opacity="0.2" />
       <line x1="36" y1="82" x2="44" y2="82" stroke={config.lace} strokeWidth="1" />
+      {/* Glove highlight */}
+      <ellipse cx="38" cy="85" rx="2.5" ry="3" fill="white" opacity="0.18" />
       {/* Right glove */}
-      <ellipse cx="88" cy="88" rx="7" ry="8" fill={config.fill} />
-      <ellipse cx="88" cy="88" rx="5" ry="6" fill={config.shadow} opacity="0.3" />
+      <ellipse cx="88" cy="88" rx="7" ry="8" fill={`url(#glove-r-${uid})`} />
+      <ellipse cx="88" cy="88" rx="5" ry="6" fill={config.shadow} opacity="0.2" />
       <line x1="84" y1="82" x2="92" y2="82" stroke={config.lace} strokeWidth="1" />
       {/* Glove highlight */}
-      <ellipse cx="38" cy="86" rx="2" ry="2.5" fill="white" opacity="0.15" />
-      <ellipse cx="86" cy="86" rx="2" ry="2.5" fill="white" opacity="0.15" />
+      <ellipse cx="86" cy="85" rx="2.5" ry="3" fill="white" opacity="0.18" />
     </g>
   );
 }
@@ -266,7 +320,7 @@ function HairBackLayer({ config }: { config: Record<string, any> }) {
         <g>
           <path d="M40 24 Q38 50, 42 72 L50 72 Q46 50, 48 28 Z" fill={config.fill} />
           <path d="M88 24 Q90 50, 86 72 L78 72 Q82 50, 80 28 Z" fill={config.fill} />
-          <path d="M40 24 Q38 50, 42 72 L50 72 Q46 50, 48 28 Z" fill={config.highlight} opacity="0.2" />
+          <path d="M40 24 Q38 50, 42 72 L50 72 Q46 50, 48 28 Z" fill={config.highlight} opacity="0.15" />
         </g>
       );
     case "medium":
@@ -274,18 +328,22 @@ function HairBackLayer({ config }: { config: Record<string, any> }) {
         <g>
           <path d="M42 20 Q38 35, 42 55 L50 55 Q48 35, 50 24 Z" fill={config.fill} />
           <path d="M86 20 Q90 35, 86 55 L78 55 Q80 35, 78 24 Z" fill={config.fill} />
+          <path d="M42 22 Q40 30, 42 40 L46 38 Q44 30, 46 24 Z" fill={config.highlight} opacity="0.15" />
         </g>
       );
     case "spiky":
       return (
         <g>
           <path d="M44 20 L40 8 L50 18 L48 6 L58 16 L56 4 L64 14 L72 4 L70 16 L80 6 L78 18 L88 8 L84 20 Z" fill={config.fill} />
-          <path d="M48 6 L58 16 L56 4 L64 14" fill={config.highlight} opacity="0.25" />
+          <path d="M48 6 L58 16 L56 4 L64 14" fill={config.highlight} opacity="0.2" />
         </g>
       );
     default: // short
       return (
-        <path d="M42 18 Q64 10, 86 18 Q88 30, 86 35 L42 35 Q40 30, 42 18 Z" fill={config.fill} />
+        <g>
+          <path d="M42 18 Q64 10, 86 18 Q88 30, 86 35 L42 35 Q40 30, 42 18 Z" fill={config.fill} />
+          <path d="M48 16 Q64 12, 80 16 Q82 24, 80 28 L48 28 Q46 24, 48 16 Z" fill={config.highlight} opacity="0.12" />
+        </g>
       );
   }
 }
@@ -296,28 +354,28 @@ function HairFrontLayer({ config }: { config: Record<string, any> }) {
       return (
         <g>
           <path d="M42 18 Q50 14, 64 16 L64 28 Q50 26, 44 30 Z" fill={config.fill} />
-          <path d="M42 18 Q50 14, 56 16 L56 24 Q50 22, 44 28 Z" fill={config.highlight} opacity="0.2" />
+          <path d="M42 18 Q50 14, 56 16 L56 24 Q50 22, 44 28 Z" fill={config.highlight} opacity="0.15" />
         </g>
       );
     case "swept":
       return (
         <g>
           <path d="M42 18 Q56 10, 78 16 Q76 24, 70 26 L56 28 Q48 24, 42 22 Z" fill={config.fill} />
-          <path d="M56 14 Q66 12, 74 16 L70 22 Q62 18, 56 20 Z" fill={config.highlight} opacity="0.2" />
+          <path d="M56 14 Q66 12, 74 16 L70 22 Q62 18, 56 20 Z" fill={config.highlight} opacity="0.15" />
         </g>
       );
     case "curly":
       return (
         <g>
           <path d="M42 20 Q38 16, 44 14 Q48 10, 54 14 Q58 10, 64 14 Q68 10, 74 14 Q80 10, 84 14 Q90 16, 86 20 Q82 24, 78 22 Q74 26, 70 22 Q66 26, 60 24 Q54 28, 48 24 Q44 26, 42 20 Z" fill={config.fill} />
-          <path d="M48 14 Q54 10, 58 14 Q62 12, 66 14" fill={config.highlight} opacity="0.25" stroke="none" />
+          <path d="M48 14 Q54 10, 58 14 Q62 12, 66 14" fill={config.highlight} opacity="0.2" stroke="none" />
         </g>
       );
     default: // bangs
       return (
         <g>
           <path d="M42 18 Q52 12, 64 16 Q76 12, 86 18 L86 26 Q76 22, 64 24 Q52 22, 42 26 Z" fill={config.fill} />
-          <path d="M50 16 Q58 14, 64 16 Q70 14, 78 16 L78 22 Q70 20, 64 22 Q58 20, 50 22 Z" fill={config.highlight} opacity="0.2" />
+          <path d="M50 16 Q58 14, 64 16 Q70 14, 78 16 L78 22 Q70 20, 64 22 Q58 20, 50 22 Z" fill={config.highlight} opacity="0.15" />
         </g>
       );
   }
@@ -342,11 +400,7 @@ function AccessoryLayer({ config }: { config: Record<string, any> }) {
         </g>
       );
     case "star":
-      return (
-        <g>
-          <polygon points="76,20 77.5,23 81,23.5 78.5,25.5 79,29 76,27.5 73,29 73.5,25.5 71,23.5 74.5,23" fill={config.fill} opacity="0.8" />
-        </g>
-      );
+      return <polygon points="76,20 77.5,23 81,23.5 78.5,25.5 79,29 76,27.5 73,29 73.5,25.5 71,23.5 74.5,23" fill={config.fill} opacity="0.8" />;
     case "bandage":
       return (
         <g>
