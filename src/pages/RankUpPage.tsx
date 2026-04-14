@@ -17,6 +17,12 @@ import type { Tables, Enums } from "@/integrations/supabase/types";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { PROMOTION_METRICS, RECOMMENDED_PATHS } from "@/data/whiteLevel1Data";
 import { RANK_ORDER, RANK_LABELS, RANK_ICONS, SECRET_MISSIONS, DAN_CHALLENGES, FINAL_REWARDS } from "@/data/sharedConstants";
+const RANK_BG: Record<string, string> = {
+  white: "from-muted/50 to-muted/20",
+  blue: "from-rank-blue/10 to-rank-blue/5",
+  red: "from-rank-red/10 to-rank-red/5",
+  black: "from-rank-black/10 to-rank-black/5",
+};
 
 type TabType = "valuemap" | "levelmap";
 

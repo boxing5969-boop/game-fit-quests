@@ -33,12 +33,8 @@ const BottomNav = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, progress } = useAuth();
-  const { data: myCharacter } = useMemberCharacterAssignment();
 
   if (hiddenPaths.includes(location.pathname) || location.pathname.startsWith("/manager/") || location.pathname.startsWith("/guide/") || location.pathname.startsWith("/live-board/")) return null;
-
-  const charPreset = myCharacter?.character_presets;
-  const charPj = charPreset?.parts_json as any;
 
   return (
     <>
