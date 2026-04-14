@@ -18,6 +18,8 @@ import { useNavigate } from "react-router-dom";
 import { User, ChevronRight, TrendingUp, CheckCircle2, Flame, QrCode, X, Lock, Clock, Gem } from "lucide-react";
 import HallOfFameShowcase from "@/components/HallOfFameShowcase";
 import RankMiniCard from "@/components/RankMiniCard";
+import CharacterSprite from "@/components/CharacterSprite";
+import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import { isManagerRole } from "@/lib/rankLabels";
@@ -70,6 +72,7 @@ const HomePage = () => {
   const { totalXp, status, metrics, activeLevelId, selfChallengeStreak } = useLocalProgress();
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
   const { data: walletData } = useWallet();
+  const { data: myCharacter } = useMemberCharacterAssignment();
   const widgetPrefs = loadHomeWidgetPrefs();
   const [showChallenge, setShowChallenge] = useState(false);
   const [qrAutoStarted, setQrAutoStarted] = useState(false);
@@ -205,8 +208,19 @@ const HomePage = () => {
             <Gem className="h-4 w-4 text-accent" />
             <span className="text-sm font-bold text-accent-foreground">{walletData?.gems_balance?.toLocaleString() || 0}</span>
           </button>
-          <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
-            <User className="h-5 w-5 text-secondary-foreground" />
+          <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary overflow-hidden transition-all active:scale-95">
+            {myCharacter?.character_presets ? (
+              <CharacterSprite
+                style={(myCharacter.character_presets.parts_json as any)?.style}
+                userId={user?.id}
+                partsJson={myCharacter.character_presets.parts_json as any}
+                size="xs"
+                league={progress?.current_rank as any}
+                level={progress?.current_level}
+              />
+            ) : (
+              <User className="h-5 w-5 text-secondary-foreground" />
+            )}
           </button>
         </div>
       </div>
