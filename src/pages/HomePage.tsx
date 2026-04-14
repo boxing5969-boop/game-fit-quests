@@ -209,6 +209,7 @@ const HomePage = () => {
             <User className="h-5 w-5 text-secondary-foreground" />
           </button>
         </div>
+      </div>
 
       <div className="space-y-5">
         {/* QR Checkin Button */}
