@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import {
   CUSTOMIZATION_CATEGORIES,
-  GLOVE_COLORS,
   EFFECT_EMOJIS,
   FRAME_STYLES,
   TITLE_LABELS,
