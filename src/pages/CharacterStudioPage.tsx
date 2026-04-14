@@ -165,7 +165,7 @@ const CharacterStudioPage = () => {
               style={selectedStyle}
               userId={user?.id}
               size="lg"
-              animate
+              animate={activeTab !== "customize"}
               league={currentLeague as any}
               level={currentLevel}
               customization={previewCustomization}
