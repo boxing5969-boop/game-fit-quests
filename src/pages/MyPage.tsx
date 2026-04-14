@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import RankBadge from "@/components/RankBadge";
 import AvatarUpload from "@/components/AvatarUpload";
 import XPBar from "@/components/XPBar";
-import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound, Award, Palette, Gem } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound, Award, Palette, Gem, Sparkles } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useNavigate } from "react-router-dom";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
@@ -130,6 +130,24 @@ const MyPage = () => {
               <Gem className="h-4 w-4 text-accent" />
               <span className="text-sm font-bold text-accent-foreground">{walletData?.gems_balance?.toLocaleString() || 0}</span>
             </div>
+          </div>
+        </button>
+
+        {/* Character Studio */}
+        <button
+          onClick={() => navigate("/character-studio")}
+          className="w-full animate-slide-up rounded-2xl border border-accent/30 bg-gradient-to-r from-accent/10 to-primary/5 p-4 shadow-sm transition-all active:scale-[0.98]"
+          style={{ animationDelay: "0.09s" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/20">
+              <Sparkles className="h-6 w-6 text-accent" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-bold text-foreground">캐릭터 스튜디오</p>
+              <p className="text-xs text-muted-foreground">나만의 복서 캐릭터를 선택하세요</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
         </button>
 
