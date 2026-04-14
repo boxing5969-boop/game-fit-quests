@@ -1,77 +1,99 @@
 
 
-# 캐릭터 꾸미기 시스템 구현 플랜
+# 캐릭터 파츠 실제 구현 플랜
 
-## 개요
-기존 153랭크업 시스템에 캐릭터 꾸미기 + 링젬 경제 시스템을 추가. DB 마이그레이션 → 링젬 자동 지급 → 꾸미기 UI 순서로 구현.
+## 현재 상태
+- `character_part_categories`: 13개 카테고리 있음 (base, skin, hair_back, top, shorts, shoes, hair_front, eyebrows, eyes, mouth, gloves, accessory, effect)
+- `character_parts` 테이블: **완전히 비어있음** — 실제 파츠 레코드 0개
+- `character_presets`: 8개 템플릿 (12개 중 첫 8개만 DB에 있음)
+- CharacterStudioPage: 프리셋 선택만 가능, 파츠 조합 불가
+- 이미지: 12개 프리빌트 full-body PNG만 존재
 
-## 1단계: DB 마이그레이션 (6개 테이블 + 3개 함수)
+## 구현 전략
 
-### 새 테이블
-- **avatar_item_categories** — 카테고리 (글러브, 헤어, 상의, 하의, 신발, 액세서리)
-- **avatar_items** — 아이템 (카테고리, 이름, 희귀도, 가격, asset_url, thumb_url, league_requirement)
-- **user_wallets** — 회원별 링젬 잔액 (user_id unique, gems_balance default 0)
-- **wallet_transactions** — 링젬 이력 (amount, reason, meta_json)
-- **user_owned_items** — 소유 아이템 (user_id + item_id unique)
-- **user_avatar_equipment** — 현재 장착 (user_id + category_code unique → item_id)
+개별 투명 PNG 레이어를 AI로 완벽하게 정렬해서 생성하는 것은 현실적으로 불가능합니다. 대신:
 
-### DB 함수
-- **grant_gems(user_id, amount, reason)** — 젬 지급 + 트랜잭션 기록
-- **purchase_avatar_item(item_id)** — 잔액 확인 → 차감 → 소유 추가
-- **equip_avatar_item(item_id)** / **unequip_avatar_item(category_code)** — 장착/해제
+1. **SVG 기반 프로그래매틱 캐릭터 렌더러** 생성 — 색상/형태 변형이 코드로 제어됨
+2. **각 파츠별 썸네일 아이콘**은 AI 이미지 생성으로 만들어 선택 UI에 사용
+3. **조합된 캐릭터는 SVG 컴포넌트**로 렌더링 — 레이어 정렬 문제 없음
+4. 기존 12 프리빌트 프리셋은 그대로 유지
 
-### RLS 정책
-- 회원: 자기 wallet/owned/equipment SELECT/INSERT/UPDATE
-- branch_manager: 같은 지점 회원 wallet 조회 + grant_gems 호출 가능
-- super_admin: 전체 관리
-- avatar_items/categories: 전체 SELECT, admin만 관리
-
-### handle_new_user 트리거 수정
-- 신규 회원 가입 시 `user_wallets` row 자동 생성 (gems_balance = 0)
-
-## 2단계: 링젬 자동 지급 연동
-
-기존 DB 함수에 `grant_gems` 호출 추가:
-- **approve_mission_submission** → +5 젬
-- **approve_quest_submission** → +3 (main), +5 (sub), +10 (weekly), +50 (boss)
-- **record_attendance** → +2 젬
-- **pass_boss_battle** → +50 젬
-
-## 3단계: 꾸미기 페이지 UI
+## 영향받는 파일
 
 ### 새 파일
-- **src/pages/AvatarPage.tsx** — `/avatar` 라우트
-  - 중앙: 현재 장착 캐릭터 미리보기 (기존 boxer 이미지 + 장착 아이템 오버레이)
-  - 하단: 카테고리 탭 (글러브/헤어/상의/하의/신발/액세서리)
-  - 아이템 그리드 (소유=장착 가능, 미소유=가격 표시+구매)
-  - 상단: 링젬 잔액 표시
-  - 장착/해제/구매 버튼
-  - 저장 버튼
+- `src/components/LayeredCharacterRenderer.tsx` — SVG 기반 레이어 렌더러
+- `src/data/characterPartsData.ts` — 80+ 파츠 정의 (색상, 형태, SVG path 데이터)
 
-### 기존 파일 수정
-- **App.tsx** — `/avatar` 라우트 추가
-- **BottomNav.tsx** — 전체 메뉴에 "내 복서 꾸미기" 항목 추가
-- **HomePage.tsx** — 상단에 링젬 잔액 표시 (💎 아이콘 + 숫자)
-- **MyPage.tsx** — "내 복서 꾸미기" 진입 버튼 추가
+### 수정 파일
+- `src/pages/CharacterStudioPage.tsx` — 프리셋 모드 + 파츠 조합 모드 탭 추가
+- `src/components/CharacterSprite.tsx` — `partsJson` prop 추가, 레이어 렌더러 연동
+- `src/hooks/useCharacterData.ts` — `useSaveCustomPreset` 추가
+- `src/components/CharacterRail.tsx` — 커스텀 프리셋 지원
+- `src/components/HallOfFameShowcase.tsx` — 변경 없음 (CharacterSprite가 자동 처리)
 
-### 새 훅
-- **src/hooks/useWallet.ts** — 잔액 조회, 구매 요청
-- **src/hooks/useAvatarItems.ts** — 카테고리/아이템/소유/장착 조회
+### DB 변경
+- `character_parts` 테이블에 80+ 레코드 INSERT (마이그레이션 아님, 데이터 삽입)
+- 나머지 4개 프리셋도 `character_presets`에 INSERT
+- 스키마 변경 없음
 
-## 4단계: 관리자 수동 젬 지급
+## 파츠 수량 (최소 80개)
 
-**MemberDetailPage.tsx**에 링젬 수동 지급/차감 UI 추가 (branch_manager/super_admin만)
+| 카테고리 | 수량 | 구현 방식 |
+|---------|------|----------|
+| skin (피부톤) | 5 | SVG fill 색상 변형 |
+| hair_back (뒷머리) | 8 | SVG path + 색상 변형 |
+| hair_front (앞머리) | 8 | SVG path + 색상 변형 |
+| eyebrows (눈썹) | 6 | SVG path 변형 |
+| eyes (눈) | 8 | SVG 컴포넌트 변형 |
+| mouth (표정) | 6 | SVG path 변형 |
+| gloves (글러브) | 8 | SVG + 색상 변형 |
+| top (상의) | 8 | SVG + 색상 변형 |
+| shorts (하의) | 8 | SVG + 색상 변형 |
+| shoes (신발) | 6 | SVG + 색상 변형 |
+| accessory (액세서리) | 6 | SVG 오버레이 |
+| effect (이펙트) | 4 | CSS 애니메이션 |
+| **합계** | **81** | |
 
-## 기술 세부사항
+## CharacterStudioPage 업데이트
 
-- 아이템 asset은 사용자가 직접 업로드하므로, 1차 MVP에서는 카테고리와 빈 아이템 구조만 생성
-- 기본 글러브 4개 (리그별 색상)를 seed 데이터로 삽입
-- 꾸미기 미리보기는 기존 boxer 이미지 위에 장착 아이템을 CSS layer로 표시
-- 라이브보드 연동은 2차에서 진행 (이번 MVP 범위 밖)
+```text
+┌─────────────────────────────┐
+│  ← 캐릭터 스튜디오    🎲랜덤  │
+├─────────────────────────────┤
+│  [프리셋 선택] [파츠 조합]     │  ← 모드 전환 탭
+├─────────────────────────────┤
+│                             │
+│     ┌───────────────┐       │
+│     │  라이브 미리보기  │       │  ← SVG 렌더러 or 프리셋 이미지
+│     └───────────────┘       │
+│                             │
+│  [💎저장] 버튼               │
+├─────────────────────────────┤
+│  파츠 조합 모드:              │
+│  피부톤 | 앞머리 | 뒷머리 | ... │  ← 카테고리 탭 (스크롤)
+│  ┌──┐ ┌──┐ ┌──┐ ┌──┐       │
+│  │  │ │  │ │  │ │  │       │  ← 파츠 그리드 (실제 선택 가능)
+│  └──┘ └──┘ └──┘ └──┘       │
+└─────────────────────────────┘
+```
 
-## 변경하지 않는 것
-- 기존 라이브보드 구조/오른쪽 패널
-- XP 시스템 (XP와 링젬은 완전 분리)
-- 기존 프로필/member_progress 테이블
-- 인증/RLS 구조
+## 렌더링 흐름
+
+1. 프리셋 캐릭터 → 기존 PNG 이미지 사용 (변경 없음)
+2. 커스텀 캐릭터 → `parts_json`에 각 카테고리별 선택 파츠 키 저장 → `LayeredCharacterRenderer`가 SVG로 렌더링
+3. CharacterSprite가 `parts_json.style` 존재 시 PNG, `parts_json.parts` 존재 시 SVG 렌더러 자동 선택
+4. Hall of Fame 레일에서 동일하게 작동 — 크기/아우라 호환 유지
+
+## Black League 후광 호환
+- `LayeredCharacterRenderer`는 `CharacterSprite` 안에서 렌더링됨
+- 아우라는 `CharacterSprite` 레벨에서 이미 처리됨 → 변경 불필요
+
+## 미변경 사항
+- 기존 12 프리빌트 프리셋
+- Hall of Fame 구조
+- CharacterRail 구조
+- Black League 아우라
+- 기존 라우트/네비게이션
+- AvatarPage (링젬 상점 — 별도 시스템)
+- RLS/역할 구조
 
