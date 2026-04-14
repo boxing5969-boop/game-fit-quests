@@ -14,7 +14,7 @@ interface AuthContextType {
   loading: boolean;
   refreshProgress: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  signUp: (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean, realEmail?: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean, birthDate?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
