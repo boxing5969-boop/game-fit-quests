@@ -1,8 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useMemo, lazy, Suspense } from "react";
 import { getCharacterImage, getCharacterByHash } from "@/data/characterPresets";
 import BlackLeagueAura from "@/components/BlackLeagueAura";
-import LayeredCharacterRenderer from "@/components/LayeredCharacterRenderer";
 import type { PartsSelection } from "@/data/characterPartsData";
+
+// Lazy-load SVG renderer — only used as dev fallback, not in main production path
+const LayeredCharacterRenderer = lazy(() => import("@/components/LayeredCharacterRenderer"));
 import type { CharacterCustomization } from "@/data/characterCustomizationData";
 import {
   GLOVE_COLORS,
@@ -92,11 +94,13 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
       )}
 
       {isLayered ? (
-        <LayeredCharacterRenderer
-          parts={partsJson!.parts!}
-          size={SIZE_PX[size]}
-          className={`relative z-10 h-full w-full ${animate ? "animate-emote-idle" : ""}`}
-        />
+        <Suspense fallback={<div className="relative z-10 h-full w-full animate-pulse rounded-full bg-muted" />}>
+          <LayeredCharacterRenderer
+            parts={partsJson!.parts!}
+            size={SIZE_PX[size]}
+            className={`relative z-10 h-full w-full ${animate ? "animate-emote-idle" : ""}`}
+          />
+        </Suspense>
       ) : (
         <img
           src={imgSrc!}
