@@ -448,17 +448,29 @@ function CustomizeTab({ customization, onChange }: {
   );
 }
 
-// Visual preview for each option type
+// Visual preview for each option type — uses real PNG thumbnails where available
 function OptionPreview({ category, optionKey }: { category: string; optionKey: string }) {
+  // Find the option from categories to get its thumb
+  const cat = CUSTOMIZATION_CATEGORIES.find(c => c.code === category);
+  const opt = cat?.options.find(o => o.key === optionKey);
+
+  // If option has a real thumbnail image, use it
+  if (opt?.thumb) {
+    return (
+      <div className="relative h-10 w-10 flex items-center justify-center">
+        <img
+          src={opt.thumb}
+          alt={opt.label}
+          className="h-full w-full object-contain"
+          draggable={false}
+        />
+      </div>
+    );
+  }
+
   if (category === "effect") {
     const emoji = EFFECT_EMOJIS[optionKey] || "✨";
     return <span className="text-2xl">{emoji}</span>;
-  }
-  if (category === "accessory") {
-    const emojis: Record<string, string> = {
-      crown: "👑", star_mark: "⭐",
-    };
-    return <span className="text-2xl">{emojis[optionKey] || "🎀"}</span>;
   }
   if (category === "frame") {
     const colors: Record<string, string> = {

@@ -7,9 +7,12 @@ const LayeredCharacterRenderer = lazy(() => import("@/components/LayeredCharacte
 import type { CharacterCustomization } from "@/data/characterCustomizationData";
 import {
   EFFECT_EMOJIS,
-  ACCESSORY_CONFIGS,
   FRAME_STYLES,
   TITLE_LABELS,
+  getPresetAnchors,
+  getAccessoryOverlay,
+  getGloveOverlay,
+  ACCESSORY_ANCHOR_ZONE,
 } from "@/data/characterCustomizationData";
 
 interface CharacterSpriteProps {
@@ -66,9 +69,11 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
 
   const showOverlays = size === "md" || size === "lg";
   const showEffectSmall = size === "sm";
-  const px = SIZE_PX[size];
 
   const frameClass = customization?.frame ? FRAME_STYLES[customization.frame] || "" : "";
+
+  // Resolve the preset style for anchor lookup
+  const resolvedPreset = presetStyle || "male_01";
 
   return (
     <div
@@ -89,7 +94,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
       )}
 
       {/* === UNIFIED ANIMATION CONTAINER ===
-           All overlays are INSIDE this container so they move with the boxer */}
+           All overlays inside so they move with the boxer */}
       <div className={`relative z-10 h-full w-full ${animate ? "animate-emote-idle" : ""}`}
            style={{ willChange: animate ? "transform" : undefined }}>
 
@@ -97,7 +102,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           <Suspense fallback={<div className="h-full w-full animate-pulse rounded-full bg-muted" />}>
             <LayeredCharacterRenderer
               parts={partsJson!.parts!}
-              size={px}
+              size={SIZE_PX[size]}
               className="h-full w-full"
             />
           </Suspense>
@@ -112,14 +117,27 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           />
         )}
 
-        {/* ===== ACCESSORY — only crown/star_mark that float above/beside ===== */}
+        {/* ===== ACCESSORY — PNG image overlay with preset-aware anchors ===== */}
         {customization?.accessory && showOverlays && (
-          <AccessoryOverlay accessory={customization.accessory} sizePx={px} />
+          <AccessoryImageOverlay
+            accessory={customization.accessory}
+            presetStyle={resolvedPreset}
+            isLarge={size === "lg"}
+          />
+        )}
+
+        {/* ===== GLOVE STYLE — PNG overlay near hands ===== */}
+        {customization?.gloveStyle && showOverlays && (
+          <GloveImageOverlay
+            gloveStyle={customization.gloveStyle}
+            presetStyle={resolvedPreset}
+            isLarge={size === "lg"}
+          />
         )}
 
         {/* ===== EFFECT PARTICLES ===== */}
         {customization?.effect && (showOverlays || showEffectSmall) && (
-          <EffectOverlay effect={customization.effect} size={size} sizePx={px} />
+          <EffectOverlay effect={customization.effect} size={size} />
         )}
       </div>
 
@@ -135,8 +153,86 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   );
 };
 
+// ===== Accessory PNG Image Overlay =====
+const AccessoryImageOverlay: React.FC<{
+  accessory: string;
+  presetStyle: string;
+  isLarge: boolean;
+}> = ({ accessory, presetStyle, isLarge }) => {
+  const overlayImage = getAccessoryOverlay(accessory);
+  if (!overlayImage) return null;
+
+  const anchors = getPresetAnchors(presetStyle);
+  const zone = ACCESSORY_ANCHOR_ZONE[accessory] || "head_top";
+  const anchor = anchors[zone];
+
+  return (
+    <div
+      className="absolute z-20 pointer-events-none"
+      style={{
+        top: `${anchor.top}%`,
+        left: `${anchor.left}%`,
+        width: `${anchor.width}%`,
+        height: `${anchor.height}%`,
+        transform: anchor.rotation ? `rotate(${anchor.rotation}deg)` : undefined,
+      }}
+    >
+      <img
+        src={overlayImage}
+        alt=""
+        className="w-full h-full object-contain"
+        draggable={false}
+        style={{
+          filter: isLarge
+            ? "drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
+            : "drop-shadow(0 1px 2px rgba(0,0,0,0.2))",
+        }}
+      />
+    </div>
+  );
+};
+
+// ===== Glove Style PNG Overlay =====
+const GloveImageOverlay: React.FC<{
+  gloveStyle: string;
+  presetStyle: string;
+  isLarge: boolean;
+}> = ({ gloveStyle, presetStyle, isLarge }) => {
+  const overlayImage = getGloveOverlay(gloveStyle);
+  if (!overlayImage) return null;
+
+  const anchors = getPresetAnchors(presetStyle);
+  const anchor = anchors.hands;
+
+  return (
+    <div
+      className="absolute z-[15] pointer-events-none"
+      style={{
+        top: `${anchor.top}%`,
+        left: `${anchor.left}%`,
+        width: `${anchor.width}%`,
+        height: `${anchor.height}%`,
+        opacity: 0.85,
+        mixBlendMode: "multiply",
+      }}
+    >
+      <img
+        src={overlayImage}
+        alt=""
+        className="w-full h-full object-contain"
+        draggable={false}
+        style={{
+          filter: isLarge
+            ? "drop-shadow(0 2px 6px rgba(0,0,0,0.25))"
+            : "drop-shadow(0 1px 3px rgba(0,0,0,0.2))",
+        }}
+      />
+    </div>
+  );
+};
+
 // ===== Effect Particles =====
-const EffectOverlay: React.FC<{ effect: string; size: string; sizePx: number }> = ({ effect, size }) => {
+const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, size }) => {
   const emoji = EFFECT_EMOJIS[effect] || "✨";
   const isSmall = size === "sm" || size === "xs";
 
@@ -161,31 +257,6 @@ const EffectOverlay: React.FC<{ effect: string; size: string; sizePx: number }> 
           <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "30%", right: "-10%", animationDelay: "0.6s", animationDuration: "1.4s" }}>{emoji}</span>
         </>
       )}
-    </div>
-  );
-};
-
-// ===== Accessory — only crown & star_mark =====
-const AccessoryOverlay: React.FC<{ accessory: string; sizePx: number }> = ({ accessory, sizePx }) => {
-  const config = ACCESSORY_CONFIGS[accessory];
-  if (!config) return null;
-
-  const isLarge = sizePx >= 128;
-  const scale = isLarge ? 1 : 0.65;
-
-  return (
-    <div
-      className="absolute z-20 pointer-events-none flex items-center justify-center"
-      style={{
-        top: config.top,
-        left: config.left,
-        width: config.width,
-        height: config.height,
-        transform: `scale(${scale})`,
-        transformOrigin: "center center",
-      }}
-    >
-      {config.render(isLarge)}
     </div>
   );
 };

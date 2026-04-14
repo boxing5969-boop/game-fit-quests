@@ -13,10 +13,11 @@ RLS: 회원=자기데이터, 코치=담당회원, 관리자=전체.
 
 ## Memories
 - [Boxing theme](mem://constraints/boxing-theme) — RPG 용어 금지, 복싱 용어만 사용
+- [League terminology](mem://constraints/league-terminology) — 리그 용어 규칙
 - [Page structure](mem://features/pages) — 7 pages: Login, Home, Quests, LevelMap, Rewards, MyPage, CoachDashboard
 - [DB schema](mem://features/db-schema) — 10 tables with RLS, role-based access
-- [Character parts](mem://features/character-parts) — SVG 레이어 렌더러 + 81개 파츠 + 프리셋/파츠 듀얼 모드
-- [Character unified](mem://features/character-unified) — 통합 캐릭터 허브: 만들기+꾸미기+성장+효과, 리그별 해금
-- [Avatar gems](mem://features/avatar-gems) — 젬 상점 시스템 (AvatarPage → 아이템 상점)
-- [League terminology](mem://constraints/league-terminology) — 리그 용어 규칙
-- [Guide onboarding](mem://features/guide-onboarding) — 온보딩 가이드 구조
+- [Character parts](mem://features/character-parts) — SVG 레이어 + 81파츠 + 프리셋 듀얼 모드
+- [Character unified](mem://features/character-unified) — PNG 프리셋 고정, SVG 숨김, 스튜디오 허브
+- [Character customization v3](mem://features/character-customization-v3) — PNG 이미지 오버레이 + 프리셋별 앵커 맵
+- [Avatar gems](mem://features/avatar-gems) — 젬 화폐 + 아바타 상점
+- [Guide onboarding](mem://features/guide-onboarding) — 가이드 페이지 + 온보딩 플로우
