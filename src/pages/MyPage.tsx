@@ -112,6 +112,27 @@ const MyPage = () => {
           <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} last />
         </div>
 
+        {/* Avatar & Gems */}
+        <button
+          onClick={() => navigate("/avatar")}
+          className="w-full animate-slide-up rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 p-4 shadow-sm transition-all active:scale-[0.98]"
+          style={{ animationDelay: "0.08s" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20">
+              <Palette className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-bold text-foreground">내 복서 꾸미기</p>
+              <p className="text-xs text-muted-foreground">아이템을 모아 캐릭터를 꾸며보세요</p>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1.5">
+              <Gem className="h-4 w-4 text-accent" />
+              <span className="text-sm font-bold text-accent-foreground">{walletData?.gems_balance?.toLocaleString() || 0}</span>
+            </div>
+          </div>
+        </button>
+
         {/* Master League */}
         {isMaster40 && (
           <div className="animate-bounce-in rounded-2xl border-2 border-accent bg-gradient-to-br from-accent/20 via-primary/10 to-accent/20 p-6 text-center shadow-lg">
