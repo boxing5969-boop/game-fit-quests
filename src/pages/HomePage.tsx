@@ -15,7 +15,7 @@ import { useRivalsAbove, useSetRival, useDivisionRanking } from "@/hooks/useRank
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useActivitySession } from "@/hooks/useActivitySession";
 import { useNavigate } from "react-router-dom";
-import { User, ChevronRight, TrendingUp, CheckCircle2, Flame, QrCode, X, Lock, Clock } from "lucide-react";
+import { User, ChevronRight, TrendingUp, CheckCircle2, Flame, QrCode, X, Lock, Clock, Gem } from "lucide-react";
 import HallOfFameShowcase from "@/components/HallOfFameShowcase";
 import RankMiniCard from "@/components/RankMiniCard";
 import { toast } from "sonner";
@@ -30,6 +30,7 @@ import {
 } from "@/data/whiteLevel1Data";
 import { WHITE_LV2_META, WHITE_LV2_PROMOTION_METRICS } from "@/data/whiteLevel2Data";
 import { supabase } from "@/integrations/supabase/client";
+import { useWallet } from "@/hooks/useWallet";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
@@ -68,6 +69,7 @@ const HomePage = () => {
   const { onboardingDone, safetyDone } = useOnboardingState();
   const { totalXp, status, metrics, activeLevelId, selfChallengeStreak } = useLocalProgress();
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
+  const { data: walletData } = useWallet();
   const widgetPrefs = loadHomeWidgetPrefs();
   const [showChallenge, setShowChallenge] = useState(false);
   const [qrAutoStarted, setQrAutoStarted] = useState(false);
@@ -198,10 +200,15 @@ const HomePage = () => {
           <p className="text-sm text-muted-foreground">안녕하세요 👋</p>
           <h1 className="text-2xl text-foreground">{profile.nickname || profile.name}</h1>
         </div>
-        <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
-          <User className="h-5 w-5 text-secondary-foreground" />
-        </button>
-      </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => navigate("/avatar")} className="flex items-center gap-1 rounded-full bg-accent/20 px-3 py-1.5 transition-all active:scale-95">
+            <Gem className="h-4 w-4 text-accent" />
+            <span className="text-sm font-bold text-accent-foreground">{walletData?.gems_balance?.toLocaleString() || 0}</span>
+          </button>
+          <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
+            <User className="h-5 w-5 text-secondary-foreground" />
+          </button>
+        </div>
 
       <div className="space-y-5">
         {/* QR Checkin Button */}
