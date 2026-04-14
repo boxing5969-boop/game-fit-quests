@@ -1,12 +1,16 @@
 import React, { useMemo } from "react";
 import { getCharacterImage, getCharacterByHash } from "@/data/characterPresets";
 import BlackLeagueAura from "@/components/BlackLeagueAura";
+import LayeredCharacterRenderer from "@/components/LayeredCharacterRenderer";
+import type { PartsSelection } from "@/data/characterPartsData";
 
 interface CharacterSpriteProps {
   /** Style key from preset's parts_json.style */
   style?: string;
   /** Fallback: deterministic char from userId */
   userId?: string;
+  /** Custom parts selection for layered SVG rendering */
+  partsJson?: { parts?: PartsSelection; style?: string };
   /** Display size */
   size?: "xs" | "sm" | "md" | "lg";
   /** Show idle bounce animation */
@@ -30,9 +34,12 @@ const SIZE_MAP = {
   lg: "w-32 h-32",  // 128px - preview
 };
 
+const SIZE_PX = { xs: 32, sm: 48, md: 80, lg: 128 };
+
 const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   style,
   userId,
+  partsJson,
   size = "sm",
   animate = false,
   className = "",
@@ -41,11 +48,16 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   level,
   auraMode,
 }) => {
+  // Determine rendering mode: layered SVG vs PNG preset
+  const isLayered = !!(partsJson?.parts && Object.keys(partsJson.parts).length > 0);
+  const presetStyle = partsJson?.style || style;
+
   const imgSrc = useMemo(() => {
-    if (style) return getCharacterImage(style);
+    if (isLayered) return null; // SVG mode
+    if (presetStyle) return getCharacterImage(presetStyle);
     if (userId) return getCharacterByHash(userId).image;
     return getCharacterImage();
-  }, [style, userId]);
+  }, [presetStyle, userId, isLayered]);
 
   // Auto-determine aura for Black League
   const isBlack = league === "black";
@@ -65,14 +77,22 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           level={isMaster ? "master" : "halo"}
         />
       )}
-      <img
-        src={imgSrc}
-        alt="캐릭터"
-        className={`relative z-10 h-full w-full object-contain drop-shadow-sm ${animate ? "animate-emote-idle" : ""}`}
-        style={{ imageRendering: "auto", willChange: animate ? "transform" : undefined }}
-        draggable={false}
-        loading="lazy"
-      />
+      {isLayered ? (
+        <LayeredCharacterRenderer
+          parts={partsJson!.parts!}
+          size={SIZE_PX[size]}
+          className={`relative z-10 h-full w-full ${animate ? "animate-emote-idle" : ""}`}
+        />
+      ) : (
+        <img
+          src={imgSrc!}
+          alt="캐릭터"
+          className={`relative z-10 h-full w-full object-contain drop-shadow-sm ${animate ? "animate-emote-idle" : ""}`}
+          style={{ imageRendering: "auto", willChange: animate ? "transform" : undefined }}
+          draggable={false}
+          loading="lazy"
+        />
+      )}
     </div>
   );
 };
