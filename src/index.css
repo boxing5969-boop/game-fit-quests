@@ -167,19 +167,22 @@
   100% { opacity: 0; transform: scale(0.4) translateY(20px); }
 }
 @keyframes emote-idle {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-3px) rotate(-0.8deg); }
-  50% { transform: translateY(-5px) rotate(0deg); }
-  75% { transform: translateY(-3px) rotate(0.8deg); }
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  20% { transform: translateY(-4px) rotate(-1deg) scale(1.01); }
+  40% { transform: translateY(-6px) rotate(0.5deg) scale(1); }
+  60% { transform: translateY(-3px) rotate(1deg) scale(0.99); }
+  80% { transform: translateY(-5px) rotate(-0.5deg) scale(1.01); }
 }
 @keyframes emote-punch {
-  0% { transform: translateX(0) scaleX(1) rotate(0deg); }
-  15% { transform: translateX(8px) scaleX(1.06) rotate(2deg); }
-  25% { transform: translateX(-2px) scaleX(0.97) rotate(-1deg); }
-  40% { transform: translateX(-8px) scaleX(1.06) rotate(-2deg); }
-  55% { transform: translateX(2px) scaleX(0.97) rotate(1deg); }
-  70% { transform: translateX(0) scaleX(1) rotate(0deg); }
-  100% { transform: translateX(0) scaleX(1) rotate(0deg); }
+  0% { transform: translateX(0) scaleX(1) scaleY(1) rotate(0deg); }
+  10% { transform: translateX(0) scaleX(0.92) scaleY(1.05) rotate(-2deg); }
+  22% { transform: translateX(10px) scaleX(1.08) scaleY(0.96) rotate(3deg); }
+  32% { transform: translateX(2px) scaleX(1) scaleY(1) rotate(0deg); }
+  42% { transform: translateX(0) scaleX(0.94) scaleY(1.04) rotate(2deg); }
+  55% { transform: translateX(-10px) scaleX(1.08) scaleY(0.96) rotate(-3deg); }
+  68% { transform: translateX(-2px) scaleX(1) scaleY(1) rotate(0deg); }
+  80% { transform: translateX(0) scaleX(0.97) scaleY(1.02) rotate(0deg); }
+  100% { transform: translateX(0) scaleX(1) scaleY(1) rotate(0deg); }
 }
 @keyframes emote-glow {
   0%, 100% { opacity: 0.3; transform: scale(0.7); }
@@ -202,8 +205,8 @@
 
 .animate-emote-enter { animation: emote-enter 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards; }
 .animate-emote-exit { animation: emote-exit 0.4s ease-in forwards; }
-.animate-emote-idle { animation: emote-idle 2.8s ease-in-out infinite; }
-.animate-emote-punch { animation: emote-punch 0.6s ease-in-out; }
+.animate-emote-idle { animation: emote-idle 2.5s ease-in-out infinite; }
+.animate-emote-punch { animation: emote-punch 0.7s ease-in-out; }
 .animate-emote-glow { animation: emote-glow 3s ease-in-out infinite; }
 .animate-emote-speed-line { animation: emote-speed-line 0.35s ease-out forwards; }
 .animate-emote-speed-line-r { animation: emote-speed-line-r 0.35s ease-out 0.15s forwards; }
