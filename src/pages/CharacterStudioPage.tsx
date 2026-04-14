@@ -451,22 +451,13 @@ function CustomizeTab({ customization, onChange }: {
 
 // Visual preview for each option type
 function OptionPreview({ category, optionKey }: { category: string; optionKey: string }) {
-  if (category === "gloveColor") {
-    const color = GLOVE_COLORS[optionKey] || "#888";
-    return (
-      <div className="flex h-8 w-8 items-center justify-center">
-        <div className="h-6 w-6 rounded-full border-2 border-card shadow-sm" style={{ backgroundColor: color }} />
-      </div>
-    );
-  }
   if (category === "effect") {
     const emoji = EFFECT_EMOJIS[optionKey] || "✨";
     return <span className="text-2xl">{emoji}</span>;
   }
   if (category === "accessory") {
     const emojis: Record<string, string> = {
-      headband_red: "🎗️", headband_black: "🖤", sunglasses: "🕶️",
-      bandage: "🩹", crown: "👑", star_mark: "⭐",
+      crown: "👑", star_mark: "⭐",
     };
     return <span className="text-2xl">{emojis[optionKey] || "🎀"}</span>;
   }
