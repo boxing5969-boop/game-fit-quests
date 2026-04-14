@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import type { CharacterCustomization } from "@/data/characterCustomizationData";
 
 export const useCharacterPresets = () => {
   return useQuery({
@@ -69,7 +70,6 @@ export const useAssignCharacter = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ userId, presetId }: { userId: string; presetId: string }) => {
-      // Upsert assignment
       const { error } = await supabase
         .from("member_character_assignments")
         .upsert(
@@ -130,6 +130,80 @@ export const useSaveCustomPreset = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["character-presets"] });
       qc.invalidateQueries({ queryKey: ["character-assignment"] });
+    },
+  });
+};
+
+/**
+ * Save customization overlay on top of existing preset style.
+ * Updates the preset's parts_json to include customization data,
+ * then assigns it to the user.
+ */
+export const useSaveCustomization = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({
+      style,
+      customization,
+    }: {
+      style: string;
+      customization: CharacterCustomization;
+    }) => {
+      if (!user?.id) throw new Error("로그인이 필요합니다");
+
+      const partsJson = { style, customization } as unknown as Record<string, any>;
+
+      // Create or update a personal preset for this user
+      const { data: existing } = await supabase
+        .from("character_presets")
+        .select("id")
+        .eq("created_by", user.id)
+        .eq("is_template", false)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let presetId: string;
+
+      if (existing) {
+        const { error } = await supabase
+          .from("character_presets")
+          .update({ parts_json: partsJson as any, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+        if (error) throw error;
+        presetId = existing.id;
+      } else {
+        const { data: newPreset, error } = await supabase
+          .from("character_presets")
+          .insert([{
+            name: `${user.id}_custom`,
+            parts_json: partsJson as any,
+            created_by: user.id,
+            is_template: false,
+          }])
+          .select()
+          .single();
+        if (error) throw error;
+        presetId = newPreset.id;
+      }
+
+      // Assign this preset to the user
+      const { error: assignError } = await supabase
+        .from("member_character_assignments")
+        .upsert(
+          { user_id: user.id, preset_id: presetId, is_active: true, display_mode: "sprite" },
+          { onConflict: "user_id" }
+        );
+      if (assignError) throw assignError;
+
+      return { presetId };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["character-assignment"] });
+      qc.invalidateQueries({ queryKey: ["character-assignments-all"] });
+      qc.invalidateQueries({ queryKey: ["character-presets"] });
     },
   });
 };

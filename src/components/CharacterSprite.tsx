@@ -3,35 +3,35 @@ import { getCharacterImage, getCharacterByHash } from "@/data/characterPresets";
 import BlackLeagueAura from "@/components/BlackLeagueAura";
 import LayeredCharacterRenderer from "@/components/LayeredCharacterRenderer";
 import type { PartsSelection } from "@/data/characterPartsData";
+import type { CharacterCustomization } from "@/data/characterCustomizationData";
+import {
+  GLOVE_COLORS,
+  EFFECT_EMOJIS,
+  ACCESSORY_EMOJIS,
+  FRAME_STYLES,
+  TITLE_LABELS,
+} from "@/data/characterCustomizationData";
 
 interface CharacterSpriteProps {
-  /** Style key from preset's parts_json.style */
   style?: string;
-  /** Fallback: deterministic char from userId */
   userId?: string;
-  /** Custom parts selection for layered SVG rendering */
-  partsJson?: { parts?: PartsSelection; style?: string };
-  /** Display size */
+  partsJson?: { parts?: PartsSelection; style?: string; customization?: CharacterCustomization };
   size?: "xs" | "sm" | "md" | "lg";
-  /** Show idle bounce animation */
   animate?: boolean;
-  /** Additional className */
   className?: string;
-  /** onClick handler */
   onClick?: () => void;
-  /** Member's league for auto-aura */
   league?: "white" | "blue" | "red" | "black";
-  /** Member's level within league (1-10) */
   level?: number;
-  /** Aura rendering mode */
   auraMode?: "compact" | "detail";
+  /** CSS overlay customization */
+  customization?: CharacterCustomization;
 }
 
 const SIZE_MAP = {
-  xs: "w-8 h-8",    // 32px - dense rail (20-30 chars)
-  sm: "w-12 h-12",  // 48px - list items
-  md: "w-20 h-20",  // 80px - cards
-  lg: "w-32 h-32",  // 128px - preview
+  xs: "w-8 h-8",
+  sm: "w-12 h-12",
+  md: "w-20 h-20",
+  lg: "w-32 h-32",
 };
 
 const SIZE_PX = { xs: 32, sm: 48, md: 80, lg: 128 };
@@ -47,23 +47,31 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   league,
   level,
   auraMode,
+  customization: customizationProp,
 }) => {
-  // Determine rendering mode: layered SVG vs PNG preset
   const isLayered = !!(partsJson?.parts && Object.keys(partsJson.parts).length > 0);
   const presetStyle = partsJson?.style || style;
 
+  // Merge customization from prop or partsJson
+  const customization = customizationProp || partsJson?.customization;
+
   const imgSrc = useMemo(() => {
-    if (isLayered) return null; // SVG mode
+    if (isLayered) return null;
     if (presetStyle) return getCharacterImage(presetStyle);
     if (userId) return getCharacterByHash(userId).image;
     return getCharacterImage();
   }, [presetStyle, userId, isLayered]);
 
-  // Auto-determine aura for Black League
   const isBlack = league === "black";
   const isMaster = isBlack && (level ?? 0) >= 10;
   const showAura = isBlack;
-  const effectiveAuraMode = auraMode ?? (size === "xs" ? "compact" : size === "sm" ? "compact" : "detail");
+  const effectiveAuraMode = auraMode ?? (size === "xs" || size === "sm" ? "compact" : "detail");
+
+  // Only show overlays on md/lg sizes
+  const showOverlays = size === "md" || size === "lg";
+  const showEffectSmall = size === "sm"; // minimal effect on sm
+
+  const frameClass = customization?.frame ? FRAME_STYLES[customization.frame] || "" : "";
 
   return (
     <div
@@ -77,6 +85,12 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           level={isMaster ? "master" : "halo"}
         />
       )}
+
+      {/* Frame glow */}
+      {customization?.frame && (
+        <div className={`absolute inset-0 rounded-full z-[5] ${frameClass}`} />
+      )}
+
       {isLayered ? (
         <LayeredCharacterRenderer
           parts={partsJson!.parts!}
@@ -93,7 +107,72 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           loading="lazy"
         />
       )}
+
+      {/* Effect particles */}
+      {customization?.effect && (showOverlays || showEffectSmall) && (
+        <EffectOverlay effect={customization.effect} size={size} />
+      )}
+
+      {/* Accessory emoji overlay — md/lg only */}
+      {customization?.accessory && showOverlays && (
+        <AccessoryOverlay accessory={customization.accessory} size={size} />
+      )}
+
+      {/* Glove color badge — md/lg only */}
+      {customization?.gloveColor && showOverlays && (
+        <div
+          className="absolute -bottom-1 -right-1 z-20 rounded-full border-2 border-card"
+          style={{
+            width: size === "lg" ? 20 : 14,
+            height: size === "lg" ? 20 : 14,
+            backgroundColor: GLOVE_COLORS[customization.gloveColor] || GLOVE_COLORS.red,
+          }}
+        />
+      )}
+
+      {/* Title label — lg only */}
+      {customization?.title && size === "lg" && (
+        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap">
+          <span className={`text-[10px] font-bold ${TITLE_LABELS[customization.title]?.color || "text-foreground"}`}>
+            {TITLE_LABELS[customization.title]?.text || customization.title}
+          </span>
+        </div>
+      )}
     </div>
+  );
+};
+
+// ===== Effect Particles =====
+const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, size }) => {
+  const emoji = EFFECT_EMOJIS[effect] || "✨";
+  const isSmall = size === "sm" || size === "xs";
+
+  if (isSmall) {
+    return (
+      <span className="absolute -top-1 -right-1 z-20 text-[10px] animate-pulse">
+        {emoji}
+      </span>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none overflow-visible">
+      <span className="absolute top-0 left-0 text-xs animate-bounce" style={{ animationDelay: "0s" }}>{emoji}</span>
+      <span className="absolute top-0 right-0 text-xs animate-bounce" style={{ animationDelay: "0.3s" }}>{emoji}</span>
+      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs animate-bounce" style={{ animationDelay: "0.6s" }}>{emoji}</span>
+    </div>
+  );
+};
+
+// ===== Accessory Emoji =====
+const AccessoryOverlay: React.FC<{ accessory: string; size: string }> = ({ accessory }) => {
+  const config = ACCESSORY_EMOJIS[accessory];
+  if (!config) return null;
+
+  return (
+    <span className={`absolute z-20 text-base pointer-events-none ${config.position}`}>
+      {config.emoji}
+    </span>
   );
 };
 
