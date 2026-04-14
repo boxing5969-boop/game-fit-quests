@@ -1,0 +1,3 @@
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS onboarding_done boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS safety_done boolean NOT NULL DEFAULT false;
