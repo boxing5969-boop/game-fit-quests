@@ -1,7 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Home, Target, TrendingUp, Trophy, Award, Menu, BookOpen, User, Settings, Map, Gift, X, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const mainTabs = [
