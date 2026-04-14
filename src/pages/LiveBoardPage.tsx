@@ -102,9 +102,9 @@ const LiveBoardPage = () => {
     return url;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Clock
+  // Clock — update every 15s so elapsed times refresh
   useEffect(() => {
-    const t = setInterval(() => setCurrentTime(new Date()), 30000);
+    const t = setInterval(() => setCurrentTime(new Date()), 15000);
     return () => clearInterval(t);
   }, []);
 
@@ -380,7 +380,10 @@ const LiveBoardPage = () => {
   };
 
   const fmtTime = (s: string) => new Date(s).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
-  const elapsedMin = (t: number) => Math.floor((Date.now() - t) / 60000);
+  const elapsedMin = (t: number) => {
+    const mins = Math.floor((Date.now() - t) / 60000);
+    return mins > 120 ? "–" : mins; // Cap abnormal durations
+  };
 
   const MemberAvatar = ({ url, name, sizeClass = "h-14 w-14" }: { url?: string | null; name: string; sizeClass?: string }) => (
     <Avatar className={`${sizeClass} border-2 border-gray-700`}>

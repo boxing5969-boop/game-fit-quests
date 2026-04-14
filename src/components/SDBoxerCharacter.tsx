@@ -32,13 +32,12 @@ interface SDBoxerCharacterProps {
 }
 
 const LEAGUE_GLOW: Record<League, string> = {
-  white: "0 0 30px rgba(200,200,200,0.4), 0 0 60px rgba(255,255,255,0.15)",
-  blue: "0 0 30px rgba(59,130,246,0.5), 0 0 60px rgba(59,130,246,0.2)",
-  red: "0 0 30px rgba(239,68,68,0.5), 0 0 60px rgba(239,68,68,0.2)",
-  black: "0 0 30px rgba(234,179,8,0.5), 0 0 60px rgba(234,179,8,0.25)",
+  white: "0 0 24px rgba(200,200,200,0.35), 0 0 48px rgba(255,255,255,0.12)",
+  blue: "0 0 24px rgba(59,130,246,0.45), 0 0 48px rgba(59,130,246,0.18)",
+  red: "0 0 24px rgba(239,68,68,0.45), 0 0 48px rgba(239,68,68,0.18)",
+  black: "0 0 24px rgba(234,179,8,0.45), 0 0 48px rgba(234,179,8,0.2)",
 };
 
-/** Deterministic character selection based on nickname */
 function getCharacterIndex(nickname: string): number {
   let hash = 0;
   for (let i = 0; i < nickname.length; i++) {
@@ -65,13 +64,13 @@ const SDBoxerCharacter: React.FC<SDBoxerCharacterProps> = ({
     }
   }, [state]);
 
-  // Periodic punch effect in idle
+  // Periodic punch effect in idle — every 4-6s
   useEffect(() => {
     if (animState !== "idle") return;
     const interval = setInterval(() => {
       setShowPunchEffect(true);
-      setTimeout(() => setShowPunchEffect(false), 600);
-    }, 5000 + Math.random() * 2000);
+      setTimeout(() => setShowPunchEffect(false), 700);
+    }, 4000 + Math.random() * 2000);
     return () => clearInterval(interval);
   }, [animState]);
 
@@ -83,19 +82,22 @@ const SDBoxerCharacter: React.FC<SDBoxerCharacterProps> = ({
   return (
     <div className={`flex flex-col items-center select-none ${wrapperAnim}`}>
       {/* Character image with animations */}
-      <div className="relative">
+      <div className="relative" style={{ transformOrigin: "center bottom" }}>
         {/* Glow ring behind character */}
         <div
-          className="absolute inset-0 rounded-full blur-2xl opacity-40 animate-emote-glow"
-          style={{ boxShadow: LEAGUE_GLOW[league], transform: "scale(0.7)" }}
+          className="absolute inset-0 rounded-full blur-2xl animate-emote-glow"
+          style={{ boxShadow: LEAGUE_GLOW[league], transform: "scale(0.6)" }}
         />
 
-        {/* Character image */}
-        <div className={`relative ${showPunchEffect ? "animate-emote-punch" : "animate-emote-idle"}`}>
+        {/* Character image — transform-origin bottom center for natural boxing feel */}
+        <div
+          className={`relative ${showPunchEffect ? "animate-emote-punch" : "animate-emote-idle"}`}
+          style={{ transformOrigin: "center bottom" }}
+        >
           <img
             src={characterImg}
             alt={nickname}
-            className="w-[clamp(40px,5vw,72px)] h-auto object-contain drop-shadow-lg"
+            className="w-[clamp(48px,6vw,80px)] h-auto object-contain drop-shadow-lg"
             style={{ imageRendering: "auto", willChange: "transform" }}
             draggable={false}
           />
@@ -103,15 +105,15 @@ const SDBoxerCharacter: React.FC<SDBoxerCharacterProps> = ({
           {/* Punch effect lines */}
           {showPunchEffect && (
             <>
-              <div className="absolute top-1/3 -right-3 animate-emote-speed-line">
-                <svg width="24" height="8" viewBox="0 0 24 8">
-                  <line x1="0" y1="2" x2="18" y2="2" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
-                  <line x1="4" y1="6" x2="14" y2="6" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+              <div className="absolute top-1/3 -right-4 animate-emote-speed-line">
+                <svg width="28" height="10" viewBox="0 0 28 10">
+                  <line x1="0" y1="3" x2="22" y2="3" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.75" />
+                  <line x1="6" y1="7" x2="16" y2="7" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
                 </svg>
               </div>
-              <div className="absolute top-1/4 -left-2 animate-emote-speed-line-r">
-                <svg width="20" height="6" viewBox="0 0 20 6">
-                  <line x1="20" y1="3" x2="6" y2="3" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+              <div className="absolute top-1/4 -left-3 animate-emote-speed-line-r">
+                <svg width="22" height="8" viewBox="0 0 22 8">
+                  <line x1="22" y1="4" x2="6" y2="4" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.65" />
                 </svg>
               </div>
             </>
@@ -120,28 +122,28 @@ const SDBoxerCharacter: React.FC<SDBoxerCharacterProps> = ({
 
         {/* Sparkle */}
         <div className="absolute -top-1 -right-1 animate-emote-sparkle">
-          <svg width="16" height="16" viewBox="0 0 16 16">
-            <path d="M8 0 L9.5 6.5 L16 8 L9.5 9.5 L8 16 L6.5 9.5 L0 8 L6.5 6.5Z" fill="white" opacity="0.6" />
+          <svg width="14" height="14" viewBox="0 0 14 14">
+            <path d="M7 0 L8.2 5.8 L14 7 L8.2 8.2 L7 14 L5.8 8.2 L0 7 L5.8 5.8Z" fill="white" opacity="0.55" />
           </svg>
         </div>
       </div>
 
-      {/* Nameplate */}
-      <div className="mt-3 text-center" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
-        <p className="text-[clamp(2rem,4vw,4rem)] font-black leading-none tracking-tight text-white">
+      {/* Nameplate — close to character */}
+      <div className="mt-2 text-center" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
+        <p className="text-[clamp(1.8rem,3.5vw,3.5rem)] font-black leading-none tracking-tight text-white">
           {nickname}
         </p>
-        <p className="text-[clamp(1rem,2vw,2rem)] font-black mt-1 opacity-80 text-white">
+        <p className="text-[clamp(0.9rem,1.8vw,1.6rem)] font-black mt-1 opacity-80 text-white">
           {formatRank(league, level)}
         </p>
-        <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-black/20 backdrop-blur-sm px-4 py-1.5">
-          <span className="text-[clamp(0.85rem,1.5vw,1.2rem)]">🥊</span>
-          <span className="text-[clamp(0.8rem,1.3vw,1.1rem)] font-bold text-white/90">
+        <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-black/20 backdrop-blur-sm px-3 py-1">
+          <span className="text-[clamp(0.75rem,1.2vw,1rem)]">🥊</span>
+          <span className="text-[clamp(0.7rem,1.1vw,0.95rem)] font-bold text-white/90">
             {subtitle || "복싱 레벨업 중"}
           </span>
         </div>
         {branchName && (
-          <p className="mt-1 text-[clamp(0.7rem,1vw,0.9rem)] text-white/50 font-bold">{branchName}</p>
+          <p className="mt-1 text-[clamp(0.65rem,0.9vw,0.8rem)] text-white/50 font-bold">{branchName}</p>
         )}
       </div>
     </div>
