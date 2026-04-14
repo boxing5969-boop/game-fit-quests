@@ -108,3 +108,28 @@ export const useSavePreset = () => {
     },
   });
 };
+
+export const useSaveCustomPreset = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async ({ name, partsJson }: { name: string; partsJson: Record<string, any> }) => {
+      const { data, error } = await supabase
+        .from("character_presets")
+        .insert({
+          name,
+          parts_json: partsJson,
+          created_by: user?.id,
+          is_template: false,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["character-presets"] });
+      qc.invalidateQueries({ queryKey: ["character-assignment"] });
+    },
+  });
+};

@@ -5,6 +5,7 @@ interface RailMember {
   userId: string;
   nickname: string;
   characterStyle?: string;
+  partsJson?: Record<string, any>;
   rank?: string;
   level?: number;
 }
@@ -36,6 +37,7 @@ const CharacterRail: React.FC<CharacterRailProps> = ({
             <CharacterSprite
               style={m.characterStyle}
               userId={m.userId}
+              partsJson={m.partsJson as any}
               size="xs"
               animate
               league={m.rank as any}
