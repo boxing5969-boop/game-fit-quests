@@ -14,3 +14,7 @@ type: feature
 - 기존 프리셋 12종, Black 후광 모두 유지
 - Hall of Fame: PNG 프리셋 기반으로 동작, 변경 없음
 - 저장: 항상 style 키로 저장, parts 키는 사용하지 않음
+- DB character_parts: 81개 파츠 실제 DB에 시드 완료 (is_placeholder=false)
+- 공유 상수: sharedConstants.ts에 SECRET_MISSIONS, DAN_CHALLENGES, FINAL_REWARDS 통합
+- BottomNav: CharacterSprite 제거로 불필요한 리렌더 해소
+- AuthContext signUp: birthDate 파라미터 이름 타입/구현 일치 완료
