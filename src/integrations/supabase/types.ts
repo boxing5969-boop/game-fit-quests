@@ -125,6 +125,86 @@ export type Database = {
         }
         Relationships: []
       }
+      avatar_item_categories: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      avatar_items: {
+        Row: {
+          asset_url: string | null
+          category_code: string
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          league_requirement: string | null
+          name: string
+          price_gems: number
+          rarity: string
+          sort_order: number
+          thumb_url: string | null
+        }
+        Insert: {
+          asset_url?: string | null
+          category_code: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          league_requirement?: string | null
+          name: string
+          price_gems?: number
+          rarity?: string
+          sort_order?: number
+          thumb_url?: string | null
+        }
+        Update: {
+          asset_url?: string | null
+          category_code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          league_requirement?: string | null
+          name?: string
+          price_gems?: number
+          rarity?: string
+          sort_order?: number
+          thumb_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avatar_items_category_code_fkey"
+            columns: ["category_code"]
+            isOneToOne: false
+            referencedRelation: "avatar_item_categories"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       badges: {
         Row: {
           code: string
@@ -937,6 +1017,74 @@ export type Database = {
           },
         ]
       }
+      user_avatar_equipment: {
+        Row: {
+          category_code: string
+          equipped_at: string
+          id: string
+          item_id: string
+          user_id: string
+        }
+        Insert: {
+          category_code: string
+          equipped_at?: string
+          id?: string
+          item_id: string
+          user_id: string
+        }
+        Update: {
+          category_code?: string
+          equipped_at?: string
+          id?: string
+          item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_avatar_equipment_category_code_fkey"
+            columns: ["category_code"]
+            isOneToOne: false
+            referencedRelation: "avatar_item_categories"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "user_avatar_equipment_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "avatar_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_owned_items: {
+        Row: {
+          acquired_at: string
+          id: string
+          item_id: string
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          id?: string
+          item_id: string
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          id?: string
+          item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_owned_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "avatar_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -951,6 +1099,60 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_wallets: {
+        Row: {
+          gems_balance: number
+          id: string
+          total_earned: number
+          total_spent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          gems_balance?: number
+          id?: string
+          total_earned?: number
+          total_spent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          gems_balance?: number
+          id?: string
+          total_earned?: number
+          total_spent?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          meta_json: Json
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          meta_json?: Json
+          reason?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          meta_json?: Json
+          reason?: string
           user_id?: string
         }
         Relationships: []
@@ -1014,6 +1216,7 @@ export type Database = {
         Args: { _body?: string; _title: string; _user_id: string }
         Returns: string
       }
+      equip_avatar_item: { Args: { _item_id: string }; Returns: undefined }
       get_boss_conquerors: {
         Args: { _branch_name: string; _limit?: number }
         Returns: {
@@ -1117,6 +1320,10 @@ export type Database = {
           weekly_xp: number
         }[]
       }
+      grant_gems: {
+        Args: { _amount: number; _reason?: string; _user_id: string }
+        Returns: undefined
+      }
       grant_manual_xp: {
         Args: { _amount: number; _member_id: string; _reason?: string }
         Returns: undefined
@@ -1143,6 +1350,7 @@ export type Database = {
         Args: { _coach_note?: string; _member_id: string }
         Returns: Json
       }
+      purchase_avatar_item: { Args: { _item_id: string }; Returns: Json }
       rank_order: {
         Args: { _rank: Database["public"]["Enums"]["rank_name"] }
         Returns: number
@@ -1189,6 +1397,10 @@ export type Database = {
         Returns: Json
       }
       set_rival: { Args: { _rival_id: string }; Returns: undefined }
+      unequip_avatar_item: {
+        Args: { _category_code: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "member" | "coach" | "admin" | "branch_manager" | "super_admin"
