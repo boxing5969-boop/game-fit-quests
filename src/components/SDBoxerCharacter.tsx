@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { formatRank } from "@/lib/rankLabels";
+import BlackLeagueAura from "@/components/BlackLeagueAura";
 
 import boxer1 from "@/assets/boxers/boxer_1.png";
 import boxer2 from "@/assets/boxers/boxer_2.png";
