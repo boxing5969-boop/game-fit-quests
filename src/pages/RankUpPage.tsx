@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Gift, ChevronDown, Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp, Crown, Shield, Award, Sparkles, ExternalLink, X, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Gift, ChevronDown, Lock, Star, Trophy, User, Play, CheckCircle2, ArrowUp, Crown, Sparkles, ExternalLink, X, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { LEAGUE_SUMMARIES, FULL_VALUE_MAP } from "@/data/valueMapData";
 import { useLevels, useManualLevelUp, usePassBossBattle } from "@/hooks/useQuestData";
@@ -16,47 +16,7 @@ import { isManagerRole } from "@/lib/rankLabels";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { PROMOTION_METRICS, RECOMMENDED_PATHS } from "@/data/whiteLevel1Data";
-
-const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
-const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
-const RANK_ICONS: Record<string, string> = { white: "⚪", blue: "🔵", red: "🔴", black: "⚫" };
-
-const RANK_BG: Record<string, string> = {
-  white: "from-muted/50 to-muted/20",
-  blue: "from-rank-blue/10 to-rank-blue/5",
-  red: "from-rank-red/10 to-rank-red/5",
-  black: "from-rank-black/10 to-rank-black/5",
-};
-
-const SECRET_MISSIONS = [
-  {
-    id: "secret-1", icon: Award, emoji: "🏅",
-    title: "한국복싱협회 단증 심사관", subtitle: "심사관이 되어 후배를 이끄세요",
-    description: "한국복싱협회 공인 단증 심사관 자격을 취득하세요. 승단 신청서를 작성하고 도전하세요!",
-    cta: "🥊 도전하기!", linkTo: "https://korea-boxing.lovable.app", isExternal: true,
-  },
-  {
-    id: "secret-2", icon: Shield, emoji: "🛡️",
-    title: "인증 복싱코치 자격증", subtitle: "공식 코치로 인정받으세요",
-    description: "한국 코치협회 인증 복싱코치 자격증을 획득하세요. 승단 신청서를 작성하고 도전하세요!",
-    cta: "🥊 도전하기!", linkTo: "https://korea-boxing.lovable.app", isExternal: true,
-  },
-];
-
-const DAN_CHALLENGES = [
-  { rank: "white", dan: "1단", message: "화이트 10레벨 달성! 🥊\n1단 단증에 도전하세요!", emoji: "🥇" },
-  { rank: "blue", dan: "2단", message: "블루 10레벨 달성! 🥊\n2단 단증에 도전하세요!", emoji: "🥈" },
-  { rank: "red", dan: "3단", message: "레드 10레벨 달성! 🥊\n3단 단증에 도전하세요!", emoji: "🥉" },
-  { rank: "black", dan: "4단", message: "블랙 10레벨 달성! 🥊\n4단 단증에 도전하세요!", emoji: "🏆" },
-];
-
-const FINAL_REWARDS = [
-  { emoji: "💰", label: "153복싱짐 50% 영구 할인" },
-  { emoji: "🏆", label: "명예의 전당 입성" },
-  { emoji: "🔐", label: "명예의 전당 전용 락카" },
-  { emoji: "👕", label: "운동복 평생 무료 제공" },
-  { emoji: "🌐", label: "153복싱짐 홈페이지 명예의 전당" },
-];
+import { RANK_ORDER, RANK_LABELS, RANK_ICONS, SECRET_MISSIONS, DAN_CHALLENGES, FINAL_REWARDS } from "@/data/sharedConstants";
 
 type TabType = "valuemap" | "levelmap";
 

@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Home, Target, TrendingUp, Trophy, Award, Menu, BookOpen, User, Settings, Map, Gift, X, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import CharacterSprite from "@/components/CharacterSprite";
-import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
+import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const mainTabs = [
