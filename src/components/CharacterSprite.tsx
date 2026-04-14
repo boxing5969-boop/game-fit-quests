@@ -6,7 +6,6 @@ import type { PartsSelection } from "@/data/characterPartsData";
 const LayeredCharacterRenderer = lazy(() => import("@/components/LayeredCharacterRenderer"));
 import type { CharacterCustomization } from "@/data/characterCustomizationData";
 import {
-  GLOVE_COLORS,
   EFFECT_EMOJIS,
   ACCESSORY_CONFIGS,
   FRAME_STYLES,
@@ -71,10 +70,6 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
 
   const frameClass = customization?.frame ? FRAME_STYLES[customization.frame] || "" : "";
 
-  // Glove color overlay style — visible tinted circles on both fists
-  const gloveColor = customization?.gloveColor ? GLOVE_COLORS[customization.gloveColor] : null;
-  const gloveSize = size === "lg" ? 22 : size === "md" ? 14 : 8;
-
   return (
     <div
       className={`relative flex-shrink-0 select-none ${SIZE_MAP[size]} ${onClick ? "cursor-pointer active:scale-95" : ""} ${className}`}
@@ -93,11 +88,11 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         <div className={`absolute inset-0 rounded-full z-[5] ${frameClass}`} />
       )}
 
-      {/* === UNIFIED ANIMATION CONTAINER === 
+      {/* === UNIFIED ANIMATION CONTAINER ===
            All overlays are INSIDE this container so they move with the boxer */}
       <div className={`relative z-10 h-full w-full ${animate ? "animate-emote-idle" : ""}`}
            style={{ willChange: animate ? "transform" : undefined }}>
-        
+
         {isLayered ? (
           <Suspense fallback={<div className="h-full w-full animate-pulse rounded-full bg-muted" />}>
             <LayeredCharacterRenderer
@@ -117,52 +112,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           />
         )}
 
-        {/* ===== GLOVE COLOR — dual colored circles on both fists ===== */}
-        {gloveColor && showOverlays && (
-          <>
-            {/* Left glove */}
-            <div
-              className="absolute z-20 rounded-full shadow-lg"
-              style={{
-                width: gloveSize,
-                height: gloveSize,
-                backgroundColor: gloveColor,
-                bottom: size === "lg" ? "18%" : "16%",
-                left: size === "lg" ? "12%" : "10%",
-                border: `2px solid ${gloveColor}`,
-                boxShadow: `0 0 ${size === "lg" ? 10 : 6}px ${gloveColor}80, inset 0 -2px 4px rgba(0,0,0,0.3)`,
-              }}
-            />
-            {/* Right glove */}
-            <div
-              className="absolute z-20 rounded-full shadow-lg"
-              style={{
-                width: gloveSize,
-                height: gloveSize,
-                backgroundColor: gloveColor,
-                bottom: size === "lg" ? "18%" : "16%",
-                right: size === "lg" ? "12%" : "10%",
-                border: `2px solid ${gloveColor}`,
-                boxShadow: `0 0 ${size === "lg" ? 10 : 6}px ${gloveColor}80, inset 0 -2px 4px rgba(0,0,0,0.3)`,
-              }}
-            />
-            {/* Color band across bottom for extra visibility */}
-            <div
-              className="absolute z-[15] rounded-b-full"
-              style={{
-                height: size === "lg" ? 6 : 4,
-                left: "20%",
-                right: "20%",
-                bottom: size === "lg" ? "12%" : "10%",
-                backgroundColor: gloveColor,
-                opacity: 0.5,
-                filter: "blur(2px)",
-              }}
-            />
-          </>
-        )}
-
-        {/* ===== ACCESSORY — properly sized & anchored ===== */}
+        {/* ===== ACCESSORY — only crown/star_mark that float above/beside ===== */}
         {customization?.accessory && showOverlays && (
           <AccessoryOverlay accessory={customization.accessory} sizePx={px} />
         )}
@@ -185,8 +135,8 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   );
 };
 
-// ===== Effect Particles — larger, more visible =====
-const EffectOverlay: React.FC<{ effect: string; size: string; sizePx: number }> = ({ effect, size, sizePx }) => {
+// ===== Effect Particles =====
+const EffectOverlay: React.FC<{ effect: string; size: string; sizePx: number }> = ({ effect, size }) => {
   const emoji = EFFECT_EMOJIS[effect] || "✨";
   const isSmall = size === "sm" || size === "xs";
 
@@ -215,7 +165,7 @@ const EffectOverlay: React.FC<{ effect: string; size: string; sizePx: number }> 
   );
 };
 
-// ===== Accessory — styled HTML elements, not just emoji =====
+// ===== Accessory — only crown & star_mark =====
 const AccessoryOverlay: React.FC<{ accessory: string; sizePx: number }> = ({ accessory, sizePx }) => {
   const config = ACCESSORY_CONFIGS[accessory];
   if (!config) return null;
