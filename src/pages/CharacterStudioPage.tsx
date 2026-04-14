@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Shuffle, Save, Check, Sparkles, Lock, ChevronRight, Crown, Gem, RotateCcw, Paintbrush } from "lucide-react";
+import { ArrowLeft, Shuffle, Save, Check, Sparkles, Lock, ChevronRight, Crown, Gem, RotateCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { PREBUILT_CHARACTERS, getRandomCharacter } from "@/data/characterPresets";
 import { getCurrentMilestone, UNLOCK_MILESTONES, getUnlockedPartKeys } from "@/data/characterUnlockData";
