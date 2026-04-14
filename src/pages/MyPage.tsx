@@ -71,35 +71,54 @@ const MyPage = () => {
       </div>
 
       <div className="space-y-5">
-        {/* Profile Card */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <AvatarUpload size="lg" />
-              {myCharacter?.character_presets && (
-                <div className="absolute -right-2 -bottom-2">
-                  <CharacterSprite
-                    style={(myCharacter.character_presets.parts_json as any)?.style}
-                    userId={profile.user_id}
-                    partsJson={myCharacter.character_presets.parts_json as any}
-                    size="sm"
-                    animate
-                    league={progress.current_rank as any}
-                    level={progress.current_level}
-                  />
+        {/* Character Hero Card */}
+        <div className="animate-slide-up rounded-2xl border border-border bg-gradient-to-b from-card to-secondary/20 p-5 shadow-sm">
+          <div className="flex items-start gap-4">
+            {/* Large character preview */}
+            <div className="relative flex-shrink-0">
+              {myCharacter?.character_presets ? (
+                <CharacterSprite
+                  style={(myCharacter.character_presets.parts_json as any)?.style}
+                  userId={profile.user_id}
+                  partsJson={myCharacter.character_presets.parts_json as any}
+                  size="lg"
+                  animate
+                  league={progress.current_rank as any}
+                  level={progress.current_level}
+                  className="!w-28 !h-28"
+                />
+              ) : (
+                <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-muted">
+                  <span className="text-4xl">🥊</span>
                 </div>
               )}
+              <button
+                onClick={() => navigate("/character-studio")}
+                className="absolute -bottom-1 -right-1 rounded-full bg-primary p-1.5 shadow-md active:scale-95 transition-transform"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+              </button>
             </div>
-            <div className="flex-1">
+            {/* Profile info */}
+            <div className="flex-1 pt-1">
               <h2 className="text-lg text-foreground">{profile.nickname || profile.name}</h2>
               <p className="text-sm text-muted-foreground">{profile.name}</p>
-              <div className="mt-1 flex items-center gap-2">
+              <div className="mt-1.5 flex items-center gap-2">
                 <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} isMaster={isManagerRole(role)} />
                 {role && role !== "member" && (
                   <span className="rounded-full bg-accent/30 px-2 py-0.5 text-xs font-bold text-accent-foreground">
                     {role === "branch_manager" || role === "coach" ? "관장님" : role === "super_admin" || role === "admin" ? "전체 관리자" : role}
                   </span>
                 )}
+              </div>
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => navigate("/character-studio")}
+                  className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary active:scale-95"
+                >
+                  캐릭터 스튜디오
+                </button>
+                <AvatarUpload size="sm" />
               </div>
             </div>
           </div>
@@ -130,42 +149,24 @@ const MyPage = () => {
           <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} last />
         </div>
 
-        {/* Avatar & Gems */}
+        {/* Character & Items - unified */}
         <button
-          onClick={() => navigate("/avatar")}
+          onClick={() => navigate("/character-studio")}
           className="w-full animate-slide-up rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 p-4 shadow-sm transition-all active:scale-[0.98]"
           style={{ animationDelay: "0.08s" }}
         >
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20">
-              <Palette className="h-6 w-6 text-primary" />
+              <Sparkles className="h-6 w-6 text-primary" />
             </div>
             <div className="flex-1 text-left">
-              <p className="text-sm font-bold text-foreground">내 복서 꾸미기</p>
-              <p className="text-xs text-muted-foreground">아이템을 모아 캐릭터를 꾸며보세요</p>
+              <p className="text-sm font-bold text-foreground">캐릭터 스튜디오</p>
+              <p className="text-xs text-muted-foreground">만들기 · 꾸미기 · 성장시키기</p>
             </div>
             <div className="flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1.5">
               <Gem className="h-4 w-4 text-accent" />
               <span className="text-sm font-bold text-accent-foreground">{walletData?.gems_balance?.toLocaleString() || 0}</span>
             </div>
-          </div>
-        </button>
-
-        {/* Character Studio */}
-        <button
-          onClick={() => navigate("/character-studio")}
-          className="w-full animate-slide-up rounded-2xl border border-accent/30 bg-gradient-to-r from-accent/10 to-primary/5 p-4 shadow-sm transition-all active:scale-[0.98]"
-          style={{ animationDelay: "0.09s" }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/20">
-              <Sparkles className="h-6 w-6 text-accent" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="text-sm font-bold text-foreground">캐릭터 스튜디오</p>
-              <p className="text-xs text-muted-foreground">나만의 복서 캐릭터를 선택하세요</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
         </button>
 

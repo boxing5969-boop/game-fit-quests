@@ -88,7 +88,7 @@ const AvatarPage = () => {
           <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
             <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
           </button>
-          <h1 className="text-xl text-foreground">내 복서 꾸미기</h1>
+          <h1 className="text-xl text-foreground">아이템 상점</h1>
         </div>
         <div className="flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1.5">
           <Gem className="h-4 w-4 text-accent" />
@@ -96,26 +96,32 @@ const AvatarPage = () => {
         </div>
       </div>
 
-      {/* Character Preview */}
-      <div className="mb-5 animate-slide-up rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="relative mx-auto flex h-48 w-48 items-center justify-center">
-          {/* Base character */}
-          <div className="text-8xl animate-bounce" style={{ animationDuration: "3s" }}>🥊</div>
-          {/* Equipped items overlay hint */}
-          {equippedItems && equippedItems.length > 0 && (
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-              {equippedItems.map(eq => (
-                <span key={eq.id} className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
-                  {(eq as any).avatar_items?.name || "장착"}
-                </span>
-              ))}
-            </div>
-          )}
+      {/* Quick link to Character Studio */}
+      <button
+        onClick={() => navigate("/character-studio")}
+        className="mb-4 w-full flex items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 active:scale-[0.98] transition-all"
+      >
+        <span className="text-lg">🎨</span>
+        <div className="flex-1 text-left">
+          <p className="text-sm font-bold text-foreground">캐릭터 스튜디오</p>
+          <p className="text-[10px] text-muted-foreground">캐릭터 만들기 · 꾸미기 · 성장</p>
         </div>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          아이템 에셋이 업로드되면 캐릭터 위에 레이어로 표시됩니다
-        </p>
-      </div>
+        <span className="text-xs text-primary font-bold">이동 →</span>
+      </button>
+
+      {/* Equipped summary */}
+      {equippedItems && equippedItems.length > 0 && (
+        <div className="mb-4 rounded-2xl border border-border bg-card p-3 shadow-sm">
+          <p className="text-xs font-bold text-foreground mb-2">현재 장착 아이템</p>
+          <div className="flex flex-wrap gap-1.5">
+            {equippedItems.map(eq => (
+              <span key={eq.id} className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-medium text-primary">
+                {(eq as any).avatar_items?.name || "장착"}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Category Tabs */}
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
