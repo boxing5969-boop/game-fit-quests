@@ -95,7 +95,7 @@ const SDBoxerCharacter: React.FC<SDBoxerCharacterProps> = ({
           <img
             src={characterImg}
             alt={nickname}
-            className="w-[clamp(80px,10vw,140px)] h-auto object-contain drop-shadow-lg"
+            className="w-[clamp(40px,5vw,72px)] h-auto object-contain drop-shadow-lg"
             style={{ imageRendering: "auto", willChange: "transform" }}
             draggable={false}
           />
