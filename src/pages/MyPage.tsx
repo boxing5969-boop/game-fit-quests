@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import RankBadge from "@/components/RankBadge";
 import AvatarUpload from "@/components/AvatarUpload";
 import XPBar from "@/components/XPBar";
+import CharacterSprite from "@/components/CharacterSprite";
+import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound, Award, Palette, Gem, Sparkles } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +21,7 @@ const MyPage = () => {
   const { data: allBadges, isLoading: badgesLoading } = useBadges();
   const { data: myBadges } = useMyBadges();
   const { data: walletData } = useWallet();
+  const { data: myCharacter } = useMemberCharacterAssignment();
   const [showPwChange, setShowPwChange] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -71,7 +74,22 @@ const MyPage = () => {
         {/* Profile Card */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="flex items-center gap-4">
-            <AvatarUpload size="lg" />
+            <div className="relative">
+              <AvatarUpload size="lg" />
+              {myCharacter?.character_presets && (
+                <div className="absolute -right-2 -bottom-2">
+                  <CharacterSprite
+                    style={(myCharacter.character_presets.parts_json as any)?.style}
+                    userId={profile.user_id}
+                    partsJson={myCharacter.character_presets.parts_json as any}
+                    size="sm"
+                    animate
+                    league={progress.current_rank as any}
+                    level={progress.current_level}
+                  />
+                </div>
+              )}
+            </div>
             <div className="flex-1">
               <h2 className="text-lg text-foreground">{profile.nickname || profile.name}</h2>
               <p className="text-sm text-muted-foreground">{profile.name}</p>
