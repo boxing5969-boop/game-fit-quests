@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { getCharacterImage, getCharacterByHash } from "@/data/characterPresets";
+import BlackLeagueAura from "@/components/BlackLeagueAura";
 
 interface CharacterSpriteProps {
   /** Style key from preset's parts_json.style */
@@ -14,6 +15,12 @@ interface CharacterSpriteProps {
   className?: string;
   /** onClick handler */
   onClick?: () => void;
+  /** Member's league for auto-aura */
+  league?: "white" | "blue" | "red" | "black";
+  /** Member's level within league (1-10) */
+  level?: number;
+  /** Aura rendering mode */
+  auraMode?: "compact" | "detail";
 }
 
 const SIZE_MAP = {
@@ -30,6 +37,9 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   animate = false,
   className = "",
   onClick,
+  league,
+  level,
+  auraMode,
 }) => {
   const imgSrc = useMemo(() => {
     if (style) return getCharacterImage(style);
@@ -37,15 +47,28 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
     return getCharacterImage();
   }, [style, userId]);
 
+  // Auto-determine aura for Black League
+  const isBlack = league === "black";
+  const isMaster = isBlack && (level ?? 0) >= 10;
+  const showAura = isBlack;
+  const effectiveAuraMode = auraMode ?? (size === "xs" ? "compact" : size === "sm" ? "compact" : "detail");
+
   return (
     <div
       className={`relative flex-shrink-0 select-none ${SIZE_MAP[size]} ${onClick ? "cursor-pointer active:scale-95" : ""} ${className}`}
       onClick={onClick}
     >
+      {/* Black League aura behind character */}
+      {showAura && (
+        <BlackLeagueAura
+          mode={effectiveAuraMode}
+          level={isMaster ? "master" : "halo"}
+        />
+      )}
       <img
         src={imgSrc}
         alt="캐릭터"
-        className={`h-full w-full object-contain drop-shadow-sm ${animate ? "animate-emote-idle" : ""}`}
+        className={`relative z-10 h-full w-full object-contain drop-shadow-sm ${animate ? "animate-emote-idle" : ""}`}
         style={{ imageRendering: "auto", willChange: animate ? "transform" : undefined }}
         draggable={false}
         loading="lazy"

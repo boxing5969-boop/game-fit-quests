@@ -212,6 +212,42 @@
 .animate-emote-speed-line-r { animation: emote-speed-line-r 0.35s ease-out 0.15s forwards; }
 .animate-emote-sparkle { animation: emote-sparkle 2.5s ease-in-out infinite; }
 
+/* ═══ Black League Rainbow Aura ═══ */
+@keyframes aura-hue {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes aura-hue-reverse {
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
+@keyframes aura-pulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(1.06); }
+}
+@keyframes aura-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.6) rotate(0deg); }
+  20% { opacity: 0.8; transform: scale(1) rotate(20deg); }
+  80% { opacity: 0.3; transform: scale(0.8) rotate(40deg); }
+}
+@keyframes aura-sparkle-delayed {
+  0%, 30%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 0.7; transform: scale(1.1) rotate(30deg); }
+  80% { opacity: 0.2; transform: scale(0.7) rotate(50deg); }
+}
+@keyframes aura-sparkle-slow {
+  0%, 40%, 100% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 0.6; transform: scale(1) rotate(-20deg); }
+  85% { opacity: 0.15; transform: scale(0.6) rotate(-40deg); }
+}
+
+.animate-aura-hue { animation: aura-hue 8s linear infinite; }
+.animate-aura-hue-reverse { animation: aura-hue-reverse 10s linear infinite; }
+.animate-aura-pulse { animation: aura-pulse 3s ease-in-out infinite; }
+.animate-aura-sparkle { animation: aura-sparkle 3.5s ease-in-out infinite; }
+.animate-aura-sparkle-delayed { animation: aura-sparkle-delayed 4s ease-in-out infinite 1.2s; }
+.animate-aura-sparkle-slow { animation: aura-sparkle-slow 5s ease-in-out infinite 0.8s; }
+
 @media (prefers-reduced-motion: reduce) {
   .animate-emote-enter,
   .animate-emote-exit,
@@ -220,5 +256,11 @@
   .animate-emote-glow,
   .animate-emote-speed-line,
   .animate-emote-speed-line-r,
-  .animate-emote-sparkle { animation: none; }
+  .animate-emote-sparkle,
+  .animate-aura-hue,
+  .animate-aura-hue-reverse,
+  .animate-aura-pulse,
+  .animate-aura-sparkle,
+  .animate-aura-sparkle-delayed,
+  .animate-aura-sparkle-slow { animation: none; }
 }

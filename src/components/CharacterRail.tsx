@@ -38,6 +38,9 @@ const CharacterRail: React.FC<CharacterRailProps> = ({
               userId={m.userId}
               size="xs"
               animate
+              league={m.rank as any}
+              level={m.level}
+              auraMode="compact"
               onClick={() => onMemberTap?.(m.userId)}
             />
             <span
