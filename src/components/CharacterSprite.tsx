@@ -134,7 +134,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         {/* === DB-DRIVEN PRESET OVERLAYS (gloves, accessories) === */}
         {hasDBOverlays && showOverlays && (
           <PresetOverlayRenderer
-            variants={presetVariants!}
+            variants={resolvedVariants}
             selections={overlaySelections}
             containerSize={SIZE_PX[size]}
           />
