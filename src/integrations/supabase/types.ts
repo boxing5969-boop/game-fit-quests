@@ -984,6 +984,54 @@ export type Database = {
         }
         Relationships: []
       }
+      preset_customization_variants: {
+        Row: {
+          anchor_x: number
+          anchor_y: number
+          asset_url: string | null
+          category_code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          option_key: string
+          preset_style: string
+          preview_order: number
+          rotation: number
+          scale: number
+          z_order: number
+        }
+        Insert: {
+          anchor_x?: number
+          anchor_y?: number
+          asset_url?: string | null
+          category_code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          option_key: string
+          preset_style: string
+          preview_order?: number
+          rotation?: number
+          scale?: number
+          z_order?: number
+        }
+        Update: {
+          anchor_x?: number
+          anchor_y?: number
+          asset_url?: string | null
+          category_code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          option_key?: string
+          preset_style?: string
+          preview_order?: number
+          rotation?: number
+          scale?: number
+          z_order?: number
+        }
+        Relationships: []
+      }
       privacy_consents: {
         Row: {
           consented_at: string
