@@ -6,6 +6,10 @@ import boxerMale03 from "@/assets/characters/prebuilt/boxer_male_03.png";
 import boxerFemale03 from "@/assets/characters/prebuilt/boxer_female_03.png";
 import boxerMale04 from "@/assets/characters/prebuilt/boxer_male_04.png";
 import boxerFemale04 from "@/assets/characters/prebuilt/boxer_female_04.png";
+import boxerMale05 from "@/assets/characters/prebuilt/boxer_male_05.png";
+import boxerFemale05 from "@/assets/characters/prebuilt/boxer_female_05.png";
+import boxerMale06 from "@/assets/characters/prebuilt/boxer_male_06.png";
+import boxerFemale06 from "@/assets/characters/prebuilt/boxer_female_06.png";
 
 export interface PrebuiltCharacter {
   style: string;
@@ -24,6 +28,10 @@ export const PREBUILT_CHARACTERS: PrebuiltCharacter[] = [
   { style: "female_03", label: "퍼플 파이터", gender: "female", image: boxerFemale03, color: "purple" },
   { style: "male_04", label: "스트리트 복서", gender: "male", image: boxerMale04, color: "orange-gray" },
   { style: "female_04", label: "골든 스트라이커", gender: "female", image: boxerFemale04, color: "yellow-black" },
+  { style: "male_05", label: "실버 복서", gender: "male", image: boxerMale05, color: "silver-blue" },
+  { style: "female_05", label: "핑크 파이터", gender: "female", image: boxerFemale05, color: "pink" },
+  { style: "male_06", label: "다크 스트라이커", gender: "male", image: boxerMale06, color: "purple-black" },
+  { style: "female_06", label: "민트 파이터", gender: "female", image: boxerFemale06, color: "mint-teal" },
 ];
 
 export function getCharacterImage(style?: string): string {
