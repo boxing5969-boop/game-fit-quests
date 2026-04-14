@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown } from "lucide-react";
+import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Gem } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import type { Enums } from "@/integrations/supabase/types";
 import LevelStatusActionSheet from "@/components/LevelStatusActionSheet";
 import MissionVideoUpload from "@/components/MissionVideoUpload";
 import BulkCompleteModal from "@/components/BulkCompleteModal";
+import { useMemberWallet, useGrantGems } from "@/hooks/useWallet";
 
 type TabKey = "overview" | "missions" | "levelmap" | "activity" | "notes";
 
@@ -35,6 +36,10 @@ const MemberDetailPage = () => {
   const [actionNote, setActionNote] = useState("");
   const [actionSheet, setActionSheet] = useState<{ rank: Enums<"rank_name">; level: number; status: string } | null>(null);
   const [showBulkComplete, setShowBulkComplete] = useState(false);
+  const [gemAmount, setGemAmount] = useState("");
+  const [gemReason, setGemReason] = useState("");
+  const memberWallet = useMemberWallet(memberId);
+  const grantGems = useGrantGems();
 
   // Member profile + progress
   const { data: member, isLoading } = useQuery({
@@ -344,6 +349,61 @@ const MemberDetailPage = () => {
                   🏆 보스전 합격 처리
                 </button>
               )}
+            </div>
+          </div>
+
+          {/* Gem Management */}
+          <div className="space-y-2 pt-2 border-t border-border">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              <Gem className="h-4 w-4 text-accent" /> 링젬 관리
+            </h3>
+            <div className="rounded-xl bg-accent/10 p-3 text-center">
+              <span className="text-2xl font-bold text-accent-foreground">💎 {memberWallet.data?.gems_balance?.toLocaleString() || 0}</span>
+              <p className="text-xs text-muted-foreground mt-1">현재 보유 링젬</p>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={gemAmount}
+                onChange={e => setGemAmount(e.target.value)}
+                placeholder="수량"
+                className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+              <input
+                type="text"
+                value={gemReason}
+                onChange={e => setGemReason(e.target.value)}
+                placeholder="사유"
+                className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  const amt = parseInt(gemAmount);
+                  if (!amt || amt <= 0) { toast.error("수량을 입력하세요"); return; }
+                  grantGems.mutate({ userId: memberId!, amount: amt, reason: gemReason || "관리자 수동 지급" }, {
+                    onSuccess: () => { toast.success(`+${amt} 링젬 지급!`); setGemAmount(""); setGemReason(""); memberWallet.refetch(); }
+                  });
+                }}
+                disabled={grantGems.isPending}
+                className="rounded-xl bg-status-complete/20 py-2.5 text-sm font-bold text-status-complete active:scale-95 disabled:opacity-50"
+              >
+                💎 지급
+              </button>
+              <button
+                onClick={() => {
+                  const amt = parseInt(gemAmount);
+                  if (!amt || amt <= 0) { toast.error("수량을 입력하세요"); return; }
+                  grantGems.mutate({ userId: memberId!, amount: -amt, reason: gemReason || "관리자 수동 차감" }, {
+                    onSuccess: () => { toast.success(`-${amt} 링젬 차감`); setGemAmount(""); setGemReason(""); memberWallet.refetch(); }
+                  });
+                }}
+                disabled={grantGems.isPending}
+                className="rounded-xl bg-destructive/20 py-2.5 text-sm font-bold text-destructive active:scale-95 disabled:opacity-50"
+              >
+                💎 차감
+              </button>
             </div>
           </div>
 

@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import RankBadge from "@/components/RankBadge";
 import AvatarUpload from "@/components/AvatarUpload";
 import XPBar from "@/components/XPBar";
-import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound, Award } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound, Award, Palette, Gem } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useNavigate } from "react-router-dom";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
+import { useWallet } from "@/hooks/useWallet";
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const MyPage = () => {
   const { data: xpLogs } = useXpLogs(30);
   const { data: allBadges, isLoading: badgesLoading } = useBadges();
   const { data: myBadges } = useMyBadges();
+  const { data: walletData } = useWallet();
   const [showPwChange, setShowPwChange] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -109,6 +111,27 @@ const MyPage = () => {
           <InfoRow icon={<MapPin className="h-4 w-4" />} label="소속 지점" value={profile.branch_name || "미설정"} />
           <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} last />
         </div>
+
+        {/* Avatar & Gems */}
+        <button
+          onClick={() => navigate("/avatar")}
+          className="w-full animate-slide-up rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 p-4 shadow-sm transition-all active:scale-[0.98]"
+          style={{ animationDelay: "0.08s" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20">
+              <Palette className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-bold text-foreground">내 복서 꾸미기</p>
+              <p className="text-xs text-muted-foreground">아이템을 모아 캐릭터를 꾸며보세요</p>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1.5">
+              <Gem className="h-4 w-4 text-accent" />
+              <span className="text-sm font-bold text-accent-foreground">{walletData?.gems_balance?.toLocaleString() || 0}</span>
+            </div>
+          </div>
+        </button>
 
         {/* Master League */}
         {isMaster40 && (
