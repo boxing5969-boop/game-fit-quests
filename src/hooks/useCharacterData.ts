@@ -153,10 +153,9 @@ export const useSaveCustomization = () => {
     }) => {
       if (!user?.id) throw new Error("로그인이 필요합니다");
 
-      const partsJson = { style, customization };
+      const partsJson = { style, customization } as unknown as Record<string, any>;
 
       // Create or update a personal preset for this user
-      // First check if user already has a custom preset
       const { data: existing } = await supabase
         .from("character_presets")
         .select("id")
@@ -169,23 +168,21 @@ export const useSaveCustomization = () => {
       let presetId: string;
 
       if (existing) {
-        // Update existing custom preset
         const { error } = await supabase
           .from("character_presets")
-          .update({ parts_json: partsJson, updated_at: new Date().toISOString() })
+          .update({ parts_json: partsJson as any, updated_at: new Date().toISOString() })
           .eq("id", existing.id);
         if (error) throw error;
         presetId = existing.id;
       } else {
-        // Create new custom preset
         const { data: newPreset, error } = await supabase
           .from("character_presets")
-          .insert({
+          .insert([{
             name: `${user.id}_custom`,
-            parts_json: partsJson,
+            parts_json: partsJson as any,
             created_by: user.id,
             is_template: false,
-          })
+          }])
           .select()
           .single();
         if (error) throw error;
