@@ -131,7 +131,8 @@ function loadProgress(): LocalProgress {
 }
 
 function saveProgress(p: LocalProgress) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+  const withTimestamp = { ...p, _savedAt: Date.now() };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(withTimestamp));
 }
 
 export function useLocalProgress() {
