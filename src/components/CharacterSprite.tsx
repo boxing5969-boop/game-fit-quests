@@ -9,11 +9,9 @@ import {
   EFFECT_EMOJIS,
   FRAME_STYLES,
   TITLE_LABELS,
-  getPresetAnchors,
-  getAccessoryOverlay,
-  getGloveOverlay,
-  ACCESSORY_ANCHOR_ZONE,
 } from "@/data/characterCustomizationData";
+import PresetOverlayRenderer from "@/components/PresetOverlayRenderer";
+import type { PresetVariant } from "@/hooks/usePresetVariants";
 
 interface CharacterSpriteProps {
   style?: string;
@@ -27,6 +25,8 @@ interface CharacterSpriteProps {
   level?: number;
   auraMode?: "compact" | "detail";
   customization?: CharacterCustomization;
+  /** DB-driven preset variants for overlay rendering */
+  presetVariants?: PresetVariant[];
 }
 
 const SIZE_MAP = {
@@ -50,6 +50,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   level,
   auraMode,
   customization: customizationProp,
+  presetVariants,
 }) => {
   const isLayered = !!(partsJson?.parts && Object.keys(partsJson.parts).length > 0);
   const presetStyle = partsJson?.style || style;
@@ -72,8 +73,16 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
 
   const frameClass = customization?.frame ? FRAME_STYLES[customization.frame] || "" : "";
 
-  // Resolve the preset style for anchor lookup
-  const resolvedPreset = presetStyle || "male_01";
+  // Build selection map for PresetOverlayRenderer from customization
+  const overlaySelections = useMemo(() => {
+    if (!customization) return {};
+    const sel: Record<string, string> = {};
+    if (customization.gloveStyle) sel.gloves = customization.gloveStyle;
+    if (customization.accessory) sel.accessory = customization.accessory;
+    return sel;
+  }, [customization?.gloveStyle, customization?.accessory]);
+
+  const hasDBOverlays = presetVariants && presetVariants.length > 0 && Object.keys(overlaySelections).length > 0;
 
   return (
     <div
@@ -93,8 +102,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         <div className={`absolute inset-0 rounded-full z-[5] ${frameClass}`} />
       )}
 
-      {/* === UNIFIED ANIMATION CONTAINER ===
-           All overlays inside so they move with the boxer */}
+      {/* === UNIFIED ANIMATION CONTAINER === */}
       <div className={`relative z-10 h-full w-full ${animate ? "animate-emote-idle" : ""}`}
            style={{ willChange: animate ? "transform" : undefined }}>
 
@@ -117,9 +125,14 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           />
         )}
 
-        {/* ACCESSORY and GLOVE overlays are disabled — PNG overlays do not
-             visually integrate with the approved static PNG boxer presets.
-             Kept in code for future preset-aware asset-swap implementation. */}
+        {/* === DB-DRIVEN PRESET OVERLAYS (gloves, accessories) === */}
+        {hasDBOverlays && showOverlays && (
+          <PresetOverlayRenderer
+            variants={presetVariants!}
+            selections={overlaySelections}
+            containerSize={SIZE_PX[size]}
+          />
+        )}
 
         {/* ===== EFFECT PARTICLES ===== */}
         {customization?.effect && (showOverlays || showEffectSmall) && (
@@ -135,84 +148,6 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           </span>
         </div>
       )}
-    </div>
-  );
-};
-
-// ===== Accessory PNG Image Overlay =====
-const AccessoryImageOverlay: React.FC<{
-  accessory: string;
-  presetStyle: string;
-  isLarge: boolean;
-}> = ({ accessory, presetStyle, isLarge }) => {
-  const overlayImage = getAccessoryOverlay(accessory);
-  if (!overlayImage) return null;
-
-  const anchors = getPresetAnchors(presetStyle);
-  const zone = ACCESSORY_ANCHOR_ZONE[accessory] || "head_top";
-  const anchor = anchors[zone];
-
-  return (
-    <div
-      className="absolute z-20 pointer-events-none"
-      style={{
-        top: `${anchor.top}%`,
-        left: `${anchor.left}%`,
-        width: `${anchor.width}%`,
-        height: `${anchor.height}%`,
-        transform: anchor.rotation ? `rotate(${anchor.rotation}deg)` : undefined,
-      }}
-    >
-      <img
-        src={overlayImage}
-        alt=""
-        className="w-full h-full object-contain"
-        draggable={false}
-        style={{
-          filter: isLarge
-            ? "drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
-            : "drop-shadow(0 1px 2px rgba(0,0,0,0.2))",
-        }}
-      />
-    </div>
-  );
-};
-
-// ===== Glove Style PNG Overlay =====
-const GloveImageOverlay: React.FC<{
-  gloveStyle: string;
-  presetStyle: string;
-  isLarge: boolean;
-}> = ({ gloveStyle, presetStyle, isLarge }) => {
-  const overlayImage = getGloveOverlay(gloveStyle);
-  if (!overlayImage) return null;
-
-  const anchors = getPresetAnchors(presetStyle);
-  const anchor = anchors.hands;
-
-  return (
-    <div
-      className="absolute z-[15] pointer-events-none"
-      style={{
-        top: `${anchor.top}%`,
-        left: `${anchor.left}%`,
-        width: `${anchor.width}%`,
-        height: `${anchor.height}%`,
-        opacity: 0.85,
-        mixBlendMode: "multiply",
-      }}
-    >
-      <img
-        src={overlayImage}
-        alt=""
-        className="w-full h-full object-contain"
-        draggable={false}
-        style={{
-          filter: isLarge
-            ? "drop-shadow(0 2px 6px rgba(0,0,0,0.25))"
-            : "drop-shadow(0 1px 3px rgba(0,0,0,0.2))",
-        }}
-      />
     </div>
   );
 };
