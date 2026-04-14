@@ -32,6 +32,7 @@ import GuideSafetyPage from "@/pages/guide/GuideSafetyPage";
 import GuideFaqPage from "@/pages/guide/GuideFaqPage";
 import RankUpPage from "@/pages/RankUpPage";
 import AvatarPage from "@/pages/AvatarPage";
+import CharacterStudioPage from "@/pages/CharacterStudioPage";
 import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
 import CheckinBoardPage from "@/pages/CheckinBoardPage";
@@ -137,6 +138,7 @@ const AppRoutes = () => {
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/avatar" element={<ProtectedRoute><AvatarPage /></ProtectedRoute>} />
+        <Route path="/character-studio" element={<ProtectedRoute><CharacterStudioPage /></ProtectedRoute>} />
         <Route path="/coach" element={<ProtectedRoute><ManagerRoute><CoachDashboard /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager" element={<ProtectedRoute><ManagerRoute><BranchManagerHome /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/member/:memberId" element={<ProtectedRoute><ManagerRoute><MemberDetailPage /></ManagerRoute></ProtectedRoute>} />

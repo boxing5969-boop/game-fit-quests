@@ -319,6 +319,116 @@ export type Database = {
         }
         Relationships: []
       }
+      character_part_categories: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_required: boolean
+          layer_order: number
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_required?: boolean
+          layer_order?: number
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_required?: boolean
+          layer_order?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      character_parts: {
+        Row: {
+          asset_key: string
+          category_code: string
+          created_at: string
+          gender_group: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_placeholder: boolean
+          label: string
+          sort_order: number
+          style_group: string
+        }
+        Insert: {
+          asset_key: string
+          category_code: string
+          created_at?: string
+          gender_group?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_placeholder?: boolean
+          label: string
+          sort_order?: number
+          style_group?: string
+        }
+        Update: {
+          asset_key?: string
+          category_code?: string
+          created_at?: string
+          gender_group?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_placeholder?: boolean
+          label?: string
+          sort_order?: number
+          style_group?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_parts_category_code_fkey"
+            columns: ["category_code"]
+            isOneToOne: false
+            referencedRelation: "character_part_categories"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      character_presets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          flattened_image_url: string | null
+          id: string
+          is_template: boolean
+          name: string
+          parts_json: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          flattened_image_url?: string | null
+          id?: string
+          is_template?: boolean
+          name?: string
+          parts_json?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          flattened_image_url?: string | null
+          id?: string
+          is_template?: boolean
+          name?: string
+          parts_json?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coach_assignments: {
         Row: {
           coach_id: string
@@ -604,6 +714,44 @@ export type Database = {
             columns: ["badge_id"]
             isOneToOne: false
             referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_character_assignments: {
+        Row: {
+          created_at: string
+          display_mode: string
+          id: string
+          is_active: boolean
+          preset_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_mode?: string
+          id?: string
+          is_active?: boolean
+          preset_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_mode?: string
+          id?: string
+          is_active?: boolean
+          preset_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_character_assignments_preset_id_fkey"
+            columns: ["preset_id"]
+            isOneToOne: false
+            referencedRelation: "character_presets"
             referencedColumns: ["id"]
           },
         ]
