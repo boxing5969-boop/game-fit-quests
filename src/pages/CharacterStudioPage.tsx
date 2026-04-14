@@ -1,19 +1,28 @@
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Shuffle, Save, Check, Sparkles, Lock, ChevronRight, Crown, Gem, RotateCcw } from "lucide-react";
+import { ArrowLeft, Shuffle, Save, Check, Sparkles, Lock, ChevronRight, Crown, Gem, RotateCcw, Paintbrush } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { PREBUILT_CHARACTERS, getRandomCharacter } from "@/data/characterPresets";
 import { getCurrentMilestone, UNLOCK_MILESTONES, getUnlockedPartKeys } from "@/data/characterUnlockData";
-import { useTemplatePresets, useAssignCharacter, useMemberCharacterAssignment } from "@/hooks/useCharacterData";
+import { useTemplatePresets, useAssignCharacter, useMemberCharacterAssignment, useSaveCustomization } from "@/hooks/useCharacterData";
 import { useWallet } from "@/hooks/useWallet";
 import CharacterSprite from "@/components/CharacterSprite";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
+import {
+  CUSTOMIZATION_CATEGORIES,
+  GLOVE_COLORS,
+  EFFECT_EMOJIS,
+  FRAME_STYLES,
+  TITLE_LABELS,
+  type CharacterCustomization,
+} from "@/data/characterCustomizationData";
 
 const TABS = [
   { key: "my", label: "내 캐릭터", icon: "🥊" },
   { key: "preset", label: "프리셋 선택", icon: "🎭" },
+  { key: "customize", label: "꾸미기", icon: "🎨" },
   { key: "growth", label: "성장", icon: "📈" },
   { key: "effects", label: "효과", icon: "✨" },
 ] as const;
@@ -39,23 +48,25 @@ const CharacterStudioPage = () => {
   const { data: templatePresets } = useTemplatePresets();
   const { data: walletData } = useWallet();
   const assignCharacter = useAssignCharacter();
+  const saveCustomization = useSaveCustomization();
 
   const currentPartsJson = (assignment?.character_presets as any)?.parts_json;
   const currentStyle = currentPartsJson?.style;
+  const currentCustomization: CharacterCustomization = currentPartsJson?.customization || {};
   const currentLeague = (progress?.current_rank || "white") as string;
   const currentLevel = progress?.current_level || 1;
 
-  // Unlock data
   const unlockedKeys = useMemo(() => getUnlockedPartKeys(currentLeague, currentLevel), [currentLeague, currentLevel]);
   const { current: currentMilestone, next: nextMilestone } = useMemo(
     () => getCurrentMilestone(currentLeague, currentLevel),
     [currentLeague, currentLevel]
   );
 
-  // State — always preset-based, no SVG switch
   const [activeTab, setActiveTab] = useState<string>("my");
   const [selectedStyle, setSelectedStyle] = useState<string>(currentStyle || "male_01");
   const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female">("all");
+  // Customization state
+  const [pendingCustomization, setPendingCustomization] = useState<CharacterCustomization>(currentCustomization);
 
   const filteredCharacters = genderFilter === "all"
     ? PREBUILT_CHARACTERS
@@ -94,8 +105,24 @@ const CharacterStudioPage = () => {
     }
   };
 
-  const isSaving = assignCharacter.isPending;
+  const handleSaveCustomization = async () => {
+    if (!user?.id) return;
+    try {
+      await saveCustomization.mutateAsync({
+        style: selectedStyle,
+        customization: pendingCustomization,
+      });
+      toast.success("꾸미기가 저장되었습니다! 🎨");
+    } catch (e: any) {
+      toast.error(e.message || "저장 실패");
+    }
+  };
+
+  const isSaving = assignCharacter.isPending || saveCustomization.isPending;
   const isCurrentPreset = currentStyle === selectedStyle;
+
+  // Determine which customization to show in preview
+  const previewCustomization = activeTab === "customize" ? pendingCustomization : currentCustomization;
 
   return (
     <div className="mx-auto max-w-lg pb-32">
@@ -129,7 +156,7 @@ const CharacterStudioPage = () => {
         </div>
       </div>
 
-      {/* Live Preview — Always PNG preset */}
+      {/* Live Preview — Always PNG preset + overlay */}
       <div className="px-4 pt-4">
         <div className="relative rounded-3xl border border-border bg-gradient-to-b from-card to-secondary/30 p-5 shadow-sm">
           <div className="relative mx-auto flex h-44 w-44 items-center justify-center">
@@ -141,6 +168,7 @@ const CharacterStudioPage = () => {
               animate
               league={currentLeague as any}
               level={currentLevel}
+              customization={previewCustomization}
               className="relative z-10 !w-40 !h-40"
             />
           </div>
@@ -153,7 +181,7 @@ const CharacterStudioPage = () => {
               )}
             </div>
           </div>
-          {/* Save button */}
+          {/* Save button for preset tab */}
           {activeTab === "preset" && (
             <button
               onClick={handleSavePreset}
@@ -171,17 +199,29 @@ const CharacterStudioPage = () => {
               )}
             </button>
           )}
+          {/* Save button for customize tab */}
+          {activeTab === "customize" && (
+            <button
+              onClick={handleSaveCustomization}
+              disabled={isSaving}
+              className="absolute top-3 right-3 rounded-full px-3 py-1.5 text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 bg-primary text-primary-foreground"
+            >
+              {isSaving ? "..." : (
+                <span className="flex items-center gap-1"><Save className="h-3 w-3" /> 저장</span>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Segmented Tabs */}
       <div className="px-4 mt-4">
-        <div className="flex rounded-2xl border border-border bg-secondary/50 p-1">
+        <div className="flex rounded-2xl border border-border bg-secondary/50 p-1 overflow-x-auto">
           {TABS.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-0.5 rounded-xl py-2 text-[10px] font-bold transition-all whitespace-nowrap min-w-0 ${
                 activeTab === tab.key
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground"
@@ -205,6 +245,7 @@ const CharacterStudioPage = () => {
             unlockedKeys={unlockedKeys}
             currentMilestone={currentMilestone}
             nextMilestone={nextMilestone}
+            currentCustomization={currentCustomization}
           />
         )}
         {activeTab === "preset" && (
@@ -217,6 +258,12 @@ const CharacterStudioPage = () => {
             onSelect={handleSelectPreset}
           />
         )}
+        {activeTab === "customize" && (
+          <CustomizeTab
+            customization={pendingCustomization}
+            onChange={setPendingCustomization}
+          />
+        )}
         {activeTab === "growth" && <GrowthTab league={currentLeague} level={currentLevel} unlockedKeys={unlockedKeys} />}
         {activeTab === "effects" && <EffectsTab league={currentLeague} level={currentLevel} />}
       </div>
@@ -225,7 +272,7 @@ const CharacterStudioPage = () => {
 };
 
 // ========== MY CHARACTER TAB ==========
-function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, currentMilestone, nextMilestone }: {
+function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, currentMilestone, nextMilestone, currentCustomization }: {
   currentStyle?: string;
   league: string;
   level: number;
@@ -233,9 +280,11 @@ function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, c
   unlockedKeys: Set<string>;
   currentMilestone: any;
   nextMilestone: any;
+  currentCustomization: CharacterCustomization;
 }) {
   const hasCharacter = !!currentStyle;
   const totalUnlocked = unlockedKeys.size;
+  const customCount = Object.values(currentCustomization).filter(Boolean).length;
 
   return (
     <div className="space-y-4 animate-slide-up">
@@ -257,9 +306,9 @@ function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, c
           <span className="text-[10px] text-muted-foreground">현재 리그</span>
         </div>
         <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-3">
-          <span className="text-lg">🧩</span>
-          <span className="mt-1 text-lg font-bold text-foreground">{totalUnlocked}</span>
-          <span className="text-[10px] text-muted-foreground">해금 파츠</span>
+          <span className="text-lg">🎨</span>
+          <span className="mt-1 text-lg font-bold text-foreground">{customCount}</span>
+          <span className="text-[10px] text-muted-foreground">꾸미기</span>
         </div>
         <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-3">
           <span className="text-lg">{currentMilestone?.icon || "🥊"}</span>
@@ -284,20 +333,6 @@ function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, c
           </div>
         </div>
       )}
-
-      {/* Coming soon: overlay customization */}
-      <div className="rounded-2xl border border-dashed border-accent/30 bg-accent/5 p-4">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">✂️</span>
-          <div className="flex-1">
-            <p className="text-sm font-bold text-foreground">꾸미기 기능 준비 중</p>
-            <p className="text-xs text-muted-foreground">
-              기존 복서 캐릭터 위에 글러브 색상, 의상, 액세서리를 덧입히는 기능이 곧 추가됩니다!
-            </p>
-          </div>
-          <Lock className="h-4 w-4 text-muted-foreground" />
-        </div>
-      </div>
 
       {/* Quick links */}
       <div className="space-y-2">
@@ -326,6 +361,133 @@ function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, c
   );
 }
 
+// ========== CUSTOMIZE TAB ==========
+function CustomizeTab({ customization, onChange }: {
+  customization: CharacterCustomization;
+  onChange: (c: CharacterCustomization) => void;
+}) {
+  const [activeCat, setActiveCat] = useState(CUSTOMIZATION_CATEGORIES[0].code);
+  const category = CUSTOMIZATION_CATEGORIES.find(c => c.code === activeCat)!;
+
+  const handleSelect = (catCode: string, optionKey: string) => {
+    const current = (customization as any)[catCode];
+    // Toggle: click again to deselect
+    const newVal = current === optionKey ? undefined : optionKey;
+    onChange({ ...customization, [catCode]: newVal });
+  };
+
+  const handleClearAll = () => {
+    onChange({});
+  };
+
+  const activeCount = Object.values(customization).filter(Boolean).length;
+
+  return (
+    <div className="space-y-4 animate-slide-up">
+      {/* Category chips */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {CUSTOMIZATION_CATEGORIES.map(cat => {
+          const isActive = activeCat === cat.code;
+          const hasSelection = !!(customization as any)[cat.code];
+          return (
+            <button
+              key={cat.code}
+              onClick={() => setActiveCat(cat.code)}
+              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-all ${
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : hasSelection
+                  ? "bg-primary/10 text-primary border border-primary/30"
+                  : "bg-secondary text-muted-foreground"
+              }`}
+            >
+              <span className="text-[11px]">{cat.icon}</span>
+              {cat.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Options grid */}
+      <div className="grid grid-cols-4 gap-2">
+        {category.options.map(opt => {
+          const isSelected = (customization as any)[activeCat] === opt.key;
+          return (
+            <button
+              key={opt.key}
+              onClick={() => handleSelect(activeCat, opt.key)}
+              className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
+                isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
+              }`}
+            >
+              {isSelected && (
+                <div className="absolute -top-1 -right-1 rounded-full bg-primary p-0.5">
+                  <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                </div>
+              )}
+              <OptionPreview category={activeCat} optionKey={opt.key} />
+              <span className="text-[9px] font-bold text-foreground/80 truncate w-full text-center">{opt.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Clear all */}
+      {activeCount > 0 && (
+        <button
+          onClick={handleClearAll}
+          className="w-full rounded-xl border border-border bg-secondary/50 py-2 text-xs text-muted-foreground active:scale-[0.98] transition-all"
+        >
+          전체 초기화 ({activeCount}개 적용 중)
+        </button>
+      )}
+
+      <p className="text-[10px] text-center text-muted-foreground">
+        꾸미기를 선택하면 위 프리뷰에 즉시 반영됩니다. 저장 버튼을 눌러 적용하세요!
+      </p>
+    </div>
+  );
+}
+
+// Visual preview for each option type
+function OptionPreview({ category, optionKey }: { category: string; optionKey: string }) {
+  if (category === "gloveColor") {
+    const color = GLOVE_COLORS[optionKey] || "#888";
+    return (
+      <div className="flex h-8 w-8 items-center justify-center">
+        <div className="h-6 w-6 rounded-full border-2 border-card shadow-sm" style={{ backgroundColor: color }} />
+      </div>
+    );
+  }
+  if (category === "effect") {
+    const emoji = EFFECT_EMOJIS[optionKey] || "✨";
+    return <span className="text-2xl">{emoji}</span>;
+  }
+  if (category === "accessory") {
+    const emojis: Record<string, string> = {
+      headband_red: "🎗️", headband_black: "🖤", sunglasses: "🕶️",
+      bandage: "🩹", sweatband: "💦", mouthguard: "😤",
+    };
+    return <span className="text-2xl">{emojis[optionKey] || "🎀"}</span>;
+  }
+  if (category === "frame") {
+    const colors: Record<string, string> = {
+      fire: "border-orange-500 shadow-orange-500/30",
+      ice: "border-cyan-400 shadow-cyan-400/30",
+      gold: "border-amber-400 shadow-amber-400/30",
+      shadow: "border-gray-600 shadow-gray-600/30",
+    };
+    return (
+      <div className={`h-8 w-8 rounded-full border-2 shadow-md ${colors[optionKey] || "border-border"}`} />
+    );
+  }
+  if (category === "title") {
+    const info = TITLE_LABELS[optionKey];
+    return <span className={`text-sm font-bold ${info?.color || "text-foreground"}`}>{info?.text || optionKey}</span>;
+  }
+  return <span className="text-lg">❓</span>;
+}
+
 // ========== PRESET TAB ==========
 function PresetTab({ filteredCharacters, selectedStyle, currentStyle, genderFilter, setGenderFilter, onSelect }: {
   filteredCharacters: typeof PREBUILT_CHARACTERS;
@@ -337,7 +499,6 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, genderFilt
 }) {
   return (
     <div className="space-y-3 animate-slide-up">
-      {/* Gender Filter */}
       <div className="flex rounded-xl border border-border bg-secondary/50 p-0.5">
         {GENDER_TABS.map(tab => (
           <button
@@ -352,7 +513,6 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, genderFilt
         ))}
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-4 gap-2.5">
         {filteredCharacters.map(char => {
           const isSelected = selectedStyle === char.style;
@@ -449,7 +609,6 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
 
   return (
     <div className="space-y-4 animate-slide-up">
-      {/* Aura Status */}
       <div className={`rounded-2xl border p-4 ${
         isBlack
           ? "border-amber-400/40 bg-gradient-to-r from-gray-900/50 to-amber-900/20"
@@ -482,7 +641,6 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
         )}
       </div>
 
-      {/* League effect tiers */}
       <div>
         <h3 className="text-sm font-bold text-foreground mb-2">리그별 프레스티지</h3>
         <div className="space-y-2">
@@ -504,13 +662,6 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Future effects note */}
-      <div className="rounded-2xl border border-dashed border-border p-4 text-center">
-        <p className="text-xs text-muted-foreground">
-          이펙트 파티클 (스파클, 불꽃 등)은 꾸미기 기능과 함께 추가 예정입니다
-        </p>
       </div>
     </div>
   );
