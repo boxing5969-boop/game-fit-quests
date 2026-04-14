@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import RankBadge from "@/components/RankBadge";
 import AvatarUpload from "@/components/AvatarUpload";
 import XPBar from "@/components/XPBar";
-import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound, Award } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound, Award, Palette, Gem } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useNavigate } from "react-router-dom";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
+import { useWallet } from "@/hooks/useWallet";
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const MyPage = () => {
   const { data: xpLogs } = useXpLogs(30);
   const { data: allBadges, isLoading: badgesLoading } = useBadges();
   const { data: myBadges } = useMyBadges();
+  const { data: walletData } = useWallet();
   const [showPwChange, setShowPwChange] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
