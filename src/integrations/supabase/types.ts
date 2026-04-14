@@ -1016,7 +1016,9 @@ export type Database = {
           is_approved: boolean
           name: string
           nickname: string
+          onboarding_done: boolean
           phone_number: string | null
+          safety_done: boolean
           updated_at: string
           user_id: string
         }
@@ -1030,7 +1032,9 @@ export type Database = {
           is_approved?: boolean
           name?: string
           nickname?: string
+          onboarding_done?: boolean
           phone_number?: string | null
+          safety_done?: boolean
           updated_at?: string
           user_id: string
         }
@@ -1044,7 +1048,9 @@ export type Database = {
           is_approved?: boolean
           name?: string
           nickname?: string
+          onboarding_done?: boolean
           phone_number?: string | null
+          safety_done?: boolean
           updated_at?: string
           user_id?: string
         }
