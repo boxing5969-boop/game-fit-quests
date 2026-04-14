@@ -85,17 +85,6 @@ const BottomNav = () => {
               >
                 <div className="flex items-center gap-0.5">
                   <Icon className={active ? "drop-shadow-[0_0_6px_hsl(14,90%,55%,0.4)]" : ""} strokeWidth={active ? 2.5 : 2} size={20} />
-                  {active && charPreset && (
-                    <CharacterSprite
-                      style={charPj?.style}
-                      userId={user?.id}
-                      partsJson={charPj}
-                      size="xs"
-                      animate={active}
-                      league={progress?.current_rank as any}
-                      level={progress?.current_level}
-                    />
-                  )}
                 </div>
                 <span className="text-[9px] font-medium whitespace-nowrap truncate">{label}</span>
               </button>
