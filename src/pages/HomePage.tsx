@@ -199,28 +199,30 @@ const HomePage = () => {
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
       {/* Header */}
       <div className="mb-5 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">안녕하세요 👋</p>
-          <h1 className="text-2xl text-foreground">{profile.nickname || profile.name}</h1>
+        <div className="flex items-center gap-3">
+          {myCharacter?.character_presets && (
+            <CharacterSprite
+              style={(myCharacter.character_presets.parts_json as any)?.style}
+              userId={user?.id}
+              partsJson={myCharacter.character_presets.parts_json as any}
+              size="sm"
+              animate
+              league={progress?.current_rank as any}
+              level={progress?.current_level}
+            />
+          )}
+          <div>
+            <p className="text-sm text-muted-foreground">안녕하세요 👋</p>
+            <h1 className="text-2xl text-foreground">{profile.nickname || profile.name}</h1>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => navigate("/avatar")} className="flex items-center gap-1 rounded-full bg-accent/20 px-3 py-1.5 transition-all active:scale-95">
             <Gem className="h-4 w-4 text-accent" />
             <span className="text-sm font-bold text-accent-foreground">{walletData?.gems_balance?.toLocaleString() || 0}</span>
           </button>
-          <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary overflow-hidden transition-all active:scale-95">
-            {myCharacter?.character_presets ? (
-              <CharacterSprite
-                style={(myCharacter.character_presets.parts_json as any)?.style}
-                userId={user?.id}
-                partsJson={myCharacter.character_presets.parts_json as any}
-                size="xs"
-                league={progress?.current_rank as any}
-                level={progress?.current_level}
-              />
-            ) : (
-              <User className="h-5 w-5 text-secondary-foreground" />
-            )}
+          <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
+            <User className="h-5 w-5 text-secondary-foreground" />
           </button>
         </div>
       </div>

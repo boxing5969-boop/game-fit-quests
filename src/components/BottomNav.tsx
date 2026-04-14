@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Home, Target, TrendingUp, Trophy, Award, Menu, BookOpen, User, Settings, Map, Gift, X, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import CharacterSprite from "@/components/CharacterSprite";
+import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
+import { useAuth } from "@/contexts/AuthContext";
 
 const mainTabs = [
   { path: "/home", icon: Home, label: "홈" },
@@ -30,8 +33,13 @@ const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user, progress } = useAuth();
+  const { data: myCharacter } = useMemberCharacterAssignment();
 
   if (hiddenPaths.includes(location.pathname) || location.pathname.startsWith("/manager/") || location.pathname.startsWith("/guide/") || location.pathname.startsWith("/live-board/")) return null;
+
+  const charPreset = myCharacter?.character_presets;
+  const charPj = charPreset?.parts_json as any;
 
   return (
     <>
@@ -80,7 +88,20 @@ const BottomNav = () => {
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
               >
-                <Icon className={active ? "drop-shadow-[0_0_6px_hsl(14,90%,55%,0.4)]" : ""} strokeWidth={active ? 2.5 : 2} size={20} />
+                <div className="flex items-center gap-0.5">
+                  <Icon className={active ? "drop-shadow-[0_0_6px_hsl(14,90%,55%,0.4)]" : ""} strokeWidth={active ? 2.5 : 2} size={20} />
+                  {active && charPreset && (
+                    <CharacterSprite
+                      style={charPj?.style}
+                      userId={user?.id}
+                      partsJson={charPj}
+                      size="xs"
+                      animate={active}
+                      league={progress?.current_rank as any}
+                      level={progress?.current_level}
+                    />
+                  )}
+                </div>
                 <span className="text-[9px] font-medium whitespace-nowrap truncate">{label}</span>
               </button>
             );
