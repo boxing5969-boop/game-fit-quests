@@ -117,23 +117,9 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           />
         )}
 
-        {/* ===== ACCESSORY — PNG image overlay with preset-aware anchors ===== */}
-        {customization?.accessory && showOverlays && (
-          <AccessoryImageOverlay
-            accessory={customization.accessory}
-            presetStyle={resolvedPreset}
-            isLarge={size === "lg"}
-          />
-        )}
-
-        {/* ===== GLOVE STYLE — PNG overlay near hands ===== */}
-        {customization?.gloveStyle && showOverlays && (
-          <GloveImageOverlay
-            gloveStyle={customization.gloveStyle}
-            presetStyle={resolvedPreset}
-            isLarge={size === "lg"}
-          />
-        )}
+        {/* ACCESSORY and GLOVE overlays are disabled — PNG overlays do not
+             visually integrate with the approved static PNG boxer presets.
+             Kept in code for future preset-aware asset-swap implementation. */}
 
         {/* ===== EFFECT PARTICLES ===== */}
         {customization?.effect && (showOverlays || showEffectSmall) && (

@@ -172,10 +172,11 @@ const TITLE_OPTIONS: CustomizationOption[] = [
   { key: "legend", label: "레전드" },
 ];
 
-// ===== MAIN CATEGORIES — only categories with real visual results =====
+// ===== MAIN CATEGORIES — only visually verified categories =====
+// NOTE: accessory and gloveStyle are HIDDEN because PNG overlays do not
+// visually integrate with the approved static PNG boxer presets.
+// They remain defined above for future preset-aware asset-swap implementation.
 export const CUSTOMIZATION_CATEGORIES: CustomizationCategory[] = [
-  { code: "accessory", label: "액세서리", icon: "👑", options: ACCESSORY_OPTIONS },
-  { code: "gloveStyle", label: "글러브", icon: "🥊", options: GLOVE_OPTIONS },
   { code: "effect", label: "이펙트", icon: "✨", options: EFFECT_OPTIONS },
   { code: "frame", label: "프레임", icon: "🖼️", options: FRAME_OPTIONS },
   { code: "title", label: "칭호", icon: "🏷️", options: TITLE_OPTIONS },
