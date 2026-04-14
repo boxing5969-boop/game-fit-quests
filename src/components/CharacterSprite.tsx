@@ -11,6 +11,7 @@ import {
   TITLE_LABELS,
 } from "@/data/characterCustomizationData";
 import PresetOverlayRenderer from "@/components/PresetOverlayRenderer";
+import { usePresetVariants } from "@/hooks/usePresetVariants";
 import type { PresetVariant } from "@/hooks/usePresetVariants";
 
 interface CharacterSpriteProps {
