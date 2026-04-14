@@ -34,8 +34,7 @@ import { WHITE_LV2_META, WHITE_LV2_PROMOTION_METRICS } from "@/data/whiteLevel2D
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@/hooks/useWallet";
 
-const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
-const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
+import { RANK_LABELS, RANK_ORDER } from "@/data/sharedConstants";
 
 const STATUS_STYLE: Record<string, { bg: string; text: string }> = {
   "진행중": { bg: "bg-primary/10", text: "text-primary" },

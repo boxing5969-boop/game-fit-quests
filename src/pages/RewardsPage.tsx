@@ -2,12 +2,18 @@ import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
 import { useAuth } from "@/contexts/AuthContext";
 import XPBar from "@/components/XPBar";
 import RankBadge from "@/components/RankBadge";
-import { User, Award } from "lucide-react";
+import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Enums } from "@/integrations/supabase/types";
 import { isManagerRole } from "@/lib/rankLabels";
-
-const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
+import { RANK_LABELS } from "@/data/sharedConstants";
+import {
+  EarnedBadgeGrid,
+  LockedBadgeGrid,
+  LevelUpHistory,
+  RecentXpList,
+  StatCard,
+} from "@/components/shared/BadgeGrid";
 
 const RewardsPage = () => {
   const navigate = useNavigate();
@@ -20,10 +26,7 @@ const RewardsPage = () => {
   const earned = (allBadges || []).filter(b => earnedIds.has(b.id));
   const locked = (allBadges || []).filter(b => !earnedIds.has(b.id));
 
-  // MASTER 40 check
   const isMaster40 = progress && progress.current_rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
-
-  // Level-up logs
   const levelUpLogs = (xpLogs || []).filter(l => l.reason.includes("클리어") || l.reason.includes("타이틀매치"));
 
   return (
@@ -36,7 +39,6 @@ const RewardsPage = () => {
       </div>
 
       <div className="space-y-5">
-        {/* 마스터 리그 */}
         {isMaster40 && (
           <div className="animate-bounce-in space-y-4">
             <div className="rounded-2xl border-2 border-accent bg-gradient-to-br from-accent/20 via-primary/10 to-accent/20 p-6 text-center shadow-lg">
@@ -44,8 +46,6 @@ const RewardsPage = () => {
               <h2 className="mt-2 text-xl font-bold text-foreground">마스터 리그 달성</h2>
               <p className="text-sm text-muted-foreground">블랙 리그 레벨 10 달성 + 모든 타이틀매치 클리어</p>
             </div>
-
-            {/* 마스터 리그 최종 미션 */}
             <div className="rounded-2xl border border-primary/30 bg-card p-5 shadow-sm">
               <h3 className="mb-4 text-base font-bold text-foreground">👑 마스터 리그 최종 미션</h3>
               <div className="space-y-3">
@@ -68,7 +68,6 @@ const RewardsPage = () => {
           </div>
         )}
 
-        {/* Current rank badge */}
         {progress && (
           <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
             <div className="flex items-center justify-between">
@@ -87,7 +86,6 @@ const RewardsPage = () => {
           </div>
         )}
 
-        {/* Stats */}
         {progress && (
           <div className="grid grid-cols-3 gap-3 animate-slide-up" style={{ animationDelay: "0.05s" }}>
             <StatCard icon="🔥" label="연속 출석" value={`${progress.streak_days}일`} />
@@ -96,96 +94,35 @@ const RewardsPage = () => {
           </div>
         )}
 
-        {/* Earned Badges */}
         <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
           <h2 className="mb-3 text-base font-bold text-foreground">🏅 획득한 배지</h2>
-          {badgesLoading ? (
-            <div className="grid grid-cols-3 gap-3">
-              {[1, 2, 3].map(i => <div key={i} className="h-24 animate-pulse rounded-2xl bg-muted" />)}
-            </div>
-          ) : earned.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-              <span className="text-3xl">🥊</span>
-              <p className="mt-2 text-sm text-muted-foreground">아직 획득한 배지가 없습니다</p>
-              <p className="text-xs text-muted-foreground">미션을 완료하고 배지를 모아보세요!</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-3">
-              {earned.map(b => (
-                <div key={b.id} className="flex flex-col items-center gap-1.5 rounded-2xl border border-primary/20 bg-card p-3 shadow-sm text-center">
-                  <span className="text-3xl">{b.image_url || "🏅"}</span>
-                  <span className="text-xs font-bold text-foreground">{b.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
+          <EarnedBadgeGrid badges={earned} loading={badgesLoading} />
         </div>
 
-        {/* Locked Badges */}
         {locked.length > 0 && (
           <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
             <h2 className="mb-3 text-base font-bold text-muted-foreground">🔒 미획득</h2>
-            <div className="grid grid-cols-3 gap-3">
-              {locked.map(b => (
-                <div key={b.id} className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-muted/30 p-3 text-center opacity-50">
-                  <span className="text-3xl grayscale">{b.image_url || "🏅"}</span>
-                  <span className="text-xs font-bold text-foreground">{b.name}</span>
-                </div>
-              ))}
-            </div>
+            <LockedBadgeGrid badges={locked} />
           </div>
         )}
 
-        {/* Level-up history */}
         {levelUpLogs.length > 0 && (
           <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
             <h2 className="mb-3 text-base font-bold text-foreground">📜 레벨업 기록</h2>
-            <div className="rounded-2xl border border-border bg-card shadow-sm">
-              {levelUpLogs.slice(0, 10).map((log, idx) => (
-                <div key={log.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(levelUpLogs.length, 10) - 1 ? "border-b border-border" : ""}`}>
-                  <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-sm text-foreground">{log.reason}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")}</p>
-                    </div>
-                  </div>
-                  <span className="text-sm font-bold text-primary">+{log.amount} XP</span>
-                </div>
-              ))}
-            </div>
+            <LevelUpHistory logs={levelUpLogs} />
           </div>
         )}
 
-        {/* Recent XP */}
         {xpLogs && xpLogs.length > 0 && (
           <div className="animate-slide-up" style={{ animationDelay: "0.25s" }}>
             <h2 className="mb-3 text-base font-bold text-foreground">⚡ 최근 XP 획득</h2>
-            <div className="rounded-2xl border border-border bg-card shadow-sm">
-              {xpLogs.slice(0, 5).map((log, idx) => (
-                <div key={log.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(xpLogs.length, 5) - 1 ? "border-b border-border" : ""}`}>
-                  <div>
-                    <p className="text-sm text-foreground">{log.reason}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")}</p>
-                  </div>
-                  <span className="text-sm font-bold text-primary">+{log.amount} XP</span>
-                </div>
-              ))}
-            </div>
+            <RecentXpList logs={xpLogs} />
           </div>
         )}
       </div>
     </div>
   );
 };
-
-const StatCard = ({ icon, label, value }: { icon: string; label: string; value: string }) => (
-  <div className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card p-3 shadow-sm text-center">
-    <span className="text-xl">{icon}</span>
-    <span className="text-xs text-muted-foreground">{label}</span>
-    <span className="text-base font-bold text-foreground">{value}</span>
-  </div>
-);
 
 function getXpToNext(level: number, rank: string): number {
   const rankIdx = ["white", "blue", "red", "black"].indexOf(rank);

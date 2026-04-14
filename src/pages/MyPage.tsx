@@ -13,6 +13,13 @@ import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import { useWallet } from "@/hooks/useWallet";
+import {
+  EarnedBadgeGrid,
+  LockedBadgeGrid,
+  LevelUpHistory,
+  RecentXpList,
+  StatCard,
+} from "@/components/shared/BadgeGrid";
 
 const MyPage = () => {
   const navigate = useNavigate();

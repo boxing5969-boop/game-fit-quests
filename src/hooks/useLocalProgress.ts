@@ -100,7 +100,8 @@ function loadProgress(): LocalProgress {
     if (saved) {
       const parsed = JSON.parse(saved);
       const defaults = getDefaultProgress();
-      const result = { ...defaults, ...parsed };
+      // Preserve savedAt timestamp for sync safety
+      const result = { ...defaults, ...parsed, _savedAt: parsed._savedAt || Date.now() };
       if (!result.levelProgress) {
         result.levelProgress = defaults.levelProgress;
       }
