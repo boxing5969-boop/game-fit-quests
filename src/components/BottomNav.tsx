@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Home, Target, TrendingUp, Trophy, Award, Menu, BookOpen, User, Settings, Map, Gift, X, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+
 
 const mainTabs = [
   { path: "/home", icon: Home, label: "홈" },
@@ -31,7 +31,6 @@ const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user, progress } = useAuth();
 
   if (hiddenPaths.includes(location.pathname) || location.pathname.startsWith("/manager/") || location.pathname.startsWith("/guide/") || location.pathname.startsWith("/live-board/")) return null;
 
