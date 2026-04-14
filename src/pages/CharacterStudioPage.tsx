@@ -466,7 +466,7 @@ function OptionPreview({ category, optionKey }: { category: string; optionKey: s
   if (category === "accessory") {
     const emojis: Record<string, string> = {
       headband_red: "🎗️", headband_black: "🖤", sunglasses: "🕶️",
-      bandage: "🩹", sweatband: "💦", mouthguard: "😤",
+      bandage: "🩹", crown: "👑", star_mark: "⭐",
     };
     return <span className="text-2xl">{emojis[optionKey] || "🎀"}</span>;
   }
