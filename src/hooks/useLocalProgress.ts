@@ -151,7 +151,16 @@ export function useLocalProgress() {
   const activeProgress = local.levelProgress[activeLevelId] || createDefaultLevelProgress();
   const rules = LEVEL_RULES[activeLevelId] || LEVEL_RULES["white-1"];
 
-  const totalXp = Math.max(local.totalXp, supabaseProgress?.total_xp ?? 0);
+  // Prefer Supabase XP when it's higher (server is authoritative for XP)
+  const supabaseXp = supabaseProgress?.total_xp ?? 0;
+  const totalXp = Math.max(local.totalXp, supabaseXp);
+
+  // Sync local XP up if Supabase has more (e.g. admin granted XP)
+  useEffect(() => {
+    if (supabaseXp > local.totalXp) {
+      setLocal(prev => ({ ...prev, totalXp: supabaseXp }));
+    }
+  }, [supabaseXp]); // eslint-disable-line
 
   const status: LevelProgressionStatus = calculateLevelStatus(rules, activeProgress);
 
