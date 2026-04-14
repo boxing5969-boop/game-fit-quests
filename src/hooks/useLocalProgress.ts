@@ -100,7 +100,8 @@ function loadProgress(): LocalProgress {
     if (saved) {
       const parsed = JSON.parse(saved);
       const defaults = getDefaultProgress();
-      const result = { ...defaults, ...parsed };
+      // Preserve savedAt timestamp for sync safety
+      const result = { ...defaults, ...parsed, _savedAt: parsed._savedAt || Date.now() };
       if (!result.levelProgress) {
         result.levelProgress = defaults.levelProgress;
       }
@@ -130,7 +131,8 @@ function loadProgress(): LocalProgress {
 }
 
 function saveProgress(p: LocalProgress) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+  const withTimestamp = { ...p, _savedAt: Date.now() };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(withTimestamp));
 }
 
 export function useLocalProgress() {
@@ -149,7 +151,16 @@ export function useLocalProgress() {
   const activeProgress = local.levelProgress[activeLevelId] || createDefaultLevelProgress();
   const rules = LEVEL_RULES[activeLevelId] || LEVEL_RULES["white-1"];
 
-  const totalXp = Math.max(local.totalXp, supabaseProgress?.total_xp ?? 0);
+  // Prefer Supabase XP when it's higher (server is authoritative for XP)
+  const supabaseXp = supabaseProgress?.total_xp ?? 0;
+  const totalXp = Math.max(local.totalXp, supabaseXp);
+
+  // Sync local XP up if Supabase has more (e.g. admin granted XP)
+  useEffect(() => {
+    if (supabaseXp > local.totalXp) {
+      setLocal(prev => ({ ...prev, totalXp: supabaseXp }));
+    }
+  }, [supabaseXp]); // eslint-disable-line
 
   const status: LevelProgressionStatus = calculateLevelStatus(rules, activeProgress);
 
