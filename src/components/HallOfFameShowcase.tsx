@@ -1,9 +1,9 @@
 import { useHallOfFame } from "@/hooks/useRankingData";
 import { useAllCharacterAssignments } from "@/hooks/useCharacterData";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Crown, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import CharacterRail from "@/components/CharacterRail";
+import CharacterSprite from "@/components/CharacterSprite";
 
 const HallOfFameShowcase = () => {
   const { data: hallMembers } = useHallOfFame();
@@ -12,21 +12,25 @@ const HallOfFameShowcase = () => {
 
   const isEmpty = !hallMembers || hallMembers.length === 0;
 
-  // Build assignment map: userId → style
-  const assignmentMap = new Map<string, string>();
+  // Build assignment map: userId → { style, partsJson }
+  const assignmentMap = new Map<string, { style?: string; partsJson?: Record<string, any> }>();
   (assignments || []).forEach(a => {
     const pj = (a.character_presets as any)?.parts_json;
-    if (pj?.style) assignmentMap.set(a.user_id, pj.style);
+    assignmentMap.set(a.user_id, { style: pj?.style, partsJson: pj });
   });
 
   // Build rail members from hall of fame data
-  const railMembers = (hallMembers || []).map(m => ({
-    userId: m.r_user_id,
-    nickname: m.r_nickname,
-    characterStyle: assignmentMap.get(m.r_user_id),
-    rank: m.r_current_rank,
-    level: m.r_current_level,
-  }));
+  const railMembers = (hallMembers || []).map(m => {
+    const charData = assignmentMap.get(m.r_user_id);
+    return {
+      userId: m.r_user_id,
+      nickname: m.r_nickname,
+      characterStyle: charData?.style,
+      partsJson: charData?.partsJson,
+      rank: m.r_current_rank,
+      level: m.r_current_level,
+    };
+  });
 
   return (
     <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
@@ -59,30 +63,39 @@ const HallOfFameShowcase = () => {
             </div>
           )}
 
-          {/* Card view */}
+          {/* Card view with character sprites */}
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-            {hallMembers.map((m) => (
-              <div
-                key={m.r_user_id}
-                className="flex min-w-[100px] flex-col items-center gap-1.5 rounded-2xl border border-amber-300/40 bg-gradient-to-b from-amber-50 to-card p-3 shadow-sm"
-              >
-                <div className="relative">
-                  <Avatar className="h-14 w-14 border-2 border-amber-400/50 shadow-md">
-                    {m.r_avatar_url ? <AvatarImage src={m.r_avatar_url} alt={m.r_nickname} /> : null}
-                    <AvatarFallback className="bg-amber-100 text-lg">👑</AvatarFallback>
-                  </Avatar>
-                  <Crown className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 text-amber-500" />
+            {hallMembers.map((m) => {
+              const charData = assignmentMap.get(m.r_user_id);
+              return (
+                <div
+                  key={m.r_user_id}
+                  className="flex min-w-[100px] flex-col items-center gap-1.5 rounded-2xl border border-amber-300/40 bg-gradient-to-b from-amber-50 to-card p-3 shadow-sm"
+                >
+                  <div className="relative">
+                    <Crown className="absolute -top-2 left-1/2 z-20 h-4 w-4 -translate-x-1/2 text-amber-500" />
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-amber-400/50 bg-amber-50 shadow-md overflow-hidden">
+                      <CharacterSprite
+                        style={charData?.style}
+                        userId={m.r_user_id}
+                        partsJson={charData?.partsJson as any}
+                        size="sm"
+                        league={m.r_current_rank as any}
+                        level={m.r_current_level}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-foreground">{m.r_nickname}</span>
+                  <div className="flex items-center gap-0.5 text-muted-foreground">
+                    <MapPin className="h-2.5 w-2.5" />
+                    <span className="text-[9px]">{m.r_branch_name}</span>
+                  </div>
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold text-amber-700">
+                    153명예코치
+                  </span>
                 </div>
-                <span className="text-xs font-bold text-foreground">{m.r_nickname}</span>
-                <div className="flex items-center gap-0.5 text-muted-foreground">
-                  <MapPin className="h-2.5 w-2.5" />
-                  <span className="text-[9px]">{m.r_branch_name}</span>
-                </div>
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold text-amber-700">
-                  153명예코치
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
