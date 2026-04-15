@@ -25,7 +25,6 @@ import {
 const TABS = [
   { key: "my", label: "내 캐릭터", icon: "🥊" },
   { key: "preset", label: "프리셋 선택", icon: "🎭" },
-  { key: "parts", label: "파츠편집", icon: "🧩" },
   { key: "customize", label: "꾸미기", icon: "🎨" },
   { key: "growth", label: "성장", icon: "📈" },
   { key: "effects", label: "효과", icon: "✨" },
@@ -182,28 +181,17 @@ const CharacterStudioPage = () => {
         <div className="relative rounded-3xl border border-border bg-gradient-to-b from-card to-secondary/30 p-5 shadow-sm">
           <div className="relative mx-auto flex h-44 w-44 items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-primary/10 blur-2xl" />
-            {activeTab === "parts" ? (
-              <div className="relative z-10 flex items-center justify-center w-40 h-40">
-                <LayeredCharacterRenderer
-                  parts={selectedParts}
-                  size={148}
-                  animate={true}
-                  className="drop-shadow-xl"
-                />
-              </div>
-            ) : (
-              <CharacterSprite
-                style={selectedStyle}
-                userId={user?.id}
-                size="lg"
-                animate={activeTab !== "customize"}
-                league={currentLeague as any}
-                level={currentLevel}
-                customization={previewCustomization}
-                presetVariants={presetVariants || []}
-                className="relative z-10 !w-40 !h-40"
-              />
-            )}
+            <CharacterSprite
+              style={selectedStyle}
+              userId={user?.id}
+              size="lg"
+              animate={activeTab !== "customize"}
+              league={currentLeague as any}
+              level={currentLevel}
+              customization={previewCustomization}
+              presetVariants={presetVariants || []}
+              className="relative z-10 !w-40 !h-40"
+            />
           </div>
           <div className="mt-2 text-center">
             <p className="text-base font-bold text-foreground">{selectedChar.label}</p>
@@ -229,15 +217,6 @@ const CharacterStudioPage = () => {
               ) : (
                 <span className="flex items-center gap-1"><Save className="h-3 w-3" /> 저장</span>
               )}
-            </button>
-          )}
-          {activeTab === "parts" && (
-            <button
-              onClick={handleSaveParts}
-              disabled={isSaving}
-              className="absolute top-3 right-3 rounded-full px-3 py-1.5 text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 bg-primary text-primary-foreground"
-            >
-              {isSaving ? "..." : <span className="flex items-center gap-1"><Save className="h-3 w-3" /> 저장</span>}
             </button>
           )}
           {activeTab === "customize" && (
@@ -296,13 +275,6 @@ const CharacterStudioPage = () => {
             genderFilter={genderFilter}
             setGenderFilter={setGenderFilter}
             onSelect={handleSelectPreset}
-          />
-        )}
-        {activeTab === "parts" && (
-          <PartsTab
-            selectedParts={selectedParts}
-            onChange={setSelectedParts}
-            unlockedKeys={unlockedKeys}
           />
         )}
         {activeTab === "customize" && (
