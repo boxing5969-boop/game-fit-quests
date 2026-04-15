@@ -4,7 +4,10 @@ import { ArrowLeft, Shuffle, Save, Check, Sparkles, Lock, ChevronRight, Crown, G
 import { useAuth } from "@/contexts/AuthContext";
 import { PREBUILT_CHARACTERS, getRandomCharacter } from "@/data/characterPresets";
 import { getCurrentMilestone, UNLOCK_MILESTONES, getUnlockedPartKeys } from "@/data/characterUnlockData";
-import { useTemplatePresets, useAssignCharacter, useMemberCharacterAssignment, useSaveCustomization } from "@/hooks/useCharacterData";
+import { useTemplatePresets, useAssignCharacter, useMemberCharacterAssignment, useSaveCustomization, useSaveParts } from "@/hooks/useCharacterData";
+import { DEFAULT_SELECTION, PARTS_BY_CATEGORY, CATEGORY_ORDER, CATEGORY_LABELS, ALL_PARTS } from "@/data/characterPartsData";
+import LayeredCharacterRenderer from "@/components/LayeredCharacterRenderer";
+import type { PartsSelection } from "@/data/characterPartsData";
 import { useWallet } from "@/hooks/useWallet";
 import { usePresetVariants, getVariantCategories, getVariantOptions, VARIANT_CATEGORY_META, VARIANT_OPTION_LABELS } from "@/hooks/usePresetVariants";
 import CharacterSprite from "@/components/CharacterSprite";
@@ -49,6 +52,8 @@ const CharacterStudioPage = () => {
   const { data: walletData } = useWallet();
   const assignCharacter = useAssignCharacter();
   const saveCustomization = useSaveCustomization();
+  const saveParts = useSaveParts();
+  const currentPartsSelection = (currentPartsJson?.parts) as PartsSelection | undefined;
 
   const currentPartsJson = (assignment?.character_presets as any)?.parts_json;
   const currentStyle = currentPartsJson?.style;
@@ -66,6 +71,11 @@ const CharacterStudioPage = () => {
   const [selectedStyle, setSelectedStyle] = useState<string>(currentStyle || "male_01");
   const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female">("all");
   const [pendingCustomization, setPendingCustomization] = useState<CharacterCustomization>(currentCustomization);
+  const [selectedParts, setSelectedParts] = useState<PartsSelection>(
+    currentPartsSelection && Object.keys(currentPartsSelection).length > 0
+      ? currentPartsSelection
+      : DEFAULT_SELECTION
+  );
 
   // Fetch preset-specific variants for the selected style
   const { data: presetVariants } = usePresetVariants(selectedStyle);
@@ -120,7 +130,16 @@ const CharacterStudioPage = () => {
     }
   };
 
-  const isSaving = assignCharacter.isPending || saveCustomization.isPending;
+  const handleSaveParts = async () => {
+    try {
+      await saveParts.mutateAsync({ parts: selectedParts });
+      alert("내 파츠 캐릭터가 저장되었습니다! 🧩");
+    } catch (e: any) {
+      alert(e.message || "저장 실패");
+    }
+  };
+
+  const isSaving = assignCharacter.isPending || saveCustomization.isPending || saveParts.isPending;
   const isCurrentPreset = currentStyle === selectedStyle;
 
   const previewCustomization = activeTab === "customize" ? pendingCustomization : currentCustomization;
@@ -162,17 +181,28 @@ const CharacterStudioPage = () => {
         <div className="relative rounded-3xl border border-border bg-gradient-to-b from-card to-secondary/30 p-5 shadow-sm">
           <div className="relative mx-auto flex h-44 w-44 items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-primary/10 blur-2xl" />
-            <CharacterSprite
-              style={selectedStyle}
-              userId={user?.id}
-              size="lg"
-              animate={activeTab !== "customize"}
-              league={currentLeague as any}
-              level={currentLevel}
-              customization={previewCustomization}
-              presetVariants={presetVariants || []}
-              className="relative z-10 !w-40 !h-40"
-            />
+            {activeTab === "parts" ? (
+              <div className="relative z-10 flex items-center justify-center w-40 h-40">
+                <LayeredCharacterRenderer
+                  parts={selectedParts}
+                  size={148}
+                  animate={true}
+                  className="drop-shadow-xl"
+                />
+              </div>
+            ) : (
+              <CharacterSprite
+                style={selectedStyle}
+                userId={user?.id}
+                size="lg"
+                animate={activeTab !== "customize"}
+                league={currentLeague as any}
+                level={currentLevel}
+                customization={previewCustomization}
+                presetVariants={presetVariants || []}
+                className="relative z-10 !w-40 !h-40"
+              />
+            )}
           </div>
           <div className="mt-2 text-center">
             <p className="text-base font-bold text-foreground">{selectedChar.label}</p>
@@ -198,6 +228,15 @@ const CharacterStudioPage = () => {
               ) : (
                 <span className="flex items-center gap-1"><Save className="h-3 w-3" /> 저장</span>
               )}
+            </button>
+          )}
+          {activeTab === "parts" && (
+            <button
+              onClick={handleSaveParts}
+              disabled={isSaving}
+              className="absolute top-3 right-3 rounded-full px-3 py-1.5 text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 bg-primary text-primary-foreground"
+            >
+              {isSaving ? "..." : <span className="flex items-center gap-1"><Save className="h-3 w-3" /> 저장</span>}
             </button>
           )}
           {activeTab === "customize" && (
@@ -256,6 +295,13 @@ const CharacterStudioPage = () => {
             genderFilter={genderFilter}
             setGenderFilter={setGenderFilter}
             onSelect={handleSelectPreset}
+          />
+        )}
+        {activeTab === "parts" && (
+          <PartsTab
+            selectedParts={selectedParts}
+            onChange={setSelectedParts}
+            unlockedKeys={unlockedKeys}
           />
         )}
         {activeTab === "customize" && (
@@ -748,6 +794,103 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+
+// ========== PARTS TAB ==========
+const CATEGORY_ICONS: Record<string, string> = {
+  skin: "🎨", hair_back: "💇", hair_front: "✂️", eyebrows: "〰️",
+  eyes: "👁️", mouth: "👄", gloves: "🥊", top: "👕",
+  shorts: "🩳", shoes: "👟", accessory: "💎", effect: "✨",
+};
+
+function PartsTab({ selectedParts, onChange, unlockedKeys }: {
+  selectedParts: PartsSelection;
+  onChange: (parts: PartsSelection) => void;
+  unlockedKeys: Set<string>;
+}) {
+  const [activeCategory, setActiveCategory] = useState<string>(CATEGORY_ORDER[0]);
+
+  const handlePartSelect = (category: string, key: string) => {
+    const current = selectedParts[category];
+    if (category === "accessory" || category === "effect") {
+      onChange({ ...selectedParts, [category]: current === key ? undefined : key });
+    } else {
+      onChange({ ...selectedParts, [category]: key });
+    }
+  };
+
+  const currentParts = PARTS_BY_CATEGORY[activeCategory] || [];
+
+  return (
+    <div className="space-y-4 animate-slide-up">
+      <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-2.5 flex items-center gap-2">
+        <span className="text-base">🧩</span>
+        <p className="text-xs font-bold text-primary">파츠를 선택하면 위 미리보기에 실시간 반영됩니다!</p>
+      </div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {CATEGORY_ORDER.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+              activeCategory === cat
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : selectedParts[cat]
+                ? "bg-primary/10 text-primary border border-primary/30"
+                : "bg-secondary text-muted-foreground"
+            }`}
+          >
+            <span>{CATEGORY_ICONS[cat]}</span>
+            {CATEGORY_LABELS[cat]}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {(activeCategory === "accessory" || activeCategory === "effect") && (
+          <button
+            onClick={() => onChange({ ...selectedParts, [activeCategory]: undefined })}
+            className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
+              !selectedParts[activeCategory] ? "border-primary bg-primary/5" : "border-border bg-card"
+            }`}
+          >
+            <span className="text-2xl">🚫</span>
+            <span className="text-[9px] font-bold">없음</span>
+          </button>
+        )}
+        {currentParts.map(part => {
+          const isSelected = selectedParts[activeCategory] === part.key;
+          const mainColor = part.config.fill || part.config.iris || "#888";
+          return (
+            <button
+              key={part.key}
+              onClick={() => handlePartSelect(activeCategory, part.key)}
+              className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
+                isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
+              }`}
+            >
+              {isSelected && (
+                <div className="absolute -top-1 -right-1 rounded-full bg-primary p-0.5">
+                  <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                </div>
+              )}
+              <div className="w-8 h-8 rounded-full border-2 border-white/20 shadow"
+                style={{ background: mainColor }} />
+              <span className="text-[9px] font-bold text-center leading-tight truncate w-full text-center">
+                {part.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <button
+        onClick={() => onChange({ ...DEFAULT_SELECTION })}
+        className="w-full rounded-xl border border-border bg-secondary/50 py-2 text-xs text-muted-foreground"
+      >
+        기본값으로 초기화
+      </button>
     </div>
   );
 }
