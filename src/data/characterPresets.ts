@@ -21,7 +21,6 @@ import boxer_master_male_01 from "@/assets/boxers/boxer_master_male_01.png";
 import boxer_master_male_02 from "@/assets/boxers/boxer_master_male_02.png";
 import boxer_grandmaster_male from "@/assets/boxers/boxer_grandmaster_male.png";
 import boxer_nika_01 from "@/assets/boxers/boxer_nika_01.png";
-import boxer_nika_02 from "@/assets/boxers/boxer_nika_02.png";
 import boxer_nika_03 from "@/assets/boxers/boxer_nika_03.png";
 import boxer_female_master_01 from "@/assets/boxers/boxer_female_master_01.png";
 import boxer_female_master_02 from "@/assets/boxers/boxer_female_master_02.png";
@@ -29,9 +28,7 @@ import boxer_female_grandmaster_01 from "@/assets/boxers/boxer_female_grandmaste
 import boxer_female_grandmaster_02 from "@/assets/boxers/boxer_female_grandmaster_02.png";
 import boxer_female_grandmaster_03 from "@/assets/boxers/boxer_female_grandmaster_03.png";
 import boxer_female_grandmaster_04 from "@/assets/boxers/boxer_female_grandmaster_04.png";
-import boxer_female_nika_01 from "@/assets/boxers/boxer_female_nika_01.png";
 import boxer_female_nika_02 from "@/assets/boxers/boxer_female_nika_02.png";
-import boxer_kpop_01 from "@/assets/boxers/boxer_kpop_01.png";
 import boxer_kpop_02 from "@/assets/boxers/boxer_kpop_02.png";
 import boxer_kpop_03 from "@/assets/boxers/boxer_kpop_03.png";
 
@@ -67,7 +64,6 @@ export const PREBUILT_CHARACTERS: PrebuiltCharacter[] = [
   { style: "master_male_02", label: "마스터 레전드", gender: "male", image: boxer_master_male_02, color: "black-rainbow" },
   { style: "grandmaster_male", label: "그랜드마스터", gender: "male", image: boxer_grandmaster_male, color: "silver-black" },
   { style: "nika_male_01", label: "태양신 니카", gender: "male", image: boxer_nika_01, color: "white-gold" },
-  { style: "nika_male_02", label: "태양신 전사", gender: "male", image: boxer_nika_02, color: "white-rainbow" },
   { style: "nika_male_03", label: "태양신 제왕", gender: "male", image: boxer_nika_03, color: "gold-white" },
   { style: "female_master_01", label: "마스터 팀", gender: "female", image: boxer_female_master_01, color: "black-gold" },
   { style: "female_master_02", label: "마스터 엠프레스", gender: "female", image: boxer_female_master_02, color: "black-rainbow" },
@@ -75,9 +71,7 @@ export const PREBUILT_CHARACTERS: PrebuiltCharacter[] = [
   { style: "female_gm_02", label: "다크 팀", gender: "female", image: boxer_female_grandmaster_02, color: "black-red" },
   { style: "female_gm_03", label: "패왕 팀", gender: "female", image: boxer_female_grandmaster_03, color: "black-lightning" },
   { style: "female_gm_04", label: "세도우 팀", gender: "female", image: boxer_female_grandmaster_04, color: "silver-black" },
-  { style: "female_nika_01", label: "태양신 여신", gender: "female", image: boxer_female_nika_01, color: "white-rainbow" },
   { style: "female_nika_02", label: "태양신 팀", gender: "female", image: boxer_female_nika_02, color: "white-gold" },
-  { style: "kpop_01", label: "케이팝 아이돌", gender: "female", image: boxer_kpop_01, color: "pink-purple" },
   { style: "kpop_02", label: "케이팝 마스터", gender: "female", image: boxer_kpop_02, color: "pink-gold" },
   { style: "kpop_03", label: "케이팝 챔프", gender: "female", image: boxer_kpop_03, color: "pink-black" },
 ];
