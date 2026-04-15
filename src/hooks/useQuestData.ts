@@ -128,6 +128,10 @@ export const useRecordAttendance = () => {
     onSuccess: () => {
       refreshProgress();
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
     },
   });
 };
@@ -173,8 +177,12 @@ export const useApproveSubmission = () => {
     onSuccess: () => {
       refreshProgress();
       qc.invalidateQueries({ queryKey: ["pending-submissions"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
       qc.invalidateQueries({ queryKey: ["my-submissions"] });
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
       qc.invalidateQueries({ queryKey: ["assigned-members"] });
     },
   });
@@ -193,6 +201,8 @@ export const useRejectSubmission = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["pending-submissions"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
       qc.invalidateQueries({ queryKey: ["my-submissions"] });
     },
   });
@@ -213,6 +223,10 @@ export const useGrantManualXp = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["assigned-members"] });
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
     },
   });
 };
@@ -232,6 +246,8 @@ export const usePassBossBattle = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["assigned-members"] });
       qc.invalidateQueries({ queryKey: ["pending-submissions"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
     },
   });
 };
@@ -285,6 +301,10 @@ export const useManualLevelUp = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["assigned-members"] });
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
     },
   });
 };
@@ -303,6 +323,10 @@ export const useManualLevelDown = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["assigned-members"] });
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
     },
   });
 };
@@ -323,6 +347,10 @@ export const useSetMemberLevel = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["assigned-members"] });
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
+      qc.invalidateQueries({ queryKey: ["levels"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
     },
   });
 };
