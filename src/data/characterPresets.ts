@@ -24,14 +24,14 @@ import boxer_nika_01 from "@/assets/boxers/boxer_nika_01.png";
 import boxer_nika_02 from "@/assets/boxers/boxer_nika_02.jpg";
 import boxer_nika_03 from "@/assets/boxers/boxer_nika_03.jpg";
 import boxer_female_master_01 from "@/assets/boxers/boxer_female_master_01.png";
-import boxer_female_master_02 from "@/assets/boxers/boxer_female_master_02.png";
+import boxer_female_master_02 from "@/assets/boxers/boxer_female_master_02.jpg";
 import boxer_female_grandmaster_01 from "@/assets/boxers/boxer_female_grandmaster_01.png";
 import boxer_female_grandmaster_02 from "@/assets/boxers/boxer_female_grandmaster_02.png";
 import boxer_female_grandmaster_03 from "@/assets/boxers/boxer_female_grandmaster_03.png";
 import boxer_female_grandmaster_04 from "@/assets/boxers/boxer_female_grandmaster_04.png";
 import boxer_female_nika_01 from "@/assets/boxers/boxer_female_nika_01.png";
 import boxer_female_nika_02 from "@/assets/boxers/boxer_female_nika_02.png";
-import boxer_kpop_01 from "@/assets/boxers/boxer_kpop_01.png";
+import boxer_kpop_01 from "@/assets/boxers/boxer_kpop_01.jpg";
 import boxer_kpop_02 from "@/assets/boxers/boxer_kpop_02.png";
 import boxer_kpop_03 from "@/assets/boxers/boxer_kpop_03.png";
 
