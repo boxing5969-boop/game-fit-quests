@@ -53,10 +53,10 @@ const CharacterStudioPage = () => {
   const assignCharacter = useAssignCharacter();
   const saveCustomization = useSaveCustomization();
   const saveParts = useSaveParts();
-  const currentPartsSelection = (currentPartsJson?.parts) as PartsSelection | undefined;
 
   const currentPartsJson = (assignment?.character_presets as any)?.parts_json;
   const currentStyle = currentPartsJson?.style;
+  const currentPartsSelection = (currentPartsJson?.parts) as PartsSelection | undefined;
   const currentCustomization: CharacterCustomization = currentPartsJson?.customization || {};
   const currentLeague = (progress?.current_rank || "white") as string;
   const currentLevel = progress?.current_level || 1;
