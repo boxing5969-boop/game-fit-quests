@@ -25,6 +25,7 @@ import {
 const TABS = [
   { key: "my", label: "내 캐릭터", icon: "🥊" },
   { key: "preset", label: "프리셋 선택", icon: "🎭" },
+  { key: "parts", label: "파츠편집", icon: "🧩" },
   { key: "customize", label: "꾸미기", icon: "🎨" },
   { key: "growth", label: "성장", icon: "📈" },
   { key: "effects", label: "효과", icon: "✨" },
