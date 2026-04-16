@@ -1,4 +1,4 @@
-import React, { useMemo, lazy, Suspense } from "react";
+﻿import React, { useMemo, lazy, Suspense } from "react";
 import { getCharacterImage, getCharacterByHash } from "@/data/characterPresets";
 import BlackLeagueAura from "@/components/BlackLeagueAura";
 import type { PartsSelection } from "@/data/characterPartsData";
@@ -12,9 +12,6 @@ import {
   AURA_RADIAL_STYLES,
   AURA_SPIN_DURATIONS,
   MASTER_AURA_KEYS,
-  VICTORY_QUOTE_TEXTS,
-  BADGE_EMOJIS,
-  VICTORY_POSE_ANIMATIONS,
   NAMEPLATE_STYLES,
 } from "@/data/characterCustomizationData";
 
@@ -41,13 +38,101 @@ const SIZE_MAP = {
 
 const SIZE_PX = { xs: 32, sm: 48, md: 80, lg: 128 };
 
-// Aura inset by size: small sprites get tighter glow
 const AURA_INSET: Record<string, string> = {
   xs: "-4px",
   sm: "-4px",
   md: "-8px",
   lg: "-8px",
 };
+
+const AURA_ALIAS_MAP: Record<string, string> = {
+  rainbow: "aura_rainbow",
+  aurarainbow: "aura_rainbow",
+  rainbowaura: "aura_rainbow",
+  fire: "aura_fire",
+  flame: "aura_fire",
+  ice: "aura_ice",
+  frost: "aura_ice",
+  lightning: "aura_lightning",
+  thunder: "aura_lightning",
+  galaxy: "aura_galaxy",
+
+  rainbownmaster: "halo_rainbow_master",
+  rainbowmaster: "halo_rainbow_master",
+  masterrainbow: "halo_rainbow_master",
+  halorainbowmaster: "halo_rainbow_master",
+
+  blackgold: "halo_black_gold",
+  haloblackgold: "halo_black_gold",
+
+  conqueror: "halo_conqueror",
+  haloconqueror: "halo_conqueror",
+
+  galaxymaster: "halo_galaxy_master",
+  mastergalaxy: "halo_galaxy_master",
+  halogalaxymaster: "halo_galaxy_master",
+};
+
+const NAMEPLATE_ALIAS_MAP: Record<string, string> = {
+  default: "default",
+  basic: "default",
+  bronze: "bronze",
+  silver: "silver",
+  gold: "gold",
+  neon: "neon",
+  purple: "purple",
+  violet: "purple",
+  blackgold: "blackgold",
+  black_gold: "blackgold",
+  "black-gold": "blackgold",
+};
+
+function normalizeKey(value?: string) {
+  return (value ?? "").toLowerCase().replace(/[\W_-]/g, "");
+}
+
+function resolveAuraKey(rawKey?: string): string | null {
+  if (!rawKey || rawKey === "none") return null;
+
+  if ((MASTER_AURA_KEYS as readonly string[]).includes(rawKey)) return rawKey;
+  if (AURA_RADIAL_STYLES[rawKey]) return rawKey;
+
+  const normalized = normalizeKey(rawKey);
+
+  if (AURA_ALIAS_MAP[normalized]) return AURA_ALIAS_MAP[normalized];
+
+  if (normalized.includes("rainbow") && normalized.includes("master")) return "halo_rainbow_master";
+  if (normalized.includes("galaxy") && normalized.includes("master")) return "halo_galaxy_master";
+  if (normalized.includes("black") && normalized.includes("gold")) return "halo_black_gold";
+  if (normalized.includes("conqueror")) return "halo_conqueror";
+  if (normalized.includes("rainbow")) return "aura_rainbow";
+  if (normalized.includes("galaxy")) return "aura_galaxy";
+  if (normalized.includes("lightning") || normalized.includes("thunder")) return "aura_lightning";
+  if (normalized.includes("fire") || normalized.includes("flame")) return "aura_fire";
+  if (normalized.includes("ice") || normalized.includes("frost")) return "aura_ice";
+
+  return null;
+}
+
+function resolveNameplateClass(rawKey?: string): string {
+  if (!rawKey || rawKey === "none") return "";
+
+  const direct = NAMEPLATE_STYLES[rawKey];
+  if (direct !== undefined) return direct;
+
+  const normalized = normalizeKey(rawKey);
+  const mapped = NAMEPLATE_ALIAS_MAP[normalized];
+
+  if (mapped && NAMEPLATE_STYLES[mapped]) return NAMEPLATE_STYLES[mapped];
+
+  if (normalized.includes("gold")) return NAMEPLATE_STYLES.blackgold || NAMEPLATE_STYLES.gold || "";
+  if (normalized.includes("purple") || normalized.includes("violet")) return NAMEPLATE_STYLES.purple || "";
+  if (normalized.includes("neon")) return NAMEPLATE_STYLES.neon || "";
+  if (normalized.includes("silver")) return NAMEPLATE_STYLES.silver || "";
+  if (normalized.includes("bronze")) return NAMEPLATE_STYLES.bronze || "";
+
+  return NAMEPLATE_STYLES.default || "";
+}
 
 const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   style,
@@ -65,7 +150,6 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   const isLayered = !!(partsJson?.parts && Object.keys(partsJson.parts).length > 0);
   const presetStyle = partsJson?.style || style;
   const customization = customizationProp || partsJson?.customization;
-
   const imgSrc = useMemo(() => {
     if (isLayered) return null;
     if (presetStyle) return getCharacterImage(presetStyle);
@@ -81,18 +165,31 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   const showEffectSmall = size === "sm";
   const frameClass = customization?.frame ? FRAME_STYLES[customization.frame] || "" : "";
 
-  const auraKey = customization?.aura;
-  const victoryPoseClass = customization?.victoryPose ? VICTORY_POSE_ANIMATIONS[customization.victoryPose] || "" : "";
-  const badgeEmoji = customization?.badge ? BADGE_EMOJIS[customization.badge] || "" : "";
-  const nameplateClass = customization?.nameplate ? NAMEPLATE_STYLES[customization.nameplate] || "" : "";
-  const victoryQuoteText = customization?.victoryQuote ? VICTORY_QUOTE_TEXTS[customization.victoryQuote] || "" : "";
+  const resolvedAuraKey = resolveAuraKey(customization?.aura);
+  const isMasterAura = !!resolvedAuraKey && (MASTER_AURA_KEYS as readonly string[]).includes(resolvedAuraKey);
+  const nameplateClass = resolveNameplateClass(customization?.nameplate);
+
+  const shouldShowLabel = size !== "xs" && !!(customization?.title || customization?.nameplate);
+  const labelText =
+    customization?.title
+      ? (TITLE_LABELS[customization.title]?.text || customization.title)
+      : "칭호";
+
+  const labelColorClass =
+    nameplateClass || (customization?.title ? TITLE_LABELS[customization.title]?.color : "") || "text-foreground";
+
+  const labelWrapClass =
+    size === "sm"
+      ? "absolute -bottom-4 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap"
+      : "absolute -bottom-5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap";
+
+  const labelTextClass = size === "sm" ? "text-[9px]" : "text-[10px]";
 
   return (
     <div
       className={`relative flex-shrink-0 select-none ${SIZE_MAP[size]} ${onClick ? "cursor-pointer active:scale-95" : ""} ${className}`}
       onClick={onClick}
     >
-      {/* Black League aura (league reward) */}
       {isBlack && (
         <BlackLeagueAura
           mode={effectiveAuraMode}
@@ -100,41 +197,34 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         />
       )}
 
-      {/* Customization aura — circular radial glow from center (z-[3]) */}
-      {auraKey && auraKey !== "none" && size !== "xs" && (
-        MASTER_AURA_KEYS.includes(auraKey) ? (
-          <MasterAuraOverlay auraKey={auraKey} size={size} />
-        ) : AURA_RADIAL_STYLES[auraKey] ? (
+      {resolvedAuraKey && size !== "xs" && (
+        isMasterAura ? (
+          <MasterAuraOverlay auraKey={resolvedAuraKey} size={size} />
+        ) : AURA_RADIAL_STYLES[resolvedAuraKey] ? (
           <div
             className={`absolute rounded-full pointer-events-none z-[3] ${
-              auraKey.includes("rainbow") || auraKey.includes("galaxy") ? "animate-spin" :
-              auraKey === "aura_lightning" ? "animate-ping" : "animate-pulse"
+              resolvedAuraKey.includes("rainbow") || resolvedAuraKey.includes("galaxy")
+                ? "animate-spin"
+                : resolvedAuraKey === "aura_lightning"
+                  ? "animate-ping"
+                  : "animate-pulse"
             }`}
             style={{
               inset: AURA_INSET[size],
-              background: AURA_RADIAL_STYLES[auraKey],
-              animationDuration: AURA_SPIN_DURATIONS[auraKey] ?? undefined,
+              background: AURA_RADIAL_STYLES[resolvedAuraKey],
+              animationDuration: resolvedAuraKey ? AURA_SPIN_DURATIONS[resolvedAuraKey] : undefined,
             }}
           />
         ) : null
       )}
 
-      {/* Frame ring */}
       {customization?.frame && showOverlays && (
         <div className={`absolute inset-0 rounded-full z-[5] ${frameClass}`} />
       )}
 
-      {/* Badge icon (top-left) */}
-      {badgeEmoji && showOverlays && (
-        <div className="absolute -top-1 -left-1 z-20 text-sm drop-shadow-md">
-          {badgeEmoji}
-        </div>
-      )}
-
-      {/* Animation container */}
       <div
-        className={`relative z-10 h-full w-full ${animate ? "animate-emote-idle" : ""} ${victoryPoseClass}`}
-        style={{ willChange: animate || victoryPoseClass ? "transform" : undefined }}
+        className={`relative z-10 h-full w-full ${animate ? "animate-emote-idle" : ""}`}
+        style={{ willChange: animate ? "transform" : undefined }}
       >
         {isLayered ? (
           <Suspense fallback={<div className="h-full w-full animate-pulse rounded-full bg-muted" />}>
@@ -155,28 +245,15 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           />
         )}
 
-        {/* Effect particles */}
         {customization?.effect && (showOverlays || showEffectSmall) && (
           <EffectOverlay effect={customization.effect} size={size} />
         )}
       </div>
 
-      {/* Title label (with optional nameplate styling) */}
-      {customization?.title && size === "lg" && (
-        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap">
-          <span className={`text-[10px] font-bold ${
-            nameplateClass || TITLE_LABELS[customization.title]?.color || "text-foreground"
-          }`}>
-            {TITLE_LABELS[customization.title]?.text || customization.title}
-          </span>
-        </div>
-      )}
-
-      {/* Victory quote (below title) */}
-      {victoryQuoteText && size === "lg" && (
-        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap">
-          <span className="text-[8px] text-muted-foreground/80 font-medium italic">
-            {victoryQuoteText}
+      {shouldShowLabel && (
+        <div className={labelWrapClass}>
+          <span className={`${labelTextClass} font-bold ${labelColorClass}`}>
+            {labelText}
           </span>
         </div>
       )}
@@ -184,7 +261,6 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   );
 };
 
-// ===== Master Aura Multi-Layer Renderer =====
 type MasterAuraLayer = {
   gradient: string;
   mask?: string;
@@ -296,8 +372,9 @@ const MASTER_AURA_CONFIG: Record<string, MasterAuraLayer[]> = {
 const MasterAuraOverlay: React.FC<{ auraKey: string; size: string }> = ({ auraKey, size }) => {
   const layers = MASTER_AURA_CONFIG[auraKey];
   if (!layers) return null;
-  // Scale outer ring down for smaller sizes
+
   const outerInset = size === "sm" ? "-8px" : "-14px";
+
   return (
     <>
       {layers.map((layer, i) => (
@@ -317,7 +394,6 @@ const MasterAuraOverlay: React.FC<{ auraKey: string; size: string }> = ({ auraKe
   );
 };
 
-// ===== Effect Particles =====
 const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, size }) => {
   const emoji = EFFECT_EMOJIS[effect] || "✨";
 
@@ -330,6 +406,7 @@ const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, siz
   }
 
   const emojiSize = size === "lg" ? "text-lg" : "text-sm";
+
   return (
     <div className="absolute inset-0 z-20 pointer-events-none overflow-visible">
       <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "-8%", left: "5%", animationDelay: "0s", animationDuration: "1.5s" }}>{emoji}</span>
@@ -346,3 +423,4 @@ const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, siz
 };
 
 export default React.memo(CharacterSprite);
+

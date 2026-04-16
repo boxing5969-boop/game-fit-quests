@@ -363,3 +363,23 @@ export const RARITY_CONFIG: Record<ItemRarity, { label: string; border: string; 
   epic:      { label: "에픽", border: "border-purple-500",  bg: "bg-purple-500/10" },
   legendary: { label: "전설", border: "border-amber-400",   bg: "bg-amber-400/10" },
 };
+
+export const NAMEPLATE_STYLES: Record<string, string> = {
+  default: "",
+  bronze: "px-2 py-0.5 rounded-full bg-amber-700/20 text-amber-200 border border-amber-500/40",
+  silver: "px-2 py-0.5 rounded-full bg-slate-400/20 text-slate-100 border border-slate-300/40",
+  gold: "px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-200 border border-yellow-300/40",
+  neon: "px-2 py-0.5 rounded-full bg-cyan-400/20 text-cyan-200 border border-cyan-300/40 shadow-[0_0_12px_rgba(34,211,238,0.35)]",
+  purple: "px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-300/40 shadow-[0_0_12px_rgba(217,70,239,0.3)]",
+  blackgold: "px-2 py-0.5 rounded-full bg-black/70 text-yellow-300 border border-yellow-500/50",
+};
+
+
+
+export const AURA_RADIAL_STYLES: Record<string, string> = {
+  aura_fire: "radial-gradient(circle, rgba(239,68,68,0.45), rgba(249,115,22,0.25), transparent 70%)",
+  aura_ice: "radial-gradient(circle, rgba(59,130,246,0.45), rgba(125,211,252,0.25), transparent 70%)",
+  aura_lightning: "radial-gradient(circle, rgba(250,204,21,0.45), rgba(255,255,255,0.22), transparent 70%)",
+  aura_rainbow: "conic-gradient(from 0deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b)",
+  aura_galaxy: "conic-gradient(from 0deg, #4f46e5, #7c3aed, #0f172a, #1d4ed8, #7c3aed, #0f172a, #4f46e5)",
+};

@@ -1,8 +1,8 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
 
 @layer base {
   :root {
@@ -155,7 +155,7 @@
   display: none;
 }
 
-/* ═══ Emoticon Boxer Animations ═══ */
+/* ?먥븧??Emoticon Boxer Animations ?먥븧??*/
 @keyframes emote-enter {
   0% { opacity: 0; transform: scale(0.3) translateY(30px); }
   50% { opacity: 1; transform: scale(1.12) translateY(-6px); }
@@ -212,7 +212,7 @@
 .animate-emote-speed-line-r { animation: emote-speed-line-r 0.35s ease-out 0.15s forwards; }
 .animate-emote-sparkle { animation: emote-sparkle 2.5s ease-in-out infinite; }
 
-/* ═══ Black League Rainbow Aura ═══ */
+/* ?먥븧??Black League Rainbow Aura ?먥븧??*/
 @keyframes aura-hue {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -248,7 +248,7 @@
 .animate-aura-sparkle-delayed { animation: aura-sparkle-delayed 4s ease-in-out infinite 1.2s; }
 .animate-aura-sparkle-slow { animation: aura-sparkle-slow 5s ease-in-out infinite 0.8s; }
 
-/* ── Frame ring animation keyframes ── */
+/* ?? Frame ring animation keyframes ?? */
 @keyframes flicker {
   0%, 100% { opacity: 1; }
   45%, 55%  { opacity: 0.6; }
@@ -266,7 +266,7 @@
   100% { filter: hue-rotate(360deg); }
 }
 
-/* ── LayeredCharacterRenderer global animations ── */
+/* ?? LayeredCharacterRenderer global animations ?? */
 @keyframes char-idle-bob {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-2px); }
@@ -299,3 +299,4 @@
   .animate-aura-sparkle-delayed,
   .animate-aura-sparkle-slow { animation: none; }
 }
+
