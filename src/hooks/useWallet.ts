@@ -75,3 +75,27 @@ export const useMemberWallet = (userId?: string) => {
     },
   });
 };
+
+export const useSpendGems = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (amount: number) => {
+      if (!user?.id) throw new Error("로그인 필요");
+      const { data: wallet, error: fetchError } = await supabase
+        .from("user_wallets")
+        .select("gems_balance")
+        .eq("user_id", user.id)
+        .single();
+      if (fetchError) throw fetchError;
+      if (!wallet) throw new Error("지갑 없음");
+      if (wallet.gems_balance < amount) throw new Error("젬이 부족합니다 💎");
+      const { error } = await supabase
+        .from("user_wallets")
+        .update({ gems_balance: wallet.gems_balance - amount })
+        .eq("user_id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["wallet"] }),
+  });
+};

@@ -248,6 +248,24 @@
 .animate-aura-sparkle-delayed { animation: aura-sparkle-delayed 4s ease-in-out infinite 1.2s; }
 .animate-aura-sparkle-slow { animation: aura-sparkle-slow 5s ease-in-out infinite 0.8s; }
 
+/* ── Frame ring animation keyframes ── */
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  45%, 55%  { opacity: 0.6; }
+}
+@keyframes breathe {
+  0%, 100% { opacity: 0.75; }
+  50%       { opacity: 1; }
+}
+@keyframes sparkle {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%       { opacity: 1; transform: scale(1.04); }
+}
+@keyframes galaxy-spin {
+  0%   { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
 /* ── LayeredCharacterRenderer global animations ── */
 @keyframes char-idle-bob {
   0%, 100% { transform: translateY(0px); }

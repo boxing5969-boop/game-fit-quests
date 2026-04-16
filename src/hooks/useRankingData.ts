@@ -195,3 +195,19 @@ export const useMyRankPosition = () => {
   const me = ranking.find(r => r.r_user_id === user.id);
   return me?.rank_position ?? null;
 };
+
+/** 현재 유저가 명예의 전당에 등재되어 있는지 Supabase에서 확인 */
+export const useIsInHallOfFame = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["is-hall-of-fame", user?.id],
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data, error } = await supabase.rpc("get_hall_of_fame", { _limit: 9999 });
+      if (error) throw error;
+      return (data ?? []).some((m: { r_user_id: string }) => m.r_user_id === user.id);
+    },
+  });
+};

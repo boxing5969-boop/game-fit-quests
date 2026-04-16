@@ -1,40 +1,48 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Shuffle, Save, Check, Sparkles, Lock, ChevronRight, Crown, Gem, RotateCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { PREBUILT_CHARACTERS, getRandomCharacter } from "@/data/characterPresets";
-import { getCurrentMilestone, UNLOCK_MILESTONES, getUnlockedPartKeys } from "@/data/characterUnlockData";
-import { useTemplatePresets, useAssignCharacter, useMemberCharacterAssignment, useSaveCustomization, useSaveParts } from "@/hooks/useCharacterData";
-import { DEFAULT_SELECTION, PARTS_BY_CATEGORY, CATEGORY_ORDER, CATEGORY_LABELS, ALL_PARTS } from "@/data/characterPartsData";
-import LayeredCharacterRenderer from "@/components/LayeredCharacterRenderer";
-import type { PartsSelection } from "@/data/characterPartsData";
-import { useWallet } from "@/hooks/useWallet";
-import { usePresetVariants, getVariantCategories, getVariantOptions, VARIANT_CATEGORY_META, VARIANT_OPTION_LABELS } from "@/hooks/usePresetVariants";
+import { getCurrentMilestone, UNLOCK_MILESTONES } from "@/data/characterUnlockData";
+import { useTemplatePresets, useAssignCharacter, useMemberCharacterAssignment, useSaveCustomization } from "@/hooks/useCharacterData";
+import { useIsInHallOfFame } from "@/hooks/useRankingData";
+import { useWallet, useSpendGems } from "@/hooks/useWallet";
 import CharacterSprite from "@/components/CharacterSprite";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
+import useEmblaCarousel from "embla-carousel-react";
+import confetti from "canvas-confetti";
+import { useOwnedSet, usePurchaseCustomization } from "@/hooks/useCustomizationPurchase";
 import {
   CUSTOMIZATION_CATEGORIES,
+  CUSTOMIZATION_LEAGUE_ORDER,
   EFFECT_EMOJIS,
-  FRAME_STYLES,
   TITLE_LABELS,
+  AURA_PREVIEW_GRADIENTS,
   type CharacterCustomization,
+  type CustomizationOption,
 } from "@/data/characterCustomizationData";
 
 const TABS = [
   { key: "my", label: "내 캐릭터", icon: "🥊" },
   { key: "preset", label: "프리셋 선택", icon: "🎭" },
   { key: "customize", label: "꾸미기", icon: "🎨" },
+  { key: "gym", label: "나의 짐", icon: "🏠" },
   { key: "growth", label: "성장", icon: "📈" },
   { key: "effects", label: "효과", icon: "✨" },
 ] as const;
 
-const GENDER_TABS = [
-  { key: "all", label: "전체" },
-  { key: "male", label: "남성" },
-  { key: "female", label: "여성" },
+const FILTER_TABS = [
+  { key: "white",  label: "화이트", icon: "🤍" },
+  { key: "blue",   label: "블루",   icon: "💙" },
+  { key: "red",    label: "레드",   icon: "❤️" },
+  { key: "black",  label: "블랙",   icon: "🖤" },
+  { key: "legend", label: "전설",   icon: "👑" },
 ] as const;
+
+const LEAGUE_ORDER: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
 
 const LEAGUE_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 const LEAGUE_COLORS: Record<string, string> = {
@@ -46,22 +54,23 @@ const LEAGUE_COLORS: Record<string, string> = {
 
 const CharacterStudioPage = () => {
   const navigate = useNavigate();
-  const { user, progress } = useAuth();
+  const { user, progress, role } = useAuth();
   const { data: assignment } = useMemberCharacterAssignment();
   const { data: templatePresets } = useTemplatePresets();
   const { data: walletData } = useWallet();
   const assignCharacter = useAssignCharacter();
   const saveCustomization = useSaveCustomization();
-  const saveParts = useSaveParts();
+  const { data: isInHallOfFame = false } = useIsInHallOfFame();
+  const isAdmin = role === "admin" || role === "super_admin";
+  const ownedSet = useOwnedSet();
+  const purchaseCustomization = usePurchaseCustomization();
 
   const currentPartsJson = (assignment?.character_presets as any)?.parts_json;
   const currentStyle = currentPartsJson?.style;
-  const currentPartsSelection = (currentPartsJson?.parts) as PartsSelection | undefined;
   const currentCustomization: CharacterCustomization = currentPartsJson?.customization || {};
   const currentLeague = (progress?.current_rank || "white") as string;
   const currentLevel = progress?.current_level || 1;
 
-  const unlockedKeys = useMemo(() => getUnlockedPartKeys(currentLeague, currentLevel), [currentLeague, currentLevel]);
   const { current: currentMilestone, next: nextMilestone } = useMemo(
     () => getCurrentMilestone(currentLeague, currentLevel),
     [currentLeague, currentLevel]
@@ -69,20 +78,110 @@ const CharacterStudioPage = () => {
 
   const [activeTab, setActiveTab] = useState<string>("my");
   const [selectedStyle, setSelectedStyle] = useState<string>(currentStyle || "male_01");
-  const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female">("all");
+  const [activeFilter, setActiveFilter] = useState<string>("white");
   const [pendingCustomization, setPendingCustomization] = useState<CharacterCustomization>(currentCustomization);
-  const [selectedParts, setSelectedParts] = useState<PartsSelection>(
-    currentPartsSelection && Object.keys(currentPartsSelection).length > 0
-      ? currentPartsSelection
-      : DEFAULT_SELECTION
-  );
 
-  // Fetch preset-specific variants for the selected style
-  const { data: presetVariants } = usePresetVariants(selectedStyle);
+  // Sync pendingCustomization when DB data loads (assignment is async)
+  useEffect(() => {
+    if (currentPartsJson?.customization) {
+      setPendingCustomization(currentPartsJson.customization);
+    }
+  }, [currentPartsJson?.customization]);
 
-  const filteredCharacters = genderFilter === "all"
-    ? PREBUILT_CHARACTERS
-    : PREBUILT_CHARACTERS.filter(c => c.gender === genderFilter);
+  // Sync selectedStyle when DB data loads
+  useEffect(() => {
+    if (currentStyle) setSelectedStyle(currentStyle);
+  }, [currentStyle]);
+
+  const currentGymLayout: GymLayout = currentPartsJson?.gymLayout || {};
+  const [pendingGymLayout, setPendingGymLayout] = useState<GymLayout>(currentGymLayout);
+
+  useEffect(() => {
+    if (currentPartsJson?.gymLayout) {
+      setPendingGymLayout(currentPartsJson.gymLayout);
+    }
+  }, [currentPartsJson?.gymLayout]);
+
+  const spendGems = useSpendGems();
+  const [purchaseModal, setPurchaseModal] = useState<typeof PREBUILT_CHARACTERS[0] | null>(null);
+  const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
+
+  const [ownedStyles, setOwnedStyles] = useState<Set<string>>(() => {
+    const freeStyles = PREBUILT_CHARACTERS.filter(c => c.price === 0).map(c => c.style);
+    try {
+      const stored = JSON.parse(localStorage.getItem(`owned_chars_${user?.id || "guest"}`) || "[]") as string[];
+      return new Set([...freeStyles, ...stored, ...(currentStyle ? [currentStyle] : [])]);
+    } catch {
+      return new Set(freeStyles);
+    }
+  });
+
+  const markOwned = useCallback((style: string) => {
+    setOwnedStyles(prev => {
+      const next = new Set(prev);
+      next.add(style);
+      try {
+        localStorage.setItem(`owned_chars_${user?.id || "guest"}`, JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+  }, [user?.id]);
+
+  const handleApplyStyle = useCallback(async (style: string) => {
+    if (!user?.id) return;
+    setSelectedStyle(style);
+    try {
+      const matchingTemplate = (templatePresets || []).find(p => (p.parts_json as any)?.style === style);
+      if (matchingTemplate) {
+        await assignCharacter.mutateAsync({ userId: user.id, presetId: matchingTemplate.id });
+      } else {
+        const partsJson = { style } as any;
+        const { data: existing } = await supabase.from("character_presets").select("id").eq("created_by", user.id).eq("is_template", false).order("updated_at", { ascending: false }).limit(1).maybeSingle();
+        let presetId: string;
+        if (existing) {
+          const { error } = await supabase.from("character_presets").update({ parts_json: partsJson, updated_at: new Date().toISOString() }).eq("id", existing.id);
+          if (error) throw error;
+          presetId = existing.id;
+        } else {
+          const { data: newPreset, error } = await supabase.from("character_presets").insert({ name: `${user.id}_preset`, parts_json: partsJson, created_by: user.id, is_template: false }).select().single();
+          if (error) throw error;
+          presetId = newPreset.id;
+        }
+        await assignCharacter.mutateAsync({ userId: user.id, presetId });
+      }
+    } catch (e: any) {
+      toast.error(e.message || "저장 실패");
+    }
+  }, [user?.id, templatePresets, assignCharacter]);
+
+  const handleConfirmPurchase = async () => {
+    if (!purchaseModal || !user?.id) return;
+    const char = purchaseModal;
+    setIsProcessingPurchase(true);
+    try {
+      if (!isAdmin && char.price > 0) {
+        await spendGems.mutateAsync(char.price);
+      }
+      markOwned(char.style);
+      setPurchaseModal(null);
+      await handleApplyStyle(char.style);
+      toast.success(`${char.label} 획득! 🎉`);
+    } catch (e: any) {
+      toast.error(e.message || "구매 실패");
+    } finally {
+      setIsProcessingPurchase(false);
+    }
+  };
+
+  const filteredCharacters = (() => {
+    switch (activeFilter) {
+      case "legend": return PREBUILT_CHARACTERS.filter(c => c.requirement === "hall_of_fame");
+      case "black":  return PREBUILT_CHARACTERS.filter(c => c.league === "black" && !c.requirement);
+      case "white": case "blue": case "red":
+        return PREBUILT_CHARACTERS.filter(c => c.league === activeFilter);
+      default: return PREBUILT_CHARACTERS;
+    }
+  })();
 
   const selectedChar = PREBUILT_CHARACTERS.find(c => c.style === selectedStyle) || PREBUILT_CHARACTERS[0];
 
@@ -101,16 +200,52 @@ const CharacterStudioPage = () => {
 
   const handleSavePreset = async () => {
     if (!user?.id) return;
-    const matchingPreset = (templatePresets || []).find(p => {
-      const pj = p.parts_json as any;
-      return pj?.style === selectedStyle;
-    });
-    if (!matchingPreset) {
-      toast.error("프리셋을 찾을 수 없습니다");
-      return;
-    }
+
     try {
-      await assignCharacter.mutateAsync({ userId: user.id, presetId: matchingPreset.id });
+      // DB 템플릿에서 먼저 찾기
+      const matchingTemplate = (templatePresets || []).find(p => {
+        const pj = p.parts_json as any;
+        return pj?.style === selectedStyle;
+      });
+
+      if (matchingTemplate) {
+        // 템플릿이 있으면 바로 배정
+        await assignCharacter.mutateAsync({ userId: user.id, presetId: matchingTemplate.id });
+      } else {
+        // 템플릿이 없으면 (새 AI 캐릭터 등) 개인 프리셋으로 생성 후 배정
+        const partsJson = { style: selectedStyle } as any;
+
+        const { data: existing } = await supabase
+          .from("character_presets")
+          .select("id")
+          .eq("created_by", user.id)
+          .eq("is_template", false)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        let presetId: string;
+
+        if (existing) {
+          const { error } = await supabase
+            .from("character_presets")
+            .update({ parts_json: partsJson, updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+          if (error) throw error;
+          presetId = existing.id;
+        } else {
+          const { data: newPreset, error } = await supabase
+            .from("character_presets")
+            .insert({ name: `${user.id}_preset`, parts_json: partsJson, created_by: user.id, is_template: false })
+            .select()
+            .single();
+          if (error) throw error;
+          presetId = newPreset.id;
+        }
+
+        await assignCharacter.mutateAsync({ userId: user.id, presetId });
+      }
+
       toast.success("내 캐릭터가 저장되었습니다! 🥊");
     } catch (e: any) {
       toast.error(e.message || "저장 실패");
@@ -123,6 +258,7 @@ const CharacterStudioPage = () => {
       await saveCustomization.mutateAsync({
         style: selectedStyle,
         customization: pendingCustomization,
+        gymLayout: pendingGymLayout,
       });
       toast.success("꾸미기가 저장되었습니다! 🎨");
     } catch (e: any) {
@@ -130,21 +266,27 @@ const CharacterStudioPage = () => {
     }
   };
 
-  const handleSaveParts = async () => {
+  const handleSaveGymLayout = async () => {
+    if (!user?.id) return;
     try {
-      await saveParts.mutateAsync({ parts: selectedParts });
-      alert("내 파츠 캐릭터가 저장되었습니다! 🧩");
+      await saveCustomization.mutateAsync({
+        style: selectedStyle,
+        customization: pendingCustomization,
+        gymLayout: pendingGymLayout,
+      });
+      toast.success("나의 짐이 저장되었습니다! 🏠");
     } catch (e: any) {
-      alert(e.message || "저장 실패");
+      toast.error(e.message || "저장 실패");
     }
   };
 
-  const isSaving = assignCharacter.isPending || saveCustomization.isPending || saveParts.isPending;
+  const isSaving = assignCharacter.isPending || saveCustomization.isPending;
   const isCurrentPreset = currentStyle === selectedStyle;
 
   const previewCustomization = activeTab === "customize" ? pendingCustomization : currentCustomization;
 
   return (
+    <>
     <div className="mx-auto max-w-lg pb-32">
       {/* Header */}
       <div className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-md px-4 py-3">
@@ -158,7 +300,7 @@ const CharacterStudioPage = () => {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 rounded-full bg-accent/20 px-2.5 py-1">
               <Gem className="h-3.5 w-3.5 text-accent" />
-              <span className="text-xs font-bold text-accent-foreground">{walletData?.gems_balance?.toLocaleString() || 0}</span>
+              <span className="text-xs font-bold text-accent-foreground">{isAdmin ? "∞" : walletData?.gems_balance?.toLocaleString() || 0}</span>
             </div>
             {activeTab === "preset" && (
               <>
@@ -189,7 +331,6 @@ const CharacterStudioPage = () => {
               league={currentLeague as any}
               level={currentLevel}
               customization={previewCustomization}
-              presetVariants={presetVariants || []}
               className="relative z-10 !w-40 !h-40"
             />
           </div>
@@ -198,7 +339,9 @@ const CharacterStudioPage = () => {
             <div className="mt-1.5 flex items-center justify-center gap-2">
               <RankBadge rank={currentLeague as Enums<"rank_name">} level={currentLevel} size="sm" />
               {currentMilestone && (
-                <span className="text-[10px] text-muted-foreground">{currentMilestone.icon} {currentMilestone.label}</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {currentMilestone.icon} {currentMilestone.label}
+                </span>
               )}
             </div>
           </div>
@@ -219,9 +362,9 @@ const CharacterStudioPage = () => {
               )}
             </button>
           )}
-          {activeTab === "customize" && (
+          {(activeTab === "customize" || activeTab === "gym") && (
             <button
-              onClick={handleSaveCustomization}
+              onClick={activeTab === "gym" ? handleSaveGymLayout : handleSaveCustomization}
               disabled={isSaving}
               className="absolute top-3 right-3 rounded-full px-3 py-1.5 text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 bg-primary text-primary-foreground"
             >
@@ -261,7 +404,6 @@ const CharacterStudioPage = () => {
             league={currentLeague}
             level={currentLevel}
             navigate={navigate}
-            unlockedKeys={unlockedKeys}
             currentMilestone={currentMilestone}
             nextMilestone={nextMilestone}
             currentCustomization={currentCustomization}
@@ -272,33 +414,68 @@ const CharacterStudioPage = () => {
             filteredCharacters={filteredCharacters}
             selectedStyle={selectedStyle}
             currentStyle={currentStyle}
-            genderFilter={genderFilter}
-            setGenderFilter={setGenderFilter}
+            activeFilter={activeFilter}
+            setActiveFilter={setActiveFilter}
+            currentLeague={currentLeague}
+            isInHallOfFame={isInHallOfFame}
+            isAdmin={isAdmin}
+            ownedStyles={ownedStyles}
+            walletBalance={walletData?.gems_balance || 0}
             onSelect={handleSelectPreset}
+            onApply={async (char) => { markOwned(char.style); await handleApplyStyle(char.style); toast.success(`${char.label} 적용! 🥊`); }}
+            onPurchaseClick={(char) => setPurchaseModal(char)}
           />
         )}
         {activeTab === "customize" && (
           <CustomizeTab
             customization={pendingCustomization}
             onChange={setPendingCustomization}
-            presetVariants={presetVariants || []}
-            selectedPreset={selectedStyle}
+            league={currentLeague}
+            isAdmin={isAdmin}
+            isInHallOfFame={isInHallOfFame}
+            ownedSet={ownedSet}
+            walletBalance={walletData?.gems_balance || 0}
+            purchaseCustomization={purchaseCustomization}
           />
         )}
-        {activeTab === "growth" && <GrowthTab league={currentLeague} level={currentLevel} unlockedKeys={unlockedKeys} />}
+        {activeTab === "gym" && (
+          <GymTab
+            currentStyle={selectedStyle}
+            userId={user?.id}
+            league={currentLeague}
+            isAdmin={isAdmin}
+            isInHallOfFame={isInHallOfFame}
+            ownedSet={ownedSet}
+            walletBalance={walletData?.gems_balance || 0}
+            purchaseCustomization={purchaseCustomization}
+            gymLayout={pendingGymLayout}
+            onLayoutChange={setPendingGymLayout}
+          />
+        )}
+        {activeTab === "growth" && <GrowthTab league={currentLeague} level={currentLevel} />}
         {activeTab === "effects" && <EffectsTab league={currentLeague} level={currentLevel} />}
       </div>
     </div>
+    {purchaseModal && (
+      <PurchaseConfirmModal
+        char={purchaseModal}
+        walletBalance={walletData?.gems_balance || 0}
+        isAdmin={isAdmin}
+        isPurchasing={isProcessingPurchase}
+        onConfirm={handleConfirmPurchase}
+        onCancel={() => setPurchaseModal(null)}
+      />
+    )}
+    </>
   );
 };
 
 // ========== MY CHARACTER TAB ==========
-function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, currentMilestone, nextMilestone, currentCustomization }: {
+function MyCharacterTab({ currentStyle, league, level, navigate, currentMilestone, nextMilestone, currentCustomization }: {
   currentStyle?: string;
   league: string;
   level: number;
   navigate: (path: string) => void;
-  unlockedKeys: Set<string>;
   currentMilestone: any;
   nextMilestone: any;
   currentCustomization: CharacterCustomization;
@@ -378,192 +555,272 @@ function MyCharacterTab({ currentStyle, league, level, navigate, unlockedKeys, c
   );
 }
 
-// ========== CUSTOMIZE TAB — PRESET-AWARE ==========
-const SUPPORTED_PRESETS = new Set(["male_01", "female_01", "male_02", "female_02"]);
-
-function CustomizeTab({ customization, onChange, presetVariants, selectedPreset }: {
+// ========== CUSTOMIZE TAB ==========
+function CustomizeTab({ customization, onChange, league, isAdmin, isInHallOfFame, ownedSet, walletBalance, purchaseCustomization }: {
   customization: CharacterCustomization;
   onChange: (c: CharacterCustomization) => void;
-  presetVariants: import("@/hooks/usePresetVariants").PresetVariant[];
-  selectedPreset: string;
+  league: string;
+  isAdmin: boolean;
+  isInHallOfFame: boolean;
+  ownedSet: Set<string>;
+  walletBalance: number;
+  purchaseCustomization: ReturnType<typeof usePurchaseCustomization>;
 }) {
-  const isSupported = SUPPORTED_PRESETS.has(selectedPreset);
+  const [activeCatIdx, setActiveCatIdx] = useState(0);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, dragFree: false });
+  const [purchaseModal, setPurchaseModal] = useState<{ cat: string; opt: CustomizationOption } | null>(null);
+  const userLeagueOrder = CUSTOMIZATION_LEAGUE_ORDER[league] ?? 0;
 
-  // Build combined categories: DB-driven (gloves, accessory) + static (effect, frame, title)
-  const dbCategories = useMemo(() => {
-    if (!isSupported) return [];
-    const cats = getVariantCategories(presetVariants);
-    return cats.map(code => ({
-      code,
-      label: VARIANT_CATEGORY_META[code]?.label || code,
-      icon: VARIANT_CATEGORY_META[code]?.icon || "🎨",
-      isDB: true as const,
-    }));
-  }, [presetVariants, isSupported]);
+  useEffect(() => {
+    if (!emblaApi) return;
+    const onSelect = () => setActiveCatIdx(emblaApi.selectedScrollSnap());
+    emblaApi.on("select", onSelect);
+    return () => { emblaApi.off("select", onSelect); };
+  }, [emblaApi]);
 
-  const staticCategories = CUSTOMIZATION_CATEGORIES.map(c => ({
-    code: c.code,
-    label: c.label,
-    icon: c.icon,
-    isDB: false as const,
-  }));
-
-  const allCategories = [...dbCategories, ...staticCategories];
-
-  const [activeCat, setActiveCat] = useState(allCategories[0]?.code || "effect");
-
-  // Reset category if current selection doesn't exist
-  const validCat = allCategories.find(c => c.code === activeCat) ? activeCat : (allCategories[0]?.code || "effect");
-  if (validCat !== activeCat) setActiveCat(validCat);
-
-  const isDBCategory = dbCategories.some(c => c.code === validCat);
-
-  const handleSelect = (catCode: string, optionKey: string) => {
-    const fieldMap: Record<string, keyof CharacterCustomization> = {
-      gloves: "gloveStyle",
-      accessory: "accessory",
-    };
-    const field = fieldMap[catCode] || catCode;
-    const current = (customization as any)[field];
-    const newVal = current === optionKey ? undefined : optionKey;
-    onChange({ ...customization, [field]: newVal });
+  const scrollTo = (idx: number) => {
+    setActiveCatIdx(idx);
+    emblaApi?.scrollTo(idx);
   };
 
-  const handleClearAll = () => {
-    onChange({});
+  const isOptLocked = (opt: CustomizationOption) => {
+    if (isAdmin) return false;
+    if (opt.requirement === "hall_of_fame") return !isInHallOfFame;
+    return (CUSTOMIZATION_LEAGUE_ORDER[opt.league] ?? 0) > userLeagueOrder;
+  };
+
+  const isOptOwned = (catCode: string, opt: CustomizationOption) => {
+    if (isAdmin) return true;
+    if (opt.price === 0) return true;
+    return ownedSet.has(`${catCode}:${opt.key}`);
+  };
+
+  const applyItem = (catCode: string, optKey: string) => {
+    const current = (customization as any)[catCode];
+    onChange({ ...customization, [catCode]: current === optKey ? undefined : optKey });
+  };
+
+  const handleItemClick = (catCode: string, opt: CustomizationOption) => {
+    if (isOptLocked(opt)) {
+      if (opt.requirement === "hall_of_fame") {
+        toast("👑 명예의 전당 헌액자만 해금됩니다");
+      } else {
+        toast(`${opt.league === "black" ? "블랙" : opt.league === "red" ? "레드" : "블루"} 리그 달성 후 해금됩니다 🔒`);
+      }
+      return;
+    }
+    if (isOptOwned(catCode, opt)) {
+      applyItem(catCode, opt.key);
+      return;
+    }
+    setPurchaseModal({ cat: catCode, opt });
+  };
+
+  const handleConfirmPurchase = async () => {
+    if (!purchaseModal) return;
+    const { cat, opt } = purchaseModal;
+    try {
+      await purchaseCustomization.mutateAsync({ category: cat, itemKey: opt.key, price: opt.price });
+      setPurchaseModal(null);
+      applyItem(cat, opt.key);
+      confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+      toast.success(`🎉 ${opt.label} 획득!`);
+    } catch (e: any) {
+      toast.error(e.message || "구매 실패");
+    }
   };
 
   const activeCount = Object.values(customization).filter(Boolean).length;
 
   return (
     <div className="space-y-4 animate-slide-up">
-      {/* Unsupported preset banner */}
-      {!isSupported && (
-        <div className="rounded-2xl border border-dashed border-amber-400/40 bg-amber-50/50 dark:bg-amber-900/10 p-5 text-center">
-          <span className="text-3xl">🔧</span>
-          <p className="mt-2 text-sm font-bold text-foreground">이 프리셋은 꾸미기 준비 중</p>
-          <p className="text-xs text-muted-foreground mt-1">글러브 · 액세서리 꾸미기는 곧 지원될 예정이에요</p>
-          <p className="text-[10px] text-muted-foreground mt-1">이펙트 · 프레임 · 칭호는 지금도 사용할 수 있어요!</p>
-        </div>
-      )}
-
-      {/* Category chips */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
-        {allCategories.map(cat => {
-          const isActive = validCat === cat.code;
-          const fieldMap: Record<string, string> = { gloves: "gloveStyle", accessory: "accessory" };
-          const field = fieldMap[cat.code] || cat.code;
-          const hasSelection = !!(customization as any)[field];
+      {/* Category tab pills */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {CUSTOMIZATION_CATEGORIES.map((cat, idx) => {
+          const hasSelection = !!(customization as any)[cat.code];
+          const isActive = activeCatIdx === idx;
           return (
             <button
               key={cat.code}
-              onClick={() => setActiveCat(cat.code)}
-              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-all ${
+              onClick={() => scrollTo(idx)}
+              className={`relative flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-primary text-primary-foreground shadow-md"
                   : hasSelection
-                  ? "bg-primary/10 text-primary border border-primary/30"
-                  : "bg-secondary text-muted-foreground"
+                  ? "bg-primary/15 text-primary border border-primary/30"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
-              <span className="text-[11px]">{cat.icon}</span>
+              <span>{cat.icon}</span>
               {cat.label}
+              {hasSelection && !isActive && (
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* Options grid */}
-      <div className="grid grid-cols-4 gap-2">
-        {isDBCategory ? (
-          // DB-driven preset-specific options
-          getVariantOptions(presetVariants, validCat).map(variant => {
-            const fieldMap: Record<string, string> = { gloves: "gloveStyle", accessory: "accessory" };
-            const field = fieldMap[validCat] || validCat;
-            const isSelected = (customization as any)[field] === variant.option_key;
-            const label = VARIANT_OPTION_LABELS[variant.option_key] || variant.option_key;
+      {/* Embla carousel */}
+      <div ref={emblaRef} className="overflow-hidden rounded-2xl border border-border bg-card/50">
+        <div className="flex">
+          {CUSTOMIZATION_CATEGORIES.map((cat) => (
+            <div key={cat.code} className="flex-[0_0_100%] min-w-0 p-3">
+              <div className="grid grid-cols-3 gap-2">
+                {cat.options.map(opt => {
+                  const isSelected = (customization as any)[cat.code] === opt.key;
+                  const locked = isOptLocked(opt);
+                  const owned = isOptOwned(cat.code, opt);
 
-            return (
-              <button
-                key={variant.id}
-                onClick={() => handleSelect(validCat, variant.option_key)}
-                className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
-                  isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
-                }`}
-              >
-                {isSelected && (
-                  <div className="absolute -top-1 -right-1 rounded-full bg-primary p-0.5">
-                    <Check className="h-2.5 w-2.5 text-primary-foreground" />
-                  </div>
-                )}
-                {/* Real PNG thumbnail from DB */}
-                <div className="relative h-10 w-10 flex items-center justify-center">
-                  {variant.asset_url ? (
-                    <img
-                      src={variant.asset_url}
-                      alt={label}
-                      className="h-full w-full object-contain"
-                      draggable={false}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <span className="text-lg">🎨</span>
-                  )}
-                </div>
-                <span className="text-[9px] font-bold text-foreground/80 truncate w-full text-center">{label}</span>
-              </button>
-            );
-          })
-        ) : (
-          // Static categories (effect, frame, title)
-          (() => {
-            const staticCat = CUSTOMIZATION_CATEGORIES.find(c => c.code === validCat);
-            if (!staticCat) return null;
-            return staticCat.options.map(opt => {
-              const isSelected = (customization as any)[validCat] === opt.key;
-              return (
-                <button
-                  key={opt.key}
-                  onClick={() => handleSelect(validCat, opt.key)}
-                  className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
-                    isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
-                  }`}
-                >
-                  {isSelected && (
-                    <div className="absolute -top-1 -right-1 rounded-full bg-primary p-0.5">
-                      <Check className="h-2.5 w-2.5 text-primary-foreground" />
-                    </div>
-                  )}
-                  <OptionPreview category={validCat} optionKey={opt.key} />
-                  <span className="text-[9px] font-bold text-foreground/80 truncate w-full text-center">{opt.label}</span>
-                </button>
-              );
-            });
-          })()
-        )}
+                  return (
+                    <button
+                      key={opt.key}
+                      onClick={() => handleItemClick(cat.code, opt)}
+                      className={`relative flex flex-col items-center gap-1 rounded-2xl border-2 p-2.5 transition-all active:scale-95 min-h-[100px] justify-between ${
+                        locked ? "border-border bg-muted/30 opacity-60"
+                        : isSelected ? "border-primary bg-primary/5 shadow-md scale-[1.02]"
+                        : owned ? "border-border bg-background"
+                        : "border-dashed border-muted-foreground/30 bg-background"
+                      }`}
+                    >
+                      {/* Top-right badge */}
+                      {isSelected && !locked && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary z-10">
+                          <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                        </span>
+                      )}
+                      {locked && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-muted-foreground/70 z-10">
+                          <Lock className="h-2.5 w-2.5 text-white" />
+                        </span>
+                      )}
+                      {!locked && owned && !isSelected && (
+                        <span className="absolute -top-1 -left-1 rounded-full bg-green-500/20 px-1.5 py-0.5 text-[8px] font-bold text-green-600 z-10">
+                          보유
+                        </span>
+                      )}
+
+                      {/* Preview */}
+                      <div className="flex-1 flex items-center justify-center">
+                        <OptionPreview category={cat.code} optionKey={opt.key} />
+                      </div>
+
+                      {/* Label */}
+                      <span className="text-[10px] font-bold text-foreground/80 truncate w-full text-center">{opt.label}</span>
+
+                      {/* Price / status */}
+                      {locked ? (
+                        <span className="text-[9px] text-muted-foreground">
+                          {opt.requirement === "hall_of_fame" ? "👑 전당" : "🔒 " + (opt.league === "black" ? "블랙" : opt.league === "red" ? "레드" : "블루")}
+                        </span>
+                      ) : !owned ? (
+                        <span className={`text-[9px] font-bold ${
+                          walletBalance >= opt.price || isAdmin ? "text-accent-foreground" : "text-muted-foreground"
+                        }`}>
+                          💎 {opt.price.toLocaleString()}
+                        </span>
+                      ) : opt.price === 0 ? (
+                        <span className="text-[9px] text-green-500 font-bold">무료</span>
+                      ) : (
+                        <span className="text-[9px] text-muted-foreground">✅</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Empty state for DB categories with no variants */}
-      {isDBCategory && getVariantOptions(presetVariants, validCat).length === 0 && (
-        <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-6 text-center">
-          <span className="text-2xl">🔒</span>
-          <p className="mt-2 text-sm font-bold text-foreground">준비 중</p>
-          <p className="text-xs text-muted-foreground">이 프리셋의 {VARIANT_CATEGORY_META[validCat]?.label || validCat} 옵션이 곧 추가됩니다</p>
-        </div>
-      )}
+      {/* Dot indicators */}
+      <div className="flex justify-center gap-1.5">
+        {CUSTOMIZATION_CATEGORIES.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => scrollTo(idx)}
+            className={`rounded-full transition-all ${
+              activeCatIdx === idx ? "w-5 h-2 bg-primary" : "w-2 h-2 bg-muted-foreground/30"
+            }`}
+          />
+        ))}
+      </div>
 
       {activeCount > 0 && (
         <button
-          onClick={handleClearAll}
-          className="w-full rounded-xl border border-border bg-secondary/50 py-2 text-xs text-muted-foreground active:scale-[0.98] transition-all"
+          onClick={() => onChange({})}
+          className="w-full rounded-xl border border-border bg-secondary/50 py-2.5 text-xs font-medium text-muted-foreground active:scale-[0.98] transition-all"
         >
           전체 초기화 ({activeCount}개 적용 중)
         </button>
       )}
 
-      <p className="text-[10px] text-center text-muted-foreground">
-        꾸미기를 선택하면 위 프리뷰에 즉시 반영됩니다. 저장 버튼을 눌러 적용하세요!
-      </p>
+      {/* Purchase confirmation modal */}
+      {purchaseModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" onClick={() => setPurchaseModal(null)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
+          <div className="relative w-full max-w-sm rounded-t-3xl sm:rounded-3xl bg-card p-6 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
+            {/* Item preview */}
+            <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-2xl bg-muted/50 border border-border">
+              <OptionPreview category={purchaseModal.cat} optionKey={purchaseModal.opt.key} />
+            </div>
+
+            <div className="text-center mb-4">
+              <h2 className="text-lg font-black text-foreground">{purchaseModal.opt.label}</h2>
+              {purchaseModal.opt.description && (
+                <p className="text-xs text-muted-foreground mt-1">{purchaseModal.opt.description}</p>
+              )}
+            </div>
+
+            {/* Price breakdown */}
+            <div className="rounded-2xl bg-muted/50 p-3.5 mb-5 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">가격</span>
+                <span className="font-black text-foreground">💎 {purchaseModal.opt.price.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">현재 잔액</span>
+                <span className="font-bold">{isAdmin ? "∞" : walletBalance.toLocaleString()}</span>
+              </div>
+              {!isAdmin && (
+                <div className="flex justify-between text-sm border-t border-border/50 pt-2">
+                  <span className="text-muted-foreground">구매 후 잔액</span>
+                  <span className={`font-bold ${walletBalance - purchaseModal.opt.price < 0 ? "text-destructive" : "text-foreground"}`}>
+                    {(walletBalance - purchaseModal.opt.price).toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setPurchaseModal(null)}
+                disabled={purchaseCustomization.isPending}
+                className="flex-1 rounded-2xl border border-border bg-secondary py-3.5 text-sm font-bold text-secondary-foreground active:scale-95 transition-all disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleConfirmPurchase}
+                disabled={purchaseCustomization.isPending || (!isAdmin && walletBalance < purchaseModal.opt.price)}
+                className="flex-[2] rounded-2xl bg-gradient-to-r from-accent to-primary py-3.5 text-sm font-bold text-primary-foreground active:scale-95 transition-all disabled:opacity-50"
+              >
+                {purchaseCustomization.isPending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    구매 중...
+                  </span>
+                ) : (!isAdmin && walletBalance < purchaseModal.opt.price) ? (
+                  "젬 부족"
+                ) : (
+                  "💎 구매하기"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -576,10 +833,24 @@ function OptionPreview({ category, optionKey }: { category: string; optionKey: s
   }
   if (category === "frame") {
     const colors: Record<string, string> = {
-      fire: "border-orange-500 shadow-orange-500/30",
-      ice: "border-cyan-400 shadow-cyan-400/30",
-      gold: "border-amber-400 shadow-amber-400/30",
-      shadow: "border-gray-600 shadow-gray-600/30",
+      fire:          "border-orange-500 shadow-orange-500/30",
+      ice:           "border-cyan-400 shadow-cyan-400/30",
+      gold:          "border-amber-400 shadow-amber-400/30",
+      shadow:        "border-gray-600 shadow-gray-600/30",
+      lightning:     "border-yellow-400 shadow-yellow-400/30",
+      rainbow:       "border-pink-400 shadow-pink-400/30",
+      cherry:        "border-pink-300 shadow-pink-300/30",
+      diamond:       "border-cyan-300 shadow-cyan-300/30",
+      purple:        "border-purple-500 shadow-purple-500/30",
+      moon:          "border-blue-200 shadow-blue-200/30",
+      dark_red:      "border-red-900 shadow-red-900/30",
+      crystal:       "border-white shadow-white/30",
+      rainbow_frame: "border-violet-500 shadow-violet-500/30",
+      sakura:        "border-rose-300 shadow-rose-300/30",
+      blood:         "border-red-700 shadow-red-700/30",
+      galaxy:        "border-indigo-500 shadow-indigo-500/30",
+      neon_green:    "border-green-400 shadow-green-400/30",
+      holy:          "border-yellow-200 shadow-yellow-200/30",
     };
     return (
       <div className={`h-8 w-8 rounded-full border-2 shadow-md ${colors[optionKey] || "border-border"}`} />
@@ -589,72 +860,331 @@ function OptionPreview({ category, optionKey }: { category: string; optionKey: s
     const info = TITLE_LABELS[optionKey];
     return <span className={`text-sm font-bold ${info?.color || "text-foreground"}`}>{info?.text || optionKey}</span>;
   }
+  if (category === "aura") {
+    const gradient = AURA_PREVIEW_GRADIENTS[optionKey] || "bg-gradient-to-t from-gray-400 to-gray-200";
+    return <div className={`h-9 w-9 rounded-full ${gradient} shadow-md`} />;
+  }
   return <span className="text-lg">❓</span>;
 }
 
 // ========== PRESET TAB ==========
-function PresetTab({ filteredCharacters, selectedStyle, currentStyle, genderFilter, setGenderFilter, onSelect }: {
+function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilter, setActiveFilter, currentLeague, isInHallOfFame, isAdmin, ownedStyles, walletBalance, onSelect, onApply, onPurchaseClick }: {
   filteredCharacters: typeof PREBUILT_CHARACTERS;
   selectedStyle: string;
   currentStyle?: string;
-  genderFilter: string;
-  setGenderFilter: (f: any) => void;
+  activeFilter: string;
+  setActiveFilter: (f: string) => void;
+  currentLeague: string;
+  isInHallOfFame: boolean;
+  isAdmin: boolean;
+  ownedStyles: Set<string>;
+  walletBalance: number;
   onSelect: (style: string) => void;
+  onApply: (char: typeof PREBUILT_CHARACTERS[0]) => Promise<void>;
+  onPurchaseClick: (char: typeof PREBUILT_CHARACTERS[0]) => void;
 }) {
+  const userRank = LEAGUE_ORDER[currentLeague] ?? 0;
+
+  const isCharLocked = (char: (typeof PREBUILT_CHARACTERS)[number]) => {
+    if (isAdmin) return false;
+    if (char.requirement === "hall_of_fame") return !isInHallOfFame;
+    return (LEAGUE_ORDER[char.league] ?? 0) > userRank;
+  };
+
+  const handleLockedToast = (char: (typeof PREBUILT_CHARACTERS)[number]) => {
+    if (char.requirement === "hall_of_fame") {
+      toast("👑 명예의 전당 헌액자만 해금됩니다.\n마스터 미션을 달성하고 전당에 오르세요!");
+    } else {
+      toast(`${LEAGUE_LABELS[char.league]} 리그 달성 후 선택 가능합니다 🔒`);
+    }
+  };
+
+  const leagueNormal: Record<string, string> = {
+    white: "bg-white border-2 border-gray-200",
+    blue:  "bg-gradient-to-b from-blue-50 to-blue-100 border-2 border-blue-200",
+    red:   "bg-gradient-to-b from-red-50 to-red-100 border-2 border-red-200",
+    black: "bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-amber-500/40 shadow-[0_0_10px_2px_rgba(251,191,36,0.2)]",
+  };
+  const leagueSelected: Record<string, string> = {
+    white: "bg-white border-2 border-primary shadow-md",
+    blue:  "bg-gradient-to-b from-blue-100 to-blue-200 border-2 border-blue-500 shadow-blue-300/50 shadow-md",
+    red:   "bg-gradient-to-b from-red-100 to-red-200 border-2 border-red-500 shadow-red-300/50 shadow-md",
+    black: "bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-amber-400 shadow-[0_0_15px_5px_rgba(251,191,36,0.5)]",
+  };
+  const leagueBtnGradient: Record<string, string> = {
+    white: "bg-gradient-to-r from-gray-400 to-gray-500 text-white",
+    blue:  "bg-gradient-to-r from-blue-500 to-blue-600 text-white",
+    red:   "bg-gradient-to-r from-red-500 to-rose-600 text-white",
+    black: "bg-gradient-to-r from-amber-600 to-amber-700 text-white",
+  };
+
   return (
     <div className="space-y-3 animate-slide-up">
-      <div className="flex rounded-xl border border-border bg-secondary/50 p-0.5">
-        {GENDER_TABS.map(tab => (
+      {/* Filter tabs */}
+      <div className="flex rounded-xl border border-border bg-secondary/50 p-0.5 overflow-x-auto gap-0.5 scrollbar-hide">
+        {FILTER_TABS.map(tab => (
           <button
             key={tab.key}
-            onClick={() => setGenderFilter(tab.key)}
-            className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-all ${
-              genderFilter === tab.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            onClick={() => setActiveFilter(tab.key)}
+            className={`flex-shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all whitespace-nowrap ${
+              activeFilter === tab.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
             }`}
           >
-            {tab.label}
+            {tab.icon} {tab.label}
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-4 gap-2.5">
+      {/* Character grid */}
+      <div className="grid grid-cols-2 gap-3">
         {filteredCharacters.map(char => {
           const isSelected = selectedStyle === char.style;
           const isCurrent = currentStyle === char.style;
+          const isLocked = isCharLocked(char);
+          const isHof = char.requirement === "hall_of_fame";
+          const isBlackNonHof = char.league === "black" && !char.requirement;
+          const isOwned = isAdmin || ownedStyles.has(char.style) || char.price === 0;
+          const isApplied = currentStyle === char.style;
+
+          const cardClass = isLocked
+            ? "border-2 border-border bg-muted/30"
+            : isHof
+              ? isSelected
+                ? "bg-gradient-to-b from-yellow-900/40 via-amber-800/30 to-yellow-900/40 border-[2px] border-amber-400 shadow-[0_0_30px_10px_rgba(253,224,71,0.8),0_0_60px_20px_rgba(251,191,36,0.5)] animate-[breathe_2s_ease-in-out_infinite]"
+                : "bg-gradient-to-b from-yellow-900/40 via-amber-800/30 to-yellow-900/40 border-[2px] border-amber-400 shadow-[0_0_20px_8px_rgba(251,191,36,0.6),0_0_40px_15px_rgba(234,179,8,0.3)] animate-[breathe_2s_ease-in-out_infinite]"
+              : isSelected
+                ? (leagueSelected[char.league] ?? "border-2 border-primary bg-primary/5 shadow-md")
+                : (leagueNormal[char.league] ?? "border-2 border-border bg-card");
+
+          const labelColor = (isHof || isBlackNonHof) && !isLocked ? "text-white/90" : "text-foreground/90";
+
+          let actionEl: React.ReactNode;
+          if (isLocked) {
+            actionEl = char.requirement === "hall_of_fame"
+              ? <div className="w-full text-center py-2 rounded-xl bg-yellow-500/10 text-yellow-500 text-xs font-bold">👑 헌액자 전용</div>
+              : <div className="w-full text-center py-2 rounded-xl bg-muted text-muted-foreground text-xs font-bold">🔒 리그 미달성</div>;
+          } else if (isApplied) {
+            actionEl = <div className="w-full text-center py-2 rounded-xl bg-primary/20 text-primary text-xs font-bold">✅ 적용됨</div>;
+          } else if (isOwned) {
+            actionEl = (
+              <button
+                onClick={(e) => { e.stopPropagation(); onApply(char); }}
+                className="w-full rounded-xl bg-secondary border border-primary/20 text-foreground py-2 text-xs font-bold active:scale-95 transition-all hover:bg-primary/10"
+              >
+                ⚡ 적용하기
+              </button>
+            );
+          } else if (char.price === 0) {
+            actionEl = (
+              <button
+                onClick={(e) => { e.stopPropagation(); onApply(char); }}
+                className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2 text-xs font-bold active:scale-95 transition-all"
+              >
+                🎁 무료 획득
+              </button>
+            );
+          } else {
+            const canAfford = isAdmin || walletBalance >= char.price;
+            actionEl = (
+              <button
+                onClick={(e) => { e.stopPropagation(); onPurchaseClick(char); }}
+                disabled={!canAfford && !isAdmin}
+                className={`w-full rounded-xl py-2 text-xs font-bold active:scale-95 transition-all disabled:opacity-40 ${
+                  isHof
+                    ? "bg-gradient-to-r from-yellow-500 to-amber-500 text-black"
+                    : (leagueBtnGradient[char.league] ?? "bg-gradient-to-r from-gray-400 to-gray-500 text-white")
+                }`}
+              >
+                💎 {char.price.toLocaleString()}
+              </button>
+            );
+          }
+
           return (
-            <button
+            <div
               key={char.style}
-              onClick={() => onSelect(char.style)}
-              className={`relative flex flex-col items-center gap-1 rounded-2xl border-2 p-2.5 transition-all active:scale-95 ${
-                isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
-              }`}
+              onClick={() => isLocked ? handleLockedToast(char) : onSelect(char.style)}
+              className={`relative flex flex-col rounded-2xl overflow-visible cursor-pointer transition-all active:scale-[0.97] ${cardClass}`}
+              style={{ minHeight: '190px' }}
             >
-              {isSelected && (
-                <div className="absolute -top-1 -right-1 rounded-full bg-primary p-0.5">
-                  <Check className="h-2.5 w-2.5 text-primary-foreground" />
-                </div>
+              {/* HOF glow ring */}
+              {isHof && !isLocked && (
+                <div className="absolute inset-[-3px] rounded-2xl bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-400 opacity-30 animate-[galaxy-spin_3s_linear_infinite] -z-10 pointer-events-none" />
               )}
-              {isCurrent && !isSelected && (
-                <div className="absolute -top-1 -left-1">
-                  <Sparkles className="h-3 w-3 text-accent" />
+
+              {/* Top row: league badge + status icon */}
+              <div className="flex items-start justify-between p-2.5 pb-0 z-10">
+                {isHof ? (
+                  <span className="bg-gradient-to-r from-yellow-500 to-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm leading-none whitespace-nowrap">
+                    👑 ETERNAL
+                  </span>
+                ) : (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full leading-none ${
+                    char.league === "black" ? "bg-gray-900/80 text-amber-400" :
+                    char.league === "red"   ? "bg-red-100 text-red-600" :
+                    char.league === "blue"  ? "bg-blue-100 text-blue-600" :
+                    "bg-gray-100 text-gray-600"
+                  }`}>
+                    {LEAGUE_LABELS[char.league]}
+                  </span>
+                )}
+                <div className="flex items-center gap-1">
+                  {isCurrent && !isSelected && !isLocked && (
+                    <Sparkles className="h-3.5 w-3.5 text-accent" />
+                  )}
+                  {isSelected && !isLocked && (
+                    <div className="rounded-full bg-primary p-0.5">
+                      <Check className="h-3 w-3 text-primary-foreground" />
+                    </div>
+                  )}
+                  {isLocked && (
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/80">
+                      <Lock className="h-3 w-3 text-white" />
+                    </div>
+                  )}
                 </div>
+              </div>
+
+              {/* HOF particles */}
+              {isHof && !isLocked && (
+                <>
+                  <span className="absolute top-8 left-2 text-xs animate-bounce pointer-events-none z-10" style={{ animationDelay: "0ms" }}>✨</span>
+                  <span className="absolute top-8 right-2 text-xs animate-bounce pointer-events-none z-10" style={{ animationDelay: "200ms" }}>⭐</span>
+                </>
               )}
-              <CharacterSprite style={char.style} size="sm" />
-              <span className="text-[9px] font-bold text-foreground/80 truncate w-full text-center">{char.label}</span>
-            </button>
+              {isBlackNonHof && !isLocked && (
+                <span className="absolute top-8 right-2 text-xs animate-bounce pointer-events-none z-10" style={{ animationDelay: "0ms", animationDuration: "1.4s" }}>✨</span>
+              )}
+
+              {/* Character image */}
+              <div className="flex-1 flex items-center justify-center px-2 py-1 min-h-[100px]">
+                <CharacterSprite style={char.style} size="lg" />
+              </div>
+
+              {/* Name + action button */}
+              <div className="p-2.5 pt-1 space-y-2">
+                <p className={`text-sm font-bold text-center leading-tight line-clamp-2 ${labelColor}`}>
+                  {char.label}
+                </p>
+                {actionEl}
+              </div>
+            </div>
           );
         })}
       </div>
 
-      <p className="text-[10px] text-center text-muted-foreground">
-        프리셋을 선택한 후 저장 버튼을 눌러 내 캐릭터로 설정하세요
+      <p className="text-[10px] text-center text-muted-foreground pb-2">
+        카드를 눌러 미리보기 · 버튼으로 적용/구매
       </p>
     </div>
   );
 }
 
+// ========== PURCHASE CONFIRM MODAL ==========
+function PurchaseConfirmModal({ char, walletBalance, isAdmin, isPurchasing, onConfirm, onCancel }: {
+  char: typeof PREBUILT_CHARACTERS[0];
+  walletBalance: number;
+  isAdmin: boolean;
+  isPurchasing: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const afterBalance = walletBalance - char.price;
+  const canAfford = isAdmin || walletBalance >= char.price;
+  const isHof = char.requirement === "hall_of_fame";
+
+  const confirmBtnClass = isHof
+    ? "bg-gradient-to-r from-yellow-500 to-amber-500 text-black"
+    : char.league === "black"
+    ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white"
+    : char.league === "red"
+    ? "bg-gradient-to-r from-red-500 to-rose-600 text-white"
+    : char.league === "blue"
+    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
+    : "bg-gradient-to-r from-gray-500 to-gray-600 text-white";
+
+  const cardBg: Record<string, string> = {
+    white: "bg-gradient-to-b from-gray-50 to-gray-100",
+    blue:  "bg-gradient-to-b from-blue-50 to-blue-100",
+    red:   "bg-gradient-to-b from-red-50 to-red-100",
+    black: "bg-gradient-to-b from-gray-800 to-gray-900",
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" onClick={onCancel}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
+      <div
+        className="relative w-full max-w-sm rounded-t-3xl sm:rounded-3xl bg-card p-6 shadow-2xl animate-slide-up"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Character preview */}
+        <div className={`mx-auto mb-4 flex h-36 w-36 items-center justify-center rounded-2xl ${cardBg[char.league] ?? cardBg.white}`}>
+          <CharacterSprite style={char.style} size="lg" />
+        </div>
+
+        {/* Name + league */}
+        <div className="text-center mb-4">
+          <h2 className="text-xl font-black text-foreground">{char.label}</h2>
+          <span className={`inline-block mt-1.5 rounded-full px-3 py-0.5 text-xs font-bold ${LEAGUE_COLORS[char.league]}`}>
+            {isHof ? "👑 명예의 전당" : LEAGUE_LABELS[char.league] + " 리그"}
+          </span>
+        </div>
+
+        {/* Price breakdown */}
+        <div className="rounded-2xl bg-muted/50 p-3.5 mb-5 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">가격</span>
+            <span className="font-black text-foreground">💎 {char.price.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">현재 잔액</span>
+            <span className="font-bold">{isAdmin ? "∞" : walletBalance.toLocaleString()}</span>
+          </div>
+          {!isAdmin && (
+            <>
+              <div className="border-t border-border/50 pt-2 flex justify-between text-sm">
+                <span className="text-muted-foreground">구매 후 잔액</span>
+                <span className={`font-bold ${afterBalance < 0 ? "text-destructive" : "text-foreground"}`}>
+                  {afterBalance.toLocaleString()}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={isPurchasing}
+            className="flex-1 rounded-2xl border border-border bg-secondary py-3.5 text-sm font-bold text-secondary-foreground active:scale-95 transition-all disabled:opacity-50"
+          >
+            취소
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isPurchasing || (!isAdmin && !canAfford)}
+            className={`flex-[2] rounded-2xl py-3.5 text-sm font-bold active:scale-95 transition-all disabled:opacity-50 ${confirmBtnClass}`}
+          >
+            {isPurchasing ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="h-4 w-4 rounded-full border-2 border-current/30 border-t-current animate-spin" />
+                구매 중...
+              </span>
+            ) : !canAfford && !isAdmin ? (
+              "젬 부족"
+            ) : (
+              "💎 구매하기"
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ========== GROWTH TAB ==========
-function GrowthTab({ league, level, unlockedKeys }: { league: string; level: number; unlockedKeys: Set<string> }) {
+function GrowthTab({ league, level }: { league: string; level: number }) {
   const leagueIdx = { white: 0, blue: 1, red: 2, black: 3 }[league] ?? 0;
 
   return (
@@ -771,99 +1301,218 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
   );
 }
 
-
-// ========== PARTS TAB ==========
-const CATEGORY_ICONS: Record<string, string> = {
-  skin: "🎨", hair_back: "💇", hair_front: "✂️", eyebrows: "〰️",
-  eyes: "👁️", mouth: "👄", gloves: "🥊", top: "👕",
-  shorts: "🩳", shoes: "👟", accessory: "💎", effect: "✨",
-};
-
-function PartsTab({ selectedParts, onChange, unlockedKeys }: {
-  selectedParts: PartsSelection;
-  onChange: (parts: PartsSelection) => void;
-  unlockedKeys: Set<string>;
+// ========== GYM TAB ==========
+function GymTab({ currentStyle, userId, league, isAdmin, isInHallOfFame, ownedSet, walletBalance, purchaseCustomization, gymLayout, onLayoutChange }: {
+  currentStyle?: string;
+  userId?: string;
+  league: string;
+  isAdmin: boolean;
+  isInHallOfFame: boolean;
+  ownedSet: Set<string>;
+  walletBalance: number;
+  purchaseCustomization: ReturnType<typeof usePurchaseCustomization>;
+  gymLayout: GymLayout;
+  onLayoutChange: (layout: GymLayout) => void;
 }) {
-  const [activeCategory, setActiveCategory] = useState<string>(CATEGORY_ORDER[0]);
+  const [activeCatIdx, setActiveCatIdx] = useState(0);
+  const [purchaseModal, setPurchaseModal] = useState<{ catCode: string; item: GymItem } | null>(null);
+  const userLeagueOrder = CUSTOMIZATION_LEAGUE_ORDER[league] ?? 0;
+  const activeCat = GYM_CATEGORIES[activeCatIdx];
 
-  const handlePartSelect = (category: string, key: string) => {
-    const current = selectedParts[category];
-    if (category === "accessory" || category === "effect") {
-      onChange({ ...selectedParts, [category]: current === key ? undefined : key });
+  const isItemLocked = (item: GymItem) => {
+    if (isAdmin) return false;
+    if (item.requirement === "hall_of_fame") return !isInHallOfFame;
+    return (CUSTOMIZATION_LEAGUE_ORDER[item.league] ?? 0) > userLeagueOrder;
+  };
+
+  const isItemOwned = (catCode: string, item: GymItem) => {
+    if (isAdmin) return true;
+    if (item.price === 0) return true;
+    return ownedSet.has(`gym_${catCode}:${item.key}`);
+  };
+
+  const placeItem = (item: GymItem) => {
+    const catCode = activeCat.code;
+    if (catCode === "wallpaper") {
+      onLayoutChange({ ...gymLayout, wallpaper: gymLayout.wallpaper === item.key ? undefined : item.key });
+    } else if (catCode === "floor_mat") {
+      onLayoutChange({ ...gymLayout, floor_mat: gymLayout.floor_mat === item.key ? undefined : item.key });
     } else {
-      onChange({ ...selectedParts, [category]: key });
+      const slotKey = item.slot as keyof GymLayout;
+      onLayoutChange({ ...gymLayout, [slotKey]: (gymLayout as any)[slotKey] === item.key ? undefined : item.key });
     }
   };
 
-  const currentParts = PARTS_BY_CATEGORY[activeCategory] || [];
+  const handleItemClick = (item: GymItem) => {
+    if (isItemLocked(item)) {
+      if (item.requirement === "hall_of_fame") {
+        toast("👑 명예의 전당 헌액자만 해금됩니다");
+      } else {
+        toast(`${item.league === "black" ? "블랙" : item.league === "red" ? "레드" : "블루"} 리그 달성 후 해금됩니다 🔒`);
+      }
+      return;
+    }
+    if (isItemOwned(activeCat.code, item)) {
+      placeItem(item);
+      return;
+    }
+    setPurchaseModal({ catCode: activeCat.code, item });
+  };
+
+  const handleConfirmPurchase = async () => {
+    if (!purchaseModal) return;
+    const { catCode, item } = purchaseModal;
+    try {
+      await purchaseCustomization.mutateAsync({ category: `gym_${catCode}`, itemKey: item.key, price: item.price });
+      setPurchaseModal(null);
+      placeItem(item);
+      confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+      toast.success(`🎉 ${item.label} 획득!`);
+    } catch (e: any) {
+      toast.error(e.message || "구매 실패");
+    }
+  };
+
+  const isPlaced = (item: GymItem) => {
+    const catCode = activeCat.code;
+    if (catCode === "wallpaper") return gymLayout.wallpaper === item.key;
+    if (catCode === "floor_mat") return gymLayout.floor_mat === item.key;
+    return (gymLayout as any)[item.slot] === item.key;
+  };
 
   return (
     <div className="space-y-4 animate-slide-up">
-      <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-2.5 flex items-center gap-2">
-        <span className="text-base">🧩</span>
-        <p className="text-xs font-bold text-primary">파츠를 선택하면 위 미리보기에 실시간 반영됩니다!</p>
-      </div>
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
-        {CATEGORY_ORDER.map(cat => (
+      {/* Mini Gym Preview */}
+      <MiniGymPreview
+        layout={gymLayout}
+        characterStyle={currentStyle}
+        userId={userId}
+        className="border border-border"
+      />
+
+      {/* Category tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {GYM_CATEGORIES.map((cat, idx) => (
           <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 ${
-              activeCategory === cat
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : selectedParts[cat]
-                ? "bg-primary/10 text-primary border border-primary/30"
-                : "bg-secondary text-muted-foreground"
+            key={cat.code}
+            onClick={() => setActiveCatIdx(idx)}
+            className={`flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
+              activeCatIdx === idx
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "bg-muted text-muted-foreground"
             }`}
           >
-            <span>{CATEGORY_ICONS[cat]}</span>
-            {CATEGORY_LABELS[cat]}
+            <span>{cat.icon}</span>
+            {cat.label}
           </button>
         ))}
       </div>
+
+      {/* Items grid */}
       <div className="grid grid-cols-3 gap-2">
-        {(activeCategory === "accessory" || activeCategory === "effect") && (
-          <button
-            onClick={() => onChange({ ...selectedParts, [activeCategory]: undefined })}
-            className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
-              !selectedParts[activeCategory] ? "border-primary bg-primary/5" : "border-border bg-card"
-            }`}
-          >
-            <span className="text-2xl">🚫</span>
-            <span className="text-[9px] font-bold">없음</span>
-          </button>
-        )}
-        {currentParts.map(part => {
-          const isSelected = selectedParts[activeCategory] === part.key;
-          const mainColor = part.config.fill || part.config.iris || "#888";
+        {activeCat.items.map(item => {
+          const locked = isItemLocked(item);
+          const owned = isItemOwned(activeCat.code, item);
+          const placed = isPlaced(item);
+
           return (
             <button
-              key={part.key}
-              onClick={() => handlePartSelect(activeCategory, part.key)}
-              className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
-                isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
+              key={item.key}
+              onClick={() => handleItemClick(item)}
+              className={`relative flex flex-col items-center gap-1 rounded-2xl border-2 p-2.5 transition-all active:scale-95 min-h-[100px] justify-between ${
+                locked ? "border-border bg-muted/30 opacity-60"
+                : placed ? "border-primary bg-primary/5 shadow-md scale-[1.02]"
+                : owned ? "border-border bg-background"
+                : "border-dashed border-muted-foreground/30 bg-background"
               }`}
             >
-              {isSelected && (
-                <div className="absolute -top-1 -right-1 rounded-full bg-primary p-0.5">
+              {placed && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary z-10">
                   <Check className="h-2.5 w-2.5 text-primary-foreground" />
-                </div>
+                </span>
               )}
-              <div className="w-8 h-8 rounded-full border-2 border-white/20 shadow"
-                style={{ background: mainColor }} />
-              <span className="text-[9px] font-bold text-center leading-tight truncate w-full text-center">
-                {part.label}
-              </span>
+              {locked && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-muted-foreground/70 z-10">
+                  <Lock className="h-2.5 w-2.5 text-white" />
+                </span>
+              )}
+              {!locked && owned && !placed && (
+                <span className="absolute -top-1 -left-1 rounded-full bg-green-500/20 px-1.5 py-0.5 text-[8px] font-bold text-green-600 z-10">
+                  보유
+                </span>
+              )}
+
+              <div className="flex-1 flex items-center justify-center">
+                <span className="text-2xl">{item.emoji}</span>
+              </div>
+              <span className="text-[10px] font-bold text-foreground/80 truncate w-full text-center">{item.label}</span>
+
+              {locked ? (
+                <span className="text-[9px] text-muted-foreground">
+                  {item.requirement === "hall_of_fame" ? "👑 전당" : "🔒"}
+                </span>
+              ) : !owned ? (
+                <span className={`text-[9px] font-bold ${walletBalance >= item.price || isAdmin ? "text-accent-foreground" : "text-muted-foreground"}`}>
+                  💎 {item.price.toLocaleString()}
+                </span>
+              ) : item.price === 0 ? (
+                <span className="text-[9px] text-green-500 font-bold">무료</span>
+              ) : (
+                <span className="text-[9px] text-muted-foreground">✅</span>
+              )}
             </button>
           );
         })}
       </div>
-      <button
-        onClick={() => onChange({ ...DEFAULT_SELECTION })}
-        className="w-full rounded-xl border border-border bg-secondary/50 py-2 text-xs text-muted-foreground"
-      >
-        기본값으로 초기화
-      </button>
+
+      {/* Purchase modal */}
+      {purchaseModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" onClick={() => setPurchaseModal(null)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
+          <div className="relative w-full max-w-sm rounded-t-3xl sm:rounded-3xl bg-card p-6 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted/50 border border-border">
+              <span className="text-4xl">{purchaseModal.item.emoji}</span>
+            </div>
+            <div className="text-center mb-4">
+              <h2 className="text-lg font-black text-foreground">{purchaseModal.item.label}</h2>
+              {purchaseModal.item.description && (
+                <p className="text-xs text-muted-foreground mt-1">{purchaseModal.item.description}</p>
+              )}
+            </div>
+            <div className="rounded-2xl bg-muted/50 p-3.5 mb-5 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">가격</span>
+                <span className="font-black">💎 {purchaseModal.item.price.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">현재 잔액</span>
+                <span className="font-bold">{isAdmin ? "∞" : walletBalance.toLocaleString()}</span>
+              </div>
+              {!isAdmin && (
+                <div className="flex justify-between text-sm border-t border-border/50 pt-2">
+                  <span className="text-muted-foreground">구매 후</span>
+                  <span className={`font-bold ${walletBalance - purchaseModal.item.price < 0 ? "text-destructive" : ""}`}>
+                    {(walletBalance - purchaseModal.item.price).toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setPurchaseModal(null)} disabled={purchaseCustomization.isPending} className="flex-1 rounded-2xl border border-border bg-secondary py-3.5 text-sm font-bold active:scale-95 transition-all disabled:opacity-50">
+                취소
+              </button>
+              <button onClick={handleConfirmPurchase} disabled={purchaseCustomization.isPending || (!isAdmin && walletBalance < purchaseModal.item.price)} className="flex-[2] rounded-2xl bg-gradient-to-r from-accent to-primary py-3.5 text-sm font-bold text-primary-foreground active:scale-95 transition-all disabled:opacity-50">
+                {purchaseCustomization.isPending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    구매 중...
+                  </span>
+                ) : (!isAdmin && walletBalance < purchaseModal.item.price) ? "젬 부족" : "💎 구매하기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

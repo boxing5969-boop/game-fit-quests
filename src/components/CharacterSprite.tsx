@@ -9,10 +9,14 @@ import {
   EFFECT_EMOJIS,
   FRAME_STYLES,
   TITLE_LABELS,
+  AURA_RADIAL_STYLES,
+  AURA_SPIN_DURATIONS,
+  MASTER_AURA_KEYS,
+  VICTORY_QUOTE_TEXTS,
+  BADGE_EMOJIS,
+  VICTORY_POSE_ANIMATIONS,
+  NAMEPLATE_STYLES,
 } from "@/data/characterCustomizationData";
-import PresetOverlayRenderer from "@/components/PresetOverlayRenderer";
-import { usePresetVariants } from "@/hooks/usePresetVariants";
-import type { PresetVariant } from "@/hooks/usePresetVariants";
 
 interface CharacterSpriteProps {
   style?: string;
@@ -26,8 +30,6 @@ interface CharacterSpriteProps {
   level?: number;
   auraMode?: "compact" | "detail";
   customization?: CharacterCustomization;
-  /** DB-driven preset variants for overlay rendering */
-  presetVariants?: PresetVariant[];
 }
 
 const SIZE_MAP = {
@@ -38,6 +40,14 @@ const SIZE_MAP = {
 };
 
 const SIZE_PX = { xs: 32, sm: 48, md: 80, lg: 128 };
+
+// Aura inset by size: small sprites get tighter glow
+const AURA_INSET: Record<string, string> = {
+  xs: "-4px",
+  sm: "-4px",
+  md: "-8px",
+  lg: "-8px",
+};
 
 const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   style,
@@ -51,16 +61,10 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   level,
   auraMode,
   customization: customizationProp,
-  presetVariants,
 }) => {
   const isLayered = !!(partsJson?.parts && Object.keys(partsJson.parts).length > 0);
   const presetStyle = partsJson?.style || style;
   const customization = customizationProp || partsJson?.customization;
-
-  // Self-fetch preset variants if not provided externally and we have customization
-  const needsSelfFetch = !presetVariants && !!customization && !!(customization.gloveStyle || customization.accessory);
-  const { data: selfFetchedVariants } = usePresetVariants(needsSelfFetch ? presetStyle : undefined);
-  const resolvedVariants = presetVariants || selfFetchedVariants || [];
 
   const imgSrc = useMemo(() => {
     if (isLayered) return null;
@@ -71,47 +75,67 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
 
   const isBlack = league === "black";
   const isMaster = isBlack && (level ?? 0) >= 10;
-  const showAura = isBlack;
   const effectiveAuraMode = auraMode ?? (size === "xs" || size === "sm" ? "compact" : "detail");
 
   const showOverlays = size === "md" || size === "lg";
   const showEffectSmall = size === "sm";
-
   const frameClass = customization?.frame ? FRAME_STYLES[customization.frame] || "" : "";
 
-  // Build selection map for PresetOverlayRenderer from customization
-  const overlaySelections = useMemo(() => {
-    if (!customization) return {};
-    const sel: Record<string, string> = {};
-    if (customization.gloveStyle) sel.gloves = customization.gloveStyle;
-    if (customization.accessory) sel.accessory = customization.accessory;
-    return sel;
-  }, [customization?.gloveStyle, customization?.accessory]);
-
-  const hasDBOverlays = resolvedVariants.length > 0 && Object.keys(overlaySelections).length > 0;
+  const auraKey = customization?.aura;
+  const victoryPoseClass = customization?.victoryPose ? VICTORY_POSE_ANIMATIONS[customization.victoryPose] || "" : "";
+  const badgeEmoji = customization?.badge ? BADGE_EMOJIS[customization.badge] || "" : "";
+  const nameplateClass = customization?.nameplate ? NAMEPLATE_STYLES[customization.nameplate] || "" : "";
+  const victoryQuoteText = customization?.victoryQuote ? VICTORY_QUOTE_TEXTS[customization.victoryQuote] || "" : "";
 
   return (
     <div
       className={`relative flex-shrink-0 select-none ${SIZE_MAP[size]} ${onClick ? "cursor-pointer active:scale-95" : ""} ${className}`}
       onClick={onClick}
     >
-      {/* Black League aura behind character */}
-      {showAura && (
+      {/* Black League aura (league reward) */}
+      {isBlack && (
         <BlackLeagueAura
           mode={effectiveAuraMode}
           level={isMaster ? "master" : "halo"}
         />
       )}
 
-      {/* Frame glow — outside animation container */}
+      {/* Customization aura — circular radial glow from center (z-[3]) */}
+      {auraKey && auraKey !== "none" && size !== "xs" && (
+        MASTER_AURA_KEYS.includes(auraKey) ? (
+          <MasterAuraOverlay auraKey={auraKey} size={size} />
+        ) : AURA_RADIAL_STYLES[auraKey] ? (
+          <div
+            className={`absolute rounded-full pointer-events-none z-[3] ${
+              auraKey.includes("rainbow") || auraKey.includes("galaxy") ? "animate-spin" :
+              auraKey === "aura_lightning" ? "animate-ping" : "animate-pulse"
+            }`}
+            style={{
+              inset: AURA_INSET[size],
+              background: AURA_RADIAL_STYLES[auraKey],
+              animationDuration: AURA_SPIN_DURATIONS[auraKey] ?? undefined,
+            }}
+          />
+        ) : null
+      )}
+
+      {/* Frame ring */}
       {customization?.frame && showOverlays && (
         <div className={`absolute inset-0 rounded-full z-[5] ${frameClass}`} />
       )}
 
-      {/* === UNIFIED ANIMATION CONTAINER === */}
-      <div className={`relative z-10 h-full w-full ${animate ? "animate-emote-idle" : ""}`}
-           style={{ willChange: animate ? "transform" : undefined }}>
+      {/* Badge icon (top-left) */}
+      {badgeEmoji && showOverlays && (
+        <div className="absolute -top-1 -left-1 z-20 text-sm drop-shadow-md">
+          {badgeEmoji}
+        </div>
+      )}
 
+      {/* Animation container */}
+      <div
+        className={`relative z-10 h-full w-full ${animate ? "animate-emote-idle" : ""} ${victoryPoseClass}`}
+        style={{ willChange: animate || victoryPoseClass ? "transform" : undefined }}
+      >
         {isLayered ? (
           <Suspense fallback={<div className="h-full w-full animate-pulse rounded-full bg-muted" />}>
             <LayeredCharacterRenderer
@@ -131,26 +155,28 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           />
         )}
 
-        {/* === DB-DRIVEN PRESET OVERLAYS (gloves, accessories) === */}
-        {hasDBOverlays && showOverlays && (
-          <PresetOverlayRenderer
-            variants={resolvedVariants}
-            selections={overlaySelections}
-            containerSize={SIZE_PX[size]}
-          />
-        )}
-
-        {/* ===== EFFECT PARTICLES ===== */}
+        {/* Effect particles */}
         {customization?.effect && (showOverlays || showEffectSmall) && (
           <EffectOverlay effect={customization.effect} size={size} />
         )}
       </div>
 
-      {/* Title label — outside animation container, below character */}
+      {/* Title label (with optional nameplate styling) */}
       {customization?.title && size === "lg" && (
         <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap">
-          <span className={`text-[10px] font-bold ${TITLE_LABELS[customization.title]?.color || "text-foreground"}`}>
+          <span className={`text-[10px] font-bold ${
+            nameplateClass || TITLE_LABELS[customization.title]?.color || "text-foreground"
+          }`}>
             {TITLE_LABELS[customization.title]?.text || customization.title}
+          </span>
+        </div>
+      )}
+
+      {/* Victory quote (below title) */}
+      {victoryQuoteText && size === "lg" && (
+        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap">
+          <span className="text-[8px] text-muted-foreground/80 font-medium italic">
+            {victoryQuoteText}
           </span>
         </div>
       )}
@@ -158,12 +184,144 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   );
 };
 
+// ===== Master Aura Multi-Layer Renderer =====
+type MasterAuraLayer = {
+  gradient: string;
+  mask?: string;
+  animClass: string;
+  opacity: number;
+  inset: string;
+  duration?: string;
+};
+
+const MASTER_AURA_CONFIG: Record<string, MasterAuraLayer[]> = {
+  halo_rainbow_master: [
+    {
+      gradient: "conic-gradient(from 0deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b)",
+      mask: "radial-gradient(circle, transparent 44%, black 49%, black 70%, transparent 75%)",
+      animClass: "animate-aura-hue",
+      opacity: 0.75,
+      inset: "-14px",
+      duration: "4s",
+    },
+    {
+      gradient: "conic-gradient(from 180deg, #ff9ff3, #54a0ff, #48dbfb, #feca57, #ff6b6b, #5f27cd, #ff9ff3)",
+      mask: "radial-gradient(circle, transparent 52%, black 56%, black 66%, transparent 71%)",
+      animClass: "animate-aura-hue-reverse",
+      opacity: 0.5,
+      inset: "-7px",
+      duration: "6s",
+    },
+    {
+      gradient: "radial-gradient(circle, rgba(147,51,234,0.5), rgba(59,130,246,0.3), transparent 70%)",
+      animClass: "animate-aura-pulse",
+      opacity: 0.4,
+      inset: "-5px",
+    },
+  ],
+  halo_black_gold: [
+    {
+      gradient: "conic-gradient(from 0deg, #fbbf24, #78350f, #fbbf24, #1c1917, #fbbf24, #78350f, #fbbf24)",
+      mask: "radial-gradient(circle, transparent 44%, black 49%, black 70%, transparent 75%)",
+      animClass: "animate-aura-hue",
+      opacity: 0.85,
+      inset: "-14px",
+      duration: "5s",
+    },
+    {
+      gradient: "conic-gradient(from 90deg, #1c1917, #fbbf24, #78350f, #fbbf24, #1c1917)",
+      mask: "radial-gradient(circle, transparent 52%, black 56%, black 66%, transparent 71%)",
+      animClass: "animate-aura-hue-reverse",
+      opacity: 0.6,
+      inset: "-7px",
+      duration: "7s",
+    },
+    {
+      gradient: "radial-gradient(circle, rgba(251,191,36,0.6), rgba(28,25,23,0.5), transparent 70%)",
+      animClass: "animate-aura-pulse",
+      opacity: 0.45,
+      inset: "-5px",
+    },
+  ],
+  halo_conqueror: [
+    {
+      gradient: "conic-gradient(from 0deg, #ef4444, #f97316, #7c2d12, #ef4444, #b91c1c, #f97316, #ef4444)",
+      mask: "radial-gradient(circle, transparent 44%, black 49%, black 70%, transparent 75%)",
+      animClass: "animate-aura-hue",
+      opacity: 0.85,
+      inset: "-14px",
+      duration: "3s",
+    },
+    {
+      gradient: "conic-gradient(from 180deg, #7c2d12, #ef4444, #f97316, #b91c1c, #7c2d12)",
+      mask: "radial-gradient(circle, transparent 52%, black 56%, black 66%, transparent 71%)",
+      animClass: "animate-aura-hue-reverse",
+      opacity: 0.55,
+      inset: "-7px",
+      duration: "5s",
+    },
+    {
+      gradient: "radial-gradient(circle, rgba(239,68,68,0.7), rgba(249,115,22,0.4), transparent 70%)",
+      animClass: "animate-aura-pulse",
+      opacity: 0.45,
+      inset: "-5px",
+    },
+  ],
+  halo_galaxy_master: [
+    {
+      gradient: "conic-gradient(from 0deg, #4f46e5, #7c3aed, #0f172a, #1d4ed8, #7c3aed, #0f172a, #4f46e5)",
+      mask: "radial-gradient(circle, transparent 44%, black 49%, black 70%, transparent 75%)",
+      animClass: "animate-aura-hue",
+      opacity: 0.75,
+      inset: "-14px",
+      duration: "6s",
+    },
+    {
+      gradient: "conic-gradient(from 270deg, #1e1b4b, #4f46e5, #7c3aed, #1e40af, #1e1b4b)",
+      mask: "radial-gradient(circle, transparent 52%, black 56%, black 66%, transparent 71%)",
+      animClass: "animate-aura-hue-reverse",
+      opacity: 0.5,
+      inset: "-7px",
+      duration: "8s",
+    },
+    {
+      gradient: "radial-gradient(circle, rgba(99,102,241,0.5), rgba(124,58,237,0.35), transparent 70%)",
+      animClass: "animate-aura-pulse",
+      opacity: 0.4,
+      inset: "-5px",
+    },
+  ],
+};
+
+const MasterAuraOverlay: React.FC<{ auraKey: string; size: string }> = ({ auraKey, size }) => {
+  const layers = MASTER_AURA_CONFIG[auraKey];
+  if (!layers) return null;
+  // Scale outer ring down for smaller sizes
+  const outerInset = size === "sm" ? "-8px" : "-14px";
+  return (
+    <>
+      {layers.map((layer, i) => (
+        <div
+          key={i}
+          className={`absolute rounded-full pointer-events-none z-[3] ${layer.animClass}`}
+          style={{
+            inset: i === 0 ? outerInset : layer.inset,
+            background: layer.gradient,
+            opacity: layer.opacity,
+            ...(layer.mask ? { mask: layer.mask, WebkitMask: layer.mask } : {}),
+            ...(layer.duration ? { animationDuration: layer.duration } : {}),
+          }}
+        />
+      ))}
+    </>
+  );
+};
+
 // ===== Effect Particles =====
 const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, size }) => {
   const emoji = EFFECT_EMOJIS[effect] || "✨";
-  const isSmall = size === "sm" || size === "xs";
 
-  if (isSmall) {
+  if (size === "sm" || size === "xs") {
     return (
       <span className="absolute -top-1 -right-1 z-20 text-xs animate-pulse pointer-events-none">
         {emoji}
@@ -172,7 +330,6 @@ const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, siz
   }
 
   const emojiSize = size === "lg" ? "text-lg" : "text-sm";
-
   return (
     <div className="absolute inset-0 z-20 pointer-events-none overflow-visible">
       <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "-8%", left: "5%", animationDelay: "0s", animationDuration: "1.5s" }}>{emoji}</span>

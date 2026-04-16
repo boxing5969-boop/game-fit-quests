@@ -53,7 +53,7 @@ const ALL_MENU_ITEMS = [
   { path: "/guide", emoji: "📖", label: "가이드" },
   { path: "/mypage", emoji: "👤", label: "내정보" },
   { path: "/settings", emoji: "⚙️", label: "설정" },
-  { path: "/level-map", emoji: "🗺️", label: "리그맵" },
+  { path: "/levelmap", emoji: "🗺️", label: "리그맵" },
   { path: "/rewards", emoji: "🎁", label: "보상" },
   { path: "/quests", emoji: "⚡", label: "퀘스트" },
 ];
