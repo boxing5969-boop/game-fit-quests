@@ -148,15 +148,13 @@ export const useSaveCustomization = () => {
     mutationFn: async ({
       style,
       customization,
-      gymLayout,
     }: {
       style: string;
       customization: CharacterCustomization;
-      gymLayout?: Record<string, any>;
     }) => {
       if (!user?.id) throw new Error("로그인이 필요합니다");
 
-      const partsJson = { style, customization, ...(gymLayout ? { gymLayout } : {}) } as unknown as Record<string, any>;
+      const partsJson = { style, customization } as unknown as Record<string, any>;
 
       // Create or update a personal preset for this user
       const { data: existing } = await supabase

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Shuffle, Save, Check, Sparkles, Lock, ChevronRight, Crown, Gem, RotateCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,11 +13,8 @@ import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import useEmblaCarousel from "embla-carousel-react";
-import confetti from "canvas-confetti";
-import { useOwnedSet, usePurchaseCustomization } from "@/hooks/useCustomizationPurchase";
 import {
   CUSTOMIZATION_CATEGORIES,
-  CUSTOMIZATION_LEAGUE_ORDER,
   EFFECT_EMOJIS,
   TITLE_LABELS,
   AURA_PREVIEW_GRADIENTS,
@@ -29,7 +26,6 @@ const TABS = [
   { key: "my", label: "내 캐릭터", icon: "🥊" },
   { key: "preset", label: "프리셋 선택", icon: "🎭" },
   { key: "customize", label: "꾸미기", icon: "🎨" },
-  { key: "gym", label: "나의 짐", icon: "🏠" },
   { key: "growth", label: "성장", icon: "📈" },
   { key: "effects", label: "효과", icon: "✨" },
 ] as const;
@@ -62,8 +58,6 @@ const CharacterStudioPage = () => {
   const saveCustomization = useSaveCustomization();
   const { data: isInHallOfFame = false } = useIsInHallOfFame();
   const isAdmin = role === "admin" || role === "super_admin";
-  const ownedSet = useOwnedSet();
-  const purchaseCustomization = usePurchaseCustomization();
 
   const currentPartsJson = (assignment?.character_presets as any)?.parts_json;
   const currentStyle = currentPartsJson?.style;
@@ -80,27 +74,6 @@ const CharacterStudioPage = () => {
   const [selectedStyle, setSelectedStyle] = useState<string>(currentStyle || "male_01");
   const [activeFilter, setActiveFilter] = useState<string>("white");
   const [pendingCustomization, setPendingCustomization] = useState<CharacterCustomization>(currentCustomization);
-
-  // Sync pendingCustomization when DB data loads (assignment is async)
-  useEffect(() => {
-    if (currentPartsJson?.customization) {
-      setPendingCustomization(currentPartsJson.customization);
-    }
-  }, [currentPartsJson?.customization]);
-
-  // Sync selectedStyle when DB data loads
-  useEffect(() => {
-    if (currentStyle) setSelectedStyle(currentStyle);
-  }, [currentStyle]);
-
-  const currentGymLayout: GymLayout = currentPartsJson?.gymLayout || {};
-  const [pendingGymLayout, setPendingGymLayout] = useState<GymLayout>(currentGymLayout);
-
-  useEffect(() => {
-    if (currentPartsJson?.gymLayout) {
-      setPendingGymLayout(currentPartsJson.gymLayout);
-    }
-  }, [currentPartsJson?.gymLayout]);
 
   const spendGems = useSpendGems();
   const [purchaseModal, setPurchaseModal] = useState<typeof PREBUILT_CHARACTERS[0] | null>(null);
@@ -258,23 +231,8 @@ const CharacterStudioPage = () => {
       await saveCustomization.mutateAsync({
         style: selectedStyle,
         customization: pendingCustomization,
-        gymLayout: pendingGymLayout,
       });
       toast.success("꾸미기가 저장되었습니다! 🎨");
-    } catch (e: any) {
-      toast.error(e.message || "저장 실패");
-    }
-  };
-
-  const handleSaveGymLayout = async () => {
-    if (!user?.id) return;
-    try {
-      await saveCustomization.mutateAsync({
-        style: selectedStyle,
-        customization: pendingCustomization,
-        gymLayout: pendingGymLayout,
-      });
-      toast.success("나의 짐이 저장되었습니다! 🏠");
     } catch (e: any) {
       toast.error(e.message || "저장 실패");
     }
@@ -339,9 +297,7 @@ const CharacterStudioPage = () => {
             <div className="mt-1.5 flex items-center justify-center gap-2">
               <RankBadge rank={currentLeague as Enums<"rank_name">} level={currentLevel} size="sm" />
               {currentMilestone && (
-                <span className="text-[10px] text-muted-foreground">
-                  {currentMilestone.icon} {currentMilestone.label}
-                </span>
+                <span className="text-[10px] text-muted-foreground">{currentMilestone.icon} {currentMilestone.label}</span>
               )}
             </div>
           </div>
@@ -362,9 +318,9 @@ const CharacterStudioPage = () => {
               )}
             </button>
           )}
-          {(activeTab === "customize" || activeTab === "gym") && (
+          {activeTab === "customize" && (
             <button
-              onClick={activeTab === "gym" ? handleSaveGymLayout : handleSaveCustomization}
+              onClick={handleSaveCustomization}
               disabled={isSaving}
               className="absolute top-3 right-3 rounded-full px-3 py-1.5 text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 bg-primary text-primary-foreground"
             >
@@ -432,24 +388,6 @@ const CharacterStudioPage = () => {
             onChange={setPendingCustomization}
             league={currentLeague}
             isAdmin={isAdmin}
-            isInHallOfFame={isInHallOfFame}
-            ownedSet={ownedSet}
-            walletBalance={walletData?.gems_balance || 0}
-            purchaseCustomization={purchaseCustomization}
-          />
-        )}
-        {activeTab === "gym" && (
-          <GymTab
-            currentStyle={selectedStyle}
-            userId={user?.id}
-            league={currentLeague}
-            isAdmin={isAdmin}
-            isInHallOfFame={isInHallOfFame}
-            ownedSet={ownedSet}
-            walletBalance={walletData?.gems_balance || 0}
-            purchaseCustomization={purchaseCustomization}
-            gymLayout={pendingGymLayout}
-            onLayoutChange={setPendingGymLayout}
           />
         )}
         {activeTab === "growth" && <GrowthTab league={currentLeague} level={currentLevel} />}
@@ -556,194 +494,92 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
 }
 
 // ========== CUSTOMIZE TAB ==========
-function CustomizeTab({ customization, onChange, league, isAdmin, isInHallOfFame, ownedSet, walletBalance, purchaseCustomization }: {
+function CustomizeTab({ customization, onChange, league, isAdmin }: {
   customization: CharacterCustomization;
   onChange: (c: CharacterCustomization) => void;
   league: string;
   isAdmin: boolean;
-  isInHallOfFame: boolean;
-  ownedSet: Set<string>;
-  walletBalance: number;
-  purchaseCustomization: ReturnType<typeof usePurchaseCustomization>;
 }) {
-  const [activeCatIdx, setActiveCatIdx] = useState(0);
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, dragFree: false });
-  const [purchaseModal, setPurchaseModal] = useState<{ cat: string; opt: CustomizationOption } | null>(null);
-  const userLeagueOrder = CUSTOMIZATION_LEAGUE_ORDER[league] ?? 0;
+  const [activeCat, setActiveCat] = useState(CUSTOMIZATION_CATEGORIES[0].code);
 
-  useEffect(() => {
-    if (!emblaApi) return;
-    const onSelect = () => setActiveCatIdx(emblaApi.selectedScrollSnap());
-    emblaApi.on("select", onSelect);
-    return () => { emblaApi.off("select", onSelect); };
-  }, [emblaApi]);
-
-  const scrollTo = (idx: number) => {
-    setActiveCatIdx(idx);
-    emblaApi?.scrollTo(idx);
-  };
-
-  const isOptLocked = (opt: CustomizationOption) => {
-    if (isAdmin) return false;
-    if (opt.requirement === "hall_of_fame") return !isInHallOfFame;
-    return (CUSTOMIZATION_LEAGUE_ORDER[opt.league] ?? 0) > userLeagueOrder;
-  };
-
-  const isOptOwned = (catCode: string, opt: CustomizationOption) => {
-    if (isAdmin) return true;
-    if (opt.price === 0) return true;
-    return ownedSet.has(`${catCode}:${opt.key}`);
-  };
-
-  const applyItem = (catCode: string, optKey: string) => {
+  const handleSelect = (catCode: string, opt: CustomizationOption) => {
+    if (opt.blackOnly && league !== "black" && !isAdmin) {
+      toast("블랙리그 달성 후 해금됩니다 🔒");
+      return;
+    }
     const current = (customization as any)[catCode];
-    onChange({ ...customization, [catCode]: current === optKey ? undefined : optKey });
-  };
-
-  const handleItemClick = (catCode: string, opt: CustomizationOption) => {
-    if (isOptLocked(opt)) {
-      if (opt.requirement === "hall_of_fame") {
-        toast("👑 명예의 전당 헌액자만 해금됩니다");
-      } else {
-        toast(`${opt.league === "black" ? "블랙" : opt.league === "red" ? "레드" : "블루"} 리그 달성 후 해금됩니다 🔒`);
-      }
-      return;
-    }
-    if (isOptOwned(catCode, opt)) {
-      applyItem(catCode, opt.key);
-      return;
-    }
-    setPurchaseModal({ cat: catCode, opt });
-  };
-
-  const handleConfirmPurchase = async () => {
-    if (!purchaseModal) return;
-    const { cat, opt } = purchaseModal;
-    try {
-      await purchaseCustomization.mutateAsync({ category: cat, itemKey: opt.key, price: opt.price });
-      setPurchaseModal(null);
-      applyItem(cat, opt.key);
-      confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
-      toast.success(`🎉 ${opt.label} 획득!`);
-    } catch (e: any) {
-      toast.error(e.message || "구매 실패");
-    }
+    const newVal = current === opt.key ? undefined : opt.key;
+    onChange({ ...customization, [catCode]: newVal });
   };
 
   const activeCount = Object.values(customization).filter(Boolean).length;
+  const activeCatData = CUSTOMIZATION_CATEGORIES.find(c => c.code === activeCat)!;
 
   return (
-    <div className="space-y-4 animate-slide-up">
-      {/* Category tab pills */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {CUSTOMIZATION_CATEGORIES.map((cat, idx) => {
+    <div className="space-y-5 animate-slide-up">
+      {/* Category selector */}
+      <div className="grid grid-cols-4 gap-2">
+        {CUSTOMIZATION_CATEGORIES.map(cat => {
           const hasSelection = !!(customization as any)[cat.code];
-          const isActive = activeCatIdx === idx;
+          const isActive = activeCat === cat.code;
           return (
             <button
               key={cat.code}
-              onClick={() => scrollTo(idx)}
-              className={`relative flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
+              onClick={() => setActiveCat(cat.code)}
+              className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 py-3.5 transition-all active:scale-95 ${
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-md"
+                  ? "border-primary bg-primary/5 shadow-sm"
                   : hasSelection
-                  ? "bg-primary/15 text-primary border border-primary/30"
-                  : "bg-muted text-muted-foreground"
+                  ? "border-primary/40 bg-primary/5"
+                  : "border-border bg-card"
               }`}
             >
-              <span>{cat.icon}</span>
-              {cat.label}
-              {hasSelection && !isActive && (
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="text-2xl">{cat.icon}</span>
+              <span className={`text-[11px] font-bold ${isActive ? "text-primary" : "text-foreground/70"}`}>
+                {cat.label}
+              </span>
+              {hasSelection && (
+                <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary">
+                  <Check className="h-2 w-2 text-primary-foreground" />
+                </span>
               )}
             </button>
           );
         })}
       </div>
 
-      {/* Embla carousel */}
-      <div ref={emblaRef} className="overflow-hidden rounded-2xl border border-border bg-card/50">
-        <div className="flex">
-          {CUSTOMIZATION_CATEGORIES.map((cat) => (
-            <div key={cat.code} className="flex-[0_0_100%] min-w-0 p-3">
-              <div className="grid grid-cols-3 gap-2">
-                {cat.options.map(opt => {
-                  const isSelected = (customization as any)[cat.code] === opt.key;
-                  const locked = isOptLocked(opt);
-                  const owned = isOptOwned(cat.code, opt);
-
-                  return (
-                    <button
-                      key={opt.key}
-                      onClick={() => handleItemClick(cat.code, opt)}
-                      className={`relative flex flex-col items-center gap-1 rounded-2xl border-2 p-2.5 transition-all active:scale-95 min-h-[100px] justify-between ${
-                        locked ? "border-border bg-muted/30 opacity-60"
-                        : isSelected ? "border-primary bg-primary/5 shadow-md scale-[1.02]"
-                        : owned ? "border-border bg-background"
-                        : "border-dashed border-muted-foreground/30 bg-background"
-                      }`}
-                    >
-                      {/* Top-right badge */}
-                      {isSelected && !locked && (
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary z-10">
-                          <Check className="h-2.5 w-2.5 text-primary-foreground" />
-                        </span>
-                      )}
-                      {locked && (
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-muted-foreground/70 z-10">
-                          <Lock className="h-2.5 w-2.5 text-white" />
-                        </span>
-                      )}
-                      {!locked && owned && !isSelected && (
-                        <span className="absolute -top-1 -left-1 rounded-full bg-green-500/20 px-1.5 py-0.5 text-[8px] font-bold text-green-600 z-10">
-                          보유
-                        </span>
-                      )}
-
-                      {/* Preview */}
-                      <div className="flex-1 flex items-center justify-center">
-                        <OptionPreview category={cat.code} optionKey={opt.key} />
-                      </div>
-
-                      {/* Label */}
-                      <span className="text-[10px] font-bold text-foreground/80 truncate w-full text-center">{opt.label}</span>
-
-                      {/* Price / status */}
-                      {locked ? (
-                        <span className="text-[9px] text-muted-foreground">
-                          {opt.requirement === "hall_of_fame" ? "👑 전당" : "🔒 " + (opt.league === "black" ? "블랙" : opt.league === "red" ? "레드" : "블루")}
-                        </span>
-                      ) : !owned ? (
-                        <span className={`text-[9px] font-bold ${
-                          walletBalance >= opt.price || isAdmin ? "text-accent-foreground" : "text-muted-foreground"
-                        }`}>
-                          💎 {opt.price.toLocaleString()}
-                        </span>
-                      ) : opt.price === 0 ? (
-                        <span className="text-[9px] text-green-500 font-bold">무료</span>
-                      ) : (
-                        <span className="text-[9px] text-muted-foreground">✅</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Dot indicators */}
-      <div className="flex justify-center gap-1.5">
-        {CUSTOMIZATION_CATEGORIES.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => scrollTo(idx)}
-            className={`rounded-full transition-all ${
-              activeCatIdx === idx ? "w-5 h-2 bg-primary" : "w-2 h-2 bg-muted-foreground/30"
-            }`}
-          />
-        ))}
+      {/* Options grid */}
+      <div className="grid grid-cols-4 gap-2">
+        {activeCatData.options.map(opt => {
+          const isSelected = (customization as any)[activeCat] === opt.key;
+          const isLocked = !!opt.blackOnly && league !== "black" && !isAdmin;
+          return (
+            <button
+              key={opt.key}
+              onClick={() => handleSelect(activeCat, opt)}
+              className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
+                isLocked
+                  ? "border-border bg-muted/30 opacity-60"
+                  : isSelected
+                  ? "border-primary bg-primary/5 shadow-md"
+                  : "border-border bg-card"
+              }`}
+            >
+              {isSelected && !isLocked && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                  <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                </span>
+              )}
+              {isLocked && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-muted-foreground/70">
+                  <Lock className="h-2.5 w-2.5 text-white" />
+                </span>
+              )}
+              <OptionPreview category={activeCat} optionKey={opt.key} />
+              <span className="text-[9px] font-bold text-foreground/80 truncate w-full text-center">{opt.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {activeCount > 0 && (
@@ -753,73 +589,6 @@ function CustomizeTab({ customization, onChange, league, isAdmin, isInHallOfFame
         >
           전체 초기화 ({activeCount}개 적용 중)
         </button>
-      )}
-
-      {/* Purchase confirmation modal */}
-      {purchaseModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" onClick={() => setPurchaseModal(null)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-          <div className="relative w-full max-w-sm rounded-t-3xl sm:rounded-3xl bg-card p-6 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
-            {/* Item preview */}
-            <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-2xl bg-muted/50 border border-border">
-              <OptionPreview category={purchaseModal.cat} optionKey={purchaseModal.opt.key} />
-            </div>
-
-            <div className="text-center mb-4">
-              <h2 className="text-lg font-black text-foreground">{purchaseModal.opt.label}</h2>
-              {purchaseModal.opt.description && (
-                <p className="text-xs text-muted-foreground mt-1">{purchaseModal.opt.description}</p>
-              )}
-            </div>
-
-            {/* Price breakdown */}
-            <div className="rounded-2xl bg-muted/50 p-3.5 mb-5 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">가격</span>
-                <span className="font-black text-foreground">💎 {purchaseModal.opt.price.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">현재 잔액</span>
-                <span className="font-bold">{isAdmin ? "∞" : walletBalance.toLocaleString()}</span>
-              </div>
-              {!isAdmin && (
-                <div className="flex justify-between text-sm border-t border-border/50 pt-2">
-                  <span className="text-muted-foreground">구매 후 잔액</span>
-                  <span className={`font-bold ${walletBalance - purchaseModal.opt.price < 0 ? "text-destructive" : "text-foreground"}`}>
-                    {(walletBalance - purchaseModal.opt.price).toLocaleString()}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setPurchaseModal(null)}
-                disabled={purchaseCustomization.isPending}
-                className="flex-1 rounded-2xl border border-border bg-secondary py-3.5 text-sm font-bold text-secondary-foreground active:scale-95 transition-all disabled:opacity-50"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleConfirmPurchase}
-                disabled={purchaseCustomization.isPending || (!isAdmin && walletBalance < purchaseModal.opt.price)}
-                className="flex-[2] rounded-2xl bg-gradient-to-r from-accent to-primary py-3.5 text-sm font-bold text-primary-foreground active:scale-95 transition-all disabled:opacity-50"
-              >
-                {purchaseCustomization.isPending ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    구매 중...
-                  </span>
-                ) : (!isAdmin && walletBalance < purchaseModal.opt.price) ? (
-                  "젬 부족"
-                ) : (
-                  "💎 구매하기"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
@@ -833,24 +602,33 @@ function OptionPreview({ category, optionKey }: { category: string; optionKey: s
   }
   if (category === "frame") {
     const colors: Record<string, string> = {
+      basic_white:   "border-gray-300 shadow-gray-300/30",
       fire:          "border-orange-500 shadow-orange-500/30",
       ice:           "border-cyan-400 shadow-cyan-400/30",
-      gold:          "border-amber-400 shadow-amber-400/30",
-      shadow:        "border-gray-600 shadow-gray-600/30",
-      lightning:     "border-yellow-400 shadow-yellow-400/30",
-      rainbow:       "border-pink-400 shadow-pink-400/30",
-      cherry:        "border-pink-300 shadow-pink-300/30",
-      diamond:       "border-cyan-300 shadow-cyan-300/30",
-      purple:        "border-purple-500 shadow-purple-500/30",
       moon:          "border-blue-200 shadow-blue-200/30",
-      dark_red:      "border-red-900 shadow-red-900/30",
-      crystal:       "border-white shadow-white/30",
-      rainbow_frame: "border-violet-500 shadow-violet-500/30",
+      lightning:     "border-yellow-400 shadow-yellow-400/30",
+      cherry:        "border-pink-300 shadow-pink-300/30",
+      electric:      "border-sky-400 shadow-sky-400/30",
+      ocean:         "border-blue-500 shadow-blue-500/30",
+      emerald:       "border-emerald-400 shadow-emerald-400/30",
       sakura:        "border-rose-300 shadow-rose-300/30",
+      diamond:       "border-cyan-300 shadow-cyan-300/30",
+      gold:          "border-amber-400 shadow-amber-400/30",
+      rainbow:       "border-pink-400 shadow-pink-400/30",
       blood:         "border-red-700 shadow-red-700/30",
-      galaxy:        "border-indigo-500 shadow-indigo-500/30",
+      dark_red:      "border-red-900 shadow-red-900/30",
+      purple:        "border-purple-500 shadow-purple-500/30",
+      neon:          "border-lime-400 shadow-lime-400/30",
+      crystal:       "border-white shadow-white/30",
+      storm:         "border-slate-500 shadow-slate-500/30",
       neon_green:    "border-green-400 shadow-green-400/30",
+      shadow:        "border-gray-600 shadow-gray-600/30",
+      galaxy:        "border-indigo-500 shadow-indigo-500/30",
+      rainbow_frame: "border-violet-500 shadow-violet-500/30",
       holy:          "border-yellow-200 shadow-yellow-200/30",
+      inferno:       "border-red-600 shadow-red-600/30",
+      void:          "border-gray-900 shadow-gray-900/30",
+      eternal:       "border-amber-200 shadow-amber-200/30",
     };
     return (
       <div className={`h-8 w-8 rounded-full border-2 shadow-md ${colors[optionKey] || "border-border"}`} />
@@ -1297,222 +1075,6 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-// ========== GYM TAB ==========
-function GymTab({ currentStyle, userId, league, isAdmin, isInHallOfFame, ownedSet, walletBalance, purchaseCustomization, gymLayout, onLayoutChange }: {
-  currentStyle?: string;
-  userId?: string;
-  league: string;
-  isAdmin: boolean;
-  isInHallOfFame: boolean;
-  ownedSet: Set<string>;
-  walletBalance: number;
-  purchaseCustomization: ReturnType<typeof usePurchaseCustomization>;
-  gymLayout: GymLayout;
-  onLayoutChange: (layout: GymLayout) => void;
-}) {
-  const [activeCatIdx, setActiveCatIdx] = useState(0);
-  const [purchaseModal, setPurchaseModal] = useState<{ catCode: string; item: GymItem } | null>(null);
-  const userLeagueOrder = CUSTOMIZATION_LEAGUE_ORDER[league] ?? 0;
-  const activeCat = GYM_CATEGORIES[activeCatIdx];
-
-  const isItemLocked = (item: GymItem) => {
-    if (isAdmin) return false;
-    if (item.requirement === "hall_of_fame") return !isInHallOfFame;
-    return (CUSTOMIZATION_LEAGUE_ORDER[item.league] ?? 0) > userLeagueOrder;
-  };
-
-  const isItemOwned = (catCode: string, item: GymItem) => {
-    if (isAdmin) return true;
-    if (item.price === 0) return true;
-    return ownedSet.has(`gym_${catCode}:${item.key}`);
-  };
-
-  const placeItem = (item: GymItem) => {
-    const catCode = activeCat.code;
-    if (catCode === "wallpaper") {
-      onLayoutChange({ ...gymLayout, wallpaper: gymLayout.wallpaper === item.key ? undefined : item.key });
-    } else if (catCode === "floor_mat") {
-      onLayoutChange({ ...gymLayout, floor_mat: gymLayout.floor_mat === item.key ? undefined : item.key });
-    } else {
-      const slotKey = item.slot as keyof GymLayout;
-      onLayoutChange({ ...gymLayout, [slotKey]: (gymLayout as any)[slotKey] === item.key ? undefined : item.key });
-    }
-  };
-
-  const handleItemClick = (item: GymItem) => {
-    if (isItemLocked(item)) {
-      if (item.requirement === "hall_of_fame") {
-        toast("👑 명예의 전당 헌액자만 해금됩니다");
-      } else {
-        toast(`${item.league === "black" ? "블랙" : item.league === "red" ? "레드" : "블루"} 리그 달성 후 해금됩니다 🔒`);
-      }
-      return;
-    }
-    if (isItemOwned(activeCat.code, item)) {
-      placeItem(item);
-      return;
-    }
-    setPurchaseModal({ catCode: activeCat.code, item });
-  };
-
-  const handleConfirmPurchase = async () => {
-    if (!purchaseModal) return;
-    const { catCode, item } = purchaseModal;
-    try {
-      await purchaseCustomization.mutateAsync({ category: `gym_${catCode}`, itemKey: item.key, price: item.price });
-      setPurchaseModal(null);
-      placeItem(item);
-      confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
-      toast.success(`🎉 ${item.label} 획득!`);
-    } catch (e: any) {
-      toast.error(e.message || "구매 실패");
-    }
-  };
-
-  const isPlaced = (item: GymItem) => {
-    const catCode = activeCat.code;
-    if (catCode === "wallpaper") return gymLayout.wallpaper === item.key;
-    if (catCode === "floor_mat") return gymLayout.floor_mat === item.key;
-    return (gymLayout as any)[item.slot] === item.key;
-  };
-
-  return (
-    <div className="space-y-4 animate-slide-up">
-      {/* Mini Gym Preview */}
-      <MiniGymPreview
-        layout={gymLayout}
-        characterStyle={currentStyle}
-        userId={userId}
-        className="border border-border"
-      />
-
-      {/* Category tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {GYM_CATEGORIES.map((cat, idx) => (
-          <button
-            key={cat.code}
-            onClick={() => setActiveCatIdx(idx)}
-            className={`flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
-              activeCatIdx === idx
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            <span>{cat.icon}</span>
-            {cat.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Items grid */}
-      <div className="grid grid-cols-3 gap-2">
-        {activeCat.items.map(item => {
-          const locked = isItemLocked(item);
-          const owned = isItemOwned(activeCat.code, item);
-          const placed = isPlaced(item);
-
-          return (
-            <button
-              key={item.key}
-              onClick={() => handleItemClick(item)}
-              className={`relative flex flex-col items-center gap-1 rounded-2xl border-2 p-2.5 transition-all active:scale-95 min-h-[100px] justify-between ${
-                locked ? "border-border bg-muted/30 opacity-60"
-                : placed ? "border-primary bg-primary/5 shadow-md scale-[1.02]"
-                : owned ? "border-border bg-background"
-                : "border-dashed border-muted-foreground/30 bg-background"
-              }`}
-            >
-              {placed && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary z-10">
-                  <Check className="h-2.5 w-2.5 text-primary-foreground" />
-                </span>
-              )}
-              {locked && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-muted-foreground/70 z-10">
-                  <Lock className="h-2.5 w-2.5 text-white" />
-                </span>
-              )}
-              {!locked && owned && !placed && (
-                <span className="absolute -top-1 -left-1 rounded-full bg-green-500/20 px-1.5 py-0.5 text-[8px] font-bold text-green-600 z-10">
-                  보유
-                </span>
-              )}
-
-              <div className="flex-1 flex items-center justify-center">
-                <span className="text-2xl">{item.emoji}</span>
-              </div>
-              <span className="text-[10px] font-bold text-foreground/80 truncate w-full text-center">{item.label}</span>
-
-              {locked ? (
-                <span className="text-[9px] text-muted-foreground">
-                  {item.requirement === "hall_of_fame" ? "👑 전당" : "🔒"}
-                </span>
-              ) : !owned ? (
-                <span className={`text-[9px] font-bold ${walletBalance >= item.price || isAdmin ? "text-accent-foreground" : "text-muted-foreground"}`}>
-                  💎 {item.price.toLocaleString()}
-                </span>
-              ) : item.price === 0 ? (
-                <span className="text-[9px] text-green-500 font-bold">무료</span>
-              ) : (
-                <span className="text-[9px] text-muted-foreground">✅</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Purchase modal */}
-      {purchaseModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" onClick={() => setPurchaseModal(null)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-          <div className="relative w-full max-w-sm rounded-t-3xl sm:rounded-3xl bg-card p-6 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted/50 border border-border">
-              <span className="text-4xl">{purchaseModal.item.emoji}</span>
-            </div>
-            <div className="text-center mb-4">
-              <h2 className="text-lg font-black text-foreground">{purchaseModal.item.label}</h2>
-              {purchaseModal.item.description && (
-                <p className="text-xs text-muted-foreground mt-1">{purchaseModal.item.description}</p>
-              )}
-            </div>
-            <div className="rounded-2xl bg-muted/50 p-3.5 mb-5 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">가격</span>
-                <span className="font-black">💎 {purchaseModal.item.price.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">현재 잔액</span>
-                <span className="font-bold">{isAdmin ? "∞" : walletBalance.toLocaleString()}</span>
-              </div>
-              {!isAdmin && (
-                <div className="flex justify-between text-sm border-t border-border/50 pt-2">
-                  <span className="text-muted-foreground">구매 후</span>
-                  <span className={`font-bold ${walletBalance - purchaseModal.item.price < 0 ? "text-destructive" : ""}`}>
-                    {(walletBalance - purchaseModal.item.price).toLocaleString()}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setPurchaseModal(null)} disabled={purchaseCustomization.isPending} className="flex-1 rounded-2xl border border-border bg-secondary py-3.5 text-sm font-bold active:scale-95 transition-all disabled:opacity-50">
-                취소
-              </button>
-              <button onClick={handleConfirmPurchase} disabled={purchaseCustomization.isPending || (!isAdmin && walletBalance < purchaseModal.item.price)} className="flex-[2] rounded-2xl bg-gradient-to-r from-accent to-primary py-3.5 text-sm font-bold text-primary-foreground active:scale-95 transition-all disabled:opacity-50">
-                {purchaseCustomization.isPending ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    구매 중...
-                  </span>
-                ) : (!isAdmin && walletBalance < purchaseModal.item.price) ? "젬 부족" : "💎 구매하기"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

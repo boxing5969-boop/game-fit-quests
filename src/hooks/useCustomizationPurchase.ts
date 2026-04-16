@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,13 +29,15 @@ export function useOwnedCustomizations() {
 
 export function useOwnedSet() {
   const { data } = useOwnedCustomizations();
-  const set = new Set<string>();
-  if (data) {
-    for (const item of data) {
-      set.add(`${item.category}:${item.item_key}`);
+  return useMemo(() => {
+    const set = new Set<string>();
+    if (data) {
+      for (const item of data) {
+        set.add(`${item.category}:${item.item_key}`);
+      }
     }
-  }
-  return set;
+    return set;
+  }, [data]);
 }
 
 export function usePurchaseCustomization() {

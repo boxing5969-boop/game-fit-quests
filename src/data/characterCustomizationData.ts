@@ -10,6 +10,7 @@ export interface CharacterCustomization {
   frame?: string;
   title?: string;
   aura?: string;
+  nameplate?: string;
 }
 
 export type ItemLeague = "white" | "blue" | "red" | "black" | "legend";
@@ -306,6 +307,8 @@ export const AURA_STYLES: Record<string, string> = {
 export const AURA_SPIN_DURATIONS: Record<string, string> = {
   aura_rainbow:        "3s",
   aura_galaxy:         "4s",
+  cosmic:              "5s",
+  void_emperor:        "6s",
   halo_rainbow_master: "3s",
   halo_galaxy_master:  "4s",
 };
@@ -377,9 +380,32 @@ export const NAMEPLATE_STYLES: Record<string, string> = {
 
 
 export const AURA_RADIAL_STYLES: Record<string, string> = {
+  // ── White ──
+  soft_glow: "radial-gradient(circle, rgba(255,255,255,0.25), rgba(255,255,255,0.05), transparent 70%)",
+  // ── Blue ──
   aura_fire: "radial-gradient(circle, rgba(239,68,68,0.45), rgba(249,115,22,0.25), transparent 70%)",
   aura_ice: "radial-gradient(circle, rgba(59,130,246,0.45), rgba(125,211,252,0.25), transparent 70%)",
+  blue_flame: "radial-gradient(circle, rgba(59,130,246,0.5), rgba(96,165,250,0.25), transparent 70%)",
+  green_energy: "radial-gradient(circle, rgba(16,185,129,0.45), rgba(52,211,153,0.2), transparent 70%)",
   aura_lightning: "radial-gradient(circle, rgba(250,204,21,0.45), rgba(255,255,255,0.22), transparent 70%)",
+  aura_sakura: "radial-gradient(circle, rgba(244,114,182,0.4), rgba(251,207,232,0.2), transparent 70%)",
+  // ── Red ──
+  red_rage: "radial-gradient(circle, rgba(220,38,38,0.5), rgba(239,68,68,0.25), transparent 70%)",
+  aura_gold: "radial-gradient(circle, rgba(234,179,8,0.45), rgba(250,204,21,0.2), transparent 70%)",
+  golden_aura: "radial-gradient(circle, rgba(245,158,11,0.5), rgba(252,211,77,0.25), transparent 70%)",
   aura_rainbow: "conic-gradient(from 0deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b)",
+  purple_haze: "radial-gradient(circle, rgba(139,92,246,0.45), rgba(196,181,253,0.2), transparent 70%)",
+  aura_blood: "radial-gradient(circle, rgba(153,27,27,0.5), rgba(220,38,38,0.25), transparent 70%)",
+  aura_neon: "radial-gradient(circle, rgba(0,255,136,0.4), rgba(0,204,255,0.25), transparent 70%)",
+  // ── Black ──
+  aura_dark: "radial-gradient(circle, rgba(30,30,30,0.55), rgba(75,0,130,0.25), transparent 70%)",
+  aura_shadow: "radial-gradient(circle, rgba(15,23,42,0.5), rgba(51,65,85,0.25), transparent 70%)",
+  aura_holy: "radial-gradient(circle, rgba(255,255,224,0.5), rgba(253,230,138,0.25), transparent 70%)",
+  dark_matter: "radial-gradient(circle, rgba(17,0,51,0.55), rgba(88,28,135,0.3), transparent 70%)",
   aura_galaxy: "conic-gradient(from 0deg, #4f46e5, #7c3aed, #0f172a, #1d4ed8, #7c3aed, #0f172a, #4f46e5)",
+  infernal: "radial-gradient(circle, rgba(180,16,0,0.55), rgba(255,69,0,0.3), rgba(255,165,0,0.15), transparent 70%)",
+  cosmic: "conic-gradient(from 0deg, #1e1b4b, #7c3aed, #06b6d4, #1e1b4b, #a855f7, #0ea5e9, #1e1b4b)",
+  // ── Legend ──
+  divine: "radial-gradient(circle, rgba(255,223,0,0.55), rgba(255,255,224,0.3), rgba(255,215,0,0.15), transparent 70%)",
+  void_emperor: "conic-gradient(from 0deg, #0a0015, #4c1d95, #000000, #7c3aed, #0a0015, #3b0764, #0a0015)",
 };

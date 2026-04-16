@@ -130,8 +130,6 @@ export const useRecordAttendance = () => {
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
       qc.invalidateQueries({ queryKey: ["levels"] });
       qc.invalidateQueries({ queryKey: ["member-progress"] });
-      qc.invalidateQueries({ queryKey: ["levels"] });
-      qc.invalidateQueries({ queryKey: ["member-progress"] });
     },
   });
 };
@@ -181,8 +179,6 @@ export const useApproveSubmission = () => {
       qc.invalidateQueries({ queryKey: ["levels"] });
       qc.invalidateQueries({ queryKey: ["my-submissions"] });
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
-      qc.invalidateQueries({ queryKey: ["levels"] });
-      qc.invalidateQueries({ queryKey: ["member-progress"] });
       qc.invalidateQueries({ queryKey: ["assigned-members"] });
     },
   });
@@ -223,8 +219,6 @@ export const useGrantManualXp = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["assigned-members"] });
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
-      qc.invalidateQueries({ queryKey: ["levels"] });
-      qc.invalidateQueries({ queryKey: ["member-progress"] });
       qc.invalidateQueries({ queryKey: ["levels"] });
       qc.invalidateQueries({ queryKey: ["member-progress"] });
     },
@@ -303,8 +297,6 @@ export const useManualLevelUp = () => {
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
       qc.invalidateQueries({ queryKey: ["levels"] });
       qc.invalidateQueries({ queryKey: ["member-progress"] });
-      qc.invalidateQueries({ queryKey: ["levels"] });
-      qc.invalidateQueries({ queryKey: ["member-progress"] });
     },
   });
 };
@@ -323,8 +315,6 @@ export const useManualLevelDown = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["assigned-members"] });
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
-      qc.invalidateQueries({ queryKey: ["levels"] });
-      qc.invalidateQueries({ queryKey: ["member-progress"] });
       qc.invalidateQueries({ queryKey: ["levels"] });
       qc.invalidateQueries({ queryKey: ["member-progress"] });
     },
@@ -347,8 +337,6 @@ export const useSetMemberLevel = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["assigned-members"] });
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
-      qc.invalidateQueries({ queryKey: ["levels"] });
-      qc.invalidateQueries({ queryKey: ["member-progress"] });
       qc.invalidateQueries({ queryKey: ["levels"] });
       qc.invalidateQueries({ queryKey: ["member-progress"] });
     },

@@ -46,17 +46,47 @@ const AURA_INSET: Record<string, string> = {
 };
 
 const AURA_ALIAS_MAP: Record<string, string> = {
+  // ── basic radial ──
+  softglow: "soft_glow",
   rainbow: "aura_rainbow",
   aurarainbow: "aura_rainbow",
   rainbowaura: "aura_rainbow",
   fire: "aura_fire",
   flame: "aura_fire",
+  aurafire: "aura_fire",
   ice: "aura_ice",
   frost: "aura_ice",
+  auraice: "aura_ice",
   lightning: "aura_lightning",
   thunder: "aura_lightning",
+  auralightning: "aura_lightning",
   galaxy: "aura_galaxy",
+  auragalaxy: "aura_galaxy",
+  blueflame: "blue_flame",
+  greenenergy: "green_energy",
+  aurasakura: "aura_sakura",
+  sakura: "aura_sakura",
+  redrage: "red_rage",
+  auragold: "aura_gold",
+  goldenaura: "golden_aura",
+  purplehaze: "purple_haze",
+  aurablood: "aura_blood",
+  blood: "aura_blood",
+  auraneon: "aura_neon",
+  neon: "aura_neon",
+  auradark: "aura_dark",
+  dark: "aura_dark",
+  aurashadow: "aura_shadow",
+  shadow: "aura_shadow",
+  auraholy: "aura_holy",
+  holy: "aura_holy",
+  darkmatter: "dark_matter",
+  infernal: "infernal",
+  cosmic: "cosmic",
+  divine: "divine",
+  voidemperor: "void_emperor",
 
+  // ── master halo ──
   rainbownmaster: "halo_rainbow_master",
   rainbowmaster: "halo_rainbow_master",
   masterrainbow: "halo_rainbow_master",
@@ -110,6 +140,11 @@ function resolveAuraKey(rawKey?: string): string | null {
   if (normalized.includes("lightning") || normalized.includes("thunder")) return "aura_lightning";
   if (normalized.includes("fire") || normalized.includes("flame")) return "aura_fire";
   if (normalized.includes("ice") || normalized.includes("frost")) return "aura_ice";
+
+  // final fallback: match normalized key against all RADIAL keys
+  for (const k of Object.keys(AURA_RADIAL_STYLES)) {
+    if (normalizeKey(k) === normalized) return k;
+  }
 
   return null;
 }
@@ -203,7 +238,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         ) : AURA_RADIAL_STYLES[resolvedAuraKey] ? (
           <div
             className={`absolute rounded-full pointer-events-none z-[3] ${
-              resolvedAuraKey.includes("rainbow") || resolvedAuraKey.includes("galaxy")
+              AURA_SPIN_DURATIONS[resolvedAuraKey]
                 ? "animate-spin"
                 : resolvedAuraKey === "aura_lightning"
                   ? "animate-ping"
