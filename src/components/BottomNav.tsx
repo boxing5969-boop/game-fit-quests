@@ -20,7 +20,7 @@ const allMenuItems = [
   { path: "/guide", icon: BookOpen, label: "가이드" },
   { path: "/mypage", icon: User, label: "내정보" },
   { path: "/settings", icon: Settings, label: "설정" },
-  { path: "/level-map", icon: Map, label: "리그맵" },
+  { path: "/levelmap", icon: Map, label: "리그맵" },
   { path: "/rewards", icon: Gift, label: "보상" },
   { path: "/character-studio", icon: Sparkles, label: "캐릭터" },
 ];

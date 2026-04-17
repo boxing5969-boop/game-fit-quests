@@ -17,7 +17,9 @@ import {
   CUSTOMIZATION_CATEGORIES,
   EFFECT_EMOJIS,
   TITLE_LABELS,
-  AURA_PREVIEW_GRADIENTS,
+  AURA_CONFIG,
+  HALO_CONFIGS,
+  HALO_OPTIONS,
   type CharacterCustomization,
   type CustomizationOption,
 } from "@/data/characterCustomizationData";
@@ -387,6 +389,7 @@ const CharacterStudioPage = () => {
             customization={pendingCustomization}
             onChange={setPendingCustomization}
             league={currentLeague}
+            level={currentLevel}
             isAdmin={isAdmin}
           />
         )}
@@ -494,12 +497,14 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
 }
 
 // ========== CUSTOMIZE TAB ==========
-function CustomizeTab({ customization, onChange, league, isAdmin }: {
+function CustomizeTab({ customization, onChange, league, level, isAdmin }: {
   customization: CharacterCustomization;
   onChange: (c: CharacterCustomization) => void;
   league: string;
+  level: number;
   isAdmin: boolean;
 }) {
+  const isMaster = league === "black" && level >= 10;
   const [activeCat, setActiveCat] = useState(CUSTOMIZATION_CATEGORIES[0].code);
 
   const handleSelect = (catCode: string, opt: CustomizationOption) => {
@@ -516,9 +521,9 @@ function CustomizeTab({ customization, onChange, league, isAdmin }: {
   const activeCatData = CUSTOMIZATION_CATEGORIES.find(c => c.code === activeCat)!;
 
   return (
-    <div className="space-y-5 animate-slide-up">
-      {/* Category selector */}
-      <div className="grid grid-cols-4 gap-2">
+    <div className="space-y-4 animate-slide-up">
+      {/* Category tab bar */}
+      <div className="flex gap-1 rounded-xl bg-muted/60 p-1">
         {CUSTOMIZATION_CATEGORIES.map(cat => {
           const hasSelection = !!(customization as any)[cat.code];
           const isActive = activeCat === cat.code;
@@ -526,22 +531,16 @@ function CustomizeTab({ customization, onChange, league, isAdmin }: {
             <button
               key={cat.code}
               onClick={() => setActiveCat(cat.code)}
-              className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 py-3.5 transition-all active:scale-95 ${
+              className={`relative flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all active:scale-[0.97] ${
                 isActive
-                  ? "border-primary bg-primary/5 shadow-sm"
-                  : hasSelection
-                  ? "border-primary/40 bg-primary/5"
-                  : "border-border bg-card"
+                  ? "bg-background text-primary shadow-sm"
+                  : "bg-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span className="text-2xl">{cat.icon}</span>
-              <span className={`text-[11px] font-bold ${isActive ? "text-primary" : "text-foreground/70"}`}>
-                {cat.label}
-              </span>
+              <span className="text-sm">{cat.icon}</span>
+              <span>{cat.label}</span>
               {hasSelection && (
-                <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary">
-                  <Check className="h-2 w-2 text-primary-foreground" />
-                </span>
+                <span className={`ml-0.5 h-1.5 w-1.5 rounded-full ${isActive ? "bg-primary" : "bg-primary/60"}`} />
               )}
             </button>
           );
@@ -580,6 +579,54 @@ function CustomizeTab({ customization, onChange, league, isAdmin }: {
             </button>
           );
         })}
+      </div>
+
+      {/* ── 후광 섹션 (마스터 전용) ── */}
+      <div className={`rounded-xl border-2 p-3 space-y-3 ${isMaster ? "border-amber-500/40 bg-amber-500/5" : "border-border bg-muted/20 opacity-50"}`}>
+        <div className="flex items-center gap-2">
+          <span className="text-base">👑</span>
+          <span className="text-xs font-bold text-foreground">마스터 후광</span>
+          {!isMaster && (
+            <span className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground">
+              <Lock className="h-3 w-3" />
+              블랙 마스터 달성 시 해금
+            </span>
+          )}
+          {isMaster && customization.halo && customization.halo !== "none" && (
+            <span className="ml-auto text-[10px] text-amber-500 font-bold">적용 중</span>
+          )}
+        </div>
+        <div className="grid grid-cols-5 gap-2">
+          {HALO_OPTIONS.map(opt => {
+            const isSelected = customization.halo === opt.key || (!customization.halo && opt.key === "halo_rainbow" && isMaster);
+            return (
+              <button
+                key={opt.key}
+                disabled={!isMaster}
+                onClick={() => {
+                  if (!isMaster) return;
+                  const newVal = customization.halo === opt.key ? undefined : opt.key;
+                  onChange({ ...customization, halo: newVal });
+                }}
+                className={`relative flex flex-col items-center gap-1.5 rounded-xl border p-2 transition-all active:scale-95 ${
+                  !isMaster
+                    ? "border-border bg-muted/30 cursor-not-allowed"
+                    : isSelected
+                    ? "border-amber-400 bg-amber-400/10 shadow-md"
+                    : "border-border bg-card"
+                }`}
+              >
+                {isSelected && isMaster && (
+                  <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500">
+                    <Check className="h-2 w-2 text-white" />
+                  </span>
+                )}
+                <OptionPreview category="halo" optionKey={opt.key} />
+                <span className="text-[8px] font-bold text-foreground/70 truncate w-full text-center">{opt.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {activeCount > 0 && (
@@ -639,8 +686,30 @@ function OptionPreview({ category, optionKey }: { category: string; optionKey: s
     return <span className={`text-sm font-bold ${info?.color || "text-foreground"}`}>{info?.text || optionKey}</span>;
   }
   if (category === "aura") {
-    const gradient = AURA_PREVIEW_GRADIENTS[optionKey] || "bg-gradient-to-t from-gray-400 to-gray-200";
-    return <div className={`h-9 w-9 rounded-full ${gradient} shadow-md`} />;
+    const tier = AURA_CONFIG[optionKey];
+    if (!tier || tier.layers.length === 0) {
+      return <div className="h-9 w-9 rounded-full bg-muted shadow-inner" />;
+    }
+    const bg = tier.layers[0].background;
+    return (
+      <div
+        className="h-9 w-9 rounded-full shadow-md"
+        style={{ background: bg }}
+      />
+    );
+  }
+  if (category === "halo") {
+    const cfg = HALO_CONFIGS[optionKey];
+    if (!cfg) {
+      return <div className="h-9 w-9 rounded-full bg-muted shadow-inner" />;
+    }
+    const bg = cfg.rings[0]?.gradient || "transparent";
+    return (
+      <div
+        className="h-9 w-9 rounded-full shadow-md animate-spin"
+        style={{ background: bg, animationDuration: "4s" }}
+      />
+    );
   }
   return <span className="text-lg">❓</span>;
 }
@@ -1030,7 +1099,7 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
           <span className="text-3xl">{isBlack ? "🌈" : "💫"}</span>
           <div>
             <p className="text-sm font-bold text-foreground">
-              {isMaster ? "마스터 레인보우 후광" : isBlack ? "블랙 리그 후광" : "오라 미해금"}
+              {isMaster ? "마스터 후광" : isBlack ? "블랙 리그 후광" : "오라 미해금"}
             </p>
             <p className="text-xs text-muted-foreground">
               {isBlack

@@ -73,7 +73,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-background text-foreground font-sans;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
   }
@@ -212,41 +212,62 @@
 .animate-emote-speed-line-r { animation: emote-speed-line-r 0.35s ease-out 0.15s forwards; }
 .animate-emote-sparkle { animation: emote-sparkle 2.5s ease-in-out infinite; }
 
-/* ?먥븧??Black League Rainbow Aura ?먥븧??*/
-@keyframes aura-hue {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-@keyframes aura-hue-reverse {
-  0% { transform: rotate(360deg); }
-  100% { transform: rotate(0deg); }
-}
-@keyframes aura-pulse {
-  0%, 100% { opacity: 0.15; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(1.06); }
-}
-@keyframes aura-sparkle {
-  0%, 100% { opacity: 0; transform: scale(0.6) rotate(0deg); }
-  20% { opacity: 0.8; transform: scale(1) rotate(20deg); }
-  80% { opacity: 0.3; transform: scale(0.8) rotate(40deg); }
-}
-@keyframes aura-sparkle-delayed {
-  0%, 30%, 100% { opacity: 0; transform: scale(0.5); }
-  50% { opacity: 0.7; transform: scale(1.1) rotate(30deg); }
-  80% { opacity: 0.2; transform: scale(0.7) rotate(50deg); }
-}
-@keyframes aura-sparkle-slow {
-  0%, 40%, 100% { opacity: 0; transform: scale(0.4); }
-  60% { opacity: 0.6; transform: scale(1) rotate(-20deg); }
-  85% { opacity: 0.15; transform: scale(0.6) rotate(-40deg); }
+
+/* ══ Aura System v2 ══ */
+
+/* ── 기본 ── */
+@keyframes aura-pulse-slow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 0.8; transform: scale(1.04); }
 }
 
-.animate-aura-hue { animation: aura-hue 8s linear infinite; }
-.animate-aura-hue-reverse { animation: aura-hue-reverse 10s linear infinite; }
-.animate-aura-pulse { animation: aura-pulse 3s ease-in-out infinite; }
-.animate-aura-sparkle { animation: aura-sparkle 3.5s ease-in-out infinite; }
-.animate-aura-sparkle-delayed { animation: aura-sparkle-delayed 4s ease-in-out infinite 1.2s; }
-.animate-aura-sparkle-slow { animation: aura-sparkle-slow 5s ease-in-out infinite 0.8s; }
+/* ── 중급 ── */
+@keyframes aura-pulse-fast {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.07); }
+}
+
+/* ── 번개 ── */
+@keyframes aura-flicker {
+  0%, 100% { opacity: 1; }
+  20%       { opacity: 0.15; }
+  40%       { opacity: 0.95; }
+  60%       { opacity: 0.1; }
+  80%       { opacity: 0.9; }
+}
+
+/* ── 스핀 ── */
+@keyframes aura-spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes aura-spin-reverse {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+
+/* ── 블랙/전설: 반짝임 파티클 ── */
+@keyframes aura-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50%       { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+@keyframes aura-sparkle-delayed {
+  0%, 30%, 100% { opacity: 0; transform: scale(0); }
+  60%            { opacity: 1; transform: scale(1.2); }
+}
+
+/* ── 전설: 홀로그램 색상 변환 ── */
+@keyframes aura-holo {
+  0%   { filter: hue-rotate(0deg)   brightness(1.2); }
+  50%  { filter: hue-rotate(180deg) brightness(1.6); }
+  100% { filter: hue-rotate(360deg) brightness(1.2); }
+}
+
+/* ── 블랙: 어두운 파동 ── */
+@keyframes aura-dark-wave {
+  0%, 100% { opacity: 0.9; transform: scale(1);    filter: brightness(0.8); }
+  50%       { opacity: 0.5; transform: scale(1.08); filter: brightness(1.3); }
+}
 
 /* ?? Frame ring animation keyframes ?? */
 @keyframes flicker {
@@ -291,12 +312,6 @@
   .animate-emote-glow,
   .animate-emote-speed-line,
   .animate-emote-speed-line-r,
-  .animate-emote-sparkle,
-  .animate-aura-hue,
-  .animate-aura-hue-reverse,
-  .animate-aura-pulse,
-  .animate-aura-sparkle,
-  .animate-aura-sparkle-delayed,
-  .animate-aura-sparkle-slow { animation: none; }
+  .animate-emote-sparkle { animation: none; }
 }
 
