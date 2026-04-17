@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Customization system — effect, frame, title, aura.
  * Each option has price / league / rarity for shop integration.
  */
@@ -11,6 +11,7 @@ export interface CharacterCustomization {
   title?: string;
   aura?: string;
   nameplate?: string;
+  halo?: string;
 }
 
 export type ItemLeague = "white" | "blue" | "red" | "black" | "legend";
@@ -44,16 +45,22 @@ const EFFECT_OPTIONS: CustomizationOption[] = [
   { key: "hearts",       label: "하트",       price: 300,   league: "white", rarity: "common",   description: "하트가 둥둥 떠오르는 효과" },
   { key: "wind",         label: "바람",       price: 200,   league: "white", rarity: "common",   description: "바람이 부는 효과" },
   { key: "clover",       label: "클로버",     price: 400,   league: "white", rarity: "common",   description: "행운의 클로버 파티클" },
+  { key: "daisy",        label: "데이지",     price: 300,   league: "white", rarity: "common",   description: "하얀 데이지꽃이 피어나는 효과" },
+  { key: "sunflower",    label: "해바라기",   price: 400,   league: "white", rarity: "common",   description: "해바라기가 반짝이는 효과" },
   // ── Blue (500–2000) ────────────────────────────────────────
   { key: "lightning",    label: "번개",       price: 800,   league: "blue",  rarity: "uncommon", description: "번개 스파크 이펙트" },
   { key: "snow",         label: "눈송이",     price: 800,   league: "blue",  rarity: "uncommon", description: "눈이 내리는 효과" },
   { key: "cherry",       label: "벚꽃",       price: 1000,  league: "blue",  rarity: "uncommon", description: "벚꽃잎이 흩날리는 효과" },
+  { key: "tulip",        label: "튤립",       price: 1000,  league: "blue",  rarity: "uncommon", description: "알록달록 튤립이 흩날리는 효과" },
+  { key: "hibiscus",     label: "히비스커스", price: 1200,  league: "blue",  rarity: "uncommon", description: "빨간 히비스커스가 피어나는 효과" },
   { key: "music",        label: "음표",       price: 1000,  league: "blue",  rarity: "uncommon", description: "음표가 떠다니는 효과" },
   { key: "firework",     label: "폭죽",       price: 1200,  league: "blue",  rarity: "uncommon", description: "축하 폭죽 이펙트" },
   // ── Red (2000–5000) ────────────────────────────────────────
   { key: "tornado",      label: "회오리",     price: 3000,  league: "red",   rarity: "rare",     description: "강력한 회오리 이펙트" },
   { key: "comet",        label: "혜성",       price: 3000,  league: "red",   rarity: "rare",     description: "혜성이 스쳐 지나가는 효과" },
   { key: "rainbow",      label: "무지개",     price: 3500,  league: "red",   rarity: "rare",     description: "무지개 빛 파티클" },
+  { key: "rose",         label: "장미",       price: 3000,  league: "red",   rarity: "rare",     description: "빨간 장미가 흩뿌려지는 효과" },
+  { key: "bouquet",      label: "꽃다발",     price: 4000,  league: "red",   rarity: "rare",     description: "화려한 꽃다발이 피어나는 효과" },
   { key: "explosion",    label: "폭발",       price: 3500,  league: "red",   rarity: "rare",     description: "펀치 폭발 이펙트" },
   { key: "ghost",        label: "유령",       price: 4000,  league: "red",   rarity: "rare",     description: "유령이 떠다니는 효과" },
   { key: "star_shoot",   label: "별똥별",     price: 4000,  league: "red",   rarity: "rare",     description: "별똥별이 쏟아지는 효과" },
@@ -63,6 +70,14 @@ const EFFECT_OPTIONS: CustomizationOption[] = [
   { key: "phoenix",      label: "피닉스",     price: 10000, league: "black", rarity: "epic",     description: "불사조 날갯짓 이펙트", blackOnly: true },
   { key: "skull",        label: "해골",       price: 12000, league: "black", rarity: "epic",     description: "해골 불꽃 이펙트", blackOnly: true },
   { key: "diamond_rain", label: "다이아 비",  price: 15000, league: "black", rarity: "epic",     description: "다이아몬드가 쏟아지는 효과", blackOnly: true },
+  { key: "inferno_dual", label: "쌍염화",     price: 18000, league: "black", rarity: "epic",     description: "빨강+파랑 쌍불꽃이 교차하는 이펙트", blackOnly: true },
+  { key: "thunder_god",  label: "뇌신",       price: 20000, league: "black", rarity: "epic",     description: "천둥번개가 연속으로 치는 이펙트", blackOnly: true },
+  { key: "cosmic_dust",  label: "우주먼지",   price: 22000, league: "black", rarity: "epic",     description: "별가루가 반짝이며 흩날리는 이펙트", blackOnly: true },
+  { key: "sword_aura",   label: "검기",       price: 25000, league: "black", rarity: "epic",     description: "검 기운이 감도는 이펙트", blackOnly: true },
+  { key: "dark_flame",   label: "흑염",       price: 30000, league: "black", rarity: "epic",     description: "검은 불꽃이 타오르는 이펙트", blackOnly: true },
+  { key: "lotus",        label: "연꽃",       price: 10000, league: "black", rarity: "epic",     description: "신비로운 연꽃이 피어나는 이펙트", blackOnly: true },
+  { key: "sakura_storm", label: "벚꽃폭풍",   price: 15000, league: "black", rarity: "epic",     description: "벚꽃잎이 폭풍처럼 휘몰아치는 이펙트", blackOnly: true },
+  { key: "rose_gold",    label: "로즈골드",   price: 20000, league: "black", rarity: "epic",     description: "황금빛 장미가 화려하게 피어나는 이펙트", blackOnly: true },
 ];
 
 // ===== FRAMES =====
@@ -137,42 +152,44 @@ const TITLE_OPTIONS: CustomizationOption[] = [
   { key: "god_fist",        label: "갓피스트",           price: 100000, league: "legend", rarity: "legendary", description: "신의 주먹", requirement: "hall_of_fame" },
 ];
 
-// ===== AURA =====
+// ===== AURA OPTIONS (상점용) =====
 const AURA_OPTIONS: CustomizationOption[] = [
-  // ── White (free–500) ───────────────────────────────────────
-  { key: "none",           label: "없음",             price: 0,      league: "white", rarity: "common",    description: "오라 없음" },
-  { key: "soft_glow",      label: "은은한 빛",        price: 300,    league: "white", rarity: "common",    description: "부드러운 빛 오라" },
-  // ── Existing White/Blue tier ───────────────────────────────
-  { key: "aura_fire",      label: "불꽃 오라",        price: 800,    league: "blue",  rarity: "uncommon",  description: "불꽃이 타오르는 오라" },
-  { key: "aura_ice",       label: "얼음 오라",        price: 800,    league: "blue",  rarity: "uncommon",  description: "차가운 얼음 오라" },
-  { key: "blue_flame",     label: "푸른 불꽃",        price: 1000,   league: "blue",  rarity: "uncommon",  description: "푸른 불꽃 오라" },
-  { key: "green_energy",   label: "그린 에너지",      price: 1200,   league: "blue",  rarity: "uncommon",  description: "생명의 에너지 오라" },
-  { key: "aura_lightning", label: "번개 오라",        price: 1500,   league: "blue",  rarity: "uncommon",  description: "번개가 치는 오라" },
-  { key: "aura_sakura",    label: "벚꽃 오라",        price: 1800,   league: "blue",  rarity: "uncommon",  description: "벚꽃잎이 흩날리는 오라" },
-  // ── Red (2000–5000) ────────────────────────────────────────
-  { key: "red_rage",       label: "레드 레이지",      price: 3000,   league: "red",   rarity: "rare",      description: "분노의 붉은 오라" },
-  { key: "aura_gold",      label: "골든 오라",        price: 3500,   league: "red",   rarity: "rare",      description: "황금빛 오라" },
-  { key: "golden_aura",    label: "순금 오라",        price: 3500,   league: "red",   rarity: "rare",      description: "찬란한 순금 오라" },
-  { key: "aura_rainbow",   label: "레인보우 오라",    price: 4000,   league: "red",   rarity: "rare",      description: "무지개빛 오라" },
-  { key: "purple_haze",    label: "퍼플 헤이즈",      price: 4000,   league: "red",   rarity: "rare",      description: "보라색 안개 오라" },
-  { key: "aura_blood",     label: "블러드 오라",      price: 4500,   league: "red",   rarity: "rare",      description: "핏빛 오라" },
-  { key: "aura_neon",      label: "네온 오라",        price: 5000,   league: "red",   rarity: "rare",      description: "네온빛 오라" },
-  // ── Black (5000–15000) ─────────────────────────────────────
-  { key: "aura_dark",      label: "다크 오라",        price: 5000,   league: "black", rarity: "epic",      description: "어둠의 오라", blackOnly: true },
-  { key: "aura_shadow",    label: "섀도우 오라",      price: 6000,   league: "black", rarity: "epic",      description: "그림자 오라", blackOnly: true },
-  { key: "aura_holy",      label: "홀리 오라",        price: 7000,   league: "black", rarity: "epic",      description: "신성한 오라", blackOnly: true },
-  { key: "dark_matter",    label: "다크 매터",        price: 8000,   league: "black", rarity: "epic",      description: "다크 매터 오라", blackOnly: true },
-  { key: "aura_galaxy",    label: "갤럭시 오라",      price: 8000,   league: "black", rarity: "epic",      description: "은하 오라", blackOnly: true },
-  { key: "infernal",       label: "인퍼널",           price: 10000,  league: "black", rarity: "epic",      description: "지옥불 오라", blackOnly: true },
-  { key: "cosmic",         label: "코즈믹",           price: 12000,  league: "black", rarity: "epic",      description: "우주의 오라", blackOnly: true },
-  // ── Black Master ───────────────────────────────────────────
-  { key: "halo_rainbow_master", label: "레인보우 마스터", price: 15000, league: "black", rarity: "epic",   description: "무지개 마스터 오라", blackOnly: true },
-  { key: "halo_black_gold",     label: "블랙 골드",       price: 15000, league: "black", rarity: "epic",   description: "블랙 골드 마스터 오라", blackOnly: true },
-  { key: "halo_conqueror",      label: "정복자 오라",     price: 15000, league: "black", rarity: "epic",   description: "정복자의 오라", blackOnly: true },
-  { key: "halo_galaxy_master",  label: "갤럭시 마스터",   price: 15000, league: "black", rarity: "epic",   description: "갤럭시 마스터 오라", blackOnly: true },
-  // ── Legend (명예의 전당 전용) ──────────────────────────────
-  { key: "divine",         label: "디바인",           price: 100000, league: "legend", rarity: "legendary", description: "신성한 빛의 오라", requirement: "hall_of_fame" },
-  { key: "void_emperor",   label: "보이드 엠퍼러",    price: 100000, league: "legend", rarity: "legendary", description: "공허의 황제 오라", requirement: "hall_of_fame" },
+  // ⬜ White
+  { key: "none",           label: "없음",         price: 0,      league: "white",  rarity: "common",    description: "오라 없음" },
+  { key: "soft_glow",      label: "은은한 빛",    price: 300,    league: "white",  rarity: "common",    description: "부드러운 빛 오라" },
+  { key: "aura_mint",      label: "민트 오라",    price: 400,    league: "white",  rarity: "common",    description: "상쾌한 민트 빛" },
+  // 🔵 Blue
+  { key: "aura_fire",      label: "불꽃 오라",    price: 800,    league: "blue",  rarity: "uncommon",  description: "불꽃이 타오르는 오라" },
+  { key: "aura_ice",       label: "얼음 오라",    price: 800,    league: "blue",  rarity: "uncommon",  description: "차가운 얼음 오라" },
+  { key: "aura_sakura",    label: "벚꽃 오라",    price: 1000,   league: "blue",  rarity: "uncommon",  description: "벚꽃잎이 흩날리는 오라" },
+  { key: "aura_ocean",     label: "오션 오라",    price: 1200,   league: "blue",  rarity: "uncommon",  description: "깊은 바다의 오라" },
+  { key: "aura_lightning", label: "번개 오라",    price: 1500,   league: "blue",  rarity: "uncommon",  description: "번개가 치는 오라" },
+  { key: "aura_emerald",   label: "에메랄드 오라", price: 1500,  league: "blue",  rarity: "uncommon",  description: "에메랄드빛 오라" },
+  // 🔴 Red
+  { key: "aura_blood",     label: "블러드 오라",  price: 3000,   league: "red",   rarity: "rare",      description: "핏빛 오라" },
+  { key: "aura_sunset",    label: "석양 오라",    price: 3500,   league: "red",   rarity: "rare",      description: "노을빛 그라데이션 오라" },
+  { key: "aura_rainbow",   label: "무지개 오라",  price: 4000,   league: "red",   rarity: "rare",      description: "무지개빛 오라" },
+  { key: "aura_neon",      label: "네온 오라",    price: 5000,   league: "red",   rarity: "rare",      description: "네온 사인 오라" },
+  { key: "aura_galaxy",    label: "은하 오라",    price: 8000,   league: "red",   rarity: "rare",      description: "은하계 오라" },
+  // ⚫ Black
+  { key: "aura_dark",        label: "어둠 오라",     price: 10000, league: "black", rarity: "epic",      description: "어둠의 오라", blackOnly: true },
+  { key: "aura_infernal",    label: "인퍼널 오라",   price: 12000, league: "black", rarity: "epic",      description: "지옥불 오라", blackOnly: true },
+  { key: "aura_phantom",     label: "팬텀 오라",     price: 12000, league: "black", rarity: "epic",      description: "유령빛 오라", blackOnly: true },
+  { key: "halo_black_gold",  label: "황금 헤일로",   price: 15000, league: "black", rarity: "epic",      description: "블랙 골드 헤일로", blackOnly: true },
+  { key: "aura_void",        label: "보이드 오라",   price: 18000, league: "black", rarity: "epic",      description: "공허의 오라", blackOnly: true },
+  // 👑 Legend
+  { key: "halo_rainbow_master", label: "마스터 헤일로",  price: 100000, league: "legend", rarity: "legendary", description: "무지개 마스터 오라", requirement: "hall_of_fame" },
+  { key: "divine",              label: "신성 오라",      price: 100000, league: "legend", rarity: "legendary", description: "신성한 빛의 오라", requirement: "hall_of_fame" },
+  { key: "aura_celestial",      label: "천체 오라",      price: 100000, league: "legend", rarity: "legendary", description: "별과 우주의 오라", requirement: "hall_of_fame" },
+];
+
+// ===== HALO OPTIONS (마스터 전용 후광) =====
+export const HALO_OPTIONS: CustomizationOption[] = [
+  { key: "none",           label: "없음",         price: 0,      league: "black", rarity: "epic",      description: "후광 없음", blackOnly: true },
+  { key: "halo_rainbow",   label: "무지개 후광",  price: 0,      league: "black", rarity: "epic",      description: "무지개빛이 회전하는 후광", blackOnly: true },
+  { key: "halo_saiyan",    label: "초사이어인",   price: 30000,  league: "black", rarity: "epic",      description: "폭발하는 황금빛 기운", blackOnly: true },
+  { key: "halo_eclipse",   label: "이클립스",     price: 35000,  league: "black", rarity: "epic",      description: "일식처럼 타오르는 코로나", blackOnly: true },
+  { key: "halo_emperor",   label: "황제의 위엄",  price: 50000,  league: "black", rarity: "epic",      description: "보라+금빛 황제의 후광", blackOnly: true },
 ];
 
 // ===== Categories =====
@@ -208,6 +225,20 @@ export const EFFECT_EMOJIS: Record<string, string> = {
   phoenix:      "🔥",
   skull:        "💀",
   diamond_rain: "💎",
+  inferno_dual: "🔥",
+  thunder_god:  "⛈️",
+  cosmic_dust:  "🌌",
+  sword_aura:   "⚔️",
+  dark_flame:   "🖤",
+  daisy:        "🌼",
+  sunflower:    "🌻",
+  tulip:        "🌷",
+  hibiscus:     "🌺",
+  rose:         "🌹",
+  bouquet:      "💐",
+  lotus:        "🪷",
+  sakura_storm: "🌸",
+  rose_gold:    "🌹",
 };
 
 export const FRAME_STYLES: Record<string, string> = {
@@ -271,87 +302,6 @@ export const TITLE_LABELS: Record<string, { text: string; color: string }> = {
   god_fist:        { text: "🥊 갓피스트",          color: "text-rose-400" },
 };
 
-/** CSS classes for aura glow behind character */
-export const AURA_STYLES: Record<string, string> = {
-  none:                "",
-  soft_glow:           "animate-pulse [background:radial-gradient(circle_at_center,rgba(255,255,255,0.25)_0%,transparent_70%)]",
-  aura_fire:           "animate-pulse [background:radial-gradient(circle_at_center,rgba(234,88,12,0.5)_0%,rgba(239,68,68,0.3)_40%,transparent_70%)]",
-  aura_ice:            "animate-pulse [background:radial-gradient(circle_at_center,rgba(34,211,238,0.45)_0%,rgba(191,219,254,0.25)_40%,transparent_70%)]",
-  blue_flame:          "animate-pulse [background:radial-gradient(circle_at_center,rgba(59,130,246,0.4)_0%,rgba(96,165,250,0.2)_40%,transparent_70%)]",
-  green_energy:        "animate-pulse [background:radial-gradient(circle_at_center,rgba(52,211,153,0.4)_0%,rgba(110,231,183,0.2)_40%,transparent_70%)]",
-  aura_lightning:      "animate-ping [background:radial-gradient(circle_at_center,rgba(250,204,21,0.5)_0%,rgba(253,224,71,0.25)_40%,transparent_70%)]",
-  aura_sakura:         "animate-pulse [background:radial-gradient(circle_at_center,rgba(244,114,182,0.45)_0%,rgba(251,207,232,0.25)_40%,transparent_70%)]",
-  red_rage:            "animate-pulse [background:radial-gradient(circle_at_center,rgba(220,38,38,0.45)_0%,rgba(239,68,68,0.2)_40%,transparent_70%)]",
-  aura_gold:           "animate-pulse [background:radial-gradient(circle_at_center,rgba(202,138,4,0.5)_0%,rgba(251,191,36,0.25)_40%,transparent_70%)]",
-  golden_aura:         "animate-pulse [background:radial-gradient(circle_at_center,rgba(251,191,36,0.45)_0%,rgba(252,211,77,0.2)_40%,transparent_70%)]",
-  aura_rainbow:        "animate-spin [background:conic-gradient(rgba(239,68,68,0.5),rgba(250,204,21,0.5),rgba(74,222,128,0.5),rgba(96,165,250,0.5),rgba(168,85,247,0.5),rgba(239,68,68,0.5))]",
-  purple_haze:         "animate-pulse [background:radial-gradient(circle_at_center,rgba(168,85,247,0.45)_0%,rgba(192,132,252,0.2)_40%,transparent_70%)]",
-  aura_blood:          "animate-pulse [background:radial-gradient(circle_at_center,rgba(127,29,29,0.55)_0%,rgba(185,28,28,0.3)_40%,transparent_70%)]",
-  aura_neon:           "animate-pulse [background:radial-gradient(circle_at_center,rgba(168,85,247,0.5)_0%,rgba(232,121,249,0.3)_40%,transparent_70%)]",
-  aura_dark:           "animate-pulse [background:radial-gradient(circle_at_center,rgba(17,24,39,0.6)_0%,rgba(88,28,135,0.3)_40%,transparent_70%)]",
-  aura_shadow:         "animate-pulse [background:radial-gradient(circle_at_center,rgba(17,24,39,0.55)_0%,rgba(55,65,81,0.3)_40%,transparent_70%)]",
-  aura_holy:           "animate-pulse [background:radial-gradient(circle_at_center,rgba(254,249,195,0.6)_0%,rgba(255,255,255,0.3)_40%,transparent_70%)]",
-  dark_matter:         "animate-pulse [background:radial-gradient(circle_at_center,rgba(17,24,39,0.55)_0%,rgba(31,41,55,0.3)_40%,transparent_70%)]",
-  aura_galaxy:         "animate-spin [background:conic-gradient(rgba(49,46,129,0.5),rgba(88,28,135,0.5),rgba(30,64,175,0.5),rgba(49,46,129,0.5))]",
-  infernal:            "animate-pulse [background:radial-gradient(circle_at_center,rgba(234,88,12,0.55)_0%,rgba(220,38,38,0.3)_40%,transparent_70%)]",
-  cosmic:              "animate-pulse [background:radial-gradient(circle_at_center,rgba(49,46,129,0.55)_0%,rgba(168,85,247,0.3)_40%,transparent_70%)]",
-  halo_rainbow_master: "animate-spin [background:conic-gradient(rgba(236,72,153,0.55),rgba(250,204,21,0.55),rgba(168,85,247,0.55),rgba(236,72,153,0.55))]",
-  halo_black_gold:     "animate-pulse [background:radial-gradient(circle_at_center,rgba(251,191,36,0.55)_0%,rgba(28,25,23,0.4)_50%,transparent_70%)]",
-  halo_conqueror:      "animate-pulse [background:radial-gradient(circle_at_center,rgba(239,68,68,0.55)_0%,rgba(249,115,22,0.35)_40%,transparent_70%)]",
-  halo_galaxy_master:  "animate-spin [background:conic-gradient(rgba(30,27,75,0.55),rgba(79,70,229,0.55),rgba(124,58,237,0.55),rgba(30,27,75,0.55))]",
-  divine:              "animate-pulse [background:radial-gradient(circle_at_center,rgba(252,211,77,0.6)_0%,rgba(253,230,138,0.3)_40%,transparent_70%)]",
-  void_emperor:        "animate-pulse [background:radial-gradient(circle_at_center,rgba(0,0,0,0.7)_0%,rgba(88,28,135,0.4)_40%,transparent_70%)]",
-};
-
-/** Custom animation durations for spin-based auras */
-export const AURA_SPIN_DURATIONS: Record<string, string> = {
-  aura_rainbow:        "3s",
-  aura_galaxy:         "4s",
-  cosmic:              "5s",
-  void_emperor:        "6s",
-  halo_rainbow_master: "3s",
-  halo_galaxy_master:  "4s",
-};
-
-/** Keys for multi-layer master auras rendered via MasterAuraOverlay */
-export const MASTER_AURA_KEYS: readonly string[] = [
-  "halo_rainbow_master",
-  "halo_black_gold",
-  "halo_conqueror",
-  "halo_galaxy_master",
-];
-
-/** Gradient colors for the option-grid preview thumbnail */
-export const AURA_PREVIEW_GRADIENTS: Record<string, string> = {
-  none:                "bg-gradient-to-t from-gray-200 to-gray-100",
-  soft_glow:           "bg-gradient-to-t from-white/50 to-gray-100",
-  aura_fire:           "bg-gradient-to-t from-orange-600 to-yellow-400",
-  aura_ice:            "bg-gradient-to-t from-cyan-300 to-blue-200",
-  blue_flame:          "bg-gradient-to-t from-blue-500 to-blue-200",
-  green_energy:        "bg-gradient-to-t from-emerald-500 to-emerald-200",
-  aura_lightning:      "bg-gradient-to-t from-yellow-300 to-white",
-  aura_sakura:         "bg-gradient-to-t from-pink-400 to-pink-100",
-  red_rage:            "bg-gradient-to-t from-red-600 to-red-300",
-  aura_gold:           "bg-gradient-to-t from-yellow-600 to-yellow-200",
-  golden_aura:         "bg-gradient-to-t from-amber-400 to-amber-200",
-  aura_rainbow:        "bg-gradient-to-r from-red-500 via-green-400 to-purple-500",
-  purple_haze:         "bg-gradient-to-t from-purple-500 to-purple-200",
-  aura_blood:          "bg-gradient-to-t from-red-900 to-red-500",
-  aura_neon:           "bg-gradient-to-t from-purple-600 to-pink-300",
-  aura_dark:           "bg-gradient-to-t from-gray-900 to-purple-900",
-  aura_shadow:         "bg-gradient-to-t from-gray-900 to-gray-500",
-  aura_holy:           "bg-gradient-to-t from-yellow-100 to-white",
-  dark_matter:         "bg-gradient-to-t from-gray-900 to-gray-700",
-  aura_galaxy:         "bg-gradient-to-r from-purple-900 to-indigo-600",
-  infernal:            "bg-gradient-to-t from-orange-600 to-red-500",
-  cosmic:              "bg-gradient-to-t from-indigo-900 to-purple-500",
-  halo_rainbow_master: "bg-gradient-to-r from-pink-500 via-yellow-400 to-purple-600",
-  halo_black_gold:     "bg-gradient-to-r from-amber-600 via-yellow-300 to-stone-900",
-  halo_conqueror:      "bg-gradient-to-r from-red-600 via-orange-500 to-red-900",
-  halo_galaxy_master:  "bg-gradient-to-r from-indigo-900 via-purple-600 to-blue-800",
-  divine:              "bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400",
-  void_emperor:        "bg-gradient-to-r from-gray-900 via-purple-800 to-gray-900",
-};
 
 /** League order for lock checks */
 export const CUSTOMIZATION_LEAGUE_ORDER: Record<string, number> = {
@@ -377,35 +327,755 @@ export const NAMEPLATE_STYLES: Record<string, string> = {
   blackgold: "px-2 py-0.5 rounded-full bg-black/70 text-yellow-300 border border-yellow-500/50",
 };
 
+// ══════════════════════════════════════════════════
+// ══ AURA SYSTEM v2 ═══════════════════════════════
+// ══════════════════════════════════════════════════
 
+// ── 타입 정의 ──
 
-export const AURA_RADIAL_STYLES: Record<string, string> = {
-  // ── White ──
-  soft_glow: "radial-gradient(circle, rgba(255,255,255,0.25), rgba(255,255,255,0.05), transparent 70%)",
-  // ── Blue ──
-  aura_fire: "radial-gradient(circle, rgba(239,68,68,0.45), rgba(249,115,22,0.25), transparent 70%)",
-  aura_ice: "radial-gradient(circle, rgba(59,130,246,0.45), rgba(125,211,252,0.25), transparent 70%)",
-  blue_flame: "radial-gradient(circle, rgba(59,130,246,0.5), rgba(96,165,250,0.25), transparent 70%)",
-  green_energy: "radial-gradient(circle, rgba(16,185,129,0.45), rgba(52,211,153,0.2), transparent 70%)",
-  aura_lightning: "radial-gradient(circle, rgba(250,204,21,0.45), rgba(255,255,255,0.22), transparent 70%)",
-  aura_sakura: "radial-gradient(circle, rgba(244,114,182,0.4), rgba(251,207,232,0.2), transparent 70%)",
-  // ── Red ──
-  red_rage: "radial-gradient(circle, rgba(220,38,38,0.5), rgba(239,68,68,0.25), transparent 70%)",
-  aura_gold: "radial-gradient(circle, rgba(234,179,8,0.45), rgba(250,204,21,0.2), transparent 70%)",
-  golden_aura: "radial-gradient(circle, rgba(245,158,11,0.5), rgba(252,211,77,0.25), transparent 70%)",
-  aura_rainbow: "conic-gradient(from 0deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b)",
-  purple_haze: "radial-gradient(circle, rgba(139,92,246,0.45), rgba(196,181,253,0.2), transparent 70%)",
-  aura_blood: "radial-gradient(circle, rgba(153,27,27,0.5), rgba(220,38,38,0.25), transparent 70%)",
-  aura_neon: "radial-gradient(circle, rgba(0,255,136,0.4), rgba(0,204,255,0.25), transparent 70%)",
-  // ── Black ──
-  aura_dark: "radial-gradient(circle, rgba(30,30,30,0.55), rgba(75,0,130,0.25), transparent 70%)",
-  aura_shadow: "radial-gradient(circle, rgba(15,23,42,0.5), rgba(51,65,85,0.25), transparent 70%)",
-  aura_holy: "radial-gradient(circle, rgba(255,255,224,0.5), rgba(253,230,138,0.25), transparent 70%)",
-  dark_matter: "radial-gradient(circle, rgba(17,0,51,0.55), rgba(88,28,135,0.3), transparent 70%)",
-  aura_galaxy: "conic-gradient(from 0deg, #4f46e5, #7c3aed, #0f172a, #1d4ed8, #7c3aed, #0f172a, #4f46e5)",
-  infernal: "radial-gradient(circle, rgba(180,16,0,0.55), rgba(255,69,0,0.3), rgba(255,165,0,0.15), transparent 70%)",
-  cosmic: "conic-gradient(from 0deg, #1e1b4b, #7c3aed, #06b6d4, #1e1b4b, #a855f7, #0ea5e9, #1e1b4b)",
-  // ── Legend ──
-  divine: "radial-gradient(circle, rgba(255,223,0,0.55), rgba(255,255,224,0.3), rgba(255,215,0,0.15), transparent 70%)",
-  void_emperor: "conic-gradient(from 0deg, #0a0015, #4c1d95, #000000, #7c3aed, #0a0015, #3b0764, #0a0015)",
+export interface AuraTier {
+  layers: AuraLayer[];
+  sparkles?: boolean;
+  holo?: boolean;
+}
+
+export interface AuraLayer {
+  background: string;
+  animation: string;
+  opacity: number;
+  insetOffset: number;
+  zIndex: number;
+  mask?: string;
+}
+
+// ── 크기별 기본 inset ──
+
+export const AURA_INSET: Record<string, number> = {
+  sm: -3,
+  md: -5,
+  lg: -7,
+};
+
+// ── 오라 정의 (리그/등급별 차등 화려함) ──
+
+export const AURA_CONFIG: Record<string, AuraTier> = {
+
+  // ─── ⬜ WHITE 리그 — 1레이어 ───
+  none: { layers: [] },
+
+  soft_glow: {
+    layers: [{
+      background: "radial-gradient(circle, rgba(255,255,255,0.4), rgba(255,255,255,0.15), transparent 60%)",
+      animation: "animate-[aura-pulse-slow_3s_ease-in-out_infinite]",
+      opacity: 0.7,
+      insetOffset: 0,
+      zIndex: 2,
+    }],
+  },
+
+  aura_mint: {
+    layers: [{
+      background: "radial-gradient(circle, rgba(110,231,183,0.45), rgba(52,211,153,0.2), transparent 60%)",
+      animation: "animate-[aura-pulse-slow_3.5s_ease-in-out_infinite]",
+      opacity: 0.7,
+      insetOffset: 0,
+      zIndex: 2,
+    }],
+  },
+
+  // ─── 🔵 BLUE 리그 — 2레이어 ───
+  aura_fire: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(239,68,68,0.7), rgba(249,115,22,0.35), transparent 62%)",
+        animation: "animate-[aura-pulse-fast_2s_ease-in-out_infinite]",
+        opacity: 0.8,
+        insetOffset: 0,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(249,115,22,0.3), rgba(239,68,68,0.1), transparent 55%)",
+        animation: "animate-[aura-pulse-slow_3s_ease-in-out_infinite]",
+        opacity: 0.5,
+        insetOffset: 3,
+        zIndex: 1,
+      },
+    ],
+  },
+
+  aura_ice: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(34,211,238,0.65), rgba(59,130,246,0.3), transparent 62%)",
+        animation: "animate-[aura-pulse-slow_2.5s_ease-in-out_infinite]",
+        opacity: 0.8,
+        insetOffset: 0,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(147,197,253,0.25), rgba(59,130,246,0.1), transparent 55%)",
+        animation: "animate-[aura-pulse-fast_3.5s_ease-in-out_infinite]",
+        opacity: 0.4,
+        insetOffset: 3,
+        zIndex: 1,
+      },
+    ],
+  },
+
+  aura_sakura: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(244,114,182,0.6), rgba(251,207,232,0.3), transparent 62%)",
+        animation: "animate-[aura-pulse-slow_2.8s_ease-in-out_infinite]",
+        opacity: 0.8,
+        insetOffset: 0,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(253,164,175,0.25), rgba(244,114,182,0.1), transparent 55%)",
+        animation: "animate-[aura-pulse-fast_3.2s_ease-in-out_infinite]",
+        opacity: 0.4,
+        insetOffset: 3,
+        zIndex: 1,
+      },
+    ],
+  },
+
+  aura_ocean: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(14,165,233,0.65), rgba(56,189,248,0.3), transparent 62%)",
+        animation: "animate-[aura-pulse-fast_2.2s_ease-in-out_infinite]",
+        opacity: 0.8,
+        insetOffset: 0,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(125,211,252,0.3), rgba(14,165,233,0.1), transparent 55%)",
+        animation: "animate-[aura-pulse-slow_3s_ease-in-out_infinite]",
+        opacity: 0.45,
+        insetOffset: 3,
+        zIndex: 1,
+      },
+    ],
+  },
+
+  aura_lightning: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(250,204,21,0.95), rgba(253,224,71,0.5), transparent 58%)",
+        animation: "animate-[aura-flicker_0.3s_ease-in-out_infinite]",
+        opacity: 1.0,
+        insetOffset: 0,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(254,240,138,0.4), rgba(250,204,21,0.15), transparent 52%)",
+        animation: "animate-[aura-pulse-fast_1s_ease-in-out_infinite]",
+        opacity: 0.6,
+        insetOffset: 4,
+        zIndex: 2,
+      },
+    ],
+  },
+
+  aura_emerald: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(16,185,129,0.65), rgba(52,211,153,0.3), transparent 62%)",
+        animation: "animate-[aura-pulse-fast_2.5s_ease-in-out_infinite]",
+        opacity: 0.8,
+        insetOffset: 0,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(110,231,183,0.3), rgba(16,185,129,0.1), transparent 55%)",
+        animation: "animate-[aura-pulse-slow_3.5s_ease-in-out_infinite]",
+        opacity: 0.4,
+        insetOffset: 3,
+        zIndex: 1,
+      },
+    ],
+  },
+
+  // ─── 🔴 RED 리그 — 3레이어 ───
+  aura_blood: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(153,27,27,0.8), rgba(220,38,38,0.4), transparent 62%)",
+        animation: "animate-[aura-pulse-fast_1.8s_ease-in-out_infinite]",
+        opacity: 0.85,
+        insetOffset: 0,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(239,68,68,0.4), rgba(153,27,27,0.15), transparent 55%)",
+        animation: "animate-[aura-pulse-slow_2.5s_ease-in-out_infinite]",
+        opacity: 0.5,
+        insetOffset: 3,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(185,28,28,0.2), transparent 45%)",
+        animation: "animate-[aura-dark-wave_3s_ease-in-out_infinite]",
+        opacity: 0.4,
+        insetOffset: 0,
+        zIndex: 1,
+      },
+    ],
+  },
+
+  aura_sunset: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(251,146,60,0.7), rgba(244,63,94,0.4), transparent 62%)",
+        animation: "animate-[aura-pulse-fast_2s_ease-in-out_infinite]",
+        opacity: 0.85,
+        insetOffset: 0,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(253,186,116,0.35), rgba(251,113,133,0.2), transparent 55%)",
+        animation: "animate-[aura-spin-slow_8s_linear_infinite]",
+        mask: "radial-gradient(circle, black 45%, transparent 68%)",
+        opacity: 0.45,
+        insetOffset: 4,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(254,215,170,0.2), transparent 45%)",
+        animation: "animate-[aura-pulse-slow_3s_ease-in-out_infinite]",
+        opacity: 0.4,
+        insetOffset: 0,
+        zIndex: 1,
+      },
+    ],
+  },
+
+  aura_rainbow: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(255,107,107,0.5), rgba(254,202,87,0.4), rgba(72,219,251,0.3), transparent 62%)",
+        animation: "animate-[aura-spin-slow_3s_linear_infinite]",
+        mask: "radial-gradient(circle, black 45%, transparent 68%)",
+        opacity: 0.85,
+        insetOffset: 0,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(255,159,243,0.35), rgba(84,160,255,0.2), transparent 55%)",
+        animation: "animate-[aura-spin-reverse_5s_linear_infinite]",
+        opacity: 0.4,
+        insetOffset: 4,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(255,255,255,0.2), transparent 45%)",
+        animation: "animate-[aura-pulse-slow_2s_ease-in-out_infinite]",
+        opacity: 0.5,
+        insetOffset: 0,
+        zIndex: 1,
+      },
+    ],
+  },
+
+  aura_neon: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(0,255,136,0.7), rgba(0,204,255,0.4), transparent 62%)",
+        animation: "animate-[aura-flicker_0.5s_ease-in-out_infinite]",
+        opacity: 0.85,
+        insetOffset: 0,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(0,204,255,0.35), rgba(168,85,247,0.2), transparent 55%)",
+        animation: "animate-[aura-pulse-fast_1.5s_ease-in-out_infinite]",
+        opacity: 0.5,
+        insetOffset: 4,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(0,255,136,0.15), transparent 45%)",
+        animation: "animate-[aura-pulse-slow_2.5s_ease-in-out_infinite]",
+        opacity: 0.4,
+        insetOffset: 0,
+        zIndex: 1,
+      },
+    ],
+  },
+
+  aura_galaxy: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(79,70,229,0.75), rgba(124,58,237,0.4), transparent 62%)",
+        animation: "animate-[aura-spin-slow_4s_linear_infinite]",
+        mask: "radial-gradient(circle, black 45%, transparent 68%)",
+        opacity: 0.9,
+        insetOffset: 0,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(30,27,75,0.6), rgba(79,70,229,0.2), transparent 55%)",
+        animation: "animate-[aura-spin-reverse_7s_linear_infinite]",
+        opacity: 0.5,
+        insetOffset: 4,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(99,102,241,0.3), transparent 48%)",
+        animation: "animate-[aura-pulse-fast_2.5s_ease-in-out_infinite]",
+        opacity: 0.4,
+        insetOffset: 7,
+        zIndex: 1,
+      },
+    ],
+  },
+
+  // ─── ⚫ BLACK 리그 — 4레이어 + 반짝임 ───
+  aura_infernal: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(220,38,38,0.85), rgba(234,88,12,0.5), transparent 62%)",
+        animation: "animate-[aura-dark-wave_1.8s_ease-in-out_infinite]",
+        opacity: 1.0,
+        insetOffset: 0,
+        zIndex: 4,
+      },
+      {
+        background: "radial-gradient(circle, rgba(249,115,22,0.5), rgba(220,38,38,0.25), transparent 55%)",
+        animation: "animate-[aura-pulse-fast_1.2s_ease-in-out_infinite]",
+        opacity: 0.7,
+        insetOffset: 3,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(251,146,60,0.3), rgba(234,88,12,0.15), transparent 50%)",
+        animation: "animate-[aura-spin-slow_5s_linear_infinite]",
+        mask: "radial-gradient(circle, black 45%, transparent 68%)",
+        opacity: 0.5,
+        insetOffset: 6,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(253,186,116,0.15), transparent 42%)",
+        animation: "animate-[aura-flicker_0.4s_ease-in-out_infinite]",
+        opacity: 0.4,
+        insetOffset: 9,
+        zIndex: 1,
+      },
+    ],
+    sparkles: true,
+  },
+
+  aura_phantom: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(148,163,184,0.8), rgba(71,85,105,0.5), transparent 62%)",
+        animation: "animate-[aura-dark-wave_2.5s_ease-in-out_infinite]",
+        opacity: 0.9,
+        insetOffset: 0,
+        zIndex: 4,
+      },
+      {
+        background: "radial-gradient(circle, rgba(203,213,225,0.45), rgba(100,116,139,0.2), transparent 55%)",
+        animation: "animate-[aura-pulse-slow_3s_ease-in-out_infinite]",
+        opacity: 0.6,
+        insetOffset: 3,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(226,232,240,0.3), rgba(148,163,184,0.15), transparent 50%)",
+        animation: "animate-[aura-spin-reverse_8s_linear_infinite]",
+        mask: "radial-gradient(circle, black 45%, transparent 68%)",
+        opacity: 0.45,
+        insetOffset: 6,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(255,255,255,0.15), transparent 42%)",
+        animation: "animate-[aura-pulse-fast_2s_ease-in-out_infinite]",
+        opacity: 0.3,
+        insetOffset: 9,
+        zIndex: 1,
+      },
+    ],
+    sparkles: true,
+  },
+
+  aura_dark: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(88,28,135,0.85), rgba(17,24,39,0.7), transparent 62%)",
+        animation: "animate-[aura-dark-wave_2s_ease-in-out_infinite]",
+        opacity: 1.0,
+        insetOffset: 0,
+        zIndex: 4,
+      },
+      {
+        background: "radial-gradient(circle, rgba(124,58,237,0.5), rgba(88,28,135,0.25), transparent 55%)",
+        animation: "animate-[aura-spin-slow_6s_linear_infinite]",
+        opacity: 0.7,
+        insetOffset: 3,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(139,92,246,0.3), rgba(17,24,39,0.2), transparent 50%)",
+        animation: "animate-[aura-spin-reverse_9s_linear_infinite]",
+        opacity: 0.5,
+        insetOffset: 6,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(167,139,250,0.15), transparent 42%)",
+        animation: "animate-[aura-pulse-fast_1.5s_ease-in-out_infinite]",
+        opacity: 0.4,
+        insetOffset: 9,
+        zIndex: 1,
+      },
+    ],
+    sparkles: true,
+  },
+
+  halo_black_gold: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(251,191,36,0.9), rgba(120,53,15,0.6), transparent 62%)",
+        animation: "animate-[aura-spin-slow_4s_linear_infinite]",
+        mask: "radial-gradient(circle, black 45%, transparent 68%)",
+        opacity: 1.0,
+        insetOffset: 0,
+        zIndex: 4,
+      },
+      {
+        background: "radial-gradient(circle, rgba(28,25,23,0.7), rgba(251,191,36,0.3), transparent 55%)",
+        animation: "animate-[aura-spin-reverse_6s_linear_infinite]",
+        opacity: 0.7,
+        insetOffset: 3,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(251,191,36,0.35), rgba(120,53,15,0.15), transparent 50%)",
+        animation: "animate-[aura-dark-wave_2.5s_ease-in-out_infinite]",
+        opacity: 0.6,
+        insetOffset: 6,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(254,215,170,0.2), transparent 42%)",
+        animation: "animate-[aura-pulse-slow_3s_ease-in-out_infinite]",
+        opacity: 0.4,
+        insetOffset: 10,
+        zIndex: 1,
+      },
+    ],
+    sparkles: true,
+  },
+
+  aura_void: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(17,0,51,0.9), rgba(49,10,101,0.6), transparent 62%)",
+        animation: "animate-[aura-dark-wave_2s_ease-in-out_infinite]",
+        opacity: 1.0,
+        insetOffset: 0,
+        zIndex: 4,
+      },
+      {
+        background: "radial-gradient(circle, rgba(88,28,135,0.55), rgba(17,0,51,0.3), transparent 55%)",
+        animation: "animate-[aura-spin-slow_7s_linear_infinite]",
+        mask: "radial-gradient(circle, black 45%, transparent 68%)",
+        opacity: 0.7,
+        insetOffset: 3,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(124,58,237,0.3), rgba(49,10,101,0.15), transparent 50%)",
+        animation: "animate-[aura-spin-reverse_10s_linear_infinite]",
+        mask: "radial-gradient(circle, black 45%, transparent 68%)",
+        opacity: 0.5,
+        insetOffset: 6,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(139,92,246,0.15), transparent 42%)",
+        animation: "animate-[aura-pulse-fast_1.5s_ease-in-out_infinite]",
+        opacity: 0.35,
+        insetOffset: 9,
+        zIndex: 1,
+      },
+    ],
+    sparkles: true,
+  },
+
+  // ─── 👑 LEGEND — 5레이어 + 홀로그램 + 반짝임 ───
+  halo_rainbow_master: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(255,107,107,0.7), rgba(254,202,87,0.5), rgba(72,219,251,0.4), transparent 60%)",
+        animation: "animate-[aura-spin-slow_3s_linear_infinite]",
+        mask: "radial-gradient(circle, black 45%, transparent 68%)",
+        opacity: 1.0,
+        insetOffset: 0,
+        zIndex: 5,
+      },
+      {
+        background: "radial-gradient(circle, rgba(255,159,243,0.5), rgba(84,160,255,0.3), transparent 52%)",
+        animation: "animate-[aura-spin-reverse_4s_linear_infinite]",
+        opacity: 0.7,
+        insetOffset: 3,
+        zIndex: 4,
+      },
+      {
+        background: "radial-gradient(circle, rgba(255,107,107,0.3), rgba(72,219,251,0.2), transparent 46%)",
+        animation: "animate-[aura-spin-slow_6s_linear_infinite]",
+        opacity: 0.5,
+        insetOffset: 6,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(255,255,255,0.25), transparent 40%)",
+        animation: "animate-[aura-pulse-fast_1.5s_ease-in-out_infinite]",
+        opacity: 0.5,
+        insetOffset: 9,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(255,255,255,0.1), transparent 35%)",
+        animation: "animate-[aura-pulse-slow_4s_ease-in-out_infinite]",
+        opacity: 0.3,
+        insetOffset: 13,
+        zIndex: 1,
+      },
+    ],
+    sparkles: true,
+    holo: true,
+  },
+
+  divine: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(254,249,195,0.9), rgba(251,191,36,0.6), transparent 60%)",
+        animation: "animate-[aura-spin-slow_2.5s_linear_infinite]",
+        mask: "radial-gradient(circle, black 45%, transparent 68%)",
+        opacity: 1.0,
+        insetOffset: 0,
+        zIndex: 5,
+      },
+      {
+        background: "radial-gradient(circle, rgba(255,255,255,0.6), rgba(253,230,138,0.35), transparent 52%)",
+        animation: "animate-[aura-spin-reverse_3.5s_linear_infinite]",
+        opacity: 0.8,
+        insetOffset: 4,
+        zIndex: 4,
+      },
+      {
+        background: "radial-gradient(circle, rgba(251,191,36,0.35), rgba(254,243,199,0.2), transparent 46%)",
+        animation: "animate-[aura-spin-slow_5s_linear_infinite]",
+        opacity: 0.6,
+        insetOffset: 7,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(255,255,255,0.2), transparent 40%)",
+        animation: "animate-[aura-dark-wave_2s_ease-in-out_infinite]",
+        opacity: 0.5,
+        insetOffset: 10,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(254,249,195,0.15), transparent 35%)",
+        animation: "animate-[aura-pulse-fast_1.8s_ease-in-out_infinite]",
+        opacity: 0.3,
+        insetOffset: 14,
+        zIndex: 1,
+      },
+    ],
+    sparkles: true,
+    holo: true,
+  },
+
+  aura_celestial: {
+    layers: [
+      {
+        background: "radial-gradient(circle, rgba(99,102,241,0.7), rgba(168,85,247,0.5), rgba(14,165,233,0.3), transparent 60%)",
+        animation: "animate-[aura-spin-slow_3.5s_linear_infinite]",
+        mask: "radial-gradient(circle, black 45%, transparent 68%)",
+        opacity: 1.0,
+        insetOffset: 0,
+        zIndex: 5,
+      },
+      {
+        background: "radial-gradient(circle, rgba(56,189,248,0.5), rgba(139,92,246,0.3), transparent 52%)",
+        animation: "animate-[aura-spin-reverse_5s_linear_infinite]",
+        opacity: 0.7,
+        insetOffset: 3,
+        zIndex: 4,
+      },
+      {
+        background: "radial-gradient(circle, rgba(192,132,252,0.35), rgba(99,102,241,0.2), transparent 46%)",
+        animation: "animate-[aura-spin-slow_7s_linear_infinite]",
+        opacity: 0.5,
+        insetOffset: 6,
+        zIndex: 3,
+      },
+      {
+        background: "radial-gradient(circle, rgba(255,255,255,0.25), transparent 40%)",
+        animation: "animate-[aura-pulse-fast_1.5s_ease-in-out_infinite]",
+        opacity: 0.45,
+        insetOffset: 9,
+        zIndex: 2,
+      },
+      {
+        background: "radial-gradient(circle, rgba(196,181,253,0.15), transparent 35%)",
+        animation: "animate-[aura-pulse-slow_3s_ease-in-out_infinite]",
+        opacity: 0.3,
+        insetOffset: 13,
+        zIndex: 1,
+      },
+    ],
+    sparkles: true,
+    holo: true,
+  },
+};
+
+// ══════════════════════════════════════════════════
+// ══ HALO SYSTEM (마스터 전용 후광) ═══════════════
+// ══════════════════════════════════════════════════
+
+export interface HaloConfig {
+  rings: HaloRing[];
+  glowColor: string;
+  glowOpacity: number;
+  sparkleColor?: string;
+}
+
+export interface HaloRing {
+  gradient: string;
+  mask: string;
+  animation: string;
+  inset: string;
+  opacity: number;
+}
+
+export const HALO_CONFIGS: Record<string, HaloConfig> = {
+  // ─── 무지개 후광 (기존 마스터 후광) ───
+  halo_rainbow: {
+    rings: [
+      {
+        gradient: "conic-gradient(from 0deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b)",
+        mask: "radial-gradient(circle, transparent 42%, black 47%, black 68%, transparent 73%)",
+        animation: "animate-[aura-spin-slow_6s_linear_infinite]",
+        inset: "-8px",
+        opacity: 0.5,
+      },
+      {
+        gradient: "conic-gradient(from 0deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b)",
+        mask: "radial-gradient(circle, transparent 58%, black 62%, black 72%, transparent 76%)",
+        animation: "animate-[aura-spin-slow_8s_linear_infinite]",
+        inset: "0px",
+        opacity: 0.6,
+      },
+      {
+        gradient: "conic-gradient(from 180deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b)",
+        mask: "radial-gradient(circle, transparent 62%, black 66%, black 74%, transparent 78%)",
+        animation: "animate-[aura-spin-reverse_12s_linear_infinite]",
+        inset: "3px",
+        opacity: 0.35,
+      },
+    ],
+    glowColor: "rgba(147,51,234,0.4)",
+    glowOpacity: 0.3,
+    sparkleColor: "white",
+  },
+
+  // ─── 초사이어인 (황금 폭발 기운) ───
+  halo_saiyan: {
+    rings: [
+      {
+        gradient: "conic-gradient(from 0deg, #fbbf24, #fef3c7, #f59e0b, #fde68a, #fbbf24)",
+        mask: "radial-gradient(circle, transparent 38%, black 44%, black 70%, transparent 76%)",
+        animation: "animate-[aura-spin-slow_3s_linear_infinite]",
+        inset: "-10px",
+        opacity: 0.7,
+      },
+      {
+        gradient: "conic-gradient(from 120deg, #f59e0b, #fbbf24, #fef3c7, #f59e0b)",
+        mask: "radial-gradient(circle, transparent 50%, black 55%, black 68%, transparent 74%)",
+        animation: "animate-[aura-spin-reverse_4s_linear_infinite]",
+        inset: "-4px",
+        opacity: 0.55,
+      },
+      {
+        gradient: "radial-gradient(circle, rgba(251,191,36,0.8), rgba(245,158,11,0.4), transparent 70%)",
+        mask: "radial-gradient(circle, transparent 55%, black 60%, black 72%, transparent 78%)",
+        animation: "animate-[aura-flicker_0.3s_ease-in-out_infinite]",
+        inset: "0px",
+        opacity: 0.5,
+      },
+    ],
+    glowColor: "rgba(251,191,36,0.5)",
+    glowOpacity: 0.4,
+    sparkleColor: "#fef3c7",
+  },
+
+  // ─── 이클립스 (일식 코로나) ───
+  halo_eclipse: {
+    rings: [
+      {
+        gradient: "conic-gradient(from 0deg, #0f172a, #dc2626, #f97316, #fbbf24, #f97316, #dc2626, #0f172a)",
+        mask: "radial-gradient(circle, transparent 40%, black 46%, black 72%, transparent 78%)",
+        animation: "animate-[aura-spin-slow_8s_linear_infinite]",
+        inset: "-10px",
+        opacity: 0.65,
+      },
+      {
+        gradient: "conic-gradient(from 180deg, #fbbf24, #f97316, #dc2626, #0f172a, #dc2626, #f97316, #fbbf24)",
+        mask: "radial-gradient(circle, transparent 52%, black 57%, black 68%, transparent 74%)",
+        animation: "animate-[aura-spin-reverse_12s_linear_infinite]",
+        inset: "-2px",
+        opacity: 0.45,
+      },
+      {
+        gradient: "radial-gradient(circle, rgba(15,23,42,0.9), rgba(220,38,38,0.3), transparent 70%)",
+        mask: "radial-gradient(circle, transparent 56%, black 60%, black 70%, transparent 76%)",
+        animation: "animate-[aura-dark-wave_2s_ease-in-out_infinite]",
+        inset: "2px",
+        opacity: 0.5,
+      },
+    ],
+    glowColor: "rgba(220,38,38,0.4)",
+    glowOpacity: 0.3,
+    sparkleColor: "#fbbf24",
+  },
+
+  // ─── 황제의 위엄 (보라+금빛) ───
+  halo_emperor: {
+    rings: [
+      {
+        gradient: "conic-gradient(from 0deg, #7c3aed, #fbbf24, #4f46e5, #fbbf24, #7c3aed)",
+        mask: "radial-gradient(circle, transparent 40%, black 46%, black 70%, transparent 76%)",
+        animation: "animate-[aura-spin-slow_5s_linear_infinite]",
+        inset: "-10px",
+        opacity: 0.65,
+      },
+      {
+        gradient: "conic-gradient(from 90deg, #fbbf24, #7c3aed, #fbbf24, #4f46e5, #fbbf24)",
+        mask: "radial-gradient(circle, transparent 54%, black 58%, black 68%, transparent 74%)",
+        animation: "animate-[aura-spin-reverse_7s_linear_infinite]",
+        inset: "-2px",
+        opacity: 0.5,
+      },
+      {
+        gradient: "conic-gradient(from 180deg, #4f46e5, #fbbf24, #7c3aed, #fbbf24, #4f46e5)",
+        mask: "radial-gradient(circle, transparent 60%, black 64%, black 72%, transparent 76%)",
+        animation: "animate-[aura-spin-slow_10s_linear_infinite]",
+        inset: "2px",
+        opacity: 0.35,
+      },
+    ],
+    glowColor: "rgba(124,58,237,0.45)",
+    glowOpacity: 0.35,
+    sparkleColor: "#fbbf24",
+  },
 };
