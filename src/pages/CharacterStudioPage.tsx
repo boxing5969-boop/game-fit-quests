@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Shuffle, Save, Check, Sparkles, Lock, ChevronRight, Crown, Gem, RotateCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -76,6 +76,17 @@ const CharacterStudioPage = () => {
   const [selectedStyle, setSelectedStyle] = useState<string>(currentStyle || "male_01");
   const [activeFilter, setActiveFilter] = useState<string>("white");
   const [pendingCustomization, setPendingCustomization] = useState<CharacterCustomization>(currentCustomization);
+
+  // Sync local state from server assignment exactly once after it loads.
+  // Without this, a page refresh leaves selectedStyle stuck on "male_01"
+  // (루키) and saving would clobber the real preset in DB.
+  const hasSyncedFromAssignmentRef = useRef(false);
+  useEffect(() => {
+    if (!assignment || hasSyncedFromAssignmentRef.current) return;
+    if (currentStyle) setSelectedStyle(currentStyle);
+    setPendingCustomization(currentCustomization);
+    hasSyncedFromAssignmentRef.current = true;
+  }, [assignment, currentStyle, currentCustomization]);
 
   const spendGems = useSpendGems();
   const [purchaseModal, setPurchaseModal] = useState<typeof PREBUILT_CHARACTERS[0] | null>(null);
