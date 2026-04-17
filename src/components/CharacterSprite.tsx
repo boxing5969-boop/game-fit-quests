@@ -1,4 +1,4 @@
-﻿import React, { useMemo, lazy, Suspense } from "react";
+import React, { useMemo, lazy, Suspense } from "react";
 import { getCharacterImage, getCharacterByHash } from "@/data/characterPresets";
 import BlackLeagueAura from "@/components/BlackLeagueAura";
 import type { PartsSelection } from "@/data/characterPartsData";
@@ -9,11 +9,22 @@ import {
   EFFECT_EMOJIS,
   FRAME_STYLES,
   TITLE_LABELS,
-  AURA_RADIAL_STYLES,
-  AURA_SPIN_DURATIONS,
-  MASTER_AURA_KEYS,
   NAMEPLATE_STYLES,
+  AURA_CONFIG,
+  AURA_INSET,
+  HALO_CONFIGS,
 } from "@/data/characterCustomizationData";
+
+/*
+ * ═══ z-index 계층 ═══
+ * z-[1]  일반 오라 글로우 (캐릭터 뒤)
+ * z-[3]  캐릭터 이미지
+ * z-[4]  프레임 링
+ * z-[5]  이펙트 이모지
+ * z-[7]  BlackLeagueAura (후광)
+ * z-[8]  마스터 오라 (최상단 후광)
+ * z-20   라벨
+ */
 
 interface CharacterSpriteProps {
   style?: string;
@@ -38,70 +49,12 @@ const SIZE_MAP = {
 
 const SIZE_PX = { xs: 32, sm: 48, md: 80, lg: 128 };
 
-const AURA_INSET: Record<string, string> = {
-  xs: "-4px",
-  sm: "-4px",
-  md: "-8px",
-  lg: "-8px",
-};
-
-const AURA_ALIAS_MAP: Record<string, string> = {
-  // ── basic radial ──
-  softglow: "soft_glow",
-  rainbow: "aura_rainbow",
-  aurarainbow: "aura_rainbow",
-  rainbowaura: "aura_rainbow",
-  fire: "aura_fire",
-  flame: "aura_fire",
-  aurafire: "aura_fire",
-  ice: "aura_ice",
-  frost: "aura_ice",
-  auraice: "aura_ice",
-  lightning: "aura_lightning",
-  thunder: "aura_lightning",
-  auralightning: "aura_lightning",
-  galaxy: "aura_galaxy",
-  auragalaxy: "aura_galaxy",
-  blueflame: "blue_flame",
-  greenenergy: "green_energy",
-  aurasakura: "aura_sakura",
-  sakura: "aura_sakura",
-  redrage: "red_rage",
-  auragold: "aura_gold",
-  goldenaura: "golden_aura",
-  purplehaze: "purple_haze",
-  aurablood: "aura_blood",
-  blood: "aura_blood",
-  auraneon: "aura_neon",
-  neon: "aura_neon",
-  auradark: "aura_dark",
-  dark: "aura_dark",
-  aurashadow: "aura_shadow",
-  shadow: "aura_shadow",
-  auraholy: "aura_holy",
-  holy: "aura_holy",
-  darkmatter: "dark_matter",
-  infernal: "infernal",
-  cosmic: "cosmic",
-  divine: "divine",
-  voidemperor: "void_emperor",
-
-  // ── master halo ──
-  rainbownmaster: "halo_rainbow_master",
-  rainbowmaster: "halo_rainbow_master",
-  masterrainbow: "halo_rainbow_master",
-  halorainbowmaster: "halo_rainbow_master",
-
-  blackgold: "halo_black_gold",
-  haloblackgold: "halo_black_gold",
-
-  conqueror: "halo_conqueror",
-  haloconqueror: "halo_conqueror",
-
-  galaxymaster: "halo_galaxy_master",
-  mastergalaxy: "halo_galaxy_master",
-  halogalaxymaster: "halo_galaxy_master",
-};
+const MASTER_AURA_KEYS = [
+  "halo_rainbow_master",
+  "halo_black_gold",
+  "halo_conqueror",
+  "halo_galaxy_master",
+];
 
 const NAMEPLATE_ALIAS_MAP: Record<string, string> = {
   default: "default",
@@ -121,51 +74,18 @@ function normalizeKey(value?: string) {
   return (value ?? "").toLowerCase().replace(/[\W_-]/g, "");
 }
 
-function resolveAuraKey(rawKey?: string): string | null {
-  if (!rawKey || rawKey === "none") return null;
-
-  if ((MASTER_AURA_KEYS as readonly string[]).includes(rawKey)) return rawKey;
-  if (AURA_RADIAL_STYLES[rawKey]) return rawKey;
-
-  const normalized = normalizeKey(rawKey);
-
-  if (AURA_ALIAS_MAP[normalized]) return AURA_ALIAS_MAP[normalized];
-
-  if (normalized.includes("rainbow") && normalized.includes("master")) return "halo_rainbow_master";
-  if (normalized.includes("galaxy") && normalized.includes("master")) return "halo_galaxy_master";
-  if (normalized.includes("black") && normalized.includes("gold")) return "halo_black_gold";
-  if (normalized.includes("conqueror")) return "halo_conqueror";
-  if (normalized.includes("rainbow")) return "aura_rainbow";
-  if (normalized.includes("galaxy")) return "aura_galaxy";
-  if (normalized.includes("lightning") || normalized.includes("thunder")) return "aura_lightning";
-  if (normalized.includes("fire") || normalized.includes("flame")) return "aura_fire";
-  if (normalized.includes("ice") || normalized.includes("frost")) return "aura_ice";
-
-  // final fallback: match normalized key against all RADIAL keys
-  for (const k of Object.keys(AURA_RADIAL_STYLES)) {
-    if (normalizeKey(k) === normalized) return k;
-  }
-
-  return null;
-}
-
 function resolveNameplateClass(rawKey?: string): string {
   if (!rawKey || rawKey === "none") return "";
-
   const direct = NAMEPLATE_STYLES[rawKey];
   if (direct !== undefined) return direct;
-
   const normalized = normalizeKey(rawKey);
   const mapped = NAMEPLATE_ALIAS_MAP[normalized];
-
   if (mapped && NAMEPLATE_STYLES[mapped]) return NAMEPLATE_STYLES[mapped];
-
   if (normalized.includes("gold")) return NAMEPLATE_STYLES.blackgold || NAMEPLATE_STYLES.gold || "";
   if (normalized.includes("purple") || normalized.includes("violet")) return NAMEPLATE_STYLES.purple || "";
   if (normalized.includes("neon")) return NAMEPLATE_STYLES.neon || "";
   if (normalized.includes("silver")) return NAMEPLATE_STYLES.silver || "";
   if (normalized.includes("bronze")) return NAMEPLATE_STYLES.bronze || "";
-
   return NAMEPLATE_STYLES.default || "";
 }
 
@@ -199,9 +119,6 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   const showOverlays = size === "md" || size === "lg";
   const showEffectSmall = size === "sm";
   const frameClass = customization?.frame ? FRAME_STYLES[customization.frame] || "" : "";
-
-  const resolvedAuraKey = resolveAuraKey(customization?.aura);
-  const isMasterAura = !!resolvedAuraKey && (MASTER_AURA_KEYS as readonly string[]).includes(resolvedAuraKey);
   const nameplateClass = resolveNameplateClass(customization?.nameplate);
 
   const shouldShowLabel = size !== "xs" && !!(customization?.title || customization?.nameplate);
@@ -209,56 +126,116 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
     customization?.title
       ? (TITLE_LABELS[customization.title]?.text || customization.title)
       : "칭호";
-
   const labelColorClass =
     nameplateClass || (customization?.title ? TITLE_LABELS[customization.title]?.color : "") || "text-foreground";
-
   const labelWrapClass =
     size === "sm"
       ? "absolute -bottom-4 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap"
       : "absolute -bottom-5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap";
-
   const labelTextClass = size === "sm" ? "text-[9px]" : "text-[10px]";
+
+  const auraKey = customization?.aura;
+  const isMasterAura = !!auraKey && MASTER_AURA_KEYS.includes(auraKey);
+  const auraTier = auraKey && auraKey !== "none" ? AURA_CONFIG[auraKey] : null;
+  const hasAura = !!auraTier && auraTier.layers.length > 0 && size !== "xs" && !isMasterAura;
+
+  // 후광: 마스터만 사용 가능, 선택된 후광 또는 마스터 기본(무지개)
+  const haloKey = customization?.halo;
+  const haloConfig = isMaster
+    ? (haloKey && haloKey !== "none" ? HALO_CONFIGS[haloKey] : HALO_CONFIGS["halo_rainbow"])
+    : null;
+  const isDetail = size === "md" || size === "lg";
 
   return (
     <div
       className={`relative flex-shrink-0 select-none ${SIZE_MAP[size]} ${onClick ? "cursor-pointer active:scale-95" : ""} ${className}`}
       onClick={onClick}
     >
-      {isBlack && (
-        <BlackLeagueAura
-          mode={effectiveAuraMode}
-          level={isMaster ? "master" : "halo"}
-        />
-      )}
 
-      {resolvedAuraKey && size !== "xs" && (
-        isMasterAura ? (
-          <MasterAuraOverlay auraKey={resolvedAuraKey} size={size} />
-        ) : AURA_RADIAL_STYLES[resolvedAuraKey] ? (
+      {/* ── 1. 오라 글로우 — z-[1] ── */}
+      {hasAura && (() => {
+        const baseInset = AURA_INSET[size] ?? -5;
+        return auraTier!.layers.map((layer, i) => (
           <div
-            className={`absolute rounded-full pointer-events-none z-[3] ${
-              AURA_SPIN_DURATIONS[resolvedAuraKey]
-                ? "animate-spin"
-                : resolvedAuraKey === "aura_lightning"
-                  ? "animate-ping"
-                  : "animate-pulse"
-            }`}
+            key={`aura-${i}`}
+            className={`absolute rounded-full pointer-events-none z-[1] ${auraTier!.holo ? "animate-[aura-holo_4s_linear_infinite]" : ""} ${layer.animation}`}
             style={{
-              inset: AURA_INSET[size],
-              background: AURA_RADIAL_STYLES[resolvedAuraKey],
-              animationDuration: resolvedAuraKey ? AURA_SPIN_DURATIONS[resolvedAuraKey] : undefined,
+              inset: `${baseInset - layer.insetOffset}px`,
+              background: layer.background,
+              opacity: layer.opacity,
+              ...(layer.mask ? { maskImage: layer.mask, WebkitMaskImage: layer.mask } : {}),
             }}
           />
-        ) : null
+        ));
+      })()}
+
+      {/* ── 2. 후광 — z-[2] ── */}
+      {isBlack && !haloConfig && (
+        <div className="absolute inset-0 z-[2] pointer-events-none">
+          <BlackLeagueAura
+            mode={effectiveAuraMode}
+            level={isMaster ? "master" : "halo"}
+          />
+        </div>
+      )}
+      {haloConfig && (
+        <div className="absolute inset-0 z-[2] pointer-events-none" aria-hidden>
+          {haloConfig.rings.map((ring, i) => (
+            <div
+              key={`halo-ring-${i}`}
+              className={`absolute rounded-full ${ring.animation}`}
+              style={{
+                inset: ring.inset,
+                background: ring.gradient,
+                mask: ring.mask,
+                WebkitMask: ring.mask,
+                opacity: isDetail ? ring.opacity : ring.opacity * 0.6,
+                filter: isDetail ? "brightness(1.4) saturate(1.3)" : undefined,
+              }}
+            />
+          ))}
+          <div
+            className="absolute inset-0 rounded-full animate-[aura-pulse-slow_3s_ease-in-out_infinite]"
+            style={{
+              background: `radial-gradient(circle, ${haloConfig.glowColor}, transparent 70%)`,
+              opacity: haloConfig.glowOpacity,
+            }}
+          />
+          {isDetail && (
+            <>
+              <div className="absolute top-[8%] right-[15%] animate-[aura-sparkle_3.5s_ease-in-out_infinite]">
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                  <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z" fill={haloConfig.sparkleColor || "white"} opacity="0.7" />
+                </svg>
+              </div>
+              <div className="absolute bottom-[12%] left-[10%] animate-[aura-sparkle-delayed_4s_ease-in-out_infinite]">
+                <svg width="8" height="8" viewBox="0 0 10 10">
+                  <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z" fill={haloConfig.sparkleColor || "white"} opacity="0.6" />
+                </svg>
+              </div>
+              <div className="absolute top-[55%] right-[8%] animate-[aura-sparkle_3s_ease-in-out_infinite]">
+                <svg width="9" height="9" viewBox="0 0 10 10">
+                  <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z" fill={haloConfig.sparkleColor || "white"} opacity="0.65" />
+                </svg>
+              </div>
+              <div className="absolute top-[35%] left-[5%] animate-[aura-sparkle-delayed_5s_ease-in-out_infinite]">
+                <svg width="7" height="7" viewBox="0 0 10 10">
+                  <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z" fill="white" opacity="0.5" />
+                </svg>
+              </div>
+            </>
+          )}
+        </div>
       )}
 
+      {/* ── 3. 프레임 링 — z-[3] ── */}
       {customization?.frame && showOverlays && (
-        <div className={`absolute inset-0 rounded-full z-[5] ${frameClass}`} />
+        <div className={`absolute inset-0 rounded-full z-[3] ${frameClass}`} />
       )}
 
+      {/* ── 4. 캐릭터 이미지 — z-[10] 항상 맨 앞 ── */}
       <div
-        className={`relative z-10 h-full w-full ${animate ? "animate-emote-idle" : ""}`}
+        className={`relative z-[10] h-full w-full ${animate ? "animate-emote-idle" : ""}`}
         style={{ willChange: animate ? "transform" : undefined }}
       >
         {isLayered ? (
@@ -279,12 +256,43 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
             loading="lazy"
           />
         )}
-
-        {customization?.effect && (showOverlays || showEffectSmall) && (
-          <EffectOverlay effect={customization.effect} size={size} />
-        )}
       </div>
 
+      {/* ── 5. 이펙트 이모지 — z-[11] ── */}
+      {customization?.effect && (showOverlays || showEffectSmall) && (
+        <div className="absolute inset-0 z-[11] pointer-events-none">
+          <EffectOverlay effect={customization.effect} size={size} />
+        </div>
+      )}
+
+      {/* ── 6. 마스터 오라 sparkle — z-[12] ── */}
+      {isMasterAura && auraTier?.sparkles && size === "lg" && (
+        <div className="absolute inset-0 z-[12] pointer-events-none">
+          <div className="absolute" style={{ top: "5%", left: "50%", transform: "translateX(-50%)" }}>
+            <svg width="8" height="8" viewBox="0 0 10 10">
+              <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z"
+                fill="white" opacity="0.9"
+                className="animate-[aura-sparkle_1.5s_ease-in-out_infinite]"/>
+            </svg>
+          </div>
+          <div className="absolute" style={{ top: "50%", right: "3%", transform: "translateY(-50%)" }}>
+            <svg width="6" height="6" viewBox="0 0 10 10">
+              <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z"
+                fill="white" opacity="0.8"
+                className="animate-[aura-sparkle-delayed_2s_ease-in-out_infinite]"/>
+            </svg>
+          </div>
+          <div className="absolute" style={{ bottom: "8%", left: "15%" }}>
+            <svg width="7" height="7" viewBox="0 0 10 10">
+              <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z"
+                fill="white" opacity="0.7"
+                className="animate-[aura-sparkle_2.5s_ease-in-out_infinite]"/>
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {/* ── 7. 라벨 — z-20 ── */}
       {shouldShowLabel && (
         <div className={labelWrapClass}>
           <span className={`${labelTextClass} font-bold ${labelColorClass}`}>
@@ -296,166 +304,61 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   );
 };
 
-type MasterAuraLayer = {
-  gradient: string;
-  mask?: string;
-  animClass: string;
-  opacity: number;
-  inset: string;
-  duration?: string;
-};
-
-const MASTER_AURA_CONFIG: Record<string, MasterAuraLayer[]> = {
-  halo_rainbow_master: [
-    {
-      gradient: "conic-gradient(from 0deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b)",
-      mask: "radial-gradient(circle, transparent 44%, black 49%, black 70%, transparent 75%)",
-      animClass: "animate-aura-hue",
-      opacity: 0.75,
-      inset: "-14px",
-      duration: "4s",
-    },
-    {
-      gradient: "conic-gradient(from 180deg, #ff9ff3, #54a0ff, #48dbfb, #feca57, #ff6b6b, #5f27cd, #ff9ff3)",
-      mask: "radial-gradient(circle, transparent 52%, black 56%, black 66%, transparent 71%)",
-      animClass: "animate-aura-hue-reverse",
-      opacity: 0.5,
-      inset: "-7px",
-      duration: "6s",
-    },
-    {
-      gradient: "radial-gradient(circle, rgba(147,51,234,0.5), rgba(59,130,246,0.3), transparent 70%)",
-      animClass: "animate-aura-pulse",
-      opacity: 0.4,
-      inset: "-5px",
-    },
-  ],
-  halo_black_gold: [
-    {
-      gradient: "conic-gradient(from 0deg, #fbbf24, #78350f, #fbbf24, #1c1917, #fbbf24, #78350f, #fbbf24)",
-      mask: "radial-gradient(circle, transparent 44%, black 49%, black 70%, transparent 75%)",
-      animClass: "animate-aura-hue",
-      opacity: 0.85,
-      inset: "-14px",
-      duration: "5s",
-    },
-    {
-      gradient: "conic-gradient(from 90deg, #1c1917, #fbbf24, #78350f, #fbbf24, #1c1917)",
-      mask: "radial-gradient(circle, transparent 52%, black 56%, black 66%, transparent 71%)",
-      animClass: "animate-aura-hue-reverse",
-      opacity: 0.6,
-      inset: "-7px",
-      duration: "7s",
-    },
-    {
-      gradient: "radial-gradient(circle, rgba(251,191,36,0.6), rgba(28,25,23,0.5), transparent 70%)",
-      animClass: "animate-aura-pulse",
-      opacity: 0.45,
-      inset: "-5px",
-    },
-  ],
-  halo_conqueror: [
-    {
-      gradient: "conic-gradient(from 0deg, #ef4444, #f97316, #7c2d12, #ef4444, #b91c1c, #f97316, #ef4444)",
-      mask: "radial-gradient(circle, transparent 44%, black 49%, black 70%, transparent 75%)",
-      animClass: "animate-aura-hue",
-      opacity: 0.85,
-      inset: "-14px",
-      duration: "3s",
-    },
-    {
-      gradient: "conic-gradient(from 180deg, #7c2d12, #ef4444, #f97316, #b91c1c, #7c2d12)",
-      mask: "radial-gradient(circle, transparent 52%, black 56%, black 66%, transparent 71%)",
-      animClass: "animate-aura-hue-reverse",
-      opacity: 0.55,
-      inset: "-7px",
-      duration: "5s",
-    },
-    {
-      gradient: "radial-gradient(circle, rgba(239,68,68,0.7), rgba(249,115,22,0.4), transparent 70%)",
-      animClass: "animate-aura-pulse",
-      opacity: 0.45,
-      inset: "-5px",
-    },
-  ],
-  halo_galaxy_master: [
-    {
-      gradient: "conic-gradient(from 0deg, #4f46e5, #7c3aed, #0f172a, #1d4ed8, #7c3aed, #0f172a, #4f46e5)",
-      mask: "radial-gradient(circle, transparent 44%, black 49%, black 70%, transparent 75%)",
-      animClass: "animate-aura-hue",
-      opacity: 0.75,
-      inset: "-14px",
-      duration: "6s",
-    },
-    {
-      gradient: "conic-gradient(from 270deg, #1e1b4b, #4f46e5, #7c3aed, #1e40af, #1e1b4b)",
-      mask: "radial-gradient(circle, transparent 52%, black 56%, black 66%, transparent 71%)",
-      animClass: "animate-aura-hue-reverse",
-      opacity: 0.5,
-      inset: "-7px",
-      duration: "8s",
-    },
-    {
-      gradient: "radial-gradient(circle, rgba(99,102,241,0.5), rgba(124,58,237,0.35), transparent 70%)",
-      animClass: "animate-aura-pulse",
-      opacity: 0.4,
-      inset: "-5px",
-    },
-  ],
-};
-
-const MasterAuraOverlay: React.FC<{ auraKey: string; size: string }> = ({ auraKey, size }) => {
-  const layers = MASTER_AURA_CONFIG[auraKey];
-  if (!layers) return null;
-
-  const outerInset = size === "sm" ? "-8px" : "-14px";
-
-  return (
-    <>
-      {layers.map((layer, i) => (
-        <div
-          key={i}
-          className={`absolute rounded-full pointer-events-none z-[3] ${layer.animClass}`}
-          style={{
-            inset: i === 0 ? outerInset : layer.inset,
-            background: layer.gradient,
-            opacity: layer.opacity,
-            ...(layer.mask ? { mask: layer.mask, WebkitMask: layer.mask } : {}),
-            ...(layer.duration ? { animationDuration: layer.duration } : {}),
-          }}
-        />
-      ))}
-    </>
-  );
+// 프리미엄 이펙트: 이모지 2종 교차 + 8개 + 더 넓은 범위
+const PREMIUM_EFFECTS: Record<string, [string, string]> = {
+  inferno_dual: ["🔥", "🔵"],
+  thunder_god:  ["⚡", "⛈️"],
+  cosmic_dust:  ["✨", "🌌"],
+  sword_aura:   ["⚔️", "💫"],
+  dark_flame:   ["🖤", "🔥"],
+  lotus:        ["🪷", "✨"],
+  sakura_storm: ["🌸", "💮"],
+  rose_gold:    ["🌹", "✨"],
 };
 
 const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, size }) => {
   const emoji = EFFECT_EMOJIS[effect] || "✨";
+  const premium = PREMIUM_EFFECTS[effect];
 
   if (size === "sm" || size === "xs") {
     return (
-      <span className="absolute -top-1 -right-1 z-20 text-xs animate-pulse pointer-events-none">
+      <span className="absolute -top-1 -right-1 text-xs animate-pulse">
         {emoji}
       </span>
     );
   }
 
+  // 프리미엄 이펙트: 8개, 2종 이모지 교차, 더 넓게
+  if (premium) {
+    const [e1, e2] = premium;
+    const emojiSize = size === "lg" ? "text-xl" : "text-base";
+    return (
+      <div className="absolute inset-0 overflow-visible">
+        <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "-18%", left: "50%", transform: "translateX(-50%)", animationDelay: "0s", animationDuration: "1.3s" }}>{e1}</span>
+        <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "-12%", right: "-2%", animationDelay: "0.4s", animationDuration: "1.6s" }}>{e2}</span>
+        <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "25%", right: "-18%", animationDelay: "0.8s", animationDuration: "1.4s" }}>{e1}</span>
+        <span className={`absolute ${emojiSize} animate-bounce`} style={{ bottom: "10%", right: "-12%", animationDelay: "1.2s", animationDuration: "1.7s" }}>{e2}</span>
+        <span className={`absolute ${emojiSize} animate-bounce`} style={{ bottom: "-12%", left: "50%", transform: "translateX(-50%)", animationDelay: "0.2s", animationDuration: "1.5s" }}>{e1}</span>
+        <span className={`absolute ${emojiSize} animate-bounce`} style={{ bottom: "10%", left: "-12%", animationDelay: "0.6s", animationDuration: "1.8s" }}>{e2}</span>
+        <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "25%", left: "-18%", animationDelay: "1.0s", animationDuration: "1.3s" }}>{e1}</span>
+        <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "-12%", left: "-2%", animationDelay: "0.3s", animationDuration: "2s" }}>{e2}</span>
+      </div>
+    );
+  }
+
+  // 일반 이펙트: 6개
   const emojiSize = size === "lg" ? "text-lg" : "text-sm";
 
   return (
-    <div className="absolute inset-0 z-20 pointer-events-none overflow-visible">
-      <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "-8%", left: "5%", animationDelay: "0s", animationDuration: "1.5s" }}>{emoji}</span>
-      <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "-8%", right: "5%", animationDelay: "0.4s", animationDuration: "1.8s" }}>{emoji}</span>
-      <span className={`absolute ${emojiSize} animate-bounce`} style={{ bottom: "5%", left: "50%", transform: "translateX(-50%)", animationDelay: "0.8s", animationDuration: "2s" }}>{emoji}</span>
-      {size === "lg" && (
-        <>
-          <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "30%", left: "-10%", animationDelay: "0.2s", animationDuration: "1.6s" }}>{emoji}</span>
-          <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "30%", right: "-10%", animationDelay: "0.6s", animationDuration: "1.4s" }}>{emoji}</span>
-        </>
-      )}
+    <div className="absolute inset-0 overflow-visible">
+      <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "-14%", left: "8%", animationDelay: "0s", animationDuration: "1.5s" }}>{emoji}</span>
+      <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "-14%", right: "8%", animationDelay: "0.5s", animationDuration: "1.8s" }}>{emoji}</span>
+      <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "38%", left: "-14%", animationDelay: "0.2s", animationDuration: "1.6s" }}>{emoji}</span>
+      <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "38%", right: "-14%", animationDelay: "0.7s", animationDuration: "1.4s" }}>{emoji}</span>
+      <span className={`absolute ${emojiSize} animate-bounce`} style={{ bottom: "-8%", left: "12%", animationDelay: "0.4s", animationDuration: "2s" }}>{emoji}</span>
+      <span className={`absolute ${emojiSize} animate-bounce`} style={{ bottom: "-8%", right: "12%", animationDelay: "0.9s", animationDuration: "1.7s" }}>{emoji}</span>
     </div>
   );
 };
 
 export default React.memo(CharacterSprite);
-
