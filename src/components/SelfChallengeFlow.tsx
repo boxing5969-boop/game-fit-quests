@@ -153,7 +153,6 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
         <button
           onClick={handleStart}
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-5 text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.97]"
-          style={{ fontFamily: "'Black Han Sans', sans-serif" }}
         >
           <Play className="h-6 w-6" /> 오늘 도전 시작
         </button>
@@ -196,7 +195,6 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
         <button
           onClick={handleFinish}
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-5 text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.97]"
-          style={{ fontFamily: "'Black Han Sans', sans-serif" }}
         >
           <Square className="h-5 w-5" /> 오늘 도전 완료
         </button>

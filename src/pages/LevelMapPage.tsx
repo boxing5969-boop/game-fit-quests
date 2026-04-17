@@ -199,7 +199,7 @@ const LevelMapPage = () => {
                   <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Secret Mission</span>
                   <Sparkles className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
                 </div>
-                <h3 className="text-xl font-black text-primary-foreground" style={{ fontFamily: "'Black Han Sans', sans-serif" }}>
+                <h3 className="text-xl font-black text-primary-foreground">
                   🏆 마스터 리그 최종 미션
                 </h3>
                 <p className="mt-1 text-xs text-primary-foreground/60">블랙 리그 레벨 10 달성 후 도전할 수 있는 시크릿 미션</p>
@@ -421,7 +421,7 @@ const LevelMapPage = () => {
               <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-primary/20 blur-3xl" />
             </div>
             <span className="relative text-5xl">{danChallengeOpen?.emoji}</span>
-            <h3 className="relative mt-3 whitespace-pre-line text-xl font-black text-foreground" style={{ fontFamily: "'Black Han Sans', sans-serif" }}>
+            <h3 className="relative mt-3 whitespace-pre-line text-xl font-black text-foreground">
               {danChallengeOpen?.message}
             </h3>
             <p className="relative mt-2 text-xs text-muted-foreground">

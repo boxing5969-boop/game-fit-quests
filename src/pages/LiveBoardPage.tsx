@@ -395,7 +395,7 @@ const LiveBoardPage = () => {
   );
 
   return (
-    <div className="fixed inset-0 bg-gray-950 text-white overflow-hidden select-none" style={{ fontFamily: "'Black Han Sans', 'Noto Sans KR', sans-serif" }}>
+    <div className="fixed inset-0 bg-gray-950 text-white overflow-hidden select-none">
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-8 py-3 bg-gray-900/90 border-b border-gray-800/60">
         <div className="flex items-center gap-5">

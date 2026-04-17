@@ -85,10 +85,7 @@ const OnboardingPage = () => {
         </div>
 
         {/* Title */}
-        <h1
-          className="mb-4 text-[1.6rem] font-extrabold leading-tight tracking-tight whitespace-pre-line"
-          style={{ fontFamily: "'Black Han Sans', sans-serif" }}
-        >
+        <h1 className="mb-4 text-[1.6rem] font-extrabold leading-tight tracking-tight whitespace-pre-line">
           {slide.title}
         </h1>
 

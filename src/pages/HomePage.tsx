@@ -522,7 +522,6 @@ const HomePage = () => {
                     ? "bg-primary text-primary-foreground active:scale-[0.98]"
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 }`}
-                style={{ fontFamily: "'Black Han Sans', sans-serif" }}
               >
                 {checkedInToday ? (
                   "🥊 오늘 도전 시작"

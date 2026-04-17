@@ -80,7 +80,7 @@ const GuidePage = () => {
 const ProgramTab = () => (
   <div className="space-y-4 animate-slide-up">
     <div className="rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 p-5 border border-primary/20">
-      <h2 className="mb-2 text-lg font-bold text-foreground" style={{ fontFamily: "'Black Han Sans', sans-serif" }}>
+      <h2 className="mb-2 text-lg font-bold text-foreground">
         153랭크업
       </h2>
       <p className="text-sm text-muted-foreground leading-relaxed">

@@ -93,7 +93,7 @@ const RankUpPage = () => {
       {/* Current progress */}
       <div className="mb-6 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 p-5 border border-primary/20 text-center">
         <p className="text-sm text-muted-foreground">현재 진행</p>
-        <p className="text-3xl font-bold text-foreground" style={{ fontFamily: "'Black Han Sans', sans-serif" }}>
+        <p className="text-3xl font-bold text-foreground">
           {isManager ? "👑 마스터" : `Lv ${globalLevel} / 40`}
         </p>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">
@@ -262,7 +262,7 @@ const RankUpPage = () => {
                       <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Secret Mission</span>
                       <Sparkles className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
                     </div>
-                    <h3 className="text-xl font-black text-primary-foreground" style={{ fontFamily: "'Black Han Sans', sans-serif" }}>🏆 마스터 리그 최종 미션</h3>
+                    <h3 className="text-xl font-black text-primary-foreground">🏆 마스터 리그 최종 미션</h3>
                     <p className="mt-1 text-xs text-primary-foreground/60">블랙 리그 레벨 10 달성 후 도전할 수 있는 시크릿 미션</p>
                   </div>
                   <div className="relative space-y-3">
@@ -405,7 +405,7 @@ const RankUpPage = () => {
               <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-primary/20 blur-3xl" />
             </div>
             <span className="relative text-5xl">{danChallengeOpen?.emoji}</span>
-            <h3 className="relative mt-3 whitespace-pre-line text-xl font-black text-foreground" style={{ fontFamily: "'Black Han Sans', sans-serif" }}>{danChallengeOpen?.message}</h3>
+            <h3 className="relative mt-3 whitespace-pre-line text-xl font-black text-foreground">{danChallengeOpen?.message}</h3>
             <p className="relative mt-2 text-xs text-muted-foreground">승단 심사 신청서를 작성하고 공식 {danChallengeOpen?.dan}에 도전하세요</p>
           </div>
           <div className="flex gap-3 p-5">
