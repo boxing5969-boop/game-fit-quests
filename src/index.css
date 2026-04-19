@@ -4,99 +4,129 @@
 
 @layer base {
   /* ─────────────────────────────────────────────────────────────
-   * Palette hierarchy (3 tiers — everything below is a shade of these)
-   *   Primary  (14°, orange-red) — CTA, emphasis
-   *   Secondary/muted (220°, neutral gray) — info surfaces, chrome
-   *   Accent   (45°, gold)        — achievement / reward ONLY
-   * Destructive (red) stays as an error-only signal, kept in the
-   * primary red family.
+   * Palette (dark-first, premium sport spec — see
+   * docs/rankingup-design-system.md for hex values and rationale)
+   *   Primary (8°, Ember #D93620) — CTA, action, emphasis
+   *   Accent  (215°, Blue #2F8CFF) — ranking, growth, progression
+   *   Reward  (42°, Gold #F6C453) — achievement, badges, currency
+   * Destructive (red #EF4444) = error only.
    *
    * Game-league colors (rank-white/blue/red/black) are semantic
    * identity tokens — do not repurpose them for chrome.
+   *
+   * Info-heavy pages (Guide, Safety, Settings) should wrap their
+   * root with the .light-surface utility to adopt the light token
+   * overrides defined below.
    * ───────────────────────────────────────────────────────────── */
   :root {
-    --background: 220 20% 97%;
-    --foreground: 220 30% 12%;
+    /* ─── Base surface (dark) ─── */
+    --background: 220 34% 7%;          /* #0B0F17 */
+    --foreground: 210 40% 98%;         /* #F8FAFC text primary */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 30% 12%;
+    --card: 220 35% 11%;               /* #121826 */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 12%;
+    --popover: 220 35% 11%;
+    --popover-foreground: 210 40% 98%;
 
-    /* ─── Primary (CTA, emphasis) ─── */
-    --primary: 14 90% 55%;
-    --primary-foreground: 0 0% 100%;
+    /* ─── Primary — Ember (CTA, action) ─── */
+    --primary: 8 75% 48%;              /* #D93620 */
+    --primary-foreground: 210 40% 98%;
 
-    /* ─── Secondary / muted (neutral info surfaces) ─── */
-    --secondary: 220 15% 93%;
-    --secondary-foreground: 220 30% 25%;
-    --muted: 220 15% 93%;
-    --muted-foreground: 220 10% 46%;
+    /* ─── Secondary / muted — dark neutral info surfaces ─── */
+    --secondary: 220 31% 15%;          /* #1B2433 (surface elevation) */
+    --secondary-foreground: 220 14% 71%;
+    --muted: 220 31% 15%;
+    --muted-foreground: 220 14% 71%;   /* #A7B0C0 text secondary */
 
-    /* ─── Accent (ranking / growth — currently gold, flips to blue in the
-     *    dark-palette commit). Until then, we keep the gold hue and
-     *    mirror it into --reward so the reward token can be adopted
-     *    first without visual regressions. ─── */
-    --accent: 45 100% 52%;
-    --accent-foreground: 220 30% 12%;
+    /* ─── Accent — Blue (ranking, growth) ─── */
+    --accent: 215 100% 59%;            /* #2F8CFF */
+    --accent-foreground: 210 40% 98%;
 
-    /* ─── Reward (achievement / badges / currency — gold) ─── */
-    --reward: 42 90% 64%;
-    --reward-foreground: 220 30% 12%;
+    /* ─── Reward — Gold (achievement, currency) ─── */
+    --reward: 42 90% 64%;              /* #F6C453 */
+    --reward-foreground: 220 30% 12%;  /* dark text on gold */
 
-    /* ─── Destructive (error only, kept in primary red family) ─── */
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    /* ─── Destructive (error only) ─── */
+    --destructive: 0 84% 60%;          /* #EF4444 */
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 220 15% 88%;
-    --input: 220 15% 88%;
-    --ring: 14 90% 55%;
+    --border: 218 24% 22%;             /* #2A3344 */
+    --input: 218 24% 22%;
+    --ring: 8 75% 48%;                 /* = primary */
 
     --radius: 1rem;
 
-    /* Rank colors — game-league identity, not chrome. Keep as-is. */
-    --rank-white: 220 10% 70%;
-    --rank-blue: 215 90% 55%;
-    --rank-red: 0 80% 55%;
-    --rank-black: 0 0% 15%;
+    /* Rank colors — game-league identity (chrome-safe on dark bg) */
+    --rank-white: 220 14% 71%;
+    --rank-blue: 215 100% 59%;
+    --rank-red: 0 84% 60%;
+    --rank-black: 220 35% 14%;
 
-    /* Quest status — each maps onto one of the 3 tiers above. */
-    --status-locked: 220 10% 65%;      /* muted family (gray) */
-    --status-active: 14 90% 55%;       /* = primary */
-    --status-pending: 35 95% 55%;      /* primary family (warm orange) */
-    --status-complete: 45 90% 45%;     /* accent family (gold)  */
+    /* Quest status — shades of the 3 tiers */
+    --status-locked: 220 13% 47%;      /* = text tertiary */
+    --status-active: 8 75% 48%;        /* = primary */
+    --status-pending: 38 92% 50%;      /* warning orange */
+    --status-complete: 42 90% 64%;     /* = reward gold */
 
-    /* XP */
-    --xp-bar: 14 90% 55%;
-    --xp-bar-bg: 220 15% 90%;
+    /* XP — ranking/growth is Accent (blue) per new spec */
+    --xp-bar: 215 100% 59%;
+    --xp-bar-bg: 218 24% 22%;
 
-    /* ─── Surface elevation (layered backgrounds for depth) ─── */
-    --surface-1: 220 20% 99%;    /* elevated: brighter than bg */
-    --surface-2: 220 15% 96%;    /* sunk:     darker than bg  */
+    /* Surface elevation (darker than card = depressed, brighter = elevated) */
+    --surface-1: 220 36% 10%;          /* #101622 bg-soft */
+    --surface-2: 220 31% 15%;          /* #1B2433 elevated */
 
-    /* ─── Shadow / glow system (premium-sport depth + game-style energy) ─── */
-    --shadow-elev-1: 0 1px 2px 0 hsl(220 30% 12% / 0.04), 0 1px 1px 0 hsl(220 30% 12% / 0.03);
-    --shadow-elev-2: 0 4px 10px -2px hsl(220 30% 12% / 0.08), 0 2px 4px -1px hsl(220 30% 12% / 0.05);
-    --shadow-elev-3: 0 12px 28px -6px hsl(220 30% 12% / 0.14), 0 4px 10px -2px hsl(220 30% 12% / 0.08);
-    --shadow-glow-primary: 0 0 0 1px hsl(14 90% 55% / 0.12), 0 10px 26px -6px hsl(14 90% 55% / 0.45);
-    --shadow-glow-reward:  0 0 0 1px hsl(42 90% 64% / 0.14), 0 10px 28px -6px hsl(42 90% 64% / 0.55);
-    --shadow-glow-gold:    0 0 0 1px hsl(42 90% 64% / 0.14), 0 10px 26px -6px hsl(42 90% 64% / 0.5);
-    --shadow-glow-blue:    0 0 0 1px hsl(215 100% 59% / 0.14), 0 10px 26px -6px hsl(215 100% 59% / 0.5);
-    --shadow-glow-soft:    0 14px 36px -14px hsl(14 90% 55% / 0.22);
+    /* Shadow / glow — spec values from design system doc */
+    --shadow-elev-1: 0px 8px 24px rgba(0, 0, 0, 0.24);
+    --shadow-elev-2: 0px 12px 32px rgba(0, 0, 0, 0.30);
+    --shadow-elev-3: 0px 16px 40px rgba(0, 0, 0, 0.36);
+    --shadow-glow-primary: 0px 0px 24px rgba(217, 54, 32, 0.28);
+    --shadow-glow-reward:  0px 0px 28px rgba(246, 196, 83, 0.32);
+    --shadow-glow-gold:    0px 0px 28px rgba(246, 196, 83, 0.32);   /* alias */
+    --shadow-glow-blue:    0px 0px 24px rgba(47, 140, 255, 0.24);
+    --shadow-glow-soft:    0px 0px 20px rgba(217, 54, 32, 0.18);
 
     /* Legacy glow helpers (kept for .glow-* utility classes below) */
-    --glow-primary: 0 0 24px hsl(14 90% 55% / 0.25);
-    --glow-gold: 0 0 24px hsl(45 100% 52% / 0.25);
+    --glow-primary: 0px 0px 24px rgba(217, 54, 32, 0.28);
+    --glow-gold: 0px 0px 28px rgba(246, 196, 83, 0.32);
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 30% 25%;
-    --sidebar-primary: 14 90% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 93%;
-    --sidebar-accent-foreground: 220 30% 25%;
-    --sidebar-border: 220 15% 88%;
-    --sidebar-ring: 14 90% 55%;
+    --sidebar-background: 220 35% 11%;
+    --sidebar-foreground: 220 14% 71%;
+    --sidebar-primary: 8 75% 48%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 220 31% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 218 24% 22%;
+    --sidebar-ring: 8 75% 48%;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * Light surface — for info-heavy pages (Guide, Safety, Settings).
+   * Wrap a page root with `className="light-surface"` and the entire
+   * subtree inherits the light palette without a theme switcher.
+   * See UI Principle #9 in the design system doc.
+   * ───────────────────────────────────────────────────────────── */
+  .light-surface {
+    --background: 0 0% 100%;
+    --foreground: 220 30% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 12%;
+    --secondary: 220 15% 95%;
+    --secondary-foreground: 220 30% 25%;
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 10% 46%;
+    --border: 220 15% 90%;                   /* #E1E5EC */
+    --input: 220 15% 90%;
+
+    --shadow-elev-1: 0px 6px 18px rgba(17, 24, 39, 0.06);
+    --shadow-elev-2: 0px 10px 24px rgba(17, 24, 39, 0.08);
+    --shadow-elev-3: 0px 20px 40px rgba(17, 24, 39, 0.12);
+
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
@@ -127,7 +157,7 @@
     box-shadow: var(--glow-gold);
   }
   .text-gradient-fire {
-    background: linear-gradient(135deg, hsl(14 90% 55%), hsl(45 100% 52%));
+    background: linear-gradient(135deg, hsl(8 75% 48%), hsl(42 90% 64%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }

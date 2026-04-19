@@ -5,7 +5,7 @@ const GuideSciencePage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
+    <div className="light-surface min-h-screen mx-auto max-w-lg px-4 pb-24 pt-4">
       <div className="mb-6 flex items-center gap-3">
         <button onClick={() => navigate("/guide")} className="rounded-full bg-secondary p-2 active:scale-95">
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />

@@ -45,7 +45,7 @@ const SafetyCheckPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
+    <div className="light-surface min-h-screen mx-auto max-w-lg px-4 pb-24 pt-4">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-bold text-foreground">안전 체크</h1>
         {safetyDone && (

@@ -23,7 +23,7 @@ const GuidePage = () => {
   const [activeTab, setActiveTab] = useState<GuideTab>("program");
 
   return (
-    <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
+    <div className="light-surface min-h-screen mx-auto max-w-lg px-4 pb-24 pt-4">
       <h1 className="mb-4 text-2xl text-foreground">📖 가이드</h1>
 
       {/* Tab switcher */}
