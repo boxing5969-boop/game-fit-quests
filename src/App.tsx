@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -6,39 +7,42 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import LoginPage from "@/pages/LoginPage";
-import HomePage from "@/pages/HomePage";
-import MissionsPage from "@/pages/MissionsPage";
-import LevelMapPage from "@/pages/LevelMapPage";
-import RewardsPage from "@/pages/RewardsPage";
-import HallOfFamePage from "@/pages/HallOfFamePage";
-import MyPage from "@/pages/MyPage";
-import CoachDashboard from "@/pages/CoachDashboard";
-import SettingsPage from "@/pages/SettingsPage";
-
-import CertBenefitsPage from "@/pages/CertBenefitsPage";
-import BranchManagerHome from "@/pages/BranchManagerHome";
-import MemberDetailPage from "@/pages/MemberDetailPage";
-import MemberPreviewPage from "@/pages/MemberPreviewPage";
-import OnboardingPage from "@/pages/OnboardingPage";
-import SelectBranchPage from "@/pages/SelectBranchPage";
-import WaitingApprovalPage from "@/pages/WaitingApprovalPage";
-import SafetyCheckPage from "@/pages/SafetyCheckPage";
-import GuidePage from "@/pages/GuidePage";
-import GuideProgramPage from "@/pages/guide/GuideProgramPage";
-import GuideSciencePage from "@/pages/guide/GuideSciencePage";
-import GuideValueMapPage from "@/pages/guide/GuideValueMapPage";
-import GuideExercisePurposePage from "@/pages/guide/GuideExercisePurposePage";
-import GuideSafetyPage from "@/pages/guide/GuideSafetyPage";
-import GuideFaqPage from "@/pages/guide/GuideFaqPage";
-import RankUpPage from "@/pages/RankUpPage";
-import AvatarPage from "@/pages/AvatarPage";
-import CharacterStudioPage from "@/pages/CharacterStudioPage";
 import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
-import CheckinBoardPage from "@/pages/CheckinBoardPage";
-import LiveBoardPage from "@/pages/LiveBoardPage";
-import SuperAdminDashboard from "@/pages/SuperAdminDashboard";
 import { isManagerRole } from "@/lib/rankLabels";
+
+// Route-level code splitting — every page below is fetched on demand.
+// LoginPage + NotFound stay eager: Login is the cold-start screen
+// (no point in splitting the first paint), NotFound is a tiny fallback.
+const HomePage = lazy(() => import("@/pages/HomePage"));
+const MissionsPage = lazy(() => import("@/pages/MissionsPage"));
+const LevelMapPage = lazy(() => import("@/pages/LevelMapPage"));
+const RewardsPage = lazy(() => import("@/pages/RewardsPage"));
+const HallOfFamePage = lazy(() => import("@/pages/HallOfFamePage"));
+const MyPage = lazy(() => import("@/pages/MyPage"));
+const CoachDashboard = lazy(() => import("@/pages/CoachDashboard"));
+const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const CertBenefitsPage = lazy(() => import("@/pages/CertBenefitsPage"));
+const BranchManagerHome = lazy(() => import("@/pages/BranchManagerHome"));
+const MemberDetailPage = lazy(() => import("@/pages/MemberDetailPage"));
+const MemberPreviewPage = lazy(() => import("@/pages/MemberPreviewPage"));
+const OnboardingPage = lazy(() => import("@/pages/OnboardingPage"));
+const SelectBranchPage = lazy(() => import("@/pages/SelectBranchPage"));
+const WaitingApprovalPage = lazy(() => import("@/pages/WaitingApprovalPage"));
+const SafetyCheckPage = lazy(() => import("@/pages/SafetyCheckPage"));
+const GuidePage = lazy(() => import("@/pages/GuidePage"));
+const GuideProgramPage = lazy(() => import("@/pages/guide/GuideProgramPage"));
+const GuideSciencePage = lazy(() => import("@/pages/guide/GuideSciencePage"));
+const GuideValueMapPage = lazy(() => import("@/pages/guide/GuideValueMapPage"));
+const GuideExercisePurposePage = lazy(() => import("@/pages/guide/GuideExercisePurposePage"));
+const GuideSafetyPage = lazy(() => import("@/pages/guide/GuideSafetyPage"));
+const GuideFaqPage = lazy(() => import("@/pages/guide/GuideFaqPage"));
+const RankUpPage = lazy(() => import("@/pages/RankUpPage"));
+const AvatarPage = lazy(() => import("@/pages/AvatarPage"));
+const CharacterStudioPage = lazy(() => import("@/pages/CharacterStudioPage"));
+const CheckinBoardPage = lazy(() => import("@/pages/CheckinBoardPage"));
+const LiveBoardPage = lazy(() => import("@/pages/LiveBoardPage"));
+const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdminDashboard"));
 
 const queryClient = new QueryClient();
 
@@ -114,6 +118,13 @@ const AppRoutes = () => {
 
   return (
     <>
+      <Suspense
+        fallback={
+          <div className="flex min-h-screen items-center justify-center">
+            <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-primary/20 text-3xl">🥊</div>
+          </div>
+        }
+      >
       <Routes>
         <Route path="/" element={user ? <RoleBasedRedirect /> : <LoginPage />} />
         <Route path="/select-branch" element={<ProtectedRoute><SelectBranchPage /></ProtectedRoute>} />
@@ -148,6 +159,7 @@ const AppRoutes = () => {
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
       <BottomNav />
       <ChatAssistant />
     </>
