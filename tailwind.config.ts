@@ -30,6 +30,15 @@ export default {
           '"Segoe UI Emoji"',
           "sans-serif",
         ],
+        // Scoreboard numerals — use for ranking / level / XP digits only
+        number: [
+          '"Space Grotesk"',
+          '"Pretendard Variable"',
+          "Pretendard",
+          "-apple-system",
+          "system-ui",
+          "sans-serif",
+        ],
         display: [
           '"Pretendard Variable"',
           "Pretendard",
@@ -88,6 +97,11 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+        },
+        // achievement / badges / currency (gold — separate from accent)
+        reward: {
+          DEFAULT: "hsl(var(--reward))",
+          foreground: "hsl(var(--reward-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -152,6 +166,8 @@ export default {
         "elev-3": "var(--shadow-elev-3)",
         "glow-primary": "var(--shadow-glow-primary)",
         "glow-gold": "var(--shadow-glow-gold)",
+        "glow-reward": "var(--shadow-glow-reward)",
+        "glow-blue": "var(--shadow-glow-blue)",
         "glow-soft": "var(--shadow-glow-soft)",
       },
       keyframes: {
