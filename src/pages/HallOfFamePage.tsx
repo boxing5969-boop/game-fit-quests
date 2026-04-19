@@ -107,7 +107,7 @@ const HallOfFamePage = () => {
         <button
           onClick={() => setTopTab("ranking")}
           className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
-            topTab === "ranking" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            topTab === "ranking" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
           }`}
         >
           🏆 랭킹
@@ -115,7 +115,7 @@ const HallOfFamePage = () => {
         <button
           onClick={() => setTopTab("halloffame")}
           className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
-            topTab === "halloffame" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            topTab === "halloffame" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
           }`}
         >
           🏅 명예의 전당
@@ -180,7 +180,7 @@ const HallOfFamePage = () => {
                     />
                     {isAdmin && (
                       <button onClick={() => openLevelSet(m)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-sm active:scale-95 backdrop-blur-sm">
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
                         <Settings2 className="h-3.5 w-3.5" />
                       </button>
                     )}
@@ -199,7 +199,7 @@ const HallOfFamePage = () => {
                   />
                   {isAdmin && (
                     <button onClick={() => openLevelSet(m)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-sm active:scale-95 backdrop-blur-sm">
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
                       <Settings2 className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -217,7 +217,7 @@ const HallOfFamePage = () => {
                   />
                   {isAdmin && (
                     <button onClick={() => openLevelSet(m)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-sm active:scale-95 backdrop-blur-sm">
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
                       <Settings2 className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -235,7 +235,7 @@ const HallOfFamePage = () => {
                   />
                   {isAdmin && (
                     <button onClick={() => openLevelSet(m)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-sm active:scale-95 backdrop-blur-sm">
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
                       <Settings2 className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -253,7 +253,7 @@ const HallOfFamePage = () => {
                   />
                   {isAdmin && (
                     <button onClick={() => openLevelSet(m)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-sm active:scale-95 backdrop-blur-sm">
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
                       <Settings2 className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -280,7 +280,7 @@ const HallOfFamePage = () => {
       {/* Hall of Fame Section */}
       {topTab === "halloffame" && (
         <div className="space-y-2">
-          <div className="mb-4 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 to-primary/5 p-5 text-center">
+          <div className="mb-4 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 to-primary/5 p-5 shadow-glow-gold text-center">
             <span className="text-4xl">🏅</span>
             <h2 className="mt-2 text-lg font-bold text-foreground">명예의 전당</h2>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -297,7 +297,7 @@ const HallOfFamePage = () => {
                 />
                 {isAdmin && (
                   <button onClick={() => openLevelSet(m)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-sm active:scale-95 backdrop-blur-sm">
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
                     <Settings2 className="h-3.5 w-3.5" />
                   </button>
                 )}
@@ -349,7 +349,7 @@ const HallOfFamePage = () => {
                 </div>
               </div>
               <button onClick={handleSetLevel} disabled={settingLevel}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                 {settingLevel ? "설정 중..." : `${RANK_LABELS[setRank] || setRank} Lv.${setLevel}로 설정`}
               </button>
             </div>

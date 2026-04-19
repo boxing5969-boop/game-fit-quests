@@ -65,7 +65,7 @@ const LevelMapPage = () => {
       </div>
 
       {/* Current position */}
-      <div className="mb-5 animate-slide-up rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="mb-5 animate-slide-up rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-sm text-muted-foreground">현재 위치</span>
@@ -124,7 +124,7 @@ const LevelMapPage = () => {
                         onClick={() => setSelectedNode(node)}
                         className={`relative flex flex-col items-center justify-center rounded-2xl border-2 p-2 transition-all active:scale-95 ${
                           isCurrent
-                            ? "border-primary bg-primary/10 shadow-md"
+                            ? "border-primary bg-primary/10 shadow-glow-soft"
                             : allDone && unlocked
                             ? "border-status-complete/30 bg-status-complete/5"
                             : unlocked
@@ -370,7 +370,7 @@ const LevelMapPage = () => {
                     }
                   }}
                   disabled={levelUpMutation.isPending}
-                  className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
                 >
                   <ArrowUp className="mr-1 inline h-4 w-4" />
                   {levelUpMutation.isPending ? "레벨업 중..." : "⚡ 즉시 레벨업 (관리자)"}
@@ -394,7 +394,7 @@ const LevelMapPage = () => {
                     }
                   }}
                   disabled={bossBattleMutation.isPending}
-                  className="w-full rounded-xl bg-accent py-3 text-sm font-bold text-accent-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="w-full rounded-xl bg-accent py-3 text-sm font-bold text-accent-foreground shadow-glow-gold transition-all active:scale-[0.98] disabled:opacity-50"
                 >
                   <Trophy className="mr-1 inline h-4 w-4" />
                   {bossBattleMutation.isPending ? "처리 중..." : "🏆 즉시 타이틀매치 클리어 (관리자)"}
@@ -403,7 +403,7 @@ const LevelMapPage = () => {
 
               <button
                 onClick={() => { setSelectedNode(null); navigate("/missions"); }}
-                className={`w-full rounded-xl ${isAdmin ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"} py-3 text-sm font-bold shadow-md transition-all active:scale-[0.98]`}
+                className={`w-full rounded-xl ${isAdmin ? "bg-secondary text-secondary-foreground shadow-elev-1" : "bg-primary text-primary-foreground shadow-glow-soft hover:shadow-glow-primary"} py-3 text-sm font-bold transition-all active:scale-[0.98]`}
               >
                 미션 보러가기
               </button>
@@ -440,7 +440,7 @@ const LevelMapPage = () => {
                 window.open("https://korea-boxing.lovable.app", "_blank");
                 setDanChallengeOpen(null);
               }}
-              className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-95"
+              className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-95"
             >
               🥊 도전하기!
             </button>
@@ -482,7 +482,7 @@ const LevelMapPage = () => {
                   }
                   setShowSecretDetail(null);
                 }}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98]"
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]"
               >
                 {showSecretDetail.cta}
               </button>
@@ -529,7 +529,7 @@ const LevelMapPage = () => {
                 } catch { toast.error("수정 실패"); }
                 finally { setEditLevelSaving(false); }
               }} disabled={editLevelSaving}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                 {editLevelSaving ? "저장 중..." : "수정 완료"}
               </button>
             </div>
