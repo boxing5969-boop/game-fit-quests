@@ -145,7 +145,7 @@ const OnboardingPage = () => {
           <div className="space-y-3">
             <button
               onClick={finish}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-base font-bold text-white shadow-lg shadow-primary/30 transition-all active:scale-[0.98]"
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-base font-bold text-white shadow-glow-primary transition-all active:scale-[0.98]"
             >
               {slide.cta || "🥊 시작하기"}
             </button>

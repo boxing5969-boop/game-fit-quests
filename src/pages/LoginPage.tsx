@@ -119,7 +119,7 @@ const PrivacyConsentModal = ({ onAccept, onClose }: { onAccept: (sig: string) =>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl">
+      <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-elev-3">
         <h2 className="mb-4 text-lg font-bold text-foreground">📋 개인정보 수집·이용 동의</h2>
         <div className="mb-4 max-h-48 overflow-y-auto rounded-xl bg-muted/50 p-4 text-sm leading-relaxed text-muted-foreground">
           <p className="mb-2 font-semibold text-foreground">1. 수집 항목</p>
@@ -143,7 +143,7 @@ const PrivacyConsentModal = ({ onAccept, onClose }: { onAccept: (sig: string) =>
             type="button"
             onClick={() => signature && onAccept(signature)}
             disabled={!signature}
-            className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+            className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
           >
             동의 및 서명 완료
           </button>
@@ -305,7 +305,7 @@ const LoginPage = () => {
           )}
           <button
             onClick={() => { setTab("login"); resetForm(); }}
-            className="rounded-xl bg-primary px-8 py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98]"
+            className="rounded-xl bg-primary px-8 py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]"
           >
             로그인으로 돌아가기
           </button>
@@ -320,7 +320,7 @@ const LoginPage = () => {
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
       {/* Logo */}
       <div className="mb-5 animate-bounce-in text-center">
-        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-4xl shadow-lg">🥊</div>
+        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-4xl shadow-glow-primary">🥊</div>
         <h1 className="text-2xl tracking-tight text-foreground">153랭크업 시스템</h1>
         <p className="mt-1 text-sm text-muted-foreground">오늘의 미션을 클리어하고 랭크업하세요</p>
       </div>
@@ -333,7 +333,7 @@ const LoginPage = () => {
             type="button"
             onClick={() => { setTab(key); setError(""); }}
             className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${
-              tab === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              tab === key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
             {label}
@@ -431,7 +431,7 @@ const LoginPage = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-xl bg-primary py-4 text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98] hover:shadow-xl disabled:opacity-50"
+          className="w-full rounded-xl bg-primary py-4 text-lg font-bold text-primary-foreground shadow-glow-primary transition-all active:scale-[0.98] hover:shadow-glow-primary disabled:opacity-50"
         >
           {isLoading ? "처리 중..." : isSignUp ? (tab === "coach" ? "관장님 가입 🥊" : "회원가입 🥊") : "로그인 🥊"}
         </button>
@@ -542,14 +542,14 @@ const LoginPage = () => {
       {/* Forgot Password Modal */}
       {showForgotPassword && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-elev-3">
             {forgotStep === "success" ? (
               <div className="text-center">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500/20 text-3xl">✅</div>
                 <h2 className="mb-2 text-lg font-bold text-foreground">비밀번호 변경 완료!</h2>
                 <p className="mb-4 text-sm text-muted-foreground">새 비밀번호로 로그인해주세요.</p>
                 <button type="button" onClick={() => { setShowForgotPassword(false); setForgotStep("verify"); setForgotUsername(""); setForgotName(""); setForgotPhone(""); setForgotBirthDate(""); setForgotNewPassword(""); setForgotConfirmPassword(""); setForgotError(""); }}
-                  className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md active:scale-[0.98]">
+                  className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary active:scale-[0.98]">
                   확인
                 </button>
               </div>
@@ -575,7 +575,7 @@ const LoginPage = () => {
                     취소
                   </button>
                   <button type="button" onClick={handleForgotPassword} disabled={forgotLoading}
-                    className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                    className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                     {forgotLoading ? "확인 중..." : "비밀번호 변경"}
                   </button>
                 </div>
