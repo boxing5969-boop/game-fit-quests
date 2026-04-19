@@ -3,6 +3,17 @@
 @tailwind utilities;
 
 @layer base {
+  /* ─────────────────────────────────────────────────────────────
+   * Palette hierarchy (3 tiers — everything below is a shade of these)
+   *   Primary  (14°, orange-red) — CTA, emphasis
+   *   Secondary/muted (220°, neutral gray) — info surfaces, chrome
+   *   Accent   (45°, gold)        — achievement / reward ONLY
+   * Destructive (red) stays as an error-only signal, kept in the
+   * primary red family.
+   *
+   * Game-league colors (rank-white/blue/red/black) are semantic
+   * identity tokens — do not repurpose them for chrome.
+   * ───────────────────────────────────────────────────────────── */
   :root {
     --background: 220 20% 97%;
     --foreground: 220 30% 12%;
@@ -13,18 +24,21 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 30% 12%;
 
+    /* ─── Primary (CTA, emphasis) ─── */
     --primary: 14 90% 55%;
     --primary-foreground: 0 0% 100%;
 
+    /* ─── Secondary / muted (neutral info surfaces) ─── */
     --secondary: 220 15% 93%;
     --secondary-foreground: 220 30% 25%;
-
     --muted: 220 15% 93%;
     --muted-foreground: 220 10% 46%;
 
+    /* ─── Accent (achievement / reward) ─── */
     --accent: 45 100% 52%;
     --accent-foreground: 220 30% 12%;
 
+    /* ─── Destructive (error only, kept in primary red family) ─── */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
@@ -34,23 +48,35 @@
 
     --radius: 1rem;
 
-    /* Rank colors */
+    /* Rank colors — game-league identity, not chrome. Keep as-is. */
     --rank-white: 220 10% 70%;
     --rank-blue: 215 90% 55%;
     --rank-red: 0 80% 55%;
     --rank-black: 0 0% 15%;
 
-    /* Quest status */
-    --status-locked: 220 10% 65%;
-    --status-active: 14 90% 55%;
-    --status-pending: 35 95% 55%;
-    --status-complete: 150 70% 42%;
+    /* Quest status — each maps onto one of the 3 tiers above. */
+    --status-locked: 220 10% 65%;      /* muted family (gray) */
+    --status-active: 14 90% 55%;       /* = primary */
+    --status-pending: 35 95% 55%;      /* primary family (warm orange) */
+    --status-complete: 45 90% 45%;     /* accent family (gold)  */
 
     /* XP */
     --xp-bar: 14 90% 55%;
     --xp-bar-bg: 220 15% 90%;
 
-    /* Glow */
+    /* ─── Surface elevation (layered backgrounds for depth) ─── */
+    --surface-1: 220 20% 99%;    /* elevated: brighter than bg */
+    --surface-2: 220 15% 96%;    /* sunk:     darker than bg  */
+
+    /* ─── Shadow / glow system (premium-sport depth + game-style energy) ─── */
+    --shadow-elev-1: 0 1px 2px 0 hsl(220 30% 12% / 0.04), 0 1px 1px 0 hsl(220 30% 12% / 0.03);
+    --shadow-elev-2: 0 4px 10px -2px hsl(220 30% 12% / 0.08), 0 2px 4px -1px hsl(220 30% 12% / 0.05);
+    --shadow-elev-3: 0 12px 28px -6px hsl(220 30% 12% / 0.14), 0 4px 10px -2px hsl(220 30% 12% / 0.08);
+    --shadow-glow-primary: 0 0 0 1px hsl(14 90% 55% / 0.12), 0 10px 26px -6px hsl(14 90% 55% / 0.45);
+    --shadow-glow-gold:    0 0 0 1px hsl(45 100% 52% / 0.14), 0 10px 26px -6px hsl(45 100% 52% / 0.5);
+    --shadow-glow-soft:    0 14px 36px -14px hsl(14 90% 55% / 0.22);
+
+    /* Legacy glow helpers (kept for .glow-* utility classes below) */
     --glow-primary: 0 0 24px hsl(14 90% 55% / 0.25);
     --glow-gold: 0 0 24px hsl(45 100% 52% / 0.25);
 

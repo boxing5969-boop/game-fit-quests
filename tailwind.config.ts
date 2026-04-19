@@ -64,6 +64,14 @@ export default {
         ],
       },
       colors: {
+        /* ─────────────────────────────────────────────
+         * 3-tier palette — every chrome color below is
+         * a shade of one of these. See src/index.css for
+         * the HSL values and the rationale.
+         *   primary   — CTA, emphasis  (orange-red)
+         *   secondary — info surfaces  (neutral gray)
+         *   accent    — reward / achievement (gold)
+         * ───────────────────────────────────────────── */
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -77,17 +85,18 @@ export default {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+        // error-only, kept in primary red family
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -97,21 +106,28 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // game-league identity tokens — not chrome; do not repurpose
         rank: {
           white: "hsl(var(--rank-white))",
           blue: "hsl(var(--rank-blue))",
           red: "hsl(var(--rank-red))",
           black: "hsl(var(--rank-black))",
         },
+        // status — each is a shade of one of the 3 tiers above
         status: {
-          locked: "hsl(var(--status-locked))",
-          active: "hsl(var(--status-active))",
-          pending: "hsl(var(--status-pending))",
-          complete: "hsl(var(--status-complete))",
+          locked: "hsl(var(--status-locked))",      // muted
+          active: "hsl(var(--status-active))",      // primary
+          pending: "hsl(var(--status-pending))",    // primary family
+          complete: "hsl(var(--status-complete))",  // accent family
         },
         xp: {
           bar: "hsl(var(--xp-bar))",
           bg: "hsl(var(--xp-bar-bg))",
+        },
+        // surface elevation — layered neutrals for depth
+        surface: {
+          1: "hsl(var(--surface-1))",
+          2: "hsl(var(--surface-2))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
@@ -128,6 +144,15 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      // premium-sport depth + game-style energy
+      boxShadow: {
+        "elev-1": "var(--shadow-elev-1)",
+        "elev-2": "var(--shadow-elev-2)",
+        "elev-3": "var(--shadow-elev-3)",
+        "glow-primary": "var(--shadow-glow-primary)",
+        "glow-gold": "var(--shadow-glow-gold)",
+        "glow-soft": "var(--shadow-glow-soft)",
       },
       keyframes: {
         "accordion-down": {
