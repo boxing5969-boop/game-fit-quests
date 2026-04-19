@@ -5,8 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>153랭크업 시스템 - 매일 도전하고 레벨업하세요</title>
     <meta name="description" content="153랭크업 시스템 - 복싱 운동을 미션으로! 매일 도전하고 레벨업하세요.">
-    <meta name="theme-color" content="#F5F5F7" />
+    <!-- Match the dark-first palette so mobile browser chrome and native
+         scrollbars/form controls render dark instead of forced light. -->
+    <meta name="theme-color" content="#0B0F17" />
+    <meta name="color-scheme" content="dark light" />
 
+    <!-- Warm up Supabase (data) and jsDelivr/Google Fonts (static assets)
+         TCP+TLS so the first API call and the font paint both skip a
+         round trip. -->
+    <link rel="preconnect" href="https://raoqefkwdpovwlgbibis.supabase.co" crossorigin />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link
       rel="stylesheet"

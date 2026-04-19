@@ -253,7 +253,12 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
             className="h-full w-full object-contain drop-shadow-elev-1"
             style={{ imageRendering: "auto" }}
             draggable={false}
-            loading="lazy"
+            // Hero-size sprites (lg/md) are the visible above-the-fold
+            // character on Home/MyPage — load eager + high priority so
+            // they drive LCP, not deprioritized like the list thumbnails.
+            loading={size === "lg" || size === "md" ? "eager" : "lazy"}
+            fetchPriority={size === "lg" ? "high" : "auto"}
+            decoding="async"
           />
         )}
       </div>
