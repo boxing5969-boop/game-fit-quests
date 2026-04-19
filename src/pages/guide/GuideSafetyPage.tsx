@@ -14,7 +14,7 @@ const GuideSafetyPage = () => {
       </div>
 
       {/* Beginner warnings */}
-      <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-elev-1">
         <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-foreground">
           <ShieldCheck className="h-5 w-5 text-primary" /> 초보자 주의사항
         </h2>
@@ -27,7 +27,7 @@ const GuideSafetyPage = () => {
       </div>
 
       {/* Emergency stop */}
-      <div className="mb-5 rounded-2xl border-2 border-destructive/30 bg-destructive/5 p-5 shadow-sm">
+      <div className="mb-5 rounded-2xl border-2 border-destructive/30 bg-destructive/5 p-5 shadow-elev-1">
         <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-foreground">
           <AlertTriangle className="h-5 w-5 text-destructive" /> 즉시 중단해야 할 때
         </h2>
@@ -40,7 +40,7 @@ const GuideSafetyPage = () => {
       </div>
 
       {/* Pre-existing conditions */}
-      <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-elev-1">
         <h2 className="mb-3 text-base font-bold text-foreground">⚠️ 기저질환 및 장기간 비활동</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
           심장 질환, 고혈압, 당뇨 등 기저질환이 있거나, 3개월 이상 운동을 하지 않았다면 
@@ -49,7 +49,7 @@ const GuideSafetyPage = () => {
       </div>
 
       {/* High intensity */}
-      <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-elev-1">
         <h2 className="mb-3 text-base font-bold text-foreground">🔥 고강도 시작 전</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
           고강도 운동을 처음 시작하려면 먼저 중강도에서 충분히 적응한 뒤 
@@ -58,7 +58,7 @@ const GuideSafetyPage = () => {
       </div>
 
       {/* Starter Mode */}
-      <div className="rounded-2xl border border-accent/30 bg-accent/5 p-5 shadow-sm">
+      <div className="rounded-2xl border border-accent/30 bg-accent/5 p-5 shadow-elev-1">
         <h2 className="mb-3 text-base font-bold text-foreground">🌱 스타터 모드</h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-3">
           최근 활동량이 적거나 몸 상태가 걱정된다면 스타터 모드를 이용하세요.

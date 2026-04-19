@@ -235,7 +235,7 @@ const SettingsPage = () => {
 
       <div className="space-y-5">
         {/* Home Widget Toggles */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1">
           <h2 className="mb-4 text-base font-bold text-foreground">🏠 홈 화면 설정</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -256,7 +256,7 @@ const SettingsPage = () => {
         </div>
 
         {/* Onboarding replay */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm" style={{ animationDelay: "0.01s" }}>
+        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.01s" }}>
           <h2 className="mb-3 text-base font-bold text-foreground">📖 온보딩</h2>
           <p className="mb-3 text-xs text-muted-foreground">153 랭크업 시스템 소개를 다시 볼 수 있습니다.</p>
           <button
@@ -271,7 +271,7 @@ const SettingsPage = () => {
         </div>
 
         {/* Profile Edit */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm" style={{ animationDelay: "0.03s" }}>
+        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.03s" }}>
           <h2 className="mb-4 text-base font-bold text-foreground">👤 프로필 수정</h2>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -302,7 +302,7 @@ const SettingsPage = () => {
         </button>
 
         {/* Branch Transfer Request */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm" style={{ animationDelay: "0.05s" }}>
+        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.05s" }}>
           <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-foreground">
             <ArrowRightLeft className="h-4 w-4" /> 지점 이전 요청
           </h2>
@@ -367,7 +367,7 @@ const SettingsPage = () => {
 
         {/* Manager: Pending Branch Transfers */}
         {isManager && branchTransfers && branchTransfers.length > 0 && (
-          <div className="animate-slide-up rounded-2xl border border-status-pending/20 bg-card p-5 shadow-sm" style={{ animationDelay: "0.1s" }}>
+          <div className="animate-slide-up rounded-2xl border border-status-pending/20 bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.1s" }}>
             <h2 className="mb-4 text-base font-bold text-foreground">📋 지점 이전 승인 대기</h2>
             <div className="space-y-3">
               {branchTransfers.map((req: any) => (
@@ -398,7 +398,7 @@ const SettingsPage = () => {
 
         {/* Admin: Branch Management */}
         {isAdmin && (
-          <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm" style={{ animationDelay: "0.15s" }}>
+          <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.15s" }}>
             <h2 className="mb-4 text-base font-bold text-foreground">🏢 지점 관리</h2>
             <div className="mb-4 flex gap-2">
               <Input

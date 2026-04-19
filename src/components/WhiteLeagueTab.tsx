@@ -77,7 +77,7 @@ const WhiteLeagueTab = () => {
         const completedInLeague = leagueLevels.filter(l => getLevelState(lc.id, l.levelInLeague) === "complete").length;
 
         return (
-          <div key={lc.id} className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div key={lc.id} className="rounded-2xl border border-border bg-card shadow-elev-1 overflow-hidden">
             <button
               onClick={() => setExpandedLeague(isExpanded && expandedLeague !== null ? null : lc.id)}
               className="flex w-full items-center justify-between p-4 text-left active:bg-muted/50"
@@ -256,7 +256,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             key={tab.key}
             onClick={() => setActiveSection(tab.key)}
             className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all ${
-              activeSection === tab.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              activeSection === tab.key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
             {tab.label}
@@ -268,7 +268,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {activeSection === "learn" && (
         <>
           {/* Learning modules from unified data */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
             <div className="mb-3 flex items-center gap-2">
               <Target className="h-4 w-4 text-primary" />
               <span className="text-sm font-bold text-foreground">학습 모듈</span>
@@ -288,7 +288,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           </div>
 
           {/* Purpose */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
             <div className="mb-3 flex items-center gap-2">
               <Target className="h-4 w-4 text-primary" />
               <span className="text-sm font-bold text-foreground">오늘의 목적</span>
@@ -316,7 +316,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
 
           {/* Beginner alts (if available) */}
           {beginnerAlts && beginnerAlts.length > 0 && (
-            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
               <div className="mb-3 flex items-center gap-2">
                 <Info className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">초보자 대체 동작</span>
@@ -355,7 +355,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {activeSection === "session" && (
         <>
           {/* Routine blocks from unified data */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
@@ -451,7 +451,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
 
           {/* XP rules (if available) */}
           {xpRules && (
-            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
               <div className="mb-3 flex items-center gap-2">
                 <Zap className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">XP 규칙</span>
@@ -478,7 +478,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {activeSection === "check" && (
         <>
           {/* 레벨업 조건 */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
             <div className="mb-3 flex items-center gap-2">
               <Award className="h-4 w-4 text-primary" />
               <span className="text-sm font-bold text-foreground">
@@ -530,7 +530,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           </div>
 
           {/* Checklist */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-primary" />

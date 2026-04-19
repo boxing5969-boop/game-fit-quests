@@ -281,7 +281,7 @@ const BranchManagerHome = () => {
             return (
             <div
               key={m.id}
-              className={`rounded-2xl border bg-card shadow-sm transition-all ${
+              className={`rounded-2xl border bg-card shadow-elev-1 transition-all ${
                 selectedMemberId === m.user_id ? "border-primary ring-2 ring-primary/20" : "border-border"
               } ${!isApproved ? "border-amber-500/30 bg-amber-50/50" : ""}`}
             >
@@ -367,7 +367,7 @@ const BranchManagerHome = () => {
       <div className="mt-6 space-y-2">
         <button
           onClick={() => navigate("/manager/checkin-board")}
-          className="w-full rounded-2xl border border-primary/30 bg-primary/5 p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+          className="w-full rounded-2xl border border-primary/30 bg-primary/5 p-4 text-left shadow-elev-1 transition-all active:scale-[0.98]"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -383,7 +383,7 @@ const BranchManagerHome = () => {
         {isSuperAdmin && (
           <button
             onClick={() => navigate("/admin")}
-            className="w-full rounded-2xl border border-accent/30 bg-accent/5 p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+            className="w-full rounded-2xl border border-accent/30 bg-accent/5 p-4 text-left shadow-elev-1 transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -399,7 +399,7 @@ const BranchManagerHome = () => {
         )}
         <button
           onClick={handleExportCsv}
-          className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+          className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-elev-1 transition-all active:scale-[0.98]"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -414,7 +414,7 @@ const BranchManagerHome = () => {
         </button>
         <button
           onClick={() => navigate("/home")}
-          className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all active:scale-[0.98]"
+          className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-elev-1 transition-all active:scale-[0.98]"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -514,7 +514,7 @@ const BranchManagerHome = () => {
           <button
             onClick={() => setMainTab("members")}
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
-              mainTab === "members" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              mainTab === "members" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
             <Users className="h-4 w-4" />
@@ -523,7 +523,7 @@ const BranchManagerHome = () => {
           <button
             onClick={() => setMainTab("inbox")}
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
-              mainTab === "inbox" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              mainTab === "inbox" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
             <Inbox className="h-4 w-4" />
@@ -537,7 +537,7 @@ const BranchManagerHome = () => {
           <button
             onClick={() => setMainTab("level_review")}
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
-              mainTab === "level_review" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              mainTab === "level_review" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
             📋 심사
@@ -545,7 +545,7 @@ const BranchManagerHome = () => {
           <button
             onClick={() => setMainTab("operations")}
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
-              mainTab === "operations" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              mainTab === "operations" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
             ⚡ 운영
@@ -553,7 +553,7 @@ const BranchManagerHome = () => {
           <button
             onClick={() => setMainTab("at_risk")}
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
-              mainTab === "at_risk" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              mainTab === "at_risk" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
             <AlertTriangle className="h-4 w-4" />
@@ -603,7 +603,7 @@ const BranchManagerHome = () => {
             <button
               onClick={() => setMainTab("members")}
               className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold transition-all ${
-                mainTab === "members" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                mainTab === "members" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
               }`}
             >
               <Users className="h-3.5 w-3.5" />
@@ -612,7 +612,7 @@ const BranchManagerHome = () => {
             <button
               onClick={() => setMainTab("inbox")}
               className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold transition-all ${
-                mainTab === "inbox" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                mainTab === "inbox" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
               }`}
             >
               <Inbox className="h-3.5 w-3.5" />
@@ -626,7 +626,7 @@ const BranchManagerHome = () => {
             <button
               onClick={() => setMainTab("level_review")}
               className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold transition-all ${
-                mainTab === "level_review" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                mainTab === "level_review" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
               }`}
             >
               📋 심사

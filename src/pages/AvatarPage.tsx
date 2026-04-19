@@ -142,7 +142,7 @@ const AvatarPage = () => {
 
         {/* ─── 장착 중인 아이템 ──────────────────────────────────── */}
         {equippedItems && equippedItems.length > 0 && (
-          <div className="mx-4 mt-5 rounded-2xl border border-border bg-card p-3 shadow-sm">
+          <div className="mx-4 mt-5 rounded-2xl border border-border bg-card p-3 shadow-elev-1">
             <p className="text-xs font-bold text-foreground mb-2">현재 장착 중</p>
             <div className="flex flex-wrap gap-1.5">
               {equippedItems.map(eq => (
@@ -168,7 +168,7 @@ const AvatarPage = () => {
                 onClick={() => setActiveCategory(cat.code)}
                 className={`flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
                   activeCategory === cat.code
-                    ? "bg-primary text-primary-foreground shadow-sm"
+                    ? "bg-primary text-primary-foreground shadow-elev-1"
                     : "bg-muted text-muted-foreground"
                 }`}
               >

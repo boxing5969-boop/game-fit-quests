@@ -39,7 +39,7 @@ const GuideValueMapPage = () => {
           <button
             key={league.rank}
             onClick={() => setExpandedRank(expandedRank === league.rank ? null : league.rank)}
-            className={`rounded-2xl border-2 bg-card p-3 text-left shadow-sm transition-all active:scale-[0.98] ${
+            className={`rounded-2xl border-2 bg-card p-3 text-left shadow-elev-1 transition-all active:scale-[0.98] ${
               expandedRank === league.rank ? RANK_COLORS[league.rank] : "border-border"
             }`}
           >
@@ -63,7 +63,7 @@ const GuideValueMapPage = () => {
                 const isComplete = lv.level < currentGlobal;
                 const isCurrent = lv.level === currentGlobal;
                 return (
-                  <div key={lv.level} className={`flex items-start gap-3 rounded-xl bg-card p-3 border border-border shadow-sm ${isCurrent ? "ring-1 ring-primary/30" : ""}`}>
+                  <div key={lv.level} className={`flex items-start gap-3 rounded-xl bg-card p-3 border border-border shadow-elev-1 ${isCurrent ? "ring-1 ring-primary/30" : ""}`}>
                     <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
                       isComplete ? "bg-primary text-primary-foreground" :
                       isCurrent ? "bg-primary text-primary-foreground animate-pulse" :
@@ -84,7 +84,7 @@ const GuideValueMapPage = () => {
             </div>
 
             {/* Completion values */}
-            <div className="mb-4 rounded-2xl border border-status-complete/30 bg-status-complete/5 p-4 shadow-sm">
+            <div className="mb-4 rounded-2xl border border-status-complete/30 bg-status-complete/5 p-4 shadow-elev-1">
               <p className="mb-2 text-sm font-bold text-foreground">{league.label} 완료 가치</p>
               <div className="space-y-1">
                 {league.completionValues.map(v => (

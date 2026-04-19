@@ -112,7 +112,7 @@ const SessionRunner = ({ blocks, levelLabel, onComplete }: SessionRunnerProps) =
   return (
     <div className="space-y-4">
       {/* Timer */}
-      <div className="rounded-2xl border-2 border-primary/30 bg-card p-5 text-center shadow-sm">
+      <div className="rounded-2xl border-2 border-primary/30 bg-card p-5 text-center shadow-elev-1">
         <p className="text-xs text-muted-foreground">{levelLabel}</p>
         <p className="mt-1 text-4xl font-bold tabular-nums text-foreground" style={{ fontFamily: "monospace" }}>
           {formatTime(tracker.elapsedSeconds)}

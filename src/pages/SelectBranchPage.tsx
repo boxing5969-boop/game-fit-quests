@@ -86,7 +86,7 @@ const SelectBranchPage = () => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-4xl shadow-lg">🥊</div>
+        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-4xl shadow-glow-primary">🥊</div>
         <h1 className="text-2xl font-bold text-foreground">체육관 등록</h1>
         <p className="mt-1 text-sm text-muted-foreground">소셜 로그인 후 추가 정보를 입력해주세요</p>
       </div>
@@ -148,7 +148,7 @@ const SelectBranchPage = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-xl bg-primary py-4 text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
+          className="w-full rounded-xl bg-primary py-4 text-lg font-bold text-primary-foreground shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
         >
           {isLoading ? "등록 중..." : "등록 완료 🥊"}
         </button>

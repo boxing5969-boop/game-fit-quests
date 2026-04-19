@@ -55,7 +55,7 @@ const SafetyCheckPage = () => {
         )}
       </div>
 
-      <div className="mb-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="mb-6 rounded-2xl border border-border bg-card p-5 shadow-elev-1">
         <div className="mb-3 flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-primary" />
           <span className="text-sm font-bold text-foreground">안전한 시작을 위한 간단 체크</span>
@@ -67,7 +67,7 @@ const SafetyCheckPage = () => {
         <>
           <div className="space-y-3">
             {SAFETY_QUESTIONS.map(q => (
-              <div key={q.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div key={q.id} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
                 <p className="mb-3 text-sm font-medium text-foreground">{q.question}</p>
                 <div className="flex gap-2">
                   {[true, false].map(val => (
@@ -91,7 +91,7 @@ const SafetyCheckPage = () => {
           <button
             onClick={handleSubmit}
             disabled={!allAnswered}
-            className="mt-6 w-full rounded-2xl bg-primary py-4 text-base font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98] disabled:opacity-40"
+            className="mt-6 w-full rounded-2xl bg-primary py-4 text-base font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-40"
           >
             결과 확인
           </button>
@@ -99,7 +99,7 @@ const SafetyCheckPage = () => {
       ) : (
         <div className="space-y-4">
           {recommendStarter ? (
-            <div className="rounded-2xl border-2 border-accent/50 bg-accent/5 p-5 shadow-sm">
+            <div className="rounded-2xl border-2 border-accent/50 bg-accent/5 p-5 shadow-elev-1">
               <div className="mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-accent" />
                 <span className="text-base font-bold text-foreground">스타터 모드를 추천합니다</span>
@@ -112,7 +112,7 @@ const SafetyCheckPage = () => {
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl border-2 border-status-complete/30 bg-status-complete/5 p-5 shadow-sm">
+            <div className="rounded-2xl border-2 border-status-complete/30 bg-status-complete/5 p-5 shadow-elev-1">
               <div className="mb-3 flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-status-complete" />
                 <span className="text-base font-bold text-foreground">준비가 되었습니다!</span>
@@ -127,7 +127,7 @@ const SafetyCheckPage = () => {
 
           <button
             onClick={handleContinue}
-            className="w-full rounded-2xl bg-primary py-4 text-base font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98]"
+            className="w-full rounded-2xl bg-primary py-4 text-base font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]"
           >
             {recommendStarter ? "🥊 스타터 모드로 시작" : "🥊 훈련 시작"}
           </button>

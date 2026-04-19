@@ -22,8 +22,8 @@ const RankMiniCard = ({ nickname, rank, level, position, avatarUrl, xp, isMe, is
   return (
     <div className={`flex items-center gap-3 rounded-2xl border p-3 transition-all ${
       isHallOfFame
-        ? "border-amber-500/40 bg-gradient-to-r from-amber-500/10 to-yellow-500/5 shadow-sm"
-        : isMe ? "border-primary bg-primary/5 shadow-sm"
+        ? "border-amber-500/40 bg-gradient-to-r from-amber-500/10 to-yellow-500/5 shadow-elev-1"
+        : isMe ? "border-primary bg-primary/5 shadow-elev-1"
         : isRival ? "border-accent/50 bg-accent/5"
         : "border-border bg-card"
     }`}>

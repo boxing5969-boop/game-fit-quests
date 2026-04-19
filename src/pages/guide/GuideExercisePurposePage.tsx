@@ -20,7 +20,7 @@ const GuideExercisePurposePage = () => {
 
       <div className="space-y-4">
         {EXERCISE_REASONS.map(ex => (
-          <div key={ex.id} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div key={ex.id} className="rounded-2xl border border-border bg-card p-5 shadow-elev-1">
             <div className="mb-3 flex items-center gap-3">
               <span className="text-2xl">{ex.emoji}</span>
               <h3 className="text-base font-bold text-foreground">{ex.name}</h3>

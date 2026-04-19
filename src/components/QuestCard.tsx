@@ -33,9 +33,9 @@ const QuestCard = ({ quest, submissionStatus = null, onSubmit, isSubmitting }: Q
 
   return (
     <div className={`rounded-2xl border p-4 transition-all ${
-      displayStatus === "complete" ? "border-status-complete/20 bg-card shadow-sm" :
-      displayStatus === "pending" ? "border-status-pending/20 bg-card shadow-sm" :
-      "border-border bg-card shadow-sm"
+      displayStatus === "complete" ? "border-status-complete/20 bg-card shadow-elev-1" :
+      displayStatus === "pending" ? "border-status-pending/20 bg-card shadow-elev-1" :
+      "border-border bg-card shadow-elev-1"
     } ${displayStatus === "active" ? "border-primary/30" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">

@@ -18,7 +18,7 @@ const GuideFaqPage = () => {
 
       <div className="space-y-3">
         {FAQ_ITEMS.map((item, i) => (
-          <div key={i} className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div key={i} className="rounded-2xl border border-border bg-card shadow-elev-1 overflow-hidden">
             <button
               onClick={() => setOpenIndex(openIndex === i ? null : i)}
               className="flex w-full items-center justify-between p-4 text-left transition-all active:bg-secondary/50"

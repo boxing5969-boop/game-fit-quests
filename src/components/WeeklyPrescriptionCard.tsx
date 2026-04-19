@@ -13,7 +13,7 @@ const WeeklyPrescriptionCard = () => {
   const style = PLAN_STYLE[prescription.planType] || PLAN_STYLE["기본"];
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-primary" />

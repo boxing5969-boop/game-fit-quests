@@ -125,7 +125,7 @@ const DailyOperationsBoard = () => {
           <h3 className="mb-2 text-sm font-bold text-foreground">⏳ 코치 백업 필요 ({pendingVisitors.length}명)</h3>
           <div className="space-y-2">
             {pendingVisitors.map(v => (
-              <div key={v.userId} className="rounded-2xl border border-status-pending/30 bg-card shadow-sm overflow-hidden">
+              <div key={v.userId} className="rounded-2xl border border-status-pending/30 bg-card shadow-elev-1 overflow-hidden">
                 <div className="flex items-center gap-3 p-3.5">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold">
                     {v.nickname.charAt(0)}

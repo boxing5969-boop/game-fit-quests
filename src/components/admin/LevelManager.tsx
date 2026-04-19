@@ -127,7 +127,7 @@ const LevelManager = () => {
         </div>
       ) : (
         filtered.map((l: any) => (
-          <div key={l.id} className="rounded-2xl border border-border bg-card p-3 shadow-sm">
+          <div key={l.id} className="rounded-2xl border border-border bg-card p-3 shadow-elev-1">
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">

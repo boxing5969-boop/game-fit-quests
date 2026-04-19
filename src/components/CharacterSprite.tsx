@@ -250,7 +250,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           <img
             src={imgSrc!}
             alt="캐릭터"
-            className="h-full w-full object-contain drop-shadow-sm"
+            className="h-full w-full object-contain drop-shadow-elev-1"
             style={{ imageRendering: "auto" }}
             draggable={false}
             loading="lazy"

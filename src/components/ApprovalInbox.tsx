@@ -360,7 +360,7 @@ const ApprovalInbox = () => {
   return (
     <div className="space-y-4">
       {/* Summary bar */}
-      <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-3 shadow-sm">
+      <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-3 shadow-elev-1">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-status-pending/10">
             <Clock className="h-5 w-5 text-status-pending" />

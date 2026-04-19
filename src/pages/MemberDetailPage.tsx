@@ -295,7 +295,7 @@ const MemberDetailPage = () => {
       </div>
 
       {/* Summary Card */}
-      <div className="mb-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="mb-4 rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="grid grid-cols-4 gap-2 text-center">
           <MiniStat label="총 XP" value={prog.total_xp.toLocaleString()} />
           <MiniStat label="출석" value={`${prog.streak_days}일`} />

@@ -70,7 +70,7 @@ const HallOfFameShowcase = () => {
               return (
                 <div
                   key={m.r_user_id}
-                  className="flex min-w-[100px] flex-col items-center gap-1.5 rounded-2xl border border-accent/40 bg-gradient-to-b from-accent/10 to-card p-3 shadow-sm"
+                  className="flex min-w-[100px] flex-col items-center gap-1.5 rounded-2xl border border-accent/40 bg-gradient-to-b from-accent/10 to-card p-3 shadow-elev-1"
                 >
                   <div className="relative">
                     <Crown className="absolute -top-2 left-1/2 z-20 h-4 w-4 -translate-x-1/2 text-accent" />

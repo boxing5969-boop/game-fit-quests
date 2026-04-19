@@ -209,7 +209,7 @@ const ChatAssistant = () => {
                 )}
 
                 <div
-                  className={`max-w-[78%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed whitespace-pre-wrap shadow-sm ${
+                  className={`max-w-[78%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed whitespace-pre-wrap shadow-elev-1 ${
                     m.role === "user"
                       ? "rounded-tr-md bg-gradient-to-br from-red-500 to-red-600 text-white"
                       : m.isError
@@ -233,7 +233,7 @@ const ChatAssistant = () => {
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-md">
                   <span className="text-sm">🥊</span>
                 </div>
-                <div className="rounded-2xl rounded-tl-md border border-gray-100 bg-white px-4 py-3 shadow-sm">
+                <div className="rounded-2xl rounded-tl-md border border-gray-100 bg-white px-4 py-3 shadow-elev-1">
                   <div className="flex items-center gap-1.5">
                     <Sparkles size={14} className="text-orange-400 animate-spin" style={{ animationDuration: "2s" }} />
                     <span className="text-[12px] text-gray-500 font-medium">코치가 분석 중...</span>

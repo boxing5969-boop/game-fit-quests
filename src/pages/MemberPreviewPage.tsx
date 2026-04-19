@@ -242,7 +242,7 @@ const MemberPreviewPage = () => {
         {activeTab === "home" && (
           <div className="space-y-4">
             {/* Member info card */}
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-elev-1">
               <div className="flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl">
                   {p.avatar_url ? (

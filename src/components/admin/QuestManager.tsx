@@ -123,7 +123,7 @@ const QuestManager = () => {
         </div>
       ) : (
         filtered.map((q: any) => (
-          <div key={q.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div key={q.id} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">

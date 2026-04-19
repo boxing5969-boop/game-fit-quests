@@ -250,7 +250,7 @@ const CoachDashboard = () => {
             <EmptyState icon="✅" message="승인 대기 중인 미션이 없습니다" />
           ) : (
             pendingSubmissions.map((sub: any) => (
-              <div key={sub.id} className="rounded-2xl border border-status-pending/30 bg-card p-4 shadow-sm">
+              <div key={sub.id} className="rounded-2xl border border-status-pending/30 bg-card p-4 shadow-elev-1">
                 <div className="mb-3">
                   <p className="text-sm font-bold text-foreground">{sub.missions?.title || "미션"}</p>
                   <div className="mt-1 flex items-center gap-2">
@@ -291,7 +291,7 @@ const CoachDashboard = () => {
               const roleInfo = ROLE_LABELS[memberRole] || ROLE_LABELS.member;
               const isBossReady = prog?.current_level === 10;
               return (
-                <div key={member.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                <div key={member.id} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-xl">
                       {member.avatar_url ? (
@@ -417,7 +417,7 @@ const CoachDashboard = () => {
       {activeTab === "branches" && (role === "admin" || role === "super_admin") && (
         <div className="space-y-3">
           {/* Add / Edit Branch */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
             <h3 className="mb-3 text-sm font-bold text-foreground">
               {editingBranch ? "✏️ 지점 수정" : "➕ 새 지점 추가"}
             </h3>
@@ -459,7 +459,7 @@ const CoachDashboard = () => {
 
           {/* Branch List */}
           {branches?.length ? branches.map((b) => (
-            <div key={b.id} className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
+            <div key={b.id} className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 shadow-elev-1">
               <span className="text-sm font-medium text-foreground">🏢 {b.name}</span>
               <div className="flex gap-2">
                 <button onClick={() => setEditingBranch({ id: b.id, name: b.name })}
@@ -493,7 +493,7 @@ const CoachDashboard = () => {
             <EmptyState icon="✅" message="승인 대기 중인 관장님 요청이 없습니다" />
           ) : (
             coachRequests.map((req: any) => (
-              <div key={req.id} className="rounded-2xl border border-status-pending/30 bg-card p-4 shadow-sm">
+              <div key={req.id} className="rounded-2xl border border-status-pending/30 bg-card p-4 shadow-elev-1">
                 <div className="mb-3">
                   <p className="text-sm font-bold text-foreground">{req.profile?.nickname || req.profile?.name || "이름 없음"}</p>
                   <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">

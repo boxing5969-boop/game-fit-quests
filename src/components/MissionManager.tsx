@@ -221,7 +221,7 @@ const MissionManager = () => {
         filteredMissions.map((mission: any) => {
           const video = mission.mission_videos?.[0];
           return (
-            <div key={mission.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div key={mission.id} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-foreground truncate">{mission.title}</p>

@@ -28,7 +28,7 @@ export function EarnedBadgeGrid({ badges, loading }: { badges: Badge[]; loading?
   return (
     <div className="grid grid-cols-3 gap-3">
       {badges.map(b => (
-        <div key={b.id} className="flex flex-col items-center gap-1.5 rounded-2xl border border-primary/20 bg-card p-3 shadow-sm text-center">
+        <div key={b.id} className="flex flex-col items-center gap-1.5 rounded-2xl border border-primary/20 bg-card p-3 shadow-elev-1 text-center">
           <span className="text-3xl">{b.image_url || "🏅"}</span>
           <span className="text-xs font-bold text-foreground">{b.name}</span>
         </div>
@@ -56,7 +56,7 @@ export function LevelUpHistory({ logs }: { logs: { id: string; reason: string; c
   if (logs.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-sm">
+    <div className="rounded-2xl border border-border bg-card shadow-elev-1">
       {logs.slice(0, 10).map((log, idx) => (
         <div key={log.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(logs.length, 10) - 1 ? "border-b border-border" : ""}`}>
           <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export function RecentXpList({ logs }: { logs: { id: string; reason: string; cre
   if (!logs || logs.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-sm">
+    <div className="rounded-2xl border border-border bg-card shadow-elev-1">
       {logs.slice(0, 5).map((log, idx) => (
         <div key={log.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(logs.length, 5) - 1 ? "border-b border-border" : ""}`}>
           <div>
@@ -93,7 +93,7 @@ export function RecentXpList({ logs }: { logs: { id: string; reason: string; cre
 
 export function StatCard({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card p-3 shadow-sm text-center">
+    <div className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card p-3 shadow-elev-1 text-center">
       <span className="text-xl">{icon}</span>
       <span className="text-xs text-muted-foreground">{label}</span>
       <span className="text-base font-bold text-foreground">{value}</span>

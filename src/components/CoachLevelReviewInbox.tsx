@@ -107,7 +107,7 @@ const CoachLevelReviewInbox = () => {
             const Icon = STATUS_ICON[member.status] || Clock;
             const color = STATUS_COLOR[member.status] || "text-muted-foreground bg-muted";
             return (
-              <div key={member.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div key={member.id} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
                 <div className="mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-foreground">{member.nickname}</span>
@@ -149,7 +149,7 @@ const CoachLevelReviewInbox = () => {
       )}
 
       {/* Quick feedback templates */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <p className="mb-2 text-xs font-bold text-foreground">💬 빠른 피드백 템플릿</p>
         <div className="flex flex-wrap gap-1.5">
           {QUICK_FEEDBACK.map(fb => (

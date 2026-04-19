@@ -14,7 +14,7 @@ const GuideProgramPage = () => {
       </div>
 
       {/* Philosophy */}
-      <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-elev-1">
         <h2 className="mb-3 text-base font-bold text-foreground">🥊 153랭크업 철학</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
           153랭크업은 복싱을 통해 1레벨에서 40레벨까지 체계적으로 성장하는 프로그램입니다. 
@@ -31,7 +31,7 @@ const GuideProgramPage = () => {
           { emoji: "🔴", label: "레드 리그 (Lv 21~30)", subtitle: "적용과 반응", desc: "배운 기술을 실전 상황에 적용하고, 거리·타이밍·반응 속도를 키워 복싱 수행자로 성장합니다." },
           { emoji: "⚫", label: "블랙 리그 (Lv 31~40)", subtitle: "설명 · 분석 · 코칭", desc: "기술을 설명하고 분석할 수 있는 전문가 역량을 갖추고, 초급 코칭까지 가능한 단계입니다." },
         ].map(league => (
-          <div key={league.label} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div key={league.label} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
             <div className="mb-2 flex items-center gap-2">
               <span className="text-xl">{league.emoji}</span>
               <div>
@@ -45,7 +45,7 @@ const GuideProgramPage = () => {
       </div>
 
       {/* Level-up method */}
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-elev-1">
         <h2 className="mb-3 text-base font-bold text-foreground">⬆️ 레벨업 방식</h2>
         <div className="space-y-2 text-sm text-muted-foreground">
           <p>1. 각 레벨의 미션을 확인하고 영상을 시청합니다.</p>

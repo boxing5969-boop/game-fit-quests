@@ -873,7 +873,7 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
               {/* Top row: league badge + status icon */}
               <div className="flex items-start justify-between p-2.5 pb-0 z-10">
                 {isHof ? (
-                  <span className="bg-gradient-to-r from-yellow-500 to-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm leading-none whitespace-nowrap">
+                  <span className="bg-gradient-to-r from-yellow-500 to-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full shadow-elev-1 leading-none whitespace-nowrap">
                     👑 ETERNAL
                   </span>
                 ) : (

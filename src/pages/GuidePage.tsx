@@ -35,7 +35,7 @@ const GuidePage = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex shrink-0 flex-1 items-center justify-center gap-1 rounded-xl px-2 py-2.5 text-xs font-bold transition-all ${
-                activeTab === tab.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                activeTab === tab.id ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -54,7 +54,7 @@ const GuidePage = () => {
             </p>
           </div>
           {WHITE_FAQ.map((item, i) => (
-            <div key={i} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div key={i} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
               <p className="mb-2 text-sm font-bold text-foreground">❓ {item.q}</p>
               <p className="text-xs text-muted-foreground leading-relaxed">{item.a}</p>
             </div>
@@ -91,7 +91,7 @@ const ProgramTab = () => (
 
     {/* New Guide Cards */}
     {GUIDE_CARDS.map(card => (
-      <div key={card.id} className={`rounded-2xl border p-4 shadow-sm ${
+      <div key={card.id} className={`rounded-2xl border p-4 shadow-elev-1 ${
         card.accent ? "border-primary/30 bg-primary/5" : "border-border bg-card"
       }`}>
         <div className="mb-2 flex items-center gap-2">
@@ -104,7 +104,7 @@ const ProgramTab = () => (
 
     {/* Existing league summaries */}
     {LEAGUE_SUMMARIES.map(league => (
-      <div key={league.rank} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div key={league.rank} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="mb-2 flex items-center gap-2">
           <span className="text-lg">{league.emoji}</span>
           <div>
@@ -172,7 +172,7 @@ const ScienceTab = () => (
       </p>
     </div>
     {SCIENCE_CARDS.map(card => (
-      <div key={card.title} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div key={card.title} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="mb-2 flex items-center gap-2">
           <span className="text-xl">{card.emoji}</span>
           <div>
@@ -208,7 +208,7 @@ const ValueMapTab = () => {
         const levels = FULL_VALUE_MAP.filter(l => l.league === league);
         const isExpanded = expandedLeague === league;
         return (
-          <div key={league} className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div key={league} className="rounded-2xl border border-border bg-card shadow-elev-1 overflow-hidden">
             <button onClick={() => setExpandedLeague(isExpanded ? null : league)} className="flex w-full items-center justify-between p-4 text-left active:bg-muted/50">
               <div className="flex items-center gap-2">
                 <span className="text-lg">{RANK_EMOJI[league]}</span>
@@ -252,7 +252,7 @@ const ValueMapTab = () => {
 const ExerciseTab = () => (
   <div className="space-y-3 animate-slide-up">
     {EXERCISE_REASONS.map(ex => (
-      <div key={ex.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div key={ex.id} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="mb-2 flex items-center gap-2">
           <span className="text-2xl">{ex.emoji}</span>
           <h3 className="text-sm font-bold text-foreground">{ex.name}</h3>

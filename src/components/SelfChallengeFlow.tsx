@@ -129,7 +129,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
         </div>
 
         {/* Routine preview (collapsible) */}
-        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-2xl border border-border bg-card shadow-elev-1 overflow-hidden">
           <button onClick={() => setRoutineExpanded(!routineExpanded)} className="flex w-full items-center justify-between p-4 text-left">
             <span className="text-sm font-bold text-foreground">📋 오늘의 추천 루틴</span>
             <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${routineExpanded ? "rotate-180" : ""}`} />
@@ -152,7 +152,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
         {/* Start button */}
         <button
           onClick={handleStart}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-5 text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.97]"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-5 text-lg font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.97]"
         >
           <Play className="h-6 w-6" /> 오늘 도전 시작
         </button>
@@ -171,7 +171,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
     return (
       <div className="space-y-5 animate-slide-up">
         {/* Timer - large and centered, minimal distraction */}
-        <div className="rounded-2xl border-2 border-primary/30 bg-card p-6 text-center shadow-md">
+        <div className="rounded-2xl border-2 border-primary/30 bg-card p-6 text-center shadow-glow-soft">
           <p className="text-xs text-muted-foreground mb-1">{level.title}</p>
           <p className="text-5xl font-bold tabular-nums text-foreground" style={{ fontFamily: "monospace" }}>
             {formatTime(elapsed)}
@@ -194,7 +194,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
         {/* Finish button */}
         <button
           onClick={handleFinish}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-5 text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.97]"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-5 text-lg font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.97]"
         >
           <Square className="h-5 w-5" /> 오늘 도전 완료
         </button>

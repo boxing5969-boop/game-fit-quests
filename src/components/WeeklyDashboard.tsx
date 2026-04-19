@@ -16,7 +16,7 @@ const WeeklyDashboard = () => {
       </h2>
 
       {/* Activity ring */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />
@@ -40,19 +40,19 @@ const WeeklyDashboard = () => {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-2">
         {/* Strength days */}
-        <div className="rounded-xl border border-border bg-card p-3 text-center shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-3 text-center shadow-elev-1">
           <Dumbbell className="mx-auto mb-1 h-4 w-4 text-primary" />
           <p className="text-lg font-bold text-foreground">{metrics.strengthDays}/2</p>
           <p className="text-[10px] text-muted-foreground">근력운동</p>
         </div>
         {/* Intensity */}
-        <div className="rounded-xl border border-border bg-card p-3 text-center shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-3 text-center shadow-elev-1">
           <Flame className="mx-auto mb-1 h-4 w-4 text-primary" />
           <p className="text-lg font-bold text-foreground">RPE {metrics.averageRpe}</p>
           <p className="text-[10px] text-muted-foreground">평균 강도</p>
         </div>
         {/* High intensity */}
-        <div className="rounded-xl border border-border bg-card p-3 text-center shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-3 text-center shadow-elev-1">
           <Timer className="mx-auto mb-1 h-4 w-4 text-primary" />
           <p className="text-lg font-bold text-foreground">{metrics.highIntensitySessions}회</p>
           <p className="text-[10px] text-muted-foreground">고강도 세션</p>
@@ -67,7 +67,7 @@ const WeeklyDashboard = () => {
 
       {/* Balance counter (conditional) */}
       {(metrics.isOver65 || metrics.hasBalanceFlag) && (
-        <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-3 shadow-elev-1">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-foreground">⚖️ 균형 훈련</span>
             <span className="text-sm font-bold text-primary">{metrics.balanceSessions}/3</span>
