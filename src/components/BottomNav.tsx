@@ -69,7 +69,7 @@ const BottomNav = () => {
       )}
 
       {/* Bottom nav bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/85 backdrop-blur-xl shadow-elev-3 safe-area-bottom">
         <div className="mx-auto flex max-w-lg items-center justify-around py-1.5 px-1">
           {mainTabs.map(({ path, icon: Icon, label }) => {
             const active = location.pathname === path;
@@ -77,13 +77,21 @@ const BottomNav = () => {
               <button
                 key={path}
                 onClick={() => navigate(path)}
-                className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 py-1 transition-all active:scale-95 ${
+                className={`relative flex min-w-0 flex-1 flex-col items-center gap-0.5 py-1 transition-all active:scale-95 ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
               >
-                <div className="flex items-center gap-0.5">
-                  <Icon className={active ? "drop-shadow-[0_0_6px_hsl(14,90%,55%,0.4)]" : ""} strokeWidth={active ? 2.5 : 2} size={20} />
-                </div>
+                {active && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -top-1.5 h-1 w-6 rounded-full bg-primary shadow-glow-primary"
+                  />
+                )}
+                <Icon
+                  className={active ? "drop-shadow-[0_0_6px_hsl(14,90%,55%,0.45)]" : ""}
+                  strokeWidth={active ? 2.5 : 2}
+                  size={20}
+                />
                 <span className="text-[9px] font-medium whitespace-nowrap truncate">{label}</span>
               </button>
             );

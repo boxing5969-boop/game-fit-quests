@@ -184,7 +184,7 @@ const HomePage = () => {
 
       <div className="space-y-4">
         {/* ─── 2. Character Showcase ─── */}
-        <section className="animate-slide-up relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card via-card to-secondary/40 p-6 shadow-sm">
+        <section className="animate-slide-up relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card via-card to-secondary/40 p-6 shadow-glow-soft">
           <div className="pointer-events-none absolute inset-0 opacity-60">
             <div className="absolute left-1/2 top-1/3 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl" />
             <div className="absolute right-5 top-4 h-1.5 w-1.5 rounded-full bg-accent animate-ping" style={{ animationDuration: "2s" }} />
@@ -258,7 +258,7 @@ const HomePage = () => {
             />
           </div>
         ) : (
-          <section className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <section className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1">
             <h2 className="mb-2 text-base font-bold text-foreground">오늘의 미션</h2>
             <p className="mb-4 text-sm text-muted-foreground">
               <span className="mr-1">⭐</span>
@@ -273,10 +273,10 @@ const HomePage = () => {
                 }
               }}
               disabled={!checkedInToday}
-              className={`w-full rounded-2xl py-4 text-center text-base font-bold shadow-md transition-all ${
+              className={`w-full rounded-2xl py-4 text-center text-base font-bold transition-all ${
                 checkedInToday
-                  ? "bg-primary text-primary-foreground active:scale-[0.98]"
-                  : "bg-muted text-muted-foreground cursor-not-allowed"
+                  ? "bg-primary text-primary-foreground shadow-glow-soft hover:shadow-glow-primary active:scale-[0.98]"
+                  : "bg-muted text-muted-foreground shadow-elev-1 cursor-not-allowed"
               }`}
             >
               {checkedInToday ? (
@@ -293,7 +293,7 @@ const HomePage = () => {
 
         {/* ─── 4. Weekly Progress ─── */}
         <section
-          className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm"
+          className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1"
           style={{ animationDelay: "0.05s" }}
         >
           <h2 className="mb-3 text-base font-bold text-foreground">이번 주 진행도</h2>
@@ -326,7 +326,7 @@ const HomePage = () => {
             if (!checkedInToday) setShowQRScanner(true);
           }}
           disabled={checkedInToday}
-          className={`w-full animate-slide-up rounded-2xl border p-4 shadow-sm transition-all ${
+          className={`w-full animate-slide-up rounded-2xl border p-4 shadow-elev-1 transition-all ${
             checkedInToday
               ? "cursor-default border-status-complete/30 bg-status-complete/5"
               : "border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 active:scale-[0.98]"
@@ -373,7 +373,7 @@ const HomePage = () => {
               {recentBadges.map((mb: any) => (
                 <div
                   key={mb.id}
-                  className="flex min-w-[80px] flex-col items-center gap-1 rounded-2xl border border-primary/20 bg-card p-3 shadow-sm"
+                  className="flex min-w-[80px] flex-col items-center gap-1 rounded-2xl border border-primary/20 bg-card p-3 shadow-elev-1"
                 >
                   <span className="text-2xl">{mb.badges?.image_url || "🏅"}</span>
                   <span className="text-[10px] font-bold text-foreground text-center">
