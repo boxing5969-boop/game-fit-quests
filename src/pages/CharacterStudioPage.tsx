@@ -269,9 +269,9 @@ const CharacterStudioPage = () => {
             <h1 className="text-lg font-bold text-foreground">캐릭터 스튜디오</h1>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 rounded-full bg-accent/20 px-2.5 py-1">
-              <Gem className="h-3.5 w-3.5 text-accent" />
-              <span className="text-xs font-bold text-accent-foreground">{isAdmin ? "∞" : walletData?.gems_balance?.toLocaleString() || 0}</span>
+            <div className="flex items-center gap-1 rounded-full bg-reward/20 px-2.5 py-1">
+              <Gem className="h-3.5 w-3.5 text-reward" />
+              <span className="text-xs font-bold text-reward-foreground">{isAdmin ? "∞" : walletData?.gems_balance?.toLocaleString() || 0}</span>
             </div>
             {activeTab === "preset" && (
               <>
@@ -466,7 +466,7 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
       </div>
 
       {nextMilestone && (
-        <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 p-4">
+        <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 to-reward/5 p-4">
           <div className="flex items-center gap-3">
             <span className="text-2xl">{nextMilestone.icon}</span>
             <div className="flex-1">
@@ -483,8 +483,8 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
 
       <div className="space-y-2">
         <button onClick={() => navigate("/avatar")} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4 active:scale-[0.98] transition-all">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/20">
-            <Gem className="h-5 w-5 text-accent" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-reward/20">
+            <Gem className="h-5 w-5 text-reward" />
           </div>
           <div className="flex-1 text-left">
             <p className="text-sm font-bold text-foreground">아이템 상점</p>
@@ -888,7 +888,7 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
                 )}
                 <div className="flex items-center gap-1">
                   {isCurrent && !isSelected && !isLocked && (
-                    <Sparkles className="h-3.5 w-3.5 text-accent" />
+                    <Sparkles className="h-3.5 w-3.5 text-reward" />
                   )}
                   {isSelected && !isLocked && (
                     <div className="rounded-full bg-primary p-0.5">
@@ -1124,7 +1124,7 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
           <div className="mt-3 flex items-center gap-2">
             <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all"
+                className="h-full rounded-full bg-gradient-to-r from-primary to-reward transition-all"
                 style={{ width: `${(leagueIdx / 3) * 100}%` }}
               />
             </div>

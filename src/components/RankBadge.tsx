@@ -20,9 +20,9 @@ const RankBadge = ({ rank, level, size = "sm", isMaster }: RankBadgeProps) => {
 
   if (isMaster) {
     return (
-      <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 border-accent bg-gradient-to-r from-accent/20 to-primary/20 shadow-elev-1 ${isLg ? "px-4 py-1.5" : ""}`}>
+      <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 border-reward bg-gradient-to-r from-reward/20 to-primary/20 shadow-elev-1 ${isLg ? "px-4 py-1.5" : ""}`}>
         <span className={isLg ? "text-lg" : "text-sm"}>👑</span>
-        <span className={`font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent ${isLg ? "text-base" : "text-xs"}`}>
+        <span className={`font-bold bg-gradient-to-r from-reward to-primary bg-clip-text text-transparent ${isLg ? "text-base" : "text-xs"}`}>
           마스터
         </span>
       </div>

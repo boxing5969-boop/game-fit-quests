@@ -119,8 +119,8 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
             <div className="space-y-4">
               {/* Already master warning */}
               {isMaster40 && (
-                <div className="rounded-xl border border-accent/30 bg-accent/10 p-3">
-                  <p className="text-xs font-bold text-accent-foreground">⚠️ 이 회원은 이미 MASTER 40입니다</p>
+                <div className="rounded-xl border border-reward/30 bg-reward/10 p-3">
+                  <p className="text-xs font-bold text-reward-foreground">⚠️ 이 회원은 이미 MASTER 40입니다</p>
                 </div>
               )}
 
@@ -128,7 +128,7 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
               <div className="space-y-2.5">
                 <p className="text-sm font-bold text-foreground">완료 항목 선택</p>
                 <CheckOption checked={doLevels} onChange={setDoLevels} icon={<Star className="h-4 w-4 text-primary" />} label="모든 레벨 완료 (40레벨)" desc="화이트~블랙 리그 전체" />
-                <CheckOption checked={doBosses} onChange={setDoBosses} icon={<Trophy className="h-4 w-4 text-accent-foreground" />} label="모든 보스전 합격 (4회)" desc="각 리그 타이틀매치 합격" />
+                <CheckOption checked={doBosses} onChange={setDoBosses} icon={<Trophy className="h-4 w-4 text-reward-foreground" />} label="모든 보스전 합격 (4회)" desc="각 리그 타이틀매치 합격" />
                 <CheckOption checked={doBadges} onChange={setDoBadges} icon={<Award className="h-4 w-4 text-status-pending" />} label="모든 배지 지급" desc="전체 배지 자동 부여" />
                 <CheckOption checked={doMaster} onChange={setDoMaster} icon={<Crown className="h-4 w-4 text-yellow-500" />} label="MASTER 40 달성" desc="블랙 리그 Lv.10 + 보스전 4회" />
                 <CheckOption checked={sendNotification} onChange={setSendNotification} icon={<Zap className="h-4 w-4 text-blue-500" />} label="회원에게 알림 보내기" desc="완료 축하 알림 발송" />

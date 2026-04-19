@@ -21,10 +21,10 @@ const LEAGUE_SECTIONS = [
 }));
 
 const RARITY_BORDER: Record<string, string> = {
-  common: "border-border", uncommon: "border-blue-400", rare: "border-primary", legendary: "border-accent",
+  common: "border-border", uncommon: "border-blue-400", rare: "border-primary", legendary: "border-reward",
 };
 const RARITY_BG: Record<string, string> = {
-  common: "bg-muted/50", uncommon: "bg-blue-400/10", rare: "bg-primary/10", legendary: "bg-accent/10",
+  common: "bg-muted/50", uncommon: "bg-blue-400/10", rare: "bg-primary/10", legendary: "bg-reward/10",
 };
 const RARITY_LABELS: Record<string, string> = {
   common: "일반", uncommon: "고급", rare: "희귀", legendary: "전설",
@@ -94,12 +94,12 @@ const AvatarPage = () => {
 
         {/* ─── Gem Balance Card ─────────────────────────────────── */}
         <div className="px-4 pt-4 pb-1">
-          <div className="rounded-3xl bg-gradient-to-br from-accent/25 via-primary/15 to-accent/20 border border-accent/30 p-5 shadow-lg">
+          <div className="rounded-3xl bg-gradient-to-br from-reward/25 via-primary/15 to-reward/20 border border-reward/30 p-5 shadow-lg">
             <p className="text-xs font-medium text-muted-foreground mb-2">내 젬 잔액</p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-accent/20 p-2.5">
-                  <Gem className="h-6 w-6 text-accent" />
+                <div className="rounded-2xl bg-reward/20 p-2.5">
+                  <Gem className="h-6 w-6 text-reward" />
                 </div>
                 <span className="text-3xl font-black text-foreground tabular-nums">
                   {isAdmin ? "∞" : gemBalance.toLocaleString()}
@@ -197,7 +197,7 @@ const AvatarPage = () => {
                 >
                   <div className="flex items-center justify-between p-3 pb-0">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                      item.rarity === "legendary" ? "bg-accent/20 text-accent-foreground" :
+                      item.rarity === "legendary" ? "bg-reward/20 text-reward-foreground" :
                       item.rarity === "rare"      ? "bg-primary/20 text-primary" :
                       item.rarity === "uncommon"  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" :
                       "bg-muted text-muted-foreground"
@@ -244,7 +244,7 @@ const AvatarPage = () => {
                       <button
                         onClick={() => setPurchaseConfirm({ id: item.id, name: item.name, price: item.price_gems })}
                         disabled={!isAdmin && gemBalance < item.price_gems}
-                        className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-accent/80 to-primary/80 py-2 text-xs font-bold text-primary-foreground active:scale-95 transition-all disabled:opacity-40"
+                        className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-reward/80 to-primary/80 py-2 text-xs font-bold text-primary-foreground active:scale-95 transition-all disabled:opacity-40"
                       >
                         <Gem className="h-3 w-3" />
                         {item.price_gems.toLocaleString()}
@@ -308,7 +308,7 @@ const AvatarPage = () => {
               <button
                 onClick={() => handlePurchase(purchaseConfirm.id, purchaseConfirm.name)}
                 disabled={purchaseItem.isPending || (!isAdmin && gemBalance < purchaseConfirm.price)}
-                className="flex-[2] rounded-2xl bg-gradient-to-r from-accent to-primary py-3.5 text-sm font-bold text-primary-foreground active:scale-95 transition-all disabled:opacity-50"
+                className="flex-[2] rounded-2xl bg-gradient-to-r from-reward to-primary py-3.5 text-sm font-bold text-primary-foreground active:scale-95 transition-all disabled:opacity-50"
               >
                 {purchaseItem.isPending ? (
                   <span className="flex items-center justify-center gap-2">

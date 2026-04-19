@@ -74,7 +74,7 @@ const GuideValueMapPage = () => {
                     <div className="flex-1">
                       <p className={`text-sm font-bold ${isComplete || isCurrent ? "text-foreground" : "text-muted-foreground"}`}>{lv.shortValueTitle}</p>
                       <p className="text-[11px] text-muted-foreground">{lv.valueDescription}</p>
-                      <span className="mt-1 inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[9px] font-bold text-accent-foreground">
+                      <span className="mt-1 inline-block rounded-full bg-reward/10 px-2 py-0.5 text-[9px] font-bold text-reward-foreground">
                         🔓 {lv.unlockedBenefit}
                       </span>
                     </div>

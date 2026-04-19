@@ -61,7 +61,7 @@ const MemberTimeline = ({ userId }: { userId: string }) => {
           detail: l.change_reason || undefined,
           date: l.created_at,
           icon: l.new_status === "boss_cleared" ? <Trophy className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />,
-          color: l.new_status === "boss_cleared" ? "text-accent-foreground bg-accent/10" : "text-rank-blue bg-rank-blue/10",
+          color: l.new_status === "boss_cleared" ? "text-reward-foreground bg-reward/10" : "text-rank-blue bg-rank-blue/10",
         });
       });
 

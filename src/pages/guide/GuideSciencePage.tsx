@@ -49,7 +49,7 @@ const GuideSciencePage = () => {
       <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-elev-1">
         <h2 className="mb-3 text-base font-bold text-foreground">🔥 강도 구분</h2>
         <div className="space-y-3">
-          <div className="rounded-xl bg-accent/10 p-3">
+          <div className="rounded-xl bg-reward/10 p-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-foreground">중강도</span>
               <span className="text-xs font-medium text-primary">RPE 3~4</span>

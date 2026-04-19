@@ -113,7 +113,7 @@ const MyPage = () => {
               <div className="mt-1.5 flex items-center gap-2">
                 <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} isMaster={isManagerRole(role)} />
                 {role && role !== "member" && (
-                  <span className="rounded-full bg-accent/30 px-2 py-0.5 text-xs font-bold text-accent-foreground">
+                  <span className="rounded-full bg-reward/30 px-2 py-0.5 text-xs font-bold text-reward-foreground">
                     {role === "branch_manager" || role === "coach" ? "관장님" : role === "super_admin" || role === "admin" ? "전체 관리자" : role}
                   </span>
                 )}
@@ -159,7 +159,7 @@ const MyPage = () => {
         {/* Character & Items - unified */}
         <button
           onClick={() => navigate("/character-studio")}
-          className="w-full animate-slide-up rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 p-4 shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]"
+          className="w-full animate-slide-up rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-reward/10 p-4 shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]"
           style={{ animationDelay: "0.08s" }}
         >
           <div className="flex items-center gap-3">
@@ -170,16 +170,16 @@ const MyPage = () => {
               <p className="text-sm font-bold text-foreground">캐릭터 스튜디오</p>
               <p className="text-xs text-muted-foreground">만들기 · 꾸미기 · 성장시키기</p>
             </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1.5">
-              <Gem className="h-4 w-4 text-accent" />
-              <span className="text-sm font-bold text-accent-foreground">{walletData?.gems_balance?.toLocaleString() || 0}</span>
+            <div className="flex items-center gap-1.5 rounded-full bg-reward/20 px-3 py-1.5">
+              <Gem className="h-4 w-4 text-reward" />
+              <span className="text-sm font-bold text-reward-foreground">{walletData?.gems_balance?.toLocaleString() || 0}</span>
             </div>
           </div>
         </button>
 
         {/* Master League */}
         {isMaster40 && (
-          <div className="animate-bounce-in rounded-2xl border-2 border-accent bg-gradient-to-br from-accent/20 via-primary/10 to-accent/20 p-6 text-center shadow-glow-gold">
+          <div className="animate-bounce-in rounded-2xl border-2 border-reward bg-gradient-to-br from-reward/20 via-primary/10 to-reward/20 p-6 text-center shadow-glow-reward">
             <span className="text-5xl">👑</span>
             <h2 className="mt-2 text-xl font-bold text-foreground">마스터 리그 달성</h2>
             <p className="text-sm text-muted-foreground">블랙 리그 레벨 10 달성 + 모든 타이틀매치 클리어</p>

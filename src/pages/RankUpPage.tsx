@@ -91,13 +91,13 @@ const RankUpPage = () => {
       </div>
 
       {/* Current progress */}
-      <div className="mb-6 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 p-5 border border-primary/20 shadow-glow-soft text-center">
+      <div className="mb-6 rounded-2xl bg-gradient-to-br from-primary/10 to-reward/10 p-5 border border-primary/20 shadow-glow-soft text-center">
         <p className="text-sm text-muted-foreground">현재 진행</p>
         <p className="text-3xl font-bold text-foreground">
           {isManager ? "👑 마스터" : `Lv ${globalLevel} / 40`}
         </p>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">
-          <div className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all" style={{ width: `${(currentGlobal / 40) * 100}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-r from-primary to-reward transition-all" style={{ width: `${(currentGlobal / 40) * 100}%` }} />
         </div>
       </div>
 
@@ -155,9 +155,9 @@ const RankUpPage = () => {
                     </div>
                     {/* Boss level unlock benefit */}
                     {lvls.length > 0 && (
-                      <div className="rounded-xl border border-accent/20 bg-accent/5 p-3">
+                      <div className="rounded-xl border border-reward/20 bg-reward/5 p-3">
                         <div className="mb-1.5 flex items-center gap-1.5">
-                          <Gift className="h-3.5 w-3.5 text-accent" />
+                          <Gift className="h-3.5 w-3.5 text-reward" />
                           <p className="text-xs font-bold text-foreground">Lv {lvls[lvls.length - 1].level} 해금 보상</p>
                         </div>
                         <p className="text-xs text-muted-foreground">🎁 {lvls[lvls.length - 1].unlockedBenefit}</p>
@@ -210,7 +210,7 @@ const RankUpPage = () => {
                             } ${node.is_boss ? "col-span-2 py-3" : ""}`}
                             style={isCurrent ? { animation: "pulse-glow 2s ease-in-out infinite" } : {}}
                           >
-                            {node.is_boss ? <Trophy className={`h-7 w-7 ${unlocked ? "text-accent" : "text-muted-foreground"}`} />
+                            {node.is_boss ? <Trophy className={`h-7 w-7 ${unlocked ? "text-reward" : "text-muted-foreground"}`} />
                               : allDone && unlocked ? <CheckCircle2 className="h-4 w-4 text-status-complete" />
                               : unlocked ? <Star className={`h-4 w-4 ${isCurrent ? "text-primary" : "text-muted-foreground"}`} />
                               : <Lock className="h-4 w-4 text-muted-foreground" />}
@@ -229,14 +229,14 @@ const RankUpPage = () => {
                       if (!challenge || currentGlobal < rankMaxGlobal) return null;
                       return (
                         <button onClick={() => setDanChallengeOpen(challenge)}
-                          className="mt-3 w-full rounded-2xl border-2 border-accent/40 bg-gradient-to-r from-accent/10 via-primary/10 to-accent/10 p-4 text-left transition-all active:scale-[0.98] hover:border-accent/60">
+                          className="mt-3 w-full rounded-2xl border-2 border-reward/40 bg-gradient-to-r from-reward/10 via-primary/10 to-reward/10 p-4 text-left transition-all active:scale-[0.98] hover:border-reward/60">
                           <div className="flex items-center gap-3">
                             <span className="text-2xl">{challenge.emoji}</span>
                             <div className="flex-1">
                               <p className="text-sm font-black text-foreground">{challenge.dan} 단증 도전 가능! 🔥</p>
                               <p className="text-xs text-muted-foreground">{RANK_LABELS[rank]} 마스터 완료 — 탭하여 도전하기</p>
                             </div>
-                            <ExternalLink className="h-5 w-5 text-accent" />
+                            <ExternalLink className="h-5 w-5 text-reward" />
                           </div>
                         </button>
                       );
@@ -251,16 +251,16 @@ const RankUpPage = () => {
                   <span className="text-lg">👑</span>
                   <h2 className="text-lg text-foreground">마스터 리그</h2>
                 </div>
-                <div className="relative overflow-hidden rounded-3xl border-2 border-accent/40 bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90 p-5 shadow-2xl">
+                <div className="relative overflow-hidden rounded-3xl border-2 border-reward/40 bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90 p-5 shadow-2xl">
                   <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                    <div className="absolute -left-4 -top-4 h-32 w-32 rounded-full bg-accent/20 blur-3xl" />
+                    <div className="absolute -left-4 -top-4 h-32 w-32 rounded-full bg-reward/20 blur-3xl" />
                     <div className="absolute -bottom-4 -right-4 h-32 w-32 rounded-full bg-primary/20 blur-3xl" />
                   </div>
                   <div className="relative mb-4 text-center">
                     <div className="mb-2 flex items-center justify-center gap-2">
-                      <Sparkles className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite" }} />
-                      <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Secret Mission</span>
-                      <Sparkles className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
+                      <Sparkles className="h-5 w-5 text-reward" style={{ animation: "pulse 2s ease-in-out infinite" }} />
+                      <span className="text-xs font-bold uppercase tracking-[0.2em] text-reward">Secret Mission</span>
+                      <Sparkles className="h-5 w-5 text-reward" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
                     </div>
                     <h3 className="text-xl font-black text-primary-foreground">🏆 마스터 리그 최종 미션</h3>
                     <p className="mt-1 text-xs text-primary-foreground/60">블랙 리그 레벨 10 달성 후 도전할 수 있는 시크릿 미션</p>
@@ -271,24 +271,24 @@ const RankUpPage = () => {
                       return (
                         <button key={mission.id}
                           onClick={() => isMaxLevel ? setShowSecretDetail(mission) : toast("블랙 리그 레벨 10 달성 후 도전할 수 있습니다! 🥊")}
-                          className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-all active:scale-[0.98] ${isMaxLevel ? "border-accent/30 bg-accent/10 hover:border-accent/50" : "border-primary-foreground/10 bg-primary-foreground/5"}`}>
+                          className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-all active:scale-[0.98] ${isMaxLevel ? "border-reward/30 bg-reward/10 hover:border-reward/50" : "border-primary-foreground/10 bg-primary-foreground/5"}`}>
                           <div className="flex items-center gap-3 p-4">
-                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isMaxLevel ? "bg-accent/20" : "bg-primary-foreground/10"}`}>
-                              {isMaxLevel ? <MIcon className="h-6 w-6 text-accent" /> : <Lock className="h-6 w-6 text-primary-foreground/30" />}
+                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isMaxLevel ? "bg-reward/20" : "bg-primary-foreground/10"}`}>
+                              {isMaxLevel ? <MIcon className="h-6 w-6 text-reward" /> : <Lock className="h-6 w-6 text-primary-foreground/30" />}
                             </div>
                             <div className="flex-1">
                               <span className="text-sm font-black text-primary-foreground">{mission.emoji} {mission.title}</span>
                               <p className="mt-0.5 text-xs text-primary-foreground/50">{mission.subtitle}</p>
-                              {isMaxLevel && <p className="mt-0.5 text-[10px] text-accent/70 font-medium">탭하여 도전하기 →</p>}
+                              {isMaxLevel && <p className="mt-0.5 text-[10px] text-reward/70 font-medium">탭하여 도전하기 →</p>}
                             </div>
-                            {isMaxLevel && <Crown className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite" }} />}
+                            {isMaxLevel && <Crown className="h-5 w-5 text-reward" style={{ animation: "pulse 2s ease-in-out infinite" }} />}
                           </div>
                         </button>
                       );
                     })}
                   </div>
-                  <div className="relative mt-4 rounded-2xl border border-accent/20 bg-accent/5 p-4">
-                    <p className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-accent">✨ 마스터 리그 달성 보상 ✨</p>
+                  <div className="relative mt-4 rounded-2xl border border-reward/20 bg-reward/5 p-4">
+                    <p className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-reward">✨ 마스터 리그 달성 보상 ✨</p>
                     <div className="space-y-2">
                       {FINAL_REWARDS.map((r, i) => (
                         <div key={i} className="flex items-center gap-2.5 rounded-xl bg-primary-foreground/5 px-3 py-2">
@@ -318,7 +318,7 @@ const RankUpPage = () => {
             <div className="flex items-center gap-2">
               <span className="text-lg">{selectedNode ? RANK_ICONS[selectedNode.rank_name] : ""}</span>
               <DrawerTitle>{selectedNode ? `${RANK_LABELS[selectedNode.rank_name]} Lv.${selectedNode.level_number}` : ""}</DrawerTitle>
-              {selectedNode?.is_boss && <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-bold text-accent-foreground">🏆 타이틀매치</span>}
+              {selectedNode?.is_boss && <span className="rounded-full bg-reward/20 px-2 py-0.5 text-xs font-bold text-reward-foreground">🏆 타이틀매치</span>}
             </div>
           </DrawerHeader>
           {selectedNode && (
@@ -383,7 +383,7 @@ const RankUpPage = () => {
               {isAdmin && user && selectedNode.is_boss && (
                 <button onClick={async () => {
                   try { const result = await bossBattleMutation.mutateAsync({ memberId: user.id }); if (result?.ranked_up) { toast.success(`${RANK_LABELS[result.new_rank] || result.new_rank} 리그로 승격! 🏆`); } else { toast.success("타이틀매치 클리어! 🏆"); } refreshProgress(); setSelectedNode(null); } catch (e: any) { toast.error(e?.message || "타이틀매치 처리 실패"); }
-                }} disabled={bossBattleMutation.isPending} className="w-full rounded-xl bg-accent py-3 text-sm font-bold text-accent-foreground shadow-glow-gold transition-all active:scale-[0.98] disabled:opacity-50">
+                }} disabled={bossBattleMutation.isPending} className="w-full rounded-xl bg-reward py-3 text-sm font-bold text-reward-foreground shadow-glow-reward transition-all active:scale-[0.98] disabled:opacity-50">
                   <Trophy className="mr-1 inline h-4 w-4" />{bossBattleMutation.isPending ? "처리 중..." : "🏆 즉시 타이틀매치 클리어 (관리자)"}
                 </button>
               )}
@@ -398,10 +398,10 @@ const RankUpPage = () => {
 
       {/* Dan Challenge Dialog */}
       <Dialog open={!!danChallengeOpen} onOpenChange={(open) => !open && setDanChallengeOpen(null)}>
-        <DialogContent className="mx-auto max-w-sm rounded-3xl border-2 border-accent/30 bg-card p-0 overflow-hidden">
-          <div className="relative bg-gradient-to-br from-accent/20 via-primary/10 to-accent/10 p-6 text-center">
+        <DialogContent className="mx-auto max-w-sm rounded-3xl border-2 border-reward/30 bg-card p-0 overflow-hidden">
+          <div className="relative bg-gradient-to-br from-reward/20 via-primary/10 to-reward/10 p-6 text-center">
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-              <div className="absolute -left-4 -top-4 h-24 w-24 rounded-full bg-accent/20 blur-3xl" />
+              <div className="absolute -left-4 -top-4 h-24 w-24 rounded-full bg-reward/20 blur-3xl" />
               <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-primary/20 blur-3xl" />
             </div>
             <span className="relative text-5xl">{danChallengeOpen?.emoji}</span>
@@ -426,7 +426,7 @@ const RankUpPage = () => {
           </DrawerHeader>
           {showSecretDetail && (
             <div className="space-y-4 px-4 pb-6">
-              <div className="rounded-xl bg-gradient-to-br from-accent/10 to-primary/10 p-4">
+              <div className="rounded-xl bg-gradient-to-br from-reward/10 to-primary/10 p-4">
                 <p className="text-sm font-bold text-foreground">{showSecretDetail.description}</p>
               </div>
               <div className="rounded-xl bg-secondary p-4">
@@ -480,7 +480,7 @@ const WhiteLv1ProgressionCard = () => {
     "진행중": "bg-primary/10 text-primary",
     "레벨업 심사 가능": "bg-status-complete/10 text-status-complete",
     "보완 필요": "bg-status-pending/10 text-status-pending",
-    "레벨업 완료": "bg-accent/10 text-accent-foreground",
+    "레벨업 완료": "bg-reward/10 text-reward-foreground",
     "코치 확인 필요": "bg-destructive/10 text-destructive",
   };
 

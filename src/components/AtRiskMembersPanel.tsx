@@ -26,7 +26,7 @@ interface AtRiskMember {
 
 const RISK_CONFIG: Record<RiskLevel, { label: string; color: string; bg: string; icon: React.ReactNode; minDays: number }> = {
   mild: { label: "주의", color: "text-status-pending", bg: "bg-status-pending/10", icon: <Clock className="h-4 w-4" />, minDays: 5 },
-  moderate: { label: "위험", color: "text-accent-foreground", bg: "bg-accent/10", icon: <AlertTriangle className="h-4 w-4" />, minDays: 14 },
+  moderate: { label: "위험", color: "text-reward-foreground", bg: "bg-reward/10", icon: <AlertTriangle className="h-4 w-4" />, minDays: 14 },
   severe: { label: "이탈 위험", color: "text-destructive", bg: "bg-destructive/10", icon: <UserX className="h-4 w-4" />, minDays: 30 },
 };
 

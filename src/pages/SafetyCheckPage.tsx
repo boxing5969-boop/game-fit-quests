@@ -99,9 +99,9 @@ const SafetyCheckPage = () => {
       ) : (
         <div className="space-y-4">
           {recommendStarter ? (
-            <div className="rounded-2xl border-2 border-accent/50 bg-accent/5 p-5 shadow-elev-1">
+            <div className="rounded-2xl border-2 border-reward/50 bg-reward/5 p-5 shadow-elev-1">
               <div className="mb-3 flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-accent" />
+                <AlertTriangle className="h-5 w-5 text-reward" />
                 <span className="text-base font-bold text-foreground">스타터 모드를 추천합니다</span>
               </div>
               <p className="mb-4 text-sm leading-relaxed text-muted-foreground">{STARTER_MODE_MESSAGE}</p>

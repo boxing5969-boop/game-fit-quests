@@ -70,13 +70,13 @@ const LevelMapPage = () => {
           <div>
             <span className="text-sm text-muted-foreground">현재 위치</span>
             {isManager ? (
-              <p className="text-lg font-bold text-accent">👑 마스터</p>
+              <p className="text-lg font-bold text-reward">👑 마스터</p>
             ) : (
               <p className="text-lg font-bold text-foreground">레벨 {currentGlobal} / 40</p>
             )}
           </div>
           {isManager ? (
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/20 text-2xl">👑</div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-reward/20 text-2xl">👑</div>
           ) : (
             <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" />
           )}
@@ -134,7 +134,7 @@ const LevelMapPage = () => {
                         style={isCurrent ? { animation: "pulse-glow 2s ease-in-out infinite" } : {}}
                       >
                         {node.is_boss ? (
-                          <Trophy className={`h-7 w-7 ${unlocked ? "text-accent" : "text-muted-foreground"}`} />
+                          <Trophy className={`h-7 w-7 ${unlocked ? "text-reward" : "text-muted-foreground"}`} />
                         ) : allDone && unlocked ? (
                           <CheckCircle2 className="h-4 w-4 text-status-complete" />
                         ) : unlocked ? (
@@ -161,7 +161,7 @@ const LevelMapPage = () => {
                   return (
                     <button
                       onClick={() => setDanChallengeOpen(challenge)}
-                      className="mt-3 w-full rounded-2xl border-2 border-accent/40 bg-gradient-to-r from-accent/10 via-primary/10 to-accent/10 p-4 text-left transition-all active:scale-[0.98] hover:border-accent/60"
+                      className="mt-3 w-full rounded-2xl border-2 border-reward/40 bg-gradient-to-r from-reward/10 via-primary/10 to-reward/10 p-4 text-left transition-all active:scale-[0.98] hover:border-reward/60"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{challenge.emoji}</span>
@@ -169,7 +169,7 @@ const LevelMapPage = () => {
                           <p className="text-sm font-black text-foreground">{challenge.dan} 단증 도전 가능! 🔥</p>
                           <p className="text-xs text-muted-foreground">{RANK_LABELS[rank]} 마스터 완료 — 탭하여 도전하기</p>
                         </div>
-                        <ExternalLink className="h-5 w-5 text-accent" />
+                        <ExternalLink className="h-5 w-5 text-reward" />
                       </div>
                     </button>
                   );
@@ -184,20 +184,20 @@ const LevelMapPage = () => {
               <span className="text-lg">👑</span>
               <h2 className="text-lg text-foreground">마스터 리그</h2>
             </div>
-            <div className="relative overflow-hidden rounded-3xl border-2 border-accent/40 bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90 p-5 shadow-2xl">
+            <div className="relative overflow-hidden rounded-3xl border-2 border-reward/40 bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90 p-5 shadow-2xl">
               {/* Sparkle effects */}
               <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                <div className="absolute -left-4 -top-4 h-32 w-32 rounded-full bg-accent/20 blur-3xl" />
+                <div className="absolute -left-4 -top-4 h-32 w-32 rounded-full bg-reward/20 blur-3xl" />
                 <div className="absolute -bottom-4 -right-4 h-32 w-32 rounded-full bg-primary/20 blur-3xl" />
-                <div className="absolute left-1/2 top-1/3 h-16 w-16 rounded-full bg-accent/10 blur-2xl" style={{ animation: "pulse 3s ease-in-out infinite" }} />
+                <div className="absolute left-1/2 top-1/3 h-16 w-16 rounded-full bg-reward/10 blur-2xl" style={{ animation: "pulse 3s ease-in-out infinite" }} />
               </div>
 
               {/* Header */}
               <div className="relative mb-4 text-center">
                 <div className="mb-2 flex items-center justify-center gap-2">
-                  <Sparkles className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite" }} />
-                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Secret Mission</span>
-                  <Sparkles className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
+                  <Sparkles className="h-5 w-5 text-reward" style={{ animation: "pulse 2s ease-in-out infinite" }} />
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-reward">Secret Mission</span>
+                  <Sparkles className="h-5 w-5 text-reward" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
                 </div>
                 <h3 className="text-xl font-black text-primary-foreground">
                   🏆 마스터 리그 최종 미션
@@ -221,16 +221,16 @@ const LevelMapPage = () => {
                       }}
                       className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-all active:scale-[0.98] ${
                         isMaxLevel
-                          ? "border-accent/30 bg-accent/10 hover:border-accent/50"
+                          ? "border-reward/30 bg-reward/10 hover:border-reward/50"
                           : "border-primary-foreground/10 bg-primary-foreground/5"
                       }`}
                     >
                       <div className="flex items-center gap-3 p-4">
                         <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
-                          isMaxLevel ? "bg-accent/20" : "bg-primary-foreground/10"
+                          isMaxLevel ? "bg-reward/20" : "bg-primary-foreground/10"
                         }`}>
                           {isMaxLevel ? (
-                            <MIcon className="h-6 w-6 text-accent" />
+                            <MIcon className="h-6 w-6 text-reward" />
                           ) : (
                             <Lock className="h-6 w-6 text-primary-foreground/30" />
                           )}
@@ -241,11 +241,11 @@ const LevelMapPage = () => {
                           </div>
                           <p className="mt-0.5 text-xs text-primary-foreground/50">{mission.subtitle}</p>
                           {isMaxLevel && (
-                            <p className="mt-0.5 text-[10px] text-accent/70 font-medium">탭하여 도전하기 →</p>
+                            <p className="mt-0.5 text-[10px] text-reward/70 font-medium">탭하여 도전하기 →</p>
                           )}
                         </div>
                         {isMaxLevel && (
-                          <Crown className="h-5 w-5 text-accent" style={{ animation: "pulse 2s ease-in-out infinite" }} />
+                          <Crown className="h-5 w-5 text-reward" style={{ animation: "pulse 2s ease-in-out infinite" }} />
                         )}
                       </div>
                     </button>
@@ -254,8 +254,8 @@ const LevelMapPage = () => {
               </div>
 
               {/* Rewards Preview */}
-              <div className="relative mt-4 rounded-2xl border border-accent/20 bg-accent/5 p-4">
-                <p className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-accent">
+              <div className="relative mt-4 rounded-2xl border border-reward/20 bg-reward/5 p-4">
+                <p className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-reward">
                   ✨ 마스터 리그 달성 보상 ✨
                 </p>
                 <div className="space-y-2">
@@ -288,7 +288,7 @@ const LevelMapPage = () => {
               <span className="text-lg">{selectedNode ? RANK_ICONS[selectedNode.rank_name] : ""}</span>
               <DrawerTitle>{selectedNode ? `${RANK_LABELS[selectedNode.rank_name]} Lv.${selectedNode.level_number}` : ""}</DrawerTitle>
               {selectedNode?.is_boss && (
-                <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-bold text-accent-foreground">🏆 타이틀매치</span>
+                <span className="rounded-full bg-reward/20 px-2 py-0.5 text-xs font-bold text-reward-foreground">🏆 타이틀매치</span>
               )}
             </div>
           </DrawerHeader>
@@ -394,7 +394,7 @@ const LevelMapPage = () => {
                     }
                   }}
                   disabled={bossBattleMutation.isPending}
-                  className="w-full rounded-xl bg-accent py-3 text-sm font-bold text-accent-foreground shadow-glow-gold transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="w-full rounded-xl bg-reward py-3 text-sm font-bold text-reward-foreground shadow-glow-reward transition-all active:scale-[0.98] disabled:opacity-50"
                 >
                   <Trophy className="mr-1 inline h-4 w-4" />
                   {bossBattleMutation.isPending ? "처리 중..." : "🏆 즉시 타이틀매치 클리어 (관리자)"}
@@ -414,10 +414,10 @@ const LevelMapPage = () => {
 
       {/* Dan Challenge Dialog */}
       <Dialog open={!!danChallengeOpen} onOpenChange={(open) => !open && setDanChallengeOpen(null)}>
-        <DialogContent className="mx-auto max-w-sm rounded-3xl border-2 border-accent/30 bg-card p-0 overflow-hidden">
-          <div className="relative bg-gradient-to-br from-accent/20 via-primary/10 to-accent/10 p-6 text-center">
+        <DialogContent className="mx-auto max-w-sm rounded-3xl border-2 border-reward/30 bg-card p-0 overflow-hidden">
+          <div className="relative bg-gradient-to-br from-reward/20 via-primary/10 to-reward/10 p-6 text-center">
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-              <div className="absolute -left-4 -top-4 h-24 w-24 rounded-full bg-accent/20 blur-3xl" />
+              <div className="absolute -left-4 -top-4 h-24 w-24 rounded-full bg-reward/20 blur-3xl" />
               <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-primary/20 blur-3xl" />
             </div>
             <span className="relative text-5xl">{danChallengeOpen?.emoji}</span>
@@ -459,7 +459,7 @@ const LevelMapPage = () => {
           </DrawerHeader>
           {showSecretDetail && (
             <div className="space-y-4 px-4 pb-6">
-              <div className="rounded-xl bg-gradient-to-br from-accent/10 to-primary/10 p-4">
+              <div className="rounded-xl bg-gradient-to-br from-reward/10 to-primary/10 p-4">
                 <p className="text-sm font-bold text-foreground">{showSecretDetail.description}</p>
               </div>
               <div className="rounded-xl bg-secondary p-4">

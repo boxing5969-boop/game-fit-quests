@@ -58,7 +58,7 @@ const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> 
 
 const EXTENDED_ACTIONS = [
   ...COACH_QUICK_ACTIONS,
-  { id: "league_promotion", label: "승격 체크", emoji: "🏆", color: "bg-accent" },
+  { id: "league_promotion", label: "승격 체크", emoji: "🏆", color: "bg-reward" },
 ];
 
 const DailyOperationsBoard = () => {

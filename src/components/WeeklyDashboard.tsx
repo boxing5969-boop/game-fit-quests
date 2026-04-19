@@ -27,7 +27,7 @@ const WeeklyDashboard = () => {
         {/* Progress bar */}
         <div className="mb-2 h-3 overflow-hidden rounded-full bg-border">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-reward transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -60,7 +60,7 @@ const WeeklyDashboard = () => {
       </div>
 
       {/* Sedentary reminder */}
-      <div className="rounded-xl bg-accent/10 p-3 text-center">
+      <div className="rounded-xl bg-reward/10 p-3 text-center">
         <p className="text-xs text-foreground font-medium">🪑 오래 앉아 있었다면 3분 움직이기</p>
         <p className="text-[10px] text-muted-foreground">짧은 움직임도 누적됩니다</p>
       </div>

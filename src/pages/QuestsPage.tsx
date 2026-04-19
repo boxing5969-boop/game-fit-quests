@@ -192,10 +192,10 @@ const QuestsPage = () => {
               <div key={q.id} className={`animate-slide-up`} style={{ animationDelay: `${idx * 0.05}s` }}>
                 {isBoss && (
                   <div className="mb-1 flex items-center gap-1.5 px-1">
-                    <span className="text-xs font-bold text-accent-foreground">🏆 타이틀매치</span>
+                    <span className="text-xs font-bold text-reward-foreground">🏆 타이틀매치</span>
                   </div>
                 )}
-                <div className={isBoss ? "rounded-2xl border-2 border-accent/40 bg-accent/5 p-1" : ""}>
+                <div className={isBoss ? "rounded-2xl border-2 border-reward/40 bg-reward/5 p-1" : ""}>
                   <div className="relative">
                     <QuestCard
                       quest={q}

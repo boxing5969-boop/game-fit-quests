@@ -133,7 +133,7 @@ const LevelManager = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-sm">{RANK_ICONS[l.rank_name]}</span>
                   <span className="text-xs font-bold text-muted-foreground">{RANK_LABELS[l.rank_name]} Lv.{l.level_number}</span>
-                  {l.is_boss && <span className="rounded-full bg-accent/20 px-1.5 py-0.5 text-[9px] font-bold text-accent-foreground">BOSS</span>}
+                  {l.is_boss && <span className="rounded-full bg-reward/20 px-1.5 py-0.5 text-[9px] font-bold text-reward-foreground">BOSS</span>}
                 </div>
                 <p className="mt-0.5 text-sm font-bold text-foreground truncate">{l.title}</p>
                 <div className="mt-0.5 flex items-center gap-3 text-[10px] text-muted-foreground">

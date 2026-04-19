@@ -168,7 +168,7 @@ const MemberPreviewPage = () => {
     approved: "border-status-complete/30 bg-status-complete/5",
     revision_requested: "border-amber-500/30 bg-amber-500/5",
     rejected: "border-destructive/30 bg-destructive/5",
-    boss_cleared: "border-accent/30 bg-accent/5",
+    boss_cleared: "border-reward/30 bg-reward/5",
   };
 
   const STATUS_EMOJI: Record<string, string> = {
@@ -187,7 +187,7 @@ const MemberPreviewPage = () => {
     <div className="mx-auto max-w-lg pb-40">
       {/* Admin Action Bar - Fixed top */}
       {showActionBar && (
-        <div className="sticky top-0 z-50 border-b border-accent/30 bg-foreground/95 backdrop-blur-md px-4 py-3">
+        <div className="sticky top-0 z-50 border-b border-reward/30 bg-foreground/95 backdrop-blur-md px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button onClick={() => navigate(-1)} className="rounded-full bg-primary-foreground/10 p-1.5 active:scale-95">
@@ -221,7 +221,7 @@ const MemberPreviewPage = () => {
               <button
                 onClick={() => bossBattleMut.mutate()}
                 disabled={bossBattleMut.isPending}
-                className="shrink-0 rounded-full bg-accent/20 px-2.5 py-1 text-[10px] font-bold text-accent disabled:opacity-40"
+                className="shrink-0 rounded-full bg-reward/20 px-2.5 py-1 text-[10px] font-bold text-reward disabled:opacity-40"
               >
                 🏆 보스전 합격
               </button>

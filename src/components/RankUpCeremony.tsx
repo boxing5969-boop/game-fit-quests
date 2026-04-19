@@ -47,7 +47,7 @@ const RankUpCeremony = ({ isOpen, onClose, oldRank, newRank, memberName }: RankU
           {RANK_LABELS[newRank]} 리그 획득
         </p>
 
-        <div className={`mx-auto rounded-2xl bg-gradient-to-b ${RANK_COLORS[newRank] || "from-primary to-accent"} p-6 text-center shadow-lg`}>
+        <div className={`mx-auto rounded-2xl bg-gradient-to-b ${RANK_COLORS[newRank] || "from-primary to-reward"} p-6 text-center shadow-lg`}>
           <p className="text-xs text-white/70 mb-2">153랭크업 시스템 인증서</p>
           <p className="text-lg font-bold text-white">{memberName}</p>
           <div className="my-3 text-4xl">{RANK_ICONS[newRank]}</div>

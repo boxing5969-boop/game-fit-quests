@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 const STATE_STYLE: Record<string, { border: string; bg: string; emoji: string }> = {
   active: { border: "border-primary/20", bg: "bg-primary/5", emoji: "💬" },
   slight_drop: { border: "border-status-pending/20", bg: "bg-status-pending/5", emoji: "👋" },
-  at_risk: { border: "border-accent/30", bg: "bg-accent/5", emoji: "🔔" },
+  at_risk: { border: "border-reward/30", bg: "bg-reward/5", emoji: "🔔" },
   coach_attention: { border: "border-destructive/20", bg: "bg-destructive/5", emoji: "⚠️" },
 };
 
@@ -37,12 +37,12 @@ const RetentionBanner = () => {
   // Normal restart routine banner (5~13 days)
   if (retention.showRestartRoutine) {
     return (
-      <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4">
-        <p className="mb-1 text-xs font-bold text-accent-foreground">🔄 리스타트 루틴</p>
+      <div className="rounded-2xl border border-reward/30 bg-reward/5 p-4">
+        <p className="mb-1 text-xs font-bold text-reward-foreground">🔄 리스타트 루틴</p>
         <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{retention.message}</p>
         <button
           onClick={() => navigate("/missions")}
-          className="mt-2 rounded-full bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent-foreground transition-all active:scale-95"
+          className="mt-2 rounded-full bg-reward/10 px-3 py-1.5 text-xs font-bold text-reward-foreground transition-all active:scale-95"
         >
           가볍게 다시 시작하기
         </button>

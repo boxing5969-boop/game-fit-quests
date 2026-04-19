@@ -14,7 +14,7 @@ const STATUS_OPTIONS: { value: Enums<"level_status_type">; label: string; emoji:
   { value: "approved", label: "완료", emoji: "✅", color: "bg-status-complete/10 text-status-complete" },
   { value: "revision_requested", label: "수정요청", emoji: "✏️", color: "bg-amber-500/10 text-amber-600" },
   { value: "rejected", label: "반려", emoji: "❌", color: "bg-destructive/10 text-destructive" },
-  { value: "boss_cleared", label: "보스전 완료", emoji: "🏆", color: "bg-accent/10 text-accent" },
+  { value: "boss_cleared", label: "보스전 완료", emoji: "🏆", color: "bg-reward/10 text-reward" },
 ];
 
 interface Props {

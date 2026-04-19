@@ -46,7 +46,7 @@ const SessionRunner = ({ blocks, levelLabel, onComplete }: SessionRunnerProps) =
   if (showResult) {
     return (
       <div className="animate-slide-up space-y-4">
-        <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-accent/10 p-6 text-center">
+        <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-reward/10 p-6 text-center">
           <span className="text-5xl">🥊</span>
           <h3 className="mt-3 text-xl font-bold text-foreground">수업 완료!</h3>
           <p className="mt-1 text-sm text-muted-foreground">{levelLabel}</p>
@@ -90,7 +90,7 @@ const SessionRunner = ({ blocks, levelLabel, onComplete }: SessionRunnerProps) =
   if (!tracker.isActive) {
     return (
       <div className="space-y-4">
-        <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-5 text-center">
+        <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-reward/5 p-5 text-center">
           <span className="text-4xl">🥊</span>
           <h3 className="mt-2 text-lg font-bold text-foreground">{levelLabel} 수업</h3>
           <p className="text-sm text-muted-foreground">50분 프로그램</p>

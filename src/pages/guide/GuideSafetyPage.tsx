@@ -58,7 +58,7 @@ const GuideSafetyPage = () => {
       </div>
 
       {/* Starter Mode */}
-      <div className="rounded-2xl border border-accent/30 bg-accent/5 p-5 shadow-elev-1">
+      <div className="rounded-2xl border border-reward/30 bg-reward/5 p-5 shadow-elev-1">
         <h2 className="mb-3 text-base font-bold text-foreground">🌱 스타터 모드</h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-3">
           최근 활동량이 적거나 몸 상태가 걱정된다면 스타터 모드를 이용하세요.
@@ -70,7 +70,7 @@ const GuideSafetyPage = () => {
         </div>
         <button
           onClick={() => navigate("/safety-check")}
-          className="mt-4 w-full rounded-xl bg-accent py-3 text-sm font-bold text-accent-foreground transition-all active:scale-95"
+          className="mt-4 w-full rounded-xl bg-reward py-3 text-sm font-bold text-reward-foreground transition-all active:scale-95"
         >
           안전 체크 해보기
         </button>

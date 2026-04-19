@@ -383,7 +383,7 @@ const BranchManagerHome = () => {
         {isSuperAdmin && (
           <button
             onClick={() => navigate("/admin")}
-            className="w-full rounded-2xl border border-accent/30 bg-accent/5 p-4 text-left shadow-elev-1 transition-all active:scale-[0.98]"
+            className="w-full rounded-2xl border border-reward/30 bg-reward/5 p-4 text-left shadow-elev-1 transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -393,7 +393,7 @@ const BranchManagerHome = () => {
                   <p className="text-xs text-muted-foreground">지점 비교 · 위험 회원 · 공지 · 이전 승인</p>
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-accent-foreground" />
+              <ChevronRight className="h-5 w-5 text-reward-foreground" />
             </div>
           </button>
         )}

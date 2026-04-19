@@ -26,10 +26,10 @@ export const formatRankShort = (rank: string, level: number) =>
 /** Role labels for UI */
 export const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   super_admin: { label: "전체 관리자", color: "bg-destructive/15 text-destructive" },
-  branch_manager: { label: "관장님", color: "bg-accent/15 text-accent-foreground" },
+  branch_manager: { label: "관장님", color: "bg-reward/15 text-reward-foreground" },
   member: { label: "회원", color: "bg-muted text-muted-foreground" },
   admin: { label: "관리자", color: "bg-destructive/15 text-destructive" },
-  coach: { label: "코치", color: "bg-accent/15 text-accent-foreground" },
+  coach: { label: "코치", color: "bg-reward/15 text-reward-foreground" },
 };
 
 export const isManagerRole = (role: string | null) =>

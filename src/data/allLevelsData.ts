@@ -822,5 +822,5 @@ export const COACH_QUICK_ACTIONS = [
   { id: "partial", label: "부분 완료", emoji: "⚠️", color: "bg-status-pending" },
   { id: "needs_review", label: "보완 필요", emoji: "🔄", color: "bg-destructive/80" },
   { id: "levelup_check", label: "레벨업 체크", emoji: "⬆️", color: "bg-primary" },
-  { id: "promotion_check", label: "리그 승격 체크", emoji: "🏆", color: "bg-accent" },
+  { id: "promotion_check", label: "리그 승격 체크", emoji: "🏆", color: "bg-reward" },
 ] as const;

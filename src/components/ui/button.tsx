@@ -20,7 +20,7 @@ const buttonVariants = cva(
           "rounded-2xl bg-primary font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary active:scale-[0.98]",
         // reward / achievement CTA — gold glow
         reward:
-          "rounded-2xl bg-accent font-bold text-accent-foreground shadow-glow-gold hover:shadow-glow-gold active:scale-[0.98]",
+          "rounded-2xl bg-reward font-bold text-reward-foreground shadow-glow-reward hover:shadow-glow-reward active:scale-[0.98]",
         // neutral elevated surface (info cards-as-buttons)
         elevated:
           "rounded-2xl border border-border bg-card text-foreground shadow-elev-1 hover:shadow-elev-2 active:scale-[0.98]",

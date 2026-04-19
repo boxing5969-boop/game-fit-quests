@@ -92,7 +92,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
     return (
       <div className="space-y-4 animate-slide-up">
         {/* Level info */}
-        <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-accent/10 p-5 text-center">
+        <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-reward/10 p-5 text-center">
           <span className="text-4xl">🥊</span>
           <h3 className="mt-2 text-lg font-bold text-foreground">{level.title}</h3>
           <p className="text-sm text-muted-foreground">{level.shortGoal}</p>
@@ -216,7 +216,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
   if (state === "result" && result) {
     return (
       <div className="space-y-4 animate-slide-up">
-        <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-accent/10 p-6 text-center">
+        <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-reward/10 p-6 text-center">
           <span className="text-5xl">🎉</span>
           <h3 className="mt-3 text-xl font-bold text-foreground">오늘 도전 완료!</h3>
           <p className="mt-1 text-sm text-muted-foreground">{level.title}</p>
@@ -226,7 +226,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
           <ResultCard icon={<Clock className="h-5 w-5 text-primary" />} value={`${result.minutes}분`} label="실제 훈련" />
           <ResultCard icon={<Zap className="h-5 w-5 text-primary" />} value={`+${result.xp}`} label="기본 XP" highlight />
           <ResultCard icon={<Flame className="h-5 w-5 text-status-pending" />} value={`+${result.bonusXp}`} label="오늘 도전 보너스" highlight={result.bonusXp > 0} />
-          <ResultCard icon={<Trophy className="h-5 w-5 text-accent" />} value={`${result.streak}회`} label="오늘 도전 연속" />
+          <ResultCard icon={<Trophy className="h-5 w-5 text-reward" />} value={`${result.streak}회`} label="오늘 도전 연속" />
         </div>
 
         {result.qualifies ? (

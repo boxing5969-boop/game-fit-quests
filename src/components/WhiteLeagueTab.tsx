@@ -128,7 +128,7 @@ const WhiteLeagueTab = () => {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[10px] font-bold text-muted-foreground">Lv.{ul.globalLevel}</span>
-                            {isBoss && <span className="rounded-full bg-accent px-1.5 py-0.5 text-[8px] font-bold text-accent-foreground">리그 승격</span>}
+                            {isBoss && <span className="rounded-full bg-reward px-1.5 py-0.5 text-[8px] font-bold text-reward-foreground">리그 승격</span>}
                           </div>
                           <p className={`text-xs font-bold leading-tight ${isLocked ? "text-muted-foreground" : "text-foreground"}`}>
                             {ul.title}
@@ -213,7 +213,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         {isWhiteLv1 ? (
           <img src={whiteLv1Hero} alt={ul.title} className="h-44 w-full object-cover" width={800} height={512} />
         ) : (
-          <div className="flex h-44 items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
+          <div className="flex h-44 items-center justify-center bg-gradient-to-br from-primary/10 to-reward/10">
             <span className="text-6xl">🥊</span>
           </div>
         )}
@@ -338,10 +338,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
 
           {/* Coach Points */}
           {(coachPoints || ul.coachTags.length > 0) && (
-            <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4">
+            <div className="rounded-2xl border border-reward/20 bg-reward/5 p-4">
               <div className="mb-3 flex items-center gap-2">
-                <Eye className="h-4 w-4 text-accent-foreground" />
-                <span className="text-sm font-bold text-accent-foreground">코치 포인트</span>
+                <Eye className="h-4 w-4 text-reward-foreground" />
+                <span className="text-sm font-bold text-reward-foreground">코치 포인트</span>
               </div>
               <div className="space-y-1.5">
                 {(coachPoints || ul.coachTags).map((point, i) => <p key={i} className="text-xs text-foreground">👁️ {point}</p>)}

@@ -79,7 +79,7 @@ const GuidePage = () => {
 /* ═══════════ 1. 프로그램 소개 (updated with guide cards) ═══════════ */
 const ProgramTab = () => (
   <div className="space-y-4 animate-slide-up">
-    <div className="rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 p-5 border border-primary/20">
+    <div className="rounded-2xl bg-gradient-to-br from-primary/10 to-reward/10 p-5 border border-primary/20">
       <h2 className="mb-2 text-lg font-bold text-foreground">
         153랭크업
       </h2>
@@ -232,7 +232,7 @@ const ValueMapTab = () => {
                           {isComplete ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : isLocked ? <Lock className="h-3.5 w-3.5 text-muted-foreground" /> : <div className="h-3.5 w-3.5 rounded-full bg-primary animate-pulse" />}
                           <span className="text-[10px] font-bold text-muted-foreground">Lv.{lv.level}</span>
                         </div>
-                        <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[9px] font-bold text-accent-foreground">🔓 {lv.unlockedBenefit}</span>
+                        <span className="rounded-full bg-reward/10 px-2 py-0.5 text-[9px] font-bold text-reward-foreground">🔓 {lv.unlockedBenefit}</span>
                       </div>
                       <p className="text-xs font-bold text-foreground">{lv.shortValueTitle}</p>
                       <p className="mt-0.5 text-[11px] text-muted-foreground">{lv.valueDescription}</p>
@@ -269,8 +269,8 @@ const ExerciseTab = () => (
             ))}
           </div>
         </div>
-        <div className="rounded-xl bg-accent/5 border border-accent/10 px-3 py-2">
-          <p className="text-[10px] font-bold text-accent-foreground mb-0.5">✅ 초보자 체크포인트</p>
+        <div className="rounded-xl bg-reward/5 border border-reward/10 px-3 py-2">
+          <p className="text-[10px] font-bold text-reward-foreground mb-0.5">✅ 초보자 체크포인트</p>
           <p className="text-[11px] text-muted-foreground">{ex.beginnerCheckpoint}</p>
         </div>
       </div>

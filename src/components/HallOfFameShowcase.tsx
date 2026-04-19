@@ -36,7 +36,7 @@ const HallOfFameShowcase = () => {
     <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
       <div className="mb-3 flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
-          <Crown className="h-4 w-4 text-accent" />
+          <Crown className="h-4 w-4 text-reward" />
           명예의 전당
         </h2>
         <button onClick={() => navigate("/halloffame")} className="text-xs font-medium text-primary">
@@ -45,7 +45,7 @@ const HallOfFameShowcase = () => {
       </div>
 
       {isEmpty ? (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-accent/30 bg-gradient-to-b from-accent/5 to-card p-6 text-center">
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-reward/30 bg-gradient-to-b from-reward/5 to-card p-6 text-center">
           <span className="text-3xl">👑</span>
           <p className="text-sm font-bold text-foreground">아직 명예의 전당 회원이 없습니다</p>
           <p className="text-xs text-muted-foreground">블랙 레벨 10 + 마스터 미션 달성 시 등극!</p>
@@ -54,7 +54,7 @@ const HallOfFameShowcase = () => {
         <>
           {/* Character Rail - dense sprite view */}
           {railMembers.length > 0 && (
-            <div className="mb-3 rounded-2xl border border-accent/20 bg-gradient-to-r from-accent/5 to-card p-2">
+            <div className="mb-3 rounded-2xl border border-reward/20 bg-gradient-to-r from-reward/5 to-card p-2">
               <CharacterRail
                 members={railMembers}
                 onMemberTap={(userId) => navigate(`/manager/member/${userId}/preview`)}
@@ -70,11 +70,11 @@ const HallOfFameShowcase = () => {
               return (
                 <div
                   key={m.r_user_id}
-                  className="flex min-w-[100px] flex-col items-center gap-1.5 rounded-2xl border border-accent/40 bg-gradient-to-b from-accent/10 to-card p-3 shadow-elev-1"
+                  className="flex min-w-[100px] flex-col items-center gap-1.5 rounded-2xl border border-reward/40 bg-gradient-to-b from-reward/10 to-card p-3 shadow-elev-1"
                 >
                   <div className="relative">
-                    <Crown className="absolute -top-2 left-1/2 z-20 h-4 w-4 -translate-x-1/2 text-accent" />
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-accent/50 bg-accent/10 shadow-md overflow-hidden">
+                    <Crown className="absolute -top-2 left-1/2 z-20 h-4 w-4 -translate-x-1/2 text-reward" />
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-reward/50 bg-reward/10 shadow-md overflow-hidden">
                       <CharacterSprite
                         style={charData?.style}
                         userId={m.r_user_id}
@@ -90,7 +90,7 @@ const HallOfFameShowcase = () => {
                     <MapPin className="h-2.5 w-2.5" />
                     <span className="text-[9px]">{m.r_branch_name}</span>
                   </div>
-                  <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[9px] font-bold text-accent-foreground">
+                  <span className="rounded-full bg-reward/20 px-2 py-0.5 text-[9px] font-bold text-reward-foreground">
                     153명예코치
                   </span>
                 </div>

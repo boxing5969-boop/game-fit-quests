@@ -22,7 +22,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   approved: { label: "완료", color: "text-status-complete" },
   revision_requested: { label: "수정요청", color: "text-amber-600" },
   rejected: { label: "반려", color: "text-destructive" },
-  boss_cleared: { label: "보스전 완료", color: "text-accent" },
+  boss_cleared: { label: "보스전 완료", color: "text-reward" },
 };
 
 const MemberDetailPage = () => {
@@ -344,7 +344,7 @@ const MemberDetailPage = () => {
                 <button
                   onClick={() => bossBattleMut.mutate()}
                   disabled={bossBattleMut.isPending}
-                  className="col-span-2 rounded-xl bg-accent py-3 text-sm font-bold text-accent-foreground shadow transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="col-span-2 rounded-xl bg-reward py-3 text-sm font-bold text-reward-foreground shadow transition-all active:scale-[0.98] disabled:opacity-50"
                 >
                   🏆 보스전 합격 처리
                 </button>
@@ -355,10 +355,10 @@ const MemberDetailPage = () => {
           {/* Gem Management */}
           <div className="space-y-2 pt-2 border-t border-border">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-              <Gem className="h-4 w-4 text-accent" /> 링젬 관리
+              <Gem className="h-4 w-4 text-reward" /> 링젬 관리
             </h3>
-            <div className="rounded-xl bg-accent/10 p-3 text-center">
-              <span className="text-2xl font-bold text-accent-foreground">💎 {memberWallet.data?.gems_balance?.toLocaleString() || 0}</span>
+            <div className="rounded-xl bg-reward/10 p-3 text-center">
+              <span className="text-2xl font-bold text-reward-foreground">💎 {memberWallet.data?.gems_balance?.toLocaleString() || 0}</span>
               <p className="text-xs text-muted-foreground mt-1">현재 보유 링젬</p>
             </div>
             <div className="flex gap-2">

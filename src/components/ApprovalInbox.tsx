@@ -455,7 +455,7 @@ const ApprovalInbox = () => {
                     item.type === "mission"
                       ? "bg-primary/10 text-primary"
                       : item.type === "quest"
-                      ? "bg-accent/10 text-accent-foreground"
+                      ? "bg-reward/10 text-reward-foreground"
                       : item.type === "member"
                       ? "bg-amber-500/15 text-amber-700"
                       : "bg-destructive/10 text-destructive"

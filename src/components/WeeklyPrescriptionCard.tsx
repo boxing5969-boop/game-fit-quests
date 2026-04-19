@@ -5,7 +5,7 @@ import { Calendar, Target, Clock } from "lucide-react";
 const PLAN_STYLE: Record<string, { bg: string; text: string; emoji: string }> = {
   "라이트": { bg: "bg-status-complete/10", text: "text-status-complete", emoji: "🌿" },
   "기본": { bg: "bg-primary/10", text: "text-primary", emoji: "💪" },
-  "빠른 경로": { bg: "bg-accent/10", text: "text-accent-foreground", emoji: "⚡" },
+  "빠른 경로": { bg: "bg-reward/10", text: "text-reward-foreground", emoji: "⚡" },
 };
 
 const WeeklyPrescriptionCard = () => {

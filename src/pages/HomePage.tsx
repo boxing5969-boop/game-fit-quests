@@ -166,10 +166,10 @@ const HomePage = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate("/avatar")}
-            className="flex items-center gap-1 rounded-full bg-accent/20 px-3 py-1.5 active:scale-95"
+            className="flex items-center gap-1 rounded-full bg-reward/20 px-3 py-1.5 active:scale-95"
           >
-            <Gem className="h-4 w-4 text-accent" />
-            <span className="text-sm font-bold text-accent-foreground">
+            <Gem className="h-4 w-4 text-reward" />
+            <span className="text-sm font-bold text-reward-foreground">
               {walletData?.gems_balance?.toLocaleString() || 0}
             </span>
           </button>
@@ -187,7 +187,7 @@ const HomePage = () => {
         <section className="animate-slide-up relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card via-card to-secondary/40 p-6 shadow-glow-soft">
           <div className="pointer-events-none absolute inset-0 opacity-60">
             <div className="absolute left-1/2 top-1/3 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl" />
-            <div className="absolute right-5 top-4 h-1.5 w-1.5 rounded-full bg-accent animate-ping" style={{ animationDuration: "2s" }} />
+            <div className="absolute right-5 top-4 h-1.5 w-1.5 rounded-full bg-reward animate-ping" style={{ animationDuration: "2s" }} />
             <div className="absolute left-6 bottom-6 h-1 w-1 rounded-full bg-primary/50 animate-ping" style={{ animationDuration: "2.5s", animationDelay: "0.7s" }} />
           </div>
           <div className="relative flex flex-col items-center">
@@ -329,7 +329,7 @@ const HomePage = () => {
           className={`w-full animate-slide-up rounded-2xl border p-4 shadow-elev-1 transition-all ${
             checkedInToday
               ? "cursor-default border-status-complete/30 bg-status-complete/5"
-              : "border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 active:scale-[0.98]"
+              : "border-primary/30 bg-gradient-to-r from-primary/10 to-reward/10 active:scale-[0.98]"
           }`}
           style={{ animationDelay: "0.08s" }}
         >

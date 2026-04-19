@@ -61,7 +61,7 @@ const MissionCard = ({
         {posterUrl ? (
           <img src={posterUrl} alt={title} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-reward/10">
             <span className="text-4xl">🥊</span>
           </div>
         )}
@@ -117,7 +117,7 @@ const MissionCard = ({
               disabled={isSubmitting}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 disabled:opacity-50 ${
                 adminMode
-                  ? "bg-accent text-accent-foreground shadow-glow-gold"
+                  ? "bg-reward text-reward-foreground shadow-glow-reward"
                   : "bg-primary text-primary-foreground shadow-glow-soft hover:shadow-glow-primary"
               }`}
             >

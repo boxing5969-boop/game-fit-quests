@@ -134,7 +134,7 @@ const SuperAdminDashboard = () => {
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2">
-        <div className={`rounded-2xl border p-3 text-center ${(globalStats?.unapproved || 0) > 0 ? "border-accent/30 bg-accent/5" : "border-border bg-card"}`}>
+        <div className={`rounded-2xl border p-3 text-center ${(globalStats?.unapproved || 0) > 0 ? "border-reward/30 bg-reward/5" : "border-border bg-card"}`}>
           <p className="text-lg font-bold text-foreground">{globalStats?.unapproved ?? "-"}</p>
           <p className="text-[9px] text-muted-foreground">미승인 회원</p>
         </div>

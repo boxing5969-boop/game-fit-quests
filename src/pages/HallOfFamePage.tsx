@@ -280,7 +280,7 @@ const HallOfFamePage = () => {
       {/* Hall of Fame Section */}
       {topTab === "halloffame" && (
         <div className="space-y-2">
-          <div className="mb-4 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 to-primary/5 p-5 shadow-glow-gold text-center">
+          <div className="mb-4 rounded-2xl border border-reward/30 bg-gradient-to-br from-reward/10 to-primary/5 p-5 shadow-glow-reward text-center">
             <span className="text-4xl">🏅</span>
             <h2 className="mt-2 text-lg font-bold text-foreground">명예의 전당</h2>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -304,7 +304,7 @@ const HallOfFamePage = () => {
               </div>
             ))
           ) : (
-            <div className="rounded-2xl border border-dashed border-accent/30 p-8 text-center">
+            <div className="rounded-2xl border border-dashed border-reward/30 p-8 text-center">
               <span className="text-3xl">🥊</span>
               <p className="mt-2 text-sm text-muted-foreground">아직 명예의 전당 멤버가 없습니다</p>
               <p className="mt-1 text-xs text-muted-foreground">블랙 레벨 10 + 마스터 미션 달성 시 입성!</p>

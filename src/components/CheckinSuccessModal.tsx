@@ -56,7 +56,7 @@ const CheckinSuccessModal = ({ open, onClose, result }: CheckinSuccessModalProps
           </>
         ) : (
           <>
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-reward/20">
               <Star className="h-10 w-10 text-primary animate-pulse" />
             </div>
             <h2 className="text-2xl font-bold text-foreground">출석 완료!</h2>

@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   admin: { label: "관리자", color: "bg-destructive/15 text-destructive" },
-  coach: { label: "코치", color: "bg-accent/15 text-accent-foreground" },
+  coach: { label: "코치", color: "bg-reward/15 text-reward-foreground" },
   member: { label: "회원", color: "bg-muted text-muted-foreground" },
 };
 
@@ -26,7 +26,7 @@ const MASTERY_FIELDS = [
   { key: "conditioning_score", label: "체력", icon: Heart, color: "text-rank-red" },
   { key: "teaching_score", label: "지도력", icon: BookOpen, color: "text-primary" },
   { key: "safety_score", label: "안전", icon: Shield, color: "text-status-complete" },
-  { key: "evaluation_score", label: "평가", icon: Eye, color: "text-accent" },
+  { key: "evaluation_score", label: "평가", icon: Eye, color: "text-reward" },
 ];
 
 const CoachDashboard = () => {
@@ -383,7 +383,7 @@ const CoachDashboard = () => {
                     )}
                     {isBossReady && (
                       <button onClick={() => handleBossPass(member)} disabled={bossBattleMutation.isPending}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-accent py-2 text-xs font-bold text-accent-foreground transition-all active:scale-95 disabled:opacity-50">
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-reward py-2 text-xs font-bold text-reward-foreground transition-all active:scale-95 disabled:opacity-50">
                         <Trophy className="h-3.5 w-3.5" /> 타이틀매치
                       </button>
                     )}
@@ -392,7 +392,7 @@ const CoachDashboard = () => {
                   {prog && (
                     <div className="mt-2">
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-xp-bg">
-                        <div className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all"
+                        <div className="h-full rounded-full bg-gradient-to-r from-primary to-reward transition-all"
                           style={{ width: `${Math.min((prog.total_xp / ((["white","blue","red","black"].indexOf(prog.current_rank) * 10 + prog.current_level + 1) * 50)) * 100, 100)}%` }} />
                       </div>
                     </div>
@@ -686,7 +686,7 @@ const MemberDetailModal = ({ member, onClose }: { member: any; onClose: () => vo
 
         {/* MASTER 40 Status */}
         {isMaster40 && (
-          <div className="rounded-xl border-2 border-accent bg-accent/10 p-4">
+          <div className="rounded-xl border-2 border-reward bg-reward/10 p-4">
             <h4 className="text-sm font-bold text-foreground">🏆 MASTER 40 달성</h4>
             <div className="mt-2 space-y-1 text-xs text-muted-foreground">
               {cert?.dan4_ready && <p className="text-status-complete">✅ 단증 4단 준비 조건 완료</p>}

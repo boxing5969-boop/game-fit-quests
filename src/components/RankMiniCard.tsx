@@ -24,7 +24,7 @@ const RankMiniCard = ({ nickname, rank, level, position, avatarUrl, xp, isMe, is
       isHallOfFame
         ? "border-amber-500/40 bg-gradient-to-r from-amber-500/10 to-yellow-500/5 shadow-elev-1"
         : isMe ? "border-primary bg-primary/5 shadow-elev-1"
-        : isRival ? "border-accent/50 bg-accent/5"
+        : isRival ? "border-reward/50 bg-reward/5"
         : "border-border bg-card"
     }`}>
       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center">
@@ -70,7 +70,7 @@ const RankMiniCard = ({ nickname, rank, level, position, avatarUrl, xp, isMe, is
           onClick={(e) => { e.stopPropagation(); onSetRival(); }}
           className={`flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold transition-all active:scale-95 ${
             isRival
-              ? "bg-accent/20 text-accent-foreground"
+              ? "bg-reward/20 text-reward-foreground"
               : "bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary"
           }`}
         >
