@@ -303,6 +303,7 @@ const CharacterStudioPage = () => {
               level={currentLevel}
               customization={previewCustomization}
               className="relative z-10 !w-40 !h-40"
+              priority
             />
           </div>
           <div className="mt-2 text-center">

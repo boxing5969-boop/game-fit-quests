@@ -202,6 +202,7 @@ const HomePage = () => {
                   league={rank}
                   level={progress.current_level}
                   auraMode="detail"
+                  priority
                 />
               ) : (
                 <div className="flex h-32 w-32 items-center justify-center rounded-full bg-muted text-6xl">🥊</div>

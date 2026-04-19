@@ -93,6 +93,7 @@ const MyPage = () => {
                   league={progress.current_rank as any}
                   level={progress.current_level}
                   className="!w-28 !h-28"
+                  priority
                 />
               ) : (
                 <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-muted">

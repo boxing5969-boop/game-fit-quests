@@ -38,6 +38,12 @@ interface CharacterSpriteProps {
   level?: number;
   auraMode?: "compact" | "detail";
   customization?: CharacterCustomization;
+  /**
+   * Opt-in eager load + high fetchpriority for the hero sprite
+   * (the one that drives LCP). Default `false` keeps every list /
+   * grid thumbnail on lazy loading.
+   */
+  priority?: boolean;
 }
 
 const SIZE_MAP = {
@@ -101,6 +107,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   level,
   auraMode,
   customization: customizationProp,
+  priority = false,
 }) => {
   const isLayered = !!(partsJson?.parts && Object.keys(partsJson.parts).length > 0);
   const presetStyle = partsJson?.style || style;
@@ -253,11 +260,11 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
             className="h-full w-full object-contain drop-shadow-elev-1"
             style={{ imageRendering: "auto" }}
             draggable={false}
-            // Hero-size sprites (lg/md) are the visible above-the-fold
-            // character on Home/MyPage — load eager + high priority so
-            // they drive LCP, not deprioritized like the list thumbnails.
-            loading={size === "lg" || size === "md" ? "eager" : "lazy"}
-            fetchPriority={size === "lg" ? "high" : "auto"}
+            // Lazy by default — `priority` opts the hero (Home/MyPage)
+            // into eager load so the LCP image isn't deprioritized.
+            // Grids and list thumbnails stay lazy even at size="lg".
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
             decoding="async"
           />
         )}
