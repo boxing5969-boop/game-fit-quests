@@ -232,7 +232,7 @@ const MissionsPage = () => {
         <button
           onClick={() => setMissionTab("white")}
           className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
-            missionTab === "white" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            missionTab === "white" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
           }`}
         >
           ⚪ 화이트 리그
@@ -240,7 +240,7 @@ const MissionsPage = () => {
         <button
           onClick={() => setMissionTab("missions")}
           className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
-            missionTab === "missions" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            missionTab === "missions" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
           }`}
         >
           🥊 미션
@@ -252,7 +252,7 @@ const MissionsPage = () => {
       ) : (
         <>
           {/* Progress */}
-          <div className="mb-5 animate-slide-up rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="mb-5 animate-slide-up rounded-2xl border border-border bg-card p-4 shadow-elev-1">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-sm text-muted-foreground">전체 진행률</span>
               <span className="text-sm font-bold text-primary">{completedCount}/{totalMissions} ({progressPct}%)</span>
@@ -299,11 +299,11 @@ const MissionsPage = () => {
                               {isAdmin && (
                                 <div className="absolute right-2 top-2 z-10 flex gap-1">
                                   <button onClick={() => openEditMission(mission)}
-                                    className="rounded-lg bg-secondary/90 p-1.5 text-foreground shadow-sm active:scale-95 backdrop-blur-sm">
+                                    className="rounded-lg bg-secondary/90 p-1.5 text-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
                                     <Pencil className="h-3 w-3" />
                                   </button>
                                   <button onClick={() => handleDeleteMission(mission.id, mission.title)}
-                                    className="rounded-lg bg-destructive/80 p-1.5 text-destructive-foreground shadow-sm active:scale-95">
+                                    className="rounded-lg bg-destructive/80 p-1.5 text-destructive-foreground shadow-elev-1 active:scale-95">
                                     <Trash2 className="h-3 w-3" />
                                   </button>
                                 </div>
@@ -412,7 +412,7 @@ const MissionsPage = () => {
                 {form.poster_url && <img src={form.poster_url} alt="" className="mt-2 h-24 w-full rounded-xl object-cover" />}
               </div>
               <button onClick={handleSaveMission} disabled={saving}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                 {saving ? "저장 중..." : editingId ? "수정 완료" : "미션 추가"}
               </button>
             </div>

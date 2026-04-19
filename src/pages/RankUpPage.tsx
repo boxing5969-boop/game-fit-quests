@@ -78,20 +78,20 @@ const RankUpPage = () => {
       <div className="mb-5 flex rounded-2xl border border-border bg-muted/30 p-1">
         <button
           onClick={() => setActiveTab("levelmap")}
-          className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${activeTab === "levelmap" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+          className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${activeTab === "levelmap" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"}`}
         >
           🗺️ 리그맵
         </button>
         <button
           onClick={() => setActiveTab("valuemap")}
-          className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${activeTab === "valuemap" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+          className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${activeTab === "valuemap" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"}`}
         >
           📋 가치맵
         </button>
       </div>
 
       {/* Current progress */}
-      <div className="mb-6 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 p-5 border border-primary/20 text-center">
+      <div className="mb-6 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 p-5 border border-primary/20 shadow-glow-soft text-center">
         <p className="text-sm text-muted-foreground">현재 진행</p>
         <p className="text-3xl font-bold text-foreground">
           {isManager ? "👑 마스터" : `Lv ${globalLevel} / 40`}
@@ -117,7 +117,7 @@ const RankUpPage = () => {
             const isCompleted = RANK_ORDER.indexOf(currentRank as Enums<"rank_name">) > rankIdx;
 
             return (
-              <div key={league.rank} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              <div key={league.rank} className="overflow-hidden rounded-2xl border border-border bg-card shadow-elev-1">
                 <button onClick={() => setExpandedRank(isExpanded ? null : league.rank)} className="flex w-full items-center justify-between p-4 transition-all active:bg-secondary/30">
                   <div className="flex items-center gap-3">
                     <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${RANK_BG[league.rank]} text-2xl`}>{league.emoji}</div>
@@ -203,7 +203,7 @@ const RankUpPage = () => {
                         return (
                           <button key={node.id} onClick={() => setSelectedNode(node)}
                             className={`relative flex flex-col items-center justify-center rounded-2xl border-2 p-2 transition-all active:scale-95 ${
-                              isCurrent ? "border-primary bg-primary/10 shadow-md"
+                              isCurrent ? "border-primary bg-primary/10 shadow-glow-soft"
                               : allDone && unlocked ? "border-status-complete/30 bg-status-complete/5"
                               : unlocked ? "border-border bg-card hover:border-primary/30"
                               : "border-border/30 bg-muted/30 opacity-40"
@@ -376,19 +376,19 @@ const RankUpPage = () => {
               {isAdmin && user && !selectedNode.is_boss && (
                 <button onClick={async () => {
                   try { const result = await levelUpMutation.mutateAsync(user.id); toast.success(`Lv.${result.new_level}로 레벨업! 🥊`); refreshProgress(); setSelectedNode(null); } catch (e: any) { toast.error(e?.message || "레벨업 실패"); }
-                }} disabled={levelUpMutation.isPending} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                }} disabled={levelUpMutation.isPending} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                   <ArrowUp className="mr-1 inline h-4 w-4" />{levelUpMutation.isPending ? "레벨업 중..." : "⚡ 즉시 레벨업 (관리자)"}
                 </button>
               )}
               {isAdmin && user && selectedNode.is_boss && (
                 <button onClick={async () => {
                   try { const result = await bossBattleMutation.mutateAsync({ memberId: user.id }); if (result?.ranked_up) { toast.success(`${RANK_LABELS[result.new_rank] || result.new_rank} 리그로 승격! 🏆`); } else { toast.success("타이틀매치 클리어! 🏆"); } refreshProgress(); setSelectedNode(null); } catch (e: any) { toast.error(e?.message || "타이틀매치 처리 실패"); }
-                }} disabled={bossBattleMutation.isPending} className="w-full rounded-xl bg-accent py-3 text-sm font-bold text-accent-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                }} disabled={bossBattleMutation.isPending} className="w-full rounded-xl bg-accent py-3 text-sm font-bold text-accent-foreground shadow-glow-gold transition-all active:scale-[0.98] disabled:opacity-50">
                   <Trophy className="mr-1 inline h-4 w-4" />{bossBattleMutation.isPending ? "처리 중..." : "🏆 즉시 타이틀매치 클리어 (관리자)"}
                 </button>
               )}
               <button onClick={() => { setSelectedNode(null); navigate("/missions"); }}
-                className={`w-full rounded-xl ${isAdmin ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"} py-3 text-sm font-bold shadow-md transition-all active:scale-[0.98]`}>
+                className={`w-full rounded-xl ${isAdmin ? "bg-secondary text-secondary-foreground shadow-elev-1" : "bg-primary text-primary-foreground shadow-glow-soft hover:shadow-glow-primary"} py-3 text-sm font-bold transition-all active:scale-[0.98]`}>
                 미션 보러가기
               </button>
             </div>
@@ -410,7 +410,7 @@ const RankUpPage = () => {
           </div>
           <div className="flex gap-3 p-5">
             <button onClick={() => setDanChallengeOpen(null)} className="flex-1 rounded-xl border border-border bg-secondary py-3 text-sm font-bold text-secondary-foreground transition-all active:scale-95">다음에 할게요</button>
-            <button onClick={() => { window.open("https://korea-boxing.lovable.app", "_blank"); setDanChallengeOpen(null); }} className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-95">🥊 도전하기!</button>
+            <button onClick={() => { window.open("https://korea-boxing.lovable.app", "_blank"); setDanChallengeOpen(null); }} className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-95">🥊 도전하기!</button>
           </div>
         </DialogContent>
       </Dialog>
@@ -436,7 +436,7 @@ const RankUpPage = () => {
                 </div>
               </div>
               <button onClick={() => { if (showSecretDetail.isExternal) window.open(showSecretDetail.linkTo, "_blank"); else navigate(showSecretDetail.linkTo); setShowSecretDetail(null); }}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98]">{showSecretDetail.cta}</button>
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]">{showSecretDetail.cta}</button>
             </div>
           )}
         </DrawerContent>
@@ -461,7 +461,7 @@ const RankUpPage = () => {
                   if (error) throw error;
                   toast.success("레벨 수정 완료 ✅"); qc.invalidateQueries({ queryKey: ["levels"] }); setEditLevelModal(false); setSelectedNode(null);
                 } catch { toast.error("수정 실패"); } finally { setEditLevelSaving(false); }
-              }} disabled={editLevelSaving} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+              }} disabled={editLevelSaving} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                 {editLevelSaving ? "저장 중..." : "수정 완료"}
               </button>
             </div>
@@ -486,7 +486,7 @@ const WhiteLv1ProgressionCard = () => {
 
   return (
     <div className="mb-6 space-y-4 animate-slide-up">
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-bold text-foreground">⚪ White Lv.1 → Lv.2</h3>
           <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${STATUS_STYLE[status] || "bg-muted text-muted-foreground"}`}>{status}</span>

@@ -41,14 +41,14 @@ const MissionCard = ({
 
   return (
     <div
-      className={`overflow-hidden rounded-2xl border bg-card shadow-sm transition-all ${
+      className={`overflow-hidden rounded-2xl border bg-card transition-all ${
         status === "complete"
-          ? "border-status-complete/20"
+          ? "border-status-complete/30 shadow-elev-1"
           : status === "pending"
-          ? "border-status-pending/20"
+          ? "border-status-pending/20 shadow-elev-1"
           : status === "active"
-          ? "border-primary/30"
-          : "border-border opacity-60"
+          ? "border-primary/30 shadow-glow-soft hover:shadow-glow-primary"
+          : "border-border opacity-60 shadow-elev-1"
       }`}
     >
       {/* Thumbnail */}
@@ -115,8 +115,10 @@ const MissionCard = ({
             <button
               onClick={onSubmit}
               disabled={isSubmitting}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 ${
-                adminMode ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground"
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 disabled:opacity-50 ${
+                adminMode
+                  ? "bg-accent text-accent-foreground shadow-glow-gold"
+                  : "bg-primary text-primary-foreground shadow-glow-soft hover:shadow-glow-primary"
               }`}
             >
               {isSubmitting ? "..." : adminMode ? "⚡ 즉시 클리어" : "완료 요청"}
