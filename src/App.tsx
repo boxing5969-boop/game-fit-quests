@@ -44,7 +44,24 @@ const CheckinBoardPage = lazy(() => import("@/pages/CheckinBoardPage"));
 const LiveBoardPage = lazy(() => import("@/pages/LiveBoardPage"));
 const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdminDashboard"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Treat data as fresh for 30s so tab-switching and route
+      // remounts don't refire every query. Hooks that need live
+      // data (rankings, attendance) override this locally.
+      staleTime: 30_000,
+      // Keep cached data for 5 min before garbage collection —
+      // back-navigation on mobile should hit cache, not network.
+      gcTime: 5 * 60_000,
+      // Don't refetch on every window focus; manual invalidations
+      // from mutations are the explicit freshness contract.
+      refetchOnWindowFocus: false,
+      // Avoid thundering-herd retries on mobile networks.
+      retry: 1,
+    },
+  },
+});
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, profile, loading } = useAuth();
