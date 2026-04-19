@@ -79,7 +79,7 @@ const MyPage = () => {
 
       <div className="space-y-5">
         {/* Character Hero Card */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-gradient-to-b from-card to-secondary/20 p-5 shadow-sm">
+        <div className="animate-slide-up rounded-2xl border border-border bg-gradient-to-b from-card to-secondary/20 p-5 shadow-glow-soft">
           <div className="flex items-start gap-4">
             {/* Large character preview */}
             <div className="relative flex-shrink-0">
@@ -132,7 +132,7 @@ const MyPage = () => {
         </div>
 
         {/* XP & Stats */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-sm" style={{ animationDelay: "0.03s" }}>
+        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.03s" }}>
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-2xl font-bold text-foreground">{progress.total_xp.toLocaleString()}</p>
@@ -151,7 +151,7 @@ const MyPage = () => {
         </div>
 
         {/* Info */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.07s" }}>
+        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.07s" }}>
           <InfoRow icon={<MapPin className="h-4 w-4" />} label="소속 지점" value={profile.branch_name || "미설정"} />
           <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} last />
         </div>
@@ -159,7 +159,7 @@ const MyPage = () => {
         {/* Character & Items - unified */}
         <button
           onClick={() => navigate("/character-studio")}
-          className="w-full animate-slide-up rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 p-4 shadow-sm transition-all active:scale-[0.98]"
+          className="w-full animate-slide-up rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 p-4 shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]"
           style={{ animationDelay: "0.08s" }}
         >
           <div className="flex items-center gap-3">
@@ -179,7 +179,7 @@ const MyPage = () => {
 
         {/* Master League */}
         {isMaster40 && (
-          <div className="animate-bounce-in rounded-2xl border-2 border-accent bg-gradient-to-br from-accent/20 via-primary/10 to-accent/20 p-6 text-center shadow-lg">
+          <div className="animate-bounce-in rounded-2xl border-2 border-accent bg-gradient-to-br from-accent/20 via-primary/10 to-accent/20 p-6 text-center shadow-glow-gold">
             <span className="text-5xl">👑</span>
             <h2 className="mt-2 text-xl font-bold text-foreground">마스터 리그 달성</h2>
             <p className="text-sm text-muted-foreground">블랙 리그 레벨 10 달성 + 모든 타이틀매치 클리어</p>
@@ -213,7 +213,7 @@ const MyPage = () => {
         )}
 
         {/* Password Change */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.2s" }}>
+        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.2s" }}>
           <button onClick={() => setShowPwChange(!showPwChange)} className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50">
             <div className="flex items-center gap-3">
               <KeyRound className="h-4 w-4 text-muted-foreground" />
@@ -231,7 +231,7 @@ const MyPage = () => {
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
               {pwError && <p className="text-xs text-destructive">{pwError}</p>}
               <button onClick={handlePasswordChange} disabled={pwLoading}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                 {pwLoading ? "처리 중..." : "비밀번호 변경 🥊"}
               </button>
             </div>
@@ -239,7 +239,7 @@ const MyPage = () => {
         </div>
 
         {/* Actions */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-sm" style={{ animationDelay: "0.22s" }}>
+        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.22s" }}>
           {(role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin") && (
             <button onClick={() => navigate("/manager")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">

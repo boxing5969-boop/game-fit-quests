@@ -291,7 +291,7 @@ const CharacterStudioPage = () => {
 
       {/* Live Preview */}
       <div className="px-4 pt-4">
-        <div className="relative rounded-3xl border border-border bg-gradient-to-b from-card to-secondary/30 p-5 shadow-sm">
+        <div className="relative rounded-3xl border border-border bg-gradient-to-b from-card to-secondary/30 p-5 shadow-glow-soft">
           <div className="relative mx-auto flex h-44 w-44 items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-primary/10 blur-2xl" />
             <CharacterSprite
@@ -318,7 +318,7 @@ const CharacterStudioPage = () => {
             <button
               onClick={handleSavePreset}
               disabled={isSaving || isCurrentPreset}
-              className={`absolute top-3 right-3 rounded-full px-3 py-1.5 text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 ${
+              className={`absolute top-3 right-3 rounded-full px-3 py-1.5 text-xs font-bold shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-95 disabled:opacity-50 ${
                 isCurrentPreset
                   ? "bg-status-complete/20 text-status-complete"
                   : "bg-primary text-primary-foreground"
@@ -335,7 +335,7 @@ const CharacterStudioPage = () => {
             <button
               onClick={handleSaveCustomization}
               disabled={isSaving}
-              className="absolute top-3 right-3 rounded-full px-3 py-1.5 text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 bg-primary text-primary-foreground"
+              className="absolute top-3 right-3 rounded-full px-3 py-1.5 text-xs font-bold shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-95 disabled:opacity-50 bg-primary text-primary-foreground"
             >
               {isSaving ? "..." : (
                 <span className="flex items-center gap-1"><Save className="h-3 w-3" /> 저장</span>
@@ -354,7 +354,7 @@ const CharacterStudioPage = () => {
               onClick={() => setActiveTab(tab.key)}
               className={`flex-1 flex items-center justify-center gap-0.5 rounded-xl py-2 text-[10px] font-bold transition-all whitespace-nowrap min-w-0 ${
                 activeTab === tab.key
-                  ? "bg-card text-foreground shadow-sm"
+                  ? "bg-card text-foreground shadow-elev-1"
                   : "text-muted-foreground"
               }`}
             >
@@ -544,7 +544,7 @@ function CustomizeTab({ customization, onChange, league, level, isAdmin }: {
               onClick={() => setActiveCat(cat.code)}
               className={`relative flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all active:scale-[0.97] ${
                 isActive
-                  ? "bg-background text-primary shadow-sm"
+                  ? "bg-background text-primary shadow-elev-1"
                   : "bg-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -571,7 +571,7 @@ function CustomizeTab({ customization, onChange, league, level, isAdmin }: {
                 isLocked
                   ? "border-border bg-muted/30 opacity-60"
                   : isSelected
-                  ? "border-primary bg-primary/5 shadow-md"
+                  ? "border-primary bg-primary/5 shadow-glow-soft"
                   : "border-border bg-card"
               }`}
             >
@@ -785,7 +785,7 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
             key={tab.key}
             onClick={() => setActiveFilter(tab.key)}
             className={`flex-shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all whitespace-nowrap ${
-              activeFilter === tab.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              activeFilter === tab.key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
             {tab.icon} {tab.label}
@@ -811,7 +811,7 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
                 ? "bg-gradient-to-b from-yellow-900/40 via-amber-800/30 to-yellow-900/40 border-[2px] border-amber-400 shadow-[0_0_30px_10px_rgba(253,224,71,0.8),0_0_60px_20px_rgba(251,191,36,0.5)] animate-[breathe_2s_ease-in-out_infinite]"
                 : "bg-gradient-to-b from-yellow-900/40 via-amber-800/30 to-yellow-900/40 border-[2px] border-amber-400 shadow-[0_0_20px_8px_rgba(251,191,36,0.6),0_0_40px_15px_rgba(234,179,8,0.3)] animate-[breathe_2s_ease-in-out_infinite]"
               : isSelected
-                ? (leagueSelected[char.league] ?? "border-2 border-primary bg-primary/5 shadow-md")
+                ? (leagueSelected[char.league] ?? "border-2 border-primary bg-primary/5 shadow-glow-soft")
                 : (leagueNormal[char.league] ?? "border-2 border-border bg-card");
 
           const labelColor = (isHof || isBlackNonHof) && !isLocked ? "text-white/90" : "text-foreground/90";
@@ -1060,7 +1060,7 @@ function GrowthTab({ league, level }: { league: string; level: number }) {
             key={idx}
             className={`rounded-2xl border p-3.5 transition-all ${
               isCurrent
-                ? "border-primary bg-primary/5 shadow-sm"
+                ? "border-primary bg-primary/5 shadow-elev-1"
                 : isCompleted
                 ? "border-status-complete/30 bg-status-complete/5"
                 : "border-border bg-muted/20 opacity-60"
