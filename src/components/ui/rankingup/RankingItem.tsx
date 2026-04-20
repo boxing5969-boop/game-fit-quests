@@ -105,11 +105,12 @@ export const RankingItem = ({
           <span
             className={cn(
               "mt-0.5 inline-flex items-center gap-0.5 text-[10px] font-bold",
+              // Spec: 상승 #22C55E / 하락 #EF4444 / 유지 #697386
               delta > 0
-                ? "text-status-complete"
+                ? "text-[#22C55E]"
                 : delta < 0
-                  ? "text-destructive"
-                  : "text-muted-foreground",
+                  ? "text-[#EF4444]"
+                  : "text-[#697386]",
             )}
           >
             {delta > 0 ? (

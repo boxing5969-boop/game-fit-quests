@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { User, Settings2, X } from "lucide-react";
+import { useState, useMemo, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import RankMiniCard from "@/components/RankMiniCard";
-import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { User, Settings2, X, Trophy, Crown } from "lucide-react";
+import { toast } from "sonner";
+
+import { useAuth } from "@/contexts/AuthContext";
 import {
   useDivisionRanking,
   useWeeklyActivityRanking,
@@ -13,47 +13,99 @@ import {
   useBossConquerors,
   useSetRival,
 } from "@/hooks/useRankingData";
-import { toast } from "sonner";
-
-const RANKING_TABS = [
-  { key: "official", label: "🏆 공식" },
-  { key: "weekly", label: "⚡ 이번 주" },
-  { key: "monthly", label: "📈 상승왕" },
-  { key: "streak", label: "🔥 출석" },
-  { key: "boss", label: "🥊 보스전" },
-] as const;
-
-type RankingTabKey = (typeof RANKING_TABS)[number]["key"];
-type TopTab = "ranking" | "halloffame";
-
-const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
-
+import { supabase } from "@/integrations/supabase/client";
 import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION } from "@/lib/rankLabels";
+import { cn } from "@/lib/utils";
+
+import {
+  AppPage,
+  PageHeader,
+  SegmentedControl,
+  FilterChips,
+  RankingItem,
+  EmptyState,
+} from "@/components/ui/rankingup";
+
+type TopTab = "ranking" | "halloffame";
+type RankingTabKey = "weekly" | "streak" | "official" | "monthly" | "boss";
+
+const RANK_LABELS: Record<string, string> = {
+  white: "화이트",
+  blue: "블루",
+  red: "레드",
+  black: "블랙",
+};
+
+const RANKING_FILTERS: { value: RankingTabKey; label: string }[] = [
+  { value: "weekly", label: "이번 주" },
+  { value: "streak", label: "출석" },
+  { value: "official", label: "XP" },
+  { value: "monthly", label: "상승" },
+  { value: "boss", label: "보상" },
+];
+
+// Podium tones — spec: 1위 #F6C453, 2위 #C9D1DC, 3위 #C8874A
+const PODIUM_TONE = {
+  gold: {
+    border: "border-[#F6C453]",
+    bg: "bg-gradient-to-b from-[#F6C453]/15 to-card",
+    glow: "shadow-glow-reward",
+    rankClass: "text-[#F6C453]",
+    pillClass: "bg-[#F6C453]/20 text-[#F6C453]",
+    ring: "ring-[#F6C453]/40",
+  },
+  silver: {
+    border: "border-[#C9D1DC]/60",
+    bg: "bg-gradient-to-b from-[#C9D1DC]/10 to-card",
+    glow: "",
+    rankClass: "text-[#C9D1DC]",
+    pillClass: "bg-[#C9D1DC]/15 text-[#C9D1DC]",
+    ring: "ring-[#C9D1DC]/30",
+  },
+  bronze: {
+    border: "border-[#C8874A]/60",
+    bg: "bg-gradient-to-b from-[#C8874A]/10 to-card",
+    glow: "",
+    rankClass: "text-[#C8874A]",
+    pillClass: "bg-[#C8874A]/15 text-[#C8874A]",
+    ring: "ring-[#C8874A]/30",
+  },
+} as const;
 
 const HallOfFamePage = () => {
   const navigate = useNavigate();
   const { user, progress, role } = useAuth();
   const [topTab, setTopTab] = useState<TopTab>("ranking");
-  const [activeTab, setActiveTab] = useState<RankingTabKey>("official");
+  const [activeTab, setActiveTab] = useState<RankingTabKey>("weekly");
   const setRival = useSetRival();
   const qc = useQueryClient();
   const isAdmin = role === "admin" || role === "super_admin";
 
-  const { data: officialRanking, isLoading: officialLoading } = useDivisionRanking();
+  const { data: officialRanking, isLoading: officialLoading } =
+    useDivisionRanking();
   const { data: weeklyRanking } = useWeeklyActivityRanking();
   const { data: monthlyRanking } = useMonthlyRisers();
   const { data: streakRanking } = useStreakRanking();
   const { data: bossRanking } = useBossConquerors();
 
-  const myPosition = officialRanking?.find(r => r.r_user_id === user?.id)?.rank_position;
+  const myPosition = officialRanking?.find((r) => r.r_user_id === user?.id)
+    ?.rank_position;
 
-  const hallOfFameMembers = (officialRanking || []).filter(
-    m => isHallOfFameMember(m.r_current_rank, m.r_current_level)
+  const hallOfFameMembers = useMemo(
+    () =>
+      (officialRanking || []).filter((m) =>
+        isHallOfFameMember(m.r_current_rank, m.r_current_level),
+      ),
+    [officialRanking],
   );
 
-  // Admin: level set modal for any member
+  // Admin: level set modal
   const [levelSetModal, setLevelSetModal] = useState<{
-    show: boolean; userId: string; nickname: string; currentRank: string; currentLevel: number;
+    show: boolean;
+    userId: string;
+    nickname: string;
+    currentRank: string;
+    currentLevel: number;
   } | null>(null);
   const [setRank, setSetRank] = useState("white");
   const [setLevel, setSetLevel] = useState(1);
@@ -70,7 +122,11 @@ const HallOfFamePage = () => {
       });
       if (error) throw error;
       const result = data as any;
-      toast.success(`${levelSetModal.nickname} → ${RANK_LABELS[result.new_rank] || result.new_rank} Lv.${result.new_level} 설정 완료`);
+      toast.success(
+        `${levelSetModal.nickname} → ${
+          RANK_LABELS[result.new_rank] || result.new_rank
+        } Lv.${result.new_level} 설정 완료`,
+      );
       setLevelSetModal(null);
       qc.invalidateQueries({ queryKey: ["division-ranking"] });
       qc.invalidateQueries({ queryKey: ["assigned-members"] });
@@ -93,277 +149,645 @@ const HallOfFamePage = () => {
     setSetLevel(member.r_current_level);
   };
 
+  const currentList = (() => {
+    switch (activeTab) {
+      case "weekly":
+        return weeklyRanking || [];
+      case "monthly":
+        return monthlyRanking || [];
+      case "streak":
+        return streakRanking || [];
+      case "boss":
+        return bossRanking || [];
+      case "official":
+      default:
+        return officialRanking || [];
+    }
+  })();
+
+  const getScore = (m: any): string | number => {
+    switch (activeTab) {
+      case "weekly":
+        return `${Number(m.weekly_xp ?? 0).toLocaleString()} XP`;
+      case "monthly":
+        return `+${Number(m.monthly_xp ?? 0).toLocaleString()} XP`;
+      case "streak":
+        return `${m.r_streak_days ?? 0}일 🔥`;
+      case "boss":
+        return `${m.r_bosses_cleared ?? 0}회 🏆`;
+      case "official":
+      default:
+        return `${Number(m.r_total_xp ?? 0).toLocaleString()} XP`;
+    }
+  };
+
+  const getMeta = (m: any) =>
+    `${RANK_LABELS[m.r_current_rank]} · Lv.${m.r_current_level}`;
+
+  const handleSetRival = (m: any) => {
+    setRival.mutate(m.r_user_id);
+    toast.success(`${m.r_nickname}을 추격 목표로 설정! 🎯`);
+  };
+
   return (
-    <div className="mx-auto max-w-lg px-4 pb-32 pt-4">
-      <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-2xl text-foreground">🏆 랭킹</h1>
-        <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
-          <User className="h-5 w-5 text-secondary-foreground" />
-        </button>
-      </div>
+    <AppPage
+      header={
+        <PageHeader
+          title="랭킹"
+          subtitle={progress ? `${RANK_LABELS[progress.current_rank]} 리그` : "복싱 리그"}
+          rightAction={
+            <button
+              onClick={() => navigate("/mypage")}
+              aria-label="내 정보"
+              className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"
+            >
+              <User className="h-4 w-4 text-secondary-foreground" />
+            </button>
+          }
+          sticky
+        />
+      }
+    >
+      <div className="space-y-5">
+        {/* Primary tabs: ranking vs hall of fame */}
+        <SegmentedControl<TopTab>
+          value={topTab}
+          onChange={(v) => setTopTab(v)}
+          segments={[
+            { value: "ranking", label: "🏆 랭킹" },
+            { value: "halloffame", label: "🏅 명예의 전당" },
+          ]}
+          fullWidth
+        />
 
-      {/* Top-level toggle: 랭킹 vs 명예의전당 */}
-      <div className="mb-4 flex rounded-2xl border border-border bg-secondary/50 p-1">
-        <button
-          onClick={() => setTopTab("ranking")}
-          className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
-            topTab === "ranking" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
-          }`}
-        >
-          🏆 랭킹
-        </button>
-        <button
-          onClick={() => setTopTab("halloffame")}
-          className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
-            topTab === "halloffame" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
-          }`}
-        >
-          🏅 명예의 전당
-        </button>
-      </div>
-
-      {topTab === "ranking" && (
-        <>
-          {/* My position card */}
-          {progress && myPosition && (
-            <div className="mb-4 animate-slide-up rounded-2xl border border-primary/30 bg-primary/5 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">내 공식 순위</p>
-                  <p className="text-2xl font-bold text-primary">{myPosition}위</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">{progress.current_rank} Lv.{progress.current_level}</p>
-                  <p className="text-sm font-bold text-foreground">{progress.total_xp.toLocaleString()} XP</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Ranking sub-tabs */}
-          <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-            {RANKING_TABS.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
-                  activeTab === tab.key
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Ranking Content */}
-          <div className="space-y-2">
-            {activeTab === "official" && (
-              officialLoading ? <SkeletonList /> : (
-                (officialRanking || []).map(m => (
-                  <div key={m.r_user_id} className="relative">
-                    <RankMiniCard
-                      nickname={m.r_nickname}
-                      rank={m.r_current_rank}
-                      level={m.r_current_level}
-                      position={Number(m.rank_position)}
-                      avatarUrl={m.r_avatar_url}
-                      xp={m.r_total_xp}
-                      isMe={m.r_user_id === user?.id}
-                      isRival={progress?.rival_id === m.r_user_id}
-                      isHallOfFame={isHallOfFameMember(m.r_current_rank, m.r_current_level)}
-                      onSetRival={() => {
-                        setRival.mutate(m.r_user_id);
-                        toast.success(`${m.r_nickname}을 추격 목표로 설정! 🎯`);
-                      }}
-                    />
-                    {isAdmin && (
-                      <button onClick={() => openLevelSet(m)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
-                        <Settings2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+        {topTab === "ranking" && (
+          <>
+            {/* My position hero (when placed in the official ranking) */}
+            {progress && myPosition && (
+              <section className="rounded-card border border-primary/40 bg-primary/5 p-4 shadow-glow-soft">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-caption text-muted-foreground">
+                      내 공식 순위
+                    </p>
+                    <p className="number-font text-display-lg text-primary">
+                      {myPosition}
+                      <span className="ml-1 text-display-sm">위</span>
+                    </p>
                   </div>
-                ))
-              )
-            )}
-
-            {activeTab === "weekly" && (
-              (weeklyRanking || []).map(m => (
-                <div key={m.r_user_id} className="relative">
-                  <RankMiniCard
-                    nickname={m.r_nickname} rank={m.r_current_rank} level={m.r_current_level}
-                    position={Number(m.rank_position)} avatarUrl={m.r_avatar_url}
-                    isMe={m.r_user_id === user?.id} extra={`${m.weekly_xp} XP`}
-                  />
-                  {isAdmin && (
-                    <button onClick={() => openLevelSet(m)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
-                      <Settings2 className="h-3.5 w-3.5" />
-                    </button>
-                  )}
+                  <div className="text-right">
+                    <p className="text-caption text-muted-foreground">
+                      {RANK_LABELS[progress.current_rank]} Lv.
+                      <span className="number-font">
+                        {progress.current_level}
+                      </span>
+                    </p>
+                    <p className="number-font text-body-sm font-bold text-foreground">
+                      {progress.total_xp.toLocaleString()} XP
+                    </p>
+                  </div>
                 </div>
-              ))
+              </section>
             )}
 
-            {activeTab === "monthly" && (
-              (monthlyRanking || []).map(m => (
-                <div key={m.r_user_id} className="relative">
-                  <RankMiniCard
-                    nickname={m.r_nickname} rank={m.r_current_rank} level={m.r_current_level}
-                    position={Number(m.rank_position)} avatarUrl={m.r_avatar_url}
-                    isMe={m.r_user_id === user?.id} extra={`+${m.monthly_xp} XP`}
+            {/* Sub-filter chips */}
+            <FilterChips<RankingTabKey>
+              value={activeTab}
+              onChange={(v) => setActiveTab(v as RankingTabKey)}
+              chips={RANKING_FILTERS}
+            />
+
+            {/* Ranking content */}
+            {officialLoading && activeTab === "official" ? (
+              <SkeletonList />
+            ) : currentList.length > 0 ? (
+              <RankingList
+                list={currentList}
+                userId={user?.id}
+                myRivalId={progress?.rival_id}
+                getScore={getScore}
+                getMeta={getMeta}
+                isAdmin={isAdmin}
+                onRowSetRival={handleSetRival}
+                onAdminEdit={openLevelSet}
+              />
+            ) : (
+              <RankingEmpty
+                tab={activeTab}
+                onCheckin={() => navigate("/home")}
+                onMissions={() => navigate("/missions")}
+                onBoss={() => navigate("/rank-up")}
+              />
+            )}
+          </>
+        )}
+
+        {topTab === "halloffame" && (
+          <>
+            <HallOfFameHero />
+
+            {officialLoading ? (
+              <SkeletonList />
+            ) : hallOfFameMembers.length > 0 ? (
+              <div className="space-y-3">
+                {hallOfFameMembers.map((m, idx) => (
+                  <HoFMemberCard
+                    key={m.r_user_id}
+                    rank={idx + 1}
+                    nickname={m.r_nickname}
+                    rankName={m.r_current_rank}
+                    level={m.r_current_level}
+                    totalXp={Number(m.r_total_xp ?? 0)}
+                    branch={(m as any).r_branch_name}
+                    avatarUrl={m.r_avatar_url}
+                    isMe={m.r_user_id === user?.id}
+                    admin={
+                      isAdmin
+                        ? { onEdit: () => openLevelSet(m) }
+                        : undefined
+                    }
                   />
-                  {isAdmin && (
-                    <button onClick={() => openLevelSet(m)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
-                      <Settings2 className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-
-            {activeTab === "streak" && (
-              (streakRanking || []).map(m => (
-                <div key={m.r_user_id} className="relative">
-                  <RankMiniCard
-                    nickname={m.r_nickname} rank={m.r_current_rank} level={m.r_current_level}
-                    position={Number(m.rank_position)} avatarUrl={m.r_avatar_url}
-                    isMe={m.r_user_id === user?.id} extra={`🔥 ${m.r_streak_days}일`}
-                  />
-                  {isAdmin && (
-                    <button onClick={() => openLevelSet(m)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
-                      <Settings2 className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-
-            {activeTab === "boss" && (
-              (bossRanking || []).map(m => (
-                <div key={m.r_user_id} className="relative">
-                  <RankMiniCard
-                    nickname={m.r_nickname} rank={m.r_current_rank} level={m.r_current_level}
-                    position={Number(m.rank_position)} avatarUrl={m.r_avatar_url}
-                    isMe={m.r_user_id === user?.id} extra={`🏆 ${m.r_bosses_cleared}회`}
-                  />
-                  {isAdmin && (
-                    <button onClick={() => openLevelSet(m)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
-                      <Settings2 className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-
-            {/* Empty state */}
-            {activeTab !== "official" && !(
-              (activeTab === "weekly" && weeklyRanking?.length) ||
-              (activeTab === "monthly" && monthlyRanking?.length) ||
-              (activeTab === "streak" && streakRanking?.length) ||
-              (activeTab === "boss" && bossRanking?.length)
-            ) && (
-              <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-                <span className="text-3xl">🥊</span>
-                <p className="mt-2 text-sm text-muted-foreground">아직 데이터가 없습니다</p>
+                ))}
               </div>
+            ) : (
+              <EmptyState
+                icon={<Crown className="h-8 w-8 text-reward" />}
+                title="아직 명예의 전당 멤버가 없습니다"
+                description="블랙 리그 Lv.10 달성 + 모든 타이틀매치 클리어 시 입성합니다."
+                ctaText="리그맵 보기"
+                onCtaClick={() => navigate("/rank-up")}
+              />
             )}
-          </div>
-        </>
-      )}
-
-      {/* Hall of Fame Section */}
-      {topTab === "halloffame" && (
-        <div className="space-y-2">
-          <div className="mb-4 rounded-2xl border border-reward/30 bg-gradient-to-br from-reward/10 to-primary/5 p-5 shadow-glow-reward text-center">
-            <span className="text-4xl">🏅</span>
-            <h2 className="mt-2 text-lg font-bold text-foreground">명예의 전당</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {HALL_OF_FAME_DESCRIPTION}
-            </p>
-          </div>
-          {officialLoading ? <SkeletonList /> : hallOfFameMembers.length > 0 ? (
-            hallOfFameMembers.map((m, idx) => (
-              <div key={m.r_user_id} className="relative">
-                <RankMiniCard
-                  nickname={m.r_nickname} rank={m.r_current_rank} level={m.r_current_level}
-                  position={idx + 1} avatarUrl={m.r_avatar_url} xp={m.r_total_xp}
-                  isMe={m.r_user_id === user?.id} isHallOfFame extra="153명예코치"
-                />
-                {isAdmin && (
-                  <button onClick={() => openLevelSet(m)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm">
-                    <Settings2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            ))
-          ) : (
-            <div className="rounded-2xl border border-dashed border-reward/30 p-8 text-center">
-              <span className="text-3xl">🥊</span>
-              <p className="mt-2 text-sm text-muted-foreground">아직 명예의 전당 멤버가 없습니다</p>
-              <p className="mt-1 text-xs text-muted-foreground">블랙 레벨 10 + 마스터 미션 달성 시 입성!</p>
-            </div>
-          )}
-        </div>
-      )}
+          </>
+        )}
+      </div>
 
       {/* Admin: Level Set Modal */}
       {levelSetModal?.show && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setLevelSetModal(null)}>
-          <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 pb-24 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-foreground/40 backdrop-blur-sm"
+          onClick={() => setLevelSetModal(null)}
+        >
+          <div
+            className="w-full max-w-lg animate-slide-up rounded-t-hero border-t border-border bg-card p-6 pb-24 shadow-elev-3"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg text-foreground">⚙️ 레벨 설정</h3>
-              <button onClick={() => setLevelSetModal(null)} className="rounded-full bg-secondary p-2 active:scale-95">
+              <h3 className="text-display-sm text-foreground">
+                ⚙️ 레벨 설정
+              </h3>
+              <button
+                onClick={() => setLevelSetModal(null)}
+                className="rounded-pill bg-secondary p-2 active:scale-95"
+              >
                 <X className="h-4 w-4 text-secondary-foreground" />
               </button>
             </div>
-            <p className="mb-3 text-sm text-muted-foreground">대상: <strong className="text-foreground">{levelSetModal.nickname}</strong></p>
-            <p className="mb-3 text-xs text-muted-foreground">현재: {RANK_LABELS[levelSetModal.currentRank] || levelSetModal.currentRank} Lv.{levelSetModal.currentLevel}</p>
+            <p className="mb-3 text-body-sm text-muted-foreground">
+              대상:{" "}
+              <strong className="text-foreground">
+                {levelSetModal.nickname}
+              </strong>
+            </p>
+            <p className="mb-3 text-caption text-muted-foreground">
+              현재:{" "}
+              {RANK_LABELS[levelSetModal.currentRank] ||
+                levelSetModal.currentRank}{" "}
+              Lv.
+              <span className="number-font">
+                {levelSetModal.currentLevel}
+              </span>
+            </p>
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">랭크</label>
+                <label className="mb-1 block text-caption text-muted-foreground">
+                  랭크
+                </label>
                 <div className="flex gap-2">
-                  {(["white", "blue", "red", "black"] as const).map(r => (
-                    <button key={r} onClick={() => setSetRank(r)}
-                      className={`flex-1 rounded-xl py-2 text-sm font-bold transition-all ${setRank === r ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+                  {(["white", "blue", "red", "black"] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setSetRank(r)}
+                      className={cn(
+                        "flex-1 rounded-xl py-2 text-body-sm font-bold transition-all",
+                        setRank === r
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-secondary-foreground",
+                      )}
+                    >
                       {RANK_LABELS[r]}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">레벨 (1~10)</label>
-                <div className="flex gap-1.5 flex-wrap">
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map(l => (
-                    <button key={l} onClick={() => setSetLevel(l)}
-                      className={`h-9 w-9 rounded-lg text-sm font-bold transition-all ${setLevel === l ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+                <label className="mb-1 block text-caption text-muted-foreground">
+                  레벨 (1~10)
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => setSetLevel(l)}
+                      className={cn(
+                        "h-9 w-9 rounded-lg text-body-sm font-bold transition-all number-font",
+                        setLevel === l
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-secondary-foreground",
+                      )}
+                    >
                       {l}
                     </button>
                   ))}
                 </div>
               </div>
-              <button onClick={handleSetLevel} disabled={settingLevel}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
-                {settingLevel ? "설정 중..." : `${RANK_LABELS[setRank] || setRank} Lv.${setLevel}로 설정`}
+              <button
+                onClick={handleSetLevel}
+                disabled={settingLevel}
+                className="primary-button"
+              >
+                {settingLevel
+                  ? "설정 중..."
+                  : `${RANK_LABELS[setRank] || setRank} Lv.${setLevel}로 설정`}
               </button>
             </div>
           </div>
         </div>
       )}
+    </AppPage>
+  );
+};
+
+/* ──────────────────────────────────────────────────────────
+ *  Podium — spec: 1위 gold, 2위 silver, 3위 bronze, center
+ *  card is taller. Uses number-font for rank digits and the
+ *  user's own row gets a subtle primary ring.
+ * ────────────────────────────────────────────────────────── */
+
+interface PodiumMember {
+  r_user_id: string;
+  r_nickname: string;
+  r_avatar_url?: string | null;
+  r_current_rank: string;
+  r_current_level: number;
+}
+
+const PodiumCard = ({
+  member,
+  rank,
+  tone,
+  tall,
+  isMe,
+  score,
+}: {
+  member: PodiumMember;
+  rank: 1 | 2 | 3;
+  tone: keyof typeof PODIUM_TONE;
+  tall?: boolean;
+  isMe?: boolean;
+  score: string | number;
+}) => {
+  const t = PODIUM_TONE[tone];
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center gap-2 rounded-card border bg-card p-3 text-center",
+        t.border,
+        t.bg,
+        t.glow,
+        tall ? "pb-5" : "",
+        isMe && "ring-2",
+        isMe && t.ring,
+      )}
+    >
+      <span className={cn("number-font text-display-md leading-none", t.rankClass)}>
+        {rank}
+      </span>
+      <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-pill bg-background/50">
+        {member.r_avatar_url ? (
+          <img
+            src={member.r_avatar_url}
+            alt={member.r_nickname}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <span className="text-xl">🥊</span>
+        )}
+      </div>
+      <p className="w-full truncate text-caption font-bold text-foreground">
+        {member.r_nickname}
+      </p>
+      <p className="number-font text-[11px] font-bold text-muted-foreground">
+        {score}
+      </p>
+      {isMe && (
+        <span className={cn("badge-pill", t.pillClass)}>내 순위</span>
+      )}
     </div>
   );
 };
 
+const Podium = ({
+  top3,
+  userId,
+  getScore,
+}: {
+  top3: any[];
+  userId?: string;
+  getScore: (m: any) => string | number;
+}) => {
+  const [first, second, third] = top3;
+  return (
+    <div className="grid grid-cols-3 items-end gap-2">
+      {second && (
+        <PodiumCard
+          member={second}
+          rank={2}
+          tone="silver"
+          score={getScore(second)}
+          isMe={second.r_user_id === userId}
+        />
+      )}
+      {first && (
+        <PodiumCard
+          member={first}
+          rank={1}
+          tone="gold"
+          tall
+          score={getScore(first)}
+          isMe={first.r_user_id === userId}
+        />
+      )}
+      {third && (
+        <PodiumCard
+          member={third}
+          rank={3}
+          tone="bronze"
+          score={getScore(third)}
+          isMe={third.r_user_id === userId}
+        />
+      )}
+    </div>
+  );
+};
+
+/* ──────────────────────────────────────────────────────────
+ *  RankingList — Podium for top 3 + RankingItems for the rest.
+ * ────────────────────────────────────────────────────────── */
+
+const RankingList = ({
+  list,
+  userId,
+  myRivalId,
+  getScore,
+  getMeta,
+  isAdmin,
+  onRowSetRival,
+  onAdminEdit,
+}: {
+  list: any[];
+  userId?: string;
+  myRivalId?: string | null;
+  getScore: (m: any) => string | number;
+  getMeta: (m: any) => string;
+  isAdmin: boolean;
+  onRowSetRival: (m: any) => void;
+  onAdminEdit: (m: any) => void;
+}) => {
+  const showPodium = list.length >= 3;
+  const top3 = showPodium ? list.slice(0, 3) : [];
+  const rest = showPodium ? list.slice(3) : list;
+
+  return (
+    <div className="space-y-4">
+      {showPodium && (
+        <Podium top3={top3} userId={userId} getScore={getScore} />
+      )}
+      <div className="space-y-2">
+        {rest.map((m) => {
+          const isMe = m.r_user_id === userId;
+          return (
+            <div key={m.r_user_id} className="relative">
+              <RankingItem
+                rank={Number(m.rank_position) || rest.indexOf(m) + (showPodium ? 4 : 1)}
+                name={m.r_nickname}
+                score={getScore(m)}
+                meta={getMeta(m)}
+                isMe={isMe}
+                avatar={m.r_avatar_url ?? undefined}
+                onClick={
+                  !isMe && myRivalId !== m.r_user_id
+                    ? () => onRowSetRival(m)
+                    : undefined
+                }
+              />
+              {isAdmin && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAdminEdit(m);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-secondary/90 p-1.5 text-muted-foreground shadow-elev-1 active:scale-95 backdrop-blur-sm"
+                  aria-label="레벨 수정"
+                >
+                  <Settings2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+/* ──────────────────────────────────────────────────────────
+ *  Empty state — per-tab motivational copy + CTA.
+ * ────────────────────────────────────────────────────────── */
+
+const RankingEmpty = ({
+  tab,
+  onCheckin,
+  onMissions,
+  onBoss,
+}: {
+  tab: RankingTabKey;
+  onCheckin: () => void;
+  onMissions: () => void;
+  onBoss: () => void;
+}) => {
+  const CONFIG: Record<
+    RankingTabKey,
+    { icon: ReactNode; title: string; description: string; ctaText: string; action: () => void }
+  > = {
+    weekly: {
+      icon: <Trophy className="h-8 w-8 text-reward" />,
+      title: "아직 이번 주 랭킹이 없습니다",
+      description: "첫 체크인을 완료하면 이번 주 랭킹에 진입합니다.",
+      ctaText: "QR 체크인 하러가기",
+      action: onCheckin,
+    },
+    streak: {
+      icon: "🔥",
+      title: "출석 연속 기록이 없어요",
+      description: "매일 체크인하면 연속 출석이 시작됩니다.",
+      ctaText: "QR 체크인 하러가기",
+      action: onCheckin,
+    },
+    official: {
+      icon: <Trophy className="h-8 w-8 text-reward" />,
+      title: "공식 XP 랭킹이 비어 있어요",
+      description: "미션과 도전을 완료해 XP를 쌓으면 이름이 올라갑니다.",
+      ctaText: "미션 보러가기",
+      action: onMissions,
+    },
+    monthly: {
+      icon: "📈",
+      title: "이번 달 상승 기록이 없어요",
+      description: "이번 달 미션을 완료해 상승 랭킹에 이름을 올리세요.",
+      ctaText: "미션 보러가기",
+      action: onMissions,
+    },
+    boss: {
+      icon: "🥊",
+      title: "아직 보상 기록이 없어요",
+      description: "타이틀매치(보스전)를 클리어하면 보상 랭킹에 집계됩니다.",
+      ctaText: "리그맵 보기",
+      action: onBoss,
+    },
+  };
+  const cfg = CONFIG[tab];
+  return (
+    <EmptyState
+      icon={cfg.icon}
+      title={cfg.title}
+      description={cfg.description}
+      ctaText={cfg.ctaText}
+      onCtaClick={cfg.action}
+    />
+  );
+};
+
+/* ──────────────────────────────────────────────────────────
+ *  Hall of Fame — premium header + reward-bordered cards.
+ * ────────────────────────────────────────────────────────── */
+
+const HallOfFameHero = () => (
+  <section
+    className="relative overflow-hidden rounded-hero border bg-card p-6 text-center"
+    style={{ borderColor: "rgba(246, 196, 83, 0.45)" }}
+  >
+    <div className="pointer-events-none absolute inset-0 opacity-60">
+      <div className="absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-reward/10 blur-3xl" />
+    </div>
+    <div className="relative flex flex-col items-center gap-2">
+      <div className="flex h-14 w-14 items-center justify-center rounded-pill bg-reward/15">
+        <Crown className="h-7 w-7 text-reward" />
+      </div>
+      <h2 className="text-display-sm text-foreground">명예의 전당</h2>
+      <p className="text-body-sm text-muted-foreground">
+        {HALL_OF_FAME_DESCRIPTION}
+      </p>
+    </div>
+  </section>
+);
+
+const HoFMemberCard = ({
+  rank,
+  nickname,
+  rankName,
+  level,
+  totalXp,
+  branch,
+  avatarUrl,
+  isMe,
+  admin,
+}: {
+  rank: number;
+  nickname: string;
+  rankName: string;
+  level: number;
+  totalXp: number;
+  branch?: string | null;
+  avatarUrl?: string | null;
+  isMe?: boolean;
+  admin?: { onEdit: () => void };
+}) => (
+  <article
+    className={cn(
+      "relative flex items-center gap-3 rounded-card border bg-card p-4",
+      isMe && "ring-2 ring-primary/50 shadow-glow-soft",
+    )}
+    style={{ borderColor: "rgba(246, 196, 83, 0.45)" }}
+  >
+    {/* Rank pill */}
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-reward/15">
+      <span className="number-font text-body-lg font-bold text-reward">
+        {rank}
+      </span>
+    </div>
+
+    {/* Avatar */}
+    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-pill border border-reward/30 bg-background/60">
+      <Crown className="absolute -top-1 left-1/2 z-10 h-3.5 w-3.5 -translate-x-1/2 text-reward drop-shadow-[0_0_6px_rgba(246,196,83,0.6)]" />
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={nickname}
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <span className="text-xl">🥊</span>
+      )}
+    </div>
+
+    {/* Name + title pill */}
+    <div className="min-w-0 flex-1">
+      <div className="flex items-center gap-1.5">
+        <p className="truncate text-body-sm font-bold text-foreground">
+          {nickname}
+        </p>
+        {isMe && (
+          <span className="badge-pill bg-primary/20 text-primary">나</span>
+        )}
+      </div>
+      <p className="text-caption truncate text-muted-foreground">
+        {RANK_LABELS[rankName] || rankName} · Lv.
+        <span className="number-font">{level}</span>
+        {branch && ` · ${branch}`}
+      </p>
+      <span className="mt-1 inline-flex items-center gap-1 rounded-pill border border-reward/50 bg-reward/10 px-2 py-0.5 text-[10px] font-bold text-reward">
+        👑 153명예코치
+      </span>
+    </div>
+
+    {/* XP / admin */}
+    <div className="flex flex-col items-end gap-1">
+      <span className="number-font text-body-sm font-bold text-foreground">
+        {totalXp.toLocaleString()} XP
+      </span>
+      {admin && (
+        <button
+          onClick={admin.onEdit}
+          className="rounded-lg bg-secondary/80 p-1.5 text-muted-foreground active:scale-95"
+          aria-label="레벨 수정"
+        >
+          <Settings2 className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  </article>
+);
+
 const SkeletonList = () => (
   <div className="space-y-2">
-    {[1, 2, 3, 4, 5].map(i => (
-      <div key={i} className="h-16 animate-pulse rounded-2xl bg-muted" />
+    {[1, 2, 3, 4, 5].map((i) => (
+      <div
+        key={i}
+        className="h-16 animate-pulse rounded-card bg-card border border-border"
+      />
     ))}
   </div>
 );
