@@ -334,7 +334,7 @@ const CharacterStudioPage = () => {
           />
         }
       >
-        <div className="space-y-5">
+        <div className="space-y-6">
           {/* ─── Character Hero Stage ─── */}
           <section className="relative overflow-hidden rounded-hero border border-border bg-gradient-to-b from-[hsl(var(--surface-2))] to-card p-6 shadow-elev-2">
             {/* Subtle reward glow behind the character */}
@@ -691,7 +691,7 @@ function CustomizeTab({ customization, onChange, league, level, isAdmin }: {
                 </span>
               )}
               <OptionPreview category={activeCat} optionKey={opt.key} />
-              <span className="text-[9px] font-bold text-foreground/80 truncate w-full text-center">{opt.label}</span>
+              <span className="text-[10px] font-bold text-foreground/80 truncate w-full text-center leading-tight">{opt.label}</span>
             </button>
           );
         })}

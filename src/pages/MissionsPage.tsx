@@ -145,9 +145,28 @@ const MissionsPage = () => {
   const toggleRank = (rank: string) =>
     setExpandedRanks((prev) => {
       const next = new Set(prev);
-      next.has(rank) ? next.delete(rank) : next.add(rank);
+      if (next.has(rank)) next.delete(rank);
+      else next.add(rank);
       return next;
     });
+
+  // `grouped` must be computed before any early return so the hook
+  // order is stable on every render.
+  const grouped = useMemo(
+    () =>
+      RANK_ORDER.map((rank) => {
+        const rankLevels = (levels || [])
+          .filter((l) => l.rank_name === rank)
+          .sort((a, b) => a.level_number - b.level_number);
+        const rankMissions = rankLevels.flatMap((level) =>
+          (missions || [])
+            .filter((m) => m.level_id === level.id)
+            .map((m) => ({ mission: m, level })),
+        );
+        return { rank, rankLevels, rankMissions };
+      }),
+    [levels, missions],
+  );
 
   if (!progress) return null;
 
@@ -177,22 +196,6 @@ const MissionsPage = () => {
     }
     return "active";
   };
-
-  const grouped = useMemo(
-    () =>
-      RANK_ORDER.map((rank) => {
-        const rankLevels = (levels || [])
-          .filter((l) => l.rank_name === rank)
-          .sort((a, b) => a.level_number - b.level_number);
-        const rankMissions = rankLevels.flatMap((level) =>
-          (missions || [])
-            .filter((m) => m.level_id === level.id)
-            .map((m) => ({ mission: m, level })),
-        );
-        return { rank, rankLevels, rankMissions };
-      }),
-    [levels, missions],
-  );
 
   const totalMissions = (missions || []).length;
   const completedCount = (missions || []).filter(
@@ -426,7 +429,7 @@ const MissionsPage = () => {
         />
       }
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
         <SegmentedControl<MissionTab>
           value={missionTab}
           onChange={(v) => setMissionTab(v)}

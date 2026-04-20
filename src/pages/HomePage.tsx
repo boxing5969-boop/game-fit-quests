@@ -242,7 +242,7 @@ const HomePage = () => {
         />
       }
     >
-      <div className="space-y-7">
+      <div className="space-y-6">
         {/* ─── Master-40 celebration (conditional) ─── */}
         {isMaster40 && (
           <NotificationBanner

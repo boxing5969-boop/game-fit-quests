@@ -85,7 +85,7 @@ const RewardsPage = () => {
         />
       }
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
         {/* ─── Master-40 Hero Reward + final missions ─── */}
         {isMaster40 && (
           <div className="animate-bounce-in space-y-4">

@@ -7,12 +7,15 @@ import { useAvatarCategories, useAvatarItems, useOwnedItems, useEquippedItems, u
 import { PREBUILT_CHARACTERS } from "@/data/characterPresets";
 import { toast } from "sonner";
 
+// Dark-theme friendly tones that still communicate league identity.
+// Card surface stays card-dark with a subtle league-tinted gradient;
+// pill/text accents carry the league color.
 const LEAGUE_SECTIONS = [
-  { key: "white",  label: "화이트", icon: "🤍", bg: "from-white to-gray-100",            border: "border-gray-200",      text: "text-gray-700",   sub: "text-gray-400" },
-  { key: "blue",   label: "블루",   icon: "💙", bg: "from-blue-50 to-blue-100",          border: "border-blue-200",      text: "text-blue-700",   sub: "text-blue-400" },
-  { key: "red",    label: "레드",   icon: "❤️", bg: "from-red-50 to-red-100",            border: "border-red-200",       text: "text-red-700",    sub: "text-red-400" },
-  { key: "black",  label: "블랙",   icon: "🖤", bg: "from-gray-800 to-gray-900",         border: "border-amber-400/40",  text: "text-amber-400",  sub: "text-amber-200/60" },
-  { key: "legend", label: "전설",   icon: "👑", bg: "from-yellow-900/60 to-amber-800/40", border: "border-amber-400",    text: "text-amber-300",  sub: "text-amber-200/60" },
+  { key: "white",  label: "화이트", icon: "🤍", bg: "from-[hsl(220_14%_71%)]/10 to-card",       border: "border-[hsl(220_14%_71%)]/30", text: "text-[hsl(220_14%_85%)]", sub: "text-muted-foreground" },
+  { key: "blue",   label: "블루",   icon: "💙", bg: "from-accent/10 to-card",                   border: "border-accent/30",             text: "text-accent",             sub: "text-muted-foreground" },
+  { key: "red",    label: "레드",   icon: "❤️", bg: "from-destructive/10 to-card",             border: "border-destructive/30",        text: "text-destructive",        sub: "text-muted-foreground" },
+  { key: "black",  label: "블랙",   icon: "🖤", bg: "from-reward/10 to-card",                   border: "border-reward/30",             text: "text-reward",             sub: "text-muted-foreground" },
+  { key: "legend", label: "전설",   icon: "👑", bg: "from-reward/15 via-primary/5 to-card",    border: "border-reward/45",             text: "text-reward",             sub: "text-muted-foreground" },
 ].map(s => ({
   ...s,
   count: s.key === "legend"
