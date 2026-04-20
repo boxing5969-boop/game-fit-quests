@@ -129,7 +129,7 @@ const HomePage = () => {
 
   const handleStartChallenge = useCallback(async () => {
     if (!checkedInToday) {
-      toast.error("체육관 QR 체크인 후 도전을 시작할 수 있어요 🥊");
+      toast.error("QR 체크인 후 오늘 도전이 오픈됩니다");
       return;
     }
     const session = await activitySession.startChallenge();
@@ -172,10 +172,10 @@ const HomePage = () => {
     sessionMet.current >= sessionMet.target &&
     minuteMet.current >= minuteMet.target;
   const weeklyEncouragement = bothDone
-    ? "🎉 이번 주 목표 달성!"
+    ? "이번 주 목표 달성"
     : allZero
-      ? "가볍게 시작해볼까요"
-      : "잘하고 있어요, 조금만 더!";
+      ? "오늘 루틴으로 리그 진입"
+      : "리듬 올라가는 중";
 
   const isMasterDisplay = isMaster40 || isManagerRole(role);
   const leagueIcon = isMasterDisplay ? "👑" : RANK_ICONS[rank];

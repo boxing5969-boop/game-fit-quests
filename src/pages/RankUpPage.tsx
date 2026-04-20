@@ -68,7 +68,7 @@ const RankUpPage = () => {
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-2xl text-foreground">🏆 랭크업</h1>
+        <h1 className="text-[22px] font-extrabold tracking-tight text-foreground">랭크업</h1>
         <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
           <User className="h-5 w-5 text-secondary-foreground" />
         </button>

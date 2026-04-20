@@ -188,27 +188,27 @@ const MyPage = () => {
         )}
 
         <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          <h2 className="mb-3 text-base font-bold text-foreground">🏅 획득한 배지</h2>
+          <h2 className="mb-3 text-base font-bold text-foreground">획득한 배지</h2>
           <EarnedBadgeGrid badges={earned} loading={badgesLoading} />
         </div>
 
         {locked.length > 0 && (
           <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
-            <h2 className="mb-3 text-base font-bold text-muted-foreground">🔒 미획득</h2>
+            <h2 className="mb-3 text-base font-bold text-muted-foreground">미획득</h2>
             <LockedBadgeGrid badges={locked} />
           </div>
         )}
 
         {levelUpLogs.length > 0 && (
           <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
-            <h2 className="mb-3 text-base font-bold text-foreground">📜 레벨업 기록</h2>
+            <h2 className="mb-3 text-base font-bold text-foreground">레벨업 기록</h2>
             <LevelUpHistory logs={levelUpLogs} />
           </div>
         )}
 
         {xpLogs && xpLogs.length > 0 && (
           <div className="animate-slide-up" style={{ animationDelay: "0.18s" }}>
-            <h2 className="mb-3 text-base font-bold text-foreground">⚡ 최근 XP 획득</h2>
+            <h2 className="mb-3 text-base font-bold text-foreground">최근 XP 획득</h2>
             <RecentXpList logs={xpLogs} />
           </div>
         )}

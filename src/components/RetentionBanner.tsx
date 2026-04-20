@@ -28,7 +28,7 @@ const RetentionBanner = () => {
           onClick={() => navigate("/missions")}
           className="mt-3 w-full rounded-xl bg-destructive/90 px-4 py-2.5 text-sm font-bold text-destructive-foreground transition-all active:scale-95"
         >
-          가볍게 다시 시작하기
+          오늘 루틴 시작하기
         </button>
       </div>
     );
@@ -44,7 +44,7 @@ const RetentionBanner = () => {
           onClick={() => navigate("/missions")}
           className="mt-2 rounded-full bg-reward/10 px-3 py-1.5 text-xs font-bold text-reward-foreground transition-all active:scale-95"
         >
-          가볍게 다시 시작하기
+          오늘 루틴 시작하기
         </button>
       </div>
     );
