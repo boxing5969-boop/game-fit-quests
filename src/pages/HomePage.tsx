@@ -31,6 +31,7 @@ import LevelUpModal from "@/components/LevelUpModal";
 import RetentionBanner from "@/components/RetentionBanner";
 import TutorialOverlay from "@/components/TutorialOverlay";
 import TutorialCompleteModal from "@/components/TutorialCompleteModal";
+import { MasterProgressCard } from "@/components/master/MasterProgressCard";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 
 import {
@@ -289,6 +290,11 @@ const HomePage = () => {
           xpToNext={Math.max(metrics.xp.target, totalXp || 1)}
           streakDays={progress.streak_days}
         />
+
+        {/* ─── 1b. Master Track progress (shown only when opted in) ─── */}
+        {(progress as any)?.master_track_unlocked && (
+          <MasterProgressCard masterLevel={(progress as any)?.master_level ?? 1} />
+        )}
 
         {/* ─── 2. Primary CTA — QR check-in or success indicator ─── */}
         {checkedInToday ? (
