@@ -184,7 +184,7 @@ const LevelMapPage = () => {
               <span className="text-lg">👑</span>
               <h2 className="text-lg text-foreground">마스터 리그</h2>
             </div>
-            <div className="relative overflow-hidden rounded-3xl border-2 border-reward/40 bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90 p-5 shadow-2xl">
+            <div className="relative overflow-hidden rounded-3xl border-2 border-reward/40 bg-gradient-to-br from-[hsl(42_92%_10%)] via-card to-card p-5 shadow-2xl">
               {/* Sparkle effects */}
               <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -left-4 -top-4 h-32 w-32 rounded-full bg-reward/20 blur-3xl" />
@@ -199,10 +199,10 @@ const LevelMapPage = () => {
                   <span className="text-xs font-bold uppercase tracking-[0.2em] text-reward">Secret Mission</span>
                   <Sparkles className="h-5 w-5 text-reward" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
                 </div>
-                <h3 className="text-xl font-black text-primary-foreground">
+                <h3 className="text-xl font-black text-reward">
                   🏆 마스터 리그 최종 미션
                 </h3>
-                <p className="mt-1 text-xs text-primary-foreground/60">블랙 리그 레벨 10 달성 후 도전할 수 있는 시크릿 미션</p>
+                <p className="mt-1 text-xs text-muted-foreground">블랙 리그 레벨 10 달성 후 도전할 수 있는 시크릿 미션</p>
               </div>
 
               {/* Mission Cards */}
@@ -221,27 +221,27 @@ const LevelMapPage = () => {
                       }}
                       className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-all active:scale-[0.98] ${
                         isMaxLevel
-                          ? "border-reward/30 bg-reward/10 hover:border-reward/50"
-                          : "border-primary-foreground/10 bg-primary-foreground/5"
+                          ? "border-reward/40 bg-reward/10 hover:border-reward/60"
+                          : "border-border bg-muted/30"
                       }`}
                     >
                       <div className="flex items-center gap-3 p-4">
                         <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
-                          isMaxLevel ? "bg-reward/20" : "bg-primary-foreground/10"
+                          isMaxLevel ? "bg-reward/20" : "bg-muted"
                         }`}>
                           {isMaxLevel ? (
                             <MIcon className="h-6 w-6 text-reward" />
                           ) : (
-                            <Lock className="h-6 w-6 text-primary-foreground/30" />
+                            <Lock className="h-6 w-6 text-muted-foreground" />
                           )}
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-black text-primary-foreground">{mission.emoji} {mission.title}</span>
+                            <span className="text-sm font-black text-foreground">{mission.emoji} {mission.title}</span>
                           </div>
-                          <p className="mt-0.5 text-xs text-primary-foreground/50">{mission.subtitle}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">{mission.subtitle}</p>
                           {isMaxLevel && (
-                            <p className="mt-0.5 text-[10px] text-reward/70 font-medium">탭하여 도전하기 →</p>
+                            <p className="mt-0.5 text-[10px] text-reward font-semibold">탭하여 도전하기 →</p>
                           )}
                         </div>
                         {isMaxLevel && (
@@ -254,15 +254,15 @@ const LevelMapPage = () => {
               </div>
 
               {/* Rewards Preview */}
-              <div className="relative mt-4 rounded-2xl border border-reward/20 bg-reward/5 p-4">
+              <div className="relative mt-4 rounded-2xl border border-reward/30 bg-reward/5 p-4">
                 <p className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-reward">
                   ✨ 마스터 리그 달성 보상 ✨
                 </p>
                 <div className="space-y-2">
                   {FINAL_REWARDS.map((r, i) => (
-                    <div key={i} className="flex items-center gap-2.5 rounded-xl bg-primary-foreground/5 px-3 py-2">
+                    <div key={i} className="flex items-center gap-2.5 rounded-xl bg-card/60 border border-border px-3 py-2">
                       <span className="text-base">{r.emoji}</span>
-                      <span className="text-xs font-bold text-primary-foreground/80">{r.label}</span>
+                      <span className="text-xs font-bold text-foreground">{r.label}</span>
                     </div>
                   ))}
                 </div>
@@ -270,9 +270,9 @@ const LevelMapPage = () => {
 
               {/* Lock overlay for non-max */}
               {!isMaxLevel && (
-                <div className="relative mt-4 flex items-center justify-center gap-2 rounded-xl bg-primary-foreground/5 py-2.5">
-                  <Lock className="h-4 w-4 text-primary-foreground/40" />
-                  <span className="text-xs font-bold text-primary-foreground/40">블랙 리그 레벨 10 달성 시 해금</span>
+                <div className="relative mt-4 flex items-center justify-center gap-2 rounded-xl bg-muted/50 py-2.5">
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs font-bold text-muted-foreground">블랙 리그 레벨 10 달성 시 해금</span>
                 </div>
               )}
             </div>
