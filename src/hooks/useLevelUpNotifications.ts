@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsInHallOfFame } from "@/hooks/useRankingData";
 import {
@@ -13,82 +14,79 @@ import {
 /**
  * Member-side new-unlock notifications (Step 7 of the unlock rollout).
  *
- * Levels are authored by coaches via grant_manual_xp / manual_level_up /
- * pass_boss_battle RPCs, so the member doesn't trigger their own level-up
- * directly. We therefore detect the change *observationally*: compare the
- * derived userLevel on each progress update to a localStorage snapshot.
+ * Baseline is stored on profiles.last_unlock_check_level (Step 2B
+ * migration) — server-authoritative so device swaps don't re-fire
+ * toasts. The baseline is backfilled at migration time to each user's
+ * current computed level, so migration day stays quiet.
  *
- *   • first observation  → seed snapshot, no toast
- *   • snapshot increased → fire one summary toast of newly unlocked items
- *   • snapshot decreased → silently resync (coach can level-down too)
- *
- * The snapshot is keyed per-user so shared devices don't cross-fire.
- * Clearing storage resets the baseline — at worst the next real level-up
- * toast is suppressed once; no double-grant risk because this is UI-only.
+ *   • observed > baseline → fire one summary toast, push new baseline
+ *   • observed < baseline → silently resync (coach can level-down)
+ *   • observed == baseline → noop
  */
-const PREV_LEVEL_KEY = "153_user_level_snapshot";
 
 export function useLevelUpNotifications() {
-  const { user, progress } = useAuth();
+  const { user, profile, progress, refreshProfile } = useAuth();
   const { data: isInHallOfFame = false } = useIsInHallOfFame();
-  const seededRef = useRef(false);
+  // Per-user guard so a single mount fires at most one toast per level
+  // change (profile may refetch multiple times between the observation
+  // and the persisted baseline catching up).
+  const pendingRef = useRef<{ userId: string; target: number } | null>(null);
 
   useEffect(() => {
-    if (!user?.id || !progress) return;
+    if (!user?.id || !profile || !progress) return;
 
-    const nowLevel = computeUserLevel({
+    const p = profile as any;
+    const baseline = typeof p.last_unlock_check_level === "number"
+      ? p.last_unlock_check_level
+      : 1;
+
+    const observed = computeUserLevel({
       current_rank: progress.current_rank,
       current_level: progress.current_level,
       bosses_cleared: progress.bosses_cleared ?? 0,
       is_in_hall_of_fame: isInHallOfFame,
     });
 
-    const storageKey = `${PREV_LEVEL_KEY}:${user.id}`;
-    let prev: number | null = null;
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) prev = Number(raw);
-    } catch {
-      // storage disabled — skip; we just won't notify this session
-    }
+    if (observed === baseline) return;
 
-    if (prev == null || Number.isNaN(prev)) {
-      try {
-        localStorage.setItem(storageKey, String(nowLevel));
-      } catch {
-        /* noop */
-      }
-      seededRef.current = true;
+    // Prevent double-fire: if we already queued a push for this target,
+    // wait for refreshProfile to pull the new baseline through.
+    if (
+      pendingRef.current &&
+      pendingRef.current.userId === user.id &&
+      pendingRef.current.target >= observed
+    ) {
       return;
     }
 
-    if (nowLevel > prev) {
-      const newlyUnlocked = getNewlyUnlockedBetween(prev, nowLevel);
-      try {
-        localStorage.setItem(storageKey, String(nowLevel));
-      } catch {
-        /* noop */
-      }
-      if (newlyUnlocked.length === 0) return;
-
-      const head = newlyUnlocked[0];
-      const headLabel = resolveDisplayName(
-        head.category as UnlockCategory,
-        head.itemKey,
-        head.itemKey,
-      );
-      const extra = newlyUnlocked.length - 1;
-      toast.success(
-        extra > 0
-          ? `새 아이템 ${newlyUnlocked.length}개 해금! 🎁 (${headLabel} 외 ${extra}개)`
-          : `${headLabel} 해금! 🎁`,
-      );
-    } else if (nowLevel < prev) {
-      try {
-        localStorage.setItem(storageKey, String(nowLevel));
-      } catch {
-        /* noop */
+    if (observed > baseline) {
+      const newlyUnlocked = getNewlyUnlockedBetween(baseline, observed);
+      if (newlyUnlocked.length > 0) {
+        const head = newlyUnlocked[0];
+        const headLabel = resolveDisplayName(
+          head.category as UnlockCategory,
+          head.itemKey,
+          head.itemKey,
+        );
+        const extra = newlyUnlocked.length - 1;
+        toast.success(
+          extra > 0
+            ? `새 아이템 ${newlyUnlocked.length}개 해금! 🎁 (${headLabel} 외 ${extra}개)`
+            : `${headLabel} 해금! 🎁`,
+        );
       }
     }
-  }, [user?.id, progress, isInHallOfFame]);
+
+    pendingRef.current = { userId: user.id, target: observed };
+    void supabase
+      .rpc("update_last_unlock_check_level" as any, { _level: observed })
+      .then(({ error }) => {
+        if (error) {
+          console.warn("[useLevelUpNotifications] baseline push failed", error);
+          pendingRef.current = null;
+          return;
+        }
+        void refreshProfile();
+      });
+  }, [user?.id, profile, progress, isInHallOfFame, refreshProfile]);
 }

@@ -12,39 +12,26 @@ import {
 /**
  * Tutorial state orchestration (Step 3 of the unlock-system rollout).
  *
- * Persistence model
- *   • server-of-truth completion flag: profiles.tutorial_completed (DB)
- *       — written exactly once by complete_tutorial_and_grant_reward RPC
- *   • per-step progress: localStorage (client-only, can be reset without
- *       penalty because the reward path is idempotent at the DB level)
+ * Source of truth
+ *   • profiles.tutorial_completed       — boolean, flipped by RPC
+ *   • profiles.tutorial_step            — int order (0..5), GREATEST-only
+ *   • profiles.tutorial_reward_claimed  — decoupled idempotency flag
+ *   • profiles.tutorial_completed_at    — audit timestamp
  *
- * The localStorage step tracker exists so that a user who closes the app
- * mid-tutorial reopens at the right step. Losing it (clearing storage,
- * different device) just restarts the walkthrough — the 1000-gem grant
- * still fires only once because the RPC UPDATEs with a WHERE guard.
+ * Server enforces idempotency via complete_tutorial_once(_final_step):
+ * reward_claimed=false → true transition is atomic; subsequent calls
+ * return already_granted=true with 0 granted_gems.
+ *
+ * We no longer keep a localStorage mirror — the overlay only renders
+ * after AuthContext populates `profile`, so server state is always
+ * available when we need it.
  */
 
-const STEP_KEY = "153_tutorial_step"; // holds one of TutorialStepKey
-
-const isStepKey = (v: unknown): v is TutorialStepKey =>
-  typeof v === "string" && TUTORIAL_STEPS.some((s) => s.key === v);
-
-const readStoredStep = (): TutorialStepKey => {
-  try {
-    const raw = localStorage.getItem(STEP_KEY);
-    if (raw && isStepKey(raw)) return raw;
-  } catch {
-    // storage disabled — fall through
-  }
-  return TUTORIAL_STEPS[0].key;
-};
-
-const writeStoredStep = (key: TutorialStepKey) => {
-  try {
-    localStorage.setItem(STEP_KEY, key);
-  } catch {
-    // storage disabled — ignore; DB flag is the real completion source
-  }
+const clampOrder = (raw: unknown): number => {
+  if (typeof raw !== "number" || Number.isNaN(raw)) return 1;
+  if (raw < 1) return 1;
+  if (raw > TUTORIAL_STEPS.length) return TUTORIAL_STEPS.length;
+  return Math.trunc(raw);
 };
 
 interface TutorialRewardResult {
@@ -59,50 +46,65 @@ export function useTutorialState() {
   const { user, profile, refreshProfile } = useAuth();
   const qc = useQueryClient();
 
-  // Server flag is the source of truth. `as any` because types.ts lags
-  // behind the migration that adds this column (rule 3: don't regen types
-  // in a way that would touch unrelated call sites).
-  const isCompleted = !!(profile as any)?.tutorial_completed;
+  // `as any` because types.ts lags behind the columns added in
+  // 20260420140000_tutorial_state_columns.sql (rule 3: don't regen
+  // types in a way that would touch unrelated call sites).
+  const p = profile as any;
+  const isCompleted = !!p?.tutorial_completed;
+  const serverStepOrder = clampOrder(p?.tutorial_step ?? 1);
 
-  const [currentStepKey, setCurrentStepKey] = useState<TutorialStepKey>(
-    () => readStoredStep(),
-  );
-
-  // If the server says "already done", collapse local state to terminal
-  // so UI never re-prompts. Runs once per completion flip.
+  // Local mirror so `advance()` can optimistically push the UI forward
+  // while the update_tutorial_step RPC is still in flight. Seeded from
+  // server every time profile changes.
+  const [localOrder, setLocalOrder] = useState<number>(serverStepOrder);
   useEffect(() => {
-    if (isCompleted && currentStepKey !== "complete") {
-      setCurrentStepKey("complete");
-      writeStoredStep("complete");
-    }
-  }, [isCompleted, currentStepKey]);
+    setLocalOrder(serverStepOrder);
+  }, [serverStepOrder]);
 
+  const currentOrder = Math.max(localOrder, serverStepOrder);
   const currentStep = useMemo(
-    () => TUTORIAL_STEPS.find((s) => s.key === currentStepKey) ?? TUTORIAL_STEPS[0],
-    [currentStepKey],
+    () => TUTORIAL_STEPS[Math.min(currentOrder, TUTORIAL_STEPS.length) - 1],
+    [currentOrder],
   );
-
-  const currentOrder = currentStep.order;
+  const currentStepKey: TutorialStepKey = currentStep.key;
   const progressRatio = Math.min(currentOrder / TUTORIAL_TOTAL_STEPS, 1);
 
+  // Fire-and-forget step persistence. We don't block UI on this —
+  // the RPC uses GREATEST so out-of-order resolution is safe.
+  const persistStep = useCallback(async (order: number) => {
+    const { error } = await supabase.rpc(
+      "update_tutorial_step" as any,
+      { _step: order },
+    );
+    if (error) {
+      // Log but don't surface — failing to save a step is harmless;
+      // the user reopens on the same step next mount.
+      console.warn("[useTutorialState] update_tutorial_step failed", error);
+      return;
+    }
+    void refreshProfile();
+  }, [refreshProfile]);
+
   const goToStep = useCallback((key: TutorialStepKey) => {
-    setCurrentStepKey(key);
-    writeStoredStep(key);
-  }, []);
+    const step = TUTORIAL_STEPS.find((s) => s.key === key);
+    if (!step) return;
+    setLocalOrder(step.order);
+    void persistStep(step.order);
+  }, [persistStep]);
 
   const advance = useCallback(() => {
-    setCurrentStepKey((prev) => {
-      const idx = TUTORIAL_STEPS.findIndex((s) => s.key === prev);
-      const next = TUTORIAL_STEPS[Math.min(idx + 1, TUTORIAL_STEPS.length - 1)];
-      writeStoredStep(next.key);
-      return next.key;
+    setLocalOrder((prev) => {
+      const next = Math.min(prev + 1, TUTORIAL_STEPS.length);
+      void persistStep(next);
+      return next;
     });
-  }, []);
+  }, [persistStep]);
 
   const completeReward = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.rpc(
-        "complete_tutorial_and_grant_reward" as any,
+        "complete_tutorial_once" as any,
+        { _final_step: TUTORIAL_STEPS.length },
       );
       if (error) throw error;
       const result = (data ?? {}) as TutorialRewardResult;
@@ -112,25 +114,14 @@ export function useTutorialState() {
       return result;
     },
     onSuccess: () => {
-      setCurrentStepKey("complete");
-      writeStoredStep("complete");
+      setLocalOrder(TUTORIAL_STEPS.length);
       qc.invalidateQueries({ queryKey: ["wallet"] });
       void refreshProfile();
     },
   });
 
-  /** Hard reset for QA. Does NOT touch the server flag. */
-  const resetLocal = useCallback(() => {
-    try {
-      localStorage.removeItem(STEP_KEY);
-    } catch {
-      /* noop */
-    }
-    setCurrentStepKey(TUTORIAL_STEPS[0].key);
-  }, []);
-
   return {
-    /** true once the server-side grant has fired for this user. */
+    /** true once complete_tutorial_once has flipped the server flag. */
     isCompleted,
     /** While the user is unauthenticated we don't show tutorial UI. */
     isEligible: !!user && !isCompleted,
@@ -144,6 +135,5 @@ export function useTutorialState() {
     goToStep,
     advance,
     completeReward,
-    resetLocal,
   };
 }
