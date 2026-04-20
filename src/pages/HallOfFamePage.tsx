@@ -12,6 +12,7 @@ import {
   useStreakRanking,
   useBossConquerors,
   useSetRival,
+  useBranchesList,
 } from "@/hooks/useRankingData";
 import { supabase } from "@/integrations/supabase/client";
 import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION } from "@/lib/rankLabels";
@@ -77,7 +78,7 @@ const PODIUM_TONE = {
 
 const HallOfFamePage = () => {
   const navigate = useNavigate();
-  const { user, progress, role } = useAuth();
+  const { user, profile, progress, role } = useAuth();
   const [topTab, setTopTab] = useState<TopTab>("ranking");
   // Default to the "official" (total XP) view so users land on the
   // full branch roster first instead of the weekly slice.
@@ -85,13 +86,31 @@ const HallOfFamePage = () => {
   const setRival = useSetRival();
   const qc = useQueryClient();
   const isAdmin = role === "admin" || role === "super_admin";
+  const isSuperAdmin = role === "super_admin";
 
+  // Branch switcher state (super_admin only).
+  //   undefined → 내 지점 (default — Regular users are locked here)
+  //   null      → 전체 지점 통합
+  //   "선릉점"  → 특정 지점
+  const [branchFilter, setBranchFilter] = useState<string | null | undefined>(
+    undefined,
+  );
+
+  const { data: branches } = useBranchesList();
+
+  const effectiveBranchLabel =
+    branchFilter === null
+      ? "전 지점 통합"
+      : branchFilter ?? profile?.branch_name ?? "내 지점";
+
+  // Forward branchFilter into the five ranking hooks. When undefined,
+  // they fall back to the caller's own branch (regular-user path).
   const { data: officialRanking, isLoading: officialLoading } =
-    useDivisionRanking();
-  const { data: weeklyRanking } = useWeeklyActivityRanking();
-  const { data: monthlyRanking } = useMonthlyRisers();
-  const { data: streakRanking } = useStreakRanking();
-  const { data: bossRanking } = useBossConquerors();
+    useDivisionRanking(50, branchFilter);
+  const { data: weeklyRanking } = useWeeklyActivityRanking(20, branchFilter);
+  const { data: monthlyRanking } = useMonthlyRisers(10, branchFilter);
+  const { data: streakRanking } = useStreakRanking(10, branchFilter);
+  const { data: bossRanking } = useBossConquerors(10, branchFilter);
 
   const myPosition = officialRanking?.find((r) => r.r_user_id === user?.id)
     ?.rank_position;
@@ -199,7 +218,13 @@ const HallOfFamePage = () => {
       header={
         <PageHeader
           title="랭킹"
-          subtitle={progress ? `${RANK_LABELS[progress.current_rank]} 리그` : "복싱 리그"}
+          subtitle={
+            isSuperAdmin
+              ? `${effectiveBranchLabel} 리그`
+              : profile?.branch_name
+                ? `${profile.branch_name} 리그`
+                : "복싱 리그"
+          }
           rightAction={
             <button
               onClick={() => navigate("/mypage")}
@@ -224,6 +249,27 @@ const HallOfFamePage = () => {
           ]}
           fullWidth
         />
+
+        {topTab === "ranking" && isSuperAdmin && branches && branches.length > 0 && (
+          // Super-admin only: switch between branches or view the global
+          // union. Regular members never see this row (server-side RPC
+          // also force-scopes them to their own branch).
+          <FilterChips<string>
+            value={branchFilter === null ? "__all__" : branchFilter ?? "__mine__"}
+            onChange={(v) => {
+              if (v === "__all__") setBranchFilter(null);
+              else if (v === "__mine__") setBranchFilter(undefined);
+              else setBranchFilter(v as string);
+            }}
+            chips={[
+              { value: "__all__", label: "전 지점" },
+              ...(profile?.branch_name
+                ? [{ value: "__mine__", label: `내 지점 (${profile.branch_name})` }]
+                : []),
+              ...branches.map((b) => ({ value: b.name, label: b.name })),
+            ]}
+          />
+        )}
 
         {topTab === "ranking" && (
           <>
