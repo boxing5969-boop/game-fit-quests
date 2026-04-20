@@ -22,6 +22,7 @@ import {
   useSaveCustomization,
 } from "@/hooks/useCharacterData";
 import { useIsInHallOfFame } from "@/hooks/useRankingData";
+import { useOwnedCustomizations } from "@/hooks/useCustomizationPurchase";
 import { useWallet, useSpendGems } from "@/hooks/useWallet";
 import CharacterSprite from "@/components/CharacterSprite";
 import { toast } from "sonner";
@@ -93,6 +94,7 @@ const CharacterStudioPage = () => {
   const assignCharacter = useAssignCharacter();
   const saveCustomization = useSaveCustomization();
   const { data: isInHallOfFame = false } = useIsInHallOfFame();
+  const { data: ownedCustomizations = [] } = useOwnedCustomizations();
   const isAdmin = role === "admin" || role === "super_admin";
 
   const currentPartsJson = (assignment?.character_presets as any)?.parts_json;
@@ -484,6 +486,8 @@ const CharacterStudioPage = () => {
               currentMilestone={currentMilestone}
               nextMilestone={nextMilestone}
               currentCustomization={currentCustomization}
+              ownedStyles={ownedStyles}
+              ownedCustomizations={ownedCustomizations}
             />
           )}
           {activeTab === "preset" && (
@@ -542,10 +546,12 @@ const CharacterStudioPage = () => {
 };
 
 // ========== MY CHARACTER TAB ==========
-function MyCharacterTab({ currentStyle, league, level, navigate, currentMilestone, nextMilestone, currentCustomization }: {
+function MyCharacterTab({ currentStyle, league, level, navigate, currentMilestone, nextMilestone, currentCustomization, ownedStyles, ownedCustomizations }: {
   currentStyle?: string;
   league: string;
   level: number;
+  ownedStyles: Set<string>;
+  ownedCustomizations: { category: string; item_key: string }[];
   navigate: (path: string) => void;
   currentMilestone: any;
   nextMilestone: any;
@@ -623,42 +629,157 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
         </div>
       )}
 
-      {/* Navigation cards — reward-tinted icon tiles per spec */}
-      <div className="space-y-2">
-        <button
-          onClick={() => navigate("/avatar")}
-          className="elevated-card flex w-full items-center gap-3 text-left"
-        >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(246,196,83,0.12)]">
-            <Gem className="h-5 w-5 text-[#F6C453]" />
+      {/* Inventory + 명예의 전당 */}
+      <InventorySection
+        ownedStyles={ownedStyles}
+        ownedCustomizations={ownedCustomizations}
+      />
+      <button
+        onClick={() => navigate("/halloffame")}
+        className="elevated-card flex w-full items-center gap-3 text-left"
+      >
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(246,196,83,0.12)]">
+          <Crown className="h-5 w-5 text-[#F6C453]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-body-sm font-bold text-foreground">
+            명예의 전당
+          </p>
+          <p className="text-caption text-muted-foreground">
+            내 캐릭터가 전시됩니다
+          </p>
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </button>
+    </div>
+  );
+}
+
+// ========== INVENTORY SECTION ==========
+function InventorySection({
+  ownedStyles,
+  ownedCustomizations,
+}: {
+  ownedStyles: Set<string>;
+  ownedCustomizations: { category: string; item_key: string }[];
+}) {
+  // 카테고리별 그룹화
+  const groupedCustomizations = useMemo(() => {
+    const groups: Record<string, string[]> = { effect: [], frame: [], title: [], aura: [] };
+    for (const item of ownedCustomizations) {
+      if (groups[item.category]) groups[item.category].push(item.item_key);
+    }
+    return groups;
+  }, [ownedCustomizations]);
+
+  const ownedPresets = useMemo(
+    () => PREBUILT_CHARACTERS.filter((c) => ownedStyles.has(c.style) || c.price === 0),
+    [ownedStyles],
+  );
+
+  const totalOwned =
+    ownedPresets.length +
+    Object.values(groupedCustomizations).reduce((a, arr) => a + arr.length, 0);
+
+  const categoryLabels: Record<string, { label: string; icon: string }> = {
+    effect: { label: "이펙트", icon: "✨" },
+    frame:  { label: "프레임", icon: "🖼️" },
+    title:  { label: "칭호",   icon: "🏷️" },
+    aura:   { label: "오라",   icon: "🌀" },
+  };
+
+  return (
+    <div className="elevated-card space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(246,196,83,0.12)]">
+          <Gem className="h-5 w-5 text-[#F6C453]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-body-sm font-bold text-foreground">인벤토리</p>
+          <p className="text-caption text-muted-foreground">
+            보유 중인 아이템 <span className="number-font font-bold text-foreground">{totalOwned}</span>개
+          </p>
+        </div>
+      </div>
+
+      {/* 복서 (프리셋) */}
+      <div className="rounded-xl border border-border bg-card/50 p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[11px] font-bold text-foreground">🥊 보유 복서</span>
+          <span className="number-font text-[11px] font-bold text-muted-foreground">
+            {ownedPresets.length}
+          </span>
+        </div>
+        {ownedPresets.length === 0 ? (
+          <p className="text-[11px] text-muted-foreground">아직 보유한 복서가 없어요.</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {ownedPresets.slice(0, 12).map((c) => (
+              <span
+                key={c.style}
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-foreground/85"
+                title={c.label}
+              >
+                {c.requirement === "hall_of_fame" && <Crown className="h-2.5 w-2.5 text-reward" />}
+                <span className="truncate max-w-[70px]">{c.label}</span>
+              </span>
+            ))}
+            {ownedPresets.length > 12 && (
+              <span className="text-[10px] text-muted-foreground">+{ownedPresets.length - 12}</span>
+            )}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-body-sm font-bold text-foreground">
-              아이템 상점
-            </p>
-            <p className="text-caption text-muted-foreground">
-              파이트 머니로 특별 아이템 구매
-            </p>
-          </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-        </button>
-        <button
-          onClick={() => navigate("/halloffame")}
-          className="elevated-card flex w-full items-center gap-3 text-left"
-        >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(246,196,83,0.12)]">
-            <Crown className="h-5 w-5 text-[#F6C453]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-body-sm font-bold text-foreground">
-              명예의 전당
-            </p>
-            <p className="text-caption text-muted-foreground">
-              내 캐릭터가 전시됩니다
-            </p>
-          </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-        </button>
+        )}
+      </div>
+
+      {/* 꾸미기 카테고리 4종 */}
+      <div className="grid grid-cols-2 gap-2">
+        {(["effect", "frame", "title", "aura"] as const).map((cat) => {
+          const items = groupedCustomizations[cat];
+          const meta = categoryLabels[cat];
+          return (
+            <div key={cat} className="rounded-xl border border-border bg-card/50 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11px] font-bold text-foreground">
+                  {meta.icon} {meta.label}
+                </span>
+                <span className="number-font text-[11px] font-bold text-muted-foreground">
+                  {items.length}
+                </span>
+              </div>
+              {items.length === 0 ? (
+                <p className="text-[10px] text-muted-foreground">없음</p>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {items.slice(0, 8).map((key) => {
+                    const fullKey = `${cat}:${key}`;
+                    // 라벨 찾기 (resolveDisplayName 은 unlockRules 데이터, 없으면 key 그대로)
+                    const catOptions = CUSTOMIZATION_CATEGORIES.find((c) => c.code === cat)?.options ?? [];
+                    const option = catOptions.find((o) => o.key === key);
+                    const label = resolveDisplayName(cat, key, option?.label ?? key);
+                    const isHof = option?.requirement === "hall_of_fame";
+                    return (
+                      <span
+                        key={fullKey}
+                        className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${
+                          isHof
+                            ? "border-reward/40 bg-reward/10 text-reward"
+                            : "border-border bg-background text-foreground/85"
+                        }`}
+                        title={label}
+                      >
+                        {isHof && <Crown className="h-2 w-2" />}
+                        <span className="truncate max-w-[56px]">{label}</span>
+                      </span>
+                    );
+                  })}
+                  {items.length > 8 && (
+                    <span className="text-[9px] text-muted-foreground">+{items.length - 8}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
