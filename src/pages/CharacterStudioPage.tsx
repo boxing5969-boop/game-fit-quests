@@ -40,7 +40,6 @@ import {
 import {
   AppPage,
   PageHeader,
-  SegmentedControl,
   StatCard,
 } from "@/components/ui/rankingup";
 
@@ -415,14 +414,36 @@ const CharacterStudioPage = () => {
             </div>
           </section>
 
-          {/* ─── Tab bar ─── */}
-          <SegmentedControl<TabKey>
-            value={activeTab as TabKey}
-            onChange={(v) => setActiveTab(v)}
-            segments={TABS.map((t) => ({ value: t.key, label: t.label }))}
-            size="sm"
-            fullWidth
-          />
+          {/* ─── Tab bar ─── Horizontally-scrollable chips so CJK labels
+               never wrap. Each chip sizes to its natural width; active
+               tab uses the shadcn-style raised surface so it still reads
+               as a tab (not a filter). */}
+          <div
+            role="tablist"
+            aria-label="캐릭터 스튜디오 탭"
+            className="flex gap-1 overflow-x-auto rounded-pill border border-border bg-muted/40 p-1 scrollbar-hide"
+          >
+            {TABS.map((t) => {
+              const active = activeTab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveTab(t.key)}
+                  className={cn(
+                    "shrink-0 whitespace-nowrap rounded-pill px-4 py-1.5 text-body-sm font-bold transition-all active:scale-[0.98]",
+                    active
+                      ? "bg-card text-foreground shadow-elev-1"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
 
           {/* ─── Tab content ─── */}
           {activeTab === "my" && (
