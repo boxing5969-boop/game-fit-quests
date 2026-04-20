@@ -687,6 +687,12 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
   const [activeCat, setActiveCat] = useState(CUSTOMIZATION_CATEGORIES[0].code);
 
   const handleSelect = (catCode: string, opt: CustomizationOption) => {
+    // HoF 게이트 — 서버 purchase_customization 의 hof_required 에러와 동일 경로.
+    // 레벨 게이트 전에 걸어서 HoF 미자격자가 "Lv.99" 가 아닌 정확한 문구를 받도록.
+    if (opt.requirement === "hall_of_fame" && !isInHallOfFame && !isAdmin) {
+      toast("명예의 전당 입성 후 구매 가능");
+      return;
+    }
     if (!isAdmin) {
       const status = getUnlockStatus(userLevel, {
         category: catCode as UnlockCategory,
@@ -744,9 +750,11 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
             category: activeCat as UnlockCategory,
             itemKey: opt.key,
           });
-          const levelLocked = unlock.locked && !isAdmin;
-          const blackLocked = !!opt.blackOnly && league !== "black" && !isAdmin;
-          const isLocked = levelLocked || blackLocked;
+          const isHof = opt.requirement === "hall_of_fame";
+          const hofLocked = isHof && !isInHallOfFame && !isAdmin;
+          const levelLocked = unlock.locked && !isAdmin && !hofLocked;
+          const blackLocked = !!opt.blackOnly && league !== "black" && !isAdmin && !hofLocked;
+          const isLocked = hofLocked || levelLocked || blackLocked;
           const displayLabel = resolveDisplayName(
             activeCat as UnlockCategory,
             opt.key,
@@ -757,21 +765,39 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
               key={opt.key}
               onClick={() => handleSelect(activeCat, opt)}
               className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
-                isLocked
+                // HoF 카드는 잠김이든 해금이든 금빛 테두리로 시각 차별화
+                isHof
+                  ? hofLocked
+                    ? "border-reward/40 bg-gradient-to-br from-[hsl(42_92%_14%)] via-card to-card"
+                    : isSelected
+                    ? "border-reward bg-reward/5 shadow-[0_0_18px_rgba(246,196,83,0.25)]"
+                    : "border-reward/60 bg-gradient-to-br from-[hsl(42_92%_10%)] via-card to-card"
+                  : isLocked
                   ? "border-border bg-muted/30"
                   : isSelected
                   ? "border-primary bg-primary/5 shadow-glow-soft"
                   : "border-border bg-card"
               }`}
             >
-              {isSelected && !isLocked && (
+              {isSelected && !isLocked && !isHof && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
                   <Check className="h-2.5 w-2.5 text-primary-foreground" />
                 </span>
               )}
-              {isLocked && (
+              {isSelected && !isLocked && isHof && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-reward">
+                  <Check className="h-2.5 w-2.5 text-background" />
+                </span>
+              )}
+              {isLocked && !hofLocked && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-muted-foreground/70">
                   <Lock className="h-2.5 w-2.5 text-white" />
+                </span>
+              )}
+              {/* HoF 전용 왕관 배지 — 잠김 여부와 무관, 항상 표시 */}
+              {isHof && (
+                <span className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-reward text-[hsl(30_60%_12%)] shadow">
+                  <Crown className="h-2.5 w-2.5" />
                 </span>
               )}
               <div className={isLocked ? "grayscale opacity-60" : undefined}>
@@ -779,11 +805,26 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
               </div>
               <span
                 className={`text-[10px] font-bold truncate w-full text-center leading-tight ${
-                  isLocked ? "text-muted-foreground" : "text-foreground/80"
+                  isLocked ? "text-muted-foreground" : isHof ? "text-reward" : "text-foreground/80"
                 }`}
               >
                 {displayLabel}
               </span>
+              {/* 가격 (HoF 는 항상, 일반은 가격 있을 때만 표기 최소화) */}
+              {isHof && (
+                <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold leading-none ${hofLocked ? "text-muted-foreground" : "text-reward"}`}>
+                  <Gem className="h-2.5 w-2.5" />
+                  <span className="number-font">{opt.price.toLocaleString()}</span>
+                </span>
+              )}
+              {/* HoF 잠금 안내 (하단 pill) */}
+              {hofLocked && (
+                <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-reward/90 px-1.5 py-0.5 text-[9px] font-bold leading-none text-[hsl(30_60%_12%)]">
+                  <Crown className="h-2 w-2" />
+                  명예의 전당 전용
+                </span>
+              )}
+              {/* 레벨 잠금 안내 — HoF 가 잠금의 1순위이므로 겹치지 않도록 hofLocked 때는 숨김 */}
               {levelLocked && unlock.requiredLevel !== null && (
                 <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-foreground/85 px-1.5 py-0.5 text-[9px] font-bold leading-none text-background">
                   <Lock className="h-2 w-2" />
@@ -810,6 +851,9 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
             <span className="ml-auto text-[10px] text-amber-500 font-bold">적용 중</span>
           )}
         </div>
+        <p className="text-[10px] leading-snug text-muted-foreground">
+          ※ 오라 탭의 <b className="text-reward">명예의 전당 전용</b> 오라와는 별개 카테고리입니다.
+        </p>
         <div className="grid grid-cols-5 gap-2">
           {HALO_OPTIONS.map(opt => {
             const isSelected = customization.halo === opt.key || (!customization.halo && opt.key === "halo_rainbow" && isMaster);
