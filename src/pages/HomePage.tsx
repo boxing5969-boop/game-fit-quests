@@ -30,6 +30,7 @@ import CheckinSuccessModal from "@/components/CheckinSuccessModal";
 import LevelUpModal from "@/components/LevelUpModal";
 import RetentionBanner from "@/components/RetentionBanner";
 import TutorialOverlay from "@/components/TutorialOverlay";
+import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 
 import {
   AppPage,
@@ -57,6 +58,7 @@ const HomePage = () => {
   const { onboardingDone, safetyDone } = useOnboardingState();
   const { totalXp, metrics } = useLocalProgress();
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
+  useLevelUpNotifications();
 
   const [showChallenge, setShowChallenge] = useState(false);
   const [qrAutoStarted, setQrAutoStarted] = useState(false);
