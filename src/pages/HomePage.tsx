@@ -30,6 +30,7 @@ import CheckinSuccessModal from "@/components/CheckinSuccessModal";
 import LevelUpModal from "@/components/LevelUpModal";
 import RetentionBanner from "@/components/RetentionBanner";
 import TutorialOverlay from "@/components/TutorialOverlay";
+import TutorialCompleteModal from "@/components/TutorialCompleteModal";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 
 import {
@@ -66,6 +67,7 @@ const HomePage = () => {
   const [checkinResult, setCheckinResult] = useState<any>(null);
   const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
   const [checkedInToday, setCheckedInToday] = useState(false);
+  const [tutorialCelebration, setTutorialCelebration] = useState<number | null>(null);
   const [levelUpModal, setLevelUpModal] = useState<{
     show: boolean;
     level: number;
@@ -487,7 +489,15 @@ const HomePage = () => {
         result={checkinResult}
       />
 
-      {onboardingDone && safetyDone && <TutorialOverlay />}
+      {onboardingDone && safetyDone && (
+        <TutorialOverlay onCompleted={(gems) => setTutorialCelebration(gems)} />
+      )}
+
+      <TutorialCompleteModal
+        open={tutorialCelebration !== null}
+        grantedGems={tutorialCelebration ?? 0}
+        onClose={() => setTutorialCelebration(null)}
+      />
     </AppPage>
   );
 };

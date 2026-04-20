@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -93,23 +93,36 @@ export function useTutorialState() {
   }, [persistStep]);
 
   /**
-   * Reward mutation kept exported for a future step. The overlay in
-   * Step 4 does NOT invoke this — reward wiring is deferred per spec.
+   * Reward mutation — Step 5 wires this to the "complete" button.
+   *
+   * Duplicate-claim defenses layered here:
+   *   1. useMutation.isPending flips true between click and settle, so
+   *      the caller can render the button disabled for the round trip.
+   *   2. The server RPC itself is atomic: only the UPDATE that flips
+   *      reward_claimed false→true grants gems. Any later call returns
+   *      already_granted=true with 0 granted_gems.
+   *   3. On success we refresh the profile so tutorial_completed=true
+   *      propagates and isEligible drops — preventing the overlay from
+   *      remounting and allowing a second click.
    */
-  const completeReward = useCallback(async () => {
-    const { data, error } = await supabase.rpc(
-      "complete_tutorial_once" as any,
-      { _final_step: STEP_COUNT },
-    );
-    if (error) throw error;
-    const result = (data ?? {}) as TutorialRewardResult;
-    if (!result.success) {
-      throw new Error(result.error ?? "튜토리얼 보상 지급 실패");
-    }
-    qc.invalidateQueries({ queryKey: ["wallet"] });
-    void refreshProfile();
-    return result;
-  }, [qc, refreshProfile]);
+  const completeReward = useMutation({
+    mutationFn: async (): Promise<TutorialRewardResult> => {
+      const { data, error } = await supabase.rpc(
+        "complete_tutorial_once" as any,
+        { _final_step: STEP_COUNT },
+      );
+      if (error) throw error;
+      const result = (data ?? {}) as TutorialRewardResult;
+      if (!result.success) {
+        throw new Error(result.error ?? "튜토리얼 보상 지급 실패");
+      }
+      return result;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+      void refreshProfile();
+    },
+  });
 
   return {
     /** Absolute signal: server has granted reward → tutorial is done forever. */

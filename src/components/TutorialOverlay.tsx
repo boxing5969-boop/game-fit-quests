@@ -1,32 +1,37 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Sparkles, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { useTutorialState } from "@/hooks/useTutorialState";
 import { cn } from "@/lib/utils";
 
+interface TutorialOverlayProps {
+  /**
+   * Fired once complete_tutorial_once succeeds. `grantedGems` is the
+   * server-reported amount (0 when already_granted, which we treat as
+   * a no-celebration path — the user should only see the confetti on
+   * the actual flip).
+   */
+  onCompleted?: (grantedGems: number) => void;
+}
+
 /**
- * Home-page tutorial modal (Step 4).
- *
- * Visibility
- *   mounts only when useTutorialState reports `isEligible`
- *   (logged in + !tutorial_completed + stepsCompleted < 5)
+ * Home-page tutorial modal (Step 5 — reward wiring active).
  *
  * Per-step behavior
  *   • profile / ranking / effect_shop
  *       — CTA navigates. Route-level visit tracker calls advance()
- *         when the user arrives, so the button itself does not
- *         advance — this prevents double-counting if the user returns
- *         to home without visiting the target.
+ *         when the user arrives.
  *   • mini_game
  *       — placeholder: CTA calls advance() directly (no navigation;
  *         avoids overlapping the overlay's own screen).
  *   • complete
- *       — 완료 button calls advance() (pushes stepsCompleted to 5
- *         which hides the overlay). Reward RPC is NOT invoked here —
- *         spec defers 1000-gem grant to a future step.
+ *       — "보상 받기" fires complete_tutorial_once via useTutorialState.
+ *         Button disables while pending. On success the parent opens
+ *         TutorialCompleteModal; on error a toast surfaces the message.
  */
-export const TutorialOverlay = () => {
+export const TutorialOverlay = ({ onCompleted }: TutorialOverlayProps) => {
   const navigate = useNavigate();
   const {
     isEligible,
@@ -36,6 +41,7 @@ export const TutorialOverlay = () => {
     totalSteps,
     steps,
     advance,
+    completeReward,
   } = useTutorialState();
 
   const [dismissed, setDismissed] = useState(false);
@@ -44,23 +50,50 @@ export const TutorialOverlay = () => {
 
   const isMiniGame = currentStep.key === "mini_game";
   const isComplete = currentStep.key === "complete";
+  const isSubmitting = completeReward.isPending;
 
   const handlePrimary = () => {
+    if (isSubmitting) return;
+
     if (isComplete) {
-      advance();
+      completeReward.mutate(undefined, {
+        onSuccess: (result) => {
+          const granted = result.granted_gems ?? 0;
+          // already_granted path: server says nothing to hand out. Close
+          // quietly — no celebration (user must have already seen it).
+          if (result.already_granted || granted <= 0) {
+            setDismissed(true);
+            return;
+          }
+          setDismissed(true);
+          onCompleted?.(granted);
+        },
+        onError: (err) => {
+          toast.error(
+            err instanceof Error
+              ? err.message
+              : "보상 지급에 실패했어요. 잠시 후 다시 시도해주세요.",
+          );
+        },
+      });
       return;
     }
+
     if (isMiniGame) {
       advance();
       return;
     }
+
     if (currentStep.navTarget) {
       setDismissed(true);
       navigate(currentStep.navTarget);
     }
   };
 
-  const handleSkip = () => setDismissed(true);
+  const handleSkip = () => {
+    if (isSubmitting) return;
+    setDismissed(true);
+  };
 
   return (
     <div
@@ -77,7 +110,8 @@ export const TutorialOverlay = () => {
           type="button"
           onClick={handleSkip}
           aria-label="튜토리얼 닫기"
-          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
+          disabled={isSubmitting}
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
         >
           <X className="h-5 w-5" />
         </button>
@@ -147,16 +181,18 @@ export const TutorialOverlay = () => {
           <button
             type="button"
             onClick={handleSkip}
-            className="flex-1 rounded-2xl border border-border bg-background px-4 py-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted"
+            disabled={isSubmitting}
+            className="flex-1 rounded-2xl border border-border bg-background px-4 py-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
           >
             나중에
           </button>
           <button
             type="button"
             onClick={handlePrimary}
-            className="flex-[2] rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-glow-soft transition-all active:scale-[0.98]"
+            disabled={isSubmitting}
+            className="flex-[2] rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-glow-soft transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {currentStep.ctaLabel}
+            {isSubmitting ? "지급 중…" : currentStep.ctaLabel}
           </button>
         </div>
       </div>
