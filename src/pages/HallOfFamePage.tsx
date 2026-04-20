@@ -1,4 +1,4 @@
-import { useState, useMemo, type ReactNode } from "react";
+import { useState, useMemo, useEffect, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { User, Settings2, X, Trophy, Crown } from "lucide-react";
@@ -89,12 +89,26 @@ const HallOfFamePage = () => {
   const isSuperAdmin = role === "super_admin";
 
   // Branch switcher state (super_admin only).
-  //   undefined → 내 지점 (default — Regular users are locked here)
-  //   null      → 전체 지점 통합
+  //   undefined → 내 지점 (Regular users are locked here)
+  //   null      → 전 지점 통합
   //   "선릉점"  → 특정 지점
+  // Default is undefined; a one-shot effect below flips it to null
+  // (전 지점 통합) for super_admins once their role finishes loading.
   const [branchFilter, setBranchFilter] = useState<string | null | undefined>(
     undefined,
   );
+
+  // Role arrives async after auth session loads. Switch super_admins to
+  // the global-union view on first role resolution so they land on
+  // "all members across all branches" by default. Ref-gated so user
+  // choices afterward (e.g. picking "내 지점") stick.
+  const branchDefaultDoneRef = useRef(false);
+  useEffect(() => {
+    if (branchDefaultDoneRef.current) return;
+    if (!role) return;
+    branchDefaultDoneRef.current = true;
+    if (role === "super_admin") setBranchFilter(null);
+  }, [role]);
 
   const { data: branches } = useBranchesList();
 
