@@ -46,18 +46,33 @@ export interface UserLevelInput {
   current_level: number;
   bosses_cleared?: number;
   is_in_hall_of_fame?: boolean;
+  /** Master track opt-in flag (migration 20260420160000). */
+  master_track_unlocked?: boolean;
+  /** 1..59 when master track is unlocked. */
+  master_level?: number;
 }
 
 /**
- * Normalize (rank, level, bosses, HoF) into a single integer level used
- * across the unlock system. Safe for unknown/null inputs → returns 1.
+ * Normalize all progression inputs into a single integer level (1..99)
+ * used across the unlock system. Safe for unknown/null inputs → returns 1.
+ *
+ * Precedence:
+ *   1. master_track_unlocked → 40 + master_level (41..99)
+ *   2. is_in_hall_of_fame    → 99 (pre-master-track legacy signal)
+ *   3. black Lv10 + bosses≥4 → 50 (pre-master-track master tier)
+ *   4. rankIdx*10 + level    → 1..40 (default)
  */
 export function computeUserLevel({
   current_rank,
   current_level,
   bosses_cleared = 0,
   is_in_hall_of_fame = false,
+  master_track_unlocked = false,
+  master_level = 0,
 }: UserLevelInput): number {
+  if (master_track_unlocked && master_level >= 1) {
+    return 40 + Math.min(master_level, 59);
+  }
   if (is_in_hall_of_fame) return 99;
   if (
     current_rank === "black" &&

@@ -228,6 +228,73 @@ describe("computeUserLevel — rank/level/bosses/HoF combinations", () => {
       computeUserLevel({ current_rank: "gold", current_level: 5 }),
     ).toBe(1);
   });
+
+  it("master_track_unlocked + master_level maps to 41..99", () => {
+    // Same rank/level shell (black Lv10) but master track flipped.
+    expect(
+      computeUserLevel({
+        current_rank: "black",
+        current_level: 10,
+        bosses_cleared: 4,
+        master_track_unlocked: true,
+        master_level: 1,
+      }),
+    ).toBe(41);
+
+    expect(
+      computeUserLevel({
+        current_rank: "black",
+        current_level: 10,
+        master_track_unlocked: true,
+        master_level: 10,
+      }),
+    ).toBe(50);
+
+    expect(
+      computeUserLevel({
+        current_rank: "black",
+        current_level: 10,
+        master_track_unlocked: true,
+        master_level: 59,
+      }),
+    ).toBe(99);
+  });
+
+  it("master_track takes precedence over is_in_hall_of_fame flag", () => {
+    expect(
+      computeUserLevel({
+        current_rank: "black",
+        current_level: 10,
+        is_in_hall_of_fame: true,
+        master_track_unlocked: true,
+        master_level: 25,
+      }),
+    ).toBe(65);
+  });
+
+  it("master_track with master_level=0 falls through to legacy logic", () => {
+    // Defensive: unlocked but not yet assigned a level → treat as 1..40 path.
+    expect(
+      computeUserLevel({
+        current_rank: "black",
+        current_level: 10,
+        bosses_cleared: 4,
+        master_track_unlocked: true,
+        master_level: 0,
+      }),
+    ).toBe(50);
+  });
+
+  it("master_level is clamped to 59 if overshot", () => {
+    expect(
+      computeUserLevel({
+        current_rank: "black",
+        current_level: 10,
+        master_track_unlocked: true,
+        master_level: 9999,
+      }),
+    ).toBe(99);
+  });
 });
 
 describe("tutorial helpers", () => {
