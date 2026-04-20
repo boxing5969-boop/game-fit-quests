@@ -12,6 +12,7 @@ import {
   Sparkles,
   User,
   Settings,
+  Gamepad2,
   X,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -21,16 +22,18 @@ import { cn } from "@/lib/utils";
 // 명예의 전당은 랭킹 화면(/halloffame) 내부 1차 탭으로 흡수,
 // 랭크업·단증혜택·가이드는 전체 메뉴로 이동. 접근성은 모두 유지.
 const mainTabs = [
-  { path: "/home",       icon: Home,   label: "홈"   },
-  { path: "/missions",   icon: Target, label: "훈련" },
-  { path: "/halloffame", icon: Trophy, label: "랭킹" },
-  { path: "/rewards",    icon: Gift,   label: "보상" },
+  { path: "/home",       icon: Home,     label: "홈"     },
+  { path: "/missions",   icon: Target,   label: "훈련"   },
+  { path: "/minigame",   icon: Gamepad2, label: "미니게임" },
+  { path: "/halloffame", icon: Trophy,   label: "랭킹"   },
+  { path: "/rewards",    icon: Gift,     label: "보상"   },
 ] as const;
 
 // ── Full menu overlay (everything not on the primary bar) ───────────
 const allMenuItems = [
   { path: "/home",              icon: Home,       label: "홈" },
   { path: "/missions",          icon: Target,     label: "훈련" },
+  { path: "/minigame",          icon: Gamepad2,   label: "미니게임" },
   { path: "/halloffame",        icon: Trophy,     label: "랭킹" },
   { path: "/rewards",           icon: Gift,       label: "보상" },
   { path: "/rank-up",           icon: TrendingUp, label: "랭크업" },

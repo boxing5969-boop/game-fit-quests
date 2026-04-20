@@ -42,6 +42,7 @@ const GuideFaqPage = lazy(() => import("@/pages/guide/GuideFaqPage"));
 const RankUpPage = lazy(() => import("@/pages/RankUpPage"));
 const CharacterStudioPage = lazy(() => import("@/pages/CharacterStudioPage"));
 const MasterTrackPage = lazy(() => import("@/pages/MasterTrackPage"));
+const MinigamePage = lazy(() => import("@/pages/MinigamePage"));
 const CheckinBoardPage = lazy(() => import("@/pages/CheckinBoardPage"));
 const LiveBoardPage = lazy(() => import("@/pages/LiveBoardPage"));
 const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdminDashboard"));
@@ -170,6 +171,7 @@ const AppRoutes = () => {
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/character-studio" element={<ProtectedRoute><CharacterStudioPage /></ProtectedRoute>} />
         <Route path="/master-track" element={<ProtectedRoute><MasterTrackPage /></ProtectedRoute>} />
+        <Route path="/minigame" element={<ProtectedRoute><MinigamePage /></ProtectedRoute>} />
         <Route path="/coach" element={<ProtectedRoute><ManagerRoute><CoachDashboard /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager" element={<ProtectedRoute><ManagerRoute><BranchManagerHome /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/member/:memberId" element={<ProtectedRoute><ManagerRoute><MemberDetailPage /></ManagerRoute></ProtectedRoute>} />
