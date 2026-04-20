@@ -26,6 +26,13 @@ const ACCENT_HELPER: Record<NonNullable<StatCardProps["accent"]>, string> = {
   muted: "text-muted-foreground",
 };
 
+/**
+ * Vertical, mobile-first. Icon top-centered, label/value stacked
+ * below. Optimized for 3-column grids on ~360px viewports where
+ * a horizontal layout would `truncate` CJK text down to a single
+ * character. Value wraps over two lines via leading-tight if
+ * needed — no truncation.
+ */
 export const StatCard = ({
   label,
   value,
@@ -34,24 +41,29 @@ export const StatCard = ({
   accent = "muted",
   className,
 }: StatCardProps) => (
-  <div className={cn("surface-card flex items-center gap-3 p-4", className)}>
+  <div
+    className={cn(
+      "flex flex-col items-center gap-2 rounded-card border border-border bg-card p-3 text-center shadow-elev-1",
+      className,
+    )}
+  >
     {icon && (
       <div
         className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
           ACCENT_TILE[accent],
         )}
       >
         {icon}
       </div>
     )}
-    <div className="min-w-0 flex-1">
-      <p className="text-caption truncate text-muted-foreground">{label}</p>
-      <p className="number-font text-number-sm truncate text-foreground">
+    <div className="min-w-0">
+      <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
+      <p className="number-font mt-0.5 text-[15px] font-bold leading-tight text-foreground break-keep">
         {typeof value === "number" ? value.toLocaleString() : value}
       </p>
       {helper && (
-        <p className={cn("text-caption mt-0.5 truncate", ACCENT_HELPER[accent])}>
+        <p className={cn("text-[10px] mt-0.5 leading-tight", ACCENT_HELPER[accent])}>
           {helper}
         </p>
       )}
