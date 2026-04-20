@@ -1,0 +1,2275 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<title>캐릭터 꾸미기 가격/해금 카탈로그</title>
+<style>
+  @page { size: A4; margin: 18mm 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo",
+                 "Malgun Gothic", system-ui, sans-serif;
+    font-size: 10.5px;
+    color: #0F172A;
+    margin: 0;
+    line-height: 1.45;
+  }
+  h1 { font-size: 26px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-size: 16px; margin: 18px 0 6px; letter-spacing: -0.01em;
+       padding-bottom: 4px; border-bottom: 2px solid #0F172A; }
+  h3 { font-size: 13px; margin: 12px 0 4px; }
+  p { margin: 6px 0; }
+  .muted { color: #64748B; font-weight: 400; font-size: 13px; }
+  .note { background: #FFFBEB; border-left: 3px solid #F59E0B;
+          padding: 8px 10px; color: #78350F; font-size: 10px; border-radius: 4px; }
+
+  .cover {
+    page-break-after: always;
+    text-align: center;
+    padding-top: 40mm;
+  }
+  .cover h1 { font-size: 32px; margin-bottom: 4px; }
+  .cover .sub { color: #475569; font-size: 12px; margin-bottom: 32px; }
+  .cover .big-num { font-size: 72px; font-weight: 800; color: #DC2626;
+                    letter-spacing: -0.04em; line-height: 1; margin: 20px 0 6px; }
+  .cover .big-label { color: #64748B; font-size: 12px; margin-bottom: 40px; }
+  .cover .grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    max-width: 460px; margin: 0 auto;
+  }
+  .cover .card {
+    border: 1px solid #E5E7EB; border-radius: 10px; padding: 12px 10px;
+    background: #F8FAFC;
+  }
+  .cover .card .k { color: #64748B; font-size: 10px; text-transform: uppercase;
+                    letter-spacing: 0.06em; margin-bottom: 4px; }
+  .cover .card .v { font-size: 22px; font-weight: 700; color: #0F172A; }
+  .cover .date { margin-top: 40px; font-size: 10px; color: #94A3B8; }
+
+  .legend {
+    page-break-after: always;
+    padding-top: 10mm;
+  }
+  .legend table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  .legend td { padding: 6px 8px; border: 1px solid #E2E8F0; vertical-align: top; }
+  .legend td:first-child { font-weight: 700; width: 30%; background: #F8FAFC; }
+
+  .cat { margin-bottom: 28px; page-break-inside: auto; }
+  .summary { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 10px; }
+  .stat { background: #F1F5F9; color: #334155; padding: 3px 8px;
+          border-radius: 12px; font-size: 10px; }
+  .stat b { color: #0F172A; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+  thead { background: #0F172A; color: #F8FAFC; }
+  th { padding: 5px 6px; text-align: left; font-weight: 600;
+       font-size: 9.5px; border: 1px solid #1E293B; }
+  td { padding: 4px 6px; border: 1px solid #E2E8F0; vertical-align: middle; }
+  tbody tr:nth-child(even) { background: #F8FAFC; }
+  td.num, th.num { width: 24px; text-align: right; color: #64748B;
+                   font-variant-numeric: tabular-nums; }
+  td.code { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+            font-size: 9px; color: #0F172A; word-break: break-all; }
+  td.price, th.price { text-align: right; font-variant-numeric: tabular-nums;
+                       font-weight: 600; white-space: nowrap; }
+  td.small, th.small { text-align: center; width: 36px; font-size: 9.5px; }
+  td.desc, th.desc { font-size: 9px; color: #475569; }
+  td.blank { background: #FFFBEB; border: 1px dashed #F59E0B; min-width: 54px; }
+  th.new-col { background: #B45309; color: #FFFBEB; }
+
+  .badge {
+    display: inline-block; padding: 1px 6px; border-radius: 999px;
+    font-size: 9px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .badge.small { font-size: 8.5px; }
+  .gate {
+    display: inline-block; margin-left: 6px; padding: 1px 5px;
+    border-radius: 4px; font-size: 8.5px; font-weight: 700;
+  }
+  .gate.black { background: #1F2937; color: #F9FAFB; }
+  .gate.hof   { background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+  .lv-pill {
+    display: inline-block; background: #DC2626; color: #FFF7ED;
+    padding: 2px 7px; border-radius: 999px; font-weight: 700;
+    font-size: 9px; letter-spacing: 0.02em; white-space: nowrap;
+  }
+  .lv-none { color: #CBD5E1; font-weight: 600; }
+
+  /* Print-specific */
+  @media print {
+    .cat, .cover, .legend { page-break-inside: auto; }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <h1>캐릭터 꾸미기 가격 / 해금 카탈로그</h1>
+  <p class="sub">153복싱짐 · 랭킹업 · 가격 정책 및 레벨 게이트 결정용 참고 문서</p>
+
+  <div class="big-num">164</div>
+  <div class="big-label">전체 꾸미기 아이템 (프리셋 포함)</div>
+
+  <div class="grid">
+    <div class="card"><div class="k">프리셋</div><div class="v">46</div></div>
+    <div class="card"><div class="k">이펙트</div><div class="v">36</div></div>
+    <div class="card"><div class="k">프레임</div><div class="v">28</div></div>
+    <div class="card"><div class="k">칭호</div><div class="v">27</div></div>
+    <div class="card"><div class="k">오라</div><div class="v">22</div></div>
+    <div class="card"><div class="k">후광(halo)</div><div class="v">5</div></div>
+  </div>
+  <p class="date">생성 일자: 2026-04-20 · 출처: characterPresets.ts, characterCustomizationData.ts, unlockRules.ts</p>
+</div>
+
+<!-- LEGEND -->
+<section class="legend">
+  <h2>읽는 법 / 범례</h2>
+
+  <h3>컬럼 의미</h3>
+  <table>
+    <tbody>
+      <tr><td>key</td><td>코드베이스에서 쓰이는 itemKey (수정 금지 권장 — 유저 소유 데이터가 이 키를 참조)</td></tr>
+      <tr><td>이름</td><td>유저에게 보이는 한국어 라벨. 단 칭호/오라 일부는 <code>displayNameOverride</code> 로 UI 에서 덮어 쓰이고 있음 (unlockRules.ts 참조)</td></tr>
+      <tr><td>리그</td><td>현재 가격 책정 시 참고한 리그 밴드. 실제 해금은 리그 아닌 Lv 또는 블랙 전용 플래그로 결정됨</td></tr>
+      <tr><td>등급</td><td>common / uncommon / rare / epic / legendary</td></tr>
+      <tr><td>현재가격</td><td>코드에 현재 박혀 있는 price 값 (젬). 0 = 무료</td></tr>
+      <tr><td>현재해금</td><td>unlockRules.ts 에 정의된 requiredLevel. 규정 없으면 —</td></tr>
+      <tr><td class="blank" style="min-width:0">새 가격</td><td>✎ 결정해서 직접 기입할 빈 셀</td></tr>
+      <tr><td class="blank" style="min-width:0">새 해금Lv</td><td>✎ 결정해서 직접 기입할 빈 셀 (1~99 범위, 마스터 트랙 지원)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>부가 표기</h3>
+  <table>
+    <tbody>
+      <tr><td><span class="gate black">black</span></td><td>레거시 <code>blackOnly</code> 플래그 — 블랙리그 미만 구매 차단 중 (unlockRules 와 병행 운영)</td></tr>
+      <tr><td><span class="gate hof">HoF</span></td><td><code>requirement: "hall_of_fame"</code> — 명예의 전당 입성자만 구매 가능 (level 무관)</td></tr>
+      <tr><td><span class="lv-pill">Lv.N</span></td><td>unlockRules.ts 에 등록된 레벨 게이트. CharacterStudio 에서 자물쇠 표시</td></tr>
+      <tr><td><span class="lv-none">—</span></td><td>레벨 게이트 없음. 가격만으로 구매 가능 (또는 가격 0 = 즉시 장착 가능)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>요약 통계</h3>
+  <table>
+    <tbody>
+      <tr><td>전체 아이템 수</td><td><b>164</b> 개 (프리셋 46 + 꾸미기 118)</td></tr>
+      <tr><td>레벨 게이트 있음</td><td><b>44</b> 개 (unlockRules.ts — effect 20 / frame 10 / title 8 / aura 6)</td></tr>
+      <tr><td>가격만 있음</td><td><b>74</b> 개 (꾸미기 중 레벨 게이트 없는 것) + 프리셋 29 개 전체</td></tr>
+      <tr><td>명예의 전당 전용</td><td>23 개 (프리셋 17 / 칭호 3 / 오라 3)</td></tr>
+      <tr><td>후광(halo)</td><td>마스터 트랙 전용 별도 카테고리 — 현재 unlockRules 미등록</td></tr>
+    </tbody>
+  </table>
+
+  <h3>권장 작업 순서</h3>
+  <ol>
+    <li>이 문서를 인쇄 또는 PDF 로 열고 각 아이템의 <b>새 가격</b> / <b>새 해금Lv</b> 컬럼 채움</li>
+    <li>결정된 값을 가지고 unlockRules.ts (레벨) + characterCustomizationData.ts (가격) 동시 업데이트</li>
+    <li>프리셋에도 레벨 게이트를 넣기로 했다면 unlockRules.ts 에 <code>"preset"</code> 카테고리 신설 + 서버측 purchase_customization RPC 확장</li>
+    <li>마이그레이션 기존 회원이 이미 소유한 아이템은 <code>user_owned_customizations</code> 에 기록되어 있어 해금 레벨을 올려도 장착은 가능 (purchase_customization 의 already_owned 분기 보호)</li>
+  </ol>
+</section>
+
+
+  <section class="cat">
+    <h2>프리셋 캐릭터 <span class="muted">(46)</span></h2>
+    <div class="summary">
+      <span class="stat"><b>3</b> 개 무료</span>
+      <span class="stat"><b>26</b> 개 유료 (가격만)</span>
+      <span class="stat"><b>17</b> 개 명예의 전당</span>
+    </div>
+    <p class="note">
+      ℹ️ 프리셋 캐릭터는 현재 <b>레벨 해금 규정이 없고 가격만</b> 걸려 있습니다
+      (HoF 전용 16개 제외). 레벨 게이트 추가 시 unlockRules.ts 를 presets
+      카테고리로 확장해야 합니다.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>style key</th>
+          <th>이름</th>
+          <th>성별</th>
+          <th>리그</th>
+          <th>현재가격</th>
+          <th class="new-col">새 가격</th>
+          <th class="new-col">새 해금Lv</th>
+          <th>메모</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+    <td class="num">1</td>
+    <td class="code">male_01</td>
+    <td>루키</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">0</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">2</td>
+    <td class="code">female_01</td>
+    <td>블루 에이스</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">0</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">3</td>
+    <td class="code">male_02</td>
+    <td>아이언 챔프</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">0</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">4</td>
+    <td class="code">female_02</td>
+    <td>레드 퓨어리</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">200</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">5</td>
+    <td class="code">male_03</td>
+    <td>그린 호크</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">250</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">6</td>
+    <td class="code">female_03</td>
+    <td>퍼플 레인</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">300</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">7</td>
+    <td class="code">male_04</td>
+    <td>스트리트 킹</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">350</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">8</td>
+    <td class="code">female_04</td>
+    <td>골든 듀크</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">400</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">9</td>
+    <td class="code">male_05</td>
+    <td>실버 폭스</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">450</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">10</td>
+    <td class="code">female_05</td>
+    <td>체리</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">450</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">11</td>
+    <td class="code">male_06</td>
+    <td>미드나잇</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">500</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">12</td>
+    <td class="code">female_06</td>
+    <td>민트 브리즈</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td class="price">500</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">13</td>
+    <td class="code">female_pink_01</td>
+    <td>체리 뵄</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td class="price">800</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">14</td>
+    <td class="code">female_pink_02</td>
+    <td>로즈 워리어</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td class="price">900</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">15</td>
+    <td class="code">male_blue_01</td>
+    <td>썬더볼트</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td class="price">1,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">16</td>
+    <td class="code">male_blue_02</td>
+    <td>라이트닝</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td class="price">1,100</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">17</td>
+    <td class="code">male_blue_03</td>
+    <td>사이클론</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td class="price">1,200</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">18</td>
+    <td class="code">male_gold_01</td>
+    <td>골든 너클</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td class="price">1,500</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">19</td>
+    <td class="code">male_gold_02</td>
+    <td>카이저</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td class="price">2,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">20</td>
+    <td class="code">new_13</td>
+    <td>알리<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">21</td>
+    <td class="code">kpop_02</td>
+    <td>디바</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td class="price">2,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">22</td>
+    <td class="code">kpop_03</td>
+    <td>슈퍼노바</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td class="price">2,500</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">23</td>
+    <td class="code">master_male_01</td>
+    <td>킹 코브라</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">3,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">24</td>
+    <td class="code">master_male_02</td>
+    <td>다크 나이트</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">4,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">25</td>
+    <td class="code">nika_male_03</td>
+    <td>라이즈</td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">7,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">26</td>
+    <td class="code">female_master_01</td>
+    <td>다이아 퀸</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">5,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">27</td>
+    <td class="code">female_master_02</td>
+    <td>라일락 엠프레스</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">6,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">28</td>
+    <td class="code">female_gm_01</td>
+    <td>실버 페가수스</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">8,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">29</td>
+    <td class="code">female_gm_02</td>
+    <td>어비스</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">8,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">30</td>
+    <td class="code">female_gm_03</td>
+    <td>도미네이터</td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">10,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">31</td>
+    <td class="code">new_16</td>
+    <td>153 블레이즈<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">32</td>
+    <td class="code">new_17</td>
+    <td>153 퓨리<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">33</td>
+    <td class="code">new_14</td>
+    <td>153 나이트<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">34</td>
+    <td class="code">new_18</td>
+    <td>153 골든 스트라이커<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">35</td>
+    <td class="code">new_01</td>
+    <td>153 에이스<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">36</td>
+    <td class="code">new_02</td>
+    <td>153 챔피언<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">37</td>
+    <td class="code">new_03</td>
+    <td>153 레전드 퀸<span class="gate hof">HoF</span></td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">38</td>
+    <td class="code">new_04</td>
+    <td>153 마이스터<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">39</td>
+    <td class="code">new_05</td>
+    <td>153 에이스<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">40</td>
+    <td class="code">new_06</td>
+    <td>153 APEX 킹<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">41</td>
+    <td class="code">new_07</td>
+    <td>153 워리어<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">42</td>
+    <td class="code">new_08</td>
+    <td>153 레전드<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">43</td>
+    <td class="code">new_09</td>
+    <td>153 다크 퀸<span class="gate hof">HoF</span></td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">44</td>
+    <td class="code">new_10</td>
+    <td>153 크라운<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">45</td>
+    <td class="code">new_11</td>
+    <td>153 스타 퀸<span class="gate hof">HoF</span></td>
+    <td class="small">여</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+<tr>
+    <td class="num">46</td>
+    <td class="code">new_12</td>
+    <td>마이크 타이거<span class="gate hof">HoF</span></td>
+    <td class="small">남</td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td class="price">100,000</td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+  </tr>
+      </tbody>
+    </table>
+  </section>
+
+
+  <section class="cat">
+    <h2>이펙트 (effect) <span class="muted">(36)</span></h2>
+    <div class="summary">
+      <span class="stat"><b>20</b> 개 레벨 해금 규정됨</span>
+      <span class="stat"><b>16</b> 개 가격만 (규정 없음)</span>
+      <span class="stat"><b>13</b> 개 blackOnly</span>
+      <span class="stat"><b>0</b> 개 명예의 전당</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>key</th>
+          <th>이름</th>
+          <th>리그</th>
+          <th>등급</th>
+          <th>현재가격</th>
+          <th>현재해금</th>
+          <th class="new-col">새 가격</th>
+          <th class="new-col">새 해금Lv</th>
+          <th class="desc">설명</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+    <td class="num">1</td>
+    <td class="code">sparkle</td>
+    <td>반짝이</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">0</td>
+    <td><span class="lv-pill">Lv.1</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">캐릭터 주변에 반짝이는 파티클</td>
+  </tr>
+<tr>
+    <td class="num">2</td>
+    <td class="code">stars</td>
+    <td>별</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">0</td>
+    <td><span class="lv-pill">Lv.1</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">별이 떠다니는 효과</td>
+  </tr>
+<tr>
+    <td class="num">3</td>
+    <td class="code">flame</td>
+    <td>불꽃</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">300</td>
+    <td><span class="lv-pill">Lv.5</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">타오르는 불꽃 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">4</td>
+    <td class="code">hearts</td>
+    <td>하트</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">300</td>
+    <td><span class="lv-pill">Lv.5</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">하트가 둥둥 떠오르는 효과</td>
+  </tr>
+<tr>
+    <td class="num">5</td>
+    <td class="code">wind</td>
+    <td>바람</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">200</td>
+    <td><span class="lv-pill">Lv.1</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">바람이 부는 효과</td>
+  </tr>
+<tr>
+    <td class="num">6</td>
+    <td class="code">clover</td>
+    <td>클로버</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">400</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">행운의 클로버 파티클</td>
+  </tr>
+<tr>
+    <td class="num">7</td>
+    <td class="code">daisy</td>
+    <td>데이지</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">300</td>
+    <td><span class="lv-pill">Lv.1</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">하얀 데이지꽃이 피어나는 효과</td>
+  </tr>
+<tr>
+    <td class="num">8</td>
+    <td class="code">sunflower</td>
+    <td>해바라기</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">400</td>
+    <td><span class="lv-pill">Lv.5</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">해바라기가 반짝이는 효과</td>
+  </tr>
+<tr>
+    <td class="num">9</td>
+    <td class="code">lightning</td>
+    <td>번개</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">800</td>
+    <td><span class="lv-pill">Lv.10</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">번개 스파크 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">10</td>
+    <td class="code">snow</td>
+    <td>눈송이</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">800</td>
+    <td><span class="lv-pill">Lv.10</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">눈이 내리는 효과</td>
+  </tr>
+<tr>
+    <td class="num">11</td>
+    <td class="code">cherry</td>
+    <td>벚꽃</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,000</td>
+    <td><span class="lv-pill">Lv.15</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">벚꽃잎이 흩날리는 효과</td>
+  </tr>
+<tr>
+    <td class="num">12</td>
+    <td class="code">tulip</td>
+    <td>튤립</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,000</td>
+    <td><span class="lv-pill">Lv.15</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">알록달록 튤립이 흩날리는 효과</td>
+  </tr>
+<tr>
+    <td class="num">13</td>
+    <td class="code">hibiscus</td>
+    <td>히비스커스</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,200</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">빨간 히비스커스가 피어나는 효과</td>
+  </tr>
+<tr>
+    <td class="num">14</td>
+    <td class="code">music</td>
+    <td>음표</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,000</td>
+    <td><span class="lv-pill">Lv.10</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">음표가 떠다니는 효과</td>
+  </tr>
+<tr>
+    <td class="num">15</td>
+    <td class="code">firework</td>
+    <td>폭죽</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,200</td>
+    <td><span class="lv-pill">Lv.15</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">축하 폭죽 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">16</td>
+    <td class="code">tornado</td>
+    <td>회오리</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,000</td>
+    <td><span class="lv-pill">Lv.20</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">강력한 회오리 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">17</td>
+    <td class="code">comet</td>
+    <td>혜성</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,000</td>
+    <td><span class="lv-pill">Lv.20</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">혜성이 스쳐 지나가는 효과</td>
+  </tr>
+<tr>
+    <td class="num">18</td>
+    <td class="code">rainbow</td>
+    <td>무지개</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,500</td>
+    <td><span class="lv-pill">Lv.20</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">무지개 빛 파티클</td>
+  </tr>
+<tr>
+    <td class="num">19</td>
+    <td class="code">rose</td>
+    <td>장미</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,000</td>
+    <td><span class="lv-pill">Lv.30</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">빨간 장미가 흩뿌려지는 효과</td>
+  </tr>
+<tr>
+    <td class="num">20</td>
+    <td class="code">bouquet</td>
+    <td>꽃다발</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">4,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">화려한 꽃다발이 피어나는 효과</td>
+  </tr>
+<tr>
+    <td class="num">21</td>
+    <td class="code">explosion</td>
+    <td>폭발</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,500</td>
+    <td><span class="lv-pill">Lv.30</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">펀치 폭발 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">22</td>
+    <td class="code">ghost</td>
+    <td>유령</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">4,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">유령이 떠다니는 효과</td>
+  </tr>
+<tr>
+    <td class="num">23</td>
+    <td class="code">star_shoot</td>
+    <td>별똥별</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">4,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">별똥별이 쏟아지는 효과</td>
+  </tr>
+<tr>
+    <td class="num">24</td>
+    <td class="code">crown_effect</td>
+    <td>왕관빛<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">5,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">왕관에서 빛이 뿜어나오는 효과</td>
+  </tr>
+<tr>
+    <td class="num">25</td>
+    <td class="code">dragon</td>
+    <td>드래곤<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">8,000</td>
+    <td><span class="lv-pill">Lv.30</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">드래곤 브레스 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">26</td>
+    <td class="code">phoenix</td>
+    <td>피닉스<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">10,000</td>
+    <td><span class="lv-pill">Lv.30</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">불사조 날갯짓 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">27</td>
+    <td class="code">skull</td>
+    <td>해골<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">12,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">해골 불꽃 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">28</td>
+    <td class="code">diamond_rain</td>
+    <td>다이아 비<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">15,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">다이아몬드가 쏟아지는 효과</td>
+  </tr>
+<tr>
+    <td class="num">29</td>
+    <td class="code">inferno_dual</td>
+    <td>쌍염화<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">18,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">빨강+파랑 쌍불꽃이 교차하는 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">30</td>
+    <td class="code">thunder_god</td>
+    <td>뇌신<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">20,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">천둥번개가 연속으로 치는 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">31</td>
+    <td class="code">cosmic_dust</td>
+    <td>우주먼지<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">22,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">별가루가 반짝이며 흩날리는 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">32</td>
+    <td class="code">sword_aura</td>
+    <td>검기<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">25,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">검 기운이 감도는 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">33</td>
+    <td class="code">dark_flame</td>
+    <td>흑염<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">30,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">검은 불꽃이 타오르는 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">34</td>
+    <td class="code">lotus</td>
+    <td>연꽃<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">10,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">신비로운 연꽃이 피어나는 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">35</td>
+    <td class="code">sakura_storm</td>
+    <td>벚꽃폭풍<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">15,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">벚꽃잎이 폭풍처럼 휘몰아치는 이펙트</td>
+  </tr>
+<tr>
+    <td class="num">36</td>
+    <td class="code">rose_gold</td>
+    <td>로즈골드<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">20,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">황금빛 장미가 화려하게 피어나는 이펙트</td>
+  </tr>
+      </tbody>
+    </table>
+  </section>
+
+
+  <section class="cat">
+    <h2>프레임 (frame) <span class="muted">(28)</span></h2>
+    <div class="summary">
+      <span class="stat"><b>10</b> 개 레벨 해금 규정됨</span>
+      <span class="stat"><b>18</b> 개 가격만 (규정 없음)</span>
+      <span class="stat"><b>7</b> 개 blackOnly</span>
+      <span class="stat"><b>0</b> 개 명예의 전당</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>key</th>
+          <th>이름</th>
+          <th>리그</th>
+          <th>등급</th>
+          <th>현재가격</th>
+          <th>현재해금</th>
+          <th class="new-col">새 가격</th>
+          <th class="new-col">새 해금Lv</th>
+          <th class="desc">설명</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+    <td class="num">1</td>
+    <td class="code">none</td>
+    <td>없음</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">0</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">프레임 없음</td>
+  </tr>
+<tr>
+    <td class="num">2</td>
+    <td class="code">basic_white</td>
+    <td>기본 화이트</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">0</td>
+    <td><span class="lv-pill">Lv.1</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">깔끔한 화이트 링</td>
+  </tr>
+<tr>
+    <td class="num">3</td>
+    <td class="code">fire</td>
+    <td>불꽃 프레임</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">300</td>
+    <td><span class="lv-pill">Lv.1</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">불타는 프레임</td>
+  </tr>
+<tr>
+    <td class="num">4</td>
+    <td class="code">ice</td>
+    <td>얼음 프레임</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">300</td>
+    <td><span class="lv-pill">Lv.5</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">차가운 얼음 프레임</td>
+  </tr>
+<tr>
+    <td class="num">5</td>
+    <td class="code">moon</td>
+    <td>달빛 프레임</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">500</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">은은한 달빛 프레임</td>
+  </tr>
+<tr>
+    <td class="num">6</td>
+    <td class="code">lightning</td>
+    <td>번개 프레임</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">800</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">번개치는 프레임</td>
+  </tr>
+<tr>
+    <td class="num">7</td>
+    <td class="code">cherry</td>
+    <td>벚꽃 프레임</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">800</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">벚꽃잎 프레임</td>
+  </tr>
+<tr>
+    <td class="num">8</td>
+    <td class="code">electric</td>
+    <td>전기 프레임</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">전류가 흐르는 프레임</td>
+  </tr>
+<tr>
+    <td class="num">9</td>
+    <td class="code">ocean</td>
+    <td>오션 프레임</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,000</td>
+    <td><span class="lv-pill">Lv.10</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">바다를 담은 프레임</td>
+  </tr>
+<tr>
+    <td class="num">10</td>
+    <td class="code">emerald</td>
+    <td>에메랄드 프레임</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,200</td>
+    <td><span class="lv-pill">Lv.10</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">에메랄드빛 프레임</td>
+  </tr>
+<tr>
+    <td class="num">11</td>
+    <td class="code">sakura</td>
+    <td>사쿠라 프레임</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,500</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">사쿠라 핑크 프레임</td>
+  </tr>
+<tr>
+    <td class="num">12</td>
+    <td class="code">diamond</td>
+    <td>다이아 프레임</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,800</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">다이아 반짝임 프레임</td>
+  </tr>
+<tr>
+    <td class="num">13</td>
+    <td class="code">gold</td>
+    <td>골드 프레임</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">2,500</td>
+    <td><span class="lv-pill">Lv.20</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">황금빛 프레임</td>
+  </tr>
+<tr>
+    <td class="num">14</td>
+    <td class="code">rainbow</td>
+    <td>무지개 프레임</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">2,500</td>
+    <td><span class="lv-pill">Lv.20</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">무지개 프레임</td>
+  </tr>
+<tr>
+    <td class="num">15</td>
+    <td class="code">blood</td>
+    <td>블러드 링</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">핏빛 링 프레임</td>
+  </tr>
+<tr>
+    <td class="num">16</td>
+    <td class="code">dark_red</td>
+    <td>블러드 레드</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">진한 블러드 프레임</td>
+  </tr>
+<tr>
+    <td class="num">17</td>
+    <td class="code">purple</td>
+    <td>퍼플 미스트</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">보라색 안개 프레임</td>
+  </tr>
+<tr>
+    <td class="num">18</td>
+    <td class="code">neon</td>
+    <td>네온 프레임</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,500</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">네온빛 프레임</td>
+  </tr>
+<tr>
+    <td class="num">19</td>
+    <td class="code">crystal</td>
+    <td>크리스탈</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,500</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">크리스탈 프레임</td>
+  </tr>
+<tr>
+    <td class="num">20</td>
+    <td class="code">storm</td>
+    <td>폭풍 프레임</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">4,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">폭풍이 감싸는 프레임</td>
+  </tr>
+<tr>
+    <td class="num">21</td>
+    <td class="code">neon_green</td>
+    <td>네온 그린</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">4,500</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">네온 그린 프레임</td>
+  </tr>
+<tr>
+    <td class="num">22</td>
+    <td class="code">shadow</td>
+    <td>섀도우 프레임<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">5,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">어둠의 그림자 프레임</td>
+  </tr>
+<tr>
+    <td class="num">23</td>
+    <td class="code">galaxy</td>
+    <td>갤럭시 링<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">6,000</td>
+    <td><span class="lv-pill">Lv.30</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">우주를 담은 프레임</td>
+  </tr>
+<tr>
+    <td class="num">24</td>
+    <td class="code">rainbow_frame</td>
+    <td>레인보우 사이클<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">7,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">무지개가 회전하는 프레임</td>
+  </tr>
+<tr>
+    <td class="num">25</td>
+    <td class="code">holy</td>
+    <td>홀리 링<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">7,000</td>
+    <td><span class="lv-pill">Lv.30</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">신성한 빛 프레임</td>
+  </tr>
+<tr>
+    <td class="num">26</td>
+    <td class="code">inferno</td>
+    <td>인페르노<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">8,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">지옥불 프레임</td>
+  </tr>
+<tr>
+    <td class="num">27</td>
+    <td class="code">void</td>
+    <td>보이드<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">10,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">공허의 어둠 프레임</td>
+  </tr>
+<tr>
+    <td class="num">28</td>
+    <td class="code">eternal</td>
+    <td>이터널<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">15,000</td>
+    <td><span class="lv-pill">Lv.50</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">영원의 빛 프레임</td>
+  </tr>
+      </tbody>
+    </table>
+  </section>
+
+
+  <section class="cat">
+    <h2>칭호 (title) <span class="muted">(27)</span></h2>
+    <div class="summary">
+      <span class="stat"><b>8</b> 개 레벨 해금 규정됨</span>
+      <span class="stat"><b>19</b> 개 가격만 (규정 없음)</span>
+      <span class="stat"><b>5</b> 개 blackOnly</span>
+      <span class="stat"><b>3</b> 개 명예의 전당</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>key</th>
+          <th>이름</th>
+          <th>리그</th>
+          <th>등급</th>
+          <th>현재가격</th>
+          <th>현재해금</th>
+          <th class="new-col">새 가격</th>
+          <th class="new-col">새 해금Lv</th>
+          <th class="desc">설명</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+    <td class="num">1</td>
+    <td class="code">rookie</td>
+    <td>루키</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">0</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">첫걸음을 뗀 복서</td>
+  </tr>
+<tr>
+    <td class="num">2</td>
+    <td class="code">beginner</td>
+    <td>초보</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">0</td>
+    <td><span class="lv-pill">Lv.1</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">성장하는 초보 복서</td>
+  </tr>
+<tr>
+    <td class="num">3</td>
+    <td class="code">trainee</td>
+    <td>수련생</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">300</td>
+    <td><span class="lv-pill">Lv.5</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">땀흘리는 수련생</td>
+  </tr>
+<tr>
+    <td class="num">4</td>
+    <td class="code">goal_getter</td>
+    <td>목표달성러</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">400</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">목표를 향해 달려가는 자</td>
+  </tr>
+<tr>
+    <td class="num">5</td>
+    <td class="code">attendance_king</td>
+    <td>출석왕</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">500</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">꾸준히 출석하는 왕</td>
+  </tr>
+<tr>
+    <td class="num">6</td>
+    <td class="code">fighter</td>
+    <td>파이터</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">800</td>
+    <td><span class="lv-pill">Lv.10</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">불꽃처럼 싸우는 전사</td>
+  </tr>
+<tr>
+    <td class="num">7</td>
+    <td class="code">warrior</td>
+    <td>전사</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,000</td>
+    <td><span class="lv-pill">Lv.15</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">강철 의지의 전사</td>
+  </tr>
+<tr>
+    <td class="num">8</td>
+    <td class="code">speedster</td>
+    <td>스피드스터</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,200</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">빛보다 빠른 권투선수</td>
+  </tr>
+<tr>
+    <td class="num">9</td>
+    <td class="code">iron_fist</td>
+    <td>아이언 피스트</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,500</td>
+    <td><span class="lv-pill">Lv.20</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">강철 주먹의 소유자</td>
+  </tr>
+<tr>
+    <td class="num">10</td>
+    <td class="code">fire_fighter</td>
+    <td>불꽃 파이터</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,800</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">불꽃을 두른 파이터</td>
+  </tr>
+<tr>
+    <td class="num">11</td>
+    <td class="code">night_hunter</td>
+    <td>나이트 헌터</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">2,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">밤을 지배하는 사냥꾼</td>
+  </tr>
+<tr>
+    <td class="num">12</td>
+    <td class="code">champion</td>
+    <td>챔피언</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">2,500</td>
+    <td><span class="lv-pill">Lv.50</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">링의 챔피언</td>
+  </tr>
+<tr>
+    <td class="num">13</td>
+    <td class="code">destroyer</td>
+    <td>디스트로이어</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">모든 것을 파괴하는 자</td>
+  </tr>
+<tr>
+    <td class="num">14</td>
+    <td class="code">thunder</td>
+    <td>썬더</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,500</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">천둥의 주먹</td>
+  </tr>
+<tr>
+    <td class="num">15</td>
+    <td class="code">thunder_king</td>
+    <td>썬더킹</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,500</td>
+    <td><span class="lv-pill">Lv.30</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">천둥을 지배하는 왕</td>
+  </tr>
+<tr>
+    <td class="num">16</td>
+    <td class="code">phoenix_title</td>
+    <td>피닉스</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">4,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">불사조처럼 부활하는 자</td>
+  </tr>
+<tr>
+    <td class="num">17</td>
+    <td class="code">beast</td>
+    <td>맹수</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">4,500</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">야생의 맹수</td>
+  </tr>
+<tr>
+    <td class="num">18</td>
+    <td class="code">diamond_fighter</td>
+    <td>다이아 파이터</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">4,500</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">다이아몬드 급 파이터</td>
+  </tr>
+<tr>
+    <td class="num">19</td>
+    <td class="code">153_star</td>
+    <td>153 스타</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">5,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">153의 스타 복서</td>
+  </tr>
+<tr>
+    <td class="num">20</td>
+    <td class="code">legend</td>
+    <td>레전드<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">5,000</td>
+    <td><span class="lv-pill">Lv.99</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">전설이 된 복서</td>
+  </tr>
+<tr>
+    <td class="num">21</td>
+    <td class="code">dragon</td>
+    <td>드래곤<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">8,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">용의 힘을 가진 자</td>
+  </tr>
+<tr>
+    <td class="num">22</td>
+    <td class="code">shadow_king</td>
+    <td>그림자왕<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">10,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">그림자를 지배하는 왕</td>
+  </tr>
+<tr>
+    <td class="num">23</td>
+    <td class="code">god_of_war</td>
+    <td>전쟁의 신<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">12,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">링 위의 전쟁 신</td>
+  </tr>
+<tr>
+    <td class="num">24</td>
+    <td class="code">immortal</td>
+    <td>불멸<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">15,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">절대 쓰러지지 않는 자</td>
+  </tr>
+<tr>
+    <td class="num">25</td>
+    <td class="code">eternal_153</td>
+    <td>ETERNAL 153<span class="gate hof">HoF</span></td>
+    <td><span class="badge" style="background:#FEF3C7;color:#92400E">전설</span></td>
+    <td><span class="badge small" style="background:#FEF3C7;color:#92400E">legendary</span></td>
+    <td class="price">100,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">153의 영원한 전설</td>
+  </tr>
+<tr>
+    <td class="num">26</td>
+    <td class="code">king_of_ring</td>
+    <td>킹 오브 더 링<span class="gate hof">HoF</span></td>
+    <td><span class="badge" style="background:#FEF3C7;color:#92400E">전설</span></td>
+    <td><span class="badge small" style="background:#FEF3C7;color:#92400E">legendary</span></td>
+    <td class="price">100,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">링의 절대 지배자</td>
+  </tr>
+<tr>
+    <td class="num">27</td>
+    <td class="code">god_fist</td>
+    <td>갓피스트<span class="gate hof">HoF</span></td>
+    <td><span class="badge" style="background:#FEF3C7;color:#92400E">전설</span></td>
+    <td><span class="badge small" style="background:#FEF3C7;color:#92400E">legendary</span></td>
+    <td class="price">100,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">신의 주먹</td>
+  </tr>
+      </tbody>
+    </table>
+  </section>
+
+
+  <section class="cat">
+    <h2>오라 (aura) <span class="muted">(22)</span></h2>
+    <div class="summary">
+      <span class="stat"><b>6</b> 개 레벨 해금 규정됨</span>
+      <span class="stat"><b>16</b> 개 가격만 (규정 없음)</span>
+      <span class="stat"><b>5</b> 개 blackOnly</span>
+      <span class="stat"><b>3</b> 개 명예의 전당</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>key</th>
+          <th>이름</th>
+          <th>리그</th>
+          <th>등급</th>
+          <th>현재가격</th>
+          <th>현재해금</th>
+          <th class="new-col">새 가격</th>
+          <th class="new-col">새 해금Lv</th>
+          <th class="desc">설명</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+    <td class="num">1</td>
+    <td class="code">none</td>
+    <td>없음</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">0</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">오라 없음</td>
+  </tr>
+<tr>
+    <td class="num">2</td>
+    <td class="code">soft_glow</td>
+    <td>은은한 빛</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">300</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">부드러운 빛 오라</td>
+  </tr>
+<tr>
+    <td class="num">3</td>
+    <td class="code">aura_mint</td>
+    <td>민트 오라</td>
+    <td><span class="badge" style="background:#F3F4F6;color:#111827">화이트</span></td>
+    <td><span class="badge small" style="background:#E5E7EB;color:#374151">common</span></td>
+    <td class="price">400</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">상쾌한 민트 빛</td>
+  </tr>
+<tr>
+    <td class="num">4</td>
+    <td class="code">aura_fire</td>
+    <td>불꽃 오라</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">800</td>
+    <td><span class="lv-pill">Lv.20</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">불꽃이 타오르는 오라</td>
+  </tr>
+<tr>
+    <td class="num">5</td>
+    <td class="code">aura_ice</td>
+    <td>얼음 오라</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">800</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">차가운 얼음 오라</td>
+  </tr>
+<tr>
+    <td class="num">6</td>
+    <td class="code">aura_sakura</td>
+    <td>벚꽃 오라</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">벚꽃잎이 흩날리는 오라</td>
+  </tr>
+<tr>
+    <td class="num">7</td>
+    <td class="code">aura_ocean</td>
+    <td>오션 오라</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,200</td>
+    <td><span class="lv-pill">Lv.1</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">깊은 바다의 오라</td>
+  </tr>
+<tr>
+    <td class="num">8</td>
+    <td class="code">aura_lightning</td>
+    <td>번개 오라</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,500</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">번개가 치는 오라</td>
+  </tr>
+<tr>
+    <td class="num">9</td>
+    <td class="code">aura_emerald</td>
+    <td>에메랄드 오라</td>
+    <td><span class="badge" style="background:#DBEAFE;color:#1E40AF">블루</span></td>
+    <td><span class="badge small" style="background:#D1FAE5;color:#065F46">uncommon</span></td>
+    <td class="price">1,500</td>
+    <td><span class="lv-pill">Lv.5</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">에메랄드빛 오라</td>
+  </tr>
+<tr>
+    <td class="num">10</td>
+    <td class="code">aura_blood</td>
+    <td>블러드 오라</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">핏빛 오라</td>
+  </tr>
+<tr>
+    <td class="num">11</td>
+    <td class="code">aura_sunset</td>
+    <td>석양 오라</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">3,500</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">노을빛 그라데이션 오라</td>
+  </tr>
+<tr>
+    <td class="num">12</td>
+    <td class="code">aura_rainbow</td>
+    <td>무지개 오라</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">4,000</td>
+    <td><span class="lv-pill">Lv.50</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">무지개빛 오라</td>
+  </tr>
+<tr>
+    <td class="num">13</td>
+    <td class="code">aura_neon</td>
+    <td>네온 오라</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">5,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">네온 사인 오라</td>
+  </tr>
+<tr>
+    <td class="num">14</td>
+    <td class="code">aura_galaxy</td>
+    <td>은하 오라</td>
+    <td><span class="badge" style="background:#FEE2E2;color:#991B1B">레드</span></td>
+    <td><span class="badge small" style="background:#DBEAFE;color:#1E3A8A">rare</span></td>
+    <td class="price">8,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">은하계 오라</td>
+  </tr>
+<tr>
+    <td class="num">15</td>
+    <td class="code">aura_dark</td>
+    <td>어둠 오라<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">10,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">어둠의 오라</td>
+  </tr>
+<tr>
+    <td class="num">16</td>
+    <td class="code">aura_infernal</td>
+    <td>인퍼널 오라<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">12,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">지옥불 오라</td>
+  </tr>
+<tr>
+    <td class="num">17</td>
+    <td class="code">aura_phantom</td>
+    <td>팬텀 오라<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">12,000</td>
+    <td><span class="lv-pill">Lv.10</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">유령빛 오라</td>
+  </tr>
+<tr>
+    <td class="num">18</td>
+    <td class="code">halo_black_gold</td>
+    <td>황금 헤일로<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">15,000</td>
+    <td><span class="lv-pill">Lv.30</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">블랙 골드 헤일로</td>
+  </tr>
+<tr>
+    <td class="num">19</td>
+    <td class="code">aura_void</td>
+    <td>보이드 오라<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">18,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">공허의 오라</td>
+  </tr>
+<tr>
+    <td class="num">20</td>
+    <td class="code">halo_rainbow_master</td>
+    <td>마스터 헤일로<span class="gate hof">HoF</span></td>
+    <td><span class="badge" style="background:#FEF3C7;color:#92400E">전설</span></td>
+    <td><span class="badge small" style="background:#FEF3C7;color:#92400E">legendary</span></td>
+    <td class="price">100,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">무지개 마스터 오라</td>
+  </tr>
+<tr>
+    <td class="num">21</td>
+    <td class="code">divine</td>
+    <td>신성 오라<span class="gate hof">HoF</span></td>
+    <td><span class="badge" style="background:#FEF3C7;color:#92400E">전설</span></td>
+    <td><span class="badge small" style="background:#FEF3C7;color:#92400E">legendary</span></td>
+    <td class="price">100,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">신성한 빛의 오라</td>
+  </tr>
+<tr>
+    <td class="num">22</td>
+    <td class="code">aura_celestial</td>
+    <td>천체 오라<span class="gate hof">HoF</span></td>
+    <td><span class="badge" style="background:#FEF3C7;color:#92400E">전설</span></td>
+    <td><span class="badge small" style="background:#FEF3C7;color:#92400E">legendary</span></td>
+    <td class="price">100,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">별과 우주의 오라</td>
+  </tr>
+      </tbody>
+    </table>
+  </section>
+
+
+  <section class="cat">
+    <h2>후광 (halo) <span class="muted">(5)</span></h2>
+    <div class="summary">
+      <span class="stat"><b>0</b> 개 레벨 해금 규정됨</span>
+      <span class="stat"><b>5</b> 개 가격만 (규정 없음)</span>
+      <span class="stat"><b>5</b> 개 blackOnly</span>
+      <span class="stat"><b>0</b> 개 명예의 전당</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>key</th>
+          <th>이름</th>
+          <th>리그</th>
+          <th>등급</th>
+          <th>현재가격</th>
+          <th>현재해금</th>
+          <th class="new-col">새 가격</th>
+          <th class="new-col">새 해금Lv</th>
+          <th class="desc">설명</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+    <td class="num">1</td>
+    <td class="code">none</td>
+    <td>없음<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">0</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">후광 없음</td>
+  </tr>
+<tr>
+    <td class="num">2</td>
+    <td class="code">halo_rainbow</td>
+    <td>무지개 후광<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">0</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">무지개빛이 회전하는 후광</td>
+  </tr>
+<tr>
+    <td class="num">3</td>
+    <td class="code">halo_saiyan</td>
+    <td>초사이어인<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">30,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">폭발하는 황금빛 기운</td>
+  </tr>
+<tr>
+    <td class="num">4</td>
+    <td class="code">halo_eclipse</td>
+    <td>이클립스<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">35,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">일식처럼 타오르는 코로나</td>
+  </tr>
+<tr>
+    <td class="num">5</td>
+    <td class="code">halo_emperor</td>
+    <td>황제의 위엄<span class="gate black">black</span></td>
+    <td><span class="badge" style="background:#1F2937;color:#F9FAFB">블랙</span></td>
+    <td><span class="badge small" style="background:#EDE9FE;color:#5B21B6">epic</span></td>
+    <td class="price">50,000</td>
+    <td><span class="lv-none">—</span></td>
+    <td class="blank"></td>
+    <td class="blank"></td>
+    <td class="desc">보라+금빛 황제의 후광</td>
+  </tr>
+      </tbody>
+    </table>
+  </section>
+
+</body>
+</html>
