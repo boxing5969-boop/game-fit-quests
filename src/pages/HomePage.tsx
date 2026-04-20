@@ -33,6 +33,7 @@ import TutorialOverlay from "@/components/TutorialOverlay";
 import TutorialCompleteModal from "@/components/TutorialCompleteModal";
 import { MasterProgressCard } from "@/components/master/MasterProgressCard";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
+import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
 
 import {
   AppPage,
@@ -61,6 +62,7 @@ const HomePage = () => {
   const { totalXp, metrics } = useLocalProgress();
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
   useLevelUpNotifications();
+  useHofRewardsAutoClaim();
 
   const [showChallenge, setShowChallenge] = useState(false);
   const [qrAutoStarted, setQrAutoStarted] = useState(false);
