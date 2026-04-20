@@ -11,6 +11,7 @@ import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { isManagerRole } from "@/lib/rankLabels";
+import { useTutorialVisitTracker } from "@/hooks/useTutorialVisitTracker";
 
 // Route-level code splitting — every page below is fetched on demand.
 // LoginPage + NotFound stay eager: Login is the cold-start screen
@@ -125,6 +126,7 @@ const RoleBasedRedirect = () => {
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
+  useTutorialVisitTracker();
 
   if (loading) {
     return (

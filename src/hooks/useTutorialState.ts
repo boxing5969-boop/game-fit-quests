@@ -1,36 +1,37 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   TUTORIAL_STEPS,
-  TUTORIAL_TOTAL_STEPS,
   TUTORIAL_REWARD_GEMS,
-  type TutorialStepKey,
+  type TutorialStep,
 } from "@/data/unlockRules";
 
 /**
- * Tutorial state orchestration (Step 3 of the unlock-system rollout).
+ * Tutorial state orchestration (Step 4 of the unlock-system rollout).
  *
- * Source of truth
- *   • profiles.tutorial_completed       — boolean, flipped by RPC
- *   • profiles.tutorial_step            — int order (0..5), GREATEST-only
- *   • profiles.tutorial_reward_claimed  — decoupled idempotency flag
- *   • profiles.tutorial_completed_at    — audit timestamp
+ * Semantics
+ *   • `tutorial_step` on the server is the *number of steps completed*
+ *     (0..5). Step N+1 is the one currently displayed.
+ *   • `advance()` increments by 1 (GREATEST-enforced server-side) and
+ *     refreshes the profile so every consumer sees the new count.
+ *   • Reward (1000 gems) is NOT wired in this step — the completeReward
+ *     mutation is still exported so a future step can flip the button.
  *
- * Server enforces idempotency via complete_tutorial_once(_final_step):
- * reward_claimed=false → true transition is atomic; subsequent calls
- * return already_granted=true with 0 granted_gems.
- *
- * We no longer keep a localStorage mirror — the overlay only renders
- * after AuthContext populates `profile`, so server state is always
- * available when we need it.
+ * Visibility
+ *   • `isEligible` gates the overlay:
+ *       logged in  &&  !tutorial_completed  &&  stepsCompleted < 5
+ *   • `isFinished` is a UI-only signal (stepsCompleted >= 5) used to
+ *     hide the overlay before the reward RPC has been wired.
  */
 
-const clampOrder = (raw: unknown): number => {
-  if (typeof raw !== "number" || Number.isNaN(raw)) return 1;
-  if (raw < 1) return 1;
-  if (raw > TUTORIAL_STEPS.length) return TUTORIAL_STEPS.length;
+const STEP_COUNT = TUTORIAL_STEPS.length; // 5
+
+const clampSteps = (raw: unknown): number => {
+  if (typeof raw !== "number" || Number.isNaN(raw)) return 0;
+  if (raw < 0) return 0;
+  if (raw > STEP_COUNT) return STEP_COUNT;
   return Math.trunc(raw);
 };
 
@@ -46,93 +47,86 @@ export function useTutorialState() {
   const { user, profile, refreshProfile } = useAuth();
   const qc = useQueryClient();
 
-  // `as any` because types.ts lags behind the columns added in
-  // 20260420140000_tutorial_state_columns.sql (rule 3: don't regen
-  // types in a way that would touch unrelated call sites).
   const p = profile as any;
   const isCompleted = !!p?.tutorial_completed;
-  const serverStepOrder = clampOrder(p?.tutorial_step ?? 1);
+  const serverStepsCompleted = clampSteps(p?.tutorial_step ?? 0);
 
-  // Local mirror so `advance()` can optimistically push the UI forward
-  // while the update_tutorial_step RPC is still in flight. Seeded from
-  // server every time profile changes.
-  const [localOrder, setLocalOrder] = useState<number>(serverStepOrder);
+  // Local mirror so advance() can push UI before the profile round-trip.
+  // GREATEST server-side ensures we never regress, and the effect keeps
+  // the local value from lagging when the server catches up.
+  const [localCompleted, setLocalCompleted] = useState(serverStepsCompleted);
   useEffect(() => {
-    setLocalOrder(serverStepOrder);
-  }, [serverStepOrder]);
-
-  const currentOrder = Math.max(localOrder, serverStepOrder);
-  const currentStep = useMemo(
-    () => TUTORIAL_STEPS[Math.min(currentOrder, TUTORIAL_STEPS.length) - 1],
-    [currentOrder],
-  );
-  const currentStepKey: TutorialStepKey = currentStep.key;
-  const progressRatio = Math.min(currentOrder / TUTORIAL_TOTAL_STEPS, 1);
-
-  // Fire-and-forget step persistence. We don't block UI on this —
-  // the RPC uses GREATEST so out-of-order resolution is safe.
-  const persistStep = useCallback(async (order: number) => {
-    const { error } = await supabase.rpc(
-      "update_tutorial_step" as any,
-      { _step: order },
-    );
-    if (error) {
-      // Log but don't surface — failing to save a step is harmless;
-      // the user reopens on the same step next mount.
-      console.warn("[useTutorialState] update_tutorial_step failed", error);
-      return;
+    if (serverStepsCompleted > localCompleted) {
+      setLocalCompleted(serverStepsCompleted);
     }
-    void refreshProfile();
-  }, [refreshProfile]);
+  }, [serverStepsCompleted, localCompleted]);
 
-  const goToStep = useCallback((key: TutorialStepKey) => {
-    const step = TUTORIAL_STEPS.find((s) => s.key === key);
-    if (!step) return;
-    setLocalOrder(step.order);
-    void persistStep(step.order);
-  }, [persistStep]);
+  const stepsCompleted = Math.max(localCompleted, serverStepsCompleted);
+  const isFinished = stepsCompleted >= STEP_COUNT;
+  const displayIndex = Math.min(stepsCompleted, STEP_COUNT - 1);
+  const currentStep: TutorialStep = TUTORIAL_STEPS[displayIndex];
+  const progressRatio = stepsCompleted / STEP_COUNT;
 
+  const persistStep = useCallback(
+    async (step: number) => {
+      const { error } = await supabase.rpc(
+        "update_tutorial_step" as any,
+        { _step: step },
+      );
+      if (error) {
+        console.warn("[useTutorialState] update_tutorial_step failed", error);
+        return;
+      }
+      void refreshProfile();
+    },
+    [refreshProfile],
+  );
+
+  /** Advance to the next step. No-op once all five are done. */
   const advance = useCallback(() => {
-    setLocalOrder((prev) => {
-      const next = Math.min(prev + 1, TUTORIAL_STEPS.length);
+    setLocalCompleted((prev) => {
+      const next = Math.min(prev + 1, STEP_COUNT);
+      if (next === prev) return prev;
       void persistStep(next);
       return next;
     });
   }, [persistStep]);
 
-  const completeReward = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.rpc(
-        "complete_tutorial_once" as any,
-        { _final_step: TUTORIAL_STEPS.length },
-      );
-      if (error) throw error;
-      const result = (data ?? {}) as TutorialRewardResult;
-      if (!result.success) {
-        throw new Error(result.error ?? "튜토리얼 보상 지급 실패");
-      }
-      return result;
-    },
-    onSuccess: () => {
-      setLocalOrder(TUTORIAL_STEPS.length);
-      qc.invalidateQueries({ queryKey: ["wallet"] });
-      void refreshProfile();
-    },
-  });
+  /**
+   * Reward mutation kept exported for a future step. The overlay in
+   * Step 4 does NOT invoke this — reward wiring is deferred per spec.
+   */
+  const completeReward = useCallback(async () => {
+    const { data, error } = await supabase.rpc(
+      "complete_tutorial_once" as any,
+      { _final_step: STEP_COUNT },
+    );
+    if (error) throw error;
+    const result = (data ?? {}) as TutorialRewardResult;
+    if (!result.success) {
+      throw new Error(result.error ?? "튜토리얼 보상 지급 실패");
+    }
+    qc.invalidateQueries({ queryKey: ["wallet"] });
+    void refreshProfile();
+    return result;
+  }, [qc, refreshProfile]);
 
   return {
-    /** true once complete_tutorial_once has flipped the server flag. */
+    /** Absolute signal: server has granted reward → tutorial is done forever. */
     isCompleted,
-    /** While the user is unauthenticated we don't show tutorial UI. */
-    isEligible: !!user && !isCompleted,
-    currentStep,
-    currentStepKey,
-    currentOrder,
-    totalSteps: TUTORIAL_TOTAL_STEPS,
+    /** UI signal: every step has been clicked through. */
+    isFinished,
+    /** Should the overlay render? */
+    isEligible: !!user && !isCompleted && !isFinished,
+    /** 0..5 */
+    stepsCompleted,
+    /** 0..1 */
     progressRatio,
+    /** Always the step currently shown (even when isFinished, it's the last). */
+    currentStep,
+    totalSteps: STEP_COUNT,
     rewardGems: TUTORIAL_REWARD_GEMS,
     steps: TUTORIAL_STEPS,
-    goToStep,
     advance,
     completeReward,
   };
