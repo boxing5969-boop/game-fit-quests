@@ -792,6 +792,54 @@ export type Database = {
         }
         Relationships: []
       }
+      minigame_records: {
+        Row: {
+          accuracy: number | null
+          avg_reaction_ms: number | null
+          best_reaction_ms: number | null
+          combo_peak: number | null
+          game_type: string
+          id: string
+          played_at: string
+          player_name: string
+          score: number
+          tier: string | null
+          total_punches: number | null
+          user_id: string
+          xp_earned: number | null
+        }
+        Insert: {
+          accuracy?: number | null
+          avg_reaction_ms?: number | null
+          best_reaction_ms?: number | null
+          combo_peak?: number | null
+          game_type: string
+          id?: string
+          played_at?: string
+          player_name: string
+          score?: number
+          tier?: string | null
+          total_punches?: number | null
+          user_id: string
+          xp_earned?: number | null
+        }
+        Update: {
+          accuracy?: number | null
+          avg_reaction_ms?: number | null
+          best_reaction_ms?: number | null
+          combo_peak?: number | null
+          game_type?: string
+          id?: string
+          played_at?: string
+          player_name?: string
+          score?: number
+          tier?: string | null
+          total_punches?: number | null
+          user_id?: string
+          xp_earned?: number | null
+        }
+        Relationships: []
+      }
       mission_submissions: {
         Row: {
           coach_note: string | null
