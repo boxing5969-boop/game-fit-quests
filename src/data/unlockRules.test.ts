@@ -23,28 +23,42 @@ import {
 // Expected unlocked counts per category at each probe level.
 // Derived from the spec (not by reading the rule arrays) so the test
 // catches any future drift in EFFECT_UNLOCK_RULES etc.
+//
+// Effects (36 total):
+//   Lv1×4, Lv5×4, Lv10×3, Lv15×4, Lv20×3, Lv25×3, Lv30×6, Lv35×3, Lv40×2, Lv50×4
+// Cumulative: Lv1=4, Lv5=8, Lv10=11, Lv15=15, Lv20=18, Lv25=21, Lv30=27,
+//             Lv35=30, Lv40=32, Lv50=36, Lv99=36
+//
+// Titles (9 total): Lv1×2 (rookie_challenger + beginner), Lv5, Lv10, Lv15,
+//                   Lv20, Lv30, Lv50, Lv99
+// Cumulative: Lv1=2, Lv5=3, Lv10=4, Lv15=5, Lv20=6, Lv30=7, Lv50=8, Lv99=9
 const EXPECTED = [
-  { lvl: 1,  effect: 4,  frame: 2,  title: 1, aura: 1 },
-  { lvl: 5,  effect: 7,  frame: 3,  title: 2, aura: 2 },
-  { lvl: 10, effect: 10, frame: 5,  title: 3, aura: 3 },
-  { lvl: 15, effect: 13, frame: 5,  title: 4, aura: 3 },
-  { lvl: 20, effect: 16, frame: 7,  title: 5, aura: 4 },
-  { lvl: 30, effect: 20, frame: 9,  title: 6, aura: 5 },
-  { lvl: 50, effect: 20, frame: 10, title: 7, aura: 6 },
-  { lvl: 99, effect: 20, frame: 10, title: 8, aura: 6 },
+  { lvl: 1,  effect: 4,  frame: 2,  title: 2, aura: 1 },
+  { lvl: 5,  effect: 8,  frame: 3,  title: 3, aura: 2 },
+  { lvl: 10, effect: 11, frame: 5,  title: 4, aura: 3 },
+  { lvl: 15, effect: 15, frame: 5,  title: 5, aura: 3 },
+  { lvl: 20, effect: 18, frame: 7,  title: 6, aura: 4 },
+  { lvl: 30, effect: 27, frame: 9,  title: 7, aura: 5 },
+  { lvl: 50, effect: 36, frame: 10, title: 8, aura: 6 },
+  { lvl: 99, effect: 36, frame: 10, title: 9, aura: 6 },
 ] as const;
 
 describe("unlockRules — rule array shape", () => {
-  it("effect rules total 20 items following spec cadence 4+3+3+3+3+4", () => {
-    expect(EFFECT_UNLOCK_RULES).toHaveLength(20);
+  it("effect rules cover all 36 EFFECT_OPTIONS distributed across league tiers", () => {
+    expect(EFFECT_UNLOCK_RULES).toHaveLength(36);
     const byLevel = (n: number) =>
       EFFECT_UNLOCK_RULES.filter((r) => r.requiredLevel === n).length;
+    // Cadence after Step 8 입단식 expansion
     expect(byLevel(1)).toBe(4);
-    expect(byLevel(5)).toBe(3);
+    expect(byLevel(5)).toBe(4);
     expect(byLevel(10)).toBe(3);
-    expect(byLevel(15)).toBe(3);
+    expect(byLevel(15)).toBe(4);
     expect(byLevel(20)).toBe(3);
-    expect(byLevel(30)).toBe(4);
+    expect(byLevel(25)).toBe(3);
+    expect(byLevel(30)).toBe(6);
+    expect(byLevel(35)).toBe(3);
+    expect(byLevel(40)).toBe(2);
+    expect(byLevel(50)).toBe(4);
   });
 
   it("frame rules total 10 items following spec cadence 2+1+2+2+2+1", () => {
@@ -59,25 +73,25 @@ describe("unlockRules — rule array shape", () => {
     expect(byLevel(50)).toBe(1);
   });
 
-  it("title rules use the exact Korean copy from the spec", () => {
-    expect(TITLE_UNLOCK_RULES).toHaveLength(8);
-    const name = (lvl: number) =>
-      TITLE_UNLOCK_RULES.find((r) => r.requiredLevel === lvl)
-        ?.displayNameOverride;
-    expect(name(1)).toBe("입문자");
-    expect(name(5)).toBe("복서 지망생");
-    expect(name(10)).toBe("아마추어 복서");
-    expect(name(15)).toBe("링의 도전자");
-    expect(name(20)).toBe("프로 복서");
-    expect(name(30)).toBe("챔피언 후보");
-    // Lv50/99 intentionally have no override — original labels 챔피언/레전드
-    // already match the spec verbatim.
-    expect(
-      TITLE_UNLOCK_RULES.find((r) => r.requiredLevel === 50),
-    ).toBeDefined();
-    expect(
-      TITLE_UNLOCK_RULES.find((r) => r.requiredLevel === 99),
-    ).toBeDefined();
+  it("title rules include 신입 챌린저 + 7 standard tiers + 2 endgame", () => {
+    expect(TITLE_UNLOCK_RULES).toHaveLength(9);
+    // Lv1 entries: 신입 챌린저 (입단식 보상) + 입문자 (기본)
+    const lv1 = TITLE_UNLOCK_RULES.filter((r) => r.requiredLevel === 1);
+    expect(lv1.map((r) => r.displayNameOverride).sort()).toEqual(
+      ["신입 챌린저", "입문자"].sort(),
+    );
+    const nameAt = (lvl: number) =>
+      TITLE_UNLOCK_RULES.find(
+        (r) => r.requiredLevel === lvl && r.itemKey !== "rookie_challenger",
+      )?.displayNameOverride;
+    expect(nameAt(5)).toBe("복서 지망생");
+    expect(nameAt(10)).toBe("아마추어 복서");
+    expect(nameAt(15)).toBe("링의 도전자");
+    expect(nameAt(20)).toBe("프로 복서");
+    expect(nameAt(30)).toBe("챔피언 후보");
+    // Lv50/99 don't carry override (champion/legend already match)
+    expect(TITLE_UNLOCK_RULES.find((r) => r.requiredLevel === 50)).toBeDefined();
+    expect(TITLE_UNLOCK_RULES.find((r) => r.requiredLevel === 99)).toBeDefined();
   });
 
   it("aura rules use the exact Korean copy from the spec", () => {
@@ -99,9 +113,9 @@ describe("getUnlockedItems / getLockedItems across all probe levels", () => {
     it(`Lv${row.lvl}: correct split per category`, () => {
       const cats: UnlockCategory[] = ["effect", "frame", "title", "aura"];
       const totalByCat: Record<UnlockCategory, number> = {
-        effect: 20,
+        effect: 36,
         frame: 10,
-        title: 8,
+        title: 9,
         aura: 6,
       };
       for (const cat of cats) {
@@ -133,10 +147,11 @@ describe("getUnlockStatus / canPurchaseItem", () => {
   });
 
   it("price-only item (unknown key) treats as unlocked", () => {
-    const status = getUnlockStatus(1, { category: "effect", itemKey: "clover" });
+    // 'clover' was added to Lv5 in Step 8. Use a truly unknown key.
+    const status = getUnlockStatus(1, { category: "effect", itemKey: "__phantom__" });
     expect(status.requiredLevel).toBeNull();
     expect(status.locked).toBe(false);
-    expect(canPurchaseItem(1, { category: "effect", itemKey: "clover" })).toBe(true);
+    expect(canPurchaseItem(1, { category: "effect", itemKey: "__phantom__" })).toBe(true);
   });
 
   it("isItemUnlocked matches canPurchaseItem for identical inputs", () => {
@@ -158,9 +173,9 @@ describe("getUnlockStatus / canPurchaseItem", () => {
 describe("getNewUnlocks (level bump)", () => {
   it("captures every new rule in (prev, current]", () => {
     const bumped = getNewUnlocks(4, 10);
-    // 4→10 should cover Lv5 (3 effect + 1 frame + 1 title + 1 aura = 6)
-    // + Lv10 (3 effect + 2 frame + 1 title + 1 aura = 7) = 13
-    expect(bumped).toHaveLength(13);
+    // 4→10: Lv5 (4 effect + 1 frame + 1 title + 1 aura = 7)
+    //     + Lv10 (3 effect + 2 frame + 1 title + 1 aura = 7) = 14
+    expect(bumped).toHaveLength(14);
   });
 
   it("no-op when currentLevel <= prevLevel", () => {
@@ -169,8 +184,10 @@ describe("getNewUnlocks (level bump)", () => {
   });
 
   it("single-threshold bump collects only that tier", () => {
-    // 29→30: picks up exactly the Lv30 rules (4 effect + 2 frame + 1 title + 1 aura = 8).
-    expect(getNewUnlocks(29, 30)).toHaveLength(8);
+    // 29→30: Lv30 = 6 effect + 2 frame + 1 title + 1 aura — wait, let me recount.
+    // Frame Lv30 = 2 (galaxy, holy), Title Lv30 = 1 (thunder_king), Aura Lv30 = 1 (halo_black_gold)
+    // Effect Lv30 = 6 → total = 6 + 2 + 1 + 1 = 10
+    expect(getNewUnlocks(29, 30)).toHaveLength(10);
   });
 });
 
@@ -324,13 +341,15 @@ describe("tutorial helpers", () => {
     expect(TUTORIAL_REWARD_GEMS).toBe(1000);
   });
 
-  it("step definitions carry the labels TutorialOverlay renders", () => {
+  it("step definitions carry the 입단식 labels TutorialOverlay renders", () => {
     const byKey = Object.fromEntries(
       TUTORIAL_STEPS.map((s) => [s.key, s]),
     );
-    expect(byKey.profile.label).toBe("프로필 확인");
-    expect(byKey.ranking.label).toBe("랭킹 확인");
-    expect(byKey.complete.ctaLabel).toBe("보상 받기");
+    expect(byKey.profile.label).toBe("내 캐릭터 확인");
+    expect(byKey.ranking.label).toBe("내 리그 / 레벨 확인");
+    expect(byKey.effect_shop.label).toBe("오늘의 퀘스트");
+    expect(byKey.mini_game.label).toBe("보상 / 이펙트");
+    expect(byKey.complete.ctaLabel).toBe("입단식 완료");
   });
 });
 

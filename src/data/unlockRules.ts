@@ -86,39 +86,61 @@ export function computeUserLevel({
   return rankIdx * 10 + (current_level || 1);
 }
 
-// ══ Effect unlock rules (20) ═══════════════════════════════
-// Picks from EFFECT_OPTIONS in characterCustomizationData.ts.
-// Selection heuristic: lowest-price basics at Lv1, progressively
-// richer visuals as league tier rises. Purely additive — the other
-// 16 effect options stay price-only purchasable on existing shop.
+// ══ Effect unlock rules (36 — full coverage) ═══════════════
+// All 36 EFFECT_OPTIONS in characterCustomizationData.ts now have a
+// level gate. Tier mapping mirrors the league field on each option:
+//   white  → Lv 1, 5
+//   blue   → Lv 10, 15
+//   red    → Lv 20, 25
+//   black  → Lv 30, 35, 40, 50
 
 export const EFFECT_UNLOCK_RULES: UnlockRule[] = [
-  // Lv1 × 4 (white, free starters)
-  { itemKey: "sparkle",  category: "effect", requiredLevel: 1 },
-  { itemKey: "stars",    category: "effect", requiredLevel: 1 },
-  { itemKey: "wind",     category: "effect", requiredLevel: 1 },
-  { itemKey: "daisy",    category: "effect", requiredLevel: 1 },
-  // Lv5 × 3 (white, low-price warm-up)
-  { itemKey: "flame",    category: "effect", requiredLevel: 5 },
-  { itemKey: "hearts",   category: "effect", requiredLevel: 5 },
-  { itemKey: "sunflower", category: "effect", requiredLevel: 5 },
-  // Lv10 × 3 (blue, mid-tier motion)
-  { itemKey: "lightning", category: "effect", requiredLevel: 10 },
-  { itemKey: "snow",     category: "effect", requiredLevel: 10 },
-  { itemKey: "music",    category: "effect", requiredLevel: 10 },
-  // Lv15 × 3 (blue-red bridge, floral/festive)
-  { itemKey: "cherry",   category: "effect", requiredLevel: 15 },
-  { itemKey: "tulip",    category: "effect", requiredLevel: 15 },
-  { itemKey: "firework", category: "effect", requiredLevel: 15 },
-  // Lv20 × 3 (red, dynamic)
-  { itemKey: "tornado",  category: "effect", requiredLevel: 20 },
-  { itemKey: "comet",    category: "effect", requiredLevel: 20 },
-  { itemKey: "rainbow",  category: "effect", requiredLevel: 20 },
-  // Lv30 × 4 (red-black epic)
-  { itemKey: "rose",     category: "effect", requiredLevel: 30 },
-  { itemKey: "explosion", category: "effect", requiredLevel: 30 },
-  { itemKey: "phoenix",  category: "effect", requiredLevel: 30 },
-  { itemKey: "dragon",   category: "effect", requiredLevel: 30 },
+  // ── Lv1 (white starters, free) ─────────────────────────────
+  { itemKey: "sparkle",      category: "effect", requiredLevel: 1 },
+  { itemKey: "stars",        category: "effect", requiredLevel: 1 },
+  { itemKey: "wind",         category: "effect", requiredLevel: 1 },
+  { itemKey: "daisy",        category: "effect", requiredLevel: 1 },
+  // ── Lv5 (white) ────────────────────────────────────────────
+  { itemKey: "flame",        category: "effect", requiredLevel: 5 },
+  { itemKey: "hearts",       category: "effect", requiredLevel: 5 },
+  { itemKey: "sunflower",    category: "effect", requiredLevel: 5 },
+  { itemKey: "clover",       category: "effect", requiredLevel: 5 },
+  // ── Lv10 (blue) ────────────────────────────────────────────
+  { itemKey: "lightning",    category: "effect", requiredLevel: 10 },
+  { itemKey: "snow",         category: "effect", requiredLevel: 10 },
+  { itemKey: "music",        category: "effect", requiredLevel: 10 },
+  // ── Lv15 (blue, floral/festive) ────────────────────────────
+  { itemKey: "cherry",       category: "effect", requiredLevel: 15 },
+  { itemKey: "tulip",        category: "effect", requiredLevel: 15 },
+  { itemKey: "firework",     category: "effect", requiredLevel: 15 },
+  { itemKey: "hibiscus",     category: "effect", requiredLevel: 15 },
+  // ── Lv20 (red, dynamic) ────────────────────────────────────
+  { itemKey: "tornado",      category: "effect", requiredLevel: 20 },
+  { itemKey: "comet",        category: "effect", requiredLevel: 20 },
+  { itemKey: "rainbow",      category: "effect", requiredLevel: 20 },
+  // ── Lv25 (red+) ────────────────────────────────────────────
+  { itemKey: "bouquet",      category: "effect", requiredLevel: 25 },
+  { itemKey: "ghost",        category: "effect", requiredLevel: 25 },
+  { itemKey: "star_shoot",   category: "effect", requiredLevel: 25 },
+  // ── Lv30 (black entry, epic) ───────────────────────────────
+  { itemKey: "rose",         category: "effect", requiredLevel: 30 },
+  { itemKey: "explosion",    category: "effect", requiredLevel: 30 },
+  { itemKey: "phoenix",      category: "effect", requiredLevel: 30 },
+  { itemKey: "dragon",       category: "effect", requiredLevel: 30 },
+  { itemKey: "crown_effect", category: "effect", requiredLevel: 30 },
+  { itemKey: "lotus",        category: "effect", requiredLevel: 30 },
+  // ── Lv35 (black mid) ───────────────────────────────────────
+  { itemKey: "skull",        category: "effect", requiredLevel: 35 },
+  { itemKey: "diamond_rain", category: "effect", requiredLevel: 35 },
+  { itemKey: "sakura_storm", category: "effect", requiredLevel: 35 },
+  // ── Lv40 (black late) ──────────────────────────────────────
+  { itemKey: "inferno_dual", category: "effect", requiredLevel: 40 },
+  { itemKey: "thunder_god",  category: "effect", requiredLevel: 40 },
+  // ── Lv50 (black master, legendary visuals) ─────────────────
+  { itemKey: "cosmic_dust",  category: "effect", requiredLevel: 50 },
+  { itemKey: "sword_aura",   category: "effect", requiredLevel: 50 },
+  { itemKey: "dark_flame",   category: "effect", requiredLevel: 50 },
+  { itemKey: "rose_gold",    category: "effect", requiredLevel: 50 },
 ];
 
 // ══ Frame unlock rules (10) ════════════════════════════════
@@ -146,6 +168,7 @@ export const FRAME_UNLOCK_RULES: UnlockRule[] = [
 // D1: key 유지 + UI 오버라이드 라벨 함께 저장.
 
 export const TITLE_UNLOCK_RULES: UnlockRule[] = [
+  { itemKey: "rookie_challenger", category: "title", requiredLevel: 1, displayNameOverride: "신입 챌린저" },
   { itemKey: "beginner",     category: "title", requiredLevel: 1,  displayNameOverride: "입문자" },
   { itemKey: "trainee",      category: "title", requiredLevel: 5,  displayNameOverride: "복서 지망생" },
   { itemKey: "fighter",      category: "title", requiredLevel: 10, displayNameOverride: "아마추어 복서" },
@@ -281,45 +304,58 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     key: "profile",
     order: 1,
-    label: "프로필 확인",
-    description: "내 캐릭터와 리그 정보를 확인해보세요.",
+    label: "내 캐릭터 확인",
+    description: "환영합니다, 챌린저님. 먼저 당신의 캐릭터와 이름을 확인하세요.",
     ctaLabel: "내 프로필 보기",
     navTarget: "/mypage",
   },
   {
     key: "ranking",
     order: 2,
-    label: "랭킹 확인",
-    description: "우리 지점 회원들의 랭킹을 살펴보세요.",
+    label: "내 리그 / 레벨 확인",
+    description: "당신은 지금 어디쯤 와 있을까요? 현재 리그와 다음 승급 목표를 확인하세요.",
     ctaLabel: "랭킹 보기",
     navTarget: "/halloffame",
   },
   {
     key: "effect_shop",
     order: 3,
-    label: "효과 상점",
-    description: "캐릭터를 꾸밀 수 있는 효과를 둘러보세요.",
-    ctaLabel: "효과 둘러보기",
-    navTarget: "/character-studio",
+    label: "오늘의 퀘스트",
+    description: "성장은 출석이 아니라 퀘스트로 증명합니다. 오늘의 미션을 확인하세요.",
+    ctaLabel: "퀘스트 보기",
+    navTarget: "/missions",
   },
   {
     key: "mini_game",
     order: 4,
-    label: "첫 도전",
-    description: "5초짜리 첫 도전 인트로로 앱 사용을 시작합니다.",
-    ctaLabel: "시작하기",
-    navTarget: "/home",
+    label: "보상 / 이펙트",
+    description: "퀘스트를 깨면 보상이 따라옵니다. 파이트 머니와 캐릭터 이펙트를 둘러보세요.",
+    ctaLabel: "보상 둘러보기",
+    navTarget: "/rewards",
   },
   {
     key: "complete",
     order: 5,
-    label: "튜토리얼 완료",
-    description: "1000 파이트 머니를 받고 정식 훈련을 시작합니다.",
-    ctaLabel: "보상 받기",
+    label: "첫 퀘스트 시작",
+    description: "이제 첫 퀘스트를 완료해보세요. 오늘부터 당신의 랭킹업이 시작됩니다.",
+    ctaLabel: "입단식 완료",
   },
 ];
 
-export const TUTORIAL_REWARD_GEMS = 1000;
+/** 단계별 즉시 지급 보상 (서버 tutorial_step_reward_amount 와 동일). */
+export const TUTORIAL_STEP_REWARDS: Record<number, number> = {
+  1: 100,
+  2: 100,
+  3: 200,
+  4: 200,
+  5: 400,
+};
+
+/** 합산 = 1000. 표시용 단일 상수. */
+export const TUTORIAL_REWARD_GEMS = Object.values(TUTORIAL_STEP_REWARDS).reduce(
+  (a, b) => a + b,
+  0,
+);
 
 /** Step count excluding the terminal "complete" stage. */
 export const TUTORIAL_TOTAL_STEPS = TUTORIAL_STEPS.length - 1;

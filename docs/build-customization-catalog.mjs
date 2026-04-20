@@ -20,11 +20,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const LEVEL_RULES = {
   effect: {
     sparkle: 1, stars: 1, wind: 1, daisy: 1,
-    flame: 5, hearts: 5, sunflower: 5,
+    flame: 5, hearts: 5, sunflower: 5, clover: 5,
     lightning: 10, snow: 10, music: 10,
-    cherry: 15, tulip: 15, firework: 15,
+    cherry: 15, tulip: 15, firework: 15, hibiscus: 15,
     tornado: 20, comet: 20, rainbow: 20,
-    rose: 30, explosion: 30, phoenix: 30, dragon: 30,
+    bouquet: 25, ghost: 25, star_shoot: 25,
+    rose: 30, explosion: 30, phoenix: 30, dragon: 30, crown_effect: 30, lotus: 30,
+    skull: 35, diamond_rain: 35, sakura_storm: 35,
+    inferno_dual: 40, thunder_god: 40,
+    cosmic_dust: 50, sword_aura: 50, dark_flame: 50, rose_gold: 50,
   },
   frame: {
     basic_white: 1, fire: 1,
@@ -35,6 +39,7 @@ const LEVEL_RULES = {
     eternal: 50,
   },
   title: {
+    rookie_challenger: 1,
     beginner: 1,
     trainee: 5,
     fighter: 10,
@@ -179,6 +184,7 @@ const FRAMES = [
 // 칭호 27종 — characterCustomizationData.ts:120
 const TITLES = [
   { key: "rookie", label: "루키", price: 0, league: "white", rarity: "common", desc: "첫걸음을 뗀 복서" },
+  { key: "rookie_challenger", label: "신입 챌린저", price: 0, league: "white", rarity: "common", desc: "입단식을 마친 신입 챌린저 — 튜토리얼 완료 보상" },
   { key: "beginner", label: "초보", price: 0, league: "white", rarity: "common", desc: "성장하는 초보 복서" },
   { key: "trainee", label: "수련생", price: 300, league: "white", rarity: "common", desc: "땀흘리는 수련생" },
   { key: "goal_getter", label: "목표달성러", price: 400, league: "white", rarity: "common", desc: "목표를 향해 달려가는 자" },

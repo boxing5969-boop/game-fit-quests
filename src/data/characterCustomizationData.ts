@@ -119,8 +119,9 @@ const FRAME_OPTIONS: CustomizationOption[] = [
 // ===== TITLES =====
 const TITLE_OPTIONS: CustomizationOption[] = [
   // ── White (free–500) ───────────────────────────────────────
-  { key: "rookie",          label: "루키",               price: 0,      league: "white", rarity: "common",    description: "첫걸음을 뗀 복서" },
-  { key: "beginner",        label: "초보",               price: 0,      league: "white", rarity: "common",    description: "성장하는 초보 복서" },
+  { key: "rookie",            label: "루키",               price: 0,      league: "white", rarity: "common",    description: "첫걸음을 뗀 복서" },
+  { key: "rookie_challenger", label: "신입 챌린저",         price: 0,      league: "white", rarity: "common",    description: "입단식을 마친 신입 챌린저 — 튜토리얼 완료 보상" },
+  { key: "beginner",          label: "초보",               price: 0,      league: "white", rarity: "common",    description: "성장하는 초보 복서" },
   { key: "trainee",         label: "수련생",             price: 300,    league: "white", rarity: "common",    description: "땀흘리는 수련생" },
   { key: "goal_getter",     label: "목표달성러",         price: 400,    league: "white", rarity: "common",    description: "목표를 향해 달려가는 자" },
   { key: "attendance_king", label: "출석왕",             price: 500,    league: "white", rarity: "common",    description: "꾸준히 출석하는 왕" },

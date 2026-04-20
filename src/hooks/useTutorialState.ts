@@ -82,15 +82,39 @@ export function useTutorialState() {
     [refreshProfile],
   );
 
-  /** Advance to the next step. No-op once all five are done. */
+  /** Step별 즉시 보상 청구 (서버 멱등). 화면에서 fire-and-forget OK. */
+  const claimStepReward = useCallback(
+    async (step: number): Promise<{ amount: number; alreadyGranted: boolean } | null> => {
+      const { data, error } = await supabase.rpc(
+        "claim_tutorial_step_reward" as any,
+        { _step: step },
+      );
+      if (error) {
+        console.warn("[useTutorialState] claim_tutorial_step_reward failed", error);
+        return null;
+      }
+      const result = (data ?? {}) as { success: boolean; amount?: number; already_granted?: boolean };
+      if (!result.success) return null;
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+      return {
+        amount: result.amount ?? 0,
+        alreadyGranted: !!result.already_granted,
+      };
+    },
+    [qc],
+  );
+
+  /** 다음 단계로 전진 + 직전(=just completed) 단계의 보상 자동 청구. */
   const advance = useCallback(() => {
     setLocalCompleted((prev) => {
       const next = Math.min(prev + 1, STEP_COUNT);
       if (next === prev) return prev;
       void persistStep(next);
+      // 'next' 자체가 막 완료된 step number — 그에 대한 즉시 보상 청구.
+      void claimStepReward(next);
       return next;
     });
-  }, [persistStep]);
+  }, [persistStep, claimStepReward]);
 
   /**
    * Reward mutation — Step 5 wires this to the "complete" button.
@@ -124,13 +148,38 @@ export function useTutorialState() {
     },
   });
 
+  /** 스킵 (서버 플래그). 최종 보상 지급 안 됨. */
+  const markSkipped = useCallback(async () => {
+    const { error } = await supabase.rpc("mark_tutorial_skipped" as any);
+    if (error) {
+      console.warn("[useTutorialState] mark_tutorial_skipped failed", error);
+      return;
+    }
+    void refreshProfile();
+  }, [refreshProfile]);
+
+  /** 다시 시작 (Settings → 튜토리얼 다시 보기). 보상 재지급 0건 보장. */
+  const restart = useCallback(async () => {
+    const { error } = await supabase.rpc("restart_tutorial" as any);
+    if (error) {
+      console.warn("[useTutorialState] restart_tutorial failed", error);
+      return;
+    }
+    setLocalCompleted(0);
+    void refreshProfile();
+  }, [refreshProfile]);
+
+  const isSkipped = !!p?.tutorial_skipped;
+
   return {
     /** Absolute signal: server has granted reward → tutorial is done forever. */
     isCompleted,
     /** UI signal: every step has been clicked through. */
     isFinished,
+    /** 사용자가 명시적으로 스킵했는지. */
+    isSkipped,
     /** Should the overlay render? */
-    isEligible: !!user && !isCompleted && !isFinished,
+    isEligible: !!user && !isCompleted && !isFinished && !isSkipped,
     /** 0..5 */
     stepsCompleted,
     /** 0..1 */
@@ -141,6 +190,9 @@ export function useTutorialState() {
     rewardGems: TUTORIAL_REWARD_GEMS,
     steps: TUTORIAL_STEPS,
     advance,
+    claimStepReward,
     completeReward,
+    markSkipped,
+    restart,
   };
 }
