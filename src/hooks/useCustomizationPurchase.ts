@@ -43,9 +43,11 @@ export function useOwnedSet() {
 /**
  * Server-side RPC can return these logical failures in the `error` field:
  *   • not_authenticated    — no session (should be filtered client-side)
- *   • insufficient_gems    — wallet shortfall (carries `current`)
+ *   • hof_required         — item needs Hall-of-Fame status
+ *                             (carries `category`, `item_key`)
  *   • level_locked         — user level below requiredLevel
  *                             (carries `required_level`, `current_level`)
+ *   • insufficient_gems    — wallet shortfall (carries `current`)
  * Anything else surfaces as a generic "구매 실패" fallback.
  */
 export function usePurchaseCustomization() {
@@ -66,9 +68,14 @@ export function usePurchaseCustomization() {
         current?: number;
         remaining_gems?: number;
         already_owned?: boolean;
+        category?: string;
+        item_key?: string;
       };
       if (!result?.success) {
-        if (result?.error === "insufficient_gems") throw new Error("젬이 부족합니다 💎");
+        if (result?.error === "hof_required") {
+          throw new Error("명예의 전당 입성 후 구매할 수 있습니다");
+        }
+        if (result?.error === "insufficient_gems") throw new Error("젬이 부족합니다");
         if (result?.error === "level_locked") {
           throw new Error(
             `Lv.${result.required_level} 달성 시 해금됩니다 🔒 (현재 Lv.${result.current_level ?? 0})`,
