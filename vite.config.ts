@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => ({
       svg: {
         multipass: true,
         plugins: [
-          { name: "preset-default", params: { overrides: { removeViewBox: false } } },
+          { name: "preset-default", params: { overrides: { removeViewBox: false } } } as any,
         ],
       },
       // Skip tiny files — not worth the CPU

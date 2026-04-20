@@ -14,7 +14,7 @@ export function useOwnedCustomizations() {
     queryKey: ["owned-customizations", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("user_owned_customizations")
         .select("category, item_key")
         .eq("user_id", user!.id);
@@ -22,7 +22,7 @@ export function useOwnedCustomizations() {
         if (error.code === "42P01") return [] as OwnedItem[];
         throw error;
       }
-      return (data || []) as OwnedItem[];
+      return ((data || []) as unknown) as OwnedItem[];
     },
   });
 }
