@@ -38,6 +38,12 @@ import {
   type CustomizationOption,
 } from "@/data/characterCustomizationData";
 import {
+  computeUserLevel,
+  getUnlockRule,
+  resolveDisplayName,
+  type UnlockCategory,
+} from "@/data/unlockRules";
+import {
   AppPage,
   PageHeader,
   StatCard,
@@ -484,6 +490,8 @@ const CharacterStudioPage = () => {
               onChange={setPendingCustomization}
               league={currentLeague}
               level={currentLevel}
+              bossesCleared={progress?.bosses_cleared || 0}
+              isInHallOfFame={isInHallOfFame}
               isAdmin={isAdmin}
             />
           )}
@@ -634,17 +642,33 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
 }
 
 // ========== CUSTOMIZE TAB ==========
-function CustomizeTab({ customization, onChange, league, level, isAdmin }: {
+function CustomizeTab({ customization, onChange, league, level, bossesCleared, isInHallOfFame, isAdmin }: {
   customization: CharacterCustomization;
   onChange: (c: CharacterCustomization) => void;
   league: string;
   level: number;
+  bossesCleared: number;
+  isInHallOfFame: boolean;
   isAdmin: boolean;
 }) {
   const isMaster = league === "black" && level >= 10;
+  const userLevel = useMemo(
+    () => computeUserLevel({
+      current_rank: league,
+      current_level: level,
+      bosses_cleared: bossesCleared,
+      is_in_hall_of_fame: isInHallOfFame,
+    }),
+    [league, level, bossesCleared, isInHallOfFame],
+  );
   const [activeCat, setActiveCat] = useState(CUSTOMIZATION_CATEGORIES[0].code);
 
   const handleSelect = (catCode: string, opt: CustomizationOption) => {
+    const rule = getUnlockRule(catCode as UnlockCategory, opt.key);
+    if (rule && userLevel < rule.requiredLevel && !isAdmin) {
+      toast(`Lv.${rule.requiredLevel} 달성 시 해금됩니다 🔒`);
+      return;
+    }
     if (opt.blackOnly && league !== "black" && !isAdmin) {
       toast("블랙리그 달성 후 해금됩니다 🔒");
       return;
@@ -688,7 +712,15 @@ function CustomizeTab({ customization, onChange, league, level, isAdmin }: {
       <div className="grid grid-cols-4 gap-2">
         {activeCatData.options.map(opt => {
           const isSelected = (customization as any)[activeCat] === opt.key;
-          const isLocked = !!opt.blackOnly && league !== "black" && !isAdmin;
+          const rule = getUnlockRule(activeCat as UnlockCategory, opt.key);
+          const levelLocked = !!rule && userLevel < rule.requiredLevel && !isAdmin;
+          const blackLocked = !!opt.blackOnly && league !== "black" && !isAdmin;
+          const isLocked = levelLocked || blackLocked;
+          const displayLabel = resolveDisplayName(
+            activeCat as UnlockCategory,
+            opt.key,
+            opt.label,
+          );
           return (
             <button
               key={opt.key}
@@ -712,7 +744,12 @@ function CustomizeTab({ customization, onChange, league, level, isAdmin }: {
                 </span>
               )}
               <OptionPreview category={activeCat} optionKey={opt.key} />
-              <span className="text-[10px] font-bold text-foreground/80 truncate w-full text-center leading-tight">{opt.label}</span>
+              <span className="text-[10px] font-bold text-foreground/80 truncate w-full text-center leading-tight">{displayLabel}</span>
+              {levelLocked && rule && (
+                <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center rounded-full bg-foreground/80 px-1.5 py-0.5 text-[9px] font-bold leading-none text-background">
+                  Lv.{rule.requiredLevel}
+                </span>
+              )}
             </button>
           );
         })}
