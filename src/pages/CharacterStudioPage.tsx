@@ -39,7 +39,7 @@ import {
 } from "@/data/characterCustomizationData";
 import {
   computeUserLevel,
-  getUnlockRule,
+  getUnlockStatus,
   resolveDisplayName,
   type UnlockCategory,
 } from "@/data/unlockRules";
@@ -664,10 +664,15 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
   const [activeCat, setActiveCat] = useState(CUSTOMIZATION_CATEGORIES[0].code);
 
   const handleSelect = (catCode: string, opt: CustomizationOption) => {
-    const rule = getUnlockRule(catCode as UnlockCategory, opt.key);
-    if (rule && userLevel < rule.requiredLevel && !isAdmin) {
-      toast(`Lv.${rule.requiredLevel} 달성 시 해금됩니다 🔒`);
-      return;
+    if (!isAdmin) {
+      const status = getUnlockStatus(userLevel, {
+        category: catCode as UnlockCategory,
+        itemKey: opt.key,
+      });
+      if (status.locked && status.requiredLevel !== null) {
+        toast(`레벨 ${status.requiredLevel} 달성 시 해금됩니다`);
+        return;
+      }
     }
     if (opt.blackOnly && league !== "black" && !isAdmin) {
       toast("블랙리그 달성 후 해금됩니다 🔒");
@@ -712,8 +717,11 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
       <div className="grid grid-cols-4 gap-2">
         {activeCatData.options.map(opt => {
           const isSelected = (customization as any)[activeCat] === opt.key;
-          const rule = getUnlockRule(activeCat as UnlockCategory, opt.key);
-          const levelLocked = !!rule && userLevel < rule.requiredLevel && !isAdmin;
+          const unlock = getUnlockStatus(userLevel, {
+            category: activeCat as UnlockCategory,
+            itemKey: opt.key,
+          });
+          const levelLocked = unlock.locked && !isAdmin;
           const blackLocked = !!opt.blackOnly && league !== "black" && !isAdmin;
           const isLocked = levelLocked || blackLocked;
           const displayLabel = resolveDisplayName(
@@ -727,7 +735,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
               onClick={() => handleSelect(activeCat, opt)}
               className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
                 isLocked
-                  ? "border-border bg-muted/30 opacity-60"
+                  ? "border-border bg-muted/30"
                   : isSelected
                   ? "border-primary bg-primary/5 shadow-glow-soft"
                   : "border-border bg-card"
@@ -743,11 +751,20 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
                   <Lock className="h-2.5 w-2.5 text-white" />
                 </span>
               )}
-              <OptionPreview category={activeCat} optionKey={opt.key} />
-              <span className="text-[10px] font-bold text-foreground/80 truncate w-full text-center leading-tight">{displayLabel}</span>
-              {levelLocked && rule && (
-                <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center rounded-full bg-foreground/80 px-1.5 py-0.5 text-[9px] font-bold leading-none text-background">
-                  Lv.{rule.requiredLevel}
+              <div className={isLocked ? "grayscale opacity-60" : undefined}>
+                <OptionPreview category={activeCat} optionKey={opt.key} />
+              </div>
+              <span
+                className={`text-[10px] font-bold truncate w-full text-center leading-tight ${
+                  isLocked ? "text-muted-foreground" : "text-foreground/80"
+                }`}
+              >
+                {displayLabel}
+              </span>
+              {levelLocked && unlock.requiredLevel !== null && (
+                <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-foreground/85 px-1.5 py-0.5 text-[9px] font-bold leading-none text-background">
+                  <Lock className="h-2 w-2" />
+                  Lv.{unlock.requiredLevel} 해금
                 </span>
               )}
             </button>
