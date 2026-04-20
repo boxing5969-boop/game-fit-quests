@@ -82,10 +82,22 @@ export function useEnterMasterTrack() {
 export function useAdvanceMasterLevel() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (memberId: string): Promise<AdvanceResult> => {
+    mutationFn: async ({
+      memberId,
+      expectedCurrent,
+    }: {
+      memberId: string;
+      /** Current master_level as the client sees it — server rejects
+       *  with stale_state if it has moved under us. Always pass when
+       *  available to kill the double-click race. */
+      expectedCurrent?: number;
+    }): Promise<AdvanceResult> => {
       const { data, error } = await supabase.rpc(
         "advance_master_level" as any,
-        { _member_id: memberId },
+        {
+          _member_id: memberId,
+          _expected_current: expectedCurrent ?? null,
+        },
       );
       if (error) throw error;
       return throwIfEnvelopeFailed((data ?? {}) as AdvanceResult);
@@ -106,10 +118,12 @@ export function useAttemptMasterBoss() {
       memberId,
       passed,
       coachNote,
+      expectedCurrent,
     }: {
       memberId: string;
       passed: boolean;
       coachNote?: string;
+      expectedCurrent?: number;
     }): Promise<BossResult> => {
       const { data, error } = await supabase.rpc(
         "attempt_master_boss" as any,
@@ -117,6 +131,7 @@ export function useAttemptMasterBoss() {
           _member_id: memberId,
           _passed: passed,
           _coach_note: coachNote ?? null,
+          _expected_current: expectedCurrent ?? null,
         },
       );
       if (error) throw error;

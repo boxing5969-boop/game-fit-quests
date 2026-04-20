@@ -1,12 +1,14 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Crown, Info, Swords, Trophy } from "lucide-react";
+import { ArrowLeft, Crown, Info, Swords, Trophy, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
 import {
   MASTER_LEVEL_DEFINITIONS,
   canEnterMasterTrack,
 } from "@/data/masterTierData";
+import { useEnterMasterTrack } from "@/hooks/useMasterTrack";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import { MasterLevelCard, type MasterLevelState } from "@/components/master/MasterLevelCard";
 import { MasterTrackBadge } from "@/components/master/MasterTrackBadge";
@@ -43,7 +45,8 @@ const DAN_SECTIONS = [
 
 const MasterTrackPage = () => {
   const navigate = useNavigate();
-  const { progress, loading } = useAuth();
+  const { user, progress, loading, refreshProgress } = useAuth();
+  const enterMutation = useEnterMasterTrack();
 
   const p = progress as any;
   const unlocked = !!p?.master_track_unlocked;
@@ -143,9 +146,38 @@ const MasterTrackPage = () => {
             <p className="mt-2 flex items-start gap-2 text-[12px] leading-relaxed text-muted-foreground">
               <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               {eligible
-                ? "조건 달성! 코치가 입장을 승인하면 마스터 트랙이 열립니다."
+                ? "조건을 충족했어요. 지금 입장하면 Lv.41 부터 진행이 시작됩니다."
                 : "블랙 Lv10 에서 보스 4회 클리어 시 마스터 트랙이 열립니다."}
             </p>
+            {eligible && user?.id && (
+              <button
+                type="button"
+                disabled={enterMutation.isPending}
+                onClick={() => {
+                  enterMutation.mutate(user.id, {
+                    onSuccess: (result) => {
+                      if (result.already_unlocked) {
+                        toast("이미 마스터 트랙에 진입해 있어요");
+                      } else {
+                        toast.success("마스터 트랙 진입! ⚔️");
+                      }
+                      void refreshProgress();
+                    },
+                    onError: (err) => {
+                      toast.error(
+                        err instanceof Error
+                          ? err.message
+                          : "입장 중 문제가 발생했어요",
+                      );
+                    },
+                  });
+                }}
+                className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[hsl(42_92%_52%)] via-[hsl(36_96%_58%)] to-[hsl(24_94%_52%)] px-4 text-sm font-bold text-[hsl(30_60%_12%)] shadow-[0_0_20px_rgba(246,196,83,0.35)] transition-all active:scale-[0.98] disabled:opacity-60"
+              >
+                <Sparkles className="h-4 w-4" />
+                {enterMutation.isPending ? "입장 중…" : "마스터 트랙 입장"}
+              </button>
+            )}
           </div>
         )}
       </section>
