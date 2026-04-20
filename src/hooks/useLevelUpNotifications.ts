@@ -68,12 +68,27 @@ export function useLevelUpNotifications() {
           head.itemKey,
           head.itemKey,
         );
-        const extra = newlyUnlocked.length - 1;
-        toast.success(
-          extra > 0
-            ? `새 아이템 ${newlyUnlocked.length}개 해금! 🎁 (${headLabel} 외 ${extra}개)`
-            : `${headLabel} 해금! 🎁`,
-        );
+        // Category breakdown so the toast shows what kind of items unlocked.
+        const byCat = new Map<UnlockCategory, number>();
+        for (const r of newlyUnlocked) {
+          byCat.set(r.category, (byCat.get(r.category) ?? 0) + 1);
+        }
+        const catLabels: Record<UnlockCategory, string> = {
+          effect: "이펙트",
+          frame: "프레임",
+          title: "칭호",
+          aura: "오라",
+        };
+        const breakdown = Array.from(byCat.entries())
+          .map(([cat, n]) => `${catLabels[cat]} ${n}`)
+          .join(" · ");
+
+        toast.success("새 아이템 해금! 🔓", {
+          description:
+            newlyUnlocked.length === 1
+              ? headLabel
+              : `${headLabel} 외 ${newlyUnlocked.length - 1}개 (${breakdown})`,
+        });
       }
     }
 
