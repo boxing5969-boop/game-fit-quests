@@ -135,17 +135,89 @@
     @apply border-border;
   }
 
+  html, body {
+    /* Mobile app-like behavior: no rubber-band scroll past edges, no
+     * overscroll refresh on pull-down, predictable touch handling. */
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground font-sans;
+    margin: 0;
     font-weight: 400;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
     font-weight: 700;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Design-system utility classes (additive — safe to adopt
+ * incrementally without breaking existing ad-hoc styling).
+ * See docs/rankingup-design-system.md for the spec they encode.
+ * ───────────────────────────────────────────────────────────── */
+@layer components {
+  /* ── Layout containers ── */
+  .app-shell {
+    @apply min-h-screen bg-background text-foreground;
+  }
+  .page-container {
+    @apply mx-auto max-w-lg px-5 pb-24 pt-4;
+  }
+
+  /* ── Surfaces ── */
+  .surface-card {
+    @apply rounded-card border border-border bg-card p-5 text-card-foreground shadow-elev-1;
+  }
+  .elevated-card {
+    @apply rounded-card border border-border bg-card p-5 text-card-foreground shadow-elev-2;
+  }
+  .hero-card {
+    @apply relative overflow-hidden rounded-hero border border-border bg-gradient-to-b from-card to-[hsl(var(--surface-2))] p-6 text-card-foreground shadow-glow-soft;
+  }
+
+  /* ── Buttons ── */
+  .primary-button {
+    @apply inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-button text-primary-foreground shadow-glow-soft transition-all;
+    @apply hover:shadow-glow-primary active:scale-[0.98];
+    @apply disabled:pointer-events-none disabled:opacity-50;
+  }
+  .secondary-button {
+    @apply inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-6 text-button text-foreground shadow-elev-1 transition-all;
+    @apply hover:shadow-elev-2 active:scale-[0.98];
+    @apply disabled:pointer-events-none disabled:opacity-50;
+  }
+  .reward-button {
+    @apply inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-reward px-6 text-button text-reward-foreground shadow-glow-reward transition-all;
+    @apply active:scale-[0.98];
+    @apply disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  /* ── Progress & pills ── */
+  .xp-bar {
+    @apply relative h-2 w-full overflow-hidden rounded-pill bg-[hsl(var(--xp-bar-bg))];
+  }
+  .xp-bar > .xp-bar-fill {
+    @apply h-full rounded-pill bg-[hsl(var(--xp-bar))] transition-all duration-500;
+  }
+  .badge-pill {
+    @apply inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-badge;
+  }
+
+  /* ── Number treatment (rankings, levels, XP) ── */
+  .number-font {
+    font-family: "Space Grotesk", "Pretendard Variable", Pretendard,
+      -apple-system, BlinkMacSystemFont, system-ui, Roboto,
+      "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
   }
 }
 

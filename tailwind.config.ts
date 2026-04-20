@@ -155,9 +155,31 @@ export default {
         },
       },
       borderRadius: {
+        // Existing semantic aliases (kept for back-compat with
+        // shadcn primitives that use rounded-lg/md/sm).
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        // Design-system radius scale (see rankingup-design-system.md)
+        card: "20px",
+        hero: "24px",
+        pill: "9999px",
+      },
+      // Design-system type scale. Numbers (ranking / level / XP)
+      // are intentionally named separately so Space Grotesk + tabular
+      // digits can be pinned via the `.number-font` utility.
+      fontSize: {
+        "display-lg":  ["28px", { lineHeight: "36px", fontWeight: "800" }],
+        "display-md":  ["24px", { lineHeight: "32px", fontWeight: "800" }],
+        "display-sm":  ["20px", { lineHeight: "28px", fontWeight: "700" }],
+        "body-lg":     ["16px", { lineHeight: "24px", fontWeight: "500" }],
+        "body-sm":     ["14px", { lineHeight: "21px", fontWeight: "500" }],
+        "caption":     ["12px", { lineHeight: "16px", fontWeight: "500" }],
+        "button":      ["16px", { lineHeight: "20px", fontWeight: "700" }],
+        "badge":       ["12px", { lineHeight: "16px", fontWeight: "700" }],
+        "number-lg":   ["32px", { lineHeight: "40px", fontWeight: "800" }],
+        "number-md":   ["24px", { lineHeight: "32px", fontWeight: "800" }],
+        "number-sm":   ["16px", { lineHeight: "22px", fontWeight: "700" }],
       },
       // premium-sport depth + game-style energy
       boxShadow: {
