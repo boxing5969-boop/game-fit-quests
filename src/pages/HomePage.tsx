@@ -29,6 +29,7 @@ import QRScannerModal from "@/components/QRScannerModal";
 import CheckinSuccessModal from "@/components/CheckinSuccessModal";
 import LevelUpModal from "@/components/LevelUpModal";
 import RetentionBanner from "@/components/RetentionBanner";
+import TutorialOverlay from "@/components/TutorialOverlay";
 
 import {
   AppPage,
@@ -483,6 +484,8 @@ const HomePage = () => {
         onClose={() => setShowCheckinSuccess(false)}
         result={checkinResult}
       />
+
+      {onboardingDone && safetyDone && <TutorialOverlay />}
     </AppPage>
   );
 };
