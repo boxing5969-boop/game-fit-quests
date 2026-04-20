@@ -355,11 +355,11 @@ const MemberDetailPage = () => {
           {/* Gem Management */}
           <div className="space-y-2 pt-2 border-t border-border">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-              <Gem className="h-4 w-4 text-reward" /> 링젬 관리
+              <Gem className="h-4 w-4 text-reward" /> 파이트 머니 관리
             </h3>
             <div className="rounded-xl bg-reward/10 p-3 text-center">
               <span className="text-2xl font-bold text-reward-foreground">💎 {memberWallet.data?.gems_balance?.toLocaleString() || 0}</span>
-              <p className="text-xs text-muted-foreground mt-1">현재 보유 링젬</p>
+              <p className="text-xs text-muted-foreground mt-1">현재 보유 파이트 머니</p>
             </div>
             <div className="flex gap-2">
               <input
@@ -383,7 +383,7 @@ const MemberDetailPage = () => {
                   const amt = parseInt(gemAmount);
                   if (!amt || amt <= 0) { toast.error("수량을 입력하세요"); return; }
                   grantGems.mutate({ userId: memberId!, amount: amt, reason: gemReason || "관리자 수동 지급" }, {
-                    onSuccess: () => { toast.success(`+${amt} 링젬 지급!`); setGemAmount(""); setGemReason(""); memberWallet.refetch(); }
+                    onSuccess: () => { toast.success(`+${amt} 파이트 머니 지급!`); setGemAmount(""); setGemReason(""); memberWallet.refetch(); }
                   });
                 }}
                 disabled={grantGems.isPending}
@@ -396,7 +396,7 @@ const MemberDetailPage = () => {
                   const amt = parseInt(gemAmount);
                   if (!amt || amt <= 0) { toast.error("수량을 입력하세요"); return; }
                   grantGems.mutate({ userId: memberId!, amount: -amt, reason: gemReason || "관리자 수동 차감" }, {
-                    onSuccess: () => { toast.success(`-${amt} 링젬 차감`); setGemAmount(""); setGemReason(""); memberWallet.refetch(); }
+                    onSuccess: () => { toast.success(`-${amt} 파이트 머니 차감`); setGemAmount(""); setGemReason(""); memberWallet.refetch(); }
                   });
                 }}
                 disabled={grantGems.isPending}

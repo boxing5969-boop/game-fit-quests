@@ -73,7 +73,7 @@ export const useSpendGems = () => {
         .single();
       if (fetchError) throw fetchError;
       if (!wallet) throw new Error("지갑 없음");
-      if (wallet.gems_balance < amount) throw new Error("젬이 부족합니다 💎");
+      if (wallet.gems_balance < amount) throw new Error("파이트 머니가 부족합니다");
       const { error } = await supabase
         .from("user_wallets")
         .update({ gems_balance: wallet.gems_balance - amount })

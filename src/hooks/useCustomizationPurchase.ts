@@ -75,7 +75,7 @@ export function usePurchaseCustomization() {
         if (result?.error === "hof_required") {
           throw new Error("명예의 전당 입성 후 구매할 수 있습니다");
         }
-        if (result?.error === "insufficient_gems") throw new Error("젬이 부족합니다");
+        if (result?.error === "insufficient_gems") throw new Error("파이트 머니가 부족합니다");
         if (result?.error === "level_locked") {
           throw new Error(
             `Lv.${result.required_level} 달성 시 해금됩니다 🔒 (현재 Lv.${result.current_level ?? 0})`,

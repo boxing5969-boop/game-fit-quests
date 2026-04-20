@@ -70,7 +70,7 @@ export function useHofRewardsAutoClaim() {
       if (grantedTotal > 0) {
         qc.invalidateQueries({ queryKey: ["wallet"] });
         toast.success("명예의 전당 보상 🏆", {
-          description: `${grantedLabels.join(" · ")} (+${grantedTotal.toLocaleString()} 젬)`,
+          description: `${grantedLabels.join(" · ")} (+${grantedTotal.toLocaleString()} 파이트 머니)`,
         });
       }
     };

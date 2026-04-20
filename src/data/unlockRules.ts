@@ -314,7 +314,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     key: "complete",
     order: 5,
     label: "튜토리얼 완료",
-    description: "1000 젬을 받고 정식 훈련을 시작합니다.",
+    description: "1000 파이트 머니를 받고 정식 훈련을 시작합니다.",
     ctaLabel: "보상 받기",
   },
 ];

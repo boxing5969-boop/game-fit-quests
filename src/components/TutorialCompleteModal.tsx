@@ -15,7 +15,7 @@ interface TutorialCompleteModalProps {
  * unmounts as soon as profile.tutorial_completed flips true; this modal
  * is a separate sibling so the celebration survives the unmount.
  *
- * Spec copy (exact): "튜토리얼 완료! 🎉 1000젬을 획득했습니다"
+ * Spec copy (exact): "튜토리얼 완료! 🎉 1000 파이트 머니를 획득했습니다"
  */
 export const TutorialCompleteModal = ({
   open,
@@ -64,7 +64,7 @@ export const TutorialCompleteModal = ({
           id="tutorial-complete-title"
           className="text-xl font-bold text-foreground"
         >
-          튜토리얼 완료! 🎉 {grantedGems}젬을 획득했습니다
+          튜토리얼 완료! 🎉 {grantedGems.toLocaleString()} 파이트 머니를 획득했습니다
         </h2>
         <div className="mt-5 flex items-center justify-center gap-2 rounded-2xl border border-reward/30 bg-reward/10 px-4 py-3 text-reward">
           <Gem className="h-5 w-5" />

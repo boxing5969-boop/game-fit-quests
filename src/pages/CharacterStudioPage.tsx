@@ -51,7 +51,7 @@ import {
 
 const TABS = [
   { key: "my", label: "내 캐릭터" },
-  { key: "preset", label: "프리셋" },
+  { key: "preset", label: "복서" },
   { key: "customize", label: "꾸미기" },
   { key: "growth", label: "성장" },
   { key: "effects", label: "효과" },
@@ -350,7 +350,7 @@ const CharacterStudioPage = () => {
                 {activeTab === "preset" && (
                   <button
                     onClick={handleRandomize}
-                    aria-label="랜덤 프리셋"
+                    aria-label="랜덤 복서"
                     className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"
                   >
                     <Shuffle className="h-4 w-4 text-muted-foreground" />
@@ -563,7 +563,7 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
             아직 캐릭터를 선택하지 않았어요
           </p>
           <p className="text-caption text-muted-foreground mt-1">
-            "프리셋" 탭에서 마음에 드는 복서를 골라보세요.
+            "복서" 탭에서 마음에 드는 복서를 골라보세요.
           </p>
         </div>
       )}
@@ -637,7 +637,7 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
               아이템 상점
             </p>
             <p className="text-caption text-muted-foreground">
-              젬으로 특별 아이템 구매
+              파이트 머니로 특별 아이템 구매
             </p>
           </div>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -742,7 +742,8 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
         })}
       </div>
 
-      {/* Options grid */}
+      {/* Options grid — 모든 아이템에 가격 + 해금 조건을 일관되게 표기.
+          admin 은 요구 조건을 그대로 보되 클릭은 허용 (handleSelect 의 !isAdmin 가드). */}
       <div className="grid grid-cols-4 gap-2">
         {activeCatData.options.map(opt => {
           const isSelected = (customization as any)[activeCat] === opt.key;
@@ -751,10 +752,15 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
             itemKey: opt.key,
           });
           const isHof = opt.requirement === "hall_of_fame";
-          const hofLocked = isHof && !isInHallOfFame && !isAdmin;
-          const levelLocked = unlock.locked && !isAdmin && !hofLocked;
-          const blackLocked = !!opt.blackOnly && league !== "black" && !isAdmin && !hofLocked;
-          const isLocked = hofLocked || levelLocked || blackLocked;
+
+          // 요구 조건 (admin 무관 — 정보 노출용)
+          const requiresHof = isHof && !isInHallOfFame;
+          const requiresLevel = unlock.locked; // user level < requiredLevel
+          const requiresBlack = !!opt.blackOnly && league !== "black";
+
+          // 시각상 잠금 처리 (admin 은 풀컬러 + 클릭 가능)
+          const visuallyLocked = !isAdmin && (requiresHof || requiresLevel || requiresBlack);
+
           const displayLabel = resolveDisplayName(
             activeCat as UnlockCategory,
             opt.key,
@@ -764,73 +770,75 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
             <button
               key={opt.key}
               onClick={() => handleSelect(activeCat, opt)}
-              className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 p-3 transition-all active:scale-95 ${
-                // HoF 카드는 잠김이든 해금이든 금빛 테두리로 시각 차별화
+              className={`relative flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 pb-6 transition-all active:scale-95 ${
+                // HoF 카드는 금빛 테두리로 시각 차별화 (admin 포함)
                 isHof
-                  ? hofLocked
+                  ? visuallyLocked
                     ? "border-reward/40 bg-gradient-to-br from-[hsl(42_92%_14%)] via-card to-card"
                     : isSelected
                     ? "border-reward bg-reward/5 shadow-[0_0_18px_rgba(246,196,83,0.25)]"
                     : "border-reward/60 bg-gradient-to-br from-[hsl(42_92%_10%)] via-card to-card"
-                  : isLocked
+                  : visuallyLocked
                   ? "border-border bg-muted/30"
                   : isSelected
                   ? "border-primary bg-primary/5 shadow-glow-soft"
                   : "border-border bg-card"
               }`}
             >
-              {isSelected && !isLocked && !isHof && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
-                  <Check className="h-2.5 w-2.5 text-primary-foreground" />
+              {isSelected && !visuallyLocked && (
+                <span className={`absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full ${isHof ? "bg-reward" : "bg-primary"}`}>
+                  <Check className={`h-2.5 w-2.5 ${isHof ? "text-background" : "text-primary-foreground"}`} />
                 </span>
               )}
-              {isSelected && !isLocked && isHof && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-reward">
-                  <Check className="h-2.5 w-2.5 text-background" />
-                </span>
-              )}
-              {isLocked && !hofLocked && (
+              {visuallyLocked && !requiresHof && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-muted-foreground/70">
                   <Lock className="h-2.5 w-2.5 text-white" />
                 </span>
               )}
-              {/* HoF 전용 왕관 배지 — 잠김 여부와 무관, 항상 표시 */}
+              {/* HoF 왕관 배지 — 잠김/해금 무관 항상 표시 */}
               {isHof && (
                 <span className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-reward text-[hsl(30_60%_12%)] shadow">
                   <Crown className="h-2.5 w-2.5" />
                 </span>
               )}
-              <div className={isLocked ? "grayscale opacity-60" : undefined}>
+              <div className={visuallyLocked ? "grayscale opacity-60" : undefined}>
                 <OptionPreview category={activeCat} optionKey={opt.key} />
               </div>
               <span
                 className={`text-[10px] font-bold truncate w-full text-center leading-tight ${
-                  isLocked ? "text-muted-foreground" : isHof ? "text-reward" : "text-foreground/80"
+                  visuallyLocked ? "text-muted-foreground" : isHof ? "text-reward" : "text-foreground/80"
                 }`}
               >
                 {displayLabel}
               </span>
-              {/* 가격 (HoF 는 항상, 일반은 가격 있을 때만 표기 최소화) */}
-              {isHof && (
-                <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold leading-none ${hofLocked ? "text-muted-foreground" : "text-reward"}`}>
+              {/* 가격 (모든 아이템에 일관되게 — admin 포함) */}
+              {opt.price > 0 && (
+                <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold leading-none ${isHof ? (visuallyLocked ? "text-muted-foreground" : "text-reward") : visuallyLocked ? "text-muted-foreground" : "text-foreground/70"}`}>
                   <Gem className="h-2.5 w-2.5" />
                   <span className="number-font">{opt.price.toLocaleString()}</span>
                 </span>
               )}
-              {/* HoF 잠금 안내 (하단 pill) */}
-              {hofLocked && (
+              {opt.price === 0 && (
+                <span className="text-[9px] font-bold leading-none text-success">FREE</span>
+              )}
+              {/* 해금 조건 하단 pill — 우선순위: HoF > Black > Level
+                  admin 에게도 정보 제공을 위해 visuallyLocked 와 무관하게 표시 */}
+              {requiresHof ? (
                 <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-reward/90 px-1.5 py-0.5 text-[9px] font-bold leading-none text-[hsl(30_60%_12%)]">
                   <Crown className="h-2 w-2" />
                   명예의 전당 전용
                 </span>
-              )}
-              {/* 레벨 잠금 안내 — HoF 가 잠금의 1순위이므로 겹치지 않도록 hofLocked 때는 숨김 */}
-              {levelLocked && unlock.requiredLevel !== null && (
+              ) : requiresBlack ? (
+                <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-foreground/85 px-1.5 py-0.5 text-[9px] font-bold leading-none text-background">
+                  <Lock className="h-2 w-2" />
+                  블랙리그 전용
+                </span>
+              ) : requiresLevel && unlock.requiredLevel !== null ? (
                 <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-foreground/85 px-1.5 py-0.5 text-[9px] font-bold leading-none text-background">
                   <Lock className="h-2 w-2" />
                   Lv.{unlock.requiredLevel} 해금
                 </span>
-              )}
+              ) : null}
             </button>
           );
         })}
@@ -1277,9 +1285,9 @@ function PurchaseConfirmModal({ char, walletBalance, isAdmin, isPurchasing, onCo
                 구매 중...
               </span>
             ) : !canAfford && !isAdmin ? (
-              "젬 부족"
+              "파이트 머니 부족"
             ) : (
-              "💎 구매하기"
+              "💰 구매하기"
             )}
           </button>
         </div>
