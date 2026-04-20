@@ -1,18 +1,32 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Shuffle, Save, Check, Sparkles, Lock, ChevronRight, Crown, Gem, RotateCcw } from "lucide-react";
+import {
+  ArrowLeft,
+  Shuffle,
+  Save,
+  Check,
+  Sparkles,
+  Lock,
+  ChevronRight,
+  Crown,
+  Gem,
+  RotateCcw,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { PREBUILT_CHARACTERS, getRandomCharacter } from "@/data/characterPresets";
 import { getCurrentMilestone, UNLOCK_MILESTONES } from "@/data/characterUnlockData";
-import { useTemplatePresets, useAssignCharacter, useMemberCharacterAssignment, useSaveCustomization } from "@/hooks/useCharacterData";
+import {
+  useTemplatePresets,
+  useAssignCharacter,
+  useMemberCharacterAssignment,
+  useSaveCustomization,
+} from "@/hooks/useCharacterData";
 import { useIsInHallOfFame } from "@/hooks/useRankingData";
 import { useWallet, useSpendGems } from "@/hooks/useWallet";
 import CharacterSprite from "@/components/CharacterSprite";
-import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
-import type { Enums } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
-import useEmblaCarousel from "embla-carousel-react";
+import { cn } from "@/lib/utils";
 import {
   CUSTOMIZATION_CATEGORIES,
   EFFECT_EMOJIS,
@@ -23,14 +37,21 @@ import {
   type CharacterCustomization,
   type CustomizationOption,
 } from "@/data/characterCustomizationData";
+import {
+  AppPage,
+  PageHeader,
+  SegmentedControl,
+  StatCard,
+} from "@/components/ui/rankingup";
 
 const TABS = [
-  { key: "my", label: "내 캐릭터", icon: "🥊" },
-  { key: "preset", label: "프리셋 선택", icon: "🎭" },
-  { key: "customize", label: "꾸미기", icon: "🎨" },
-  { key: "growth", label: "성장", icon: "📈" },
-  { key: "effects", label: "효과", icon: "✨" },
+  { key: "my", label: "내 캐릭터" },
+  { key: "preset", label: "프리셋" },
+  { key: "customize", label: "꾸미기" },
+  { key: "growth", label: "성장" },
+  { key: "effects", label: "효과" },
 ] as const;
+type TabKey = (typeof TABS)[number]["key"];
 
 const FILTER_TABS = [
   { key: "white",  label: "화이트", icon: "🤍" },
@@ -42,12 +63,20 @@ const FILTER_TABS = [
 
 const LEAGUE_ORDER: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
 
-const LEAGUE_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
+const LEAGUE_LABELS: Record<string, string> = {
+  white: "화이트",
+  blue: "블루",
+  red: "레드",
+  black: "블랙",
+};
+
+/** League pill tones — dark-theme friendly, desaturated so the screen
+ *  doesn't become a wash of league colors. */
 const LEAGUE_COLORS: Record<string, string> = {
-  white: "bg-gray-100 text-gray-700",
-  blue: "bg-blue-100 text-blue-700",
-  red: "bg-red-100 text-red-700",
-  black: "bg-gray-900 text-amber-400",
+  white: "bg-[hsl(220_14%_71%)]/15 text-[hsl(220_14%_85%)]",
+  blue: "bg-accent/15 text-accent",
+  red: "bg-destructive/15 text-destructive",
+  black: "bg-reward/15 text-reward",
 };
 
 const CharacterStudioPage = () => {
@@ -256,169 +285,206 @@ const CharacterStudioPage = () => {
 
   const previewCustomization = activeTab === "customize" ? pendingCustomization : currentCustomization;
 
+  const gemsDisplay = isAdmin ? "∞" : (walletData?.gems_balance ?? 0).toLocaleString();
+
   return (
     <>
-    <div className="mx-auto max-w-lg pb-32">
-      {/* Header */}
-      <div className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-md px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95 transition-transform">
-              <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
-            </button>
-            <h1 className="text-lg font-bold text-foreground">캐릭터 스튜디오</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 rounded-full bg-reward/20 px-2.5 py-1">
-              <Gem className="h-3.5 w-3.5 text-reward" />
-              <span className="text-xs font-bold text-reward-foreground">{isAdmin ? "∞" : walletData?.gems_balance?.toLocaleString() || 0}</span>
-            </div>
-            {activeTab === "preset" && (
+      <AppPage
+        header={
+          <PageHeader
+            title="캐릭터 스튜디오"
+            leftAction={
+              <button
+                onClick={() => navigate(-1)}
+                aria-label="뒤로가기"
+                className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"
+              >
+                <ArrowLeft className="h-4 w-4 text-secondary-foreground" />
+              </button>
+            }
+            rightAction={
               <>
-                {currentStyle && selectedStyle !== currentStyle && (
-                  <button onClick={handleRevert} className="rounded-full bg-secondary p-2 active:scale-95 transition-transform">
+                {/* Reward-tinted gem pill per spec
+                    — rgba(246, 196, 83, 0.12) bg, #F6C453 text */}
+                <span className="inline-flex items-center gap-1 rounded-pill bg-[rgba(246,196,83,0.12)] px-3 py-1.5 text-caption font-bold text-[#F6C453]">
+                  <Gem className="h-3.5 w-3.5" />
+                  <span className="number-font">{gemsDisplay}</span>
+                </span>
+                {activeTab === "preset" && currentStyle && selectedStyle !== currentStyle && (
+                  <button
+                    onClick={handleRevert}
+                    aria-label="되돌리기"
+                    className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"
+                  >
                     <RotateCcw className="h-4 w-4 text-muted-foreground" />
                   </button>
                 )}
-                <button onClick={handleRandomize} className="rounded-full bg-secondary p-2 active:scale-95 transition-transform">
-                  <Shuffle className="h-4 w-4 text-muted-foreground" />
-                </button>
+                {activeTab === "preset" && (
+                  <button
+                    onClick={handleRandomize}
+                    aria-label="랜덤 프리셋"
+                    className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"
+                  >
+                    <Shuffle className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                )}
               </>
-            )}
-          </div>
-        </div>
-      </div>
+            }
+            sticky
+          />
+        }
+      >
+        <div className="space-y-5">
+          {/* ─── Character Hero Stage ─── */}
+          <section className="relative overflow-hidden rounded-hero border border-border bg-gradient-to-b from-[hsl(var(--surface-2))] to-card p-6 shadow-elev-2">
+            {/* Subtle reward glow behind the character */}
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute left-1/2 top-[40%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-reward/10 blur-3xl" />
+              <div className="absolute left-1/2 top-[40%] h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-2xl" />
+            </div>
 
-      {/* Live Preview */}
-      <div className="px-4 pt-4">
-        <div className="relative rounded-3xl border border-border bg-gradient-to-b from-card to-secondary/30 p-5 shadow-glow-soft">
-          <div className="relative mx-auto flex h-44 w-44 items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-primary/10 blur-2xl" />
-            <CharacterSprite
-              style={selectedStyle}
-              userId={user?.id}
-              size="lg"
-              animate={activeTab !== "customize"}
-              league={currentLeague as any}
-              level={currentLevel}
-              customization={previewCustomization}
-              className="relative z-10 !w-40 !h-40"
-              priority
-            />
-          </div>
-          <div className="mt-2 text-center">
-            <p className="text-base font-bold text-foreground">{selectedChar.label}</p>
-            <div className="mt-1.5 flex items-center justify-center gap-2">
-              <RankBadge rank={currentLeague as Enums<"rank_name">} level={currentLevel} size="sm" />
+            {/* Contextual save button */}
+            {activeTab === "preset" && (
+              <button
+                onClick={handleSavePreset}
+                disabled={isSaving || isCurrentPreset}
+                className={`absolute top-4 right-4 z-10 inline-flex items-center gap-1 rounded-pill px-3 py-1.5 text-caption font-bold transition-all active:scale-95 disabled:opacity-50 ${
+                  isCurrentPreset
+                    ? "bg-[#22C55E]/15 text-[#22C55E]"
+                    : "bg-primary text-primary-foreground shadow-glow-soft hover:shadow-glow-primary"
+                }`}
+              >
+                {isSaving ? (
+                  "..."
+                ) : isCurrentPreset ? (
+                  <>
+                    <Check className="h-3 w-3" /> 적용됨
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-3 w-3" /> 저장
+                  </>
+                )}
+              </button>
+            )}
+            {activeTab === "customize" && (
+              <button
+                onClick={handleSaveCustomization}
+                disabled={isSaving}
+                className="absolute top-4 right-4 z-10 inline-flex items-center gap-1 rounded-pill bg-primary px-3 py-1.5 text-caption font-bold text-primary-foreground shadow-glow-soft transition-all hover:shadow-glow-primary active:scale-95 disabled:opacity-50"
+              >
+                {isSaving ? "..." : (<><Save className="h-3 w-3" /> 저장</>)}
+              </button>
+            )}
+
+            <div className="relative flex flex-col items-center">
+              {/* Character */}
+              <div className="mb-5 flex h-44 w-44 items-center justify-center">
+                <CharacterSprite
+                  style={selectedStyle}
+                  userId={user?.id}
+                  size="lg"
+                  animate={activeTab !== "customize"}
+                  league={currentLeague as any}
+                  level={currentLevel}
+                  customization={previewCustomization}
+                  className="!w-40 !h-40"
+                  priority
+                />
+              </div>
+
+              {/* Name */}
+              <h2 className="text-[24px] font-extrabold leading-tight text-foreground">
+                {selectedChar.label}
+              </h2>
+
+              {/* League · Lv pill */}
+              <div className="mt-2 flex items-center gap-2">
+                <span className={cn("badge-pill", LEAGUE_COLORS[currentLeague])}>
+                  {LEAGUE_LABELS[currentLeague]} 리그 · Lv.
+                  <span className="number-font">{currentLevel}</span>
+                </span>
+              </div>
+
+              {/* Milestone / current grade */}
               {currentMilestone && (
-                <span className="text-[10px] text-muted-foreground">{currentMilestone.icon} {currentMilestone.label}</span>
+                <p className="mt-1.5 text-caption text-muted-foreground">
+                  {currentMilestone.icon} {currentMilestone.label}
+                </p>
               )}
             </div>
-          </div>
+          </section>
+
+          {/* ─── Tab bar ─── */}
+          <SegmentedControl<TabKey>
+            value={activeTab as TabKey}
+            onChange={(v) => setActiveTab(v)}
+            segments={TABS.map((t) => ({ value: t.key, label: t.label }))}
+            size="sm"
+            fullWidth
+          />
+
+          {/* ─── Tab content ─── */}
+          {activeTab === "my" && (
+            <MyCharacterTab
+              currentStyle={currentStyle}
+              league={currentLeague}
+              level={currentLevel}
+              navigate={navigate}
+              currentMilestone={currentMilestone}
+              nextMilestone={nextMilestone}
+              currentCustomization={currentCustomization}
+            />
+          )}
           {activeTab === "preset" && (
-            <button
-              onClick={handleSavePreset}
-              disabled={isSaving || isCurrentPreset}
-              className={`absolute top-3 right-3 rounded-full px-3 py-1.5 text-xs font-bold shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-95 disabled:opacity-50 ${
-                isCurrentPreset
-                  ? "bg-status-complete/20 text-status-complete"
-                  : "bg-primary text-primary-foreground"
-              }`}
-            >
-              {isSaving ? "..." : isCurrentPreset ? (
-                <span className="flex items-center gap-1"><Check className="h-3 w-3" /> 적용됨</span>
-              ) : (
-                <span className="flex items-center gap-1"><Save className="h-3 w-3" /> 저장</span>
-              )}
-            </button>
+            <PresetTab
+              filteredCharacters={filteredCharacters}
+              selectedStyle={selectedStyle}
+              currentStyle={currentStyle}
+              activeFilter={activeFilter}
+              setActiveFilter={setActiveFilter}
+              currentLeague={currentLeague}
+              isInHallOfFame={isInHallOfFame}
+              isAdmin={isAdmin}
+              ownedStyles={ownedStyles}
+              walletBalance={walletData?.gems_balance || 0}
+              onSelect={handleSelectPreset}
+              onApply={async (char) => {
+                markOwned(char.style);
+                await handleApplyStyle(char.style);
+                toast.success(`${char.label} 적용! 🥊`);
+              }}
+              onPurchaseClick={(char) => setPurchaseModal(char)}
+            />
           )}
           {activeTab === "customize" && (
-            <button
-              onClick={handleSaveCustomization}
-              disabled={isSaving}
-              className="absolute top-3 right-3 rounded-full px-3 py-1.5 text-xs font-bold shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-95 disabled:opacity-50 bg-primary text-primary-foreground"
-            >
-              {isSaving ? "..." : (
-                <span className="flex items-center gap-1"><Save className="h-3 w-3" /> 저장</span>
-              )}
-            </button>
+            <CustomizeTab
+              customization={pendingCustomization}
+              onChange={setPendingCustomization}
+              league={currentLeague}
+              level={currentLevel}
+              isAdmin={isAdmin}
+            />
+          )}
+          {activeTab === "growth" && (
+            <GrowthTab league={currentLeague} level={currentLevel} />
+          )}
+          {activeTab === "effects" && (
+            <EffectsTab league={currentLeague} level={currentLevel} />
           )}
         </div>
-      </div>
+      </AppPage>
 
-      {/* Tabs */}
-      <div className="px-4 mt-4">
-        <div className="flex rounded-2xl border border-border bg-secondary/50 p-1 overflow-x-auto">
-          {TABS.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex items-center justify-center gap-0.5 rounded-xl py-2 text-[10px] font-bold transition-all whitespace-nowrap min-w-0 ${
-                activeTab === tab.key
-                  ? "bg-card text-foreground shadow-elev-1"
-                  : "text-muted-foreground"
-              }`}
-            >
-              <span className="text-[10px]">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      <div className="px-4 mt-4">
-        {activeTab === "my" && (
-          <MyCharacterTab
-            currentStyle={currentStyle}
-            league={currentLeague}
-            level={currentLevel}
-            navigate={navigate}
-            currentMilestone={currentMilestone}
-            nextMilestone={nextMilestone}
-            currentCustomization={currentCustomization}
-          />
-        )}
-        {activeTab === "preset" && (
-          <PresetTab
-            filteredCharacters={filteredCharacters}
-            selectedStyle={selectedStyle}
-            currentStyle={currentStyle}
-            activeFilter={activeFilter}
-            setActiveFilter={setActiveFilter}
-            currentLeague={currentLeague}
-            isInHallOfFame={isInHallOfFame}
-            isAdmin={isAdmin}
-            ownedStyles={ownedStyles}
-            walletBalance={walletData?.gems_balance || 0}
-            onSelect={handleSelectPreset}
-            onApply={async (char) => { markOwned(char.style); await handleApplyStyle(char.style); toast.success(`${char.label} 적용! 🥊`); }}
-            onPurchaseClick={(char) => setPurchaseModal(char)}
-          />
-        )}
-        {activeTab === "customize" && (
-          <CustomizeTab
-            customization={pendingCustomization}
-            onChange={setPendingCustomization}
-            league={currentLeague}
-            level={currentLevel}
-            isAdmin={isAdmin}
-          />
-        )}
-        {activeTab === "growth" && <GrowthTab league={currentLeague} level={currentLevel} />}
-        {activeTab === "effects" && <EffectsTab league={currentLeague} level={currentLevel} />}
-      </div>
-    </div>
-    {purchaseModal && (
-      <PurchaseConfirmModal
-        char={purchaseModal}
-        walletBalance={walletData?.gems_balance || 0}
-        isAdmin={isAdmin}
-        isPurchasing={isProcessingPurchase}
-        onConfirm={handleConfirmPurchase}
-        onCancel={() => setPurchaseModal(null)}
-      />
-    )}
+      {purchaseModal && (
+        <PurchaseConfirmModal
+          char={purchaseModal}
+          walletBalance={walletData?.gems_balance || 0}
+          isAdmin={isAdmin}
+          isPurchasing={isProcessingPurchase}
+          onConfirm={handleConfirmPurchase}
+          onCancel={() => setPurchaseModal(null)}
+        />
+      )}
     </>
   );
 };
@@ -439,42 +505,65 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
   return (
     <div className="space-y-4 animate-slide-up">
       {!hasCharacter && (
-        <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-6 text-center">
+        <div className="rounded-card border border-dashed border-primary/40 bg-primary/5 p-6 text-center">
           <span className="text-4xl">🥊</span>
-          <p className="mt-2 text-sm font-bold text-foreground">아직 캐릭터를 선택하지 않았어요</p>
-          <p className="text-xs text-muted-foreground mt-1">"프리셋 선택" 탭에서 마음에 드는 복서를 골라보세요!</p>
+          <p className="mt-2 text-body-sm font-bold text-foreground">
+            아직 캐릭터를 선택하지 않았어요
+          </p>
+          <p className="text-caption text-muted-foreground mt-1">
+            "프리셋" 탭에서 마음에 드는 복서를 골라보세요.
+          </p>
         </div>
       )}
 
+      {/* 3 stat cards — number-font pinned via StatCard */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-3">
-          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${LEAGUE_COLORS[league]}`}>
-            {LEAGUE_LABELS[league]}
-          </span>
-          <span className="mt-1 text-lg font-bold text-foreground">Lv.{level}</span>
-          <span className="text-[10px] text-muted-foreground">현재 리그</span>
-        </div>
-        <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-3">
-          <span className="text-lg">🎨</span>
-          <span className="mt-1 text-lg font-bold text-foreground">{customCount}</span>
-          <span className="text-[10px] text-muted-foreground">꾸미기</span>
-        </div>
-        <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-3">
-          <span className="text-lg">{currentMilestone?.icon || "🥊"}</span>
-          <span className="mt-1 text-xs font-bold text-foreground truncate w-full text-center">{currentMilestone?.label || "입문"}</span>
-          <span className="text-[10px] text-muted-foreground">현재 등급</span>
-        </div>
+        <StatCard
+          label="현재 리그"
+          value={`${LEAGUE_LABELS[league]} · Lv.${level}`}
+          accent="accent"
+          icon={<Sparkles className="h-5 w-5" />}
+        />
+        <StatCard
+          label="꾸미기"
+          value={`${customCount}개`}
+          accent="reward"
+          icon={<Gem className="h-5 w-5" />}
+        />
+        <StatCard
+          label="현재 등급"
+          value={currentMilestone?.label || "입문"}
+          accent="primary"
+          icon={
+            currentMilestone?.icon ? (
+              <span className="text-lg">{currentMilestone.icon}</span>
+            ) : (
+              <Crown className="h-5 w-5" />
+            )
+          }
+        />
       </div>
 
+      {/* Next unlock */}
       {nextMilestone && (
-        <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 to-reward/5 p-4">
+        <div className="rounded-card border border-primary/25 bg-gradient-to-r from-primary/5 to-reward/5 p-4">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{nextMilestone.icon}</span>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-foreground">다음 해금: {nextMilestone.label}</p>
-              <p className="text-xs text-muted-foreground">{nextMilestone.description}</p>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-xl">
+              {nextMilestone.icon}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-body-sm font-bold text-foreground">
+                다음 해금: {nextMilestone.label}
+              </p>
+              <p className="text-caption text-muted-foreground">
+                {nextMilestone.description}
+              </p>
               <p className="text-[10px] text-primary mt-0.5">
-                {LEAGUE_LABELS[nextMilestone.league]} 리그 Lv.{nextMilestone.levelRange[0]} 도달 시
+                {LEAGUE_LABELS[nextMilestone.league]} 리그 Lv.
+                <span className="number-font">
+                  {nextMilestone.levelRange[0]}
+                </span>{" "}
+                도달 시
               </p>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -482,26 +571,41 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
         </div>
       )}
 
+      {/* Navigation cards — reward-tinted icon tiles per spec */}
       <div className="space-y-2">
-        <button onClick={() => navigate("/avatar")} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4 active:scale-[0.98] transition-all">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-reward/20">
-            <Gem className="h-5 w-5 text-reward" />
+        <button
+          onClick={() => navigate("/avatar")}
+          className="elevated-card flex w-full items-center gap-3 text-left"
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(246,196,83,0.12)]">
+            <Gem className="h-5 w-5 text-[#F6C453]" />
           </div>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-bold text-foreground">아이템 상점</p>
-            <p className="text-[10px] text-muted-foreground">젬으로 특별 아이템 구매</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-body-sm font-bold text-foreground">
+              아이템 상점
+            </p>
+            <p className="text-caption text-muted-foreground">
+              젬으로 특별 아이템 구매
+            </p>
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         </button>
-        <button onClick={() => navigate("/halloffame")} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4 active:scale-[0.98] transition-all">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20">
-            <Crown className="h-5 w-5 text-amber-500" />
+        <button
+          onClick={() => navigate("/halloffame")}
+          className="elevated-card flex w-full items-center gap-3 text-left"
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(246,196,83,0.12)]">
+            <Crown className="h-5 w-5 text-[#F6C453]" />
           </div>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-bold text-foreground">명예의 전당</p>
-            <p className="text-[10px] text-muted-foreground">내 캐릭터가 전시됩니다</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-body-sm font-bold text-foreground">
+              명예의 전당
+            </p>
+            <p className="text-caption text-muted-foreground">
+              내 캐릭터가 전시됩니다
+            </p>
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         </button>
       </div>
     </div>
