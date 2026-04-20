@@ -40,6 +40,14 @@ export function useOwnedSet() {
   }, [data]);
 }
 
+/**
+ * Server-side RPC can return these logical failures in the `error` field:
+ *   • not_authenticated    — no session (should be filtered client-side)
+ *   • insufficient_gems    — wallet shortfall (carries `current`)
+ *   • level_locked         — user level below requiredLevel
+ *                             (carries `required_level`, `current_level`)
+ * Anything else surfaces as a generic "구매 실패" fallback.
+ */
 export function usePurchaseCustomization() {
   const qc = useQueryClient();
   return useMutation({
@@ -50,9 +58,23 @@ export function usePurchaseCustomization() {
         p_price: price,
       });
       if (error) throw error;
-      const result = data as any;
+      const result = data as {
+        success: boolean;
+        error?: string;
+        required_level?: number;
+        current_level?: number;
+        current?: number;
+        remaining_gems?: number;
+        already_owned?: boolean;
+      };
       if (!result?.success) {
         if (result?.error === "insufficient_gems") throw new Error("젬이 부족합니다 💎");
+        if (result?.error === "level_locked") {
+          throw new Error(
+            `Lv.${result.required_level} 달성 시 해금됩니다 🔒 (현재 Lv.${result.current_level ?? 0})`,
+          );
+        }
+        if (result?.error === "not_authenticated") throw new Error("로그인이 필요합니다");
         throw new Error(result?.error || "구매 실패");
       }
       return result;
