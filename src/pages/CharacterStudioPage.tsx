@@ -274,6 +274,29 @@ const CharacterStudioPage = () => {
 
   const handleSaveCustomization = async () => {
     if (!user?.id) return;
+
+    // Client-side pre-check matches the server RPC/trigger — catches bad
+    // state before the round trip so the user gets an immediate toast.
+    if (!isAdmin) {
+      const pendingUserLevel = computeUserLevel({
+        current_rank: currentLeague,
+        current_level: currentLevel,
+        bosses_cleared: progress?.bosses_cleared || 0,
+        is_in_hall_of_fame: isInHallOfFame,
+      });
+      for (const [category, itemKey] of Object.entries(pendingCustomization)) {
+        if (!itemKey || itemKey === "none") continue;
+        const status = getUnlockStatus(pendingUserLevel, {
+          category: category as UnlockCategory,
+          itemKey: String(itemKey),
+        });
+        if (status.locked && status.requiredLevel !== null) {
+          toast.error(`레벨 ${status.requiredLevel} 달성 시 해금됩니다`);
+          return;
+        }
+      }
+    }
+
     try {
       await saveCustomization.mutateAsync({
         style: selectedStyle,
