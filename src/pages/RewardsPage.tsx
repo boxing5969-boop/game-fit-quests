@@ -174,7 +174,7 @@ const RewardsPage = () => {
                       ? "마스터 승급 조건"
                       : `${nextRankLabel}까지`
                   }
-                  variant={nearPromotion ? "reward" : "blue"}
+                  variant={nearPromotion ? "reward" : "primary"}
                   showNumbers
                 />
                 <p

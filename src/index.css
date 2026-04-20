@@ -69,9 +69,12 @@
     --status-pending: 38 92% 50%;      /* warning orange */
     --status-complete: 42 90% 64%;     /* = reward gold */
 
-    /* XP — ranking/growth is Accent (blue) per new spec */
-    --xp-bar: 215 100% 59%;
-    --xp-bar-bg: 218 24% 22%;
+    /* XP — spec: fill gradient #D93620 → #FF6A3D (primary family).
+     * Solid fallback token stays on primary hue so `bg-xp-bar`
+     * consumers (legacy single-color progress bars) render in the
+     * right tier without needing a gradient property. */
+    --xp-bar: 8 75% 48%;            /* = primary */
+    --xp-bar-bg: 218 24% 22%;       /* dark track #2A3344 */
 
     /* Surface elevation (darker than card = depressed, brighter = elevated) */
     --surface-1: 220 36% 10%;          /* #101622 bg-soft */
@@ -99,6 +102,12 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 218 24% 22%;
     --sidebar-ring: 8 75% 48%;
+
+    /* Disabled button surface (context-aware: overridden inside
+     * .light-surface below). Spec: dark #2A3344/#697386, light
+     * #E9EDF3/#8C95A3. */
+    --btn-disabled-bg: 218 24% 22%;     /* #2A3344 */
+    --btn-disabled-fg: 221 13% 47%;     /* #697386 */
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -127,10 +136,15 @@
     --muted-foreground: 221 10% 46%;         /* #687080 */
     --border: 218 17% 91%;                   /* #E1E5EC */
     --input: 218 17% 91%;
+    --xp-bar-bg: 218 17% 91%;                /* track = spec light #E1E5EC */
 
     --shadow-elev-1: 0px 6px 18px rgba(17, 24, 39, 0.06);
     --shadow-elev-2: 0px 10px 24px rgba(17, 24, 39, 0.08);
     --shadow-elev-3: 0px 20px 40px rgba(17, 24, 39, 0.12);
+
+    /* Spec light disabled button surface: #E9EDF3 / #8C95A3 */
+    --btn-disabled-bg: 218 18% 93%;
+    --btn-disabled-fg: 221 11% 60%;
 
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -191,28 +205,40 @@
   }
 
   /* ── Buttons ── */
+  /* Spec — Primary: #D93620, pressed #A92B1A (hsl 8 73% 38%), 56px.
+   * Secondary: #1B2433 (surface-2) + border #2A3344, 52px.
+   * Reward: #F6C453, dark text, gold glow.
+   * Disabled: spec hex via --btn-disabled-bg / --btn-disabled-fg;
+   * .light-surface overrides swap them to the light palette values. */
   .primary-button {
     @apply inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-button text-primary-foreground shadow-glow-soft transition-all;
-    @apply hover:shadow-glow-primary active:scale-[0.98];
-    @apply disabled:pointer-events-none disabled:opacity-50;
+    @apply hover:shadow-glow-primary active:scale-[0.98] active:bg-[hsl(8_73%_38%)];
+    @apply disabled:pointer-events-none disabled:bg-[hsl(var(--btn-disabled-bg))] disabled:text-[hsl(var(--btn-disabled-fg))] disabled:shadow-none;
   }
   .secondary-button {
-    @apply inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-6 text-button text-foreground shadow-elev-1 transition-all;
+    @apply inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-border bg-[hsl(var(--surface-2))] px-6 text-button text-foreground shadow-elev-1 transition-all;
     @apply hover:shadow-elev-2 active:scale-[0.98];
-    @apply disabled:pointer-events-none disabled:opacity-50;
+    @apply disabled:pointer-events-none disabled:bg-[hsl(var(--btn-disabled-bg))] disabled:text-[hsl(var(--btn-disabled-fg))] disabled:border-transparent disabled:shadow-none;
   }
   .reward-button {
     @apply inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-reward px-6 text-button text-reward-foreground shadow-glow-reward transition-all;
     @apply active:scale-[0.98];
-    @apply disabled:pointer-events-none disabled:opacity-50;
+    @apply disabled:pointer-events-none disabled:bg-[hsl(var(--btn-disabled-bg))] disabled:text-[hsl(var(--btn-disabled-fg))] disabled:shadow-none;
   }
 
   /* ── Progress & pills ── */
+  /* Spec: fill gradient #D93620 → #FF6A3D, track #2A3344 (dark) or
+   * #E1E5EC (light, via .light-surface --border override). */
   .xp-bar {
     @apply relative h-2 w-full overflow-hidden rounded-pill bg-[hsl(var(--xp-bar-bg))];
   }
   .xp-bar > .xp-bar-fill {
-    @apply h-full rounded-pill bg-[hsl(var(--xp-bar))] transition-all duration-500;
+    @apply h-full rounded-pill transition-all duration-500;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)) 0%,
+      hsl(13 100% 62%) 100%
+    );
   }
   .badge-pill {
     @apply inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-badge;

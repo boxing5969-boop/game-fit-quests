@@ -80,12 +80,12 @@ export const HeroStatusCard = ({
           </div>
         )}
 
-        {/* XP progress to next level */}
+        {/* XP progress to next level — spec: primary gradient for XP */}
         <div className="mt-5 w-full">
           <XPBar
             current={totalXp}
             max={xpToNext}
-            variant="blue"
+            variant="primary"
             size="md"
             label="다음 승급까지"
             showNumbers

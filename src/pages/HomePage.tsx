@@ -364,7 +364,7 @@ const HomePage = () => {
               current={sessionMet.current}
               max={sessionMet.target}
               label="🎯 세션"
-              variant="blue"
+              variant="primary"
               size="md"
               showNumbers
             />
@@ -372,7 +372,7 @@ const HomePage = () => {
               current={minuteMet.current}
               max={minuteMet.target}
               label="⏱ 훈련 시간 (분)"
-              variant="blue"
+              variant="primary"
               size="md"
               showNumbers
             />
