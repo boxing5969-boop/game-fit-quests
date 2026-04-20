@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { CharacterCustomization } from "@/data/characterCustomizationData";
-import type { PartsSelection } from "@/data/characterPartsData";
 
 export const useCharacterPresets = () => {
   return useQuery({
@@ -219,63 +218,3 @@ export const useSaveCustomization = () => {
   });
 };
 
-export const useSaveParts = () => {
-  const qc = useQueryClient();
-  const { user } = useAuth();
-
-  return useMutation({
-    mutationFn: async ({ parts }: { parts: PartsSelection }) => {
-      if (!user?.id) throw new Error("로그인이 필요합니다");
-
-      const partsJson = { parts } as unknown as Record<string, any>;
-
-      const { data: existing } = await supabase
-        .from("character_presets")
-        .select("id")
-        .eq("created_by", user.id)
-        .eq("is_template", false)
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      let presetId: string;
-
-      if (existing) {
-        const { error } = await supabase
-          .from("character_presets")
-          .update({ parts_json: partsJson as any, updated_at: new Date().toISOString() })
-          .eq("id", existing.id);
-        if (error) throw error;
-        presetId = existing.id;
-      } else {
-        const { data: newPreset, error } = await supabase
-          .from("character_presets")
-          .insert([{
-            name: `${user.id}_parts`,
-            parts_json: partsJson as any,
-            created_by: user.id,
-            is_template: false,
-          }])
-          .select()
-          .single();
-        if (error) throw error;
-        presetId = newPreset.id;
-      }
-
-      const { error: assignError } = await supabase
-        .from("member_character_assignments")
-        .upsert(
-          { user_id: user.id, preset_id: presetId, is_active: true, display_mode: "layered" },
-          { onConflict: "user_id" }
-        );
-      if (assignError) throw assignError;
-
-      return { presetId };
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["character-assignment"] });
-      qc.invalidateQueries({ queryKey: ["character-assignments-all"] });
-      qc.invalidateQueries({ queryKey: ["character-presets"] });
-    },
-  });
-};

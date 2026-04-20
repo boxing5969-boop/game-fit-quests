@@ -458,23 +458,6 @@
   100% { filter: hue-rotate(360deg); }
 }
 
-/* ?? LayeredCharacterRenderer global animations ?? */
-@keyframes char-idle-bob {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-2px); }
-}
-@keyframes char-blink {
-  0%, 88%, 100% { transform: scaleY(1); }
-  93%           { transform: scaleY(0.07); }
-}
-@keyframes char-shadow-pulse {
-  0%, 100% { opacity: 1; transform: scaleX(1); }
-  50%       { opacity: 0.7; transform: scaleX(0.88); }
-}
-.animate-char-idle    { animation: char-idle-bob 2.8s ease-in-out infinite; }
-.animate-char-blink   { animation: char-blink 4.5s ease-in-out infinite; transform-origin: center; }
-.animate-char-shadow  { animation: char-shadow-pulse 2.8s ease-in-out infinite; }
-
 @media (prefers-reduced-motion: reduce) {
   .animate-emote-enter,
   .animate-emote-exit,

@@ -26,22 +26,6 @@ export const useWallet = () => {
   });
 };
 
-export const usePurchaseItem = () => {
-  const qc = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (itemId: string) => {
-      const { data, error } = await supabase.rpc("purchase_avatar_item", { _item_id: itemId });
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["wallet"] });
-      qc.invalidateQueries({ queryKey: ["owned-items"] });
-    },
-  });
-};
-
 export const useGrantGems = () => {
   const qc = useQueryClient();
   

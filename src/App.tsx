@@ -40,7 +40,6 @@ const GuideExercisePurposePage = lazy(() => import("@/pages/guide/GuideExerciseP
 const GuideSafetyPage = lazy(() => import("@/pages/guide/GuideSafetyPage"));
 const GuideFaqPage = lazy(() => import("@/pages/guide/GuideFaqPage"));
 const RankUpPage = lazy(() => import("@/pages/RankUpPage"));
-const AvatarPage = lazy(() => import("@/pages/AvatarPage"));
 const CharacterStudioPage = lazy(() => import("@/pages/CharacterStudioPage"));
 const MasterTrackPage = lazy(() => import("@/pages/MasterTrackPage"));
 const CheckinBoardPage = lazy(() => import("@/pages/CheckinBoardPage"));
@@ -169,7 +168,6 @@ const AppRoutes = () => {
         <Route path="/guide/faq" element={<ProtectedRoute><GuideFaqPage /></ProtectedRoute>} />
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-        <Route path="/avatar" element={<ProtectedRoute><AvatarPage /></ProtectedRoute>} />
         <Route path="/character-studio" element={<ProtectedRoute><CharacterStudioPage /></ProtectedRoute>} />
         <Route path="/master-track" element={<ProtectedRoute><MasterTrackPage /></ProtectedRoute>} />
         <Route path="/coach" element={<ProtectedRoute><ManagerRoute><CoachDashboard /></ManagerRoute></ProtectedRoute>} />

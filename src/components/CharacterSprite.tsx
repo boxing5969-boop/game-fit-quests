@@ -1,9 +1,6 @@
-import React, { useMemo, lazy, Suspense } from "react";
+import React, { useMemo } from "react";
 import { getCharacterImage, getCharacterByHash } from "@/data/characterPresets";
 import BlackLeagueAura from "@/components/BlackLeagueAura";
-import type { PartsSelection } from "@/data/characterPartsData";
-
-const LayeredCharacterRenderer = lazy(() => import("@/components/LayeredCharacterRenderer"));
 import type { CharacterCustomization } from "@/data/characterCustomizationData";
 import {
   EFFECT_EMOJIS,
@@ -29,7 +26,7 @@ import {
 interface CharacterSpriteProps {
   style?: string;
   userId?: string;
-  partsJson?: { parts?: PartsSelection; style?: string; customization?: CharacterCustomization };
+  partsJson?: { style?: string; customization?: CharacterCustomization };
   size?: "xs" | "sm" | "md" | "lg";
   animate?: boolean;
   className?: string;
@@ -109,15 +106,13 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   customization: customizationProp,
   priority = false,
 }) => {
-  const isLayered = !!(partsJson?.parts && Object.keys(partsJson.parts).length > 0);
   const presetStyle = partsJson?.style || style;
   const customization = customizationProp || partsJson?.customization;
   const imgSrc = useMemo(() => {
-    if (isLayered) return null;
     if (presetStyle) return getCharacterImage(presetStyle);
     if (userId) return getCharacterByHash(userId).image;
     return getCharacterImage();
-  }, [presetStyle, userId, isLayered]);
+  }, [presetStyle, userId]);
 
   const isBlack = league === "black";
   const isMaster = isBlack && (level ?? 0) >= 10;
@@ -245,29 +240,19 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         className={`relative z-[10] h-full w-full ${animate ? "animate-emote-idle" : ""}`}
         style={{ willChange: animate ? "transform" : undefined }}
       >
-        {isLayered ? (
-          <Suspense fallback={<div className="h-full w-full animate-pulse rounded-full bg-muted" />}>
-            <LayeredCharacterRenderer
-              parts={partsJson!.parts!}
-              size={SIZE_PX[size]}
-              className="h-full w-full"
-            />
-          </Suspense>
-        ) : (
-          <img
-            src={imgSrc!}
-            alt="캐릭터"
-            className="h-full w-full object-contain drop-shadow-elev-1"
-            style={{ imageRendering: "auto" }}
-            draggable={false}
-            // Lazy by default — `priority` opts the hero (Home/MyPage)
-            // into eager load so the LCP image isn't deprioritized.
-            // Grids and list thumbnails stay lazy even at size="lg".
-            loading={priority ? "eager" : "lazy"}
-            fetchPriority={priority ? "high" : "auto"}
-            decoding="async"
-          />
-        )}
+        <img
+          src={imgSrc!}
+          alt="캐릭터"
+          className="h-full w-full object-contain drop-shadow-elev-1"
+          style={{ imageRendering: "auto" }}
+          draggable={false}
+          // Lazy by default — `priority` opts the hero (Home/MyPage)
+          // into eager load so the LCP image isn't deprioritized.
+          // Grids and list thumbnails stay lazy even at size="lg".
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          decoding="async"
+        />
       </div>
 
       {/* ── 5. 이펙트 이모지 — z-[11] ── */}
