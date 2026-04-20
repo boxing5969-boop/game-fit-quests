@@ -36,10 +36,13 @@ const RANK_LABELS: Record<string, string> = {
   black: "블랙",
 };
 
+// Order drives the visual position of chips. "official" sits first
+// because that's the default landing view — full branch roster sorted
+// by total XP, i.e. "우리 지점 전체 회원" at a glance.
 const RANKING_FILTERS: { value: RankingTabKey; label: string }[] = [
+  { value: "official", label: "전체" },
   { value: "weekly", label: "이번 주" },
   { value: "streak", label: "출석" },
-  { value: "official", label: "XP" },
   { value: "monthly", label: "상승" },
   { value: "boss", label: "보상" },
 ];
@@ -76,7 +79,9 @@ const HallOfFamePage = () => {
   const navigate = useNavigate();
   const { user, progress, role } = useAuth();
   const [topTab, setTopTab] = useState<TopTab>("ranking");
-  const [activeTab, setActiveTab] = useState<RankingTabKey>("weekly");
+  // Default to the "official" (total XP) view so users land on the
+  // full branch roster first instead of the weekly slice.
+  const [activeTab, setActiveTab] = useState<RankingTabKey>("official");
   const setRival = useSetRival();
   const qc = useQueryClient();
   const isAdmin = role === "admin" || role === "super_admin";
