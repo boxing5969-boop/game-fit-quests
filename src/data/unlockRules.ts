@@ -245,8 +245,8 @@ export function resolveDisplayName(
 // (Step 2) which credits 1000 gems exactly once per profile.
 
 export type TutorialStepKey =
-  | "profile_check"
-  | "ranking_visit"
+  | "profile"
+  | "ranking"
   | "effect_shop"
   | "mini_game"
   | "complete";
@@ -264,7 +264,7 @@ export interface TutorialStep {
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
-    key: "profile_check",
+    key: "profile",
     order: 1,
     label: "프로필 확인",
     description: "내 캐릭터와 리그 정보를 확인해보세요.",
@@ -272,7 +272,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     navTarget: "/mypage",
   },
   {
-    key: "ranking_visit",
+    key: "ranking",
     order: 2,
     label: "랭킹 확인",
     description: "우리 지점 회원들의 랭킹을 살펴보세요.",
@@ -308,3 +308,102 @@ export const TUTORIAL_REWARD_GEMS = 1000;
 
 /** Step count excluding the terminal "complete" stage. */
 export const TUTORIAL_TOTAL_STEPS = TUTORIAL_STEPS.length - 1;
+
+// ══ Public utility API (Step 3) ════════════════════════════
+// Thin, pure helpers so every consumer goes through one surface
+// instead of duplicating inline checks. All inputs are plain values
+// so the functions are trivially testable and SSR-safe.
+
+/** Identifier pair used by every status/unlocked/locked helper. */
+export interface UnlockItemRef {
+  category: UnlockCategory;
+  itemKey: string;
+}
+
+/** Result of getUnlockStatus — covers both level-gated and price-only items. */
+export interface UnlockStatus {
+  /** null when item is not under level control (price-only). */
+  requiredLevel: number | null;
+  locked: boolean;
+  /** Korean hint for UI; empty when unlocked or not level-controlled. */
+  message: string;
+}
+
+/** Minimal row shape for isTutorialCompleted — accepts any profile-like. */
+export interface TutorialUserLike {
+  tutorial_completed?: boolean | null;
+}
+
+/** Returns the 5-step tutorial definition (frozen order). */
+export function getTutorialSteps(): TutorialStep[] {
+  return TUTORIAL_STEPS;
+}
+
+/** True when the given profile row has the server flag set. */
+export function isTutorialCompleted(
+  user: TutorialUserLike | null | undefined,
+): boolean {
+  return !!user?.tutorial_completed;
+}
+
+/** Combined lock state for a single item — level + message in one call. */
+export function getUnlockStatus(
+  userLevel: number,
+  item: UnlockItemRef,
+): UnlockStatus {
+  const rule = UNLOCK_INDEX[item.category].get(item.itemKey);
+  if (!rule) {
+    return { requiredLevel: null, locked: false, message: "" };
+  }
+  const locked = userLevel < rule.requiredLevel;
+  return {
+    requiredLevel: rule.requiredLevel,
+    locked,
+    message: locked ? `Lv.${rule.requiredLevel} 해금` : "",
+  };
+}
+
+/** Rules in `category` whose requiredLevel is satisfied by `userLevel`. */
+export function getUnlockedItems(
+  category: UnlockCategory,
+  userLevel: number,
+): UnlockRule[] {
+  return Array.from(UNLOCK_INDEX[category].values()).filter(
+    (r) => userLevel >= r.requiredLevel,
+  );
+}
+
+/** Rules in `category` still beyond `userLevel`. */
+export function getLockedItems(
+  category: UnlockCategory,
+  userLevel: number,
+): UnlockRule[] {
+  return Array.from(UNLOCK_INDEX[category].values()).filter(
+    (r) => userLevel < r.requiredLevel,
+  );
+}
+
+/**
+ * Rules unlocked by a level bump (prev, current]. Alias for
+ * getNewlyUnlockedBetween — the Step 3 spec asks for this name.
+ */
+export function getNewUnlocks(
+  prevLevel: number,
+  currentLevel: number,
+): UnlockRule[] {
+  return getNewlyUnlockedBetween(prevLevel, currentLevel);
+}
+
+/**
+ * Gate used by server-mirroring purchase flows. Price-only items
+ * (no level rule) return true regardless; the wallet balance check
+ * happens downstream.
+ */
+export function canPurchaseItem(
+  userLevel: number,
+  item: UnlockItemRef,
+): boolean {
+  const rule = UNLOCK_INDEX[item.category].get(item.itemKey);
+  if (!rule) return true;
+  return userLevel >= rule.requiredLevel;
+}
