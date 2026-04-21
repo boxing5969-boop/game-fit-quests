@@ -139,7 +139,10 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   const auraKey = customization?.aura;
   const isMasterAura = !!auraKey && MASTER_AURA_KEYS.includes(auraKey);
   const auraTier = auraKey && auraKey !== "none" ? AURA_CONFIG[auraKey] : null;
-  const hasAura = !!auraTier && auraTier.layers.length > 0 && size !== "xs" && !isMasterAura;
+  // 마스터 오라도 layers 를 정상 렌더. 기존 `!isMasterAura` exclusion 이
+  // halo_rainbow_master 를 완전히 비가시화시키던 버그를 제거. 별개 슬롯인
+  // customization.halo 는 아래 blackLeague halo 섹션에서 따로 렌더됨.
+  const hasAura = !!auraTier && auraTier.layers.length > 0 && size !== "xs";
 
   // 후광: 마스터만 사용 가능, 선택된 후광 또는 마스터 기본(무지개)
   const haloKey = customization?.halo;
@@ -263,7 +266,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
       )}
 
       {/* ── 6. 마스터 오라 sparkle — z-[12] ── */}
-      {isMasterAura && auraTier?.sparkles && size === "lg" && (
+      {isMasterAura && auraTier?.sparkles && (size === "md" || size === "lg") && (
         <div className="absolute inset-0 z-[12] pointer-events-none">
           <div className="absolute" style={{ top: "5%", left: "50%", transform: "translateX(-50%)" }}>
             <svg width="8" height="8" viewBox="0 0 10 10">
