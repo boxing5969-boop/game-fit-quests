@@ -213,6 +213,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           />
           {isDetail && (
             <>
+              {/* 기존 4개 — 링 가장자리 4방향 */}
               <div className="absolute top-[8%] right-[15%] animate-[aura-sparkle_3.5s_ease-in-out_infinite]">
                 <svg width="10" height="10" viewBox="0 0 10 10">
                   <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z" fill={haloConfig.sparkleColor || "white"} opacity="0.7" />
@@ -231,6 +232,27 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
               <div className="absolute top-[35%] left-[5%] animate-[aura-sparkle-delayed_5s_ease-in-out_infinite]">
                 <svg width="7" height="7" viewBox="0 0 10 10">
                   <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z" fill="white" opacity="0.5" />
+                </svg>
+              </div>
+              {/* 추가 4개 — 빈 섹터 채우기 */}
+              <div className="absolute top-[3%] left-[42%] animate-[aura-sparkle_2.5s_ease-in-out_infinite]">
+                <svg width="8" height="8" viewBox="0 0 10 10">
+                  <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z" fill={haloConfig.sparkleColor || "white"} opacity="0.72" />
+                </svg>
+              </div>
+              <div className="absolute bottom-[4%] right-[32%] animate-[aura-sparkle-delayed_3s_ease-in-out_infinite]">
+                <svg width="9" height="9" viewBox="0 0 10 10">
+                  <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z" fill={haloConfig.sparkleColor || "white"} opacity="0.68" />
+                </svg>
+              </div>
+              <div className="absolute top-[70%] left-[18%] animate-[aura-sparkle_4s_ease-in-out_infinite]">
+                <svg width="7" height="7" viewBox="0 0 10 10">
+                  <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z" fill={haloConfig.sparkleColor || "white"} opacity="0.55" />
+                </svg>
+              </div>
+              <div className="absolute top-[22%] right-[38%] animate-[aura-sparkle-delayed_4.5s_ease-in-out_infinite]">
+                <svg width="6" height="6" viewBox="0 0 10 10">
+                  <path d="M5 0L5.8 4.2L10 5L5.8 5.8L5 10L4.2 5.8L0 5L4.2 4.2Z" fill="white" opacity="0.55" />
                 </svg>
               </div>
             </>

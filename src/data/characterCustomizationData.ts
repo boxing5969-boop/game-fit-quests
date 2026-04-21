@@ -189,8 +189,12 @@ export const HALO_OPTIONS: CustomizationOption[] = [
   { key: "none",           label: "없음",         price: 0,      league: "black", rarity: "epic",      description: "후광 없음", blackOnly: true },
   { key: "halo_rainbow",   label: "무지개 후광",  price: 0,      league: "black", rarity: "epic",      description: "무지개빛이 회전하는 후광", blackOnly: true },
   { key: "halo_saiyan",    label: "초사이어인",   price: 30000,  league: "black", rarity: "epic",      description: "폭발하는 황금빛 기운", blackOnly: true },
+  { key: "halo_frost",     label: "빙결 후광",    price: 32000,  league: "black", rarity: "epic",      description: "차가운 청백 빙정의 고리", blackOnly: true },
   { key: "halo_eclipse",   label: "이클립스",     price: 35000,  league: "black", rarity: "epic",      description: "일식처럼 타오르는 코로나", blackOnly: true },
+  { key: "halo_phoenix",   label: "불사조 후광",  price: 40000,  league: "black", rarity: "epic",      description: "붉은 화염 날개가 휘몰아치는 후광", blackOnly: true },
+  { key: "halo_cosmic",    label: "코스믹 후광",  price: 45000,  league: "black", rarity: "epic",      description: "은하 성운이 회전하는 후광", blackOnly: true },
   { key: "halo_emperor",   label: "황제의 위엄",  price: 50000,  league: "black", rarity: "epic",      description: "보라+금빛 황제의 후광", blackOnly: true },
+  { key: "halo_champion",  label: "챔피언 후광",  price: 55000,  league: "black", rarity: "epic",      description: "황금+백광 챔피언의 후광", blackOnly: true },
 ];
 
 // ===== Categories =====
@@ -1050,6 +1054,96 @@ export const HALO_CONFIGS: Record<string, HaloConfig> = {
     sparkleColor: "#fbbf24",
   },
 
+  // ─── 빙결 (청+백 얼음 고리) ───
+  halo_frost: {
+    rings: [
+      {
+        gradient: "conic-gradient(from 0deg, #e0f2fe, #38bdf8, #ffffff, #7dd3fc, #e0f2fe)",
+        mask: "radial-gradient(circle, transparent 40%, black 46%, black 70%, transparent 76%)",
+        animation: "animate-[aura-spin-slow_6s_linear_infinite]",
+        inset: "-10px",
+        opacity: 0.7,
+      },
+      {
+        gradient: "conic-gradient(from 180deg, #ffffff, #7dd3fc, #ffffff, #38bdf8)",
+        mask: "radial-gradient(circle, transparent 52%, black 57%, black 68%, transparent 74%)",
+        animation: "animate-[aura-spin-reverse_9s_linear_infinite]",
+        inset: "-2px",
+        opacity: 0.5,
+      },
+      {
+        gradient: "radial-gradient(circle, rgba(224,242,254,0.9), rgba(56,189,248,0.3), transparent 70%)",
+        mask: "radial-gradient(circle, transparent 58%, black 62%, black 70%, transparent 76%)",
+        animation: "animate-[aura-pulse-slow_3s_ease-in-out_infinite]",
+        inset: "2px",
+        opacity: 0.55,
+      },
+    ],
+    glowColor: "rgba(56,189,248,0.45)",
+    glowOpacity: 0.35,
+    sparkleColor: "#ffffff",
+  },
+
+  // ─── 불사조 (붉은 화염 날개) ───
+  halo_phoenix: {
+    rings: [
+      {
+        gradient: "conic-gradient(from 0deg, #dc2626, #f97316, #fbbf24, #fef3c7, #f97316, #dc2626)",
+        mask: "radial-gradient(circle, transparent 38%, black 44%, black 72%, transparent 78%)",
+        animation: "animate-[aura-spin-slow_4s_linear_infinite]",
+        inset: "-12px",
+        opacity: 0.75,
+      },
+      {
+        gradient: "conic-gradient(from 90deg, #fbbf24, #dc2626, #f97316, #dc2626, #fbbf24)",
+        mask: "radial-gradient(circle, transparent 50%, black 55%, black 68%, transparent 74%)",
+        animation: "animate-[aura-flicker_0.4s_ease-in-out_infinite]",
+        inset: "-3px",
+        opacity: 0.55,
+      },
+      {
+        gradient: "radial-gradient(circle, rgba(220,38,38,0.9), rgba(249,115,22,0.4), transparent 70%)",
+        mask: "radial-gradient(circle, transparent 56%, black 60%, black 72%, transparent 78%)",
+        animation: "animate-[aura-spin-reverse_11s_linear_infinite]",
+        inset: "0px",
+        opacity: 0.6,
+      },
+    ],
+    glowColor: "rgba(220,38,38,0.55)",
+    glowOpacity: 0.4,
+    sparkleColor: "#fef3c7",
+  },
+
+  // ─── 코스믹 (은하 성운) ───
+  halo_cosmic: {
+    rings: [
+      {
+        gradient: "conic-gradient(from 0deg, #312e81, #7c3aed, #2563eb, #a855f7, #312e81)",
+        mask: "radial-gradient(circle, transparent 40%, black 46%, black 72%, transparent 78%)",
+        animation: "animate-[aura-spin-slow_10s_linear_infinite]",
+        inset: "-11px",
+        opacity: 0.7,
+      },
+      {
+        gradient: "conic-gradient(from 150deg, #a855f7, #2563eb, #ec4899, #7c3aed, #a855f7)",
+        mask: "radial-gradient(circle, transparent 54%, black 58%, black 68%, transparent 74%)",
+        animation: "animate-[aura-spin-reverse_14s_linear_infinite]",
+        inset: "-2px",
+        opacity: 0.5,
+      },
+      {
+        gradient: "radial-gradient(circle, rgba(168,85,247,0.85), rgba(37,99,235,0.35), transparent 70%)",
+        mask: "radial-gradient(circle, transparent 58%, black 62%, black 72%, transparent 78%)",
+        animation: "animate-[aura-pulse-slow_4s_ease-in-out_infinite]",
+        inset: "2px",
+        opacity: 0.55,
+      },
+    ],
+    glowColor: "rgba(124,58,237,0.5)",
+    glowOpacity: 0.4,
+    sparkleColor: "#e9d5ff",
+  },
+
   // ─── 황제의 위엄 (보라+금빛) ───
   halo_emperor: {
     rings: [
@@ -1078,5 +1172,35 @@ export const HALO_CONFIGS: Record<string, HaloConfig> = {
     glowColor: "rgba(124,58,237,0.45)",
     glowOpacity: 0.35,
     sparkleColor: "#fbbf24",
+  },
+
+  // ─── 챔피언 (금+백광 승리의 후광) ───
+  halo_champion: {
+    rings: [
+      {
+        gradient: "conic-gradient(from 0deg, #fef3c7, #fbbf24, #ffffff, #f59e0b, #fef3c7)",
+        mask: "radial-gradient(circle, transparent 38%, black 44%, black 72%, transparent 78%)",
+        animation: "animate-[aura-spin-slow_5s_linear_infinite]",
+        inset: "-12px",
+        opacity: 0.78,
+      },
+      {
+        gradient: "conic-gradient(from 60deg, #ffffff, #fbbf24, #fef3c7, #fbbf24, #ffffff)",
+        mask: "radial-gradient(circle, transparent 52%, black 57%, black 68%, transparent 74%)",
+        animation: "animate-[aura-spin-reverse_8s_linear_infinite]",
+        inset: "-3px",
+        opacity: 0.62,
+      },
+      {
+        gradient: "radial-gradient(circle, rgba(255,255,255,0.95), rgba(251,191,36,0.4), transparent 70%)",
+        mask: "radial-gradient(circle, transparent 58%, black 62%, black 72%, transparent 78%)",
+        animation: "animate-[aura-pulse-fast_2s_ease-in-out_infinite]",
+        inset: "0px",
+        opacity: 0.6,
+      },
+    ],
+    glowColor: "rgba(251,191,36,0.55)",
+    glowOpacity: 0.45,
+    sparkleColor: "#ffffff",
   },
 };
