@@ -179,7 +179,7 @@ const AURA_OPTIONS: CustomizationOption[] = [
   { key: "halo_black_gold",  label: "황금 헤일로",   price: 15000, league: "black", rarity: "epic",      description: "블랙 골드 헤일로", blackOnly: true },
   { key: "aura_void",        label: "보이드 오라",   price: 18000, league: "black", rarity: "epic",      description: "공허의 오라", blackOnly: true },
   // 👑 Legend
-  { key: "halo_rainbow_master", label: "마스터 헤일로",  price: 240000, league: "legend", rarity: "legendary", description: "무지개 마스터 오라", requirement: "hall_of_fame" },
+  { key: "halo_rainbow_master", label: "레인보우 마스터 오라",  price: 240000, league: "legend", rarity: "legendary", description: "무지개 파장이 캐릭터를 감싸는 최상위 오라 (오라 카테고리)", requirement: "hall_of_fame" },
   { key: "divine",              label: "신성 오라",      price: 280000, league: "legend", rarity: "legendary", description: "신성한 빛의 오라", requirement: "hall_of_fame" },
   { key: "aura_celestial",      label: "천체 오라",      price: 320000, league: "legend", rarity: "legendary", description: "별과 우주의 오라", requirement: "hall_of_fame" },
 ];

@@ -234,7 +234,7 @@ const AURAS = [
   { key: "aura_phantom", label: "팬텀 오라", price: 12000, league: "black", rarity: "epic", desc: "유령빛 오라", blackOnly: true },
   { key: "halo_black_gold", label: "황금 헤일로", price: 15000, league: "black", rarity: "epic", desc: "블랙 골드 헤일로", blackOnly: true },
   { key: "aura_void", label: "보이드 오라", price: 18000, league: "black", rarity: "epic", desc: "공허의 오라", blackOnly: true },
-  { key: "halo_rainbow_master", label: "마스터 헤일로", price: 240000, league: "legend", rarity: "legendary", desc: "무지개 마스터 오라", hof: true },
+  { key: "halo_rainbow_master", label: "레인보우 마스터 오라", price: 240000, league: "legend", rarity: "legendary", desc: "무지개 파장이 캐릭터를 감싸는 최상위 오라 (오라 카테고리)", hof: true },
   { key: "divine", label: "신성 오라", price: 280000, league: "legend", rarity: "legendary", desc: "신성한 빛의 오라", hof: true },
   { key: "aura_celestial", label: "천체 오라", price: 320000, league: "legend", rarity: "legendary", desc: "별과 우주의 오라", hof: true },
 ];
