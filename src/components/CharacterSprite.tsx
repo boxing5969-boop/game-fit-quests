@@ -144,10 +144,12 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   // customization.halo 는 아래 blackLeague halo 섹션에서 따로 렌더됨.
   const hasAura = !!auraTier && auraTier.layers.length > 0 && size !== "xs";
 
-  // 후광: 마스터만 사용 가능, 선택된 후광 또는 마스터 기본(무지개)
+  // 후광: 마스터만 사용 가능. 선택한 경우에만 렌더 — 자동 rainbow
+  // fallback 제거. customization.halo 가 undefined/"none" 이면 아무것도
+  // 안 그려짐 (BlackLeagueAura 도 마스터에는 차단).
   const haloKey = customization?.halo;
-  const haloConfig = isMaster
-    ? (haloKey && haloKey !== "none" ? HALO_CONFIGS[haloKey] : HALO_CONFIGS["halo_rainbow"])
+  const haloConfig = isMaster && haloKey && haloKey !== "none"
+    ? HALO_CONFIGS[haloKey]
     : null;
   const isDetail = size === "md" || size === "lg";
 
@@ -174,12 +176,15 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         ));
       })()}
 
-      {/* ── 2. 후광 — z-[2] ── */}
-      {isBlack && !haloConfig && (
+      {/* ── 2. 후광 — z-[2] ──
+          비-마스터 블랙리그에만 자동 BlackLeagueAura 를 띄워서 "곧 마스터"
+          시각 힌트를 준다. 마스터는 본인이 customization.halo 에서 고른
+          것만 렌더 — 선택 없음이면 아예 후광 없음. */}
+      {isBlack && !isMaster && !haloConfig && (
         <div className="absolute inset-0 z-[2] pointer-events-none">
           <BlackLeagueAura
             mode={effectiveAuraMode}
-            level={isMaster ? "master" : "halo"}
+            level="halo"
           />
         </div>
       )}

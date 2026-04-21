@@ -985,15 +985,20 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
         </p>
         <div className="grid grid-cols-5 gap-2">
           {HALO_OPTIONS.map(opt => {
-            const isSelected = customization.halo === opt.key || (!customization.halo && opt.key === "halo_rainbow" && isMaster);
+            // undefined 는 "선택 안함" 의 기본 — "none" 옵션을 활성화 표시.
+            // 마스터여도 자동 rainbow 선택 처리 없음 (유저가 명시 선택해야 함).
+            const currentHalo = customization.halo ?? "none";
+            const isSelected = currentHalo === opt.key;
             return (
               <button
                 key={opt.key}
                 disabled={!isMaster}
                 onClick={() => {
                   if (!isMaster) return;
-                  const newVal = customization.halo === opt.key ? undefined : opt.key;
-                  onChange({ ...customization, halo: newVal });
+                  // 명시 선택 = 항상 해당 key 로 설정. "none" 을 고르면
+                  // halo 렌더가 사라진다 (CharacterSprite 가 "none" 에
+                  // 대해 haloConfig=null 처리).
+                  onChange({ ...customization, halo: opt.key });
                 }}
                 className={`relative flex flex-col items-center gap-1.5 rounded-xl border p-2 transition-all active:scale-95 ${
                   !isMaster
