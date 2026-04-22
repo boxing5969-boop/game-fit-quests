@@ -170,7 +170,7 @@ const OnboardingCTA = ({ onStart }: { onStart: () => void }) => (
         153 DIET · 21 DAYS
       </p>
       <h2 className="mt-1 text-display-sm text-foreground leading-tight">
-        살이 덜 찌는 몸습관 만들기
+        체지방을 제거하는 몸 습관 만들기
       </h2>
       <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
         체중 숫자가 아니라 식사 리듬·출석·회복 습관에 집중합니다. 복싱짐 출석과 코치 피드백이 함께 갑니다.

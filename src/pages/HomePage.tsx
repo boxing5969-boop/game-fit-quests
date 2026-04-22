@@ -412,7 +412,7 @@ const HomePage = () => {
                     153 DIET · 21 DAYS
                   </p>
                   <p className="mt-0.5 truncate text-[14px] font-bold text-foreground">
-                    살이 덜 찌는 몸습관 만들기
+                    체지방을 제거하는 몸 습관 만들기
                   </p>
                   <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
                     매일 5 습관 체크 · 복싱짐 출석 연동 · 코치 피드백

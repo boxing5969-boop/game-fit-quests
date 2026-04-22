@@ -364,8 +364,8 @@ const StepIntro = ({ onNext }: { onNext: () => void }) => (
   <DietOnboardingStep
     stepIndex={0}
     totalSteps={TOTAL_STEPS}
-    title="살이 덜 찌는 몸습관, 21일"
-    subtitle="'살을 빼는 21일'이 아니라 '덜 찌는 몸'을 만드는 프로그램입니다."
+    title="체지방을 제거하는 몸 습관, 21일"
+    subtitle="숫자로 살을 재는 21일이 아니라, 체지방이 잘 붙지 않는 몸을 만드는 습관 프로그램입니다."
     onNext={onNext}
   >
     <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-3">
