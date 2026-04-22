@@ -727,10 +727,13 @@ function InventorySection({
   isEquipping: boolean;
 }) {
   // 카테고리별로 보유 아이템 key 를 모은다.
+  // DB 에 미리 알려진 것 외의 카테고리(halo 등)가 있어도 일단 살려 두고,
+  // 렌더할 때 라벨만 fallback 처리. 하드코딩된 4개로 제한하면 사용자가
+  // "이미 보유" 인데 UI 에서 사라지는 버그가 난다.
   const groupedCustomizations = useMemo(() => {
-    const groups: Record<string, string[]> = { effect: [], frame: [], title: [], aura: [] };
+    const groups: Record<string, string[]> = {};
     for (const item of ownedCustomizations) {
-      if (groups[item.category]) groups[item.category].push(item.item_key);
+      (groups[item.category] ??= []).push(item.item_key);
     }
     return groups;
   }, [ownedCustomizations]);
@@ -744,16 +747,24 @@ function InventorySection({
     ownedPresets.length +
     Object.values(groupedCustomizations).reduce((a, arr) => a + arr.length, 0);
 
-  const equippedCount = (["effect", "frame", "title", "aura"] as const).filter(
-    (c) => (currentCustomization as Record<string, string | undefined>)[c],
-  ).length;
+  // 장착된 카테고리 수 — customization 객체에서 비어있지 않은 값 카운트.
+  // 미래에 halo 가 customization 에 포함돼도 자연스럽게 반영.
+  const equippedCount = Object.values(
+    currentCustomization as Record<string, string | undefined>,
+  ).filter((v) => v && v !== "none").length;
 
   const categoryLabels: Record<string, { label: string; icon: string }> = {
     effect: { label: "이펙트", icon: "✨" },
     frame:  { label: "프레임", icon: "🖼️" },
     title:  { label: "칭호",   icon: "🏷️" },
     aura:   { label: "오라",   icon: "🌀" },
+    halo:   { label: "후광",   icon: "👑" },
   };
+
+  // 실제로 보유한 카테고리 목록을 동적으로 추출 — 4종 이외 항목도 포함.
+  const presentCategories = Object.keys(groupedCustomizations).filter(
+    (cat) => (groupedCustomizations[cat]?.length ?? 0) > 0,
+  );
 
   return (
     <div className="elevated-card space-y-4">
@@ -814,9 +825,9 @@ function InventorySection({
       )}
 
       {/* 꾸미기 4종 슬롯 그리드 — 클릭하면 즉시 장착/해제 */}
-      {(["effect", "frame", "title", "aura"] as const).map((cat) => {
-        const items = groupedCustomizations[cat];
-        const meta = categoryLabels[cat];
+      {presentCategories.map((cat) => {
+        const items = groupedCustomizations[cat] ?? [];
+        const meta = categoryLabels[cat] ?? { label: cat, icon: "🎒" };
         const equippedKey = (currentCustomization as Record<string, string | undefined>)[cat];
         if (items.length === 0) return null;
         return (
@@ -834,7 +845,9 @@ function InventorySection({
                 const catOptions =
                   CUSTOMIZATION_CATEGORIES.find((c) => c.code === cat)?.options ?? [];
                 const option = catOptions.find((o) => o.key === key);
-                const label = resolveDisplayName(cat, key, option?.label ?? key);
+                // resolveDisplayName 은 UnlockCategory 타입이라 cat 을 캐스팅.
+                // 알 수 없는 카테고리는 item_key 그대로 라벨로 사용.
+                const label = resolveDisplayName(cat as UnlockCategory, key, option?.label ?? key);
                 const isHof = option?.requirement === "hall_of_fame";
                 const isEquipped = equippedKey === key;
                 return (
