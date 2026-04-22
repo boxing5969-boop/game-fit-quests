@@ -179,7 +179,7 @@ const MemberPreviewPage = () => {
   const TABS: { key: PreviewTab; label: string; icon: any }[] = [
     { key: "home", label: "홈", icon: Home },
     { key: "missions", label: "미션", icon: Swords },
-    { key: "levelmap", label: "리그맵", icon: MapIcon },
+    { key: "levelmap", label: "로드맵", icon: MapIcon },
     { key: "rewards", label: "보상", icon: Gift },
   ];
 
@@ -230,7 +230,7 @@ const MemberPreviewPage = () => {
               onClick={() => setActiveTab("levelmap")}
               className="shrink-0 rounded-full bg-primary/20 px-2.5 py-1 text-[10px] font-bold text-primary"
             >
-              🗺️ 리그맵 체크
+              🗺️ 로드맵 체크
             </button>
           </div>
         </div>
@@ -337,7 +337,7 @@ const MemberPreviewPage = () => {
         {/* ── Level Map Tab ── */}
         {activeTab === "levelmap" && (
           <div className="space-y-5">
-            <h2 className="text-lg font-bold text-foreground">🗺️ 리그맵 (회원 시점)</h2>
+            <h2 className="text-lg font-bold text-foreground">🗺️ 로드맵 (회원 시점)</h2>
             {RANK_ORDER_ARR.map((rank, ri) => (
               <div key={rank}>
                 <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-foreground">

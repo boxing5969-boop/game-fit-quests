@@ -379,7 +379,7 @@ const HallOfFamePage = () => {
                 icon={<Crown className="h-8 w-8 text-reward" />}
                 title="아직 명예의 전당 멤버가 없습니다"
                 description="블랙 리그 Lv.10 달성 + 모든 타이틀매치 클리어 시 입성합니다."
-                ctaText="리그맵 보기"
+                ctaText="로드맵 보기"
                 onCtaClick={() => navigate("/rank-up")}
               />
             )}
@@ -718,7 +718,7 @@ const RankingEmpty = ({
       icon: "🥊",
       title: "아직 보상 기록이 없어요",
       description: "타이틀매치(보스전)를 클리어하면 보상 랭킹에 집계됩니다.",
-      ctaText: "리그맵 보기",
+      ctaText: "로드맵 보기",
       action: onBoss,
     },
   };

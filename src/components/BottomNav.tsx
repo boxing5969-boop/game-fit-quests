@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import {
   Home,
-  Target,
   Trophy,
   Gift,
   Menu,
@@ -13,7 +12,7 @@ import {
   Salad,
   User,
   Settings,
-  Gamepad2,
+  Dumbbell,
   X,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -21,26 +20,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 // ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
-// 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 리그맵으로 교체.
+// 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 로드맵으로 교체.
 // 접근성은 전체 메뉴 오버레이에 보존.
+// 훈련은 🥊 이모지로 복싱 정체성 강화, 미니게임은 "트레이닝" 라벨로 통일.
 const mainTabs = [
-  { path: "/home",       icon: Home,     label: "홈"     },
-  { path: "/missions",   icon: Target,   label: "훈련"   },
-  { path: "/minigame",   icon: Gamepad2, label: "미니게임" },
-  { path: "/halloffame", icon: Trophy,   label: "랭킹"   },
-  { path: "/levelmap",   icon: Map,      label: "리그맵" },
+  { path: "/home",       icon: Home,     label: "홈",     emoji: null  },
+  { path: "/missions",   icon: null,     label: "훈련",   emoji: "🥊" },
+  { path: "/minigame",   icon: Dumbbell, label: "트레이닝", emoji: null },
+  { path: "/halloffame", icon: Trophy,   label: "랭킹",   emoji: null  },
+  { path: "/levelmap",   icon: Map,      label: "로드맵",  emoji: null  },
 ] as const;
 
 // ── Full menu overlay (everything not on the primary bar) ───────────
 // /diet 항목은 feature flag 에 따라 조건부로 포함 — 아래 useMemo 참조.
 const baseMenuItems = [
   { path: "/home",              icon: Home,       label: "홈" },
-  { path: "/missions",          icon: Target,     label: "훈련" },
-  { path: "/minigame",          icon: Gamepad2,   label: "미니게임" },
+  { path: "/missions",          icon: Dumbbell,   label: "훈련" },
+  { path: "/minigame",          icon: Dumbbell,   label: "트레이닝" },
   { path: "/halloffame",        icon: Trophy,     label: "랭킹" },
   { path: "/rank-up",           icon: TrendingUp, label: "랭크업" },
   { path: "/cert-benefits",     icon: Award,      label: "단증혜택" },
-  { path: "/levelmap",          icon: Map,        label: "리그맵" },
+  { path: "/levelmap",          icon: Map,        label: "로드맵" },
   { path: "/rewards",           icon: Gift,       label: "보상" },
   { path: "/character-studio",  icon: Sparkles,   label: "캐릭터" },
   { path: "/guide",             icon: BookOpen,   label: "가이드" },
@@ -150,7 +150,7 @@ const BottomNav = () => {
         className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card safe-area-bottom"
       >
         <div className="mx-auto flex max-w-lg items-stretch justify-around px-1">
-          {mainTabs.map(({ path, icon: Icon, label }) => {
+          {mainTabs.map(({ path, icon: Icon, label, emoji }) => {
             const active = location.pathname === path;
             return (
               <button
@@ -162,15 +162,29 @@ const BottomNav = () => {
                   active ? "text-primary" : INACTIVE_TONE,
                 )}
               >
-                <Icon
-                  size={24}
-                  strokeWidth={active ? 2.5 : 2}
-                  className={
-                    active
-                      ? "drop-shadow-[0_0_8px_hsl(8_75%_48%_/_0.5)]"
-                      : undefined
-                  }
-                />
+                {emoji ? (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "text-[22px] leading-none",
+                      active
+                        ? "drop-shadow-[0_0_8px_hsl(8_75%_48%_/_0.55)]"
+                        : "opacity-70",
+                    )}
+                  >
+                    {emoji}
+                  </span>
+                ) : Icon ? (
+                  <Icon
+                    size={24}
+                    strokeWidth={active ? 2.5 : 2}
+                    className={
+                      active
+                        ? "drop-shadow-[0_0_8px_hsl(8_75%_48%_/_0.5)]"
+                        : undefined
+                    }
+                  />
+                ) : null}
                 <span className="text-[11px] font-semibold leading-none">
                   {label}
                 </span>

@@ -262,7 +262,7 @@ const MemberDetailPage = () => {
   const TABS: { key: TabKey; label: string; icon: any }[] = [
     { key: "overview", label: "개요", icon: User },
     { key: "missions", label: "미션 승인", icon: FileText },
-    { key: "levelmap", label: "리그맵 체크", icon: Map },
+    { key: "levelmap", label: "로드맵 체크", icon: Map },
     { key: "activity", label: "활동기록", icon: Activity },
     { key: "notes", label: "메모", icon: MessageSquare },
   ];
@@ -333,7 +333,7 @@ const MemberDetailPage = () => {
             <h3 className="text-sm font-bold text-foreground">빠른 액션</h3>
             <div className="grid grid-cols-2 gap-2">
               <ActionBtn label="승인대기 보기" onClick={() => setActiveTab("missions")} count={pendingSubs.length} />
-              <ActionBtn label="리그맵 체크" onClick={() => setActiveTab("levelmap")} />
+              <ActionBtn label="로드맵 체크" onClick={() => setActiveTab("levelmap")} />
               <button
                 onClick={() => navigate(`/manager/member/${memberId}/preview`)}
                 className="col-span-2 flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-3 text-sm font-bold text-primary transition-all active:scale-[0.98]"

@@ -80,7 +80,7 @@ const RankUpPage = () => {
           onClick={() => setActiveTab("levelmap")}
           className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${activeTab === "levelmap" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"}`}
         >
-          🗺️ 리그맵
+          🗺️ 로드맵
         </button>
         <button
           onClick={() => setActiveTab("valuemap")}
