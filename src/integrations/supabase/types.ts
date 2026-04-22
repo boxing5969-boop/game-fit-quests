@@ -2065,6 +2065,10 @@ export type Database = {
         Args: { _kind: string; _period_key: string; _user_id: string }
         Returns: Json
       }
+      add_diet_coach_feedback: {
+        Args: { _feedback: string; _log_id: string }
+        Returns: Json
+      }
       add_diet_log_photo: {
         Args: {
           _log_id: string
@@ -2317,6 +2321,10 @@ export type Database = {
       purchase_avatar_item: { Args: { _item_id: string }; Returns: Json }
       purchase_customization: {
         Args: { p_category: string; p_item_key: string; p_price: number }
+        Returns: Json
+      }
+      purge_my_old_diet_photos: {
+        Args: { _older_than_days?: number }
         Returns: Json
       }
       rank_order: {
