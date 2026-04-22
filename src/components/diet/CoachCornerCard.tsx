@@ -45,7 +45,7 @@ export const CoachCornerCard = ({
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-            코치 한마디
+            AI 코치님의 한마디
           </p>
           {createdAt && (
             <p className="text-[10px] text-muted-foreground">

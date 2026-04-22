@@ -105,7 +105,7 @@ export const DietSettingsSection = () => {
         className="mt-3"
       >
         <Row
-          label="코치 피드백 알림"
+          label="AI 코치님의 피드백 알림"
           hint="새 한마디 도착 시 인앱 알림"
           value={data.notifications.coach_feedback}
           disabled={isUpdating}

@@ -43,7 +43,6 @@ import {
   PrimaryCTAButton,
   MissionCard,
   XPBar,
-  BadgeCard,
   RankingItem,
   EmptyState,
   NotificationBanner,
@@ -164,7 +163,7 @@ const HomePage = () => {
   const currentLevel = levels?.find(
     (l) => l.rank_name === rank && l.level_number === progress.current_level,
   );
-  const recentBadges = (myBadges || []).slice(0, 5);
+  void myBadges; // 최근 획득 배지 섹션 제거로 현재 미사용 — 향후 복구 대비 hook 유지
   const isMaster40 =
     rank === "black" &&
     progress.current_level === 10 &&
@@ -412,7 +411,7 @@ const HomePage = () => {
                     체지방을 제거하는 몸 습관 만들기
                   </p>
                   <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                    매일 5 습관 체크 · 복싱짐 출석 연동 · 코치 피드백
+                    매일 5 습관 체크 · 복싱짐 출석 연동 · AI 코치님의 피드백
                   </p>
                 </div>
                 <span className="shrink-0 text-primary text-xl">→</span>
@@ -421,31 +420,7 @@ const HomePage = () => {
           </section>
         )}
 
-        {/* ─── 6. Recent Badges ─── */}
-        {recentBadges.length > 0 && (
-          <section>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-display-sm">최근 획득 배지</h2>
-              <button
-                onClick={() => navigate("/rewards")}
-                className="text-caption font-medium text-primary active:scale-95"
-              >
-                전체보기 →
-              </button>
-            </div>
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
-              {recentBadges.map((mb: any) => (
-                <BadgeCard
-                  key={mb.id}
-                  title={mb.badges?.name || "배지"}
-                  icon={mb.badges?.image_url || "🏅"}
-                  rarity="rare"
-                  subtitle="획득"
-                />
-              ))}
-            </div>
-          </section>
-        )}
+        {/* ─── 6. Recent Badges 섹션 제거 (획득 배지는 /mypage 에서 확인) ─── */}
 
         {/* ─── 7. Ranking Preview ─── */}
         <section>
