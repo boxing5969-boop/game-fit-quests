@@ -201,6 +201,41 @@ const CharacterStudioPage = () => {
     }
   };
 
+  /**
+   * 인벤토리에서 아이템 클릭 → 즉시 장착/해제 (디아블로 스타일).
+   * customize 탭의 Save 버튼을 거치지 않고 서버에 바로 반영.
+   * itemKey=undefined 이면 해당 카테고리 장착 해제.
+   */
+  const handleEquipFromInventory = useCallback(
+    async (category: string, itemKey: string | undefined) => {
+      if (!user?.id) return;
+      if (!currentStyle) {
+        toast.error("먼저 복서를 선택해주세요");
+        return;
+      }
+      const next: CharacterCustomization = {
+        ...currentCustomization,
+        [category]: itemKey,
+      };
+      // undefined 필드는 JSON 저장 시에도 키 자체가 빠지도록 정리.
+      if (itemKey === undefined) {
+        delete (next as Record<string, unknown>)[category];
+      }
+      try {
+        await saveCustomization.mutateAsync({
+          style: currentStyle,
+          customization: next,
+        });
+        // pending state 도 맞춰 두어 customize 탭으로 이동해도 동기화 유지.
+        setPendingCustomization(next);
+        toast.success(itemKey ? "장착 완료 ⚡" : "장착 해제");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "장착 실패");
+      }
+    },
+    [user?.id, currentStyle, currentCustomization, saveCustomization],
+  );
+
   const filteredCharacters = (() => {
     switch (activeFilter) {
       case "legend": return PREBUILT_CHARACTERS.filter(c => c.requirement === "hall_of_fame");
@@ -494,6 +529,8 @@ const CharacterStudioPage = () => {
               currentCustomization={currentCustomization}
               ownedStyles={ownedStyles}
               ownedCustomizations={ownedCustomizations}
+              onEquip={handleEquipFromInventory}
+              isEquipping={saveCustomization.isPending}
             />
           )}
           {activeTab === "preset" && (
@@ -553,7 +590,7 @@ const CharacterStudioPage = () => {
 };
 
 // ========== MY CHARACTER TAB ==========
-function MyCharacterTab({ currentStyle, league, level, navigate, currentMilestone, nextMilestone, currentCustomization, ownedStyles, ownedCustomizations }: {
+function MyCharacterTab({ currentStyle, league, level, navigate, currentMilestone, nextMilestone, currentCustomization, ownedStyles, ownedCustomizations, onEquip, isEquipping }: {
   currentStyle?: string;
   league: string;
   level: number;
@@ -563,6 +600,8 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
   currentMilestone: any;
   nextMilestone: any;
   currentCustomization: CharacterCustomization;
+  onEquip: (category: string, itemKey: string | undefined) => Promise<void>;
+  isEquipping: boolean;
 }) {
   const hasCharacter = !!currentStyle;
   const customCount = Object.values(currentCustomization).filter(Boolean).length;
@@ -640,6 +679,9 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
       <InventorySection
         ownedStyles={ownedStyles}
         ownedCustomizations={ownedCustomizations}
+        currentCustomization={currentCustomization}
+        onEquip={onEquip}
+        isEquipping={isEquipping}
       />
       <button
         onClick={() => navigate("/halloffame")}
@@ -662,15 +704,29 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
   );
 }
 
-// ========== INVENTORY SECTION ==========
+// ========== INVENTORY SECTION (Diablo-style) ==========
+//
+// 게임 인벤토리처럼 동작.
+//   • 복서(프리셋)는 디스플레이 전용 — 프리셋 탭에서 "적용" 으로 전환.
+//   • 꾸미기 4종(이펙트·프레임·칭호·오라)은 슬롯 그리드로 표시.
+//     - 보유한 아이템만 표시 (미구매는 꾸미기 탭 상점에서 구매).
+//     - 탭하면 즉시 장착 (saveCustomization 호출), 한 번 더 탭하면 해제.
+//     - 현재 장착 아이템은 primary 테두리 + "장착 중" 배지 + glow.
+//
 function InventorySection({
   ownedStyles,
   ownedCustomizations,
+  currentCustomization,
+  onEquip,
+  isEquipping,
 }: {
   ownedStyles: Set<string>;
   ownedCustomizations: { category: string; item_key: string }[];
+  currentCustomization: CharacterCustomization;
+  onEquip: (category: string, itemKey: string | undefined) => Promise<void>;
+  isEquipping: boolean;
 }) {
-  // 카테고리별 그룹화
+  // 카테고리별로 보유 아이템 key 를 모은다.
   const groupedCustomizations = useMemo(() => {
     const groups: Record<string, string[]> = { effect: [], frame: [], title: [], aura: [] };
     for (const item of ownedCustomizations) {
@@ -688,6 +744,10 @@ function InventorySection({
     ownedPresets.length +
     Object.values(groupedCustomizations).reduce((a, arr) => a + arr.length, 0);
 
+  const equippedCount = (["effect", "frame", "title", "aura"] as const).filter(
+    (c) => (currentCustomization as Record<string, string | undefined>)[c],
+  ).length;
+
   const categoryLabels: Record<string, { label: string; icon: string }> = {
     effect: { label: "이펙트", icon: "✨" },
     frame:  { label: "프레임", icon: "🖼️" },
@@ -696,30 +756,42 @@ function InventorySection({
   };
 
   return (
-    <div className="elevated-card space-y-3">
+    <div className="elevated-card space-y-4">
       <div className="flex items-center gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(246,196,83,0.12)]">
           <Gem className="h-5 w-5 text-[#F6C453]" />
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-body-sm font-bold text-foreground">인벤토리</p>
           <p className="text-caption text-muted-foreground">
-            보유 중인 아이템 <span className="number-font font-bold text-foreground">{totalOwned}</span>개
+            보유 <span className="number-font font-bold text-foreground">{totalOwned}</span>개 · 장착{" "}
+            <span className="number-font font-bold text-primary">{equippedCount}</span>/4
           </p>
         </div>
       </div>
 
-      {/* 복서 (프리셋) */}
-      <div className="rounded-xl border border-border bg-card/50 p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-[11px] font-bold text-foreground">🥊 보유 복서</span>
-          <span className="number-font text-[11px] font-bold text-muted-foreground">
-            {ownedPresets.length}
-          </span>
+      {/* 전체 인벤토리 비어있을 때 */}
+      {totalOwned === 0 && (
+        <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5 text-center">
+          <span className="text-3xl">📦</span>
+          <p className="mt-2 text-[12px] font-bold text-foreground">
+            아직 구매한 아이템이 없어요
+          </p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            꾸미기 탭에서 💎 파이트 머니로 이펙트·프레임·칭호를 구매하면 여기에 쌓입니다.
+          </p>
         </div>
-        {ownedPresets.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground">아직 보유한 복서가 없어요.</p>
-        ) : (
+      )}
+
+      {/* 보유 복서 (프리셋) — 디스플레이 전용, "복서" 탭에서 교체 */}
+      {ownedPresets.length > 0 && (
+        <div className="rounded-xl border border-border bg-card/50 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[11px] font-bold text-foreground">🥊 보유 복서</span>
+            <span className="number-font text-[11px] font-bold text-muted-foreground">
+              {ownedPresets.length}
+            </span>
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {ownedPresets.slice(0, 12).map((c) => (
               <span
@@ -735,59 +807,101 @@ function InventorySection({
               <span className="text-[10px] text-muted-foreground">+{ownedPresets.length - 12}</span>
             )}
           </div>
-        )}
-      </div>
+          <p className="mt-2 text-[10px] text-muted-foreground">
+            교체하려면 "복서" 탭에서 선택해주세요.
+          </p>
+        </div>
+      )}
 
-      {/* 꾸미기 카테고리 4종 */}
-      <div className="grid grid-cols-2 gap-2">
-        {(["effect", "frame", "title", "aura"] as const).map((cat) => {
-          const items = groupedCustomizations[cat];
-          const meta = categoryLabels[cat];
-          return (
-            <div key={cat} className="rounded-xl border border-border bg-card/50 p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-[11px] font-bold text-foreground">
-                  {meta.icon} {meta.label}
-                </span>
-                <span className="number-font text-[11px] font-bold text-muted-foreground">
-                  {items.length}
-                </span>
-              </div>
-              {items.length === 0 ? (
-                <p className="text-[10px] text-muted-foreground">없음</p>
-              ) : (
-                <div className="flex flex-wrap gap-1">
-                  {items.slice(0, 8).map((key) => {
-                    const fullKey = `${cat}:${key}`;
-                    // 라벨 찾기 (resolveDisplayName 은 unlockRules 데이터, 없으면 key 그대로)
-                    const catOptions = CUSTOMIZATION_CATEGORIES.find((c) => c.code === cat)?.options ?? [];
-                    const option = catOptions.find((o) => o.key === key);
-                    const label = resolveDisplayName(cat, key, option?.label ?? key);
-                    const isHof = option?.requirement === "hall_of_fame";
-                    return (
-                      <span
-                        key={fullKey}
-                        className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${
-                          isHof
-                            ? "border-reward/40 bg-reward/10 text-reward"
-                            : "border-border bg-background text-foreground/85"
-                        }`}
-                        title={label}
-                      >
-                        {isHof && <Crown className="h-2 w-2" />}
-                        <span className="truncate max-w-[56px]">{label}</span>
-                      </span>
-                    );
-                  })}
-                  {items.length > 8 && (
-                    <span className="text-[9px] text-muted-foreground">+{items.length - 8}</span>
-                  )}
-                </div>
-              )}
+      {/* 꾸미기 4종 슬롯 그리드 — 클릭하면 즉시 장착/해제 */}
+      {(["effect", "frame", "title", "aura"] as const).map((cat) => {
+        const items = groupedCustomizations[cat];
+        const meta = categoryLabels[cat];
+        const equippedKey = (currentCustomization as Record<string, string | undefined>)[cat];
+        if (items.length === 0) return null;
+        return (
+          <div key={cat} className="rounded-xl border border-border bg-card/50 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[11px] font-bold text-foreground">
+                {meta.icon} {meta.label}
+              </span>
+              <span className="number-font text-[10px] text-muted-foreground">
+                {items.length}개 보유
+              </span>
             </div>
-          );
-        })}
-      </div>
+            <div className="grid grid-cols-4 gap-2">
+              {items.map((key) => {
+                const catOptions =
+                  CUSTOMIZATION_CATEGORIES.find((c) => c.code === cat)?.options ?? [];
+                const option = catOptions.find((o) => o.key === key);
+                const label = resolveDisplayName(cat, key, option?.label ?? key);
+                const isHof = option?.requirement === "hall_of_fame";
+                const isEquipped = equippedKey === key;
+                return (
+                  <button
+                    key={`${cat}:${key}`}
+                    type="button"
+                    disabled={isEquipping}
+                    onClick={() => onEquip(cat, isEquipped ? undefined : key)}
+                    aria-pressed={isEquipped}
+                    className={cn(
+                      "relative flex flex-col items-center gap-1 rounded-xl border-2 p-2 pb-4 transition-all active:scale-95 disabled:opacity-60",
+                      isEquipped
+                        ? isHof
+                          ? "border-reward bg-reward/10 shadow-[0_0_16px_rgba(246,196,83,0.35)]"
+                          : "border-primary bg-primary/10 shadow-glow-soft"
+                        : isHof
+                          ? "border-reward/40 bg-gradient-to-br from-[hsl(42_92%_10%)] via-card to-card"
+                          : "border-border bg-card",
+                    )}
+                  >
+                    {isEquipped && (
+                      <span
+                        className={cn(
+                          "absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full",
+                          isHof ? "bg-reward" : "bg-primary",
+                        )}
+                      >
+                        <Check
+                          className={cn(
+                            "h-2.5 w-2.5",
+                            isHof ? "text-background" : "text-primary-foreground",
+                          )}
+                        />
+                      </span>
+                    )}
+                    {isHof && (
+                      <span className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-reward text-[hsl(30_60%_12%)]">
+                        <Crown className="h-2.5 w-2.5" />
+                      </span>
+                    )}
+                    <OptionPreview category={cat} optionKey={key} />
+                    <span
+                      className={cn(
+                        "w-full truncate text-center text-[9px] font-bold leading-tight",
+                        isEquipped
+                          ? isHof
+                            ? "text-reward"
+                            : "text-primary"
+                          : isHof
+                            ? "text-reward/90"
+                            : "text-foreground/80",
+                      )}
+                    >
+                      {label}
+                    </span>
+                    {isEquipped && (
+                      <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-primary-foreground">
+                        장착 중
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
