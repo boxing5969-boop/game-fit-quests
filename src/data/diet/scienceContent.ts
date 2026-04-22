@@ -17,6 +17,268 @@ export interface ScienceSection {
 }
 
 // ──────────────────────────────────────────────────────────────────
+// 히어로 패러독스 — "덜 먹는데도 찌는 이유"
+// ──────────────────────────────────────────────────────────────────
+export const PARADOX_HERO = Object.freeze({
+  tagline: "THE WEIGHT PARADOX",
+  title: "왜 나는 덜 먹는데도 찌는가?",
+  body:
+    "대부분의 다이어트 실패는 '의지력 부족' 이 아니라 '밸런스 붕괴' 에서 옵니다. 몸은 굶기 시작하면 지방을 태우는 것이 아니라, 오히려 '비상 저장 모드' 로 전환해요. 근육을 먼저 분해해 기초대사를 낮추고, 들어온 모든 에너지를 지방으로 잠가둡니다. 적게 먹을수록 더 잘 찌는 체질이 만들어지는 이유가 여기 있습니다.",
+  punchline:
+    "결핍은 살을 빼는 게 아니라, 살이 더 잘 붙는 몸을 만듭니다.",
+});
+
+// ──────────────────────────────────────────────────────────────────
+// 7가지 밸런스 기둥 — 5대 영양소 + 물 + 휴식
+//   하나라도 부족하면 몸은 결핍 경보를 울리고 대사를 낮춘다.
+// ──────────────────────────────────────────────────────────────────
+export type PillarId =
+  | "carb"
+  | "protein"
+  | "fat"
+  | "vitamin"
+  | "mineral"
+  | "water"
+  | "rest";
+
+export interface BalancePillar {
+  id: PillarId;
+  emoji: string;
+  name: string;
+  role: string;
+  deficiencySigns: readonly string[];
+  answer153: string;
+}
+
+export const BALANCE_PILLARS: readonly BalancePillar[] = Object.freeze([
+  {
+    id: "carb",
+    emoji: "🌾",
+    name: "탄수화물",
+    role: "두뇌와 근육의 즉시 연료",
+    deficiencySigns: [
+      "오후 집중력 급락",
+      "단 것·빵에 대한 강한 갈망",
+      "운동 중 힘 빠짐",
+    ],
+    answer153:
+      "정제 탄수를 줄이고 현미·귀리·뿌리채소 등 자연 탄수를 끼니마다 적정량 유지합니다. 전면 제거가 아니라 재배치가 목표예요.",
+  },
+  {
+    id: "protein",
+    emoji: "🥩",
+    name: "단백질",
+    role: "근육·면역·호르몬의 재료",
+    deficiencySigns: [
+      "근육이 빠지고 피부 탄력 저하",
+      "식후 2~3시간 만에 다시 배고픔",
+      "잔병이 잦아짐",
+    ],
+    answer153:
+      "매 끼니 첫 입을 단백질로 시작하고 체중(kg)의 1.2~1.5배 그램을 목표. 계란·두부·그릭요거트·생선·닭가슴살 축으로 돌립니다.",
+  },
+  {
+    id: "fat",
+    emoji: "🥑",
+    name: "지방",
+    role: "호르몬 합성·뇌 구성·지용성 비타민 운반",
+    deficiencySigns: [
+      "피부·모발 건조",
+      "생리 불순·컨디션 저하",
+      "공복감이 극단적으로 오감",
+    ],
+    answer153:
+      "저지방 식단 대신 '좋은 지방' 을 씁니다. 견과 한 줌, 아보카도, 올리브유, 등푸른 생선의 오메가3 — 지방이 적으면 호르몬이 먼저 흔들려요.",
+  },
+  {
+    id: "vitamin",
+    emoji: "🥬",
+    name: "비타민",
+    role: "에너지 대사를 작동시키는 촉매",
+    deficiencySigns: [
+      "만성 피로·무기력",
+      "구내염·잇몸 출혈",
+      "아침에 일어나기 힘듦",
+    ],
+    answer153:
+      "색이 다른 채소 3가지 이상을 하루에 섞어 먹기. 영양제 의존 대신 자연식품에서 먼저 채우는 것이 기본 순서입니다.",
+  },
+  {
+    id: "mineral",
+    emoji: "🧂",
+    name: "미네랄",
+    role: "신경 신호·근수축·골밀도·수분 균형",
+    deficiencySigns: [
+      "밤에 근경련·쥐가 남",
+      "예민함·불안감 증가",
+      "부종이 쉽게 옴",
+    ],
+    answer153:
+      "정제염·가공식만 먹으면 나트륨만 과하고 마그네슘·칼륨은 부족해집니다. 해조·견과·콩·자연소금으로 미네랄 종을 다양하게.",
+  },
+  {
+    id: "water",
+    emoji: "💧",
+    name: "수분",
+    role: "혈액순환·체온·해독·포만감 신호",
+    deficiencySigns: [
+      "두통과 가짜 배고픔",
+      "피부가 칙칙해짐",
+      "소변이 진하고 적음",
+    ],
+    answer153:
+      "하루 1.5~2L, 아침 첫 잔과 식전 한 컵을 습관으로. 목이 마르다는 느낌은 이미 경도 탈수 신호예요.",
+  },
+  {
+    id: "rest",
+    emoji: "🌙",
+    name: "휴식 (수면)",
+    role: "회복·근합성·식욕 호르몬 리셋",
+    deficiencySigns: [
+      "아침부터 강한 식욕",
+      "밤마다 야식·단 것 갈망",
+      "의지력이 낮 동안 점점 약해짐",
+    ],
+    answer153:
+      "7시간 이상, 취침 시간 고정, 마지막 식사는 취침 3시간 전 종료. 수면은 가장 저평가된 체중 관리 도구입니다.",
+  },
+] as const);
+
+export const BALANCE_PILLARS_HEADER = Object.freeze({
+  tagline: "7 PILLARS OF BALANCE",
+  title: "안 찌는 몸은 '7가지' 로 떠 있다",
+  subtitle:
+    "5대 영양소(탄·단·지·비타민·미네랄) + 물 + 휴식. 이 7개 중 하나만 흔들려도 몸 전체의 대사 밸런스가 기울어요. 결핍은 체중이 아니라 '체질' 을 바꿉니다.",
+});
+
+// ──────────────────────────────────────────────────────────────────
+// 결핍성 축적 악순환 — "안 먹어도 찌는" 5단계
+// ──────────────────────────────────────────────────────────────────
+export interface SpiralStep {
+  id: string;
+  step: number;
+  emoji: string;
+  title: string;
+  body: string;
+}
+
+export const DEFICIENCY_SPIRAL: readonly SpiralStep[] = Object.freeze([
+  {
+    id: "detect",
+    step: 1,
+    emoji: "🚨",
+    title: "결핍 감지",
+    body:
+      "극단적 절식·편식으로 영양 기둥 중 하나라도 부족해지면 몸은 '위기' 로 판단하고 생존 모드로 전환합니다.",
+  },
+  {
+    id: "cortisol",
+    step: 2,
+    emoji: "🔥",
+    title: "코르티솔 상승",
+    body:
+      "스트레스 호르몬이 올라가 복부 중심 지방 축적을 가속시키고, 단 것·기름진 음식에 대한 갈망이 커집니다.",
+  },
+  {
+    id: "muscle-breakdown",
+    step: 3,
+    emoji: "💪",
+    title: "근육이 먼저 분해",
+    body:
+      "지방이 아니라 근육이 비상 연료로 먼저 쓰입니다. 근육이 줄면 기초대사량이 떨어져 같은 활동에도 에너지를 덜 써요.",
+  },
+  {
+    id: "metabolism-drop",
+    step: 4,
+    emoji: "⬇️",
+    title: "기초대사 급락",
+    body:
+      "몸이 '에너지 절약 모드' 로 굳어지면 가만히 있어도 남는 에너지가 모두 저장 쪽으로 돌려집니다.",
+  },
+  {
+    id: "storage-dominant",
+    step: 5,
+    emoji: "🪨",
+    title: "저장 우위 체질 완성",
+    body:
+      "적게 먹어도 찌는 체질. 피로·짜증·폭식 충동이 반복되고, 다시 굶으면 더 깊은 결핍으로 들어가는 악순환에 갇힙니다.",
+  },
+] as const);
+
+export const DEFICIENCY_SPIRAL_HEADER = Object.freeze({
+  tagline: "THE DEFICIENCY SPIRAL",
+  title: "굶을수록 더 찌는 '결핍성 축적' 5단계",
+  subtitle:
+    "다이어트 실패의 진짜 이름은 '의지 부족' 이 아니라 '결핍 축적' 입니다. 이 5단계가 반복되는 동안 체중은 늘고, 근육은 빠지고, 의지력은 바닥납니다.",
+});
+
+// ──────────────────────────────────────────────────────────────────
+// 복구 3원칙 — 153 다이어트가 하는 일
+// ──────────────────────────────────────────────────────────────────
+export interface RestorationRule {
+  id: string;
+  num: string;
+  title: string;
+  body: string;
+}
+
+export const RESTORATION_RULES: readonly RestorationRule[] = Object.freeze([
+  {
+    id: "dont-starve",
+    num: "01",
+    title: "굶지 않는다",
+    body:
+      "결핍을 만들지 않는 것이 가장 빠른 복구. 먼저 먹어서 채우고 나머지를 정돈합니다. 공복이 길어지면 다음 끼니가 무너져요.",
+  },
+  {
+    id: "fill-first",
+    num: "02",
+    title: "먼저 넣는다",
+    body:
+      "끼니 시작은 단백질과 채소로. 먹는 순서 하나만 바꿔도 같은 양에서 혈당 곡선과 호르몬 반응이 달라집니다.",
+  },
+  {
+    id: "rhythm",
+    num: "03",
+    title: "리듬을 잡는다",
+    body:
+      "같은 시간·비슷한 양·충분한 수면. 대사는 '규칙'을 좋아합니다. 몸이 안정되면 과식 충동부터 조용히 가라앉아요.",
+  },
+] as const);
+
+export const RESTORATION_HEADER = Object.freeze({
+  tagline: "BALANCE RESTORATION",
+  title: "153 다이어트는 이 3가지만 반복합니다",
+  subtitle:
+    "새 식단 규칙을 덧붙이는 게 아니라, 기둥을 다시 세워 악순환을 끊는 것이 목표예요.",
+});
+
+// ──────────────────────────────────────────────────────────────────
+// 자가 진단 — 내 밸런스 흔들림 체크 (주관식 7문항)
+// ──────────────────────────────────────────────────────────────────
+export interface BalanceCheckQuestion {
+  pillarId: PillarId;
+  question: string;
+}
+
+export const BALANCE_SELF_CHECK: readonly BalanceCheckQuestion[] = Object.freeze([
+  { pillarId: "carb",    question: "오후 2~4시에 집중력이 급격히 떨어지거나 단 게 당긴다" },
+  { pillarId: "protein", question: "식후 2~3시간 안에 다시 배고프거나 근력·체력이 빠지는 느낌" },
+  { pillarId: "fat",     question: "피부·머리카락이 건조해지고 호르몬 관련 컨디션 기복이 있다" },
+  { pillarId: "vitamin", question: "아침에 일어나기가 점점 힘들고 만성 피로가 풀리지 않는다" },
+  { pillarId: "mineral", question: "밤에 쥐가 나거나 부종·예민함이 전보다 심해졌다" },
+  { pillarId: "water",   question: "하루 1L도 물을 잘 안 마시고 두통·가짜 배고픔이 자주 온다" },
+  { pillarId: "rest",    question: "수면이 6시간 이하거나 취침 시간이 매일 들쭉날쭉하다" },
+] as const);
+
+export const SELF_CHECK_HEADER = Object.freeze({
+  tagline: "BALANCE SELF-CHECK",
+  title: "내 몸의 기둥, 몇 개가 흔들리고 있나요?",
+  subtitle:
+    "해당되는 항목을 골라보세요. 많을수록 '결핍성 축적' 초입에 가깝고, 153 다이어트의 복구 효과를 더 크게 체감할 수 있습니다.",
+});
+
+// ──────────────────────────────────────────────────────────────────
 // 왜 살이 찌는 체질이 되는가
 // ──────────────────────────────────────────────────────────────────
 export const WHY_YOU_GAIN: readonly ScienceSection[] = Object.freeze([
