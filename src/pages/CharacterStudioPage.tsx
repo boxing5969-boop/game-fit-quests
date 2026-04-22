@@ -22,7 +22,11 @@ import {
   useSaveCustomization,
 } from "@/hooks/useCharacterData";
 import { useIsInHallOfFame } from "@/hooks/useRankingData";
-import { useOwnedCustomizations } from "@/hooks/useCustomizationPurchase";
+import {
+  useOwnedCustomizations,
+  useOwnedSet,
+  usePurchaseCustomization,
+} from "@/hooks/useCustomizationPurchase";
 import { useWallet, useSpendGems } from "@/hooks/useWallet";
 import CharacterSprite from "@/components/CharacterSprite";
 import { toast } from "sonner";
@@ -522,6 +526,7 @@ const CharacterStudioPage = () => {
               bossesCleared={progress?.bosses_cleared || 0}
               isInHallOfFame={isInHallOfFame}
               isAdmin={isAdmin}
+              walletBalance={walletData?.gems_balance || 0}
             />
           )}
           {activeTab === "growth" && (
@@ -788,7 +793,7 @@ function InventorySection({
 }
 
 // ========== CUSTOMIZE TAB ==========
-function CustomizeTab({ customization, onChange, league, level, bossesCleared, isInHallOfFame, isAdmin }: {
+function CustomizeTab({ customization, onChange, league, level, bossesCleared, isInHallOfFame, isAdmin, walletBalance }: {
   customization: CharacterCustomization;
   onChange: (c: CharacterCustomization) => void;
   league: string;
@@ -796,6 +801,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
   bossesCleared: number;
   isInHallOfFame: boolean;
   isAdmin: boolean;
+  walletBalance: number;
 }) {
   const isMaster = league === "black" && level >= 10;
   const userLevel = useMemo(
@@ -809,9 +815,22 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
   );
   const [activeCat, setActiveCat] = useState(CUSTOMIZATION_CATEGORIES[0].code);
 
+  // 구매 관련 — 아이템 상점처럼 미소유 유료 아이템 클릭 시 구매 모달 오픈.
+  const ownedSet = useOwnedSet();
+  const purchase = usePurchaseCustomization();
+  const [purchaseItem, setPurchaseItem] = useState<{ category: string; option: CustomizationOption } | null>(null);
+
+  const isItemOwned = (catCode: string, itemKey: string): boolean =>
+    ownedSet.has(`${catCode}:${itemKey}`);
+
+  const applySelection = (catCode: string, itemKey: string) => {
+    const current = (customization as any)[catCode];
+    const newVal = current === itemKey ? undefined : itemKey;
+    onChange({ ...customization, [catCode]: newVal });
+  };
+
   const handleSelect = (catCode: string, opt: CustomizationOption) => {
     // HoF 게이트 — 서버 purchase_customization 의 hof_required 에러와 동일 경로.
-    // 레벨 게이트 전에 걸어서 HoF 미자격자가 "Lv.99" 가 아닌 정확한 문구를 받도록.
     if (opt.requirement === "hall_of_fame" && !isInHallOfFame && !isAdmin) {
       toast("명예의 전당 입성 후 구매 가능");
       return;
@@ -830,9 +849,36 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
       toast("블랙리그 달성 후 해금됩니다 🔒");
       return;
     }
-    const current = (customization as any)[catCode];
-    const newVal = current === opt.key ? undefined : opt.key;
-    onChange({ ...customization, [catCode]: newVal });
+
+    // 유료 아이템 + 미소유 + 비관리자 → 구매 모달. admin 은 무료 적용.
+    const needsPurchase =
+      !isAdmin && opt.price > 0 && !isItemOwned(catCode, opt.key);
+    if (needsPurchase) {
+      setPurchaseItem({ category: catCode, option: opt });
+      return;
+    }
+
+    // 소유했거나 FREE 아이템 → 바로 토글 적용 (기존 동작 유지).
+    applySelection(catCode, opt.key);
+  };
+
+  const handleConfirmPurchase = async () => {
+    if (!purchaseItem) return;
+    const { category, option } = purchaseItem;
+    try {
+      await purchase.mutateAsync({
+        category,
+        itemKey: option.key,
+        price: option.price,
+      });
+      toast.success(`💎 ${resolveDisplayName(category as UnlockCategory, option.key, option.label)} 구매 완료!`);
+      setPurchaseItem(null);
+      // 구매 직후 자동 적용 — 사용자가 이 아이템을 고른 맥락이므로 의도 명확.
+      applySelection(category, option.key);
+    } catch (e) {
+      // useCustomizationPurchase 훅이 Error 메시지로 insufficient_gems 등 번역해 던짐.
+      toast.error(e instanceof Error ? e.message : "구매 실패");
+    }
   };
 
   const activeCount = Object.values(customization).filter(Boolean).length;
@@ -884,6 +930,9 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
           // 시각상 잠금 처리 (admin 은 풀컬러 + 클릭 가능)
           const visuallyLocked = !isAdmin && (requiresHof || requiresLevel || requiresBlack);
 
+          // 구매 여부 — admin 은 항상 "보유" 취급, 유료 아이템만 체크.
+          const owned = opt.price > 0 && (isAdmin || isItemOwned(activeCat, opt.key));
+
           const displayLabel = resolveDisplayName(
             activeCat as UnlockCategory,
             opt.key,
@@ -934,14 +983,18 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
               >
                 {displayLabel}
               </span>
-              {/* 가격 (모든 아이템에 일관되게 — admin 포함) */}
-              {opt.price > 0 && (
+              {/* 가격/상태 — 아이템 상점 톤. 소유자는 "보유", 미소유 유료는 가격, 0원은 FREE. */}
+              {opt.price > 0 && owned ? (
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold leading-none text-success">
+                  <Check className="h-2.5 w-2.5" />
+                  보유
+                </span>
+              ) : opt.price > 0 ? (
                 <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold leading-none ${isHof ? (visuallyLocked ? "text-muted-foreground" : "text-reward") : visuallyLocked ? "text-muted-foreground" : "text-foreground/70"}`}>
                   <Gem className="h-2.5 w-2.5" />
                   <span className="number-font">{opt.price.toLocaleString()}</span>
                 </span>
-              )}
-              {opt.price === 0 && (
+              ) : (
                 <span className="text-[9px] font-bold leading-none text-success">FREE</span>
               )}
               {/* 해금 조건 하단 pill — 우선순위: HoF > Black > Level
@@ -1031,6 +1084,149 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
           전체 초기화 ({activeCount}개 적용 중)
         </button>
       )}
+
+      {/* 꾸미기 아이템 구매 모달 — 미소유 유료 아이템 클릭 시 열림 */}
+      {purchaseItem && (
+        <CustomizationPurchaseModal
+          category={purchaseItem.category}
+          option={purchaseItem.option}
+          walletBalance={walletBalance}
+          isPurchasing={purchase.isPending}
+          onConfirm={handleConfirmPurchase}
+          onCancel={() => setPurchaseItem(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ========== CUSTOMIZATION PURCHASE MODAL ==========
+// 꾸미기(이펙트/프레임/칭호/오라) 단일 아이템 구매 확인.
+// 프리셋(PurchaseConfirmModal)과 동일 톤이지만 미리보기는 OptionPreview 사용.
+function CustomizationPurchaseModal({
+  category,
+  option,
+  walletBalance,
+  isPurchasing,
+  onConfirm,
+  onCancel,
+}: {
+  category: string;
+  option: CustomizationOption;
+  walletBalance: number;
+  isPurchasing: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const afterBalance = walletBalance - option.price;
+  const canAfford = walletBalance >= option.price;
+  const isHof = option.requirement === "hall_of_fame";
+  const displayLabel = resolveDisplayName(
+    category as UnlockCategory,
+    option.key,
+    option.label,
+  );
+  const catMeta = CUSTOMIZATION_CATEGORIES.find((c) => c.code === category);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+      onClick={onCancel}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
+      <div
+        className="relative w-full max-w-sm rounded-t-3xl bg-card p-6 shadow-2xl animate-slide-up sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 아이템 프리뷰 */}
+        <div
+          className={`mx-auto mb-4 flex h-32 w-32 items-center justify-center rounded-2xl ${
+            isHof
+              ? "bg-gradient-to-br from-[hsl(42_92%_14%)] via-card to-card ring-2 ring-reward/60"
+              : "bg-muted/40"
+          }`}
+        >
+          <OptionPreview category={category} optionKey={option.key} />
+        </div>
+
+        {/* 이름 + 카테고리 */}
+        <div className="mb-4 text-center">
+          <h2 className="text-xl font-black text-foreground">{displayLabel}</h2>
+          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-muted/70 px-3 py-0.5 text-xs font-bold text-muted-foreground">
+            {catMeta?.icon}
+            <span>{catMeta?.label}</span>
+            {isHof && (
+              <>
+                <span className="mx-1 opacity-40">·</span>
+                <Crown className="h-3 w-3 text-reward" />
+                <span className="text-reward">명예의 전당 전용</span>
+              </>
+            )}
+          </span>
+        </div>
+
+        {/* 가격 내역 */}
+        <div className="mb-5 space-y-2 rounded-2xl bg-muted/50 p-3.5">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">가격</span>
+            <span className="font-black text-foreground">
+              💎 {option.price.toLocaleString()}
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">현재 잔액</span>
+            <span className="font-bold">{walletBalance.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between border-t border-border/50 pt-2 text-sm">
+            <span className="text-muted-foreground">구매 후 잔액</span>
+            <span
+              className={`font-bold ${
+                afterBalance < 0 ? "text-destructive" : "text-foreground"
+              }`}
+            >
+              {afterBalance.toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {!canAfford && (
+          <div className="mb-3 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-center text-[12px] font-bold text-destructive">
+            파이트 머니가 {(option.price - walletBalance).toLocaleString()}원 부족합니다
+          </div>
+        )}
+
+        {/* 버튼 */}
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={isPurchasing}
+            className="flex-1 rounded-2xl border border-border bg-secondary py-3.5 text-sm font-bold text-secondary-foreground transition-all active:scale-95 disabled:opacity-50"
+          >
+            취소
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isPurchasing || !canAfford}
+            className={cn(
+              "flex-[2] rounded-2xl py-3.5 text-sm font-bold transition-all active:scale-95 disabled:opacity-50",
+              canAfford
+                ? "bg-gradient-to-r from-primary to-primary/85 text-primary-foreground shadow-[0_4px_14px_-4px_rgba(217,54,32,0.6)]"
+                : "bg-muted text-muted-foreground",
+            )}
+          >
+            {isPurchasing ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" />
+                구매 중...
+              </span>
+            ) : !canAfford ? (
+              "파이트 머니 부족"
+            ) : (
+              "💰 구매하기"
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
