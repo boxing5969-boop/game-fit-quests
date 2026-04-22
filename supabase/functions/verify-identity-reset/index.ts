@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Password reset successful for user: ${matched.user_id}`);
+    console.log(`Password reset successful for user: ${authUser.id}`);
 
     return new Response(
       JSON.stringify({ success: true }),
