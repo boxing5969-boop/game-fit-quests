@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
+  Brain,
   Calendar,
   ChevronLeft,
   LineChart,
+  Salad,
   Sparkles,
   Trophy,
   UtensilsCrossed,
@@ -366,8 +368,20 @@ const ActiveHome = (p: ActiveHomeProps) => {
         createdAt={coachNoteQuery.data?.created_at ?? null}
       />
 
-      {/* 하위 페이지 네비게이션 */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* 하위 페이지 네비게이션 — 과학·식단 탭 추가로 5 grid 구성 */}
+      <div className="grid grid-cols-2 gap-2">
+        <NavTile
+          icon={<Brain className="h-4 w-4" />}
+          label="왜 153 다이어트?"
+          hint="과학·원리 설명"
+          onClick={() => navigate("/diet/value")}
+        />
+        <NavTile
+          icon={<Salad className="h-4 w-4" />}
+          label="21일 식단"
+          hint="무제한·적정량·피하기"
+          onClick={() => navigate("/diet/meal-plan")}
+        />
         <NavTile
           icon={<LineChart className="h-4 w-4" />}
           label="진행 현황"
@@ -385,6 +399,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
           label="습관 랭킹"
           hint="지점 완주율"
           onClick={() => navigate("/diet/ranking")}
+          className="col-span-2"
         />
       </div>
 
@@ -475,16 +490,21 @@ const NavTile = ({
   label,
   hint,
   onClick,
+  className,
 }: {
   icon: React.ReactNode;
   label: string;
   hint: string;
   onClick: () => void;
+  className?: string;
 }) => (
   <button
     type="button"
     onClick={onClick}
-    className="rounded-xl border border-border bg-card p-3 text-left transition-colors hover:border-primary/40 active:scale-[0.99]"
+    className={cn(
+      "rounded-xl border border-border bg-card p-3 text-left transition-colors hover:border-primary/40 active:scale-[0.99]",
+      className,
+    )}
   >
     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
       {icon}

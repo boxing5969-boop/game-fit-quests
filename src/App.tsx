@@ -50,6 +50,8 @@ const DietTrackerPage = lazy(() => import("@/pages/diet/DietTrackerPage"));
 const DietProgressPage = lazy(() => import("@/pages/diet/DietProgressPage"));
 const DietFoodGuidePage = lazy(() => import("@/pages/diet/DietFoodGuidePage"));
 const DietRankingPage = lazy(() => import("@/pages/diet/DietRankingPage"));
+const DietValuePage = lazy(() => import("@/pages/diet/DietValuePage"));
+const DietMealPlanPage = lazy(() => import("@/pages/diet/DietMealPlanPage"));
 const DietCoachInboxPage = lazy(() => import("@/pages/diet/coach/DietCoachInboxPage"));
 const DietMemberDetailPage = lazy(() => import("@/pages/diet/coach/DietMemberDetailPage"));
 const LiveBoardPage = lazy(() => import("@/pages/LiveBoardPage"));
@@ -185,6 +187,8 @@ const AppRoutes = () => {
         <Route path="/diet/progress" element={<ProtectedRoute><DietProgressPage /></ProtectedRoute>} />
         <Route path="/diet/food" element={<ProtectedRoute><DietFoodGuidePage /></ProtectedRoute>} />
         <Route path="/diet/ranking" element={<ProtectedRoute><DietRankingPage /></ProtectedRoute>} />
+        <Route path="/diet/value" element={<ProtectedRoute><DietValuePage /></ProtectedRoute>} />
+        <Route path="/diet/meal-plan" element={<ProtectedRoute><DietMealPlanPage /></ProtectedRoute>} />
         <Route path="/coach/diet" element={<ProtectedRoute><ManagerRoute><DietCoachInboxPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/coach/diet/member/:memberId" element={<ProtectedRoute><ManagerRoute><DietMemberDetailPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/coach" element={<ProtectedRoute><ManagerRoute><CoachDashboard /></ManagerRoute></ProtectedRoute>} />
