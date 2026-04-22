@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -17,7 +17,6 @@ import {
 import AppPage from "@/components/ui/rankingup/AppPage";
 import PageHeader from "@/components/ui/rankingup/PageHeader";
 import { Button } from "@/components/ui/button";
-
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useDietProgress } from "@/hooks/useDietEnrollment";
@@ -43,7 +42,6 @@ import {
   DIET_DROP_OFF_FLAG_KEY,
   DIET_EVENT_TYPES,
 } from "@/lib/diet/analytics";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const todayIso = () => {

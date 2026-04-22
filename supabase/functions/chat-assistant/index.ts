@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { SYSTEM_PROMPT_153 } from "../_shared/systemPrompt153.ts";
+import { KNOWLEDGE_153 } from "../_shared/knowledge153.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -190,6 +192,48 @@ const SYSTEM_PROMPT = `당신은 "랭킹업(RANKINGUP)" 앱의 전담 AI 코치 
 - 아래 "현재 회원 정보" 섹션의 수치만 사용. 추측 금지
 - 반려 이력이 있으면 coach_note 를 인용해 개선 포인트 제시
 - 운동 기법 상세(폼·프로그램)는 담당 코치 영역 → "담당 코치와 상의" 안내`;
+function buildDietContext(enrollment: any, snapshot: any, recentLogs: any[], latestCoachNote: any) {
+  if (!enrollment && !snapshot && (!recentLogs || recentLogs.length === 0)) return "";
+  const lines: string[] = [];
+  lines.push(`## 현재 153다이어트 진행 상황`);
+  if (enrollment) {
+    lines.push(`- 트랙: ${enrollment.track} · 상태: ${enrollment.status} · 현재 Day ${enrollment.current_day}`);
+    if (enrollment.start_date) lines.push(`- 시작일: ${enrollment.start_date}`);
+  }
+  if (snapshot) {
+    lines.push(`- 자가 기록 누적: ${snapshot.approved_days_total ?? 0}/21일`);
+    lines.push(`- 현재 스트릭: ${snapshot.current_streak ?? 0}일 (최장 ${snapshot.best_streak ?? 0}일)`);
+    lines.push(`- 습관 점수: ${snapshot.habit_score ?? 0}/100`);
+    const m: string[] = [];
+    if (snapshot.milestone_7_reached) m.push("7일");
+    if (snapshot.milestone_14_reached) m.push("14일");
+    if (snapshot.milestone_21_reached) m.push("21일 완주");
+    if (m.length) lines.push(`- 달성 마일스톤: ${m.join(", ")}`);
+  }
+  if (recentLogs && recentLogs.length > 0) {
+    lines.push(`\n## 최근 식습관 체크 (최근 ${recentLogs.length}일)`);
+    for (const log of recentLogs) {
+      const bits: string[] = [];
+      if (log.protein_first) bits.push("단백질먼저O");
+      if (log.veggies_natural) bits.push("채소O");
+      if (log.sugary_drink_avoided) bits.push("당음료절제O");
+      if (log.late_night_snack_avoided) bits.push("야식절제O");
+      if (log.gym_attended) bits.push("출석O");
+      if (log.water_ml) bits.push(`물 ${log.water_ml}ml`);
+      if (log.sleep_hours) bits.push(`수면 ${log.sleep_hours}h`);
+      const mood = log.mood ? ` · 기분 ${log.mood}` : "";
+      const memo = log.memo ? ` · 메모 "${String(log.memo).slice(0, 60)}"` : "";
+      lines.push(`- Day ${log.day_number} (${log.log_date}): ${bits.join(" / ") || "기록 부실"}${mood}${memo}`);
+    }
+  }
+  if (latestCoachNote && latestCoachNote.note_text) {
+    lines.push(`\n## 가장 최근 코치 메모`);
+    lines.push(`- ${String(latestCoachNote.note_text).slice(0, 240)}`);
+  }
+  lines.push(`\n→ 이 정보를 반드시 참고해서 답변한다. 모순되는 추측 금지.`);
+  return "\n\n" + lines.join("\n");
+}
+
 function buildPersonalContext(profile: any, progress: any, recentRejections: any[], nextLevel: any) {
   const rankLabels: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
   const lines: string[] = [];
@@ -229,6 +273,7 @@ serve(async (req) => {
     if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY is not configured");
     // Try to get user context from auth token
     let personalContext = "";
+    let dietContext = "";
     const authHeader = req.headers.get("authorization");
     if (authHeader) {
       try {
@@ -241,7 +286,13 @@ serve(async (req) => {
           data: { user },
         } = await supabase.auth.getUser();
         if (user) {
-          const [profileRes, progressRes, rejectionsRes] = await Promise.all([
+          const [
+            profileRes,
+            progressRes,
+            rejectionsRes,
+            enrollmentRes,
+            recentLogsRes,
+          ] = await Promise.all([
             supabase.from("profiles").select("*").eq("user_id", user.id).single(),
             supabase.from("member_progress").select("*").eq("user_id", user.id).single(),
             supabase
@@ -251,6 +302,20 @@ serve(async (req) => {
               .in("status", ["rejected", "revision_requested"])
               .order("requested_at", { ascending: false })
               .limit(5),
+            supabase
+              .from("diet_program_enrollments")
+              .select("*")
+              .eq("user_id", user.id)
+              .in("status", ["active", "not_started", "completed"])
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+            supabase
+              .from("diet_daily_logs")
+              .select("day_number, log_date, protein_first, veggies_natural, sugary_drink_avoided, late_night_snack_avoided, gym_attended, water_ml, sleep_hours, mood, memo")
+              .eq("user_id", user.id)
+              .order("log_date", { ascending: false })
+              .limit(3),
           ]);
           let nextLevel = null;
           if (progressRes.data) {
@@ -268,12 +333,56 @@ serve(async (req) => {
             rejectionsRes.data || [],
             nextLevel,
           );
+
+          // 진행 중이거나 최근 완주한 다이어트 enrollment 가 있으면 snapshot + 코치 메모까지 로드해 컨텍스트에 합친다.
+          const enrollment = enrollmentRes.data;
+          if (enrollment) {
+            const [snapshotRes, coachNoteRes] = await Promise.all([
+              supabase
+                .from("diet_progress_snapshots")
+                .select("*")
+                .eq("enrollment_id", enrollment.id)
+                .maybeSingle(),
+              supabase
+                .from("diet_coach_notes")
+                .select("note_text, created_at, visibility")
+                .eq("enrollment_id", enrollment.id)
+                .eq("visibility", "member_visible")
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle(),
+            ]);
+            dietContext = buildDietContext(
+              enrollment,
+              snapshotRes.data,
+              recentLogsRes.data || [],
+              coachNoteRes.data,
+            );
+          } else if ((recentLogsRes.data || []).length > 0) {
+            // enrollment 는 없지만 오래된 로그만 있는 드문 케이스
+            dietContext = buildDietContext(null, null, recentLogsRes.data || [], null);
+          }
         }
       } catch (e) {
         console.error("Context fetch error (non-fatal):", e);
       }
     }
-    const systemMessage = SYSTEM_PROMPT + personalContext;
+    // ── messages 조립 ────────────────────────────────────────────
+    // 1) 랭킹업(복싱) 시스템 + 회원 개인 컨텍스트 (기존)
+    // 2) 153다이어트 시스템 프롬프트 (신규)
+    // 3) 153다이어트 공식 지식 문서 (신규)
+    // 4) 다이어트 회원 컨텍스트 — 있을 때만 (신규)
+    // 5) 클라이언트가 보낸 messages
+    const baseSystemMessage = SYSTEM_PROMPT + personalContext;
+    const dietKnowledgeMessage = `아래는 153다이어트 공식 지식 문서다. 반드시 이 문서의 범위 안에서만 153다이어트 세부 규칙을 답변하라.\n\n${KNOWLEDGE_153}`;
+    const systemMessages: Array<{ role: "system"; content: string }> = [
+      { role: "system", content: baseSystemMessage },
+      { role: "system", content: SYSTEM_PROMPT_153 },
+      { role: "system", content: dietKnowledgeMessage },
+    ];
+    if (dietContext) {
+      systemMessages.push({ role: "system", content: dietContext });
+    }
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -282,7 +391,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
-        messages: [{ role: "system", content: systemMessage }, ...messages],
+        messages: [...systemMessages, ...messages],
         stream: true,
       }),
     });
@@ -300,11 +409,19 @@ serve(async (req) => {
         });
       }
       const t = await response.text();
-      console.error("Groq API error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI 서비스 오류" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // 키는 절대 찍지 않고, 상태코드 + 본문 앞 일부만 로그에 남긴다.
+      console.error("Groq API error:", response.status, t.slice(0, 800));
+      return new Response(
+        JSON.stringify({
+          error: "AI 서비스 오류",
+          status: response.status,
+          detail: t.slice(0, 400),
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
