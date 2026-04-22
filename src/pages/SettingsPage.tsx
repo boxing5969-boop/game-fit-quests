@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
-import { useTutorialState } from "@/hooks/useTutorialState";
+import { useTutorialProgress } from "@/hooks/useTutorialProgress";
+import DietSettingsSection from "@/components/diet/DietSettingsSection";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -31,7 +32,9 @@ export function loadHomeWidgetPrefs(): HomeWidgetPrefs {
   try {
     const raw = localStorage.getItem(HOME_PREFS_KEY);
     if (raw) return { ...{ showRestartRoutine: true, showWeeklyPrescription: true }, ...JSON.parse(raw) };
-  } catch {}
+  } catch {
+    // storage 깨지거나 JSON 파싱 실패해도 기본값으로 fallback.
+  }
   return { showRestartRoutine: true, showWeeklyPrescription: true };
 }
 
@@ -274,6 +277,9 @@ const SettingsPage = () => {
           </div>
         </div>
 
+        {/* 153 다이어트 — feature flag off 유저에겐 아무것도 렌더되지 않음 */}
+        <DietSettingsSection />
+
         {/* Profile Edit */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.03s" }}>
           <h2 className="mb-4 text-base font-bold text-foreground">프로필 수정</h2>
@@ -460,9 +466,11 @@ const SettingsPage = () => {
   );
 };
 
-// 인라인 helper — useTutorialState 호출 + restart RPC + 토스트
+// 인라인 helper — 신규 useTutorialProgress.restartTutorial 경로
+// (legacy useTutorialState.restart 는 글로벌 InductionCeremonyOverlay 의
+// localStep 을 동기화하지 못해 재시작이 화면에 반영되지 않는 이슈가 있다.)
 const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
-  const { restart } = useTutorialState();
+  const { restartTutorial } = useTutorialProgress();
   const [busy, setBusy] = useState(false);
   return (
     <button
@@ -471,7 +479,11 @@ const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
       onClick={async () => {
         setBusy(true);
         try {
-          await restart();
+          const ok = await restartTutorial();
+          if (!ok) {
+            toast.error("다시 시작에 실패했습니다. 잠시 후 다시 시도해주세요.");
+            return;
+          }
           toast.success("랭킹업 입단식을 다시 시작합니다 🥊");
           onDone();
         } finally {

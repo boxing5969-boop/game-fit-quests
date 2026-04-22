@@ -32,7 +32,9 @@ function loadTodayVisitors(): TodayVisitor[] {
       const parsed = JSON.parse(saved);
       if (parsed.date === today) return parsed.visitors || [];
     }
-  } catch {}
+  } catch {
+    // storage 깨지거나 JSON 파싱 실패해도 데모 데이터로 fallback.
+  }
   return [
     { userId: "demo-1", nickname: "김복서", currentLevel: 1, currentRank: "white", status: "self_challenge", selfChallengeComplete: true, coachTags: [], startedAt: "09:30", finishedAt: "10:20" },
     { userId: "demo-2", nickname: "이도전", currentLevel: 2, currentRank: "white", status: "pending", selfChallengeComplete: false, coachTags: [] },

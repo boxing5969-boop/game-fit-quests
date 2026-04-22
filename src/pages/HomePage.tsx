@@ -29,8 +29,9 @@ import QRScannerModal from "@/components/QRScannerModal";
 import CheckinSuccessModal from "@/components/CheckinSuccessModal";
 import LevelUpModal from "@/components/LevelUpModal";
 import RetentionBanner from "@/components/RetentionBanner";
-import TutorialOverlay from "@/components/TutorialOverlay";
-import TutorialCompleteModal from "@/components/TutorialCompleteModal";
+// TutorialOverlay / TutorialCompleteModal: 랭킹업 입단식 리뉴얼로 글로벌
+// InductionCeremonyOverlay (App.tsx) 가 대체. 기존 컴포넌트 파일은 보존되어
+// 있으며 롤백 시 import 만 복구하면 된다.
 import { MasterProgressCard } from "@/components/master/MasterProgressCard";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
@@ -70,7 +71,6 @@ const HomePage = () => {
   const [checkinResult, setCheckinResult] = useState<any>(null);
   const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
   const [checkedInToday, setCheckedInToday] = useState(false);
-  const [tutorialCelebration, setTutorialCelebration] = useState<number | null>(null);
   const [levelUpModal, setLevelUpModal] = useState<{
     show: boolean;
     level: number;
@@ -497,15 +497,7 @@ const HomePage = () => {
         result={checkinResult}
       />
 
-      {onboardingDone && safetyDone && (
-        <TutorialOverlay onCompleted={(gems) => setTutorialCelebration(gems)} />
-      )}
-
-      <TutorialCompleteModal
-        open={tutorialCelebration !== null}
-        grantedGems={tutorialCelebration ?? 0}
-        onClose={() => setTutorialCelebration(null)}
-      />
+      {/* 튜토리얼 오버레이는 App.tsx 의 글로벌 InductionCeremonyOverlay 로 이관. */}
     </AppPage>
   );
 };

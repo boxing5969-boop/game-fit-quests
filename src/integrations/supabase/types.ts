@@ -477,6 +477,363 @@ export type Database = {
         }
         Relationships: []
       }
+      diet_analytics_events: {
+        Row: {
+          created_at: string
+          event_data: Json
+          event_type: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json
+          event_type: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json
+          event_type?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      diet_preferences: {
+        Row: {
+          settings: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          settings?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          settings?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      diet_coach_notes: {
+        Row: {
+          author_id: string
+          created_at: string
+          enrollment_id: string
+          id: string
+          note_text: string
+          recipient_user_id: string
+          related_log_id: string | null
+          template_type: Database["public"]["Enums"]["diet_coach_note_template"]
+          visibility: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          enrollment_id: string
+          id?: string
+          note_text: string
+          recipient_user_id: string
+          related_log_id?: string | null
+          template_type?: Database["public"]["Enums"]["diet_coach_note_template"]
+          visibility?: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          enrollment_id?: string
+          id?: string
+          note_text?: string
+          recipient_user_id?: string
+          related_log_id?: string | null
+          template_type?: Database["public"]["Enums"]["diet_coach_note_template"]
+          visibility?: string
+        }
+        Relationships: []
+      }
+      diet_daily_log_photos: {
+        Row: {
+          id: string
+          log_id: string
+          meal_slot: Database["public"]["Enums"]["diet_meal_slot"]
+          storage_path: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          log_id: string
+          meal_slot: Database["public"]["Enums"]["diet_meal_slot"]
+          storage_path: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          log_id?: string
+          meal_slot?: Database["public"]["Enums"]["diet_meal_slot"]
+          storage_path?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      diet_daily_logs: {
+        Row: {
+          coach_feedback: string | null
+          coach_reviewed: boolean
+          day_number: number
+          enrollment_id: string
+          gym_attended: boolean | null
+          id: string
+          late_night_snack_avoided: boolean | null
+          log_date: string
+          memo: string | null
+          mood: string | null
+          protein_first: boolean | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sleep_hours: number | null
+          status: Database["public"]["Enums"]["diet_log_status"]
+          step_count: number | null
+          submitted_at: string
+          sugary_drink_avoided: boolean | null
+          updated_at: string
+          user_id: string
+          veggies_natural: boolean | null
+          water_ml: number | null
+        }
+        Insert: {
+          coach_feedback?: string | null
+          coach_reviewed?: boolean
+          day_number: number
+          enrollment_id: string
+          gym_attended?: boolean | null
+          id?: string
+          late_night_snack_avoided?: boolean | null
+          log_date: string
+          memo?: string | null
+          mood?: string | null
+          protein_first?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sleep_hours?: number | null
+          status?: Database["public"]["Enums"]["diet_log_status"]
+          step_count?: number | null
+          submitted_at?: string
+          sugary_drink_avoided?: boolean | null
+          updated_at?: string
+          user_id: string
+          veggies_natural?: boolean | null
+          water_ml?: number | null
+        }
+        Update: {
+          coach_feedback?: string | null
+          coach_reviewed?: boolean
+          day_number?: number
+          enrollment_id?: string
+          gym_attended?: boolean | null
+          id?: string
+          late_night_snack_avoided?: boolean | null
+          log_date?: string
+          memo?: string | null
+          mood?: string | null
+          protein_first?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sleep_hours?: number | null
+          status?: Database["public"]["Enums"]["diet_log_status"]
+          step_count?: number | null
+          submitted_at?: string
+          sugary_drink_avoided?: boolean | null
+          updated_at?: string
+          user_id?: string
+          veggies_natural?: boolean | null
+          water_ml?: number | null
+        }
+        Relationships: []
+      }
+      diet_program_enrollments: {
+        Row: {
+          advanced_feature_enabled: boolean
+          branch_name: string | null
+          coach_assigned_id: string | null
+          created_at: string
+          current_day: number
+          current_stage: Database["public"]["Enums"]["diet_stage"]
+          finished_at: string | null
+          id: string
+          screening_id: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["diet_enrollment_status"]
+          track: Database["public"]["Enums"]["diet_track"]
+          updated_at: string
+          user_id: string
+          warning_flags: Json
+        }
+        Insert: {
+          advanced_feature_enabled?: boolean
+          branch_name?: string | null
+          coach_assigned_id?: string | null
+          created_at?: string
+          current_day?: number
+          current_stage?: Database["public"]["Enums"]["diet_stage"]
+          finished_at?: string | null
+          id?: string
+          screening_id?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["diet_enrollment_status"]
+          track: Database["public"]["Enums"]["diet_track"]
+          updated_at?: string
+          user_id: string
+          warning_flags?: Json
+        }
+        Update: {
+          advanced_feature_enabled?: boolean
+          branch_name?: string | null
+          coach_assigned_id?: string | null
+          created_at?: string
+          current_day?: number
+          current_stage?: Database["public"]["Enums"]["diet_stage"]
+          finished_at?: string | null
+          id?: string
+          screening_id?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["diet_enrollment_status"]
+          track?: Database["public"]["Enums"]["diet_track"]
+          updated_at?: string
+          user_id?: string
+          warning_flags?: Json
+        }
+        Relationships: []
+      }
+      diet_progress_snapshots: {
+        Row: {
+          approved_days_total: number
+          best_streak: number
+          current_streak: number
+          enrollment_id: string
+          habit_score: number | null
+          last_log_date: string | null
+          milestone_14_reached: boolean
+          milestone_21_reached: boolean
+          milestone_7_reached: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_days_total?: number
+          best_streak?: number
+          current_streak?: number
+          enrollment_id: string
+          habit_score?: number | null
+          last_log_date?: string | null
+          milestone_14_reached?: boolean
+          milestone_21_reached?: boolean
+          milestone_7_reached?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_days_total?: number
+          best_streak?: number
+          current_streak?: number
+          enrollment_id?: string
+          habit_score?: number | null
+          last_log_date?: string | null
+          milestone_14_reached?: boolean
+          milestone_21_reached?: boolean
+          milestone_7_reached?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      diet_safety_screenings: {
+        Row: {
+          age_group: Database["public"]["Enums"]["diet_age_group"]
+          consent_accepted: boolean
+          consent_version: number
+          created_at: string
+          diabetes_medication: boolean
+          eating_disorder_risk: boolean
+          id: string
+          is_youth: boolean
+          other_conditions: string | null
+          pregnancy_breastfeeding: boolean
+          user_id: string
+        }
+        Insert: {
+          age_group: Database["public"]["Enums"]["diet_age_group"]
+          consent_accepted?: boolean
+          consent_version?: number
+          created_at?: string
+          diabetes_medication?: boolean
+          eating_disorder_risk?: boolean
+          id?: string
+          is_youth: boolean
+          other_conditions?: string | null
+          pregnancy_breastfeeding?: boolean
+          user_id: string
+        }
+        Update: {
+          age_group?: Database["public"]["Enums"]["diet_age_group"]
+          consent_accepted?: boolean
+          consent_version?: number
+          created_at?: string
+          diabetes_medication?: boolean
+          eating_disorder_risk?: boolean
+          id?: string
+          is_youth?: boolean
+          other_conditions?: string | null
+          pregnancy_breastfeeding?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      diet_weekly_reviews: {
+        Row: {
+          adherence_summary: Json
+          body_photo_url: string | null
+          created_at: string
+          enrollment_id: string
+          id: string
+          next_week_focus: string | null
+          reflection: string | null
+          user_id: string
+          waist_cm: number | null
+          week_index: number
+        }
+        Insert: {
+          adherence_summary?: Json
+          body_photo_url?: string | null
+          created_at?: string
+          enrollment_id: string
+          id?: string
+          next_week_focus?: string | null
+          reflection?: string | null
+          user_id: string
+          waist_cm?: number | null
+          week_index: number
+        }
+        Update: {
+          adherence_summary?: Json
+          body_photo_url?: string | null
+          created_at?: string
+          enrollment_id?: string
+          id?: string
+          next_week_focus?: string | null
+          reflection?: string | null
+          user_id?: string
+          waist_cm?: number | null
+          week_index?: number
+        }
+        Relationships: []
+      }
       external_cert_progress: {
         Row: {
           age_gate: boolean
@@ -1107,14 +1464,22 @@ export type Database = {
           birth_date: string | null
           branch_name: string
           created_at: string
+          diet_program_enabled: boolean
           email: string | null
           id: string
           is_approved: boolean
+          last_unlock_check_level: number
           name: string
           nickname: string
           onboarding_done: boolean
           phone_number: string | null
           safety_done: boolean
+          tutorial_completed: boolean
+          tutorial_completed_at: string | null
+          tutorial_reward_claimed: boolean
+          tutorial_skipped: boolean
+          tutorial_started_at: string | null
+          tutorial_step: number
           updated_at: string
           user_id: string
         }
@@ -1123,14 +1488,22 @@ export type Database = {
           birth_date?: string | null
           branch_name?: string
           created_at?: string
+          diet_program_enabled?: boolean
           email?: string | null
           id?: string
           is_approved?: boolean
+          last_unlock_check_level?: number
           name?: string
           nickname?: string
           onboarding_done?: boolean
           phone_number?: string | null
           safety_done?: boolean
+          tutorial_completed?: boolean
+          tutorial_completed_at?: string | null
+          tutorial_reward_claimed?: boolean
+          tutorial_skipped?: boolean
+          tutorial_started_at?: string | null
+          tutorial_step?: number
           updated_at?: string
           user_id: string
         }
@@ -1139,14 +1512,22 @@ export type Database = {
           birth_date?: string | null
           branch_name?: string
           created_at?: string
+          diet_program_enabled?: boolean
           email?: string | null
           id?: string
           is_approved?: boolean
+          last_unlock_check_level?: number
           name?: string
           nickname?: string
           onboarding_done?: boolean
           phone_number?: string | null
           safety_done?: boolean
+          tutorial_completed?: boolean
+          tutorial_completed_at?: string | null
+          tutorial_reward_claimed?: boolean
+          tutorial_skipped?: boolean
+          tutorial_started_at?: string | null
+          tutorial_step?: number
           updated_at?: string
           user_id?: string
         }
@@ -1651,9 +2032,127 @@ export type Database = {
         Args: { _category_code: string }
         Returns: undefined
       }
+      add_diet_log_photo: {
+        Args: {
+          _log_id: string
+          _meal_slot: Database["public"]["Enums"]["diet_meal_slot"]
+          _storage_path: string
+        }
+        Returns: Json
+      }
+      create_diet_coach_note: {
+        Args: {
+          _enrollment_id: string
+          _note_text: string
+          _related_log_id?: string | null
+          _template_type?: Database["public"]["Enums"]["diet_coach_note_template"]
+          _visibility?: string
+        }
+        Returns: Json
+      }
+      enroll_diet_program: {
+        Args: { _coach_assigned_id?: string | null; _screening_id: string }
+        Returns: Json
+      }
+      get_caller_age: { Args: Record<string, never>; Returns: number | null }
+      get_diet_progress: {
+        Args: { _user_id?: string | null }
+        Returns: Json
+      }
+      get_diet_ranking: {
+        Args: { _branch_name: string; _limit?: number }
+        Returns: {
+          r_approved_days: number
+          r_avatar_url: string | null
+          r_best_streak: number
+          r_completion_rate: number
+          r_habit_score: number
+          r_nickname: string
+          r_user_id: string
+          rank_position: number
+        }[]
+      }
+      record_diet_safety_screening: {
+        Args: {
+          _consent_accepted: boolean
+          _consent_version: number
+          _diabetes_medication: boolean
+          _eating_disorder_risk: boolean
+          _other_conditions: string | null
+          _pregnancy_breastfeeding: boolean
+        }
+        Returns: Json
+      }
+      resolve_diet_track: {
+        Args: Record<string, never>
+        Returns: Database["public"]["Enums"]["diet_track"] | null
+      }
+      review_diet_log: {
+        Args: {
+          _action: Database["public"]["Enums"]["diet_log_status"]
+          _feedback?: string | null
+          _log_id: string
+        }
+        Returns: Json
+      }
+      submit_diet_daily_log: {
+        Args: { _habits: Json; _log_date: string; _note?: string | null }
+        Returns: Json
+      }
+      submit_diet_weekly_review: {
+        Args: {
+          _body_photo_url?: string | null
+          _enrollment_id: string
+          _next_week_focus?: string | null
+          _reflection?: string | null
+          _waist_cm?: number | null
+          _week_index: number
+        }
+        Returns: Json
+      }
+      update_diet_enrollment_status: {
+        Args: {
+          _enrollment_id: string
+          _next_status: Database["public"]["Enums"]["diet_enrollment_status"]
+        }
+        Returns: Json
+      }
+      log_diet_event: {
+        Args: { _event_type: string; _event_data?: Json }
+        Returns: Json
+      }
+      get_diet_preferences: {
+        Args: Record<string, never>
+        Returns: Json
+      }
+      upsert_diet_preferences: {
+        Args: { _settings: Json }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "member" | "coach" | "admin" | "branch_manager" | "super_admin"
+      diet_age_group: "youth" | "adult"
+      diet_coach_note_template:
+        | "general"
+        | "warning"
+        | "celebration"
+        | "correction"
+        | "weekly"
+      diet_enrollment_status:
+        | "not_started"
+        | "active"
+        | "paused"
+        | "completed"
+        | "dropped"
+      diet_log_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "revision_requested"
+      diet_meal_slot: "breakfast" | "lunch" | "dinner" | "snack"
+      diet_stage: "reset" | "burning" | "lifestyle"
+      diet_track: "adult_standard" | "adult_advanced_hidden" | "youth_habit"
       level_status_type:
         | "locked"
         | "in_progress"
@@ -1797,6 +2296,30 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["member", "coach", "admin", "branch_manager", "super_admin"],
+      diet_age_group: ["youth", "adult"],
+      diet_coach_note_template: [
+        "general",
+        "warning",
+        "celebration",
+        "correction",
+        "weekly",
+      ],
+      diet_enrollment_status: [
+        "not_started",
+        "active",
+        "paused",
+        "completed",
+        "dropped",
+      ],
+      diet_log_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "revision_requested",
+      ],
+      diet_meal_slot: ["breakfast", "lunch", "dinner", "snack"],
+      diet_stage: ["reset", "burning", "lifestyle"],
+      diet_track: ["adult_standard", "adult_advanced_hidden", "youth_habit"],
       level_status_type: [
         "locked",
         "in_progress",

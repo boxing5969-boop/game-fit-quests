@@ -144,7 +144,9 @@ const CharacterStudioPage = () => {
       next.add(style);
       try {
         localStorage.setItem(`owned_chars_${user?.id || "guest"}`, JSON.stringify([...next]));
-      } catch {}
+      } catch {
+        // storage quota 초과 등은 UI 에만 반영하고 다음 세션에 재동기화.
+      }
       return next;
     });
   }, [user?.id]);

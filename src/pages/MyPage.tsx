@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useTutorialProgress } from "@/hooks/useTutorialProgress";
 import RankBadge from "@/components/RankBadge";
 import AvatarUpload from "@/components/AvatarUpload";
 import XPBar from "@/components/XPBar";
@@ -29,12 +30,43 @@ const MyPage = () => {
   const { data: myBadges } = useMyBadges();
   const { data: walletData } = useWallet();
   const { data: myCharacter } = useMemberCharacterAssignment();
+  const { isCompleted: tutorialDone, isSkipped: tutorialSkipped, restartTutorial } =
+    useTutorialProgress();
   const [showPwChange, setShowPwChange] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState("");
+  const [tutorialRestartBusy, setTutorialRestartBusy] = useState(false);
+
+  /**
+   * 입단식 다시 보기 — 이미 완료/스킵한 유저만 노출되는 재시작 진입점.
+   *
+   * 경로
+   *   MyPage 액션 리스트 → restart_tutorial RPC → /home 이동 →
+   *   글로벌 InductionCeremonyOverlay 가 자동 재진입.
+   *
+   * 중복 지급 방지 (서버측)
+   *   • profiles.tutorial_reward_claimed 은 restart_tutorial 이 리셋하지 않음
+   *   • tutorial_step_claims 도 보존 → 단계별 보상 0젬 재지급
+   *   • complete_tutorial_once 는 reward_claimed=true 시 already_granted 반환
+   */
+  const handleRestartTutorial = async () => {
+    if (tutorialRestartBusy) return;
+    setTutorialRestartBusy(true);
+    try {
+      const ok = await restartTutorial();
+      if (!ok) {
+        toast.error("다시 시작에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+      toast.success("랭킹업 입단식을 다시 시작합니다 🥊");
+      navigate("/home");
+    } finally {
+      setTutorialRestartBusy(false);
+    }
+  };
 
   if (!profile || !progress) return null;
 
@@ -271,6 +303,21 @@ const MyPage = () => {
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
+          {(tutorialDone || tutorialSkipped) && (
+            <button
+              onClick={handleRestartTutorial}
+              disabled={tutorialRestartBusy}
+              className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50 disabled:opacity-60"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">🥊</span>
+                <span className="text-sm text-foreground">
+                  {tutorialRestartBusy ? "준비 중…" : "입단식 다시 보기"}
+                </span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
           <button onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-4 active:bg-secondary/50">
             <LogOut className="h-4 w-4 text-destructive" />
             <span className="text-sm text-destructive">로그아웃</span>

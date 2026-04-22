@@ -11,7 +11,7 @@ import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { isManagerRole } from "@/lib/rankLabels";
-import { useTutorialVisitTracker } from "@/hooks/useTutorialVisitTracker";
+import InductionCeremonyOverlay from "@/components/induction/InductionCeremonyOverlay";
 
 // Route-level code splitting — every page below is fetched on demand.
 // LoginPage + NotFound stay eager: Login is the cold-start screen
@@ -44,6 +44,14 @@ const CharacterStudioPage = lazy(() => import("@/pages/CharacterStudioPage"));
 const MasterTrackPage = lazy(() => import("@/pages/MasterTrackPage"));
 const MinigamePage = lazy(() => import("@/pages/MinigamePage"));
 const CheckinBoardPage = lazy(() => import("@/pages/CheckinBoardPage"));
+const DietHubPage = lazy(() => import("@/pages/diet/DietHubPage"));
+const DietOnboardingPage = lazy(() => import("@/pages/diet/DietOnboardingPage"));
+const DietTrackerPage = lazy(() => import("@/pages/diet/DietTrackerPage"));
+const DietProgressPage = lazy(() => import("@/pages/diet/DietProgressPage"));
+const DietFoodGuidePage = lazy(() => import("@/pages/diet/DietFoodGuidePage"));
+const DietRankingPage = lazy(() => import("@/pages/diet/DietRankingPage"));
+const DietCoachInboxPage = lazy(() => import("@/pages/diet/coach/DietCoachInboxPage"));
+const DietMemberDetailPage = lazy(() => import("@/pages/diet/coach/DietMemberDetailPage"));
 const LiveBoardPage = lazy(() => import("@/pages/LiveBoardPage"));
 const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdminDashboard"));
 
@@ -127,7 +135,6 @@ const RoleBasedRedirect = () => {
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
-  useTutorialVisitTracker();
 
   if (loading) {
     return (
@@ -172,6 +179,14 @@ const AppRoutes = () => {
         <Route path="/character-studio" element={<ProtectedRoute><CharacterStudioPage /></ProtectedRoute>} />
         <Route path="/master-track" element={<ProtectedRoute><MasterTrackPage /></ProtectedRoute>} />
         <Route path="/minigame" element={<ProtectedRoute><MinigamePage /></ProtectedRoute>} />
+        <Route path="/diet" element={<ProtectedRoute><DietHubPage /></ProtectedRoute>} />
+        <Route path="/diet/onboarding" element={<ProtectedRoute><DietOnboardingPage /></ProtectedRoute>} />
+        <Route path="/diet/tracker" element={<ProtectedRoute><DietTrackerPage /></ProtectedRoute>} />
+        <Route path="/diet/progress" element={<ProtectedRoute><DietProgressPage /></ProtectedRoute>} />
+        <Route path="/diet/food" element={<ProtectedRoute><DietFoodGuidePage /></ProtectedRoute>} />
+        <Route path="/diet/ranking" element={<ProtectedRoute><DietRankingPage /></ProtectedRoute>} />
+        <Route path="/coach/diet" element={<ProtectedRoute><ManagerRoute><DietCoachInboxPage /></ManagerRoute></ProtectedRoute>} />
+        <Route path="/coach/diet/member/:memberId" element={<ProtectedRoute><ManagerRoute><DietMemberDetailPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/coach" element={<ProtectedRoute><ManagerRoute><CoachDashboard /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager" element={<ProtectedRoute><ManagerRoute><BranchManagerHome /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/member/:memberId" element={<ProtectedRoute><ManagerRoute><MemberDetailPage /></ManagerRoute></ProtectedRoute>} />
@@ -184,6 +199,8 @@ const AppRoutes = () => {
       </Suspense>
       <BottomNav />
       <ChatAssistant />
+      {/* 랭킹업 입단식 — 글로벌 portal 오버레이. 셋업 라우트에서는 내부에서 숨김. */}
+      {user && <InductionCeremonyOverlay />}
     </>
   );
 };

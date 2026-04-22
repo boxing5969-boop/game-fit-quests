@@ -18,17 +18,15 @@ const SuperAdminDashboard = () => {
   const { role } = useAuth();
   const [tab, setTab] = useState<AdminTab>("overview");
 
-  if (role !== "super_admin" && role !== "admin") {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">접근 권한이 없습니다</p>
-      </div>
-    );
-  }
+  // React Rules-of-Hooks: useQuery 는 조건부 early-return 이후에 호출되면
+  // 렌더마다 hook 개수가 달라져 크래시 위험. `enabled` 로만 페치를 차단하고
+  // 권한 거절 UI 는 모든 hook 호출 이후로 미룬다.
+  const isAuthorized = role === "super_admin" || role === "admin";
 
   // Global stats
   const { data: globalStats } = useQuery({
     queryKey: ["global-admin-stats"],
+    enabled: isAuthorized,
     queryFn: async () => {
       const [membersRes, pendingMissionsRes, pendingQuestsRes, transferRes, branchesRes] = await Promise.all([
         supabase.from("profiles").select("user_id, is_approved", { count: "exact" }),
@@ -95,6 +93,14 @@ const SuperAdminDashboard = () => {
     { key: "transfers", label: "이전 승인", icon: <ArrowRightLeft className="h-4 w-4" /> },
     { key: "broadcast", label: "공지", icon: <Bell className="h-4 w-4" /> },
   ];
+
+  if (!isAuthorized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">접근 권한이 없습니다</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
