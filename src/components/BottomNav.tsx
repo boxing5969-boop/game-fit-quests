@@ -20,14 +20,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
-// ── Primary tab bar (5 slots: 4 routes + menu) ─────────────────────
-// 보상(/rewards)은 전체 메뉴로 이관 — 하단 탭은 가장 자주 쓰는 4개만 유지.
+// ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
+// 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 리그맵으로 교체.
 // 접근성은 전체 메뉴 오버레이에 보존.
 const mainTabs = [
   { path: "/home",       icon: Home,     label: "홈"     },
   { path: "/missions",   icon: Target,   label: "훈련"   },
   { path: "/minigame",   icon: Gamepad2, label: "미니게임" },
   { path: "/halloffame", icon: Trophy,   label: "랭킹"   },
+  { path: "/levelmap",   icon: Map,      label: "리그맵" },
 ] as const;
 
 // ── Full menu overlay (everything not on the primary bar) ───────────

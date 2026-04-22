@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
-import { useRetention } from "@/hooks/useRetention";
+// useRetention: 홈 리스타트 루틴 배너 제거로 사용처 없음 (필요 시 복구).
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useActivitySession } from "@/hooks/useActivitySession";
 import { useWallet } from "@/hooks/useWallet";
@@ -28,7 +28,7 @@ import SelfChallengeFlow from "@/components/SelfChallengeFlow";
 import QRScannerModal from "@/components/QRScannerModal";
 import CheckinSuccessModal from "@/components/CheckinSuccessModal";
 import LevelUpModal from "@/components/LevelUpModal";
-import RetentionBanner from "@/components/RetentionBanner";
+// RetentionBanner 는 홈에서 제거 (Settings 의 widget pref 는 유지되어 향후 복구 가능).
 // TutorialOverlay / TutorialCompleteModal: 랭킹업 입단식 리뉴얼로 글로벌
 // InductionCeremonyOverlay (App.tsx) 가 대체. 기존 컴포넌트 파일은 보존되어
 // 있으며 롤백 시 import 만 복구하면 된다.
@@ -58,7 +58,6 @@ const HomePage = () => {
   const { data: myCharacter } = useMemberCharacterAssignment();
   const { data: ranking } = useDivisionRanking();
   const attendance = useRecordAttendance();
-  const retention = useRetention();
   const { onboardingDone, safetyDone } = useOnboardingState();
   const { totalXp, metrics } = useLocalProgress();
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
@@ -171,7 +170,6 @@ const HomePage = () => {
     progress.current_level === 10 &&
     progress.bosses_cleared >= 4;
   const unifiedLevel = getLevelById(rank, progress.current_level);
-  const showRestartRoutine = retention.inactiveDays >= 7;
 
   const sessionMet = metrics.sessions;
   const minuteMet = metrics.minutes;
@@ -392,8 +390,7 @@ const HomePage = () => {
           </div>
         </section>
 
-        {/* ─── 5. Retention (7+ days inactive) ─── */}
-        {showRestartRoutine && <RetentionBanner />}
+        {/* ─── 5. Retention 배너는 홈에서 제거 ─── */}
 
         {/* ─── 5b. 153 다이어트 프로그램 (feature flag ON 시만) ─── */}
         {profile?.diet_program_enabled && (
