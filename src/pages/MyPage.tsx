@@ -24,7 +24,7 @@ import {
 
 const MyPage = () => {
   const navigate = useNavigate();
-  const { profile, progress, role, signOut } = useAuth();
+  const { user, profile, progress, role, signOut, refreshProfile } = useAuth();
   const { data: xpLogs } = useXpLogs(30);
   const { data: allBadges, isLoading: badgesLoading } = useBadges();
   const { data: myBadges } = useMyBadges();
@@ -38,6 +38,10 @@ const MyPage = () => {
   const [confirmPw, setConfirmPw] = useState("");
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState("");
+  const [showBirthEdit, setShowBirthEdit] = useState(false);
+  const [birthInput, setBirthInput] = useState(profile?.birth_date ?? "");
+  const [birthLoading, setBirthLoading] = useState(false);
+  const [birthError, setBirthError] = useState("");
   const [tutorialRestartBusy, setTutorialRestartBusy] = useState(false);
 
   /**
@@ -98,6 +102,32 @@ const MyPage = () => {
       setShowPwChange(false); setCurrentPw(""); setNewPw(""); setConfirmPw("");
     } catch (err: any) { setPwError(err.message || "비밀번호 변경 실패"); }
     finally { setPwLoading(false); }
+  };
+
+  const handleBirthSave = async () => {
+    setBirthError("");
+    if (!user?.id) { setBirthError("로그인 상태를 확인해 주세요"); return; }
+    const trimmed = birthInput.trim();
+    // YYYY-MM-DD 간단 포맷 검증 (비움 = 삭제 허용)
+    if (trimmed && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      setBirthError("YYYY-MM-DD 형식으로 입력해 주세요");
+      return;
+    }
+    setBirthLoading(true);
+    try {
+      const { error: updErr } = await supabase
+        .from("profiles")
+        .update({ birth_date: trimmed === "" ? null : trimmed })
+        .eq("user_id", user.id);
+      if (updErr) throw updErr;
+      await refreshProfile();
+      toast.success("생년월일이 저장되었습니다 ✅");
+      setShowBirthEdit(false);
+    } catch (err: any) {
+      setBirthError(err.message || "생년월일 저장 실패");
+    } finally {
+      setBirthLoading(false);
+    }
   };
 
   return (
@@ -266,6 +296,44 @@ const MyPage = () => {
               <button onClick={handlePasswordChange} disabled={pwLoading}
                 className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                 {pwLoading ? "처리 중..." : "비밀번호 변경 🥊"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Birth date edit — 다이어트 트랙 자동 판정에 사용됨 */}
+        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.21s" }}>
+          <button onClick={() => { setShowBirthEdit(!showBirthEdit); setBirthInput(profile?.birth_date ?? ""); setBirthError(""); }} className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50">
+            <div className="flex items-center gap-3">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div className="flex flex-col items-start">
+                <span className="text-sm text-foreground">생년월일 수정</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {profile?.birth_date ? profile.birth_date : "등록되지 않음"}
+                </span>
+              </div>
+            </div>
+            <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${showBirthEdit ? "rotate-90" : ""}`} />
+          </button>
+          {showBirthEdit && (
+            <div className="space-y-3 border-t border-border px-4 py-4">
+              <input
+                type="date"
+                value={birthInput}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => setBirthInput(e.target.value)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              />
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                153 다이어트 트랙 자동 판정(성인·청소년), 프로그램 맞춤 카피에 사용됩니다. 비워두면 '등록되지 않음' 처리됩니다.
+              </p>
+              {birthError && <p className="text-xs text-destructive">{birthError}</p>}
+              <button
+                onClick={handleBirthSave}
+                disabled={birthLoading}
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {birthLoading ? "처리 중..." : "생년월일 저장"}
               </button>
             </div>
           )}
