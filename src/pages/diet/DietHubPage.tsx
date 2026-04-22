@@ -6,6 +6,7 @@ import {
   Brain,
   Calendar,
   ChevronLeft,
+  ImageIcon,
   LineChart,
   Salad,
   Sparkles,
@@ -395,11 +396,16 @@ const ActiveHome = (p: ActiveHomeProps) => {
           onClick={() => navigate("/diet/food")}
         />
         <NavTile
+          icon={<ImageIcon className="h-4 w-4" />}
+          label="내 사진"
+          hint="업로드한 식단 모아보기"
+          onClick={() => navigate("/diet/photos")}
+        />
+        <NavTile
           icon={<Trophy className="h-4 w-4" />}
           label="습관 랭킹"
           hint="지점 완주율"
           onClick={() => navigate("/diet/ranking")}
-          className="col-span-2"
         />
       </div>
 

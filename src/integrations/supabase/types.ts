@@ -2353,6 +2353,10 @@ export type Database = {
         }
         Returns: Json
       }
+      purge_my_old_diet_photos: {
+        Args: { _older_than_days?: number }
+        Returns: Json
+      }
       submit_diet_daily_log: {
         Args: { _habits: Json; _log_date: string; _note?: string | null }
         Returns: Json

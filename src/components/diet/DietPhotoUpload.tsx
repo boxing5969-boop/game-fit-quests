@@ -55,7 +55,9 @@ export const DietPhotoUpload = ({
   const handleFile = async (slot: DietMealSlot, file: File) => {
     setStates((s) => ({ ...s, [slot]: { pending: true, error: null } }));
     try {
-      const blob = await compressImage(file, 800, 0.75);
+      // 갤러리에서 다시 볼 것을 감안해 살짝 높은 해상도/품질로 압축.
+      // 대략 가장 긴 변 1024 + q 0.72 → 일반 식단 사진 150~300KB 수준.
+      const blob = await compressImage(file, 1024, 0.72);
       await onUpload(slot, blob);
       setStates((s) => ({ ...s, [slot]: { pending: false, error: null } }));
     } catch (e) {

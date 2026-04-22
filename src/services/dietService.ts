@@ -377,6 +377,90 @@ export async function fetchLogPhotos(
   return data ?? [];
 }
 
+/**
+ * 현재 유저 본인의 모든 식단 사진을 업로드 역순으로 조회.
+ * RLS 가 user_id 일치만 허용하므로 필터를 명시적으로 걸어둔다.
+ */
+export async function fetchMyDietPhotos(
+  userId: string,
+): Promise<DietDailyLogPhotoRow[]> {
+  const { data, error } = await supabase
+    .from("diet_daily_log_photos")
+    .select("*")
+    .eq("user_id", userId)
+    .order("uploaded_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * 사진 1장 삭제 — storage + DB 를 모두 정리. 권한은 RLS 가 보장.
+ * storage 쪽 remove 가 이미 없어도 조용히 진행한다 (중복 호출 내성).
+ */
+export async function deleteMyDietPhoto(input: {
+  photoId: string;
+  storagePath: string;
+}): Promise<DietRpcResult<Record<string, never>>> {
+  const { error: storageErr } = await supabase.storage
+    .from(DIET_PHOTOS_BUCKET)
+    .remove([input.storagePath]);
+  if (storageErr && !/not found|does not exist/i.test(storageErr.message)) {
+    return err(storageErr.message);
+  }
+  const { error: dbErr } = await supabase
+    .from("diet_daily_log_photos")
+    .delete()
+    .eq("id", input.photoId);
+  if (dbErr) return err(dbErr.message);
+  return ok({});
+}
+
+/**
+ * 3개월(기본 90일) 이상 지난 내 사진을 DB 에서 일괄 삭제.
+ * 반환된 `paths` 로 storage 실물 파일까지 지워야 완전 정리된다.
+ */
+export async function purgeMyOldDietPhotos(
+  olderThanDays = 90,
+): Promise<DietRpcResult<{ deleted: number; paths: string[] }>> {
+  const { data, error } = await supabase.rpc("purge_my_old_diet_photos", {
+    _older_than_days: olderThanDays,
+  });
+  if (error) return err(error.message);
+  const parsed = asJsonRpc<{ deleted: number; paths: string[] }>(data);
+  if (!parsed.success) return parsed;
+  // 실제 storage 파일 일괄 제거 (존재하지 않아도 조용히 무시)
+  if (parsed.paths.length > 0) {
+    const { error: rmErr } = await supabase.storage
+      .from(DIET_PHOTOS_BUCKET)
+      .remove(parsed.paths);
+    if (rmErr && !/not found|does not exist/i.test(rmErr.message)) {
+      // storage 삭제 실패도 치명적이진 않음 — DB 는 이미 정리됨
+      console.warn("[diet] purge storage remove failed:", rmErr.message);
+    }
+  }
+  return parsed;
+}
+
+/**
+ * 서명된 읽기 URL 을 여러 개 동시에 발급 (유효시간 동일).
+ * storage.createSignedUrls 는 `paths` 배열 + `expiresIn` 을 받는다.
+ */
+export async function getDietPhotoSignedUrls(
+  paths: string[],
+  expiresSec = 300,
+): Promise<DietRpcResult<{ map: Record<string, string> }>> {
+  if (paths.length === 0) return ok({ map: {} });
+  const { data, error } = await supabase.storage
+    .from(DIET_PHOTOS_BUCKET)
+    .createSignedUrls(paths, expiresSec);
+  if (error) return err(error.message);
+  const map: Record<string, string> = {};
+  for (const row of data ?? []) {
+    if (row.path && row.signedUrl) map[row.path] = row.signedUrl;
+  }
+  return ok({ map });
+}
+
 export async function fetchPendingLogsForCoach(limit = 20) {
   const { data, error } = await supabase
     .from("diet_daily_logs")
