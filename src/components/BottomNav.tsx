@@ -21,14 +21,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 // ── Primary tab bar (5 slots: 4 routes + menu) ─────────────────────
-// 명예의 전당은 랭킹 화면(/halloffame) 내부 1차 탭으로 흡수,
-// 랭크업·단증혜택·가이드는 전체 메뉴로 이동. 접근성은 모두 유지.
+// 보상(/rewards)은 전체 메뉴로 이관 — 하단 탭은 가장 자주 쓰는 4개만 유지.
+// 접근성은 전체 메뉴 오버레이에 보존.
 const mainTabs = [
   { path: "/home",       icon: Home,     label: "홈"     },
   { path: "/missions",   icon: Target,   label: "훈련"   },
   { path: "/minigame",   icon: Gamepad2, label: "미니게임" },
   { path: "/halloffame", icon: Trophy,   label: "랭킹"   },
-  { path: "/rewards",    icon: Gift,     label: "보상"   },
 ] as const;
 
 // ── Full menu overlay (everything not on the primary bar) ───────────
@@ -38,10 +37,10 @@ const baseMenuItems = [
   { path: "/missions",          icon: Target,     label: "훈련" },
   { path: "/minigame",          icon: Gamepad2,   label: "미니게임" },
   { path: "/halloffame",        icon: Trophy,     label: "랭킹" },
-  { path: "/rewards",           icon: Gift,       label: "보상" },
   { path: "/rank-up",           icon: TrendingUp, label: "랭크업" },
   { path: "/cert-benefits",     icon: Award,      label: "단증혜택" },
   { path: "/levelmap",          icon: Map,        label: "리그맵" },
+  { path: "/rewards",           icon: Gift,       label: "보상" },
   { path: "/character-studio",  icon: Sparkles,   label: "캐릭터" },
   { path: "/guide",             icon: BookOpen,   label: "가이드" },
   { path: "/mypage",            icon: User,       label: "내정보" },
