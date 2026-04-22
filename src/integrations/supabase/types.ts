@@ -903,6 +903,54 @@ export type Database = {
         }
         Relationships: []
       }
+      hof_reward_claims: {
+        Row: {
+          amount: number
+          granted_at: string
+          id: string
+          kind: string
+          period_key: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          granted_at?: string
+          id?: string
+          kind: string
+          period_key: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          granted_at?: string
+          id?: string
+          kind?: string
+          period_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hof_reward_config: {
+        Row: {
+          amount: number
+          description: string | null
+          kind: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          description?: string | null
+          kind: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          description?: string | null
+          kind?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       level_status: {
         Row: {
           approval_note: string | null
@@ -1046,6 +1094,90 @@ export type Database = {
         }
         Relationships: []
       }
+      master_boss_attempts: {
+        Row: {
+          attempted_at: string
+          coach_note: string | null
+          id: string
+          passed: boolean
+          retained_xp: number
+          target_master_level: number
+          user_id: string
+          xp_snapshot: number
+        }
+        Insert: {
+          attempted_at?: string
+          coach_note?: string | null
+          id?: string
+          passed: boolean
+          retained_xp?: number
+          target_master_level: number
+          user_id: string
+          xp_snapshot?: number
+        }
+        Update: {
+          attempted_at?: string
+          coach_note?: string | null
+          id?: string
+          passed?: boolean
+          retained_xp?: number
+          target_master_level?: number
+          user_id?: string
+          xp_snapshot?: number
+        }
+        Relationships: []
+      }
+      master_level_definitions: {
+        Row: {
+          aura_reward: string | null
+          created_at: string
+          days_required: number
+          description: string | null
+          fail_retention_pct: number
+          frame_reward: string | null
+          gem_reward: number
+          is_boss: boolean
+          master_level: number
+          overall_level: number | null
+          sessions_required: number
+          title: string
+          title_reward: string | null
+          xp_required: number
+        }
+        Insert: {
+          aura_reward?: string | null
+          created_at?: string
+          days_required?: number
+          description?: string | null
+          fail_retention_pct?: number
+          frame_reward?: string | null
+          gem_reward?: number
+          is_boss?: boolean
+          master_level: number
+          overall_level?: number | null
+          sessions_required?: number
+          title: string
+          title_reward?: string | null
+          xp_required?: number
+        }
+        Update: {
+          aura_reward?: string | null
+          created_at?: string
+          days_required?: number
+          description?: string | null
+          fail_retention_pct?: number
+          frame_reward?: string | null
+          gem_reward?: number
+          is_boss?: boolean
+          master_level?: number
+          overall_level?: number | null
+          sessions_required?: number
+          title?: string
+          title_reward?: string | null
+          xp_required?: number
+        }
+        Relationships: []
+      }
       member_badges: {
         Row: {
           awarded_at: string
@@ -1119,6 +1251,9 @@ export type Database = {
           current_level: number
           current_rank: Database["public"]["Enums"]["rank_name"]
           id: string
+          master_level: number
+          master_track_unlocked: boolean
+          overall_level: number | null
           rival_id: string | null
           streak_days: number
           total_xp: number
@@ -1130,6 +1265,9 @@ export type Database = {
           current_level?: number
           current_rank?: Database["public"]["Enums"]["rank_name"]
           id?: string
+          master_level?: number
+          master_track_unlocked?: boolean
+          overall_level?: number | null
           rival_id?: string | null
           streak_days?: number
           total_xp?: number
@@ -1141,6 +1279,9 @@ export type Database = {
           current_level?: number
           current_rank?: Database["public"]["Enums"]["rank_name"]
           id?: string
+          master_level?: number
+          master_track_unlocked?: boolean
+          overall_level?: number | null
           rival_id?: string | null
           streak_days?: number
           total_xp?: number
@@ -1648,6 +1789,30 @@ export type Database = {
           },
         ]
       }
+      tutorial_step_claims: {
+        Row: {
+          amount: number
+          granted_at: string
+          id: string
+          step_order: number
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          granted_at?: string
+          id?: string
+          step_order: number
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          granted_at?: string
+          id?: string
+          step_order?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_avatar_equipment: {
         Row: {
           category_code: string
@@ -1686,6 +1851,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_owned_customizations: {
+        Row: {
+          category: string
+          id: string
+          item_key: string
+          purchased_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          id?: string
+          item_key: string
+          purchased_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          item_key?: string
+          purchased_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_owned_items: {
         Row: {
@@ -1817,6 +2006,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _grant_hof_reward_once: {
+        Args: { _kind: string; _period_key: string; _user_id: string }
+        Returns: Json
+      }
+      advance_master_level:
+        | { Args: { _member_id: string }; Returns: Json }
+        | {
+            Args: { _expected_current?: number; _member_id: string }
+            Returns: Json
+          }
       approve_branch_transfer: {
         Args: { _note?: string; _request_id: string }
         Returns: undefined
@@ -1834,6 +2033,20 @@ export type Database = {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: Json
       }
+      attempt_master_boss:
+        | {
+            Args: { _coach_note?: string; _member_id: string; _passed: boolean }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _coach_note?: string
+              _expected_current?: number
+              _member_id: string
+              _passed: boolean
+            }
+            Returns: Json
+          }
       bulk_complete_member: {
         Args: {
           _member_id: string
@@ -1843,13 +2056,25 @@ export type Database = {
         }
         Returns: Json
       }
+      check_customization_unlock: {
+        Args: { _category: string; _item_key: string }
+        Returns: boolean
+      }
+      claim_hof_first_entry: { Args: never; Returns: Json }
+      claim_hof_monthly_reward: { Args: never; Returns: Json }
+      claim_hof_season_reward: { Args: never; Returns: Json }
+      claim_hof_weekly_reward: { Args: never; Returns: Json }
+      claim_tutorial_step_reward: { Args: { _step: number }; Returns: Json }
+      complete_tutorial_and_grant_reward: { Args: never; Returns: Json }
+      complete_tutorial_once: { Args: { _final_step?: number }; Returns: Json }
       create_notification: {
         Args: { _body?: string; _title: string; _user_id: string }
         Returns: string
       }
+      enter_master_track: { Args: { _member_id: string }; Returns: Json }
       equip_avatar_item: { Args: { _item_id: string }; Returns: undefined }
       get_boss_conquerors: {
-        Args: { _branch_name: string; _limit?: number }
+        Args: { _branch_name?: string; _limit?: number }
         Returns: {
           r_avatar_url: string
           r_bosses_cleared: number
@@ -1861,8 +2086,13 @@ export type Database = {
         }[]
       }
       get_branch_stats: { Args: { _branch_name: string }; Returns: Json }
+      get_caller_user_level: { Args: never; Returns: number }
+      get_customization_required_level: {
+        Args: { _category: string; _item_key: string }
+        Returns: number
+      }
       get_division_ranking: {
-        Args: { _branch_name: string; _limit?: number }
+        Args: { _branch_name?: string; _limit?: number }
         Returns: {
           r_avatar_url: string
           r_bosses_cleared: number
@@ -1890,7 +2120,7 @@ export type Database = {
         }[]
       }
       get_monthly_risers: {
-        Args: { _branch_name: string; _limit?: number }
+        Args: { _branch_name?: string; _limit?: number }
         Returns: {
           monthly_xp: number
           r_avatar_url: string
@@ -1928,7 +2158,7 @@ export type Database = {
         }[]
       }
       get_streak_ranking: {
-        Args: { _branch_name: string; _limit?: number }
+        Args: { _branch_name?: string; _limit?: number }
         Returns: {
           r_avatar_url: string
           r_current_level: number
@@ -1940,7 +2170,7 @@ export type Database = {
         }[]
       }
       get_weekly_activity_ranking: {
-        Args: { _branch_name: string; _limit?: number }
+        Args: { _branch_name?: string; _limit?: number }
         Returns: {
           r_avatar_url: string
           r_current_level: number
@@ -1970,18 +2200,28 @@ export type Database = {
         Args: { _manager_id: string; _member_id: string }
         Returns: boolean
       }
+      is_caller_in_hall_of_fame: { Args: never; Returns: boolean }
       is_coach_of: {
         Args: { _coach_id: string; _member_id: string }
+        Returns: boolean
+      }
+      is_hof_required_item: {
+        Args: { _category: string; _item_key: string }
         Returns: boolean
       }
       is_same_branch: { Args: { _user_id: string }; Returns: boolean }
       manual_level_down: { Args: { _member_id: string }; Returns: Json }
       manual_level_up: { Args: { _member_id: string }; Returns: Json }
+      mark_tutorial_skipped: { Args: never; Returns: Json }
       pass_boss_battle: {
         Args: { _coach_note?: string; _member_id: string }
         Returns: Json
       }
       purchase_avatar_item: { Args: { _item_id: string }; Returns: Json }
+      purchase_customization: {
+        Args: { p_category: string; p_item_key: string; p_price: number }
+        Returns: Json
+      }
       rank_order: {
         Args: { _rank: Database["public"]["Enums"]["rank_name"] }
         Returns: number
@@ -2009,6 +2249,11 @@ export type Database = {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
       }
+      restart_tutorial: { Args: never; Returns: Json }
+      save_member_customization: {
+        Args: { _customization: Json; _style: string }
+        Returns: Json
+      }
       set_level_status: {
         Args: {
           _level: number
@@ -2028,10 +2273,16 @@ export type Database = {
         Returns: Json
       }
       set_rival: { Args: { _rival_id: string }; Returns: undefined }
+      tutorial_step_reward_amount: { Args: { _step: number }; Returns: number }
       unequip_avatar_item: {
         Args: { _category_code: string }
         Returns: undefined
       }
+      update_last_unlock_check_level: {
+        Args: { _level: number }
+        Returns: number
+      }
+      update_tutorial_step: { Args: { _step: number }; Returns: number }
       add_diet_log_photo: {
         Args: {
           _log_id: string
