@@ -296,6 +296,15 @@ const MyPage = () => {
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
+          {profile?.diet_program_enabled && (
+            <button onClick={() => navigate("/diet")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">🥗</span>
+                <span className="text-sm text-foreground">153 다이어트</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
           <button onClick={() => navigate("/settings")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
             <div className="flex items-center gap-3">
               <Settings className="h-4 w-4 text-muted-foreground" />

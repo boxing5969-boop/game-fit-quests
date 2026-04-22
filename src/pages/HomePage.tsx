@@ -395,6 +395,35 @@ const HomePage = () => {
         {/* ─── 5. Retention (7+ days inactive) ─── */}
         {showRestartRoutine && <RetentionBanner />}
 
+        {/* ─── 5b. 153 다이어트 프로그램 (feature flag ON 시만) ─── */}
+        {profile?.diet_program_enabled && (
+          <section>
+            <button
+              type="button"
+              onClick={() => navigate("/diet")}
+              className="w-full rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-reward/5 to-primary/10 p-4 text-left transition-all active:scale-[0.99] hover:border-primary/50"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-reward text-primary-foreground text-xl">
+                  🥗
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                    153 DIET · 21 DAYS
+                  </p>
+                  <p className="mt-0.5 truncate text-[14px] font-bold text-foreground">
+                    살이 덜 찌는 몸습관 만들기
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                    매일 5 습관 체크 · 복싱짐 출석 연동 · 코치 피드백
+                  </p>
+                </div>
+                <span className="shrink-0 text-primary text-xl">→</span>
+              </div>
+            </button>
+          </section>
+        )}
+
         {/* ─── 6. Recent Badges ─── */}
         {recentBadges.length > 0 && (
           <section>
