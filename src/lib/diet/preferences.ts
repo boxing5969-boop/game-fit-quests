@@ -28,6 +28,16 @@ export interface DietPreferences {
   };
   /** 21일 완주 후 선택한 유지 플랜 id (미선택 시 null). */
   maintenance_variant: DietMaintenanceVariantId | null;
+  /**
+   * DIY 식단 구성 — 각 끼니 슬롯별 선택한 음식 이름 배열.
+   * 사용자가 MealPlan 페이지의 구성 빌더로 저장. 비어있으면 아직 미설정.
+   */
+  custom_meal_plan: {
+    breakfast: string[];
+    lunch: string[];
+    dinner: string[];
+    snack: string[];
+  };
 }
 
 export const DEFAULT_DIET_PREFERENCES: DietPreferences = Object.freeze({
@@ -35,6 +45,12 @@ export const DEFAULT_DIET_PREFERENCES: DietPreferences = Object.freeze({
   notifications: { coach_feedback: true, badge_reward: true },
   privacy: { ranking_visible: true },
   maintenance_variant: null,
+  custom_meal_plan: {
+    breakfast: [],
+    lunch: [],
+    dinner: [],
+    snack: [],
+  },
 }) as DietPreferences;
 
 /**
@@ -47,6 +63,12 @@ export function mergeDietPreferences(raw: unknown): DietPreferences {
     notifications: { ...DEFAULT_DIET_PREFERENCES.notifications },
     privacy: { ...DEFAULT_DIET_PREFERENCES.privacy },
     maintenance_variant: DEFAULT_DIET_PREFERENCES.maintenance_variant,
+    custom_meal_plan: {
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snack: [],
+    },
   };
   if (!raw || typeof raw !== "object") return base;
   const r = raw as Record<string, unknown>;
@@ -81,6 +103,18 @@ export function mergeDietPreferences(raw: unknown): DietPreferences {
     typeof mv === "string" && (allowed as string[]).includes(mv)
       ? (mv as DietMaintenanceVariantId)
       : null;
+
+  // custom_meal_plan — 슬롯별 string[] 만 허용
+  const cmp = (r.custom_meal_plan ?? {}) as Record<string, unknown>;
+  const toStrArr = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((i) => typeof i === "string") : [];
+  base.custom_meal_plan = {
+    breakfast: toStrArr(cmp.breakfast),
+    lunch: toStrArr(cmp.lunch),
+    dinner: toStrArr(cmp.dinner),
+    snack: toStrArr(cmp.snack),
+  };
+
   return base;
 }
 
