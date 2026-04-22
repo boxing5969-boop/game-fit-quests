@@ -501,24 +501,6 @@ export type Database = {
         }
         Relationships: []
       }
-      diet_preferences: {
-        Row: {
-          settings: Json
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          settings?: Json
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          settings?: Json
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       diet_coach_notes: {
         Row: {
           author_id: string
@@ -553,7 +535,22 @@ export type Database = {
           template_type?: Database["public"]["Enums"]["diet_coach_note_template"]
           visibility?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "diet_coach_notes_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "diet_program_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diet_coach_notes_related_log_id_fkey"
+            columns: ["related_log_id"]
+            isOneToOne: false
+            referencedRelation: "diet_daily_logs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       diet_daily_log_photos: {
         Row: {
@@ -580,7 +577,15 @@ export type Database = {
           uploaded_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "diet_daily_log_photos_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "diet_daily_logs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       diet_daily_logs: {
         Row: {
@@ -655,6 +660,32 @@ export type Database = {
           veggies_natural?: boolean | null
           water_ml?: number | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "diet_daily_logs_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "diet_program_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diet_preferences: {
+        Row: {
+          settings: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          settings?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          settings?: Json
+          updated_at?: string
+          user_id?: string
+        }
         Relationships: []
       }
       diet_program_enrollments: {
@@ -709,7 +740,15 @@ export type Database = {
           user_id?: string
           warning_flags?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "diet_program_enrollments_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: false
+            referencedRelation: "diet_safety_screenings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       diet_progress_snapshots: {
         Row: {
@@ -751,7 +790,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "diet_progress_snapshots_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: true
+            referencedRelation: "diet_program_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       diet_safety_screenings: {
         Row: {
@@ -832,7 +879,15 @@ export type Database = {
           waist_cm?: number | null
           week_index?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "diet_weekly_reviews_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "diet_program_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       external_cert_progress: {
         Row: {
@@ -2010,6 +2065,14 @@ export type Database = {
         Args: { _kind: string; _period_key: string; _user_id: string }
         Returns: Json
       }
+      add_diet_log_photo: {
+        Args: {
+          _log_id: string
+          _meal_slot: Database["public"]["Enums"]["diet_meal_slot"]
+          _storage_path: string
+        }
+        Returns: Json
+      }
       advance_master_level:
         | { Args: { _member_id: string }; Returns: Json }
         | {
@@ -2067,9 +2130,23 @@ export type Database = {
       claim_tutorial_step_reward: { Args: { _step: number }; Returns: Json }
       complete_tutorial_and_grant_reward: { Args: never; Returns: Json }
       complete_tutorial_once: { Args: { _final_step?: number }; Returns: Json }
+      create_diet_coach_note: {
+        Args: {
+          _enrollment_id: string
+          _note_text: string
+          _related_log_id?: string
+          _template_type?: Database["public"]["Enums"]["diet_coach_note_template"]
+          _visibility?: string
+        }
+        Returns: Json
+      }
       create_notification: {
         Args: { _body?: string; _title: string; _user_id: string }
         Returns: string
+      }
+      enroll_diet_program: {
+        Args: { _coach_assigned_id?: string; _screening_id: string }
+        Returns: Json
       }
       enter_master_track: { Args: { _member_id: string }; Returns: Json }
       equip_avatar_item: { Args: { _item_id: string }; Returns: undefined }
@@ -2086,10 +2163,26 @@ export type Database = {
         }[]
       }
       get_branch_stats: { Args: { _branch_name: string }; Returns: Json }
+      get_caller_age: { Args: never; Returns: number }
       get_caller_user_level: { Args: never; Returns: number }
       get_customization_required_level: {
         Args: { _category: string; _item_key: string }
         Returns: number
+      }
+      get_diet_preferences: { Args: never; Returns: Json }
+      get_diet_progress: { Args: { _user_id?: string }; Returns: Json }
+      get_diet_ranking: {
+        Args: { _branch_name: string; _limit?: number }
+        Returns: {
+          r_approved_days: number
+          r_avatar_url: string
+          r_best_streak: number
+          r_completion_rate: number
+          r_habit_score: number
+          r_nickname: string
+          r_user_id: string
+          rank_position: number
+        }[]
       }
       get_division_ranking: {
         Args: { _branch_name?: string; _limit?: number }
@@ -2210,6 +2303,10 @@ export type Database = {
         Returns: boolean
       }
       is_same_branch: { Args: { _user_id: string }; Returns: boolean }
+      log_diet_event: {
+        Args: { _event_data?: Json; _event_type: string }
+        Returns: Json
+      }
       manual_level_down: { Args: { _member_id: string }; Returns: Json }
       manual_level_up: { Args: { _member_id: string }; Returns: Json }
       mark_tutorial_skipped: { Args: never; Returns: Json }
@@ -2227,6 +2324,17 @@ export type Database = {
         Returns: number
       }
       record_attendance: { Args: { _user_id: string }; Returns: undefined }
+      record_diet_safety_screening: {
+        Args: {
+          _consent_accepted: boolean
+          _consent_version: number
+          _diabetes_medication: boolean
+          _eating_disorder_risk: boolean
+          _other_conditions: string
+          _pregnancy_breastfeeding: boolean
+        }
+        Returns: Json
+      }
       reject_branch_transfer: {
         Args: { _note?: string; _request_id: string }
         Returns: undefined
@@ -2249,7 +2357,19 @@ export type Database = {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
       }
+      resolve_diet_track: {
+        Args: never
+        Returns: Database["public"]["Enums"]["diet_track"]
+      }
       restart_tutorial: { Args: never; Returns: Json }
+      review_diet_log: {
+        Args: {
+          _action: Database["public"]["Enums"]["diet_log_status"]
+          _feedback?: string
+          _log_id: string
+        }
+        Returns: Json
+      }
       save_member_customization: {
         Args: { _customization: Json; _style: string }
         Returns: Json
@@ -2273,104 +2393,25 @@ export type Database = {
         Returns: Json
       }
       set_rival: { Args: { _rival_id: string }; Returns: undefined }
-      tutorial_step_reward_amount: { Args: { _step: number }; Returns: number }
-      unequip_avatar_item: {
-        Args: { _category_code: string }
-        Returns: undefined
-      }
-      update_last_unlock_check_level: {
-        Args: { _level: number }
-        Returns: number
-      }
-      update_tutorial_step: { Args: { _step: number }; Returns: number }
-      add_diet_log_photo: {
-        Args: {
-          _log_id: string
-          _meal_slot: Database["public"]["Enums"]["diet_meal_slot"]
-          _storage_path: string
-        }
-        Returns: Json
-      }
-      create_diet_coach_note: {
-        Args: {
-          _enrollment_id: string
-          _note_text: string
-          _related_log_id?: string | null
-          _template_type?: Database["public"]["Enums"]["diet_coach_note_template"]
-          _visibility?: string
-        }
-        Returns: Json
-      }
-      enroll_diet_program: {
-        Args: { _coach_assigned_id?: string | null; _screening_id: string }
-        Returns: Json
-      }
-      get_caller_age: { Args: Record<string, never>; Returns: number | null }
-      get_diet_progress: {
-        Args: { _user_id?: string | null }
-        Returns: Json
-      }
-      get_diet_ranking: {
-        Args: { _branch_name: string; _limit?: number }
-        Returns: {
-          r_approved_days: number
-          r_avatar_url: string | null
-          r_best_streak: number
-          r_completion_rate: number
-          r_habit_score: number
-          r_nickname: string
-          r_user_id: string
-          rank_position: number
-        }[]
-      }
-      record_diet_safety_screening: {
-        Args: {
-          _consent_accepted: boolean
-          _consent_version: number
-          _diabetes_medication: boolean
-          _eating_disorder_risk: boolean
-          _other_conditions: string | null
-          _pregnancy_breastfeeding: boolean
-        }
-        Returns: Json
-      }
-      resolve_diet_track: {
-        Args: Record<string, never>
-        Returns: Database["public"]["Enums"]["diet_track"] | null
-      }
-      review_diet_log: {
-        Args: {
-          _action: Database["public"]["Enums"]["diet_log_status"]
-          _feedback?: string | null
-          _log_id: string
-        }
-        Returns: Json
-      }
-      add_diet_coach_feedback: {
-        Args: {
-          _log_id: string
-          _feedback: string
-        }
-        Returns: Json
-      }
-      purge_my_old_diet_photos: {
-        Args: { _older_than_days?: number }
-        Returns: Json
-      }
       submit_diet_daily_log: {
-        Args: { _habits: Json; _log_date: string; _note?: string | null }
+        Args: { _habits: Json; _log_date: string; _note?: string }
         Returns: Json
       }
       submit_diet_weekly_review: {
         Args: {
-          _body_photo_url?: string | null
+          _body_photo_url?: string
           _enrollment_id: string
-          _next_week_focus?: string | null
-          _reflection?: string | null
-          _waist_cm?: number | null
+          _next_week_focus?: string
+          _reflection?: string
+          _waist_cm?: number
           _week_index: number
         }
         Returns: Json
+      }
+      tutorial_step_reward_amount: { Args: { _step: number }; Returns: number }
+      unequip_avatar_item: {
+        Args: { _category_code: string }
+        Returns: undefined
       }
       update_diet_enrollment_status: {
         Args: {
@@ -2379,18 +2420,12 @@ export type Database = {
         }
         Returns: Json
       }
-      log_diet_event: {
-        Args: { _event_type: string; _event_data?: Json }
-        Returns: Json
+      update_last_unlock_check_level: {
+        Args: { _level: number }
+        Returns: number
       }
-      get_diet_preferences: {
-        Args: Record<string, never>
-        Returns: Json
-      }
-      upsert_diet_preferences: {
-        Args: { _settings: Json }
-        Returns: Json
-      }
+      update_tutorial_step: { Args: { _step: number }; Returns: number }
+      upsert_diet_preferences: { Args: { _settings: Json }; Returns: Json }
     }
     Enums: {
       app_role: "member" | "coach" | "admin" | "branch_manager" | "super_admin"
