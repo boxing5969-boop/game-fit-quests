@@ -404,7 +404,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
       </div>
 
       <p className="text-center text-[11px] text-muted-foreground">
-        현재 검토 대기: <strong className="text-foreground">{p.pendingDays}</strong>일
+        자가 기록 완료: <strong className="text-foreground">{p.approvedDays}</strong>일 / 21일
       </p>
 
       {/* 21일 완주 축하 모달 — 1회성 */}

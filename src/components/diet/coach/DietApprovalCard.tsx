@@ -1,20 +1,18 @@
 import { useState } from "react";
 import {
   Camera,
-  Check,
   Droplets,
   Flame,
   Footprints,
+  MessageCircle,
   Moon,
-  RotateCcw,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 import type { Database } from "@/integrations/supabase/types";
-import { useReviewDietLog } from "@/hooks/useDietCoach";
+import { useAddCoachFeedback } from "@/hooks/useDietCoach";
 import { scoreFromLogRow } from "@/lib/diet/scoreEngine";
 import { DIET_STAGES } from "@/data/dietProgramData";
 import DietCoachTemplatePicker, {
@@ -31,14 +29,14 @@ interface DietApprovalCardProps {
   avatarUrl: string | null;
   photosCount: number;
   onReviewed?: () => void;
-  /** 클릭 시 멤버 상세 페이지로 이동 */
   onOpenMember?: (userId: string) => void;
   className?: string;
 }
 
 /**
- * 코치 승인 카드 — 썸네일·5체크·수치·피드백 입력·승인/수정/반려.
- * 질병 진단 표현 없이 "주의" 수준으로만 운영 플래그 노출.
+ * 코치 피드백 카드 — 승인 체계가 폐지되고 자가 기록으로 전환됨에 따라
+ * 승인/반려/수정 3-버튼은 제거되고 "피드백 보내기" 단일 액션만 남는다.
+ * 기존 props 시그니처 유지 — 상위 페이지(`DietCoachInboxPage`, `MemberDetailPage`) 호환.
  */
 export const DietApprovalCard = ({
   log,
@@ -49,8 +47,8 @@ export const DietApprovalCard = ({
   onOpenMember,
   className,
 }: DietApprovalCardProps) => {
-  const review = useReviewDietLog();
-  const [feedback, setFeedback] = useState("");
+  const feedback = useAddCoachFeedback();
+  const [text, setText] = useState(log.coach_feedback ?? "");
   const [tplId, setTplId] = useState<string | null>(null);
 
   const stageLabel =
@@ -62,36 +60,35 @@ export const DietApprovalCard = ({
 
   const score = scoreFromLogRow(log, photosCount, false).total;
 
-  const dispatch = async (action: "approved" | "rejected" | "revision_requested") => {
+  const sendFeedback = async () => {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      toast.error("피드백을 입력해 주세요.");
+      return;
+    }
     try {
-      const r = await review.mutateAsync({
+      const r = await feedback.mutateAsync({
         logId: log.id,
-        action,
-        feedback: feedback.trim() || null,
+        feedback: trimmed,
       });
       if (!r.success) {
-        toast.error(`처리 실패: ${r.error}`);
+        toast.error(`전송 실패: ${r.error}`);
         return;
       }
-      toast.success(
-        action === "approved"
-          ? "승인했어요. 다음 카드로 이동합니다."
-          : action === "rejected"
-            ? "반려 처리 — 회원에게 알림이 전송됐어요."
-            : "수정 요청 — 회원이 다시 제출할 수 있어요.",
-      );
+      toast.success("피드백을 보냈어요. 회원 알림으로 전달됩니다.");
       onReviewed?.();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "처리 실패");
+      toast.error(e instanceof Error ? e.message : "전송 실패");
     }
   };
 
   const handleTemplate = (t: CoachTemplateItem) => {
     setTplId(t.id);
-    setFeedback(t.body);
+    setText(t.body);
   };
 
-  const busy = review.isPending;
+  const busy = feedback.isPending;
+  const alreadySent = !!log.coach_feedback;
 
   return (
     <div
@@ -128,7 +125,7 @@ export const DietApprovalCard = ({
         </span>
       </div>
 
-      {/* 체크 summary + 수치 + 사진 count */}
+      {/* 체크 summary + 사진 count */}
       <div className="grid grid-cols-2 gap-1.5 text-[11.5px]">
         <SmallStat
           label="단백질"
@@ -201,60 +198,37 @@ export const DietApprovalCard = ({
       {/* 템플릿 */}
       <DietCoachTemplatePicker selectedId={tplId} onPick={handleTemplate} />
 
-      {/* 피드백 */}
+      {/* 피드백 입력 */}
       <Textarea
-        value={feedback}
+        value={text}
         onChange={(e) => {
-          setFeedback(e.target.value.slice(0, 300));
+          setText(e.target.value.slice(0, 300));
           setTplId(null);
         }}
         placeholder="회원에게 보낼 한마디 (템플릿 선택 또는 직접 입력)"
         className="min-h-[72px] rounded-xl text-[13px]"
       />
 
-      {/* 액션 */}
+      {/* 액션 — 단일 "피드백 보내기" */}
       <div className="flex gap-1.5">
         <Button
           type="button"
-          variant="outline"
           disabled={busy}
-          onClick={() => dispatch("rejected")}
-          className="flex-1 h-10 rounded-xl"
-        >
-          <X className="mr-1 h-4 w-4" />
-          반려
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={busy}
-          onClick={() => dispatch("revision_requested")}
-          className="flex-1 h-10 rounded-xl"
-        >
-          <RotateCcw className="mr-1 h-4 w-4" />
-          수정
-        </Button>
-        <Button
-          type="button"
-          disabled={busy}
-          onClick={() => dispatch("approved")}
+          onClick={sendFeedback}
           className={cn(
             "flex-1 h-10 rounded-xl font-bold",
             "bg-gradient-to-r from-primary to-primary/85 text-primary-foreground",
             "shadow-[0_4px_14px_-4px_rgba(217,54,32,0.6)]",
           )}
         >
-          <Check className="mr-1 h-4 w-4" />
-          승인
+          <MessageCircle className="mr-1 h-4 w-4" />
+          {alreadySent ? "피드백 업데이트" : "피드백 보내기"}
         </Button>
       </div>
 
-      {/* 운영 힌트 (질병 진단 아님) */}
-      {log.status === "pending" && (
-        <p className="text-[10.5px] text-muted-foreground">
-          <Flame className="inline h-3 w-3 text-primary" /> 운영 힌트: 연속 미기록·수면 부족이 겹친 회원에겐 "수면 챙기기" 템플릿 권장.
-        </p>
-      )}
+      <p className="text-[10.5px] text-muted-foreground">
+        <Flame className="inline h-3 w-3 text-primary" /> 회원은 자가 기록 + 즉시 보상 모드입니다. 코치는 응원·코칭 메시지만 보냅니다.
+      </p>
     </div>
   );
 };

@@ -13,17 +13,11 @@ import DietApprovalCard from "@/components/diet/coach/DietApprovalCard";
 import { cn } from "@/lib/utils";
 
 /**
- * /coach/diet — 코치용 식습관 승인 인박스.
+ * /coach/diet — 코치 피드백 인박스 (자가 기록 체제 전환 후 버전).
  *
- * 기존 ApprovalInbox 를 건드리지 않고 별도 페이지로 구성.
- * (ApprovalInbox 는 미션/퀘스트/가입 승인 전용 — Stage 1 감사 참고)
- *
- * 필터
- *   • 정렬: "오래된 순" (SLA) / "최신 순"
- *   • 필터: 전체 / 사진 있음만 / 사진 없음 / 누락 회원
- *
- * 누락(Stale) 은 서버 권장이 아닌 UI 필터 — 운영 편의.
- * "주의 필요" 플래그는 `warning_flags` 에서 읽어와 칩 표시.
+ * 회원은 스스로 기록하고 스스로 보상을 받으므로 "승인" 개념이 없다.
+ * 이 페이지는 코치가 아직 피드백을 남기지 않은 최근 체크인을 훑어보며
+ * 응원·코칭 메시지만 덧붙일 수 있도록 유지된다.
  */
 const DietCoachInboxPage = () => {
   const navigate = useNavigate();
@@ -55,8 +49,8 @@ const DietCoachInboxPage = () => {
     <AppPage
       header={
         <PageHeader
-          title="식습관 승인"
-          subtitle="오늘의 회원 체크인을 검토해요"
+          title="식습관 피드백"
+          subtitle="회원의 자가 기록에 응원 한마디를 남겨보세요"
           leftAction={
             <button
               type="button"
@@ -104,7 +98,7 @@ const DietCoachInboxPage = () => {
 
         <div className="flex items-center gap-2 text-[11.5px] text-muted-foreground">
           <Filter className="h-3.5 w-3.5" />
-          검토 대기 {items.length}건
+          피드백 미전달 {items.length}건
         </div>
 
         {/* 리스트 */}
@@ -115,10 +109,10 @@ const DietCoachInboxPage = () => {
             <div className="flex flex-col items-center gap-1.5 py-4">
               <Inbox className="h-6 w-6 text-muted-foreground" />
               <p className="text-[13px] font-bold text-foreground">
-                검토할 체크인이 없어요
+                모든 회원에게 피드백을 남겼어요
               </p>
               <p className="text-[11.5px] text-muted-foreground">
-                승인된 기록은 멤버 상세에서 확인할 수 있어요.
+                자가 기록된 최근 체크인은 멤버 상세에서도 확인할 수 있어요.
               </p>
             </div>
           </PlaceholderCard>

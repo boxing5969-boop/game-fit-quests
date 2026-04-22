@@ -2346,6 +2346,13 @@ export type Database = {
         }
         Returns: Json
       }
+      add_diet_coach_feedback: {
+        Args: {
+          _log_id: string
+          _feedback: string
+        }
+        Returns: Json
+      }
       submit_diet_daily_log: {
         Args: { _habits: Json; _log_date: string; _note?: string | null }
         Returns: Json

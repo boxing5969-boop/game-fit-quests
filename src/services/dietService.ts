@@ -121,11 +121,30 @@ export interface DailyHabitsPayload {
   memo?: string | null;
 }
 
+/**
+ * 자가 기록 모드 — 첫 제출 시 파이트 머니 3 + 배지 + (21일째면 보너스 50).
+ * 같은 날 재제출은 필드만 갱신하고 보상은 지급하지 않는다 (granted_gems=0).
+ */
+export interface SubmitDailyLogResult {
+  log_id: string;
+  day_number: number;
+  first_submit: boolean;
+  granted_gems: number;
+  bonus_gems?: number;
+  approved_days_total?: number;
+  current_streak?: number;
+  milestones_newly_reached?: {
+    m7: boolean;
+    m14: boolean;
+    m21: boolean;
+  };
+}
+
 export async function submitDailyLog(input: {
   logDate: string; // YYYY-MM-DD
   habits: DailyHabitsPayload;
   note?: string | null;
-}): Promise<DietRpcResult<{ log_id: string; day_number: number }>> {
+}): Promise<DietRpcResult<SubmitDailyLogResult>> {
   const { data, error } = await supabase.rpc("submit_diet_daily_log", {
     _log_date: input.logDate,
     _habits: input.habits as unknown as Database["public"]["Tables"]["diet_daily_logs"]["Row"] extends infer _ ? never : never,
@@ -215,6 +234,22 @@ export async function reviewDailyLog(input: {
     _log_id: input.logId,
     _action: input.action,
     _feedback: input.feedback ?? null,
+  });
+  if (error) return err(error.message);
+  return asJsonRpc(data);
+}
+
+/**
+ * 코치 피드백 전용 — 승인/상태 변경 없이 피드백 메시지만 남긴다.
+ * 자가 기록 체제에서 코치는 이 RPC 로만 상호작용한다.
+ */
+export async function addCoachFeedback(input: {
+  logId: string;
+  feedback: string;
+}): Promise<DietRpcResult<Record<string, never>>> {
+  const { data, error } = await supabase.rpc("add_diet_coach_feedback", {
+    _log_id: input.logId,
+    _feedback: input.feedback,
   });
   if (error) return err(error.message);
   return asJsonRpc(data);

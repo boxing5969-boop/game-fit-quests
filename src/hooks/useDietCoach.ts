@@ -29,16 +29,21 @@ export interface PendingDietLogItem {
   avatar_url: string | null;
 }
 
+/**
+ * 자가 기록 체제 전환 이후 "승인 대기" 개념이 사라졌다.
+ * 이 훅은 이름을 유지하되 반환 내용은 "코치 피드백이 아직 안 달린 최근 로그"로 바뀐다.
+ * 기존 호출부(DietCoachInboxPage 등)는 UI 변경 없이 그대로 동작한다.
+ */
 export function usePendingDietLogs(limit = 30) {
   return useQuery({
-    queryKey: ["diet", "coach", "pending", limit],
+    queryKey: ["diet", "coach", "awaitingFeedback", limit],
     staleTime: 15_000,
     queryFn: async (): Promise<PendingDietLogItem[]> => {
       const { data: logs, error } = await supabase
         .from("diet_daily_logs")
         .select("*")
-        .eq("status", "pending")
-        .order("submitted_at", { ascending: true })
+        .is("coach_feedback", null)
+        .order("submitted_at", { ascending: false })
         .limit(limit);
       if (error) throw error;
       if (!logs || logs.length === 0) return [];
@@ -137,34 +142,35 @@ const invalidateCoach = (qc: ReturnType<typeof useQueryClient>) => {
   qc.invalidateQueries({ queryKey: ["diet", "progress"] });
 };
 
+/**
+ * @deprecated 자가 기록 체제 전환 이후 사용하지 않는다. 호출 경로가 제거된 뒤 삭제 예정.
+ * 기존 시그니처는 유지해 외부 참조가 있더라도 빌드는 통과하도록 둔다.
+ */
 export function useReviewDietLog() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: diet.reviewDailyLog,
+    onSuccess: () => {
+      invalidateCoach(qc);
+    },
+  });
+}
+
+/**
+ * 코치 피드백 전용 — 승인/반려 없이 텍스트 한 줄만 회원에게 전달.
+ */
+export function useAddCoachFeedback() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: diet.addCoachFeedback,
     onSuccess: (res, variables) => {
       invalidateCoach(qc);
-      // best-effort analytics — 승인 시 보상/배지/완주 신호
-      if ("success" in res && res.success && res.action === "approved") {
-        void diet.logDietEvent(DIET_EVENT_TYPES.HABIT_SCORE_UPDATED, {
+      if ("success" in res && res.success) {
+        void diet.logDietEvent(DIET_EVENT_TYPES.COACH_NOTE_SENT, {
           log_id: variables.logId,
-          approved_days_total: res.approved_days_total ?? null,
+          template_type: "feedback_inline",
+          visibility: "member_visible",
         });
-        const newly = res.milestones_newly_reached ?? {
-          m7: false,
-          m14: false,
-          m21: false,
-        };
-        if (newly.m7 || newly.m14 || newly.m21) {
-          void diet.logDietEvent(DIET_EVENT_TYPES.BADGE_EARNED, {
-            log_id: variables.logId,
-            milestones: newly,
-          });
-        }
-        if (newly.m21) {
-          void diet.logDietEvent(DIET_EVENT_TYPES.PROGRAM_COMPLETED, {
-            log_id: variables.logId,
-          });
-        }
       }
     },
   });

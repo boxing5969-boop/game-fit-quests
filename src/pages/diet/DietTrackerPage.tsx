@@ -125,13 +125,13 @@ const DietTrackerPage = () => {
     setHydrated(true);
   }, [hydrated, user?.id, progressQuery.isLoading, todayLogQuery.isLoading, logRow, logDate]);
 
-  // 입력 변경 시 local draft 저장 (submit 전까지만)
+  // 입력 변경 시 local draft 저장 — 자가 기록 모드에서는 제출 이후에도
+  // 언제든 재수정 가능하므로 항상 드래프트를 유지한다.
   useEffect(() => {
     if (!hydrated || !user?.id) return;
-    if (logRow?.status === "approved") return; // 승인된 이후엔 드래프트 비활성
     const payloadDraft: DietTrackerDraft = { habits, note };
     saveTrackerDraft(user.id, logDate, payloadDraft);
-  }, [habits, note, hydrated, user?.id, logDate, logRow?.status]);
+  }, [habits, note, hydrated, user?.id, logDate]);
 
   // 출석 브릿지 — 오늘 attendance_logs 있으면 gym_attended 를 true 초기값으로
   //             한 번만 자동 반영. 사용자가 수동 off 한 뒤 재덮어쓰기 금지.
@@ -164,10 +164,24 @@ const DietTrackerPage = () => {
         return;
       }
       if (user?.id) clearTrackerDraft(user.id, logDate);
-      toast.success("오늘의 체크인이 저장됐어요. 한 번 놓쳐도 다음 끼니부터 다시 시작!");
+
+      if (r.first_submit) {
+        const bonus = r.bonus_gems ?? 0;
+        const base = r.granted_gems ?? 0;
+        const total = base + bonus;
+        toast.success(
+          bonus > 0
+            ? `🥊 21일 완주! 파이트 머니 +${total} (기본 ${base} · 보너스 ${bonus})`
+            : `🥊 기록 완료! 파이트 머니 +${total}`,
+        );
+      } else {
+        toast.success("오늘 기록이 업데이트됐어요. 언제든 다시 수정 가능합니다.");
+      }
+
       void logEvent(DIET_EVENT_TYPES.DAILY_CHECKIN_COMPLETED, {
         log_id: r.log_id,
         day_number: r.day_number,
+        first_submit: r.first_submit,
       });
     } catch (e) {
       toast.error(
@@ -233,7 +247,8 @@ const DietTrackerPage = () => {
   }
 
   const submitBusy = submitMutation.isPending;
-  const isApproved = logRow?.status === "approved";
+  // 자가 기록 모드 — 이미 제출한 적 있는지 여부(UX 문구용). 수정은 언제든 허용.
+  const hasRecord = !!logRow?.id;
 
   return (
     <Shell>
@@ -252,9 +267,9 @@ const DietTrackerPage = () => {
                 {logDate} · 하루 1~2분이면 충분해요.
               </p>
             </div>
-            {isApproved && (
+            {hasRecord && (
               <span className="rounded-full bg-reward/15 px-2.5 py-1 text-[10px] font-black uppercase text-reward">
-                승인 완료
+                기록 완료
               </span>
             )}
           </div>
@@ -351,21 +366,20 @@ const DietTrackerPage = () => {
           />
         </Section>
 
-        {/* 저장 / 임시저장 */}
+        {/* 저장 / 임시저장 — 자가 기록 모드에서는 언제든 재수정 가능 */}
         <div className="sticky bottom-0 -mx-5 border-t border-border bg-background/95 px-5 py-3 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               onClick={handleSaveDraftOnly}
               className="h-11 rounded-2xl px-4"
-              disabled={isApproved}
             >
               <Save className="mr-1 h-4 w-4" />
               임시저장
             </Button>
             <Button
               onClick={handleSave}
-              disabled={submitBusy || isApproved}
+              disabled={submitBusy}
               className={cn(
                 "ml-auto h-11 flex-1 rounded-2xl font-bold tracking-wide",
                 "bg-gradient-to-r from-primary to-primary/85 text-primary-foreground",
@@ -374,9 +388,9 @@ const DietTrackerPage = () => {
             >
               {submitBusy
                 ? "저장 중..."
-                : isApproved
-                  ? "이미 승인된 기록"
-                  : "오늘 체크인 저장"}
+                : hasRecord
+                  ? "오늘 기록 수정"
+                  : "오늘 체크인 저장 · 🥊 +3"}
             </Button>
           </div>
         </div>

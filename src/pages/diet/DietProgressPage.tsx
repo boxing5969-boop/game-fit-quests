@@ -157,9 +157,7 @@ const DietProgressPage = () => {
 
 const Legend = () => (
   <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
-    <LegendDot tone="approved" label="승인" />
-    <LegendDot tone="pending" label="검토 대기" />
-    <LegendDot tone="rejected" label="반려" />
+    <LegendDot tone="approved" label="기록" />
     <LegendDot tone="empty" label="미기록" />
   </div>
 );
@@ -214,10 +212,9 @@ const WeekCard = ({
           {approved} <span className="text-[11px] text-muted-foreground">/ {total}</span>
         </p>
       </div>
-      <div className="mt-2 grid grid-cols-3 gap-1.5 text-[10.5px]">
-        <StatPill label="승인" value={approved} tone="primary" />
-        <StatPill label="대기" value={pending} tone="neutral" />
-        <StatPill label="반려" value={rejected} tone="danger" />
+      <div className="mt-2 grid grid-cols-2 gap-1.5 text-[10.5px]">
+        <StatPill label="기록" value={approved} tone="primary" />
+        <StatPill label="미기록" value={Math.max(0, total - approved - pending - rejected)} tone="neutral" />
       </div>
     </div>
   );
