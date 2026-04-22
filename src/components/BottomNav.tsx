@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Home,
   Target,
@@ -10,12 +10,14 @@ import {
   BookOpen,
   Map,
   Sparkles,
+  Salad,
   User,
   Settings,
   Gamepad2,
   X,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 // ── Primary tab bar (5 slots: 4 routes + menu) ─────────────────────
@@ -30,7 +32,8 @@ const mainTabs = [
 ] as const;
 
 // ── Full menu overlay (everything not on the primary bar) ───────────
-const allMenuItems = [
+// /diet 항목은 feature flag 에 따라 조건부로 포함 — 아래 useMemo 참조.
+const baseMenuItems = [
   { path: "/home",              icon: Home,       label: "홈" },
   { path: "/missions",          icon: Target,     label: "훈련" },
   { path: "/minigame",          icon: Gamepad2,   label: "미니게임" },
@@ -44,6 +47,8 @@ const allMenuItems = [
   { path: "/mypage",            icon: User,       label: "내정보" },
   { path: "/settings",          icon: Settings,   label: "설정" },
 ] as const;
+
+type MenuItem = { path: string; icon: typeof Home; label: string };
 
 const hiddenPaths = [
   "/",
@@ -64,7 +69,22 @@ const INACTIVE_TONE = "text-[#8C95A3]";
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // /diet 은 feature flag(`profiles.diet_program_enabled`) ON 일 때만 노출.
+  // 캐릭터(index 8) 뒤, 가이드(index 9) 앞에 삽입해 "활동 → 꾸미기 → 다이어트 → 가이드" 순 유지.
+  const allMenuItems = useMemo<readonly MenuItem[]>(() => {
+    if (!profile?.diet_program_enabled) return baseMenuItems;
+    const dietItem: MenuItem = { path: "/diet", icon: Salad, label: "다이어트" };
+    const insertAt = baseMenuItems.findIndex((i) => i.path === "/guide");
+    const idx = insertAt === -1 ? baseMenuItems.length : insertAt;
+    return [
+      ...baseMenuItems.slice(0, idx),
+      dietItem,
+      ...baseMenuItems.slice(idx),
+    ];
+  }, [profile?.diet_program_enabled]);
 
   if (
     hiddenPaths.includes(location.pathname) ||
