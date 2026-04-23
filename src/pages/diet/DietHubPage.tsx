@@ -3,18 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
-  Brain,
   Calendar,
-  ChefHat,
   ChevronLeft,
-  Flag,
-  HeartHandshake,
-  ImageIcon,
-  LineChart,
-  Salad,
   Sparkles,
-  Trophy,
-  UtensilsCrossed,
 } from "lucide-react";
 
 import AppPage from "@/components/ui/rankingup/AppPage";
@@ -41,6 +32,7 @@ import CoachCornerCard from "@/components/diet/CoachCornerCard";
 import DietReminderBanner from "@/components/diet/DietReminderBanner";
 import DietCompletionModal from "@/components/diet/DietCompletionModal";
 import PostProgramRouter from "@/components/diet/post/PostProgramRouter";
+import DietSubNav from "@/components/diet/DietSubNav";
 import { useDietPreferences } from "@/hooks/useDietPreferences";
 import { useDietAnalytics } from "@/hooks/useDietAnalytics";
 import {
@@ -164,7 +156,10 @@ const HubShell = ({
       />
     }
   >
-    <div className="space-y-4 pt-2">{children}</div>
+    <div className="space-y-4">
+      <DietSubNav />
+      <div className="space-y-4">{children}</div>
+    </div>
   </AppPage>
 );
 
@@ -403,63 +398,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
         createdAt={coachNoteQuery.data?.created_at ?? null}
       />
 
-      {/* 하위 페이지 네비게이션 — 과학·식단 탭 추가로 5 grid 구성 */}
-      <div className="grid grid-cols-2 gap-2">
-        <NavTile
-          icon={<Brain className="h-4 w-4" />}
-          label="왜 153다이어트?"
-          hint="과학·원리 설명"
-          onClick={() => navigate("/diet/value")}
-        />
-        <NavTile
-          icon={<Salad className="h-4 w-4" />}
-          label="21일 식단"
-          hint="무제한·적정량·피하기"
-          onClick={() => navigate("/diet/meal-plan")}
-        />
-        <NavTile
-          icon={<LineChart className="h-4 w-4" />}
-          label="진행 현황"
-          hint="21일 타임라인"
-          onClick={() => navigate("/diet/progress")}
-        />
-        <NavTile
-          icon={<UtensilsCrossed className="h-4 w-4" />}
-          label="음식 가이드"
-          hint="권장·줄이기·팁"
-          onClick={() => navigate("/diet/food")}
-        />
-        <NavTile
-          icon={<ImageIcon className="h-4 w-4" />}
-          label="내 사진"
-          hint="업로드한 식단 모아보기"
-          onClick={() => navigate("/diet/photos")}
-        />
-        <NavTile
-          icon={<Trophy className="h-4 w-4" />}
-          label="습관 랭킹"
-          hint="지점 완주율"
-          onClick={() => navigate("/diet/ranking")}
-        />
-        <NavTile
-          icon={<ChefHat className="h-4 w-4" />}
-          label="자동 식단 프로그램"
-          hint="BMR·TDEE 기반 하루 메뉴"
-          onClick={() => navigate("/diet/auto-meals")}
-        />
-        <NavTile
-          icon={<Flag className="h-4 w-4" />}
-          label="21일 이후 가이드"
-          hint="유지·연장 분기 설명"
-          onClick={() => navigate("/diet/after-21")}
-        />
-        <NavTile
-          icon={<HeartHandshake className="h-4 w-4" />}
-          label="유지·연장 프로그램"
-          hint="21일 이후 두 갈래 경로"
-          onClick={() => navigate("/diet/post-program")}
-        />
-      </div>
+      {/* 하위 페이지 네비게이션은 상단 DietSubNav 로 통합 — 기존 타일 그리드 제거 */}
 
       <p className="text-center text-[11px] text-muted-foreground">
         자가 기록 완료: <strong className="text-foreground">{p.approvedDays}</strong>일 / 21일
@@ -541,35 +480,6 @@ const Section = ({
     </div>
     {children}
   </section>
-);
-
-const NavTile = ({
-  icon,
-  label,
-  hint,
-  onClick,
-  className,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  hint: string;
-  onClick: () => void;
-  className?: string;
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={cn(
-      "rounded-xl border border-border bg-card p-3 text-left transition-colors hover:border-primary/40 active:scale-[0.99]",
-      className,
-    )}
-  >
-    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-      {icon}
-    </span>
-    <p className="mt-2 text-[13px] font-bold text-foreground">{label}</p>
-    <p className="text-[11px] text-muted-foreground">{hint}</p>
-  </button>
 );
 
 function stageLabel(stageId: string): string {
