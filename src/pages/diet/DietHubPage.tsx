@@ -33,6 +33,7 @@ import DietReminderBanner from "@/components/diet/DietReminderBanner";
 import DietCompletionModal from "@/components/diet/DietCompletionModal";
 import PostProgramRouter from "@/components/diet/post/PostProgramRouter";
 import DietSubNav from "@/components/diet/DietSubNav";
+import DietLoadingOverlay from "@/components/diet/DietLoadingOverlay";
 import { pickDailyCoachMessage } from "@/data/diet/coachMessages";
 import { useDietPreferences } from "@/hooks/useDietPreferences";
 import { useDietAnalytics } from "@/hooks/useDietAnalytics";
@@ -56,28 +57,59 @@ const todayIso = () => {
  *   3. active enrollment 없음 → 온보딩 CTA
  *   4. active → 전체 홈 (Day/Stage + 오늘 미션 + 점수 + 배지 + 코치 한마디 + CTA 모음)
  */
+const DIET_OVERLAY_SESSION_KEY = "diet_loading_overlay_shown_v1";
+
 const DietHubPage = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const progressQuery = useDietProgress();
 
+  // 세션당 1회 오버레이 — /diet 에 처음 진입했을 때만 노출
+  const [showOverlay, setShowOverlay] = useState<boolean>(() => {
+    if (typeof sessionStorage === "undefined") return false;
+    try {
+      return !sessionStorage.getItem(DIET_OVERLAY_SESSION_KEY);
+    } catch {
+      return false;
+    }
+  });
+
+  const handleOverlayDone = () => {
+    setShowOverlay(false);
+    try {
+      sessionStorage.setItem(DIET_OVERLAY_SESSION_KEY, "1");
+    } catch {
+      // sessionStorage 실패해도 UX 영향 없음
+    }
+  };
+
   const featureEnabled = !!profile?.diet_program_enabled;
 
   if (!featureEnabled) {
     return (
-      <HubShell onBack={() => navigate(-1)}>
-        <ComingSoon />
-      </HubShell>
+      <>
+        {showOverlay && (
+          <DietLoadingOverlay ready={true} onDone={handleOverlayDone} />
+        )}
+        <HubShell onBack={() => navigate(-1)}>
+          <ComingSoon />
+        </HubShell>
+      </>
     );
   }
 
   if (progressQuery.isLoading) {
     return (
-      <HubShell onBack={() => navigate(-1)}>
-        <div className="rounded-2xl border border-border bg-card p-6 text-center text-[12px] text-muted-foreground">
-          불러오는 중...
-        </div>
-      </HubShell>
+      <>
+        {showOverlay && (
+          <DietLoadingOverlay ready={false} onDone={handleOverlayDone} />
+        )}
+        <HubShell onBack={() => navigate(-1)}>
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-[12px] text-muted-foreground">
+            불러오는 중...
+          </div>
+        </HubShell>
+      </>
     );
   }
 
@@ -85,11 +117,18 @@ const DietHubPage = () => {
   const hasActive =
     payload && "success" in payload && payload.success && payload.has_active;
 
+  const overlay = showOverlay ? (
+    <DietLoadingOverlay ready={true} onDone={handleOverlayDone} />
+  ) : null;
+
   if (!hasActive) {
     return (
-      <HubShell onBack={() => navigate(-1)}>
-        <OnboardingCTA onStart={() => navigate("/diet/onboarding")} />
-      </HubShell>
+      <>
+        {overlay}
+        <HubShell onBack={() => navigate(-1)}>
+          <OnboardingCTA onStart={() => navigate("/diet/onboarding")} />
+        </HubShell>
+      </>
     );
   }
 
@@ -97,34 +136,40 @@ const DietHubPage = () => {
   // 최근 7일 수행률은 snapshot.habit_score 를 근사치로 주입 (정밀값은 서버에서 별도 집계 가능).
   if (payload.enrollment!.status === "completed") {
     return (
-      <HubShell onBack={() => navigate(-1)}>
-        <PostProgramRouter
-          enrollmentId={payload.enrollment!.id}
-          recentAdherence7d={payload.snapshot?.habit_score ?? null}
-        />
-      </HubShell>
+      <>
+        {overlay}
+        <HubShell onBack={() => navigate(-1)}>
+          <PostProgramRouter
+            enrollmentId={payload.enrollment!.id}
+            recentAdherence7d={payload.snapshot?.habit_score ?? null}
+          />
+        </HubShell>
+      </>
     );
   }
 
   return (
-    <HubShell onBack={() => navigate(-1)}>
-      <ActiveHome
-        enrollmentId={payload.enrollment!.id}
-        track={payload.enrollment!.track}
-        currentDay={payload.enrollment!.current_day}
-        stageLabel={stageLabel(payload.enrollment!.current_stage)}
-        startDate={payload.enrollment!.start_date}
-        approvedDays={payload.snapshot?.approved_days_total ?? 0}
-        currentStreak={payload.snapshot?.current_streak ?? 0}
-        bestStreak={payload.snapshot?.best_streak ?? 0}
-        pendingDays={payload.pending_days ?? 0}
-        milestone7={payload.snapshot?.milestone_7_reached ?? false}
-        milestone14={payload.snapshot?.milestone_14_reached ?? false}
-        milestone21={payload.snapshot?.milestone_21_reached ?? false}
-        lastLogDate={payload.snapshot?.last_log_date ?? null}
-        enrollmentStatus={payload.enrollment!.status}
-      />
-    </HubShell>
+    <>
+      {overlay}
+      <HubShell onBack={() => navigate(-1)}>
+        <ActiveHome
+          enrollmentId={payload.enrollment!.id}
+          track={payload.enrollment!.track}
+          currentDay={payload.enrollment!.current_day}
+          stageLabel={stageLabel(payload.enrollment!.current_stage)}
+          startDate={payload.enrollment!.start_date}
+          approvedDays={payload.snapshot?.approved_days_total ?? 0}
+          currentStreak={payload.snapshot?.current_streak ?? 0}
+          bestStreak={payload.snapshot?.best_streak ?? 0}
+          pendingDays={payload.pending_days ?? 0}
+          milestone7={payload.snapshot?.milestone_7_reached ?? false}
+          milestone14={payload.snapshot?.milestone_14_reached ?? false}
+          milestone21={payload.snapshot?.milestone_21_reached ?? false}
+          lastLogDate={payload.snapshot?.last_log_date ?? null}
+          enrollmentStatus={payload.enrollment!.status}
+        />
+      </HubShell>
+    </>
   );
 };
 
