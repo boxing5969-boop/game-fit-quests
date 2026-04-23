@@ -469,3 +469,90 @@
   .animate-emote-sparkle { animation: none; }
 }
 
+/* ──────────────────────────────────────────────────────────────
+ * App Launch Splash — 153 Boxing Gym 로고 스플래시
+ *
+ * 타임라인 (총 1750ms)
+ *   0~250ms     배경 fade in
+ *   150~900ms   로고 opacity 0→1, scale 0.92→1, blur 10→0
+ *   700~1150ms  뒤쪽 레드 글로우 pulse
+ *   1150~1450ms hold
+ *   1450~1750ms 전체 fade out
+ * ────────────────────────────────────────────────────────────── */
+
+@keyframes splashBgIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes splashLogoIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes splashGlowPulse {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  55% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+  100% {
+    opacity: 0.22;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes splashRootFadeOut {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes splashReducedFadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* 요소별 애니메이션. animation-delay 로 타이밍 편성. */
+.splash-bg-anim {
+  animation: splashBgIn 250ms ease-out forwards;
+}
+.splash-glow-anim {
+  opacity: 0;
+  animation: splashGlowPulse 450ms ease-out 700ms forwards;
+}
+.splash-logo-anim {
+  opacity: 0;
+  animation: splashLogoIn 750ms cubic-bezier(0.22, 0.61, 0.36, 1) 150ms forwards;
+}
+.splash-exiting {
+  animation: splashRootFadeOut 300ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* 장식성 모션 제거 — 단순 fade in/out 만 유지.
+     scale/blur/glow-pulse 모두 생략. */
+  .splash-logo-anim,
+  .splash-bg-anim {
+    animation: splashReducedFadeIn 300ms ease forwards !important;
+    filter: none !important;
+    transform: none !important;
+  }
+  .splash-glow-anim {
+    display: none !important;
+  }
+  .splash-exiting {
+    animation: splashRootFadeOut 200ms ease-in forwards !important;
+  }
+}
+

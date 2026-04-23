@@ -1,0 +1,38 @@
+<!--
+  153 BOXING GYM — 흰색 로고 placeholder (다크 배경 전용).
+
+  ⚠ 이 파일은 빌드 통과용 임시 SVG 입니다. 공식 로고 PNG 로 교체하려면:
+    1. 최종 로고를 src/assets/branding/153-logo-white.png 로 저장
+    2. src/components/splash/AppLaunchSplash.tsx 의 import 경로를 .svg → .png 로 변경
+
+  AppLaunchSplash 가 viewBox 기준으로 반응형 스케일링 하므로 크기·여백은
+  이 파일의 내부 비율만 유지하면 됨.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1000 420"
+  fill="none"
+  role="img"
+  aria-label="153 BOXING GYM"
+>
+  <g fill="#FFFFFF">
+    <text
+      x="500"
+      y="250"
+      font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif"
+      font-size="280"
+      font-weight="900"
+      text-anchor="middle"
+      letter-spacing="12"
+    >153</text>
+    <text
+      x="500"
+      y="360"
+      font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif"
+      font-size="68"
+      font-weight="900"
+      text-anchor="middle"
+      letter-spacing="22"
+    >BOXING GYM</text>
+  </g>
+</svg>
