@@ -12,11 +12,11 @@ import {
   Salad,
   User,
   Settings,
-  Target,
   Gamepad2,
   Info,
   X,
 } from "lucide-react";
+import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -24,13 +24,14 @@ import { cn } from "@/lib/utils";
 // ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
 // 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 로드맵으로 교체.
 // 접근성은 전체 메뉴 오버레이에 보존.
-// 모든 탭이 lucide 선형 아이콘으로 통일. 훈련은 Target — mission/quest 의미와 시각 일치.
+// 모든 탭이 선형 아이콘으로 통일. 훈련은 복싱 글러브 커스텀 SVG —
+// lucide 스타일(24x24 / stroke 2) 로 다른 탭과 시각 정합.
 const mainTabs = [
-  { path: "/home",          icon: Home,    label: "홈",     emoji: null },
-  { path: "/missions",      icon: Target,  label: "훈련",    emoji: null },
-  { path: "/cert-benefits", icon: Award,   label: "단증혜택", emoji: null },
-  { path: "/halloffame",    icon: Trophy,  label: "랭킹",    emoji: null },
-  { path: "/levelmap",      icon: Map,     label: "로드맵",   emoji: null },
+  { path: "/home",          icon: Home,            label: "홈",     emoji: null },
+  { path: "/missions",      icon: BoxingGloveIcon, label: "훈련",    emoji: null },
+  { path: "/cert-benefits", icon: Award,           label: "단증혜택", emoji: null },
+  { path: "/halloffame",    icon: Trophy,          label: "랭킹",    emoji: null },
+  { path: "/levelmap",      icon: Map,             label: "로드맵",   emoji: null },
 ] as const;
 
 // ── Full menu overlay (everything not on the primary bar) ───────────
@@ -38,7 +39,7 @@ const mainTabs = [
 // /cert-benefits 는 mainTabs 로 이관됐지만 전체메뉴에도 남겨 두어 발견성 유지.
 const baseMenuItems = [
   { path: "/home",              icon: Home,       label: "홈" },
-  { path: "/missions",          icon: Target,     label: "훈련" },
+  { path: "/missions",          icon: BoxingGloveIcon, label: "훈련" },
   { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝 게임" },
   { path: "/halloffame",        icon: Trophy,     label: "랭킹" },
   { path: "/rank-up",           icon: TrendingUp, label: "랭크업" },
