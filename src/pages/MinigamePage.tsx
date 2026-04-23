@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell } from "lucide-react";
+import { ArrowLeft, Dumbbell } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useRankupUser } from "@/features/minigame/lib/rankupAuth";
@@ -24,6 +24,26 @@ import "@/features/minigame/minigame.css";
 
 type AppMode = "select" | "mode1" | "mode2" | "mode3" | "education" | "leaderboard";
 
+// ── 복싱 명언 — 진입 로딩 오버레이에서 순환 노출.
+type Quote = { line: string; by: string };
+const BOXING_QUOTES: readonly Quote[] = Object.freeze([
+  { line: "복싱은 타이밍의 예술이다.", by: "Sugar Ray Robinson" },
+  { line: "나비처럼 날아 벌처럼 쏴라.", by: "Muhammad Ali" },
+  { line: "모두에게는 계획이 있다. 한 대 맞기 전까지는.", by: "Mike Tyson" },
+  { line: "두려움은 친구이자 적이다. 통제하면 무기가 된다.", by: "Cus D'Amato" },
+  { line: "챔피언은 링이 아니라 체육관에서 만들어진다.", by: "Muhammad Ali" },
+  { line: "나는 훈련하는 매 1분이 싫었다. 그러나 '포기하지 마라, 지금 고통받고 평생 챔피언으로 살아라'라고 말했다.", by: "Muhammad Ali" },
+  { line: "승리는 이미 이긴 사람의 것이 아니라, 포기하지 않은 사람의 것이다.", by: "Rocky Balboa" },
+  { line: "중요한 건 얼마나 세게 때리느냐가 아니다. 얼마나 세게 맞고도 전진하느냐다.", by: "Rocky Balboa" },
+  { line: "규율이 재능을 이긴다. 매일 반복하는 자를 이기는 건 쉽지 않다.", by: "Coach's Corner" },
+  { line: "스피드가 파워다. 손이 빠르면 주먹은 무거워진다.", by: "Sugar Ray Leonard" },
+  { line: "준비되지 않은 자에게 기회는 재앙일 뿐.", by: "George Foreman" },
+  { line: "땀은 거짓말하지 않는다.", by: "Old Gym Wisdom" },
+]);
+
+const INTRO_VISIBLE_MS = 1800;
+const QUOTE_ROTATE_MS = 2600;
+
 const MinigamePage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -35,6 +55,31 @@ const MinigamePage = () => {
   const [showTutorial, setShowTutorial] = useState(
     () => !(typeof window !== "undefined" && localStorage.getItem("mitt_tutorial_seen")),
   );
+
+  // 진입 애니메이션 — 글러브 펀치 + 명언 순환. 게임은 같은 번들에 있어 즉시 로드되지만
+  // 트랜지션 연출을 위해 짧게(INTRO_VISIBLE_MS) 오버레이를 띄운다.
+  const [introVisible, setIntroVisible] = useState(true);
+  const [fadingOut, setFadingOut] = useState(false);
+  const mountedAt = useRef<number>(Date.now());
+  const startIdx = useMemo(
+    () => Math.floor(Math.random() * BOXING_QUOTES.length),
+    [],
+  );
+  const [quoteIdx, setQuoteIdx] = useState(startIdx);
+
+  useEffect(() => {
+    if (!introVisible) return;
+    const rotate = window.setInterval(() => {
+      setQuoteIdx((i) => (i + 1) % BOXING_QUOTES.length);
+    }, QUOTE_ROTATE_MS);
+    const fadeT = window.setTimeout(() => setFadingOut(true), INTRO_VISIBLE_MS - 400);
+    const hideT = window.setTimeout(() => setIntroVisible(false), INTRO_VISIBLE_MS);
+    return () => {
+      window.clearInterval(rotate);
+      window.clearTimeout(fadeT);
+      window.clearTimeout(hideT);
+    };
+  }, [introVisible]);
 
   const resolvePlayerName = () => {
     const nick = rankupUser?.nickname?.trim();
@@ -55,9 +100,7 @@ const MinigamePage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="minigame-app flex min-h-screen items-center justify-center" />
-    );
+    return <div className="minigame-app flex min-h-screen items-center justify-center" />;
   }
 
   if (!user) {
@@ -251,7 +294,110 @@ const MinigamePage = () => {
     }
   };
 
-  return <div className="minigame-app">{renderGame()}</div>;
+  return (
+    <div className="minigame-app">
+      {/* 랭킹업 앱 복귀 버튼 — 메인 모드 선택 화면에서만 노출. 게임 진행 중에는
+          goToModeSelect 로 한 단계 빠진 뒤 다시 표시됨. */}
+      {appMode === "select" && (
+        <button
+          type="button"
+          onClick={() => navigate("/home")}
+          className="fixed left-3 top-3 z-[55] flex items-center gap-1.5 rounded-full border border-border bg-card/90 px-3 py-1.5 text-[11px] font-bold text-foreground shadow-lg backdrop-blur-sm active:scale-95"
+          aria-label="랭킹업으로 돌아가기"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          랭킹업
+        </button>
+      )}
+
+      {renderGame()}
+
+      {introVisible && <IntroOverlay quoteIdx={quoteIdx} fadingOut={fadingOut} />}
+    </div>
+  );
+};
+
+// ──────────────────────────────────────────────────────────────────
+// Intro overlay — 진입 시 복싱 명언 + 글러브 펀치 애니메이션
+// ──────────────────────────────────────────────────────────────────
+const IntroOverlay = ({
+  quoteIdx,
+  fadingOut,
+}: {
+  quoteIdx: number;
+  fadingOut: boolean;
+}) => {
+  const q = BOXING_QUOTES[quoteIdx] ?? BOXING_QUOTES[0];
+  return (
+    <div
+      aria-live="polite"
+      className={`fixed inset-0 z-[70] flex flex-col items-center justify-center bg-background px-6 transition-opacity duration-500 ${
+        fadingOut ? "opacity-0" : "opacity-100"
+      }`}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 35%, hsl(8 75% 48% / 0.22), transparent 55%)",
+        }}
+      />
+
+      <div className="relative mb-7 flex h-16 w-28 items-center justify-center">
+        <span
+          aria-hidden
+          className="absolute left-0 animate-[mg-punchL_0.9s_ease-in-out_infinite] text-[44px]"
+          style={{ filter: "drop-shadow(0 6px 14px rgba(217,54,32,0.45))" }}
+        >
+          🥊
+        </span>
+        <span
+          aria-hidden
+          className="absolute right-0 scale-x-[-1] animate-[mg-punchR_0.9s_ease-in-out_infinite] text-[44px]"
+          style={{ filter: "drop-shadow(0 6px 14px rgba(217,54,32,0.45))" }}
+        >
+          🥊
+        </span>
+      </div>
+
+      <div className="relative mx-auto flex min-h-[88px] max-w-[320px] flex-col items-center justify-center text-center">
+        <p
+          key={`q-${quoteIdx}`}
+          className="animate-[mg-quoteIn_520ms_ease-out] text-[16px] font-extrabold leading-snug text-foreground"
+        >
+          "{q.line}"
+        </p>
+        <p
+          key={`by-${quoteIdx}`}
+          className="mt-2 animate-[mg-quoteIn_620ms_ease-out] text-[11px] font-semibold tracking-wide text-muted-foreground"
+        >
+          — {q.by}
+        </p>
+      </div>
+
+      <div className="mt-7 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-primary">
+        <span className="inline-block h-1 w-8 animate-pulse rounded-full bg-primary/60" />
+        ROUND 1 · READY
+        <span className="inline-block h-1 w-8 animate-pulse rounded-full bg-primary/60" />
+      </div>
+
+      <style>{`
+        @keyframes mg-punchL {
+          0%, 100% { transform: translateX(-16px) rotate(-8deg) scale(1); }
+          50%      { transform: translateX(14px)  rotate(8deg)  scale(1.15); }
+        }
+        @keyframes mg-punchR {
+          0%, 100% { transform: translateX(16px)  rotate(8deg)  scale(1); }
+          50%      { transform: translateX(-14px) rotate(-8deg) scale(1.15); }
+        }
+        @keyframes mg-quoteIn {
+          0%   { opacity: 0; transform: translateY(8px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
 };
 
 export default MinigamePage;
