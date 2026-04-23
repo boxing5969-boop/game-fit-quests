@@ -362,6 +362,12 @@ const CharacterStudioPage = () => {
 
   const gemsDisplay = isAdmin ? "∞" : (walletData?.gems_balance ?? 0).toLocaleString();
 
+  // 현재 스테이지에 서 있는 캐릭터가 "전설"(HoF)인지 판정.
+  // preset 탭 프리뷰 중일 땐 selectedStyle, 그 외엔 실제 적용 중인 currentStyle 기준.
+  const stageCharStyle = activeTab === "preset" ? selectedStyle : (currentStyle ?? selectedStyle);
+  const stageChar = PREBUILT_CHARACTERS.find((c) => c.style === stageCharStyle);
+  const isStageHof = stageChar?.requirement === "hall_of_fame";
+
   return (
     <>
       <AppPage
@@ -410,13 +416,42 @@ const CharacterStudioPage = () => {
         }
       >
         <div className="space-y-6">
-          {/* ─── Character Hero Stage ─── */}
-          <section className="relative overflow-hidden rounded-hero border border-border bg-gradient-to-b from-[hsl(var(--surface-2))] to-card p-6 shadow-elev-2">
-            {/* Subtle reward glow behind the character */}
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute left-1/2 top-[40%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-reward/10 blur-3xl" />
-              <div className="absolute left-1/2 top-[40%] h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-2xl" />
-            </div>
+          {/* ─── Character Hero Stage ─── 전설(HoF) 캐릭터면 amber 톤 + breathe + 황금 glow */}
+          <section
+            className={cn(
+              "relative overflow-visible rounded-hero p-6",
+              isStageHof
+                ? "border-[2px] border-amber-400 animate-[breathe_2.4s_ease-in-out_infinite]"
+                : "border border-border bg-gradient-to-b from-[hsl(var(--surface-2))] to-card shadow-elev-2",
+            )}
+            style={
+              isStageHof
+                ? {
+                    background:
+                      "linear-gradient(to bottom, hsla(50, 92%, 13%, 0.55) 0%, hsla(35, 80%, 20%, 0.50) 50%, hsla(50, 92%, 13%, 0.55) 100%)",
+                    boxShadow:
+                      "0 0 24px 8px rgba(251, 191, 36, 0.55), 0 0 54px 18px rgba(234, 179, 8, 0.28)",
+                  }
+                : undefined
+            }
+          >
+            {/* Subtle reward glow behind the character — 일반 캐릭터용 */}
+            {!isStageHof && (
+              <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-hero">
+                <div className="absolute left-1/2 top-[40%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-reward/10 blur-3xl" />
+                <div className="absolute left-1/2 top-[40%] h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-2xl" />
+              </div>
+            )}
+            {/* HoF 전용 — 중앙 강한 황금 hotspot + 스파클 */}
+            {isStageHof && (
+              <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-hero">
+                <div className="absolute left-1/2 top-[38%] h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-400/25 blur-3xl" />
+                <span aria-hidden className="absolute left-6 top-6 text-base opacity-70 drop-shadow-[0_0_8px_rgba(251,191,36,0.9)]">✨</span>
+                <span aria-hidden className="absolute right-8 top-10 text-sm opacity-60 drop-shadow-[0_0_6px_rgba(251,191,36,0.9)]">⭐</span>
+                <span aria-hidden className="absolute left-10 bottom-14 text-xs opacity-55 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]">✨</span>
+                <span aria-hidden className="absolute right-6 bottom-20 text-sm opacity-50 drop-shadow-[0_0_5px_rgba(251,191,36,0.7)]">⭐</span>
+              </div>
+            )}
 
             {/* Contextual save button */}
             {activeTab === "preset" && (
