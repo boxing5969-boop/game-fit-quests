@@ -12,7 +12,8 @@ import {
   Salad,
   User,
   Settings,
-  Dumbbell,
+  Target,
+  Gamepad2,
   X,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -22,14 +23,13 @@ import { cn } from "@/lib/utils";
 // ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
 // 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 로드맵으로 교체.
 // 접근성은 전체 메뉴 오버레이에 보존.
-// AI 코치봇 플로팅 버튼이 더 이상 🥊 을 쓰지 않으므로, "훈련" 탭도 글러브
-// 대신 훈련/목표 상징인 🎯 으로 교체. mission-driven 앱 톤과 어울림.
+// 모든 탭이 lucide 선형 아이콘으로 통일. 훈련은 Target — mission/quest 의미와 시각 일치.
 const mainTabs = [
-  { path: "/home",          icon: Home,    label: "홈",     emoji: null  },
-  { path: "/missions",      icon: null,    label: "훈련",    emoji: "🎯" },
-  { path: "/cert-benefits", icon: Award,   label: "단증혜택", emoji: null  },
-  { path: "/halloffame",    icon: Trophy,  label: "랭킹",    emoji: null  },
-  { path: "/levelmap",      icon: Map,     label: "로드맵",   emoji: null  },
+  { path: "/home",          icon: Home,    label: "홈",     emoji: null },
+  { path: "/missions",      icon: Target,  label: "훈련",    emoji: null },
+  { path: "/cert-benefits", icon: Award,   label: "단증혜택", emoji: null },
+  { path: "/halloffame",    icon: Trophy,  label: "랭킹",    emoji: null },
+  { path: "/levelmap",      icon: Map,     label: "로드맵",   emoji: null },
 ] as const;
 
 // ── Full menu overlay (everything not on the primary bar) ───────────
@@ -37,8 +37,8 @@ const mainTabs = [
 // /cert-benefits 는 mainTabs 로 이관됐지만 전체메뉴에도 남겨 두어 발견성 유지.
 const baseMenuItems = [
   { path: "/home",              icon: Home,       label: "홈" },
-  { path: "/missions",          icon: Dumbbell,   label: "훈련" },
-  { path: "/minigame",          icon: Dumbbell,   label: "복싱 트레이닝 게임" },
+  { path: "/missions",          icon: Target,     label: "훈련" },
+  { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝 게임" },
   { path: "/halloffame",        icon: Trophy,     label: "랭킹" },
   { path: "/rank-up",           icon: TrendingUp, label: "랭크업" },
   { path: "/cert-benefits",     icon: Award,      label: "단증혜택" },
