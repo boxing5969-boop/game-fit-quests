@@ -32,7 +32,13 @@ export const DailyMissionList = ({
     <ul className={cn("space-y-1.5", className)}>
       {items.map((m) => {
         const linked = m.linkedHabitColumn;
-        const checked = linked ? responses?.[linked] === true : false;
+        // 수치형 체크 — water_ml 이 threshold 이상이면 자동 체크.
+        // linkedHabitColumn 과 독립 — 둘 중 하나만 충족해도 "달성" 으로 본다.
+        const waterHit =
+          m.waterMlThreshold !== undefined &&
+          (responses?.water_ml ?? 0) >= m.waterMlThreshold;
+        const habitHit = linked ? responses?.[linked] === true : false;
+        const checked = waterHit || habitHit;
         return (
           <li
             key={m.id}

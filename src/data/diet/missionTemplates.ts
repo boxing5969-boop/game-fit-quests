@@ -50,6 +50,11 @@ export interface DietMissionTemplate {
     | "sugary_drink_avoided"
     | "late_night_snack_avoided"
     | "gym_attended";
+  /**
+   * 수치형 체크 — 지정하면 today 의 water_ml 이 이 값(이상)에 도달하면
+   * 자동으로 "체크됨" 으로 표시된다. "물 1.5L" 같은 hydration 타겟 전용.
+   */
+  waterMlThreshold?: number;
 }
 
 export interface DietTrackStageSet {
@@ -85,9 +90,10 @@ const ADULT_STD_RESET_DAILY: readonly DietMissionTemplate[] = [
   {
     id: "as-r-d3",
     label: "물 1.5L",
-    hint: "텀블러/컵 단위로 나눠 마시기",
+    hint: "텀블러/컵 단위로 나눠 마시기 — 1500ml 이상이면 자동 체크",
     category: "hydration",
     severity: "core",
+    waterMlThreshold: 1500,
   },
   {
     id: "as-r-d4",
@@ -99,10 +105,11 @@ const ADULT_STD_RESET_DAILY: readonly DietMissionTemplate[] = [
   },
   {
     id: "as-r-d5",
-    label: "식후 10분 걷기",
-    hint: "혈당 완만하게 내리기 위한 가벼운 움직임",
+    label: "복싱하기",
+    hint: "체육관 출석 QR 체크 시 자동 반영",
     category: "movement",
-    severity: "optional",
+    severity: "core",
+    linkedHabitColumn: "gym_attended",
   },
 ];
 
@@ -385,9 +392,10 @@ const YOUTH_RESET_DAILY: readonly DietMissionTemplate[] = [
   {
     id: "yh-r-d2",
     label: "물 1L",
-    hint: "생수·무가당 음료로 채우기",
+    hint: "생수·무가당 음료로 채우기 — 1000ml 이상이면 자동 체크",
     category: "hydration",
     severity: "core",
+    waterMlThreshold: 1000,
   },
   {
     id: "yh-r-d3",

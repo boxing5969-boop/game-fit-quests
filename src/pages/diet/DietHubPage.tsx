@@ -21,6 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useDietProgress } from "@/hooks/useDietEnrollment";
 import { useTodayDailyLog } from "@/hooks/useDietDailyLog";
+import { useAttendanceToday } from "@/hooks/useDietAttendance";
 import {
   DIET_STAGES,
   DIET_TRACK_LABEL,
@@ -231,9 +232,11 @@ const COMPLETION_SHOWN_KEY = "diet_completion_shown_v1";
 
 const ActiveHome = (p: ActiveHomeProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const logDate = todayIso();
   const todayLogQuery = useTodayDailyLog(p.enrollmentId, logDate);
   const logRow = todayLogQuery.data ?? null;
+  const attendanceTodayQuery = useAttendanceToday(user?.id, logDate);
   const { data: prefs } = useDietPreferences();
   const { logEvent } = useDietAnalytics();
 
@@ -350,7 +353,23 @@ const ActiveHome = (p: ActiveHomeProps) => {
           </Button>
         }
       >
-        <DailyMissionList missions={todayPlan.missions} limit={5} />
+        <DailyMissionList
+          missions={todayPlan.missions}
+          limit={5}
+          responses={{
+            protein_first: logRow?.protein_first ?? null,
+            veggies_natural: logRow?.veggies_natural ?? null,
+            sugary_drink_avoided: logRow?.sugary_drink_avoided ?? null,
+            late_night_snack_avoided: logRow?.late_night_snack_avoided ?? null,
+            // QR 출석 기록이 있으면 gym_attended 를 자동 체크 오버레이 —
+            // 다이어트 로그에 아직 저장 안 됐어도 "복싱하기" 미션이 체크되어 보인다.
+            gym_attended:
+              attendanceTodayQuery.data === true
+                ? true
+                : logRow?.gym_attended ?? null,
+            water_ml: logRow?.water_ml ?? null,
+          }}
+        />
       </Section>
 
       {/* 배지 진행 */}
