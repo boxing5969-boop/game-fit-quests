@@ -6,8 +6,8 @@
   /* ─────────────────────────────────────────────────────────────
    * Palette (dark-first, premium sport spec — see
    * docs/rankingup-design-system.md for hex values and rationale)
-   *   Primary (8°, Ember #D93620) — CTA, action, emphasis
-   *   Accent  (215°, Blue #2F8CFF) — ranking, growth, progression
+   *   Primary (8°, Ember #D93620) — CTA, action, emphasis (brand point 1)
+   *   Accent  (165°, Mint #29C39C) — ranking, growth, progression (brand point 2)
    *   Reward  (42°, Gold #F6C453) — achievement, badges, currency
    * Destructive (red #EF4444) = error only.
    *
@@ -40,8 +40,8 @@
     --muted-foreground: 220 14% 71%;   /* #A7B0C0 text secondary */
 
     /* ─── Accent — Blue (ranking, growth) ─── */
-    --accent: 215 100% 59%;            /* #2F8CFF */
-    --accent-foreground: 210 40% 98%;
+    --accent: 165 70% 52%;             /* #29C39C mint — brand point 2 */
+    --accent-foreground: 220 34% 7%;   /* #0B0F17 — dark text on mint for AA contrast */
 
     /* ─── Reward — Gold (achievement, currency) ─── */
     --reward: 42 90% 64%;              /* #F6C453 */
