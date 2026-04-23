@@ -168,6 +168,7 @@ const HubShell = ({
   children: React.ReactNode;
   onBack: () => void;
 }) => {
+  const navigate = useNavigate();
   const { data: walletData } = useWallet();
   const gemsDisplay = (walletData?.gems_balance ?? 0).toLocaleString();
 
@@ -188,13 +189,15 @@ const HubShell = ({
             </button>
           }
           rightAction={
-            <span
-              aria-label="파이트 머니"
-              className="inline-flex items-center gap-1 rounded-pill bg-[rgba(246,196,83,0.12)] px-3 py-1.5 text-caption font-bold text-[#F6C453]"
+            <button
+              type="button"
+              onClick={() => navigate("/character-studio")}
+              aria-label="파이트 머니 — 캐릭터 스튜디오로 이동"
+              className="inline-flex items-center gap-1 rounded-pill bg-[rgba(246,196,83,0.12)] px-3 py-1.5 text-caption font-bold text-[#F6C453] transition-transform active:scale-95"
             >
               <Banknote className="h-3.5 w-3.5" />
               <span className="number-font">{gemsDisplay}</span>
-            </span>
+            </button>
           }
           sticky
         />

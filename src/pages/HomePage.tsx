@@ -244,9 +244,9 @@ const HomePage = () => {
           rightAction={
             <>
               <button
-                onClick={() => navigate("/avatar")}
+                onClick={() => navigate("/character-studio")}
                 className="badge-pill bg-reward/15 text-reward active:scale-95"
-                aria-label="파이트 머니"
+                aria-label="파이트 머니 — 캐릭터 스튜디오로 이동"
               >
                 <Banknote className="h-3.5 w-3.5" />
                 <span className="number-font">{gemsDisplay}</span>
