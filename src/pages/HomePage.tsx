@@ -434,7 +434,7 @@ const HomePage = () => {
                     체지방을 제거하는 몸 습관 만들기
                   </p>
                   <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                    매일 5 습관 체크 · 복싱짐 출석 연동 · AI 코치님의 피드백
+                    매일 5 습관 체크 · 복싱짐 출석 연동 · 오삼 코치님의 피드백
                   </p>
                 </div>
                 <span className="shrink-0 text-primary text-xl">→</span>

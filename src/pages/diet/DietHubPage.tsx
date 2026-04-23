@@ -34,6 +34,7 @@ import DietCompletionModal from "@/components/diet/DietCompletionModal";
 import PostProgramRouter from "@/components/diet/post/PostProgramRouter";
 import DietSubNav from "@/components/diet/DietSubNav";
 import DietLoadingOverlay from "@/components/diet/DietLoadingOverlay";
+import OsamCoachPopup from "@/components/diet/OsamCoachPopup";
 import { pickDailyCoachMessage } from "@/data/diet/coachMessages";
 import { useDietPreferences } from "@/hooks/useDietPreferences";
 import { useDietAnalytics } from "@/hooks/useDietAnalytics";
@@ -247,13 +248,13 @@ const OnboardingCTA = ({ onStart }: { onStart: () => void }) => (
         체지방을 제거하는 몸 습관 만들기
       </h2>
       <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-        체중 숫자가 아니라 식사 리듬·출석·회복 습관에 집중합니다. 복싱짐 출석과 AI 코치님의 피드백이 함께 갑니다.
+        체중 숫자가 아니라 식사 리듬·출석·회복 습관에 집중합니다. 복싱짐 출석과 오삼 코치님의 피드백이 함께 갑니다.
       </p>
     </div>
     <ul className="space-y-1.5">
       {[
         "매일 5개 습관 체크 + 식단 사진",
-        "AI 코치님의 맞춤 피드백 + 배지 보상",
+        "오삼 코치님의 맞춤 피드백 + 배지 보상",
         "21일 후 유지 플랜 선택형",
       ].map((t) => (
         <li
@@ -462,6 +463,9 @@ const ActiveHome = (p: ActiveHomeProps) => {
         onClose={() => setShowCompletion(false)}
         onChoosePlan={() => navigate("/settings")}
       />
+
+      {/* 오삼 코치 랜덤 따뜻한 팝업 — 하루 1회 확률 기반 */}
+      <OsamCoachPopup />
     </div>
   );
 };

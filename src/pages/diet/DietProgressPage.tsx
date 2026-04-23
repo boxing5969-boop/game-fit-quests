@@ -146,7 +146,7 @@ const DietProgressPage = () => {
 
             {/* 비공개 안내 */}
             <div className="rounded-2xl border border-border bg-muted/30 p-3 text-[11.5px] leading-relaxed text-muted-foreground">
-              체중 숫자는 저장하지 않고 랭킹에도 쓰지 않습니다. 개인 기록으로 남기고 싶다면 AI 코치님의 한마디 또는 회고 메모를 활용하세요.
+              체중 숫자는 저장하지 않고 랭킹에도 쓰지 않습니다. 개인 기록으로 남기고 싶다면 오삼 코치님의 한마디 또는 회고 메모를 활용하세요.
             </div>
           </>
         )}

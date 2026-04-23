@@ -413,7 +413,7 @@ export const HOW_TO_RESIST: readonly ScienceSection[] = Object.freeze([
     icon: "metabolism",
     title: "짧은 피드백 루프 유지",
     summary:
-      "혼자 하면 무너졌을 때 더 오래 놓칩니다. 매일 체크 + AI 코치님의 피드백이 있으면 빠르게 제자리로 돌아올 수 있어요.",
+      "혼자 하면 무너졌을 때 더 오래 놓칩니다. 매일 체크 + 오삼 코치님의 피드백이 있으면 빠르게 제자리로 돌아올 수 있어요.",
     bullets: [
       "하루 1~2분 체크인으로 상태 관찰",
       "무너진 한 끼가 주간을 망치지 않도록 '다음 끼니 복귀' 루틴",

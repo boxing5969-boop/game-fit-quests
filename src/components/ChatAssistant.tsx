@@ -20,7 +20,7 @@ const normalizeQ = (s: string) =>
 
 const WELCOME_MSG: Msg = {
   role: "assistant",
-  content: "안녕하세요! 153복싱짐 AI 코치입니다.\n\n퀘스트, 리그 시스템, 동작 요령 등 궁금한 점을 자유롭게 물어보세요!",
+  content: "안녕하세요! 153복싱짐 오삼 코치입니다.\n\n퀘스트, 리그 시스템, 동작 요령 등 궁금한 점을 자유롭게 물어보세요!",
 };
 
 const ChatAssistant = () => {
@@ -207,7 +207,7 @@ const ChatAssistant = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <h3 className="font-black text-white text-[15px] tracking-tight">AI 코치봇</h3>
+                    <h3 className="font-black text-white text-[15px] tracking-tight">오삼 코치</h3>
                     <span className="flex items-center gap-0.5 rounded-full bg-green-500/20 px-2 py-0.5 text-[10px] font-bold text-green-400">
                       <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
                       온라인
