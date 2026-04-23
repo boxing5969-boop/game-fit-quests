@@ -262,26 +262,46 @@ const DietOnboardingPage = () => {
   };
 
   // 스텝별 검증
+  // 규칙: UI 에 "이미 기본값이 보이는" 필드는 별도 터치 없이도 통과시킨다.
+  //      (NumberPicker 는 ?? 3 · ?? 7, startDate 는 ?? todayIso 로 화면에 값이 이미 있음.)
+  //      사용자 혼란 방지: "보이는 값을 또 눌러야 다음으로 가는" 문제 해소.
   const canNextFromStep = useCallback(
     (idx: number) => {
       if (idx === 0) return true;
       if (idx === 1) return true;
       if (idx === 2) {
+        // 명시 선택이 필요한 것만 검증 — 목표 + 3개 빈도
         return (
           !!draft.goal &&
-          draft.exerciseDaysPerWeek !== undefined &&
-          draft.sleepHoursGoal !== undefined &&
           !!draft.sugaryDrinkFreq &&
           !!draft.lateSnackFreq &&
           !!draft.eatOutFreq
         );
       }
       if (idx === 3) return !!draft.consentAccepted;
-      if (idx === 4) return !!draft.startDate;
+      if (idx === 4) return true; // 시작일은 오늘이 기본 — 변경 없이도 진행 가능
       return false;
     },
     [draft],
   );
+
+  // 스텝 진입 시 "보이는 기본값" 을 실제 state 에 하이드레이션 — submit payload 일관성 유지.
+  useEffect(() => {
+    if (draft.stepIndex === 2) {
+      setDraft((d) => ({
+        ...d,
+        exerciseDaysPerWeek: d.exerciseDaysPerWeek ?? 3,
+        sleepHoursGoal: d.sleepHoursGoal ?? 7,
+      }));
+    }
+    if (draft.stepIndex === 4) {
+      setDraft((d) => ({
+        ...d,
+        startDate: d.startDate ?? todayIso(),
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.stepIndex]);
 
   return (
     <AppPage
