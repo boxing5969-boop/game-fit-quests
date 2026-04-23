@@ -23,6 +23,7 @@ import { pickWeeklyMissions } from "@/lib/diet/extendMissionEngine";
 import WeeklyCheckinDialog from "./WeeklyCheckinDialog";
 import ExtendReassessmentWizard from "./ExtendReassessmentWizard";
 import ExtendCycleResult from "./ExtendCycleResult";
+import AutoMealPlanSection from "./AutoMealPlanSection";
 
 interface ExtendHomeProps {
   plan: DietPostProgramPlan;
@@ -178,6 +179,9 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
           </div>
         </section>
       )}
+
+      {/* 자동 식단 — 연장 프로그램은 감량 모드 + 약점 패턴 반영 */}
+      <AutoMealPlanSection mode="fat_loss" preferPatterns={tags} />
 
       {/* 요약 지표 — 진행 중 실측 */}
       <section className="grid grid-cols-3 gap-2">

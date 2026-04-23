@@ -15,6 +15,7 @@ import type {
   DietPostProgramPlan,
 } from "@/lib/diet/postProgramTypes";
 import WeeklyCheckinDialog from "./WeeklyCheckinDialog";
+import AutoMealPlanSection from "./AutoMealPlanSection";
 
 interface MaintenanceHomeProps {
   plan: DietPostProgramPlan;
@@ -111,6 +112,9 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
           공개 랭킹에 쓰이지 않습니다. 자기 점검 용도입니다.
         </p>
       </section>
+
+      {/* 자동 식단 — BMR/TDEE 계산 + 하루 메뉴 자동 생성 */}
+      <AutoMealPlanSection mode="maintenance" />
 
       {/* 복귀 미션 카드 */}
       {recoveryActive && (
