@@ -6,6 +6,7 @@ import {
   Brain,
   Calendar,
   ChevronLeft,
+  Flag,
   ImageIcon,
   LineChart,
   Salad,
@@ -437,6 +438,12 @@ const ActiveHome = (p: ActiveHomeProps) => {
           label="습관 랭킹"
           hint="지점 완주율"
           onClick={() => navigate("/diet/ranking")}
+        />
+        <NavTile
+          icon={<Flag className="h-4 w-4" />}
+          label="21일 이후 가이드"
+          hint="유지·연장 분기 설명"
+          onClick={() => navigate("/diet/after-21")}
         />
       </div>
 
