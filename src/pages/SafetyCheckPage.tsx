@@ -14,7 +14,6 @@ const SAFETY_QUESTIONS: SafetyQuestion[] = [
   { id: "recent_exercise", question: "최근 3개월 이내에 규칙적으로 운동한 적이 있나요?", riskFlag: false },
   { id: "chronic_condition", question: "심장 질환, 고혈압, 당뇨 등 기저질환이 있나요?", riskFlag: true },
   { id: "dizziness", question: "운동 중 어지럼증이나 흉통을 경험한 적이 있나요?", riskFlag: true },
-  { id: "age_over_65", question: "65세 이상이신가요?", riskFlag: true },
   { id: "high_intensity_goal", question: "처음부터 높은 강도로 운동하고 싶으신가요?", riskFlag: true },
 ];
 
