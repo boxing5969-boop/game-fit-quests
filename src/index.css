@@ -499,18 +499,27 @@
 }
 
 @keyframes splashGlowPulse {
+  /* alpha 0.55 → 0.38 로 더 은은하게. 최종 잔광도 0.22 → 0.14. */
   0% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.85);
   }
   55% {
-    opacity: 0.55;
+    opacity: 0.38;
     transform: translate(-50%, -50%) scale(1.08);
   }
   100% {
-    opacity: 0.22;
+    opacity: 0.14;
     transform: translate(-50%, -50%) scale(1);
   }
+}
+
+/* hold 구간 미세 pulse — 1150~1450ms 에 로고가 아주 조금 호흡하듯 커졌다
+   줄어든다. scale 2.5% 이내 — "살아있다" 정도로만. */
+@keyframes splashLogoHoldPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.025); }
+  100% { transform: scale(1); }
 }
 
 @keyframes splashRootFadeOut {
@@ -533,7 +542,15 @@
 }
 .splash-logo-anim {
   opacity: 0;
-  animation: splashLogoIn 750ms cubic-bezier(0.22, 0.61, 0.36, 1) 150ms forwards;
+  /* 두 애니메이션 연쇄:
+       ① splashLogoIn    150~900ms  — entrance, forwards 로 최종 scale(1)·opacity(1) 유지
+       ② splashLogoHoldPulse 1150~1450ms — hold 구간 미세 pulse (forwards 없이 자동 해제)
+     forwards 가 붙은 ① 이 전역 상태 유지, ② 는 일시적으로 transform 오버라이드. */
+  animation:
+    splashLogoIn 750ms cubic-bezier(0.22, 0.61, 0.36, 1) 150ms forwards,
+    splashLogoHoldPulse 300ms ease-in-out 1150ms;
+  /* GPU 힌트 — 저사양 기기에서도 blur/scale 전환이 부드럽게. */
+  will-change: transform, opacity, filter;
 }
 .splash-exiting {
   animation: splashRootFadeOut 300ms ease-in forwards;

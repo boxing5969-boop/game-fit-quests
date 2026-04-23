@@ -29,7 +29,6 @@ import { cn } from "@/lib/utils";
 // 타임라인 상수 — CSS keyframes 와 정합 유지.
 const TOTAL_MS = 1750;
 const FADE_OUT_MS = 300;      // 마지막 0.3s 는 전체 fade out
-const FADE_OUT_START_MS = TOTAL_MS - FADE_OUT_MS;
 
 export interface AppLaunchSplashProps {
   /** 스플래시 종료 시 호출. Gate 에서 세션 플래그 세팅 + children 마운트. */
@@ -69,7 +68,6 @@ export const AppLaunchSplash = ({
       window.clearTimeout(finishTimer);
     };
   }, [totalMs, onFinished]);
-  void FADE_OUT_START_MS; // 상수 의도 보존 — linter 소거 방지
 
   if (typeof document === "undefined") return null;
 
@@ -85,12 +83,15 @@ export const AppLaunchSplash = ({
     >
       <AppLaunchSplashBackground />
 
-      {/* 로고 컨테이너 — clamp 로 뷰포트에 반응. 세로·가로 정렬은 부모 flex. */}
+      {/* 로고 컨테이너 — clamp 로 뷰포트에 반응. 세로·가로 정렬은 부모 flex.
+           - width: 폰 320px ~ 태블릿 768px+ 공통 시각 무게 유지
+           - maxHeight 40vh: 랜드스케이프·초세로 짧은 뷰포트에서 로고가 화면 넘치지 않게 보호
+           - aspectRatio 로 원본 비율(1000:420) 유지, object-contain 으로 내부 맞춤 */}
       <div
         className="relative z-10 flex items-center justify-center"
         style={{
-          // clamp: 아주 작은 폰(320px)~태블릿(768px+) 범위에서 시각 무게 일정.
           width: "clamp(220px, 58vw, 420px)",
+          maxHeight: "40vh",
           aspectRatio: "1000 / 420",
           // safe-area 보정: iOS notch 환경에서도 중앙 유지
           padding: "env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)",
@@ -102,7 +103,7 @@ export const AppLaunchSplash = ({
           draggable={false}
           className="splash-logo-anim h-full w-full select-none object-contain"
           style={{
-            // 이미지 자체 drop-shadow — 레드 글로우와 분리된 은은한 깊이감
+            // 은은한 깊이감. 레드 글로우는 배경 레이어에서 따로 처리.
             filter: "drop-shadow(0 4px 18px rgba(0, 0, 0, 0.45))",
           }}
         />

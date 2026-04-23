@@ -156,7 +156,10 @@ const AppRoutes = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{ background: "radial-gradient(ellipse at 50% 45%, #0B0F16 0%, #06070B 70%, #03040A 100%)" }}
+      >
         <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-primary/20 text-3xl">🥊</div>
       </div>
     );
@@ -166,7 +169,10 @@ const AppRoutes = () => {
     <>
       <Suspense
         fallback={
-          <div className="flex min-h-screen items-center justify-center">
+          <div
+            className="flex min-h-screen items-center justify-center"
+            style={{ background: "radial-gradient(ellipse at 50% 45%, #0B0F16 0%, #06070B 70%, #03040A 100%)" }}
+          >
             <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-primary/20 text-3xl">🥊</div>
           </div>
         }
