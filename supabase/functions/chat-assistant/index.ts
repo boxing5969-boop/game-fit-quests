@@ -7,6 +7,58 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// ────────────────────────────────────────────────────────────────
+// AI Provider 체인
+//
+// 위에서 아래로 순서대로 시도. 각 provider 는 환경변수 KEY 가 있어야 활성화 —
+// 없으면 조용히 스킵하고 다음으로 넘어감. 모두 OpenAI 호환 SSE 포맷이라
+// 클라이언트 스트리밍 파서를 바꿀 필요 없음.
+//
+// 폴백 조건: 429(분/일 한도) 또는 402(크레딧). 그 외 4xx/5xx 는 다음
+// provider 로 가도 같은 에러가 날 가능성이 높고 쓸데없이 레이턴시만 쌓이므로
+// 즉시 반환.
+//
+// Supabase 시크릿 등록 방법:
+//   Dashboard → Edge Functions → chat-assistant → Secrets → 아래 이름으로 추가
+//     GROQ_API_KEY        (필수, 1차)
+//     CEREBRAS_API_KEY    (선택, 2차 폴백)
+//     SAMBANOVA_API_KEY   (선택, 3차 폴백 — cloud.sambanova.ai)
+//     DEEPSEEK_API_KEY    (선택, 4차 폴백 — platform.deepseek.com, 크레딧 필요할 수 있음)
+// ────────────────────────────────────────────────────────────────
+type Provider = {
+  name: string;
+  keyEnv: string;
+  url: string;
+  model: string;
+};
+
+const PROVIDERS: Provider[] = [
+  {
+    name: "groq",
+    keyEnv: "GROQ_API_KEY",
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    model: "llama-3.1-8b-instant",
+  },
+  {
+    name: "cerebras",
+    keyEnv: "CEREBRAS_API_KEY",
+    url: "https://api.cerebras.ai/v1/chat/completions",
+    model: "llama3.1-8b",
+  },
+  {
+    name: "sambanova",
+    keyEnv: "SAMBANOVA_API_KEY",
+    url: "https://api.sambanova.ai/v1/chat/completions",
+    model: "Meta-Llama-3.1-8B-Instruct",
+  },
+  {
+    name: "deepseek",
+    keyEnv: "DEEPSEEK_API_KEY",
+    url: "https://api.deepseek.com/v1/chat/completions",
+    model: "deepseek-chat",
+  },
+];
 const SYSTEM_PROMPT = `당신은 "랭킹업(RANKINGUP)" 앱의 전담 AI 코치 — "코치봇"입니다.
 대상 사용자는 153복싱짐 회원으로, 복싱 훈련을 체계화하는 스포츠 RPG 앱을 사용 중입니다.
 ═══════════════════════════════════════════════════
@@ -269,8 +321,14 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const { messages } = await req.json();
-    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
-    if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY is not configured");
+
+    // 활성화된 provider 만 걸러낸다. 최소 1개는 있어야 함.
+    const activeProviders = PROVIDERS.filter((p) => !!Deno.env.get(p.keyEnv));
+    if (activeProviders.length === 0) {
+      throw new Error(
+        "No AI provider API key configured (GROQ_API_KEY / CEREBRAS_API_KEY / SAMBANOVA_API_KEY / DEEPSEEK_API_KEY)",
+      );
+    }
     // Try to get user context from auth token
     let personalContext = "";
     let dietContext = "";
@@ -385,75 +443,82 @@ serve(async (req) => {
     }
     const fullMessages = [...systemMessages, ...messages];
 
-    // 1) 1차 시도: Groq (llama-3.1-8b-instant).
-    let response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        messages: fullMessages,
-        stream: true,
-      }),
-    });
+    // activeProviders 를 순서대로 시도. 첫 성공(2xx) 응답을 사용.
+    // 429/402 만 다음 provider 로 폴백. 그 외 에러는 즉시 반환.
+    let response: Response | null = null;
+    let usedProvider = "";
+    for (let i = 0; i < activeProviders.length; i++) {
+      const p = activeProviders[i];
+      const key = Deno.env.get(p.keyEnv)!;
+      usedProvider = p.name;
+      response = await fetch(p.url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: p.model,
+          messages: fullMessages,
+          stream: true,
+        }),
+      });
+      if (response.ok) break;
+      const shouldFallback =
+        response.status === 429 || response.status === 402;
+      const hasMore = i + 1 < activeProviders.length;
+      if (!shouldFallback || !hasMore) break;
+      console.warn(
+        `[chat-assistant] ${p.name} returned ${response.status}, falling back to ${activeProviders[i + 1].name}`,
+      );
+    }
 
-    // 2) 쿼터 소진 시 Cerebras 폴백. CEREBRAS_API_KEY 시크릿이 있어야 활성화.
-    //    429(분/일 한도) · 402(크레딧) 만 폴백 대상. 5xx·400 등은 폴백해도 같은 에러가 나므로 제외.
-    const fellBackToCerebras = false;
-    if (!response.ok && (response.status === 429 || response.status === 402)) {
-      const CEREBRAS_API_KEY = Deno.env.get("CEREBRAS_API_KEY");
-      if (CEREBRAS_API_KEY) {
-        console.warn(`Groq returned ${response.status}, falling back to Cerebras`);
-        response = await fetch("https://api.cerebras.ai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${CEREBRAS_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            // Cerebras 모델명 표기는 'llama3.1-8b' (하이픈 없이) — 공식 문서 기준.
-            model: "llama3.1-8b",
-            messages: fullMessages,
-            stream: true,
-          }),
-        });
-      }
+    // Defensive: 위 for 루프는 항상 response 를 할당함. TS 보강용 가드.
+    if (!response) {
+      return new Response(
+        JSON.stringify({ error: "AI 서비스 오류: no response" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI 크레딧이 부족합니다." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "AI 크레딧이 부족합니다." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
       const t = await response.text();
-      // 키는 절대 찍지 않고, 상태코드 + 본문 앞 일부만 로그에 남긴다.
-      console.error("Upstream AI error:", response.status, t.slice(0, 800));
+      // 키는 절대 찍지 않고, 상태코드 + 본문 앞 일부 + provider 이름만 로그에 남긴다.
+      console.error(
+        `[chat-assistant] ${usedProvider} error:`,
+        response.status,
+        t.slice(0, 800),
+      );
       return new Response(
         JSON.stringify({
           error: "AI 서비스 오류",
+          provider: usedProvider,
           status: response.status,
           detail: t.slice(0, 400),
         }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    void fellBackToCerebras;
-    return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
+
+    // 성공. 어느 provider 가 응답했는지 response header 로 노출 (디버깅용).
+    const streamHeaders: Record<string, string> = {
+      ...corsHeaders,
+      "Content-Type": "text/event-stream",
+      "X-AI-Provider": usedProvider,
+    };
+    return new Response(response.body, { headers: streamHeaders });
   } catch (e) {
     console.error("chat error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "알 수 없는 오류" }), {
