@@ -136,7 +136,11 @@ const CharacterStudioPage = () => {
     const freeStyles = PREBUILT_CHARACTERS.filter(c => c.price === 0).map(c => c.style);
     try {
       const stored = JSON.parse(localStorage.getItem(`owned_chars_${user?.id || "guest"}`) || "[]") as string[];
-      return new Set([...freeStyles, ...stored, ...(currentStyle ? [currentStyle] : [])]);
+      // currentStyle 자동 추가를 제거. "현재 적용 중" 판별은 isApplied(=== currentStyle) 로
+      // 따로 처리되므로 ownedStyles 에 넣지 않아도 "✅ 적용됨" 은 정상 노출된다.
+      // 이전 로직은 admin 이 과거 무지갑 적용한 복서가 계속 "보유" 로 보이게 해서,
+      // "admin 도 구매해야 보유" 라는 규칙을 깨뜨렸다.
+      return new Set([...freeStyles, ...stored]);
     } catch {
       return new Set(freeStyles);
     }
