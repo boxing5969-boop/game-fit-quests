@@ -1,4 +1,4 @@
-import { Gem, Crown, Sparkles, BadgeCheck } from "lucide-react";
+import { Banknote, Crown, Sparkles, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface InductionRewardPreviewProps {
@@ -9,7 +9,7 @@ interface InductionRewardPreviewProps {
 }
 
 interface RewardTile {
-  icon: typeof Gem;
+  icon: typeof Banknote;
   label: string;
   value: string;
   tint: "reward" | "primary" | "accent" | "muted";
@@ -27,7 +27,7 @@ export const InductionRewardPreview = ({
   className,
 }: InductionRewardPreviewProps) => {
   const tiles: RewardTile[] = [
-    { icon: Gem,         label: "파이트 머니", value: `${totalGems.toLocaleString()}젬`, tint: "reward"  },
+    { icon: Banknote,         label: "파이트 머니", value: `${totalGems.toLocaleString()}젬`, tint: "reward"  },
     { icon: Crown,       label: "칭호",       value: "신입 챌린저",                  tint: "primary" },
     { icon: Sparkles,    label: "이펙트",     value: "반짝임 1종",                    tint: "accent"  },
     { icon: BadgeCheck,  label: "배지",       value: "튜토리얼 완료",                 tint: "muted"   },

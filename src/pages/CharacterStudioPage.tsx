@@ -9,7 +9,7 @@ import {
   Lock,
   ChevronRight,
   Crown,
-  Gem,
+  Banknote,
   RotateCcw,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -378,7 +378,7 @@ const CharacterStudioPage = () => {
                 {/* Reward-tinted gem pill per spec
                     — rgba(246, 196, 83, 0.12) bg, #F6C453 text */}
                 <span className="inline-flex items-center gap-1 rounded-pill bg-[rgba(246,196,83,0.12)] px-3 py-1.5 text-caption font-bold text-[#F6C453]">
-                  <Gem className="h-3.5 w-3.5" />
+                  <Banknote className="h-3.5 w-3.5" />
                   <span className="number-font">{gemsDisplay}</span>
                 </span>
                 {activeTab === "preset" && currentStyle && selectedStyle !== currentStyle && (
@@ -632,7 +632,7 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
           label="꾸미기"
           value={`${customCount}개`}
           accent="reward"
-          icon={<Gem className="h-5 w-5" />}
+          icon={<Banknote className="h-5 w-5" />}
         />
         <StatCard
           label="현재 등급"
@@ -770,7 +770,7 @@ function InventorySection({
     <div className="elevated-card space-y-4">
       <div className="flex items-center gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(246,196,83,0.12)]">
-          <Gem className="h-5 w-5 text-[#F6C453]" />
+          <Banknote className="h-5 w-5 text-[#F6C453]" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-body-sm font-bold text-foreground">인벤토리</p>
@@ -789,7 +789,7 @@ function InventorySection({
             아직 구매한 아이템이 없어요
           </p>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            꾸미기 탭에서 💎 파이트 머니로 이펙트·프레임·칭호를 구매하면 여기에 쌓입니다.
+            꾸미기 탭에서 💵 파이트 머니로 이펙트·프레임·칭호를 구매하면 여기에 쌓입니다.
           </p>
         </div>
       )}
@@ -999,7 +999,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
         itemKey: option.key,
         price: option.price,
       });
-      toast.success(`💎 ${resolveDisplayName(category as UnlockCategory, option.key, option.label)} 구매 완료!`);
+      toast.success(`💵 ${resolveDisplayName(category as UnlockCategory, option.key, option.label)} 구매 완료!`);
       setPurchaseItem(null);
       // 구매 직후 자동 적용 — 사용자가 이 아이템을 고른 맥락이므로 의도 명확.
       applySelection(category, option.key);
@@ -1120,7 +1120,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
                 </span>
               ) : opt.price > 0 ? (
                 <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold leading-none ${isHof ? (visuallyLocked ? "text-muted-foreground" : "text-reward") : visuallyLocked ? "text-muted-foreground" : "text-foreground/70"}`}>
-                  <Gem className="h-2.5 w-2.5" />
+                  <Banknote className="h-2.5 w-2.5" />
                   <span className="number-font">{opt.price.toLocaleString()}</span>
                 </span>
               ) : (
@@ -1303,7 +1303,7 @@ function CustomizationPurchaseModal({
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">가격</span>
             <span className="font-black text-foreground">
-              💎 {option.price.toLocaleString()}
+              💵 {option.price.toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between text-sm">
@@ -1569,7 +1569,7 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
                     : (leagueBtnGradient[char.league] ?? "bg-gradient-to-r from-gray-400 to-gray-500 text-white")
                 }`}
               >
-                💎 {char.price.toLocaleString()}
+                💵 {char.price.toLocaleString()}
               </button>
             );
           }
@@ -1708,7 +1708,7 @@ function PurchaseConfirmModal({ char, walletBalance, isAdmin, isPurchasing, onCo
         <div className="rounded-2xl bg-muted/50 p-3.5 mb-5 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">가격</span>
-            <span className="font-black text-foreground">💎 {char.price.toLocaleString()}</span>
+            <span className="font-black text-foreground">💵 {char.price.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">현재 잔액</span>

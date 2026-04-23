@@ -7,7 +7,7 @@ import AvatarUpload from "@/components/AvatarUpload";
 import XPBar from "@/components/XPBar";
 import CharacterSprite from "@/components/CharacterSprite";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
-import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound, Award, Palette, Gem, Sparkles } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useNavigate } from "react-router-dom";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
@@ -234,8 +234,12 @@ const MyPage = () => {
               <p className="text-xs text-muted-foreground">만들기 · 꾸미기 · 성장시키기</p>
             </div>
             <div className="flex items-center gap-1.5 rounded-full bg-reward/20 px-3 py-1.5">
-              <Gem className="h-4 w-4 text-reward" />
-              <span className="text-sm font-bold text-reward-foreground">{walletData?.gems_balance?.toLocaleString() || 0}</span>
+              <Banknote className="h-4 w-4 text-reward" />
+              <span className="text-sm font-bold text-reward-foreground">
+                {role === "admin" || role === "super_admin"
+                  ? "∞"
+                  : walletData?.gems_balance?.toLocaleString() || 0}
+              </span>
             </div>
           </div>
         </button>

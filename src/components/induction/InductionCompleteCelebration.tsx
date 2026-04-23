@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Check, Gem, Gift } from "lucide-react";
+import { ArrowRight, Check, Banknote, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InductionRewardPreview } from "./InductionRewardPreview";
 import { cn } from "@/lib/utils";
@@ -127,7 +127,7 @@ export const InductionCompleteCelebration = ({
           )}
           aria-live="polite"
         >
-          <Gem className="h-6 w-6 self-center text-reward" />
+          <Banknote className="h-6 w-6 self-center text-reward" />
           <span className="number-font text-[32px] font-black leading-none text-reward">
             +{displayGems.toLocaleString()}
           </span>

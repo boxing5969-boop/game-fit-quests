@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Gem, QrCode, CheckCircle2, Trophy } from "lucide-react";
+import { User, Banknote, QrCode, CheckCircle2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -194,6 +194,9 @@ const HomePage = () => {
   const myPosition = myRankRow ? Number(myRankRow.rank_position) : null;
 
   const gemCount = walletData?.gems_balance ?? 0;
+  // 전체 관리자는 파이트 머니 개념이 없음 — 상단 표기를 ∞ 로 통일.
+  const isAdmin = role === "admin" || role === "super_admin";
+  const gemsDisplay = isAdmin ? "∞" : gemCount.toLocaleString();
   const displayName = profile.nickname || profile.name;
 
   return (
@@ -229,10 +232,10 @@ const HomePage = () => {
               <button
                 onClick={() => navigate("/avatar")}
                 className="badge-pill bg-reward/15 text-reward active:scale-95"
-                aria-label="보석"
+                aria-label="파이트 머니"
               >
-                <Gem className="h-3.5 w-3.5" />
-                <span className="number-font">{gemCount.toLocaleString()}</span>
+                <Banknote className="h-3.5 w-3.5" />
+                <span className="number-font">{gemsDisplay}</span>
               </button>
               <button
                 onClick={() => navigate("/mypage")}

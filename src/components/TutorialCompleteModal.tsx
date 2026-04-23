@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
-import { Crown, Gem, Sparkles } from "lucide-react";
+import { Crown, Banknote, Sparkles } from "lucide-react";
 
 interface TutorialCompleteModalProps {
   open: boolean;
@@ -83,7 +83,7 @@ export const TutorialCompleteModal = ({
         {/* 보상 3종 표시 */}
         <div className="mt-5 space-y-2">
           <div className="flex items-center gap-2 rounded-2xl border border-reward/30 bg-reward/10 px-4 py-3 text-left">
-            <Gem className="h-5 w-5 shrink-0 text-reward" />
+            <Banknote className="h-5 w-5 shrink-0 text-reward" />
             <div className="flex-1">
               <p className="text-[10px] font-medium uppercase tracking-wider text-reward">파이트 머니</p>
               <p className="number-font text-base font-bold text-foreground">

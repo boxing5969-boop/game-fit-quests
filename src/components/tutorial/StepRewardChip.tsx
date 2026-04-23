@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Gem } from "lucide-react";
+import { Banknote } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StepRewardChipProps {
@@ -45,7 +45,7 @@ export const StepRewardChip = ({
       )}
       aria-live="polite"
     >
-      <Gem className="h-3 w-3" />
+      <Banknote className="h-3 w-3" />
       <span className="number-font">+{shown.toLocaleString()}</span>
     </span>
   );

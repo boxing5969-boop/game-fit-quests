@@ -1,4 +1,4 @@
-import { ArrowRight, Gem } from "lucide-react";
+import { ArrowRight, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoachBot } from "@/components/tutorial/CoachBot";
 import { StepRewardChip } from "@/components/tutorial/StepRewardChip";
@@ -128,7 +128,7 @@ export const InductionStepCard = ({
           )}
         >
           <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
-            <Gem className="h-3.5 w-3.5 text-reward" />
+            <Banknote className="h-3.5 w-3.5 text-reward" />
             <span>이 단계 보상</span>
           </div>
           {recentReward && recentReward > 0 ? (

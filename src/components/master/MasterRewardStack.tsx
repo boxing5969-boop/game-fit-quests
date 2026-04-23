@@ -1,4 +1,4 @@
-import { Gem, Crown, Frame, Sparkles } from "lucide-react";
+import { Banknote, Crown, Frame, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MasterLevelDefinition } from "@/data/masterTierData";
 
@@ -25,7 +25,7 @@ export const MasterRewardStack = ({
 
   if (def.gemReward > 0) {
     chips.push({
-      icon: <Gem className="h-3 w-3" />,
+      icon: <Banknote className="h-3 w-3" />,
       text: `+${def.gemReward.toLocaleString()}`,
       tone: "bg-reward/12 text-reward",
     });

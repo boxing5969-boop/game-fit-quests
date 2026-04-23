@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Gem } from "lucide-react";
+import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Banknote } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
@@ -352,13 +352,13 @@ const MemberDetailPage = () => {
             </div>
           </div>
 
-          {/* Gem Management */}
+          {/* Fight Money Management */}
           <div className="space-y-2 pt-2 border-t border-border">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-              <Gem className="h-4 w-4 text-reward" /> 파이트 머니 관리
+              <Banknote className="h-4 w-4 text-reward" /> 파이트 머니 관리
             </h3>
             <div className="rounded-xl bg-reward/10 p-3 text-center">
-              <span className="text-2xl font-bold text-reward-foreground">💎 {memberWallet.data?.gems_balance?.toLocaleString() || 0}</span>
+              <span className="text-2xl font-bold text-reward-foreground">💵 {memberWallet.data?.gems_balance?.toLocaleString() || 0}</span>
               <p className="text-xs text-muted-foreground mt-1">현재 보유 파이트 머니</p>
             </div>
             <div className="flex gap-2">
@@ -389,7 +389,7 @@ const MemberDetailPage = () => {
                 disabled={grantGems.isPending}
                 className="rounded-xl bg-status-complete/20 py-2.5 text-sm font-bold text-status-complete active:scale-95 disabled:opacity-50"
               >
-                💎 지급
+                💵 지급
               </button>
               <button
                 onClick={() => {
@@ -402,7 +402,7 @@ const MemberDetailPage = () => {
                 disabled={grantGems.isPending}
                 className="rounded-xl bg-destructive/20 py-2.5 text-sm font-bold text-destructive active:scale-95 disabled:opacity-50"
               >
-                💎 차감
+                💵 차감
               </button>
             </div>
           </div>
