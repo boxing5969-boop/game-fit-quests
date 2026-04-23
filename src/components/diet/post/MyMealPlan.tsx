@@ -1,14 +1,17 @@
 import { useMemo, useState } from "react";
 import {
+  CheckCircle2,
   Flame,
   RefreshCw,
   UtensilsCrossed,
   Replace,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   MEAL_SLOT_LABEL_KO,
+  evaluateFiveNutrients,
   type NutritionTarget,
   type MealSlot,
 } from "@/lib/diet/nutritionEngine";
@@ -72,6 +75,10 @@ export const MyMealPlan = ({
 
   const kcalPct = Math.round(plan.coverage.kcalRatio * 100);
   const proteinPct = Math.round(plan.coverage.proteinRatio * 100);
+  const fiveNutrients = useMemo(
+    () => evaluateFiveNutrients(plan.nutrients, target),
+    [plan, target],
+  );
 
   const handleReroll = () => {
     setOverridePlan(null);
@@ -123,6 +130,88 @@ export const MyMealPlan = ({
             ? `단백질 ${proteinPct}% 확보. 감량기 근보존·포만감 OK.`
             : `단백질 ${proteinPct}% — 간식을 그릭요거트·삶은 달걀로 보강하면 좋아요.`}
         </p>
+      </div>
+
+      {/* 5대 영양소 체크리스트 */}
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              5대 영양소 + 프로바이오틱
+            </p>
+            <p className="mt-0.5 text-[13px] font-extrabold text-foreground">
+              하루 영양소 커버
+            </p>
+          </div>
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest",
+              fiveNutrients.allGreen
+                ? "bg-emerald-400/15 text-emerald-500"
+                : "bg-amber-400/15 text-amber-600",
+            )}
+          >
+            {fiveNutrients.allGreen ? "ALL GREEN" : "보강 필요"}
+          </span>
+        </div>
+        <ul className="mt-2 space-y-1.5">
+          <NutRow
+            label="단백질"
+            status={fiveNutrients.protein >= 0.85 ? "ok" : "low"}
+            detail={`${plan.totals.proteinG}/${target.proteinG}g`}
+          />
+          <NutRow
+            label="지방"
+            status={
+              fiveNutrients.fat >= 0.7 && fiveNutrients.fat <= 1.2 ? "ok" : "low"
+            }
+            detail={`${plan.totals.fatG}/${target.fatG}g`}
+          />
+          <NutRow
+            label="탄수화물"
+            status={
+              fiveNutrients.carbs >= 0.7 && fiveNutrients.carbs <= 1.2 ? "ok" : "low"
+            }
+            detail={`${plan.totals.carbsG}/${target.carbsG}g`}
+          />
+          <NutRow
+            label="비타민 (다양성)"
+            status={
+              fiveNutrients.vitamins.count >= fiveNutrients.vitamins.target
+                ? "ok"
+                : "low"
+            }
+            detail={`${fiveNutrients.vitamins.list.join("·") || "—"} (${fiveNutrients.vitamins.count}/${fiveNutrients.vitamins.target}종)`}
+          />
+          <NutRow
+            label="무기질 (다양성)"
+            status={
+              fiveNutrients.minerals.count >= fiveNutrients.minerals.target
+                ? "ok"
+                : "low"
+            }
+            detail={`${fiveNutrients.minerals.list.join("·") || "—"} (${fiveNutrients.minerals.count}/${fiveNutrients.minerals.target}종)`}
+          />
+          <NutRow
+            label="섬유질"
+            status={fiveNutrients.fiber.g >= fiveNutrients.fiber.target * 0.8 ? "ok" : "low"}
+            detail={`${fiveNutrients.fiber.g}/${fiveNutrients.fiber.target}g`}
+          />
+          <NutRow
+            label="프로바이오틱스"
+            status={
+              fiveNutrients.probiotic.count >= fiveNutrients.probiotic.target
+                ? "ok"
+                : "low"
+            }
+            detail={`${fiveNutrients.probiotic.count}회 (요거트·김치·된장 등)`}
+          />
+        </ul>
+        {!fiveNutrients.allGreen && (
+          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+            부족한 항목은 간식 "교체" 로 그릭요거트·사우어크라우트·견과류를 추가해 보세요.
+          </p>
+        )}
       </div>
 
       {/* 끼니 카드 */}
@@ -233,6 +322,35 @@ const Chip = ({ icon, label }: { icon?: React.ReactNode; label: string }) => (
     {icon}
     {label}
   </span>
+);
+
+const NutRow = ({
+  label,
+  status,
+  detail,
+}: {
+  label: string;
+  status: "ok" | "low";
+  detail: string;
+}) => (
+  <li
+    className={cn(
+      "flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-[11.5px]",
+      status === "ok"
+        ? "border-emerald-400/25 bg-emerald-400/5"
+        : "border-amber-400/25 bg-amber-400/5",
+    )}
+  >
+    <div className="flex items-center gap-1.5">
+      {status === "ok" ? (
+        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+      ) : (
+        <AlertCircle className="h-3 w-3 text-amber-600" />
+      )}
+      <span className="font-bold text-foreground">{label}</span>
+    </div>
+    <span className="text-[10.5px] text-muted-foreground">{detail}</span>
+  </li>
 );
 
 export default MyMealPlan;

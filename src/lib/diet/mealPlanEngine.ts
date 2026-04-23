@@ -20,6 +20,7 @@ import {
 } from "@/data/nutrition/mealLibrary";
 import {
   splitTargetsBySlot,
+  type DailyNutrientSum,
   type MealSlot,
   type MealSlotTarget,
   type NutritionTarget,
@@ -48,11 +49,13 @@ export interface MealPlanResult {
     proteinG: number;
     fatG: number;
     carbsG: number;
+    fiberG: number;
   };
   coverage: {
     kcalRatio: number;      // totals.kcal / target.kcal
     proteinRatio: number;
   };
+  nutrients: DailyNutrientSum;
   seed: number;
 }
 
@@ -133,6 +136,86 @@ function pickOneMeal(opts: {
   return scored[0].m;
 }
 
+/** 하루 최소 1개 프로바이오틱 메뉴 보장 — 선택된 picks 중 probiotic 없으면 snack 을 probiotic 메뉴로 강제 교체. */
+function ensureDailyProbiotic(
+  picks: MealPlanPick[],
+  excludeTags: string[],
+  excludeIngredients: string[],
+  rng: () => number,
+): MealPlanPick[] {
+  const hasProbiotic = picks.some((p) => p.item?.hasProbiotic);
+  if (hasProbiotic) return picks;
+
+  // 간식 슬롯 우선 교체, 없으면 아침
+  const swapOrder: MealSlot[] = ["snack", "breakfast", "lunch", "dinner"];
+  const used = new Set(picks.filter((p) => p.item).map((p) => p.item!.code));
+
+  for (const slot of swapOrder) {
+    const idx = picks.findIndex((p) => p.slot === slot);
+    if (idx < 0) continue;
+    const currentCode = picks[idx].item?.code;
+    if (currentCode) used.delete(currentCode);
+
+    const replacement = pickOneMeal({
+      slot: picks[idx].slot,
+      target: picks[idx].target,
+      excludeCodes: used,
+      excludeTags,
+      excludeIngredients,
+      rng,
+    });
+    // probiotic 필터 적용해서 재선택
+    const probioticOnly = filterMenus({
+      slot: picks[idx].slot,
+      excludeTags,
+      excludeIngredients,
+      requireProbiotic: true,
+    }).filter((m) => !used.has(m.code));
+    const chosen = probioticOnly[0] ?? replacement;
+    if (chosen?.hasProbiotic) {
+      picks[idx] = { ...picks[idx], item: chosen };
+      return picks;
+    }
+    if (currentCode) used.add(currentCode);
+  }
+  return picks;
+}
+
+function aggregateNutrients(picks: MealPlanPick[]): {
+  totals: MealPlanResult["totals"];
+  nutrients: DailyNutrientSum;
+} {
+  const totals = { kcal: 0, proteinG: 0, fatG: 0, carbsG: 0, fiberG: 0 };
+  const vitSet = new Set<string>();
+  const minSet = new Set<string>();
+  let probioticCount = 0;
+
+  for (const p of picks) {
+    if (!p.item) continue;
+    totals.kcal += p.item.kcal;
+    totals.proteinG += p.item.proteinG;
+    totals.fatG += p.item.fatG;
+    totals.carbsG += p.item.carbsG;
+    totals.fiberG += p.item.fiberG;
+    p.item.keyVitamins.forEach((v) => vitSet.add(v));
+    p.item.keyMinerals.forEach((m) => minSet.add(m));
+    if (p.item.hasProbiotic) probioticCount++;
+  }
+
+  return {
+    totals,
+    nutrients: {
+      proteinG: totals.proteinG,
+      fatG: totals.fatG,
+      carbsG: totals.carbsG,
+      fiberG: totals.fiberG,
+      vitamins: Array.from(vitSet),
+      minerals: Array.from(minSet),
+      probioticCount,
+    },
+  };
+}
+
 export function generateMealPlan(input: MealPlanInput): MealPlanResult {
   const seed = input.seed ?? Math.floor(Math.random() * 1000);
   const rng = mulberry32(seed);
@@ -145,7 +228,7 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
   );
 
   const used = new Set<string>();
-  const picks: MealPlanPick[] = slotTargets.map((t) => {
+  let picks: MealPlanPick[] = slotTargets.map((t) => {
     const item = pickOneMeal({
       slot: t.slot,
       target: t,
@@ -159,21 +242,15 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
     return { slot: t.slot, target: t, item };
   });
 
-  const totals = picks.reduce(
-    (acc, p) => {
-      if (!p.item) return acc;
-      acc.kcal += p.item.kcal;
-      acc.proteinG += p.item.proteinG;
-      acc.fatG += p.item.fatG;
-      acc.carbsG += p.item.carbsG;
-      return acc;
-    },
-    { kcal: 0, proteinG: 0, fatG: 0, carbsG: 0 },
-  );
+  // 하루 프로바이오틱 최소 1회 보장
+  picks = ensureDailyProbiotic(picks, excludeTags, excludeIngredients, rng);
+
+  const { totals, nutrients } = aggregateNutrients(picks);
 
   return {
     picks,
     totals,
+    nutrients,
     coverage: {
       kcalRatio: input.target.kcalTarget > 0 ? totals.kcal / input.target.kcalTarget : 0,
       proteinRatio:
@@ -232,22 +309,13 @@ export function swapMealWithAutoAdjust(input: SwapInput): MealPlanResult {
     }
   }
 
-  // 최종 합산
-  const totals = picks.reduce(
-    (acc, p) => {
-      if (!p.item) return acc;
-      acc.kcal += p.item.kcal;
-      acc.proteinG += p.item.proteinG;
-      acc.fatG += p.item.fatG;
-      acc.carbsG += p.item.carbsG;
-      return acc;
-    },
-    { kcal: 0, proteinG: 0, fatG: 0, carbsG: 0 },
-  );
+  // 최종 합산 + 5대 영양소
+  const { totals, nutrients } = aggregateNutrients(picks);
 
   return {
     picks,
     totals,
+    nutrients,
     coverage: {
       kcalRatio: input.target.kcalTarget > 0 ? totals.kcal / input.target.kcalTarget : 0,
       proteinRatio:

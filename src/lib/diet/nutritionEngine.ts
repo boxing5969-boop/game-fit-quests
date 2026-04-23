@@ -212,3 +212,90 @@ export const MEAL_SLOT_LABEL_KO: Record<MealSlot, string> = {
   dinner: "저녁",
   snack: "간식",
 };
+
+// ──────────────────────────────────────────────────────────────────
+// 5대 영양소 하루 목표 & 커버리지 판정
+// ──────────────────────────────────────────────────────────────────
+
+/**
+ * 하루 권장:
+ *   · 섬유질 25g (성인 일반 권장)
+ *   · 프로바이오틱 1일 1회 이상
+ *   · 비타민·무기질: 5대 영양소 관점에서 "종류 다양성" 체크
+ *     (정밀 mg 은 개별 계산 불가 — 메뉴별 keyVitamins/keyMinerals 로 대체)
+ */
+export const DAILY_FIBER_TARGET_G = 25;
+export const DAILY_PROBIOTIC_TARGET = 1;
+export const DAILY_VITAMIN_DIVERSITY_TARGET = 5;  // 최소 5종
+export const DAILY_MINERAL_DIVERSITY_TARGET = 4;  // 최소 4종
+
+export interface FiveNutrientStatus {
+  /** 단백질 충족율 (0~1+) */
+  protein: number;
+  /** 지방 충족율 */
+  fat: number;
+  /** 탄수 충족율 */
+  carbs: number;
+  /** 비타민 다양성 (보유 종류 수 / 목표) */
+  vitamins: { count: number; target: number; list: string[] };
+  /** 무기질 다양성 */
+  minerals: { count: number; target: number; list: string[] };
+  /** 섬유질 (g) */
+  fiber: { g: number; target: number };
+  /** 프로바이오틱 (횟수) */
+  probiotic: { count: number; target: number };
+  /** 전체 통과 여부 — UI "5대 영양소 OK" 표시용 */
+  allGreen: boolean;
+}
+
+export interface DailyNutrientSum {
+  proteinG: number;
+  fatG: number;
+  carbsG: number;
+  fiberG: number;
+  vitamins: string[];   // 중복 제거된 종류
+  minerals: string[];
+  probioticCount: number;
+}
+
+export function evaluateFiveNutrients(
+  sum: DailyNutrientSum,
+  target: NutritionTarget,
+): FiveNutrientStatus {
+  const protein = target.proteinG > 0 ? sum.proteinG / target.proteinG : 0;
+  const fat = target.fatG > 0 ? sum.fatG / target.fatG : 0;
+  const carbs = target.carbsG > 0 ? sum.carbsG / target.carbsG : 0;
+
+  const vit = {
+    count: sum.vitamins.length,
+    target: DAILY_VITAMIN_DIVERSITY_TARGET,
+    list: sum.vitamins,
+  };
+  const min = {
+    count: sum.minerals.length,
+    target: DAILY_MINERAL_DIVERSITY_TARGET,
+    list: sum.minerals,
+  };
+  const fiber = { g: sum.fiberG, target: DAILY_FIBER_TARGET_G };
+  const prob = { count: sum.probioticCount, target: DAILY_PROBIOTIC_TARGET };
+
+  const allGreen =
+    protein >= 0.85 &&
+    fat >= 0.7 &&
+    carbs >= 0.7 &&
+    vit.count >= vit.target &&
+    min.count >= min.target &&
+    fiber.g >= fiber.target * 0.8 &&
+    prob.count >= prob.target;
+
+  return {
+    protein,
+    fat,
+    carbs,
+    vitamins: vit,
+    minerals: min,
+    fiber,
+    probiotic: prob,
+    allGreen,
+  };
+}

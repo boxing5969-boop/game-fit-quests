@@ -69,6 +69,21 @@ export const NutritionScienceCard = ({
             label="지방을 25% 이하로 내리지 않는 이유"
             body="성호르몬·비타민 흡수·세포막 유지에 필요한 최소선. 더 줄이면 컨디션·생리 주기 영향."
           />
+
+          <div className="rounded-xl border border-border bg-muted/30 p-3">
+            <p className="text-[11.5px] font-extrabold text-foreground">
+              5대 영양소 + 프로바이오틱스
+            </p>
+            <ul className="mt-1.5 space-y-1.5 text-[11.5px] leading-relaxed text-muted-foreground">
+              <li><strong className="text-foreground">단백질</strong> — 근육·효소·면역세포 재료. 감량기 근손실을 막는 1순위.</li>
+              <li><strong className="text-foreground">지방</strong> — 호르몬 전구체, 지용성 비타민(A·D·E·K) 흡수 매개.</li>
+              <li><strong className="text-foreground">탄수화물</strong> — 뇌·근육의 주 연료. 섬유질은 장 건강·혈당 안정.</li>
+              <li><strong className="text-foreground">비타민</strong> — 대사 반응의 촉매. 수용성(B·C)은 매일, 지용성(A·D·E·K)은 지방과 함께.</li>
+              <li><strong className="text-foreground">무기질</strong> — 철(산소 운반)·칼슘(뼈·수축)·마그네슘(300+ 효소)·아연(면역).</li>
+              <li><strong className="text-foreground">프로바이오틱스</strong> — 장내 미생물 균형. 요거트·김치·된장·사우어크라우트·케피어 중 1회/일.</li>
+            </ul>
+          </div>
+
           <p className="text-[11px] italic text-muted-foreground">
             * 값은 계산 기반 가이드입니다. 임신·수유·질환 시 담당의와 상담하세요.
           </p>
