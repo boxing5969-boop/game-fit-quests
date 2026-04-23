@@ -35,6 +35,7 @@ import PostProgramRouter from "@/components/diet/post/PostProgramRouter";
 import DietSubNav from "@/components/diet/DietSubNav";
 import DietLoadingOverlay from "@/components/diet/DietLoadingOverlay";
 import OsamCoachPopup from "@/components/diet/OsamCoachPopup";
+import ComebackButton from "@/components/diet/ComebackButton";
 import { pickDailyCoachMessage } from "@/data/diet/coachMessages";
 import { useDietPreferences } from "@/hooks/useDietPreferences";
 import { useDietAnalytics } from "@/hooks/useDietAnalytics";
@@ -419,6 +420,9 @@ const ActiveHome = (p: ActiveHomeProps) => {
           <ArrowRight className="h-5 w-5 text-primary" />
         </div>
       </button>
+
+      {/* 실패 복귀 시스템 — "망쳤어요" 진입. 1개만 체크해도 복구 성공 */}
+      <ComebackButton />
 
       {/* 배지 진행 */}
       <MilestoneProgressStrip
