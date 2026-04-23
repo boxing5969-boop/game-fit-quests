@@ -1,0 +1,211 @@
+/* 153 랭킹업 · 복싱 트레이닝 게임 전용 스타일.
+   원본: speed-strike-trainer/src/index.css
+   .minigame-app 서브트리에만 적용되도록 CSS 변수·컴포넌트 클래스를 스코프함.
+   전역 키프레임은 이름 충돌 방지를 위해 'mg-' 접두사로 리네임. */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;900&display=swap');
+
+/* ── 테마 변수 오버라이드 (.minigame-app 서브트리 한정) */
+.minigame-app {
+  --background: 0 0% 4%;
+  --foreground: 0 0% 95%;
+
+  --card: 0 0% 8%;
+  --card-foreground: 0 0% 95%;
+
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 95%;
+
+  --primary: 355 82% 56%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 45 100% 50%;
+  --secondary-foreground: 0 0% 4%;
+
+  --muted: 0 0% 14%;
+  --muted-foreground: 0 0% 55%;
+
+  --accent: 45 100% 50%;
+  --accent-foreground: 0 0% 4%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 18%;
+  --input: 0 0% 18%;
+  --ring: 355 82% 56%;
+
+  --radius: 0.75rem;
+
+  /* Boxing-specific tokens */
+  --punch-jab: 217 91% 60%;
+  --punch-straight: 355 82% 56%;
+  --punch-hook: 45 100% 50%;
+  --punch-upper: 142 71% 45%;
+
+  --rating-lightning: 270 70% 60%;
+  --rating-fast: 142 71% 45%;
+  --rating-good: 217 91% 60%;
+  --rating-slow: 25 95% 53%;
+  --rating-miss: 0 84% 60%;
+
+  --tier-bronze: 30 60% 50%;
+  --tier-silver: 0 0% 70%;
+  --tier-gold: 45 100% 50%;
+  --tier-platinum: 195 80% 65%;
+  --tier-legend: 270 70% 60%;
+
+  /* 게임 루트 자체에 body 수준 스타일 적용 */
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', sans-serif;
+}
+
+.minigame-app .font-display {
+  font-family: 'Bebas Neue', cursive;
+}
+
+/* ── 컴포넌트 클래스 — 게임 스코프 내에서만 동작 */
+.minigame-app .punch-btn {
+  @apply flex flex-col items-center justify-center rounded-xl font-bold text-lg transition-all duration-100 active:scale-95 select-none;
+  min-height: 80px;
+}
+
+.minigame-app .flash-overlay {
+  @apply fixed inset-0 flex items-center justify-center z-50;
+  animation: mg-flash-in 0.15s ease-out;
+}
+
+.minigame-app .pulse-glow {
+  animation: mg-pulse-glow 1.5s ease-in-out infinite;
+}
+
+.minigame-app .shake {
+  animation: mg-shake 0.4s ease-in-out;
+}
+
+.minigame-app .defense-shake {
+  animation: mg-defense-shake 0.22s ease-out;
+}
+.minigame-app .defense-shake-big {
+  animation: mg-defense-shake-big 0.38s ease-out;
+}
+
+.minigame-app .hit-stop {
+  animation: mg-hit-stop 0.22s cubic-bezier(.2,.9,.2,1);
+}
+
+.minigame-app .perfect-pop {
+  animation: mg-perfect-pop 0.7s cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+.minigame-app .particle {
+  animation: mg-particle-fly 0.55s ease-out forwards;
+}
+
+.minigame-app .ring-pulse {
+  animation: mg-ring-pulse 0.55s ease-out forwards;
+}
+
+.minigame-app .round-banner-in {
+  animation: mg-round-banner-in 0.6s cubic-bezier(.2,.9,.2,1.1);
+}
+
+.minigame-app .new-best-shine {
+  background: linear-gradient(
+    100deg,
+    hsl(var(--secondary)) 0%,
+    hsl(var(--secondary)) 35%,
+    hsl(45 100% 80%) 50%,
+    hsl(var(--secondary)) 65%,
+    hsl(var(--secondary)) 100%
+  );
+  background-size: 200% 100%;
+  animation: mg-new-best-shine 1.6s ease-in-out infinite;
+}
+
+.minigame-app .game-viewport {
+  height: 100dvh;
+  height: 100svh;
+  width: 100vw;
+  max-width: 100vw;
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* ── 키프레임 (전역 — 이름 충돌 방지 'mg-' 접두사) */
+@keyframes mg-flash-in {
+  from { opacity: 0; transform: scale(1.1); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes mg-pulse-glow {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.03); }
+}
+
+@keyframes mg-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+@keyframes mg-defense-shake {
+  0%, 100% { transform: translate3d(0,0,0); }
+  20% { transform: translate3d(-4px, 2px, 0); }
+  40% { transform: translate3d(4px, -2px, 0); }
+  60% { transform: translate3d(-3px, -1px, 0); }
+  80% { transform: translate3d(3px, 1px, 0); }
+}
+
+@keyframes mg-defense-shake-big {
+  0%, 100% { transform: translate3d(0,0,0); }
+  10% { transform: translate3d(-9px, 4px, 0) rotate(-0.5deg); }
+  25% { transform: translate3d(8px, -5px, 0) rotate(0.4deg); }
+  40% { transform: translate3d(-7px, -3px, 0) rotate(-0.3deg); }
+  55% { transform: translate3d(6px, 4px, 0) rotate(0.3deg); }
+  70% { transform: translate3d(-4px, -2px, 0); }
+  85% { transform: translate3d(3px, 2px, 0); }
+}
+
+@keyframes mg-hit-stop {
+  0%   { transform: scale(1); filter: brightness(1); }
+  18%  { transform: scale(1.06); filter: brightness(1.7) saturate(1.4); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes mg-perfect-pop {
+  0%   { transform: scale(0.4) translateY(20px); opacity: 0; }
+  35%  { transform: scale(1.25) translateY(-8px); opacity: 1; }
+  60%  { transform: scale(0.92) translateY(0); }
+  100% { transform: scale(1) translateY(-30px); opacity: 0; }
+}
+
+@keyframes mg-particle-fly {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
+}
+
+@keyframes mg-ring-pulse {
+  0%   { transform: scale(0.4); opacity: 0.9; border-width: 6px; }
+  100% { transform: scale(2.4); opacity: 0;   border-width: 1px; }
+}
+
+@keyframes mg-round-banner-in {
+  0%   { transform: scale(0.3) rotate(-8deg); opacity: 0; filter: blur(8px); }
+  40%  { transform: scale(1.18) rotate(2deg); opacity: 1; filter: blur(0); }
+  60%  { transform: scale(0.94) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes mg-new-best-shine {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}

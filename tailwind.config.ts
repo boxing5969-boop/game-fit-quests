@@ -4,6 +4,17 @@ export default {
   darkMode: ["class"],
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
+  // /minigame (복싱 트레이닝) 에서 동적으로 조립되는 색 유틸리티.
+  // 문자열 템플릿(`text-rating-${judgement}`, `text-tier-${t}`) 로 만들어져
+  // 컨텐트 스캔에 잡히지 않으므로 강제 포함. CSS 변수는 src/features/minigame/minigame.css
+  // 의 .minigame-app 스코프에서만 값이 설정되므로 앱 전체에 영향 없음.
+  safelist: [
+    "text-rating-lightning", "text-rating-fast", "text-rating-good", "text-rating-slow", "text-rating-miss",
+    "text-rating-lightning/80", "text-rating-fast/80", "text-rating-good/80", "text-rating-slow/80", "text-rating-miss/80",
+    "text-tier-bronze", "text-tier-silver", "text-tier-gold", "text-tier-platinum", "text-tier-legend",
+    "text-tier-bronze/80", "text-tier-silver/80", "text-tier-gold/80", "text-tier-platinum/80", "text-tier-legend/80",
+    "text-punch-jab", "text-punch-straight", "text-punch-hook", "text-punch-upper",
+  ],
   theme: {
     container: {
       center: true,
@@ -152,6 +163,28 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        // 복싱 트레이닝(/minigame) 전용 토큰. 실제 CSS 변수 값은
+        // src/features/minigame/minigame.css 의 .minigame-app 안에서만 설정됨.
+        punch: {
+          jab: "hsl(var(--punch-jab))",
+          straight: "hsl(var(--punch-straight))",
+          hook: "hsl(var(--punch-hook))",
+          upper: "hsl(var(--punch-upper))",
+        },
+        rating: {
+          lightning: "hsl(var(--rating-lightning))",
+          fast: "hsl(var(--rating-fast))",
+          good: "hsl(var(--rating-good))",
+          slow: "hsl(var(--rating-slow))",
+          miss: "hsl(var(--rating-miss))",
+        },
+        tier: {
+          bronze: "hsl(var(--tier-bronze))",
+          silver: "hsl(var(--tier-silver))",
+          gold: "hsl(var(--tier-gold))",
+          platinum: "hsl(var(--tier-platinum))",
+          legend: "hsl(var(--tier-legend))",
         },
       },
       borderRadius: {

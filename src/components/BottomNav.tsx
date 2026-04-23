@@ -64,6 +64,8 @@ const hiddenPaths = [
   "/select-branch",
   "/waiting-approval",
   "/live-board",
+  // 복싱 트레이닝은 100dvh 풀스크린 게임 UI 라 하단 탭바가 겹치면 안 됨.
+  "/minigame",
 ];
 
 // Inactive tone — spec #8C95A3. Kept as an arbitrary Tailwind value
