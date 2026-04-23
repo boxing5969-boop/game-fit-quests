@@ -22,13 +22,13 @@ import { cn } from "@/lib/utils";
 // ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
 // 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 로드맵으로 교체.
 // 접근성은 전체 메뉴 오버레이에 보존.
-// 훈련은 🥊 이모지로 복싱 정체성 강화, 미니게임은 "트레이닝" 라벨로 통일.
+// 훈련은 🥊 이모지로 복싱 정체성 강화, 미니게임은 "복싱 트레이닝 게임" 라벨로 통일.
 const mainTabs = [
-  { path: "/home",       icon: Home,     label: "홈",     emoji: null  },
-  { path: "/missions",   icon: null,     label: "훈련",   emoji: "🥊" },
-  { path: "/minigame",   icon: Dumbbell, label: "트레이닝", emoji: null },
-  { path: "/halloffame", icon: Trophy,   label: "랭킹",   emoji: null  },
-  { path: "/levelmap",   icon: Map,      label: "로드맵",  emoji: null  },
+  { path: "/home",       icon: Home,     label: "홈",            emoji: null  },
+  { path: "/missions",   icon: null,     label: "훈련",          emoji: "🥊" },
+  { path: "/minigame",   icon: Dumbbell, label: "복싱 트레이닝 게임", emoji: null },
+  { path: "/halloffame", icon: Trophy,   label: "랭킹",          emoji: null  },
+  { path: "/levelmap",   icon: Map,      label: "로드맵",         emoji: null  },
 ] as const;
 
 // ── Full menu overlay (everything not on the primary bar) ───────────
@@ -36,7 +36,7 @@ const mainTabs = [
 const baseMenuItems = [
   { path: "/home",              icon: Home,       label: "홈" },
   { path: "/missions",          icon: Dumbbell,   label: "훈련" },
-  { path: "/minigame",          icon: Dumbbell,   label: "트레이닝" },
+  { path: "/minigame",          icon: Dumbbell,   label: "복싱 트레이닝 게임" },
   { path: "/halloffame",        icon: Trophy,     label: "랭킹" },
   { path: "/rank-up",           icon: TrendingUp, label: "랭크업" },
   { path: "/cert-benefits",     icon: Award,      label: "단증혜택" },
@@ -76,7 +76,7 @@ const BottomNav = () => {
   // 캐릭터(index 8) 뒤, 가이드(index 9) 앞에 삽입해 "활동 → 꾸미기 → 다이어트 → 가이드" 순 유지.
   const allMenuItems = useMemo<readonly MenuItem[]>(() => {
     if (!profile?.diet_program_enabled) return baseMenuItems;
-    const dietItem: MenuItem = { path: "/diet", icon: Salad, label: "다이어트" };
+    const dietItem: MenuItem = { path: "/diet", icon: Salad, label: "153다이어트" };
     const insertAt = baseMenuItems.findIndex((i) => i.path === "/guide");
     const idx = insertAt === -1 ? baseMenuItems.length : insertAt;
     return [

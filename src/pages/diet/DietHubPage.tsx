@@ -131,7 +131,7 @@ const HubShell = ({
   <AppPage
     header={
       <PageHeader
-        title="153 다이어트"
+        title="153다이어트"
         subtitle="21일 습관 리셋 프로그램"
         leftAction={
           <button
@@ -160,7 +160,7 @@ const ComingSoon = () => (
     <Sparkles className="mx-auto h-6 w-6 text-primary" />
     <p className="mt-2 text-[14px] font-bold text-foreground">곧 공개됩니다</p>
     <p className="mt-1 text-[12px] text-muted-foreground leading-relaxed">
-      153 다이어트 프로그램이 지점별 순차 공개됩니다. 관장님 또는 담당 코치에게 문의해 주세요.
+      153다이어트 프로그램이 지점별 순차 공개됩니다. 관장님 또는 담당 코치에게 문의해 주세요.
     </p>
   </div>
 );
@@ -390,7 +390,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
       <div className="grid grid-cols-2 gap-2">
         <NavTile
           icon={<Brain className="h-4 w-4" />}
-          label="왜 153 다이어트?"
+          label="왜 153다이어트?"
           hint="과학·원리 설명"
           onClick={() => navigate("/diet/value")}
         />
