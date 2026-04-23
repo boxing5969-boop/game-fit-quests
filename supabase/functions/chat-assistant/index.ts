@@ -383,7 +383,10 @@ serve(async (req) => {
     if (dietContext) {
       systemMessages.push({ role: "system", content: dietContext });
     }
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const fullMessages = [...systemMessages, ...messages];
+
+    // 1) 1차 시도: Groq (llama-3.1-8b-instant).
+    let response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${GROQ_API_KEY}`,
@@ -391,10 +394,34 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
-        messages: [...systemMessages, ...messages],
+        messages: fullMessages,
         stream: true,
       }),
     });
+
+    // 2) 쿼터 소진 시 Cerebras 폴백. CEREBRAS_API_KEY 시크릿이 있어야 활성화.
+    //    429(분/일 한도) · 402(크레딧) 만 폴백 대상. 5xx·400 등은 폴백해도 같은 에러가 나므로 제외.
+    const fellBackToCerebras = false;
+    if (!response.ok && (response.status === 429 || response.status === 402)) {
+      const CEREBRAS_API_KEY = Deno.env.get("CEREBRAS_API_KEY");
+      if (CEREBRAS_API_KEY) {
+        console.warn(`Groq returned ${response.status}, falling back to Cerebras`);
+        response = await fetch("https://api.cerebras.ai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${CEREBRAS_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            // Cerebras 모델명 표기는 'llama3.1-8b' (하이픈 없이) — 공식 문서 기준.
+            model: "llama3.1-8b",
+            messages: fullMessages,
+            stream: true,
+          }),
+        });
+      }
+    }
+
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." }), {
@@ -410,7 +437,7 @@ serve(async (req) => {
       }
       const t = await response.text();
       // 키는 절대 찍지 않고, 상태코드 + 본문 앞 일부만 로그에 남긴다.
-      console.error("Groq API error:", response.status, t.slice(0, 800));
+      console.error("Upstream AI error:", response.status, t.slice(0, 800));
       return new Response(
         JSON.stringify({
           error: "AI 서비스 오류",
@@ -423,6 +450,7 @@ serve(async (req) => {
         },
       );
     }
+    void fellBackToCerebras;
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });

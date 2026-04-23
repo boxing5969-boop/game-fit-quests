@@ -7,6 +7,17 @@ type Msg = { role: "user" | "assistant"; content: string; isError?: boolean };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistant`;
 
+// 무료 AI 쿼터 보호:
+//   COOLDOWN_MS — 연타 방지. 동일 유저가 이 간격 이내 재전송 시도 시 무시.
+//   CACHE_TTL_MS — 같은 질문을 이 시간 안에 다시 묻는 경우 API 호출 없이 재사용.
+//   CACHE_MAX — 메모리 캐시 엔트리 상한 (오래된 것부터 제거).
+const COOLDOWN_MS = 3_000;
+const CACHE_TTL_MS = 5 * 60_000;
+const CACHE_MAX = 20;
+
+const normalizeQ = (s: string) =>
+  s.trim().toLowerCase().replace(/\s+/g, " ");
+
 const WELCOME_MSG: Msg = {
   role: "assistant",
   content: "안녕하세요! 🥊 153복싱짐 AI 코치입니다.\n\n퀘스트, 리그 시스템, 동작 요령 등 궁금한 점을 자유롭게 물어보세요!",
@@ -19,6 +30,8 @@ const ChatAssistant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isApiLimitReached, setIsApiLimitReached] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastSendAtRef = useRef(0);
+  const cacheRef = useRef(new Map<string, { answer: string; at: number }>());
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,7 +42,27 @@ const ChatAssistant = () => {
     const text = input.trim();
     if (!text || isLoading || isApiLimitReached) return;
 
+    // 1) 쿨다운 — 3초 안 연타는 조용히 무시 (연속 탭 실수 + 스팸 방지).
+    const now = Date.now();
+    if (now - lastSendAtRef.current < COOLDOWN_MS) return;
+    lastSendAtRef.current = now;
+
     const userMsg: Msg = { role: "user", content: text };
+
+    // 2) 메모리 질문 캐시 — 같은 질문을 TTL 내에 다시 하면 API 없이 재사용.
+    //    개인화 응답이 5분 안에 크게 달라질 일은 드물어 안전.
+    const qKey = normalizeQ(text);
+    const cached = cacheRef.current.get(qKey);
+    if (cached && now - cached.at < CACHE_TTL_MS) {
+      setMessages((prev) => [
+        ...prev,
+        userMsg,
+        { role: "assistant", content: cached.answer },
+      ]);
+      setInput("");
+      return;
+    }
+
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
@@ -112,6 +145,15 @@ const ChatAssistant = () => {
             textBuffer = line + "\n" + textBuffer;
             break;
           }
+        }
+      }
+
+      // 스트림 정상 완료 시 질문→응답 캐시에 저장. 에러 경로는 저장하지 않음.
+      if (assistantSoFar) {
+        cacheRef.current.set(qKey, { answer: assistantSoFar, at: Date.now() });
+        if (cacheRef.current.size > CACHE_MAX) {
+          const oldestKey = cacheRef.current.keys().next().value;
+          if (oldestKey !== undefined) cacheRef.current.delete(oldestKey);
         }
       }
     } catch (e: any) {
