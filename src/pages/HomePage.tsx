@@ -439,6 +439,31 @@ const HomePage = () => {
                 <span className="shrink-0 text-primary text-xl">→</span>
               </div>
             </button>
+
+            {/* 21일 챌린지 진입 — 같이 하면 더 오래 간다 */}
+            <button
+              type="button"
+              onClick={() => navigate("/challenges")}
+              className="mt-2 w-full rounded-2xl border border-emerald-400/30 bg-emerald-400/5 p-4 text-left transition-all active:scale-[0.99] hover:border-emerald-400/50"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-400/15 text-emerald-500 text-xl">
+                  🤝
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">
+                    CHALLENGE · 같이 21일
+                  </p>
+                  <p className="mt-0.5 truncate text-[14px] font-bold text-foreground">
+                    21일 챌린지 참여
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                    팀전 · 목표별 그룹 · 출석·연속성·복귀 기반 점수
+                  </p>
+                </div>
+                <span className="shrink-0 text-emerald-500 text-xl">→</span>
+              </div>
+            </button>
           </section>
         )}
 
