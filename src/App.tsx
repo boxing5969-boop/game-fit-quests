@@ -34,7 +34,6 @@ const MemberPreviewPage = lazy(() => import("@/pages/MemberPreviewPage"));
 const OnboardingPage = lazy(() => import("@/pages/OnboardingPage"));
 const SelectBranchPage = lazy(() => import("@/pages/SelectBranchPage"));
 const WaitingApprovalPage = lazy(() => import("@/pages/WaitingApprovalPage"));
-const SafetyCheckPage = lazy(() => import("@/pages/SafetyCheckPage"));
 const GuidePage = lazy(() => import("@/pages/GuidePage"));
 const GuideProgramPage = lazy(() => import("@/pages/guide/GuideProgramPage"));
 const GuideSciencePage = lazy(() => import("@/pages/guide/GuideSciencePage"));
@@ -164,7 +163,6 @@ const AppRoutes = () => {
         <Route path="/select-branch" element={<ProtectedRoute><SelectBranchPage /></ProtectedRoute>} />
         <Route path="/waiting-approval" element={<ProtectedRoute><WaitingApprovalPage /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
-        <Route path="/safety-check" element={<ProtectedRoute><SafetyCheckPage /></ProtectedRoute>} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
         <Route path="/quests" element={<Navigate to="/missions" replace />} />

@@ -57,7 +57,6 @@ type MenuItem = { path: string; icon: IconComponent; label: string };
 const hiddenPaths = [
   "/",
   "/onboarding",
-  "/safety-check",
   "/manager",
   "/coach",
   "/member",

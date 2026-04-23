@@ -32,7 +32,6 @@ const BYPASS_PATH_PREFIXES: readonly string[] = [
   "/onboarding",
   "/select-branch",
   "/waiting-approval",
-  "/safety-check",
   "/live-board",
 ];
 

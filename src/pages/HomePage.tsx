@@ -59,7 +59,7 @@ const HomePage = () => {
   const { data: myCharacter } = useMemberCharacterAssignment();
   const { data: ranking } = useDivisionRanking();
   const attendance = useRecordAttendance();
-  const { onboardingDone, safetyDone } = useOnboardingState();
+  const { onboardingDone } = useOnboardingState();
   const { totalXp, metrics } = useLocalProgress();
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
   useLevelUpNotifications();
@@ -103,8 +103,7 @@ const HomePage = () => {
 
   useEffect(() => {
     if (!onboardingDone) navigate("/onboarding", { replace: true });
-    else if (!safetyDone) navigate("/safety-check", { replace: true });
-  }, [onboardingDone, safetyDone, navigate]);
+  }, [onboardingDone, navigate]);
 
   useEffect(() => {
     if (progress) attendance.mutate();

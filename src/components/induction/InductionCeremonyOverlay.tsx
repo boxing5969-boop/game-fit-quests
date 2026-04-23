@@ -46,7 +46,6 @@ import { cn } from "@/lib/utils";
  *   • "/onboarding"          — 설문 온보딩
  *   • "/select-branch"       — 지점 선택
  *   • "/waiting-approval"    — 코치 승인 대기
- *   • "/safety-check"        — 안전 확인
  *   • "/live-board/*"        — 퍼블릭 전광판 (비로그인도 접근)
  *
  * ──────────────────────────────────────────────────────────────
@@ -70,7 +69,6 @@ const SETUP_ROUTES = [
   "/onboarding",
   "/select-branch",
   "/waiting-approval",
-  "/safety-check",
 ] as const;
 
 const isSetupPath = (pathname: string): boolean => {
