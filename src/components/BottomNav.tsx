@@ -14,6 +14,7 @@ import {
   Settings,
   Target,
   Gamepad2,
+  Info,
   X,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -46,6 +47,7 @@ const baseMenuItems = [
   { path: "/rewards",           icon: Gift,       label: "보상" },
   { path: "/character-studio",  icon: Sparkles,   label: "캐릭터" },
   { path: "/guide",             icon: BookOpen,   label: "가이드" },
+  { path: "/about/153",         icon: Info,       label: "153이란?" },
   { path: "/mypage",            icon: User,       label: "내정보" },
   { path: "/settings",          icon: Settings,   label: "설정" },
 ] as const;
