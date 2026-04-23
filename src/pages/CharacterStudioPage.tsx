@@ -977,9 +977,10 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
       return;
     }
 
-    // 유료 아이템 + 미소유 + 비관리자 → 구매 모달. admin 은 무료 적용.
+    // 유료 + 미소유 → 구매 모달. admin 도 예외 없이 진입 — 서버 RPC 가
+    // admin 지갑 체크를 우회하므로 '파이트 머니 무제한' 으로 항상 구매 성공.
     const needsPurchase =
-      !isAdmin && opt.price > 0 && !isItemOwned(catCode, opt.key);
+      opt.price > 0 && !isItemOwned(catCode, opt.key);
     if (needsPurchase) {
       setPurchaseItem({ category: catCode, option: opt });
       return;
@@ -1057,8 +1058,9 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
           // 시각상 잠금 처리 (admin 은 풀컬러 + 클릭 가능)
           const visuallyLocked = !isAdmin && (requiresHof || requiresLevel || requiresBlack);
 
-          // 구매 여부 — admin 은 항상 "보유" 취급, 유료 아이템만 체크.
-          const owned = opt.price > 0 && (isAdmin || isItemOwned(activeCat, opt.key));
+          // 구매 여부 — 실제 user_owned_customizations 기록 기준.
+          // admin 도 예외 없음 (구매하면 "보유", 안 했으면 미보유).
+          const owned = opt.price > 0 && isItemOwned(activeCat, opt.key);
 
           const displayLabel = resolveDisplayName(
             activeCat as UnlockCategory,
@@ -1218,6 +1220,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
           category={purchaseItem.category}
           option={purchaseItem.option}
           walletBalance={walletBalance}
+          isAdmin={isAdmin}
           isPurchasing={purchase.isPending}
           onConfirm={handleConfirmPurchase}
           onCancel={() => setPurchaseItem(null)}
@@ -1234,6 +1237,7 @@ function CustomizationPurchaseModal({
   category,
   option,
   walletBalance,
+  isAdmin,
   isPurchasing,
   onConfirm,
   onCancel,
@@ -1241,12 +1245,14 @@ function CustomizationPurchaseModal({
   category: string;
   option: CustomizationOption;
   walletBalance: number;
+  isAdmin: boolean;
   isPurchasing: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
   const afterBalance = walletBalance - option.price;
-  const canAfford = walletBalance >= option.price;
+  // admin 은 파이트 머니 ∞ 취급 — 서버 RPC 가 지갑 체크 우회하므로 항상 구매 가능.
+  const canAfford = isAdmin || walletBalance >= option.price;
   const isHof = option.requirement === "hall_of_fame";
   const displayLabel = resolveDisplayName(
     category as UnlockCategory,
@@ -1292,7 +1298,7 @@ function CustomizationPurchaseModal({
           </span>
         </div>
 
-        {/* 가격 내역 */}
+        {/* 가격 내역 — admin 은 ∞ / 지갑 무차감 표시 */}
         <div className="mb-5 space-y-2 rounded-2xl bg-muted/50 p-3.5">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">가격</span>
@@ -1302,21 +1308,25 @@ function CustomizationPurchaseModal({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">현재 잔액</span>
-            <span className="font-bold">{walletBalance.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between border-t border-border/50 pt-2 text-sm">
-            <span className="text-muted-foreground">구매 후 잔액</span>
-            <span
-              className={`font-bold ${
-                afterBalance < 0 ? "text-destructive" : "text-foreground"
-              }`}
-            >
-              {afterBalance.toLocaleString()}
+            <span className="font-bold">
+              {isAdmin ? "∞" : walletBalance.toLocaleString()}
             </span>
           </div>
+          {!isAdmin && (
+            <div className="flex justify-between border-t border-border/50 pt-2 text-sm">
+              <span className="text-muted-foreground">구매 후 잔액</span>
+              <span
+                className={`font-bold ${
+                  afterBalance < 0 ? "text-destructive" : "text-foreground"
+                }`}
+              >
+                {afterBalance.toLocaleString()}
+              </span>
+            </div>
+          )}
         </div>
 
-        {!canAfford && (
+        {!canAfford && !isAdmin && (
           <div className="mb-3 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-center text-[12px] font-bold text-destructive">
             파이트 머니가 {(option.price - walletBalance).toLocaleString()}원 부족합니다
           </div>
