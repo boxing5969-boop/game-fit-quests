@@ -32,3 +32,16 @@ export const celebrateLevelUp = () => {
   };
   frame();
 };
+
+/** 복귀 성공용 민트 톤 — 작게 소리 없이 한 번. */
+export const celebrateComeback = () => {
+  confetti({
+    particleCount: 30,
+    spread: 45,
+    startVelocity: 22,
+    origin: { y: 0.7 },
+    colors: ["#10B981", "#34D399", "#6EE7B7"],
+    scalar: 0.75,
+    ticks: 80,
+  });
+};

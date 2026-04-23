@@ -231,14 +231,14 @@ const DietPhotoGalleryPage = () => {
           </div>
         </div>
 
-        {/* 경고 배너 */}
+        {/* 안내 배너 — 삭제 예정 안내 (부드러운 톤) */}
         {warnCount > 0 && (
-          <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-400/5 p-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
             <p className="text-[12px] leading-relaxed text-foreground">
-              <strong className="text-destructive">{warnCount}장</strong> 이
-              곧 자동 삭제됩니다 (업로드 {DELETE_DAYS}일 경과). 보관하고
-              싶다면 상단 "전체 저장" 또는 개별 다운로드를 해 주세요.
+              <strong className="text-amber-700">{warnCount}장</strong>의 사진이
+              저장 기한 {DELETE_DAYS}일에 가까워지고 있어요. 보관하고 싶다면
+              상단 "전체 저장" 또는 개별 다운로드로 내려받아 두세요.
             </p>
           </div>
         )}
@@ -470,32 +470,41 @@ const LightboxAnalysis = ({ photo }: { photo: DietDailyLogPhotoRow }) => {
   }
 
   const busy = analyze.isPending;
+  const failed = analyze.isError;
+  const triggerAnalyze = () =>
+    analyze.mutate({
+      photoId: photo.id,
+      storageKey: photo.storage_path,
+      uploadedAt: new Date(photo.uploaded_at),
+      userSlot: photo.meal_slot as
+        | "breakfast" | "lunch" | "dinner" | "snack",
+    });
 
   return (
     <div className="w-full max-w-[420px]">
       <button
         type="button"
         disabled={busy}
-        onClick={() =>
-          analyze.mutate({
-            photoId: photo.id,
-            storageKey: photo.storage_path,
-            uploadedAt: new Date(photo.uploaded_at),
-            userSlot: photo.meal_slot as
-              | "breakfast" | "lunch" | "dinner" | "snack",
-          })
-        }
+        onClick={triggerAnalyze}
+        aria-busy={busy}
+        aria-label={failed ? "AI 평가 다시 시도" : "AI 간편 평가 받기"}
         className={cn(
           "flex w-full items-center justify-center gap-2 rounded-2xl border py-3",
-          "border-emerald-400/40 bg-emerald-400/10 text-[13px] font-bold text-emerald-500",
-          "active:scale-[0.99] disabled:opacity-70",
+          "text-[13px] font-bold transition-all active:scale-[0.99]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50",
+          failed
+            ? "border-amber-400/40 bg-amber-400/10 text-amber-500"
+            : "border-emerald-400/40 bg-emerald-400/10 text-emerald-500",
+          "disabled:opacity-70",
         )}
       >
         {busy ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            분석 중...
+            평가 중...
           </>
+        ) : failed ? (
+          <>다시 시도</>
         ) : (
           <>AI 간편 평가 받기</>
         )}
@@ -508,9 +517,9 @@ const LightboxAnalysis = ({ photo }: { photo: DietDailyLogPhotoRow }) => {
           />
         </div>
       )}
-      {analyze.isError && (
+      {failed && (
         <p className="mt-2 text-center text-[11px] text-white/70">
-          분석에 실패했어요. 잠시 후 다시 시도해 주세요.
+          잠깐 네트워크가 느렸어요 · 같은 버튼으로 바로 다시 시도할 수 있어요.
         </p>
       )}
     </div>

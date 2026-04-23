@@ -103,8 +103,25 @@ const ChallengesPage = () => {
             </p>
           )}
           {!listQ.isLoading && rows.length === 0 && (
-            <div className="rounded-2xl border border-border bg-card p-6 text-center text-[12.5px] leading-relaxed text-muted-foreground">
-              아직 공개된 챌린지가 없어요. 곧 새 시즌이 열립니다.
+            <div className="rounded-2xl border border-dashed border-emerald-400/30 bg-emerald-400/5 p-6 text-center">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-500">
+                <Users className="h-5 w-5" />
+              </div>
+              <p className="mt-2 text-[13px] font-bold text-foreground">
+                곧 새 시즌이 시작됩니다
+              </p>
+              <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                지점 또는 목표별 챌린지가 열리면 여기에 표시돼요.
+                <br />
+                먼저 오늘의 습관 체크부터 챙겨볼까요?
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/diet")}
+                className="mt-3 h-9 rounded-xl text-[12px]"
+              >
+                오늘 미션 먼저 하기
+              </Button>
             </div>
           )}
           <ul className="space-y-2">
@@ -140,10 +157,23 @@ const MyChallengeCard = ({
   const checkin = useSubmitChallengeCheckin();
   const [status, setStatus] = useState<string | null>(null);
 
-  const endDate = useMemo(() => {
-    const d = new Date(row.start_date);
-    d.setDate(d.getDate() + row.duration_days);
-    return d.toISOString().slice(0, 10);
+  const { endDate, currentDay, pctComplete } = useMemo(() => {
+    const start = new Date(row.start_date);
+    const end = new Date(start);
+    end.setDate(end.getDate() + row.duration_days);
+    const today = new Date();
+    const diffDays = Math.floor(
+      (today.getTime() - start.getTime()) / (24 * 60 * 60 * 1000),
+    );
+    const cur = Math.max(0, Math.min(row.duration_days, diffDays + 1));
+    return {
+      endDate: end.toISOString().slice(0, 10),
+      currentDay: cur,
+      pctComplete: Math.max(
+        0,
+        Math.min(100, Math.round((cur / row.duration_days) * 100)),
+      ),
+    };
   }, [row.start_date, row.duration_days]);
 
   const handleCheckin = async () => {
@@ -156,7 +186,7 @@ const MyChallengeCard = ({
       setStatus(
         res.already_done_today
           ? "오늘은 이미 체크인했어요"
-          : `체크인 완료! 연속 ${res.current_streak ?? 1}일`,
+          : `오늘 체크인 완료 · 연속 ${res.current_streak ?? 1}일째`,
       );
     }
   };
@@ -172,15 +202,28 @@ const MyChallengeCard = ({
       <h3 className="mt-1 text-[16px] font-extrabold leading-tight text-foreground">
         {row.title}
       </h3>
-      <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-        {row.start_date} ~ {endDate} · {row.duration_days}일 · 참여 {row.participant_count}명
-      </p>
+
+      {/* 진행률 링 + 일수 */}
+      <div className="mt-3 flex items-center gap-3">
+        <ProgressRing pct={pctComplete} label={`${currentDay}`} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[11.5px] font-bold text-foreground">
+            Day {currentDay} <span className="text-muted-foreground font-normal">/ {row.duration_days}</span>
+          </p>
+          <p className="mt-0.5 text-[10.5px] leading-relaxed text-muted-foreground">
+            {row.start_date} ~ {endDate}
+            <br />
+            참여 {row.participant_count}명 · 오늘도 체크인 한 번이면 충분해요
+          </p>
+        </div>
+      </div>
 
       <div className="mt-3 flex gap-2">
         <Button
           onClick={handleCheckin}
           disabled={checkin.isPending}
           className="h-10 flex-1 rounded-xl font-bold"
+          aria-label="오늘의 챌린지 체크인"
         >
           <CalendarCheck className="mr-1 h-4 w-4" />
           오늘 체크인
@@ -189,6 +232,7 @@ const MyChallengeCard = ({
           variant="outline"
           onClick={onOpenLeaderboard}
           className="h-10 rounded-xl"
+          aria-label="챌린지 순위 보기"
         >
           <Medal className="mr-1 h-4 w-4" />
           순위
@@ -200,6 +244,59 @@ const MyChallengeCard = ({
           {status}
         </p>
       )}
+    </div>
+  );
+};
+
+/** 진행률 링 — SVG 기반 · 가운데 숫자 · mint accent. */
+const ProgressRing = ({
+  pct,
+  label,
+  size = 56,
+  stroke = 5,
+}: {
+  pct: number;
+  label: string;
+  size?: number;
+  stroke?: number;
+}) => {
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - pct / 100);
+  return (
+    <div
+      className="relative shrink-0"
+      style={{ width: size, height: size }}
+      aria-label={`진행률 ${pct}%`}
+    >
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="hsl(var(--muted))"
+          strokeWidth={stroke}
+          fill="none"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="hsl(var(--primary))"
+          strokeWidth={stroke}
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ transition: "stroke-dashoffset 500ms ease-out" }}
+        />
+      </svg>
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <span className="number-font text-[13px] font-extrabold text-foreground">
+          {label}
+        </span>
+      </div>
     </div>
   );
 };

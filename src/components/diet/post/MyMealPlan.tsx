@@ -103,13 +103,9 @@ export const MyMealPlan = ({
   };
 
   const handleCustomSave = (slot: MealSlot, item: MealItem) => {
-    // 직접 입력은 다음 끼니 자동조정 없이 단순 대체 — 회원 의도 존중
-    const nextPicks = plan.picks.map((p) =>
-      p.slot === slot ? { ...p, item } : p,
-    );
-    // 총합·영양 재계산 — swap 로직 재사용하되 replacement 는 같은 slot 그대로
+    // 직접 입력 — 해당 슬롯 교체. 총합·영양은 swap 로직 재사용으로 자동 재합산.
     const next = swapMealWithAutoAdjust({
-      plan: { ...plan, picks: plan.picks },
+      plan,
       target,
       slotToSwap: slot,
       replacement: item,
@@ -117,8 +113,6 @@ export const MyMealPlan = ({
       dislikedIngredients,
       seed,
     });
-    // next 의 nextIdx 자동 조정은 원치 않음 — 픽업 배열만 직접 교체 + nutrients 재합산
-    void nextPicks;
     setOverridePlan(next);
     setCustomSlot(null);
   };

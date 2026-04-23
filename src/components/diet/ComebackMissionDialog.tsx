@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CheckCircle2, Circle, Heart, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { successHaptic } from "@/lib/haptics";
+import { celebrateComeback } from "@/lib/celebrations";
 import {
   COMEBACK_MISSIONS,
   pickComebackLine,
@@ -49,6 +51,9 @@ function saveChecks(next: Record<string, boolean>) {
 
 export const ComebackMissionDialog = ({ open, onClose }: ComebackMissionDialogProps) => {
   const [checks, setChecks] = useState<Record<string, boolean>>(() => loadChecks());
+  const celebratedRef = useRef<boolean>(
+    Object.values(loadChecks()).some(Boolean), // 재진입 시 중복 연출 방지
+  );
 
   const warmLine = useMemo(() => pickComebackLine(), []);
   const completedCount = Object.values(checks).filter(Boolean).length;
@@ -57,9 +62,22 @@ export const ComebackMissionDialog = ({ open, onClose }: ComebackMissionDialogPr
   if (!open || typeof document === "undefined") return null;
 
   const toggle = (code: string) => {
+    const prevCount = Object.values(checks).filter(Boolean).length;
     const next = { ...checks, [code]: !checks[code] };
     setChecks(next);
     saveChecks(next);
+
+    // 오늘 첫 복귀 체크 시 1회만 축하 연출 — 햅틱 + 민트 콘페티
+    const nextCount = Object.values(next).filter(Boolean).length;
+    if (!celebratedRef.current && prevCount === 0 && nextCount > 0) {
+      celebratedRef.current = true;
+      try {
+        successHaptic();
+        celebrateComeback();
+      } catch {
+        // best-effort
+      }
+    }
   };
 
   return createPortal(
@@ -111,15 +129,15 @@ export const ComebackMissionDialog = ({ open, onClose }: ComebackMissionDialogPr
             ))}
           </ul>
 
-          {/* 성공 상태 배지 */}
+          {/* 성공 상태 배지 — 가볍게, 따뜻한 톤 */}
           {isSuccess && (
-            <div className="mt-3 rounded-xl border border-reward/30 bg-reward/10 px-3 py-2.5 text-center">
-              <Sparkles className="mx-auto h-4 w-4 text-[#F6C453]" />
-              <p className="mt-0.5 text-[12px] font-extrabold text-[#F6C453]">
-                오늘은 이긴 날입니다
+            <div className="mt-3 rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-3 py-2.5 text-center">
+              <Sparkles className="mx-auto h-4 w-4 text-emerald-500" />
+              <p className="mt-0.5 text-[12px] font-extrabold text-emerald-600">
+                오늘, 다시 돌아왔어요
               </p>
               <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                복귀 속도가 진짜 챔피언의 습관이에요.
+                복귀 속도가 진짜 힘입니다. 그걸 오늘 증명했어요.
               </p>
             </div>
           )}
@@ -135,7 +153,7 @@ export const ComebackMissionDialog = ({ open, onClose }: ComebackMissionDialogPr
                 : "bg-primary text-primary-foreground",
             )}
           >
-            {isSuccess ? "다시 이어갈게요" : "괜찮아요, 닫기"}
+            {isSuccess ? "좋아요, 이어가볼게요" : "괜찮아요, 잠시 닫기"}
           </Button>
         </div>
       </div>

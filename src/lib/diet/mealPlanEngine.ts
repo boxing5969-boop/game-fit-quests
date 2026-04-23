@@ -14,7 +14,6 @@
  */
 
 import {
-  MEAL_LIBRARY,
   filterMenus,
   type MealItem,
 } from "@/data/nutrition/mealLibrary";
@@ -473,5 +472,3 @@ export function swapMealWithAutoAdjust(input: SwapInput): MealPlanResult {
   };
 }
 
-// 참조 무시 경고 방지
-void MEAL_LIBRARY;
