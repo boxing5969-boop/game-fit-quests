@@ -7,13 +7,12 @@ import {
   TrendingUp,
   Award,
   BookOpen,
-  Map,
   Sparkles,
   Salad,
   User,
   Settings,
   Gamepad2,
-  Info,
+  Fish,
   X,
 } from "lucide-react";
 import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
@@ -22,16 +21,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 // ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
-// 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 로드맵으로 교체.
+// 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 랭크업(로드맵+가치맵 통합 페이지).
 // 접근성은 전체 메뉴 오버레이에 보존.
-// 모든 탭이 선형 아이콘으로 통일. 훈련은 복싱 글러브 커스텀 SVG —
-// lucide 스타일(24x24 / stroke 2) 로 다른 탭과 시각 정합.
+// 모든 탭이 선형 아이콘으로 통일. 훈련은 복싱 글러브 커스텀 SVG.
+// /levelmap 은 /rank-up 에 통합됨 (내용 중복) — 5번째 슬롯은 랭크업으로.
 const mainTabs = [
   { path: "/home",          icon: Home,            label: "홈",     emoji: null },
   { path: "/missions",      icon: BoxingGloveIcon, label: "훈련",    emoji: null },
   { path: "/cert-benefits", icon: Award,           label: "단증혜택", emoji: null },
   { path: "/halloffame",    icon: Trophy,          label: "랭킹",    emoji: null },
-  { path: "/levelmap",      icon: Map,             label: "로드맵",   emoji: null },
+  { path: "/rank-up",       icon: TrendingUp,      label: "랭크업",   emoji: null },
 ] as const;
 
 // ── Full menu overlay (everything not on the primary bar) ───────────
@@ -44,11 +43,10 @@ const baseMenuItems = [
   { path: "/halloffame",        icon: Trophy,     label: "랭킹" },
   { path: "/rank-up",           icon: TrendingUp, label: "랭크업" },
   { path: "/cert-benefits",     icon: Award,      label: "단증혜택" },
-  { path: "/levelmap",          icon: Map,        label: "로드맵" },
   { path: "/rewards",           icon: Gift,       label: "보상" },
   { path: "/character-studio",  icon: Sparkles,   label: "캐릭터" },
   { path: "/guide",             icon: BookOpen,   label: "가이드" },
-  { path: "/about/153",         icon: Info,       label: "153이란?" },
+  { path: "/about/153",         icon: Fish,       label: "153이란?" },
   { path: "/mypage",            icon: User,       label: "내정보" },
   { path: "/settings",          icon: Settings,   label: "설정" },
 ] as const;

@@ -21,7 +21,7 @@ import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
 // (no point in splitting the first paint), NotFound is a tiny fallback.
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const MissionsPage = lazy(() => import("@/pages/MissionsPage"));
-const LevelMapPage = lazy(() => import("@/pages/LevelMapPage"));
+// LevelMapPage — /rank-up 에 탭으로 통합, /levelmap 경로는 리다이렉트만 유지.
 const RewardsPage = lazy(() => import("@/pages/RewardsPage"));
 const HallOfFamePage = lazy(() => import("@/pages/HallOfFamePage"));
 const MyPage = lazy(() => import("@/pages/MyPage"));
@@ -165,7 +165,8 @@ const AppRoutes = () => {
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
         <Route path="/quests" element={<Navigate to="/missions" replace />} />
-        <Route path="/levelmap" element={<ProtectedRoute><LevelMapPage /></ProtectedRoute>} />
+        {/* /levelmap 은 /rank-up 안에 levelmap 탭으로 통합됨. 기존 링크 깨짐 방지용 리다이렉트. */}
+        <Route path="/levelmap" element={<Navigate to="/rank-up" replace />} />
         <Route path="/rank-up" element={<ProtectedRoute><RankUpPage /></ProtectedRoute>} />
         <Route path="/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
         <Route path="/halloffame" element={<ProtectedRoute><HallOfFamePage /></ProtectedRoute>} />
