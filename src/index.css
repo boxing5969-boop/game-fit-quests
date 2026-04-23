@@ -6,9 +6,13 @@
   /* ─────────────────────────────────────────────────────────────
    * Palette (dark-first, premium sport spec — see
    * docs/rankingup-design-system.md for hex values and rationale)
-   *   Primary (8°, Ember #D93620) — CTA, action, emphasis (brand point 1)
-   *   Accent  (165°, Mint #29C39C) — ranking, growth, progression (brand point 2)
+   *   Primary (165°, Mint #29C39C) — CTA, action, emphasis, brand point
+   *   Accent  (165°, Mint #29C39C) — secondary emphasis (동일 계열)
    *   Reward  (42°, Gold #F6C453) — achievement, badges, currency
+   *
+   * 빨강은 153 로고 전용. ChatAssistant 버튼·Splash 글로우 등 이미
+   * hardcoded red/orange gradient 로 표현돼 있어 primary 토큰 변경과 독립.
+   * Destructive(#EF4444) 는 에러 시맨틱 전용, 별개 토큰.
    * Destructive (red #EF4444) = error only.
    *
    * Game-league colors (rank-white/blue/red/black) are semantic
@@ -29,9 +33,12 @@
     --popover: 220 35% 11%;
     --popover-foreground: 210 40% 98%;
 
-    /* ─── Primary — Ember (CTA, action) ─── */
-    --primary: 8 75% 48%;              /* #D93620 */
-    --primary-foreground: 210 40% 98%;
+    /* ─── Primary — Mint (CTA, action, brand point) ───
+       정책: 브랜드 포인트 컬러는 민트 단일. 빨강은 "153 로고" 한정으로만
+       하드코딩 사용(ChatAssistant 버튼·Splash 글로우 등). destructive 는
+       에러 전용 별도 토큰이라 영향 없음. Rank-red(레드 리그) 리그 정체성도 유지. */
+    --primary: 165 70% 52%;            /* #29C39C mint */
+    --primary-foreground: 220 34% 7%;  /* #0B0F17 dark — 민트에 AA 대비 */
 
     /* ─── Secondary / muted — dark neutral info surfaces ─── */
     --secondary: 220 31% 15%;          /* #1B2433 (surface elevation) */
@@ -53,7 +60,7 @@
 
     --border: 218 24% 22%;             /* #2A3344 */
     --input: 218 24% 22%;
-    --ring: 8 75% 48%;                 /* = primary */
+    --ring: 165 70% 52%;               /* = primary (mint) */
 
     --radius: 1rem;
 
