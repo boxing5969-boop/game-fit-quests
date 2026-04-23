@@ -41,11 +41,16 @@ export type DietProgressSnapshotRow =
 // ──────────────────────────────────────────────────────────────────
 // 공통 응답 형식
 // ──────────────────────────────────────────────────────────────────
-export type DietRpcOk<T> = { success: true } & T;
+// NOTE: `success: true` 필드를 명시적으로 가진 ok 변형과 `success: false` 의
+// err 변형을 분리해 둔다. 과거에 `{ success: true } & T` 인터섹션을 썼더니
+// `T = Record<string, never>` 같은 케이스에서 `success: true` 가 `never` 로
+// 좁혀져 RPC 호출부 전반이 깨졌다.
+export type DietRpcOk<T> = { success: true; error?: undefined } & T;
 export type DietRpcErr = { success: false; error: string };
 export type DietRpcResult<T> = DietRpcOk<T> | DietRpcErr;
 
-const ok = <T>(data: T): DietRpcOk<T> => ({ success: true, ...data });
+const ok = <T>(data: T): DietRpcOk<T> =>
+  ({ success: true, ...data } as DietRpcOk<T>);
 const err = (error: string): DietRpcErr => ({ success: false, error });
 
 const asJsonRpc = <T>(data: unknown): DietRpcResult<T> => {
@@ -147,13 +152,9 @@ export async function submitDailyLog(input: {
 }): Promise<DietRpcResult<SubmitDailyLogResult>> {
   const { data, error } = await supabase.rpc("submit_diet_daily_log", {
     _log_date: input.logDate,
-    _habits: input.habits as unknown as Database["public"]["Tables"]["diet_daily_logs"]["Row"] extends infer _ ? never : never,
+    _habits: input.habits as unknown as Database["public"]["Tables"]["diet_daily_logs"]["Row"]["memo"] extends infer _ ? Record<string, unknown> : never,
     _note: input.note ?? null,
-  } as unknown as {
-    _log_date: string;
-    _habits: DailyHabitsPayload;
-    _note?: string | null;
-  });
+  } as never);
   if (error) return err(error.message);
   return asJsonRpc(data);
 }
@@ -246,7 +247,7 @@ export async function reviewDailyLog(input: {
 export async function addCoachFeedback(input: {
   logId: string;
   feedback: string;
-}): Promise<DietRpcResult<Record<string, never>>> {
+}): Promise<DietRpcResult<Record<string, unknown>>> {
   const { data, error } = await supabase.rpc("add_diet_coach_feedback", {
     _log_id: input.logId,
     _feedback: input.feedback,
@@ -283,7 +284,7 @@ export async function submitWeeklyReview(input: {
   bodyPhotoUrl?: string | null;
   reflection?: string | null;
   nextWeekFocus?: string | null;
-}): Promise<DietRpcResult<Record<string, never>>> {
+}): Promise<DietRpcResult<Record<string, unknown>>> {
   const { data, error } = await supabase.rpc("submit_diet_weekly_review", {
     _enrollment_id: input.enrollmentId,
     _week_index: input.weekIndex,
@@ -400,7 +401,7 @@ export async function fetchMyDietPhotos(
 export async function deleteMyDietPhoto(input: {
   photoId: string;
   storagePath: string;
-}): Promise<DietRpcResult<Record<string, never>>> {
+}): Promise<DietRpcResult<Record<string, unknown>>> {
   const { error: storageErr } = await supabase.storage
     .from(DIET_PHOTOS_BUCKET)
     .remove([input.storagePath]);
@@ -484,11 +485,8 @@ export async function logDietEvent(
   try {
     const { error } = await supabase.rpc("log_diet_event", {
       _event_type: eventType,
-      _event_data: eventData as unknown as never,
-    } as unknown as {
-      _event_type: string;
-      _event_data?: Record<string, unknown>;
-    });
+      _event_data: eventData as never,
+    } as never);
     return !error;
   } catch {
     return false;
@@ -509,9 +507,7 @@ export async function saveDietPreferences(
   settings: Record<string, unknown>,
 ): Promise<boolean> {
   const { error } = await supabase.rpc("upsert_diet_preferences", {
-    _settings: settings as unknown as never,
-  } as unknown as {
-    _settings: Record<string, unknown>;
-  });
+    _settings: settings as never,
+  } as never);
   return !error;
 }

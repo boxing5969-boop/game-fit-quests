@@ -324,7 +324,7 @@ const DateGroup = ({
               {url ? (
                 <img
                   src={url}
-                  alt={`${p.log_date} ${p.meal_slot}`}
+                  alt={`${p.uploaded_at.slice(0, 10)} ${p.meal_slot}`}
                   loading="lazy"
                   className="h-full w-full object-cover"
                 />
@@ -373,7 +373,7 @@ const Lightbox = ({
     <div className="fixed inset-0 z-[80] flex flex-col bg-black/90 backdrop-blur-sm">
       <div className="flex items-center justify-between px-4 py-3 text-white">
         <div className="text-[12px]">
-          <p className="font-bold">{photo.log_date}</p>
+          <p className="font-bold">{photo.uploaded_at.slice(0, 10)}</p>
           <p className="text-white/70">
             {DIET_MEAL_SLOT_LABEL[photo.meal_slot]} · {photo.uploaded_at.slice(11, 16)}
           </p>
@@ -391,7 +391,7 @@ const Lightbox = ({
         {url ? (
           <img
             src={url}
-            alt={`${photo.log_date} ${photo.meal_slot}`}
+            alt={`${photo.uploaded_at.slice(0, 10)} ${photo.meal_slot}`}
             className="max-h-full max-w-full rounded-lg object-contain"
           />
         ) : (
@@ -451,7 +451,7 @@ function todayIso(): string {
 }
 
 function buildFileName(p: DietDailyLogPhotoRow): string {
-  const base = `${p.log_date}_${p.meal_slot}_${p.id.slice(0, 6)}`;
+  const base = `${p.uploaded_at.slice(0, 10)}_${p.meal_slot}_${p.id.slice(0, 6)}`;
   const ext = p.storage_path.split(".").pop() ?? "jpg";
   return `${base}.${ext}`;
 }
