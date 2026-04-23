@@ -13,6 +13,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { isManagerRole } from "@/lib/rankLabels";
 import InductionCeremonyOverlay from "@/components/induction/InductionCeremonyOverlay";
 import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
+import RouteLoader from "@/components/splash/RouteLoader";
 import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
 
 // Route-level code splitting — every page below is fetched on demand.
@@ -82,14 +83,7 @@ const queryClient = new QueryClient({
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, profile, loading } = useAuth();
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-primary/20 text-3xl">🥊</div>
-          <p className="text-muted-foreground">로딩 중...</p>
-        </div>
-      </div>
-    );
+    return <RouteLoader />;
   }
   if (!user) return <Navigate to="/" replace />;
   
@@ -155,28 +149,12 @@ const AppRoutes = () => {
   );
 
   if (loading) {
-    return (
-      <div
-        className="flex min-h-screen items-center justify-center"
-        style={{ background: "radial-gradient(ellipse at 50% 45%, #0B0F16 0%, #06070B 70%, #03040A 100%)" }}
-      >
-        <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-primary/20 text-3xl">🥊</div>
-      </div>
-    );
+    return <RouteLoader />;
   }
 
   return (
     <>
-      <Suspense
-        fallback={
-          <div
-            className="flex min-h-screen items-center justify-center"
-            style={{ background: "radial-gradient(ellipse at 50% 45%, #0B0F16 0%, #06070B 70%, #03040A 100%)" }}
-          >
-            <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-primary/20 text-3xl">🥊</div>
-          </div>
-        }
-      >
+      <Suspense fallback={<RouteLoader />}>
       <Routes>
         <Route path="/" element={user ? <RoleBasedRedirect /> : <LoginPage />} />
         <Route path="/select-branch" element={<ProtectedRoute><SelectBranchPage /></ProtectedRoute>} />
