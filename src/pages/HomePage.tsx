@@ -211,7 +211,12 @@ const HomePage = () => {
           subtitle={profile.branch_name || undefined}
           leftAction={
             myCharacter?.character_presets ? (
-              <div className="h-9 w-9 shrink-0">
+              <button
+                type="button"
+                onClick={() => navigate("/character-studio")}
+                aria-label="캐릭터 스튜디오로 이동"
+                className="relative h-9 w-9 shrink-0 overflow-visible rounded-full transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              >
                 <CharacterSprite
                   style={
                     (myCharacter.character_presets.parts_json as any)?.style
@@ -224,11 +229,16 @@ const HomePage = () => {
                   league={rank}
                   level={progress.current_level}
                 />
-              </div>
+              </button>
             ) : (
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-muted text-base">
+              <button
+                type="button"
+                onClick={() => navigate("/character-studio")}
+                aria-label="캐릭터 만들러 가기"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-muted text-base transition-transform active:scale-95"
+              >
                 🥊
-              </div>
+              </button>
             )
           }
           rightAction={

@@ -119,7 +119,10 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   const effectiveAuraMode = auraMode ?? (size === "xs" || size === "sm" ? "compact" : "detail");
 
   const showOverlays = size === "md" || size === "lg";
-  const showEffectSmall = size === "sm";
+  // 이펙트 이모지는 xs/sm 에서도 작게 렌더 (EffectOverlay 가 xs 브랜치를 가짐).
+  const showEffectSmall = size === "sm" || size === "xs";
+  // 프레임 링은 라이트하므로 xs 에도 허용 — 정체성 색상만 더해져 깔끔.
+  const showFrameRing = showOverlays || size === "xs" || size === "sm";
   const frameClass = customization?.frame ? FRAME_STYLES[customization.frame] || "" : "";
   const nameplateClass = resolveNameplateClass(customization?.nameplate);
 
@@ -260,8 +263,8 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         </div>
       )}
 
-      {/* ── 3. 프레임 링 — z-[3] ── */}
-      {customization?.frame && showOverlays && (
+      {/* ── 3. 프레임 링 — z-[3] (xs/sm 에도 표시) ── */}
+      {customization?.frame && showFrameRing && (
         <div className={`absolute inset-0 rounded-full z-[3] ${frameClass}`} />
       )}
 
