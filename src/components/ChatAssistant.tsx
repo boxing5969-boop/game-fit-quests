@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { X, Send, AlertTriangle, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,7 @@ const WELCOME_MSG: Msg = {
 };
 
 const ChatAssistant = () => {
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([WELCOME_MSG]);
   const [input, setInput] = useState("");
@@ -169,6 +171,9 @@ const ChatAssistant = () => {
       setIsLoading(false);
     }
   };
+
+  // 복싱 트레이닝은 풀스크린 터치 게임이라 플로팅 버튼이 펀치 입력에 겹쳐 오조작을 유발함.
+  if (location.pathname === "/minigame") return null;
 
   return (
     <>
