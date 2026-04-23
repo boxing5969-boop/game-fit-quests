@@ -670,6 +670,223 @@ export type Database = {
           },
         ]
       }
+      diet_nutrition_profiles: {
+        Row: {
+          activity_level: string | null
+          created_at: string
+          dietary_restrictions: string[]
+          disliked_ingredients: string[]
+          height_cm: number | null
+          meals_per_day: number
+          sex: string | null
+          target_weight_kg: number | null
+          updated_at: string
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          activity_level?: string | null
+          created_at?: string
+          dietary_restrictions?: string[]
+          disliked_ingredients?: string[]
+          height_cm?: number | null
+          meals_per_day?: number
+          sex?: string | null
+          target_weight_kg?: number | null
+          updated_at?: string
+          user_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          activity_level?: string | null
+          created_at?: string
+          dietary_restrictions?: string[]
+          disliked_ingredients?: string[]
+          height_cm?: number | null
+          meals_per_day?: number
+          sex?: string | null
+          target_weight_kg?: number | null
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
+      diet_post_program_checkins: {
+        Row: {
+          adherence_score: number | null
+          attended_workouts: number
+          checkin_date: string
+          created_at: string
+          flexible_meals_count: number
+          id: string
+          late_binge_count: number
+          needs_recovery: boolean
+          plan_id: string
+          protein_first_days: number
+          recovery_reason: string | null
+          reflection: string | null
+          user_id: string
+          waist_cm: number | null
+          week_index: number
+          weight_kg: number | null
+        }
+        Insert: {
+          adherence_score?: number | null
+          attended_workouts?: number
+          checkin_date: string
+          created_at?: string
+          flexible_meals_count?: number
+          id?: string
+          late_binge_count?: number
+          needs_recovery?: boolean
+          plan_id: string
+          protein_first_days?: number
+          recovery_reason?: string | null
+          reflection?: string | null
+          user_id: string
+          waist_cm?: number | null
+          week_index: number
+          weight_kg?: number | null
+        }
+        Update: {
+          adherence_score?: number | null
+          attended_workouts?: number
+          checkin_date?: string
+          created_at?: string
+          flexible_meals_count?: number
+          id?: string
+          late_binge_count?: number
+          needs_recovery?: boolean
+          plan_id?: string
+          protein_first_days?: number
+          recovery_reason?: string | null
+          reflection?: string | null
+          user_id?: string
+          waist_cm?: number | null
+          week_index?: number
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diet_post_program_checkins_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "diet_post_program_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diet_post_program_plans: {
+        Row: {
+          coach_recommendation_note: string | null
+          coach_recommended_at: string | null
+          coach_recommended_by: string | null
+          coach_recommended_path:
+            | Database["public"]["Enums"]["diet_post_program_recommendation"]
+            | null
+          completion_summary: Json
+          created_at: string
+          enrollment_id: string
+          extend_ended_at: string | null
+          extend_goals: Json | null
+          extend_result: string | null
+          extend_started_at: string | null
+          extension_cycle_index: number
+          extension_cycle_length: number
+          follow_up_status: Database["public"]["Enums"]["diet_post_program_follow_up"]
+          id: string
+          maintenance_range_kg: number
+          maintenance_target_weight_kg: number | null
+          maintenance_waist_range_cm: number
+          maintenance_waist_target_cm: number | null
+          next_cycle_start_date: string | null
+          pattern_tags: string[]
+          reassessment: Json | null
+          recommended_path: Database["public"]["Enums"]["diet_post_program_recommendation"]
+          regain_alert_threshold_kg: number
+          selected_at: string | null
+          selected_path: Database["public"]["Enums"]["diet_post_program_path"]
+          target_achieved: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coach_recommendation_note?: string | null
+          coach_recommended_at?: string | null
+          coach_recommended_by?: string | null
+          coach_recommended_path?:
+            | Database["public"]["Enums"]["diet_post_program_recommendation"]
+            | null
+          completion_summary?: Json
+          created_at?: string
+          enrollment_id: string
+          extend_ended_at?: string | null
+          extend_goals?: Json | null
+          extend_result?: string | null
+          extend_started_at?: string | null
+          extension_cycle_index?: number
+          extension_cycle_length?: number
+          follow_up_status?: Database["public"]["Enums"]["diet_post_program_follow_up"]
+          id?: string
+          maintenance_range_kg?: number
+          maintenance_target_weight_kg?: number | null
+          maintenance_waist_range_cm?: number
+          maintenance_waist_target_cm?: number | null
+          next_cycle_start_date?: string | null
+          pattern_tags?: string[]
+          reassessment?: Json | null
+          recommended_path?: Database["public"]["Enums"]["diet_post_program_recommendation"]
+          regain_alert_threshold_kg?: number
+          selected_at?: string | null
+          selected_path?: Database["public"]["Enums"]["diet_post_program_path"]
+          target_achieved?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coach_recommendation_note?: string | null
+          coach_recommended_at?: string | null
+          coach_recommended_by?: string | null
+          coach_recommended_path?:
+            | Database["public"]["Enums"]["diet_post_program_recommendation"]
+            | null
+          completion_summary?: Json
+          created_at?: string
+          enrollment_id?: string
+          extend_ended_at?: string | null
+          extend_goals?: Json | null
+          extend_result?: string | null
+          extend_started_at?: string | null
+          extension_cycle_index?: number
+          extension_cycle_length?: number
+          follow_up_status?: Database["public"]["Enums"]["diet_post_program_follow_up"]
+          id?: string
+          maintenance_range_kg?: number
+          maintenance_target_weight_kg?: number | null
+          maintenance_waist_range_cm?: number
+          maintenance_waist_target_cm?: number | null
+          next_cycle_start_date?: string | null
+          pattern_tags?: string[]
+          reassessment?: Json | null
+          recommended_path?: Database["public"]["Enums"]["diet_post_program_recommendation"]
+          regain_alert_threshold_kg?: number
+          selected_at?: string | null
+          selected_path?: Database["public"]["Enums"]["diet_post_program_path"]
+          target_achieved?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diet_post_program_plans_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "diet_program_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diet_preferences: {
         Row: {
           settings: Json
@@ -2132,6 +2349,22 @@ export type Database = {
       claim_hof_season_reward: { Args: never; Returns: Json }
       claim_hof_weekly_reward: { Args: never; Returns: Json }
       claim_tutorial_step_reward: { Args: { _step: number }; Returns: Json }
+      coach_list_post_program_members: {
+        Args: { _filter?: string }
+        Returns: Json
+      }
+      coach_recommend_post_program_path: {
+        Args: {
+          _note?: string
+          _path: Database["public"]["Enums"]["diet_post_program_recommendation"]
+          _plan_id: string
+        }
+        Returns: Json
+      }
+      coach_tag_pattern: {
+        Args: { _action: string; _plan_id: string; _tag: string }
+        Returns: Json
+      }
       complete_tutorial_and_grant_reward: { Args: never; Returns: Json }
       complete_tutorial_once: { Args: { _final_step?: number }; Returns: Json }
       create_diet_coach_note: {
@@ -2148,8 +2381,16 @@ export type Database = {
         Args: { _body?: string; _title: string; _user_id: string }
         Returns: string
       }
+      end_extend_cycle: {
+        Args: { _plan_id: string; _result: string }
+        Returns: Json
+      }
       enroll_diet_program: {
         Args: { _coach_assigned_id?: string; _screening_id: string }
+        Returns: Json
+      }
+      ensure_post_program_plan: {
+        Args: { _enrollment_id: string }
         Returns: Json
       }
       enter_master_track: { Args: { _member_id: string }; Returns: Json }
@@ -2229,6 +2470,8 @@ export type Database = {
         }[]
       }
       get_my_branch: { Args: never; Returns: string }
+      get_nutrition_profile: { Args: { _user_id?: string }; Returns: Json }
+      get_post_program_plan: { Args: { _user_id?: string }; Returns: Json }
       get_quest_xp: {
         Args: { qt: Database["public"]["Enums"]["quest_type"] }
         Returns: number
@@ -2382,6 +2625,17 @@ export type Database = {
         Args: { _customization: Json; _style: string }
         Returns: Json
       }
+      select_post_program_path: {
+        Args: {
+          _extension_cycle_length?: number
+          _maintenance_target_waist_cm?: number
+          _maintenance_target_weight_kg?: number
+          _path: Database["public"]["Enums"]["diet_post_program_path"]
+          _plan_id: string
+          _target_achieved?: boolean
+        }
+        Returns: Json
+      }
       set_level_status: {
         Args: {
           _level: number
@@ -2416,6 +2670,36 @@ export type Database = {
         }
         Returns: Json
       }
+      submit_extend_reassessment: {
+        Args: {
+          _biggest_obstacle: string
+          _eating_out_weekly: number
+          _extend_goals: Json
+          _late_binge_weekly: number
+          _plan_id: string
+          _recent_21d_adherence: number
+          _sleep_hours: number
+          _user_pattern_overrides?: string[]
+          _weakest_habit: string
+          _weekly_workouts: number
+        }
+        Returns: Json
+      }
+      submit_post_program_checkin: {
+        Args: {
+          _adherence_score?: number
+          _attended_workouts?: number
+          _flexible_meals_count?: number
+          _late_binge_count?: number
+          _plan_id: string
+          _protein_first_days?: number
+          _reflection?: string
+          _waist_cm?: number
+          _week_index: number
+          _weight_kg?: number
+        }
+        Returns: Json
+      }
       tutorial_step_reward_amount: { Args: { _step: number }; Returns: number }
       unequip_avatar_item: {
         Args: { _category_code: string }
@@ -2434,6 +2718,19 @@ export type Database = {
       }
       update_tutorial_step: { Args: { _step: number }; Returns: number }
       upsert_diet_preferences: { Args: { _settings: Json }; Returns: Json }
+      upsert_nutrition_profile: {
+        Args: {
+          _activity_level: string
+          _dietary_restrictions?: string[]
+          _disliked_ingredients?: string[]
+          _height_cm: number
+          _meals_per_day?: number
+          _sex: string
+          _target_weight_kg: number
+          _weight_kg: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "member" | "coach" | "admin" | "branch_manager" | "super_admin"
@@ -2456,6 +2753,14 @@ export type Database = {
         | "rejected"
         | "revision_requested"
       diet_meal_slot: "breakfast" | "lunch" | "dinner" | "snack"
+      diet_post_program_follow_up:
+        | "pending"
+        | "active"
+        | "paused"
+        | "abandoned"
+        | "succeeded"
+      diet_post_program_path: "pending" | "maintenance" | "extend"
+      diet_post_program_recommendation: "maintenance" | "extend" | "either"
       diet_stage: "reset" | "burning" | "lifestyle"
       diet_track: "adult_standard" | "adult_advanced_hidden" | "youth_habit"
       level_status_type:
@@ -2623,6 +2928,15 @@ export const Constants = {
         "revision_requested",
       ],
       diet_meal_slot: ["breakfast", "lunch", "dinner", "snack"],
+      diet_post_program_follow_up: [
+        "pending",
+        "active",
+        "paused",
+        "abandoned",
+        "succeeded",
+      ],
+      diet_post_program_path: ["pending", "maintenance", "extend"],
+      diet_post_program_recommendation: ["maintenance", "extend", "either"],
       diet_stage: ["reset", "burning", "lifestyle"],
       diet_track: ["adult_standard", "adult_advanced_hidden", "youth_habit"],
       level_status_type: [
