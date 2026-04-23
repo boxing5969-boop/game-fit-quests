@@ -51,7 +51,8 @@ const baseMenuItems = [
   { path: "/settings",          icon: Settings,   label: "설정" },
 ] as const;
 
-type MenuItem = { path: string; icon: typeof Home; label: string };
+type IconComponent = React.ComponentType<{ size?: number | string; strokeWidth?: number | string; className?: string }>;
+type MenuItem = { path: string; icon: IconComponent; label: string };
 
 const hiddenPaths = [
   "/",

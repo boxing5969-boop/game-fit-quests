@@ -48,7 +48,7 @@ export const DietSettingsSection = () => {
   };
 
   const toggle = async (
-    section: keyof DietPreferences,
+    section: "reminders" | "notifications" | "privacy",
     key: string,
     value: boolean,
   ) => {
