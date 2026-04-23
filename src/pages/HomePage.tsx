@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Banknote, QrCode, CheckCircle2, Trophy } from "lucide-react";
+import { User, Banknote, QrCode, CheckCircle2, Trophy, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +33,8 @@ import LevelUpModal from "@/components/LevelUpModal";
 // InductionCeremonyOverlay (App.tsx) 가 대체. 기존 컴포넌트 파일은 보존되어
 // 있으며 롤백 시 import 만 복구하면 된다.
 import { MasterProgressCard } from "@/components/master/MasterProgressCard";
+import HomeCustomizeSheet from "@/components/home/HomeCustomizeSheet";
+import { useHomeLayout } from "@/lib/homeLayout";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
 
@@ -66,6 +68,8 @@ const HomePage = () => {
   const [showChallenge, setShowChallenge] = useState(false);
   const [qrAutoStarted, setQrAutoStarted] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showCustomize, setShowCustomize] = useState(false);
+  const { visibility: homeWidgets } = useHomeLayout();
   const [checkinResult, setCheckinResult] = useState<any>(null);
   const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
   const [checkedInToday, setCheckedInToday] = useState(false);
@@ -264,37 +268,39 @@ const HomePage = () => {
           />
         )}
 
-        {/* ─── 1. Hero Status ─── */}
-        <HeroStatusCard
-          character={
-            myCharacter?.character_presets ? (
-              <CharacterSprite
-                style={(myCharacter.character_presets.parts_json as any)?.style}
-                userId={user?.id}
-                partsJson={myCharacter.character_presets.parts_json as any}
-                size="lg"
-                animate
-                league={rank}
-                level={progress.current_level}
-                auraMode="detail"
-                priority
-              />
-            ) : (
-              <div className="flex h-32 w-32 items-center justify-center rounded-pill bg-muted text-6xl">
-                🥊
-              </div>
-            )
-          }
-          leagueIcon={leagueIcon}
-          leagueName={leagueName}
-          level={progress.current_level}
-          totalXp={totalXp}
-          xpToNext={Math.max(metrics.xp.target, totalXp || 1)}
-          streakDays={progress.streak_days}
-        />
+        {/* ─── 1. Hero Status ─── (커스텀 토글) */}
+        {homeWidgets.hero && (
+          <HeroStatusCard
+            character={
+              myCharacter?.character_presets ? (
+                <CharacterSprite
+                  style={(myCharacter.character_presets.parts_json as any)?.style}
+                  userId={user?.id}
+                  partsJson={myCharacter.character_presets.parts_json as any}
+                  size="lg"
+                  animate
+                  league={rank}
+                  level={progress.current_level}
+                  auraMode="detail"
+                  priority
+                />
+              ) : (
+                <div className="flex h-32 w-32 items-center justify-center rounded-pill bg-muted text-6xl">
+                  🥊
+                </div>
+              )
+            }
+            leagueIcon={leagueIcon}
+            leagueName={leagueName}
+            level={progress.current_level}
+            totalXp={totalXp}
+            xpToNext={Math.max(metrics.xp.target, totalXp || 1)}
+            streakDays={progress.streak_days}
+          />
+        )}
 
-        {/* ─── 1b. Master Track progress (shown only when opted in) ─── */}
-        {(progress as any)?.master_track_unlocked && (
+        {/* ─── 1b. Master Track progress (커스텀 토글 + 자격 조건) ─── */}
+        {homeWidgets.masterTrack && (progress as any)?.master_track_unlocked && (
           <MasterProgressCard masterLevel={(progress as any)?.master_level ?? 1} />
         )}
 
@@ -325,8 +331,9 @@ const HomePage = () => {
           </PrimaryCTAButton>
         )}
 
-        {/* ─── 3. Today's Mission / Active Session ─── */}
-        {showChallenge ? (
+        {/* ─── 3. Today's Mission / Active Session ─── (커스텀 토글) */}
+        {homeWidgets.todayMission && (
+          showChallenge ? (
           <SelfChallengeFlow
             league={rank}
             levelInLeague={progress.current_level}
@@ -362,9 +369,11 @@ const HomePage = () => {
             onClick={handleStartChallenge}
             lockedHint="QR 체크인 후 오늘의 미션이 오픈됩니다"
           />
+        )
         )}
 
-        {/* ─── 4. Weekly Progress ─── */}
+        {/* ─── 4. Weekly Progress ─── (커스텀 토글) */}
+        {homeWidgets.weeklyProgress && (
         <section className="surface-card">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-display-sm">이번 주 진행도</h2>
@@ -391,6 +400,7 @@ const HomePage = () => {
             />
           </div>
         </section>
+        )}
 
         {/* ─── 5. Retention 배너는 홈에서 제거 ─── */}
 
@@ -425,7 +435,8 @@ const HomePage = () => {
 
         {/* ─── 6. Recent Badges 섹션 제거 (획득 배지는 /mypage 에서 확인) ─── */}
 
-        {/* ─── 7. Ranking Preview ─── */}
+        {/* ─── 7. Ranking Preview ─── (커스텀 토글) */}
+        {homeWidgets.rankingPreview && (
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-display-sm">이번 주 내 순위</h2>
@@ -476,7 +487,25 @@ const HomePage = () => {
             />
           )}
         </section>
+        )}
+
+        {/* ─── 홈 커스터마이즈 진입점 — 전체 피드 하단 ─── */}
+        <div className="flex justify-center pb-2">
+          <button
+            type="button"
+            onClick={() => setShowCustomize(true)}
+            className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-card px-3.5 py-1.5 text-[11px] font-bold text-muted-foreground transition-colors active:scale-95 hover:border-primary/40 hover:text-primary"
+          >
+            <Settings className="h-3.5 w-3.5" />
+            홈 커스터마이즈
+          </button>
+        </div>
       </div>
+
+      <HomeCustomizeSheet
+        open={showCustomize}
+        onClose={() => setShowCustomize(false)}
+      />
 
       <LevelUpModal
         isOpen={levelUpModal.show}
