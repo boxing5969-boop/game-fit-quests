@@ -56,8 +56,46 @@ export interface DietPostProgramPlan {
   coach_recommended_by: string | null;
   coach_recommended_at: string | null;
   follow_up_status: DietPostProgramFollowUp;
+  // 11단계 · 연장 심화 필드
+  reassessment: DietExtendReassessment | null;
+  pattern_tags: string[];
+  extend_goals: DietExtendGoals | null;
+  extend_started_at: string | null;
+  extend_ended_at: string | null;
+  extend_result: DietExtendResult | null;
   created_at: string;
   updated_at: string;
+}
+
+export type DietExtendResult =
+  | "maintenance_transition"
+  | "extend_again"
+  | "coach_consult";
+
+export interface DietExtendReassessment {
+  recent_21d_adherence: number;
+  weakest_habit: string;
+  weekly_workouts: number;
+  sleep_hours: number;
+  eating_out_weekly: number;
+  late_binge_weekly: number;
+  biggest_obstacle:
+    | "late_binge"
+    | "eating_out"
+    | "weekend_crash"
+    | "sleep_short"
+    | "stress"
+    | "other";
+  submitted_at?: string;
+}
+
+export interface DietExtendGoals {
+  weight_kg_target: number | null;
+  waist_cm_target: number | null;
+  weekly_workouts_target: number;
+  weekly_checkin_rate_target: number;   // 0~100
+  sleep_hours_target: number;
+  weekend_defense_target: number;        // 주말 지켜낸 일수 목표 0~2
 }
 
 export interface DietPostProgramCheckin {

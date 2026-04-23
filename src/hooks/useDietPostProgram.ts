@@ -69,3 +69,28 @@ export function useCoachRecommendPath() {
     onSuccess: () => invalidatePost(qc),
   });
 }
+
+// 11단계 · 연장 심화
+export function useSubmitExtendReassessment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: svc.submitExtendReassessment,
+    onSuccess: () => invalidatePost(qc),
+  });
+}
+
+export function useCoachTagPattern() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: svc.coachTagPattern,
+    onSuccess: () => invalidatePost(qc),
+  });
+}
+
+export function useEndExtendCycle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: svc.endExtendCycle,
+    onSuccess: () => invalidatePost(qc),
+  });
+}

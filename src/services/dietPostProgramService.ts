@@ -8,6 +8,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type {
+  DietExtendGoals,
+  DietExtendReassessment,
+  DietExtendResult,
   DietPostProgramCheckin,
   DietPostProgramPath,
   DietPostProgramPlan,
@@ -163,6 +166,10 @@ export interface CoachPostProgramRow {
   follow_up_status: string;
   coach_recommended_path: DietPostProgramRecommendation | null;
   completion_summary: Record<string, unknown>;
+  pattern_tags: string[] | null;
+  extend_started_at: string | null;
+  extend_ended_at: string | null;
+  extend_result: DietExtendResult | null;
   finished_at: string | null;
 }
 
@@ -175,6 +182,72 @@ export async function coachListPostProgramMembers(
   });
   if (error) return err(error.message);
   return asRpc<{ rows: CoachPostProgramRow[] }>(data);
+}
+
+// ──────────────────────────────────────────────────────────────────
+// 7. 연장 재평가 제출 (11단계 · fat_loss_extend_153 deep)
+// ──────────────────────────────────────────────────────────────────
+export interface ExtendReassessmentInput {
+  planId: string;
+  reassessment: DietExtendReassessment;
+  extendGoals: DietExtendGoals;
+  userPatternOverrides?: string[] | null;
+}
+
+export async function submitExtendReassessment(input: ExtendReassessmentInput) {
+  const r = input.reassessment;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)("submit_extend_reassessment", {
+    _plan_id: input.planId,
+    _recent_21d_adherence: Math.round(r.recent_21d_adherence),
+    _weakest_habit: r.weakest_habit,
+    _weekly_workouts: r.weekly_workouts,
+    _sleep_hours: r.sleep_hours,
+    _eating_out_weekly: r.eating_out_weekly,
+    _late_binge_weekly: r.late_binge_weekly,
+    _biggest_obstacle: r.biggest_obstacle,
+    _extend_goals: input.extendGoals as unknown as Record<string, unknown>,
+    _user_pattern_overrides: input.userPatternOverrides ?? null,
+  });
+  if (error) return err(error.message);
+  return asRpc<{
+    pattern_tags: string[];
+    reassessment: DietExtendReassessment;
+  }>(data);
+}
+
+// ──────────────────────────────────────────────────────────────────
+// 8. 코치 — 패턴 태그 추가/제거
+// ──────────────────────────────────────────────────────────────────
+export async function coachTagPattern(input: {
+  planId: string;
+  tag: string;
+  action: "add" | "remove";
+}) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)("coach_tag_pattern", {
+    _plan_id: input.planId,
+    _tag: input.tag,
+    _action: input.action,
+  });
+  if (error) return err(error.message);
+  return asRpc<Record<string, never>>(data);
+}
+
+// ──────────────────────────────────────────────────────────────────
+// 9. 연장 사이클 종료 + 결과 선택
+// ──────────────────────────────────────────────────────────────────
+export async function endExtendCycle(input: {
+  planId: string;
+  result: DietExtendResult;
+}) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)("end_extend_cycle", {
+    _plan_id: input.planId,
+    _result: input.result,
+  });
+  if (error) return err(error.message);
+  return asRpc<{ result: DietExtendResult }>(data);
 }
 
 // ok() helper 은 다른 파일에서 재사용되지 않아 미사용 경고 방지

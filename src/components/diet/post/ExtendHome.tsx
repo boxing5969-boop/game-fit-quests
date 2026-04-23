@@ -3,17 +3,26 @@ import {
   CalendarCheck,
   CheckCircle2,
   Dumbbell,
+  Flag,
   HeartHandshake,
   LineChart,
+  Tags,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { EXTEND_MISSIONS } from "@/data/postProgramMissions";
 import type {
   DietPostProgramCheckin,
   DietPostProgramPlan,
 } from "@/lib/diet/postProgramTypes";
+import {
+  PATTERN_LABEL_KO,
+  type ExtendPatternTag,
+} from "@/lib/diet/extendPatternEngine";
+import { pickWeeklyMissions } from "@/lib/diet/extendMissionEngine";
 import WeeklyCheckinDialog from "./WeeklyCheckinDialog";
+import ExtendReassessmentWizard from "./ExtendReassessmentWizard";
+import ExtendCycleResult from "./ExtendCycleResult";
 
 interface ExtendHomeProps {
   plan: DietPostProgramPlan;
@@ -21,23 +30,42 @@ interface ExtendHomeProps {
 }
 
 /**
- * 건강리셋 연장 프로그램 홈.
+ * 건강리셋 연장 프로그램 홈 (11단계 · fat_loss_extend_153 deep).
  *
- * 구조:
- *   - 14 또는 21일 연장 사이클 (plan.extension_cycle_length)
- *   - 현재 주차 = 완료된 체크인 수 + 1
- *   - 주간 식단 인증률·출석·수면 안정화 중심. 체중 경쟁 금지.
+ * 렌더 분기:
+ *   1. extend_started_at 없음 → ExtendReassessmentWizard (재평가 + 목표 설정 3-step)
+ *   2. currentWeek > totalWeeks → ExtendCycleResult (유지/재연장/상담)
+ *   3. 그 외 → 패턴 기반 주간 미션 + 목표 대시보드 + 주간 체크인
+ *
+ * 주차 계산: 완료 체크인 중 `week_index` 최댓값 + 1. 시작일 대비 달력 주차가 아니라
+ * 체크인 제출 기준으로 잡아야 회원 페이스에 맞게 동작.
  */
 export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
   const [checkinOpen, setCheckinOpen] = useState(false);
 
-  const totalWeeks = plan.extension_cycle_length === 21 ? 3 : 2;
+  const totalWeeks = Math.max(1, Math.floor(plan.extension_cycle_length / 7));
   const currentWeek = useMemo(
     () =>
       checkins.length > 0 ? Math.max(...checkins.map((c) => c.week_index)) + 1 : 1,
     [checkins],
   );
   const cycleDone = currentWeek > totalWeeks;
+
+  // 1) 재평가 미완료 → Wizard
+  if (!plan.extend_started_at || !plan.reassessment) {
+    return <ExtendReassessmentWizard plan={plan} />;
+  }
+
+  // 2) 사이클 완주 → 결과 선택
+  if (cycleDone) {
+    return <ExtendCycleResult plan={plan} totalWeeks={totalWeeks} />;
+  }
+
+  // 3) 일반 진행 상태
+  const tags = (plan.pattern_tags ?? []) as ExtendPatternTag[];
+  // playbook 은 1, 2 주차만 정의 → 3주차 이상은 2주차 미션 재사용 (정체기 대응 톤)
+  const weekForPlaybook = (currentWeek >= 2 ? 2 : 1) as 1 | 2;
+  const missions = pickWeeklyMissions(tags, weekForPlaybook);
 
   const avgAdherence = useMemo(() => {
     const scores = checkins
@@ -46,6 +74,8 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
     if (scores.length === 0) return null;
     return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
   }, [checkins]);
+
+  const goals = plan.extend_goals;
 
   return (
     <div className="space-y-4">
@@ -60,7 +90,8 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
           </p>
         </div>
         <h2 className="mt-1 text-[20px] font-extrabold leading-tight text-foreground">
-          {plan.extension_cycle_length}일 연장 · {Math.min(currentWeek, totalWeeks)} / {totalWeeks}주
+          {plan.extension_cycle_length}일 연장 · {Math.min(currentWeek, totalWeeks)} /{" "}
+          {totalWeeks}주 · {currentWeek === 1 ? "리듬 재정렬" : "감량 지속 / 정체기 대응"}
         </h2>
         <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
           지금 필요한 것은 더 극단적인 제한이 아니라
@@ -77,11 +108,7 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
                 key={w}
                 className={cn(
                   "h-1.5 flex-1 rounded-full",
-                  done
-                    ? "bg-primary"
-                    : active
-                      ? "bg-primary/50"
-                      : "bg-muted",
+                  done ? "bg-primary" : active ? "bg-primary/50" : "bg-muted",
                 )}
               />
             );
@@ -89,7 +116,70 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
         </div>
       </section>
 
-      {/* 요약 지표 */}
+      {/* 패턴 태그 */}
+      {tags.length > 0 && (
+        <section className="rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+            <Tags className="h-3.5 w-3.5" />
+            내 약점 패턴
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {tags.map((t) => (
+              <span
+                key={t}
+                className="rounded-full bg-primary/10 px-2.5 py-1 text-[11.5px] font-bold text-primary"
+              >
+                {PATTERN_LABEL_KO[t] ?? t}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
+            이번 주 미션은 이 패턴에 맞춰 구성됩니다. 코치가 태그를 조정할 수 있어요.
+          </p>
+        </section>
+      )}
+
+      {/* 목표 대시보드 */}
+      {goals && (
+        <section>
+          <div className="mb-2 flex items-center gap-1.5">
+            <Target className="h-3.5 w-3.5 text-primary" />
+            <p className="text-[12px] font-extrabold text-foreground">연장 목표</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <GoalTile
+              label="운동"
+              value={`${goals.weekly_workouts_target}회/주`}
+            />
+            <GoalTile
+              label="인증률"
+              value={`${goals.weekly_checkin_rate_target}%`}
+            />
+            <GoalTile
+              label="수면"
+              value={`${goals.sleep_hours_target}h`}
+            />
+            {goals.weight_kg_target != null && (
+              <GoalTile
+                label="체중"
+                value={`${goals.weight_kg_target}kg`}
+              />
+            )}
+            {goals.waist_cm_target != null && (
+              <GoalTile
+                label="허리"
+                value={`${goals.waist_cm_target}cm`}
+              />
+            )}
+            <GoalTile
+              label="주말 방어"
+              value={`${goals.weekend_defense_target}일`}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* 요약 지표 — 진행 중 실측 */}
       <section className="grid grid-cols-3 gap-2">
         <MiniStat
           icon={<LineChart className="h-3.5 w-3.5" />}
@@ -104,19 +194,31 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
         <MiniStat
           icon={<CalendarCheck className="h-3.5 w-3.5" />}
           label="사이클"
-          value={plan.extension_cycle_index >= 1
-            ? `${plan.extension_cycle_index + 1}차`
-            : "1차"}
+          value={
+            plan.extension_cycle_index >= 1
+              ? `${plan.extension_cycle_index + 1}차`
+              : "1차"
+          }
         />
       </section>
 
-      {/* 미션 */}
+      {/* 코치 한마디 (이탈 방지 메시지 포함) */}
+      {plan.coach_recommendation_note && (
+        <section className="rounded-2xl border border-primary/30 bg-primary/5 p-3 text-[12px] leading-relaxed text-foreground">
+          <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+            코치 한마디
+          </p>
+          <p className="mt-0.5">{plan.coach_recommendation_note}</p>
+        </section>
+      )}
+
+      {/* 주차별 미션 */}
       <section>
         <p className="mb-2 text-[12px] font-extrabold text-foreground">
-          이번 사이클 미션
+          이번 주 미션 · {currentWeek === 1 ? "리듬 재정렬" : "감량 지속 / 정체기 대응"}
         </p>
         <ul className="space-y-1.5">
-          {EXTEND_MISSIONS.map((m) => (
+          {missions.map((m) => (
             <li
               key={m.code}
               className="rounded-xl border border-border bg-card px-3 py-2.5"
@@ -145,28 +247,17 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
       </section>
 
       {/* 주간 체크인 CTA */}
-      {!cycleDone ? (
-        <Button
-          onClick={() => setCheckinOpen(true)}
-          className={cn(
-            "h-12 w-full rounded-2xl font-bold tracking-wide",
-            "bg-gradient-to-r from-primary to-primary/85 text-primary-foreground",
-            "shadow-[0_6px_22px_-6px_hsl(var(--primary)/0.6)]",
-          )}
-        >
-          <CalendarCheck className="mr-1.5 h-4 w-4" />
-          {currentWeek}주차 체크인 시작
-        </Button>
-      ) : (
-        <div className="rounded-2xl border border-reward/30 bg-reward/10 p-4 text-center">
-          <p className="text-[12px] font-extrabold text-[#F6C453]">
-            🏅 연장 사이클 완주
-          </p>
-          <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
-            한 번 더 이어갈지, 유지 모드로 전환할지 코치와 상담해 주세요.
-          </p>
-        </div>
-      )}
+      <Button
+        onClick={() => setCheckinOpen(true)}
+        className={cn(
+          "h-12 w-full rounded-2xl font-bold tracking-wide",
+          "bg-gradient-to-r from-primary to-primary/85 text-primary-foreground",
+          "shadow-[0_6px_22px_-6px_hsl(var(--primary)/0.6)]",
+        )}
+      >
+        <CalendarCheck className="mr-1.5 h-4 w-4" />
+        {currentWeek}주차 체크인 시작
+      </Button>
 
       {/* 체크인 히스토리 */}
       {checkins.length > 0 && (
@@ -190,6 +281,7 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
                     {c.adherence_score}
                   </span>
                 )}
+                {c.needs_recovery && <Flag className="h-3.5 w-3.5 text-primary" />}
               </li>
             ))}
           </ul>
@@ -222,6 +314,17 @@ const MiniStat = ({
       {label}
     </span>
     <p className="mt-0.5 number-font text-[14px] font-extrabold text-foreground">
+      {value}
+    </p>
+  </div>
+);
+
+const GoalTile = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-xl border border-primary/15 bg-primary/5 p-2.5 text-center">
+    <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+      {label}
+    </p>
+    <p className="mt-0.5 number-font text-[13px] font-extrabold text-foreground">
       {value}
     </p>
   </div>
