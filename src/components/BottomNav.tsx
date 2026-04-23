@@ -39,7 +39,7 @@ const mainTabs = [
 const baseMenuItems = [
   { path: "/home",              icon: Home,       label: "홈" },
   { path: "/missions",          icon: BoxingGloveIcon, label: "훈련" },
-  { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝 게임" },
+  { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝" },
   { path: "/halloffame",        icon: Trophy,     label: "랭킹" },
   { path: "/rank-up",           icon: TrendingUp, label: "랭크업" },
   { path: "/cert-benefits",     icon: Award,      label: "단증혜택" },

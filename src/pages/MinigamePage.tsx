@@ -93,7 +93,7 @@ const MinigamePage = () => {
         </div>
         <h1 className="text-lg font-bold text-foreground">로그인이 필요합니다</h1>
         <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
-          복싱 트레이닝 게임은 로그인 후 이용할 수 있어요. 점수는 내 계정에 연동됩니다.
+          복싱 트레이닝은 로그인 후 이용할 수 있어요. 점수는 내 계정에 연동됩니다.
         </p>
         <button
           type="button"
@@ -115,7 +115,7 @@ const MinigamePage = () => {
         width="100%"
         height="100%"
         style={{ border: "none", minHeight: "100vh" }}
-        title="복싱 트레이닝 게임 — Speed Strike Trainer"
+        title="복싱 트레이닝 — Speed Strike Trainer"
         allow="accelerometer; gyroscope; fullscreen"
         onLoad={() => setIframeLoaded(true)}
       />
