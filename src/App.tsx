@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +12,8 @@ import ChatAssistant from "@/components/ChatAssistant";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { isManagerRole } from "@/lib/rankLabels";
 import InductionCeremonyOverlay from "@/components/induction/InductionCeremonyOverlay";
+import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
+import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
 
 // Route-level code splitting — every page below is fetched on demand.
 // LoginPage + NotFound stay eager: Login is the cold-start screen
@@ -138,6 +140,19 @@ const RoleBasedRedirect = () => {
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
+  const { pathname } = useLocation();
+
+  // Splash gate.
+  //   • 쿨드 스타트 시 1회만 재생 (sessionStorage 키 'rankingup_splash_seen_v1').
+  //   • auth loading 중이거나 user 가 없으면 gated=true — waiting 유지.
+  //   • 로그인·셋업·퍼블릭 라우트에서는 hook 내부에서 bypass.
+  //   • 새로고침은 같은 세션으로 간주 → 재생 안 함. 탭 완전 종료 후 새로 열면 재생.
+  //   • 튜토리얼 오버레이는 splashDone 이 될 때까지 mount 금지 (아래 {splashDone && ...}).
+  const splashGated = loading || !user;
+  const { shouldShow: showSplash, splashDone, markFinished } = useAppLaunchSplash(
+    pathname,
+    splashGated,
+  );
 
   if (loading) {
     return (
@@ -205,8 +220,11 @@ const AppRoutes = () => {
       </Suspense>
       <BottomNav />
       <ChatAssistant />
-      {/* 랭킹업 입단식 — 글로벌 portal 오버레이. 셋업 라우트에서는 내부에서 숨김. */}
-      {user && <InductionCeremonyOverlay />}
+      {/* 랭킹업 입단식 — 글로벌 portal 오버레이. 셋업 라우트에서는 내부에서 숨김.
+          splashDone 이전에는 mount 자체 차단 — 스플래시 종료 후에만 튜토리얼 시작. */}
+      {user && splashDone && <InductionCeremonyOverlay />}
+      {/* 쿨드 스타트 스플래시 (z-[80] · 포털). 세션 1회. */}
+      {showSplash && <AppLaunchSplash onFinished={markFinished} />}
     </>
   );
 };

@@ -1,24 +1,48 @@
 /**
- * useAppLaunchSplash — 앱 쿨드 스타트 스플래시 게이팅 훅.
+ * useAppLaunchSplash — 앱 쿨드 스타트 스플래시 게이트.
  *
- * 역할
- *   • 세션 내 1회만 재생. sessionStorage 키로 중복 방지.
- *   • 특정 퍼블릭 라우트(/live-board/*)는 bypass.
- *   • 실제 재생/애니메이션은 AppLaunchSplash 컴포넌트 책임.
+ * 정책 (명시)
+ *   • 세션 1회만 재생. sessionStorage 키 `rankingup_splash_seen_v1` 로
+ *     게이트. 새로고침(= 같은 탭·같은 세션) 에선 재생 안 함. 탭을 완전히
+ *     닫았다가 새로 열면(= 새 세션) 다시 재생.
+ *   • 로그인/셋업/퍼블릭 라우트에서는 bypass — 세션 플래그 세팅 안 함.
+ *     (로그인 후 /home 으로 진입할 때 최초 재생되도록)
+ *   • 외부 gated 플래그로 재생 지연 가능 — 예: auth loading 완료까지.
  *
- * 현재 App.tsx 에 연결되어 있지 않음 — Gate 에서 읽어 쓰는 구조로
- * 사용 예정. 이 훅은 컴포넌트/테스트 양쪽에서 호출 가능하도록 순수 유지.
+ * 상태 머신
+ *   ┌──────────────┐   gated=false · pathname 유효 · session 미시청    ┌──────────┐
+ *   │  waiting     │ ─────────────────────────────────────────────► │ showing  │
+ *   └──────────────┘                                                 └────┬─────┘
+ *          │                                                              │ markFinished()
+ *          │ gated=false · 이미 시청                                       ▼
+ *          └──────────────────────────────────────────────────► ┌──────────┐
+ *                                                                │   done   │
+ *                                                                └──────────┘
+ *   한 번 `done` 이면 다시 showing 으로 돌아가지 않음.
  */
 
 import { useCallback, useEffect, useState } from "react";
 
-const STORAGE_KEY = "app_splash_shown_v1";
+const STORAGE_KEY = "rankingup_splash_seen_v1";
 
-/** pathname 이 이 prefix 로 시작하면 스플래시 생략. */
-const BYPASS_ROUTES = ["/live-board"];
+// 셋업·퍼블릭 라우트 — 이 중에 있으면 splash 를 재생하지 않는다.
+// 정확 일치("/" 로그인) + prefix 매칭(/onboarding 등) 혼합.
+const BYPASS_PATH_EXACT = new Set<string>(["/"]);
+const BYPASS_PATH_PREFIXES: readonly string[] = [
+  "/onboarding",
+  "/select-branch",
+  "/waiting-approval",
+  "/safety-check",
+  "/live-board",
+];
 
-function readHasShown(): boolean {
-  if (typeof window === "undefined") return true; // SSR safe-default
+function isBypassPath(pathname: string): boolean {
+  if (BYPASS_PATH_EXACT.has(pathname)) return true;
+  return BYPASS_PATH_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+function readSeen(): boolean {
+  if (typeof window === "undefined") return true;
   try {
     return sessionStorage.getItem(STORAGE_KEY) === "1";
   } catch {
@@ -26,47 +50,60 @@ function readHasShown(): boolean {
   }
 }
 
-function markShown() {
+function markSeen() {
   try {
     sessionStorage.setItem(STORAGE_KEY, "1");
   } catch {
-    // private mode · quota 초과 — 무시 (세션 동안 메모리 플래그만 유지됨)
+    // private mode · quota 초과 — 세션 한정 효과만 유지, 차후 탭 재진입 시 재생됨.
   }
 }
 
-function isBypassPath(pathname: string): boolean {
-  return BYPASS_ROUTES.some((p) => pathname.startsWith(p));
-}
+type Phase = "waiting" | "showing" | "done";
 
 export interface UseAppLaunchSplashResult {
-  /** 지금 스플래시를 렌더해야 하는지. */
+  /** 지금 스플래시 포털을 렌더해야 하는지. */
   shouldShow: boolean;
-  /** 스플래시 애니메이션 완료 시 호출. 세션 플래그 세팅 + shouldShow=false. */
+  /** 스플래시 주기가 종료됐는지. 튜토리얼 등 후속 오버레이 게이트에 사용. */
+  splashDone: boolean;
+  /** 애니메이션 완료 시 호출. 세션 플래그 저장 + phase→done. */
   markFinished: () => void;
-  /** 디버그/테스트용 — 세션 플래그 리셋 (다음 페이지 로드부터 재생). */
+  /** 디버그/테스트 전용 — 세션 플래그 제거. 다음 mount 때 waiting 재진입. */
   reset: () => void;
 }
 
 /**
- * pathname 기반 bypass + 세션 1회 제한.
- * SSR 안전 — 초기 렌더에선 항상 false 로 시작하고 mount 후 상태 확정.
+ * @param pathname — 현재 라우트 경로 (react-router `useLocation().pathname`).
+ * @param gated   — true 이면 waiting 유지. auth loading 등 외부 조건용.
  */
-export function useAppLaunchSplash(pathname: string): UseAppLaunchSplashResult {
-  const [shouldShow, setShouldShow] = useState<boolean>(false);
+export function useAppLaunchSplash(
+  pathname: string,
+  gated = false,
+): UseAppLaunchSplashResult {
+  // 첫 렌더에서 동기적으로 phase 결정 — 깜빡임(1-frame flash) 방지.
+  const [phase, setPhase] = useState<Phase>(() => {
+    if (typeof window === "undefined") return "done";
+    if (readSeen()) return "done";
+    if (gated) return "waiting";
+    if (isBypassPath(pathname)) return "waiting";
+    return "showing";
+  });
 
+  // pathname/gated 변경 시 waiting → showing/done 전환.
+  // done 이면 어떤 경우에도 되돌아가지 않음.
   useEffect(() => {
-    // 첫 mount 시에 한 번만 결정. 이후 pathname 변경으로 재계산 X.
-    if (isBypassPath(pathname)) {
-      setShouldShow(false);
+    if (phase !== "waiting") return;
+    if (gated) return;
+    if (isBypassPath(pathname)) return;
+    if (readSeen()) {
+      setPhase("done");
       return;
     }
-    setShouldShow(!readHasShown());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    setPhase("showing");
+  }, [pathname, gated, phase]);
 
   const markFinished = useCallback(() => {
-    markShown();
-    setShouldShow(false);
+    markSeen();
+    setPhase("done");
   }, []);
 
   const reset = useCallback(() => {
@@ -75,8 +112,13 @@ export function useAppLaunchSplash(pathname: string): UseAppLaunchSplashResult {
     } catch {
       // 무시
     }
-    setShouldShow(true);
+    setPhase("waiting");
   }, []);
 
-  return { shouldShow, markFinished, reset };
+  return {
+    shouldShow: phase === "showing",
+    splashDone: phase === "done",
+    markFinished,
+    reset,
+  };
 }
