@@ -64,8 +64,8 @@ export const NutritionScienceCard = ({
             body="더 빠른 감량은 근육량·기초 대사량이 함께 빠져 요요 가능성이 급격히 올라갑니다. Hall 2011 Lancet 연구 기반 권장."
           />
           <Row
-            label={`단백질 ${sex === "male" ? "1.5" : "1.2"} g/kg (${sex === "male" ? "남성" : "여성"} 체중 ${weightKg}kg 기준)`}
-            body="성별별 베이스라인 — 근손실 방지 + 포만감 확보. 운동 강도에 따라 개인이 상향 조정 가능."
+            label={`단백질 ${(target.proteinG / weightKg).toFixed(1)} g/kg (${sex === "male" ? "남성" : "여성"} 체중 ${weightKg}kg)`}
+            body="성별 × 활동 수준 매트릭스 — 활동이 많아지면 근합성·근손실 방지 요구가 커져 자동 상향됩니다. Phillips 2011 / Morton 2018 / Helms 2014 근거."
           />
           <Row
             label="지방을 25% 이하로 내리지 않는 이유"

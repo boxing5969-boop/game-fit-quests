@@ -114,22 +114,51 @@ export function calcKcalTarget(
 }
 
 /**
+ * 단백질 권장량 (g/kg 체중) — 성별 × 활동 수준 매트릭스.
+ *
+ * 근거:
+ *   · Phillips & Van Loon 2011, Morton et al. 2018 (BJSM) — 근력 훈련 성인 1.4~1.8
+ *   · Helms et al. 2014 (JISSN) — 감량기 근손실 방지 상한 1.8~2.2
+ *   · ISSN 2017 Position Stand — 활동 수준에 따라 1.2~2.0 범위
+ *
+ * 베이스라인(light) 은 사용자 "옵션 B" 합의: 남 1.6 / 여 1.4.
+ * 활동이 증가할수록 근합성·근손실 방지 요구가 올라가 단계적으로 상향.
+ * Sedentary 는 최소선이지만 RDA(0.8) 대비 충분한 마진 유지.
+ */
+export const PROTEIN_PER_KG: Record<Sex, Record<ActivityLevel, number>> = {
+  male: {
+    sedentary: 1.4,
+    light: 1.6,
+    moderate: 1.8,
+    active: 1.9,
+    very_active: 2.0,
+  },
+  female: {
+    sedentary: 1.2,
+    light: 1.4,
+    moderate: 1.5,
+    active: 1.6,
+    very_active: 1.8,
+  },
+};
+
+/**
  * 매크로 분배.
+ *   1. 단백질 → PROTEIN_PER_KG[sex][activity] × weight (우선 확보)
+ *   2. 지방 → 총 kcal × 25% (호르몬 유지 최소선)
+ *   3. 탄수 → 나머지 kcal
  *
- * 단백질 베이스라인 (사용자 지정):
- *   · 남 1.5 g/kg
- *   · 여 1.2 g/kg
- *
- * 나머지는 감량·유지 모드와 무관하게 동일 베이스라인.
- * 탄수·지방은 회원 상태에 맞춰 자동 분배 (지방 25% 고정, 탄수 나머지).
+ * 감량/유지 모드는 단백질엔 영향 없음 (활동이 더 중요한 변수).
+ * 탄수·지방은 회원 상태에 맞춰 자동 분배.
  */
 export function calcMacros(
   kcalTarget: number,
   weightKg: number,
   sex: Sex,
+  activity: ActivityLevel,
   mode: CalorieMode,
 ): { proteinG: number; fatG: number; carbsG: number; reason: string } {
-  const proteinPerKg = sex === "male" ? 1.5 : 1.2;
+  const proteinPerKg = PROTEIN_PER_KG[sex][activity];
   const proteinG = Math.round(weightKg * proteinPerKg);
   const proteinKcal = proteinG * 4;
 
@@ -141,10 +170,11 @@ export function calcMacros(
   const carbsG = Math.round(carbsKcal / 4);
 
   const sexLabel = sex === "male" ? "남성" : "여성";
+  const activityLabel = ACTIVITY_LABEL_KO[activity];
   const reason =
     mode === "fat_loss"
-      ? `${sexLabel} 기준 단백질 ${proteinPerKg}g/kg — 근손실 방지 베이스라인. 지방 25% 호르몬 유지선 + 탄수는 목표 칼로리에 맞춰 자동 분배.`
-      : `${sexLabel} 기준 단백질 ${proteinPerKg}g/kg — 유지 베이스라인. 지방 25% + 탄수는 활동량에 맞춘 자동 분배.`;
+      ? `${sexLabel} · ${activityLabel} 단백질 ${proteinPerKg}g/kg — 감량기 근손실 방지 · 훈련 강도 반영. 지방 25% 호르몬 유지선, 탄수는 자동 분배.`
+      : `${sexLabel} · ${activityLabel} 단백질 ${proteinPerKg}g/kg — 유지 베이스라인 × 활동 증가분. 지방 25% + 탄수는 활동량에 맞춘 자동 분배.`;
 
   return { proteinG, fatG, carbsG, reason };
 }
@@ -158,6 +188,7 @@ export function computeNutritionTarget(input: NutritionInput): NutritionTarget {
     kcal,
     input.weightKg,
     input.sex,
+    input.activity,
     input.mode,
   );
   return {
