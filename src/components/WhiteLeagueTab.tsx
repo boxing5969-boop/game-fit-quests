@@ -23,8 +23,9 @@ import {
   ArrowLeft, Star, Shield, Info, Dumbbell, Eye, Award, Play,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
+import CharacterSprite from "@/components/CharacterSprite";
 import { toast } from "sonner";
-import whiteLv1Hero from "@/assets/white-lv1-hero.jpg";
 
 type LevelState = "complete" | "active" | "locked";
 type DetailView = null | { league: string; level: number };
@@ -158,6 +159,8 @@ const WhiteLeagueTab = () => {
    ═══════════════════════════════════════════════════════ */
 const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; levelNum: number; onBack: () => void }) => {
   const ul = getLevelById(league, levelNum);
+  const { user, progress } = useAuth();
+  const { data: myCharacter } = useMemberCharacterAssignment(user?.id);
   const { metrics, status, canAttemptChecklist, submitChecklist } = useLocalProgress();
   const [activeSection, setActiveSection] = useState<"learn" | "session" | "check">("learn");
   const [showChecklist, setShowChecklist] = useState(false);
@@ -208,22 +211,49 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         <ArrowLeft className="h-4 w-4" /> 목록으로
       </button>
 
-      {/* Hero Card */}
-      <div className="relative overflow-hidden rounded-2xl shadow-md">
-        {isWhiteLv1 ? (
-          <img src={whiteLv1Hero} alt={ul.title} className="h-44 w-full object-cover" width={800} height={512} />
-        ) : (
-          <div className="flex h-44 items-center justify-center bg-gradient-to-br from-primary/10 to-reward/10">
-            <span className="text-6xl">🥊</span>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent" />
+      {/* Hero Card — 내 캐릭터 + 그라데이션 */}
+      <div
+        className="relative h-48 overflow-hidden rounded-2xl shadow-elev-2"
+        style={{
+          // 민트 primary + 약한 레드 악센트 방사형 그라디언트. 중앙은 밝게,
+          // 외곽은 어둡게 눌러 캐릭터로 시선 집중.
+          background:
+            "radial-gradient(ellipse at 50% 40%, hsl(var(--primary) / 0.28) 0%, hsl(var(--primary) / 0.12) 35%, rgba(217,54,32,0.08) 70%, rgba(6,7,11,0.95) 100%)",
+        }}
+      >
+        {/* 은은한 스파클 파티클 (정적) — 왼쪽·오른쪽 */}
+        <span aria-hidden className="pointer-events-none absolute left-4 top-5 text-lg opacity-40">✨</span>
+        <span aria-hidden className="pointer-events-none absolute right-6 top-8 text-sm opacity-30">⭐</span>
+        <span aria-hidden className="pointer-events-none absolute left-8 bottom-16 text-xs opacity-25">✨</span>
+
+        {/* 캐릭터 — 중앙에 lg 사이즈. 없으면 🥊 fallback */}
+        <div className="absolute inset-0 flex items-center justify-center pt-2">
+          {myCharacter?.character_presets ? (
+            <CharacterSprite
+              style={(myCharacter.character_presets.parts_json as Record<string, unknown>)?.style as string | undefined}
+              userId={user?.id}
+              partsJson={myCharacter.character_presets.parts_json as Record<string, unknown>}
+              size="lg"
+              animate
+              league={progress?.current_rank}
+              level={progress?.current_level}
+              auraMode="compact"
+            />
+          ) : (
+            <span className="text-6xl drop-shadow-[0_4px_14px_rgba(0,0,0,0.5)]">🥊</span>
+          )}
+        </div>
+
+        {/* 하단 어둠 오버레이 — 텍스트 가독성 */}
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-transparent to-transparent" />
+
+        {/* 레벨 라벨 + 제목 */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <span className="mb-1 inline-block rounded-full bg-card/90 px-2.5 py-0.5 text-[10px] font-bold text-primary backdrop-blur-sm">
             Lv.{ul.globalLevel}
           </span>
-          <h2 className="text-xl font-bold text-white">{ul.title}</h2>
-          <p className="text-xs text-white/80">{ul.shortGoal}</p>
+          <h2 className="text-xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">{ul.title}</h2>
+          <p className="text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)]">{ul.shortGoal}</p>
         </div>
       </div>
 
