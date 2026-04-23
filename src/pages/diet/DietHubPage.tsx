@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
+  Banknote,
   Calendar,
   ChevronLeft,
   Sparkles,
@@ -14,18 +15,17 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useDietProgress } from "@/hooks/useDietEnrollment";
+import { useWallet } from "@/hooks/useWallet";
 import { useTodayDailyLog } from "@/hooks/useDietDailyLog";
-import { useAttendanceToday } from "@/hooks/useDietAttendance";
 import {
   DIET_STAGES,
   DIET_TRACK_LABEL,
 } from "@/data/dietProgramData";
 import type { DailyHabitsPayload } from "@/services/dietService";
-import { computeHabitScore, getDailyPlan } from "@/lib/diet/ruleEngine";
+import { computeHabitScore } from "@/lib/diet/ruleEngine";
 import type { DietTrack } from "@/lib/dietTrack";
 
 import DietTrackBadge from "@/components/diet/DietTrackBadge";
-import DailyMissionList from "@/components/diet/DailyMissionList";
 import HabitScoreCard from "@/components/diet/HabitScoreCard";
 import MilestoneProgressStrip from "@/components/diet/MilestoneProgressStrip";
 import CoachCornerCard from "@/components/diet/CoachCornerCard";
@@ -33,6 +33,7 @@ import DietReminderBanner from "@/components/diet/DietReminderBanner";
 import DietCompletionModal from "@/components/diet/DietCompletionModal";
 import PostProgramRouter from "@/components/diet/post/PostProgramRouter";
 import DietSubNav from "@/components/diet/DietSubNav";
+import { pickDailyCoachMessage } from "@/data/diet/coachMessages";
 import { useDietPreferences } from "@/hooks/useDietPreferences";
 import { useDietAnalytics } from "@/hooks/useDietAnalytics";
 import {
@@ -136,32 +137,46 @@ const HubShell = ({
 }: {
   children: React.ReactNode;
   onBack: () => void;
-}) => (
-  <AppPage
-    header={
-      <PageHeader
-        title="153다이어트"
-        subtitle="21일 습관 리셋 프로그램"
-        leftAction={
-          <button
-            type="button"
-            onClick={onBack}
-            className="rounded-full bg-secondary p-2 active:scale-95"
-            aria-label="돌아가기"
-          >
-            <ChevronLeft className="h-5 w-5 text-secondary-foreground" />
-          </button>
-        }
-        sticky
-      />
-    }
-  >
-    <div className="space-y-4">
-      <DietSubNav />
-      <div className="space-y-4">{children}</div>
-    </div>
-  </AppPage>
-);
+}) => {
+  const { data: walletData } = useWallet();
+  const gemsDisplay = (walletData?.gems_balance ?? 0).toLocaleString();
+
+  return (
+    <AppPage
+      header={
+        <PageHeader
+          title="153다이어트"
+          subtitle="21일 습관 리셋 프로그램"
+          leftAction={
+            <button
+              type="button"
+              onClick={onBack}
+              className="rounded-full bg-secondary p-2 active:scale-95"
+              aria-label="돌아가기"
+            >
+              <ChevronLeft className="h-5 w-5 text-secondary-foreground" />
+            </button>
+          }
+          rightAction={
+            <span
+              aria-label="파이트 머니"
+              className="inline-flex items-center gap-1 rounded-pill bg-[rgba(246,196,83,0.12)] px-3 py-1.5 text-caption font-bold text-[#F6C453]"
+            >
+              <Banknote className="h-3.5 w-3.5" />
+              <span className="number-font">{gemsDisplay}</span>
+            </span>
+          }
+          sticky
+        />
+      }
+    >
+      <div className="space-y-4">
+        <DietSubNav />
+        <div className="space-y-4">{children}</div>
+      </div>
+    </AppPage>
+  );
+};
 
 const ComingSoon = () => (
   <div
@@ -248,14 +263,11 @@ const ActiveHome = (p: ActiveHomeProps) => {
   const logDate = todayIso();
   const todayLogQuery = useTodayDailyLog(p.enrollmentId, logDate);
   const logRow = todayLogQuery.data ?? null;
-  const attendanceTodayQuery = useAttendanceToday(user?.id, logDate);
   const { data: prefs } = useDietPreferences();
   const { logEvent } = useDietAnalytics();
-
-  const todayPlan = useMemo(
-    () => getDailyPlan(p.track, p.currentDay),
-    [p.track, p.currentDay],
-  );
+  // 미션 리스트 inline 렌더 제거 — 상세는 /diet/tracker 에서. useAttendanceToday /
+  // getDailyPlan 은 트래커 페이지 내부에서 사용.
+  void user;
 
   const habitScore = useMemo(() => {
     const responses: DailyHabitsPayload = {
@@ -350,39 +362,30 @@ const ActiveHome = (p: ActiveHomeProps) => {
         streak={p.currentStreak}
       />
 
-      {/* 오늘의 핵심 미션 (요약 3개) */}
-      <Section
-        title="오늘의 미션"
-        action={
-          <Button
-            type="button"
-            variant="link"
-            className="h-auto p-0 text-[12px] font-bold text-primary"
-            onClick={() => navigate("/diet/tracker")}
-          >
-            체크하러 가기
-            <ArrowRight className="ml-0.5 h-3 w-3" />
-          </Button>
-        }
+      {/* 오늘의 미션 CTA — 축소해 탭/클릭 시에만 상세 이동 */}
+      <button
+        type="button"
+        onClick={() => navigate("/diet/tracker")}
+        className={cn(
+          "w-full rounded-2xl border border-primary/30 bg-primary/5 p-4 text-left",
+          "transition-all active:scale-[0.99] hover:border-primary/50",
+        )}
       >
-        <DailyMissionList
-          missions={todayPlan.missions}
-          limit={5}
-          responses={{
-            protein_first: logRow?.protein_first ?? null,
-            veggies_natural: logRow?.veggies_natural ?? null,
-            sugary_drink_avoided: logRow?.sugary_drink_avoided ?? null,
-            late_night_snack_avoided: logRow?.late_night_snack_avoided ?? null,
-            // QR 출석 기록이 있으면 gym_attended 를 자동 체크 오버레이 —
-            // 다이어트 로그에 아직 저장 안 됐어도 "복싱하기" 미션이 체크되어 보인다.
-            gym_attended:
-              attendanceTodayQuery.data === true
-                ? true
-                : logRow?.gym_attended ?? null,
-            water_ml: logRow?.water_ml ?? null,
-          }}
-        />
-      </Section>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+              TODAY · 오늘의 미션
+            </p>
+            <p className="mt-0.5 text-[14px] font-extrabold leading-tight text-foreground">
+              오늘의 미션을 클릭하세요
+            </p>
+            <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+              5가지 습관 체크 + 식단 사진 · 자가 기록 시 파이트 머니 지급
+            </p>
+          </div>
+          <ArrowRight className="h-5 w-5 text-primary" />
+        </div>
+      </button>
 
       {/* 배지 진행 */}
       <MilestoneProgressStrip
@@ -392,10 +395,12 @@ const ActiveHome = (p: ActiveHomeProps) => {
         milestone21Reached={p.milestone21}
       />
 
-      {/* 코치 한마디 */}
+      {/* 코치 한마디 — 실제 코치 노트가 없으면 일자별 결정적 랜덤 픽
+          (힘이되는말 / 다이어트 상식 번갈아) */}
       <CoachCornerCard
         latestNoteText={coachNoteQuery.data?.note_text ?? null}
         createdAt={coachNoteQuery.data?.created_at ?? null}
+        fallback={pickDailyCoachMessage().text}
       />
 
       {/* 하위 페이지 네비게이션은 상단 DietSubNav 로 통합 — 기존 타일 그리드 제거 */}
@@ -464,24 +469,6 @@ function ctaCopy(state: string | null) {
 // ──────────────────────────────────────────────────────────────────
 // 유틸 / 보조 컴포넌트
 // ──────────────────────────────────────────────────────────────────
-const Section = ({
-  title,
-  action,
-  children,
-}: {
-  title: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) => (
-  <section className="space-y-2">
-    <div className="flex items-center justify-between">
-      <h3 className="text-[13px] font-bold text-foreground">{title}</h3>
-      {action}
-    </div>
-    {children}
-  </section>
-);
-
 function stageLabel(stageId: string): string {
   return DIET_STAGES.find((s) => s.id === stageId)?.label ?? "";
 }
