@@ -41,11 +41,16 @@ export type DietProgressSnapshotRow =
 // ──────────────────────────────────────────────────────────────────
 // 공통 응답 형식
 // ──────────────────────────────────────────────────────────────────
-export type DietRpcOk<T> = { success: true } & T;
+// NOTE: `success: true` 필드를 명시적으로 가진 ok 변형과 `success: false` 의
+// err 변형을 분리해 둔다. 과거에 `{ success: true } & T` 인터섹션을 썼더니
+// `T = Record<string, never>` 같은 케이스에서 `success: true` 가 `never` 로
+// 좁혀져 RPC 호출부 전반이 깨졌다.
+export type DietRpcOk<T> = { success: true; error?: undefined } & T;
 export type DietRpcErr = { success: false; error: string };
 export type DietRpcResult<T> = DietRpcOk<T> | DietRpcErr;
 
-const ok = <T>(data: T): DietRpcOk<T> => ({ success: true, ...data });
+const ok = <T>(data: T): DietRpcOk<T> =>
+  ({ success: true, ...data } as DietRpcOk<T>);
 const err = (error: string): DietRpcErr => ({ success: false, error });
 
 const asJsonRpc = <T>(data: unknown): DietRpcResult<T> => {
