@@ -5,8 +5,10 @@ import {
   ArrowRight,
   Brain,
   Calendar,
+  ChefHat,
   ChevronLeft,
   Flag,
+  HeartHandshake,
   ImageIcon,
   LineChart,
   Salad,
@@ -448,6 +450,18 @@ const ActiveHome = (p: ActiveHomeProps) => {
           label="21일 이후 가이드"
           hint="유지·연장 분기 설명"
           onClick={() => navigate("/diet/after-21")}
+        />
+        <NavTile
+          icon={<ChefHat className="h-4 w-4" />}
+          label="자동 식단"
+          hint="BMR·TDEE 기반 하루 메뉴"
+          onClick={() => navigate("/diet/auto-meals")}
+        />
+        <NavTile
+          icon={<HeartHandshake className="h-4 w-4" />}
+          label="유지·연장 프로그램"
+          hint="21일 이후 두 갈래 경로"
+          onClick={() => navigate("/diet/post-program")}
         />
       </div>
 
