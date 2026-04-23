@@ -48,8 +48,10 @@ const ChatAssistant = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          // 에러 토스트(isError=true)는 모델 응답이 아닌 UI 알림이라
+          // LLM 이 "이전 대화의 자기 발언" 으로 오해하지 않도록 history 전송 시 제외.
           messages: [...messages, userMsg]
-            .filter((m) => m !== WELCOME_MSG)
+            .filter((m) => m !== WELCOME_MSG && !m.isError)
             .map(({ role, content }) => ({ role, content })),
         }),
       });
