@@ -1637,11 +1637,27 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
                 <CharacterSprite style={char.style} size="lg" />
               </div>
 
-              {/* Name + action button */}
-              <div className="p-2.5 pt-1 space-y-2">
+              {/* Name + price label + action button */}
+              <div className="p-2.5 pt-1 space-y-1.5">
                 <p className={`text-sm font-bold text-center leading-tight line-clamp-2 ${labelColor}`}>
                   {char.label}
                 </p>
+                {/* 가격 라벨 — 상태(잠김/적용중/보유/구매가능) 무관하게 항상 노출.
+                    FREE 는 녹색, 유료는 💵 {가격}, 보유한 유료는 "· 보유" 꼬리표 추가. */}
+                <div className="flex items-center justify-center gap-1 text-[10px] font-bold leading-none">
+                  {char.price === 0 ? (
+                    <span className="text-emerald-500">🎁 FREE</span>
+                  ) : (
+                    <>
+                      <span className={isHof ? "text-amber-400" : "text-muted-foreground"}>
+                        💵 {char.price.toLocaleString()}
+                      </span>
+                      {isOwned && (
+                        <span className="text-emerald-500">· ✓ 보유</span>
+                      )}
+                    </>
+                  )}
+                </div>
                 {actionEl}
               </div>
             </div>
