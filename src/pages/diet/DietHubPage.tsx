@@ -41,7 +41,6 @@ import CoachCornerCard from "@/components/diet/CoachCornerCard";
 import DietReminderBanner from "@/components/diet/DietReminderBanner";
 import DietCompletionModal from "@/components/diet/DietCompletionModal";
 import PostProgramRouter from "@/components/diet/post/PostProgramRouter";
-import AutoMealPlanSection from "@/components/diet/post/AutoMealPlanSection";
 import { useDietPreferences } from "@/hooks/useDietPreferences";
 import { useDietAnalytics } from "@/hooks/useDietAnalytics";
 import {
@@ -397,9 +396,6 @@ const ActiveHome = (p: ActiveHomeProps) => {
         milestone14Reached={p.milestone14}
         milestone21Reached={p.milestone21}
       />
-
-      {/* Day 1부터 자동 식단 — 21일 리셋은 fat_loss 모드 기본 */}
-      <AutoMealPlanSection mode="fat_loss" />
 
       {/* 코치 한마디 */}
       <CoachCornerCard
