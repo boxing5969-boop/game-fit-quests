@@ -37,6 +37,7 @@ import MilestoneProgressStrip from "@/components/diet/MilestoneProgressStrip";
 import CoachCornerCard from "@/components/diet/CoachCornerCard";
 import DietReminderBanner from "@/components/diet/DietReminderBanner";
 import DietCompletionModal from "@/components/diet/DietCompletionModal";
+import PostProgramRouter from "@/components/diet/post/PostProgramRouter";
 import { useDietPreferences } from "@/hooks/useDietPreferences";
 import { useDietAnalytics } from "@/hooks/useDietAnalytics";
 import {
@@ -92,6 +93,19 @@ const DietHubPage = () => {
     return (
       <HubShell onBack={() => navigate(-1)}>
         <OnboardingCTA onStart={() => navigate("/diet/onboarding")} />
+      </HubShell>
+    );
+  }
+
+  // 21일 완주 후에는 유지/연장 분기 화면으로 전환.
+  // 최근 7일 수행률은 snapshot.habit_score 를 근사치로 주입 (정밀값은 서버에서 별도 집계 가능).
+  if (payload.enrollment!.status === "completed") {
+    return (
+      <HubShell onBack={() => navigate(-1)}>
+        <PostProgramRouter
+          enrollmentId={payload.enrollment!.id}
+          recentAdherence7d={payload.snapshot?.habit_score ?? null}
+        />
       </HubShell>
     );
   }

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { usePendingDietLogs } from "@/hooks/useDietCoach";
 import DietApprovalCard from "@/components/diet/coach/DietApprovalCard";
+import CoachPostProgramPanel from "@/components/diet/post/CoachPostProgramPanel";
 import { cn } from "@/lib/utils";
 
 /**
@@ -138,6 +139,9 @@ const DietCoachInboxPage = () => {
             새로고침
           </Button>
         </div>
+
+        {/* 21일 완주 회원 후속 경로 (유지/연장) */}
+        <CoachPostProgramPanel />
       </div>
     </AppPage>
   );
