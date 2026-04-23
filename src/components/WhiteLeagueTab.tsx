@@ -211,49 +211,68 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         <ArrowLeft className="h-4 w-4" /> 목록으로
       </button>
 
-      {/* Hero Card — 내 캐릭터 + 그라데이션 */}
+      {/* Hero Card — 내 캐릭터 + 전설 등급 황금 글로우 배경.
+          CharacterStudio 의 HoF 카드와 동일한 amber 테두리·다중 레이어 그림자·breathe 애니메이션. */}
       <div
-        className="relative h-48 overflow-hidden rounded-2xl shadow-elev-2"
+        className="relative h-48 overflow-visible rounded-2xl border-[2px] border-amber-400 animate-[breathe_2s_ease-in-out_infinite]"
         style={{
-          // 민트 primary + 약한 레드 악센트 방사형 그라디언트. 중앙은 밝게,
-          // 외곽은 어둡게 눌러 캐릭터로 시선 집중.
+          // 황금 깊이감 그라디언트: yellow-900/40 → amber-800/30 → yellow-900/40
           background:
-            "radial-gradient(ellipse at 50% 40%, hsl(var(--primary) / 0.28) 0%, hsl(var(--primary) / 0.12) 35%, rgba(217,54,32,0.08) 70%, rgba(6,7,11,0.95) 100%)",
+            "linear-gradient(to bottom, hsla(50, 92%, 13%, 0.55) 0%, hsla(35, 80%, 20%, 0.50) 50%, hsla(50, 92%, 13%, 0.55) 100%)",
+          // 2중 황금 glow — 안쪽은 강하게, 바깥은 넓게 퍼지게. 전설 카드 톤 유지.
+          boxShadow:
+            "0 0 24px 8px rgba(251, 191, 36, 0.55), 0 0 54px 18px rgba(234, 179, 8, 0.28)",
         }}
       >
-        {/* 은은한 스파클 파티클 (정적) — 왼쪽·오른쪽 */}
-        <span aria-hidden className="pointer-events-none absolute left-4 top-5 text-lg opacity-40">✨</span>
-        <span aria-hidden className="pointer-events-none absolute right-6 top-8 text-sm opacity-30">⭐</span>
-        <span aria-hidden className="pointer-events-none absolute left-8 bottom-16 text-xs opacity-25">✨</span>
+        {/* overflow-hidden 은 내부 래퍼에서 — 바깥 glow 살아남게 */}
+        <div className="relative h-full w-full overflow-hidden rounded-[14px]">
+          {/* 중앙 민트 hotspot (기존 radial 유지, 황금 톤 위에 은은히 블렌드) */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse at 50% 40%, hsl(var(--primary) / 0.22) 0%, transparent 60%)",
+            }}
+          />
 
-        {/* 캐릭터 — 중앙에 lg 사이즈. 없으면 🥊 fallback */}
-        <div className="absolute inset-0 flex items-center justify-center pt-2">
-          {myCharacter?.character_presets ? (
-            <CharacterSprite
-              style={(myCharacter.character_presets.parts_json as Record<string, unknown>)?.style as string | undefined}
-              userId={user?.id}
-              partsJson={myCharacter.character_presets.parts_json as Record<string, unknown>}
-              size="lg"
-              animate
-              league={progress?.current_rank}
-              level={progress?.current_level}
-              auraMode="compact"
-            />
-          ) : (
-            <span className="text-6xl drop-shadow-[0_4px_14px_rgba(0,0,0,0.5)]">🥊</span>
-          )}
-        </div>
+          {/* 스파클 파티클 — 황금 톤에 맞춰 3개 */}
+          <span aria-hidden className="pointer-events-none absolute left-4 top-5 text-lg opacity-70 drop-shadow-[0_0_6px_rgba(251,191,36,0.8)]">✨</span>
+          <span aria-hidden className="pointer-events-none absolute right-6 top-8 text-base opacity-60 drop-shadow-[0_0_6px_rgba(251,191,36,0.8)]">⭐</span>
+          <span aria-hidden className="pointer-events-none absolute left-8 bottom-16 text-sm opacity-55 drop-shadow-[0_0_5px_rgba(251,191,36,0.7)]">✨</span>
+          <span aria-hidden className="pointer-events-none absolute right-4 bottom-20 text-[10px] opacity-50 drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]">⭐</span>
 
-        {/* 하단 어둠 오버레이 — 텍스트 가독성 */}
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-transparent to-transparent" />
+          {/* 캐릭터 — 중앙. 황금 drop-shadow 로 묶음. */}
+          <div className="absolute inset-0 flex items-center justify-center pt-2">
+            {myCharacter?.character_presets ? (
+              <div className="drop-shadow-[0_4px_16px_rgba(251,191,36,0.45)]">
+                <CharacterSprite
+                  style={(myCharacter.character_presets.parts_json as Record<string, unknown>)?.style as string | undefined}
+                  userId={user?.id}
+                  partsJson={myCharacter.character_presets.parts_json as Record<string, unknown>}
+                  size="lg"
+                  animate
+                  league={progress?.current_rank}
+                  level={progress?.current_level}
+                  auraMode="compact"
+                />
+              </div>
+            ) : (
+              <span className="text-6xl drop-shadow-[0_4px_14px_rgba(251,191,36,0.6)]">🥊</span>
+            )}
+          </div>
 
-        {/* 레벨 라벨 + 제목 */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <span className="mb-1 inline-block rounded-full bg-card/90 px-2.5 py-0.5 text-[10px] font-bold text-primary backdrop-blur-sm">
-            Lv.{ul.globalLevel}
-          </span>
-          <h2 className="text-xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">{ul.title}</h2>
-          <p className="text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)]">{ul.shortGoal}</p>
+          {/* 하단 어둠 오버레이 — 텍스트 가독성 */}
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-transparent to-transparent" />
+
+          {/* 레벨 라벨 + 제목 — 뱃지 톤을 황금으로 */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <span className="mb-1 inline-block rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 px-2.5 py-0.5 text-[10px] font-black text-black backdrop-blur-sm">
+              Lv.{ul.globalLevel}
+            </span>
+            <h2 className="text-xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{ul.title}</h2>
+            <p className="text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)]">{ul.shortGoal}</p>
+          </div>
         </div>
       </div>
 
