@@ -58,31 +58,15 @@ const todayIso = () => {
  *   3. active enrollment 없음 → 온보딩 CTA
  *   4. active → 전체 홈 (Day/Stage + 오늘 미션 + 점수 + 배지 + 코치 한마디 + CTA 모음)
  */
-const DIET_OVERLAY_SESSION_KEY = "diet_loading_overlay_shown_v1";
-
 const DietHubPage = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const progressQuery = useDietProgress();
 
-  // 세션당 1회 오버레이 — /diet 에 처음 진입했을 때만 노출
-  const [showOverlay, setShowOverlay] = useState<boolean>(() => {
-    if (typeof sessionStorage === "undefined") return false;
-    try {
-      return !sessionStorage.getItem(DIET_OVERLAY_SESSION_KEY);
-    } catch {
-      return false;
-    }
-  });
-
-  const handleOverlayDone = () => {
-    setShowOverlay(false);
-    try {
-      sessionStorage.setItem(DIET_OVERLAY_SESSION_KEY, "1");
-    } catch {
-      // sessionStorage 실패해도 UX 영향 없음
-    }
-  };
+  // 다이어트 탭 진입 시 매번 오버레이 노출 — MinigamePage 로더와 동일 패턴.
+  // 세션 캐시 없음 · 탭 재진입 시마다 새 명언/유머 랜덤 노출.
+  const [showOverlay, setShowOverlay] = useState<boolean>(true);
+  const handleOverlayDone = () => setShowOverlay(false);
 
   const featureEnabled = !!profile?.diet_program_enabled;
 
