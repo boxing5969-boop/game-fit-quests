@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode, type CSSProperties } from "react";
 import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { XPBar } from "./XPBar";
@@ -20,6 +20,36 @@ interface HeroStatusCardProps {
   className?: string;
 }
 
+// 캐릭터 클릭 시 생성되는 파티클 버스트.
+// 각 파티클은 radial 로 밖으로 튀어나가며 서서히 페이드아웃한다.
+interface BurstParticle {
+  id: number;
+  emoji: string;
+  endX: number;
+  endY: number;
+  delay: number;
+  size: number;
+}
+const BURST_EMOJIS = ["✨", "⭐", "🎉", "💥", "👊", "🥊", "💫"] as const;
+const BURST_COUNT = 14;
+const BURST_DURATION_MS = 900;
+
+const buildBurst = (seed: number): BurstParticle[] =>
+  Array.from({ length: BURST_COUNT }, (_, i) => {
+    const baseAngle = (i / BURST_COUNT) * Math.PI * 2;
+    // 살짝 랜덤 각도·거리로 자연스러운 분산. Math.random 은 매 클릭마다 다른 패턴.
+    const angle = baseAngle + (Math.random() - 0.5) * 0.45;
+    const distance = 70 + Math.random() * 45;
+    return {
+      id: seed * 100 + i,
+      emoji: BURST_EMOJIS[Math.floor(Math.random() * BURST_EMOJIS.length)],
+      endX: Math.cos(angle) * distance,
+      endY: Math.sin(angle) * distance,
+      delay: Math.random() * 90,
+      size: 18 + Math.random() * 10,
+    };
+  });
+
 /**
  * Hero card: large character on a dark gradient stage, with league /
  * level badge, XP progress to next level, and an optional streak chip.
@@ -40,6 +70,26 @@ export const HeroStatusCard = ({
     streakLabel ??
     (streakDays && streakDays > 0 ? `${streakDays}일 연속 출석 중` : null);
 
+  // 클릭 이펙트 상태 — 같은 애니메이션이 겹치지 않게 debounce.
+  const [burst, setBurst] = useState<{ id: number; particles: BurstParticle[] } | null>(null);
+  const [pulsing, setPulsing] = useState(false);
+  const handleCharacterPop = () => {
+    if (pulsing) return;
+    const id = Date.now();
+    setBurst({ id, particles: buildBurst(id) });
+    setPulsing(true);
+    // 햅틱 — 모바일에서만 반응. 미지원 기기는 무시.
+    try {
+      navigator.vibrate?.(30);
+    } catch {
+      // safari / 미지원 기기 — 무시
+    }
+    window.setTimeout(() => {
+      setBurst(null);
+      setPulsing(false);
+    }, BURST_DURATION_MS);
+  };
+
   return (
     <section className={cn("hero-card", className)}>
       {/* Ambient glow backdrop */}
@@ -52,12 +102,58 @@ export const HeroStatusCard = ({
       )}
 
       <div className="relative flex flex-col items-center text-center">
-        {/* Character / artwork slot */}
+        {/* Character / artwork slot — 탭하면 파티클 버스트 + 캐릭터 팝 애니메이션 */}
         {character && (
-          <div className="mb-4 flex h-40 w-40 items-center justify-center">
+          <button
+            type="button"
+            onClick={handleCharacterPop}
+            aria-label="캐릭터 응원 탭"
+            className={cn(
+              "relative mb-4 flex h-40 w-40 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+              "transition-transform select-none",
+              pulsing && "animate-[heroPop_0.6s_ease-out]",
+            )}
+          >
             {character}
-          </div>
+            {/* 파티클 버스트 — 상태가 있을 때만 렌더 */}
+            {burst?.particles.map((p) => (
+              <span
+                key={p.id}
+                aria-hidden
+                className="pointer-events-none absolute left-1/2 top-1/2 select-none"
+                style={{
+                  fontSize: `${p.size}px`,
+                  animation: `heroBurst ${BURST_DURATION_MS}ms ${p.delay}ms cubic-bezier(0.22,0.61,0.36,1) forwards`,
+                  "--end-x": `${p.endX}px`,
+                  "--end-y": `${p.endY}px`,
+                  transform: "translate(-50%, -50%) scale(0.4)",
+                  opacity: 0,
+                } as CSSProperties}
+              >
+                {p.emoji}
+              </span>
+            ))}
+          </button>
         )}
+
+        {/* 로컬 keyframes — Tailwind 설정 확장 없이 인라인 주입 */}
+        <style>{`
+          @keyframes heroBurst {
+            0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+            15%  { opacity: 1; }
+            100% { transform: translate(calc(-50% + var(--end-x)), calc(-50% + var(--end-y))) scale(1.15) rotate(20deg); opacity: 0; }
+          }
+          @keyframes heroPop {
+            0%   { transform: scale(1)    rotate(0deg); }
+            35%  { transform: scale(1.12) rotate(-4deg); }
+            65%  { transform: scale(0.94) rotate(3deg); }
+            100% { transform: scale(1)    rotate(0deg); }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            @keyframes heroBurst { 0%,100% { opacity: 0; } }
+            @keyframes heroPop   { 0%,100% { transform: scale(1); } }
+          }
+        `}</style>
 
         {/* League + level badge */}
         <div className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-background/60 px-3.5 py-1 backdrop-blur">
