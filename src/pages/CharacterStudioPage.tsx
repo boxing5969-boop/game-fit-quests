@@ -13,7 +13,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { PREBUILT_CHARACTERS, getRandomCharacter } from "@/data/characterPresets";
+import { PREBUILT_CHARACTERS, getRandomCharacter, getCharacterByHash } from "@/data/characterPresets";
 import { getCurrentMilestone, UNLOCK_MILESTONES } from "@/data/characterUnlockData";
 import {
   useTemplatePresets,
@@ -362,11 +362,76 @@ const CharacterStudioPage = () => {
 
   const gemsDisplay = isAdmin ? "∞" : (walletData?.gems_balance ?? 0).toLocaleString();
 
-  // 현재 스테이지에 서 있는 캐릭터가 "전설"(HoF)인지 판정.
-  // preset 탭 프리뷰 중일 땐 selectedStyle, 그 외엔 실제 적용 중인 currentStyle 기준.
-  const stageCharStyle = activeTab === "preset" ? selectedStyle : (currentStyle ?? selectedStyle);
-  const stageChar = PREBUILT_CHARACTERS.find((c) => c.style === stageCharStyle);
+  // 현재 스테이지에 서 있는 캐릭터를 결정 — CharacterSprite 의 fallback 순서와 동일.
+  //   1) preset 탭 프리뷰 중이면 selectedStyle
+  //   2) 그 외엔 currentStyle (assignment 에서 로드된 내 캐릭터)
+  //   3) selectedStyle (초기 state 기본값)
+  //   4) userId 해시로 계산되는 deterministic 스타일
+  const stageCharStyle =
+    (activeTab === "preset" ? selectedStyle : currentStyle) ||
+    selectedStyle ||
+    (user?.id ? getCharacterByHash(user.id).style : undefined);
+  const stageChar = stageCharStyle
+    ? PREBUILT_CHARACTERS.find((c) => c.style === stageCharStyle)
+    : undefined;
+
+  // 리그·요구조건 기반 배경/테두리/글로우 톤. 하단 프리셋 카드와 동일 계열로 통일하되
+  // 다크 테마 스테이지 표면에 맞춰 채도·명도 조정. HoF 는 특별 golden 톤.
+  type StageTone = { bg: string; border: string; glow: string; breathe: boolean };
+  const stageTone: StageTone = (() => {
+    if (stageChar?.requirement === "hall_of_fame") {
+      return {
+        bg: "linear-gradient(to bottom, hsla(50, 92%, 13%, 0.55) 0%, hsla(35, 80%, 20%, 0.50) 50%, hsla(50, 92%, 13%, 0.55) 100%)",
+        border: "border-[2px] border-amber-400",
+        glow: "0 0 24px 8px rgba(251, 191, 36, 0.55), 0 0 54px 18px rgba(234, 179, 8, 0.28)",
+        breathe: true,
+      };
+    }
+    switch (stageChar?.league) {
+      case "black":
+        return {
+          bg: "linear-gradient(to bottom, hsla(220, 20%, 14%, 0.85) 0%, hsla(220, 20%, 10%, 0.90) 100%)",
+          border: "border-[2px] border-amber-500/50",
+          glow: "0 0 18px 6px rgba(251, 191, 36, 0.22), 0 0 40px 12px rgba(251, 191, 36, 0.10)",
+          breathe: false,
+        };
+      case "red":
+        return {
+          bg: "linear-gradient(to bottom, hsla(0, 55%, 22%, 0.55) 0%, hsla(0, 50%, 15%, 0.65) 100%)",
+          border: "border-[2px] border-rose-400/70",
+          glow: "0 0 22px 8px rgba(248, 113, 113, 0.30), 0 0 44px 14px rgba(239, 68, 68, 0.14)",
+          breathe: false,
+        };
+      case "blue":
+        return {
+          bg: "linear-gradient(to bottom, hsla(215, 70%, 22%, 0.55) 0%, hsla(215, 60%, 15%, 0.65) 100%)",
+          border: "border-[2px] border-sky-400/70",
+          glow: "0 0 22px 8px rgba(56, 189, 248, 0.28), 0 0 44px 14px rgba(14, 165, 233, 0.14)",
+          breathe: false,
+        };
+      case "white":
+      default:
+        return {
+          // 기본 톤 — 기존 surface-2 → card gradient 유지
+          bg: "",
+          border: "border border-border",
+          glow: "",
+          breathe: false,
+        };
+    }
+  })();
+  const isStageStyled = !!stageTone.bg;
   const isStageHof = stageChar?.requirement === "hall_of_fame";
+  // 리그별 중앙 hotspot(캐릭터 뒤 블러 원) 색상 — 테두리와 동계열로 유지
+  const stageHotspotClass = isStageHof
+    ? "bg-amber-400/25"
+    : stageChar?.league === "black"
+    ? "bg-amber-500/14"
+    : stageChar?.league === "red"
+    ? "bg-rose-400/22"
+    : stageChar?.league === "blue"
+    ? "bg-sky-400/22"
+    : "";
 
   return (
     <>
@@ -416,36 +481,42 @@ const CharacterStudioPage = () => {
         }
       >
         <div className="space-y-6">
-          {/* ─── Character Hero Stage ─── 전설(HoF) 캐릭터면 amber 톤 + breathe + 황금 glow */}
+          {/* ─── Character Hero Stage ─── 리그별 톤(검/빨/파/백) + HoF 는 황금 breathe + 강한 glow */}
           <section
             className={cn(
               "relative overflow-visible rounded-hero p-6",
-              isStageHof
-                ? "border-[2px] border-amber-400 animate-[breathe_2.4s_ease-in-out_infinite]"
-                : "border border-border bg-gradient-to-b from-[hsl(var(--surface-2))] to-card shadow-elev-2",
+              stageTone.border,
+              stageTone.breathe && "animate-[breathe_2.4s_ease-in-out_infinite]",
+              !isStageStyled && "bg-gradient-to-b from-[hsl(var(--surface-2))] to-card shadow-elev-2",
             )}
             style={
-              isStageHof
+              isStageStyled
                 ? {
-                    background:
-                      "linear-gradient(to bottom, hsla(50, 92%, 13%, 0.55) 0%, hsla(35, 80%, 20%, 0.50) 50%, hsla(50, 92%, 13%, 0.55) 100%)",
-                    boxShadow:
-                      "0 0 24px 8px rgba(251, 191, 36, 0.55), 0 0 54px 18px rgba(234, 179, 8, 0.28)",
+                    background: stageTone.bg,
+                    boxShadow: stageTone.glow,
                   }
                 : undefined
             }
           >
-            {/* Subtle reward glow behind the character — 일반 캐릭터용 */}
-            {!isStageHof && (
+            {/* 기본(white/unstyled) — reward/primary 부드러운 hotspot */}
+            {!isStageStyled && (
               <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-hero">
                 <div className="absolute left-1/2 top-[40%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-reward/10 blur-3xl" />
                 <div className="absolute left-1/2 top-[40%] h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-2xl" />
               </div>
             )}
-            {/* HoF 전용 — 중앙 강한 황금 hotspot + 스파클 */}
+            {/* 스타일 적용 리그 — 테두리와 동계열 hotspot */}
+            {isStageStyled && (
+              <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-hero">
+                <div className={cn(
+                  "absolute left-1/2 top-[38%] h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl",
+                  stageHotspotClass,
+                )} />
+              </div>
+            )}
+            {/* HoF 전용 — 황금 스파클 오버레이 */}
             {isStageHof && (
               <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-hero">
-                <div className="absolute left-1/2 top-[38%] h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-400/25 blur-3xl" />
                 <span aria-hidden className="absolute left-6 top-6 text-base opacity-70 drop-shadow-[0_0_8px_rgba(251,191,36,0.9)]">✨</span>
                 <span aria-hidden className="absolute right-8 top-10 text-sm opacity-60 drop-shadow-[0_0_6px_rgba(251,191,36,0.9)]">⭐</span>
                 <span aria-hidden className="absolute left-10 bottom-14 text-xs opacity-55 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]">✨</span>
