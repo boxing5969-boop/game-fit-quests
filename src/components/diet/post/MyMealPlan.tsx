@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
   CheckCircle2,
   Flame,
+  Pencil,
   RefreshCw,
   UtensilsCrossed,
   Replace,
@@ -22,6 +23,7 @@ import {
 } from "@/lib/diet/mealPlanEngine";
 import type { MealItem } from "@/data/nutrition/mealLibrary";
 import MealSwapDialog from "./MealSwapDialog";
+import CustomMealDialog from "./CustomMealDialog";
 
 interface MyMealPlanProps {
   target: NutritionTarget;
@@ -56,6 +58,7 @@ export const MyMealPlan = ({
     Math.floor(Math.random() * 1000),
   );
   const [swapSlot, setSwapSlot] = useState<MealSlot | null>(null);
+  const [customSlot, setCustomSlot] = useState<MealSlot | null>(null);
   const [overridePlan, setOverridePlan] = useState<MealPlanResult | null>(null);
 
   const generated = useMemo<MealPlanResult>(
@@ -97,6 +100,27 @@ export const MyMealPlan = ({
     });
     setOverridePlan(next);
     setSwapSlot(null);
+  };
+
+  const handleCustomSave = (slot: MealSlot, item: MealItem) => {
+    // 직접 입력은 다음 끼니 자동조정 없이 단순 대체 — 회원 의도 존중
+    const nextPicks = plan.picks.map((p) =>
+      p.slot === slot ? { ...p, item } : p,
+    );
+    // 총합·영양 재계산 — swap 로직 재사용하되 replacement 는 같은 slot 그대로
+    const next = swapMealWithAutoAdjust({
+      plan: { ...plan, picks: plan.picks },
+      target,
+      slotToSwap: slot,
+      replacement: item,
+      dietaryRestrictions,
+      dislikedIngredients,
+      seed,
+    });
+    // next 의 nextIdx 자동 조정은 원치 않음 — 픽업 배열만 직접 교체 + nutrients 재합산
+    void nextPicks;
+    setOverridePlan(next);
+    setCustomSlot(null);
   };
 
   return (
@@ -261,14 +285,24 @@ export const MyMealPlan = ({
                     </>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSwapSlot(p.slot)}
-                  aria-label={`${MEAL_SLOT_LABEL_KO[p.slot]} 교체`}
-                  className="rounded-lg border border-border bg-background px-2 py-1 text-[11px] font-bold text-foreground active:scale-95"
-                >
-                  <Replace className="inline h-3 w-3" /> 교체
-                </button>
+                <div className="flex flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSwapSlot(p.slot)}
+                    aria-label={`${MEAL_SLOT_LABEL_KO[p.slot]} 교체`}
+                    className="rounded-lg border border-border bg-background px-2 py-1 text-[11px] font-bold text-foreground active:scale-95"
+                  >
+                    <Replace className="inline h-3 w-3" /> 교체
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCustomSlot(p.slot)}
+                    aria-label={`${MEAL_SLOT_LABEL_KO[p.slot]} 직접 입력`}
+                    className="rounded-lg border border-border bg-background px-2 py-1 text-[11px] font-bold text-foreground active:scale-95"
+                  >
+                    <Pencil className="inline h-3 w-3" /> 직접 입력
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -287,6 +321,13 @@ export const MyMealPlan = ({
           dislikedIngredients={dislikedIngredients}
           onClose={() => setSwapSlot(null)}
           onPick={(item) => handleSwapConfirm(swapSlot, item)}
+        />
+      )}
+      {customSlot && (
+        <CustomMealDialog
+          slot={customSlot}
+          onClose={() => setCustomSlot(null)}
+          onSave={(item) => handleCustomSave(customSlot, item)}
         />
       )}
     </section>

@@ -108,7 +108,12 @@ const ActiveBody = ({ profile, age, mode, preferPatterns, onRefresh }: ActiveBod
         preferPatterns={preferPatterns}
         mode={mode}
       />
-      <NutritionScienceCard target={target} weightKg={profile.weight_kg!} mode={mode} />
+      <NutritionScienceCard
+        target={target}
+        weightKg={profile.weight_kg!}
+        sex={profile.sex as Sex}
+        mode={mode}
+      />
       <Button
         variant="outline"
         onClick={onRefresh}

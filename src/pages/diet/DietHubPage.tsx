@@ -446,16 +446,16 @@ const ActiveHome = (p: ActiveHomeProps) => {
           onClick={() => navigate("/diet/ranking")}
         />
         <NavTile
+          icon={<ChefHat className="h-4 w-4" />}
+          label="자동 식단 프로그램"
+          hint="BMR·TDEE 기반 하루 메뉴"
+          onClick={() => navigate("/diet/auto-meals")}
+        />
+        <NavTile
           icon={<Flag className="h-4 w-4" />}
           label="21일 이후 가이드"
           hint="유지·연장 분기 설명"
           onClick={() => navigate("/diet/after-21")}
-        />
-        <NavTile
-          icon={<ChefHat className="h-4 w-4" />}
-          label="자동 식단"
-          hint="BMR·TDEE 기반 하루 메뉴"
-          onClick={() => navigate("/diet/auto-meals")}
         />
         <NavTile
           icon={<HeartHandshake className="h-4 w-4" />}

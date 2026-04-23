@@ -6,6 +6,7 @@ import type { NutritionTarget } from "@/lib/diet/nutritionEngine";
 interface NutritionScienceCardProps {
   target: NutritionTarget;
   weightKg: number;
+  sex: "male" | "female";
   mode: "maintenance" | "fat_loss";
 }
 
@@ -19,6 +20,7 @@ interface NutritionScienceCardProps {
 export const NutritionScienceCard = ({
   target,
   weightKg,
+  sex,
   mode,
 }: NutritionScienceCardProps) => {
   const [open, setOpen] = useState(false);
@@ -62,8 +64,8 @@ export const NutritionScienceCard = ({
             body="더 빠른 감량은 근육량·기초 대사량이 함께 빠져 요요 가능성이 급격히 올라갑니다. Hall 2011 Lancet 연구 기반 권장."
           />
           <Row
-            label={`단백질 ${mode === "fat_loss" ? "1.8" : "1.6"} g/kg (체중 ${weightKg}kg)`}
-            body="감량기 근손실 방지 + 포만감 확보. ISSN (국제스포츠영양학회) 2017 성명 권장선."
+            label={`단백질 ${sex === "male" ? "1.5" : "1.2"} g/kg (${sex === "male" ? "남성" : "여성"} 체중 ${weightKg}kg 기준)`}
+            body="성별별 베이스라인 — 근손실 방지 + 포만감 확보. 운동 강도에 따라 개인이 상향 조정 가능."
           />
           <Row
             label="지방을 25% 이하로 내리지 않는 이유"

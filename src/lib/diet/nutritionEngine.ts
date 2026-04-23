@@ -115,14 +115,21 @@ export function calcKcalTarget(
 
 /**
  * 매크로 분배.
- *   단백질 우선 확보(1.8 g/kg) → 지방 25% → 탄수 나머지.
+ *
+ * 단백질 베이스라인 (사용자 지정):
+ *   · 남 1.5 g/kg
+ *   · 여 1.2 g/kg
+ *
+ * 나머지는 감량·유지 모드와 무관하게 동일 베이스라인.
+ * 탄수·지방은 회원 상태에 맞춰 자동 분배 (지방 25% 고정, 탄수 나머지).
  */
 export function calcMacros(
   kcalTarget: number,
   weightKg: number,
+  sex: Sex,
   mode: CalorieMode,
 ): { proteinG: number; fatG: number; carbsG: number; reason: string } {
-  const proteinPerKg = mode === "fat_loss" ? 1.8 : 1.6;
+  const proteinPerKg = sex === "male" ? 1.5 : 1.2;
   const proteinG = Math.round(weightKg * proteinPerKg);
   const proteinKcal = proteinG * 4;
 
@@ -133,10 +140,11 @@ export function calcMacros(
   const carbsKcal = Math.max(0, kcalTarget - proteinKcal - fatKcal);
   const carbsG = Math.round(carbsKcal / 4);
 
+  const sexLabel = sex === "male" ? "남성" : "여성";
   const reason =
     mode === "fat_loss"
-      ? `감량기는 근손실 방지를 위해 단백질 ${proteinPerKg}g/kg 우선. 지방 25% 는 호르몬 유지 최소선, 나머지는 탄수화물.`
-      : `유지기는 단백질 ${proteinPerKg}g/kg + 지방 25% + 탄수 균형. 주말 유연식을 흡수할 수 있는 폭입니다.`;
+      ? `${sexLabel} 기준 단백질 ${proteinPerKg}g/kg — 근손실 방지 베이스라인. 지방 25% 호르몬 유지선 + 탄수는 목표 칼로리에 맞춰 자동 분배.`
+      : `${sexLabel} 기준 단백질 ${proteinPerKg}g/kg — 유지 베이스라인. 지방 25% + 탄수는 활동량에 맞춘 자동 분배.`;
 
   return { proteinG, fatG, carbsG, reason };
 }
@@ -149,6 +157,7 @@ export function computeNutritionTarget(input: NutritionInput): NutritionTarget {
   const { proteinG, fatG, carbsG, reason: macroReason } = calcMacros(
     kcal,
     input.weightKg,
+    input.sex,
     input.mode,
   );
   return {

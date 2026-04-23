@@ -19,6 +19,7 @@ import {
   type MealItem,
 } from "@/data/nutrition/mealLibrary";
 import {
+  evaluateFiveNutrients,
   splitTargetsBySlot,
   type DailyNutrientSum,
   type MealSlot,
@@ -136,17 +137,14 @@ function pickOneMeal(opts: {
   return scored[0].m;
 }
 
-/** 하루 최소 1개 프로바이오틱 메뉴 보장 — 선택된 picks 중 probiotic 없으면 snack 을 probiotic 메뉴로 강제 교체. */
+/** 하루 최소 1개 프로바이오틱 메뉴 보장. */
 function ensureDailyProbiotic(
   picks: MealPlanPick[],
   excludeTags: string[],
   excludeIngredients: string[],
-  rng: () => number,
 ): MealPlanPick[] {
-  const hasProbiotic = picks.some((p) => p.item?.hasProbiotic);
-  if (hasProbiotic) return picks;
+  if (picks.some((p) => p.item?.hasProbiotic)) return picks;
 
-  // 간식 슬롯 우선 교체, 없으면 아침
   const swapOrder: MealSlot[] = ["snack", "breakfast", "lunch", "dinner"];
   const used = new Set(picks.filter((p) => p.item).map((p) => p.item!.code));
 
@@ -156,28 +154,131 @@ function ensureDailyProbiotic(
     const currentCode = picks[idx].item?.code;
     if (currentCode) used.delete(currentCode);
 
-    const replacement = pickOneMeal({
-      slot: picks[idx].slot,
-      target: picks[idx].target,
-      excludeCodes: used,
-      excludeTags,
-      excludeIngredients,
-      rng,
-    });
-    // probiotic 필터 적용해서 재선택
     const probioticOnly = filterMenus({
       slot: picks[idx].slot,
       excludeTags,
       excludeIngredients,
       requireProbiotic: true,
     }).filter((m) => !used.has(m.code));
-    const chosen = probioticOnly[0] ?? replacement;
-    if (chosen?.hasProbiotic) {
-      picks[idx] = { ...picks[idx], item: chosen };
+
+    if (probioticOnly.length > 0) {
+      picks[idx] = { ...picks[idx], item: probioticOnly[0] };
       return picks;
     }
     if (currentCode) used.add(currentCode);
   }
+  return picks;
+}
+
+/**
+ * 영양소 부족 자동 보강 — 생성된 plan 을 평가 후 약한 항목을 snack 교체로 해결.
+ *
+ * 원칙:
+ *   1. 단백질 부족 → 프로틴 쉐이크 계열로 간식 교체 (가장 간편)
+ *   2. 섬유질 부족 → 견과/오트밀/엣지마메 계열로 교체
+ *   3. 비타민·무기질 다양성 부족 → 샐러드볼/포케볼 계열로 간식 또는 끼니 교체
+ *
+ * 간식 슬롯이 없는 2끼 식단이면 가장 여유 있는 끼니(보통 dinner)를 보강 대상으로.
+ */
+function fillNutrientGaps(
+  picks: MealPlanPick[],
+  target: NutritionTarget,
+  excludeTags: string[],
+  excludeIngredients: string[],
+): MealPlanPick[] {
+  const aggregate = aggregateNutrients(picks);
+  const status = evaluateFiveNutrients(aggregate.nutrients, target);
+
+  // 보강 대상 슬롯 — snack 우선, 없으면 breakfast, 없으면 dinner
+  const supplementOrder: MealSlot[] = ["snack", "breakfast", "dinner", "lunch"];
+  const findSupplementSlot = () => {
+    for (const s of supplementOrder) {
+      const idx = picks.findIndex((p) => p.slot === s);
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  };
+
+  // 1) 단백질 부족 (< 85%) → 프로틴 쉐이크 류로 간식 교체
+  if (status.protein < 0.85) {
+    const idx = findSupplementSlot();
+    if (idx >= 0) {
+      const used = new Set(
+        picks.filter((p, i) => p.item && i !== idx).map((p) => p.item!.code),
+      );
+      // 간편 쉐이크 계열 — 단백질 20g 이상
+      const shakes = filterMenus({
+        slot: picks[idx].slot,
+        excludeTags,
+        excludeIngredients,
+      }).filter(
+        (m) =>
+          !used.has(m.code) &&
+          m.tags.includes("쉐이크") &&
+          m.proteinG >= 20,
+      );
+      if (shakes.length > 0) {
+        picks[idx] = { ...picks[idx], item: shakes[0] };
+      }
+    }
+  }
+
+  // 2) 재평가 — 섬유질 부족 (목표 80% 미만)
+  const afterProtein = aggregateNutrients(picks);
+  const afterStatus = evaluateFiveNutrients(afterProtein.nutrients, target);
+  if (afterStatus.fiber.g < afterStatus.fiber.target * 0.8) {
+    const idx = findSupplementSlot();
+    if (idx >= 0) {
+      const used = new Set(
+        picks.filter((p, i) => p.item && i !== idx).map((p) => p.item!.code),
+      );
+      const highFiber = filterMenus({
+        slot: picks[idx].slot,
+        excludeTags,
+        excludeIngredients,
+      }).filter((m) => !used.has(m.code) && m.fiberG >= 5);
+      if (highFiber.length > 0 && !picks[idx].item?.tags.includes("쉐이크")) {
+        picks[idx] = { ...picks[idx], item: highFiber[0] };
+      }
+    }
+  }
+
+  // 3) 비타민 or 무기질 다양성 부족 → 간식을 샐러드/과일·견과 조합으로 교체
+  //    단 이미 쉐이크/고단백으로 보강된 간식은 유지 (우선순위 낮음)
+  const afterFiber = aggregateNutrients(picks);
+  const diversityStatus = evaluateFiveNutrients(afterFiber.nutrients, target);
+  if (
+    diversityStatus.vitamins.count < diversityStatus.vitamins.target ||
+    diversityStatus.minerals.count < diversityStatus.minerals.target
+  ) {
+    const idx = findSupplementSlot();
+    if (idx >= 0 && !picks[idx].item?.tags.includes("쉐이크")) {
+      const used = new Set(
+        picks.filter((p, i) => p.item && i !== idx).map((p) => p.item!.code),
+      );
+      // 비타민·무기질 종류가 많은 메뉴 (합산 5종 이상)
+      const diverse = filterMenus({
+        slot: picks[idx].slot,
+        excludeTags,
+        excludeIngredients,
+      })
+        .filter(
+          (m) =>
+            !used.has(m.code) &&
+            m.keyVitamins.length + m.keyMinerals.length >= 5,
+        )
+        .sort(
+          (a, b) =>
+            b.keyVitamins.length +
+            b.keyMinerals.length -
+            (a.keyVitamins.length + a.keyMinerals.length),
+        );
+      if (diverse.length > 0) {
+        picks[idx] = { ...picks[idx], item: diverse[0] };
+      }
+    }
+  }
+
   return picks;
 }
 
@@ -243,7 +344,10 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
   });
 
   // 하루 프로바이오틱 최소 1회 보장
-  picks = ensureDailyProbiotic(picks, excludeTags, excludeIngredients, rng);
+  picks = ensureDailyProbiotic(picks, excludeTags, excludeIngredients);
+
+  // 영양소 부족 자동 보강 — 단백질·섬유질·비타민·무기질 다양성
+  picks = fillNutrientGaps(picks, input.target, excludeTags, excludeIngredients);
 
   const { totals, nutrients } = aggregateNutrients(picks);
 
