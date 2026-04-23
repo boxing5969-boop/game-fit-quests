@@ -20,7 +20,7 @@ const normalizeQ = (s: string) =>
 
 const WELCOME_MSG: Msg = {
   role: "assistant",
-  content: "안녕하세요! 🥊 153복싱짐 AI 코치입니다.\n\n퀘스트, 리그 시스템, 동작 요령 등 궁금한 점을 자유롭게 물어보세요!",
+  content: "안녕하세요! 153복싱짐 AI 코치입니다.\n\n퀘스트, 리그 시스템, 동작 요령 등 궁금한 점을 자유롭게 물어보세요!",
 };
 
 const ChatAssistant = () => {
@@ -179,7 +179,8 @@ const ChatAssistant = () => {
           className="fixed bottom-24 right-4 z-50 group"
         >
           <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-red-600 to-orange-500 shadow-[0_4px_20px_rgba(232,85,58,0.45)] transition-transform active:scale-90 group-hover:scale-105">
-            <span className="text-2xl">🥊</span>
+            {/* 기존 🥊 대신 "153" 로고 마크. 원형 브랜드 아이콘 톤. */}
+            <span className="font-black tracking-tight text-white" style={{ fontSize: "22px", letterSpacing: "-1px" }}>153</span>
             <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-black text-red-600 shadow ring-2 ring-red-500">
               AI
             </span>
@@ -193,15 +194,16 @@ const ChatAssistant = () => {
           
           {/* ── 헤더 ── */}
           <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black px-5 py-4">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-2 right-8 text-6xl">🥊</div>
-              <div className="absolute bottom-1 left-4 text-4xl rotate-12">💪</div>
+            {/* 배경 워터마크 — 브랜드 "153" 을 연하게 배치. */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none">
+              <div className="absolute top-2 right-4 text-5xl font-black tracking-tighter text-white">153</div>
+              <div className="absolute bottom-0 left-3 text-3xl font-black tracking-tighter text-white">GYM</div>
             </div>
             
             <div className="relative flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 shadow-lg">
-                  <span className="text-xl">🥊</span>
+                  <span className="font-black tracking-tight text-white" style={{ fontSize: "14px", letterSpacing: "-0.5px" }}>153</span>
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
@@ -248,7 +250,7 @@ const ChatAssistant = () => {
               >
                 {m.role === "assistant" && (
                   <div className="mr-2 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-md">
-                    <span className="text-sm">🥊</span>
+                    <span className="font-black tracking-tight text-white" style={{ fontSize: "10px", letterSpacing: "-0.5px" }}>153</span>
                   </div>
                 )}
 
@@ -275,7 +277,7 @@ const ChatAssistant = () => {
             {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex items-start gap-2">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-md">
-                  <span className="text-sm">🥊</span>
+                  <span className="font-black tracking-tight text-white" style={{ fontSize: "10px", letterSpacing: "-0.5px" }}>153</span>
                 </div>
                 <div className="rounded-2xl rounded-tl-md border border-gray-100 bg-white px-4 py-3 shadow-elev-1">
                   <div className="flex items-center gap-1.5">

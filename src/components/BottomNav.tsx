@@ -22,11 +22,11 @@ import { cn } from "@/lib/utils";
 // ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
 // 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 로드맵으로 교체.
 // 접근성은 전체 메뉴 오버레이에 보존.
-// 훈련은 🥊 이모지로 복싱 정체성 강화. 복싱 트레이닝 게임은 전체메뉴로 이관,
-// 3번째 슬롯은 단증혜택으로 교체.
+// AI 코치봇 플로팅 버튼이 더 이상 🥊 을 쓰지 않으므로, "훈련" 탭도 글러브
+// 대신 훈련/목표 상징인 🎯 으로 교체. mission-driven 앱 톤과 어울림.
 const mainTabs = [
   { path: "/home",          icon: Home,    label: "홈",     emoji: null  },
-  { path: "/missions",      icon: null,    label: "훈련",    emoji: "🥊" },
+  { path: "/missions",      icon: null,    label: "훈련",    emoji: "🎯" },
   { path: "/cert-benefits", icon: Award,   label: "단증혜택", emoji: null  },
   { path: "/halloffame",    icon: Trophy,  label: "랭킹",    emoji: null  },
   { path: "/levelmap",      icon: Map,     label: "로드맵",   emoji: null  },
