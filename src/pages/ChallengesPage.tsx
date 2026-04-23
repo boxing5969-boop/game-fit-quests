@@ -225,8 +225,9 @@ const ChallengeCard = ({
       inviteCode: row.invite_code ? invite.trim().toLowerCase() : null,
     });
     if (!res.success) {
+      const errMsg = "error" in res ? res.error : "참여 실패";
       setMsg(
-        res.error === "invalid_invite_code" ? "초대 코드가 맞지 않아요" : "참여 실패",
+        errMsg === "invalid_invite_code" ? "초대 코드가 맞지 않아요" : "참여 실패",
       );
     } else {
       setMsg("참여 완료! 오늘 체크인도 잊지 마세요.");
