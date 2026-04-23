@@ -1517,7 +1517,9 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
           const isLocked = isCharLocked(char);
           const isHof = char.requirement === "hall_of_fame";
           const isBlackNonHof = char.league === "black" && !char.requirement;
-          const isOwned = isAdmin || ownedStyles.has(char.style) || char.price === 0;
+          // 실제 구매 기록(ownedStyles) 과 무료(price=0) 만 "보유" 로 인정.
+          // admin 도 예외 없이 구매 플로우를 거친다 — 지갑 차감만 스킵(handleConfirmPurchase 참고).
+          const isOwned = ownedStyles.has(char.style) || char.price === 0;
           const isApplied = currentStyle === char.style;
 
           const cardClass = isLocked
