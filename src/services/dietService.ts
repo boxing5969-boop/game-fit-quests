@@ -378,6 +378,28 @@ export async function fetchLogPhotos(
   return data ?? [];
 }
 
+// ──────────────────────────────────────────────────────────────────
+// 9. 식단 사진 AI 분석 결과 저장 (20260504 migration)
+// ──────────────────────────────────────────────────────────────────
+export async function saveMealPhotoAnalysis(input: {
+  photoId: string;
+  category: "good" | "normal" | "adjust";
+  feedback: string;
+  detectedTags?: string[];
+  provider?: string;
+}): Promise<DietRpcResult<{ photo_id: string }>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)("save_diet_photo_analysis", {
+    _photo_id: input.photoId,
+    _category: input.category,
+    _feedback: input.feedback,
+    _detected_tags: input.detectedTags ?? null,
+    _provider: input.provider ?? "rules",
+  });
+  if (error) return err(error.message);
+  return asJsonRpc(data);
+}
+
 /**
  * 현재 유저 본인의 모든 식단 사진을 업로드 역순으로 조회.
  * RLS 가 user_id 일치만 허용하므로 필터를 명시적으로 걸어둔다.

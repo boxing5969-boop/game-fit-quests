@@ -17,6 +17,9 @@ import {
 import AppPage from "@/components/ui/rankingup/AppPage";
 import PageHeader from "@/components/ui/rankingup/PageHeader";
 import { Button } from "@/components/ui/button";
+import MealAnalysisBadge from "@/components/diet/MealAnalysisBadge";
+import { useMealPhotoAnalysis } from "@/hooks/useMealPhotoAnalysis";
+import type { MealCategory } from "@/lib/diet/mealAnalyzer";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { DIET_MEAL_SLOT_LABEL } from "@/data/dietProgramData";
@@ -336,6 +339,14 @@ const DateGroup = ({
               <span className="absolute bottom-1 left-1 rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-bold text-white">
                 {DIET_MEAL_SLOT_LABEL[p.meal_slot]}
               </span>
+              {(p as unknown as { category?: MealCategory }).category && (
+                <span className="absolute bottom-1 right-1">
+                  <MealAnalysisBadge
+                    category={(p as unknown as { category: MealCategory }).category}
+                    compact
+                  />
+                </span>
+              )}
               {warn && (
                 <span className="absolute right-1 top-1 rounded bg-destructive px-1 py-0.5 text-[8.5px] font-black uppercase text-destructive-foreground">
                   D-{Math.max(0, DELETE_DAYS - days)}
@@ -387,16 +398,17 @@ const Lightbox = ({
           <X className="h-5 w-5" />
         </button>
       </div>
-      <div className="flex flex-1 items-center justify-center p-4">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4">
         {url ? (
           <img
             src={url}
             alt={`${photo.uploaded_at.slice(0, 10)} ${photo.meal_slot}`}
-            className="max-h-full max-w-full rounded-lg object-contain"
+            className="max-h-[60vh] max-w-full rounded-lg object-contain"
           />
         ) : (
           <Loader2 className="h-6 w-6 animate-spin text-white" />
         )}
+        <LightboxAnalysis photo={photo} />
       </div>
       <div className="flex items-center gap-2 p-4">
         {url && (
@@ -434,6 +446,76 @@ const Placeholder = ({ children }: { children: React.ReactNode }) => (
     {children}
   </div>
 );
+
+// ──────────────────────────────────────────────────────────────────
+// 라이트박스 내 AI 분석 카드
+// ──────────────────────────────────────────────────────────────────
+const LightboxAnalysis = ({ photo }: { photo: DietDailyLogPhotoRow }) => {
+  const analyze = useMealPhotoAnalysis();
+  const row = photo as unknown as {
+    category?: MealCategory;
+    feedback?: string | null;
+  };
+  const hasAnalysis = !!row.category && !!row.feedback;
+
+  if (hasAnalysis) {
+    return (
+      <div className="w-full max-w-[420px]">
+        <MealAnalysisBadge
+          category={row.category!}
+          feedback={row.feedback}
+        />
+      </div>
+    );
+  }
+
+  const busy = analyze.isPending;
+
+  return (
+    <div className="w-full max-w-[420px]">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() =>
+          analyze.mutate({
+            photoId: photo.id,
+            storageKey: photo.storage_path,
+            uploadedAt: new Date(photo.uploaded_at),
+            userSlot: photo.meal_slot as
+              | "breakfast" | "lunch" | "dinner" | "snack",
+          })
+        }
+        className={cn(
+          "flex w-full items-center justify-center gap-2 rounded-2xl border py-3",
+          "border-emerald-400/40 bg-emerald-400/10 text-[13px] font-bold text-emerald-500",
+          "active:scale-[0.99] disabled:opacity-70",
+        )}
+      >
+        {busy ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            분석 중...
+          </>
+        ) : (
+          <>AI 간편 평가 받기</>
+        )}
+      </button>
+      {analyze.isSuccess && analyze.data && (
+        <div className="mt-2">
+          <MealAnalysisBadge
+            category={analyze.data.category}
+            feedback={analyze.data.feedback}
+          />
+        </div>
+      )}
+      {analyze.isError && (
+        <p className="mt-2 text-center text-[11px] text-white/70">
+          분석에 실패했어요. 잠시 후 다시 시도해 주세요.
+        </p>
+      )}
+    </div>
+  );
+};
 
 // ──────────────────────────────────────────────────────────────────
 // utils
