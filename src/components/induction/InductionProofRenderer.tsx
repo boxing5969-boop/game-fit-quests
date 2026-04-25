@@ -76,7 +76,6 @@ export const InductionProofRenderer = ({
 
   // 오늘의 훈련(미션) 개수 — quests 활성 항목 기준 (서버 truth)
   const totalQuests = quests.data?.length ?? null;
-  const isQuestsLoading = quests.isLoading;
 
   // 회원이 완료한 미션 수 — quest_submissions.status='approved' 카운트
   const approvedCount = useMemo(() => {
@@ -195,11 +194,11 @@ export const InductionProofRenderer = ({
               />
             );
           case "today_mission_count": {
-            const valueText = isQuestsLoading
-              ? "불러오는 중..."
-              : totalQuests !== null
-                ? `오늘 진행 가능 ${totalQuests}개`
-                : "오늘 훈련 목록 확인";
+            // 로딩 중에도 정적 메시지로 노출 — 가치 전달 영역이 스피너 문구로
+            // 빈 인상을 주지 않게. data 들어오면 자연스럽게 숫자로 전환.
+            const valueText = totalQuests !== null && totalQuests > 0
+              ? `오늘 진행 가능 ${totalQuests}개`
+              : "오늘 훈련 목록에서 확인";
             return (
               <ProofCard
                 key={key}
