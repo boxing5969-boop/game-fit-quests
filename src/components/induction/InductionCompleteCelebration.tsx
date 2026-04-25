@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Check, Banknote, Gift } from "lucide-react";
+import {
+  ArrowRight,
+  Award,
+  Banknote,
+  Check,
+  Flag,
+  Gift,
+  TrendingUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InductionRewardPreview } from "./InductionRewardPreview";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { cn } from "@/lib/utils";
 import { celebrationHaptic } from "@/lib/haptics";
 
@@ -11,6 +21,13 @@ interface InductionCompleteCelebrationProps {
   onClose: () => void;
   className?: string;
 }
+
+const RANK_KO: Record<"white" | "blue" | "red" | "black", string> = {
+  white: "백",
+  blue: "청",
+  red: "적",
+  black: "흑",
+};
 
 /**
  * 입단식 완료 축하 카드 — 챔피언 벨트 공개식 톤.
@@ -40,6 +57,23 @@ export const InductionCompleteCelebration = ({
   className,
 }: InductionCompleteCelebrationProps) => {
   const [displayGems, setDisplayGems] = useState(0);
+  const { profile } = useAuth();
+  const local = useLocalProgress();
+
+  // 가치 회수 데이터 — 신규 호출 0 (기존 훅 재사용).
+  // profile 타입에 current_rank / current_level 가 미정의이므로 as any 우회 (앱 내 동일 패턴).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const p = profile as any;
+  const currentRank = (p?.current_rank ?? "white") as
+    | "white" | "blue" | "red" | "black";
+  const currentLevel = (p?.current_level ?? 1) as number;
+  const xpCurrent = local?.metrics?.xp?.current ?? 0;
+  const xpTarget = local?.metrics?.xp?.target ?? 0;
+  const xpRemaining = Math.max(0, xpTarget - xpCurrent);
+  const xpPct = xpTarget > 0
+    ? Math.max(0, Math.min(100, Math.round((xpCurrent / xpTarget) * 100)))
+    : 0;
+  const firstDanUnlocked = currentRank === "black" && currentLevel >= 10;
 
   useEffect(() => {
     // 마운트 시 1회 haptic.
@@ -117,32 +151,109 @@ export const InductionCompleteCelebration = ({
           </p>
         </div>
 
-        {/* 4. Hero 카운트업 */}
-        <div
-          className={cn(
-            "flex items-baseline justify-center gap-1 rounded-2xl",
-            "bg-gradient-to-br from-reward/30 via-reward/10 to-reward/30",
-            "border border-reward/50 px-4 py-3",
-            "shadow-[0_0_32px_rgba(246,196,83,0.4)]",
-          )}
-          aria-live="polite"
-        >
-          <Banknote className="h-6 w-6 self-center text-reward" />
-          <span className="number-font text-[32px] font-black leading-none text-reward">
-            +{displayGems.toLocaleString()}
-          </span>
-          <span className="text-sm font-bold text-reward/90">젬</span>
+        {/* 4. 가치 회수 — 현재 위치 + 다음 목표 (메인 비주얼). */}
+        <div className="space-y-2">
+          {/* 4a. 현재 위치 (이번 입단식의 결과 = 시작점 확정) */}
+          <div className="rounded-2xl border border-primary/30 bg-primary/5 p-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <Award className="h-3.5 w-3.5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                  나의 시작점
+                </p>
+                <p className="mt-0.5 text-[14px] font-extrabold leading-tight text-foreground">
+                  {RANK_KO[currentRank]}색 리그 · Lv.{currentLevel}
+                </p>
+              </div>
+            </div>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+              지금 이 위치가 당신의 0일차입니다. 모든 훈련은 여기서부터 누적돼요.
+            </p>
+          </div>
+
+          {/* 4b. 다음 목표 — 다음 레벨까지 + 1단 도전 거리 */}
+          <div className="rounded-2xl border border-primary/25 bg-card p-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <TrendingUp className="h-3.5 w-3.5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                  다음 목표
+                </p>
+                <p className="mt-0.5 text-[12.5px] font-bold leading-tight text-foreground">
+                  {xpTarget > 0
+                    ? `다음 레벨까지 ${xpRemaining} XP · ${xpPct}%`
+                    : "오늘의 훈련 1개만 완료해도 진행이 시작됩니다"}
+                </p>
+              </div>
+            </div>
+            {xpTarget > 0 && (
+              <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-[width] duration-500"
+                  style={{ width: `${xpPct}%` }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* 4c. 1단 도전 연결 — 가치 회수의 클라이맥스 */}
+          <div
+            className={cn(
+              "rounded-2xl border p-3",
+              firstDanUnlocked
+                ? "border-reward bg-reward/10 ring-1 ring-reward/40"
+                : "border-reward/35 bg-reward/5",
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-reward/20 text-reward">
+                <Flag className="h-3.5 w-3.5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-reward">
+                  1단 도전
+                </p>
+                <p className="mt-0.5 text-[12.5px] font-bold leading-tight text-foreground">
+                  {firstDanUnlocked
+                    ? "지금 1단 심사 도전 가능"
+                    : "흑색 Lv.10 도달 시 1단 심사가 열립니다"}
+                </p>
+              </div>
+            </div>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+              레벨업·승급은 1단 도전이라는 실제 목표로 이어집니다. 오늘의 훈련이 그 첫 발이에요.
+            </p>
+          </div>
         </div>
 
-        {/* 5. 보상 4-tile 그리드 */}
-        <InductionRewardPreview totalGems={totalGems} celebrated />
+        {/* 5. 보상 — 보조로 격하. hero 카운트업 → 인라인 한 줄 */}
+        <div
+          className="flex items-center justify-between gap-2 rounded-xl border border-reward/25 bg-reward/5 px-3 py-2"
+          aria-live="polite"
+        >
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+            <Banknote className="h-3.5 w-3.5 text-reward/80" />
+            <span>입단식 보상</span>
+          </span>
+          <span className="number-font text-[13px] font-extrabold text-reward">
+            +{displayGems.toLocaleString()}
+            <span className="ml-0.5 text-[10.5px] font-semibold text-reward/80">
+              {" "}파이트 머니
+            </span>
+          </span>
+        </div>
 
-        {/* 6. 보상 recap */}
+        {/* 5b. 보상 recap — 신입 배지 / 이펙트 (보조). 4-tile 그리드 보존. */}
+        <InductionRewardPreview totalGems={totalGems} celebrated />
         <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
-          {totalGems.toLocaleString()}젬 · 신입 회원 배지 · 기본 이펙트 획득
+          {totalGems.toLocaleString()} 파이트 머니 · 신입 회원 배지 · 기본 이펙트
         </p>
 
-        {/* 7. 보너스 안내 */}
+        {/* 6. 보너스 안내 — 오늘 첫 체크인 인센티브 (계속 사용해야 하는 이유) */}
         <div className="flex items-start gap-2.5 rounded-xl border border-accent/30 bg-accent/10 px-3 py-2.5">
           <span
             className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent/20 text-accent"
@@ -152,16 +263,17 @@ export const InductionCompleteCelebration = ({
           </span>
           <div className="min-w-0 leading-tight">
             <div className="text-[12px] font-bold text-accent">
-              보너스 훈련 해금
+              오늘 첫 훈련 시작하면
             </div>
             <div className="mt-0.5 text-[11px] text-muted-foreground">
-              오늘 첫 체크인 시 추가{" "}
-              <span className="font-bold text-reward">+300 파이트 머니</span>
+              추가{" "}
+              <span className="font-bold text-reward">+300 파이트 머니</span>{" "}
+              · 첫 기록은 0일차가 됩니다
             </div>
           </div>
         </div>
 
-        {/* 8. CTA */}
+        {/* 7. CTA — primary glow */}
         <Button
           onClick={onClose}
           className={cn(
@@ -171,7 +283,7 @@ export const InductionCompleteCelebration = ({
             "shadow-[0_8px_28px_-8px_rgba(217,54,32,0.8)]",
           )}
         >
-          <span>첫 훈련 시작하기</span>
+          <span>오늘의 훈련 시작하기</span>
           <ArrowRight className="ml-1.5 h-4 w-4" />
         </Button>
       </div>
