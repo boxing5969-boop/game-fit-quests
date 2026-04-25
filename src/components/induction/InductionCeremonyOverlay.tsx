@@ -162,30 +162,27 @@ export const InductionCeremonyOverlay = ({
     //   3. 서버 RPC atomic UPDATE WHERE reward_claimed=false RETURNING
     //   4. tutorial_step_claims UNIQUE(user_id, step_order) — step 5 중복 차단
     //   5. try/catch + toast — 네트워크 오류 시 사용자 알림
+    // Step 5 정책: 클릭 즉시 축하 화면 띄우고, claim 은 백그라운드에서 처리.
+    // 이유: shouldRender 는 isOpen(=!isFinished) 에 묶여 Step 5 완료 순간 false 로
+    //       뒤집힌다. celebration 을 async 결과 기다린 후 세팅하면 그 사이에
+    //       화면이 공백이 되는 race 가 발생 → 사용자 입장에서 "클릭해도 반응 없음".
+    // 중복 지급은 서버 RPC atomic + step_claims UNIQUE 로 안전.
+    setShowCelebration(true);
     try {
       const r = await claimTutorialRewardIfEligible();
       if ("alreadyClaimed" in r) {
-        // 재시작 케이스 — 축하 카드 없이 즉시 닫고 퀘스트 화면 유지.
-        setDismissed(true);
-        onClose?.();
+        // 재시작 후 다시 완주 — 축하 화면 그대로 유지 (보상은 이미 지급됨)
         return;
       }
-      if (!r.success) {
-        // mutateAsync 는 실패 시 throw 하므로 여기 도달하지 않지만, 서버가
-        // success=true + grantedGems=0 으로 응답하는 edge 에서도 안전하게 닫음.
-        setDismissed(true);
-        onClose?.();
-        return;
-      }
-      setShowCelebration(true);
-      if (r.grantedGems > 0) {
+      if (r.success && r.grantedGems > 0) {
         toast.success(`입단식 완료! +${r.grantedGems.toLocaleString()}젬`);
       }
     } catch (err) {
       console.error("[InductionCeremony] final claim failed", err);
-      toast.error("입단식 보상 지급에 실패했습니다. 잠시 후 다시 시도해주세요.");
-      // 버튼 잠금 상태를 풀어 재시도 가능하게 함 — mutation.isPending 이
-      // onError 에서 false 로 돌아가므로 추가 처리 불필요.
+      // 네트워크 오류여도 축하 화면은 유지 — 다음 앱 진입 시 서버가
+      // tutorial_completed=false 임을 감지하면 재시도 UX 가능. 여기서 바로
+      // overlay 닫아버리면 사용자가 Step 5 를 처음부터 다시 클릭해야 함.
+      toast.error("보상 지급에 일시적 문제가 있었어요. 다음 진입 시 자동 재시도됩니다.");
     }
   };
 
