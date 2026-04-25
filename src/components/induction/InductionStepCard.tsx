@@ -1,8 +1,9 @@
-import { ArrowRight, Banknote } from "lucide-react";
+import { ArrowRight, Banknote, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoachBot } from "@/components/tutorial/CoachBot";
 import { StepRewardChip } from "@/components/tutorial/StepRewardChip";
 import { InductionProgressBar } from "./InductionProgressBar";
+import { InductionProofRenderer } from "./InductionProofRenderer";
 import type { InductionStep } from "@/data/inductionTutorialSteps";
 import { cn } from "@/lib/utils";
 
@@ -119,34 +120,51 @@ export const InductionStepCard = ({
           </p>
         </div>
 
-        {/* 3. CoachBot */}
+        {/* 3. "왜 중요한가" — coachMessage 와 의미 분리.
+                whyItMatters 는 한 줄짜리 정착 메시지, 카드형으로 무게 추가. */}
+        {step.whyItMatters && (
+          <div className="flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
+              <Lightbulb className="h-3.5 w-3.5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                왜 중요한가
+              </p>
+              <p className="mt-0.5 text-[12px] font-bold leading-snug text-foreground">
+                {step.whyItMatters}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* 4. CoachBot — 오삼 코치 한마디 */}
         <CoachBot message={coachMessage} />
 
-        {/* 4. 보상 칩 */}
-        <div
-          className={cn(
-            "flex items-center justify-between gap-2 rounded-2xl",
-            "border border-reward/25 bg-gradient-to-br from-reward/10 to-transparent",
-            "px-3 py-2",
-          )}
-        >
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
-            <Banknote className="h-3.5 w-3.5 text-reward" />
-            <span>이 단계 보상</span>
-          </div>
+        {/* 5. proofItems — 실데이터 / 정적 안내 카드. 신규 데이터 호출 0. */}
+        {step.proofItems && step.proofItems.length > 0 && (
+          <InductionProofRenderer items={step.proofItems} maxItems={3} />
+        )}
+
+        {/* 6. 보상 — 시각 무게 축소. 카드 → 인라인 한 줄. */}
+        <div className="flex items-center justify-between gap-2 px-1 text-[11px]">
+          <span className="inline-flex items-center gap-1 text-muted-foreground">
+            <Banknote className="h-3 w-3 text-reward/80" />
+            <span className="font-semibold">이 단계 보상</span>
+          </span>
           {recentReward && recentReward > 0 ? (
             <StepRewardChip amount={recentReward} />
           ) : (
-            <span className="number-font text-[13px] font-extrabold text-reward">
+            <span className="number-font text-[12px] font-bold text-reward/90">
               +{step.rewardGems.toLocaleString()}
-              <span className="ml-0.5 text-[10px] font-bold text-reward/80">
-                젬
+              <span className="ml-0.5 text-[10px] font-semibold text-reward/70">
+                {" "}파이트 머니
               </span>
             </span>
           )}
         </div>
 
-        {/* 5. CTA — primary glow 강조 */}
+        {/* 7. CTA — primary 강조. Step 5 만 reward 톤 */}
         <Button
           onClick={onConfirm}
           disabled={busy}
