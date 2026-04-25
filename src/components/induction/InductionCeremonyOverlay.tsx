@@ -94,7 +94,6 @@ export const InductionCeremonyOverlay = ({
   const {
     isOpen,
     isCompleted,
-    rewardClaimed,
     stepsCompleted,
     currentStep,
     totalSteps,
@@ -115,7 +114,10 @@ export const InductionCeremonyOverlay = ({
 
   const isGateOpen = !isSetupPath(pathname);
   const shouldRender = forceOpen || (isOpen && !dismissed && isGateOpen);
-  const shouldShowCelebration = showCelebration && rewardClaimed;
+  // Step 5 최종 claim 성공 직후 즉시 celebration 표시 — profile refetch 로
+  // rewardClaimed 가 true 로 반영되기 전 race 로 화면이 비는 현상 방지.
+  // (claim 실패는 handleConfirm 의 catch 에서 잡혀 showCelebration=false 유지)
+  const shouldShowCelebration = showCelebration;
 
   // ──────────────────────────────────────────────────────────────
   // 자동 네비게이션
