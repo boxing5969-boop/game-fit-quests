@@ -326,5 +326,7 @@ export function useLocalProgress() {
     sessions: local.sessions,
     selfChallengeStreak: local.selfChallengeStreak,
     dailyParticipations: local.dailyParticipations,
+    currentLevel,
+    currentRank,
   };
 }
