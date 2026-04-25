@@ -82,13 +82,14 @@ export const INDUCTION_STEPS: readonly InductionStep[] = Object.freeze([
     id: "profile",
     title: "출발점",
     shortLabel: "출발",
-    valueHeadline: "기록은 사라지지 않습니다",
+    // 가치 1: 이 앱은 단순 출석앱이 아니다
+    valueHeadline: "출석앱이 아니라 성장 기록 시스템",
     valueBody:
-      "지금 보이는 이 카드가 당신의 출발점입니다. 매번의 훈련이 여기에 한 줄씩 쌓여요.",
+      "153 은 와서 체크만 찍는 앱이 아닙니다. 매번의 훈련이 한 사람의 성장 기록으로 남고, 그 기록이 리그·레벨·단증으로 이어집니다.",
     whyItMatters:
-      "오늘부터 당신의 모든 운동이 한 사람의 성장으로 기록됩니다.",
+      "오늘부터 당신의 모든 운동은 사라지지 않고 성장 기록으로 쌓입니다.",
     coachMessage:
-      "153은 출석이 아니라 성장으로 증명하는 곳입니다.\n지금의 당신이 출발점이에요.",
+      "153 은 출석이 아니라 성장으로 증명하는 곳입니다.\n지금의 당신이 출발점이에요.",
     ctaLabel: "내 출발점 확인",
     proofItems: ["first_record_callout"] as const,
     description:
@@ -101,13 +102,15 @@ export const INDUCTION_STEPS: readonly InductionStep[] = Object.freeze([
     id: "ranking",
     title: "나의 위치",
     shortLabel: "위치",
-    valueHeadline: "지금 위치 → 다음 목표",
+    // 가치 4: 리그와 레벨은 내 위치와 목표를 명확하게 만든다
+    // 가치 5: 10레벨 이후에는 1단 도전이라는 실제 목표가 열린다
+    valueHeadline: "내 위치가 보이면 다음이 분명해집니다",
     valueBody:
-      "백 → 청 → 적 → 흑, 단계적 승급 구조. 그리고 10레벨에 도달하면 1단 심사가 열립니다.",
+      "백·청·적·흑 4단계 리그 + 각 10레벨. 흑색 Lv.10 을 넘으면 1단 심사라는 실제 목표가 열립니다. 더 이상 '열심히' 가 아니라 '어디까지' 가 보입니다.",
     whyItMatters:
-      "리그와 레벨은 내 위치와 다음 목표를 분명하게 만듭니다.",
+      "리그·레벨은 내 위치와 다음 목표를 분명하게 만들고, 그 끝에는 1단 도전이 있습니다.",
     coachMessage:
-      "백 → 청 → 적 → 흑, 단계적 승급 구조입니다.\n오늘의 한 발이 다음 리그로 이어져요.",
+      "백·청·적·흑을 지나 1단 심사까지 — 정해진 길이 있습니다.\n오늘의 한 발이 그 길의 일부예요.",
     ctaLabel: "나의 리그 보기",
     proofItems: [
       "current_league",
@@ -125,13 +128,14 @@ export const INDUCTION_STEPS: readonly InductionStep[] = Object.freeze([
     id: "quest",
     title: "오늘의 훈련",
     shortLabel: "훈련",
-    valueHeadline: "오늘이 다음과 이어집니다",
+    // 가치 2: 오늘의 훈련은 다음 레벨과 승급에 직접 연결된다
+    valueHeadline: "오늘의 훈련 = 다음 레벨의 연료",
     valueBody:
-      "헬스장은 출석으로 끝나지만, 153은 오늘 무엇을 했는지 기록합니다. 이 기록이 레벨업·승급·1단 심사의 근거가 돼요.",
+      "오늘 완료한 훈련은 바로 XP 로 쌓이고, 쌓인 XP 는 레벨업과 승급 조건을 만듭니다. '열심히 했다' 가 아니라 '어디까지 왔다' 가 남습니다.",
     whyItMatters:
-      "오늘의 훈련은 다음 레벨과 승급 조건에 직접 연결됩니다.",
+      "오늘의 훈련 한 줄이 다음 레벨·리그 승급에 직접 연결됩니다.",
     coachMessage:
-      "헬스장은 출석으로 끝나지만,\n153은 오늘 무엇을 했는지 기록으로 남깁니다.",
+      "오늘의 훈련 한 줄이 XP 가 되고,\nXP 가 다음 레벨과 승급을 만듭니다.",
     ctaLabel: "오늘의 훈련 보기",
     proofItems: [
       "today_mission_count",
@@ -148,13 +152,14 @@ export const INDUCTION_STEPS: readonly InductionStep[] = Object.freeze([
     id: "rewards",
     title: "증명과 보상",
     shortLabel: "증명",
-    valueHeadline: "성장은 증명됩니다",
+    // 가치 3: 내 성장은 기록과 코치 기준으로 증명된다
+    valueHeadline: "코치의 기준 + 기록으로 증명",
     valueBody:
-      "코치의 기준 + 누적 기록이 단증과 승급의 근거가 됩니다. 파이트 머니는 그 과정에 따라오는 부가 혜택이에요.",
+      "153 의 레벨업·승급·단증은 자의적 통과가 아닙니다. 코치의 공식 기준을 통과해야 인정됩니다. 당신의 성장은 기록과 코치 평가라는 이중 근거로 증명돼요.",
     whyItMatters:
-      "성장은 코치 기준과 기록으로 증명됩니다. 보상은 그 증거의 부가물입니다.",
+      "성장은 기록과 코치 기준 두 가지로 증명됩니다. 보상은 그 증거의 부산물입니다.",
     coachMessage:
-      "훈련을 완수하면 파이트 머니가 지급돼요.\n복서 카드·단증 혜택 등 실제 가치로 연결됩니다.",
+      "자의적 인정이 아니라 기록 + 코치 기준.\n이 이중 증명이 153 의 단증을 특별하게 만듭니다.",
     ctaLabel: "보상과 혜택 둘러보기",
     proofItems: ["coach_review_note", "rewards_preview"] as const,
     description:
@@ -167,13 +172,15 @@ export const INDUCTION_STEPS: readonly InductionStep[] = Object.freeze([
     id: "first_action",
     title: "첫 한 줄",
     shortLabel: "첫 기록",
-    valueHeadline: "첫 한 줄을 남겨주세요",
+    // 가치 5: 10레벨 이후에는 1단 도전이라는 실제 목표가 열린다
+    // + 가치 전체 회수: 5개 메시지를 한 번에 닫는 클로저
+    valueHeadline: "오늘 한 줄이 1단까지의 첫 발",
     valueBody:
-      "오늘의 훈련 중 하나를 시작합니다. 이 첫 기록이 당신의 0일차이자, 1단 도전까지의 첫 발입니다.",
+      "오늘의 훈련 중 하나를 시작합니다. 이 첫 기록이 0일차 · 레벨업의 첫 XP · 리그 승급의 첫 근거 · 그리고 1단 심사까지의 첫 발이 됩니다.",
     whyItMatters:
       "지금 한 번의 시작이 1단 심사대까지 이어지는 첫 발입니다.",
     coachMessage:
-      "마지막 단계 — 오늘의 훈련 하나만 시작해 주세요.\n첫 기록부터 당신의 성장이 측정됩니다.",
+      "마지막 단계 — 오늘의 훈련 하나만 시작해 주세요.\n이 첫 한 줄이 1단 도전까지의 시작점이에요.",
     ctaLabel: "첫 한 줄 남기기",
     proofItems: ["today_mission_preview", "first_record_callout"] as const,
     description:

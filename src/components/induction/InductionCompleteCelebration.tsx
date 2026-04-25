@@ -247,6 +247,34 @@ export const InductionCompleteCelebration = ({
           </span>
         </div>
 
+        {/* 4d. 5대 가치 checklist — 회원이 튜토리얼에서 반드시 가지고 나가야 하는
+                핵심 메시지 요약. 보상 위에 배치해 "가치 회수" 를 먼저 닫는다. */}
+        <div className="rounded-2xl border border-border bg-card/70 p-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/70">
+            오늘 이해하고 가는 5가지
+          </p>
+          <ul className="mt-2 space-y-1">
+            {[
+              "단순 출석앱이 아니라 성장 기록 시스템",
+              "오늘의 훈련 = 다음 레벨·승급의 연료",
+              "기록 + 코치 기준의 이중 증명",
+              "리그·레벨로 내 위치와 목표가 분명",
+              "흑색 Lv.10 너머 — 1단 도전이라는 실제 목표",
+            ].map((msg, i) => (
+              <li
+                key={i}
+                className="flex items-start gap-2 text-[11.5px] leading-snug text-foreground"
+              >
+                <Check
+                  className="mt-0.5 h-3 w-3 shrink-0 text-primary"
+                  strokeWidth={3}
+                />
+                <span>{msg}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {/* 5b. 보상 recap — 신입 배지 / 이펙트 (보조). 4-tile 그리드 보존. */}
         <InductionRewardPreview totalGems={totalGems} celebrated />
         <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
