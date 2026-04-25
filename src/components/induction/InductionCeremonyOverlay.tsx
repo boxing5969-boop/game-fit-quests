@@ -94,7 +94,6 @@ export const InductionCeremonyOverlay = ({
   const {
     isOpen,
     isCompleted,
-    isFinished,
     rewardClaimed,
     stepsCompleted,
     currentStep,
@@ -266,7 +265,7 @@ export const InductionCeremonyOverlay = ({
             recentReward={recentReward}
             onConfirm={handleConfirm}
             onSkip={handleSkip}
-            busy={isFinishing || (isFinished && !rewardClaimed)}
+            busy={isFinishing}
           />
         )}
       </div>
