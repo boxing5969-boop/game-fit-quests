@@ -7,26 +7,31 @@ import type { InductionStep } from "@/data/inductionTutorialSteps";
 import { cn } from "@/lib/utils";
 
 /**
- * step 별 CoachBot 대사 — "랭킹업 입단식" 톤 (복싱짐 NPC 컨셉).
+ * step 별 오삼 코치 대사 — "왜 153인가" 가치 전달 톤.
+ *
+ * 톤 가이드:
+ *   · 성인 회원 친화. 게임 용어("챌린저/퀘스트/보스") 최소화
+ *   · 출석이 아니라 성장·승급·기록·증명 중심
+ *   · 한 줄당 12~22자, 두 줄 권장
  */
 const COACH_MESSAGES: Record<number, string> = {
-  1: "환영합니다, 챌린저님.\n먼저 당신의 캐릭터와 이름을 확인하세요.",
-  2: "당신은 지금 어디쯤 와 있을까요?\n현재 리그와 레벨을 확인해보세요.",
-  3: "성장은 출석이 아니라 퀘스트로 증명합니다.\n오늘의 미션을 확인하세요.",
-  4: "퀘스트를 깨면 보상이 따라옵니다.\n젬과 커스터마이징 보상을 확인하세요.",
-  5: "이제 첫 퀘스트를 완료해보세요.\n오늘부터 당신의 랭킹업이 시작됩니다.",
+  1: "153은 출석이 아니라 성장으로 증명하는 곳입니다.\n지금의 당신이 출발점이에요.",
+  2: "백 → 청 → 적 → 흑, 단계적 승급 구조입니다.\n오늘의 한 발이 다음 리그로 이어져요.",
+  3: "헬스장은 출석으로 끝나지만,\n153은 오늘 무엇을 했는지 기록으로 남깁니다.",
+  4: "훈련을 완수하면 파이트 머니가 지급돼요.\n복서 카드·단증 혜택 등 실제 가치로 연결됩니다.",
+  5: "마지막 단계 — 오늘의 훈련 하나만 시작해 주세요.\n첫 기록부터 당신의 성장이 측정됩니다.",
 };
 
 /**
- * CTA 카피 — 게임 진행감 강조 ("좋아, 다음 단계" 리듬).
- * Step 5 만 "첫 퀘스트 시작하기" 로 최종 액션 신호.
+ * CTA 카피 — 성인 톤. 게임적 리듬("좋아, ~") 제거.
+ * Step 5 는 최종 액션 신호.
  */
 const CTA_LABELS: Record<number, string> = {
-  1: "좋아, 리그 보러 가기",
-  2: "좋아, 퀘스트 보러 가기",
-  3: "좋아, 보상함 열기",
-  4: "이제 시작하자",
-  5: "첫 퀘스트 시작하기",
+  1: "내 리그 확인하기",
+  2: "오늘의 훈련 보기",
+  3: "파이트 머니 확인",
+  4: "첫 훈련 준비 완료",
+  5: "첫 훈련 시작하기",
 };
 
 interface InductionStepCardProps {
@@ -105,7 +110,7 @@ export const InductionStepCard = ({
           </button>
         </div>
 
-        {/* 2. STEP 배지 + 제목 */}
+        {/* 2. STEP 배지 + 제목 + description (가치 전달 한 줄) */}
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-1.5 rounded-md bg-primary/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
             <span className="inline-block h-1 w-1 rounded-full bg-primary" />
@@ -114,6 +119,9 @@ export const InductionStepCard = ({
           <h2 className="text-lg font-extrabold leading-tight text-foreground">
             {step.title}
           </h2>
+          <p className="text-[12px] leading-relaxed text-muted-foreground">
+            {step.description}
+          </p>
         </div>
 
         {/* 3. CoachBot */}

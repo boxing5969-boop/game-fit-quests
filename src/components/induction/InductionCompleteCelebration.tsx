@@ -104,16 +104,16 @@ export const InductionCompleteCelebration = ({
         {/* 2 + 3. 타이틀 블록 */}
         <div className="flex flex-col items-center gap-1 text-center">
           <span className="text-[10px] font-black uppercase tracking-[0.28em] text-reward">
-            CHAMPION OF THE DAY
+            WELCOME TO 153
           </span>
           <h2
             id="induction-complete-title"
             className="text-2xl font-extrabold tracking-tight text-foreground"
           >
-            입단식 완료! <span className="inline-block animate-bounce-in">🎉</span>
+            시작 준비 완료 <span className="inline-block animate-bounce-in">🎉</span>
           </h2>
           <p className="text-[12px] leading-relaxed text-muted-foreground">
-            당신은 이제 정식 챌린저입니다.
+            오늘부터 당신의 모든 훈련이 기록됩니다.
           </p>
         </div>
 
@@ -139,7 +139,7 @@ export const InductionCompleteCelebration = ({
 
         {/* 6. 보상 recap */}
         <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
-          {totalGems.toLocaleString()}젬 · 신입 챌린저 칭호 · 기본 이펙트 획득
+          {totalGems.toLocaleString()}젬 · 신입 회원 배지 · 기본 이펙트 획득
         </p>
 
         {/* 7. 보너스 안내 */}
@@ -152,11 +152,11 @@ export const InductionCompleteCelebration = ({
           </span>
           <div className="min-w-0 leading-tight">
             <div className="text-[12px] font-bold text-accent">
-              보너스 미션 해금
+              보너스 훈련 해금
             </div>
             <div className="mt-0.5 text-[11px] text-muted-foreground">
               오늘 첫 체크인 시 추가{" "}
-              <span className="font-bold text-reward">+300젬</span>
+              <span className="font-bold text-reward">+300 파이트 머니</span>
             </div>
           </div>
         </div>
@@ -171,7 +171,7 @@ export const InductionCompleteCelebration = ({
             "shadow-[0_8px_28px_-8px_rgba(217,54,32,0.8)]",
           )}
         >
-          <span>첫 퀘스트 시작하기</span>
+          <span>첫 훈련 시작하기</span>
           <ArrowRight className="ml-1.5 h-4 w-4" />
         </Button>
       </div>
