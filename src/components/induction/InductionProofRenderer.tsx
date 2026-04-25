@@ -5,13 +5,16 @@ import {
   ClipboardCheck,
   Flag,
   ListChecks,
+  Lock,
   Sparkles,
   Target,
   TrendingUp,
+  Unlock,
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
+import { useQuests, useMySubmissions } from "@/hooks/useQuestData";
 import type { InductionProofKey } from "@/data/inductionTutorialSteps";
 import { cn } from "@/lib/utils";
 
@@ -53,22 +56,53 @@ export const InductionProofRenderer = ({
 }: InductionProofRendererProps) => {
   const { profile } = useAuth();
   const local = useLocalProgress();
+  const quests = useQuests();
+  const submissions = useMySubmissions();
 
-  // current 데이터
+  // current 데이터 — 모두 기존 훅에서 재사용. 신규 호출 0.
   const currentRank = (profile?.current_rank ?? "white") as
     | "white" | "blue" | "red" | "black";
   const currentLevel = profile?.current_level ?? 1;
-  const totalXp = local?.totalXp ?? 0;
 
-  // 다음 레벨까지 진행률 (대략) — useLocalProgress 가 이미 가진 값 활용
+  // 다음 레벨까지 정밀 진행률 — useLocalProgress.metrics.xp 사용
+  // (current=현재 레벨 누적 XP / target=레벨 통과 최소 XP)
+  const xpCurrent = local?.metrics?.xp?.current ?? 0;
+  const xpTarget = local?.metrics?.xp?.target ?? 0;
+  const xpRemaining = Math.max(0, xpTarget - xpCurrent);
   const nextLevelProgressPct = useMemo(() => {
-    // levelProgress[activeLevelId]?.currentLevelXp / xpToNext 가 더 정확하지만
-    // 튜토리얼 단계라 0% 근처가 일반적. 안전 fallback.
-    const lvl = local?.levelProgress?.[`${currentRank}-${currentLevel}`];
-    const cur = lvl?.currentLevelXp ?? totalXp;
-    const goal = 100; // 튜토리얼 시점 표시용 — 실제 룰엔진 계산은 후속 단계
-    return Math.max(0, Math.min(100, Math.round((cur / goal) * 100)));
-  }, [local?.levelProgress, currentRank, currentLevel, totalXp]);
+    if (!xpTarget || xpTarget <= 0) return 0;
+    return Math.max(0, Math.min(100, Math.round((xpCurrent / xpTarget) * 100)));
+  }, [xpCurrent, xpTarget]);
+
+  // 오늘의 훈련(미션) 개수 — quests 활성 항목 기준 (서버 truth)
+  const totalQuests = quests.data?.length ?? null;
+  const isQuestsLoading = quests.isLoading;
+
+  // 회원이 완료한 미션 수 — quest_submissions.status='approved' 카운트
+  const approvedCount = useMemo(() => {
+    const rows = submissions.data ?? [];
+    return rows.filter(
+      (s) => (s as unknown as { status?: string }).status === "approved",
+    ).length;
+  }, [submissions.data]);
+  const pendingCount = useMemo(() => {
+    const rows = submissions.data ?? [];
+    return rows.filter(
+      (s) => (s as unknown as { status?: string }).status === "pending",
+    ).length;
+  }, [submissions.data]);
+
+  // 1단 도전 오픈 여부 — 흑색 리그 + Lv.10 도달 시
+  const firstDanUnlocked = currentRank === "black" && currentLevel >= 10;
+  const levelsToFirstDan = useMemo(() => {
+    if (firstDanUnlocked) return 0;
+    if (currentRank === "black") return Math.max(0, 10 - currentLevel);
+    // 흑색까지의 레벨 거리 — 각 리그 10레벨 가정
+    const rankIdx = RANK_ORDER.indexOf(currentRank);
+    const remainingInCurrent = Math.max(0, 10 - currentLevel);
+    const remainingRanks = RANK_ORDER.length - rankIdx - 1; // 청·적·흑
+    return remainingInCurrent + remainingRanks * 10;
+  }, [currentRank, currentLevel, firstDanUnlocked]);
 
   // 중복 제거 + 최대 개수
   const seen = new Set<InductionProofKey>();
@@ -104,49 +138,92 @@ export const InductionProofRenderer = ({
                 tone="primary"
               />
             );
-          case "next_level_progress":
+          case "next_level_progress": {
+            // 실제 데이터 우선. 0% 일 때는 fallback 문구.
+            const valueText = xpTarget > 0
+              ? `${xpCurrent} / ${xpTarget} XP · ${nextLevelProgressPct}%`
+              : "곧 첫 훈련을 시작해요";
+            const subText = xpTarget > 0 && xpRemaining > 0
+              ? `남은 ${xpRemaining} XP 만에 다음 레벨`
+              : null;
             return (
               <ProofCard
                 key={key}
                 icon={<TrendingUp className="h-3.5 w-3.5" />}
                 label="다음 레벨까지"
-                value={`${nextLevelProgressPct}% 진행`}
-                bar={nextLevelProgressPct}
+                value={valueText}
+                sub={subText}
+                bar={xpTarget > 0 ? nextLevelProgressPct : undefined}
                 tone="primary"
               />
             );
+          }
           case "league_roadmap":
-            return <RoadmapStrip key={key} currentRank={currentRank} />;
+            return (
+              <RoadmapStrip
+                key={key}
+                currentRank={currentRank}
+                firstDanUnlocked={firstDanUnlocked}
+              />
+            );
           case "first_dan_unlock":
+            // 1단 도전 잠금/오픈 상태 반영
             return (
               <ProofCard
                 key={key}
-                icon={<Flag className="h-3.5 w-3.5" />}
-                label="다음 마일스톤"
-                value="Lv.10 도달 시 1단 심사 오픈"
+                icon={
+                  firstDanUnlocked ? (
+                    <Unlock className="h-3.5 w-3.5" />
+                  ) : (
+                    <Lock className="h-3.5 w-3.5" />
+                  )
+                }
+                label={firstDanUnlocked ? "1단 도전 오픈" : "다음 마일스톤"}
+                value={
+                  firstDanUnlocked
+                    ? "지금 1단 심사 도전 가능"
+                    : "흑색 Lv.10 도달 시 1단 심사 오픈"
+                }
+                sub={
+                  firstDanUnlocked
+                    ? null
+                    : levelsToFirstDan > 0
+                      ? `현재 ${RANK_KO[currentRank]}색 Lv.${currentLevel} · 약 ${levelsToFirstDan}레벨 남음`
+                      : null
+                }
                 tone="reward"
               />
             );
-          case "today_mission_count":
+          case "today_mission_count": {
+            const valueText = isQuestsLoading
+              ? "불러오는 중..."
+              : totalQuests !== null
+                ? `오늘 진행 가능 ${totalQuests}개`
+                : "오늘 훈련 목록 확인";
             return (
               <ProofCard
                 key={key}
                 icon={<ListChecks className="h-3.5 w-3.5" />}
                 label="오늘의 훈련"
-                value="홈에서 오늘 미션 확인 가능"
+                value={valueText}
                 tone="muted"
               />
             );
-          case "today_mission_preview":
+          }
+          case "today_mission_preview": {
+            const valueText = approvedCount > 0
+              ? `이미 ${approvedCount}개 완료 · 다음 한 줄`
+              : "복싱 · 자세 · 습관 중 1개로 시작";
             return (
               <ProofCard
                 key={key}
                 icon={<Target className="h-3.5 w-3.5" />}
-                label="오늘 시작할 훈련"
-                value="복싱 · 자세 · 습관 중 1개로 시작"
+                label={approvedCount > 0 ? "오늘 이어서 할 훈련" : "오늘 시작할 훈련"}
+                value={valueText}
                 tone="muted"
               />
             );
+          }
           case "rewards_preview":
             return (
               <ProofCard
@@ -157,16 +234,21 @@ export const InductionProofRenderer = ({
                 tone="muted"
               />
             );
-          case "coach_review_note":
+          case "coach_review_note": {
+            // 대기 중 검토가 있으면 자연스럽게 그 사실을 노출
+            const valueText = pendingCount > 0
+              ? `현재 ${pendingCount}건 검토 대기 중`
+              : "기록은 코치 평가로 검증됩니다";
             return (
               <ProofCard
                 key={key}
                 icon={<ClipboardCheck className="h-3.5 w-3.5" />}
                 label="코치 검토"
-                value="기록은 코치 평가로 검증됩니다"
+                value={valueText}
                 tone="muted"
               />
             );
+          }
           case "first_record_callout":
             return (
               <ProofCard
@@ -192,12 +274,15 @@ const ProofCard = ({
   icon,
   label,
   value,
+  sub,
   bar,
   tone = "muted",
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
+  /** 보조 한 줄 — 작은 회색 글씨 (옵션) */
+  sub?: string | null;
   /** 0~100 진행 바 (선택) */
   bar?: number;
   tone?: "primary" | "reward" | "muted";
@@ -231,6 +316,11 @@ const ProofCard = ({
           <p className="text-[12.5px] font-extrabold leading-tight text-foreground">
             {value}
           </p>
+          {sub && (
+            <p className="mt-0.5 text-[10.5px] leading-snug text-muted-foreground">
+              {sub}
+            </p>
+          )}
         </div>
       </div>
       {bar !== undefined && (
@@ -251,8 +341,10 @@ const ProofCard = ({
 // ──────────────────────────────────────────────────────────────────
 const RoadmapStrip = ({
   currentRank,
+  firstDanUnlocked = false,
 }: {
   currentRank: (typeof RANK_ORDER)[number];
+  firstDanUnlocked?: boolean;
 }) => {
   const idx = RANK_ORDER.indexOf(currentRank);
 
@@ -282,14 +374,30 @@ const RoadmapStrip = ({
             )}
           </div>
         ))}
-        {/* 1단 마커 */}
+        {/* 1단 마커 — 잠금/오픈 상태에 따라 톤 변화 */}
         <span aria-hidden className="mx-0.5 inline-block h-px w-2 bg-reward/60" />
-        <div className="flex h-7 min-w-[34px] items-center justify-center rounded-md border border-reward/40 bg-reward/15 px-1.5 text-[10.5px] font-black tracking-wide text-reward">
+        <div
+          className={cn(
+            "flex h-7 min-w-[34px] items-center justify-center rounded-md border px-1.5 text-[10.5px] font-black tracking-wide",
+            firstDanUnlocked
+              ? "border-reward bg-reward/25 text-reward ring-2 ring-reward/40"
+              : "border-reward/40 bg-reward/15 text-reward",
+          )}
+          aria-label={firstDanUnlocked ? "1단 도전 오픈" : "1단 도전 잠금"}
+        >
           1단
         </div>
       </div>
       <p className="mt-1.5 text-[10.5px] leading-relaxed text-muted-foreground">
-        지금 <span className="font-bold text-foreground">{RANK_KO[currentRank]}색</span> · 흑색 너머에 1단 심사가 열립니다
+        {firstDanUnlocked ? (
+          <>
+            <span className="font-bold text-reward">1단 도전이 열려 있어요</span> · 지금 심사에 도전 가능
+          </>
+        ) : (
+          <>
+            지금 <span className="font-bold text-foreground">{RANK_KO[currentRank]}색</span> · 흑색 Lv.10 도달 시 1단 심사 오픈
+          </>
+        )}
       </p>
     </div>
   );
