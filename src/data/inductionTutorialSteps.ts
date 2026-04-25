@@ -9,20 +9,66 @@
  * Reward amounts MUST stay in sync with the server RPC
  * `public.tutorial_step_reward_amount` — mirrored here for optimistic
  * UI and totals. Sum = 1000 (== total reward paid by server).
+ *
+ * ──────────────────────────────────────────────────────────────────
+ * 가치 전달 필드 (확장)
+ * ──────────────────────────────────────────────────────────────────
+ * 5-act 내러티브 (출발점 → 위치 → 오늘 → 증명 → 첫 한 줄) 에 맞춰
+ * 각 step 의 카피/가치/근거를 모두 이 파일에서 관리한다. UI 컴포넌트는
+ * 텍스트를 하드코딩하지 않고 step.* 만 읽는다.
+ *   · valueHeadline : 한 줄 헤드라인 (가치 선언)
+ *   · valueBody     : 1~2 줄 본문 (왜 이 화면이 중요한지)
+ *   · whyItMatters  : 코칭 톤 한 줄 (CoachBot 대사 폴백·요약)
+ *   · coachMessage  : 오삼 코치 대사 (멀티라인, \n 허용)
+ *   · ctaLabel      : 메인 CTA 문구
+ *   · shortLabel    : ProgressBar / 분석 이벤트용 짧은 라벨
+ *   · proofItems    : 화면에 표시할 실데이터 키 (UI 가 매핑해 렌더)
  */
 
 export type InductionStepId =
-  | "profile"        // 1. 내 캐릭터 확인
-  | "ranking"        // 2. 내 리그/레벨 확인
-  | "quest"          // 3. 오늘의 퀘스트 확인
-  | "rewards"        // 4. 젬/보상/이펙트 확인
-  | "first_action";  // 5. 첫 체크인 또는 첫 퀘스트 수락
+  | "profile"        // 1. 출발점 — 내 카드가 0일차
+  | "ranking"        // 2. 나의 위치 — 리그/레벨/1단 도전
+  | "quest"          // 3. 오늘의 훈련 — 출석 ≠ 성장
+  | "rewards"        // 4. 증명과 보상 — 코치 검증 + 부가 혜택
+  | "first_action";  // 5. 첫 한 줄 — 첫 기록이 출발
+
+/**
+ * proofItems 키 — UI 가 실제 데이터를 매핑해 렌더할 식별자.
+ * 신규 데이터 호출은 추가하지 않고, 기존 훅(profile / questData / progress) 만 재사용.
+ */
+export type InductionProofKey =
+  | "current_league"            // profile.current_rank
+  | "current_level"             // profile.current_level
+  | "next_level_progress"       // useLocalProgress XP %
+  | "league_roadmap"            // 백→청→적→흑 단계 시각화 (정적)
+  | "first_dan_unlock"          // 10레벨 1단 심사 안내 (정적)
+  | "today_mission_count"       // useQuestData 오늘 미션 수
+  | "today_mission_preview"     // useQuestData 첫 1~2개 미리보기
+  | "rewards_preview"           // 단증 혜택 정적 카드
+  | "coach_review_note"         // "코치가 주기적으로 검토" 정적 안내
+  | "first_record_callout";     // 첫 기록 0일차 강조
 
 export interface InductionStep {
   /** 1..5 — server-side `tutorial_step` value after this step finishes. */
   order: 1 | 2 | 3 | 4 | 5;
   id: InductionStepId;
+  /** 카드 메인 제목 (한 줄, ~12자). */
   title: string;
+  /** 진행바·분석 라벨용 짧은 이름 (≤ 6자). */
+  shortLabel: string;
+  /** 가치 헤드라인 — 카드 부제목으로 노출. */
+  valueHeadline: string;
+  /** 1~2 줄 본문. 왜 이 화면이 중요한지. */
+  valueBody: string;
+  /** 코치 페르소나 한 줄 요약 (CoachBot 폴백). */
+  whyItMatters: string;
+  /** 오삼 코치 멀티라인 대사 — \n 으로 줄바꿈. */
+  coachMessage: string;
+  /** 주 CTA 문구. */
+  ctaLabel: string;
+  /** 화면에 표시할 실데이터 proof 키 배열 (UI 매핑). */
+  proofItems: readonly InductionProofKey[];
+  /** 종전 description — 호환을 위해 유지 (= valueBody). */
   description: string;
   /** Route the user should visit while this step is active (UI hint). */
   navTarget?: string;
@@ -34,16 +80,43 @@ export const INDUCTION_STEPS: readonly InductionStep[] = Object.freeze([
   {
     order: 1,
     id: "profile",
-    title: "성장의 출발점",
-    description: "내 복서 카드를 확인합니다. 이름·현재 상태가 모든 기록의 기준이 됩니다.",
+    title: "출발점",
+    shortLabel: "출발",
+    valueHeadline: "기록은 사라지지 않습니다",
+    valueBody:
+      "지금 보이는 이 카드가 당신의 출발점입니다. 매번의 훈련이 여기에 한 줄씩 쌓여요.",
+    whyItMatters:
+      "오늘부터 당신의 모든 운동이 한 사람의 성장으로 기록됩니다.",
+    coachMessage:
+      "153은 출석이 아니라 성장으로 증명하는 곳입니다.\n지금의 당신이 출발점이에요.",
+    ctaLabel: "내 출발점 확인",
+    proofItems: ["first_record_callout"] as const,
+    description:
+      "내 복서 카드를 확인합니다. 이름·현재 상태가 모든 기록의 기준이 됩니다.",
     navTarget: "/mypage",
     rewardGems: 100,
   },
   {
     order: 2,
     id: "ranking",
-    title: "지금 서 있는 자리",
-    description: "백 → 청 → 적 → 흑 단계적 성장 구조. 현재 리그·레벨이 다음 승급 목표가 됩니다.",
+    title: "나의 위치",
+    shortLabel: "위치",
+    valueHeadline: "지금 위치 → 다음 목표",
+    valueBody:
+      "백 → 청 → 적 → 흑, 단계적 승급 구조. 그리고 10레벨에 도달하면 1단 심사가 열립니다.",
+    whyItMatters:
+      "리그와 레벨은 내 위치와 다음 목표를 분명하게 만듭니다.",
+    coachMessage:
+      "백 → 청 → 적 → 흑, 단계적 승급 구조입니다.\n오늘의 한 발이 다음 리그로 이어져요.",
+    ctaLabel: "나의 리그 보기",
+    proofItems: [
+      "current_league",
+      "current_level",
+      "league_roadmap",
+      "first_dan_unlock",
+    ] as const,
+    description:
+      "백 → 청 → 적 → 흑 단계적 성장 구조. 현재 리그·레벨이 다음 승급 목표가 됩니다.",
     navTarget: "/halloffame",
     rewardGems: 100,
   },
@@ -51,23 +124,60 @@ export const INDUCTION_STEPS: readonly InductionStep[] = Object.freeze([
     order: 3,
     id: "quest",
     title: "오늘의 훈련",
-    description: "복싱·자세·습관 — 오늘 해야 할 훈련이 준비돼 있습니다. 매일의 한 줄이 다음 단증의 근거가 됩니다.",
+    shortLabel: "훈련",
+    valueHeadline: "오늘이 다음과 이어집니다",
+    valueBody:
+      "헬스장은 출석으로 끝나지만, 153은 오늘 무엇을 했는지 기록합니다. 이 기록이 레벨업·승급·1단 심사의 근거가 돼요.",
+    whyItMatters:
+      "오늘의 훈련은 다음 레벨과 승급 조건에 직접 연결됩니다.",
+    coachMessage:
+      "헬스장은 출석으로 끝나지만,\n153은 오늘 무엇을 했는지 기록으로 남깁니다.",
+    ctaLabel: "오늘의 훈련 보기",
+    proofItems: [
+      "today_mission_count",
+      "today_mission_preview",
+      "next_level_progress",
+    ] as const,
+    description:
+      "복싱·자세·습관 — 오늘 해야 할 훈련이 준비돼 있습니다. 매일의 한 줄이 다음 단증의 근거가 됩니다.",
     navTarget: "/missions",
     rewardGems: 200,
   },
   {
     order: 4,
     id: "rewards",
-    title: "파이트 머니 · 성취 보상",
-    description: "훈련 완수 시 파이트 머니가 지급됩니다. 복서 카드 장식·단증 혜택 등 실제 가치로 연결됩니다.",
+    title: "증명과 보상",
+    shortLabel: "증명",
+    valueHeadline: "성장은 증명됩니다",
+    valueBody:
+      "코치의 기준 + 누적 기록이 단증과 승급의 근거가 됩니다. 파이트 머니는 그 과정에 따라오는 부가 혜택이에요.",
+    whyItMatters:
+      "성장은 코치 기준과 기록으로 증명됩니다. 보상은 그 증거의 부가물입니다.",
+    coachMessage:
+      "훈련을 완수하면 파이트 머니가 지급돼요.\n복서 카드·단증 혜택 등 실제 가치로 연결됩니다.",
+    ctaLabel: "보상과 혜택 둘러보기",
+    proofItems: ["coach_review_note", "rewards_preview"] as const,
+    description:
+      "훈련 완수 시 파이트 머니가 지급됩니다. 복서 카드 장식·단증 혜택 등 실제 가치로 연결됩니다.",
     navTarget: "/rewards",
     rewardGems: 200,
   },
   {
     order: 5,
     id: "first_action",
-    title: "첫 훈련 기록",
-    description: "오늘의 훈련 중 하나를 골라 시작합니다. 첫 기록부터 당신의 성장이 측정되기 시작합니다.",
+    title: "첫 한 줄",
+    shortLabel: "첫 기록",
+    valueHeadline: "첫 한 줄을 남겨주세요",
+    valueBody:
+      "오늘의 훈련 중 하나를 시작합니다. 이 첫 기록이 당신의 0일차이자, 1단 도전까지의 첫 발입니다.",
+    whyItMatters:
+      "지금 한 번의 시작이 1단 심사대까지 이어지는 첫 발입니다.",
+    coachMessage:
+      "마지막 단계 — 오늘의 훈련 하나만 시작해 주세요.\n첫 기록부터 당신의 성장이 측정됩니다.",
+    ctaLabel: "첫 한 줄 남기기",
+    proofItems: ["today_mission_preview", "first_record_callout"] as const,
+    description:
+      "오늘의 훈련 중 하나를 골라 시작합니다. 첫 기록부터 당신의 성장이 측정되기 시작합니다.",
     // Step 5 는 미션 페이지에서 마무리 — finish RPC + 축하 카드 → 같은 페이지에서 시작.
     navTarget: "/missions",
     rewardGems: 400,

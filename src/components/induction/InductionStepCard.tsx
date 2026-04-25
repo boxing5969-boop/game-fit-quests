@@ -7,32 +7,19 @@ import type { InductionStep } from "@/data/inductionTutorialSteps";
 import { cn } from "@/lib/utils";
 
 /**
- * step 별 오삼 코치 대사 — "왜 153인가" 가치 전달 톤.
+ * 단일 step 카드 — 카피·메시지는 모두 step.* 에서 읽는다 (data-driven).
  *
- * 톤 가이드:
- *   · 성인 회원 친화. 게임 용어("챌린저/퀘스트/보스") 최소화
- *   · 출석이 아니라 성장·승급·기록·증명 중심
- *   · 한 줄당 12~22자, 두 줄 권장
+ * 텍스트 소스:
+ *   · step.title          — STEP 배지 옆 메인 제목
+ *   · step.valueHeadline  — 부제목 (가치 헤드라인)
+ *   · step.valueBody      — 1~2줄 본문 (왜 이 화면이 중요한지)
+ *   · step.coachMessage   — 오삼 코치 대사 (CoachBot)
+ *   · step.ctaLabel       — 메인 CTA 문구
+ *
+ * 구조 변경 없음 — 기존 5개 섹션 (진행바·STEP·CoachBot·보상칩·CTA) 유지.
+ * 본 컴포넌트는 더 이상 텍스트를 하드코딩하지 않으며,
+ * 카피 변경은 src/data/inductionTutorialSteps.ts 한 곳에서 관리한다.
  */
-const COACH_MESSAGES: Record<number, string> = {
-  1: "153은 출석이 아니라 성장으로 증명하는 곳입니다.\n지금의 당신이 출발점이에요.",
-  2: "백 → 청 → 적 → 흑, 단계적 승급 구조입니다.\n오늘의 한 발이 다음 리그로 이어져요.",
-  3: "헬스장은 출석으로 끝나지만,\n153은 오늘 무엇을 했는지 기록으로 남깁니다.",
-  4: "훈련을 완수하면 파이트 머니가 지급돼요.\n복서 카드·단증 혜택 등 실제 가치로 연결됩니다.",
-  5: "마지막 단계 — 오늘의 훈련 하나만 시작해 주세요.\n첫 기록부터 당신의 성장이 측정됩니다.",
-};
-
-/**
- * CTA 카피 — 성인 톤. 게임적 리듬("좋아, ~") 제거.
- * Step 5 는 최종 액션 신호.
- */
-const CTA_LABELS: Record<number, string> = {
-  1: "내 리그 확인하기",
-  2: "오늘의 훈련 보기",
-  3: "파이트 머니 확인",
-  4: "첫 훈련 준비 완료",
-  5: "첫 훈련 시작하기",
-};
 
 interface InductionStepCardProps {
   step: InductionStep;
@@ -69,8 +56,9 @@ export const InductionStepCard = ({
   busy = false,
   className,
 }: InductionStepCardProps) => {
-  const coachMessage = COACH_MESSAGES[step.order] ?? step.description;
-  const ctaLabel = CTA_LABELS[step.order] ?? "다음 단계";
+  // 모든 카피는 step.* 에서 — config 단일 출처.
+  const coachMessage = step.coachMessage || step.whyItMatters || step.valueBody;
+  const ctaLabel = step.ctaLabel;
   const isFinalStep = step.order === totalSteps;
 
   return (
@@ -110,17 +98,24 @@ export const InductionStepCard = ({
           </button>
         </div>
 
-        {/* 2. STEP 배지 + 제목 + description (가치 전달 한 줄) */}
+        {/* 2. STEP 배지 + 제목 + valueHeadline + valueBody
+                — 모두 step.* 에서 읽음 (data-driven) */}
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-1.5 rounded-md bg-primary/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
             <span className="inline-block h-1 w-1 rounded-full bg-primary" />
             <span>STEP {step.order.toString().padStart(2, "0")}</span>
+            <span className="opacity-70">· {step.shortLabel}</span>
           </div>
           <h2 className="text-lg font-extrabold leading-tight text-foreground">
             {step.title}
           </h2>
+          {/* 가치 헤드라인 — 제목보다 한 톤 작게 부제목 역할 */}
+          <p className="text-[13px] font-bold leading-snug text-foreground/90">
+            {step.valueHeadline}
+          </p>
+          {/* 본문 — 왜 이 화면이 중요한지 1~2 줄 */}
           <p className="text-[12px] leading-relaxed text-muted-foreground">
-            {step.description}
+            {step.valueBody}
           </p>
         </div>
 
