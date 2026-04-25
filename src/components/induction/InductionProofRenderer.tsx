@@ -60,9 +60,9 @@ export const InductionProofRenderer = ({
   const submissions = useMySubmissions();
 
   // current 데이터 — 모두 기존 훅에서 재사용. 신규 호출 0.
-  const currentRank = (profile?.current_rank ?? "white") as
+  const currentRank = (local?.currentRank ?? "white") as
     | "white" | "blue" | "red" | "black";
-  const currentLevel = profile?.current_level ?? 1;
+  const currentLevel = local?.currentLevel ?? 1;
 
   // 다음 레벨까지 정밀 진행률 — useLocalProgress.metrics.xp 사용
   // (current=현재 레벨 누적 XP / target=레벨 통과 최소 XP)
