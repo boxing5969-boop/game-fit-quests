@@ -6,6 +6,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import LoginErrorModal, { classifyLoginError } from "@/components/LoginErrorModal";
+import { translateAuthError } from "@/lib/errorMessages";
 import {
   Select,
   SelectContent,
@@ -211,9 +212,11 @@ const LoginPage = () => {
       try {
         const { error } = await signIn(toFakeEmail(username), password);
         if (error) {
+          // classifyLoginError 는 영어 키워드로 타입 판정 — 원문으로 분류 유지
           const errorType = classifyLoginError(error.message);
           setLoginErrorType(errorType);
-          setError(error.message);
+          // 회원에게 노출되는 메시지는 한국어로 변환
+          setError(translateAuthError(error));
           return;
         }
         navigate("/home");
@@ -236,7 +239,7 @@ const LoginPage = () => {
     setIsLoading(true);
     try {
       const { error } = await signUp(toFakeEmail(username), password, name, nickname, rawPhone, branch, tab === "coach", birthDate);
-      if (error) { setError(error.message); return; }
+      if (error) { setError(translateAuthError(error)); return; }
       setSignUpSuccess(true);
       toast.success(tab === "coach" ? "가입 완료! 관리자 승인을 기다려주세요" : "가입 완료! 관장님 승인을 기다려주세요 🥊");
     } finally { setIsLoading(false); }

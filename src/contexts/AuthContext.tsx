@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import type { Tables, Enums } from "@/integrations/supabase/types";
+import { translateAuthError } from "@/lib/errorMessages";
 
 type AppRole = Enums<"app_role">;
 
@@ -110,20 +111,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       },
     });
     if (error) {
-      // Translate common errors to Korean
+      // 도메인 특화 안내가 더 정확한 케이스만 명시 매핑, 그 외는
+      // translateAuthError 로 일괄 한국어화 (영어 원문 노출 방지).
       if (error.message.includes("duplicate key") || error.message.includes("phone_number")) {
         return { error: new Error("이미 등록된 전화번호입니다. 한 번호당 하나의 계정만 가능합니다.") };
-      }
-      if (error.message.includes("already registered") || error.message.includes("already been registered")) {
-        return { error: new Error("이미 사용 중인 아이디입니다. 다른 아이디를 사용해주세요.") };
-      }
-      if (error.message.includes("password")) {
-        return { error: new Error("비밀번호가 보안 기준에 맞지 않습니다. 다른 비밀번호를 사용해주세요.") };
       }
       if (error.message.includes("Database error")) {
         return { error: new Error("가입 처리 중 오류가 발생했습니다. 전화번호나 아이디가 이미 사용 중일 수 있습니다.") };
       }
-      return { error: new Error(error.message) };
+      return { error: new Error(translateAuthError(error)) };
     }
 
     // Always sign out after signup — all new members need manager approval before login
@@ -143,10 +139,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error, data } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
-      if (error.message.includes("Invalid login")) {
-        return { error: new Error("아이디 또는 비밀번호가 올바르지 않습니다.") };
-      }
-      return { error: new Error(error.message) };
+      return { error: new Error(translateAuthError(error)) };
     }
     if (data.user) {
       // Check if user has a pending coach request — block login
