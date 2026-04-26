@@ -216,18 +216,20 @@ export interface MealSlotTarget {
   carbsG: number;
 }
 
-/** 끼니 수·패턴별 비중 — 2끼일 때 아침 스킵 패턴. */
+/** 끼니 수·패턴별 비중. 아침은 항상 포함 (회원 정책). 2끼 = 가벼운 아침 + 점심 + 저녁. */
 export function splitTargetsBySlot(
   target: NutritionTarget,
   mealsPerDay: 2 | 3 | 4 = 3,
 ): MealSlotTarget[] {
-  // 비중 선택
+  // 비중 선택 — 아침을 항상 포함하도록 재구성
   let ratios: Partial<Record<MealSlot, number>>;
   if (mealsPerDay === 2) {
-    ratios = { lunch: 0.45, dinner: 0.40, snack: 0.15 };
+    // 2끼 = 아침 가볍게 + 점심 + 저녁 (간식 생략)
+    ratios = { breakfast: 0.20, lunch: 0.42, dinner: 0.38 };
   } else if (mealsPerDay === 4) {
     ratios = { breakfast: 0.22, lunch: 0.32, dinner: 0.28, snack: 0.18 };
   } else {
+    // 3끼 기본 = 아침 + 점심 + 저녁 + 간식
     ratios = { breakfast: 0.25, lunch: 0.35, dinner: 0.30, snack: 0.10 };
   }
 

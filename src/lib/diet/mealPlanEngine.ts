@@ -32,8 +32,10 @@ export interface MealPlanInput {
   dietaryRestrictions?: string[];  // vegan, vegetarian, halal 등
   dislikedIngredients?: string[];
   preferPatterns?: string[];       // pattern_tags
-  /** 임의성 시드 (0~999). "다시 뽑기" 시 증가. */
+  /** 임의성 시드. "다시 뽑기" 시 큰 폭 변경. */
   seed?: number;
+  /** 직전 plan 의 메뉴 코드 — 가급적 회피해서 매번 새 조합 보장. */
+  excludeCodes?: readonly string[];
 }
 
 export interface MealPlanPick {
@@ -373,17 +375,35 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
     input.dislikedIngredients,
   );
 
+  // reroll 시 직전 picks 회피 — 가능하면 새 메뉴로 채워 매 클릭마다 변화 보장.
+  // 후보 부족(필터 후 모두 직전 코드와 동일) 시 자동으로 폴백 — 빈 카드 방지.
+  const avoidPrev = new Set<string>(input.excludeCodes ?? []);
   const used = new Set<string>();
+
   let picks: MealPlanPick[] = slotTargets.map((t) => {
-    const item = pickOneMeal({
+    // 1차 시도 — 직전 코드 + 이번 plan 에서 이미 쓴 코드 모두 회피
+    const exclude1 = new Set<string>([...avoidPrev, ...used]);
+    let item = pickOneMeal({
       slot: t.slot,
       target: t,
-      excludeCodes: used,
+      excludeCodes: exclude1,
       excludeTags,
       excludeIngredients,
       preferPatterns: input.preferPatterns,
       rng,
     });
+    // 2차 시도 — 1차 결과 없을 때(좁은 풀) 직전 코드 회피만 풀어 다시 시도
+    if (!item) {
+      item = pickOneMeal({
+        slot: t.slot,
+        target: t,
+        excludeCodes: used,
+        excludeTags,
+        excludeIngredients,
+        preferPatterns: input.preferPatterns,
+        rng,
+      });
+    }
     if (item) used.add(item.code);
     return { slot: t.slot, target: t, item };
   });

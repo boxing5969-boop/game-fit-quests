@@ -55,11 +55,13 @@ export const MyMealPlan = ({
   mode,
 }: MyMealPlanProps) => {
   const [seed, setSeed] = useState<number>(() =>
-    Math.floor(Math.random() * 1000),
+    Math.floor(Math.random() * 1_000_000),
   );
   const [swapSlot, setSwapSlot] = useState<MealSlot | null>(null);
   const [customSlot, setCustomSlot] = useState<MealSlot | null>(null);
   const [overridePlan, setOverridePlan] = useState<MealPlanResult | null>(null);
+  // reroll 시 직전 picks 의 메뉴 코드 — 다음 generate 호출 시 회피용
+  const [excludeCodes, setExcludeCodes] = useState<readonly string[]>([]);
 
   const generated = useMemo<MealPlanResult>(
     () =>
@@ -70,8 +72,9 @@ export const MyMealPlan = ({
         dislikedIngredients,
         preferPatterns,
         seed,
+        excludeCodes,
       }),
-    [target, mealsPerDay, dietaryRestrictions, dislikedIngredients, preferPatterns, seed],
+    [target, mealsPerDay, dietaryRestrictions, dislikedIngredients, preferPatterns, seed, excludeCodes],
   );
 
   const plan = overridePlan ?? generated;
@@ -84,13 +87,17 @@ export const MyMealPlan = ({
   );
 
   const handleReroll = () => {
-    // 새 plan 강제 — 직전 seed 와 절대 같지 않게 큰 폭으로 점프 + 시간 jitter.
-    // (단순 +1 은 좁은 메뉴 풀에서 동일 결과가 나올 수 있고, override 만 풀려서
-    //  화면이 안 바뀌는 케이스 발생)
+    // 새 plan 강제 — 두 단계로 보장:
+    //   1) 시드 큰 폭 점프 (jitter 우회)
+    //   2) 직전 picks 의 메뉴 코드를 excludeCodes 로 전달 → 같은 메뉴 회피
+    const prevCodes = plan.picks
+      .map((p) => p.item?.code)
+      .filter((c): c is string => !!c);
     setOverridePlan(null);
+    setExcludeCodes(prevCodes);
     setSeed((prev) => {
       let next = Math.floor(Math.random() * 1_000_000) + (Date.now() % 1_000);
-      if (next === prev) next += 137; // 안전망 — 동일값 회피
+      if (next === prev) next += 137;
       return next;
     });
   };
