@@ -122,13 +122,15 @@ function pickOneMeal(opts: {
   if (pool.length === 0) return null;
 
   // 스코어: kcal 근접(-) + 단백질 충족(+) + 패턴 매칭(+) + 난수 타이브레이커
+  // jitter 폭을 충분히 키워 reroll 시 1순위가 자주 바뀌도록 — 결정성은 mulberry32
+  // 시드로 유지되므로 같은 시드면 같은 결과, 시드가 바뀌면 결과도 분명히 변경.
   const scored = pool.map((m) => {
     const kcalDiff = Math.abs(m.kcal - opts.target.kcal);
     const kcalScore = 300 - Math.min(kcalDiff, 300); // 0~300
     const proteinScore = m.proteinG >= opts.target.proteinG * 0.8 ? 120 : 0;
     const patternScore =
       (m.patternFit ?? []).filter((p) => opts.preferPatterns?.includes(p)).length * 60;
-    const jitter = opts.rng() * 40; // 난수 타이브레이커 (너무 강하지 않게)
+    const jitter = opts.rng() * 180; // 0~180 — 좁은 풀에서도 1순위 재배치 유도
     return { m, score: kcalScore + proteinScore + patternScore + jitter };
   });
 

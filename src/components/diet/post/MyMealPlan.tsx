@@ -84,8 +84,15 @@ export const MyMealPlan = ({
   );
 
   const handleReroll = () => {
+    // 새 plan 강제 — 직전 seed 와 절대 같지 않게 큰 폭으로 점프 + 시간 jitter.
+    // (단순 +1 은 좁은 메뉴 풀에서 동일 결과가 나올 수 있고, override 만 풀려서
+    //  화면이 안 바뀌는 케이스 발생)
     setOverridePlan(null);
-    setSeed(seed + 1);
+    setSeed((prev) => {
+      let next = Math.floor(Math.random() * 1_000_000) + (Date.now() % 1_000);
+      if (next === prev) next += 137; // 안전망 — 동일값 회피
+      return next;
+    });
   };
 
   const handleSwapConfirm = (slot: MealSlot, item: MealItem) => {
