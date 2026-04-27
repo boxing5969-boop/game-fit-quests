@@ -443,34 +443,31 @@ serve(async (req) => {
       systemMessages.push({ role: "system", content: dietContext });
     }
 
-    // ── 토큰 예산 관리 (sliding window) ────────────────────────────
-    // groq llama-3.1-8b-instant 의 분당 토큰(TPM) 한도가 6000.
-    // system 메시지가 이미 SYSTEM_PROMPT + KNOWLEDGE_153 + 컨텍스트로
-    // 1500~2500 토큰 차지하므로, 사용자/모델 대화는 4000 토큰 이내로 제한.
-    // 한국어 평균: 1자 ≈ 0.6 토큰, 영문 1자 ≈ 0.25 토큰. 안전 비율 0.5 사용.
+    // ── 대화 히스토리 제한 ──────────────────────────────────────────
+    // 두 단계 안전장치:
+    //   1) 하드 캡: 최근 10개 메시지만 (오래된 발언은 무관하고 토큰만 차지)
+    //   2) 토큰 예산: 그래도 길면 4000 토큰까지 — groq TPM 6000 한도 마진 확보
+    // 한국어 1자 ≈ 0.5 토큰 어림(보수적).
+    const HISTORY_CAP = 10;
     const MAX_HISTORY_TOKENS = 4000;
     const approxTokens = (s: string) => Math.ceil(s.length * 0.5);
-    // 항상 마지막 user 메시지는 보존. 그 외는 최근부터 거꾸로 토큰 예산이
-    // 허용하는 만큼만 포함. role 페어링이 깨지지 않도록 짝수 단위로 트림.
+
+    // 1단계 — 하드 캡
+    const recentMessages = messages.slice(-HISTORY_CAP);
+
+    // 2단계 — 토큰 예산: 최근부터 거꾸로 예산이 허용하는 만큼만 포함
     const trimmedHistory: Array<{ role: string; content: string }> = [];
     let budget = MAX_HISTORY_TOKENS;
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const m = messages[i];
+    for (let i = recentMessages.length - 1; i >= 0; i--) {
+      const m = recentMessages[i];
       const t = approxTokens(m.content || "");
       if (t > budget && trimmedHistory.length > 0) break;
       trimmedHistory.unshift(m);
       budget -= t;
     }
-    // 최소 6개(또는 전체)는 유지 — 짧은 메시지가 많을 때도 흐름 유지.
-    if (trimmedHistory.length < 6 && messages.length > trimmedHistory.length) {
-      const need = Math.min(6, messages.length) - trimmedHistory.length;
-      const startIdx = Math.max(0, messages.length - trimmedHistory.length - need);
-      const extra = messages.slice(startIdx, messages.length - trimmedHistory.length);
-      trimmedHistory.unshift(...extra);
-    }
     if (trimmedHistory.length < messages.length) {
       console.log(
-        `[chat-assistant] history trimmed: ${messages.length} → ${trimmedHistory.length} messages (budget ${MAX_HISTORY_TOKENS} tokens)`,
+        `[chat-assistant] history trimmed: ${messages.length} → ${trimmedHistory.length} messages (cap ${HISTORY_CAP}, budget ${MAX_HISTORY_TOKENS} tokens)`,
       );
     }
 
@@ -516,25 +513,33 @@ serve(async (req) => {
       );
     }
 
+    // 모든 응답에 X-AI-Provider 헤더 일관 부착 (성공/실패 무관).
+    // 클라이언트가 어느 provider 가 마지막으로 시도됐는지 항상 알 수 있게 한다.
+    const baseHeaders = (extra: Record<string, string> = {}) => ({
+      ...corsHeaders,
+      "X-AI-Provider": usedProvider || "none",
+      ...extra,
+    });
+
     // Defensive: 위 for 루프는 항상 response 를 할당함. TS 보강용 가드.
     if (!response) {
       return new Response(
         JSON.stringify({ error: "AI 서비스 오류: no response" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 500, headers: baseHeaders({ "Content-Type": "application/json" }) },
       );
     }
 
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          JSON.stringify({ error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.", provider: usedProvider }),
+          { status: 429, headers: baseHeaders({ "Content-Type": "application/json" }) },
         );
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "AI 크레딧이 부족합니다." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          JSON.stringify({ error: "AI 크레딧이 부족합니다.", provider: usedProvider }),
+          { status: 402, headers: baseHeaders({ "Content-Type": "application/json" }) },
         );
       }
       const t = await response.text();
@@ -551,22 +556,19 @@ serve(async (req) => {
           status: response.status,
           detail: t.slice(0, 400),
         }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 500, headers: baseHeaders({ "Content-Type": "application/json" }) },
       );
     }
 
-    // 성공. 어느 provider 가 응답했는지 response header 로 노출 (디버깅용).
-    const streamHeaders: Record<string, string> = {
-      ...corsHeaders,
-      "Content-Type": "text/event-stream",
-      "X-AI-Provider": usedProvider,
-    };
-    return new Response(response.body, { headers: streamHeaders });
+    // 성공. 스트림 응답 — 어느 provider 가 응답했는지 X-AI-Provider 로 노출.
+    return new Response(response.body, {
+      headers: baseHeaders({ "Content-Type": "text/event-stream" }),
+    });
   } catch (e) {
     console.error("chat error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "알 수 없는 오류" }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "X-AI-Provider": "none", "Content-Type": "application/json" },
     });
   }
 });
