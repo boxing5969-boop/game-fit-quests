@@ -25,6 +25,8 @@ import {
   computeExtendDeadline,
 } from "@/lib/diet/postProgramCoachEngine";
 import WeeklyCheckinDialog from "./WeeklyCheckinDialog";
+import PostProgramDailyCheckCard from "./PostProgramDailyCheckCard";
+import { useAuth } from "@/contexts/AuthContext";
 import ExtendReassessmentWizard from "./ExtendReassessmentWizard";
 import ExtendCycleResult from "./ExtendCycleResult";
 import AutoMealPlanSection from "./AutoMealPlanSection";
@@ -46,6 +48,7 @@ interface ExtendHomeProps {
  * 체크인 제출 기준으로 잡아야 회원 페이스에 맞게 동작.
  */
 export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
+  const { user } = useAuth();
   const [checkinOpen, setCheckinOpen] = useState(false);
 
   const totalWeeks = Math.max(1, Math.floor(plan.extension_cycle_length / 7));
@@ -219,6 +222,13 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
           <p className="mt-0.5">{plan.coach_recommendation_note}</p>
         </section>
       )}
+
+      {/* 추가: 매일 미션 체크 + 점수 + 오삼 코치 (사후 프로그램 일일 체크) */}
+      <PostProgramDailyCheckCard
+        mode="extend"
+        planId={plan.id}
+        userId={user?.id ?? null}
+      />
 
       {/* 추가: 데드라인 + 오삼 코치 동적 피드백 */}
       <ExtendDeadlineFeedbackCard plan={plan} />

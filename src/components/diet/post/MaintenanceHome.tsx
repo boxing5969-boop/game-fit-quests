@@ -19,6 +19,8 @@ import {
   computeMaintenanceWeeklyCheckDeadline,
 } from "@/lib/diet/postProgramCoachEngine";
 import WeeklyCheckinDialog from "./WeeklyCheckinDialog";
+import PostProgramDailyCheckCard from "./PostProgramDailyCheckCard";
+import { useAuth } from "@/contexts/AuthContext";
 import AutoMealPlanSection from "./AutoMealPlanSection";
 
 interface MaintenanceHomeProps {
@@ -38,6 +40,7 @@ interface MaintenanceHomeProps {
  *   6. 최근 체크인 히스토리
  */
 export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
+  const { user } = useAuth();
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [showRecovery, setShowRecovery] = useState(false);
 
@@ -116,6 +119,13 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
           공개 랭킹에 쓰이지 않습니다. 자기 점검 용도입니다.
         </p>
       </section>
+
+      {/* 추가: 매일 미션 체크 + 점수 + 오삼 코치 (사후 프로그램 일일 체크) */}
+      <PostProgramDailyCheckCard
+        mode="maintenance"
+        planId={plan.id}
+        userId={user?.id ?? null}
+      />
 
       {/* 자동 식단 — BMR/TDEE 계산 + 하루 메뉴 자동 생성 */}
       <AutoMealPlanSection mode="maintenance" />
