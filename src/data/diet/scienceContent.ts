@@ -146,7 +146,7 @@ export const BALANCE_PILLARS: readonly BalancePillar[] = Object.freeze([
 
 export const BALANCE_PILLARS_HEADER = Object.freeze({
   tagline: "7 PILLARS OF BALANCE",
-  title: "안 찌는 몸은 '7가지' 로 떠 있다",
+  title: "안 찌는 몸은 '7개의 기둥' 으로 지탱됩니다",
   subtitle:
     "5대 영양소(탄·단·지·비타민·미네랄) + 물 + 휴식. 이 7개 중 하나만 흔들려도 몸 전체의 대사 밸런스가 기울어요. 결핍은 체중이 아니라 '체질' 을 바꿉니다.",
 });
