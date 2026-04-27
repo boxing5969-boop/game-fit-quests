@@ -613,6 +613,13 @@ const ActiveHome = (p: ActiveHomeProps) => {
         milestone21Reached={p.milestone21}
       />
 
+      {/* 추가: 21일 이후 프로그램 진입 CTA — currentDay 에 따라 라벨/강조 변동 */}
+      <PostProgramEntryCard
+        currentDay={p.currentDay}
+        milestone21={p.milestone21}
+        onEnter={() => navigate("/diet/post-program")}
+      />
+
       {/* 코치 한마디 — 실제 코치 노트가 없으면 일자별 결정적 랜덤 픽
           (힘이되는말 / 다이어트 상식 번갈아) */}
       <CoachCornerCard
@@ -714,6 +721,102 @@ function useLatestCoachNote(enrollmentId: string) {
     },
   });
 }
+
+// ───────────────────────────────────────────────────────────────────
+// 21일 이후 프로그램 진입 CTA 카드.
+//   currentDay 에 따라 3단계 표시:
+//     · Day 1~13       : 미리보기 (lock 아이콘 + 부드러운 안내)
+//     · Day 14~20      : 곧 시작 (counts down)
+//     · Day 21+ / 완주 : 시작 가능 (primary CTA, 강조 emerald 톤)
+//   클릭 시 /diet/post-program 으로 이동 — 그 페이지가 자동으로 상태별 분기.
+// ───────────────────────────────────────────────────────────────────
+const PostProgramEntryCard = ({
+  currentDay,
+  milestone21,
+  onEnter,
+}: {
+  currentDay: number;
+  milestone21: boolean;
+  onEnter: () => void;
+}) => {
+  const eligible = milestone21 || currentDay >= 21;
+  const remainingDays = Math.max(0, 21 - currentDay);
+  const tone: "lock" | "soon" | "ready" =
+    eligible ? "ready" : currentDay >= 14 ? "soon" : "lock";
+
+  const title =
+    tone === "ready"
+      ? "21일 이후 프로그램 시작 준비 완료"
+      : tone === "soon"
+        ? `21일 이후 프로그램 — ${remainingDays}일 남았어요`
+        : "21일 이후 프로그램 미리보기";
+  const subtitle =
+    tone === "ready"
+      ? "유지 컨설팅 / 건강리셋 연장 두 갈래 중 한 가지를 골라 다음 단계로."
+      : tone === "soon"
+        ? "곧 활성화돼요. 미리 두 갈래 경로를 확인해 보세요."
+        : "유지 모드와 건강리셋 연장 — 21일 후 어떤 경로로 갈 수 있는지 살펴봐요.";
+  const ctaLabel =
+    tone === "ready" ? "지금 시작하기" : "프로그램 보기";
+
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border p-4 transition-colors",
+        tone === "ready"
+          ? "border-emerald-400/50 bg-emerald-400/10"
+          : tone === "soon"
+            ? "border-primary/30 bg-primary/5"
+            : "border-border bg-card",
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <p
+          className={cn(
+            "text-[10px] font-black uppercase tracking-[0.2em]",
+            tone === "ready"
+              ? "text-emerald-600"
+              : tone === "soon"
+                ? "text-primary"
+                : "text-muted-foreground",
+          )}
+        >
+          POST · 21일 이후
+        </p>
+        {tone === "ready" && (
+          <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-700">
+            READY
+          </span>
+        )}
+      </div>
+      <p
+        className={cn(
+          "mt-1 text-[13.5px] font-extrabold leading-tight",
+          tone === "ready" ? "text-emerald-700" : "text-foreground",
+        )}
+      >
+        {title}
+      </p>
+      <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+        {subtitle}
+      </p>
+      <Button
+        onClick={onEnter}
+        className={cn(
+          "mt-3 h-10 w-full rounded-xl text-[12.5px] font-bold",
+          tone === "ready"
+            ? "bg-emerald-500 text-white hover:bg-emerald-500/90"
+            : tone === "soon"
+              ? "bg-primary text-primary-foreground"
+              : "bg-secondary text-secondary-foreground",
+        )}
+      >
+        {ctaLabel}
+        <ArrowRight className="ml-1.5 h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
 
 // 사용하지 않는 아이콘 import 방지용 참조
 void Calendar;
