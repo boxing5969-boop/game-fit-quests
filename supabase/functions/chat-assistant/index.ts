@@ -40,7 +40,7 @@ const PROVIDERS: Provider[] = [
     url: "https://api.groq.com/openai/v1/chat/completions",
     // llama-3.1-8b-instant — 한국어 품질 안정. (gemma2-9b-it 는 TPM 여유는 컸지만
     // 한국어 출력에 중국어/영어 혼입·임의 단어 생성·부적절 표현 발생.)
-    // 시스템 프롬프트 600자 + history slice(-2) + max_tokens 200 으로 토큰 합산 ~600
+    // 시스템 프롬프트 3500자 + history slice(-2) + max_tokens 500 으로 토큰 합산 ~2650
     // → llama-3.1-8b-instant TPM 6K 한도 안에 풍부히 들어감.
     model: "llama-3.1-8b-instant",
   },
@@ -140,13 +140,15 @@ const SYSTEM_PROMPT = `너는 랭킹업(RANKING-UP) 앱의 AI 코치 "오삼"이
 
 [규칙]
 1. 한국어 표준어만. 외국어 문자(5个/recovery/修 등) 절대 금지. 동일 문장 반복 금지.
-2. 답변 2-3문장. 명확·간결.
-3. 임의 합성어 만들지 마(예: 21야/포도살/유비식 금지). 표준어만.
-4. 회원 실제 데이터가 컨텍스트에 없으면 절대 만들지 마. "회원님의 기록을 보면" 같은 표현 금지.
-5. 성적·욕설·혐오·의료 진단·약물 권유 절대 금지.
-6. 카운터=되받아치기 복싱 기술. 잽은 "잽" (쩁/쨉 금지).
-7. 역질문으로 마무리 금지. 다음 한 걸음을 구체적 행동으로 제안.
-8. 모르는 건 솔직히 "확인이 어려워요. 담당 코치에게 문의해주세요" 안내.`;
+2. 답변 2-5문장. 명확·간결. 답변이 잘리지 않도록 결론까지 마무리.
+3. 임의 합성어 만들지 마(예: 21야/포도살/유비식/식은 설퍼/국물 수박 금지). 표준어만.
+4. 영양소 수치(g, kcal 등)를 임의로 만들어내지 마. 정확히 아는 일반 상식 수준만 인용하고, 자세한 수치는 "앱의 자동 식단·식품 가이드를 참고" 또는 "담당 코치 확인" 안내.
+   잘못된 예: "수박 8.9g/100g 식이섬유" (실제는 ~0.4g) — 절대 금지.
+5. 회원 실제 데이터가 컨텍스트에 없으면 절대 만들지 마. "회원님의 기록을 보면" 같은 표현 금지.
+6. 성적·욕설·혐오·의료 진단·약물 권유 절대 금지.
+7. 카운터=되받아치기 복싱 기술. 잽은 "잽" (쩁/쨉 금지). 식이섬유는 "식이섬유" (식은 설퍼 금지).
+8. 역질문으로 마무리 금지. 다음 한 걸음을 구체적 행동으로 제안.
+9. 모르는 건 솔직히 "확인이 어려워요. 담당 코치에게 문의해주세요" 안내.`;
 function buildDietContext(enrollment: any, snapshot: any, recentLogs: any[], latestCoachNote: any) {
   if (!enrollment && !snapshot && (!recentLogs || recentLogs.length === 0)) return "";
   const lines: string[] = [];
@@ -425,7 +427,7 @@ serve(async (req) => {
           model: p.model,
           messages: fullMessages,
           stream: true,
-          max_tokens: 200,
+          max_tokens: 500,
         }),
       });
       if (response.ok) break;
@@ -443,7 +445,7 @@ serve(async (req) => {
             model: p.model,
             messages: minimalMessages,
             stream: true,
-            max_tokens: 200,
+            max_tokens: 500,
           }),
         });
         if (response.ok) break;
