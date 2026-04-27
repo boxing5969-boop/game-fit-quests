@@ -36,17 +36,14 @@ function modeFilter(it, mode) {
   return it.tags.some((t) => allow.includes(t));
 }
 
-function weightedPick(pool) {
+function weightedPick(pool, slotProtein = 25, slotKcal = 500) {
   const weights = pool.map((m) => {
-    let proteinTier;
-    if (m.proteinG >= 30) proteinTier = m.proteinG * m.proteinG * 0.15;
-    else if (m.proteinG >= 25) proteinTier = m.proteinG * m.proteinG * 0.08;
-    else if (m.proteinG >= 20) proteinTier = m.proteinG * m.proteinG * 0.04;
-    else if (m.proteinG >= 15) proteinTier = m.proteinG * 0.5;
-    else proteinTier = m.proteinG * 0.1;
-    const fiberW = Math.pow(m.fiberG, 1.5) * 0.4;
-    const probioticW = m.hasProbiotic ? 8 : 0;
-    return 0.2 + proteinTier + fiberW + probioticW;
+    const proteinFit = Math.max(0, 1 - Math.min(Math.abs(m.proteinG - slotProtein) / Math.max(slotProtein, 1), 1));
+    const kcalFit = Math.max(0, 1 - Math.min(Math.abs(m.kcal - slotKcal) / Math.max(slotKcal, 1), 1));
+    const fitW = Math.pow(proteinFit, 3) * 30 + Math.pow(kcalFit, 3) * 12;
+    const fiberW = m.fiberG * 0.3;
+    const probioticW = m.hasProbiotic ? 3 : 0;
+    return 1 + fitW + fiberW + probioticW;
   });
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
@@ -57,39 +54,52 @@ function weightedPick(pool) {
   return pool[pool.length - 1];
 }
 
-function simulate(mode, target) {
+function simulate(mode, target, label) {
   const N = 30;
-  const slotTargets = { breakfast: target.proteinG * 0.27, lunch: target.proteinG * 0.36, dinner: target.proteinG * 0.36 };
+  // splitTargetsBySlot: 27/36/36 분할 가정
+  const slotProtein = { breakfast: target.proteinG * 0.27, lunch: target.proteinG * 0.36, dinner: target.proteinG * 0.36 };
+  const slotKcal = { breakfast: target.kcal * 0.27, lunch: target.kcal * 0.36, dinner: target.kcal * 0.36 };
   const FIBER_TARGET = 25;
-  const stats = { protein: [], fiber: [], probiotic: 0 };
+  const stats = { protein: [], fiber: [], kcal: [], probiotic: 0 };
   for (let r = 0; r < N; r++) {
     const used = new Set();
-    let totalP = 0, totalF = 0, hasProb = false;
+    let totalP = 0, totalF = 0, totalK = 0, hasProb = false;
     for (const slot of ["breakfast", "lunch", "dinner"]) {
       const pool = items.filter((it) => it.type === slot && modeFilter(it, mode) && !used.has(it.id));
       if (pool.length === 0) continue;
-      const picked = weightedPick(pool);
+      const picked = weightedPick(pool, slotProtein[slot], slotKcal[slot]);
       used.add(picked.id);
       totalP += picked.proteinG;
       totalF += picked.fiberG;
+      totalK += picked.kcal;
       if (picked.hasProbiotic) hasProb = true;
     }
     stats.protein.push(totalP);
     stats.fiber.push(totalF);
+    stats.kcal.push(totalK);
     if (hasProb) stats.probiotic++;
   }
   const avg = (a) => Math.round(a.reduce((s, v) => s + v, 0) / a.length);
   const proteinAvg = avg(stats.protein);
   const fiberAvg = avg(stats.fiber);
-  console.log(`[${mode}] (목표 단백질 ${target.proteinG}g, 섬유 ${FIBER_TARGET}g)`);
-  console.log(`  단백질 평균: ${proteinAvg}g (${Math.round(proteinAvg / target.proteinG * 100)}%) · min ${Math.min(...stats.protein)}, max ${Math.max(...stats.protein)}`);
-  console.log(`  섬유 평균:   ${fiberAvg}g (${Math.round(fiberAvg / FIBER_TARGET * 100)}%) · min ${Math.min(...stats.fiber)}, max ${Math.max(...stats.fiber)}`);
-  console.log(`  유산균 hit:  ${stats.probiotic}/${N}회 (${Math.round(stats.probiotic / N * 100)}%)`);
+  const kcalAvg = avg(stats.kcal);
+  console.log(`[${mode}] ${label} (목표 단백질 ${target.proteinG}g, 칼로리 ${target.kcal} kcal, 섬유 ${FIBER_TARGET}g)`);
+  console.log(`  단백질 평균: ${proteinAvg}g (${Math.round(proteinAvg / target.proteinG * 100)}%) · ${Math.min(...stats.protein)}~${Math.max(...stats.protein)}`);
+  console.log(`  칼로리 평균: ${kcalAvg} kcal (${Math.round(kcalAvg / target.kcal * 100)}%) · ${Math.min(...stats.kcal)}~${Math.max(...stats.kcal)}`);
+  console.log(`  섬유 평균:   ${fiberAvg}g (${Math.round(fiberAvg / FIBER_TARGET * 100)}%)`);
+  console.log(`  유산균 hit:  ${stats.probiotic}/${N}회`);
 }
 
-// 일반 회원: 70kg 활동중인 남성 → 단백질 ~120g
-const target = { proteinG: 120 };
+// 시나리오 1 — 50대 여성 60kg, 단백질 75g
+console.log("=== 시나리오 1: 단백질 75g 회원 ===");
 for (const mode of ["random", "home_korean", "office_quick"]) {
-  simulate(mode, target);
+  simulate(mode, { proteinG: 75, kcal: 1700 }, "");
+  console.log("");
+}
+
+// 시나리오 2 — 활동 남성 70kg, 단백질 120g
+console.log("=== 시나리오 2: 단백질 120g 회원 ===");
+for (const mode of ["random", "home_korean", "office_quick"]) {
+  simulate(mode, { proteinG: 120, kcal: 2400 }, "");
   console.log("");
 }

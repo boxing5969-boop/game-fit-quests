@@ -149,29 +149,33 @@ function pickOneMeal(opts: {
   // 모든 항목에 base 0.5 weight 를 두어 변동성 유지. 결과: 메인 3슬롯이 80~95%
   // 자체 충족 → 오삼 코치 advice 가 남은 5~20% 만 정확히 안내.
   // 단백질 가중치는 비선형(제곱)으로 — 30g 항목이 10g 항목보다 9배 자주 뽑힘.
+  // 목표 근접도 기반 가중 — 슬롯별 단백질·칼로리 이상치에 가까울수록 weight ↑.
+  // proteinFit^3 으로 곡선을 가파르게 만들어 양극단 모두 정확히 매칭:
+  //   · 75g 목표: 슬롯 25g 근처 메뉴(28g 등) 강하게 우선 → 합계 ~75g, 오버 방지
+  //   · 120g 목표: 슬롯 40g 근처 메뉴 강하게 우선 → 합계 ~110~120g, 언더 방지
+  const slotProtein = Math.max(opts.target.proteinG, 1);
+  const slotKcal = Math.max(opts.target.kcal, 1);
   const weights = pool.map((m) => {
-    // 단백질 핵심 — 임계 + 제곱 결합으로 고단백 메뉴를 강력하게 우선.
-    // 30g+: ×2 부스트 / 25g+: ×1.5 / 20g+: ×1.0 / 15g+: ×0.5 / 그 미만: ×0.05
-    let proteinTier: number;
-    if (m.proteinG >= 30) proteinTier = m.proteinG * m.proteinG * 0.15;       // 30g→135, 40g→240
-    else if (m.proteinG >= 25) proteinTier = m.proteinG * m.proteinG * 0.08;  // 25g→50, 28g→63
-    else if (m.proteinG >= 20) proteinTier = m.proteinG * m.proteinG * 0.04;  // 20g→16, 24g→23
-    else if (m.proteinG >= 15) proteinTier = m.proteinG * 0.5;                // 15g→7.5, 18g→9
-    else proteinTier = m.proteinG * 0.1;                                      // 10g→1, 8g→0.8
-    // 섬유 — 12g→17, 6g→4
-    const fiberW = Math.pow(m.fiberG, 1.5) * 0.4;
-    const probioticW = m.hasProbiotic ? 8 : 0;
+    const proteinDiffRatio = Math.abs(m.proteinG - slotProtein) / slotProtein;
+    const proteinFit = Math.max(0, 1 - Math.min(proteinDiffRatio, 1));
+    const kcalDiffRatio = Math.abs(m.kcal - slotKcal) / slotKcal;
+    const kcalFit = Math.max(0, 1 - Math.min(kcalDiffRatio, 1));
+    // 근접도 ^3 — 1순위 후보를 강하게 모음. 변동성은 base 1.0 으로 유지.
+    const fitW = Math.pow(proteinFit, 3) * 30 + Math.pow(kcalFit, 3) * 12;
+    // 섬유 절대량 약하게(±5g 차이가 단백질 정확도를 깨지 않도록)
+    const fiberW = m.fiberG * 0.3;
+    const probioticW = m.hasProbiotic ? 3 : 0;
     const tagW =
       (opts.bonusTags ?? []).reduce(
-        (acc, t) => acc + (m.tags.includes(t) ? 2 : 0),
+        (acc, t) => acc + (m.tags.includes(t) ? 1.5 : 0),
         0,
       );
     const nameW =
       (opts.bonusNameKeywords ?? []).reduce(
-        (acc, k) => acc + (m.name.includes(k) ? 3 : 0),
+        (acc, k) => acc + (m.name.includes(k) ? 2 : 0),
         0,
       );
-    return 0.2 + proteinTier + fiberW + probioticW + tagW + nameW;
+    return 1 + fitW + fiberW + probioticW + tagW + nameW;
   });
   const total = weights.reduce((a, b) => a + b, 0);
   let r = opts.rng() * total;
