@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { RefreshCw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNutritionProfile } from "@/hooks/useDietNutrition";
 import {
@@ -85,6 +85,8 @@ interface ActiveBodyProps {
 
 /** 프로필이 완전한 경우의 본문 — 훅을 안전하게 사용 */
 const ActiveBody = ({ profile, age, mode, preferPatterns, onRefresh }: ActiveBodyProps) => {
+  const [editMode, setEditMode] = useState(false);
+
   const target = useMemo(
     () =>
       computeNutritionTarget({
@@ -97,6 +99,28 @@ const ActiveBody = ({ profile, age, mode, preferPatterns, onRefresh }: ActiveBod
       }),
     [profile, age, mode],
   );
+
+  if (editMode) {
+    return (
+      <NutritionOnboardingCard
+        mode={mode}
+        initial={{
+          sex: profile.sex as Sex | null,
+          heightCm: profile.height_cm,
+          weightKg: profile.weight_kg,
+          targetWeightKg: profile.target_weight_kg,
+          activityLevel: profile.activity_level as ActivityLevel | null,
+          mealsPerDay: (profile.meals_per_day as 2 | 3 | 4 | null) ?? null,
+          dietaryRestrictions: profile.dietary_restrictions,
+        }}
+        onDone={() => {
+          setEditMode(false);
+          onRefresh();
+        }}
+        onCancel={() => setEditMode(false)}
+      />
+    );
+  }
 
   return (
     <section className="space-y-3">
@@ -116,11 +140,11 @@ const ActiveBody = ({ profile, age, mode, preferPatterns, onRefresh }: ActiveBod
       />
       <Button
         variant="outline"
-        onClick={onRefresh}
+        onClick={() => setEditMode(true)}
         className="h-9 w-full rounded-xl text-[12px]"
       >
-        <RefreshCw className="mr-1 h-3 w-3" />
-        프로필 새로고침
+        <Pencil className="mr-1 h-3 w-3" />
+        프로필 수정 (키·체중·활동수준 등)
       </Button>
     </section>
   );
