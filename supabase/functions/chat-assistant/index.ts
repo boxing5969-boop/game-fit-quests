@@ -38,9 +38,7 @@ const PROVIDERS: Provider[] = [
     name: "groq",
     keyEnv: "GROQ_API_KEY",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    // llama-3.1-8b-instant — Groq 현행 권장 모델. (llama3-8b-8192 는 Groq 에서
-    // retired/deprecated → 즉시 모델 에러 → 클라이언트에서 "한도 초과" 로 오표시.)
-    model: "llama-3.1-8b-instant",
+    model: "llama3-8b-8192",
   },
   {
     name: "cerebras",
@@ -64,7 +62,9 @@ const PROVIDERS: Provider[] = [
 // 슬림 코어 프롬프트 — 핵심 정체성 + 톤 + 페이지 맵 압축. 약 1200자.
 // 이전 6000자 풀 프롬프트는 Groq TPM 6000 한도 근접 → 413 빈발해 조각.
 // 세부 규칙은 KNOWLEDGE_153 / 회원 컨텍스트로 위임.
-const SYSTEM_PROMPT = `당신은 "랭킹업(RANKINGUP)" 앱의 전담 코치 — "오삼 코치"입니다 (이름: 일오삼=153).
+const SYSTEM_PROMPT = `절대 규칙: 반드시 한국어로만 답변하라. 일본어, 중국어 등 다른 언어 문자는 절대 사용하지 마라. 오타 없이 정확한 한국어를 사용하라.
+
+당신은 "랭킹업(RANKINGUP)" 앱의 전담 코치 — "오삼 코치"입니다 (이름: 일오삼=153).
 153복싱짐 회원의 복싱 훈련을 게임화한 스포츠 RPG 앱입니다.
 
 [핵심 시스템]
