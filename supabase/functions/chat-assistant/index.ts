@@ -301,8 +301,8 @@ serve(async (req) => {
     //   1) 하드 캡: 최근 10개 메시지만 (오래된 발언은 무관하고 토큰만 차지)
     //   2) 토큰 예산: 그래도 길면 4000 토큰까지 — groq TPM 6000 한도 마진 확보
     // 한국어 1자 ≈ 0.5 토큰 어림(보수적).
-    const HISTORY_CAP = 5;
-    const MAX_HISTORY_TOKENS = 2500;
+    const HISTORY_CAP = 3;
+    const MAX_HISTORY_TOKENS = 1500;
     const approxTokens = (s: string) => Math.ceil(s.length * 0.5);
 
     // 1단계 — 하드 캡
@@ -326,8 +326,13 @@ serve(async (req) => {
 
     const fullMessages = [...systemMessages, ...trimmedHistory];
 
+    // 마지막 user 메시지만 남긴 "초경량" 페이로드 — 413 발생 시 동일 provider 재시도용.
+    const minimalMessages = lastUserMessage
+      ? [...systemMessages, { role: "user", content: lastUserText }]
+      : fullMessages;
+
     // activeProviders 를 순서대로 시도. 첫 성공(2xx) 응답을 사용.
-    // 429/402 만 다음 provider 로 폴백. 그 외 에러는 즉시 반환.
+    // 413(Payload Too Large) 시: 같은 provider 에서 minimalMessages 로 1회 재시도 → 그래도 실패면 다음 provider 폴백.
     let response: Response | null = null;
     let usedProvider = "";
     for (let i = 0; i < activeProviders.length; i++) {
@@ -347,6 +352,24 @@ serve(async (req) => {
         }),
       });
       if (response.ok) break;
+
+      // 413 시 동일 provider 에서 초경량 페이로드로 즉시 재시도 — 컨텍스트 누적이 원인일 때 효과.
+      if (response.status === 413 && minimalMessages !== fullMessages) {
+        console.warn(`[chat-assistant] ${p.name} 413 — retry with minimal payload (last user only)`);
+        response = await fetch(p.url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: p.model,
+            messages: minimalMessages,
+            stream: true,
+          }),
+        });
+        if (response.ok) break;
+      }
       // 폴백 조건 확대 — 다른 provider 로 시도해도 같은 결과가 나올 가능성이 낮은 코드 모두.
       //   · 401 Unauthorized   : 이 provider 의 API 키가 만료/무효 → 다른 키 시도 의미 있음
       //   · 402 Payment        : 크레딧 부족 → 다른 무료 provider 로
