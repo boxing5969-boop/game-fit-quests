@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ChevronLeft, Droplets, Footprints, Moon, Save, Utensils } from "lucide-react";
+import { ChevronLeft, Droplets, Footprints, Moon, Save, Sparkles, Utensils } from "lucide-react";
 
 import AppPage from "@/components/ui/rankingup/AppPage";
 import PageHeader from "@/components/ui/rankingup/PageHeader";
@@ -31,7 +31,20 @@ import {
   computeQuestScore,
   diffHabitsForEmission,
   gradeTiming,
+  type QuestSourceKind,
 } from "@/lib/diet/questEvents";
+import {
+  calcQuestScore,
+  gradeTimingBySlot,
+  type QuestSlotKey,
+  type TimingGrade,
+} from "@/lib/diet/questTimingEngine";
+import {
+  getQuestMessage,
+  makeMessageSeed,
+  type QuestMessageType,
+} from "@/lib/diet/questMessageEngine";
+import type { DietMissionTemplate } from "@/data/diet/missionTemplates";
 import type { DailyHabitsPayload } from "@/services/dietService";
 import type { DietMealSlot, DietTrack } from "@/lib/dietTrack";
 
@@ -97,6 +110,156 @@ const DietTrackerPage = () => {
   const attendanceQuery = useAttendanceToday(user?.id, logDate);
   const recordQuestEvent = useRecordQuestEvent();
   const { logEvent } = useDietAnalytics();
+
+  // ── 추가: 미션 완료 / slot / 점수 derived helpers ──────────────
+  const isMissionCompleted = (
+    m: DietMissionTemplate,
+    h: DailyHabitsPayload,
+  ): boolean => {
+    const linked = m.linkedHabitColumn;
+    const waterHit =
+      m.waterMlThreshold !== undefined &&
+      (h.water_ml ?? 0) >= m.waterMlThreshold;
+    const habitHit = linked ? h[linked] === true : false;
+    return waterHit || habitHit;
+  };
+
+  const inferSlotForMission = (m: DietMissionTemplate): QuestSlotKey => {
+    if (m.waterMlThreshold !== undefined) return "water";
+    if (m.linkedHabitColumn === "gym_attended") return "workout";
+    if (m.linkedHabitColumn === "late_night_snack_avoided") return "dinner";
+    if (m.linkedHabitColumn === "sugary_drink_avoided") return "water";
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Seoul",
+      hour: "2-digit",
+      hour12: false,
+    });
+    const h = Number(
+      fmt.formatToParts(new Date()).find((p) => p.type === "hour")?.value ??
+        "0",
+    );
+    const hh = h === 24 ? 0 : h;
+    if (hh < 11) return "breakfast";
+    if (hh < 17) return "lunch";
+    return "dinner";
+  };
+
+  // 추가: quest event insert 헬퍼 — 메인 흐름 절대 막지 않도록 try/catch
+  const insertQuestEvent = (params: {
+    sourceKind: QuestSourceKind;
+    mission?: DietMissionTemplate | null;
+    missionId?: string;
+    missionLabel?: string;
+    isCore?: boolean;
+    mealSlot?: string | null;
+    timingGrade?: TimingGrade;
+    completedAt?: Date;
+    allDone?: boolean;
+    isComeback?: boolean;
+    meta?: Record<string, unknown>;
+  }) => {
+    try {
+      if (!user?.id || !enrollment) return;
+      const completedAt = params.completedAt ?? new Date();
+      const slotForGrade: QuestSlotKey = params.mission
+        ? inferSlotForMission(params.mission)
+        : (params.mealSlot as QuestSlotKey | null) ?? "snack";
+      const grade =
+        params.timingGrade ?? gradeTimingBySlot(slotForGrade, completedAt);
+      const isCore =
+        params.isCore ?? params.mission?.severity === "core" ?? false;
+      const score = calcQuestScore({
+        isCore,
+        timingGrade: grade,
+        allDone: params.allDone,
+        isComeback: params.isComeback,
+      });
+      const missionId = params.missionId ?? params.mission?.id ?? "";
+      const missionLabel = params.missionLabel ?? params.mission?.label ?? "";
+      if (!missionId) return;
+      recordQuestEvent.mutate({
+        userId: user.id,
+        enrollmentId: enrollment.id,
+        logDate,
+        dayNumber: currentDay,
+        missionId,
+        missionLabel,
+        sourceKind: params.sourceKind,
+        mealSlot: params.mealSlot ?? null,
+        completedAt,
+        timingGrade: grade,
+        baseScore: score.baseScore,
+        timingBonus: score.timingBonus,
+        totalScore: score.total,
+        meta: {
+          ...(params.mission?.category
+            ? { category: params.mission.category }
+            : {}),
+          ...(params.mission?.severity
+            ? { severity: params.mission.severity }
+            : {}),
+          ...(params.mission?.linkedHabitColumn
+            ? { linkedHabitColumn: params.mission.linkedHabitColumn }
+            : {}),
+          ...(params.meta ?? {}),
+        },
+      });
+    } catch (err) {
+      // 절대 메인 흐름을 막지 않음 — 콘솔만 남김
+      // eslint-disable-next-line no-console
+      console.warn("[DietTracker] insertQuestEvent failed", err);
+    }
+  };
+
+  // 추가: 진행률 / 점수 / 코치 메시지 (optimistic — habits 변경 즉시 반영)
+  const completedCount = useMemo(() => {
+    if (!todayPlan) return 0;
+    return todayPlan.missions.reduce(
+      (acc, m) => acc + (isMissionCompleted(m, habits) ? 1 : 0),
+      0,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayPlan, habits]);
+  const totalCount = todayPlan?.missions.length ?? 0;
+  const allDone = totalCount > 0 && completedCount === totalCount;
+
+  const todayQuestScore = useMemo(() => {
+    if (!todayPlan) return 0;
+    return todayPlan.missions.reduce((acc, m) => {
+      if (!isMissionCompleted(m, habits)) return acc;
+      const slot = inferSlotForMission(m);
+      const grade = gradeTimingBySlot(slot);
+      const s = calcQuestScore({
+        isCore: m.severity === "core",
+        timingGrade: grade,
+      });
+      return acc + s.total;
+    }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayPlan, habits]);
+
+  const coachMessageType: QuestMessageType = (() => {
+    if (totalCount === 0) return "morning_start";
+    if (allDone) return "all_done";
+    if (completedCount === 0) return "morning_start";
+    if (completedCount === totalCount - 1) return "almost_done";
+    return "incomplete_nudge";
+  })();
+  const coachMessage = useMemo(() => {
+    const seed = makeMessageSeed(user?.id ?? null, coachMessageType);
+    return getQuestMessage({
+      type: coachMessageType,
+      remainingCount: Math.max(0, totalCount - completedCount),
+      todayScore: todayQuestScore,
+      seed,
+    });
+  }, [user?.id, coachMessageType, totalCount, completedCount, todayQuestScore]);
+
+  // 저장 후 all_done 토스트는 1회만 — 화면 갱신마다 반복 차단
+  const [allDoneToastShown, setAllDoneToastShown] = useState(false);
+  useEffect(() => {
+    if (!allDone) setAllDoneToastShown(false);
+  }, [allDone]);
 
   // ── 폼 상태 (habits + note) ────────────────────────────────
   const [habits, setHabits] = useState<DailyHabitsPayload>(emptyHabits);
@@ -225,6 +388,18 @@ const DietTrackerPage = () => {
           });
         }
       }
+
+      // 저장 후 — 전체 미션 완료 시 오삼 코치 all_done 메시지 1회 표시.
+      if (allDone && !allDoneToastShown) {
+        const seed = makeMessageSeed(user?.id ?? null, "all_done");
+        const allDoneMsg = getQuestMessage({
+          type: "all_done",
+          todayScore: todayQuestScore,
+          seed,
+        });
+        toast.success(`🏆 ${allDoneMsg}`);
+        setAllDoneToastShown(true);
+      }
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : "저장 실패. 네트워크 상태 확인 후 다시 시도해 주세요.",
@@ -254,6 +429,35 @@ const DietTrackerPage = () => {
       log_id: logRow.id,
       meal_slot: slot,
     });
+
+    // 추가: 사진 인증 quest event(source_kind='photo') + 오삼 코치 칭찬 토스트.
+    // mealSlot 은 식사 슬롯명(breakfast/lunch/dinner/snack) 그대로 사용.
+    const slotForGrade: QuestSlotKey =
+      (slot as QuestSlotKey) ?? ("snack" as QuestSlotKey);
+    const completedAt = new Date();
+    const grade = gradeTimingBySlot(slotForGrade, completedAt);
+    insertQuestEvent({
+      sourceKind: "photo",
+      missionId: `photo:${slot}`,
+      missionLabel: `식단 사진 인증 (${slot})`,
+      isCore: false,
+      mealSlot: slot,
+      timingGrade: grade,
+      completedAt,
+      meta: { from: "handlePhoto" },
+    });
+    const seed = makeMessageSeed(
+      user.id,
+      grade === "perfect" ? "perfect_complete" : "mission_complete",
+      completedAt,
+    );
+    const praise = getQuestMessage({
+      type: grade === "perfect" ? "perfect_complete" : "mission_complete",
+      completedMissionLabel: `사진 인증 · ${slot}`,
+      timingGrade: grade,
+      seed,
+    });
+    toast.success(praise);
   };
 
   const stageLabel =
@@ -316,6 +520,76 @@ const DietTrackerPage = () => {
             )}
           </div>
         </div>
+
+        {/* 추가: 퀘스트 진행 카드 — 완료수/전체 + 오늘 점수 + 오삼 코치 한 줄 */}
+        {todayPlan && totalCount > 0 && (
+          <div
+            className={cn(
+              "rounded-2xl border p-4 transition-colors",
+              allDone
+                ? "border-emerald-400/50 bg-emerald-400/10"
+                : "border-border bg-card",
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <p
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-[0.2em]",
+                  allDone ? "text-emerald-600" : "text-primary",
+                )}
+              >
+                오늘의 퀘스트
+              </p>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
+                  allDone
+                    ? "bg-emerald-400/20 text-emerald-700"
+                    : "bg-primary/10 text-primary",
+                )}
+              >
+                {completedCount}/{totalCount} 완료
+              </span>
+            </div>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-300",
+                  allDone ? "bg-emerald-500" : "bg-primary",
+                )}
+                style={{
+                  width: `${
+                    totalCount > 0
+                      ? Math.round((completedCount / totalCount) * 100)
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <p
+                className={cn(
+                  "text-[11.5px] leading-relaxed",
+                  allDone ? "text-emerald-700" : "text-foreground",
+                )}
+              >
+                <Sparkles className="mr-1 inline h-3 w-3 align-[-2px]" />
+                {coachMessage}
+              </p>
+              <span
+                className={cn(
+                  "shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold",
+                  allDone
+                    ? "bg-emerald-500/15 text-emerald-700"
+                    : "bg-muted text-foreground",
+                )}
+                aria-label="오늘 퀘스트 점수"
+              >
+                {todayQuestScore}점
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* 오늘의 미션 (요약) */}
         {todayPlan && (
