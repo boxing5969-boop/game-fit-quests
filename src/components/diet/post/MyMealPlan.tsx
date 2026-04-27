@@ -17,8 +17,10 @@ import {
   type MealSlot,
 } from "@/lib/diet/nutritionEngine";
 import {
+  generateCoachAdvice,
   generateMealPlan,
   swapMealWithAutoAdjust,
+  type CoachAdvice,
   type MealPlanResult,
   type PlanMode,
 } from "@/lib/diet/mealPlanEngine";
@@ -89,6 +91,10 @@ export const MyMealPlan = ({
   const proteinPct = Math.round(plan.coverage.proteinRatio * 100);
   const fiveNutrients = useMemo(
     () => evaluateFiveNutrients(plan.nutrients, target),
+    [plan, target],
+  );
+  const coachAdvice = useMemo<CoachAdvice[]>(
+    () => generateCoachAdvice(plan.picks, target),
     [plan, target],
   );
 
@@ -294,26 +300,51 @@ export const MyMealPlan = ({
             detail={`${fiveNutrients.probiotic.count}회 (요거트·김치·된장 등)`}
           />
         </ul>
-        {!fiveNutrients.allGreen && (
-          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-            부족한 항목은 간식 "교체" 로 그릭요거트·사우어크라우트·견과류를 추가해 보세요.
-          </p>
-        )}
       </div>
 
-      {/* 끼니 카드 */}
+      {/* 오삼 코치 식단 도우미 — 부족한 영양소를 구체 음식·분량·시점으로 안내 */}
+      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-base">
+            🥊
+          </span>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-wide text-primary">
+              오삼 코치 식단 도우미
+            </p>
+            <p className="text-[12.5px] font-extrabold text-foreground">
+              {coachAdvice[0]?.tone === "success"
+                ? "오늘 식단, 합격이에요"
+                : "오늘 식단, 이렇게 보강해주세요"}
+            </p>
+          </div>
+        </div>
+        <ul className="mt-2 space-y-1.5">
+          {coachAdvice.map((a, i) => (
+            <li
+              key={`${a.type}-${i}`}
+              className={cn(
+                "rounded-lg border px-3 py-2 text-[11.5px] leading-relaxed",
+                a.tone === "warning" &&
+                  "border-amber-400/30 bg-amber-400/5 text-foreground",
+                a.tone === "info" &&
+                  "border-sky-400/30 bg-sky-400/5 text-foreground",
+                a.tone === "success" &&
+                  "border-emerald-400/30 bg-emerald-400/5 text-foreground",
+              )}
+            >
+              {a.message}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* 끼니 카드 — 메인 슬롯(아침/점심/저녁) 만 표시. 보강은 오삼 코치 카드에서 안내. */}
       <div className="space-y-2">
         {plan.picks.map((p, idx) => {
           const hasItem = !!p.item;
-          // 식전 쉐이크 — 같은 plan 안에 snack 이 2개 이상이고 첫 번째가 쉐이크면 식전 보강 슬롯
-          const isPreShake =
-            idx === 0 &&
-            p.slot === "snack" &&
-            !!p.item?.tags.includes("쉐이크") &&
-            plan.picks.filter((q) => q.slot === "snack").length > 1;
-          const slotLabel = isPreShake
-            ? "식전 단백질 (쉐이크)"
-            : MEAL_SLOT_LABEL_KO[p.slot];
+          const slotLabel = MEAL_SLOT_LABEL_KO[p.slot];
+          const isPreShake = false; // 식전 쉐이크 슬롯 폐지 — 보강은 코치 advice 가 담당
           return (
             <div
               key={`${p.slot}-${idx}`}

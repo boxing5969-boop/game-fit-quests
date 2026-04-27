@@ -401,6 +401,92 @@ function fillNutrientGaps(
   return picks;
 }
 
+// ===== 오삼 코치 식단 도우미 advice 생성 =====
+export type CoachAdviceTone = "warning" | "info" | "success";
+export interface CoachAdvice {
+  type: "protein" | "fiber" | "probiotic" | "vitamins" | "minerals" | "ok";
+  message: string;
+  tone: CoachAdviceTone;
+}
+
+/**
+ * 픽 결과 + 일일 목표를 비교해 오삼 코치 말투의 보강 안내를 생성.
+ * 부족 항목별로 구체 음식·분량·시점 권고. 모두 충족 시 격려 메시지 1개.
+ */
+export function generateCoachAdvice(
+  picks: MealPlanPick[],
+  target: NutritionTarget,
+): CoachAdvice[] {
+  const items = picks
+    .map((p) => p.item)
+    .filter((m): m is MealItem => !!m);
+
+  const sumProtein = items.reduce((s, m) => s + m.proteinG, 0);
+  const sumFiber = items.reduce((s, m) => s + m.fiberG, 0);
+  const probioticCount = items.filter((m) => m.hasProbiotic).length;
+  const vitCount = new Set(items.flatMap((m) => m.keyVitamins)).size;
+  const minCount = new Set(items.flatMap((m) => m.keyMinerals)).size;
+
+  const proteinGap = target.proteinG * PROTEIN_TARGET_RATIO - sumProtein;
+  const fiberGap = DAILY_FIBER_TARGET_G * 0.8 - sumFiber;
+
+  const advice: CoachAdvice[] = [];
+
+  if (proteinGap > 0) {
+    const grams = Math.round(proteinGap);
+    advice.push({
+      type: "protein",
+      tone: "warning",
+      message: `이 식단은 단백질이 약 ${grams}g 부족해요. 점심과 저녁 사이 오후 3시쯤 프로틴 쉐이크 1잔(단백질 약 20g)을 꼭 섭취해주세요.`,
+    });
+  }
+
+  if (fiberGap > 0) {
+    const grams = Math.round(fiberGap);
+    advice.push({
+      type: "fiber",
+      tone: "warning",
+      message: `섬유질이 약 ${grams}g 부족해요. 식사 사이 간식으로 사과 1개 또는 그릭요거트 150g + 블루베리 한컵을 추가하면 딱 맞아요.`,
+    });
+  }
+
+  if (probioticCount < DAILY_PROBIOTIC_TARGET) {
+    advice.push({
+      type: "probiotic",
+      tone: "warning",
+      message: `오늘 식단에 유산균(발효식품)이 없어요. 저녁 식사에 김치 50g을 곁들이거나 식후 그릭요거트 150g을 드시면 장 건강에 좋아요.`,
+    });
+  }
+
+  if (vitCount < DAILY_VITAMIN_DIVERSITY_TARGET) {
+    const need = DAILY_VITAMIN_DIVERSITY_TARGET - vitCount;
+    advice.push({
+      type: "vitamins",
+      tone: "info",
+      message: `비타민 종류가 ${need}종 부족해요. 토마토 2개, 시금치나물, 키위 1개 중 1~2가지를 식사에 곁들여 보세요.`,
+    });
+  }
+
+  if (minCount < DAILY_MINERAL_DIVERSITY_TARGET) {
+    const need = DAILY_MINERAL_DIVERSITY_TARGET - minCount;
+    advice.push({
+      type: "minerals",
+      tone: "info",
+      message: `무기질 종류가 ${need}종 부족해요. 견과류 한 줌(아몬드 10알), 미역국 1그릇, 우유 1잔 중 하나를 추가해 보세요.`,
+    });
+  }
+
+  if (advice.length === 0) {
+    advice.push({
+      type: "ok",
+      tone: "success",
+      message: `오늘 식단은 5대 영양소가 균형있게 구성되어 있어요. 추가 보강 없이 그대로 드셔도 충분합니다. 수분 섭취 1.5L 잊지 마세요!`,
+    });
+  }
+
+  return advice;
+}
+
 function aggregateNutrients(picks: MealPlanPick[]): {
   totals: MealPlanResult["totals"];
   nutrients: DailyNutrientSum;
@@ -647,15 +733,8 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
     return { slot: t.slot, target: t, item };
   });
 
-  // 영양 보강 간식 자동 추가 — 메인 슬롯 다양성 유지하면서 부족분만 간식으로 보강.
-  // 단백질 / 섬유 / 유산균 부족 시 최대 2개 간식을 picks 끝에 append.
-  picks = appendNutrientSupplements(
-    picks,
-    input.target,
-    excludeIngredients,
-    rng,
-    avoidPrev,
-  );
+  // 자동 보강 간식은 오삼 코치 advice 로 대체 — picks 는 메인 3슬롯 그대로 유지.
+  // appendNutrientSupplements 함수는 generateCoachAdvice 의 gap 계산 로직 재사용을 위해 보존.
 
   const { totals, nutrients } = aggregateNutrients(picks);
 
