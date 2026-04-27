@@ -2865,6 +2865,58 @@ export const MEAL_LIBRARY: MealItem[] = [
   },
 ];
 
+/** 식단 스타일. UI 의 모드 탭과 일대일 대응. */
+export type MealPlanMode = "random" | "home_korean" | "office_quick";
+
+/** 모드별 허용 태그(한국어/영어 동시 인식). 새 데이터를 영어 태그로 추가해도 호환. */
+const MODE_ALLOW_TAGS: Record<Exclude<MealPlanMode, "random">, readonly string[]> = {
+  home_korean: ["한식", "korean", "home", "집밥", "가정식", "자연식"],
+  office_quick: [
+    "편의점",
+    "간편",
+    "데스크",
+    "쉐이크",
+    "quick",
+    "simple",
+    "office",
+  ],
+};
+
+/**
+ * 모드별 메뉴 풀.
+ *   · random       → 전체 라이브러리
+ *   · home_korean  → 한식/집밥/한식 자연식 태그
+ *   · office_quick → 편의점/간편/쉐이크/데스크 태그
+ *
+ * 태그 매칭은 한국어/영어 모두 OR. 새 메뉴를 영어 태그로 추가해도 그대로 잡힘.
+ */
+export function getMealPoolByMode(mode: MealPlanMode): MealItem[] {
+  if (mode === "random") return MEAL_LIBRARY.slice();
+  const allow = MODE_ALLOW_TAGS[mode];
+  return MEAL_LIBRARY.filter((m) => m.tags.some((t) => allow.includes(t)));
+}
+
+/** SelectedMeal — code 와 동일한 id 알리아스 포함. UI 에서 meal.id 로 접근 가능. */
+export type SelectedMeal = MealItem & { id: string };
+
+/**
+ * 무가중 무작위 선택 + 최근 선택 ID 회피.
+ *   · recentIds 에 포함된 코드는 1차로 제외.
+ *   · 회피 후 풀이 비면 fallback 으로 회피 풀어 빈 결과 방지.
+ *   · 결정성 없음(Math.random) — 시드 기반 결정성이 필요하면 mealPlanEngine 의 pickOneMeal 사용.
+ */
+export function selectRandomMeal(
+  pool: MealItem[],
+  recentIds: readonly string[] = [],
+): SelectedMeal | null {
+  if (pool.length === 0) return null;
+  const recent = new Set(recentIds);
+  const fresh = pool.filter((m) => !recent.has(m.code));
+  const candidates = fresh.length > 0 ? fresh : pool;
+  const picked = candidates[Math.floor(Math.random() * candidates.length)];
+  return { ...picked, id: picked.code };
+}
+
 /** 태그/제한으로 필터. */
 export function filterMenus(opts: {
   slot?: MealSlot;

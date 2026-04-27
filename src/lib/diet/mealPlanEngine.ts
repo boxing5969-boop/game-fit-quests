@@ -15,7 +15,9 @@
 
 import {
   filterMenus,
+  getMealPoolByMode,
   type MealItem,
+  type MealPlanMode,
 } from "@/data/nutrition/mealLibrary";
 import {
   evaluateFiveNutrients,
@@ -26,11 +28,8 @@ import {
   type NutritionTarget,
 } from "./nutritionEngine";
 
-/** 식단 모드 — 회원이 식단 스타일을 선택. */
-export type PlanMode =
-  | "random"        // 기본: 전체 라이브러리 랜덤
-  | "home_korean"   // 가정집 한식 위주: 한식 태그 강제 + 닭가슴살 보강 + 단백질 부족 시 식전 쉐이크
-  | "office_quick"; // 업무용 초간단: 편의점/쉐이크 한정
+/** 식단 모드 — mealLibrary 의 MealPlanMode 와 동일. UI/엔진 단일 출처. */
+export type PlanMode = MealPlanMode;
 
 export interface MealPlanInput {
   target: NutritionTarget;
@@ -121,8 +120,8 @@ function pickOneMeal(opts: {
   excludeIngredients: string[];
   preferPatterns?: string[];
   rng: () => number;
-  /** 메뉴는 이 태그들 중 최소 1개를 가져야 함 (모드 한정). */
-  requireTagsAny?: string[];
+  /** 모드 한정 — getMealPoolByMode 결과 code 집합. 비어 있으면 전체 허용. */
+  modePoolCodes?: Set<string>;
   /** 모드별 보너스 점수: 태그 매칭 / 이름 키워드 매칭. */
   bonusTags?: string[];
   bonusNameKeywords?: string[];
@@ -134,12 +133,10 @@ function pickOneMeal(opts: {
     preferPatterns: opts.preferPatterns,
   }).filter((m) => !opts.excludeCodes.has(m.code));
 
-  // 모드 한정 태그 필터 (1차 시도). 빈 풀이면 호출부에서 fallback 시도.
+  // 모드 한정 — getMealPoolByMode 결과 안에 있는 코드만. 풀 비면 호출부에서 fallback.
   const pool =
-    opts.requireTagsAny && opts.requireTagsAny.length > 0
-      ? basePool.filter((m) =>
-          opts.requireTagsAny!.some((t) => m.tags.includes(t)),
-        )
+    opts.modePoolCodes && opts.modePoolCodes.size > 0
+      ? basePool.filter((m) => opts.modePoolCodes!.has(m.code))
       : basePool;
 
   if (pool.length === 0) return null;
@@ -438,34 +435,25 @@ function aggregateNutrients(picks: MealPlanPick[]): {
   };
 }
 
-/** 모드별 메인 끼니(점심·저녁) 필터·보너스. 식전 쉐이크는 별도 prepend 에서 처리. */
-function modeFilterFor(mode: PlanMode, slot: MealSlot): {
-  requireTagsAny?: string[];
+/** 모드별 보너스(태그/이름) — 풀 자체는 getMealPoolByMode 가 강제. */
+function modeBonusFor(mode: PlanMode, slot: MealSlot): {
   bonusTags?: string[];
   bonusNameKeywords?: string[];
 } {
   if (mode === "home_korean") {
     if (slot === "lunch" || slot === "dinner") {
       return {
-        requireTagsAny: ["한식"],
         bonusTags: ["고단백", "한식"],
         bonusNameKeywords: ["닭가슴살", "닭가슴", "두부"],
       };
     }
-    if (slot === "breakfast") {
-      return {
-        bonusTags: ["한식", "간편"],
-        bonusNameKeywords: ["달걀", "두부", "닭가슴살"],
-      };
-    }
     return {
       bonusTags: ["한식", "간편"],
-      bonusNameKeywords: ["닭가슴살"],
+      bonusNameKeywords: ["달걀", "두부", "닭가슴살"],
     };
   }
   if (mode === "office_quick") {
     return {
-      requireTagsAny: ["편의점", "쉐이크", "간편", "데스크"],
       bonusTags: ["편의점", "쉐이크", "고단백"],
       bonusNameKeywords: ["쉐이크", "삼각김밥", "닭가슴살"],
     };
@@ -527,9 +515,16 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
   const avoidPrev = new Set<string>(input.excludeCodes ?? []);
   const used = new Set<string>();
 
+  // 모드 풀 — getMealPoolByMode 단일 출처. random 이면 size 0 으로 전체 허용.
+  const modePool = getMealPoolByMode(planMode);
+  const modePoolCodes =
+    planMode === "random"
+      ? new Set<string>()
+      : new Set(modePool.map((m) => m.code));
+
   let picks: MealPlanPick[] = slotTargets.map((t) => {
-    const modeFilter = modeFilterFor(planMode, t.slot);
-    // 1차 시도 — 직전 코드 + 이번 plan 에서 이미 쓴 코드 모두 회피 + 모드 한정 태그
+    const modeBonus = modeBonusFor(planMode, t.slot);
+    // 1차 — 직전 코드 + 이번 plan 에서 이미 쓴 코드 회피 + 모드 풀 한정
     const exclude1 = new Set<string>([...avoidPrev, ...used]);
     let item = pickOneMeal({
       slot: t.slot,
@@ -539,9 +534,10 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
       excludeIngredients,
       preferPatterns: input.preferPatterns,
       rng,
-      ...modeFilter,
+      modePoolCodes,
+      ...modeBonus,
     });
-    // 2차 — 모드 태그 풀이 직전 코드와 겹쳐 비었을 때 직전 회피만 풀고 모드 유지
+    // 2차 — 모드 풀 안에서 직전 회피만 풀어 시도
     if (!item) {
       item = pickOneMeal({
         slot: t.slot,
@@ -551,10 +547,11 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
         excludeIngredients,
         preferPatterns: input.preferPatterns,
         rng,
-        ...modeFilter,
+        modePoolCodes,
+        ...modeBonus,
       });
     }
-    // 3차 — 모드 태그까지 풀어 빈 카드 방지 (랜덤 모드와 동일하게)
+    // 3차 — 모드 풀까지 풀어 빈 카드 방지
     if (!item) {
       item = pickOneMeal({
         slot: t.slot,
