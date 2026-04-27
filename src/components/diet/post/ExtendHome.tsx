@@ -20,6 +20,10 @@ import {
   type ExtendPatternTag,
 } from "@/lib/diet/extendPatternEngine";
 import { pickWeeklyMissions } from "@/lib/diet/extendMissionEngine";
+import {
+  buildPostProgramFeedback,
+  computeExtendDeadline,
+} from "@/lib/diet/postProgramCoachEngine";
 import WeeklyCheckinDialog from "./WeeklyCheckinDialog";
 import ExtendReassessmentWizard from "./ExtendReassessmentWizard";
 import ExtendCycleResult from "./ExtendCycleResult";
@@ -216,6 +220,9 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
         </section>
       )}
 
+      {/* 추가: 데드라인 + 오삼 코치 동적 피드백 */}
+      <ExtendDeadlineFeedbackCard plan={plan} />
+
       {/* 주차별 미션 */}
       <section>
         <p className="mb-2 text-[12px] font-extrabold text-foreground">
@@ -333,5 +340,71 @@ const GoalTile = ({ label, value }: { label: string; value: string }) => (
     </p>
   </div>
 );
+
+// ──────────────────────────────────────────────────────────────────
+// 추가: 데드라인 + 오삼 코치 동적 피드백 카드
+// ──────────────────────────────────────────────────────────────────
+const ExtendDeadlineFeedbackCard = ({
+  plan,
+}: {
+  plan: DietPostProgramPlan;
+}) => {
+  const dl = computeExtendDeadline(plan);
+  const adherence = plan.completion_summary?.habit_score ?? null;
+  const feedback = buildPostProgramFeedback({
+    plan,
+    recentAdherence7d: adherence,
+  });
+  const tone =
+    dl.daysRemaining != null && dl.daysRemaining < 0
+      ? "ended"
+      : dl.daysRemaining != null && dl.daysRemaining <= 3
+        ? "soon"
+        : "active";
+  return (
+    <section
+      className={cn(
+        "rounded-2xl border p-3",
+        tone === "ended"
+          ? "border-amber-400/40 bg-amber-400/10"
+          : tone === "soon"
+            ? "border-emerald-400/40 bg-emerald-400/10"
+            : "border-border bg-card",
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+          데드라인
+        </p>
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
+            tone === "ended"
+              ? "bg-amber-400/20 text-amber-700"
+              : tone === "soon"
+                ? "bg-emerald-400/20 text-emerald-700"
+                : "bg-primary/10 text-primary",
+          )}
+        >
+          {dl.label}
+        </span>
+      </div>
+      {dl.endsAtIso && (
+        <p className="mt-1 text-[12px] text-foreground">
+          마감일:{" "}
+          <span className="number-font font-extrabold">{dl.endsAtIso}</span>
+        </p>
+      )}
+      <div className="mt-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+          오삼 코치 한마디
+        </p>
+        <p className="mt-0.5 text-[12px] leading-relaxed text-foreground">
+          {feedback}
+        </p>
+      </div>
+    </section>
+  );
+};
 
 export default ExtendHome;

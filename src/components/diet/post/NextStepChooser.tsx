@@ -17,6 +17,7 @@ import type {
   DietPostProgramRecommendation,
 } from "@/lib/diet/postProgramTypes";
 import { useSelectPostProgramPath } from "@/hooks/useDietPostProgram";
+import { buildChooserPreviewFeedback } from "@/lib/diet/postProgramCoachEngine";
 
 interface NextStepChooserProps {
   plan: DietPostProgramPlan;
@@ -50,8 +51,43 @@ export const NextStepChooser = ({
   const [weight, setWeight] = useState<string>("");
   const [waist, setWaist] = useState<string>("");
   const [cycleLength, setCycleLength] = useState<14 | 21>(14);
+  // 추가: 연장 모드 목표 + 현재 체중 (코치 피드백 입력값)
+  const [extendTargetWeight, setExtendTargetWeight] = useState<string>("");
+  const [currentWeight, setCurrentWeight] = useState<string>("");
 
   const selectMut = useSelectPostProgramPath();
+
+  // 추가: 연장 사이클 데드라인 미리보기 — 오늘 + cycleLength
+  const extendDeadlinePreview = useMemo(() => {
+    const today = new Date();
+    const end = new Date(today);
+    end.setDate(end.getDate() + cycleLength);
+    const iso = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+    return { iso, days: cycleLength };
+  }, [cycleLength]);
+
+  // 추가: 입력값 기반 오삼 코치 즉시 피드백 (선택 전 미리보기)
+  const previewMaintenance = useMemo(
+    () =>
+      buildChooserPreviewFeedback({
+        path: "maintenance",
+        maintenanceTargetWeightKg: weight ? Number(weight) : null,
+        currentWeightKg: currentWeight ? Number(currentWeight) : null,
+      }),
+    [weight, currentWeight],
+  );
+  const previewExtend = useMemo(
+    () =>
+      buildChooserPreviewFeedback({
+        path: "extend",
+        extensionCycleLength: cycleLength,
+        extensionTargetWeightKg: extendTargetWeight
+          ? Number(extendTargetWeight)
+          : null,
+        currentWeightKg: currentWeight ? Number(currentWeight) : null,
+      }),
+    [cycleLength, extendTargetWeight, currentWeight],
+  );
 
   const reco = useMemo(() => {
     const input: RecommendInput = {
@@ -184,6 +220,24 @@ export const NextStepChooser = ({
               type="decimal"
             />
           </div>
+          <div className="mt-2">
+            <LabeledInput
+              label="현재 체중 (kg, 선택)"
+              value={currentWeight}
+              onChange={setCurrentWeight}
+              placeholder="예: 63.0"
+              type="decimal"
+            />
+          </div>
+          {/* 오삼 코치 동적 피드백 — 입력값 기반 */}
+          <div className="mt-2 rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-3 py-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+              오삼 코치 한마디
+            </p>
+            <p className="mt-0.5 text-[12px] leading-relaxed text-foreground">
+              {previewMaintenance}
+            </p>
+          </div>
           <Button
             onClick={() => handleSelect("maintenance")}
             disabled={selectMut.isPending}
@@ -220,6 +274,40 @@ export const NextStepChooser = ({
               selected={cycleLength === 21}
               onClick={() => setCycleLength(21)}
             />
+          </div>
+          {/* 데드라인 미리보기 — 오늘 + cycleLength */}
+          <div className="mt-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-[11.5px] text-foreground">
+            <span className="font-bold">데드라인:</span>{" "}
+            <span className="number-font">{extendDeadlinePreview.iso}</span>
+            <span className="ml-1 text-muted-foreground">
+              (오늘 시작 시 D-{extendDeadlinePreview.days})
+            </span>
+          </div>
+          {/* 연장 모드 목표 입력 — 새로 추가 */}
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <LabeledInput
+              label="목표 체중 (kg)"
+              value={extendTargetWeight}
+              onChange={setExtendTargetWeight}
+              placeholder="예: 60.0"
+              type="decimal"
+            />
+            <LabeledInput
+              label="현재 체중 (kg)"
+              value={currentWeight}
+              onChange={setCurrentWeight}
+              placeholder="예: 63.0"
+              type="decimal"
+            />
+          </div>
+          {/* 오삼 코치 동적 피드백 — 사이클·목표·현재 체중 기반 */}
+          <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+              오삼 코치 한마디
+            </p>
+            <p className="mt-0.5 text-[12px] leading-relaxed text-foreground">
+              {previewExtend}
+            </p>
           </div>
           <Button
             onClick={() => handleSelect("extend")}

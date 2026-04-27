@@ -14,6 +14,10 @@ import type {
   DietPostProgramCheckin,
   DietPostProgramPlan,
 } from "@/lib/diet/postProgramTypes";
+import {
+  buildPostProgramFeedback,
+  computeMaintenanceWeeklyCheckDeadline,
+} from "@/lib/diet/postProgramCoachEngine";
 import WeeklyCheckinDialog from "./WeeklyCheckinDialog";
 import AutoMealPlanSection from "./AutoMealPlanSection";
 
@@ -115,6 +119,9 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
 
       {/* 자동 식단 — BMR/TDEE 계산 + 하루 메뉴 자동 생성 */}
       <AutoMealPlanSection mode="maintenance" />
+
+      {/* 추가: 데드라인(주간 체크) + 오삼 코치 동적 피드백 */}
+      <MaintenanceCheckFeedbackCard plan={plan} />
 
       {/* 복귀 미션 카드 */}
       {recoveryActive && (
@@ -252,5 +259,47 @@ const InfoTile = ({ label, value }: { label: string; value: string }) => (
     <p className="mt-0.5 text-[13px] font-extrabold text-foreground">{value}</p>
   </div>
 );
+
+// ──────────────────────────────────────────────────────────────────
+// 추가: 데드라인(주간 체크) + 오삼 코치 동적 피드백 카드
+// ──────────────────────────────────────────────────────────────────
+const MaintenanceCheckFeedbackCard = ({
+  plan,
+}: {
+  plan: DietPostProgramPlan;
+}) => {
+  const dl = computeMaintenanceWeeklyCheckDeadline();
+  const feedback = buildPostProgramFeedback({
+    plan,
+    recentAdherence7d: plan.completion_summary?.habit_score ?? null,
+  });
+  return (
+    <section className="rounded-2xl border border-emerald-400/30 bg-emerald-400/5 p-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+          이번 주 체크 마감
+        </p>
+        <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-700">
+          {dl.label}
+        </span>
+      </div>
+      {dl.endsAtIso && (
+        <p className="mt-1 text-[12px] text-foreground">
+          마감일:{" "}
+          <span className="number-font font-extrabold">{dl.endsAtIso}</span>
+          <span className="ml-1 text-muted-foreground">(매주 일요일)</span>
+        </p>
+      )}
+      <div className="mt-2 rounded-xl border border-emerald-400/30 bg-card px-3 py-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+          오삼 코치 한마디
+        </p>
+        <p className="mt-0.5 text-[12px] leading-relaxed text-foreground">
+          {feedback}
+        </p>
+      </div>
+    </section>
+  );
+};
 
 export default MaintenanceHome;
