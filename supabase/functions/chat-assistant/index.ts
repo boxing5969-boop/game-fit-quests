@@ -38,10 +38,11 @@ const PROVIDERS: Provider[] = [
     name: "groq",
     keyEnv: "GROQ_API_KEY",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    // gemma2-9b-it — Groq 에서 TPM 한도 15000 으로 가장 여유.
-    // (llama-3.1-8b-instant 는 일부 org 6K TPM 정책에 걸려 413 빈발했음.
-    //  llama3-8b-8192 는 decommissioned.)
-    model: "gemma2-9b-it",
+    // llama-3.1-8b-instant — 한국어 품질 안정. (gemma2-9b-it 는 TPM 여유는 컸지만
+    // 한국어 출력에 중국어/영어 혼입·임의 단어 생성·부적절 표현 발생.)
+    // 시스템 프롬프트 600자 + history slice(-2) + max_tokens 200 으로 토큰 합산 ~600
+    // → llama-3.1-8b-instant TPM 6K 한도 안에 풍부히 들어감.
+    model: "llama-3.1-8b-instant",
   },
   {
     name: "cerebras",
@@ -62,23 +63,25 @@ const PROVIDERS: Provider[] = [
     model: "deepseek-chat",
   },
 ];
-// 초경량 코어 프롬프트 — Groq TPM 한도 안에 절대 안전. 약 600자.
-// 정체성을 "랭킹업 앱" 으로 고정 (이전 "다이어트 앱" 표현이 모든 답을 식단으로 유도).
-// 도메인 분기를 명시 표 형태로 — 모델이 잘못된 영역으로 끌어가는 문제 차단.
+// 초경량 코어 프롬프트 — Groq TPM 한도 안에 절대 안전. 약 800자.
+// 정체성 "랭킹업 앱" 고정 + 도메인 분기 + 안전 규칙 + 단어 생성 금지.
 const SYSTEM_PROMPT = `너는 랭킹업(RANKING-UP) 앱의 AI 코치 "오삼"이야. 153복싱짐 회원의 복싱 훈련과 21일 다이어트를 같이 코칭해.
 
 [질문 분류 — 반드시 따를 것]
-- 복싱 기술(잽/스트레이트/훅/어퍼컷/카운터/스파링/풋워크/콤비네이션/디펜스) → 복싱 기술 답변. 절대 식단으로 넘어가지 마.
-- 식단/다이어트/체중/단백질/칼로리/식사 → 153다이어트 원칙으로 답변.
-- 앱 기능(랭킹/레벨/리그/퀘스트/타이틀매치/꾸미기/QR출석/젬) → 랭킹업 시스템 답변.
+- 인사(안녕/안녕하세요): 짧게 인사로만 응답. 2문장 이내. 다이어트 데이터·진행 상황 강의 절대 금지.
+- 복싱 기술(잽/스트레이트/훅/어퍼컷/카운터/스파링/풋워크/콤비네이션/디펜스): 복싱 기술 답변. 절대 식단으로 넘어가지 마.
+- 식단/다이어트/체중/단백질/칼로리/식사: 153다이어트 원칙으로 답변.
+- 앱 기능(랭킹/레벨/리그/퀘스트/타이틀매치/꾸미기/QR출석/젬): 랭킹업 시스템 답변.
 
 [규칙]
-1. 반드시 한국어. 영어/일본어/중국어/베트남어 등 다른 언어 문자 절대 금지. 같은 단어 반복 금지.
+1. 반드시 한국어 표준어. 영어/일본어/중국어/베트남어 등 다른 언어 문자 절대 금지(예: "5个","recovery","修" 금지). 같은 문장·단어 반복 금지.
 2. 답변은 2-3문장. 길게 쓰지 마.
-3. 유저 실제 데이터가 없으면 절대 만들어내지 마. "회원님의 기록을 보면..." 같은 표현 금지. Day 수·식습관·운동 이력은 모르면 "확인하기 어려워요"로 답해.
-4. 카운터(counter)는 "되받아치기" 복싱 기술이야. 운동 횟수가 아니야.
-5. "랭킹업"은 이 앱 이름이야. 다이어트 랭킹이 아니라 99레벨 시스템 + 5종 랭킹 보드를 가리켜.
-6. 역질문으로 끝내지 마. 구체적 제안·조언으로 마무리.`;
+3. 잘 모르는 단어를 절대 만들어내지 마. "포도살","유비식","21야" 같은 임의 합성어 금지. 정확히 아는 표준 한국어 단어만 사용.
+4. 유저 실제 데이터가 없으면 절대 만들어내지 마. "회원님의 기록을 보면..." 표현 금지.
+5. 부적절 내용 절대 금지: 성적 표현, 욕설, 혐오, 의료 진단, 약물 권유 일체 금지.
+6. 카운터 = "되받아치기" 복싱 기술 (운동 횟수 아님). 잽은 정확히 "잽"으로 표기 ("쩁","쨉" 금지).
+7. "랭킹업"은 앱 이름. 99레벨 시스템 + 5종 랭킹 보드.
+8. 역질문으로 끝내지 마. 구체 제안·조언으로 마무리.`;
 function buildDietContext(enrollment: any, snapshot: any, recentLogs: any[], latestCoachNote: any) {
   if (!enrollment && !snapshot && (!recentLogs || recentLogs.length === 0)) return "";
   const lines: string[] = [];
@@ -266,31 +269,41 @@ serve(async (req) => {
     // 3) 153다이어트 공식 지식 문서 (신규)
     // 4) 다이어트 회원 컨텍스트 — 있을 때만 (신규)
     // 5) 클라이언트가 보낸 messages
-    // personalContext 가 비어 있으면 "회원 정보 없음" 명시 → 모델이 데이터 만들어내는 환각 차단.
-    const contextHeader = personalContext
-      ? personalContext
-      : "\n\n[회원 정보] 조회된 개인 데이터 없음. 진행도·식습관·기록을 절대 만들어내지 말 것.";
-    const baseSystemMessage = SYSTEM_PROMPT + contextHeader;
-    const systemMessages: Array<{ role: "system"; content: string }> = [
-      { role: "system", content: baseSystemMessage },
-    ];
-    // 다이어트 키워드가 있을 때만 153다이어트 시스템·지식 문서 주입.
-    // 일반 복싱 질문은 시스템 컨텍스트가 1500자 이내로 줄어 Groq TPM 여유 확보.
+    // 사용자 마지막 메시지에서 도메인 감지.
     const lastUserMessage = [...messages]
       .reverse()
       .find((m: { role: string }) => m.role === "user");
     const lastUserText = (lastUserMessage?.content as string | undefined) ?? "";
+
+    // 도메인 분기 — 인사/잡담은 어떤 컨텍스트도 주입 안 함 (모델이 회원 데이터로
+    // 갑자기 다이어트 강의 시작하는 환각 차단).
+    const greetingRe = /^(안녕|안녕하세요|하이|반가워|좋은\s*아침|hi|hello)[!?\s.~]*$/i;
+    const isGreeting = greetingRe.test(lastUserText.trim());
     const dietRe =
-      /(다이어트|식단|영양|칼로리|단백질|탄수|체중|감량|살빼|식사|체지방|복부|뱃살|식이|쉐이크|보강)/;
-    const isDietTopic = dietRe.test(lastUserText) || !!dietContext;
+      /(다이어트|식단|영양|칼로리|단백질|탄수|체중|감량|살빼|식사|체지방|복부|뱃살|식이|쉐이크|보강|21일|day\s*\d+|기록|습관|진행|수면|물|채소)/;
+    const personalRe =
+      /(내|나의|제|저의|레벨|랭킹|단증|미션|퀘스트|진행|반려|보스|타이틀)/;
+    const isDietTopic = dietRe.test(lastUserText);
+    const wantsPersonalData = personalRe.test(lastUserText) || isDietTopic;
+
+    // 회원 컨텍스트 주입 — 사용자가 명시적으로 개인/다이어트 화제를 꺼낸 경우에만.
+    const baseSystemMessage = wantsPersonalData && personalContext
+      ? SYSTEM_PROMPT + personalContext
+      : SYSTEM_PROMPT +
+        "\n\n[중요] 이번 사용자 메시지는 일반 질문/인사로 분류됨. 회원의 진행도·식습관·기록·Day수를 언급하거나 만들어내지 말 것. 인사면 짧게 인사로만 응답.";
+    const systemMessages: Array<{ role: "system"; content: string }> = [
+      { role: "system", content: baseSystemMessage },
+    ];
+    // 다이어트 화제일 때만 다이어트 시스템 + 지식 + 회원 다이어트 컨텍스트 주입.
     if (isDietTopic) {
       const dietKnowledgeMessage = `아래는 153다이어트 공식 지식 문서다. 반드시 이 문서의 범위 안에서만 153다이어트 세부 규칙을 답변하라.\n\n${KNOWLEDGE_153}`;
       systemMessages.push({ role: "system", content: SYSTEM_PROMPT_153 });
       systemMessages.push({ role: "system", content: dietKnowledgeMessage });
+      if (dietContext) {
+        systemMessages.push({ role: "system", content: dietContext });
+      }
     }
-    if (dietContext) {
-      systemMessages.push({ role: "system", content: dietContext });
-    }
+    void isGreeting; // 향후 인사 전용 분기 확장 시 사용
 
     // ── 대화 히스토리 제한 ──────────────────────────────────────────
     // 두 단계 안전장치:
