@@ -38,7 +38,9 @@ const PROVIDERS: Provider[] = [
     name: "groq",
     keyEnv: "GROQ_API_KEY",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama3-8b-8192",
+    // llama3-8b-8192 는 Groq 에서 decommissioned (확인 메시지: "model has been
+    // decommissioned and is no longer supported"). 현행 권장 모델로 고정.
+    model: "llama-3.1-8b-instant",
   },
   {
     name: "cerebras",
@@ -382,11 +384,13 @@ serve(async (req) => {
       //   · 403 Forbidden      : 권한 / 모델 접근 거부 → 다른 provider
       //   · 404 Not Found      : 모델명이 바뀐 경우 → 다른 provider
       //   · 408/429            : 타임아웃 / rate limit → 다른 provider
+      //   · 400 Bad Request    : provider 가 "model decommissioned" 등으로 거부 →
+      //                            다른 provider 는 다른 모델 이름이라 통과 가능 → 폴백
       //   · 413 Payload Too Large: provider 별 컨텍스트 한도가 다름(groq 6K TPM,
       //                            cerebras·sambanova·deepseek 더 큼) → 다음으로 폴백
       //   · 500~504            : 업스트림 일시 장애 → 다른 provider
-      // 폴백 안 함: 400, 422 (우리 페이로드 자체 문법/스키마 문제 — 어디 가도 같은 에러).
-      const fallbackable = [401, 402, 403, 404, 408, 413, 429, 500, 502, 503, 504];
+      // 폴백 안 함: 422 (스키마 자체 문제 — 어디 가도 동일 에러).
+      const fallbackable = [400, 401, 402, 403, 404, 408, 413, 429, 500, 502, 503, 504];
       const shouldFallback = fallbackable.includes(response.status);
       const hasMore = i + 1 < activeProviders.length;
       if (!shouldFallback || !hasMore) break;
