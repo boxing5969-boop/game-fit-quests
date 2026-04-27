@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import {
   ChevronLeft,
   Flag,
@@ -14,6 +15,8 @@ import AppPage from "@/components/ui/rankingup/AppPage";
 import PageHeader from "@/components/ui/rankingup/PageHeader";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { useDietProgress } from "@/hooks/useDietEnrollment";
 import { useEarlyStartPostProgram } from "@/hooks/useDietPostProgram";
 import PostProgramRouter from "@/components/diet/post/PostProgramRouter";
@@ -28,6 +31,7 @@ import PostProgramRouter from "@/components/diet/post/PostProgramRouter";
  */
 const DietPostProgramPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const progressQuery = useDietProgress();
   const earlyStart = useEarlyStartPostProgram();
   // "지금 시작" 클릭 후 서버 응답 받기 전까지 PostProgramRouter 즉시 노출용 hint.
@@ -38,9 +42,33 @@ const DietPostProgramPage = () => {
     progressQuery.data && "success" in progressQuery.data && progressQuery.data.success
       ? progressQuery.data
       : null;
-  const enrollment = payload?.enrollment;
+  const activeEnrollment = payload?.enrollment;
   const snapshot = payload?.snapshot;
+
+  // Fallback — get_diet_progress 는 active/not_started/paused 만 조회.
+  // status 가 'completed' 또는 'dropped' 면 위 RPC 가 enrollment 못 찾으니, 본인 enrollment
+  // 를 직접 조회해 사후 프로그램 분기에서 사용. RLS 가 본인 데이터 SELECT 허용.
+  const anyEnrollmentQuery = useQuery({
+    queryKey: ["diet", "post-program-page-enrollment", user?.id],
+    enabled: !!user?.id && !activeEnrollment, // active 잡혔으면 fallback 불필요
+    staleTime: 15_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("diet_program_enrollments")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // 우선순위: get_diet_progress 의 enrollment → 없으면 직접 조회 fallback
+  const enrollment = activeEnrollment ?? anyEnrollmentQuery.data ?? null;
   const status = enrollment?.status;
+  const isPostProgramReady = status === "completed" || earlyStarted;
 
   const handleEarlyStart = async () => {
     if (!enrollment) return;
@@ -110,11 +138,11 @@ const DietPostProgramPage = () => {
           </div>
         </section>
 
-        {progressQuery.isLoading ? (
+        {progressQuery.isLoading || anyEnrollmentQuery.isLoading ? (
           <Placeholder>불러오는 중...</Placeholder>
         ) : !enrollment ? (
           <NotEnrolledCTA onStart={() => navigate("/diet/onboarding")} />
-        ) : status === "completed" || earlyStarted ? (
+        ) : isPostProgramReady ? (
           <PostProgramRouter
             enrollmentId={enrollment.id}
             recentAdherence7d={snapshot?.habit_score ?? null}

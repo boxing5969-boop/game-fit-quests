@@ -53,9 +53,10 @@ export function useEarlyStartPostProgram() {
     mutationFn: (enrollmentId: string) => svc.earlyStartPostProgram(enrollmentId),
     onSuccess: () => {
       invalidatePost(qc);
-      // enrollment 상태 자체가 바뀌었으므로 다이어트 진행도 쿼리도 무효화
+      // enrollment 상태 자체가 바뀌었으므로 다이어트 진행도 / 직접 조회 fallback 도 모두 무효화
       qc.invalidateQueries({ queryKey: ["diet", "progress"] });
       qc.invalidateQueries({ queryKey: ["diet", "enrollment"] });
+      qc.invalidateQueries({ queryKey: ["diet", "post-program-page-enrollment"] });
     },
   });
 }
