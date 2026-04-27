@@ -141,36 +141,12 @@ function pickOneMeal(opts: {
 
   if (pool.length === 0) return null;
 
-  // 스코어: kcal 근접(-) + 단백질 충족(+) + 패턴 매칭(+) + 큰 폭 jitter
-  // jitter 폭을 kcalScore 동급으로 키워 reroll 시 1순위가 명확히 바뀌도록.
-  // 결정성은 mulberry32 시드로 유지(같은 시드 → 같은 결과).
-  // 점수 = kcal 근접 + 단백질 + 패턴/태그/이름 보너스 (결정적 적합성)
-  // 풀이 작아도 reroll 마다 다른 결과가 나오도록, "상위 N개 중 무작위 선택" 전략 사용.
-  // 1순위만 뽑으면 작은 풀에서 같은 메뉴가 반복되는 문제 해결.
-  const scored = pool.map((m) => {
-    const kcalDiff = Math.abs(m.kcal - opts.target.kcal);
-    const kcalScore = 300 - Math.min(kcalDiff, 300);
-    const proteinScore = m.proteinG >= opts.target.proteinG * 0.8 ? 120 : 0;
-    const patternScore =
-      (m.patternFit ?? []).filter((p) => opts.preferPatterns?.includes(p)).length * 60;
-    const tagBonus =
-      (opts.bonusTags ?? []).reduce(
-        (acc, t) => acc + (m.tags.includes(t) ? 80 : 0),
-        0,
-      );
-    const nameBonus =
-      (opts.bonusNameKeywords ?? []).reduce(
-        (acc, k) => acc + (m.name.includes(k) ? 60 : 0),
-        0,
-      );
-    return { m, score: kcalScore + proteinScore + patternScore + tagBonus + nameBonus };
-  });
-
-  scored.sort((a, b) => b.score - a.score);
-  // 상위 N — 풀이 크면 12개, 작으면 풀 전체. 1순위 고정 방지.
-  const topN = Math.min(12, scored.length);
-  const idx = Math.floor(opts.rng() * topN);
-  return scored[idx].m;
+  // 순수 무작위 선택 — 풀(슬롯+모드+회피) 안에서 균등 확률.
+  // 점수 기반 정렬을 폐기한 이유: 결정 점수(kcal 근접·단백질 임계·이름 키워드)가
+  // 풀을 6~8개로 좁혀 reroll 시 같은 슬롯이 같은 후보 안에서만 회귀했음.
+  // 칼로리/단백질 정밀 추적이 필요하면 회원이 직접 "교체" 버튼으로 조정 가능.
+  const idx = Math.floor(opts.rng() * pool.length);
+  return pool[idx];
 }
 
 /** modePoolCodes 가 지정되어 있으면 풀을 모드 풀에 한정. 비어있으면 전체. 모드 풀에 매칭 0이면 fallback 으로 전체 허용. */
@@ -588,13 +564,10 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
     return { slot: t.slot, target: t, item };
   });
 
-  // 하루 프로바이오틱 최소 1회 보장
-  picks = ensureDailyProbiotic(picks, excludeTags, excludeIngredients, rng, avoidPrev, modePoolCodes);
-
-  // 영양소 부족 자동 보강 — 단백질·섬유질·비타민·무기질 다양성
-  picks = fillNutrientGaps(picks, input.target, excludeTags, excludeIngredients, rng, avoidPrev, modePoolCodes);
-
-  // 한식/초간단 모드 — 단백질 부족 시 식전 쉐이크 prepend 로 95% 보장
+  // 후처리 비활성화 — 회원의 핵심 요구는 "매 reroll 마다 모든 슬롯 변경".
+  // ensureDailyProbiotic / guaranteeProtein / fillNutrientGaps 는 슬롯을 교체하면서
+  // 결정적 후보 8개로 좁혀 reroll 다양성을 깨고 있었음. 영양 보강은 회원이 "교체"
+  // 버튼으로 수동 조정하거나 단백질 부족 시 식전 쉐이크만 추가.
   if (planMode === "home_korean" || planMode === "office_quick") {
     picks = prependPreMealShake(picks, input.target, excludeIngredients, rng, avoidPrev);
   }
