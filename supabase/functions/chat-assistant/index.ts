@@ -465,8 +465,16 @@ serve(async (req) => {
         }),
       });
       if (response.ok) break;
-      const shouldFallback =
-        response.status === 429 || response.status === 402;
+      // 폴백 조건 확대 — 다른 provider 로 시도해도 같은 결과가 나올 가능성이 낮은 코드 모두.
+      //   · 401 Unauthorized   : 이 provider 의 API 키가 만료/무효 → 다른 키 시도 의미 있음
+      //   · 402 Payment        : 크레딧 부족 → 다른 무료 provider 로
+      //   · 403 Forbidden      : 권한 / 모델 접근 거부 → 다른 provider
+      //   · 404 Not Found      : 모델명이 바뀐 경우 → 다른 provider
+      //   · 408/429            : 타임아웃 / rate limit → 다른 provider
+      //   · 500~504            : 업스트림 일시 장애 → 다른 provider
+      // 폴백 안 함: 400, 413, 422 (우리 페이로드 자체 문제 — 어디 가도 같은 에러).
+      const fallbackable = [401, 402, 403, 404, 408, 429, 500, 502, 503, 504];
+      const shouldFallback = fallbackable.includes(response.status);
       const hasMore = i + 1 < activeProviders.length;
       if (!shouldFallback || !hasMore) break;
       console.warn(
