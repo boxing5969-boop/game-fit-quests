@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   ArrowRight,
   HeartHandshake,
@@ -103,17 +104,40 @@ export const NextStepChooser = ({
   }, [plan, targetAchieved, recentAdherence7d, lateBingeCount7d, sugaryDrinkCount7d, attendanceStable]);
 
   const handleSelect = async (path: "maintenance" | "extend") => {
-    const res = await selectMut.mutateAsync({
-      planId: plan.id,
-      path,
-      targetAchieved,
-      maintenanceTargetWeightKg:
-        path === "maintenance" && weight ? Number(weight) : null,
-      maintenanceTargetWaistCm:
-        path === "maintenance" && waist ? Number(waist) : null,
-      extensionCycleLength: path === "extend" ? cycleLength : 14,
-    });
-    if (res.success) onDone?.();
+    try {
+      const res = await selectMut.mutateAsync({
+        planId: plan.id,
+        path,
+        targetAchieved,
+        maintenanceTargetWeightKg:
+          path === "maintenance" && weight ? Number(weight) : null,
+        maintenanceTargetWaistCm:
+          path === "maintenance" && waist ? Number(waist) : null,
+        extensionCycleLength: path === "extend" ? cycleLength : 14,
+      });
+      if (res.success) {
+        toast.success(
+          path === "maintenance"
+            ? "🛡 유지 컨설팅 모드로 전환됐어요. 페이스 맞춰드릴게요."
+            : "🥊 건강리셋 연장 시작! 사이클 끝까지 함께해요.",
+        );
+        onDone?.();
+      } else {
+        // 서버 RPC 가 명시적 error 반환 — 회원에게 실제 메시지 노출.
+        const msg =
+          (res as { error?: string }).error ?? "선택 저장에 실패했어요.";
+        // eslint-disable-next-line no-console
+        console.error("[NextStepChooser] select failed:", res);
+        toast.error(`경로 선택 실패: ${msg}`);
+      }
+    } catch (e) {
+      // 네트워크 / 예외
+      // eslint-disable-next-line no-console
+      console.error("[NextStepChooser] select exception:", e);
+      const msg =
+        e instanceof Error ? e.message : "네트워크 오류로 저장하지 못했어요.";
+      toast.error(`경로 선택 실패: ${msg}`);
+    }
   };
 
   return (
@@ -325,7 +349,13 @@ export const NextStepChooser = ({
 
       {selectMut.isError && (
         <p className="text-center text-[11px] text-destructive">
-          선택을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.
+          서버에 저장하지 못했어요. 인터넷을 확인하거나 잠시 후 다시 시도해 주세요.
+          (반복되면 관리자에게 select_post_program_path RPC 적용 여부 확인)
+        </p>
+      )}
+      {selectMut.isPending && (
+        <p className="text-center text-[11px] text-muted-foreground">
+          저장 중입니다...
         </p>
       )}
 
