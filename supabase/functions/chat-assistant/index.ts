@@ -38,7 +38,9 @@ const PROVIDERS: Provider[] = [
     name: "groq",
     keyEnv: "GROQ_API_KEY",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.1-8b-instant",
+    // llama3-8b-8192 — Groq legacy 모델. 8K 진짜 컨텍스트, 무료 한도 비교적 여유.
+    // (llama-3.1-8b-instant 는 일부 org TPM 6K 정책에 걸려 413 빈발했음.)
+    model: "llama3-8b-8192",
   },
   {
     name: "cerebras",
@@ -305,8 +307,10 @@ serve(async (req) => {
     const MAX_HISTORY_TOKENS = 1500;
     const approxTokens = (s: string) => Math.ceil(s.length * 0.5);
 
-    // 1단계 — 하드 캡
-    const recentMessages = messages.slice(-HISTORY_CAP);
+    // 1단계 — 하드 캡: 최근 3개만 (사용자 요청)
+    //   trimmedMessages = [system, ...history.slice(-3)]
+    const conversationHistory = messages as Array<{ role: string; content: string }>;
+    const recentMessages = conversationHistory.slice(-HISTORY_CAP);
 
     // 2단계 — 토큰 예산: 최근부터 거꾸로 예산이 허용하는 만큼만 포함
     const trimmedHistory: Array<{ role: string; content: string }> = [];
@@ -349,6 +353,7 @@ serve(async (req) => {
           model: p.model,
           messages: fullMessages,
           stream: true,
+          max_tokens: 400,
         }),
       });
       if (response.ok) break;
@@ -366,6 +371,7 @@ serve(async (req) => {
             model: p.model,
             messages: minimalMessages,
             stream: true,
+            max_tokens: 400,
           }),
         });
         if (response.ok) break;
