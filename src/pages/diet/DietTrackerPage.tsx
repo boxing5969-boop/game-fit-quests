@@ -23,9 +23,15 @@ import {
 } from "@/hooks/useDietDailyLog";
 import { useAttendanceToday } from "@/hooks/useDietAttendance";
 import { useDietAnalytics } from "@/hooks/useDietAnalytics";
+import { useRecordQuestEvent } from "@/hooks/useDietQuestEvents";
 import { DIET_EVENT_TYPES } from "@/lib/diet/analytics";
 import { DIET_STAGES } from "@/data/dietProgramData";
 import { getDailyPlan } from "@/lib/diet/ruleEngine";
+import {
+  computeQuestScore,
+  diffHabitsForEmission,
+  gradeTiming,
+} from "@/lib/diet/questEvents";
 import type { DailyHabitsPayload } from "@/services/dietService";
 import type { DietMealSlot, DietTrack } from "@/lib/dietTrack";
 
@@ -89,6 +95,7 @@ const DietTrackerPage = () => {
   const submitMutation = useSubmitDailyLog();
   const photoMutation = useUploadMealPhoto();
   const attendanceQuery = useAttendanceToday(user?.id, logDate);
+  const recordQuestEvent = useRecordQuestEvent();
   const { logEvent } = useDietAnalytics();
 
   // ── 폼 상태 (habits + note) ────────────────────────────────
@@ -183,6 +190,41 @@ const DietTrackerPage = () => {
         day_number: r.day_number,
         first_submit: r.first_submit,
       });
+
+      // diet_quest_events emit — 새로 체크된 미션만 1행씩 시계열 적재.
+      // 보호 함수(scoreEngine/ruleEngine)는 건들지 않고 신규 모듈에서 점수 산출.
+      if (todayPlan && user?.id) {
+        const diff = diffHabitsForEmission({
+          prev: logRow,
+          next: { ...habits, memo: note },
+          missions: todayPlan.missions,
+        });
+        const completedAt = new Date();
+        const grade = gradeTiming(completedAt);
+        for (const entry of diff) {
+          const score = computeQuestScore(entry.mission.severity, grade);
+          recordQuestEvent.mutate({
+            userId: user.id,
+            enrollmentId: enrollment.id,
+            logDate,
+            dayNumber: r.day_number ?? currentDay,
+            missionId: entry.mission.id,
+            missionLabel: entry.mission.label,
+            sourceKind: "habit",
+            mealSlot: null,
+            completedAt,
+            timingGrade: grade,
+            baseScore: score.base,
+            timingBonus: score.bonus,
+            totalScore: score.total,
+            meta: {
+              category: entry.mission.category,
+              severity: entry.mission.severity,
+              linkedHabitColumn: entry.mission.linkedHabitColumn ?? null,
+            },
+          });
+        }
+      }
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : "저장 실패. 네트워크 상태 확인 후 다시 시도해 주세요.",
