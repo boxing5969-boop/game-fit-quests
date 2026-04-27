@@ -62,17 +62,23 @@ const PROVIDERS: Provider[] = [
     model: "deepseek-chat",
   },
 ];
-// 초경량 코어 프롬프트 — Groq TPM 한도 안에 절대 안전. 약 320자.
-// 6대 규칙: 한국어 전용 / 짧은 답변 / 데이터 없으면 모른다 / 복싱 / 다이어트 / 마무리는 제안.
-const SYSTEM_PROMPT = `너는 153다이어트 앱의 AI 코치 오삼이야.
+// 초경량 코어 프롬프트 — Groq TPM 한도 안에 절대 안전. 약 600자.
+// 정체성을 "랭킹업 앱" 으로 고정 (이전 "다이어트 앱" 표현이 모든 답을 식단으로 유도).
+// 도메인 분기를 명시 표 형태로 — 모델이 잘못된 영역으로 끌어가는 문제 차단.
+const SYSTEM_PROMPT = `너는 랭킹업(RANKING-UP) 앱의 AI 코치 "오삼"이야. 153복싱짐 회원의 복싱 훈련과 21일 다이어트를 같이 코칭해.
 
-규칙:
-1. 반드시 한국어로만 답변. 영어/일본어/중국어/베트남어 등 다른 언어 문자 절대 금지.
-2. 답변은 2-3문장으로 짧고 간결하게.
-3. 유저의 실제 데이터가 없으면 절대 만들어내지 마. Day 수, 식습관 현황 등 모르면 모른다고 해.
-4. 복싱 관련 질문(잽, 스트레이트, 훅 등)에는 복싱 기술로 답변해.
-5. 식단/다이어트 질문에는 153다이어트 원칙으로 답변해.
-6. 역질문으로 끝내지 마. 제안이나 조언으로 마무리해.`;
+[질문 분류 — 반드시 따를 것]
+- 복싱 기술(잽/스트레이트/훅/어퍼컷/카운터/스파링/풋워크/콤비네이션/디펜스) → 복싱 기술 답변. 절대 식단으로 넘어가지 마.
+- 식단/다이어트/체중/단백질/칼로리/식사 → 153다이어트 원칙으로 답변.
+- 앱 기능(랭킹/레벨/리그/퀘스트/타이틀매치/꾸미기/QR출석/젬) → 랭킹업 시스템 답변.
+
+[규칙]
+1. 반드시 한국어. 영어/일본어/중국어/베트남어 등 다른 언어 문자 절대 금지. 같은 단어 반복 금지.
+2. 답변은 2-3문장. 길게 쓰지 마.
+3. 유저 실제 데이터가 없으면 절대 만들어내지 마. "회원님의 기록을 보면..." 같은 표현 금지. Day 수·식습관·운동 이력은 모르면 "확인하기 어려워요"로 답해.
+4. 카운터(counter)는 "되받아치기" 복싱 기술이야. 운동 횟수가 아니야.
+5. "랭킹업"은 이 앱 이름이야. 다이어트 랭킹이 아니라 99레벨 시스템 + 5종 랭킹 보드를 가리켜.
+6. 역질문으로 끝내지 마. 구체적 제안·조언으로 마무리.`;
 function buildDietContext(enrollment: any, snapshot: any, recentLogs: any[], latestCoachNote: any) {
   if (!enrollment && !snapshot && (!recentLogs || recentLogs.length === 0)) return "";
   const lines: string[] = [];
@@ -260,7 +266,11 @@ serve(async (req) => {
     // 3) 153다이어트 공식 지식 문서 (신규)
     // 4) 다이어트 회원 컨텍스트 — 있을 때만 (신규)
     // 5) 클라이언트가 보낸 messages
-    const baseSystemMessage = SYSTEM_PROMPT + personalContext;
+    // personalContext 가 비어 있으면 "회원 정보 없음" 명시 → 모델이 데이터 만들어내는 환각 차단.
+    const contextHeader = personalContext
+      ? personalContext
+      : "\n\n[회원 정보] 조회된 개인 데이터 없음. 진행도·식습관·기록을 절대 만들어내지 말 것.";
+    const baseSystemMessage = SYSTEM_PROMPT + contextHeader;
     const systemMessages: Array<{ role: "system"; content: string }> = [
       { role: "system", content: baseSystemMessage },
     ];
