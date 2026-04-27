@@ -60,8 +60,10 @@ export const MyMealPlan = ({
   const [swapSlot, setSwapSlot] = useState<MealSlot | null>(null);
   const [customSlot, setCustomSlot] = useState<MealSlot | null>(null);
   const [overridePlan, setOverridePlan] = useState<MealPlanResult | null>(null);
-  // reroll 시 직전 picks 의 메뉴 코드 — 다음 generate 호출 시 회피용
+  // reroll 누적 회피 큐 — 최근 ~30개 메뉴까지 보관해 같은 식단으로 빨리 회귀하는 것 방지.
+  // 끼니 4 × 8회 reroll = 32 → 30개 한도. 한도 초과 시 가장 오래된 코드부터 drop.
   const [excludeCodes, setExcludeCodes] = useState<readonly string[]>([]);
+  const EXCLUDE_QUEUE_LIMIT = 30;
 
   const generated = useMemo<MealPlanResult>(
     () =>
@@ -87,14 +89,19 @@ export const MyMealPlan = ({
   );
 
   const handleReroll = () => {
-    // 새 plan 강제 — 두 단계로 보장:
+    // 새 plan 강제 — 세 단계로 보장:
     //   1) 시드 큰 폭 점프 (jitter 우회)
-    //   2) 직전 picks 의 메뉴 코드를 excludeCodes 로 전달 → 같은 메뉴 회피
+    //   2) 누적 회피 큐 — 최근 ~30개 메뉴를 모두 회피해 4-5회 reroll 후 같은 식단 회귀 방지
+    //   3) override(swap 결과) 해제
     const prevCodes = plan.picks
       .map((p) => p.item?.code)
       .filter((c): c is string => !!c);
     setOverridePlan(null);
-    setExcludeCodes(prevCodes);
+    setExcludeCodes((prev) => {
+      // 가장 최근 코드를 앞에, 한도 초과분은 꼬리부터 잘라냄
+      const merged = [...prevCodes, ...prev.filter((c) => !prevCodes.includes(c))];
+      return merged.slice(0, EXCLUDE_QUEUE_LIMIT);
+    });
     setSeed((prev) => {
       let next = Math.floor(Math.random() * 1_000_000) + (Date.now() % 1_000);
       if (next === prev) next += 137;

@@ -123,16 +123,16 @@ function pickOneMeal(opts: {
 
   if (pool.length === 0) return null;
 
-  // 스코어: kcal 근접(-) + 단백질 충족(+) + 패턴 매칭(+) + 난수 타이브레이커
-  // jitter 폭을 충분히 키워 reroll 시 1순위가 자주 바뀌도록 — 결정성은 mulberry32
-  // 시드로 유지되므로 같은 시드면 같은 결과, 시드가 바뀌면 결과도 분명히 변경.
+  // 스코어: kcal 근접(-) + 단백질 충족(+) + 패턴 매칭(+) + 큰 폭 jitter
+  // jitter 폭을 kcalScore 동급으로 키워 reroll 시 1순위가 명확히 바뀌도록.
+  // 결정성은 mulberry32 시드로 유지(같은 시드 → 같은 결과).
   const scored = pool.map((m) => {
     const kcalDiff = Math.abs(m.kcal - opts.target.kcal);
     const kcalScore = 300 - Math.min(kcalDiff, 300); // 0~300
     const proteinScore = m.proteinG >= opts.target.proteinG * 0.8 ? 120 : 0;
     const patternScore =
       (m.patternFit ?? []).filter((p) => opts.preferPatterns?.includes(p)).length * 60;
-    const jitter = opts.rng() * 180; // 0~180 — 좁은 풀에서도 1순위 재배치 유도
+    const jitter = opts.rng() * 450; // 0~450 — kcal/단백질 점수와 동급, 풀 다양성 강제
     return { m, score: kcalScore + proteinScore + patternScore + jitter };
   });
 
@@ -159,17 +159,17 @@ function ensureDailyProbiotic(
     const currentCode = picks[idx].item?.code;
     if (currentCode) used.delete(currentCode);
 
-    const probioticOnly = filterMenus({
+    const probioticBase = filterMenus({
       slot: picks[idx].slot,
       excludeTags,
       excludeIngredients,
       requireProbiotic: true,
-    })
-      .filter((m) => !used.has(m.code))
-      .map((m) => ({
-        m,
-        score: (avoidPrev.has(m.code) ? 0 : 20) + rng() * 100,
-      }))
+    }).filter((m) => !used.has(m.code));
+    // 1차: avoidPrev 까지 회피. 2차: 풀이 비면 회피 풀어서 보장.
+    const fresh = probioticBase.filter((m) => !avoidPrev.has(m.code));
+    const candidatePool = fresh.length > 0 ? fresh : probioticBase;
+    const probioticOnly = candidatePool
+      .map((m) => ({ m, score: rng() * 200 }))
       .sort((a, b) => b.score - a.score);
 
     if (probioticOnly.length > 0) {
@@ -231,20 +231,20 @@ function guaranteeProtein(
     );
 
     // 후보: 슬롯 일치 + 단백질 더 높은 메뉴.
-    // 점수 = 단백질 + (직전 회피 보너스) + jitter — 매 reroll 마다 1순위 변동.
-    const candidatesScored = filterMenus({
+    // 1차로 avoidPrev 회피 + 단백질 상위권에서 jitter, 풀이 너무 좁으면 fallback.
+    const baseCandidates = filterMenus({
       slot: picks[lowestIdx].slot,
       excludeTags,
       excludeIngredients,
-    })
-      .filter((m) => !used.has(m.code) && m.proteinG > lowestProtein)
-      .map((m) => ({
-        m,
-        score:
-          m.proteinG * 4 +
-          (avoidPrev.has(m.code) ? 0 : 30) +
-          rng() * 60,
-      }))
+    }).filter((m) => !used.has(m.code) && m.proteinG > lowestProtein);
+    const fresh = baseCandidates.filter((m) => !avoidPrev.has(m.code));
+    // 단백질 상위 8개 안에서 jitter — 절대 1순위만 뽑히지 않도록.
+    const topByProtein = (fresh.length >= 4 ? fresh : baseCandidates)
+      .slice()
+      .sort((a, b) => b.proteinG - a.proteinG)
+      .slice(0, 8);
+    const candidatesScored = topByProtein
+      .map((m) => ({ m, score: m.proteinG + rng() * 200 }))
       .sort((a, b) => b.score - a.score);
 
     if (candidatesScored.length === 0) return picks;
@@ -295,18 +295,21 @@ function fillNutrientGaps(
       const used = new Set(
         picks.filter((p, i) => p.item && i !== idx).map((p) => p.item!.code),
       );
-      const highFiber = filterMenus({
+      const fiberBase = filterMenus({
         slot: picks[idx].slot,
         excludeTags,
         excludeIngredients,
-      })
-        .filter(
-          (m) => !used.has(m.code) && m.fiberG >= 5 && m.proteinG >= currentP - 3,
-        )
-        .map((m) => ({
-          m,
-          score: m.fiberG * 6 + (avoidPrev.has(m.code) ? 0 : 20) + rng() * 50,
-        }))
+      }).filter(
+        (m) => !used.has(m.code) && m.fiberG >= 5 && m.proteinG >= currentP - 3,
+      );
+      const fresh = fiberBase.filter((m) => !avoidPrev.has(m.code));
+      // 섬유 상위 8개 안에서 jitter
+      const topByFiber = (fresh.length >= 4 ? fresh : fiberBase)
+        .slice()
+        .sort((a, b) => b.fiberG - a.fiberG)
+        .slice(0, 8);
+      const highFiber = topByFiber
+        .map((m) => ({ m, score: m.fiberG + rng() * 200 }))
         .sort((a, b) => b.score - a.score);
       if (highFiber.length > 0) {
         picks[idx] = { ...picks[idx], item: highFiber[0].m };
@@ -327,23 +330,31 @@ function fillNutrientGaps(
       const used = new Set(
         picks.filter((p, i) => p.item && i !== idx).map((p) => p.item!.code),
       );
-      const diverse = filterMenus({
+      const diverseBase = filterMenus({
         slot: picks[idx].slot,
         excludeTags,
         excludeIngredients,
-      })
-        .filter(
-          (m) =>
-            !used.has(m.code) &&
-            m.keyVitamins.length + m.keyMinerals.length >= 5 &&
-            m.proteinG >= currentP - 3,
+      }).filter(
+        (m) =>
+          !used.has(m.code) &&
+          m.keyVitamins.length + m.keyMinerals.length >= 5 &&
+          m.proteinG >= currentP - 3,
+      );
+      const fresh2 = diverseBase.filter((m) => !avoidPrev.has(m.code));
+      // 다양성 상위 8개 안에서 jitter
+      const topByDiverse = (fresh2.length >= 4 ? fresh2 : diverseBase)
+        .slice()
+        .sort(
+          (a, b) =>
+            b.keyVitamins.length + b.keyMinerals.length -
+            (a.keyVitamins.length + a.keyMinerals.length),
         )
+        .slice(0, 8);
+      const diverse = topByDiverse
         .map((m) => ({
           m,
           score:
-            (m.keyVitamins.length + m.keyMinerals.length) * 8 +
-            (avoidPrev.has(m.code) ? 0 : 20) +
-            rng() * 50,
+            (m.keyVitamins.length + m.keyMinerals.length) * 2 + rng() * 200,
         }))
         .sort((a, b) => b.score - a.score);
       if (diverse.length > 0) {
