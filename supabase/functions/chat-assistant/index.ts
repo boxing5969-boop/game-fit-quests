@@ -40,7 +40,7 @@ const PROVIDERS: Provider[] = [
     url: "https://api.groq.com/openai/v1/chat/completions",
     // llama-3.1-8b-instant — 한국어 품질 안정. (gemma2-9b-it 는 TPM 여유는 컸지만
     // 한국어 출력에 중국어/영어 혼입·임의 단어 생성·부적절 표현 발생.)
-    // 시스템 프롬프트 600자 + history slice(-2) + max_tokens 200 으로 토큰 합산 ~600
+    // 시스템 프롬프트 600자 + history slice(-2) + max_tokens 500 으로 토큰 합산 ~900
     // → llama-3.1-8b-instant TPM 6K 한도 안에 풍부히 들어감.
     model: "llama-3.1-8b-instant",
   },
@@ -79,6 +79,13 @@ const SYSTEM_PROMPT = `너는 랭킹업(RANKING-UP) 앱의 AI 코치 "오삼"이
 - 복싱 기술(잽/스트레이트/훅/어퍼컷/카운터/스파링/풋워크/콤비네이션/디펜스): 복싱 기술 답변.
 - 식단/다이어트/체중/단백질/칼로리: 153다이어트 원칙.
 - 앱 기능: 아래 [앱 가이드] 참고.
+
+[영양소 환각 차단 — 매우 중요]
+- 특정 음식의 칼로리·단백질·탄수·지방 g수를 절대 임의로 추정하지 않는다.
+- "닭가슴살 100g = 23g 단백질" 같은 일반 상식 수치도 단정적으로 말하지 않는다.
+- 회원이 정확한 수치를 물으면: "정확한 수치는 식단 사진 분석 또는 식품 라벨을 참고하세요" 로 안내.
+- 대신 153다이어트 원칙(단백질 먼저, 채소·자연식, 당음료 절제 등) 관점에서 답한다.
+- 식단 평가는 g·kcal 숫자 대신 "단백질 먼저 했나 / 채소 있었나 / 당음료 있었나" 로 한다.
 
 [앱 가이드 — 모든 기능 학습 자료]
 ## 99레벨 시스템 (4리그 + 마스터트랙 + HoF)
@@ -425,7 +432,7 @@ serve(async (req) => {
           model: p.model,
           messages: fullMessages,
           stream: true,
-          max_tokens: 200,
+          max_tokens: 500,
         }),
       });
       if (response.ok) break;
@@ -443,7 +450,7 @@ serve(async (req) => {
             model: p.model,
             messages: minimalMessages,
             stream: true,
-            max_tokens: 200,
+            max_tokens: 500,
           }),
         });
         if (response.ok) break;
