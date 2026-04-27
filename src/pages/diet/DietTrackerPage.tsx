@@ -44,6 +44,7 @@ import {
   makeMessageSeed,
   type QuestMessageType,
 } from "@/lib/diet/questMessageEngine";
+import { syncQuestCheckin } from "@/services/challengeService";
 import type { DietMissionTemplate } from "@/data/diet/missionTemplates";
 import type { DailyHabitsPayload } from "@/services/dietService";
 import type { DietMealSlot, DietTrack } from "@/lib/dietTrack";
@@ -400,6 +401,23 @@ const DietTrackerPage = () => {
         toast.success(`🏆 ${allDoneMsg}`);
         setAllDoneToastShown(true);
       }
+
+      // 챌린지 동기화 — 새로 체크된 미션이 1개라도 있으면 mission 종류로 1회.
+      // 하루 중복은 syncQuestCheckin 내부에서 dedup.
+      if (user?.id && todayPlan) {
+        const newlyChecked = diffHabitsForEmission({
+          prev: logRow,
+          next: { ...habits, memo: note },
+          missions: todayPlan.missions,
+        });
+        if (newlyChecked.length > 0) {
+          void syncQuestCheckin({
+            userId: user.id,
+            kind: "mission",
+            points: 3,
+          });
+        }
+      }
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : "저장 실패. 네트워크 상태 확인 후 다시 시도해 주세요.",
@@ -458,6 +476,13 @@ const DietTrackerPage = () => {
       seed,
     });
     toast.success(praise);
+
+    // 챌린지 동기화 — active challenge 참여 중일 때만, 같은 kind/오늘 중복 skip.
+    void syncQuestCheckin({
+      userId: user.id,
+      kind: "photo",
+      points: 2,
+    });
   };
 
   const stageLabel =

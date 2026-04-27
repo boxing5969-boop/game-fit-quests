@@ -37,6 +37,18 @@ import DietLoadingOverlay from "@/components/diet/DietLoadingOverlay";
 import OsamCoachPopup from "@/components/diet/OsamCoachPopup";
 import ComebackButton from "@/components/diet/ComebackButton";
 import { pickDailyCoachMessage } from "@/data/diet/coachMessages";
+import { getDailyPlan } from "@/lib/diet/ruleEngine";
+import {
+  calcQuestScore,
+  gradeTimingBySlot,
+  type QuestSlotKey,
+} from "@/lib/diet/questTimingEngine";
+import {
+  getQuestMessage,
+  makeMessageSeed,
+  type QuestMessageType,
+} from "@/lib/diet/questMessageEngine";
+import type { DietMissionTemplate } from "@/data/diet/missionTemplates";
 import { useDietPreferences } from "@/hooks/useDietPreferences";
 import { useDietAnalytics } from "@/hooks/useDietAnalytics";
 import {
@@ -314,6 +326,93 @@ const ActiveHome = (p: ActiveHomeProps) => {
     return computeHabitScore(responses);
   }, [logRow]);
 
+  // ── 추가: 오늘의 퀘스트 현황 (점수·완료수·perfect 수·코치 메시지) ────────
+  const todayPlanForCard = useMemo(() => {
+    if (!p.track) return null;
+    return getDailyPlan(p.track as DietTrack, p.currentDay);
+  }, [p.track, p.currentDay]);
+
+  const inferSlotForMission = (m: DietMissionTemplate): QuestSlotKey => {
+    if (m.waterMlThreshold !== undefined) return "water";
+    if (m.linkedHabitColumn === "gym_attended") return "workout";
+    if (m.linkedHabitColumn === "late_night_snack_avoided") return "dinner";
+    if (m.linkedHabitColumn === "sugary_drink_avoided") return "water";
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Seoul",
+      hour: "2-digit",
+      hour12: false,
+    });
+    const h = Number(
+      fmt.formatToParts(new Date()).find((part) => part.type === "hour")?.value ??
+        "0",
+    );
+    const hh = h === 24 ? 0 : h;
+    if (hh < 11) return "breakfast";
+    if (hh < 17) return "lunch";
+    return "dinner";
+  };
+
+  const isMissionCompletedFromLog = (m: DietMissionTemplate): boolean => {
+    if (!logRow) return false;
+    const linked = m.linkedHabitColumn;
+    const waterHit =
+      m.waterMlThreshold !== undefined &&
+      (logRow.water_ml ?? 0) >= m.waterMlThreshold;
+    const habitHit = linked ? logRow[linked] === true : false;
+    return waterHit || habitHit;
+  };
+
+  const questCardSummary = useMemo(() => {
+    if (!todayPlanForCard) {
+      return { total: 0, completed: 0, perfect: 0, score: 0, allDone: false };
+    }
+    let completed = 0;
+    let perfect = 0;
+    let score = 0;
+    for (const m of todayPlanForCard.missions) {
+      if (!isMissionCompletedFromLog(m)) continue;
+      completed += 1;
+      const slot = inferSlotForMission(m);
+      const grade = gradeTimingBySlot(slot);
+      if (grade === "perfect") perfect += 1;
+      const s = calcQuestScore({
+        isCore: m.severity === "core",
+        timingGrade: grade,
+      });
+      score += s.total;
+    }
+    const total = todayPlanForCard.missions.length;
+    return {
+      total,
+      completed,
+      perfect,
+      score,
+      allDone: total > 0 && completed === total,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayPlanForCard, logRow]);
+
+  const questCardMessageType: QuestMessageType = (() => {
+    if (questCardSummary.total === 0) return "morning_start";
+    if (questCardSummary.allDone) return "all_done";
+    if (questCardSummary.completed === 0) return "morning_start";
+    if (questCardSummary.completed === questCardSummary.total - 1)
+      return "almost_done";
+    return "incomplete_nudge";
+  })();
+  const questCardMessage = useMemo(() => {
+    const seed = makeMessageSeed(user?.id ?? null, questCardMessageType);
+    return getQuestMessage({
+      type: questCardMessageType,
+      remainingCount: Math.max(
+        0,
+        questCardSummary.total - questCardSummary.completed,
+      ),
+      todayScore: questCardSummary.score,
+      seed,
+    });
+  }, [user?.id, questCardMessageType, questCardSummary]);
+
   const coachNoteQuery = useLatestCoachNote(p.enrollmentId);
 
   // 완주 축하 모달 — enrollment.status === 'completed' && 아직 안 봤을 때 1회만
@@ -423,6 +522,88 @@ const ActiveHome = (p: ActiveHomeProps) => {
 
       {/* 실패 복귀 시스템 — "망쳤어요" 진입. 1개만 체크해도 복구 성공 */}
       <ComebackButton />
+
+      {/* 추가: 오늘의 퀘스트 현황 — 점수·완료수·perfect·코치 메시지 */}
+      {todayPlanForCard && questCardSummary.total > 0 && (
+        <div
+          className={cn(
+            "rounded-2xl border p-4 transition-colors",
+            questCardSummary.allDone
+              ? "border-emerald-400/50 bg-emerald-400/10"
+              : "border-border bg-card",
+          )}
+        >
+          <div className="flex items-center justify-between">
+            <p
+              className={cn(
+                "text-[10px] font-black uppercase tracking-[0.2em]",
+                questCardSummary.allDone ? "text-emerald-600" : "text-primary",
+              )}
+            >
+              오늘의 퀘스트 현황
+            </p>
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
+                questCardSummary.allDone
+                  ? "bg-emerald-400/20 text-emerald-700"
+                  : "bg-primary/10 text-primary",
+              )}
+            >
+              {questCardSummary.completed}/{questCardSummary.total}
+            </span>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <div
+              className={cn(
+                "rounded-xl border bg-background px-2 py-2 text-center",
+                questCardSummary.allDone
+                  ? "border-emerald-400/30"
+                  : "border-border",
+              )}
+            >
+              <p className="text-[9.5px] font-bold uppercase tracking-wide text-muted-foreground">
+                점수
+              </p>
+              <p
+                className={cn(
+                  "mt-0.5 text-[14px] font-extrabold",
+                  questCardSummary.allDone
+                    ? "text-emerald-600"
+                    : "text-foreground",
+                )}
+              >
+                {questCardSummary.score}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-background px-2 py-2 text-center">
+              <p className="text-[9.5px] font-bold uppercase tracking-wide text-muted-foreground">
+                완료
+              </p>
+              <p className="mt-0.5 text-[14px] font-extrabold text-foreground">
+                {questCardSummary.completed}/{questCardSummary.total}
+              </p>
+            </div>
+            <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-2 py-2 text-center">
+              <p className="text-[9.5px] font-bold uppercase tracking-wide text-emerald-600">
+                Perfect
+              </p>
+              <p className="mt-0.5 text-[14px] font-extrabold text-emerald-700">
+                {questCardSummary.perfect}
+              </p>
+            </div>
+          </div>
+          <p
+            className={cn(
+              "mt-3 text-[12px] leading-relaxed",
+              questCardSummary.allDone ? "text-emerald-700" : "text-foreground",
+            )}
+          >
+            <Sparkles className="mr-1 inline h-3 w-3 align-[-2px]" />
+            {questCardMessage}
+          </p>
+        </div>
+      )}
 
       {/* 배지 진행 */}
       <MilestoneProgressStrip
