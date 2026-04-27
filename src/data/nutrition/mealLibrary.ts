@@ -82,6 +82,94 @@ function detectProbiotic(name: string): boolean {
   return PROBIOTIC_KEYWORDS.some((kw) => name.includes(kw));
 }
 
+/** 음식명 → 비타민 자동 인식. evaluateFiveNutrients 의 다양성 체크가 동작하도록. */
+function detectVitamins(name: string): Vitamin[] {
+  const v = new Set<Vitamin>();
+  if (/(시금치|케일|당근|호박|고구마|토마토|파프리카|망고|바나나|애호박)/.test(name)) v.add("A");
+  if (/(브로콜리|딸기|키위|오렌지|레몬|파프리카|토마토|블루베리|자몽|귤|사과|채소|샐러드|쌈)/.test(name)) v.add("C");
+  if (/(연어|고등어|갈치|참치|버섯|달걀|계란|우유|치즈|요거트)/.test(name)) v.add("D");
+  if (/(소고기|돼지고기|닭|계란|달걀|연어|참치|우유|치즈|요거트|북어|고등어)/.test(name)) v.add("B12");
+  if (/(견과|아몬드|호두|아보카도|올리브|땅콩|해바라기씨)/.test(name)) v.add("E");
+  if (/(시금치|케일|브로콜리|아스파라거스|상추|쌈|나물)/.test(name)) v.add("K");
+  if (/(현미|잡곡|통밀|보리|콩|두부|귀리|오트)/.test(name)) v.add("B");
+  return [...v];
+}
+
+/** 음식명 → 무기질 자동 인식. */
+function detectMinerals(name: string): Mineral[] {
+  const m = new Set<Mineral>();
+  if (/(우유|치즈|요거트|멸치|두부|시금치|뱅어|새우)/.test(name)) m.add("칼슘");
+  if (/(소고기|돼지고기|간|시금치|콩|굴|조개|북어|황태|해물)/.test(name)) m.add("철");
+  if (/(견과|아몬드|호두|시금치|바나나|아보카도|콩|두부|호박씨)/.test(name)) m.add("마그네슘");
+  if (/(굴|새우|소고기|콩|호박씨|장어)/.test(name)) m.add("아연");
+  if (/(바나나|고구마|감자|아보카도|시금치|토마토|연어|메론|수박)/.test(name)) m.add("칼륨");
+  if (/(미역|다시마|김|새우|연어|참치|굴|조개|해물|북어|황태|동태|꽃게|낙지|쭈꾸미|오징어|장어)/.test(name)) m.add("요오드");
+  return [...m];
+}
+
+/**
+ * 음식명에 표준 분량 자동 부착.
+ *   "흰쌀밥+굴국"      → "흰쌀밥 1공기(200g) + 굴국 1그릇"
+ *   "삼겹살구이+상추쌈+밥" → "삼겹살구이 100g + 상추쌈 + 흰쌀밥 1공기"
+ *   이미 단위(g, 개, 1공기 등)가 들어간 항목은 그대로 통과.
+ */
+function portionize(name: string): string {
+  // 양이 이미 명시된 경우 통과
+  if (/\d+\s*(g|kg|ml|개|점|쌈|줌|컵|봉|조각|알|공기|그릇|잔|쪽|모)/.test(name)) return name;
+  if (/(한\s*컵|한\s*줌|한\s*봉|한\s*조각|한\s*그릇|반\s*개|반\s*공기|작은것)/.test(name)) return name;
+
+  const SUFFIX_RULES: Array<[RegExp, string]> = [
+    // 밥류 → 1공기 200g
+    [/^(흰쌀밥|잡곡밥|현미밥|보리밥|흑미밥|기장밥|수수밥|팥밥|찰밥|영양찰밥|콩나물밥|무밥|돌솥비빔밥|비빔밥|김치볶음밥|소고기볶음밥|새우볶음밥|야채볶음밥|참치볶음밥|된장비빔밥|나물비빔밥|채소비빔밥|곤약비빔밥|톳비빔밥|회덮밥|참치덮밥|연어덮밥|장어덮밥|소불고기덮밥|제육덮밥|닭고기덮밥|낙지덮밥|새우덮밥|규동|가츠동|오야코동|텐동|하이라이스|오므라이스\(한식\))$/, "$1 1공기(200g)"],
+    [/^밥$/, "흰쌀밥 1공기(200g)"],
+    // 죽
+    [/(죽)$/, "$& 1그릇(250g)"],
+    // 국·탕·찌개·전골
+    [/(국|탕|찌개|전골)$/, "$& 1그릇"],
+    // 면류
+    [/^(라면|짜장면|짬뽕|삼선짜장면|칼국수|수제비|만두국|떡국|떡국\+만두|냉면|물냉면|비빔냉면|비빔국수|잔치국수|막국수|메밀소바|우동|쌀국수|똠얌꿍쌀국수|팟타이|분짜|비빔쌀국수|돈코츠라멘|미소라멘|쇼유라멘|키마카레\+밥|그린커리\+밥|반미샌드위치)$/, "$1 1인분"],
+    // 구이류
+    [/(구이)$/, "$& 100g"],
+    [/(조림)$/, "$& 1접시"],
+    [/(볶음)$/, "$& 1접시"],
+    // 단품 단백질
+    [/^(닭가슴살)$/, "$1 100g"],
+    [/^(소고기|돼지고기)$/, "$1 100g"],
+    [/^(삼겹살|목살|항정살|차돌박이|우삼겹|등심|안심|갈비)$/, "$1 80g"],
+    [/^(연어|참치|고등어|갈치|새우|문어|오징어|낙지|쭈꾸미)$/, "$1 80g"],
+    [/^(두부)$/, "$1 1/2모"],
+    // 빵·토스트
+    [/^(통밀토스트|토스트|샌드위치|베이글|머핀|핫도그|랩)$/, "$1 1개"],
+    // 음료
+    [/^(우유|두유|아몬드밀크|코코넛워터|쉐이크|프로틴쉐이크|스무디)$/, "$1 1잔(200ml)"],
+    // 요거트
+    [/^(그릭요거트|요거트|저지방그릭요거트|무가당그릭요거트|저지방요거트)$/, "$1 150g"],
+    // 과일
+    [/^(사과|배|키위|오렌지|복숭아|망고|파인애플|멜론|수박|자몽|참외|바나나|감)$/, "$1 1개"],
+    [/^(딸기|블루베리|체리|포도|청포도|베리)$/, "$1 한컵"],
+    // 김치/반찬
+    [/^(김치|깍두기|물김치|보쌈김치|총각김치|배추김치)$/, "$1 50g"],
+    [/^(나물|시금치무침|콩나물무침|미역줄기무침|콩나물|숙주|상추쌈|상추|깻잎)$/, "$1 80g"],
+    // 김
+    [/^김$/, "김 1봉"],
+  ];
+
+  function single(token: string): string {
+    const t = token.trim();
+    if (!t) return t;
+    for (const [re, repl] of SUFFIX_RULES) {
+      if (re.test(t)) return t.replace(re, repl);
+    }
+    return t;
+  }
+
+  // "+" 로 분리 후 각 토큰에 분량 부착
+  return name
+    .split("+")
+    .map(single)
+    .join(" + ");
+}
+
 // ===== RAW 데이터 (튜플) =====
 type Raw = [string, number, number, number, number, MealType, MealTag[]];
 
@@ -465,8 +553,9 @@ const RAW: Raw[] = [
 
 // ===== 확장 — RAW → MealItem (신/구 필드 모두 채움) =====
 function expand(raw: Raw, idx: number): MealItem {
-  const [name, calories, protein, carbs, fat, type, tags] = raw;
+  const [rawName, calories, protein, carbs, fat, type, tags] = raw;
   const id = `meal_${String(idx + 1).padStart(4, "0")}`;
+  const name = portionize(rawName);
   return {
     id,
     code: id,
@@ -479,10 +568,10 @@ function expand(raw: Raw, idx: number): MealItem {
     carbsG: carbs,
     fat,
     fatG: fat,
-    fiberG: estimateFiber(name, carbs),
-    keyVitamins: [],
-    keyMinerals: [],
-    hasProbiotic: detectProbiotic(name),
+    fiberG: estimateFiber(rawName, carbs),
+    keyVitamins: detectVitamins(rawName),
+    keyMinerals: detectMinerals(rawName),
+    hasProbiotic: detectProbiotic(rawName),
     type,
     slots: [type],
     tags,

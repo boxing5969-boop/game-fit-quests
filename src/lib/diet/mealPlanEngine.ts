@@ -20,6 +20,10 @@ import {
   type MealPlanMode,
 } from "@/data/nutrition/mealLibrary";
 import {
+  DAILY_FIBER_TARGET_G,
+  DAILY_MINERAL_DIVERSITY_TARGET,
+  DAILY_PROBIOTIC_TARGET,
+  DAILY_VITAMIN_DIVERSITY_TARGET,
   evaluateFiveNutrients,
   splitTargetsBySlot,
   type DailyNutrientSum,
@@ -458,41 +462,120 @@ function modeBonusFor(mode: PlanMode, slot: MealSlot): {
   return {};
 }
 
-/** 단백질이 95% 이하면 식전 쉐이크 슬롯을 추가해 단백질 보강.
- *  반환: pre_shake 슬롯이 picks 의 가장 앞에 추가된 새 picks. */
-function prependPreMealShake(
+/**
+ * 영양 부족 시 보강 간식을 자동 추가 — 메인 슬롯은 그대로 유지하고 간식만 append.
+ *   · 단백질 < 95% 목표  → 고단백 간식(쉐이크/요거트/닭가슴살 류)
+ *   · 섬유 < 80% 목표    → 고섬유 간식(베리/사과/고구마 류)
+ *   · 유산균 0회         → 그릭요거트/김치 류
+ *   · 비타민/무기질 다양성 부족 → 채소·과일 다양 간식
+ * 최대 2개 추가. 추가 간식은 picks 끝에 append → 메인 다양성 보존.
+ */
+function appendNutrientSupplements(
   picks: MealPlanPick[],
   target: NutritionTarget,
   excludeIngredients: string[],
   rng: () => number,
   avoidPrev: Set<string>,
 ): MealPlanPick[] {
-  const totalProtein = picks.reduce(
-    (sum, p) => sum + (p.item?.proteinG ?? 0),
-    0,
-  );
-  if (totalProtein >= target.proteinG * PROTEIN_TARGET_RATIO) return picks;
+  const MAX_SUPPLEMENTS = 3;
+  const supplements: MealItem[] = [];
 
-  // 쉐이크 풀에서 1개 선택 — 시드/회피 적용
-  const used = new Set(picks.filter((p) => p.item).map((p) => p.item!.code));
-  const shakePool = filterMenus({ slot: "snack", excludeIngredients })
-    .filter((m) => m.tags.includes("쉐이크"))
-    .filter((m) => !used.has(m.code));
-  const fresh = shakePool.filter((m) => !avoidPrev.has(m.code));
-  const candidates = (fresh.length >= 2 ? fresh : shakePool)
-    .map((m) => ({ m, score: m.proteinG * 2 + rng() * 200 }))
-    .sort((a, b) => b.score - a.score);
+  const allItems = (): MealItem[] => [
+    ...picks.map((p) => p.item).filter((m): m is MealItem => !!m),
+    ...supplements,
+  ];
 
-  if (candidates.length === 0) return picks;
+  const sumOf = (key: "proteinG" | "fiberG"): number =>
+    allItems().reduce((s, m) => s + m[key], 0);
 
-  const shake = candidates[0].m;
-  // 식전 쉐이크 — snack 슬롯 형태이지만 가장 앞에 두어 "식전 단백질" 의미 전달.
-  const preShakePick: MealPlanPick = {
-    slot: "snack",
-    target: { slot: "snack", kcal: shake.kcal, proteinG: shake.proteinG },
-    item: shake,
-  };
-  return [preShakePick, ...picks];
+  const probioticCount = (): number =>
+    allItems().filter((m) => m.hasProbiotic).length;
+
+  const vitaminCount = (): number =>
+    new Set(allItems().flatMap((m) => m.keyVitamins)).size;
+
+  const mineralCount = (): number =>
+    new Set(allItems().flatMap((m) => m.keyMinerals)).size;
+
+  const proteinTarget = target.proteinG * PROTEIN_TARGET_RATIO;
+  const fiberTarget = DAILY_FIBER_TARGET_G * 0.8;
+
+  for (let iter = 0; iter < MAX_SUPPLEMENTS; iter++) {
+    const proteinGap = Math.max(0, proteinTarget - sumOf("proteinG"));
+    const fiberGap = Math.max(0, fiberTarget - sumOf("fiberG"));
+    const needProbiotic = probioticCount() < DAILY_PROBIOTIC_TARGET;
+    const vitGap = Math.max(0, DAILY_VITAMIN_DIVERSITY_TARGET - vitaminCount());
+    const minGap = Math.max(0, DAILY_MINERAL_DIVERSITY_TARGET - mineralCount());
+
+    // 모두 충족되면 중단
+    if (
+      proteinGap === 0 &&
+      fiberGap === 0 &&
+      !needProbiotic &&
+      vitGap === 0 &&
+      minGap === 0
+    )
+      break;
+
+    const usedCodes = new Set([
+      ...picks.map((p) => p.item?.code).filter((c): c is string => !!c),
+      ...supplements.map((s) => s.code),
+    ]);
+
+    const snackPool = filterMenus({ slot: "snack", excludeIngredients }).filter(
+      (m) => !usedCodes.has(m.code),
+    );
+
+    if (snackPool.length === 0) break;
+
+    // 점수 = gap 기여도 합산. 회피 큐 와는 약하게(가벼운 페널티)
+    const currentVit = new Set(allItems().flatMap((m) => m.keyVitamins));
+    const currentMin = new Set(allItems().flatMap((m) => m.keyMinerals));
+
+    const scored = snackPool.map((m) => {
+      const proteinFill = proteinGap > 0 ? Math.min(m.proteinG, proteinGap) * 4 : 0;
+      const fiberFill = fiberGap > 0 ? Math.min(m.fiberG, fiberGap) * 6 : 0;
+      const probioticFill = needProbiotic && m.hasProbiotic ? 80 : 0;
+      const newVitamins = vitGap > 0
+        ? m.keyVitamins.filter((v) => !currentVit.has(v)).length * 25
+        : 0;
+      const newMinerals = minGap > 0
+        ? m.keyMinerals.filter((mn) => !currentMin.has(mn)).length * 25
+        : 0;
+      const avoidPenalty = avoidPrev.has(m.code) ? -10 : 0;
+      const tieBreak = rng() * 30;
+      return {
+        m,
+        score:
+          proteinFill +
+          fiberFill +
+          probioticFill +
+          newVitamins +
+          newMinerals +
+          avoidPenalty +
+          tieBreak,
+      };
+    });
+
+    // gap 을 채울 수 없는 후보(score 0 이하) 제거
+    const useful = scored.filter((s) => s.score > 0);
+    if (useful.length === 0) break;
+
+    useful.sort((a, b) => b.score - a.score);
+    // 상위 5 중 무작위 (1순위 고정 방지)
+    const topN = Math.min(5, useful.length);
+    const idx = Math.floor(rng() * topN);
+    supplements.push(useful[idx].m);
+  }
+
+  if (supplements.length === 0) return picks;
+
+  const supplementPicks: MealPlanPick[] = supplements.map((m) => ({
+    slot: "snack" as MealSlot,
+    target: { slot: "snack" as MealSlot, kcal: m.kcal, proteinG: m.proteinG },
+    item: m,
+  }));
+  return [...picks, ...supplementPicks];
 }
 
 export function generateMealPlan(input: MealPlanInput): MealPlanResult {
@@ -564,13 +647,15 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
     return { slot: t.slot, target: t, item };
   });
 
-  // 후처리 비활성화 — 회원의 핵심 요구는 "매 reroll 마다 모든 슬롯 변경".
-  // ensureDailyProbiotic / guaranteeProtein / fillNutrientGaps 는 슬롯을 교체하면서
-  // 결정적 후보 8개로 좁혀 reroll 다양성을 깨고 있었음. 영양 보강은 회원이 "교체"
-  // 버튼으로 수동 조정하거나 단백질 부족 시 식전 쉐이크만 추가.
-  if (planMode === "home_korean" || planMode === "office_quick") {
-    picks = prependPreMealShake(picks, input.target, excludeIngredients, rng, avoidPrev);
-  }
+  // 영양 보강 간식 자동 추가 — 메인 슬롯 다양성 유지하면서 부족분만 간식으로 보강.
+  // 단백질 / 섬유 / 유산균 부족 시 최대 2개 간식을 picks 끝에 append.
+  picks = appendNutrientSupplements(
+    picks,
+    input.target,
+    excludeIngredients,
+    rng,
+    avoidPrev,
+  );
 
   const { totals, nutrients } = aggregateNutrients(picks);
 
