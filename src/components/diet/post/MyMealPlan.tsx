@@ -20,6 +20,7 @@ import {
   generateMealPlan,
   swapMealWithAutoAdjust,
   type MealPlanResult,
+  type PlanMode,
 } from "@/lib/diet/mealPlanEngine";
 import type { MealItem } from "@/data/nutrition/mealLibrary";
 import MealSwapDialog from "./MealSwapDialog";
@@ -57,6 +58,7 @@ export const MyMealPlan = ({
   const [seed, setSeed] = useState<number>(() =>
     Math.floor(Math.random() * 1_000_000),
   );
+  const [planMode, setPlanMode] = useState<PlanMode>("random");
   const [swapSlot, setSwapSlot] = useState<MealSlot | null>(null);
   const [customSlot, setCustomSlot] = useState<MealSlot | null>(null);
   const [overridePlan, setOverridePlan] = useState<MealPlanResult | null>(null);
@@ -75,8 +77,9 @@ export const MyMealPlan = ({
         preferPatterns,
         seed,
         excludeCodes,
+        planMode,
       }),
-    [target, mealsPerDay, dietaryRestrictions, dislikedIngredients, preferPatterns, seed, excludeCodes],
+    [target, mealsPerDay, dietaryRestrictions, dislikedIngredients, preferPatterns, seed, excludeCodes, planMode],
   );
 
   const plan = overridePlan ?? generated;
@@ -87,6 +90,14 @@ export const MyMealPlan = ({
     () => evaluateFiveNutrients(plan.nutrients, target),
     [plan, target],
   );
+
+  const handleModeChange = (next: PlanMode) => {
+    if (next === planMode) return;
+    setPlanMode(next);
+    setOverridePlan(null);
+    setExcludeCodes([]); // 모드 전환 — 회피 큐 리셋
+    setSeed(Math.floor(Math.random() * 1_000_000) + (Date.now() % 1_000));
+  };
 
   const handleReroll = () => {
     // 새 plan 강제 — 세 단계로 보장:
@@ -140,6 +151,40 @@ export const MyMealPlan = ({
 
   return (
     <section className="space-y-3">
+      {/* 식단 모드 탭 — 3가지 랜덤 식단 스타일 선택 */}
+      <div className="rounded-2xl border border-border bg-card p-2">
+        <p className="px-1 pb-1 text-[10px] font-black uppercase tracking-wide text-muted-foreground">
+          식단 스타일
+        </p>
+        <div className="grid grid-cols-3 gap-1.5">
+          <ModeTab
+            active={planMode === "random"}
+            label="자동 랜덤"
+            sub="전체 라이브러리"
+            onClick={() => handleModeChange("random")}
+          />
+          <ModeTab
+            active={planMode === "home_korean"}
+            label="가정집 한식"
+            sub="닭가슴살·두부 보강"
+            onClick={() => handleModeChange("home_korean")}
+          />
+          <ModeTab
+            active={planMode === "office_quick"}
+            label="업무용 초간단"
+            sub="편의점·쉐이크"
+            onClick={() => handleModeChange("office_quick")}
+          />
+        </div>
+        <p className="mt-2 px-1 text-[10.5px] leading-relaxed text-muted-foreground">
+          {planMode === "home_korean"
+            ? "가정에서 한식 위주로. 단백질 부족 시 식전 쉐이크로 보강합니다."
+            : planMode === "office_quick"
+              ? "편의점 + 쉐이크로 즉시 해결. 단백질 부족 시 쉐이크 1회 추가."
+              : "전체 라이브러리에서 자동 조합. 다양성 최대."}
+        </p>
+      </div>
+
       {/* 요약 헤더 */}
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
@@ -255,14 +300,24 @@ export const MyMealPlan = ({
 
       {/* 끼니 카드 */}
       <div className="space-y-2">
-        {plan.picks.map((p) => {
+        {plan.picks.map((p, idx) => {
           const hasItem = !!p.item;
+          // 식전 쉐이크 — 같은 plan 안에 snack 이 2개 이상이고 첫 번째가 쉐이크면 식전 보강 슬롯
+          const isPreShake =
+            idx === 0 &&
+            p.slot === "snack" &&
+            !!p.item?.tags.includes("쉐이크") &&
+            plan.picks.filter((q) => q.slot === "snack").length > 1;
+          const slotLabel = isPreShake
+            ? "식전 단백질 (쉐이크)"
+            : MEAL_SLOT_LABEL_KO[p.slot];
           return (
             <div
-              key={p.slot}
+              key={`${p.slot}-${idx}`}
               className={cn(
                 "rounded-2xl border bg-card p-3",
                 hasItem ? "border-border" : "border-primary/30 bg-primary/5",
+                isPreShake && "border-primary/50 bg-primary/5",
               )}
             >
               <div className="flex items-start gap-2">
@@ -277,7 +332,7 @@ export const MyMealPlan = ({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <p className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">
-                      {MEAL_SLOT_LABEL_KO[p.slot]}
+                      {slotLabel}
                     </p>
                     <span className="text-[10px] text-muted-foreground">
                       · 목표 {p.target.kcal} kcal
@@ -300,24 +355,26 @@ export const MyMealPlan = ({
                     </>
                   )}
                 </div>
-                <div className="flex flex-col gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setSwapSlot(p.slot)}
-                    aria-label={`${MEAL_SLOT_LABEL_KO[p.slot]} 교체`}
-                    className="rounded-lg border border-border bg-background px-2 py-1 text-[11px] font-bold text-foreground active:scale-95"
-                  >
-                    <Replace className="inline h-3 w-3" /> 교체
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCustomSlot(p.slot)}
-                    aria-label={`${MEAL_SLOT_LABEL_KO[p.slot]} 직접 입력`}
-                    className="rounded-lg border border-border bg-background px-2 py-1 text-[11px] font-bold text-foreground active:scale-95"
-                  >
-                    <Pencil className="inline h-3 w-3" /> 직접 입력
-                  </button>
-                </div>
+                {!isPreShake && (
+                  <div className="flex flex-col gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setSwapSlot(p.slot)}
+                      aria-label={`${MEAL_SLOT_LABEL_KO[p.slot]} 교체`}
+                      className="rounded-lg border border-border bg-background px-2 py-1 text-[11px] font-bold text-foreground active:scale-95"
+                    >
+                      <Replace className="inline h-3 w-3" /> 교체
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCustomSlot(p.slot)}
+                      aria-label={`${MEAL_SLOT_LABEL_KO[p.slot]} 직접 입력`}
+                      className="rounded-lg border border-border bg-background px-2 py-1 text-[11px] font-bold text-foreground active:scale-95"
+                    >
+                      <Pencil className="inline h-3 w-3" /> 직접 입력
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -348,6 +405,33 @@ export const MyMealPlan = ({
     </section>
   );
 };
+
+const ModeTab = ({
+  active,
+  label,
+  sub,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  sub: string;
+  onClick: () => void;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-pressed={active}
+    className={cn(
+      "rounded-xl border px-2 py-2 text-left transition-colors active:scale-[0.98]",
+      active
+        ? "border-primary bg-primary/10 text-foreground"
+        : "border-border bg-background text-muted-foreground hover:text-foreground",
+    )}
+  >
+    <p className="text-[11.5px] font-extrabold leading-tight">{label}</p>
+    <p className="mt-0.5 text-[10px] leading-tight">{sub}</p>
+  </button>
+);
 
 const Stat = ({
   label,

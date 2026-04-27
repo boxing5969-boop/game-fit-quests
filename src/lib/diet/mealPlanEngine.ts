@@ -26,6 +26,12 @@ import {
   type NutritionTarget,
 } from "./nutritionEngine";
 
+/** 식단 모드 — 회원이 식단 스타일을 선택. */
+export type PlanMode =
+  | "random"        // 기본: 전체 라이브러리 랜덤
+  | "home_korean"   // 가정집 한식 위주: 한식 태그 강제 + 닭가슴살 보강 + 단백질 부족 시 식전 쉐이크
+  | "office_quick"; // 업무용 초간단: 편의점/쉐이크 한정
+
 export interface MealPlanInput {
   target: NutritionTarget;
   mealsPerDay?: 2 | 3 | 4;
@@ -36,6 +42,8 @@ export interface MealPlanInput {
   seed?: number;
   /** 직전 plan 의 메뉴 코드 — 가급적 회피해서 매번 새 조합 보장. */
   excludeCodes?: readonly string[];
+  /** 식단 스타일. 기본은 "random". */
+  planMode?: PlanMode;
 }
 
 export interface MealPlanPick {
@@ -113,13 +121,26 @@ function pickOneMeal(opts: {
   excludeIngredients: string[];
   preferPatterns?: string[];
   rng: () => number;
+  /** 메뉴는 이 태그들 중 최소 1개를 가져야 함 (모드 한정). */
+  requireTagsAny?: string[];
+  /** 모드별 보너스 점수: 태그 매칭 / 이름 키워드 매칭. */
+  bonusTags?: string[];
+  bonusNameKeywords?: string[];
 }): MealItem | null {
-  const pool = filterMenus({
+  const basePool = filterMenus({
     slot: opts.slot,
     excludeTags: opts.excludeTags,
     excludeIngredients: opts.excludeIngredients,
     preferPatterns: opts.preferPatterns,
   }).filter((m) => !opts.excludeCodes.has(m.code));
+
+  // 모드 한정 태그 필터 (1차 시도). 빈 풀이면 호출부에서 fallback 시도.
+  const pool =
+    opts.requireTagsAny && opts.requireTagsAny.length > 0
+      ? basePool.filter((m) =>
+          opts.requireTagsAny!.some((t) => m.tags.includes(t)),
+        )
+      : basePool;
 
   if (pool.length === 0) return null;
 
@@ -132,8 +153,21 @@ function pickOneMeal(opts: {
     const proteinScore = m.proteinG >= opts.target.proteinG * 0.8 ? 120 : 0;
     const patternScore =
       (m.patternFit ?? []).filter((p) => opts.preferPatterns?.includes(p)).length * 60;
+    const tagBonus =
+      (opts.bonusTags ?? []).reduce(
+        (acc, t) => acc + (m.tags.includes(t) ? 80 : 0),
+        0,
+      );
+    const nameBonus =
+      (opts.bonusNameKeywords ?? []).reduce(
+        (acc, k) => acc + (m.name.includes(k) ? 100 : 0),
+        0,
+      );
     const jitter = opts.rng() * 450; // 0~450 — kcal/단백질 점수와 동급, 풀 다양성 강제
-    return { m, score: kcalScore + proteinScore + patternScore + jitter };
+    return {
+      m,
+      score: kcalScore + proteinScore + patternScore + tagBonus + nameBonus + jitter,
+    };
   });
 
   scored.sort((a, b) => b.score - a.score);
@@ -404,9 +438,82 @@ function aggregateNutrients(picks: MealPlanPick[]): {
   };
 }
 
+/** 모드별 메인 끼니(점심·저녁) 필터·보너스. 식전 쉐이크는 별도 prepend 에서 처리. */
+function modeFilterFor(mode: PlanMode, slot: MealSlot): {
+  requireTagsAny?: string[];
+  bonusTags?: string[];
+  bonusNameKeywords?: string[];
+} {
+  if (mode === "home_korean") {
+    if (slot === "lunch" || slot === "dinner") {
+      return {
+        requireTagsAny: ["한식"],
+        bonusTags: ["고단백", "한식"],
+        bonusNameKeywords: ["닭가슴살", "닭가슴", "두부"],
+      };
+    }
+    if (slot === "breakfast") {
+      return {
+        bonusTags: ["한식", "간편"],
+        bonusNameKeywords: ["달걀", "두부", "닭가슴살"],
+      };
+    }
+    return {
+      bonusTags: ["한식", "간편"],
+      bonusNameKeywords: ["닭가슴살"],
+    };
+  }
+  if (mode === "office_quick") {
+    return {
+      requireTagsAny: ["편의점", "쉐이크", "간편", "데스크"],
+      bonusTags: ["편의점", "쉐이크", "고단백"],
+      bonusNameKeywords: ["쉐이크", "삼각김밥", "닭가슴살"],
+    };
+  }
+  return {};
+}
+
+/** 단백질이 95% 이하면 식전 쉐이크 슬롯을 추가해 단백질 보강.
+ *  반환: pre_shake 슬롯이 picks 의 가장 앞에 추가된 새 picks. */
+function prependPreMealShake(
+  picks: MealPlanPick[],
+  target: NutritionTarget,
+  excludeIngredients: string[],
+  rng: () => number,
+  avoidPrev: Set<string>,
+): MealPlanPick[] {
+  const totalProtein = picks.reduce(
+    (sum, p) => sum + (p.item?.proteinG ?? 0),
+    0,
+  );
+  if (totalProtein >= target.proteinG * PROTEIN_TARGET_RATIO) return picks;
+
+  // 쉐이크 풀에서 1개 선택 — 시드/회피 적용
+  const used = new Set(picks.filter((p) => p.item).map((p) => p.item!.code));
+  const shakePool = filterMenus({ slot: "snack", excludeIngredients })
+    .filter((m) => m.tags.includes("쉐이크"))
+    .filter((m) => !used.has(m.code));
+  const fresh = shakePool.filter((m) => !avoidPrev.has(m.code));
+  const candidates = (fresh.length >= 2 ? fresh : shakePool)
+    .map((m) => ({ m, score: m.proteinG * 2 + rng() * 200 }))
+    .sort((a, b) => b.score - a.score);
+
+  if (candidates.length === 0) return picks;
+
+  const shake = candidates[0].m;
+  // 식전 쉐이크 — snack 슬롯 형태이지만 가장 앞에 두어 "식전 단백질" 의미 전달.
+  const preShakePick: MealPlanPick = {
+    slot: "snack",
+    target: { slot: "snack", kcal: shake.kcal, proteinG: shake.proteinG },
+    item: shake,
+  };
+  return [preShakePick, ...picks];
+}
+
 export function generateMealPlan(input: MealPlanInput): MealPlanResult {
   const seed = input.seed ?? Math.floor(Math.random() * 1000);
   const rng = mulberry32(seed);
+  const planMode: PlanMode = input.planMode ?? "random";
 
   const slotTargets = splitTargetsBySlot(input.target, input.mealsPerDay ?? 3);
   const excludeTags = restrictionsToExcludeTags(input.dietaryRestrictions);
@@ -421,7 +528,8 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
   const used = new Set<string>();
 
   let picks: MealPlanPick[] = slotTargets.map((t) => {
-    // 1차 시도 — 직전 코드 + 이번 plan 에서 이미 쓴 코드 모두 회피
+    const modeFilter = modeFilterFor(planMode, t.slot);
+    // 1차 시도 — 직전 코드 + 이번 plan 에서 이미 쓴 코드 모두 회피 + 모드 한정 태그
     const exclude1 = new Set<string>([...avoidPrev, ...used]);
     let item = pickOneMeal({
       slot: t.slot,
@@ -431,8 +539,22 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
       excludeIngredients,
       preferPatterns: input.preferPatterns,
       rng,
+      ...modeFilter,
     });
-    // 2차 시도 — 1차 결과 없을 때(좁은 풀) 직전 코드 회피만 풀어 다시 시도
+    // 2차 — 모드 태그 풀이 직전 코드와 겹쳐 비었을 때 직전 회피만 풀고 모드 유지
+    if (!item) {
+      item = pickOneMeal({
+        slot: t.slot,
+        target: t,
+        excludeCodes: used,
+        excludeTags,
+        excludeIngredients,
+        preferPatterns: input.preferPatterns,
+        rng,
+        ...modeFilter,
+      });
+    }
+    // 3차 — 모드 태그까지 풀어 빈 카드 방지 (랜덤 모드와 동일하게)
     if (!item) {
       item = pickOneMeal({
         slot: t.slot,
@@ -453,6 +575,11 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
 
   // 영양소 부족 자동 보강 — 단백질·섬유질·비타민·무기질 다양성
   picks = fillNutrientGaps(picks, input.target, excludeTags, excludeIngredients, rng, avoidPrev);
+
+  // 한식/초간단 모드 — 단백질 부족 시 식전 쉐이크 prepend 로 95% 보장
+  if (planMode === "home_korean" || planMode === "office_quick") {
+    picks = prependPreMealShake(picks, input.target, excludeIngredients, rng, avoidPrev);
+  }
 
   const { totals, nutrients } = aggregateNutrients(picks);
 
