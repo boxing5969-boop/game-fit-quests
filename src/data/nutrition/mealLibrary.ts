@@ -215,6 +215,17 @@ const RAW: Raw[] = [
   ["팥시루떡+두유", 400, 10, 76, 4, "breakfast", ["korean", "home"]],
   ["인절미+두유", 370, 10, 72, 4, "breakfast", ["korean", "home"]],
   ["누룽지탕+깍두기", 340, 8, 68, 2, "breakfast", ["korean", "home", "diet"]],
+  // 한식 고단백 아침 보강 — 평균 단백질 끌어올림
+  ["흰쌀밥+소고기장조림+계란말이", 520, 32, 70, 14, "breakfast", ["korean", "home", "protein"]],
+  ["현미밥+제육볶음(소량)+나물", 510, 30, 64, 15, "breakfast", ["korean", "home", "protein"]],
+  ["잡곡밥+불고기(소량)+된장국", 510, 30, 66, 14, "breakfast", ["korean", "home", "protein", "soup"]],
+  ["흰쌀밥+황태북어조림+계란찜", 480, 32, 60, 12, "breakfast", ["korean", "home", "protein"]],
+  ["현미밥+연어구이+미역국", 530, 32, 62, 16, "breakfast", ["korean", "home", "protein", "soup"]],
+  ["흰쌀밥+삼치구이+된장국", 510, 30, 62, 14, "breakfast", ["korean", "home", "protein", "soup"]],
+  ["흰쌀밥+오징어볶음+계란찜", 500, 30, 64, 14, "breakfast", ["korean", "home", "protein"]],
+  ["흰쌀밥+닭가슴살장조림+나물", 480, 36, 60, 10, "breakfast", ["korean", "home", "protein"]],
+  ["잡곡밥+두부조림+소고기무국", 500, 30, 64, 14, "breakfast", ["korean", "home", "protein", "soup"]],
+  ["현미밥+우삼겹조림+나물", 540, 32, 58, 18, "breakfast", ["korean", "home", "protein"]],
 
   // ===== 간단식 아침 (30) =====
   ["그릭요거트+바나나", 280, 18, 42, 4, "breakfast", ["quick", "simple", "diet", "protein"]],
