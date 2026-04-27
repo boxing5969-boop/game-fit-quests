@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   ChevronLeft,
   Flag,
   HeartHandshake,
   Lock,
+  Rocket,
   ShieldCheck,
 } from "lucide-react";
 
@@ -12,6 +15,7 @@ import PageHeader from "@/components/ui/rankingup/PageHeader";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useDietProgress } from "@/hooks/useDietEnrollment";
+import { useEarlyStartPostProgram } from "@/hooks/useDietPostProgram";
 import PostProgramRouter from "@/components/diet/post/PostProgramRouter";
 
 /**
@@ -25,6 +29,10 @@ import PostProgramRouter from "@/components/diet/post/PostProgramRouter";
 const DietPostProgramPage = () => {
   const navigate = useNavigate();
   const progressQuery = useDietProgress();
+  const earlyStart = useEarlyStartPostProgram();
+  // "지금 시작" 클릭 후 서버 응답 받기 전까지 PostProgramRouter 즉시 노출용 hint.
+  // 서버 mutation 성공하면 useDietProgress 도 자동 갱신되어 status 가 completed 로 바뀜.
+  const [earlyStarted, setEarlyStarted] = useState(false);
 
   const payload =
     progressQuery.data && "success" in progressQuery.data && progressQuery.data.success
@@ -33,6 +41,25 @@ const DietPostProgramPage = () => {
   const enrollment = payload?.enrollment;
   const snapshot = payload?.snapshot;
   const status = enrollment?.status;
+
+  const handleEarlyStart = async () => {
+    if (!enrollment) return;
+    try {
+      const r = await earlyStart.mutateAsync(enrollment.id);
+      if (r.success) {
+        toast.success(
+          "🚀 21일 이후 프로그램이 활성화됐어요. 두 갈래 중에서 골라봐요.",
+        );
+        setEarlyStarted(true);
+      } else {
+        const msg = (r as { error?: string }).error ?? "조기 시작 실패";
+        toast.error(`조기 시작 실패: ${msg}`);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "네트워크 오류";
+      toast.error(`조기 시작 실패: ${msg}`);
+    }
+  };
 
   return (
     <AppPage
@@ -87,7 +114,7 @@ const DietPostProgramPage = () => {
           <Placeholder>불러오는 중...</Placeholder>
         ) : !enrollment ? (
           <NotEnrolledCTA onStart={() => navigate("/diet/onboarding")} />
-        ) : status === "completed" ? (
+        ) : status === "completed" || earlyStarted ? (
           <PostProgramRouter
             enrollmentId={enrollment.id}
             recentAdherence7d={snapshot?.habit_score ?? null}
@@ -97,6 +124,8 @@ const DietPostProgramPage = () => {
             currentDay={enrollment.current_day}
             onGuide={() => navigate("/diet/after-21")}
             onHome={() => navigate("/diet")}
+            onEarlyStart={handleEarlyStart}
+            earlyStartPending={earlyStart.isPending}
           />
         )}
       </div>
@@ -160,10 +189,14 @@ const LockedLanding = ({
   currentDay,
   onGuide,
   onHome,
+  onEarlyStart,
+  earlyStartPending,
 }: {
   currentDay: number;
   onGuide: () => void;
   onHome: () => void;
+  onEarlyStart: () => void;
+  earlyStartPending: boolean;
 }) => (
   <section className="space-y-3">
     <div className="rounded-2xl border border-border bg-card p-5">
@@ -174,9 +207,9 @@ const LockedLanding = ({
         </p>
       </div>
       <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-        유지·연장 프로그램은 21일 완주 후 자동으로 활성화됩니다.
-        지금은 오늘의 체크인에 집중해 주세요. 21일 이후에 어떻게 진행되는지
-        미리 보려면 아래 가이드를 확인할 수 있어요.
+        21일 자가 기록을 마치면 자동으로 활성화돼요. 다만 21일을 다 채우지 않고
+        <strong className="text-foreground"> 유지·연장 프로그램부터 바로 시작</strong>
+        하고 싶다면 아래 "지금 시작하기" 로 즉시 진입할 수 있어요.
       </p>
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
@@ -188,6 +221,32 @@ const LockedLanding = ({
         {Math.max(0, 21 - currentDay)}일 남음
       </p>
     </div>
+
+    {/* 추가: 21일 안 채우고 조기 시작 CTA */}
+    <div className="rounded-2xl border border-emerald-400/40 bg-emerald-400/10 p-4">
+      <div className="flex items-center gap-2">
+        <Rocket className="h-4 w-4 text-emerald-600" />
+        <p className="text-[12px] font-extrabold text-emerald-700">
+          지금 바로 21일 이후 프로그램 시작
+        </p>
+      </div>
+      <p className="mt-1 text-[11.5px] leading-relaxed text-foreground">
+        21일을 다 채우지 않고도 유지·연장 프로그램으로 즉시 진입할 수 있어요.
+        지금까지의 기록은 그대로 유지되며, 다음 단계 두 갈래에서 한 가지를
+        고르고 데드라인·목표를 설정합니다.
+      </p>
+      <Button
+        onClick={onEarlyStart}
+        disabled={earlyStartPending}
+        className={cn(
+          "mt-3 h-10 w-full rounded-xl font-bold",
+          "bg-emerald-500 text-white hover:bg-emerald-500/90 disabled:opacity-60",
+        )}
+      >
+        {earlyStartPending ? "활성화 중..." : "지금 시작하기"}
+      </Button>
+    </div>
+
     <div className="grid grid-cols-2 gap-2">
       <Button variant="outline" onClick={onGuide} className="h-11 rounded-xl">
         21일 이후 가이드

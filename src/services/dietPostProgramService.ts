@@ -52,6 +52,25 @@ export async function ensurePostProgramPlan(
 }
 
 // ──────────────────────────────────────────────────────────────────
+// 1-b. 조기 시작 — 21일 안 채우고 사후 프로그램 진입.
+//      enrollment.status active → completed 강제 전환 + plan 생성. 멱등.
+// ──────────────────────────────────────────────────────────────────
+export async function earlyStartPostProgram(enrollmentId: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)(
+    "early_start_post_program",
+    { _enrollment_id: enrollmentId },
+  );
+  if (error) return err(error.message);
+  return asRpc<{
+    plan_id: string;
+    selected_path: DietPostProgramPath;
+    created: boolean;
+    early_start?: boolean;
+  }>(data);
+}
+
+// ──────────────────────────────────────────────────────────────────
 // 2. 경로 선택 (회원)
 // ──────────────────────────────────────────────────────────────────
 export interface SelectPathInput {

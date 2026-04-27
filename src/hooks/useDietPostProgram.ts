@@ -46,6 +46,20 @@ export function useEnsurePostProgramPlan() {
   });
 }
 
+// 21일 안 채우고 조기 시작 — enrollment 강제 completed + plan 생성
+export function useEarlyStartPostProgram() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (enrollmentId: string) => svc.earlyStartPostProgram(enrollmentId),
+    onSuccess: () => {
+      invalidatePost(qc);
+      // enrollment 상태 자체가 바뀌었으므로 다이어트 진행도 쿼리도 무효화
+      qc.invalidateQueries({ queryKey: ["diet", "progress"] });
+      qc.invalidateQueries({ queryKey: ["diet", "enrollment"] });
+    },
+  });
+}
+
 export function useSelectPostProgramPath() {
   const qc = useQueryClient();
   return useMutation({
