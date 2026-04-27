@@ -95,6 +95,9 @@ const ChatAssistant = () => {
         const errData = await resp.json().catch(() => ({}));
         if (resp.status === 429 || resp.status === 402) {
           setIsApiLimitReached(true);
+          // 60초 후 자동 해제 — 분당 한도면 1분 안에 회복. 사용자가 페이지 새로고침
+          // 안 해도 다시 시도 가능. 실제로 한도 안 풀려 있으면 다음 호출에서 다시 잠김.
+          setTimeout(() => setIsApiLimitReached(false), 60_000);
           throw new Error(
             "코치봇이 잠시 휴식 중이에요 💦\n무료 한도(분당/일일)를 초과했어요. 잠시 후 다시 시도해 주세요."
           );

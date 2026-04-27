@@ -38,9 +38,9 @@ const PROVIDERS: Provider[] = [
     name: "groq",
     keyEnv: "GROQ_API_KEY",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    // llama3-8b-8192 — Groq legacy 모델. 8K 진짜 컨텍스트, 무료 한도 비교적 여유.
-    // (llama-3.1-8b-instant 는 일부 org TPM 6K 정책에 걸려 413 빈발했음.)
-    model: "llama3-8b-8192",
+    // llama-3.1-8b-instant — Groq 현행 권장 모델. (llama3-8b-8192 는 Groq 에서
+    // retired/deprecated → 즉시 모델 에러 → 클라이언트에서 "한도 초과" 로 오표시.)
+    model: "llama-3.1-8b-instant",
   },
   {
     name: "cerebras",
