@@ -48,9 +48,10 @@ const DietPostProgramPage = () => {
   // Fallback — get_diet_progress 는 active/not_started/paused 만 조회.
   // status 가 'completed' 또는 'dropped' 면 위 RPC 가 enrollment 못 찾으니, 본인 enrollment
   // 를 직접 조회해 사후 프로그램 분기에서 사용. RLS 가 본인 데이터 SELECT 허용.
+  // ⚠️ 무조건 enabled — active 가 잡혀도 직접 조회로 검증해 진단 정보 풍부히.
   const anyEnrollmentQuery = useQuery({
     queryKey: ["diet", "post-program-page-enrollment", user?.id],
-    enabled: !!user?.id && !activeEnrollment, // active 잡혔으면 fallback 불필요
+    enabled: !!user?.id,
     staleTime: 15_000,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -60,7 +61,13 @@ const DietPostProgramPage = () => {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("[DietPostProgramPage] enrollment fallback error", error);
+        throw error;
+      }
+      // eslint-disable-next-line no-console
+      console.log("[DietPostProgramPage] direct enrollment query result", data);
       return data;
     },
   });
@@ -68,7 +75,9 @@ const DietPostProgramPage = () => {
   // 우선순위: get_diet_progress 의 enrollment → 없으면 직접 조회 fallback
   const enrollment = activeEnrollment ?? anyEnrollmentQuery.data ?? null;
   const status = enrollment?.status;
-  const isPostProgramReady = status === "completed" || earlyStarted;
+  // dropped 도 사후 프로그램 진입 허용 — early_start_post_program 이 status 를 completed 로 바꿔줌
+  const isPostProgramReady =
+    status === "completed" || status === "dropped" || earlyStarted;
 
   const handleEarlyStart = async () => {
     if (!enrollment) return;
@@ -141,7 +150,17 @@ const DietPostProgramPage = () => {
         {progressQuery.isLoading || anyEnrollmentQuery.isLoading ? (
           <Placeholder>불러오는 중...</Placeholder>
         ) : !enrollment ? (
-          <NotEnrolledCTA onStart={() => navigate("/diet/onboarding")} />
+          <NotEnrolledCTA
+            onStart={() => navigate("/diet/onboarding")}
+            onRetry={() => {
+              progressQuery.refetch();
+              anyEnrollmentQuery.refetch();
+            }}
+            retryPending={
+              progressQuery.isFetching || anyEnrollmentQuery.isFetching
+            }
+            progressErrored={progressQuery.isError || !payload?.success}
+          />
         ) : isPostProgramReady ? (
           <PostProgramRouter
             enrollmentId={enrollment.id}
@@ -198,16 +217,40 @@ const PathPreview = ({
   </div>
 );
 
-const NotEnrolledCTA = ({ onStart }: { onStart: () => void }) => (
+const NotEnrolledCTA = ({
+  onStart,
+  onRetry,
+  retryPending,
+  progressErrored,
+}: {
+  onStart: () => void;
+  onRetry: () => void;
+  retryPending: boolean;
+  progressErrored: boolean;
+}) => (
   <section className="rounded-2xl border border-border bg-card p-5 text-center">
     <Lock className="mx-auto h-6 w-6 text-muted-foreground" />
     <p className="mt-2 text-[13px] font-bold text-foreground">
       아직 21일 프로그램에 등록되지 않았어요
     </p>
     <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
-      먼저 21일 프로그램을 시작하면 이곳에서 완주 후 다음 단계를 선택할 수 있어요.
+      온보딩을 마쳤는데도 이 화면이 나오면 등록이 정상 완료되지 않았을 수 있어요.
+      먼저 아래 새로고침을 눌러보고, 그래도 같은 화면이면 온보딩을 다시 끝까지 진행해 주세요.
     </p>
-    <Button onClick={onStart} className="mt-3 h-10 w-full rounded-xl">
+    {progressErrored && (
+      <p className="mt-2 text-[10.5px] leading-relaxed text-amber-600">
+        ※ 진행도 조회가 일시적으로 실패했을 수 있어요. 새로고침으로 재시도해 보세요.
+      </p>
+    )}
+    <Button
+      variant="outline"
+      onClick={onRetry}
+      disabled={retryPending}
+      className="mt-3 h-10 w-full rounded-xl"
+    >
+      {retryPending ? "확인 중..." : "다시 확인"}
+    </Button>
+    <Button onClick={onStart} className="mt-2 h-10 w-full rounded-xl">
       3분 온보딩 시작
     </Button>
   </section>
