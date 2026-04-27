@@ -144,9 +144,12 @@ function pickOneMeal(opts: {
   // 스코어: kcal 근접(-) + 단백질 충족(+) + 패턴 매칭(+) + 큰 폭 jitter
   // jitter 폭을 kcalScore 동급으로 키워 reroll 시 1순위가 명확히 바뀌도록.
   // 결정성은 mulberry32 시드로 유지(같은 시드 → 같은 결과).
+  // 점수 = kcal 근접 + 단백질 + 패턴/태그/이름 보너스 (결정적 적합성)
+  // 풀이 작아도 reroll 마다 다른 결과가 나오도록, "상위 N개 중 무작위 선택" 전략 사용.
+  // 1순위만 뽑으면 작은 풀에서 같은 메뉴가 반복되는 문제 해결.
   const scored = pool.map((m) => {
     const kcalDiff = Math.abs(m.kcal - opts.target.kcal);
-    const kcalScore = 300 - Math.min(kcalDiff, 300); // 0~300
+    const kcalScore = 300 - Math.min(kcalDiff, 300);
     const proteinScore = m.proteinG >= opts.target.proteinG * 0.8 ? 120 : 0;
     const patternScore =
       (m.patternFit ?? []).filter((p) => opts.preferPatterns?.includes(p)).length * 60;
@@ -157,18 +160,17 @@ function pickOneMeal(opts: {
       );
     const nameBonus =
       (opts.bonusNameKeywords ?? []).reduce(
-        (acc, k) => acc + (m.name.includes(k) ? 100 : 0),
+        (acc, k) => acc + (m.name.includes(k) ? 60 : 0),
         0,
       );
-    const jitter = opts.rng() * 450; // 0~450 — kcal/단백질 점수와 동급, 풀 다양성 강제
-    return {
-      m,
-      score: kcalScore + proteinScore + patternScore + tagBonus + nameBonus + jitter,
-    };
+    return { m, score: kcalScore + proteinScore + patternScore + tagBonus + nameBonus };
   });
 
   scored.sort((a, b) => b.score - a.score);
-  return scored[0].m;
+  // 상위 N — 풀이 크면 12개, 작으면 풀 전체. 1순위 고정 방지.
+  const topN = Math.min(12, scored.length);
+  const idx = Math.floor(opts.rng() * topN);
+  return scored[idx].m;
 }
 
 /** modePoolCodes 가 지정되어 있으면 풀을 모드 풀에 한정. 비어있으면 전체. 모드 풀에 매칭 0이면 fallback 으로 전체 허용. */
@@ -213,12 +215,16 @@ function ensureDailyProbiotic(
     // 1차: avoidPrev 까지 회피. 2차: 풀이 비면 회피 풀어서 보장.
     const fresh = probioticBase.filter((m) => !avoidPrev.has(m.code));
     const candidatePool = fresh.length > 0 ? fresh : probioticBase;
-    const probioticOnly = candidatePool
-      .map((m) => ({ m, score: rng() * 200 }))
-      .sort((a, b) => b.score - a.score);
-
-    if (probioticOnly.length > 0) {
-      picks[idx] = { ...picks[idx], item: probioticOnly[0].m };
+    if (candidatePool.length > 0) {
+      // 상위 N 중 무작위 — 같은 probiotic 메뉴 고정 방지
+      const topN = Math.min(8, candidatePool.length);
+      const pickIdx = Math.floor(rng() * topN);
+      // candidatePool 은 이미 random 순서가 아니므로 한 번 셔플한 뒤 picks
+      const shuffled = candidatePool
+        .map((m) => ({ m, r: rng() }))
+        .sort((a, b) => a.r - b.r)
+        .map((x) => x.m);
+      picks[idx] = { ...picks[idx], item: shuffled[pickIdx] };
       return picks;
     }
     if (currentCode) used.add(currentCode);
@@ -287,17 +293,15 @@ function guaranteeProtein(
       modePoolCodes,
     );
     const fresh = baseCandidates.filter((m) => !avoidPrev.has(m.code));
-    // 단백질 상위 8개 안에서 jitter — 절대 1순위만 뽑히지 않도록.
+    // 단백질 상위 8개 중 무작위 1개 — 매 reroll 마다 다른 후보로 단백질 보강.
     const topByProtein = (fresh.length >= 4 ? fresh : baseCandidates)
       .slice()
       .sort((a, b) => b.proteinG - a.proteinG)
       .slice(0, 8);
-    const candidatesScored = topByProtein
-      .map((m) => ({ m, score: m.proteinG + rng() * 200 }))
-      .sort((a, b) => b.score - a.score);
 
-    if (candidatesScored.length === 0) return picks;
-    picks[lowestIdx] = { ...picks[lowestIdx], item: candidatesScored[0].m };
+    if (topByProtein.length === 0) return picks;
+    const pickIdx = Math.floor(rng() * topByProtein.length);
+    picks[lowestIdx] = { ...picks[lowestIdx], item: topByProtein[pickIdx] };
   }
   return picks;
 }
@@ -361,11 +365,9 @@ function fillNutrientGaps(
         .slice()
         .sort((a, b) => b.fiberG - a.fiberG)
         .slice(0, 8);
-      const highFiber = topByFiber
-        .map((m) => ({ m, score: m.fiberG + rng() * 200 }))
-        .sort((a, b) => b.score - a.score);
-      if (highFiber.length > 0) {
-        picks[idx] = { ...picks[idx], item: highFiber[0].m };
+      if (topByFiber.length > 0) {
+        const pickIdx = Math.floor(rng() * topByFiber.length);
+        picks[idx] = { ...picks[idx], item: topByFiber[pickIdx] };
       }
     }
   }
@@ -406,15 +408,9 @@ function fillNutrientGaps(
             (a.keyVitamins.length + a.keyMinerals.length),
         )
         .slice(0, 8);
-      const diverse = topByDiverse
-        .map((m) => ({
-          m,
-          score:
-            (m.keyVitamins.length + m.keyMinerals.length) * 2 + rng() * 200,
-        }))
-        .sort((a, b) => b.score - a.score);
-      if (diverse.length > 0) {
-        picks[idx] = { ...picks[idx], item: diverse[0].m };
+      if (topByDiverse.length > 0) {
+        const pickIdx = Math.floor(rng() * topByDiverse.length);
+        picks[idx] = { ...picks[idx], item: topByDiverse[pickIdx] };
       }
     }
   }

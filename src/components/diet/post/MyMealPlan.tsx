@@ -62,10 +62,10 @@ export const MyMealPlan = ({
   const [swapSlot, setSwapSlot] = useState<MealSlot | null>(null);
   const [customSlot, setCustomSlot] = useState<MealSlot | null>(null);
   const [overridePlan, setOverridePlan] = useState<MealPlanResult | null>(null);
-  // 최근 선택된 메뉴 ID(=code) 추적용 ref. 슬라이딩 윈도우(15개) 로 빠른 회귀 방지.
-  // useRef 라 갱신해도 리렌더가 발생하지 않음 — generateMealPlan 의 입력은 seed 변경으로 트리거.
+  // 최근 선택된 메뉴 ID 추적. 슬라이딩 윈도우(10개) 로 빠른 회귀 방지.
+  // 너무 크면 작은 풀(예: home_korean 간식 5개) 이 회피로 막혀 1순위 고정 → 10개로 보수적.
   const recentMealIds = useRef<string[]>([]);
-  const RECENT_LIMIT = 15;
+  const RECENT_LIMIT = 10;
 
   const generated = useMemo<MealPlanResult>(
     () =>
@@ -102,17 +102,19 @@ export const MyMealPlan = ({
 
   const handleReroll = () => {
     // 새 plan 강제:
-    //   1) 직전 picks 의 모든 코드를 ref 슬라이딩 윈도우(15개)에 추가
-    //   2) 시드 큰 폭 점프 → useMemo 재실행 → generateMealPlan 이 ref.current 회피 풀 사용
+    //   1) 직전 picks 의 모든 코드를 ref 슬라이딩 윈도우(RECENT_LIMIT)에 추가
+    //   2) 시드 큰 폭 점프 → useMemo 재실행 → 새 식단 생성
     //   3) override(swap 결과) 해제
-    //   4) planMode 는 그대로 유지 — reroll 이 모드를 바꾸지 않음
+    //   4) planMode 는 그대로 유지
+    // 작은 풀에서 회피 큐가 풀 전체를 잠식하면 1순위 고정 — 회피 큐 길이를 풀 크기에 맞춰 자동 절단.
     const prevCodes = plan.picks
       .map((p) => p.item?.code)
       .filter((c): c is string => !!c);
-    recentMealIds.current = [
+    const merged = [
       ...recentMealIds.current.filter((c) => !prevCodes.includes(c)),
       ...prevCodes,
-    ].slice(-RECENT_LIMIT);
+    ];
+    recentMealIds.current = merged.slice(-RECENT_LIMIT);
     setOverridePlan(null);
     setSeed((prev) => {
       let next = Math.floor(Math.random() * 1_000_000) + (Date.now() % 1_000);
