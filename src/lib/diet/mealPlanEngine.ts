@@ -140,11 +140,13 @@ function pickOneMeal(opts: {
   return scored[0].m;
 }
 
-/** 하루 최소 1개 프로바이오틱 메뉴 보장. */
+/** 하루 최소 1개 프로바이오틱 메뉴 보장. rng + avoidPrev 적용으로 reroll 시 후보 변화. */
 function ensureDailyProbiotic(
   picks: MealPlanPick[],
   excludeTags: string[],
   excludeIngredients: string[],
+  rng: () => number,
+  avoidPrev: Set<string>,
 ): MealPlanPick[] {
   if (picks.some((p) => p.item?.hasProbiotic)) return picks;
 
@@ -162,10 +164,16 @@ function ensureDailyProbiotic(
       excludeTags,
       excludeIngredients,
       requireProbiotic: true,
-    }).filter((m) => !used.has(m.code));
+    })
+      .filter((m) => !used.has(m.code))
+      .map((m) => ({
+        m,
+        score: (avoidPrev.has(m.code) ? 0 : 20) + rng() * 100,
+      }))
+      .sort((a, b) => b.score - a.score);
 
     if (probioticOnly.length > 0) {
-      picks[idx] = { ...picks[idx], item: probioticOnly[0] };
+      picks[idx] = { ...picks[idx], item: probioticOnly[0].m };
       return picks;
     }
     if (currentCode) used.add(currentCode);
@@ -187,12 +195,15 @@ function ensureDailyProbiotic(
 
 const PROTEIN_TARGET_RATIO = 0.95; // 95% 이상 충족 보장
 
-/** 단백질 95% 보장 — 최대 4회 반복 교체. 쉐이크를 여러 끼니에 허용. */
+/** 단백질 95% 보장 — 최대 4회 반복 교체. 쉐이크를 여러 끼니에 허용.
+ *  rng + avoidPrev 로 reroll 시마다 다른 후보가 뽑히도록 하되, 단백질 충족은 유지. */
 function guaranteeProtein(
   picks: MealPlanPick[],
   target: NutritionTarget,
   excludeTags: string[],
   excludeIngredients: string[],
+  rng: () => number,
+  avoidPrev: Set<string>,
 ): MealPlanPick[] {
   const MAX_ITERATIONS = 4;
   const requiredProtein = target.proteinG * PROTEIN_TARGET_RATIO;
@@ -219,30 +230,41 @@ function guaranteeProtein(
       picks.filter((p, i) => p.item && i !== lowestIdx).map((p) => p.item!.code),
     );
 
-    // 후보: 쉐이크 + 고단백(≥25g) 메뉴 우선. slot 일치.
-    const candidates = filterMenus({
+    // 후보: 슬롯 일치 + 단백질 더 높은 메뉴.
+    // 점수 = 단백질 + (직전 회피 보너스) + jitter — 매 reroll 마다 1순위 변동.
+    const candidatesScored = filterMenus({
       slot: picks[lowestIdx].slot,
       excludeTags,
       excludeIngredients,
     })
       .filter((m) => !used.has(m.code) && m.proteinG > lowestProtein)
-      .sort((a, b) => b.proteinG - a.proteinG);
+      .map((m) => ({
+        m,
+        score:
+          m.proteinG * 4 +
+          (avoidPrev.has(m.code) ? 0 : 30) +
+          rng() * 60,
+      }))
+      .sort((a, b) => b.score - a.score);
 
-    if (candidates.length === 0) return picks;
-    picks[lowestIdx] = { ...picks[lowestIdx], item: candidates[0] };
+    if (candidatesScored.length === 0) return picks;
+    picks[lowestIdx] = { ...picks[lowestIdx], item: candidatesScored[0].m };
   }
   return picks;
 }
 
-/** 섬유질·다양성 보강 — 단백질을 손해 보지 않는 선에서만. */
+/** 섬유질·다양성 보강 — 단백질을 손해 보지 않는 선에서만.
+ *  rng + avoidPrev 로 reroll 시마다 다른 보강 후보가 뽑히도록. */
 function fillNutrientGaps(
   picks: MealPlanPick[],
   target: NutritionTarget,
   excludeTags: string[],
   excludeIngredients: string[],
+  rng: () => number,
+  avoidPrev: Set<string>,
 ): MealPlanPick[] {
   // 우선 단백질 보장 pass
-  picks = guaranteeProtein(picks, target, excludeTags, excludeIngredients);
+  picks = guaranteeProtein(picks, target, excludeTags, excludeIngredients, rng, avoidPrev);
 
   const supplementOrder: MealSlot[] = ["snack", "breakfast", "dinner", "lunch"];
   const findSoftSlot = () => {
@@ -281,9 +303,13 @@ function fillNutrientGaps(
         .filter(
           (m) => !used.has(m.code) && m.fiberG >= 5 && m.proteinG >= currentP - 3,
         )
-        .sort((a, b) => b.fiberG - a.fiberG);
+        .map((m) => ({
+          m,
+          score: m.fiberG * 6 + (avoidPrev.has(m.code) ? 0 : 20) + rng() * 50,
+        }))
+        .sort((a, b) => b.score - a.score);
       if (highFiber.length > 0) {
-        picks[idx] = { ...picks[idx], item: highFiber[0] };
+        picks[idx] = { ...picks[idx], item: highFiber[0].m };
       }
     }
   }
@@ -312,19 +338,22 @@ function fillNutrientGaps(
             m.keyVitamins.length + m.keyMinerals.length >= 5 &&
             m.proteinG >= currentP - 3,
         )
-        .sort(
-          (a, b) =>
-            b.keyVitamins.length + b.keyMinerals.length -
-            (a.keyVitamins.length + a.keyMinerals.length),
-        );
+        .map((m) => ({
+          m,
+          score:
+            (m.keyVitamins.length + m.keyMinerals.length) * 8 +
+            (avoidPrev.has(m.code) ? 0 : 20) +
+            rng() * 50,
+        }))
+        .sort((a, b) => b.score - a.score);
       if (diverse.length > 0) {
-        picks[idx] = { ...picks[idx], item: diverse[0] };
+        picks[idx] = { ...picks[idx], item: diverse[0].m };
       }
     }
   }
 
   // 단백질이 다시 떨어졌을 수 있으니 마지막으로 보장 pass
-  picks = guaranteeProtein(picks, target, excludeTags, excludeIngredients);
+  picks = guaranteeProtein(picks, target, excludeTags, excludeIngredients, rng, avoidPrev);
 
   return picks;
 }
@@ -409,10 +438,10 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
   });
 
   // 하루 프로바이오틱 최소 1회 보장
-  picks = ensureDailyProbiotic(picks, excludeTags, excludeIngredients);
+  picks = ensureDailyProbiotic(picks, excludeTags, excludeIngredients, rng, avoidPrev);
 
   // 영양소 부족 자동 보강 — 단백질·섬유질·비타민·무기질 다양성
-  picks = fillNutrientGaps(picks, input.target, excludeTags, excludeIngredients);
+  picks = fillNutrientGaps(picks, input.target, excludeTags, excludeIngredients, rng, avoidPrev);
 
   const { totals, nutrients } = aggregateNutrients(picks);
 
