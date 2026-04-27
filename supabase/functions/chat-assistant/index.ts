@@ -62,9 +62,17 @@ const PROVIDERS: Provider[] = [
     model: "deepseek-chat",
   },
 ];
-// 초경량 코어 프롬프트 — Groq TPM 한도 안에 절대 안전. 약 200자.
-// 직전 1200자 슬림 버전도 history 누적 시 한도 위협 → 더 줄임.
-const SYSTEM_PROMPT = `너는 153다이어트 앱의 AI 코치 오삼이야. 반드시 한국어로만 답변해. 다른 언어 문자 절대 사용 금지. 다이어트, 운동, 식단 관련 질문에 친절하고 간결하게 답변해줘. 답변은 3문장 이내로.`;
+// 초경량 코어 프롬프트 — Groq TPM 한도 안에 절대 안전. 약 320자.
+// 6대 규칙: 한국어 전용 / 짧은 답변 / 데이터 없으면 모른다 / 복싱 / 다이어트 / 마무리는 제안.
+const SYSTEM_PROMPT = `너는 153다이어트 앱의 AI 코치 오삼이야.
+
+규칙:
+1. 반드시 한국어로만 답변. 영어/일본어/중국어/베트남어 등 다른 언어 문자 절대 금지.
+2. 답변은 2-3문장으로 짧고 간결하게.
+3. 유저의 실제 데이터가 없으면 절대 만들어내지 마. Day 수, 식습관 현황 등 모르면 모른다고 해.
+4. 복싱 관련 질문(잽, 스트레이트, 훅 등)에는 복싱 기술로 답변해.
+5. 식단/다이어트 질문에는 153다이어트 원칙으로 답변해.
+6. 역질문으로 끝내지 마. 제안이나 조언으로 마무리해.`;
 function buildDietContext(enrollment: any, snapshot: any, recentLogs: any[], latestCoachNote: any) {
   if (!enrollment && !snapshot && (!recentLogs || recentLogs.length === 0)) return "";
   const lines: string[] = [];
