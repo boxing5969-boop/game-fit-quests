@@ -96,10 +96,20 @@ const ChatAssistant = () => {
         if (resp.status === 429 || resp.status === 402) {
           setIsApiLimitReached(true);
           throw new Error(
-            "코치봇이 스파링을 마치고 휴식 중입니다 💦\n급한 질문은 관장님께 직접 문의해 주세요!"
+            "코치봇이 잠시 휴식 중이에요 💦\n무료 한도(분당/일일)를 초과했어요. 잠시 후 다시 시도해 주세요."
           );
         }
-        throw new Error(errData.error || "요청 실패");
+        // 진단 정보 포함 — 어느 provider 에서 어떤 코드/내용으로 실패했는지 드러내
+        // 사용자가 화면 캡처 → 운영팀에게 전달하면 즉시 원인 파악 가능.
+        const provider = errData.provider ? ` (${errData.provider})` : "";
+        const upstream = errData.status ? ` ${errData.status}` : "";
+        const detail = errData.detail
+          ? `\n· 응답: ${String(errData.detail).slice(0, 200)}`
+          : "";
+        const baseMsg = errData.error || "요청 실패";
+        throw new Error(
+          `${baseMsg}${provider}${upstream}\n· HTTP ${resp.status}${detail}\n· 코치봇 API 키가 만료/한도 초과일 수 있어요. 관장님께 알려주세요.`,
+        );
       }
 
       const reader = resp.body.getReader();
