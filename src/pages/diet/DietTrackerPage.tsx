@@ -212,7 +212,13 @@ const DietTrackerPage = () => {
     }
   };
 
+  // ── 폼 상태 (habits + note) ────────────────────────────────
+  const [habits, setHabits] = useState<DailyHabitsPayload>(emptyHabits);
+  const [note, setNote] = useState("");
+  const [hydrated, setHydrated] = useState(false);
+
   // 추가: 진행률 / 점수 / 코치 메시지 (optimistic — habits 변경 즉시 반영)
+  // habits useState 이후에 선언해야 TDZ 안 걸림.
   const completedCount = useMemo(() => {
     if (!todayPlan) return 0;
     return todayPlan.missions.reduce(
@@ -261,11 +267,6 @@ const DietTrackerPage = () => {
   useEffect(() => {
     if (!allDone) setAllDoneToastShown(false);
   }, [allDone]);
-
-  // ── 폼 상태 (habits + note) ────────────────────────────────
-  const [habits, setHabits] = useState<DailyHabitsPayload>(emptyHabits);
-  const [note, setNote] = useState("");
-  const [hydrated, setHydrated] = useState(false);
 
   // 최초 hydrate: server 우선 → 없으면 localStorage 드래프트
   useEffect(() => {
