@@ -38,9 +38,10 @@ const PROVIDERS: Provider[] = [
     name: "groq",
     keyEnv: "GROQ_API_KEY",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    // llama3-8b-8192 는 Groq 에서 decommissioned (확인 메시지: "model has been
-    // decommissioned and is no longer supported"). 현행 권장 모델로 고정.
-    model: "llama-3.1-8b-instant",
+    // gemma2-9b-it — Groq 에서 TPM 한도 15000 으로 가장 여유.
+    // (llama-3.1-8b-instant 는 일부 org 6K TPM 정책에 걸려 413 빈발했음.
+    //  llama3-8b-8192 는 decommissioned.)
+    model: "gemma2-9b-it",
   },
   {
     name: "cerebras",
@@ -61,36 +62,9 @@ const PROVIDERS: Provider[] = [
     model: "deepseek-chat",
   },
 ];
-// 슬림 코어 프롬프트 — 핵심 정체성 + 톤 + 페이지 맵 압축. 약 1200자.
-// 이전 6000자 풀 프롬프트는 Groq TPM 6000 한도 근접 → 413 빈발해 조각.
-// 세부 규칙은 KNOWLEDGE_153 / 회원 컨텍스트로 위임.
-const SYSTEM_PROMPT = `절대 규칙: 반드시 한국어로만 답변하라. 일본어, 중국어 등 다른 언어 문자는 절대 사용하지 마라. 오타 없이 정확한 한국어를 사용하라.
-
-당신은 "랭킹업(RANKINGUP)" 앱의 전담 코치 — "오삼 코치"입니다 (이름: 일오삼=153).
-153복싱짐 회원의 복싱 훈련을 게임화한 스포츠 RPG 앱입니다.
-
-[핵심 시스템]
-- 99레벨 구조: 화이트(1~10)/블루(11~20)/레드(21~30)/블랙(31~40) → 마스터트랙(41~50) → HoF(99)
-- XP는 코치 승인 미션으로만 획득. 가짜 성장 불가.
-- 파이트머니(젬): 미션·QR출석·입단식·HoF·미니게임으로 획득 → 꾸미기·HoF전용 상품 구매.
-
-[주요 페이지]
-/home(대시보드) /mypage(프로필) /missions(미션) /rewards(상점) /character-studio(꾸미기)
-/halloffame(랭킹+HoF) /levelmap /master-track /minigame /settings /guide /coach /manager /admin
-
-[주요 기능]
-- 입단식 5단계 튜토리얼: 1000젬+칭호+이펙트(1회성)
-- 타이틀매치(보스전): 각 리그 Lv10에서 다음 리그 승격 시험
-- HoF: 블랙 Lv10 비관리자 진입 → 일/주/월/시즌 자동 보상
-- 5종 랭킹: 브랜치·보스정복·연속출석·XP상승·HoF
-
-[대화 규칙]
-- 한국어 격려·친근·간결. 3~4문장 이내 핵심만. 이모지 🥊⚡🏆✨👊 1~2개.
-- 복싱 용어 사용(잽/훅/스파링/타이틀매치). 금지: "계급"(→리그), 판타지 용어.
-- 기능 위치는 경로 명시(예: "/missions 에서 확인하세요").
-- 불확실한 수치는 "담당 코치에게 확인" 안내.
-- 반려된 미션 이력 있으면 coach_note 인용해 개선 포인트 제시.
-- 운동 폼·프로그램 상세는 "담당 코치와 상의" 안내.`;
+// 초경량 코어 프롬프트 — Groq TPM 한도 안에 절대 안전. 약 200자.
+// 직전 1200자 슬림 버전도 history 누적 시 한도 위협 → 더 줄임.
+const SYSTEM_PROMPT = `너는 153다이어트 앱의 AI 코치 오삼이야. 반드시 한국어로만 답변해. 다른 언어 문자 절대 사용 금지. 다이어트, 운동, 식단 관련 질문에 친절하고 간결하게 답변해줘. 답변은 3문장 이내로.`;
 function buildDietContext(enrollment: any, snapshot: any, recentLogs: any[], latestCoachNote: any) {
   if (!enrollment && !snapshot && (!recentLogs || recentLogs.length === 0)) return "";
   const lines: string[] = [];
@@ -305,8 +279,8 @@ serve(async (req) => {
     //   1) 하드 캡: 최근 10개 메시지만 (오래된 발언은 무관하고 토큰만 차지)
     //   2) 토큰 예산: 그래도 길면 4000 토큰까지 — groq TPM 6000 한도 마진 확보
     // 한국어 1자 ≈ 0.5 토큰 어림(보수적).
-    const HISTORY_CAP = 3;
-    const MAX_HISTORY_TOKENS = 1500;
+    const HISTORY_CAP = 2; // 사용자 요청: conversationHistory.slice(-2)
+    const MAX_HISTORY_TOKENS = 1000;
     const approxTokens = (s: string) => Math.ceil(s.length * 0.5);
 
     // 1단계 — 하드 캡: 최근 3개만 (사용자 요청)
@@ -355,7 +329,7 @@ serve(async (req) => {
           model: p.model,
           messages: fullMessages,
           stream: true,
-          max_tokens: 400,
+          max_tokens: 200,
         }),
       });
       if (response.ok) break;
@@ -373,7 +347,7 @@ serve(async (req) => {
             model: p.model,
             messages: minimalMessages,
             stream: true,
-            max_tokens: 400,
+            max_tokens: 200,
           }),
         });
         if (response.ok) break;
