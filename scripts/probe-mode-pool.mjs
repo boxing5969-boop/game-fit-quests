@@ -8,21 +8,21 @@ import path from "node:path";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([a-zA-Z]:)/, "$1")), "..");
 const src = await readFile(path.join(ROOT, "src/data/nutrition/mealLibrary.ts"), "utf8");
 
-// 정규식으로 모든 메뉴 항목의 slots / tags 만 추출 (단순 파싱).
+// v6.1 RAW 튜플 파싱 — ["name", cal, pro, carb, fat, "type", [...tags]]
 const items = [];
-const blockRe = /\{\s*code:\s*"([^"]+)"[^}]*?slots:\s*\[([^\]]*)\][^}]*?tags:\s*\[([^\]]*)\]/g;
+const tupleRe = /\["([^"]+)",\s*\d+,\s*\d+,\s*\d+,\s*\d+,\s*"(breakfast|lunch|dinner|snack)",\s*\[([^\]]*)\]\]/g;
 let m;
-while ((m = blockRe.exec(src)) !== null) {
-  const code = m[1];
-  const slots = [...m[2].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
+while ((m = tupleRe.exec(src)) !== null) {
+  const name = m[1];
+  const type = m[2];
   const tags = [...m[3].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
-  items.push({ code, slots, tags });
+  items.push({ name, slots: [type], tags });
 }
 
 console.log(`총 메뉴: ${items.length}개`);
 
-const HOME_KOREAN = ["한식", "korean", "home", "집밥", "가정식", "자연식"];
-const OFFICE_QUICK = ["편의점", "간편", "데스크", "쉐이크", "quick", "simple", "office"];
+const HOME_KOREAN = ["korean", "home"];
+const OFFICE_QUICK = ["quick", "simple", "office"];
 
 function poolFor(allow) {
   return items.filter((it) => it.tags.some((t) => allow.includes(t)));
