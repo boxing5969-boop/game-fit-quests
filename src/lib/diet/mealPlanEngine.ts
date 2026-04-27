@@ -171,6 +171,16 @@ function pickOneMeal(opts: {
   return scored[0].m;
 }
 
+/** modePoolCodes 가 지정되어 있으면 풀을 모드 풀에 한정. 비어있으면 전체. 모드 풀에 매칭 0이면 fallback 으로 전체 허용. */
+function applyModePool<T extends { code: string }>(
+  pool: T[],
+  modePoolCodes: Set<string>,
+): T[] {
+  if (modePoolCodes.size === 0) return pool;
+  const filtered = pool.filter((m) => modePoolCodes.has(m.code));
+  return filtered.length > 0 ? filtered : pool;
+}
+
 /** 하루 최소 1개 프로바이오틱 메뉴 보장. rng + avoidPrev 적용으로 reroll 시 후보 변화. */
 function ensureDailyProbiotic(
   picks: MealPlanPick[],
@@ -178,6 +188,7 @@ function ensureDailyProbiotic(
   excludeIngredients: string[],
   rng: () => number,
   avoidPrev: Set<string>,
+  modePoolCodes: Set<string>,
 ): MealPlanPick[] {
   if (picks.some((p) => p.item?.hasProbiotic)) return picks;
 
@@ -190,12 +201,15 @@ function ensureDailyProbiotic(
     const currentCode = picks[idx].item?.code;
     if (currentCode) used.delete(currentCode);
 
-    const probioticBase = filterMenus({
-      slot: picks[idx].slot,
-      excludeTags,
-      excludeIngredients,
-      requireProbiotic: true,
-    }).filter((m) => !used.has(m.code));
+    const probioticBase = applyModePool(
+      filterMenus({
+        slot: picks[idx].slot,
+        excludeTags,
+        excludeIngredients,
+        requireProbiotic: true,
+      }).filter((m) => !used.has(m.code)),
+      modePoolCodes,
+    );
     // 1차: avoidPrev 까지 회피. 2차: 풀이 비면 회피 풀어서 보장.
     const fresh = probioticBase.filter((m) => !avoidPrev.has(m.code));
     const candidatePool = fresh.length > 0 ? fresh : probioticBase;
@@ -235,6 +249,7 @@ function guaranteeProtein(
   excludeIngredients: string[],
   rng: () => number,
   avoidPrev: Set<string>,
+  modePoolCodes: Set<string>,
 ): MealPlanPick[] {
   const MAX_ITERATIONS = 4;
   const requiredProtein = target.proteinG * PROTEIN_TARGET_RATIO;
@@ -261,13 +276,16 @@ function guaranteeProtein(
       picks.filter((p, i) => p.item && i !== lowestIdx).map((p) => p.item!.code),
     );
 
-    // 후보: 슬롯 일치 + 단백질 더 높은 메뉴.
+    // 후보: 슬롯 일치 + 단백질 더 높은 메뉴 + 모드 풀.
     // 1차로 avoidPrev 회피 + 단백질 상위권에서 jitter, 풀이 너무 좁으면 fallback.
-    const baseCandidates = filterMenus({
-      slot: picks[lowestIdx].slot,
-      excludeTags,
-      excludeIngredients,
-    }).filter((m) => !used.has(m.code) && m.proteinG > lowestProtein);
+    const baseCandidates = applyModePool(
+      filterMenus({
+        slot: picks[lowestIdx].slot,
+        excludeTags,
+        excludeIngredients,
+      }).filter((m) => !used.has(m.code) && m.proteinG > lowestProtein),
+      modePoolCodes,
+    );
     const fresh = baseCandidates.filter((m) => !avoidPrev.has(m.code));
     // 단백질 상위 8개 안에서 jitter — 절대 1순위만 뽑히지 않도록.
     const topByProtein = (fresh.length >= 4 ? fresh : baseCandidates)
@@ -293,9 +311,10 @@ function fillNutrientGaps(
   excludeIngredients: string[],
   rng: () => number,
   avoidPrev: Set<string>,
+  modePoolCodes: Set<string>,
 ): MealPlanPick[] {
   // 우선 단백질 보장 pass
-  picks = guaranteeProtein(picks, target, excludeTags, excludeIngredients, rng, avoidPrev);
+  picks = guaranteeProtein(picks, target, excludeTags, excludeIngredients, rng, avoidPrev, modePoolCodes);
 
   const supplementOrder: MealSlot[] = ["snack", "breakfast", "dinner", "lunch"];
   const findSoftSlot = () => {
@@ -326,12 +345,15 @@ function fillNutrientGaps(
       const used = new Set(
         picks.filter((p, i) => p.item && i !== idx).map((p) => p.item!.code),
       );
-      const fiberBase = filterMenus({
-        slot: picks[idx].slot,
-        excludeTags,
-        excludeIngredients,
-      }).filter(
-        (m) => !used.has(m.code) && m.fiberG >= 5 && m.proteinG >= currentP - 3,
+      const fiberBase = applyModePool(
+        filterMenus({
+          slot: picks[idx].slot,
+          excludeTags,
+          excludeIngredients,
+        }).filter(
+          (m) => !used.has(m.code) && m.fiberG >= 5 && m.proteinG >= currentP - 3,
+        ),
+        modePoolCodes,
       );
       const fresh = fiberBase.filter((m) => !avoidPrev.has(m.code));
       // 섬유 상위 8개 안에서 jitter
@@ -361,15 +383,18 @@ function fillNutrientGaps(
       const used = new Set(
         picks.filter((p, i) => p.item && i !== idx).map((p) => p.item!.code),
       );
-      const diverseBase = filterMenus({
-        slot: picks[idx].slot,
-        excludeTags,
-        excludeIngredients,
-      }).filter(
-        (m) =>
-          !used.has(m.code) &&
-          m.keyVitamins.length + m.keyMinerals.length >= 5 &&
-          m.proteinG >= currentP - 3,
+      const diverseBase = applyModePool(
+        filterMenus({
+          slot: picks[idx].slot,
+          excludeTags,
+          excludeIngredients,
+        }).filter(
+          (m) =>
+            !used.has(m.code) &&
+            m.keyVitamins.length + m.keyMinerals.length >= 5 &&
+            m.proteinG >= currentP - 3,
+        ),
+        modePoolCodes,
       );
       const fresh2 = diverseBase.filter((m) => !avoidPrev.has(m.code));
       // 다양성 상위 8개 안에서 jitter
@@ -395,7 +420,7 @@ function fillNutrientGaps(
   }
 
   // 단백질이 다시 떨어졌을 수 있으니 마지막으로 보장 pass
-  picks = guaranteeProtein(picks, target, excludeTags, excludeIngredients, rng, avoidPrev);
+  picks = guaranteeProtein(picks, target, excludeTags, excludeIngredients, rng, avoidPrev, modePoolCodes);
 
   return picks;
 }
@@ -551,8 +576,8 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
         ...modeBonus,
       });
     }
-    // 3차 — 모드 풀까지 풀어 빈 카드 방지
-    if (!item) {
+    // 3차 — 모드 풀까지 풀어 빈 카드 방지 (모드 풀에 슬롯 일치 메뉴가 0인 극단 케이스만 도달)
+    if (!item && (!modePoolCodes.size || !modePool.some((m) => m.slots.includes(t.slot)))) {
       item = pickOneMeal({
         slot: t.slot,
         target: t,
@@ -568,10 +593,10 @@ export function generateMealPlan(input: MealPlanInput): MealPlanResult {
   });
 
   // 하루 프로바이오틱 최소 1회 보장
-  picks = ensureDailyProbiotic(picks, excludeTags, excludeIngredients, rng, avoidPrev);
+  picks = ensureDailyProbiotic(picks, excludeTags, excludeIngredients, rng, avoidPrev, modePoolCodes);
 
   // 영양소 부족 자동 보강 — 단백질·섬유질·비타민·무기질 다양성
-  picks = fillNutrientGaps(picks, input.target, excludeTags, excludeIngredients, rng, avoidPrev);
+  picks = fillNutrientGaps(picks, input.target, excludeTags, excludeIngredients, rng, avoidPrev, modePoolCodes);
 
   // 한식/초간단 모드 — 단백질 부족 시 식전 쉐이크 prepend 로 95% 보장
   if (planMode === "home_korean" || planMode === "office_quick") {
