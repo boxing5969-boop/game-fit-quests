@@ -442,7 +442,39 @@ serve(async (req) => {
     if (dietContext) {
       systemMessages.push({ role: "system", content: dietContext });
     }
-    const fullMessages = [...systemMessages, ...messages];
+
+    // ── 토큰 예산 관리 (sliding window) ────────────────────────────
+    // groq llama-3.1-8b-instant 의 분당 토큰(TPM) 한도가 6000.
+    // system 메시지가 이미 SYSTEM_PROMPT + KNOWLEDGE_153 + 컨텍스트로
+    // 1500~2500 토큰 차지하므로, 사용자/모델 대화는 4000 토큰 이내로 제한.
+    // 한국어 평균: 1자 ≈ 0.6 토큰, 영문 1자 ≈ 0.25 토큰. 안전 비율 0.5 사용.
+    const MAX_HISTORY_TOKENS = 4000;
+    const approxTokens = (s: string) => Math.ceil(s.length * 0.5);
+    // 항상 마지막 user 메시지는 보존. 그 외는 최근부터 거꾸로 토큰 예산이
+    // 허용하는 만큼만 포함. role 페어링이 깨지지 않도록 짝수 단위로 트림.
+    const trimmedHistory: Array<{ role: string; content: string }> = [];
+    let budget = MAX_HISTORY_TOKENS;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      const t = approxTokens(m.content || "");
+      if (t > budget && trimmedHistory.length > 0) break;
+      trimmedHistory.unshift(m);
+      budget -= t;
+    }
+    // 최소 6개(또는 전체)는 유지 — 짧은 메시지가 많을 때도 흐름 유지.
+    if (trimmedHistory.length < 6 && messages.length > trimmedHistory.length) {
+      const need = Math.min(6, messages.length) - trimmedHistory.length;
+      const startIdx = Math.max(0, messages.length - trimmedHistory.length - need);
+      const extra = messages.slice(startIdx, messages.length - trimmedHistory.length);
+      trimmedHistory.unshift(...extra);
+    }
+    if (trimmedHistory.length < messages.length) {
+      console.log(
+        `[chat-assistant] history trimmed: ${messages.length} → ${trimmedHistory.length} messages (budget ${MAX_HISTORY_TOKENS} tokens)`,
+      );
+    }
+
+    const fullMessages = [...systemMessages, ...trimmedHistory];
 
     // activeProviders 를 순서대로 시도. 첫 성공(2xx) 응답을 사용.
     // 429/402 만 다음 provider 로 폴백. 그 외 에러는 즉시 반환.
@@ -471,9 +503,11 @@ serve(async (req) => {
       //   · 403 Forbidden      : 권한 / 모델 접근 거부 → 다른 provider
       //   · 404 Not Found      : 모델명이 바뀐 경우 → 다른 provider
       //   · 408/429            : 타임아웃 / rate limit → 다른 provider
+      //   · 413 Payload Too Large: provider 별 컨텍스트 한도가 다름(groq 6K TPM,
+      //                            cerebras·sambanova·deepseek 더 큼) → 다음으로 폴백
       //   · 500~504            : 업스트림 일시 장애 → 다른 provider
-      // 폴백 안 함: 400, 413, 422 (우리 페이로드 자체 문제 — 어디 가도 같은 에러).
-      const fallbackable = [401, 402, 403, 404, 408, 429, 500, 502, 503, 504];
+      // 폴백 안 함: 400, 422 (우리 페이로드 자체 문법/스키마 문제 — 어디 가도 같은 에러).
+      const fallbackable = [401, 402, 403, 404, 408, 413, 429, 500, 502, 503, 504];
       const shouldFallback = fallbackable.includes(response.status);
       const hasMore = i + 1 < activeProviders.length;
       if (!shouldFallback || !hasMore) break;
