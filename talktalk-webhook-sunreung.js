@@ -30,47 +30,23 @@ const GREETING_REPLY = `안녕하세요, 고객님! 😊
 153복싱짐 선릉역점입니다 🥊
 
 무엇이든 편하게 말씀해 주세요!
-가격, 시간표, 등록, 상담 모두 바로 안내해드릴게요 💪`;
+가격, 시간표, 체험, 등록 모두 바로 안내해드릴게요 💪`;
 
 const WELCOME_MESSAGE = `안녕하세요, 고객님! 😊
 153복싱짐 선릉역점입니다 🥊
 
-────────────────
-🏆 153복싱짐 선릉역점을 선택해야 하는 이유
+선릉역 유일! 국가대표 출신 코치님이
+직접 지도하는 프리미엄 복싱짐이에요 🏆
 
-1️⃣ 선릉역 유일 지상층 프리미엄 복싱짐
-   → 지하철 2호선·분당선 선릉역 도보권!
-   출근길·퇴근길에 바로 들를 수 있어요
-
-2️⃣ 국가대표 출신 코치님 직접 지도
-   → 처음이셔도 기초부터 차근차근!
-   복린이·여성분·직장인 모두 환영해요 💪
-
-3️⃣ 1시간에 700~900kcal 소모
-   → 복싱은 전신 다이어트 최강 운동!
-   3개월이면 주변에서 달라졌다는 말 들으세요 🔥
-
-4️⃣ 오전 7시부터 밤 23시까지 운영
-   → 출근 전 아침 운동도, 야근 후에도 OK!!
-   내 일정에 맞게 언제든 오실 수 있어요
-
-5️⃣ 프라이빗 샤워실 (남녀 분리)
-   → 운동 후 바로 씻고 귀가 가능해요 🚿
+복린이·여성분·직장인 모두 환영해요 💪
 
 ────────────────
-💬 아래 단어를 입력하시면 바로 안내해드려요!
+무엇을 도와드릴까요?
 
-💰 가격표  →  "가격" 입력
-⏰ 시간표  →  "시간표" 입력
-📝 등록/결제  →  "등록" 입력
-🗣 코치님 상담  →  "상담" 입력
-☀️ 아침반  →  "아침" 입력
-🌞 점심반  →  "점심" 입력
-🌙 저녁반  →  "저녁" 입력
-📍 오시는 길  →  "위치" 입력
-🚗 주차 안내  →  "주차" 입력
-────────────────
-궁금하신 내용을 입력해 주시면 바로 도와드릴게요 💪`;
+✅ 바로 등록할게요
+✅ 체험 먼저 해보고 싶어요
+✅ 가격·시간표가 궁금해요
+────────────────`;
 
 const PRICE_TABLE = `📋 153복싱짐 선릉역점 가격표
 
@@ -278,20 +254,20 @@ https://m.booking.naver.com/booking/6/bizes/1319992/items/6435759?area=pll&theme
 혹시 더 궁금하신 점이 있으신가요? 😊`;
 
 const FALLBACK_MENU = `고객님, 안녕하세요 😊
-저는 153복싱짐 선릉역점 AI 상담원이에요!
+153복싱짐 선릉역점 AI 상담원입니다!
 
-말씀하신 내용을 정확히 파악하지 못했어요 🙏
-아래처럼 입력해 주시면 원하시는 정보를 바로 안내해드릴게요!
+아래 키워드를 입력하시면 바로 안내해드려요 👇
 
-👉 가격이 궁금하시면 → "가격" 이라고 입력해 주세요
-👉 시간표가 궁금하시면 → "시간표" 라고 입력해 주세요
-👉 코치님과 상담을 원하시면 → "상담" 이라고 입력해 주세요
-👉 등록/결제를 원하시면 → "등록" 이라고 입력해 주세요
-👉 아침·점심·저녁 수업이 궁금하시면 → "아침" / "점심" / "저녁" 이라고 입력해 주세요
-👉 오시는 길이 궁금하시면 → "위치" 라고 입력해 주세요
-👉 주차가 궁금하시면 → "주차" 라고 입력해 주세요
+1️⃣ 가격 → 전체 가격표
+2️⃣ 시간표 → 전체 시간표
+3️⃣ 체험 → 체험예약 링크
+4️⃣ 등록 → 등록/결제 안내
+5️⃣ 상담 → 코치님 1:1 상담 예약
+6️⃣ 아침 / 점심 / 저녁 → 시간대별 안내
+7️⃣ 위치 → 오시는 길 안내
+8️⃣ 주차 → 주차 안내
 
-궁금하신 내용을 입력해 주시면 바로 도와드릴게요 💪`;
+원하시는 내용을 입력해 주시면 바로 도와드릴게요! 😊`;
 
 // ─── 키워드 감지 함수들 ────────────────────────────────────────────────────────
 
@@ -338,18 +314,13 @@ function isReservationOnly(text) {
 }
 
 function isTrialQuery(text) {
-  return text.includes("체험");
-}
-
-function isVisitQuery(text) {
-  if (text.includes("체험") || text.includes("상담")) return false;
   return [
-    "방문", "가보고싶", "가 보고 싶", "가볼수있",
-    "가도 될까", "가도될까", "둘러봐도", "둘러볼",
-    "언제 가면", "언제가면", "몇시에 오면", "몇시에오면",
-    "언제 오면", "언제오면", "직접 와", "직접와",
-    "가면 되나요", "가면되나요", "가볼게요", "가려고",
-    "와보고", "와도 될", "와도될",
+    "체험", "방문", "가보고싶", "가 보고 싶",
+    "한번 해보", "해볼 수 있", "해볼수있",
+    "처음 와보", "처음와보", "가볼수있",
+    "언제 가면", "언제가면", "가도 될까", "가도될까",
+    "먼저 와", "먼저와", "둘러봐도",
+    "언제 오면", "언제오면", "몇시에 오면", "몇시에오면",
   ].some(kw => text.includes(kw));
 }
 
@@ -545,50 +516,19 @@ Deno.serve(async (req) => {
 
     let replyText = null;
 
-    if (isGreeting(msg)) {
-      replyText = GREETING_REPLY;
-    } else {
-      const parts = [];
-
-      // 등록 의사 (더 구체적인 것 우선)
-      if (isReadyToRegister(msg)) {
-        parts.push(REGISTER_QUICK_REPLY);
-      } else if (isEnrollQuery(msg)) {
-        parts.push(ENROLL_REPLY);
-      }
-
-      // 상담 (방문 의사도 상담으로 연결)
-      if (isConsultQuery(msg) || isVisitQuery(msg)) parts.push(CONSULT_REPLY);
-
-      // 예약 (등록/상담 없을 때만)
-      if (isReservationOnly(msg) && parts.length === 0) parts.push(RESERVATION_ASK_REPLY);
-
-      // 체험 — 고객이 "체험" 단어를 먼저 언급할 때만
-      if (isTrialQuery(msg)) parts.push(TRIAL_QUICK_REPLY);
-
-      // 가격
-      if (isPriceQuery(msg)) parts.push(PRICE_TABLE);
-
-      // 시간표 / 시간대
-      if (isScheduleQuery(msg)) {
-        parts.push(SCHEDULE_TABLE);
-      } else {
-        if (isMorningQuery(msg)) parts.push(MORNING_REPLY);
-        if (isLunchQuery(msg))   parts.push(LUNCH_REPLY);
-        if (isEveningQuery(msg)) parts.push(EVENING_REPLY);
-      }
-
-      // 위치/주차
-      if (isLocationQuery(msg)) parts.push(LOCATION_REPLY);
-      if (isParkingQuery(msg))  parts.push(PARKING_REPLY);
-
-      if (parts.length === 1) {
-        replyText = parts[0];
-      } else if (parts.length > 1) {
-        replyText = `고객님, 궁금하신 내용 모두 안내드릴게요 😊\n\n` +
-                    parts.join("\n\n─────────────────\n\n");
-      }
-    }
+    if (isGreeting(msg))             replyText = GREETING_REPLY;
+    else if (isReadyToRegister(msg)) replyText = REGISTER_QUICK_REPLY;
+    else if (isEnrollQuery(msg))     replyText = ENROLL_REPLY;
+    else if (isConsultQuery(msg))    replyText = CONSULT_REPLY;
+    else if (isReservationOnly(msg)) replyText = RESERVATION_ASK_REPLY;
+    else if (isTrialQuery(msg))      replyText = TRIAL_QUICK_REPLY;
+    else if (isPriceQuery(msg))      replyText = PRICE_TABLE;
+    else if (isScheduleQuery(msg))   replyText = SCHEDULE_TABLE;
+    else if (isMorningQuery(msg))    replyText = MORNING_REPLY;
+    else if (isLunchQuery(msg))      replyText = LUNCH_REPLY;
+    else if (isEveningQuery(msg))    replyText = EVENING_REPLY;
+    else if (isLocationQuery(msg))   replyText = LOCATION_REPLY;
+    else if (isParkingQuery(msg))    replyText = PARKING_REPLY;
 
     if (replyText) {
       return new Response(
