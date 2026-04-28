@@ -608,14 +608,14 @@ const MissionsPage = () => {
         />
       )}
 
-      {/* ─── Admin form modal (unchanged structure) ─── */}
+      {/* ─── Admin form modal — BottomNav(z-50) 위로 z-[70] / 하단 nav 영역 만큼 padding-bottom ─── */}
       {showForm && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-foreground/30 backdrop-blur-sm"
           onClick={() => setShowForm(false)}
         >
           <div
-            className="w-full max-w-lg animate-slide-up rounded-t-hero border-t border-border bg-card p-6 shadow-elev-3 max-h-[85vh] overflow-y-auto"
+            className="w-full max-w-lg animate-slide-up rounded-t-hero border-t border-border bg-card p-6 shadow-elev-3 max-h-[85vh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+5rem)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">

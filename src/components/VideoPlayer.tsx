@@ -66,7 +66,7 @@ const VideoPlayer = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-background">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <h2 className="truncate text-base font-bold text-foreground">{title}</h2>
