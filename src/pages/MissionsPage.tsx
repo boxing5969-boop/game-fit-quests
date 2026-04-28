@@ -904,6 +904,10 @@ const MissionRow = ({
   const v = STATUS_VISUAL[status];
   const Icon = v.statusIcon;
   const isLocked = status === "locked";
+  // 영상 등록된 미션이면 썸네일 + ▶ 노출 ("훈련 탭의 영상" UI 복구)
+  const video = mission.mission_videos?.[0] ?? null;
+  const hasVideo = !!video?.video_url;
+  const posterUrl = video?.poster_url ?? null;
 
   return (
     <li
@@ -931,11 +935,49 @@ const MissionRow = ({
           </span>
         </div>
 
+        {/* 영상 썸네일 — mission_videos[0] 있을 때만 노출. ▶ 오버레이로 클릭 영역 시각화. */}
+        {hasVideo && (
+          <div
+            className={cn(
+              "relative h-10 w-16 shrink-0 overflow-hidden rounded-lg",
+              "border border-border bg-[hsl(var(--surface-2))]",
+              isLocked && "grayscale",
+            )}
+            aria-hidden
+          >
+            {posterUrl ? (
+              <img
+                src={posterUrl}
+                alt=""
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="h-full w-full bg-gradient-to-br from-primary/20 to-primary/5" />
+            )}
+            <div className="absolute inset-0 flex items-center justify-center bg-foreground/30">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/95 shadow">
+                <Play className="h-2.5 w-2.5 fill-foreground text-foreground" />
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Title + difficulty + reward */}
         <div className="min-w-0 flex-1">
-          <h4 className="truncate text-[15px] font-bold leading-tight text-foreground">
-            {mission.title}
-          </h4>
+          <div className="flex items-center gap-1.5">
+            <h4 className="truncate text-[15px] font-bold leading-tight text-foreground">
+              {mission.title}
+            </h4>
+            {hasVideo && (
+              <span
+                className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-primary"
+                aria-label="영상 있음"
+              >
+                ▶ 영상
+              </span>
+            )}
+          </div>
           <div className="mt-1 flex items-center gap-2">
             <div className="flex items-center gap-0.5">
               {Array.from({ length: 5 }, (_, i) => (
