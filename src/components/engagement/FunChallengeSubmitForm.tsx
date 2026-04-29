@@ -6,7 +6,7 @@
  * 공식 XP / member_progress / user_wallets 일절 미수정.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, CheckCircle2, RefreshCw, XCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,7 +17,7 @@ import type {
   QuizDifficulty,
 } from "@/services/boxingEngagementService";
 
-import SafetyCheckPanel from "./SafetyCheckPanel";
+import SafetyCheckPanel, { type PainChecks } from "./SafetyCheckPanel";
 
 const DIFFICULTY_LABEL: Record<QuizDifficulty, string> = {
   beginner: "초급",
@@ -48,7 +48,7 @@ const FunChallengeSubmitForm = ({
   const [difficulty, setDifficulty] = useState<QuizDifficulty>("beginner");
   const [submittedValue, setSubmittedValue] = useState("");
   const [note, setNote] = useState("");
-  const [pain, setPain] = useState<Record<string, boolean>>({});
+  const [painChecks, setPainChecks] = useState<PainChecks>({});
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<FunChallengeAttemptResult | null>(null);
 
@@ -58,20 +58,34 @@ const FunChallengeSubmitForm = ({
   const rewardPreview = challenge.rewards_by_difficulty?.[difficulty];
 
   // pain_check_required 가 매 렌더 새 reference 가 되지 않도록 안정화.
-  const required = useMemo(
+  const requiredPainAreas = useMemo(
     () => challenge.pain_check_required ?? [],
     [challenge.pain_check_required],
   );
-  const allPainOk = useMemo(() => {
-    if (required.length === 0) return true;
-    return required.every((p) => pain[p] === true);
-  }, [required, pain]);
+
+  // 챌린지 또는 난이도 변경 시 통증 체크 초기화.
+  useEffect(() => {
+    setPainChecks({});
+  }, [challenge.id, difficulty]);
+
+  const allPainChecked = useMemo(() => {
+    if (requiredPainAreas.length === 0) return true;
+    return requiredPainAreas.every((area) => painChecks[area] === "none");
+  }, [requiredPainAreas, painChecks]);
+
+  const hasPain = useMemo(
+    () => requiredPainAreas.some((area) => painChecks[area] === "pain"),
+    [requiredPainAreas, painChecks],
+  );
 
   const numericValue = Number(submittedValue);
   const isNumberValid =
-    submittedValue.length > 0 && Number.isFinite(numericValue) && numericValue >= 0;
+    submittedValue.length > 0 &&
+    Number.isFinite(numericValue) &&
+    numericValue > 0;
 
-  const canSubmit = isNumberValid && allPainOk && !pending;
+  const canSubmit =
+    isNumberValid && allPainChecked && !hasPain && !pending;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -81,7 +95,7 @@ const FunChallengeSubmitForm = ({
         challengeId: challenge.id,
         difficulty,
         submittedValue: numericValue,
-        painCheckPassed: allPainOk,
+        painCheckPassed: allPainChecked && !hasPain,
         note: note.trim() || null,
       });
       setResult(data);
@@ -100,7 +114,25 @@ const FunChallengeSubmitForm = ({
     setResult(null);
     setSubmittedValue("");
     setNote("");
+    setPainChecks({});
   };
+
+  // 통증 체크 누락된 영역 — 안내 표시용
+  const missingPainAreas = requiredPainAreas.filter(
+    (area) => painChecks[area] !== "none",
+  );
+  const PART_LABEL_KO: Record<string, string> = {
+    wrist: "손목",
+    shoulder: "어깨",
+    knee: "무릎",
+    back: "허리",
+    ankle: "발목",
+    elbow: "팔꿈치",
+    hip: "고관절",
+  };
+  const missingPainLabel = missingPainAreas
+    .map((a) => PART_LABEL_KO[a] ?? a)
+    .join(", ");
 
   if (result) {
     const { status, daily_limit_reached } = result;
@@ -287,7 +319,11 @@ const FunChallengeSubmitForm = ({
         />
       </div>
 
-      <SafetyCheckPanel required={required} values={pain} onChange={setPain} />
+      <SafetyCheckPanel
+        required={requiredPainAreas}
+        values={painChecks}
+        onChange={setPainChecks}
+      />
 
       <div>
         <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
@@ -302,9 +338,9 @@ const FunChallengeSubmitForm = ({
         />
       </div>
 
-      {required.length > 0 && !allPainOk && (
+      {requiredPainAreas.length > 0 && !allPainChecked && !hasPain && (
         <p className="text-[11px] text-amber-600">
-          모든 통증 체크를 "통증 없음"으로 확인해야 보상이 지급됩니다.
+          보상 지급을 위해 {missingPainLabel} 통증 없음 확인이 필요합니다.
         </p>
       )}
 
@@ -312,9 +348,21 @@ const FunChallengeSubmitForm = ({
         type="button"
         onClick={handleSubmit}
         disabled={!canSubmit}
-        className="w-full rounded-card bg-primary py-3 text-[14px] font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+        className={`w-full rounded-card py-3 text-[14px] font-bold transition-all ${
+          canSubmit
+            ? "bg-primary text-primary-foreground active:scale-[0.98]"
+            : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60"
+        }`}
       >
-        {pending ? "제출 중…" : "제출하기"}
+        {pending
+          ? "제출 중…"
+          : !isNumberValid
+            ? "기록 입력 필요"
+            : hasPain
+              ? "통증 있음 — 제출 불가"
+              : !allPainChecked
+                ? "통증 체크 필요"
+                : "제출하기"}
       </button>
     </div>
   );

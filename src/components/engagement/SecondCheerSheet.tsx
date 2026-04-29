@@ -344,9 +344,19 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
           type="button"
           onClick={handleSend}
           disabled={!canSend}
-          className="w-full rounded-card bg-primary py-3 text-[14px] font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+          className={`w-full rounded-card py-3 text-[14px] font-bold transition-all ${
+            canSend
+              ? "bg-primary text-primary-foreground active:scale-[0.98]"
+              : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60"
+          }`}
         >
-          {pending ? "전송 중…" : "응원 보내기"}
+          {pending
+            ? "전송 중…"
+            : !target
+              ? "동료를 선택해주세요"
+              : !sticker
+                ? "스티커를 선택해주세요"
+                : "응원 보내기"}
         </button>
       </div>
     );

@@ -281,9 +281,21 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         type="button"
         onClick={handleSubmit}
         disabled={!canSubmit}
-        className="w-full rounded-card bg-primary py-3 text-[14px] font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+        className={`w-full rounded-card py-3 text-[14px] font-bold transition-all ${
+          canSubmit
+            ? "bg-primary text-primary-foreground active:scale-[0.98]"
+            : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60"
+        }`}
       >
-        {pending ? "저장 중…" : "기록 남기기"}
+        {pending
+          ? "저장 중…"
+          : tooShort
+            ? `최소 ${MIN_LEN}자 이상 입력해주세요`
+            : tooLong
+              ? `최대 ${MAX_LEN}자까지 입력 가능합니다`
+              : !prompt
+                ? "질문을 선택해주세요"
+                : "기록 남기기"}
       </button>
 
       {/* 최근 일기 3개 */}

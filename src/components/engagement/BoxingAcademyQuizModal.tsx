@@ -316,14 +316,23 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
     }
 
     if (!result) {
+      const submitEnabled = !!selected && !pending;
       return (
         <div className="border-t border-border px-5 py-3">
           <button
             onClick={handleSubmit}
-            disabled={!selected || pending}
-            className="w-full rounded-card bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+            disabled={!submitEnabled}
+            className={`w-full rounded-card py-3 text-sm font-bold transition-all ${
+              submitEnabled
+                ? "bg-primary text-primary-foreground active:scale-[0.98]"
+                : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60"
+            }`}
           >
-            {pending ? "제출 중…" : "제출하기"}
+            {pending
+              ? "제출 중…"
+              : !selected
+                ? "답을 선택해주세요"
+                : "제출하기"}
           </button>
         </div>
       );
