@@ -34,6 +34,7 @@ import LevelUpModal from "@/components/LevelUpModal";
 // 있으며 롤백 시 import 만 복구하면 된다.
 import { MasterProgressCard } from "@/components/master/MasterProgressCard";
 import HomeCustomizeSheet from "@/components/home/HomeCustomizeSheet";
+import { HomeEngagementSection } from "@/components/engagement";
 import { useHomeLayout } from "@/lib/homeLayout";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
@@ -339,6 +340,11 @@ const HomePage = () => {
             QR 체크인 하기
           </PrimaryCTAButton>
         )}
+
+        {/* ─── 2b. 153 QUEST 몰입 카드 (오삼 브리핑 + 보조 퀘스트 미니 패널) ─── */}
+        {/*       공식 1~40 미션과 분리. 공식 XP/member_progress 미수정. */}
+        {/*       7~8단계에서 onOpenXxx 콜백을 실제 모달/페이지 진입으로 연결. */}
+        <HomeEngagementSection />
 
         {/* ─── 3. Today's Mission / Active Session ─── (커스텀 토글) */}
         {homeWidgets.todayMission && (

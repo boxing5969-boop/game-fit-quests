@@ -21,6 +21,7 @@ import {
   RecentXpList,
   StatCard,
 } from "@/components/shared/BadgeGrid";
+import { BoxingHallSummaryCard } from "@/components/engagement";
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -212,6 +213,10 @@ const MyPage = () => {
           <StatCard icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
           <StatCard icon="🏅" label="배지" value={`${earned.length}개`} />
         </div>
+
+        {/* ─── 153 QUEST 몰입 레이어: 나만의 복싱 전당 ─── */}
+        {/*       공식 progress 는 읽기만, QUEST 보조 데이터는 useBoxingEngagementSummary 사용 */}
+        <BoxingHallSummaryCard />
 
         {/* Info */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.07s" }}>
