@@ -17,9 +17,29 @@
 import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
 
-// types.ts 갱신 전 임시 cast — 향후 자동 생성 후 제거.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+// ──────────────────────────────────────────────────────────────────
+// types.ts 자동 생성 전 타입 우회 헬퍼 (양쪽 다 좁은 범위로 격리).
+//   향후 supabase gen types typescript 갱신 시 본 헬퍼만 제거하고
+//   호출부는 typed supabase.from / supabase.rpc 로 자연스럽게 전환된다.
+// ──────────────────────────────────────────────────────────────────
+
+interface SbResult<T> {
+  data: T | null;
+  error: { message: string; code?: string } | null;
+}
+
+function sbFrom(table: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (supabase as any).from(table);
+}
+
+async function sbRpc<T>(
+  name: string,
+  args?: Record<string, unknown>,
+): Promise<SbResult<T>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (supabase as any).rpc(name, args);
+}
 
 // ──────────────────────────────────────────────────────────────────
 // 한국어 fallback (translateError 가 매핑하지 못하는 RPC 도메인 메시지 보강)
@@ -240,12 +260,14 @@ export interface SecondCheerCandidate {
 // ──────────────────────────────────────────────────────────────────
 
 export async function getMyBoxingEngagementSummary(): Promise<BoxingEngagementSummary> {
-  const { data, error } = await sb.rpc("get_my_boxing_engagement_summary");
+  const { data, error } = await sbRpc<BoxingEngagementSummary>(
+    "get_my_boxing_engagement_summary",
+  );
   if (error) throwKo(error);
   if (!data || data.success !== true) {
     throw new Error("요약 정보를 불러오지 못했습니다.");
   }
-  return data as BoxingEngagementSummary;
+  return data;
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -253,16 +275,17 @@ export async function getMyBoxingEngagementSummary(): Promise<BoxingEngagementSu
 // ──────────────────────────────────────────────────────────────────
 
 export async function getActiveBoxingQuizQuestions(): Promise<BoxingQuizQuestion[]> {
-  const { data, error } = await sb
-    .from("boxing_quiz_questions")
+  const { data, error } = (await sbFrom("boxing_quiz_questions")
     .select(
       "id, category, title, lesson_text, question, question_type, options, correct_answer, explanation, difficulty, reward_quest_xp, reward_gems, retry_reward_quest_xp, retry_reward_gems, active, sort_order",
     )
     .eq("active", true)
-    .order("sort_order", { ascending: true });
+    .order("sort_order", { ascending: true })) as SbResult<
+    BoxingQuizQuestion[]
+  >;
 
   if (error) throwKo(error);
-  return (data ?? []) as BoxingQuizQuestion[];
+  return data ?? [];
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -273,15 +296,18 @@ export async function submitBoxingQuizAttempt(
   questionId: string,
   selectedAnswer: string,
 ): Promise<BoxingQuizAttemptResult> {
-  const { data, error } = await sb.rpc("submit_boxing_quiz_attempt", {
-    p_question_id: questionId,
-    p_selected_answer: selectedAnswer,
-  });
+  const { data, error } = await sbRpc<BoxingQuizAttemptResult>(
+    "submit_boxing_quiz_attempt",
+    {
+      p_question_id: questionId,
+      p_selected_answer: selectedAnswer,
+    },
+  );
   if (error) throwKo(error);
   if (!data || data.success !== true) {
     throw new Error("퀴즈 결과를 처리하지 못했습니다.");
   }
-  return data as BoxingQuizAttemptResult;
+  return data;
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -289,16 +315,17 @@ export async function submitBoxingQuizAttempt(
 // ──────────────────────────────────────────────────────────────────
 
 export async function getActiveBoxingFunChallenges(): Promise<BoxingFunChallenge[]> {
-  const { data, error } = await sb
-    .from("boxing_fun_challenges")
+  const { data, error } = (await sbFrom("boxing_fun_challenges")
     .select(
       "id, code, title, description, category, target_metric, duration_seconds, difficulty_targets, rewards_by_difficulty, pain_check_required, high_intensity, safety_note, active, sort_order",
     )
     .eq("active", true)
-    .order("sort_order", { ascending: true });
+    .order("sort_order", { ascending: true })) as SbResult<
+    BoxingFunChallenge[]
+  >;
 
   if (error) throwKo(error);
-  return (data ?? []) as BoxingFunChallenge[];
+  return data ?? [];
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -308,18 +335,21 @@ export async function getActiveBoxingFunChallenges(): Promise<BoxingFunChallenge
 export async function submitBoxingFunChallengeAttempt(
   payload: SubmitFunChallengeInput,
 ): Promise<FunChallengeAttemptResult> {
-  const { data, error } = await sb.rpc("submit_boxing_fun_challenge_attempt", {
-    p_challenge_id: payload.challengeId,
-    p_difficulty: payload.difficulty,
-    p_submitted_value: payload.submittedValue,
-    p_pain_check_passed: payload.painCheckPassed ?? true,
-    p_note: payload.note ?? null,
-  });
+  const { data, error } = await sbRpc<FunChallengeAttemptResult>(
+    "submit_boxing_fun_challenge_attempt",
+    {
+      p_challenge_id: payload.challengeId,
+      p_difficulty: payload.difficulty,
+      p_submitted_value: payload.submittedValue,
+      p_pain_check_passed: payload.painCheckPassed ?? true,
+      p_note: payload.note ?? null,
+    },
+  );
   if (error) throwKo(error);
   if (!data || data.success !== true) {
     throw new Error("챌린지 결과를 처리하지 못했습니다.");
   }
-  return data as FunChallengeAttemptResult;
+  return data;
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -329,16 +359,19 @@ export async function submitBoxingFunChallengeAttempt(
 export async function submitChampionJournalEntry(
   payload: SubmitJournalInput,
 ): Promise<JournalEntryResult> {
-  const { data, error } = await sb.rpc("submit_champion_journal_entry", {
-    p_prompt: payload.prompt,
-    p_content: payload.content,
-    p_mood: payload.mood ?? null,
-  });
+  const { data, error } = await sbRpc<JournalEntryResult>(
+    "submit_champion_journal_entry",
+    {
+      p_prompt: payload.prompt,
+      p_content: payload.content,
+      p_mood: payload.mood ?? null,
+    },
+  );
   if (error) throwKo(error);
   if (!data || data.success !== true) {
     throw new Error("일기를 저장하지 못했습니다.");
   }
-  return data as JournalEntryResult;
+  return data;
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -348,16 +381,15 @@ export async function submitChampionJournalEntry(
 export async function getRecentChampionJournalEntries(
   limit = 3,
 ): Promise<ChampionJournalEntryRow[]> {
-  const { data, error } = await sb
-    .from("champion_journal_entries")
+  const { data, error } = (await sbFrom("champion_journal_entries")
     .select(
       "id, user_id, prompt, content, mood, quest_xp_granted, gems_granted, created_at",
     )
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(limit)) as SbResult<ChampionJournalEntryRow[]>;
 
   if (error) throwKo(error);
-  return (data ?? []) as ChampionJournalEntryRow[];
+  return data ?? [];
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -368,11 +400,12 @@ export async function getRecentChampionJournalEntries(
 export async function getSecondCheerCandidates(
   limit = 30,
 ): Promise<SecondCheerCandidate[]> {
-  const { data, error } = await sb.rpc("get_second_cheer_candidates", {
-    p_limit: limit,
-  });
+  const { data, error } = await sbRpc<SecondCheerCandidate[]>(
+    "get_second_cheer_candidates",
+    { p_limit: limit },
+  );
   if (error) throwKo(error);
-  return (data ?? []) as SecondCheerCandidate[];
+  return data ?? [];
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -382,7 +415,7 @@ export async function getSecondCheerCandidates(
 export async function sendBoxingCheer(
   payload: SendCheerInput,
 ): Promise<SendCheerResult> {
-  const { data, error } = await sb.rpc("send_boxing_cheer", {
+  const { data, error } = await sbRpc<SendCheerResult>("send_boxing_cheer", {
     p_receiver_user_id: payload.receiverUserId,
     p_cheer_type: payload.cheerType,
     p_message: payload.message ?? null,
@@ -393,5 +426,5 @@ export async function sendBoxingCheer(
   if (!data || data.success !== true) {
     throw new Error("응원을 전송하지 못했습니다.");
   }
-  return data as SendCheerResult;
+  return data;
 }
