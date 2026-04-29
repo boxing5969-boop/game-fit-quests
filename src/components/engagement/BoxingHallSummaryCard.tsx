@@ -35,7 +35,8 @@ const BoxingHallSummaryCard = () => {
   const navigate = useNavigate();
   const { progress, role } = useAuth();
   const { data: wallet } = useWallet();
-  const { data: summary } = useBoxingEngagementSummary();
+  const { data: summary, isLoading: summaryLoading } =
+    useBoxingEngagementSummary();
 
   if (!progress) return null;
 
@@ -101,7 +102,7 @@ const BoxingHallSummaryCard = () => {
         </div>
       </div>
 
-      {/* B. QUEST 성장 (보조) */}
+      {/* B. QUEST 성장 (보조) — 초기 로드 시 skeleton */}
       <div className="mt-3">
         <p className="mb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
           QUEST 성장 · 보조 경험치
@@ -112,32 +113,38 @@ const BoxingHallSummaryCard = () => {
             label="QUEST XP"
             value={questXp}
             tone="primary"
+            loading={summaryLoading}
           />
           <BoxingHallStatTile
             icon="🎖"
             label="RP"
             value={respect}
             tone="primary"
+            loading={summaryLoading}
           />
           <BoxingHallStatTile
             icon={<Brain className="h-3 w-3" />}
             label="퀴즈 정답"
             value={quizCorrect}
+            loading={summaryLoading}
           />
           <BoxingHallStatTile
             icon={<Swords className="h-3 w-3" />}
             label="챌린지 클리어"
             value={challengeClear}
+            loading={summaryLoading}
           />
           <BoxingHallStatTile
             icon={<ClipboardList className="h-3 w-3" />}
             label="일기"
             value={journalCount}
+            loading={summaryLoading}
           />
           <BoxingHallStatTile
             icon={<Megaphone className="h-3 w-3" />}
             label="응원 보냄/받음"
             value={`${cheerSent}/${cheerReceived}`}
+            loading={summaryLoading}
           />
         </div>
       </div>

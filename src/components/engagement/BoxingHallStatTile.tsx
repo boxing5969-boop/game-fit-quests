@@ -10,6 +10,7 @@ export interface BoxingHallStatTileProps {
   value: string | number;
   tone?: "primary" | "reward" | "muted";
   hint?: string;
+  loading?: boolean;
 }
 
 const TONE: Record<NonNullable<BoxingHallStatTileProps["tone"]>, string> = {
@@ -24,6 +25,7 @@ const BoxingHallStatTile = ({
   value,
   tone = "muted",
   hint,
+  loading = false,
 }: BoxingHallStatTileProps) => {
   const display =
     typeof value === "number" ? value.toLocaleString() : value;
@@ -40,10 +42,19 @@ const BoxingHallStatTile = ({
           {label}
         </p>
       </div>
-      <p className={`number-font mt-0.5 text-[15px] font-black ${TONE[tone]}`}>
-        {display}
-      </p>
-      {hint && (
+      {loading ? (
+        <div
+          className="mt-1 h-[16px] w-12 animate-pulse rounded bg-muted/60"
+          aria-hidden="true"
+        />
+      ) : (
+        <p
+          className={`number-font mt-0.5 text-[15px] font-black ${TONE[tone]}`}
+        >
+          {display}
+        </p>
+      )}
+      {hint && !loading && (
         <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
           {hint}
         </p>

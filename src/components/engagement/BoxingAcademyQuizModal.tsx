@@ -23,6 +23,7 @@ import {
   useBoxingAcademyQuestions,
   useSubmitBoxingQuizAttempt,
 } from "@/hooks/useBoxingAcademy";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 import type {
   BoxingQuizAttemptResult,
   BoxingQuizQuestion,
@@ -45,6 +46,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
   // open=false 일 때는 RPC 가 발사되지 않도록 enabled gate.
   const { data: questions, isLoading } = useBoxingAcademyQuestions(open);
   const submit = useSubmitBoxingQuizAttempt();
+  useModalDismiss(open, onClose);
 
   const playable: BoxingQuizQuestion[] = useMemo(
     () => (questions ?? []).filter((q) => SUPPORTED_TYPES.has(q.question_type)),
@@ -374,6 +376,9 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
             exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="복싱 IQ 퀴즈"
             className="flex max-h-[88vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {renderHeader()}

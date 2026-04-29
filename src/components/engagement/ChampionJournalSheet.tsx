@@ -17,6 +17,7 @@ import {
   useRecentChampionJournalEntries,
   useSubmitChampionJournalEntry,
 } from "@/hooks/useChampionJournal";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 import type { JournalEntryResult } from "@/services/boxingEngagementService";
 
 import ChampionJournalCard from "./ChampionJournalCard";
@@ -56,6 +57,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
   // open=false 일 때는 SELECT 가 발사되지 않도록 enabled gate.
   const { data: recent, isLoading: recentLoading } =
     useRecentChampionJournalEntries(3, open);
+  useModalDismiss(open, onClose);
 
   const [prompt, setPrompt] = useState<string>("");
   const [content, setContent] = useState("");
@@ -322,6 +324,9 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="챔피언 일기"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {renderHeader()}

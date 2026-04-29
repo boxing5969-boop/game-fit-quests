@@ -10,9 +10,6 @@
 
 import { Brain, Swords, BookOpen } from "lucide-react";
 
-import { useBoxingAcademyQuestions } from "@/hooks/useBoxingAcademy";
-import { useBoxingFunChallenges } from "@/hooks/useBoxingFunChallenges";
-
 export interface TodayQuestMiniPanelProps {
   onOpenAcademy: () => void;
   onOpenChallengeArena: () => void;
@@ -72,11 +69,8 @@ const TodayQuestMiniPanel = ({
   onOpenChallengeArena,
   onOpenChampionJournal,
 }: TodayQuestMiniPanelProps) => {
-  const { data: questions } = useBoxingAcademyQuestions();
-  const { data: funChallenges } = useBoxingFunChallenges();
-
-  const questionCount = questions?.length ?? 0;
-  const challengeCount = funChallenges?.length ?? 0;
+  // 카드만 표시 — 실제 RPC 는 모달이 열릴 때만 발사 (enabled gate 적용됨).
+  // 여기서는 카운트를 호출하지 않고 정적 카피로 표시.
 
   return (
     <section
@@ -99,11 +93,7 @@ const TodayQuestMiniPanel = ({
         <MiniCard
           icon={<Brain className="h-5 w-5" />}
           badge="복싱 IQ"
-          title={
-            questionCount > 0
-              ? `오늘의 퀴즈 1문제 (총 ${questionCount}개 준비)`
-              : "오늘의 퀴즈 1문제"
-          }
+          title="오늘의 퀴즈 1문제"
           subtitle="머리로 한 번, 몸으로 한 번 — 두 번 들어갑니다."
           rewardPreview="+30 XP · +100"
           onClick={onOpenAcademy}
@@ -111,11 +101,7 @@ const TodayQuestMiniPanel = ({
         <MiniCard
           icon={<Swords className="h-5 w-5" />}
           badge="챌린지 아레나"
-          title={
-            challengeCount > 0
-              ? `번개 잽 / 원투 / 스쿼트 외 ${challengeCount}종 도전`
-              : "번개 잽 / 원투 / 스쿼트 중 하나 도전"
-          }
+          title="번개 잽 / 원투 / 스쿼트 외 도전 라운드"
           subtitle="공식 미션과 별개의 재미 챌린지입니다."
           rewardPreview="+150 XP · +500"
           onClick={onOpenChallengeArena}

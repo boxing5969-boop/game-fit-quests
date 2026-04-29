@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Swords, X } from "lucide-react";
 
 import { useBoxingFunChallenges } from "@/hooks/useBoxingFunChallenges";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 import type { BoxingFunChallenge } from "@/services/boxingEngagementService";
 
 import FunChallengeCard from "./FunChallengeCard";
@@ -28,6 +29,7 @@ const FunChallengeArenaSheet = ({ open, onClose }: Props) => {
   // open=false 일 때는 RPC 가 발사되지 않도록 enabled gate.
   const { data: challenges, isLoading } = useBoxingFunChallenges(open);
   const [selected, setSelected] = useState<BoxingFunChallenge | null>(null);
+  useModalDismiss(open, onClose);
 
   useEffect(() => {
     if (open) setSelected(null);
@@ -118,6 +120,9 @@ const FunChallengeArenaSheet = ({ open, onClose }: Props) => {
             exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="챌린지 아레나"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {renderHeader()}

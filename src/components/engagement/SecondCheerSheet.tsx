@@ -26,6 +26,7 @@ import {
   useSecondCheerCandidates,
   useSendBoxingCheer,
 } from "@/hooks/useSecondCheer";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 import type {
   SecondCheerCandidate,
   SendCheerResult,
@@ -45,6 +46,7 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
   // open=false 일 때는 RPC 가 발사되지 않도록 enabled gate.
   const { data: candidates, isLoading } = useSecondCheerCandidates(30, open);
   const send = useSendBoxingCheer();
+  useModalDismiss(open, onClose);
 
   const [target, setTarget] = useState<SecondCheerCandidate | null>(null);
   const [sticker, setSticker] = useState<string | null>(null);
@@ -366,6 +368,9 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
             exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="세컨드 응원"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {renderHeader()}
