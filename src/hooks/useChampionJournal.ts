@@ -3,6 +3,7 @@
  *
  * submit_champion_journal_entry RPC 래퍼 + 최근 일기 조회.
  * 하루 최초 작성에만 보상이 지급되고, 추가 작성은 기록만 저장된다.
+ * v1.5 16단계: onSuccess 에서 숨겨진 미션 평가 트리거 호출 (디바운스).
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,11 +15,13 @@ import {
   type JournalEntryResult,
   type SubmitJournalInput,
 } from "@/services/boxingEngagementService";
+import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
 
 export const CHAMPION_JOURNAL_KEY = ["champion-journal"] as const;
 
 export function useSubmitChampionJournalEntry() {
   const qc = useQueryClient();
+  const { triggerCheck } = useHiddenMissionTrigger();
 
   return useMutation<JournalEntryResult, Error, SubmitJournalInput>({
     mutationFn: submitChampionJournalEntry,
@@ -26,6 +29,8 @@ export function useSubmitChampionJournalEntry() {
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
       qc.invalidateQueries({ queryKey: ["champion-journal"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
+      // 숨겨진 미션 평가 — 800ms 디바운스
+      triggerCheck();
     },
   });
 }

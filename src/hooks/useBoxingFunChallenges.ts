@@ -13,6 +13,7 @@ import {
   type FunChallengeAttemptResult,
   type SubmitFunChallengeInput,
 } from "@/services/boxingEngagementService";
+import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
 
 export const BOXING_FUN_CHALLENGES_KEY = ["boxing-fun-challenges"] as const;
 
@@ -27,6 +28,7 @@ export function useBoxingFunChallenges(enabled = true) {
 
 export function useSubmitBoxingFunChallengeAttempt() {
   const qc = useQueryClient();
+  const { triggerCheck } = useHiddenMissionTrigger();
 
   return useMutation<
     FunChallengeAttemptResult,
@@ -38,6 +40,8 @@ export function useSubmitBoxingFunChallengeAttempt() {
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
       qc.invalidateQueries({ queryKey: ["boxing-fun-challenges"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
+      // v1.5 16단계: 숨겨진 미션 평가 트리거 (디바운스)
+      triggerCheck();
     },
   });
 }

@@ -15,6 +15,10 @@ import BoxingAcademyQuizModal from "./BoxingAcademyQuizModal";
 import FunChallengeArenaSheet from "./FunChallengeArenaSheet";
 import ChampionJournalSheet from "./ChampionJournalSheet";
 import SecondCheerSheet from "./SecondCheerSheet";
+import ConditionGaugeCard from "./ConditionGaugeCard";
+import ConditionGaugeSheet from "./ConditionGaugeSheet";
+import ReturnRoundBanner from "./ReturnRoundBanner";
+import ReturnRoundSheet from "./ReturnRoundSheet";
 
 export interface HomeEngagementSectionProps {
   /** 외부에서 복싱 IQ 진입을 가로채고 싶을 때만 지정. 기본은 본 컴포넌트가 모달을 연다. */
@@ -37,6 +41,10 @@ const HomeEngagementSection = ({
   const [showArena, setShowArena] = useState(false);
   const [showJournal, setShowJournal] = useState(false);
   const [showCheer, setShowCheer] = useState(false);
+  // v1.5 14단계 — 컨디션 게이지
+  const [showCondition, setShowCondition] = useState(false);
+  // v1.5 15단계 — 리턴 라운드
+  const [showReturn, setShowReturn] = useState(false);
 
   const handleAcademy = onOpenAcademy ?? (() => setShowAcademy(true));
   const handleChallenge = onOpenChallengeArena ?? (() => setShowArena(true));
@@ -45,6 +53,8 @@ const HomeEngagementSection = ({
 
   return (
     <div className="space-y-4">
+      <ReturnRoundBanner onOpen={() => setShowReturn(true)} />
+      <ConditionGaugeCard onOpen={() => setShowCondition(true)} />
       <OsamiDailyBriefingCard />
       <TodayQuestMiniPanel
         onOpenAcademy={handleAcademy}
@@ -101,6 +111,16 @@ const HomeEngagementSection = ({
       <SecondCheerSheet
         open={showCheer}
         onClose={() => setShowCheer(false)}
+      />
+
+      <ConditionGaugeSheet
+        open={showCondition}
+        onClose={() => setShowCondition(false)}
+      />
+
+      <ReturnRoundSheet
+        open={showReturn}
+        onClose={() => setShowReturn(false)}
       />
     </div>
   );

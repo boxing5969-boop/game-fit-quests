@@ -56,6 +56,19 @@ const ENGAGEMENT_ERROR_MAP: ReadonlyArray<{ match: string; ko: string }> = [
   { match: "cannot cheer yourself", ko: "본인에게는 응원을 보낼 수 없습니다." },
   { match: "invalid cheer_type", ko: "올바르지 않은 응원 종류입니다." },
   { match: "receiver not found", ko: "응원할 회원을 찾을 수 없습니다." },
+  // v1.5 14단계 — 컨디션 게이지
+  { match: "condition_type required", ko: "컨디션을 선택해주세요." },
+  { match: "invalid condition_type", ko: "올바르지 않은 컨디션입니다." },
+  { match: "invalid energy_level", ko: "에너지 레벨은 0~5 사이여야 합니다." },
+  // v1.5 15단계 — 리턴 라운드
+  { match: "no return round available", ko: "복귀 라운드 조건이 아닙니다." },
+  { match: "return round already claimed", ko: "오늘은 이미 복귀 보상을 받았습니다." },
+  { match: "return round on cooldown", ko: "이번 복귀 보상은 다음 주기에 다시 열립니다." },
+  { match: "mission_code required", ko: "복귀 미션을 선택해주세요." },
+  { match: "invalid mission_code", ko: "올바르지 않은 복귀 미션 코드입니다." },
+  // v1.5 16단계 — 숨겨진 미션
+  { match: "hidden mission not eligible", ko: "아직 조건이 충족되지 않은 숨겨진 미션입니다." },
+  { match: "hidden mission already claimed", ko: "이미 받은 숨겨진 미션입니다." },
 ];
 
 function toKoreanError(err: unknown): string {
@@ -425,6 +438,258 @@ export async function sendBoxingCheer(
   if (error) throwKo(error);
   if (!data || data.success !== true) {
     throw new Error("응원을 전송하지 못했습니다.");
+  }
+  return data;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// v1.5 — 14단계 컨디션 게이지
+// ══════════════════════════════════════════════════════════════════
+
+export type BoxingConditionType =
+  | "great"
+  | "normal"
+  | "tired"
+  | "pain"
+  | "short_time";
+
+export interface BoxingConditionLogRow {
+  id: string;
+  user_id: string;
+  condition_type: BoxingConditionType;
+  energy_level: number | null;
+  pain_area: string[];
+  note: string | null;
+  selected_at: string;
+  created_at: string;
+}
+
+export interface SubmitBoxingConditionInput {
+  conditionType: BoxingConditionType;
+  energyLevel?: number | null;
+  painArea?: string[];
+  note?: string | null;
+}
+
+export interface SubmitBoxingConditionResult {
+  success: true;
+  log_id: string;
+  condition_type: BoxingConditionType;
+  message: string;
+}
+
+export interface TodayBoxingCondition {
+  success: true;
+  has_today: boolean;
+  log_id?: string;
+  condition_type: BoxingConditionType | null;
+  energy_level?: number | null;
+  pain_area?: string[];
+  note?: string | null;
+  selected_at?: string;
+  message?: string;
+}
+
+export async function submitBoxingCondition(
+  payload: SubmitBoxingConditionInput,
+): Promise<SubmitBoxingConditionResult> {
+  const { data, error } = await sbRpc<SubmitBoxingConditionResult>(
+    "submit_boxing_condition",
+    {
+      p_condition_type: payload.conditionType,
+      p_energy_level: payload.energyLevel ?? null,
+      p_pain_area: payload.painArea ?? [],
+      p_note: payload.note ?? null,
+    },
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    throw new Error("컨디션을 저장하지 못했습니다.");
+  }
+  return data;
+}
+
+export async function getTodayBoxingCondition(): Promise<TodayBoxingCondition> {
+  const { data, error } = await sbRpc<TodayBoxingCondition>(
+    "get_today_boxing_condition",
+  );
+  if (error) throwKo(error);
+  if (!data) {
+    return {
+      success: true,
+      has_today: false,
+      condition_type: null,
+      message: "오늘 컨디션이 아직 기록되지 않았습니다.",
+    };
+  }
+  return data;
+}
+
+export async function getRecentBoxingConditions(
+  days = 14,
+): Promise<BoxingConditionLogRow[]> {
+  const { data, error } = await sbRpc<BoxingConditionLogRow[]>(
+    "get_recent_boxing_conditions",
+    { p_days: days },
+  );
+  if (error) throwKo(error);
+  return data ?? [];
+}
+
+// ══════════════════════════════════════════════════════════════════
+// v1.5 — 15단계 리턴 라운드
+// ══════════════════════════════════════════════════════════════════
+
+export type ReturnRoundType =
+  | "after_3_days"
+  | "after_7_days"
+  | "after_14_days"
+  | "after_30_days";
+
+export interface ReturnRoundMission {
+  code: string;
+  title: string;
+  description: string;
+  difficulty: "recovery";
+}
+
+export interface ReturnRoundStatus {
+  success: true;
+  active: boolean;
+  inactive_days: number;
+  return_type: ReturnRoundType | null;
+  already_claimed_today?: boolean;
+  on_cooldown?: boolean;
+  message: string;
+  missions?: ReturnRoundMission[];
+}
+
+export interface ClaimReturnRoundResult {
+  success: true;
+  claim_id: string;
+  return_type: ReturnRoundType;
+  inactive_days: number;
+  mission_code: string;
+  quest_xp_granted: number;
+  gems_granted: number;
+  message: string;
+}
+
+export async function getReturnRoundStatus(): Promise<ReturnRoundStatus> {
+  const { data, error } = await sbRpc<ReturnRoundStatus>(
+    "get_return_round_status",
+  );
+  if (error) throwKo(error);
+  if (!data) {
+    return {
+      success: true,
+      active: false,
+      inactive_days: 0,
+      return_type: null,
+      message: "꾸준히 오고 계시네요.",
+    };
+  }
+  return data;
+}
+
+export async function claimReturnRoundReward(
+  missionCode: string,
+): Promise<ClaimReturnRoundResult> {
+  const { data, error } = await sbRpc<ClaimReturnRoundResult>(
+    "claim_return_round_reward",
+    { p_mission_code: missionCode },
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    throw new Error("복귀 보상을 처리하지 못했습니다.");
+  }
+  return data;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// v1.5 — 16단계 숨겨진 미션 + 복싱 IQ 리그
+// ══════════════════════════════════════════════════════════════════
+
+export interface HiddenMissionClaimedRow {
+  code: string;
+  title: string;
+  description: string;
+  quest_xp_granted: number;
+  gems_granted: number;
+  respect_granted: number;
+}
+
+export interface CheckAndClaimHiddenMissionsResult {
+  success: true;
+  claimed: HiddenMissionClaimedRow[];
+}
+
+export interface HiddenMissionProgressRow {
+  code: string;
+  title: string;
+  description: string;
+  reward_quest_xp: number;
+  reward_gems: number;
+  reward_respect: number;
+  sort_order: number;
+  claimed: boolean;
+  claimed_at: string | null;
+}
+
+export interface HiddenMissionProgressResult {
+  success: true;
+  missions: HiddenMissionProgressRow[];
+}
+
+export interface BoxingIqLeagueSummary {
+  success: true;
+  quiz_correct_count: number;
+  quiz_attempt_count: number;
+  accuracy_rate: number;
+  current_quiz_streak: number;
+  best_quiz_streak: number;
+  week_correct_count: number;
+  grade: string;
+}
+
+export async function checkAndClaimHiddenMissions(): Promise<CheckAndClaimHiddenMissionsResult> {
+  const { data, error } = await sbRpc<CheckAndClaimHiddenMissionsResult>(
+    "check_and_claim_hidden_missions",
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    return { success: true, claimed: [] };
+  }
+  return data;
+}
+
+export async function getMyHiddenMissionProgress(): Promise<HiddenMissionProgressResult> {
+  const { data, error } = await sbRpc<HiddenMissionProgressResult>(
+    "get_my_hidden_mission_progress",
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    return { success: true, missions: [] };
+  }
+  return data;
+}
+
+export async function getBoxingIqLeagueSummary(): Promise<BoxingIqLeagueSummary> {
+  const { data, error } = await sbRpc<BoxingIqLeagueSummary>(
+    "get_boxing_iq_league_summary",
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    return {
+      success: true,
+      quiz_correct_count: 0,
+      quiz_attempt_count: 0,
+      accuracy_rate: 0,
+      current_quiz_streak: 0,
+      best_quiz_streak: 0,
+      week_correct_count: 0,
+      grade: "복싱 입문생",
+    };
   }
   return data;
 }

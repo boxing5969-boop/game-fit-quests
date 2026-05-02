@@ -15,6 +15,7 @@ import {
   type SendCheerInput,
   type SendCheerResult,
 } from "@/services/boxingEngagementService";
+import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
 
 export const SECOND_CHEER_KEY = ["second-cheer"] as const;
 
@@ -31,6 +32,7 @@ export function useSecondCheerCandidates(limit = 30, enabled = true) {
 
 export function useSendBoxingCheer() {
   const qc = useQueryClient();
+  const { triggerCheck } = useHiddenMissionTrigger();
 
   return useMutation<SendCheerResult, Error, SendCheerInput>({
     mutationFn: sendBoxingCheer,
@@ -38,6 +40,8 @@ export function useSendBoxingCheer() {
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
       qc.invalidateQueries({ queryKey: ["second-cheer"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
+      // v1.5 16단계: 숨겨진 미션 평가 트리거 (디바운스)
+      triggerCheck();
     },
   });
 }

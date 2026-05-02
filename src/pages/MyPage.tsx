@@ -21,7 +21,13 @@ import {
   RecentXpList,
   StatCard,
 } from "@/components/shared/BadgeGrid";
-import { BoxingHallSummaryCard } from "@/components/engagement";
+import {
+  BoxingHallSummaryCard,
+  BoxingIqLeagueCard,
+  HiddenMissionPanel,
+  BoxerStyleDiagnosisCard,
+  GrowthReportCard,
+} from "@/components/engagement";
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -217,6 +223,18 @@ const MyPage = () => {
         {/* ─── 153 QUEST 몰입 레이어: 나만의 복싱 전당 ─── */}
         {/*       공식 progress 는 읽기만, QUEST 보조 데이터는 useBoxingEngagementSummary 사용 */}
         <BoxingHallSummaryCard />
+
+        {/* ─── v1.5 16단계: 복싱 IQ 리그 ─── */}
+        <BoxingIqLeagueCard />
+
+        {/* ─── v1.5 17단계: 복서 스타일 진단 ─── */}
+        <BoxerStyleDiagnosisCard />
+
+        {/* ─── v1.5 17단계: 성장 리포트 ─── */}
+        <GrowthReportCard />
+
+        {/* ─── v1.5 16단계: 숨겨진 미션 진척 ─── */}
+        <HiddenMissionPanel />
 
         {/* Info */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.07s" }}>

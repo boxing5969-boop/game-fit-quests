@@ -12,6 +12,7 @@ import {
   type BoxingQuizAttemptResult,
   type BoxingQuizQuestion,
 } from "@/services/boxingEngagementService";
+import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
 
 export const BOXING_ACADEMY_KEY = ["boxing-academy"] as const;
 
@@ -31,6 +32,7 @@ export interface SubmitQuizArgs {
 
 export function useSubmitBoxingQuizAttempt() {
   const qc = useQueryClient();
+  const { triggerCheck } = useHiddenMissionTrigger();
 
   return useMutation<BoxingQuizAttemptResult, Error, SubmitQuizArgs>({
     mutationFn: ({ questionId, selectedAnswer }) =>
@@ -38,7 +40,10 @@ export function useSubmitBoxingQuizAttempt() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
       qc.invalidateQueries({ queryKey: ["boxing-academy"] });
+      qc.invalidateQueries({ queryKey: ["boxing-iq-league"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
+      // v1.5 16단계: 숨겨진 미션 평가 트리거 (디바운스)
+      triggerCheck();
     },
   });
 }
