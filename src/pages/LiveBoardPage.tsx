@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { AnimatePresence } from "framer-motion";
 import SDBoxerCharacter from "@/components/SDBoxerCharacter";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,9 @@ import { RANK_LABELS } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Building2, Clock, X, Trophy, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import LiveActiveMemberCard from "@/components/liveBoard/LiveActiveMemberCard";
+import LiveBoardEmptyState from "@/components/liveBoard/LiveBoardEmptyState";
+import LiveGymRaidStrip from "@/components/liveBoard/LiveGymRaidStrip";
 
 const RANK_COLORS: Record<string, string> = {
   white: "border-gray-400 bg-gray-200 text-gray-900",
@@ -457,33 +461,75 @@ const LiveBoardPage = () => {
         {/* ═══ Center: Main area ═══ */}
         <div className="flex-1 flex flex-col">
           {/* Main popup / idle */}
-          <div className="flex-1 flex items-center justify-center relative px-8">
+          <div className="flex-1 flex flex-col relative px-6 py-4 overflow-hidden">
+            {/*
+              Cinematic 업그레이드:
+              · 새 입실 popup 은 그대로 유지 (큰 SDBoxerCharacter, 7초 표시)
+              · 그 외 시간엔 활동 중 회원 그리드 (LiveActiveMemberCard 풀 사이즈)
+              · 활동 0명일 때는 시그니처 빈 상태 (LiveBoardEmptyState)
+            */}
             {showPopup && latestPopup ? (
-              <SDBoxerCharacter
-                league={(latestPopup.league_snapshot as "white" | "blue" | "red" | "black") || "white"}
-                nickname={latestPopup.display_name_snapshot}
-                level={latestPopup.level_snapshot}
-                state="enter"
-              />
+              <div className="flex flex-1 items-center justify-center">
+                <SDBoxerCharacter
+                  league={(latestPopup.league_snapshot as "white" | "blue" | "red" | "black") || "white"}
+                  nickname={latestPopup.display_name_snapshot}
+                  level={latestPopup.level_snapshot}
+                  state="enter"
+                />
+              </div>
             ) : activeMembers.length > 0 ? (
-              <SDBoxerCharacter
-                league={(activeMembers[0].league as "white" | "blue" | "red" | "black") || "white"}
-                nickname={activeMembers[0].name}
-                level={activeMembers[0].level}
-                state="idle"
-                branchName={branchName}
-              />
+              <div className="flex flex-1 flex-col">
+                <div className="mb-3 flex items-center gap-3">
+                  <span className="h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />
+                  <h2 className="text-2xl font-black tracking-wide text-emerald-300">
+                    🥊 지금 운동 중
+                  </h2>
+                  <p className="number-font text-2xl font-black text-emerald-400 tabular-nums">
+                    {activeMembers.length}
+                    <span className="ml-1 text-base text-emerald-500/70">명</span>
+                  </p>
+                  <div className="h-px flex-1 bg-gradient-to-r from-emerald-500/40 to-transparent" />
+                </div>
+
+                <div
+                  className={`grid flex-1 content-start gap-4 overflow-y-auto ${
+                    activeMembers.length === 1
+                      ? "grid-cols-1 max-w-sm mx-auto"
+                      : activeMembers.length === 2
+                        ? "grid-cols-2 max-w-3xl mx-auto"
+                        : activeMembers.length <= 4
+                          ? "grid-cols-2 lg:grid-cols-4"
+                          : "grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                  }`}
+                >
+                  <AnimatePresence>
+                    {activeMembers.map((m) => (
+                      <LiveActiveMemberCard
+                        key={m.user_id}
+                        member={m}
+                        elapsedMinutes={
+                          typeof elapsedMin(m.startedAt) === "number"
+                            ? (elapsedMin(m.startedAt) as number)
+                            : 0
+                        }
+                        showForceExit={isBranchManager}
+                        onForceExit={() => handleForceExit(m.id, m.name)}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
             ) : (
-              <SDBoxerCharacter
-                league="white"
-                nickname="153 랭크업"
-                level={1}
-                state="idle"
-                subtitle="오늘도 복싱 레벨업 중"
+              <LiveBoardEmptyState
                 branchName={branchName}
+                todayVisitCount={dailyVisits.length}
+                hallOfFameCount={hallMembers.length}
               />
             )}
           </div>
+
+          {/* ── 짐 레이드 strip (v2 21단계 활용) ── */}
+          {branchName && <LiveGymRaidStrip branchName={branchName} />}
 
           {/* ── Bottom: Hall of Fame banner ── */}
           {hallMembers.length > 0 && (
