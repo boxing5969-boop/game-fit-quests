@@ -445,44 +445,72 @@ const BranchManagerHome = () => {
       );
     }
 
+    /*
+      이전엔 우측 패널을 iframe 으로 미리보기 했지만, super_admin 의
+      profile.branch_name 이 null 인 경우 ProtectedRoute 가 iframe 안에서
+      `/select-branch` 로 redirect → 그 페이지가 다시 redirect 하며 무한
+      루프가 발생했다 (RouteLoader 가 초당 수십 번 깜빡거림). iframe 의
+      auth context 가 부모와 별도 인스턴스로 시작하면서 발생하는 알려진
+      문제이며, iframe 의 메모리/CPU 부담도 큰 편이라 React 컴포넌트
+      직접 렌더 또는 명시적 navigate 으로 전환하는 게 정답. 본 fix 에서는
+      이미 존재하는 `/manager/member/:memberId` 라우트로 navigate 만 한다.
+      회원 상세는 전체 화면에서 보고, 우측 패널에는 선택 안내만 표시.
+    */
     return (
-      <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3">
-          <p className="text-sm font-bold text-foreground">회원 상세</p>
+      <div
+        className="flex h-full flex-col"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 45%, #0B0F16 0%, #06070B 70%, #03040A 100%)",
+        }}
+      >
+        <div className="flex items-center justify-between border-b border-border/40 bg-card/80 px-4 py-3 backdrop-blur-sm">
+          <p className="text-sm font-bold text-white">회원 상세</p>
           <div className="flex gap-2">
             <button
               onClick={() => navigate(`/manager/member/${selectedMemberId}/preview`)}
-              className="rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-all active:scale-95"
+              className="rounded-lg bg-primary/15 px-3 py-1.5 text-xs font-bold text-primary transition-all active:scale-95"
             >
               📱 회원 앱 보기
             </button>
             <button
               onClick={() => navigate(`/manager/member/${selectedMemberId}`)}
-              className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground transition-all active:scale-95"
+              className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground transition-all active:scale-95"
             >
-              전체 화면
+              전체 화면 →
             </button>
           </div>
         </div>
-        {/*
-          iframe wrapper 에 splash 와 동일한 어두운 radial 배경을 깔아둔다.
-          iframe 자체 배경은 transparent — key={selectedMemberId} 변경으로
-          unmount/mount 가 반복되어도 wrapper 의 어두운 톤이 유지되어
-          white flash 가 사라지고 시각적 깜빡임이 거의 제거된다. */}
-        <div
-          className="flex-1 w-full"
-          style={{
-            background:
-              "radial-gradient(ellipse at 50% 45%, #0B0F16 0%, #06070B 70%, #03040A 100%)",
-          }}
-        >
-          <iframe
-            key={selectedMemberId}
-            src={`/manager/member/${selectedMemberId}`}
-            className="h-full w-full border-0"
-            title="Member Detail"
-            style={{ background: "transparent" }}
-          />
+
+        <div className="flex flex-1 items-center justify-center px-6">
+          <div className="text-center">
+            <span className="text-5xl">🥊</span>
+            <p className="mt-4 text-base font-bold text-white">
+              회원이 선택되었습니다
+            </p>
+            <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/60">
+              상단 <strong className="text-primary">전체 화면 →</strong> 버튼을
+              눌러 상세 정보를 확인하세요.
+              <br />
+              모바일 앱 화면을 미리 보려면{" "}
+              <strong className="text-primary">📱 회원 앱 보기</strong> 를 눌러주세요.
+            </p>
+
+            <div className="mt-8 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button
+                onClick={() => navigate(`/manager/member/${selectedMemberId}`)}
+                className="rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98] hover:brightness-110"
+              >
+                회원 상세 열기
+              </button>
+              <button
+                onClick={() => navigate(`/manager/member/${selectedMemberId}/preview`)}
+                className="rounded-xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-primary transition-all active:scale-[0.98] hover:bg-primary/20"
+              >
+                회원 앱 미리보기
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
