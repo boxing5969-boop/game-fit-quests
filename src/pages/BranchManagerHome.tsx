@@ -464,12 +464,26 @@ const BranchManagerHome = () => {
             </button>
           </div>
         </div>
-        <iframe
-          key={selectedMemberId}
-          src={`/manager/member/${selectedMemberId}`}
-          className="flex-1 w-full border-0"
-          title="Member Detail"
-        />
+        {/*
+          iframe wrapper 에 splash 와 동일한 어두운 radial 배경을 깔아둔다.
+          iframe 자체 배경은 transparent — key={selectedMemberId} 변경으로
+          unmount/mount 가 반복되어도 wrapper 의 어두운 톤이 유지되어
+          white flash 가 사라지고 시각적 깜빡임이 거의 제거된다. */}
+        <div
+          className="flex-1 w-full"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 45%, #0B0F16 0%, #06070B 70%, #03040A 100%)",
+          }}
+        >
+          <iframe
+            key={selectedMemberId}
+            src={`/manager/member/${selectedMemberId}`}
+            className="h-full w-full border-0"
+            title="Member Detail"
+            style={{ background: "transparent" }}
+          />
+        </div>
       </div>
     );
   };

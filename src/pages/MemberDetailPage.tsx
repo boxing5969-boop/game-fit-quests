@@ -12,6 +12,7 @@ import LevelStatusActionSheet from "@/components/LevelStatusActionSheet";
 import MissionVideoUpload from "@/components/MissionVideoUpload";
 import BulkCompleteModal from "@/components/BulkCompleteModal";
 import { useMemberWallet, useGrantGems } from "@/hooks/useWallet";
+import RouteLoader from "@/components/splash/RouteLoader";
 
 type TabKey = "overview" | "missions" | "levelmap" | "activity" | "notes";
 
@@ -237,16 +238,10 @@ const MemberDetailPage = () => {
   });
 
   if (isLoading || !member?.profile || !member?.progress) {
-    return (
-      <div className="mx-auto max-w-lg px-4 pt-4">
-        <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
-          <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
-        </button>
-        <div className="mt-8 flex justify-center">
-          <div className="h-16 w-16 animate-pulse rounded-2xl bg-muted" />
-        </div>
-      </div>
-    );
+    // RouteLoader 와 톤 일치 — iframe wrapper / Suspense fallback / 본체 로딩이
+    // 모두 같은 어두운 radial 배경 + 부드러운 호흡 로고로 통일되어
+    // 회원 클릭 → iframe 새로고침 → 페이지 본체 로드 시 깜빡임이 사라진다.
+    return <RouteLoader label="회원 정보를 불러오는 중" />;
   }
 
   const p = member.profile;
