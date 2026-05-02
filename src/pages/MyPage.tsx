@@ -27,6 +27,7 @@ import {
   HiddenMissionPanel,
   BoxerStyleDiagnosisCard,
   GrowthReportCard,
+  ShadowBoxerCard,
 } from "@/components/engagement";
 
 const MyPage = () => {
@@ -229,6 +230,9 @@ const MyPage = () => {
 
         {/* ─── v1.5 17단계: 복서 스타일 진단 ─── */}
         <BoxerStyleDiagnosisCard />
+
+        {/* ─── v2 20단계: 그림자 복서 (어제의 나와 비교) ─── */}
+        <ShadowBoxerCard />
 
         {/* ─── v1.5 17단계: 성장 리포트 ─── */}
         <GrowthReportCard />

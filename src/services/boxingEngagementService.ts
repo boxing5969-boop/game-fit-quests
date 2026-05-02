@@ -84,6 +84,10 @@ const ENGAGEMENT_ERROR_MAP: ReadonlyArray<{ match: string; ko: string }> = [
   { match: "receiver required", ko: "상대 회원을 선택해주세요." },
   { match: "cannot request self", ko: "본인에게는 코너맨 요청을 보낼 수 없습니다." },
   { match: "invalid action", ko: "올바르지 않은 응답입니다." },
+  // v2 20단계 — 그림자 복서
+  { match: "shadow boxer not ready", ko: "아직 비교할 데이터가 부족합니다." },
+  { match: "shadow boxer reward already claimed", ko: "이번 달 그림자 보상은 이미 받았습니다." },
+  { match: "shadow boxer not improved", ko: "이번 라운드는 데이터로 저장되었습니다." },
 ];
 
 function toKoreanError(err: unknown): string {
@@ -855,6 +859,82 @@ export async function claimCornermanDailyBonus(): Promise<ClaimCornermanBonusRes
   if (error) throwKo(error);
   if (!data || data.success !== true) {
     throw new Error("코너맨 보너스를 받지 못했습니다.");
+  }
+  return data;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// v2 — 20단계 그림자 복서
+// ══════════════════════════════════════════════════════════════════
+
+export type ShadowBoxerWindow = 7 | 30 | 90;
+
+export interface ShadowBoxerMetric {
+  key: string;
+  label: string;
+  shadow: number;
+  current: number;
+  improved: boolean;
+}
+
+export interface ShadowBoxerSnapshot {
+  success: true;
+  ready: boolean;
+  window_days: number;
+  shadow_period?: string;
+  current_period?: string;
+  shadow_score?: number;
+  current_score?: number;
+  improved?: boolean;
+  growth_rate?: number;
+  metrics?: ShadowBoxerMetric[];
+  message?: string;
+  reason?: string;
+}
+
+export interface ClaimShadowBoxerResult {
+  success: true;
+  claim_id: string;
+  window_days: number;
+  shadow_score: number;
+  current_score: number;
+  growth_rate: number;
+  quest_xp_granted: number;
+  gems_granted: number;
+  respect_granted: number;
+  message: string;
+}
+
+export async function getShadowBoxerSnapshot(
+  windowDays: ShadowBoxerWindow = 30,
+): Promise<ShadowBoxerSnapshot> {
+  const { data, error } = await sbRpc<ShadowBoxerSnapshot>(
+    "get_shadow_boxer_snapshot",
+    { p_window_days: windowDays },
+  );
+  if (error) throwKo(error);
+  if (!data) {
+    return {
+      success: true,
+      ready: false,
+      window_days: windowDays,
+      reason: "분석 준비 중입니다.",
+      message: "잠시 후 다시 시도해주세요.",
+    };
+  }
+  return data;
+}
+
+export async function claimShadowBoxerReward(
+  windowDays: ShadowBoxerWindow = 30,
+): Promise<ClaimShadowBoxerResult> {
+  const { data, error } = await sbRpc<ClaimShadowBoxerResult>(
+    "claim_shadow_boxer_reward",
+    { p_window_days: windowDays },
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    throw new Error("그림자 복서 보상을 처리하지 못했습니다.");
   }
   return data;
 }

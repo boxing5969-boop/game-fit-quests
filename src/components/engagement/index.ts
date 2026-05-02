@@ -39,6 +39,11 @@ export { default as CornermanCandidateList } from "./CornermanCandidateList";
 export { default as CornermanStatusPanel } from "./CornermanStatusPanel";
 export type { CornermanCandidateListProps } from "./CornermanCandidateList";
 export type { CornermanStatusPanelProps } from "./CornermanStatusPanel";
+// v2 20단계 — 그림자 복서
+export { default as ShadowBoxerCard } from "./ShadowBoxerCard";
+export { default as ShadowBoxerSheet } from "./ShadowBoxerSheet";
+export { default as ShadowMetricRow } from "./ShadowMetricRow";
+export type { ShadowMetricRowProps } from "./ShadowMetricRow";
 export { default as BoxingHallSummaryCard } from "./BoxingHallSummaryCard";
 export { default as BoxingHallStatTile } from "./BoxingHallStatTile";
 export { default as LeagueStoryBadge } from "./LeagueStoryBadge";
