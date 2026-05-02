@@ -29,7 +29,7 @@ export const RouteLoader = ({ label = "로딩 중" }: RouteLoaderProps) => (
   <div
     role="status"
     aria-label={label}
-    className="flex min-h-screen items-center justify-center"
+    className="route-loader-root flex min-h-screen items-center justify-center"
     style={{
       background:
         "radial-gradient(ellipse at 50% 45%, #0B0F16 0%, #06070B 70%, #03040A 100%)",

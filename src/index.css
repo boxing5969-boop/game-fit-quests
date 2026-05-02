@@ -530,16 +530,29 @@
 }
 
 /* RouteLoader — 라우트 전환·Auth 로딩 시 은은한 breathe.
-   0.85 ↔ 1 opacity 로 무한 반복. 스플래시와 달리 transform 변형 없음 —
-   짧은 지연에서도 거슬리지 않게. */
+   기존 0.72↔1.0 (28% range, 1800ms) 의 깜빡임을 0.9↔1.0 (10% range, 2600ms)
+   로 부드럽게 조정. 화면 전체를 덮는 splash 라 작은 opacity 변화도 충분히
+   "살아있는 호흡" 느낌을 준다. */
 @keyframes routeLoaderBreathe {
-  0%, 100% { opacity: 0.72; }
+  0%, 100% { opacity: 0.9; }
   50%       { opacity: 1; }
 }
 
+@keyframes routeLoaderRootFadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.route-loader-root {
+  /* 라우터 전환·chunk 로드 시 갑자기 번뜩이지 않게 fade-in.
+     400ms ease-out — 짧은 chunk 로드 (200ms 미만) 에서는 거의 안 보이고,
+     긴 로드에서는 자연스럽게 등장. */
+  animation: routeLoaderRootFadeIn 400ms ease-out both;
+}
+
 .route-loader-logo {
-  opacity: 0.72;
-  animation: routeLoaderBreathe 1800ms ease-in-out infinite;
+  opacity: 0.9;
+  animation: routeLoaderBreathe 2600ms ease-in-out infinite;
 }
 
 @keyframes splashRootFadeOut {
