@@ -403,9 +403,9 @@ BEGIN
 END;
 $$;
 
+-- DEFAULT NULL 함수는 단일 시그니처 (text, uuid) 로 등록됨.
+-- 1-arg 호출도 같은 함수로 디스패치되므로 별도 GRANT 불필요.
 GRANT EXECUTE ON FUNCTION public.contribute_to_gym_raid(text, uuid) TO authenticated;
--- 디폴트 NULL 시그니처도 명시 grant
-GRANT EXECUTE ON FUNCTION public.contribute_to_gym_raid(text) TO authenticated;
 
 -- =====================================================================
 -- C. claim_gym_raid_reward(p_raid_id)
