@@ -19,6 +19,8 @@ import ConditionGaugeCard from "./ConditionGaugeCard";
 import ConditionGaugeSheet from "./ConditionGaugeSheet";
 import ReturnRoundBanner from "./ReturnRoundBanner";
 import ReturnRoundSheet from "./ReturnRoundSheet";
+import CornermanCard from "./CornermanCard";
+import CornermanSheet from "./CornermanSheet";
 
 export interface HomeEngagementSectionProps {
   /** 외부에서 복싱 IQ 진입을 가로채고 싶을 때만 지정. 기본은 본 컴포넌트가 모달을 연다. */
@@ -45,6 +47,8 @@ const HomeEngagementSection = ({
   const [showCondition, setShowCondition] = useState(false);
   // v1.5 15단계 — 리턴 라운드
   const [showReturn, setShowReturn] = useState(false);
+  // v2 19단계 — 코너맨
+  const [showCornerman, setShowCornerman] = useState(false);
 
   const handleAcademy = onOpenAcademy ?? (() => setShowAcademy(true));
   const handleChallenge = onOpenChallengeArena ?? (() => setShowArena(true));
@@ -93,6 +97,9 @@ const HomeEngagementSection = ({
         </span>
       </button>
 
+      {/* ─── v2 19단계: 코너맨 매칭 ─── */}
+      <CornermanCard onOpen={() => setShowCornerman(true)} />
+
       <BoxingAcademyQuizModal
         open={showAcademy}
         onClose={() => setShowAcademy(false)}
@@ -121,6 +128,11 @@ const HomeEngagementSection = ({
       <ReturnRoundSheet
         open={showReturn}
         onClose={() => setShowReturn(false)}
+      />
+
+      <CornermanSheet
+        open={showCornerman}
+        onClose={() => setShowCornerman(false)}
       />
     </div>
   );

@@ -69,6 +69,21 @@ const ENGAGEMENT_ERROR_MAP: ReadonlyArray<{ match: string; ko: string }> = [
   // v1.5 16단계 — 숨겨진 미션
   { match: "hidden mission not eligible", ko: "아직 조건이 충족되지 않은 숨겨진 미션입니다." },
   { match: "hidden mission already claimed", ko: "이미 받은 숨겨진 미션입니다." },
+  // v2 19단계 — 코너맨
+  { match: "cornerman pair already exists", ko: "이미 코너맨이 있습니다." },
+  { match: "cornerman request already pending", ko: "이미 보낸 요청이 처리 대기 중입니다." },
+  { match: "cornerman not your pair", ko: "본인의 코너맨이 아닙니다." },
+  { match: "cornerman branch mismatch", ko: "같은 지점 회원만 코너맨이 될 수 있습니다." },
+  { match: "cornerman branch unknown", ko: "지점 정보를 확인할 수 없습니다." },
+  { match: "cornerman bonus not eligible", ko: "오늘 코너 보너스 조건이 아닙니다." },
+  { match: "cornerman bonus already claimed", ko: "오늘 코너 보너스는 이미 받았습니다." },
+  { match: "cornerman pair not found", ko: "코너맨 정보를 찾을 수 없습니다." },
+  { match: "cornerman not pending", ko: "이미 처리된 요청입니다." },
+  { match: "cornerman already ended", ko: "이미 종료된 코너맨 관계입니다." },
+  { match: "pair_id required", ko: "잘못된 요청입니다." },
+  { match: "receiver required", ko: "상대 회원을 선택해주세요." },
+  { match: "cannot request self", ko: "본인에게는 코너맨 요청을 보낼 수 없습니다." },
+  { match: "invalid action", ko: "올바르지 않은 응답입니다." },
 ];
 
 function toKoreanError(err: unknown): string {
@@ -690,6 +705,156 @@ export async function getBoxingIqLeagueSummary(): Promise<BoxingIqLeagueSummary>
       week_correct_count: 0,
       grade: "복싱 입문생",
     };
+  }
+  return data;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// v2 — 19단계 코너맨 매칭
+// ══════════════════════════════════════════════════════════════════
+
+export interface CornermanCandidate {
+  user_id: string;
+  display_name: string;
+  branch_name: string;
+  current_rank: string;
+  current_level: number;
+}
+
+export interface CornermanPendingReceived {
+  pair_id: string;
+  requester_user_id: string;
+  requester_name: string;
+  requester_rank: string;
+  requester_level: number;
+  requested_at: string;
+}
+
+export interface CornermanPendingSent {
+  pair_id: string;
+  receiver_user_id: string;
+  receiver_name: string;
+  requested_at: string;
+}
+
+export interface CornermanTodayStatus {
+  date: string;
+  my_completed: boolean;
+  partner_completed: boolean;
+  both_completed: boolean;
+  bonus_claimed: boolean;
+}
+
+export interface CornermanStatus {
+  success: true;
+  has_active: boolean;
+  pair_id?: string;
+  partner_user_id?: string;
+  partner_name?: string;
+  partner_rank?: string;
+  partner_level?: number;
+  accepted_at?: string | null;
+  today?: CornermanTodayStatus;
+  pending_received: CornermanPendingReceived[];
+  pending_sent: CornermanPendingSent[];
+}
+
+export interface CornermanRequestResult {
+  success: true;
+  pair_id: string;
+  status: "pending" | "active" | "declined" | "ended";
+  message: string;
+}
+
+export interface ClaimCornermanBonusResult {
+  success: true;
+  pair_id: string;
+  sync_id: string;
+  quest_xp_granted: number;
+  gems_granted: number;
+  respect_granted: number;
+  message: string;
+}
+
+export const EMPTY_CORNERMAN_STATUS: CornermanStatus = {
+  success: true,
+  has_active: false,
+  pending_received: [],
+  pending_sent: [],
+};
+
+export async function getCornermanCandidates(
+  limit = 30,
+): Promise<CornermanCandidate[]> {
+  const { data, error } = await sbRpc<CornermanCandidate[]>(
+    "get_cornerman_candidates",
+    { p_limit: limit },
+  );
+  if (error) throwKo(error);
+  return data ?? [];
+}
+
+export async function getMyCornermanStatus(): Promise<CornermanStatus> {
+  const { data, error } = await sbRpc<CornermanStatus>(
+    "get_my_cornerman_status",
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    return EMPTY_CORNERMAN_STATUS;
+  }
+  return data;
+}
+
+export async function requestCornermanPair(
+  receiverUserId: string,
+): Promise<CornermanRequestResult> {
+  const { data, error } = await sbRpc<CornermanRequestResult>(
+    "request_cornerman_pair",
+    { p_receiver_user_id: receiverUserId },
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    throw new Error("코너맨 요청을 보내지 못했습니다.");
+  }
+  return data;
+}
+
+export async function respondCornermanPair(
+  pairId: string,
+  action: "accept" | "decline",
+): Promise<CornermanRequestResult> {
+  const { data, error } = await sbRpc<CornermanRequestResult>(
+    "respond_cornerman_pair",
+    { p_pair_id: pairId, p_action: action },
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    throw new Error("코너맨 응답을 처리하지 못했습니다.");
+  }
+  return data;
+}
+
+export async function endCornermanPair(
+  pairId: string,
+): Promise<CornermanRequestResult> {
+  const { data, error } = await sbRpc<CornermanRequestResult>(
+    "end_cornerman_pair",
+    { p_pair_id: pairId },
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    throw new Error("코너맨 종료를 처리하지 못했습니다.");
+  }
+  return data;
+}
+
+export async function claimCornermanDailyBonus(): Promise<ClaimCornermanBonusResult> {
+  const { data, error } = await sbRpc<ClaimCornermanBonusResult>(
+    "claim_cornerman_daily_bonus",
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    throw new Error("코너맨 보너스를 받지 못했습니다.");
   }
   return data;
 }

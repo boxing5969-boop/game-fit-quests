@@ -32,6 +32,13 @@ export { default as BoxingIqLeagueCard } from "./BoxingIqLeagueCard";
 export { default as BoxerStyleDiagnosisCard } from "./BoxerStyleDiagnosisCard";
 export { default as GrowthReportCard } from "./GrowthReportCard";
 export { default as GrowthReportDetailSheet } from "./GrowthReportDetailSheet";
+// v2 19단계 — 코너맨 매칭
+export { default as CornermanCard } from "./CornermanCard";
+export { default as CornermanSheet } from "./CornermanSheet";
+export { default as CornermanCandidateList } from "./CornermanCandidateList";
+export { default as CornermanStatusPanel } from "./CornermanStatusPanel";
+export type { CornermanCandidateListProps } from "./CornermanCandidateList";
+export type { CornermanStatusPanelProps } from "./CornermanStatusPanel";
 export { default as BoxingHallSummaryCard } from "./BoxingHallSummaryCard";
 export { default as BoxingHallStatTile } from "./BoxingHallStatTile";
 export { default as LeagueStoryBadge } from "./LeagueStoryBadge";
