@@ -13,6 +13,7 @@ import RankUpCeremony from "@/components/RankUpCeremony";
 import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import QuestCoachSummaryPanel from "@/components/engagement/coach/QuestCoachSummaryPanel";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
@@ -601,6 +602,10 @@ const CoachDashboard = () => {
         newRank={rankUpInfo.newRank}
         memberName={rankUpInfo.memberName}
       />
+
+      {/* ─── v2 22단계: 153 QUEST 몰입 관리 (코치/관장 전용) ─── */}
+      {/*       표시 전용. RPC 내부에서 권한 검증 + 민감정보 화이트리스트. */}
+      <QuestCoachSummaryPanel />
     </div>
   );
 };

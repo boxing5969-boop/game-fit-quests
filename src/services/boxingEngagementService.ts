@@ -95,6 +95,9 @@ const ENGAGEMENT_ERROR_MAP: ReadonlyArray<{ match: string; ko: string }> = [
   { match: "gym raid not completed", ko: "짐 레이드 목표가 아직 달성되지 않았습니다." },
   { match: "gym raid no contribution", ko: "기여 기록이 없어 보상을 받을 수 없습니다." },
   { match: "gym raid reward already claimed", ko: "이미 받은 짐 레이드 보상입니다." },
+  // v2 22단계 — 코치 대시보드
+  { match: "insufficient permissions", ko: "이 화면을 볼 권한이 없습니다." },
+  { match: "branch scope mismatch", ko: "본인 지점만 조회할 수 있습니다." },
 ];
 
 function toKoreanError(err: unknown): string {
@@ -1050,6 +1053,119 @@ export async function claimGymRaidReward(
   if (error) throwKo(error);
   if (!data || data.success !== true) {
     throw new Error("짐 레이드 보상을 처리하지 못했습니다.");
+  }
+  return data;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// v2 — 22단계 코치 대시보드 QUEST 확장
+// ══════════════════════════════════════════════════════════════════
+
+export interface CoachQuestSummary {
+  total_members: number;
+  active_quest_members_7d: number;
+  quiz_attempts_7d: number;
+  challenge_clears_7d: number;
+  journals_7d: number;
+  cheers_7d: number;
+  return_round_candidates: number;
+  cornerman_active_pairs: number;
+}
+
+export interface CoachAtRiskMember {
+  user_id: string;
+  display_name: string;
+  current_rank: string;
+  current_level: number;
+  last_activity_at: string | null;
+  inactive_days: number;
+  suggested_action: string;
+}
+
+export interface CoachPraiseTarget {
+  user_id: string;
+  display_name: string;
+  current_rank: string;
+  current_level: number;
+  reason: string;
+  metric: string;
+}
+
+export interface CoachTopRespectMember {
+  user_id: string;
+  display_name: string;
+  respect_points: number;
+}
+
+export interface CoachGymRaidProgress {
+  raid_id: string;
+  title: string;
+  raid_type: GymRaidType;
+  current_value: number;
+  target_value: number;
+  percentage: number;
+  end_date: string;
+  status: GymRaidStatus;
+}
+
+export interface CoachGymRaidContributor {
+  user_id: string;
+  display_name: string;
+  contribution_count: number;
+}
+
+export interface CoachQuestCommunity {
+  active_cornerman_pairs: number;
+  cheers_sent_7d: number;
+  top_respect_members: CoachTopRespectMember[];
+  gym_raid_progress: CoachGymRaidProgress[];
+  gym_raid_top_contributors: CoachGymRaidContributor[];
+}
+
+export interface CoachQuestDashboard {
+  success: true;
+  branch?: string;
+  reason?: string;
+  summary: CoachQuestSummary | Record<string, never>;
+  at_risk_members: CoachAtRiskMember[];
+  praise_targets: CoachPraiseTarget[];
+  community: CoachQuestCommunity | Record<string, never>;
+  generated_at?: string;
+}
+
+export const EMPTY_COACH_QUEST_DASHBOARD: CoachQuestDashboard = {
+  success: true,
+  summary: {
+    total_members: 0,
+    active_quest_members_7d: 0,
+    quiz_attempts_7d: 0,
+    challenge_clears_7d: 0,
+    journals_7d: 0,
+    cheers_7d: 0,
+    return_round_candidates: 0,
+    cornerman_active_pairs: 0,
+  },
+  at_risk_members: [],
+  praise_targets: [],
+  community: {
+    active_cornerman_pairs: 0,
+    cheers_sent_7d: 0,
+    top_respect_members: [],
+    gym_raid_progress: [],
+    gym_raid_top_contributors: [],
+  },
+};
+
+export async function getCoachQuestDashboard(
+  branchName?: string | null,
+): Promise<CoachQuestDashboard> {
+  const { data, error } = await sbRpc<CoachQuestDashboard>(
+    "get_coach_quest_dashboard",
+    { p_branch_name: branchName ?? null },
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    return EMPTY_COACH_QUEST_DASHBOARD;
   }
   return data;
 }

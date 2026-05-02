@@ -49,6 +49,11 @@ export { default as GymRaidCard } from "./GymRaidCard";
 export { default as GymRaidSheet } from "./GymRaidSheet";
 export { default as GymRaidContributionList } from "./GymRaidContributionList";
 export type { GymRaidContributionListProps } from "./GymRaidContributionList";
+// v2 22단계 — 코치 대시보드 QUEST 확장 (coach 디렉토리)
+export { default as QuestCoachSummaryPanel } from "./coach/QuestCoachSummaryPanel";
+export { default as QuestAtRiskMembersPanel } from "./coach/QuestAtRiskMembersPanel";
+export { default as QuestPraiseTargetsPanel } from "./coach/QuestPraiseTargetsPanel";
+export { default as QuestCommunityPanel } from "./coach/QuestCommunityPanel";
 export { default as BoxingHallSummaryCard } from "./BoxingHallSummaryCard";
 export { default as BoxingHallStatTile } from "./BoxingHallStatTile";
 export { default as LeagueStoryBadge } from "./LeagueStoryBadge";
