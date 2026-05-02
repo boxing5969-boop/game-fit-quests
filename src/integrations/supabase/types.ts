@@ -229,6 +229,376 @@ export type Database = {
         }
         Relationships: []
       }
+      boxing_cheers: {
+        Row: {
+          cheer_type: string
+          created_at: string
+          gems_granted_to_receiver: number
+          id: string
+          message: string | null
+          metadata: Json
+          receiver_user_id: string
+          respect_granted: number
+          sender_user_id: string
+          source_id: string | null
+          source_type: string | null
+        }
+        Insert: {
+          cheer_type: string
+          created_at?: string
+          gems_granted_to_receiver?: number
+          id?: string
+          message?: string | null
+          metadata?: Json
+          receiver_user_id: string
+          respect_granted?: number
+          sender_user_id: string
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Update: {
+          cheer_type?: string
+          created_at?: string
+          gems_granted_to_receiver?: number
+          id?: string
+          message?: string | null
+          metadata?: Json
+          receiver_user_id?: string
+          respect_granted?: number
+          sender_user_id?: string
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Relationships: []
+      }
+      boxing_engagement_events: {
+        Row: {
+          action: string
+          created_at: string
+          event_type: string
+          gems_delta: number
+          id: string
+          idempotency_key: string
+          metadata: Json
+          quest_xp_delta: number
+          respect_delta: number
+          source_id: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          event_type: string
+          gems_delta?: number
+          id?: string
+          idempotency_key: string
+          metadata?: Json
+          quest_xp_delta?: number
+          respect_delta?: number
+          source_id?: string | null
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          event_type?: string
+          gems_delta?: number
+          id?: string
+          idempotency_key?: string
+          metadata?: Json
+          quest_xp_delta?: number
+          respect_delta?: number
+          source_id?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      boxing_engagement_profiles: {
+        Row: {
+          best_quiz_streak: number
+          challenge_attempt_count: number
+          challenge_clear_count: number
+          cheer_received_count: number
+          cheer_sent_count: number
+          created_at: string
+          current_quiz_streak: number
+          journal_count: number
+          last_daily_briefing_date: string | null
+          metadata: Json
+          quest_xp: number
+          quiz_attempt_count: number
+          quiz_correct_count: number
+          respect_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          best_quiz_streak?: number
+          challenge_attempt_count?: number
+          challenge_clear_count?: number
+          cheer_received_count?: number
+          cheer_sent_count?: number
+          created_at?: string
+          current_quiz_streak?: number
+          journal_count?: number
+          last_daily_briefing_date?: string | null
+          metadata?: Json
+          quest_xp?: number
+          quiz_attempt_count?: number
+          quiz_correct_count?: number
+          respect_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          best_quiz_streak?: number
+          challenge_attempt_count?: number
+          challenge_clear_count?: number
+          cheer_received_count?: number
+          cheer_sent_count?: number
+          created_at?: string
+          current_quiz_streak?: number
+          journal_count?: number
+          last_daily_briefing_date?: string | null
+          metadata?: Json
+          quest_xp?: number
+          quiz_attempt_count?: number
+          quiz_correct_count?: number
+          respect_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      boxing_fun_challenge_attempts: {
+        Row: {
+          challenge_id: string
+          created_at: string
+          difficulty: string
+          gems_granted: number
+          id: string
+          metadata: Json
+          note: string | null
+          pain_check_passed: boolean
+          quest_xp_granted: number
+          status: string
+          submitted_value: number
+          target_value: number
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string
+          difficulty: string
+          gems_granted?: number
+          id?: string
+          metadata?: Json
+          note?: string | null
+          pain_check_passed?: boolean
+          quest_xp_granted?: number
+          status?: string
+          submitted_value?: number
+          target_value?: number
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string
+          difficulty?: string
+          gems_granted?: number
+          id?: string
+          metadata?: Json
+          note?: string | null
+          pain_check_passed?: boolean
+          quest_xp_granted?: number
+          status?: string
+          submitted_value?: number
+          target_value?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_fun_challenge_attempts_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_fun_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_fun_challenges: {
+        Row: {
+          active: boolean
+          category: string
+          code: string
+          created_at: string
+          description: string
+          difficulty_targets: Json
+          duration_seconds: number | null
+          high_intensity: boolean
+          id: string
+          metadata: Json
+          pain_check_required: string[]
+          rewards_by_difficulty: Json
+          safety_note: string | null
+          sort_order: number
+          target_metric: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          code: string
+          created_at?: string
+          description: string
+          difficulty_targets?: Json
+          duration_seconds?: number | null
+          high_intensity?: boolean
+          id?: string
+          metadata?: Json
+          pain_check_required?: string[]
+          rewards_by_difficulty?: Json
+          safety_note?: string | null
+          sort_order?: number
+          target_metric: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          code?: string
+          created_at?: string
+          description?: string
+          difficulty_targets?: Json
+          duration_seconds?: number | null
+          high_intensity?: boolean
+          id?: string
+          metadata?: Json
+          pain_check_required?: string[]
+          rewards_by_difficulty?: Json
+          safety_note?: string | null
+          sort_order?: number
+          target_metric?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      boxing_quiz_attempts: {
+        Row: {
+          attempt_no: number
+          created_at: string
+          gems_granted: number
+          id: string
+          is_correct: boolean
+          quest_xp_granted: number
+          question_id: string
+          selected_answer: string
+          user_id: string
+        }
+        Insert: {
+          attempt_no?: number
+          created_at?: string
+          gems_granted?: number
+          id?: string
+          is_correct: boolean
+          quest_xp_granted?: number
+          question_id: string
+          selected_answer: string
+          user_id: string
+        }
+        Update: {
+          attempt_no?: number
+          created_at?: string
+          gems_granted?: number
+          id?: string
+          is_correct?: boolean
+          quest_xp_granted?: number
+          question_id?: string
+          selected_answer?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_quiz_attempts_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_quiz_questions: {
+        Row: {
+          active: boolean
+          category: string
+          correct_answer: string
+          created_at: string
+          difficulty: string
+          explanation: string | null
+          id: string
+          lesson_text: string
+          metadata: Json
+          options: Json
+          question: string
+          question_type: string
+          retry_reward_gems: number
+          retry_reward_quest_xp: number
+          reward_gems: number
+          reward_quest_xp: number
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          correct_answer: string
+          created_at?: string
+          difficulty?: string
+          explanation?: string | null
+          id?: string
+          lesson_text: string
+          metadata?: Json
+          options?: Json
+          question: string
+          question_type?: string
+          retry_reward_gems?: number
+          retry_reward_quest_xp?: number
+          reward_gems?: number
+          reward_quest_xp?: number
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          correct_answer?: string
+          created_at?: string
+          difficulty?: string
+          explanation?: string | null
+          id?: string
+          lesson_text?: string
+          metadata?: Json
+          options?: Json
+          question?: string
+          question_type?: string
+          retry_reward_gems?: number
+          retry_reward_quest_xp?: number
+          reward_gems?: number
+          reward_quest_xp?: number
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       branch_display_settings: {
         Row: {
           animation_level: string
@@ -316,6 +686,42 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      champion_journal_entries: {
+        Row: {
+          content: string
+          created_at: string
+          gems_granted: number
+          id: string
+          metadata: Json
+          mood: string | null
+          prompt: string
+          quest_xp_granted: number
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          gems_granted?: number
+          id?: string
+          metadata?: Json
+          mood?: string | null
+          prompt: string
+          quest_xp_granted?: number
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          gems_granted?: number
+          id?: string
+          metadata?: Json
+          mood?: string | null
+          prompt?: string
+          quest_xp_granted?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -1016,6 +1422,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      diet_quest_events: {
+        Row: {
+          base_score: number
+          completed_at: string
+          created_at: string
+          day_number: number
+          enrollment_id: string
+          id: string
+          log_date: string
+          meal_slot: string | null
+          meta: Json
+          mission_id: string
+          mission_label: string
+          source_kind: string
+          timing_bonus: number
+          timing_grade: string
+          total_score: number
+          user_id: string
+        }
+        Insert: {
+          base_score?: number
+          completed_at?: string
+          created_at?: string
+          day_number: number
+          enrollment_id: string
+          id?: string
+          log_date: string
+          meal_slot?: string | null
+          meta?: Json
+          mission_id: string
+          mission_label: string
+          source_kind: string
+          timing_bonus?: number
+          timing_grade: string
+          total_score?: number
+          user_id: string
+        }
+        Update: {
+          base_score?: number
+          completed_at?: string
+          created_at?: string
+          day_number?: number
+          enrollment_id?: string
+          id?: string
+          log_date?: string
+          meal_slot?: string | null
+          meta?: Json
+          mission_id?: string
+          mission_label?: string
+          source_kind?: string
+          timing_bonus?: number
+          timing_grade?: string
+          total_score?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       diet_safety_screenings: {
         Row: {
@@ -2381,6 +2844,10 @@ export type Database = {
         Args: { _body?: string; _title: string; _user_id: string }
         Returns: string
       }
+      early_start_post_program: {
+        Args: { _enrollment_id: string }
+        Returns: Json
+      }
       end_extend_cycle: {
         Args: { _plan_id: string; _result: string }
         Returns: Json
@@ -2388,6 +2855,10 @@ export type Database = {
       enroll_diet_program: {
         Args: { _coach_assigned_id?: string; _screening_id: string }
         Returns: Json
+      }
+      ensure_boxing_engagement_profile: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       ensure_post_program_plan: {
         Args: { _enrollment_id: string }
@@ -2469,6 +2940,7 @@ export type Database = {
           rank_position: number
         }[]
       }
+      get_my_boxing_engagement_summary: { Args: never; Returns: Json }
       get_my_branch: { Args: never; Returns: string }
       get_nutrition_profile: { Args: { _user_id?: string }; Returns: Json }
       get_post_program_plan: { Args: { _user_id?: string }; Returns: Json }
@@ -2488,6 +2960,16 @@ export type Database = {
           r_total_xp: number
           r_user_id: string
           rank_position: number
+        }[]
+      }
+      get_second_cheer_candidates: {
+        Args: { p_limit?: number }
+        Returns: {
+          branch_name: string
+          current_level: number
+          current_rank: string
+          display_name: string
+          user_id: string
         }[]
       }
       get_signup_providers: {
@@ -2636,6 +3118,16 @@ export type Database = {
         }
         Returns: Json
       }
+      send_boxing_cheer: {
+        Args: {
+          p_cheer_type: string
+          p_message?: string
+          p_receiver_user_id: string
+          p_source_id?: string
+          p_source_type?: string
+        }
+        Returns: Json
+      }
       set_level_status: {
         Args: {
           _level: number
@@ -2655,6 +3147,24 @@ export type Database = {
         Returns: Json
       }
       set_rival: { Args: { _rival_id: string }; Returns: undefined }
+      submit_boxing_fun_challenge_attempt: {
+        Args: {
+          p_challenge_id: string
+          p_difficulty: string
+          p_note?: string
+          p_pain_check_passed?: boolean
+          p_submitted_value: number
+        }
+        Returns: Json
+      }
+      submit_boxing_quiz_attempt: {
+        Args: { p_question_id: string; p_selected_answer: string }
+        Returns: Json
+      }
+      submit_champion_journal_entry: {
+        Args: { p_content: string; p_mood?: string; p_prompt: string }
+        Returns: Json
+      }
       submit_diet_daily_log: {
         Args: { _habits: Json; _log_date: string; _note?: string }
         Returns: Json
