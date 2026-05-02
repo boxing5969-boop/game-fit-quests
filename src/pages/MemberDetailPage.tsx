@@ -13,6 +13,7 @@ import MissionVideoUpload from "@/components/MissionVideoUpload";
 import BulkCompleteModal from "@/components/BulkCompleteModal";
 import { useMemberWallet, useGrantGems } from "@/hooks/useWallet";
 import RouteLoader from "@/components/splash/RouteLoader";
+import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
 
 type TabKey = "overview" | "missions" | "levelmap" | "activity" | "notes";
 
@@ -297,6 +298,17 @@ const MemberDetailPage = () => {
           <MiniStat label="진행" value={`${globalLevel}/40`} />
           <MiniStat label="대기" value={`${pendingSubs.length}건`} highlight={pendingSubs.length > 0} />
         </div>
+      </div>
+
+      {/* ─── 관리자 레벨 조정 패널 (super_admin / branch_manager / coach 만 자동 표시) ─── */}
+      <div className="mb-4">
+        <LevelAdminPanel
+          memberId={p.user_id}
+          memberName={p.nickname || p.name}
+          currentRank={prog.current_rank}
+          currentLevel={prog.current_level}
+          mode="full"
+        />
       </div>
 
       {/* Tabs */}

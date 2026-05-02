@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
 import DailyOperationsBoard from "@/components/DailyOperationsBoard";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
+import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -482,21 +483,25 @@ const BranchManagerHome = () => {
           </div>
         </div>
 
-        <div className="flex flex-1 items-center justify-center px-6">
-          <div className="text-center">
-            <span className="text-5xl">🥊</span>
-            <p className="mt-4 text-base font-bold text-white">
-              회원이 선택되었습니다
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          {/* ─── 빠른 액션 — 관리자 레벨 조정 (super_admin/관장/코치만 표시) ─── */}
+          <div className="mx-auto mb-5 w-full max-w-md">
+            <LevelAdminPanel memberId={selectedMemberId} mode="compact" />
+          </div>
+
+          {/* ─── 안내 + 전체 화면 진입 ─── */}
+          <div className="mx-auto max-w-md text-center">
+            <span className="text-4xl">🥊</span>
+            <p className="mt-3 text-sm font-bold text-white">
+              회원 상세 정보 보기
             </p>
-            <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/60">
-              상단 <strong className="text-primary">전체 화면 →</strong> 버튼을
-              눌러 상세 정보를 확인하세요.
-              <br />
-              모바일 앱 화면을 미리 보려면{" "}
-              <strong className="text-primary">📱 회원 앱 보기</strong> 를 눌러주세요.
+            <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-white/60 mx-auto">
+              상단 <strong className="text-primary">전체 화면 →</strong> 버튼 또는
+              아래 버튼으로 상세 페이지로 이동하세요. 모바일 앱 화면을
+              미리 보려면 <strong className="text-primary">📱 회원 앱 보기</strong>.
             </p>
 
-            <div className="mt-8 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <button
                 onClick={() => navigate(`/manager/member/${selectedMemberId}`)}
                 className="rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98] hover:brightness-110"
