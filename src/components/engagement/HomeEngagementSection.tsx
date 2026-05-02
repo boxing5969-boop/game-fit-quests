@@ -21,6 +21,7 @@ import ReturnRoundBanner from "./ReturnRoundBanner";
 import ReturnRoundSheet from "./ReturnRoundSheet";
 import CornermanCard from "./CornermanCard";
 import CornermanSheet from "./CornermanSheet";
+import GymRaidCard from "./GymRaidCard";
 
 export interface HomeEngagementSectionProps {
   /** 외부에서 복싱 IQ 진입을 가로채고 싶을 때만 지정. 기본은 본 컴포넌트가 모달을 연다. */
@@ -99,6 +100,9 @@ const HomeEngagementSection = ({
 
       {/* ─── v2 19단계: 코너맨 매칭 ─── */}
       <CornermanCard onOpen={() => setShowCornerman(true)} />
+
+      {/* ─── v2 21단계: 짐 레이드 (지점 누적 목표) ─── */}
+      <GymRaidCard />
 
       <BoxingAcademyQuizModal
         open={showAcademy}

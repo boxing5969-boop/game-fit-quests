@@ -16,6 +16,7 @@ import {
   type SendCheerResult,
 } from "@/services/boxingEngagementService";
 import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
+import { useGymRaidContributeTrigger } from "@/hooks/useGymRaid";
 
 export const SECOND_CHEER_KEY = ["second-cheer"] as const;
 
@@ -33,15 +34,18 @@ export function useSecondCheerCandidates(limit = 30, enabled = true) {
 export function useSendBoxingCheer() {
   const qc = useQueryClient();
   const { triggerCheck } = useHiddenMissionTrigger();
+  const { triggerContribute } = useGymRaidContributeTrigger();
 
   return useMutation<SendCheerResult, Error, SendCheerInput>({
     mutationFn: sendBoxingCheer,
-    onSuccess: () => {
+    onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
       qc.invalidateQueries({ queryKey: ["second-cheer"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
       // v1.5 16단계: 숨겨진 미션 평가 트리거 (디바운스)
       triggerCheck();
+      // v2 21단계: 짐 레이드 contribute (cheer_id 사용)
+      triggerContribute("boxing_cheer", result.cheer_id);
     },
   });
 }

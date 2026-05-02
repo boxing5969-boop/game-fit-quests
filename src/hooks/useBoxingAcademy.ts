@@ -13,6 +13,7 @@ import {
   type BoxingQuizQuestion,
 } from "@/services/boxingEngagementService";
 import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
+import { useGymRaidContributeTrigger } from "@/hooks/useGymRaid";
 
 export const BOXING_ACADEMY_KEY = ["boxing-academy"] as const;
 
@@ -33,17 +34,22 @@ export interface SubmitQuizArgs {
 export function useSubmitBoxingQuizAttempt() {
   const qc = useQueryClient();
   const { triggerCheck } = useHiddenMissionTrigger();
+  const { triggerContribute } = useGymRaidContributeTrigger();
 
   return useMutation<BoxingQuizAttemptResult, Error, SubmitQuizArgs>({
     mutationFn: ({ questionId, selectedAnswer }) =>
       submitBoxingQuizAttempt(questionId, selectedAnswer),
-    onSuccess: () => {
+    onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
       qc.invalidateQueries({ queryKey: ["boxing-academy"] });
       qc.invalidateQueries({ queryKey: ["boxing-iq-league"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
       // v1.5 16단계: 숨겨진 미션 평가 트리거 (디바운스)
       triggerCheck();
+      // v2 21단계: 짐 레이드 contribute (정답일 때만, RPC 가 최근 5분 내 자동 매칭)
+      if (result.is_correct) {
+        triggerContribute("boxing_quiz_attempt");
+      }
     },
   });
 }

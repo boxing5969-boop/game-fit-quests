@@ -88,6 +88,13 @@ const ENGAGEMENT_ERROR_MAP: ReadonlyArray<{ match: string; ko: string }> = [
   { match: "shadow boxer not ready", ko: "아직 비교할 데이터가 부족합니다." },
   { match: "shadow boxer reward already claimed", ko: "이번 달 그림자 보상은 이미 받았습니다." },
   { match: "shadow boxer not improved", ko: "이번 라운드는 데이터로 저장되었습니다." },
+  // v2 21단계 — 짐 레이드
+  { match: "gym raid not found", ko: "해당 짐 레이드를 찾을 수 없습니다." },
+  { match: "gym raid not active", ko: "이미 끝난 짐 레이드입니다." },
+  { match: "gym raid invalid source", ko: "기여 인증 정보가 올바르지 않습니다." },
+  { match: "gym raid not completed", ko: "짐 레이드 목표가 아직 달성되지 않았습니다." },
+  { match: "gym raid no contribution", ko: "기여 기록이 없어 보상을 받을 수 없습니다." },
+  { match: "gym raid reward already claimed", ko: "이미 받은 짐 레이드 보상입니다." },
 ];
 
 function toKoreanError(err: unknown): string {
@@ -935,6 +942,114 @@ export async function claimShadowBoxerReward(
   if (error) throwKo(error);
   if (!data || data.success !== true) {
     throw new Error("그림자 복서 보상을 처리하지 못했습니다.");
+  }
+  return data;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// v2 — 21단계 짐 레이드
+// ══════════════════════════════════════════════════════════════════
+
+export type GymRaidType =
+  | "quiz_correct"
+  | "challenge_clear"
+  | "cheer_sent"
+  | "journal_write"
+  | "quest_xp"
+  | "respect_points";
+
+export type GymRaidStatus = "draft" | "active" | "completed" | "ended";
+
+export type GymRaidContributeSourceType =
+  | "boxing_quiz_attempt"
+  | "boxing_fun_challenge_attempt"
+  | "champion_journal_entry"
+  | "boxing_cheer";
+
+export interface GymRaidRow {
+  id: string;
+  title: string;
+  description: string;
+  raid_type: GymRaidType;
+  target_value: number;
+  current_value: number;
+  percentage: number;
+  start_date: string;
+  end_date: string;
+  status: GymRaidStatus;
+  reward_quest_xp: number;
+  reward_gems: number;
+  reward_respect: number;
+  my_contribution: number;
+  reward_claimed: boolean;
+}
+
+export interface ActiveGymRaidsResult {
+  success: true;
+  branch?: string;
+  raids: GymRaidRow[];
+}
+
+export interface ContributeGymRaidResult {
+  success: true;
+  contributed: boolean;
+  raids_contributed?: number;
+  reason?: string;
+}
+
+export interface ClaimGymRaidRewardResult {
+  success: true;
+  claim_id: string;
+  raid_id: string;
+  contribution_count: number;
+  quest_xp_granted: number;
+  gems_granted: number;
+  respect_granted: number;
+  message: string;
+}
+
+export async function getActiveGymRaids(): Promise<ActiveGymRaidsResult> {
+  const { data, error } = await sbRpc<ActiveGymRaidsResult>(
+    "get_active_gym_raids",
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    return { success: true, raids: [] };
+  }
+  return data;
+}
+
+export async function contributeToGymRaid(
+  sourceType: GymRaidContributeSourceType,
+  sourceId?: string | null,
+): Promise<ContributeGymRaidResult> {
+  // sourceId 가 없으면 RPC 가 최근 5분 내 본인 source 자동 매칭
+  // (v1 RPC 가 ID 반환하지 않는 quiz/challenge 우회용)
+  const { data, error } = await sbRpc<ContributeGymRaidResult>(
+    "contribute_to_gym_raid",
+    { p_source_type: sourceType, p_source_id: sourceId ?? null },
+  );
+  if (error) {
+    // contribute 실패는 사용자 흐름을 막지 말고 silent warning (§ 21단계 요구사항)
+    console.warn("[gym-raid] contribute failed:", error);
+    return { success: true, contributed: false };
+  }
+  if (!data) {
+    return { success: true, contributed: false };
+  }
+  return data;
+}
+
+export async function claimGymRaidReward(
+  raidId: string,
+): Promise<ClaimGymRaidRewardResult> {
+  const { data, error } = await sbRpc<ClaimGymRaidRewardResult>(
+    "claim_gym_raid_reward",
+    { p_raid_id: raidId },
+  );
+  if (error) throwKo(error);
+  if (!data || data.success !== true) {
+    throw new Error("짐 레이드 보상을 처리하지 못했습니다.");
   }
   return data;
 }

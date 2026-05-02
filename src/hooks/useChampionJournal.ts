@@ -16,21 +16,25 @@ import {
   type SubmitJournalInput,
 } from "@/services/boxingEngagementService";
 import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
+import { useGymRaidContributeTrigger } from "@/hooks/useGymRaid";
 
 export const CHAMPION_JOURNAL_KEY = ["champion-journal"] as const;
 
 export function useSubmitChampionJournalEntry() {
   const qc = useQueryClient();
   const { triggerCheck } = useHiddenMissionTrigger();
+  const { triggerContribute } = useGymRaidContributeTrigger();
 
   return useMutation<JournalEntryResult, Error, SubmitJournalInput>({
     mutationFn: submitChampionJournalEntry,
-    onSuccess: () => {
+    onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
       qc.invalidateQueries({ queryKey: ["champion-journal"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
       // 숨겨진 미션 평가 — 800ms 디바운스
       triggerCheck();
+      // v2 21단계: 짐 레이드 contribute (entry_id 사용 — 명시적 source)
+      triggerContribute("champion_journal_entry", result.entry_id);
     },
   });
 }

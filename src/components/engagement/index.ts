@@ -44,6 +44,11 @@ export { default as ShadowBoxerCard } from "./ShadowBoxerCard";
 export { default as ShadowBoxerSheet } from "./ShadowBoxerSheet";
 export { default as ShadowMetricRow } from "./ShadowMetricRow";
 export type { ShadowMetricRowProps } from "./ShadowMetricRow";
+// v2 21단계 — 짐 레이드
+export { default as GymRaidCard } from "./GymRaidCard";
+export { default as GymRaidSheet } from "./GymRaidSheet";
+export { default as GymRaidContributionList } from "./GymRaidContributionList";
+export type { GymRaidContributionListProps } from "./GymRaidContributionList";
 export { default as BoxingHallSummaryCard } from "./BoxingHallSummaryCard";
 export { default as BoxingHallStatTile } from "./BoxingHallStatTile";
 export { default as LeagueStoryBadge } from "./LeagueStoryBadge";

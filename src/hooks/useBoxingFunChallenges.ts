@@ -14,6 +14,7 @@ import {
   type SubmitFunChallengeInput,
 } from "@/services/boxingEngagementService";
 import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
+import { useGymRaidContributeTrigger } from "@/hooks/useGymRaid";
 
 export const BOXING_FUN_CHALLENGES_KEY = ["boxing-fun-challenges"] as const;
 
@@ -29,6 +30,7 @@ export function useBoxingFunChallenges(enabled = true) {
 export function useSubmitBoxingFunChallengeAttempt() {
   const qc = useQueryClient();
   const { triggerCheck } = useHiddenMissionTrigger();
+  const { triggerContribute } = useGymRaidContributeTrigger();
 
   return useMutation<
     FunChallengeAttemptResult,
@@ -36,12 +38,16 @@ export function useSubmitBoxingFunChallengeAttempt() {
     SubmitFunChallengeInput
   >({
     mutationFn: submitBoxingFunChallengeAttempt,
-    onSuccess: () => {
+    onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
       qc.invalidateQueries({ queryKey: ["boxing-fun-challenges"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
       // v1.5 16단계: 숨겨진 미션 평가 트리거 (디바운스)
       triggerCheck();
+      // v2 21단계: 짐 레이드 contribute (completed 일 때만, 자동 매칭)
+      if (result.status === "completed") {
+        triggerContribute("boxing_fun_challenge_attempt");
+      }
     },
   });
 }
