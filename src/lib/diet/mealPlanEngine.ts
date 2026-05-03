@@ -167,7 +167,7 @@ function pickOneMeal(opts: {
     const probioticW = m.hasProbiotic ? 3 : 0;
     const tagW =
       (opts.bonusTags ?? []).reduce(
-        (acc, t) => acc + (m.tags.includes(t) ? 1.5 : 0),
+        (acc, t) => acc + ((m.tags as string[]).includes(t) ? 1.5 : 0),
         0,
       );
     const nameW =
