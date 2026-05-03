@@ -193,7 +193,7 @@ export async function syncQuestCheckin(
     });
     if (!r.success) {
       // eslint-disable-next-line no-console
-      console.warn("[syncQuestCheckin] submitChallengeCheckin 실패", r.error);
+      console.warn("[syncQuestCheckin] submitChallengeCheckin 실패", (r as Err).error);
       return {
         attempted: true,
         challengeId: joined.id,
