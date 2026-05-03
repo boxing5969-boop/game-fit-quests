@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import { Clock, X } from "lucide-react";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import CharacterSprite from "@/components/CharacterSprite";
 
 const RANK_LABELS: Record<string, string> = {
   white: "화이트",
@@ -74,6 +75,8 @@ export interface LiveActiveMember {
   level: number;
   startedAt: number;
   avatar_url?: string | null;
+  /** 회원이 설정한 캐릭터 preset (member_character_assignments → character_presets.parts_json) */
+  partsJson?: { style?: string; customization?: Record<string, unknown> } | null;
 }
 
 export type LiveCardSize = "spotlight" | "medium" | "compact";
@@ -99,6 +102,7 @@ const SIZE_CONFIG = {
     avatarBorder: "border-4",
     avatarFallbackText: "text-3xl",
     sdScale: "scale-[0.55]",
+    spriteSize: "md" as const,
     nameText: "text-2xl",
     nameMargin: "mb-2",
     badgeText: "text-sm",
@@ -117,6 +121,7 @@ const SIZE_CONFIG = {
     avatarBorder: "border-2",
     avatarFallbackText: "text-lg",
     sdScale: "scale-[0.32]",
+    spriteSize: "sm" as const,
     nameText: "text-sm",
     nameMargin: "mb-0.5",
     badgeText: "text-[10px]",
@@ -135,6 +140,7 @@ const SIZE_CONFIG = {
     avatarBorder: "border",
     avatarFallbackText: "text-sm",
     sdScale: "scale-[0.22]",
+    spriteSize: "xs" as const,
     nameText: "text-xs",
     nameMargin: "mb-0.5",
     badgeText: "text-[9px]",
@@ -231,25 +237,46 @@ const LiveActiveMemberCard = ({
           aria-hidden="true"
         />
 
-        {/* avatar 영역 — 깔끔한 원형 (overflow 차단) */}
+        {/* avatar 영역 — 우선순위: avatar_url > 회원 설정 캐릭터(CharacterSprite) > 이니셜 fallback */}
         <div
           className={`relative z-10 flex items-center justify-center overflow-hidden rounded-full ${cfg.avatar}`}
         >
-          <Avatar
-            className={`${cfg.avatar} ${cfg.avatarBorder} border-white/20 shadow-2xl`}
-          >
-            {member.avatar_url ? (
-              <AvatarImage src={member.avatar_url} alt={member.name} />
-            ) : null}
-            <AvatarFallback
-              className={`${cfg.avatarFallbackText} font-black text-white`}
-              style={{
-                background: `linear-gradient(135deg, ${RANK_FALLBACK_BG[rankKey] ?? RANK_FALLBACK_BG.white})`,
-              }}
+          {member.avatar_url ? (
+            <Avatar
+              className={`${cfg.avatar} ${cfg.avatarBorder} border-white/20 shadow-2xl`}
             >
-              {member.name.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
+              <AvatarImage src={member.avatar_url} alt={member.name} />
+              <AvatarFallback
+                className={`${cfg.avatarFallbackText} font-black text-white`}
+                style={{
+                  background: `linear-gradient(135deg, ${RANK_FALLBACK_BG[rankKey] ?? RANK_FALLBACK_BG.white})`,
+                }}
+              >
+                {member.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+          ) : member.partsJson ? (
+            <CharacterSprite
+              partsJson={member.partsJson}
+              size={cfg.spriteSize}
+              league={rankKey as "white" | "blue" | "red" | "black"}
+              level={member.level}
+              animate={false}
+            />
+          ) : (
+            <Avatar
+              className={`${cfg.avatar} ${cfg.avatarBorder} border-white/20 shadow-2xl`}
+            >
+              <AvatarFallback
+                className={`${cfg.avatarFallbackText} font-black text-white`}
+                style={{
+                  background: `linear-gradient(135deg, ${RANK_FALLBACK_BG[rankKey] ?? RANK_FALLBACK_BG.white})`,
+                }}
+              >
+                {member.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+          )}
         </div>
       </div>
 

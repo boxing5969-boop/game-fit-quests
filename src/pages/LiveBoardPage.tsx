@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import SDBoxerCharacter from "@/components/SDBoxerCharacter";
+import CharacterSprite from "@/components/CharacterSprite";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS } from "@/lib/rankLabels";
@@ -66,6 +67,8 @@ interface ActiveMember {
   level: number;
   startedAt: number;
   avatar_url?: string | null;
+  /** member_character_assignments → character_presets.parts_json (사용자 설정 캐릭터) */
+  partsJson?: { style?: string; customization?: Record<string, unknown> } | null;
 }
 
 interface HallMember {
@@ -102,6 +105,7 @@ const LiveBoardPage = () => {
   const [connected, setConnected] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
+  const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
 
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isBranchManager, setIsBranchManager] = useState(false);
@@ -211,8 +215,24 @@ const LiveBoardPage = () => {
       .select("user_id, current_rank, current_level")
       .in("user_id", userIds);
 
+    // 회원이 설정한 캐릭터 (member_character_assignments → character_presets.parts_json)
+    // anon RLS 거부 가능 — 거부 시 빈 배열, fallback 으로 letter avatar 사용
+    const { data: charAssignments } = await supabase
+      .from("member_character_assignments")
+      .select("user_id, character_presets(parts_json)")
+      .in("user_id", userIds)
+      .eq("is_active", true);
+
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
     const progressMap = new Map((progressData || []).map(p => [p.user_id, p]));
+    const charMap = new Map<string, { style?: string; customization?: Record<string, unknown> }>();
+    for (const a of (charAssignments || [])) {
+      const cp = (a as { character_presets?: { parts_json?: unknown } }).character_presets;
+      const pj = cp?.parts_json as { style?: string; customization?: Record<string, unknown> } | undefined;
+      if (pj && (a as { user_id: string }).user_id) {
+        charMap.set((a as { user_id: string }).user_id, pj);
+      }
+    }
 
     // Fallback: fetch today's attendance_logs for display info (anon CAN read these)
     const todayStart = new Date();
@@ -262,6 +282,7 @@ const LiveBoardPage = () => {
         level,
         startedAt: new Date(session.started_at).getTime(),
         avatar_url: avatarUrl,
+        partsJson: charMap.get(userId) ?? null,
       });
     }
 
@@ -336,6 +357,25 @@ const LiveBoardPage = () => {
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
     const avatar = await getAvatarUrl(event.user_id);
     setPopupAvatarUrl(avatar);
+
+    // 회원이 설정한 캐릭터 fetch (RLS 거부 시 null fallback)
+    try {
+      const { data } = await supabase
+        .from("member_character_assignments")
+        .select("character_presets(parts_json)")
+        .eq("user_id", event.user_id)
+        .eq("is_active", true)
+        .maybeSingle();
+      const cp = (data as { character_presets?: { parts_json?: unknown } } | null)
+        ?.character_presets;
+      const pj = cp?.parts_json as
+        | { style?: string; customization?: Record<string, unknown> }
+        | undefined;
+      setPopupPartsJson(pj ?? null);
+    } catch {
+      setPopupPartsJson(null);
+    }
+
     setLatestPopup(event);
     setShowPopup(true);
     popupTimeoutRef.current = setTimeout(() => setShowPopup(false), 7000);
@@ -370,6 +410,24 @@ const LiveBoardPage = () => {
       const avatar =
         active?.avatar_url ?? avatarMapRef.current[userId] ?? (await getAvatarUrl(userId));
 
+      // 회원 설정 캐릭터 — 활동 중이면 이미 가지고 있고, 아니면 fetch
+      let partsJson = active?.partsJson ?? null;
+      if (!partsJson) {
+        try {
+          const { data } = await supabase
+            .from("member_character_assignments")
+            .select("character_presets(parts_json)")
+            .eq("user_id", userId)
+            .eq("is_active", true)
+            .maybeSingle();
+          const cp = (data as { character_presets?: { parts_json?: unknown } } | null)
+            ?.character_presets;
+          partsJson = (cp?.parts_json as { style?: string; customization?: Record<string, unknown> } | undefined) ?? null;
+        } catch {
+          /* RLS 거부 — letter fallback */
+        }
+      }
+
       setLevelUpEvent({
         eventId: `${userId}-${newLevel}-${Date.now()}`,
         user_id: userId,
@@ -378,6 +436,7 @@ const LiveBoardPage = () => {
         oldLevel,
         newLevel,
         avatar_url: avatar,
+        partsJson,
       });
     },
     [getAvatarUrl],
@@ -591,13 +650,37 @@ const LiveBoardPage = () => {
               · 활동 0명일 때는 시그니처 빈 상태 (LiveBoardEmptyState)
             */}
             {showPopup && latestPopup ? (
-              <div className="flex flex-1 items-center justify-center">
-                <SDBoxerCharacter
-                  league={(latestPopup.league_snapshot as "white" | "blue" | "red" | "black") || "white"}
-                  nickname={latestPopup.display_name_snapshot}
-                  level={latestPopup.level_snapshot}
-                  state="enter"
-                />
+              <div className="flex flex-1 flex-col items-center justify-center gap-4">
+                {popupPartsJson ? (
+                  <CharacterSprite
+                    partsJson={popupPartsJson}
+                    size="lg"
+                    league={(latestPopup.league_snapshot as "white" | "blue" | "red" | "black") || "white"}
+                    level={latestPopup.level_snapshot}
+                    animate
+                  />
+                ) : (
+                  <SDBoxerCharacter
+                    league={(latestPopup.league_snapshot as "white" | "blue" | "red" | "black") || "white"}
+                    nickname={latestPopup.display_name_snapshot}
+                    level={latestPopup.level_snapshot}
+                    state="enter"
+                  />
+                )}
+                {/* 캐릭터일 때는 이름/리그 별도 표시 (SDBoxerCharacter 는 자체 포함) */}
+                {popupPartsJson && (
+                  <div className="text-center">
+                    <p
+                      className="text-4xl font-black text-white"
+                      style={{ textShadow: "0 4px 20px rgba(0,0,0,0.8)" }}
+                    >
+                      {latestPopup.display_name_snapshot}
+                    </p>
+                    <p className="mt-1 text-xl font-bold text-emerald-300">
+                      입실! · Lv.{latestPopup.level_snapshot}
+                    </p>
+                  </div>
+                )}
               </div>
             ) : combinedMembers.length > 0 ? (
               <div className="flex flex-1 flex-col">

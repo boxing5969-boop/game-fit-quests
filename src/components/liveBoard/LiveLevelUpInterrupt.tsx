@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import CharacterSprite from "@/components/CharacterSprite";
 
 const RANK_LABELS: Record<string, string> = {
   white: "화이트",
@@ -49,6 +50,8 @@ export interface LevelUpEvent {
   oldLevel: number;
   newLevel: number;
   avatar_url?: string | null;
+  /** 회원이 설정한 캐릭터 preset (있으면 photo 보다 우선) */
+  partsJson?: { style?: string; customization?: Record<string, unknown> } | null;
   /** Unique ID — Realtime payload PK 또는 timestamp */
   eventId: string;
 }
@@ -167,28 +170,40 @@ const LiveLevelUpInterrupt = ({
                 aria-hidden="true"
               />
 
-              <div className="relative z-10 flex h-44 w-44 items-center justify-center overflow-hidden rounded-full">
-                <Avatar className="h-44 w-44 border-4 border-white/30 shadow-2xl">
-                  {event.avatar_url ? (
-                    <AvatarImage src={event.avatar_url} alt={event.name} />
-                  ) : null}
-                  <AvatarFallback
-                    className="text-6xl font-black text-white"
-                    style={{
-                      background: `linear-gradient(135deg, ${
-                        rankKey === "blue"
-                          ? "hsl(215, 100%, 35%) 0%, hsl(215, 100%, 18%) 100%"
-                          : rankKey === "red"
-                            ? "hsl(0, 84%, 35%) 0%, hsl(0, 84%, 18%) 100%"
-                            : rankKey === "black"
-                              ? "hsl(42, 60%, 22%) 0%, hsl(0, 0%, 8%) 100%"
-                              : "hsl(220, 14%, 35%) 0%, hsl(220, 14%, 22%) 100%"
-                      })`,
-                    }}
-                  >
-                    {event.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+              <div className="relative z-10 flex h-44 w-44 items-center justify-center">
+                {event.partsJson ? (
+                  <CharacterSprite
+                    partsJson={event.partsJson}
+                    size="lg"
+                    league={rankKey as "white" | "blue" | "red" | "black"}
+                    level={event.newLevel}
+                    animate
+                  />
+                ) : (
+                  <div className="overflow-hidden rounded-full">
+                    <Avatar className="h-44 w-44 border-4 border-white/30 shadow-2xl">
+                      {event.avatar_url ? (
+                        <AvatarImage src={event.avatar_url} alt={event.name} />
+                      ) : null}
+                      <AvatarFallback
+                        className="text-6xl font-black text-white"
+                        style={{
+                          background: `linear-gradient(135deg, ${
+                            rankKey === "blue"
+                              ? "hsl(215, 100%, 35%) 0%, hsl(215, 100%, 18%) 100%"
+                              : rankKey === "red"
+                                ? "hsl(0, 84%, 35%) 0%, hsl(0, 84%, 18%) 100%"
+                                : rankKey === "black"
+                                  ? "hsl(42, 60%, 22%) 0%, hsl(0, 0%, 8%) 100%"
+                                  : "hsl(220, 14%, 35%) 0%, hsl(220, 14%, 22%) 100%"
+                          })`,
+                        }}
+                      >
+                        {event.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                )}
               </div>
             </motion.div>
 
