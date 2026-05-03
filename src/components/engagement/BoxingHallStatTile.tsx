@@ -35,7 +35,7 @@ const BoxingHallStatTile = ({
       <div className="flex items-center gap-1.5">
         {icon && (
           <span className={`text-[12px] ${TONE[tone]}`}>
-            {typeof icon === "string" ? icon : icon}
+            {icon as React.ReactNode}
           </span>
         )}
         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
