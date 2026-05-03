@@ -653,19 +653,19 @@ const LiveBoardPage = () => {
 
           {/* ── Bottom: Hall of Fame banner ── */}
           {hallMembers.length > 0 && (
-            <div className="mx-6 mb-4 rounded-2xl border-2 border-yellow-600/40 bg-gradient-to-r from-yellow-950/60 via-gray-900/80 to-yellow-950/60 px-8 py-6">
-              <div className="flex items-center gap-4 mb-5">
-                <Trophy className="h-10 w-10 text-yellow-500" />
-                <h2 className="text-3xl font-black text-yellow-400 tracking-wide">명예의 전당</h2>
+            <div className="mx-4 mb-3 flex-shrink-0 rounded-xl border border-yellow-600/40 bg-gradient-to-r from-yellow-950/60 via-gray-900/80 to-yellow-950/60 px-4 py-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Trophy className="h-5 w-5 text-yellow-500" />
+                <h2 className="text-base font-black text-yellow-400 tracking-wide">명예의 전당</h2>
                 <div className="flex-1 h-px bg-gradient-to-r from-yellow-600/40 to-transparent" />
               </div>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-2">
                 {hallMembers.map((m) => (
-                  <div key={m.r_user_id} className="flex items-center gap-4 rounded-xl border border-yellow-700/30 bg-yellow-900/20 px-6 py-4">
-                    <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-12 w-12" />
+                  <div key={m.r_user_id} className="flex items-center gap-2 rounded-lg border border-yellow-700/30 bg-yellow-900/20 px-2.5 py-1.5">
+                    <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-8 w-8" />
                     <div>
-                      <p className="text-2xl font-black text-yellow-200 leading-tight">{m.r_nickname}</p>
-                      <p className="text-base text-yellow-500/80 font-black">MASTER 40</p>
+                      <p className="text-sm font-black text-yellow-200 leading-tight">{m.r_nickname}</p>
+                      <p className="text-[10px] text-yellow-500/80 font-black">MASTER 40</p>
                     </div>
                   </div>
                 ))}

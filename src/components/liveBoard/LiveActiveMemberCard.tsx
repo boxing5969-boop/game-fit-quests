@@ -7,7 +7,7 @@
  *   · 리그별 conic-gradient 글로우 (레벨업 Cinematic 과 일관)
  *   · framer-motion spring scale-in (새 입실 시 등장)
  *   · 운동 시간 카운터 (props 로 갱신, LiveBoardPage 가 15초마다 currentTime 갱신)
- *   · avatar 우선, 없으면 SDBoxerCharacter fallback
+ *   · avatar_url 우선, 없으면 리그 색 그라디언트 + 이니셜 fallback (overflow 차단)
  *
  * 디자인 원칙 (사이즈별):
  *   · spotlight (1~4명): 풀 사이즈, 모든 정보 표시
@@ -19,7 +19,6 @@ import { motion } from "framer-motion";
 import { Clock, X } from "lucide-react";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import SDBoxerCharacter from "@/components/SDBoxerCharacter";
 
 const RANK_LABELS: Record<string, string> = {
   white: "화이트",
@@ -45,6 +44,14 @@ const RING_GRADIENT: Record<string, string> = {
     "conic-gradient(from 0deg, hsla(0, 84%, 70%, 0.95), hsla(42, 90%, 70%, 0.9), hsla(0, 84%, 50%, 0.95), hsla(0, 84%, 70%, 0.95))",
   black:
     "conic-gradient(from 0deg, hsla(42, 90%, 70%, 1), hsla(280, 70%, 60%, 0.9), hsla(42, 100%, 80%, 1), hsla(42, 90%, 60%, 1))",
+};
+
+/** Rank → fallback 그라디언트 (avatar_url 없을 때 깔끔한 원형 배경) */
+const RANK_FALLBACK_BG: Record<string, string> = {
+  white: "hsl(220, 14%, 35%) 0%, hsl(220, 14%, 22%) 100%",
+  blue: "hsl(215, 100%, 35%) 0%, hsl(215, 100%, 18%) 100%",
+  red: "hsl(0, 84%, 35%) 0%, hsl(0, 84%, 18%) 100%",
+  black: "hsl(42, 60%, 22%) 0%, hsl(0, 0%, 8%) 100%",
 };
 
 /** Rank → glow shadow (카드 외곽) */
@@ -104,39 +111,39 @@ const SIZE_CONFIG = {
     showLive: true,
   },
   medium: {
-    container: "p-3",
-    avatarBox: "h-20 w-20",
-    avatar: "h-16 w-16",
-    avatarBorder: "border-2",
-    avatarFallbackText: "text-xl",
-    sdScale: "scale-[0.38]",
-    nameText: "text-base",
-    nameMargin: "mb-1",
-    badgeText: "text-xs",
-    badgePadding: "px-1.5 py-0.5",
-    levelText: "text-sm",
-    badgeMargin: "mb-2",
-    timerPadding: "px-2 py-0.5",
-    timerIcon: "h-3 w-3",
-    timerText: "text-xs",
-    showLive: false,
-  },
-  compact: {
     container: "p-2",
     avatarBox: "h-14 w-14",
-    avatar: "h-11 w-11",
+    avatar: "h-12 w-12",
     avatarBorder: "border-2",
-    avatarFallbackText: "text-base",
-    sdScale: "scale-[0.26]",
+    avatarFallbackText: "text-lg",
+    sdScale: "scale-[0.32]",
     nameText: "text-sm",
     nameMargin: "mb-0.5",
     badgeText: "text-[10px]",
     badgePadding: "px-1 py-0",
-    levelText: "text-[10px]",
+    levelText: "text-[11px]",
     badgeMargin: "mb-1",
     timerPadding: "px-1.5 py-0.5",
     timerIcon: "h-2.5 w-2.5",
     timerText: "text-[10px]",
+    showLive: false,
+  },
+  compact: {
+    container: "p-1.5",
+    avatarBox: "h-11 w-11",
+    avatar: "h-9 w-9",
+    avatarBorder: "border",
+    avatarFallbackText: "text-sm",
+    sdScale: "scale-[0.22]",
+    nameText: "text-xs",
+    nameMargin: "mb-0.5",
+    badgeText: "text-[9px]",
+    badgePadding: "px-1 py-0",
+    levelText: "text-[9px]",
+    badgeMargin: "mb-0.5",
+    timerPadding: "px-1 py-0",
+    timerIcon: "h-2 w-2",
+    timerText: "text-[9px]",
     showLive: false,
   },
 } as const;
@@ -224,31 +231,25 @@ const LiveActiveMemberCard = ({
           aria-hidden="true"
         />
 
-        {/* avatar 또는 SDBoxerCharacter */}
+        {/* avatar 영역 — 깔끔한 원형 (overflow 차단) */}
         <div
-          className={`relative z-10 flex items-center justify-center ${cfg.avatar}`}
+          className={`relative z-10 flex items-center justify-center overflow-hidden rounded-full ${cfg.avatar}`}
         >
-          {member.avatar_url ? (
-            <Avatar
-              className={`${cfg.avatar} ${cfg.avatarBorder} border-white/20 shadow-2xl`}
-            >
+          <Avatar
+            className={`${cfg.avatar} ${cfg.avatarBorder} border-white/20 shadow-2xl`}
+          >
+            {member.avatar_url ? (
               <AvatarImage src={member.avatar_url} alt={member.name} />
-              <AvatarFallback
-                className={`bg-gray-800 ${cfg.avatarFallbackText} font-black text-white`}
-              >
-                {member.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-          ) : (
-            <div className={cfg.sdScale}>
-              <SDBoxerCharacter
-                league={rankKey as "white" | "blue" | "red" | "black"}
-                nickname=""
-                level={member.level}
-                state="idle"
-              />
-            </div>
-          )}
+            ) : null}
+            <AvatarFallback
+              className={`${cfg.avatarFallbackText} font-black text-white`}
+              style={{
+                background: `linear-gradient(135deg, ${RANK_FALLBACK_BG[rankKey] ?? RANK_FALLBACK_BG.white})`,
+              }}
+            >
+              {member.name.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
         </div>
       </div>
 

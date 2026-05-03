@@ -20,7 +20,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import SDBoxerCharacter from "@/components/SDBoxerCharacter";
 
 const RANK_LABELS: Record<string, string> = {
   white: "화이트",
@@ -168,29 +167,28 @@ const LiveLevelUpInterrupt = ({
                 aria-hidden="true"
               />
 
-              <div className="relative z-10">
-                {event.avatar_url ? (
-                  <Avatar className="h-44 w-44 border-4 border-white/30 shadow-2xl">
-                    <AvatarImage
-                      src={event.avatar_url}
-                      alt={event.name}
-                    />
-                    <AvatarFallback className="bg-gray-900 text-6xl font-black text-white">
-                      {event.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <div className="scale-100">
-                    <SDBoxerCharacter
-                      league={
-                        rankKey as "white" | "blue" | "red" | "black"
-                      }
-                      nickname=""
-                      level={event.newLevel}
-                      state="enter"
-                    />
-                  </div>
-                )}
+              <div className="relative z-10 flex h-44 w-44 items-center justify-center overflow-hidden rounded-full">
+                <Avatar className="h-44 w-44 border-4 border-white/30 shadow-2xl">
+                  {event.avatar_url ? (
+                    <AvatarImage src={event.avatar_url} alt={event.name} />
+                  ) : null}
+                  <AvatarFallback
+                    className="text-6xl font-black text-white"
+                    style={{
+                      background: `linear-gradient(135deg, ${
+                        rankKey === "blue"
+                          ? "hsl(215, 100%, 35%) 0%, hsl(215, 100%, 18%) 100%"
+                          : rankKey === "red"
+                            ? "hsl(0, 84%, 35%) 0%, hsl(0, 84%, 18%) 100%"
+                            : rankKey === "black"
+                              ? "hsl(42, 60%, 22%) 0%, hsl(0, 0%, 8%) 100%"
+                              : "hsl(220, 14%, 35%) 0%, hsl(220, 14%, 22%) 100%"
+                      })`,
+                    }}
+                  >
+                    {event.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
               </div>
             </motion.div>
 
