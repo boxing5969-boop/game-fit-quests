@@ -408,7 +408,7 @@ const DietTrackerPage = () => {
       if (user?.id && todayPlan) {
         const newlyChecked = diffHabitsForEmission({
           prev: logRow,
-          next: { ...habits, memo: note },
+          next: { ...habits },
           missions: todayPlan.missions,
         });
         if (newlyChecked.length > 0) {
