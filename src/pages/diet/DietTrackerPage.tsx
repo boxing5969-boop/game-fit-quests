@@ -361,7 +361,7 @@ const DietTrackerPage = () => {
       if (todayPlan && user?.id) {
         const diff = diffHabitsForEmission({
           prev: logRow,
-          next: { ...habits, memo: note },
+          next: { ...habits },
           missions: todayPlan.missions,
         });
         const completedAt = new Date();
