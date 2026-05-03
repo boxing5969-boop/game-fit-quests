@@ -167,7 +167,7 @@ function pickOneMeal(opts: {
     const probioticW = m.hasProbiotic ? 3 : 0;
     const tagW =
       (opts.bonusTags ?? []).reduce(
-        (acc, t) => acc + (m.tags.includes(t) ? 1.5 : 0),
+        (acc, t) => acc + ((m.tags as string[]).includes(t) ? 1.5 : 0),
         0,
       );
     const nameW =
@@ -720,7 +720,7 @@ function appendNutrientSupplements(
 
   const supplementPicks: MealPlanPick[] = supplements.map((m) => ({
     slot: "snack" as MealSlot,
-    target: { slot: "snack" as MealSlot, kcal: m.kcal, proteinG: m.proteinG },
+    target: { slot: "snack" as MealSlot, kcal: m.kcal, proteinG: m.proteinG, fatG: m.fatG, carbsG: m.carbsG },
     item: m,
   }));
   return [...picks, ...supplementPicks];

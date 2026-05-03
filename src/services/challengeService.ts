@@ -160,7 +160,7 @@ export async function syncQuestCheckin(
     const list = await listChallenges("active", null);
     if (!list.success) {
       // eslint-disable-next-line no-console
-      console.warn("[syncQuestCheckin] listChallenges 실패", list.error);
+      console.warn("[syncQuestCheckin] listChallenges 실패", (list as Err).error);
       return baseFail("rpc_failed");
     }
     const joined = (list.rows ?? []).find((r) => r.is_joined);
@@ -193,7 +193,7 @@ export async function syncQuestCheckin(
     });
     if (!r.success) {
       // eslint-disable-next-line no-console
-      console.warn("[syncQuestCheckin] submitChallengeCheckin 실패", r.error);
+      console.warn("[syncQuestCheckin] submitChallengeCheckin 실패", (r as Err).error);
       return {
         attempted: true,
         challengeId: joined.id,

@@ -29,7 +29,12 @@ export type MealTag =
   | "diet"
   | "protein"
   | "soup"
-  | "vegan";
+  | "vegan"
+  | "쉐이크"
+  | "편의점"
+  | "고단백"
+  | "외식OK"
+  | "직접 입력";
 
 export type Vitamin = "A" | "B" | "B12" | "C" | "D" | "E" | "K";
 export type Mineral = "철" | "칼슘" | "마그네슘" | "아연" | "칼륨" | "요오드";
