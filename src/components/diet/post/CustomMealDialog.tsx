@@ -40,21 +40,28 @@ export const CustomMealDialog = ({ slot, onClose, onSave }: CustomMealDialogProp
   const canSave = !!name.trim() && !!kcal && Number(kcal) > 0;
 
   const handleSave = () => {
+    const code = `custom_${slot}_${Date.now()}`;
     const item: MealItem = {
-      code: `custom_${slot}_${Date.now()}`,
+      id: code,
+      code,
       name: name.trim(),
+      calories: Number(kcal) || 0,
       kcal: Number(kcal) || 0,
+      protein: Number(protein) || 0,
       proteinG: Number(protein) || 0,
+      fat: Number(fat) || 0,
       fatG: Number(fat) || 0,
+      carbs: Number(carbs) || 0,
       carbsG: Number(carbs) || 0,
       fiberG: Number(fiber) || 0,
       keyVitamins: [],
       keyMinerals: [],
       hasProbiotic: probiotic,
+      type: "lunch",
       slots: [slot],
       tags: ["직접 입력"],
       note: "회원이 직접 입력한 메뉴입니다.",
-    };
+    } as MealItem;
     onSave(item);
   };
 
