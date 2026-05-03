@@ -1,5 +1,7 @@
 /**
- * 153 — 라이브보드 활동 중 회원 풀 사이즈 카드 (체육관 모니터용).
+ * 153 — 라이브보드 활동 중 회원 카드 (체육관 모니터용).
+ *
+ * v2: 적응형 사이즈 ("spotlight" | "medium" | "compact")
  *
  * 시각효과:
  *   · 리그별 conic-gradient 글로우 (레벨업 Cinematic 과 일관)
@@ -7,9 +9,10 @@
  *   · 운동 시간 카운터 (props 로 갱신, LiveBoardPage 가 15초마다 currentTime 갱신)
  *   · avatar 우선, 없으면 SDBoxerCharacter fallback
  *
- * 디자인 원칙:
- *   · 60인치 모니터 가시성 — 카드 width 240px+ / 글자 22px+
- *   · 그리드 배치 시 4명 = 한 줄 / 5명 이상 = 2줄
+ * 디자인 원칙 (사이즈별):
+ *   · spotlight (1~4명): 풀 사이즈, 모든 정보 표시
+ *   · medium (5~12명): 중간 사이즈, 핵심 정보
+ *   · compact (13명+): 작은 사이즈, 아바타 + 이름 + 시간만
  */
 
 import { motion } from "framer-motion";
@@ -66,25 +69,91 @@ export interface LiveActiveMember {
   avatar_url?: string | null;
 }
 
+export type LiveCardSize = "spotlight" | "medium" | "compact";
+
 export interface LiveActiveMemberCardProps {
   member: LiveActiveMember;
   /** "분" 단위 운동 시간 — LiveBoardPage 가 currentTime 으로 계산 */
   elapsedMinutes: number;
+  /** 카드 사이즈 — 인원수에 따라 자동 결정 */
+  size?: LiveCardSize;
   /** super_admin/branch_manager 만 보임 */
   showForceExit?: boolean;
   onForceExit?: () => void;
+  /** "방금 입실" 글로우 강조 (5분 이내) */
+  isFresh?: boolean;
 }
+
+const SIZE_CONFIG = {
+  spotlight: {
+    container: "p-4",
+    avatarBox: "h-32 w-32",
+    avatar: "h-24 w-24",
+    avatarBorder: "border-4",
+    avatarFallbackText: "text-3xl",
+    sdScale: "scale-[0.55]",
+    nameText: "text-2xl",
+    nameMargin: "mb-2",
+    badgeText: "text-sm",
+    badgePadding: "px-2.5 py-1",
+    levelText: "text-lg",
+    badgeMargin: "mb-3",
+    timerPadding: "px-3 py-1",
+    timerIcon: "h-3.5 w-3.5",
+    timerText: "text-base",
+    showLive: true,
+  },
+  medium: {
+    container: "p-3",
+    avatarBox: "h-20 w-20",
+    avatar: "h-16 w-16",
+    avatarBorder: "border-2",
+    avatarFallbackText: "text-xl",
+    sdScale: "scale-[0.38]",
+    nameText: "text-base",
+    nameMargin: "mb-1",
+    badgeText: "text-xs",
+    badgePadding: "px-1.5 py-0.5",
+    levelText: "text-sm",
+    badgeMargin: "mb-2",
+    timerPadding: "px-2 py-0.5",
+    timerIcon: "h-3 w-3",
+    timerText: "text-xs",
+    showLive: false,
+  },
+  compact: {
+    container: "p-2",
+    avatarBox: "h-14 w-14",
+    avatar: "h-11 w-11",
+    avatarBorder: "border-2",
+    avatarFallbackText: "text-base",
+    sdScale: "scale-[0.26]",
+    nameText: "text-sm",
+    nameMargin: "mb-0.5",
+    badgeText: "text-[10px]",
+    badgePadding: "px-1 py-0",
+    levelText: "text-[10px]",
+    badgeMargin: "mb-1",
+    timerPadding: "px-1.5 py-0.5",
+    timerIcon: "h-2.5 w-2.5",
+    timerText: "text-[10px]",
+    showLive: false,
+  },
+} as const;
 
 const LiveActiveMemberCard = ({
   member,
   elapsedMinutes,
+  size = "spotlight",
   showForceExit,
   onForceExit,
+  isFresh,
 }: LiveActiveMemberCardProps) => {
   const rankKey = (member.league ?? "white").toLowerCase();
   const ring = RING_GRADIENT[rankKey] ?? RING_GRADIENT.white;
   const glow = CARD_GLOW[rankKey] ?? CARD_GLOW.white;
   const rankLabel = RANK_LABELS[rankKey] ?? rankKey;
+  const cfg = SIZE_CONFIG[size];
 
   return (
     <motion.div
@@ -97,11 +166,26 @@ const LiveActiveMemberCard = ({
         damping: 18,
         stiffness: 220,
       }}
-      className="relative flex flex-col items-center rounded-3xl border border-white/10 bg-gradient-to-br from-gray-900 via-gray-900 to-black p-4 group"
-      style={{ boxShadow: glow }}
+      className={`relative flex flex-col items-center rounded-3xl border ${
+        isFresh ? "border-emerald-400/60" : "border-white/10"
+      } bg-gradient-to-br from-gray-900 via-gray-900 to-black ${cfg.container} group`}
+      style={{
+        boxShadow: isFresh
+          ? `${glow}, 0 0 60px hsla(160, 80%, 60%, 0.6)`
+          : glow,
+      }}
     >
+      {/* "방금 입실" 강조 배지 */}
+      {isFresh && size !== "compact" && (
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-30">
+          <span className="rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10px] font-black text-white shadow-lg">
+            ✨ NEW
+          </span>
+        </div>
+      )}
+
       {/* Force exit 버튼 (관장/super 만) */}
-      {showForceExit && onForceExit && (
+      {showForceExit && onForceExit && size !== "compact" && (
         <button
           onClick={onForceExit}
           className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-red-600/30 text-red-300 opacity-0 transition-opacity hover:bg-red-600/60 hover:text-red-100 group-hover:opacity-100"
@@ -113,7 +197,9 @@ const LiveActiveMemberCard = ({
       )}
 
       {/* 캐릭터 / 아바타 영역 (회전 글로우 + 펄스) */}
-      <div className="relative mb-3 flex h-32 w-32 items-center justify-center">
+      <div
+        className={`relative ${cfg.nameMargin} flex items-center justify-center ${cfg.avatarBox}`}
+      >
         {/* 외곽 회전 ring */}
         <motion.div
           animate={{ rotate: 360 }}
@@ -139,16 +225,22 @@ const LiveActiveMemberCard = ({
         />
 
         {/* avatar 또는 SDBoxerCharacter */}
-        <div className="relative z-10 flex h-24 w-24 items-center justify-center">
+        <div
+          className={`relative z-10 flex items-center justify-center ${cfg.avatar}`}
+        >
           {member.avatar_url ? (
-            <Avatar className="h-24 w-24 border-4 border-white/20 shadow-2xl">
+            <Avatar
+              className={`${cfg.avatar} ${cfg.avatarBorder} border-white/20 shadow-2xl`}
+            >
               <AvatarImage src={member.avatar_url} alt={member.name} />
-              <AvatarFallback className="bg-gray-800 text-3xl font-black text-white">
+              <AvatarFallback
+                className={`bg-gray-800 ${cfg.avatarFallbackText} font-black text-white`}
+              >
                 {member.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
           ) : (
-            <div className="scale-[0.55]">
+            <div className={cfg.sdScale}>
               <SDBoxerCharacter
                 league={rankKey as "white" | "blue" | "red" | "black"}
                 nickname=""
@@ -162,41 +254,51 @@ const LiveActiveMemberCard = ({
 
       {/* 이름 */}
       <p
-        className="mb-2 max-w-full truncate text-center text-2xl font-black text-white"
+        className={`${cfg.nameMargin} max-w-full truncate text-center ${cfg.nameText} font-black text-white`}
         style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}
       >
         {member.name}
       </p>
 
       {/* 리그 + 레벨 */}
-      <div className="mb-3 flex items-center gap-2">
+      <div className={`${cfg.badgeMargin} flex items-center gap-1.5`}>
         <span
-          className={`rounded-md px-2.5 py-1 text-sm font-black ${RANK_BADGE[rankKey] ?? RANK_BADGE.white}`}
+          className={`rounded-md ${cfg.badgePadding} ${cfg.badgeText} font-black ${
+            RANK_BADGE[rankKey] ?? RANK_BADGE.white
+          }`}
         >
           {rankLabel}
         </span>
-        <span className="text-lg font-black text-gray-300">Lv.{member.level}</span>
+        <span className={`${cfg.levelText} font-black text-gray-300`}>
+          Lv.{member.level}
+        </span>
       </div>
 
       {/* 운동 시간 */}
-      <div className="flex items-center gap-1.5 rounded-pill border border-white/10 bg-black/40 px-3 py-1">
-        <Clock className="h-3.5 w-3.5 text-emerald-400" />
-        <span className="number-font text-base font-black text-emerald-300 tabular-nums">
-          {elapsedMinutes}분 째 운동중
+      <div
+        className={`flex items-center gap-1 rounded-pill border border-white/10 bg-black/40 ${cfg.timerPadding}`}
+      >
+        <Clock className={`${cfg.timerIcon} text-emerald-400`} />
+        <span
+          className={`number-font ${cfg.timerText} font-black text-emerald-300 tabular-nums`}
+        >
+          {elapsedMinutes}분{size !== "compact" && " 째 운동중"}
         </span>
       </div>
 
-      {/* 활동 진행 인디케이터 — 잔잔한 펄스 */}
-      <motion.div
-        animate={{ opacity: [0.3, 0.8, 0.3] }}
-        transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-        className="mt-2 flex items-center gap-1"
-      >
-        <span className="h-2 w-2 rounded-full bg-emerald-400" />
-        <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
-          LIVE
-        </span>
-      </motion.div>
+      {/* 활동 진행 인디케이터 — 잔잔한 펄스 (spotlight 만) */}
+      {cfg.showLive && (
+        <motion.div
+          animate={{ opacity: [0.3, 0.8, 0.3] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+          className="mt-2 flex items-center gap-1"
+        >
+          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
+            LIVE
+          </span>
+        </motion.div>
+      )}
     </motion.div>
   );
 };

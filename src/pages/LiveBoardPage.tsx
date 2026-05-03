@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { AnimatePresence } from "framer-motion";
 import SDBoxerCharacter from "@/components/SDBoxerCharacter";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,9 +6,13 @@ import { RANK_LABELS } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Building2, Clock, X, Trophy, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import LiveActiveMemberCard from "@/components/liveBoard/LiveActiveMemberCard";
 import LiveBoardEmptyState from "@/components/liveBoard/LiveBoardEmptyState";
 import LiveGymRaidStrip from "@/components/liveBoard/LiveGymRaidStrip";
+import LiveSpotlightStage from "@/components/liveBoard/LiveSpotlightStage";
+import LiveCompactGrid from "@/components/liveBoard/LiveCompactGrid";
+import LiveLevelUpInterrupt, {
+  type LevelUpEvent,
+} from "@/components/liveBoard/LiveLevelUpInterrupt";
 
 const RANK_COLORS: Record<string, string> = {
   white: "border-gray-400 bg-gray-200 text-gray-900",
@@ -78,6 +81,10 @@ const LiveBoardPage = () => {
   const [latestPopup, setLatestPopup] = useState<CheckinEvent | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const popupTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // 레벨업 인터럽트 큐 (한 번에 하나)
+  const [levelUpEvent, setLevelUpEvent] = useState<LevelUpEvent | null>(null);
+  const knownLevelsRef = useRef<Map<string, number>>(new Map());
   const [connected, setConnected] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
@@ -229,12 +236,16 @@ const LiveBoardPage = () => {
       const avatarUrl = profile?.avatar_url || null;
       avatarCacheRef.current[userId] = avatarUrl;
 
+      const level = progress?.current_level || attendanceFallback?.level || 1;
+      // 알려진 레벨 시드 — Realtime 비교용
+      knownLevelsRef.current.set(userId, level);
+
       members.push({
         id: session.id,
         user_id: userId,
         name: displayName,
         league: progress?.current_rank || attendanceFallback?.league || "white",
-        level: progress?.current_level || attendanceFallback?.level || 1,
+        level,
         startedAt: new Date(session.started_at).getTime(),
         avatar_url: avatarUrl,
       });
@@ -281,9 +292,12 @@ const LiveBoardPage = () => {
       const visits = Array.from(userMap.values());
       setDailyVisits(visits);
 
-      // Prefetch avatars
+      // Prefetch avatars + 알려진 레벨 시드 (Realtime 비교용)
       for (const v of visits) {
         getAvatarUrl(v.user_id);
+        if (!knownLevelsRef.current.has(v.user_id)) {
+          knownLevelsRef.current.set(v.user_id, v.level);
+        }
       }
     } else {
       setDailyVisits([]);
@@ -313,6 +327,48 @@ const LiveBoardPage = () => {
     popupTimeoutRef.current = setTimeout(() => setShowPopup(false), 7000);
   }, [getAvatarUrl]);
 
+  /**
+   * member_progress 의 current_level 이 증가할 때 인터럽트 발동.
+   *
+   * Ref 패턴: activeMembers/dailyVisits 가 자주 변해서 채널을 자주 재구독하면 안 됨 →
+   * 항상 최신 state 를 참조할 수 있게 ref 로 래핑.
+   */
+  const activeMembersRef = useRef(activeMembers);
+  const dailyVisitsRef = useRef(dailyVisits);
+  const avatarMapRef = useRef(avatarMap);
+  useEffect(() => {
+    activeMembersRef.current = activeMembers;
+  }, [activeMembers]);
+  useEffect(() => {
+    dailyVisitsRef.current = dailyVisits;
+  }, [dailyVisits]);
+  useEffect(() => {
+    avatarMapRef.current = avatarMap;
+  }, [avatarMap]);
+
+  const triggerLevelUp = useCallback(
+    async (userId: string, oldLevel: number, newLevel: number, league: string) => {
+      const active = activeMembersRef.current.find((m) => m.user_id === userId);
+      const visit = dailyVisitsRef.current.find((v) => v.user_id === userId);
+      const name = active?.name || visit?.display_name;
+      if (!name) return; // 이름 모르면 패스 (다른 지점 회원일 수 있음)
+
+      const avatar =
+        active?.avatar_url ?? avatarMapRef.current[userId] ?? (await getAvatarUrl(userId));
+
+      setLevelUpEvent({
+        eventId: `${userId}-${newLevel}-${Date.now()}`,
+        user_id: userId,
+        name,
+        league,
+        oldLevel,
+        newLevel,
+        avatar_url: avatar,
+      });
+    },
+    [getAvatarUrl],
+  );
+
   // Realtime subscriptions
   useEffect(() => {
     if (!branchName) return;
@@ -339,9 +395,25 @@ const LiveBoardPage = () => {
         () => {
           loadActivitySessions();
         })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "member_progress" },
+        (payload) => {
+          // 운영 DB 모든 회원 변경이 들어옴 — 우리 지점 활동/방문 회원만 처리
+          const n = payload.new as { user_id: string; current_level: number; current_rank: string };
+          const o = payload.old as { current_level?: number };
+          if (!n?.user_id || typeof n.current_level !== "number") return;
+          const oldLevel = typeof o?.current_level === "number"
+            ? o.current_level
+            : knownLevelsRef.current.get(n.user_id);
+          if (oldLevel === undefined) return; // 모르는 회원 (다른 지점) — 무시
+          if (n.current_level > oldLevel) {
+            void triggerLevelUp(n.user_id, oldLevel, n.current_level, n.current_rank || "white");
+          }
+          knownLevelsRef.current.set(n.user_id, n.current_level);
+          void loadActivitySessions();
+        })
       .subscribe((status) => setConnected(status === "SUBSCRIBED"));
     return () => { supabase.removeChannel(channel); };
-  }, [branchName, triggerPopup, loadActivitySessions, getAvatarUrl]);
+  }, [branchName, triggerPopup, loadActivitySessions, getAvatarUrl, triggerLevelUp]);
 
   // Reconnect fallback
   useEffect(() => {
@@ -478,7 +550,7 @@ const LiveBoardPage = () => {
                 />
               </div>
             ) : activeMembers.length > 0 ? (
-              <div className="flex flex-1 flex-col">
+              <div className="flex flex-1 flex-col overflow-y-auto">
                 <div className="mb-3 flex items-center gap-3">
                   <span className="h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />
                   <h2 className="text-2xl font-black tracking-wide text-emerald-300">
@@ -491,33 +563,29 @@ const LiveBoardPage = () => {
                   <div className="h-px flex-1 bg-gradient-to-r from-emerald-500/40 to-transparent" />
                 </div>
 
-                <div
-                  className={`grid flex-1 content-start gap-4 overflow-y-auto ${
-                    activeMembers.length === 1
-                      ? "grid-cols-1 max-w-sm mx-auto"
-                      : activeMembers.length === 2
-                        ? "grid-cols-2 max-w-3xl mx-auto"
-                        : activeMembers.length <= 4
-                          ? "grid-cols-2 lg:grid-cols-4"
-                          : "grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-                  }`}
-                >
-                  <AnimatePresence>
-                    {activeMembers.map((m) => (
-                      <LiveActiveMemberCard
-                        key={m.user_id}
-                        member={m}
-                        elapsedMinutes={
-                          typeof elapsedMin(m.startedAt) === "number"
-                            ? (elapsedMin(m.startedAt) as number)
-                            : 0
-                        }
-                        showForceExit={isBranchManager}
-                        onForceExit={() => handleForceExit(m.id, m.name)}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </div>
+                {/* 스포트라이트 무대 — 항상 표시 (1명도 OK) */}
+                <LiveSpotlightStage
+                  members={activeMembers}
+                  getElapsedMinutes={(t) => {
+                    const v = elapsedMin(t);
+                    return typeof v === "number" ? v : 0;
+                  }}
+                  showForceExit={isBranchManager}
+                  onForceExit={(sessionId, name) => handleForceExit(sessionId, name)}
+                />
+
+                {/* 컴팩트 그리드 — 5명 이상일 때만 (3명 이하면 스포트라이트만으로 충분) */}
+                {activeMembers.length >= 5 && (
+                  <LiveCompactGrid
+                    members={activeMembers}
+                    getElapsedMinutes={(t) => {
+                      const v = elapsedMin(t);
+                      return typeof v === "number" ? v : 0;
+                    }}
+                    showForceExit={isBranchManager}
+                    onForceExit={(sessionId, name) => handleForceExit(sessionId, name)}
+                  />
+                )}
               </div>
             ) : (
               <LiveBoardEmptyState
@@ -632,6 +700,12 @@ const LiveBoardPage = () => {
           </div>
         </div>
       </div>
+
+      {/* 레벨업 인터럽트 — 최상위 z-index, 5초 풀스크린 */}
+      <LiveLevelUpInterrupt
+        event={levelUpEvent}
+        onDismiss={() => setLevelUpEvent(null)}
+      />
 
       {/* Popup animation keyframes */}
       <style>{`
