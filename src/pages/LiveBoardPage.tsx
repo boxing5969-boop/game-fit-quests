@@ -579,11 +579,11 @@ const LiveBoardPage = () => {
         </div>
       </div>
 
-      <div className="flex h-[calc(100vh-80px)]">
-        {/* ═══ Center: Main area ═══ */}
-        <div className="flex-1 flex flex-col">
-          {/* Main popup / idle */}
-          <div className="flex-1 flex flex-col relative px-6 py-4 overflow-hidden">
+      <div className="flex h-[calc(100vh-80px)] min-h-0">
+        {/* ═══ Center: Main area — 세로 스크롤 가능 ═══ */}
+        <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
+          {/* Main popup / idle — flex-1 제거, overflow-hidden 제거 (스포트라이트가 squeeze 되지 않게) */}
+          <div className="flex flex-col relative px-6 py-4 min-h-[40vh]">
             {/*
               Cinematic 업그레이드:
               · 새 입실 popup 은 그대로 유지 (큰 SDBoxerCharacter, 7초 표시)
@@ -600,7 +600,7 @@ const LiveBoardPage = () => {
                 />
               </div>
             ) : combinedMembers.length > 0 ? (
-              <div className="flex flex-1 flex-col overflow-y-auto">
+              <div className="flex flex-1 flex-col">
                 <div className="mb-3 flex items-center gap-3">
                   <span className="h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />
                   <h2 className="text-2xl font-black tracking-wide text-emerald-300">
@@ -678,14 +678,14 @@ const LiveBoardPage = () => {
         </div>
 
         {/* ═══ Right panel ═══ */}
-        <div className="w-[26rem] bg-gray-900/60 border-l border-gray-800/60 flex flex-col">
-          {/* Active members */}
-          <div className="flex-shrink-0 border-b border-gray-800/60">
-            <div className="px-5 py-4 flex items-center gap-3">
+        <div className="w-[26rem] bg-gray-900/60 border-l border-gray-800/60 flex flex-col min-h-0">
+          {/* Active members — 인원수 많을 때 더 많이 보이게 flex-1 + 최소 절반 보장 */}
+          <div className="flex-1 border-b border-gray-800/60 flex flex-col min-h-[40vh]">
+            <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0">
               <span className="h-4 w-4 rounded-full bg-green-400 animate-pulse" />
               <h2 className="text-2xl font-black text-green-400">현재 활동 중 ({combinedMembers.length})</h2>
             </div>
-            <div className="max-h-[28vh] overflow-y-auto px-3 pb-3">
+            <div className="flex-1 overflow-y-auto px-3 pb-3">
               {combinedMembers.length === 0 ? (
                 <div className="text-center py-6 text-gray-600"><p className="text-xl">활동 중인 회원 없음</p></div>
               ) : (
@@ -722,7 +722,7 @@ const LiveBoardPage = () => {
           </div>
 
           {/* Today visits — deduplicated */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto min-h-[20vh]">
             <div className="px-5 py-4 border-b border-gray-800/40 sticky top-0 bg-gray-900/90 backdrop-blur-sm z-10">
               <h2 className="text-2xl font-black text-gray-400">📋 오늘 방문 ({dailyVisits.length})</h2>
             </div>
