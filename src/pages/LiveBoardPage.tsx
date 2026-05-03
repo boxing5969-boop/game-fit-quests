@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import SDBoxerCharacter from "@/components/SDBoxerCharacter";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,11 @@ import LiveCompactGrid from "@/components/liveBoard/LiveCompactGrid";
 import LiveLevelUpInterrupt, {
   type LevelUpEvent,
 } from "@/components/liveBoard/LiveLevelUpInterrupt";
+import LiveBoardTestPanel from "@/components/liveBoard/LiveBoardTestPanel";
+import {
+  generateMockMembers,
+  type MockActiveMember,
+} from "@/components/liveBoard/liveBoardMock";
 
 const RANK_COLORS: Record<string, string> = {
   white: "border-gray-400 bg-gray-200 text-gray-900",
@@ -85,6 +90,15 @@ const LiveBoardPage = () => {
   // 레벨업 인터럽트 큐 (한 번에 하나)
   const [levelUpEvent, setLevelUpEvent] = useState<LevelUpEvent | null>(null);
   const knownLevelsRef = useRef<Map<string, number>>(new Map());
+
+  // 테스트 모드 — 가상 회원 (DB 변경 없음)
+  const [mockMembers, setMockMembers] = useState<MockActiveMember[]>([]);
+
+  /** 실제 + mock 합쳐서 시각효과에 전달 */
+  const combinedMembers = useMemo<ActiveMember[]>(
+    () => [...activeMembers, ...mockMembers],
+    [activeMembers, mockMembers],
+  );
   const [connected, setConnected] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
@@ -425,8 +439,12 @@ const LiveBoardPage = () => {
     window.location.href = `/live-board/${encodeURIComponent(name)}`;
   };
 
-  // Force-exit a single member (admin/manager)
+  // Force-exit a single member (admin/manager) — mock 회원은 화면에서만 제거
   const handleForceExit = async (sessionId: string, memberName: string) => {
+    if (sessionId.startsWith("mock-")) {
+      setMockMembers((prev) => prev.filter((m) => m.id !== sessionId));
+      return;
+    }
     const { error } = await supabase
       .from("activity_sessions")
       .update({ status: "force_ended", ended_at: new Date().toISOString() })
@@ -438,6 +456,38 @@ const LiveBoardPage = () => {
       loadActivitySessions();
     }
   };
+
+  // ── 테스트 패널 콜백 ──
+  const handleMockAdd = useCallback((count: number, asFresh = false) => {
+    setMockMembers((prev) => [...prev, ...generateMockMembers(count, { fresh: asFresh })]);
+  }, []);
+  const handleMockRemoveOne = useCallback(() => {
+    setMockMembers((prev) => prev.slice(0, -1));
+  }, []);
+  const handleMockReset = useCallback(() => {
+    setMockMembers([]);
+  }, []);
+  const handleMockTriggerLevelUp = useCallback(() => {
+    setMockMembers((prev) => {
+      if (prev.length === 0) return prev;
+      const target = prev[Math.floor(Math.random() * prev.length)];
+      const newLevel = Math.min(target.level + 1, 10);
+      // 인터럽트 발동
+      setLevelUpEvent({
+        eventId: `${target.user_id}-${newLevel}-${Date.now()}`,
+        user_id: target.user_id,
+        name: target.name,
+        league: target.league,
+        oldLevel: target.level,
+        newLevel,
+        avatar_url: target.avatar_url,
+      });
+      // mock 회원 레벨도 갱신
+      return prev.map((m) =>
+        m.user_id === target.user_id ? { ...m, level: newLevel } : m,
+      );
+    });
+  }, []);
 
   // Reset all active sessions for this branch (admin tool)
   const handleResetActiveSessions = async () => {
@@ -512,7 +562,7 @@ const LiveBoardPage = () => {
           )}
           <div className="flex items-center gap-8">
             <div className="text-center">
-              <p className="text-5xl font-black text-green-400 tabular-nums leading-none">{activeMembers.length}</p>
+              <p className="text-5xl font-black text-green-400 tabular-nums leading-none">{combinedMembers.length}</p>
               <p className="text-base text-gray-500 mt-1 font-bold">활동 중</p>
             </div>
             <div className="text-center">
@@ -549,7 +599,7 @@ const LiveBoardPage = () => {
                   state="enter"
                 />
               </div>
-            ) : activeMembers.length > 0 ? (
+            ) : combinedMembers.length > 0 ? (
               <div className="flex flex-1 flex-col overflow-y-auto">
                 <div className="mb-3 flex items-center gap-3">
                   <span className="h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />
@@ -557,15 +607,20 @@ const LiveBoardPage = () => {
                     🥊 지금 운동 중
                   </h2>
                   <p className="number-font text-2xl font-black text-emerald-400 tabular-nums">
-                    {activeMembers.length}
+                    {combinedMembers.length}
                     <span className="ml-1 text-base text-emerald-500/70">명</span>
                   </p>
+                  {mockMembers.length > 0 && (
+                    <span className="rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-black text-purple-300">
+                      mock {mockMembers.length}
+                    </span>
+                  )}
                   <div className="h-px flex-1 bg-gradient-to-r from-emerald-500/40 to-transparent" />
                 </div>
 
                 {/* 스포트라이트 무대 — 항상 표시 (1명도 OK) */}
                 <LiveSpotlightStage
-                  members={activeMembers}
+                  members={combinedMembers}
                   getElapsedMinutes={(t) => {
                     const v = elapsedMin(t);
                     return typeof v === "number" ? v : 0;
@@ -575,9 +630,9 @@ const LiveBoardPage = () => {
                 />
 
                 {/* 컴팩트 그리드 — 5명 이상일 때만 (3명 이하면 스포트라이트만으로 충분) */}
-                {activeMembers.length >= 5 && (
+                {combinedMembers.length >= 5 && (
                   <LiveCompactGrid
-                    members={activeMembers}
+                    members={combinedMembers}
                     getElapsedMinutes={(t) => {
                       const v = elapsedMin(t);
                       return typeof v === "number" ? v : 0;
@@ -628,14 +683,14 @@ const LiveBoardPage = () => {
           <div className="flex-shrink-0 border-b border-gray-800/60">
             <div className="px-5 py-4 flex items-center gap-3">
               <span className="h-4 w-4 rounded-full bg-green-400 animate-pulse" />
-              <h2 className="text-2xl font-black text-green-400">현재 활동 중 ({activeMembers.length})</h2>
+              <h2 className="text-2xl font-black text-green-400">현재 활동 중 ({combinedMembers.length})</h2>
             </div>
             <div className="max-h-[28vh] overflow-y-auto px-3 pb-3">
-              {activeMembers.length === 0 ? (
+              {combinedMembers.length === 0 ? (
                 <div className="text-center py-6 text-gray-600"><p className="text-xl">활동 중인 회원 없음</p></div>
               ) : (
                 <div className="space-y-2">
-                  {activeMembers.map((m) => (
+                  {combinedMembers.map((m) => (
                     <div key={m.user_id} className="flex items-center gap-4 rounded-xl bg-gray-800/40 px-4 py-4 group">
                       <MemberAvatar url={m.avatar_url} name={m.name} />
                       <div className="flex-1 min-w-0">
@@ -706,6 +761,17 @@ const LiveBoardPage = () => {
         event={levelUpEvent}
         onDismiss={() => setLevelUpEvent(null)}
       />
+
+      {/* ── 테스트 패널 (관리자 전용) — 가상 회원 추가/레벨업 시뮬레이트 ── */}
+      {(isSuperAdmin || isBranchManager) && (
+        <LiveBoardTestPanel
+          mockCount={mockMembers.length}
+          onAdd={handleMockAdd}
+          onRemoveOne={handleMockRemoveOne}
+          onReset={handleMockReset}
+          onTriggerLevelUp={handleMockTriggerLevelUp}
+        />
+      )}
 
       {/* Popup animation keyframes */}
       <style>{`
