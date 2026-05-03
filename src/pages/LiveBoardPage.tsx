@@ -639,10 +639,10 @@ const LiveBoardPage = () => {
       </div>
 
       <div className="flex h-[calc(100vh-80px)] min-h-0">
-        {/* ═══ Center: Main area — 세로 스크롤 가능 ═══ */}
-        <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
-          {/* Main popup / idle — flex-1 제거, overflow-hidden 제거 (스포트라이트가 squeeze 되지 않게) */}
-          <div className="flex flex-col relative px-6 py-4 min-h-[40vh]">
+        {/* ═══ Center: Main area — 명예의 전당 sticky bottom + 위쪽만 스크롤 ═══ */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* 상단: 스포트라이트 + 컴팩트 그리드 (스크롤 가능) */}
+          <div className="flex-1 flex flex-col relative px-6 py-4 overflow-y-auto min-h-0">
             {/*
               Cinematic 업그레이드:
               · 새 입실 popup 은 그대로 유지 (큰 SDBoxerCharacter, 7초 표시)
@@ -735,23 +735,35 @@ const LiveBoardPage = () => {
           </div>
 
           {/* ── Bottom: Hall of Fame banner ── */}
+          {/* 명예의 전당 — 항상 맨 아래 sticky, 한 줄, 가로 스크롤 */}
           {hallMembers.length > 0 && (
-            <div className="mx-4 mb-3 flex-shrink-0 rounded-xl border border-yellow-600/40 bg-gradient-to-r from-yellow-950/60 via-gray-900/80 to-yellow-950/60 px-4 py-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Trophy className="h-5 w-5 text-yellow-500" />
-                <h2 className="text-base font-black text-yellow-400 tracking-wide">명예의 전당</h2>
-                <div className="flex-1 h-px bg-gradient-to-r from-yellow-600/40 to-transparent" />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {hallMembers.map((m) => (
-                  <div key={m.r_user_id} className="flex items-center gap-2 rounded-lg border border-yellow-700/30 bg-yellow-900/20 px-2.5 py-1.5">
-                    <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-8 w-8" />
-                    <div>
-                      <p className="text-sm font-black text-yellow-200 leading-tight">{m.r_nickname}</p>
-                      <p className="text-[10px] text-yellow-500/80 font-black">MASTER 40</p>
+            <div className="mx-4 mb-3 flex-shrink-0 rounded-xl border border-yellow-600/40 bg-gradient-to-r from-yellow-950/60 via-gray-900/80 to-yellow-950/60 px-4 py-2.5">
+              <div className="flex items-center gap-3">
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  <h2 className="text-base font-black text-yellow-400 tracking-wide whitespace-nowrap">
+                    명예의 전당
+                  </h2>
+                  <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] font-black text-yellow-300 tabular-nums">
+                    {hallMembers.length}
+                  </span>
+                </div>
+                <div className="flex flex-1 items-center gap-2 overflow-x-auto">
+                  {hallMembers.map((m) => (
+                    <div
+                      key={m.r_user_id}
+                      className="flex flex-shrink-0 items-center gap-2 rounded-lg border border-yellow-700/30 bg-yellow-900/20 px-2.5 py-1"
+                    >
+                      <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-7 w-7" />
+                      <div>
+                        <p className="text-sm font-black text-yellow-200 leading-tight whitespace-nowrap">
+                          {m.r_nickname}
+                        </p>
+                        <p className="text-[10px] text-yellow-500/80 font-black">MASTER 40</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           )}

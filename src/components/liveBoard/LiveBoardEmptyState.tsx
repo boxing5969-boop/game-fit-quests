@@ -12,7 +12,6 @@
  */
 
 import { motion } from "framer-motion";
-import SDBoxerCharacter from "@/components/SDBoxerCharacter";
 
 export interface LiveBoardEmptyStateProps {
   branchName: string;
@@ -59,7 +58,7 @@ const LiveBoardEmptyState = ({
 
       {/* 중앙 콘텐츠 */}
       <div className="relative z-10 flex flex-col items-center gap-6 px-8 text-center">
-        {/* 153 캐릭터 */}
+        {/* 153 시그니처 로고 + 글러브 (회원이 설정한 캐릭터가 아닌 일반 sprite 표시 안 함) */}
         <motion.div
           animate={{
             y: [0, -8, 0],
@@ -70,15 +69,13 @@ const LiveBoardEmptyState = ({
             repeat: Infinity,
             ease: "easeInOut",
           }}
+          className="flex flex-col items-center gap-3"
         >
-          <SDBoxerCharacter
-            league="white"
-            nickname="153 랭크업"
-            level={1}
-            state="idle"
-            subtitle="오늘도 복싱 레벨업 중"
-            branchName={branchName}
-          />
+          <div className="text-7xl">🥊</div>
+          <p className="text-lg font-black tracking-wider text-yellow-300">
+            153 랭크업
+          </p>
+          <p className="text-sm text-gray-400">{branchName} · 오늘도 복싱 레벨업 중</p>
         </motion.div>
 
         {/* 시그니처 메시지 */}
