@@ -271,6 +271,134 @@ export type Database = {
         }
         Relationships: []
       }
+      boxing_condition_logs: {
+        Row: {
+          condition_type: string
+          created_at: string
+          energy_level: number | null
+          id: string
+          note: string | null
+          pain_area: string[]
+          selected_at: string
+          user_id: string
+        }
+        Insert: {
+          condition_type: string
+          created_at?: string
+          energy_level?: number | null
+          id?: string
+          note?: string | null
+          pain_area?: string[]
+          selected_at?: string
+          user_id: string
+        }
+        Update: {
+          condition_type?: string
+          created_at?: string
+          energy_level?: number | null
+          id?: string
+          note?: string | null
+          pain_area?: string[]
+          selected_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      boxing_cornerman_daily_syncs: {
+        Row: {
+          bonus_claimed: boolean
+          created_at: string
+          gems_granted: number
+          id: string
+          pair_id: string
+          quest_xp_granted: number
+          respect_granted: number
+          sync_date: string
+          updated_at: string
+          user_a_completed: boolean
+          user_a_id: string
+          user_b_completed: boolean
+          user_b_id: string
+        }
+        Insert: {
+          bonus_claimed?: boolean
+          created_at?: string
+          gems_granted?: number
+          id?: string
+          pair_id: string
+          quest_xp_granted?: number
+          respect_granted?: number
+          sync_date?: string
+          updated_at?: string
+          user_a_completed?: boolean
+          user_a_id: string
+          user_b_completed?: boolean
+          user_b_id: string
+        }
+        Update: {
+          bonus_claimed?: boolean
+          created_at?: string
+          gems_granted?: number
+          id?: string
+          pair_id?: string
+          quest_xp_granted?: number
+          respect_granted?: number
+          sync_date?: string
+          updated_at?: string
+          user_a_completed?: boolean
+          user_a_id?: string
+          user_b_completed?: boolean
+          user_b_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_cornerman_daily_syncs_pair_id_fkey"
+            columns: ["pair_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_cornerman_pairs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_cornerman_pairs: {
+        Row: {
+          accepted_at: string | null
+          branch_name: string | null
+          created_at: string
+          ended_at: string | null
+          id: string
+          metadata: Json
+          receiver_user_id: string
+          requested_at: string
+          requester_user_id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          branch_name?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          metadata?: Json
+          receiver_user_id: string
+          requested_at?: string
+          requester_user_id: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          branch_name?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          metadata?: Json
+          receiver_user_id?: string
+          requested_at?: string
+          requester_user_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       boxing_engagement_events: {
         Row: {
           action: string
@@ -489,6 +617,237 @@ export type Database = {
         }
         Relationships: []
       }
+      boxing_gym_raid_contributions: {
+        Row: {
+          contributed_at: string
+          contribution_type: string
+          contribution_value: number
+          id: string
+          metadata: Json
+          raid_id: string
+          source_id: string | null
+          source_type: string | null
+          user_id: string
+        }
+        Insert: {
+          contributed_at?: string
+          contribution_type: string
+          contribution_value?: number
+          id?: string
+          metadata?: Json
+          raid_id: string
+          source_id?: string | null
+          source_type?: string | null
+          user_id: string
+        }
+        Update: {
+          contributed_at?: string
+          contribution_type?: string
+          contribution_value?: number
+          id?: string
+          metadata?: Json
+          raid_id?: string
+          source_id?: string | null
+          source_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_gym_raid_contributions_raid_id_fkey"
+            columns: ["raid_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_gym_raids"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_gym_raid_reward_claims: {
+        Row: {
+          claimed_at: string
+          contribution_count: number
+          gems_granted: number
+          id: string
+          metadata: Json
+          quest_xp_granted: number
+          raid_id: string
+          respect_granted: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          contribution_count?: number
+          gems_granted?: number
+          id?: string
+          metadata?: Json
+          quest_xp_granted?: number
+          raid_id: string
+          respect_granted?: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          contribution_count?: number
+          gems_granted?: number
+          id?: string
+          metadata?: Json
+          quest_xp_granted?: number
+          raid_id?: string
+          respect_granted?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_gym_raid_reward_claims_raid_id_fkey"
+            columns: ["raid_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_gym_raids"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_gym_raids: {
+        Row: {
+          branch_name: string
+          created_at: string
+          current_value: number
+          description: string
+          end_date: string
+          id: string
+          metadata: Json
+          raid_type: string
+          reward_gems: number
+          reward_quest_xp: number
+          reward_respect: number
+          start_date: string
+          status: string
+          target_value: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          branch_name: string
+          created_at?: string
+          current_value?: number
+          description: string
+          end_date: string
+          id?: string
+          metadata?: Json
+          raid_type: string
+          reward_gems?: number
+          reward_quest_xp?: number
+          reward_respect?: number
+          start_date: string
+          status?: string
+          target_value: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          branch_name?: string
+          created_at?: string
+          current_value?: number
+          description?: string
+          end_date?: string
+          id?: string
+          metadata?: Json
+          raid_type?: string
+          reward_gems?: number
+          reward_quest_xp?: number
+          reward_respect?: number
+          start_date?: string
+          status?: string
+          target_value?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      boxing_hidden_mission_claims: {
+        Row: {
+          claimed_at: string
+          gems_granted: number
+          id: string
+          metadata: Json
+          mission_id: string
+          quest_xp_granted: number
+          respect_granted: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          gems_granted?: number
+          id?: string
+          metadata?: Json
+          mission_id: string
+          quest_xp_granted?: number
+          respect_granted?: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          gems_granted?: number
+          id?: string
+          metadata?: Json
+          mission_id?: string
+          quest_xp_granted?: number
+          respect_granted?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_hidden_mission_claims_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_hidden_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_hidden_missions: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string
+          id: string
+          metadata: Json
+          reward_gems: number
+          reward_quest_xp: number
+          reward_respect: number
+          sort_order: number
+          title: string
+          trigger_type: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json
+          reward_gems?: number
+          reward_quest_xp?: number
+          reward_respect?: number
+          sort_order?: number
+          title: string
+          trigger_type: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json
+          reward_gems?: number
+          reward_quest_xp?: number
+          reward_respect?: number
+          sort_order?: number
+          title?: string
+          trigger_type?: string
+        }
+        Relationships: []
+      }
       boxing_quiz_attempts: {
         Row: {
           attempt_no: number
@@ -596,6 +955,87 @@ export type Database = {
           sort_order?: number
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      boxing_return_round_claims: {
+        Row: {
+          claimed_at: string
+          gems_granted: number
+          id: string
+          inactive_days: number
+          metadata: Json
+          mission_code: string
+          quest_xp_granted: number
+          return_type: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          gems_granted?: number
+          id?: string
+          inactive_days: number
+          metadata?: Json
+          mission_code: string
+          quest_xp_granted?: number
+          return_type: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          gems_granted?: number
+          id?: string
+          inactive_days?: number
+          metadata?: Json
+          mission_code?: string
+          quest_xp_granted?: number
+          return_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      boxing_shadow_boxer_claims: {
+        Row: {
+          claimed_at: string
+          comparison_window: string
+          current_score: number
+          gems_granted: number
+          growth_rate: number
+          id: string
+          improved: boolean
+          metadata: Json
+          quest_xp_granted: number
+          respect_granted: number
+          shadow_score: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          comparison_window?: string
+          current_score?: number
+          gems_granted?: number
+          growth_rate?: number
+          id?: string
+          improved?: boolean
+          metadata?: Json
+          quest_xp_granted?: number
+          respect_granted?: number
+          shadow_score?: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          comparison_window?: string
+          current_score?: number
+          gems_granted?: number
+          growth_rate?: number
+          id?: string
+          improved?: boolean
+          metadata?: Json
+          quest_xp_granted?: number
+          respect_granted?: number
+          shadow_score?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -2794,6 +3234,29 @@ export type Database = {
             }
             Returns: Json
           }
+      boxing_calc_inactive_days: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
+      boxing_cornerman_expire_stale_pending: { Args: never; Returns: undefined }
+      boxing_cornerman_has_active_pair: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      boxing_cornerman_user_branch: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
+      boxing_cornerman_user_completed_today: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      boxing_gym_raid_lazy_expire: { Args: never; Returns: undefined }
+      boxing_return_type_for_days: { Args: { p_days: number }; Returns: string }
+      boxing_shadow_metric_period: {
+        Args: { p_end: string; p_start: string; p_user_id: string }
+        Returns: Json
+      }
       bulk_complete_member: {
         Args: {
           _member_id: string
@@ -2803,14 +3266,25 @@ export type Database = {
         }
         Returns: Json
       }
+      check_and_claim_hidden_missions: { Args: never; Returns: Json }
       check_customization_unlock: {
         Args: { _category: string; _item_key: string }
         Returns: boolean
       }
+      claim_cornerman_daily_bonus: { Args: never; Returns: Json }
+      claim_gym_raid_reward: { Args: { p_raid_id: string }; Returns: Json }
       claim_hof_first_entry: { Args: never; Returns: Json }
       claim_hof_monthly_reward: { Args: never; Returns: Json }
       claim_hof_season_reward: { Args: never; Returns: Json }
       claim_hof_weekly_reward: { Args: never; Returns: Json }
+      claim_return_round_reward: {
+        Args: { p_mission_code: string }
+        Returns: Json
+      }
+      claim_shadow_boxer_reward: {
+        Args: { p_window_days?: number }
+        Returns: Json
+      }
       claim_tutorial_step_reward: { Args: { _step: number }; Returns: Json }
       coach_list_post_program_members: {
         Args: { _filter?: string }
@@ -2830,6 +3304,10 @@ export type Database = {
       }
       complete_tutorial_and_grant_reward: { Args: never; Returns: Json }
       complete_tutorial_once: { Args: { _final_step?: number }; Returns: Json }
+      contribute_to_gym_raid: {
+        Args: { p_source_id?: string; p_source_type: string }
+        Returns: Json
+      }
       create_diet_coach_note: {
         Args: {
           _enrollment_id: string
@@ -2848,6 +3326,7 @@ export type Database = {
         Args: { _enrollment_id: string }
         Returns: Json
       }
+      end_cornerman_pair: { Args: { p_pair_id: string }; Returns: Json }
       end_extend_cycle: {
         Args: { _plan_id: string; _result: string }
         Returns: Json
@@ -2866,6 +3345,7 @@ export type Database = {
       }
       enter_master_track: { Args: { _member_id: string }; Returns: Json }
       equip_avatar_item: { Args: { _item_id: string }; Returns: undefined }
+      get_active_gym_raids: { Args: never; Returns: Json }
       get_boss_conquerors: {
         Args: { _branch_name?: string; _limit?: number }
         Returns: {
@@ -2878,9 +3358,24 @@ export type Database = {
           rank_position: number
         }[]
       }
+      get_boxing_iq_league_summary: { Args: never; Returns: Json }
       get_branch_stats: { Args: { _branch_name: string }; Returns: Json }
       get_caller_age: { Args: never; Returns: number }
       get_caller_user_level: { Args: never; Returns: number }
+      get_coach_quest_dashboard: {
+        Args: { p_branch_name?: string }
+        Returns: Json
+      }
+      get_cornerman_candidates: {
+        Args: { p_limit?: number }
+        Returns: {
+          branch_name: string
+          current_level: number
+          current_rank: string
+          display_name: string
+          user_id: string
+        }[]
+      }
       get_customization_required_level: {
         Args: { _category: string; _item_key: string }
         Returns: number
@@ -2942,12 +3437,34 @@ export type Database = {
       }
       get_my_boxing_engagement_summary: { Args: never; Returns: Json }
       get_my_branch: { Args: never; Returns: string }
+      get_my_cornerman_status: { Args: never; Returns: Json }
+      get_my_hidden_mission_progress: { Args: never; Returns: Json }
       get_nutrition_profile: { Args: { _user_id?: string }; Returns: Json }
       get_post_program_plan: { Args: { _user_id?: string }; Returns: Json }
       get_quest_xp: {
         Args: { qt: Database["public"]["Enums"]["quest_type"] }
         Returns: number
       }
+      get_recent_boxing_conditions: {
+        Args: { p_days?: number }
+        Returns: {
+          condition_type: string
+          created_at: string
+          energy_level: number | null
+          id: string
+          note: string | null
+          pain_area: string[]
+          selected_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "boxing_condition_logs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_return_round_status: { Args: never; Returns: Json }
       get_rivals_above: {
         Args: { _count?: number; _user_id: string }
         Returns: {
@@ -2972,6 +3489,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_shadow_boxer_snapshot: {
+        Args: { p_window_days?: number }
+        Returns: Json
+      }
       get_signup_providers: {
         Args: { _user_ids: string[] }
         Returns: {
@@ -2991,6 +3512,7 @@ export type Database = {
           rank_position: number
         }[]
       }
+      get_today_boxing_condition: { Args: never; Returns: Json }
       get_weekly_activity_ranking: {
         Args: { _branch_name?: string; _limit?: number }
         Returns: {
@@ -3086,6 +3608,10 @@ export type Database = {
         Returns: undefined
       }
       request_branch_transfer: { Args: { _to_branch: string }; Returns: string }
+      request_cornerman_pair: {
+        Args: { p_receiver_user_id: string }
+        Returns: Json
+      }
       request_mission_revision: {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
@@ -3093,6 +3619,10 @@ export type Database = {
       resolve_diet_track: {
         Args: never
         Returns: Database["public"]["Enums"]["diet_track"]
+      }
+      respond_cornerman_pair: {
+        Args: { p_action: string; p_pair_id: string }
+        Returns: Json
       }
       restart_tutorial: { Args: never; Returns: Json }
       review_diet_log: {
@@ -3147,6 +3677,15 @@ export type Database = {
         Returns: Json
       }
       set_rival: { Args: { _rival_id: string }; Returns: undefined }
+      submit_boxing_condition: {
+        Args: {
+          p_condition_type: string
+          p_energy_level?: number
+          p_note?: string
+          p_pain_area?: string[]
+        }
+        Returns: Json
+      }
       submit_boxing_fun_challenge_attempt: {
         Args: {
           p_challenge_id: string
