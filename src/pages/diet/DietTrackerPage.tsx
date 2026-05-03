@@ -168,7 +168,7 @@ const DietTrackerPage = () => {
       const grade =
         params.timingGrade ?? gradeTimingBySlot(slotForGrade, completedAt);
       const isCore =
-        params.isCore ?? params.mission?.severity === "core" ?? false;
+        params.isCore ?? (params.mission?.severity === "core" ? true : false);
       const score = calcQuestScore({
         isCore,
         timingGrade: grade,
