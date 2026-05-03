@@ -51,9 +51,11 @@ const RAID_TYPE_LABEL: Record<string, string> = {
 
 export interface LiveGymRaidStripProps {
   branchName: string;
+  /** "center" = 가로 그리드 (기본), "sidebar" = 세로 스택 (우측 패널용) */
+  variant?: "center" | "sidebar";
 }
 
-const LiveGymRaidStrip = ({ branchName }: LiveGymRaidStripProps) => {
+const LiveGymRaidStrip = ({ branchName, variant = "center" }: LiveGymRaidStripProps) => {
   const [raids, setRaids] = useState<RaidRow[]>([]);
 
   useEffect(() => {
@@ -86,17 +88,31 @@ const LiveGymRaidStrip = ({ branchName }: LiveGymRaidStripProps) => {
 
   if (raids.length === 0) return null;
 
+  const isSidebar = variant === "sidebar";
+
   return (
-    <div className="mx-6 mb-4 rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/10 via-gray-900/80 to-primary/10 px-6 py-5">
-      <div className="mb-4 flex items-center gap-3">
-        <Flag className="h-7 w-7 text-primary" />
-        <h2 className="text-2xl font-black tracking-wide text-primary">
-          짐 레이드 — 우리 지점이 함께 깨는 목표
+    <div
+      className={`rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/10 via-gray-900/80 to-primary/10 ${
+        isSidebar ? "px-4 py-3" : "mx-6 mb-4 px-6 py-5"
+      }`}
+    >
+      <div className={`flex items-center gap-2 ${isSidebar ? "mb-3" : "mb-4 gap-3"}`}>
+        <Flag className={isSidebar ? "h-5 w-5 text-primary" : "h-7 w-7 text-primary"} />
+        <h2
+          className={`font-black tracking-wide text-primary ${
+            isSidebar ? "text-base" : "text-2xl"
+          }`}
+        >
+          {isSidebar ? "짐 레이드" : "짐 레이드 — 우리 지점이 함께 깨는 목표"}
         </h2>
         <div className="h-px flex-1 bg-gradient-to-r from-primary/40 to-transparent" />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <div
+        className={`grid gap-2.5 ${
+          isSidebar ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-3"
+        }`}
+      >
         {raids.slice(0, 3).map((r) => {
           const percentage = Math.min(
             100,
@@ -109,7 +125,9 @@ const LiveGymRaidStrip = ({ branchName }: LiveGymRaidStripProps) => {
           return (
             <div
               key={r.id}
-              className={`rounded-xl border px-4 py-3 ${
+              className={`rounded-xl border ${
+                isSidebar ? "px-3 py-2" : "px-4 py-3"
+              } ${
                 completed
                   ? "border-yellow-500/50 bg-yellow-500/5"
                   : "border-white/10 bg-black/30"
@@ -120,24 +138,32 @@ const LiveGymRaidStrip = ({ branchName }: LiveGymRaidStripProps) => {
                   : undefined,
               }}
             >
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="flex items-center gap-1.5 truncate text-base font-black text-white">
+              <div className={`${isSidebar ? "mb-1.5" : "mb-2"} flex items-center justify-between gap-2`}>
+                <p
+                  className={`flex items-center gap-1 truncate font-black text-white ${
+                    isSidebar ? "text-sm" : "text-base gap-1.5"
+                  }`}
+                >
                   <span>
                     {RAID_TYPE_EMOJI[r.raid_type] ?? "🎯"}
                   </span>
                   {r.title}
                 </p>
                 <p
-                  className={`shrink-0 text-lg font-black tabular-nums ${
-                    completed ? "text-yellow-400" : "text-primary"
-                  }`}
+                  className={`shrink-0 font-black tabular-nums ${
+                    isSidebar ? "text-sm" : "text-lg"
+                  } ${completed ? "text-yellow-400" : "text-primary"}`}
                 >
                   {percentage}%
                 </p>
               </div>
 
               {/* 진척바 */}
-              <div className="h-3 overflow-hidden rounded-full bg-gray-800/80">
+              <div
+                className={`overflow-hidden rounded-full bg-gray-800/80 ${
+                  isSidebar ? "h-2" : "h-3"
+                }`}
+              >
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${percentage}%` }}
@@ -150,7 +176,11 @@ const LiveGymRaidStrip = ({ branchName }: LiveGymRaidStripProps) => {
                 />
               </div>
 
-              <p className="mt-1.5 text-xs text-gray-400 tabular-nums">
+              <p
+                className={`mt-1 text-gray-400 tabular-nums ${
+                  isSidebar ? "text-[10px]" : "mt-1.5 text-xs"
+                }`}
+              >
                 {Math.round(r.current_value).toLocaleString()} /{" "}
                 {Math.round(r.target_value).toLocaleString()}{" "}
                 <span className="text-gray-600">

@@ -651,9 +651,6 @@ const LiveBoardPage = () => {
             )}
           </div>
 
-          {/* ── 짐 레이드 strip (v2 21단계 활용) ── */}
-          {branchName && <LiveGymRaidStrip branchName={branchName} />}
-
           {/* ── Bottom: Hall of Fame banner ── */}
           {hallMembers.length > 0 && (
             <div className="mx-6 mb-4 rounded-2xl border-2 border-yellow-600/40 bg-gradient-to-r from-yellow-950/60 via-gray-900/80 to-yellow-950/60 px-8 py-6">
@@ -721,37 +718,9 @@ const LiveBoardPage = () => {
             </div>
           </div>
 
-          {/* Today visits — deduplicated */}
-          <div className="flex-1 overflow-y-auto min-h-[20vh]">
-            <div className="px-5 py-4 border-b border-gray-800/40 sticky top-0 bg-gray-900/90 backdrop-blur-sm z-10">
-              <h2 className="text-2xl font-black text-gray-400">📋 오늘 방문 ({dailyVisits.length})</h2>
-            </div>
-            <div className="px-3 py-2">
-              {dailyVisits.length === 0 ? (
-                <div className="text-center py-10 text-gray-600">
-                  <p className="text-4xl mb-3">🥊</p>
-                  <p className="text-xl font-bold">아직 체크인이 없습니다</p>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {dailyVisits.map((v) => (
-                    <div key={v.user_id} className="flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-gray-800/30 transition-colors">
-                      <MemberAvatar url={avatarMap[v.user_id]} name={v.display_name} sizeClass="h-11 w-11" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xl font-black text-gray-200 truncate leading-tight">{v.display_name}</p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className={`inline-flex px-1.5 py-0.5 rounded text-xs font-black ${RANK_BADGE_COLORS[v.league] || "bg-gray-700 text-gray-300"}`}>
-                            {RANK_LABELS[v.league] || v.league} 리그
-                          </span>
-                          <span className="text-sm text-gray-500 font-bold">레벨 {v.level}</span>
-                        </div>
-                      </div>
-                      <span className="text-lg text-gray-500 tabular-nums font-black">{fmtTime(v.last_checkin_at)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          {/* 짐 레이드 — sidebar variant (오늘 방문 자리에 표시) */}
+          <div className="flex-shrink-0 overflow-y-auto p-4">
+            {branchName && <LiveGymRaidStrip branchName={branchName} variant="sidebar" />}
           </div>
         </div>
       </div>
