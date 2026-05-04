@@ -40,6 +40,7 @@ import TodayActionCard, { type TodayActionState } from "@/components/home/TodayA
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
+import { useDisplayMode } from "@/hooks/useDisplayMode";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
 
@@ -64,6 +65,7 @@ const HomePage = () => {
   const { onboardingDone } = useOnboardingState();
   const { totalXp, metrics } = useLocalProgress();
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
+  const { resolveSlot: resolveDisplaySlot } = useDisplayMode();
   useLevelUpNotifications();
   useHofRewardsAutoClaim();
 
@@ -315,11 +317,22 @@ const HomePage = () => {
         )}
 
         {/* ─── 1. Hero Status — 프로복서 라이센스 카드 ─── */}
-        {homeWidgets.hero && (
+        {/* photo 우선순위: useDisplayMode 환경설정 (auto = 사진→캐릭터→이니셜) */}
+        {homeWidgets.hero && (() => {
+          const hasAvatar = !!profile?.avatar_url;
+          const hasCharacter = !!myCharacter?.character_presets;
+          const slot = resolveDisplaySlot(hasAvatar, hasCharacter);
+          return (
           <BoxerLicenseCard
             size="hero"
             photo={
-              myCharacter?.character_presets ? (
+              slot === "photo" && profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.nickname || profile.name || "프로필"}
+                  className="h-full w-full object-cover"
+                />
+              ) : slot === "character" && myCharacter?.character_presets ? (
                 <CharacterSprite
                   style={(myCharacter.character_presets.parts_json as any)?.style}
                   userId={user?.id}
@@ -332,7 +345,19 @@ const HomePage = () => {
                   priority
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-5xl">🥊</div>
+                <div className="flex h-full w-full items-center justify-center text-5xl font-black text-white"
+                  style={{
+                    background: rank === "blue"
+                      ? "linear-gradient(135deg, hsl(215, 100%, 35%), hsl(215, 100%, 18%))"
+                      : rank === "red"
+                        ? "linear-gradient(135deg, hsl(0, 84%, 35%), hsl(0, 84%, 18%))"
+                        : rank === "black"
+                          ? "linear-gradient(135deg, hsl(42, 60%, 22%), hsl(0, 0%, 8%))"
+                          : "linear-gradient(135deg, hsl(220, 14%, 35%), hsl(220, 14%, 22%))",
+                  }}
+                >
+                  {(profile?.nickname || profile?.name || "🥊").charAt(0)}
+                </div>
               )
             }
             name={profile.nickname || profile.name || "복서"}
@@ -346,7 +371,8 @@ const HomePage = () => {
             xpToNext={Math.max(metrics.xp.target, totalXp || 1)}
             isMaster={isMaster40}
           />
-        )}
+          );
+        })()}
 
         {/* ─── 핵심: 오늘의 액션 (상태별 자동 변경) ─── */}
         <TodayActionCard

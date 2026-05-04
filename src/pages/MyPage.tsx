@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTutorialState } from "@/hooks/useTutorialState";
 import RankBadge from "@/components/RankBadge";
 import AvatarUpload from "@/components/AvatarUpload";
+import DisplayModeToggle from "@/components/profile/DisplayModeToggle";
 import XPBar from "@/components/XPBar";
 import CharacterSprite from "@/components/CharacterSprite";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
@@ -200,6 +201,11 @@ const MyPage = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* 라이센스 카드 표시 모드 토글 */}
+        <div className="animate-slide-up" style={{ animationDelay: "0.025s" }}>
+          <DisplayModeToggle />
         </div>
 
         {/* XP & Stats */}

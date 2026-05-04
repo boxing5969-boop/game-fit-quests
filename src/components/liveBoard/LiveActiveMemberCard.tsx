@@ -15,7 +15,6 @@
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import CharacterSprite from "@/components/CharacterSprite";
 import BoxerLicenseCard, { type LicenseSize } from "@/components/license/BoxerLicenseCard";
 
@@ -46,7 +45,7 @@ export interface LiveActiveMemberCardProps {
   isFresh?: boolean;
 }
 
-/** 라이브 카드 내부에서 보여줄 photo (CharacterSprite > avatar > 이니셜) */
+/** 라이브 카드 photo 우선순위: avatar_url(사진) > 회원 설정 캐릭터(CharacterSprite) > 이니셜 */
 const PhotoSlot = ({
   member,
   size,
@@ -57,17 +56,18 @@ const PhotoSlot = ({
   const rankKey = (member.league ?? "white").toLowerCase();
   const spriteSize: "xs" | "sm" | "md" = size === "compact" ? "xs" : size === "spotlight" ? "md" : "sm";
 
+  // 1순위 — 본인이 업로드한 사진
   if (member.avatar_url) {
     return (
-      <Avatar className="h-full w-full">
-        <AvatarImage src={member.avatar_url} alt={member.name} />
-        <AvatarFallback className="bg-gray-800 text-white font-black">
-          {member.name.charAt(0)}
-        </AvatarFallback>
-      </Avatar>
+      <img
+        src={member.avatar_url}
+        alt={member.name}
+        className="h-full w-full object-cover"
+      />
     );
   }
 
+  // 2순위 — 캐릭터 스튜디오에서 설정한 캐릭터
   if (member.partsJson) {
     return (
       <CharacterSprite
@@ -80,7 +80,7 @@ const PhotoSlot = ({
     );
   }
 
-  // Letter fallback (rank-colored gradient)
+  // 3순위 — 이니셜 fallback (리그 색 그라디언트)
   const fallbackBg =
     rankKey === "blue"
       ? "linear-gradient(135deg, hsl(215, 100%, 35%) 0%, hsl(215, 100%, 18%) 100%)"

@@ -56,6 +56,39 @@ const RANK_ACCENT_TEXT: Record<string, string> = {
   black: "text-yellow-300",
 };
 
+/** 리그별 사진 frame aurora — conic-gradient 회전 빛줄기 (등급↑ = 화려↑) */
+const AURORA_RING: Record<string, string> = {
+  white:
+    "conic-gradient(from 0deg, hsla(0, 0%, 100%, 0.85), hsla(0, 0%, 90%, 0.4), hsla(0, 0%, 100%, 0.85), hsla(0, 0%, 95%, 0.6), hsla(0, 0%, 100%, 0.85))",
+  blue:
+    "conic-gradient(from 0deg, hsla(215, 100%, 70%, 0.95), hsla(195, 100%, 80%, 0.7), hsla(215, 100%, 50%, 0.95), hsla(195, 100%, 75%, 0.85), hsla(215, 100%, 70%, 0.95))",
+  red:
+    "conic-gradient(from 0deg, hsla(0, 84%, 70%, 0.95), hsla(20, 100%, 75%, 0.85), hsla(42, 90%, 70%, 0.9), hsla(0, 84%, 50%, 0.95), hsla(20, 100%, 65%, 0.85), hsla(0, 84%, 70%, 0.95))",
+  black:
+    // 무지개 + 골드 — 가장 화려
+    "conic-gradient(from 0deg, hsla(42, 95%, 65%, 1), hsla(280, 80%, 65%, 0.95), hsla(195, 100%, 70%, 0.95), hsla(140, 80%, 60%, 0.95), hsla(20, 100%, 65%, 1), hsla(330, 85%, 65%, 0.95), hsla(42, 95%, 65%, 1))",
+};
+
+/** 리그별 회전 속도 (초) — 등급 올라갈수록 빠르게 */
+const AURORA_SPEED: Record<string, number> = {
+  white: 16,
+  blue: 12,
+  red: 9,
+  black: 6,
+};
+
+/** 카드 외곽 글로우 (등급별 강도 차등) */
+const CARD_GLOW: Record<string, string> = {
+  white:
+    "0 4px 20px rgba(255,255,255,0.1), 0 0 0 1px rgba(255,255,255,0.08)",
+  blue:
+    "0 6px 28px hsla(215, 100%, 65%, 0.35), 0 0 0 1.5px hsla(215, 100%, 60%, 0.4)",
+  red:
+    "0 8px 36px hsla(0, 84%, 60%, 0.4), 0 0 0 1.5px hsla(20, 100%, 60%, 0.45), 0 0 80px hsla(20, 100%, 55%, 0.15)",
+  black:
+    "0 10px 50px hsla(42, 95%, 60%, 0.55), 0 0 0 2px hsla(42, 95%, 60%, 0.6), 0 0 120px hsla(280, 70%, 55%, 0.25)",
+};
+
 /** user_id 해시 → 6자리 라이센스 번호 */
 function licenseNumber(userId?: string): string {
   if (!userId) return "------";
@@ -199,11 +232,9 @@ const BoxerLicenseCard = ({
       className={`relative w-full overflow-hidden rounded-2xl ${cfg.padding}`}
       style={{
         background: `linear-gradient(135deg, hsla(0, 0%, 6%, 0.97) 0%, hsla(0, 0%, 10%, 0.95) 100%)`,
-        boxShadow: isMaster
-          ? "0 8px 32px hsla(42, 90%, 64%, 0.4), 0 0 0 2px hsla(42, 90%, 64%, 0.6)"
-          : isFresh
-            ? "0 8px 24px hsla(160, 80%, 50%, 0.4), 0 0 0 2px hsla(160, 80%, 50%, 0.6)"
-            : "0 4px 20px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08)",
+        boxShadow: isFresh
+          ? "0 8px 24px hsla(160, 80%, 50%, 0.4), 0 0 0 2px hsla(160, 80%, 50%, 0.6)"
+          : CARD_GLOW[isMaster ? "black" : rankKey] ?? CARD_GLOW.white,
       }}
     >
       {/* ── 골드 트림 (얇은 외곽 그라디언트 라인) ── */}
@@ -252,21 +283,83 @@ const BoxerLicenseCard = ({
         <div className="flex items-start gap-3">
           {/* 사진 frame */}
           <div className="relative flex-shrink-0">
+            {/* 사진 frame + 회전 aurora ring (리그별 강도) */}
             <div
-              className={`${cfg.photoBox} relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-gray-800 to-gray-950`}
-              style={{
-                boxShadow: isMaster
-                  ? "0 0 0 2px hsla(42, 90%, 64%, 0.7), inset 0 0 20px hsla(42, 90%, 64%, 0.2)"
-                  : "inset 0 0 0 1px rgba(255,255,255,0.1)",
-              }}
+              className={`${cfg.photoBox} relative flex items-center justify-center rounded-xl`}
             >
-              {photo}
+              {/* 외곽 회전 aurora — 리그별 conic-gradient (등급↑ 빠르게) */}
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{
+                  duration: AURORA_SPEED[isMaster ? "black" : rankKey] ?? AURORA_SPEED.white,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                className="absolute inset-0 rounded-xl"
+                style={{
+                  background: AURORA_RING[isMaster ? "black" : rankKey] ?? AURORA_RING.white,
+                  filter: "blur(3px)",
+                }}
+                aria-hidden="true"
+              />
+
+              {/* 안쪽 어두운 padding 영역 (사진 외곽 ring 효과 만들기 위해) */}
+              <div className="absolute inset-[3px] rounded-[10px] bg-gradient-to-br from-gray-900 to-black" />
+
+              {/* 펄스 글로우 (블랙/마스터 추가 화려) */}
+              {(rankKey === "black" || isMaster) && (
+                <motion.div
+                  animate={{ opacity: [0.4, 0.95, 0.4] }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute inset-[3px] rounded-[10px] pointer-events-none"
+                  style={{
+                    boxShadow: "inset 0 0 30px hsla(42, 95%, 60%, 0.5), inset 0 0 60px hsla(280, 70%, 55%, 0.3)",
+                  }}
+                  aria-hidden="true"
+                />
+              )}
+
+              {/* ★ 별 입자 (블루 이상 — 등급↑ 별 더 많음) */}
+              {(rankKey === "blue" || rankKey === "red" || rankKey === "black" || isMaster) && (
+                <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl" aria-hidden="true">
+                  {[...Array(rankKey === "black" || isMaster ? 8 : rankKey === "red" ? 5 : 3)].map((_, i) => (
+                    <motion.span
+                      key={i}
+                      className="absolute"
+                      style={{
+                        left: `${(i * 37) % 90 + 5}%`,
+                        top: `${(i * 53) % 85 + 5}%`,
+                        fontSize: "8px",
+                        color: rankKey === "black" || isMaster ? "#F6C453" : rankKey === "red" ? "#FFB347" : "#A5D8FF",
+                      }}
+                      animate={{
+                        opacity: [0, 1, 0],
+                        scale: [0.5, 1.3, 0.5],
+                      }}
+                      transition={{
+                        duration: 1.6 + (i % 3) * 0.4,
+                        repeat: Infinity,
+                        delay: i * 0.25,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      ✦
+                    </motion.span>
+                  ))}
+                </div>
+              )}
+
+              {/* 사진/캐릭터 (z-index 위) */}
+              <div className="relative z-10 flex items-center justify-center w-full h-full overflow-hidden rounded-[10px]">
+                {photo}
+              </div>
+
               {/* "153" 워터마크 (대각선) — hero 만 표시 */}
               {size === "hero" && (
                 <span
-                  className="pointer-events-none absolute -bottom-1 -right-2 font-black opacity-10"
+                  className="pointer-events-none absolute z-20 -bottom-1 -right-1 font-black opacity-15"
                   style={{
-                    fontSize: "60px",
+                    fontSize: "48px",
                     color: "#fff",
                     transform: "rotate(-15deg)",
                   }}
