@@ -77,7 +77,7 @@ const LiveCompactGrid = ({
   if (currentPage.length === 0) return null;
 
   return (
-    <div className="mt-4 w-full">
+    <div className="mt-2 w-full">
       {/* 헤더 */}
       <div className="mb-2 flex items-center gap-2">
         <Users className="h-4 w-4 text-emerald-400" />

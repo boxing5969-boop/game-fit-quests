@@ -111,9 +111,9 @@ const LiveSpotlightStage = ({
   return (
     <div className="relative w-full">
       {/* 무대 헤더 */}
-      <div className="mb-3 flex items-center gap-2">
-        <Sparkles className="h-5 w-5 text-yellow-400" />
-        <h3 className="text-lg font-black uppercase tracking-wider text-yellow-300">
+      <div className="mb-2 flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-yellow-400" />
+        <h3 className="text-sm font-black uppercase tracking-wider text-yellow-300">
           오늘의 스포트라이트
         </h3>
         {totalPages > 1 && (
@@ -140,7 +140,7 @@ const LiveSpotlightStage = ({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -30 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className={`grid gap-4 ${gridCols}`}
+          className={`grid gap-3 ${gridCols}`}
         >
           {currentPage.map((m) => {
             const isFresh = Date.now() - m.startedAt < FRESH_THRESHOLD_MS;

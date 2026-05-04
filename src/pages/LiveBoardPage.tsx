@@ -641,8 +641,8 @@ const LiveBoardPage = () => {
       <div className="flex h-[calc(100vh-80px)] min-h-0">
         {/* ═══ Center: Main area — 명예의 전당 sticky bottom + 위쪽만 스크롤 ═══ */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {/* 상단: 스포트라이트 + 컴팩트 그리드 (스크롤 가능) */}
-          <div className="flex-1 flex flex-col relative px-6 py-4 overflow-y-auto min-h-0">
+          {/* 상단: 스포트라이트 + 컴팩트 그리드 (37명까지 스크롤 없이 fit) */}
+          <div className="flex-1 flex flex-col relative px-4 py-2 overflow-y-auto min-h-0">
             {/*
               Cinematic 업그레이드:
               · 새 입실 popup 은 그대로 유지 (큰 SDBoxerCharacter, 7초 표시)
@@ -684,17 +684,17 @@ const LiveBoardPage = () => {
               </div>
             ) : combinedMembers.length > 0 ? (
               <div className="flex flex-1 flex-col">
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />
-                  <h2 className="text-2xl font-black tracking-wide text-emerald-300">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <h2 className="text-base font-black tracking-wide text-emerald-300">
                     🥊 지금 운동 중
                   </h2>
-                  <p className="number-font text-2xl font-black text-emerald-400 tabular-nums">
+                  <p className="number-font text-base font-black text-emerald-400 tabular-nums">
                     {combinedMembers.length}
-                    <span className="ml-1 text-base text-emerald-500/70">명</span>
+                    <span className="ml-1 text-xs text-emerald-500/70">명</span>
                   </p>
                   {mockMembers.length > 0 && (
-                    <span className="rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-black text-purple-300">
+                    <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-black text-purple-300">
                       mock {mockMembers.length}
                     </span>
                   )}
