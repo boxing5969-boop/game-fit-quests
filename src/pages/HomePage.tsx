@@ -21,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Enums } from "@/integrations/supabase/types";
 import { isManagerRole } from "@/lib/rankLabels";
 import { getLevelById } from "@/data/allLevelsData";
-import { RANK_LABELS, RANK_ICONS } from "@/data/sharedConstants";
+import { RANK_LABELS } from "@/data/sharedConstants";
 
 import CharacterSprite from "@/components/CharacterSprite";
 import SelfChallengeFlow from "@/components/SelfChallengeFlow";
@@ -39,13 +39,13 @@ import { useHomeLayout } from "@/lib/homeLayout";
 import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
+import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
 
 import {
   AppPage,
   PageHeader,
-  HeroStatusCard,
   XPBar,
   RankingItem,
   EmptyState,
@@ -187,9 +187,9 @@ const HomePage = () => {
       ? "오늘 루틴으로 리그 진입"
       : "리듬 올라가는 중";
 
+  // leagueIcon/leagueName — 옛 HeroStatusCard 에서 사용. 라이센스 카드 도입으로 미사용.
   const isMasterDisplay = isMaster40 || isManagerRole(role);
-  const leagueIcon = isMasterDisplay ? "👑" : RANK_ICONS[rank];
-  const leagueName = isMasterDisplay ? "마스터" : `${RANK_LABELS[rank]} 리그`;
+  void isMasterDisplay;
   // missionTitle/SELF_CHALLENGE_BONUS_XP — 옛 MissionCard 에서 사용됨, Option C 에서는 미사용
   void unifiedLevel; void currentLevel;
 
@@ -314,34 +314,37 @@ const HomePage = () => {
           />
         )}
 
-        {/* ─── 1. Hero Status ─── (커스텀 토글) */}
+        {/* ─── 1. Hero Status — 프로복서 라이센스 카드 ─── */}
         {homeWidgets.hero && (
-          <HeroStatusCard
-            character={
+          <BoxerLicenseCard
+            size="hero"
+            photo={
               myCharacter?.character_presets ? (
                 <CharacterSprite
                   style={(myCharacter.character_presets.parts_json as any)?.style}
                   userId={user?.id}
                   partsJson={myCharacter.character_presets.parts_json as any}
-                  size="lg"
+                  size="md"
                   animate
                   league={rank}
                   level={progress.current_level}
-                  auraMode="detail"
+                  auraMode="compact"
                   priority
                 />
               ) : (
-                <div className="flex h-32 w-32 items-center justify-center rounded-pill bg-muted text-6xl">
-                  🥊
-                </div>
+                <div className="flex h-full w-full items-center justify-center text-5xl">🥊</div>
               )
             }
-            leagueIcon={leagueIcon}
-            leagueName={leagueName}
+            name={profile.nickname || profile.name || "복서"}
+            branch={profile.branch_name}
+            league={rank}
             level={progress.current_level}
+            userId={user?.id}
+            issueDate={(profile as { created_at?: string }).created_at}
+            streakDays={progress.streak_days}
             totalXp={totalXp}
             xpToNext={Math.max(metrics.xp.target, totalXp || 1)}
-            streakDays={progress.streak_days}
+            isMaster={isMaster40}
           />
         )}
 
