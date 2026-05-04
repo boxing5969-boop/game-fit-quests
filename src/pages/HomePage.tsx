@@ -39,6 +39,7 @@ import { useHomeLayout } from "@/lib/homeLayout";
 import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
+import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import { useDisplayMode } from "@/hooks/useDisplayMode";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
@@ -423,6 +424,7 @@ const HomePage = () => {
           count={
             (homeWidgets.masterTrack && (progress as any)?.master_track_unlocked ? 1 : 0) +
             1 /* engagement */ +
+            1 /* story-rpg */ +
             (profile?.diet_program_enabled ? 1 : 0) +
             (homeWidgets.weeklyProgress ? 1 : 0) +
             (homeWidgets.rankingPreview ? 1 : 0)
@@ -435,6 +437,9 @@ const HomePage = () => {
 
           {/* 153 QUEST 몰입 카드 (코너맨/그림자복서/짐레이드) */}
           <HomeEngagementSection />
+
+          {/* 153 스토리 RPG — 복서의 길 진입 카드 */}
+          <StoryRpgEntryCard />
 
           {/* 이번 주 진행도 */}
           {homeWidgets.weeklyProgress && (

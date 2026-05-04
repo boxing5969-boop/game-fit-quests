@@ -65,6 +65,7 @@ const DietCoachInboxPage = lazy(() => import("@/pages/diet/coach/DietCoachInboxP
 const DietMemberDetailPage = lazy(() => import("@/pages/diet/coach/DietMemberDetailPage"));
 const LiveBoardPage = lazy(() => import("@/pages/LiveBoardPage"));
 const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdminDashboard"));
+const StoryRpgPage = lazy(() => import("@/pages/StoryRpgPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -208,6 +209,7 @@ const AppRoutes = () => {
         <Route path="/manager/member/:memberId/preview" element={<ProtectedRoute><ManagerRoute><MemberPreviewPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/checkin-board" element={<ProtectedRoute><ManagerRoute><CheckinBoardPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><ManagerRoute><SuperAdminDashboard /></ManagerRoute></ProtectedRoute>} />
+        <Route path="/story-rpg" element={<ProtectedRoute><StoryRpgPage /></ProtectedRoute>} />
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
