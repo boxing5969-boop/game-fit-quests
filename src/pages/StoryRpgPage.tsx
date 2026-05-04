@@ -1,5 +1,10 @@
 /**
- * 153 스토리 RPG — 메인 페이지 (단계 36~38).
+ * 153 스토리 RPG — 메인 페이지 (단계 36~41).
+ *
+ * 41단계 업그레이드:
+ *   · 비주얼 월드맵에서 챕터 노드 탭 → 전투 모달 (StoryBattleScreen)
+ *   · 액션 클릭 → 페이지 navigate → 돌아오면 자동 sync
+ *   · 조건 충족 + claim 성공 → VICTORY 풀스크린 (StoryVictoryOverlay)
  *
  * 보호 원칙:
  *   · 공식 1~40 시스템과 분리. member_progress 미수정.
@@ -9,7 +14,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { useStoryRpgState, useSyncStoryProgress } from "@/hooks/useStoryRpg";
+import { toast } from "sonner";
+import {
+  useClaimStoryReward,
+  useStoryRpgState,
+  useSyncStoryProgress,
+} from "@/hooks/useStoryRpg";
 import StoryRpgPageHeader from "@/components/story-rpg/StoryRpgPageHeader";
 import StoryRpgProtectionNotice from "@/components/story-rpg/StoryRpgProtectionNotice";
 import StoryRouteSelect from "@/components/story-rpg/StoryRouteSelect";
@@ -19,11 +29,19 @@ import StoryWorldMap from "@/components/story-rpg/StoryWorldMap";
 import StoryDialogBox from "@/components/story-rpg/StoryDialogBox";
 import StoryQuestActions from "@/components/story-rpg/StoryQuestActions";
 import StoryRewardPanel from "@/components/story-rpg/StoryRewardPanel";
+import StoryBattleScreen from "@/components/story-rpg/StoryBattleScreen";
+import StoryVictoryOverlay from "@/components/story-rpg/StoryVictoryOverlay";
 import {
+  STORY_ALREADY_CLAIMED_BODY,
+  STORY_NOT_COMPLETE_BODY,
   STORY_ROUTE_NOT_SELECTED,
   STORY_ROUTE_SELECT_HINT,
 } from "@/data/storyRpgCopy";
-import type { StoryChapterSyncEntry } from "@/types/storyRpg";
+import type {
+  StoryChapter,
+  StoryChapterSyncEntry,
+  StoryRewardResult,
+} from "@/types/storyRpg";
 
 const StoryRpgPage = () => {
   const { data, isLoading } = useStoryRpgState();
@@ -56,15 +74,13 @@ const StoryRpgPage = () => {
 
   const questActionsRef = useRef<HTMLDivElement | null>(null);
 
-  // 39단계: active 루트가 있으면 페이지 진입 시 진행도 자동 sync.
-  // sync 결과는 chapter 별 진행률 표시 + 보상 패널에 사용된다.
+  // ─── 진행도 sync ───────────────────────────────────────────
   const sync = useSyncStoryProgress();
   const [syncEntries, setSyncEntries] = useState<StoryChapterSyncEntry[]>([]);
   const lastSyncedRouteRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!activeRoute) return;
-    // 같은 route 에 대해 1회만 자동 sync (수동 새로고침은 별도)
     if (lastSyncedRouteRef.current === activeRoute.code) return;
     lastSyncedRouteRef.current = activeRoute.code;
     sync.mutate(activeRoute.code, {
@@ -72,15 +88,69 @@ const StoryRpgPage = () => {
         if (res?.chapters) setSyncEntries(res.chapters);
       },
     });
-    // sync mutate 는 stable — deps 에 sync 자체를 넣으면 무한 루프
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeRoute?.code]);
 
-  const handleManualSync = () => {
+  const runSync = () => {
     if (!activeRoute) return;
     sync.mutate(activeRoute.code, {
       onSuccess: (res) => {
         if (res?.chapters) setSyncEntries(res.chapters);
+      },
+    });
+  };
+
+  // 페이지 visibility/focus 시 자동 sync (다른 페이지에서 활동 후 돌아왔을 때)
+  useEffect(() => {
+    if (!activeRoute) return;
+    const handler = () => {
+      if (document.visibilityState === "visible") runSync();
+    };
+    document.addEventListener("visibilitychange", handler);
+    window.addEventListener("focus", handler);
+    return () => {
+      document.removeEventListener("visibilitychange", handler);
+      window.removeEventListener("focus", handler);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeRoute?.code]);
+
+  // ─── 전투 + 승리 모달 상태 ──────────────────────────────────
+  const [battleChapter, setBattleChapter] = useState<StoryChapter | null>(null);
+  const [victory, setVictory] = useState<{
+    chapter: StoryChapter;
+    result: StoryRewardResult;
+  } | null>(null);
+
+  const battleSyncDetail = useMemo(() => {
+    if (!battleChapter) return null;
+    return (
+      syncEntries.find((e) => e.chapter_id === battleChapter.id)?.detail ?? null
+    );
+  }, [battleChapter, syncEntries]);
+
+  const claim = useClaimStoryReward();
+
+  const handleClaimFromBattle = () => {
+    if (!battleChapter) return;
+    claim.mutate(battleChapter.id, {
+      onSuccess: (res) => {
+        if (!res.success) {
+          toast.error(res.reason ?? STORY_NOT_COMPLETE_BODY);
+          return;
+        }
+        if (res.already_claimed) {
+          toast.message(STORY_ALREADY_CLAIMED_BODY);
+          setBattleChapter(null);
+          return;
+        }
+        setVictory({ chapter: battleChapter, result: res });
+        setBattleChapter(null);
+      },
+      onError: (err) => {
+        toast.error(
+          err instanceof Error ? err.message : "보상 수령에 실패했습니다.",
+        );
       },
     });
   };
@@ -90,14 +160,12 @@ const StoryRpgPage = () => {
       <StoryRpgPageHeader />
 
       <div className="mx-auto w-full max-w-screen-sm space-y-4 px-4 pt-2">
-        {/* 내 복서 캐릭터 패널 (공식 리그/레벨 read-only) */}
         <StoryCharacterPanel
           official={official}
           activeRoute={activeRoute}
           activeProgress={activeProgress}
         />
 
-        {/* 현재 복서의 길 요약 */}
         <section className="rounded-2xl border border-white/10 bg-gray-900/40 p-4">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">
             현재 복서의 길
@@ -133,11 +201,11 @@ const StoryRpgPage = () => {
           )}
         </section>
 
-        {/* 오삼이 대화창 — active 루트가 있을 때만 */}
         {activeRouteId && currentChapter && (
           <StoryDialogBox
             chapter={currentChapter}
             dialogues={dialogues}
+            onChallenge={() => setBattleChapter(currentChapter)}
             onOpenQuests={() =>
               questActionsRef.current?.scrollIntoView({
                 behavior: "smooth",
@@ -147,21 +215,19 @@ const StoryRpgPage = () => {
           />
         )}
 
-        {/* 월드맵 — active 루트의 노드 강조 */}
         {activeRouteId && activeChapters.length > 0 && (
           <StoryWorldMap
             nodes={nodes}
             chapters={activeChapters}
             progress={activeProgress}
+            onChapterTap={(c) => setBattleChapter(c)}
           />
         )}
 
-        {/* 3가지 복서의 길 */}
         {routes.length > 0 && (
           <StoryRouteSelect routes={routes} activeRouteId={activeRouteId} />
         )}
 
-        {/* 수령 대기 보상 (sync 결과로 complete 되었지만 미수령) */}
         {activeRouteId && activeChapters.length > 0 && (
           <StoryRewardPanel
             chapters={activeChapters}
@@ -170,13 +236,12 @@ const StoryRpgPage = () => {
           />
         )}
 
-        {/* 챕터 진행도 + 진행도 새로고침 */}
         {activeRouteId && activeChapters.length > 0 && (
           <div className="space-y-3">
             <div className="flex justify-end">
               <button
                 type="button"
-                onClick={handleManualSync}
+                onClick={runSync}
                 disabled={sync.isPending}
                 className="inline-flex items-center gap-1.5 rounded-pill border border-white/15 bg-gray-900/60 px-3 py-1.5 text-[11px] font-bold text-foreground transition-all active:scale-[0.98] hover:border-white/30 disabled:opacity-60"
               >
@@ -196,13 +261,31 @@ const StoryRpgPage = () => {
           </div>
         )}
 
-        {/* 오늘의 퀘스트 진입 */}
         <div ref={questActionsRef}>
           <StoryQuestActions />
         </div>
 
         <StoryRpgProtectionNotice />
       </div>
+
+      {/* 전투 모달 */}
+      {battleChapter && (
+        <StoryBattleScreen
+          chapter={battleChapter}
+          progressDetail={battleSyncDetail}
+          onClose={() => setBattleChapter(null)}
+          onClaimReward={handleClaimFromBattle}
+        />
+      )}
+
+      {/* 승리 풀스크린 */}
+      {victory && (
+        <StoryVictoryOverlay
+          chapter={victory.chapter}
+          rewardResult={victory.result}
+          onClose={() => setVictory(null)}
+        />
+      )}
     </div>
   );
 };
