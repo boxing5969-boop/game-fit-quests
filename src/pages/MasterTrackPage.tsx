@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
  *
  * Layout
  *   ┌──────────────────────────────────────────┐
- *   │ ← 마스터 트랙 (header + MASTER badge)    │
+ *   │ ← 마스터 로드 (header + MASTER badge)    │
  *   ├──────────────────────────────────────────┤
  *   │ Hero card (current level title + info)   │
  *   ├──────────────────────────────────────────┤
@@ -82,7 +82,7 @@ const MasterTrackPage = () => {
   return (
     <AppPage>
       <PageHeader
-        title="마스터 트랙"
+        title="마스터 로드"
         leftAction={
           <button
             type="button"
@@ -147,7 +147,7 @@ const MasterTrackPage = () => {
               <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               {eligible
                 ? "조건을 충족했어요. 지금 입장하면 Lv.41 부터 진행이 시작됩니다."
-                : "블랙 Lv10 에서 보스 4회 클리어 시 마스터 트랙이 열립니다."}
+                : "블랙 Lv10 에서 보스 4회 클리어 시 마스터 로드이 열립니다."}
             </p>
             {eligible && user?.id && (
               <button
@@ -157,9 +157,9 @@ const MasterTrackPage = () => {
                   enterMutation.mutate(user.id, {
                     onSuccess: (result) => {
                       if (result.already_unlocked) {
-                        toast("이미 마스터 트랙에 진입해 있어요");
+                        toast("이미 마스터 로드에 진입해 있어요");
                       } else {
-                        toast.success("마스터 트랙 진입! ⚔️");
+                        toast.success("마스터 로드 진입! ⚔️");
                       }
                       void refreshProgress();
                     },
@@ -175,7 +175,7 @@ const MasterTrackPage = () => {
                 className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[hsl(42_92%_52%)] via-[hsl(36_96%_58%)] to-[hsl(24_94%_52%)] px-4 text-sm font-bold text-[hsl(30_60%_12%)] shadow-[0_0_20px_rgba(246,196,83,0.35)] transition-all active:scale-[0.98] disabled:opacity-60"
               >
                 <Sparkles className="h-4 w-4" />
-                {enterMutation.isPending ? "입장 중…" : "마스터 트랙 입장"}
+                {enterMutation.isPending ? "입장 중…" : "마스터 로드 입장"}
               </button>
             )}
           </div>

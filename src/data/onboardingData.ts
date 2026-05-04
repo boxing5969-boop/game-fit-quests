@@ -14,7 +14,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: 1,
     icon: "🥊",
-    title: "153 랭크업 시스템은\n단순 운동 앱이 아닙니다",
+    title: "마이복서153은\n단순 운동 앱이 아닙니다",
     body: "복싱을 통해 체력, 기술, 태도, 꾸준함을 함께 성장시키는\n4리그 40레벨 성장 시스템입니다.",
     keywords: ["성장", "구조", "꾸준함"],
   },
@@ -29,7 +29,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
     id: 3,
     icon: "🧱",
     title: "꾸준함은 감이 아니라\n구조에서 나옵니다",
-    body: "153 랭크업 시스템은 출석, 세션, 미션, 리그, 심사를 분리해\n단계적으로 성장하도록 설계되었습니다.",
+    body: "153 QUEST 시스템은 출석, 세션, 미션, 리그, 심사를 분리해\n단계적으로 성장하도록 설계되었습니다.",
     keywords: ["출석", "미션", "심사"],
   },
   {
@@ -52,7 +52,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
     id: 6,
     icon: "🤝",
     title: "왜 코치 승인 시스템이\n있나요",
-    body: "153 랭크업은 혼자 기록만 쌓는 앱이 아닙니다.\n관장님과 코치의 확인과 심사를 통해\n성장의 기준을 더 공정하고 신뢰 있게 만듭니다.",
+    body: "마이복서153은 혼자 기록만 쌓는 앱이 아닙니다.\n관장님과 코치의 확인과 심사를 통해\n성장의 기준을 더 공정하고 신뢰 있게 만듭니다.",
     keywords: ["공정성", "신뢰", "승인"],
   },
   {

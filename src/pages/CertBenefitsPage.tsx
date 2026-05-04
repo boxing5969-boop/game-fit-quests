@@ -179,7 +179,7 @@ const CertBenefitsPage = () => {
       {/* ─── Roadmap (white surface, light UI) ─── */}
       <section className="px-5 py-6">
         <h3 className="text-[20px] font-extrabold text-foreground">
-          153 랭크업 → 단증 로드맵
+          마이복서153 → 단증 로드맵
         </h3>
         <p className="mt-1 text-[15px] leading-6 text-muted-foreground">
           각 리그 레벨을 마스터하면 해당 단수 심사에 도전할 수 있는 실력이

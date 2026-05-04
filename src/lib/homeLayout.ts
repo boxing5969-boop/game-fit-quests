@@ -43,7 +43,7 @@ export const HOME_WIDGETS: readonly HomeWidgetMeta[] = Object.freeze([
   },
   {
     id: "masterTrack",
-    label: "마스터 트랙 진행도",
+    label: "마스터 로드 진행도",
     description: "블랙 Lv10 + 보스 4회 클리어 이후에 해금",
     conditional: true,
   },

@@ -97,7 +97,7 @@ const RankUpCeremony = ({
                     : "rgba(255, 255, 255, 0.7)",
               }}
             >
-              153 랭크업 시스템 인증서
+              153 QUEST 인증서
             </p>
             <p
               className="text-[20px] font-black"

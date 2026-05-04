@@ -26,7 +26,7 @@ const GuideFaqPage = () => {
 
       <main className="mx-auto max-w-lg px-5 pb-24 pt-5">
         <p className="mb-4 text-[14px] leading-6 text-muted-foreground">
-          153랭크업에 대해 가장 자주 묻는 질문을 모았습니다.
+          마이복서153에 대해 가장 자주 묻는 질문을 모았습니다.
         </p>
 
         <ul className="space-y-2.5">

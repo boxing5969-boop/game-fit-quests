@@ -9,7 +9,7 @@ export interface GuideSection {
 }
 
 export const GUIDE_SECTIONS: GuideSection[] = [
-  { id: "program", label: "프로그램 소개", icon: BookOpen, path: "/guide/program", description: "153랭크업 철학과 리그 구조" },
+  { id: "program", label: "프로그램 소개", icon: BookOpen, path: "/guide/program", description: "마이복서153 철학과 리그 구조" },
   { id: "science", label: "과학적 설계", icon: FlaskConical, path: "/guide/science", description: "WHO·CDC·ACSM 기반 운동 설계" },
   { id: "value-map", label: "1~40 가치맵", icon: Map, path: "/guide/value-map", description: "레벨별 성장 가치와 해금 보상" },
   { id: "exercise-purpose", label: "왜 이 운동을 하나요?", icon: Dumbbell, path: "/guide/exercise-purpose", description: "훈련별 과학적 이유" },

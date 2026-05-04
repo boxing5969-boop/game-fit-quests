@@ -324,8 +324,9 @@ const LoginPage = () => {
       {/* Logo */}
       <div className="mb-5 animate-bounce-in text-center">
         <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-4xl shadow-glow-primary">🥊</div>
-        <h1 className="text-2xl tracking-tight text-foreground">153랭크업 시스템</h1>
-        <p className="mt-1 text-sm text-muted-foreground">오늘의 미션을 클리어하고 랭크업하세요</p>
+        <h1 className="text-2xl tracking-tight text-foreground">마이복서153</h1>
+        <p className="mt-0.5 text-xs font-bold tracking-[0.2em] text-yellow-400">MY BOXER 153</p>
+        <p className="mt-1.5 text-sm text-muted-foreground">153복싱짐 회원을 위한 복싱 성장 퀘스트 앱</p>
       </div>
 
       {/* Tab */}

@@ -262,7 +262,7 @@ const SettingsPage = () => {
         {/* Onboarding replay */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.01s" }}>
           <h2 className="mb-3 text-base font-bold text-foreground">온보딩</h2>
-          <p className="mb-3 text-xs text-muted-foreground">153 랭크업 시스템 소개를 다시 볼 수 있습니다.</p>
+          <p className="mb-3 text-xs text-muted-foreground">마이복서153 소개를 다시 볼 수 있습니다.</p>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => {

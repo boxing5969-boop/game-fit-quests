@@ -4,7 +4,7 @@
  * 체육관 모니터에 항상 떠있는 화면이라 빈 상태도 멋있어야 한다.
  *
  * 요소:
- *   · 153 랭크업 로고 + 잔잔한 호흡
+ *   · 마이복서153 로고 + 잔잔한 호흡
  *   · "오늘 첫 라운드를 누가 시작할까요?" 타이포
  *   · 누적 통계 (오늘 방문 수 / 명예의 전당 수)
  *   · 별 / 입자 잔잔한 떠다님 (배경)
@@ -72,8 +72,11 @@ const LiveBoardEmptyState = ({
           className="flex flex-col items-center gap-3"
         >
           <div className="text-7xl">🥊</div>
-          <p className="text-lg font-black tracking-wider text-yellow-300">
-            153 랭크업
+          <p className="text-2xl font-black tracking-wider text-yellow-300">
+            마이복서153
+          </p>
+          <p className="text-xs font-bold tracking-[0.3em] text-yellow-400">
+            MY BOXER 153
           </p>
           <p className="text-sm text-gray-400">{branchName} · 오늘도 복싱 레벨업 중</p>
         </motion.div>

@@ -586,8 +586,9 @@ const LiveBoardPage = () => {
         <div className="flex items-center gap-5">
           <span className="text-5xl">🥊</span>
           <div>
-            <h1 className="text-4xl font-black tracking-tight leading-none">153 랭크업</h1>
-            <p className="text-xl text-gray-400 font-bold mt-1">{branchName || "지점"}</p>
+            <h1 className="text-4xl font-black tracking-tight leading-none">마이복서153</h1>
+            <p className="text-xs font-bold tracking-[0.25em] text-yellow-400">MY BOXER 153</p>
+            <p className="text-lg text-gray-400 font-bold mt-0.5">{branchName || "지점"}</p>
           </div>
         </div>
         <div className="flex items-center gap-8">

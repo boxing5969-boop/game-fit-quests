@@ -48,7 +48,7 @@ const bossTitle = (n: number): string => {
 
 const bossDescription = (n: number): string => {
   switch (n) {
-    case 10: return "마스터 트랙 첫 번째 관문. 통과 시 챔피언 칭호와 영원의 프레임을 획득합니다.";
+    case 10: return "마스터 로드 첫 번째 관문. 통과 시 챔피언 칭호와 영원의 프레임을 획득합니다.";
     case 20:
     case 30:
     case 40:

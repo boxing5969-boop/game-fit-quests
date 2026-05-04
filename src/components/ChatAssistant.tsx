@@ -231,7 +231,7 @@ const ChatAssistant = () => {
                       온라인
                     </span>
                   </div>
-                  <p className="text-[11px] text-gray-400 font-medium">153 랭크업 시스템 · 맞춤 코칭</p>
+                  <p className="text-[11px] text-gray-400 font-medium">153 QUEST · 맞춤 코칭</p>
                 </div>
               </div>
               <button

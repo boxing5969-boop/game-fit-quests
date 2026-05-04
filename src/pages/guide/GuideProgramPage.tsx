@@ -15,9 +15,9 @@ const GuideProgramPage = () => {
 
       {/* Philosophy */}
       <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-elev-1">
-        <h2 className="mb-3 text-base font-bold text-foreground">🥊 153랭크업 철학</h2>
+        <h2 className="mb-3 text-base font-bold text-foreground">🥊 마이복서153 철학</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          153랭크업은 복싱을 통해 1레벨에서 40레벨까지 체계적으로 성장하는 프로그램입니다. 
+          마이복서153은 복싱을 통해 1레벨에서 40레벨까지 체계적으로 성장하는 프로그램입니다.
           단순한 출석이 아니라, 습관 → 기본기 → 적용 → 전문가로 이어지는 실질적 성장을 추구합니다.
         </p>
       </div>

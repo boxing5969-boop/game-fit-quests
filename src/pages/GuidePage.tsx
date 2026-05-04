@@ -81,7 +81,7 @@ const ProgramTab = () => (
   <div className="space-y-4 animate-slide-up">
     <div className="rounded-2xl bg-gradient-to-br from-primary/10 to-reward/10 p-5 border border-primary/20">
       <h2 className="mb-2 text-lg font-bold text-foreground">
-        153랭크업
+        마이복서153
       </h2>
       <p className="text-sm text-muted-foreground leading-relaxed">
         1~40레벨로 구성된 복싱 성장 시스템입니다.
