@@ -64,7 +64,8 @@ const WELCOME_MESSAGE = `안녕하세요, 고객님! 😊
 💰 가격표  →  "가격" 입력
 ⏰ 시간표  →  "시간표" 입력
 📝 등록/결제  →  "등록" 입력
-🗣 코치님 상담  →  "상담" 입력
+🗣 상담예약  →  "상담" 입력
+📞 상담원 연결  →  "연결" 입력
 ☀️ 오전반  →  "아침" 입력
 🌙 저녁반  →  "저녁" 입력
 👧 키즈반  →  "키즈" 입력
@@ -241,6 +242,20 @@ const CONSULT_REPLY = `네, 고객님 😊
 카카오채널로도 편하게 문의 가능해요 😊
 http://pf.kakao.com/_txdGxcxj`;
 
+const CONTACT_REPLY = `📞 153복싱짐 칠금점 상담원 연결 안내
+
+문자·카카오톡·전화 모두 가능해요! 😊
+
+📱 전화 / 문자: 010-8343-1530
+💬 카카오톡: http://pf.kakao.com/_txdGxcxj
+
+─────────────────
+⚠️ 수업 중·회의 중에는 전화 통화가 바로 어려울 수 있어요.
+문자나 카카오톡으로 남겨주시면
+확인 후 꼭 연락드릴게요 🙏
+
+혹시 더 궁금하신 점이 있으신가요? 😊`;
+
 const RESERVATION_ASK_REPLY = `고객님, 예약 문의 주셔서 감사합니다 😊
 
 네이버페이로 바로 등록 가능해요!
@@ -266,7 +281,8 @@ const FALLBACK_MENU = `고객님, 안녕하세요 😊
 
 👉 가격이 궁금하시면 → "가격" 이라고 입력해 주세요
 👉 시간표가 궁금하시면 → "시간표" 라고 입력해 주세요
-👉 코치님과 상담을 원하시면 → "상담" 이라고 입력해 주세요
+👉 상담 예약을 원하시면 → "상담" 이라고 입력해 주세요
+👉 상담원과 직접 연결을 원하시면 → "연결" 이라고 입력해 주세요
 👉 등록/결제를 원하시면 → "등록" 이라고 입력해 주세요
 👉 아침·저녁·키즈 수업이 궁금하시면 → "아침" / "저녁" / "키즈" 라고 입력해 주세요
 👉 오시는 길이 궁금하시면 → "위치" 라고 입력해 주세요
@@ -300,6 +316,7 @@ function isEnrollQuery(text) {
 }
 
 function isConsultQuery(text) {
+  if (text.includes("상담원")) return false;
   if ([
     "상담예약", "상담 예약", "상담신청", "상담 신청",
     "상담하고싶", "상담 하고 싶", "산단",
@@ -308,6 +325,13 @@ function isConsultQuery(text) {
     "상담 시간", "상담시간",
   ].some(kw => text.includes(kw))) return true;
   return fuzzyContains(text, "상담", 1);
+}
+
+function isContactQuery(text) {
+  return [
+    "상담원", "연결", "전화번호", "직접 연락", "직접연락",
+    "담당자", "직원 연결", "직원연결", "사람이랑", "사람과",
+  ].some(kw => text.includes(kw));
 }
 
 function isReservationOnly(text) {
@@ -540,6 +564,9 @@ Deno.serve(async (req) => {
 
       // 상담 (방문 의사도 상담으로 연결)
       if (isConsultQuery(msg) || isVisitQuery(msg)) parts.push(CONSULT_REPLY);
+
+      // 상담원 직접 연결
+      if (isContactQuery(msg)) parts.push(CONTACT_REPLY);
 
       // 예약 (등록/상담 없을 때만)
       if (isReservationOnly(msg) && parts.length === 0) parts.push(RESERVATION_ASK_REPLY);
