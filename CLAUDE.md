@@ -1,6 +1,25 @@
 # CLAUDE.md
 
-랭킹업(153복싱짐) 스포츠 RPG 앱. Lovable 로 초기 생성됐고 이제 GitHub + Claude Code 중심으로 관리한다.
+마이복서153 (153복싱짐) 스포츠 RPG 앱. Lovable 로 초기 생성됐고 이제 GitHub + Claude Code 중심으로 관리한다.
+
+브랜드:
+- 앱 이름: **마이복서153**
+- 영문 로고: **MY BOXER 153**
+- 시스템명: **153 QUEST**
+- 공식 훈련 과정명: **마스터 로드** (코드 식별자는 `master_track` 유지 — DB 마이그레이션 회피)
+- 시즌/이벤트명: **더 파이터** (챌린지 페이지)
+
+---
+
+## 별도 시스템 (마이복서153 앱과 무관)
+
+레포 안에 다음 경로의 파일들은 **네이버 톡톡 자동 상담 봇** — 마이복서153 앱과 별도 시스템이다. 앱 작업 시 절대 같이 commit/push 하지 않는다.
+
+- `external/naver-talktalk/*.js` — 스탠드얼론 스크립트
+- `supabase/functions/talktalk-chilgeum/` — 칠금점 봇 Edge Function
+- `supabase/functions/talktalk-webhook/` — 톡톡 웹훅 Edge Function
+
+talktalk 변경은 별도 commit 으로 처리하고 prefix 는 `chore(talktalk):` 또는 `feat(talktalk):`.
 
 ---
 
