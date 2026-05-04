@@ -159,14 +159,15 @@ export function useTutorialState() {
   }, [refreshProfile]);
 
   /** 다시 시작 (Settings → 튜토리얼 다시 보기). 보상 재지급 0건 보장. */
-  const restart = useCallback(async () => {
+  const restart = useCallback(async (): Promise<boolean> => {
     const { error } = await supabase.rpc("restart_tutorial" as any);
     if (error) {
       console.warn("[useTutorialState] restart_tutorial failed", error);
-      return;
+      return false;
     }
     setLocalCompleted(0);
     void refreshProfile();
+    return true;
   }, [refreshProfile]);
 
   const isSkipped = !!p?.tutorial_skipped;

@@ -11,7 +11,8 @@ import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { isManagerRole } from "@/lib/rankLabels";
-import InductionCeremonyOverlay from "@/components/induction/InductionCeremonyOverlay";
+import TutorialFloatingMascot from "@/components/tutorial/TutorialFloatingMascot";
+import { useTutorialAutoDetect } from "@/hooks/useTutorialAutoDetect";
 import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
 import RouteLoader from "@/components/splash/RouteLoader";
 import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
@@ -213,13 +214,18 @@ const AppRoutes = () => {
       </Suspense>
       <BottomNav />
       <ChatAssistant />
-      {/* 랭킹업 입단식 — 글로벌 portal 오버레이. 셋업 라우트에서는 내부에서 숨김.
-          splashDone 이전에는 mount 자체 차단 — 스플래시 종료 후에만 튜토리얼 시작. */}
-      {user && splashDone && <InductionCeremonyOverlay />}
+      {/* 마이복서153 — 오삼 마스코트 튜토리얼 (행동기반 미션 5개). */}
+      {user && splashDone && <TutorialFloatingMascotWithDetect />}
       {/* 쿨드 스타트 스플래시 (z-[80] · 포털). 세션 1회. */}
       {showSplash && <AppLaunchSplash onFinished={markFinished} />}
     </>
   );
+};
+
+/** 자동완료감지 훅 + floating 마스코트 함께 마운트 (router 컨텍스트 안). */
+const TutorialFloatingMascotWithDetect = () => {
+  useTutorialAutoDetect();
+  return <TutorialFloatingMascot />;
 };
 
 const App = () => {

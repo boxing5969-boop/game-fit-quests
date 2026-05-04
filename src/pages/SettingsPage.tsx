@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
-import { useTutorialProgress } from "@/hooks/useTutorialProgress";
+import { useTutorialState } from "@/hooks/useTutorialState";
 import DietSettingsSection from "@/components/diet/DietSettingsSection";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -466,11 +466,9 @@ const SettingsPage = () => {
   );
 };
 
-// 인라인 helper — 신규 useTutorialProgress.restartTutorial 경로
-// (legacy useTutorialState.restart 는 글로벌 InductionCeremonyOverlay 의
-// localStep 을 동기화하지 못해 재시작이 화면에 반영되지 않는 이슈가 있다.)
+// 인라인 helper — 신규 useTutorialState.restart (오삼 floating mascot 사용)
 const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
-  const { restartTutorial } = useTutorialProgress();
+  const { restart: restartTutorial } = useTutorialState();
   const [busy, setBusy] = useState(false);
   return (
     <button

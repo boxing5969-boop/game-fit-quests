@@ -277,78 +277,121 @@ export function resolveDisplayName(
 }
 
 // ══ Tutorial ═══════════════════════════════════════════════
-// 5-step flow: profile → ranking → effect shop → mini game → done.
-// Each step is marked complete via useTutorialState (Step 3). Final
-// completion triggers the server-side grant_tutorial_reward RPC
-// (Step 2) which credits 1000 gems exactly once per profile.
+// 5-step 행동 기반 튜토리얼 플로우 (오삼 마스코트 가이드).
+// 사용자가 실제로 페이지에 가서 행동을 해야 advance.
+// 각 단계 자동완료감지(detector) + 백업 수동 완료 버튼 동시 지원.
+//   1) 프로필 사진 설정    — profile.avatar_url 변경 감지
+//   2) 마이복서153 알아보기 — /guide 진입 + 일정시간 체류 OR 수동
+//   3) 오늘의 미션 완료    — daily_quest_completions row 생성
+//   4) 첫 출석 체크인      — attendance_logs row 생성
+//   5) 첫 챌린지 참여      — challenge_participants row 생성
 
 export type TutorialStepKey =
-  | "profile"
-  | "ranking"
-  | "effect_shop"
-  | "mini_game"
-  | "complete";
+  | "profile_photo"
+  | "discover_app"
+  | "first_mission"
+  | "first_checkin"
+  | "first_challenge";
+
+/**
+ * 자동완료 감지 키 — TutorialActionDetector 훅에서 사용.
+ *   · "avatar_set"     — profile.avatar_url 이 set 됨 (null → string)
+ *   · "viewed_guide"   — /guide 또는 /about 페이지에 5초 이상 체류
+ *   · "mission_done"   — 오늘 첫 mission completion row 생성
+ *   · "first_attendance" — attendance_logs 첫 row
+ *   · "first_challenge"  — challenge_participants 첫 row
+ */
+export type TutorialDetectorKey =
+  | "avatar_set"
+  | "viewed_guide"
+  | "mission_done"
+  | "first_attendance"
+  | "first_challenge";
 
 export interface TutorialStep {
   key: TutorialStepKey;
   order: number;
+  /** 짧은 미션 라벨 (mascot 말풍선용) */
   label: string;
+  /** 한 줄 설명 (미션 카드 본문) */
   description: string;
+  /** 마스코트 안내 멘트 (해당 페이지 진입 시 표시) */
+  hint: string;
   /** Primary CTA label on the tutorial modal. */
   ctaLabel: string;
   /** Route to navigate to when the user taps the CTA. */
   navTarget?: string;
+  /** 자동 완료 감지 키 — undefined 면 수동 완료만 가능 */
+  detector?: TutorialDetectorKey;
+  /** 미션 아이콘 (이모지) */
+  icon: string;
 }
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
-    key: "profile",
+    key: "profile_photo",
     order: 1,
-    label: "내 캐릭터 확인",
-    description: "환영합니다, 챌린저님. 먼저 당신의 캐릭터와 이름을 확인하세요.",
-    ctaLabel: "내 프로필 보기",
+    label: "프로필 사진 설정",
+    description: "내 얼굴이 보여야 라이브보드에서 더 멋있게 등장해요.",
+    hint: "마이페이지에서 프로필 사진을 업로드해보세요. 카메라 아이콘을 누르면 됩니다.",
+    ctaLabel: "내 프로필 가기",
     navTarget: "/mypage",
+    detector: "avatar_set",
+    icon: "🥊",
   },
   {
-    key: "ranking",
+    key: "discover_app",
     order: 2,
-    label: "내 리그 / 레벨 확인",
-    description: "당신은 지금 어디쯤 와 있을까요? 현재 리그와 다음 승급 목표를 확인하세요.",
-    ctaLabel: "랭킹 보기",
-    navTarget: "/halloffame",
+    label: "마이복서153 알아보기",
+    description: "이 앱이 어떤 가치를 만들고, 무엇을 향해 가는지 한 번 읽어보세요.",
+    hint: "프로그램 소개 / 가치맵 / 과학적 설계 — 핵심 페이지 한 곳만 봐도 충분합니다.",
+    ctaLabel: "가이드 열기",
+    navTarget: "/guide",
+    detector: "viewed_guide",
+    icon: "📖",
   },
   {
-    key: "effect_shop",
+    key: "first_mission",
     order: 3,
-    label: "오늘의 퀘스트",
-    description: "성장은 출석이 아니라 퀘스트로 증명합니다. 오늘의 미션을 확인하세요.",
-    ctaLabel: "퀘스트 보기",
+    label: "오늘의 미션 하나 완료",
+    description: "성장은 출석이 아니라 퀘스트에서 시작됩니다. 가장 쉬운 것부터 하나 깨봐요.",
+    hint: "미션 페이지에서 오늘의 미션 하나를 골라 완료 상태로 표시하세요.",
+    ctaLabel: "미션 보기",
     navTarget: "/missions",
+    detector: "mission_done",
+    icon: "⚡",
   },
   {
-    key: "mini_game",
+    key: "first_checkin",
     order: 4,
-    label: "보상 / 이펙트",
-    description: "퀘스트를 깨면 보상이 따라옵니다. 파이트 머니와 캐릭터 이펙트를 둘러보세요.",
-    ctaLabel: "보상 둘러보기",
-    navTarget: "/rewards",
+    label: "첫 출석 체크인",
+    description: "QR 을 스캔하면 출석이 기록되고 라이브보드에 등장합니다.",
+    hint: "홈 화면 상단의 'QR 체크인 하기' 버튼을 눌러 코치님의 QR을 스캔하세요.",
+    ctaLabel: "QR 체크인 가기",
+    navTarget: "/home",
+    detector: "first_attendance",
+    icon: "📍",
   },
   {
-    key: "complete",
+    key: "first_challenge",
     order: 5,
-    label: "첫 퀘스트 시작",
-    description: "이제 첫 퀘스트를 완료해보세요. 오늘부터 당신의 랭킹업이 시작됩니다.",
-    ctaLabel: "입단식 완료",
+    label: "첫 챌린지 참여",
+    description: "혼자가 아니라 함께. 더 파이터 시즌 챌린지에 참여해보세요.",
+    hint: "챌린지 페이지에서 진행 중인 챌린지를 골라 참여하기 버튼을 누르세요.",
+    ctaLabel: "챌린지 가기",
+    navTarget: "/challenges",
+    detector: "first_challenge",
+    icon: "🏆",
   },
 ];
 
 /** 단계별 즉시 지급 보상 (서버 tutorial_step_reward_amount 와 동일). */
 export const TUTORIAL_STEP_REWARDS: Record<number, number> = {
-  1: 100,
-  2: 100,
+  1: 200,
+  2: 200,
   3: 200,
   4: 200,
-  5: 400,
+  5: 200,
 };
 
 /** 합산 = 1000. 표시용 단일 상수. */

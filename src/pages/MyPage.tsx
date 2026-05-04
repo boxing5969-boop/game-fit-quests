@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useTutorialProgress } from "@/hooks/useTutorialProgress";
+import { useTutorialState } from "@/hooks/useTutorialState";
 import RankBadge from "@/components/RankBadge";
 import AvatarUpload from "@/components/AvatarUpload";
 import XPBar from "@/components/XPBar";
@@ -38,8 +38,8 @@ const MyPage = () => {
   const { data: myBadges } = useMyBadges();
   const { data: walletData } = useWallet();
   const { data: myCharacter } = useMemberCharacterAssignment();
-  const { isCompleted: tutorialDone, isSkipped: tutorialSkipped, restartTutorial } =
-    useTutorialProgress();
+  const { isCompleted: tutorialDone, isSkipped: tutorialSkipped, restart: restartTutorial } =
+    useTutorialState();
   const [showPwChange, setShowPwChange] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
