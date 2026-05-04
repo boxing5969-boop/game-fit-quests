@@ -46,7 +46,7 @@ const ChallengesPage = () => {
       header={
         <PageHeader
           title="21일 챌린지"
-          subtitle="같이 하면 더 오래 갑니다"
+          subtitle="시즌 · 더 파이터"
           leftAction={
             <button
               type="button"
@@ -62,15 +62,23 @@ const ChallengesPage = () => {
       }
     >
       <div className="space-y-4 pt-2">
-        {/* Hero */}
-        <section className="rounded-2xl border border-emerald-400/30 bg-gradient-to-b from-emerald-400/10 to-transparent p-5">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">
-            CHALLENGE · 같이 21일
-          </p>
-          <h2 className="mt-1 text-display-sm leading-tight text-foreground">
-            혼자보다 함께
+        {/* Hero — 더 파이터 시즌 */}
+        <section className="rounded-2xl border border-yellow-500/40 bg-gradient-to-b from-yellow-500/10 via-emerald-400/5 to-transparent p-5">
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.2em] text-yellow-400">
+              SEASON
+            </span>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">
+              CHALLENGE · 같이 21일
+            </p>
+          </div>
+          <h2 className="mt-1.5 text-display-sm leading-tight text-foreground">
+            <span className="text-yellow-400">더 파이터</span> 시즌
           </h2>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-[13px] font-bold text-muted-foreground">
+            혼자보다 함께
+          </p>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
             체중을 경쟁하지 않습니다. 출석·기록·복귀 참여로 점수가 쌓여요.
             꾸준함이 진짜 점수입니다.
           </p>
@@ -108,7 +116,7 @@ const ChallengesPage = () => {
                 <Users className="h-5 w-5" />
               </div>
               <p className="mt-2 text-[13px] font-bold text-foreground">
-                곧 새 시즌이 시작됩니다
+                <span className="text-yellow-400">더 파이터</span> 시즌 챌린지가 곧 열립니다
               </p>
               <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
                 지점 또는 목표별 챌린지가 열리면 여기에 표시돼요.
