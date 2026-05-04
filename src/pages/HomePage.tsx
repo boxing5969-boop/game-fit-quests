@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Banknote, QrCode, CheckCircle2, Trophy, Settings } from "lucide-react";
+import { User, Banknote, Trophy, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 import type { Enums } from "@/integrations/supabase/types";
 import { isManagerRole } from "@/lib/rankLabels";
-import { getLevelById, SELF_CHALLENGE_BONUS_XP } from "@/data/allLevelsData";
+import { getLevelById } from "@/data/allLevelsData";
 import { RANK_LABELS, RANK_ICONS } from "@/data/sharedConstants";
 
 import CharacterSprite from "@/components/CharacterSprite";
@@ -36,6 +36,9 @@ import { MasterProgressCard } from "@/components/master/MasterProgressCard";
 import HomeCustomizeSheet from "@/components/home/HomeCustomizeSheet";
 import { HomeEngagementSection } from "@/components/engagement";
 import { useHomeLayout } from "@/lib/homeLayout";
+import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
+import QuickAccessRow from "@/components/home/QuickAccessRow";
+import HomeMoreSection from "@/components/home/HomeMoreSection";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
 
@@ -43,8 +46,6 @@ import {
   AppPage,
   PageHeader,
   HeroStatusCard,
-  PrimaryCTAButton,
-  MissionCard,
   XPBar,
   RankingItem,
   EmptyState,
@@ -189,13 +190,48 @@ const HomePage = () => {
   const isMasterDisplay = isMaster40 || isManagerRole(role);
   const leagueIcon = isMasterDisplay ? "👑" : RANK_ICONS[rank];
   const leagueName = isMasterDisplay ? "마스터" : `${RANK_LABELS[rank]} 리그`;
-  const missionTitle =
-    unifiedLevel?.title ||
-    currentLevel?.title ||
-    `${RANK_LABELS[rank]} · Lv.${progress.current_level}`;
+  // missionTitle/SELF_CHALLENGE_BONUS_XP — 옛 MissionCard 에서 사용됨, Option C 에서는 미사용
+  void unifiedLevel; void currentLevel;
 
   const myRankRow = ranking?.find((r) => r.r_user_id === user?.id);
   const myPosition = myRankRow ? Number(myRankRow.rank_position) : null;
+
+  // ── Option C: 오늘의 액션 상태 결정 (TodayActionCard 입력) ──
+  const activeMinutes = activitySession.activeSession?.started_at
+    ? Math.max(0, Math.floor((Date.now() - new Date(activitySession.activeSession.started_at).getTime()) / 60000))
+    : 0;
+  const todayActionState: TodayActionState = !checkedInToday
+    ? "qr_checkin"
+    : activitySession.isActive
+      ? "active_session"
+      : bothDone
+        ? "all_done"
+        : !showChallenge && !sessionMet.current && !minuteMet.current
+          ? "start_mission"
+          : "evaluate";
+  const handleTodayAction = () => {
+    if (todayActionState === "qr_checkin") setShowQRScanner(true);
+    else if (todayActionState === "active_session" || todayActionState === "start_mission") handleStartChallenge();
+    else if (todayActionState === "all_done") navigate("/halloffame");
+    else navigate("/missions");
+  };
+
+  // 퀵 액세스 칩 상태
+  const missionStatus: "locked" | "ready" | "in_progress" | "done" = !checkedInToday
+    ? "locked"
+    : bothDone
+      ? "done"
+      : showChallenge || activitySession.isActive
+        ? "in_progress"
+        : "ready";
+  const weeklyProgress = Math.min(
+    1,
+    sessionMet.target > 0
+      ? (sessionMet.current / sessionMet.target +
+          (minuteMet.target > 0 ? minuteMet.current / minuteMet.target : 0)) /
+          (minuteMet.target > 0 ? 2 : 1)
+      : 0,
+  );
 
   const gemCount = walletData?.gems_balance ?? 0;
   // 전체 관리자는 파이트 머니 개념이 없음 — 상단 표기를 ∞ 로 통일.
@@ -264,15 +300,15 @@ const HomePage = () => {
         />
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* ─── Master-40 celebration (conditional) ─── */}
         {isMaster40 && (
           <NotificationBanner
             variant="reward"
             title="🏆 마스터 리그 달성"
-            message="블랙 10 + 모든 타이틀매치 클리어 완료. 명예의 전당에 등극!"
+            message="명예의 전당에 등극!"
             action={{
-              label: "명예의 전당 보기",
+              label: "전당 보기",
               onClick: () => navigate("/halloffame"),
             }}
           />
@@ -309,46 +345,23 @@ const HomePage = () => {
           />
         )}
 
-        {/* ─── 1b. Master Track progress (커스텀 토글 + 자격 조건) ─── */}
-        {homeWidgets.masterTrack && (progress as any)?.master_track_unlocked && (
-          <MasterProgressCard masterLevel={(progress as any)?.master_level ?? 1} />
-        )}
+        {/* ─── 핵심: 오늘의 액션 (상태별 자동 변경) ─── */}
+        <TodayActionCard
+          state={todayActionState}
+          activeMinutes={activeMinutes}
+          streakDays={progress.streak_days}
+          onClick={handleTodayAction}
+        />
 
-        {/* ─── 2. Primary CTA — QR check-in or success indicator ─── */}
-        {checkedInToday ? (
-          <div className="flex items-center justify-center gap-2 rounded-card border border-[#22C55E]/40 bg-[#22C55E]/10 px-6 py-4 font-bold text-[#22C55E]">
-            <CheckCircle2 className="h-5 w-5" />
-            <span>
-              출석 완료
-              {progress.streak_days > 0 && (
-                <>
-                  {" · "}
-                  <span className="number-font">
-                    {progress.streak_days}일
-                  </span>{" "}
-                  연속
-                </>
-              )}
-            </span>
-          </div>
-        ) : (
-          <PrimaryCTAButton
-            icon={<QrCode className="h-5 w-5" />}
-            rewardText="+10 XP"
-            onClick={() => setShowQRScanner(true)}
-          >
-            QR 체크인 하기
-          </PrimaryCTAButton>
-        )}
+        {/* ─── 퀵 액세스 3 칩 ─── */}
+        <QuickAccessRow
+          missionStatus={missionStatus}
+          challengeJoined={false}
+          weeklyProgress={weeklyProgress}
+        />
 
-        {/* ─── 2b. 153 QUEST 몰입 카드 (오삼 브리핑 + 보조 퀘스트 미니 패널) ─── */}
-        {/*       공식 1~40 미션과 분리. 공식 XP/member_progress 미수정. */}
-        {/*       7~8단계에서 onOpenXxx 콜백을 실제 모달/페이지 진입으로 연결. */}
-        <HomeEngagementSection />
-
-        {/* ─── 3. Today's Mission / Active Session ─── (커스텀 토글) */}
-        {homeWidgets.todayMission && (
-          showChallenge ? (
+        {/* ─── 활동 세션 진행 중일 때만 SelfChallengeFlow 표시 (전체 화면 모달) ─── */}
+        {showChallenge && (
           <SelfChallengeFlow
             league={rank}
             levelInLeague={progress.current_level}
@@ -374,172 +387,140 @@ const HomePage = () => {
               setQrAutoStarted(false);
             }}
           />
-        ) : (
-          <MissionCard
-            title={missionTitle}
-            subtitle={`${RANK_LABELS[rank]} 리그 · 오늘의 미션`}
-            reward={`+${SELF_CHALLENGE_BONUS_XP} XP 보너스`}
-            status={checkedInToday ? "active" : "locked"}
-            ctaText={checkedInToday ? "🥊 시작" : undefined}
-            onClick={handleStartChallenge}
-            lockedHint="QR 체크인 후 오늘의 미션이 오픈됩니다"
-          />
-        )
         )}
 
-        {/* ─── 4. Weekly Progress ─── (커스텀 토글) */}
-        {homeWidgets.weeklyProgress && (
-        <section className="surface-card">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-display-sm">이번 주 진행도</h2>
-            <span className="text-caption text-muted-foreground">
-              {weeklyEncouragement}
-            </span>
-          </div>
-          <div className="space-y-4">
-            <XPBar
-              current={sessionMet.current}
-              max={sessionMet.target}
-              label="🎯 세션"
-              variant="primary"
-              size="md"
-              showNumbers
-            />
-            <XPBar
-              current={minuteMet.current}
-              max={minuteMet.target}
-              label="⏱ 훈련 시간 (분)"
-              variant="primary"
-              size="md"
-              showNumbers
-            />
-          </div>
-        </section>
-        )}
+        {/* ─── "더 보기" — 펼침 가능한 보조 콘텐츠 ─── */}
+        <HomeMoreSection
+          count={
+            (homeWidgets.masterTrack && (progress as any)?.master_track_unlocked ? 1 : 0) +
+            1 /* engagement */ +
+            (profile?.diet_program_enabled ? 1 : 0) +
+            (homeWidgets.weeklyProgress ? 1 : 0) +
+            (homeWidgets.rankingPreview ? 1 : 0)
+          }
+        >
+          {/* 마스터 로드 진행도 */}
+          {homeWidgets.masterTrack && (progress as any)?.master_track_unlocked && (
+            <MasterProgressCard masterLevel={(progress as any)?.master_level ?? 1} />
+          )}
 
-        {/* ─── 5. Retention 배너는 홈에서 제거 ─── */}
+          {/* 153 QUEST 몰입 카드 (코너맨/그림자복서/짐레이드) */}
+          <HomeEngagementSection />
 
-        {/* ─── 5b. 153 다이어트 프로그램 (feature flag ON 시만) ─── */}
-        {profile?.diet_program_enabled && (
-          <section>
+          {/* 이번 주 진행도 */}
+          {homeWidgets.weeklyProgress && (
+            <section className="surface-card">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-base font-black">이번 주 진행도</h2>
+                <span className="text-[11px] text-muted-foreground">
+                  {weeklyEncouragement}
+                </span>
+              </div>
+              <div className="space-y-3">
+                <XPBar
+                  current={sessionMet.current}
+                  max={sessionMet.target}
+                  label="🎯 세션"
+                  variant="primary"
+                  size="md"
+                  showNumbers
+                />
+                <XPBar
+                  current={minuteMet.current}
+                  max={minuteMet.target}
+                  label="⏱ 훈련 시간 (분)"
+                  variant="primary"
+                  size="md"
+                  showNumbers
+                />
+              </div>
+            </section>
+          )}
+
+          {/* 153 다이어트 프로그램 (feature flag) — 한 줄 요약 */}
+          {profile?.diet_program_enabled && (
             <button
               type="button"
               onClick={() => navigate("/diet")}
-              className="w-full rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-reward/5 to-primary/10 p-4 text-left transition-all active:scale-[0.99] hover:border-primary/50"
+              className="flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-reward/5 to-primary/10 p-3 text-left transition-all active:scale-[0.99] hover:border-primary/50"
             >
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-reward text-primary-foreground text-xl">
-                  🥗
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-                    153 DIET · 21 DAYS
-                  </p>
-                  <p className="mt-0.5 truncate text-[14px] font-bold text-foreground">
-                    체지방을 제거하는 몸 습관 만들기
-                  </p>
-                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                    매일 5 습관 체크 · 복싱짐 출석 연동 · 오삼 코치님의 피드백
-                  </p>
-                </div>
-                <span className="shrink-0 text-primary text-xl">→</span>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-reward text-primary-foreground text-lg">
+                🥗
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                  153 DIET · 21 DAYS
+                </p>
+                <p className="mt-0.5 truncate text-sm font-bold text-foreground">
+                  체지방 제거 21일 챌린지
+                </p>
               </div>
+              <span className="shrink-0 text-primary text-lg">→</span>
             </button>
+          )}
 
-            {/* 21일 챌린지 진입 — Diet 주 카드 아래 보조 링크 톤 */}
+          {/* 이번 주 내 순위 */}
+          {homeWidgets.rankingPreview && (
+            <section>
+              <div className="mb-2 flex items-center justify-between">
+                <h2 className="text-base font-black">이번 주 내 순위</h2>
+                <button
+                  onClick={() => navigate("/halloffame")}
+                  className="text-[11px] font-medium text-primary active:scale-95"
+                >
+                  전체 →
+                </button>
+              </div>
+              {myPosition ? (
+                <RankingItem
+                  rank={myPosition}
+                  name={displayName}
+                  score={totalXp}
+                  isMe
+                  meta={`${RANK_LABELS[rank]} · Lv.${progress.current_level}`}
+                  avatar={
+                    myCharacter?.character_presets ? (
+                      <CharacterSprite
+                        style={(myCharacter.character_presets.parts_json as any)?.style}
+                        userId={user?.id}
+                        partsJson={myCharacter.character_presets.parts_json as any}
+                        size="xs"
+                        league={rank}
+                        level={progress.current_level}
+                      />
+                    ) : (
+                      "🥊"
+                    )
+                  }
+                  onClick={() => navigate("/halloffame")}
+                />
+              ) : (
+                <EmptyState
+                  icon={<Trophy className="h-8 w-8 text-reward" />}
+                  title="아직 순위에 없어요"
+                  description="첫 도전을 완료하면 랭킹에 진입합니다."
+                  ctaText={checkedInToday ? "🥊 오늘 도전 시작" : "QR 체크인 하기"}
+                  onCtaClick={() => {
+                    if (checkedInToday) handleStartChallenge();
+                    else setShowQRScanner(true);
+                  }}
+                />
+              )}
+            </section>
+          )}
+
+          {/* 홈 커스터마이즈 진입점 */}
+          <div className="flex justify-center pb-1">
             <button
               type="button"
-              onClick={() => navigate("/challenges")}
-              aria-label="21일 챌린지 페이지 열기"
-              className="mt-2 flex w-full items-center justify-between rounded-xl border border-emerald-400/25 bg-transparent px-3.5 py-2.5 text-left transition-all active:scale-[0.99] hover:bg-emerald-400/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40"
+              onClick={() => setShowCustomize(true)}
+              className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-card px-3.5 py-1.5 text-[11px] font-bold text-muted-foreground transition-colors active:scale-95 hover:border-primary/40 hover:text-primary"
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-400/10 text-emerald-500 text-[14px]">
-                  🤝
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-[12.5px] font-bold text-foreground">
-                    같이 21일 · 챌린지 참여
-                  </p>
-                  <p className="mt-0.5 truncate text-[10.5px] leading-relaxed text-muted-foreground">
-                    팀전 · 꾸준함 기반 점수 (몸무게 공개 없음)
-                  </p>
-                </div>
-              </div>
-              <span className="shrink-0 text-[11px] font-bold text-emerald-500">
-                열기 →
-              </span>
-            </button>
-          </section>
-        )}
-
-        {/* ─── 6. Recent Badges 섹션 제거 (획득 배지는 /mypage 에서 확인) ─── */}
-
-        {/* ─── 7. Ranking Preview ─── (커스텀 토글) */}
-        {homeWidgets.rankingPreview && (
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-display-sm">이번 주 내 순위</h2>
-            <button
-              onClick={() => navigate("/halloffame")}
-              className="text-caption font-medium text-primary active:scale-95"
-            >
-              전체 랭킹 →
+              <Settings className="h-3.5 w-3.5" />
+              홈 커스터마이즈
             </button>
           </div>
-          {myPosition ? (
-            <RankingItem
-              rank={myPosition}
-              name={displayName}
-              score={totalXp}
-              isMe
-              meta={`${RANK_LABELS[rank]} · Lv.${progress.current_level}`}
-              avatar={
-                myCharacter?.character_presets ? (
-                  <CharacterSprite
-                    style={
-                      (myCharacter.character_presets.parts_json as any)?.style
-                    }
-                    userId={user?.id}
-                    partsJson={
-                      myCharacter.character_presets.parts_json as any
-                    }
-                    size="xs"
-                    league={rank}
-                    level={progress.current_level}
-                  />
-                ) : (
-                  "🥊"
-                )
-              }
-              onClick={() => navigate("/halloffame")}
-            />
-          ) : (
-            <EmptyState
-              icon={<Trophy className="h-8 w-8 text-reward" />}
-              title="아직 순위에 없어요"
-              description="첫 도전을 완료하면 랭킹에 진입합니다."
-              ctaText={checkedInToday ? "🥊 오늘 도전 시작" : "QR 체크인 하기"}
-              onCtaClick={() => {
-                if (checkedInToday) handleStartChallenge();
-                else setShowQRScanner(true);
-              }}
-            />
-          )}
-        </section>
-        )}
-
-        {/* ─── 홈 커스터마이즈 진입점 — 전체 피드 하단 ─── */}
-        <div className="flex justify-center pb-2">
-          <button
-            type="button"
-            onClick={() => setShowCustomize(true)}
-            className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-card px-3.5 py-1.5 text-[11px] font-bold text-muted-foreground transition-colors active:scale-95 hover:border-primary/40 hover:text-primary"
-          >
-            <Settings className="h-3.5 w-3.5" />
-            홈 커스터마이즈
-          </button>
-        </div>
+        </HomeMoreSection>
       </div>
 
       <HomeCustomizeSheet
