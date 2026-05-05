@@ -6,8 +6,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import OsamMascot from "@/components/mascot/OsamMascot";
 import StoryChoicePanel from "./StoryChoicePanel";
+import CharacterPortrait from "./visuals/portraits/CharacterPortrait";
+import {
+  resolvePortrait,
+  SPEAKER_DEFAULT_EMOTION,
+  type PortraitEmotion,
+} from "./visuals/portraits/portraitData";
 import type {
   StoryScene,
   StorySceneChoicePayload,
@@ -146,7 +151,9 @@ const StoryScenePlayer = ({
 };
 
 // ──────────────────────────────────────────────────────────────────
-// DialogueScene
+// DialogueScene — Stage 47A 비주얼 오버홀
+//   · 좌측 1/3: CharacterPortrait (입 모양 동기화)
+//   · 우측 2/3: 텍스트 박스 (retro 프레임 보더)
 // ──────────────────────────────────────────────────────────────────
 function DialogueScene({
   payload,
@@ -164,6 +171,13 @@ function DialogueScene({
     else if (canAdvance) onAdvance();
   };
 
+  // speaker → portrait key + emotion fallback
+  const portraitKey = resolvePortrait(payload.speaker);
+  const emotion: PortraitEmotion =
+    (payload as { portrait_emotion?: PortraitEmotion }).portrait_emotion ??
+    SPEAKER_DEFAULT_EMOTION[portraitKey] ??
+    "default";
+
   return (
     <button
       type="button"
@@ -172,23 +186,14 @@ function DialogueScene({
     >
       <div className="flex items-start gap-3">
         <div className="shrink-0">
-          {payload.portrait === "self" ? (
-            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-violet-500/40 bg-violet-500/10 text-xl">
-              🪞
-            </span>
-          ) : payload.portrait === "han_champion" ? (
-            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-500/40 bg-amber-500/10 text-xl">
-              🏆
-            </span>
-          ) : payload.portrait === "osam" || !payload.portrait ? (
-            <OsamMascot size="sm" state="idle" />
-          ) : (
-            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-500/30 bg-gray-900/70 text-xl">
-              🥊
-            </span>
-          )}
+          <CharacterPortrait
+            portraitKey={portraitKey}
+            emotion={emotion}
+            talking={!complete}
+            size="md"
+          />
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 rounded-2xl border border-amber-500/30 bg-gray-950/85 p-3 shadow-[0_0_0_1px_rgba(253,184,92,0.15)_inset]">
           <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-300">
             {payload.speaker}
           </p>

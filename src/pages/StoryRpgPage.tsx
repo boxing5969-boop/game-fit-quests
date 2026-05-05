@@ -38,6 +38,60 @@ import type {
   StorySceneEndingPayload,
 } from "@/types/storyRpg";
 
+// ── Stage 47A — scene → backgroundTheme/mood/cinematic 매핑 헬퍼 ──
+function resolveSceneTheme(scene: StoryScene): string {
+  const fromMeta = (scene.metadata as { background_theme?: string } | undefined)
+    ?.background_theme;
+  if (fromMeta) return fromMeta;
+  if (scene.scene_type === "node_move") {
+    const mv = scene.payload as { to_node_code?: string };
+    return nodeCodeToTheme(mv.to_node_code);
+  }
+  if (scene.scene_type === "ending") return "master_room";
+  return "default";
+}
+
+function nodeCodeToTheme(code?: string): string {
+  switch (code) {
+    case "gym_entrance":
+      return "gym_entrance";
+    case "mirror_zone":
+      return "gym_mirror";
+    case "ring":
+      return "gym_ring";
+    case "sandbag_zone":
+      return "gym_sandbag";
+    case "rope_zone":
+      return "gym_rope";
+    case "corner":
+      return "gym_corner";
+    case "boxing_hall":
+      return "gym_hall";
+    case "master_room":
+      return "master_room";
+    case "rival_arena":
+      return "rival_arena";
+    case "fight_camp":
+      return "champion_camp";
+    default:
+      return "default";
+  }
+}
+
+function resolveSceneMood(scene: StoryScene): "calm" | "tense" | "sad" | "triumphant" {
+  const bgm = (scene.payload as { bgm_hint?: string }).bgm_hint;
+  if (bgm === "tense") return "tense";
+  if (bgm === "epic") return "triumphant";
+  if (bgm === "sad") return "sad";
+  return "calm";
+}
+
+function resolveSceneCinematic(scene: StoryScene): boolean {
+  const meta = (scene.metadata as { cinematic?: boolean } | undefined)?.cinematic;
+  if (typeof meta === "boolean") return meta;
+  return scene.scene_type === "ending";
+}
+
 type StoryRpgMode =
   | { kind: "loading" }
   | { kind: "no_route" }
@@ -352,7 +406,12 @@ const StoryRpgPage = () => {
         {(mode.kind === "prologue" || mode.kind === "scene") && (
           <>
             {scene ? (
-              <StorySceneShell bgmHint={(scene.payload as { bgm_hint?: string }).bgm_hint}>
+              <StorySceneShell
+                bgmHint={(scene.payload as { bgm_hint?: string }).bgm_hint}
+                backgroundTheme={resolveSceneTheme(scene)}
+                mood={resolveSceneMood(scene)}
+                cinematic={resolveSceneCinematic(scene)}
+              >
                 <StoryScenePlayer
                   scene={scene}
                   onAdvance={handleAdvance}
@@ -381,6 +440,7 @@ const StoryRpgPage = () => {
               nodes={nodes}
               chapters={activeChapters}
               progress={sceneProgress}
+              routeCode={activeRouteCode}
               onSelectChapter={handleSelectChapter}
             />
             <div className="flex justify-center">

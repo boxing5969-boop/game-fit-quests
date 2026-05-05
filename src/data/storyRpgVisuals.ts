@@ -84,3 +84,36 @@ export const STORY_CHAPTER_STATE_VISUAL = {
 } as const;
 
 export type StoryChapterStateKey = keyof typeof STORY_CHAPTER_STATE_VISUAL;
+
+// ──────────────────────────────────────────────────────────────────
+// Stage 47A — 비주얼 오버홀 토큰
+// ──────────────────────────────────────────────────────────────────
+
+export const STORY_VISUAL_TOKENS = {
+  amberDeep: "#b87900",
+  bloodRed: "#a40e1a",
+  fogGray: "#8a92a3",
+  lanternGlow: "#fdb85c",
+  midnightNavy: "#0b0e2e",
+  midnightDeep: "#1a1f4d",
+  dawnOrange: "#f5832b",
+  champCrimson: "#1a0a0a",
+} as const;
+
+export const STORY_ROUTE_BACKDROP_PALETTE = {
+  master_path: {
+    skyFrom: STORY_VISUAL_TOKENS.midnightNavy,
+    skyTo: STORY_VISUAL_TOKENS.midnightDeep,
+    accent: STORY_VISUAL_TOKENS.lanternGlow,
+  },
+  pro_path: {
+    skyFrom: "#1c2547",
+    skyTo: STORY_VISUAL_TOKENS.dawnOrange,
+    accent: STORY_VISUAL_TOKENS.amberDeep,
+  },
+  champion_road: {
+    skyFrom: "#000814",
+    skyTo: STORY_VISUAL_TOKENS.champCrimson,
+    accent: STORY_VISUAL_TOKENS.bloodRed,
+  },
+} as const;

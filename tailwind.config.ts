@@ -164,6 +164,14 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // 153 스토리 RPG 전용 비주얼 토큰 (Stage 47A).
+        // 한국 90년대 PC RPG 일반 시각 언어 — 마이복서153 자체 IP 만 사용.
+        story: {
+          "amber-deep": "#b87900",
+          "blood-red": "#a40e1a",
+          "fog-gray": "#8a92a3",
+          "lantern-glow": "#fdb85c",
+        },
         // 복싱 트레이닝(/minigame) 전용 토큰. 실제 CSS 변수 값은
         // src/features/minigame/minigame.css 의 .minigame-app 안에서만 설정됨.
         punch: {
