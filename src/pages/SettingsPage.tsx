@@ -65,7 +65,6 @@ const SettingsPage = () => {
 
   // 7일 스타터 캠프 — admin 진입 (옵션 C)
   const { start: startCamp, isActive: campActive } = useTutorialCamp();
-  const isAdmin = role === "admin" || role === "super_admin";
 
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
