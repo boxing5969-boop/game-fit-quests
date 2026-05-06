@@ -5,8 +5,10 @@
  * 보편적 도상: 슬라임 / 늑대 / 로봇 / 그림자 / 거울 등 자체 IP.
  */
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import type { EnemyVariant } from "./enemyVariants";
+import { resolveEnemyAsset, PIXELATED_CSS } from "../assetMap";
 
 export type EnemyPose = "idle" | "attack" | "hurt" | "defeated";
 
@@ -35,6 +37,14 @@ const EnemySvg = ({
   const px = isBoss ? Math.round(base * 1.5) : base;
   const tint = pose === "hurt";
 
+  // PNG 자산 우선 시도 (tense_wolf 등)
+  const pngPath = resolveEnemyAsset(variant, pose);
+  const [pngFailed, setPngFailed] = useState(false);
+  useEffect(() => {
+    setPngFailed(false);
+  }, [pngPath]);
+  const usePng = pngPath && !pngFailed;
+
   return (
     <motion.div
       className={`relative inline-flex items-center justify-center ${className}`}
@@ -57,12 +67,36 @@ const EnemySvg = ({
         ease: "easeInOut",
       }}
     >
-      <svg viewBox="0 0 200 240" width={px} height={px * 1.2}>
-        <EnemyBody variant={variant} pose={pose} isBoss={isBoss} />
-        {tint && (
-          <rect width="200" height="240" fill="#a40e1a" opacity="0.3" />
-        )}
-      </svg>
+      {usePng ? (
+        <div className="relative h-full w-full">
+          <img
+            src={pngPath}
+            alt={`${variant} ${pose}`}
+            loading="lazy"
+            decoding="async"
+            onError={() => setPngFailed(true)}
+            className="h-full w-full object-contain"
+            style={PIXELATED_CSS}
+          />
+          {/* hurt 시 0.2s 빨간 tint overlay */}
+          {tint && (
+            <motion.div
+              className="pointer-events-none absolute inset-0 mix-blend-multiply"
+              style={{ background: "#a40e1a" }}
+              initial={{ opacity: 0.55 }}
+              animate={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            />
+          )}
+        </div>
+      ) : (
+        <svg viewBox="0 0 200 240" width={px} height={px * 1.2}>
+          <EnemyBody variant={variant} pose={pose} isBoss={isBoss} />
+          {tint && (
+            <rect width="200" height="240" fill="#a40e1a" opacity="0.3" />
+          )}
+        </svg>
+      )}
     </motion.div>
   );
 };

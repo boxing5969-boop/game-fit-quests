@@ -9,7 +9,7 @@
  *   · LLM/ChatAssistant 호출 없음.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Loader2, Map as MapIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ import StoryEndingCutscene from "@/components/story-rpg/StoryEndingCutscene";
 import StoryWorldOverview from "@/components/story-rpg/StoryWorldOverview";
 import StoryInventoryPanel from "@/components/story-rpg/StoryInventoryPanel";
 import ChapterClearOverlay from "@/components/story-rpg/visuals/effects/ChapterClearOverlay";
+import ChapterTitleCard from "@/components/story-rpg/visuals/effects/ChapterTitleCard";
 import type {
   ChapterCompleteResult,
   EndingCompleteResult,
@@ -136,6 +137,8 @@ const StoryRpgPage = () => {
   const [showInventory, setShowInventory] = useState(false);
   const [chapterClearResult, setChapterClearResult] =
     useState<ChapterCompleteResult | null>(null);
+  const [activeChapterTitle, setActiveChapterTitle] = useState<string | null>(null);
+  const shownChapterTitlesRef = useRef<Set<string>>(new Set());
 
   const routes = rpgState?.routes ?? [];
   const allChapters = rpgState?.chapters ?? [];
@@ -265,6 +268,23 @@ const StoryRpgPage = () => {
     mode.kind === "scene" ? mode.routeId : "",
     mode.kind === "scene" ? mode.chapterId : "",
     mode.kind === "scene" ? mode.sceneIndex : -1,
+  ]);
+
+  // ── chapter title card 트리거 (mode='scene' && sceneIndex===0, chapter당 1회) ──
+  useEffect(() => {
+    if (mode.kind !== "scene") return;
+    if (mode.sceneIndex !== 0) return;
+    if (!mode.chapterId) return;
+    if (shownChapterTitlesRef.current.has(mode.chapterId)) return;
+    const chapter = allChapters.find((c) => c.id === mode.chapterId);
+    if (!chapter) return;
+    shownChapterTitlesRef.current.add(mode.chapterId);
+    setActiveChapterTitle(chapter.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    mode.kind === "scene" ? mode.chapterId : "",
+    mode.kind === "scene" ? mode.sceneIndex : -1,
+    allChapters.length,
   ]);
 
   // ── 씬 전환 시 battle/ending 자동 분기 ───────────────────────
@@ -430,6 +450,13 @@ const StoryRpgPage = () => {
           setMode({ kind: "world" });
         }}
       />
+
+      {activeChapterTitle && (
+        <ChapterTitleCard
+          chapterCode={activeChapterTitle}
+          onComplete={() => setActiveChapterTitle(null)}
+        />
+      )}
 
       <div className="mx-auto w-full max-w-md md:max-w-xl space-y-4 px-4 py-4">
         {/* 능력치 HUD (no_route / loading / battle 외에서 표시) */}

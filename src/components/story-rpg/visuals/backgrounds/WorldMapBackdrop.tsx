@@ -5,12 +5,13 @@
  * 외부 이미지 0. 외부 IP 0. 마우스 패럴랙스 적용.
  */
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useMousePosition } from "@/hooks/useMousePosition";
 import { STORY_ROUTE_BACKDROP_PALETTE } from "@/data/storyRpgVisuals";
 import BackgroundParallax from "./BackgroundParallax";
 import ParticleField from "../effects/ParticleField";
+import { resolveWorldMapAsset, PIXELATED_CSS } from "../assetMap";
 
 export type WorldRouteCode = "master_path" | "pro_path" | "champion_road";
 
@@ -25,12 +26,20 @@ const WorldMapBackdrop = ({ routeCode }: WorldMapBackdropProps) => {
     ? STORY_ROUTE_BACKDROP_PALETTE[routeCode]
     : STORY_ROUTE_BACKDROP_PALETTE.master_path;
 
+  // PNG 픽셀 아트 자산 우선 (champion_road)
+  const pngPath = resolveWorldMapAsset(routeCode);
+  const [pngFailed, setPngFailed] = useState(false);
+  useEffect(() => {
+    setPngFailed(false);
+  }, [pngPath]);
+  const usePng = pngPath && !pngFailed;
+
   return (
     <div
       ref={containerRef}
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >
-      {/* layer 1: 그라디언트 하늘 */}
+      {/* layer 1: 그라디언트 하늘 — PNG 일 때도 fallback 컬러로 깔아둠 */}
       <div
         className="absolute inset-0"
         style={{
@@ -38,14 +47,45 @@ const WorldMapBackdrop = ({ routeCode }: WorldMapBackdropProps) => {
         }}
       />
 
-      {routeCode === "master_path" && (
-        <MasterPathLayers mouse={mouse} accent={palette.accent} />
-      )}
-      {routeCode === "pro_path" && (
-        <ProPathLayers mouse={mouse} accent={palette.accent} />
-      )}
-      {routeCode === "champion_road" && (
-        <ChampionRoadLayers mouse={mouse} accent={palette.accent} />
+      {usePng ? (
+        // PNG 단일 레이어 + 약한 패럴랙스 (마우스 추적 effect)
+        <div
+          className="absolute inset-0 will-change-transform"
+          style={{
+            transform: `translate3d(${-mouse.x * 6}px, ${-mouse.y * 4}px, 0)`,
+            transition: "transform 80ms linear",
+          }}
+        >
+          <img
+            src={pngPath}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onError={() => setPngFailed(true)}
+            className="absolute inset-0 h-full w-full object-cover"
+            style={PIXELATED_CSS}
+          />
+          {/* 가독성 그라디언트 */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.25) 100%)",
+            }}
+          />
+        </div>
+      ) : (
+        <>
+          {routeCode === "master_path" && (
+            <MasterPathLayers mouse={mouse} accent={palette.accent} />
+          )}
+          {routeCode === "pro_path" && (
+            <ProPathLayers mouse={mouse} accent={palette.accent} />
+          )}
+          {routeCode === "champion_road" && (
+            <ChampionRoadLayers mouse={mouse} accent={palette.accent} />
+          )}
+        </>
       )}
     </div>
   );

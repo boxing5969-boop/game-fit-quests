@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
   PORTRAIT_PALETTE,
   SPEAKER_DEFAULT_EMOTION,
@@ -17,6 +18,7 @@ import {
   type PortraitKey,
 } from "./portraitData";
 import { useMouthOpen } from "./MouthSync";
+import { resolvePortraitAsset, PIXELATED_CSS } from "../assetMap";
 
 export interface CharacterPortraitProps {
   portraitKey: PortraitKey;
@@ -72,42 +74,74 @@ const CharacterPortrait = ({
   const mouthOpen = useMouthOpen(talking);
   const blinkClosed = useBlink();
 
+  // PNG 픽셀 아트 자산 우선 시도 → 404 시 SVG fallback
+  const pngPath = resolvePortraitAsset(portraitKey, finalEmotion);
+  const [pngFailed, setPngFailed] = useState(false);
+  // emotion 바뀔 때 마다 다시 PNG 시도
+  useEffect(() => {
+    setPngFailed(false);
+  }, [pngPath]);
+
+  const usePng = pngPath && !pngFailed;
+
   return (
     <div
       className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 ${className}`}
       style={{ width: px, height: px * 1.2, background: palette.bg }}
     >
-      <svg
-        viewBox="0 0 200 240"
-        width={px}
-        height={px * 1.2}
-        preserveAspectRatio="xMidYMid meet"
-      >
-        <defs>
-          <radialGradient id={`bg-${portraitKey}`} cx="50%" cy="40%" r="65%">
-            <stop offset="0%" stopColor={palette.bg} stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#000" stopOpacity="0.6" />
-          </radialGradient>
-        </defs>
-        <rect width="200" height="240" fill={`url(#bg-${portraitKey})`} />
+      {usePng ? (
+        <>
+          <img
+            src={pngPath}
+            alt={`${portraitKey} ${finalEmotion}`}
+            loading="lazy"
+            decoding="async"
+            onError={() => setPngFailed(true)}
+            className="h-full w-full object-cover"
+            style={PIXELATED_CSS}
+          />
+          {/* talking — 우상단 amber dot 깜빡 (PNG 입 못 바꾸므로 indicator) */}
+          {talking && (
+            <motion.span
+              className="pointer-events-none absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_6px_rgba(253,184,92,0.8)]"
+              animate={{ opacity: [0.3, 1, 0.3], scale: [0.85, 1.1, 0.85] }}
+              transition={{ duration: 0.6, repeat: Infinity }}
+            />
+          )}
+        </>
+      ) : (
+        <svg
+          viewBox="0 0 200 240"
+          width={px}
+          height={px * 1.2}
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <defs>
+            <radialGradient id={`bg-${portraitKey}`} cx="50%" cy="40%" r="65%">
+              <stop offset="0%" stopColor={palette.bg} stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#000" stopOpacity="0.6" />
+            </radialGradient>
+          </defs>
+          <rect width="200" height="240" fill={`url(#bg-${portraitKey})`} />
 
-        {portraitKey === "osam" ? (
-          <OsamFace
-            palette={palette}
-            emotion={finalEmotion}
-            mouthOpen={mouthOpen}
-            blinkClosed={blinkClosed}
-          />
-        ) : (
-          <HumanFace
-            portraitKey={portraitKey}
-            palette={palette}
-            emotion={finalEmotion}
-            mouthOpen={mouthOpen}
-            blinkClosed={blinkClosed}
-          />
-        )}
-      </svg>
+          {portraitKey === "osam" ? (
+            <OsamFace
+              palette={palette}
+              emotion={finalEmotion}
+              mouthOpen={mouthOpen}
+              blinkClosed={blinkClosed}
+            />
+          ) : (
+            <HumanFace
+              portraitKey={portraitKey}
+              palette={palette}
+              emotion={finalEmotion}
+              mouthOpen={mouthOpen}
+              blinkClosed={blinkClosed}
+            />
+          )}
+        </svg>
+      )}
     </div>
   );
 };

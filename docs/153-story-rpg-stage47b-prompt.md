@@ -128,32 +128,32 @@ framer-motion 사용:
 ═══════════════════════════════════════════════════════════════════
 
 enemyVariants.ts:
+// ⚠️ 운영 DB 의 boxing_story_enemies.code 와 정확히 1:1 매칭 (확정 11종)
 export type EnemyVariant =
-  | 'lazy_slime'           // 게으름 슬라임 — 회색 슬라임 + 졸린 눈 + 침
-  | 'guard_breaker'        // 가드 브레이커 — 거대한 망치 들고 있는 인영
-  | 'tension_wolf'         // 긴장 늑대 — 회색 늑대 + 빨간 눈 + 칼날 입
-  | 'overtraining_golem'   // 과훈련 골렘 — 청회색 로봇 + 빨간 눈 + 균열
-  | 'master_door'          // 마스터의 문 — 거대한 자물쇠 + 빛나는 눈
-  | 'routine_breaker'      // 루틴 파괴자 — 깨진 시계 + 톱니바퀴 인영
-  | 'compare_monster'      // 비교 괴물 — 거울 표면 + 일그러진 자기 모습
-  | 'shadow_rival'         // 그림자 라이벌 — 검은 실루엣 + 빨간 눈 (보스급)
-  | 'camp_guard'           // 캠프 가드 — 모닥불 옆 거구 가드
-  | 'crowd_illusion'       // 군중 환각 — 일그러진 얼굴들의 실루엣
-  | 'self_doubt';          // 자기 의심 — 안개 속 흐릿한 자기 모습
+  | 'lazy_slime'            // 게으름 슬라임 (HP 30) — 회색 슬라임 + 졸린 눈 + 침
+  | 'excuse_goblin'         // 핑계 도깨비 (HP 50) — 작은 도깨비 + 손가락 가리키기 + 말풍선 "그러게..."
+  | 'guard_breaker'         // 가드 브레이커 (HP 60) — 검은 hood + 거대 망치 + 빨간 inner glow
+  | 'breath_holder'         // 숨참기 유령 (HP 60) — 청백색 유령 + 호흡 게이지 + 부유
+  | 'tense_wolf'            // 긴장 늑대 (HP 70) — 회색 늑대 + 빨간 눈 + 송곳니 으르렁
+  | 'compare_monster'       // 비교 괴물 (HP 80) — 거울 + 일그러진 자기 reflection
+  | 'quit_demon'            // 포기 악마 (HP 100) — 검붉은 악마 + 검은 사슬 + 의자에 앉아있음
+  | 'overtrain_golem'       // 과훈련 골렘 (HP 150) — 청회색 로봇 + 빨간 눈 슬릿 + 균열
+  | 'routine_breaker'       // 루틴 파괴자 (HP 180, 보스) — 깨진 시계 머리 + 톱니바퀴 어깨
+  | 'master_door'           // 마스터의 문 (HP 200, 보스) — 거대 문 + 자물쇠 + 빛나는 눈
+  | 'self_compare_evolved'; // 처음의 나/비교 괴물 진화형 (HP 250, 최종 보스) — 안개 속 PlayerBoxer 회색조 거대화
 
 export const ENEMY_CODE_TO_VARIANT: Record<string, EnemyVariant> = {
   lazy_slime: 'lazy_slime',
+  excuse_goblin: 'excuse_goblin',
   guard_breaker: 'guard_breaker',
-  tension_wolf: 'tension_wolf',
-  overtraining_golem: 'overtraining_golem',
-  master_door: 'master_door',
-  routine_breaker: 'routine_breaker',
+  breath_holder: 'breath_holder',
+  tense_wolf: 'tense_wolf',
   compare_monster: 'compare_monster',
-  shadow_rival: 'shadow_rival',
-  camp_guard: 'camp_guard',
-  crowd_illusion: 'crowd_illusion',
-  self_doubt: 'self_doubt',
-  // 추가 fallback — Stage 44 시나리오에 더 많은 적이 있을 수 있음
+  quit_demon: 'quit_demon',
+  overtrain_golem: 'overtrain_golem',
+  routine_breaker: 'routine_breaker',
+  master_door: 'master_door',
+  self_compare_evolved: 'self_compare_evolved',
 };
 
 EnemySvg.tsx props:
@@ -169,19 +169,19 @@ EnemySvg.tsx props:
 - hurt: x: [-4,4,-3,3,0] 흔들 (0.2s) + 빨간 tint overlay
 - defeated: opacity 1 → 0 (0.6s) + 회색조 + 위에서 내려옴
 
-각 변형 SVG 구체적 묘사:
+각 변형 SVG 구체적 묘사 (11종 — 운영 DB code 기준):
 
-A. lazy_slime: 둥근 회색 (#8a9da5) 덩어리 + 위 양 졸린 눈 (반쯤 감김) + 침 한 방울 떨어지기 애니메이션
-B. guard_breaker: 검은 hood 인영 + 큰 회색 망치 + 빨간 inner glow
-C. tension_wolf: 회색 늑대 머리 + 빨간 눈 + 송곳니 + idle 시 으르렁 (입 살짝 벌림)
-D. overtraining_golem: 청회색 로봇 + 빨간 눈 슬릿 + 가슴에 균열 + 매 2초 균열 빛남
-E. master_door: 거대 문 + 자물쇠 + 자물쇠 안에 노란 빛 + 보스 (1.5x)
-F. routine_breaker: 깨진 시계 머리 + 톱니바퀴 어깨 + 시침 흔들리기
-G. compare_monster: 거울 형태 + 안에 흐릿한 사람 모양 + idle 시 모양 바뀜
-H. shadow_rival: 검은 실루엣 + 빨간 눈 + 글러브 (보스급 1.5x)
-I. camp_guard: 모닥불 옆 거구 + 양 글러브 + idle 시 발 구르기
-J. crowd_illusion: 5-7 작은 얼굴 실루엣들 + 모두 같은 표정으로 비웃기
-K. self_doubt: 안개 (semi-transparent ellipse) 속 자기 모습 (PlayerBoxer 의 회색조 버전)
+A. lazy_slime (게으름 슬라임): 둥근 회색 (#8a9da5) 덩어리 + 위 졸린 눈 (반쯤 감김 ~~ 모양) + 침 한 방울 0.8초 간격 떨어짐 + 이불 자락 살짝
+B. excuse_goblin (핑계 도깨비): 작은 녹갈색 도깨비 (#5a4a2a) + 한 손 가리키기 포즈 + 머리에 작은 뿔 + 말풍선 ("그러게...") 가끔 popup
+C. guard_breaker (가드 브레이커): 검은 hood 인영 + 큰 회색 망치 (양손에 들기) + 망치에 빨간 inner glow + idle 시 망치 들썩
+D. breath_holder (숨참기 유령): 청백색 (#a8c5e0) 반투명 유령 + 부유 (위아래 3px, 2s) + 머리 위 호흡 게이지 SVG (0~MAX) + 숨 막힐 때 흔들림
+E. tense_wolf (긴장 늑대): 회색 늑대 머리 + 빨간 눈 + 송곳니 4개 + idle 시 으르렁 (입 살짝 벌림, 0.5s 간격) + 어깨 털 곤두섬
+F. compare_monster (비교 괴물): 거울 형태 (200x240 직사각) + 안에 일그러진 사람 reflection (PlayerBoxer 의 왜곡 버전) + idle 시 reflection 모양 천천히 변형
+G. quit_demon (포기 악마): 검붉은 (#5a1010) 악마 + 검은 사슬 손목/발목에 묶임 + 의자에 앉아있음 + 머리 살짝 숙임 + idle 시 한숨 (가슴 들썩)
+H. overtrain_golem (과훈련 골렘): 청회색 (#3a4a5a) 로봇 + 빨간 눈 슬릿 + 가슴에 균열 + 매 2초 균열 빛남 + 거대 (1.2x) + idle 시 무거운 발걸음 (좌우)
+I. routine_breaker (루틴 파괴자, 보스 1.5x): 깨진 시계 머리 (균열) + 톱니바퀴 어깨 + 시침/분침이 어긋난 채 흔들림 + 보스 오라 (검빛 ring)
+J. master_door (마스터의 문, 보스 1.5x): 거대 문 양짝 (200x300) + 중앙 자물쇠 + 자물쇠 안에 노란 빛 (radial gradient) + idle 시 빛 깜빡 + 위쪽에 빛나는 두 눈
+K. self_compare_evolved (처음의 나/비교 괴물 진화형, 최종 보스 1.5x): 안개 (semi-transparent ellipse 들) 속 PlayerBoxer 의 회색조 거대화 + 빨간 눈 + idle 시 안개 천천히 흐름 + 페이즈 1 (HP > 50%) 흐릿 / 페이즈 2 (HP <= 50%) 명확
 
 ═══════════════════════════════════════════════════════════════════
 4. BattleArena.tsx — 전체 합성

@@ -4,7 +4,9 @@
  * 10 테마 × 4 mood. 모두 inline SVG. 외부 IP 0.
  */
 
+import { useEffect, useState } from "react";
 import ParticleField, { type ParticleKind } from "../effects/ParticleField";
+import { resolveBackgroundAsset, PIXELATED_CSS } from "../assetMap";
 
 export type SceneBackgroundTheme =
   | "gym_entrance"
@@ -51,19 +53,50 @@ const SceneBackground = ({
   const tint = MOOD_TINT[mood];
   const particle = MOOD_PARTICLE[mood];
 
+  // PNG 픽셀 아트 자산 우선 (gym_entrance / gym_ring / rival_arena)
+  const pngPath = resolveBackgroundAsset(theme);
+  const [pngFailed, setPngFailed] = useState(false);
+  useEffect(() => {
+    setPngFailed(false);
+  }, [pngPath]);
+  const usePng = pngPath && !pngFailed;
+
   return (
     <div
       aria-hidden
       className={`pointer-events-none absolute inset-0 overflow-hidden rounded-3xl ${className}`}
     >
-      <svg
-        viewBox="0 0 1280 720"
-        preserveAspectRatio="xMidYMid slice"
-        className="h-full w-full"
-      >
-        {renderTheme(theme)}
-      </svg>
+      {usePng ? (
+        <img
+          src={pngPath}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={() => setPngFailed(true)}
+          className="absolute inset-0 h-full w-full object-cover"
+          style={PIXELATED_CSS}
+        />
+      ) : (
+        <svg
+          viewBox="0 0 1280 720"
+          preserveAspectRatio="xMidYMid slice"
+          className="h-full w-full"
+        >
+          {renderTheme(theme)}
+        </svg>
+      )}
+      {/* mood overlay — PNG/SVG 공통, 가독성 보강 */}
       <div className="absolute inset-0" style={{ background: tint }} />
+      {/* PNG 위 추가 어두운 그라디언트 (텍스트 가독성) */}
+      {usePng && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.35) 100%)",
+          }}
+        />
+      )}
       <ParticleField kind={particle.kind} density={particle.density} speed={particle.speed} />
     </div>
   );
