@@ -34,7 +34,7 @@ import LevelUpModal from "@/components/LevelUpModal";
 // 있으며 롤백 시 import 만 복구하면 된다.
 import { MasterProgressCard } from "@/components/master/MasterProgressCard";
 import HomeCustomizeSheet from "@/components/home/HomeCustomizeSheet";
-import { HomeEngagementSection } from "@/components/engagement";
+// HomeEngagementSection 은 별도 메뉴 (/myboxer/quest, MyBoxerQuestPage) 로 이전.
 import { useHomeLayout } from "@/lib/homeLayout";
 import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
@@ -430,7 +430,6 @@ const HomePage = () => {
         <HomeMoreSection
           count={
             (homeWidgets.masterTrack && (progress as any)?.master_track_unlocked ? 1 : 0) +
-            (homeWidgets.engagement ? 1 : 0) +
             (showStoryRpg ? 1 : 0) /* story-rpg — admin only + 토글 */ +
             (homeWidgets.dietPromo && profile?.diet_program_enabled ? 1 : 0) +
             (homeWidgets.weeklyProgress ? 1 : 0) +
@@ -442,8 +441,7 @@ const HomePage = () => {
             <MasterProgressCard masterLevel={(progress as any)?.master_level ?? 1} />
           )}
 
-          {/* 153 QUEST 몰입 카드 (코너맨/그림자복서/짐레이드) */}
-          {homeWidgets.engagement && <HomeEngagementSection />}
+          {/* 153 QUEST 몰입 카드는 별도 메뉴 (/myboxer/quest) 로 이전 */}
 
           {/* 153 스토리 RPG — 복서의 길 진입 카드 (미공개 — admin/super_admin 만) */}
           {showStoryRpg && <StoryRpgEntryCard />}

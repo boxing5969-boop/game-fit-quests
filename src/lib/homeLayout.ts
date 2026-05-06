@@ -25,7 +25,6 @@ export type HomeWidgetId =
   | "todayAction"
   | "quickAccess"
   | "masterTrack"
-  | "engagement"
   | "storyRpg"
   | "dietPromo"
   | "todayMission"
@@ -63,11 +62,6 @@ export const HOME_WIDGETS: readonly HomeWidgetMeta[] = Object.freeze([
     label: "마스터 로드 진행도",
     description: "블랙 Lv10 + 보스 4회 클리어 이후에 해금",
     conditional: true,
-  },
-  {
-    id: "engagement",
-    label: "몰입 카드",
-    description: "코너맨 매칭 / 그림자 복서 / 짐 레이드 / 챔피언 일기 / 세컨드 응원",
   },
   {
     id: "storyRpg",
@@ -108,7 +102,6 @@ const DEFAULT_VISIBILITY: VisibilityMap = {
   todayAction: true,
   quickAccess: true,
   masterTrack: true,
-  engagement: true,
   storyRpg: true,
   dietPromo: true,
   todayMission: true,
