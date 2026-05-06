@@ -949,7 +949,7 @@ function SavedScreen({
           SAVED
         </p>
         <h2 className="text-2xl font-black leading-tight text-amber-50">
-          오늘의 시각화가
+          오늘의 153마인드셋이
           <br />
           저장되었습니다.
         </h2>
@@ -975,7 +975,7 @@ function SavedScreen({
           className="h-12 w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 font-black tracking-wider text-amber-950 hover:from-amber-400 hover:to-amber-300 active:scale-[0.98]"
         >
           <RotateCcw className="mr-1 h-4 w-4" />
-          처음부터 다시
+          새 마인드셋 시작
         </Button>
         {onClose && (
           <Button

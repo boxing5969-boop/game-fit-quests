@@ -212,7 +212,7 @@ const AboutOneFiveThreePage = () => {
             "shadow-[0_6px_22px_-6px_rgba(217,54,32,0.7)]",
           )}
         >
-          나의 링으로 돌아가기
+          나의 153복싱짐으로 돌아가기
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
