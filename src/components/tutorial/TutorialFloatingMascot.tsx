@@ -44,6 +44,8 @@ const TutorialFloatingMascot = () => {
     markSkipped,
     rewardGems,
   } = useTutorialState();
+  // 'advance' 는 first_checkin 의 CTA 클릭 자동 통과 시에만 사용.
+  // 그 외 미션은 useTutorialAutoDetect 훅이 감지해서 자동 advance.
 
   const [open, setOpen] = useState(false);
   const [bubbleVisible, setBubbleVisible] = useState(true);
@@ -52,16 +54,23 @@ const TutorialFloatingMascot = () => {
   if (isSetupPath(location.pathname)) return null;
   if (!isEligible) return null;
 
-  const handleStartMission = (navTarget?: string) => {
+  const handleStartMission = (step: typeof currentStep) => {
     setOpen(false);
-    if (navTarget && location.pathname !== navTarget) {
-      navigate(navTarget);
+    if (step.navTarget && location.pathname !== step.navTarget) {
+      navigate(step.navTarget);
     }
-  };
-
-  const handleManualComplete = () => {
-    advance();
-    toast.success(`${currentStep.label} 완료! 🎉 +${TUTORIAL_STEP_REWARDS[currentStep.order]} GEMS`);
+    // 출석 체크 미션 (first_checkin) 은 QR 이 없을 수도 있어
+    // CTA 클릭만으로 자동 통과 (예외).
+    // 다른 4개 미션은 실제 행동을 해야만 detector 가 감지하여 advance.
+    if (step.key === "first_checkin") {
+      // 약간 지연 — navigate 후 toast 가 보이도록
+      setTimeout(() => {
+        advance();
+        toast.success(
+          `${step.label} 완료! 🎉 +${TUTORIAL_STEP_REWARDS[step.order]} GEMS`,
+        );
+      }, 600);
+    }
   };
 
   const handleSkipAll = async () => {
@@ -278,20 +287,18 @@ const TutorialFloatingMascot = () => {
                           {isCurrent && (
                             <div className="mt-2 flex flex-wrap items-center gap-2">
                               <button
-                                onClick={() => handleStartMission(step.navTarget)}
+                                onClick={() => handleStartMission(step)}
                                 className="inline-flex items-center gap-1 rounded-pill bg-yellow-400 px-3 py-1.5 text-xs font-black text-gray-900 hover:bg-yellow-300 active:scale-95"
                               >
                                 {step.ctaLabel}
                                 <ChevronRight className="h-3 w-3" />
                               </button>
-                              <button
-                                onClick={handleManualComplete}
-                                className="inline-flex items-center gap-1 rounded-pill bg-gray-800 px-3 py-1.5 text-xs font-bold text-gray-300 hover:bg-gray-700 active:scale-95"
-                                title="이미 했어요"
-                              >
-                                <Check className="h-3 w-3" />
-                                완료했어요
-                              </button>
+                              {/* 안내 — 출석 체크는 클릭만으로 OK, 나머지는 실제 행동 필요 */}
+                              <span className="text-[10px] text-gray-500">
+                                {step.key === "first_checkin"
+                                  ? "버튼 누르면 완료"
+                                  : "실제 행동 후 자동 완료"}
+                              </span>
                             </div>
                           )}
                         </div>
