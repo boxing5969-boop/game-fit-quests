@@ -13,6 +13,7 @@ import {
   Settings,
   Gamepad2,
   Fish,
+  Compass,
   X,
 } from "lucide-react";
 import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
@@ -40,6 +41,8 @@ const baseMenuItems = [
   { path: "/home",              icon: Home,       label: "홈" },
   { path: "/missions",          icon: BoxingGloveIcon, label: "훈련" },
   { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝" },
+  // 복싱인 루트 — 시각화 훈련. 일반 회원 공개 (ProtectedRoute 만 적용).
+  { path: "/myboxer/visualization", icon: Compass, label: "복싱인 루트" },
   { path: "/halloffame",        icon: Trophy,     label: "랭킹" },
   { path: "/rank-up",           icon: TrendingUp, label: "랭크업" },
   { path: "/cert-benefits",     icon: Award,      label: "단증혜택" },
