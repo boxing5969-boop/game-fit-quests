@@ -69,11 +69,11 @@ const DAY_1_STEPS: TutorialCampStep[] = [
   {
     day: 1,
     step: 0,
-    route: "/home",
+    route: "/myboxer/quest",
     targetKey: "day1.osami_greeting",
     targetSelector: '[data-tour="home-osami-briefing"]',
     title: "오삼이의 첫 인사",
-    body: "오삼이가 매일 짧은 메시지를 드려요.\n잠깐만 봐주세요.",
+    body: "오삼이가 매일 짧은 메시지를 드려요.\n153 QUEST 메뉴에서 만날 수 있어요.",
     osamiMessage: "안녕하세요. 오늘도 잘 오셨어요.",
     actionType: "read",
     requireTargetClick: false,
@@ -81,13 +81,13 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     animation: "pulse",
     placement: "bottom",
     fallbackText:
-      "홈 화면 위쪽의 오삼이 카드에서 매일 새로운 메시지를 받을 수 있어요.",
+      "153 QUEST 메뉴 위쪽의 오삼이 카드에서 매일 새로운 메시지를 받을 수 있어요.",
     completionText: "잘했어요. 다음으로 가요.",
   },
   {
     day: 1,
     step: 1,
-    route: "/home",
+    route: "/myboxer/quest",
     targetKey: "day1.today_round",
     targetSelector: '[data-tour="home-today-round"]',
     title: "오늘의 라운드",
@@ -98,7 +98,7 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     allowNextWithoutClick: true,
     animation: "spotlight",
     placement: "bottom",
-    fallbackText: "홈 화면 가운데에 오늘의 라운드 카드가 있어요.",
+    fallbackText: "153 QUEST 메뉴 가운데에 오늘의 라운드 카드가 있어요.",
     completionText: "오늘의 한 라운드, 기억해두세요.",
   },
   {
@@ -274,7 +274,7 @@ const DAY_3_STEPS: TutorialCampStep[] = [
   {
     day: 3,
     step: 1,
-    route: "/home",
+    route: "/myboxer/quest",
     targetKey: "day3.boxing_iq",
     targetSelector: '[data-tour="boxing-iq-card"]',
     title: "복싱 IQ",
@@ -285,7 +285,7 @@ const DAY_3_STEPS: TutorialCampStep[] = [
     allowNextWithoutClick: true,
     animation: "pulse",
     placement: "bottom",
-    fallbackText: "홈 화면을 내리면 복싱 IQ 카드가 보여요.",
+    fallbackText: "153 QUEST 메뉴를 내리면 복싱 IQ 카드가 보여요.",
     completionText: "복싱 IQ는 알수록 자세가 자연스러워져요.",
   },
   {
@@ -441,7 +441,7 @@ const DAY_5_STEPS: TutorialCampStep[] = [
   {
     day: 5,
     step: 0,
-    route: "/home",
+    route: "/myboxer/quest",
     targetKey: "day5.journal_card",
     targetSelector: '[data-tour="champion-journal-card"]',
     title: "챔피언 일기",
@@ -452,7 +452,7 @@ const DAY_5_STEPS: TutorialCampStep[] = [
     allowNextWithoutClick: true,
     animation: "spotlight",
     placement: "bottom",
-    fallbackText: "홈 화면에서 챔피언 일기 카드를 찾을 수 있어요.",
+    fallbackText: "153 QUEST 메뉴에서 챔피언 일기 카드를 찾을 수 있어요.",
     completionText: "오늘의 한 줄, 잘 적어두세요.",
   },
   {
@@ -533,7 +533,7 @@ const DAY_6_STEPS: TutorialCampStep[] = [
   {
     day: 6,
     step: 0,
-    route: "/home",
+    route: "/myboxer/quest",
     targetKey: "day6.second_cheer",
     targetSelector: '[data-tour="second-cheer-card"]',
     title: "세컨드 응원",
@@ -544,7 +544,7 @@ const DAY_6_STEPS: TutorialCampStep[] = [
     allowNextWithoutClick: true,
     animation: "spotlight",
     placement: "bottom",
-    fallbackText: "홈에서 세컨드 응원 카드를 찾을 수 있어요.",
+    fallbackText: "153 QUEST 메뉴에서 세컨드 응원 카드를 찾을 수 있어요.",
     completionText: "혼자가 아니에요.",
   },
   {

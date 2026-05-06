@@ -128,16 +128,26 @@ export function getTutorialCampState(): TutorialCampState {
   }
 }
 
+/** 동일 탭 안의 다른 hook 인스턴스에게 변경 알림 — useTutorialCamp 가 listen. */
+export const TUTORIAL_CAMP_STATE_EVENT = "tutorial-camp:state-changed";
+
 /**
  * 캠프 상태 write.
  * 입력은 정규화 후 저장 — 외부에서 잘못된 값을 넣어도 깨진 채 보관 안 됨.
  * QuotaExceeded 등은 조용히 무시.
+ *
+ * 저장 직후 same-tab 변경 알림 이벤트 dispatch — 다른 hook 인스턴스 즉시 sync.
  */
 export function saveTutorialCampState(state: TutorialCampState): void {
   if (!isBrowser()) return;
   try {
     const safe = normalizeState(state);
     window.localStorage.setItem(STORAGE_STATE_KEY, JSON.stringify(safe));
+    try {
+      window.dispatchEvent(new CustomEvent(TUTORIAL_CAMP_STATE_EVENT));
+    } catch {
+      // 이벤트 디스패치 실패는 조용히 무시 (저장 자체는 성공)
+    }
   } catch {
     // QuotaExceeded / 보안 정책 등 — 조용히 무시
   }

@@ -20,7 +20,10 @@ import {
   pauseTutorialCamp,
   resetTutorialCamp,
 } from "./tutorialCampUtils";
-import { getTutorialCampState } from "./tutorialCampStorage";
+import {
+  getTutorialCampState,
+  TUTORIAL_CAMP_STATE_EVENT,
+} from "./tutorialCampStorage";
 import { appendTutorialCampEvent } from "./tutorialCampEvents";
 import {
   getStep,
@@ -69,8 +72,17 @@ export function useTutorialCamp(): UseTutorialCampReturn {
   );
 
   // 마운트 시 storage 동기화 (탭 간 변경 / 직접 storage 수정 대비)
+  // + 동일 탭 안의 다른 hook 인스턴스가 saveTutorialCampState 호출했을 때 sync.
   useEffect(() => {
-    setState(getTutorialCampState());
+    const sync = () => setState(getTutorialCampState());
+    sync();
+    if (typeof window === "undefined") return;
+    window.addEventListener(TUTORIAL_CAMP_STATE_EVENT, sync);
+    window.addEventListener("storage", sync); // 탭 간
+    return () => {
+      window.removeEventListener(TUTORIAL_CAMP_STATE_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   const start = useCallback(() => {
