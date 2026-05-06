@@ -146,7 +146,7 @@ const StoryScenePlayer = ({
     <DialogueScene
       payload={dialoguePayload}
       onAdvance={() => onAdvance(scene.next_scene_index ?? -1)}
-      canAdvance={scene.next_scene_index !== null && scene.next_scene_index >= 0}
+      canAdvance={scene.next_scene_index !== null}
     />
   );
 };
