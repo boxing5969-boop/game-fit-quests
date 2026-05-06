@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { isManagerRole } from "@/lib/rankLabels";
+import { useTutorialCamp } from "@/features/tutorial-camp/useTutorialCamp";
 
 // ── Home widget toggle helpers ──
 const HOME_PREFS_KEY = "home-widget-prefs";
@@ -61,6 +62,10 @@ const SettingsPage = () => {
   const { data: branches } = useBranches();
   const { resetOnboarding } = useOnboardingState();
   const qc = useQueryClient();
+
+  // 7일 스타터 캠프 — admin 진입 (옵션 C)
+  const { start: startCamp, isActive: campActive } = useTutorialCamp();
+  const isAdmin = role === "admin" || role === "super_admin";
 
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
@@ -274,7 +279,28 @@ const SettingsPage = () => {
               온보딩 다시 보기
             </button>
             <RestartTutorialButton onDone={() => navigate("/home")} />
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  startCamp();
+                  toast.success(
+                    campActive
+                      ? "7일 스타터 캠프 재개"
+                      : "7일 스타터 캠프를 시작합니다 🥊",
+                  );
+                  navigate("/home");
+                }}
+                className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm font-bold text-amber-700 transition-all active:scale-95 dark:text-amber-400"
+              >
+                🥊 7일 스타터 캠프 시작 <span className="ml-1 text-[10px] font-normal opacity-70">(admin)</span>
+              </button>
+            )}
           </div>
+          {isAdmin && (
+            <p className="mt-2 text-[11px] text-amber-700/80 dark:text-amber-400/80">
+              ※ 운영 테스트용. 회원에게는 아직 노출되지 않습니다.
+            </p>
+          )}
         </div>
 
         {/* 153 다이어트 — feature flag off 유저에겐 아무것도 렌더되지 않음 */}
