@@ -501,3 +501,17 @@ export interface RouteResetResult {
   success: boolean;
   route_id: string;
 }
+
+// Stage 47A-fix — complete_chapter RPC 응답
+export interface ChapterCompleteResult {
+  success: boolean;
+  already_completed: boolean;
+  chapter_code: string;
+  chapter_title?: string;
+  story_xp_granted: number;
+  ring_coins_granted: number;
+  card_added: boolean;
+  card_code: string | null;
+  reward_title: string | null;
+  reason?: string;
+}

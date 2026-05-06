@@ -10,10 +10,12 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Loader2, Map as MapIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
   useApplyChoice,
+  useCompleteChapter,
   useMyPlayerStats,
   useProgressToScene,
   useStoryRpgState,
@@ -30,7 +32,9 @@ import StoryBattleEngine from "@/components/story-rpg/StoryBattleEngine";
 import StoryEndingCutscene from "@/components/story-rpg/StoryEndingCutscene";
 import StoryWorldOverview from "@/components/story-rpg/StoryWorldOverview";
 import StoryInventoryPanel from "@/components/story-rpg/StoryInventoryPanel";
+import ChapterClearOverlay from "@/components/story-rpg/visuals/effects/ChapterClearOverlay";
 import type {
+  ChapterCompleteResult,
   EndingCompleteResult,
   SceneProgressResult,
   StoryChapter,
@@ -111,7 +115,12 @@ type StoryRpgMode =
       defeatNext: number | null;
       routeId: string;
     }
-  | { kind: "ending"; routeId: string; payload: StorySceneEndingPayload }
+  | {
+      kind: "ending";
+      routeId: string;
+      chapterId: string | null;
+      payload: StorySceneEndingPayload;
+    }
   | { kind: "ending_claimed"; result: EndingCompleteResult; title: string };
 
 const StoryRpgPage = () => {
@@ -120,10 +129,13 @@ const StoryRpgPage = () => {
   const { data: playerStats } = useMyPlayerStats();
   const progressMut = useProgressToScene();
   const applyChoiceMut = useApplyChoice();
+  const completeChapterMut = useCompleteChapter();
 
   const [mode, setMode] = useState<StoryRpgMode>({ kind: "loading" });
   const [scene, setScene] = useState<StoryScene | null>(null);
   const [showInventory, setShowInventory] = useState(false);
+  const [chapterClearResult, setChapterClearResult] =
+    useState<ChapterCompleteResult | null>(null);
 
   const routes = rpgState?.routes ?? [];
   const allChapters = rpgState?.chapters ?? [];
@@ -266,7 +278,12 @@ const StoryRpgPage = () => {
     } else if (scene.scene_type === "ending") {
       const endingPayload = scene.payload as StorySceneEndingPayload;
       if (mode.kind === "scene") {
-        setMode({ kind: "ending", routeId: mode.routeId, payload: endingPayload });
+        setMode({
+          kind: "ending",
+          routeId: mode.routeId,
+          chapterId: scene.chapter_id,
+          payload: endingPayload,
+        });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -275,8 +292,27 @@ const StoryRpgPage = () => {
   // ── 진행 핸들러 ──────────────────────────────────────────────
   const handleAdvance = (nextIndex: number) => {
     if (nextIndex < 0) {
-      // 챕터 끝 → 월드맵 복귀
-      setMode({ kind: "world" });
+      // 챕터 끝 → completeChapter (있다면) → cinematic → 월드맵
+      if (mode.kind === "scene" && mode.routeId && mode.chapterId) {
+        const routeId = mode.routeId;
+        const chapterId = mode.chapterId;
+        completeChapterMut.mutate(
+          { routeId, chapterId },
+          {
+            onSuccess: (result) => {
+              setChapterClearResult(result);
+            },
+            onError: (err) => {
+              toast.error(
+                err instanceof Error ? err.message : "챕터 완료 처리 실패",
+              );
+              setMode({ kind: "world" });
+            },
+          },
+        );
+      } else {
+        setMode({ kind: "world" });
+      }
       return;
     }
     if (mode.kind === "prologue") {
@@ -371,8 +407,21 @@ const StoryRpgPage = () => {
   const isBusy = progressMut.isPending || applyChoiceMut.isPending;
 
   return (
-    <div className="min-h-dvh bg-background pb-32">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="min-h-dvh bg-background pb-32"
+    >
       <StoryRpgPageHeader />
+
+      <ChapterClearOverlay
+        result={chapterClearResult}
+        onClose={() => {
+          setChapterClearResult(null);
+          setMode({ kind: "world" });
+        }}
+      />
 
       <div className="mx-auto w-full max-w-md md:max-w-xl space-y-4 px-4 py-4">
         {/* 능력치 HUD (no_route / loading / battle 외에서 표시) */}
@@ -403,8 +452,15 @@ const StoryRpgPage = () => {
         )}
 
         {/* ── prologue / scene ── */}
-        {(mode.kind === "prologue" || mode.kind === "scene") && (
-          <>
+        <AnimatePresence mode="wait">
+          {(mode.kind === "prologue" || mode.kind === "scene") && (
+            <motion.div
+              key={`scene-${mode.kind}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
             {scene ? (
               <StorySceneShell
                 bgmHint={(scene.payload as { bgm_hint?: string }).bgm_hint}
@@ -430,8 +486,9 @@ const StoryRpgPage = () => {
                 <Loader2 className="h-5 w-5 animate-spin text-amber-300" />
               </div>
             )}
-          </>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── world ── */}
         {mode.kind === "world" && (
@@ -474,6 +531,7 @@ const StoryRpgPage = () => {
             <StoryEndingCutscene
               payload={mode.payload}
               routeId={mode.routeId}
+              chapterId={mode.chapterId}
               onClaimed={handleEndingClaimed}
             />
           </StorySceneShell>
@@ -530,7 +588,7 @@ const StoryRpgPage = () => {
 
         <StoryRpgProtectionNotice />
       </div>
-    </div>
+    </motion.div>
   );
 };
 

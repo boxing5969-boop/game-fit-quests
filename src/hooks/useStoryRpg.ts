@@ -9,11 +9,13 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import {
   applyChoice,
   changeStoryRoute,
   chooseStoryRoute,
   claimCardReward,
+  completeChapter,
   completeEnding,
   fetchMyInventory,
   fetchMyPlayerStats,
@@ -206,6 +208,27 @@ export function useCompleteEnding() {
       qc.invalidateQueries({ queryKey: [...STORY_RPG_KEY] });
       // real_gems 가 grant_gems 로 wallet 에 반영됨 — 클라이언트는 invalidate 만
       qc.invalidateQueries({ queryKey: ["wallet"] });
+    },
+  });
+}
+
+export function useCompleteChapter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      routeId,
+      chapterId,
+    }: {
+      routeId: string;
+      chapterId: string;
+    }) => completeChapter(routeId, chapterId),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: [...STORY_PLAYER_STATS_KEY] });
+      qc.invalidateQueries({ queryKey: [...STORY_INVENTORY_KEY] });
+      qc.invalidateQueries({ queryKey: [...STORY_RPG_KEY] });
+      if (result.card_added && result.card_code) {
+        toast.success(`'${result.card_code}' 카드 획득!`);
+      }
     },
   });
 }

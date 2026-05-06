@@ -4,12 +4,12 @@
  * cutscene_blocks 순차 렌더 + 보상 카드 + completeEnding RPC 호출.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Loader2 } from "lucide-react";
 import OsamMascot from "@/components/mascot/OsamMascot";
-import { useCompleteEnding } from "@/hooks/useStoryRpg";
+import { useCompleteChapter, useCompleteEnding } from "@/hooks/useStoryRpg";
 import type {
   EndingCompleteResult,
   StoryEndingCutsceneBlock,
@@ -21,6 +21,8 @@ const BLOCK_INTERVAL_MS = 3500;
 export interface StoryEndingCutsceneProps {
   payload: StorySceneEndingPayload;
   routeId: string;
+  /** ending 씬이 속한 챕터 — 있으면 ending 보상 전 complete_chapter 도 호출. */
+  chapterId?: string | null;
   onClaimed: (result: EndingCompleteResult) => void;
   onClose?: () => void;
 }
@@ -28,6 +30,7 @@ export interface StoryEndingCutsceneProps {
 const StoryEndingCutscene = ({
   payload,
   routeId,
+  chapterId,
   onClaimed,
   onClose,
 }: StoryEndingCutsceneProps) => {
@@ -36,6 +39,7 @@ const StoryEndingCutscene = ({
   const totalBlocks = blocks.length;
   const allShown = blockIndex >= totalBlocks - 1;
   const completeEnding = useCompleteEnding();
+  const completeChapter = useCompleteChapter();
 
   // 자동 진행
   useEffect(() => {
@@ -65,6 +69,11 @@ const StoryEndingCutscene = ({
   const block = blocks[Math.min(blockIndex, totalBlocks - 1)];
 
   const handleClaim = () => {
+    // 챕터에 속한 ending 이면 complete_chapter 도 호출 (멱등성 RPC 보장).
+    // ending 씬은 챕터의 마지막 — completed_chapter_codes 에 추가되어야 다음 챕터 잠금 해제.
+    if (chapterId) {
+      completeChapter.mutate({ routeId, chapterId });
+    }
     completeEnding.mutate(
       { routeId, endingCode: payload.ending_code },
       {

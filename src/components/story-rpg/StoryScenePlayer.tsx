@@ -12,6 +12,7 @@ import {
   resolvePortrait,
   SPEAKER_DEFAULT_EMOTION,
   type PortraitEmotion,
+  type PortraitKey,
 } from "./visuals/portraits/portraitData";
 import type {
   StoryScene,
@@ -179,9 +180,12 @@ function DialogueScene({
     "default";
 
   return (
-    <button
+    <motion.button
       type="button"
       onClick={handleTap}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
       className="w-full cursor-pointer text-left"
     >
       <div className="flex items-start gap-3">
@@ -193,10 +197,19 @@ function DialogueScene({
             size="md"
           />
         </div>
-        <div className="flex-1 min-w-0 rounded-2xl border border-amber-500/30 bg-gray-950/85 p-3 shadow-[0_0_0_1px_rgba(253,184,92,0.15)_inset]">
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-300">
-            {payload.speaker}
-          </p>
+        <div className="relative flex-1 min-w-0 rounded-2xl border border-amber-500/30 bg-gray-950/85 p-3 shadow-[0_0_0_1px_rgba(253,184,92,0.15)_inset]">
+          {/* retro 프레임 — 4 모서리 */}
+          <CornerDecor pos="tl" />
+          <CornerDecor pos="tr" />
+          <CornerDecor pos="bl" />
+          <CornerDecor pos="br" />
+
+          <div className="flex items-center gap-1.5">
+            <SpeakerIcon portraitKey={portraitKey} />
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-300">
+              {payload.speaker}
+            </p>
+          </div>
           <p className="mt-2 min-h-[3.5em] whitespace-pre-line text-[13px] leading-relaxed text-foreground">
             {typed}
             {!complete && (
@@ -218,7 +231,72 @@ function DialogueScene({
           ▼ 탭하여 다음
         </motion.p>
       )}
-    </button>
+    </motion.button>
+  );
+}
+
+// ── retro 프레임 모서리 장식 ──────────────────────────────────────
+function CornerDecor({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
+  const POS_STYLE: Record<typeof pos, string> = {
+    tl: "top-1 left-1",
+    tr: "top-1 right-1 rotate-90",
+    bl: "bottom-1 left-1 -rotate-90",
+    br: "bottom-1 right-1 rotate-180",
+  };
+  return (
+    <svg
+      viewBox="0 0 8 8"
+      className={`pointer-events-none absolute ${POS_STYLE[pos]} h-2 w-2`}
+    >
+      <path d="M 0 4 L 0 0 L 4 0" stroke="#fdb85c" strokeWidth="1.2" fill="none" />
+    </svg>
+  );
+}
+
+// ── speaker 아이콘 (portraitKey 별 작은 SVG) ──────────────────────
+function SpeakerIcon({ portraitKey }: { portraitKey: PortraitKey }) {
+  // osam = 글러브, gwan = 크라운, han_champion = 트로피, default = 점 3개 (나레이션)
+  const ICON: Record<string, JSX.Element> = {
+    osam: (
+      <ellipse cx="6" cy="6" rx="5" ry="4" fill="#e63946" stroke="#7a0e1a" strokeWidth="0.8" />
+    ),
+    gwan: (
+      <path
+        d="M 1 9 L 1 4 L 4 6 L 6 2 L 8 6 L 11 4 L 11 9 Z"
+        fill="#fdb85c"
+        stroke="#b87900"
+        strokeWidth="0.6"
+      />
+    ),
+    han_champion: (
+      <>
+        <rect x="3" y="2" width="6" height="6" rx="1" fill="#fdb85c" />
+        <rect x="4.5" y="8" width="3" height="2" fill="#b87900" />
+      </>
+    ),
+    park_senior: (
+      <circle cx="6" cy="6" r="4" fill="#0f766e" stroke="#fff" strokeWidth="0.6" />
+    ),
+    minji: <circle cx="6" cy="6" r="4" fill="#ec4899" />,
+    dohun: <path d="M 2 8 L 6 2 L 10 8 Z" fill="#a40e1a" />,
+    kim_coach: (
+      <rect x="2" y="3" width="8" height="6" rx="1" fill="#374151" stroke="#fdb85c" strokeWidth="0.6" />
+    ),
+    player: (
+      <circle cx="6" cy="6" r="4" fill="#b87900" stroke="#fdb85c" strokeWidth="0.6" />
+    ),
+  };
+  const icon = ICON[portraitKey] ?? (
+    <>
+      <circle cx="2.5" cy="6" r="0.8" fill="#fdb85c" />
+      <circle cx="6" cy="6" r="0.8" fill="#fdb85c" />
+      <circle cx="9.5" cy="6" r="0.8" fill="#fdb85c" />
+    </>
+  );
+  return (
+    <svg viewBox="0 0 12 12" className="h-3 w-3">
+      {icon}
+    </svg>
   );
 }
 

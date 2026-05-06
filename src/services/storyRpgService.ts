@@ -21,6 +21,7 @@ import {
   type BattleCommandResult,
   type BattleStartResult,
   type CardClaimResult,
+  type ChapterCompleteResult,
   type ChoiceApplyResult,
   type EndingCompleteResult,
   type RouteResetResult,
@@ -74,6 +75,7 @@ const STORY_ERROR_MAP: ReadonlyArray<{ match: string; ko: string }> = [
   { match: "card_not_found", ko: "카드를 찾을 수 없습니다." },
   { match: "enemy not available", ko: "적을 찾을 수 없습니다." },
   { match: "battle_lock", ko: "전투 진행 중에는 이 행동을 할 수 없습니다." },
+  { match: "chapter not found", ko: "챕터 정보를 찾을 수 없습니다." },
 ];
 
 function mapStoryError(message: string | undefined): string {
@@ -243,6 +245,19 @@ export async function completeEnding(
   });
   if (error) throw new Error(mapStoryError(error.message));
   if (!data) throw new Error("엔딩 보상 처리에 실패했습니다.");
+  return data;
+}
+
+export async function completeChapter(
+  routeId: string,
+  chapterId: string,
+): Promise<ChapterCompleteResult> {
+  const { data, error } = await sbRpc<ChapterCompleteResult>("complete_chapter", {
+    p_route_id: routeId,
+    p_chapter_id: chapterId,
+  });
+  if (error) throw new Error(mapStoryError(error.message));
+  if (!data) throw new Error("complete_chapter 응답이 비었습니다.");
   return data;
 }
 

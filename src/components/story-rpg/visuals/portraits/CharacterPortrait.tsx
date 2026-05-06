@@ -138,13 +138,25 @@ function OsamFace({
       <path d="M 70 165 Q 100 175 130 165" stroke="#fef3c7" strokeWidth="3" fill="none" />
       <circle cx="100" cy="170" r="3" fill="#fef3c7" />
 
-      {/* 눈썹 */}
-      {emotion === "concerned" || emotion === "serious" ? (
-        <>
-          <path d="M 70 90 L 90 95" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
-          <path d="M 130 95 L 110 90" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
-        </>
-      ) : null}
+      {/* 눈썹 — 감정별 (오삼이는 글러브 머리지만 양 눈 위에 표현 가능) */}
+      <g style={{ transition: "opacity 200ms" }}>
+        {emotion === "angry" ? (
+          <>
+            <path d="M 65 92 L 90 86" stroke="#1a1a1a" strokeWidth="4" strokeLinecap="round" />
+            <path d="M 135 92 L 110 86" stroke="#1a1a1a" strokeWidth="4" strokeLinecap="round" />
+          </>
+        ) : emotion === "concerned" || emotion === "serious" ? (
+          <>
+            <path d="M 70 90 L 90 95" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
+            <path d="M 130 95 L 110 90" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
+          </>
+        ) : isHappy ? (
+          <>
+            <path d="M 67 92 Q 77 86 87 92" stroke="#1a1a1a" strokeWidth="3" fill="none" strokeLinecap="round" />
+            <path d="M 113 92 Q 123 86 133 92" stroke="#1a1a1a" strokeWidth="3" fill="none" strokeLinecap="round" />
+          </>
+        ) : null}
+      </g>
 
       {/* 눈 */}
       <g style={{ transform: blinkClosed ? "scaleY(0.05)" : "scaleY(1)", transformOrigin: "100px 110px", transition: "transform 80ms" }}>
@@ -192,6 +204,9 @@ function OsamFace({
         />
       )}
 
+      {/* 글러브 머리 오른쪽 그림자 */}
+      <ellipse cx="155" cy="135" rx="22" ry="50" fill="#000" opacity="0.18" />
+
       {/* 광택 */}
       <ellipse cx="80" cy="80" rx="12" ry="10" fill="#fff" opacity="0.18" />
     </g>
@@ -224,6 +239,8 @@ function HumanFace({
       {/* 어깨 / 옷 */}
       <path d="M 20 240 L 20 195 Q 100 170 180 195 L 180 240 Z" fill={palette.outfit} />
       <path d="M 60 195 L 100 175 L 140 195" stroke={palette.accent} strokeWidth="2" fill="none" />
+      {/* 어깨 그림자 (오른쪽) */}
+      <path d="M 165 200 Q 175 210 178 235 L 180 240 L 150 240 Q 158 220 162 205 Z" fill="#000" opacity="0.18" />
 
       {/* 머리 (실루엣) */}
       <PortraitHair portraitKey={portraitKey} palette={palette} />
@@ -231,24 +248,38 @@ function HumanFace({
       {/* 얼굴 */}
       <ellipse cx="100" cy="105" rx="48" ry="58" fill={palette.skin} />
       <ellipse cx="100" cy="105" rx="48" ry="58" fill="none" stroke="#000" strokeOpacity="0.15" strokeWidth="2" />
+      {/* 얼굴 오른쪽 그림자 (얼굴 외곽 가까이만 — 눈/입 덮지 않음) */}
+      <ellipse cx="145" cy="120" rx="10" ry="40" fill="#000" opacity="0.18" />
 
-      {/* 눈썹 */}
-      {browAngry ? (
-        <>
-          <path d="M 65 88 L 88 95" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
-          <path d="M 135 88 L 112 95" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
-        </>
-      ) : browWorry ? (
-        <>
-          <path d="M 65 92 Q 76 86 88 92" stroke="#1a1a1a" strokeWidth="3" fill="none" strokeLinecap="round" />
-          <path d="M 112 92 Q 124 86 135 92" stroke="#1a1a1a" strokeWidth="3" fill="none" strokeLinecap="round" />
-        </>
-      ) : (
-        <>
-          <path d="M 65 88 L 88 88" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
-          <path d="M 112 88 L 135 88" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
-        </>
-      )}
+      {/* 눈썹 — 감정별 (200ms transition) */}
+      <g style={{ transition: "opacity 200ms" }}>
+        {emotion === "angry" ? (
+          <>
+            <path d="M 63 90 L 90 84" stroke="#1a1a1a" strokeWidth="4" strokeLinecap="round" />
+            <path d="M 137 90 L 110 84" stroke="#1a1a1a" strokeWidth="4" strokeLinecap="round" />
+          </>
+        ) : browAngry ? (
+          <>
+            <path d="M 65 88 L 88 95" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
+            <path d="M 135 88 L 112 95" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
+          </>
+        ) : browWorry ? (
+          <>
+            <path d="M 65 92 Q 76 86 88 92" stroke="#1a1a1a" strokeWidth="3" fill="none" strokeLinecap="round" />
+            <path d="M 112 92 Q 124 86 135 92" stroke="#1a1a1a" strokeWidth="3" fill="none" strokeLinecap="round" />
+          </>
+        ) : isHappy ? (
+          <>
+            <path d="M 65 90 Q 76 84 88 90" stroke="#1a1a1a" strokeWidth="3" fill="none" strokeLinecap="round" />
+            <path d="M 112 90 Q 124 84 135 90" stroke="#1a1a1a" strokeWidth="3" fill="none" strokeLinecap="round" />
+          </>
+        ) : (
+          <>
+            <path d="M 65 88 L 88 88" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
+            <path d="M 112 88 L 135 88" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
+          </>
+        )}
+      </g>
 
       {/* 눈 */}
       <g
