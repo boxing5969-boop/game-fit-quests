@@ -241,6 +241,8 @@ const HomePage = () => {
   const isAdmin = role === "admin" || role === "super_admin";
   const gemsDisplay = isAdmin ? "∞" : gemCount.toLocaleString();
   const displayName = profile.nickname || profile.name;
+  // 153 스토리 RPG: 미공개 — admin/super_admin 만 진입/표시 (회원 노출 차단)
+  const showStoryRpg = isAdmin;
 
   return (
     <AppPage
@@ -424,7 +426,7 @@ const HomePage = () => {
           count={
             (homeWidgets.masterTrack && (progress as any)?.master_track_unlocked ? 1 : 0) +
             1 /* engagement */ +
-            1 /* story-rpg */ +
+            (showStoryRpg ? 1 : 0) /* story-rpg — admin only */ +
             (profile?.diet_program_enabled ? 1 : 0) +
             (homeWidgets.weeklyProgress ? 1 : 0) +
             (homeWidgets.rankingPreview ? 1 : 0)
@@ -438,8 +440,8 @@ const HomePage = () => {
           {/* 153 QUEST 몰입 카드 (코너맨/그림자복서/짐레이드) */}
           <HomeEngagementSection />
 
-          {/* 153 스토리 RPG — 복서의 길 진입 카드 */}
-          <StoryRpgEntryCard />
+          {/* 153 스토리 RPG — 복서의 길 진입 카드 (미공개 — admin/super_admin 만) */}
+          {showStoryRpg && <StoryRpgEntryCard />}
 
           {/* 이번 주 진행도 */}
           {homeWidgets.weeklyProgress && (

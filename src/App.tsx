@@ -119,6 +119,16 @@ const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// 153 스토리 RPG 미공개 — admin/super_admin 만 진입 (회원 직접 URL 접근 차단)
+const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
+  const { role, loading } = useAuth();
+  if (loading) return null;
+  if (role !== "admin" && role !== "super_admin") {
+    return <Navigate to="/home" replace />;
+  }
+  return <>{children}</>;
+};
+
 const RoleBasedRedirect = () => {
   const { role, profile, loading } = useAuth();
   if (loading) return null;
@@ -209,7 +219,7 @@ const AppRoutes = () => {
         <Route path="/manager/member/:memberId/preview" element={<ProtectedRoute><ManagerRoute><MemberPreviewPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/checkin-board" element={<ProtectedRoute><ManagerRoute><CheckinBoardPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><ManagerRoute><SuperAdminDashboard /></ManagerRoute></ProtectedRoute>} />
-        <Route path="/story-rpg" element={<ProtectedRoute><StoryRpgPage /></ProtectedRoute>} />
+        <Route path="/story-rpg" element={<ProtectedRoute><AdminOnlyRoute><StoryRpgPage /></AdminOnlyRoute></ProtectedRoute>} />
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
