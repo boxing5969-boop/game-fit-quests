@@ -241,8 +241,9 @@ const HomePage = () => {
   const isAdmin = role === "admin" || role === "super_admin";
   const gemsDisplay = isAdmin ? "∞" : gemCount.toLocaleString();
   const displayName = profile.nickname || profile.name;
-  // 153 스토리 RPG: 미공개 — admin/super_admin 만 진입/표시 (회원 노출 차단)
-  const showStoryRpg = isAdmin;
+  // 153 스토리 RPG: 미공개 — admin/super_admin 만 진입/표시 (회원 노출 차단).
+  // 추가로 admin 도 본인 customize 토글로 끌 수 있음.
+  const showStoryRpg = isAdmin && homeWidgets.storyRpg;
 
   return (
     <AppPage
@@ -378,19 +379,23 @@ const HomePage = () => {
         })()}
 
         {/* ─── 핵심: 오늘의 액션 (상태별 자동 변경) ─── */}
-        <TodayActionCard
-          state={todayActionState}
-          activeMinutes={activeMinutes}
-          streakDays={progress.streak_days}
-          onClick={handleTodayAction}
-        />
+        {homeWidgets.todayAction && (
+          <TodayActionCard
+            state={todayActionState}
+            activeMinutes={activeMinutes}
+            streakDays={progress.streak_days}
+            onClick={handleTodayAction}
+          />
+        )}
 
         {/* ─── 퀵 액세스 3 칩 ─── */}
-        <QuickAccessRow
-          missionStatus={missionStatus}
-          challengeJoined={false}
-          weeklyProgress={weeklyProgress}
-        />
+        {homeWidgets.quickAccess && (
+          <QuickAccessRow
+            missionStatus={missionStatus}
+            challengeJoined={false}
+            weeklyProgress={weeklyProgress}
+          />
+        )}
 
         {/* ─── 활동 세션 진행 중일 때만 SelfChallengeFlow 표시 (전체 화면 모달) ─── */}
         {showChallenge && (
@@ -425,9 +430,9 @@ const HomePage = () => {
         <HomeMoreSection
           count={
             (homeWidgets.masterTrack && (progress as any)?.master_track_unlocked ? 1 : 0) +
-            1 /* engagement */ +
-            (showStoryRpg ? 1 : 0) /* story-rpg — admin only */ +
-            (profile?.diet_program_enabled ? 1 : 0) +
+            (homeWidgets.engagement ? 1 : 0) +
+            (showStoryRpg ? 1 : 0) /* story-rpg — admin only + 토글 */ +
+            (homeWidgets.dietPromo && profile?.diet_program_enabled ? 1 : 0) +
             (homeWidgets.weeklyProgress ? 1 : 0) +
             (homeWidgets.rankingPreview ? 1 : 0)
           }
@@ -438,7 +443,7 @@ const HomePage = () => {
           )}
 
           {/* 153 QUEST 몰입 카드 (코너맨/그림자복서/짐레이드) */}
-          <HomeEngagementSection />
+          {homeWidgets.engagement && <HomeEngagementSection />}
 
           {/* 153 스토리 RPG — 복서의 길 진입 카드 (미공개 — admin/super_admin 만) */}
           {showStoryRpg && <StoryRpgEntryCard />}
@@ -474,7 +479,7 @@ const HomePage = () => {
           )}
 
           {/* 153 다이어트 프로그램 (feature flag) — 한 줄 요약 */}
-          {profile?.diet_program_enabled && (
+          {homeWidgets.dietPromo && profile?.diet_program_enabled && (
             <button
               type="button"
               onClick={() => navigate("/diet")}

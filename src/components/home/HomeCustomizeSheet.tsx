@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { RotateCcw, Settings, X } from "lucide-react";
 import { HOME_WIDGETS, useHomeLayout, type HomeWidgetId } from "@/lib/homeLayout";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 interface HomeCustomizeSheetProps {
@@ -9,10 +11,19 @@ interface HomeCustomizeSheetProps {
 
 /**
  * 홈 화면 커스터마이즈 바텀시트 — 토글로 위젯 표시/숨김.
- * 고정 영역(QR 체크인 · 다이어트 프로모 · 골드 뱃지)은 여기서 제어 안 한다.
+ * 고정 영역(QR 체크인 · 골드 뱃지)은 여기서 제어 안 한다.
+ * adminOnly 위젯은 admin/super_admin 만 토글 항목 노출.
  */
 const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
   const { visibility, toggle, reset, visibleCount } = useHomeLayout();
+  const { role } = useAuth();
+  const isAdmin = role === "admin" || role === "super_admin";
+
+  // adminOnly 위젯은 회원 sheet 에서 숨김
+  const visibleWidgets = useMemo(
+    () => HOME_WIDGETS.filter((w) => !w.adminOnly || isAdmin),
+    [isAdmin],
+  );
 
   if (!open) return null;
 
@@ -37,7 +48,7 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
                 홈 커스터마이즈
               </h2>
               <p className="text-[11px] text-muted-foreground leading-tight">
-                표시되는 위젯: <span className="number-font font-bold text-foreground">{visibleCount}</span>/{HOME_WIDGETS.length}
+                표시되는 위젯: <span className="number-font font-bold text-foreground">{visibleCount}</span>/{visibleWidgets.length}
               </p>
             </div>
           </div>
@@ -52,8 +63,8 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
         </div>
 
         {/* 위젯 토글 리스트 */}
-        <ul className="space-y-1.5">
-          {HOME_WIDGETS.map((w) => (
+        <ul className="space-y-1.5 max-h-[55vh] overflow-y-auto pr-1">
+          {visibleWidgets.map((w) => (
             <WidgetToggleRow
               key={w.id}
               id={w.id}
@@ -73,8 +84,7 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
           </p>
           <ul className="mt-1.5 space-y-0.5 text-[11.5px] text-foreground/85">
             <li>· 상단 💵 파이트 머니 뱃지</li>
-            <li>· QR 체크인</li>
-            <li>· 153 다이어트 프로모</li>
+            <li>· QR 체크인 / 출석 완료 패널</li>
             <li>· 명예의 전당 축하 배너 (자격 달성 시)</li>
           </ul>
         </div>

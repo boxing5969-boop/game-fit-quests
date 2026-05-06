@@ -22,7 +22,12 @@ import { useCallback, useEffect, useState } from "react";
 
 export type HomeWidgetId =
   | "hero"
+  | "todayAction"
+  | "quickAccess"
   | "masterTrack"
+  | "engagement"
+  | "storyRpg"
+  | "dietPromo"
   | "todayMission"
   | "weeklyProgress"
   | "rankingPreview";
@@ -33,6 +38,8 @@ export interface HomeWidgetMeta {
   description: string;
   /** 조건부 위젯이면 프리퍼런스가 on 이어도 조건 미충족 시 렌더 안 함 (UI 안내용). */
   conditional?: boolean;
+  /** admin / super_admin 만 토글 항목에 노출 (회원 sheet 에서는 숨김). */
+  adminOnly?: boolean;
 }
 
 export const HOME_WIDGETS: readonly HomeWidgetMeta[] = Object.freeze([
@@ -42,9 +49,37 @@ export const HOME_WIDGETS: readonly HomeWidgetMeta[] = Object.freeze([
     description: "내 캐릭터·리그 뱃지·다음 승급까지 XP",
   },
   {
+    id: "todayAction",
+    label: "오늘의 액션",
+    description: "QR 체크인 / 도전 시작 / 활성 세션 안내 카드",
+  },
+  {
+    id: "quickAccess",
+    label: "퀵 액세스",
+    description: "오늘 미션 / 챌린지 / 이번 주 진행 미니 칩",
+  },
+  {
     id: "masterTrack",
     label: "마스터 로드 진행도",
     description: "블랙 Lv10 + 보스 4회 클리어 이후에 해금",
+    conditional: true,
+  },
+  {
+    id: "engagement",
+    label: "몰입 카드",
+    description: "코너맨 매칭 / 그림자 복서 / 짐 레이드 / 챔피언 일기 / 세컨드 응원",
+  },
+  {
+    id: "storyRpg",
+    label: "153 스토리 RPG (베타)",
+    description: "복서의 길 — 미공개 베타. 관리자만 표시.",
+    conditional: true,
+    adminOnly: true,
+  },
+  {
+    id: "dietPromo",
+    label: "153 다이어트 프로모",
+    description: "체지방 제거 21일 챌린지 — 다이어트 활성 시.",
     conditional: true,
   },
   {
@@ -70,7 +105,12 @@ type VisibilityMap = Record<HomeWidgetId, boolean>;
 
 const DEFAULT_VISIBILITY: VisibilityMap = {
   hero: true,
+  todayAction: true,
+  quickAccess: true,
   masterTrack: true,
+  engagement: true,
+  storyRpg: true,
+  dietPromo: true,
   todayMission: true,
   weeklyProgress: true,
   rankingPreview: true,
