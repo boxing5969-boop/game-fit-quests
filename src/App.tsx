@@ -65,7 +65,17 @@ const DietCoachInboxPage = lazy(() => import("@/pages/diet/coach/DietCoachInboxP
 const DietMemberDetailPage = lazy(() => import("@/pages/diet/coach/DietMemberDetailPage"));
 const LiveBoardPage = lazy(() => import("@/pages/LiveBoardPage"));
 const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdminDashboard"));
-const StoryRpgPage = lazy(() => import("@/pages/StoryRpgPage"));
+// 복싱인 루트 — 시각화 훈련 (153복싱짐으로 돌아온 사람).
+//
+// 보존된 RPG 자산:
+//   · src/pages/StoryRpgPage.tsx (47A/47B 단계 — 153 스토리 RPG)
+//   · src/components/story-rpg/ 전체
+//   · public/assets/story-rpg/ 17장 PNG
+//   · src/pages/BoxerRoutePage.tsx (직전 단계 — 7 라운드 RoundTimer 시각화)
+// 위 파일은 모두 그대로 보존. 라우트 import 만 신규 페이지로 교체 — 1커밋 rollback 가능.
+const MyBoxerVisualizationPage = lazy(
+  () => import("@/pages/MyBoxerVisualizationPage"),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -219,7 +229,12 @@ const AppRoutes = () => {
         <Route path="/manager/member/:memberId/preview" element={<ProtectedRoute><ManagerRoute><MemberPreviewPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/checkin-board" element={<ProtectedRoute><ManagerRoute><CheckinBoardPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><ManagerRoute><SuperAdminDashboard /></ManagerRoute></ProtectedRoute>} />
-        <Route path="/story-rpg" element={<ProtectedRoute><AdminOnlyRoute><StoryRpgPage /></AdminOnlyRoute></ProtectedRoute>} />
+        {/* 복싱인 루트 — 시각화 훈련 (153복싱짐으로 돌아온 사람). */}
+        {/* 일반 회원에게 공개. ProtectedRoute 만 유지 — 비로그인 진입 차단. */}
+        {/* admin/super_admin 전용 제한 (AdminOnlyRoute) 은 제거. */}
+        <Route path="/story-rpg" element={<ProtectedRoute><MyBoxerVisualizationPage /></ProtectedRoute>} />
+        <Route path="/boxer-route" element={<ProtectedRoute><MyBoxerVisualizationPage /></ProtectedRoute>} />
+        <Route path="/myboxer/visualization" element={<ProtectedRoute><MyBoxerVisualizationPage /></ProtectedRoute>} />
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
