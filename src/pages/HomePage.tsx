@@ -28,6 +28,9 @@ import SelfChallengeFlow from "@/components/SelfChallengeFlow";
 import QRScannerModal from "@/components/QRScannerModal";
 import CheckinSuccessModal from "@/components/CheckinSuccessModal";
 import LevelUpModal from "@/components/LevelUpModal";
+// 단계 47 — 홈 상단 정리: 오늘 할 일 / 오삼이 한마디 (기존 컴포넌트 0 변경)
+import TodayFocusCard from "@/components/home/TodayFocusCard";
+import OsamiHomeNote from "@/components/home/OsamiHomeNote";
 // RetentionBanner 는 홈에서 제거 (Settings 의 widget pref 는 유지되어 향후 복구 가능).
 // TutorialOverlay / TutorialCompleteModal: 랭킹업 입단식 리뉴얼로 글로벌
 // InductionCeremonyOverlay (App.tsx) 가 대체. 기존 컴포넌트 파일은 보존되어
@@ -307,6 +310,10 @@ const HomePage = () => {
       }
     >
       <div className="space-y-4">
+        {/* ─── 단계 47: 홈 상단 정리 — 오늘 할 일 + 오삼이 한마디 ─── */}
+        <TodayFocusCard />
+        <OsamiHomeNote />
+
         {/* ─── Master-40 celebration (conditional) ─── */}
         {isMaster40 && (
           <NotificationBanner

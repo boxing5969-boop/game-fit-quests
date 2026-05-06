@@ -429,7 +429,7 @@ const MissionsPage = () => {
         />
       }
     >
-      <div className="space-y-6">
+      <div data-tour="missions-official-training" className="space-y-6">
         <SegmentedControl<MissionTab>
           value={missionTab}
           onChange={(v) => setMissionTab(v)}

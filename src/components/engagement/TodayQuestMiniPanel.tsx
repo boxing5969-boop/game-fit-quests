@@ -149,6 +149,7 @@ const TodayQuestMiniPanel = ({
 
   return (
     <section
+      data-tour="home-today-round"
       className="surface-card border border-border bg-card"
       aria-label="오늘의 보조 퀘스트"
     >

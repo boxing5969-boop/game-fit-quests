@@ -1,5 +1,5 @@
 /**
- * 복싱인 루트 — 시각화 훈련 페이지 wrapper.
+ * 153마인드셋 — 시각화 훈련 페이지 wrapper.
  *
  * 라우트 마운트 지점. 단기 / 장기 두 세션을 선택해서 같은 플레이어로 실행.
  * 세션 본 화면 로직은 MyBoxerVisualizationSession 컴포넌트가 담당.
@@ -58,6 +58,7 @@ const MyBoxerVisualizationPage = () => {
 
   return (
     <div
+      data-tour="mindset-session-picker"
       className="relative min-h-dvh w-full overflow-hidden"
       style={{
         background:
@@ -84,7 +85,7 @@ const MyBoxerVisualizationPage = () => {
             MYBOXER 153
           </p>
           <h1 className="text-3xl font-black leading-tight text-amber-50">
-            복싱인 루트
+            153마인드셋
           </h1>
           <p className="text-[12px] text-amber-200/60">
             오늘의 한 라운드와, 1년 뒤의 나를 함께 마음에 둡니다.

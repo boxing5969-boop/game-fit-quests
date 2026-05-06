@@ -20,6 +20,7 @@ const BoxingIqLeagueCard = () => {
 
   return (
     <section
+      data-tour="boxing-iq-card"
       className="surface-card border border-border bg-card"
       aria-label="복싱 IQ 리그"
     >

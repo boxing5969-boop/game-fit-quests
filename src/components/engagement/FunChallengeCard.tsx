@@ -32,7 +32,7 @@ const FunChallengeCard = ({ challenge, onChallenge }: FunChallengeCardProps) => 
   const rewards = challenge.rewards_by_difficulty;
 
   return (
-    <article className="rounded-card border border-border bg-card p-3.5">
+    <article data-tour="challenge-arena-card" className="rounded-card border border-border bg-card p-3.5">
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">

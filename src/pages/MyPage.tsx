@@ -74,7 +74,7 @@ const MyPage = () => {
         toast.error("다시 시작에 실패했습니다. 잠시 후 다시 시도해주세요.");
         return;
       }
-      toast.success("랭킹업 입단식을 다시 시작합니다 🥊");
+      toast.success("튜토리얼을 다시 시작합니다 🥊");
       navigate("/home");
     } finally {
       setTutorialRestartBusy(false);
@@ -141,7 +141,7 @@ const MyPage = () => {
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
-      <div className="mb-6 flex items-center gap-3">
+      <div data-tour="mypage-profile" className="mb-6 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
@@ -229,7 +229,9 @@ const MyPage = () => {
 
         {/* ─── 153 QUEST 몰입 레이어: 나만의 복싱 전당 ─── */}
         {/*       공식 progress 는 읽기만, QUEST 보조 데이터는 useBoxingEngagementSummary 사용 */}
-        <BoxingHallSummaryCard />
+        <div data-tour="boxing-hall-card">
+          <BoxingHallSummaryCard />
+        </div>
 
         {/* ─── v1.5 16단계: 복싱 IQ 리그 ─── */}
         <BoxingIqLeagueCard />
@@ -419,7 +421,7 @@ const MyPage = () => {
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">🥊</span>
                 <span className="text-sm text-foreground">
-                  {tutorialRestartBusy ? "준비 중…" : "입단식 다시 보기"}
+                  {tutorialRestartBusy ? "준비 중…" : "튜토리얼 다시 시작"}
                 </span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />

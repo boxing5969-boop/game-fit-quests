@@ -482,7 +482,7 @@ const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
             toast.error("다시 시작에 실패했습니다. 잠시 후 다시 시도해주세요.");
             return;
           }
-          toast.success("랭킹업 입단식을 다시 시작합니다 🥊");
+          toast.success("튜토리얼을 다시 시작합니다 🥊");
           onDone();
         } finally {
           setBusy(false);
@@ -490,7 +490,7 @@ const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
       }}
       className="rounded-xl bg-reward/15 px-4 py-2.5 text-sm font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
     >
-      {busy ? "준비 중…" : "🥊 랭킹업 입단식 다시 시작"}
+      {busy ? "준비 중…" : "🥊 튜토리얼 다시 시작"}
     </button>
   );
 };

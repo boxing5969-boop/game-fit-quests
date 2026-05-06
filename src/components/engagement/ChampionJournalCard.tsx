@@ -18,7 +18,7 @@ function formatKstShort(iso: string): string {
 
 const ChampionJournalCard = ({ entry }: ChampionJournalCardProps) => {
   return (
-    <article className="rounded-card border border-border bg-card px-3 py-2.5">
+    <article data-tour="champion-journal-card" className="rounded-card border border-border bg-card px-3 py-2.5">
       <div className="flex items-center justify-between gap-2">
         <p className="truncate text-[10px] font-bold uppercase tracking-wider text-primary">
           {formatKstShort(entry.created_at)} · {entry.prompt}

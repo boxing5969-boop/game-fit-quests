@@ -29,6 +29,7 @@ const GrowthReportCard = () => {
   return (
     <>
       <section
+        data-tour="growth-report-card"
         className="surface-card border border-border bg-card"
         aria-label="성장 리포트"
       >

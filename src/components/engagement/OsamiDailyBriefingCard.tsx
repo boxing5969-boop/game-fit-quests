@@ -53,6 +53,7 @@ const OsamiDailyBriefingCard = () => {
 
   return (
     <section
+      data-tour="home-osami-briefing"
       className="surface-card border border-border bg-card"
       aria-label="오삼이 오늘의 브리핑"
     >

@@ -48,6 +48,8 @@ import {
   type PromiseKey,
   type VisualizationSession as VisualizationSessionData,
 } from "./visualizationContent";
+// 단계 47 — 활동 후 30초 마무리 trigger (UI hook only, 기존 저장 로직 0 변경)
+import { triggerPostActionReflection } from "@/data/postActionReflectionMessages";
 
 // ─────────────────────────────────────────────────────────────
 // localStorage
@@ -267,6 +269,8 @@ const MyBoxerVisualizationSession = ({
     appendRecord(record);
     setStep("saved");
     if (onSaved) onSaved(record);
+    // 30초 마무리 sheet — 글로벌 listener 가 처리. 본 함수는 trigger 만.
+    triggerPostActionReflection("mindset");
   };
 
   return (
@@ -467,6 +471,7 @@ function StartScreen({
       </div>
 
       <Button
+        data-tour="mindset-start-button"
         onClick={onStart}
         className="h-12 w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-base font-black tracking-wider text-amber-950 shadow-[0_0_20px_rgba(253,184,92,0.35)] hover:from-amber-400 hover:to-amber-300 active:scale-[0.98]"
       >
@@ -719,6 +724,7 @@ function PlayerStep({
 
   return (
     <motion.section
+      data-tour="mindset-player"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
@@ -861,6 +867,7 @@ function ReflectionStep({
 }) {
   return (
     <motion.section
+      data-tour="mindset-reflection"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}

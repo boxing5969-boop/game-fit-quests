@@ -13,6 +13,9 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { isManagerRole } from "@/lib/rankLabels";
 import TutorialFloatingMascot from "@/components/tutorial/TutorialFloatingMascot";
 import { useTutorialAutoDetect } from "@/hooks/useTutorialAutoDetect";
+import TutorialCampProvider from "@/features/tutorial-camp/TutorialCampProvider";
+import TutorialDevPanel from "@/features/tutorial-camp/TutorialDevPanel";
+import PostActionReflectionSheet from "@/components/home/PostActionReflectionSheet";
 import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
 import RouteLoader from "@/components/splash/RouteLoader";
 import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
@@ -245,6 +248,12 @@ const AppRoutes = () => {
       <ChatAssistant />
       {/* 마이복서153 — 오삼 마스코트 튜토리얼 (행동기반 미션 5개). */}
       {user && splashDone && <TutorialFloatingMascotWithDetect />}
+      {/* 7일 스타터 캠프 overlay — localStorage 기반, isActive 시에만 렌더 */}
+      {user && splashDone && <TutorialCampProvider />}
+      {/* 개발자 preview 패널 — localhost / ?tutorialDev=1 / dev 토글 ON 일 때만 노출 */}
+      {user && splashDone && <TutorialDevPanel />}
+      {/* 활동 후 30초 마무리 sheet — 글로벌 trigger 이벤트 listen, 하루 1회 큰 sheet */}
+      {user && splashDone && <PostActionReflectionSheet />}
       {/* 쿨드 스타트 스플래시 (z-[80] · 포털). 세션 1회. */}
       {showSplash && <AppLaunchSplash onFinished={markFinished} />}
     </>
