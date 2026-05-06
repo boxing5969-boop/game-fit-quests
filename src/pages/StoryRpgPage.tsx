@@ -151,23 +151,31 @@ const StoryRpgPage = () => {
     [allChapters, activeRouteId],
   );
 
-  // scene_progress 파생 (rpgState.progress 첫 행이 active route 인지 매칭)
+  // scene_progress 파생 — Stage 45 신규 boxing_user_scene_progress 컬럼 매핑 (47A-fix-3)
+  // get_my_story_rpg_state RPC 가 jsonb_agg 로 반환하므로 raw record 에서 직접 추출.
   const sceneProgressRaw = useMemo(
-    () => (rpgState?.progress ?? []).find((p) => p.route_id === activeRouteId),
+    () =>
+      (rpgState?.progress ?? []).find(
+        (p) => (p as { route_id?: string }).route_id === activeRouteId,
+      ),
     [rpgState?.progress, activeRouteId],
   );
   const sceneProgress = sceneProgressRaw
-    ? {
-        route_id: sceneProgressRaw.route_id,
-        chapter_id: sceneProgressRaw.current_chapter_id,
-        current_scene_index: 0,
-        completed_chapter_codes: [] as string[],
-        ending_reached: sceneProgressRaw.route_completed,
-        ending_code: null,
-        play_count: 0,
-        first_clear_at: null,
-        last_played_at: sceneProgressRaw.last_synced_at,
-      }
+    ? (() => {
+        const raw = sceneProgressRaw as Record<string, unknown>;
+        return {
+          route_id: raw.route_id as string,
+          chapter_id: (raw.chapter_id as string | null) ?? null,
+          current_scene_index: (raw.current_scene_index as number | null) ?? 0,
+          completed_chapter_codes:
+            (raw.completed_chapter_codes as string[] | null) ?? [],
+          ending_reached: (raw.ending_reached as boolean | null) ?? false,
+          ending_code: (raw.ending_code as string | null) ?? null,
+          play_count: (raw.play_count as number | null) ?? 0,
+          first_clear_at: (raw.first_clear_at as string | null) ?? null,
+          last_played_at: (raw.last_played_at as string | null) ?? null,
+        };
+      })()
     : null;
 
   // ── 초기 모드 결정 ──────────────────────────────────────────
