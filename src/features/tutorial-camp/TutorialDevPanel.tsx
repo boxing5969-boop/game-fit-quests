@@ -17,10 +17,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bug, ClipboardCopy, RotateCcw, Trophy, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   copyToClipboard,
   disableDevToggle,
   getPreviewProfileId,
+  isAdminPreviewRole,
   setPreviewProfileId,
   shouldShowDevPanel,
 } from "./tutorialCampDevAccess";
@@ -56,21 +58,23 @@ const STATUS_OPTIONS: { value: TutorialCampStatus; label: string }[] = [
 ];
 
 const TutorialDevPanel = () => {
+  const { role } = useAuth();
   const [eligible, setEligible] = useState(false);
   const [open, setOpen] = useState(false);
+  const isAdmin = isAdminPreviewRole(role);
 
-  // 마운트 시 1회 접근 조건 확인 — false 면 영구 hidden
+  // 64-C: role 변경 시 재평가 — 관리자 로그인 시 자동 노출
   useEffect(() => {
-    setEligible(shouldShowDevPanel());
-  }, []);
+    setEligible(shouldShowDevPanel(role));
+  }, [role]);
 
   if (!eligible) return null;
 
   return (
     <>
-      <FloatingButton onClick={() => setOpen(true)} />
+      <FloatingButton isAdmin={isAdmin} onClick={() => setOpen(true)} />
       <AnimatePresence>
-        {open && <DevModal onClose={() => setOpen(false)} />}
+        {open && <DevModal isAdmin={isAdmin} onClose={() => setOpen(false)} />}
       </AnimatePresence>
     </>
   );
@@ -80,16 +84,29 @@ const TutorialDevPanel = () => {
 // Floating button — 화면 우하단
 // ─────────────────────────────────────────────────────────────
 
-function FloatingButton({ onClick }: { onClick: () => void }) {
+function FloatingButton({
+  isAdmin,
+  onClick,
+}: {
+  isAdmin: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label="튜토리얼 검수 모드 열기"
-      className="fixed bottom-20 right-3 z-[95] inline-flex items-center gap-1.5 rounded-pill border border-rose-400/40 bg-rose-600/90 px-3 py-1.5 text-[10px] font-black tracking-widest text-white shadow-[0_4px_14px_rgba(0,0,0,0.45)] backdrop-blur-sm hover:bg-rose-500"
+      aria-label={
+        isAdmin ? "관리자 — Day 미리보기 열기" : "튜토리얼 검수 모드 열기"
+      }
+      className={cn(
+        "fixed bottom-20 right-3 z-[95] inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-[10px] font-black tracking-widest text-white shadow-[0_4px_14px_rgba(0,0,0,0.45)] backdrop-blur-sm",
+        isAdmin
+          ? "border border-amber-300/60 bg-amber-600/90 hover:bg-amber-500"
+          : "border border-rose-400/40 bg-rose-600/90 hover:bg-rose-500",
+      )}
     >
       <Bug className="h-3 w-3" />
-      DEV
+      {isAdmin ? "관리자 미리보기" : "DEV"}
     </button>
   );
 }
@@ -98,7 +115,13 @@ function FloatingButton({ onClick }: { onClick: () => void }) {
 // Modal — fixed center
 // ─────────────────────────────────────────────────────────────
 
-function DevModal({ onClose }: { onClose: () => void }) {
+function DevModal({
+  isAdmin,
+  onClose,
+}: {
+  isAdmin: boolean;
+  onClose: () => void;
+}) {
   const [state, setState] = useState<TutorialCampState>(() =>
     getTutorialCampState(),
   );
@@ -239,17 +262,27 @@ function DevModal({ onClose }: { onClose: () => void }) {
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0d1530]/95 px-4 py-3 backdrop-blur-sm">
           <div className="flex items-center gap-2">
             <span
-              className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-[10px] font-black"
+              className={cn(
+                "inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black",
+                isAdmin ? "bg-amber-600" : "bg-rose-600",
+              )}
               aria-hidden
             >
-              D
+              {isAdmin ? "A" : "D"}
             </span>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-300">
-                DEV PREVIEW
+              <p
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-[0.3em]",
+                  isAdmin ? "text-amber-300" : "text-rose-300",
+                )}
+              >
+                {isAdmin ? "ADMIN PREVIEW" : "DEV PREVIEW"}
               </p>
               <p className="text-[13px] font-bold text-amber-50">
-                개발자 검수 모드
+                {isAdmin
+                  ? "관리자 — Day 2~7 미리보기"
+                  : "개발자 검수 모드"}
               </p>
             </div>
           </div>
@@ -277,6 +310,41 @@ function DevModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="space-y-4 p-4">
+          {/* 64-C: Day 빠른 점프 — Day 1~7 한 클릭으로 이동 (관리자 검수용) */}
+          <Section title="Day 빠른 점프 — 미리보기">
+            <div className="grid grid-cols-7 gap-1.5">
+              {[1, 2, 3, 4, 5, 6, 7].map((d) => {
+                const active = state.currentDay === d;
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => {
+                      setTutorialCampDayStep(d, 0);
+                      setDay(d);
+                      setStep(0);
+                      refresh();
+                      flash(`Day ${d} 시작 위치로 이동`);
+                    }}
+                    className={cn(
+                      "rounded-lg border px-2 py-2 text-[11px] font-black active:scale-[0.97]",
+                      active
+                        ? "border-amber-300 bg-amber-500/30 text-amber-100"
+                        : "border-amber-400/30 bg-black/30 text-amber-200/80 hover:bg-black/50",
+                    )}
+                    aria-label={`Day ${d} 미리보기`}
+                  >
+                    Day {d}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-[10.5px] leading-relaxed text-amber-200/65">
+              각 Day 의 step 0 부터 진행. 아래 'Day · Step 직접 이동' 으로
+              세부 step 까지 점프 가능.
+            </p>
+          </Section>
+
           {/* 현재 상태 표시 */}
           <Section title="현재 localStorage 상태">
             <KeyValue label="status" value={state.status} />

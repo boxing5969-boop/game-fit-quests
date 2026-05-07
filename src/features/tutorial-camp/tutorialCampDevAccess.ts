@@ -5,8 +5,10 @@
  *   1. hostname === localhost / 127.0.0.1 / *.local
  *   2. URL query ?tutorialDev=1 (한 번 통과하면 localStorage 토글 ON)
  *   3. localStorage `myboxer.tutorialCamp.dev.enabled` === "true"
+ *   4. (단계 64-C) 관리자 계정 — role 이 admin / super_admin / branch_manager
  *
- * BottomNav / 메뉴 0 변경. Supabase / role 조회 0.
+ * BottomNav / 메뉴 0 변경. role 은 호출자가 전달 (AuthContext) — 본 모듈은
+ * Supabase 직접 조회 0.
  */
 
 const DEV_TOGGLE_KEY = "myboxer.tutorialCamp.dev.enabled";
@@ -42,11 +44,26 @@ function readStorageToggle(): boolean {
   }
 }
 
+/** 관리자 계정 role 인지 — admin / super_admin / branch_manager */
+export function isAdminPreviewRole(
+  role: string | null | undefined,
+): boolean {
+  return (
+    role === "admin" ||
+    role === "super_admin" ||
+    role === "branch_manager"
+  );
+}
+
 /**
  * dev panel 노출 여부 결정.
  * 한 번 query 로 통과하면 localStorage 토글을 ON 으로 저장 — 페이지 이동 후에도 유지.
+ *
+ * @param role  AuthContext 의 role — 관리자면 자동 통과 (단계 64-C).
  */
-export function shouldShowDevPanel(): boolean {
+export function shouldShowDevPanel(
+  role?: string | null,
+): boolean {
   if (typeof window === "undefined") return false;
 
   if (isLocalhost()) return true;
@@ -59,6 +76,8 @@ export function shouldShowDevPanel(): boolean {
     }
     return true;
   }
+
+  if (isAdminPreviewRole(role)) return true;
 
   return readStorageToggle();
 }
