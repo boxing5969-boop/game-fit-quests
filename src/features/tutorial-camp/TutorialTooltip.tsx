@@ -185,11 +185,6 @@ const TutorialTooltip = ({
             <Check className="h-3 w-3" /> 잘했어요 — 다음으로 갈 수 있어요
           </p>
         )}
-        {step.requireTargetClick && !targetClicked && routeMatch && !fallbackMode && (
-          <p className="mt-2 text-[10px] font-bold text-amber-300/70">
-            여기를 눌러보세요
-          </p>
-        )}
       </div>
 
       {/* CTA 영역 */}
