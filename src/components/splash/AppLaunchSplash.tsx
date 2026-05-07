@@ -25,8 +25,8 @@ import { createPortal } from "react-dom";
 import { AppLaunchSplashBackground } from "./AppLaunchSplashBackground";
 import { cn } from "@/lib/utils";
 
-// 신 로고 (2026-05) — public/assets/brand/myboxer_logo_full.png
-const logoSrc = "/assets/brand/myboxer_logo_full.png";
+// 신 로고 v4 (2026-05) — 시안 + 검정 외곽선 디자인. 캐시 회피용 v4 파일명.
+const logoSrc = "/assets/brand/myboxer_logo_full_v4.png";
 
 // 타임라인 상수 — CSS keyframes 와 정합 유지.
 const TOTAL_MS = 1750;

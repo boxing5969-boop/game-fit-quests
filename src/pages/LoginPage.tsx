@@ -321,10 +321,10 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
-      {/* Logo — MB 아이콘 + 풀 로고. v=3 = 다크 배경 가독성 보정본 (캐시 회피) */}
+      {/* Logo v4 — 시안 + 검정 외곽선 디자인 (캐시 회피용 새 파일명) */}
       <div className="mb-5 animate-bounce-in text-center">
         <img
-          src="/assets/brand/myboxer_logo_full.png?v=3"
+          src="/assets/brand/myboxer_logo_full_v4.png"
           alt="MY BOXER 마이복서 by 153 BOXING GYM"
           draggable={false}
           className="mx-auto mb-1 h-16 w-auto select-none object-contain sm:h-20"
@@ -451,7 +451,7 @@ const LoginPage = () => {
                 {isSignUp ? (tab === "coach" ? "관장님 가입" : "회원가입") : "로그인"}
               </span>
               <img
-                src="/assets/brand/myboxer_logo_icon.png?v=3"
+                src="/assets/brand/myboxer_logo_icon_v4.png"
                 alt=""
                 aria-hidden="true"
                 draggable={false}
