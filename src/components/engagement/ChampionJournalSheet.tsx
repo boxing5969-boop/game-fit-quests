@@ -247,6 +247,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
           onChange={(e) => setContent(e.target.value.slice(0, MAX_LEN + 50))}
           placeholder="오늘의 라운드를 한 줄로…"
           rows={4}
+          data-tour="journal-reflection-input"
           className="w-full resize-none rounded-card border border-border bg-card px-3 py-2 text-[13px] text-foreground focus:border-primary focus:outline-none"
         />
       </div>
@@ -256,13 +257,14 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
           오늘의 컨디션{" "}
           <span className="text-muted-foreground font-normal">(선택)</span>
         </p>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5" data-tour="journal-condition-options">
           {MOOD_OPTIONS.map((m) => {
             const active = m === mood;
             return (
               <button
                 key={m}
                 type="button"
+                data-tutorial-condition="true"
                 onClick={() => setMood(active ? null : m)}
                 className={`rounded-pill border px-2.5 py-1.5 text-[11px] transition-all active:scale-[0.98] ${
                   active
@@ -339,6 +341,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             role="dialog"
             aria-modal="true"
             aria-label="챔피언 일기"
+            data-tour="champion-journal-sheet"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {renderHeader()}
