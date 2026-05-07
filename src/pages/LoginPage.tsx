@@ -321,10 +321,10 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
-      {/* Logo v6 — 강한 시안 + 흰 글자 (회색/검정 모두 흰색화) */}
+      {/* Logo v7 — 밝은 시안만 보존 (어두운 시안 그라디언트도 흰색화) */}
       <div className="mb-5 animate-bounce-in text-center">
         <img
-          src="/assets/brand/myboxer_logo_full_v6.png"
+          src="/assets/brand/myboxer_logo_full_v7.png"
           alt="MY BOXER 마이복서 by 153 BOXING GYM"
           draggable={false}
           className="mx-auto mb-1 h-16 w-auto select-none object-contain sm:h-20"
