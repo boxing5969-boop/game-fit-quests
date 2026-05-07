@@ -140,7 +140,7 @@ const TutorialFloatingMascot = () => {
           style={{ boxShadow: "0 8px 24px rgba(234, 179, 8, 0.45)" }}
           aria-label="오삼이 — 튜토리얼 미션 보기"
         >
-          <OsamMascot size="xs" state="wave" />
+          <OsamMascot size="xs" state={isFinished ? "victory" : "wink"} />
           {/* 미션 진행 뱃지 */}
           <span className="absolute -left-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-black text-white ring-2 ring-gray-900">
             {stepsCompleted}/{TUTORIAL_STEPS.length}
@@ -176,7 +176,7 @@ const TutorialFloatingMascot = () => {
               <div className="px-5 pt-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <OsamMascot size="md" state={isFinished ? "celebrate" : "wave"} />
+                    <OsamMascot size="md" state={isFinished ? "victory" : "determined"} />
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-300">
                         OSAM · 시작하기

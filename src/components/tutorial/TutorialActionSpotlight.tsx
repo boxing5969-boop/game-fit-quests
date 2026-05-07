@@ -28,7 +28,17 @@ import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
 import { useTutorialState } from "@/hooks/useTutorialState";
-import { TUTORIAL_STEP_REWARDS } from "@/data/unlockRules";
+import { TUTORIAL_STEP_REWARDS, type TutorialStepKey } from "@/data/unlockRules";
+import OsamMascot, { type OsamState } from "@/components/mascot/OsamMascot";
+
+/** 5개 미션별 오삼이 표정 매핑. */
+const STEP_TO_OSAMI_STATE: Record<TutorialStepKey, OsamState> = {
+  profile_photo: "wink",
+  discover_app: "smile",
+  first_mission: "determined",
+  first_checkin: "surprised",
+  first_challenge: "victory",
+};
 
 const SETUP_ROUTES = ["/", "/onboarding", "/select-branch", "/waiting-approval"];
 const isSetupPath = (pathname: string): boolean => {
@@ -324,8 +334,14 @@ const TutorialActionSpotlight = () => {
             }}
           >
             <div className="flex items-start gap-2">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-base">
-                {currentStep.icon}
+              <div className="shrink-0">
+                <OsamMascot
+                  size="xs"
+                  state={
+                    STEP_TO_OSAMI_STATE[currentStep.key as TutorialStepKey] ??
+                    "wink"
+                  }
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-wider text-amber-300">
