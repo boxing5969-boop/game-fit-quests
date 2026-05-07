@@ -122,14 +122,37 @@ const TutorialCampProvider = () => {
     }
     if (!element) return;
 
-    const onClick = () => {
+    const onClick = (e: Event) => {
       setTargetClicked(true);
       camp.markTargetClicked(step.targetKey, {
         route: location.pathname,
       });
-      // 자동 next 제거 — 회원이 sub-기능(모달/sheet) 안에서 충분히 체험한 후
-      // 닫고 캠프 tooltip 으로 돌아와 직접 "다음으로" 누르는 흐름.
-      // targetClicked=true 가 되어 다음 버튼 자동 활성.
+      // root wrapper(예: section/article/div) 자체에는 onClick 이 없을 때
+      // 안의 첫 actionable element(button / a / role=button)를 자동 발동.
+      // 회원이 spotlight 안 빈 영역을 눌러도 실제 기능(모달/sheet)이 열림.
+      const clicked = e.target as HTMLElement | null;
+      if (!clicked) return;
+      const isActionable =
+        clicked.tagName === "BUTTON" ||
+        clicked.tagName === "A" ||
+        clicked.getAttribute("role") === "button" ||
+        clicked.closest("button, a, [role='button']");
+      if (isActionable) return; // 이미 정확한 element 클릭 — 기존 동작 그대로
+      const root = element as HTMLElement | null;
+      if (!root) return;
+      const inner = root.querySelector(
+        'button, a, [role="button"]',
+      ) as HTMLElement | null;
+      if (inner) {
+        // capture phase 끝난 후 안의 actionable 자동 click
+        setTimeout(() => {
+          try {
+            inner.click();
+          } catch {
+            /* noop */
+          }
+        }, 60);
+      }
     };
     element.addEventListener("click", onClick, { capture: true });
     return () => {
