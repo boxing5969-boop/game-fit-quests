@@ -93,20 +93,20 @@ const TutorialFloatingMascot = () => {
 
   return createPortal(
     <>
-      {/* ── Floating mascot (우측 하단) ── */}
-      <div className="fixed bottom-20 right-4 z-[60] pointer-events-none">
+      {/* ── Floating mascot (좌측 하단 — 우측은 ChatAssistant) ── */}
+      <div className="fixed bottom-20 left-4 z-[60] pointer-events-none">
         {/* 미니 말풍선 (idle 상태에서 살짝 보임) */}
         <AnimatePresence>
           {bubbleVisible && !open && (
             <motion.div
-              initial={{ opacity: 0, x: 10, scale: 0.9 }}
+              initial={{ opacity: 0, x: -10, scale: 0.9 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="pointer-events-auto absolute bottom-full right-0 mb-2 mr-1 w-44 rounded-2xl bg-gray-900/95 px-3 py-2 shadow-2xl backdrop-blur-md ring-1 ring-yellow-400/40"
+              className="pointer-events-auto absolute bottom-full left-0 mb-2 ml-1 w-44 rounded-2xl bg-gray-900/95 px-3 py-2 shadow-2xl backdrop-blur-md ring-1 ring-yellow-400/40"
             >
               <button
                 onClick={() => setBubbleVisible(false)}
-                className="absolute -right-1 -top-1 h-5 w-5 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600"
+                className="absolute -left-1 -top-1 h-5 w-5 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600"
                 aria-label="말풍선 닫기"
               >
                 <X className="mx-auto h-3 w-3" />
@@ -120,7 +120,7 @@ const TutorialFloatingMascot = () => {
               <p className="mt-0.5 text-[10px] text-gray-400">탭해서 시작하기 →</p>
               {/* 꼬리 */}
               <div
-                className="absolute -bottom-1 right-6 h-3 w-3 rotate-45 bg-gray-900/95 ring-1 ring-yellow-400/40"
+                className="absolute -bottom-1 left-6 h-3 w-3 rotate-45 bg-gray-900/95 ring-1 ring-yellow-400/40"
                 style={{ clipPath: "polygon(0 100%, 100% 0, 100% 100%)" }}
               />
             </motion.div>
@@ -142,7 +142,7 @@ const TutorialFloatingMascot = () => {
         >
           <OsamMascot size="xs" state="wave" />
           {/* 미션 진행 뱃지 */}
-          <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-black text-white ring-2 ring-gray-900">
+          <span className="absolute -left-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-black text-white ring-2 ring-gray-900">
             {stepsCompleted}/{TUTORIAL_STEPS.length}
           </span>
         </motion.button>
