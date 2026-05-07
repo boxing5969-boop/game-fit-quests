@@ -29,6 +29,10 @@ export interface TutorialOverlayProps {
   onGoToRoute: () => void;
   onMarkClicked: () => void;
   onDimNudge: () => void;
+  /** 50-A: step.completionRule 기준 통합 만족 여부 (Tooltip next gating). */
+  conditionMet?: boolean;
+  /** 50-A: 세부 completion 상태 (helper/success message 분기용). */
+  completionState?: Record<string, boolean>;
 }
 
 const TutorialOverlay = ({
@@ -45,6 +49,8 @@ const TutorialOverlay = ({
   onGoToRoute,
   onMarkClicked,
   onDimNudge,
+  conditionMet,
+  completionState,
 }: TutorialOverlayProps) => {
 
   const showSpotlight =
@@ -129,6 +135,8 @@ const TutorialOverlay = ({
           onPause={onPause}
           onGoToRoute={onGoToRoute}
           onMarkClicked={onMarkClicked}
+          conditionMet={conditionMet}
+          completionState={completionState}
         />
       </div>
     </AnimatePresence>

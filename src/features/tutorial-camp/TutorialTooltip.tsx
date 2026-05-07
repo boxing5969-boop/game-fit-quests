@@ -44,6 +44,10 @@ export interface TutorialTooltipProps {
   onPause: () => void;
   onGoToRoute: () => void;
   onMarkClicked: () => void;
+  /** 50-A: step.completionRule 만족 여부 (next gating). */
+  conditionMet?: boolean;
+  /** 50-A: 세부 completion 상태 (helper/success message 분기용). */
+  completionState?: Record<string, boolean>;
 }
 
 const TOOLTIP_WIDTH = 320;
@@ -102,6 +106,8 @@ const TutorialTooltip = ({
   onPause,
   onGoToRoute,
   onMarkClicked,
+  conditionMet,
+  completionState,
 }: TutorialTooltipProps) => {
   const pos = computeTooltipPosition(rect, step.placement);
   // route 가 다르면 → 이동 필요 (target rect 자체를 시도 안 함)
@@ -110,14 +116,25 @@ const TutorialTooltip = ({
   const trueFallback = routeMatch && (!rect || !rect.found);
   const fallbackMode = trueRouteMismatch || trueFallback;
 
-  // 직접 행동해야 다음으로 — requireTargetClick 강제 모드:
-  //   · route mismatch → 다음 비활성, "여기로 이동" CTA 가 메인
-  //   · target 매칭 + 미클릭 → 다음 비활성, 직접 누르거나 "잠깐 살펴보기"
-  //   · target 매칭 실패 (route 같음) → 안전망: 다음 자동 활성 (회원 막힘 방지)
-  const blockNext =
+  // 50-A: 새 gating 통합
+  //   · step.blockNextUntilComplete=true → conditionMet 만족 시에만 next 가능
+  //   · step.blockNextUntilComplete!=true 면 기존 requireTargetClick 폴백
+  //   · target 매칭 실패 (route 같음) → 안전망: next 활성 (회원 막힘 방지)
+  const legacyBlock =
     step.requireTargetClick &&
     (trueRouteMismatch || (!targetClicked && !trueFallback));
+  const newBlock =
+    step.blockNextUntilComplete === true &&
+    !conditionMet &&
+    !trueFallback;
+  const blockNext = legacyBlock || newBlock;
   const nextDisabled = blockNext;
+
+  // helper / success message 결정
+  const showSuccess = conditionMet === true;
+  const helperToShow = showSuccess
+    ? step.successMessage
+    : step.helperMessage ?? null;
 
   return (
     <motion.div
@@ -184,6 +201,18 @@ const TutorialTooltip = ({
         {step.requireTargetClick && targetClicked && (
           <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300">
             <Check className="h-3 w-3" /> 잘하셨어요! 다 보셨으면 "다음으로" 눌러주세요
+          </p>
+        )}
+
+        {/* 50-A: helper / success 메시지 — completionRule 기반 */}
+        {helperToShow && (
+          <p
+            className={`mt-2 inline-flex items-center gap-1 text-[10px] font-bold ${
+              showSuccess ? "text-emerald-300" : "text-amber-300/80"
+            }`}
+          >
+            {showSuccess && <Check className="h-3 w-3" />}
+            {helperToShow}
           </p>
         )}
       </div>

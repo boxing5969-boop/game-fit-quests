@@ -16,7 +16,7 @@
  *   · 153마인드셋 / 공식 훈련 / wallet 0 영향
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTutorialCamp } from "./useTutorialCamp";
 import { useTutorialTarget } from "./useTutorialTarget";
@@ -25,9 +25,95 @@ import {
 } from "./tutorialCampEvents";
 import {
   getStepsCountByDay,
+  type TutorialCampStep,
 } from "./tutorialCampSteps";
 import TutorialOverlay from "./TutorialOverlay";
 import TutorialCelebration from "./TutorialCelebration";
+
+// ─────────────────────────────────────────────────────────────
+// 50-A: completion state machine
+//   step 의 completionRule 별 listener 가 갱신하는 boolean 모음.
+//   step 변경 시 모두 reset.
+// ─────────────────────────────────────────────────────────────
+interface CompletionState {
+  quizQuestionRead: boolean;
+  quizAnswerSelected: boolean;
+  quizCorrectAnswerSelected: boolean;
+  scrolledToBottom: boolean;
+  textInputSatisfied: boolean;
+  optionSelected: boolean;
+  conditionChecked: boolean;
+  modalClosed: boolean;
+}
+
+const INITIAL_COMPLETION: CompletionState = {
+  quizQuestionRead: false,
+  quizAnswerSelected: false,
+  quizCorrectAnswerSelected: false,
+  scrolledToBottom: false,
+  textInputSatisfied: false,
+  optionSelected: false,
+  conditionChecked: false,
+  modalClosed: false,
+};
+
+type CompletionAction =
+  | { type: "reset" }
+  | { type: "set"; key: keyof CompletionState; value: boolean };
+
+function completionReducer(
+  state: CompletionState,
+  action: CompletionAction,
+): CompletionState {
+  if (action.type === "reset") return { ...INITIAL_COMPLETION };
+  if (action.type === "set") {
+    if (state[action.key] === action.value) return state;
+    return { ...state, [action.key]: action.value };
+  }
+  return state;
+}
+
+/**
+ * step 의 completionRule 을 보고 완료 여부 계산.
+ * completionRule 미정의 시 requireTargetClick 폴백 (기존 35 step 호환).
+ */
+function isStepConditionMet(
+  step: TutorialCampStep,
+  targetClicked: boolean,
+  c: CompletionState,
+): boolean {
+  if (step.completionRule) {
+    switch (step.completionRule) {
+      case "target_clicked":
+        return targetClicked;
+      case "quiz_question_read":
+        return c.quizQuestionRead;
+      case "quiz_answer_selected":
+        return c.quizAnswerSelected;
+      case "quiz_correct_answer_selected":
+        return c.quizCorrectAnswerSelected;
+      case "scrolled_to_bottom":
+        return c.scrolledToBottom;
+      case "text_input_min_length":
+        return c.textInputSatisfied;
+      case "option_selected":
+        return c.optionSelected;
+      case "toggle_selected":
+        return c.optionSelected;
+      case "condition_checked":
+        return c.conditionChecked;
+      case "modal_closed":
+        return c.modalClosed;
+      case "manual_confirm":
+        return true;
+      default:
+        return targetClicked;
+    }
+  }
+  // 기존 호환: completionRule 미정의 시 requireTargetClick 만 본다.
+  if (step.requireTargetClick) return targetClicked;
+  return true;
+}
 
 const TutorialCampProvider = () => {
   const camp = useTutorialCamp();
@@ -36,6 +122,12 @@ const TutorialCampProvider = () => {
 
   const [targetClicked, setTargetClicked] = useState(false);
   const lastStepKeyRef = useRef<string | null>(null);
+
+  // 50-A: completion state (step 의 신규 completionRule 만족 여부 모음)
+  const [completion, dispatchCompletion] = useReducer(
+    completionReducer,
+    INITIAL_COMPLETION,
+  );
 
   // ── Day cooldown — 다음날 진입 시 paused → active 자동 복귀 ──
   //   · completeTutorialCampDay 가 status="paused" + lastDayCompletedAt 기록
@@ -66,17 +158,19 @@ const TutorialCampProvider = () => {
   const step = camp.currentStep;
   const isActiveCamp = camp.isActive && step !== null;
 
-  // step 변경 시 targetClicked 리셋
+  // step 변경 시 targetClicked + completion state 모두 리셋
   useEffect(() => {
     if (!step) {
       lastStepKeyRef.current = null;
       setTargetClicked(false);
+      dispatchCompletion({ type: "reset" });
       return;
     }
     const key = `${step.day}.${step.step}`;
     if (lastStepKeyRef.current !== key) {
       lastStepKeyRef.current = key;
       setTargetClicked(false);
+      dispatchCompletion({ type: "reset" });
     }
   }, [step]);
 
@@ -183,6 +277,269 @@ const TutorialCampProvider = () => {
     // step.targetSelector 가 바뀌어도 element 재탐색
   }, [isActiveCamp, step, rect?.found, camp, location.pathname]);
 
+  // ─────────────────────────────────────────────────────────────
+  // 50-A 신규 listener: input / scroll / option / condition / modal
+  //   각 listener 는 step.completionRule 또는 관련 selector 가 있을 때만 활성.
+  //   step 변경 시 cleanup 자동.
+  // ─────────────────────────────────────────────────────────────
+
+  // 1) text input listener
+  useEffect(() => {
+    if (!isActiveCamp || !step) return;
+    if (typeof document === "undefined") return;
+    const selector = step.inputSelector;
+    if (!selector) return;
+    const minLen = step.minTextLength ?? 5;
+
+    let target: HTMLInputElement | HTMLTextAreaElement | null = null;
+    try {
+      target = document.querySelector(selector) as
+        | HTMLInputElement
+        | HTMLTextAreaElement
+        | null;
+    } catch {
+      target = null;
+    }
+    if (!target) return;
+
+    const handle = () => {
+      const ok = (target?.value ?? "").trim().length >= minLen;
+      dispatchCompletion({
+        type: "set",
+        key: "textInputSatisfied",
+        value: ok,
+      });
+    };
+    handle(); // 초기값 측정
+    target.addEventListener("input", handle);
+    return () => {
+      target?.removeEventListener("input", handle);
+    };
+  }, [isActiveCamp, step]);
+
+  // 2) scroll listener — scrollContainerSelector 또는 window
+  useEffect(() => {
+    if (!isActiveCamp || !step) return;
+    if (typeof document === "undefined" || typeof window === "undefined")
+      return;
+    if (
+      step.completionRule !== "scrolled_to_bottom" &&
+      !step.scrollContainerSelector
+    )
+      return;
+    const threshold = step.scrollThreshold ?? 0.85;
+
+    let container: HTMLElement | Window = window;
+    if (step.scrollContainerSelector) {
+      try {
+        const el = document.querySelector(
+          step.scrollContainerSelector,
+        ) as HTMLElement | null;
+        if (el) container = el;
+      } catch {
+        // selector 잘못되면 window fallback
+      }
+    }
+
+    const handle = () => {
+      let ratio = 0;
+      if (container === window) {
+        const scrolled = window.scrollY + window.innerHeight;
+        const total = document.documentElement.scrollHeight;
+        ratio = total > 0 ? scrolled / total : 1;
+      } else {
+        const el = container as HTMLElement;
+        const scrolled = el.scrollTop + el.clientHeight;
+        ratio = el.scrollHeight > 0 ? scrolled / el.scrollHeight : 1;
+      }
+      if (ratio >= threshold) {
+        dispatchCompletion({
+          type: "set",
+          key: "scrolledToBottom",
+          value: true,
+        });
+      }
+    };
+    handle();
+    container.addEventListener("scroll", handle, { passive: true });
+    return () => {
+      container.removeEventListener("scroll", handle);
+    };
+  }, [isActiveCamp, step]);
+
+  // 3) option selector listener (옵션/토글 클릭)
+  useEffect(() => {
+    if (!isActiveCamp || !step) return;
+    if (typeof document === "undefined") return;
+    const selector = step.optionSelector;
+    if (!selector) return;
+
+    const handler = (e: Event) => {
+      const tgt = e.target as HTMLElement | null;
+      if (!tgt) return;
+      try {
+        if (tgt.closest(selector)) {
+          dispatchCompletion({
+            type: "set",
+            key: "optionSelected",
+            value: true,
+          });
+        }
+      } catch {
+        /* selector 오류 무시 */
+      }
+    };
+    document.addEventListener("click", handler, { capture: true });
+    return () => {
+      document.removeEventListener("click", handler, { capture: true });
+    };
+  }, [isActiveCamp, step]);
+
+  // 4) condition selector listener (컨디션 토글 등)
+  useEffect(() => {
+    if (!isActiveCamp || !step) return;
+    if (typeof document === "undefined") return;
+    const selector = step.conditionSelector;
+    if (!selector) return;
+
+    const handler = (e: Event) => {
+      const tgt = e.target as HTMLElement | null;
+      if (!tgt) return;
+      try {
+        if (tgt.closest(selector)) {
+          dispatchCompletion({
+            type: "set",
+            key: "conditionChecked",
+            value: true,
+          });
+        }
+      } catch {
+        /* noop */
+      }
+    };
+    document.addEventListener("click", handler, { capture: true });
+    return () => {
+      document.removeEventListener("click", handler, { capture: true });
+    };
+  }, [isActiveCamp, step]);
+
+  // 5) modal close watcher — modalSelector element 가 DOM 에서 사라지면 만족
+  useEffect(() => {
+    if (!isActiveCamp || !step) return;
+    if (typeof document === "undefined") return;
+    const selector = step.modalSelector;
+    if (!selector) return;
+
+    const check = () => {
+      let exists = false;
+      try {
+        exists = !!document.querySelector(selector);
+      } catch {
+        exists = false;
+      }
+      // modal 이 한 번이라도 열렸다가 닫히면 modalClosed=true
+      // — 처음부터 없는 경우는 무시 (회원이 아직 안 열었을 수 있음)
+      // 단순 구현: 한 번 열린 적 있는지 ref 추적.
+      if (exists) {
+        modalSeenRef.current = true;
+      } else if (modalSeenRef.current) {
+        dispatchCompletion({
+          type: "set",
+          key: "modalClosed",
+          value: true,
+        });
+      }
+    };
+
+    check();
+    const id = window.setInterval(check, 800);
+    return () => {
+      window.clearInterval(id);
+    };
+  }, [isActiveCamp, step]);
+
+  // modal seen flag — step 변경 시 reset
+  const modalSeenRef = useRef(false);
+  useEffect(() => {
+    modalSeenRef.current = false;
+  }, [step]);
+
+  // 6) quiz_answer_selected — expectedAnswerSelector 가 있으면 그 element 의 클릭 감지
+  //    expectedAnswerValue 가 있으면 data-tutorial-answer-value 매칭 시 correct.
+  useEffect(() => {
+    if (!isActiveCamp || !step) return;
+    if (typeof document === "undefined") return;
+    if (
+      !step.expectedAnswerSelector &&
+      step.completionRule !== "quiz_answer_selected" &&
+      step.completionRule !== "quiz_correct_answer_selected"
+    )
+      return;
+
+    const handler = (e: Event) => {
+      const tgt = e.target as HTMLElement | null;
+      if (!tgt) return;
+      try {
+        // 정답 또는 일반 선택지 클릭 감지
+        const answerEl = step.expectedAnswerSelector
+          ? tgt.closest(step.expectedAnswerSelector)
+          : null;
+        const anyAnswer =
+          tgt.closest("[data-tutorial-answer]") ||
+          tgt.closest('[role="radio"]') ||
+          tgt.closest("button[data-answer]");
+        if (answerEl || anyAnswer) {
+          dispatchCompletion({
+            type: "set",
+            key: "quizAnswerSelected",
+            value: true,
+          });
+          // 정답 매칭
+          const el = (answerEl ?? anyAnswer) as HTMLElement | null;
+          if (el && step.expectedAnswerValue) {
+            const v = el.getAttribute("data-tutorial-answer-value");
+            if (v === step.expectedAnswerValue) {
+              dispatchCompletion({
+                type: "set",
+                key: "quizCorrectAnswerSelected",
+                value: true,
+              });
+            }
+          } else if (answerEl) {
+            // expectedAnswerSelector 매칭 자체가 정답
+            dispatchCompletion({
+              type: "set",
+              key: "quizCorrectAnswerSelected",
+              value: true,
+            });
+          }
+        }
+      } catch {
+        /* noop */
+      }
+    };
+    document.addEventListener("click", handler, { capture: true });
+    return () => {
+      document.removeEventListener("click", handler, { capture: true });
+    };
+  }, [isActiveCamp, step]);
+
+  // 7) quiz_question_read — 단순히 "확인" chip 클릭 또는 짧은 지연 후 satisfied.
+  //    overlay 내부 helper 가 markQuizQuestionRead 콜백 호출 시 set.
+  //    + helper: 4초 자동 satisfied (회원이 읽을 시간)
+  useEffect(() => {
+    if (!isActiveCamp || !step) return;
+    if (step.completionRule !== "quiz_question_read") return;
+    const id = window.setTimeout(() => {
+      dispatchCompletion({
+        type: "set",
+        key: "quizQuestionRead",
+        value: true,
+      });
+    }, 4000);
+    return () => window.clearTimeout(id);
+  }, [isActiveCamp, step]);
+
   // 캠프 자체 overlay (data-tour-overlay) 외 다른 dialog 가 열려 있는지
   function hasOtherDialog(): boolean {
     if (typeof document === "undefined") return false;
@@ -265,6 +622,9 @@ const TutorialCampProvider = () => {
 
   const totalStepsInDay = getStepsCountByDay(step.day);
 
+  // 50-A: 통합 완료 판정 (next gating 용)
+  const conditionMet = isStepConditionMet(step, targetClicked, completion);
+
   return (
     <TutorialOverlay
       step={step}
@@ -280,6 +640,8 @@ const TutorialCampProvider = () => {
       onGoToRoute={handleGoToRoute}
       onMarkClicked={() => setTargetClicked(true)}
       onDimNudge={handleDimNudge}
+      conditionMet={conditionMet}
+      completionState={completion}
     />
   );
 };
