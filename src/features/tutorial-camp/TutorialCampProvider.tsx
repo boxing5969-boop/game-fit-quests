@@ -618,27 +618,15 @@ const TutorialCampProvider = () => {
     camp.completeDay(step.day);
   }, [step, camp]);
 
-  // 마운트 가드
-  if (!isActiveCamp || !step) return null;
-
-  // celebration / confetti 분기
-  if (step.animation === "celebration" || step.animation === "confetti") {
-    return (
-      <TutorialCelebration
-        step={step}
-        onContinue={handleCelebrationContinue}
-      />
-    );
-  }
-
-  const totalStepsInDay = getStepsCountByDay(step.day);
-
-  // 50-A: 통합 완료 판정 (next gating 용)
-  const conditionMet = isStepConditionMet(step, targetClicked, completion);
+  // 50-A: 통합 완료 판정 (next gating 용) — step null 안전
+  const conditionMet = step
+    ? isStepConditionMet(step, targetClicked, completion)
+    : false;
 
   // 57: cascade 인프라 — step.autoAdvance=true 면 조건 충족 시 자동 다음 step
-  //   · 0.6초 지연: 회원이 자기 행동 결과 (success message) 본 후 자동 진행
+  //   · 0.6초 지연: 회원이 자기 행동 결과 본 후 자동 진행
   //   · step 중복 advance 방지 (ref 가드)
+  //   · 모든 hook 은 early return 전에 호출 (React Hooks 규칙)
   const autoAdvancedKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isActiveCamp || !step) return;
@@ -657,6 +645,21 @@ const TutorialCampProvider = () => {
   useEffect(() => {
     autoAdvancedKeyRef.current = null;
   }, [step]);
+
+  // 마운트 가드 — 모든 hook 호출 후 early return
+  if (!isActiveCamp || !step) return null;
+
+  // celebration / confetti 분기
+  if (step.animation === "celebration" || step.animation === "confetti") {
+    return (
+      <TutorialCelebration
+        step={step}
+        onContinue={handleCelebrationContinue}
+      />
+    );
+  }
+
+  const totalStepsInDay = getStepsCountByDay(step.day);
 
   return (
     <TutorialOverlay
