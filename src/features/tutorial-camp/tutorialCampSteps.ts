@@ -104,36 +104,36 @@ const DAY_1_STEPS: TutorialCampStep[] = [
   {
     day: 1,
     step: 2,
-    route: "/home",
+    route: "/missions",
     targetKey: "day1.official_training_card",
-    targetSelector: '[data-tour="home-official-training"]',
+    targetSelector: '[data-tour="missions-official-training"]',
     title: "공식 훈련",
     body: "공식 훈련은 마스터로드를 따라\n단계별로 진행되는 정식 훈련 코스예요.",
     osamiMessage: "이건 매일 한 단계씩 쌓는 길이에요.",
-    actionType: "read",
+    actionType: "navigate",
     requireTargetClick: false,
     allowNextWithoutClick: true,
     animation: "spotlight",
     placement: "bottom",
     fallbackText:
-      "홈에서 공식 훈련 카드를 찾을 수 있어요. 보이지 않으면 훈련 메뉴로 들어가도 돼요.",
+      "하단 메뉴의 훈련 아이콘을 누르면 공식 훈련 화면으로 들어와요.",
     completionText: "공식 훈련은 천천히 쌓는 것이에요.",
   },
   {
     day: 1,
     step: 3,
-    route: "/home",
+    route: "/myboxer/quest",
     targetKey: "day1.quest_recommend",
-    targetSelector: '[data-tour="home-quest-recommendation"]',
+    targetSelector: '[data-tour="boxing-iq-card"]',
     title: "오늘의 153 QUEST",
-    body: "공식 훈련과 별도로,\n짧고 가벼운 153 QUEST가 매일 추천돼요.",
+    body: "공식 훈련과 별도로,\n복싱 IQ 같은 짧은 153 QUEST가 매일 추천돼요.",
     osamiMessage: "부담 없이 한 번만 눌러보세요.",
-    actionType: "read",
+    actionType: "click",
     requireTargetClick: false,
     allowNextWithoutClick: true,
     animation: "pulse",
     placement: "bottom",
-    fallbackText: "홈 화면을 내리면 153 QUEST 추천 카드가 보여요.",
+    fallbackText: "153 QUEST 메뉴를 내리면 복싱 IQ 카드가 보여요.",
     completionText: "QUEST는 그날의 작은 한 걸음이에요.",
   },
   {
@@ -463,7 +463,7 @@ const DAY_5_STEPS: TutorialCampStep[] = [
     targetSelector: '[data-tour="journal-question"]',
     title: "오늘의 질문",
     body: "매일 작은 질문이 하나 떠올라요.\n그 질문에 한 문장이면 충분해요.",
-    osamiMessage: "큰 답이 아니어도 괜찮아요.",
+    osamiMessage: "거창하지 않아도 돼요.",
     actionType: "read",
     requireTargetClick: false,
     allowNextWithoutClick: true,
@@ -514,7 +514,7 @@ const DAY_5_STEPS: TutorialCampStep[] = [
     targetSelector: "",
     title: "Day 5 완료",
     body: "오늘의 한 문장을 남기셨다면,\n오늘의 캠프는 끝이에요.",
-    osamiMessage: "기록은 큰 사람의 작은 습관이에요.",
+    osamiMessage: "꾸준히 적는 사람이 결국 멀리 가요.",
     actionType: "complete",
     requireTargetClick: false,
     allowNextWithoutClick: true,
@@ -711,10 +711,33 @@ const DAY_7_STEPS: TutorialCampStep[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 합본 + 헬퍼
+// 체험형 강화 — 직접 행동해야 다음으로 넘어가게
 // ─────────────────────────────────────────────────────────────
 
-/** 모든 day 의 step 을 펼쳐 둔 평면 배열 (35개) */
+/**
+ * step 메타를 일괄 변환.
+ *   · target 이 있고 actionType 이 "click" / "navigate" / "open" 이면
+ *     → requireTargetClick=true / allowNextWithoutClick=false
+ *     (회원이 직접 클릭하거나 그 화면으로 이동해야 다음 step 으로)
+ *   · "read" / "complete" 는 그대로 (정보 안내 / Day 완료 모달은 다음 버튼으로 통과)
+ *   · target 이 비어 있거나 fallback 모드 / route mismatch 시에는
+ *     Tooltip 의 nextDisabled 안전망이 자동으로 다음 활성 — 회원 막힘 0
+ */
+function withInteractive(step: TutorialCampStep): TutorialCampStep {
+  const isInteractive =
+    step.targetSelector !== "" &&
+    (step.actionType === "click" ||
+      step.actionType === "navigate" ||
+      step.actionType === "open");
+  if (!isInteractive) return step;
+  return {
+    ...step,
+    requireTargetClick: true,
+    allowNextWithoutClick: false,
+  };
+}
+
+/** 모든 day 의 step 을 펼쳐 둔 평면 배열 (35개) — 체험형 변환 적용 */
 export const TUTORIAL_CAMP_STEPS: TutorialCampStep[] = [
   ...DAY_1_STEPS,
   ...DAY_2_STEPS,
@@ -723,7 +746,7 @@ export const TUTORIAL_CAMP_STEPS: TutorialCampStep[] = [
   ...DAY_5_STEPS,
   ...DAY_6_STEPS,
   ...DAY_7_STEPS,
-];
+].map(withInteractive);
 
 /** 특정 day 의 step 배열 — step 인덱스 순 */
 export function getStepsByDay(day: number): TutorialCampStep[] {

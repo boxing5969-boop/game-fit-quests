@@ -167,6 +167,7 @@ export function completeTutorialCampDay(day: number): TutorialCampState {
       status: "completed",
       completedAt: cur.completedAt ?? ts,
       lastSeenAt: ts,
+      lastDayCompletedAt: ts,
     };
     saveTutorialCampState(next);
     appendTutorialCampEvent({
@@ -182,12 +183,18 @@ export function completeTutorialCampDay(day: number): TutorialCampState {
     return next;
   }
 
+  // Day cooldown — 하루 1 Day 정책.
+  //   · currentDay 는 다음 day 로 이동해 두지만, status="paused" 로 전환해
+  //     같은 날 안에서 overlay 자동 진입을 막는다.
+  //   · 다음날(자정 이후) 진입 시 Provider 가 자동으로 status="active" 복귀.
   next = {
     ...cur,
     completedDays,
     currentDay: clampDay(completedDay + 1),
     currentStep: MIN_STEP,
+    status: "paused",
     lastSeenAt: ts,
+    lastDayCompletedAt: ts,
   };
   saveTutorialCampState(next);
   appendTutorialCampEvent({

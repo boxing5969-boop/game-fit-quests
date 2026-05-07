@@ -38,6 +38,12 @@ export interface TutorialCampState {
   skippedAt: string | null;
   /** ISO. 마지막 진입 시각 */
   lastSeenAt: string | null;
+  /**
+   * ISO. 마지막 Day 완료 시각.
+   * 같은 날에는 다음 Day 진입 차단(하루 1 Day 정책).
+   * 다음날(자정 이후) 진입 시 자동으로 status=active 복귀.
+   */
+  lastDayCompletedAt: string | null;
   /** completed 회원이 다시 보기 모드로 진입했을 때 true */
   replayMode: boolean;
   /** 개발자 preview 모드 — 회원 UI 안 노출 */

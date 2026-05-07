@@ -37,6 +37,7 @@ export const DEFAULT_STATE: TutorialCampState = {
   completedAt: null,
   skippedAt: null,
   lastSeenAt: null,
+  lastDayCompletedAt: null,
   replayMode: false,
   devPreviewMode: false,
   metadata: {},
@@ -99,6 +100,8 @@ function normalizeState(raw: unknown): TutorialCampState {
     completedAt: typeof r.completedAt === "string" ? r.completedAt : null,
     skippedAt: typeof r.skippedAt === "string" ? r.skippedAt : null,
     lastSeenAt: typeof r.lastSeenAt === "string" ? r.lastSeenAt : null,
+    lastDayCompletedAt:
+      typeof r.lastDayCompletedAt === "string" ? r.lastDayCompletedAt : null,
     replayMode: r.replayMode === true,
     devPreviewMode: r.devPreviewMode === true,
     metadata:

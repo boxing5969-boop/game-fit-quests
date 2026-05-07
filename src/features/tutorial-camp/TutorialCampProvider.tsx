@@ -35,7 +35,34 @@ const TutorialCampProvider = () => {
   const navigate = useNavigate();
 
   const [targetClicked, setTargetClicked] = useState(false);
+  const [peeking, setPeeking] = useState(false);
   const lastStepKeyRef = useRef<string | null>(null);
+  const peekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Day cooldown — 다음날 진입 시 paused → active 자동 복귀 ──
+  //   · completeTutorialCampDay 가 status="paused" + lastDayCompletedAt 기록
+  //   · 마운트 시 lastDayCompletedAt 이 어제 이전이면 자동 resume
+  useEffect(() => {
+    if (camp.state.status !== "paused") return;
+    if (!camp.state.lastDayCompletedAt) return;
+    if (camp.state.currentDay > 7) return;
+    const last = new Date(camp.state.lastDayCompletedAt);
+    const now = new Date();
+    const sameDay =
+      last.getFullYear() === now.getFullYear() &&
+      last.getMonth() === now.getMonth() &&
+      last.getDate() === now.getDate();
+    if (!sameDay) {
+      // 자정 지났음 → 자동 resume
+      camp.start();
+    }
+    // 같은 날이면 paused 상태로 — overlay 안 띄움 (cooldown)
+  }, [
+    camp.state.status,
+    camp.state.lastDayCompletedAt,
+    camp.state.currentDay,
+    camp,
+  ]);
 
   // 활성 step 결정
   const step = camp.currentStep;
@@ -128,6 +155,23 @@ const TutorialCampProvider = () => {
     camp.next();
   }, [step, camp]);
 
+  // 이전 단계 — Day 안에서 step-1, Day 경계면 이전 Day 마지막 step 으로
+  const handlePrev = useCallback(() => {
+    if (!step) return;
+    if (step.step > 0) {
+      camp.goToDayStep(step.day, step.step - 1);
+      return;
+    }
+    if (step.day > 1) {
+      const prevDay = step.day - 1;
+      const prevDayCount = getStepsCountByDay(prevDay);
+      camp.goToDayStep(prevDay, Math.max(0, prevDayCount - 1));
+    }
+    // Day 1 step 0 이면 noop (canGoBack 으로 차단)
+  }, [step, camp]);
+
+  const canGoBack = !!step && (step.step > 0 || step.day > 1);
+
   const handleSkipDay = useCallback(() => {
     if (!step) return;
     camp.skipDay(step.day);
@@ -144,10 +188,40 @@ const TutorialCampProvider = () => {
     }
   }, [step, location.pathname, navigate]);
 
-  const handleDimNudge = useCallback(() => {
-    // dim 영역 클릭 시 안내 깜빡임 — 별도 토스트 X (조용한 UX)
-    // 추후 단계에서 nudge 효과 추가 가능
+  // ── peek 모드 ── overlay 를 8초간 hide 해서 회원이 실제 화면을 만져보게 함
+  const PEEK_DURATION_MS = 8000;
+  const enterPeek = useCallback(() => {
+    setPeeking(true);
+    if (peekTimerRef.current) clearTimeout(peekTimerRef.current);
+    peekTimerRef.current = setTimeout(() => {
+      setPeeking(false);
+      peekTimerRef.current = null;
+    }, PEEK_DURATION_MS);
   }, []);
+  const exitPeek = useCallback(() => {
+    if (peekTimerRef.current) {
+      clearTimeout(peekTimerRef.current);
+      peekTimerRef.current = null;
+    }
+    setPeeking(false);
+  }, []);
+
+  // step 변경 시 peek 자동 종료
+  useEffect(() => {
+    exitPeek();
+  }, [step?.day, step?.step, exitPeek]);
+
+  // 언마운트 cleanup
+  useEffect(() => {
+    return () => {
+      if (peekTimerRef.current) clearTimeout(peekTimerRef.current);
+    };
+  }, []);
+
+  const handleDimNudge = useCallback(() => {
+    // dim 영역 클릭 = "잠깐 살펴보기" 즉시 진입 — 회원이 자연스럽게 화면을 만져보게
+    enterPeek();
+  }, [enterPeek]);
 
   const handleCelebrationContinue = useCallback(() => {
     // celebration 화면에서 "오늘 캠프 마치기" / "7일 캠프 마치기" 버튼
@@ -178,12 +252,17 @@ const TutorialCampProvider = () => {
       routeMatch={routeMatch}
       targetClicked={targetClicked}
       totalStepsInDay={totalStepsInDay}
+      peeking={peeking}
+      canGoBack={canGoBack}
       onNext={handleNext}
+      onPrev={handlePrev}
       onSkipDay={handleSkipDay}
       onPause={handlePause}
       onGoToRoute={handleGoToRoute}
       onMarkClicked={() => setTargetClicked(true)}
       onDimNudge={handleDimNudge}
+      onTryItYourself={enterPeek}
+      onResumeFromPeek={exitPeek}
     />
   );
 };
