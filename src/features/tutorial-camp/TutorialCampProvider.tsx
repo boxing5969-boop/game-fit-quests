@@ -251,24 +251,30 @@ const TutorialCampProvider = () => {
       //   2. 떠 있으면 1초 간격으로 닫힘 감시
       //   3. 닫히면 1초 후 camp.next() 자동
       //   4. 60초 안전망
-      setTimeout(() => {
-        if (!hasOtherDialog()) return; // 모달 안 열림 — 회원이 직접 다음 누름
-        let cancelled = false;
-        const id = setInterval(() => {
-          if (cancelled) return;
-          if (!hasOtherDialog()) {
-            clearInterval(id);
-            cancelled = true;
-            // 모달 닫힘 → 1초 후 자동 다음 (회원이 보상 화면 보고 닫은 직후)
-            setTimeout(() => camp.next(), 1000);
-          }
-        }, 800);
-        // 안전망 60초
+      //
+      //   주의: step.autoAdvance=true 면 cascade 가 step 의 conditionMet 으로
+      //   진행되므로 이 자동 감지가 동시에 작동하면 step 점프 발생.
+      //   autoAdvance step 은 자동 감지 skip.
+      if (!step.autoAdvance) {
         setTimeout(() => {
-          cancelled = true;
-          clearInterval(id);
-        }, 60_000);
-      }, 600);
+          if (!hasOtherDialog()) return; // 모달 안 열림 — 회원이 직접 다음 누름
+          let cancelled = false;
+          const id = setInterval(() => {
+            if (cancelled) return;
+            if (!hasOtherDialog()) {
+              clearInterval(id);
+              cancelled = true;
+              // 모달 닫힘 → 1초 후 자동 다음 (회원이 보상 화면 보고 닫은 직후)
+              setTimeout(() => camp.next(), 1000);
+            }
+          }, 800);
+          // 안전망 60초
+          setTimeout(() => {
+            cancelled = true;
+            clearInterval(id);
+          }, 60_000);
+        }, 600);
+      }
     };
     element.addEventListener("click", onClick, { capture: true });
     return () => {
