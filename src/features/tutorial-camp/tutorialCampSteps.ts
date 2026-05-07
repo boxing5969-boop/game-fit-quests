@@ -173,8 +173,8 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     route: "/myboxer/quest",
     targetKey: "day1.boxing_iq_question",
     targetSelector: '[data-tour="boxing-iq-question"]',
-    title: "오늘의 복싱 카드",
-    body: "위에 오늘의 문제가 보여요.\n천천히 읽어보고 '다음으로' 를 눌러주세요.",
+    title: "문제를 확인하세요",
+    body: "위에 오늘의 복싱 카드가 보여요.\n천천히 읽어보고 '다음으로' 를 눌러주세요.",
     osamiMessage: "급하게 풀지 않아도 괜찮아요.",
     actionType: "read",
     requireTargetClick: false,
@@ -183,16 +183,19 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     placement: "bottom",
     fallbackText: "복싱 IQ 모달이 열려 있으면 문제 영역을 한 번 읽어보세요.",
     completionText: "잘 읽으셨어요.",
-    helperMessage: "문제를 한 번 읽고 '다음으로' 를 눌러주세요.",
+    helperMessage: "문제를 확인 후 '다음으로' 를 눌러주세요.",
+    successMessage: "잘했어요. 이제 답을 골라볼게요.",
   },
   // ── 2. 복싱 IQ 모달: 정답 선택 ──
+  //   정답 클릭 → next 활성화 (autoAdvance X). 회원이 결과 화면 본 후
+  //   직접 '다음으로' 누름 → step 3 챌린지 카드로.
   {
     day: 1,
     step: 2,
     route: "/myboxer/quest",
     targetKey: "day1.boxing_iq_answer",
     targetSelector: '[data-tour="boxing-iq-options"]',
-    title: "이제 답을 골라볼까요?",
+    title: "정답을 선택하세요",
     body: "답이라고 생각하는 선택지를\n한 번 눌러보세요.",
     osamiMessage: "정답이 아니어도 괜찮아요.",
     actionType: "wait_quiz_answer",
@@ -201,13 +204,12 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     animation: "spotlight",
     placement: "top",
     fallbackText: "복싱 IQ 모달이 열려 있으면 선택지 중 하나를 눌러보세요.",
-    completionText: "잘했어요. 이제 모달을 닫고 다음으로 갈게요.",
+    completionText: "잘했어요. '다음으로' 를 눌러주세요.",
     helperMessage: "답이라고 생각하는 선택지를 한 번 눌러보세요.",
-    successMessage: "좋아요. 모달을 닫으면 자동으로 다음으로 갑니다.",
+    successMessage: "잘했어요! 이제 '다음으로' 를 눌러주세요.",
     blockNextUntilComplete: true,
     completionRule: "quiz_answer_selected",
     expectedAnswerSelector: '[data-tutorial-answer="true"]',
-    autoAdvance: true,
   },
   // ── 3. 챌린지 아레나 카드 클릭 (오늘의 라운드 보조 퀘스트 안) ──
   {

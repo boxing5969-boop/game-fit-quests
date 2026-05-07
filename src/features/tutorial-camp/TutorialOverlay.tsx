@@ -84,7 +84,7 @@ const TutorialOverlay = ({
         {/* fallback dim — target 못 찾았거나 라우트 mismatch */}
         {fallbackDim && (
           <div
-            className="fixed inset-0 z-[90]"
+            className="fixed inset-0 z-[110]"
             style={{ background: "rgba(10, 16, 36, 0.78)" }}
             onClick={onDimNudge}
             aria-hidden
@@ -110,7 +110,7 @@ const TutorialOverlay = ({
           )}
 
         {/* Progress dots — tooltip 위쪽에 별도 고정 위치 */}
-        <div className="pointer-events-none fixed inset-x-0 top-3 z-[94] flex justify-center px-4">
+        <div className="pointer-events-none fixed inset-x-0 top-3 z-[113] flex justify-center px-4">
           <div className="rounded-full border border-amber-400/30 bg-black/55 px-3 py-1.5 backdrop-blur-sm">
             <TutorialProgressDots
               total={totalStepsInDay}
@@ -194,7 +194,7 @@ function TapHere({
     <motion.button
       type="button"
       onClick={handleChipClick}
-      className="pointer-events-auto fixed z-[94] -translate-x-1/2 cursor-pointer whitespace-nowrap rounded-pill border-2 border-amber-300 bg-amber-500 px-4 py-1.5 text-[11px] font-black tracking-wider text-amber-950 shadow-[0_6px_20px_rgba(253,184,92,0.65)] hover:bg-amber-400 active:scale-95"
+      className="pointer-events-auto fixed z-[113] -translate-x-1/2 cursor-pointer whitespace-nowrap rounded-pill border-2 border-amber-300 bg-amber-500 px-4 py-1.5 text-[11px] font-black tracking-wider text-amber-950 shadow-[0_6px_20px_rgba(253,184,92,0.65)] hover:bg-amber-400 active:scale-95"
       style={{ top, left }}
       animate={{
         y: [0, -4, 0],

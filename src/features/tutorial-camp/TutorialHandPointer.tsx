@@ -61,7 +61,7 @@ const TutorialHandPointer = ({
 
   return (
     <motion.div
-      className="pointer-events-none fixed z-[92]"
+      className="pointer-events-none fixed z-[112]"
       style={{ left: x, top: y, width: POINTER_SIZE, height: POINTER_SIZE }}
       animate={
         reduced

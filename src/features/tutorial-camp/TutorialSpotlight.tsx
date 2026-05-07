@@ -27,7 +27,7 @@ const TutorialSpotlight = ({ rect, onDimClick }: TutorialSpotlightProps) => {
     // fallback: 단일 dim layer (target 영역 0)
     return (
       <div
-        className="fixed inset-0 z-[90]"
+        className="fixed inset-0 z-[110]"
         style={{ background: DIM_COLOR }}
         onClick={onDimClick}
         aria-hidden
@@ -48,25 +48,25 @@ const TutorialSpotlight = ({ rect, onDimClick }: TutorialSpotlightProps) => {
     <>
       {/* 4개 dim div — 좌우 아래위 */}
       <div
-        className="fixed inset-x-0 top-0 z-[90]"
+        className="fixed inset-x-0 top-0 z-[110]"
         style={{ height: top, background: DIM_COLOR }}
         onClick={onDimClick}
         aria-hidden
       />
       <div
-        className="fixed inset-x-0 z-[90]"
+        className="fixed inset-x-0 z-[110]"
         style={{ top: bottom, bottom: 0, background: DIM_COLOR }}
         onClick={onDimClick}
         aria-hidden
       />
       <div
-        className="fixed left-0 z-[90]"
+        className="fixed left-0 z-[110]"
         style={{ top, height, width: left, background: DIM_COLOR }}
         onClick={onDimClick}
         aria-hidden
       />
       <div
-        className="fixed right-0 z-[90]"
+        className="fixed right-0 z-[110]"
         style={{
           top,
           height,
@@ -79,7 +79,7 @@ const TutorialSpotlight = ({ rect, onDimClick }: TutorialSpotlightProps) => {
 
       {/* Pulse ring — pointer-events none 으로 target 클릭 방해 X */}
       <motion.div
-        className="pointer-events-none fixed z-[91]"
+        className="pointer-events-none fixed z-[111]"
         style={{
           top: top - 2,
           left: left - 2,
