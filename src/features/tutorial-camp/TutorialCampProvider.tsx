@@ -608,9 +608,54 @@ const TutorialCampProvider = () => {
     );
   }
 
+  // 캠프 외 다른 dialog 자동 dismiss — ESC + close button 백업 클릭
+  //   · 회원이 모달 위에서 '다음으로' 눌렀는데 모달 이 그대로면 다음 step
+  //     spotlight 이 모달 뒤에 가려서 진행 안 된 것처럼 보임 → 자동 닫기
+  //   · 닫힌 dialog 가 있었으면 true 반환
+  function dismissOtherDialogs(): boolean {
+    if (typeof document === "undefined" || typeof window === "undefined")
+      return false;
+    const dialogs = Array.from(document.querySelectorAll('[role="dialog"]'));
+    const others = dialogs.filter(
+      (d) =>
+        !d.hasAttribute("data-tour-overlay") &&
+        !d.closest("[data-tour-overlay]"),
+    );
+    if (others.length === 0) return false;
+    // 1) ESC dispatch — Radix Dialog/Sheet 표준 닫기 경로
+    try {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+      );
+    } catch {
+      /* noop */
+    }
+    // 2) 백업 — 안 닫히는 controlled dialog 대비 close button 자동 클릭
+    window.setTimeout(() => {
+      others.forEach((d) => {
+        if (!d.isConnected) return;
+        const closeBtn = d.querySelector(
+          '[aria-label="닫기"], [aria-label*="close" i]',
+        ) as HTMLElement | null;
+        try {
+          closeBtn?.click();
+        } catch {
+          /* noop */
+        }
+      });
+    }, 100);
+    return true;
+  }
+
   // 핸들러
   const handleNext = useCallback(() => {
     if (!step) return;
+    // 다른 모달이 떠 있으면 자동 dismiss — 다음 step spotlight 이 모달 뒤로
+    // 가려서 진행 안 된 것처럼 보이는 회원 혼란 제거.
+    // 동시에 onClick 안에서 시작된 모달 자동 감지 폴링도 정리 (중복 next 방지).
+    if (dismissOtherDialogs()) {
+      clearModalPolling();
+    }
     // Day 마지막 step 인 경우 — completeDay 호출
     const dayStepCount = getStepsCountByDay(step.day);
     if (step.step >= dayStepCount - 1) {
@@ -618,7 +663,7 @@ const TutorialCampProvider = () => {
       return;
     }
     camp.next();
-  }, [step, camp]);
+  }, [step, camp, clearModalPolling]);
 
   // 이전 단계 — Day 안에서 step-1, Day 경계면 이전 Day 마지막 step 으로
   const handlePrev = useCallback(() => {

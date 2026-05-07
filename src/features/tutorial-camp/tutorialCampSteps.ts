@@ -208,7 +208,7 @@ const DAY_1_STEPS: TutorialCampStep[] = [
       "복싱 IQ 모달이 열려 있으면 선택지 중 하나를 눌러보세요.\n선택한 답에 효과가 표시돼요.",
     completionText: "잘했어요. '다음으로' 를 눌러주세요.",
     helperMessage: "답이라고 생각하는 선택지를 한 번 눌러보세요.",
-    successMessage: "잘했어요! 이제 '다음으로' 를 눌러주세요.",
+    successMessage: "잘했어요! '다음으로' 누르면 모달이 자동으로 닫혀요.",
     blockNextUntilComplete: true,
     completionRule: "quiz_answer_selected",
     expectedAnswerSelector: '[data-tutorial-answer="true"]',
