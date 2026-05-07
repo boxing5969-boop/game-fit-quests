@@ -430,15 +430,17 @@ const MissionsPage = () => {
       }
     >
       <div data-tour="missions-official-training" className="space-y-6">
-        <SegmentedControl<MissionTab>
-          value={missionTab}
-          onChange={(v) => setMissionTab(v)}
-          segments={[
-            { value: "white", label: "🤍 화이트 리그" },
-            { value: "missions", label: "🥊 전체 미션" },
-          ]}
-          fullWidth
-        />
+        <div data-tour="missions-tab-control">
+          <SegmentedControl<MissionTab>
+            value={missionTab}
+            onChange={(v) => setMissionTab(v)}
+            segments={[
+              { value: "white", label: "🤍 화이트 리그" },
+              { value: "missions", label: "🥊 전체 미션" },
+            ]}
+            fullWidth
+          />
+        </div>
 
         {missionTab === "white" ? (
           <WhiteLeagueTab />
@@ -500,6 +502,11 @@ const MissionsPage = () => {
                       {/* League header (toggle) */}
                       <button
                         type="button"
+                        data-tour={
+                          rank === "white"
+                            ? "missions-league-header-white"
+                            : undefined
+                        }
                         onClick={() => toggleRank(rank)}
                         aria-expanded={isExpanded}
                         className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-[hsl(var(--surface-2))]/40 active:scale-[0.99]"

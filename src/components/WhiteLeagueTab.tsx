@@ -295,7 +295,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       </div>
 
       {/* Section tabs — 3탭 구조 */}
-      <div className="flex gap-1 rounded-2xl bg-secondary p-1">
+      <div className="flex gap-1 rounded-2xl bg-secondary p-1" data-tour="white-league-tabs">
         {([
           { key: "learn" as const, label: "📖 배우기" },
           { key: "session" as const, label: "🥊 수업실행" },
@@ -303,6 +303,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         ]).map(tab => (
           <button
             key={tab.key}
+            data-tour={`white-league-tab-${tab.key}`}
             onClick={() => setActiveSection(tab.key)}
             className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all ${
               activeSection === tab.key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
