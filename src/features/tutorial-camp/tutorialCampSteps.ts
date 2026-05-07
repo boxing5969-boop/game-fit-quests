@@ -20,7 +20,32 @@ export type TutorialCampActionType =
   | "click"
   | "navigate"
   | "open"
-  | "complete";
+  | "complete"
+  // 신규 (49/50단계) — 모두 기존 step 에 영향 0 (optional 필드와 함께 사용)
+  | "wait_quiz_read"
+  | "wait_quiz_answer"
+  | "wait_scroll_bottom"
+  | "wait_text_input"
+  | "wait_select_option"
+  | "wait_condition_check"
+  | "wait_modal_next";
+
+/**
+ * step 완료 조건 룰 — Provider 의 evaluator 가 이 룰로 isStepConditionMet 결정.
+ * 미정의 시 기존 requireTargetClick 폴백 사용 (호환).
+ */
+export type TutorialCampCompletionRule =
+  | "target_clicked"
+  | "quiz_question_read"
+  | "quiz_answer_selected"
+  | "quiz_correct_answer_selected"
+  | "scrolled_to_bottom"
+  | "text_input_min_length"
+  | "option_selected"
+  | "toggle_selected"
+  | "condition_checked"
+  | "modal_closed"
+  | "manual_confirm";
 
 export type TutorialCampAnimation =
   | "spotlight"
@@ -59,6 +84,46 @@ export interface TutorialCampStep {
   fallbackText: string;
   /** step 통과 직후 1~2초 잠깐 노출 */
   completionText: string;
+
+  // ─────────────────────────────────────────────────────────────
+  // 신규 (49/50단계) — 모두 optional, 기존 35 step 데이터 호환
+  // ─────────────────────────────────────────────────────────────
+
+  /** 명시적 완료 룰. 없으면 requireTargetClick 폴백 (호환). */
+  completionRule?: TutorialCampCompletionRule;
+  /** true 면 completionRule 만족 전엔 next 비활성화. 기본 false. */
+  blockNextUntilComplete?: boolean;
+  /** 조건 충족 시 자동으로 다음 step 진행 (기본 false). */
+  autoAdvance?: boolean;
+  /** wait_text_input — 입력 element 셀렉터 */
+  inputSelector?: string;
+  /** wait_text_input — 최소 글자 수 (기본 5) */
+  minTextLength?: number;
+  /** wait_scroll_bottom — 스크롤 컨테이너 셀렉터 (기본 window) */
+  scrollContainerSelector?: string;
+  /** wait_scroll_bottom — 도달 임계 (0~1, 기본 0.85) */
+  scrollThreshold?: number;
+  /** wait_select_option — 클릭 가능 옵션들 셀렉터 (복수 매칭 가능) */
+  optionSelector?: string;
+  /** wait_condition_check — 컨디션 토글 셀렉터 */
+  conditionSelector?: string;
+  /** wait_quiz_answer — 정답 element 셀렉터 (보안상 클라이언트 노출 주의) */
+  expectedAnswerSelector?: string;
+  /** wait_quiz_answer — data-tutorial-answer-value 매칭값 */
+  expectedAnswerValue?: string;
+  /** wait_modal_next — 모달 컨테이너 셀렉터 (제거 감지) */
+  modalSelector?: string;
+  /** 조건 미충족 시 tooltip 안에 보일 부드러운 재안내. */
+  helperMessage?: string;
+  /** 조건 충족 시 tooltip 안에 보일 칭찬/안내. */
+  successMessage?: string;
+  /** 오답 선택 시 부드러운 재안내 (wait_quiz_answer). */
+  wrongAnswerMessage?: string;
+  /**
+   * Day 완료 후 30초 마무리 sheet 노출 억제 (true 시 trigger skip).
+   * Day 7 완료식 등에서 시각 충돌 방지용.
+   */
+  suppressReflectionSheet?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────
