@@ -61,7 +61,10 @@ const ChallengesPage = () => {
         />
       }
     >
-      <div className="space-y-4 pt-2">
+      <div
+        data-tour="challenge-arena-scroll"
+        className="space-y-4 pt-2"
+      >
         {/* Hero — 더 파이터 시즌 */}
         <section className="rounded-2xl border border-yellow-500/40 bg-gradient-to-b from-yellow-500/10 via-emerald-400/5 to-transparent p-5">
           <div className="flex items-center gap-2">
