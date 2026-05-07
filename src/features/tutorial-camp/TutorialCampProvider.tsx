@@ -204,6 +204,23 @@ const TutorialCampProvider = () => {
     });
   }, [isActiveCamp, step, location.pathname]);
 
+  // 모달 자동 감지 timer 추적 — step 변경/unmount 시 모두 clear
+  const modalPollRef = useRef<{
+    initial?: number;
+    interval?: number;
+    safety?: number;
+    finishTimeout?: number;
+  }>({});
+  const innerClickRef = useRef<number | null>(null);
+  const clearModalPolling = useCallback(() => {
+    const p = modalPollRef.current;
+    if (p.initial) window.clearTimeout(p.initial);
+    if (p.interval) window.clearInterval(p.interval);
+    if (p.safety) window.clearTimeout(p.safety);
+    if (p.finishTimeout) window.clearTimeout(p.finishTimeout);
+    modalPollRef.current = {};
+  }, []);
+
   // target click 감지 — DOM element 에 capture-phase listener 부착
   useEffect(() => {
     if (!isActiveCamp || !step || !rect?.found) return;
@@ -235,7 +252,10 @@ const TutorialCampProvider = () => {
             'button, a, [role="button"]',
           ) as HTMLElement | null;
           if (inner) {
-            setTimeout(() => {
+            if (innerClickRef.current)
+              window.clearTimeout(innerClickRef.current);
+            innerClickRef.current = window.setTimeout(() => {
+              innerClickRef.current = null;
               try {
                 inner.click();
               } catch {
@@ -247,31 +267,27 @@ const TutorialCampProvider = () => {
       }
 
       // 모달/sheet 자동 감지 — 회원이 정답 맞추고 닫으면 자동 다음 step
-      //   1. 600ms 후 다른 dialog 가 떠 있는지 확인 (모달 열림 인지)
-      //   2. 떠 있으면 1초 간격으로 닫힘 감시
-      //   3. 닫히면 1초 후 camp.next() 자동
-      //   4. 60초 안전망
-      //
-      //   주의: step.autoAdvance=true 면 cascade 가 step 의 conditionMet 으로
-      //   진행되므로 이 자동 감지가 동시에 작동하면 step 점프 발생.
-      //   autoAdvance step 은 자동 감지 skip.
+      //   · 이전 폴링이 살아있으면 정리 후 새로 시작 (step 변경 race 방지)
+      //   · 1.5초 폴링 (CPU 절감) — modal close watcher useEffect 와 보완
+      //   · autoAdvance step 은 cascade 가 처리하므로 skip
       if (!step.autoAdvance) {
-        setTimeout(() => {
-          if (!hasOtherDialog()) return; // 모달 안 열림 — 회원이 직접 다음 누름
-          let cancelled = false;
-          const id = setInterval(() => {
-            if (cancelled) return;
+        clearModalPolling();
+        modalPollRef.current.initial = window.setTimeout(() => {
+          if (!hasOtherDialog()) return;
+          modalPollRef.current.interval = window.setInterval(() => {
             if (!hasOtherDialog()) {
-              clearInterval(id);
-              cancelled = true;
-              // 모달 닫힘 → 1초 후 자동 다음 (회원이 보상 화면 보고 닫은 직후)
-              setTimeout(() => camp.next(), 1000);
+              if (modalPollRef.current.interval) {
+                window.clearInterval(modalPollRef.current.interval);
+                modalPollRef.current.interval = undefined;
+              }
+              modalPollRef.current.finishTimeout = window.setTimeout(() => {
+                modalPollRef.current.finishTimeout = undefined;
+                camp.next();
+              }, 1000);
             }
-          }, 800);
-          // 안전망 60초
-          setTimeout(() => {
-            cancelled = true;
-            clearInterval(id);
+          }, 1500);
+          modalPollRef.current.safety = window.setTimeout(() => {
+            clearModalPolling();
           }, 60_000);
         }, 600);
       }
@@ -279,9 +295,14 @@ const TutorialCampProvider = () => {
     element.addEventListener("click", onClick, { capture: true });
     return () => {
       element?.removeEventListener("click", onClick, { capture: true });
+      clearModalPolling();
+      if (innerClickRef.current) {
+        window.clearTimeout(innerClickRef.current);
+        innerClickRef.current = null;
+      }
     };
     // step.targetSelector 가 바뀌어도 element 재탐색
-  }, [isActiveCamp, step, rect?.found, camp, location.pathname]);
+  }, [isActiveCamp, step, rect?.found, camp, location.pathname, clearModalPolling]);
 
   // ─────────────────────────────────────────────────────────────
   // 50-A 신규 listener: input / scroll / option / condition / modal
@@ -323,7 +344,7 @@ const TutorialCampProvider = () => {
     };
   }, [isActiveCamp, step]);
 
-  // 2) scroll listener — scrollContainerSelector 또는 window
+  // 2) scroll listener — scrollContainerSelector 또는 window. rAF throttle.
   useEffect(() => {
     if (!isActiveCamp || !step) return;
     if (typeof document === "undefined" || typeof window === "undefined")
@@ -347,7 +368,9 @@ const TutorialCampProvider = () => {
       }
     }
 
-    const handle = () => {
+    let satisfied = false;
+    const compute = () => {
+      if (satisfied) return;
       let ratio = 0;
       if (container === window) {
         const scrolled = window.scrollY + window.innerHeight;
@@ -359,6 +382,7 @@ const TutorialCampProvider = () => {
         ratio = el.scrollHeight > 0 ? scrolled / el.scrollHeight : 1;
       }
       if (ratio >= threshold) {
+        satisfied = true;
         dispatchCompletion({
           type: "set",
           key: "scrolledToBottom",
@@ -366,10 +390,20 @@ const TutorialCampProvider = () => {
         });
       }
     };
-    handle();
-    container.addEventListener("scroll", handle, { passive: true });
+
+    let rafId = 0;
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        compute();
+      });
+    };
+    compute();
+    container.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      container.removeEventListener("scroll", handle);
+      container.removeEventListener("scroll", onScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
     };
   }, [isActiveCamp, step]);
 
@@ -429,14 +463,17 @@ const TutorialCampProvider = () => {
     };
   }, [isActiveCamp, step]);
 
-  // 5) modal close watcher — modalSelector element 가 DOM 에서 사라지면 만족
+  // 5) modal close watcher — modalSelector element 가 DOM 에서 사라지면 만족.
+  //    MutationObserver 가 우선 (즉각), polling 은 1.5s 안전망 (브라우저 호환)
   useEffect(() => {
     if (!isActiveCamp || !step) return;
     if (typeof document === "undefined") return;
     const selector = step.modalSelector;
     if (!selector) return;
 
+    let satisfied = false;
     const check = () => {
+      if (satisfied) return;
       let exists = false;
       try {
         exists = !!document.querySelector(selector);
@@ -445,10 +482,10 @@ const TutorialCampProvider = () => {
       }
       // modal 이 한 번이라도 열렸다가 닫히면 modalClosed=true
       // — 처음부터 없는 경우는 무시 (회원이 아직 안 열었을 수 있음)
-      // 단순 구현: 한 번 열린 적 있는지 ref 추적.
       if (exists) {
         modalSeenRef.current = true;
       } else if (modalSeenRef.current) {
+        satisfied = true;
         dispatchCompletion({
           type: "set",
           key: "modalClosed",
@@ -458,8 +495,22 @@ const TutorialCampProvider = () => {
     };
 
     check();
-    const id = window.setInterval(check, 800);
+    let observer: MutationObserver | null = null;
+    if (typeof MutationObserver !== "undefined") {
+      observer = new MutationObserver(check);
+      try {
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+        });
+      } catch {
+        observer = null;
+      }
+    }
+    // 안전망 polling — observer 못 쓰는 환경 + 첫 렌더 race
+    const id = window.setInterval(check, 1500);
     return () => {
+      observer?.disconnect();
       window.clearInterval(id);
     };
   }, [isActiveCamp, step]);
