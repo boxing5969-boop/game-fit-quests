@@ -184,19 +184,20 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
             </p>
           </div>
 
-          <div>
+          <div data-tour="boxing-iq-question">
             <p className="text-[13px] font-bold leading-relaxed text-foreground">
               {current.question}
             </p>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2" data-tour="boxing-iq-options">
             {options.map((opt) => {
               const active = selected === opt;
               return (
                 <button
                   key={opt}
                   type="button"
+                  data-tutorial-answer="true"
                   onClick={() => setSelected(opt)}
                   className={`w-full rounded-card border px-3.5 py-3 text-left text-[13px] transition-all active:scale-[0.99] ${
                     active
@@ -388,6 +389,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
             role="dialog"
             aria-modal="true"
             aria-label="복싱 IQ 퀴즈"
+            data-tour="boxing-iq-modal"
             className="flex max-h-[88vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {renderHeader()}
