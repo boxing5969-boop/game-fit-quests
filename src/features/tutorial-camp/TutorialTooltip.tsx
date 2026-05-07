@@ -44,8 +44,6 @@ export interface TutorialTooltipProps {
   onPause: () => void;
   onGoToRoute: () => void;
   onMarkClicked: () => void;
-  /** "잠깐 살펴보기" CTA — overlay 8초간 hide, 회원이 화면 직접 만져봄 */
-  onTryItYourself?: () => void;
 }
 
 const TOOLTIP_WIDTH = 320;
@@ -104,7 +102,6 @@ const TutorialTooltip = ({
   onPause,
   onGoToRoute,
   onMarkClicked,
-  onTryItYourself,
 }: TutorialTooltipProps) => {
   const pos = computeTooltipPosition(rect, step.placement);
   // route 가 다르면 → 이동 필요 (target rect 자체를 시도 안 함)
@@ -218,16 +215,6 @@ const TutorialTooltip = ({
             <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
           </Button>
         </div>
-        {/* 잠깐 살펴보기 — overlay 8초간 hide, 회원이 화면 직접 만져봄 */}
-        {onTryItYourself && (
-          <button
-            type="button"
-            onClick={onTryItYourself}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-amber-400/30 bg-black/35 px-3 py-2 text-[11px] font-bold text-amber-100/85 hover:bg-black/50 active:scale-[0.98]"
-          >
-            잠깐 살펴보기 (8초)
-          </button>
-        )}
         <div className="mt-2 flex items-center justify-between text-[10px] text-amber-200/55">
           <button
             type="button"

@@ -35,9 +35,7 @@ const TutorialCampProvider = () => {
   const navigate = useNavigate();
 
   const [targetClicked, setTargetClicked] = useState(false);
-  const [peeking, setPeeking] = useState(false);
   const lastStepKeyRef = useRef<string | null>(null);
-  const peekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Day cooldown — 다음날 진입 시 paused → active 자동 복귀 ──
   //   · completeTutorialCampDay 가 status="paused" + lastDayCompletedAt 기록
@@ -188,40 +186,9 @@ const TutorialCampProvider = () => {
     }
   }, [step, location.pathname, navigate]);
 
-  // ── peek 모드 ── overlay 를 8초간 hide 해서 회원이 실제 화면을 만져보게 함
-  const PEEK_DURATION_MS = 8000;
-  const enterPeek = useCallback(() => {
-    setPeeking(true);
-    if (peekTimerRef.current) clearTimeout(peekTimerRef.current);
-    peekTimerRef.current = setTimeout(() => {
-      setPeeking(false);
-      peekTimerRef.current = null;
-    }, PEEK_DURATION_MS);
-  }, []);
-  const exitPeek = useCallback(() => {
-    if (peekTimerRef.current) {
-      clearTimeout(peekTimerRef.current);
-      peekTimerRef.current = null;
-    }
-    setPeeking(false);
-  }, []);
-
-  // step 변경 시 peek 자동 종료
-  useEffect(() => {
-    exitPeek();
-  }, [step?.day, step?.step, exitPeek]);
-
-  // 언마운트 cleanup
-  useEffect(() => {
-    return () => {
-      if (peekTimerRef.current) clearTimeout(peekTimerRef.current);
-    };
-  }, []);
-
   const handleDimNudge = useCallback(() => {
-    // dim 영역 클릭 = "잠깐 살펴보기" 즉시 진입 — 회원이 자연스럽게 화면을 만져보게
-    enterPeek();
-  }, [enterPeek]);
+    // dim 영역 클릭 시 — 조용한 noop. 회원이 막히면 "건너뛰기" 또는 "잠시 멈추기" 사용.
+  }, []);
 
   const handleCelebrationContinue = useCallback(() => {
     // celebration 화면에서 "오늘 캠프 마치기" / "7일 캠프 마치기" 버튼
@@ -252,7 +219,6 @@ const TutorialCampProvider = () => {
       routeMatch={routeMatch}
       targetClicked={targetClicked}
       totalStepsInDay={totalStepsInDay}
-      peeking={peeking}
       canGoBack={canGoBack}
       onNext={handleNext}
       onPrev={handlePrev}
@@ -261,8 +227,6 @@ const TutorialCampProvider = () => {
       onGoToRoute={handleGoToRoute}
       onMarkClicked={() => setTargetClicked(true)}
       onDimNudge={handleDimNudge}
-      onTryItYourself={enterPeek}
-      onResumeFromPeek={exitPeek}
     />
   );
 };
