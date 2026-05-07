@@ -140,24 +140,26 @@ export interface TutorialCampStep {
 // ─────────────────────────────────────────────────────────────
 
 const DAY_1_STEPS: TutorialCampStep[] = [
-  // ── 0. 153 QUEST 진입 ──
+  // ── 0. 오늘의 라운드 보조 퀘스트 — "오늘의 퀴즈 1문제" 카드 클릭 ──
+  //   회원이 이 카드 누르면 onOpenAcademy → 복싱 IQ 모달 열림.
   {
     day: 1,
     step: 0,
     route: "/myboxer/quest",
-    targetKey: "day1.boxing_iq_card",
-    targetSelector: '[data-tour="boxing-iq-card"]',
-    title: "복싱 IQ",
-    body: "오늘 첫 번째 보조 퀘스트는 복싱 IQ 예요.\n여기를 눌러볼까요?",
+    targetKey: "day1.quest_mini_academy",
+    targetSelector: '[data-tour="quest-mini-academy"]',
+    title: "오늘의 퀴즈 1문제",
+    body: "첫 번째 보조 퀘스트는 복싱 IQ 예요.\n여기를 눌러볼까요?",
     osamiMessage: "안녕하세요. 같이 시작해볼게요.",
     actionType: "click",
     requireTargetClick: true,
     allowNextWithoutClick: true,
     animation: "pulse",
     placement: "bottom",
-    fallbackText: "153 QUEST 메뉴에서 복싱 IQ 카드를 찾을 수 있어요.",
+    fallbackText:
+      "153 QUEST 메뉴의 '오늘의 라운드 보조 퀘스트' 영역에서 '오늘의 퀴즈 1문제' 카드를 찾아 누르세요.",
     completionText: "복싱 IQ 가 열렸어요.",
-    helperMessage: "반짝이는 곳을 눌러보세요.",
+    helperMessage: "여기 '오늘의 퀴즈 1문제' 카드를 눌러보세요.",
     successMessage: "좋아요. 한 문제 풀어볼게요.",
     blockNextUntilComplete: true,
     completionRule: "target_clicked",
@@ -207,13 +209,13 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     expectedAnswerSelector: '[data-tutorial-answer="true"]',
     autoAdvance: true,
   },
-  // ── 3. 챌린지 아레나 카드 클릭 ──
+  // ── 3. 챌린지 아레나 카드 클릭 (오늘의 라운드 보조 퀘스트 안) ──
   {
     day: 1,
     step: 3,
     route: "/myboxer/quest",
-    targetKey: "day1.challenge_card",
-    targetSelector: '[data-tour="challenge-arena-card"]',
+    targetKey: "day1.quest_mini_challenge",
+    targetSelector: '[data-tour="quest-mini-challenge"]',
     title: "다음은 챌린지 아레나",
     body: "이번엔 챌린지 카드를 한 번 눌러볼게요.",
     osamiMessage: "한 번 들어가서 둘러봐요.",
@@ -223,9 +225,9 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     animation: "pulse",
     placement: "bottom",
     fallbackText:
-      "153 QUEST 메뉴를 내리면 챌린지 아레나 카드가 보여요.",
+      "153 QUEST 메뉴 '오늘의 라운드 보조 퀘스트' 영역에서 챌린지 아레나 카드를 누르세요.",
     completionText: "챌린지 화면으로 갑니다.",
-    helperMessage: "여기를 눌러볼까요?",
+    helperMessage: "여기 챌린지 아레나 카드를 눌러보세요.",
     successMessage: "좋아요. 챌린지 화면을 둘러볼게요.",
     blockNextUntilComplete: true,
     completionRule: "target_clicked",
@@ -262,8 +264,8 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     day: 1,
     step: 5,
     route: "/myboxer/quest",
-    targetKey: "day1.journal_card",
-    targetSelector: '[data-tour="champion-journal-card"]',
+    targetKey: "day1.quest_mini_journal",
+    targetSelector: '[data-tour="quest-mini-journal"]',
     title: "마지막은 챔피언 일기",
     body: "하루 한 줄 짧은 일기예요.\n여기를 눌러볼까요?",
     osamiMessage: "한 줄이면 돼요.",
@@ -273,9 +275,9 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     animation: "spotlight",
     placement: "bottom",
     fallbackText:
-      "153 QUEST 메뉴에서 챔피언 일기 카드를 찾을 수 있어요.",
+      "153 QUEST 메뉴 '오늘의 라운드 보조 퀘스트' 영역에서 챔피언 일기 카드를 누르세요.",
     completionText: "일기 화면이 열렸어요.",
-    helperMessage: "여기를 눌러볼까요?",
+    helperMessage: "여기 챔피언 일기 카드를 눌러보세요.",
     successMessage: "좋아요. 한 줄 적어볼게요.",
     blockNextUntilComplete: true,
     completionRule: "target_clicked",

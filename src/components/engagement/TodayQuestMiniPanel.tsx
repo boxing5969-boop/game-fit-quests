@@ -33,6 +33,8 @@ interface MiniCardProps {
   subtitle: string;
   rewardPreview: string;
   onClick: () => void;
+  /** 7일 캠프 튜토리얼 anchor */
+  dataTour?: string;
 }
 
 const MiniCard = ({
@@ -42,10 +44,12 @@ const MiniCard = ({
   subtitle,
   rewardPreview,
   onClick,
+  dataTour,
 }: MiniCardProps) => (
   <button
     type="button"
     onClick={onClick}
+    data-tour={dataTour}
     className="flex w-full items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3 text-left transition-all active:scale-[0.99] hover:border-primary/40"
   >
     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -93,6 +97,7 @@ const TodayQuestMiniPanel = ({
     academy: (
       <MiniCard
         key="academy"
+        dataTour="quest-mini-academy"
         icon={<Brain className="h-5 w-5" />}
         badge="복싱 IQ"
         title="오늘의 퀴즈 1문제"
@@ -104,6 +109,7 @@ const TodayQuestMiniPanel = ({
     challenge: (
       <MiniCard
         key="challenge"
+        dataTour="quest-mini-challenge"
         icon={<Swords className="h-5 w-5" />}
         badge="챌린지 아레나"
         title={
@@ -123,6 +129,7 @@ const TodayQuestMiniPanel = ({
     journal: (
       <MiniCard
         key="journal"
+        dataTour="quest-mini-journal"
         icon={<BookOpen className="h-5 w-5" />}
         badge="챔피언 일기"
         title={
