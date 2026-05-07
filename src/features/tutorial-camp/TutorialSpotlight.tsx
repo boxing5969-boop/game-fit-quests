@@ -22,14 +22,15 @@ export interface TutorialSpotlightProps {
   onDimClick?: () => void;
 }
 
-const TutorialSpotlight = ({ rect, onDimClick }: TutorialSpotlightProps) => {
+const TutorialSpotlight = ({ rect, onDimClick: _onDimClick }: TutorialSpotlightProps) => {
+  // pointer-events: none — z-index 가 모달(z-100) 위지만 클릭은 모달까지 통과.
+  // dim 은 시각 효과만 담당. dim 클릭 nudge 는 사용 안 함.
   if (!rect.found || rect.width === 0 || rect.height === 0) {
     // fallback: 단일 dim layer (target 영역 0)
     return (
       <div
-        className="fixed inset-0 z-[110]"
+        className="pointer-events-none fixed inset-0 z-[110]"
         style={{ background: DIM_COLOR }}
-        onClick={onDimClick}
         aria-hidden
       />
     );
@@ -46,34 +47,30 @@ const TutorialSpotlight = ({ rect, onDimClick }: TutorialSpotlightProps) => {
 
   return (
     <>
-      {/* 4개 dim div — 좌우 아래위 */}
+      {/* 4개 dim div — 좌우 아래위. pointer-events: none 으로 모달 클릭 보존 */}
       <div
-        className="fixed inset-x-0 top-0 z-[110]"
+        className="pointer-events-none fixed inset-x-0 top-0 z-[110]"
         style={{ height: top, background: DIM_COLOR }}
-        onClick={onDimClick}
         aria-hidden
       />
       <div
-        className="fixed inset-x-0 z-[110]"
+        className="pointer-events-none fixed inset-x-0 z-[110]"
         style={{ top: bottom, bottom: 0, background: DIM_COLOR }}
-        onClick={onDimClick}
         aria-hidden
       />
       <div
-        className="fixed left-0 z-[110]"
+        className="pointer-events-none fixed left-0 z-[110]"
         style={{ top, height, width: left, background: DIM_COLOR }}
-        onClick={onDimClick}
         aria-hidden
       />
       <div
-        className="fixed right-0 z-[110]"
+        className="pointer-events-none fixed right-0 z-[110]"
         style={{
           top,
           height,
           left: right,
           background: DIM_COLOR,
         }}
-        onClick={onDimClick}
         aria-hidden
       />
 

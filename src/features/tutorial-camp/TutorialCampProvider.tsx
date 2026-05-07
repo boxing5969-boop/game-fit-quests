@@ -681,7 +681,9 @@ const TutorialCampProvider = () => {
     : false;
 
   // 57: cascade 인프라 — step.autoAdvance=true 면 조건 충족 시 자동 다음 step
-  //   · 0.6초 지연: 회원이 자기 행동 결과 본 후 자동 진행
+  //   · 250ms 지연: 회원이 자기 클릭 시각 피드백 본 직후 빠르게 진행
+  //     (이전 600ms 는 모달 떠있는 동안 spotlight 가 카드 위치=모달 뒤
+  //      영역에 잘못 박혀 보이는 시간이 너무 길었음)
   //   · step 중복 advance 방지 (ref 가드)
   //   · 모든 hook 은 early return 전에 호출 (React Hooks 규칙)
   const autoAdvancedKeyRef = useRef<string | null>(null);
@@ -694,7 +696,7 @@ const TutorialCampProvider = () => {
     autoAdvancedKeyRef.current = key;
     const id = window.setTimeout(() => {
       handleNext();
-    }, 600);
+    }, 250);
     return () => window.clearTimeout(id);
   }, [isActiveCamp, step, conditionMet, handleNext]);
 

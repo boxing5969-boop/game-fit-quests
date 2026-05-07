@@ -81,12 +81,12 @@ const TutorialOverlay = ({
           <TutorialSpotlight rect={rect} onDimClick={onDimNudge} />
         )}
 
-        {/* fallback dim — target 못 찾았거나 라우트 mismatch */}
+        {/* fallback dim — target 못 찾았거나 라우트 mismatch.
+            pointer-events: none — 모달/sheet 의 button 클릭이 통과되도록. */}
         {fallbackDim && (
           <div
-            className="fixed inset-0 z-[110]"
+            className="pointer-events-none fixed inset-0 z-[110]"
             style={{ background: "rgba(10, 16, 36, 0.78)" }}
-            onClick={onDimNudge}
             aria-hidden
           />
         )}
