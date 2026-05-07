@@ -18,7 +18,8 @@
  *   • ProtectedRoute 로딩 분기
  */
 
-import logoSrc from "@/assets/branding/153-logo-white.svg";
+// 신 MY BOXER 로고 (2026-05) — public 자산 직접 참조 (assets/brand 분리)
+const logoSrc = "/assets/brand/myboxer_logo_full.png";
 
 export interface RouteLoaderProps {
   /** 접근성용 안내 문구. 기본 "로딩 중". */

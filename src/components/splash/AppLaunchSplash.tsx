@@ -23,8 +23,10 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppLaunchSplashBackground } from "./AppLaunchSplashBackground";
-import logoSrc from "@/assets/branding/153-logo-white.svg";
 import { cn } from "@/lib/utils";
+
+// 신 로고 (2026-05) — public/assets/brand/myboxer_logo_full.png
+const logoSrc = "/assets/brand/myboxer_logo_full.png";
 
 // 타임라인 상수 — CSS keyframes 와 정합 유지.
 const TOTAL_MS = 1750;
@@ -99,11 +101,10 @@ export const AppLaunchSplash = ({
       >
         <img
           src={logoSrc}
-          alt="153 BOXING GYM"
+          alt="MY BOXER 153 — 마이복서"
           draggable={false}
           className="splash-logo-anim h-full w-full select-none object-contain"
           style={{
-            // 은은한 깊이감. 레드 글로우는 배경 레이어에서 따로 처리.
             filter: "drop-shadow(0 4px 18px rgba(0, 0, 0, 0.45))",
           }}
         />

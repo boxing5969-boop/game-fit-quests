@@ -321,12 +321,18 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
-      {/* Logo */}
+      {/* Logo — 새 MY BOXER 풀 로고 (아이콘 + 텍스트 합본) */}
       <div className="mb-5 animate-bounce-in text-center">
-        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-4xl shadow-glow-primary">🥊</div>
-        <h1 className="text-2xl tracking-tight text-foreground">마이복서153</h1>
-        <p className="mt-0.5 text-xs font-bold tracking-[0.2em] text-yellow-400">MY BOXER 153</p>
-        <p className="mt-1.5 text-sm text-muted-foreground">153복싱짐 회원을 위한 복싱 성장 퀘스트 앱</p>
+        <img
+          src="/assets/brand/myboxer_logo_full.png"
+          alt="MY BOXER 마이복서 by 153 BOXING GYM"
+          draggable={false}
+          className="mx-auto mb-2 h-24 w-auto select-none object-contain"
+          style={{ filter: "drop-shadow(0 4px 14px rgba(0,0,0,0.35))" }}
+        />
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          153복싱짐 회원을 위한 복싱 성장 퀘스트 앱
+        </p>
       </div>
 
       {/* Tab */}
