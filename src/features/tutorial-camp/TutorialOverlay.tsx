@@ -172,7 +172,7 @@ function TapHere({
       transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
       aria-hidden
     >
-      여기를 눌러보세요
+      👆 여기를 클릭하세요
     </motion.div>
   );
 }

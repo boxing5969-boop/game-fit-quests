@@ -127,12 +127,9 @@ const TutorialCampProvider = () => {
       camp.markTargetClicked(step.targetKey, {
         route: location.pathname,
       });
-      // requireTargetClick=true 면 잠시 후 자동 next (자연스러운 흐름)
-      if (step.requireTargetClick) {
-        setTimeout(() => {
-          camp.next();
-        }, 600);
-      }
+      // 자동 next 제거 — 회원이 sub-기능(모달/sheet) 안에서 충분히 체험한 후
+      // 닫고 캠프 tooltip 으로 돌아와 직접 "다음으로" 누르는 흐름.
+      // targetClicked=true 가 되어 다음 버튼 자동 활성.
     };
     element.addEventListener("click", onClick, { capture: true });
     return () => {

@@ -182,7 +182,7 @@ const TutorialTooltip = ({
         {/* requireTargetClick && targetClicked 표시 */}
         {step.requireTargetClick && targetClicked && (
           <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300">
-            <Check className="h-3 w-3" /> 잘했어요 — 다음으로 갈 수 있어요
+            <Check className="h-3 w-3" /> 잘하셨어요! 다 보셨으면 "다음으로" 눌러주세요
           </p>
         )}
       </div>
