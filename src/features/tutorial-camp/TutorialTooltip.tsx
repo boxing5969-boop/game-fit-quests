@@ -119,7 +119,11 @@ const TutorialTooltip = ({
   //   회원이 모달 안 컨텐츠(정답 선택지 등)를 자유롭게 보고 누를 수 있음.
   //   행동 완료 → mini "다음으로" 버튼 표시 → 누르면 onNext (모달 자동 닫힘).
   //   회원이 모달 직접 닫으면 modalOpen=false → 일반 카드 복귀.
-  const compact = modalOpen === true;
+  // 64-F: spotlight target 이 잡혀있고 라우트 매칭이면 항상 compact —
+  //   카드가 메뉴/탭/버튼을 가리지 않게 화면 하단으로 자동 축소.
+  //   target 못 찾거나 라우트 mismatch 면 fallback 카드로 (회원 안내 필요).
+  const hasSpotlightTarget = !!rect && rect.found && routeMatch;
+  const compact = modalOpen === true || hasSpotlightTarget;
   const pos = computeTooltipPosition(rect, step.placement);
   // route 가 다르면 → 이동 필요 (target rect 자체를 시도 안 함)
   // route 가 같지만 target 매칭 실패 → 진짜 fallback (안전망 발동)
@@ -160,7 +164,7 @@ const TutorialTooltip = ({
         role="status"
         aria-label={step.title}
         data-tour-overlay="true"
-        className="pointer-events-none fixed inset-x-0 bottom-3 z-[112] flex justify-center px-3"
+        className="pointer-events-none fixed inset-x-0 bottom-20 z-[112] flex justify-center px-3"
       >
         <div className="flex max-w-[340px] items-center gap-2 rounded-pill border border-amber-400/40 bg-[#0a1024]/95 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.55)] backdrop-blur-sm">
           <div className="shrink-0">
