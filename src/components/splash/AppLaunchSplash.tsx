@@ -24,9 +24,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppLaunchSplashBackground } from "./AppLaunchSplashBackground";
 import { cn } from "@/lib/utils";
-
-// 신 로고 v7 (2026-05) — 밝은 시안만 보존 (max>170), 어두운 시안/회색/검정 모두 흰색.
-const logoSrc = "/assets/brand/myboxer_logo_full_v7.png";
+import MyBoxerWordmark from "@/components/brand/MyBoxerWordmark";
 
 // 타임라인 상수 — CSS keyframes 와 정합 유지.
 const TOTAL_MS = 1750;
@@ -85,29 +83,14 @@ export const AppLaunchSplash = ({
     >
       <AppLaunchSplashBackground />
 
-      {/* 로고 컨테이너 — clamp 로 뷰포트에 반응. 세로·가로 정렬은 부모 flex.
-           - width: 폰 320px ~ 태블릿 768px+ 공통 시각 무게 유지
-           - maxHeight 40vh: 랜드스케이프·초세로 짧은 뷰포트에서 로고가 화면 넘치지 않게 보호
-           - aspectRatio 로 원본 비율(1000:420) 유지, object-contain 으로 내부 맞춤 */}
+      {/* 로고 — CSS 워드마크 (검정 0, 시안 외곽 + 흰 글자). PNG 의존 제거 */}
       <div
-        className="relative z-10 flex items-center justify-center"
+        className="splash-logo-anim relative z-10 flex items-center justify-center"
         style={{
-          width: "clamp(220px, 58vw, 420px)",
-          maxHeight: "40vh",
-          aspectRatio: "1000 / 420",
-          // safe-area 보정: iOS notch 환경에서도 중앙 유지
           padding: "env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)",
         }}
       >
-        <img
-          src={logoSrc}
-          alt="MY BOXER 153 — 마이복서"
-          draggable={false}
-          className="splash-logo-anim h-full w-full select-none object-contain"
-          style={{
-            filter: "drop-shadow(0 4px 18px rgba(0, 0, 0, 0.45))",
-          }}
-        />
+        <MyBoxerWordmark size="lg" align="center" />
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import LoginErrorModal, { classifyLoginError } from "@/components/LoginErrorModal";
 import { translateAuthError } from "@/lib/errorMessages";
+import MyBoxerWordmark from "@/components/brand/MyBoxerWordmark";
 import {
   Select,
   SelectContent,
@@ -321,16 +322,10 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
-      {/* Logo v7 — 밝은 시안만 보존 (어두운 시안 그라디언트도 흰색화) */}
+      {/* Logo — CSS 워드마크 (PNG 의존 0). 검정 픽셀 0, 흰 글자 + 시안 외곽 */}
       <div className="mb-5 animate-bounce-in text-center">
-        <img
-          src="/assets/brand/myboxer_logo_full_v7.png"
-          alt="MY BOXER 마이복서 by 153 BOXING GYM"
-          draggable={false}
-          className="mx-auto mb-1 h-16 w-auto select-none object-contain sm:h-20"
-          style={{ filter: "drop-shadow(0 0 18px rgba(45, 212, 191, 0.35))" }}
-        />
-        <p className="mt-2 text-xs text-muted-foreground">
+        <MyBoxerWordmark size="md" align="center" className="mx-auto" />
+        <p className="mt-3 text-xs text-muted-foreground">
           153복싱짐 회원을 위한 복싱 성장 퀘스트 앱
         </p>
       </div>
