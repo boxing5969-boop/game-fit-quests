@@ -25,8 +25,8 @@ import { createPortal } from "react-dom";
 import { AppLaunchSplashBackground } from "./AppLaunchSplashBackground";
 import { cn } from "@/lib/utils";
 
-// 신 로고 v5 (2026-05) — 시안 + 흰 외곽선 (탄 자국 같던 검정 외곽 흰색화).
-const logoSrc = "/assets/brand/myboxer_logo_full_v5.png";
+// 신 로고 v6 (2026-05) — 강한 시안만 보존, 나머지 모두 흰색 (글자 fill 흰색화).
+const logoSrc = "/assets/brand/myboxer_logo_full_v6.png";
 
 // 타임라인 상수 — CSS keyframes 와 정합 유지.
 const TOTAL_MS = 1750;

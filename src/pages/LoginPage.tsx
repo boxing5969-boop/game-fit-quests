@@ -321,10 +321,10 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
-      {/* Logo v5 — 시안 + 흰 외곽선 (검정 외곽 흰색화) */}
+      {/* Logo v6 — 강한 시안 + 흰 글자 (회색/검정 모두 흰색화) */}
       <div className="mb-5 animate-bounce-in text-center">
         <img
-          src="/assets/brand/myboxer_logo_full_v5.png"
+          src="/assets/brand/myboxer_logo_full_v6.png"
           alt="MY BOXER 마이복서 by 153 BOXING GYM"
           draggable={false}
           className="mx-auto mb-1 h-16 w-auto select-none object-contain sm:h-20"
@@ -441,24 +441,15 @@ const LoginPage = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-4 text-lg font-bold text-primary-foreground shadow-glow-primary transition-all active:scale-[0.98] hover:shadow-glow-primary disabled:opacity-50"
+          className="w-full rounded-xl bg-primary py-4 text-lg font-bold text-primary-foreground shadow-glow-primary transition-all active:scale-[0.98] hover:shadow-glow-primary disabled:opacity-50"
         >
-          {isLoading ? (
-            "처리 중..."
-          ) : (
-            <>
-              <span>
-                {isSignUp ? (tab === "coach" ? "관장님 가입" : "회원가입") : "로그인"}
-              </span>
-              <img
-                src="/assets/brand/myboxer_logo_icon_v5.png"
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-                className="h-6 w-6 select-none object-contain"
-              />
-            </>
-          )}
+          {isLoading
+            ? "처리 중..."
+            : isSignUp
+              ? tab === "coach"
+                ? "관장님 가입"
+                : "회원가입"
+              : "로그인"}
         </button>
 
         {tab === "login" && (
