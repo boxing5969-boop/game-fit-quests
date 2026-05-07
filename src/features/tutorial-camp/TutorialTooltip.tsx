@@ -11,24 +11,41 @@
  */
 
 import { motion } from "framer-motion";
-import { Check, ChevronRight, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { COMMON_LABELS, FALLBACK_GENERIC } from "./tutorialCampCopy";
 import { COLOR_AMBER } from "./tutorialCampMotion";
 import type { TargetRect } from "./useTutorialTarget";
 import type { TutorialCampStep } from "./tutorialCampSteps";
+import OsamMascot, { type OsamState } from "@/components/mascot/OsamMascot";
+
+/** 7일 Day 별 오삼이 표정 매핑. 마지막 step (confetti) 은 Provider 가 별도 처리. */
+const DAY_TO_OSAMI_STATE: Record<number, OsamState> = {
+  1: "wink",        // Day 1 — 첫 인사
+  2: "determined",  // Day 2 — 마스터로드
+  3: "smile",       // Day 3 — 153 QUEST
+  4: "happy",       // Day 4 — 챌린지
+  5: "shy",         // Day 5 — 챔피언 일기
+  6: "surprised",   // Day 6 — 세컨드 응원
+  7: "victory",     // Day 7 — 마무리
+};
 
 export interface TutorialTooltipProps {
   step: TutorialCampStep;
   rect: TargetRect | null;
   targetClicked: boolean;
   routeMatch: boolean;
+  /** 이전 step 으로 갈 수 있는지 (Day 1 step 0 이면 false) */
+  canGoBack?: boolean;
   onNext: () => void;
+  onPrev?: () => void;
   onSkipDay: () => void;
   onPause: () => void;
   onGoToRoute: () => void;
   onMarkClicked: () => void;
+  /** "잠깐 살펴보기" CTA — overlay 8초간 hide, 회원이 화면 직접 만져봄 */
+  onTryItYourself?: () => void;
 }
 
 const TOOLTIP_WIDTH = 320;
@@ -80,22 +97,30 @@ const TutorialTooltip = ({
   rect,
   targetClicked,
   routeMatch,
+  canGoBack = false,
   onNext,
+  onPrev,
   onSkipDay,
   onPause,
   onGoToRoute,
   onMarkClicked,
+  onTryItYourself,
 }: TutorialTooltipProps) => {
   const pos = computeTooltipPosition(rect, step.placement);
-  const fallbackMode = !rect || !rect.found;
-  const blockNext =
-    step.requireTargetClick && !targetClicked && !fallbackMode && routeMatch;
+  // route 가 다르면 → 이동 필요 (target rect 자체를 시도 안 함)
+  // route 가 같지만 target 매칭 실패 → 진짜 fallback (안전망 발동)
+  const trueRouteMismatch = !routeMatch;
+  const trueFallback = routeMatch && (!rect || !rect.found);
+  const fallbackMode = trueRouteMismatch || trueFallback;
 
-  // requireTargetClick=true 인데 fallback 또는 라우트 mismatch 면
-  // allowNextWithoutClick 정책에 따라 다음 가능
-  const allowFallbackNext = fallbackMode && step.allowNextWithoutClick;
-  const allowOffRouteNext = !routeMatch && step.allowNextWithoutClick;
-  const nextDisabled = blockNext && !allowFallbackNext && !allowOffRouteNext;
+  // 직접 행동해야 다음으로 — requireTargetClick 강제 모드:
+  //   · route mismatch → 다음 비활성, "여기로 이동" CTA 가 메인
+  //   · target 매칭 + 미클릭 → 다음 비활성, 직접 누르거나 "잠깐 살펴보기"
+  //   · target 매칭 실패 (route 같음) → 안전망: 다음 자동 활성 (회원 막힘 방지)
+  const blockNext =
+    step.requireTargetClick &&
+    (trueRouteMismatch || (!targetClicked && !trueFallback));
+  const nextDisabled = blockNext;
 
   return (
     <motion.div
@@ -117,16 +142,15 @@ const TutorialTooltip = ({
       }}
     >
       <div className="px-5 pt-4 pb-2">
-        {/* 오삼이 한 줄 */}
+        {/* 오삼이 한 줄 — 미니 PNG 캐릭터 + 메시지 */}
         <div className="mb-2 flex items-start gap-2">
-          <span
-            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-black"
-            style={{ background: COLOR_AMBER, color: "#3a1a00" }}
-            aria-hidden
-          >
-            오
-          </span>
-          <p className="text-[11px] leading-relaxed text-amber-200/90">
+          <div className="shrink-0 -my-1">
+            <OsamMascot
+              size="xs"
+              state={DAY_TO_OSAMI_STATE[step.day] ?? "wink"}
+            />
+          </div>
+          <p className="pt-1 text-[11px] leading-relaxed text-amber-200/90">
             {step.osamiMessage}
           </p>
         </div>
@@ -174,6 +198,17 @@ const TutorialTooltip = ({
       {/* CTA 영역 */}
       <div className="border-t border-amber-400/15 bg-black/30 px-4 py-3">
         <div className="flex items-center gap-2">
+          {canGoBack && onPrev && (
+            <button
+              type="button"
+              onClick={onPrev}
+              aria-label="이전 단계"
+              className="inline-flex h-10 items-center gap-1 rounded-xl border border-amber-400/30 bg-black/40 px-3 text-[11px] font-bold text-amber-200/85 hover:bg-black/60 active:scale-[0.98]"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              이전
+            </button>
+          )}
           <Button
             onClick={onNext}
             disabled={nextDisabled}
@@ -183,6 +218,16 @@ const TutorialTooltip = ({
             <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
           </Button>
         </div>
+        {/* 잠깐 살펴보기 — overlay 8초간 hide, 회원이 화면 직접 만져봄 */}
+        {onTryItYourself && (
+          <button
+            type="button"
+            onClick={onTryItYourself}
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-amber-400/30 bg-black/35 px-3 py-2 text-[11px] font-bold text-amber-100/85 hover:bg-black/50 active:scale-[0.98]"
+          >
+            잠깐 살펴보기 (8초)
+          </button>
+        )}
         <div className="mt-2 flex items-center justify-between text-[10px] text-amber-200/55">
           <button
             type="button"

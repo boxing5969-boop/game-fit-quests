@@ -3,6 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { ONBOARDING_SLIDES } from "@/data/onboardingData";
 import { ChevronRight, ChevronLeft } from "lucide-react";
+import OsamMascot, { type OsamState } from "@/components/mascot/OsamMascot";
+
+// 슬라이드별 오삼이 표정 (총 슬라이드 수에 맞게 회전)
+const ONBOARDING_OSAMI_STATES: OsamState[] = [
+  "wink",       // 1 — 첫 인사
+  "smile",      // 2
+  "determined", // 3
+  "happy",      // 4
+  "surprised",  // 5
+  "victory",    // 6 — 마지막 슬라이드 / 결심
+];
 
 const RANK_COLORS = [
   "from-primary/80 to-primary",
@@ -79,8 +90,19 @@ const OnboardingPage = () => {
           animating ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
         }`}
       >
-        {/* Icon */}
-        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-white/5 text-4xl backdrop-blur-sm border border-white/10 shadow-2xl">
+        {/* 오삼이 코치 — 슬라이드마다 다른 표정으로 동행 */}
+        <div className="mb-3 flex justify-center">
+          <OsamMascot
+            size="lg"
+            state={
+              ONBOARDING_OSAMI_STATES[current] ??
+              ONBOARDING_OSAMI_STATES[ONBOARDING_OSAMI_STATES.length - 1]
+            }
+          />
+        </div>
+
+        {/* 슬라이드 아이콘 — 작게 보조 표시 */}
+        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-xl backdrop-blur-sm border border-white/10">
           {slide.icon}
         </div>
 

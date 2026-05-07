@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { COMMON_LABELS, STARTER_TITLE_TEXT } from "./tutorialCampCopy";
 import { COLOR_AMBER, prefersReducedMotion } from "./tutorialCampMotion";
 import type { TutorialCampStep } from "./tutorialCampSteps";
+import OsamMascot from "@/components/mascot/OsamMascot";
 
 export interface TutorialCelebrationProps {
   step: TutorialCampStep;
@@ -75,6 +76,10 @@ const TutorialCelebration = ({ step, onContinue }: TutorialCelebrationProps) => 
         transition={{ delay: 0.2, type: "spring", stiffness: 180 }}
         className="w-full max-w-[340px] rounded-2xl border border-amber-400/40 bg-gradient-to-b from-[#0d1530] to-[#0a1024] px-6 py-7 text-center text-amber-50 shadow-[0_24px_60px_rgba(0,0,0,0.6)]"
       >
+        {/* 큰 오삼이 캐릭터 (승리 표정) — Day 7 은 더 크게 */}
+        <div className="mb-2 flex justify-center">
+          <OsamMascot size={grand ? "xl" : "lg"} state="victory" />
+        </div>
         <p
           className="text-[10px] font-black uppercase tracking-[0.5em]"
           style={{ color: COLOR_AMBER }}
