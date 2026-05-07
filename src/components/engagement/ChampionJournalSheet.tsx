@@ -281,6 +281,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
 
       <button
         type="button"
+        data-tour="journal-submit"
         onClick={handleSubmit}
         disabled={!canSubmit}
         className={`w-full rounded-card py-3 text-[14px] font-bold transition-all ${

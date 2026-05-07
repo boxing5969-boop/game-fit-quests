@@ -646,6 +646,28 @@ const TutorialCampProvider = () => {
     autoAdvancedKeyRef.current = null;
   }, [step]);
 
+  // 57+: autoNavigate 인프라 — step 진입 시 route 다르고 autoNavigate=true 면 자동 이동
+  //   · 0.4초 지연 (회원이 step 의 안내 잠깐 보고 이동)
+  //   · 같은 step 중복 navigate 방지
+  const autoNavigatedKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isActiveCamp || !step) return;
+    if (!step.autoNavigate) return;
+    if (!step.route) return;
+    if (location.pathname === step.route) return;
+    const key = `${step.day}.${step.step}`;
+    if (autoNavigatedKeyRef.current === key) return;
+    autoNavigatedKeyRef.current = key;
+    const id = window.setTimeout(() => {
+      navigate(step.route);
+    }, 400);
+    return () => window.clearTimeout(id);
+  }, [isActiveCamp, step, location.pathname, navigate]);
+
+  useEffect(() => {
+    autoNavigatedKeyRef.current = null;
+  }, [step]);
+
   // 마운트 가드 — 모든 hook 호출 후 early return
   if (!isActiveCamp || !step) return null;
 

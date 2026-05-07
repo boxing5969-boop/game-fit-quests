@@ -26,13 +26,14 @@ const ChampionJournalPromptList = ({
   onSelect,
 }: ChampionJournalPromptListProps) => {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-1.5" data-tour="journal-prompt-list">
       {CHAMPION_JOURNAL_PROMPTS.map((p) => {
         const active = p === selected;
         return (
           <button
             key={p}
             type="button"
+            data-tutorial-prompt="true"
             onClick={() => onSelect(p)}
             className={`rounded-pill border px-2.5 py-1.5 text-[11px] transition-all active:scale-[0.98] ${
               active
