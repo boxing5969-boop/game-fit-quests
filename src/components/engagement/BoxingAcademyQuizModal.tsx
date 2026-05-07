@@ -228,7 +228,10 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
     const isAlreadyRewarded = result.already_rewarded;
 
     return (
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+      <div
+        data-tour="boxing-iq-result"
+        className="flex-1 overflow-y-auto px-5 py-4 space-y-4"
+      >
         <div
           className={`rounded-card border p-4 ${
             isCorrect

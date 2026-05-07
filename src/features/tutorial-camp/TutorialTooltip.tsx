@@ -50,6 +50,8 @@ export interface TutorialTooltipProps {
   completionState?: Record<string, boolean>;
   /** 64: 다른 모달이 떠있는지 — compact 모드 트리거 */
   modalOpen?: boolean;
+  /** 65: 모달 안 액션 완료 (회원이 답 제출 후 결과 화면 등) — '다음으로' 강조 */
+  modalActionDone?: boolean;
 }
 
 const TOOLTIP_WIDTH = 320;
@@ -111,6 +113,7 @@ const TutorialTooltip = ({
   conditionMet,
   completionState,
   modalOpen,
+  modalActionDone,
 }: TutorialTooltipProps) => {
   // 64: compact 모드 — 다른 모달 떠있는 동안 카드를 화면 하단 작은 알림으로 축소.
   //   회원이 모달 안 컨텐츠(정답 선택지 등)를 자유롭게 보고 누를 수 있음.
@@ -170,16 +173,35 @@ const TutorialTooltip = ({
             <>
               <p className="text-[11px] font-bold leading-snug text-emerald-200">
                 <Check className="mr-1 inline h-3 w-3 -translate-y-[1px]" />
-                {step.successMessage ?? "잘했어요!"}
+                {modalActionDone
+                  ? "다 푸셨어요! 다음으로 →"
+                  : step.successMessage ?? "잘했어요!"}
               </p>
-              <button
+              <motion.button
                 type="button"
                 onClick={onNext}
                 className="pointer-events-auto ml-1 inline-flex h-7 items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 px-3 text-[11px] font-black text-amber-950 active:scale-[0.97]"
+                animate={
+                  modalActionDone
+                    ? {
+                        scale: [1, 1.08, 1],
+                        boxShadow: [
+                          "0 0 0 0 rgba(253,184,92,0.0)",
+                          "0 0 0 8px rgba(253,184,92,0.35)",
+                          "0 0 0 0 rgba(253,184,92,0.0)",
+                        ],
+                      }
+                    : { scale: 1, boxShadow: "0 0 0 0 rgba(253,184,92,0)" }
+                }
+                transition={
+                  modalActionDone
+                    ? { duration: 1.1, repeat: Infinity, ease: "easeInOut" }
+                    : { duration: 0.2 }
+                }
               >
                 다음으로
                 <ChevronRight className="h-3 w-3" />
-              </button>
+              </motion.button>
             </>
           ) : (
             <p className="text-[11px] font-bold leading-snug text-amber-100">

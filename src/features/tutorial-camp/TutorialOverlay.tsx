@@ -35,6 +35,8 @@ export interface TutorialOverlayProps {
   completionState?: Record<string, boolean>;
   /** 64: 다른 모달(role="dialog") 떠있는지 — Tooltip compact 모드 트리거 */
   modalOpen?: boolean;
+  /** 65: 모달 안 회원 액션 완료 (IQ 결과 화면 등) — '다음으로' 강조 효과 트리거 */
+  modalActionDone?: boolean;
 }
 
 const TutorialOverlay = ({
@@ -54,6 +56,7 @@ const TutorialOverlay = ({
   conditionMet,
   completionState,
   modalOpen,
+  modalActionDone,
 }: TutorialOverlayProps) => {
 
   // 클릭 직후 autoAdvance 대기 중인 step 은 spotlight 즉시 숨김 →
@@ -158,6 +161,7 @@ const TutorialOverlay = ({
           conditionMet={conditionMet}
           completionState={completionState}
           modalOpen={modalOpen}
+          modalActionDone={modalActionDone}
         />
       </div>
     </AnimatePresence>

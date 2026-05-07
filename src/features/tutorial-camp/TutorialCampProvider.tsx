@@ -728,16 +728,33 @@ const TutorialCampProvider = () => {
   // 64: 다른 dialog 가 떠있는지 추적 — TutorialTooltip 의 compact 모드 전환용.
   //   회원이 모달 안에서 행동(정답 선택 등) 진행 중일 때 카드가 모달 컨텐츠를
   //   가리는 문제 → 모달 떠있고 조건 미충족 시 카드 자동 컴팩트.
+  // 65: 모달 안 회원 액션 완료 감지 — [data-tour-modal-action-done] 또는
+  //   IQ 결과 화면 [data-tour="boxing-iq-result"] 가 보이면 modalActionDone=true.
+  //   compact mode 의 '다음으로' 버튼이 강조 효과 (pulse+glow) 로 전환.
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalActionDone, setModalActionDone] = useState(false);
   useEffect(() => {
     if (!isActiveCamp) {
       setModalOpen(false);
+      setModalActionDone(false);
       return;
     }
     if (typeof document === "undefined") return;
     const check = () => {
       const v = hasOtherDialog();
       setModalOpen((prev) => (prev === v ? prev : v));
+      // 회원 액션 완료 마커 — 현재 IQ 결과 화면 + 일반 marker 둘 다.
+      let done = false;
+      try {
+        done =
+          !!document.querySelector('[data-tour="boxing-iq-result"]') ||
+          !!document.querySelector('[data-tour-modal-action-done="true"]');
+      } catch {
+        done = false;
+      }
+      // 모달 닫혀있으면 마커도 무효 (다음 step 위해 자동 reset)
+      const next = v && done;
+      setModalActionDone((prev) => (prev === next ? prev : next));
     };
     check();
     let observer: MutationObserver | null = null;
@@ -748,7 +765,7 @@ const TutorialCampProvider = () => {
           childList: true,
           subtree: true,
           attributes: true,
-          attributeFilter: ["data-state", "aria-hidden"],
+          attributeFilter: ["data-state", "aria-hidden", "data-tour"],
         });
       } catch {
         observer = null;
@@ -841,6 +858,7 @@ const TutorialCampProvider = () => {
       conditionMet={conditionMet}
       completionState={completion}
       modalOpen={modalOpen}
+      modalActionDone={modalActionDone}
     />
   );
 };
