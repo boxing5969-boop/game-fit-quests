@@ -136,7 +136,7 @@ const ChallengesPage = () => {
             {rows
               .filter((r) => !r.is_joined || r.status === "ended")
               .map((r) => (
-                <li key={r.id}>
+                <li key={r.id} data-tutorial-target="first-challenge-card">
                   <ChallengeCard
                     row={r}
                     onOpenLeaderboard={() => setActiveId(r.id)}

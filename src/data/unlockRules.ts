@@ -325,6 +325,14 @@ export interface TutorialStep {
   detector?: TutorialDetectorKey;
   /** 미션 아이콘 (이모지) */
   icon: string;
+  /**
+   * navTarget 페이지에서 강조할 element 의 CSS 셀렉터.
+   * 매칭되면 무지개 그라데이션 spotlight overlay 가 떠서 회원에게
+   * "여기를 누르세요" 안내. 미매칭 시 기본 floating 안내만 표시.
+   */
+  spotlightSelector?: string;
+  /** spotlight 위 말풍선 한 줄 안내. 미정의 시 hint 사용. */
+  spotlightHint?: string;
 }
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
@@ -338,6 +346,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     navTarget: "/mypage",
     detector: "avatar_set",
     icon: "🥊",
+    spotlightSelector: '[data-tutorial-target="profile-photo-button"]',
+    spotlightHint: "여기 카메라 아이콘을 눌러 프로필 사진을 올려주세요.",
   },
   {
     key: "discover_app",
@@ -349,6 +359,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     navTarget: "/guide",
     detector: "viewed_guide",
     icon: "📖",
+    spotlightSelector: '[data-tutorial-target="guide-first-card"]',
+    spotlightHint: "여기 카드 한 장만 들어가서 잠시 읽어보면 자동으로 완료돼요.",
   },
   {
     key: "first_mission",
@@ -360,6 +372,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     navTarget: "/missions",
     detector: "mission_done",
     icon: "⚡",
+    spotlightSelector: '[data-tutorial-target="first-mission-card"]',
+    spotlightHint: "이 카드 하나만 완료하면 끝! 가장 쉬운 미션이에요.",
   },
   {
     key: "first_checkin",
@@ -371,6 +385,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     navTarget: "/home",
     detector: "first_attendance",
     icon: "📍",
+    spotlightSelector: '[data-tutorial-target="qr-checkin-button"]',
+    spotlightHint: "여기를 눌러 코치님의 QR을 스캔해주세요.",
   },
   {
     key: "first_challenge",
@@ -382,6 +398,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     navTarget: "/challenges",
     detector: "first_challenge",
     icon: "🏆",
+    spotlightSelector: '[data-tutorial-target="first-challenge-card"]',
+    spotlightHint: "이 챌린지 카드를 누르고 참여하기를 눌러보세요.",
   },
 ];
 

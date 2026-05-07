@@ -153,7 +153,7 @@ const MyPage = () => {
         <div className="animate-slide-up rounded-2xl border border-border bg-gradient-to-b from-card to-secondary/20 p-5 shadow-glow-soft">
           <div className="flex items-start gap-4">
             {/* Large character preview */}
-            <div className="relative flex-shrink-0">
+            <div data-tutorial-target="profile-photo-button" className="relative flex-shrink-0">
               {myCharacter?.character_presets ? (
                 <CharacterSprite
                   style={(myCharacter.character_presets.parts_json as any)?.style}

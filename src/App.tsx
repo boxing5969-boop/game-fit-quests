@@ -12,6 +12,7 @@ import ChatAssistant from "@/components/ChatAssistant";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { isManagerRole } from "@/lib/rankLabels";
 import TutorialFloatingMascot from "@/components/tutorial/TutorialFloatingMascot";
+import TutorialActionSpotlight from "@/components/tutorial/TutorialActionSpotlight";
 import { useTutorialAutoDetect } from "@/hooks/useTutorialAutoDetect";
 import TutorialCampProvider from "@/features/tutorial-camp/TutorialCampProvider";
 import TutorialDevPanel from "@/features/tutorial-camp/TutorialDevPanel";
@@ -248,6 +249,8 @@ const AppRoutes = () => {
       <ChatAssistant />
       {/* 마이복서153 — 오삼 마스코트 튜토리얼 (행동기반 미션 5개). */}
       {user && splashDone && <TutorialFloatingMascotWithDetect />}
+      {/* 5개 미션 spotlight 가이드 — navTarget 페이지에서 어떤 element 누를지 안내 */}
+      {user && splashDone && <TutorialActionSpotlight />}
       {/* 7일 스타터 캠프 overlay — localStorage 기반, isActive 시에만 렌더 */}
       {user && splashDone && <TutorialCampProvider />}
       {/* 개발자 preview 패널 — localhost / ?tutorialDev=1 / dev 토글 ON 일 때만 노출 */}

@@ -491,6 +491,7 @@ const MissionsPage = () => {
                   return (
                     <section
                       key={rank}
+                      data-tutorial-target="first-mission-card"
                       className={cn(
                         "overflow-hidden rounded-card border border-border bg-card shadow-elev-1",
                         leagueComplete &&

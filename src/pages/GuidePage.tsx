@@ -79,7 +79,7 @@ const GuidePage = () => {
 /* ═══════════ 1. 프로그램 소개 (updated with guide cards) ═══════════ */
 const ProgramTab = () => (
   <div className="space-y-4 animate-slide-up">
-    <div className="rounded-2xl bg-gradient-to-br from-primary/10 to-reward/10 p-5 border border-primary/20">
+    <div data-tutorial-target="guide-first-card" className="rounded-2xl bg-gradient-to-br from-primary/10 to-reward/10 p-5 border border-primary/20">
       <h2 className="mb-2 text-lg font-bold text-foreground">
         마이복서153
       </h2>
