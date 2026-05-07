@@ -273,6 +273,9 @@ const DAY_1_STEPS: TutorialCampStep[] = [
 // ─────────────────────────────────────────────────────────────
 
 const DAY_2_STEPS: TutorialCampStep[] = [
+  // ※ 64-D: Day 2 도 Day 1 흐름과 동일하게 — autoNavigate 자동 이동 +
+  //   read step 들은 4초 자동 진행 (quiz_question_read + autoAdvance).
+  //   회원이 직접 다음으로 누르지 않아도 자연스럽게 cascade.
   {
     day: 2,
     step: 0,
@@ -289,7 +292,11 @@ const DAY_2_STEPS: TutorialCampStep[] = [
     placement: "bottom",
     fallbackText: "하단 메뉴의 훈련 아이콘으로 들어올 수 있어요.",
     completionText: "훈련 화면은 매일의 출발점이에요.",
-    helperMessage: "하단 메뉴 '훈련' 을 눌러 들어와볼게요.",
+    helperMessage: "훈련 화면이 열렸어요. 잠깐 둘러보세요.",
+    successMessage: "잘 보셨어요. 다음으로 갈게요.",
+    completionRule: "quiz_question_read",
+    autoAdvance: true,
+    autoNavigate: true,
   },
   {
     day: 2,
@@ -313,6 +320,7 @@ const DAY_2_STEPS: TutorialCampStep[] = [
     blockNextUntilComplete: true,
     completionRule: "target_clicked",
     autoAdvance: true,
+    autoNavigate: true,
   },
   {
     day: 2,
@@ -331,7 +339,11 @@ const DAY_2_STEPS: TutorialCampStep[] = [
     fallbackText:
       "마스터로드 안의 단계 카드를 누르면 미션 제출 화면이 열려요.",
     completionText: "제출은 부담 없이, 자세 위주로 시작해요.",
-    helperMessage: "잠깐 읽어보고 '다음으로' 를 눌러주세요.",
+    helperMessage: "잠깐 읽어보고 있어요. 곧 다음으로 가요.",
+    successMessage: "잘 읽으셨어요. 다음으로 갈게요.",
+    completionRule: "quiz_question_read",
+    autoAdvance: true,
+    autoNavigate: true,
   },
   {
     day: 2,
@@ -349,7 +361,11 @@ const DAY_2_STEPS: TutorialCampStep[] = [
     placement: "center",
     fallbackText: "제출 후 알림으로 코치의 승인 결과가 전해져요.",
     completionText: "153복싱짐의 모든 단계는 코치가 같이 봐드려요.",
-    helperMessage: "잠깐 읽어보고 '다음으로' 를 눌러주세요.",
+    helperMessage: "잠깐 읽어보고 있어요. 곧 다음으로 가요.",
+    successMessage: "잘 읽으셨어요. 마무리해볼게요.",
+    completionRule: "quiz_question_read",
+    autoAdvance: true,
+    autoNavigate: true,
   },
   {
     day: 2,
