@@ -64,7 +64,7 @@ const SettingsPage = () => {
   const qc = useQueryClient();
 
   // 7일 스타터 캠프 — admin 진입 (옵션 C)
-  const { start: startCamp, isActive: campActive } = useTutorialCamp();
+  const { start: startCamp, reset: resetCamp } = useTutorialCamp();
 
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
@@ -281,17 +281,16 @@ const SettingsPage = () => {
             {isAdmin && (
               <button
                 onClick={() => {
+                  // 진행 / 완료 / paused 상태 모두 처음부터 — reset 후 start
+                  // (이전엔 startCamp 만 → cooldown / completed 시 재실행 안 됨)
+                  resetCamp();
                   startCamp();
-                  toast.success(
-                    campActive
-                      ? "7일 스타터 캠프 재개"
-                      : "7일 스타터 캠프를 시작합니다 🥊",
-                  );
+                  toast.success("7일 스타터 캠프 — Day 1 부터 다시 시작 🥊");
                   navigate("/home");
                 }}
                 className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm font-bold text-amber-700 transition-all active:scale-95 dark:text-amber-400"
               >
-                🥊 7일 스타터 캠프 시작 <span className="ml-1 text-[10px] font-normal opacity-70">(admin)</span>
+                🥊 7일 스타터 캠프 처음부터 시작 <span className="ml-1 text-[10px] font-normal opacity-70">(admin)</span>
               </button>
             )}
           </div>
