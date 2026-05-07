@@ -65,6 +65,7 @@ const TutorialCelebration = ({ step, onContinue }: TutorialCelebrationProps) => 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.35 }}
+      data-tour-overlay="true"
       style={{
         background:
           "radial-gradient(circle at 50% 35%, rgba(253,184,92,0.18) 0%, rgba(10,16,36,0.92) 60%)",

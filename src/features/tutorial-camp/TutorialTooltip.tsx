@@ -127,6 +127,7 @@ const TutorialTooltip = ({
       transition={{ duration: 0.25 }}
       role="dialog"
       aria-label={step.title}
+      data-tour-overlay="true"
       className={cn(
         "fixed z-[93] overflow-hidden rounded-2xl border border-amber-400/40 shadow-[0_12px_36px_rgba(0,0,0,0.55)]",
         "bg-gradient-to-b from-[#0d1530] via-[#0a1024] to-[#0a1024] text-amber-50",

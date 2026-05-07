@@ -127,32 +127,54 @@ const TutorialCampProvider = () => {
       camp.markTargetClicked(step.targetKey, {
         route: location.pathname,
       });
-      // root wrapper(예: section/article/div) 자체에는 onClick 이 없을 때
-      // 안의 첫 actionable element(button / a / role=button)를 자동 발동.
-      // 회원이 spotlight 안 빈 영역을 눌러도 실제 기능(모달/sheet)이 열림.
+      // root wrapper 빈 영역 클릭 → 안 actionable 자동 발동
       const clicked = e.target as HTMLElement | null;
-      if (!clicked) return;
-      const isActionable =
-        clicked.tagName === "BUTTON" ||
-        clicked.tagName === "A" ||
-        clicked.getAttribute("role") === "button" ||
-        clicked.closest("button, a, [role='button']");
-      if (isActionable) return; // 이미 정확한 element 클릭 — 기존 동작 그대로
-      const root = element as HTMLElement | null;
-      if (!root) return;
-      const inner = root.querySelector(
-        'button, a, [role="button"]',
-      ) as HTMLElement | null;
-      if (inner) {
-        // capture phase 끝난 후 안의 actionable 자동 click
-        setTimeout(() => {
-          try {
-            inner.click();
-          } catch {
-            /* noop */
+      if (clicked) {
+        const isActionable =
+          clicked.tagName === "BUTTON" ||
+          clicked.tagName === "A" ||
+          clicked.getAttribute("role") === "button" ||
+          clicked.closest("button, a, [role='button']");
+        if (!isActionable) {
+          const root = element as HTMLElement | null;
+          const inner = root?.querySelector(
+            'button, a, [role="button"]',
+          ) as HTMLElement | null;
+          if (inner) {
+            setTimeout(() => {
+              try {
+                inner.click();
+              } catch {
+                /* noop */
+              }
+            }, 60);
           }
-        }, 60);
+        }
       }
+
+      // 모달/sheet 자동 감지 — 회원이 정답 맞추고 닫으면 자동 다음 step
+      //   1. 600ms 후 다른 dialog 가 떠 있는지 확인 (모달 열림 인지)
+      //   2. 떠 있으면 1초 간격으로 닫힘 감시
+      //   3. 닫히면 1초 후 camp.next() 자동
+      //   4. 60초 안전망
+      setTimeout(() => {
+        if (!hasOtherDialog()) return; // 모달 안 열림 — 회원이 직접 다음 누름
+        let cancelled = false;
+        const id = setInterval(() => {
+          if (cancelled) return;
+          if (!hasOtherDialog()) {
+            clearInterval(id);
+            cancelled = true;
+            // 모달 닫힘 → 1초 후 자동 다음 (회원이 보상 화면 보고 닫은 직후)
+            setTimeout(() => camp.next(), 1000);
+          }
+        }, 800);
+        // 안전망 60초
+        setTimeout(() => {
+          cancelled = true;
+          clearInterval(id);
+        }, 60_000);
+      }, 600);
     };
     element.addEventListener("click", onClick, { capture: true });
     return () => {
@@ -160,6 +182,17 @@ const TutorialCampProvider = () => {
     };
     // step.targetSelector 가 바뀌어도 element 재탐색
   }, [isActiveCamp, step, rect?.found, camp, location.pathname]);
+
+  // 캠프 자체 overlay (data-tour-overlay) 외 다른 dialog 가 열려 있는지
+  function hasOtherDialog(): boolean {
+    if (typeof document === "undefined") return false;
+    const dialogs = document.querySelectorAll('[role="dialog"]');
+    return Array.from(dialogs).some(
+      (d) =>
+        !d.hasAttribute("data-tour-overlay") &&
+        !d.closest("[data-tour-overlay]"),
+    );
+  }
 
   // 핸들러
   const handleNext = useCallback(() => {
