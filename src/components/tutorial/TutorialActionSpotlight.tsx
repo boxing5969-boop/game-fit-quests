@@ -25,8 +25,10 @@ import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Hand } from "lucide-react";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
 
 import { useTutorialState } from "@/hooks/useTutorialState";
+import { TUTORIAL_STEP_REWARDS } from "@/data/unlockRules";
 
 const SETUP_ROUTES = ["/", "/onboarding", "/select-branch", "/waiting-approval"];
 const isSetupPath = (pathname: string): boolean => {
@@ -42,22 +44,16 @@ interface Rect {
   height: number;
 }
 
-const SESSION_DISMISS_KEY = "tutorial-spotlight-dismissed-step";
-
 const TutorialActionSpotlight = () => {
   const location = useLocation();
-  const { isEligible, isFinished, currentStep } = useTutorialState();
+  const { isEligible, isFinished, currentStep, advance } = useTutorialState();
 
   const [rect, setRect] = useState<Rect | null>(null);
-  const [dismissedStepKey, setDismissedStepKey] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return window.sessionStorage.getItem(SESSION_DISMISS_KEY);
-    } catch {
-      return null;
-    }
-  });
+  // dismiss 는 step 진행 중 한 번 X 누르면 그 step 만 잠시 끄는 용도.
+  // step 이 바뀌면 자동 reset (sessionStorage 안 씀 — 영구 dismiss 방지).
+  const [dismissedStepKey, setDismissedStepKey] = useState<string | null>(null);
   const [softened, setSoftened] = useState(false);
+  const advancedKeyRef = useRef<string | null>(null);
   const rafRef = useRef<number | null>(null);
 
   // 라우트 매칭 + 활성 step 결정
@@ -74,9 +70,11 @@ const TutorialActionSpotlight = () => {
     isOnTargetRoute &&
     dismissedStepKey !== stepKey;
 
-  // step 이 바뀌면 dismiss / softened 리셋
+  // step 이 바뀌면 dismiss / softened / advancedKey 모두 리셋
   useEffect(() => {
     setSoftened(false);
+    setDismissedStepKey(null);
+    advancedKeyRef.current = null;
   }, [stepKey, location.pathname]);
 
   // target 위치 측정 — RAF 폴링 (DOM 변동/스크롤/애니메이션 대응)
@@ -145,7 +143,7 @@ const TutorialActionSpotlight = () => {
     return () => window.clearTimeout(t);
   }, [shouldRender, rect, stepKey]);
 
-  // target click 감지 → spotlight 즉시 페이드아웃 (시각 피드백)
+  // target click 감지 → 즉시 advance + 보상 토스트 (idempotent — detector 와 중복 OK)
   useEffect(() => {
     if (!shouldRender || !rect) return;
     if (typeof document === "undefined") return;
@@ -157,27 +155,29 @@ const TutorialActionSpotlight = () => {
     }
     if (!element) return;
     const onClick = () => {
-      // detector 가 알아서 advance 시키므로 여기선 일시 dismiss 만.
+      // 같은 step 에서 두 번 호출되지 않도록 가드 (advance 자체는 멱등이지만 토스트 중복 방지)
+      if (advancedKeyRef.current === stepKey) return;
+      advancedKeyRef.current = stepKey;
+      const stepOrder = currentStep?.order ?? 0;
+      const stepLabel = currentStep?.label ?? "미션";
+      const reward = TUTORIAL_STEP_REWARDS[stepOrder] ?? 0;
+      // 0.4초 정도 후 advance — 사용자가 자기 클릭이 반영됐다는 시각 피드백 본 후
+      window.setTimeout(() => {
+        advance();
+        toast.success(`${stepLabel} 완료! 🎉 +${reward} GEMS`);
+      }, 400);
+      // spotlight 즉시 페이드아웃 (advance 가 currentStep 바꾸면 자동 unmount)
       setDismissedStepKey(stepKey);
-      try {
-        window.sessionStorage.setItem(SESSION_DISMISS_KEY, stepKey);
-      } catch {
-        // ignore
-      }
     };
     element.addEventListener("click", onClick, { capture: true });
     return () => {
       element?.removeEventListener("click", onClick, { capture: true });
     };
-  }, [shouldRender, rect, selector, stepKey]);
+  }, [shouldRender, rect, selector, stepKey, currentStep, advance]);
 
+  // X 버튼 dismiss — 그 step 만 일시 끔 (step 이 바뀌면 자동 reset 되므로 sessionStorage 안 씀)
   const handleDismiss = useCallback(() => {
     setDismissedStepKey(stepKey);
-    try {
-      window.sessionStorage.setItem(SESSION_DISMISS_KEY, stepKey);
-    } catch {
-      // ignore
-    }
   }, [stepKey]);
 
   if (!shouldRender || !rect) return null;

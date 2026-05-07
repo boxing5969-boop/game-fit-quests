@@ -475,7 +475,7 @@ const MissionsPage = () => {
             {isLoading ? (
               <SkeletonList />
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4" data-tutorial-target="first-mission-card">
                 {grouped.map(({ rank, rankMissions }) => {
                   if (rankMissions.length === 0) return null;
                   const completed = rankMissions.filter(
@@ -491,7 +491,6 @@ const MissionsPage = () => {
                   return (
                     <section
                       key={rank}
-                      data-tutorial-target="first-mission-card"
                       className={cn(
                         "overflow-hidden rounded-card border border-border bg-card shadow-elev-1",
                         leagueComplete &&
