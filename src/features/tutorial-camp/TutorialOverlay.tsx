@@ -53,10 +53,15 @@ const TutorialOverlay = ({
   completionState,
 }: TutorialOverlayProps) => {
 
+  // 클릭 직후 autoAdvance 대기 중인 step 은 spotlight 즉시 숨김 →
+  // 모달/sheet 가 막 떠올라 카드(=spotlight target) 와 겹쳐 보이는 시간 제거
+  const isAwaitingAutoAdvance = !!step.autoAdvance && targetClicked;
+
   const showSpotlight =
     !!rect &&
     rect.found &&
     routeMatch &&
+    !isAwaitingAutoAdvance &&
     (step.animation === "spotlight" ||
       step.animation === "pulse" ||
       step.animation === "hand" ||
@@ -67,11 +72,22 @@ const TutorialOverlay = ({
     !!rect &&
     rect.found &&
     routeMatch &&
+    !isAwaitingAutoAdvance &&
     (step.animation === "hand" ||
       step.animation === "arrow" ||
       step.animation === "bounce");
 
-  const fallbackDim = !rect || !rect.found || !routeMatch;
+  // chip 도 동일 — autoAdvance 대기 중엔 숨김
+  const showTapHere =
+    step.requireTargetClick &&
+    !targetClicked &&
+    rect &&
+    rect.found &&
+    routeMatch;
+
+  // fallback dim — autoAdvance 대기 중엔 숨김 (모달이 화면 가운데 잘 보이도록)
+  const fallbackDim =
+    !isAwaitingAutoAdvance && (!rect || !rect.found || !routeMatch);
 
   return (
     <AnimatePresence mode="wait">
@@ -100,14 +116,11 @@ const TutorialOverlay = ({
           />
         )}
 
-        {/* "여기를 클릭하세요" — target 안쪽 상단 floating chip (직접 클릭 강제 + 미클릭 시) */}
-        {step.requireTargetClick &&
-          !targetClicked &&
-          rect &&
-          rect.found &&
-          routeMatch && (
-            <TapHere rect={rect} targetSelector={step.targetSelector} />
-          )}
+        {/* "여기를 클릭하세요" — target 안쪽 상단 floating chip (직접 클릭 강제 + 미클릭 시).
+            showTapHere = requireTargetClick && !targetClicked && rect.found && routeMatch */}
+        {showTapHere && rect && (
+          <TapHere rect={rect} targetSelector={step.targetSelector} />
+        )}
 
         {/* Progress dots — tooltip 위쪽에 별도 고정 위치 */}
         <div className="pointer-events-none fixed inset-x-0 top-3 z-[113] flex justify-center px-4">
