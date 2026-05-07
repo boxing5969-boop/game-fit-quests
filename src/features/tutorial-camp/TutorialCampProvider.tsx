@@ -603,6 +603,17 @@ const TutorialCampProvider = () => {
   const handleCelebrationContinue = useCallback(() => {
     // celebration 화면에서 "오늘 캠프 마치기" / "7일 캠프 마치기" 버튼
     if (!step) return;
+    // 55단계: suppressReflectionSheet=true 면 PostActionReflectionSheet 차단 플래그 세팅
+    if (step.suppressReflectionSheet && typeof window !== "undefined") {
+      try {
+        window.sessionStorage.setItem(
+          "tutorial-camp-suppress-reflection-until",
+          String(Date.now() + 60_000), // 60초 동안 차단
+        );
+      } catch {
+        // ignore
+      }
+    }
     // celebration 또는 confetti step 은 항상 day 의 마지막
     camp.completeDay(step.day);
   }, [step, camp]);

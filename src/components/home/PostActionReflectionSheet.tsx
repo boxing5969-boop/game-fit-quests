@@ -25,6 +25,25 @@ import {
 
 const AUTO_DISMISS_MS = 30_000;
 
+/**
+ * 55단계: 7일 캠프 step 의 suppressReflectionSheet=true 가 발동하면
+ * Provider 가 sessionStorage 에 세팅하는 차단 플래그 (Unix ms 만료시각).
+ * 이 시각 이전이면 sheet 노출 + toast 폴백 둘 다 건너뜀.
+ */
+const SUPPRESS_KEY = "tutorial-camp-suppress-reflection-until";
+function isSuppressed(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = window.sessionStorage.getItem(SUPPRESS_KEY);
+    if (!raw) return false;
+    const until = Number(raw);
+    if (!Number.isFinite(until)) return false;
+    return Date.now() < until;
+  } catch {
+    return false;
+  }
+}
+
 const PostActionReflectionSheet = () => {
   const [active, setActive] = useState<ReflectionSource | null>(null);
 
@@ -41,6 +60,9 @@ const PostActionReflectionSheet = () => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<ReflectionTriggerDetail>).detail;
       if (!detail || !detail.source) return;
+
+      // 55단계: 7일 캠프 suppressReflectionSheet 차단 — sheet/toast 모두 skip
+      if (isSuppressed()) return;
 
       // force=true (예: Day 7 캠프 완료) 거나, 오늘 한 번 안 봤으면 큰 sheet
       const force = detail.force === true;
