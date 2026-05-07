@@ -33,6 +33,8 @@ export interface TutorialOverlayProps {
   conditionMet?: boolean;
   /** 50-A: 세부 completion 상태 (helper/success message 분기용). */
   completionState?: Record<string, boolean>;
+  /** 64: 다른 모달(role="dialog") 떠있는지 — Tooltip compact 모드 트리거 */
+  modalOpen?: boolean;
 }
 
 const TutorialOverlay = ({
@@ -51,6 +53,7 @@ const TutorialOverlay = ({
   onDimNudge,
   conditionMet,
   completionState,
+  modalOpen,
 }: TutorialOverlayProps) => {
 
   // 클릭 직후 autoAdvance 대기 중인 step 은 spotlight 즉시 숨김 →
@@ -85,9 +88,13 @@ const TutorialOverlay = ({
     rect.found &&
     routeMatch;
 
-  // fallback dim — autoAdvance 대기 중엔 숨김 (모달이 화면 가운데 잘 보이도록)
+  // fallback dim — autoAdvance 대기 중엔 숨김 (모달이 화면 가운데 잘 보이도록).
+  //   다른 모달이 떠있으면 모달 자체 backdrop 이 이미 어둡게 처리하므로 중복 dim 제거
+  //   — 회원이 모달을 더 또렷하게 본다.
   const fallbackDim =
-    !isAwaitingAutoAdvance && (!rect || !rect.found || !routeMatch);
+    !isAwaitingAutoAdvance &&
+    !modalOpen &&
+    (!rect || !rect.found || !routeMatch);
 
   return (
     <AnimatePresence mode="wait">
@@ -150,6 +157,7 @@ const TutorialOverlay = ({
           onMarkClicked={onMarkClicked}
           conditionMet={conditionMet}
           completionState={completionState}
+          modalOpen={modalOpen}
         />
       </div>
     </AnimatePresence>

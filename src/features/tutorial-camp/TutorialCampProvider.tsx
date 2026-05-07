@@ -725,6 +725,42 @@ const TutorialCampProvider = () => {
     ? isStepConditionMet(step, targetClicked, completion)
     : false;
 
+  // 64: 다른 dialog 가 떠있는지 추적 — TutorialTooltip 의 compact 모드 전환용.
+  //   회원이 모달 안에서 행동(정답 선택 등) 진행 중일 때 카드가 모달 컨텐츠를
+  //   가리는 문제 → 모달 떠있고 조건 미충족 시 카드 자동 컴팩트.
+  const [modalOpen, setModalOpen] = useState(false);
+  useEffect(() => {
+    if (!isActiveCamp) {
+      setModalOpen(false);
+      return;
+    }
+    if (typeof document === "undefined") return;
+    const check = () => {
+      const v = hasOtherDialog();
+      setModalOpen((prev) => (prev === v ? prev : v));
+    };
+    check();
+    let observer: MutationObserver | null = null;
+    if (typeof MutationObserver !== "undefined") {
+      observer = new MutationObserver(check);
+      try {
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["data-state", "aria-hidden"],
+        });
+      } catch {
+        observer = null;
+      }
+    }
+    const id = window.setInterval(check, 1500);
+    return () => {
+      observer?.disconnect();
+      window.clearInterval(id);
+    };
+  }, [isActiveCamp]);
+
   // 57: cascade 인프라 — step.autoAdvance=true 면 조건 충족 시 자동 다음 step
   //   · 250ms 지연: 회원이 자기 클릭 시각 피드백 본 직후 빠르게 진행
   //     (이전 600ms 는 모달 떠있는 동안 spotlight 가 카드 위치=모달 뒤
@@ -804,6 +840,7 @@ const TutorialCampProvider = () => {
       onDimNudge={handleDimNudge}
       conditionMet={conditionMet}
       completionState={completion}
+      modalOpen={modalOpen}
     />
   );
 };

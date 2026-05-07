@@ -48,6 +48,8 @@ export interface TutorialTooltipProps {
   conditionMet?: boolean;
   /** 50-A: 세부 completion 상태 (helper/success message 분기용). */
   completionState?: Record<string, boolean>;
+  /** 64: 다른 모달이 떠있는지 — compact 모드 트리거 */
+  modalOpen?: boolean;
 }
 
 const TOOLTIP_WIDTH = 320;
@@ -108,7 +110,13 @@ const TutorialTooltip = ({
   onMarkClicked,
   conditionMet,
   completionState,
+  modalOpen,
 }: TutorialTooltipProps) => {
+  // 64: compact 모드 — 다른 모달 떠있는 동안 카드를 화면 하단 작은 알림으로 축소.
+  //   회원이 모달 안 컨텐츠(정답 선택지 등)를 자유롭게 보고 누를 수 있음.
+  //   행동 완료 → mini "다음으로" 버튼 표시 → 누르면 onNext (모달 자동 닫힘).
+  //   회원이 모달 직접 닫으면 modalOpen=false → 일반 카드 복귀.
+  const compact = modalOpen === true;
   const pos = computeTooltipPosition(rect, step.placement);
   // route 가 다르면 → 이동 필요 (target rect 자체를 시도 안 함)
   // route 가 같지만 target 매칭 실패 → 진짜 fallback (안전망 발동)
@@ -135,6 +143,53 @@ const TutorialTooltip = ({
   const helperToShow = showSuccess
     ? step.successMessage
     : step.helperMessage ?? null;
+
+  // 64: compact 모드 — 모달 떠있을 때 화면 하단 작은 카드.
+  //   wrapper 는 pointer-events-none → 회원 클릭은 모달 컨텐츠로 그대로 통과.
+  //   안의 mini-button 만 pointer-events-auto → 다음으로 누름 가능.
+  if (compact) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 12 }}
+        transition={{ duration: 0.25 }}
+        role="status"
+        aria-label={step.title}
+        data-tour-overlay="true"
+        className="pointer-events-none fixed inset-x-0 bottom-3 z-[112] flex justify-center px-3"
+      >
+        <div className="flex max-w-[340px] items-center gap-2 rounded-pill border border-amber-400/40 bg-[#0a1024]/95 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.55)] backdrop-blur-sm">
+          <div className="shrink-0">
+            <OsamMascot
+              size="xs"
+              state={DAY_TO_OSAMI_STATE[step.day] ?? "wink"}
+            />
+          </div>
+          {showSuccess ? (
+            <>
+              <p className="text-[11px] font-bold leading-snug text-emerald-200">
+                <Check className="mr-1 inline h-3 w-3 -translate-y-[1px]" />
+                {step.successMessage ?? "잘했어요!"}
+              </p>
+              <button
+                type="button"
+                onClick={onNext}
+                className="pointer-events-auto ml-1 inline-flex h-7 items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 px-3 text-[11px] font-black text-amber-950 active:scale-[0.97]"
+              >
+                다음으로
+                <ChevronRight className="h-3 w-3" />
+              </button>
+            </>
+          ) : (
+            <p className="text-[11px] font-bold leading-snug text-amber-100">
+              {step.helperMessage ?? "모달 안에서 답을 골라주세요."}
+            </p>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
