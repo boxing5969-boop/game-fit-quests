@@ -18,8 +18,9 @@
  *   • ProtectedRoute 로딩 분기
  */
 
-// 신 MY BOXER 로고 (2026-05) — public 자산 직접 참조 (assets/brand 분리)
-const logoSrc = "/assets/brand/myboxer_logo_full.png";
+// 라우트 로딩 fallback — 기존 153 BOXING GYM 로고 유지 (사용자 의향).
+// 앱 첫 진입 스플래시는 새 MY BOXER 로고로 교체된 상태.
+import logoSrc from "@/assets/branding/153-logo-white.svg";
 
 export interface RouteLoaderProps {
   /** 접근성용 안내 문구. 기본 "로딩 중". */

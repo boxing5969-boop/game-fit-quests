@@ -321,16 +321,16 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
-      {/* Logo — 새 MY BOXER 풀 로고 (아이콘 + 텍스트 합본) */}
+      {/* Logo — MB 아이콘 + 풀 로고 (투명 PNG). 흰 배경 제거됨 */}
       <div className="mb-5 animate-bounce-in text-center">
         <img
           src="/assets/brand/myboxer_logo_full.png"
           alt="MY BOXER 마이복서 by 153 BOXING GYM"
           draggable={false}
-          className="mx-auto mb-2 h-24 w-auto select-none object-contain"
+          className="mx-auto mb-1 h-16 w-auto select-none object-contain sm:h-20"
           style={{ filter: "drop-shadow(0 4px 14px rgba(0,0,0,0.35))" }}
         />
-        <p className="mt-1.5 text-sm text-muted-foreground">
+        <p className="mt-2 text-xs text-muted-foreground">
           153복싱짐 회원을 위한 복싱 성장 퀘스트 앱
         </p>
       </div>
@@ -441,9 +441,24 @@ const LoginPage = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-xl bg-primary py-4 text-lg font-bold text-primary-foreground shadow-glow-primary transition-all active:scale-[0.98] hover:shadow-glow-primary disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-4 text-lg font-bold text-primary-foreground shadow-glow-primary transition-all active:scale-[0.98] hover:shadow-glow-primary disabled:opacity-50"
         >
-          {isLoading ? "처리 중..." : isSignUp ? (tab === "coach" ? "관장님 가입 🥊" : "회원가입 🥊") : "로그인 🥊"}
+          {isLoading ? (
+            "처리 중..."
+          ) : (
+            <>
+              <span>
+                {isSignUp ? (tab === "coach" ? "관장님 가입" : "회원가입") : "로그인"}
+              </span>
+              <img
+                src="/assets/brand/myboxer_logo_icon.png"
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                className="h-6 w-6 select-none object-contain"
+              />
+            </>
+          )}
         </button>
 
         {tab === "login" && (
