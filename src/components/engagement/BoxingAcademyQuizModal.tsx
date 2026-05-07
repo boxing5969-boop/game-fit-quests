@@ -198,6 +198,10 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
                   key={opt}
                   type="button"
                   data-tutorial-answer="true"
+                  // 회원이 선택한 button 에만 동적으로 추가 anchor 부여 →
+                  // 7일 캠프 spotlight 가 4개 전체가 아닌 선택된 button 으로
+                  // 좁아짐 (정답 정보는 서버 결정이라 클라이언트 노출 0).
+                  data-tour={active ? "boxing-iq-selected-option" : undefined}
                   onClick={() => setSelected(opt)}
                   className={`w-full rounded-card border px-3.5 py-3 text-left text-[13px] transition-all active:scale-[0.99] ${
                     active
