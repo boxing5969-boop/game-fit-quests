@@ -711,30 +711,96 @@ const DAY_7_STEPS: TutorialCampStep[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 체험형 강화 — 직접 행동해야 다음으로 넘어가게
+// 체험형 강화 — 모든 step 을 "여기로 이동 → spotlight → 직접 클릭" 흐름으로 통일
 // ─────────────────────────────────────────────────────────────
 
 /**
+ * 매칭 가능한 anchor 가 없는 selector → 같은 Day 의 매칭 가능한 anchor 로 통합.
+ * 회원이 모든 step 에서 동일한 spotlight + 직접 클릭 체험.
+ *
+ * 예: missions-master-road 처럼 anchor 가 화면에 없는 selector 는
+ *     missions-official-training (anchor 존재) 으로 매핑.
+ *     회원은 같은 영역을 여러 번 클릭하게 되지만 안내 본문은 매번 다름.
+ */
+const SELECTOR_REMAP: Record<string, { selector: string; route: string }> = {
+  // Day 2 — 마스터로드 / 미션 / 코치 승인 안내 → 훈련 화면 단일 spotlight
+  '[data-tour="missions-master-road"]': {
+    selector: '[data-tour="missions-official-training"]',
+    route: "/missions",
+  },
+  '[data-tour="missions-submit-note"]': {
+    selector: '[data-tour="missions-official-training"]',
+    route: "/missions",
+  },
+  '[data-tour="missions-coach-approval-note"]': {
+    selector: '[data-tour="missions-official-training"]',
+    route: "/missions",
+  },
+  // Day 4 — 난이도 / 통증 체크 / 제출 → 챌린지 카드 단일
+  '[data-tour="challenge-difficulty"]': {
+    selector: '[data-tour="challenge-arena-card"]',
+    route: "/myboxer/quest",
+  },
+  '[data-tour="challenge-safety-check"]': {
+    selector: '[data-tour="challenge-arena-card"]',
+    route: "/myboxer/quest",
+  },
+  '[data-tour="challenge-submit"]': {
+    selector: '[data-tour="challenge-arena-card"]',
+    route: "/myboxer/quest",
+  },
+  // Day 5 — 오늘의 질문 / 저장 → 챔피언 일기 카드 단일
+  '[data-tour="journal-question"]': {
+    selector: '[data-tour="champion-journal-card"]',
+    route: "/myboxer/quest",
+  },
+  '[data-tour="journal-save"]': {
+    selector: '[data-tour="champion-journal-card"]',
+    route: "/myboxer/quest",
+  },
+  // Day 6 — 동료 선택 / 스티커 → 세컨드 응원 카드 단일
+  '[data-tour="second-cheer-list"]': {
+    selector: '[data-tour="second-cheer-card"]',
+    route: "/myboxer/quest",
+  },
+  '[data-tour="cheer-sticker"]': {
+    selector: '[data-tour="second-cheer-card"]',
+    route: "/myboxer/quest",
+  },
+};
+
+/**
  * step 메타를 일괄 변환.
- *   · target 이 있고 actionType 이 "click" / "navigate" / "open" 이면
- *     → requireTargetClick=true / allowNextWithoutClick=false
- *     (회원이 직접 클릭하거나 그 화면으로 이동해야 다음 step 으로)
- *   · "read" / "complete" 는 그대로 (정보 안내 / Day 완료 모달은 다음 버튼으로 통과)
- *   · target 이 비어 있거나 fallback 모드 / route mismatch 시에는
- *     Tooltip 의 nextDisabled 안전망이 자동으로 다음 활성 — 회원 막힘 0
+ *   1. SELECTOR_REMAP 적용 — 매칭 가능한 anchor 로 selector / route 정정
+ *   2. target 있고 모달(complete) 아니면 → 직접 클릭 강제
+ *      · requireTargetClick=true
+ *      · allowNextWithoutClick=false
+ *      · actionType="click" (read 도 click 으로 — 단조로운 "다음으로" 만 누르는 흐름 제거)
+ *   3. Day 완료 모달 (actionType="complete") 은 그대로
  */
 function withInteractive(step: TutorialCampStep): TutorialCampStep {
-  const isInteractive =
-    step.targetSelector !== "" &&
-    (step.actionType === "click" ||
-      step.actionType === "navigate" ||
-      step.actionType === "open");
-  if (!isInteractive) return step;
-  return {
-    ...step,
-    requireTargetClick: true,
-    allowNextWithoutClick: false,
-  };
+  let selector = step.targetSelector;
+  let route = step.route;
+
+  // 매핑 테이블 적용
+  if (selector in SELECTOR_REMAP) {
+    const remap = SELECTOR_REMAP[selector];
+    selector = remap.selector;
+    route = remap.route;
+  }
+
+  // 직접 클릭 강제 — Day 완료 모달 제외 모든 target 있는 step
+  if (selector !== "" && step.actionType !== "complete") {
+    return {
+      ...step,
+      targetSelector: selector,
+      route,
+      actionType: "click",
+      requireTargetClick: true,
+      allowNextWithoutClick: false,
+    };
+  }
+  return step;
 }
 
 /** 모든 day 의 step 을 펼쳐 둔 평면 배열 (35개) — 체험형 변환 적용 */
