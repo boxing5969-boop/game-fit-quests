@@ -138,16 +138,21 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     targetKey: "day1.osami_greeting",
     targetSelector: '[data-tour="home-osami-briefing"]',
     title: "오삼이의 첫 인사",
-    body: "오삼이가 매일 짧은 메시지를 드려요.\n153 QUEST 메뉴에서 만날 수 있어요.",
+    body: "오삼이가 매일 짧은 메시지를 드려요.\n여기를 한 번 눌러볼까요?",
     osamiMessage: "안녕하세요. 오늘도 잘 오셨어요.",
-    actionType: "read",
-    requireTargetClick: false,
+    actionType: "click",
+    requireTargetClick: true,
     allowNextWithoutClick: true,
     animation: "pulse",
     placement: "bottom",
     fallbackText:
       "153 QUEST 메뉴 위쪽의 오삼이 카드에서 매일 새로운 메시지를 받을 수 있어요.",
     completionText: "잘했어요. 다음으로 가요.",
+    helperMessage: "반짝이는 곳을 눌러보세요.",
+    successMessage: "좋아요. 다음 카드로 가볼게요.",
+    blockNextUntilComplete: true,
+    completionRule: "target_clicked",
+    autoAdvance: true,
   },
   {
     day: 1,
@@ -159,12 +164,17 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     body: "오늘 한 번만 해도 충분해요.\n이 카드가 오늘의 한 라운드를 알려줘요.",
     osamiMessage: "오늘은 무엇을 할지, 같이 봐요.",
     actionType: "click",
-    requireTargetClick: false,
+    requireTargetClick: true,
     allowNextWithoutClick: true,
     animation: "spotlight",
     placement: "bottom",
     fallbackText: "153 QUEST 메뉴 가운데에 오늘의 라운드 카드가 있어요.",
     completionText: "오늘의 한 라운드, 기억해두세요.",
+    helperMessage: "여기를 한 번 눌러보세요.",
+    successMessage: "좋아요. 다음으로 가볼까요?",
+    blockNextUntilComplete: true,
+    completionRule: "target_clicked",
+    autoAdvance: true,
   },
   {
     day: 1,
@@ -183,6 +193,7 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     fallbackText:
       "하단 메뉴의 훈련 아이콘을 누르면 공식 훈련 화면으로 들어와요.",
     completionText: "공식 훈련은 천천히 쌓는 것이에요.",
+    helperMessage: "여기로 한 번 들어가볼게요.",
   },
   {
     day: 1,
@@ -194,12 +205,17 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     body: "공식 훈련과 별도로,\n복싱 IQ 같은 짧은 153 QUEST가 매일 추천돼요.",
     osamiMessage: "부담 없이 한 번만 눌러보세요.",
     actionType: "click",
-    requireTargetClick: false,
+    requireTargetClick: true,
     allowNextWithoutClick: true,
     animation: "pulse",
     placement: "bottom",
     fallbackText: "153 QUEST 메뉴를 내리면 복싱 IQ 카드가 보여요.",
     completionText: "QUEST는 그날의 작은 한 걸음이에요.",
+    helperMessage: "여기를 한 번 눌러보세요.",
+    successMessage: "잘했어요. Day 1 거의 다 왔어요.",
+    blockNextUntilComplete: true,
+    completionRule: "target_clicked",
+    autoAdvance: true,
   },
   {
     day: 1,
@@ -241,6 +257,7 @@ const DAY_2_STEPS: TutorialCampStep[] = [
     placement: "bottom",
     fallbackText: "하단 메뉴의 훈련 아이콘으로 들어올 수 있어요.",
     completionText: "훈련 화면은 매일의 출발점이에요.",
+    helperMessage: "하단 메뉴 '훈련' 을 눌러 들어와볼게요.",
   },
   {
     day: 2,
@@ -251,14 +268,19 @@ const DAY_2_STEPS: TutorialCampStep[] = [
     title: "마스터로드",
     body: "마스터로드는 1단부터 차례로 올라가는\n정식 훈련의 길이에요.\n한 번에 한 단씩, 천천히 쌓아갑니다.",
     osamiMessage: "처음엔 어려워 보여도, 단계별이라 부담 없어요.",
-    actionType: "navigate",
-    requireTargetClick: false,
+    actionType: "click",
+    requireTargetClick: true,
     allowNextWithoutClick: true,
     animation: "spotlight",
     placement: "bottom",
     fallbackText:
       "훈련 화면 안에서 마스터로드 카드를 누르면 들어올 수 있어요.",
     completionText: "마스터로드는 나의 길이에요.",
+    helperMessage: "여기 마스터로드 카드를 눌러보세요.",
+    successMessage: "좋아요. 마스터로드를 만났어요.",
+    blockNextUntilComplete: true,
+    completionRule: "target_clicked",
+    autoAdvance: true,
   },
   {
     day: 2,
@@ -277,6 +299,7 @@ const DAY_2_STEPS: TutorialCampStep[] = [
     fallbackText:
       "마스터로드 안의 단계 카드를 누르면 미션 제출 화면이 열려요.",
     completionText: "제출은 부담 없이, 자세 위주로 시작해요.",
+    helperMessage: "잠깐 읽어보고 '다음으로' 를 눌러주세요.",
   },
   {
     day: 2,
@@ -294,6 +317,7 @@ const DAY_2_STEPS: TutorialCampStep[] = [
     placement: "center",
     fallbackText: "제출 후 알림으로 코치의 승인 결과가 전해져요.",
     completionText: "153복싱짐의 모든 단계는 코치가 같이 봐드려요.",
+    helperMessage: "잠깐 읽어보고 '다음으로' 를 눌러주세요.",
   },
   {
     day: 2,
@@ -356,6 +380,7 @@ const DAY_3_STEPS: TutorialCampStep[] = [
     successMessage: "좋아요. 이제 한 문제 풀어볼게요.",
     blockNextUntilComplete: true,
     completionRule: "target_clicked",
+    autoAdvance: true,
   },
   {
     day: 3,
@@ -379,6 +404,7 @@ const DAY_3_STEPS: TutorialCampStep[] = [
     blockNextUntilComplete: true,
     completionRule: "quiz_answer_selected",
     expectedAnswerSelector: '[data-tutorial-answer="true"]',
+    autoAdvance: true,
   },
   {
     day: 3,
@@ -461,6 +487,7 @@ const DAY_4_STEPS: TutorialCampStep[] = [
     blockNextUntilComplete: true,
     completionRule: "scrolled_to_bottom",
     scrollThreshold: 0.85,
+    autoAdvance: true,
   },
   {
     day: 4,
@@ -540,6 +567,7 @@ const DAY_5_STEPS: TutorialCampStep[] = [
     successMessage: "좋아요. 이제 한 줄을 적어볼게요.",
     blockNextUntilComplete: true,
     completionRule: "target_clicked",
+    autoAdvance: true,
   },
   {
     day: 5,
@@ -564,6 +592,7 @@ const DAY_5_STEPS: TutorialCampStep[] = [
     completionRule: "text_input_min_length",
     inputSelector: '[data-tour="journal-reflection-input"]',
     minTextLength: 5,
+    autoAdvance: true,
   },
   {
     day: 5,
@@ -586,6 +615,7 @@ const DAY_5_STEPS: TutorialCampStep[] = [
     blockNextUntilComplete: true,
     completionRule: "condition_checked",
     conditionSelector: '[data-tutorial-condition="true"]',
+    autoAdvance: true,
   },
   {
     day: 5,
@@ -648,6 +678,7 @@ const DAY_6_STEPS: TutorialCampStep[] = [
     successMessage: "좋아요. 응원하는 마음이 시작이에요.",
     blockNextUntilComplete: true,
     completionRule: "target_clicked",
+    autoAdvance: true,
   },
   {
     day: 6,

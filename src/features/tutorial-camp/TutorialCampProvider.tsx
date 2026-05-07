@@ -636,6 +636,28 @@ const TutorialCampProvider = () => {
   // 50-A: 통합 완료 판정 (next gating 용)
   const conditionMet = isStepConditionMet(step, targetClicked, completion);
 
+  // 57: cascade 인프라 — step.autoAdvance=true 면 조건 충족 시 자동 다음 step
+  //   · 0.6초 지연: 회원이 자기 행동 결과 (success message) 본 후 자동 진행
+  //   · step 중복 advance 방지 (ref 가드)
+  const autoAdvancedKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isActiveCamp || !step) return;
+    if (!step.autoAdvance) return;
+    if (!conditionMet) return;
+    const key = `${step.day}.${step.step}`;
+    if (autoAdvancedKeyRef.current === key) return;
+    autoAdvancedKeyRef.current = key;
+    const id = window.setTimeout(() => {
+      handleNext();
+    }, 600);
+    return () => window.clearTimeout(id);
+  }, [isActiveCamp, step, conditionMet, handleNext]);
+
+  // step 변경 시 autoAdvance 가드 reset
+  useEffect(() => {
+    autoAdvancedKeyRef.current = null;
+  }, [step]);
+
   return (
     <TutorialOverlay
       step={step}
