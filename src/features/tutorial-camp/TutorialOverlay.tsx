@@ -94,14 +94,12 @@ const TutorialOverlay = ({
           />
         )}
 
-        {/* "여기를 눌러보세요" — target 옆 floating chip (직접 클릭 강제 + 미클릭 시) */}
+        {/* "여기를 클릭하세요" — target 안쪽 상단 floating chip (직접 클릭 강제 + 미클릭 시) */}
         {step.requireTargetClick &&
           !targetClicked &&
           rect &&
           rect.found &&
-          routeMatch && (
-            <TapHere rect={rect} placement={step.placement} />
-          )}
+          routeMatch && <TapHere rect={rect} />}
 
         {/* Progress dots — tooltip 위쪽에 별도 고정 위치 */}
         <div className="pointer-events-none fixed inset-x-0 top-3 z-[94] flex justify-center px-4">
@@ -136,38 +134,40 @@ const TutorialOverlay = ({
 };
 
 // ─────────────────────────────────────────────────────────────
-// "여기를 눌러보세요" — target 옆 floating chip
-// pointer-events: none (target 클릭 방해 X), placement 기준 위치
+// "여기를 클릭하세요" — target 안쪽 상단 floating chip
+//   · z-[94] — tooltip(z-93) 위에 떠 있어 어떤 위치에서도 항상 보임
+//   · target 영역 내부 상단 12px — spotlight 안에 명확히 떠 있어 시선 집중
+//   · pointer-events: none — target 클릭 방해 0
+//   · viewport clamp — 화면 가장자리 쳐도 깨지지 않음
 // ─────────────────────────────────────────────────────────────
 function TapHere({
   rect,
-  placement,
 }: {
   rect: NonNullable<TutorialOverlayProps["rect"]>;
-  placement: TutorialOverlayProps["step"]["placement"];
 }) {
-  const CHIP_GAP = 12;
-  const CHIP_HEIGHT = 28;
-  let top = rect.top + rect.height + CHIP_GAP;
+  const CHIP_INSET = 12;
+  // target 안쪽 상단 중앙
+  let top = rect.top + CHIP_INSET;
   let left = rect.left + rect.width / 2;
 
-  if (placement === "top") {
-    top = rect.top - CHIP_GAP - CHIP_HEIGHT;
-  } else if (placement === "left") {
-    left = rect.left - CHIP_GAP;
-    top = rect.top + rect.height / 2 - CHIP_HEIGHT / 2;
-  } else if (placement === "right") {
-    left = rect.left + rect.width + CHIP_GAP;
-    top = rect.top + rect.height / 2 - CHIP_HEIGHT / 2;
+  // viewport clamp — 화면 위쪽 끝이거나 너무 작은 target 일 때
+  if (typeof window !== "undefined") {
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+    if (top < 60) top = 60;
+    if (top > vh - 60) top = vh - 60;
+    if (left < 80) left = 80;
+    if (left > vw - 80) left = vw - 80;
   }
 
   return (
     <motion.div
-      className="pointer-events-none fixed z-[92] -translate-x-1/2 whitespace-nowrap rounded-pill border border-amber-300/70 bg-amber-500 px-3 py-1 text-[10px] font-black tracking-wider text-amber-950 shadow-[0_4px_14px_rgba(253,184,92,0.5)]"
+      className="pointer-events-none fixed z-[94] -translate-x-1/2 whitespace-nowrap rounded-pill border-2 border-amber-300 bg-amber-500 px-4 py-1.5 text-[11px] font-black tracking-wider text-amber-950 shadow-[0_6px_20px_rgba(253,184,92,0.65)]"
       style={{ top, left }}
       animate={{
-        y: placement === "top" ? [0, 3, 0] : [0, -3, 0],
-        opacity: [0.85, 1, 0.85],
+        y: [0, -4, 0],
+        scale: [1, 1.08, 1],
+        opacity: [0.9, 1, 0.9],
       }}
       transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
       aria-hidden
