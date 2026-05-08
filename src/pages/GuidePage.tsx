@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, FlaskConical, Map, Dumbbell, ShieldCheck, Play, ChevronDown, Lock, CheckCircle2, HelpCircle } from "lucide-react";
 import { LEAGUE_SUMMARIES, FULL_VALUE_MAP } from "@/data/valueMapData";
@@ -6,6 +6,7 @@ import { EXERCISE_REASONS } from "@/data/exerciseReasonsData";
 import { SAFETY_BLOCKS } from "@/data/safetyCheckData";
 import { GUIDE_CARDS } from "@/data/whiteLevel1Data";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTutorialState } from "@/hooks/useTutorialState";
 
 type GuideTab = "program" | "science" | "valuemap" | "exercise" | "safety" | "whitefaq";
 
@@ -22,24 +23,94 @@ const GuidePage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<GuideTab>("program");
 
+  // 64-L: 오삼 가이드 step 2 (마이복서153 알아보기) 진행 중이면
+  //   6 탭 cascade 안내 — 다음 미클릭 탭에 amber pulse + '👆 클릭' 라벨.
+  //   6 탭 모두 click 시 자동 advance (5초 체류 폴백 그대로 유지).
+  const tutorial = useTutorialState();
+  const isTutorialStep2 =
+    tutorial.isEligible && tutorial.currentStep?.key === "discover_app";
+  const [clickedTabs, setClickedTabs] = useState<Set<GuideTab>>(
+    () => new Set(["program"]),
+  );
+  // 첫 진입 시 program 활성 상태이므로 미리 시작 탭 등록.
+  useEffect(() => {
+    if (!isTutorialStep2) return;
+    if (clickedTabs.size >= TABS.length) {
+      const t = window.setTimeout(() => {
+        try {
+          tutorial.advance();
+        } catch {
+          /* noop */
+        }
+      }, 600);
+      return () => window.clearTimeout(t);
+    }
+  }, [isTutorialStep2, clickedTabs, tutorial]);
+
+  // 다음 안내해야 할 미클릭 탭 — 첫 unclicked 탭만 highlight
+  const nextUnclickedTab = isTutorialStep2
+    ? TABS.find((t) => !clickedTabs.has(t.id))?.id
+    : null;
+
+  const handleTabClick = (id: GuideTab) => {
+    setActiveTab(id);
+    if (isTutorialStep2) {
+      setClickedTabs((prev) => {
+        if (prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.add(id);
+        return next;
+      });
+    }
+  };
+
   return (
     <div className="light-surface min-h-screen mx-auto max-w-lg px-4 pb-24 pt-4">
       <h1 className="mb-4 text-2xl text-foreground">📖 가이드</h1>
+
+      {/* 64-L: 튜토리얼 안내 카드 — step 2 진행 중일 때만 */}
+      {isTutorialStep2 && (
+        <div className="mb-3 flex items-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
+          <span className="text-base">👆</span>
+          <span className="flex-1">
+            아래 6개 탭을 한 번씩 눌러보세요. 클릭{" "}
+            <span className="number-font">{clickedTabs.size}</span> /{" "}
+            <span className="number-font">{TABS.length}</span> 완료 시 자동 진행.
+          </span>
+        </div>
+      )}
 
       {/* Tab switcher */}
       <div className="mb-5 flex gap-1 overflow-x-auto rounded-2xl bg-secondary p-1 no-scrollbar">
         {TABS.map(tab => {
           const Icon = tab.icon;
+          const isClicked = clickedTabs.has(tab.id);
+          const isNextHint = isTutorialStep2 && nextUnclickedTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex shrink-0 flex-1 items-center justify-center gap-1 rounded-xl px-2 py-2.5 text-xs font-bold transition-all ${
+              data-tour={`guide-tab-${tab.id}`}
+              onClick={() => handleTabClick(tab.id)}
+              className={`relative flex shrink-0 flex-1 items-center justify-center gap-1 rounded-xl px-2 py-2.5 text-xs font-bold transition-all ${
                 activeTab === tab.id ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
+              } ${
+                isNextHint
+                  ? "ring-2 ring-amber-400 ring-offset-1 ring-offset-secondary animate-pulse"
+                  : ""
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
               <span className="hidden min-[400px]:inline">{tab.label}</span>
+              {isNextHint && (
+                <span className="absolute -top-1 -right-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] font-black text-amber-950 shadow-md">
+                  👆 클릭
+                </span>
+              )}
+              {isTutorialStep2 && isClicked && (
+                <span className="absolute -top-1 -right-1 text-emerald-500">
+                  <CheckCircle2 className="h-3 w-3 fill-emerald-500/20" />
+                </span>
+              )}
             </button>
           );
         })}
