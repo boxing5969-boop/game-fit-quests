@@ -216,8 +216,17 @@ const HomePage = () => {
           ? "start_mission"
           : "evaluate";
   const handleTodayAction = () => {
-    if (todayActionState === "qr_checkin") setShowQRScanner(true);
-    else if (todayActionState === "active_session" || todayActionState === "start_mission") handleStartChallenge();
+    if (todayActionState === "qr_checkin") {
+      setShowQRScanner(true);
+      // 64-P: 오삼 가이드 step 4 'QR 출석체크 연습하기' detector 트리거
+      if (typeof window !== "undefined") {
+        try {
+          window.dispatchEvent(new Event("tutorial-qr-opened"));
+        } catch {
+          /* noop */
+        }
+      }
+    } else if (todayActionState === "active_session" || todayActionState === "start_mission") handleStartChallenge();
     else if (todayActionState === "all_done") navigate("/halloffame");
     else navigate("/missions");
   };

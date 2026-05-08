@@ -299,8 +299,9 @@ export type TutorialStepKey =
  *   · "viewed_guide"    — /guide 또는 /about 페이지에 5초 이상 체류
  *   · "viewed_missions" — /missions 페이지에 5초 이상 체류 (탭 둘러보기 충분)
  *   · "viewed_challenges" — /challenges 페이지에 5초 이상 체류 (둘러보기 충분)
+ *   · "qr_camera_opened" — 홈에서 QR 카메라 모달이 열림 (window event)
  *   · "mission_done"    — 오늘 첫 mission completion row 생성 (legacy)
- *   · "first_attendance" — attendance_logs 첫 row
+ *   · "first_attendance" — attendance_logs 첫 row (legacy)
  *   · "first_challenge"  — challenge_participants 첫 row (legacy)
  */
 export type TutorialDetectorKey =
@@ -308,6 +309,7 @@ export type TutorialDetectorKey =
   | "viewed_guide"
   | "viewed_missions"
   | "viewed_challenges"
+  | "qr_camera_opened"
   | "mission_done"
   | "first_attendance"
   | "first_challenge";
@@ -386,16 +388,16 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     key: "first_checkin",
     order: 4,
-    label: "4단계 — 첫 출석 체크인",
+    label: "4단계 — QR 출석체크 연습하기",
     description:
-      "체육관에서 코치님의 QR 을 스캔하면 출석이 기록되고 라이브보드에 내 이름이 올라가요. 출석은 모든 보상의 시작이에요.",
-    hint: "홈 화면 상단의 'QR 체크인 하기' 버튼을 눌러 코치님이 보여주시는 QR 을 카메라로 비춰주세요.",
-    ctaLabel: "QR 체크인 가기",
+      "홈 화면의 'QR 체크인 하기' 버튼을 눌러 카메라를 켜보세요. 실제 출석 기록은 코치님 QR 을 스캔할 때부터 — 지금은 카메라 한 번 켜면 연습 완료!",
+    hint: "👆 홈 화면 상단의 'QR 체크인 하기' 버튼을 누르세요. 카메라가 열리면 4단계 자동 완료!",
+    ctaLabel: "QR 카메라 켜기 →",
     navTarget: "/home",
-    detector: "first_attendance",
+    detector: "qr_camera_opened",
     icon: "📍",
     spotlightSelector: '[data-tutorial-target="qr-checkin-button"]',
-    spotlightHint: "여기를 눌러 코치님의 QR을 스캔해주세요.",
+    spotlightHint: "👆 여기를 눌러 QR 카메라를 켜보세요. 카메라만 열려도 연습 완료!",
   },
   {
     key: "first_challenge",

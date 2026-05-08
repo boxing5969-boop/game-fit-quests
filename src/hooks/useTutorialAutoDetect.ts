@@ -88,6 +88,17 @@ export function useTutorialAutoDetect() {
     return () => clearTimeout(t);
   }, [currentDetector, location.pathname, advance]);
 
+  // ── 2-D) qr_camera_opened: 홈에서 QR 카메라 모달이 열렸을 때 (window event) ──
+  //   회원이 setShowQRScanner(true) 트리거 → 'tutorial-qr-opened' event dispatch
+  //   → 자동 advance. 실제 출석 row 생성은 강제하지 않음 (연습 완료).
+  useEffect(() => {
+    if (currentDetector !== "qr_camera_opened") return;
+    if (typeof window === "undefined") return;
+    const onOpen = () => advance();
+    window.addEventListener("tutorial-qr-opened", onOpen);
+    return () => window.removeEventListener("tutorial-qr-opened", onOpen);
+  }, [currentDetector, advance]);
+
   // ── 3-5) DB row 감지: 폴링으로 안전 (Realtime RLS 거부 시 대비) ──
   useEffect(() => {
     if (!user?.id) return;
