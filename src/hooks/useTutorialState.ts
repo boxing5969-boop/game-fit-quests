@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import confetti from "canvas-confetti";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -66,6 +68,74 @@ export function useTutorialState() {
   const displayIndex = Math.min(stepsCompleted, STEP_COUNT - 1);
   const currentStep: TutorialStep = TUTORIAL_STEPS[displayIndex];
   const progressRatio = stepsCompleted / STEP_COUNT;
+
+  // 64-H: stepsCompleted 가 늘어날 때마다 ✓ 완료 toast + 폭죽 효과.
+  //   sonner toast id 로 dedup (다중 인스턴스 호출 시 중복 표시 방지).
+  //   마지막 5 단계는 큰 폭죽 시퀀스 + 졸업 메시지.
+  const lastStepsRef = useRef(stepsCompleted);
+  useEffect(() => {
+    if (stepsCompleted <= lastStepsRef.current) {
+      lastStepsRef.current = stepsCompleted;
+      return;
+    }
+    const justFinished = stepsCompleted; // 1..STEP_COUNT
+    lastStepsRef.current = stepsCompleted;
+
+    const justStep = TUTORIAL_STEPS[justFinished - 1];
+    const isFinal = justFinished === STEP_COUNT;
+
+    if (typeof window !== "undefined") {
+      try {
+        if (isFinal) {
+          // 큰 폭죽 시퀀스 — 3 회
+          const fire = (x: number, delay: number) =>
+            window.setTimeout(() => {
+              try {
+                confetti({
+                  particleCount: 100,
+                  spread: 80,
+                  origin: { x, y: 0.6 },
+                  colors: [
+                    "#fdb85c",
+                    "#fde047",
+                    "#fb7185",
+                    "#fef3c7",
+                    "#34d399",
+                  ],
+                });
+              } catch {
+                /* noop */
+              }
+            }, delay);
+          fire(0.2, 0);
+          fire(0.8, 250);
+          fire(0.5, 500);
+        } else {
+          confetti({
+            particleCount: 60,
+            spread: 65,
+            origin: { x: 0.5, y: 0.55 },
+            colors: ["#fdb85c", "#fde047", "#fef3c7", "#34d399"],
+          });
+        }
+      } catch {
+        /* noop */
+      }
+    }
+
+    toast.success(
+      isFinal
+        ? "🏆 5단계 모두 완료! 오삼이 인사 끝났어요."
+        : `✓ ${justStep?.label ?? "단계"} 완료!`,
+      {
+        id: `tutorial-step-${justFinished}`,
+        description: isFinal
+          ? "이제 모든 메뉴를 자유롭게 둘러보세요."
+          : `다음 단계로 넘어갑니다.`,
+        duration: isFinal ? 3500 : 2200,
+      },
+    );
+  }, [stepsCompleted]);
 
   const persistStep = useCallback(
     async (step: number) => {
