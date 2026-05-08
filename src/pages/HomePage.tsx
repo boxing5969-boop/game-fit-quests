@@ -436,21 +436,21 @@ const HomePage = () => {
         {/* ─── "더 보기" — 펼침 가능한 보조 콘텐츠 ─── */}
         <HomeMoreSection
           count={
-            (homeWidgets.masterTrack && (progress as any)?.master_track_unlocked ? 1 : 0) +
-            (showStoryRpg ? 1 : 0) /* story-rpg — admin only + 토글 */ +
+            /* 64-I: master 카드는 /missions 으로 이전 — 홈 카운트에서 제외 */
+            (showStoryRpg ? 1 : 0) /* 153 마인드셋 — admin only + 토글 */ +
             (homeWidgets.dietPromo && profile?.diet_program_enabled ? 1 : 0) +
             (homeWidgets.weeklyProgress ? 1 : 0) +
             (homeWidgets.rankingPreview ? 1 : 0)
           }
         >
-          {/* 마스터 로드 진행도 */}
-          {homeWidgets.masterTrack && (progress as any)?.master_track_unlocked && (
-            <MasterProgressCard masterLevel={(progress as any)?.master_level ?? 1} />
-          )}
+          {/* 64-I: 마스터 로드 진행도 카드는 훈련 탭(/missions) 으로 이전.
+              회원이 마스터(40레벨 달성=master_track_unlocked)에 들어선 뒤에만
+              훈련 탭 상단에서 다음 보스 보상을 확인하도록 — 홈은 1~40 회원에게
+              부담 줄임. */}
 
           {/* 153 QUEST 몰입 카드는 별도 메뉴 (/myboxer/quest) 로 이전 */}
 
-          {/* 153 스토리 RPG — 복서의 길 진입 카드 (미공개 — admin/super_admin 만) */}
+          {/* 153 마인드셋 진입 카드 (회원 노출 라벨 통일 — 미공개, admin 만) */}
           {showStoryRpg && <StoryRpgEntryCard />}
 
           {/* 이번 주 진행도 */}

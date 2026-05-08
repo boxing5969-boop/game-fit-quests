@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { MasterProgressCard } from "@/components/master/MasterProgressCard";
 import {
   useMissions,
   useMyMissionSubmissions,
@@ -430,6 +431,14 @@ const MissionsPage = () => {
       }
     >
       <div data-tour="missions-official-training" className="space-y-6">
+        {/* 64-I: 마스터 로드 진행도 카드 — 홈 → /missions 이전.
+            master_track_unlocked=true (40 레벨 달성) 회원만 노출. */}
+        {(progress as any)?.master_track_unlocked && (
+          <MasterProgressCard
+            masterLevel={(progress as any)?.master_level ?? 1}
+          />
+        )}
+
         <div data-tour="missions-tab-control">
           <SegmentedControl<MissionTab>
             value={missionTab}
