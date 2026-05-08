@@ -194,6 +194,23 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   const checklist = getChecklistForLevel(`${league}-${levelNum}`);
   const [checkResults, setCheckResults] = useState<boolean[]>(checklist.map(() => false));
 
+  // 64-O: 오삼 가이드 step 3 cascade — 배우기 → 수업실행 → 심사 탭 순차 click
+  //   화이트 Lv.1 detail 일 때만 활성. 첫 진입 시 'learn' 은 default 라 자동 등록.
+  const tutorial = useTutorialState();
+  const isStep3DetailCascade =
+    tutorial.isEligible &&
+    tutorial.currentStep?.key === "first_mission" &&
+    league === "white" &&
+    levelNum === 1;
+  const [clickedSections, setClickedSections] = useState<
+    Set<"learn" | "session" | "check">
+  >(() => new Set(["learn"]));
+  const nextUnclickedSection = isStep3DetailCascade
+    ? (["learn", "session", "check"] as const).find(
+        (k) => !clickedSections.has(k),
+      ) ?? null
+    : null;
+
   if (!ul) return <div className="p-4 text-center text-muted-foreground">레벨 데이터를 불러올 수 없습니다</div>;
 
   // Use whiteLevel1/2 detailed session data if available, else use routineA
@@ -319,24 +336,64 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         </div>
       </div>
 
+      {/* 64-O: step 3 detail cascade 안내 카드 */}
+      {isStep3DetailCascade && (
+        <div className="flex items-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
+          <span className="text-base">👆</span>
+          <span className="flex-1">
+            세 개 탭(배우기 / 수업실행 / 심사)을 한 번씩 눌러 둘러보세요.
+            클릭 <span className="number-font">{clickedSections.size}</span> /{" "}
+            <span className="number-font">3</span>
+          </span>
+        </div>
+      )}
+
       {/* Section tabs — 3탭 구조 */}
       <div className="flex gap-1 rounded-2xl bg-secondary p-1" data-tour="white-league-tabs">
         {([
           { key: "learn" as const, label: "📖 배우기" },
           { key: "session" as const, label: "🥊 수업실행" },
           { key: "check" as const, label: "✅ 심사" },
-        ]).map(tab => (
-          <button
-            key={tab.key}
-            data-tour={`white-league-tab-${tab.key}`}
-            onClick={() => setActiveSection(tab.key)}
-            className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all ${
-              activeSection === tab.key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+        ]).map(tab => {
+          const isNextHint = nextUnclickedSection === tab.key;
+          const isClicked = clickedSections.has(tab.key);
+          return (
+            <button
+              key={tab.key}
+              data-tour={`white-league-tab-${tab.key}`}
+              onClick={() => {
+                setActiveSection(tab.key);
+                if (isStep3DetailCascade) {
+                  setClickedSections((prev) => {
+                    if (prev.has(tab.key)) return prev;
+                    const next = new Set(prev);
+                    next.add(tab.key);
+                    return next;
+                  });
+                }
+              }}
+              className={`relative flex-1 rounded-xl py-2 text-xs font-bold transition-all ${
+                activeSection === tab.key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
+              } ${
+                isNextHint
+                  ? "ring-2 ring-amber-400 ring-offset-1 ring-offset-secondary animate-pulse"
+                  : ""
+              }`}
+            >
+              {tab.label}
+              {isNextHint && (
+                <span className="absolute -top-1 -right-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] font-black text-amber-950 shadow-md">
+                  👆 클릭
+                </span>
+              )}
+              {isStep3DetailCascade && isClicked && tab.key !== "learn" && (
+                <span className="absolute -top-1 -right-1 text-emerald-500">
+                  <CheckCircle2 className="h-3 w-3 fill-emerald-500/20" />
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* ═══ 배우기 Section ═══ */}
