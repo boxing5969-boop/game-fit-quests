@@ -203,11 +203,15 @@ function TapHere({
       target = null;
     }
     if (!target) return;
-    // 안의 첫 actionable element 우선 — 모달/sheet 열림 같은 실제 동작 트리거
-    const inner = target.querySelector(
+    // 안의 첫 actionable element 우선 — inactive(aria-selected=false / 비활성)
+    // 토글 버튼 우선 — SegmentedControl 같이 active 버튼 click 이 noop 되는 경우 회피.
+    const innerInactive = target.querySelector(
+      'button[aria-selected="false"]:not([disabled]), [role="tab"][aria-selected="false"]',
+    ) as HTMLElement | null;
+    const innerAny = target.querySelector(
       'button, a, [role="button"]',
     ) as HTMLElement | null;
-    const dispatchTarget = inner ?? target;
+    const dispatchTarget = innerInactive ?? innerAny ?? target;
     try {
       dispatchTarget.click();
     } catch {

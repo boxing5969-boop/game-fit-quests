@@ -248,9 +248,14 @@ const TutorialCampProvider = () => {
           clicked.closest("button, a, [role='button']");
         if (!isActionable) {
           const root = element as HTMLElement | null;
-          const inner = root?.querySelector(
+          // inactive 토글 버튼 우선 (SegmentedControl 같이 active button click noop 회피)
+          const inactiveInner = root?.querySelector(
+            'button[aria-selected="false"]:not([disabled]), [role="tab"][aria-selected="false"]',
+          ) as HTMLElement | null;
+          const anyInner = root?.querySelector(
             'button, a, [role="button"]',
           ) as HTMLElement | null;
+          const inner = inactiveInner ?? anyInner;
           if (inner) {
             if (innerClickRef.current)
               window.clearTimeout(innerClickRef.current);

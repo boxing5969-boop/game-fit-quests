@@ -414,12 +414,15 @@ const DAY_2_STEPS: TutorialCampStep[] = [
     autoAdvance: true,
   },
   // ── 6. 전체 미션 토글 클릭 ──
+  //   selector 는 inactive button 만 직접 매칭 — 화이트 리그가 default active 라서
+  //   wrapper 잡으면 chip 이 첫 button(=white) noop. inactive 버튼 가리키면 정확.
   {
     day: 2,
     step: 6,
     route: "/missions",
     targetKey: "day2.tab_all_missions",
-    targetSelector: '[data-tour="missions-tab-control"]',
+    targetSelector:
+      '[data-tour="missions-tab-control"] button[aria-selected="false"]',
     title: "전체 미션 보기",
     body: "위쪽 토글에서 '🥊 전체 미션' 으로 옮겨볼게요.\n리그별 미션 목록을 한눈에 볼 수 있어요.",
     osamiMessage: "전체 그림을 한 번 보면 좋아요.",
@@ -430,7 +433,7 @@ const DAY_2_STEPS: TutorialCampStep[] = [
     placement: "bottom",
     fallbackText: "위쪽 토글에서 '전체 미션' 을 눌러주세요.",
     completionText: "전체 미션 화면이 열렸어요.",
-    helperMessage: "여기 토글에서 '전체 미션' 을 눌러보세요.",
+    helperMessage: "여기 '전체 미션' 토글을 눌러보세요.",
     successMessage: "리그별 미션이 보여요.",
     blockNextUntilComplete: true,
     completionRule: "target_clicked",

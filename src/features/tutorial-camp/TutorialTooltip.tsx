@@ -155,16 +155,22 @@ const TutorialTooltip = ({
   //   wrapper 는 pointer-events-none → 회원 클릭은 모달 컨텐츠로 그대로 통과.
   //   안의 mini-button 만 pointer-events-auto → 다음으로 누름 가능.
   if (compact) {
+    // placement="top" 인 step 은 화면 상단 fixed (target 이 화면 상단 메뉴/탭이라
+    //   카드를 하단에 두면 아래쪽 컨텐츠 가림). 그 외는 BottomNav 위쪽 (bottom-20).
+    const compactPos =
+      step.placement === "top"
+        ? "top-14 inset-x-0 z-[112] flex justify-center px-3 fixed pointer-events-none"
+        : "bottom-20 inset-x-0 z-[112] flex justify-center px-3 fixed pointer-events-none";
     return (
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: step.placement === "top" ? -12 : 12 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 12 }}
+        exit={{ opacity: 0, y: step.placement === "top" ? -12 : 12 }}
         transition={{ duration: 0.25 }}
         role="status"
         aria-label={step.title}
         data-tour-overlay="true"
-        className="pointer-events-none fixed inset-x-0 bottom-20 z-[112] flex justify-center px-3"
+        className={compactPos}
       >
         <div className="flex max-w-[340px] items-center gap-2 rounded-pill border border-amber-400/40 bg-[#0a1024]/95 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.55)] backdrop-blur-sm">
           <div className="shrink-0">
