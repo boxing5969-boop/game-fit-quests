@@ -5,9 +5,10 @@
  * 백업으로 수동 "완료했어요" 버튼은 TutorialFloatingMascot 에 있음.
  *
  * 감지 종류:
- *   · avatar_set      — profile.avatar_url 변경 (null → string)
- *   · viewed_guide    — /guide 페이지 5초 체류
- *   · mission_done    — daily_quest_completions 첫 row (오늘)
+ *   · avatar_set       — profile.avatar_url 변경 (null → string)
+ *   · viewed_guide     — /guide 페이지 5초 체류
+ *   · viewed_missions  — /missions 페이지 5초 체류 (탭 확인 충분)
+ *   · mission_done     — daily_quest_completions 첫 row (오늘) — legacy
  *   · first_attendance — attendance_logs 첫 row (이 회원)
  *   · first_challenge  — challenge_participants 첫 row (이 회원)
  *
@@ -22,6 +23,7 @@ import { TUTORIAL_STEPS } from "@/data/unlockRules";
 import { supabase } from "@/integrations/supabase/client";
 
 const GUIDE_DWELL_MS = 5000; // 가이드에서 5초 체류 = 봤다고 인정
+const MISSIONS_DWELL_MS = 5000; // 훈련 화면에서 5초 체류 = 둘러봤다고 인정
 
 export function useTutorialAutoDetect() {
   const { user, profile } = useAuth();
@@ -60,6 +62,17 @@ export function useTutorialAutoDetect() {
     const t = setTimeout(() => {
       advance();
     }, GUIDE_DWELL_MS);
+    return () => clearTimeout(t);
+  }, [currentDetector, location.pathname, advance]);
+
+  // ── 2-B) viewed_missions: /missions 5초 체류 = 탭 둘러보기 충분 ──
+  useEffect(() => {
+    if (currentDetector !== "viewed_missions") return;
+    const onMissions = location.pathname.startsWith("/missions");
+    if (!onMissions) return;
+    const t = setTimeout(() => {
+      advance();
+    }, MISSIONS_DWELL_MS);
     return () => clearTimeout(t);
   }, [currentDetector, location.pathname, advance]);
 

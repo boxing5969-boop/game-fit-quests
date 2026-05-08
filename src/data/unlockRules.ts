@@ -297,13 +297,15 @@ export type TutorialStepKey =
  * 자동완료 감지 키 — TutorialActionDetector 훅에서 사용.
  *   · "avatar_set"     — profile.avatar_url 이 set 됨 (null → string)
  *   · "viewed_guide"   — /guide 또는 /about 페이지에 5초 이상 체류
- *   · "mission_done"   — 오늘 첫 mission completion row 생성
+ *   · "viewed_missions" — /missions 페이지에 5초 이상 체류 (탭 둘러보기 충분)
+ *   · "mission_done"   — 오늘 첫 mission completion row 생성 (legacy)
  *   · "first_attendance" — attendance_logs 첫 row
  *   · "first_challenge"  — challenge_participants 첫 row
  */
 export type TutorialDetectorKey =
   | "avatar_set"
   | "viewed_guide"
+  | "viewed_missions"
   | "mission_done"
   | "first_attendance"
   | "first_challenge";
@@ -365,15 +367,15 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     key: "first_mission",
     order: 3,
-    label: "오늘의 미션 하나 완료",
-    description: "성장은 출석이 아니라 퀘스트에서 시작됩니다. 가장 쉬운 것부터 하나 깨봐요.",
-    hint: "미션 페이지에서 오늘의 미션 하나를 골라 완료 상태로 표시하세요.",
-    ctaLabel: "미션 보기",
+    label: "훈련 미션 둘러보기",
+    description: "훈련 화면을 한 번 둘러보세요. 화이트 리그와 전체 미션 탭이 보여요.",
+    hint: "훈련 페이지에 들어가 화이트 리그 / 전체 미션 두 탭을 한 번씩 살펴보세요. 잠깐 머무는 것만으로 자동 완료돼요.",
+    ctaLabel: "훈련 화면 보기",
     navTarget: "/missions",
-    detector: "mission_done",
+    detector: "viewed_missions",
     icon: "⚡",
-    spotlightSelector: '[data-tutorial-target="first-mission-card"]',
-    spotlightHint: "이 카드 하나만 완료하면 끝! 가장 쉬운 미션이에요.",
+    spotlightSelector: '[data-tour="missions-tab-control"]',
+    spotlightHint: "두 탭을 잠깐 둘러보면 자동으로 완료돼요.",
   },
   {
     key: "first_checkin",
