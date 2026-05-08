@@ -359,14 +359,15 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     order: 2,
     label: "2단계 — 마이복서153 알아보기",
     description:
-      "이 앱이 어떤 가치를 만들고, 무엇을 향해 가는지 가이드에서 한 번 살펴보세요. 핵심 페이지 한 곳만 5초 머물러도 자동 완료.",
-    hint: "프로그램 소개 / 가치맵 / 과학적 설계 — 한 카드만 들어가서 잠깐 읽어보면 됩니다.",
-    ctaLabel: "가이드 열기",
+      "이 앱이 어떤 가치를 만들고, 무엇을 향해 가는지 가이드에서 한 번 살펴보세요. 가이드 페이지에 5초만 머물러도 자동 완료, 카드 한 장 눌러도 완료돼요.",
+    hint: "👆 첫 번째 카드를 한 번 눌러서 들어가보세요. 또는 가이드 페이지에서 5초만 머물러도 자동 완료됩니다. 프로그램 소개 / 가치맵 / 과학적 설계 — 어느 카드든 OK.",
+    ctaLabel: "가이드 열기 →",
     navTarget: "/guide",
     detector: "viewed_guide",
     icon: "📖",
     spotlightSelector: '[data-tutorial-target="guide-first-card"]',
-    spotlightHint: "여기 카드 한 장만 들어가서 잠시 읽어보면 자동으로 완료돼요.",
+    spotlightHint:
+      "👆 여기를 클릭하세요! 카드를 누르거나, 가이드 페이지에 5초만 머물러도 자동으로 2단계가 완료됩니다.",
   },
   {
     key: "first_mission",
