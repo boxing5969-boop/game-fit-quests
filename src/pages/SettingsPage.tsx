@@ -539,11 +539,14 @@ const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
 };
 
 // 64-K: 오삼 5단계 가이드(왼쪽 하단 floating)만 다시 시작 — 환영 모달은 안 띄움.
-//   · restart RPC (tutorial_step=0) 호출
-//   · osami-welcome-seen='1' 을 강제 set → 환영 모달 노출 차단
-//   · 회원이 환영 모달 한 번도 본 적 없어도 가이드만 진행
+//   · useTutorialState.restart() 사용 — RPC + setLocalCompleted(0) +
+//     lastStepsRef reset + refreshProfile 까지 모두 호출
+//     (이전엔 RPC 만 호출 → local state 가 5 그대로라 isFinished=true →
+//      isEligible=false 로 가이드가 마운트 안 됨)
+//   · restart 가 osami-welcome-seen 을 제거하므로 직후 다시 set →
+//     환영 모달 노출 차단, 가이드만 시작
 const RestartGuideOnlyButton = ({ onDone }: { onDone: () => void }) => {
-  const { refreshProfile } = useAuth();
+  const { restart: restartTutorial } = useTutorialState();
   const [busy, setBusy] = useState(false);
   return (
     <button
@@ -552,7 +555,12 @@ const RestartGuideOnlyButton = ({ onDone }: { onDone: () => void }) => {
       onClick={async () => {
         setBusy(true);
         try {
-          // 환영 모달 차단 — 가이드만 시작
+          const ok = await restartTutorial();
+          if (!ok) {
+            toast.error("다시 시작에 실패했습니다. 잠시 후 다시 시도해주세요.");
+            return;
+          }
+          // restart 가 osami-welcome-seen 을 제거 → 가이드만 시작 위해 다시 set
           if (typeof window !== "undefined") {
             try {
               window.localStorage.setItem("osami-welcome-seen", "1");
@@ -560,12 +568,6 @@ const RestartGuideOnlyButton = ({ onDone }: { onDone: () => void }) => {
               /* noop */
             }
           }
-          const { error } = await supabase.rpc("restart_tutorial" as any);
-          if (error) {
-            toast.error("다시 시작에 실패했습니다. 잠시 후 다시 시도해주세요.");
-            return;
-          }
-          await refreshProfile();
           toast.success("오삼 5단계 가이드를 다시 시작합니다 🥊");
           onDone();
         } finally {
