@@ -283,6 +283,7 @@ const SettingsPage = () => {
               온보딩 다시 보기
             </button>
             <RestartTutorialButton onDone={() => navigate("/home")} />
+            <RestartGuideOnlyButton onDone={() => navigate("/home")} />
             {isAdmin && (
               <>
                 <button
@@ -533,6 +534,37 @@ const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
       className="rounded-xl bg-reward/15 px-4 py-2.5 text-sm font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
     >
       {busy ? "준비 중…" : "🥊 오삼 환영 인사부터 처음 (인사 + 5단계 가이드)"}
+    </button>
+  );
+};
+
+// 64-K: 오삼 가이드(왼쪽 하단 5단계)만 다시 시작 — 환영 인사 모달은 안 띄움.
+//   restart RPC 만 호출 + osami-welcome-seen flag 유지.
+const RestartGuideOnlyButton = ({ onDone }: { onDone: () => void }) => {
+  const { refreshProfile } = useAuth();
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          const { error } = await supabase.rpc("restart_tutorial" as any);
+          if (error) {
+            toast.error("다시 시작에 실패했습니다. 잠시 후 다시 시도해주세요.");
+            return;
+          }
+          await refreshProfile();
+          toast.success("오삼 가이드 5단계를 다시 시작합니다 🥊");
+          onDone();
+        } finally {
+          setBusy(false);
+        }
+      }}
+      className="rounded-xl border border-reward/30 bg-reward/5 px-4 py-2.5 text-sm font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
+    >
+      {busy ? "준비 중…" : "🥊 오삼 가이드(왼쪽 하단)만 다시 시작"}
     </button>
   );
 };

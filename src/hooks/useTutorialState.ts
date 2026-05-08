@@ -4,6 +4,7 @@ import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTutorialCamp } from "@/features/tutorial-camp/useTutorialCamp";
 import {
   TUTORIAL_STEPS,
   TUTORIAL_REWARD_GEMS,
@@ -48,6 +49,9 @@ interface TutorialRewardResult {
 export function useTutorialState() {
   const { user, profile, refreshProfile } = useAuth();
   const qc = useQueryClient();
+  // 64-J: 5단계 가이드 완료 시 7일 캠프 자동 시작 (신규 회원 흐름):
+  //   온보딩 → 환영 인사 → 오삼 가이드 5단계 → 7일 스타터 캠프
+  const { state: campState, start: startCamp } = useTutorialCamp();
 
   const p = profile as any;
   const isCompleted = !!p?.tutorial_completed;
@@ -125,17 +129,30 @@ export function useTutorialState() {
 
     toast.success(
       isFinal
-        ? "🏆 5단계 모두 완료! 오삼이 인사 끝났어요."
+        ? "🏆 5단계 모두 완료! 7일 스타터 캠프로 이어집니다."
         : `✓ ${justStep?.label ?? "단계"} 완료!`,
       {
         id: `tutorial-step-${justFinished}`,
         description: isFinal
-          ? "이제 모든 메뉴를 자유롭게 둘러보세요."
+          ? "오삼이가 7일 캠프를 자동으로 시작해드려요."
           : `다음 단계로 넘어갑니다.`,
         duration: isFinal ? 3500 : 2200,
       },
     );
-  }, [stepsCompleted]);
+
+    // 64-J: 5 단계 완료 → 7일 캠프 자동 시작 (status === 'not_started' 일 때만)
+    //   회원 흐름: 온보딩 → 환영 인사 → 가이드 5단계 → 7일 캠프
+    //   이미 시작/완료/스킵된 경우엔 재시작하지 않음 (멱등 보장)
+    if (isFinal && campState.status === "not_started") {
+      window.setTimeout(() => {
+        try {
+          startCamp();
+        } catch {
+          /* noop */
+        }
+      }, 2000);
+    }
+  }, [stepsCompleted, campState.status, startCamp]);
 
   const persistStep = useCallback(
     async (step: number) => {
