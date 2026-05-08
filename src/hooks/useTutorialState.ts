@@ -228,7 +228,10 @@ export function useTutorialState() {
     void refreshProfile();
   }, [refreshProfile]);
 
-  /** 다시 시작 (Settings → 튜토리얼 다시 보기). 보상 재지급 0건 보장. */
+  /** 다시 시작 (Settings → 튜토리얼 다시 보기). 보상 재지급 0건 보장.
+   *  · tutorial_step 0 으로 reset (server RPC)
+   *  · 환영 모달 localStorage flag 도 제거 → 환영 인사부터 다시 노출
+   */
   const restart = useCallback(async (): Promise<boolean> => {
     const { error } = await supabase.rpc("restart_tutorial" as any);
     if (error) {
@@ -236,6 +239,16 @@ export function useTutorialState() {
       return false;
     }
     setLocalCompleted(0);
+    // 환영 모달도 처음부터 — OsamiWelcomeModal 의 localStorage flag 제거
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem("osami-welcome-seen");
+      } catch {
+        /* noop */
+      }
+    }
+    // step toast dedup ref 도 reset (다음 advance 에서 toast 재발사 보장)
+    lastStepsRef.current = 0;
     void refreshProfile();
     return true;
   }, [refreshProfile]);

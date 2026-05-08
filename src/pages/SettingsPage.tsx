@@ -266,8 +266,12 @@ const SettingsPage = () => {
 
         {/* Onboarding replay */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.01s" }}>
-          <h2 className="mb-3 text-base font-bold text-foreground">온보딩</h2>
-          <p className="mb-3 text-xs text-muted-foreground">마이복서153 소개를 다시 볼 수 있습니다.</p>
+          <h2 className="mb-3 text-base font-bold text-foreground">온보딩 / 오삼 가이드</h2>
+          <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+            · <strong>온보딩</strong> — 마이복서153 소개 8 슬라이드<br />
+            · <strong>오삼 환영 인사</strong> — 가운데 큰 모달 (안녕하세요! 오삼이에요)<br />
+            · <strong>오삼 가이드 5단계</strong> — 왼쪽 하단 작은 오삼이가 1단계부터 안내
+          </p>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => {
@@ -528,7 +532,7 @@ const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
       }}
       className="rounded-xl bg-reward/15 px-4 py-2.5 text-sm font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
     >
-      {busy ? "준비 중…" : "🥊 오삼 5단계 인사 다시 시작 (왼쪽 하단 가이드)"}
+      {busy ? "준비 중…" : "🥊 오삼 환영 인사부터 처음 (인사 + 5단계 가이드)"}
     </button>
   );
 };
