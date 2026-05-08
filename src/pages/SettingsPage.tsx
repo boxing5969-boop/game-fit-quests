@@ -528,7 +528,7 @@ const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
       }}
       className="rounded-xl bg-reward/15 px-4 py-2.5 text-sm font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
     >
-      {busy ? "준비 중…" : "🥊 OSAM 5단계 튜토리얼 다시 시작"}
+      {busy ? "준비 중…" : "🥊 오삼 5단계 인사 다시 시작 (왼쪽 하단 가이드)"}
     </button>
   );
 };
