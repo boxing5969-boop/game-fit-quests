@@ -295,17 +295,19 @@ export type TutorialStepKey =
 
 /**
  * 자동완료 감지 키 — TutorialActionDetector 훅에서 사용.
- *   · "avatar_set"     — profile.avatar_url 이 set 됨 (null → string)
- *   · "viewed_guide"   — /guide 또는 /about 페이지에 5초 이상 체류
+ *   · "avatar_set"      — profile.avatar_url 이 set 됨 (null → string)
+ *   · "viewed_guide"    — /guide 또는 /about 페이지에 5초 이상 체류
  *   · "viewed_missions" — /missions 페이지에 5초 이상 체류 (탭 둘러보기 충분)
- *   · "mission_done"   — 오늘 첫 mission completion row 생성 (legacy)
+ *   · "viewed_challenges" — /challenges 페이지에 5초 이상 체류 (둘러보기 충분)
+ *   · "mission_done"    — 오늘 첫 mission completion row 생성 (legacy)
  *   · "first_attendance" — attendance_logs 첫 row
- *   · "first_challenge"  — challenge_participants 첫 row
+ *   · "first_challenge"  — challenge_participants 첫 row (legacy)
  */
 export type TutorialDetectorKey =
   | "avatar_set"
   | "viewed_guide"
   | "viewed_missions"
+  | "viewed_challenges"
   | "mission_done"
   | "first_attendance"
   | "first_challenge";
@@ -341,9 +343,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     key: "profile_photo",
     order: 1,
-    label: "프로필 사진 설정",
-    description: "내 얼굴이 보여야 라이브보드에서 더 멋있게 등장해요.",
-    hint: "마이페이지에서 프로필 사진을 업로드해보세요. 카메라 아이콘을 누르면 됩니다.",
+    label: "1단계 — 프로필 사진 설정",
+    description:
+      "내 얼굴이 보여야 라이브보드 / 랭킹 / 챌린지에서 더 멋있게 등장해요. 마이페이지에서 카메라 아이콘을 눌러 한 장 올리면 끝.",
+    hint: "마이페이지 상단의 프로필 영역에서 카메라 아이콘을 누르고 사진 한 장만 올려주세요. 업로드되면 자동 완료돼요.",
     ctaLabel: "내 프로필 가기",
     navTarget: "/mypage",
     detector: "avatar_set",
@@ -354,9 +357,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     key: "discover_app",
     order: 2,
-    label: "마이복서153 알아보기",
-    description: "이 앱이 어떤 가치를 만들고, 무엇을 향해 가는지 한 번 읽어보세요.",
-    hint: "프로그램 소개 / 가치맵 / 과학적 설계 — 핵심 페이지 한 곳만 봐도 충분합니다.",
+    label: "2단계 — 마이복서153 알아보기",
+    description:
+      "이 앱이 어떤 가치를 만들고, 무엇을 향해 가는지 가이드에서 한 번 살펴보세요. 핵심 페이지 한 곳만 5초 머물러도 자동 완료.",
+    hint: "프로그램 소개 / 가치맵 / 과학적 설계 — 한 카드만 들어가서 잠깐 읽어보면 됩니다.",
     ctaLabel: "가이드 열기",
     navTarget: "/guide",
     detector: "viewed_guide",
@@ -367,9 +371,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     key: "first_mission",
     order: 3,
-    label: "훈련 미션 둘러보기",
-    description: "훈련 화면을 한 번 둘러보세요. 화이트 리그와 전체 미션 탭이 보여요.",
-    hint: "훈련 페이지에 들어가 화이트 리그 / 전체 미션 두 탭을 한 번씩 살펴보세요. 잠깐 머무는 것만으로 자동 완료돼요.",
+    label: "3단계 — 훈련 미션 둘러보기",
+    description:
+      "훈련 화면에서 화이트 리그(매일 50분 수업)와 전체 미션(공식 단계별 미션) 두 탭을 한 번씩 살펴보세요. 5초만 머물러도 자동 완료.",
+    hint: "훈련 페이지의 위쪽 토글에서 '🤍 화이트 리그' / '🥊 전체 미션' 을 한 번씩 눌러보면 어떤 자리인지 감이 와요.",
     ctaLabel: "훈련 화면 보기",
     navTarget: "/missions",
     detector: "viewed_missions",
@@ -380,9 +385,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     key: "first_checkin",
     order: 4,
-    label: "첫 출석 체크인",
-    description: "QR 을 스캔하면 출석이 기록되고 라이브보드에 등장합니다.",
-    hint: "홈 화면 상단의 'QR 체크인 하기' 버튼을 눌러 코치님의 QR을 스캔하세요.",
+    label: "4단계 — 첫 출석 체크인",
+    description:
+      "체육관에서 코치님의 QR 을 스캔하면 출석이 기록되고 라이브보드에 내 이름이 올라가요. 출석은 모든 보상의 시작이에요.",
+    hint: "홈 화면 상단의 'QR 체크인 하기' 버튼을 눌러 코치님이 보여주시는 QR 을 카메라로 비춰주세요.",
     ctaLabel: "QR 체크인 가기",
     navTarget: "/home",
     detector: "first_attendance",
@@ -393,15 +399,16 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     key: "first_challenge",
     order: 5,
-    label: "첫 챌린지 참여",
-    description: "혼자가 아니라 함께. 더 파이터 시즌 챌린지에 참여해보세요.",
-    hint: "챌린지 페이지에서 진행 중인 챌린지를 골라 참여하기 버튼을 누르세요.",
-    ctaLabel: "챌린지 가기",
+    label: "5단계 — 더 파이터 챌린지 둘러보기",
+    description:
+      "혼자가 아니라 함께. '더 파이터' 시즌 챌린지 페이지에서 어떤 도전들이 진행 중인지 한 번 둘러보세요. 5초만 머물러도 자동 완료.",
+    hint: "더 파이터 시즌 페이지에서 위에서 아래까지 어떤 챌린지가 있는지 가볍게 훑어봐주세요. 마음에 드는 게 있으면 카드 하나 눌러봐도 좋아요.",
+    ctaLabel: "더 파이터 챌린지 보기",
     navTarget: "/challenges",
-    detector: "first_challenge",
+    detector: "viewed_challenges",
     icon: "🏆",
-    spotlightSelector: '[data-tutorial-target="first-challenge-card"]',
-    spotlightHint: "이 챌린지 카드를 누르고 참여하기를 눌러보세요.",
+    spotlightSelector: '[data-tour="challenge-arena-scroll"]',
+    spotlightHint: "위에서 아래까지 한 번 둘러보면 자동으로 완료돼요.",
   },
 ];
 

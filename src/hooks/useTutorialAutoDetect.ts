@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const GUIDE_DWELL_MS = 5000; // 가이드에서 5초 체류 = 봤다고 인정
 const MISSIONS_DWELL_MS = 5000; // 훈련 화면에서 5초 체류 = 둘러봤다고 인정
+const CHALLENGES_DWELL_MS = 5000; // 더 파이터 챌린지에서 5초 체류 = 둘러봤다고 인정
 
 export function useTutorialAutoDetect() {
   const { user, profile } = useAuth();
@@ -73,6 +74,17 @@ export function useTutorialAutoDetect() {
     const t = setTimeout(() => {
       advance();
     }, MISSIONS_DWELL_MS);
+    return () => clearTimeout(t);
+  }, [currentDetector, location.pathname, advance]);
+
+  // ── 2-C) viewed_challenges: /challenges 5초 체류 = 더 파이터 둘러보기 충분 ──
+  useEffect(() => {
+    if (currentDetector !== "viewed_challenges") return;
+    const onChallenges = location.pathname.startsWith("/challenges");
+    if (!onChallenges) return;
+    const t = setTimeout(() => {
+      advance();
+    }, CHALLENGES_DWELL_MS);
     return () => clearTimeout(t);
   }, [currentDetector, location.pathname, advance]);
 
