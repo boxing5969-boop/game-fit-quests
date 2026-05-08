@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useTutorialCamp } from "@/features/tutorial-camp/useTutorialCamp";
+import { TUTORIAL_DEV_OPEN_EVENT } from "@/features/tutorial-camp/TutorialDevPanel";
 
 // ── Home widget toggle helpers ──
 const HOME_PREFS_KEY = "home-widget-prefs";
@@ -279,19 +280,32 @@ const SettingsPage = () => {
             </button>
             <RestartTutorialButton onDone={() => navigate("/home")} />
             {isAdmin && (
-              <button
-                onClick={() => {
-                  // 진행 / 완료 / paused 상태 모두 처음부터 — reset 후 start
-                  // (이전엔 startCamp 만 → cooldown / completed 시 재실행 안 됨)
-                  resetCamp();
-                  startCamp();
-                  toast.success("7일 스타터 캠프 — Day 1 부터 다시 시작 🥊");
-                  navigate("/home");
-                }}
-                className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm font-bold text-amber-700 transition-all active:scale-95 dark:text-amber-400"
-              >
-                🥊 7일 스타터 캠프 처음부터 시작 <span className="ml-1 text-[10px] font-normal opacity-70">(admin)</span>
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    // 진행 / 완료 / paused 상태 모두 처음부터 — reset 후 start
+                    // (이전엔 startCamp 만 → cooldown / completed 시 재실행 안 됨)
+                    resetCamp();
+                    startCamp();
+                    toast.success("7일 스타터 캠프 — Day 1 부터 다시 시작 🥊");
+                    navigate("/home");
+                  }}
+                  className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm font-bold text-amber-700 transition-all active:scale-95 dark:text-amber-400"
+                >
+                  🥊 7일 스타터 캠프 처음부터 시작 <span className="ml-1 text-[10px] font-normal opacity-70">(admin)</span>
+                </button>
+                <button
+                  onClick={() => {
+                    // 64-G: 7일 캠프 Day 1~7 미리보기 modal — TutorialDevPanel 열기
+                    if (typeof window !== "undefined") {
+                      window.dispatchEvent(new Event(TUTORIAL_DEV_OPEN_EVENT));
+                    }
+                  }}
+                  className="rounded-xl border border-amber-500/40 bg-amber-500/5 px-4 py-2.5 text-sm font-bold text-amber-700 transition-all active:scale-95 dark:text-amber-400"
+                >
+                  🐞 관리자 미리보기 — Day 1~7 <span className="ml-1 text-[10px] font-normal opacity-70">(admin)</span>
+                </button>
+              </>
             )}
           </div>
           {isAdmin && (
@@ -514,7 +528,7 @@ const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
       }}
       className="rounded-xl bg-reward/15 px-4 py-2.5 text-sm font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
     >
-      {busy ? "준비 중…" : "🥊 튜토리얼 다시 시작"}
+      {busy ? "준비 중…" : "🥊 OSAM 5단계 튜토리얼 다시 시작"}
     </button>
   );
 };

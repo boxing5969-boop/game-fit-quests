@@ -57,6 +57,9 @@ const STATUS_OPTIONS: { value: TutorialCampStatus; label: string }[] = [
   { value: "skipped", label: "skipped" },
 ];
 
+/** 외부 진입점 — Settings 등에서 modal 직접 열기 */
+export const TUTORIAL_DEV_OPEN_EVENT = "tutorial-dev-open";
+
 const TutorialDevPanel = () => {
   const { role } = useAuth();
   const [eligible, setEligible] = useState(false);
@@ -68,11 +71,25 @@ const TutorialDevPanel = () => {
     setEligible(shouldShowDevPanel(role));
   }, [role]);
 
+  // 64-G: 외부에서 modal 열기 — Settings 의 '관리자 미리보기' 버튼 등
+  useEffect(() => {
+    if (!eligible) return;
+    if (typeof window === "undefined") return;
+    const onOpen = () => setOpen(true);
+    window.addEventListener(TUTORIAL_DEV_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(TUTORIAL_DEV_OPEN_EVENT, onOpen);
+  }, [eligible]);
+
   if (!eligible) return null;
 
   return (
     <>
-      <FloatingButton isAdmin={isAdmin} onClick={() => setOpen(true)} />
+      {/* 64-G: 관리자(role 기반) 진입은 Settings 에서만 — 홈/페이지 floating
+          제거해 화면을 가리지 않음. dev 토글(localhost / query) 진입자만
+          floating 버튼 노출. */}
+      {!isAdmin && (
+        <FloatingButton isAdmin={isAdmin} onClick={() => setOpen(true)} />
+      )}
       <AnimatePresence>
         {open && <DevModal isAdmin={isAdmin} onClose={() => setOpen(false)} />}
       </AnimatePresence>
