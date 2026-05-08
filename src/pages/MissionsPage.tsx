@@ -444,8 +444,8 @@ const MissionsPage = () => {
             value={missionTab}
             onChange={(v) => setMissionTab(v)}
             segments={[
-              { value: "white", label: "🤍 화이트 리그" },
-              { value: "missions", label: "🥊 전체 미션" },
+              { value: "white", label: "🤍 올리그" },
+              { value: "missions", label: "🥊 복싱 컨텐츠" },
             ]}
             fullWidth
           />
@@ -529,7 +529,11 @@ const MissionsPage = () => {
                         />
                         <div className="min-w-0 flex-1">
                           <h3 className="text-body-lg text-foreground">
-                            {RANK_LABELS[rank]} 리그
+                            {/* 64-M: 화이트 리그만 컨텐츠 영상 라벨로 노출.
+                                다른 리그는 기존 'X 리그' 표기 유지. */}
+                            {rank === "white"
+                              ? "화이트 리그 컨텐츠 영상"
+                              : `${RANK_LABELS[rank]} 리그`}
                           </h3>
                           <p className="text-caption text-muted-foreground">
                             <span className="number-font">
