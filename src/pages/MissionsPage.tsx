@@ -20,6 +20,7 @@ import {
 
 import { useAuth } from "@/contexts/AuthContext";
 import { MasterProgressCard } from "@/components/master/MasterProgressCard";
+import { useTutorialState } from "@/hooks/useTutorialState";
 import {
   useMissions,
   useMyMissionSubmissions,
@@ -110,6 +111,10 @@ const emptyMissionForm: MissionForm = {
 const MissionsPage = () => {
   const navigate = useNavigate();
   const { progress, role, user, refreshProgress } = useAuth();
+  // 64-N: 오삼 가이드 step 3 진행 — 올리그(SegmentedControl) 강조
+  const tutorial = useTutorialState();
+  const isTutorialStep3 =
+    tutorial.isEligible && tutorial.currentStep?.key === "first_mission";
   const { data: missions, isLoading } = useMissions();
   const { data: submissions } = useMyMissionSubmissions();
   const submitMission = useSubmitMission();
@@ -439,12 +444,25 @@ const MissionsPage = () => {
           />
         )}
 
-        <div data-tour="missions-tab-control">
+        <div
+          data-tour="missions-tab-control"
+          className={
+            isTutorialStep3 && missionTab !== "white"
+              ? "rounded-pill ring-2 ring-amber-400 ring-offset-1 ring-offset-background animate-pulse"
+              : ""
+          }
+        >
           <SegmentedControl<MissionTab>
             value={missionTab}
             onChange={(v) => setMissionTab(v)}
             segments={[
-              { value: "white", label: "🤍 올리그" },
+              {
+                value: "white",
+                label:
+                  isTutorialStep3 && missionTab !== "white"
+                    ? "👆 🤍 올리그"
+                    : "🤍 올리그",
+              },
               { value: "missions", label: "🥊 복싱 컨텐츠" },
             ]}
             fullWidth

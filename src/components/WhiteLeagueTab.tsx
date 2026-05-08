@@ -17,6 +17,7 @@ import {
 import { ALL_LEVELS, getLevelById, type UnifiedLevel } from "@/data/allLevelsData";
 import { getChecklistForLevel } from "@/data/levelRuleEngine";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
+import { useTutorialState } from "@/hooks/useTutorialState";
 import SessionRunner from "@/components/SessionRunner";
 import {
   CheckCircle2, Lock, ChevronRight, ChevronDown, Clock, Zap, Target,
@@ -47,6 +48,10 @@ const WhiteLeagueTab = () => {
   const { progress } = useAuth();
   const [detailView, setDetailView] = useState<DetailView>(null);
   const [expandedLeague, setExpandedLeague] = useState<string | null>(null);
+  // 64-N: 오삼 가이드 step 3 (훈련 미션 둘러보기) 진행 중 — Lv.1 카드 강조
+  const tutorial = useTutorialState();
+  const isTutorialStep3 =
+    tutorial.isEligible && tutorial.currentStep?.key === "first_mission";
 
   const currentRank = progress?.current_rank || "white";
   const currentLevel = progress?.current_level || 1;
@@ -105,15 +110,30 @@ const WhiteLeagueTab = () => {
                   const isLocked = state === "locked";
                   const isBoss = ul.levelInLeague === 10;
 
+                  // 64-N: 오삼 가이드 step 3 일 때 화이트 Lv.1 카드만 amber pulse + '👆 클릭' badge
+                  const isTutorialTargetCard =
+                    isTutorialStep3 &&
+                    lc.id === "white" &&
+                    ul.levelInLeague === 1 &&
+                    !isLocked;
                   return (
                     <button
                       key={ul.globalLevel}
+                      data-tour={
+                        lc.id === "white" && ul.levelInLeague === 1
+                          ? "white-level-1-card"
+                          : undefined
+                      }
                       onClick={() => !isLocked && setDetailView({ league: lc.id, level: ul.levelInLeague })}
                       disabled={isLocked}
-                      className={`group w-full rounded-xl border p-3 text-left transition-all active:scale-[0.98] ${
+                      className={`group relative w-full rounded-xl border p-3 text-left transition-all active:scale-[0.98] ${
                         state === "complete" ? "border-primary/20 bg-card"
                         : state === "active" ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
                         : "border-border bg-muted/30 opacity-50"
+                      } ${
+                        isTutorialTargetCard
+                          ? "ring-2 ring-amber-400 ring-offset-1 ring-offset-card animate-pulse"
+                          : ""
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -141,6 +161,11 @@ const WhiteLeagueTab = () => {
                         </div>
                         {!isLocked && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
                       </div>
+                      {isTutorialTargetCard && (
+                        <span className="absolute -top-2 right-3 rounded-full bg-amber-500 px-2 py-0.5 text-[9px] font-black text-amber-950 shadow-md">
+                          👆 클릭
+                        </span>
+                      )}
                     </button>
                   );
                 })}
