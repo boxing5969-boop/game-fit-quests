@@ -584,45 +584,50 @@ function StepOrderPanel({
         <p className="mb-1 text-[9.5px] font-bold uppercase tracking-wider text-emerald-300/80">
           ✓ 보이는 단계 ({list.length}개)
         </p>
-        <div className="space-y-1 rounded-lg border border-amber-400/15 bg-black/20 p-1.5">
+        <div className="space-y-1.5 rounded-lg border border-amber-400/15 bg-black/20 p-1.5">
           {list.map((s, idx) => (
             <div
               key={`v-${day}-${idx}-${s.title}`}
-              className="flex items-center gap-1 rounded-md bg-black/30 px-2 py-1.5 text-[10.5px]"
+              className="rounded-md bg-black/30 px-2 py-1.5 text-[10.5px]"
             >
-              <span className="number-font w-5 shrink-0 text-center font-black text-amber-300">
-                {idx + 1}
-              </span>
-              <p className="flex-1 truncate text-amber-100">
-                {s.title || "(제목 없음)"}
-              </p>
-              <button
-                type="button"
-                onClick={() => move(idx, -1)}
-                disabled={idx === 0}
-                className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
-                aria-label="위로"
-              >
-                <ArrowUp className="h-3 w-3" />
-              </button>
-              <button
-                type="button"
-                onClick={() => move(idx, 1)}
-                disabled={idx === list.length - 1}
-                className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
-                aria-label="아래로"
-              >
-                <ArrowDown className="h-3 w-3" />
-              </button>
-              <button
-                type="button"
-                onClick={() => removeAt(idx)}
-                className="rounded border border-rose-400/40 bg-rose-950/30 p-0.5 text-rose-200 hover:bg-rose-950/50"
-                aria-label="빼기"
-                title="이 단계 빼기"
-              >
-                <Trash2 className="h-3 w-3" />
-              </button>
+              {/* 1행: 번호 + 제목 + 버튼 */}
+              <div className="flex items-center gap-1">
+                <span className="number-font w-5 shrink-0 text-center font-black text-amber-300">
+                  {idx + 1}
+                </span>
+                <p className="flex-1 truncate text-amber-100 font-bold">
+                  {s.title || "(제목 없음)"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => move(idx, -1)}
+                  disabled={idx === 0}
+                  className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
+                  aria-label="위로"
+                >
+                  <ArrowUp className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(idx, 1)}
+                  disabled={idx === list.length - 1}
+                  className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
+                  aria-label="아래로"
+                >
+                  <ArrowDown className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeAt(idx)}
+                  className="rounded border border-rose-400/40 bg-rose-950/30 p-0.5 text-rose-200 hover:bg-rose-950/50"
+                  aria-label="빼기"
+                  title="이 단계 빼기"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+              {/* 2행: 효과 / 기능 badge */}
+              <StepBadges step={s} />
             </div>
           ))}
           {list.length === 0 && (
@@ -872,6 +877,107 @@ function NewStepForm({
       <p className="text-[9px] leading-relaxed text-amber-200/55">
         ※ 만든 단계는 {day}일차 끝에 추가돼요. ↑↓ 로 원하는 위치로 옮길 수 있어요.
       </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// 64-Z: StepBadges — 단계의 효과 / 기능을 작은 chip 으로 시각화
+// ─────────────────────────────────────────────────────────────
+const COMPLETION_RULE_LABEL: Record<string, string> = {
+  target_clicked: "👆 클릭",
+  quiz_question_read: "⏱️ 4초 자동",
+  quiz_answer_selected: "✅ 답 선택",
+  quiz_correct_answer_selected: "🎯 정답",
+  scrolled_to_bottom: "⬇️ 스크롤",
+  text_input_min_length: "✏️ 입력",
+  option_selected: "🔘 옵션",
+  toggle_selected: "🔘 토글",
+  condition_checked: "☑️ 체크",
+  modal_closed: "✖️ 모달닫힘",
+  manual_confirm: "↪️ 수동",
+};
+
+const PLACEMENT_LABEL: Record<string, string> = {
+  top: "📍위",
+  bottom: "📍아래",
+  left: "📍왼쪽",
+  right: "📍오른쪽",
+  center: "📍가운데",
+};
+
+interface BadgeStep {
+  targetSelector: string;
+  placement: string;
+  completionRule?: string;
+  autoAdvance?: boolean;
+  autoNavigate?: boolean;
+  requireTargetClick?: boolean;
+  blockNextUntilComplete?: boolean;
+  helperMessage?: string;
+  successMessage?: string;
+}
+
+function StepBadges({ step }: { step: BadgeStep }) {
+  const sel = (step.targetSelector ?? "").trim();
+  const targetLabel = sel ? SELECTOR_LABELS_LITE[sel] ?? "사용자 selector" : "🌐 화면 가운데";
+  const placement = PLACEMENT_LABEL[step.placement] ?? `📍${step.placement}`;
+  const rule = step.completionRule
+    ? COMPLETION_RULE_LABEL[step.completionRule] ?? `📋 ${step.completionRule}`
+    : null;
+  const isCustom = step.targetSelector?.includes("custom_") ||
+    (typeof (step as { step?: number }).step === "number" &&
+      (step as unknown as { step: number }).step >= 1000);
+
+  return (
+    <div className="mt-1 flex flex-wrap gap-1 pl-6">
+      {isCustom && (
+        <span className="rounded-full bg-purple-500/25 px-1.5 py-0.5 text-[9px] font-bold text-purple-200">
+          ✨ 새 단계
+        </span>
+      )}
+      <span
+        className="max-w-[180px] truncate rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-200"
+        title={sel || "selector 비어있음"}
+      >
+        🎯 {targetLabel}
+      </span>
+      <span className="rounded-full bg-cyan-500/15 px-1.5 py-0.5 text-[9px] font-bold text-cyan-200">
+        {placement}
+      </span>
+      {rule && (
+        <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold text-emerald-200">
+          {rule}
+        </span>
+      )}
+      {step.autoAdvance && (
+        <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-bold text-blue-200">
+          ⏩ 자동 다음
+        </span>
+      )}
+      {step.autoNavigate && (
+        <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-bold text-blue-200">
+          🚀 페이지 자동
+        </span>
+      )}
+      {step.requireTargetClick && (
+        <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-[9px] font-bold text-rose-200">
+          🔒 클릭 필수
+        </span>
+      )}
+      {step.blockNextUntilComplete && (
+        <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-[9px] font-bold text-rose-200">
+          🔐 다음 잠금
+        </span>
+      )}
+      {step.helperMessage && (
+        <span
+          className="max-w-[200px] truncate rounded-full bg-amber-300/10 px-1.5 py-0.5 text-[9px] italic text-amber-200/80"
+          title={step.helperMessage}
+        >
+          🗨️ {step.helperMessage}
+        </span>
+      )}
     </div>
   );
 }
