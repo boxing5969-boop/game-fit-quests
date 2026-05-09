@@ -489,28 +489,29 @@ const DAY_2_STEPS: TutorialCampStep[] = [
 // 64-R: 사용자 피드백 "복싱 IQ 는 1일차에서 이미 진행하므로 다른 일차에는 X".
 //   Day 1/2 와 같은 cascade 패턴 — autoNavigate + click 강조 + autoAdvance.
 const DAY_3_STEPS: TutorialCampStep[] = [
-  // ── 0. 홈에서 153 QUEST 카드 click → /myboxer/quest 자동 이동 ──
+  // ── 0. 153 QUEST 페이지 자동 이동 + 안내 ──
+  //   home-quest-recommendation anchor 가 코드에 없어 click 강제 시 fallback
+  //   모드로 큰 카드만 떠 회원이 막힘 → autoNavigate 로 자동 이동, 4초 자동 진행.
   {
     day: 3,
     step: 0,
-    route: "/home",
+    route: "/myboxer/quest",
     targetKey: "day3.quest_intro",
-    targetSelector: '[data-tour="home-quest-recommendation"]',
+    targetSelector: "",
     title: "153 QUEST",
-    body: "오늘의 한 줄과 작은 행동이 모이는 곳이에요.\n홈 화면의 QUEST 카드를 한 번 눌러볼게요.",
-    osamiMessage: "공부보다 가벼워요. 한 번 눌러봐요.",
-    actionType: "click",
-    requireTargetClick: true,
+    body: "오늘의 한 줄과 작은 행동이 모이는 곳이에요.\n복싱 IQ · 챌린지 · 챔피언 일기 같은 작은 미션이 매일 새로 와요.",
+    osamiMessage: "공부보다 가벼워요. 잠깐 둘러볼게요.",
+    actionType: "navigate",
+    requireTargetClick: false,
     allowNextWithoutClick: true,
-    animation: "pulse",
-    placement: "bottom",
+    animation: "spotlight",
+    placement: "center",
     fallbackText:
-      "홈 화면에서 'QUEST' 추천 카드를 찾아 눌러주세요.",
+      "153 QUEST 페이지가 열리는 중이에요. 잠시만 기다려주세요.",
     completionText: "153 QUEST 화면이 열렸어요.",
-    helperMessage: "👆 여기 153 QUEST 카드를 눌러보세요.",
-    successMessage: "좋아요. QUEST 화면이 열렸어요.",
-    blockNextUntilComplete: true,
-    completionRule: "target_clicked",
+    helperMessage: "잠깐 둘러보고 있어요. 곧 다음으로 가요.",
+    successMessage: "좋아요. 카드들을 살펴볼게요.",
+    completionRule: "quiz_question_read",
     autoAdvance: true,
     autoNavigate: true,
   },
