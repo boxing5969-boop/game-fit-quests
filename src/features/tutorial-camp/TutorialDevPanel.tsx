@@ -587,6 +587,98 @@ function Section({
 }
 
 // ─────────────────────────────────────────────────────────────
+// 64-U: selector → 한글 라벨 사전. 자주 쓰는 anchor 만 매핑.
+//   모르는 selector 는 selector 그대로 표시.
+// ─────────────────────────────────────────────────────────────
+const SELECTOR_LABELS: Record<string, string> = {
+  '[data-tour="missions-official-training"]': "훈련 화면 (전체 영역)",
+  '[data-tour="missions-tab-control"]': "올리그 / 복싱 컨텐츠 토글",
+  '[data-tour="missions-league-header-white"]':
+    "복싱 컨텐츠 안 — 화이트 리그 헤더",
+  '[data-tour="missions-tab-control"] button[aria-selected="false"]':
+    "올리그/복싱 컨텐츠 — 비활성 토글",
+  '[data-tour="white-league-tabs"]': "화이트 리그 — 탭 줄 (배우기/수업실행/심사)",
+  '[data-tour="white-league-tab-learn"]': "📖 배우기 탭",
+  '[data-tour="white-league-tab-session"]': "🥊 수업실행 탭",
+  '[data-tour="white-league-tab-check"]': "✅ 심사 탭",
+  '[data-tour="white-level-1-card"]': "Lv.1 스탠스·가드·잽 입문 카드",
+  '[data-tour="boxing-iq-card"]': "복싱 IQ 카드 (153 QUEST)",
+  '[data-tour="boxing-iq-question"]': "복싱 IQ 모달 — 문제 영역",
+  '[data-tour="boxing-iq-options"]': "복싱 IQ 모달 — 선택지 영역",
+  '[data-tour="boxing-iq-selected-option"]': "복싱 IQ 모달 — 선택한 답",
+  '[data-tour="boxing-iq-result"]': "복싱 IQ 모달 — 결과 화면",
+  '[data-tour="quest-mini-academy"]': "153 QUEST — 오늘의 퀴즈 카드",
+  '[data-tour="quest-mini-challenge"]': "153 QUEST — 챌린지 미니 카드",
+  '[data-tour="quest-mini-journal"]': "153 QUEST — 챔피언 일기 미니 카드",
+  '[data-tour="champion-journal-card"]': "챔피언 일기 카드",
+  '[data-tour="challenge-arena-card"]': "챌린지 아레나 카드",
+  '[data-tour="challenge-arena-scroll"]': "챌린지 페이지 스크롤 영역",
+  '[data-tour="journal-prompt-list"]': "일기 — 질문 목록",
+  '[data-tour="journal-reflection-input"]': "일기 — 한 줄 입력칸",
+  '[data-tour="journal-condition-options"]': "일기 — 컨디션 선택지",
+  '[data-tour="journal-submit"]': "일기 — '기록 남기기' 버튼",
+  '[data-tour="home-osami-note"]': "홈 — 오삼이 노트",
+  '[data-tour="home-today-focus"]': "홈 — 오늘의 포커스",
+  '[data-tour="home-quest-recommendation"]': "홈 — QUEST 추천 카드 (anchor 미존재)",
+  '[data-tour="missions-master-road"]': "마스터로드 카드 (anchor 미존재)",
+  '[data-tour="missions-submit-note"]': "공식 미션 제출 안내 (anchor 미존재)",
+  '[data-tour="missions-coach-approval-note"]': "코치 승인 안내 (anchor 미존재)",
+  '[data-tutorial-target="profile-photo-button"]': "마이페이지 — 카메라 아이콘",
+  '[data-tutorial-target="guide-first-card"]': "가이드 페이지 — 첫 카드",
+  '[data-tutorial-target="qr-checkin-button"]': "홈 — 'QR 체크인 하기' 버튼",
+  '[data-tutorial-target="first-mission-card"]': "전체 미션 — 첫 카드",
+  '[data-tutorial-target="first-challenge-card"]': "더 파이터 — 첫 챌린지 카드",
+};
+
+function describeSelector(sel: string): string {
+  if (!sel || sel.trim() === "") return "(선택 안 함 — 화면 가운데 큰 카드로 표시)";
+  return SELECTOR_LABELS[sel.trim()] ?? "사용자 정의 selector — 정확히 매칭되는지 확인 필요";
+}
+
+// 화면에서 element 찾아 1.5초 amber 외곽선 + scrollIntoView
+function previewSelectorOnScreen(sel: string): {
+  ok: boolean;
+  message: string;
+} {
+  if (typeof document === "undefined") return { ok: false, message: "브라우저 외 환경" };
+  if (!sel || sel.trim() === "")
+    return { ok: false, message: "selector 가 비어있어요 (화면 가운데 큰 카드)" };
+  let el: HTMLElement | null = null;
+  try {
+    el = document.querySelector(sel.trim()) as HTMLElement | null;
+  } catch {
+    return { ok: false, message: "selector 형식 오류 — 다시 확인해주세요" };
+  }
+  if (!el)
+    return {
+      ok: false,
+      message: "지금 화면에 없어요. 해당 페이지로 먼저 이동해야 보여요.",
+    };
+  // amber outline 1.5s + scrollIntoView
+  const prevOutline = el.style.outline;
+  const prevOffset = el.style.outlineOffset;
+  const prevTransition = el.style.transition;
+  try {
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.style.transition = "outline 0.2s ease";
+    el.style.outline = "3px solid #fbbf24";
+    el.style.outlineOffset = "4px";
+    window.setTimeout(() => {
+      try {
+        el!.style.outline = prevOutline;
+        el!.style.outlineOffset = prevOffset;
+        el!.style.transition = prevTransition;
+      } catch {
+        /* noop */
+      }
+    }, 1500);
+  } catch {
+    /* noop */
+  }
+  return { ok: true, message: "화면에서 1.5초 동안 강조 표시했어요" };
+}
+
+// ─────────────────────────────────────────────────────────────
 // 64-T: StepEditorSection — admin 이 현재 step 의 selector / placement /
 //   autoAdvance / autoNavigate / completionRule 등을 즉시 시범 변경.
 //   localStorage override → getStep merge. 코드 변경 없이 시범 + 검증.
@@ -679,7 +771,7 @@ function StepEditorSection({
           <br />저장 후 화면을 새로고침해야 적용돼요.
         </p>
 
-        <label className="block">
+        <div className="block">
           <span className="text-[11px] font-bold text-amber-100">
             👉 어디를 가리킬까요?
           </span>
@@ -693,7 +785,37 @@ function StepEditorSection({
             placeholder='[data-tour="..."]'
             className={inputCls}
           />
-        </label>
+          {/* 한글 라벨 — 어떤 메뉴인지 자동 표시 */}
+          <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10.5px] font-bold text-amber-200">
+            🏷️ {describeSelector(draft.targetSelector ?? "")}
+          </p>
+          {/* 화면에서 보기 버튼 */}
+          <button
+            type="button"
+            onClick={() => {
+              const result = previewSelectorOnScreen(draft.targetSelector ?? "");
+              onSaved();
+              // toast 는 onSaved 의 flash 가 받게
+              if (!result.ok) {
+                // ok=false 면 alert 대체로 console + toast 부족시 native
+                if (typeof window !== "undefined") {
+                  // 단순 inline 표시 — modal 의 toast 가 닫혀있으면 alert
+                  // (modal 자체가 열려있으니 toast 안 보일 수 있음)
+                  window.alert(`📍 ${result.message}`);
+                }
+              } else if (typeof window !== "undefined") {
+                window.alert(`📍 ${result.message}\n(modal 닫고 보면 강조선이 보여요)`);
+              }
+            }}
+            className="mt-1.5 inline-flex w-full items-center justify-center gap-1 rounded-lg border border-amber-400/40 bg-black/30 px-3 py-1.5 text-[11px] font-bold text-amber-200 hover:bg-black/50 active:scale-[0.98]"
+          >
+            📍 화면에서 위치 보기 (강조 표시)
+          </button>
+          <p className="mt-0.5 text-[9.5px] text-amber-200/55">
+            ※ 누르면 1.5초 동안 노란 외곽선 + 자동 스크롤. 해당 페이지에 있어야
+            보여요. modal 을 닫고 봐주세요.
+          </p>
+        </div>
 
         <label className="block">
           <span className="text-[11px] font-bold text-amber-100">
