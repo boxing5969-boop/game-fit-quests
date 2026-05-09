@@ -59,6 +59,16 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
+    // 64-Q: dynamic-only chunk(qr/charts) 는 modulepreload 에서 제외 →
+    //   회원이 QR 체크인 / 관리자 차트 진입 전엔 다운로드 안 함.
+    //   supabase / 일반 lazy route chunk 는 preload 유지 (실제 곧 필요).
+    modulePreload: {
+      resolveDependencies(_filename, deps) {
+        return deps.filter(
+          (d) => !d.includes("/qr-") && !d.includes("/charts-"),
+        );
+      },
+    },
     // Vendor bundle will be larger without aggressive splitting, but
     // correctness > caching.
     chunkSizeWarningLimit: 1200,

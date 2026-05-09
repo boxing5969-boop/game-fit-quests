@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Banknote, Trophy, Settings } from "lucide-react";
 import { toast } from "sonner";
@@ -25,7 +25,9 @@ import { RANK_LABELS } from "@/data/sharedConstants";
 
 import CharacterSprite from "@/components/CharacterSprite";
 import SelfChallengeFlow from "@/components/SelfChallengeFlow";
-import QRScannerModal from "@/components/QRScannerModal";
+// 64-Q: QRScannerModal lazy import — qr.js (359KB) 첫 페인트에서 제거.
+//   회원이 QR 체크인 버튼 누를 때만 다운로드. 평소 홈 진입엔 불필요.
+const QRScannerModal = lazy(() => import("@/components/QRScannerModal"));
 import CheckinSuccessModal from "@/components/CheckinSuccessModal";
 import LevelUpModal from "@/components/LevelUpModal";
 // 단계 47 — 홈 상단 정리: 오늘 할 일 / 오삼이 한마디 (기존 컴포넌트 0 변경)
@@ -594,11 +596,17 @@ const HomePage = () => {
         xpGranted={levelUpModal.xp}
       />
 
-      <QRScannerModal
-        open={showQRScanner}
-        onClose={() => setShowQRScanner(false)}
-        onSuccess={handleQrCheckinSuccess}
-      />
+      {/* 64-Q: QRScannerModal 은 modal open 시점에만 chunk 다운로드.
+          fallback=null — 미열린 평소엔 아무것도 안 그림. */}
+      {showQRScanner && (
+        <Suspense fallback={null}>
+          <QRScannerModal
+            open={showQRScanner}
+            onClose={() => setShowQRScanner(false)}
+            onSuccess={handleQrCheckinSuccess}
+          />
+        </Suspense>
+      )}
 
       <CheckinSuccessModal
         open={showCheckinSuccess}
