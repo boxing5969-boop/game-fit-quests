@@ -1090,9 +1090,12 @@ export const TUTORIAL_CAMP_STEPS: TutorialCampStep[] = [
   ...DAY_7_STEPS,
 ].map(withInteractive);
 
-/** 특정 day 의 step 배열 — step 인덱스 순 */
+/** 특정 day 의 step 배열 — admin order override 적용. step 번호 reassign. */
 export function getStepsByDay(day: number): TutorialCampStep[] {
-  return TUTORIAL_CAMP_STEPS.filter((s) => s.day === day);
+  return getOrderedStepsByDay(day).map((s) => {
+    const ov = getStepOverride(day, s.step);
+    return ov ? ({ ...s, ...ov } as TutorialCampStep) : s;
+  });
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1183,12 +1186,97 @@ function applyOverride(s: TutorialCampStep): TutorialCampStep {
   return ov ? ({ ...s, ...ov } as TutorialCampStep) : s;
 }
 
-/** 특정 day × step 의 단일 step. 없으면 null. admin override 적용. */
+// ─────────────────────────────────────────────────────────────
+// 64-W: step order override — admin 이 day 안의 step 순서 reorder.
+//   localStorage `myboxer.tutorialCamp.dev.stepOrder` =
+//     Record<day, originalSteps[]>  (회원이 정한 순서, 첫 → 마지막)
+//   getStepsByDay / getStep 호출 시 그 순서대로 sort + step 번호 reassign.
+// ─────────────────────────────────────────────────────────────
+const STEP_ORDER_KEY = "myboxer.tutorialCamp.dev.stepOrder";
+
+function readStepOrders(): Record<number, number[]> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STEP_ORDER_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<number, number[]>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getStepOrderForDay(day: number): number[] | null {
+  const all = readStepOrders();
+  return all[day] ?? null;
+}
+
+export function setStepOrderForDay(day: number, order: number[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    const all = readStepOrders();
+    all[day] = order;
+    window.localStorage.setItem(STEP_ORDER_KEY, JSON.stringify(all));
+  } catch {
+    /* noop */
+  }
+}
+
+export function clearStepOrderForDay(day: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    const all = readStepOrders();
+    delete all[day];
+    window.localStorage.setItem(STEP_ORDER_KEY, JSON.stringify(all));
+  } catch {
+    /* noop */
+  }
+}
+
+export function clearAllStepOrders(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(STEP_ORDER_KEY);
+  } catch {
+    /* noop */
+  }
+}
+
+/** day 안의 base step 들을 admin 정의 순서로 정렬 + step 번호 reassign. */
+function getOrderedStepsByDay(day: number): TutorialCampStep[] {
+  const base = TUTORIAL_CAMP_STEPS.filter((s) => s.day === day);
+  const order = getStepOrderForDay(day);
+  if (!order || order.length === 0) return base;
+  // order 에 명시된 originalSteps 만 사용 + 누락된 step 은 뒤에 그대로 append
+  const byOriginal = new Map(base.map((s) => [s.step, s]));
+  const seen = new Set<number>();
+  const sorted: TutorialCampStep[] = [];
+  for (const orig of order) {
+    const s = byOriginal.get(orig);
+    if (s) {
+      sorted.push(s);
+      seen.add(orig);
+    }
+  }
+  for (const s of base) {
+    if (!seen.has(s.step)) sorted.push(s);
+  }
+  // step 번호 reassign (0..N-1) — advance / 마지막 step 판정 자연 동작
+  return sorted.map((s, idx) => (s.step === idx ? s : { ...s, step: idx }));
+}
+
+/** 특정 day × step 의 단일 step. 없으면 null. admin override + order 적용. */
 export function getStep(day: number, step: number): TutorialCampStep | null {
-  const found = TUTORIAL_CAMP_STEPS.find(
-    (s) => s.day === day && s.step === step,
-  );
-  return found ? applyOverride(found) : null;
+  const list = getOrderedStepsByDay(day);
+  const found = list[step];
+  if (!found) return null;
+  // override 는 base 의 day.step 으로 식별 — order reassign 후에도 base step 으로 lookup
+  const baseStep =
+    TUTORIAL_CAMP_STEPS.find(
+      (s) => s.day === day && s.title === found.title && s.targetKey === found.targetKey,
+    )?.step ?? found.step;
+  const ov = getStepOverride(day, baseStep);
+  return ov ? ({ ...found, ...ov } as TutorialCampStep) : found;
 }
 
 /** day 의 step 수 */

@@ -16,7 +16,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pointer, Settings2, Save, X, Wrench } from "lucide-react";
+import {
+  Pointer,
+  Settings2,
+  Save,
+  X,
+  Wrench,
+  ArrowUp,
+  ArrowDown,
+  Play,
+  RotateCcw,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -24,8 +34,12 @@ import {
   shouldShowDevPanel,
 } from "./tutorialCampDevAccess";
 import {
+  clearStepOrderForDay,
   getStep,
+  getStepOrderForDay,
   getStepOverride,
+  getStepsByDay,
+  setStepOrderForDay,
   setStepOverride,
   type TutorialStepOverridePartial,
 } from "./tutorialCampSteps";
@@ -369,6 +383,57 @@ const TutorialCustomizer = () => {
                 </button>
               </div>
 
+              {/* 64-W: 단계 순서 정하기 */}
+              <StepOrderPanel
+                day={day}
+                onChanged={() => {
+                  /* 변경은 localStorage 즉시. 미리보기 위해 새로고침 권장 */
+                }}
+              />
+
+              {/* 미리보기 — 현재 day 처음부터 시뮬레이션 */}
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-amber-100">
+                  🎬 미리보기 (회원이 보는 화면 그대로)
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    camp.goToDayStep(day, 0);
+                    if (camp.state.status !== "active") camp.start();
+                    setOpen(false);
+                    toast.success(
+                      `🎬 ${day}일차 미리보기 시작 — 화면을 따라가보세요`,
+                      { description: "다시 customizer 를 열려면 우측 버튼" },
+                    );
+                  }}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-[11px] font-black text-emerald-950 hover:bg-emerald-400"
+                >
+                  <Play className="h-3.5 w-3.5" />
+                  지금 {day}일차 처음부터 미리보기
+                </button>
+                <p className="text-[9.5px] text-amber-200/55">
+                  ※ 변경한 순서/설정 그대로 본인 화면에 적용. 회원에게는 영향 없어요.
+                </p>
+              </div>
+
+              {/* 최종 저장 + 새로고침 */}
+              <button
+                type="button"
+                onClick={() => {
+                  toast.success("저장 완료 — 새로고침 후 반영", {
+                    description: "변경 사항은 본인 화면에만 적용됩니다",
+                  });
+                  setTimeout(() => {
+                    if (typeof window !== "undefined") window.location.reload();
+                  }, 800);
+                }}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2.5 text-[12px] font-black text-amber-50 hover:bg-amber-500"
+              >
+                <Save className="h-4 w-4" />
+                💾 최종 저장 + 새로고침 (바로 반영)
+              </button>
+
               {/* 전체 편집 (modal) */}
               <button
                 type="button"
@@ -390,6 +455,110 @@ const TutorialCustomizer = () => {
     </div>
   );
 };
+
+// ─────────────────────────────────────────────────────────────
+// 64-W: StepOrderPanel — 현재 day 의 step 순서 reorder
+// ─────────────────────────────────────────────────────────────
+function StepOrderPanel({
+  day,
+  onChanged,
+}: {
+  day: number;
+  onChanged: () => void;
+}) {
+  const [bump, setBump] = useState(0); // re-read trigger
+  // 현재 적용된 순서 (override 또는 base) — base step 인덱스 배열
+  const list = getStepsByDay(day);
+  // base step 의 원본 인덱스 (TUTORIAL_CAMP_STEPS 기준) 와 매핑이 필요.
+  // getStepsByDay 가 reassign 후이므로 'baseStepByTitle' 트릭 — title+targetKey 로
+  // 원본을 찾아 저장하는 대신, getStepOrderForDay 를 우선 써서 사용자가 정한 순서
+  // 그대로 표시.
+  const customOrder = getStepOrderForDay(day);
+  const orderedOriginalSteps =
+    customOrder ??
+    // 없으면 0..N-1 순서로 (정렬 안 된 상태)
+    list.map((_, i) => i);
+
+  // ↑ ↓ 버튼 핸들러
+  const move = (idx: number, delta: -1 | 1) => {
+    const next = [...orderedOriginalSteps];
+    const target = idx + delta;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    setStepOrderForDay(day, next);
+    setBump((b) => b + 1);
+    onChanged();
+  };
+
+  const reset = () => {
+    clearStepOrderForDay(day);
+    setBump((b) => b + 1);
+    onChanged();
+  };
+
+  // bump dependency — re-render 강제
+  void bump;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-bold text-amber-100">
+          📋 단계 순서 정하기 ({day}일차)
+        </p>
+        <button
+          type="button"
+          onClick={reset}
+          className="inline-flex items-center gap-0.5 rounded-md border border-amber-400/30 bg-black/30 px-1.5 py-0.5 text-[9px] font-bold text-amber-200 hover:bg-black/50"
+          title="원래 순서로"
+        >
+          <RotateCcw className="h-2.5 w-2.5" />
+          초기화
+        </button>
+      </div>
+      <div className="space-y-1 rounded-lg border border-amber-400/15 bg-black/20 p-1.5">
+        {list.map((s, idx) => (
+          <div
+            key={`${day}-${idx}-${s.title}`}
+            className="flex items-center gap-1.5 rounded-md bg-black/30 px-2 py-1.5 text-[10.5px]"
+          >
+            <span className="number-font w-5 shrink-0 text-center font-black text-amber-300">
+              {idx + 1}
+            </span>
+            <p className="flex-1 truncate text-amber-100">
+              {s.title || "(제목 없음)"}
+            </p>
+            <button
+              type="button"
+              onClick={() => move(idx, -1)}
+              disabled={idx === 0}
+              className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
+              aria-label="위로"
+            >
+              <ArrowUp className="h-3 w-3" />
+            </button>
+            <button
+              type="button"
+              onClick={() => move(idx, 1)}
+              disabled={idx === list.length - 1}
+              className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
+              aria-label="아래로"
+            >
+              <ArrowDown className="h-3 w-3" />
+            </button>
+          </div>
+        ))}
+        {list.length === 0 && (
+          <p className="px-2 py-3 text-center text-[10px] text-amber-200/50">
+            이 일차에 단계가 없어요
+          </p>
+        )}
+      </div>
+      <p className="text-[9.5px] text-amber-200/55">
+        ↑↓ 로 순서 바꾸기. 변경 후 '미리보기' 또는 '최종 저장' 누르세요.
+      </p>
+    </div>
+  );
+}
 
 function CompactToggle({
   label,
