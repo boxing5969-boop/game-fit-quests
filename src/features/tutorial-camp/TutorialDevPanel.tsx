@@ -42,8 +42,14 @@ import {
   startTutorialCamp,
 } from "./tutorialCampUtils";
 import {
+  clearAllStepOverrides,
+  clearStepOverride,
+  getStep,
+  getStepOverride,
   getStepsCountByDay,
+  setStepOverride,
   TUTORIAL_CAMP_STEPS,
+  type TutorialStepOverridePartial,
 } from "./tutorialCampSteps";
 import type {
   TutorialCampState,
@@ -362,6 +368,15 @@ function DevModal({
             </p>
           </Section>
 
+          {/* 64-T: 현재 step 편집 (admin override) */}
+          <StepEditorSection
+            day={state.currentDay}
+            step={state.currentStep}
+            onSaved={() => {
+              flash("저장됨. 새로고침하면 적용됩니다.");
+            }}
+          />
+
           {/* 현재 상태 표시 */}
           <Section title="현재 localStorage 상태">
             <KeyValue label="status" value={state.status} />
@@ -568,6 +583,260 @@ function Section({
       </h3>
       {children}
     </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// 64-T: StepEditorSection — admin 이 현재 step 의 selector / placement /
+//   autoAdvance / autoNavigate / completionRule 등을 즉시 시범 변경.
+//   localStorage override → getStep merge. 코드 변경 없이 시범 + 검증.
+// ─────────────────────────────────────────────────────────────
+function StepEditorSection({
+  day,
+  step,
+  onSaved,
+}: {
+  day: number;
+  step: number;
+  onSaved: () => void;
+}) {
+  const baseStep = getStep(day, step);
+  const existing = getStepOverride(day, step);
+  const [draft, setDraft] = useState<TutorialStepOverridePartial>(() => ({
+    targetSelector: baseStep?.targetSelector ?? "",
+    placement: baseStep?.placement ?? "bottom",
+    autoAdvance: baseStep?.autoAdvance ?? false,
+    autoNavigate: baseStep?.autoNavigate ?? false,
+    requireTargetClick: baseStep?.requireTargetClick ?? false,
+    blockNextUntilComplete: baseStep?.blockNextUntilComplete ?? false,
+    completionRule: baseStep?.completionRule,
+    helperMessage: baseStep?.helperMessage,
+    successMessage: baseStep?.successMessage,
+  }));
+
+  // day/step 바뀌면 새 base 로 reload
+  useEffect(() => {
+    const fresh = getStep(day, step);
+    setDraft({
+      targetSelector: fresh?.targetSelector ?? "",
+      placement: fresh?.placement ?? "bottom",
+      autoAdvance: fresh?.autoAdvance ?? false,
+      autoNavigate: fresh?.autoNavigate ?? false,
+      requireTargetClick: fresh?.requireTargetClick ?? false,
+      blockNextUntilComplete: fresh?.blockNextUntilComplete ?? false,
+      completionRule: fresh?.completionRule,
+      helperMessage: fresh?.helperMessage,
+      successMessage: fresh?.successMessage,
+    });
+  }, [day, step]);
+
+  if (!baseStep) {
+    return (
+      <Section title="현재 step 편집 (admin)">
+        <p className="text-[11px] text-amber-200/60">
+          Day {day} · Step {step} — 정의된 step 없음
+        </p>
+      </Section>
+    );
+  }
+
+  const inputCls =
+    "w-full rounded-lg border border-amber-400/20 bg-black/30 px-2 py-1 text-[11px] font-mono text-amber-100 focus:outline-none focus:border-amber-400/60";
+
+  const update = (patch: TutorialStepOverridePartial) =>
+    setDraft((prev) => ({ ...prev, ...patch }));
+
+  const onSave = () => {
+    setStepOverride(day, step, draft);
+    onSaved();
+  };
+
+  const onResetThisStep = () => {
+    clearStepOverride(day, step);
+    const fresh = getStep(day, step);
+    setDraft({
+      targetSelector: fresh?.targetSelector ?? "",
+      placement: fresh?.placement ?? "bottom",
+      autoAdvance: fresh?.autoAdvance ?? false,
+      autoNavigate: fresh?.autoNavigate ?? false,
+      requireTargetClick: fresh?.requireTargetClick ?? false,
+      blockNextUntilComplete: fresh?.blockNextUntilComplete ?? false,
+      completionRule: fresh?.completionRule,
+      helperMessage: fresh?.helperMessage,
+      successMessage: fresh?.successMessage,
+    });
+    onSaved();
+  };
+
+  return (
+    <Section
+      title={`현재 step 편집 (Day ${day} · Step ${step}${existing ? " · OVERRIDE" : ""})`}
+    >
+      <div className="space-y-2">
+        <p className="text-[10px] leading-relaxed text-amber-200/65">
+          ※ 이 변경은 admin 본인 브라우저에만 적용됩니다 (localStorage).
+          저장 후 페이지 새로고침으로 반영. 회원/server 영향 0.
+        </p>
+
+        <label className="block">
+          <span className="text-[10px] font-bold text-amber-200/80">
+            target selector
+          </span>
+          <input
+            type="text"
+            value={draft.targetSelector ?? ""}
+            onChange={(e) => update({ targetSelector: e.target.value })}
+            placeholder='[data-tour="..."]'
+            className={inputCls}
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-[10px] font-bold text-amber-200/80">placement</span>
+          <select
+            value={draft.placement ?? "bottom"}
+            onChange={(e) =>
+              update({
+                placement: e.target.value as TutorialStepOverridePartial["placement"],
+              })
+            }
+            className={inputCls}
+          >
+            <option value="top">top</option>
+            <option value="bottom">bottom</option>
+            <option value="left">left</option>
+            <option value="right">right</option>
+            <option value="center">center</option>
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="text-[10px] font-bold text-amber-200/80">
+            completion rule
+          </span>
+          <select
+            value={draft.completionRule ?? ""}
+            onChange={(e) =>
+              update({
+                completionRule:
+                  (e.target.value || undefined) as TutorialStepOverridePartial["completionRule"],
+              })
+            }
+            className={inputCls}
+          >
+            <option value="">(없음 — requireTargetClick 폴백)</option>
+            <option value="target_clicked">target_clicked</option>
+            <option value="quiz_question_read">quiz_question_read (4초 자동)</option>
+            <option value="quiz_answer_selected">quiz_answer_selected</option>
+            <option value="quiz_correct_answer_selected">quiz_correct_answer_selected</option>
+            <option value="scrolled_to_bottom">scrolled_to_bottom</option>
+            <option value="text_input_min_length">text_input_min_length</option>
+            <option value="option_selected">option_selected</option>
+            <option value="toggle_selected">toggle_selected</option>
+            <option value="condition_checked">condition_checked</option>
+            <option value="modal_closed">modal_closed</option>
+            <option value="manual_confirm">manual_confirm</option>
+          </select>
+        </label>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <ToggleRow
+            label="autoAdvance"
+            checked={!!draft.autoAdvance}
+            onChange={(v) => update({ autoAdvance: v })}
+          />
+          <ToggleRow
+            label="autoNavigate"
+            checked={!!draft.autoNavigate}
+            onChange={(v) => update({ autoNavigate: v })}
+          />
+          <ToggleRow
+            label="requireTargetClick"
+            checked={!!draft.requireTargetClick}
+            onChange={(v) => update({ requireTargetClick: v })}
+          />
+          <ToggleRow
+            label="blockNextUntilComplete"
+            checked={!!draft.blockNextUntilComplete}
+            onChange={(v) => update({ blockNextUntilComplete: v })}
+          />
+        </div>
+
+        <label className="block">
+          <span className="text-[10px] font-bold text-amber-200/80">
+            helper message
+          </span>
+          <input
+            type="text"
+            value={draft.helperMessage ?? ""}
+            onChange={(e) => update({ helperMessage: e.target.value })}
+            className={inputCls}
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-[10px] font-bold text-amber-200/80">
+            success message
+          </span>
+          <input
+            type="text"
+            value={draft.successMessage ?? ""}
+            onChange={(e) => update({ successMessage: e.target.value })}
+            className={inputCls}
+          />
+        </label>
+
+        <div className="flex gap-2 pt-1">
+          <Button
+            type="button"
+            onClick={onSave}
+            className="h-8 flex-1 rounded-lg bg-amber-500 px-3 text-[11px] font-black text-amber-950 hover:bg-amber-400"
+          >
+            저장 + 새로고침 안내
+          </Button>
+          <button
+            type="button"
+            onClick={onResetThisStep}
+            className="rounded-lg border border-amber-400/30 bg-black/30 px-3 text-[11px] font-bold text-amber-200/85 hover:bg-black/50"
+          >
+            이 step 초기화
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            clearAllStepOverrides();
+            onSaved();
+          }}
+          className="w-full rounded-lg border border-rose-400/30 bg-rose-950/15 px-3 py-1.5 text-[10px] font-bold text-rose-200/85 hover:bg-rose-950/30"
+        >
+          전체 override 초기화 (모든 step)
+        </button>
+      </div>
+    </Section>
+  );
+}
+
+function ToggleRow({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-amber-400/15 bg-black/30 px-2 py-1.5 text-[10px] font-bold text-amber-100">
+      <span className="font-mono text-amber-200/80">{label}</span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-3.5 w-3.5 accent-amber-400"
+      />
+    </label>
   );
 }
 

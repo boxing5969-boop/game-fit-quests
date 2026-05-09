@@ -1095,11 +1095,100 @@ export function getStepsByDay(day: number): TutorialCampStep[] {
   return TUTORIAL_CAMP_STEPS.filter((s) => s.day === day);
 }
 
-/** 특정 day × step 의 단일 step. 없으면 null. */
+// ─────────────────────────────────────────────────────────────
+// 64-T: 관리자 dev panel step override 시스템.
+//   admin 이 dev panel 에서 현재 step 의 selector / placement / autoAdvance
+//   등을 즉시 시범 변경. localStorage 에 저장 → getStep 호출 시 merge.
+//   영향 범위: admin 본인 브라우저만. 회원/server 0.
+// ─────────────────────────────────────────────────────────────
+const STEP_OVERRIDE_KEY = "myboxer.tutorialCamp.dev.stepOverrides";
+
+export type TutorialStepOverridePartial = Partial<
+  Pick<
+    TutorialCampStep,
+    | "targetSelector"
+    | "placement"
+    | "autoAdvance"
+    | "autoNavigate"
+    | "requireTargetClick"
+    | "blockNextUntilComplete"
+    | "completionRule"
+    | "title"
+    | "body"
+    | "helperMessage"
+    | "successMessage"
+  >
+>;
+
+type OverrideMap = Record<string, TutorialStepOverridePartial>;
+
+function readOverrides(): OverrideMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STEP_OVERRIDE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as OverrideMap;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getStepOverride(
+  day: number,
+  step: number,
+): TutorialStepOverridePartial | null {
+  const map = readOverrides();
+  return map[`${day}.${step}`] ?? null;
+}
+
+export function setStepOverride(
+  day: number,
+  step: number,
+  patch: TutorialStepOverridePartial,
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const map = readOverrides();
+    const key = `${day}.${step}`;
+    map[key] = { ...(map[key] ?? {}), ...patch };
+    window.localStorage.setItem(STEP_OVERRIDE_KEY, JSON.stringify(map));
+  } catch {
+    /* noop */
+  }
+}
+
+export function clearStepOverride(day: number, step: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    const map = readOverrides();
+    delete map[`${day}.${step}`];
+    window.localStorage.setItem(STEP_OVERRIDE_KEY, JSON.stringify(map));
+  } catch {
+    /* noop */
+  }
+}
+
+export function clearAllStepOverrides(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(STEP_OVERRIDE_KEY);
+  } catch {
+    /* noop */
+  }
+}
+
+function applyOverride(s: TutorialCampStep): TutorialCampStep {
+  const ov = getStepOverride(s.day, s.step);
+  return ov ? ({ ...s, ...ov } as TutorialCampStep) : s;
+}
+
+/** 특정 day × step 의 단일 step. 없으면 null. admin override 적용. */
 export function getStep(day: number, step: number): TutorialCampStep | null {
-  return (
-    TUTORIAL_CAMP_STEPS.find((s) => s.day === day && s.step === step) ?? null
+  const found = TUTORIAL_CAMP_STEPS.find(
+    (s) => s.day === day && s.step === step,
   );
+  return found ? applyOverride(found) : null;
 }
 
 /** day 의 step 수 */
