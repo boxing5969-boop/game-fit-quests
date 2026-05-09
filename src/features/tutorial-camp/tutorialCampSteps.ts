@@ -1242,27 +1242,42 @@ export function clearAllStepOrders(): void {
   }
 }
 
-/** day 안의 base step 들을 admin 정의 순서로 정렬 + step 번호 reassign. */
+/** day 안의 base step 들을 admin 정의 순서로 정렬 + step 번호 reassign.
+ *  64-X: order 에 명시된 step 만 포함 — 누락(빼기) 된 step 은 hidden.
+ *        order 가 빈 배열 또는 미설정이면 base 그대로 (모두 보임).
+ */
 function getOrderedStepsByDay(day: number): TutorialCampStep[] {
   const base = TUTORIAL_CAMP_STEPS.filter((s) => s.day === day);
   const order = getStepOrderForDay(day);
-  if (!order || order.length === 0) return base;
-  // order 에 명시된 originalSteps 만 사용 + 누락된 step 은 뒤에 그대로 append
+  if (!order) return base;
   const byOriginal = new Map(base.map((s) => [s.step, s]));
-  const seen = new Set<number>();
   const sorted: TutorialCampStep[] = [];
   for (const orig of order) {
     const s = byOriginal.get(orig);
-    if (s) {
-      sorted.push(s);
-      seen.add(orig);
-    }
-  }
-  for (const s of base) {
-    if (!seen.has(s.step)) sorted.push(s);
+    if (s) sorted.push(s);
   }
   // step 번호 reassign (0..N-1) — advance / 마지막 step 판정 자연 동작
   return sorted.map((s, idx) => (s.step === idx ? s : { ...s, step: idx }));
+}
+
+/** 64-X: order 에서 빠진 (hidden) base step 들 — 다시 넣기 UI 용. */
+export function getHiddenStepsForDay(day: number): TutorialCampStep[] {
+  const order = getStepOrderForDay(day);
+  if (!order) return [];
+  const base = TUTORIAL_CAMP_STEPS.filter((s) => s.day === day);
+  const inOrder = new Set(order);
+  return base.filter((s) => !inOrder.has(s.step));
+}
+
+/** 64-X: 현재 day 의 base step 모두를 order 에 넣기 (초기화 후 정렬 시작점). */
+export function ensureFullOrderForDay(day: number): void {
+  const base = TUTORIAL_CAMP_STEPS.filter((s) => s.day === day);
+  const existing = getStepOrderForDay(day);
+  if (existing) return;
+  setStepOrderForDay(
+    day,
+    base.map((s) => s.step),
+  );
 }
 
 /** 특정 day × step 의 단일 step. 없으면 null. admin override + order 적용. */

@@ -26,6 +26,8 @@ import {
   ArrowDown,
   Play,
   RotateCcw,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +37,8 @@ import {
 } from "./tutorialCampDevAccess";
 import {
   clearStepOrderForDay,
+  ensureFullOrderForDay,
+  getHiddenStepsForDay,
   getStep,
   getStepOrderForDay,
   getStepOverride,
@@ -504,25 +508,46 @@ function StepOrderPanel({
   onChanged: () => void;
 }) {
   const [bump, setBump] = useState(0); // re-read trigger
-  // 현재 적용된 순서 (override 또는 base) — base step 인덱스 배열
-  const list = getStepsByDay(day);
-  // base step 의 원본 인덱스 (TUTORIAL_CAMP_STEPS 기준) 와 매핑이 필요.
-  // getStepsByDay 가 reassign 후이므로 'baseStepByTitle' 트릭 — title+targetKey 로
-  // 원본을 찾아 저장하는 대신, getStepOrderForDay 를 우선 써서 사용자가 정한 순서
-  // 그대로 표시.
-  const customOrder = getStepOrderForDay(day);
-  const orderedOriginalSteps =
-    customOrder ??
-    // 없으면 0..N-1 순서로 (정렬 안 된 상태)
-    list.map((_, i) => i);
 
-  // ↑ ↓ 버튼 핸들러
+  // 현재 보이는 순서 (order 적용된 step list)
+  const list = getStepsByDay(day);
+  // 현재 빠진 (hidden) step list
+  const hiddenList = getHiddenStepsForDay(day);
+  const customOrder = getStepOrderForDay(day);
+
+  // base step 의 original step 번호로 표시된 order (없으면 자동 생성)
+  const orderedOriginalSteps =
+    customOrder ?? list.map((s) => s.step);
+
+  // ↑ ↓ 핸들러 — order 가 없으면 먼저 ensure
   const move = (idx: number, delta: -1 | 1) => {
-    const next = [...orderedOriginalSteps];
+    if (!customOrder) ensureFullOrderForDay(day);
+    const current = getStepOrderForDay(day) ?? orderedOriginalSteps;
+    const next = [...current];
     const target = idx + delta;
     if (target < 0 || target >= next.length) return;
     [next[idx], next[target]] = [next[target], next[idx]];
     setStepOrderForDay(day, next);
+    setBump((b) => b + 1);
+    onChanged();
+  };
+
+  // 🗑️ 빼기 — order 에서 해당 step 제거
+  const removeAt = (idx: number) => {
+    if (!customOrder) ensureFullOrderForDay(day);
+    const current = getStepOrderForDay(day) ?? orderedOriginalSteps;
+    const next = current.filter((_, i) => i !== idx);
+    setStepOrderForDay(day, next);
+    setBump((b) => b + 1);
+    onChanged();
+  };
+
+  // ➕ 다시 넣기 — hidden step 을 order 끝에 추가
+  const addStep = (originalStep: number) => {
+    const current =
+      getStepOrderForDay(day) ?? list.map((s) => s.step);
+    if (current.includes(originalStep)) return;
+    setStepOrderForDay(day, [...current, originalStep]);
     setBump((b) => b + 1);
     onChanged();
   };
@@ -533,65 +558,111 @@ function StepOrderPanel({
     onChanged();
   };
 
-  // bump dependency — re-render 강제
-  void bump;
+  void bump; // re-render trigger
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-bold text-amber-100">
-          📋 단계 순서 정하기 ({day}일차)
+          📋 단계 순서 / 추가·빼기 ({day}일차)
         </p>
         <button
           type="button"
           onClick={reset}
           className="inline-flex items-center gap-0.5 rounded-md border border-amber-400/30 bg-black/30 px-1.5 py-0.5 text-[9px] font-bold text-amber-200 hover:bg-black/50"
-          title="원래 순서로"
+          title="원래대로"
         >
           <RotateCcw className="h-2.5 w-2.5" />
-          초기화
+          원래대로
         </button>
       </div>
-      <div className="space-y-1 rounded-lg border border-amber-400/15 bg-black/20 p-1.5">
-        {list.map((s, idx) => (
-          <div
-            key={`${day}-${idx}-${s.title}`}
-            className="flex items-center gap-1.5 rounded-md bg-black/30 px-2 py-1.5 text-[10.5px]"
-          >
-            <span className="number-font w-5 shrink-0 text-center font-black text-amber-300">
-              {idx + 1}
-            </span>
-            <p className="flex-1 truncate text-amber-100">
-              {s.title || "(제목 없음)"}
+
+      {/* 보이는 단계 (회원이 진행) */}
+      <div>
+        <p className="mb-1 text-[9.5px] font-bold uppercase tracking-wider text-emerald-300/80">
+          ✓ 보이는 단계 ({list.length}개)
+        </p>
+        <div className="space-y-1 rounded-lg border border-amber-400/15 bg-black/20 p-1.5">
+          {list.map((s, idx) => (
+            <div
+              key={`v-${day}-${idx}-${s.title}`}
+              className="flex items-center gap-1 rounded-md bg-black/30 px-2 py-1.5 text-[10.5px]"
+            >
+              <span className="number-font w-5 shrink-0 text-center font-black text-amber-300">
+                {idx + 1}
+              </span>
+              <p className="flex-1 truncate text-amber-100">
+                {s.title || "(제목 없음)"}
+              </p>
+              <button
+                type="button"
+                onClick={() => move(idx, -1)}
+                disabled={idx === 0}
+                className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
+                aria-label="위로"
+              >
+                <ArrowUp className="h-3 w-3" />
+              </button>
+              <button
+                type="button"
+                onClick={() => move(idx, 1)}
+                disabled={idx === list.length - 1}
+                className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
+                aria-label="아래로"
+              >
+                <ArrowDown className="h-3 w-3" />
+              </button>
+              <button
+                type="button"
+                onClick={() => removeAt(idx)}
+                className="rounded border border-rose-400/40 bg-rose-950/30 p-0.5 text-rose-200 hover:bg-rose-950/50"
+                aria-label="빼기"
+                title="이 단계 빼기"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+          {list.length === 0 && (
+            <p className="px-2 py-3 text-center text-[10px] text-amber-200/50">
+              보이는 단계가 없어요. 아래에서 다시 넣어보세요.
             </p>
-            <button
-              type="button"
-              onClick={() => move(idx, -1)}
-              disabled={idx === 0}
-              className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
-              aria-label="위로"
-            >
-              <ArrowUp className="h-3 w-3" />
-            </button>
-            <button
-              type="button"
-              onClick={() => move(idx, 1)}
-              disabled={idx === list.length - 1}
-              className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
-              aria-label="아래로"
-            >
-              <ArrowDown className="h-3 w-3" />
-            </button>
-          </div>
-        ))}
-        {list.length === 0 && (
-          <p className="px-2 py-3 text-center text-[10px] text-amber-200/50">
-            이 일차에 단계가 없어요
-          </p>
-        )}
+          )}
+        </div>
       </div>
+
+      {/* 빠진 단계 (hidden) */}
+      {hiddenList.length > 0 && (
+        <div>
+          <p className="mb-1 text-[9.5px] font-bold uppercase tracking-wider text-rose-300/80">
+            ✗ 빠진 단계 ({hiddenList.length}개)
+          </p>
+          <div className="space-y-1 rounded-lg border border-rose-400/15 bg-rose-950/10 p-1.5">
+            {hiddenList.map((s) => (
+              <div
+                key={`h-${day}-${s.step}-${s.title}`}
+                className="flex items-center gap-1 rounded-md bg-black/30 px-2 py-1.5 text-[10.5px] opacity-80"
+              >
+                <p className="flex-1 truncate text-rose-100/85 line-through">
+                  {s.title || "(제목 없음)"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => addStep(s.step)}
+                  className="inline-flex items-center gap-0.5 rounded border border-emerald-400/40 bg-emerald-500/15 px-1.5 py-0.5 text-[9.5px] font-bold text-emerald-200 hover:bg-emerald-500/25"
+                  title="다시 넣기"
+                >
+                  <Plus className="h-2.5 w-2.5" />
+                  다시
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <p className="text-[9.5px] text-amber-200/55">
-        ↑↓ 로 순서 바꾸기. 변경 후 '미리보기' 또는 '최종 저장' 누르세요.
+        ↑↓ 순서 변경 · 🗑️ 빼기 · ➕ 다시 넣기. '미리보기' / '최종 저장' 으로 적용.
       </p>
     </div>
   );
