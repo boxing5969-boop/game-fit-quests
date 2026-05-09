@@ -391,11 +391,48 @@ const TutorialCustomizer = () => {
                 }}
               />
 
-              {/* 미리보기 — 현재 day 처음부터 시뮬레이션 */}
-              <div className="space-y-1">
+              {/* 미리보기 — 1~7 일차 선택 후 처음부터 시뮬레이션 */}
+              <div className="space-y-1.5">
                 <p className="text-[11px] font-bold text-amber-100">
                   🎬 미리보기 (회원이 보는 화면 그대로)
                 </p>
+                <p className="text-[10px] text-amber-200/65">
+                  미리보고 싶은 일차를 선택하세요. 누르면 그 일차 처음부터
+                  자동 시작.
+                </p>
+                <div className="grid grid-cols-7 gap-1">
+                  {[1, 2, 3, 4, 5, 6, 7].map((d) => {
+                    const isCurrent = camp.state.currentDay === d;
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => {
+                          camp.goToDayStep(d, 0);
+                          if (camp.state.status !== "active") camp.start();
+                          setOpen(false);
+                          toast.success(
+                            `🎬 ${d}일차 미리보기 시작 — 화면을 따라가보세요`,
+                            {
+                              description:
+                                "다시 customizer 를 열려면 우측 버튼",
+                            },
+                          );
+                        }}
+                        className={`flex flex-col items-center justify-center rounded-lg border px-1 py-1.5 text-[10px] font-black transition-all active:scale-95 ${
+                          isCurrent
+                            ? "border-emerald-300 bg-emerald-500/30 text-emerald-100"
+                            : "border-amber-400/30 bg-black/30 text-amber-100 hover:bg-black/50"
+                        }`}
+                      >
+                        <span className="text-[8px] font-bold opacity-70">
+                          DAY
+                        </span>
+                        <span>{d}</span>
+                      </button>
+                    );
+                  })}
+                </div>
                 <button
                   type="button"
                   onClick={() => {
@@ -410,7 +447,7 @@ const TutorialCustomizer = () => {
                   className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-[11px] font-black text-emerald-950 hover:bg-emerald-400"
                 >
                   <Play className="h-3.5 w-3.5" />
-                  지금 {day}일차 처음부터 미리보기
+                  지금 보고있는 {day}일차 처음부터
                 </button>
                 <p className="text-[9.5px] text-amber-200/55">
                   ※ 변경한 순서/설정 그대로 본인 화면에 적용. 회원에게는 영향 없어요.
