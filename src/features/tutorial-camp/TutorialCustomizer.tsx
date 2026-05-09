@@ -28,6 +28,7 @@ import {
   RotateCcw,
   Trash2,
   Plus,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,7 +39,9 @@ import {
 import {
   addCustomStep,
   clearStepOrderForDay,
+  clearStepOverride,
   ensureFullOrderForDay,
+  getCustomStepsForDay,
   getHiddenStepsForDay,
   getStep,
   getStepOrderForDay,
@@ -47,8 +50,10 @@ import {
   removeCustomStep,
   setStepOrderForDay,
   setStepOverride,
+  TUTORIAL_CAMP_STEPS,
   type TutorialStepOverridePartial,
 } from "./tutorialCampSteps";
+import type { TutorialCampStep } from "./tutorialCampSteps";
 import { useTutorialCamp } from "./useTutorialCamp";
 import { TUTORIAL_DEV_OPEN_EVENT } from "./TutorialDevPanel";
 
@@ -530,6 +535,7 @@ function StepOrderPanel({
   onChanged: () => void;
 }) {
   const [bump, setBump] = useState(0); // re-read trigger
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   // 현재 보이는 순서 (order 적용된 step list)
   const list = getStepsByDay(day);
@@ -540,6 +546,17 @@ function StepOrderPanel({
   // base step 의 original step 번호로 표시된 order (없으면 자동 생성)
   const orderedOriginalSteps =
     customOrder ?? list.map((s) => s.step);
+
+  // 64-AB: list idx → original step 번호 (base 또는 custom).
+  //   targetKey 로 lookup — order reassign 후에도 정확히 매핑.
+  const allOriginalSteps: TutorialCampStep[] = [
+    ...TUTORIAL_CAMP_STEPS.filter((s) => s.day === day),
+    ...getCustomStepsForDay(day),
+  ];
+  const findOriginalStepNo = (s: TutorialCampStep): number => {
+    const found = allOriginalSteps.find((o) => o.targetKey === s.targetKey);
+    return found?.step ?? s.step;
+  };
 
   // ↑ ↓ 핸들러 — order 가 없으면 먼저 ensure
   const move = (idx: number, delta: -1 | 1) => {
@@ -605,51 +622,82 @@ function StepOrderPanel({
           ✓ 보이는 단계 ({list.length}개)
         </p>
         <div className="space-y-1.5 rounded-lg border border-amber-400/15 bg-black/20 p-1.5">
-          {list.map((s, idx) => (
-            <div
-              key={`v-${day}-${idx}-${s.title}`}
-              className="rounded-md bg-black/30 px-2 py-1.5 text-[10.5px]"
-            >
-              {/* 1행: 번호 + 제목 + 버튼 */}
-              <div className="flex items-center gap-1">
-                <span className="number-font w-5 shrink-0 text-center font-black text-amber-300">
-                  {idx + 1}
-                </span>
-                <p className="flex-1 truncate text-amber-100 font-bold">
-                  {s.title || "(제목 없음)"}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => move(idx, -1)}
-                  disabled={idx === 0}
-                  className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
-                  aria-label="위로"
-                >
-                  <ArrowUp className="h-3 w-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => move(idx, 1)}
-                  disabled={idx === list.length - 1}
-                  className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
-                  aria-label="아래로"
-                >
-                  <ArrowDown className="h-3 w-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeAt(idx)}
-                  className="rounded border border-rose-400/40 bg-rose-950/30 p-0.5 text-rose-200 hover:bg-rose-950/50"
-                  aria-label="빼기"
-                  title="이 단계 빼기"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
+          {list.map((s, idx) => {
+            const isEditing = editingIdx === idx;
+            const originalStepNo = findOriginalStepNo(s);
+            return (
+              <div
+                key={`v-${day}-${idx}-${s.title}`}
+                className="rounded-md bg-black/30 px-2 py-1.5 text-[10.5px]"
+              >
+                {/* 1행: 번호 + 제목 + 버튼 */}
+                <div className="flex items-center gap-1">
+                  <span className="number-font w-5 shrink-0 text-center font-black text-amber-300">
+                    {idx + 1}
+                  </span>
+                  <p className="flex-1 truncate text-amber-100 font-bold">
+                    {s.title || "(제목 없음)"}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setEditingIdx(isEditing ? null : idx)}
+                    className={`rounded border p-0.5 ${
+                      isEditing
+                        ? "border-amber-300 bg-amber-500/30 text-amber-100"
+                        : "border-amber-400/30 bg-black/30 text-amber-200 hover:bg-black/50"
+                    }`}
+                    aria-label="수정"
+                    title="기능 수정"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => move(idx, -1)}
+                    disabled={idx === 0}
+                    className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
+                    aria-label="위로"
+                  >
+                    <ArrowUp className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => move(idx, 1)}
+                    disabled={idx === list.length - 1}
+                    className="rounded border border-amber-400/30 bg-black/30 p-0.5 text-amber-200 disabled:opacity-30 hover:bg-black/50"
+                    aria-label="아래로"
+                  >
+                    <ArrowDown className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeAt(idx)}
+                    className="rounded border border-rose-400/40 bg-rose-950/30 p-0.5 text-rose-200 hover:bg-rose-950/50"
+                    aria-label="빼기"
+                    title="이 단계 빼기"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+                {/* 2행: 효과 / 기능 badge */}
+                <StepBadges step={s} />
+                {/* 3행: 편집 패널 (✏️ 클릭 시) */}
+                {isEditing && (
+                  <InlineRowEditor
+                    day={day}
+                    originalStep={originalStepNo}
+                    currentStep={s}
+                    onSaved={() => {
+                      setEditingIdx(null);
+                      setBump((b) => b + 1);
+                      onChanged();
+                    }}
+                    onCancel={() => setEditingIdx(null)}
+                  />
+                )}
               </div>
-              {/* 2행: 효과 / 기능 badge */}
-              <StepBadges step={s} />
-            </div>
-          ))}
+            );
+          })}
           {list.length === 0 && (
             <p className="px-2 py-3 text-center text-[10px] text-amber-200/50">
               보이는 단계가 없어요. 아래에서 다시 넣어보세요.
@@ -897,6 +945,208 @@ function NewStepForm({
       <p className="text-[9px] leading-relaxed text-amber-200/55">
         ※ 만든 단계는 {day}일차 끝에 추가돼요. ↑↓ 로 원하는 위치로 옮길 수 있어요.
       </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// 64-AB: InlineRowEditor — row 안에서 직접 그 step 의 효과/기능 수정
+// ─────────────────────────────────────────────────────────────
+function InlineRowEditor({
+  day,
+  originalStep,
+  currentStep,
+  onSaved,
+  onCancel,
+}: {
+  day: number;
+  originalStep: number;
+  currentStep: TutorialCampStep;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
+  const [draft, setDraft] = useState<TutorialStepOverridePartial>(() => ({
+    targetSelector: currentStep.targetSelector ?? "",
+    placement: currentStep.placement ?? "bottom",
+    autoAdvance: !!currentStep.autoAdvance,
+    autoNavigate: !!currentStep.autoNavigate,
+    requireTargetClick: !!currentStep.requireTargetClick,
+    blockNextUntilComplete: !!currentStep.blockNextUntilComplete,
+    completionRule: currentStep.completionRule,
+    helperMessage: currentStep.helperMessage,
+    successMessage: currentStep.successMessage,
+  }));
+
+  const update = (patch: TutorialStepOverridePartial) =>
+    setDraft((prev) => ({ ...prev, ...patch }));
+
+  const onSave = () => {
+    setStepOverride(day, originalStep, draft);
+    toast.success(`✏️ "${currentStep.title}" 수정 저장됨`, {
+      description: "새로고침 후 회원에게도 반영하려면 코드 영구 반영",
+    });
+    onSaved();
+  };
+
+  const onResetThis = () => {
+    clearStepOverride(day, originalStep);
+    toast.success("이 단계 원래 설정으로 복귀");
+    onSaved();
+  };
+
+  const inputCls =
+    "w-full rounded-md border border-amber-400/20 bg-black/40 px-2 py-1 text-[10.5px] font-mono text-amber-100 focus:outline-none focus:border-amber-400/60";
+
+  return (
+    <div className="mt-2 space-y-2 rounded-md border border-amber-400/30 bg-amber-500/5 p-2">
+      <p className="text-[10px] font-bold text-amber-200">
+        ✏️ 이 단계 기능 수정
+      </p>
+
+      {/* selector */}
+      <label className="block">
+        <span className="text-[9.5px] font-bold text-amber-200/85">
+          🎯 가리킬 element
+        </span>
+        <input
+          type="text"
+          value={draft.targetSelector ?? ""}
+          onChange={(e) => update({ targetSelector: e.target.value })}
+          placeholder='[data-tour="..."] 또는 비워두면 가운데'
+          className={inputCls}
+        />
+      </label>
+
+      {/* placement */}
+      <label className="block">
+        <span className="text-[9.5px] font-bold text-amber-200/85">
+          💬 카드 위치
+        </span>
+        <select
+          value={draft.placement ?? "bottom"}
+          onChange={(e) =>
+            update({
+              placement:
+                e.target.value as TutorialStepOverridePartial["placement"],
+            })
+          }
+          className={inputCls}
+        >
+          <option value="top">위쪽</option>
+          <option value="bottom">아래쪽</option>
+          <option value="left">왼쪽</option>
+          <option value="right">오른쪽</option>
+          <option value="center">가운데</option>
+        </select>
+      </label>
+
+      {/* completion rule */}
+      <label className="block">
+        <span className="text-[9.5px] font-bold text-amber-200/85">
+          ✅ 어떻게 완료되나요?
+        </span>
+        <select
+          value={draft.completionRule ?? ""}
+          onChange={(e) =>
+            update({
+              completionRule:
+                (e.target.value ||
+                  undefined) as TutorialStepOverridePartial["completionRule"],
+            })
+          }
+          className={inputCls}
+        >
+          <option value="">(설정 안 함 — 다음으로 직접)</option>
+          <option value="target_clicked">회원이 카드를 눌렀을 때</option>
+          <option value="quiz_question_read">4초 동안 읽기 (자동)</option>
+          <option value="quiz_answer_selected">퀴즈 답 골랐을 때</option>
+          <option value="quiz_correct_answer_selected">정답 골랐을 때</option>
+          <option value="scrolled_to_bottom">맨 아래까지 스크롤</option>
+          <option value="text_input_min_length">글 일정 길이 입력</option>
+          <option value="option_selected">옵션 골랐을 때</option>
+          <option value="toggle_selected">토글 눌렀을 때</option>
+          <option value="condition_checked">컨디션 체크</option>
+          <option value="modal_closed">모달 닫혔을 때</option>
+          <option value="manual_confirm">언제든 통과</option>
+        </select>
+      </label>
+
+      {/* 토글 4개 */}
+      <div className="space-y-1">
+        <CompactToggle
+          label="완료 시 자동 다음으로"
+          checked={!!draft.autoAdvance}
+          onChange={(v) => update({ autoAdvance: v })}
+        />
+        <CompactToggle
+          label="시작 시 페이지 자동 이동"
+          checked={!!draft.autoNavigate}
+          onChange={(v) => update({ autoNavigate: v })}
+        />
+        <CompactToggle
+          label="회원이 꼭 카드 클릭"
+          checked={!!draft.requireTargetClick}
+          onChange={(v) => update({ requireTargetClick: v })}
+        />
+        <CompactToggle
+          label="완료 전에 '다음으로' 잠그기"
+          checked={!!draft.blockNextUntilComplete}
+          onChange={(v) => update({ blockNextUntilComplete: v })}
+        />
+      </div>
+
+      {/* helper / success */}
+      <label className="block">
+        <span className="text-[9.5px] font-bold text-amber-200/85">
+          🗨️ 안내 한 줄 (행동 전)
+        </span>
+        <input
+          type="text"
+          value={draft.helperMessage ?? ""}
+          onChange={(e) => update({ helperMessage: e.target.value })}
+          placeholder="예: 👆 여기를 눌러보세요"
+          className={inputCls}
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-[9.5px] font-bold text-amber-200/85">
+          🎉 칭찬 한 줄 (행동 후)
+        </span>
+        <input
+          type="text"
+          value={draft.successMessage ?? ""}
+          onChange={(e) => update({ successMessage: e.target.value })}
+          placeholder="예: 잘했어요!"
+          className={inputCls}
+        />
+      </label>
+
+      {/* 저장 / 원래대로 / 닫기 */}
+      <div className="flex gap-1.5 pt-1">
+        <button
+          type="button"
+          onClick={onSave}
+          className="inline-flex flex-1 items-center justify-center gap-1 rounded-md bg-amber-500 px-2 py-1.5 text-[10.5px] font-black text-amber-950 hover:bg-amber-400"
+        >
+          💾 저장
+        </button>
+        <button
+          type="button"
+          onClick={onResetThis}
+          className="rounded-md border border-amber-400/30 bg-black/30 px-2 py-1.5 text-[10.5px] font-bold text-amber-200 hover:bg-black/50"
+          title="이 단계 원래 설정으로"
+        >
+          ↩️
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-md border border-amber-400/30 bg-black/30 px-2 py-1.5 text-[10.5px] font-bold text-amber-200 hover:bg-black/50"
+        >
+          닫기
+        </button>
+      </div>
     </div>
   );
 }
