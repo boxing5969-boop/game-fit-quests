@@ -300,11 +300,11 @@ function DevModal({
                   isAdmin ? "text-amber-300" : "text-rose-300",
                 )}
               >
-                {isAdmin ? "ADMIN PREVIEW" : "DEV PREVIEW"}
+                {isAdmin ? "관리자 모드" : "DEV PREVIEW"}
               </p>
               <p className="text-[13px] font-bold text-amber-50">
                 {isAdmin
-                  ? "관리자 — Day 2~7 미리보기"
+                  ? "7일 캠프 미리보기 / 단계 고치기"
                   : "개발자 검수 모드"}
               </p>
             </div>
@@ -670,18 +670,22 @@ function StepEditorSection({
 
   return (
     <Section
-      title={`현재 step 편집 (Day ${day} · Step ${step}${existing ? " · OVERRIDE" : ""})`}
+      title={`이번 단계 고치기 (${day}일차 · ${step + 1}번째${existing ? " · 수정됨" : ""})`}
     >
-      <div className="space-y-2">
-        <p className="text-[10px] leading-relaxed text-amber-200/65">
-          ※ 이 변경은 admin 본인 브라우저에만 적용됩니다 (localStorage).
-          저장 후 페이지 새로고침으로 반영. 회원/server 영향 0.
+      <div className="space-y-3">
+        <p className="rounded-lg border border-amber-400/20 bg-amber-500/5 px-2.5 py-1.5 text-[11px] leading-relaxed text-amber-100">
+          💡 여기서 바꾸면 <strong>관리자 본인 화면</strong>에서만 보여요.
+          다른 회원에게는 영향 없어요. 마음에 들면 코드에 적어달라고 알려주세요.
+          <br />저장 후 화면을 새로고침해야 적용돼요.
         </p>
 
         <label className="block">
-          <span className="text-[10px] font-bold text-amber-200/80">
-            target selector
+          <span className="text-[11px] font-bold text-amber-100">
+            👉 어디를 가리킬까요?
           </span>
+          <p className="mb-1 text-[10px] text-amber-200/60">
+            화면에서 강조할 버튼/카드의 표식. 예: [data-tour="quest-mini-academy"]
+          </p>
           <input
             type="text"
             value={draft.targetSelector ?? ""}
@@ -692,7 +696,12 @@ function StepEditorSection({
         </label>
 
         <label className="block">
-          <span className="text-[10px] font-bold text-amber-200/80">placement</span>
+          <span className="text-[11px] font-bold text-amber-100">
+            💬 안내 카드 위치
+          </span>
+          <p className="mb-1 text-[10px] text-amber-200/60">
+            오삼이 카드가 화면 어디에 보일지
+          </p>
           <select
             value={draft.placement ?? "bottom"}
             onChange={(e) =>
@@ -702,18 +711,21 @@ function StepEditorSection({
             }
             className={inputCls}
           >
-            <option value="top">top</option>
-            <option value="bottom">bottom</option>
-            <option value="left">left</option>
-            <option value="right">right</option>
-            <option value="center">center</option>
+            <option value="top">위쪽</option>
+            <option value="bottom">아래쪽</option>
+            <option value="left">왼쪽</option>
+            <option value="right">오른쪽</option>
+            <option value="center">가운데</option>
           </select>
         </label>
 
         <label className="block">
-          <span className="text-[10px] font-bold text-amber-200/80">
-            completion rule
+          <span className="text-[11px] font-bold text-amber-100">
+            ✅ 어떻게 완료되나요?
           </span>
+          <p className="mb-1 text-[10px] text-amber-200/60">
+            회원이 무엇을 해야 이 단계가 끝나는지
+          </p>
           <select
             value={draft.completionRule ?? ""}
             onChange={(e) =>
@@ -724,48 +736,60 @@ function StepEditorSection({
             }
             className={inputCls}
           >
-            <option value="">(없음 — requireTargetClick 폴백)</option>
-            <option value="target_clicked">target_clicked</option>
-            <option value="quiz_question_read">quiz_question_read (4초 자동)</option>
-            <option value="quiz_answer_selected">quiz_answer_selected</option>
-            <option value="quiz_correct_answer_selected">quiz_correct_answer_selected</option>
-            <option value="scrolled_to_bottom">scrolled_to_bottom</option>
-            <option value="text_input_min_length">text_input_min_length</option>
-            <option value="option_selected">option_selected</option>
-            <option value="toggle_selected">toggle_selected</option>
-            <option value="condition_checked">condition_checked</option>
-            <option value="modal_closed">modal_closed</option>
-            <option value="manual_confirm">manual_confirm</option>
+            <option value="">(설정 안 함 — 회원이 '다음으로' 직접)</option>
+            <option value="target_clicked">회원이 카드를 눌렀을 때</option>
+            <option value="quiz_question_read">4초 동안 읽기 (자동 완료)</option>
+            <option value="quiz_answer_selected">퀴즈에서 답을 골랐을 때</option>
+            <option value="quiz_correct_answer_selected">정답을 골랐을 때</option>
+            <option value="scrolled_to_bottom">맨 아래까지 스크롤했을 때</option>
+            <option value="text_input_min_length">글을 일정 길이 이상 적었을 때</option>
+            <option value="option_selected">옵션을 골랐을 때</option>
+            <option value="toggle_selected">토글을 눌렀을 때</option>
+            <option value="condition_checked">컨디션을 체크했을 때</option>
+            <option value="modal_closed">모달이 닫혔을 때</option>
+            <option value="manual_confirm">언제든 통과 (수동 확인용)</option>
           </select>
         </label>
 
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <ToggleRow
-            label="autoAdvance"
-            checked={!!draft.autoAdvance}
-            onChange={(v) => update({ autoAdvance: v })}
-          />
-          <ToggleRow
-            label="autoNavigate"
-            checked={!!draft.autoNavigate}
-            onChange={(v) => update({ autoNavigate: v })}
-          />
-          <ToggleRow
-            label="requireTargetClick"
-            checked={!!draft.requireTargetClick}
-            onChange={(v) => update({ requireTargetClick: v })}
-          />
-          <ToggleRow
-            label="blockNextUntilComplete"
-            checked={!!draft.blockNextUntilComplete}
-            onChange={(v) => update({ blockNextUntilComplete: v })}
-          />
+        <div>
+          <p className="mb-1.5 text-[11px] font-bold text-amber-100">
+            ⚙️ 자동 진행 설정
+          </p>
+          <div className="grid grid-cols-1 gap-2">
+            <ToggleRow
+              label="완료되면 다음 단계로 자동 이동"
+              hint="회원이 '다음으로'를 안 눌러도 자동 진행 (0.25초 후)"
+              checked={!!draft.autoAdvance}
+              onChange={(v) => update({ autoAdvance: v })}
+            />
+            <ToggleRow
+              label="이 단계 시작할 때 페이지 자동 이동"
+              hint="단계가 시작되면 정해진 화면으로 자동 이동"
+              checked={!!draft.autoNavigate}
+              onChange={(v) => update({ autoNavigate: v })}
+            />
+            <ToggleRow
+              label="회원이 꼭 카드를 눌러야 함"
+              hint="누르기 전에는 '다음으로' 비활성"
+              checked={!!draft.requireTargetClick}
+              onChange={(v) => update({ requireTargetClick: v })}
+            />
+            <ToggleRow
+              label="완료 전에는 '다음으로' 잠그기"
+              hint="조건 채울 때까지 다음으로 못 누름"
+              checked={!!draft.blockNextUntilComplete}
+              onChange={(v) => update({ blockNextUntilComplete: v })}
+            />
+          </div>
         </div>
 
         <label className="block">
-          <span className="text-[10px] font-bold text-amber-200/80">
-            helper message
+          <span className="text-[11px] font-bold text-amber-100">
+            🗨️ 안내 한 줄 (회원이 행동하기 전)
           </span>
+          <p className="mb-1 text-[10px] text-amber-200/60">
+            예: "👆 여기를 눌러보세요"
+          </p>
           <input
             type="text"
             value={draft.helperMessage ?? ""}
@@ -775,9 +799,12 @@ function StepEditorSection({
         </label>
 
         <label className="block">
-          <span className="text-[10px] font-bold text-amber-200/80">
-            success message
+          <span className="text-[11px] font-bold text-amber-100">
+            🎉 칭찬 한 줄 (회원이 행동한 후)
           </span>
+          <p className="mb-1 text-[10px] text-amber-200/60">
+            예: "잘했어요! 다음으로 갈게요"
+          </p>
           <input
             type="text"
             value={draft.successMessage ?? ""}
@@ -790,16 +817,16 @@ function StepEditorSection({
           <Button
             type="button"
             onClick={onSave}
-            className="h-8 flex-1 rounded-lg bg-amber-500 px-3 text-[11px] font-black text-amber-950 hover:bg-amber-400"
+            className="h-9 flex-1 rounded-lg bg-amber-500 px-3 text-[12px] font-black text-amber-950 hover:bg-amber-400"
           >
-            저장 + 새로고침 안내
+            💾 저장하기 (새로고침 후 적용)
           </Button>
           <button
             type="button"
             onClick={onResetThisStep}
             className="rounded-lg border border-amber-400/30 bg-black/30 px-3 text-[11px] font-bold text-amber-200/85 hover:bg-black/50"
           >
-            이 step 초기화
+            ↩️ 원래대로
           </button>
         </div>
 
@@ -811,7 +838,7 @@ function StepEditorSection({
           }}
           className="w-full rounded-lg border border-rose-400/30 bg-rose-950/15 px-3 py-1.5 text-[10px] font-bold text-rose-200/85 hover:bg-rose-950/30"
         >
-          전체 override 초기화 (모든 step)
+          🗑️ 내가 바꾼 모든 단계 한꺼번에 원래대로
         </button>
       </div>
     </Section>
@@ -820,21 +847,30 @@ function StepEditorSection({
 
 function ToggleRow({
   label,
+  hint,
   checked,
   onChange,
 }: {
   label: string;
+  hint?: string;
   checked: boolean;
   onChange: (next: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-amber-400/15 bg-black/30 px-2 py-1.5 text-[10px] font-bold text-amber-100">
-      <span className="font-mono text-amber-200/80">{label}</span>
+    <label className="flex cursor-pointer items-start justify-between gap-2 rounded-lg border border-amber-400/15 bg-black/30 px-2.5 py-2 text-[11px] font-bold text-amber-100 active:scale-[0.99]">
+      <div className="flex-1 min-w-0">
+        <span className="block text-amber-100">{label}</span>
+        {hint && (
+          <span className="block text-[10px] font-normal text-amber-200/60">
+            {hint}
+          </span>
+        )}
+      </div>
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="h-3.5 w-3.5 accent-amber-400"
+        className="mt-0.5 h-4 w-4 shrink-0 accent-amber-400"
       />
     </label>
   );
