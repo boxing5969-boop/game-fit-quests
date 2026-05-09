@@ -484,10 +484,12 @@ const DAY_2_STEPS: TutorialCampStep[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// Day 3 — 153 QUEST / 복싱 IQ
+// Day 3 — 153 QUEST 둘러보기 (IQ 는 Day 1 에서 이미 진행 — 중복 제거)
 // ─────────────────────────────────────────────────────────────
-
+// 64-R: 사용자 피드백 "복싱 IQ 는 1일차에서 이미 진행하므로 다른 일차에는 X".
+//   Day 1/2 와 같은 cascade 패턴 — autoNavigate + click 강조 + autoAdvance.
 const DAY_3_STEPS: TutorialCampStep[] = [
+  // ── 0. 홈에서 153 QUEST 카드 click → /myboxer/quest 자동 이동 ──
   {
     day: 3,
     step: 0,
@@ -495,41 +497,49 @@ const DAY_3_STEPS: TutorialCampStep[] = [
     targetKey: "day3.quest_intro",
     targetSelector: '[data-tour="home-quest-recommendation"]',
     title: "153 QUEST",
-    body: "153 QUEST는 매일 짧게 즐기는\n복싱 한 줄과 작은 행동이에요.",
-    osamiMessage: "공부보다 가벼워요.",
-    actionType: "navigate",
-    requireTargetClick: false,
-    allowNextWithoutClick: true,
-    animation: "spotlight",
-    placement: "bottom",
-    fallbackText: "홈 화면에서 QUEST 카드를 누르면 들어올 수 있어요.",
-    completionText: "오늘의 QUEST 한 줄, 챙겼어요.",
-  },
-  {
-    day: 3,
-    step: 1,
-    route: "/myboxer/quest",
-    targetKey: "day3.boxing_iq",
-    targetSelector: '[data-tour="boxing-iq-card"]',
-    title: "복싱 IQ",
-    body: "복싱 IQ는 자세, 거리, 호흡, 회복 같은\n복싱의 작은 원리를 묻는 짧은 퀴즈예요.",
-    osamiMessage: "여기를 눌러 한 번 열어볼까요?",
+    body: "오늘의 한 줄과 작은 행동이 모이는 곳이에요.\n홈 화면의 QUEST 카드를 한 번 눌러볼게요.",
+    osamiMessage: "공부보다 가벼워요. 한 번 눌러봐요.",
     actionType: "click",
     requireTargetClick: true,
     allowNextWithoutClick: true,
     animation: "pulse",
     placement: "bottom",
-    fallbackText: "153 QUEST 메뉴를 내리면 복싱 IQ 카드가 보여요.",
-    completionText: "복싱 IQ는 알수록 자세가 자연스러워져요.",
-    helperMessage: "반짝이는 곳을 눌러보세요.",
-    successMessage: "복싱 IQ 가 열렸어요. 둘러보고 닫으면 다음으로 가요.",
+    fallbackText:
+      "홈 화면에서 'QUEST' 추천 카드를 찾아 눌러주세요.",
+    completionText: "153 QUEST 화면이 열렸어요.",
+    helperMessage: "👆 여기 153 QUEST 카드를 눌러보세요.",
+    successMessage: "좋아요. QUEST 화면이 열렸어요.",
     blockNextUntilComplete: true,
     completionRule: "target_clicked",
     autoAdvance: true,
+    autoNavigate: true,
   },
-  // ※ 64-A: Day 3 의 IQ 모달 안 진행 (문제 읽기 / 정답 선택) step 제거.
-  //   Day 1 에서 이미 IQ 카드 한 번 클릭 + 모달 열어봤음 → 같은 흐름 중복 안내가
-  //   부담. step 1 의 카드 클릭 + modalOpen 감지로 자유롭게 풀거나 닫음.
+  // ── 1. 153 QUEST 페이지 둘러보기 (4초 자동) ──
+  //   회원이 QUEST 카드들(IQ / 챌린지 / 일기 등)을 잠깐 살펴보는 시간.
+  //   IQ 클릭은 Day 1 에서 이미 진행 — 여기서는 카드 위치만 인지.
+  {
+    day: 3,
+    step: 1,
+    route: "/myboxer/quest",
+    targetKey: "day3.quest_overview",
+    targetSelector: "",
+    title: "오늘의 QUEST 카드들",
+    body: "복싱 IQ · 챌린지 · 챔피언 일기 — 매일 한 번씩 즐기는 작은 미션들이에요.\n각 카드는 자유롭게 둘러보세요.",
+    osamiMessage: "오늘은 위치만 봐도 충분해요.",
+    actionType: "read",
+    requireTargetClick: false,
+    allowNextWithoutClick: true,
+    animation: "spotlight",
+    placement: "center",
+    fallbackText:
+      "153 QUEST 페이지 안에서 오늘의 카드들을 잠깐 둘러보세요.",
+    completionText: "각 카드의 자리를 알게 됐어요.",
+    helperMessage: "잠깐 둘러보고 있어요. 곧 다음으로 가요.",
+    successMessage: "이제 보상 안내로 가볼게요.",
+    completionRule: "quiz_question_read",
+    autoAdvance: true,
+  },
+  // ── 2. QUEST XP 와 파이트 머니 (4초 자동) ──
   {
     day: 3,
     step: 2,
@@ -546,8 +556,12 @@ const DAY_3_STEPS: TutorialCampStep[] = [
     placement: "center",
     fallbackText: "QUEST를 한 번 진행하면 자동으로 작은 보상이 누적돼요.",
     completionText: "보상은 결과가 아니라, 따라오는 거예요.",
-    helperMessage: "잠깐 읽어보고 '다음으로' 를 눌러주세요.",
+    helperMessage: "잠깐 읽어보고 있어요. 곧 다음으로 가요.",
+    successMessage: "Day 3 마무리할게요.",
+    completionRule: "quiz_question_read",
+    autoAdvance: true,
   },
+  // ── 3. Day 3 완료 ──
   {
     day: 3,
     step: 3,
