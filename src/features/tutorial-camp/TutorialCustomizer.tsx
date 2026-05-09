@@ -123,9 +123,21 @@ const TutorialCustomizer = () => {
   const [autoNavigate, setAutoNavigate] = useState(false);
   const [requireTargetClick, setRequireTargetClick] = useState(false);
 
-  // step 변경 시 draft 동기화
-  const day = camp.state.currentDay;
-  const step = camp.state.currentStep;
+  // 64-AA: 미리보기 / 편집할 일차 — '지금 진행 중' 과 별개로 admin 이 선택
+  //   1~7 button 으로 선택만 함. 실제 시작은 '시작' 버튼 클릭 시.
+  const [previewDay, setPreviewDay] = useState<number>(
+    camp.state.currentDay,
+  );
+  // 활성 day 가 외부에서 바뀌면 동기화 (camp.start 후 등)
+  useEffect(() => {
+    setPreviewDay(camp.state.currentDay);
+  }, [camp.state.currentDay]);
+
+  // step 변경 시 draft 동기화 — previewDay 가 currentDay 와 같을 때만 currentStep
+  //   참조. 다른 day 보고 있으면 0 부터 (편집기 시작점).
+  const day = previewDay;
+  const step =
+    previewDay === camp.state.currentDay ? camp.state.currentStep : 0;
   useEffect(() => {
     const s = getStep(day, step);
     setSelector(s?.targetSelector ?? "");
@@ -397,66 +409,74 @@ const TutorialCustomizer = () => {
                 }}
               />
 
-              {/* 미리보기 — 1~7 일차 선택 후 처음부터 시뮬레이션 */}
+              {/* 미리보기 — 1~7 일차 선택 (커스텀만) + 별도 시작 버튼 */}
               <div className="space-y-1.5">
                 <p className="text-[11px] font-bold text-amber-100">
-                  🎬 미리보기 (회원이 보는 화면 그대로)
+                  📅 어느 일차를 편집할까요?
                 </p>
                 <p className="text-[10px] text-amber-200/65">
-                  미리보고 싶은 일차를 선택하세요. 누르면 그 일차 처음부터
-                  자동 시작.
+                  버튼을 누르면 그 일차의 단계 순서 / 설정이 아래에 표시돼요.
+                  <br />
+                  실제 화면 미리보기는 ▶ '시작' 버튼 누른 뒤 진행됩니다.
                 </p>
                 <div className="grid grid-cols-7 gap-1">
                   {[1, 2, 3, 4, 5, 6, 7].map((d) => {
-                    const isCurrent = camp.state.currentDay === d;
+                    const isPreview = previewDay === d;
+                    const isRunning =
+                      camp.state.currentDay === d &&
+                      camp.state.status === "active";
                     return (
                       <button
                         key={d}
                         type="button"
                         onClick={() => {
-                          camp.goToDayStep(d, 0);
-                          if (camp.state.status !== "active") camp.start();
-                          setOpen(false);
-                          toast.success(
-                            `🎬 ${d}일차 미리보기 시작 — 화면을 따라가보세요`,
-                            {
-                              description:
-                                "다시 customizer 를 열려면 우측 버튼",
-                            },
-                          );
+                          setPreviewDay(d);
+                          toast.success(`📅 ${d}일차 편집 모드`, {
+                            description:
+                              "단계 순서 / 설정이 아래에 표시됩니다",
+                            id: `preview-day-${d}`,
+                          });
                         }}
-                        className={`flex flex-col items-center justify-center rounded-lg border px-1 py-1.5 text-[10px] font-black transition-all active:scale-95 ${
-                          isCurrent
-                            ? "border-emerald-300 bg-emerald-500/30 text-emerald-100"
-                            : "border-amber-400/30 bg-black/30 text-amber-100 hover:bg-black/50"
+                        className={`relative flex flex-col items-center justify-center rounded-lg border px-1 py-1.5 text-[10px] font-black transition-all active:scale-95 ${
+                          isPreview
+                            ? "border-amber-300 bg-amber-500/30 text-amber-50"
+                            : "border-amber-400/30 bg-black/30 text-amber-100/80 hover:bg-black/50"
                         }`}
                       >
                         <span className="text-[8px] font-bold opacity-70">
                           DAY
                         </span>
                         <span>{d}</span>
+                        {isRunning && (
+                          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-emerald-400/40" />
+                        )}
                       </button>
                     );
                   })}
                 </div>
+                {/* 시작 버튼 — 별도 큰 버튼 */}
                 <button
                   type="button"
                   onClick={() => {
-                    camp.goToDayStep(day, 0);
+                    camp.goToDayStep(previewDay, 0);
                     if (camp.state.status !== "active") camp.start();
                     setOpen(false);
                     toast.success(
-                      `🎬 ${day}일차 미리보기 시작 — 화면을 따라가보세요`,
-                      { description: "다시 customizer 를 열려면 우측 버튼" },
+                      `🎬 ${previewDay}일차 미리보기 시작 — 화면을 따라가보세요`,
+                      {
+                        description:
+                          "다시 customizer 를 열려면 우측 'Wrench 커스텀' 버튼",
+                      },
                     );
                   }}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-[11px] font-black text-emerald-950 hover:bg-emerald-400"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2.5 text-[12px] font-black text-emerald-950 shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 active:scale-[0.98]"
                 >
-                  <Play className="h-3.5 w-3.5" />
-                  지금 보고있는 {day}일차 처음부터
+                  <Play className="h-4 w-4 fill-emerald-950" />▶ {previewDay}
+                  일차 처음부터 시작
                 </button>
                 <p className="text-[9.5px] text-amber-200/55">
-                  ※ 변경한 순서/설정 그대로 본인 화면에 적용. 회원에게는 영향 없어요.
+                  ※ 1~7 일차 버튼은 편집/설정만 전환. 실제 진행은 위 ▶ 버튼.
+                  회원에게는 영향 없어요.
                 </p>
               </div>
 
