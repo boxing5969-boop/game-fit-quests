@@ -631,14 +631,24 @@ function StepOrderPanel({
         </div>
       </div>
 
-      {/* 빠진 단계 (hidden) */}
-      {hiddenList.length > 0 && (
-        <div>
-          <p className="mb-1 text-[9.5px] font-bold uppercase tracking-wider text-rose-300/80">
-            ✗ 빠진 단계 ({hiddenList.length}개)
-          </p>
-          <div className="space-y-1 rounded-lg border border-rose-400/15 bg-rose-950/10 p-1.5">
-            {hiddenList.map((s) => (
+      {/* 빠진 단계 (hidden) — 항상 표시. 0개일 때 안내. */}
+      <div>
+        <p className="mb-1 text-[9.5px] font-bold uppercase tracking-wider text-rose-300/80">
+          ✗ 빠진 단계 ({hiddenList.length}개)
+        </p>
+        <div className="space-y-1 rounded-lg border border-rose-400/15 bg-rose-950/10 p-1.5">
+          {hiddenList.length === 0 ? (
+            <p className="px-2 py-2.5 text-center text-[10px] leading-relaxed text-rose-200/55">
+              빠진 단계가 없어요.
+              <br />
+              <span className="text-amber-200/65">위에서 🗑️ 빼기</span> 누르면
+              여기로 이동합니다.
+              <br />
+              여기에서 <span className="text-emerald-300/85">➕ 다시</span> 누르면
+              보이는 단계로 복귀.
+            </p>
+          ) : (
+            hiddenList.map((s) => (
               <div
                 key={`h-${day}-${s.step}-${s.title}`}
                 className="flex items-center gap-1 rounded-md bg-black/30 px-2 py-1.5 text-[10.5px] opacity-80"
@@ -656,10 +666,10 @@ function StepOrderPanel({
                   다시
                 </button>
               </div>
-            ))}
-          </div>
+            ))
+          )}
         </div>
-      )}
+      </div>
 
       <p className="text-[9.5px] text-amber-200/55">
         ↑↓ 순서 변경 · 🗑️ 빼기 · ➕ 다시 넣기. '미리보기' / '최종 저장' 으로 적용.
