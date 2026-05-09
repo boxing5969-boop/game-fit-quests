@@ -108,11 +108,13 @@ const TutorialOverlay = ({
         )}
 
         {/* fallback dim — target 못 찾았거나 라우트 mismatch.
-            pointer-events: none — 모달/sheet 의 button 클릭이 통과되도록. */}
+            pointer-events: none — 모달/sheet 의 button 클릭이 통과되도록.
+            64-S: opacity 0.78 → 0.4 — 회원이 뒤 메뉴 위치를 인지할 수 있게
+            과한 어두움 해소. */}
         {fallbackDim && (
           <div
             className="pointer-events-none fixed inset-0 z-[110]"
-            style={{ background: "rgba(10, 16, 36, 0.78)" }}
+            style={{ background: "rgba(10, 16, 36, 0.4)" }}
             aria-hidden
           />
         )}

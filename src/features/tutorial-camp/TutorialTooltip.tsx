@@ -121,9 +121,10 @@ const TutorialTooltip = ({
   //   회원이 모달 직접 닫으면 modalOpen=false → 일반 카드 복귀.
   // 64-F: spotlight target 이 잡혀있고 라우트 매칭이면 항상 compact —
   //   카드가 메뉴/탭/버튼을 가리지 않게 화면 하단으로 자동 축소.
-  //   target 못 찾거나 라우트 mismatch 면 fallback 카드로 (회원 안내 필요).
+  // 64-S: target 못 찾는 fallback 시에도 compact — 큰 카드가 메뉴를 가리고
+  //   회원 시야를 막던 문제 해소. fallback hint 는 카드 안에 한 줄로 표시.
   const hasSpotlightTarget = !!rect && rect.found && routeMatch;
-  const compact = modalOpen === true || hasSpotlightTarget;
+  const compact = modalOpen === true || hasSpotlightTarget || true;
   const pos = computeTooltipPosition(rect, step.placement);
   // route 가 다르면 → 이동 필요 (target rect 자체를 시도 안 함)
   // route 가 같지만 target 매칭 실패 → 진짜 fallback (안전망 발동)
@@ -172,51 +173,54 @@ const TutorialTooltip = ({
         data-tour-overlay="true"
         className={compactPos}
       >
-        <div className="flex max-w-[340px] items-center gap-2 rounded-pill border border-amber-400/40 bg-[#0a1024]/95 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.55)] backdrop-blur-sm">
+        <div className="flex max-w-[360px] items-center gap-2 rounded-2xl border border-amber-400/40 bg-[#0a1024]/95 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.55)] backdrop-blur-sm">
           <div className="shrink-0">
             <OsamMascot
               size="xs"
               state={DAY_TO_OSAMI_STATE[step.day] ?? "wink"}
             />
           </div>
-          {showSuccess ? (
-            <>
-              <p className="text-[11px] font-bold leading-snug text-emerald-200">
-                <Check className="mr-1 inline h-3 w-3 -translate-y-[1px]" />
-                {modalActionDone
-                  ? "다 푸셨어요! 다음으로 →"
-                  : step.successMessage ?? "잘했어요!"}
-              </p>
-              <motion.button
-                type="button"
-                onClick={onNext}
-                className="pointer-events-auto ml-1 inline-flex h-7 items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 px-3 text-[11px] font-black text-amber-950 active:scale-[0.97]"
-                animate={
-                  modalActionDone
-                    ? {
-                        scale: [1, 1.08, 1],
-                        boxShadow: [
-                          "0 0 0 0 rgba(253,184,92,0.0)",
-                          "0 0 0 8px rgba(253,184,92,0.35)",
-                          "0 0 0 0 rgba(253,184,92,0.0)",
-                        ],
-                      }
-                    : { scale: 1, boxShadow: "0 0 0 0 rgba(253,184,92,0)" }
-                }
-                transition={
-                  modalActionDone
-                    ? { duration: 1.1, repeat: Infinity, ease: "easeInOut" }
-                    : { duration: 0.2 }
-                }
-              >
-                다음으로
-                <ChevronRight className="h-3 w-3" />
-              </motion.button>
-            </>
-          ) : (
-            <p className="text-[11px] font-bold leading-snug text-amber-100">
-              {step.helperMessage ?? "모달 안에서 답을 골라주세요."}
+          {/* 64-S: 카드 제목 표시 — compact 모드에서도 회원이 무엇을 보고
+              있는지 명확히. helper / success 는 그 옆에 한 줄로. */}
+          <div className="flex min-w-0 flex-1 flex-col leading-tight">
+            <p className="truncate text-[11px] font-black text-amber-100">
+              {step.title}
             </p>
+            <p className="truncate text-[10px] font-bold text-amber-200/85">
+              {showSuccess
+                ? modalActionDone
+                  ? "다 푸셨어요! 다음으로 →"
+                  : step.successMessage ?? "잘했어요!"
+                : step.helperMessage ?? "잠깐 둘러보세요."}
+            </p>
+          </div>
+          {/* 64-S: showSuccess 시 mini '다음으로' 버튼 (modalActionDone 일 때 pulse glow) */}
+          {showSuccess && (
+            <motion.button
+              type="button"
+              onClick={onNext}
+              className="pointer-events-auto ml-1 inline-flex h-7 items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 px-3 text-[11px] font-black text-amber-950 active:scale-[0.97]"
+              animate={
+                modalActionDone
+                  ? {
+                      scale: [1, 1.08, 1],
+                      boxShadow: [
+                        "0 0 0 0 rgba(253,184,92,0.0)",
+                        "0 0 0 8px rgba(253,184,92,0.35)",
+                        "0 0 0 0 rgba(253,184,92,0.0)",
+                      ],
+                    }
+                  : { scale: 1, boxShadow: "0 0 0 0 rgba(253,184,92,0)" }
+              }
+              transition={
+                modalActionDone
+                  ? { duration: 1.1, repeat: Infinity, ease: "easeInOut" }
+                  : { duration: 0.2 }
+              }
+            >
+              다음으로
+              <ChevronRight className="h-3 w-3" />
+            </motion.button>
           )}
         </div>
       </motion.div>
