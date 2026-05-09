@@ -17,6 +17,7 @@ import OsamiWelcomeModal from "@/components/tutorial/OsamiWelcomeModal";
 import { useTutorialAutoDetect } from "@/hooks/useTutorialAutoDetect";
 import TutorialCampProvider from "@/features/tutorial-camp/TutorialCampProvider";
 import TutorialDevPanel from "@/features/tutorial-camp/TutorialDevPanel";
+import TutorialCustomizer from "@/features/tutorial-camp/TutorialCustomizer";
 import PostActionReflectionSheet from "@/components/home/PostActionReflectionSheet";
 import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
 import RouteLoader from "@/components/splash/RouteLoader";
@@ -258,6 +259,8 @@ const AppRoutes = () => {
       {user && splashDone && <TutorialCampProvider />}
       {/* 개발자 preview 패널 — localhost / ?tutorialDev=1 / dev 토글 ON 일 때만 노출 */}
       {user && splashDone && <TutorialDevPanel />}
+      {/* 64-V: 관리자 floating 커스텀 도구 — 화면 위 element picker + 토글 */}
+      {user && splashDone && <TutorialCustomizer />}
       {/* 활동 후 30초 마무리 sheet — 글로벌 trigger 이벤트 listen, 하루 1회 큰 sheet */}
       {user && splashDone && <PostActionReflectionSheet />}
       {/* 쿨드 스타트 스플래시 (z-[80] · 포털). 세션 1회. */}
