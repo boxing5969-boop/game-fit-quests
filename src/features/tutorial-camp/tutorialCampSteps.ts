@@ -1242,15 +1242,16 @@ export function clearAllStepOrders(): void {
   }
 }
 
-/** day 안의 base step 들을 admin 정의 순서로 정렬 + step 번호 reassign.
+/** day 안의 base + custom step 들을 admin 정의 순서로 정렬 + step 번호 reassign.
  *  64-X: order 에 명시된 step 만 포함 — 누락(빼기) 된 step 은 hidden.
- *        order 가 빈 배열 또는 미설정이면 base 그대로 (모두 보임).
+ *        order 가 빈 배열 또는 미설정이면 base + custom 그대로 (모두 보임).
+ *  64-Y: custom step 도 통합 — admin 이 만든 새 step 도 일반 step 처럼 동작.
  */
 function getOrderedStepsByDay(day: number): TutorialCampStep[] {
-  const base = TUTORIAL_CAMP_STEPS.filter((s) => s.day === day);
+  const all = getAllStepsForDay(day); // base + custom
   const order = getStepOrderForDay(day);
-  if (!order) return base;
-  const byOriginal = new Map(base.map((s) => [s.step, s]));
+  if (!order) return all;
+  const byOriginal = new Map(all.map((s) => [s.step, s]));
   const sorted: TutorialCampStep[] = [];
   for (const orig of order) {
     const s = byOriginal.get(orig);
@@ -1260,23 +1261,135 @@ function getOrderedStepsByDay(day: number): TutorialCampStep[] {
   return sorted.map((s, idx) => (s.step === idx ? s : { ...s, step: idx }));
 }
 
-/** 64-X: order 에서 빠진 (hidden) base step 들 — 다시 넣기 UI 용. */
+// ─────────────────────────────────────────────────────────────
+// 64-Y: admin 이 새로 만든 step (custom). step 번호 1000+ 으로 base 와 충돌 회피.
+// ─────────────────────────────────────────────────────────────
+const STEP_CUSTOM_KEY = "myboxer.tutorialCamp.dev.customSteps";
+const CUSTOM_STEP_BASE = 1000;
+
+function readCustomStepsAll(): Record<number, TutorialCampStep[]> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STEP_CUSTOM_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<number, TutorialCampStep[]>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getCustomStepsForDay(day: number): TutorialCampStep[] {
+  return readCustomStepsAll()[day] ?? [];
+}
+
+function writeCustomStepsForDay(
+  day: number,
+  steps: TutorialCampStep[],
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const all = readCustomStepsAll();
+    if (steps.length === 0) {
+      delete all[day];
+    } else {
+      all[day] = steps;
+    }
+    window.localStorage.setItem(STEP_CUSTOM_KEY, JSON.stringify(all));
+  } catch {
+    /* noop */
+  }
+}
+
+/** 새 custom step 추가. step 번호 자동 (CUSTOM_STEP_BASE + 다음 idx). */
+export function addCustomStep(
+  day: number,
+  partial: Partial<TutorialCampStep> & { title: string },
+): TutorialCampStep {
+  const existing = getCustomStepsForDay(day);
+  const nextStepNo =
+    CUSTOM_STEP_BASE +
+    (existing.length === 0
+      ? 0
+      : Math.max(...existing.map((s) => s.step - CUSTOM_STEP_BASE)) + 1);
+  const created: TutorialCampStep = {
+    day,
+    step: nextStepNo,
+    route: partial.route ?? "/home",
+    targetKey: partial.targetKey ?? `day${day}.custom_${Date.now()}`,
+    targetSelector: partial.targetSelector ?? "",
+    title: partial.title,
+    body: partial.body ?? "",
+    osamiMessage: partial.osamiMessage ?? "",
+    actionType: (partial.actionType ?? "navigate") as TutorialCampStep["actionType"],
+    requireTargetClick: partial.requireTargetClick ?? false,
+    allowNextWithoutClick: partial.allowNextWithoutClick ?? true,
+    animation: (partial.animation ?? "spotlight") as TutorialCampStep["animation"],
+    placement: (partial.placement ?? "bottom") as TutorialCampStep["placement"],
+    fallbackText: partial.fallbackText ?? "",
+    completionText: partial.completionText ?? "",
+    completionRule: partial.completionRule,
+    blockNextUntilComplete: partial.blockNextUntilComplete,
+    autoAdvance: partial.autoAdvance ?? true,
+    autoNavigate: partial.autoNavigate ?? false,
+    helperMessage: partial.helperMessage,
+    successMessage: partial.successMessage,
+  };
+  writeCustomStepsForDay(day, [...existing, created]);
+  // 새 step 을 order 끝에 자동 추가 (순서 정의되어 있으면)
+  const order = getStepOrderForDay(day);
+  if (order) {
+    setStepOrderForDay(day, [...order, nextStepNo]);
+  }
+  return created;
+}
+
+export function removeCustomStep(day: number, stepNo: number): void {
+  const existing = getCustomStepsForDay(day);
+  writeCustomStepsForDay(
+    day,
+    existing.filter((s) => s.step !== stepNo),
+  );
+  // order 에서도 제거
+  const order = getStepOrderForDay(day);
+  if (order) {
+    setStepOrderForDay(
+      day,
+      order.filter((n) => n !== stepNo),
+    );
+  }
+}
+
+export function clearCustomStepsForDay(day: number): void {
+  writeCustomStepsForDay(day, []);
+}
+
+/** custom 포함된 day 의 모든 step (base + custom) — order/override 적용 X. */
+function getAllStepsForDay(day: number): TutorialCampStep[] {
+  const base = TUTORIAL_CAMP_STEPS.filter((s) => s.day === day);
+  const custom = getCustomStepsForDay(day);
+  return [...base, ...custom];
+}
+
+/** 64-X: order 에서 빠진 (hidden) base step 들 — 다시 넣기 UI 용.
+ *   custom step 도 포함 (admin 이 만든 것 hidden 상태일 수 있음).
+ */
 export function getHiddenStepsForDay(day: number): TutorialCampStep[] {
   const order = getStepOrderForDay(day);
   if (!order) return [];
-  const base = TUTORIAL_CAMP_STEPS.filter((s) => s.day === day);
+  const all = getAllStepsForDay(day);
   const inOrder = new Set(order);
-  return base.filter((s) => !inOrder.has(s.step));
+  return all.filter((s) => !inOrder.has(s.step));
 }
 
-/** 64-X: 현재 day 의 base step 모두를 order 에 넣기 (초기화 후 정렬 시작점). */
+/** 64-X: 현재 day 의 base + custom step 모두를 order 에 넣기 (정렬 시작점). */
 export function ensureFullOrderForDay(day: number): void {
-  const base = TUTORIAL_CAMP_STEPS.filter((s) => s.day === day);
+  const all = getAllStepsForDay(day);
   const existing = getStepOrderForDay(day);
   if (existing) return;
   setStepOrderForDay(
     day,
-    base.map((s) => s.step),
+    all.map((s) => s.step),
   );
 }
 

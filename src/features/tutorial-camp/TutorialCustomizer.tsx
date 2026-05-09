@@ -36,6 +36,7 @@ import {
   shouldShowDevPanel,
 } from "./tutorialCampDevAccess";
 import {
+  addCustomStep,
   clearStepOrderForDay,
   ensureFullOrderForDay,
   getHiddenStepsForDay,
@@ -43,6 +44,7 @@ import {
   getStepOrderForDay,
   getStepOverride,
   getStepsByDay,
+  removeCustomStep,
   setStepOrderForDay,
   setStepOverride,
   type TutorialStepOverridePartial,
@@ -671,8 +673,204 @@ function StepOrderPanel({
         </div>
       </div>
 
+      {/* 새 단계 만들기 */}
+      <NewStepForm
+        day={day}
+        onCreated={() => {
+          setBump((b) => b + 1);
+          onChanged();
+        }}
+      />
+
       <p className="text-[9.5px] text-amber-200/55">
-        ↑↓ 순서 변경 · 🗑️ 빼기 · ➕ 다시 넣기. '미리보기' / '최종 저장' 으로 적용.
+        ↑↓ 순서 변경 · 🗑️ 빼기 · ➕ 다시 넣기 · ✨ 새 단계 만들기. '미리보기' /
+        '최종 저장' 으로 적용.
+      </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// 64-Y: NewStepForm — 관리자가 새 step 직접 생성
+// ─────────────────────────────────────────────────────────────
+function NewStepForm({
+  day,
+  onCreated,
+}: {
+  day: number;
+  onCreated: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [route, setRoute] = useState("/home");
+  const [targetSelector, setTargetSelector] = useState("");
+  const [helperMessage, setHelperMessage] = useState("");
+  const [autoAdvance, setAutoAdvance] = useState(true);
+  const [autoNavigate, setAutoNavigate] = useState(false);
+  const [requireTargetClick, setRequireTargetClick] = useState(false);
+
+  const reset = () => {
+    setTitle("");
+    setBody("");
+    setRoute("/home");
+    setTargetSelector("");
+    setHelperMessage("");
+    setAutoAdvance(true);
+    setAutoNavigate(false);
+    setRequireTargetClick(false);
+  };
+
+  const onSave = () => {
+    const trimmed = title.trim();
+    if (!trimmed) {
+      toast.error("제목을 입력해주세요");
+      return;
+    }
+    // 보이는 단계로 자동 등록 위해 order 보장
+    ensureFullOrderForDay(day);
+    addCustomStep(day, {
+      title: trimmed,
+      body: body.trim(),
+      route: route.trim() || "/home",
+      targetSelector: targetSelector.trim(),
+      helperMessage: helperMessage.trim() || undefined,
+      autoAdvance,
+      autoNavigate,
+      requireTargetClick,
+      completionRule: requireTargetClick ? "target_clicked" : "quiz_question_read",
+      blockNextUntilComplete: requireTargetClick,
+    });
+    toast.success(`✨ 새 단계 추가됨: "${trimmed}"`, {
+      description: `${day}일차 끝에 추가됨. ↑↓ 로 위치 조정 가능.`,
+    });
+    reset();
+    setOpen(false);
+    onCreated();
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-amber-400/40 bg-amber-500/5 px-3 py-2 text-[11px] font-bold text-amber-200 hover:bg-amber-500/15 active:scale-[0.98]"
+      >
+        <Plus className="h-3.5 w-3.5" />✨ 새 단계 만들기
+      </button>
+    );
+  }
+
+  const inputCls =
+    "w-full rounded-md border border-amber-400/20 bg-black/30 px-2 py-1 text-[10.5px] font-mono text-amber-100 focus:outline-none focus:border-amber-400/60";
+
+  return (
+    <div className="space-y-2 rounded-lg border border-amber-400/30 bg-amber-500/5 p-2.5">
+      <p className="text-[11px] font-bold text-amber-100">✨ 새 단계 만들기</p>
+
+      <label className="block">
+        <span className="text-[10px] font-bold text-amber-200/85">제목 *</span>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="예: 오늘의 보상 확인하기"
+          className={inputCls}
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-[10px] font-bold text-amber-200/85">
+          안내 본문 (선택)
+        </span>
+        <input
+          type="text"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="회원에게 보여줄 설명 한 줄"
+          className={inputCls}
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-[10px] font-bold text-amber-200/85">
+          어느 페이지에서? (route)
+        </span>
+        <input
+          type="text"
+          value={route}
+          onChange={(e) => setRoute(e.target.value)}
+          placeholder="/home / /missions / /myboxer/quest 등"
+          className={inputCls}
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-[10px] font-bold text-amber-200/85">
+          가리킬 element (선택)
+        </span>
+        <input
+          type="text"
+          value={targetSelector}
+          onChange={(e) => setTargetSelector(e.target.value)}
+          placeholder='[data-tour="..."] 또는 비워두면 가운데 카드'
+          className={inputCls}
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-[10px] font-bold text-amber-200/85">
+          👆 안내 한 줄 (helper, 선택)
+        </span>
+        <input
+          type="text"
+          value={helperMessage}
+          onChange={(e) => setHelperMessage(e.target.value)}
+          placeholder="예: 여기를 눌러보세요"
+          className={inputCls}
+        />
+      </label>
+
+      <div className="space-y-1">
+        <CompactToggle
+          label="완료 시 자동 다음으로"
+          checked={autoAdvance}
+          onChange={setAutoAdvance}
+        />
+        <CompactToggle
+          label="시작 시 페이지 자동 이동"
+          checked={autoNavigate}
+          onChange={setAutoNavigate}
+        />
+        <CompactToggle
+          label="회원이 꼭 카드 클릭"
+          checked={requireTargetClick}
+          onChange={setRequireTargetClick}
+        />
+      </div>
+
+      <div className="flex gap-2 pt-1">
+        <button
+          type="button"
+          onClick={onSave}
+          className="inline-flex flex-1 items-center justify-center gap-1 rounded-md bg-amber-500 px-2 py-1.5 text-[11px] font-black text-amber-950 hover:bg-amber-400"
+        >
+          ✨ 추가하기
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            reset();
+            setOpen(false);
+          }}
+          className="rounded-md border border-amber-400/30 bg-black/30 px-2 py-1.5 text-[11px] font-bold text-amber-200 hover:bg-black/50"
+        >
+          취소
+        </button>
+      </div>
+
+      <p className="text-[9px] leading-relaxed text-amber-200/55">
+        ※ 만든 단계는 {day}일차 끝에 추가돼요. ↑↓ 로 원하는 위치로 옮길 수 있어요.
       </p>
     </div>
   );
