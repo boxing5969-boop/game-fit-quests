@@ -526,90 +526,9 @@ const TutorialCustomizer = () => {
                 바꾼 내용은 <strong>관리자 본인 화면</strong>에만 적용돼요.
               </p>
 
-              {/* element picker */}
-              <div
-                className={`rounded-lg ${
-                  justCaptured
-                    ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-[#0a1024] animate-pulse"
-                    : ""
-                }`}
-              >
-                <p className="mb-1 text-[11px] font-bold text-amber-100">
-                  👉 어디를 가리킬까요?
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setPicking((p) => !p)}
-                  className={`mb-1.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-black transition-all ${
-                    picking
-                      ? "bg-rose-500 text-white animate-pulse"
-                      : "bg-amber-500 text-amber-950 hover:bg-amber-400"
-                  }`}
-                >
-                  <Pointer className="h-3.5 w-3.5" />
-                  {picking
-                    ? "클릭 모드 끄기 (ESC)"
-                    : "🎯 화면에서 element 선택"}
-                </button>
-                <input
-                  type="text"
-                  value={selector}
-                  onChange={(e) => setSelector(e.target.value)}
-                  placeholder='[data-tour="..."] 또는 빈 값'
-                  className="w-full rounded-lg border border-amber-400/20 bg-black/30 px-2 py-1.5 text-[11px] font-mono text-amber-100 focus:border-amber-400/60 focus:outline-none"
-                />
-                <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10.5px] font-bold text-amber-200">
-                  🏷️ {describeSelector(selector)}
-                </p>
-                {justCaptured && (
-                  <p className="mt-1 text-[10px] font-bold text-amber-300 animate-pulse">
-                    ✅ 캡처 완료! 아래에서 자동 진행 / 저장 설정하세요.
-                  </p>
-                )}
-              </div>
-
-              {/* 자동 진행 토글 */}
-              <div>
-                <p className="mb-1.5 text-[11px] font-bold text-amber-100">
-                  ⚙️ 자동 진행
-                </p>
-                <div className="space-y-1.5">
-                  <CompactToggle
-                    label="완료 시 자동 다음으로"
-                    checked={autoAdvance}
-                    onChange={setAutoAdvance}
-                  />
-                  <CompactToggle
-                    label="시작 시 페이지 자동 이동"
-                    checked={autoNavigate}
-                    onChange={setAutoNavigate}
-                  />
-                  <CompactToggle
-                    label="회원이 꼭 카드 클릭"
-                    checked={requireTargetClick}
-                    onChange={setRequireTargetClick}
-                  />
-                </div>
-              </div>
-
-              {/* 저장 / 새로고침 */}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-amber-500 px-3 py-2 text-[11px] font-black text-amber-950 hover:bg-amber-400 active:scale-[0.98]"
-                >
-                  <Save className="h-3.5 w-3.5" />
-                  저장
-                </button>
-                <button
-                  type="button"
-                  onClick={handleReload}
-                  className="rounded-lg border border-amber-400/40 bg-black/30 px-3 py-2 text-[11px] font-bold text-amber-200 hover:bg-black/50"
-                >
-                  🔄 새로고침
-                </button>
-              </div>
+              {/* 64-AH: 상단 picker / 토글 / 저장 영역 제거.
+                  각 단계 row 의 ✏️ 수정 패널에서 동일 기능 가능 (중복 제거).
+                  필요 시 git 히스토리 9c18865 참조. */}
 
               {/* 64-W: 단계 순서 정하기 */}
               <StepOrderPanel
