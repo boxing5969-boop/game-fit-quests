@@ -30,6 +30,8 @@ import {
   Trash2,
   Plus,
   Pencil,
+  Minus,
+  ChevronLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -359,6 +361,8 @@ const TutorialCustomizer = () => {
 
   const camp = useTutorialCamp();
   const [open, setOpen] = useState(false);
+  // 64-AL: 최소화 — sidebar hidden 하고 화면 우측에 작은 '↗ 펼치기' 버튼만 표시
+  const [minimized, setMinimized] = useState(false);
   const [picking, setPicking] = useState(false);
   const [hoverEl, setHoverEl] = useState<Element | null>(null);
   const [selector, setSelector] = useState("");
@@ -560,13 +564,16 @@ const TutorialCustomizer = () => {
         )}
       </AnimatePresence>
 
-      {/* floating button */}
+      {/* floating button — 닫힘 상태 (open=false) */}
       {!open && (
         <motion.button
           type="button"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setOpen(true);
+            setMinimized(false);
+          }}
           aria-label="듀토리얼 커스텀 도구 열기"
           className="fixed right-3 top-1/2 z-[96] -translate-y-1/2 inline-flex flex-col items-center gap-1 rounded-l-2xl border border-amber-400/40 bg-amber-600/95 px-2 py-3 text-[10px] font-black tracking-wider text-amber-50 shadow-2xl backdrop-blur-sm hover:bg-amber-500"
         >
@@ -575,9 +582,24 @@ const TutorialCustomizer = () => {
         </motion.button>
       )}
 
-      {/* sidebar panel */}
+      {/* 64-AL: 최소화 버튼 — sidebar hidden 상태에서 작은 펼치기 핀 */}
+      {open && minimized && (
+        <motion.button
+          type="button"
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          onClick={() => setMinimized(false)}
+          aria-label="커스텀 도구 펼치기"
+          className="fixed right-0 top-16 z-[96] inline-flex items-center gap-1 rounded-l-lg border border-amber-400/40 bg-amber-600/95 px-2 py-2 text-[10px] font-black text-amber-50 shadow-2xl backdrop-blur-sm hover:bg-amber-500"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+          <span>{previewDay}일차 펼치기</span>
+        </motion.button>
+      )}
+
+      {/* sidebar panel — open && !minimized */}
       <AnimatePresence>
-        {open && (
+        {open && !minimized && (
           <motion.div
             initial={{ opacity: 0, x: 320 }}
             animate={{
@@ -600,17 +622,33 @@ const TutorialCustomizer = () => {
                   {day}일차 · {step + 1}번째 단계
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  setPicking(false);
-                }}
-                className="rounded-full border border-amber-400/30 bg-black/30 p-1 text-amber-200 hover:bg-black/50"
-                aria-label="닫기"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMinimized(true);
+                    setPicking(false);
+                  }}
+                  className="rounded-full border border-amber-400/30 bg-black/30 p-1 text-amber-200 hover:bg-black/50"
+                  aria-label="최소화"
+                  title="최소화 (작은 핀으로 줄임)"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    setMinimized(false);
+                    setPicking(false);
+                  }}
+                  className="rounded-full border border-amber-400/30 bg-black/30 p-1 text-amber-200 hover:bg-black/50"
+                  aria-label="닫기"
+                  title="닫기 (완전 종료)"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3 p-3">
