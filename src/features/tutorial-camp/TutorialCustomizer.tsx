@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Pointer,
@@ -182,6 +183,15 @@ const TutorialCustomizer = () => {
   const [previewDay, setPreviewDay] = useState<number>(
     camp.state.currentDay,
   );
+
+  // 64-AD: 외부에서 customizer 닫기 요청 (PreviewLocationButton 에서 dispatch)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onClose = () => setOpen(false);
+    window.addEventListener("tutorial-customizer-close", onClose);
+    return () =>
+      window.removeEventListener("tutorial-customizer-close", onClose);
+  }, []);
   // 활성 day 가 외부에서 바뀌면 동기화 (camp.start 후 등)
   useEffect(() => {
     setPreviewDay(camp.state.currentDay);
@@ -998,6 +1008,97 @@ function NewStepForm({
   );
 }
 
+// 64-AD: customizer sidebar 닫기 — window event 로 깊은 prop drilling 회피
+const CUSTOMIZER_CLOSE_EVENT = "tutorial-customizer-close";
+
+// ─────────────────────────────────────────────────────────────
+// 64-AD: PreviewLocationButton — selector 가 다른 페이지면 navigate 후 강조
+// ─────────────────────────────────────────────────────────────
+function PreviewLocationButton({
+  selector,
+  stepRoute,
+}: {
+  selector: string;
+  stepRoute: string;
+}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const onClick = () => {
+    const trimmed = selector.trim();
+    if (!trimmed) {
+      toast.error("📍 위치 확인 실패", {
+        description:
+          "selector 가 비어있어요 — 큰 카드가 가운데 표시됩니다",
+      });
+      return;
+    }
+    // 1) 현재 페이지에서 element 찾기
+    let el: HTMLElement | null = null;
+    try {
+      el = document.querySelector(trimmed) as HTMLElement | null;
+    } catch {
+      toast.error("📍 위치 확인 실패", {
+        description: "selector 형식 오류 — 다시 확인해주세요",
+      });
+      return;
+    }
+
+    // 2) 현재 페이지에 있으면 즉시 강조 (customizer 닫음)
+    if (el) {
+      window.dispatchEvent(new Event(CUSTOMIZER_CLOSE_EVENT));
+      window.setTimeout(() => {
+        const r = previewSelector(trimmed);
+        if (r.ok) {
+          toast.success("📍 강조 표시 (1.5초)", { description: r.message });
+        } else {
+          toast.error("📍 위치 확인 실패", { description: r.message });
+        }
+      }, 200);
+      return;
+    }
+
+    // 3) 없으면 step.route 로 navigate → 페이지 mount 후 강조
+    if (!stepRoute) {
+      toast.error("📍 위치 확인 실패", {
+        description: "이 단계에 페이지 정보(route)가 없어 이동 불가",
+      });
+      return;
+    }
+    if (location.pathname === stepRoute) {
+      toast.error("📍 위치 확인 실패", {
+        description:
+          "이 페이지에 selector 매칭 element 가 없어요. selector 다시 확인",
+      });
+      return;
+    }
+    // customizer 닫고 → navigate → DOM mount 기다림 → 강조
+    window.dispatchEvent(new Event(CUSTOMIZER_CLOSE_EVENT));
+    toast.success("📍 페이지로 이동 후 강조", {
+      description: `${stepRoute} 로 이동 → 1초 후 자동 강조`,
+    });
+    navigate(stepRoute);
+    window.setTimeout(() => {
+      const r = previewSelector(trimmed);
+      if (!r.ok) {
+        toast.error("📍 이동했지만 element 못 찾음", {
+          description: r.message,
+        });
+      }
+    }, 1000);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-1 inline-flex w-full items-center justify-center gap-1 rounded-md border border-amber-400/40 bg-black/30 px-2 py-1 text-[10px] font-bold text-amber-200 hover:bg-black/50"
+    >
+      📍 화면에서 위치 보기 (페이지 자동 이동)
+    </button>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────
 // 64-AB: InlineRowEditor — row 안에서 직접 그 step 의 효과/기능 수정
 // ─────────────────────────────────────────────────────────────
@@ -1068,23 +1169,14 @@ function InlineRowEditor({
         <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-200">
           🏷️ {describeSelector(draft.targetSelector ?? "")}
         </p>
-        {/* 화면에서 위치 보기 버튼 */}
-        <button
-          type="button"
-          onClick={() => {
-            const r = previewSelector(draft.targetSelector ?? "");
-            if (r.ok) {
-              toast.success("📍 화면에서 강조 표시", {
-                description: r.message + " (customizer 닫고 보세요)",
-              });
-            } else {
-              toast.error("📍 위치 확인 실패", { description: r.message });
-            }
-          }}
-          className="mt-1 inline-flex w-full items-center justify-center gap-1 rounded-md border border-amber-400/40 bg-black/30 px-2 py-1 text-[10px] font-bold text-amber-200 hover:bg-black/50"
-        >
-          📍 화면에서 위치 보기 (1.5초 강조)
-        </button>
+        {/* 화면에서 위치 보기 버튼 — 다른 페이지면 자동 navigate 후 강조 */}
+        <PreviewLocationButton
+          selector={draft.targetSelector ?? ""}
+          stepRoute={currentStep.route}
+        />
+        <p className="mt-0.5 text-[9px] text-amber-200/55">
+          ※ 다른 페이지에 있으면 자동으로 이동 + customizer 닫음 → 강조 표시
+        </p>
       </div>
 
       {/* placement */}
