@@ -280,14 +280,45 @@ const TutorialCustomizer = () => {
     camp.state.currentDay,
   );
 
-  // 64-AD: 외부에서 customizer 닫기 요청 (PreviewLocationButton 에서 dispatch)
+  // 64-AD: 외부에서 customizer 닫기 요청 (전체 편집기 진입 등)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const onClose = () => setOpen(false);
-    window.addEventListener("tutorial-customizer-close", onClose);
-    return () =>
-      window.removeEventListener("tutorial-customizer-close", onClose);
+    window.addEventListener(CUSTOMIZER_CLOSE_EVENT, onClose);
+    return () => window.removeEventListener(CUSTOMIZER_CLOSE_EVENT, onClose);
   }, []);
+
+  // 64-AG: customizer 흐리게 / 선명 토글 — 회원이 홈 화면 잘 보이도록.
+  //   · DIM_EVENT (예: 위치 보기 click) → 흐려짐
+  //   · customizer 위 클릭/마우스다운 → 다시 선명
+  //   · customizer 외부 클릭 → 흐려짐 (포커스 잃음)
+  const [dimmed, setDimmed] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onDim = () => setDimmed(true);
+    window.addEventListener(CUSTOMIZER_DIM_EVENT, onDim);
+    return () => window.removeEventListener(CUSTOMIZER_DIM_EVENT, onDim);
+  }, []);
+  useEffect(() => {
+    if (!open) {
+      setDimmed(false);
+      return;
+    }
+    if (typeof document === "undefined") return;
+    const onDocClick = (e: MouseEvent) => {
+      const el = e.target as Element | null;
+      if (!el) return;
+      if (el.closest("[data-tutorial-customizer]")) {
+        // customizer 안 클릭 → 선명
+        setDimmed(false);
+      } else {
+        // 외부 클릭 → 흐려짐
+        setDimmed(true);
+      }
+    };
+    document.addEventListener("click", onDocClick, true);
+    return () => document.removeEventListener("click", onDocClick, true);
+  }, [open]);
   // 활성 day 가 외부에서 바뀌면 동기화 (camp.start 후 등)
   useEffect(() => {
     setPreviewDay(camp.state.currentDay);
@@ -455,10 +486,14 @@ const TutorialCustomizer = () => {
         {open && (
           <motion.div
             initial={{ opacity: 0, x: 320 }}
-            animate={{ opacity: picking ? 0.35 : 1, x: 0 }}
+            animate={{
+              /* 64-AE: picker 시 0.35 / 64-AG: dimmed 시 0.25 / 평소 1 */
+              opacity: picking ? 0.35 : dimmed ? 0.25 : 1,
+              x: 0,
+            }}
             exit={{ opacity: 0, x: 320 }}
             transition={{ duration: 0.25 }}
-            /* 64-AE: picker 활성 시 sidebar 반투명 — 회원이 뒤 화면 잘 보이도록 */
+            onMouseDown={() => setDimmed(false)}
             className="fixed right-0 top-12 z-[96] flex max-h-[80dvh] w-[320px] flex-col overflow-y-auto rounded-l-2xl border border-amber-400/40 bg-[#0a1024]/97 text-amber-50 shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-md"
           >
             {/* 헤더 */}
@@ -1122,6 +1157,8 @@ function NewStepForm({
 
 // 64-AD: customizer sidebar 닫기 — window event 로 깊은 prop drilling 회피
 const CUSTOMIZER_CLOSE_EVENT = "tutorial-customizer-close";
+// 64-AG: customizer 흐리게 (닫지 않고 dim) — 회원이 화면 작업 가능, focus 시 복귀
+const CUSTOMIZER_DIM_EVENT = "tutorial-customizer-dim";
 
 // ─────────────────────────────────────────────────────────────
 // 64-AD: PreviewLocationButton — selector 가 다른 페이지면 navigate 후 강조
@@ -1148,7 +1185,7 @@ function PreviewLocationButton({
     //    회원이 보는 그대로 시뮬레이션 (Day 완료 confetti 화면 등).
     if (!trimmed) {
       if (typeof day === "number" && typeof listIdx === "number") {
-        window.dispatchEvent(new Event(CUSTOMIZER_CLOSE_EVENT));
+        window.dispatchEvent(new Event(CUSTOMIZER_DIM_EVENT));
         camp.goToDayStep(day, listIdx);
         if (camp.state.status !== "active") camp.start();
         toast.success("🎬 이 단계 직접 시뮬레이션", {
@@ -1177,7 +1214,7 @@ function PreviewLocationButton({
 
     // 2) 현재 페이지에 있으면 즉시 강조 (customizer 닫음)
     if (el) {
-      window.dispatchEvent(new Event(CUSTOMIZER_CLOSE_EVENT));
+      window.dispatchEvent(new Event(CUSTOMIZER_DIM_EVENT));
       window.setTimeout(() => {
         const r = previewSelector(trimmed);
         if (r.ok) {
@@ -1192,7 +1229,7 @@ function PreviewLocationButton({
     // 3) 매칭 실패 → 무조건 customizer 닫고 stepRoute 로 navigate.
     //    같은 라우트라도 customizer 가림이 사라져 회원이 화면 조작 가능.
     //    1초 / 2.5초 두 번 재시도 — 동적 mount (탭 토글 등) 대응.
-    window.dispatchEvent(new Event(CUSTOMIZER_CLOSE_EVENT));
+    window.dispatchEvent(new Event(CUSTOMIZER_DIM_EVENT));
     if (stepRoute && location.pathname !== stepRoute) {
       toast.success("📍 페이지로 이동 후 강조", {
         description: `${stepRoute} 로 이동 → 자동 강조 시도`,
