@@ -1201,37 +1201,36 @@ function PreviewLocationButton({
       return;
     }
 
-    // 3) 매칭 실패 → 무조건 customizer 닫고 stepRoute 로 navigate.
-    //    같은 라우트라도 customizer 가림이 사라져 회원이 화면 조작 가능.
-    //    1초 / 2.5초 두 번 재시도 — 동적 mount (탭 토글 등) 대응.
+    // 3) 매칭 실패 → 무조건 customizer 흐리게 + stepRoute 로 navigate (다른 라우트면).
+    //    매칭은 즉시 시도, 실패 시 1.5초 후 재시도 (동적 mount 대응).
+    //    toast 는 결과 한 번만 — 회원이 spam 안 느끼게.
     window.dispatchEvent(new Event(CUSTOMIZER_DIM_EVENT));
     if (stepRoute && location.pathname !== stepRoute) {
-      toast.success("📍 페이지로 이동 후 강조", {
-        description: `${stepRoute} 로 이동 → 자동 강조 시도`,
-      });
       navigate(stepRoute);
-    } else {
-      toast.success("📍 화면에서 찾는 중", {
-        description:
-          stepRoute === location.pathname
-            ? "같은 페이지 — 보이는 영역으로 스크롤 후 강조 시도"
-            : "selector 매칭 시도",
-      });
     }
     const tryHighlight = () => previewSelector(trimmed);
+    // 즉시 1차 시도 (다른 페이지면 navigate 직후 DOM 아직 없을 수 있어 짧은 대기)
+    const firstDelay =
+      stepRoute && location.pathname !== stepRoute ? 600 : 50;
     window.setTimeout(() => {
-      if (tryHighlight().ok) return;
-      // 동적 mount 대비 — 추가 1.5초 후 재시도
+      const r1 = tryHighlight();
+      if (r1.ok) {
+        toast.success("📍 위치로 이동했어요", { description: r1.message });
+        return;
+      }
+      // 동적 mount (탭 토글 등) 대비 — 추가 1.5초 후 재시도
       window.setTimeout(() => {
         const r2 = tryHighlight();
-        if (!r2.ok) {
+        if (r2.ok) {
+          toast.success("📍 위치로 이동했어요", { description: r2.message });
+        } else {
           toast.error("📍 element 못 찾음", {
             description:
               "selector 다시 확인하거나 해당 탭/메뉴를 직접 눌러 mount 시켜주세요",
           });
         }
       }, 1500);
-    }, 1000);
+    }, firstDelay);
   };
 
   return (
