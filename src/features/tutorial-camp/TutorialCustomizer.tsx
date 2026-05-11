@@ -195,11 +195,20 @@ function previewSelector(sel: string): { ok: boolean; message: string } {
   } catch {
     return { ok: false, message: "selector 형식 오류 — 다시 확인해주세요" };
   }
-  if (!el)
-    return {
-      ok: false,
-      message: "지금 화면에 없어요. 해당 페이지로 먼저 이동해야 보여요.",
-    };
+  // 64-AJ: 매칭 실패 시 부분 매칭 fallback —
+  //   selector 안의 data-tour / data-tutorial-target 값 추출 → split('-') prefix
+  //   로 contains 검색. 있으면 그 영역으로 scroll + 점선 외곽선 (정확하지 않음 표시)
+  let fallback = false;
+  if (!el) {
+    el = findFallbackElement(trimmed);
+    if (!el)
+      return {
+        ok: false,
+        message:
+          "이 element 가 화면에 없어요. 해당 탭/펼침을 직접 눌러 mount 시킨 뒤 다시 시도",
+      };
+    fallback = true;
+  }
   const prev = {
     outline: el.style.outline,
     offset: el.style.outlineOffset,
@@ -208,7 +217,9 @@ function previewSelector(sel: string): { ok: boolean; message: string } {
   try {
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     el.style.transition = "outline 0.2s ease";
-    el.style.outline = "3px solid #fbbf24";
+    el.style.outline = fallback
+      ? "3px dashed #f87171" /* rose dashed — 부분 매칭 */
+      : "3px solid #fbbf24" /* amber solid — 정확 매칭 */;
     el.style.outlineOffset = "4px";
     window.setTimeout(() => {
       try {
@@ -218,14 +229,41 @@ function previewSelector(sel: string): { ok: boolean; message: string } {
       } catch {
         /* noop */
       }
-    }, 1500);
+    }, 2000);
   } catch {
     /* noop */
   }
   return {
     ok: true,
-    message: "화면에서 1.5초 동안 노란 외곽선으로 강조됐어요",
+    message: fallback
+      ? "정확한 element 는 못 찾았지만 부근(점선 영역)으로 이동했어요. 화면에서 탭/펼침 직접 조작해주세요"
+      : "화면에서 1.5초 동안 노란 외곽선으로 강조됐어요",
   };
+}
+
+/** 64-AJ: selector 안의 data-tour 값에서 prefix 추출 → 부분 매칭 element 찾기. */
+function findFallbackElement(sel: string): HTMLElement | null {
+  if (typeof document === "undefined") return null;
+  // data-tour="value" 추출
+  const m = sel.match(/data-tour="([^"]+)"/) ||
+    sel.match(/data-tutorial-target="([^"]+)"/);
+  if (!m) return null;
+  const value = m[1];
+  // value 의 prefix 들 시도 (가장 긴 prefix 부터)
+  const parts = value.split(/[-_]/);
+  for (let n = parts.length - 1; n >= 1; n--) {
+    const prefix = parts.slice(0, n).join("-");
+    if (!prefix) continue;
+    try {
+      const found = document.querySelector(
+        `[data-tour^="${prefix}"], [data-tutorial-target^="${prefix}"]`,
+      ) as HTMLElement | null;
+      if (found) return found;
+    } catch {
+      /* noop */
+    }
+  }
+  return null;
 }
 
 /**
