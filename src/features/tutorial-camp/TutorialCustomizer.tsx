@@ -85,6 +85,100 @@ function describeSelector(sel: string): string {
   return SELECTOR_LABELS_LITE[trimmed] ?? "사용자 selector — 매칭 확인 필요";
 }
 
+// ─────────────────────────────────────────────────────────────
+// 64-AF: usePicker hook — element picker (마우스 오버 강조 + click 캡처)
+//   여러 곳에서 재사용. customizer sidebar + InlineRowEditor 의 ✏️ 패널
+// ─────────────────────────────────────────────────────────────
+function usePicker(onCapture: (selector: string) => void): {
+  picking: boolean;
+  start: () => void;
+  stop: () => void;
+} {
+  const [picking, setPicking] = useState(false);
+  const lastOutlinedRef = useRef<{
+    el: Element;
+    outline: string;
+    outlineOffset: string;
+  } | null>(null);
+  const clearOutline = useCallback(() => {
+    const last = lastOutlinedRef.current;
+    if (last) {
+      try {
+        (last.el as HTMLElement).style.outline = last.outline;
+        (last.el as HTMLElement).style.outlineOffset = last.outlineOffset;
+      } catch {
+        /* noop */
+      }
+      lastOutlinedRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!picking) {
+      clearOutline();
+      return;
+    }
+    if (typeof document === "undefined") return;
+
+    const onMove = (e: MouseEvent) => {
+      const el = e.target as Element | null;
+      if (!el) return;
+      if (el.closest("[data-tutorial-customizer]")) return;
+      clearOutline();
+      try {
+        const html = el as HTMLElement;
+        lastOutlinedRef.current = {
+          el,
+          outline: html.style.outline,
+          outlineOffset: html.style.outlineOffset,
+        };
+        html.style.outline = "3px dashed #fbbf24";
+        html.style.outlineOffset = "2px";
+      } catch {
+        /* noop */
+      }
+    };
+
+    const onClick = (e: MouseEvent) => {
+      const el = e.target as Element | null;
+      if (!el) return;
+      if (el.closest("[data-tutorial-customizer]")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const sel = buildSelectorFor(el);
+      setPicking(false);
+      clearOutline();
+      onCapture(sel);
+      toast.success(`✅ 선택됨: ${describeSelector(sel)}`, {
+        description: sel,
+      });
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setPicking(false);
+        clearOutline();
+      }
+    };
+
+    document.addEventListener("mousemove", onMove, true);
+    document.addEventListener("click", onClick, true);
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("mousemove", onMove, true);
+      document.removeEventListener("click", onClick, true);
+      document.removeEventListener("keydown", onKey, true);
+      clearOutline();
+    };
+  }, [picking, onCapture, clearOutline]);
+
+  return {
+    picking,
+    start: () => setPicking(true),
+    stop: () => setPicking(false),
+  };
+}
+
 /** 64-AC: 화면에서 selector 매칭 element 를 1.5초 amber 외곽선 + scrollIntoView. */
 function previewSelector(sel: string): { ok: boolean; message: string } {
   if (typeof document === "undefined")
@@ -1171,6 +1265,11 @@ function InlineRowEditor({
   const update = (patch: TutorialStepOverridePartial) =>
     setDraft((prev) => ({ ...prev, ...patch }));
 
+  // 64-AF: InlineRowEditor 안 element picker
+  const picker = usePicker((sel) => {
+    update({ targetSelector: sel });
+  });
+
   const onSave = () => {
     setStepOverride(day, originalStep, draft);
     toast.success(`✏️ "${currentStep.title}" 수정 저장됨`, {
@@ -1227,6 +1326,21 @@ function InlineRowEditor({
         <span className="text-[9.5px] font-bold text-amber-200/85">
           🎯 가리킬 element
         </span>
+        {/* picker 버튼 — 화면 element click 으로 자동 캡처 */}
+        <button
+          type="button"
+          onClick={() => (picker.picking ? picker.stop() : picker.start())}
+          className={`mb-1 inline-flex w-full items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-black transition-all ${
+            picker.picking
+              ? "bg-rose-500 text-white animate-pulse"
+              : "bg-amber-500 text-amber-950 hover:bg-amber-400"
+          }`}
+        >
+          <Pointer className="h-3 w-3" />
+          {picker.picking
+            ? "취소 (ESC)"
+            : "🎯 화면에서 element 선택"}
+        </button>
         <input
           type="text"
           value={draft.targetSelector ?? ""}
