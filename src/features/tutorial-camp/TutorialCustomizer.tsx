@@ -745,6 +745,7 @@ function StepOrderPanel({
                   <InlineRowEditor
                     day={day}
                     originalStep={originalStepNo}
+                    listIdx={idx}
                     currentStep={s}
                     onSaved={() => {
                       setEditingIdx(null);
@@ -1017,22 +1018,41 @@ const CUSTOMIZER_CLOSE_EVENT = "tutorial-customizer-close";
 function PreviewLocationButton({
   selector,
   stepRoute,
+  day,
+  listIdx,
 }: {
   selector: string;
   stepRoute: string;
+  day?: number;
+  listIdx?: number;
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const camp = useTutorialCamp();
 
   const onClick = () => {
     const trimmed = selector.trim();
+
+    // 0) selector 비어있음 → 화면 가운데 큰 카드. 실제 step 으로 jump 해서
+    //    회원이 보는 그대로 시뮬레이션 (Day 완료 confetti 화면 등).
     if (!trimmed) {
-      toast.error("📍 위치 확인 실패", {
-        description:
-          "selector 가 비어있어요 — 큰 카드가 가운데 표시됩니다",
-      });
+      if (typeof day === "number" && typeof listIdx === "number") {
+        window.dispatchEvent(new Event(CUSTOMIZER_CLOSE_EVENT));
+        camp.goToDayStep(day, listIdx);
+        if (camp.state.status !== "active") camp.start();
+        toast.success("🎬 이 단계 직접 시뮬레이션", {
+          description:
+            "selector 가 비어있어 화면 가운데 큰 카드로 표시됩니다 (확인 후 다시 customizer 열기)",
+        });
+      } else {
+        toast.error("📍 위치 확인 실패", {
+          description:
+            "selector 가 비어있어요 — 화면 가운데 큰 카드로 표시됩니다",
+        });
+      }
       return;
     }
+
     // 1) 현재 페이지에서 element 찾기
     let el: HTMLElement | null = null;
     try {
@@ -1105,12 +1125,14 @@ function PreviewLocationButton({
 function InlineRowEditor({
   day,
   originalStep,
+  listIdx,
   currentStep,
   onSaved,
   onCancel,
 }: {
   day: number;
   originalStep: number;
+  listIdx: number;
   currentStep: TutorialCampStep;
   onSaved: () => void;
   onCancel: () => void;
@@ -1173,6 +1195,8 @@ function InlineRowEditor({
         <PreviewLocationButton
           selector={draft.targetSelector ?? ""}
           stepRoute={currentStep.route}
+          day={day}
+          listIdx={listIdx}
         />
         <p className="mt-0.5 text-[9px] text-amber-200/55">
           ※ 다른 페이지에 있으면 자동으로 이동 + customizer 닫음 → 강조 표시
