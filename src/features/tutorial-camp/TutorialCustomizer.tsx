@@ -89,12 +89,15 @@ function describeSelector(sel: string): string {
 
 // ─────────────────────────────────────────────────────────────
 // 64-AF: usePicker hook — element picker (마우스 오버 강조 + click 캡처)
-//   여러 곳에서 재사용. customizer sidebar + InlineRowEditor 의 ✏️ 패널
+//   64-AM: invisible overlay 방식으로 변경 — click 이 overlay 에서 종료되어
+//   뒤 element 의 onClick (button / link 등) 이 절대 트리거 안 됨.
+//   elementsFromPoint 로 overlay 뒤 element 식별.
 // ─────────────────────────────────────────────────────────────
 function usePicker(onCapture: (selector: string) => void): {
   picking: boolean;
   start: () => void;
   stop: () => void;
+  overlay: React.ReactNode;
 } {
   const [picking, setPicking] = useState(false);
   const lastOutlinedRef = useRef<{
@@ -102,6 +105,7 @@ function usePicker(onCapture: (selector: string) => void): {
     outline: string;
     outlineOffset: string;
   } | null>(null);
+
   const clearOutline = useCallback(() => {
     const last = lastOutlinedRef.current;
     if (last) {
@@ -115,69 +119,92 @@ function usePicker(onCapture: (selector: string) => void): {
     }
   }, []);
 
+  // ESC 로 취소
   useEffect(() => {
     if (!picking) {
       clearOutline();
       return;
     }
     if (typeof document === "undefined") return;
-
-    const onMove = (e: MouseEvent) => {
-      const el = e.target as Element | null;
-      if (!el) return;
-      if (el.closest("[data-tutorial-customizer]")) return;
-      clearOutline();
-      try {
-        const html = el as HTMLElement;
-        lastOutlinedRef.current = {
-          el,
-          outline: html.style.outline,
-          outlineOffset: html.style.outlineOffset,
-        };
-        html.style.outline = "3px dashed #fbbf24";
-        html.style.outlineOffset = "2px";
-      } catch {
-        /* noop */
-      }
-    };
-
-    const onClick = (e: MouseEvent) => {
-      const el = e.target as Element | null;
-      if (!el) return;
-      if (el.closest("[data-tutorial-customizer]")) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const sel = buildSelectorFor(el);
-      setPicking(false);
-      clearOutline();
-      onCapture(sel);
-      toast.success(`✅ 선택됨: ${describeSelector(sel)}`, {
-        description: sel,
-      });
-    };
-
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setPicking(false);
         clearOutline();
       }
     };
-
-    document.addEventListener("mousemove", onMove, true);
-    document.addEventListener("click", onClick, true);
     document.addEventListener("keydown", onKey, true);
     return () => {
-      document.removeEventListener("mousemove", onMove, true);
-      document.removeEventListener("click", onClick, true);
       document.removeEventListener("keydown", onKey, true);
       clearOutline();
     };
-  }, [picking, onCapture, clearOutline]);
+  }, [picking, clearOutline]);
+
+  // overlay 뒤 element 식별 — customizer 자체는 제외
+  const pickElementAt = (x: number, y: number): Element | null => {
+    if (typeof document === "undefined") return null;
+    const els = document.elementsFromPoint(x, y);
+    for (const e of els) {
+      if (e.closest("[data-tutorial-customizer]")) continue;
+      if (e.tagName === "HTML" || e.tagName === "BODY") continue;
+      return e;
+    }
+    return null;
+  };
+
+  const onMove = (ev: React.MouseEvent<HTMLDivElement>) => {
+    const target = pickElementAt(ev.clientX, ev.clientY);
+    if (!target) return;
+    clearOutline();
+    try {
+      const html = target as HTMLElement;
+      lastOutlinedRef.current = {
+        el: target,
+        outline: html.style.outline,
+        outlineOffset: html.style.outlineOffset,
+      };
+      html.style.outline = "3px dashed #fbbf24";
+      html.style.outlineOffset = "2px";
+    } catch {
+      /* noop */
+    }
+  };
+
+  const onClick = (ev: React.MouseEvent<HTMLDivElement>) => {
+    const target = pickElementAt(ev.clientX, ev.clientY);
+    if (!target) return;
+    const sel = buildSelectorFor(target);
+    setPicking(false);
+    clearOutline();
+    onCapture(sel);
+    toast.success(`✅ 선택됨: ${describeSelector(sel)}`, {
+      description: sel,
+    });
+  };
+
+  const overlay = picking ? (
+    <div
+      data-tutorial-customizer="true"
+      onMouseMove={onMove}
+      onClick={onClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setPicking(false);
+        clearOutline();
+      }}
+      className="fixed inset-0 z-[99]"
+      style={{ cursor: "crosshair", background: "transparent" }}
+      aria-label="element 선택 모드 — 클릭하거나 ESC 로 취소"
+    />
+  ) : null;
 
   return {
     picking,
     start: () => setPicking(true),
-    stop: () => setPicking(false),
+    stop: () => {
+      setPicking(false);
+      clearOutline();
+    },
+    overlay,
   };
 }
 
@@ -1383,6 +1410,8 @@ function InlineRowEditor({
 
   return (
     <div className="mt-2 space-y-2 rounded-md border border-amber-400/30 bg-amber-500/5 p-2">
+      {/* 64-AM: picker 활성 시 invisible overlay 가 화면 전체를 덮어 click intercept */}
+      {picker.overlay}
       <p className="text-[10px] font-bold text-amber-200">
         ✏️ 이 단계 기능 수정
       </p>
