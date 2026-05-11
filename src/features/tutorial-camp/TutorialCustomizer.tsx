@@ -1155,6 +1155,8 @@ function InlineRowEditor({
   onCancel: () => void;
 }) {
   const [draft, setDraft] = useState<TutorialStepOverridePartial>(() => ({
+    title: currentStep.title ?? "",
+    body: currentStep.body ?? "",
     targetSelector: currentStep.targetSelector ?? "",
     placement: currentStep.placement ?? "bottom",
     autoAdvance: !!currentStep.autoAdvance,
@@ -1191,6 +1193,34 @@ function InlineRowEditor({
       <p className="text-[10px] font-bold text-amber-200">
         ✏️ 이 단계 기능 수정
       </p>
+
+      {/* title */}
+      <label className="block">
+        <span className="text-[9.5px] font-bold text-amber-200/85">
+          📌 단계 제목
+        </span>
+        <input
+          type="text"
+          value={draft.title ?? ""}
+          onChange={(e) => update({ title: e.target.value })}
+          placeholder="예: 훈련 화면, 배우기 탭, 수업실행 탭"
+          className={inputCls}
+        />
+      </label>
+
+      {/* body */}
+      <label className="block">
+        <span className="text-[9.5px] font-bold text-amber-200/85">
+          📝 안내 본문 (회원이 카드에서 보는 설명)
+        </span>
+        <input
+          type="text"
+          value={draft.body ?? ""}
+          onChange={(e) => update({ body: e.target.value })}
+          placeholder="예: 여기가 마이복서153의 훈련 메인 화면이에요."
+          className={inputCls}
+        />
+      </label>
 
       {/* selector */}
       <div className="block">
