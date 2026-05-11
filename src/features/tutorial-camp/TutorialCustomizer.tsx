@@ -230,32 +230,88 @@ function previewSelector(sel: string): { ok: boolean; message: string } {
 
 /**
  * Element 의 안정적인 selector 추출.
- * 우선순위: data-tour > data-tutorial-target > id > stable className > 단순 tag.
+ * 우선순위:
+ *   1. element 자체 data-tour / data-tutorial-target
+ *   2. element 가 의미 단위 (button/a/li/article/[role=button]) 면 가장 가까운 anchor
+ *      부모 + nth-of-type path → 정확히 그 button 만 매칭
+ *   3. id
+ *   4. stable className
+ *   5. tag
+ *
+ * 64-AI: 워밍업 button 같이 자체 anchor 없는 의미 단위 element 클릭 시,
+ *   이전엔 부모 wrapping 영역 (missions-official-training) 이 잡혀 너무 광범위.
+ *   path-based selector 로 정확한 element 만 매칭.
  */
 function buildSelectorFor(el: Element): string {
+  // 1. element 자체 anchor
   const dt = el.getAttribute("data-tour");
   if (dt) return `[data-tour="${dt}"]`;
   const dtt = el.getAttribute("data-tutorial-target");
   if (dtt) return `[data-tutorial-target="${dtt}"]`;
-  // 부모 또는 closest 에 anchor 있으면 그것
-  const ancestor = el.closest("[data-tour],[data-tutorial-target]");
-  if (ancestor && ancestor !== el) {
-    const adt = ancestor.getAttribute("data-tour");
-    if (adt) return `[data-tour="${adt}"]`;
-    const adtt = ancestor.getAttribute("data-tutorial-target");
-    if (adtt) return `[data-tutorial-target="${adtt}"]`;
+
+  // 2. element 가 의미 단위 (button/a/li 등) — 부모 anchor + path
+  const isMeaningful =
+    ["BUTTON", "A", "LI", "ARTICLE"].includes(el.tagName) ||
+    el.getAttribute("role") === "button" ||
+    el.getAttribute("role") === "tab";
+
+  // 의미 단위 아니면 가장 가까운 의미 단위 element 로 swap (예: button 안 span 클릭)
+  let target: Element = el;
+  if (!isMeaningful) {
+    const meaningful = el.closest(
+      "button, a, [role='button'], [role='tab'], li, article",
+    );
+    if (meaningful) target = meaningful;
   }
-  if (el.id) return `#${el.id}`;
-  // class 후보 — 너무 많은 utility class 제외
-  const stable = Array.from(el.classList).find(
+
+  // target 자체 다시 anchor 검사 (의미 단위 swap 후)
+  const tdt = target.getAttribute("data-tour");
+  if (tdt) return `[data-tour="${tdt}"]`;
+  const tdtt = target.getAttribute("data-tutorial-target");
+  if (tdtt) return `[data-tutorial-target="${tdtt}"]`;
+
+  // 3. id
+  if (target.id) return `#${target.id}`;
+
+  // 4. 가장 가까운 anchor 부모 + nth-of-type path
+  const root = target.closest("[data-tour],[data-tutorial-target]");
+  if (root && root !== target) {
+    const rootDt = root.getAttribute("data-tour");
+    const rootDtt = root.getAttribute("data-tutorial-target");
+    const rootSel = rootDt
+      ? `[data-tour="${rootDt}"]`
+      : `[data-tutorial-target="${rootDtt}"]`;
+    // target → root path 생성 (nth-of-type)
+    const path: string[] = [];
+    let cur: Element | null = target;
+    while (cur && cur !== root && cur.parentElement) {
+      const parent = cur.parentElement;
+      const sameTagSibs = Array.from(parent.children).filter(
+        (c) => c.tagName === cur!.tagName,
+      );
+      const idx = sameTagSibs.indexOf(cur);
+      if (idx >= 0) {
+        path.unshift(
+          `${cur.tagName.toLowerCase()}:nth-of-type(${idx + 1})`,
+        );
+      }
+      cur = parent;
+    }
+    if (path.length > 0) return `${rootSel} ${path.join(" > ")}`;
+    return rootSel;
+  }
+
+  // 5. stable className — utility class 제외
+  const stable = Array.from(target.classList).find(
     (c) =>
       /^[a-z][a-z0-9_-]*$/i.test(c) &&
       !/^(css-|chunk-|grid-|flex-|w-|h-|p-|m-|text-|bg-|border-|rounded-|shadow-|absolute|relative|fixed|sticky)/i.test(
         c,
       ),
   );
-  if (stable) return `${el.tagName.toLowerCase()}.${stable}`;
-  return el.tagName.toLowerCase();
+  if (stable) return `${target.tagName.toLowerCase()}.${stable}`;
+
+  return target.tagName.toLowerCase();
 }
 
 const TutorialCustomizer = () => {
