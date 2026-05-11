@@ -177,6 +177,8 @@ const TutorialCustomizer = () => {
   const [autoAdvance, setAutoAdvance] = useState(false);
   const [autoNavigate, setAutoNavigate] = useState(false);
   const [requireTargetClick, setRequireTargetClick] = useState(false);
+  // 64-AE: 캡처 직후 selector 영역 amber pulse 강조
+  const [justCaptured, setJustCaptured] = useState(false);
 
   // 64-AA: 미리보기 / 편집할 일차 — '지금 진행 중' 과 별개로 admin 이 선택
   //   1~7 button 으로 선택만 함. 실제 시작은 '시작' 버튼 클릭 시.
@@ -269,8 +271,11 @@ const TutorialCustomizer = () => {
       setPicking(false);
       clearHoverOutline();
       setHoverEl(null);
-      toast.success(`선택됨: ${describeSelector(sel)}`, {
-        description: sel,
+      // 64-AE: 캡처 직후 amber pulse 강조 — 회원이 시각적으로 인지
+      setJustCaptured(true);
+      window.setTimeout(() => setJustCaptured(false), 1500);
+      toast.success(`✅ 선택됨: ${describeSelector(sel)}`, {
+        description: sel + " — 아래에서 설정 변경 후 저장",
       });
     };
 
@@ -356,9 +361,10 @@ const TutorialCustomizer = () => {
         {open && (
           <motion.div
             initial={{ opacity: 0, x: 320 }}
-            animate={{ opacity: 1, x: 0 }}
+            animate={{ opacity: picking ? 0.35 : 1, x: 0 }}
             exit={{ opacity: 0, x: 320 }}
             transition={{ duration: 0.25 }}
+            /* 64-AE: picker 활성 시 sidebar 반투명 — 회원이 뒤 화면 잘 보이도록 */
             className="fixed right-0 top-12 z-[96] flex max-h-[80dvh] w-[320px] flex-col overflow-y-auto rounded-l-2xl border border-amber-400/40 bg-[#0a1024]/97 text-amber-50 shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-md"
           >
             {/* 헤더 */}
@@ -392,7 +398,13 @@ const TutorialCustomizer = () => {
               </p>
 
               {/* element picker */}
-              <div>
+              <div
+                className={`rounded-lg ${
+                  justCaptured
+                    ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-[#0a1024] animate-pulse"
+                    : ""
+                }`}
+              >
                 <p className="mb-1 text-[11px] font-bold text-amber-100">
                   👉 어디를 가리킬까요?
                 </p>
@@ -420,6 +432,11 @@ const TutorialCustomizer = () => {
                 <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10.5px] font-bold text-amber-200">
                   🏷️ {describeSelector(selector)}
                 </p>
+                {justCaptured && (
+                  <p className="mt-1 text-[10px] font-bold text-amber-300 animate-pulse">
+                    ✅ 캡처 완료! 아래에서 자동 진행 / 저장 설정하세요.
+                  </p>
+                )}
               </div>
 
               {/* 자동 진행 토글 */}
