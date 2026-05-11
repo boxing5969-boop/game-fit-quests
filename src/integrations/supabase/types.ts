@@ -1039,6 +1039,764 @@ export type Database = {
         }
         Relationships: []
       }
+      boxing_story_cards: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string
+          effect_code: string | null
+          effect_metadata: Json
+          is_consumable: boolean
+          metadata: Json
+          name: string
+          rarity: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description: string
+          effect_code?: string | null
+          effect_metadata?: Json
+          is_consumable?: boolean
+          metadata?: Json
+          name: string
+          rarity?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string
+          effect_code?: string | null
+          effect_metadata?: Json
+          is_consumable?: boolean
+          metadata?: Json
+          name?: string
+          rarity?: string
+        }
+        Relationships: []
+      }
+      boxing_story_chapters: {
+        Row: {
+          active: boolean
+          chapter_number: number
+          code: string
+          completion_condition: Json
+          created_at: string
+          description: string
+          id: string
+          metadata: Json
+          obstacle_code: string | null
+          reward_card_code: string | null
+          reward_gems: number
+          reward_quest_xp: number
+          reward_title: string | null
+          route_id: string
+          subtitle: string | null
+          title: string
+          unlock_condition: Json
+          updated_at: string
+          world_node_code: string
+        }
+        Insert: {
+          active?: boolean
+          chapter_number: number
+          code: string
+          completion_condition?: Json
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json
+          obstacle_code?: string | null
+          reward_card_code?: string | null
+          reward_gems?: number
+          reward_quest_xp?: number
+          reward_title?: string | null
+          route_id: string
+          subtitle?: string | null
+          title: string
+          unlock_condition?: Json
+          updated_at?: string
+          world_node_code: string
+        }
+        Update: {
+          active?: boolean
+          chapter_number?: number
+          code?: string
+          completion_condition?: Json
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json
+          obstacle_code?: string | null
+          reward_card_code?: string | null
+          reward_gems?: number
+          reward_quest_xp?: number
+          reward_title?: string | null
+          route_id?: string
+          subtitle?: string | null
+          title?: string
+          unlock_condition?: Json
+          updated_at?: string
+          world_node_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_story_chapters_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_story_dialogues: {
+        Row: {
+          active: boolean
+          body: string
+          chapter_id: string | null
+          choices: Json
+          created_at: string
+          dialogue_type: string
+          id: string
+          metadata: Json
+          route_id: string | null
+          sort_order: number
+          speaker: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          chapter_id?: string | null
+          choices?: Json
+          created_at?: string
+          dialogue_type?: string
+          id?: string
+          metadata?: Json
+          route_id?: string | null
+          sort_order?: number
+          speaker?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          chapter_id?: string | null
+          choices?: Json
+          created_at?: string
+          dialogue_type?: string
+          id?: string
+          metadata?: Json
+          route_id?: string | null
+          sort_order?: number
+          speaker?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_story_dialogues_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boxing_story_dialogues_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_story_ending_claims: {
+        Row: {
+          claimed_at: string
+          ending_code: string
+          id: string
+          metadata: Json
+          real_gems_granted: number
+          reward_badge_code: string | null
+          reward_card_code: string | null
+          reward_title: string | null
+          ring_coins_granted: number
+          route_id: string
+          story_xp_granted: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          ending_code: string
+          id?: string
+          metadata?: Json
+          real_gems_granted?: number
+          reward_badge_code?: string | null
+          reward_card_code?: string | null
+          reward_title?: string | null
+          ring_coins_granted?: number
+          route_id: string
+          story_xp_granted?: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          ending_code?: string
+          id?: string
+          metadata?: Json
+          real_gems_granted?: number
+          reward_badge_code?: string | null
+          reward_card_code?: string | null
+          reward_title?: string | null
+          ring_coins_granted?: number
+          route_id?: string
+          story_xp_granted?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_story_ending_claims_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_story_enemies: {
+        Row: {
+          active: boolean
+          attack: number
+          code: string
+          created_at: string
+          defense: number
+          description: string | null
+          hp: number
+          is_boss: boolean
+          metadata: Json
+          name: string
+          pattern_code: string
+          pattern_metadata: Json
+          reward_card_code: string | null
+          reward_ring_coins: number
+          reward_story_xp: number
+          updated_at: string
+          weakness: Json
+        }
+        Insert: {
+          active?: boolean
+          attack?: number
+          code: string
+          created_at?: string
+          defense?: number
+          description?: string | null
+          hp?: number
+          is_boss?: boolean
+          metadata?: Json
+          name: string
+          pattern_code: string
+          pattern_metadata?: Json
+          reward_card_code?: string | null
+          reward_ring_coins?: number
+          reward_story_xp?: number
+          updated_at?: string
+          weakness?: Json
+        }
+        Update: {
+          active?: boolean
+          attack?: number
+          code?: string
+          created_at?: string
+          defense?: number
+          description?: string | null
+          hp?: number
+          is_boss?: boolean
+          metadata?: Json
+          name?: string
+          pattern_code?: string
+          pattern_metadata?: Json
+          reward_card_code?: string | null
+          reward_ring_coins?: number
+          reward_story_xp?: number
+          updated_at?: string
+          weakness?: Json
+        }
+        Relationships: []
+      }
+      boxing_story_inventory: {
+        Row: {
+          card_code: string
+          count: number
+          first_acquired_at: string
+          id: string
+          metadata: Json
+          user_id: string
+        }
+        Insert: {
+          card_code: string
+          count?: number
+          first_acquired_at?: string
+          id?: string
+          metadata?: Json
+          user_id: string
+        }
+        Update: {
+          card_code?: string
+          count?: number
+          first_acquired_at?: string
+          id?: string
+          metadata?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_story_inventory_card_code_fkey"
+            columns: ["card_code"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_cards"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      boxing_story_nodes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string
+          icon: string | null
+          id: string
+          metadata: Json
+          node_type: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description: string
+          icon?: string | null
+          id?: string
+          metadata?: Json
+          node_type: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string
+          icon?: string | null
+          id?: string
+          metadata?: Json
+          node_type?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      boxing_story_reward_claims: {
+        Row: {
+          chapter_id: string
+          claimed_at: string
+          gems_granted: number
+          id: string
+          metadata: Json
+          quest_xp_granted: number
+          reward_card_code: string | null
+          reward_title: string | null
+          route_id: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          claimed_at?: string
+          gems_granted?: number
+          id?: string
+          metadata?: Json
+          quest_xp_granted?: number
+          reward_card_code?: string | null
+          reward_title?: string | null
+          route_id: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          claimed_at?: string
+          gems_granted?: number
+          id?: string
+          metadata?: Json
+          quest_xp_granted?: number
+          reward_card_code?: string | null
+          reward_title?: string | null
+          route_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_story_reward_claims_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boxing_story_reward_claims_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_story_routes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string
+          id: string
+          metadata: Json
+          route_type: string
+          sort_order: number
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json
+          route_type: string
+          sort_order?: number
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json
+          route_type?: string
+          sort_order?: number
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      boxing_story_scenes: {
+        Row: {
+          active: boolean
+          chapter_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          next_scene_defeat: number | null
+          next_scene_index: number | null
+          next_scene_victory: number | null
+          payload: Json
+          route_id: string | null
+          scene_index: number
+          scene_type: string
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          chapter_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          next_scene_defeat?: number | null
+          next_scene_index?: number | null
+          next_scene_victory?: number | null
+          payload?: Json
+          route_id?: string | null
+          scene_index: number
+          scene_type: string
+          scope?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          chapter_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          next_scene_defeat?: number | null
+          next_scene_index?: number | null
+          next_scene_victory?: number | null
+          payload?: Json
+          route_id?: string | null
+          scene_index?: number
+          scene_type?: string
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_story_scenes_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boxing_story_scenes_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_user_player_stats: {
+        Row: {
+          active_route_code: string | null
+          battle_state: Json
+          created_at: string
+          earned_badges: Json
+          earned_endings: Json
+          earned_titles: Json
+          focus: number
+          focus_max: number
+          grit: number
+          grit_max: number
+          guard: number
+          guard_max: number
+          hp: number
+          hp_max: number
+          last_played_at: string | null
+          metadata: Json
+          prologue_completed: boolean
+          respect: number
+          respect_max: number
+          ring_coins: number
+          skill: number
+          skill_max: number
+          story_xp: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_route_code?: string | null
+          battle_state?: Json
+          created_at?: string
+          earned_badges?: Json
+          earned_endings?: Json
+          earned_titles?: Json
+          focus?: number
+          focus_max?: number
+          grit?: number
+          grit_max?: number
+          guard?: number
+          guard_max?: number
+          hp?: number
+          hp_max?: number
+          last_played_at?: string | null
+          metadata?: Json
+          prologue_completed?: boolean
+          respect?: number
+          respect_max?: number
+          ring_coins?: number
+          skill?: number
+          skill_max?: number
+          story_xp?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_route_code?: string | null
+          battle_state?: Json
+          created_at?: string
+          earned_badges?: Json
+          earned_endings?: Json
+          earned_titles?: Json
+          focus?: number
+          focus_max?: number
+          grit?: number
+          grit_max?: number
+          guard?: number
+          guard_max?: number
+          hp?: number
+          hp_max?: number
+          last_played_at?: string | null
+          metadata?: Json
+          prologue_completed?: boolean
+          respect?: number
+          respect_max?: number
+          ring_coins?: number
+          skill?: number
+          skill_max?: number
+          story_xp?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      boxing_user_scene_progress: {
+        Row: {
+          chapter_id: string | null
+          completed_chapter_codes: Json
+          created_at: string
+          current_scene_index: number
+          ending_code: string | null
+          ending_reached: boolean
+          first_clear_at: string | null
+          id: string
+          last_played_at: string | null
+          metadata: Json
+          play_count: number
+          route_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id?: string | null
+          completed_chapter_codes?: Json
+          created_at?: string
+          current_scene_index?: number
+          ending_code?: string | null
+          ending_reached?: boolean
+          first_clear_at?: string | null
+          id?: string
+          last_played_at?: string | null
+          metadata?: Json
+          play_count?: number
+          route_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string | null
+          completed_chapter_codes?: Json
+          created_at?: string
+          current_scene_index?: number
+          ending_code?: string | null
+          ending_reached?: boolean
+          first_clear_at?: string | null
+          id?: string
+          last_played_at?: string | null
+          metadata?: Json
+          play_count?: number
+          route_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_user_scene_progress_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boxing_user_scene_progress_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_user_story_progress: {
+        Row: {
+          completed_chapter_count: number
+          created_at: string
+          current_chapter_id: string | null
+          current_chapter_number: number
+          id: string
+          last_synced_at: string | null
+          metadata: Json
+          route_completed: boolean
+          route_id: string
+          selected_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_chapter_count?: number
+          created_at?: string
+          current_chapter_id?: string | null
+          current_chapter_number?: number
+          id?: string
+          last_synced_at?: string | null
+          metadata?: Json
+          route_completed?: boolean
+          route_id: string
+          selected_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_chapter_count?: number
+          created_at?: string
+          current_chapter_id?: string | null
+          current_chapter_number?: number
+          id?: string
+          last_synced_at?: string | null
+          metadata?: Json
+          route_completed?: boolean
+          route_id?: string
+          selected_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_user_story_progress_current_chapter_id_fkey"
+            columns: ["current_chapter_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boxing_user_story_progress_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boxing_user_story_route_state: {
+        Row: {
+          active_route_id: string | null
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_route_id?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_route_id?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boxing_user_story_route_state_active_route_id_fkey"
+            columns: ["active_route_id"]
+            isOneToOne: false
+            referencedRelation: "boxing_story_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branch_display_settings: {
         Row: {
           animation_level: string
@@ -3185,6 +3943,10 @@ export type Database = {
         Args: { _kind: string; _period_key: string; _user_id: string }
         Returns: Json
       }
+      _story_clamp_int: {
+        Args: { hi: number; lo: number; v: number }
+        Returns: number
+      }
       add_diet_coach_feedback: {
         Args: { _feedback: string; _log_id: string }
         Returns: Json
@@ -3203,6 +3965,10 @@ export type Database = {
             Args: { _expected_current?: number; _member_id: string }
             Returns: Json
           }
+      apply_choice: {
+        Args: { p_choice_index: number; p_scene_id: string }
+        Returns: Json
+      }
       approve_branch_transfer: {
         Args: { _note?: string; _request_id: string }
         Returns: undefined
@@ -3266,10 +4032,16 @@ export type Database = {
         }
         Returns: Json
       }
+      change_story_route: { Args: { p_route_code: string }; Returns: Json }
       check_and_claim_hidden_missions: { Args: never; Returns: Json }
       check_customization_unlock: {
         Args: { _category: string; _item_key: string }
         Returns: boolean
+      }
+      choose_story_route: { Args: { p_route_code: string }; Returns: Json }
+      claim_card_reward: {
+        Args: { p_card_code: string; p_source: string }
+        Returns: Json
       }
       claim_cornerman_daily_bonus: { Args: never; Returns: Json }
       claim_gym_raid_reward: { Args: { p_raid_id: string }; Returns: Json }
@@ -3300,6 +4072,14 @@ export type Database = {
       }
       coach_tag_pattern: {
         Args: { _action: string; _plan_id: string; _tag: string }
+        Returns: Json
+      }
+      complete_chapter: {
+        Args: { p_chapter_id: string; p_route_id: string }
+        Returns: Json
+      }
+      complete_ending: {
+        Args: { p_ending_code: string; p_route_id: string }
         Returns: Json
       }
       complete_tutorial_and_grant_reward: { Args: never; Returns: Json }
@@ -3439,6 +4219,7 @@ export type Database = {
       get_my_branch: { Args: never; Returns: string }
       get_my_cornerman_status: { Args: never; Returns: Json }
       get_my_hidden_mission_progress: { Args: never; Returns: Json }
+      get_my_story_rpg_state: { Args: never; Returns: Json }
       get_nutrition_profile: { Args: { _user_id?: string }; Returns: Json }
       get_post_program_plan: { Args: { _user_id?: string }; Returns: Json }
       get_quest_xp: {
@@ -3565,6 +4346,14 @@ export type Database = {
         Args: { _coach_note?: string; _member_id: string }
         Returns: Json
       }
+      progress_to_scene: {
+        Args: {
+          p_chapter_id: string
+          p_route_id: string
+          p_scene_index: number
+        }
+        Returns: Json
+      }
       purchase_avatar_item: { Args: { _item_id: string }; Returns: Json }
       purchase_customization: {
         Args: { p_category: string; p_item_key: string; p_price: number }
@@ -3616,6 +4405,7 @@ export type Database = {
         Args: { _coach_note?: string; _submission_id: string }
         Returns: undefined
       }
+      reset_story_route: { Args: { p_route_id: string }; Returns: Json }
       resolve_diet_track: {
         Args: never
         Returns: Database["public"]["Enums"]["diet_track"]
@@ -3677,6 +4467,11 @@ export type Database = {
         Returns: Json
       }
       set_rival: { Args: { _rival_id: string }; Returns: undefined }
+      start_battle: {
+        Args: { p_chapter_id: string; p_enemy_code: string }
+        Returns: Json
+      }
+      start_story_session: { Args: never; Returns: Json }
       submit_boxing_condition: {
         Args: {
           p_condition_type: string
@@ -3732,6 +4527,10 @@ export type Database = {
           _weakest_habit: string
           _weekly_workouts: number
         }
+        Returns: Json
+      }
+      submit_player_command: {
+        Args: { p_command: string; p_target_data: Json }
         Returns: Json
       }
       submit_post_program_checkin: {
