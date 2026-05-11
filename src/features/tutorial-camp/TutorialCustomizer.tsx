@@ -1189,33 +1189,36 @@ function PreviewLocationButton({
       return;
     }
 
-    // 3) 없으면 step.route 로 navigate → 페이지 mount 후 강조
-    if (!stepRoute) {
-      toast.error("📍 위치 확인 실패", {
-        description: "이 단계에 페이지 정보(route)가 없어 이동 불가",
-      });
-      return;
-    }
-    if (location.pathname === stepRoute) {
-      toast.error("📍 위치 확인 실패", {
-        description:
-          "이 페이지에 selector 매칭 element 가 없어요. selector 다시 확인",
-      });
-      return;
-    }
-    // customizer 닫고 → navigate → DOM mount 기다림 → 강조
+    // 3) 매칭 실패 → 무조건 customizer 닫고 stepRoute 로 navigate.
+    //    같은 라우트라도 customizer 가림이 사라져 회원이 화면 조작 가능.
+    //    1초 / 2.5초 두 번 재시도 — 동적 mount (탭 토글 등) 대응.
     window.dispatchEvent(new Event(CUSTOMIZER_CLOSE_EVENT));
-    toast.success("📍 페이지로 이동 후 강조", {
-      description: `${stepRoute} 로 이동 → 1초 후 자동 강조`,
-    });
-    navigate(stepRoute);
+    if (stepRoute && location.pathname !== stepRoute) {
+      toast.success("📍 페이지로 이동 후 강조", {
+        description: `${stepRoute} 로 이동 → 자동 강조 시도`,
+      });
+      navigate(stepRoute);
+    } else {
+      toast.success("📍 화면에서 찾는 중", {
+        description:
+          stepRoute === location.pathname
+            ? "같은 페이지 — 보이는 영역으로 스크롤 후 강조 시도"
+            : "selector 매칭 시도",
+      });
+    }
+    const tryHighlight = () => previewSelector(trimmed);
     window.setTimeout(() => {
-      const r = previewSelector(trimmed);
-      if (!r.ok) {
-        toast.error("📍 이동했지만 element 못 찾음", {
-          description: r.message,
-        });
-      }
+      if (tryHighlight().ok) return;
+      // 동적 mount 대비 — 추가 1.5초 후 재시도
+      window.setTimeout(() => {
+        const r2 = tryHighlight();
+        if (!r2.ok) {
+          toast.error("📍 element 못 찾음", {
+            description:
+              "selector 다시 확인하거나 해당 탭/메뉴를 직접 눌러 mount 시켜주세요",
+          });
+        }
+      }, 1500);
     }, 1000);
   };
 
