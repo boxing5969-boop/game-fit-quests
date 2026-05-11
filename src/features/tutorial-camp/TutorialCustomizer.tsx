@@ -84,6 +84,55 @@ function describeSelector(sel: string): string {
   return SELECTOR_LABELS_LITE[trimmed] ?? "사용자 selector — 매칭 확인 필요";
 }
 
+/** 64-AC: 화면에서 selector 매칭 element 를 1.5초 amber 외곽선 + scrollIntoView. */
+function previewSelector(sel: string): { ok: boolean; message: string } {
+  if (typeof document === "undefined")
+    return { ok: false, message: "브라우저 외 환경" };
+  const trimmed = sel.trim();
+  if (!trimmed)
+    return {
+      ok: false,
+      message: "selector 가 비어있어요 — 큰 카드가 가운데 표시됩니다",
+    };
+  let el: HTMLElement | null = null;
+  try {
+    el = document.querySelector(trimmed) as HTMLElement | null;
+  } catch {
+    return { ok: false, message: "selector 형식 오류 — 다시 확인해주세요" };
+  }
+  if (!el)
+    return {
+      ok: false,
+      message: "지금 화면에 없어요. 해당 페이지로 먼저 이동해야 보여요.",
+    };
+  const prev = {
+    outline: el.style.outline,
+    offset: el.style.outlineOffset,
+    transition: el.style.transition,
+  };
+  try {
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.style.transition = "outline 0.2s ease";
+    el.style.outline = "3px solid #fbbf24";
+    el.style.outlineOffset = "4px";
+    window.setTimeout(() => {
+      try {
+        el!.style.outline = prev.outline;
+        el!.style.outlineOffset = prev.offset;
+        el!.style.transition = prev.transition;
+      } catch {
+        /* noop */
+      }
+    }, 1500);
+  } catch {
+    /* noop */
+  }
+  return {
+    ok: true,
+    message: "화면에서 1.5초 동안 노란 외곽선으로 강조됐어요",
+  };
+}
+
 /**
  * Element 의 안정적인 selector 추출.
  * 우선순위: data-tour > data-tutorial-target > id > stable className > 단순 tag.
@@ -1004,7 +1053,7 @@ function InlineRowEditor({
       </p>
 
       {/* selector */}
-      <label className="block">
+      <div className="block">
         <span className="text-[9.5px] font-bold text-amber-200/85">
           🎯 가리킬 element
         </span>
@@ -1015,7 +1064,28 @@ function InlineRowEditor({
           placeholder='[data-tour="..."] 또는 비워두면 가운데'
           className={inputCls}
         />
-      </label>
+        {/* 한글 라벨 — 어디인지 자동 표시 */}
+        <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-200">
+          🏷️ {describeSelector(draft.targetSelector ?? "")}
+        </p>
+        {/* 화면에서 위치 보기 버튼 */}
+        <button
+          type="button"
+          onClick={() => {
+            const r = previewSelector(draft.targetSelector ?? "");
+            if (r.ok) {
+              toast.success("📍 화면에서 강조 표시", {
+                description: r.message + " (customizer 닫고 보세요)",
+              });
+            } else {
+              toast.error("📍 위치 확인 실패", { description: r.message });
+            }
+          }}
+          className="mt-1 inline-flex w-full items-center justify-center gap-1 rounded-md border border-amber-400/40 bg-black/30 px-2 py-1 text-[10px] font-bold text-amber-200 hover:bg-black/50"
+        >
+          📍 화면에서 위치 보기 (1.5초 강조)
+        </button>
+      </div>
 
       {/* placement */}
       <label className="block">
