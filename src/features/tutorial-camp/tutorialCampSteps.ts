@@ -130,6 +130,14 @@ export interface TutorialCampStep {
    * Day 7 완료식 등에서 시각 충돌 방지용.
    */
   suppressReflectionSheet?: boolean;
+
+  /**
+   * 64-AK: "👆 여기를 클릭하세요" chip 표시 여부.
+   *   · undefined → requireTargetClick 따라감 (기존 호환)
+   *   · true       → 강제 표시 (회원 click 강제 아니어도)
+   *   · false      → 명시적으로 chip 숨김
+   */
+  showTapHereChip?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1120,6 +1128,7 @@ export type TutorialStepOverridePartial = Partial<
     | "body"
     | "helperMessage"
     | "successMessage"
+    | "showTapHereChip"
   >
 >;
 

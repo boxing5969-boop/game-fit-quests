@@ -83,13 +83,14 @@ const TutorialOverlay = ({
       step.animation === "arrow" ||
       step.animation === "bounce");
 
-  // chip 도 동일 — autoAdvance 대기 중엔 숨김
+  // chip 도 동일 — autoAdvance 대기 중엔 숨김.
+  // 64-AK: step.showTapHereChip 명시 시 그 값 우선. undefined 면 기존 호환 (requireTargetClick).
+  const chipEnabled =
+    typeof step.showTapHereChip === "boolean"
+      ? step.showTapHereChip
+      : step.requireTargetClick;
   const showTapHere =
-    step.requireTargetClick &&
-    !targetClicked &&
-    rect &&
-    rect.found &&
-    routeMatch;
+    chipEnabled && !targetClicked && rect && rect.found && routeMatch;
 
   // fallback dim — autoAdvance 대기 중엔 숨김 (모달이 화면 가운데 잘 보이도록).
   //   다른 모달이 떠있으면 모달 자체 backdrop 이 이미 어둡게 처리하므로 중복 dim 제거

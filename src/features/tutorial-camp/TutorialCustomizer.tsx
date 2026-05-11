@@ -1312,6 +1312,10 @@ function InlineRowEditor({
     completionRule: currentStep.completionRule,
     helperMessage: currentStep.helperMessage,
     successMessage: currentStep.successMessage,
+    showTapHereChip:
+      typeof currentStep.showTapHereChip === "boolean"
+        ? currentStep.showTapHereChip
+        : !!currentStep.requireTargetClick,
   }));
 
   const update = (patch: TutorialStepOverridePartial) =>
@@ -1470,7 +1474,7 @@ function InlineRowEditor({
         </select>
       </label>
 
-      {/* 토글 4개 */}
+      {/* 토글 5개 */}
       <div className="space-y-1">
         <CompactToggle
           label="완료 시 자동 다음으로"
@@ -1491,6 +1495,11 @@ function InlineRowEditor({
           label="완료 전에 '다음으로' 잠그기"
           checked={!!draft.blockNextUntilComplete}
           onChange={(v) => update({ blockNextUntilComplete: v })}
+        />
+        <CompactToggle
+          label="👆 '여기를 클릭하세요' chip 표시"
+          checked={!!draft.showTapHereChip}
+          onChange={(v) => update({ showTapHereChip: v })}
         />
       </div>
 
