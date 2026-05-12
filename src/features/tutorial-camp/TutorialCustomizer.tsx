@@ -1062,20 +1062,37 @@ function NewStepForm({
   const [body, setBody] = useState("");
   const [route, setRoute] = useState("/home");
   const [targetSelector, setTargetSelector] = useState("");
+  const [placement, setPlacement] = useState<
+    TutorialStepOverridePartial["placement"]
+  >("bottom");
+  const [completionRule, setCompletionRule] = useState<
+    TutorialStepOverridePartial["completionRule"]
+  >(undefined);
   const [helperMessage, setHelperMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [autoAdvance, setAutoAdvance] = useState(true);
   const [autoNavigate, setAutoNavigate] = useState(false);
   const [requireTargetClick, setRequireTargetClick] = useState(false);
+  const [blockNextUntilComplete, setBlockNextUntilComplete] = useState(false);
+  const [showTapHereChip, setShowTapHereChip] = useState(false);
+
+  // 64-AO: 새 단계 만들기 안에도 element picker
+  const picker = usePicker((sel) => setTargetSelector(sel));
 
   const reset = () => {
     setTitle("");
     setBody("");
     setRoute("/home");
     setTargetSelector("");
+    setPlacement("bottom");
+    setCompletionRule(undefined);
     setHelperMessage("");
+    setSuccessMessage("");
     setAutoAdvance(true);
     setAutoNavigate(false);
     setRequireTargetClick(false);
+    setBlockNextUntilComplete(false);
+    setShowTapHereChip(false);
   };
 
   const onSave = () => {
@@ -1084,19 +1101,24 @@ function NewStepForm({
       toast.error("제목을 입력해주세요");
       return;
     }
-    // 보이는 단계로 자동 등록 위해 order 보장
     ensureFullOrderForDay(day);
     addCustomStep(day, {
       title: trimmed,
       body: body.trim(),
       route: route.trim() || "/home",
       targetSelector: targetSelector.trim(),
+      placement,
+      completionRule:
+        completionRule ??
+        (requireTargetClick ? "target_clicked" : "quiz_question_read"),
       helperMessage: helperMessage.trim() || undefined,
+      successMessage: successMessage.trim() || undefined,
       autoAdvance,
       autoNavigate,
       requireTargetClick,
-      completionRule: requireTargetClick ? "target_clicked" : "quiz_question_read",
-      blockNextUntilComplete: requireTargetClick,
+      blockNextUntilComplete:
+        blockNextUntilComplete || requireTargetClick,
+      showTapHereChip,
     });
     toast.success(`✨ 새 단계 추가됨: "${trimmed}"`, {
       description: `${day}일차 끝에 추가됨. ↑↓ 로 위치 조정 가능.`,
@@ -1123,6 +1145,7 @@ function NewStepForm({
 
   return (
     <div className="space-y-2 rounded-lg border border-amber-400/30 bg-amber-500/5 p-2.5">
+      {picker.overlay}
       <p className="text-[11px] font-bold text-amber-100">✨ 새 단계 만들기</p>
 
       <label className="block">
@@ -1138,7 +1161,7 @@ function NewStepForm({
 
       <label className="block">
         <span className="text-[10px] font-bold text-amber-200/85">
-          안내 본문 (선택)
+          📝 안내 본문 (선택)
         </span>
         <input
           type="text"
@@ -1151,7 +1174,7 @@ function NewStepForm({
 
       <label className="block">
         <span className="text-[10px] font-bold text-amber-200/85">
-          어느 페이지에서? (route)
+          📍 어느 페이지에서? (route)
         </span>
         <input
           type="text"
@@ -1162,10 +1185,23 @@ function NewStepForm({
         />
       </label>
 
-      <label className="block">
+      {/* selector + picker + 한글 라벨 + 위치 보기 */}
+      <div className="block">
         <span className="text-[10px] font-bold text-amber-200/85">
-          가리킬 element (선택)
+          🎯 가리킬 element (선택)
         </span>
+        <button
+          type="button"
+          onClick={() => (picker.picking ? picker.stop() : picker.start())}
+          className={`mb-1 inline-flex w-full items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-black transition-all ${
+            picker.picking
+              ? "bg-rose-500 text-white animate-pulse"
+              : "bg-amber-500 text-amber-950 hover:bg-amber-400"
+          }`}
+        >
+          <Pointer className="h-3 w-3" />
+          {picker.picking ? "취소 (ESC)" : "🎯 화면에서 element 선택"}
+        </button>
         <input
           type="text"
           value={targetSelector}
@@ -1173,17 +1209,89 @@ function NewStepForm({
           placeholder='[data-tour="..."] 또는 비워두면 가운데 카드'
           className={inputCls}
         />
+        <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-200">
+          🏷️ {describeSelector(targetSelector)}
+        </p>
+        <PreviewLocationButton
+          selector={targetSelector}
+          stepRoute={route}
+        />
+      </div>
+
+      {/* placement */}
+      <label className="block">
+        <span className="text-[10px] font-bold text-amber-200/85">
+          💬 카드 위치
+        </span>
+        <select
+          value={placement ?? "bottom"}
+          onChange={(e) =>
+            setPlacement(
+              e.target.value as TutorialStepOverridePartial["placement"],
+            )
+          }
+          className={inputCls}
+        >
+          <option value="top">위쪽</option>
+          <option value="bottom">아래쪽</option>
+          <option value="left">왼쪽</option>
+          <option value="right">오른쪽</option>
+          <option value="center">가운데</option>
+        </select>
+      </label>
+
+      {/* completion rule */}
+      <label className="block">
+        <span className="text-[10px] font-bold text-amber-200/85">
+          ✅ 어떻게 완료되나요?
+        </span>
+        <select
+          value={completionRule ?? ""}
+          onChange={(e) =>
+            setCompletionRule(
+              (e.target.value ||
+                undefined) as TutorialStepOverridePartial["completionRule"],
+            )
+          }
+          className={inputCls}
+        >
+          <option value="">(자동 — 클릭 필수 시 클릭, 아니면 4초 자동)</option>
+          <option value="target_clicked">회원이 카드를 눌렀을 때</option>
+          <option value="quiz_question_read">4초 동안 읽기 (자동)</option>
+          <option value="quiz_answer_selected">퀴즈 답 골랐을 때</option>
+          <option value="quiz_correct_answer_selected">정답 골랐을 때</option>
+          <option value="scrolled_to_bottom">맨 아래까지 스크롤</option>
+          <option value="text_input_min_length">글 일정 길이 입력</option>
+          <option value="option_selected">옵션 골랐을 때</option>
+          <option value="toggle_selected">토글 눌렀을 때</option>
+          <option value="condition_checked">컨디션 체크</option>
+          <option value="modal_closed">모달 닫혔을 때</option>
+          <option value="manual_confirm">언제든 통과</option>
+        </select>
       </label>
 
       <label className="block">
         <span className="text-[10px] font-bold text-amber-200/85">
-          👆 안내 한 줄 (helper, 선택)
+          🗨️ 안내 한 줄 (행동 전)
         </span>
         <input
           type="text"
           value={helperMessage}
           onChange={(e) => setHelperMessage(e.target.value)}
-          placeholder="예: 여기를 눌러보세요"
+          placeholder="예: 👆 여기를 눌러보세요"
+          className={inputCls}
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-[10px] font-bold text-amber-200/85">
+          🎉 칭찬 한 줄 (행동 후)
+        </span>
+        <input
+          type="text"
+          value={successMessage}
+          onChange={(e) => setSuccessMessage(e.target.value)}
+          placeholder="예: 잘했어요!"
           className={inputCls}
         />
       </label>
@@ -1203,6 +1311,16 @@ function NewStepForm({
           label="회원이 꼭 카드 클릭"
           checked={requireTargetClick}
           onChange={setRequireTargetClick}
+        />
+        <CompactToggle
+          label="완료 전에 '다음으로' 잠그기"
+          checked={blockNextUntilComplete}
+          onChange={setBlockNextUntilComplete}
+        />
+        <CompactToggle
+          label="👆 '여기를 클릭하세요' chip 표시"
+          checked={showTapHereChip}
+          onChange={setShowTapHereChip}
         />
       </div>
 
