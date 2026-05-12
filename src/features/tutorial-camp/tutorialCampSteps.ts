@@ -1098,10 +1098,18 @@ export const TUTORIAL_CAMP_STEPS: TutorialCampStep[] = [
   ...DAY_7_STEPS,
 ].map(withInteractive);
 
-/** 특정 day 의 step 배열 — admin order override 적용. step 번호 reassign. */
+/** 특정 day 의 step 배열 — admin order override 적용. step 번호 reassign.
+ *  64-AN: override lookup 도 originalStep (base + custom 통합) 으로.
+ */
 export function getStepsByDay(day: number): TutorialCampStep[] {
+  const allOriginal = [
+    ...TUTORIAL_CAMP_STEPS.filter((s) => s.day === day),
+    ...getCustomStepsForDay(day),
+  ];
+  const byTargetKey = new Map(allOriginal.map((s) => [s.targetKey, s.step]));
   return getOrderedStepsByDay(day).map((s) => {
-    const ov = getStepOverride(day, s.step);
+    const baseStep = byTargetKey.get(s.targetKey) ?? s.step;
+    const ov = getStepOverride(day, baseStep);
     return ov ? ({ ...s, ...ov } as TutorialCampStep) : s;
   });
 }
@@ -1402,16 +1410,22 @@ export function ensureFullOrderForDay(day: number): void {
   );
 }
 
-/** 특정 day × step 의 단일 step. 없으면 null. admin override + order 적용. */
+/** 특정 day × step 의 단일 step. 없으면 null. admin override + order 적용.
+ *  64-AN: originalStep 식별은 base + custom 통합 list 에서 targetKey 로.
+ *    이전엔 base 만 검사 → custom step 의 reassign step number 가 base step number
+ *    와 충돌해 다른 step 의 override 가 적용되는 버그 발생.
+ */
 export function getStep(day: number, step: number): TutorialCampStep | null {
   const list = getOrderedStepsByDay(day);
   const found = list[step];
   if (!found) return null;
-  // override 는 base 의 day.step 으로 식별 — order reassign 후에도 base step 으로 lookup
+  const allOriginal = [
+    ...TUTORIAL_CAMP_STEPS.filter((s) => s.day === day),
+    ...getCustomStepsForDay(day),
+  ];
   const baseStep =
-    TUTORIAL_CAMP_STEPS.find(
-      (s) => s.day === day && s.title === found.title && s.targetKey === found.targetKey,
-    )?.step ?? found.step;
+    allOriginal.find((o) => o.targetKey === found.targetKey)?.step ??
+    found.step;
   const ov = getStepOverride(day, baseStep);
   return ov ? ({ ...found, ...ov } as TutorialCampStep) : found;
 }
