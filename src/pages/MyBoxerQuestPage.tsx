@@ -1,18 +1,16 @@
 /**
- * 153 QUEST — 보조 퀘스트 / 커뮤니티 활동 허브 페이지.
+ * 153 QUEST — 보조 퀘스트 페이지 (개인 미션).
  *
- * 홈 화면의 HomeEngagementSection 을 별도 메뉴로 분리한 페이지.
+ * 64-AS: 커뮤니티 카드 (세컨드 응원 / 코너맨 / 짐 레이드) 는 별도 메뉴
+ *   '/myboxer/community' 로 이동. 여기는 개인 미션 (mode='personal') 만.
  * 라우트: /myboxer/quest (ProtectedRoute 만 적용 — 로그인 회원 전체 접근).
- * BottomNav 메인 슬롯에는 노출 X. "전체 메뉴" 안에서 진입.
  *
- * 포함 내용 (HomeEngagementSection 통째 마운트):
+ * 포함 내용 (HomeEngagementSection mode='personal'):
  *   · 리턴 라운드 배너 / 컨디션 게이지 / 오삼 코치 브리핑 / 오늘의 퀘스트 미니 패널
- *   · 복싱 IQ 퀴즈 / 챌린지 아레나 / 챔피언 일기 / 세컨드 응원
- *   · 코너맨 매칭 / 짐 레이드
+ *   · 복싱 IQ 퀴즈 / 챌린지 아레나 / 챔피언 일기
  *
  * 보호 원칙:
- *   · 기존 HomeEngagementSection 컴포넌트 props/state/로직 0 변경
- *   · 공식 1~40 레벨업 / 코치 승인 미션과 무관 (기존 보조 퀘스트 정책 유지)
+ *   · 공식 1~40 레벨업 / 코치 승인 미션과 무관
  *   · DB / RPC / 마이그레이션 추가 0
  */
 
@@ -50,8 +48,8 @@ const MyBoxerQuestPage = () => {
           </p>
         </div>
 
-        {/* 본문 — 기존 HomeEngagementSection 통째 마운트 */}
-        <HomeEngagementSection />
+        {/* 본문 — 개인 미션만 (커뮤니티 카드는 /myboxer/community 로 분리) */}
+        <HomeEngagementSection mode="personal" />
       </div>
     </motion.div>
   );

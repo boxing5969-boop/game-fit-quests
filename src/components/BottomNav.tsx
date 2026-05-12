@@ -15,6 +15,7 @@ import {
   Fish,
   Compass,
   Target,
+  Users,
   X,
 } from "lucide-react";
 import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
@@ -42,8 +43,10 @@ const baseMenuItems = [
   { path: "/home",              icon: Home,       label: "홈" },
   { path: "/missions",          icon: BoxingGloveIcon, label: "훈련" },
   { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝" },
-  // 153 QUEST — 보조 퀘스트 / 커뮤니티 활동 허브 (홈에서 분리).
+  // 153 QUEST — 개인 보조 퀘스트 (IQ / 챌린지 / 일기). 커뮤니티는 별도 메뉴.
   { path: "/myboxer/quest",     icon: Target,     label: "153 QUEST" },
+  // 64-AS: 153 커뮤니티 — 세컨드 응원 / 코너맨 / 짐 레이드 (회원 간 소통).
+  { path: "/myboxer/community", icon: Users,      label: "153 커뮤니티" },
   // 153마인드셋 — 시각화 훈련. 일반 회원 공개 (ProtectedRoute 만 적용).
   { path: "/myboxer/visualization", icon: Compass, label: "153마인드셋" },
   { path: "/halloffame",        icon: Trophy,     label: "랭킹" },

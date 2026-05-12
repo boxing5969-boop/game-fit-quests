@@ -32,6 +32,13 @@ export interface HomeEngagementSectionProps {
   onOpenChampionJournal?: () => void;
   /** 외부에서 세컨드 응원 진입을 가로채고 싶을 때만 지정. 기본은 본 컴포넌트가 시트를 연다. */
   onOpenSecondCheer?: () => void;
+  /**
+   * 64-AS: 카드 렌더 모드.
+   *   · 'all' (기본) — 홈 등 모든 카드 (개인 + 커뮤니티)
+   *   · 'personal' — 153 QUEST: 리턴 라운드 / 컨디션 / 오삼 브리핑 / 오늘의 퀘스트 미니
+   *   · 'community' — 153 커뮤니티: 세컨드 응원 / 코너맨 / 짐 레이드
+   */
+  mode?: "all" | "personal" | "community";
 }
 
 const HomeEngagementSection = ({
@@ -39,6 +46,7 @@ const HomeEngagementSection = ({
   onOpenChallengeArena,
   onOpenChampionJournal,
   onOpenSecondCheer,
+  mode = "all",
 }: HomeEngagementSectionProps) => {
   const [showAcademy, setShowAcademy] = useState(false);
   const [showArena, setShowArena] = useState(false);
@@ -56,17 +64,27 @@ const HomeEngagementSection = ({
   const handleJournal = onOpenChampionJournal ?? (() => setShowJournal(true));
   const handleCheer = onOpenSecondCheer ?? (() => setShowCheer(true));
 
+  // 64-AS: mode 별 카드 분리
+  const showPersonal = mode === "all" || mode === "personal";
+  const showCommunity = mode === "all" || mode === "community";
+
   return (
     <div className="space-y-4">
-      <ReturnRoundBanner onOpen={() => setShowReturn(true)} />
-      <ConditionGaugeCard onOpen={() => setShowCondition(true)} />
-      <OsamiDailyBriefingCard />
-      <TodayQuestMiniPanel
-        onOpenAcademy={handleAcademy}
-        onOpenChallengeArena={handleChallenge}
-        onOpenChampionJournal={handleJournal}
-      />
+      {showPersonal && (
+        <>
+          <ReturnRoundBanner onOpen={() => setShowReturn(true)} />
+          <ConditionGaugeCard onOpen={() => setShowCondition(true)} />
+          <OsamiDailyBriefingCard />
+          <TodayQuestMiniPanel
+            onOpenAcademy={handleAcademy}
+            onOpenChallengeArena={handleChallenge}
+            onOpenChampionJournal={handleJournal}
+          />
+        </>
+      )}
 
+      {showCommunity && (
+        <>
       {/* ─── 4번째 카드: 세컨드 응원 (커뮤니티 미션) ─── */}
       <button
         type="button"
@@ -103,6 +121,8 @@ const HomeEngagementSection = ({
 
       {/* ─── v2 21단계: 짐 레이드 (지점 누적 목표) ─── */}
       <GymRaidCard />
+        </>
+      )}
 
       <BoxingAcademyQuizModal
         open={showAcademy}

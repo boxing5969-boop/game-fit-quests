@@ -83,6 +83,7 @@ const MyBoxerVisualizationPage = lazy(
   () => import("@/pages/MyBoxerVisualizationPage"),
 );
 const MyBoxerQuestPage = lazy(() => import("@/pages/MyBoxerQuestPage"));
+const MyBoxerCommunityPage = lazy(() => import("@/pages/MyBoxerCommunityPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -243,6 +244,7 @@ const AppRoutes = () => {
         <Route path="/boxer-route" element={<ProtectedRoute><MyBoxerVisualizationPage /></ProtectedRoute>} />
         <Route path="/myboxer/visualization" element={<ProtectedRoute><MyBoxerVisualizationPage /></ProtectedRoute>} />
         <Route path="/myboxer/quest" element={<ProtectedRoute><MyBoxerQuestPage /></ProtectedRoute>} />
+        <Route path="/myboxer/community" element={<ProtectedRoute><MyBoxerCommunityPage /></ProtectedRoute>} />
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
