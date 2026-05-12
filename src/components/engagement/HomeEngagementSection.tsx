@@ -15,8 +15,6 @@ import BoxingAcademyQuizModal from "./BoxingAcademyQuizModal";
 import FunChallengeArenaSheet from "./FunChallengeArenaSheet";
 import ChampionJournalSheet from "./ChampionJournalSheet";
 import SecondCheerSheet from "./SecondCheerSheet";
-import ConditionGaugeCard from "./ConditionGaugeCard";
-import ConditionGaugeSheet from "./ConditionGaugeSheet";
 import ReturnRoundBanner from "./ReturnRoundBanner";
 import ReturnRoundSheet from "./ReturnRoundSheet";
 import CornermanCard from "./CornermanCard";
@@ -52,8 +50,6 @@ const HomeEngagementSection = ({
   const [showArena, setShowArena] = useState(false);
   const [showJournal, setShowJournal] = useState(false);
   const [showCheer, setShowCheer] = useState(false);
-  // v1.5 14단계 — 컨디션 게이지
-  const [showCondition, setShowCondition] = useState(false);
   // v1.5 15단계 — 리턴 라운드
   const [showReturn, setShowReturn] = useState(false);
   // v2 19단계 — 코너맨
@@ -73,7 +69,7 @@ const HomeEngagementSection = ({
       {showPersonal && (
         <>
           <ReturnRoundBanner onOpen={() => setShowReturn(true)} />
-          <ConditionGaugeCard onOpen={() => setShowCondition(true)} />
+          {/* 컨디션 게이지는 챔피언 일기 시트로 통합됨 — 일기 작성 시 함께 기록. */}
           <OsamiDailyBriefingCard />
           <TodayQuestMiniPanel
             onOpenAcademy={handleAcademy}
@@ -142,11 +138,6 @@ const HomeEngagementSection = ({
       <SecondCheerSheet
         open={showCheer}
         onClose={() => setShowCheer(false)}
-      />
-
-      <ConditionGaugeSheet
-        open={showCondition}
-        onClose={() => setShowCondition(false)}
       />
 
       <ReturnRoundSheet

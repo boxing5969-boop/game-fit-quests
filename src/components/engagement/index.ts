@@ -8,6 +8,9 @@ export { default as FunChallengeSubmitForm } from "./FunChallengeSubmitForm";
 export { default as SafetyCheckPanel } from "./SafetyCheckPanel";
 export { default as ChampionJournalSheet } from "./ChampionJournalSheet";
 export { default as ChampionJournalCard } from "./ChampionJournalCard";
+// 파트너 일기 피드 + 댓글 (코너맨 / 세컨드 응원 양방향)
+export { default as PartnerJournalFeedCard } from "./PartnerJournalFeedCard";
+export { default as PartnerJournalCommentSheet } from "./PartnerJournalCommentSheet";
 export {
   default as ChampionJournalPromptList,
   CHAMPION_JOURNAL_PROMPTS,

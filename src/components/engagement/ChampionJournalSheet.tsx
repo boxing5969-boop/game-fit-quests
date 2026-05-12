@@ -17,8 +17,20 @@ import {
   useRecentChampionJournalEntries,
   useSubmitChampionJournalEntry,
 } from "@/hooks/useChampionJournal";
+import {
+  useSubmitBoxingCondition,
+  useTodayBoxingCondition,
+} from "@/hooks/useBoxingCondition";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
-import type { JournalEntryResult } from "@/services/boxingEngagementService";
+import type {
+  BoxingConditionType,
+  JournalEntryResult,
+} from "@/services/boxingEngagementService";
+import {
+  CONDITION_OPTIONS,
+  PAIN_AREA_OPTIONS,
+  getConditionOption,
+} from "@/data/boxingConditionMessages";
 
 import ChampionJournalCard from "./ChampionJournalCard";
 import ChampionJournalPromptList, {
@@ -30,7 +42,11 @@ interface Props {
   onClose: () => void;
 }
 
-const MOOD_OPTIONS = ["💪 단단함", "🔥 의욕", "😮‍💨 지침", "🌧 흐림", "✨ 맑음"];
+function conditionToMoodLabel(c: BoxingConditionType | null): string | null {
+  const o = getConditionOption(c);
+  if (!o) return null;
+  return `${o.emoji} ${o.shortLabel}`;
+}
 
 const MIN_LEN = 5;
 const MAX_LEN = 500;
@@ -54,14 +70,17 @@ function tidyContent(s: string): string {
 
 const ChampionJournalSheet = ({ open, onClose }: Props) => {
   const submit = useSubmitChampionJournalEntry();
+  const submitCondition = useSubmitBoxingCondition();
   // open=false 일 때는 SELECT 가 발사되지 않도록 enabled gate.
   const { data: recent, isLoading: recentLoading } =
     useRecentChampionJournalEntries(3, open);
+  const { data: todayCondition } = useTodayBoxingCondition();
   useModalDismiss(open, onClose);
 
   const [prompt, setPrompt] = useState<string>("");
   const [content, setContent] = useState("");
-  const [mood, setMood] = useState<string | null>(null);
+  const [condition, setCondition] = useState<BoxingConditionType | null>(null);
+  const [painArea, setPainArea] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<JournalEntryResult | null>(null);
 
@@ -69,26 +88,52 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
     if (open) {
       setPrompt(pickPromptOfDay());
       setContent("");
-      setMood(null);
+      // 오늘 이미 컨디션 기록이 있으면 미리 채워둔다 — 중복 저장은 submit 시 skip.
+      setCondition(todayCondition?.condition_type ?? null);
+      setPainArea(todayCondition?.pain_area ?? []);
       setResult(null);
       setPending(false);
     }
-  }, [open]);
+  }, [open, todayCondition?.condition_type, todayCondition?.pain_area]);
+
+  const showPainArea = condition === "pain";
+  const alreadyHasTodayCondition = !!todayCondition?.has_today;
+
+  const togglePainArea = (value: string) => {
+    setPainArea((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+    );
+  };
 
   const trimmedLen = useMemo(() => tidyContent(content).length, [content]);
   const tooShort = trimmedLen < MIN_LEN;
   const tooLong = trimmedLen > MAX_LEN;
-  const canSubmit = !!prompt && !tooShort && !tooLong && !pending;
+  // 컨디션 선택을 STEP 1 필수 조건으로 게이팅 — 통합 시트에서 컨디션 누락 방지.
+  const canSubmit =
+    !!prompt && !!condition && !tooShort && !tooLong && !pending;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setPending(true);
     try {
+      // 일기와 컨디션을 함께 저장. 일기는 필수 결과(result) 라 await 필수.
+      // 컨디션은 오늘 첫 기록일 때만 새로 저장 (중복 방지).
       const data = await submit.mutateAsync({
         prompt,
         content: tidyContent(content),
-        mood: mood ?? null,
+        mood: conditionToMoodLabel(condition),
       });
+      if (condition && !alreadyHasTodayCondition) {
+        try {
+          await submitCondition.mutateAsync({
+            conditionType: condition,
+            painArea: showPainArea ? painArea : [],
+            note: null,
+          });
+        } catch {
+          // 컨디션 저장 실패는 일기 보상에 영향 없음 — 조용히 무시.
+        }
+      }
       setResult(data);
     } catch (err) {
       const msg =
@@ -112,10 +157,10 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             오늘의 한 줄
           </p>
           <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
-            챔피언 일기
+            챔피언 일기 · 오늘의 컨디션
           </h2>
           <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-            오늘의 한 줄이 90일 뒤 성장 기록이 됩니다.
+            한 줄 회고와 오늘 컨디션을 한 번에 기록합니다.
           </p>
         </div>
       </div>
@@ -204,78 +249,168 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
 
   const renderForm = () => (
     <div className="space-y-3">
-      <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-        <p className="text-[10px] font-black uppercase tracking-wider text-primary">
-          오늘의 질문
-        </p>
-        <p className="mt-1 text-[13.5px] font-bold text-foreground">{prompt}</p>
-        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-          완벽한 문장이 아니라 솔직한 기록이면 충분합니다. 챔피언은 훈련만
-          기록하지 않습니다 — 느낀 것도 기록합니다.
-        </p>
-        <div className="mt-2.5 flex items-center justify-between gap-2">
-          <span className="badge-pill bg-reward/15 text-reward">
-            첫 작성 +20 XP · +50
-          </span>
+      {/* STEP 1 — 오늘의 컨디션 (먼저 선택) */}
+      <div
+        className={`rounded-card border p-3 transition-all ${
+          condition
+            ? "border-emerald-500/30 bg-emerald-500/5"
+            : "border-primary/30 bg-primary/5"
+        }`}
+      >
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span
+              className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
+                condition
+                  ? "bg-emerald-500 text-white"
+                  : "bg-primary text-primary-foreground"
+              }`}
+            >
+              {condition ? "✓" : "1"}
+            </span>
+            <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+              먼저, 오늘의 컨디션
+            </p>
+          </div>
+          {alreadyHasTodayCondition && (
+            <span className="text-[10px] font-medium text-emerald-600">
+              오늘 기록됨
+            </span>
+          )}
         </div>
-      </div>
-
-      <div>
-        <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
-          질문 바꾸기
-        </p>
-        <ChampionJournalPromptList selected={prompt} onSelect={setPrompt} />
-      </div>
-
-      <div>
-        <p className="mb-1.5 flex items-center justify-between text-[11.5px] font-bold text-foreground">
-          한 줄 회고
-          <span
-            className={`text-[10.5px] font-medium ${
-              tooLong
-                ? "text-destructive"
-                : tooShort
-                  ? "text-muted-foreground"
-                  : "text-emerald-600"
-            }`}
-          >
-            {trimmedLen} / {MAX_LEN}자 · 최소 {MIN_LEN}자
-          </span>
-        </p>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value.slice(0, MAX_LEN + 50))}
-          placeholder="오늘의 라운드를 한 줄로…"
-          rows={4}
-          data-tour="journal-reflection-input"
-          className="w-full resize-none rounded-card border border-border bg-card px-3 py-2 text-[13px] text-foreground focus:border-primary focus:outline-none"
-        />
-      </div>
-
-      <div>
-        <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
-          오늘의 컨디션{" "}
-          <span className="text-muted-foreground font-normal">(선택)</span>
-        </p>
-        <div className="flex flex-wrap gap-1.5" data-tour="journal-condition-options">
-          {MOOD_OPTIONS.map((m) => {
-            const active = m === mood;
+        <div
+          className="flex flex-wrap gap-1.5"
+          data-tour="journal-condition-options"
+        >
+          {CONDITION_OPTIONS.map((o) => {
+            const active = o.type === condition;
             return (
               <button
-                key={m}
+                key={o.type}
                 type="button"
                 data-tutorial-condition="true"
-                onClick={() => setMood(active ? null : m)}
+                onClick={() => setCondition(active ? null : o.type)}
                 className={`rounded-pill border px-2.5 py-1.5 text-[11px] transition-all active:scale-[0.98] ${
                   active
                     ? "border-primary bg-primary/10 text-foreground font-bold"
                     : "border-border bg-card text-muted-foreground"
                 }`}
               >
-                {m}
+                {o.emoji} {o.shortLabel}
               </button>
             );
           })}
+        </div>
+
+        {showPainArea && (
+          <div className="mt-2.5">
+            <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+              통증 부위{" "}
+              <span className="font-normal text-muted-foreground">(선택)</span>
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {PAIN_AREA_OPTIONS.map((p) => {
+                const active = painArea.includes(p.value);
+                return (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => togglePainArea(p.value)}
+                    className={`rounded-pill border px-2.5 py-1.5 text-[11px] transition-all active:scale-[0.98] ${
+                      active
+                        ? "border-primary bg-primary/10 text-foreground font-bold"
+                        : "border-border bg-card text-muted-foreground"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-[10.5px] leading-relaxed text-muted-foreground">
+              ※ 통증이 있으면 무리하지 마세요. 코치와 상담을 권장합니다.
+            </p>
+          </div>
+        )}
+
+        {!condition && (
+          <p className="mt-2 text-[10.5px] leading-relaxed text-muted-foreground">
+            컨디션을 먼저 골라야 일기 작성이 시작됩니다.
+          </p>
+        )}
+      </div>
+
+      {/* STEP 2 — 챔피언 일기 (컨디션 선택 후 활성) */}
+      <div
+        className={`space-y-3 rounded-card border p-3 transition-all ${
+          condition
+            ? "border-primary/30 bg-primary/5"
+            : "border-border bg-muted/30 opacity-60"
+        }`}
+        aria-disabled={!condition}
+      >
+        <div className="flex items-center gap-2">
+          <span
+            className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
+              condition
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            2
+          </span>
+          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+            챔피언 일기
+          </p>
+        </div>
+
+        <div>
+          <p className="text-[13.5px] font-bold text-foreground">{prompt}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+            완벽한 문장이 아니라 솔직한 기록이면 충분합니다.
+          </p>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className="badge-pill bg-reward/15 text-reward">
+              첫 작성 +20 XP · +50
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+            질문 바꾸기
+          </p>
+          <ChampionJournalPromptList selected={prompt} onSelect={setPrompt} />
+        </div>
+
+        <div>
+          <p className="mb-1.5 flex items-center justify-between text-[11.5px] font-bold text-foreground">
+            한 줄 회고
+            <span
+              className={`text-[10.5px] font-medium ${
+                tooLong
+                  ? "text-destructive"
+                  : tooShort
+                    ? "text-muted-foreground"
+                    : "text-emerald-600"
+              }`}
+            >
+              {trimmedLen} / {MAX_LEN}자 · 최소 {MIN_LEN}자
+            </span>
+          </p>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value.slice(0, MAX_LEN + 50))}
+            placeholder={
+              condition
+                ? "오늘의 라운드를 한 줄로…"
+                : "위에서 컨디션을 먼저 선택해주세요."
+            }
+            rows={4}
+            disabled={!condition}
+            data-tour="journal-reflection-input"
+            className="w-full resize-none rounded-card border border-border bg-card px-3 py-2 text-[13px] text-foreground focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          />
         </div>
       </div>
 
@@ -292,13 +427,15 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
       >
         {pending
           ? "저장 중…"
-          : tooShort
-            ? `최소 ${MIN_LEN}자 이상 입력해주세요`
-            : tooLong
-              ? `최대 ${MAX_LEN}자까지 입력 가능합니다`
-              : !prompt
-                ? "질문을 선택해주세요"
-                : "기록 남기기"}
+          : !condition
+            ? "먼저 오늘의 컨디션을 선택해주세요"
+            : tooShort
+              ? `최소 ${MIN_LEN}자 이상 입력해주세요`
+              : tooLong
+                ? `최대 ${MAX_LEN}자까지 입력 가능합니다`
+                : !prompt
+                  ? "질문을 선택해주세요"
+                  : "기록 남기기"}
       </button>
 
       {/* 최근 일기 3개 */}

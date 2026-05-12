@@ -15,6 +15,7 @@
 
 import { motion } from "framer-motion";
 import HomeEngagementSection from "@/components/engagement/HomeEngagementSection";
+import PartnerJournalFeedCard from "@/components/engagement/PartnerJournalFeedCard";
 
 const MyBoxerCommunityPage = () => {
   return (
@@ -49,6 +50,9 @@ const MyBoxerCommunityPage = () => {
 
         {/* 본문 — 커뮤니티 카드만 */}
         <HomeEngagementSection mode="community" />
+
+        {/* 파트너 챔피언 일기 피드 + 댓글 — 코너맨/세컨드 양방향만 열람 */}
+        <PartnerJournalFeedCard />
       </div>
     </motion.div>
   );
