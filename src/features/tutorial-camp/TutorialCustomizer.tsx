@@ -100,36 +100,22 @@ function usePicker(onCapture: (selector: string) => void): {
   overlay: React.ReactNode;
 } {
   const [picking, setPicking] = useState(false);
-  const lastOutlinedRef = useRef<{
-    el: Element;
-    outline: string;
-    outlineOffset: string;
-  } | null>(null);
-
-  const clearOutline = useCallback(() => {
-    const last = lastOutlinedRef.current;
-    if (last) {
-      try {
-        (last.el as HTMLElement).style.outline = last.outline;
-        (last.el as HTMLElement).style.outlineOffset = last.outlineOffset;
-      } catch {
-        /* noop */
-      }
-      lastOutlinedRef.current = null;
-    }
-  }, []);
+  // 64-AQ: 강조 효과를 별도 fixed div 로 — element style 수정 / parent overflow:hidden
+  //   문제 회피. getBoundingClientRect 로 위치 계산.
+  const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
+  const [hoverLabel, setHoverLabel] = useState<string>("");
 
   // ESC 로 취소
   useEffect(() => {
     if (!picking) {
-      clearOutline();
+      setHoverRect(null);
       return;
     }
     if (typeof document === "undefined") return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setPicking(false);
-        clearOutline();
+        setHoverRect(null);
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event(CUSTOMIZER_SHOW_EVENT));
         }
@@ -138,9 +124,8 @@ function usePicker(onCapture: (selector: string) => void): {
     document.addEventListener("keydown", onKey, true);
     return () => {
       document.removeEventListener("keydown", onKey, true);
-      clearOutline();
     };
-  }, [picking, clearOutline]);
+  }, [picking]);
 
   // overlay 뒤 element 식별 — customizer 자체는 제외
   const pickElementAt = (x: number, y: number): Element | null => {
@@ -156,20 +141,12 @@ function usePicker(onCapture: (selector: string) => void): {
 
   const onMove = (ev: React.MouseEvent<HTMLDivElement>) => {
     const target = pickElementAt(ev.clientX, ev.clientY);
-    if (!target) return;
-    clearOutline();
-    try {
-      const html = target as HTMLElement;
-      lastOutlinedRef.current = {
-        el: target,
-        outline: html.style.outline,
-        outlineOffset: html.style.outlineOffset,
-      };
-      html.style.outline = "3px dashed #fbbf24";
-      html.style.outlineOffset = "2px";
-    } catch {
-      /* noop */
+    if (!target) {
+      setHoverRect(null);
+      return;
     }
+    setHoverRect(target.getBoundingClientRect());
+    setHoverLabel(describeSelector(buildSelectorFor(target)));
   };
 
   const onClick = (ev: React.MouseEvent<HTMLDivElement>) => {
@@ -177,7 +154,7 @@ function usePicker(onCapture: (selector: string) => void): {
     if (!target) return;
     const sel = buildSelectorFor(target);
     setPicking(false);
-    clearOutline();
+    setHoverRect(null);
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event(CUSTOMIZER_SHOW_EVENT));
     }
@@ -195,7 +172,7 @@ function usePicker(onCapture: (selector: string) => void): {
       onContextMenu={(e) => {
         e.preventDefault();
         setPicking(false);
-        clearOutline();
+        setHoverRect(null);
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event(CUSTOMIZER_SHOW_EVENT));
         }
@@ -203,7 +180,39 @@ function usePicker(onCapture: (selector: string) => void): {
       className="fixed inset-0 z-[99]"
       style={{ cursor: "crosshair", background: "transparent" }}
       aria-label="element 선택 모드 — 클릭하거나 ESC 로 취소"
-    />
+    >
+      {/* 64-AQ: hover element 위에 노란 dashed border + 한글 라벨 chip */}
+      {hoverRect && (
+        <>
+          <div
+            className="pointer-events-none fixed border-[3px] border-dashed border-amber-400 rounded"
+            style={{
+              left: hoverRect.left - 2,
+              top: hoverRect.top - 2,
+              width: hoverRect.width + 4,
+              height: hoverRect.height + 4,
+              boxShadow:
+                "0 0 0 9999px rgba(0,0,0,0.15)" /* hover 영역 외부 살짝 어둡게 */,
+            }}
+          />
+          {hoverLabel && (
+            <div
+              className="pointer-events-none fixed rounded-md bg-amber-500 px-2 py-1 text-[11px] font-black text-amber-950 shadow-lg"
+              style={{
+                left: Math.max(8, hoverRect.left),
+                top: Math.max(8, hoverRect.top - 28),
+              }}
+            >
+              🏷️ {hoverLabel}
+            </div>
+          )}
+        </>
+      )}
+      {/* 상단 안내 */}
+      <div className="pointer-events-none fixed left-1/2 top-3 -translate-x-1/2 rounded-full border border-amber-300/60 bg-amber-500/95 px-4 py-2 text-[12px] font-black text-amber-950 shadow-2xl">
+        🎯 원하는 element 위를 클릭하세요 (ESC: 취소)
+      </div>
+    </div>
   ) : null;
 
   // 64-AP: picker 활성/종료 시 customizer sidebar visibility 토글
