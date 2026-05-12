@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -164,7 +165,9 @@ function usePicker(onCapture: (selector: string) => void): {
     });
   };
 
-  const overlay = picking ? (
+  // 64-AR: overlay 를 createPortal 로 document.body 직접 마운트.
+  //   customizer sidebar 의 visibility:hidden 가 자식 visibility 상속하는 문제 회피.
+  const overlayNode = picking ? (
     <div
       data-tutorial-customizer="true"
       onMouseMove={onMove}
@@ -178,8 +181,12 @@ function usePicker(onCapture: (selector: string) => void): {
         }
       }}
       className="fixed inset-0 z-[99]"
-      style={{ cursor: "crosshair", background: "transparent" }}
-      aria-label="element 선택 모드 — 클릭하거나 ESC 로 취소"
+      style={{
+        cursor: "crosshair",
+        background: "transparent",
+        visibility: "visible" /* parent hidden 영향 회피 */,
+      }}
+      aria-label="강조할 부분 선택 모드 — 클릭하거나 ESC 로 취소"
     >
       {/* 64-AQ: hover element 위에 노란 dashed border + 한글 라벨 chip */}
       {hoverRect && (
@@ -210,10 +217,15 @@ function usePicker(onCapture: (selector: string) => void): {
       )}
       {/* 상단 안내 */}
       <div className="pointer-events-none fixed left-1/2 top-3 -translate-x-1/2 rounded-full border border-amber-300/60 bg-amber-500/95 px-4 py-2 text-[12px] font-black text-amber-950 shadow-2xl">
-        🎯 원하는 element 위를 클릭하세요 (ESC: 취소)
+        🎯 원하는 부분 위를 클릭하세요 (ESC: 취소)
       </div>
     </div>
   ) : null;
+
+  const overlay =
+    overlayNode && typeof document !== "undefined"
+      ? createPortal(overlayNode, document.body)
+      : null;
 
   // 64-AP: picker 활성/종료 시 customizer sidebar visibility 토글
   const start = () => {
@@ -1248,7 +1260,7 @@ function NewStepForm({
           }`}
         >
           <Pointer className="h-3 w-3" />
-          {picker.picking ? "취소 (ESC)" : "🎯 화면에서 element 선택"}
+          {picker.picking ? "취소 (ESC)" : "🎯 화면에서 강조할 부분 선택"}
         </button>
         <input
           type="text"
@@ -1632,7 +1644,7 @@ function InlineRowEditor({
           <Pointer className="h-3 w-3" />
           {picker.picking
             ? "취소 (ESC)"
-            : "🎯 화면에서 element 선택"}
+            : "🎯 화면에서 강조할 부분 선택"}
         </button>
         <input
           type="text"
