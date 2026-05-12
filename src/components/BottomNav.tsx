@@ -43,8 +43,9 @@ const baseMenuItems = [
   { path: "/home",              icon: Home,       label: "홈" },
   { path: "/missions",          icon: BoxingGloveIcon, label: "훈련" },
   { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝" },
-  // 153 QUEST — 개인 보조 퀘스트 (IQ / 챌린지 / 일기). 커뮤니티는 별도 메뉴.
-  { path: "/myboxer/quest",     icon: Target,     label: "153 QUEST" },
+  // 153 챌린지 — 개인 보조 퀘스트 (IQ / 챌린지 아레나) + 회원 간 랭킹 경쟁.
+  // 라우트는 /myboxer/quest 유지 (DB anchor 호환). 챔피언 일기는 153 커뮤니티로 이관.
+  { path: "/myboxer/quest",     icon: Target,     label: "153 챌린지" },
   // 64-AS: 153 커뮤니티 — 세컨드 응원 / 코너맨 / 짐 레이드 (회원 간 소통).
   { path: "/myboxer/community", icon: Users,      label: "153 커뮤니티" },
   // 153마인드셋 — 시각화 훈련. 일반 회원 공개 (ProtectedRoute 만 적용).

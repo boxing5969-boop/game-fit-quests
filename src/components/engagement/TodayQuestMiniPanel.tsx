@@ -10,7 +10,7 @@
  *   · 공식 missions 필터링 / 수정 0 — 본 컴포넌트는 보조 카드 정렬만 담당
  */
 
-import { Brain, Swords, BookOpen } from "lucide-react";
+import { Brain, Swords } from "lucide-react";
 
 import {
   getConditionRecommendation,
@@ -21,10 +21,14 @@ import { useTodayBoxingCondition } from "@/hooks/useBoxingCondition";
 export interface TodayQuestMiniPanelProps {
   onOpenAcademy: () => void;
   onOpenChallengeArena: () => void;
-  onOpenChampionJournal: () => void;
+  /**
+   * @deprecated 챔피언 일기는 153 커뮤니티 로 이관됨.
+   * 호환을 위해 prop 시그니처는 유지하나 패널에서는 사용하지 않는다.
+   */
+  onOpenChampionJournal?: () => void;
 }
 
-type CardKey = "academy" | "challenge" | "journal";
+type CardKey = "academy" | "challenge";
 
 interface MiniCardProps {
   icon: React.ReactNode;
@@ -81,7 +85,6 @@ const MiniCard = ({
 const TodayQuestMiniPanel = ({
   onOpenAcademy,
   onOpenChallengeArena,
-  onOpenChampionJournal,
 }: TodayQuestMiniPanelProps) => {
   // 카드만 표시 — 실제 RPC 는 모달이 열릴 때만 발사 (enabled gate 적용됨).
   // 여기서는 카운트를 호출하지 않고 정적 카피로 표시.
@@ -126,32 +129,15 @@ const TodayQuestMiniPanel = ({
         onClick={onOpenChallengeArena}
       />
     ),
-    journal: (
-      <MiniCard
-        key="journal"
-        dataTour="quest-mini-journal"
-        icon={<BookOpen className="h-5 w-5" />}
-        badge="챔피언 일기"
-        title={
-          rec?.emphasizeShortQuest
-            ? "5분 안에 한 줄만 — 시간이 없을 때"
-            : "오늘 가장 잘한 펀치는?"
-        }
-        subtitle="한 줄이면 충분합니다 — 하루 첫 작성에만 보상."
-        rewardPreview="+20 XP · +50"
-        onClick={onOpenChampionJournal}
-      />
-    ),
   };
 
-  const order: CardKey[] = rec?.recommendation ?? [
-    "academy",
-    "challenge",
-    "journal",
-  ];
-  // 추천 외 카드도 모두 노출 — 우선순위만 조정 (숨김 처리 안 함)
+  // 챔피언 일기 카드는 153 커뮤니티로 이관되어 패널에서 제거됨.
+  // recommendation 의 'journal' 은 필터링하여 무시한다.
+  const baseOrder = (rec?.recommendation ?? ["academy", "challenge"]).filter(
+    (k): k is CardKey => k === "academy" || k === "challenge",
+  );
   const visible: CardKey[] = Array.from(
-    new Set([...order, "academy", "challenge", "journal"] as CardKey[]),
+    new Set([...baseOrder, "academy", "challenge"] as CardKey[]),
   );
 
   return (

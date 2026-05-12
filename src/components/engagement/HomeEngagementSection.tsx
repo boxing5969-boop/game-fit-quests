@@ -7,7 +7,7 @@
  */
 
 import { useState } from "react";
-import { Megaphone } from "lucide-react";
+import { BookOpen, Megaphone } from "lucide-react";
 
 import OsamiDailyBriefingCard from "./OsamiDailyBriefingCard";
 import TodayQuestMiniPanel from "./TodayQuestMiniPanel";
@@ -81,7 +81,38 @@ const HomeEngagementSection = ({
 
       {showCommunity && (
         <>
-      {/* ─── 4번째 카드: 세컨드 응원 (커뮤니티 미션) ─── */}
+      {/* ─── 챔피언 일기 (153 챌린지에서 153 커뮤니티 로 이관) ─── */}
+      <button
+        type="button"
+        onClick={handleJournal}
+        className="flex w-full items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3 text-left transition-all active:scale-[0.99] hover:border-primary/40"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <BookOpen className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+            챔피언 일기
+          </p>
+          <p className="mt-0.5 truncate text-[13.5px] font-bold text-foreground">
+            오늘의 컨디션 + 한 줄 회고
+          </p>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+            파트너 (코너맨 / 세컨드) 가 열람하고 댓글로 응원합니다.
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-reward">
+            보상
+          </p>
+          <p className="mt-0.5 text-[11px] font-bold text-reward">+20 XP · +50</p>
+        </div>
+        <span className="ml-1 shrink-0 text-[11px] font-bold text-primary">
+          열기 →
+        </span>
+      </button>
+
+      {/* ─── 세컨드 응원 (커뮤니티 미션) ─── */}
       <button
         type="button"
         onClick={handleCheer}
