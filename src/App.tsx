@@ -22,6 +22,7 @@ import PostActionReflectionSheet from "@/components/home/PostActionReflectionShe
 import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
 import RouteLoader from "@/components/splash/RouteLoader";
 import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
+import { useTutorialGlobalOverridesBoot } from "@/hooks/useTutorialGlobalOverrides";
 
 // Route-level code splitting — every page below is fetched on demand.
 // LoginPage + NotFound stay eager: Login is the cold-start screen
@@ -169,6 +170,10 @@ const RoleBasedRedirect = () => {
 const AppRoutes = () => {
   const { user, loading } = useAuth();
   const { pathname } = useLocation();
+
+  // 65-A: 앱 부팅 시 1회 — 관리자가 publish 한 글로벌 튜토리얼 오버라이드 로드.
+  // 실패해도 조용히 — base + 본인 local 만으로 동작.
+  useTutorialGlobalOverridesBoot();
 
   // Splash gate.
   //   • 쿨드 스타트 시 1회만 재생 (sessionStorage 키 'rankingup_splash_seen_v1').

@@ -1115,10 +1115,12 @@ export function getStepsByDay(day: number): TutorialCampStep[] {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 64-T: 관리자 dev panel step override 시스템.
-//   admin 이 dev panel 에서 현재 step 의 selector / placement / autoAdvance
-//   등을 즉시 시범 변경. localStorage 에 저장 → getStep 호출 시 merge.
-//   영향 범위: admin 본인 브라우저만. 회원/server 0.
+// 64-T / 65-A: 튜토리얼 step override 시스템.
+//   · local (localStorage): admin 본인 브라우저 미리보기 — write 즉시 적용
+//   · global (Supabase tutorial_global_overrides): admin publish → 전체 회원 반영
+//
+//   read 함수는 global + local merge — local 이 우선 (admin 미리보기 보장).
+//   일반 회원은 local 빈 상태 → global 만 반영. publish 안 한 변경은 보이지 않음.
 // ─────────────────────────────────────────────────────────────
 const STEP_OVERRIDE_KEY = "myboxer.tutorialCamp.dev.stepOverrides";
 
@@ -1142,7 +1144,39 @@ export type TutorialStepOverridePartial = Partial<
 
 type OverrideMap = Record<string, TutorialStepOverridePartial>;
 
-function readOverrides(): OverrideMap {
+// ─── 65-A: 글로벌 캐시 (publish 된 데이터 — App.tsx 에서 fetch 후 setter 호출) ───
+let globalOverrides: OverrideMap = {};
+let globalStepOrders: Record<number, number[]> = {};
+let globalCustomSteps: Record<number, TutorialCampStep[]> = {};
+
+/** App.tsx 부팅 시 1회 호출 — Supabase 에서 fetch 한 글로벌 데이터를 메모리 캐시에 주입. */
+export function setGlobalTutorialOverrides(payload: {
+  step_overrides?: Record<string, TutorialStepOverridePartial> | null;
+  step_order?: Record<string, number[]> | null;
+  custom_steps?: Record<string, TutorialCampStep[]> | null;
+}): void {
+  globalOverrides = (payload.step_overrides ?? {}) as OverrideMap;
+
+  const orderObj: Record<number, number[]> = {};
+  for (const [k, v] of Object.entries(payload.step_order ?? {})) {
+    const dayNum = Number(k);
+    if (Number.isFinite(dayNum) && Array.isArray(v)) {
+      orderObj[dayNum] = v;
+    }
+  }
+  globalStepOrders = orderObj;
+
+  const customObj: Record<number, TutorialCampStep[]> = {};
+  for (const [k, v] of Object.entries(payload.custom_steps ?? {})) {
+    const dayNum = Number(k);
+    if (Number.isFinite(dayNum) && Array.isArray(v)) {
+      customObj[dayNum] = v as TutorialCampStep[];
+    }
+  }
+  globalCustomSteps = customObj;
+}
+
+function readLocalOverrides(): OverrideMap {
   if (typeof window === "undefined") return {};
   try {
     const raw = window.localStorage.getItem(STEP_OVERRIDE_KEY);
@@ -1152,6 +1186,11 @@ function readOverrides(): OverrideMap {
   } catch {
     return {};
   }
+}
+
+/** override = global + local. local 이 우선 — admin 본인 미리보기 보장. */
+function readOverrides(): OverrideMap {
+  return { ...globalOverrides, ...readLocalOverrides() };
 }
 
 export function getStepOverride(
@@ -1211,7 +1250,7 @@ function applyOverride(s: TutorialCampStep): TutorialCampStep {
 // ─────────────────────────────────────────────────────────────
 const STEP_ORDER_KEY = "myboxer.tutorialCamp.dev.stepOrder";
 
-function readStepOrders(): Record<number, number[]> {
+function readLocalStepOrders(): Record<number, number[]> {
   if (typeof window === "undefined") return {};
   try {
     const raw = window.localStorage.getItem(STEP_ORDER_KEY);
@@ -1221,6 +1260,11 @@ function readStepOrders(): Record<number, number[]> {
   } catch {
     return {};
   }
+}
+
+/** order = global + local. day 별로 local 이 있으면 local, 없으면 global. */
+function readStepOrders(): Record<number, number[]> {
+  return { ...globalStepOrders, ...readLocalStepOrders() };
 }
 
 export function getStepOrderForDay(day: number): number[] | null {
@@ -1284,7 +1328,7 @@ function getOrderedStepsByDay(day: number): TutorialCampStep[] {
 const STEP_CUSTOM_KEY = "myboxer.tutorialCamp.dev.customSteps";
 const CUSTOM_STEP_BASE = 1000;
 
-function readCustomStepsAll(): Record<number, TutorialCampStep[]> {
+function readLocalCustomStepsAll(): Record<number, TutorialCampStep[]> {
   if (typeof window === "undefined") return {};
   try {
     const raw = window.localStorage.getItem(STEP_CUSTOM_KEY);
@@ -1294,6 +1338,11 @@ function readCustomStepsAll(): Record<number, TutorialCampStep[]> {
   } catch {
     return {};
   }
+}
+
+/** custom = global + local. day 별로 local 이 있으면 local, 없으면 global. */
+function readCustomStepsAll(): Record<number, TutorialCampStep[]> {
+  return { ...globalCustomSteps, ...readLocalCustomStepsAll() };
 }
 
 export function getCustomStepsForDay(day: number): TutorialCampStep[] {
@@ -1386,6 +1435,40 @@ function getAllStepsForDay(day: number): TutorialCampStep[] {
   const base = TUTORIAL_CAMP_STEPS.filter((s) => s.day === day);
   const custom = getCustomStepsForDay(day);
   return [...base, ...custom];
+}
+
+// ─────────────────────────────────────────────────────────────
+// 65-A: publish helpers — admin 이 '전체 회원 반영' 누를 때 보낼 payload.
+//   현재 보이는 결과 (global + local merge) 를 publish 한다.
+//   → publish 후엔 global 이 같은 값이 되어 일관됨.
+// ─────────────────────────────────────────────────────────────
+export interface TutorialPublishPayload {
+  step_overrides: OverrideMap;
+  step_order: Record<string, number[]>;
+  custom_steps: Record<string, TutorialCampStep[]>;
+}
+
+/** 현재 적용된 (global + local merge) 데이터를 publish payload 로 변환. */
+export function buildTutorialPublishPayload(): TutorialPublishPayload {
+  const overrides = readOverrides();
+  const orders = readStepOrders();
+  const customs = readCustomStepsAll();
+
+  const orderStringKeyed: Record<string, number[]> = {};
+  for (const [day, arr] of Object.entries(orders)) {
+    orderStringKeyed[String(day)] = arr;
+  }
+
+  const customStringKeyed: Record<string, TutorialCampStep[]> = {};
+  for (const [day, arr] of Object.entries(customs)) {
+    customStringKeyed[String(day)] = arr;
+  }
+
+  return {
+    step_overrides: overrides,
+    step_order: orderStringKeyed,
+    custom_steps: customStringKeyed,
+  };
 }
 
 /** 64-X: order 에서 빠진 (hidden) base step 들 — 다시 넣기 UI 용.

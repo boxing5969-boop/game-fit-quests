@@ -42,6 +42,7 @@ import {
 } from "./tutorialCampDevAccess";
 import {
   addCustomStep,
+  buildTutorialPublishPayload,
   clearStepOrderForDay,
   clearStepOverride,
   ensureFullOrderForDay,
@@ -52,12 +53,14 @@ import {
   getStepOverride,
   getStepsByDay,
   removeCustomStep,
+  setGlobalTutorialOverrides,
   setStepOrderForDay,
   setStepOverride,
   TUTORIAL_CAMP_STEPS,
   type TutorialStepOverridePartial,
 } from "./tutorialCampSteps";
 import type { TutorialCampStep } from "./tutorialCampSteps";
+import { publishTutorialGlobalOverrides } from "@/services/tutorialGlobalOverridesService";
 import { useTutorialCamp } from "./useTutorialCamp";
 import { TUTORIAL_DEV_OPEN_EVENT } from "./TutorialDevPanel";
 
@@ -448,6 +451,39 @@ const TutorialCustomizer = () => {
     camp.state.currentDay,
   );
 
+  // 65-A: '전체 회원에게 반영' (publish) 진행 상태
+  const [publishing, setPublishing] = useState(false);
+
+  const handlePublishToAll = useCallback(async () => {
+    if (typeof window !== "undefined") {
+      const ok = window.confirm(
+        "현재 설정된 튜토리얼 내용을 전체 회원에게 반영합니다.\n" +
+          "다음 앱 로드부터 모든 회원이 같은 튜토리얼을 보게 됩니다.\n\n진행할까요?",
+      );
+      if (!ok) return;
+    }
+    setPublishing(true);
+    try {
+      const payload = buildTutorialPublishPayload();
+      const result = await publishTutorialGlobalOverrides(payload);
+      // 글로벌 캐시 즉시 갱신 — 본 브라우저에서도 결과 즉시 반영
+      setGlobalTutorialOverrides({
+        step_overrides: payload.step_overrides,
+        step_order: payload.step_order,
+        custom_steps: payload.custom_steps,
+      });
+      toast.success(result.message || "전체 회원에게 반영되었습니다.");
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "전체 회원 반영 중 문제가 발생했습니다.";
+      toast.error(msg);
+    } finally {
+      setPublishing(false);
+    }
+  }, []);
+
   // 64-AD: 외부에서 customizer 닫기 요청 (전체 편집기 진입 등)
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -743,6 +779,28 @@ const TutorialCustomizer = () => {
               <p className="rounded-lg border border-amber-400/20 bg-amber-500/5 px-2.5 py-1.5 text-[10.5px] leading-relaxed text-amber-100">
                 💡 화면을 보면서 빠르게 단계를 고치는 도구예요.
                 바꾼 내용은 <strong>관리자 본인 화면</strong>에만 적용돼요.
+                <br />
+                완성되면 아래 <strong>🚀 전체 회원에게 반영</strong> 을 눌러 publish 하세요.
+              </p>
+
+              {/* 65-A: '전체 회원에게 반영' (publish) — 현재 적용된 내용을 Supabase 에 저장 */}
+              <button
+                type="button"
+                onClick={handlePublishToAll}
+                disabled={publishing}
+                className={`w-full rounded-lg border px-3 py-2.5 text-[12px] font-black tracking-wide transition-all ${
+                  publishing
+                    ? "cursor-not-allowed border-emerald-500/30 bg-emerald-500/10 text-emerald-200 opacity-60"
+                    : "border-emerald-400/60 bg-emerald-600/30 text-emerald-50 hover:bg-emerald-500/40 active:scale-[0.98]"
+                }`}
+              >
+                {publishing
+                  ? "반영 중…"
+                  : "🚀 전체 회원에게 반영 (publish)"}
+              </button>
+              <p className="text-[10px] leading-relaxed text-amber-200/70">
+                ※ publish 후 모든 회원이 다음 앱 로드부터 같은 튜토리얼을 보게 됩니다.
+                실수 시 다시 편집 → 같은 버튼으로 재반영하면 즉시 갱신됩니다.
               </p>
 
               {/* 64-AH: 상단 picker / 토글 / 저장 영역 제거.
