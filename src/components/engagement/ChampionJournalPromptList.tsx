@@ -14,6 +14,8 @@ export const CHAMPION_JOURNAL_PROMPTS: string[] = [
   "오늘의 컨디션을 한 단어로 표현한다면?",
   "오늘 배운 복싱 습관은?",
   "7일 뒤의 나에게 남기고 싶은 말은?",
+  "내가 느낀 점은?",
+  "스스로에게 하고 싶은 말은?",
 ];
 
 export interface ChampionJournalPromptListProps {

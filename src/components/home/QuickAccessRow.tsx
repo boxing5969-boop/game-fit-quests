@@ -78,7 +78,7 @@ const QuickAccessRow = ({
             챌린지
           </p>
         </div>
-        <p className="mt-1.5 text-sm font-black text-white">더 파이터</p>
+        <p className="mt-1.5 text-sm font-black text-white">더 다이어터</p>
         <span
           className={`mt-1.5 inline-block rounded-pill px-1.5 py-0.5 text-[9px] font-black ${challengeMeta.color}`}
         >
