@@ -130,6 +130,9 @@ function usePicker(onCapture: (selector: string) => void): {
       if (e.key === "Escape") {
         setPicking(false);
         clearOutline();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event(CUSTOMIZER_SHOW_EVENT));
+        }
       }
     };
     document.addEventListener("keydown", onKey, true);
@@ -175,6 +178,9 @@ function usePicker(onCapture: (selector: string) => void): {
     const sel = buildSelectorFor(target);
     setPicking(false);
     clearOutline();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(CUSTOMIZER_SHOW_EVENT));
+    }
     onCapture(sel);
     toast.success(`✅ 선택됨: ${describeSelector(sel)}`, {
       description: sel,
@@ -190,6 +196,9 @@ function usePicker(onCapture: (selector: string) => void): {
         e.preventDefault();
         setPicking(false);
         clearOutline();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event(CUSTOMIZER_SHOW_EVENT));
+        }
       }}
       className="fixed inset-0 z-[99]"
       style={{ cursor: "crosshair", background: "transparent" }}
@@ -197,13 +206,26 @@ function usePicker(onCapture: (selector: string) => void): {
     />
   ) : null;
 
+  // 64-AP: picker 활성/종료 시 customizer sidebar visibility 토글
+  const start = () => {
+    setPicking(true);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(CUSTOMIZER_HIDE_EVENT));
+    }
+  };
+  const stop = () => {
+    setPicking(false);
+    clearOutline();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(CUSTOMIZER_SHOW_EVENT));
+    }
+  };
+  // pickElementAt 의 click handler 안에서도 자동 stop
+  // (이미 setPicking(false) + clearOutline 하지만 show event 추가 필요)
   return {
     picking,
-    start: () => setPicking(true),
-    stop: () => {
-      setPicking(false);
-      clearOutline();
-    },
+    start,
+    stop,
     overlay,
   };
 }
@@ -418,6 +440,19 @@ const TutorialCustomizer = () => {
   //   · customizer 위 클릭/마우스다운 → 다시 선명
   //   · customizer 외부 클릭 → 흐려짐 (포커스 잃음)
   const [dimmed, setDimmed] = useState(false);
+  // 64-AP: picker 활성 중 sidebar 완전 hidden (elementsFromPoint 가 sidebar 영역도 정확히 뒤 element 잡도록)
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onHide = () => setHidden(true);
+    const onShow = () => setHidden(false);
+    window.addEventListener(CUSTOMIZER_HIDE_EVENT, onHide);
+    window.addEventListener(CUSTOMIZER_SHOW_EVENT, onShow);
+    return () => {
+      window.removeEventListener(CUSTOMIZER_HIDE_EVENT, onHide);
+      window.removeEventListener(CUSTOMIZER_SHOW_EVENT, onShow);
+    };
+  }, []);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const onDim = () => setDimmed(true);
@@ -630,13 +665,17 @@ const TutorialCustomizer = () => {
           <motion.div
             initial={{ opacity: 0, x: 320 }}
             animate={{
-              /* 64-AE: picker 시 0.35 / 64-AG: dimmed 시 0.25 / 평소 1 */
-              opacity: picking ? 0.35 : dimmed ? 0.25 : 1,
+              /* 64-AP: hidden 시 완전 0 + pointer-events:none / 64-AG: dimmed 0.25 / 평소 1 */
+              opacity: hidden ? 0 : picking ? 0.35 : dimmed ? 0.25 : 1,
               x: 0,
             }}
             exit={{ opacity: 0, x: 320 }}
             transition={{ duration: 0.25 }}
             onMouseDown={() => setDimmed(false)}
+            style={{
+              pointerEvents: hidden ? "none" : undefined,
+              visibility: hidden ? "hidden" : undefined,
+            }}
             className="fixed right-0 top-12 z-[96] flex max-h-[80dvh] w-[320px] flex-col overflow-y-auto rounded-l-2xl border border-amber-400/40 bg-[#0a1024]/97 text-amber-50 shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-md"
           >
             {/* 헤더 */}
@@ -1355,6 +1394,10 @@ function NewStepForm({
 const CUSTOMIZER_CLOSE_EVENT = "tutorial-customizer-close";
 // 64-AG: customizer 흐리게 (닫지 않고 dim) — 회원이 화면 작업 가능, focus 시 복귀
 const CUSTOMIZER_DIM_EVENT = "tutorial-customizer-dim";
+// 64-AP: picker 중 sidebar 완전 hide (visibility:hidden + pointer-events:none) —
+//   elementsFromPoint 가 sidebar 영역 위라도 정확히 뒤 element 잡도록
+const CUSTOMIZER_HIDE_EVENT = "tutorial-customizer-hide";
+const CUSTOMIZER_SHOW_EVENT = "tutorial-customizer-show";
 
 // ─────────────────────────────────────────────────────────────
 // 64-AD: PreviewLocationButton — selector 가 다른 페이지면 navigate 후 강조
