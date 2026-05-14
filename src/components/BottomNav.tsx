@@ -16,6 +16,7 @@ import {
   Compass,
   Target,
   Users,
+  Star,
   X,
 } from "lucide-react";
 import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
@@ -167,12 +168,10 @@ const BottomNav = () => {
         <div className="mx-auto flex max-w-lg items-stretch justify-around px-1">
           {mainTabs.map(({ path, icon: Icon, label, emoji }) => {
             const active = location.pathname === path;
-            // 핵심 기능 — 훈련 탭은 활성 여부와 무관하게 상시 레드 강조.
-            //   · 아이콘 크게 (28) + strokeWidth 2.5
-            //   · 레드 톤 상시 (active 여부 무관 — 다른 탭의 민트 active 와 구분)
-            //   · 라벨 black weight + 레드 배경 + 글러브 반짝임 글로우
+            // 훈련 탭 — 핵심 기능이지만 색상·크기는 다른 탭과 100% 동일.
+            //   강조는 아이콘 우상단 별표 배지로만 (차분한 표시).
+            //   active 시 색상은 다른 탭과 같은 규칙 (text-primary).
             const isTraining = path === "/missions";
-            const emphasized = active || isTraining;
             return (
               <button
                 key={path}
@@ -180,21 +179,9 @@ const BottomNav = () => {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "group relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2 transition-transform duration-150 hover:scale-105 active:scale-95",
-                  isTraining
-                    ? "text-[hsl(8,82%,57%)]"
-                    : active
-                      ? "text-primary"
-                      : INACTIVE_TONE,
+                  active ? "text-primary" : INACTIVE_TONE,
                 )}
               >
-                {/* 훈련 탭 배경 하이라이트 — 선택(active) 했을 때만 */}
-                {isTraining && active && (
-                  <span
-                    aria-hidden
-                    className="absolute inset-x-1.5 inset-y-1 -z-10 rounded-xl"
-                    style={{ background: "hsl(8 82% 52% / 0.14)" }}
-                  />
-                )}
                 {emoji ? (
                   <span
                     aria-hidden
@@ -208,25 +195,25 @@ const BottomNav = () => {
                     {emoji}
                   </span>
                 ) : Icon ? (
-                  <Icon
-                    size={isTraining ? 28 : 24}
-                    strokeWidth={emphasized ? 2.5 : 2}
-                    className={cn(
-                      "transition-transform duration-150",
-                      // 훈련 탭은 hover 시 살짝 튕기며 회전 (글러브 펀치 느낌).
-                      // 글로우/반짝임은 제거 — 크기·레드 색만으로 강조.
-                      isTraining
-                        ? "relative group-hover:-rotate-12 group-hover:scale-110"
-                        : "group-hover:-translate-y-0.5",
+                  <span className="relative">
+                    <Icon
+                      size={24}
+                      strokeWidth={active ? 2.5 : 2}
+                      className="transition-transform duration-150 group-hover:-translate-y-0.5"
+                    />
+                    {/* 훈련 탭 — 핵심 표시 별표 배지 (색·크기는 다른 탭과 동일,
+                        별표만 추가). hover 시 살짝 커지고 회전. */}
+                    {isTraining && (
+                      <Star
+                        size={11}
+                        strokeWidth={2}
+                        aria-hidden
+                        className="absolute -right-2 -top-1 fill-amber-400 text-amber-400 drop-shadow-sm transition-transform duration-150 group-hover:scale-125 group-hover:rotate-[18deg]"
+                      />
                     )}
-                  />
+                  </span>
                 ) : null}
-                <span
-                  className={cn(
-                    "relative text-[11px] leading-none",
-                    isTraining ? "font-black" : "font-semibold",
-                  )}
-                >
+                <span className="relative text-[11px] font-semibold leading-none">
                   {label}
                 </span>
               </button>
