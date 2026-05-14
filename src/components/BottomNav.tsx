@@ -195,17 +195,6 @@ const BottomNav = () => {
                     style={{ background: "hsl(8 82% 52% / 0.14)" }}
                   />
                 )}
-                {/* 훈련 탭 글러브 반짝임 글로우 (레드 펄스) — 상시 */}
-                {isTraining && (
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute left-1/2 top-1.5 h-9 w-9 -translate-x-1/2 rounded-full animate-pulse transition-opacity duration-200 group-hover:opacity-90"
-                    style={{
-                      background:
-                        "radial-gradient(circle, hsl(8 88% 58% / 0.5) 0%, transparent 68%)",
-                    }}
-                  />
-                )}
                 {emoji ? (
                   <span
                     aria-hidden
@@ -224,12 +213,11 @@ const BottomNav = () => {
                     strokeWidth={emphasized ? 2.5 : 2}
                     className={cn(
                       "transition-transform duration-150",
-                      // 훈련 탭은 hover 시 살짝 튕기며 회전 (글러브 펀치 느낌)
+                      // 훈련 탭은 hover 시 살짝 튕기며 회전 (글러브 펀치 느낌).
+                      // 글로우/반짝임은 제거 — 크기·레드 색만으로 강조.
                       isTraining
-                        ? "relative drop-shadow-[0_0_9px_hsl(8_88%_56%_/_0.8)] group-hover:-rotate-12 group-hover:scale-110"
-                        : active
-                          ? "drop-shadow-[0_0_8px_hsl(8_75%_48%_/_0.5)] group-hover:-translate-y-0.5"
-                          : "group-hover:-translate-y-0.5",
+                        ? "relative group-hover:-rotate-12 group-hover:scale-110"
+                        : "group-hover:-translate-y-0.5",
                     )}
                   />
                 ) : null}
