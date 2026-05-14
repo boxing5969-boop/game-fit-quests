@@ -1533,9 +1533,13 @@ export function getStep(day: number, step: number): TutorialCampStep | null {
   return ov ? ({ ...found, ...ov } as TutorialCampStep) : found;
 }
 
-/** day 의 step 수 */
+/** day 의 step 수 — base + custom + order(숨김) 반영한 *실제* step 수.
+ *  64-AZ 버그 수정: 이전엔 base step 만 세서 admin 이 추가한 custom step 이
+ *  마지막 step 판정에서 누락 → custom step 진입 전 Day 가 완료 처리됨.
+ *  getStepsByDay(day).length 가 order/custom 모두 반영한 최종 list 길이.
+ */
 export function getStepsCountByDay(day: number): number {
-  return TUTORIAL_CAMP_STEPS.filter((s) => s.day === day).length;
+  return getStepsByDay(day).length;
 }
 
 /** 다음 step. 같은 day 안에 다음 step 있으면 그것, 없으면 다음 day step 0. day 7 끝이면 null. */
