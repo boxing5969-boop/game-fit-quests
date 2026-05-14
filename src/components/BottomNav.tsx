@@ -179,7 +179,7 @@ const BottomNav = () => {
                 onClick={() => navigate(path)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2 transition-all active:scale-95",
+                  "group relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2 transition-transform duration-150 hover:scale-105 active:scale-95",
                   isTraining
                     ? "text-[hsl(8,82%,57%)]"
                     : active
@@ -187,22 +187,22 @@ const BottomNav = () => {
                       : INACTIVE_TONE,
                 )}
               >
-                {/* 훈련 탭 상시 레드 배경 하이라이트 */}
-                {isTraining && (
+                {/* 훈련 탭 배경 하이라이트 — 선택(active) 했을 때만 */}
+                {isTraining && active && (
                   <span
                     aria-hidden
                     className="absolute inset-x-1.5 inset-y-1 -z-10 rounded-xl"
-                    style={{ background: "hsl(8 82% 52% / 0.12)" }}
+                    style={{ background: "hsl(8 82% 52% / 0.14)" }}
                   />
                 )}
-                {/* 훈련 탭 글러브 반짝임 글로우 (레드 펄스) */}
+                {/* 훈련 탭 글러브 반짝임 글로우 (레드 펄스) — 상시 */}
                 {isTraining && (
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute left-1/2 top-1.5 h-9 w-9 -translate-x-1/2 rounded-full animate-pulse"
+                    className="pointer-events-none absolute left-1/2 top-1.5 h-9 w-9 -translate-x-1/2 rounded-full animate-pulse transition-opacity duration-200 group-hover:opacity-90"
                     style={{
                       background:
-                        "radial-gradient(circle, hsl(8 88% 58% / 0.55) 0%, transparent 68%)",
+                        "radial-gradient(circle, hsl(8 88% 58% / 0.5) 0%, transparent 68%)",
                     }}
                   />
                 )}
@@ -210,7 +210,7 @@ const BottomNav = () => {
                   <span
                     aria-hidden
                     className={cn(
-                      "text-[22px] leading-none",
+                      "text-[22px] leading-none transition-transform duration-150 group-hover:-translate-y-0.5",
                       active
                         ? "drop-shadow-[0_0_8px_hsl(8_75%_48%_/_0.55)]"
                         : "opacity-70",
@@ -222,13 +222,15 @@ const BottomNav = () => {
                   <Icon
                     size={isTraining ? 28 : 24}
                     strokeWidth={emphasized ? 2.5 : 2}
-                    className={
+                    className={cn(
+                      "transition-transform duration-150",
+                      // 훈련 탭은 hover 시 살짝 튕기며 회전 (글러브 펀치 느낌)
                       isTraining
-                        ? "relative drop-shadow-[0_0_9px_hsl(8_88%_56%_/_0.8)]"
+                        ? "relative drop-shadow-[0_0_9px_hsl(8_88%_56%_/_0.8)] group-hover:-rotate-12 group-hover:scale-110"
                         : active
-                          ? "drop-shadow-[0_0_8px_hsl(8_75%_48%_/_0.5)]"
-                          : undefined
-                    }
+                          ? "drop-shadow-[0_0_8px_hsl(8_75%_48%_/_0.5)] group-hover:-translate-y-0.5"
+                          : "group-hover:-translate-y-0.5",
+                    )}
                   />
                 ) : null}
                 <span
