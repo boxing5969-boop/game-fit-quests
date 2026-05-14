@@ -122,7 +122,7 @@ function FloatingButton({
         isAdmin ? "관리자 — Day 미리보기 열기" : "튜토리얼 검수 모드 열기"
       }
       className={cn(
-        "fixed bottom-20 right-3 z-[95] inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-[10px] font-black tracking-widest text-white shadow-[0_4px_14px_rgba(0,0,0,0.45)] backdrop-blur-sm",
+        "fixed bottom-20 right-3 z-[140] inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-[10px] font-black tracking-widest text-white shadow-[0_4px_14px_rgba(0,0,0,0.45)] backdrop-blur-sm",
         isAdmin
           ? "border border-amber-300/60 bg-amber-600/90 hover:bg-amber-500"
           : "border border-rose-400/40 bg-rose-600/90 hover:bg-rose-500",
@@ -269,7 +269,7 @@ function DevModal({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.18 }}
       onClick={onClose}
-      className="fixed inset-0 z-[95] flex items-center justify-center bg-black/70 px-3 py-4"
+      className="fixed inset-0 z-[141] flex items-center justify-center bg-black/70 px-3 py-4"
       role="dialog"
       aria-label="개발자 검수 모드"
     >
@@ -554,7 +554,7 @@ function DevModal({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="pointer-events-none fixed bottom-6 left-1/2 z-[96] -translate-x-1/2 rounded-full border border-amber-400/40 bg-black/85 px-4 py-2 text-[11px] font-bold text-amber-200 shadow-lg"
+              className="pointer-events-none fixed bottom-6 left-1/2 z-[142] -translate-x-1/2 rounded-full border border-amber-400/40 bg-black/85 px-4 py-2 text-[11px] font-bold text-amber-200 shadow-lg"
             >
               {toast}
             </motion.div>
