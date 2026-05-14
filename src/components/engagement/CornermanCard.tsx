@@ -69,6 +69,7 @@ const CornermanCard = ({ onOpen }: Props) => {
     <button
       type="button"
       onClick={onOpen}
+      data-tour="cornerman-card"
       className="flex w-full items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3 text-left transition-all active:scale-[0.99] hover:border-primary/40"
       aria-label="코너맨 매칭 열기"
     >

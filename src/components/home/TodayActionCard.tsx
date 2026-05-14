@@ -131,6 +131,7 @@ const TodayActionCard = ({
       data-tutorial-target={
         state === "qr_checkin" ? "qr-checkin-button" : undefined
       }
+      data-tour={state === "qr_checkin" ? "home-qr-checkin" : undefined}
       className="group relative w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-gray-900 via-gray-900 to-black p-5 text-left transition-all hover:border-white/20"
       style={{
         boxShadow: `0 8px 32px ${config.glow}, 0 0 0 1px ${config.glow}`,

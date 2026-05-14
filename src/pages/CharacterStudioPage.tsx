@@ -426,7 +426,7 @@ const CharacterStudioPage = () => {
           />
         }
       >
-        <div className="space-y-6">
+        <div data-tour="character-studio-page" className="space-y-6">
           {/* ─── Character Hero Stage ─── HoF 만 외곽 golden glow + amber 테두리. 안쪽은 기본(검정) 유지 */}
           <section
             className={cn(

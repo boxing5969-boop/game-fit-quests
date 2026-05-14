@@ -252,7 +252,7 @@ const HallOfFamePage = () => {
         />
       }
     >
-      <div className="space-y-6">
+      <div data-tour="halloffame-leaderboard" className="space-y-6">
         {/* Primary tabs: ranking vs hall of fame */}
         <SegmentedControl<TopTab>
           value={topTab}
