@@ -167,6 +167,12 @@ const BottomNav = () => {
         <div className="mx-auto flex max-w-lg items-stretch justify-around px-1">
           {mainTabs.map(({ path, icon: Icon, label, emoji }) => {
             const active = location.pathname === path;
+            // 핵심 기능 — 훈련 탭은 활성 여부와 무관하게 상시 시각 강조.
+            //   · 아이콘 크게 (28) + strokeWidth 2.5
+            //   · primary 톤 상시 (비활성이어도 묻히지 않음)
+            //   · 라벨 black weight + 은은한 배경 하이라이트
+            const isTraining = path === "/missions";
+            const emphasized = active || isTraining;
             return (
               <button
                 key={path}
@@ -174,9 +180,20 @@ const BottomNav = () => {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2 transition-all active:scale-95",
-                  active ? "text-primary" : INACTIVE_TONE,
+                  active
+                    ? "text-primary"
+                    : isTraining
+                      ? "text-primary/85"
+                      : INACTIVE_TONE,
                 )}
               >
+                {/* 훈련 탭 상시 강조 배경 (비활성일 때만 — 활성은 색으로 충분) */}
+                {isTraining && !active && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-x-1.5 inset-y-1 -z-10 rounded-xl bg-primary/10"
+                  />
+                )}
                 {emoji ? (
                   <span
                     aria-hidden
@@ -191,16 +208,21 @@ const BottomNav = () => {
                   </span>
                 ) : Icon ? (
                   <Icon
-                    size={24}
-                    strokeWidth={active ? 2.5 : 2}
+                    size={isTraining ? 28 : 24}
+                    strokeWidth={emphasized ? 2.5 : 2}
                     className={
-                      active
+                      emphasized
                         ? "drop-shadow-[0_0_8px_hsl(8_75%_48%_/_0.5)]"
                         : undefined
                     }
                   />
                 ) : null}
-                <span className="text-[11px] font-semibold leading-none">
+                <span
+                  className={cn(
+                    "text-[11px] leading-none",
+                    isTraining ? "font-black" : "font-semibold",
+                  )}
+                >
                   {label}
                 </span>
               </button>

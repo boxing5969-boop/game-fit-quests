@@ -321,8 +321,18 @@ const HomePage = () => {
       }
     >
       <div className="space-y-4">
-        {/* ─── 단계 47: 홈 상단 정리 — 오늘 할 일 + 오삼이 한마디 ─── */}
+        {/* ─── 홈 = "오늘 하나" — 핵심 CTA 를 최상단으로 끌어올림 ───
+             회원이 홈 진입 즉시 "오늘 뭐 하지" 답이 보이도록.
+             라이센스/퀵액세스/주간진행 등 보조 카드는 아래로. */}
         <TodayFocusCard />
+        {homeWidgets.todayAction && (
+          <TodayActionCard
+            state={todayActionState}
+            activeMinutes={activeMinutes}
+            streakDays={progress.streak_days}
+            onClick={handleTodayAction}
+          />
+        )}
         <OsamiHomeNote />
 
         {/* ─── Master-40 celebration (conditional) ─── */}
@@ -396,15 +406,7 @@ const HomePage = () => {
           );
         })()}
 
-        {/* ─── 핵심: 오늘의 액션 (상태별 자동 변경) ─── */}
-        {homeWidgets.todayAction && (
-          <TodayActionCard
-            state={todayActionState}
-            activeMinutes={activeMinutes}
-            streakDays={progress.streak_days}
-            onClick={handleTodayAction}
-          />
-        )}
+        {/* TodayActionCard 는 최상단 (TodayFocusCard 다음) 으로 이전됨 */}
 
         {/* ─── 퀵 액세스 3 칩 ─── */}
         {homeWidgets.quickAccess && (
