@@ -136,6 +136,8 @@ const BottomNav = () => {
             <div className="grid grid-cols-4 gap-3">
               {allMenuItems.map(({ path, icon: Icon, label }) => {
                 const active = location.pathname === path;
+                // 훈련 — 핵심 기능. 전체 메뉴에서도 별표 배지로 표시.
+                const isTraining = path === "/missions";
                 return (
                   <button
                     key={path}
@@ -144,13 +146,23 @@ const BottomNav = () => {
                       setMenuOpen(false);
                     }}
                     className={cn(
-                      "flex flex-col items-center gap-1.5 rounded-xl p-3 transition-all active:scale-95",
+                      "group flex flex-col items-center gap-1.5 rounded-xl p-3 transition-all active:scale-95",
                       active
                         ? "bg-primary/10 text-primary"
                         : "bg-muted/40 text-muted-foreground hover:bg-muted",
                     )}
                   >
-                    <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+                    <span className="relative">
+                      <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+                      {isTraining && (
+                        <Star
+                          size={11}
+                          strokeWidth={2}
+                          aria-hidden
+                          className="absolute -right-2 -top-1 fill-amber-400 text-amber-400 drop-shadow-sm transition-transform duration-150 group-hover:scale-125 group-hover:rotate-[18deg]"
+                        />
+                      )}
+                    </span>
                     <span className="text-[11px] font-semibold">{label}</span>
                   </button>
                 );
