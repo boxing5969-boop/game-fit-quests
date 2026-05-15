@@ -61,7 +61,10 @@ const CertBenefitsPage = () => {
       </header>
 
       {/* ─── Hero splash (kept dark for brand impact) ─── */}
-      <section className="bg-gradient-to-b from-[hsl(220_34%_7%)] to-[hsl(8_60%_14%)] px-5 py-10 text-center text-white">
+      <section
+        data-tour="cert-hero"
+        className="bg-gradient-to-b from-[hsl(220_34%_7%)] to-[hsl(8_60%_14%)] px-5 py-10 text-center text-white"
+      >
         <h2 className="text-[26px] font-extrabold leading-tight">
           단증이 열어주는 미래
         </h2>
@@ -84,7 +87,7 @@ const CertBenefitsPage = () => {
       </section>
 
       {/* ─── Carousel (premium dark cards) ─── */}
-      <section className="px-5 py-7">
+      <section data-tour="cert-carousel" className="px-5 py-7">
         <div className="mb-4 text-center text-caption font-medium text-muted-foreground">
           <span className="number-font">
             {current + 1} / {count}
@@ -177,7 +180,7 @@ const CertBenefitsPage = () => {
       </section>
 
       {/* ─── Roadmap (white surface, light UI) ─── */}
-      <section className="px-5 py-6">
+      <section data-tour="cert-roadmap" className="px-5 py-6">
         <h3 className="text-[20px] font-extrabold text-foreground">
           마이복서153 → 단증 로드맵
         </h3>
@@ -231,7 +234,7 @@ const CertBenefitsPage = () => {
       </section>
 
       {/* ─── Master splash (dark premium) ─── */}
-      <section className="px-5 py-6">
+      <section data-tour="cert-master-reward" className="px-5 py-6">
         <div className="rounded-hero bg-gradient-to-br from-[hsl(220_35%_11%)] to-[hsl(8_50%_12%)] p-6 text-white shadow-elev-3">
           <h3 className="text-[20px] font-extrabold">
             🏆 블랙 레벨 마스터 달성 시
@@ -268,7 +271,7 @@ const CertBenefitsPage = () => {
       </section>
 
       {/* ─── Detail accordions (light, 56px min-height, readable) ─── */}
-      <section className="px-5 py-5">
+      <section data-tour="cert-detail-accordions" className="px-5 py-5">
         <h3 className="mb-3 text-[20px] font-extrabold text-foreground">
           실제 가점 상세 정보
         </h3>
@@ -294,7 +297,7 @@ const CertBenefitsPage = () => {
       </section>
 
       {/* ─── FAQ ─── */}
-      <section className="px-5 py-5">
+      <section data-tour="cert-faq" className="px-5 py-5">
         <h3 className="mb-3 text-[20px] font-extrabold text-foreground">
           자주 묻는 질문
         </h3>

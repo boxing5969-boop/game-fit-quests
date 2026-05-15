@@ -43,7 +43,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       supabase.from("member_progress").select("*").eq("user_id", userId).single(),
     ]);
 
-    if (profileRes.data) setProfile(profileRes.data);
+    if (profileRes.data) {
+      // 65-E: 153 다이어트 기능을 전체 회원에게 ON.
+      //   DB 컬럼(diet_program_enabled)을 건드리지 않고 클라이언트에서 강제 true —
+      //   Supabase 권한 이슈 회피. 모든 소비처(BottomNav / DietHubPage / MyPage 등)가
+      //   profile.diet_program_enabled 를 읽으므로 여기 한 곳만 덮으면 전체 적용.
+      setProfile({ ...profileRes.data, diet_program_enabled: true });
+    }
     if (roleRes.data) setRole(roleRes.data.role);
     if (progressRes.data) setProgress(progressRes.data);
   }, []);

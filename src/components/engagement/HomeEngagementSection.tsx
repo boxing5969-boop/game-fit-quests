@@ -68,14 +68,20 @@ const HomeEngagementSection = ({
     <div className="space-y-4">
       {showPersonal && (
         <>
-          <ReturnRoundBanner onOpen={() => setShowReturn(true)} />
+          <div data-tour="return-round-banner">
+            <ReturnRoundBanner onOpen={() => setShowReturn(true)} />
+          </div>
           {/* 컨디션 게이지는 챔피언 일기 시트로 통합됨 — 일기 작성 시 함께 기록. */}
-          <OsamiDailyBriefingCard />
-          <TodayQuestMiniPanel
-            onOpenAcademy={handleAcademy}
-            onOpenChallengeArena={handleChallenge}
-            onOpenChampionJournal={handleJournal}
-          />
+          <div data-tour="osami-briefing-card">
+            <OsamiDailyBriefingCard />
+          </div>
+          <div data-tour="quest-mini-panel">
+            <TodayQuestMiniPanel
+              onOpenAcademy={handleAcademy}
+              onOpenChallengeArena={handleChallenge}
+              onOpenChampionJournal={handleJournal}
+            />
+          </div>
         </>
       )}
 

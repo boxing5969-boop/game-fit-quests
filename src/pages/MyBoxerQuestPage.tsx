@@ -28,9 +28,12 @@ const MyBoxerQuestPage = () => {
       transition={{ duration: 0.3 }}
       className="min-h-dvh bg-background pb-32"
     >
-      <div className="mx-auto w-full max-w-md md:max-w-xl space-y-5 px-4 py-5">
+      <div
+        data-tour="challenge153-page"
+        className="mx-auto w-full max-w-md md:max-w-xl space-y-5 px-4 py-5"
+      >
         {/* 헤더 — 메뉴 제목 + 부제 */}
-        <header className="space-y-1">
+        <header data-tour="challenge153-header" className="space-y-1">
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-300/80">
             MYBOXER 153
           </p>
@@ -43,7 +46,10 @@ const MyBoxerQuestPage = () => {
         </header>
 
         {/* 안내 — 공식 레벨업과 무관 */}
-        <div className="rounded-xl border-l-2 border-primary/40 bg-primary/5 px-3.5 py-2.5">
+        <div
+          data-tour="challenge153-intro"
+          className="rounded-xl border-l-2 border-primary/40 bg-primary/5 px-3.5 py-2.5"
+        >
           <p className="text-[11px] leading-relaxed text-muted-foreground">
             153 챌린지는 공식 1~40 레벨업 / 명예의 전당 랭킹과 별개입니다.
             <br />
@@ -52,7 +58,9 @@ const MyBoxerQuestPage = () => {
         </div>
 
         {/* 153 챌린지 회원 간 랭킹 — quest_xp 누적 기반 */}
-        <Challenge153LeaderboardCard />
+        <div data-tour="challenge153-leaderboard">
+          <Challenge153LeaderboardCard />
+        </div>
 
         {/* 본문 — 개인 챌린지 (일기는 153 커뮤니티 로 이관됨) */}
         <HomeEngagementSection mode="personal" />

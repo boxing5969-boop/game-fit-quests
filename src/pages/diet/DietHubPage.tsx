@@ -217,7 +217,9 @@ const HubShell = ({
       }
     >
       <div className="space-y-4">
-        <DietSubNav />
+        <div data-tour="diet-subnav">
+          <DietSubNav />
+        </div>
         <div className="space-y-4">{children}</div>
       </div>
     </AppPage>
@@ -239,7 +241,7 @@ const ComingSoon = () => (
 );
 
 const OnboardingCTA = ({ onStart }: { onStart: () => void }) => (
-  <div className="space-y-4">
+  <div data-tour="diet-onboarding-cta" className="space-y-4">
     <div className="rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/10 to-transparent p-5">
       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
         153 DIET · 21 DAYS
@@ -268,6 +270,7 @@ const OnboardingCTA = ({ onStart }: { onStart: () => void }) => (
     </ul>
     <Button
       onClick={onStart}
+      data-tour="diet-onboarding-start"
       className={cn(
         "h-12 w-full rounded-2xl font-bold tracking-wide",
         "bg-gradient-to-r from-primary to-primary/85 text-primary-foreground",
@@ -466,7 +469,10 @@ const ActiveHome = (p: ActiveHomeProps) => {
       />
 
       {/* Hero: Day + Stage + track */}
-      <div className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-5">
+      <div
+        data-tour="diet-hero"
+        className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-5"
+      >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
@@ -499,6 +505,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
       <button
         type="button"
         onClick={() => navigate("/diet/tracker")}
+        data-tour="diet-today-mission"
         className={cn(
           "w-full rounded-2xl border border-primary/30 bg-primary/5 p-4 text-left",
           "transition-all active:scale-[0.99] hover:border-primary/50",

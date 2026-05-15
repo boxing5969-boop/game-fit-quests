@@ -75,7 +75,10 @@ const RankUpPage = () => {
       </div>
 
       {/* Tab switcher */}
-      <div className="mb-5 flex rounded-2xl border border-border bg-muted/30 p-1">
+      <div
+        data-tour="rankup-tabs"
+        className="mb-5 flex rounded-2xl border border-border bg-muted/30 p-1"
+      >
         <button
           onClick={() => setActiveTab("levelmap")}
           className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${activeTab === "levelmap" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"}`}
@@ -91,7 +94,10 @@ const RankUpPage = () => {
       </div>
 
       {/* Current progress */}
-      <div className="mb-6 rounded-2xl bg-gradient-to-br from-primary/10 to-reward/10 p-5 border border-primary/20 shadow-glow-soft text-center">
+      <div
+        data-tour="rankup-progress"
+        className="mb-6 rounded-2xl bg-gradient-to-br from-primary/10 to-reward/10 p-5 border border-primary/20 shadow-glow-soft text-center"
+      >
         <p className="text-sm text-muted-foreground">현재 진행</p>
         <p className="text-3xl font-bold text-foreground">
           {isManager ? "👑 마스터" : `Lv ${globalLevel} / 40`}
@@ -182,7 +188,7 @@ const RankUpPage = () => {
               ))}
             </div>
           ) : (
-            <div className="space-y-6">
+            <div data-tour="rankup-levelmap" className="space-y-6">
               {RANK_ORDER.map((rank, sectionIdx) => {
                 const nodes = (levels || []).filter(l => l.rank_name === rank).sort((a, b) => a.level_number - b.level_number);
                 return (
@@ -246,7 +252,11 @@ const RankUpPage = () => {
               })}
 
               {/* Master League */}
-              <div className="animate-slide-up" style={{ animationDelay: "0.5s" }}>
+              <div
+                data-tour="rankup-master-league"
+                className="animate-slide-up"
+                style={{ animationDelay: "0.5s" }}
+              >
                 <div className="mb-3 flex items-center gap-2">
                   <span className="text-lg">👑</span>
                   <h2 className="text-lg text-foreground">마스터 리그</h2>

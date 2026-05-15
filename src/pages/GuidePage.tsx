@@ -81,7 +81,10 @@ const GuidePage = () => {
       )}
 
       {/* Tab switcher */}
-      <div className="mb-5 flex gap-1 overflow-x-auto rounded-2xl bg-secondary p-1 no-scrollbar">
+      <div
+        data-tour="guide-tab-switcher"
+        className="mb-5 flex gap-1 overflow-x-auto rounded-2xl bg-secondary p-1 no-scrollbar"
+      >
         {TABS.map(tab => {
           const Icon = tab.icon;
           const isClicked = clickedTabs.has(tab.id);
@@ -139,6 +142,7 @@ const GuidePage = () => {
 
       <button
         onClick={() => navigate("/onboarding")}
+        data-tour="guide-onboarding-replay"
         className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/5 py-4 text-sm font-bold text-primary transition-all active:scale-[0.98]"
       >
         <Play className="h-4 w-4" /> 온보딩 다시 보기

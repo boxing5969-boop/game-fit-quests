@@ -92,7 +92,10 @@ const MyBoxerVisualizationPage = () => {
           </p>
         </header>
 
-        <div className="mt-8 rounded-xl border-l-2 border-rose-500/60 bg-rose-950/15 px-4 py-3 text-left">
+        <div
+          data-tour="mindset-intro"
+          className="mt-8 rounded-xl border-l-2 border-rose-500/60 bg-rose-950/15 px-4 py-3 text-left"
+        >
           <p className="text-[11px] leading-relaxed text-rose-100/80">
             복싱은 강해지는 시간이기도 하지만,
             <br />
@@ -101,11 +104,12 @@ const MyBoxerVisualizationPage = () => {
         </div>
 
         <AnimatePresence>
-          <div className="mt-6 space-y-3">
+          <div data-tour="mindset-session-list" className="mt-6 space-y-3">
             {CHOICES.map((c, i) => (
               <motion.button
                 key={c.data.id}
                 type="button"
+                data-tour={i === 0 ? "mindset-session-card" : undefined}
                 onClick={() => setActiveIdx(i)}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}

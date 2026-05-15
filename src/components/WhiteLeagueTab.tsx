@@ -83,7 +83,11 @@ const WhiteLeagueTab = () => {
         const completedInLeague = leagueLevels.filter(l => getLevelState(lc.id, l.levelInLeague) === "complete").length;
 
         return (
-          <div key={lc.id} className="rounded-2xl border border-border bg-card shadow-elev-1 overflow-hidden">
+          <div
+            key={lc.id}
+            data-tour={lc.id === "white" ? "white-league-accordion" : undefined}
+            className="rounded-2xl border border-border bg-card shadow-elev-1 overflow-hidden"
+          >
             <button
               onClick={() => setExpandedLeague(isExpanded && expandedLeague !== null ? null : lc.id)}
               className="flex w-full items-center justify-between p-4 text-left active:bg-muted/50"
@@ -256,6 +260,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {/* Hero Card — 내 캐릭터 + 전설 등급 황금 글로우 배경.
           CharacterStudio 의 HoF 카드와 동일한 amber 테두리·다중 레이어 그림자·breathe 애니메이션. */}
       <div
+        data-tour="white-detail-hero"
         className="relative h-48 overflow-visible rounded-2xl border-[2px] border-amber-400 animate-[breathe_2s_ease-in-out_infinite]"
         style={{
           // 황금 깊이감 그라디언트: yellow-900/40 → amber-800/30 → yellow-900/40
@@ -319,7 +324,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       </div>
 
       {/* Quick stats */}
-      <div className="flex gap-2">
+      <div data-tour="white-detail-stats" className="flex gap-2">
         <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-card p-3">
           <Clock className="h-4 w-4 text-primary" />
           <div>
@@ -400,7 +405,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {activeSection === "learn" && (
         <>
           {/* Learning modules from unified data */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+          <div
+            data-tour="white-learn-modules"
+            className="rounded-2xl border border-border bg-card p-4 shadow-elev-1"
+          >
             <div className="mb-3 flex items-center gap-2">
               <Target className="h-4 w-4 text-primary" />
               <span className="text-sm font-bold text-foreground">학습 모듈</span>
@@ -420,7 +428,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           </div>
 
           {/* Purpose */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+          <div
+            data-tour="white-learn-purpose"
+            className="rounded-2xl border border-border bg-card p-4 shadow-elev-1"
+          >
             <div className="mb-3 flex items-center gap-2">
               <Target className="h-4 w-4 text-primary" />
               <span className="text-sm font-bold text-foreground">오늘의 목적</span>
@@ -436,7 +447,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           </div>
 
           {/* Value */}
-          <div className="rounded-2xl border-2 border-primary/20 bg-primary/5 p-4">
+          <div
+            data-tour="white-learn-value"
+            className="rounded-2xl border-2 border-primary/20 bg-primary/5 p-4"
+          >
             <div className="mb-2 flex items-center gap-2">
               <span className="text-base">💎</span>
               <span className="text-sm font-bold text-primary">오늘 얻는 가치</span>
@@ -470,7 +484,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
 
           {/* Coach Points */}
           {(coachPoints || ul.coachTags.length > 0) && (
-            <div className="rounded-2xl border border-reward/20 bg-reward/5 p-4">
+            <div
+              data-tour="white-learn-coach"
+              className="rounded-2xl border border-reward/20 bg-reward/5 p-4"
+            >
               <div className="mb-3 flex items-center gap-2">
                 <Eye className="h-4 w-4 text-reward-foreground" />
                 <span className="text-sm font-bold text-reward-foreground">코치 포인트</span>
@@ -487,7 +504,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {activeSection === "session" && (
         <>
           {/* Routine blocks from unified data */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+          <div
+            data-tour="white-session-blocks"
+            className="rounded-2xl border border-border bg-card p-4 shadow-elev-1"
+          >
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
@@ -495,6 +515,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
               </div>
               {sessionBlocks && (
                 <button
+                  data-tour="white-session-start"
                   onClick={() => setShowSession(true)}
                   className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition-all active:scale-95"
                 >
@@ -583,7 +604,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
 
           {/* XP rules (if available) */}
           {xpRules && (
-            <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+            <div
+              data-tour="white-session-xp"
+              className="rounded-2xl border border-border bg-card p-4 shadow-elev-1"
+            >
               <div className="mb-3 flex items-center gap-2">
                 <Zap className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">XP 규칙</span>
@@ -610,7 +634,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {activeSection === "check" && (
         <>
           {/* 레벨업 조건 */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+          <div
+            data-tour="white-check-conditions"
+            className="rounded-2xl border border-border bg-card p-4 shadow-elev-1"
+          >
             <div className="mb-3 flex items-center gap-2">
               <Award className="h-4 w-4 text-primary" />
               <span className="text-sm font-bold text-foreground">
@@ -662,7 +689,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           </div>
 
           {/* Checklist */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+          <div
+            data-tour="white-check-checklist"
+            className="rounded-2xl border border-border bg-card p-4 shadow-elev-1"
+          >
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-primary" />
