@@ -91,6 +91,30 @@ function describeSelector(sel: string): string {
   return SELECTOR_LABELS_LITE[trimmed] ?? "사용자 selector — 매칭 확인 필요";
 }
 
+// 65-D: step 이 가리킬 페이지(route) 목록 — 메뉴 이동/통합 시 admin 이 교체.
+const ROUTE_OPTIONS_LITE: { value: string; label: string }[] = [
+  { value: "/home", label: "홈" },
+  { value: "/missions", label: "훈련" },
+  { value: "/myboxer/quest", label: "153 챌린지 (153 QUEST)" },
+  { value: "/myboxer/community", label: "153 커뮤니티 (챔피언 일기·세컨드 응원)" },
+  { value: "/myboxer/visualization", label: "153마인드셋" },
+  { value: "/challenges", label: "더 다이어터 (챌린지)" },
+  { value: "/halloffame", label: "랭킹" },
+  { value: "/rank-up", label: "랭크업" },
+  { value: "/cert-benefits", label: "단증혜택" },
+  { value: "/rewards", label: "보상" },
+  { value: "/character-studio", label: "캐릭터" },
+  { value: "/guide", label: "가이드" },
+  { value: "/mypage", label: "내정보" },
+  { value: "/settings", label: "설정" },
+];
+
+function describeRoute(route: string): string {
+  const r = (route ?? "").trim();
+  if (!r) return "(페이지 지정 안 함 — 현재 화면 그대로)";
+  return ROUTE_OPTIONS_LITE.find((o) => o.value === r)?.label ?? "사용자 정의 경로";
+}
+
 // ─────────────────────────────────────────────────────────────
 // 64-AF: usePicker hook — element picker (마우스 오버 강조 + click 캡처)
 //   64-AM: invisible overlay 방식으로 변경 — click 이 overlay 에서 종료되어
@@ -1609,6 +1633,8 @@ function InlineRowEditor({
     title: currentStep.title ?? "",
     body: currentStep.body ?? "",
     targetSelector: currentStep.targetSelector ?? "",
+    // 65-D: route 도 수정 가능 — 메뉴 이동/통합 시 step 의 페이지를 교체.
+    route: currentStep.route ?? "",
     placement: currentStep.placement ?? "bottom",
     autoAdvance: !!currentStep.autoAdvance,
     autoNavigate: !!currentStep.autoNavigate,
@@ -1718,12 +1744,38 @@ function InlineRowEditor({
         {/* 화면에서 위치 보기 버튼 — 다른 페이지면 자동 navigate 후 강조 */}
         <PreviewLocationButton
           selector={draft.targetSelector ?? ""}
-          stepRoute={currentStep.route}
+          stepRoute={draft.route ?? currentStep.route}
           day={day}
           listIdx={listIdx}
         />
         <p className="mt-0.5 text-[9px] text-amber-200/55">
           ※ 다른 페이지에 있으면 자동으로 이동 + customizer 닫음 → 강조 표시
+        </p>
+      </div>
+
+      {/* 65-D: route — 어느 페이지에서 강조할지. 메뉴 이동/통합 시 필수.
+          '시작 시 페이지 자동 이동' 토글이 이 경로로 navigate 한다. */}
+      <div className="block">
+        <span className="text-[9.5px] font-bold text-amber-200/85">
+          📍 어느 페이지에서? (route)
+        </span>
+        <input
+          type="text"
+          list="tutorial-route-options-lite"
+          value={draft.route ?? ""}
+          onChange={(e) => update({ route: e.target.value })}
+          placeholder="/myboxer/community 등"
+          className={inputCls}
+        />
+        <datalist id="tutorial-route-options-lite">
+          {ROUTE_OPTIONS_LITE.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </datalist>
+        <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-200">
+          🏷️ {describeRoute(draft.route ?? "")}
         </p>
       </div>
 

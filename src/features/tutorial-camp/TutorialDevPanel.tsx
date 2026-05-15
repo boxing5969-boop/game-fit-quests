@@ -47,6 +47,7 @@ import {
   getStep,
   getStepOverride,
   getStepsCountByDay,
+  getOriginalStepNumber,
   setStepOverride,
   TUTORIAL_CAMP_STEPS,
   type TutorialStepOverridePartial,
@@ -635,6 +636,34 @@ function describeSelector(sel: string): string {
   return SELECTOR_LABELS[sel.trim()] ?? "사용자 정의 selector — 정확히 매칭되는지 확인 필요";
 }
 
+// ─────────────────────────────────────────────────────────────
+// 65-D: step 이 가리킬 페이지(route) 목록. 메뉴 이동/통합 시 admin 이
+//   코드 수정 없이 step 의 페이지를 바꿀 수 있게 한다.
+//   여기 없는 경로도 직접 입력 가능 (input 자유 입력 허용).
+// ─────────────────────────────────────────────────────────────
+const ROUTE_OPTIONS: { value: string; label: string }[] = [
+  { value: "/home", label: "홈" },
+  { value: "/missions", label: "훈련" },
+  { value: "/myboxer/quest", label: "153 챌린지 (153 QUEST)" },
+  { value: "/myboxer/community", label: "153 커뮤니티 (챔피언 일기·세컨드 응원)" },
+  { value: "/myboxer/visualization", label: "153마인드셋" },
+  { value: "/challenges", label: "더 다이어터 (챌린지)" },
+  { value: "/halloffame", label: "랭킹" },
+  { value: "/rank-up", label: "랭크업" },
+  { value: "/cert-benefits", label: "단증혜택" },
+  { value: "/rewards", label: "보상" },
+  { value: "/character-studio", label: "캐릭터" },
+  { value: "/guide", label: "가이드" },
+  { value: "/mypage", label: "내정보" },
+  { value: "/settings", label: "설정" },
+];
+
+function describeRoute(route: string): string {
+  const r = (route ?? "").trim();
+  if (!r) return "(페이지 지정 안 함 — 현재 화면 그대로)";
+  return ROUTE_OPTIONS.find((o) => o.value === r)?.label ?? "사용자 정의 경로";
+}
+
 // 화면에서 element 찾아 1.5초 amber 외곽선 + scrollIntoView
 function previewSelectorOnScreen(sel: string): {
   ok: boolean;
@@ -693,9 +722,13 @@ function StepEditorSection({
   onSaved: () => void;
 }) {
   const baseStep = getStep(day, step);
-  const existing = getStepOverride(day, step);
+  // 64-BA: override 는 original step number 로 저장/lookup (custom step 1000+).
+  //   dev panel 의 step 은 reassigned 0-based — 변환 필수.
+  const originalStep = getOriginalStepNumber(day, step);
+  const existing = getStepOverride(day, originalStep);
   const [draft, setDraft] = useState<TutorialStepOverridePartial>(() => ({
     targetSelector: baseStep?.targetSelector ?? "",
+    route: baseStep?.route ?? "",
     placement: baseStep?.placement ?? "bottom",
     autoAdvance: baseStep?.autoAdvance ?? false,
     autoNavigate: baseStep?.autoNavigate ?? false,
@@ -711,6 +744,7 @@ function StepEditorSection({
     const fresh = getStep(day, step);
     setDraft({
       targetSelector: fresh?.targetSelector ?? "",
+      route: fresh?.route ?? "",
       placement: fresh?.placement ?? "bottom",
       autoAdvance: fresh?.autoAdvance ?? false,
       autoNavigate: fresh?.autoNavigate ?? false,
@@ -739,15 +773,16 @@ function StepEditorSection({
     setDraft((prev) => ({ ...prev, ...patch }));
 
   const onSave = () => {
-    setStepOverride(day, step, draft);
+    setStepOverride(day, originalStep, draft);
     onSaved();
   };
 
   const onResetThisStep = () => {
-    clearStepOverride(day, step);
+    clearStepOverride(day, originalStep);
     const fresh = getStep(day, step);
     setDraft({
       targetSelector: fresh?.targetSelector ?? "",
+      route: fresh?.route ?? "",
       placement: fresh?.placement ?? "bottom",
       autoAdvance: fresh?.autoAdvance ?? false,
       autoNavigate: fresh?.autoNavigate ?? false,
@@ -814,6 +849,36 @@ function StepEditorSection({
           <p className="mt-0.5 text-[9.5px] text-amber-200/55">
             ※ 누르면 1.5초 동안 노란 외곽선 + 자동 스크롤. 해당 페이지에 있어야
             보여요. modal 을 닫고 봐주세요.
+          </p>
+        </div>
+
+        {/* 65-D: 어느 페이지(route) 에서 강조할지 — 메뉴 이동/통합 시 필수.
+            '시작 시 페이지 자동 이동' 토글이 이 경로로 navigate 한다. */}
+        <div className="block">
+          <span className="text-[11px] font-bold text-amber-100">
+            📍 어느 페이지에서 강조하나요?
+          </span>
+          <p className="mb-1 text-[10px] text-amber-200/60">
+            메뉴를 옮겼다면 여기를 새 페이지로 바꾸세요. 아래 '시작 시 페이지
+            자동 이동'을 켜면 이 페이지로 자동 이동해요.
+          </p>
+          <input
+            type="text"
+            list="tutorial-route-options"
+            value={draft.route ?? ""}
+            onChange={(e) => update({ route: e.target.value })}
+            placeholder="/myboxer/community 등"
+            className={inputCls}
+          />
+          <datalist id="tutorial-route-options">
+            {ROUTE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </datalist>
+          <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10.5px] font-bold text-amber-200">
+            🏷️ {describeRoute(draft.route ?? "")}
           </p>
         </div>
 

@@ -1148,6 +1148,9 @@ export type TutorialStepOverridePartial = Partial<
   Pick<
     TutorialCampStep,
     | "targetSelector"
+    // 65-D: route 도 override 가능 — 메뉴 이동/통합 시 step 의 페이지를 admin 이
+    //   코드 수정 없이 새 라우트로 교체. autoNavigate 가 이 값으로 이동한다.
+    | "route"
     | "placement"
     | "autoAdvance"
     | "autoNavigate"
@@ -1540,6 +1543,34 @@ export function getStep(day: number, step: number): TutorialCampStep | null {
  */
 export function getStepsCountByDay(day: number): number {
   return getStepsByDay(day).length;
+}
+
+/**
+ * 64-BA 버그 수정: dev panel 의 reassigned 0-based step → original step number.
+ *
+ * getStep / getStepsByDay 는 override 를 *original step number* (custom step 은
+ * 1000+) 로 lookup 하는데, dev panel 의 StepEditorSection 은 화면에 보이는
+ * reassigned 0-based step 을 그대로 setStepOverride 에 넘겨 키가 어긋났음.
+ * → custom step 의 selector/위치 수정이 적용 안 됨.
+ *
+ * dev panel 의 onSave/onReset 은 이 함수로 original step number 를 구한 뒤
+ * setStepOverride / clearStepOverride 를 호출해야 한다.
+ */
+export function getOriginalStepNumber(
+  day: number,
+  reassignedStep: number,
+): number {
+  const list = getOrderedStepsByDay(day);
+  const found = list[reassignedStep];
+  if (!found) return reassignedStep;
+  const allOriginal = [
+    ...TUTORIAL_CAMP_STEPS.filter((s) => s.day === day),
+    ...getCustomStepsForDay(day),
+  ];
+  return (
+    allOriginal.find((o) => o.targetKey === found.targetKey)?.step ??
+    found.step
+  );
 }
 
 /** 다음 step. 같은 day 안에 다음 step 있으면 그것, 없으면 다음 day step 0. day 7 끝이면 null. */

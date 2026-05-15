@@ -81,10 +81,12 @@ const HomeEngagementSection = ({
 
       {showCommunity && (
         <>
-      {/* ─── 챔피언 일기 (153 챌린지에서 153 커뮤니티 로 이관) ─── */}
+      {/* ─── 챔피언 일기 (153 챌린지에서 153 커뮤니티 로 이관) ───
+          data-tour: 7일 캠프 / 커스텀 튜토리얼이 이 카드를 강조·이동 대상으로 잡음. */}
       <button
         type="button"
         onClick={handleJournal}
+        data-tour="champion-journal-card"
         className="flex w-full items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3 text-left transition-all active:scale-[0.99] hover:border-primary/40"
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
