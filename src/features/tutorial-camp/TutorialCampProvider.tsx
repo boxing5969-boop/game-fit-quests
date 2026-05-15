@@ -794,6 +794,14 @@ const TutorialCampProvider = () => {
     if (!isActiveCamp || !step) return;
     if (!step.autoAdvance) return;
     if (!conditionMet) return;
+    // 65-G: autoNavigate 가 아직 목표 route 로 못 옮겼으면 autoAdvance 보류.
+    //   autoAdvance(250ms) + autoNavigate(400ms) 가 둘 다 켜진 step (각 Day 의
+    //   step 0) 에서 advance 가 navigate 를 앞질러 다음 step 이 엉뚱한 페이지에
+    //   갇히는 race 방지. navigate 완료 → location.pathname 변경 → 이 effect
+    //   재실행 → 정상 진행.
+    if (step.autoNavigate && step.route && location.pathname !== step.route) {
+      return;
+    }
     const key = `${step.day}.${step.step}`;
     if (autoAdvancedKeyRef.current === key) return;
     autoAdvancedKeyRef.current = key;
@@ -801,7 +809,7 @@ const TutorialCampProvider = () => {
       handleNext();
     }, 250);
     return () => window.clearTimeout(id);
-  }, [isActiveCamp, step, conditionMet, handleNext]);
+  }, [isActiveCamp, step, conditionMet, handleNext, location.pathname]);
 
   // step 변경 시 autoAdvance 가드 reset
   useEffect(() => {

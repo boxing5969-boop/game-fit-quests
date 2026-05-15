@@ -1845,10 +1845,22 @@ function withInteractive(step: TutorialCampStep): TutorialCampStep {
     route = remap.route;
   }
 
+  // 65-G: 모든 step 을 자기 route 로 self-heal — autoNavigate 강제 ON.
+  //   회원이 어떤 이유로든 (로그인 직후 /home 등) 엉뚱한 페이지에 있어도
+  //   현재 step 이 올바른 페이지로 데려간다. 같은 route 면 no-op.
+  let base: TutorialCampStep = { ...step, autoNavigate: true };
+
+  // 65-G: 읽기 카드(manual_confirm)는 autoAdvance 강제 OFF — 회원이 직접
+  //   '다음으로'. manual_confirm 은 conditionMet 즉시 true 라 autoAdvance 가
+  //   250ms 만에 카드를 넘겨버려 읽을 시간이 없다.
+  if (base.completionRule === "manual_confirm") {
+    base = { ...base, autoAdvance: false };
+  }
+
   // 직접 클릭 강제 — Day 완료 모달 제외 모든 target 있는 step
   if (selector !== "" && step.actionType !== "complete") {
     return {
-      ...step,
+      ...base,
       targetSelector: selector,
       route,
       actionType: "click",
@@ -1856,7 +1868,7 @@ function withInteractive(step: TutorialCampStep): TutorialCampStep {
       allowNextWithoutClick: false,
     };
   }
-  return step;
+  return base;
 }
 
 /** 모든 day 의 step 을 펼쳐 둔 평면 배열 (35개) — 체험형 변환 적용 */
