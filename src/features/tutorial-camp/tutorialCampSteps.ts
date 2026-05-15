@@ -228,15 +228,18 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     scrollThreshold: 0.85,
     autoAdvance: true,
   },
-  // ── 3. 챔피언 일기 카드 클릭 (153 QUEST 자동 이동) ──
+  // ── 3. 챔피언 일기 카드 클릭 (153 커뮤니티 자동 이동) ──
+  //   65-D: 챔피언 일기는 153 챌린지(/myboxer/quest) → 153 커뮤니티(/myboxer/community)
+  //   로 이관됨. route + selector 를 새 위치로 갱신. autoNavigate 가 153 커뮤니티로
+  //   자동 이동시킨다. anchor 는 HomeEngagementSection 의 champion-journal-card.
   {
     day: 1,
     step: 3,
-    route: "/myboxer/quest",
+    route: "/myboxer/community",
     targetKey: "day1.quest_mini_journal",
-    targetSelector: '[data-tour="quest-mini-journal"]',
+    targetSelector: '[data-tour="champion-journal-card"]',
     title: "마지막은 챔피언 일기",
-    body: "하루 한 줄 짧은 일기예요.\n여기를 눌러볼까요?",
+    body: "하루 한 줄 짧은 일기예요.\n153 커뮤니티에서 여기를 눌러볼까요?",
     osamiMessage: "한 줄이면 돼요.",
     actionType: "click",
     requireTargetClick: true,
@@ -244,7 +247,7 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     animation: "spotlight",
     placement: "bottom",
     fallbackText:
-      "153 QUEST 메뉴 '오늘의 라운드 보조 퀘스트' 영역에서 챔피언 일기 카드를 누르세요.",
+      "153 커뮤니티 메뉴에서 챔피언 일기 카드를 누르세요.",
     completionText: "일기 화면이 열렸어요.",
     helperMessage: "여기 챔피언 일기 카드를 눌러보세요.",
     successMessage: "일기가 열렸어요. 둘러보고 닫으면 다음으로 가요.",
