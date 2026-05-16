@@ -69,6 +69,7 @@ const WELCOME_MESSAGE = `안녕하세요, 고객님! 😊
 ☀️ 오전반  →  "아침" 입력
 🌙 저녁반  →  "저녁" 입력
 👧 키즈반  →  "키즈" 입력
+🔒 락카·운동복  →  "락카" 입력
 📍 오시는 길  →  "위치" 입력
 🚗 주차 안내  →  "주차" 입력
 ────────────────
@@ -94,6 +95,11 @@ const PRICE_TABLE = `📋 153복싱짐 칠금점 가격표
 • 70여 종 최고급 머신 이용
 • 복싱 레슨 + 헬스장 동시 이용
 • 글러브 + 붕대 포함
+
+─────────────────
+🔒 선택 추가 옵션 (별도 유료)
+• 개인 락카 (장비 보관용): 월 5,000원
+• 운동복 대여: 월 10,000원
 
 ─────────────────
 💡 처음 시작하시는 분들 대부분이 3개월을 선택하세요.
@@ -177,6 +183,36 @@ const PARKING_REPLY = `🚗 153복싱짐 칠금점 주차 안내
 카카오채널: http://pf.kakao.com/_txdGxcxj
 
 혹시 더 궁금하신 점이 있으신가요? 😊`;
+
+const LOCKER_REPLY = `🔒 153복싱짐 칠금점 락카 안내
+
+━━━━━━━━━━━━━━━
+📦 개인 락카 (유료 · 한정 수량)
+━━━━━━━━━━━━━━━
+글러브·장갑 등 운동 장비를 짐에 놓고 다닐 수 있는 전용 보관함이에요.
+
+💰 이용 요금: 월 5,000원 (별도 신청)
+
+⚠️ 한정 수량이라 자리가 없을 수 있어요.
+신청은 등록 시 코치님께 문의해 주세요!
+
+━━━━━━━━━━━━━━━
+👕 운동복 대여 (유료)
+━━━━━━━━━━━━━━━
+운동복을 따로 준비하지 않으셔도 돼요!
+• 월 10,000원으로 대여 가능해요
+
+━━━━━━━━━━━━━━━
+🚿 샤워실 공용 락카 (무료)
+━━━━━━━━━━━━━━━
+입장 후 운동복으로 갈아입을 때부터
+운동 끝나고 샤워 후 사복으로 갈아입을 때까지
+그날 방문하는 동안 사복·소지품을 보관하는 용도예요.
+목욕탕 락카처럼 사용하시면 돼요!
+단, 글러브·장비를 매일 두고 다니는 장기 보관은 개인 락카를 이용해 주세요 😊
+
+─────────────────
+추가 문의는 편하게 말씀해 주세요 💪`;
 
 const REGISTER_QUICK_REPLY = `고객님, 결심해 주셔서 정말 잘하셨어요! 🎉
 
@@ -285,6 +321,7 @@ const FALLBACK_MENU = `고객님, 안녕하세요 😊
 👉 상담원과 직접 연결을 원하시면 → "연결" 이라고 입력해 주세요
 👉 등록/결제를 원하시면 → "등록" 이라고 입력해 주세요
 👉 아침·저녁·키즈 수업이 궁금하시면 → "아침" / "저녁" / "키즈" 라고 입력해 주세요
+👉 락카·운동복 안내는 → "락카" 라고 입력해 주세요
 👉 오시는 길이 궁금하시면 → "위치" 라고 입력해 주세요
 👉 주차가 궁금하시면 → "주차" 라고 입력해 주세요
 
@@ -391,6 +428,11 @@ function isLocationQuery(text) {
 
 function isParkingQuery(text) {
   return ["주차", "주차장", "차 가", "차가"].some(kw => text.includes(kw));
+}
+
+function isLockerQuery(text) {
+  if (["락카", "라카", "롹카", "락커", "라커", "로카", "록카", "라크카", "낙카", "locker", "운동복", "대여"].some(kw => text.includes(kw))) return true;
+  return fuzzyContains(text, "락카", 1);
 }
 
 // ─── AI 시스템 프롬프트 (심리 분석 + CS 전문가 버전) ──────────────────────────
@@ -506,6 +548,9 @@ Q. 주차 되나요?
 
 【체험】 보증금 20,000원 (당일 등록 시 전액 환급) / 준비물: 운동복+운동화
 
+【락카·운동복】
+개인락카=글러브·장비 장기보관전용, 한정수량, 월5,000원 / 운동복대여=월10,000원 / 샤워실공용락카=무료, 방문당일 입장~퇴장까지 사복·소지품 보관용(목욕탕식), 장비 장기보관 불가
+
 【답변 규칙】
 1. 항상 "고객님" 호칭, 따뜻하고 긍정적인 존댓말
 2. 부정어 절대 금지 — "안 돼요" → "이렇게 하시면 돼요"
@@ -513,7 +558,9 @@ Q. 주차 되나요?
 4. 전화번호보다 네이버 결제 링크 우선
 5. 4~6문장 이내 간결하게
 6. 링크 안내 시 3개월을 항상 먼저, 5개월을 두 번째로
-7. 헬스장 무료 이용 혜택을 항상 차별화 포인트로 강조`;
+7. 헬스장 무료 이용 혜택을 항상 차별화 포인트로 강조
+8. 반드시 한국어(한글)로만 답변. 한자·중국어·일본어·알 수 없는 특수문자 절대 사용 금지.
+9. 멤버십 포함 물품은 정확히: 글러브+붕대. 이 외 물품(운동복·락카 등) 무료라고 절대 말하지 말 것. 운동복=월10,000원 유료, 락카=월5,000원 유료.`;
 
 // ─── Deno Deploy 서버 ─────────────────────────────────────────────────────────
 
@@ -586,9 +633,10 @@ Deno.serve(async (req) => {
         if (isKidsQuery(msg))    parts.push(KIDS_REPLY);
       }
 
-      // 위치/주차
+      // 위치/주차/락카
       if (isLocationQuery(msg)) parts.push(LOCATION_REPLY);
       if (isParkingQuery(msg))  parts.push(PARKING_REPLY);
+      if (isLockerQuery(msg))   parts.push(LOCKER_REPLY);
 
       if (parts.length === 1) {
         replyText = parts[0];
@@ -619,15 +667,20 @@ Deno.serve(async (req) => {
             { role: "system", content: GYM_SYSTEM_PROMPT },
             { role: "user", content: msg },
           ],
-          max_tokens: 600,
-          temperature: 0.6,
+          max_tokens: 500,
+          temperature: 0.4,
         }),
       });
 
       if (!groqRes.ok) throw new Error(`Groq error: ${groqRes.status}`);
       const data = await groqRes.json();
-      const aiReply = data.choices[0]?.message?.content;
+      const aiReply = data.choices[0]?.message?.content?.trim();
       if (!aiReply) throw new Error("Empty response");
+
+      // 한자·이상한 문자 포함 시 fallback
+      if (/[⺀-鿿豈-﫿]/.test(aiReply)) {
+        throw new Error("Non-Korean characters detected");
+      }
 
       return new Response(
         JSON.stringify({ event: "send", textContent: { text: aiReply } }),

@@ -495,11 +495,13 @@ const ActiveHome = (p: ActiveHomeProps) => {
       </div>
 
       {/* 점수 */}
-      <HabitScoreCard
-        habitScore={habitScore}
-        approvedDays={p.approvedDays}
-        streak={p.currentStreak}
-      />
+      <div data-tour="diet-habit-score">
+        <HabitScoreCard
+          habitScore={habitScore}
+          approvedDays={p.approvedDays}
+          streak={p.currentStreak}
+        />
+      </div>
 
       {/* 오늘의 미션 CTA — 축소해 탭/클릭 시에만 상세 이동 */}
       <button
@@ -613,12 +615,14 @@ const ActiveHome = (p: ActiveHomeProps) => {
       )}
 
       {/* 배지 진행 */}
-      <MilestoneProgressStrip
-        approvedDays={p.approvedDays}
-        milestone7Reached={p.milestone7}
-        milestone14Reached={p.milestone14}
-        milestone21Reached={p.milestone21}
-      />
+      <div data-tour="diet-milestones">
+        <MilestoneProgressStrip
+          approvedDays={p.approvedDays}
+          milestone7Reached={p.milestone7}
+          milestone14Reached={p.milestone14}
+          milestone21Reached={p.milestone21}
+        />
+      </div>
 
       {/* 추가: 21일 이후 프로그램 진입 CTA — currentDay 에 따라 라벨/강조 변동 */}
       <PostProgramEntryCard

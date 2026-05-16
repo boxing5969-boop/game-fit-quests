@@ -163,7 +163,7 @@ const DietMealPlanPage = () => {
         />
       }
     >
-      <div className="space-y-5 pt-2">
+      <div data-tour="diet-page-meal-plan" className="space-y-5 pt-2">
         {!featureEnabled ? (
           <div className="rounded-2xl border border-border bg-card p-6 text-center text-[13px] text-muted-foreground">
             153 다이어트 프로그램이 아직 활성화되지 않았어요.

@@ -77,7 +77,7 @@ const DietProgressPage = () => {
         />
       }
     >
-      <div className="space-y-4 pt-2">
+      <div data-tour="diet-page-progress" className="space-y-4 pt-2">
         {!hasActive || !enrollment ? (
           <div className="rounded-2xl border border-border bg-card p-6 text-center text-[13px] text-muted-foreground">
             아직 진행 중인 프로그램이 없어요.

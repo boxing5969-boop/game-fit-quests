@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>AI 코딩 에이전트 핸드오프 — game-fit-quests + 153-boxing-os</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+  :root {
+    --ink: #16181d; --muted: #5b6270; --line: #e2e5ea;
+    --accent: #2a4cff; --warn: #b85a00; --danger: #b8001f; --ok: #0f7a3a;
+    --code-bg: #f6f7f9;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+    font-size: 10.5pt;
+    line-height: 1.5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  header.cover {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 14pt;
+    margin-bottom: 18pt;
+    page-break-after: avoid;
+  }
+  header.cover .kicker { font-size: 9pt; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+  header.cover h1 { font-size: 22pt; margin: 4pt 0 2pt; font-weight: 800; letter-spacing: -0.01em; }
+  header.cover .subtitle { font-size: 11.5pt; color: var(--muted); margin-bottom: 8pt; }
+  header.cover .meta { display: flex; gap: 18pt; flex-wrap: wrap; font-size: 9.5pt; color: var(--muted); }
+  header.cover .meta b { color: var(--ink); font-weight: 600; }
+
+  h2 { font-size: 13pt; margin: 18pt 0 6pt; padding-bottom: 4pt; border-bottom: 1px solid var(--line); page-break-after: avoid; }
+  h3 { font-size: 11pt; margin: 10pt 0 4pt; font-weight: 700; page-break-after: avoid; }
+  h4 { font-size: 10pt; margin: 8pt 0 3pt; font-weight: 700; page-break-after: avoid; }
+
+  p, li { margin: 3pt 0; }
+  ul { padding-left: 16pt; margin: 4pt 0; }
+  ol { padding-left: 18pt; margin: 4pt 0; }
+
+  code, .mono {
+    font-family: "JetBrains Mono", "Consolas", "Fira Code", monospace;
+    font-size: 9pt;
+    background: var(--code-bg);
+    padding: 0.5pt 4pt;
+    border-radius: 3pt;
+  }
+  pre {
+    font-family: "JetBrains Mono", "Consolas", "Fira Code", monospace;
+    font-size: 8.7pt;
+    background: var(--code-bg);
+    padding: 8pt 10pt;
+    border-radius: 4pt;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    white-space: pre-wrap;
+    word-break: break-word;
+    page-break-inside: avoid;
+  }
+  table { border-collapse: collapse; width: 100%; font-size: 9pt; margin: 4pt 0 6pt; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 4pt 6pt; vertical-align: top; text-align: left; }
+  th { background: #f1f3f7; font-weight: 700; }
+
+  .badge { display: inline-block; padding: 1pt 6pt; border-radius: 999px; font-size: 8.5pt; font-weight: 700; }
+  .badge.ok { background: #e2f4ea; color: var(--ok); }
+  .badge.warn { background: #fff1e0; color: var(--warn); }
+  .badge.danger { background: #fde2e6; color: var(--danger); }
+  .badge.muted { background: #eff1f5; color: var(--muted); }
+
+  .callout {
+    border-left: 3pt solid var(--accent);
+    padding: 6pt 10pt;
+    background: #f4f6ff;
+    border-radius: 0 3pt 3pt 0;
+    margin: 6pt 0;
+    font-size: 9.7pt;
+  }
+  .callout.warn { border-color: var(--warn); background: #fff7ec; }
+  .callout.danger { border-color: var(--danger); background: #fdecef; }
+  .callout.ok { border-color: var(--ok); background: #ecf7f1; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10pt; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 6pt; margin: 4pt 0; }
+
+  .toc ol { padding-left: 18pt; }
+  .toc li { margin: 1pt 0; }
+
+  section { page-break-inside: auto; }
+  .pb-after { page-break-after: always; }
+  .avoid-break { page-break-inside: avoid; }
+
+  footer.page-footer { font-size: 8.5pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 6pt; margin-top: 18pt; }
+  .file-path { font-family: monospace; font-size: 9pt; color: #1a3aa8; }
+  small.note { color: var(--muted); font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="kicker">AI 코딩 에이전트 인계 문서 · v1</div>
+  <h1>game-fit-quests &nbsp;+&nbsp; 153-boxing-os 통합 핸드오프</h1>
+  <div class="subtitle">두 프로젝트의 진행 상태 · 결정 · 미해결 항목 · 협업 원칙을 한 문서에서 다음 세션 / 다른 LLM 으로 충돌 없이 전달.</div>
+  <div class="meta">
+    <span><b>작성일</b> 2026-05-06</span>
+    <span><b>대상 모델</b> Claude Opus 4.7 (1M context) — claude-opus-4-7[1m]</span>
+    <span><b>실행 환경</b> Claude Code · Windows 11 · PowerShell</span>
+  </div>
+</header>
+
+<section class="toc avoid-break">
+  <h2>목차</h2>
+  <ol>
+    <li>AI 에이전트 식별 — 모델 / 환경 / 운영 원칙</li>
+    <li>두 프로젝트 식별 — 위치 · 스택 · 배포 토폴로지</li>
+    <li>game-fit-quests — 현황과 메모리에 남은 결정</li>
+    <li>153-boxing-os — 모노레포 · DB · Workers · 출입통제 코어</li>
+    <li>이번 세션의 작업 시간순 — 6개 단계</li>
+    <li>현재 미해결 / 차단 / 보류 항목</li>
+    <li>다음 안전한 작업 순서 (권장 큐)</li>
+    <li>절대 위반 금지 원칙 (전 프로젝트 공통)</li>
+    <li>참조 — 핵심 파일 / 명령 / SQL 진단 쿼리</li>
+  </ol>
+</section>
+
+<section>
+  <h2>1. AI 에이전트 식별</h2>
+  <table>
+    <tr><th>항목</th><th>값</th></tr>
+    <tr><td>모델</td><td>Claude Opus 4.7 (1M context window). 모델 ID: <code>claude-opus-4-7[1m]</code></td></tr>
+    <tr><td>호스트</td><td>Anthropic Claude Code (CLI / VSCode 네이티브 확장)</td></tr>
+    <tr><td>OS</td><td>Windows 11 Home 10.0.26200</td></tr>
+    <tr><td>기본 셸</td><td>PowerShell 5.1 (또한 Bash 사용 가능 — POSIX 명령은 Bash 도구로)</td></tr>
+    <tr><td>지식 컷오프</td><td>2026-01</td></tr>
+    <tr><td>주 작업 디렉토리</td><td><span class="file-path">c:\Users\82104\game-fit-quests</span> (이 세션 시작 디렉토리)</td></tr>
+    <tr><td>추가 작업 디렉토리</td><td><span class="file-path">C:\Users\82104\Desktop\153-boxing-os</span> (오늘 작업의 중심)</td></tr>
+    <tr><td>auto-memory 경로</td><td><span class="file-path">C:\Users\82104\.claude\projects\c--Users-82104-game-fit-quests\memory\</span></td></tr>
+  </table>
+
+  <h3>1.1 운영 원칙 (CLAUDE.md + 학습된 메모리에서 추출)</h3>
+  <ul>
+    <li><b>최소 수정 우선</b>. 의도하지 않은 영역 리팩터링 금지. <code>Edit</code> 도구로 필요한 라인만 교체.</li>
+    <li><b>탐색 먼저, 수정 나중</b>. <code>Grep/Glob</code> 으로 기존 패턴/호출부/타입을 확인하고 들어간다. 경로 추측 금지.</li>
+    <li><b>작업 후 반드시 빌드 확인</b>. <code>bun run build</code> · <code>bun run --filter ... typecheck</code>. 푸시 전 필수.</li>
+    <li><b>main push 금지</b>. 사용자가 명시적으로 승인하기 전까지 절대.</li>
+    <li><b>feature flag / 마이그레이션 / 시크릿 / 운영 DB 변경</b>은 사용자 승인 후에만.</li>
+    <li>새 페이지·새 채팅 박스·새 실험용 컴포넌트를 추가하지 않는다 (game-fit-quests 한정 규칙). 무언가 바꿔야 하면 기존 컴포넌트를 개선.</li>
+    <li>변경 요약 포맷: <code>[영역] 한 줄 요약 / 변경 파일 목록 / 이유 / 확인</code>.</li>
+  </ul>
+
+  <h3>1.2 학습된 메모리 (auto-memory)</h3>
+  <table>
+    <tr><th>이름</th><th>요지</th></tr>
+    <tr><td>project_deployment</td><td>game-fit-quests 는 Cloudflare Pages 배포(Vercel 아님). SPA 라우팅은 <span class="file-path">public/_redirects</span>.</td></tr>
+    <tr><td>feedback_chunk_splitting</td><td>Radix/router/react-query 등을 React 본체와 다른 청크로 분리하면 forwardRef undefined 런타임 크래시. <b>분리 금지.</b></td></tr>
+    <tr><td>project_153_boxing_os</td><td>153-boxing-os 는 신규 별개 프로젝트(CRM + 출입통제). 랭킹업앱(game-fit-quests) 과 분리. Supabase 별도 인스턴스, bun 모노레포 구조.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>2. 두 프로젝트 식별</h2>
+  <div class="grid2">
+    <div class="callout">
+      <h3>game-fit-quests (랭킹업앱)</h3>
+      <ul>
+        <li>경로: <span class="file-path">c:\Users\82104\game-fit-quests</span></li>
+        <li>스택: React 18 + Vite + TS + Tailwind + shadcn/ui</li>
+        <li>백엔드: Supabase (Postgres + RLS + RPC + Edge Functions Deno + Storage)</li>
+        <li>배포: GitHub <code>main</code> push → Lovable 동기화 → Cloudflare Pages</li>
+        <li>Supabase 운영 owner: <b>Lovable</b> — 로컬 CLI <code>functions deploy</code> 시 403 가능. SQL Editor 수동 또는 Lovable 채팅 위임.</li>
+        <li>AI 코치봇: <b>유일 경로</b> = <code>src/components/ChatAssistant.tsx</code> ↔ <code>supabase/functions/chat-assistant/</code>. <b>새 챗 박스 만들지 말 것.</b></li>
+      </ul>
+    </div>
+    <div class="callout warn">
+      <h3>153-boxing-os (CRM + 출입통제 OS)</h3>
+      <ul>
+        <li>경로: <span class="file-path">C:\Users\82104\Desktop\153-boxing-os</span></li>
+        <li>모노레포: <code>apps/crm</code>(Vite/React), <code>workers/api</code>(Cloudflare Workers/Hono), <code>packages/shared</code>(공유 타입), <code>packages/device-adapters</code></li>
+        <li>스택: React 18 + Vite 5 + TS strict + verbatimModuleSyntax + noUncheckedIndexedAccess + Tailwind + shadcn/ui</li>
+        <li>백엔드: Supabase Postgres + RLS + RPC(SECURITY DEFINER), Cloudflare Workers (Hono) + KV/D1 가능</li>
+        <li>배포: GitHub <code>main</code> push → Cloudflare Pages 자동 빌드 (CRM) + <code>wrangler deploy</code> (Workers) + Supabase SQL Editor 수동(마이그레이션)</li>
+        <li>출입통제 권위: 항상 <b>Workers API</b> 의 <code>verifyAccess</code>. 프론트는 표시만, 실제 문열림 판단 금지.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>3. game-fit-quests — 현황과 메모리</h2>
+  <h3>3.1 최근 커밋(상위)</h3>
+  <pre>5c1db0d docs(story-rpg): 47A 단계 실행 프롬프트
+1578837 feat(story-rpg): 월드맵 + 씬 분위기 비주얼 오버홀 (47A 단계)
+0e7b61c feat(story-rpg): 독립형 게임 UI 구현 (46단계) — Scene Player / 턴제 전투 / 인벤토리 / 엔딩 컷씬
+222518b feat(story-rpg): 독립형 게임 DB 재설계 (45단계)
+1b202c0 docs(story-rpg): Stage 42~44 실행 프롬프트
+3168a9a docs(story-rpg): 게임 시나리오 (44단계) — 18챕터 + 프롤로그 + 3엔딩
+8df2744 feat(story-rpg): 모바일 캐주얼 RPG 게임화 (41단계)
+4370615 feat(story-rpg): 설계 문서 + DB/RPC 기반 (33~34단계) — 7테이블 + 5 RPCs + seed 18챕터
+449cc6b feat(license): 사진 우선 + 리그별 오로라 + 사진/캐릭터 토글 (마이페이지)</pre>
+
+  <h3>3.2 진행 중 (이 디렉토리의 working tree 변경)</h3>
+  <table>
+    <tr><th>유형</th><th>경로</th></tr>
+    <tr><td>M</td><td>src/components/engagement/HomeEngagementSection.tsx, TodayQuestMiniPanel.tsx, index.ts</td></tr>
+    <tr><td>M</td><td>src/hooks/useBoxingAcademy.ts, useBoxingFunChallenges.ts, useChampionJournal.ts, useSecondCheer.ts</td></tr>
+    <tr><td>M</td><td>src/pages/MyPage.tsx, src/services/boxingEngagementService.ts</td></tr>
+    <tr><td>새 파일 (다수)</td><td>BoxerStyleDiagnosisCard, BoxingIqLeagueCard, ConditionGaugeCard/Sheet, GrowthReportCard/Sheet, HiddenMissionPanel, ReturnRoundBanner/MissionCard/Sheet 등 + 관련 hooks/data/migrations</td></tr>
+    <tr><td>새 마이그레이션</td><td>20260601 boxing_condition_logs · 20260602 boxing_return_round · 20260603 boxing_hidden_missions</td></tr>
+    <tr><td>문서</td><td>docs/153-quest-v1-5-implementation-plan.md, docs/153-quest-v1-5-qa-regression-report.md, docs/153_quest_v1_handoff.pdf</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <b>주의:</b> 이 working tree 의 변경물(QUEST v1.5 — 컨디션 게이지/회귀 라운드/히든 미션/복서 스타일 진단 등)은 본 핸드오프 작업과 무관하며 별도 작업이다. 153-boxing-os 작업과 섞지 말 것.
+  </div>
+</section>
+
+<section>
+  <h2>4. 153-boxing-os — 핵심 구조</h2>
+
+  <h3>4.1 디렉토리</h3>
+  <pre>153-boxing-os/
+├── apps/crm/                  # Vite + React CRM (Pages)
+│   └── src/
+│       ├── contexts/AuthContext.tsx          # 세션·프로필 상태머신 (idle/loading/loaded/missing/error)
+│       ├── components/ProtectedRoute.tsx     # ⚠ idle 분기가 영구 로딩 노출 결함 진단됨 (8장 참조)
+│       ├── pages/members/MemberDetailPage.tsx
+│       ├── services/access.ts                # ✅ 신규(이번 세션) — getAccessPreview
+│       ├── services/payments.ts              # 결제선생 — feature/payment-requests
+│       └── ...
+├── workers/api/               # Cloudflare Workers (Hono)
+│   └── src/
+│       ├── index.ts                          # 라우트 등록 + cron(daily expiry / qr cleanup / alerts)
+│       ├── lib/{env,responses,supabase,keyEncryption}.ts
+│       ├── middleware/{jwt,deviceAuth}.ts
+│       ├── routes/{access,devices,external,admin,onboarding,staff,payments}.ts
+│       └── services/{accessVerifier,accessPreview,qrToken,auditLogger,syncQueueProcessor}.ts
+│                                             # ✅ accessPreview.ts 신규(이번 세션)
+├── packages/shared/src/        # 공유 타입(@153/shared)
+│   ├── constants/deniedReasons.ts            # DENIED_REASON_LABELS / DeniedReason
+│   └── types/{members,access,...}.ts
+└── supabase/migrations/        # 21개 마이그레이션</pre>
+
+  <h3>4.2 핵심 테이블 (요약)</h3>
+  <table>
+    <tr><th>테이블</th><th>역할</th><th>핵심 컬럼</th></tr>
+    <tr><td>companies</td><td>본사 (SaaS 멀티테넌트 root)</td><td>id, name, business_type</td></tr>
+    <tr><td>branches</td><td>지점</td><td>company_id, name, status, kakao_*</td></tr>
+    <tr><td>profiles</td><td>직원/관리자/코치</td><td>auth_user_id (UNIQUE FK auth.users), role(super_admin/hq_admin/branch_admin/branch_owner/coach/staff), company_id, branch_id</td></tr>
+    <tr><td>members</td><td>회원</td><td>company_id, branch_id, status(active/trial/expired/suspended/unpaid/withdrawn)</td></tr>
+    <tr><td>memberships</td><td>이용권</td><td>start_date, end_date, payment_status(paid/unpaid/partial/refunded), status(active/expired/paused/canceled), <b>price?</b>(이번 세션 추가)</td></tr>
+    <tr><td>trial_passes</td><td>체험권</td><td>start_at/end_at, max_entries, used_entries, status</td></tr>
+    <tr><td>access_devices / device_users</td><td>단말기 + 매핑</td><td>vendor, status, vendor_user_id (UNIQUE per device)</td></tr>
+    <tr><td>access_grants</td><td>특별 출입권한</td><td>grant_type, valid_from/until, status</td></tr>
+    <tr><td>access_logs</td><td>감사 로그 (UPDATE/DELETE 트리거 차단)</td><td>credential_type, result, denied_reason, occurred_at</td></tr>
+    <tr><td>device_sync_jobs</td><td>단말기 동기화 큐 (Phase 6)</td><td>job_type, target_member_id, status, retry_count</td></tr>
+    <tr><td>qr_used_tokens</td><td>QR nonce 재사용 차단</td><td>nonce(UNIQUE), expires_at</td></tr>
+    <tr><td>emergency_pins / payment_requests</td><td>비상 PIN / 결제선생 청구내역</td><td>SECURITY DEFINER RPC 동반</td></tr>
+  </table>
+
+  <h3>4.3 출입통제 권위 흐름 (요약)</h3>
+  <ol>
+    <li>단말기 → <code>POST /api/access/verify</code> (device HMAC 인증)</li>
+    <li><code>verifyAccess(db, input, qrConsumed)</code> 호출 — device 활성/지점 매칭 → credential 분기(face/qr/card/pin) → <b>previewAccessForMember</b> 위임</li>
+    <li><b>previewAccessForMember</b> (이번 세션 추출): member.status → access_grants → memberships(paid/partial) → trial_passes(횟수/기간) 순서. <b>side-effect 없음</b>.</li>
+    <li>verifyAccess 본체에서: trial 통과 시 <code>used_entries++</code>, QR 시 <code>qr_used_tokens</code> insert, 비상 PIN 은 <code>consume_emergency_pin</code> RPC.</li>
+    <li><code>access_logs</code> 에 success/denied 모두 기록.</li>
+    <li>거절 사유 enum: <code>DENIED_REASON_LABELS</code> (13가지, frontend/backend 공유).</li>
+  </ol>
+
+  <h3>4.4 운영 cron (Workers)</h3>
+  <table>
+    <tr><th>cron</th><th>핸들러</th><th>역할</th></tr>
+    <tr><td>DAILY_EXPIRY_CRON</td><td>runDailyExpiry</td><td>members.status 자동 expired 전환 + memberships 만료 처리</td></tr>
+    <tr><td>QR_CLEANUP_CRON</td><td>(qr_used_tokens 정리)</td><td>만료된 nonce 삭제</td></tr>
+    <tr><td>ALERT_CHECK_CRON</td><td>processAlertChecks</td><td>알림 검사</td></tr>
+    <tr><td>SYNC_CRON</td><td>processNextSyncJobs</td><td>device_sync_jobs 처리</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>5. 이번 세션의 작업 시간순</h2>
+
+  <h3>5.1 Cloudflare Pages 빌드 실패 4건 픽스 → 커밋 <code>63a2be1</code> <span class="badge ok">완료</span></h3>
+  <ul>
+    <li><b>A.</b> <code>packages/shared/src/types/members.ts</code> — Membership 인터페이스에 <code>price?: number | null</code> 추가 (<code>SendBillDialog</code> 가 참조)</li>
+    <li><b>B.</b> <code>apps/crm/src/pages/branches/BranchDetailPage.tsx:15</code> — <code>{ MemberStatusBadge }</code> named import → default import (대상 파일은 default export)</li>
+    <li><b>C.</b> <code>apps/crm/src/pages/branches/BranchesListPage.tsx</code> — <code>BranchCard</code> prop 타입을 <code>ReturnType&lt;...&gt; extends Promise&lt;infer A&gt; ? A[number] : never</code> 복잡 추론에서 <code>BranchStats</code> 단순 타입으로 교체. <code>noUncheckedIndexedAccess</code> 충돌 해소</li>
+    <li><b>D.</b> <code>apps/crm/src/services/branches.ts</code> — supabase insert/update 인자에 <code>as unknown as Record&lt;string, unknown&gt;</code> 단언 + TODO 주석("추후 Supabase Database 타입 생성 후 제거 — supabase gen types"). Database 타입이 generic placeholder 라 strict 한 input 이 통과 못함</li>
+  </ul>
+
+  <h3>5.2 Auth 프로필 로딩 hotfix → 커밋 <code>e533503</code> <span class="badge ok">완료</span></h3>
+  <p>증상: 새로 로그인 직후 "프로필이 연결되지 않았습니다" 영구 노출. 새로고침하면 정상.</p>
+  <ul>
+    <li>원인: <code>AuthContext</code> 가 <code>getSession()</code> 과 <code>onAuthStateChange.INITIAL_SESSION</code> 두 곳에서 fetchProfile 동시 트리거 → JWT 가 PostgREST 헤더에 안정 부착되기 전 SELECT 가 anon 으로 평가되어 0 rows.</li>
+    <li>수정 (옵션 A — 상태머신 도입):
+      <ul>
+        <li><code>profileState: "idle" | "loading" | "loaded" | "missing" | "error"</code> 상태머신.</li>
+        <li><code>fetchProfileWithRetry</code> — error 만 backoff(400/1200ms) 2회 재시도. loaded/missing 즉시 확정.</li>
+        <li>Stale-request guard: <code>reqIdRef</code> 단조 증가, 응답 도착 시 자기 reqId 가 최신일 때만 setState. 늦은 응답이 정상 결과를 덮어쓰지 못함.</li>
+        <li>이벤트 분기: <code>INITIAL_SESSION</code> 무시, <code>SIGNED_OUT</code>→clear, <code>SIGNED_IN/TOKEN_REFRESHED/USER_UPDATED</code> 만 재조회.</li>
+      </ul>
+    </li>
+    <li>호출자 파급: <code>LoginPage.tsx</code>, <code>kiosk/KioskHomePage.tsx</code> 의 <code>loading</code> → <code>authLoading</code> 으로 rename.</li>
+  </ul>
+
+  <h3>5.3 feature/payment-requests 진단 — Step 1 typecheck 픽스 <span class="badge ok">완료</span> (실 결제 연동은 <span class="badge warn">차단</span>)</h3>
+  <p>결제선생(Payssam) 청구서 발송 시스템 초안 진단. 변경 8개 파일(신규 4 + 수정 4):</p>
+  <table>
+    <tr><th>파일</th><th>역할</th></tr>
+    <tr><td>supabase/migrations/20260510000000_payment_requests.sql</td><td>payment_requests 테이블 + payment_request_status enum + RLS + mark_payment_completed RPC</td></tr>
+    <tr><td>workers/api/src/routes/payments.ts</td><td>POST /send (JWT) · POST /webhook · GET /:member_id</td></tr>
+    <tr><td>workers/api/src/lib/env.ts</td><td>PAYSSAM_API_KEY?, PAYSSAM_WEBHOOK_SECRET? 옵셔널 슬롯</td></tr>
+    <tr><td>apps/crm/src/services/payments.ts · components/payments/SendBillDialog.tsx</td><td>UI · 발송 fetch</td></tr>
+    <tr><td>pages/members/MemberDetailPage.tsx</td><td>"결제 청구" 카드 + 회원권별 "청구" 버튼</td></tr>
+  </table>
+  <p>Step 1 픽스(typecheck 통과 위해서만):</p>
+  <ul>
+    <li><code>responses.ts</code>: ErrorStatus union 에 <code>409</code> 추가</li>
+    <li><code>payments.ts:59</code>: <code>parsed.error.issues[0]?.message ?? "잘못된 요청입니다."</code> 옵셔널 체이닝</li>
+    <li><code>onboarding.ts:123</code>: <code>ok(c, payload, 201)</code> 가 헬퍼 시그니처와 안 맞아 → <code>c.json(...)</code> 직접 호출 (201 보존)</li>
+  </ul>
+  <div class="callout warn">
+    <b>그 후</b>: <code>responses.ts</code> 와 <code>onboarding.ts</code> 가 system-reminder 로 의도적 회귀(원본 상태로 되돌아감)됨이 통보됨. 즉시 재수정 금지. 사용자가 의도적으로 그 상태를 유지하고 있음. <b>현재 @153/api typecheck 가 onboarding.ts 64,123 에서 2건 실패 상태로 잔존</b>.
+  </div>
+  <div class="callout danger">
+    <b>main 머지 보류 사유</b>: ① 결제선생 API base URL/payload/webhook 서명 모두 추측 코드 ② 운영 DB 마이그레이션 미적용 ③ HMAC-SHA256 webhook 서명 검증 TODO ④ 시크릿 미등록 ⑤ Phase 21 GRANT 마이그레이션 적용 여부 미확인.
+  </div>
+
+  <h3>5.4 feature/access-control-core — Access Preview API + verifyAccess 리팩터링 <span class="badge ok">1단계 완료</span></h3>
+  <p>발견: 출입통제 코어(<code>verifyAccess</code>, <code>routes/access.ts</code>, <code>DENIED_REASON_LABELS</code>, 모든 테이블/cron) 가 이미 풀구현. 이번 작업은 <b>회원 상세 화면이 권위 결과를 표시하도록</b> 끌어올리기.</p>
+  <table>
+    <tr><th>파일</th><th>변경</th></tr>
+    <tr><td>workers/api/src/services/accessPreview.ts</td><td><b>신규</b>. <code>previewAccessForMember(db, memberId, branchIdHint?)</code> — side-effect 없음. member.status → grants → memberships → trials 순. 차별 union 반환 <code>{allowed: true, source: "grant"|"membership"|"trial"} | {allowed: false, reason: DeniedReason}</code></td></tr>
+    <tr><td>workers/api/src/routes/access.ts</td><td><b>수정</b>. <code>GET /api/access/preview</code> 추가. JWT 인증 + role 가드(HQ_ROLES/BRANCH_ROLES) + company/branch 일치 검사 + <code>previewAccessForMember</code> 호출</td></tr>
+    <tr><td>workers/api/src/services/accessVerifier.ts</td><td><b>리팩터링</b>. 기존 step 3~5 (member 상태/grants/memberships/trials) 를 <code>previewAccessForMember</code> 위임. trial used_entries++, QR nonce 등록은 verify 본체에 보존.</td></tr>
+    <tr><td>apps/crm/src/services/access.ts</td><td><b>신규</b>. <code>getAccessPreview(memberId, branchId?)</code> — VITE_API_BASE_URL 기반 fetch. JWT Authorization 자동 부착.</td></tr>
+    <tr><td>apps/crm/src/pages/members/MemberDetailPage.tsx</td><td><b>수정</b>. <code>accessPreviewQuery</code> useQuery 추가 (staleTime 30s). 표시 박스가 query 결과 우선, 응답 전엔 기존 <code>computeAccessReady</code> fallback. 사유는 <code>DENIED_REASON_LABELS</code> 사용.</td></tr>
+  </table>
+  <p>커밋(브랜치 history): <code>905f6c2 / 01614eb / 47907f5 feat: add access preview for member detail</code> 등.</p>
+
+  <h3>5.5 "로딩 중…" 영구 노출 진단 <span class="badge warn">미수정</span></h3>
+  <div class="callout danger">
+    <b>핵심 결함 식별 — 미수정 상태로 진단만 마침</b>
+    <p><span class="file-path">apps/crm/src/components/ProtectedRoute.tsx:8</span> 의 분기 순서:</p>
+    <pre>if (authLoading || profileState === "idle" || profileState === "loading") {
+  return &lt;로딩 중…&gt;;
+}
+if (!user) {
+  return &lt;Navigate to="/login" /&gt;;
+}</pre>
+    <p><code>profileState === "idle"</code> 의 <b>의미</b> = "세션 없음(비로그인)". 그런데 그 상태가 로딩으로 잘못 분류되어, 비로그인 사용자가 보호 라우트를 직접 방문하면 <code>/login</code> 으로 리다이렉트되지 못하고 영구 "로딩 중…" 노출.</p>
+    <p><b>재현</b>: localStorage 에 세션 없는 상태로 <code>/</code> 또는 <code>/members</code> 직접 진입. 새로고침해도 동일. <code>/login</code> 직접 진입은 정상(ProtectedRoute 밖).</p>
+    <p><b>특히</b> Cloudflare Pages preview URL ↔ production URL 간 origin 분리로 localStorage 세션이 공유되지 않을 때 confidently 재현.</p>
+    <p><b>권장 hotfix</b> — 분기 순서 변경:</p>
+    <pre>if (authLoading) return &lt;로딩&gt;;
+if (!user) return &lt;Navigate to="/login" state={{ from: location }} replace /&gt;;
+if (profileState === "idle" || profileState === "loading") return &lt;로딩&gt;;
+if (profileState === "error") return &lt;에러 화면&gt;;
+if (profileState === "missing" || !profile) return &lt;프로필 미연결&gt;;
+return &lt;Outlet /&gt;;</pre>
+    <p>단일 파일 · 분기 순서 1줄 단위 변경.</p>
+  </div>
+
+  <h3>5.6 부수 작업</h3>
+  <ul>
+    <li>잘못된 디렉토리에서 git commit 후 game-fit-quests/main 으로 push 된 사고 — <code>git reset --mixed HEAD~1</code> 로 로컬 복구. 원격은 사용자가 force push 또는 revert 결정 필요(현재 미해결).</li>
+    <li>본 인계 문서 작성 (이 PDF).</li>
+  </ul>
+</section>
+
+<section>
+  <h2>6. 미해결 / 차단 / 보류</h2>
+  <table>
+    <tr><th>항목</th><th>상태</th><th>차단 이유 / 다음 액션</th></tr>
+    <tr><td>ProtectedRoute idle 분기 hotfix</td><td><span class="badge danger">긴급</span></td><td>5.5 절 권장 패치를 단일 PR 로. 외부 의존 0.</td></tr>
+    <tr><td>workers/api typecheck 부채 (onboarding.ts 64/123, responses.ts 409 미포함)</td><td><span class="badge warn">의도적 회귀</span></td><td>system-reminder 가 의도적이라 명시. 사용자 지시 없는 한 재수정 금지. CI 에 tsc 단계 도입 시 차단 발생.</td></tr>
+    <tr><td>결제선생(Payssam) 실 API 연동</td><td><span class="badge warn">외부 차단</span></td><td>파트너 계약 + API 문서 → base URL/payload/HMAC 서명 알고리즘 확정 후. 그 전엔 mock.</td></tr>
+    <tr><td>20260510 payment_requests 마이그레이션 운영 적용</td><td><span class="badge warn">대기</span></td><td>SQL Editor 또는 Lovable 위임. <b>선결: Phase 21</b> (20260507_grant_authenticated_privileges.sql) 적용 확인.</td></tr>
+    <tr><td>결제 webhook HMAC-SHA256 검증 구현</td><td><span class="badge danger">보안</span></td><td><span class="file-path">workers/api/src/routes/payments.ts:142-151</span> TODO. 현재 signature 누락 시 console.warn 만. 위조 webhook → 임의 paid 전환 가능.</td></tr>
+    <tr><td>Cloudflare Worker 시크릿 등록 (PAYSSAM_API_KEY, PAYSSAM_WEBHOOK_SECRET)</td><td><span class="badge muted">대기</span></td><td><code>wrangler secret put ...</code>. 실 API 확정 후.</td></tr>
+    <tr><td>game-fit-quests/main 사고 커밋 정리</td><td><span class="badge warn">미해결</span></td><td>force push 또는 revert 사용자 결정 대기.</td></tr>
+    <tr><td>main 의 153-boxing-os 작업 (access preview) 1차 안정화</td><td><span class="badge ok">완료</span></td><td>typecheck/build 통과. 단 5.5 hotfix 후에야 진정한 운영 안정.</td></tr>
+    <tr><td>회원권 변경 시 access-preview 캐시 invalidation</td><td><span class="badge muted">선택</span></td><td><code>updateMembershipState</code> 등의 mutation onSuccess 에 <code>qc.invalidateQueries({ queryKey: ["access-preview", memberId] })</code> 추가.</td></tr>
+    <tr><td>Supabase Database 타입 생성 (현재 generic placeholder)</td><td><span class="badge muted">권장</span></td><td><code>supabase gen types typescript --project-id ... &gt; ...types.ts</code>. 적용 후 services/branches.ts 의 D 단언 일괄 제거 가능.</td></tr>
+    <tr><td>wrangler 3 → 4 업그레이드 (deprecation warning)</td><td><span class="badge muted">선택</span></td><td><code>npm install --save-dev wrangler@4</code>. 별도 PR.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>7. 다음 안전한 작업 순서 (권장 큐)</h2>
+  <ol>
+    <li><b>[P0]</b> ProtectedRoute idle 분기 hotfix (5.5 절 권장 패치 그대로). 단일 파일 · 5분 작업. main 직접 머지 가능 — 외부 의존 0.</li>
+    <li><b>[P1]</b> Phase 21 GRANT 마이그레이션 운영 적용 여부 확인 (9.3 SQL #1). 비어있으면 SQL Editor 에서 실행.</li>
+    <li><b>[P1]</b> access-preview 캐시 invalidation — <code>updateMembershipState</code>, <code>cancelTrialPass</code> 등 mutation 의 onSuccess 에서 <code>["access-preview", memberId]</code> 무효화 추가.</li>
+    <li><b>[P2]</b> Workers typecheck 부채 — 사용자 의향 재확인. 회복하려면 ErrorStatus 에 409 다시 추가 + onboarding.ts:123 의 <code>ok(...,201)</code> → <code>c.json(...)</code>. 사용자가 의도적 회귀를 다시 풀어달라고 할 때까지 대기.</li>
+    <li><b>[P2]</b> 결제선생 파트너 계약 진행 후 → payments.ts 실 스펙 반영 + HMAC 서명 구현 + 시크릿 등록 + 마이그레이션 운영 적용 → main 머지.</li>
+    <li><b>[P3]</b> Supabase Database 타입 생성 (D 단언 제거).</li>
+    <li><b>[P3]</b> 출입통제 다음 단계: access_grants UI 관리 화면 / 단말기 동기화 실패 알림 화면 / 슈프리마 어댑터 (실 vendor 계약 후).</li>
+  </ol>
+</section>
+
+<section>
+  <h2>8. 절대 위반 금지 원칙</h2>
+  <div class="callout danger">
+    <ol>
+      <li><b>판정 권위는 서버.</b> 문열림 판단을 프론트에서 하지 말 것. <code>computeAccessReady</code> 는 fallback 표시용일 뿐.</li>
+      <li><b>service_role key 를 프론트엔드 번들에 절대 넣지 말 것.</b> 프론트는 anon key + 사용자 JWT 만.</li>
+      <li><b>main push 는 사용자 명시 승인 후에만.</b> 작업은 항상 feature 브랜치.</li>
+      <li><b>Solapi/결제선생/슈프리마 등 외부 vendor API 의 base URL/payload/서명 알고리즘을 추측해서 구현하지 말 것.</b> 계약 + 문서 확보 후.</li>
+      <li><b>RLS 끄지 말 것.</b> 권한 문제는 RLS 정책 또는 GRANT 로 해결.</li>
+      <li><b>Solapi/Payssam API 키를 .env / Pages 환경변수에 노출하지 말 것.</b> 모두 Workers <code>wrangler secret</code> 전용.</li>
+      <li><b>access_logs 는 INSERT-only.</b> UPDATE/DELETE 트리거가 차단. 우회 시도 금지.</li>
+      <li><b>trial_passes.used_entries 는 verifyAccess 에서만 증가.</b> preview 와 frontend 는 절대 update 하지 말 것.</li>
+      <li><b>Vite 청크 분리 시 React 본체와 Radix/router/react-query 를 분리하지 말 것.</b> forwardRef undefined 런타임 크래시 (메모리에 학습된 사고).</li>
+      <li><b>game-fit-quests 에 새 챗 박스 만들지 말 것.</b> AI 코치봇은 <code>ChatAssistant.tsx</code> + <code>chat-assistant</code> Edge Function 단일 경로.</li>
+      <li><b>결제 / payment / payssam 관련 파일은 access-control 작업 시 절대 수정하지 말 것.</b> 브랜치 분리(<code>feature/payment-requests</code> ↔ <code>feature/access-control-core</code>) 유지.</li>
+      <li><b>destructive git 작업(force push, reset --hard, branch -D)은 사용자 명시 승인 후에만.</b></li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <h2>9. 참조</h2>
+
+  <h3>9.1 자주 쓰는 명령</h3>
+  <pre># game-fit-quests
+bun run dev
+bun run build              # 푸시 전 필수
+npx tsc --noEmit
+git log --oneline -10
+
+# 153-boxing-os (모노레포)
+bun run --filter '@153/crm' typecheck
+bun run --filter '@153/crm' build
+bun run --filter '@153/api' typecheck
+bun run --filter '@153/api' build      # wrangler --dry-run
+bun run build                          # 전체</pre>
+
+  <h3>9.2 핵심 파일 빠른 참조</h3>
+  <table>
+    <tr><th>역할</th><th>경로</th></tr>
+    <tr><td>153 출입 권위 판정</td><td>workers/api/src/services/accessVerifier.ts → previewAccessForMember</td></tr>
+    <tr><td>153 출입 미리보기 (UI)</td><td>workers/api/src/services/accessPreview.ts</td></tr>
+    <tr><td>153 거절 사유 라벨</td><td>packages/shared/src/constants/deniedReasons.ts</td></tr>
+    <tr><td>153 세션·프로필 상태머신</td><td>apps/crm/src/contexts/AuthContext.tsx</td></tr>
+    <tr><td>153 보호 라우트 가드 (P0 결함)</td><td>apps/crm/src/components/ProtectedRoute.tsx</td></tr>
+    <tr><td>game AI 코치봇 (유일 경로)</td><td>src/components/ChatAssistant.tsx ↔ supabase/functions/chat-assistant/</td></tr>
+  </table>
+
+  <h3>9.3 운영 DB 진단 SQL (Supabase SQL Editor)</h3>
+  <pre>-- (1) Phase 21 GRANT 적용 여부 확인
+SELECT grantee, privilege_type
+FROM information_schema.role_table_grants
+WHERE table_schema = 'public' AND table_name = 'profiles' AND grantee = 'authenticated'
+ORDER BY privilege_type;
+-- 비어있으면 supabase/migrations/20260507000000_grant_authenticated_privileges.sql 적용 필요
+
+-- (2) profiles RLS 정책 본문
+SELECT polname, polcmd,
+       pg_get_expr(polqual, polrelid)      AS using_clause,
+       pg_get_expr(polwithcheck, polrelid) AS check_clause
+FROM pg_policy WHERE polrelid = 'public.profiles'::regclass;
+
+-- (3) 특정 사용자 프로필 직접 조회
+SELECT id, role, company_id, branch_id, auth_user_id, name, created_at
+FROM public.profiles WHERE auth_user_id = '&lt;UUID&gt;';
+
+-- (4) RLS 활성 확인
+SELECT relname, relrowsecurity FROM pg_class WHERE relname IN ('profiles','members','memberships');
+
+-- (5) auth.users 에 있는데 profiles 매핑 누락된 계정
+SELECT u.id AS auth_user_id, u.email, u.created_at
+FROM auth.users u
+LEFT JOIN public.profiles p ON p.auth_user_id = u.id
+WHERE p.id IS NULL ORDER BY u.created_at DESC;
+
+-- (6) payment_requests 테이블 존재 (운영 적용 확인)
+SELECT to_regclass('public.payment_requests');
+-- NULL 이면 20260510000000_payment_requests.sql 미적용</pre>
+
+  <h3>9.4 환경변수 / 시크릿 분리표</h3>
+  <table>
+    <tr><th>변수</th><th>위치</th><th>설명</th></tr>
+    <tr><td>VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY</td><td>Pages env (build)</td><td>프론트 — 공개해도 무방한 publishable key</td></tr>
+    <tr><td>VITE_API_BASE_URL</td><td>Pages env (build)</td><td>Workers 도메인. 누락 시 access preview 가 같은 origin 으로 fallback (실패)</td></tr>
+    <tr><td>SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / SUPABASE_JWT_SECRET</td><td>Workers secret</td><td>서버 전용. <b>프론트 절대 노출 금지</b></td></tr>
+    <tr><td>QR_SIGNING_SECRET</td><td>Workers secret</td><td>HMAC-SHA256 QR 토큰 서명</td></tr>
+    <tr><td>DEVICE_KMS_KEY</td><td>Workers secret</td><td>device api_key AES-GCM 암호화 키</td></tr>
+    <tr><td>PAYSSAM_API_KEY / PAYSSAM_WEBHOOK_SECRET</td><td>Workers secret (옵셔널)</td><td>결제선생 — 계약 후 발급</td></tr>
+    <tr><td>SOLAPI_API_KEY / SOLAPI_API_SECRET</td><td>Workers secret 또는 DB 암호화 컬럼</td><td>지점별 카카오 알림톡 — branch_kakao_settings 에 KMS 암호화 저장</td></tr>
+  </table>
+</section>
+
+<footer class="page-footer">
+  AI 코딩 에이전트 핸드오프 v1 · 2026-05-06 작성 · Claude Opus 4.7 (1M) · 본 문서는 두 프로젝트의 진행상태와 충돌 회피 원칙을 다음 세션/다른 LLM 으로 인계하기 위한 단일 진입점입니다.
+</footer>
+
+</body>
+</html>

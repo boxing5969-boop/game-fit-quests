@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>마이복서153 — 코딩 핸드오프 (153마인드셋)</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+    color: #111827;
+    line-height: 1.55;
+    font-size: 11pt;
+    margin: 0;
+    padding: 0;
+  }
+  h1 {
+    font-size: 22pt;
+    color: #0a1024;
+    border-bottom: 3px solid #fdb85c;
+    padding-bottom: 8px;
+    margin: 0 0 10px;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 15pt;
+    color: #0a1024;
+    border-left: 4px solid #fdb85c;
+    padding-left: 10px;
+    margin-top: 28px;
+    margin-bottom: 10px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12pt;
+    color: #1f2937;
+    margin-top: 16px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0 6px 18px; padding-left: 0; }
+  li { margin-bottom: 3px; }
+  code {
+    font-family: "Consolas", "Cascadia Code", "D2Coding", monospace;
+    background: #f1f5f9;
+    color: #b87900;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 9.5pt;
+  }
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-family: "Consolas", "Cascadia Code", monospace;
+    font-size: 9pt;
+    line-height: 1.45;
+    overflow-x: auto;
+    page-break-inside: avoid;
+  }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #d1d5db;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #f3f4f6;
+    font-weight: 700;
+  }
+  .meta {
+    background: linear-gradient(135deg, #0a1024 0%, #1f2a44 100%);
+    color: #fef3c7;
+    padding: 18px 20px;
+    border-radius: 8px;
+    margin-bottom: 22px;
+  }
+  .meta p { margin: 3px 0; font-size: 10.5pt; }
+  .meta strong { color: #fdb85c; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 9pt;
+    font-weight: 700;
+    margin-right: 4px;
+  }
+  .badge-ok { background: #d1fae5; color: #065f46; }
+  .badge-warn { background: #fef3c7; color: #92400e; }
+  .badge-no { background: #fee2e2; color: #991b1b; }
+  .badge-amber { background: #fdb85c; color: #4a2d00; }
+  .quote {
+    border-left: 3px solid #a40e1a;
+    background: #fef2f2;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 10pt;
+    color: #4b1a1a;
+  }
+  .small { font-size: 9.5pt; color: #4b5563; }
+  .page-break { page-break-after: always; }
+  .toc {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 14px 20px;
+    margin-bottom: 24px;
+  }
+  .toc ol { margin: 4px 0 0 20px; }
+  .toc li { margin-bottom: 2px; font-size: 10pt; }
+  .danger {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 10pt;
+  }
+  .ok-box {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 10pt;
+  }
+</style>
+</head>
+<body>
+
+<h1>마이복서153 — 153마인드셋 코딩 핸드오프</h1>
+
+<div class="meta">
+  <p><strong>프로젝트</strong>: 마이복서153 (My Boxer 153) — 153복싱짐 회원 앱</p>
+  <p><strong>대상 기능</strong>: 153마인드셋 — 성인 회원용 3분 1라운드 시각화 훈련</p>
+  <p><strong>핸드오프 일자</strong>: 2026-05-07</p>
+  <p><strong>대상 독자</strong>: 다음 단계 작업을 이어받는 AI 코딩 어시스턴트 (또는 인간 개발자)</p>
+  <p><strong>저장소</strong>: GitHub <code>153boxing/game-fit-quests</code> · 브랜치 <code>main</code></p>
+</div>
+
+<div class="toc">
+  <strong>목차</strong>
+  <ol>
+    <li>프로젝트 메타 / 스택 / 배포</li>
+    <li>절대 보호 영역 (수정 금지)</li>
+    <li>153마인드셋 기능 명세</li>
+    <li>라우팅 / 메뉴 구조</li>
+    <li>파일 구조 — 신규 / 수정 / 보존</li>
+    <li>데이터 모델 (콘텐츠)</li>
+    <li>localStorage 정책</li>
+    <li>UI / 디자인 토큰</li>
+    <li>코딩 작업 타임라인</li>
+    <li>AI 가이드라인 (다음 작업 시 체크리스트)</li>
+    <li>부록: 빌드 / 배포 명령</li>
+  </ol>
+</div>
+
+<h2>1. 프로젝트 메타 / 스택 / 배포</h2>
+
+<table>
+  <tr><th>항목</th><th>값</th></tr>
+  <tr><td>앱 이름</td><td>마이복서153 (My Boxer 153)</td></tr>
+  <tr><td>시스템명</td><td>153 QUEST</td></tr>
+  <tr><td>브랜드 키워드</td><td>153복싱짐 (모든 장소 표현은 이 단어로 통일)</td></tr>
+  <tr><td>스택</td><td>React 18 + Vite + TypeScript + Tailwind + shadcn/ui + framer-motion + lucide-react</td></tr>
+  <tr><td>구조</td><td><code>src/pages/</code> 평면 구조 (Next.js 아님). React Router v6 + lazy import</td></tr>
+  <tr><td>백엔드</td><td>Supabase (Postgres + RLS + RPC + Storage + Edge Functions)</td></tr>
+  <tr><td>배포 (프런트)</td><td>Cloudflare Pages — main 브랜치 push 시 자동 빌드 (2~4분)</td></tr>
+  <tr><td>배포 (DB)</td><td>Supabase Dashboard SQL Editor 수동 실행</td></tr>
+  <tr><td>SPA 라우팅</td><td><code>public/_redirects</code> 파일</td></tr>
+  <tr><td>빌드 명령</td><td><code>bun run build</code></td></tr>
+  <tr><td>타입 검증</td><td><code>npx tsc --noEmit</code></td></tr>
+  <tr><td>패키지 매니저</td><td>bun</td></tr>
+</table>
+
+<h2>2. 절대 보호 영역 (수정 금지)</h2>
+
+<div class="danger">
+  <strong>경고</strong>: 아래 영역은 153마인드셋 기능과 무관하며, 운영 중인 핵심 기능이다. 어떤 경우에도 수정 금지.
+</div>
+
+<h3>2.1 코어 비즈니스 영역</h3>
+<ul>
+  <li><code>levels</code> / <code>missions</code> / <code>mission_videos</code> / <code>mission_submissions</code> 테이블</li>
+  <li><code>member_progress</code> 테이블 + 모든 컬럼</li>
+  <li><code>approve_mission_submission</code> RPC</li>
+  <li><code>record_attendance</code> RPC</li>
+  <li><code>useManualLevelUp</code> / <code>usePassBossBattle</code> 훅</li>
+  <li><code>MissionsPage.tsx</code>의 공식 훈련 로직</li>
+  <li><code>RankUpPage.tsx</code>의 공식 랭크업 로직</li>
+  <li><code>useWallet.ts</code> / <code>challengeService.ts</code></li>
+  <li><code>allLevelsData.ts</code> / <code>whiteLevel1Data.ts</code> / <code>sharedConstants</code></li>
+</ul>
+
+<h3>2.2 AI 코치봇</h3>
+<ul>
+  <li><code>src/components/ChatAssistant.tsx</code> — 0 byte 변경</li>
+  <li><code>supabase/functions/chat-assistant/**</code></li>
+  <li><code>supabase/functions/_shared/systemPrompt153.ts</code> / <code>knowledge153.ts</code></li>
+</ul>
+
+<h3>2.3 자동 생성 / 외부 시스템</h3>
+<ul>
+  <li><code>src/integrations/supabase/types.ts</code> — 자동 생성, 손대지 않음</li>
+  <li><code>external/naver-talktalk/**</code> — 별도 시스템 (네이버 톡톡 봇)</li>
+  <li><code>supabase/functions/talktalk-*/**</code></li>
+</ul>
+
+<h3>2.4 결제 / 출석 / 관리자</h3>
+<ul>
+  <li>결제 / wallet 직접 update 금지 — <code>real_gems</code>는 <code>grant_gems</code> RPC 경유만</li>
+  <li>관리자 / 회원관리 / 코치 승인 흐름 미수정</li>
+  <li>로그인 / 회원가입 / AuthContext 미수정</li>
+</ul>
+
+<h2>3. 153마인드셋 기능 명세</h2>
+
+<h3>3.1 기능 개요</h3>
+<p>
+  153복싱짐으로 돌아온 성인 회원이 운동 직전·직후에 마음을 정돈하는 <strong>3분 1라운드 시각화 훈련</strong>.
+  RPG 게임형 표현 일절 사용 금지. 회복 / 꾸준함 / 자기 존중 / 전문성 / 지도자 가능성 톤.
+</p>
+
+<div class="quote">
+  복싱은 강해지는 시간이기도 하지만, 나를 다시 좋아하게 되는 시간이기도 합니다.
+</div>
+
+<h3>3.2 사용자 흐름 (7-step)</h3>
+<ol>
+  <li><strong>시작 화면</strong> — 제목 + 부제 + openingText + "시작하기"</li>
+  <li><strong>오늘의 마음</strong> — 6 옵션 중 1개 선택 → 응답 즉시 표시</li>
+  <li><strong>마음가짐</strong> — 5 옵션 중 1개 선택 → 설명 즉시 표시</li>
+  <li><strong>실천 약속</strong> — 7 옵션 중 정확히 3개 선택 (FIFO: 4번째 클릭 시 가장 오래된 1개 자동 제거)</li>
+  <li><strong>3분 플레이어</strong> — 12 세그먼트 × 15초, <code>setInterval</code> 1초 tick. 시작 / 일시정지 / 계속 / 다시시작 / 마무리</li>
+  <li><strong>감정 기록</strong> — Textarea 500자, 비워도 저장 가능</li>
+  <li><strong>저장 완료</strong> — localStorage 저장 + 마무리 선언문</li>
+</ol>
+
+<h3>3.3 두 세션 카탈로그</h3>
+<table>
+  <tr><th>세션</th><th>id (변경 금지)</th><th>title</th><th>용도</th></tr>
+  <tr>
+    <td>단기</td>
+    <td><code>myboxer-153-returned-person</code></td>
+    <td>153복싱짐으로 돌아온 사람</td>
+    <td>오늘의 한 라운드 (운동 직전 마음 정돈)</td>
+  </tr>
+  <tr>
+    <td>장기</td>
+    <td><code>myboxer-153-one-year-later</code></td>
+    <td>1년 뒤, 나는 복싱인이 되어 있다</td>
+    <td>1년 뒤 자신을 미리 만나는 장기 시각화</td>
+  </tr>
+</table>
+
+<div class="danger">
+  <strong>session id 변경 금지</strong> — localStorage 기록 호환성 유지를 위해 위 두 id는 영구 보존.
+</div>
+
+<h2>4. 라우팅 / 메뉴 구조</h2>
+
+<h3>4.1 라우트 (App.tsx)</h3>
+<table>
+  <tr><th>경로</th><th>가드</th><th>컴포넌트</th><th>비고</th></tr>
+  <tr><td><code>/myboxer/visualization</code></td><td>ProtectedRoute</td><td>MyBoxerVisualizationPage</td><td>표준 경로 (권장)</td></tr>
+  <tr><td><code>/story-rpg</code></td><td>ProtectedRoute</td><td>MyBoxerVisualizationPage</td><td>기존 RPG 자리, 호환 유지</td></tr>
+  <tr><td><code>/boxer-route</code></td><td>ProtectedRoute</td><td>MyBoxerVisualizationPage</td><td>직전 단계 자리, 호환 유지</td></tr>
+</table>
+
+<p>
+  세 경로 모두 같은 <code>MyBoxerVisualizationPage</code>로 연결.
+  <span class="badge badge-ok">로그인 필수</span>
+  <span class="badge badge-ok">모든 회원 (admin 포함) 통과</span>
+  <span class="badge badge-no">AdminOnlyRoute 추가 금지</span>
+</p>
+
+<h3>4.2 BottomNav 메뉴 항목</h3>
+<pre>{ path: "/myboxer/visualization", icon: Compass, label: "153마인드셋" }</pre>
+<p>
+  전체 메뉴 오버레이(<code>baseMenuItems</code>) 안. mainTabs 5개 메인 탭에는 노출 X.
+  "복싱 트레이닝(/minigame)" 다음 자리에 삽입 — 훈련 카테고리 묶음.
+</p>
+
+<div class="ok-box">
+  <strong>주의</strong>: BottomNav 다른 항목 순서 / 이름 / 아이콘 0 변경. 메인 5탭 0 변경.
+</div>
+
+<h2>5. 파일 구조 — 신규 / 수정 / 보존</h2>
+
+<h3>5.1 신규 (153마인드셋 본체)</h3>
+<table>
+  <tr><th>경로</th><th>역할</th></tr>
+  <tr><td><code>src/features/myboxer-visualization/visualizationContent.ts</code></td><td>2 세션 + 마음/마음가짐/약속 옵션 + 헬퍼</td></tr>
+  <tr><td><code>src/features/myboxer-visualization/MyBoxerVisualizationSession.tsx</code></td><td>7-step 흐름 + setInterval 플레이어 + localStorage 저장. <code>session</code> prop 받음</td></tr>
+  <tr><td><code>src/pages/MyBoxerVisualizationPage.tsx</code></td><td>라우트 wrapper. 단기/장기 picker 화면</td></tr>
+</table>
+
+<h3>5.2 수정 (라우트/메뉴 통합)</h3>
+<table>
+  <tr><th>경로</th><th>변경</th></tr>
+  <tr><td><code>src/App.tsx</code></td><td><code>BoxerRoutePage</code> import → <code>MyBoxerVisualizationPage</code> 교체. 라우트 3개에 매핑. AdminOnlyRoute 제거 → ProtectedRoute만</td></tr>
+  <tr><td><code>src/components/BottomNav.tsx</code></td><td><code>baseMenuItems</code>에 항목 1줄 추가. label "153마인드셋"</td></tr>
+</table>
+
+<h3>5.3 보존 (rollback 안전망 / dead code)</h3>
+<table>
+  <tr><th>경로</th><th>상태</th></tr>
+  <tr><td><code>src/pages/StoryRpgPage.tsx</code></td><td>153 스토리 RPG (47A/47B). 라우트 미연결</td></tr>
+  <tr><td><code>src/components/story-rpg/**</code></td><td>전체 자산 보존 (월드맵/전투/포트레이트/PNG)</td></tr>
+  <tr><td><code>public/assets/story-rpg/**</code></td><td>17장 PNG 보존</td></tr>
+  <tr><td><code>src/pages/BoxerRoutePage.tsx</code></td><td>직전 단계 RoundTimer 7라운드 자산. 라우트 미연결</td></tr>
+  <tr><td><code>src/components/boxer-route/**</code></td><td>5 컴포넌트 보존</td></tr>
+  <tr><td><code>src/data/boxerRouteContent.ts</code></td><td>7 라운드 데이터 보존</td></tr>
+  <tr><td><code>src/hooks/useVisualizationProgress.ts</code></td><td>localStorage <code>mb153_viz_*</code> hook 보존 (현재 미사용)</td></tr>
+</table>
+
+<h2>6. 데이터 모델 (콘텐츠)</h2>
+
+<h3>6.1 타입</h3>
+<pre>type MoodKey = "tired" | "stressed" | "awkward" | "excited" | "want_change" | "future_leader";
+type MindsetKey = "return_to_self" | "no_compare" | "one_more_time" | "respect_body" | "becoming_boxer";
+type PromiseKey = "breath_back" | "guard_up" | "no_compare_action" | "listen_coach"
+                | "retry_after_fail" | "record_emotion" | "thank_self";
+
+interface VisualizationSegment {
+  id: number;          // 1..12
+  start: number;       // 0..180
+  end: number;         // 0..180 (start + 15)
+  title: string;
+  guide: string;
+  narration: string;   // \n 줄바꿈으로 모바일 가독성
+}
+
+interface VisualizationSession {
+  id: string;          // 영구 식별자 — 변경 금지
+  title: string;
+  subtitle: string;
+  durationSeconds: 180;
+  openingText: string;
+  closingDeclaration: string;
+  segments: VisualizationSegment[];   // 정확히 12개
+}</pre>
+
+<h3>6.2 옵션 카운트</h3>
+<table>
+  <tr><th>옵션</th><th>개수</th><th>제약</th></tr>
+  <tr><td>MOOD_OPTIONS</td><td>6</td><td>회원이 1개 선택</td></tr>
+  <tr><td>MINDSET_OPTIONS</td><td>5</td><td>회원이 1개 선택</td></tr>
+  <tr><td>PROMISE_OPTIONS</td><td>7</td><td>회원이 정확히 3개 선택 (FIFO)</td></tr>
+</table>
+
+<h2>7. localStorage 정책</h2>
+
+<h3>7.1 키</h3>
+<pre>const STORAGE_KEY = "myboxer.visualization.records";   // 변경 금지</pre>
+
+<h3>7.2 record 형식</h3>
+<pre>{
+  sessionId: "myboxer-153-returned-person" | "myboxer-153-one-year-later",
+  completedAt: "2026-05-07T...",        // ISO
+  mood?: MoodKey,
+  mindset?: MindsetKey,
+  promises: PromiseKey[],                // 정확히 3개
+  reflection: string,                    // trim 처리, 빈 문자열 가능
+  declaration: string                    // session.closingDeclaration 사본
+}</pre>
+
+<h3>7.3 저장 규칙</h3>
+<ul>
+  <li><code>unshift</code>로 최신이 앞</li>
+  <li>최근 200개만 보관 (안전 상한)</li>
+  <li><code>try/catch</code> QuotaExceeded 안전망</li>
+  <li>SSR-safe (<code>typeof window === "undefined"</code> 체크)</li>
+  <li><strong>DB / API 호출 0</strong> — localStorage 단독</li>
+</ul>
+
+<h2>8. UI / 디자인 토큰</h2>
+
+<table>
+  <tr><th>요소</th><th>값</th></tr>
+  <tr><td>배경</td><td>deep navy 그라디언트 <code>#0a1024 → #0d1530 → #0a1024</code></td></tr>
+  <tr><td>주요 포인트</td><td>amber <code>#fdb85c</code> (CTA, 진행률, 강조)</td></tr>
+  <tr><td>브랜드 강조</td><td>rose-500 <code>#a40e1a</code> 좌측 보더 (인용 박스, 153복싱짐 톤)</td></tr>
+  <tr><td>모바일 우선</td><td><code>max-w-md mx-auto</code>, <code>min-h-dvh</code></td></tr>
+  <tr><td>애니메이션</td><td>framer-motion AnimatePresence (단계/세그먼트 전환), 기본 0.3~0.5s</td></tr>
+  <tr><td>아이콘</td><td>lucide-react만 사용 (이미 의존성에 포함)</td></tr>
+  <tr><td>shadcn/ui</td><td><code>Button</code> / <code>Textarea</code> / <code>cn</code> 활용</td></tr>
+</table>
+
+<div class="quote">
+  <strong>표현 금지</strong>: 링 / 체육관 / 복싱장 / gym / RPG / 몬스터 / 전투 / 보스 / 판타지 / 레벨업 / monster / battle / fantasy
+  <br>
+  <strong>장소 표현 통일</strong>: "153복싱짐" 만 사용
+</div>
+
+<h2>9. 코딩 작업 타임라인</h2>
+
+<table>
+  <tr><th>단계</th><th>커밋 / 작업</th><th>핵심 변경</th></tr>
+  <tr>
+    <td>47A / 47B</td>
+    <td>153 스토리 RPG (보존 영역)</td>
+    <td>월드맵 / 챕터 / 적 SVG·PNG / 턴제 전투 / 카드 / 픽셀 아트 17장</td>
+  </tr>
+  <tr>
+    <td>전환 1차</td>
+    <td>RPG → "복싱인 루트" RoundTimer 7라운드</td>
+    <td><code>BoxerRoutePage</code> + <code>boxer-route/</code> 컴포넌트</td>
+  </tr>
+  <tr>
+    <td>전환 2차</td>
+    <td>"복싱인 루트" → 153마인드셋</td>
+    <td><code>MyBoxerVisualizationSession</code> 7-step + 단기/장기 2 세션</td>
+  </tr>
+  <tr>
+    <td>접근 권한</td>
+    <td>9f8a2ca</td>
+    <td>AdminOnlyRoute 제거 → ProtectedRoute만</td>
+  </tr>
+  <tr>
+    <td>메뉴 노출</td>
+    <td>BottomNav</td>
+    <td><code>baseMenuItems</code>에 "153마인드셋" 항목 추가</td>
+  </tr>
+  <tr>
+    <td>명칭 통일</td>
+    <td>"복싱인 루트" → "153마인드셋"</td>
+    <td>UI 라벨 + 페이지 헤더 + 코멘트</td>
+  </tr>
+  <tr>
+    <td>본문 개선</td>
+    <td>visualizationContent.ts</td>
+    <td>단기 세션 톤 깊고 차분하게 / 12 세그먼트 정제</td>
+  </tr>
+</table>
+
+<h2>10. AI 가이드라인 (다음 작업 시 체크리스트)</h2>
+
+<h3>10.1 작업 시작 전 점검</h3>
+<ol>
+  <li><code>git status</code>로 modified/untracked 파일 확인. 본 작업과 무관한 modified 파일은 손대지 않음.</li>
+  <li>최근 커밋 5개 확인 (<code>git log --oneline -5</code>) — 어디까지 push됐는지 파악.</li>
+  <li>요청이 153마인드셋 영역인지, 보호 영역(§2)인지 분별.</li>
+</ol>
+
+<h3>10.2 작업 중 원칙</h3>
+<ul>
+  <li><span class="badge badge-no">금지</span> 보호 영역(§2) 0 byte 변경</li>
+  <li><span class="badge badge-no">금지</span> 새 npm 패키지 추가 (framer-motion / lucide-react / shadcn/ui 기존 활용)</li>
+  <li><span class="badge badge-no">금지</span> DB / API / Supabase RPC 직접 호출 (localStorage만)</li>
+  <li><span class="badge badge-no">금지</span> session id 변경 (localStorage 기록 호환성)</li>
+  <li><span class="badge badge-no">금지</span> localStorage key <code>myboxer.visualization.records</code> 변경</li>
+  <li><span class="badge badge-no">금지</span> AdminOnlyRoute 다시 추가</li>
+  <li><span class="badge badge-no">금지</span> "링 / 체육관 / 복싱장 / gym / RPG / 몬스터 / 전투 / 보스" 표현 사용</li>
+  <li><span class="badge badge-ok">권장</span> 장소는 "153복싱짐" 으로만 표현</li>
+  <li><span class="badge badge-ok">권장</span> 성인 회원 톤 — 차분하고 깊은 문체</li>
+  <li><span class="badge badge-ok">권장</span> "운동하러 왔다" 가 아닌 "153복싱짐으로 돌아와 나를 다시 세운다" 느낌</li>
+</ul>
+
+<h3>10.3 작업 끝 검증 (필수)</h3>
+<ol>
+  <li><code>npx tsc --noEmit</code> → EXIT=0 확인</li>
+  <li><code>bun run build</code> → "✓ built" 확인</li>
+  <li>grep 자기검열:
+    <ul>
+      <li><code>ChatAssistant | chat-assistant</code> in 변경 영역 → 0 hit</li>
+      <li><code>approve_mission_submission | record_attendance | member_progress</code> → 0 hit</li>
+      <li><code>useWallet | grant_gems</code> 직접 호출 → 0 hit</li>
+      <li><code>localStorage | sessionStorage</code> in 153마인드셋 영역 외 → 0 hit (기존 영역 외에서 추가 금지)</li>
+      <li><code>링 | 체육관 | 복싱장 | gym | 몬스터 | 전투 | 보스 | 판타지 | RPG</code> → 0 hit (UI/콘텐츠)</li>
+    </ul>
+  </li>
+  <li><code>git diff --stat</code>로 변경 파일 목록 확인 — 의도하지 않은 영역 변경 0 보장</li>
+  <li>새 npm 패키지 0 (<code>git diff package.json bun.lockb</code> 확인)</li>
+  <li>새 마이그레이션 0 (<code>supabase/migrations/</code> 변경 0)</li>
+</ol>
+
+<h3>10.4 보고 형식</h3>
+<pre>변경 파일 목록 (수정 / 신규)
+  - path: 무엇을 바꿨는지
+
+검증 결과
+  - npx tsc --noEmit ✓
+  - bun run build ✓
+  - 보호 영역 grep 0 hit
+  - 새 npm 패키지 0
+  - 새 마이그레이션 0
+
+이유
+  - 1~2 줄로 왜 이렇게 했는지
+
+다음 단계 (있다면)
+  - 사용자가 결정해야 할 후속 사안</pre>
+
+<h2>11. 부록: 빌드 / 배포 명령</h2>
+
+<h3>11.1 로컬 검증</h3>
+<pre>npx tsc --noEmit         # 타입체크
+bun run build            # 프로덕션 빌드
+bun run dev              # 개발 서버</pre>
+
+<h3>11.2 commit / push</h3>
+<pre>git add &lt;특정 파일들&gt;       # ⚠️ git add . 또는 -A 금지 (의도하지 않은 파일 포함 위험)
+git commit -m "feat(mindset): ..."
+git push origin main      # → Cloudflare Pages 자동 빌드 (2~4분)</pre>
+
+<h3>11.3 배포 확인</h3>
+<ul>
+  <li>Cloudflare Pages 대시보드에서 빌드 상태 확인</li>
+  <li>production URL에서 비로그인 사용자 차단 / 로그인 회원 통과 / 메뉴 노출 확인</li>
+  <li>localStorage <code>myboxer.visualization.records</code> 키에 record 누적 확인</li>
+</ul>
+
+<h3>11.4 rollback</h3>
+<pre>git revert &lt;commit-hash&gt;
+git push origin main      # Cloudflare Pages 자동 재빌드</pre>
+
+<p>
+  153마인드셋 자산이 미연결 상태로 디스크에 보존되어 있어, 라우트 swap 1 commit revert로 즉시 이전 화면 복원 가능.
+</p>
+
+<hr style="margin-top:30px; border:none; border-top:1px solid #d1d5db;">
+<p class="small">
+  © 마이복서153 · 153복싱짐 · 본 문서는 AI 코딩 핸드오프 용도. 회원 노출 자료 아님.
+  <br>
+  생성: 2026-05-07 / 작성 도구: Claude Code (Opus 4.7)
+</p>
+
+</body>
+</html>

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>마이복서153 — 7일 스타터 캠프 코딩 핸드오프</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  html, body {
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    color: #0f172a;
+    line-height: 1.55;
+    font-size: 11pt;
+    margin: 0;
+  }
+  h1 {
+    font-size: 22pt;
+    color: #0a1024;
+    border-bottom: 3px solid #fdb85c;
+    padding-bottom: 8px;
+    margin: 0 0 10px;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 15pt;
+    color: #0a1024;
+    border-left: 4px solid #fdb85c;
+    padding-left: 10px;
+    margin-top: 26px;
+    margin-bottom: 10px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12pt;
+    color: #1f2937;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0 6px 20px; padding: 0; }
+  li { margin-bottom: 3px; }
+  code {
+    font-family: "Consolas", "Cascadia Code", monospace;
+    background: #f1f5f9;
+    color: #b87900;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 9.5pt;
+  }
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-family: "Consolas", monospace;
+    font-size: 9pt;
+    line-height: 1.45;
+    overflow-x: auto;
+    page-break-inside: avoid;
+  }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #d1d5db;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f3f4f6; font-weight: 700; }
+  .meta {
+    background: linear-gradient(135deg, #0a1024 0%, #1f2a44 100%);
+    color: #fef3c7;
+    padding: 18px 20px;
+    border-radius: 8px;
+    margin-bottom: 22px;
+  }
+  .meta p { margin: 3px 0; font-size: 10.5pt; }
+  .meta strong { color: #fdb85c; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 9pt;
+    font-weight: 700;
+    margin-right: 4px;
+  }
+  .badge-ok { background: #d1fae5; color: #065f46; }
+  .badge-no { background: #fee2e2; color: #991b1b; }
+  .badge-warn { background: #fef3c7; color: #92400e; }
+  .danger {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 10pt;
+  }
+  .ok-box {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 10pt;
+  }
+  .quote {
+    border-left: 3px solid #a40e1a;
+    background: #fef2f2;
+    padding: 8px 12px;
+    margin: 10px 0;
+    font-size: 10pt;
+    color: #4b1a1a;
+  }
+  .toc {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 14px 20px;
+    margin-bottom: 22px;
+  }
+  .toc ol { margin: 4px 0 0 22px; }
+  .toc li { margin-bottom: 2px; font-size: 10pt; }
+  .small { font-size: 9.5pt; color: #4b5563; }
+</style>
+</head>
+<body>
+
+<h1>마이복서153 — 7일 스타터 캠프 코딩 핸드오프</h1>
+
+<div class="meta">
+  <p><strong>프로젝트</strong>: 마이복서153 (My Boxer 153) — 153복싱짐 회원 앱</p>
+  <p><strong>대상 기능</strong>: 오삼이와 함께하는 7일 입문 캠프 (MyBoxer Tutorial Camp)</p>
+  <p><strong>핸드오프 일자</strong>: 2026-05-07</p>
+  <p><strong>대상</strong>: 다음 단계 작업을 이어받는 AI 코딩 어시스턴트</p>
+  <p><strong>저장소</strong>: GitHub <code>153boxing/game-fit-quests</code> · 브랜치 <code>main</code></p>
+  <p><strong>스택</strong>: React 18 + Vite + TypeScript + Tailwind + shadcn/ui + framer-motion</p>
+</div>
+
+<div class="toc">
+  <strong>목차</strong>
+  <ol>
+    <li>기능 개요</li>
+    <li>절대 보호 영역</li>
+    <li>회원 흐름 — UI/UX 동작 명세</li>
+    <li>35 step 데이터 구조 + Day 별 매핑</li>
+    <li>Day cooldown 정책 — 1일 1Day</li>
+    <li>localStorage 정책</li>
+    <li>파일 구조 + 라인 카운트</li>
+    <li>모달 자동 감지 + 자동 next 흐름</li>
+    <li>chip / spotlight / 뒤로가기 / 30초 sheet</li>
+    <li>개발자 dev panel 접근 정책</li>
+    <li>Settings 진입점 (admin only)</li>
+    <li>Commit 타임라인 (단계 41 ~ 49+)</li>
+    <li>AI 가이드라인 — 다음 작업 시 체크리스트</li>
+    <li>부록 — 빌드 / 배포 / 검수 명령</li>
+  </ol>
+</div>
+
+<h2>1. 기능 개요</h2>
+
+<p>
+  신규 회원이 가입 후 7일 동안 <strong>매일 한 영역씩</strong> 마이복서153 앱의 핵심 사용법을 직접 체험하며 익히는 온보딩 캠프.
+  텍스트만 읽는 정적 튜토리얼이 아니라, <strong>실제 화면 영역을 spotlight 로 강조하고 회원이 직접 클릭/체험</strong>한 후 다음 step으로 진행.
+</p>
+
+<div class="quote">
+  회원 화면 이름: <strong>오삼이와 함께하는 7일 입문 캠프</strong><br>
+  내부 시스템명: <strong>MyBoxer Tutorial Camp</strong>
+</div>
+
+<h3>핵심 원칙</h3>
+<ul>
+  <li><span class="badge badge-ok">localStorage 단독</span> DB / Supabase / RPC 호출 0</li>
+  <li><span class="badge badge-ok">메뉴 변경 0</span> BottomNav / 라우트 구조 그대로</li>
+  <li><span class="badge badge-ok">기존 기능 0 byte 영향</span> 공식 훈련 / 153마인드셋 / wallet / 결제 / 관리자</li>
+  <li><span class="badge badge-ok">새 npm 패키지 0</span> framer-motion / lucide-react / shadcn/ui / canvas-confetti 기존 활용</li>
+  <li><span class="badge badge-ok">Day 1 회원에게 1일차만</span> Day cooldown 적용 — 다음날 자동 재개</li>
+  <li><span class="badge badge-ok">체험형 강제</span> "다음으로" 만 누르는 단조로운 흐름 제거</li>
+</ul>
+
+<h2>2. 절대 보호 영역</h2>
+
+<div class="danger">
+  <strong>경고</strong>: 본 영역은 7일 캠프와 무관하며 운영 중인 핵심 기능. 어떤 경우에도 수정 금지.
+</div>
+
+<table>
+  <tr><th>영역</th><th>위치</th></tr>
+  <tr><td>levels / missions / mission_videos / mission_submissions / member_progress</td><td>테이블 + 호출부 0 byte</td></tr>
+  <tr><td>approve_mission_submission / record_attendance</td><td>RPC 호출 0</td></tr>
+  <tr><td>useManualLevelUp / usePassBossBattle</td><td>0</td></tr>
+  <tr><td>useWallet / challengeService / allLevelsData / sharedConstants</td><td>0</td></tr>
+  <tr><td>ChatAssistant / chat-assistant Edge Function</td><td>0</td></tr>
+  <tr><td>153마인드셋 (myboxer-visualization) — session id, localStorage key, 7-step 흐름</td><td>0</td></tr>
+  <tr><td>BottomNav / 라우트 구조 / supabase types.ts</td><td>0</td></tr>
+  <tr><td>package.json / bun.lockb</td><td>0 (새 npm 패키지 0)</td></tr>
+  <tr><td>supabase/migrations/</td><td>0 (새 마이그레이션 0)</td></tr>
+</table>
+
+<h3>회원 노출 텍스트 금지어</h3>
+<p>
+  링 / 체육관 / 복싱장 / gym / RPG / 몬스터 / 전투 / 보스 / 판타지 / 레벨업 / monster / battle / fantasy
+  → <strong>0 hit</strong>. 장소 표현은 <strong>"153복싱짐"</strong> 만.
+</p>
+
+<h2>3. 회원 흐름 — UI/UX 동작 명세</h2>
+
+<h3>3.1 step 진입 시</h3>
+<ol>
+  <li><strong>tooltip 안내 카드</strong> 화면에 노출 — 오삼이 PNG (Day 별 표정) + osamiMessage + 제목 + 본문</li>
+  <li><strong>routeMismatch</strong> 시 — "여기로 이동" CTA 메인 노출, "다음으로" 비활성</li>
+  <li><strong>routeMatch + target 매칭</strong> — Spotlight (4-div dim mask) + amber pulse ring + target 안쪽 상단 amber chip "👆 여기를 클릭하세요" 깜빡 표시</li>
+  <li><strong>routeMatch + target 미매칭 (fallback)</strong> — 화면 중앙 모달 + fallback 안내 텍스트 + 다음 자동 활성 (안전망)</li>
+</ol>
+
+<h3>3.2 회원 행동</h3>
+<table>
+  <tr><th>행동</th><th>결과</th></tr>
+  <tr><td>amber chip "👆 여기를 클릭하세요" 직접 클릭</td><td>target 안 첫 actionable 자동 dispatch → 모달/sheet 열림</td></tr>
+  <tr><td>카드 root 빈 영역 클릭 (capture-phase listener)</td><td>안 actionable 자동 dispatch → 모달/sheet 열림</td></tr>
+  <tr><td>카드 안 button 직접 클릭</td><td>기존 onClick 동작 그대로 (capture listener는 부가만)</td></tr>
+  <tr><td>모달/sheet 열림 → 회원 직접 체험 (퀴즈/일기/응원 등)</td><td>캠프가 모달 자동 감지 (800ms 간격)</td></tr>
+  <tr><td>모달 닫힘 (X 또는 ESC)</td><td>1초 후 자동 camp.next() → 다음 step 진입</td></tr>
+  <tr><td>"이전" 버튼</td><td>이전 step (Day 경계 자동 처리, Day 1 step 0 에서는 미노출)</td></tr>
+  <tr><td>"건너뛰기 (오늘 Day)"</td><td>Day skip → skippedDays 추가</td></tr>
+  <tr><td>"잠시 멈추기"</td><td>status="paused" — 다시 들어와도 같은 step 유지</td></tr>
+</table>
+
+<h3>3.3 Day 마지막 step (완료 모달)</h3>
+<ul>
+  <li>actionType="complete" 의 step — Day 1.4 / 2.4 / 3.4 / 4.4 / 5.4 / 6.4</li>
+  <li>animation="confetti" — canvas-confetti 1회 발사</li>
+  <li>"오늘 캠프 마치기" 버튼 → completeTutorialCampDay 호출</li>
+  <li>30초 마무리 sheet 자동 표시 (PostActionReflectionSheet)</li>
+</ul>
+
+<h3>3.4 Day 7 — 캠프 졸업</h3>
+<ul>
+  <li>animation="celebration" — 3회 confetti 시퀀스</li>
+  <li>"복싱인이 되어가는 사람" 칭호 cosmetic 표시</li>
+  <li>force=true reflection — 같은 날 sheet 봤어도 큰 sheet 강제</li>
+  <li>status="completed" + completedAt 기록</li>
+</ul>
+
+<h2>4. 35 step 데이터 구조 + Day 별 매핑</h2>
+
+<h3>4.1 TutorialCampStep 타입</h3>
+
+<pre>interface TutorialCampStep {
+  day: number;                    // 1..7
+  step: number;                   // 0-based, day 안 인덱스
+  route: string;                  // 권장 라우트
+  targetKey: string;              // 영구 식별자 ("day1.osami_greeting")
+  targetSelector: string;         // CSS 셀렉터, 빈 문자열이면 모달
+  title: string;
+  body: string;
+  osamiMessage: string;
+  actionType: "read" | "click" | "navigate" | "open" | "complete";
+  requireTargetClick: boolean;
+  allowNextWithoutClick: boolean;
+  animation: "spotlight" | "pulse" | "hand" | "arrow" | "bounce"
+           | "confetti" | "celebration";
+  placement: "top" | "bottom" | "left" | "right" | "center";
+  fallbackText: string;
+  completionText: string;
+}</pre>
+
+<h3>4.2 Day 별 step 수 + 핵심 영역</h3>
+<table>
+  <tr><th>Day</th><th>주제</th><th>step 수</th><th>핵심 anchor</th></tr>
+  <tr><td>1</td><td>홈 / 오삼이 / 라운드</td><td>5</td><td>home-osami-briefing, home-today-round, missions-official-training, boxing-iq-card</td></tr>
+  <tr><td>2</td><td>마스터로드 / 공식 훈련</td><td>5</td><td>missions-official-training (4개 step 통합)</td></tr>
+  <tr><td>3</td><td>153 QUEST / 복싱 IQ</td><td>5</td><td>boxing-iq-card (4개 step 통합)</td></tr>
+  <tr><td>4</td><td>챌린지 / 안전 체크</td><td>5</td><td>challenge-arena-card (4개 step 통합)</td></tr>
+  <tr><td>5</td><td>챔피언 일기</td><td>5</td><td>champion-journal-card / growth-report-card</td></tr>
+  <tr><td>6</td><td>세컨드 응원</td><td>5</td><td>second-cheer-card</td></tr>
+  <tr><td>7</td><td>마이페이지 / 졸업</td><td>5</td><td>mypage-profile / boxing-hall-card / growth-report-card / celebration</td></tr>
+</table>
+
+<h3>4.3 SELECTOR_REMAP — 매칭 가능한 anchor 로 통합</h3>
+<p>
+  Day 안에서 anchor 가 화면에 없는 selector 11개는 <code>SELECTOR_REMAP</code> 헬퍼로 같은 Day 의 매칭 가능한 anchor 로 일괄 변환:
+</p>
+<pre>const SELECTOR_REMAP = {
+  '[data-tour="missions-master-road"]':     → '[data-tour="missions-official-training"]' + /missions
+  '[data-tour="missions-submit-note"]':     → '[data-tour="missions-official-training"]' + /missions
+  '[data-tour="missions-coach-approval-note"]': → '[data-tour="missions-official-training"]' + /missions
+  '[data-tour="challenge-difficulty"]':     → '[data-tour="challenge-arena-card"]' + /myboxer/quest
+  '[data-tour="challenge-safety-check"]':   → '[data-tour="challenge-arena-card"]' + /myboxer/quest
+  '[data-tour="challenge-submit"]':         → '[data-tour="challenge-arena-card"]' + /myboxer/quest
+  '[data-tour="journal-question"]':         → '[data-tour="champion-journal-card"]' + /myboxer/quest
+  '[data-tour="journal-save"]':             → '[data-tour="champion-journal-card"]' + /myboxer/quest
+  '[data-tour="second-cheer-list"]':        → '[data-tour="second-cheer-card"]' + /myboxer/quest
+  '[data-tour="cheer-sticker"]':            → '[data-tour="second-cheer-card"]' + /myboxer/quest
+};</pre>
+
+<h3>4.4 withInteractive 헬퍼 — 모든 체험 step 강제 모드</h3>
+<pre>function withInteractive(step) {
+  const remapped = SELECTOR_REMAP[step.targetSelector];
+  let { selector, route } = remapped ?? { selector: step.targetSelector, route: step.route };
+
+  if (selector !== "" && step.actionType !== "complete") {
+    return {
+      ...step,
+      targetSelector: selector,
+      route,
+      actionType: "click",         // read 도 click 으로
+      requireTargetClick: true,    // 직접 클릭 강제
+      allowNextWithoutClick: false,
+    };
+  }
+  return step;  // Day 완료 모달 (complete) 은 그대로
+}</pre>
+
+<h2>5. Day cooldown 정책 — 1일 1Day</h2>
+
+<p>
+  <strong>completeTutorialCampDay(N&lt;7)</strong> 호출 시:
+</p>
+<ul>
+  <li><code>currentDay</code> = N+1, <code>currentStep</code> = 0 (다음 day 자리로 이동)</li>
+  <li><code>status</code> = "paused" — 캠프 일시 정지</li>
+  <li><code>lastDayCompletedAt</code> = ISO 시각 기록</li>
+  <li>day_completed 이벤트 + camp_day reflection trigger</li>
+</ul>
+
+<p>
+  <strong>TutorialCampProvider</strong> 마운트 시 자동 cooldown 만료 검사:
+</p>
+<pre>useEffect(() => {
+  if (camp.state.status !== "paused") return;
+  if (!camp.state.lastDayCompletedAt) return;
+  const last = new Date(camp.state.lastDayCompletedAt);
+  const now = new Date();
+  const sameDay =
+    last.getFullYear() === now.getFullYear() &&
+    last.getMonth() === now.getMonth() &&
+    last.getDate() === now.getDate();
+  if (!sameDay) {
+    // 자정 지났음 → 자동 resume
+    camp.start();
+  }
+});</pre>
+
+<h2>6. localStorage 정책</h2>
+
+<table>
+  <tr><th>키</th><th>용도</th></tr>
+  <tr><td><code>myboxer.tutorialCamp.v1.state</code></td><td>TutorialCampState 전체 (status, currentDay, currentStep, completedDays, skippedDays, lastDayCompletedAt 등)</td></tr>
+  <tr><td><code>myboxer.tutorialCamp.v1.events</code></td><td>이벤트 로그 — 최근 500개 FIFO</td></tr>
+  <tr><td><code>myboxer.tutorialCamp.v1.devPreview</code></td><td>dev panel preview 좌표</td></tr>
+  <tr><td><code>myboxer.tutorialCamp.dev.enabled</code></td><td>dev 토글 — true 일 때만 dev panel 노출</td></tr>
+  <tr><td><code>myboxer.tutorialCamp.dev.previewProfileId</code></td><td>cosmetic 메모 — 서버 user_id 무관</td></tr>
+  <tr><td><code>myboxer.postActionReflection.v1.lastShownAt</code></td><td>30초 마무리 sheet 하루 1회 제한 키</td></tr>
+</table>
+
+<div class="ok-box">
+  <strong>호환성 보장</strong>: 기존 키 <code>myboxer.visualization.records</code> (153마인드셋) <strong>0 변경</strong>.
+  153마인드셋 session id (<code>myboxer-153-returned-person</code>, <code>myboxer-153-one-year-later</code>) 도 <strong>0 변경</strong>.
+</div>
+
+<h2>7. 파일 구조 + 라인 카운트</h2>
+
+<h3>7.1 src/features/tutorial-camp/ — 18 파일</h3>
+<table>
+  <tr><th>파일</th><th>역할</th><th>라인</th></tr>
+  <tr><td>tutorialCampConstants.ts</td><td>localStorage 키 / day 범위 / MAX_EVENTS</td><td>~30</td></tr>
+  <tr><td>tutorialCampTypes.ts</td><td>State / Event / Status / DevPreview 타입</td><td>~110</td></tr>
+  <tr><td>tutorialCampStorage.ts</td><td>get/saveTutorialCampState + 정규화 + dev preview R/W</td><td>~210</td></tr>
+  <tr><td>tutorialCampEvents.ts</td><td>append / get / clear events + id 생성</td><td>~140</td></tr>
+  <tr><td>tutorialCampUtils.ts</td><td>11개 lifecycle 함수 (start, complete, skip, reset 등) + Day cooldown</td><td>~360</td></tr>
+  <tr><td>tutorialCampSteps.ts</td><td>35 step 정적 데이터 + SELECTOR_REMAP + withInteractive</td><td>~820</td></tr>
+  <tr><td>tutorialCampCopy.ts</td><td>Day 제목 / 부제 / 공통 라벨 / 폴백</td><td>~90</td></tr>
+  <tr><td>tutorialCampMotion.ts</td><td>모션 상수 + reduced motion 감지</td><td>~40</td></tr>
+  <tr><td>tutorialCampDevAccess.ts</td><td>dev panel 접근 조건 / clipboard fallback</td><td>~115</td></tr>
+  <tr><td>useTutorialCamp.ts</td><td>React hook — 14 API (state, currentStep, isActive, start, next, prev, skipDay, completeDay, reset, pause, resume, markTargetClicked, goToDayStep)</td><td>~160</td></tr>
+  <tr><td>useTutorialCampDev.ts</td><td>dev preview hook — 4 API</td><td>~75</td></tr>
+  <tr><td>useTutorialTarget.ts</td><td>DOM target rect 추적 (rAF + retry + scrollIntoView)</td><td>~140</td></tr>
+  <tr><td>TutorialCampProvider.tsx</td><td>location 매칭 + target click capture + 모달 자동 감지 + Day cooldown 복귀</td><td>~250</td></tr>
+  <tr><td>TutorialOverlay.tsx</td><td>Spotlight + Pointer + Tooltip + ProgressDots + TapHere chip 합성</td><td>~165</td></tr>
+  <tr><td>TutorialSpotlight.tsx</td><td>4-div dim mask + amber pulse ring</td><td>~110</td></tr>
+  <tr><td>TutorialHandPointer.tsx</td><td>hand/arrow SVG + bounce</td><td>~155</td></tr>
+  <tr><td>TutorialTooltip.tsx</td><td>안내 카드 + 위치 계산 + CTA + 이전 버튼</td><td>~245</td></tr>
+  <tr><td>TutorialProgressDots.tsx</td><td>Day step 진행 dots</td><td>~50</td></tr>
+  <tr><td>TutorialCelebration.tsx</td><td>Day 완료 / Day 7 졸업 cinematic</td><td>~120</td></tr>
+  <tr><td>TutorialDevPanel.tsx</td><td>dev preview 패널 (Day/Step 점프, 상태 변경, reset, 7일 완료, events 복사, profileId)</td><td>~410</td></tr>
+</table>
+
+<h3>7.2 외부 통합</h3>
+<table>
+  <tr><th>파일</th><th>변경</th></tr>
+  <tr><td><code>src/App.tsx</code></td><td>TutorialCampProvider + TutorialDevPanel + PostActionReflectionSheet 마운트 (3줄)</td></tr>
+  <tr><td><code>src/pages/SettingsPage.tsx</code></td><td>admin only "처음부터 시작" 버튼 (reset+start)</td></tr>
+  <tr><td><code>src/data/postActionReflectionMessages.ts</code></td><td>30초 마무리 메시지 + trigger 버스</td></tr>
+  <tr><td><code>src/components/home/PostActionReflectionSheet.tsx</code></td><td>30초 마무리 sheet (글로벌 listener)</td></tr>
+  <tr><td><code>src/components/home/TodayFocusCard.tsx</code></td><td>홈 상단 "오늘의 한 가지" 카드</td></tr>
+  <tr><td><code>src/components/home/OsamiHomeNote.tsx</code></td><td>홈 상단 오삼이 한마디</td></tr>
+  <tr><td>data-tour anchor 추가 (engagement / pages / 153마인드셋)</td><td>1줄씩 추가만, 기존 props/state/handler 0 변경</td></tr>
+</table>
+
+<h2>8. 모달 자동 감지 + 자동 next 흐름</h2>
+
+<p>
+  복싱 IQ / 챔피언 일기 / 응원 시트 등의 sub-기능은 회원이 모달 안에서 직접 체험.
+  <strong>모달 닫힘을 캠프가 자동 감지</strong>해서 다음 step 으로 자연스럽게 진입.
+</p>
+
+<pre>// TutorialCampProvider.tsx — capture-phase listener 안
+setTimeout(() => {
+  if (!hasOtherDialog()) return; // 모달 안 열림 — 회원이 직접 다음 누름
+  let cancelled = false;
+  const id = setInterval(() => {
+    if (cancelled) return;
+    if (!hasOtherDialog()) {
+      clearInterval(id);
+      cancelled = true;
+      // 모달 닫힘 → 1초 후 자동 다음
+      setTimeout(() => camp.next(), 1000);
+    }
+  }, 800);
+  setTimeout(() => { cancelled = true; clearInterval(id); }, 60_000);
+}, 600);
+
+function hasOtherDialog() {
+  return Array.from(document.querySelectorAll('[role="dialog"]'))
+    .some(d => !d.hasAttribute("data-tour-overlay")
+            && !d.closest("[data-tour-overlay]"));
+}</pre>
+
+<p>
+  캠프 자체 overlay (Tooltip / Celebration) 는 <code>data-tour-overlay="true"</code> 마커로 식별 — 검색에서 제외해 자기 자신을 모달로 오인 방지.
+</p>
+
+<h2>9. chip / spotlight / 뒤로가기 / 30초 sheet</h2>
+
+<h3>9.1 amber chip "👆 여기를 클릭하세요"</h3>
+<ul>
+  <li>위치: target 영역 내부 상단 12px (큰 카드도 안전)</li>
+  <li>z-index: 94 (tooltip z-93 위)</li>
+  <li>클릭 가능: <strong>chip 자체가 button</strong>, 클릭 시 target 안 actionable 자동 dispatch</li>
+  <li>모션: y bounce + scale 1.08 + opacity 깜빡 (1.2s)</li>
+  <li>viewport clamp 안전망</li>
+</ul>
+
+<h3>9.2 spotlight (TutorialSpotlight.tsx)</h3>
+<ul>
+  <li>4-div dim mask — top / bottom / left / right 으로 target 둘러쌈</li>
+  <li>spotlight 영역은 빈 공간 → target 자연스럽게 클릭 가능</li>
+  <li>amber pulse ring (CSS box-shadow + framer opacity)</li>
+  <li>target 클릭 시 capture-phase listener 가 잡되 <code>preventDefault</code> 안 함 — 기존 onClick 보존</li>
+</ul>
+
+<h3>9.3 "이전" 버튼</h3>
+<ul>
+  <li>"다음으로" 왼쪽에 작은 outline 버튼</li>
+  <li>Day 경계 자동 처리 — Day N step 0 에서 누르면 Day N-1 마지막 step</li>
+  <li>Day 1 step 0 에서는 미노출 (canGoBack=false)</li>
+</ul>
+
+<h3>9.4 30초 마무리 sheet (PostActionReflectionSheet)</h3>
+<ul>
+  <li>글로벌 CustomEvent listen — <code>triggerPostActionReflection(source)</code> 호출 시 발동</li>
+  <li>하루 1회 큰 sheet, 그 외엔 sonner toast 폴백 (4초)</li>
+  <li>Day 7 캠프 완료 시 force=true → 같은 날 봤어도 큰 sheet 강제</li>
+  <li>30초 자동 닫힘 / X / dim 클릭 / "오늘은 여기까지"</li>
+</ul>
+
+<h2>10. 개발자 dev panel 접근 정책</h2>
+
+<p>
+  3 조건 OR — 일반 회원은 절대 노출되지 않음:
+</p>
+<ol>
+  <li><code>hostname === "localhost"</code> / 127.0.0.1 / *.local</li>
+  <li>URL <code>?tutorialDev=1</code> (한 번 통과 시 토글 ON 자동 저장)</li>
+  <li><code>localStorage["myboxer.tutorialCamp.dev.enabled"] === "true"</code></li>
+</ol>
+
+<p><strong>10가지 기능</strong>: 현재 state 보기 / Day 1~7 점프 / Step 점프 / 4가지 상태 토글 (active, paused, completed, skipped) / 이 위치로 이동 / 내 튜토리얼 리셋 / 7일 완료 강제 / 이벤트 로그 클립보드 복사 / preview profileId 입력 / dev preview 종료 (페이지 새로고침)</p>
+
+<div class="danger">
+  모든 변경은 현재 브라우저 localStorage 만 — 서버 / 타 회원 영향 0.
+</div>
+
+<h2>11. Settings 진입점 (admin only)</h2>
+
+<p>
+  SettingsPage.tsx 의 admin only 영역에 "🥊 7일 스타터 캠프 처음부터 시작" 버튼:
+</p>
+
+<pre>onClick={() => {
+  // 진행 / 완료 / paused / skipped 무관하게 매번 Day 1 부터 깨끗하게
+  resetCamp();   // state / events / devPreview 모두 초기화
+  startCamp();   // status="active", currentDay=1, currentStep=0
+  toast.success("7일 스타터 캠프 — Day 1 부터 다시 시작 🥊");
+  navigate("/home");
+}}</pre>
+
+<p>
+  일반 회원에게는 <strong>버튼 자체가 미노출</strong> (<code>isAdmin</code> 검사). 회원 노출은 후속 단계 결정 사안.
+</p>
+
+<h2>12. Commit 타임라인 (단계 41 ~ 49+)</h2>
+
+<table>
+  <tr><th>단계</th><th>commit</th><th>내용</th></tr>
+  <tr><td>41</td><td>—</td><td>설계 문서 작성 (docs/myboxer-7-day-starter-camp-plan.md)</td></tr>
+  <tr><td>42</td><td>—</td><td>localStorage 상태 엔진 + 타입 + 이벤트 로그 (5 파일)</td></tr>
+  <tr><td>43</td><td>—</td><td>35 step 데이터 + 공통 문구 + React hook (4 파일)</td></tr>
+  <tr><td>44</td><td>—</td><td>overlay 엔진 (Spotlight/Pointer/Tooltip/Celebration/Provider)</td></tr>
+  <tr><td>45</td><td>—</td><td>data-tour anchor 25개 추가 (engagement / pages / 153마인드셋)</td></tr>
+  <tr><td>46</td><td>—</td><td>개발자 dev panel + 접근 조건 헬퍼</td></tr>
+  <tr><td>47</td><td>—</td><td>홈 카드 (TodayFocusCard / OsamiHomeNote) + 30초 마무리 sheet</td></tr>
+  <tr><td>48</td><td>—</td><td>QA 리포트 (docs/myboxer-7-day-starter-camp-qa-report.md)</td></tr>
+  <tr><td>49+</td><td><code>3d0d714</code></td><td>단계 41~48 통합 push</td></tr>
+  <tr><td>49+</td><td><code>5a82665</code></td><td>Settings admin 진입점 추가 (Option C)</td></tr>
+  <tr><td>49+</td><td><code>49439f2</code></td><td>same-tab state sync + engagement step routes 이전</td></tr>
+  <tr><td>fix</td><td><code>e9febc6</code></td><td>잠깐 살펴보기 + 뒤로가기 + Day cooldown + 모든 step 체험형 강화</td></tr>
+  <tr><td>refactor</td><td><code>1d2440b</code></td><td>"잠깐 살펴보기 (8초)" 모드 제거 — 직접 클릭 흐름</td></tr>
+  <tr><td>fix</td><td><code>fff9487</code></td><td>"여기를 눌러보세요" 라벨을 target 옆 floating chip 으로 이동</td></tr>
+  <tr><td>feat</td><td><code>5b2611b</code></td><td>모든 step "spotlight → 직접 클릭" 흐름 통일 (SELECTOR_REMAP)</td></tr>
+  <tr><td>feat</td><td><code>06cb676</code></td><td>sub-기능 직접 체험 흐름 — 자동 next 제거 + chip 문구 강화</td></tr>
+  <tr><td>fix</td><td><code>e043760</code></td><td>"여기를 클릭하세요" chip 항상 보이게 (target 안쪽 + z-94)</td></tr>
+  <tr><td>fix</td><td><code>883a288</code></td><td>chip 클릭 + 카드 빈 영역 클릭 모두 실제 기능 발동</td></tr>
+  <tr><td>feat</td><td><code>181ab40</code></td><td>모달 닫힘 자동 감지 → 자동 다음 step</td></tr>
+  <tr><td>fix</td><td><code>3c0c0ac</code></td><td>Settings "다시 시작" 버튼 — 매번 Day 1 부터 깨끗하게 (reset + start)</td></tr>
+</table>
+
+<h2>13. AI 가이드라인 — 다음 작업 시 체크리스트</h2>
+
+<h3>13.1 작업 시작 전</h3>
+<ol>
+  <li><code>git status -sb</code> 로 ahead/behind 확인</li>
+  <li><code>git log --oneline -5</code> 로 최근 commit 확인</li>
+  <li>요청이 7일 캠프 영역인지, 보호 영역인지 분별</li>
+</ol>
+
+<h3>13.2 작업 중 원칙</h3>
+<ul>
+  <li><span class="badge badge-no">금지</span> 보호 영역 0 byte 변경 (§2)</li>
+  <li><span class="badge badge-no">금지</span> 새 npm 패키지 / 마이그레이션 / DB 호출</li>
+  <li><span class="badge badge-no">금지</span> 153마인드셋 session id / localStorage key 변경</li>
+  <li><span class="badge badge-no">금지</span> tutorialCamp localStorage key prefix 변경 (기존 데이터 호환성)</li>
+  <li><span class="badge badge-no">금지</span> 회원 노출 텍스트에 "링/체육관/복싱장/gym/RPG/몬스터/전투/보스/판타지/레벨업"</li>
+  <li><span class="badge badge-ok">권장</span> 장소 표현은 "153복싱짐" 만</li>
+  <li><span class="badge badge-ok">권장</span> 오삼이 말투는 짧고 따뜻하게</li>
+  <li><span class="badge badge-ok">권장</span> 새 step 추가 시 SELECTOR_REMAP 또는 anchor 추가로 매칭 보장</li>
+</ul>
+
+<h3>13.3 작업 끝 검증</h3>
+<ol>
+  <li><code>npx tsc --noEmit</code> EXIT=0</li>
+  <li><code>bun run build</code> "✓ built"</li>
+  <li>grep 자기검열:
+    <ul>
+      <li><code>supabase|fetch\(|axios|approve_mission|record_attendance|member_progress|grant_gems|ChatAssistant</code> in <code>src/features/tutorial-camp/</code> → 0 hit (코멘트 false positive 제외)</li>
+      <li><code>링|체육관|복싱장|gym|RPG|몬스터|전투|보스|판타지|레벨업</code> in 회원 노출 영역 → 0 hit</li>
+    </ul>
+  </li>
+  <li><code>git diff --stat</code> 의도하지 않은 영역 변경 0 보장</li>
+  <li>새 npm 패키지 0 (<code>git diff package.json bun.lockb</code> 확인)</li>
+</ol>
+
+<h2>14. 부록 — 빌드 / 배포 / 검수 명령</h2>
+
+<h3>14.1 로컬 검증</h3>
+<pre>npx tsc --noEmit         # 타입체크
+bun run build            # 프로덕션 빌드 (Vite)
+bun run dev              # 개발 서버</pre>
+
+<h3>14.2 배포</h3>
+<pre>git add &lt;특정 파일&gt;
+git commit -m "feat(tutorial-camp): ..."
+git push origin main      # → Cloudflare Pages 자동 빌드 (2~4분)</pre>
+
+<h3>14.3 production 검수 (admin only)</h3>
+<ol>
+  <li>Settings → "🥊 7일 스타터 캠프 처음부터 시작" 클릭</li>
+  <li>홈에서 Day 1 step 0 overlay 자동 표시</li>
+  <li>amber chip "👆 여기를 클릭하세요" → 클릭 → 모달 열림</li>
+  <li>모달 안 체험 → 닫기 → 1초 후 자동 다음 step</li>
+  <li>Day 1 5 step 모두 통과 → confetti + 30초 마무리 sheet</li>
+  <li>같은 날 다시 진입 → cooldown (overlay 미노출)</li>
+  <li>Settings 다시 클릭 → reset + start → 또 Day 1 부터</li>
+</ol>
+
+<h3>14.4 dev panel 활성</h3>
+<p>
+  URL 끝에 <code>?tutorialDev=1</code> 추가 → 우하단 빨간 "DEV" 버튼 노출.
+  Day/Step 점프 / 상태 토글 / events 로그 복사 가능.
+</p>
+
+<hr style="margin-top:30px; border:none; border-top:1px solid #d1d5db;">
+<p class="small">
+  © 마이복서153 · 153복싱짐 · 본 문서는 AI 코딩 핸드오프 용도. 회원 노출 자료 아님.
+  <br>
+  생성: 2026-05-07 / 작성 도구: Claude Code (Opus 4.7)
+</p>
+
+</body>
+</html>

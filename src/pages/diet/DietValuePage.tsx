@@ -131,7 +131,7 @@ const DietValuePage = () => {
         </div>
       </div>
 
-      <div className="space-y-8 pt-2">
+      <div data-tour="diet-page-value" className="space-y-8 pt-2">
         {/* ══════════ 1. THE PARADOX ══════════ */}
         <section id="ch-paradox">
           <div className="rounded-2xl border border-destructive/30 bg-gradient-to-b from-destructive/10 to-transparent p-5">

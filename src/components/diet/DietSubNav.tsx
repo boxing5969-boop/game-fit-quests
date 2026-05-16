@@ -52,12 +52,16 @@ export const DietSubNav = () => {
           const active =
             location.pathname === path ||
             (path === "/diet/post-program" && location.pathname.startsWith("/diet/post"));
+          // 65-M: 7일 캠프 Day 6 cascade 가 sub-nav 버튼별 click 가능하도록
+          //   data-tour 부여. 형식: diet-nav-<path 마지막 segment>.
+          const slug = path.replace(/^\/diet\//, "");
           return (
             <li key={path}>
               <button
                 type="button"
                 onClick={() => navigate(path)}
                 aria-current={active ? "page" : undefined}
+                data-tour={`diet-nav-${slug}`}
                 className={cn(
                   "flex min-w-[64px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1.5",
                   "text-[10.5px] font-bold transition-all active:scale-95",
