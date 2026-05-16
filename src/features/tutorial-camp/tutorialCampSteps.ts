@@ -723,27 +723,29 @@ const DAY_2_STEPS: TutorialCampStep[] = [
     completionRule: "quiz_question_read",
     autoAdvance: true,
   },
-  // ── 16. 수업 시작 버튼 안내 (읽기 — 실제 시작은 회원이 원할 때) ──
+  // ── 16. 수업 시작 버튼 안내 (가운데 읽기 카드) ──
+  //   65-H: 실제 '수업 시작' 버튼을 spotlight 하면 회원이 눌러 SessionRunner 가
+  //   열리고, 다음 step (XP 규칙) 의 target 이 detail view 와 함께 사라진다.
+  //   spotlight 제거하고 본문으로 위치만 안내. 회원이 직접 '다음으로'.
   {
     day: 2,
     step: 16,
     route: "/missions",
     targetKey: "day2.session_start",
-    targetSelector: '[data-tour="white-session-start"]',
+    targetSelector: "",
     title: "수업 시작 버튼",
-    body: "이 '수업 시작' 버튼을 누르면\n블록을 하나씩 따라가는 진행 화면이 열려요.\n지금은 위치만 알아두고, 실제 운동할 때 눌러보세요.",
+    body: "수업실행 탭 위쪽에 '🥊 수업 시작' 초록 버튼이 있어요.\n누르면 블록을 하나씩 따라가는 진행 화면이 열려요.\n지금은 위치만 알아두고, 실제 운동할 때 눌러보세요.",
     osamiMessage: "오늘은 위치만 알아둬도 충분해요.",
     actionType: "read",
     requireTargetClick: false,
     allowNextWithoutClick: true,
     animation: "spotlight",
-    placement: "top",
+    placement: "center",
     fallbackText: "수업실행 탭 안에 '수업 시작' 버튼이 있어요.",
     completionText: "수업 시작 버튼의 위치를 알았어요.",
-    helperMessage: "잠깐 보고 있어요. 곧 다음으로 가요.",
+    helperMessage: "잠깐 읽어보세요. 곧 다음으로 가요.",
     successMessage: "다음은 XP 규칙이에요.",
-    completionRule: "quiz_question_read",
-    autoAdvance: true,
+    completionRule: "manual_confirm",
   },
   // ── 17. XP 규칙 ──
   {
@@ -1857,8 +1859,17 @@ function withInteractive(step: TutorialCampStep): TutorialCampStep {
     base = { ...base, autoAdvance: false };
   }
 
-  // 직접 클릭 강제 — Day 완료 모달 제외 모든 target 있는 step
-  if (selector !== "" && step.actionType !== "complete") {
+  // 65-H: quiz_question_read 는 spotlight + 읽기 타이머 자동 advance step.
+  //   클릭 강제하면 spotlight 한 버튼(예: '수업 시작')을 실제로 누르게 되어
+  //   페이지 상태가 바뀌고(SessionRunner 진입 등) 다음 step 의 target 이
+  //   사라지는 사고가 난다. quiz_question_read 는 클릭 강제에서 제외.
+  // 직접 클릭 강제 — Day 완료 모달 + quiz_question_read 제외 모든 target 있는 step
+  const shouldForceClick =
+    selector !== "" &&
+    step.actionType !== "complete" &&
+    step.completionRule !== "quiz_question_read";
+
+  if (shouldForceClick) {
     return {
       ...base,
       targetSelector: selector,
