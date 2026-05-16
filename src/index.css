@@ -22,8 +22,84 @@
    * root with the .light-surface utility to adopt the light token
    * overrides defined below.
    * ───────────────────────────────────────────────────────────── */
+  /* 65-O: Tailwind 표준 패턴 — :root = 라이트, .dark = 다크 오버라이드.
+     · ThemeProvider 가 <html> 에 class="dark" 를 토글
+     · 기본값은 .dark (next-themes defaultTheme="dark") → 기존 비주얼 유지
+     · .light-surface 는 별도 강제 라이트 페이지용으로 그대로 보존 */
   :root {
-    /* ─── Base surface (dark) ─── */
+    /* ─── LIGHT MODE (default — no .dark class on html) ─── */
+    --background: 220 20% 97%;          /* #F5F7FA */
+    --foreground: 224 25% 12%;          /* #171C26 */
+    --card: 0 0% 100%;                  /* #FFFFFF */
+    --card-foreground: 224 25% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 25% 12%;
+
+    --primary: 165 70% 52%;             /* #29C39C mint — 두 모드 공통 브랜드 */
+    --primary-foreground: 220 34% 7%;
+    --secondary: 222 20% 95%;           /* #EFF1F5 */
+    --secondary-foreground: 224 22% 18%;
+    --muted: 222 20% 95%;
+    --muted-foreground: 221 10% 46%;    /* #687080 */
+    --accent: 165 70% 52%;
+    --accent-foreground: 220 34% 7%;
+    --reward: 42 90% 64%;               /* gold */
+    --reward-foreground: 220 30% 12%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 218 17% 91%;              /* #E1E5EC */
+    --input: 218 17% 91%;
+    --ring: 165 70% 52%;
+    --radius: 1rem;
+
+    /* Rank colors — game-league identity (두 모드 공통) */
+    --rank-white: 220 14% 71%;
+    --rank-blue: 215 100% 59%;
+    --rank-red: 0 84% 60%;
+    --rank-black: 220 35% 14%;
+
+    /* Status (두 모드 공통) */
+    --status-locked: 220 13% 47%;
+    --status-active: 8 75% 48%;
+    --status-pending: 38 92% 50%;
+    --status-complete: 42 90% 64%;
+
+    --xp-bar: 8 75% 48%;
+    --xp-bar-bg: 218 17% 91%;
+
+    /* Surface elevation — light variants */
+    --surface-1: 220 15% 94%;           /* slightly grayer than bg (depressed) */
+    --surface-2: 0 0% 100%;             /* white (elevated, = card) */
+
+    /* Shadows — light mode (softer) */
+    --shadow-elev-1: 0px 6px 18px rgba(17, 24, 39, 0.06);
+    --shadow-elev-2: 0px 10px 24px rgba(17, 24, 39, 0.08);
+    --shadow-elev-3: 0px 20px 40px rgba(17, 24, 39, 0.12);
+    --shadow-glow-primary: 0px 0px 24px rgba(41, 195, 156, 0.30);
+    --shadow-glow-reward: 0px 0px 28px rgba(246, 196, 83, 0.32);
+    --shadow-glow-gold: 0px 0px 28px rgba(246, 196, 83, 0.32);
+    --shadow-glow-blue: 0px 0px 24px rgba(47, 140, 255, 0.24);
+    --shadow-glow-soft: 0px 0px 20px rgba(41, 195, 156, 0.18);
+    --glow-primary: 0px 0px 24px rgba(41, 195, 156, 0.30);
+    --glow-gold: 0px 0px 28px rgba(246, 196, 83, 0.32);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 224 22% 18%;
+    --sidebar-primary: 165 70% 52%;
+    --sidebar-primary-foreground: 220 34% 7%;
+    --sidebar-accent: 222 20% 95%;
+    --sidebar-accent-foreground: 224 22% 18%;
+    --sidebar-border: 218 17% 91%;
+    --sidebar-ring: 165 70% 52%;
+
+    --btn-disabled-bg: 218 18% 93%;
+    --btn-disabled-fg: 221 11% 60%;
+  }
+
+  .dark {
+    /* ─── DARK MODE — applied when <html class="dark"> (default by ThemeProvider) ───
+       기존 :root 의 다크 값을 그대로 옮긴 것 — 비주얼 100% 보존. */
     --background: 220 34% 7%;          /* #0B0F17 */
     --foreground: 210 40% 98%;         /* #F8FAFC text primary */
 
@@ -33,71 +109,52 @@
     --popover: 220 35% 11%;
     --popover-foreground: 210 40% 98%;
 
-    /* ─── Primary — Mint (CTA, action, brand point) ───
-       정책: 브랜드 포인트 컬러는 민트 단일. 빨강은 "153 로고" 한정으로만
-       하드코딩 사용(ChatAssistant 버튼·Splash 글로우 등). destructive 는
-       에러 전용 별도 토큰이라 영향 없음. Rank-red(레드 리그) 리그 정체성도 유지. */
     --primary: 165 70% 52%;            /* #29C39C mint */
-    --primary-foreground: 220 34% 7%;  /* #0B0F17 dark — 민트에 AA 대비 */
+    --primary-foreground: 220 34% 7%;
 
-    /* ─── Secondary / muted — dark neutral info surfaces ─── */
-    --secondary: 220 31% 15%;          /* #1B2433 (surface elevation) */
+    --secondary: 220 31% 15%;          /* #1B2433 */
     --secondary-foreground: 220 14% 71%;
     --muted: 220 31% 15%;
-    --muted-foreground: 220 14% 71%;   /* #A7B0C0 text secondary */
+    --muted-foreground: 220 14% 71%;   /* #A7B0C0 */
 
-    /* ─── Accent — Blue (ranking, growth) ─── */
-    --accent: 165 70% 52%;             /* #29C39C mint — brand point 2 */
-    --accent-foreground: 220 34% 7%;   /* #0B0F17 — dark text on mint for AA contrast */
+    --accent: 165 70% 52%;
+    --accent-foreground: 220 34% 7%;
 
-    /* ─── Reward — Gold (achievement, currency) ─── */
     --reward: 42 90% 64%;              /* #F6C453 */
-    --reward-foreground: 220 30% 12%;  /* dark text on gold */
+    --reward-foreground: 220 30% 12%;
 
-    /* ─── Destructive (error only) ─── */
     --destructive: 0 84% 60%;          /* #EF4444 */
     --destructive-foreground: 210 40% 98%;
 
     --border: 218 24% 22%;             /* #2A3344 */
     --input: 218 24% 22%;
-    --ring: 165 70% 52%;               /* = primary (mint) */
+    --ring: 165 70% 52%;
 
-    --radius: 1rem;
-
-    /* Rank colors — game-league identity (chrome-safe on dark bg) */
     --rank-white: 220 14% 71%;
     --rank-blue: 215 100% 59%;
     --rank-red: 0 84% 60%;
     --rank-black: 220 35% 14%;
 
-    /* Quest status — shades of the 3 tiers */
-    --status-locked: 220 13% 47%;      /* = text tertiary */
-    --status-active: 8 75% 48%;        /* = primary */
-    --status-pending: 38 92% 50%;      /* warning orange */
-    --status-complete: 42 90% 64%;     /* = reward gold */
+    --status-locked: 220 13% 47%;
+    --status-active: 8 75% 48%;
+    --status-pending: 38 92% 50%;
+    --status-complete: 42 90% 64%;
 
-    /* XP — spec: fill gradient #D93620 → #FF6A3D (primary family).
-     * Solid fallback token stays on primary hue so `bg-xp-bar`
-     * consumers (legacy single-color progress bars) render in the
-     * right tier without needing a gradient property. */
-    --xp-bar: 8 75% 48%;            /* = primary */
-    --xp-bar-bg: 218 24% 22%;       /* dark track #2A3344 */
+    --xp-bar: 8 75% 48%;
+    --xp-bar-bg: 218 24% 22%;
 
-    /* Surface elevation (darker than card = depressed, brighter = elevated) */
-    --surface-1: 220 36% 10%;          /* #101622 bg-soft */
-    --surface-2: 220 31% 15%;          /* #1B2433 elevated */
+    --surface-1: 220 36% 10%;          /* #101622 */
+    --surface-2: 220 31% 15%;          /* #1B2433 */
 
-    /* Shadow / glow — spec values from design system doc */
     --shadow-elev-1: 0px 8px 24px rgba(0, 0, 0, 0.24);
     --shadow-elev-2: 0px 12px 32px rgba(0, 0, 0, 0.30);
     --shadow-elev-3: 0px 16px 40px rgba(0, 0, 0, 0.36);
     --shadow-glow-primary: 0px 0px 24px rgba(217, 54, 32, 0.28);
     --shadow-glow-reward:  0px 0px 28px rgba(246, 196, 83, 0.32);
-    --shadow-glow-gold:    0px 0px 28px rgba(246, 196, 83, 0.32);   /* alias */
+    --shadow-glow-gold:    0px 0px 28px rgba(246, 196, 83, 0.32);
     --shadow-glow-blue:    0px 0px 24px rgba(47, 140, 255, 0.24);
     --shadow-glow-soft:    0px 0px 20px rgba(217, 54, 32, 0.18);
 
-    /* Legacy glow helpers (kept for .glow-* utility classes below) */
     --glow-primary: 0px 0px 24px rgba(217, 54, 32, 0.28);
     --glow-gold: 0px 0px 28px rgba(246, 196, 83, 0.32);
 
@@ -110,11 +167,8 @@
     --sidebar-border: 218 24% 22%;
     --sidebar-ring: 8 75% 48%;
 
-    /* Disabled button surface (context-aware: overridden inside
-     * .light-surface below). Spec: dark #2A3344/#697386, light
-     * #E9EDF3/#8C95A3. */
-    --btn-disabled-bg: 218 24% 22%;     /* #2A3344 */
-    --btn-disabled-fg: 221 13% 47%;     /* #697386 */
+    --btn-disabled-bg: 218 24% 22%;
+    --btn-disabled-fg: 221 13% 47%;
   }
 
   /* ─────────────────────────────────────────────────────────────

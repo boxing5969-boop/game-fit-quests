@@ -23,6 +23,7 @@ import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 // ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
 // 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 랭크업(로드맵+가치맵 통합 페이지).
@@ -125,13 +126,17 @@ const BottomNav = () => {
               <span className="text-body-sm font-bold text-foreground">
                 전체 메뉴
               </span>
-              <button
-                aria-label="메뉴 닫기"
-                onClick={() => setMenuOpen(false)}
-                className="rounded-pill bg-muted p-1.5 active:scale-95"
-              >
-                <X className="h-4 w-4 text-muted-foreground" />
-              </button>
+              <div className="flex items-center gap-2">
+                {/* 65-O: 빠른 테마 토글 — Sun/Moon 아이콘 */}
+                <ThemeToggle variant="icon" />
+                <button
+                  aria-label="메뉴 닫기"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-pill bg-muted p-1.5 active:scale-95"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-4 gap-3">
               {allMenuItems.map(({ path, icon: Icon, label }) => {

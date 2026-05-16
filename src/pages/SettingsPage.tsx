@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useTutorialState } from "@/hooks/useTutorialState";
 import DietSettingsSection from "@/components/diet/DietSettingsSection";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -243,6 +244,15 @@ const SettingsPage = () => {
       </div>
 
       <div className="space-y-5">
+        {/* 65-O: 화면 모드 (다크/라이트) — next-themes 기반 */}
+        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1">
+          <h2 className="mb-1 text-base font-bold text-foreground">화면 모드</h2>
+          <p className="mb-3 text-[11px] text-muted-foreground">
+            다크는 밤·실내, 라이트는 낮·야외에서 보기 편해요.
+          </p>
+          <ThemeToggle variant="segment" />
+        </div>
+
         {/* Home Widget Toggles */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1">
           <h2 className="mb-4 text-base font-bold text-foreground">홈 화면 설정</h2>
