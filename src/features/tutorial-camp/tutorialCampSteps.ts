@@ -1454,86 +1454,62 @@ const DAY_6_STEPS: TutorialCampStep[] = [
     autoAdvance: true,
     autoNavigate: true,
   },
-  // ── 1. 다이어트 하위 메뉴 (가운데 읽기 카드) ──
-  //   65-K: /diet 는 DietLoadingOverlay (z-70 전체 화면) 와 enrollment 상태별
-  //   조건부 렌더 때문에 spotlight 안정성이 낮음. Day 6 전체를 center 카드
-  //   시리즈로 단순화 — 회원이 화면 배경으로 보면서 카드만 읽고 진행.
+  // ── 1. 다이어트 하위 메뉴 spotlight (활성/온보딩 두 상태 모두 존재 — 안전) ──
+  //   65-L: querySelector 가 comma 결합 selector 지원. 활성 회원은
+  //   diet-hero/today-mission 이, 온보딩 회원은 diet-onboarding-cta/start 가
+  //   화면에 있음 — 두 상태 모두를 spotlight 로 커버.
   {
     day: 6,
     step: 1,
     route: "/diet",
     targetKey: "day6.subnav",
-    targetSelector: "",
+    targetSelector: '[data-tour="diet-subnav"]',
     title: "다이어트 하위 메뉴",
-    body: "153다이어트는 여러 화면으로 나뉘어 있어요.\n화면 위쪽 하위 메뉴 줄로 식단 · 기록 · 랭킹 사이를 자유롭게 오갈 수 있어요.",
+    body: "화면 위쪽 메뉴 줄로 식단 · 기록 · 랭킹 · 음식 가이드 사이를\n자유롭게 오갈 수 있어요.",
     osamiMessage: "여기서 다이어트 화면을 오가요.",
     actionType: "read",
     requireTargetClick: false,
     allowNextWithoutClick: true,
     animation: "spotlight",
-    placement: "center",
+    placement: "bottom",
     fallbackText: "153다이어트 화면 위쪽에 하위 메뉴 줄이 있어요.",
     completionText: "여러 화면으로 이어지는 메뉴예요.",
-    helperMessage: "잠깐 읽어보세요.",
-    successMessage: "다음은 프로그램 소개예요.",
-    completionRule: "manual_confirm",
+    helperMessage: "잠깐 보고 다음으로 가요.",
+    successMessage: "다음은 프로그램 흐름이에요.",
+    completionRule: "quiz_question_read",
   },
-  // ── 2. 21일 프로그램 소개 (가운데 읽기 카드) ──
-  //   65-J: diet-onboarding-cta 는 OnboardingCTA wrapper 전체라 그 안에
-  //   '3분 온보딩 시작' 버튼이 포함됨. spotlight 안을 누르면 /diet/onboarding 으로
-  //   이동해 cascade 가 깨진다. spotlight 빼고 본문으로만 안내.
+  // ── 2. 프로그램 카드 spotlight — 활성 회원: diet-hero / 온보딩 회원: diet-onboarding-cta ──
   {
     day: 6,
     step: 2,
     route: "/diet",
-    targetKey: "day6.onboarding_cta",
-    targetSelector: "",
-    title: "21일 습관 리셋",
-    body: "153다이어트는 21일 동안 식사 리듬 · 출석 · 회복 습관을 만드는 프로그램이에요.\n매일 5개 습관 체크 + 식단 사진,\n오삼 코치의 맞춤 피드백이 함께 가요.",
-    osamiMessage: "21일이면 습관 하나가 바뀌어요.",
+    targetKey: "day6.program_card",
+    targetSelector:
+      '[data-tour="diet-hero"], [data-tour="diet-onboarding-cta"]',
+    title: "21일 프로그램 카드",
+    body: "이미 시작한 회원은 'Day N / 21' 진행 카드가,\n아직 시작 전이면 '21일 습관 리셋' 소개 카드가 보여요.\n오늘 어디쯤 와 있는지 / 어떻게 시작하는지가 여기 있어요.",
+    osamiMessage: "프로그램의 중심 카드예요.",
     actionType: "read",
     requireTargetClick: false,
     allowNextWithoutClick: true,
     animation: "spotlight",
-    placement: "center",
-    fallbackText: "153다이어트 화면에 프로그램 소개 영역이 있어요.",
-    completionText: "21일 습관 리셋 프로그램이에요.",
-    helperMessage: "잠깐 읽어보세요.",
-    successMessage: "다음은 시작 버튼 안내예요.",
-    completionRule: "manual_confirm",
+    placement: "top",
+    fallbackText:
+      "153다이어트 화면 가운데에 프로그램 카드(Day N/21 또는 '21일 습관 리셋')가 있어요.",
+    completionText: "오늘 위치 / 시작점이 여기 있어요.",
+    helperMessage: "잠깐 보고 다음으로 가요.",
+    successMessage: "다음은 매일의 흐름이에요.",
+    completionRule: "quiz_question_read",
   },
-  // ── 3. 온보딩 시작 안내 (가운데 읽기 카드) ──
-  //   65-J: diet-onboarding-start 버튼을 spotlight 하면 회원이 눌러
-  //   /diet/onboarding 으로 이동, cascade 가 깨진다. 본문으로 위치만 안내.
+  // ── 3. 매일의 흐름 (가운데 읽기 카드 — 개념 설명) ──
   {
     day: 6,
     step: 3,
     route: "/diet",
-    targetKey: "day6.onboarding_start",
-    targetSelector: "",
-    title: "3분 온보딩 시작",
-    body: "153다이어트 화면 아래쪽에 빨간 '3분 온보딩 시작하기' 버튼이 있어요.\n누르면 3분 온보딩으로 내 다이어트가 시작돼요.\n오늘은 위치만 알아두고, 마음이 준비되면 눌러보세요.",
-    osamiMessage: "준비됐을 때 눌러도 늦지 않아요.",
-    actionType: "read",
-    requireTargetClick: false,
-    allowNextWithoutClick: true,
-    animation: "spotlight",
-    placement: "center",
-    fallbackText: "153다이어트 화면 아래쪽에 '3분 온보딩 시작하기' 빨간 버튼이 있어요.",
-    completionText: "시작 버튼의 위치를 알았어요.",
-    helperMessage: "잠깐 읽어보세요.",
-    successMessage: "다음은 매일의 흐름이에요.",
-    completionRule: "manual_confirm",
-  },
-  // ── 4. 매일의 흐름 (읽기) ──
-  {
-    day: 6,
-    step: 4,
-    route: "/diet",
-    targetKey: "day6.daily_flow",
+    targetKey: "day6.daily_routine",
     targetSelector: "",
     title: "매일은 이렇게 흘러요",
-    body: "매일 5가지 습관을 체크하고 식단 사진을 남겨요.\n오삼 코치가 피드백과 배지로 응원하고,\n7일 · 14일 · 21일마다 작은 보상이 와요.",
+    body: "매일 5가지 습관을 체크하고 식단 사진을 남겨요.\n오삼 코치가 피드백과 배지로 응원하고,\n7일 · 14일 · 21일마다 작은 보상이 함께 와요.",
     osamiMessage: "하루 한 번, 가볍게 기록해요.",
     actionType: "read",
     requireTargetClick: false,
@@ -1542,10 +1518,32 @@ const DAY_6_STEPS: TutorialCampStep[] = [
     placement: "center",
     fallbackText: "다이어트는 매일 습관 체크 + 식단 기록으로 진행돼요.",
     completionText: "매일의 흐름을 알게 됐어요.",
-    helperMessage: "잠깐 읽어보세요. 곧 다음으로 가요.",
-    successMessage: "마지막으로 다이어트의 마음가짐이에요.",
+    helperMessage: "잠깐 읽어보세요.",
+    successMessage: "다음은 오늘 시작 위치예요.",
     completionRule: "manual_confirm",
-    autoAdvance: true,
+  },
+  // ── 4. 오늘 시작 위치 spotlight — 활성: today-mission / 온보딩: onboarding-start ──
+  {
+    day: 6,
+    step: 4,
+    route: "/diet",
+    targetKey: "day6.today_start",
+    targetSelector:
+      '[data-tour="diet-today-mission"], [data-tour="diet-onboarding-start"]',
+    title: "오늘 시작은 여기서",
+    body: "이미 시작한 회원은 '오늘의 미션' 카드가,\n아직 시작 전이면 '3분 온보딩 시작' 빨간 버튼이 보여요.\n오늘 다이어트의 첫걸음은 여기서 시작돼요.",
+    osamiMessage: "오늘은 위치만 알아둬도 충분해요.",
+    actionType: "read",
+    requireTargetClick: false,
+    allowNextWithoutClick: true,
+    animation: "spotlight",
+    placement: "top",
+    fallbackText:
+      "153다이어트 화면에 '오늘의 미션' 또는 '3분 온보딩 시작하기' 버튼이 있어요.",
+    completionText: "오늘 시작 위치, 알게 됐어요.",
+    helperMessage: "잠깐 보고 다음으로 가요.",
+    successMessage: "마지막으로 다이어트의 마음가짐이에요.",
+    completionRule: "quiz_question_read",
   },
   // ── 5. 다이어트의 마음가짐 (읽기 — 가치) ──
   {
