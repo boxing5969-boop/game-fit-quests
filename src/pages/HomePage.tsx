@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, lazy, Suspense } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Banknote, Trophy, Settings } from "lucide-react";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ import OsamiHomeNote from "@/components/home/OsamiHomeNote";
 import { MasterProgressCard } from "@/components/master/MasterProgressCard";
 import HomeCustomizeSheet from "@/components/home/HomeCustomizeSheet";
 // HomeEngagementSection 은 별도 메뉴 (/myboxer/quest, MyBoxerQuestPage) 로 이전.
-import { useHomeLayout } from "@/lib/homeLayout";
+import { useHomeLayout, type HomeWidgetId } from "@/lib/homeLayout";
 import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
@@ -79,7 +79,7 @@ const HomePage = () => {
   const [qrAutoStarted, setQrAutoStarted] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
-  const { visibility: homeWidgets } = useHomeLayout();
+  const { visibility: homeWidgets, order: homeWidgetOrder } = useHomeLayout();
   const [checkinResult, setCheckinResult] = useState<any>(null);
   const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
   const [checkedInToday, setCheckedInToday] = useState(false);
@@ -321,21 +321,7 @@ const HomePage = () => {
       }
     >
       <div className="space-y-4">
-        {/* ─── 홈 = "오늘 하나" — 핵심 CTA 를 최상단으로 끌어올림 ───
-             회원이 홈 진입 즉시 "오늘 뭐 하지" 답이 보이도록.
-             라이센스/퀵액세스/주간진행 등 보조 카드는 아래로. */}
-        <TodayFocusCard />
-        {homeWidgets.todayAction && (
-          <TodayActionCard
-            state={todayActionState}
-            activeMinutes={activeMinutes}
-            streakDays={progress.streak_days}
-            onClick={handleTodayAction}
-          />
-        )}
-        <OsamiHomeNote />
-
-        {/* ─── Master-40 celebration (conditional) ─── */}
+        {/* ─── Master-40 celebration (조건부 — 항상 상단 고정) ─── */}
         {isMaster40 && (
           <NotificationBanner
             variant="reward"
@@ -348,67 +334,151 @@ const HomePage = () => {
           />
         )}
 
-        {/* ─── 1. Hero Status — 프로복서 라이센스 카드 ─── */}
-        {/* photo 우선순위: useDisplayMode 환경설정 (auto = 사진→캐릭터→이니셜) */}
-        {homeWidgets.hero && (() => {
-          const hasAvatar = !!profile?.avatar_url;
-          const hasCharacter = !!myCharacter?.character_presets;
-          const slot = resolveDisplaySlot(hasAvatar, hasCharacter);
-          return (
-          <BoxerLicenseCard
-            size="hero"
-            photo={
-              slot === "photo" && profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.nickname || profile.name || "프로필"}
-                  className="h-full w-full object-cover"
-                />
-              ) : slot === "character" && myCharacter?.character_presets ? (
-                <CharacterSprite
-                  style={(myCharacter.character_presets.parts_json as any)?.style}
-                  userId={user?.id}
-                  partsJson={myCharacter.character_presets.parts_json as any}
-                  size="md"
-                  animate
+        {/* ─── Primary 슬롯 — 회원이 커스터마이즈에서 순서 변경 가능 ───
+             기본값: ① 프로카드 ② QR 체크인 ③ 오삼 코치 한마디 ④ 명예의 전당.
+             각 위젯은 homeWidgets[id] 토글로 켜고 끔. 끄면 더보기 안으로 이동. */}
+        {(() => {
+          const PRIMARY_IDS = new Set<HomeWidgetId>([
+            "hero",
+            "todayAction",
+            "osamiNote",
+            "rankingPreview",
+          ]);
+
+          const renderers: Record<HomeWidgetId, () => JSX.Element | null> = {
+            hero: () => {
+              if (!homeWidgets.hero) return null;
+              const hasAvatar = !!profile?.avatar_url;
+              const hasCharacter = !!myCharacter?.character_presets;
+              const slot = resolveDisplaySlot(hasAvatar, hasCharacter);
+              return (
+                <BoxerLicenseCard
+                  size="hero"
+                  photo={
+                    slot === "photo" && profile?.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt={profile.nickname || profile.name || "프로필"}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : slot === "character" && myCharacter?.character_presets ? (
+                      <CharacterSprite
+                        style={(myCharacter.character_presets.parts_json as any)?.style}
+                        userId={user?.id}
+                        partsJson={myCharacter.character_presets.parts_json as any}
+                        size="md"
+                        animate
+                        league={rank}
+                        level={progress.current_level}
+                        auraMode="compact"
+                        priority
+                      />
+                    ) : (
+                      <div
+                        className="flex h-full w-full items-center justify-center text-5xl font-black text-white"
+                        style={{
+                          background:
+                            rank === "blue"
+                              ? "linear-gradient(135deg, hsl(215, 100%, 35%), hsl(215, 100%, 18%))"
+                              : rank === "red"
+                                ? "linear-gradient(135deg, hsl(0, 84%, 35%), hsl(0, 84%, 18%))"
+                                : rank === "black"
+                                  ? "linear-gradient(135deg, hsl(42, 60%, 22%), hsl(0, 0%, 8%))"
+                                  : "linear-gradient(135deg, hsl(220, 14%, 35%), hsl(220, 14%, 22%))",
+                        }}
+                      >
+                        {(profile?.nickname || profile?.name || "🥊").charAt(0)}
+                      </div>
+                    )
+                  }
+                  name={profile.nickname || profile.name || "복서"}
+                  branch={profile.branch_name}
                   league={rank}
                   level={progress.current_level}
-                  auraMode="compact"
-                  priority
+                  userId={user?.id}
+                  issueDate={(profile as { created_at?: string }).created_at}
+                  streakDays={progress.streak_days}
+                  totalXp={totalXp}
+                  xpToNext={Math.max(metrics.xp.target, totalXp || 1)}
+                  isMaster={isMaster40}
                 />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-5xl font-black text-white"
-                  style={{
-                    background: rank === "blue"
-                      ? "linear-gradient(135deg, hsl(215, 100%, 35%), hsl(215, 100%, 18%))"
-                      : rank === "red"
-                        ? "linear-gradient(135deg, hsl(0, 84%, 35%), hsl(0, 84%, 18%))"
-                        : rank === "black"
-                          ? "linear-gradient(135deg, hsl(42, 60%, 22%), hsl(0, 0%, 8%))"
-                          : "linear-gradient(135deg, hsl(220, 14%, 35%), hsl(220, 14%, 22%))",
-                  }}
-                >
-                  {(profile?.nickname || profile?.name || "🥊").charAt(0)}
-                </div>
-              )
-            }
-            name={profile.nickname || profile.name || "복서"}
-            branch={profile.branch_name}
-            league={rank}
-            level={progress.current_level}
-            userId={user?.id}
-            issueDate={(profile as { created_at?: string }).created_at}
-            streakDays={progress.streak_days}
-            totalXp={totalXp}
-            xpToNext={Math.max(metrics.xp.target, totalXp || 1)}
-            isMaster={isMaster40}
-          />
-          );
+              );
+            },
+            todayAction: () =>
+              homeWidgets.todayAction ? (
+                <TodayActionCard
+                  state={todayActionState}
+                  activeMinutes={activeMinutes}
+                  streakDays={progress.streak_days}
+                  onClick={handleTodayAction}
+                />
+              ) : null,
+            osamiNote: () => (homeWidgets.osamiNote ? <OsamiHomeNote /> : null),
+            rankingPreview: () =>
+              homeWidgets.rankingPreview ? (
+                <section>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h2 className="text-base font-black">이번 주 내 순위</h2>
+                    <button
+                      onClick={() => navigate("/halloffame")}
+                      className="text-[11px] font-medium text-primary active:scale-95"
+                    >
+                      전체 →
+                    </button>
+                  </div>
+                  {myPosition ? (
+                    <RankingItem
+                      rank={myPosition}
+                      name={displayName}
+                      score={totalXp}
+                      isMe
+                      meta={`${RANK_LABELS[rank]} · Lv.${progress.current_level}`}
+                      avatar={
+                        myCharacter?.character_presets ? (
+                          <CharacterSprite
+                            style={(myCharacter.character_presets.parts_json as any)?.style}
+                            userId={user?.id}
+                            partsJson={myCharacter.character_presets.parts_json as any}
+                            size="xs"
+                            league={rank}
+                            level={progress.current_level}
+                          />
+                        ) : (
+                          "🥊"
+                        )
+                      }
+                      onClick={() => navigate("/halloffame")}
+                    />
+                  ) : (
+                    <EmptyState
+                      icon={<Trophy className="h-8 w-8 text-reward" />}
+                      title="아직 순위에 없어요"
+                      description="첫 도전을 완료하면 랭킹에 진입합니다."
+                      ctaText={checkedInToday ? "🥊 오늘 도전 시작" : "QR 체크인 하기"}
+                      onCtaClick={() => {
+                        if (checkedInToday) handleStartChallenge();
+                        else setShowQRScanner(true);
+                      }}
+                    />
+                  )}
+                </section>
+              ) : null,
+            // primary 슬롯에 안 들어가는 ID 들 (HomeMoreSection 안에서 별도 렌더)
+            quickAccess: () => null,
+            masterTrack: () => null,
+            storyRpg: () => null,
+            dietPromo: () => null,
+            todayMission: () => null,
+            weeklyProgress: () => null,
+          };
+
+          // order 배열에서 primary 슬롯에 해당하는 ID 만 정렬 순서로 렌더
+          return homeWidgetOrder
+            .filter((id) => PRIMARY_IDS.has(id))
+            .map((id) => <Fragment key={id}>{renderers[id]()}</Fragment>);
         })()}
 
-        {/* TodayActionCard 는 최상단 (TodayFocusCard 다음) 으로 이전됨 */}
-
-        {/* ─── 퀵 액세스 3 칩 ─── */}
+        {/* ─── 퀵 액세스 3 칩 (Primary 슬롯에 들어가지 않는 항상-위 위젯) ─── */}
         {homeWidgets.quickAccess && (
           <QuickAccessRow
             missionStatus={missionStatus}
@@ -416,6 +486,9 @@ const HomePage = () => {
             weeklyProgress={weeklyProgress}
           />
         )}
+
+        {/* ─── 오늘 한 줄 포커스 카드 (always-on, customize 토글 대상 아님) ─── */}
+        <TodayFocusCard />
 
         {/* ─── 활동 세션 진행 중일 때만 SelfChallengeFlow 표시 (전체 화면 모달) ─── */}
         {showChallenge && (
@@ -446,14 +519,13 @@ const HomePage = () => {
           />
         )}
 
-        {/* ─── "더 보기" — 펼침 가능한 보조 콘텐츠 ─── */}
+        {/* ─── "더 보기" — 펼침 가능한 보조 콘텐츠 ───
+             rankingPreview 는 primary 슬롯으로 이전 — 더보기 안에서는 제거. */}
         <HomeMoreSection
           count={
-            /* 64-I: master 카드는 /missions 으로 이전 — 홈 카운트에서 제외 */
-            (showStoryRpg ? 1 : 0) /* 153 마인드셋 — admin only + 토글 */ +
+            (showStoryRpg ? 1 : 0) +
             (homeWidgets.dietPromo && profile?.diet_program_enabled ? 1 : 0) +
-            (homeWidgets.weeklyProgress ? 1 : 0) +
-            (homeWidgets.rankingPreview ? 1 : 0)
+            (homeWidgets.weeklyProgress ? 1 : 0)
           }
         >
           {/* 64-I: 마스터 로드 진행도 카드는 훈련 탭(/missions) 으로 이전.
@@ -518,55 +590,7 @@ const HomePage = () => {
             </button>
           )}
 
-          {/* 이번 주 내 순위 */}
-          {homeWidgets.rankingPreview && (
-            <section>
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="text-base font-black">이번 주 내 순위</h2>
-                <button
-                  onClick={() => navigate("/halloffame")}
-                  className="text-[11px] font-medium text-primary active:scale-95"
-                >
-                  전체 →
-                </button>
-              </div>
-              {myPosition ? (
-                <RankingItem
-                  rank={myPosition}
-                  name={displayName}
-                  score={totalXp}
-                  isMe
-                  meta={`${RANK_LABELS[rank]} · Lv.${progress.current_level}`}
-                  avatar={
-                    myCharacter?.character_presets ? (
-                      <CharacterSprite
-                        style={(myCharacter.character_presets.parts_json as any)?.style}
-                        userId={user?.id}
-                        partsJson={myCharacter.character_presets.parts_json as any}
-                        size="xs"
-                        league={rank}
-                        level={progress.current_level}
-                      />
-                    ) : (
-                      "🥊"
-                    )
-                  }
-                  onClick={() => navigate("/halloffame")}
-                />
-              ) : (
-                <EmptyState
-                  icon={<Trophy className="h-8 w-8 text-reward" />}
-                  title="아직 순위에 없어요"
-                  description="첫 도전을 완료하면 랭킹에 진입합니다."
-                  ctaText={checkedInToday ? "🥊 오늘 도전 시작" : "QR 체크인 하기"}
-                  onCtaClick={() => {
-                    if (checkedInToday) handleStartChallenge();
-                    else setShowQRScanner(true);
-                  }}
-                />
-              )}
-            </section>
-          )}
+          {/* rankingPreview 는 primary 슬롯으로 이전됨 (커스터마이즈 토글로 켜고 끔). */}
 
           {/* 홈 커스터마이즈 진입점 */}
           <div className="flex justify-center pb-1">

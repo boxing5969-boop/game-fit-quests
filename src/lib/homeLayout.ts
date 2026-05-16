@@ -23,13 +23,14 @@ import { useCallback, useEffect, useState } from "react";
 export type HomeWidgetId =
   | "hero"
   | "todayAction"
+  | "osamiNote"
+  | "rankingPreview"
   | "quickAccess"
   | "masterTrack"
   | "storyRpg"
   | "dietPromo"
   | "todayMission"
-  | "weeklyProgress"
-  | "rankingPreview";
+  | "weeklyProgress";
 
 export interface HomeWidgetMeta {
   id: HomeWidgetId;
@@ -44,13 +45,23 @@ export interface HomeWidgetMeta {
 export const HOME_WIDGETS: readonly HomeWidgetMeta[] = Object.freeze([
   {
     id: "hero",
-    label: "캐릭터 & 레벨",
+    label: "마이복서 153 프로카드",
     description: "내 캐릭터·리그 뱃지·다음 승급까지 XP",
   },
   {
     id: "todayAction",
-    label: "오늘의 액션",
+    label: "QR 체크인",
     description: "QR 체크인 / 도전 시작 / 활성 세션 안내 카드",
+  },
+  {
+    id: "osamiNote",
+    label: "오삼 코치 한마디",
+    description: "오늘의 코치 메시지",
+  },
+  {
+    id: "rankingPreview",
+    label: "명예의 전당 (내 순위)",
+    description: "지점 랭킹 내 내 위치 미리보기",
   },
   {
     id: "quickAccess",
@@ -86,90 +97,199 @@ export const HOME_WIDGETS: readonly HomeWidgetMeta[] = Object.freeze([
     label: "이번 주 진행도",
     description: "세션 수 · 훈련 시간(분) 목표 바",
   },
-  {
-    id: "rankingPreview",
-    label: "이번 주 내 순위",
-    description: "지점 랭킹 내 내 위치 미리보기",
-  },
 ]);
 
-const STORAGE_KEY = "home_layout_v1";
+// v2: visibility + order 함께 저장. v1 (visibility 만) 데이터는 자동 마이그레이션.
+const STORAGE_KEY = "home_layout_v2";
+const STORAGE_KEY_LEGACY = "home_layout_v1";
 
 type VisibilityMap = Record<HomeWidgetId, boolean>;
 
+/**
+ * 기본 노출 4개 + 나머지는 "더보기" 안 (visibility=false).
+ * 회원이 커스터마이즈에서 추가로 켜거나 끄거나, 순서 바꿀 수 있음.
+ */
 const DEFAULT_VISIBILITY: VisibilityMap = {
-  hero: true,
-  todayAction: true,
-  quickAccess: true,
-  masterTrack: true,
-  storyRpg: true,
-  dietPromo: true,
-  todayMission: true,
-  weeklyProgress: true,
-  rankingPreview: true,
+  hero: true,            // ① 마이복서 153 프로카드 (최상단)
+  todayAction: true,     // ② QR 체크인
+  osamiNote: true,       // ③ 오삼 코치 한마디
+  rankingPreview: true,  // ④ 명예의 전당
+  quickAccess: false,
+  masterTrack: false,
+  storyRpg: false,
+  dietPromo: false,
+  todayMission: false,
+  weeklyProgress: false,
 };
 
 /**
- * localStorage 에서 읽어 기본값과 머지. 누락/오염 키는 조용히 기본값으로 복구.
+ * 기본 순서 — 위 4개가 정확히 이 순서로 상단에 노출.
+ * 나머지는 "더보기" 안에서 이 순서로 노출 (회원이 켜면).
  */
-function loadVisibility(): VisibilityMap {
-  if (typeof window === "undefined") return { ...DEFAULT_VISIBILITY };
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_VISIBILITY };
-    const parsed = JSON.parse(raw) as Partial<VisibilityMap>;
-    return { ...DEFAULT_VISIBILITY, ...parsed };
-  } catch {
-    return { ...DEFAULT_VISIBILITY };
-  }
+const DEFAULT_ORDER: HomeWidgetId[] = [
+  "hero",
+  "todayAction",
+  "osamiNote",
+  "rankingPreview",
+  "quickAccess",
+  "weeklyProgress",
+  "dietPromo",
+  "masterTrack",
+  "storyRpg",
+  "todayMission",
+];
+
+interface LayoutStateV2 {
+  visibility: VisibilityMap;
+  order: HomeWidgetId[];
 }
 
-function saveVisibility(v: VisibilityMap) {
+const ALL_IDS: readonly HomeWidgetId[] = HOME_WIDGETS.map((w) => w.id);
+
+/** order 배열이 모든 ID 를 정확히 한 번씩 포함하도록 정규화 (누락은 끝에 추가, 알 수 없는 ID 는 제거). */
+function normalizeOrder(input: HomeWidgetId[] | undefined): HomeWidgetId[] {
+  const known = new Set<HomeWidgetId>(ALL_IDS);
+  const seen = new Set<HomeWidgetId>();
+  const cleaned: HomeWidgetId[] = [];
+  for (const id of input ?? []) {
+    if (known.has(id) && !seen.has(id)) {
+      cleaned.push(id);
+      seen.add(id);
+    }
+  }
+  for (const id of DEFAULT_ORDER) {
+    if (!seen.has(id)) cleaned.push(id);
+  }
+  return cleaned;
+}
+
+/**
+ * v2 (visibility + order) 우선 — 없으면 v1 (visibility only) 마이그레이션 후 default order.
+ * 누락/오염 키는 조용히 기본값으로 복구.
+ */
+function loadLayout(): LayoutStateV2 {
+  if (typeof window === "undefined") {
+    return {
+      visibility: { ...DEFAULT_VISIBILITY },
+      order: [...DEFAULT_ORDER],
+    };
+  }
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<LayoutStateV2>;
+      return {
+        visibility: { ...DEFAULT_VISIBILITY, ...(parsed.visibility ?? {}) },
+        order: normalizeOrder(parsed.order),
+      };
+    }
+    // v1 마이그레이션 — visibility 만 가져오고 default order 사용.
+    const legacy = localStorage.getItem(STORAGE_KEY_LEGACY);
+    if (legacy) {
+      const parsed = JSON.parse(legacy) as Partial<VisibilityMap>;
+      return {
+        visibility: { ...DEFAULT_VISIBILITY, ...parsed },
+        order: [...DEFAULT_ORDER],
+      };
+    }
+  } catch {
+    /* fallthrough */
+  }
+  return {
+    visibility: { ...DEFAULT_VISIBILITY },
+    order: [...DEFAULT_ORDER],
+  };
+}
+
+function saveLayout(state: LayoutStateV2) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
     // quota 초과 등은 세션 내 메모리 상태만 유지.
   }
 }
 
 /**
- * 위젯 표시 여부 훅 — homepage 에서 사용.
+ * 위젯 표시 여부 + 순서 훅 — homepage 에서 사용.
  * 다른 탭에서 편집한 경우 storage 이벤트로도 반영.
  */
 export function useHomeLayout() {
-  const [visibility, setVisibility] = useState<VisibilityMap>(() => loadVisibility());
+  const [state, setState] = useState<LayoutStateV2>(() => loadLayout());
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key !== STORAGE_KEY) return;
-      setVisibility(loadVisibility());
+      setState(loadLayout());
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const toggle = useCallback((id: HomeWidgetId) => {
-    setVisibility((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      saveVisibility(next);
+    setState((prev) => {
+      const next: LayoutStateV2 = {
+        visibility: { ...prev.visibility, [id]: !prev.visibility[id] },
+        order: prev.order,
+      };
+      saveLayout(next);
       return next;
     });
   }, []);
 
   const setAll = useCallback((next: Partial<VisibilityMap>) => {
-    setVisibility((prev) => {
-      const merged = { ...prev, ...next };
-      saveVisibility(merged);
+    setState((prev) => {
+      const merged: LayoutStateV2 = {
+        visibility: { ...prev.visibility, ...next },
+        order: prev.order,
+      };
+      saveLayout(merged);
+      return merged;
+    });
+  }, []);
+
+  const moveUp = useCallback((id: HomeWidgetId) => {
+    setState((prev) => {
+      const idx = prev.order.indexOf(id);
+      if (idx <= 0) return prev;
+      const next = [...prev.order];
+      [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+      const merged: LayoutStateV2 = { visibility: prev.visibility, order: next };
+      saveLayout(merged);
+      return merged;
+    });
+  }, []);
+
+  const moveDown = useCallback((id: HomeWidgetId) => {
+    setState((prev) => {
+      const idx = prev.order.indexOf(id);
+      if (idx < 0 || idx >= prev.order.length - 1) return prev;
+      const next = [...prev.order];
+      [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+      const merged: LayoutStateV2 = { visibility: prev.visibility, order: next };
+      saveLayout(merged);
       return merged;
     });
   }, []);
 
   const reset = useCallback(() => {
-    setVisibility({ ...DEFAULT_VISIBILITY });
-    saveVisibility({ ...DEFAULT_VISIBILITY });
+    const next: LayoutStateV2 = {
+      visibility: { ...DEFAULT_VISIBILITY },
+      order: [...DEFAULT_ORDER],
+    };
+    setState(next);
+    saveLayout(next);
   }, []);
 
-  const visibleCount = Object.values(visibility).filter(Boolean).length;
+  const visibleCount = Object.values(state.visibility).filter(Boolean).length;
 
-  return { visibility, toggle, setAll, reset, visibleCount };
+  return {
+    visibility: state.visibility,
+    order: state.order,
+    toggle,
+    setAll,
+    moveUp,
+    moveDown,
+    reset,
+    visibleCount,
+  };
 }
