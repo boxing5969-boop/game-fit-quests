@@ -1454,27 +1454,29 @@ const DAY_6_STEPS: TutorialCampStep[] = [
     autoAdvance: true,
     autoNavigate: true,
   },
-  // ── 1. 다이어트 하위 메뉴 ──
+  // ── 1. 다이어트 하위 메뉴 (가운데 읽기 카드) ──
+  //   65-K: /diet 는 DietLoadingOverlay (z-70 전체 화면) 와 enrollment 상태별
+  //   조건부 렌더 때문에 spotlight 안정성이 낮음. Day 6 전체를 center 카드
+  //   시리즈로 단순화 — 회원이 화면 배경으로 보면서 카드만 읽고 진행.
   {
     day: 6,
     step: 1,
     route: "/diet",
     targetKey: "day6.subnav",
-    targetSelector: '[data-tour="diet-subnav"]',
+    targetSelector: "",
     title: "다이어트 하위 메뉴",
-    body: "153다이어트는 여러 화면으로 나뉘어 있어요.\n이 메뉴 줄로 식단 · 기록 · 랭킹 사이를 오갈 수 있어요.",
+    body: "153다이어트는 여러 화면으로 나뉘어 있어요.\n화면 위쪽 하위 메뉴 줄로 식단 · 기록 · 랭킹 사이를 자유롭게 오갈 수 있어요.",
     osamiMessage: "여기서 다이어트 화면을 오가요.",
     actionType: "read",
     requireTargetClick: false,
     allowNextWithoutClick: true,
     animation: "spotlight",
-    placement: "bottom",
+    placement: "center",
     fallbackText: "153다이어트 화면 위쪽에 하위 메뉴 줄이 있어요.",
     completionText: "여러 화면으로 이어지는 메뉴예요.",
-    helperMessage: "잠깐 보고 있어요. 곧 다음으로 가요.",
+    helperMessage: "잠깐 읽어보세요.",
     successMessage: "다음은 프로그램 소개예요.",
-    completionRule: "quiz_question_read",
-    autoAdvance: true,
+    completionRule: "manual_confirm",
   },
   // ── 2. 21일 프로그램 소개 (가운데 읽기 카드) ──
   //   65-J: diet-onboarding-cta 는 OnboardingCTA wrapper 전체라 그 안에
