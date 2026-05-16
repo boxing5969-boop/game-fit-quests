@@ -1476,49 +1476,52 @@ const DAY_6_STEPS: TutorialCampStep[] = [
     completionRule: "quiz_question_read",
     autoAdvance: true,
   },
-  // ── 2. 21일 프로그램 소개 ──
+  // ── 2. 21일 프로그램 소개 (가운데 읽기 카드) ──
+  //   65-J: diet-onboarding-cta 는 OnboardingCTA wrapper 전체라 그 안에
+  //   '3분 온보딩 시작' 버튼이 포함됨. spotlight 안을 누르면 /diet/onboarding 으로
+  //   이동해 cascade 가 깨진다. spotlight 빼고 본문으로만 안내.
   {
     day: 6,
     step: 2,
     route: "/diet",
     targetKey: "day6.onboarding_cta",
-    targetSelector: '[data-tour="diet-onboarding-cta"]',
+    targetSelector: "",
     title: "21일 습관 리셋",
-    body: "체지방을 제거하는 몸 습관을 21일 동안 만들어요.\n매일 5개 습관 체크 + 식단 사진,\n오삼 코치의 맞춤 피드백이 함께 가요.",
+    body: "153다이어트는 21일 동안 식사 리듬 · 출석 · 회복 습관을 만드는 프로그램이에요.\n매일 5개 습관 체크 + 식단 사진,\n오삼 코치의 맞춤 피드백이 함께 가요.",
     osamiMessage: "21일이면 습관 하나가 바뀌어요.",
     actionType: "read",
     requireTargetClick: false,
     allowNextWithoutClick: true,
     animation: "spotlight",
-    placement: "bottom",
+    placement: "center",
     fallbackText: "153다이어트 화면에 프로그램 소개 영역이 있어요.",
     completionText: "21일 습관 리셋 프로그램이에요.",
-    helperMessage: "잠깐 보고 있어요. 곧 다음으로 가요.",
-    successMessage: "다음은 시작 버튼이에요.",
-    completionRule: "quiz_question_read",
-    autoAdvance: true,
+    helperMessage: "잠깐 읽어보세요.",
+    successMessage: "다음은 시작 버튼 안내예요.",
+    completionRule: "manual_confirm",
   },
-  // ── 3. 온보딩 시작 버튼 안내 (읽기 — 실제 시작은 회원이 원할 때) ──
+  // ── 3. 온보딩 시작 안내 (가운데 읽기 카드) ──
+  //   65-J: diet-onboarding-start 버튼을 spotlight 하면 회원이 눌러
+  //   /diet/onboarding 으로 이동, cascade 가 깨진다. 본문으로 위치만 안내.
   {
     day: 6,
     step: 3,
     route: "/diet",
     targetKey: "day6.onboarding_start",
-    targetSelector: '[data-tour="diet-onboarding-start"]',
+    targetSelector: "",
     title: "3분 온보딩 시작",
-    body: "이 버튼을 누르면 3분 온보딩으로 내 다이어트가 시작돼요.\n오늘은 위치만 알아두고, 마음이 준비되면 눌러보세요.",
+    body: "153다이어트 화면 아래쪽에 빨간 '3분 온보딩 시작하기' 버튼이 있어요.\n누르면 3분 온보딩으로 내 다이어트가 시작돼요.\n오늘은 위치만 알아두고, 마음이 준비되면 눌러보세요.",
     osamiMessage: "준비됐을 때 눌러도 늦지 않아요.",
     actionType: "read",
     requireTargetClick: false,
     allowNextWithoutClick: true,
     animation: "spotlight",
-    placement: "top",
-    fallbackText: "153다이어트 화면에 '3분 온보딩 시작하기' 버튼이 있어요.",
+    placement: "center",
+    fallbackText: "153다이어트 화면 아래쪽에 '3분 온보딩 시작하기' 빨간 버튼이 있어요.",
     completionText: "시작 버튼의 위치를 알았어요.",
-    helperMessage: "잠깐 보고 있어요. 곧 다음으로 가요.",
+    helperMessage: "잠깐 읽어보세요.",
     successMessage: "다음은 매일의 흐름이에요.",
-    completionRule: "quiz_question_read",
-    autoAdvance: true,
+    completionRule: "manual_confirm",
   },
   // ── 4. 매일의 흐름 (읽기) ──
   {
