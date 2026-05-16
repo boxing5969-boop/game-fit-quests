@@ -47,7 +47,7 @@ const DietAfter21GuidePage = () => {
         />
       }
     >
-      <div className="space-y-5 pt-2">
+      <div data-tour="diet-page-after-21" className="space-y-5 pt-2">
         {/* Hero */}
         <section className="rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/10 to-transparent p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">

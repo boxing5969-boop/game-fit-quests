@@ -196,7 +196,7 @@ const DietPhotoGalleryPage = () => {
         />
       }
     >
-      <div className="space-y-3 pt-2">
+      <div data-tour="diet-page-photos" className="space-y-3 pt-2">
         {/* 상단 요약 + 전체 저장 */}
         <div className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-4">
           <div className="flex items-center justify-between gap-3">

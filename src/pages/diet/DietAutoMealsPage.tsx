@@ -63,7 +63,7 @@ const DietAutoMealsPage = () => {
         />
       }
     >
-      <div className="space-y-4 pt-2">
+      <div data-tour="diet-page-auto-meals" className="space-y-4 pt-2">
         <section className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-5">
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-primary/15 p-1.5">
