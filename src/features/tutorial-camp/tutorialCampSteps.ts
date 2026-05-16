@@ -1852,10 +1852,18 @@ function withInteractive(step: TutorialCampStep): TutorialCampStep {
   //   현재 step 이 올바른 페이지로 데려간다. 같은 route 면 no-op.
   let base: TutorialCampStep = { ...step, autoNavigate: true };
 
-  // 65-G: 읽기 카드(manual_confirm)는 autoAdvance 강제 OFF — 회원이 직접
-  //   '다음으로'. manual_confirm 은 conditionMet 즉시 true 라 autoAdvance 가
-  //   250ms 만에 카드를 넘겨버려 읽을 시간이 없다.
-  if (base.completionRule === "manual_confirm") {
+  // 65-G/I: 읽기 류 step (manual_confirm + quiz_question_read) 는 autoAdvance
+  //   강제 OFF — 회원이 충분히 보고 직접 '다음으로' 누르도록.
+  //   · manual_confirm: conditionMet 즉시 true 라 autoAdvance 가 250ms 만에
+  //     카드를 넘겨버려 읽을 시간이 없음.
+  //   · quiz_question_read: 읽기 타이머 자동 진행은 더 보고 싶은 회원에게
+  //     답답할 수 있음 — 회원 페이스 우선.
+  //   target_clicked(탭/카드 클릭 후 250ms cascade) 와 scrolled_to_bottom
+  //   (스크롤 완료 후 cascade) 의 autoAdvance 는 유지 — 액션 직후 자연스러운 진행.
+  if (
+    base.completionRule === "manual_confirm" ||
+    base.completionRule === "quiz_question_read"
+  ) {
     base = { ...base, autoAdvance: false };
   }
 
