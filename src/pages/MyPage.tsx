@@ -8,7 +8,7 @@ import DisplayModeToggle from "@/components/profile/DisplayModeToggle";
 import XPBar from "@/components/XPBar";
 import CharacterSprite from "@/components/CharacterSprite";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
-import { ArrowLeft, MapPin, Calendar, LogOut, Settings, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useNavigate } from "react-router-dom";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
@@ -33,7 +33,7 @@ import {
 
 const MyPage = () => {
   const navigate = useNavigate();
-  const { user, profile, progress, role, signOut, refreshProfile } = useAuth();
+  const { user, profile, progress, role, refreshProfile } = useAuth();
   const { data: xpLogs } = useXpLogs(30);
   const { data: allBadges, isLoading: badgesLoading } = useBadges();
   const { data: myBadges } = useMyBadges();
@@ -88,11 +88,6 @@ const MyPage = () => {
   const locked = (allBadges || []).filter(b => !earnedIds.has(b.id));
   const isMaster40 = progress.current_rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
   const levelUpLogs = (xpLogs || []).filter(l => l.reason.includes("클리어") || l.reason.includes("타이틀매치"));
-
-  const handleLogout = async () => {
-    await signOut();
-    navigate("/");
-  };
 
   const handlePasswordChange = async () => {
     setPwError("");
@@ -378,37 +373,13 @@ const MyPage = () => {
           )}
         </div>
 
-        {/* Actions */}
+        {/* Actions — 65-S: 회원관리/가이드/153다이어트/설정/로그아웃 은 /settings 로 이관.
+            전체메뉴에 있던 보상(/rewards) 메뉴를 내정보로 이관. */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.22s" }}>
-          {(role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin") && (
-            <button onClick={() => navigate("/manager")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
-              <div className="flex items-center gap-3">
-                <span className="text-muted-foreground">📋</span>
-                <span className="text-sm text-foreground">회원 관리</span>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          )}
-          <button onClick={() => navigate("/guide")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
+          <button onClick={() => navigate("/rewards")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
             <div className="flex items-center gap-3">
-              <span className="text-muted-foreground">📖</span>
-              <span className="text-sm text-foreground">가이드</span>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-          {profile?.diet_program_enabled && (
-            <button onClick={() => navigate("/diet")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
-              <div className="flex items-center gap-3">
-                <span className="text-muted-foreground">🥗</span>
-                <span className="text-sm text-foreground">153 다이어트</span>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          )}
-          <button onClick={() => navigate("/settings")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
-            <div className="flex items-center gap-3">
-              <Settings className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">설정</span>
+              <span className="text-muted-foreground">🎁</span>
+              <span className="text-sm text-foreground">보상</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -416,7 +387,7 @@ const MyPage = () => {
             <button
               onClick={handleRestartTutorial}
               disabled={tutorialRestartBusy}
-              className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50 disabled:opacity-60"
+              className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50 disabled:opacity-60"
             >
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">🥊</span>
@@ -427,10 +398,6 @@ const MyPage = () => {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
           )}
-          <button onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-4 active:bg-secondary/50">
-            <LogOut className="h-4 w-4 text-destructive" />
-            <span className="text-sm text-destructive">로그아웃</span>
-          </button>
         </div>
       </div>
     </div>

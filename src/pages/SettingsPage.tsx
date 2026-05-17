@@ -6,7 +6,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Plus, Trash2, Pencil, Check, X, ArrowRightLeft, Clock } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, Pencil, Check, X, ArrowRightLeft, Clock, ChevronRight, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -60,7 +60,7 @@ const useBranches = () =>
 
 const SettingsPage = () => {
   const navigate = useNavigate();
-  const { profile, user, role, refreshProfile } = useAuth();
+  const { profile, user, role, refreshProfile, signOut } = useAuth();
   const { data: branches } = useBranches();
   const { resetOnboarding } = useOnboardingState();
   const qc = useQueryClient();
@@ -514,6 +514,44 @@ const SettingsPage = () => {
             </div>
           </div>
         )}
+
+        {/* 65-S: 마이페이지에서 이관 — 회원관리/가이드/153다이어트/로그아웃 */}
+        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.18s" }}>
+          <h2 className="border-b border-border px-5 py-4 text-base font-bold text-foreground">메뉴</h2>
+          {(role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin") && (
+            <button onClick={() => navigate("/manager")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">📋</span>
+                <span className="text-sm text-foreground">회원 관리</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
+          <button onClick={() => navigate("/guide")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
+            <div className="flex items-center gap-3">
+              <span className="text-muted-foreground">📖</span>
+              <span className="text-sm text-foreground">가이드</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+          <button onClick={() => navigate("/diet")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
+            <div className="flex items-center gap-3">
+              <span className="text-muted-foreground">🥗</span>
+              <span className="text-sm text-foreground">153 다이어트</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+          <button
+            onClick={async () => {
+              await signOut();
+              navigate("/");
+            }}
+            className="flex w-full items-center gap-3 px-4 py-4 active:bg-secondary/50"
+          >
+            <LogOut className="h-4 w-4 text-destructive" />
+            <span className="text-sm text-destructive">로그아웃</span>
+          </button>
+        </div>
       </div>
     </div>
   );

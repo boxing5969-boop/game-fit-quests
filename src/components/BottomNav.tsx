@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import {
   Home,
   Trophy,
-  Gift,
   Menu,
   TrendingUp,
   Award,
@@ -55,7 +54,7 @@ const baseMenuItems = [
   { path: "/halloffame",        icon: Trophy,     label: "랭킹" },
   { path: "/rank-up",           icon: TrendingUp, label: "랭크업" },
   { path: "/cert-benefits",     icon: Award,      label: "단증혜택" },
-  { path: "/rewards",           icon: Gift,       label: "보상" },
+  // 65-S: 보상(/rewards)은 전체 메뉴에서 제거 — 마이페이지 안으로 이관.
   { path: "/character-studio",  icon: Sparkles,   label: "캐릭터" },
   { path: "/guide",             icon: BookOpen,   label: "가이드" },
   { path: "/about/153",         icon: Fish,       label: "153이란?" },
