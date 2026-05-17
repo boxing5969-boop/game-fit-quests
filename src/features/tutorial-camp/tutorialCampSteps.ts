@@ -2314,34 +2314,16 @@ const DAY_7_STEPS: TutorialCampStep[] = [
     fallbackText: "안전 탭에 안전한 운동을 위한 가이드가 정리돼 있어요.",
     completionText: "안전이 곧 멀리 가는 길이에요.",
     helperMessage: "잠깐 읽어보세요.",
-    successMessage: "다음은 '온보딩 다시 보기' 위치예요.",
+    successMessage: "이제 가이드의 의미를 정리해볼게요.",
     completionRule: "manual_confirm",
   },
-  // ── 14. 온보딩 다시 보기 spotlight ──
+  // 65-Q: 14단계(온보딩 다시 보기 spotlight) 제거 — 회원이 spotlight 안의 버튼을
+  //   실수로 누르면 /onboarding 으로 이동해 cascade 가 깨지는 위험. 14단계 이후
+  //   step 번호 모두 1씩 당김.
+  // ── 14. 가이드는 자료실 (center) ──
   {
     day: 7,
     step: 14,
-    route: "/guide",
-    targetKey: "day7.onboarding_replay",
-    targetSelector: '[data-tour="guide-onboarding-replay"]',
-    title: "언제든 처음으로",
-    body: "가이드 맨 아래 '온보딩 다시 보기' 버튼이 있어요.\n헷갈릴 땐 언제든 첫 안내를 다시 볼 수 있어요.\n오늘은 위치만 알아둬요.",
-    osamiMessage: "길을 잃어도 돌아올 곳이 있어요.",
-    actionType: "read",
-    requireTargetClick: false,
-    allowNextWithoutClick: true,
-    animation: "spotlight",
-    placement: "top",
-    fallbackText: "가이드 화면 맨 아래에 '온보딩 다시 보기' 버튼이 있어요.",
-    completionText: "언제든 처음으로 돌아올 수 있어요.",
-    helperMessage: "잠깐 보고 다음으로 가요.",
-    successMessage: "이제 7일을 마무리할게요.",
-    completionRule: "quiz_question_read",
-  },
-  // ── 15. 가이드는 자료실 (center) ──
-  {
-    day: 7,
-    step: 15,
     route: "/guide",
     targetKey: "day7.guide_is_library",
     targetSelector: "",
@@ -2359,10 +2341,10 @@ const DAY_7_STEPS: TutorialCampStep[] = [
     successMessage: "이제 7일을 함께 돌아볼게요.",
     completionRule: "manual_confirm",
   },
-  // ── 16. 7일 회고 (center) ──
+  // ── 15. 7일 회고 (center) ──
   {
     day: 7,
-    step: 16,
+    step: 15,
     route: "/guide",
     targetKey: "day7.recap",
     targetSelector: "",
@@ -2380,10 +2362,10 @@ const DAY_7_STEPS: TutorialCampStep[] = [
     successMessage: "마이복서153 이 전하고 싶은 5가지를 천천히 나눌게요.",
     completionRule: "manual_confirm",
   },
-  // ── 17. 가치 1 — 자기 페이스 (center) ──
+  // ── 16. 약속 1 — 자기 페이스 (center) ──
   {
     day: 7,
-    step: 17,
+    step: 16,
     route: "/guide",
     targetKey: "day7.value_pace",
     targetSelector: "",
@@ -2401,10 +2383,10 @@ const DAY_7_STEPS: TutorialCampStep[] = [
     successMessage: "두 번째 약속.",
     completionRule: "manual_confirm",
   },
-  // ── 18. 가치 2 — 비교 아닌 동행 (center) ──
+  // ── 17. 약속 2 — 비교 아닌 동행 (center) ──
   {
     day: 7,
-    step: 18,
+    step: 17,
     route: "/guide",
     targetKey: "day7.value_together",
     targetSelector: "",
@@ -2422,10 +2404,10 @@ const DAY_7_STEPS: TutorialCampStep[] = [
     successMessage: "세 번째 약속.",
     completionRule: "manual_confirm",
   },
-  // ── 19. 가치 3 — 다시 돌아오는 횟수 (center) ──
+  // ── 18. 약속 3 — 다시 돌아오는 횟수 (center) ──
   {
     day: 7,
-    step: 19,
+    step: 18,
     route: "/guide",
     targetKey: "day7.value_return",
     targetSelector: "",
@@ -2443,10 +2425,10 @@ const DAY_7_STEPS: TutorialCampStep[] = [
     successMessage: "네 번째 약속.",
     completionRule: "manual_confirm",
   },
-  // ── 20. 가치 4 — 작은 한 번 (center) ──
+  // ── 19. 약속 4 — 작은 한 번 (center) ──
   {
     day: 7,
-    step: 20,
+    step: 19,
     route: "/guide",
     targetKey: "day7.value_small",
     targetSelector: "",
@@ -2464,10 +2446,10 @@ const DAY_7_STEPS: TutorialCampStep[] = [
     successMessage: "마지막 약속이에요.",
     completionRule: "manual_confirm",
   },
-  // ── 21. 가치 5 — 나를 다시 좋아하기 (center) ──
+  // ── 20. 약속 5 — 나를 다시 좋아하기 (center) ──
   {
     day: 7,
-    step: 21,
+    step: 20,
     route: "/guide",
     targetKey: "day7.value_self",
     targetSelector: "",
@@ -2485,10 +2467,10 @@ const DAY_7_STEPS: TutorialCampStep[] = [
     successMessage: "이제 7일 완료식으로 갈게요.",
     completionRule: "manual_confirm",
   },
-  // ── 22. 153복싱짐의 인사 (center) ──
+  // ── 21. 153복싱짐의 인사 (center) ──
   {
     day: 7,
-    step: 22,
+    step: 21,
     route: "/guide",
     targetKey: "day7.gym_message",
     targetSelector: "",
@@ -2506,10 +2488,10 @@ const DAY_7_STEPS: TutorialCampStep[] = [
     successMessage: "7일 완료식이에요.",
     completionRule: "manual_confirm",
   },
-  // ── 23. 7일 완료식 (celebration) ──
+  // ── 22. 7일 완료식 (celebration) ──
   {
     day: 7,
-    step: 23,
+    step: 22,
     route: "/guide",
     targetKey: "day7.celebration",
     targetSelector: "",
@@ -2526,10 +2508,10 @@ const DAY_7_STEPS: TutorialCampStep[] = [
     /** Day 7 완료식 confetti 와 PostActionReflectionSheet 시각 충돌 방지. */
     suppressReflectionSheet: true,
   },
-  // ── 24. 앞으로의 사용법 (complete) ──
+  // ── 23. 앞으로의 사용법 (complete) ──
   {
     day: 7,
-    step: 24,
+    step: 23,
     route: "/guide",
     targetKey: "day7.next_steps",
     targetSelector: "",
