@@ -694,6 +694,11 @@ const SELECTOR_LABELS: Record<string, string> = {
   '[data-tour="guide-tab-whitefaq"]': "가이드 — 화이트 FAQ 탭",
   '[data-tour="guide-tab-safety"]': "가이드 — 안전 탭",
   '[data-tour="guide-onboarding-replay"]': "가이드 — 온보딩 다시 보기 버튼",
+  '[data-tour="bottomnav-home"]': "하단 메뉴 — 홈",
+  '[data-tour="bottomnav-missions"]': "하단 메뉴 — 훈련",
+  '[data-tour="bottomnav-cert-benefits"]': "하단 메뉴 — 단증혜택",
+  '[data-tour="bottomnav-halloffame"]': "하단 메뉴 — 랭킹",
+  '[data-tour="bottomnav-rank-up"]': "하단 메뉴 — 랭크업",
 };
 
 function describeSelector(sel: string): string {

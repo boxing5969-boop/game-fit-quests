@@ -189,11 +189,15 @@ const BottomNav = () => {
             //   강조는 아이콘 우상단 별표 배지로만 (차분한 표시).
             //   active 시 색상은 다른 탭과 같은 규칙 (text-primary).
             const isTraining = path === "/missions";
+            // 65-R: 7일 캠프 Day 7 회고 cascade 가 BottomNav 탭별 click 가능하도록
+            //   data-tour 부여. 형식: bottomnav-<path 마지막 segment>.
+            const navSlug = path.replace(/^\//, "").replace(/\//g, "-");
             return (
               <button
                 key={path}
                 onClick={() => navigate(path)}
                 aria-current={active ? "page" : undefined}
+                data-tour={`bottomnav-${navSlug}`}
                 className={cn(
                   "group relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2 transition-transform duration-150 hover:scale-105 active:scale-95",
                   active ? "text-primary" : INACTIVE_TONE,
