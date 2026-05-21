@@ -64,22 +64,23 @@ export const useSpendGems = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (amount: number) => {
+    // amount 만 넘기는 기존 호출부 호환 + reason 명시 가능한 객체 형태 모두 허용.
+    mutationFn: async (input: number | { amount: number; reason?: string }) => {
       if (!user?.id) throw new Error("로그인 필요");
-      const { data: wallet, error: fetchError } = await supabase
-        .from("user_wallets")
-        .select("gems_balance")
-        .eq("user_id", user.id)
-        .single();
-      if (fetchError) throw fetchError;
-      if (!wallet) throw new Error("지갑 없음");
-      if (wallet.gems_balance < amount) throw new Error("파이트 머니가 부족합니다");
-      const { error } = await supabase
-        .from("user_wallets")
-        .update({ gems_balance: wallet.gems_balance - amount })
-        .eq("user_id", user.id);
+      const amount = typeof input === "number" ? input : input.amount;
+      const reason = typeof input === "number" ? "링젬 차감" : (input.reason ?? "링젬 차감");
+      // 서버측 spend_gems RPC 가 atomic 잔액 체크 + wallet_transactions 로그까지 처리.
+      // 잔액 부족 시 RAISE EXCEPTION '파이트 머니가 부족합니다' 가 error.message 로 전파.
+      const { error } = await supabase.rpc("spend_gems", {
+        _user_id: user.id,
+        _amount: amount,
+        _reason: reason,
+      });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["wallet"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+      qc.invalidateQueries({ queryKey: ["member-wallet"] });
+    },
   });
 };
