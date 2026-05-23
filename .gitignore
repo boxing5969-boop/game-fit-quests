@@ -60,3 +60,9 @@ supabase/.temp/
 # FUSE / OS temp files
 .fuse_hidden*
 _tmp_*
+
+# 루트 레벨 talktalk 변종 (canonical: external/naver-talktalk/, supabase/functions/talktalk-*/)
+# d9d1e74 에서 추적 해제 — 디스크에는 로컬 보존
+/talktalk-webhook-*.js
+/*-talktalk.js
+/\[*\]talktalk.js
