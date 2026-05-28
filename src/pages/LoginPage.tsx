@@ -472,16 +472,17 @@ const LoginPage = () => {
                 onClick={async () => {
                   setIsLoading(true);
                   try {
-                    const result = await lovable.auth.signInWithOAuth("google", {
-                      redirect_uri: window.location.origin,
+                    // Supabase 직접 OAuth — Lovable broker (/~oauth/initiate, Lovable 호스팅 전용)
+                    // 우회. 인증 후 redirectTo 로 돌아오면 Supabase JS 가 자동 세션 설정.
+                    const { error } = await supabase.auth.signInWithOAuth({
+                      provider: "google",
+                      options: { redirectTo: window.location.origin },
                     });
-                    if (result.error) {
-                      setError("Google 로그인에 실패했습니다.");
-                      return;
+                    if (error) {
+                      setError("Google 로그인에 실패했습니다. " + (error.message ?? ""));
                     }
-                    if (result.redirected) return;
-                    navigate("/home");
-                  } catch {
+                    // 성공 시 브라우저가 Google 페이지로 redirect — 별도 navigate 불필요
+                  } catch (e) {
                     setError("Google 로그인에 실패했습니다.");
                   } finally {
                     setIsLoading(false);
@@ -504,16 +505,14 @@ const LoginPage = () => {
                 onClick={async () => {
                   setIsLoading(true);
                   try {
-                    const result = await lovable.auth.signInWithOAuth("apple", {
-                      redirect_uri: window.location.origin,
+                    const { error } = await supabase.auth.signInWithOAuth({
+                      provider: "apple",
+                      options: { redirectTo: window.location.origin },
                     });
-                    if (result.error) {
-                      setError("Apple 로그인에 실패했습니다.");
-                      return;
+                    if (error) {
+                      setError("Apple 로그인에 실패했습니다. " + (error.message ?? ""));
                     }
-                    if (result.redirected) return;
-                    navigate("/home");
-                  } catch {
+                  } catch (e) {
                     setError("Apple 로그인에 실패했습니다.");
                   } finally {
                     setIsLoading(false);
