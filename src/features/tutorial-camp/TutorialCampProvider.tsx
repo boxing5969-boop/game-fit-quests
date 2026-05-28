@@ -869,7 +869,7 @@ const TutorialCampProvider = () => {
       onMarkClicked={() => setTargetClicked(true)}
       onDimNudge={handleDimNudge}
       conditionMet={conditionMet}
-      completionState={completion}
+      completionState={completion as unknown as Record<string, boolean>}
       modalOpen={modalOpen}
       modalActionDone={modalActionDone}
     />

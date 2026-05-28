@@ -56,8 +56,8 @@ export const TutorialOverlay = ({ onCompleted }: TutorialOverlayProps) => {
 
   if (!isEligible || dismissed) return null;
 
-  const isMiniGame = currentStep.key === "mini_game";
-  const isComplete = currentStep.key === "complete";
+  const isMiniGame = false;
+  const isComplete = stepsCompleted >= totalSteps;
   const isSubmitting = completeReward.isPending;
 
   const handlePrimary = () => {

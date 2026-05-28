@@ -305,7 +305,7 @@ function usePicker(onCapture: (selector: string) => void): {
   };
   const stop = () => {
     setPicking(false);
-    clearOutline();
+    setHoverRect(null);
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event(CUSTOMIZER_SHOW_EVENT));
     }
