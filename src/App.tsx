@@ -197,6 +197,13 @@ const AppRoutes = () => {
       <Suspense fallback={<RouteLoader />}>
       <Routes>
         <Route path="/" element={user ? <RoleBasedRedirect /> : <LoginPage />} />
+        {/* OAuth callback 안전망 — Google/Apple/Microsoft broker 가 흔히 사용하는 path 들.
+            search/hash 의 OAuth 파라미터 (code/state/access_token) 는 LoginPage 가 받아
+            Supabase JS 의 detectSessionInUrl 로 자동 세션 설정. NotFound 도 추가 fallback. */}
+        <Route path="/auth/callback" element={<LoginPage />} />
+        <Route path="/oauth/callback" element={<LoginPage />} />
+        <Route path="/login/callback" element={<LoginPage />} />
+        <Route path="/auth/v1/callback" element={<LoginPage />} />
         <Route path="/select-branch" element={<ProtectedRoute><SelectBranchPage /></ProtectedRoute>} />
         <Route path="/waiting-approval" element={<ProtectedRoute><WaitingApprovalPage /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
