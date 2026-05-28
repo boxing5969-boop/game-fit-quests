@@ -594,6 +594,12 @@ Deno.serve(async (req) => {
 
     console.log(`[TalkTalk-선릉] 이벤트: ${event}, 사용자: ${user}`);
 
+    // 사업주 계정 — 자동 응답 없음
+    const OWNER_IDS = ["gkadmsal64"];
+    if (OWNER_IDS.includes(user)) {
+      return new Response(null, { status: 200 });
+    }
+
     if (event === "open") {
       return new Response(
         JSON.stringify({ event: "send", textContent: { text: WELCOME_MESSAGE } }),
