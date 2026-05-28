@@ -165,7 +165,7 @@ const StoryRpgPage = () => {
   );
   const sceneProgress = sceneProgressRaw
     ? (() => {
-        const raw = sceneProgressRaw as Record<string, unknown>;
+        const raw = sceneProgressRaw as unknown as Record<string, unknown>;
         return {
           route_id: raw.route_id as string,
           chapter_id: (raw.chapter_id as string | null) ?? null,
@@ -599,7 +599,7 @@ const StoryRpgPage = () => {
         )}
 
         {/* 하단 — 월드맵 복귀 버튼 (전투 / 로딩 / 프롤로그 / 엔딩 외) */}
-        {showBackButton && mode.kind !== "battle" && (
+        {showBackButton && (
           <button
             type="button"
             onClick={() => setMode({ kind: "world" })}
