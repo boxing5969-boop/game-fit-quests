@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import LoginErrorModal, { classifyLoginError } from "@/components/LoginErrorModal";
 import { translateAuthError } from "@/lib/errorMessages";
 import MyBoxerWordmark from "@/components/brand/MyBoxerWordmark";
+import InstallAppButton from "@/components/install/InstallAppButton";
 import {
   Select,
   SelectContent,
@@ -328,6 +329,12 @@ const LoginPage = () => {
         <p className="mt-3 text-xs text-muted-foreground">
           153복싱짐 회원을 위한 복싱 성장 퀘스트 앱
         </p>
+      </div>
+
+      {/* PWA 설치 버튼 — Android 는 native prompt, iOS Safari 는 안내 모달 자동 노출.
+          이미 설치(standalone) 됐거나 in-app webview 면 자동 숨김. */}
+      <div className="mb-4 w-full max-w-sm">
+        <InstallAppButton label="📱 앱으로 설치하기 (1초)" />
       </div>
 
       {/* Tab */}

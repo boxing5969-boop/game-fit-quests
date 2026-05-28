@@ -13,6 +13,13 @@
     <link rel="icon" type="image/png" href="/myboxer-icon.png" />
     <link rel="apple-touch-icon" href="/myboxer-icon.png" />
     <link rel="shortcut icon" type="image/png" href="/myboxer-icon.png" />
+    <!-- PWA: manifest + 설치 가능 — Android Chrome 은 beforeinstallprompt, iOS Safari 는 '홈 화면에 추가' 안내. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="application-name" content="마이복서153" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="마이복서153" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <!-- Match the dark-first palette so mobile browser chrome and native
          scrollbars/form controls render dark instead of forced light. -->
     <meta name="theme-color" content="#0B0F17" />
@@ -46,5 +53,15 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- PWA service worker 등록 — production 만. 실패해도 앱은 정상 동작. -->
+    <script>
+      if ("serviceWorker" in navigator && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js").catch(() => {
+            /* sw 등록 실패는 무시 — 설치 가능 상태만 못 됨 */
+          });
+        });
+      }
+    </script>
   </body>
 </html>
