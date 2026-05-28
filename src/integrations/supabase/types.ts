@@ -1887,6 +1887,41 @@ export type Database = {
         }
         Relationships: []
       }
+      champion_journal_comments: {
+        Row: {
+          commenter_user_id: string
+          content: string
+          created_at: string
+          entry_id: string
+          id: string
+          metadata: Json
+        }
+        Insert: {
+          commenter_user_id: string
+          content: string
+          created_at?: string
+          entry_id: string
+          id?: string
+          metadata?: Json
+        }
+        Update: {
+          commenter_user_id?: string
+          content?: string
+          created_at?: string
+          entry_id?: string
+          id?: string
+          metadata?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "champion_journal_comments_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "champion_journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       champion_journal_entries: {
         Row: {
           content: string
@@ -3722,6 +3757,33 @@ export type Database = {
           },
         ]
       }
+      tutorial_global_overrides: {
+        Row: {
+          custom_steps: Json
+          id: number
+          step_order: Json
+          step_overrides: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          custom_steps?: Json
+          id?: number
+          step_order?: Json
+          step_overrides?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          custom_steps?: Json
+          id?: number
+          step_order?: Json
+          step_overrides?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       tutorial_step_claims: {
         Row: {
           amount: number
@@ -3959,6 +4021,14 @@ export type Database = {
         }
         Returns: Json
       }
+      add_journal_comment: {
+        Args: { p_content: string; p_entry_id: string }
+        Returns: {
+          comment_id: string
+          message: string
+          success: boolean
+        }[]
+      }
       advance_master_level:
         | { Args: { _member_id: string }; Returns: Json }
         | {
@@ -4102,6 +4172,13 @@ export type Database = {
         Args: { _body?: string; _title: string; _user_id: string }
         Returns: string
       }
+      delete_journal_comment: {
+        Args: { p_comment_id: string }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
+      }
       early_start_post_program: {
         Args: { _enrollment_id: string }
         Returns: Json
@@ -4125,6 +4202,17 @@ export type Database = {
       }
       enter_master_track: { Args: { _member_id: string }; Returns: Json }
       equip_avatar_item: { Args: { _item_id: string }; Returns: undefined }
+      get_153_challenge_leaderboard: {
+        Args: { p_limit?: number; p_period?: string }
+        Returns: {
+          branch_name: string
+          display_name: string
+          is_me: boolean
+          rank: number
+          score: number
+          user_id: string
+        }[]
+      }
       get_active_gym_raids: { Args: never; Returns: Json }
       get_boss_conquerors: {
         Args: { _branch_name?: string; _limit?: number }
@@ -4215,12 +4303,35 @@ export type Database = {
           rank_position: number
         }[]
       }
+      get_my_153_challenge_rank: {
+        Args: { p_period?: string }
+        Returns: {
+          my_rank: number
+          my_score: number
+          period: string
+          total_participants: number
+        }[]
+      }
       get_my_boxing_engagement_summary: { Args: never; Returns: Json }
       get_my_branch: { Args: never; Returns: string }
       get_my_cornerman_status: { Args: never; Returns: Json }
       get_my_hidden_mission_progress: { Args: never; Returns: Json }
       get_my_story_rpg_state: { Args: never; Returns: Json }
       get_nutrition_profile: { Args: { _user_id?: string }; Returns: Json }
+      get_partner_journal_feed: {
+        Args: { p_limit?: number }
+        Returns: {
+          comment_count: number
+          content: string
+          created_at: string
+          display_name: string
+          id: string
+          mood: string
+          prompt: string
+          relation: string
+          user_id: string
+        }[]
+      }
       get_post_program_plan: { Args: { _user_id?: string }; Returns: Json }
       get_quest_xp: {
         Args: { qt: Database["public"]["Enums"]["quest_type"] }
@@ -4294,6 +4405,15 @@ export type Database = {
         }[]
       }
       get_today_boxing_condition: { Args: never; Returns: Json }
+      get_tutorial_global_overrides: {
+        Args: never
+        Returns: {
+          custom_steps: Json
+          step_order: Json
+          step_overrides: Json
+          updated_at: string
+        }[]
+      }
       get_weekly_activity_ranking: {
         Args: { _branch_name?: string; _limit?: number }
         Returns: {
@@ -4334,7 +4454,23 @@ export type Database = {
         Args: { _category: string; _item_key: string }
         Returns: boolean
       }
+      is_journal_partner: {
+        Args: { p_owner: string; p_viewer: string }
+        Returns: boolean
+      }
       is_same_branch: { Args: { _user_id: string }; Returns: boolean }
+      list_journal_comments: {
+        Args: { p_entry_id: string }
+        Returns: {
+          commenter_name: string
+          commenter_user_id: string
+          content: string
+          created_at: string
+          entry_id: string
+          id: string
+          is_mine: boolean
+        }[]
+      }
       log_diet_event: {
         Args: { _event_data?: Json; _event_type: string }
         Returns: Json
@@ -4353,6 +4489,14 @@ export type Database = {
           p_scene_index: number
         }
         Returns: Json
+      }
+      publish_tutorial_global_overrides: {
+        Args: { p_payload: Json }
+        Returns: {
+          message: string
+          success: boolean
+          updated_at: string
+        }[]
       }
       purchase_avatar_item: { Args: { _item_id: string }; Returns: Json }
       purchase_customization: {
@@ -4467,6 +4611,10 @@ export type Database = {
         Returns: Json
       }
       set_rival: { Args: { _rival_id: string }; Returns: undefined }
+      spend_gems: {
+        Args: { _amount: number; _reason?: string; _user_id: string }
+        Returns: undefined
+      }
       start_battle: {
         Args: { p_chapter_id: string; p_enemy_code: string }
         Returns: Json
