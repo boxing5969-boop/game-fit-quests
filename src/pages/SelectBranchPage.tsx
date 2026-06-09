@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -13,8 +13,16 @@ import {
 } from "@/components/ui/select";
 
 const SelectBranchPage = () => {
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
+
+  // 이미 체육관이 등록된(프로필 완성) 사용자는 이 화면에 갇히지 않도록 홈으로 보냄.
+  // (소셜 재로그인 시 이 화면에 빠지면 뒤로가기가 없어 갇히고, 등록완료 시 승인이 풀리는 문제 방지)
+  useEffect(() => {
+    if (profile && (profile as any).branch_name) {
+      navigate("/home", { replace: true });
+    }
+  }, [profile, navigate]);
   const [branch, setBranch] = useState("");
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
