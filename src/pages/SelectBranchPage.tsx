@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -92,7 +93,15 @@ const SelectBranchPage = () => {
   const inputClass = "w-full rounded-xl border border-border bg-card px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all";
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
+    <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-8">
+      <button
+        type="button"
+        onClick={async () => { await supabase.auth.signOut(); navigate("/", { replace: true }); }}
+        className="absolute left-4 top-4 flex items-center gap-1 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        aria-label="뒤로가기"
+      >
+        <ArrowLeft className="h-5 w-5" /> 뒤로
+      </button>
       <div className="mb-6 text-center">
         <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-4xl shadow-glow-primary">🥊</div>
         <h1 className="text-2xl font-bold text-foreground">체육관 등록</h1>

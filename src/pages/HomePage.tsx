@@ -46,6 +46,7 @@ import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
+import { getMasterLevelDefinition } from "@/data/masterTierData";
 import { useDisplayMode } from "@/hooks/useDisplayMode";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
@@ -181,6 +182,9 @@ const HomePage = () => {
     rank === "black" &&
     progress.current_level === 10 &&
     progress.bosses_cleared >= 4;
+  // 마스터 트랙 진입자: 카드에 마스터 타이틀(예: 그랜드 챔피언) + 오버롤 레벨 표시
+  const onMasterTrack = !!progress.master_track_unlocked && (progress.master_level ?? 0) >= 1;
+  const masterDef = onMasterTrack ? getMasterLevelDefinition(progress.master_level ?? 0) : undefined;
   const unifiedLevel = getLevelById(rank, progress.current_level);
 
   const sessionMet = metrics.sessions;
@@ -394,13 +398,14 @@ const HomePage = () => {
                   name={profile.nickname || profile.name || "복서"}
                   branch={profile.branch_name}
                   league={rank}
-                  level={progress.current_level}
+                  level={onMasterTrack ? progress.overall_level : progress.current_level}
                   userId={user?.id}
                   issueDate={(profile as { created_at?: string }).created_at}
                   streakDays={progress.streak_days}
                   totalXp={totalXp}
                   xpToNext={Math.max(metrics.xp.target, totalXp || 1)}
                   isMaster={isMaster40}
+                  masterTitle={masterDef?.title}
                 />
               );
             },

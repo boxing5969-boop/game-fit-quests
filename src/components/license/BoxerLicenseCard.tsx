@@ -136,6 +136,8 @@ export interface BoxerLicenseCardProps {
   xpToNext?: number;
   /** 마스터 (블랙 Lv.10 + 보스 4클리어) */
   isMaster?: boolean;
+  /** 마스터 트랙 타이틀 (예: "그랜드 챔피언") — 있으면 isMaster 일 때 "MASTER" 대신 표시 */
+  masterTitle?: string;
   /** 운동중 LIVE 인디케이터 (라이브보드용) */
   isLive?: boolean;
   /** "방금 입실" 강조 (라이브보드 fresh) */
@@ -157,6 +159,7 @@ const BoxerLicenseCard = ({
   totalXp,
   xpToNext,
   isMaster = false,
+  masterTitle,
   isLive = false,
   isFresh = false,
   elapsedMinutes,
@@ -165,7 +168,7 @@ const BoxerLicenseCard = ({
   const lic = licenseNumber(userId);
   const issuedFmt = formatIssueDate(issueDate);
   const rankLabelKR = isMaster ? "마스터" : RANK_LABELS_KR[rankKey] ?? rankKey;
-  const rankLabelEN = isMaster ? "MASTER" : RANK_LABELS[rankKey] ?? rankKey.toUpperCase();
+  const rankLabelEN = isMaster ? (masterTitle || "MASTER") : (RANK_LABELS[rankKey] ?? rankKey.toUpperCase());
   const accentText = isMaster ? "text-yellow-300" : RANK_ACCENT_TEXT[rankKey] ?? "text-gray-300";
   const borderGrad = isMaster ? RANK_BORDER.black : RANK_BORDER[rankKey] ?? RANK_BORDER.white;
   const bgGrad = isMaster ? RANK_BG.black : RANK_BG[rankKey] ?? RANK_BG.white;
