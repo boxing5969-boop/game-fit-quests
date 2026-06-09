@@ -506,7 +506,8 @@ const LoginPage = () => {
                   try {
                     const { error } = await supabase.auth.signInWithOAuth({
                       provider: "kakao",
-                      options: { redirectTo: window.location.origin },
+                      // 비즈 앱 아님 → account_email 요청 시 KOE205. 닉네임만 요청.
+                      options: { redirectTo: window.location.origin, scopes: "profile_nickname" },
                     });
                     if (error) {
                       setError("카카오 로그인에 실패했습니다. " + (error.message ?? ""));
