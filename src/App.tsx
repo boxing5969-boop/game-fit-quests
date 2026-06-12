@@ -15,6 +15,7 @@ import { isManagerRole } from "@/lib/rankLabels";
 import TutorialFloatingMascot from "@/components/tutorial/TutorialFloatingMascot";
 import TutorialActionSpotlight from "@/components/tutorial/TutorialActionSpotlight";
 import OsamiWelcomeModal from "@/components/tutorial/OsamiWelcomeModal";
+import WelcomeLetter from "@/components/WelcomeLetter";
 import { useTutorialAutoDetect } from "@/hooks/useTutorialAutoDetect";
 import TutorialCampProvider from "@/features/tutorial-camp/TutorialCampProvider";
 import TutorialDevPanel from "@/features/tutorial-camp/TutorialDevPanel";
@@ -270,6 +271,8 @@ const AppRoutes = () => {
       {user && splashDone && <TutorialActionSpotlight />}
       {/* 첫 로그인 환영 모달 — 신규 회원 1회 노출, 오삼이 코치 인사 + 앱 핵심 안내 */}
       {user && splashDone && <OsamiWelcomeModal />}
+      {/* 감동편지 — 웰컴 1통 + 리그 승급(블루/레드/블랙) 3통, localStorage 1회 노출 */}
+      {user && splashDone && <WelcomeLetter />}
       {/* 7일 스타터 캠프 overlay — localStorage 기반, isActive 시에만 렌더 */}
       {user && splashDone && <TutorialCampProvider />}
       {/* 개발자 preview 패널 — localhost / ?tutorialDev=1 / dev 토글 ON 일 때만 노출 */}
