@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mail, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { getTutorialCampState } from "@/features/tutorial-camp/tutorialCampStorage";
 
 const RANK_ORDER = ["white", "blue", "red", "black"] as const;
 type RankKey = (typeof RANK_ORDER)[number];
@@ -196,6 +197,12 @@ const WelcomeLetter = () => {
     if (!user || !profile) return;
     if (isSetupPath(location.pathname)) return;
 
+    // 튜토리얼·7일 스타터 캠프가 진행/대기 중이면 편지 보류 — 캠프 안내와 겹침 방지.
+    // 캠프는 튜토리얼 5단계 완료 시 자동 시작되므로 끝나기 전엔 안 띄운다.
+    // completed/skipped(종료) 또는 not_started(튜토리얼 건너뛰어 캠프 미진행) 진입에서만 도착.
+    const campStatus = getTutorialCampState().status;
+    if (campStatus === "active" || campStatus === "paused") return;
+
     const p = profile as unknown as LetterProfile;
     const rank = ((progress as unknown as { current_rank?: string } | null)?.current_rank ??
       "white") as RankKey;
@@ -256,7 +263,7 @@ const WelcomeLetter = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[85] bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-[114] bg-black/80 backdrop-blur-md"
             onClick={handleClose}
           />
 
@@ -266,7 +273,7 @@ const WelcomeLetter = () => {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.96, opacity: 0 }}
             transition={{ type: "spring", damping: 24, stiffness: 220 }}
-            className="fixed inset-0 z-[86] flex items-center justify-center px-4 py-8"
+            className="fixed inset-0 z-[115] flex items-center justify-center px-4 py-8"
             onClick={handleClose}
           >
             <div
