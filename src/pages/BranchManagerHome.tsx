@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
 import DailyOperationsBoard from "@/components/DailyOperationsBoard";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
+import DailyReportCard from "@/components/DailyReportCard";
 import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -546,6 +547,17 @@ const BranchManagerHome = () => {
           </div>
         </div>
 
+        {/* 일일 운영 리포트 (홈 진입 카드) */}
+        <DailyReportCard
+          branchName={branchName}
+          isSuperAdmin={isSuperAdmin}
+          enabled={isManagerRole(role)}
+          pendingCount={stats?.pending_count}
+          todaySubmissions={stats?.today_submissions}
+          onOpenOperations={() => setMainTab("operations")}
+          onOpenCheckin={() => navigate("/manager/checkin-board")}
+        />
+
         {/* Stats Cards */}
         <div className="mb-5 grid grid-cols-2 gap-2.5">
           <StatCard icon="👥" label="전체 회원" value={stats?.total_members ?? "-"} />
@@ -636,6 +648,16 @@ const BranchManagerHome = () => {
               </button>
             </div>
           </div>
+
+          {/* 일일 운영 리포트 (홈 진입 카드) */}
+          <DailyReportCard
+            branchName={branchName}
+            isSuperAdmin={isSuperAdmin}
+            enabled={isManagerRole(role)}
+            pendingCount={stats?.pending_count}
+            todaySubmissions={stats?.today_submissions}
+            onOpenCheckin={() => navigate("/manager/checkin-board")}
+          />
 
           {/* Stats */}
           <div className="mb-4 grid grid-cols-2 gap-2">
