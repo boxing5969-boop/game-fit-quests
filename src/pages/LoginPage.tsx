@@ -179,6 +179,13 @@ const LoginPage = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotStep, setForgotStep] = useState<"verify" | "success">("verify");
   const [forgotError, setForgotError] = useState("");
+  const [showFindId, setShowFindId] = useState(false);
+  const [findName, setFindName] = useState("");
+  const [findPhone, setFindPhone] = useState("");
+  const [findBirth, setFindBirth] = useState("");
+  const [findLoading, setFindLoading] = useState(false);
+  const [findError, setFindError] = useState("");
+  const [findResults, setFindResults] = useState<Array<{ type: string; username?: string; provider?: string; email?: string }> | null>(null);
   const [error, setError] = useState("");
   const [loginErrorType, setLoginErrorType] = useState<ReturnType<typeof classifyLoginError> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -288,6 +295,33 @@ const LoginPage = () => {
     } finally {
       setForgotLoading(false);
     }
+  };
+
+  const handleFindId = async () => {
+    setFindError("");
+    if (!findName.trim() || !findPhone.trim()) {
+      setFindError("이름과 전화번호를 입력해주세요");
+      return;
+    }
+    setFindLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("find-username", {
+        body: { name: findName.trim(), phone: findPhone.trim(), birthDate: findBirth.trim() || null },
+      });
+      if (error) throw error;
+      if (data?.error) { setFindError(data.error); return; }
+      setFindResults(data?.accounts ?? []);
+    } catch (err) {
+      setFindError("처리 중 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setFindLoading(false);
+    }
+  };
+
+  const closeFindId = () => {
+    setShowFindId(false);
+    setFindName(""); setFindPhone(""); setFindBirth("");
+    setFindError(""); setFindResults(null);
   };
 
   if (signUpSuccess) {
@@ -529,14 +563,25 @@ const LoginPage = () => {
                   계정 등록 후 supabase.auth.signInWithOAuth({ provider: "apple" }) 으로 재활성. */}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowForgotPassword(true)}
-              disabled={isLoading}
-              className="w-full py-2 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              비밀번호를 잊으셨나요?
-            </button>
+            <div className="flex items-center justify-center gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowFindId(true)}
+                disabled={isLoading}
+                className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                아이디 찾기
+              </button>
+              <span className="text-border">·</span>
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                disabled={isLoading}
+                className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                비밀번호 찾기
+              </button>
+            </div>
           </>
         )}
       </form>
@@ -597,6 +642,53 @@ const LoginPage = () => {
                     className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                     {forgotLoading ? "확인 중..." : "비밀번호 변경"}
                   </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      {/* 아이디 찾기 모달 */}
+      {showFindId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-elev-3">
+            {findResults ? (
+              <div>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-3xl">🪪</div>
+                <h2 className="mb-3 text-center text-lg font-bold text-foreground">가입 정보 확인</h2>
+                {findResults.length === 0 ? (
+                  <p className="mb-4 text-center text-sm text-muted-foreground">일치하는 계정을 찾을 수 없습니다.</p>
+                ) : (
+                  <div className="mb-4 space-y-2">
+                    {findResults.map((r, i) => (
+                      <div key={i} className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm">
+                        {r.type === "username" ? (
+                          <p className="text-foreground">아이디: <span className="font-bold text-primary">{r.username}</span></p>
+                        ) : r.type === "social" ? (
+                          <p className="text-foreground">{r.provider === "google" ? "구글" : r.provider === "kakao" ? "카카오" : "애플"}로 가입하셨습니다 <span className="text-muted-foreground">({r.email})</span></p>
+                        ) : (
+                          <p className="text-foreground">이메일로 가입: <span className="font-bold text-primary">{r.email}</span></p>
+                        )}
+                      </div>
+                    ))}
+                    <p className="text-xs text-muted-foreground">보안을 위해 일부만 표시됩니다. 비밀번호를 모르면 '비밀번호 찾기'로 재설정하세요.</p>
+                  </div>
+                )}
+                <button type="button" onClick={closeFindId} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary active:scale-[0.98]">확인</button>
+              </div>
+            ) : (
+              <>
+                <h2 className="mb-2 text-lg font-bold text-foreground">🪪 아이디 찾기</h2>
+                <p className="mb-4 text-sm text-muted-foreground">가입 시 등록한 이름과 전화번호를 입력하세요.</p>
+                <div className="space-y-3">
+                  <input type="text" value={findName} onChange={(e) => setFindName(e.target.value)} placeholder="이름" className={inputClass} />
+                  <input type="tel" value={findPhone} onChange={(e) => setFindPhone(formatPhone(e.target.value))} placeholder="전화번호 (010-0000-0000)" className={inputClass} />
+                  <input type="text" value={findBirth} onChange={(e) => setFindBirth(e.target.value)} placeholder="생년월일 (선택, 예: 19990315)" className={inputClass} maxLength={8} inputMode="numeric" />
+                </div>
+                {findError && <p className="mt-2 text-sm text-destructive">{findError}</p>}
+                <div className="mt-4 flex gap-3">
+                  <button type="button" onClick={closeFindId} className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground transition-all active:scale-[0.98]">취소</button>
+                  <button type="button" onClick={handleFindId} disabled={findLoading} className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">{findLoading ? "확인 중..." : "아이디 찾기"}</button>
                 </div>
               </>
             )}
