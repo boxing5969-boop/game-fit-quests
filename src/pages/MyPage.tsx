@@ -149,30 +149,28 @@ const MyPage = () => {
           {/* Character Hero Card */}
           <div className="rounded-2xl border border-border bg-gradient-to-b from-card to-secondary/20 p-5 shadow-glow-soft">
             <div className="flex items-start gap-4">
-              {/* Large character preview */}
+              {/* 프로필 사진 (메인) + 캐릭터 미니 배지 */}
               <div data-tutorial-target="profile-photo-button" className="relative flex-shrink-0">
-                {myCharacter?.character_presets ? (
-                  <CharacterSprite
-                    style={(myCharacter.character_presets.parts_json as any)?.style}
-                    userId={profile.user_id}
-                    partsJson={myCharacter.character_presets.parts_json as any}
-                    size="lg"
-                    animate
-                    league={progress.current_rank as any}
-                    level={progress.current_level}
-                    className="!w-28 !h-28"
-                    priority
-                  />
-                ) : (
-                  <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-muted">
-                    <span className="text-4xl">🥊</span>
-                  </div>
-                )}
+                <AvatarUpload size="xl" />
+                {/* 캐릭터를 프로필 사진 좌하단 미니 배지로 — 탭하면 캐릭터 스튜디오 */}
                 <button
                   onClick={() => navigate("/character-studio")}
-                  className="absolute -bottom-1 -right-1 rounded-full bg-primary p-1.5 shadow-md active:scale-95 transition-transform"
+                  aria-label="캐릭터 스튜디오"
+                  className="absolute -bottom-1 -left-1 flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border-2 border-card bg-secondary shadow-md active:scale-95"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+                  {myCharacter?.character_presets ? (
+                    <CharacterSprite
+                      style={(myCharacter.character_presets.parts_json as any)?.style}
+                      userId={profile.user_id}
+                      partsJson={myCharacter.character_presets.parts_json as any}
+                      size="sm"
+                      league={progress.current_rank as any}
+                      level={progress.current_level}
+                      className="!w-14 !h-14"
+                    />
+                  ) : (
+                    <span className="text-xl">🥊</span>
+                  )}
                 </button>
               </div>
               {/* Profile info */}
@@ -207,7 +205,6 @@ const MyPage = () => {
                   >
                     캐릭터 스튜디오
                   </button>
-                  <AvatarUpload size="sm" />
                 </div>
               </div>
             </div>

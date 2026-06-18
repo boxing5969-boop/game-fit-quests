@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { compressImage } from "@/lib/imageCompression";
 
 interface AvatarUploadProps {
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   editable?: boolean;
 }
 
@@ -15,6 +15,7 @@ const sizeMap = {
   sm: "h-12 w-12",
   md: "h-16 w-16",
   lg: "h-24 w-24",
+  xl: "h-28 w-28",
 };
 
 const AvatarUpload = ({ size = "md", editable = true }: AvatarUploadProps) => {
