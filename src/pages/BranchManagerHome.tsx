@@ -12,6 +12,7 @@ import { Search, Users, User, ChevronRight, Bell, Inbox, UserCheck, UserX, Downl
 import { formatRank, RANK_ICONS, isManagerRole } from "@/lib/rankLabels";
 import { Input } from "@/components/ui/input";
 import ApprovalInbox from "@/components/ApprovalInbox";
+import BulkMemberImport from "@/components/admin/BulkMemberImport";
 import { toast } from "sonner";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
@@ -29,6 +30,7 @@ const BranchManagerHome = () => {
   const [sort, setSort] = useState<SortType>("level_desc");
   const [mainTab, setMainTab] = useState<MainTab>("members");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   const branchName = profile?.branch_name || "";
   const isSuperAdmin = role === "super_admin" || role === "admin";
@@ -415,6 +417,21 @@ const BranchManagerHome = () => {
           </div>
         </button>
         <button
+          onClick={() => setShowImport(true)}
+          className="w-full rounded-2xl border border-primary/30 bg-primary/5 p-4 text-left shadow-elev-1 transition-all active:scale-[0.98]"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📥</span>
+              <div>
+                <p className="text-sm font-bold text-foreground">회원 엑셀 일괄 등록</p>
+                <p className="text-xs text-muted-foreground">브로제이 고객목록 .xlsx → 자동 승인</p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-primary" />
+          </div>
+        </button>
+        <button
           onClick={() => navigate("/home")}
           className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-elev-1 transition-all active:scale-[0.98]"
         >
@@ -712,6 +729,8 @@ const BranchManagerHome = () => {
           <DesktopDetailPanel />
         </div>
       </div>
+
+      {showImport && <BulkMemberImport onClose={() => setShowImport(false)} />}
     </>
   );
 };

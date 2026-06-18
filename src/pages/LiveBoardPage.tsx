@@ -123,8 +123,8 @@ const LiveBoardPage = () => {
       }
       return avatarCacheRef.current[userId];
     }
-    // Try profiles (may fail for anon due to RLS)
-    const { data } = await supabase.from("profiles").select("avatar_url").eq("user_id", userId).single();
+    // 공개 안전컬럼 뷰 사용 (민감정보 제외, 회원 간 닉네임/아바타만 노출)
+    const { data } = await (supabase as any).from("public_profiles").select("avatar_url").eq("user_id", userId).single();
     const url = data?.avatar_url || null;
     avatarCacheRef.current[userId] = url;
     setAvatarMap(prev => ({ ...prev, [userId]: url }));
@@ -204,9 +204,9 @@ const LiveBoardPage = () => {
 
     const userIds = Array.from(latestByUser.keys());
 
-    // Batch fetch profiles and progress (may fail for anon users due to RLS)
-    const { data: profiles } = await supabase
-      .from("profiles")
+    // 공개 안전컬럼 뷰 사용 (민감정보 제외)
+    const { data: profiles } = await (supabase as any)
+      .from("public_profiles")
       .select("user_id, nickname, name, avatar_url")
       .in("user_id", userIds);
 
