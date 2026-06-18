@@ -143,266 +143,265 @@ const MyPage = () => {
         <h1 className="text-xl text-foreground">마이페이지</h1>
       </div>
 
-      <div className="space-y-5">
-        {/* Character Hero Card */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-gradient-to-b from-card to-secondary/20 p-5 shadow-glow-soft">
-          <div className="flex items-start gap-4">
-            {/* Large character preview */}
-            <div data-tutorial-target="profile-photo-button" className="relative flex-shrink-0">
-              {myCharacter?.character_presets ? (
-                <CharacterSprite
-                  style={(myCharacter.character_presets.parts_json as any)?.style}
-                  userId={profile.user_id}
-                  partsJson={myCharacter.character_presets.parts_json as any}
-                  size="lg"
-                  animate
-                  league={progress.current_rank as any}
-                  level={progress.current_level}
-                  className="!w-28 !h-28"
-                  priority
-                />
-              ) : (
-                <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-muted">
-                  <span className="text-4xl">🥊</span>
-                </div>
-              )}
-              <button
-                onClick={() => navigate("/character-studio")}
-                className="absolute -bottom-1 -right-1 rounded-full bg-primary p-1.5 shadow-md active:scale-95 transition-transform"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
-              </button>
-            </div>
-            {/* Profile info */}
-            <div className="flex-1 pt-1">
-              <h2 className="text-lg text-foreground">{profile.nickname || profile.name}</h2>
-              <p className="text-sm text-muted-foreground">{profile.name}</p>
-              <div className="mt-1.5 flex items-center gap-2">
-                <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} isMaster={isManagerRole(role)} />
-                {role && role !== "member" && (
-                  <span className="rounded-full bg-reward/30 px-2 py-0.5 text-xs font-bold text-reward-foreground">
-                    {role === "branch_manager" || role === "coach" ? "관장님" : role === "super_admin" || role === "admin" ? "전체 관리자" : role}
-                  </span>
+      <div className="space-y-7">
+        {/* ═══════════ 프로필 ═══════════ */}
+        <section className="animate-slide-up space-y-3">
+          {/* Character Hero Card */}
+          <div className="rounded-2xl border border-border bg-gradient-to-b from-card to-secondary/20 p-5 shadow-glow-soft">
+            <div className="flex items-start gap-4">
+              {/* Large character preview */}
+              <div data-tutorial-target="profile-photo-button" className="relative flex-shrink-0">
+                {myCharacter?.character_presets ? (
+                  <CharacterSprite
+                    style={(myCharacter.character_presets.parts_json as any)?.style}
+                    userId={profile.user_id}
+                    partsJson={myCharacter.character_presets.parts_json as any}
+                    size="lg"
+                    animate
+                    league={progress.current_rank as any}
+                    level={progress.current_level}
+                    className="!w-28 !h-28"
+                    priority
+                  />
+                ) : (
+                  <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-muted">
+                    <span className="text-4xl">🥊</span>
+                  </div>
                 )}
-              </div>
-              <div className="mt-2 flex gap-2">
                 <button
                   onClick={() => navigate("/character-studio")}
-                  className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary active:scale-95"
+                  className="absolute -bottom-1 -right-1 rounded-full bg-primary p-1.5 shadow-md active:scale-95 transition-transform"
                 >
-                  캐릭터 스튜디오
+                  <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
                 </button>
-                <AvatarUpload size="sm" />
+              </div>
+              {/* Profile info */}
+              <div className="min-w-0 flex-1 pt-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h2 className="truncate text-lg text-foreground">{profile.nickname || profile.name}</h2>
+                    <p className="truncate text-sm text-muted-foreground">{profile.name}</p>
+                  </div>
+                  {/* 보유 젬 (기존 중복 버튼에서 프로필로 통합) */}
+                  <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-reward/20 px-2.5 py-1">
+                    <Banknote className="h-3.5 w-3.5 text-reward" />
+                    <span className="text-xs font-bold text-reward-foreground">
+                      {role === "admin" || role === "super_admin"
+                        ? "∞"
+                        : walletData?.gems_balance?.toLocaleString() || 0}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} isMaster={isManagerRole(role)} />
+                  {role && role !== "member" && (
+                    <span className="rounded-full bg-reward/30 px-2 py-0.5 text-xs font-bold text-reward-foreground">
+                      {role === "branch_manager" || role === "coach" ? "관장님" : role === "super_admin" || role === "admin" ? "전체 관리자" : role}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => navigate("/character-studio")}
+                    className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary active:scale-95"
+                  >
+                    캐릭터 스튜디오
+                  </button>
+                  <AvatarUpload size="sm" />
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* 라이센스 카드 표시 모드 토글 */}
-        <div className="animate-slide-up" style={{ animationDelay: "0.025s" }}>
+          {/* 라이센스 카드 표시 모드 토글 */}
           <DisplayModeToggle />
-        </div>
+        </section>
 
-        {/* XP & Stats */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.03s" }}>
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-2xl font-bold text-foreground">{progress.total_xp.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">총 XP</p>
-            </div>
-            <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
-          </div>
-          <XPBar current={progress.total_xp} max={getXpToNext(progress.current_level, progress.current_rank)} />
-        </div>
+        {/* ═══════════ 내 기록 ═══════════ */}
+        <section className="animate-slide-up space-y-3">
+          <SectionHeader>내 기록</SectionHeader>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-3 gap-3 animate-slide-up" style={{ animationDelay: "0.05s" }}>
-          <StatCard icon="🔥" label="연속 출석" value={`${progress.streak_days}일`} />
-          <StatCard icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
-          <StatCard icon="🏅" label="배지" value={`${earned.length}개`} />
-        </div>
-
-        {/* ─── 153 QUEST 몰입 레이어: 나만의 복싱 전당 ─── */}
-        {/*       공식 progress 는 읽기만, QUEST 보조 데이터는 useBoxingEngagementSummary 사용 */}
-        <div data-tour="boxing-hall-card">
-          <BoxingHallSummaryCard />
-        </div>
-
-        {/* ─── v1.5 16단계: 복싱 IQ 리그 ─── */}
-        <BoxingIqLeagueCard />
-
-        {/* ─── v1.5 17단계: 복서 스타일 진단 ─── */}
-        <BoxerStyleDiagnosisCard />
-
-        {/* ─── v2 20단계: 그림자 복서 (어제의 나와 비교) ─── */}
-        <ShadowBoxerCard />
-
-        {/* ─── v1.5 17단계: 성장 리포트 ─── */}
-        <GrowthReportCard />
-
-        {/* ─── v1.5 16단계: 숨겨진 미션 진척 ─── */}
-        <HiddenMissionPanel />
-
-        {/* Info */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.07s" }}>
-          <InfoRow icon={<MapPin className="h-4 w-4" />} label="소속 지점" value={profile.branch_name || "미설정"} />
-          <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} last />
-        </div>
-
-        {/* Character & Items - unified */}
-        <button
-          onClick={() => navigate("/character-studio")}
-          className="w-full animate-slide-up rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-reward/10 p-4 shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]"
-          style={{ animationDelay: "0.08s" }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20">
-              <Sparkles className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="text-sm font-bold text-foreground">캐릭터 스튜디오</p>
-              <p className="text-xs text-muted-foreground">만들기 · 꾸미기 · 성장시키기</p>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-reward/20 px-3 py-1.5">
-              <Banknote className="h-4 w-4 text-reward" />
-              <span className="text-sm font-bold text-reward-foreground">
-                {role === "admin" || role === "super_admin"
-                  ? "∞"
-                  : walletData?.gems_balance?.toLocaleString() || 0}
-              </span>
-            </div>
-          </div>
-        </button>
-
-        {/* Master League */}
-        {isMaster40 && (
-          <div className="animate-bounce-in rounded-2xl border-2 border-reward bg-gradient-to-br from-reward/20 via-primary/10 to-reward/20 p-6 text-center shadow-glow-reward">
-            <span className="text-5xl">👑</span>
-            <h2 className="mt-2 text-xl font-bold text-foreground">마스터 리그 달성</h2>
-            <p className="text-sm text-muted-foreground">블랙 리그 레벨 10 달성 + 모든 타이틀매치 클리어</p>
-          </div>
-        )}
-
-        <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          <h2 className="mb-3 text-base font-bold text-foreground">획득한 배지</h2>
-          <EarnedBadgeGrid badges={earned} loading={badgesLoading} />
-        </div>
-
-        {locked.length > 0 && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.12s" }}>
-            <h2 className="mb-3 text-base font-bold text-muted-foreground">미획득</h2>
-            <LockedBadgeGrid badges={locked} />
-          </div>
-        )}
-
-        {levelUpLogs.length > 0 && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
-            <h2 className="mb-3 text-base font-bold text-foreground">레벨업 기록</h2>
-            <LevelUpHistory logs={levelUpLogs} />
-          </div>
-        )}
-
-        {xpLogs && xpLogs.length > 0 && (
-          <div className="animate-slide-up" style={{ animationDelay: "0.18s" }}>
-            <h2 className="mb-3 text-base font-bold text-foreground">최근 XP 획득</h2>
-            <RecentXpList logs={xpLogs} />
-          </div>
-        )}
-
-        {/* Password Change */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.2s" }}>
-          <button onClick={() => setShowPwChange(!showPwChange)} className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50">
-            <div className="flex items-center gap-3">
-              <KeyRound className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">비밀번호 변경</span>
-            </div>
-            <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${showPwChange ? "rotate-90" : ""}`} />
-          </button>
-          {showPwChange && (
-            <div className="space-y-3 border-t border-border px-4 py-4">
-              <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} placeholder="현재 비밀번호"
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
-              <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="새 비밀번호 (6자 이상)"
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
-              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="새 비밀번호 확인"
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
-              {pwError && <p className="text-xs text-destructive">{pwError}</p>}
-              <button onClick={handlePasswordChange} disabled={pwLoading}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
-                {pwLoading ? "처리 중..." : "비밀번호 변경 🥊"}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Birth date edit — 다이어트 트랙 자동 판정에 사용됨 */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.21s" }}>
-          <button onClick={() => { setShowBirthEdit(!showBirthEdit); setBirthInput(profile?.birth_date ?? ""); setBirthError(""); }} className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <div className="flex flex-col items-start">
-                <span className="text-sm text-foreground">생년월일 수정</span>
-                <span className="text-[11px] text-muted-foreground">
-                  {profile?.birth_date ? profile.birth_date : "등록되지 않음"}
-                </span>
+          {/* XP & Stats */}
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-elev-1">
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-foreground">{progress.total_xp.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">총 XP</p>
               </div>
+              <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
             </div>
-            <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${showBirthEdit ? "rotate-90" : ""}`} />
-          </button>
-          {showBirthEdit && (
-            <div className="space-y-3 border-t border-border px-4 py-4">
-              <input
-                type="date"
-                value={birthInput}
-                max={new Date().toISOString().slice(0, 10)}
-                onChange={(e) => setBirthInput(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-              />
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                153 다이어트 트랙 자동 판정(성인·청소년), 프로그램 맞춤 카피에 사용됩니다. 비워두면 '등록되지 않음' 처리됩니다.
-              </p>
-              {birthError && <p className="text-xs text-destructive">{birthError}</p>}
-              <button
-                onClick={handleBirthSave}
-                disabled={birthLoading}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
-              >
-                {birthLoading ? "처리 중..." : "생년월일 저장"}
-              </button>
+            <XPBar current={progress.total_xp} max={getXpToNext(progress.current_level, progress.current_rank)} />
+          </div>
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-3 gap-3">
+            <StatCard icon="🔥" label="연속 출석" value={`${progress.streak_days}일`} />
+            <StatCard icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
+            <StatCard icon="🏅" label="배지" value={`${earned.length}개`} />
+          </div>
+
+          {/* Master League */}
+          {isMaster40 && (
+            <div className="animate-bounce-in rounded-2xl border-2 border-reward bg-gradient-to-br from-reward/20 via-primary/10 to-reward/20 p-6 text-center shadow-glow-reward">
+              <span className="text-5xl">👑</span>
+              <h3 className="mt-2 text-xl font-bold text-foreground">마스터 리그 달성</h3>
+              <p className="text-sm text-muted-foreground">블랙 리그 레벨 10 달성 + 모든 타이틀매치 클리어</p>
             </div>
           )}
-        </div>
 
-        {/* Actions — 65-S: 회원관리/가이드/153다이어트/설정/로그아웃 은 /settings 로 이관.
-            전체메뉴에 있던 보상(/rewards) 메뉴를 내정보로 이관. */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.22s" }}>
-          <button onClick={() => navigate("/rewards")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
-            <div className="flex items-center gap-3">
-              <span className="text-muted-foreground">🎁</span>
-              <span className="text-sm text-foreground">보상</span>
+          {/* 배지 */}
+          <div>
+            <h3 className="mb-3 text-base font-bold text-foreground">획득한 배지</h3>
+            <EarnedBadgeGrid badges={earned} loading={badgesLoading} />
+          </div>
+
+          {locked.length > 0 && (
+            <div>
+              <h3 className="mb-3 text-base font-bold text-muted-foreground">미획득</h3>
+              <LockedBadgeGrid badges={locked} />
             </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-          {(tutorialDone || tutorialSkipped) && (
-            <button
-              onClick={handleRestartTutorial}
-              disabled={tutorialRestartBusy}
-              className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50 disabled:opacity-60"
-            >
+          )}
+
+          {levelUpLogs.length > 0 && (
+            <div>
+              <h3 className="mb-3 text-base font-bold text-foreground">레벨업 기록</h3>
+              <LevelUpHistory logs={levelUpLogs} />
+            </div>
+          )}
+
+          {xpLogs && xpLogs.length > 0 && (
+            <div>
+              <h3 className="mb-3 text-base font-bold text-foreground">최근 XP 획득</h3>
+              <RecentXpList logs={xpLogs} />
+            </div>
+          )}
+        </section>
+
+        {/* ═══════════ 성장 도구 ═══════════ */}
+        <section className="animate-slide-up space-y-3">
+          <SectionHeader>성장 도구</SectionHeader>
+          <div data-tour="boxing-hall-card">
+            <BoxingHallSummaryCard />
+          </div>
+          <BoxingIqLeagueCard />
+          <BoxerStyleDiagnosisCard />
+          <ShadowBoxerCard />
+          <GrowthReportCard />
+          <HiddenMissionPanel />
+        </section>
+
+        {/* ═══════════ 계정 · 정보 ═══════════ */}
+        <section className="animate-slide-up space-y-3">
+          <SectionHeader>계정 · 정보</SectionHeader>
+
+          {/* Info */}
+          <div className="rounded-2xl border border-border bg-card shadow-elev-1">
+            <InfoRow icon={<MapPin className="h-4 w-4" />} label="소속 지점" value={profile.branch_name || "미설정"} />
+            <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} last />
+          </div>
+
+          {/* Password Change */}
+          <div className="rounded-2xl border border-border bg-card shadow-elev-1">
+            <button onClick={() => setShowPwChange(!showPwChange)} className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">
-                <span className="text-muted-foreground">🥊</span>
-                <span className="text-sm text-foreground">
-                  {tutorialRestartBusy ? "준비 중…" : "튜토리얼 다시 시작"}
-                </span>
+                <KeyRound className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-foreground">비밀번호 변경</span>
+              </div>
+              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${showPwChange ? "rotate-90" : ""}`} />
+            </button>
+            {showPwChange && (
+              <div className="space-y-3 border-t border-border px-4 py-4">
+                <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} placeholder="현재 비밀번호"
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="새 비밀번호 (6자 이상)"
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="새 비밀번호 확인"
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                {pwError && <p className="text-xs text-destructive">{pwError}</p>}
+                <button onClick={handlePasswordChange} disabled={pwLoading}
+                  className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
+                  {pwLoading ? "처리 중..." : "비밀번호 변경 🥊"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Birth date edit — 다이어트 트랙 자동 판정에 사용됨 */}
+          <div className="rounded-2xl border border-border bg-card shadow-elev-1">
+            <button onClick={() => { setShowBirthEdit(!showBirthEdit); setBirthInput(profile?.birth_date ?? ""); setBirthError(""); }} className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-col items-start">
+                  <span className="text-sm text-foreground">생년월일 수정</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {profile?.birth_date ? profile.birth_date : "등록되지 않음"}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${showBirthEdit ? "rotate-90" : ""}`} />
+            </button>
+            {showBirthEdit && (
+              <div className="space-y-3 border-t border-border px-4 py-4">
+                <input
+                  type="date"
+                  value={birthInput}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setBirthInput(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                />
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                  153 다이어트 트랙 자동 판정(성인·청소년), 프로그램 맞춤 카피에 사용됩니다. 비워두면 '등록되지 않음' 처리됩니다.
+                </p>
+                {birthError && <p className="text-xs text-destructive">{birthError}</p>}
+                <button
+                  onClick={handleBirthSave}
+                  disabled={birthLoading}
+                  className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
+                >
+                  {birthLoading ? "처리 중..." : "생년월일 저장"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Actions — 회원관리/가이드/153다이어트/설정/로그아웃 은 /settings 로 이관됨.
+              보상(/rewards) + 튜토리얼 다시 시작만 여기 유지. */}
+          <div className="rounded-2xl border border-border bg-card shadow-elev-1">
+            <button onClick={() => navigate("/rewards")} className={`flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50 ${(tutorialDone || tutorialSkipped) ? "border-b border-border" : ""}`}>
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">🎁</span>
+                <span className="text-sm text-foreground">보상</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
-          )}
-        </div>
+            {(tutorialDone || tutorialSkipped) && (
+              <button
+                onClick={handleRestartTutorial}
+                disabled={tutorialRestartBusy}
+                className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50 disabled:opacity-60"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-muted-foreground">🥊</span>
+                  <span className="text-sm text-foreground">
+                    {tutorialRestartBusy ? "준비 중…" : "튜토리얼 다시 시작"}
+                  </span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );
 };
+
+const SectionHeader = ({ children }: { children: React.ReactNode }) => (
+  <h2 className="flex items-center gap-2 px-1 text-[13px] font-bold text-muted-foreground">
+    <span className="h-3.5 w-1 rounded-full bg-primary/60" />
+    {children}
+  </h2>
+);
 
 const InfoRow = ({ icon, label, value, last = false }: { icon: React.ReactNode; label: string; value: string; last?: boolean }) => (
   <div className={`flex items-center justify-between px-4 py-3.5 ${!last ? "border-b border-border" : ""}`}>
