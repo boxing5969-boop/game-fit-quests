@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { SYSTEM_PROMPT_153 } from "../_shared/systemPrompt153.ts";
 import { KNOWLEDGE_153 } from "../_shared/knowledge153.ts";
+import { KNOWLEDGE_BOXING_153 } from "../_shared/knowledgeBoxing153.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -359,6 +360,9 @@ serve(async (req) => {
     const personalRe =
       /(내|나의|제|저의|레벨|랭킹|단증|미션|퀘스트|진행|반려|보스|타이틀)/;
     const isDietTopic = dietRe.test(lastUserText);
+    const boxingRe =
+      /(복싱|복서|잽|jab|스트레이트|크로스|훅|hook|어퍼|어퍼컷|uppercut|카운터|스파링|풋워크|콤비|컴비|디펜스|가드|슬립|위빙|더킹|패리|블록|샌드백|미트|쉐도우|줄넘기|글러브|핸드랩|스텝|스탠스|오소독스|사우스포|펀치|클린치|타격)/;
+    const isBoxingTopic = boxingRe.test(lastUserText);
     const wantsPersonalData = personalRe.test(lastUserText) || isDietTopic;
 
     // 회원 컨텍스트 주입 — 사용자가 명시적으로 개인/다이어트 화제를 꺼낸 경우에만.
@@ -377,6 +381,11 @@ serve(async (req) => {
       if (dietContext) {
         systemMessages.push({ role: "system", content: dietContext });
       }
+    }
+    // 복싱 기술 화제일 때만 복싱 지식 문서 주입 (토큰 절약 게이트).
+    if (isBoxingTopic) {
+      const boxingKnowledgeMessage = `아래는 153복싱짐 공식 복싱 기술 지식 문서다. 복싱 기술·훈련 질문은 이 문서를 우선 참고해 정확하고 실전적으로, 초보가 오늘 바로 해볼 수 있게 답하라.\n\n${KNOWLEDGE_BOXING_153}`;
+      systemMessages.push({ role: "system", content: boxingKnowledgeMessage });
     }
     void isGreeting; // 향후 인사 전용 분기 확장 시 사용
 
