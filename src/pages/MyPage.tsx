@@ -149,29 +149,9 @@ const MyPage = () => {
           {/* Character Hero Card */}
           <div className="rounded-2xl border border-border bg-gradient-to-b from-card to-secondary/20 p-5 shadow-glow-soft">
             <div className="flex items-start gap-4">
-              {/* 프로필 사진 (메인) + 캐릭터 미니 배지 */}
+              {/* 프로필 사진 (메인) */}
               <div data-tutorial-target="profile-photo-button" className="relative flex-shrink-0">
                 <AvatarUpload size="xl" />
-                {/* 캐릭터를 프로필 사진 좌하단 미니 배지로 — 탭하면 캐릭터 스튜디오 */}
-                <button
-                  onClick={() => navigate("/character-studio")}
-                  aria-label="캐릭터 스튜디오"
-                  className="absolute -bottom-1 -left-1 flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border-2 border-card bg-secondary shadow-md active:scale-95"
-                >
-                  {myCharacter?.character_presets ? (
-                    <CharacterSprite
-                      style={(myCharacter.character_presets.parts_json as any)?.style}
-                      userId={profile.user_id}
-                      partsJson={myCharacter.character_presets.parts_json as any}
-                      size="sm"
-                      league={progress.current_rank as any}
-                      level={progress.current_level}
-                      className="!w-14 !h-14"
-                    />
-                  ) : (
-                    <span className="text-xl">🥊</span>
-                  )}
-                </button>
               </div>
               {/* Profile info */}
               <div className="min-w-0 flex-1 pt-1">
@@ -204,6 +184,26 @@ const MyPage = () => {
                     className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary active:scale-95"
                   >
                     캐릭터 스튜디오
+                  </button>
+                  {/* 글러브 캐릭터 — 캐릭터 스튜디오 버튼 옆으로 이동 */}
+                  <button
+                    onClick={() => navigate("/character-studio")}
+                    aria-label="캐릭터 스튜디오"
+                    className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-border bg-secondary active:scale-95"
+                  >
+                    {myCharacter?.character_presets ? (
+                      <CharacterSprite
+                        style={(myCharacter.character_presets.parts_json as any)?.style}
+                        userId={profile.user_id}
+                        partsJson={myCharacter.character_presets.parts_json as any}
+                        size="sm"
+                        league={progress.current_rank as any}
+                        level={progress.current_level}
+                        className="!w-11 !h-11"
+                      />
+                    ) : (
+                      <span className="text-lg">🥊</span>
+                    )}
                   </button>
                 </div>
               </div>
