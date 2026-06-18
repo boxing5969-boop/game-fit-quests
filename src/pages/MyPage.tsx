@@ -52,6 +52,9 @@ const MyPage = () => {
   const [birthLoading, setBirthLoading] = useState(false);
   const [birthError, setBirthError] = useState("");
   const [tutorialRestartBusy, setTutorialRestartBusy] = useState(false);
+  const [showGrowthTools, setShowGrowthTools] = useState(false);
+  const [showAllXp, setShowAllXp] = useState(false);
+  const [showLocked, setShowLocked] = useState(false);
 
   /**
    * 입단식 다시 보기 — 이미 완료/스킵한 유저만 노출되는 재시작 진입점.
@@ -254,8 +257,14 @@ const MyPage = () => {
 
           {locked.length > 0 && (
             <div>
-              <h3 className="mb-3 text-base font-bold text-muted-foreground">미획득</h3>
-              <LockedBadgeGrid badges={locked} />
+              <button
+                onClick={() => setShowLocked((v) => !v)}
+                className="mb-3 flex w-full items-center justify-between"
+              >
+                <h3 className="text-base font-bold text-muted-foreground">미획득 ({locked.length})</h3>
+                <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${showLocked ? "rotate-90" : ""}`} />
+              </button>
+              {showLocked && <LockedBadgeGrid badges={locked} />}
             </div>
           )}
 
@@ -269,22 +278,46 @@ const MyPage = () => {
           {xpLogs && xpLogs.length > 0 && (
             <div>
               <h3 className="mb-3 text-base font-bold text-foreground">최근 XP 획득</h3>
-              <RecentXpList logs={xpLogs} />
+              <RecentXpList logs={showAllXp ? xpLogs : xpLogs.slice(0, 5)} />
+              {xpLogs.length > 5 && (
+                <button
+                  onClick={() => setShowAllXp((v) => !v)}
+                  className="mt-2 w-full rounded-xl border border-border py-2 text-xs font-medium text-muted-foreground active:scale-[0.98]"
+                >
+                  {showAllXp ? "접기" : `더보기 (${xpLogs.length - 5}개 더)`}
+                </button>
+              )}
             </div>
           )}
         </section>
 
-        {/* ═══════════ 성장 도구 ═══════════ */}
+        {/* ═══════════ 성장 도구 (기본 접힘) ═══════════ */}
         <section className="animate-slide-up space-y-3">
-          <SectionHeader>성장 도구</SectionHeader>
-          <div data-tour="boxing-hall-card">
-            <BoxingHallSummaryCard />
-          </div>
-          <BoxingIqLeagueCard />
-          <BoxerStyleDiagnosisCard />
-          <ShadowBoxerCard />
-          <GrowthReportCard />
-          <HiddenMissionPanel />
+          <button
+            onClick={() => setShowGrowthTools((v) => !v)}
+            className="flex w-full items-center justify-between px-1"
+          >
+            <span className="flex items-center gap-2 text-[13px] font-bold text-muted-foreground">
+              <span className="h-3.5 w-1 rounded-full bg-primary/60" />
+              성장 도구
+            </span>
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              {showGrowthTools ? "접기" : "펼치기"}
+              <ChevronRight className={`h-4 w-4 transition-transform ${showGrowthTools ? "rotate-90" : ""}`} />
+            </span>
+          </button>
+          {showGrowthTools && (
+            <div className="space-y-3">
+              <div data-tour="boxing-hall-card">
+                <BoxingHallSummaryCard />
+              </div>
+              <BoxingIqLeagueCard />
+              <BoxerStyleDiagnosisCard />
+              <ShadowBoxerCard />
+              <GrowthReportCard />
+              <HiddenMissionPanel />
+            </div>
+          )}
         </section>
 
         {/* ═══════════ 계정 · 정보 ═══════════ */}
