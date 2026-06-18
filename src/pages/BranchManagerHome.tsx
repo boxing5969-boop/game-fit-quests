@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
 import DailyOperationsBoard from "@/components/DailyOperationsBoard";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
@@ -31,6 +31,8 @@ const BranchManagerHome = () => {
   const [mainTab, setMainTab] = useState<MainTab>("members");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const branchName = profile?.branch_name || "";
   const isSuperAdmin = role === "super_admin" || role === "admin";
@@ -151,6 +153,11 @@ const BranchManagerHome = () => {
     return list;
   }, [members, search, filter, sort]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  useEffect(() => { setPage(1); }, [search, filter, sort]);
+
   const unapprovedCount = useMemo(() => members?.filter(m => !(m as any).is_approved).length || 0, [members]);
 
   const FILTERS: { key: FilterType; label: string }[] = [
@@ -268,6 +275,14 @@ const BranchManagerHome = () => {
         ))}
       </div>
 
+      {/* 총 인원 + 페이지 */}
+      <div className="mb-2 flex items-center justify-between px-1">
+        <span className="text-xs font-bold text-foreground">총 {filtered.length}명</span>
+        {filtered.length > PAGE_SIZE && (
+          <span className="text-[11px] text-muted-foreground">{safePage} / {totalPages} 페이지</span>
+        )}
+      </div>
+
       {/* Member List */}
       <div className="space-y-2">
         {isLoading ? (
@@ -280,8 +295,10 @@ const BranchManagerHome = () => {
             </p>
           </div>
         ) : (
-          filtered.map(m => {
+          pageItems.map(m => {
             const isApproved = (m as any).is_approved;
+            const memEnd = (m as any).membership_end as string | null;
+            const memDdays = memEnd ? Math.ceil((new Date(memEnd + "T23:59:59").getTime() - Date.now()) / 86400000) : null;
             return (
             <div
               key={m.id}
@@ -340,6 +357,14 @@ const BranchManagerHome = () => {
                           <span>{m.phone_number.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")}</span>
                         </>
                       )}
+                      {memEnd && (
+                        <>
+                          <span>·</span>
+                          <span className={memDdays !== null && memDdays < 0 ? "font-medium text-destructive" : memDdays !== null && memDdays <= 7 ? "font-medium text-status-pending" : ""}>
+                            {memDdays !== null && memDdays < 0 ? "만료" : `D-${memDdays}`}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -366,6 +391,26 @@ const BranchManagerHome = () => {
           })
         )}
       </div>
+
+      {filtered.length > PAGE_SIZE && (
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={safePage <= 1}
+            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-all active:scale-95 disabled:opacity-40"
+          >
+            이전
+          </button>
+          <span className="text-xs text-muted-foreground">{safePage} / {totalPages}</span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={safePage >= totalPages}
+            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-all active:scale-95 disabled:opacity-40"
+          >
+            다음
+          </button>
+        </div>
+      )}
 
       {/* Quick action: checkin board + member app + admin */}
       <div className="mt-6 space-y-2">

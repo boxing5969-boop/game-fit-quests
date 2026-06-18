@@ -8,7 +8,7 @@ import DisplayModeToggle from "@/components/profile/DisplayModeToggle";
 import XPBar from "@/components/XPBar";
 import CharacterSprite from "@/components/CharacterSprite";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
-import { ArrowLeft, MapPin, Calendar, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles, Clock } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useNavigate } from "react-router-dom";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
@@ -92,6 +92,12 @@ const MyPage = () => {
   const locked = (allBadges || []).filter(b => !earnedIds.has(b.id));
   const isMaster40 = progress.current_rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
   const levelUpLogs = (xpLogs || []).filter(l => l.reason.includes("클리어") || l.reason.includes("타이틀매치"));
+
+  // 수강권 — 등록일/만료일/남은 기간 (브로제이 일괄등록 시 채워짐, 본인만 조회 가능)
+  const memEnd = (profile as { membership_end?: string }).membership_end ?? null;
+  const regDate = (profile as { gym_reg_date?: string }).gym_reg_date ?? null;
+  const ddays = memEnd ? Math.ceil((new Date(memEnd + "T23:59:59").getTime() - Date.now()) / 86400000) : null;
+  const ddayText = ddays === null ? "" : ddays < 0 ? "만료됨" : ddays === 0 ? "오늘 만료" : `${ddays}일 남음`;
 
   const handlePasswordChange = async () => {
     setPwError("");
@@ -336,7 +342,10 @@ const MyPage = () => {
           {/* Info */}
           <div className="rounded-2xl border border-border bg-card shadow-elev-1">
             <InfoRow icon={<MapPin className="h-4 w-4" />} label="소속 지점" value={profile.branch_name || "미설정"} />
-            <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} last />
+            <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} last={!regDate && !memEnd} />
+            {regDate && <InfoRow icon={<Calendar className="h-4 w-4" />} label="등록일" value={new Date(regDate).toLocaleDateString("ko-KR")} last={!memEnd} />}
+            {memEnd && <InfoRow icon={<Calendar className="h-4 w-4" />} label="수강 만료" value={new Date(memEnd).toLocaleDateString("ko-KR")} />}
+            {memEnd && <InfoRow icon={<Clock className="h-4 w-4" />} label="남은 기간" value={ddayText} last />}
           </div>
 
           {/* Password Change */}
