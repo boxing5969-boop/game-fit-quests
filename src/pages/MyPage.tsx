@@ -287,13 +287,13 @@ const MyPage = () => {
           {xpLogs && xpLogs.length > 0 && (
             <div>
               <h3 className="mb-3 text-base font-bold text-foreground">최근 XP 획득</h3>
-              <RecentXpList logs={showAllXp ? xpLogs : xpLogs.slice(0, 5)} />
-              {xpLogs.length > 5 && (
+              <RecentXpList logs={showAllXp ? xpLogs : xpLogs.slice(0, 1)} />
+              {xpLogs.length > 1 && (
                 <button
                   onClick={() => setShowAllXp((v) => !v)}
                   className="mt-2 w-full rounded-xl border border-border py-2 text-xs font-medium text-muted-foreground active:scale-[0.98]"
                 >
-                  {showAllXp ? "접기" : `더보기 (${xpLogs.length - 5}개 더)`}
+                  {showAllXp ? "접기" : `더보기 (${xpLogs.length - 1}개 더)`}
                 </button>
               )}
             </div>
