@@ -55,6 +55,7 @@ const MyPage = () => {
   const [showGrowthTools, setShowGrowthTools] = useState(false);
   const [showAllXp, setShowAllXp] = useState(false);
   const [showLocked, setShowLocked] = useState(false);
+  const [showAllMedals, setShowAllMedals] = useState(false);
 
   /**
    * 입단식 다시 보기 — 이미 완료/스킵한 유저만 노출되는 재시작 진입점.
@@ -237,7 +238,7 @@ const MyPage = () => {
           <div className="grid grid-cols-3 gap-3">
             <StatCard icon="🔥" label="연속 출석" value={`${progress.streak_days}일`} />
             <StatCard icon="🏆" label="보스 클리어" value={`${progress.bosses_cleared}회`} />
-            <StatCard icon="🏅" label="배지" value={`${earned.length}개`} />
+            <StatCard icon="🏅" label="메달" value={`${earned.length}개`} />
           </div>
 
           {/* Master League */}
@@ -249,10 +250,18 @@ const MyPage = () => {
             </div>
           )}
 
-          {/* 배지 */}
+          {/* 획득한 메달 (상위 3개만, 나머지는 접기) */}
           <div>
-            <h3 className="mb-3 text-base font-bold text-foreground">획득한 배지</h3>
-            <EarnedBadgeGrid badges={earned} loading={badgesLoading} />
+            <h3 className="mb-3 text-base font-bold text-foreground">획득한 메달</h3>
+            <EarnedBadgeGrid badges={showAllMedals ? earned : earned.slice(0, 3)} loading={badgesLoading} />
+            {earned.length > 3 && (
+              <button
+                onClick={() => setShowAllMedals((v) => !v)}
+                className="mt-2 w-full rounded-xl border border-border py-2 text-xs font-medium text-muted-foreground active:scale-[0.98]"
+              >
+                {showAllMedals ? "접기" : `더보기 (${earned.length - 3}개 더)`}
+              </button>
+            )}
           </div>
 
           {locked.length > 0 && (
