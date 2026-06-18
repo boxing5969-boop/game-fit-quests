@@ -198,7 +198,7 @@ const ChatAssistant = () => {
         >
           <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-red-600 to-orange-500 shadow-[0_4px_20px_rgba(232,85,58,0.45)] transition-transform active:scale-90 group-hover:scale-105">
             {/* 기존 🥊 대신 "153" 로고 마크. 원형 브랜드 아이콘 톤. */}
-            <span className="font-black tracking-tight text-white" style={{ fontSize: "22px", letterSpacing: "-1px" }}>153</span>
+            <img src="/assets/mascot/osami_wink.png" alt="오삼 코치" className="h-12 w-12 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]" draggable={false} />
             <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-black text-red-600 shadow ring-2 ring-red-500">
               AI
             </span>
@@ -221,7 +221,7 @@ const ChatAssistant = () => {
             <div className="relative flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 shadow-lg">
-                  <span className="font-black tracking-tight text-white" style={{ fontSize: "14px", letterSpacing: "-0.5px" }}>153</span>
+                  <img src="/assets/mascot/osami_smile.png" alt="오삼 코치" className="h-10 w-10 object-contain" draggable={false} />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
@@ -268,7 +268,7 @@ const ChatAssistant = () => {
               >
                 {m.role === "assistant" && (
                   <div className="mr-2 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-md">
-                    <span className="font-black tracking-tight text-white" style={{ fontSize: "10px", letterSpacing: "-0.5px" }}>153</span>
+                    <img src="/assets/mascot/osami_default.png" alt="오삼" className="h-7 w-7 object-contain" draggable={false} />
                   </div>
                 )}
 
@@ -295,7 +295,7 @@ const ChatAssistant = () => {
             {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex items-start gap-2">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-md">
-                  <span className="font-black tracking-tight text-white" style={{ fontSize: "10px", letterSpacing: "-0.5px" }}>153</span>
+                  <img src="/assets/mascot/osami_default.png" alt="오삼" className="h-7 w-7 object-contain" draggable={false} />
                 </div>
                 <div className="rounded-2xl rounded-tl-md border border-gray-100 bg-white px-4 py-3 shadow-elev-1">
                   <div className="flex items-center gap-1.5">
