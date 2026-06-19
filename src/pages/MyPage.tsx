@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useTutorialState } from "@/hooks/useTutorialState";
 import RankBadge from "@/components/RankBadge";
+import MembershipCard from "@/components/MembershipCard";
 import AvatarUpload from "@/components/AvatarUpload";
 import DisplayModeToggle from "@/components/profile/DisplayModeToggle";
 import XPBar from "@/components/XPBar";
@@ -93,13 +94,7 @@ const MyPage = () => {
   const isMaster40 = progress.current_rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
   const levelUpLogs = (xpLogs || []).filter(l => l.reason.includes("클리어") || l.reason.includes("타이틀매치"));
 
-  // 수강권 — 등록일/만료일/남은 기간 (브로제이 일괄등록 시 채워짐, 본인만 조회 가능)
-  const memEnd = (profile as { membership_end?: string }).membership_end ?? null;
-  const regDate = (profile as { gym_reg_date?: string }).gym_reg_date ?? null;
-  const ddays = memEnd ? Math.ceil((new Date(memEnd + "T23:59:59").getTime() - Date.now()) / 86400000) : null;
-  const ddayText = ddays === null ? "" : ddays < 0 ? `만료 ${-ddays}일 지남` : ddays === 0 ? "오늘 만료" : `${ddays}일 남음`;
-  const isStaff = isManagerRole(role); // 마스터·관장·코치 = 수강권 무제한
-  const showMembership = isStaff || !!memEnd;
+  // (수강권 계산·표시는 MembershipCard 컴포넌트로 이동)
 
   const handlePasswordChange = async () => {
     setPwError("");
@@ -225,49 +220,8 @@ const MyPage = () => {
           {/* 라이센스 카드 표시 모드 토글 */}
           <DisplayModeToggle />
 
-          {/* 수강권 — 프리미엄 멤버십 카드 (FastFive 스타일) */}
-          {showMembership && (
-            <div
-              className="relative overflow-hidden rounded-3xl border border-white/10 p-5 shadow-lg"
-              style={{ background: "linear-gradient(135deg, #161b22 0%, #0c0f14 60%, #0a0c10 100%)" }}
-            >
-              {/* 액센트 글로우 — 회원=민트, 스태프=골드 */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full opacity-30 blur-2xl"
-                style={{ background: isStaff ? "radial-gradient(circle, hsl(var(--reward)) 0%, transparent 70%)" : "radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)" }}
-              />
-              {/* 153 워터마크 */}
-              <span className="pointer-events-none absolute -bottom-5 right-2 select-none text-7xl font-black tracking-tighter text-white/[0.04]">153</span>
-
-              <div className="relative flex items-center justify-between">
-                <span className="text-[11px] font-bold tracking-[0.2em] text-white/55">153 MEMBERSHIP</span>
-                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${isStaff ? "bg-reward/20 text-reward" : "bg-primary/20 text-primary"}`}>
-                  {isStaff ? "STAFF" : "정회원"}
-                </span>
-              </div>
-
-              <div className="relative mt-5">
-                <p className="text-lg font-bold text-white">{profile.nickname || profile.name}</p>
-                <p className="mt-0.5 text-xs text-white/45">{profile.branch_name || "153복싱짐"}</p>
-              </div>
-
-              <div className="relative mt-6 flex items-end justify-between">
-                <div className="space-y-0.5 text-[11px] leading-relaxed text-white/55">
-                  <p>등록 {regDate ? new Date(regDate).toLocaleDateString("ko-KR") : new Date(profile.created_at).toLocaleDateString("ko-KR")}</p>
-                  <p>만료 {isStaff ? "무제한" : new Date(memEnd!).toLocaleDateString("ko-KR")}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[9px] font-medium uppercase tracking-wider text-white/40">
-                    {isStaff ? "PERIOD" : ddays !== null && ddays < 0 ? "EXPIRED" : "남은 기간"}
-                  </p>
-                  <p className={`text-2xl font-black leading-none ${isStaff ? "text-reward" : ddays !== null && ddays < 0 ? "text-destructive" : ddays !== null && ddays <= 7 ? "text-status-pending" : "text-primary"}`}>
-                    {isStaff ? "무제한" : ddays !== null && ddays < 0 ? `D+${-ddays}` : `D-${ddays}`}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* 수강권 — 멤버십 카드 (공용 컴포넌트, 수강권 없으면 자동 숨김) */}
+          <MembershipCard />
         </section>
 
         {/* ═══════════ 내 기록 ═══════════ */}

@@ -22,6 +22,7 @@ import TutorialDevPanel from "@/features/tutorial-camp/TutorialDevPanel";
 import TutorialCustomizer from "@/features/tutorial-camp/TutorialCustomizer";
 import PostActionReflectionSheet from "@/components/home/PostActionReflectionSheet";
 import CredentialChangePrompt from "@/components/CredentialChangePrompt";
+import LinkAccountPrompt from "@/components/LinkAccountPrompt";
 import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
 import RouteLoader from "@/components/splash/RouteLoader";
 import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
@@ -36,6 +37,7 @@ const MissionsPage = lazy(() => import("@/pages/MissionsPage"));
 const RewardsPage = lazy(() => import("@/pages/RewardsPage"));
 const HallOfFamePage = lazy(() => import("@/pages/HallOfFamePage"));
 const MyPage = lazy(() => import("@/pages/MyPage"));
+const MembershipPage = lazy(() => import("@/pages/MembershipPage"));
 const CoachDashboard = lazy(() => import("@/pages/CoachDashboard"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
 const CertBenefitsPage = lazy(() => import("@/pages/CertBenefitsPage"));
@@ -226,6 +228,7 @@ const AppRoutes = () => {
         <Route path="/guide/safety" element={<ProtectedRoute><GuideSafetyPage /></ProtectedRoute>} />
         <Route path="/guide/faq" element={<ProtectedRoute><GuideFaqPage /></ProtectedRoute>} />
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
+        <Route path="/membership" element={<ProtectedRoute><MembershipPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/character-studio" element={<ProtectedRoute><CharacterStudioPage /></ProtectedRoute>} />
         <Route path="/master-track" element={<ProtectedRoute><MasterTrackPage /></ProtectedRoute>} />
@@ -284,6 +287,8 @@ const AppRoutes = () => {
       {user && splashDone && <PostActionReflectionSheet />}
       {/* 최초 로그인 아이디·비번 변경 권장(스킵 가능) — 일괄등록 회원 must_change_credentials */}
       {user && splashDone && <CredentialChangePrompt />}
+      {/* 소셜 첫 로그인 전화번호 연동(권장·스킵) — phone 없는 소셜 회원 */}
+      {user && splashDone && <LinkAccountPrompt />}
       {/* 쿨드 스타트 스플래시 (z-[80] · 포털). 세션 1회. */}
       {showSplash && <AppLaunchSplash onFinished={markFinished} />}
     </>

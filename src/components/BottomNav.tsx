@@ -17,6 +17,7 @@ import {
   Users,
   Star,
   X,
+  Ticket,
 } from "lucide-react";
 import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -58,6 +59,7 @@ const baseMenuItems = [
   { path: "/character-studio",  icon: Sparkles,   label: "캐릭터" },
   { path: "/guide",             icon: BookOpen,   label: "가이드" },
   { path: "/about/153",         icon: Fish,       label: "153이란?" },
+  { path: "/membership",        icon: Ticket,     label: "수강권" },
   { path: "/mypage",            icon: User,       label: "내정보" },
   { path: "/settings",          icon: Settings,   label: "설정" },
 ] as const;
