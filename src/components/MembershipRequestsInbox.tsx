@@ -2,7 +2,7 @@
 // 회원이 /membership 에서 신청한 pending 건을 승인/반려. RLS 가 지점 스코프를 강제한다.
 // 처리는 process_membership_request RPC(SECURITY DEFINER) — 홀딩 승인 시 만료일 자동 연장.
 import { useState, useEffect, useCallback } from "react";
-import { Pause, RotateCcw, Check, X } from "lucide-react";
+import { Pause, CalendarClock, RotateCcw, Check, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,6 +76,10 @@ const MembershipRequestsInbox = () => {
                 {r.type === "hold" ? (
                   <>
                     <Pause className="h-3 w-3" /> 홀딩 {r.hold_days ?? "-"}일
+                  </>
+                ) : r.type === "postpone" ? (
+                  <>
+                    <CalendarClock className="h-3 w-3" /> 연기 {r.hold_days ?? "-"}일
                   </>
                 ) : (
                   <>

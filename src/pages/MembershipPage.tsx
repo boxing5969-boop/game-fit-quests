@@ -1,8 +1,8 @@
 // 수강권 전용 화면 (/membership) — 전체메뉴 "수강권"에서 진입.
-// 디지털 멤버십 카드 + 홀딩/환불 신청(회원) → 관장·마스터가 승인·처리.
+// 디지털 멤버십 카드 + 홀딩/연기/환불 신청(회원) → 관장·마스터가 승인·처리.
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Pause, RotateCcw, X, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, Pause, CalendarClock, RotateCcw, X, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +23,7 @@ const HOLD_PRESETS = [7, 14, 30];
 
 const fmt = (d: string) => new Date(d).toLocaleDateString("ko-KR");
 
-const typeLabel = (t: string) => (t === "hold" ? "홀딩" : t === "refund" ? "환불" : t);
+const typeLabel = (t: string) => (t === "hold" ? "홀딩" : t === "postpone" ? "연기" : t === "refund" ? "환불" : t);
 const statusMeta = (s: string) =>
   s === "approved"
     ? { label: "승인됨", cls: "bg-status-complete/15 text-status-complete", Icon: CheckCircle2 }
@@ -39,7 +39,7 @@ const MembershipPage = () => {
   const hasMembership = isStaff || !!memEnd;
 
   const [requests, setRequests] = useState<MReq[]>([]);
-  const [modal, setModal] = useState<null | "hold" | "refund">(null);
+  const [modal, setModal] = useState<null | "hold" | "postpone" | "refund">(null);
   const [holdDays, setHoldDays] = useState(7);
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -59,6 +59,7 @@ const MembershipPage = () => {
   }, [load]);
 
   const pendingHold = requests.some((r) => r.type === "hold" && r.status === "pending");
+  const pendingPostpone = requests.some((r) => r.type === "postpone" && r.status === "pending");
   const pendingRefund = requests.some((r) => r.type === "refund" && r.status === "pending");
 
   const submit = async (type: "hold" | "refund") => {
@@ -109,14 +110,22 @@ const MembershipPage = () => {
           {/* 회원 전용 — 홀딩/환불 신청 (마스터·관장은 무제한이라 숨김) */}
           {!isStaff && memEnd && (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2.5">
                 <button
                   onClick={() => openModal("hold")}
                   disabled={pendingHold}
                   className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card py-4 text-sm font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
                 >
                   <Pause className="h-5 w-5 text-status-pending" />
-                  {pendingHold ? "홀딩 신청 중" : "홀딩 신청"}
+                  {pendingHold ? "신청 중" : "홀딩"}
+                </button>
+                <button
+                  onClick={() => openModal("postpone")}
+                  disabled={pendingPostpone}
+                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card py-4 text-sm font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
+                >
+                  <CalendarClock className="h-5 w-5 text-primary" />
+                  {pendingPostpone ? "신청 중" : "연기"}
                 </button>
                 <button
                   onClick={() => openModal("refund")}
@@ -124,11 +133,11 @@ const MembershipPage = () => {
                   className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card py-4 text-sm font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
                 >
                   <RotateCcw className="h-5 w-5 text-destructive" />
-                  {pendingRefund ? "환불 신청 중" : "환불 신청"}
+                  {pendingRefund ? "신청 중" : "환불"}
                 </button>
               </div>
               <p className="px-1 text-xs leading-relaxed text-muted-foreground">
-                신청하면 관장님이 확인 후 처리합니다. 홀딩 승인 시 신청한 일수만큼 만료일이 자동 연장됩니다. 환불은 관장님과 별도 정산이 필요합니다.
+                신청하면 관장님이 확인 후 처리합니다. 홀딩·연기 승인 시 신청한 일수만큼 만료일이 자동 연장됩니다. 환불은 관장님과 별도 정산이 필요합니다.
               </p>
 
               {/* 내 신청 내역 */}
@@ -143,7 +152,7 @@ const MembershipPage = () => {
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground">
                               {typeLabel(r.type)}
-                              {r.type === "hold" && r.hold_days ? ` ${r.hold_days}일` : ""}
+                              {(r.type === "hold" || r.type === "postpone") && r.hold_days ? ` ${r.hold_days}일` : ""}
                             </p>
                             {r.reason && <p className="mt-0.5 truncate text-xs text-muted-foreground">{r.reason}</p>}
                             <p className="mt-0.5 text-[11px] text-muted-foreground">{fmt(r.created_at)} 신청</p>
@@ -163,7 +172,7 @@ const MembershipPage = () => {
 
           {isStaff && (
             <p className="px-1 text-xs leading-relaxed text-muted-foreground">
-              출석·수강 시 이 화면을 보여주세요. 회원 홀딩·환불 신청은 홈 화면의 관리 메뉴에서 처리할 수 있습니다.
+              출석·수강 시 이 화면을 보여주세요. 회원 홀딩·연기·환불 신청은 홈 화면의 관리 메뉴에서 처리할 수 있습니다.
             </p>
           )}
         </div>
@@ -182,15 +191,15 @@ const MembershipPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setModal(null)}>
           <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-elev-3" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-bold text-foreground">{modal === "hold" ? "수강권 홀딩 신청" : "수강권 환불 신청"}</h2>
+              <h2 className="text-base font-bold text-foreground">{modal === "hold" ? "수강권 홀딩 신청" : modal === "postpone" ? "수강권 연기 신청" : "수강권 환불 신청"}</h2>
               <button onClick={() => setModal(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:scale-95">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {modal === "hold" && (
+            {(modal === "hold" || modal === "postpone") && (
               <div className="mb-4">
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">홀딩 일수</label>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{modal === "postpone" ? "연기 일수" : "홀딩 일수"}</label>
                 <div className="mb-2 flex gap-2">
                   {HOLD_PRESETS.map((d) => (
                     <button
@@ -223,7 +232,7 @@ const MembershipPage = () => {
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
                 className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
-                placeholder={modal === "hold" ? "예: 출장으로 2주간 이용이 어렵습니다" : "환불 사유를 입력해주세요"}
+                placeholder={modal === "refund" ? "환불 사유를 입력해주세요" : modal === "postpone" ? "예: 사정이 생겨 기간을 미루고 싶습니다" : "예: 출장으로 2주간 이용이 어렵습니다"}
               />
             </div>
 
@@ -232,7 +241,7 @@ const MembershipPage = () => {
               disabled={submitting || (modal === "refund" && !reason.trim())}
               className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
             >
-              {submitting ? "신청 중..." : modal === "hold" ? `${holdDays}일 홀딩 신청` : "환불 신청"}
+              {submitting ? "신청 중..." : modal === "hold" ? `${holdDays}일 홀딩 신청` : modal === "postpone" ? `${holdDays}일 연기 신청` : "환불 신청"}
             </button>
           </div>
         </div>
