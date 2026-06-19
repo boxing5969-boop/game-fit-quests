@@ -21,6 +21,7 @@ import TutorialCampProvider from "@/features/tutorial-camp/TutorialCampProvider"
 import TutorialDevPanel from "@/features/tutorial-camp/TutorialDevPanel";
 import TutorialCustomizer from "@/features/tutorial-camp/TutorialCustomizer";
 import PostActionReflectionSheet from "@/components/home/PostActionReflectionSheet";
+import CredentialChangePrompt from "@/components/CredentialChangePrompt";
 import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
 import RouteLoader from "@/components/splash/RouteLoader";
 import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
@@ -281,6 +282,8 @@ const AppRoutes = () => {
       {user && splashDone && <TutorialCustomizer />}
       {/* 활동 후 30초 마무리 sheet — 글로벌 trigger 이벤트 listen, 하루 1회 큰 sheet */}
       {user && splashDone && <PostActionReflectionSheet />}
+      {/* 최초 로그인 아이디·비번 변경 권장(스킵 가능) — 일괄등록 회원 must_change_credentials */}
+      {user && splashDone && <CredentialChangePrompt />}
       {/* 쿨드 스타트 스플래시 (z-[80] · 포털). 세션 1회. */}
       {showSplash && <AppLaunchSplash onFinished={markFinished} />}
     </>
