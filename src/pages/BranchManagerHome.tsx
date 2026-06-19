@@ -3,6 +3,7 @@ import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
 import DailyOperationsBoard from "@/components/DailyOperationsBoard";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
 import DailyReportCard from "@/components/DailyReportCard";
+import MembershipRequestsInbox from "@/components/MembershipRequestsInbox";
 import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -620,6 +621,9 @@ const BranchManagerHome = () => {
           onOpenCheckin={() => navigate("/manager/checkin-board")}
         />
 
+        {/* 수강권 홀딩·환불 신청 처리 (신청 있을 때만 노출) */}
+        <MembershipRequestsInbox />
+
         {/* Stats Cards */}
         <div className="mb-5 grid grid-cols-2 gap-2.5">
           <StatCard icon="👥" label="전체 회원" value={stats?.total_members ?? "-"} />
@@ -720,6 +724,9 @@ const BranchManagerHome = () => {
             todaySubmissions={stats?.today_submissions}
             onOpenCheckin={() => navigate("/manager/checkin-board")}
           />
+
+          {/* 수강권 홀딩·환불 신청 처리 (신청 있을 때만 노출) */}
+          <MembershipRequestsInbox />
 
           {/* Stats */}
           <div className="mb-4 grid grid-cols-2 gap-2">

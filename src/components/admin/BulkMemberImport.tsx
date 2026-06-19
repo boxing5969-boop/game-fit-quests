@@ -21,10 +21,12 @@ interface ParsedMember {
   reg_date: string;
   membership_end: string;
   status: string;
+  payment: string;
 }
 
 interface ImportResult {
   created: number;
+  updated: number;
   skipped: number;
   failed: { name: string; phone: string; reason: string }[];
 }
@@ -72,6 +74,7 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
         reg: col("최초 등록일"),
         end: col("최종 이용 만료일"),
         status: col("상태"),
+        payment: col("누적 결제 금액"),
       };
       if (ci.name < 0 || ci.phone < 0) {
         throw new Error("'고객명' 또는 '연락처' 열을 찾을 수 없습니다. 브로제이 고객목록 엑셀이 맞는지 확인해주세요.");
@@ -86,6 +89,7 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
           reg_date: get(r, ci.reg),
           membership_end: get(r, ci.end),
           status: get(r, ci.status),
+          payment: get(r, ci.payment),
         }));
       setRows(parsed);
       setFileName(file.name);
@@ -127,6 +131,7 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
         birth_date: r.birth_date,
         reg_date: r.reg_date,
         membership_end: r.membership_end,
+        payment: r.payment,
       }));
       const { data, error } = await supabase.functions.invoke("bulk-import-members", {
         body: { ...(isAdmin ? { branch_name: branch } : {}), members },
@@ -136,8 +141,8 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
         toast.error(data.error);
         return;
       }
-      setResult({ created: data.created ?? 0, skipped: data.skipped ?? 0, failed: data.failed ?? [] });
-      toast.success(`${data.created ?? 0}명 등록 완료 · 중복 ${data.skipped ?? 0} · 실패 ${data.failed?.length ?? 0}`);
+      setResult({ created: data.created ?? 0, updated: data.updated ?? 0, skipped: data.skipped ?? 0, failed: data.failed ?? [] });
+      toast.success(`신규 ${data.created ?? 0}명 · 갱신 ${data.updated ?? 0}명 · 실패 ${data.failed?.length ?? 0}`);
     } catch (err) {
       toast.error("등록 실패: " + ((err as Error)?.message || ""));
     } finally {
@@ -240,9 +245,9 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
             {result && (
               <div className="mb-3 rounded-xl border border-border bg-muted/30 p-3 text-sm">
                 <div className="flex items-center gap-2 font-bold text-status-complete">
-                  <CheckCircle2 className="h-4 w-4" /> 등록 {result.created}명
+                  <CheckCircle2 className="h-4 w-4" /> 신규 {result.created}명 · 갱신 {result.updated}명
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">중복(건너뜀) {result.skipped}명 · 실패 {result.failed.length}명</p>
+                <p className="mt-1 text-xs text-muted-foreground">실패 {result.failed.length}명 · 재업로드 시 기존 회원의 등록일·만료일·결제금액이 갱신됩니다.</p>
                 {result.failed.length > 0 && (
                   <div className="mt-2 max-h-24 overflow-y-auto rounded-lg bg-destructive/5 p-2 text-[11px] text-destructive">
                     {result.failed.slice(0, 20).map((f, i) => (

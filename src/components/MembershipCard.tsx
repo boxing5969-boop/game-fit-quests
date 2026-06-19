@@ -11,6 +11,7 @@ const MembershipCard = () => {
 
   const memEnd = (profile as { membership_end?: string }).membership_end ?? null;
   const regDate = (profile as { gym_reg_date?: string }).gym_reg_date ?? null;
+  const payment = (profile as { payment_total?: number }).payment_total ?? null;
   const isStaff = isManagerRole(role);
   if (!isStaff && !memEnd) return null;
 
@@ -46,6 +47,9 @@ const MembershipCard = () => {
         <div className="space-y-0.5 text-[11px] leading-relaxed text-white/55">
           <p>등록 {regDate ? fmt(regDate) : fmt(profile.created_at)}</p>
           <p>만료 {isStaff ? "무제한" : fmt(memEnd!)}</p>
+          {!isStaff && payment != null && payment > 0 && (
+            <p>누적 결제 <span className="font-semibold text-white/75">{payment.toLocaleString("ko-KR")}원</span></p>
+          )}
         </div>
         <div className="text-right">
           <p className="text-[9px] font-medium uppercase tracking-wider text-white/40">
