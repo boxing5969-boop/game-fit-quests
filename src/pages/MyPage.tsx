@@ -97,7 +97,7 @@ const MyPage = () => {
   const memEnd = (profile as { membership_end?: string }).membership_end ?? null;
   const regDate = (profile as { gym_reg_date?: string }).gym_reg_date ?? null;
   const ddays = memEnd ? Math.ceil((new Date(memEnd + "T23:59:59").getTime() - Date.now()) / 86400000) : null;
-  const ddayText = ddays === null ? "" : ddays < 0 ? "만료됨" : ddays === 0 ? "오늘 만료" : `${ddays}일 남음`;
+  const ddayText = ddays === null ? "" : ddays < 0 ? `만료 ${-ddays}일 지남` : ddays === 0 ? "오늘 만료" : `${ddays}일 남음`;
 
   const handlePasswordChange = async () => {
     setPwError("");
@@ -222,6 +222,32 @@ const MyPage = () => {
 
           {/* 라이센스 카드 표시 모드 토글 */}
           <DisplayModeToggle />
+
+          {/* 수강권 — 등록일·만료일·남은기간/경과 (일괄등록·연동 회원만) */}
+          {memEnd && (
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+              <div className="mb-3 flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="text-sm font-bold text-foreground">수강권</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-12 text-muted-foreground">등록일</span>
+                    <span className="font-medium text-foreground">{regDate ? new Date(regDate).toLocaleDateString("ko-KR") : "-"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-12 text-muted-foreground">만료일</span>
+                    <span className="font-medium text-foreground">{new Date(memEnd).toLocaleDateString("ko-KR")}</span>
+                  </div>
+                </div>
+                <div className={`shrink-0 rounded-xl px-4 py-2.5 text-center ${ddays !== null && ddays < 0 ? "bg-destructive/10" : ddays !== null && ddays <= 7 ? "bg-status-pending/10" : "bg-primary/10"}`}>
+                  <p className="text-[10px] text-muted-foreground">{ddays !== null && ddays < 0 ? "만료" : "남은 기간"}</p>
+                  <p className={`text-base font-bold ${ddays !== null && ddays < 0 ? "text-destructive" : ddays !== null && ddays <= 7 ? "text-status-pending" : "text-primary"}`}>{ddayText}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* ═══════════ 내 기록 ═══════════ */}
@@ -342,10 +368,7 @@ const MyPage = () => {
           {/* Info */}
           <div className="rounded-2xl border border-border bg-card shadow-elev-1">
             <InfoRow icon={<MapPin className="h-4 w-4" />} label="소속 지점" value={profile.branch_name || "미설정"} />
-            <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} last={!regDate && !memEnd} />
-            {regDate && <InfoRow icon={<Calendar className="h-4 w-4" />} label="등록일" value={new Date(regDate).toLocaleDateString("ko-KR")} last={!memEnd} />}
-            {memEnd && <InfoRow icon={<Calendar className="h-4 w-4" />} label="수강 만료" value={new Date(memEnd).toLocaleDateString("ko-KR")} />}
-            {memEnd && <InfoRow icon={<Clock className="h-4 w-4" />} label="남은 기간" value={ddayText} last />}
+            <InfoRow icon={<Calendar className="h-4 w-4" />} label="가입일" value={new Date(profile.created_at).toLocaleDateString("ko-KR")} last />
           </div>
 
           {/* Password Change */}

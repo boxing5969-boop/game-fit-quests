@@ -361,7 +361,7 @@ const BranchManagerHome = () => {
                         <>
                           <span>·</span>
                           <span className={memDdays !== null && memDdays < 0 ? "font-medium text-destructive" : memDdays !== null && memDdays <= 7 ? "font-medium text-status-pending" : ""}>
-                            {memDdays !== null && memDdays < 0 ? "만료" : `D-${memDdays}`}
+                            {memDdays !== null && memDdays < 0 ? `D+${-memDdays}` : `D-${memDdays}`}
                           </span>
                         </>
                       )}
