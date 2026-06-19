@@ -1,8 +1,9 @@
-// 수강권 홀딩·환불 신청 처리 인박스 — 관장(본인 지점)/마스터(전체) 전용.
+// 수강권 홀딩·양도·환불 신청 처리 인박스 — 관장(본인 지점)/마스터(전체) 전용.
 // 회원이 /membership 에서 신청한 pending 건을 승인/반려. RLS 가 지점 스코프를 강제한다.
 // 처리는 process_membership_request RPC(SECURITY DEFINER) — 홀딩 승인 시 만료일 자동 연장.
+// 양도·환불 승인은 기록만 처리되며 실제 정산/이전은 관장이 오프라인으로 진행.
 import { useState, useEffect, useCallback } from "react";
-import { Pause, CalendarClock, RotateCcw, Check, X } from "lucide-react";
+import { Pause, ArrowLeftRight, RotateCcw, Check, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,9 +18,13 @@ interface PReq {
   reason: string | null;
   created_at: string;
   member_name: string | null;
+  transferee_name: string | null;
+  transferee_phone: string | null;
+  est_refund: number | null;
 }
 
 const fmt = (d: string) => new Date(d).toLocaleDateString("ko-KR");
+const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 
 const MembershipRequestsInbox = () => {
   const { role } = useAuth();
@@ -30,7 +35,9 @@ const MembershipRequestsInbox = () => {
   const load = useCallback(async () => {
     const { data } = await (supabase as any)
       .from("membership_requests")
-      .select("id, user_id, branch_name, type, hold_days, reason, created_at, member_name")
+      .select(
+        "id, user_id, branch_name, type, hold_days, reason, created_at, member_name, transferee_name, transferee_phone, est_refund",
+      )
       .eq("status", "pending")
       .order("created_at", { ascending: true });
     setReqs((data as PReq[]) || []);
@@ -59,13 +66,35 @@ const MembershipRequestsInbox = () => {
     }
   };
 
+  const typeChip = (r: PReq) => {
+    if (r.type === "hold")
+      return (
+        <>
+          <Pause className="h-3 w-3" /> 홀딩 {r.hold_days ?? "-"}일
+        </>
+      );
+    if (r.type === "transfer")
+      return (
+        <>
+          <ArrowLeftRight className="h-3 w-3" /> 양도
+        </>
+      );
+    if (r.type === "refund")
+      return (
+        <>
+          <RotateCcw className="h-3 w-3" /> 환불
+        </>
+      );
+    return <>{r.type}</>;
+  };
+
   return (
     <div className="mb-5 rounded-2xl border border-status-pending/30 bg-status-pending/5 p-4">
       <div className="mb-3 flex items-center gap-2">
         <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-status-pending px-1.5 text-[11px] font-bold text-white">
           {reqs.length}
         </span>
-        <h3 className="text-sm font-bold text-foreground">수강권 홀딩·환불 신청</h3>
+        <h3 className="text-sm font-bold text-foreground">수강권 홀딩·양도·환불 신청</h3>
       </div>
       <div className="space-y-2">
         {reqs.map((r) => (
@@ -73,21 +102,27 @@ const MembershipRequestsInbox = () => {
             <p className="text-sm font-semibold text-foreground">
               {r.member_name || "회원"}
               <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground">
-                {r.type === "hold" ? (
-                  <>
-                    <Pause className="h-3 w-3" /> 홀딩 {r.hold_days ?? "-"}일
-                  </>
-                ) : r.type === "postpone" ? (
-                  <>
-                    <CalendarClock className="h-3 w-3" /> 연기 {r.hold_days ?? "-"}일
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="h-3 w-3" /> 환불
-                  </>
-                )}
+                {typeChip(r)}
               </span>
             </p>
+
+            {/* 양도: 양수인 정보 */}
+            {r.type === "transfer" && (
+              <p className="mt-1 text-xs text-foreground">
+                양수인 <span className="font-semibold">{r.transferee_name || "-"}</span>
+                {r.transferee_phone ? ` · ${r.transferee_phone}` : ""}
+                <span className="ml-1 text-muted-foreground">(수수료 50,000원 안내)</span>
+              </p>
+            )}
+
+            {/* 환불: 예상 환불액 */}
+            {r.type === "refund" && r.est_refund != null && (
+              <p className="mt-1 text-xs text-foreground">
+                예상 환불액 <span className="font-bold text-primary">{won(r.est_refund)}</span>
+                <span className="ml-1 text-muted-foreground">(최종 확정 필요)</span>
+              </p>
+            )}
+
             {r.reason && <p className="mt-1 text-xs text-muted-foreground">{r.reason}</p>}
             <p className="mt-1 text-[11px] text-muted-foreground">
               {r.branch_name ? r.branch_name + " · " : ""}
@@ -113,7 +148,7 @@ const MembershipRequestsInbox = () => {
         ))}
       </div>
       <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-        홀딩 승인 시 만료일이 신청 일수만큼 자동 연장됩니다. 환불 승인은 신청 기록만 처리되며, 실제 환불 정산은 별도로 진행하세요.
+        홀딩 승인 시 만료일이 신청 일수만큼 자동 연장됩니다. 양도·환불 승인은 신청 기록만 처리되며, 실제 정산·명의 이전은 별도로 진행하세요.
       </p>
     </div>
   );
