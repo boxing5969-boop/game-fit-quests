@@ -81,7 +81,9 @@ const MembershipPage = () => {
 
   // 제14조 일시정지(홀딩) 자격
   const holdTier =
-    contractMonths == null
+    isStaff
+      ? { maxCount: 2, maxDays: 30 } // 본사 테스트: 12개월+ 자격으로 가정
+      : contractMonths == null
       ? null
       : contractMonths < 6
       ? { maxCount: 0, maxDays: 0 }
@@ -171,9 +173,14 @@ const MembershipPage = () => {
         <div className="space-y-4">
           <MembershipCard />
 
-          {/* 회원 전용 — 홀딩/양도/환불 신청 (마스터·관장은 무제한이라 숨김) */}
-          {!isStaff && memEnd && (
+          {/* 홀딩/양도/환불 신청 — 회원은 본인 수강권 기준, 본사는 테스트 모드 */}
+          {(memEnd || isStaff) && (
             <>
+              {isStaff && (
+                <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <span className="font-bold text-primary">본사 테스트 모드</span> — 무제한 계정이라 실제 회원에겐 없는 신청 버튼이 테스트용으로 표시됩니다. 신청하면 아래 내역과 홈 화면 관리 메뉴에서 승인/반려를 확인할 수 있습니다.
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-2.5">
                 <button
                   onClick={() => openModal("hold")}
@@ -204,7 +211,7 @@ const MembershipPage = () => {
               {/* 자격 안내 (약관 기준) */}
               <div className="rounded-xl bg-muted/30 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
                 {holdTier && holdTier.maxCount > 0 ? (
-                  <p>홀딩 가능: 남은 {remainCount}회 · {remainDays}일 (약정 {Math.round(contractMonths ?? 0)}개월 기준)</p>
+                  <p>홀딩 가능: 남은 {remainCount}회 · {remainDays}일{isStaff ? " (본사 테스트)" : ` (약정 ${Math.round(contractMonths ?? 0)}개월 기준)`}</p>
                 ) : (
                   <p>홀딩 불가: 6개월 미만 약정은 일시정지가 제공되지 않습니다(약관 제14조).</p>
                 )}
@@ -244,11 +251,6 @@ const MembershipPage = () => {
             </>
           )}
 
-          {isStaff && (
-            <p className="px-1 text-xs leading-relaxed text-muted-foreground">
-              출석·수강 시 이 화면을 보여주세요. 회원 홀딩·양도·환불 신청은 홈 화면의 관리 메뉴에서 처리할 수 있습니다.
-            </p>
-          )}
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
