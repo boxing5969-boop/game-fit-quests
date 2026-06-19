@@ -225,41 +225,46 @@ const MyPage = () => {
           {/* 라이센스 카드 표시 모드 토글 */}
           <DisplayModeToggle />
 
-          {/* 수강권 — 회원: 등록일·만료일·남은기간 / 마스터·관장·코치: 무제한 */}
+          {/* 수강권 — 프리미엄 멤버십 카드 (FastFive 스타일) */}
           {showMembership && (
-            <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-              <div className="mb-3 flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold text-foreground">수강권</span>
+            <div
+              className="relative overflow-hidden rounded-3xl border border-white/10 p-5 shadow-lg"
+              style={{ background: "linear-gradient(135deg, #161b22 0%, #0c0f14 60%, #0a0c10 100%)" }}
+            >
+              {/* 액센트 글로우 — 회원=민트, 스태프=골드 */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full opacity-30 blur-2xl"
+                style={{ background: isStaff ? "radial-gradient(circle, hsl(var(--reward)) 0%, transparent 70%)" : "radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)" }}
+              />
+              {/* 153 워터마크 */}
+              <span className="pointer-events-none absolute -bottom-5 right-2 select-none text-7xl font-black tracking-tighter text-white/[0.04]">153</span>
+
+              <div className="relative flex items-center justify-between">
+                <span className="text-[11px] font-bold tracking-[0.2em] text-white/55">153 MEMBERSHIP</span>
+                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${isStaff ? "bg-reward/20 text-reward" : "bg-primary/20 text-primary"}`}>
+                  {isStaff ? "STAFF" : "정회원"}
+                </span>
               </div>
-              <div className="flex items-center justify-between gap-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="w-12 text-muted-foreground">등록일</span>
-                    <span className="font-medium text-foreground">
-                      {regDate
-                        ? new Date(regDate).toLocaleDateString("ko-KR")
-                        : new Date(profile.created_at).toLocaleDateString("ko-KR")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="w-12 text-muted-foreground">만료일</span>
-                    <span className="font-medium text-foreground">
-                      {isStaff ? "무제한" : new Date(memEnd!).toLocaleDateString("ko-KR")}
-                    </span>
-                  </div>
+
+              <div className="relative mt-5">
+                <p className="text-lg font-bold text-white">{profile.nickname || profile.name}</p>
+                <p className="mt-0.5 text-xs text-white/45">{profile.branch_name || "153복싱짐"}</p>
+              </div>
+
+              <div className="relative mt-6 flex items-end justify-between">
+                <div className="space-y-0.5 text-[11px] leading-relaxed text-white/55">
+                  <p>등록 {regDate ? new Date(regDate).toLocaleDateString("ko-KR") : new Date(profile.created_at).toLocaleDateString("ko-KR")}</p>
+                  <p>만료 {isStaff ? "무제한" : new Date(memEnd!).toLocaleDateString("ko-KR")}</p>
                 </div>
-                {isStaff ? (
-                  <div className="shrink-0 rounded-xl bg-reward/10 px-4 py-2.5 text-center">
-                    <p className="text-[10px] text-muted-foreground">이용권</p>
-                    <p className="text-base font-bold text-reward">무제한</p>
-                  </div>
-                ) : (
-                  <div className={`shrink-0 rounded-xl px-4 py-2.5 text-center ${ddays !== null && ddays < 0 ? "bg-destructive/10" : ddays !== null && ddays <= 7 ? "bg-status-pending/10" : "bg-primary/10"}`}>
-                    <p className="text-[10px] text-muted-foreground">{ddays !== null && ddays < 0 ? "만료" : "남은 기간"}</p>
-                    <p className={`text-base font-bold ${ddays !== null && ddays < 0 ? "text-destructive" : ddays !== null && ddays <= 7 ? "text-status-pending" : "text-primary"}`}>{ddayText}</p>
-                  </div>
-                )}
+                <div className="text-right">
+                  <p className="text-[9px] font-medium uppercase tracking-wider text-white/40">
+                    {isStaff ? "PERIOD" : ddays !== null && ddays < 0 ? "EXPIRED" : "남은 기간"}
+                  </p>
+                  <p className={`text-2xl font-black leading-none ${isStaff ? "text-reward" : ddays !== null && ddays < 0 ? "text-destructive" : ddays !== null && ddays <= 7 ? "text-status-pending" : "text-primary"}`}>
+                    {isStaff ? "무제한" : ddays !== null && ddays < 0 ? `D+${-ddays}` : `D-${ddays}`}
+                  </p>
+                </div>
               </div>
             </div>
           )}
