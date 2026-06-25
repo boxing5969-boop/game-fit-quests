@@ -61,11 +61,11 @@
 
     /* Status (두 모드 공통) */
     --status-locked: 220 13% 47%;
-    --status-active: 8 75% 48%;
+    --status-active: 165 70% 52%;
     --status-pending: 38 92% 50%;
     --status-complete: 42 90% 64%;
 
-    --xp-bar: 8 75% 48%;
+    --xp-bar: 165 70% 52%;
     --xp-bar-bg: 218 17% 91%;
 
     /* Surface elevation — light variants */
@@ -136,11 +136,11 @@
     --rank-black: 220 35% 14%;
 
     --status-locked: 220 13% 47%;
-    --status-active: 8 75% 48%;
+    --status-active: 165 70% 52%;
     --status-pending: 38 92% 50%;
     --status-complete: 42 90% 64%;
 
-    --xp-bar: 8 75% 48%;
+    --xp-bar: 165 70% 52%;
     --xp-bar-bg: 218 24% 22%;
 
     --surface-1: 220 36% 10%;          /* #101622 */
@@ -149,23 +149,23 @@
     --shadow-elev-1: 0px 8px 24px rgba(0, 0, 0, 0.24);
     --shadow-elev-2: 0px 12px 32px rgba(0, 0, 0, 0.30);
     --shadow-elev-3: 0px 16px 40px rgba(0, 0, 0, 0.36);
-    --shadow-glow-primary: 0px 0px 24px rgba(217, 54, 32, 0.28);
+    --shadow-glow-primary: 0px 0px 24px rgba(41, 195, 156, 0.28);
     --shadow-glow-reward:  0px 0px 28px rgba(246, 196, 83, 0.32);
     --shadow-glow-gold:    0px 0px 28px rgba(246, 196, 83, 0.32);
     --shadow-glow-blue:    0px 0px 24px rgba(47, 140, 255, 0.24);
-    --shadow-glow-soft:    0px 0px 20px rgba(217, 54, 32, 0.18);
+    --shadow-glow-soft:    0px 0px 20px rgba(41, 195, 156, 0.18);
 
-    --glow-primary: 0px 0px 24px rgba(217, 54, 32, 0.28);
+    --glow-primary: 0px 0px 24px rgba(41, 195, 156, 0.28);
     --glow-gold: 0px 0px 28px rgba(246, 196, 83, 0.32);
 
     --sidebar-background: 220 35% 11%;
     --sidebar-foreground: 220 14% 71%;
-    --sidebar-primary: 8 75% 48%;
-    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-primary: 165 70% 52%;
+    --sidebar-primary-foreground: 220 34% 7%;
     --sidebar-accent: 220 31% 15%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 218 24% 22%;
-    --sidebar-ring: 8 75% 48%;
+    --sidebar-ring: 165 70% 52%;
 
     --btn-disabled-bg: 218 24% 22%;
     --btn-disabled-fg: 221 13% 47%;
@@ -273,7 +273,7 @@
    * .light-surface overrides swap them to the light palette values. */
   .primary-button {
     @apply inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-button text-primary-foreground shadow-glow-soft transition-all;
-    @apply hover:shadow-glow-primary active:scale-[0.98] active:bg-[hsl(8_73%_38%)];
+    @apply hover:shadow-glow-primary active:scale-[0.98] active:bg-[hsl(165_70%_42%)];
     @apply disabled:pointer-events-none disabled:bg-[hsl(var(--btn-disabled-bg))] disabled:text-[hsl(var(--btn-disabled-fg))] disabled:shadow-none;
   }
   .secondary-button {
@@ -298,7 +298,7 @@
     background: linear-gradient(
       90deg,
       hsl(var(--primary)) 0%,
-      hsl(13 100% 62%) 100%
+      hsl(165 70% 62%) 100%
     );
   }
   .badge-pill {

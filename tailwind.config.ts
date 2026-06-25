@@ -210,6 +210,11 @@ export default {
       // are intentionally named separately so Space Grotesk + tabular
       // digits can be pinned via the `.number-font` utility.
       fontSize: {
+        // 회원 가독성 — 기본 small 텍스트 상향 (text-xs 12→13, text-sm 14→15, 줄간격↑).
+        // ad-hoc text-xs(약 515곳)·text-sm(약 635곳) 에 앱 전역 일괄 적용.
+        // 큰 글자·숫자·뱃지 토큰(display-*, number-*, badge 등)은 그대로 둔다.
+        "xs": ["13px", { lineHeight: "18px" }],
+        "sm": ["15px", { lineHeight: "22px" }],
         "display-lg":  ["28px", { lineHeight: "36px", fontWeight: "800" }],
         "display-md":  ["24px", { lineHeight: "32px", fontWeight: "800" }],
         "display-sm":  ["20px", { lineHeight: "28px", fontWeight: "700" }],

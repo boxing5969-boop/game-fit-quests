@@ -32,14 +32,20 @@
 ---
 
 ## 2. Color Tokens
+> **[2026-06 브랜드 업데이트] Primary: Ember 레드 → 민트**
+> 현재 정본은 코드(`src/index.css`). Primary가 Ember 레드(#D93620)에서 **민트 #29C39C**로 이전됨.
+> 빨강은 이제 153 로고와 에러(destructive #EF4444)에만 사용. Primary 글로우·버튼 press·사이드바도 민트로 정리됨.
+> 리그 색상(§3)은 정체성 토큰이라 그대로 유지.
+> [확인 필요] Accent: 코드 `--accent` 토큰은 민트로 별칭됐으나, 랭킹/성장/정보용 블루(#2F8CFF)·리그-블루는 유지 — 문서와 갈리니 확정 필요.
+
 
 ### 브랜드 / 표면
 
 | Token              | Hex       | 용도                                   |
 | ------------------ | --------- | -------------------------------------- |
-| Primary            | `#D93620` | 핵심 CTA, 주요 강조                    |
-| Primary Light      | `#FF6A3D` | Primary의 밝은 변형 (그라데이션/hover) |
-| Primary Dark       | `#A92B1A` | Primary의 어두운 변형 (press 상태)     |
+| Primary            | `#29C39C` | 핵심 CTA, 주요 강조                    |
+| Primary Light      | `#5AE2C0` | Primary의 밝은 변형 (그라데이션/hover) |
+| Primary Dark       | `#20B691` | Primary의 어두운 변형 (press 상태)     |
 | Secondary          | `#0B0F17` | 어두운 보조 배경 / 깊이 표현            |
 | Accent             | `#2F8CFF` | 랭킹·성장 관련 강조                    |
 | Reward             | `#F6C453` | 보상·성취 전용 (Gold)                  |
@@ -68,7 +74,7 @@
 | -------------- | --------- | --------------------------------------- |
 | Border         | `#2A3344` | 다크 기본 경계선                        |
 | Border Light   | `#E1E5EC` | 라이트 모드 경계선                      |
-| Border Active  | `#D93620` | 선택 · active 상태 경계선 (= Primary)   |
+| Border Active  | `#29C39C` | 선택 · active 상태 경계선 (= Primary)   |
 
 ### 시스템 (상태)
 
@@ -92,7 +98,7 @@
 | League Red    | `#EF4444` | 레드 리그                 |
 | League Black  | `#20242D` | 블랙 리그 (상위)          |
 | League Master | `#F6C453` | 마스터 (= Reward gold)    |
-| League Legend | `#FF6A3D` | 레전드 (= Primary Light)  |
+| League Legend | `#FF6A3D` | 레전드 (오렌지, 리그 전용)  |
 
 ---
 
@@ -171,7 +177,7 @@
 | ------------------ | -------------------------------------------------- | ----------------------------- |
 | Shadow Card        | `0px 8px 24px rgba(0, 0, 0, 0.24)`                 | 다크 모드 일반 카드           |
 | Shadow Floating    | `0px 16px 40px rgba(0, 0, 0, 0.36)`                | 모달, 플로팅 액션             |
-| Primary Glow       | `0px 0px 24px rgba(217, 54, 32, 0.28)`             | 핵심 CTA · 브랜드 발광        |
+| Primary Glow       | `0px 0px 24px rgba(41, 195, 156, 0.28)`             | 핵심 CTA · 브랜드 발광        |
 | Reward Glow        | `0px 0px 28px rgba(246, 196, 83, 0.32)`            | 보상 · 성취 팝업              |
 | Blue Glow          | `0px 0px 24px rgba(47, 140, 255, 0.24)`            | 랭킹 · 성장 정보              |
 | Light Card Shadow  | `0px 6px 18px rgba(17, 24, 39, 0.06)`              | 라이트 모드 카드 (정보성 화면) |
@@ -186,10 +192,10 @@
 2. **Primary 컬러는 핵심 행동에만 사용한다.**
    한 화면에 Primary CTA는 1개 원칙. 남발하면 강조가 사라진다.
 
-3. **보상은 Gold, 랭킹/성장은 Blue, 액션은 Ember로 역할을 분리한다.**
+3. **보상은 Gold, 랭킹/성장은 Blue, 액션·강조는 Mint로 역할을 분리한다.**
    - Reward (Gold `#F6C453`) → 보상 · 배지 · 성취
    - Accent (Blue `#2F8CFF`) → 랭킹 · 성장 지표
-   - Primary (Ember `#D93620`) → CTA · 시작/제출 액션
+   - Primary (Mint `#29C39C`) → CTA · 시작/제출 액션
 
 4. **캐릭터는 귀엽게만 보이지 않게 다크 스테이지와 리그 정보로 잡는다.**
    캐릭터 단독으로 두지 말고, 뒤에 다크 그라데이션·리그 뱃지·파티클 같은 프레이밍을 함께 배치.
