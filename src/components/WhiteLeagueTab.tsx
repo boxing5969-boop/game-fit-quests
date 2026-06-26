@@ -19,9 +19,11 @@ import { getChecklistForLevel } from "@/data/levelRuleEngine";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { useTutorialState } from "@/hooks/useTutorialState";
 import SessionRunner from "@/components/SessionRunner";
+import SessionTemplateEditor from "@/components/SessionTemplateEditor";
+import { useSessionTemplate } from "@/hooks/useSessionTemplate";
 import {
   CheckCircle2, Lock, ChevronRight, ChevronDown, Clock, Zap, Target,
-  ArrowLeft, Star, Shield, Info, Dumbbell, Eye, Award, Play,
+  ArrowLeft, Star, Shield, Info, Dumbbell, Eye, Award, Play, Pencil,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
@@ -188,7 +190,7 @@ const WhiteLeagueTab = () => {
    ═══════════════════════════════════════════════════════ */
 const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; levelNum: number; onBack: () => void }) => {
   const ul = getLevelById(league, levelNum);
-  const { user, progress } = useAuth();
+  const { user, progress, role } = useAuth();
   const { data: myCharacter } = useMemberCharacterAssignment(user?.id);
   const { metrics, status, canAttemptChecklist, submitChecklist } = useLocalProgress();
   const [activeSection, setActiveSection] = useState<"learn" | "session" | "check">("learn");
@@ -215,12 +217,20 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       ) ?? null
     : null;
 
+  // 50분 수업 구성 — DB(session_templates) 우선, 없으면 하드코딩 폴백. 마스터만 편집.
+  const sessionLevelKey =
+    league === "white" && levelNum === 1 ? "white-1" : league === "white" && levelNum === 2 ? "white-2" : null;
+  const sessionFallback =
+    sessionLevelKey === "white-1" ? WHITE_LV1_SESSION : sessionLevelKey === "white-2" ? WHITE_LV2_SESSION : null;
+  const { blocks: sessionBlocks, refetch: refetchSession } = useSessionTemplate(sessionLevelKey, sessionFallback);
+  const isMaster = role === "admin" || role === "super_admin";
+  const [showSessionEditor, setShowSessionEditor] = useState(false);
+
   if (!ul) return <div className="p-4 text-center text-muted-foreground">레벨 데이터를 불러올 수 없습니다</div>;
 
   // Use whiteLevel1/2 detailed session data if available, else use routineA
   const isWhiteLv1 = league === "white" && levelNum === 1;
   const isWhiteLv2 = league === "white" && levelNum === 2;
-  const sessionBlocks = isWhiteLv1 ? WHITE_LV1_SESSION : isWhiteLv2 ? WHITE_LV2_SESSION : null;
   const xpRules = isWhiteLv1 ? XP_RULES : isWhiteLv2 ? WHITE_LV2_XP_RULES : null;
   const learning = isWhiteLv1 ? WHITE_LV1_LEARNING : isWhiteLv2 ? WHITE_LV2_LEARNING : null;
   const purpose = isWhiteLv1 ? WHITE_LV1_PURPOSE : isWhiteLv2 ? WHITE_LV2_PURPOSE : null;
@@ -503,6 +513,18 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {/* ═══ 수업 실행 Section ═══ */}
       {activeSection === "session" && (
         <>
+          {showSessionEditor && sessionLevelKey && (
+            <SessionTemplateEditor
+              levelKey={sessionLevelKey}
+              levelLabel={`${league.charAt(0).toUpperCase()}${league.slice(1)} Lv.${levelNum}`}
+              initialBlocks={sessionBlocks ?? []}
+              onClose={() => setShowSessionEditor(false)}
+              onSaved={() => {
+                refetchSession();
+                setShowSessionEditor(false);
+              }}
+            />
+          )}
           {/* Routine blocks from unified data */}
           <div
             data-tour="white-session-blocks"
@@ -513,15 +535,25 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
                 <Clock className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">50분 수업 구성</span>
               </div>
-              {sessionBlocks && (
-                <button
-                  data-tour="white-session-start"
-                  onClick={() => setShowSession(true)}
-                  className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition-all active:scale-95"
-                >
-                  <Play className="h-3 w-3" /> 수업 시작
-                </button>
-              )}
+              <div className="flex items-center gap-1.5">
+                {isMaster && sessionLevelKey && (
+                  <button
+                    onClick={() => setShowSessionEditor(true)}
+                    className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold text-foreground transition-all active:scale-95"
+                  >
+                    <Pencil className="h-3 w-3" /> 편집
+                  </button>
+                )}
+                {sessionBlocks && (
+                  <button
+                    data-tour="white-session-start"
+                    onClick={() => setShowSession(true)}
+                    className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition-all active:scale-95"
+                  >
+                    <Play className="h-3 w-3" /> 수업 시작
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Show detailed session blocks if available, otherwise show routine blocks */}
