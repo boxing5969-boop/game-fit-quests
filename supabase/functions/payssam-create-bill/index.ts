@@ -95,6 +95,9 @@ Deno.serve(async (req) => {
       .single();
     if (oErr || !order) return json({ error: "주문 생성에 실패했습니다." }, 500);
 
+    // 앱 가입 신청 회원 자동 승인 (결제 진행 = 가입 확정). 기존 승인 회원은 무변화.
+    await admin.from("profiles").update({ is_approved: true }).eq("user_id", user.id);
+
     // 결제선생 청구서 생성·발송 (sendType=URL → shortUrl 응답)
     const res = await fetch(`${PAYSSAM_BASE_URL}/bill`, {
       method: "POST",

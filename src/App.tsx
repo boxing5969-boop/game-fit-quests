@@ -38,6 +38,7 @@ const RewardsPage = lazy(() => import("@/pages/RewardsPage"));
 const HallOfFamePage = lazy(() => import("@/pages/HallOfFamePage"));
 const MyPage = lazy(() => import("@/pages/MyPage"));
 const MembershipPage = lazy(() => import("@/pages/MembershipPage"));
+const SignupApply = lazy(() => import("@/pages/SignupApply"));
 const CoachDashboard = lazy(() => import("@/pages/CoachDashboard"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
 const CertBenefitsPage = lazy(() => import("@/pages/CertBenefitsPage"));
@@ -229,6 +230,7 @@ const AppRoutes = () => {
         <Route path="/guide/faq" element={<ProtectedRoute><GuideFaqPage /></ProtectedRoute>} />
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/membership" element={<ProtectedRoute><MembershipPage /></ProtectedRoute>} />
+        <Route path="/signup" element={<SignupApply />} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/character-studio" element={<ProtectedRoute><CharacterStudioPage /></ProtectedRoute>} />
         <Route path="/master-track" element={<ProtectedRoute><MasterTrackPage /></ProtectedRoute>} />

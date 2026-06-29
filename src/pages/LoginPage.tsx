@@ -490,6 +490,13 @@ const LoginPage = () => {
 
         {tab === "login" && (
           <>
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="w-full rounded-xl border border-primary/40 bg-primary/5 py-3.5 text-sm font-bold text-primary transition-all active:scale-[0.98]"
+            >
+              🥊 처음 오셨나요? 신규 회원 가입 신청
+            </button>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border" />
