@@ -4,6 +4,7 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronDown, Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { GYM_POLICIES } from "@/data/gymPolicies";
 import { toast } from "sonner";
@@ -32,6 +33,8 @@ const STEPS = ["계정 정보", "추가 정보", "규정 동의", "수강권 선
 
 const SignupApply = () => {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
+  const loggedIn = !!user; // 소셜(구글/카카오) 로그인 후 가입 신청 → 계정 생성 단계 건너뜀
   const [step, setStep] = useState(1);
   const [err, setErr] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -67,13 +70,26 @@ const SignupApply = () => {
     })();
   }, []);
 
+  // 소셜 로그인 사용자: 기존 프로필 값 프리필(사용자가 입력 중이면 덮어쓰지 않음)
+  useEffect(() => {
+    if (!profile) return;
+    const p = profile as { name?: string; nickname?: string; phone_number?: string; birth_date?: string; gender?: string };
+    if (p.name) setName((v) => v || (p.name as string));
+    if (p.nickname) setNickname((v) => v || (p.nickname as string));
+    if (p.phone_number) setPhone((v) => v || formatPhone(p.phone_number as string));
+    if (p.birth_date) setBirth((v) => v || (p.birth_date as string).replace(/[^0-9]/g, "").slice(0, 8));
+    if (p.gender) setGender((v) => v || (p.gender as string));
+  }, [profile]);
+
   const allAgreed = GYM_POLICIES.every((p) => !p.required || agree[p.key]);
   const setAllAgree = (v: boolean) => setAgree(Object.fromEntries(GYM_POLICIES.map((p) => [p.key, v])));
 
   const validateStep1 = () => {
-    if (!/^[a-z0-9_]{4,}$/.test(username.trim())) return "아이디는 영문·숫자·밑줄(_) 4자 이상이어야 합니다";
-    if (password.length < 6) return "비밀번호는 6자 이상이어야 합니다";
-    if (password !== confirm) return "비밀번호가 일치하지 않습니다";
+    if (!loggedIn) {
+      if (!/^[a-z0-9_]{4,}$/.test(username.trim())) return "아이디는 영문·숫자·밑줄(_) 4자 이상이어야 합니다";
+      if (password.length < 6) return "비밀번호는 6자 이상이어야 합니다";
+      if (password !== confirm) return "비밀번호가 일치하지 않습니다";
+    }
     if (!name.trim()) return "이름을 입력해주세요";
     if (!nickname.trim()) return "닉네임을 입력해주세요";
     if (rawDigits(phone).length < 10) return "전화번호를 정확히 입력해주세요";
@@ -93,7 +109,7 @@ const SignupApply = () => {
   };
   const back = () => {
     setErr("");
-    if (step === 1) navigate("/login");
+    if (step === 1) navigate(loggedIn ? "/home" : "/login");
     else setStep((s) => s - 1);
   };
 
@@ -103,39 +119,50 @@ const SignupApply = () => {
     setSubmitting(true);
     try {
       const phoneDigits = rawDigits(phone);
-      const { data: dup } = await supabase.from("profiles").select("id").eq("phone_number", phoneDigits).maybeSingle();
+      // 전화번호 중복 체크 (소셜 로그인 본인은 제외)
+      let dupQ = supabase.from("profiles").select("user_id").eq("phone_number", phoneDigits);
+      if (loggedIn && user) dupQ = dupQ.neq("user_id", user.id);
+      const { data: dup } = await dupQ.maybeSingle();
       if (dup) {
         setErr("이미 등록된 전화번호입니다. 한 번호당 하나의 계정만 가능합니다.");
         setSubmitting(false);
         return;
       }
-      const email = toFakeEmail(username);
-      const { data: su, error: suErr } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
+
+      let uid: string | null = user?.id ?? null;
+      if (!loggedIn) {
+        const email = toFakeEmail(username);
+        const { data: su, error: suErr } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name: name.trim(),
+              nickname: nickname.trim(),
+              phone_number: phoneDigits,
+              branch_name: BRANCH,
+              birth_date: birth,
+              is_coach_request: false,
+            },
+          },
+        });
+        if (suErr) {
+          setErr(/registered|already/i.test(suErr.message) ? "이미 사용 중인 아이디입니다." : "가입 처리 중 오류가 발생했습니다. 아이디나 전화번호가 사용 중일 수 있습니다.");
+          setSubmitting(false);
+          return;
+        }
+        uid = su.user?.id ?? null;
+        if (!su.session) await supabase.auth.signInWithPassword({ email, password });
+      }
+      if (uid) {
+        await supabase
+          .from("profiles")
+          .update({
             name: name.trim(),
             nickname: nickname.trim(),
             phone_number: phoneDigits,
             branch_name: BRANCH,
             birth_date: birth,
-            is_coach_request: false,
-          },
-        },
-      });
-      if (suErr) {
-        setErr(/registered|already/i.test(suErr.message) ? "이미 사용 중인 아이디입니다." : "가입 처리 중 오류가 발생했습니다. 아이디나 전화번호가 사용 중일 수 있습니다.");
-        setSubmitting(false);
-        return;
-      }
-      const uid = su.user?.id;
-      if (!su.session) await supabase.auth.signInWithPassword({ email, password });
-      if (uid) {
-        await supabase
-          .from("profiles")
-          .update({
-            email,
             gender,
             fitness_goal: goal.trim() || null,
             health_notes: health.trim() || null,
@@ -193,11 +220,17 @@ const SignupApply = () => {
       {/* STEP 1 — 계정 */}
       {step === 1 && (
         <div className="space-y-3">
-          <Field label="아이디"><input className={inputClass} value={username} onChange={(e) => setUsername(e.target.value)} placeholder="영문·숫자 4자 이상" autoCapitalize="none" autoCorrect="off" /></Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="비밀번호"><input type="password" className={inputClass} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6자 이상" /></Field>
-            <Field label="비밀번호 확인"><input type="password" className={inputClass} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="다시 입력" /></Field>
-          </div>
+          {loggedIn ? (
+            <div className="rounded-xl bg-primary/5 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">소셜 계정으로 로그인됨 — 아래 가입 정보만 작성하면 됩니다.</div>
+          ) : (
+            <>
+              <Field label="아이디"><input className={inputClass} value={username} onChange={(e) => setUsername(e.target.value)} placeholder="영문·숫자 4자 이상" autoCapitalize="none" autoCorrect="off" /></Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="비밀번호"><input type="password" className={inputClass} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6자 이상" /></Field>
+                <Field label="비밀번호 확인"><input type="password" className={inputClass} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="다시 입력" /></Field>
+              </div>
+            </>
+          )}
           <Field label="이름(실명)"><input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="실명" /></Field>
           <Field label="닉네임"><input className={inputClass} value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="링 위의 이름" /></Field>
           <Field label="전화번호"><input type="tel" className={inputClass} value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" /></Field>
@@ -273,7 +306,7 @@ const SignupApply = () => {
       {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">{err}</p>}
 
       {/* 하단 버튼 */}
-      <div className="fixed inset-x-0 bottom-0 mx-auto max-w-lg border-t border-border bg-card p-4">
+      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg border-t border-border bg-card p-4 safe-area-bottom">
         {step < 4 ? (
           <button onClick={next} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]">다음</button>
         ) : (
