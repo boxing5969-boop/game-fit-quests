@@ -1,1 +1,5 @@
 project_id = "whnczhxyjmyywhlfbgsd"
+
+# 결제선생 결제 승인 콜백 — 결제선생 서버가 JWT 없이 호출하므로 공개(자체 apiKey 검증).
+[functions.payssam-callback]
+verify_jwt = false

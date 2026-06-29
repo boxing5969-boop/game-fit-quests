@@ -2,13 +2,14 @@
 // 디지털 멤버십 카드 + 홀딩/양도/환불 신청(회원) → 관장·마스터가 승인·처리.
 // 규칙 근거: 153복싱짐 통합 상품 이용약관 — 제14조(일시정지), 제15조(양도), 제18조(환불).
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Pause, ArrowLeftRight, RotateCcw, X, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import MembershipCard from "@/components/MembershipCard";
+import MembershipProducts from "@/components/MembershipProducts";
 
 interface MReq {
   id: string;
@@ -39,7 +40,8 @@ const statusMeta = (s: string) =>
 
 const MembershipPage = () => {
   const navigate = useNavigate();
-  const { profile, role, user } = useAuth();
+  const { profile, role, user, refreshProfile } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const memEnd = (profile as { membership_end?: string } | null)?.membership_end ?? null;
   const regDate = (profile as { gym_reg_date?: string } | null)?.gym_reg_date ?? null;
   const payment = (profile as { payment_total?: number } | null)?.payment_total ?? null;
@@ -67,6 +69,17 @@ const MembershipPage = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  // 결제선생 결제창에서 복귀(?paid=1) → 결제 확인 안내 + 프로필 갱신
+  useEffect(() => {
+    if (searchParams.get("paid") === "1") {
+      toast.success("결제 확인 중입니다. 잠시 후 수강권에 반영됩니다.");
+      refreshProfile?.();
+      setSearchParams({}, { replace: true });
+      const t = setTimeout(() => refreshProfile?.(), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [searchParams, setSearchParams, refreshProfile]);
 
   // ── 약관 기반 계산 ──────────────────────────────
   const totalDays = useMemo(
@@ -172,6 +185,9 @@ const MembershipPage = () => {
       {hasMembership ? (
         <div className="space-y-4">
           <MembershipCard />
+
+          {/* 수강권 결제 — 회원: 상품 결제하기 / 관장·마스터: 상품 관리 */}
+          <MembershipProducts />
 
           {/* 홀딩/양도/환불 신청 — 회원은 본인 수강권 기준, 본사는 테스트 모드 */}
           {(memEnd || isStaff) && (
