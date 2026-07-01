@@ -1,4 +1,5 @@
-// 수강권 결제 상품 — 회원: 상품 선택 후 '결제하기'(결제선생 결제창으로 이동) / 관장·마스터: 상품 관리.
+// 수강권/부가상품 결제 — 회원: 탭(주5회·주3회·PT·용품·렌탈·1일권) + 상품 선택 후 결제 / 관장·마스터: 상품 관리.
+// 수강권 탭은 정상가·할인율·원/일(하루 단가)을 노출하는 패스 선택형 카드.
 // 결제는 payssam-create-bill 엣지함수가 결제선생 청구서를 만들고 결제 URL(shortUrl)을 반환 → 그 URL 로 이동.
 import { useState, useEffect, useCallback } from "react";
 import { CreditCard, Plus, Pencil, Trash2, X } from "lucide-react";
@@ -10,8 +11,11 @@ import { toast } from "sonner";
 interface Product {
   id: string;
   branch_name: string | null;
+  category: string; // membership | pt | goods | rental | daypass
+  pass_type: string | null; // 주5회 | 주3회 (membership)
   name: string;
   price: number;
+  normal_price: number | null;
   duration_days: number;
   sort_order: number;
   is_active: boolean;
@@ -26,6 +30,17 @@ const formatPhone = (v: string) => {
 };
 const blankForm = { name: "", price: "", duration_days: "30" };
 
+// 회원 화면 카테고리 탭
+const CATS = [
+  { key: "m5", label: "주5회", match: (p: Product) => p.category === "membership" && p.pass_type === "주5회" },
+  { key: "m3", label: "주3회", match: (p: Product) => p.category === "membership" && p.pass_type === "주3회" },
+  { key: "pt", label: "PT", match: (p: Product) => p.category === "pt" },
+  { key: "goods", label: "용품", match: (p: Product) => p.category === "goods" },
+  { key: "rental", label: "렌탈", match: (p: Product) => p.category === "rental" },
+  { key: "day", label: "1일권", match: (p: Product) => p.category === "daypass" },
+] as const;
+const CAT_LABEL: Record<string, string> = { membership: "수강권", pt: "PT", goods: "용품", rental: "렌탈", daypass: "1일권" };
+
 const MembershipProducts = () => {
   const { profile, role, refreshProfile, user } = useAuth();
   const isStaff = isManagerRole(role);
@@ -35,6 +50,7 @@ const MembershipProducts = () => {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [paying, setPaying] = useState<string | null>(null);
+  const [activeCatKey, setActiveCatKey] = useState<string>("m5");
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [form, setForm] = useState(blankForm);
   const [saving, setSaving] = useState(false);
@@ -57,8 +73,7 @@ const MembershipProducts = () => {
     load();
   }, [load]);
 
-  // ── 회원 결제 ──
-  // 전화번호가 있으면 바로 결제, 없으면(카톡/구글 가입자) 번호 입력 모달을 먼저 띄운다.
+  // ── 회원 결제 ── 전화번호 있으면 바로 결제, 없으면(카톡/구글 가입자) 번호 입력 모달 먼저.
   const pay = (p: Product) => {
     if (memberPhone.length < 10) {
       setPhoneInput("");
@@ -78,7 +93,7 @@ const MembershipProducts = () => {
         return;
       }
       if (data?.shortUrl) {
-        window.location.href = data.shortUrl as string; // 결제선생 결제창으로 이동
+        window.location.href = data.shortUrl as string;
       } else {
         toast.error("결제 URL을 받지 못했습니다.");
       }
@@ -147,15 +162,12 @@ const MembershipProducts = () => {
           name,
           price,
           duration_days: duration,
-          branch_name: isAdmin ? null : branch, // 마스터=전 지점 공통, 관장=본인 지점
+          branch_name: isAdmin ? null : branch,
         });
         if (error) throw error;
         toast.success("상품을 추가했습니다");
       } else if (editing) {
-        const { error } = await (supabase as any)
-          .from("membership_products")
-          .update({ name, price, duration_days: duration })
-          .eq("id", editing.id);
+        const { error } = await (supabase as any).from("membership_products").update({ name, price, duration_days: duration }).eq("id", editing.id);
         if (error) throw error;
         toast.success("상품을 수정했습니다");
       }
@@ -184,67 +196,133 @@ const MembershipProducts = () => {
     }
   };
 
+  // 결제 전 전화번호 모달 JSX (회원 공용, 인라인 — 중첩 컴포넌트로 만들면 입력 포커스 튐)
+  const phoneModalJsx = phoneModal ? (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setPhoneModal(null)}>
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-elev-3" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-base font-bold text-foreground">전화번호 확인</h2>
+          <button onClick={() => setPhoneModal(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:scale-95">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+          결제·회원 관리를 위해 전화번호가 필요합니다. 번호를 입력하면 <b className="text-foreground">153복싱짐 선릉역점</b> 회원으로 등록되고 바로 결제가 진행됩니다.
+        </p>
+        <input
+          type="tel"
+          inputMode="numeric"
+          value={phoneInput}
+          onChange={(e) => setPhoneInput(formatPhone(e.target.value))}
+          placeholder="010-0000-0000"
+          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+        />
+        <button
+          onClick={savePhoneAndPay}
+          disabled={savingPhone}
+          className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+        >
+          {savingPhone ? "처리 중..." : `${won(phoneModal.price)} 결제하기`}
+        </button>
+      </div>
+    </div>
+  ) : null;
+
   // ── 회원 화면 ──
   if (!isStaff) {
     if (products.length === 0) return null;
+    const activeCats = CATS.filter((c) => products.some((p) => c.match(p)));
+    const cat = activeCats.find((c) => c.key === activeCatKey) ?? activeCats[0];
+    const list = cat ? products.filter(cat.match) : [];
+    const isMembership = cat?.key === "m5" || cat?.key === "m3";
+
     return (
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="mb-3 flex items-center gap-2">
           <CreditCard className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground">수강권 결제</h3>
+          <h3 className="text-sm font-bold text-foreground">수강권·부가상품 결제</h3>
         </div>
-        <div className="space-y-2">
-          {products.map((p) => (
-            <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background px-3 py-2.5">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{p.name}</p>
-                <p className="text-[11px] text-muted-foreground">{p.duration_days}일 · {won(p.price)}</p>
-              </div>
-              <button
-                onClick={() => pay(p)}
-                disabled={paying === p.id}
-                className="shrink-0 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
-              >
-                {paying === p.id ? "이동 중..." : "결제하기"}
-              </button>
-            </div>
+
+        {/* 카테고리 탭 */}
+        <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
+          {activeCats.map((c) => (
+            <button
+              key={c.key}
+              onClick={() => setActiveCatKey(c.key)}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+                cat?.key === c.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {c.label}
+            </button>
           ))}
         </div>
-        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-          결제하기를 누르면 안전한 결제창으로 이동합니다. 결제가 완료되면 수강권 기간이 자동으로 반영됩니다.
-        </p>
 
-        {/* 카톡/구글 가입자: 전화번호 없을 때 결제 전 간편 등록 */}
-        {phoneModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setPhoneModal(null)}>
-            <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-elev-3" onClick={(e) => e.stopPropagation()}>
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="text-base font-bold text-foreground">전화번호 확인</h2>
-                <button onClick={() => setPhoneModal(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:scale-95">
-                  <X className="h-4 w-4" />
+        {isMembership && (
+          <p className="mb-2 px-0.5 text-[11px] text-muted-foreground">이용시간 매일 00:00–23:59 · 153복싱짐 선릉역점 · 길게 등록할수록 하루 단가가 저렴해요</p>
+        )}
+
+        <div className="space-y-2">
+          {list.map((p) => {
+            const months = Math.max(1, Math.round(p.duration_days / 30));
+            const perDay = p.duration_days > 0 ? Math.round(p.price / p.duration_days) : 0;
+            const off = p.normal_price && p.normal_price > p.price ? Math.round((1 - p.price / p.normal_price) * 100) : 0;
+            if (isMembership) {
+              return (
+                <div key={p.id} className="rounded-xl border border-border bg-background p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-foreground">{months}개월</span>
+                        {off > 0 && <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">{off}% OFF</span>}
+                      </div>
+                      <p className="mt-1 text-xs">
+                        {p.normal_price ? <span className="text-muted-foreground line-through">{won(p.normal_price)}</span> : null}
+                        <span className="ml-1 font-bold text-foreground">{won(p.price)}</span>
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-lg font-black leading-none text-primary">
+                        {perDay.toLocaleString("ko-KR")}
+                        <span className="ml-0.5 text-[11px] font-bold text-muted-foreground">원/일</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => pay(p)}
+                    disabled={paying === p.id}
+                    className="mt-2.5 w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {paying === p.id ? "이동 중..." : "결제하기"}
+                  </button>
+                </div>
+              );
+            }
+            return (
+              <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">{p.name}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {won(p.price)}
+                    {p.duration_days > 0 ? ` · ${p.duration_days}일` : ""}
+                  </p>
+                </div>
+                <button
+                  onClick={() => pay(p)}
+                  disabled={paying === p.id}
+                  className="shrink-0 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {paying === p.id ? "이동 중..." : "결제하기"}
                 </button>
               </div>
-              <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
-                결제·회원 관리를 위해 전화번호가 필요합니다. 번호를 입력하면 <b className="text-foreground">153복싱짐 선릉역점</b> 회원으로 등록되고 바로 결제가 진행됩니다.
-              </p>
-              <input
-                type="tel"
-                inputMode="numeric"
-                value={phoneInput}
-                onChange={(e) => setPhoneInput(formatPhone(e.target.value))}
-                placeholder="010-0000-0000"
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-              />
-              <button
-                onClick={savePhoneAndPay}
-                disabled={savingPhone}
-                className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
-              >
-                {savingPhone ? "처리 중..." : `${won(phoneModal.price)} 결제하기`}
-              </button>
-            </div>
-          </div>
-        )}
+            );
+          })}
+        </div>
+
+        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+          결제하기를 누르면 안전한 결제창으로 이동합니다. 수강권은 결제 완료 시 기간이 자동 반영됩니다.
+        </p>
+        {phoneModalJsx}
       </div>
     );
   }
@@ -255,18 +333,15 @@ const MembershipProducts = () => {
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CreditCard className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground">수강권 상품 관리</h3>
+          <h3 className="text-sm font-bold text-foreground">수강권·상품 관리</h3>
         </div>
-        <button
-          onClick={() => openEdit("new")}
-          className="flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-bold text-primary-foreground active:scale-95"
-        >
+        <button onClick={() => openEdit("new")} className="flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-bold text-primary-foreground active:scale-95">
           <Plus className="h-3.5 w-3.5" /> 추가
         </button>
       </div>
 
       {products.length === 0 ? (
-        <p className="py-4 text-center text-xs text-muted-foreground">등록된 상품이 없습니다. '추가'로 수강권 상품을 만들어주세요.</p>
+        <p className="py-4 text-center text-xs text-muted-foreground">등록된 상품이 없습니다. '추가'로 상품을 만들어주세요.</p>
       ) : (
         <div className="space-y-2">
           {products.map((p) => (
@@ -277,7 +352,10 @@ const MembershipProducts = () => {
                   {!p.is_active && <span className="ml-1.5 text-[10px] font-bold text-muted-foreground">(비활성)</span>}
                 </p>
                 <p className="text-[11px] text-muted-foreground">
-                  {p.duration_days}일 · {won(p.price)} · {p.branch_name ? p.branch_name : "전 지점 공통"}
+                  {CAT_LABEL[p.category] || p.category}
+                  {p.pass_type ? ` ${p.pass_type}` : ""} · {won(p.price)}
+                  {p.normal_price ? ` (정상 ${won(p.normal_price)})` : ""}
+                  {p.duration_days > 0 ? ` · ${p.duration_days}일` : ""}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
@@ -309,46 +387,23 @@ const MembershipProducts = () => {
             <div className="space-y-2.5">
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">상품명</label>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
-                  placeholder="예: 1개월 자유수강"
-                />
+                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground" placeholder="예: 주5회 기간권 1개월" />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">금액(원)</label>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={form.price}
-                    onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
-                    placeholder="120000"
-                  />
+                  <input type="number" inputMode="numeric" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground" placeholder="220000" />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">기간(일)</label>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={form.duration_days}
-                    onChange={(e) => setForm({ ...form, duration_days: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
-                    placeholder="30"
-                  />
+                  <input type="number" inputMode="numeric" value={form.duration_days} onChange={(e) => setForm({ ...form, duration_days: e.target.value })} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground" placeholder="30" />
                 </div>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                결제 완료 시 회원 수강권 만료일이 기간(일)만큼 자동 연장됩니다. {isAdmin ? "(전 지점 공통 상품으로 등록)" : "(본인 지점 상품으로 등록)"}
+                기간(일)이 있으면 결제 시 수강권 만료일이 그만큼 연장됩니다(용품·PT는 0). 카테고리·정상가는 문의 시 일괄 설정해 드립니다.
               </p>
             </div>
-            <button
-              onClick={save}
-              disabled={saving}
-              className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
-            >
+            <button onClick={save} disabled={saving} className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
               {saving ? "저장 중..." : "저장"}
             </button>
           </div>
