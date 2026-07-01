@@ -182,9 +182,16 @@ const MembershipPage = () => {
         <h1 className="text-xl text-foreground">수강권</h1>
       </div>
 
-      {hasMembership ? (
-        <div className="space-y-4">
+      <div className="space-y-4">
+        {hasMembership ? (
           <MembershipCard />
+        ) : (
+          <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+            <span className="text-3xl">🎫</span>
+            <p className="mt-2 text-sm font-medium text-foreground">아직 등록된 수강권이 없습니다</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">아래에서 수강권을 결제하면 바로 이용이 시작됩니다.</p>
+          </div>
+        )}
 
           {/* 수강권 결제 — 회원: 상품 결제하기 / 관장·마스터: 상품 관리 */}
           <MembershipProducts />
@@ -266,17 +273,7 @@ const MembershipPage = () => {
               )}
             </>
           )}
-
         </div>
-      ) : (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <span className="text-3xl">🎫</span>
-          <p className="mt-2 text-sm font-medium text-foreground">등록된 수강권이 없습니다</p>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            관장님께 문의하시거나, 구글·카카오로 가입하셨다면 전화번호 연동을 진행해주세요.
-          </p>
-        </div>
-      )}
 
       {/* 신청 모달 */}
       {modal && (
