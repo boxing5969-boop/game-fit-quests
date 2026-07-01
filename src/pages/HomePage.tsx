@@ -324,7 +324,7 @@ const HomePage = () => {
         />
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* ─── Master-40 celebration (조건부 — 항상 상단 고정) ─── */}
         {isMaster40 && (
           <NotificationBanner
@@ -423,10 +423,10 @@ const HomePage = () => {
               homeWidgets.rankingPreview ? (
                 <section>
                   <div className="mb-2 flex items-center justify-between">
-                    <h2 className="text-base font-black">이번 주 내 순위</h2>
+                    <h2 className="text-[17px] font-black">이번 주 내 순위</h2>
                     <button
                       onClick={() => navigate("/halloffame")}
-                      className="text-[11px] font-medium text-primary active:scale-95"
+                      className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary active:scale-95"
                     >
                       전체 →
                     </button>
@@ -547,7 +547,7 @@ const HomePage = () => {
           {homeWidgets.weeklyProgress && (
             <section className="surface-card">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-base font-black">이번 주 진행도</h2>
+                <h2 className="text-[17px] font-black">이번 주 진행도</h2>
                 <span className="text-[11px] text-muted-foreground">
                   {weeklyEncouragement}
                 </span>
