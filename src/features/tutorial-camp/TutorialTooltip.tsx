@@ -41,6 +41,7 @@ export interface TutorialTooltipProps {
   onNext: () => void;
   onPrev?: () => void;
   onSkipDay: () => void;
+  onSkipCamp: () => void;
   onPause: () => void;
   onGoToRoute: () => void;
   onMarkClicked: () => void;
@@ -107,6 +108,7 @@ const TutorialTooltip = ({
   onNext,
   onPrev,
   onSkipDay,
+  onSkipCamp,
   onPause,
   onGoToRoute,
   onMarkClicked,
@@ -222,6 +224,16 @@ const TutorialTooltip = ({
               <ChevronRight className="h-3 w-3" />
             </motion.button>
           )}
+          {/* 7일 캠프 그만두기 — 항상 보이는 종료(X) 버튼. 확인창은 Provider가 처리. */}
+          <button
+            type="button"
+            onClick={onSkipCamp}
+            aria-label={COMMON_LABELS.endCamp}
+            title={COMMON_LABELS.endCamp}
+            className="pointer-events-auto ml-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-amber-200/55 hover:bg-white/10 hover:text-amber-100 active:scale-90"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       </motion.div>
     );
@@ -348,6 +360,14 @@ const TutorialTooltip = ({
             {COMMON_LABELS.pause}
           </button>
         </div>
+        {/* 7일 캠프 전체 그만두기 — 다시 안 뜸(확인창 후) */}
+        <button
+          type="button"
+          onClick={onSkipCamp}
+          className="mt-2 w-full text-center text-[10px] text-amber-200/40 hover:text-amber-200/70"
+        >
+          {COMMON_LABELS.endCamp}
+        </button>
       </div>
 
       {/* Hidden — onMarkClicked 는 외부 target click listener 가 호출 */}

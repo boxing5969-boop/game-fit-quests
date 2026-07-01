@@ -239,6 +239,32 @@ export function skipTutorialCampDay(day: number): TutorialCampState {
 }
 
 /**
+ * 7일 캠프 전체 건너뛰기(종료).
+ *   · status="skipped" 터미널 상태 — 자동 재개(paused→active)·자동 시작(not_started→active)
+ *     어디에도 걸리지 않아 다시 뜨지 않는다.
+ *   · skippedAt 기록 + skipped 이벤트(metadata.scope="all") append.
+ *   · 다시 하려면 설정에서 start()/reset() 사용.
+ */
+export function skipEntireTutorialCamp(): TutorialCampState {
+  const cur = getTutorialCampState();
+  const ts = nowISO();
+  const next: TutorialCampState = {
+    ...cur,
+    status: "skipped",
+    skippedAt: ts,
+    lastSeenAt: ts,
+  };
+  saveTutorialCampState(next);
+  appendTutorialCampEvent({
+    eventType: "skipped",
+    day: cur.currentDay,
+    step: cur.currentStep,
+    metadata: { scope: "all" },
+  });
+  return next;
+}
+
+/**
  * 캠프 일시 정지. status="paused".
  * 이후 startTutorialCamp() 호출 시 resumed 이벤트 발생.
  */

@@ -17,6 +17,7 @@ import {
   advanceTutorialCampStep,
   completeTutorialCampDay,
   skipTutorialCampDay,
+  skipEntireTutorialCamp,
   pauseTutorialCamp,
   resetTutorialCamp,
 } from "./tutorialCampUtils";
@@ -46,6 +47,8 @@ export interface UseTutorialCampReturn {
   next: () => void;
   /** day 단위 스킵. 미지정 시 현재 day */
   skipDay: (day?: number) => void;
+  /** 7일 캠프 전체 건너뛰기(종료) — status="skipped", 다시 안 뜸 */
+  skipCamp: () => void;
   /** day 단위 완료. 미지정 시 현재 day. day=7 이면 캠프 자동 완료 */
   completeDay: (day?: number) => void;
   /** 캠프 진행 / 이벤트 / dev preview 전체 초기화 */
@@ -97,6 +100,10 @@ export function useTutorialCamp(): UseTutorialCampReturn {
     const fresh = getTutorialCampState();
     const target = typeof day === "number" ? day : fresh.currentDay;
     setState(skipTutorialCampDay(target));
+  }, []);
+
+  const skipCamp = useCallback(() => {
+    setState(skipEntireTutorialCamp());
   }, []);
 
   const completeDay = useCallback((day?: number) => {
@@ -159,6 +166,7 @@ export function useTutorialCamp(): UseTutorialCampReturn {
     start,
     next,
     skipDay,
+    skipCamp,
     completeDay,
     reset,
     pause,

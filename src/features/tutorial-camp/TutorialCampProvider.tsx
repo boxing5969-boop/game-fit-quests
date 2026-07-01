@@ -692,6 +692,17 @@ const TutorialCampProvider = () => {
     camp.skipDay(step.day);
   }, [step, camp]);
 
+  // 7일 캠프 전체 건너뛰기(종료) — 실수 방지 확인창 후 skipCamp. status="skipped" 로 다시 안 뜸.
+  const handleSkipCamp = useCallback(() => {
+    if (typeof window !== "undefined") {
+      const ok = window.confirm(
+        "7일 스타터 캠프 안내를 그만둘까요?\n지금부터 이 안내가 더 이상 표시되지 않아요.",
+      );
+      if (!ok) return;
+    }
+    camp.skipCamp();
+  }, [camp]);
+
   const handlePause = useCallback(() => {
     camp.pause();
   }, [camp]);
@@ -864,6 +875,7 @@ const TutorialCampProvider = () => {
       onNext={handleNext}
       onPrev={handlePrev}
       onSkipDay={handleSkipDay}
+      onSkipCamp={handleSkipCamp}
       onPause={handlePause}
       onGoToRoute={handleGoToRoute}
       onMarkClicked={() => setTargetClicked(true)}

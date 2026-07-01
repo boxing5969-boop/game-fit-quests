@@ -25,6 +25,7 @@ export interface TutorialOverlayProps {
   onNext: () => void;
   onPrev?: () => void;
   onSkipDay: () => void;
+  onSkipCamp: () => void;
   onPause: () => void;
   onGoToRoute: () => void;
   onMarkClicked: () => void;
@@ -49,6 +50,7 @@ const TutorialOverlay = ({
   onNext,
   onPrev,
   onSkipDay,
+  onSkipCamp,
   onPause,
   onGoToRoute,
   onMarkClicked,
@@ -158,6 +160,7 @@ const TutorialOverlay = ({
           onNext={onNext}
           onPrev={onPrev}
           onSkipDay={onSkipDay}
+          onSkipCamp={onSkipCamp}
           onPause={onPause}
           onGoToRoute={onGoToRoute}
           onMarkClicked={onMarkClicked}

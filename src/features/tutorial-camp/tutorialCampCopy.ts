@@ -76,6 +76,7 @@ export const COMMON_LABELS = {
   finishDay: "오늘 캠프 마치기",
   finishCamp: "7일 캠프 마치기",
   goToTarget: "여기로 이동",
+  endCamp: "튜토리얼 그만두기",
 } as const;
 
 /** 폴백 — step.fallbackText 가 비었을 때 사용하는 일반 문구 */
