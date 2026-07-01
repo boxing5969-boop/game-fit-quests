@@ -227,6 +227,8 @@
   body {
     @apply bg-background text-foreground font-sans;
     margin: 0;
+    /* iOS 노치·상태바(안전영역) 만큼 상단 여백 — 콘텐츠가 상태바와 겹치지 않게. */
+    padding-top: env(safe-area-inset-top);
     font-weight: 400;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
@@ -329,6 +331,9 @@
   }
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
   }
   .animate-bounce-in {
     animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
