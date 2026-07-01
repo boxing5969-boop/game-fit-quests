@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PromoBanner from "@/components/PromoBanner";
 
 interface Product {
   id: string;
@@ -239,17 +240,17 @@ const MembershipProducts = () => {
     return (
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="mb-3 flex items-center gap-2">
-          <CreditCard className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground">수강권·부가상품 결제</h3>
+          <CreditCard className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-bold text-foreground">패스 선택</h3>
         </div>
 
         {/* 카테고리 탭 */}
-        <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
+        <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
           {activeCats.map((c) => (
             <button
               key={c.key}
               onClick={() => setActiveCatKey(c.key)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-all active:scale-95 ${
                 cat?.key === c.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
               }`}
             >
@@ -258,40 +259,59 @@ const MembershipProducts = () => {
           ))}
         </div>
 
+        {/* 이용 안내 (수강권 탭) */}
         {isMembership && (
-          <p className="mb-2 px-0.5 text-[11px] text-muted-foreground">이용시간 매일 00:00–23:59 · 153복싱짐 선릉역점 · 길게 등록할수록 하루 단가가 저렴해요</p>
+          <div className="mb-3 rounded-2xl bg-muted/40 px-4 py-2">
+            <div className="flex items-center justify-between py-1.5 text-sm">
+              <span className="text-muted-foreground">이용 시간</span>
+              <span className="font-semibold text-foreground">매일 00:00 – 23:59</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-border/60 py-1.5 text-sm">
+              <span className="text-muted-foreground">이용 지점</span>
+              <span className="font-semibold text-foreground">153복싱짐 선릉역점</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-border/60 py-1.5 text-sm">
+              <span className="text-muted-foreground">패스 종류</span>
+              <span className="font-semibold text-foreground">{cat?.key === "m5" ? "주5회 기간권" : "주3회 기간권"}</span>
+            </div>
+          </div>
         )}
 
-        <div className="space-y-2">
+        {/* 공지·이벤트 배너 */}
+        <div className="mb-3">
+          <PromoBanner />
+        </div>
+
+        {isMembership && <p className="mb-2 px-0.5 text-base font-bold text-foreground">이용 기간</p>}
+
+        <div className="space-y-2.5">
           {list.map((p) => {
             const months = Math.max(1, Math.round(p.duration_days / 30));
             const perDay = p.duration_days > 0 ? Math.round(p.price / p.duration_days) : 0;
             const off = p.normal_price && p.normal_price > p.price ? Math.round((1 - p.price / p.normal_price) * 100) : 0;
             if (isMembership) {
               return (
-                <div key={p.id} className="rounded-xl border border-border bg-background p-3">
-                  <div className="flex items-start justify-between gap-3">
+                <div key={p.id} className="rounded-2xl border border-border bg-background p-4">
+                  <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-foreground">{months}개월</span>
-                        {off > 0 && <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">{off}% OFF</span>}
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-lg font-black text-foreground">{months}개월</span>
+                        {off > 0 && <span className="text-sm font-bold text-[#f97316]">{off}% OFF</span>}
                       </div>
-                      <p className="mt-1 text-xs">
-                        {p.normal_price ? <span className="text-muted-foreground line-through">{won(p.normal_price)}</span> : null}
-                        <span className="ml-1 font-bold text-foreground">{won(p.price)}</span>
+                      <p className="mt-1">
+                        {p.normal_price ? <span className="text-sm text-muted-foreground line-through">{won(p.normal_price)}</span> : null}
+                        <span className="ml-1.5 text-base font-bold text-foreground">{won(p.price)}</span>
                       </p>
                     </div>
-                    <div className="shrink-0 text-right">
-                      <p className="text-lg font-black leading-none text-primary">
-                        {perDay.toLocaleString("ko-KR")}
-                        <span className="ml-0.5 text-[11px] font-bold text-muted-foreground">원/일</span>
-                      </p>
+                    <div className="shrink-0 whitespace-nowrap text-right leading-none">
+                      <span className="text-[28px] font-black text-foreground">{perDay.toLocaleString("ko-KR")}</span>
+                      <span className="ml-0.5 text-sm font-bold text-muted-foreground">원/일</span>
                     </div>
                   </div>
                   <button
                     onClick={() => pay(p)}
                     disabled={paying === p.id}
-                    className="mt-2.5 w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+                    className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
                   >
                     {paying === p.id ? "이동 중..." : "결제하기"}
                   </button>
@@ -299,18 +319,18 @@ const MembershipProducts = () => {
               );
             }
             return (
-              <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background px-3 py-2.5">
+              <div key={p.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background px-4 py-3.5">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">{p.name}</p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="truncate text-base font-bold text-foreground">{p.name}</p>
+                  <p className="mt-0.5 text-sm font-semibold text-foreground">
                     {won(p.price)}
-                    {p.duration_days > 0 ? ` · ${p.duration_days}일` : ""}
+                    {p.duration_days > 0 ? <span className="font-normal text-muted-foreground"> · {p.duration_days}일</span> : null}
                   </p>
                 </div>
                 <button
                   onClick={() => pay(p)}
                   disabled={paying === p.id}
-                  className="shrink-0 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
+                  className="shrink-0 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
                 >
                   {paying === p.id ? "이동 중..." : "결제하기"}
                 </button>
@@ -319,7 +339,7 @@ const MembershipProducts = () => {
           })}
         </div>
 
-        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
           결제하기를 누르면 안전한 결제창으로 이동합니다. 수강권은 결제 완료 시 기간이 자동 반영됩니다.
         </p>
         {phoneModalJsx}
