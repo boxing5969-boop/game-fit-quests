@@ -28,19 +28,19 @@
      · .light-surface 는 별도 강제 라이트 페이지용으로 그대로 보존 */
   :root {
     /* ─── LIGHT MODE (default — no .dark class on html) ─── */
-    --background: 220 20% 97%;          /* #F5F7FA */
-    --foreground: 224 25% 12%;          /* #171C26 */
-    --card: 0 0% 100%;                  /* #FFFFFF */
-    --card-foreground: 224 25% 12%;
+    --background: 216 15% 96%;          /* Toss #F2F4F6 — 연회색 배경 */
+    --foreground: 218 24% 13%;          /* Toss #191F28 — 또렷한 검정 텍스트 */
+    --card: 0 0% 100%;                  /* #FFFFFF 순백 카드 */
+    --card-foreground: 218 24% 13%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 25% 12%;
+    --popover-foreground: 218 24% 13%;
 
     --primary: 165 70% 52%;             /* #29C39C mint — 두 모드 공통 브랜드 */
     --primary-foreground: 220 34% 7%;
-    --secondary: 222 20% 95%;           /* #EFF1F5 */
-    --secondary-foreground: 224 22% 18%;
-    --muted: 222 20% 95%;
-    --muted-foreground: 221 10% 46%;    /* #687080 */
+    --secondary: 214 16% 95%;           /* Toss 연회색 fill #F1F3F5 */
+    --secondary-foreground: 216 16% 24%;/* #333D4B */
+    --muted: 214 16% 95%;
+    --muted-foreground: 213 11% 47%;    /* Toss #6B7684 — 보조 텍스트 */
     --accent: 165 70% 52%;
     --accent-foreground: 220 34% 7%;
     --reward: 42 90% 64%;               /* gold */
@@ -48,8 +48,8 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 218 16% 87%;              /* 카드 경계 또렷하게(라이트) */
-    --input: 218 16% 87%;
+    --border: 214 15% 91%;              /* Toss #E5E8EB — 은은한 경계 */
+    --input: 214 15% 91%;
     --ring: 165 70% 52%;
     --radius: 1rem;
 
@@ -72,19 +72,18 @@
     --surface-1: 220 15% 94%;           /* slightly grayer than bg (depressed) */
     --surface-2: 0 0% 100%;             /* white (elevated, = card) */
 
-    /* Shadows — light mode (softer) */
-    --shadow-elev-1: 0px 6px 18px rgba(17, 24, 39, 0.06);
-    --shadow-elev-2: 0px 10px 24px rgba(17, 24, 39, 0.08);
-    --shadow-elev-3: 0px 20px 40px rgba(17, 24, 39, 0.12);
-    /* 라이트 모드: 색 번짐(glow bloom) 대신 중립 방향 그림자 — 흰 배경에서 깔끔하게.
-       (다크 모드의 네온 글로우는 .dark 블록에서 그대로 유지) */
-    --shadow-glow-primary: 0px 8px 20px rgba(17, 24, 39, 0.10);
-    --shadow-glow-reward: 0px 8px 20px rgba(17, 24, 39, 0.10);
-    --shadow-glow-gold: 0px 8px 20px rgba(17, 24, 39, 0.10);
-    --shadow-glow-blue: 0px 8px 20px rgba(17, 24, 39, 0.10);
-    --shadow-glow-soft: 0px 4px 14px rgba(17, 24, 39, 0.06);
-    --glow-primary: 0px 8px 20px rgba(17, 24, 39, 0.10);
-    --glow-gold: 0px 8px 20px rgba(17, 24, 39, 0.10);
+    /* Shadows — 토스식 라이트: 그림자 최소화, 배경(연회색)↔카드(흰색) 대비로 분리 */
+    --shadow-elev-1: 0px 1px 3px rgba(23, 31, 40, 0.04);
+    --shadow-elev-2: 0px 4px 12px rgba(23, 31, 40, 0.06);
+    --shadow-elev-3: 0px 12px 28px rgba(23, 31, 40, 0.10);
+    /* 라이트 모드: 글로우 대신 거의 평평한 미세 그림자(색 번짐 0). 다크 네온은 .dark 유지 */
+    --shadow-glow-primary: 0px 2px 8px rgba(23, 31, 40, 0.05);
+    --shadow-glow-reward: 0px 2px 8px rgba(23, 31, 40, 0.05);
+    --shadow-glow-gold: 0px 2px 8px rgba(23, 31, 40, 0.05);
+    --shadow-glow-blue: 0px 2px 8px rgba(23, 31, 40, 0.05);
+    --shadow-glow-soft: 0px 1px 4px rgba(23, 31, 40, 0.04);
+    --glow-primary: 0px 2px 8px rgba(23, 31, 40, 0.05);
+    --glow-gold: 0px 2px 8px rgba(23, 31, 40, 0.05);
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 224 22% 18%;
