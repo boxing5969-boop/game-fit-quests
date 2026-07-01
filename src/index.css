@@ -337,6 +337,11 @@
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
   }
+  /* 모바일 가독성 — 9~10px 초소형 글씨를 전 화면에서 최소 11px로 상향(고객경험 최적화) */
+  .text-\[9px\],
+  .text-\[10px\] {
+    font-size: 11px !important;
+  }
   .animate-bounce-in {
     animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
