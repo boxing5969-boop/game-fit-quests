@@ -229,12 +229,15 @@ const MembershipProducts = () => {
     </div>
   ) : null;
 
-  // ── 회원 화면 ──
-  if (!isStaff) {
-    if (products.length === 0) return null;
-    const activeCats = CATS.filter((c) => products.some((p) => c.match(p)));
+  // ── 회원 화면(가격표·결제) — 회원/관장/마스터 모두 동일하게 노출 ──
+  //    스태프는 아래에서 관리 패널을 함께 보되, 이 미리보기는 회원이 실제로
+  //    보는 것과 동일하도록 활성 상품만(비활성 제외) 기준으로 렌더한다.
+  const memberBase = isStaff ? products.filter((p) => p.is_active) : products;
+  const memberView = (() => {
+    if (memberBase.length === 0) return null;
+    const activeCats = CATS.filter((c) => memberBase.some((p) => c.match(p)));
     const cat = activeCats.find((c) => c.key === activeCatKey) ?? activeCats[0];
-    const list = cat ? products.filter(cat.match) : [];
+    const list = cat ? memberBase.filter(cat.match) : [];
     const isMembership = cat?.key === "m5" || cat?.key === "m3";
 
     return (
@@ -345,11 +348,16 @@ const MembershipProducts = () => {
         {phoneModalJsx}
       </div>
     );
-  }
+  })();
 
-  // ── 관장·마스터 상품 관리 화면 ──
+  // 회원: 가격표·결제 화면만
+  if (!isStaff) return memberView;
+
+  // ── 관장·마스터: 회원과 동일한 가격표·결제 + 아래에 상품 관리 패널 ──
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
+    <div className="space-y-3">
+      {memberView}
+      <div className="rounded-2xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CreditCard className="h-4 w-4 text-primary" />
@@ -429,6 +437,7 @@ const MembershipProducts = () => {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 };
