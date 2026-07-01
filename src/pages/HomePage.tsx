@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, lazy, Suspense, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Banknote, Trophy, Settings } from "lucide-react";
+import { User, Ticket, Trophy, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -304,12 +304,12 @@ const HomePage = () => {
           rightAction={
             <>
               <button
-                onClick={() => navigate("/character-studio")}
-                className="badge-pill bg-reward/15 text-reward active:scale-95"
-                aria-label="파이트 머니 — 캐릭터 스튜디오로 이동"
+                onClick={() => navigate("/membership-plans")}
+                className="badge-pill bg-primary/15 text-primary active:scale-95"
+                aria-label="153멤버십"
               >
-                <Banknote className="h-3.5 w-3.5" />
-                <span className="number-font">{gemsDisplay}</span>
+                <Ticket className="h-3.5 w-3.5" />
+                <span>멤버십</span>
               </button>
               <button
                 onClick={() => navigate("/mypage")}

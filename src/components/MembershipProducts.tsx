@@ -1,5 +1,5 @@
 // 수강권/부가상품 결제 — 회원: 탭(주5회·주3회·PT·용품·렌탈·1일권) + 상품 선택 후 결제 / 관장·마스터: 상품 관리.
-// 수강권 탭은 정상가·할인율·원/일(하루 단가)을 노출하는 패스 선택형 카드.
+// 수강권 탭은 정상가·할인율·원/일(하루 단가)을 노출하는 153멤버십 선택형 카드.
 // 결제는 payssam-create-bill 엣지함수가 결제선생 청구서를 만들고 결제 URL(shortUrl)을 반환 → 그 URL 로 이동.
 import { useState, useEffect, useCallback } from "react";
 import { CreditCard, Plus, Pencil, Trash2, X } from "lucide-react";
@@ -241,7 +241,7 @@ const MembershipProducts = () => {
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="mb-3 flex items-center gap-2">
           <CreditCard className="h-5 w-5 text-primary" />
-          <h3 className="text-base font-bold text-foreground">패스 선택</h3>
+          <h3 className="text-base font-bold text-foreground">153멤버십</h3>
         </div>
 
         {/* 카테고리 탭 */}
@@ -271,7 +271,7 @@ const MembershipProducts = () => {
               <span className="font-semibold text-foreground">153복싱짐 선릉역점</span>
             </div>
             <div className="flex items-center justify-between border-t border-border/60 py-1.5 text-sm">
-              <span className="text-muted-foreground">패스 종류</span>
+              <span className="text-muted-foreground">멤버십 종류</span>
               <span className="font-semibold text-foreground">{cat?.key === "m5" ? "주5회 기간권" : "주3회 기간권"}</span>
             </div>
           </div>
