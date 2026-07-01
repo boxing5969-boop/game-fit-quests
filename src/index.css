@@ -48,8 +48,8 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 218 17% 91%;              /* #E1E5EC */
-    --input: 218 17% 91%;
+    --border: 218 16% 87%;              /* 카드 경계 또렷하게(라이트) */
+    --input: 218 16% 87%;
     --ring: 165 70% 52%;
     --radius: 1rem;
 
@@ -76,13 +76,15 @@
     --shadow-elev-1: 0px 6px 18px rgba(17, 24, 39, 0.06);
     --shadow-elev-2: 0px 10px 24px rgba(17, 24, 39, 0.08);
     --shadow-elev-3: 0px 20px 40px rgba(17, 24, 39, 0.12);
-    --shadow-glow-primary: 0px 0px 24px rgba(41, 195, 156, 0.30);
-    --shadow-glow-reward: 0px 0px 28px rgba(246, 196, 83, 0.32);
-    --shadow-glow-gold: 0px 0px 28px rgba(246, 196, 83, 0.32);
-    --shadow-glow-blue: 0px 0px 24px rgba(47, 140, 255, 0.24);
-    --shadow-glow-soft: 0px 0px 20px rgba(41, 195, 156, 0.18);
-    --glow-primary: 0px 0px 24px rgba(41, 195, 156, 0.30);
-    --glow-gold: 0px 0px 28px rgba(246, 196, 83, 0.32);
+    /* 라이트 모드: 색 번짐(glow bloom) 대신 중립 방향 그림자 — 흰 배경에서 깔끔하게.
+       (다크 모드의 네온 글로우는 .dark 블록에서 그대로 유지) */
+    --shadow-glow-primary: 0px 8px 20px rgba(17, 24, 39, 0.10);
+    --shadow-glow-reward: 0px 8px 20px rgba(17, 24, 39, 0.10);
+    --shadow-glow-gold: 0px 8px 20px rgba(17, 24, 39, 0.10);
+    --shadow-glow-blue: 0px 8px 20px rgba(17, 24, 39, 0.10);
+    --shadow-glow-soft: 0px 4px 14px rgba(17, 24, 39, 0.06);
+    --glow-primary: 0px 8px 20px rgba(17, 24, 39, 0.10);
+    --glow-gold: 0px 8px 20px rgba(17, 24, 39, 0.10);
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 224 22% 18%;
