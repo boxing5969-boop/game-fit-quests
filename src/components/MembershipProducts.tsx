@@ -8,6 +8,7 @@ import { isManagerRole } from "@/lib/rankLabels";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import PromoBanner from "@/components/PromoBanner";
+import PayssamInspectPanel from "@/components/PayssamInspectPanel";
 
 interface Product {
   id: string;
@@ -356,6 +357,7 @@ const MembershipProducts = () => {
   // ── 관장·마스터: 회원과 동일한 가격표·결제 + 아래에 상품 관리 패널 ──
   return (
     <div className="space-y-3">
+      {isAdmin && <PayssamInspectPanel />}
       {memberView}
       <div className="rounded-2xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center justify-between">

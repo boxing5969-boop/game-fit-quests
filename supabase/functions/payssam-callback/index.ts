@@ -13,6 +13,16 @@ const cors = {
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const DAY = 86400000;
+// 페이민트 승인동기화 정상 수신 응답 — 문서 규격 그대로 반환해야 검수가 완료된다.
+const OK = { code: "0000", msg: "성공하였습니다." };
+// 페이민트 콜백은 snake_case(appr_state 등), OpenAPI 스키마는 camelCase — 양쪽 모두 수용.
+const pick = (o: Record<string, unknown>, ...keys: string[]): string => {
+  for (const k of keys) {
+    const v = o?.[k];
+    if (v !== undefined && v !== null && String(v) !== "") return String(v);
+  }
+  return "";
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -22,11 +32,11 @@ Deno.serve(async (req) => {
     const PAYSSAM_API_KEY = Deno.env.get("PAYSSAM_API_KEY") || "";
     const admin = createClient(SUPABASE_URL, SERVICE, { auth: { persistSession: false, autoRefreshToken: false } });
 
-    const body = await req.json().catch(() => ({}));
-    const billId = String(body?.billId || "");
-    const apiKey = String(body?.apiKey || "");
-    const apprState = String(body?.apprState || "");
-    const apprPrice = String(body?.apprPrice || "");
+    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    const billId = pick(body, "billId", "bill_id");
+    const apiKey = pick(body, "apiKey", "apikey", "api_key");
+    const apprState = pick(body, "apprState", "appr_state");
+    const apprPrice = pick(body, "apprPrice", "appr_price");
 
     // 1차 인증: payload apiKey 검증
     if (PAYSSAM_API_KEY && apiKey && apiKey !== PAYSSAM_API_KEY) {
@@ -35,13 +45,13 @@ Deno.serve(async (req) => {
     if (!billId) return json({ code: "9999", message: "no billId" }, 400);
 
     const { data: order } = await admin.from("payment_orders").select("*").eq("bill_id", billId).maybeSingle();
-    if (!order) return json({ code: "0000" }); // 모르는 청구서는 멱등 무시
+    if (!order) return json(OK); // 모르는 청구서(검수 테스트 등)는 멱등 무시 — 그래도 0000 정상응답
 
     if (apprState === "F") {
       // 금액 검증
       if (apprPrice && Number(apprPrice) !== Number(order.amount)) {
         await admin.from("payment_orders").update({ status: "failed", raw: body }).eq("id", order.id);
-        return json({ code: "0000" });
+        return json(OK);
       }
       if (order.status !== "paid") {
         await admin
@@ -49,8 +59,8 @@ Deno.serve(async (req) => {
           .update({
             status: "paid",
             paid_at: new Date().toISOString(),
-            appr_num: String(body?.apprNum || ""),
-            appr_card: String(body?.apprIssuer || body?.apprCardType || ""),
+            appr_num: pick(body, "apprNum", "appr_num"),
+            appr_card: pick(body, "apprIssuer", "appr_issuer", "apprCardType", "appr_card_type", "apprPayType", "appr_pay_type"),
             raw: body,
           })
           .eq("id", order.id);
@@ -111,7 +121,7 @@ Deno.serve(async (req) => {
       await admin.from("payment_orders").update({ status: "canceled", raw: body }).eq("id", order.id);
     }
 
-    return json({ code: "0000" });
+    return json(OK);
   } catch (e) {
     console.error("payssam-callback error:", e);
     return json({ code: "9999" }, 500);
