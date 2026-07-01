@@ -680,3 +680,48 @@
   }
 }
 
+/* ══════════════════════════════════════════════════════════════
+ * 토스식 라이트 모드 모션 (2026-07)
+ * 라이트 테마(html:not(.dark))에서만 적용 — 다크(게임) 모션은 100% 보존.
+ * 원칙: 오버슈트(튕김) 제거 · 색번짐 글로우 펄스 제거 · 강한 감속 이징으로
+ * 토스 앱 특유의 "잔잔하고 매끄러운" 전환.  진입 유틸(animate-*)이 앱 전반
+ * 70여 파일에 쓰여, 여기서만 치환하면 라이트 전체 모션이 토스식이 된다.
+ * ══════════════════════════════════════════════════════════════ */
+:root {
+  --ease-toss: cubic-bezier(0.22, 1, 0.36, 1);     /* 진입 — 강한 감속(오버슈트 X) */
+  --ease-toss-soft: cubic-bezier(0.33, 0, 0.2, 1); /* 일반 전환 */
+  --dur-fast: 150ms;
+  --dur-base: 240ms;
+  --dur-slow: 380ms;
+}
+
+/* 토스식 진입 keyframes — 페이드 + 미세 이동, 튕김 없음 */
+@keyframes toss-slide-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toss-scale-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+@keyframes toss-pop      { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* 진입 유틸을 라이트에서 토스식으로 치환 — bounce 오버슈트 → 매끄러운 감속 */
+  html:not(.dark) .animate-bounce-in { animation: toss-pop var(--dur-base) var(--ease-toss) both; }
+  html:not(.dark) .animate-slide-up  { animation: toss-slide-up var(--dur-slow) var(--ease-toss) both; }
+  html:not(.dark) .animate-fade-in   { animation: fade-in var(--dur-base) var(--ease-toss-soft) both; }
+  html:not(.dark) .animate-scale-in  { animation: toss-scale-in var(--dur-base) var(--ease-toss) both; }
+
+  /* 버튼 전환·프레스 — 토스 이징으로 매끄럽게(색 전환 대신 transform/shadow만) */
+  html:not(.dark) .primary-button,
+  html:not(.dark) .secondary-button,
+  html:not(.dark) .reward-button {
+    transition:
+      transform var(--dur-fast) var(--ease-toss-soft),
+      box-shadow var(--dur-base) var(--ease-toss-soft),
+      background-color var(--dur-fast) var(--ease-toss-soft);
+  }
+
+  /* XP 바 채움 — 토스식 부드러운 감속(기존 duration-500 대체) */
+  html:not(.dark) .xp-bar > .xp-bar-fill { transition: width var(--dur-slow) var(--ease-toss); }
+}
+
+/* 라이트: 색번짐 네온 펄스 무력화 — 색 호흡 제거, 잔잔한 그림자만.
+   (다크 모드의 게임 펄스·오라·이모트 모션은 위 :not(.dark) 밖이라 그대로 유지) */
+html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: var(--shadow-glow-soft); }
+
