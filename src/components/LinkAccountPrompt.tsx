@@ -97,7 +97,13 @@ const LinkAccountPrompt = () => {
         >
           신규 회원이에요 · 가입 신청하기
         </button>
-        <p className="mt-3 text-center text-[11px] text-muted-foreground">153복싱짐 등록 회원만 앱을 이용할 수 있어요.</p>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          className="mt-3 w-full text-center text-[11px] text-muted-foreground underline"
+        >
+          나중에 할게요 · 수강권 결제 시 번호를 입력하면 자동 등록돼요
+        </button>
       </div>
     </div>
   );

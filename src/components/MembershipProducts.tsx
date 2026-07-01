@@ -18,19 +18,29 @@ interface Product {
 }
 
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
+const formatPhone = (v: string) => {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length < 4) return d;
+  if (d.length < 8) return `${d.slice(0, 3)}-${d.slice(3)}`;
+  return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+};
 const blankForm = { name: "", price: "", duration_days: "30" };
 
 const MembershipProducts = () => {
-  const { profile, role } = useAuth();
+  const { profile, role, refreshProfile, user } = useAuth();
   const isStaff = isManagerRole(role);
   const isAdmin = role === "admin" || role === "super_admin";
   const branch = profile?.branch_name ?? null;
+  const memberPhone = ((profile as { phone_number?: string } | null)?.phone_number || "").replace(/\D/g, "");
 
   const [products, setProducts] = useState<Product[]>([]);
   const [paying, setPaying] = useState<string | null>(null);
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [form, setForm] = useState(blankForm);
   const [saving, setSaving] = useState(false);
+  const [phoneModal, setPhoneModal] = useState<Product | null>(null);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [savingPhone, setSavingPhone] = useState(false);
 
   const load = useCallback(async () => {
     const { data } = await (supabase as any)
@@ -48,7 +58,17 @@ const MembershipProducts = () => {
   }, [load]);
 
   // ── 회원 결제 ──
-  const pay = async (p: Product) => {
+  // 전화번호가 있으면 바로 결제, 없으면(카톡/구글 가입자) 번호 입력 모달을 먼저 띄운다.
+  const pay = (p: Product) => {
+    if (memberPhone.length < 10) {
+      setPhoneInput("");
+      setPhoneModal(p);
+      return;
+    }
+    runBill(p);
+  };
+
+  const runBill = async (p: Product) => {
     setPaying(p.id);
     try {
       const { data, error } = await supabase.functions.invoke("payssam-create-bill", { body: { product_id: p.id } });
@@ -66,6 +86,42 @@ const MembershipProducts = () => {
       toast.error("결제 요청 실패: " + ((e as Error)?.message || ""));
     } finally {
       setPaying(null);
+    }
+  };
+
+  // 카톡/구글 가입자: 번호 입력 → 선릉역점 회원 등록(번호·지점·등록일) 후 결제 진행.
+  const savePhoneAndPay = async () => {
+    const digits = phoneInput.replace(/\D/g, "");
+    if (digits.length < 10) {
+      toast.error("전화번호를 정확히 입력해주세요.");
+      return;
+    }
+    setSavingPhone(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          phone_number: digits,
+          branch_name: branch || "153복싱짐 선릉역점",
+          gym_reg_date: new Date().toISOString().slice(0, 10),
+        } as never)
+        .eq("user_id", user?.id ?? "");
+      if (error) {
+        if (/duplicate|unique|23505/i.test(error.message)) {
+          toast.error("이미 등록된 번호입니다. 기존 회원이시면 로그인 화면의 '기존 회원 연동'을 이용해주세요.");
+        } else {
+          toast.error("번호 저장 실패: " + error.message);
+        }
+        return;
+      }
+      await refreshProfile?.();
+      const target = phoneModal;
+      setPhoneModal(null);
+      if (target) runBill(target);
+    } catch (e) {
+      toast.error("처리 중 오류: " + ((e as Error)?.message || ""));
+    } finally {
+      setSavingPhone(false);
     }
   };
 
@@ -157,6 +213,38 @@ const MembershipProducts = () => {
         <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
           결제하기를 누르면 안전한 결제창으로 이동합니다. 결제가 완료되면 수강권 기간이 자동으로 반영됩니다.
         </p>
+
+        {/* 카톡/구글 가입자: 전화번호 없을 때 결제 전 간편 등록 */}
+        {phoneModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setPhoneModal(null)}>
+            <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-elev-3" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-2 flex items-center justify-between">
+                <h2 className="text-base font-bold text-foreground">전화번호 확인</h2>
+                <button onClick={() => setPhoneModal(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:scale-95">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+                결제·회원 관리를 위해 전화번호가 필요합니다. 번호를 입력하면 <b className="text-foreground">153복싱짐 선릉역점</b> 회원으로 등록되고 바로 결제가 진행됩니다.
+              </p>
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(formatPhone(e.target.value))}
+                placeholder="010-0000-0000"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              />
+              <button
+                onClick={savePhoneAndPay}
+                disabled={savingPhone}
+                className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {savingPhone ? "처리 중..." : `${won(phoneModal.price)} 결제하기`}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
