@@ -175,15 +175,15 @@ const SignupApply = () => {
       const { data, error } = await supabase.functions.invoke("payssam-create-bill", { body: { product_id: productId } });
       if (error || (data && (data as { error?: string }).error)) {
         toast.error((data as { error?: string })?.error || "결제 요청에 실패했습니다. 로그인 후 수강권 탭에서 결제할 수 있습니다.");
-        navigate("/membership");
+        navigate("/membership", { replace: true });
         return;
       }
       const shortUrl = (data as { shortUrl?: string })?.shortUrl;
       if (shortUrl) {
-        window.location.href = shortUrl;
+        window.location.replace(shortUrl); // 결제창으로 이동(뒤로가기로 가입폼에 안 돌아오게)
       } else {
         toast.success("가입 신청이 완료되었습니다. 수강권 탭에서 결제를 진행해주세요.");
-        navigate("/membership");
+        navigate("/membership", { replace: true });
       }
     } catch (e) {
       setErr("처리 중 오류가 발생했습니다: " + ((e as Error)?.message || ""));
