@@ -373,7 +373,7 @@ const LoginPage = () => {
 
       {/* Tab */}
       <div className="mb-4 flex w-full max-w-sm gap-1 rounded-xl bg-muted p-1">
-        {([["login", "로그인"], ["member", "회원가입"], ["coach", "관장님 가입"]] as [Tab, string][]).map(([key, label]) => (
+        {([["login", "로그인"], ["coach", "관장님 가입"]] as [Tab, string][]).map(([key, label]) => (
           <button
             key={key}
             type="button"
