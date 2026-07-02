@@ -64,7 +64,7 @@ const DietMealPlanPage = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const progressQuery = useDietProgress();
-  const { data: prefs, update: updatePrefs, isUpdating } = useDietPreferences();
+  const { data: prefs, updateAsync: updatePrefsAsync, isUpdating } = useDietPreferences();
 
   const track: DietTrack | null = useMemo(() => {
     const p = progressQuery.data;
@@ -113,7 +113,7 @@ const DietMealPlanPage = () => {
   const saveDiy = async () => {
     const next: DietPreferences = { ...prefs, custom_meal_plan: diyPlan };
     try {
-      updatePrefs(next);
+      await updatePrefsAsync(next);
       toast.success("내 식단이 저장됐어요");
     } catch {
       toast.error("저장 실패 — 잠시 후 다시 시도해 주세요");

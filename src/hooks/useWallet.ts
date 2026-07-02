@@ -66,19 +66,11 @@ export const useSpendGems = () => {
   return useMutation({
     mutationFn: async (amount: number) => {
       if (!user?.id) throw new Error("로그인 필요");
-      const { data: wallet, error: fetchError } = await supabase
-        .from("user_wallets")
-        .select("gems_balance")
-        .eq("user_id", user.id)
-        .single();
-      if (fetchError) throw fetchError;
-      if (!wallet) throw new Error("지갑 없음");
-      if (wallet.gems_balance < amount) throw new Error("파이트 머니가 부족합니다");
-      const { error } = await supabase
-        .from("user_wallets")
-        .update({ gems_balance: wallet.gems_balance - amount })
-        .eq("user_id", user.id);
+      // 원자적 차감 — DB의 조건부 UPDATE(잔액 >= amount)로 처리해
+      // 중복탭/연타에도 잔액 초과 사용이 불가능하다. (-1 = 잔액 부족)
+      const { data, error } = await (supabase.rpc as any)("spend_gems", { _amount: amount });
       if (error) throw error;
+      if (typeof data === "number" && data < 0) throw new Error("파이트 머니가 부족합니다");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["wallet"] }),
   });
