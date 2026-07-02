@@ -105,7 +105,7 @@ const ApprovalInbox = () => {
       (missionRes.data || []).forEach(s => {
         const p = profileMap.get(s.user_id);
         const prog = progressMap.get(s.user_id);
-        if (!p || p.branch_name !== branchName) return;
+        if (!p || (!isSuperAdmin && p.branch_name !== branchName)) return;
         items.push({
           id: s.id,
           type: "mission",
@@ -126,7 +126,7 @@ const ApprovalInbox = () => {
       (questRes.data || []).forEach(s => {
         const p = profileMap.get(s.user_id);
         const prog = progressMap.get(s.user_id);
-        if (!p || p.branch_name !== branchName) return;
+        if (!p || (!isSuperAdmin && p.branch_name !== branchName)) return;
         items.push({
           id: s.id,
           type: "quest",

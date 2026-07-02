@@ -140,7 +140,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   const { role, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return <RouteLoader />;
   if (!isManagerRole(role)) return <Navigate to="/home" replace />;
   return <>{children}</>;
 };
@@ -148,7 +148,7 @@ const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
 // 153 스토리 RPG 미공개 — admin/super_admin 만 진입 (회원 직접 URL 접근 차단)
 const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   const { role, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return <RouteLoader />;
   if (role !== "admin" && role !== "super_admin") {
     return <Navigate to="/home" replace />;
   }
@@ -157,7 +157,7 @@ const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
 
 const RoleBasedRedirect = () => {
   const { role, profile, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return <RouteLoader />;
   
   // Social login users without branch need to select one
   if (profile && !profile.branch_name) {

@@ -21,7 +21,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useTutorialCamp } from "@/features/tutorial-camp/useTutorialCamp";
-import { TUTORIAL_DEV_OPEN_EVENT } from "@/features/tutorial-camp/TutorialDevPanel";
 
 // ── Home widget toggle helpers ──
 const HOME_PREFS_KEY = "home-widget-prefs";
@@ -300,10 +299,13 @@ const SettingsPage = () => {
           </div>
         </div>
 
-        {/* Onboarding replay */}
-        <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.01s" }}>
-          <h2 className="mb-3 text-base font-bold text-foreground">온보딩 / 오삼 가이드</h2>
-          <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+        {/* Onboarding replay — 저빈도라 기본 접힘(더보기) */}
+        <details className="group animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.01s" }}>
+          <summary className="flex cursor-pointer list-none items-center justify-between text-base font-bold text-foreground [&::-webkit-details-marker]:hidden">
+            <span>온보딩 / 오삼 가이드 다시 보기</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
+          </summary>
+          <p className="mb-3 mt-3 text-xs leading-relaxed text-muted-foreground">
             · <strong>온보딩</strong> — 마이복서153 소개 8 슬라이드<br />
             · <strong>오삼 환영 인사</strong> — 가운데 큰 모달 (안녕하세요! 오삼이에요)<br />
             · <strong>오삼 가이드 5단계</strong> — 왼쪽 하단 작은 오삼이가 1단계부터 안내
@@ -335,17 +337,6 @@ const SettingsPage = () => {
                 >
                   🥊 7일 스타터 캠프 처음부터 시작 <span className="ml-1 text-[10px] font-normal opacity-70">(admin)</span>
                 </button>
-                <button
-                  onClick={() => {
-                    // 64-G: 7일 캠프 Day 1~7 미리보기 modal — TutorialDevPanel 열기
-                    if (typeof window !== "undefined") {
-                      window.dispatchEvent(new Event(TUTORIAL_DEV_OPEN_EVENT));
-                    }
-                  }}
-                  className="rounded-xl border border-amber-500/40 bg-amber-500/5 px-4 py-2.5 text-sm font-bold text-amber-700 transition-all active:scale-95 dark:text-amber-400"
-                >
-                  🐞 관리자 미리보기 — Day 1~7 <span className="ml-1 text-[10px] font-normal opacity-70">(admin)</span>
-                </button>
               </>
             )}
           </div>
@@ -354,7 +345,7 @@ const SettingsPage = () => {
               ※ 운영 테스트용. 회원에게는 아직 노출되지 않습니다.
             </p>
           )}
-        </div>
+        </details>
 
         {/* 153 다이어트 — feature flag off 유저에겐 아무것도 렌더되지 않음 */}
         <DietSettingsSection />

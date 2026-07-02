@@ -150,7 +150,7 @@ export const useHiddenMastery = (userId?: string) => {
         .from("hidden_mastery")
         .select("*")
         .eq("user_id", userId!)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -168,7 +168,7 @@ export const useExternalCertProgress = (userId?: string) => {
         .from("external_cert_progress")
         .select("*")
         .eq("user_id", userId!)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },

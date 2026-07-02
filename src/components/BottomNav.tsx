@@ -41,9 +41,8 @@ const mainTabs = [
 // ── Full menu overlay (everything not on the primary bar) ───────────
 // /diet 항목은 feature flag 에 따라 조건부로 포함 — 아래 useMemo 참조.
 // /cert-benefits 는 mainTabs 로 이관됐지만 전체메뉴에도 남겨 두어 발견성 유지.
+// 하단탭에 이미 있는 홈·훈련·랭킹·랭크업은 전체메뉴에서 제외(중복 제거).
 const baseMenuItems = [
-  { path: "/home",              icon: Home,       label: "홈" },
-  { path: "/missions",          icon: BoxingGloveIcon, label: "훈련" },
   { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝" },
   // 153 챌린지 — 개인 보조 퀘스트 (IQ / 챌린지 아레나) + 회원 간 랭킹 경쟁.
   // 라우트는 /myboxer/quest 유지 (DB anchor 호환). 챔피언 일기는 153 커뮤니티로 이관.
@@ -52,8 +51,6 @@ const baseMenuItems = [
   { path: "/myboxer/community", icon: Users,      label: "153 커뮤니티" },
   // 153마인드셋 — 시각화 훈련. 일반 회원 공개 (ProtectedRoute 만 적용).
   { path: "/myboxer/visualization", icon: Compass, label: "153마인드셋" },
-  { path: "/halloffame",        icon: Trophy,     label: "랭킹" },
-  { path: "/rank-up",           icon: TrendingUp, label: "랭크업" },
   { path: "/cert-benefits",     icon: Award,      label: "단증혜택" },
   // 65-S: 보상(/rewards)은 전체 메뉴에서 제거 — 마이페이지 안으로 이관.
   { path: "/character-studio",  icon: Sparkles,   label: "캐릭터" },
