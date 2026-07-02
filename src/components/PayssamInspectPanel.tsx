@@ -30,7 +30,12 @@ const PayssamInspectPanel = () => {
 
   useEffect(() => { localStorage.setItem(LS, JSON.stringify(st)); }, [st]);
 
-  if (!isAdmin) return null;
+  // 운영 라이브 후 실결제 도구라 기본 숨김 — 승인취소/조회 등 지원이 필요할 때만
+  // 멤버십 URL 뒤에 ?inspect=1 을 붙여 노출한다(실수로 실결제 생성 방지).
+  const inspectMode =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("inspect") === "1";
+  if (!isAdmin || !inspectMode) return null;
 
   const put = (t: string, ok: boolean, msg: string) => setLog((l) => [{ t, ok, msg }, ...l].slice(0, 12));
 
