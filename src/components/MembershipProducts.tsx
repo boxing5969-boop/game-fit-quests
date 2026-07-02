@@ -34,9 +34,8 @@ const blankForm = { name: "", price: "", duration_days: "30" };
 
 // 회원 화면 카테고리 탭
 const CATS = [
-  { key: "m5", label: "주5회", match: (p: Product) => p.category === "membership" && p.pass_type === "주5회" },
+  { key: "m5", label: "주5회", match: (p: Product) => p.category === "membership" && (p.pass_type === "주5회" || p.pass_type === "무제한") },
   { key: "m3", label: "주3회", match: (p: Product) => p.category === "membership" && p.pass_type === "주3회" },
-  { key: "unlimited", label: "무제한", match: (p: Product) => p.category === "membership" && p.pass_type === "무제한" },
   { key: "pt", label: "PT", match: (p: Product) => p.category === "pt" },
   { key: "goods", label: "용품", match: (p: Product) => p.category === "goods" },
   { key: "rental", label: "렌탈", match: (p: Product) => p.category === "rental" },
@@ -240,7 +239,7 @@ const MembershipProducts = () => {
     const activeCats = CATS.filter((c) => memberBase.some((p) => c.match(p)));
     const cat = activeCats.find((c) => c.key === activeCatKey) ?? activeCats[0];
     const list = cat ? memberBase.filter(cat.match) : [];
-    const isMembership = cat?.key === "m5" || cat?.key === "m3" || cat?.key === "unlimited";
+    const isMembership = cat?.key === "m5" || cat?.key === "m3";
 
     return (
       <div className="rounded-2xl border border-border bg-card p-4">
@@ -277,7 +276,7 @@ const MembershipProducts = () => {
             </div>
             <div className="flex items-center justify-between border-t border-border/60 py-1.5 text-sm">
               <span className="text-muted-foreground">멤버십 종류</span>
-              <span className="font-semibold text-foreground">{cat?.key === "m5" ? "주5회 기간권" : cat?.key === "m3" ? "주3회 기간권" : "1년 무제한 회원권 · 이용횟수 무제한"}</span>
+              <span className="font-semibold text-foreground">{cat?.key === "m5" ? "주5회 기간권" : "주3회 기간권"}</span>
             </div>
           </div>
         )}
@@ -300,7 +299,7 @@ const MembershipProducts = () => {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-lg font-black text-foreground">{cat?.key === "unlimited" ? "1년 무제한" : `${months}개월`}</span>
+                        <span className="text-lg font-black text-foreground">{p.pass_type === "무제한" ? "1년 무제한" : `${months}개월`}</span>
                         {off > 0 && <span className="text-sm font-bold text-[#f97316]">{off}% OFF</span>}
                       </div>
                       <p className="mt-1">
