@@ -66,7 +66,9 @@ const RankUpPage = () => {
   const totalForLevel = (levelId: string) => (missions || []).filter(m => m.level_id === levelId).length;
 
   return (
-    <div className="mx-auto max-w-lg px-4 pb-24 pt-4">
+    // 랭크업(게임) 화면은 라이트 모드에서도 다크 톤으로 렌더 — 카드들이 다크 기준으로
+    // 디자인돼 라이트에선 빛바래 보이므로, .dark 컨텍스트를 씌워 다크모드와 동일하게 표시.
+    <div className="dark mx-auto min-h-screen max-w-lg bg-background px-4 pb-24 pt-4 text-foreground">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-[22px] font-extrabold tracking-tight text-foreground">랭크업</h1>
         <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
