@@ -29,19 +29,19 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 // 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 랭크업(로드맵+가치맵 통합 페이지).
 // 접근성은 전체 메뉴 오버레이에 보존.
 // 모든 탭이 선형 아이콘으로 통일. 훈련은 복싱 글러브 커스텀 SVG.
-// /levelmap 은 /rank-up 에 통합됨 (내용 중복) — 5번째 슬롯은 랭크업으로.
+// 3번째 슬롯: 결제형 수강권(/membership). 단증혜택은 하단탭에서 빼고 전체메뉴에만 둔다.
 const mainTabs = [
   { path: "/home",          icon: Home,            label: "홈",     emoji: null },
   { path: "/missions",      icon: BoxingGloveIcon, label: "훈련",    emoji: null },
-  { path: "/cert-benefits", icon: Award,           label: "단증혜택", emoji: null },
+  { path: "/membership",    icon: Ticket,          label: "수강권",   emoji: null },
   { path: "/halloffame",    icon: Trophy,          label: "랭킹",    emoji: null },
   { path: "/rank-up",       icon: TrendingUp,      label: "랭크업",   emoji: null },
 ] as const;
 
 // ── Full menu overlay (everything not on the primary bar) ───────────
 // /diet 항목은 feature flag 에 따라 조건부로 포함 — 아래 useMemo 참조.
-// /cert-benefits 는 mainTabs 로 이관됐지만 전체메뉴에도 남겨 두어 발견성 유지.
-// 하단탭에 이미 있는 홈·훈련·랭킹·랭크업은 전체메뉴에서 제외(중복 제거).
+// /cert-benefits(단증혜택)는 하단탭에서 빠져 전체메뉴에서만 접근한다.
+// 하단탭에 이미 있는 홈·훈련·수강권·랭킹·랭크업은 전체메뉴에서 제외(중복 제거).
 const baseMenuItems = [
   { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝" },
   // 153 챌린지 — 개인 보조 퀘스트 (IQ / 챌린지 아레나) + 회원 간 랭킹 경쟁.
@@ -56,7 +56,6 @@ const baseMenuItems = [
   { path: "/character-studio",  icon: Sparkles,   label: "캐릭터" },
   { path: "/guide",             icon: BookOpen,   label: "가이드" },
   { path: "/about/153",         icon: Fish,       label: "153이란?" },
-  { path: "/membership",        icon: Ticket,     label: "수강권" },
   { path: "/mypage",            icon: User,       label: "내정보" },
   { path: "/settings",          icon: Settings,   label: "설정" },
 ] as const;
