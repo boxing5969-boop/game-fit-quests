@@ -299,7 +299,7 @@ const MembershipProducts = () => {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-lg font-black text-foreground">{p.pass_type === "무제한" ? "1년 무제한" : `${months}개월`}</span>
+                        <span className="text-lg font-black text-foreground">{months}개월</span>
                         {off > 0 && <span className="text-sm font-bold text-[#f97316]">{off}% OFF</span>}
                       </div>
                       <p className="mt-1">
