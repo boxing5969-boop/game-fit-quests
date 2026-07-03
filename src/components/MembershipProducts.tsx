@@ -2,7 +2,7 @@
 // 수강권 탭은 정상가·할인율·원/일(하루 단가)을 노출하는 153멤버십 선택형 카드.
 // 결제는 payssam-create-bill 엣지함수가 결제선생 청구서를 만들고 결제 URL(shortUrl)을 반환 → 그 URL 로 이동.
 import { useState, useEffect, useCallback } from "react";
-import { CreditCard, Plus, Pencil, Trash2, X } from "lucide-react";
+import { CreditCard, Plus, Pencil, Trash2, X, Settings, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +59,7 @@ const MembershipProducts = () => {
   const [phoneModal, setPhoneModal] = useState<Product | null>(null);
   const [phoneInput, setPhoneInput] = useState("");
   const [savingPhone, setSavingPhone] = useState(false);
+  const [showProductAdmin, setShowProductAdmin] = useState(false); // 마스터 전용 상품 설정 패널 열림 여부
 
   const load = useCallback(async () => {
     const { data } = await (supabase as any)
@@ -359,6 +360,20 @@ const MembershipProducts = () => {
     <div className="space-y-3">
       {isAdmin && <PayssamInspectPanel />}
       {memberView}
+      {isAdmin && (
+        <button
+          onClick={() => setShowProductAdmin((v) => !v)}
+          className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-all active:scale-[0.99]"
+        >
+          <span className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-primary" />
+            <span className="text-sm font-bold text-foreground">수강권·상품 설정</span>
+            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">마스터</span>
+          </span>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showProductAdmin ? "rotate-180" : ""}`} />
+        </button>
+      )}
+      {isAdmin && showProductAdmin && (
       <div className="rounded-2xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -440,6 +455,7 @@ const MembershipProducts = () => {
         </div>
       )}
     </div>
+      )}
     </div>
   );
 };
