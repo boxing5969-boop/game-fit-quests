@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-마이복서153 (153복싱짐) 스포츠 RPG 앱. Lovable 로 초기 생성됐고 이제 GitHub + Claude Code 중심으로 관리한다.
+마이복서153 (153복싱짐) 스포츠 RPG 앱. Lovable 로 초기 생성됐고 이제 GitHub + Codex 중심으로 관리한다.
 
 브랜드:
 - 앱 이름: **마이복서153**

@@ -205,10 +205,11 @@ const LiveBoardPage = () => {
     const userIds = Array.from(latestByUser.keys());
 
     // 공개 안전컬럼 뷰 사용 (민감정보 제외)
-    const { data: profiles } = await (supabase as any)
+    type PublicProfileLite = { user_id: string; nickname: string | null; avatar_url: string | null };
+    const { data: profiles } = (await (supabase as any)
       .from("public_profiles")
-      .select("user_id, nickname, name, avatar_url")
-      .in("user_id", userIds);
+      .select("user_id, nickname, avatar_url")
+      .in("user_id", userIds)) as { data: PublicProfileLite[] | null };
 
     const { data: progressData } = await supabase
       .from("member_progress")
@@ -264,7 +265,7 @@ const LiveBoardPage = () => {
       const attendanceFallback = attendanceMap.get(userId);
 
       // Determine display name: profile > attendance_log > skip
-      const displayName = profile?.nickname || profile?.name || attendanceFallback?.display_name;
+      const displayName = profile?.nickname || attendanceFallback?.display_name;
       if (!displayName) continue; // truly unknown user — skip
 
       const avatarUrl = profile?.avatar_url || null;
