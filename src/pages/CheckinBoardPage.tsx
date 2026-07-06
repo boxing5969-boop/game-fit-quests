@@ -118,7 +118,7 @@ const CheckinBoardPage = () => {
       .from("branch_display_settings")
       .select("display_name_mode")
       .eq("branch_name", activeBranch)
-      .single()
+      .maybeSingle()
       .then(({ data }) => {
         if (data) setDisplayMode(data.display_name_mode);
       });

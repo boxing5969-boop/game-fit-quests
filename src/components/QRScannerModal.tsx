@@ -81,6 +81,9 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [processing, setProcessing] = useState(false);
+  // html5-qrcode 는 같은 QR 을 초당 수 회 콜백하는데, state(processing)는
+  // 콜백 등록 시점의 stale closure 라 가드가 무력화됨 → ref 로 동기 가드.
+  const processingRef = useRef(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -99,7 +102,8 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
   }, []);
 
   const handleScan = useCallback(async (decodedText: string) => {
-    if (processing) return;
+    if (processingRef.current) return;
+    processingRef.current = true;
     setProcessing(true);
     await stopScanner();
 
@@ -108,6 +112,7 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
       const { token, error: parseError } = extractToken(decodedText);
       if (!token) {
         setError(parseError || "유효하지 않은 QR입니다");
+        processingRef.current = false;
         setProcessing(false);
         return;
       }
@@ -121,6 +126,7 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
       if (fnError) {
         console.error("[QR Scanner] Function invoke error:", fnError);
         setError("네트워크 오류가 발생했습니다");
+        processingRef.current = false;
         setProcessing(false);
         return;
       }
@@ -130,6 +136,7 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
         const message = (code && ERROR_MESSAGES[code]) || data.error;
         console.error("[QR Scanner] Server error:", code, data.error);
         setError(message);
+        processingRef.current = false;
         setProcessing(false);
         return;
       }
@@ -139,14 +146,16 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
     } catch (e) {
       console.error("[QR Scanner] Unexpected error:", e);
       setError("네트워크 오류가 발생했습니다");
+      processingRef.current = false;
       setProcessing(false);
     }
-  }, [processing, stopScanner, onSuccess]);
+  }, [stopScanner, onSuccess]);
 
   useEffect(() => {
     if (!open) {
       stopScanner();
       setError(null);
+      processingRef.current = false;
       setProcessing(false);
       setScanning(false);
       return;
@@ -195,6 +204,7 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
 
   const retryScanner = () => {
     setError(null);
+    processingRef.current = false;
     setProcessing(false);
     // Re-open scanner by triggering effect
     stopScanner().then(() => {

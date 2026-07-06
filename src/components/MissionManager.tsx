@@ -129,7 +129,7 @@ const MissionManager = () => {
         // Update or create video
         if (form.video_url.trim()) {
           const { data: existingVideo } = await supabase
-            .from("mission_videos").select("id").eq("mission_id", editingId).limit(1).single();
+            .from("mission_videos").select("id").eq("mission_id", editingId).limit(1).maybeSingle();
           if (existingVideo) {
             await supabase.from("mission_videos").update({
               video_url: form.video_url.trim(),
