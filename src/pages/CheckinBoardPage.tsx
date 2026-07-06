@@ -236,14 +236,21 @@ const CheckinBoardPage = () => {
     toast.success("표시 설정 저장됨");
   };
 
-  // Cancel checkin
+  // Cancel checkin — cancel_checkin RPC 가 기록 삭제 + XP/스트릭 회수를
+  // 한 트랜잭션으로 처리 (기존 직접 DELETE 는 지급된 XP 가 남는 문제).
+  // types.ts 미재생성 함수라 spend_gems 와 같은 캐스트 패턴 사용.
   const cancelCheckin = async (logId: string) => {
-    const { error } = await supabase.from("attendance_logs").delete().eq("id", logId);
-    if (error) {
+    const { data, error } = await (supabase.rpc as any)("cancel_checkin", { _log_id: logId });
+    const result = data as { success?: boolean; reverted_xp?: number } | null;
+    if (error || !result?.success) {
       toast.error("취소 실패");
     } else {
       setLogs(prev => prev.filter(l => l.id !== logId));
-      toast.success("체크인 취소됨");
+      toast.success(
+        result.reverted_xp
+          ? `체크인 취소됨 (XP ${result.reverted_xp} 회수)`
+          : "체크인 취소됨",
+      );
     }
   };
 
