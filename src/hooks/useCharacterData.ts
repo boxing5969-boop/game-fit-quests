@@ -39,6 +39,9 @@ export const useMemberCharacterAssignment = (userId?: string) => {
   return useQuery({
     queryKey: ["character-assignment", targetId],
     enabled: !!targetId,
+    // 캐릭터 변경은 스튜디오 저장(useAssignCharacter)이 invalidate 로 즉시 반영 —
+    // 페이지 이동마다 재조회할 필요 없음.
+    staleTime: 60_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("member_character_assignments")

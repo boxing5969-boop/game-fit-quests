@@ -86,6 +86,8 @@ export const useDivisionRanking = (
     // enabled if either (a) super-admin passed explicit override (null OK)
     // or (b) regular user has a branch_name from profile
     enabled: branchOverride !== undefined || !!profile?.branch_name,
+    // 홈↔다른 탭 이동마다 랭킹 RPC 재조회 방지 — 미리보기 용도라 30초면 충분.
+    staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_division_ranking", {
         // `effective` may be null (all branches for super_admin) — the

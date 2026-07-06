@@ -6,6 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 export const useLevels = () =>
   useQuery({
     queryKey: ["levels"],
+    // levels 는 사실상 정적 테이블 — 페이지 이동마다 재조회할 필요 없음.
+    // 관리 화면의 invalidateQueries(["levels"]) 는 staleTime 과 무관하게 즉시 갱신됨.
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("levels")
@@ -128,8 +131,10 @@ export const useRecordAttendance = () => {
     onSuccess: () => {
       refreshProgress();
       qc.invalidateQueries({ queryKey: ["xp-logs"] });
-      qc.invalidateQueries({ queryKey: ["levels"] });
+      // ["levels"] 무효화 제거 — record_attendance 는 levels 테이블을 바꾸지 않는데
+      // 홈 진입마다 levels 재조회를 유발하고 있었음.
       qc.invalidateQueries({ queryKey: ["member-progress"] });
+      qc.invalidateQueries({ queryKey: ["wallet"] });
     },
   });
 };

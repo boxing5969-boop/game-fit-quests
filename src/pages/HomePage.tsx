@@ -13,7 +13,6 @@ import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import {
   useRecordAttendance,
   useLevels,
-  useMyBadges,
 } from "@/hooks/useQuestData";
 import { useDivisionRanking } from "@/hooks/useRankingData";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,7 +63,8 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { user, profile, progress, role, refreshProgress } = useAuth();
   const { data: levels } = useLevels();
-  const { data: myBadges } = useMyBadges();
+  // useMyBadges 호출 제거 — 배지 섹션 제거 후 결과 미사용인데 홈 진입마다
+  // member_badges 조회가 나감. 복구 시 useQuestData 의 훅을 다시 호출하면 됨.
   const { data: walletData } = useWallet();
   const { data: myCharacter } = useMemberCharacterAssignment();
   const { data: ranking } = useDivisionRanking();
@@ -117,7 +117,15 @@ const HomePage = () => {
   }, [onboardingDone, navigate]);
 
   useEffect(() => {
-    if (progress) attendance.mutate();
+    if (!progress) return;
+    // 앱접속 출석(record_attendance)은 서버가 같은 날 중복을 무시하므로,
+    // 성공한 날은 sessionStorage 로 표시해 홈 재진입마다 나가던
+    // RPC + progress 재조회 체인을 차단한다 (실패 시엔 다음 진입에 재시도).
+    const attKey = `153_att_${progress.user_id}_${new Date().toDateString()}`;
+    if (sessionStorage.getItem(attKey)) return;
+    attendance.mutate(undefined, {
+      onSuccess: () => sessionStorage.setItem(attKey, "1"),
+    });
   }, [progress?.user_id]); // eslint-disable-line
 
   useEffect(() => {
@@ -177,7 +185,6 @@ const HomePage = () => {
   const currentLevel = levels?.find(
     (l) => l.rank_name === rank && l.level_number === progress.current_level,
   );
-  void myBadges; // 최근 획득 배지 섹션 제거로 현재 미사용 — 향후 복구 대비 hook 유지
   const isMaster40 =
     rank === "black" &&
     progress.current_level === 10 &&
