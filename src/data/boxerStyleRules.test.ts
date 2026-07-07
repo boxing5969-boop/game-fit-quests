@@ -89,6 +89,8 @@ describe("boxerStyleRules — 6 스타일 분기", () => {
   it("speed_fighter — 잽·줄넘기 챌린지 비중", () => {
     const r = computeBoxerStyleDiagnosis(
       baseInput({
+        // 루키 게이트(활동량 ≥5)는 profile.challenge_clear_count 로 판정된다.
+        profile: { ...emptyProfile, challenge_clear_count: 5 },
         challengeAttempts: [
           { category: "jab", status: "completed" },
           { category: "jab", status: "completed" },
@@ -103,6 +105,8 @@ describe("boxerStyleRules — 6 스타일 분기", () => {
   it("power_puncher — 샌드백·푸시업 비중", () => {
     const r = computeBoxerStyleDiagnosis(
       baseInput({
+        // 루키 게이트(활동량 ≥5)는 profile.challenge_clear_count 로 판정된다.
+        profile: { ...emptyProfile, challenge_clear_count: 5 },
         challengeAttempts: [
           { category: "sandbag", status: "completed" },
           { category: "sandbag", status: "completed" },

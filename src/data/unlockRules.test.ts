@@ -319,11 +319,11 @@ describe("tutorial helpers", () => {
     const steps = getTutorialSteps();
     expect(steps).toHaveLength(5);
     expect(steps.map((s) => s.key)).toEqual([
-      "profile",
-      "ranking",
-      "effect_shop",
-      "mini_game",
-      "complete",
+      "profile_photo",
+      "discover_app",
+      "first_mission",
+      "first_checkin",
+      "first_challenge",
     ]);
     expect(steps.map((s) => s.order)).toEqual([1, 2, 3, 4, 5]);
   });
@@ -341,15 +341,15 @@ describe("tutorial helpers", () => {
     expect(TUTORIAL_REWARD_GEMS).toBe(1000);
   });
 
-  it("step definitions carry the 입단식 labels TutorialOverlay renders", () => {
+  it("step definitions carry the 스타터 캠프 labels the tutorial overlay renders", () => {
     const byKey = Object.fromEntries(
       TUTORIAL_STEPS.map((s) => [s.key, s]),
     );
-    expect(byKey.profile.label).toBe("내 캐릭터 확인");
-    expect(byKey.ranking.label).toBe("내 리그 / 레벨 확인");
-    expect(byKey.effect_shop.label).toBe("오늘의 퀘스트");
-    expect(byKey.mini_game.label).toBe("보상 / 이펙트");
-    expect(byKey.complete.ctaLabel).toBe("입단식 완료");
+    expect(byKey.profile_photo.label).toBe("1단계 — 프로필 사진 설정");
+    expect(byKey.discover_app.label).toBe("2단계 — 마이복서153 알아보기");
+    expect(byKey.first_mission.label).toBe("3단계 — 훈련 미션 둘러보기");
+    expect(byKey.first_checkin.label).toBe("4단계 — QR 출석체크 연습하기");
+    expect(byKey.first_challenge.label).toBe("5단계 — 더 다이어터 챌린지 둘러보기");
   });
 });
 
