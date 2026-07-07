@@ -71,6 +71,10 @@ export interface LocalProgress {
 
 const STORAGE_KEY = "white-lv1-progress";
 
+// 로컬(KST) 기준 YYYY-MM-DD — toISOString() 은 UTC 라 한국 새벽 0~9시 세션이
+// "어제" 로 기록돼 스트릭/일일 중복판정이 어긋났음 (en-CA 로케일 = ISO 포맷).
+const localDateStr = (d: Date = new Date()) => d.toLocaleDateString("en-CA");
+
 function getDefaultProgress(): LocalProgress {
   return {
     totalXp: 0,
@@ -165,7 +169,7 @@ export function useLocalProgress() {
   const status: LevelProgressionStatus = calculateLevelStatus(rules, activeProgress);
 
   const recordSession = useCallback((minutes: number, completedBlocks: string[] = [], intensity: "easy" | "normal" | "hard" = "normal") => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateStr();
     const xp = calculateSessionXp(minutes);
     const qualifies = isQualifyingSession(minutes);
 
@@ -238,7 +242,7 @@ export function useLocalProgress() {
         checklistResults: results,
         remediationUsed: prevLp.checklistAttempted && !passed ? true : prevLp.remediationUsed,
         remediationDueAt: !passed && !prevLp.remediationUsed
-          ? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+          ? localDateStr(new Date(Date.now() + 7 * 86400000))
           : prevLp.remediationDueAt,
       };
 
@@ -263,11 +267,11 @@ export function useLocalProgress() {
   }, []);
 
   const recordSelfChallenge = useCallback((minutes: number, xp: number, bonusXp: number): number => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateStr();
     let newStreak = 0;
 
     setLocal(prev => {
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const yesterday = localDateStr(new Date(Date.now() - 86400000));
       const isConsecutive = prev.lastSelfChallengeDate === yesterday || prev.lastSelfChallengeDate === today;
       newStreak = prev.lastSelfChallengeDate === today
         ? prev.selfChallengeStreak

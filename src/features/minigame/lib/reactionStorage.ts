@@ -13,7 +13,8 @@ const K = {
   dailyGemDate:  'reactionTraining_dailyGemDate',
 } as const;
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+// 로컬(KST) 날짜 — UTC(toISOString)면 새벽 0~9시 플레이가 어제로 붙어 일일 젬 한도가 어긋남.
+const todayStr = () => new Date().toLocaleDateString("en-CA");
 
 const num = (v: string | null) => (v ? Number(v) || 0 : 0);
 

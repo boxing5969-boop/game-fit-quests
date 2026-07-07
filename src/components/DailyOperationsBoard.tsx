@@ -24,9 +24,12 @@ interface TodayVisitor {
 const STORAGE_KEY = "daily-operations";
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
+// 로컬(KST) 날짜 — UTC(toISOString)면 오전 0~9시에 어제 보드가 유지됨.
+const localToday = () => new Date().toLocaleDateString("en-CA");
+
 function loadTodayVisitors(): TodayVisitor[] {
   try {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localToday();
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
@@ -45,7 +48,7 @@ function loadTodayVisitors(): TodayVisitor[] {
 }
 
 function saveTodayVisitors(visitors: TodayVisitor[]) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localToday();
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, visitors }));
 }
 

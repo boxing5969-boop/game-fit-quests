@@ -22,7 +22,8 @@ interface DefenseState {
 }
 
 function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  // 로컬(KST) 날짜 — UTC(toISOString)면 새벽 0~9시 플레이가 어제로 붙어 일일 판정이 어긋남.
+  return new Date().toLocaleDateString("en-CA");
 }
 
 function emptyState(): DefenseState {
