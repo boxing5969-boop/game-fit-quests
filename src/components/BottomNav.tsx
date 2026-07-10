@@ -18,6 +18,7 @@ import {
   Star,
   X,
   Ticket,
+  Dumbbell,
 } from "lucide-react";
 import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -44,6 +45,7 @@ const mainTabs = [
 // 하단탭에 이미 있는 홈·훈련·수강권·랭킹·랭크업은 전체메뉴에서 제외(중복 제거).
 const baseMenuItems = [
   { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝" },
+  { path: "/training-library",  icon: Dumbbell,   label: "훈련 라이브러리" },
   // 153 챌린지 — 개인 보조 퀘스트 (IQ / 챌린지 아레나) + 회원 간 랭킹 경쟁.
   // 라우트는 /myboxer/quest 유지 (DB anchor 호환). 챔피언 일기는 153 커뮤니티로 이관.
   { path: "/myboxer/quest",     icon: Target,     label: "153 챌린지" },
