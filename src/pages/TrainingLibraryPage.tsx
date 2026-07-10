@@ -112,9 +112,14 @@ const TrainingLibraryPage = () => {
         <button onClick={() => navigate(-1)} className="rounded-lg p-1.5 active:scale-95"><ArrowLeft className="h-5 w-5" /></button>
         <h1 className="text-lg font-black">훈련 라이브러리</h1>
         {isStaff && (
-          <button onClick={() => openEdit("new")} className="ml-auto flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-bold text-primary-foreground active:scale-95">
-            <Plus className="h-3.5 w-3.5" /> 추가
-          </button>
+          <div className="ml-auto flex items-center gap-1.5">
+            <button onClick={() => navigate("/routine-builder")} className="rounded-lg bg-muted px-2.5 py-1.5 text-xs font-bold text-foreground active:scale-95">
+              🥊 루틴 빌더
+            </button>
+            <button onClick={() => openEdit("new")} className="flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-bold text-primary-foreground active:scale-95">
+              <Plus className="h-3.5 w-3.5" /> 추가
+            </button>
+          </div>
         )}
       </div>
       <p className="mb-3 text-xs leading-relaxed text-muted-foreground">복싱 훈련을 카테고리별로 모았어요. 각 훈련의 방법과 무엇이 좋아지는지 확인하고 수업에 활용하세요.</p>
