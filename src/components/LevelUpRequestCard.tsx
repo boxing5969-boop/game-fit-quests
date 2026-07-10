@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Cycle {
   sessions: number; days: number; minutes: number;
@@ -32,6 +33,7 @@ const Bar = ({ label, cur, req, unit }: { label: string; cur: number; req: numbe
 
 const LevelUpRequestCard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
 
   const { data: cycle } = useQuery({
@@ -115,6 +117,9 @@ const LevelUpRequestCard = () => {
           <Check className="h-4 w-4" /> {cycle.meets ? "레벨업 신청하기" : "조건을 더 채워주세요"}
         </button>
       )}
+      <button onClick={() => navigate("/routines")} className="mt-2 w-full text-center text-[11px] font-semibold text-primary active:opacity-70">
+        추천 수업 루틴 보기 →
+      </button>
     </div>
   );
 };
