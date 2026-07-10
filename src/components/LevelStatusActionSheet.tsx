@@ -47,8 +47,33 @@ const LevelStatusActionSheet = ({ open, onOpenChange, memberId, rank, level, cur
     },
   });
 
+  // 회원의 현재 레벨 — '완료/수정요청'을 실제 레벨업 경로로 보낼지 판단.
+  const { data: prog } = useQuery({
+    queryKey: ["mp-current", memberId],
+    enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("member_progress")
+        .select("current_rank, current_level")
+        .eq("user_id", memberId)
+        .maybeSingle();
+      return (data as { current_rank: string; current_level: number } | null) ?? null;
+    },
+  });
+  const isCurrentLevel = !!prog && prog.current_rank === rank && prog.current_level === level;
+
   const setStatusMut = useMutation({
     mutationFn: async (newStatus: string) => {
+      // 현재 레벨의 '완료/수정요청' → 실제 레벨업(approve_level_review). 그 외 상태는 기록만.
+      if (isCurrentLevel && (newStatus === "approved" || newStatus === "revision_requested")) {
+        const { error } = await (supabase.rpc as any)("approve_level_review", {
+          _member_id: memberId,
+          _approve: newStatus === "approved",
+          _note: reason || null,
+        });
+        if (error) throw error;
+        return;
+      }
       const { error } = await supabase.rpc("set_level_status", {
         _member_id: memberId,
         _rank: rank as any,
@@ -59,10 +84,13 @@ const LevelStatusActionSheet = ({ open, onOpenChange, memberId, rank, level, cur
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("상태 변경 완료");
+      toast.success(isCurrentLevel ? "처리 완료 (레벨 반영)" : "상태 변경 완료");
       qc.invalidateQueries({ queryKey: ["member-level-status", memberId] });
       qc.invalidateQueries({ queryKey: ["level-status-history", memberId, rank, level] });
       qc.invalidateQueries({ queryKey: ["member-detail", memberId] });
+      qc.invalidateQueries({ queryKey: ["mp-current", memberId] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
+      qc.invalidateQueries({ queryKey: ["level-cycle"] });
       setReason("");
     },
     onError: (e: any) => toast.error(e.message),

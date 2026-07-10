@@ -129,10 +129,19 @@ const CoachLevelReviewInbox = () => {
     },
   });
 
-  // 승인/보완/보류 — set_level_status RPC (권한체크·이력·회원 알림 서버 처리)
+  // 승인/보완 → approve_level_review (실제 레벨업 + 사이클 리셋). 보류(in_progress)만 set_level_status.
   const decide = useMutation({
     mutationFn: async ({ m, status }: { m: ReviewMember; status: "approved" | "revision_requested" | "in_progress" }) => {
       const note = selectedFeedback.length > 0 ? selectedFeedback.join(" / ") : null;
+      if (status === "approved" || status === "revision_requested") {
+        const { error } = await (supabase.rpc as any)("approve_level_review", {
+          _member_id: m.userId,
+          _approve: status === "approved",
+          _note: note,
+        });
+        if (error) throw error;
+        return status;
+      }
       const { error } = await supabase.rpc("set_level_status", {
         _member_id: m.userId,
         _rank: m.rank as never,
@@ -145,14 +154,16 @@ const CoachLevelReviewInbox = () => {
     },
     onSuccess: (status) => {
       qc.invalidateQueries({ queryKey: ["level-review-queue"] });
+      qc.invalidateQueries({ queryKey: ["member-progress"] });
+      qc.invalidateQueries({ queryKey: ["level-cycle"] });
       setSelectedFeedback([]);
       toast.success(
-        status === "approved" ? "레벨 완료를 승인했습니다"
+        status === "approved" ? "레벨업 승인 — 레벨이 올랐습니다 🎉"
         : status === "revision_requested" ? "보완을 요청했습니다"
         : "심사를 보류했습니다 (진행중으로 되돌림)",
       );
     },
-    onError: () => toast.error("처리 실패 — 다시 시도해주세요"),
+    onError: (e: any) => toast.error(e?.message || "처리 실패 — 다시 시도해주세요"),
   });
 
   const FILTERS: { key: FilterKey; label: string }[] = [

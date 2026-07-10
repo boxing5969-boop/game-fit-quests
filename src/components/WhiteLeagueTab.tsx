@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { whiteLevels, WhiteLevelDetail } from "@/data/whiteLevelData";
+import LevelUpRequestCard from "@/components/LevelUpRequestCard";
 import {
   WHITE_LV1_META, WHITE_LV1_SESSION, WHITE_LV1_CHECKLIST,
   WHITE_LV1_PURPOSE, WHITE_LV1_VALUE, XP_RULES,
@@ -665,6 +666,8 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {/* ═══ 심사 Section ═══ */}
       {activeSection === "check" && (
         <>
+          {/* 서버 3·3·3 집계 + 레벨업 신청 (실제 레벨업 경로) */}
+          <LevelUpRequestCard />
           {/* 레벨업 조건 */}
           <div
             data-tour="white-check-conditions"
