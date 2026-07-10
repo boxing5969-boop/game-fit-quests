@@ -3,6 +3,7 @@
 // 규칙 근거: 153복싱짐 통합 상품 이용약관 — 제14조(일시정지), 제15조(양도), 제18조(환불).
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { calcRefund, NORMAL_MONTHLY_DEFAULT } from "@/lib/refundPolicy";
 import { ArrowLeft, Pause, ArrowLeftRight, RotateCcw, X, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
@@ -114,13 +115,13 @@ const MembershipPage = () => {
   // 제15조 양도 — 1회만
   const transferUsed = requests.some((r) => r.type === "transfer" && (r.status === "approved" || r.status === "pending"));
 
-  // 환불 예상액 — 소비자분쟁해결기준(체육시설업): 결제금액 − 이용기간(일할) − 수수료·세금 10%. 최종은 관장이 153경영앱에서 확정.
-  const estRefund = useMemo(() => {
+  // 환불 예상액 — 정상가 재산정(할인 회수): 결제액 − (정상 일요금 × 이용일수) − 위약금10%.
+  // 정상 일요금은 월 30만원(주5회 정상가) 기준. 최종은 관장이 153경영앱에서 확정.
+  const estBreak = useMemo(() => {
     if (payment == null) return null;
-    if (!totalDays || elapsedDays == null || elapsedDays <= 0) return Math.max(0, Math.round(payment * 0.9));
-    const used = (payment * Math.min(elapsedDays, totalDays)) / totalDays;
-    return Math.max(0, Math.round(payment - used - payment * 0.1));
-  }, [payment, totalDays, elapsedDays]);
+    return calcRefund({ paid: payment, normalDaily: NORMAL_MONTHLY_DEFAULT / 30, elapsedDays: elapsedDays ?? 0 });
+  }, [payment, elapsedDays]);
+  const estRefund = estBreak ? estBreak.refund : null;
   const pendingRefund = requests.some((r) => r.type === "refund" && r.status === "pending");
 
   const holdPresets = [7, 14, 30].filter((d) => d <= remainDays);
@@ -358,11 +359,28 @@ const MembershipPage = () => {
                         <span className="text-foreground">{Math.min(elapsedDays, totalDays)} / {totalDays}일</span>
                       </div>
                     )}
+                    {estBreak && (
+                      <>
+                        <div className="mt-1 flex items-center justify-between">
+                          <span className="text-muted-foreground">이용분 차감 (정상가 재산정)</span>
+                          <span className="font-semibold text-destructive">-{won(estBreak.usedNormal)}</span>
+                        </div>
+                        <div className="mt-1 flex items-center justify-between">
+                          <span className="text-muted-foreground">위약금 (10%)</span>
+                          <span className="font-semibold text-destructive">-{won(estBreak.penalty)}</span>
+                        </div>
+                      </>
+                    )}
                     <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
                       <span className="font-bold text-foreground">예상 환불액</span>
                       <span className="text-base font-black text-primary">{won(estRefund ?? 0)}</span>
                     </div>
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">일할 정산 후 10% 공제 기준(약관 제18조). 최종 금액은 관장님이 확정합니다.</p>
+                    {estBreak && estBreak.loss > 0 && (
+                      <div className="mt-2 rounded-lg bg-destructive/10 px-2.5 py-2 text-center">
+                        <span className="text-[11px] font-bold text-destructive">지금 환불하면 약 {won(estBreak.loss)} 손해예요</span>
+                      </div>
+                    )}
+                    <p className="mt-1.5 text-[11px] text-muted-foreground">할인 상품은 중도 해지 시 이용기간이 정상가로 재산정됩니다(정상 월 30만원 기준). 위생용품·부대서비스는 별도이며, 최종 금액은 관장님이 확정합니다.</p>
                   </>
                 ) : (
                   <p className="text-muted-foreground">결제 금액 정보가 없어 예상액을 계산할 수 없습니다. 신청 후 관장님이 금액을 확정합니다.</p>

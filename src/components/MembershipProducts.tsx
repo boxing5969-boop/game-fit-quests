@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import PromoBanner from "@/components/PromoBanner";
 import PayssamInspectPanel from "@/components/PayssamInspectPanel";
+import { calcRefund, normalDailyRate, SIM_MONTHS } from "@/lib/refundPolicy";
 
 interface Product {
   id: string;
@@ -60,6 +61,8 @@ const MembershipProducts = () => {
   const [phoneInput, setPhoneInput] = useState("");
   const [savingPhone, setSavingPhone] = useState(false);
   const [showProductAdmin, setShowProductAdmin] = useState(false); // 마스터 전용 상품 설정 패널 열림 여부
+  const [confirmProduct, setConfirmProduct] = useState<Product | null>(null); // 결제 전 환불규정 확인 대상
+  const [confirmAgree, setConfirmAgree] = useState(false);
 
   const load = useCallback(async () => {
     const { data } = await (supabase as any)
@@ -84,6 +87,16 @@ const MembershipProducts = () => {
       return;
     }
     runBill(p);
+  };
+
+  // 수강권 결제 전 '환불 규정 확인' 모달을 먼저 띄운다(환불 억제). 비수강권은 바로 결제.
+  const askConfirm = (p: Product) => {
+    if (p.category !== "membership") {
+      pay(p);
+      return;
+    }
+    setConfirmAgree(false);
+    setConfirmProduct(p);
   };
 
   const runBill = async (p: Product) => {
@@ -314,7 +327,7 @@ const MembershipProducts = () => {
                     </div>
                   </div>
                   <button
-                    onClick={() => pay(p)}
+                    onClick={() => askConfirm(p)}
                     disabled={paying === p.id}
                     className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
                   >
@@ -333,7 +346,7 @@ const MembershipProducts = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => pay(p)}
+                  onClick={() => askConfirm(p)}
                   disabled={paying === p.id}
                   className="shrink-0 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
                 >
@@ -348,6 +361,63 @@ const MembershipProducts = () => {
           결제하기를 누르면 안전한 결제창으로 이동합니다. 수강권은 결제 완료 시 기간이 자동 반영됩니다.
         </p>
         {phoneModalJsx}
+        {confirmProduct && (() => {
+          const p = confirmProduct;
+          const nd = normalDailyRate(p.normal_price, p.duration_days);
+          const months = Math.max(1, Math.round(p.duration_days / 30));
+          const off = p.normal_price && p.normal_price > p.price ? Math.round((1 - p.price / p.normal_price) * 100) : 0;
+          const discountAmt = p.normal_price && p.normal_price > p.price ? p.normal_price - p.price : 0;
+          const rows = SIM_MONTHS.filter((m) => m * 30 < p.duration_days).map((m) => ({ m, ...calcRefund({ paid: p.price, normalDaily: nd, elapsedDays: m * 30 }) }));
+          return (
+            <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setConfirmProduct(null)}>
+              <div className="w-full max-w-md rounded-t-2xl bg-card p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="mb-1 flex items-center justify-between">
+                  <h3 className="text-base font-black text-foreground">환불 규정 확인</h3>
+                  <button onClick={() => setConfirmProduct(null)} className="rounded-lg p-1 text-muted-foreground active:scale-95"><X className="h-5 w-5" /></button>
+                </div>
+                <p className="text-sm text-muted-foreground">{months}개월 약정 · <span className="font-bold text-foreground">{won(p.price)}</span> 결제{off > 0 ? ` · 정상가 ${won(p.normal_price ?? 0)} (${off}% 할인)` : ""}</p>
+
+                {discountAmt > 0 && (
+                  <div className="mt-3 rounded-xl border border-[#f97316]/40 bg-[#f97316]/10 p-3">
+                    <p className="text-sm font-bold text-[#f97316]">⚠️ 중도 해지 시 손해가 발생합니다</p>
+                    <p className="mt-1 text-xs leading-relaxed text-foreground">이용하신 기간은 <b>할인 전 정상가</b>로 재산정됩니다. 지금 받으신 할인 혜택 <b>{won(discountAmt)}</b>이 사라져, 조기 환불 시 돌려받는 금액이 크게 줄어듭니다.</p>
+                  </div>
+                )}
+
+                {rows.length > 0 && (
+                  <div className="mt-3 overflow-hidden rounded-xl border border-border">
+                    <div className="grid grid-cols-3 bg-muted/50 px-3 py-2 text-[11px] font-bold text-muted-foreground">
+                      <span>환불 시점</span><span className="text-right">돌려받는 금액</span><span className="text-right">손해</span>
+                    </div>
+                    {rows.map((r) => (
+                      <div key={r.m} className="grid grid-cols-3 border-t border-border px-3 py-2 text-sm">
+                        <span className="text-foreground">{r.m}개월 사용 후</span>
+                        <span className="text-right font-bold text-foreground">{won(r.refund)}</span>
+                        <span className="text-right font-bold text-destructive">-{won(r.loss)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">끝까지 이용하시면 하루 {(p.duration_days > 0 ? Math.round(p.price / p.duration_days) : 0).toLocaleString("ko-KR")}원으로 가장 이득입니다. 위약금(10%)·개인 위생용품은 별도이며, 최종 환불액은 관장님이 확정합니다.</p>
+
+                <label className="mt-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <input type="checkbox" checked={confirmAgree} onChange={(e) => setConfirmAgree(e.target.checked)} className="h-4 w-4 accent-primary" />
+                  위 환불 규정을 확인했으며 이에 동의합니다.
+                </label>
+
+                <button
+                  onClick={() => { const t = confirmProduct; setConfirmProduct(null); if (t) pay(t); }}
+                  disabled={!confirmAgree}
+                  className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-40"
+                >
+                  동의하고 결제 진행
+                </button>
+                <button onClick={() => setConfirmProduct(null)} className="mt-2 w-full rounded-xl bg-muted py-2.5 text-sm font-bold text-muted-foreground active:scale-95">다시 볼게요</button>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     );
   })();
