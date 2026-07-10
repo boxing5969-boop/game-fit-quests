@@ -114,7 +114,7 @@ const MembershipPage = () => {
   // 제15조 양도 — 1회만
   const transferUsed = requests.some((r) => r.type === "transfer" && (r.status === "approved" || r.status === "pending"));
 
-  // 제18조 환불 예상액 (회원 사정, 총 이용료의 10% 공제)
+  // 환불 예상액 — 소비자분쟁해결기준(체육시설업): 결제금액 − 이용기간(일할) − 수수료·세금 10%. 최종은 관장이 153경영앱에서 확정.
   const estRefund = useMemo(() => {
     if (payment == null) return null;
     if (!totalDays || elapsedDays == null || elapsedDays <= 0) return Math.max(0, Math.round(payment * 0.9));
@@ -239,7 +239,7 @@ const MembershipPage = () => {
                   <p>홀딩 불가: 6개월 미만 약정은 일시정지가 제공되지 않습니다(약관 제14조).</p>
                 )}
                 <p className="mt-0.5">양도 1회 가능 · 수수료 {won(TRANSFER_FEE)} (관장 승인 후 처리, 재양도 불가).</p>
-                <p className="mt-0.5">환불은 실제 결제금액 기준 일할 정산 후 10% 공제됩니다. 최종 금액은 관장님이 확정합니다.</p>
+                <p className="mt-0.5">환불은 소비자분쟁해결기준(체육시설업)에 따라 결제금액에서 이용하신 기간과 결제 수수료·세금(10%)을 공제해 산정하며, 위생용품·부대서비스는 별도 반영될 수 있습니다. 최종 금액은 관장님이 확정합니다.</p>
               </div>
 
               {/* 내 신청 내역 */}
