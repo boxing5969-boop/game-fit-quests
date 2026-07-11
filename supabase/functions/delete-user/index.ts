@@ -32,14 +32,14 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Check caller has super_admin role
-    const { data: roleData } = await adminClient
+    // Check caller has super_admin role (다중 역할 대응 — .single() 사용 금지)
+    const { data: roleRows } = await adminClient
       .from("user_roles")
       .select("role")
-      .eq("user_id", caller.id)
-      .single();
+      .eq("user_id", caller.id);
 
-    if (roleData?.role !== "super_admin") {
+    const isSuperAdmin = (roleRows ?? []).some((r) => r.role === "super_admin");
+    if (!isSuperAdmin) {
       return new Response(JSON.stringify({ error: "관리자 권한이 필요합니다" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

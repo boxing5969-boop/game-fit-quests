@@ -31,7 +31,8 @@ export const useGrantGems = () => {
   
   return useMutation({
     mutationFn: async ({ userId, amount, reason }: { userId: string; amount: number; reason: string }) => {
-      const { error } = await supabase.rpc("grant_gems", { _user_id: userId, _amount: amount, _reason: reason });
+      // 서버에서 역할검사하는 래퍼 RPC 경유 (grant_gems 직접 호출은 권한 회수됨)
+      const { error } = await (supabase.rpc as any)("admin_grant_gems", { _user_id: userId, _amount: amount, _reason: reason });
       if (error) throw error;
     },
     onSuccess: () => {

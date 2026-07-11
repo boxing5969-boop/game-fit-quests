@@ -14,9 +14,9 @@ Deno.serve(async (req) => {
   try {
     const { username, name, phone, birthDate, newPassword } = await req.json();
 
-    if (!username || !name || !phone || !newPassword) {
+    if (!username || !name || !phone || !newPassword || !birthDate) {
       return new Response(
-        JSON.stringify({ error: "아이디, 이름, 전화번호를 모두 입력해주세요" }),
+        JSON.stringify({ error: "아이디, 이름, 전화번호, 생년월일을 모두 입력해주세요" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -41,20 +41,30 @@ Deno.serve(async (req) => {
     const usernameClean = username.toLowerCase().trim();
     const fakeEmail = `${usernameClean}@153rankup.app`;
 
-    // Try to find auth user: first by fake email, then by real email (username might be a full email)
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-    if (authError) {
-      console.error("Auth list error:", authError);
-      throw authError;
+    // Try to find auth user — 전체 페이지 조회(페이지네이션 필수: 51번째 이후 사용자도 검색됨)
+    const allUsers: any[] = [];
+    {
+      let page = 1;
+      // deno-lint-ignore no-constant-condition
+      while (true) {
+        const { data: pageData, error: authError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+        if (authError) {
+          console.error("Auth list error:", authError);
+          throw authError;
+        }
+        allUsers.push(...pageData.users);
+        if (pageData.users.length < 1000) break;
+        page++;
+      }
     }
-    let authUser = authData.users.find((u) => u.email === fakeEmail);
+    let authUser = allUsers.find((u) => u.email === fakeEmail);
     if (!authUser) {
       // Try matching username as full email
-      authUser = authData.users.find((u) => u.email === usernameClean);
+      authUser = allUsers.find((u) => u.email === usernameClean);
     }
     if (!authUser) {
       // Try matching username as email prefix (e.g. user entered "boxing" and email is "boxing@naver.com")
-      authUser = authData.users.find((u) => u.email?.split("@")[0] === usernameClean);
+      authUser = allUsers.find((u) => u.email?.split("@")[0] === usernameClean);
     }
     if (!authUser) {
       return new Response(
@@ -90,8 +100,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // If birth_date provided and stored, verify it
-    if (cleanBirthDate && profile.birth_date) {
+    // 생년월일 필수 검증 — 저장된 생년월일이 없으면 본 셀프 경로로 재설정 불가(관장 문의).
+    // (이름+전화만으로 계정 탈취되던 문제 차단. 근본 해결은 SMS OTP 권장 — 보고서 참조)
+    if (!profile.birth_date) {
+      return new Response(
+        JSON.stringify({ error: "본인확인 정보가 부족합니다. 관장님께 문의해주세요." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    {
       const pBirth = profile.birth_date.replace(/\D/g, "");
       if (pBirth !== cleanBirthDate) {
         return new Response(

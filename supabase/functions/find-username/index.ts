@@ -73,13 +73,23 @@ Deno.serve(async (req) => {
       return json({ error: "입력한 정보와 일치하는 계정을 찾을 수 없습니다" }, 404);
     }
 
-    // auth 사용자 매핑(이메일/소셜 판별)
-    const { data: authData, error: aErr } = await admin.auth.admin.listUsers();
-    if (aErr) throw aErr;
+    // auth 사용자 매핑(이메일/소셜 판별) — 전체 페이지 조회(페이지네이션 필수)
+    const allUsers: any[] = [];
+    {
+      let page = 1;
+      // deno-lint-ignore no-constant-condition
+      while (true) {
+        const { data: pageData, error: aErr } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+        if (aErr) throw aErr;
+        allUsers.push(...pageData.users);
+        if (pageData.users.length < 1000) break;
+        page++;
+      }
+    }
 
     const accounts: Array<Record<string, string>> = [];
     for (const m of matches) {
-      const u = authData.users.find((x) => x.id === m.user_id);
+      const u = allUsers.find((x) => x.id === m.user_id);
       if (!u) continue;
       const email = u.email || "";
       const provider =
