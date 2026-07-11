@@ -677,6 +677,9 @@ export function useDefenseEngine() {
     });
   }, [counterEndsAt, elapsedSec]);
 
+  // Stop BGM if the component unmounts mid-run (e.g., navigating away)
+  useEffect(() => () => audio.stopBgm(), []);
+
   const gemsEarned = useMemo(() => getGemReward(Math.floor(stats.survivedMs / 1000)), [stats.survivedMs]);
 
   return {

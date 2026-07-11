@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, X, Clock, CheckCircle2, TrendingUp } from "lucide-react";
@@ -30,6 +31,7 @@ const CycleBar = ({ label, cur, req, unit }: { label: string; cur: number; req: 
 const RoutinesPage = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [sel, setSel] = useState<Routine | null>(null);
 
   const { data: routines = [], isLoading } = useQuery({
@@ -42,7 +44,7 @@ const RoutinesPage = () => {
   });
 
   const { data: cycle } = useQuery({
-    queryKey: ["level-cycle"],
+    queryKey: ["level-cycle", user?.id],
     queryFn: async () => {
       const { data, error } = await (supabase.rpc as any)("get_level_cycle_progress", {});
       if (error) throw error;

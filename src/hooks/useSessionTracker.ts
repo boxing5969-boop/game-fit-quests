@@ -97,7 +97,7 @@ export function useSessionTracker(blocks: SessionBlock[]) {
   const elapsedMinutes = Math.floor(state.elapsedSeconds / 60);
   const elapsedSecondsRemainder = state.elapsedSeconds % 60;
   const totalPlannedMinutes = blocks.reduce((sum, b) => sum + b.durationMin, 0);
-  const progressPct = Math.min(100, Math.round((elapsedMinutes / totalPlannedMinutes) * 100));
+  const progressPct = totalPlannedMinutes > 0 ? Math.min(100, Math.round((elapsedMinutes / totalPlannedMinutes) * 100)) : 0;
 
   return {
     ...state,

@@ -24,7 +24,7 @@ type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk";
 
 const BranchManagerHome = () => {
   const navigate = useNavigate();
-  const { profile, role } = useAuth();
+  const { user, profile, role } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
@@ -119,7 +119,7 @@ const BranchManagerHome = () => {
 
   // Notifications count
   const { data: unreadCount } = useQuery({
-    queryKey: ["unread-notifications"],
+    queryKey: ["unread-notifications", user?.id],
     queryFn: async () => {
       const { count, error } = await supabase
         .from("notifications")

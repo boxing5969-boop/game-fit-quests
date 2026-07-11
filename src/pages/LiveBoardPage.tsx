@@ -80,6 +80,28 @@ interface HallMember {
   r_bosses_cleared: number;
 }
 
+/**
+ * 회원 아바타 — 모듈 스코프로 hoist.
+ * (이전엔 LiveBoardPage 본문 안에 정의되어 매 렌더마다 새 컴포넌트 identity 가
+ *  생성 → 아바타가 매번 remount 되며 깜빡였다. props 만으로 동작하므로 밖으로 이동.)
+ */
+const MemberAvatar = ({
+  url,
+  name,
+  sizeClass = "h-14 w-14",
+}: {
+  url?: string | null;
+  name: string;
+  sizeClass?: string;
+}) => (
+  <Avatar className={`${sizeClass} border-2 border-gray-700`}>
+    {url ? <AvatarImage src={url} alt={name} /> : null}
+    <AvatarFallback className="bg-gray-800 text-white text-lg font-black">
+      {name.charAt(0)}
+    </AvatarFallback>
+  </Avatar>
+);
+
 const LiveBoardPage = () => {
   const { branchCode } = useParams<{ branchCode: string }>();
   const [branchName, setBranchName] = useState("");
@@ -471,10 +493,13 @@ const LiveBoardPage = () => {
         })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "member_progress" },
         (payload) => {
-          // 운영 DB 모든 회원 변경이 들어옴 — 우리 지점 활동/방문 회원만 처리
+          // 운영 DB 모든 지점의 회원 변경이 들어옴 — member_progress 에는 branch
+          // 컬럼이 없어 서버 필터가 불가. knownLevelsRef 는 이 지점의 활동/방문
+          // 회원으로만 시드되므로, 그것으로 우리 지점 회원인지 판별해 처리한다.
           const n = payload.new as { user_id: string; current_level: number; current_rank: string };
           const o = payload.old as { current_level?: number };
           if (!n?.user_id || typeof n.current_level !== "number") return;
+          const knownToBranch = knownLevelsRef.current.has(n.user_id);
           const oldLevel = typeof o?.current_level === "number"
             ? o.current_level
             : knownLevelsRef.current.get(n.user_id);
@@ -483,7 +508,9 @@ const LiveBoardPage = () => {
             void triggerLevelUp(n.user_id, oldLevel, n.current_level, n.current_rank || "white");
           }
           knownLevelsRef.current.set(n.user_id, n.current_level);
-          void loadActivitySessions();
+          // 다른 지점 회원의 변경으로 무거운 loadActivitySessions() 를 호출하지 않음 —
+          // 이 지점에서 활동/방문한 회원의 변경일 때만 세션을 다시 불러온다.
+          if (knownToBranch) void loadActivitySessions();
         })
       .subscribe((status) => setConnected(status === "SUBSCRIBED"));
     return () => { supabase.removeChannel(channel); };
@@ -570,15 +597,6 @@ const LiveBoardPage = () => {
     const mins = Math.floor((Date.now() - t) / 60000);
     return mins > 120 ? "–" : mins; // Cap abnormal durations
   };
-
-  const MemberAvatar = ({ url, name, sizeClass = "h-14 w-14" }: { url?: string | null; name: string; sizeClass?: string }) => (
-    <Avatar className={`${sizeClass} border-2 border-gray-700`}>
-      {url ? <AvatarImage src={url} alt={name} /> : null}
-      <AvatarFallback className="bg-gray-800 text-white text-lg font-black">
-        {name.charAt(0)}
-      </AvatarFallback>
-    </Avatar>
-  );
 
   return (
     <div className="fixed inset-0 bg-gray-950 text-white overflow-hidden select-none">

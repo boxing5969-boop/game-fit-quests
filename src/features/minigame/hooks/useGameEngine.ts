@@ -86,6 +86,7 @@ export function useGameEngine() {
   const nextCueTimer = useRef<ReturnType<typeof setTimeout>>();
   const elapsedTimer = useRef<ReturnType<typeof setInterval>>();
   const feverTimer = useRef<ReturnType<typeof setTimeout>>();
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval>>();
   const invincibleUntil = useRef(0);
   const prevPunch = useRef<PunchType>();
   const pausedRef = useRef(false);
@@ -111,6 +112,7 @@ export function useGameEngine() {
     clearTimeout(nextCueTimer.current);
     clearTimeout(feverTimer.current);
     clearInterval(elapsedTimer.current);
+    clearInterval(countdownTimerRef.current);
   }, []);
 
   const finishSession = useCallback(() => {
@@ -477,12 +479,12 @@ export function useGameEngine() {
     setCountdown(3);
     audio.beep(false);
     let n = 3;
-    const id = setInterval(() => {
+    countdownTimerRef.current = setInterval(() => {
       n--;
       if (n > 0) { audio.beep(false); setCountdown(n); }
       else if (n === 0) { audio.beep(true); setCountdown(0); }
       else {
-        clearInterval(id);
+        clearInterval(countdownTimerRef.current);
         audio.bell();
         beginPlaying();
       }
@@ -611,7 +613,7 @@ export function useGameEngine() {
     else setPhase('home');
   }, [playerName, clearAllTimers, startGame]);
 
-  useEffect(() => () => clearAllTimers(), [clearAllTimers]);
+  useEffect(() => () => { clearAllTimers(); audio.stopBgm(); }, [clearAllTimers]);
 
   const theme = getRoundTheme(round);
 

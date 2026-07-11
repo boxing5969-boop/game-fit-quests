@@ -74,12 +74,30 @@ export const QUEST_TIMING_BONUS: Readonly<Record<TimingGrade, number>> =
 // ──────────────────────────────────────────────────────────────────
 
 /**
+ * 완료 시점의 KST(Asia/Seoul) 시(hour) 추출 — 브라우저 로케일/timezone 무관.
+ * questTimingEngine.ts 의 toSeoulMinutes 와 동일한 Intl 방식.
+ */
+function seoulHour(at: Date): number {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Seoul",
+    hour: "2-digit",
+    hour12: false,
+  });
+  const h = Number(
+    fmt.formatToParts(at).find((p) => p.type === "hour")?.value ?? "0",
+  );
+  // hour12:false 인데 일부 환경에서 "24" 가 나올 수 있음 → 0 으로 정규화
+  return h === 24 ? 0 : h;
+}
+
+/**
  * 완료 시점의 시간대를 보고 등급 판정.
  *   하루 내 완료한 미션은 perfect/good 안에 들어가도록 컷오프 설정.
  *   다음날 새벽 완료(0~5시)도 late 처리.
+ *   시간대는 Asia/Seoul(KST) 고정 — 기기 로컬 시각에 의존하지 않음.
  */
 export function gradeTiming(at: Date = new Date()): TimingGrade {
-  const h = at.getHours();
+  const h = seoulHour(at);
   if (h >= 0 && h < 5) return "late"; // 자정 넘긴 늦밤 회복
   if (h < QUEST_TIMING_CUTOFF.perfectBeforeHour) return "perfect";
   if (h < QUEST_TIMING_CUTOFF.goodBeforeHour) return "good";

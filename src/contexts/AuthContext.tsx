@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import type { Tables, Enums } from "@/integrations/supabase/types";
@@ -35,6 +36,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole | null>(null);
   const [progress, setProgress] = useState<Tables<"member_progress"> | null>(null);
   const [loading, setLoading] = useState(true);
+  // 공용 QueryClient — 로그아웃 시 이전 사용자의 React Query 캐시를 비워
+  // 공용 기기(짐 로비 등)에서 계정 간 데이터가 새는 것을 막는다.
+  const queryClient = useQueryClient();
 
   const fetchUserData = useCallback(async (userId: string) => {
     const [profileRes, roleRes, progressRes] = await Promise.all([
@@ -182,6 +186,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile(null);
     setRole(null);
     setProgress(null);
+    // 이전 사용자의 캐시 전부 제거 — 재로그인 시 staleTime 안에 이전
+    // 사용자 데이터가 노출되는 크로스-유저 캐시 누수 방지.
+    queryClient.clear();
   };
 
   return (

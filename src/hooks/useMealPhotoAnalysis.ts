@@ -52,8 +52,9 @@ export function useMealPhotoAnalysis() {
     },
     onSuccess: () => {
       // 갤러리·오늘 로그 자동 갱신
-      qc.invalidateQueries({ queryKey: ["diet", "photos"] });
-      qc.invalidateQueries({ queryKey: ["diet", "daily-log"] });
+      qc.invalidateQueries({ queryKey: ["diet", "myPhotos"] });
+      qc.invalidateQueries({ queryKey: ["diet", "dailyLog"] });
+      qc.invalidateQueries({ queryKey: ["diet", "dailyLogPhotos"] });
     },
   });
 }

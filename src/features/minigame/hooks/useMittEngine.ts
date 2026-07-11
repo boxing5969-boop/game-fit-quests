@@ -119,11 +119,13 @@ export function useMittEngine() {
   const pausedRef = useRef(false);
   const pausedAtRef = useRef<number>(0);
   const energyRef = useRef(100);
+  const scoreRef = useRef(score);
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
   useEffect(() => { currentStageRef.current = currentStage; }, [currentStage]);
   useEffect(() => { pausedRef.current = paused; }, [paused]);
   useEffect(() => { energyRef.current = energy; }, [energy]);
+  useEffect(() => { scoreRef.current = score; }, [score]);
 
   const clearAllTimers = useCallback(() => {
     clearTimeout(spawnTimerRef.current);
@@ -148,7 +150,9 @@ export function useMittEngine() {
     const remainingEnergy = Math.max(0, energyRef.current);
     const cleared = reason === 'time-up' && remainingEnergy > 0 && total > 0;
     const stars = evaluateStars({ cleared, accuracy, remainingEnergy });
-    const roundScore = score - rs.startScore;
+    // Read live score via ref — finalizeRound is invoked from timer closures
+    // frozen at stage start, where the captured `score` still equals startScore.
+    const roundScore = scoreRef.current - rs.startScore;
 
     // Drill result 누적 (최종 결과 화면용)
     const stepResults: StepResult[] = allHits.current
@@ -245,7 +249,7 @@ export function useMittEngine() {
 
     // bgm fade
     audio.stopBgm();
-  }, [clearAllTimers, score]);
+  }, [clearAllTimers]);
 
   const finishSession = useCallback(() => {
     clearAllTimers();

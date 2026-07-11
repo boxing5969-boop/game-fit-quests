@@ -1,5 +1,5 @@
 // 레벨업 신청 카드 — 서버 집계(get_level_cycle_progress) 3·3·3 표시 + 신청(request_level_review).
-// 회원이 출석 3회·3일·훈련 180분을 채우면 코치/관장에게 레벨업 심사를 신청한다.
+// 회원이 출석 3회·3일·훈련 150분을 채우면 코치/관장에게 레벨업 심사를 신청한다.
 // 코치 승인은 CoachLevelReviewInbox → approve_level_review 로 실제 레벨을 올린다.
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,7 +90,7 @@ const LevelUpRequestCard = () => {
     <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
       <p className="mb-1 text-sm font-black text-foreground">레벨업 조건</p>
       <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
-        출석 3회 · 서로 다른 3일 · 훈련 180분을 채우면 코치님께 레벨업을 신청할 수 있어요. 코치님이 자세를 확인하고 승인하면 레벨이 오릅니다.
+        출석 3회 · 서로 다른 3일 · 훈련 150분을 채우면 코치님께 레벨업을 신청할 수 있어요. 코치님이 자세를 확인하고 승인하면 레벨이 오릅니다.
       </p>
       <div className="space-y-2.5">
         <Bar label="출석" cur={cycle.sessions} req={cycle.reqSessions} unit="회" />

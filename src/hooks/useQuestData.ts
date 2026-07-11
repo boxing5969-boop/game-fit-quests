@@ -260,7 +260,7 @@ export const useAssignedMembers = () => {
     queryFn: async () => {
       if (role === "admin" || role === "super_admin") {
         const [profilesRes, rolesRes] = await Promise.all([
-          supabase.from("profiles").select("*, member_progress(*)"),
+          supabase.from("profiles").select("*, member_progress(*)").limit(500),
           supabase.from("user_roles").select("user_id, role"),
         ]);
         if (profilesRes.error) throw profilesRes.error;

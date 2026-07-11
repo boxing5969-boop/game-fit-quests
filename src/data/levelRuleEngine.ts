@@ -88,8 +88,11 @@ export const LEVEL_RULES: Record<string, LevelRuleConfig> = (() => {
     minQualifyingSessions: PROMOTION_RULES.sessionsRequired,
     minAttendanceDays: PROMOTION_RULES.attendanceDaysRequired,
     minTrainingMinutes: PROMOTION_RULES.totalMinutesRequired,
-    checklistPassCount: PROMOTION_RULES.checklistPassCount,
-    mandatoryCheckItems: PROMOTION_RULES.mandatoryItems,
+    // getChecklistForLevel(reviewCriteria) 는 4항목뿐 → PROMOTION_RULES 의
+    // passCount 5·mandatory [0,3] 로는 evaluateChecklist 가 절대 통과 불가.
+    // allLevelsData progressionConfig 와 동일하게 4항목 기준으로 교정.
+    checklistPassCount: 3,
+    mandatoryCheckItems: [0, 1],
   };
   map["white-2"] = {
     ...map["white-2"],
@@ -97,8 +100,11 @@ export const LEVEL_RULES: Record<string, LevelRuleConfig> = (() => {
     minQualifyingSessions: WHITE_LV2_PROMOTION_RULES.sessionsRequired,
     minAttendanceDays: WHITE_LV2_PROMOTION_RULES.attendanceDaysRequired,
     minTrainingMinutes: WHITE_LV2_PROMOTION_RULES.totalMinutesRequired,
-    checklistPassCount: WHITE_LV2_PROMOTION_RULES.checklistPassCount,
-    mandatoryCheckItems: WHITE_LV2_PROMOTION_RULES.mandatoryItems,
+    // getChecklistForLevel(reviewCriteria) 는 4항목뿐 → WHITE_LV2_PROMOTION_RULES 의
+    // passCount 5·mandatory [0,3] 로는 evaluateChecklist 가 절대 통과 불가.
+    // allLevelsData progressionConfig 와 동일하게 4항목 기준으로 교정.
+    checklistPassCount: 3,
+    mandatoryCheckItems: [0, 1],
     additionalRules: {
       movementJabBlockMinSessions: WHITE_LV2_PROMOTION_RULES.movementJabBlockMinSessions,
     },
