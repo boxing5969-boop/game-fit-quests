@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { whiteLevels, WhiteLevelDetail } from "@/data/whiteLevelData";
 import LevelUpRequestCard from "@/components/LevelUpRequestCard";
 import {
@@ -32,6 +32,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import CharacterSprite from "@/components/CharacterSprite";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import SparringConsentModal from "@/components/SparringConsentModal";
 
 type LevelState = "complete" | "active" | "locked";
 type DetailView = null | { league: string; level: number };
@@ -193,7 +195,7 @@ const WhiteLeagueTab = () => {
    ═══════════════════════════════════════════════════════ */
 const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; levelNum: number; onBack: () => void }) => {
   const ul = getLevelById(league, levelNum);
-  const { user, progress, role } = useAuth();
+  const { user, progress, role, profile } = useAuth();
   const { data: myCharacter } = useMemberCharacterAssignment(user?.id);
   const { metrics, status, canAttemptChecklist, submitChecklist } = useLocalProgress();
   const [activeSection, setActiveSection] = useState<"learn" | "session" | "check">("learn");
@@ -229,6 +231,28 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   const { blocks: sessionBlocks, refetch: refetchSession } = useSessionTemplate(sessionLevelKey, sessionFallback);
   const isMaster = role === "admin" || role === "super_admin";
   const [showSessionEditor, setShowSessionEditor] = useState(false);
+
+  // 🥊 스파링 신청 — 접촉 레벨(Lv.26+) 전용. 본인 최신 동의서 조회.
+  const [showSparring, setShowSparring] = useState(false);
+  const [sparringConsent, setSparringConsent] = useState<{ id: string; status: string } | null>(null);
+  useEffect(() => {
+    const gl = ul?.globalLevel ?? 0;
+    if (!user || gl < 26) return;
+    let active = true;
+    supabase
+      .from("sparring_consents")
+      .select("id,status")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setSparringConsent(data ? { id: data.id, status: data.status } : null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [user?.id, ul?.globalLevel]);
 
   if (!ul) return <div className="p-4 text-center text-muted-foreground">레벨 데이터를 불러올 수 없습니다</div>;
 
@@ -865,6 +889,32 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         </>
       )}
 
+      {/* 🥊 스파링 신청 — 접촉 레벨(Lv.26+) 전용 카드 */}
+      {ul.globalLevel >= 26 && (
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🥊</span>
+            <h3 className="text-sm font-bold text-foreground">스파링 참가</h3>
+          </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+            접촉 훈련(라이트 스파링)은 부상 위험이 있어, 참가 전 안전 동의서 서명이 필요합니다.
+          </p>
+          {sparringConsent ? (
+            <div className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-status-complete/10 py-3 text-sm font-bold text-status-complete">
+              <CheckCircle2 className="h-4 w-4" />
+              스파링 동의 완료{sparringConsent.status === "coach_confirmed" ? " · 코치 확인됨" : ""}
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowSparring(true)}
+              className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]"
+            >
+              🥊 스파링 신청
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Checklist Modal */}
       {showChecklist && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setShowChecklist(false)}>
@@ -898,6 +948,18 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             </button>
           </div>
         </div>
+      )}
+
+      {/* 🥊 스파링 참가 동의서 모달 */}
+      {showSparring && (
+        <SparringConsentModal
+          participantDefaultName={profile?.name ?? ""}
+          onClose={() => setShowSparring(false)}
+          onSigned={(row) => {
+            setSparringConsent(row);
+            setShowSparring(false);
+          }}
+        />
       )}
     </div>
   );

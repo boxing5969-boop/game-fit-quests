@@ -3757,6 +3757,66 @@ export type Database = {
           },
         ]
       }
+      sparring_consents: {
+        Row: {
+          agreed_rules: boolean
+          coach_confirmed_at: string | null
+          coach_confirmed_by: string | null
+          created_at: string
+          form_version: string
+          guardian_name: string | null
+          guardian_phone: string | null
+          guardian_relation: string | null
+          guardian_signature: string | null
+          health_note: string | null
+          health_ok: boolean
+          id: string
+          is_minor: boolean
+          participant_name: string
+          signed_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          agreed_rules?: boolean
+          coach_confirmed_at?: string | null
+          coach_confirmed_by?: string | null
+          created_at?: string
+          form_version?: string
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_relation?: string | null
+          guardian_signature?: string | null
+          health_note?: string | null
+          health_ok?: boolean
+          id?: string
+          is_minor?: boolean
+          participant_name: string
+          signed_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          agreed_rules?: boolean
+          coach_confirmed_at?: string | null
+          coach_confirmed_by?: string | null
+          created_at?: string
+          form_version?: string
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_relation?: string | null
+          guardian_signature?: string | null
+          health_note?: string | null
+          health_ok?: boolean
+          id?: string
+          is_minor?: boolean
+          participant_name?: string
+          signed_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tutorial_global_overrides: {
         Row: {
           custom_steps: Json
@@ -4154,6 +4214,7 @@ export type Database = {
       }
       complete_tutorial_and_grant_reward: { Args: never; Returns: Json }
       complete_tutorial_once: { Args: { _final_step?: number }; Returns: Json }
+      confirm_sparring_consent: { Args: { _consent_id: string }; Returns: undefined }
       contribute_to_gym_raid: {
         Args: { p_source_id?: string; p_source_type: string }
         Returns: Json

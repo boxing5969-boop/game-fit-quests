@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import RankUpCeremony from "@/components/RankUpCeremony";
 import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
+import CoachSparringInbox from "@/components/CoachSparringInbox";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import QuestCoachSummaryPanel from "@/components/engagement/coach/QuestCoachSummaryPanel";
@@ -97,7 +98,7 @@ const CoachDashboard = () => {
     },
   });
 
-  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions" | "quests" | "levels" | "coach-requests" | "level-review">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "members" | "branches" | "missions" | "quests" | "levels" | "coach-requests" | "level-review" | "sparring">("pending");
   const [rankUpInfo, setRankUpInfo] = useState<{ show: boolean; oldRank: string; newRank: string; memberName: string }>({ show: false, oldRank: "", newRank: "", memberName: "" });
   const [xpModal, setXpModal] = useState<{ show: boolean; memberId: string; memberName: string }>({ show: false, memberId: "", memberName: "" });
   const [xpAmount, setXpAmount] = useState(10);
@@ -216,6 +217,10 @@ const CoachDashboard = () => {
           className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "level-review" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
           📋 레벨업 심사
         </button>
+        <button onClick={() => setActiveTab("sparring")}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${activeTab === "sparring" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+          🥊 스파링
+        </button>
         {(role === "admin" || role === "super_admin") && (
           <>
             <button onClick={() => setActiveTab("quests")}
@@ -277,6 +282,9 @@ const CoachDashboard = () => {
 
       {/* Level Review Tab */}
       {activeTab === "level-review" && <CoachLevelReviewInbox />}
+
+      {/* Sparring Consents Tab — 코치/관장/관리자 스파링 동의서 확인 */}
+      {activeTab === "sparring" && <CoachSparringInbox />}
 
       {/* Members Tab */}
       {activeTab === "members" && (
