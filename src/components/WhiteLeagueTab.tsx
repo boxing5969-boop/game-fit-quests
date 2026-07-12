@@ -16,6 +16,7 @@ import {
   WHITE_LV2_LEARNING,
 } from "@/data/whiteLevel2Data";
 import { ALL_LEVELS, getLevelById, type UnifiedLevel } from "@/data/allLevelsData";
+import { levelHeroImage, levelDetailImages } from "@/data/curriculumImages";
 import { getChecklistForLevel } from "@/data/levelRuleEngine";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { useTutorialState } from "@/hooks/useTutorialState";
@@ -267,6 +268,30 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-bold text-primary active:scale-95">
         <ArrowLeft className="h-4 w-4" /> 목록으로
       </button>
+
+      {/* 레벨 교육 다이어그램 — public/assets/curriculum/L{n}.png(히어로) + L{n}-A/B/C.png(세부).
+          파일이 아직 없으면 onError 로 개별 숨김(무해). */}
+      <div className="space-y-2">
+        <img
+          src={levelHeroImage(ul.globalLevel)}
+          alt={`${ul.title} 교육 다이어그램`}
+          loading="lazy"
+          onError={(e) => { e.currentTarget.style.display = "none"; }}
+          className="w-full rounded-2xl border border-border bg-card shadow-elev-1"
+        />
+        <div className="grid grid-cols-3 gap-2">
+          {levelDetailImages(ul.globalLevel).map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt={`${ul.title} 세부 ${i + 1}`}
+              loading="lazy"
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+              className="w-full rounded-xl border border-border bg-card"
+            />
+          ))}
+        </div>
+      </div>
 
       {/* Hero Card — 내 캐릭터 + 전설 등급 황금 글로우 배경.
           CharacterStudio 의 HoF 카드와 동일한 amber 테두리·다중 레이어 그림자·breathe 애니메이션. */}
