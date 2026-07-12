@@ -16,6 +16,7 @@ import {
   WHITE_LV2_LEARNING,
 } from "@/data/whiteLevel2Data";
 import { ALL_LEVELS, getLevelById, type UnifiedLevel } from "@/data/allLevelsData";
+import { getCurriculumReview } from "@/data/curriculumReviewCriteria";
 import { levelHeroImage, levelDetailImages } from "@/data/curriculumImages";
 import { getChecklistForLevel } from "@/data/levelRuleEngine";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
@@ -197,6 +198,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   const { metrics, status, canAttemptChecklist, submitChecklist } = useLocalProgress();
   const [activeSection, setActiveSection] = useState<"learn" | "session" | "check">("learn");
   const [showChecklist, setShowChecklist] = useState(false);
+  const [showCurriculumReview, setShowCurriculumReview] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
   const [showSession, setShowSession] = useState(false);
   const checklist = getChecklistForLevel(`${league}-${levelNum}`);
@@ -790,6 +792,65 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
               </button>
             )}
           </div>
+
+          {/* 판매급 심사 기준(커리큘럼) — 기존 체크리스트와 별개인 추가 참고 카드, 있을 때만 렌더 */}
+          {(() => {
+            const curriculumReview = getCurriculumReview(ul.globalLevel);
+            if (!curriculumReview) return null;
+            return (
+              <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+                <button
+                  onClick={() => setShowCurriculumReview(v => !v)}
+                  className="flex w-full items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <Info className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-bold text-foreground">판매급 심사 기준(커리큘럼)</span>
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 text-muted-foreground transition-transform ${showCurriculumReview ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {showCurriculumReview && (
+                  <div className="mt-3 space-y-3">
+                    {curriculumReview.mission && (
+                      <p className="text-[11px] leading-relaxed text-muted-foreground">{curriculumReview.mission}</p>
+                    )}
+                    {curriculumReview.quantitative.length > 0 && (
+                      <div>
+                        <p className="mb-1 text-[10px] font-bold text-primary">정량 기준</p>
+                        <div className="space-y-0.5">
+                          {curriculumReview.quantitative.map((q, i) => (
+                            <p key={i} className="text-[10px] text-foreground">· {q}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {curriculumReview.qualitative.length > 0 && (
+                      <div>
+                        <p className="mb-1 text-[10px] font-bold text-primary">정성 루브릭</p>
+                        <div className="space-y-0.5">
+                          {curriculumReview.qualitative.map((q, i) => (
+                            <p key={i} className="text-[10px] text-foreground">· {q}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {curriculumReview.instantFail.length > 0 && (
+                      <div>
+                        <p className="mb-1 text-[10px] font-bold text-destructive">즉시실패 조건</p>
+                        <div className="space-y-0.5">
+                          {curriculumReview.instantFail.map((q, i) => (
+                            <p key={i} className="text-[10px] text-foreground">· {q}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Status */}
           <div className={`rounded-xl p-3 text-center text-sm font-bold ${

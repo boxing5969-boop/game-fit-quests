@@ -43,7 +43,7 @@ const HERO_CDN: Record<number, string> = {
   26: `${CDN}/hf_20260712_124848_5afaca1e-3a0f-4420-9a74-c2b895cff4ca.png`,
   27: `${CDN}/hf_20260712_124858_51329fc9-53b0-4670-9e90-25e76c8f6ea6.png`,
   28: `${CDN}/hf_20260712_124906_fcc6ff3e-b59f-494e-a427-911a5e4f89d9.png`,
-  // 29: 재생성 후 백필 (현재 public 폴백)
+  29: `${CDN}/hf_20260712_124917_d2b27be6-de42-41ff-b2c9-58eee5cbf027.png`,
   30: `${CDN}/hf_20260712_113910_ff652575-677c-4e31-a9aa-a5c750b15db3.png`,
   31: `${CDN}/hf_20260712_114004_5194184f-ae70-4f47-8e59-23583a6ff608.png`,
   32: `${CDN}/hf_20260712_114017_331a69ac-48d1-4e8c-aea7-e3e99d493753.png`,
