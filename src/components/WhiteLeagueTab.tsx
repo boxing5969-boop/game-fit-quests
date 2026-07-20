@@ -254,6 +254,15 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
     };
   }, [user?.id, ul?.globalLevel]);
 
+  // 📷 교육 다이어그램 갤러리 — 하단 썸네일을 누르면 큰 사진과 자리를 바꾼다.
+  // imgOrder[0]=큰 사진 인덱스, [1..3]=썸네일. 레벨이 바뀌면 원래 순서로 리셋.
+  const [imgOrder, setImgOrder] = useState([0, 1, 2, 3]);
+  const [brokenImgs, setBrokenImgs] = useState<number[]>([]);
+  useEffect(() => {
+    setImgOrder([0, 1, 2, 3]);
+    setBrokenImgs([]);
+  }, [ul?.globalLevel]);
+
   if (!ul) return <div className="p-4 text-center text-muted-foreground">레벨 데이터를 불러올 수 없습니다</div>;
 
   // Use whiteLevel1/2 detailed session data if available, else use routineA
@@ -296,28 +305,55 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       </button>
 
       {/* 레벨 교육 다이어그램 — public/assets/curriculum/L{n}.png(히어로) + L{n}-A/B/C.png(세부).
-          파일이 아직 없으면 onError 로 개별 숨김(무해). */}
-      <div className="space-y-2">
-        <img
-          src={levelHeroImage(ul.globalLevel)}
-          alt={`${ul.title} 교육 다이어그램`}
-          loading="lazy"
-          onError={(e) => { e.currentTarget.style.display = "none"; }}
-          className="w-full rounded-2xl border border-border bg-card shadow-elev-1"
-        />
-        <div className="grid grid-cols-3 gap-2">
-          {levelDetailImages(ul.globalLevel).map((src, i) => (
-            <img
-              key={i}
-              src={src}
-              alt={`${ul.title} 세부 ${i + 1}`}
-              loading="lazy"
-              onError={(e) => { e.currentTarget.style.display = "none"; }}
-              className="w-full rounded-xl border border-border bg-card"
-            />
-          ))}
-        </div>
-      </div>
+          하단 썸네일을 탭하면 큰 사진과 자리를 바꿔 크게 볼 수 있다.
+          파일이 아직 없으면 해당 칸만 숨김(무해). */}
+      {(() => {
+        const gallery = [levelHeroImage(ul.globalLevel), ...levelDetailImages(ul.globalLevel)];
+        const mainIdx = imgOrder[0];
+        const markBroken = (idx: number) =>
+          setBrokenImgs((prev) => (prev.includes(idx) ? prev : [...prev, idx]));
+        return (
+          <div className="space-y-2">
+            {!brokenImgs.includes(mainIdx) && (
+              <img
+                src={gallery[mainIdx]}
+                alt={`${ul.title} 교육 다이어그램`}
+                loading="lazy"
+                onError={() => markBroken(mainIdx)}
+                className="w-full rounded-2xl border border-border bg-card shadow-elev-1"
+              />
+            )}
+            <div className="grid grid-cols-3 gap-2">
+              {imgOrder.slice(1).map((idx, i) =>
+                brokenImgs.includes(idx) ? null : (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() =>
+                      setImgOrder((prev) => {
+                        const next = [...prev];
+                        const pos = i + 1;
+                        [next[0], next[pos]] = [next[pos], next[0]];
+                        return next;
+                      })
+                    }
+                    aria-label={`교육 이미지 ${i + 1} 크게 보기`}
+                    className="overflow-hidden rounded-xl border border-border bg-card transition-transform active:scale-95"
+                  >
+                    <img
+                      src={gallery[idx]}
+                      alt={`${ul.title} 세부 ${i + 1}`}
+                      loading="lazy"
+                      onError={() => markBroken(idx)}
+                      className="w-full"
+                    />
+                  </button>
+                ),
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Hero Card — 내 캐릭터 + 전설 등급 황금 글로우 배경.
           CharacterStudio 의 HoF 카드와 동일한 amber 테두리·다중 레이어 그림자·breathe 애니메이션. */}
