@@ -6,9 +6,13 @@ import { useSessionTracker } from "@/hooks/useSessionTracker";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { calculateSessionXp } from "@/data/levelRuleEngine";
 import type { SessionBlock } from "@/data/whiteLevel1Data";
-import { Play, Pause, Square, CheckCircle2, Clock, Zap } from "lucide-react";
+import { Play, Pause, Square, CheckCircle2, Clock, Zap, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { celebrateSmall } from "@/lib/celebrations";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTrainingLibrary, type TrainingExercise } from "@/hooks/useTrainingLibrary";
+import TrainingDrillSheet from "@/components/TrainingDrillSheet";
 
 const INTENSITY_OPTIONS = [
   { value: "easy" as const, label: "가볍게", emoji: "😊", color: "bg-status-complete/10 text-status-complete" },
@@ -25,7 +29,43 @@ interface SessionRunnerProps {
 const SessionRunner = ({ blocks, levelLabel, onComplete }: SessionRunnerProps) => {
   const tracker = useSessionTracker(blocks);
   const { recordSession } = useLocalProgress();
+  const { refreshProgress } = useAuth();
   const [showResult, setShowResult] = useState<{ minutes: number; xp: number; qualifies: boolean } | null>(null);
+
+  // 드릴 그림 설명 시트 — 블록의 드릴 이름을 라이브러리에서 찾아 연다
+  const { data: library } = useTrainingLibrary();
+  const [selectedDrill, setSelectedDrill] = useState<TrainingExercise | null>(null);
+  const openDrill = (name: string) => {
+    const ex = library?.find((e) => e.name === name || name.includes(e.name) || e.name.includes(name));
+    if (ex) setSelectedDrill(ex);
+    else toast("이 드릴의 상세 그림은 준비 중이에요");
+  };
+
+  // 코치/관장 수업 참여 XP — 하루 1회, 서버(RPC)에서 중복 방지
+  const [classClaimed, setClassClaimed] = useState(false);
+  const [claiming, setClaiming] = useState(false);
+  const claimClassXp = async () => {
+    if (claiming || classClaimed) return;
+    setClaiming(true);
+    try {
+      const { data, error } = await (supabase.rpc as any)("record_class_participation");
+      const r = data as { success?: boolean; already?: boolean; xp_granted?: number } | null;
+      if (error) throw error;
+      if (r?.already) {
+        setClassClaimed(true);
+        toast("오늘 수업 참여 보상은 이미 받았어요 ✅");
+      } else if (r?.success) {
+        setClassClaimed(true);
+        celebrateSmall();
+        toast.success(`코치 수업 참여 +${r.xp_granted ?? 20}XP 🧑‍🏫`);
+        refreshProgress();
+      }
+    } catch {
+      toast.error("잠시 후 다시 시도해주세요");
+    } finally {
+      setClaiming(false);
+    }
+  };
 
   const handleFinish = () => {
     const result = tracker.finishSession();
@@ -75,6 +115,20 @@ const SessionRunner = ({ blocks, levelLabel, onComplete }: SessionRunnerProps) =
             <p className="text-xs text-status-pending">⚠️ 45분 이상이어야 레벨업용 인정 세션이 됩니다</p>
           </div>
         )}
+
+        {/* 코치/관장 수업으로 참여했으면 추가 XP — 서버가 하루 1회 중복 방지 */}
+        <button
+          onClick={claimClassXp}
+          disabled={claiming || classClaimed}
+          className={`flex w-full items-center justify-center gap-2 rounded-2xl border py-3.5 text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-60 ${
+            classClaimed
+              ? "border-status-complete/30 bg-status-complete/10 text-status-complete"
+              : "border-primary/30 bg-primary/5 text-primary"
+          }`}
+        >
+          <GraduationCap className="h-4 w-4" />
+          {classClaimed ? "수업 참여 보상 받음 ✓" : "관장님·코치님 수업이었어요 (+20XP)"}
+        </button>
 
         <button
           onClick={() => { setShowResult(null); onComplete?.(); }}
@@ -173,11 +227,29 @@ const SessionRunner = ({ blocks, levelLabel, onComplete }: SessionRunnerProps) =
               <div className="min-w-0 flex-1">
                 <p className={`text-xs font-bold ${done ? "text-status-complete" : "text-foreground"}`}>{block.title}</p>
                 <p className="text-[10px] text-muted-foreground">{block.timeRange} · {block.durationMin}분</p>
+                {block.drills.length > 0 && (
+                  <span className="mt-1.5 flex flex-wrap gap-1">
+                    {block.drills.slice(0, 3).map((d, di) => (
+                      <span
+                        key={di}
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); openDrill(d.name === "포인트" ? block.title : d.name); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); openDrill(d.name === "포인트" ? block.title : d.name); } }}
+                        className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary active:scale-95"
+                      >
+                        🖼 {d.name === "포인트" ? "포인트 보기" : d.name}
+                      </span>
+                    ))}
+                  </span>
+                )}
               </div>
             </button>
           );
         })}
       </div>
+
+      <TrainingDrillSheet exercise={selectedDrill} onClose={() => setSelectedDrill(null)} />
     </div>
   );
 };

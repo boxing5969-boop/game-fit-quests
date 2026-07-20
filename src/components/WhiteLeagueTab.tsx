@@ -18,6 +18,8 @@ import {
 import { ALL_LEVELS, getLevelById, type UnifiedLevel } from "@/data/allLevelsData";
 import { getCurriculumReview } from "@/data/curriculumReviewCriteria";
 import { levelHeroImage, levelDetailImages } from "@/data/curriculumImages";
+import { useComposedSession, usePriorityDrills, type TrainingExercise } from "@/hooks/useTrainingLibrary";
+import TrainingDrillSheet from "@/components/TrainingDrillSheet";
 import { getChecklistForLevel } from "@/data/levelRuleEngine";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { useTutorialState } from "@/hooks/useTutorialState";
@@ -263,6 +265,11 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
     setBrokenImgs([]);
   }, [ul?.globalLevel]);
 
+  // 🎯 AI 수업 구성(워밍업·체력 블록 매일 로테이션) + 레벨업 필수 훈련
+  const composedBlocks = useComposedSession(sessionBlocks, ul?.globalLevel ?? 1);
+  const priorityDrills = usePriorityDrills(ul?.globalLevel ?? 1);
+  const [drillSheet, setDrillSheet] = useState<TrainingExercise | null>(null);
+
   if (!ul) return <div className="p-4 text-center text-muted-foreground">레벨 데이터를 불러올 수 없습니다</div>;
 
   // Use whiteLevel1/2 detailed session data if available, else use routineA
@@ -292,7 +299,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         <button onClick={() => setShowSession(false)} className="flex items-center gap-1.5 text-sm font-bold text-primary active:scale-95">
           <ArrowLeft className="h-4 w-4" /> 돌아가기
         </button>
-        <SessionRunner blocks={sessionBlocks} levelLabel={`${league.charAt(0).toUpperCase()}${league.slice(1)} Lv.${levelNum}`} onComplete={() => setShowSession(false)} />
+        <SessionRunner blocks={composedBlocks ?? sessionBlocks} levelLabel={`${league.charAt(0).toUpperCase()}${league.slice(1)} Lv.${levelNum}`} onComplete={() => setShowSession(false)} />
       </div>
     );
   }
@@ -354,6 +361,37 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           </div>
         );
       })()}
+
+      {/* 🎯 레벨업 필수 훈련 — 심사에 나오는 핵심 동작만 모아보기. 탭하면 그림 설명.
+          50분 수업의 워밍업·체력 블록은 useComposedSession 이 매일 로테이션한다. */}
+      {priorityDrills.length > 0 && (
+        <section className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
+          <div className="mb-1 flex items-center justify-between">
+            <h3 className="text-sm font-black text-foreground">🎯 레벨업 필수 훈련</h3>
+            <span className="text-[10px] font-bold text-primary">탭하면 그림 설명</span>
+          </div>
+          <p className="mb-2.5 text-[11px] text-muted-foreground">
+            이번 레벨 심사에 나오는 핵심 동작이에요 · 50분 수업의 워밍업·체력 블록은 매일 새롭게 바뀝니다 ✨
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {priorityDrills.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => setDrillSheet(d)}
+                className="rounded-xl border border-border bg-card p-3 text-left transition-all active:scale-[0.97]"
+              >
+                <p className="text-xs font-black text-foreground">{d.name}</p>
+                <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground">{d.summary}</p>
+                <span className="mt-1 inline-block rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+                  {d.category} · L{d.level_min}+
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+      <TrainingDrillSheet exercise={drillSheet} onClose={() => setDrillSheet(null)} />
 
       {/* Hero Card — 내 캐릭터 + 전설 등급 황금 글로우 배경.
           CharacterStudio 의 HoF 카드와 동일한 amber 테두리·다중 레이어 그림자·breathe 애니메이션. */}
