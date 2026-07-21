@@ -269,6 +269,8 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   const composedBlocks = useComposedSession(sessionBlocks, ul?.globalLevel ?? 1);
   const priorityDrills = usePriorityDrills(ul?.globalLevel ?? 1);
   const [drillSheet, setDrillSheet] = useState<TrainingExercise | null>(null);
+  // 배우기 탭 보조 섹션 접기 — 기본은 접힘(회원은 필수훈련·그림·학습모듈만 보면 됨)
+  const [openLearnMore, setOpenLearnMore] = useState(false);
 
   if (!ul) return <div className="p-4 text-center text-muted-foreground">레벨 데이터를 불러올 수 없습니다</div>;
 
@@ -563,6 +565,18 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             </div>
           </div>
 
+          {/* 더 알아보기 — 목적·초보자 대체·코치 포인트를 접어 첫 화면을 짧게 유지 */}
+          <div className="rounded-2xl border border-border bg-card shadow-elev-1">
+            <button
+              type="button"
+              onClick={() => setOpenLearnMore((v) => !v)}
+              className="flex w-full items-center justify-between p-4"
+            >
+              <span className="text-sm font-bold text-foreground">📚 더 알아보기</span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${openLearnMore ? "rotate-180" : ""}`} />
+            </button>
+            {openLearnMore && (
+              <div className="space-y-3 px-4 pb-4">
           {/* Purpose */}
           <div
             data-tour="white-learn-purpose"
@@ -619,6 +633,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
               </div>
             </div>
           )}
+              </div>
+            )}
+          </div>
+
         </>
       )}
 
