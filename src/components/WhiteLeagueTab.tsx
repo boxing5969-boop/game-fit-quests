@@ -21,6 +21,7 @@ import { levelHeroImage, levelDetailImages } from "@/data/curriculumImages";
 import { useComposedSession, usePriorityDrills, type TrainingExercise } from "@/hooks/useTrainingLibrary";
 import TrainingDrillSheet from "@/components/TrainingDrillSheet";
 import LevelVideoMaster from "@/components/LevelVideoMaster";
+import CoachTodayCard from "@/components/CoachTodayCard";
 import { getChecklistForLevel } from "@/data/levelRuleEngine";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { useTutorialState } from "@/hooks/useTutorialState";
@@ -202,6 +203,8 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   const { data: myCharacter } = useMemberCharacterAssignment(user?.id);
   const { metrics, status, canAttemptChecklist, submitChecklist } = useLocalProgress();
   const [activeSection, setActiveSection] = useState<"video" | "learn" | "session" | "check">("video");
+  // 심플 모드(기본) — 오삼 코치 지시 카드 하나만. "상세 보기"를 누르면 기존 전체 화면.
+  const [detailMode, setDetailMode] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
   const [showCurriculumReview, setShowCurriculumReview] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
@@ -313,6 +316,29 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-bold text-primary active:scale-95">
         <ArrowLeft className="h-4 w-4" /> 목록으로
       </button>
+
+      {/* ═══ 심플 모드 — 오삼 코치가 오늘 할 일 하나만 알려준다 ═══ */}
+      {!detailMode && (
+        <CoachTodayCard
+          league={league}
+          levelNumber={levelNum}
+          levelTitle={ul.title}
+          onStartSession={() => setShowSession(true)}
+          onOpenDetail={() => { setDetailMode(true); setActiveSection("video"); }}
+          onOpenVideos={() => { setDetailMode(true); setActiveSection("video"); }}
+        />
+      )}
+
+      {detailMode && (
+        <button
+          onClick={() => setDetailMode(false)}
+          className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-border bg-card py-2.5 text-xs font-bold text-muted-foreground active:scale-[0.99]"
+        >
+          간단히 보기로 돌아가기
+        </button>
+      )}
+
+      {detailMode && (<>
 
       {/* Hero Card — 내 캐릭터 + 전설 등급 황금 글로우 배경.
           CharacterStudio 의 HoF 카드와 동일한 amber 테두리·다중 레이어 그림자·breathe 애니메이션. */}
@@ -999,6 +1025,8 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           )}
         </div>
       )}
+
+      </>)}
 
       {/* Checklist Modal */}
       {showChecklist && (
