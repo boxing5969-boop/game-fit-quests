@@ -60,9 +60,11 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     staleTime: 60_000,
     queryFn: async () => {
       const start = new Date(); start.setHours(0, 0, 0, 0);
+      // method='qr' 만 인정 — 브로제이 출입(method='broj')은 라이브보드 표시용이고
+      // XP 는 앱에서 QR 을 찍어야 지급되므로 1번 스텝 완료로 치지 않는다.
       const { data } = await supabase
         .from("attendance_logs").select("id")
-        .eq("user_id", user!.id).eq("is_duplicate", false)
+        .eq("user_id", user!.id).eq("is_duplicate", false).eq("method", "qr")
         .gte("checked_in_at", start.toISOString()).limit(1);
       return (data?.length ?? 0) > 0;
     },
