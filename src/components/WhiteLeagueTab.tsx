@@ -59,6 +59,8 @@ const WhiteLeagueTab = () => {
   const { progress } = useAuth();
   const [detailView, setDetailView] = useState<DetailView>(null);
   const [expandedLeague, setExpandedLeague] = useState<string | null>(null);
+  // 리그 전체 목록은 기본 접힘 — 첫 화면은 코치 지시 카드만 보이게
+  const [showLeagueList, setShowLeagueList] = useState(false);
   // 64-N: 오삼 가이드 step 3 (훈련 미션 둘러보기) 진행 중 — Lv.1 카드 강조
   const tutorial = useTutorialState();
   const isTutorialStep3 =
@@ -87,7 +89,33 @@ const WhiteLeagueTab = () => {
 
   return (
     <div className="space-y-4">
+      {/* ═══ 오삼 코치 오늘 지시 — 훈련탭 첫 화면. 회원은 이 버튼 하나만 보면 된다 ═══ */}
+      <CoachTodayCard
+        league={currentRank}
+        levelNumber={currentLevel}
+        levelTitle={getLevelById(currentRank, currentLevel)?.title ?? ""}
+        onStartSession={() => setDetailView({ league: currentRank, level: currentLevel })}
+        onOpenDetail={() => setDetailView({ league: currentRank, level: currentLevel })}
+        onOpenVideos={() => setDetailView({ league: currentRank, level: currentLevel })}
+      />
+
+      {/* 리그 전체 목록 — 접어두고, 보고 싶은 회원만 펼친다 */}
+      <button
+        type="button"
+        onClick={() => setShowLeagueList((v) => !v)}
+        className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-all active:scale-[0.99]"
+      >
+        <span>
+          <span className="block text-sm font-black text-foreground">🗺️ 전체 레벨 지도</span>
+          <span className="mt-0.5 block text-[11px] text-muted-foreground">
+            화이트 · 블루 · 레드 · 블랙 리그 40레벨 전체 보기
+          </span>
+        </span>
+        <ChevronDown className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform ${showLeagueList ? "rotate-180" : ""}`} />
+      </button>
+
       {/* League accordions */}
+      {showLeagueList && (<>
       {LEAGUE_CONFIG.map(lc => {
         const isExpanded = activeLeague === lc.id;
         const leagueLevels = ALL_LEVELS.filter(l => l.league === lc.id);
@@ -189,6 +217,7 @@ const WhiteLeagueTab = () => {
           </div>
         );
       })}
+      </>)}
     </div>
   );
 };
