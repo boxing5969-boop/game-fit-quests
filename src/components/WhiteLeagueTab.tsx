@@ -20,6 +20,7 @@ import { getCurriculumReview } from "@/data/curriculumReviewCriteria";
 import { levelHeroImage, levelDetailImages } from "@/data/curriculumImages";
 import { useComposedSession, usePriorityDrills, type TrainingExercise } from "@/hooks/useTrainingLibrary";
 import TrainingDrillSheet from "@/components/TrainingDrillSheet";
+import LevelVideoMaster from "@/components/LevelVideoMaster";
 import { getChecklistForLevel } from "@/data/levelRuleEngine";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { useTutorialState } from "@/hooks/useTutorialState";
@@ -200,7 +201,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   const { user, progress, role, profile } = useAuth();
   const { data: myCharacter } = useMemberCharacterAssignment(user?.id);
   const { metrics, status, canAttemptChecklist, submitChecklist } = useLocalProgress();
-  const [activeSection, setActiveSection] = useState<"learn" | "session" | "check">("learn");
+  const [activeSection, setActiveSection] = useState<"video" | "learn" | "session" | "check">("video");
   const [showChecklist, setShowChecklist] = useState(false);
   const [showCurriculumReview, setShowCurriculumReview] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
@@ -217,8 +218,8 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
     league === "white" &&
     levelNum === 1;
   const [clickedSections, setClickedSections] = useState<
-    Set<"learn" | "session" | "check">
-  >(() => new Set(["learn"]));
+    Set<"video" | "learn" | "session" | "check">
+  >(() => new Set(["video"]));
   const nextUnclickedSection = isStep3DetailCascade
     ? (["learn", "session", "check"] as const).find(
         (k) => !clickedSections.has(k),
@@ -412,6 +413,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {/* Section tabs — 3탭 구조 */}
       <div className="flex gap-1 rounded-2xl bg-secondary p-1" data-tour="white-league-tabs">
         {([
+          { key: "video" as const, label: "🎬 영상" },
           { key: "learn" as const, label: "📖 배우기" },
           { key: "session" as const, label: "🥊 수업실행" },
           { key: "check" as const, label: "✅ 심사" },
@@ -456,6 +458,11 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           );
         })}
       </div>
+
+      {/* ═══ 🎬 영상 마스터 Section — 집에서 예습 ═══ */}
+      {activeSection === "video" && (
+        <LevelVideoMaster league={league} levelNumber={levelNum} />
+      )}
 
       {/* ═══ 배우기 Section ═══ */}
       {activeSection === "learn" && (
