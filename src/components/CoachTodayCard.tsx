@@ -1,14 +1,11 @@
-// 🥊 오삼 코치의 오늘 지시 — 훈련 탭의 기본(심플) 화면.
-// 회원은 여기서 "지금 눌러야 할 버튼 하나"만 보면 된다.
-// 상태 판정 순서(위가 우선):
-//   ① 심사 신청됨 → 대기 안내
-//   ② 3·3·3 충족 → 레벨업 신청하기
-//   ③ 오늘 체크인 안 함 → QR 체크인
-//   ④ 오늘 영상 안 봄 → 오늘의 영상 보기
-//   ⑤ 그 외 → 오늘 수업 시작(50분)
+// 🥊 오늘의 코스 — 훈련 탭 첫 화면.
+// 오삼 코치가 오늘 할 일을 1·2·3 순서로 알려준다. 완료한 건 체크, 지금 할 건 강조.
+// 회원이 원하면 "코스 접기"로 숨길 수 있다(기기에 기억).
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { QrCode, Play, Dumbbell, Trophy, Clock, ChevronRight, CheckCircle2 } from "lucide-react";
+import {
+  QrCode, Play, Dumbbell, Trophy, Clock, ChevronRight, ChevronDown, CheckCircle2,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLevelVideos, useWatchedVideos, parseVideoTitle, youtubeThumb, youtubeId } from "@/hooks/useLevelVideos";
@@ -29,16 +26,23 @@ interface Props {
   onOpenVideos: () => void;
 }
 
-const localToday = () => new Date().toLocaleDateString("en-CA");
+const COURSE_KEY = "153_course_collapsed";
 
 const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpenDetail, onOpenVideos }: Props) => {
   const { user, profile } = useAuth();
   const qc = useQueryClient();
   const [playing, setPlaying] = useState<{ id: string; url: string; title: string } | null>(null);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COURSE_KEY) === "1");
   const { data: videos = [] } = useLevelVideos(league, levelNumber);
   const { watched, toggle, countFor } = useWatchedVideos();
 
-  // 3·3·3 진행도
+  const toggleCollapsed = () => {
+    setCollapsed((v) => {
+      localStorage.setItem(COURSE_KEY, v ? "0" : "1");
+      return !v;
+    });
+  };
+
   const { data: cycle } = useQuery({
     queryKey: ["level-cycle", user?.id],
     enabled: !!user?.id,
@@ -50,10 +54,9 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     },
   });
 
-  // 오늘 체크인 여부
   const { data: checkedInToday } = useQuery({
     queryKey: ["today-checkin", user?.id],
-    enabled: !!user?.id && !!profile?.branch_name,
+    enabled: !!user?.id,
     staleTime: 60_000,
     queryFn: async () => {
       const start = new Date(); start.setHours(0, 0, 0, 0);
@@ -65,7 +68,20 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     },
   });
 
-  // 심사 신청 상태
+  const { data: todaySession } = useQuery({
+    queryKey: ["today-session-done", user?.id],
+    enabled: !!user?.id,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("activity_sessions").select("id")
+        .eq("user_id", user!.id).eq("status", "completed")
+        .gte("started_at", start.toISOString()).limit(1);
+      return (data?.length ?? 0) > 0;
+    },
+  });
+
   const { data: reviewStatus } = useQuery({
     queryKey: ["my-level-status", user?.id, league, levelNumber],
     enabled: !!user?.id,
@@ -93,33 +109,50 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
 
   const doneCount = countFor(videos.map((v) => v.id));
   const nextVideo = useMemo(() => videos.find((v) => !watched[v.id]) ?? null, [videos, watched]);
+  const videoDone = videos.length > 0 && doneCount >= videos.length;
+  const isPending = reviewStatus === "pending";
+  const canLevelUp = !!cycle?.meets;
 
-  // ── 오늘의 지시 결정 ──
-  const step = (() => {
-    if (reviewStatus === "pending") return "waiting" as const;
-    if (cycle?.meets) return "levelup" as const;
-    if (!checkedInToday) return "checkin" as const;
-    if (nextVideo) return "video" as const;
-    return "session" as const;
-  })();
+  // ── 오늘의 코스 3단계 ──
+  const steps = [
+    {
+      n: 1,
+      title: "체육관에서 QR 체크인",
+      desc: "체크인해야 오늘 훈련이 기록돼요",
+      icon: QrCode,
+      done: !!checkedInToday,
+      action: null as null | (() => void),
+      actionLabel: "홈 화면 QR 버튼에서 스캔",
+    },
+    {
+      n: 2,
+      title: videos.length > 0 ? `오늘의 영상 보기 (${doneCount}/${videos.length})` : "오늘의 영상 보기",
+      desc: nextVideo ? parseVideoTitle(nextVideo.title).name : "이번 레벨 영상을 모두 봤어요",
+      icon: Play,
+      done: videoDone,
+      action: () => (nextVideo ? setPlaying({ id: nextVideo.id, url: nextVideo.videoUrl, title: nextVideo.title }) : onOpenVideos()),
+      actionLabel: "영상 보기",
+    },
+    {
+      n: 3,
+      title: "50분 수업하기",
+      desc: "영상에서 본 동작을 몸으로 익혀요",
+      icon: Dumbbell,
+      done: !!todaySession,
+      action: onStartSession,
+      actionLabel: "수업 시작",
+    },
+  ];
+  const currentStep = steps.find((s) => !s.done) ?? null;
 
-  const COACH_LINE: Record<typeof step, { title: string; body: string }> = {
-    waiting: { title: "심사 신청했어요! 조금만 기다려요", body: "코치님이 자세를 확인하고 승인하면 레벨이 올라갑니다. 그동안 가볍게 복습해요." },
-    levelup: { title: "축하해요! 레벨업 신청할 수 있어요", body: "출석·훈련 조건을 모두 채웠어요. 아래 버튼을 눌러 코치님께 심사를 신청하세요." },
-    checkin: { title: "오늘은 QR 체크인부터 해요", body: "체육관에 오면 QR을 찍어야 오늘 훈련이 기록돼요. 이게 레벨업의 시작이에요." },
-    video: { title: "오늘 볼 영상이 있어요", body: "관장님 영상을 먼저 보고 따라 하면 수업이 훨씬 쉬워져요. 딱 하나만 보면 됩니다." },
-    session: { title: "오늘 50분 수업을 시작해요", body: "체크인도 했고 영상도 봤어요. 이제 몸으로 익힐 차례예요. 시작 버튼만 누르면 됩니다." },
-  };
-  const line = COACH_LINE[step];
-
-  const c = cycle;
   const bar = (cur: number, req: number) => Math.min(100, Math.round((cur / Math.max(1, req)) * 100));
+  const c = cycle;
 
   return (
     <div className="space-y-3">
-      {/* ── 오삼 코치 지시 카드 ── */}
+      {/* ── 오삼 코치 헤더 ── */}
       <div className="overflow-hidden rounded-3xl border-2 border-primary/30 bg-gradient-to-b from-primary/10 to-card shadow-elev-1">
-        <div className="flex items-center gap-3 px-4 pt-4">
+        <div className="flex items-center gap-3 p-4">
           <img
             src="/assets/mascot/osami_smile.png"
             alt="오삼 코치"
@@ -128,75 +161,103 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
           />
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-black tracking-wide text-primary">오삼 코치</p>
-            <p className="text-[15px] font-black leading-tight text-foreground">{line.title}</p>
+            <p className="text-[15px] font-black leading-tight text-foreground">
+              {isPending ? "심사 신청 완료! 조금만 기다려요"
+                : canLevelUp ? "조건 달성! 레벨업 신청하세요 🎉"
+                : currentStep ? `오늘은 ${currentStep.n}번부터 하면 돼요`
+                : "오늘 코스 완료! 잘하셨어요 👏"}
+            </p>
           </div>
-        </div>
-        <p className="px-4 pt-2 text-[12px] leading-relaxed text-muted-foreground">{line.body}</p>
-
-        {/* 오늘 볼 영상 미리보기 */}
-        {step === "video" && nextVideo && (
           <button
-            type="button"
-            onClick={() => setPlaying({ id: nextVideo.id, url: nextVideo.videoUrl, title: nextVideo.title })}
-            className="mx-4 mt-3 flex w-[calc(100%-2rem)] items-center gap-3 rounded-2xl border border-border bg-card p-2.5 text-left active:scale-[0.99]"
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? "코스 펼치기" : "코스 접기"}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground active:scale-90"
           >
-            <span className="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
-              {youtubeThumb(nextVideo.videoUrl) && (
-                <img src={youtubeThumb(nextVideo.videoUrl)!} alt="" className="h-full w-full object-cover" />
-              )}
-              <span className="absolute inset-0 flex items-center justify-center bg-black/30">
-                <Play className="h-5 w-5 fill-white text-white" />
-              </span>
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[13px] font-black text-foreground">{parseVideoTitle(nextVideo.title).name}</span>
-              <span className="mt-0.5 block text-[10px] text-muted-foreground">영상 {doneCount}/{videos.length} 완료</span>
-            </span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${collapsed ? "" : "rotate-180"}`} />
           </button>
-        )}
-
-        {/* 메인 액션 버튼 — 화면에 항상 이 버튼 하나가 정답 */}
-        <div className="p-4 pt-3">
-          {step === "waiting" ? (
-            <div className="flex items-center justify-center gap-2 rounded-2xl bg-status-pending/10 py-4 text-sm font-bold text-status-pending">
-              <Clock className="h-4 w-4" /> 코치님 승인 대기 중
-            </div>
-          ) : step === "levelup" ? (
-            <button
-              onClick={() => requestReview.mutate()}
-              disabled={requestReview.isPending}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-reward py-4 text-sm font-black text-reward-foreground shadow-elev-1 transition-all active:scale-[0.98] disabled:opacity-60"
-            >
-              <Trophy className="h-5 w-5" /> 레벨업 신청하기
-            </button>
-          ) : step === "checkin" ? (
-            <div className="flex items-center justify-center gap-2 rounded-2xl bg-primary/10 py-4 text-sm font-black text-primary">
-              <QrCode className="h-5 w-5" /> 홈 화면에서 QR 체크인 하기
-            </div>
-          ) : step === "video" ? (
-            <button
-              onClick={() => (nextVideo ? setPlaying({ id: nextVideo.id, url: nextVideo.videoUrl, title: nextVideo.title }) : onOpenVideos())}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-elev-1 transition-all active:scale-[0.98]"
-            >
-              <Play className="h-5 w-5 fill-current" /> 오늘의 영상 보기
-            </button>
-          ) : (
-            <button
-              onClick={onStartSession}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-elev-1 transition-all active:scale-[0.98]"
-            >
-              <Dumbbell className="h-5 w-5" /> 오늘 수업 시작 (50분)
-            </button>
-          )}
         </div>
+
+        {/* ── 오늘의 코스 1·2·3 ── */}
+        {!collapsed && (
+          <div className="space-y-2 px-4 pb-4">
+            {steps.map((s) => {
+              const isCurrent = currentStep?.n === s.n && !isPending && !canLevelUp;
+              const Icon = s.icon;
+              return (
+                <div
+                  key={s.n}
+                  className={`rounded-2xl border p-3 transition-all ${
+                    s.done
+                      ? "border-status-complete/30 bg-status-complete/5"
+                      : isCurrent
+                        ? "border-primary bg-card shadow-elev-1"
+                        : "border-border bg-card opacity-60"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black ${
+                        s.done
+                          ? "bg-status-complete text-white"
+                          : isCurrent
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {s.done ? <CheckCircle2 className="h-5 w-5" /> : s.n}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-[13px] font-black ${s.done ? "text-status-complete" : "text-foreground"}`}>
+                        {s.title}
+                      </p>
+                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{s.desc}</p>
+                    </div>
+                    <Icon className={`h-4 w-4 shrink-0 ${isCurrent ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
+
+                  {/* 지금 할 단계만 큰 버튼 노출 */}
+                  {isCurrent && (
+                    s.action ? (
+                      <button
+                        onClick={s.action}
+                        className="mt-2.5 w-full rounded-xl bg-primary py-3 text-[13px] font-black text-primary-foreground transition-all active:scale-[0.98]"
+                      >
+                        {s.actionLabel}
+                      </button>
+                    ) : (
+                      <p className="mt-2.5 rounded-xl bg-primary/10 py-2.5 text-center text-[12px] font-bold text-primary">
+                        {s.actionLabel}
+                      </p>
+                    )
+                  )}
+                </div>
+              );
+            })}
+
+            {/* 레벨업 신청 / 대기 */}
+            {isPending ? (
+              <div className="flex items-center justify-center gap-2 rounded-2xl bg-status-pending/10 py-3.5 text-[13px] font-bold text-status-pending">
+                <Clock className="h-4 w-4" /> 코치님 승인 대기 중
+              </div>
+            ) : canLevelUp ? (
+              <button
+                onClick={() => requestReview.mutate()}
+                disabled={requestReview.isPending}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-reward py-3.5 text-[13px] font-black text-reward-foreground shadow-elev-1 active:scale-[0.98] disabled:opacity-60"
+              >
+                <Trophy className="h-4 w-4" /> 레벨업 신청하기
+              </button>
+            ) : null}
+          </div>
+        )}
       </div>
 
-      {/* ── 레벨업까지 남은 것 — 3칸 진행바 ── */}
+      {/* ── 레벨업까지 ── */}
       <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-sm font-black text-foreground">🏆 레벨업까지</p>
           <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">
-            {RANK_LABELS[league] || league} Lv.{levelNumber} · {levelTitle}
+            {RANK_LABELS[league] || league} Lv.{levelNumber}{levelTitle ? ` · ${levelTitle}` : ""}
           </span>
         </div>
         <div className="grid grid-cols-3 gap-2.5">
@@ -224,7 +285,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
           })}
         </div>
         <p className="mt-3 text-[11px] text-muted-foreground">
-          조건을 채우면 코치님이 자세를 확인하고 승인해요 · 영상 {doneCount}/{videos.length} 시청
+          조건을 채우면 코치님이 자세를 확인하고 승인해요
         </p>
       </div>
 
