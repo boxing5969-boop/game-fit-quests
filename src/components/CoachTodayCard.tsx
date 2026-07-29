@@ -1,7 +1,7 @@
 // 🥊 오늘의 코스 — 훈련 탭 첫 화면.
 // 오삼 코치가 오늘 할 일을 1·2·3 순서로 알려준다. 완료한 건 체크, 지금 할 건 강조.
 // 회원이 원하면 "코스 접기"로 숨길 수 있다(기기에 기억).
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   QrCode, Play, Dumbbell, Trophy, Clock, ChevronRight, ChevronDown, CheckCircle2,
@@ -183,6 +183,36 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
           ? { face: "osami_smile", line: "오늘도 시작해볼까요? 1번부터예요" }
           : { face: "osami_determined", line: `${currentStep.n}번만 하면 오늘 끝이에요` };
 
+  // ── 캐릭터 모션 ──
+  // 등장(emote-enter 0.7s) → 끝나면 상시 대기(emote-idle 무한). 표정이 바뀌면 다시 등장.
+  // 오늘 코스를 방금 다 끝냈으면 축하 펀치를 한 번 친다.
+  const coachFace = coach.face;
+  const [entered, setEntered] = useState(false);
+  const prevDone = useRef(doneSteps);
+  const [cheer, setCheer] = useState(false);
+
+  useEffect(() => {
+    setEntered(false);
+    const t = setTimeout(() => setEntered(true), 700);
+    return () => clearTimeout(t);
+  }, [coachFace]);
+
+  useEffect(() => {
+    if (doneSteps > prevDone.current && doneSteps === steps.length) {
+      setCheer(true);
+      const t = setTimeout(() => setCheer(false), 700);
+      prevDone.current = doneSteps;
+      return () => clearTimeout(t);
+    }
+    prevDone.current = doneSteps;
+  }, [doneSteps, steps.length]);
+
+  const coachMotion = cheer
+    ? "animate-emote-punch"
+    : entered
+      ? "animate-emote-idle"
+      : "animate-emote-enter";
+
   const bar = (cur: number, req: number) => Math.min(100, Math.round((cur / Math.max(1, req)) * 100));
   const c = cycle;
 
@@ -196,15 +226,20 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
           aria-expanded={!collapsed}
           className="flex w-full items-start gap-2.5 p-4 text-left active:scale-[0.99]"
         >
+          {/* key 를 표정에 걸어 표정이 바뀌면 등장 모션을 다시 재생한다 */}
           <img
-            src={`/assets/mascot/${coach.face}.png`}
+            key={coachFace}
+            src={`/assets/mascot/${coachFace}.png`}
             alt=""
             aria-hidden="true"
-            className={`shrink-0 object-contain transition-all ${collapsed ? "h-10 w-10" : "h-16 w-16"}`}
+            className={`shrink-0 object-contain ${coachMotion} ${collapsed ? "h-10 w-10" : "h-16 w-16"}`}
             onError={(e) => { e.currentTarget.style.display = "none"; }}
           />
-          {/* 말풍선 — 왼쪽에 꼬리 */}
-          <div className="relative min-w-0 flex-1 rounded-2xl border border-border bg-muted/40 px-3 py-2.5">
+          {/* 말풍선 — 왼쪽에 꼬리. 캐릭터가 뛰어든 뒤 0.28s 후 톡 열린다 */}
+          <div
+            key={`${coachFace}-bubble`}
+            className="animate-coach-bubble relative min-w-0 flex-1 rounded-2xl border border-border bg-muted/40 px-3 py-2.5"
+          >
             <span className="absolute -left-[5px] top-5 h-2.5 w-2.5 rotate-45 border-b border-l border-border bg-muted/40" />
             <p className="text-[11px] font-black tracking-wide text-primary">오삼 코치</p>
             <p className="mt-0.5 text-[15px] font-black leading-snug text-foreground">{coach.line}</p>
@@ -233,7 +268,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
               return (
                 <div
                   key={s.n}
-                  className={`rounded-2xl border p-3 transition-all ${
+                  style={{ animationDelay: `${0.34 + s.n * 0.07}s` }}
+                  className={`animate-coach-step rounded-2xl border p-3 transition-colors ${
                     s.done
                       ? "border-status-complete/30 bg-status-complete/5"
                       : isCurrent

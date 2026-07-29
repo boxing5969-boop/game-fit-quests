@@ -725,3 +725,27 @@
    (다크 모드의 게임 펄스·오라·이모트 모션은 위 :not(.dark) 밖이라 그대로 유지) */
 html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: var(--shadow-glow-soft); }
 
+/* ── 오늘의 코스: 오삼 코치 말풍선 (듀오링고·말해보카식 등장) ── */
+/* 꼬리(왼쪽 중앙)를 원점으로 톡 터지듯 열린다. 캐릭터가 먼저 뛰어들고 말풍선이 뒤따른다. */
+@keyframes coach-bubble-pop {
+  0%   { opacity: 0; transform: scale(0.6) translateX(-10px); }
+  60%  { opacity: 1; transform: scale(1.04) translateX(2px); }
+  100% { opacity: 1; transform: scale(1) translateX(0); }
+}
+.animate-coach-bubble {
+  transform-origin: left center;
+  animation: coach-bubble-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.28s both;
+}
+
+/* 스텝 카드가 1·2·3 순서로 올라온다. 지연은 인라인 style 로 준다. */
+.animate-coach-step { animation: slide-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* 접근성: 모션 최소화 설정이면 전부 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  .animate-coach-bubble,
+  .animate-coach-step,
+  .animate-emote-enter,
+  .animate-emote-idle,
+  .animate-emote-punch { animation: none !important; }
+}
+
