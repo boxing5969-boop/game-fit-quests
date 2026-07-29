@@ -1,7 +1,7 @@
 // 🥊 오늘의 코스 — 훈련 탭 첫 화면.
 // 오삼 코치가 오늘 할 일을 1·2·3 순서로 알려준다. 완료한 건 체크, 지금 할 건 강조.
 // 회원이 원하면 "코스 접기"로 숨길 수 있다(기기에 기억).
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   QrCode, Play, Dumbbell, Trophy, Clock, ChevronRight, ChevronDown, CheckCircle2,
@@ -28,10 +28,15 @@ interface Props {
 
 const COURSE_KEY = "153_course_collapsed";
 
+// 홈 화면과 같은 QR 스캐너를 재사용한다(새로 만들지 않는다).
+// qr.js(359KB)는 모달을 열 때만 내려받도록 lazy 유지.
+const QRScannerModal = lazy(() => import("@/components/QRScannerModal"));
+
 const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpenDetail, onOpenVideos }: Props) => {
   const { user, profile } = useAuth();
   const qc = useQueryClient();
   const [playing, setPlaying] = useState<{ id: string; url: string; title: string } | null>(null);
+  const [showQR, setShowQR] = useState(false);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COURSE_KEY) === "1");
   const { data: videos = [] } = useLevelVideos(league, levelNumber);
   const { watched, toggle, countFor } = useWatchedVideos();
@@ -147,8 +152,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
         : "체크인해야 오늘 훈련이 기록돼요",
       icon: QrCode,
       done: !!checkedInToday,
-      action: null as null | (() => void),
-      actionLabel: arrivalLabel ? "홈 화면 QR 버튼에서 스캔하면 +10 XP" : "홈 화면 QR 버튼에서 스캔",
+      action: (() => setShowQR(true)) as null | (() => void),
+      actionLabel: arrivalLabel ? "QR 스캔하고 +10 XP 받기" : "QR 스캔하기",
     },
     {
       n: 2,
@@ -419,6 +424,29 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
             </button>
           </div>
         </div>
+      )}
+
+      {/* QR 체크인 — 홈 화면과 같은 스캐너·같은 qr-checkin 경로를 그대로 쓴다.
+          XP 지급·중복 판정은 전부 Edge Function 이 하고, 여기서는 결과만 반영한다. */}
+      {showQR && (
+        <Suspense fallback={null}>
+          <QRScannerModal
+            open={showQR}
+            onClose={() => setShowQR(false)}
+            onSuccess={(r) => {
+              setShowQR(false);
+              qc.invalidateQueries({ queryKey: ["today-checkin"] });
+              qc.invalidateQueries({ queryKey: ["today-arrival"] });
+              qc.invalidateQueries({ queryKey: ["member-progress"] });
+              qc.invalidateQueries({ queryKey: ["level-cycle"] });
+              toast.success(
+                r.is_duplicate
+                  ? "오늘은 이미 체크인했어요"
+                  : `체크인 완료! +${r.xp_granted} XP 🥊`,
+              );
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );
