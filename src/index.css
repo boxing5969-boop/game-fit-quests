@@ -740,10 +740,32 @@ html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: va
 /* 스텝 카드가 1·2·3 순서로 올라온다. 지연은 인라인 style 로 준다. */
 .animate-coach-step { animation: slide-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
+/* 코치가 살아있게 보이는 2겹 모션.
+   기존 emote-idle 은 최대 6px 라 실기기에서 정지처럼 보였다 → 눈에 띄게 키운다.
+   바깥 span 은 주기적 점프(스쿼시&스트레치), 안쪽 img 는 상시 둥실.
+   transform 이 겹치면 덮어써지므로 반드시 다른 요소에 나눠 건다. */
+@keyframes coach-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-7px) rotate(-2.5deg); }
+}
+.animate-coach-float { animation: coach-float 2s ease-in-out infinite; }
+
+@keyframes coach-hop {
+  0%, 68%  { transform: translateY(0) scale(1, 1); }
+  73%      { transform: translateY(2px) scale(1.1, 0.88); }
+  82%      { transform: translateY(-16px) scale(0.92, 1.12); }
+  90%      { transform: translateY(0) scale(1.06, 0.95); }
+  96%      { transform: translateY(-3px) scale(0.98, 1.02); }
+  100%     { transform: translateY(0) scale(1, 1); }
+}
+.animate-coach-hop { animation: coach-hop 4.5s ease-in-out infinite; display: inline-block; }
+
 /* 접근성: 모션 최소화 설정이면 전부 끈다 */
 @media (prefers-reduced-motion: reduce) {
   .animate-coach-bubble,
   .animate-coach-step,
+  .animate-coach-float,
+  .animate-coach-hop,
   .animate-emote-enter,
   .animate-emote-idle,
   .animate-emote-punch { animation: none !important; }

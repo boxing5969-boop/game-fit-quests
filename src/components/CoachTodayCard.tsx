@@ -207,10 +207,11 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     prevDone.current = doneSteps;
   }, [doneSteps, steps.length]);
 
+  // 바깥 span = 등장 → 주기적 점프(또는 축하 펀치). 안쪽 img = 상시 둥실.
   const coachMotion = cheer
     ? "animate-emote-punch"
     : entered
-      ? "animate-emote-idle"
+      ? "animate-coach-hop"
       : "animate-emote-enter";
 
   const bar = (cur: number, req: number) => Math.min(100, Math.round((cur / Math.max(1, req)) * 100));
@@ -227,14 +228,15 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
           className="flex w-full items-start gap-2.5 p-4 text-left active:scale-[0.99]"
         >
           {/* key 를 표정에 걸어 표정이 바뀌면 등장 모션을 다시 재생한다 */}
-          <img
-            key={coachFace}
-            src={`/assets/mascot/${coachFace}.png`}
-            alt=""
-            aria-hidden="true"
-            className={`shrink-0 object-contain ${coachMotion} ${collapsed ? "h-10 w-10" : "h-16 w-16"}`}
-            onError={(e) => { e.currentTarget.style.display = "none"; }}
-          />
+          <span key={coachFace} className={`shrink-0 ${coachMotion}`}>
+            <img
+              src={`/assets/mascot/${coachFace}.png`}
+              alt=""
+              aria-hidden="true"
+              className={`object-contain ${entered && !cheer ? "animate-coach-float" : ""} ${collapsed ? "h-10 w-10" : "h-[72px] w-[72px]"}`}
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+            />
+          </span>
           {/* 말풍선 — 왼쪽에 꼬리. 캐릭터가 뛰어든 뒤 0.28s 후 톡 열린다 */}
           <div
             key={`${coachFace}-bubble`}
