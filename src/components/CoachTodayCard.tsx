@@ -70,6 +70,23 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     },
   });
 
+  // 브로제이(얼굴인식) 출입 — 문을 통과하면 QR 없이도 "도착"으로 인정해 표시한다.
+  // XP 는 여기서 주지 않는다. QR 을 찍어야 받는다(checkedInToday).
+  const { data: arrivedAt } = useQuery({
+    queryKey: ["today-arrival", user?.id],
+    enabled: !!user?.id,
+    staleTime: 60_000,
+    queryFn: async (): Promise<string | null> => {
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("attendance_logs").select("checked_in_at")
+        .eq("user_id", user!.id).eq("method", "broj")
+        .gte("checked_in_at", start.toISOString())
+        .order("checked_in_at", { ascending: true }).limit(1);
+      return data?.[0]?.checked_in_at ?? null;
+    },
+  });
+
   const { data: todaySession } = useQuery({
     queryKey: ["today-session-done", user?.id],
     enabled: !!user?.id,
@@ -115,16 +132,23 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
   const isPending = reviewStatus === "pending";
   const canLevelUp = !!cycle?.meets;
 
+  // 브로제이 도착 시각 (오후 7:12 형태)
+  const arrivalLabel = arrivedAt
+    ? new Date(arrivedAt).toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit" })
+    : null;
+
   // ── 오늘의 코스 3단계 ──
   const steps = [
     {
       n: 1,
-      title: "체육관에서 QR 체크인",
-      desc: "체크인해야 오늘 훈련이 기록돼요",
+      title: arrivalLabel && !checkedInToday ? "체육관 도착!" : "체육관에서 QR 체크인",
+      desc: arrivalLabel
+        ? `${arrivalLabel} 입장${checkedInToday ? "" : " — QR 찍으면 XP 받아요"}`
+        : "체크인해야 오늘 훈련이 기록돼요",
       icon: QrCode,
       done: !!checkedInToday,
       action: null as null | (() => void),
-      actionLabel: "홈 화면 QR 버튼에서 스캔",
+      actionLabel: arrivalLabel ? "홈 화면 QR 버튼에서 스캔하면 +10 XP" : "홈 화면 QR 버튼에서 스캔",
     },
     {
       n: 2,
@@ -146,42 +170,63 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     },
   ];
   const currentStep = steps.find((s) => !s.done) ?? null;
+  const doneSteps = steps.filter((s) => s.done).length;
+
+  // 상황별 오삼 코치 표정 + 한마디 (듀오링고식 말풍선)
+  const coach = isPending
+    ? { face: "osami_shy", line: "심사 신청 완료! 조금만 기다려요" }
+    : canLevelUp
+      ? { face: "osami_victory", line: "조건 달성! 레벨업 신청하세요" }
+      : !currentStep
+        ? { face: "osami_happy", line: "오늘 코스 완료! 잘하셨어요" }
+        : doneSteps === 0
+          ? { face: "osami_smile", line: "오늘도 시작해볼까요? 1번부터예요" }
+          : { face: "osami_determined", line: `${currentStep.n}번만 하면 오늘 끝이에요` };
 
   const bar = (cur: number, req: number) => Math.min(100, Math.round((cur / Math.max(1, req)) * 100));
   const c = cycle;
 
   return (
     <div className="space-y-3">
-      {/* ── 오삼 코치 헤더 ── */}
-      <div className="overflow-hidden rounded-3xl border-2 border-primary/30 bg-gradient-to-b from-primary/10 to-card shadow-elev-1">
-        <div className="flex items-center gap-3 p-4">
+      {/* ── 오삼 코치 헤더 (말풍선) ── */}
+      <div className="overflow-hidden rounded-3xl border-2 border-primary/30 bg-card shadow-elev-1">
+        <button
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? "오늘의 코스 펼치기" : "오늘의 코스 접기"}
+          aria-expanded={!collapsed}
+          className="flex w-full items-start gap-2.5 p-4 text-left active:scale-[0.99]"
+        >
           <img
-            src="/assets/mascot/osami_smile.png"
-            alt="오삼 코치"
-            className="h-12 w-12 shrink-0 object-contain"
+            src={`/assets/mascot/${coach.face}.png`}
+            alt=""
+            aria-hidden="true"
+            className={`shrink-0 object-contain transition-all ${collapsed ? "h-10 w-10" : "h-16 w-16"}`}
             onError={(e) => { e.currentTarget.style.display = "none"; }}
           />
-          <div className="min-w-0 flex-1">
+          {/* 말풍선 — 왼쪽에 꼬리 */}
+          <div className="relative min-w-0 flex-1 rounded-2xl border border-border bg-muted/40 px-3 py-2.5">
+            <span className="absolute -left-[5px] top-5 h-2.5 w-2.5 rotate-45 border-b border-l border-border bg-muted/40" />
             <p className="text-[11px] font-black tracking-wide text-primary">오삼 코치</p>
-            <p className="text-[15px] font-black leading-tight text-foreground">
-              {isPending ? "심사 신청 완료! 조금만 기다려요"
-                : canLevelUp ? "조건 달성! 레벨업 신청하세요 🎉"
-                : currentStep ? `오늘은 ${currentStep.n}번부터 하면 돼요`
-                : "오늘 코스 완료! 잘하셨어요 👏"}
-            </p>
+            <p className="mt-0.5 text-[15px] font-black leading-snug text-foreground">{coach.line}</p>
           </div>
-          <button
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? "코스 펼치기" : "코스 접기"}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground active:scale-90"
-          >
-            <ChevronDown className={`h-4 w-4 transition-transform ${collapsed ? "" : "rotate-180"}`} />
-          </button>
-        </div>
+          <ChevronDown
+            className={`mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform ${collapsed ? "" : "rotate-180"}`}
+          />
+        </button>
 
         {/* ── 오늘의 코스 1·2·3 ── */}
         {!collapsed && (
           <div className="space-y-2 px-4 pb-4">
+            {/* 오늘 진행도 */}
+            <div className="mb-1 flex items-center gap-2.5">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-status-complete transition-all duration-500"
+                  style={{ width: `${(doneSteps / steps.length) * 100}%` }}
+                />
+              </div>
+              <span className="text-[11px] font-black text-muted-foreground">{doneSteps}/{steps.length}</span>
+            </div>
             {steps.map((s) => {
               const isCurrent = currentStep?.n === s.n && !isPending && !canLevelUp;
               const Icon = s.icon;
@@ -209,8 +254,14 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
                       {s.done ? <CheckCircle2 className="h-5 w-5" /> : s.n}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className={`text-[13px] font-black ${s.done ? "text-status-complete" : "text-foreground"}`}>
+                      <p className={`flex items-center gap-1.5 text-[13px] font-black ${s.done ? "text-status-complete" : "text-foreground"}`}>
                         {s.title}
+                        {/* 얼굴인식으로 이미 들어온 상태 — QR 만 남았다는 표시 */}
+                        {s.n === 1 && !!arrivalLabel && !s.done && (
+                          <span className="rounded-full bg-status-complete/15 px-1.5 py-0.5 text-[10px] font-black text-status-complete">
+                            도착 확인
+                          </span>
+                        )}
                       </p>
                       <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{s.desc}</p>
                     </div>
