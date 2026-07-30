@@ -72,15 +72,13 @@ const CheckinBoardPage = () => {
   // Reset active sessions
   const handleResetActiveSessions = async () => {
     if (!activeBranch) return;
-    const { error } = await supabase
-      .from("activity_sessions")
-      .update({ status: "auto_ended", ended_at: new Date().toISOString() })
-      .eq("branch_name", activeBranch)
-      .eq("status", "active");
+    // RPC 경유 — 직접 UPDATE 는 RLS(본인·super_admin만)에 걸려 branch_manager 가 0행 무음 실패
+    // + "완료" 거짓 토스트를 띄우던 문제. 실제 종료 건수로 화면 갱신.
+    const { data, error } = await (supabase.rpc as any)("reset_active_sessions", { _branch_name: activeBranch });
     if (error) {
-      toast.error("초기화 실패");
+      toast.error(error.message?.includes("authorized") ? "권한이 없습니다" : "초기화 실패");
     } else {
-      toast.success("현재 활동 중 초기화 완료");
+      toast.success(`현재 활동 중 초기화 완료 (${Number(data) || 0}명)`);
       setActiveSessions(0);
     }
   };

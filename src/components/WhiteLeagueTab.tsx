@@ -40,7 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SparringConsentModal from "@/components/SparringConsentModal";
 
 type LevelState = "complete" | "active" | "locked";
-type DetailView = null | { league: string; level: number };
+type DetailView = null | { league: string; level: number; intent?: "session" };
 
 const INTENSITY_STYLE: Record<string, string> = {
   "가볍게": "bg-status-complete/10 text-status-complete",
@@ -84,7 +84,7 @@ const WhiteLeagueTab = () => {
   const activeLeague = expandedLeague ?? currentRank;
 
   if (detailView) {
-    return <UnifiedLevelDetailView league={detailView.league} levelNum={detailView.level} onBack={() => setDetailView(null)} />;
+    return <UnifiedLevelDetailView key={`${detailView.league}-${detailView.level}`} league={detailView.league} levelNum={detailView.level} autoStart={detailView.intent === "session"} onBack={() => setDetailView(null)} />;
   }
 
   return (
@@ -94,7 +94,7 @@ const WhiteLeagueTab = () => {
         league={currentRank}
         levelNumber={currentLevel}
         levelTitle={getLevelById(currentRank, currentLevel)?.title ?? ""}
-        onStartSession={() => setDetailView({ league: currentRank, level: currentLevel })}
+        onStartSession={() => setDetailView({ league: currentRank, level: currentLevel, intent: "session" })}
         onOpenDetail={() => setDetailView({ league: currentRank, level: currentLevel })}
         onOpenVideos={() => setDetailView({ league: currentRank, level: currentLevel })}
       />
@@ -226,7 +226,7 @@ const WhiteLeagueTab = () => {
    Unified Level Detail View — 40레벨 3탭 구조
    배우기 / 수업실행 / 심사
    ═══════════════════════════════════════════════════════ */
-const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; levelNum: number; onBack: () => void }) => {
+const UnifiedLevelDetailView = ({ league, levelNum, onBack, autoStart = false }: { league: string; levelNum: number; onBack: () => void; autoStart?: boolean }) => {
   const ul = getLevelById(league, levelNum);
   const { user, progress, role, profile } = useAuth();
   const { data: myCharacter } = useMemberCharacterAssignment(user?.id);
@@ -237,7 +237,8 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   const [showChecklist, setShowChecklist] = useState(false);
   const [showCurriculumReview, setShowCurriculumReview] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
-  const [showSession, setShowSession] = useState(false);
+  // autoStart: 메인 화면 "수업 시작" 버튼의 의도 전달 — 상세를 거치지 않고 바로 세션 러너를 연다(이중 퍼널 해소)
+  const [showSession, setShowSession] = useState(autoStart);
   const checklist = getChecklistForLevel(`${league}-${levelNum}`);
   const [checkResults, setCheckResults] = useState<boolean[]>(checklist.map(() => false));
 
@@ -352,7 +353,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           league={league}
           levelNumber={levelNum}
           levelTitle={ul.title}
-          onStartSession={() => setShowSession(true)}
+          onStartSession={() => (sessionBlocks ? setShowSession(true) : (setDetailMode(true), setActiveSection("session")))}
           onOpenDetail={() => { setDetailMode(true); setActiveSection("video"); }}
           onOpenVideos={() => { setDetailMode(true); setActiveSection("video"); }}
         />

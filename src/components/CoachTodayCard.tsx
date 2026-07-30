@@ -70,6 +70,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     queryKey: ["today-checkin", user?.id],
     enabled: !!user?.id,
     staleTime: 60_000,
+    refetchOnMount: "always", // 홈에서 QR 찍고 넘어와도 즉시 최신 (탭 재진입 시 항상 재조회)
     queryFn: async () => {
       // method='qr' 만 인정 — 브로제이 출입(method='broj')은 라이브보드 표시용이고
       // XP 는 앱에서 QR 을 찍어야 지급되므로 1번 스텝 완료로 치지 않는다.
@@ -87,6 +88,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     queryKey: ["today-arrival", user?.id],
     enabled: !!user?.id,
     staleTime: 60_000,
+    refetchOnMount: "always", // 홈에서 QR 찍고 넘어와도 즉시 최신 (탭 재진입 시 항상 재조회)
     queryFn: async (): Promise<string | null> => {
       const { data } = await supabase
         .from("attendance_logs").select("checked_in_at")
@@ -101,6 +103,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     queryKey: ["today-session-done", user?.id],
     enabled: !!user?.id,
     staleTime: 60_000,
+    refetchOnMount: "always", // 홈에서 QR 찍고 넘어와도 즉시 최신 (탭 재진입 시 항상 재조회)
     queryFn: async () => {
       const { data } = await supabase
         .from("activity_sessions").select("id")

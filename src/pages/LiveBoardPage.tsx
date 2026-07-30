@@ -194,14 +194,8 @@ const LiveBoardPage = () => {
     if (!branchName) return;
 
     // Auto-end stale sessions (>60 minutes old)
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    await supabase
-      .from("activity_sessions")
-      .update({ status: "auto_ended", ended_at: new Date().toISOString() })
-      .eq("branch_name", branchName)
-      .eq("status", "active")
-      .is("ended_at", null)
-      .lt("started_at", oneHourAgo);
+    // ⚠️ RPC 경유 — 직접 UPDATE 는 RLS(본인·super_admin만)에 걸려 비로그인 TV 에서 0행 무음 실패했다.
+    await (supabase.rpc as any)("end_stale_sessions", { _branch_name: branchName });
 
     const { data: activeSessions } = await supabase
       .from("activity_sessions")
@@ -540,12 +534,9 @@ const LiveBoardPage = () => {
       setMockMembers((prev) => prev.filter((m) => m.id !== sessionId));
       return;
     }
-    const { error } = await supabase
-      .from("activity_sessions")
-      .update({ status: "force_ended", ended_at: new Date().toISOString() })
-      .eq("id", sessionId);
-    if (error) {
-      toast.error("퇴장 처리 실패");
+    const { data, error } = await (supabase.rpc as any)("force_end_session", { _session_id: sessionId });
+    if (error || !data?.success) {
+      toast.error(error?.message?.includes("authorized") ? "권한이 없습니다 (관리자 로그인 필요)" : "퇴장 처리 실패");
     } else {
       toast.success(`${memberName} 퇴장 처리 완료`);
       loadActivitySessions();
@@ -587,15 +578,11 @@ const LiveBoardPage = () => {
   // Reset all active sessions for this branch (admin tool)
   const handleResetActiveSessions = async () => {
     if (!branchName) return;
-    const { error } = await supabase
-      .from("activity_sessions")
-      .update({ status: "auto_ended", ended_at: new Date().toISOString() })
-      .eq("branch_name", branchName)
-      .eq("status", "active");
+    const { data, error } = await (supabase.rpc as any)("reset_active_sessions", { _branch_name: branchName });
     if (error) {
-      toast.error("초기화 실패");
+      toast.error(error.message?.includes("authorized") ? "권한이 없습니다 (관리자 로그인 필요)" : "초기화 실패");
     } else {
-      toast.success("현재 활동 중 초기화 완료");
+      toast.success(`현재 활동 중 초기화 완료 (${Number(data) || 0}명)`);
       loadActivitySessions();
     }
   };
