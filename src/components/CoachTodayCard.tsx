@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLevelVideos, useWatchedVideos, parseVideoTitle, youtubeThumb, youtubeId } from "@/hooks/useLevelVideos";
+import { useLevelVideos, useWatchedVideos, parseVideoTitle, youtubeId } from "@/hooks/useLevelVideos";
 import { toast } from "sonner";
 import { RANK_LABELS } from "@/data/sharedConstants";
 
@@ -32,20 +32,27 @@ const COURSE_KEY = "153_course_collapsed";
 // qr.js(359KB)는 모달을 열 때만 내려받도록 lazy 유지.
 const QRScannerModal = lazy(() => import("@/components/QRScannerModal"));
 
+// KST 자정 (기기 타임존과 무관) — 해외폰에서도 '오늘' 판정이 체육관 기준과 일치해야 한다.
+const kstDayStartIso = () => {
+  const kstMs = Date.now() + 9 * 3600 * 1000;
+  return new Date(Math.floor(kstMs / 86400000) * 86400000 - 9 * 3600 * 1000).toISOString();
+};
+
+const safeGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
+const safeSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* 프라이빗 모드 등 */ } };
+
 const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpenDetail, onOpenVideos }: Props) => {
-  const { user, profile } = useAuth();
+  const { user, refreshProgress } = useAuth();
   const qc = useQueryClient();
   const [playing, setPlaying] = useState<{ id: string; url: string; title: string } | null>(null);
   const [showQR, setShowQR] = useState(false);
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COURSE_KEY) === "1");
-  const { data: videos = [] } = useLevelVideos(league, levelNumber);
+  const [collapsed, setCollapsed] = useState(() => safeGet(COURSE_KEY) === "1");
+  const { data: videos = [], isFetched: videosFetched } = useLevelVideos(league, levelNumber);
   const { watched, toggle, countFor } = useWatchedVideos();
 
   const toggleCollapsed = () => {
-    setCollapsed((v) => {
-      localStorage.setItem(COURSE_KEY, v ? "0" : "1");
-      return !v;
-    });
+    safeSet(COURSE_KEY, collapsed ? "0" : "1");
+    setCollapsed((v) => !v);
   };
 
   const { data: cycle } = useQuery({
@@ -59,18 +66,17 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     },
   });
 
-  const { data: checkedInToday } = useQuery({
+  const { data: checkedInToday, isFetched: checkinFetched } = useQuery({
     queryKey: ["today-checkin", user?.id],
     enabled: !!user?.id,
     staleTime: 60_000,
     queryFn: async () => {
-      const start = new Date(); start.setHours(0, 0, 0, 0);
       // method='qr' 만 인정 — 브로제이 출입(method='broj')은 라이브보드 표시용이고
       // XP 는 앱에서 QR 을 찍어야 지급되므로 1번 스텝 완료로 치지 않는다.
       const { data } = await supabase
         .from("attendance_logs").select("id")
         .eq("user_id", user!.id).eq("is_duplicate", false).eq("method", "qr")
-        .gte("checked_in_at", start.toISOString()).limit(1);
+        .gte("checked_in_at", kstDayStartIso()).limit(1);
       return (data?.length ?? 0) > 0;
     },
   });
@@ -82,26 +88,24 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     enabled: !!user?.id,
     staleTime: 60_000,
     queryFn: async (): Promise<string | null> => {
-      const start = new Date(); start.setHours(0, 0, 0, 0);
       const { data } = await supabase
         .from("attendance_logs").select("checked_in_at")
         .eq("user_id", user!.id).eq("method", "broj")
-        .gte("checked_in_at", start.toISOString())
+        .gte("checked_in_at", kstDayStartIso())
         .order("checked_in_at", { ascending: true }).limit(1);
       return data?.[0]?.checked_in_at ?? null;
     },
   });
 
-  const { data: todaySession } = useQuery({
+  const { data: todaySession, isFetched: sessionFetched } = useQuery({
     queryKey: ["today-session-done", user?.id],
     enabled: !!user?.id,
     staleTime: 60_000,
     queryFn: async () => {
-      const start = new Date(); start.setHours(0, 0, 0, 0);
       const { data } = await supabase
         .from("activity_sessions").select("id")
         .eq("user_id", user!.id).eq("status", "completed")
-        .gte("started_at", start.toISOString()).limit(1);
+        .gte("started_at", kstDayStartIso()).limit(1);
       return (data?.length ?? 0) > 0;
     },
   });
@@ -133,7 +137,9 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
 
   const doneCount = countFor(videos.map((v) => v.id));
   const nextVideo = useMemo(() => videos.find((v) => !watched[v.id]) ?? null, [videos, watched]);
-  const videoDone = videos.length > 0 && doneCount >= videos.length;
+  // 영상이 없는 레벨(블루·레드·블랙 다수)은 2번 스텝을 완료로 간주 — 교착 방지.
+  // videosFetched 전에는 미완료로 두어 로딩 플래시를 막는다.
+  const videoDone = videosFetched && (videos.length === 0 || doneCount >= videos.length);
   const isPending = reviewStatus === "pending";
   const canLevelUp = !!cycle?.meets;
 
@@ -147,9 +153,11 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     {
       n: 1,
       title: arrivalLabel && !checkedInToday ? "체육관 도착!" : "체육관에서 QR 체크인",
-      desc: arrivalLabel
-        ? `${arrivalLabel} 입장${checkedInToday ? "" : " — QR 찍으면 XP 받아요"}`
-        : "체크인해야 오늘 훈련이 기록돼요",
+      desc: checkedInToday
+        ? (arrivalLabel ? `${arrivalLabel} 입장 · 체크인 완료` : "체크인 완료")
+        : arrivalLabel
+          ? `${arrivalLabel} 입장 — QR 찍으면 XP 받아요`
+          : "체크인해야 오늘 훈련이 기록돼요",
       icon: QrCode,
       done: !!checkedInToday,
       action: (() => setShowQR(true)) as null | (() => void),
@@ -158,7 +166,11 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     {
       n: 2,
       title: videos.length > 0 ? `오늘의 영상 보기 (${doneCount}/${videos.length})` : "오늘의 영상 보기",
-      desc: nextVideo ? parseVideoTitle(nextVideo.title).name : "이번 레벨 영상을 모두 봤어요",
+      desc: nextVideo
+        ? parseVideoTitle(nextVideo.title).name
+        : videos.length === 0
+          ? "이 레벨은 영상 없이 진행해요"
+          : "이번 레벨 영상을 모두 봤어요",
       icon: Play,
       done: videoDone,
       action: () => (nextVideo ? setPlaying({ id: nextVideo.id, url: nextVideo.videoUrl, title: nextVideo.title }) : onOpenVideos()),
@@ -186,7 +198,9 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
         ? { face: "osami_happy", line: "오늘 코스 완료! 잘하셨어요" }
         : doneSteps === 0
           ? { face: "osami_smile", line: "오늘도 시작해볼까요? 1번부터예요" }
-          : { face: "osami_determined", line: `${currentStep.n}번만 하면 오늘 끝이에요` };
+          : doneSteps === steps.length - 1
+            ? { face: "osami_determined", line: `${currentStep.n}번만 하면 오늘 끝이에요` }
+            : { face: "osami_determined", line: `잘하고 있어요! 다음은 ${currentStep.n}번이에요` };
 
   // ── 캐릭터 모션 ──
   // 등장(emote-enter 0.7s) → 끝나면 상시 대기(emote-idle 무한). 표정이 바뀌면 다시 등장.
@@ -202,7 +216,14 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     return () => clearTimeout(t);
   }, [coachFace]);
 
+  const queriesReady = checkinFetched && videosFetched && sessionFetched;
   useEffect(() => {
+    // 콜드 로드(이미 완료한 날 재접속)에서는 축하 펀치를 치지 않는다 —
+    // 쿼리가 다 도착하기 전 doneSteps 0→3 점프는 '방금 완료'가 아니다.
+    if (!queriesReady) {
+      prevDone.current = doneSteps;
+      return;
+    }
     if (doneSteps > prevDone.current && doneSteps === steps.length) {
       setCheer(true);
       const t = setTimeout(() => setCheer(false), 700);
@@ -210,7 +231,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
       return () => clearTimeout(t);
     }
     prevDone.current = doneSteps;
-  }, [doneSteps, steps.length]);
+    setCheer(false);
+  }, [doneSteps, steps.length, queriesReady]);
 
   // 바깥 span = 등장 → 주기적 점프(또는 축하 펀치). 안쪽 img = 상시 둥실.
   const coachMotion = cheer
@@ -270,7 +292,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
               <span className="text-[11px] font-black text-muted-foreground">{doneSteps}/{steps.length}</span>
             </div>
             {steps.map((s) => {
-              const isCurrent = currentStep?.n === s.n && !isPending && !canLevelUp;
+              const isCurrent = currentStep?.n === s.n; // 심사 대기·레벨업 가능 중에도 일일 코스 버튼은 유지
               const Icon = s.icon;
               return (
                 <div
@@ -435,6 +457,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
             onClose={() => setShowQR(false)}
             onSuccess={(r) => {
               setShowQR(false);
+              if (!r.is_duplicate) refreshProgress(); // XP 바·레벨은 AuthContext 상태라 직접 갱신
               qc.invalidateQueries({ queryKey: ["today-checkin"] });
               qc.invalidateQueries({ queryKey: ["today-arrival"] });
               qc.invalidateQueries({ queryKey: ["member-progress"] });

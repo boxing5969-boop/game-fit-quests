@@ -97,12 +97,15 @@ Deno.serve(async (req) => {
     // 5. Attendance: duplicate check only affects XP
     const now = new Date();
     const nowIso = now.toISOString();
-    const todayStart = new Date(now);
-    todayStart.setHours(0, 0, 0, 0);
+    // ⚠️ '오늘' 은 KST 자정 기준. (이전: 서버(UTC) 자정 = KST 09:00 — 새벽 회원 XP 박탈/이중지급 원인)
+    const kstMs = now.getTime() + 9 * 3600 * 1000;
+    const todayStart = new Date(Math.floor(kstMs / 86400000) * 86400000 - 9 * 3600 * 1000);
+    // ⚠️ method='qr' 만 중복 판정에 사용 — 브로제이 출입(method='broj')·앱 세션 기록(method='app')이
+    //    있어도 그날 첫 QR 은 정상 XP 를 받아야 한다 ("QR 찍으면 +10 XP" 약속).
     const { data: existingToday } = await supabaseAdmin
       .from("attendance_logs").select("id")
       .eq("user_id", user.id).eq("branch_name", qrToken.branch_name)
-      .eq("is_duplicate", false)
+      .eq("is_duplicate", false).eq("method", "qr")
       .gte("checked_in_at", todayStart.toISOString()).limit(1);
 
     const isDuplicate = !!(existingToday && existingToday.length > 0);
@@ -195,6 +198,17 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "체크인 처리 중 오류가 발생했습니다", code: "INSERT_FAILED" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // 7-a. 같은 날 먼저 들어온 브로제이 출입 행은 중복 표시로 강등 —
+    //      QR 행이 그날의 대표 기록이 되고, 라이브보드·통계의 하루 2건 카운트를 막는다.
+    if (!isDuplicate) {
+      await supabaseAdmin
+        .from("attendance_logs")
+        .update({ is_duplicate: true })
+        .eq("user_id", user.id).eq("branch_name", qrToken.branch_name)
+        .eq("method", "broj").eq("is_duplicate", false)
+        .gte("checked_in_at", todayStart.toISOString());
     }
 
     // 7. Grant XP if first checkin today

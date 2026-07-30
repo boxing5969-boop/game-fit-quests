@@ -746,14 +746,14 @@ html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: va
    transform 이 겹치면 덮어써지므로 반드시 다른 요소에 나눠 건다. */
 @keyframes coach-float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  50%      { transform: translateY(-7px) rotate(-2.5deg); }
+  50%      { transform: translateY(-5px) rotate(-2.5deg); }
 }
 .animate-coach-float { animation: coach-float 2s ease-in-out infinite; }
 
 @keyframes coach-hop {
   0%, 68%  { transform: translateY(0) scale(1, 1); }
   73%      { transform: translateY(2px) scale(1.1, 0.88); }
-  82%      { transform: translateY(-16px) scale(0.92, 1.12); }
+  82%      { transform: translateY(-10px) scale(0.92, 1.12); }
   90%      { transform: translateY(0) scale(1.06, 0.95); }
   96%      { transform: translateY(-3px) scale(0.98, 1.02); }
   100%     { transform: translateY(0) scale(1, 1); }

@@ -29,16 +29,16 @@ function kstDate(offsetDays = 0): string {
   return t.toISOString().slice(0, 10);
 }
 
-/** 표시명 — branch_display_settings.display_name_mode 규약을 따른다 */
+/** 표시명 — qr-checkin 과 동일 규칙(첫 글자 + O 반복)으로 통일. 빈 이름은 "회원" 폴백. */
 function displayName(mode: string, nickname: string | null, name: string | null): string {
   const nm = (name ?? "").trim();
-  if (mode === "full_name") return nm || (nickname ?? "").trim();
+  const nick = (nickname ?? "").trim();
   if (mode === "masked_name") {
-    if (nm.length <= 1) return nm;
-    if (nm.length === 2) return nm[0] + "*";
-    return nm[0] + "*".repeat(nm.length - 2) + nm[nm.length - 1];
+    const n = nm || nick || "회원";
+    return n.length <= 1 ? n : n[0] + "O".repeat(n.length - 1);
   }
-  return (nickname ?? "").trim() || nm; // 기본: nickname
+  if (mode === "full_name") return nm || nick || "회원";
+  return nick || nm || "회원"; // 기본: nickname
 }
 
 Deno.serve(async (req) => {
@@ -70,22 +70,27 @@ Deno.serve(async (req) => {
     const os = createClient(OS_URL, OS_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
     // 2) CRM 출입 이력 조회 (지점명 필요 → branches 조인)
-    const { data: osRows, error: osErr } = await os
-      .from("attendance_logs")
-      .select("broj_attendance_id, phone, member_name, attended_at, attend_date, branches!inner(name)")
-      .gte("attend_date", from).lte("attend_date", to)
-      .order("attended_at", { ascending: true })
-      .limit(2000);
-    if (osErr) {
-      await app.from("broj_checkin_runs").insert({ ok: false, error: "OS 조회 실패: " + osErr.message });
-      return json({ error: "OS 조회 실패" }, 502);
-    }
-
+    //    ⚠️ 단일 limit 은 백필(days=30)에서 조용히 잘린다 → 1000행 페이지 루프로 전량 수집.
     type OsRow = {
       broj_attendance_id: string; phone: string | null; member_name: string | null;
       attended_at: string; attend_date: string; branches: { name: string } | { name: string }[] | null;
     };
-    const rows = (osRows || []) as unknown as OsRow[];
+    const rows: OsRow[] = [];
+    for (let off = 0; off < 20000; off += 1000) {
+      const { data: page, error: osErr } = await os
+        .from("attendance_logs")
+        .select("broj_attendance_id, phone, member_name, attended_at, attend_date, branches!inner(name)")
+        .gte("attend_date", from).lte("attend_date", to)
+        .order("attended_at", { ascending: true })
+        .range(off, off + 999);
+      if (osErr) {
+        await app.from("broj_checkin_runs").insert({ ok: false, error: "OS 조회 실패: " + osErr.message });
+        return json({ error: "OS 조회 실패" }, 502);
+      }
+      const list = (page || []) as unknown as OsRow[];
+      rows.push(...list);
+      if (list.length < 1000) break;
+    }
     const branchOf = (r: OsRow) => {
       const b = Array.isArray(r.branches) ? r.branches[0] : r.branches;
       const raw = (b?.name ?? "").trim();

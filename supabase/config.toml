@@ -3,3 +3,11 @@ project_id = "whnczhxyjmyywhlfbgsd"
 # 결제선생 결제 승인 콜백 — 결제선생 서버가 JWT 없이 호출하므로 공개(자체 apiKey 검증).
 [functions.payssam-callback]
 verify_jwt = false
+
+# 크론(pg_cron → net.http_post)이 JWT 없이 x-auto-key 로 호출하는 내부 함수들 —
+# CLI/CI 재배포 시 verify_jwt 기본값(true)이 적용되면 무음 정지하므로 명시한다.
+[functions.auto-sync-members]
+verify_jwt = false
+
+[functions.sync-broj-checkins]
+verify_jwt = false

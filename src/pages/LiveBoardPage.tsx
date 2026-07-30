@@ -473,13 +473,21 @@ const LiveBoardPage = () => {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "attendance_logs", filter: `branch_name=eq.${branchName}` },
         (payload) => {
           const n = payload.new as any;
+          // 백필·과거 데이터 가드: 중복 표시 행이거나 KST 오늘이 아니면 무시 —
+          // 과거 30일 백필이 TV 에 팝업 폭풍·시각 회귀를 일으키는 것을 막는다.
+          if (n.is_duplicate) return;
+          const kstMs = Date.now() + 9 * 3600 * 1000;
+          const kstDayStart = Math.floor(kstMs / 86400000) * 86400000 - 9 * 3600 * 1000;
+          const t = new Date(n.checked_in_at).getTime();
+          if (!Number.isFinite(t) || t < kstDayStart) return;
           const event: CheckinEvent = { id: n.id, display_name_snapshot: n.display_name_snapshot, league_snapshot: n.league_snapshot, level_snapshot: n.level_snapshot, checked_in_at: n.checked_in_at, user_id: n.user_id };
           getAvatarUrl(n.user_id);
           // Update daily visits (deduplicated)
           setDailyVisits(prev => {
             const exists = prev.find(v => v.user_id === n.user_id);
             if (exists) {
-              // Update last checkin time
+              // 최신 시각일 때만 갱신 — 늦게 도착한 과거 행이 시각을 되돌리지 않게
+              if (new Date(exists.last_checkin_at).getTime() >= t) return prev;
               return prev.map(v => v.user_id === n.user_id ? { ...v, last_checkin_at: n.checked_in_at, display_name: n.display_name_snapshot, league: n.league_snapshot, level: n.level_snapshot } : v);
             }
             return [{ user_id: n.user_id, display_name: n.display_name_snapshot, league: n.league_snapshot, level: n.level_snapshot, last_checkin_at: n.checked_in_at }, ...prev];

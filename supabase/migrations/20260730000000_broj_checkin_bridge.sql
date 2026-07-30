@@ -65,7 +65,7 @@ SELECT cron.schedule('sync-broj-checkins', '*/10 * * * *', $job$
       'Content-Type', 'application/json',
       'x-auto-key', (SELECT value FROM public.internal_sync_config WHERE key = 'auto_sync_key')
     ),
-    body := jsonb_build_object('days', 1),
+    body := jsonb_build_object('days', 2),  -- 2일 창: 어제분(00:05 CRM 유입)도 포착
     timeout_milliseconds := 120000
   );
 $job$);
