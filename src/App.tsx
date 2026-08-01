@@ -78,6 +78,7 @@ const AboutOneFiveThreePage = lazy(() => import("@/pages/AboutOneFiveThreePage")
 const DietCoachInboxPage = lazy(() => import("@/pages/diet/coach/DietCoachInboxPage"));
 const DietMemberDetailPage = lazy(() => import("@/pages/diet/coach/DietMemberDetailPage"));
 const LiveBoardPage = lazy(() => import("@/pages/LiveBoardPage"));
+const FaceKioskPage = lazy(() => import("@/pages/FaceKioskPage"));
 const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdminDashboard"));
 // 153마인드셋 — 시각화 훈련 (153복싱짐으로 돌아온 사람).
 //
@@ -274,6 +275,7 @@ const AppRoutes = () => {
         <Route path="/routine-builder" element={<ProtectedRoute><ManagerRoute><RoutineBuilderPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/routines" element={<ProtectedRoute><RoutinesPage /></ProtectedRoute>} />
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
+        <Route path="/face-kiosk/:branchCode" element={<FaceKioskPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       </Suspense>
