@@ -411,6 +411,9 @@ const FaceKioskPage = () => {
 };
 
 // ── 등록 시트 ──
+// FC-5: 실회원 등록 확대 — 실시간 얼굴 감지 피드백 + 3샷 각도 가이드 + 생체정보 동의 고지 강화
+const SHOT_GUIDES = ["1/3 · 정면을 바라봐 주세요", "2/3 · 고개를 살짝 왼쪽으로", "3/3 · 고개를 살짝 오른쪽으로"];
+
 const EnrollSheet = ({ osApi, video, onDone, onClose }: {
   osApi: (path: string, b: Record<string, unknown>) => Promise<{ status: number; json: any }>;
   video: React.RefObject<HTMLVideoElement>;
@@ -422,8 +425,28 @@ const EnrollSheet = ({ osApi, video, onDone, onClose }: {
   const [consent, setConsent] = useState(false);
   const [msg, setMsg] = useState("");
   const [shots, setShots] = useState(0);
+  const [faceOk, setFaceOk] = useState(false);
+  const [capturing, setCapturing] = useState(false);
   const embsRef = useRef<number[][]>([]);
   const [saving, setSaving] = useState(false);
+
+  // 회원 선택 후: 가벼운 탐지(디텍터만, 160px)로 "얼굴 잡힘" 상태를 실시간 표시
+  useEffect(() => {
+    if (!member) return;
+    const fa = (window as any).faceapi;
+    let alive = true;
+    const t = setInterval(async () => {
+      if (!alive || !video.current || video.current.readyState < 2) return;
+      try {
+        const det = await fa.detectSingleFace(
+          video.current,
+          new fa.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 })
+        );
+        if (alive) setFaceOk(!!det);
+      } catch { /* 프레임 스킵 */ }
+    }, 500);
+    return () => { alive = false; clearInterval(t); };
+  }, [member, video]);
 
   const lookup = async () => {
     setMsg("조회 중…");
@@ -434,15 +457,18 @@ const EnrollSheet = ({ osApi, video, onDone, onClose }: {
 
   const capture = async () => {
     const fa = (window as any).faceapi;
-    if (!video.current) return;
-    setMsg("촬영 중… 카메라를 봐주세요");
+    if (!video.current || capturing) return;
+    setCapturing(true);
+    setMsg("촬영 중… 그대로 계세요");
     const det = await fa
       .detectSingleFace(video.current, new fa.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
       .withFaceLandmarks().withFaceDescriptor();
-    if (!det?.descriptor) { setMsg("얼굴을 찾지 못했어요 — 정면을 봐주세요"); return; }
+    setCapturing(false);
+    if (!det?.descriptor) { setMsg("얼굴을 찾지 못했어요 — 화면 중앙에 정면으로 서주세요"); return; }
     embsRef.current.push(Array.from(det.descriptor as Float32Array));
-    setShots(embsRef.current.length);
-    setMsg(embsRef.current.length >= 3 ? "충분해요! 저장을 눌러주세요" : "좋아요, 각도를 살짝 바꿔 한 번 더");
+    const n = embsRef.current.length;
+    setShots(n);
+    setMsg(n >= 3 ? "충분해요! 저장을 눌러주세요" : SHOT_GUIDES[Math.min(n, 2)]);
   };
 
   const save = async () => {
@@ -450,7 +476,7 @@ const EnrollSheet = ({ osApi, video, onDone, onClose }: {
     setSaving(true);
     const { json } = await osApi("enroll", { member_id: member.user_id, embeddings: embsRef.current, consent });
     setSaving(false);
-    if (json?.success) { setMsg("등록 완료!"); setTimeout(onDone, 800); }
+    if (json?.success) { setMsg("등록 완료! 이제 얼굴만 보이면 자동 출석돼요"); setTimeout(onDone, 1200); }
     else setMsg(json?.error?.message || "등록 실패");
   };
 
@@ -475,14 +501,27 @@ const EnrollSheet = ({ osApi, video, onDone, onClose }: {
             <label className="flex items-start gap-2 rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground">
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
               <span>
-                얼굴 특징값(사진 아님)을 출석 확인 목적으로 수집·이용하는 데 동의합니다.
-                언제든 삭제 요청할 수 있으며, 동의하지 않아도 QR 로 출석할 수 있습니다.
+                <b className="text-foreground">얼굴 특징값 수집·이용 동의 (필수)</b>
+                <span className="mt-1 block">· 수집: 얼굴 특징값(숫자 128개) — 사진·영상은 저장하지 않아요</span>
+                <span className="block">· 목적: 출석 확인 전용 (다른 용도 사용 없음)</span>
+                <span className="block">· 철회: 데스크에 요청하면 즉시 삭제돼요</span>
+                <span className="block">· 동의하지 않아도 QR 로 출석할 수 있어요</span>
               </span>
             </label>
+            {consent && (
+              <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/40 px-3 py-2">
+                <p className="text-xs font-bold text-foreground">
+                  {shots >= 3 ? "촬영 완료 — 저장을 눌러주세요" : SHOT_GUIDES[shots]}
+                </p>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${faceOk ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
+                  {faceOk ? "● 얼굴 잡힘" : "○ 얼굴을 화면에"}
+                </span>
+              </div>
+            )}
             <div className="flex gap-2">
-              <button onClick={capture} disabled={!consent}
+              <button onClick={capture} disabled={!consent || !faceOk || capturing || shots >= 5}
                 className="flex-1 rounded-xl bg-secondary py-3 font-bold text-secondary-foreground disabled:opacity-40">
-                촬영 ({shots}/3)
+                {capturing ? "촬영 중…" : `촬영 (${shots}/3)`}
               </button>
               <button onClick={save} disabled={!consent || shots === 0 || saving}
                 className="flex-1 rounded-xl bg-primary py-3 font-black text-primary-foreground disabled:opacity-40">
