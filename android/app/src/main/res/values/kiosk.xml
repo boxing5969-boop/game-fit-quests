@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 앱 이탈 잠금(화면 고정).
+         true 로 바꾸면 회원이 홈·최근앱으로 빠져나갈 수 없습니다.
+         켜기 전에 탈출 방법을 꼭 익히세요: [뒤로]+[최근앱] 동시에 길게 누르기.
+         처음 한 번은 "화면 고정하시겠습니까?" 확인창이 뜹니다. -->
+    <bool name="kiosk_pin_screen">false</bool>
+</resources>

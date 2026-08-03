@@ -95,6 +95,9 @@ const FaceKioskPage = () => {
   const [soundOn, setSoundOn] = useState<boolean>(() => lsGet(SOUND_LS) !== "off");
   // FC-6: 이 기기의 키가 어느 지점에 묶여 있는지(서버가 알려줌). 화면 URL 지점과 다르면 즉시 눈에 띈다.
   const [keyBranch, setKeyBranch] = useState<string | null>(null);
+  // 지점명: 웹은 주소(branchCode)로, 앱은 키가 알려준 지점(keyBranch)으로.
+  const branchLabelRef = useRef<string>("");
+  branchLabelRef.current = branchName || keyBranch || "";
   const profilesRef = useRef<{ p: FaceProfile; f32: Float32Array }[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const lastSeenRef = useRef<Map<string, number>>(new Map());
@@ -198,7 +201,7 @@ const FaceKioskPage = () => {
 
   // face-api 스크립트 + 모델 + (병렬) 명단·카메라 + 워밍업
   useEffect(() => {
-    if (!kioskKey || !branchName) return;
+    if (!kioskKey || (branchCode && !branchName)) return;
     let stop = false;
     (async () => {
       try {
@@ -262,7 +265,7 @@ const FaceKioskPage = () => {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
-  }, [kioskKey, branchName, osApi]);
+  }, [kioskKey, branchName, branchCode, osApi]);
 
   // ── 인식 루프: 연속 실행 — 탐지가 끝나면 즉시 다음. 얼굴 없을 때만 짧게 쉼 ──
   useEffect(() => {
@@ -302,7 +305,7 @@ const FaceKioskPage = () => {
         if (appUserId && allowed) {
           // 라이브보드 체크인은 부가 경로 — 실패해도 출석(원장) 성공 표시를 바꾸지 않는다
           try {
-            const { json: ck } = await api({ action: "checkin", user_id: appUserId, branch_name: branchName });
+            const { json: ck } = await api({ action: "checkin", user_id: appUserId, branch_name: branchLabelRef.current });
             already = ck?.already === true;
           } catch { /* 부가 경로 실패 무시 */ }
         }
@@ -442,7 +445,7 @@ const FaceKioskPage = () => {
       {/* 상단 안내 */}
       <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
         <p className="rounded-full bg-black/60 px-4 py-2 text-sm font-black text-white">
-          🥊 {branchName} · 얼굴 출석
+          🥊 {branchName || keyBranch || "153복싱짐"} · 얼굴 출석
           {keyBranch
             ? <span className="ml-2 font-medium text-white/70">🔑 {keyBranch}</span>
             : <span className="ml-2 font-medium text-white/70">(공용 키)</span>}

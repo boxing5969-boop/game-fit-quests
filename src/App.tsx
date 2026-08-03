@@ -276,6 +276,8 @@ const AppRoutes = () => {
         <Route path="/routines" element={<ProtectedRoute><RoutinesPage /></ProtectedRoute>} />
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         <Route path="/face-kiosk/:branchCode" element={<FaceKioskPage />} />
+        {/* 설치형 앱 전용 — 지점은 키오스크 키가 결정한다(주소에 지점코드 불필요) */}
+        <Route path="/face-kiosk" element={<FaceKioskPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       </Suspense>
