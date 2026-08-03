@@ -148,7 +148,7 @@ const FaceKioskPage = () => {
   // ── 키 입력 화면 ──
   if (!kioskKey) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-8">
+      <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-4 bg-background p-8">
         <p className="text-lg font-black text-foreground">🥊 153 얼굴 키오스크 설정</p>
         <p className="text-sm text-muted-foreground">관리자에게 받은 키오스크 키를 입력하세요 (최초 1회)</p>
         <input
@@ -167,8 +167,9 @@ const FaceKioskPage = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-black">
-      <video ref={videoRef} muted playsInline className="h-screen w-full object-cover" style={{ transform: "scaleX(-1)" }} />
+    // fixed + z-[80]: 앱 하단 메뉴·AI 버튼 위를 덮는 전체화면 키오스크 (등록 버튼 가림 사고 방지)
+    <div className="fixed inset-0 z-[80] bg-black">
+      <video ref={videoRef} muted playsInline className="h-full w-full object-cover" style={{ transform: "scaleX(-1)" }} />
 
       {/* 상단 안내 */}
       <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
