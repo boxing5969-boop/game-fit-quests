@@ -74,6 +74,7 @@ const FaceKioskPage = () => {
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [soundOn, setSoundOn] = useState<boolean>(() => localStorage.getItem(SOUND_LS) !== "off");
   const profilesRef = useRef<{ p: FaceProfile; f32: Float32Array }[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
   const lastSeenRef = useRef<Map<string, number>>(new Map());
   const greetSeqRef = useRef(0);
   const greetTimerRef = useRef<number | undefined>(undefined);
@@ -97,9 +98,12 @@ const FaceKioskPage = () => {
     } catch { return null; }
   }, []);
 
-  // 오토플레이 정책 대응: 첫 터치에서 오디오 잠금 해제 (키오스크 최초 설정 시 1회면 충분)
+  // 오토플레이 정책 대응: 터치에서 오디오 잠금 해제 — 실제 running 확인 전까지 리스너 유지(새로고침·재부팅 후에도 복구)
   useEffect(() => {
-    const unlock = () => { ensureAudio(); window.removeEventListener("pointerdown", unlock); };
+    const unlock = () => {
+      const ctx = ensureAudio();
+      if (ctx && ctx.state === "running") window.removeEventListener("pointerdown", unlock);
+    };
     window.addEventListener("pointerdown", unlock);
     return () => window.removeEventListener("pointerdown", unlock);
   }, [ensureAudio]);
@@ -196,11 +200,18 @@ const FaceKioskPage = () => {
           navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 } }),
         ]);
         if (stop) { stream.getTracks().forEach((t) => t.stop()); return; }
+        streamRef.current = stream;
         if (listRes.status === 401) {
           stream.getTracks().forEach((t) => t.stop());
           setStatus("키오스크 키가 올바르지 않아요");
           localStorage.removeItem(KEY_LS);
           setKioskKey("");
+          return;
+        }
+        if (!listRes.json?.success) {
+          // 명단 로드 실패를 무음으로 넘기면 "멀쩡해 보이는데 아무도 인식 안 되는" 상태가 된다(검수 반영)
+          stream.getTracks().forEach((t) => t.stop());
+          setStatus("등록 명단을 불러오지 못했어요 — 새로고침 해주세요");
           return;
         }
         const list = (listRes.json?.data?.profiles || []) as { member_id: string; name: string; embedding: number[] }[];
@@ -219,7 +230,12 @@ const FaceKioskPage = () => {
         setStatus(e instanceof Error ? e.message : "초기화 실패 — 새로고침 해주세요");
       }
     })();
-    return () => { stop = true; };
+    return () => {
+      stop = true;
+      // 라우트 이탈 시 카메라 끄기 — 트랙을 안 멈추면 카메라가 계속 켜져 있다(검수 반영)
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    };
   }, [kioskKey, branchName, osApi]);
 
   // ── 인식 루프: 연속 실행 — 탐지가 끝나면 즉시 다음. 얼굴 없을 때만 짧게 쉼 ──
@@ -230,29 +246,56 @@ const FaceKioskPage = () => {
     let alive = true;
     let timer: number | undefined;
 
+    // 오버레이 표시 시간 관리 — 결과 확정 시 타이머를 다시 걸어 문구가 반드시 보이게 한다(검수 반영)
+    const holdGreet = (seq: number, ms: number) => {
+      if (greetTimerRef.current) window.clearTimeout(greetTimerRef.current);
+      greetTimerRef.current = window.setTimeout(() => {
+        if (greetSeqRef.current === seq) setGreet(null);
+      }, ms);
+    };
+
     // 매칭 즉시 인사 → verify(153OS 장부)·checkin(라이브보드)은 백그라운드에서 확정
     const confirmAttendance = async (p: FaceProfile, seq: number) => {
       try {
-        const { json: vr } = await osApi("verify", { member_id: p.user_id });
+        const { status: vrStatus, json: vr } = await osApi("verify", { member_id: p.user_id });
+        if (vrStatus === 401) {
+          // 키오스크 키 회전 — 재설정 화면으로 (무한 재시도 루프 방지)
+          localStorage.removeItem(KEY_LS);
+          setKioskKey("");
+          return;
+        }
         if (!vr?.success) throw new Error("verify 실패");
         const reason: string | null = vr?.data?.reason ?? null;
+        // 판정은 서버 allowed 기준(실차단 계약) — reason 은 문구 선택에만 쓴다
+        const allowed: boolean = vr?.data?.allowed !== false;
+        const deny: string | null = allowed ? null : (reason || "no_valid_grant");
         const appUserId: string | null = vr?.data?.app_user_id ?? null;
         const daysLeft = daysLeftOf(vr?.data?.end_date);
         let already = false;
-        if (appUserId) {
-          const { json: ck } = await api({ action: "checkin", user_id: appUserId, branch_name: branchName });
-          already = ck?.already === true;
+        if (appUserId && allowed) {
+          // 라이브보드 체크인은 부가 경로 — 실패해도 출석(원장) 성공 표시를 바꾸지 않는다
+          try {
+            const { json: ck } = await api({ action: "checkin", user_id: appUserId, branch_name: branchName });
+            already = ck?.already === true;
+          } catch { /* 부가 경로 실패 무시 */ }
+        }
+        if (deny) {
+          // 거절: 60초 뒤 재시도 허용 — 데스크에서 결제 직후 다시 인식할 수 있게(검수 반영)
+          lastSeenRef.current.set(p.user_id, Date.now() - REMATCH_MS + 60_000);
         }
         if (!alive || greetSeqRef.current !== seq) return;
         setGreet((g) => (g && g.seq === seq
-          ? { ...g, phase: "done", name: vr?.data?.name || g.name, already, deny: reason, daysLeft }
+          ? { ...g, phase: "done", name: vr?.data?.name || g.name, already, deny, daysLeft }
           : g));
-        if (reason) chime(false);
+        holdGreet(seq, deny ? 5000 : 3500);
+        if (deny) chime(false);
+        else speak(`${vr?.data?.name || p.name}님 환영합니다!`); // 호명은 통과 확정 후 — 실차단에서 거절자에게 환영 음성이 나가는 모순 방지
       } catch {
-        // 기록 실패 — 같은 회원이 계속 서 있으면 곧바로 재시도되도록 재인식 잠금 해제
-        lastSeenRef.current.delete(p.user_id);
+        // 기록 실패(네트워크 등): 30초 뒤 재시도 — 즉시 해제하면 차임·호명 무한 반복(검수 반영)
+        lastSeenRef.current.set(p.user_id, Date.now() - REMATCH_MS + 30_000);
         if (!alive || greetSeqRef.current !== seq) return;
         setGreet((g) => (g && g.seq === seq ? { ...g, phase: "done", deny: "network" } : g));
+        holdGreet(seq, 4000);
         chime(false);
       }
     };
@@ -260,12 +303,8 @@ const FaceKioskPage = () => {
     const showGreet = (p: FaceProfile) => {
       const seq = ++greetSeqRef.current;
       setGreet({ seq, name: p.name, timeLine: timeGreeting(), phase: "checking", already: false, deny: null, daysLeft: null });
-      chime(true);
-      speak(`${p.name}님 환영합니다!`);
-      if (greetTimerRef.current) window.clearTimeout(greetTimerRef.current);
-      greetTimerRef.current = window.setTimeout(() => {
-        if (greetSeqRef.current === seq) setGreet(null);
-      }, GREET_MS);
+      chime(true); // 즉시 반응은 차임만 — 호명(TTS)은 판정 확정 후
+      holdGreet(seq, GREET_MS);
       void confirmAttendance(p, seq);
     };
 
@@ -339,6 +378,7 @@ const FaceKioskPage = () => {
   const greetStatus = greet
     ? greet.phase === "checking" ? "출석 기록 중…"
       : greet.deny === "expired_membership" ? "이용권이 만료되었어요 — 데스크에 문의해주세요"
+      : greet.deny === "consent_revoked" ? "얼굴 등록이 해제되어 있어요 — 데스크에서 재등록해주세요"
       : greet.deny === "network" ? "기록에 실패했어요 — 잠시 후 다시 인식해주세요"
       : greet.deny ? "출석 확인 — 데스크에서 회원 정보를 확인해주세요"
       : greet.already ? "오늘은 이미 출석했어요!"
@@ -383,7 +423,12 @@ const FaceKioskPage = () => {
 
       {/* 사운드 토글 (좌하단) */}
       <button
-        onClick={() => { setSoundOn((v) => !v); ensureAudio(); }}
+        onClick={() => {
+          const next = !soundOn;
+          setSoundOn(next);
+          if (!next) { try { window.speechSynthesis?.cancel(); } catch { /* 무시 */ } }
+          ensureAudio();
+        }}
         className="absolute bottom-4 left-4 rounded-full bg-black/60 px-4 py-2 text-xs text-white/70"
       >{soundOn ? "🔊 소리 켜짐" : "🔇 무음"}</button>
 
@@ -399,9 +444,18 @@ const FaceKioskPage = () => {
           video={videoRef}
           onDone={async () => {
             setEnrollOpen(false);
-            const { json } = await osApi("list", {});
-            const list = (json?.data?.profiles || []) as { member_id: string; name: string; embedding: number[] }[];
-            profilesRef.current = list.map((r) => ({ p: { user_id: r.member_id, name: r.name, embedding: r.embedding }, f32: Float32Array.from(r.embedding) }));
+            // 명단 갱신 실패 시 기존 명단을 유지한다 — 빈 배열로 덮으면 전 회원 인식이 무음으로 죽는다(검수 반영)
+            try {
+              const { json } = await osApi("list", {});
+              if (json?.success) {
+                const list = (json?.data?.profiles || []) as { member_id: string; name: string; embedding: number[] }[];
+                profilesRef.current = list.map((r) => ({ p: { user_id: r.member_id, name: r.name, embedding: r.embedding }, f32: Float32Array.from(r.embedding) }));
+              } else {
+                setStatus("명단 갱신 실패 — 새로고침 해주세요");
+              }
+            } catch {
+              setStatus("명단 갱신 실패 — 새로고침 해주세요");
+            }
           }}
           onClose={() => setEnrollOpen(false)}
         />
@@ -450,9 +504,13 @@ const EnrollSheet = ({ osApi, video, onDone, onClose }: {
 
   const lookup = async () => {
     setMsg("조회 중…");
-    const { json } = await osApi("lookup", { phone });
-    if (json?.success) { setMember({ user_id: json.data.member_id, label: json.data.name || "회원", enrolled: json.data.enrolled }); setMsg(""); }
-    else setMsg(json?.error?.message || "조회 실패");
+    try {
+      const { json } = await osApi("lookup", { phone });
+      if (json?.success) { setMember({ user_id: json.data.member_id, label: json.data.name || "회원", enrolled: json.data.enrolled }); setMsg(""); }
+      else setMsg(json?.error?.message || "조회 실패");
+    } catch {
+      setMsg("네트워크 오류 — 다시 시도해주세요");
+    }
   };
 
   const capture = async () => {
@@ -460,24 +518,34 @@ const EnrollSheet = ({ osApi, video, onDone, onClose }: {
     if (!video.current || capturing) return;
     setCapturing(true);
     setMsg("촬영 중… 그대로 계세요");
-    const det = await fa
-      .detectSingleFace(video.current, new fa.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
-      .withFaceLandmarks().withFaceDescriptor();
-    setCapturing(false);
-    if (!det?.descriptor) { setMsg("얼굴을 찾지 못했어요 — 화면 중앙에 정면으로 서주세요"); return; }
-    embsRef.current.push(Array.from(det.descriptor as Float32Array));
-    const n = embsRef.current.length;
-    setShots(n);
-    setMsg(n >= 3 ? "충분해요! 저장을 눌러주세요" : SHOT_GUIDES[Math.min(n, 2)]);
+    try {
+      const det = await fa
+        .detectSingleFace(video.current, new fa.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+        .withFaceLandmarks().withFaceDescriptor();
+      if (!det?.descriptor) { setMsg("얼굴을 찾지 못했어요 — 화면 중앙에 정면으로 서주세요"); return; }
+      embsRef.current.push(Array.from(det.descriptor as Float32Array));
+      const n = embsRef.current.length;
+      setShots(n);
+      setMsg(n >= 3 ? "충분해요! 저장을 눌러주세요" : SHOT_GUIDES[Math.min(n, 2)]);
+    } catch {
+      setMsg("촬영 오류 — 다시 시도해주세요");
+    } finally {
+      setCapturing(false);
+    }
   };
 
   const save = async () => {
     if (!member || embsRef.current.length === 0) return;
     setSaving(true);
-    const { json } = await osApi("enroll", { member_id: member.user_id, embeddings: embsRef.current, consent });
-    setSaving(false);
-    if (json?.success) { setMsg("등록 완료! 이제 얼굴만 보이면 자동 출석돼요"); setTimeout(onDone, 1200); }
-    else setMsg(json?.error?.message || "등록 실패");
+    try {
+      const { json } = await osApi("enroll", { member_id: member.user_id, embeddings: embsRef.current, consent });
+      if (json?.success) { setMsg("등록 완료! 이제 얼굴만 보이면 자동 출석돼요"); setTimeout(onDone, 1200); }
+      else setMsg(json?.error?.message || "등록 실패");
+    } catch {
+      setMsg("네트워크 오류 — 다시 시도해주세요");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -521,7 +589,7 @@ const EnrollSheet = ({ osApi, video, onDone, onClose }: {
             <div className="flex gap-2">
               <button onClick={capture} disabled={!consent || !faceOk || capturing || shots >= 5}
                 className="flex-1 rounded-xl bg-secondary py-3 font-bold text-secondary-foreground disabled:opacity-40">
-                {capturing ? "촬영 중…" : `촬영 (${shots}/3)`}
+                {capturing ? "촬영 중…" : `촬영 (${Math.min(shots, 3)}/3)`}
               </button>
               <button onClick={save} disabled={!consent || shots === 0 || saving}
                 className="flex-1 rounded-xl bg-primary py-3 font-black text-primary-foreground disabled:opacity-40">
