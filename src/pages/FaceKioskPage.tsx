@@ -63,16 +63,22 @@ const daysLeftOf = (endDate: string | null | undefined): number | null => {
 const detOpts = (fa: any) =>
   new fa.TinyFaceDetectorOptions({ inputSize: DETECT_INPUT, scoreThreshold: DETECT_SCORE });
 
+// localStorage 안전 접근 — 저장소가 차단된 안드로이드 WebView·시크릿 모드에서 렌더 중 예외로
+// 백스크린이 되는 사고 방지(검수 반영). 실패는 조용히 무시하고 기본값으로 동작한다.
+const lsGet = (k: string): string | null => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k: string, v: string): void => { try { localStorage.setItem(k, v); } catch { /* 무시 */ } };
+const lsDel = (k: string): void => { try { localStorage.removeItem(k); } catch { /* 무시 */ } };
+
 const FaceKioskPage = () => {
   const { branchCode } = useParams();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [branchName, setBranchName] = useState<string>("");
-  const [kioskKey, setKioskKey] = useState<string>(() => localStorage.getItem(KEY_LS) || "");
+  const [kioskKey, setKioskKey] = useState<string>(() => lsGet(KEY_LS) || "");
   const [status, setStatus] = useState<string>("준비 중…");
   const [ready, setReady] = useState(false);
   const [greet, setGreet] = useState<Greet | null>(null);
   const [enrollOpen, setEnrollOpen] = useState(false);
-  const [soundOn, setSoundOn] = useState<boolean>(() => localStorage.getItem(SOUND_LS) !== "off");
+  const [soundOn, setSoundOn] = useState<boolean>(() => lsGet(SOUND_LS) !== "off");
   const profilesRef = useRef<{ p: FaceProfile; f32: Float32Array }[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const lastSeenRef = useRef<Map<string, number>>(new Map());
@@ -83,7 +89,7 @@ const FaceKioskPage = () => {
 
   useEffect(() => {
     soundOnRef.current = soundOn;
-    localStorage.setItem(SOUND_LS, soundOn ? "on" : "off");
+    lsSet(SOUND_LS, soundOn ? "on" : "off");
   }, [soundOn]);
 
   // ── 사운드: 차임(WebAudio) + 이름 호명(TTS). 무음 토글 시 전부 끔 ──
@@ -108,12 +114,14 @@ const FaceKioskPage = () => {
     return () => window.removeEventListener("pointerdown", unlock);
   }, [ensureAudio]);
 
-  const chime = useCallback((ok: boolean) => {
+  // ping = 인식됨(판정 전 중립음) · ok = 통과 · deny = 안내(거절).
+  // 실차단에서는 판정 전에 성공음을 내면 거절 회원이 통과한 줄 알고 걸어 들어간다(검수 반영).
+  const chime = useCallback((kind: "ok" | "deny" | "ping") => {
     if (!soundOnRef.current) return;
     const ctx = ensureAudio();
     if (!ctx) return;
     try {
-      const notes = ok ? [784, 1175] : [392, 311]; // 성공: 밝은 상승 2음 / 안내: 낮은 하강 2음
+      const notes = kind === "ok" ? [784, 1175] : kind === "deny" ? [392, 311] : [659];
       notes.forEach((freq, i) => {
         const t0 = ctx.currentTime + i * 0.13;
         const osc = ctx.createOscillator();
@@ -204,7 +212,7 @@ const FaceKioskPage = () => {
         if (listRes.status === 401) {
           stream.getTracks().forEach((t) => t.stop());
           setStatus("키오스크 키가 올바르지 않아요");
-          localStorage.removeItem(KEY_LS);
+          lsDel(KEY_LS);
           setKioskKey("");
           return;
         }
@@ -260,14 +268,15 @@ const FaceKioskPage = () => {
         const { status: vrStatus, json: vr } = await osApi("verify", { member_id: p.user_id });
         if (vrStatus === 401) {
           // 키오스크 키 회전 — 재설정 화면으로 (무한 재시도 루프 방지)
-          localStorage.removeItem(KEY_LS);
+          lsDel(KEY_LS);
+          setReady(false);
           setKioskKey("");
           return;
         }
         if (!vr?.success) throw new Error("verify 실패");
         const reason: string | null = vr?.data?.reason ?? null;
-        // 판정은 서버 allowed 기준(실차단 계약) — reason 은 문구 선택에만 쓴다
-        const allowed: boolean = vr?.data?.allowed !== false;
+        // 판정은 서버 allowed 기준(실차단 계약) — 부정을 기본값으로 둔다(필드 누락 시 통과 금지)
+        const allowed: boolean = vr?.data?.allowed === true;
         const deny: string | null = allowed ? null : (reason || "no_valid_grant");
         const appUserId: string | null = vr?.data?.app_user_id ?? null;
         const daysLeft = daysLeftOf(vr?.data?.end_date);
@@ -284,27 +293,47 @@ const FaceKioskPage = () => {
           lastSeenRef.current.set(p.user_id, Date.now() - REMATCH_MS + 60_000);
         }
         if (!alive || greetSeqRef.current !== seq) return;
-        setGreet((g) => (g && g.seq === seq
-          ? { ...g, phase: "done", name: vr?.data?.name || g.name, already, deny, daysLeft }
-          : g));
+        // 응답이 느려 오버레이가 이미 사라졌어도(g === null) 결과를 다시 세운다 —
+        // 그러지 않으면 거절 회원이 사유는 못 보고 거절음만 듣는다(검수 반영).
+        setGreet((g) => (g && g.seq !== seq ? g : {
+          seq,
+          name: vr?.data?.name || g?.name || p.name,
+          timeLine: g?.timeLine ?? timeGreeting(),
+          phase: "done",
+          already,
+          deny,
+          daysLeft,
+        }));
         holdGreet(seq, deny ? 5000 : 3500);
-        if (deny) chime(false);
-        else speak(`${vr?.data?.name || p.name}님 환영합니다!`); // 호명은 통과 확정 후 — 실차단에서 거절자에게 환영 음성이 나가는 모순 방지
+        if (deny) chime("deny");
+        else {
+          chime("ok");
+          speak(`${vr?.data?.name || p.name}님 환영합니다!`); // 호명은 통과 확정 후 — 거절자에게 환영 음성이 나가는 모순 방지
+        }
       } catch {
         // 기록 실패(네트워크 등): 30초 뒤 재시도 — 즉시 해제하면 차임·호명 무한 반복(검수 반영)
         lastSeenRef.current.set(p.user_id, Date.now() - REMATCH_MS + 30_000);
         if (!alive || greetSeqRef.current !== seq) return;
-        setGreet((g) => (g && g.seq === seq ? { ...g, phase: "done", deny: "network" } : g));
+        setGreet((g) => (g && g.seq !== seq ? g : {
+          seq,
+          name: g?.name ?? p.name,
+          timeLine: g?.timeLine ?? timeGreeting(),
+          phase: "done",
+          already: false,
+          deny: "network",
+          daysLeft: null,
+        }));
         holdGreet(seq, 4000);
-        chime(false);
+        chime("deny");
       }
     };
 
     const showGreet = (p: FaceProfile) => {
       const seq = ++greetSeqRef.current;
       setGreet({ seq, name: p.name, timeLine: timeGreeting(), phase: "checking", already: false, deny: null, daysLeft: null });
-      chime(true); // 즉시 반응은 차임만 — 호명(TTS)은 판정 확정 후
-      holdGreet(seq, GREET_MS);
+      chime("ping"); // 인식됨 신호(중립음) — 통과/거절음과 호명은 판정 확정 후
+      // 안전 타이머는 넉넉히(15초). 실제 소멸 시간은 결과 도착 시 holdGreet 이 다시 정한다.
+      holdGreet(seq, 15_000);
       void confirmAttendance(p, seq);
     };
 
@@ -319,7 +348,9 @@ const FaceKioskPage = () => {
         const t0 = performance.now();
         const det = await fa.detectSingleFace(videoRef.current, OPTS).withFaceLandmarks().withFaceDescriptor();
         if (performance.now() - t0 > 200) idle = 0; // 느린 기기는 쉬지 않고 연속 탐지
-        if (det?.descriptor && profilesRef.current.length > 0) {
+        // await 사이에 언마운트·등록시트 진입이 일어났을 수 있다 — 그 프레임의 결과로
+        // 인사·출입기록·문열기를 실행하면 안 된다(검수 반영).
+        if (alive && !enrollOpen && det?.descriptor && profilesRef.current.length > 0) {
           let best: { p: FaceProfile; d: number } | null = null;
           for (const { p, f32 } of profilesRef.current) {
             const d = fa.euclideanDistance(det.descriptor, f32);
@@ -357,7 +388,7 @@ const FaceKioskPage = () => {
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               const v = (e.target as HTMLInputElement).value.trim();
-              if (v) { localStorage.setItem(KEY_LS, v); setKioskKey(v); }
+              if (v) { lsSet(KEY_LS, v); setKioskKey(v); }
             }
           }}
         />
