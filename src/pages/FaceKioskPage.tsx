@@ -23,6 +23,20 @@ const OS_URL = "https://153-boxing-os-api.boxing5969.workers.dev/api/face";     
 const KEY_LS = "153_kiosk_key";
 const SOUND_LS = "153_kiosk_sound";
 const CDN = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2";
+// 앱(APK)·오프라인 대비: 같은 0.22.2 자산을 앱/사이트에 번들해 두고 그걸 먼저 쓴다.
+// 번들이 없으면 기존 CDN 그대로 — 동작 변화 없음. 버전을 바꾸면 등록된 특징값이
+// 깨지므로 반드시 0.22.2 동일 파일만 번들할 것(임의 교체 금지).
+const LOCAL_ASSETS = "/vendor/face-api";
+let assetBase: string | null = null;
+const resolveAssetBase = async (): Promise<string> => {
+  if (assetBase) return assetBase;
+  try {
+    const r = await fetch(`${LOCAL_ASSETS}/weights/tiny_face_detector_model-weights_manifest.json`, { method: "HEAD" });
+    if (r.ok) { assetBase = LOCAL_ASSETS; return assetBase; }
+  } catch { /* 번들 없음 → CDN */ }
+  assetBase = CDN;
+  return assetBase;
+};
 const MATCH_DIST = 0.5;          // face-api 권장 임계 (낮을수록 엄격)
 const REMATCH_MS = 5 * 60_000;   // 같은 회원 재인식 무시 간격
 const DETECT_INPUT = 224;        // 탐지 해상도 (320→224: 키오스크는 얼굴이 크게 잡혀 충분)
@@ -189,10 +203,11 @@ const FaceKioskPage = () => {
     (async () => {
       try {
         setStatus("AI 모델 준비 중…");
+        const BASE = await resolveAssetBase();
         if (!(window as any).faceapi) {
           await new Promise<void>((resolve, reject) => {
             const s = document.createElement("script");
-            s.src = `${CDN}/dist/face-api.min.js`;
+            s.src = `${BASE}/dist/face-api.min.js`;
             s.onload = () => resolve();
             s.onerror = () => reject(new Error("face-api 로드 실패"));
             document.head.appendChild(s);
@@ -202,9 +217,9 @@ const FaceKioskPage = () => {
         // 모델 로드 + 등록 명단 + 카메라를 병렬로 (시작 시간 단축)
         const [, listRes, stream] = await Promise.all([
           Promise.all([
-            fa.nets.tinyFaceDetector.loadFromUri(`${CDN}/weights`),
-            fa.nets.faceLandmark68Net.loadFromUri(`${CDN}/weights`),
-            fa.nets.faceRecognitionNet.loadFromUri(`${CDN}/weights`),
+            fa.nets.tinyFaceDetector.loadFromUri(`${BASE}/weights`),
+            fa.nets.faceLandmark68Net.loadFromUri(`${BASE}/weights`),
+            fa.nets.faceRecognitionNet.loadFromUri(`${BASE}/weights`),
           ]),
           osApi("list", {}),
           navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 } }),
