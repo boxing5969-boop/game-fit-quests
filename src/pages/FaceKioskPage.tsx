@@ -79,6 +79,8 @@ const FaceKioskPage = () => {
   const [greet, setGreet] = useState<Greet | null>(null);
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [soundOn, setSoundOn] = useState<boolean>(() => lsGet(SOUND_LS) !== "off");
+  // FC-6: 이 기기의 키가 어느 지점에 묶여 있는지(서버가 알려줌). 화면 URL 지점과 다르면 즉시 눈에 띈다.
+  const [keyBranch, setKeyBranch] = useState<string | null>(null);
   const profilesRef = useRef<{ p: FaceProfile; f32: Float32Array }[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const lastSeenRef = useRef<Map<string, number>>(new Map());
@@ -223,6 +225,7 @@ const FaceKioskPage = () => {
           return;
         }
         const list = (listRes.json?.data?.profiles || []) as { member_id: string; name: string; embedding: number[] }[];
+        setKeyBranch((listRes.json?.data?.branch_name as string | null) ?? null);
         profilesRef.current = list.map((r) => ({ p: { user_id: r.member_id, name: r.name, embedding: r.embedding }, f32: Float32Array.from(r.embedding) }));
         if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
         if (stop) { stream.getTracks().forEach((t) => t.stop()); return; }
@@ -423,7 +426,12 @@ const FaceKioskPage = () => {
 
       {/* 상단 안내 */}
       <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
-        <p className="rounded-full bg-black/60 px-4 py-2 text-sm font-black text-white">🥊 {branchName} · 얼굴 출석 (시범 운영)</p>
+        <p className="rounded-full bg-black/60 px-4 py-2 text-sm font-black text-white">
+          🥊 {branchName} · 얼굴 출석
+          {keyBranch
+            ? <span className="ml-2 font-medium text-white/70">🔑 {keyBranch}</span>
+            : <span className="ml-2 font-medium text-white/70">(공용 키)</span>}
+        </p>
         {status && <p className="rounded-full bg-black/60 px-4 py-2 text-sm text-white">{status}</p>}
       </div>
 
@@ -479,6 +487,7 @@ const FaceKioskPage = () => {
             try {
               const { json } = await osApi("list", {});
               if (json?.success) {
+                setKeyBranch((json?.data?.branch_name as string | null) ?? null);
                 const list = (json?.data?.profiles || []) as { member_id: string; name: string; embedding: number[] }[];
                 profilesRef.current = list.map((r) => ({ p: { user_id: r.member_id, name: r.name, embedding: r.embedding }, f32: Float32Array.from(r.embedding) }));
               } else {
