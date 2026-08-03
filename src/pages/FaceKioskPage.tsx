@@ -10,13 +10,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
-const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/face-kiosk`;
+const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/face-kiosk`; // 앱측: 라이브보드 즉시 표시용
+const OS_URL = "https://153-boxing-os-api.boxing5969.workers.dev/api/face";     // 153OS: 판단·등록·장부(FC-2)
 const KEY_LS = "153_kiosk_key";
 const CDN = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2";
 const MATCH_DIST = 0.5;          // face-api 권장 임계 (낮을수록 엄격)
 const REMATCH_MS = 5 * 60_000;   // 같은 회원 재인식 무시 간격
 
-interface FaceProfile { user_id: string; name: string; embedding: number[] }
+interface FaceProfile { user_id: string; name: string; embedding: number[] } // user_id = 153OS member_id
 
 const FaceKioskPage = () => {
   const { branchCode } = useParams();
@@ -25,7 +26,7 @@ const FaceKioskPage = () => {
   const [kioskKey, setKioskKey] = useState<string>(() => localStorage.getItem(KEY_LS) || "");
   const [status, setStatus] = useState<string>("준비 중…");
   const [ready, setReady] = useState(false);
-  const [greet, setGreet] = useState<{ name: string; already: boolean } | null>(null);
+  const [greet, setGreet] = useState<{ name: string; already: boolean; deny?: string | null } | null>(null);
   const [enrollOpen, setEnrollOpen] = useState(false);
   const profilesRef = useRef<{ p: FaceProfile; f32: Float32Array }[]>([]);
   const lastSeenRef = useRef<Map<string, number>>(new Map());
@@ -43,6 +44,16 @@ const FaceKioskPage = () => {
 
   const api = useCallback(async (body: Record<string, unknown>) => {
     const res = await fetch(FN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-kiosk-key": kioskKey },
+      body: JSON.stringify(body),
+    });
+    return { status: res.status, json: await res.json().catch(() => ({})) };
+  }, [kioskKey]);
+
+  // 153OS 워커 호출 (판단·등록·목록) — 같은 키오스크 키 사용
+  const osApi = useCallback(async (path: string, body: Record<string, unknown>) => {
+    const res = await fetch(`${OS_URL}/${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-kiosk-key": kioskKey },
       body: JSON.stringify(body),
@@ -74,9 +85,10 @@ const FaceKioskPage = () => {
         ]);
         if (stop) return;
         setStatus("등록 회원 불러오는 중…");
-        const { status: st, json } = await api({ action: "list" });
+        const { status: st, json } = await osApi("list", {});
         if (st === 401) { setStatus("키오스크 키가 올바르지 않아요"); localStorage.removeItem(KEY_LS); setKioskKey(""); return; }
-        profilesRef.current = ((json?.profiles || []) as FaceProfile[]).map((p) => ({ p, f32: Float32Array.from(p.embedding) }));
+        const list = (json?.data?.profiles || []) as { member_id: string; name: string; embedding: number[] }[];
+        profilesRef.current = list.map((r) => ({ p: { user_id: r.member_id, name: r.name, embedding: r.embedding }, f32: Float32Array.from(r.embedding) }));
         setStatus("카메라 켜는 중…");
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 } });
         if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
@@ -112,9 +124,18 @@ const FaceKioskPage = () => {
             const last = lastSeenRef.current.get(best.p.user_id) || 0;
             if (now - last > REMATCH_MS) {
               lastSeenRef.current.set(best.p.user_id, now);
-              const { json } = await api({ action: "checkin", user_id: best.p.user_id, branch_name: branchName });
-              setGreet({ name: best.p.name, already: json?.already === true });
-              setTimeout(() => setGreet(null), 4000);
+              // ① 153OS 판단 + 출입장부(access_logs) 기록
+              const { json: vr } = await osApi("verify", { member_id: best.p.user_id });
+              const reason: string | null = vr?.data?.reason ?? null;
+              const appUserId: string | null = vr?.data?.app_user_id ?? null;
+              // ② 앱 계정이 연결된 회원이면 라이브보드 즉시 표시
+              let already = false;
+              if (appUserId) {
+                const { json: ck } = await api({ action: "checkin", user_id: appUserId, branch_name: branchName });
+                already = ck?.already === true;
+              }
+              setGreet({ name: vr?.data?.name || best.p.name, already, deny: reason });
+              setTimeout(() => setGreet(null), 4500);
             }
           }
         }
@@ -159,10 +180,13 @@ const FaceKioskPage = () => {
       {greet && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70">
           <div className="animate-bounce-in rounded-3xl bg-card p-10 text-center shadow-elev-3">
-            <p className="text-5xl">{greet.already ? "✅" : "🥊"}</p>
+            <p className="text-5xl">{greet.deny === "expired_membership" ? "⏰" : greet.deny ? "📋" : greet.already ? "✅" : "🥊"}</p>
             <p className="mt-4 text-3xl font-black text-foreground">{greet.name}님</p>
-            <p className="mt-2 text-lg font-bold text-primary">
-              {greet.already ? "오늘은 이미 출석했어요!" : "어서오세요! 출석 완료"}
+            <p className={`mt-2 text-lg font-bold ${greet.deny ? "text-status-pending" : "text-primary"}`}>
+              {greet.deny === "expired_membership" ? "이용권이 만료되었어요 — 데스크에 문의해주세요"
+                : greet.deny ? "출석 확인 — 데스크에서 회원 정보를 확인해주세요"
+                : greet.already ? "오늘은 이미 출석했어요!"
+                : "어서오세요! 출석 완료"}
             </p>
           </div>
         </div>
@@ -176,12 +200,13 @@ const FaceKioskPage = () => {
 
       {enrollOpen && (
         <EnrollSheet
-          api={api}
+          osApi={osApi}
           video={videoRef}
           onDone={async () => {
             setEnrollOpen(false);
-            const { json } = await api({ action: "list" });
-            profilesRef.current = ((json?.profiles || []) as FaceProfile[]).map((p) => ({ p, f32: Float32Array.from(p.embedding) }));
+            const { json } = await osApi("list", {});
+            const list = (json?.data?.profiles || []) as { member_id: string; name: string; embedding: number[] }[];
+            profilesRef.current = list.map((r) => ({ p: { user_id: r.member_id, name: r.name, embedding: r.embedding }, f32: Float32Array.from(r.embedding) }));
           }}
           onClose={() => setEnrollOpen(false)}
         />
@@ -191,8 +216,8 @@ const FaceKioskPage = () => {
 };
 
 // ── 등록 시트 ──
-const EnrollSheet = ({ api, video, onDone, onClose }: {
-  api: (b: Record<string, unknown>) => Promise<{ status: number; json: any }>;
+const EnrollSheet = ({ osApi, video, onDone, onClose }: {
+  osApi: (path: string, b: Record<string, unknown>) => Promise<{ status: number; json: any }>;
   video: React.RefObject<HTMLVideoElement>;
   onDone: () => void;
   onClose: () => void;
@@ -207,9 +232,9 @@ const EnrollSheet = ({ api, video, onDone, onClose }: {
 
   const lookup = async () => {
     setMsg("조회 중…");
-    const { json } = await api({ action: "lookup", phone });
-    if (json?.ok) { setMember({ user_id: json.user_id, label: json.nickname || json.name || "회원", enrolled: json.enrolled }); setMsg(""); }
-    else setMsg(json?.error || "조회 실패");
+    const { json } = await osApi("lookup", { phone });
+    if (json?.success) { setMember({ user_id: json.data.member_id, label: json.data.name || "회원", enrolled: json.data.enrolled }); setMsg(""); }
+    else setMsg(json?.error?.message || "조회 실패");
   };
 
   const capture = async () => {
@@ -228,10 +253,10 @@ const EnrollSheet = ({ api, video, onDone, onClose }: {
   const save = async () => {
     if (!member || embsRef.current.length === 0) return;
     setSaving(true);
-    const { json } = await api({ action: "enroll", user_id: member.user_id, embeddings: embsRef.current, consent });
+    const { json } = await osApi("enroll", { member_id: member.user_id, embeddings: embsRef.current, consent });
     setSaving(false);
-    if (json?.ok) { setMsg("등록 완료!"); setTimeout(onDone, 800); }
-    else setMsg(json?.error || "등록 실패");
+    if (json?.success) { setMsg("등록 완료!"); setTimeout(onDone, 800); }
+    else setMsg(json?.error?.message || "등록 실패");
   };
 
   return (
