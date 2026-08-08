@@ -1,7 +1,7 @@
 const U = "https://tbxdrfowanyksgdicryl.supabase.co";
 const K = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRieGRyZm93YW55a3NnZGljcnlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMDgyNjEsImV4cCI6MjA5Mjg4NDI2MX0.i8vPePIs0PzreC9RA8d-psLkabgXJRXykC3Km3a434g";
-const ADMIN_SECRET = Deno.env.get("PT_ADMIN_SECRET") || "<<REDACTED_IN_BACKUP>>";
-const SECRET = Deno.env.get("PT_SECRET") || "<<REDACTED_IN_BACKUP>>";
+const ADMIN_SECRET = Deno.env.get("PT_ADMIN_SECRET") || "";
+const SECRET = Deno.env.get("BOT_ADMIN_SECRET") || "";
 const BRANCH = "sunreung";
 const BRANCH_NAME = "153복싱짐 선릉역점";
 const TTL = 1000 * 60 * 60 * 12;

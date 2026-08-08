@@ -41,12 +41,17 @@ Supabase 프로젝트 `tbxdrfowanyksgdicryl` (153OS CRM 과 **같은 DB**).
 Deno 플레이그라운드의 Deploy 이력 외 수단 없음.
 Supabase 는 free 플랜이라 **PITR(시점 복구) 불가** — 파기·삭제 오조작은 복구되지 않는다.
 
-## ⚠️ 이 백업은 시크릿이 마스킹돼 있다
-`ADMIN_SECRET` 등 소스에 **평문으로 박혀 있던 상수**는 `<<REDACTED_IN_BACKUP>>` 로 치환했다.
-복원할 때는 플레이그라운드의 실제 값으로 되돌리거나, 아래처럼 환경변수로 옮길 것(권장).
+## 시크릿은 이제 소스에 없다 (2026-08-08)
+`ADMIN_SECRET` / `SECRET` 을 Deno 환경변수로 옮겼다. 이 백업은 **마스킹 없는 원본 그대로**이며
+시크릿 값은 포함돼 있지 않다.
 
-```ts
-const ADMIN_SECRET = Deno.env.get("PT_ADMIN_SECRET")!;
-```
-실제 값은 Supabase `pt_admin_secret` 테이블(id=1)에 있다.
-Supabase anon 키(`eyJ...`)는 **공개용 키**라 마스킹하지 않았다.
+| 소스 상수 | 환경변수 이름 | 실제 값 위치 |
+|---|---|---|
+| `ADMIN_SECRET` | `PT_ADMIN_SECRET` | Supabase `pt_admin_secret` 테이블 (id=1) |
+| `SECRET` | `BOT_ADMIN_SECRET` | Deno Env 에만 존재 |
+| `TG_TOKEN` | `TELEGRAM_BOT_TOKEN` | Deno Env |
+| `TG_CHATS` | `TELEGRAM_CHAT_ID` | Deno Env (콤마 구분 다중 가능) |
+
+복원 순서: ① Deno 앱에 위 4개 환경변수를 먼저 등록 → ② `main.ts` 붙여넣고 Deploy.
+환경변수 없이 배포하면 관리 화면·알림이 전부 인증 실패한다.
+Supabase anon 키(`eyJ...`)는 공개용이라 소스에 그대로 둔다.
