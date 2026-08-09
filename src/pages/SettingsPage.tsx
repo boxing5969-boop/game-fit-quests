@@ -6,7 +6,8 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Plus, Trash2, Pencil, Check, X, ArrowRightLeft, Clock, ChevronRight, LogOut } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, Pencil, Check, X, ArrowRightLeft, Clock, ChevronRight, LogOut, Fingerprint } from "lucide-react";
+import { canUsePasskey, registerPasskey } from "@/lib/passkey";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -71,6 +72,10 @@ const SettingsPage = () => {
   const [nickname, setNickname] = useState("");
   const [saving, setSaving] = useState(false);
   const [linkingGoogle, setLinkingGoogle] = useState(false);
+  // 지문·얼굴 로그인 — 도메인·기기가 지원할 때만 화면에 띄운다.
+  const [passkeyReady, setPasskeyReady] = useState(false);
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+  const [passkeyDone, setPasskeyDone] = useState(false);
 
   // Home widget prefs
   const [widgetPrefs, setWidgetPrefs] = useState<HomeWidgetPrefs>(loadHomeWidgetPrefs);
@@ -183,6 +188,22 @@ const SettingsPage = () => {
       setSaving(false);
     }
   };
+
+  useEffect(() => {
+    let alive = true;
+    canUsePasskey().then((ok) => { if (alive) setPasskeyReady(ok); });
+    return () => { alive = false; };
+  }, []);
+
+  // 이 기기를 지문·얼굴로 등록. 실제 인증창은 브라우저가 띄운다.
+  const handleRegisterPasskey = useCallback(async () => {
+    setPasskeyBusy(true);
+    const err = await registerPasskey("마이복서153");
+    setPasskeyBusy(false);
+    if (err) { toast.error(err); return; }
+    setPasskeyDone(true);
+    toast.success("이 기기로 지문·얼굴 로그인이 가능해졌어요");
+  }, []);
 
   // 구글 계정을 '지금 로그인된 아이디 계정'에 연결 (Supabase manual identity linking).
   // 연결 후엔 로그인 화면의 구글 버튼으로도 동일 계정에 로그인됨. 기존 로그인 경로는 변경 없음.
@@ -380,6 +401,33 @@ const SettingsPage = () => {
           <Save className="h-4 w-4" />
           {saving ? "저장 중..." : "저장하기"}
         </button>
+
+        {/* 지문·얼굴 로그인 — 지원하는 기기·주소에서만 보인다 */}
+        {passkeyReady && (
+          <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.03s" }}>
+            <h2 className="mb-1 text-base font-bold text-foreground">지문·얼굴 로그인</h2>
+            <p className="mb-3 text-[11px] text-muted-foreground">
+              이 기기를 등록해두면 다음부터 비밀번호나 카카오 없이 지문·얼굴만으로 바로 들어올 수 있어요.
+              지문 정보는 기기 안에만 저장되고 서버로 전송되지 않습니다.
+            </p>
+            {passkeyDone ? (
+              <div className="flex items-center gap-2 rounded-xl border border-status-complete/30 bg-status-complete/5 px-4 py-3">
+                <Check className="h-4 w-4 text-status-complete" />
+                <span className="text-sm font-medium text-foreground">이 기기 등록됨</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleRegisterPasskey}
+                disabled={passkeyBusy}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-medium text-foreground transition-all hover:bg-muted active:scale-[0.98] disabled:opacity-50"
+              >
+                <Fingerprint className="h-5 w-5" />
+                {passkeyBusy ? "기기 확인 중…" : "이 기기 등록하기"}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* 계정 연결 — 구글 로그인을 기존 아이디 계정에 연결 (Supabase identity linking) */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.04s" }}>

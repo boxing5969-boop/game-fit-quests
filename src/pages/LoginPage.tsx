@@ -6,6 +6,8 @@ import { lovable } from "@/integrations/lovable/index";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import LoginErrorModal, { classifyLoginError } from "@/components/LoginErrorModal";
+import { Fingerprint } from "lucide-react";
+import { canUsePasskey, signInWithPasskey } from "@/lib/passkey";
 import { translateAuthError } from "@/lib/errorMessages";
 import MyBoxerWordmark from "@/components/brand/MyBoxerWordmark";
 import InstallAppButton from "@/components/install/InstallAppButton";
@@ -84,6 +86,12 @@ const SignaturePad = ({ onSignatureChange }: { onSignatureChange: (data: string 
     setHasDrawn(false);
     onSignatureChange(null);
   };
+
+  useEffect(() => {
+    let alive = true;
+    canUsePasskey().then((ok) => { if (alive) setPasskeyReady(ok); });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -189,6 +197,9 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [loginErrorType, setLoginErrorType] = useState<ReturnType<typeof classifyLoginError> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // 지문·얼굴 로그인 — 지원하는 기기·주소에서만 버튼을 띄운다.
+  const [passkeyReady, setPasskeyReady] = useState(false);
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -505,6 +516,25 @@ const LoginPage = () => {
                 <span className="bg-background px-3 text-muted-foreground">또는</span>
               </div>
             </div>
+
+            {/* 지문·얼굴 로그인 — 아이디도 비밀번호도 필요 없다. 지원 기기에서만 보인다. */}
+            {passkeyReady && (
+              <button
+                type="button"
+                disabled={passkeyBusy || isLoading}
+                onClick={async () => {
+                  setPasskeyBusy(true);
+                  const err = await signInWithPasskey();
+                  setPasskeyBusy(false);
+                  if (err) { setError(err); return; }
+                  navigate("/home");
+                }}
+                className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-foreground transition-all hover:bg-primary/15 active:scale-[0.98] disabled:opacity-50"
+              >
+                <Fingerprint className="h-5 w-5 text-primary" />
+                {passkeyBusy ? "확인 중…" : "지문 · 얼굴로 로그인"}
+              </button>
+            )}
 
             <div className="flex gap-3">
               <button

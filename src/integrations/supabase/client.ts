@@ -13,5 +13,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+    // 지문·얼굴 로그인(패스키) 활성화 — supabase-js 실험 기능이라 타입에 아직 없어 캐스팅으로 넘긴다.
+    // ⚠️ 이 파일이 자동 생성으로 덮이면 이 줄이 사라지고 패스키가 조용히 안 된다. 그때 다시 넣을 것.
+    ...({ experimental: { passkey: true } } as object),
   }
 });
