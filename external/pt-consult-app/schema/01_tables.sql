@@ -5,9 +5,9 @@
 -- 라이브 DB 의 information_schema.columns + pg_constraint(pg_get_constraintdef)
 -- 를 읽어 손으로 CREATE TABLE 문으로 되살린 것이다.
 --
---   생성일       : 2026-08-08  (오늘 마이그레이션 5건 반영 후 재생성)
+--   생성일       : 2026-08-08  (2차. 같은 날 추가 마이그레이션 3건 반영 후 재생성)
 --   소스 프로젝트: Supabase project ref  tbxdrfowanyksgdicryl
---   대상 범위    : schema public, 테이블명 'pt_%' 전부 (8개) + dashboard_users
+--   대상 범위    : schema public, 테이블명 'pt_%' 전부 (9개) + dashboard_users
 --   데이터       : 없음. 스키마(DDL) 전용. row 데이터는 일절 포함하지 않는다.
 --
 -- 복원 순서: 01_tables -> 02_indexes -> 03_functions -> 04_grants_rls -> 05_cron
@@ -23,6 +23,16 @@
 -- 주의 4) dashboard_users 는 이름이 pt_ 로 시작하지 않지만 PT앱 로그인 경로
 --        (dashboard_login -> pt_access)가 이 테이블에 의존하므로 함께 넣었다.
 --        03_functions.sql 의 dashboard_* 4개 함수와 짝이다.
+-- 주의 5) **외부 의존 테이블 public.bot_admin_secret** -- 이 파일에는 CREATE 문이 없다.
+--        PT앱 소유가 아니라 톡톡 리포트 봇 계열이 쓰는 시크릿 1행 테이블이다.
+--        그런데 2026-08-08(2차)부터 dashboard_approve / dashboard_users_list 가
+--        _bot_admin_ok(p_secret) -> bot_admin_secret 을 읽는다. 즉 이 테이블이
+--        없으면 대시보드 계정관리가 죽는다. 구조는 pt_admin_secret 과 동일:
+--          (id integer NOT NULL DEFAULT 1, secret text NOT NULL,
+--           PRIMARY KEY (id), CHECK (id = 1))
+--        값은 여기 없다. 복원 시 운영자가 직접 넣어야 한다.
+-- 주의 6) 2026-08-08 2차 추가분: pt_tg_invites (아래 7번). 코치 텔레그램 초대링크가
+--        "시크릿 파생 고정 코드"에서 "1회용 + 만료 + 코치 지정" 으로 바뀌면서 생겼다.
 -- =====================================================================
 
 -- 필요 확장 (pt_passes.id, pt_sessions.id 의 gen_random_uuid(),
@@ -189,7 +199,36 @@ CREATE TABLE public.pt_tg_recipients (
 
 
 -- ---------------------------------------------------------------------
--- 7. dashboard_users  -- 대시보드/PT앱 로그인 계정 (자체 인증, Supabase Auth 아님)
+-- 7. pt_tg_invites  -- 코치 텔레그램 1회용 초대코드  (2026-08-08 2차 신규)
+--    이전에는 초대 링크가 "시크릿에서 파생한 고정 코드" 하나였다. 유출되면
+--    영구히 아무나 봇에 붙을 수 있었다. 이제 발급할 때마다 랜덤 코드를 만들고
+--    기본 24시간(최대 168h)만 살아 있으며, 한 번 쓰면 used_at 이 박혀 끝난다.
+--    코드 생성/검증/소진은 pt_join_issue / pt_join_peek / pt_join_consume 셋이 한다.
+--    (main.ts 의 /api/join/* + /api/tg/joinlink 와 짝이다 -- 반드시 함께 배포)
+--
+--    code       : PK. 랜덤 14자 [a-z0-9]. 텔레그램 start 파라미터로 그대로 실린다.
+--    coach_id   : NULL 이면 "코치 미지정" 초대. 값이 있으면 그 코치 전용.
+--    expires_at : 발급 시각 + p_hours. pt_join_peek 이 now() 와 비교.
+--    used_at    : 소진 시각. NOT NULL 이 되는 순간 그 코드는 죽는다 (1회용).
+--    used_chat  : 소진한 텔레그램 chat_id (앞 40자). 감사용.
+--    ※ 정리(GC) 는 크론이 아니라 pt_join_issue 안에서 한다 -- 발급할 때마다
+--      같은 지점의 "만료 7일 초과" / "사용 7일 초과" 행을 DELETE 한다.
+-- ---------------------------------------------------------------------
+CREATE TABLE public.pt_tg_invites (
+  code        text                     NOT NULL,
+  branch      text                     NOT NULL,
+  coach_id    bigint,
+  created_at  timestamp with time zone NOT NULL DEFAULT now(),
+  expires_at  timestamp with time zone NOT NULL,
+  used_at     timestamp with time zone,
+  used_chat   text,
+  CONSTRAINT pt_tg_invites_pkey          PRIMARY KEY (code),
+  CONSTRAINT pt_tg_invites_coach_id_fkey FOREIGN KEY (coach_id) REFERENCES public.pt_coaches(id) ON DELETE SET NULL
+);
+
+
+-- ---------------------------------------------------------------------
+-- 8. dashboard_users  -- 대시보드/PT앱 로그인 계정 (자체 인증, Supabase Auth 아님)
 --    PK 는 id 가 아니라 username 이다. 시퀀스 없음.
 --    2026-08-08 추가 컬럼: pt_access, fail_count, locked_until
 -- ---------------------------------------------------------------------
@@ -211,8 +250,9 @@ CREATE TABLE public.dashboard_users (
 --                main.ts 가 그 값으로 PT앱 진입을 막는다.
 -- fail_count   : 2026-08-08 추가. 비밀번호 연속 실패 횟수.
 -- locked_until : 2026-08-08 추가. 5회 실패 시 now() + 10분. pt_coach_login 과 동일 정책.
---                주의) dashboard_login 은 잠금이 만료돼도 fail_count 를 리셋하지 않는다.
---                (pt_coach_login 에는 있는 리셋 분기가 여기엔 없다 -- 실측값 그대로 둠)
+--                ★ 2026-08-08 2차 수정: 잠금이 만료되면 fail_count 를 0 부터 다시 센다.
+--                  (1차 덤프 시점에는 리셋 분기가 없어서, 10분이 지나 잠금이 풀려도
+--                   fail_count 가 5 로 남아 있다가 1회만 틀리면 즉시 재잠금됐다.)
 -- role         : 'owner' | 'manager' 등. dashboard_approve 는 role='owner' 를 건드리지 않는다.
 
 
@@ -223,7 +263,7 @@ CREATE TABLE public.dashboard_users (
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
--- 8. pt_passes  (153OS 소속. branches / profiles 필요)
+-- 9. pt_passes  (153OS 소속. branches / profiles 필요)
 -- ---------------------------------------------------------------------
 CREATE TABLE public.pt_passes (
   id              uuid                     NOT NULL DEFAULT gen_random_uuid(),
@@ -250,7 +290,7 @@ CREATE TABLE public.pt_passes (
 
 
 -- ---------------------------------------------------------------------
--- 9. pt_sessions  (153OS 소속. branches / staff / members / memberships 필요)
+-- 10. pt_sessions  (153OS 소속. branches / staff / members / memberships 필요)
 -- ---------------------------------------------------------------------
 CREATE TABLE public.pt_sessions (
   id             uuid                     NOT NULL DEFAULT gen_random_uuid(),

@@ -1,7 +1,7 @@
 -- =====================================================================
 -- pt-consult-app / DISASTER-RECOVERY SCHEMA DUMP -- 03_functions.sql
 -- =====================================================================
---   생성일       : 2026-08-08  (오늘 마이그레이션 5건 반영 후 재덤프)
+--   생성일       : 2026-08-08  (2차. 같은 날 추가 마이그레이션 3건 반영 후 재덤프)
 --   소스 프로젝트: Supabase project ref  tbxdrfowanyksgdicryl
 --   추출 방법    : pg_get_functiondef(p.oid) 원문 그대로 (verbatim).
 --                  요약·재작성·축약 없음.
@@ -12,18 +12,39 @@
 --    라이브 DB 와 백업이 조용히 어긋난다.
 --
 --   포함 범위 (public 스키마):
---     - proname LIKE '_pt_%'      ......  6개 (내부 헬퍼. 반드시 먼저 실행)
---     - proname LIKE 'dashboard%' ......  4개 (대시보드 로그인/가입/승인)
---     - proname LIKE 'pt_%'       ...... 34개 (앱 공개 RPC 전부)
---   합계 44개.
+--     - proname LIKE '_pt_%'      ......  6개 (PT앱 내부 헬퍼. 반드시 먼저 실행)
+--     - _bot_admin_ok             ......  1개 (톡톡봇 공용 헬퍼. dashboard_* 가 의존)
+--     - proname LIKE 'dashboard%' ......  4개 (대시보드 로그인/가입/승인/목록)
+--     - proname LIKE 'pt_%'       ...... 37개 (앱 공개 RPC 전부)
+--   합계 48개.
+--
+-- ---------------------------------------------------------------------
+-- 2026-08-08 (2차) 이 덤프에서 달라진 것 -- 8개
+-- ---------------------------------------------------------------------
+--   [신규] _bot_admin_ok        : bot_admin_secret 대조 게이트. 아래 2개가 이걸 쓴다.
+--   [신규] pt_join_issue        : 코치 텔레그램 초대코드 발급 (1회용, 기본 24h, 최대 168h)
+--   [신규] pt_join_peek         : 초대코드 확인 (invalid / used / expired 판정)
+--   [신규] pt_join_consume      : 초대코드 소진 (used_at, used_chat 기록)
+--   [변경] pt_datacenter        : 매출 귀속을 "이름 문자열" -> "이름 유일 + 전화 일치" 로.
+--                                 기간 필터 최근 365일 (v_days). 반환값에 revenue_days /
+--                                 pt_revenue_30 / pt_revenue_90 추가.
+--   [변경] dashboard_approve    : 시그니처 (p_user,p_approve) -> (p_user,p_approve,p_secret).
+--                                 _bot_admin_ok(p_secret) 게이트 추가. **구 시그니처 DROP 됨.**
+--   [변경] dashboard_users_list : 시그니처 () -> (p_secret).
+--                                 _bot_admin_ok(p_secret) 게이트 추가. **구 시그니처 DROP 됨.**
+--   [변경] dashboard_login      : 잠금(locked_until)이 만료된 계정은 fail_count 를 0 부터
+--                                 다시 센다. 이전엔 누적값이 남아 1회 실패로 즉시 재잠금됐다.
+--   나머지 40개는 1차 덤프와 **바이트 단위로 동일**함을 md5 로 대조 확인했다.
 --
 -- ---------------------------------------------------------------------
 -- 시크릿 검사 결과
 -- ---------------------------------------------------------------------
---   44개 함수 본문 전체를 자동 스캔했다. **리터럴 시크릿/토큰/비밀번호/해시
+--   48개 함수 본문 전체를 자동 스캔했다. **리터럴 시크릿/토큰/비밀번호/해시
 --   문자열은 단 한 건도 없다.** 따라서 이 파일에는 redaction(가림 처리)이 없다.
---   인증 방식은 전부 "호출자가 p_secret 을 넘기면 _pt_admin_ok() 가
---   pt_admin_secret 테이블 값과 대조" 하는 구조다 -- 값이 아니라 참조다.
+--   인증 방식은 전부 "호출자가 p_secret 을 넘기면 게이트 함수가 시크릿 테이블
+--   값과 대조" 하는 구조다 -- 값이 아니라 참조다.
+--     _pt_admin_ok(p_secret)   -> pt_admin_secret  대조 (PT앱 RPC 전부)
+--     _bot_admin_ok(p_secret)  -> bot_admin_secret 대조 (dashboard_approve/users_list)
 --   비밀번호도 crypt(p_pw, gen_salt('bf')) 해시만 저장하며 코드에는 없다.
 --   _pt_phone_key() 는 pt_admin_secret 의 값을 hmac 키로 **읽어 쓸 뿐** 코드에
 --   담고 있지 않다.
@@ -31,18 +52,22 @@
 --
 -- 실행 순서 주의: 이 파일은 01_tables.sql 이후에 실행한다.
 --                 파일 위에서 아래로 그대로 실행하면 의존 순서가 맞는다
---                 (_pt_* 헬퍼가 맨 앞에 온다).
+--                 (_pt_* / _bot_admin_ok 헬퍼가 맨 앞에 온다).
 --
 -- CREATE OR REPLACE 함정: 시그니처(인자 목록)가 바뀐 함수를 OR REPLACE 하면
 --   옛 버전이 지워지지 않고 **오버로드로 남는다**. PostgREST 가
 --   PGRST203 을 뱉거나 옛 버전이 계속 호출된다. 시그니처를 바꿀 때는
 --   반드시 DROP FUNCTION 으로 옛 시그니처를 먼저 지운다.
---   (2026-08-08 기준 중복 오버로드 0건 확인)
+--   이번 2차에서 dashboard_approve / dashboard_users_list 가 정확히 이 경우였고,
+--   운영 DB 에서 구 시그니처가 DROP 된 것을 확인했다. 복원 시 참고:
+--     DROP FUNCTION IF EXISTS public.dashboard_approve(text, boolean);
+--     DROP FUNCTION IF EXISTS public.dashboard_users_list();
+--   (2026-08-08 2차 기준 전체 48개 중 중복 오버로드 **0건** 확인)
 -- =====================================================================
 
 
 -- =====================================================================
--- (A) 내부 헬퍼 _pt_*  -- 반드시 먼저 실행한다
+-- (A) 내부 헬퍼 _pt_* / _bot_admin_ok  -- 반드시 먼저 실행한다
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -140,20 +165,39 @@ AS $function$
               else encode(hmac(p_phone, (select secret from pt_admin_secret where id=1), 'sha256'),'hex') end;
 $function$;
 
+-- ---------------------------------------------------------------------
+-- _bot_admin_ok
+--   ※ 이 함수는 PT앱 소유가 아니다. 톡톡 리포트 봇 계열이 쓰는 공용 게이트이며
+--     public.bot_admin_secret (id=1, secret) 테이블을 읽는다.
+--     dashboard_approve / dashboard_users_list 가 의존하므로 함께 덤프했다.
+--     빈 DB 에 복원할 때 bot_admin_secret 테이블이 없으면 함수 생성은 되지만
+--     호출 시 터진다. 01_tables.sql 의 "외부 의존 테이블" 절을 볼 것.
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public._bot_admin_ok(p_secret text)
+ RETURNS boolean
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ select exists(select 1 from public.bot_admin_secret where id=1 and secret = p_secret); $function$;
+
+
 -- =====================================================================
--- (B) dashboard_*  -- 대시보드 계정/로그인
+-- (B) dashboard_*  -- PT앱 로그인/가입/승인 경로
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
 -- dashboard_approve
 -- ---------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.dashboard_approve(p_user text, p_approve boolean)
+CREATE OR REPLACE FUNCTION public.dashboard_approve(p_user text, p_approve boolean, p_secret text DEFAULT NULL::text)
  RETURNS json
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
 begin
+  if not _bot_admin_ok(p_secret) then
+    return json_build_object('ok', false, 'error', 'forbidden');
+  end if;
   if p_approve then
     update dashboard_users set approved=true where username=p_user and role<>'owner';
   else
@@ -171,23 +215,23 @@ CREATE OR REPLACE FUNCTION public.dashboard_login(p_user text, p_pw text)
  SECURITY DEFINER
  SET search_path TO 'public', 'extensions'
 AS $function$
-declare u public.dashboard_users%rowtype;
+declare u public.dashboard_users%rowtype; v_fail int;
 begin
   select * into u from dashboard_users where lower(username)=lower(trim(p_user));
-  if not found then
-    return json_build_object('ok',false,'reason','invalid');
-  end if;
+  if not found then return json_build_object('ok',false,'reason','invalid'); end if;
 
-  -- 대입 잠금 (pt_coach_login 과 동일 정책: 5회 실패 → 10분)
   if u.locked_until is not null and u.locked_until > now() then
     return json_build_object('ok',false,'reason','locked',
       'error','비밀번호를 여러 번 틀렸어요. 잠시 후 다시 시도해 주세요.');
   end if;
 
+  -- 잠금이 만료됐으면 카운터를 0 부터 다시 센다
+  v_fail := case when u.locked_until is not null and u.locked_until <= now() then 0 else u.fail_count end;
+
   if u.pw_hash <> crypt(p_pw, u.pw_hash) then
     update dashboard_users
-       set fail_count = fail_count + 1,
-           locked_until = case when fail_count + 1 >= 5 then now() + interval '10 minutes' else locked_until end
+       set fail_count = v_fail + 1,
+           locked_until = case when v_fail + 1 >= 5 then now() + interval '10 minutes' else null end
      where username = u.username;
     return json_build_object('ok',false,'reason','invalid');
   end if;
@@ -229,20 +273,26 @@ end;$function$;
 -- ---------------------------------------------------------------------
 -- dashboard_users_list
 -- ---------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.dashboard_users_list()
+CREATE OR REPLACE FUNCTION public.dashboard_users_list(p_secret text DEFAULT NULL::text)
  RETURNS json
- LANGUAGE sql
+ LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
-  select coalesce(json_agg(json_build_object(
-    'username',username,'branch',branch,'role',role,'approved',approved,
-    'created',to_char(created_at at time zone 'Asia/Seoul','MM-DD HH24:MI')
-  ) order by approved asc, created_at desc),'[]'::json) from dashboard_users;
-$function$;
+begin
+  if not _bot_admin_ok(p_secret) then return '[]'::json; end if;
+  return (
+    select coalesce(json_agg(json_build_object(
+      'username',username,'branch',branch,'role',role,'approved',approved,
+      'pt_access',coalesce(pt_access,false),
+      'created',to_char(created_at at time zone 'Asia/Seoul','MM-DD HH24:MI')
+    ) order by approved asc, created_at desc),'[]'::json) from dashboard_users
+  );
+end;$function$;
+
 
 -- =====================================================================
--- (C) pt_*  -- 앱 공개 RPC
+-- (C) 앱 공개 RPC pt_*
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -604,7 +654,7 @@ CREATE OR REPLACE FUNCTION public.pt_datacenter(p_secret text, p_branch text, p_
  SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
-declare v_br text; v_bid uuid; d date; v jsonb; v_money boolean;
+declare v_br text; v_bid uuid; d date; v jsonb; v_money boolean; v_days int := 365;
 begin
   if not _pt_admin_ok(p_secret) then return jsonb_build_object('error','forbidden'); end if;
   v_br := coalesce(nullif(btrim(p_branch),''),'sunreung');
@@ -636,15 +686,25 @@ begin
      where ms.branch_id=v_bid and ms.deleted_at is null and _pt_is_pt_product(ms.plan_name)
        and regexp_replace(coalesce(mm.phone,''),'[^0-9]','','g') in (select ph from mem where ph is not null)
      group by 1
-  ), nm as (
-    select distinct m.name, _pt_name_phone(v_bid, m.name) as ph from mem m
   ), sale as (
-    select s.amount, _pt_is_pt_product(s.product) as is_pt, (nm.ph is null) as amb
-      from sales_entries s join nm on nm.name = s.member_name
+    -- 이름이 걸린 결제 중, 원장의 그 이름이 유일하고 전화번호까지 우리 PT 명부와 일치할 때만 '확실'로 본다.
+    select s.amount, s.sale_date, _pt_is_pt_product(s.product) as is_pt,
+           not (
+             (select count(*) from members mm
+               where mm.branch_id = v_bid and mm.deleted_at is null and mm.name = s.member_name) = 1
+             and exists (
+               select 1 from members mm
+                where mm.branch_id = v_bid and mm.deleted_at is null and mm.name = s.member_name
+                  and regexp_replace(coalesce(mm.phone,''),'[^0-9]','','g') in (select ph from mem where ph is not null))
+           ) as amb
+      from sales_entries s
      where s.branch_id = v_bid
+       and s.sale_date > d - v_days
+       and exists (select 1 from mem where mem.name = s.member_name)
   ), ptall as (
     select coalesce(sum(s.amount),0) amt, count(*) cnt
-      from sales_entries s where s.branch_id = v_bid and _pt_is_pt_product(s.product)
+      from sales_entries s
+     where s.branch_id = v_bid and s.sale_date > d - v_days and _pt_is_pt_product(s.product)
   )
   select jsonb_build_object(
     'members_total',  (select count(*) from mem),
@@ -659,24 +719,27 @@ begin
     'other_branch_30', (select coalesce(sum(a.v30_other),0) from mem m join att a on a.id=m.id),
     'risk',           (select count(*) from mem m join att a on a.id=m.id
                         where m.status='active' and (a.last_visit is null or a.last_visit < d-14)),
-    'low_sessions',   (select count(*) from mem where status='active' and (total_sessions-used_sessions) between 0 and 3),
+    'low_sessions',   (select count(*) from mem where status='active' and total_sessions > 0 and (total_sessions-used_sessions) between 0 and 3),
     'renew_rate',     (select case when count(*)=0 then 0 else round(100.0*count(*) filter (where n>1)/count(*)) end from ticket),
     'renew_members',  (select count(*) filter (where n>1) from ticket),
     'ticket_members', (select count(*) from ticket),
     'money_visible',  v_money,
+    'revenue_days',   v_days,
     'pt_revenue',     case when v_money then (select coalesce(sum(amount),0) from sale where is_pt and not amb) else 0 end,
     'pt_revenue_cnt', case when v_money then (select count(*) from sale where is_pt and not amb) else 0 end,
+    'pt_revenue_30',  case when v_money then (select coalesce(sum(amount),0) from sale where is_pt and not amb and sale_date > d-30) else 0 end,
+    'pt_revenue_90',  case when v_money then (select coalesce(sum(amount),0) from sale where is_pt and not amb and sale_date > d-90) else 0 end,
     'pay_total',      case when v_money then (select coalesce(sum(amount),0) from sale where not amb) else 0 end,
-    'pay_avg',        case when v_money then (select case when (select count(distinct coalesce(ph,'id:'||id::text)) from mem)=0 then 0
+    'pay_avg',        case when v_money then (select case when (select count(*) from sale where is_pt and not amb)=0 then 0
                         else round((select coalesce(sum(amount),0) from sale where is_pt and not amb)::numeric
-                                   / (select count(distinct coalesce(ph,'id:'||id::text)) from mem)) end) else 0 end,
+                                   / (select count(*) from sale where is_pt and not amb)) end) else 0 end,
     'pay_unsure_cnt', case when v_money then (select count(*) from sale where amb) else 0 end,
     'pay_unsure_amt', case when v_money then (select coalesce(sum(amount),0) from sale where amb) else 0 end,
     'pt_branch_total', case when v_money then (select amt from ptall) else 0 end,
     'pt_unlinked_amt', case when v_money then greatest((select amt from ptall)
-                        - (select coalesce(sum(amount),0) from sale where is_pt), 0) else 0 end,
+                        - (select coalesce(sum(amount),0) from sale where is_pt and not amb), 0) else 0 end,
     'pt_unlinked_cnt', case when v_money then greatest((select cnt from ptall)
-                        - (select count(*) from sale where is_pt), 0) else 0 end,
+                        - (select count(*) from sale where is_pt and not amb), 0) else 0 end,
     'sessions_done',  (select count(*) from pt_logs l join pt_members mm on mm.id=l.member_id and mm.deleted_at is null
                         where l.branch=v_br and (p_coach_id is null or l.coach_id=p_coach_id)),
     'sessions_30d',   (select count(*) from pt_logs l join pt_members mm on mm.id=l.member_id and mm.deleted_at is null
@@ -774,6 +837,77 @@ begin
 
   return jsonb_build_object('ok', true, 'branch', v_br, 'inserted', ins, 'updated', upd,
                             'skipped_deleted', skp, 'auto_coach', v_coach);
+end $function$;
+
+-- ---------------------------------------------------------------------
+-- pt_join_consume
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.pt_join_consume(p_secret text, p_code text, p_branch text DEFAULT NULL::text, p_chat text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare r record; v_br text;
+begin
+  if not _pt_admin_ok(p_secret) then return jsonb_build_object('error','forbidden'); end if;
+  v_br := coalesce(nullif(btrim(p_branch),''),'sunreung');
+  update pt_tg_invites
+     set used_at = now(), used_chat = left(coalesce(p_chat,''),40)
+   where code = btrim(p_code) and branch = v_br and used_at is null and expires_at >= now()
+   returning * into r;
+  if not found then return jsonb_build_object('ok',false,'error','invalid'); end if;
+  return jsonb_build_object('ok',true,'coach_id',r.coach_id);
+end $function$;
+
+-- ---------------------------------------------------------------------
+-- pt_join_issue
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.pt_join_issue(p_secret text, p_branch text, p_coach_id bigint DEFAULT NULL::bigint, p_hours integer DEFAULT 24)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+declare v_br text; v_code text; v_name text; v_h int;
+begin
+  if not _pt_admin_ok(p_secret) then return jsonb_build_object('error','forbidden'); end if;
+  v_br := coalesce(nullif(btrim(p_branch),''),'sunreung');
+  v_h := least(greatest(coalesce(p_hours,24),1), 168);
+  if p_coach_id is not null then
+    select name into v_name from pt_coaches where id = p_coach_id and branch = v_br;
+    if v_name is null then return jsonb_build_object('ok',false,'error','다른 지점 코치는 지정할 수 없습니다'); end if;
+  end if;
+  -- 텔레그램 start 파라미터 제약(영숫자 64자 이내)에 맞춘 랜덤 14자
+  v_code := lower(translate(encode(gen_random_bytes(12),'base64'), '+/=', 'xyz'));
+  v_code := left(regexp_replace(v_code,'[^a-z0-9]','','g') || md5(random()::text), 14);
+  insert into pt_tg_invites (code, branch, coach_id, expires_at)
+  values (v_code, v_br, p_coach_id, now() + make_interval(hours => v_h));
+  -- 만료·사용 완료된 오래된 초대는 정리
+  delete from pt_tg_invites where branch = v_br and (expires_at < now() - interval '7 days' or used_at < now() - interval '7 days');
+  return jsonb_build_object('ok',true,'code',v_code,'coach_id',p_coach_id,'coach_name',v_name,'hours',v_h);
+end $function$;
+
+-- ---------------------------------------------------------------------
+-- pt_join_peek
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.pt_join_peek(p_secret text, p_code text, p_branch text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare r record; v_br text;
+begin
+  if not _pt_admin_ok(p_secret) then return jsonb_build_object('error','forbidden'); end if;
+  v_br := coalesce(nullif(btrim(p_branch),''),'sunreung');
+  select i.*, c.name as coach_name into r
+    from pt_tg_invites i left join pt_coaches c on c.id = i.coach_id
+   where i.code = btrim(p_code) and i.branch = v_br;
+  if not found then return jsonb_build_object('ok',false,'error','invalid'); end if;
+  if r.used_at is not null then return jsonb_build_object('ok',false,'error','used'); end if;
+  if r.expires_at < now() then return jsonb_build_object('ok',false,'error','expired'); end if;
+  return jsonb_build_object('ok',true,'coach_id',r.coach_id,'coach_name',r.coach_name);
 end $function$;
 
 -- ---------------------------------------------------------------------

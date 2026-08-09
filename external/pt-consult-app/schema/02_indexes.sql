@@ -1,14 +1,18 @@
 -- =====================================================================
 -- pt-consult-app / DISASTER-RECOVERY SCHEMA DUMP -- 02_indexes.sql
 -- =====================================================================
---   생성일       : 2026-08-08  (오늘 마이그레이션 5건 반영 후 재생성)
+--   생성일       : 2026-08-08  (2차. 같은 날 추가 마이그레이션 3건 반영 후 재생성)
 --   소스 프로젝트: Supabase project ref  tbxdrfowanyksgdicryl
 --   추출 쿼리    : select indexdef from pg_indexes
 --                  where schemaname='public'
 --                    and (tablename like 'pt\_%' or tablename='dashboard_users')
+--   실측 개수    : 30개 (제약 자동생성 12 + 보조 18)
 --
---   ※ 오늘 마이그레이션 5건은 인덱스를 하나도 바꾸지 않았다.
---     pt_members.purge_key / manual_edited, dashboard_users.pt_access 에는
+--   ※ 2026-08-08 2차 변경분은 인덱스 하나만 늘렸다.
+--     신규: pt_tg_invites_branch_idx (branch, expires_at DESC)
+--     그 외 기존 인덱스는 1차 덤프와 동일하다.
+--
+--   ※ pt_members.purge_key / manual_edited, dashboard_users.pt_access 에는
 --     인덱스가 없다 (purge_key 는 임포트 루프에서 seq scan 으로 대조된다 --
 --     회원 수가 커지면 pt_members(purge_key) 부분 인덱스를 검토할 것).
 --
@@ -31,6 +35,7 @@
 -- CREATE UNIQUE INDEX pt_members_pkey ON public.pt_members USING btree (id);
 -- CREATE UNIQUE INDEX pt_passes_pkey ON public.pt_passes USING btree (id);
 -- CREATE UNIQUE INDEX pt_sessions_pkey ON public.pt_sessions USING btree (id);
+-- CREATE UNIQUE INDEX pt_tg_invites_pkey ON public.pt_tg_invites USING btree (code);
 -- CREATE UNIQUE INDEX pt_tg_recipients_pkey ON public.pt_tg_recipients USING btree (id);
 -- CREATE UNIQUE INDEX pt_tg_recipients_branch_chat_id_key ON public.pt_tg_recipients USING btree (branch, chat_id);
 -- CREATE UNIQUE INDEX dashboard_users_pkey ON public.dashboard_users USING btree (username);
@@ -60,6 +65,11 @@ CREATE INDEX pt_members_branch_coach_idx ON public.pt_members USING btree (branc
 CREATE UNIQUE INDEX pt_members_consult_uidx ON public.pt_members USING btree (consult_id) WHERE ((consult_id IS NOT NULL) AND (deleted_at IS NULL));
 CREATE UNIQUE INDEX pt_members_os_mid_uidx ON public.pt_members USING btree (os_membership_id) WHERE (os_membership_id IS NOT NULL);
 CREATE INDEX pt_members_phone_idx ON public.pt_members USING btree (phone);
+
+-- pt_tg_invites  (2026-08-08 2차 신규)
+--   조회 패턴은 code(PK) 단건 조회가 대부분이고, 이 인덱스는 pt_join_issue 안의
+--   지점별 GC(만료·사용 7일 초과 DELETE)를 위한 것이다.
+CREATE INDEX pt_tg_invites_branch_idx ON public.pt_tg_invites USING btree (branch, expires_at DESC);
 
 -- pt_passes (153OS 소속)
 CREATE INDEX pt_passes_branch_idx ON public.pt_passes USING btree (branch_id, status, created_at DESC);
