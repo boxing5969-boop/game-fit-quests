@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
@@ -27,6 +27,8 @@ import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
 import RouteLoader from "@/components/splash/RouteLoader";
 import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
 import { useTutorialGlobalOverridesBoot } from "@/hooks/useTutorialGlobalOverrides";
+import ExitConfirm from "@/components/ExitConfirm";
+import { initBackExit } from "@/lib/androidBackExit";
 
 // Route-level code splitting — every page below is fetched on demand.
 // LoginPage + NotFound stay eager: Login is the cold-start screen
@@ -198,6 +200,12 @@ const AppRoutes = () => {
     splashGated,
   );
 
+  // 안드로이드 뒤로가기 — 더 갈 곳이 없을 때 앱을 바로 끄지 않고 물어본다.
+  // (하위 화면에서의 뒤로가기는 라우터가 그대로 처리 — 여기서 가로채지 않는다)
+  const [exitAsk, setExitAsk] = useState(false);
+  // 홈 = 메인 화면과 로그인 화면. 여기서 뒤로가면 더 갈 곳이 없으므로 종료를 묻는다.
+  useEffect(() => { initBackExit(() => setExitAsk(true), ["/", "/login"]); }, []);
+
   if (loading) {
     return <RouteLoader />;
   }
@@ -305,6 +313,8 @@ const AppRoutes = () => {
       {user && splashDone && <LinkAccountPrompt />}
       {/* 쿨드 스타트 스플래시 (z-[80] · 포털). 세션 1회. */}
       {showSplash && <AppLaunchSplash onFinished={markFinished} />}
+      {/* 안드로이드 뒤로가기로 앱이 그냥 꺼지지 않게 — 홈에서 한 번 물어본다 */}
+      <ExitConfirm open={exitAsk} onClose={() => setExitAsk(false)} />
     </>
   );
 };
