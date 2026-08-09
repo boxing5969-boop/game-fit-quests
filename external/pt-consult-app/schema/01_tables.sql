@@ -5,9 +5,9 @@
 -- 라이브 DB 의 information_schema.columns + pg_constraint(pg_get_constraintdef)
 -- 를 읽어 손으로 CREATE TABLE 문으로 되살린 것이다.
 --
---   생성일       : 2026-08-08  (2차. 같은 날 추가 마이그레이션 3건 반영 후 재생성)
+--   생성일       : 2026-08-09  (3차. 지문·얼굴 로그인(WebAuthn 패스키) 반영 후 재생성)
 --   소스 프로젝트: Supabase project ref  tbxdrfowanyksgdicryl
---   대상 범위    : schema public, 테이블명 'pt_%' 전부 (9개) + dashboard_users
+--   대상 범위    : schema public, 테이블명 'pt_%' 전부 (11개) + dashboard_users
 --   데이터       : 없음. 스키마(DDL) 전용. row 데이터는 일절 포함하지 않는다.
 --
 -- 복원 순서: 01_tables -> 02_indexes -> 03_functions -> 04_grants_rls -> 05_cron
@@ -33,6 +33,13 @@
 --        값은 여기 없다. 복원 시 운영자가 직접 넣어야 한다.
 -- 주의 6) 2026-08-08 2차 추가분: pt_tg_invites (아래 7번). 코치 텔레그램 초대링크가
 --        "시크릿 파생 고정 코드"에서 "1회용 + 만료 + 코치 지정" 으로 바뀌면서 생겼다.
+-- 주의 7) 2026-08-09 3차 추가분: pt_webauthn_creds / pt_wa_challenges (아래 8·9번).
+--        지문·얼굴 로그인(WebAuthn 패스키)용이다. **비밀번호도 개인키도 저장하지 않는다.**
+--        기기 보안칩이 개인키를 갖고, DB 에는 공개키(public_key jsonb)만 온다.
+--        아래 8번 테이블의 **행은 절대 백업 문서·리포트에 옮겨 적지 않는다**
+--        (cred_id 와 공개키는 자격증명 식별 정보다). 구조만 남긴다.
+--        번호가 밀려서 dashboard_users 는 8 -> 10, pt_passes 9 -> 11,
+--        pt_sessions 10 -> 12 로 바뀌었다. 내용은 그대로다.
 -- =====================================================================
 
 -- 필요 확장 (pt_passes.id, pt_sessions.id 의 gen_random_uuid(),
@@ -227,8 +234,64 @@ CREATE TABLE public.pt_tg_invites (
 );
 
 
+-- =====================================================================
+-- 2026-08-09 신규 -- 지문·얼굴 로그인(WebAuthn 패스키) 2테이블
+-- 개인키는 여기 오지 않는다. 사용자 기기 보안칩에만 있고, 서버는 공개키로
+-- 서명을 검증만 한다. 아래 두 테이블에는 비밀번호가 일절 저장되지 않는다.
+-- =====================================================================
+
 -- ---------------------------------------------------------------------
--- 8. dashboard_users  -- 대시보드/PT앱 로그인 계정 (자체 인증, Supabase Auth 아님)
+-- 8. pt_webauthn_creds  -- 등록된 기기(패스키) 공개키 보관  (2026-08-09 신규)
+--    user_key 규칙 : 관장/관리자 'u:<아이디 소문자>' , 코치 'c:<pt_coaches.id>'
+--                    (문자열이라 FK 가 없다. 계정 유효성은 pt_wa_get 이 조회 시점에
+--                     pt_coaches / dashboard_users 를 다시 읽어 판정한다)
+--    cred_id      : 인증기가 발급한 credential id (base64url). UNIQUE.
+--    public_key   : COSE 공개키를 jsonb 로 저장. **개인키는 없다.**
+--    sign_count   : 인증기 서명 카운터. pt_wa_touch 가 greatest() 로만 올린다
+--                   (역행하면 복제 기기 의심 -> 서버가 거부).
+--    label        : 사용자가 붙인 기기 이름. 40자로 잘린다.
+--    ★ 이 테이블의 행은 백업 문서에 절대 옮겨 적지 않는다 (자격증명 식별자·공개키).
+-- ---------------------------------------------------------------------
+CREATE TABLE public.pt_webauthn_creds (
+  id            bigserial                NOT NULL,
+  user_key      text                     NOT NULL,
+  branch        text                     NOT NULL DEFAULT 'sunreung'::text,
+  cred_id       text                     NOT NULL,
+  public_key    jsonb                    NOT NULL,
+  sign_count    bigint                   NOT NULL DEFAULT 0,
+  label         text,
+  created_at    timestamp with time zone NOT NULL DEFAULT now(),
+  last_used_at  timestamp with time zone,
+  CONSTRAINT pt_webauthn_creds_pkey        PRIMARY KEY (id),
+  CONSTRAINT pt_webauthn_creds_cred_id_key UNIQUE (cred_id)
+);
+-- 기기 대수 제한(1인 5대)은 제약이 아니라 pt_wa_register 안의 count 검사다.
+-- FK 없음: user_key 가 두 종류 계정 테이블을 가리키는 다형 키이기 때문이다.
+
+
+-- ---------------------------------------------------------------------
+-- 9. pt_wa_challenges  -- 1회용 로그인/등록 챌린지  (2026-08-09 신규)
+--    challenge 가 PK 다. base64url 로 인코딩된 32바이트 난수.
+--    purpose   : 'login' | 'register'  (pt_wa_challenge_new 가 이 둘만 받는다)
+--    user_key  : register 때만 채워진다. login 은 NULL (누가 올지 모르므로).
+--    expires_at: 발급 + 3분. pt_wa_challenge_take 가 DELETE ... RETURNING 으로
+--                가져가므로 **한 번 쓰면 사라진다**(재사용 차단).
+--    청소      : pt_wa_challenge_new 가 호출될 때마다 10분 지난 행을 DELETE 한다.
+--                별도 크론 없음.
+--    CHECK 제약 없음 -- purpose 검증은 함수가 한다 (운영 실측 그대로).
+-- ---------------------------------------------------------------------
+CREATE TABLE public.pt_wa_challenges (
+  challenge   text                     NOT NULL,
+  purpose     text                     NOT NULL,
+  user_key    text,
+  created_at  timestamp with time zone NOT NULL DEFAULT now(),
+  expires_at  timestamp with time zone NOT NULL,
+  CONSTRAINT pt_wa_challenges_pkey PRIMARY KEY (challenge)
+);
+
+
+-- ---------------------------------------------------------------------
+-- 10. dashboard_users  -- 대시보드/PT앱 로그인 계정 (자체 인증, Supabase Auth 아님)
 --    PK 는 id 가 아니라 username 이다. 시퀀스 없음.
 --    2026-08-08 추가 컬럼: pt_access, fail_count, locked_until
 -- ---------------------------------------------------------------------
@@ -263,7 +326,7 @@ CREATE TABLE public.dashboard_users (
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
--- 9. pt_passes  (153OS 소속. branches / profiles 필요)
+-- 11. pt_passes  (153OS 소속. branches / profiles 필요)
 -- ---------------------------------------------------------------------
 CREATE TABLE public.pt_passes (
   id              uuid                     NOT NULL DEFAULT gen_random_uuid(),
@@ -290,7 +353,7 @@ CREATE TABLE public.pt_passes (
 
 
 -- ---------------------------------------------------------------------
--- 10. pt_sessions  (153OS 소속. branches / staff / members / memberships 필요)
+-- 12. pt_sessions  (153OS 소속. branches / staff / members / memberships 필요)
 -- ---------------------------------------------------------------------
 CREATE TABLE public.pt_sessions (
   id             uuid                     NOT NULL DEFAULT gen_random_uuid(),

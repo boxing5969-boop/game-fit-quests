@@ -1,7 +1,7 @@
 -- =====================================================================
 -- pt-consult-app / DISASTER-RECOVERY SCHEMA DUMP -- 03_functions.sql
 -- =====================================================================
---   생성일       : 2026-08-08  (2차. 같은 날 추가 마이그레이션 3건 반영 후 재덤프)
+--   생성일       : 2026-08-09  (3차. 지문·얼굴 로그인(WebAuthn 패스키) 반영 후 재덤프)
 --   소스 프로젝트: Supabase project ref  tbxdrfowanyksgdicryl
 --   추출 방법    : pg_get_functiondef(p.oid) 원문 그대로 (verbatim).
 --                  요약·재작성·축약 없음.
@@ -15,56 +15,83 @@
 --     - proname LIKE '_pt_%'      ......  6개 (PT앱 내부 헬퍼. 반드시 먼저 실행)
 --     - _bot_admin_ok             ......  1개 (톡톡봇 공용 헬퍼. dashboard_* 가 의존)
 --     - proname LIKE 'dashboard%' ......  4개 (대시보드 로그인/가입/승인/목록)
---     - proname LIKE 'pt_%'       ...... 37개 (앱 공개 RPC 전부)
---   합계 48개.
+--     - proname LIKE 'pt_%'       ...... 44개 (앱 공개 RPC 전부. pt_wa_* 7개 포함)
+--   합계 55개.
 --
 -- ---------------------------------------------------------------------
--- 2026-08-08 (2차) 이 덤프에서 달라진 것 -- 8개
+-- 2026-08-09 (3차) 이 덤프에서 달라진 것 -- 신규 7개뿐
 -- ---------------------------------------------------------------------
---   [신규] _bot_admin_ok        : bot_admin_secret 대조 게이트. 아래 2개가 이걸 쓴다.
---   [신규] pt_join_issue        : 코치 텔레그램 초대코드 발급 (1회용, 기본 24h, 최대 168h)
---   [신규] pt_join_peek         : 초대코드 확인 (invalid / used / expired 판정)
---   [신규] pt_join_consume      : 초대코드 소진 (used_at, used_chat 기록)
---   [변경] pt_datacenter        : 매출 귀속을 "이름 문자열" -> "이름 유일 + 전화 일치" 로.
---                                 기간 필터 최근 365일 (v_days). 반환값에 revenue_days /
---                                 pt_revenue_30 / pt_revenue_90 추가.
---   [변경] dashboard_approve    : 시그니처 (p_user,p_approve) -> (p_user,p_approve,p_secret).
---                                 _bot_admin_ok(p_secret) 게이트 추가. **구 시그니처 DROP 됨.**
---   [변경] dashboard_users_list : 시그니처 () -> (p_secret).
---                                 _bot_admin_ok(p_secret) 게이트 추가. **구 시그니처 DROP 됨.**
---   [변경] dashboard_login      : 잠금(locked_until)이 만료된 계정은 fail_count 를 0 부터
---                                 다시 센다. 이전엔 누적값이 남아 1회 실패로 즉시 재잠금됐다.
---   나머지 40개는 1차 덤프와 **바이트 단위로 동일**함을 md5 로 대조 확인했다.
+--   지문·얼굴 로그인(WebAuthn 패스키) 마이그레이션이 함수 7개를 추가했다.
+--   기존 48개는 **단 한 개도 바뀌지 않았다** (아래 무결성 검증 참고).
+--
+--   [신규] pt_wa_challenge_new  : 1회용 챌린지 발급. 32바이트 난수(gen_random_bytes)를
+--                                 base64url 로 바꿔 pt_wa_challenges 에 넣고 **3분** 뒤 만료.
+--                                 purpose 는 'login' / 'register' 둘만 허용.
+--                                 호출 때마다 10분 지난 찌꺼기를 청소한다(GC).
+--   [신규] pt_wa_challenge_take : 챌린지 소진. DELETE ... RETURNING 이라 **1회용**이 보장된다.
+--                                 만료됐거나 이미 쓴 챌린지는 {ok:false,error:'challenge'}.
+--   [신규] pt_wa_register       : 공개키 등록. user_key 당 **최대 5대**. cred_id UNIQUE 에
+--                                 ON CONFLICT DO UPDATE (같은 기기 재등록 시 갱신 + sign_count 유지).
+--                                 branch 기본값 'sunreung', label 은 40자로 자른다.
+--   [신규] pt_wa_get            : cred_id 로 자격증명 + **계정 상태 재확인**.
+--                                 'c:<id>' → pt_coaches (active AND approved 여야 통과)
+--                                 'u:<아이디>' → dashboard_users (approved AND pt_access 여야 통과)
+--                                 즉 승인취소·비활성·pt_access=false 면 지문 로그인도 즉시 막힌다.
+--   [신규] pt_wa_touch          : 로그인 성공 후 sign_count 갱신(greatest 로 **역행 방지**) +
+--                                 last_used_at 기록.
+--   [신규] pt_wa_list           : 내 등록 기기 목록 (id/label/등록일/마지막 사용, KST 표기).
+--                                 ★ cred_id 와 public_key 는 반환하지 않는다.
+--   [신규] pt_wa_del            : 내 기기 해제. user_key 가 일치해야만 지워진다(타인 기기 삭제 불가).
+--
+--   ※ 서명 검증(COSE 공개키 파싱, authenticatorData 플래그, clientDataJSON 대조)은
+--     DB 가 아니라 서버(main.ts, /api/wa/*)에서 한다. DB 는 챌린지 1회성·공개키 보관·
+--     카운터 단조증가·계정 상태 재확인만 책임진다.
+--
+-- ---------------------------------------------------------------------
+-- 무결성 검증 (3차 덤프 시점 실측)
+-- ---------------------------------------------------------------------
+--   라이브 DB 의 md5(pg_get_functiondef(oid)) 를 55개 전량 뽑아 이 파일에서
+--   추출한 각 함수 본문의 md5 와 1:1 대조했다.
+--     - 기존 48개 : 전부 일치 (2차 덤프와 **바이트 단위로 동일**)
+--     - 신규  7개 : 전부 일치
+--     - 라이브에만 있는 함수 / 파일에만 있는 함수 : 0건
+--     - 중복 오버로드(같은 이름 2개 이상) : **0건**
 --
 -- ---------------------------------------------------------------------
 -- 시크릿 검사 결과
 -- ---------------------------------------------------------------------
---   48개 함수 본문 전체를 자동 스캔했다. **리터럴 시크릿/토큰/비밀번호/해시
+--   55개 함수 본문 전체를 스캔했다. **리터럴 시크릿/토큰/비밀번호/해시/공개키
 --   문자열은 단 한 건도 없다.** 따라서 이 파일에는 redaction(가림 처리)이 없다.
 --   인증 방식은 전부 "호출자가 p_secret 을 넘기면 게이트 함수가 시크릿 테이블
 --   값과 대조" 하는 구조다 -- 값이 아니라 참조다.
---     _pt_admin_ok(p_secret)   -> pt_admin_secret  대조 (PT앱 RPC 전부)
+--     _pt_admin_ok(p_secret)   -> pt_admin_secret  대조 (PT앱 RPC 전부. pt_wa_* 7개 포함)
 --     _bot_admin_ok(p_secret)  -> bot_admin_secret 대조 (dashboard_approve/users_list)
 --   비밀번호도 crypt(p_pw, gen_salt('bf')) 해시만 저장하며 코드에는 없다.
 --   _pt_phone_key() 는 pt_admin_secret 의 값을 hmac 키로 **읽어 쓸 뿐** 코드에
 --   담고 있지 않다.
+--   패스키의 **개인키는 애초에 DB 에 오지 않는다** -- 사용자 기기 보안칩에만 있다.
+--   pt_webauthn_creds 에는 공개키(public_key jsonb)만 저장된다.
 -- ---------------------------------------------------------------------
 --
 -- 실행 순서 주의: 이 파일은 01_tables.sql 이후에 실행한다.
 --                 파일 위에서 아래로 그대로 실행하면 의존 순서가 맞는다
 --                 (_pt_* / _bot_admin_ok 헬퍼가 맨 앞에 온다).
 --
+-- ★ pt_wa_challenge_new 는 search_path 에 'extensions' 가 들어 있다
+--   (gen_random_bytes 가 거기 있기 때문). 복원 대상 DB 에서 pgcrypto 가
+--   extensions 스키마가 아닌 곳에 설치돼 있으면 이 함수만 런타임에 터진다.
+--   그때는 SET search_path 를 실제 설치 스키마에 맞춰 고칠 것.
+--
 -- CREATE OR REPLACE 함정: 시그니처(인자 목록)가 바뀐 함수를 OR REPLACE 하면
 --   옛 버전이 지워지지 않고 **오버로드로 남는다**. PostgREST 가
 --   PGRST203 을 뱉거나 옛 버전이 계속 호출된다. 시그니처를 바꿀 때는
 --   반드시 DROP FUNCTION 으로 옛 시그니처를 먼저 지운다.
---   이번 2차에서 dashboard_approve / dashboard_users_list 가 정확히 이 경우였고,
---   운영 DB 에서 구 시그니처가 DROP 된 것을 확인했다. 복원 시 참고:
+--   2026-08-08 2차에서 dashboard_approve / dashboard_users_list 가 이 경우였다.
+--   복원 시 참고:
 --     DROP FUNCTION IF EXISTS public.dashboard_approve(text, boolean);
 --     DROP FUNCTION IF EXISTS public.dashboard_users_list();
---   (2026-08-08 2차 기준 전체 48개 중 중복 오버로드 **0건** 확인)
+--   (2026-08-09 3차 기준 전체 55개 중 중복 오버로드 **0건** 확인)
 -- =====================================================================
-
 
 -- =====================================================================
 -- (A) 내부 헬퍼 _pt_* / _bot_admin_ok  -- 반드시 먼저 실행한다
@@ -167,11 +194,6 @@ $function$;
 
 -- ---------------------------------------------------------------------
 -- _bot_admin_ok
---   ※ 이 함수는 PT앱 소유가 아니다. 톡톡 리포트 봇 계열이 쓰는 공용 게이트이며
---     public.bot_admin_secret (id=1, secret) 테이블을 읽는다.
---     dashboard_approve / dashboard_users_list 가 의존하므로 함께 덤프했다.
---     빈 DB 에 복원할 때 bot_admin_secret 테이블이 없으면 함수 생성은 되지만
---     호출 시 터진다. 01_tables.sql 의 "외부 의존 테이블" 절을 볼 것.
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public._bot_admin_ok(p_secret text)
  RETURNS boolean
@@ -179,7 +201,6 @@ CREATE OR REPLACE FUNCTION public._bot_admin_ok(p_secret text)
  SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$ select exists(select 1 from public.bot_admin_secret where id=1 and secret = p_secret); $function$;
-
 
 -- =====================================================================
 -- (B) dashboard_*  -- PT앱 로그인/가입/승인 경로
@@ -290,9 +311,8 @@ begin
   );
 end;$function$;
 
-
 -- =====================================================================
--- (C) 앱 공개 RPC pt_*
+-- (C) 앱 공개 RPC pt_*   (pt_wa_* 7개 = 지문·얼굴 로그인, 2026-08-09 신규)
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -1585,6 +1605,159 @@ begin
   get diagnostics n = row_count;
   if n = 0 then return jsonb_build_object('ok', false, 'error', '해당 상담을 찾을 수 없거나 권한이 없습니다'); end if;
   return jsonb_build_object('ok', true);
+end $function$;
+
+-- ---------------------------------------------------------------------
+-- pt_wa_challenge_new
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.pt_wa_challenge_new(p_secret text, p_purpose text, p_user_key text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+declare v text;
+begin
+  if not _pt_admin_ok(p_secret) then return jsonb_build_object('error','forbidden'); end if;
+  if coalesce(p_purpose,'') not in ('login','register') then return jsonb_build_object('ok',false,'error','bad purpose'); end if;
+  v := translate(encode(gen_random_bytes(32),'base64'), '+/=', '-_');
+  insert into pt_wa_challenges (challenge, purpose, user_key, expires_at)
+  values (v, p_purpose, p_user_key, now() + interval '3 minutes');
+  delete from pt_wa_challenges where expires_at < now() - interval '10 minutes';
+  return jsonb_build_object('ok',true,'challenge',v);
+end $function$;
+
+-- ---------------------------------------------------------------------
+-- pt_wa_challenge_take
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.pt_wa_challenge_take(p_secret text, p_challenge text, p_purpose text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare r record;
+begin
+  if not _pt_admin_ok(p_secret) then return jsonb_build_object('error','forbidden'); end if;
+  delete from pt_wa_challenges
+   where challenge = p_challenge and purpose = p_purpose and expires_at >= now()
+   returning * into r;
+  if not found then return jsonb_build_object('ok',false,'error','challenge'); end if;
+  return jsonb_build_object('ok',true,'user_key',r.user_key);
+end $function$;
+
+-- ---------------------------------------------------------------------
+-- pt_wa_del
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.pt_wa_del(p_secret text, p_id bigint, p_user_key text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  if not _pt_admin_ok(p_secret) then return jsonb_build_object('error','forbidden'); end if;
+  delete from pt_webauthn_creds where id = p_id and user_key = p_user_key;
+  return jsonb_build_object('ok', found);
+end $function$;
+
+-- ---------------------------------------------------------------------
+-- pt_wa_get
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.pt_wa_get(p_secret text, p_cred_id text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare c record; k text; cid bigint; du record; co record;
+begin
+  if not _pt_admin_ok(p_secret) then return jsonb_build_object('error','forbidden'); end if;
+  select * into c from pt_webauthn_creds where cred_id = btrim(p_cred_id);
+  if not found then return jsonb_build_object('ok',false,'error','등록되지 않은 기기입니다'); end if;
+  k := c.user_key;
+
+  if left(k,2) = 'c:' then
+    cid := nullif(substring(k from 3), '')::bigint;
+    select * into co from pt_coaches where id = cid;
+    if not found or not co.active or not co.approved then
+      return jsonb_build_object('ok',false,'error','사용할 수 없는 계정입니다');
+    end if;
+    return jsonb_build_object('ok',true,'row_id',c.id,'sign_count',c.sign_count,'public_key',c.public_key,
+      'user_key',k,'role','coach','branch',co.branch,'name',co.name,'coach_id',co.id);
+  end if;
+
+  select * into du from dashboard_users where lower(username) = lower(substring(k from 3));
+  if not found or not du.approved or not coalesce(du.pt_access,false) then
+    return jsonb_build_object('ok',false,'error','사용할 수 없는 계정입니다');
+  end if;
+  return jsonb_build_object('ok',true,'row_id',c.id,'sign_count',c.sign_count,'public_key',c.public_key,
+    'user_key',k,'role', case when du.role='owner' then 'owner' else 'manager' end,
+    'branch',du.branch,'name',du.username,'coach_id',null);
+end $function$;
+
+-- ---------------------------------------------------------------------
+-- pt_wa_list
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.pt_wa_list(p_secret text, p_user_key text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare v jsonb;
+begin
+  if not _pt_admin_ok(p_secret) then return jsonb_build_object('error','forbidden'); end if;
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'id', id, 'label', coalesce(label,'등록한 기기'),
+    'created', to_char(created_at at time zone 'Asia/Seoul','YYYY-MM-DD'),
+    'last_used', to_char(last_used_at at time zone 'Asia/Seoul','YYYY-MM-DD HH24:MI')
+  ) order by id desc), '[]'::jsonb) into v
+  from pt_webauthn_creds where user_key = p_user_key;
+  return jsonb_build_object('ok',true,'rows',v);
+end $function$;
+
+-- ---------------------------------------------------------------------
+-- pt_wa_register
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.pt_wa_register(p_secret text, p_user_key text, p_branch text, p_cred_id text, p_public_key jsonb, p_label text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare v_id bigint; n int;
+begin
+  if not _pt_admin_ok(p_secret) then return jsonb_build_object('error','forbidden'); end if;
+  if coalesce(btrim(p_user_key),'') = '' or coalesce(btrim(p_cred_id),'') = '' then
+    return jsonb_build_object('ok',false,'error','잘못된 요청');
+  end if;
+  select count(*) into n from pt_webauthn_creds where user_key = p_user_key;
+  if n >= 5 then return jsonb_build_object('ok',false,'error','기기는 최대 5대까지 등록할 수 있어요'); end if;
+  insert into pt_webauthn_creds (user_key, branch, cred_id, public_key, label)
+  values (p_user_key, coalesce(nullif(btrim(p_branch),''),'sunreung'), btrim(p_cred_id), p_public_key,
+          left(nullif(btrim(coalesce(p_label,'')),''), 40))
+  on conflict (cred_id) do update set user_key = excluded.user_key, public_key = excluded.public_key,
+                                      label = excluded.label, last_used_at = null
+  returning id into v_id;
+  return jsonb_build_object('ok',true,'id',v_id);
+end $function$;
+
+-- ---------------------------------------------------------------------
+-- pt_wa_touch
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.pt_wa_touch(p_secret text, p_row_id bigint, p_sign_count bigint)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  if not _pt_admin_ok(p_secret) then return jsonb_build_object('error','forbidden'); end if;
+  update pt_webauthn_creds
+     set sign_count = greatest(sign_count, coalesce(p_sign_count,0)), last_used_at = now()
+   where id = p_row_id;
+  return jsonb_build_object('ok', found);
 end $function$;
 
 -- (끝)

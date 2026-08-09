@@ -1,14 +1,15 @@
 # pt-consult-app 스키마 백업 (재난 복구용)
 
-**생성일** 2026-08-08 **(2차)** — 같은 날 추가 마이그레이션 3건 적용 후 **전면 재덤프**
+**생성일** 2026-08-09 **(3차)** — 지문·얼굴 로그인(WebAuthn 패스키) 마이그레이션 적용 후 **전면 재덤프**
 **소스** Supabase project ref `tbxdrfowanyksgdicryl` / schema `public`
-**범위** `pt_*` 테이블 9개 + `dashboard_users` + 함수 48개 (`_pt_*` 6, `_bot_admin_ok` 1, `dashboard*` 4, `pt_*` 37)
+**범위** `pt_*` 테이블 11개 + `dashboard_users` + 함수 55개 (`_pt_*` 6, `_bot_admin_ok` 1, `dashboard*` 4, `pt_*` 44)
 
 이 앱은 그동안 백업이 `main.ts` **한 파일뿐**이었다. DB 쪽(테이블·인덱스·함수·RLS·크론)이
 레포에 전혀 없었고, 이 폴더가 그 구멍을 메운다.
 
 > **데이터는 들어있지 않다.** 전부 스키마(DDL) 전용이다. 회원 이름·전화번호 등
-> 개인정보와 `pt_admin_secret.secret` 값은 일절 포함하지 않았다.
+> 개인정보와 `pt_admin_secret.secret` 값, 그리고 `pt_webauthn_creds` 의 자격증명
+> (`cred_id` / `public_key`) 행은 일절 포함하지 않았다. 구조만 있다.
 
 ---
 
@@ -16,9 +17,9 @@
 
 | 파일 | 내용 |
 |---|---|
-| `01_tables.sql` | `pt_*` 9개 + `dashboard_users` CREATE TABLE (컬럼·타입·기본값·PK·UNIQUE·FK·CHECK) |
-| `02_indexes.sql` | 인덱스 전체 30개 (`pg_indexes.indexdef`) |
-| `03_functions.sql` | 함수 48개 `pg_get_functiondef` 원문 — **자동 덤프, 손으로 고치지 말 것** |
+| `01_tables.sql` | `pt_*` 11개 + `dashboard_users` CREATE TABLE (컬럼·타입·기본값·PK·UNIQUE·FK·CHECK) |
+| `02_indexes.sql` | 인덱스 전체 34개 (`pg_indexes.indexdef`) |
+| `03_functions.sql` | 함수 55개 `pg_get_functiondef` 원문 — **자동 덤프, 손으로 고치지 말 것** |
 | `04_grants_rls.sql` | RLS 상태, 정책, 테이블 GRANT, 함수 EXECUTE GRANT |
 | `05_cron.sql` | pg_cron 잡 (`pt-daily-import`) |
 
@@ -81,6 +82,12 @@ INSERT INTO public.pt_admin_secret (id, secret) VALUES (1, '<운영 시크릿>')
 3. **크론 시각** — `05` 의 `0 16 * * *` 은 **UTC**다 (= KST 새벽 1시).
 4. **코치 초대 링크 재발급** — 2026-08-08 (2차)부터 초대 링크가 1회용이다.
    복원/배포 후 기존 링크는 전부 무효이므로 코치들에게 다시 발급해 보내야 한다.
+5. **패스키(지문·얼굴) 재등록** — 복원한 앱의 **도메인이 달라지면 등록된 기기가 전부
+   무효**가 된다. WebAuthn 자격증명은 등록 당시 도메인(RP ID)에만 묶이기 때문이다.
+   사용자는 "등록되지 않은 기기입니다" 를 보게 되는데 버그가 아니다 — 비밀번호로
+   로그인한 뒤 기기를 다시 등록하면 된다. 자세한 내용은 아래 "2026-08-09 변경" 6번.
+6. **`main.ts` 동시 배포** — `/api/wa/*` 6개 라우트가 `pt_wa_*` 7개 함수와 짝이다.
+   한쪽만 올리면 지문 로그인이 동작하지 않는다.
 
 ---
 
@@ -279,6 +286,136 @@ INSERT INTO public.pt_admin_secret (id, secret) VALUES (1, '<운영 시크릿>')
 
 ---
 
+## 2026-08-09 변경 — 지문·얼굴 로그인(패스키)
+
+지점장·코치가 비밀번호를 매번 입력하지 않고 **휴대폰 지문/얼굴로 바로 로그인**하는 기능이
+붙었다. 표준 WebAuthn(패스키)이다. DB 쪽 추가분은 **테이블 2개 + 함수 7개**.
+
+### 1. 비밀번호를 기기에 저장하는 게 아니다
+
+가장 흔한 오해다. 동작은 이렇다.
+
+- 등록할 때, 사용자 **기기 안의 보안칩**이 키 한 쌍을 만든다.
+  **개인키는 그 칩 밖으로 절대 나오지 않는다.** 서버는 **공개키만** 받아 보관한다.
+- 로그인할 때, 서버가 1회용 난수(챌린지)를 주고 기기가 개인키로 서명한다.
+  서버는 보관 중인 공개키로 그 서명이 맞는지 **검증만** 한다.
+- 그래서 이 DB 가 통째로 유출돼도 **거기서 남의 계정으로 로그인할 수단은 나오지 않는다.**
+  공개키는 이름 그대로 공개돼도 되는 값이다.
+- 비밀번호 로그인은 그대로 남아 있다. 패스키는 추가 수단이지 대체가 아니다.
+
+> `pt_webauthn_creds` 의 **행은 백업 문서·리포트·스크린샷에 옮겨 적지 않는다.**
+> 공개키라 해도 `cred_id` 는 자격증명 식별자이므로 구조만 남긴다. (이 폴더도 구조만 있다.)
+
+### 2. 새 테이블 2개
+
+| 테이블 | 역할 |
+|---|---|
+| `pt_webauthn_creds` | 등록된 기기의 공개키. `user_key` / `branch` / `cred_id`(UNIQUE) / `public_key`(jsonb) / `sign_count` / `label` / `created_at` / `last_used_at` |
+| `pt_wa_challenges` | 1회용 챌린지. `challenge`(PK) / `purpose` / `user_key` / `created_at` / `expires_at` |
+
+둘 다 다른 `pt_*` 테이블과 같은 정책이다 — **RLS ON + 정책 0 + anon/authenticated 권한 0 +
+service_role 만 ALL**. 접근은 전부 `SECURITY DEFINER` RPC 를 통한다.
+
+### 3. 위조·재사용을 막는 3중 장치
+
+- **챌린지는 3분·1회용이다.** `pt_wa_challenge_take` 가 `DELETE ... RETURNING` 으로
+  가져가므로 한 번 쓰면 사라진다. 로그인 응답을 그대로 복사해 다시 던져도 통하지 않는다.
+  만료 찌꺼기는 `pt_wa_challenge_new` 가 호출될 때마다 10분 지난 것을 지운다(크론 없음).
+- **서명 카운터가 역행하면 거부한다.** 인증기는 서명할 때마다 카운터를 올린다.
+  `pt_wa_touch` 는 `greatest()` 로만 올리고, 서버는 들어온 값이 저장값보다 작거나 같으면
+  **복제된 기기로 보고 로그인을 거부**한다.
+- **UV(지문/얼굴 확인) 플래그가 필수다.** 서버가 `authenticatorData` 의 UV 비트를 확인한다.
+  화면만 켜서 "기기가 잠겨 있지 않다"는 것만으로는 통과하지 못한다. 실제로 지문이나
+  얼굴을 확인해야 한다.
+
+### 4. `pt_wa_get` 이 로그인 시점에 계정 상태를 다시 확인한다 (중요)
+
+기기 등록은 한 번이지만, 권한은 로그인할 때마다 다시 본다.
+
+- `user_key` 가 `c:<코치id>` 면 → `pt_coaches` 를 다시 읽어 **`active` 이고 `approved`** 여야 통과.
+- `user_key` 가 `u:<아이디>` 면 → `dashboard_users` 를 다시 읽어 **`approved` 이고
+  `pt_access=true`** 여야 통과.
+
+즉 **코치 승인을 취소하거나 비활성으로 바꾸면, 관리자가 `pt_access` 를 끄면,
+그 사람의 지문 로그인도 그 즉시 막힌다.** 기기를 따로 해제하러 다닐 필요가 없다.
+(반대로 말하면, 등록된 기기를 지우는 것만으로는 계정을 막을 수 없다 — 계정 쪽을 꺼야 한다.)
+
+### 5. `user_key` 규칙과 기기 대수
+
+| 역할 | user_key 형식 |
+|---|---|
+| 관장 / 관리자 | `u:<아이디 소문자>` |
+| 코치 | `c:<pt_coaches.id>` |
+
+- **한 사람당 기기 5대까지.** 초과하면 `pt_wa_register` 가
+  "기기는 최대 5대까지 등록할 수 있어요" 로 거절한다. 제약이 아니라 함수 안의 count 검사다.
+- 같은 기기를 다시 등록하면 `cred_id` UNIQUE 에 걸려 **갱신**된다(중복 행이 생기지 않는다).
+- `pt_webauthn_creds` 에는 계정 테이블로 향하는 **FK 가 없다**(`user_key` 가 두 테이블을
+  가리키는 다형 문자열이라서). 계정을 하드 DELETE 하면 기기 행이 고아로 남는다.
+  로그인은 위 4번 때문에 막히지만, 찌꺼기는 수동으로 지운다:
+  `DELETE FROM pt_webauthn_creds WHERE user_key = 'c:<지운 코치 id>';`
+
+### 6. ⚠️ 패스키는 도메인(RP ID)에 묶인다 — 주소를 바꾸면 전부 재등록
+
+WebAuthn 자격증명은 **등록할 때의 도메인에만** 쓸 수 있다. 이건 규격이지 설정 실수가 아니다.
+
+**앱 주소(도메인)를 바꾸면 등록된 기기가 전부 무효가 되고, 모든 사용자가 다시 등록해야 한다.**
+
+- Deno Deploy 프로젝트 이름을 바꾸거나 새로 만들어 주소가 달라지는 경우
+- `*.deno.dev` 에서 자체 도메인으로 옮기는 경우 (그 반대도 마찬가지)
+- 서브도메인이 달라지는 경우
+
+이때 사용자는 로그인 화면에서 "등록되지 않은 기기입니다" 를 보게 된다. **버그가 아니다.**
+비밀번호 로그인은 그대로 되므로, 비밀번호로 들어가서 기기를 다시 등록하면 된다.
+→ **도메인 변경 계획이 있으면 패스키 안내를 먼저 하고, 비밀번호를 잊지 않게 할 것.**
+
+### 7. `main.ts` 와 반드시 같이 배포한다
+
+DB 함수만 넣고 서버를 안 올리면 아무 일도 일어나지 않고, 서버만 올리고 DB 함수가 없으면
+로그인 화면이 깨진다. `/api/wa/*` **6개 라우트**가 이 7개 함수와 1:1로 짝이다.
+
+| 라우트 | 쓰는 함수 |
+|---|---|
+| `POST /api/wa/options` | `pt_wa_challenge_new`(login) |
+| `POST /api/wa/verify` | `pt_wa_challenge_take` → `pt_wa_get` → `pt_wa_touch` |
+| `POST /api/wa/reg/options` | `pt_wa_challenge_new`(register) |
+| `POST /api/wa/reg/verify` | `pt_wa_challenge_take` → `pt_wa_register` |
+| `POST /api/wa/list` | `pt_wa_list` |
+| `POST /api/wa/del` | `pt_wa_del` |
+
+서명 검증(COSE 공개키 파싱, `authenticatorData` 플래그, `clientDataJSON` 대조)은
+**DB 가 아니라 `main.ts`** 가 한다. DB 는 챌린지 1회성·공개키 보관·카운터 단조증가·
+계정 상태 재확인만 책임진다. 그래서 둘은 항상 세트로 배포해야 한다.
+
+### 8. 라이브 검증 결과
+
+배포 후 운영 DB 에서 확인한 것 (합성 데이터로만 시험했고, 실제 회원 정보는 쓰지 않았다):
+
+| 시험 | 결과 |
+|---|---|
+| 정상 지문/얼굴 서명으로 로그인 | **수락** ✅ |
+| 성공한 로그인 응답을 그대로 다시 전송 (재사용 공격) | **거부** ✅ (챌린지가 이미 소진됨) |
+| 서명을 위조해 전송 | **거부** ✅ (공개키 검증 실패) |
+| 비활성 처리된 코치의 기기로 로그인 | **거부** ✅ (`pt_wa_get` 이 계정 상태에서 차단) |
+
+### 무결성 검증 (3차 덤프 시점 실측)
+
+| 항목 | 결과 |
+|---|---|
+| 중복 오버로드 (`pt%` / `_pt%` / `dashboard%` / `_bot%`) | **0건** |
+| 덤프한 함수 수 | 55개 (`_pt_*` 6 + `_bot_admin_ok` 1 + `dashboard*` 4 + `pt_*` 44) |
+| 2차 덤프와 동일한 함수 | **48개 전부** — `pg_get_functiondef` md5 **바이트 단위 일치** |
+| 달라진 함수 | 0개. **신규만 7개** (`pt_wa_*`), md5 대조로 무손실 전송 확인 |
+| 라이브↔파일 함수 집합 대조 | 55 = 55, 누락·초과 **0건** |
+| RLS | `pt_*` 11개 + `dashboard_users` 전부 ON, `FORCE` 없음 |
+| POLICY | **0건** (의도된 deny-all) |
+| `pt_*` 테이블의 anon/authenticated 권한 | **0건** (신규 2테이블 포함) |
+| 인덱스 | 34개 (제약 자동생성 15 + 보조 19). 3차 신규는 4개 (전부 신규 2테이블 소속) |
+| pg_cron 잡 | 1개 (`pt-daily-import`, `0 16 * * *` UTC = KST 01:00) — **변경 없음** |
+| 리터럴 시크릿 포함 여부 | 55개 함수 본문 전수 스캔 결과 **0건**. 시크릿 테이블과 `pt_webauthn_creds` 의 행은 조회조차 하지 않았다 |
+
+---
+
 ## 경고
 
 ### 무료 플랜 Supabase 에는 PITR(Point-in-Time Recovery)이 없다
@@ -310,7 +447,7 @@ WHERE n.nspname = 'public'
   AND (proname LIKE 'pt%' OR proname LIKE '_pt%' OR proname LIKE 'dashboard%' OR proname LIKE '_bot%')
 GROUP BY proname HAVING count(*) > 1;
 ```
-(2026-08-08 **2차** 재덤프 기준 결과: **0건**. 전체 48개 중 중복 오버로드 없음.)
+(2026-08-09 **3차** 재덤프 기준 결과: **0건**. 전체 55개 중 중복 오버로드 없음.)
 
 ---
 
@@ -319,11 +456,15 @@ GROUP BY proname HAVING count(*) > 1;
 - 인증은 Supabase Auth 가 아니다. 모든 관리자 RPC 가 `p_secret` 을 받아
   `_pt_admin_ok()` 로 `pt_admin_secret` 과 대조한다. 시크릿은 서버(`main.ts`)에만
   두고 브라우저로 내려보내면 안 된다.
-- 로그인 경로는 **둘**이다.
+- 비밀번호 로그인 경로는 **둘**이다.
   - 코치: `pt_coaches.login_id` + bcrypt `pw_hash` → `pt_coach_login`
   - 지점장/관리자: `dashboard_users.username` + bcrypt `pw_hash` → `dashboard_login`
     (여기서 `pt_access` 가 PT앱 진입을 가른다)
   - 둘 다 5회 실패 / 10분 잠금.
+- 2026-08-09 부터 **세 번째 경로**로 지문·얼굴(패스키)이 붙었다 → `pt_wa_get`.
+  비밀번호를 대체하지 않고 추가된 것이며, 이 경로도 결국 위 두 계정 테이블의
+  상태(`active`/`approved`/`pt_access`)를 로그인할 때마다 다시 확인한다.
+  즉 **계정을 막으면 지문 로그인도 같이 막힌다.**
 - 게이트 함수는 **둘**이다. 헷갈리지 말 것.
   - `_pt_admin_ok(p_secret)` → `pt_admin_secret` 대조. PT앱 RPC 전부가 이걸 쓴다.
   - `_bot_admin_ok(p_secret)` → `bot_admin_secret` 대조. `dashboard_approve` /

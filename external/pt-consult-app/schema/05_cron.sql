@@ -2,6 +2,10 @@
 -- pt-consult-app / DISASTER-RECOVERY SCHEMA DUMP -- 05_cron.sql
 -- =====================================================================
 --   생성일       : 2026-08-08  (오늘 마이그레이션 5건 반영 후 재생성)
+--   재확인       : 2026-08-09  (3차 덤프 시 cron.job 재조회 -- **변경 없음**.
+--                  잡은 여전히 pt-daily-import 1개뿐이고 스케줄·명령·active 모두 동일.
+--                  지문·얼굴 로그인(패스키)은 크론을 추가하지 않았다. 챌린지 청소는
+--                  pt_wa_challenge_new 가 호출될 때마다 인라인으로 한다.)
 --   소스 프로젝트: Supabase project ref  tbxdrfowanyksgdicryl
 --   추출 쿼리    : select jobid, jobname, schedule, command, nodename, nodeport,
 --                         database, username, active from cron.job
