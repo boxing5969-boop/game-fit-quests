@@ -35,6 +35,7 @@ import { initBackExit } from "@/lib/androidBackExit";
 // Route-level code splitting — every page below is fetched on demand.
 // LoginPage + NotFound stay eager: Login is the cold-start screen
 // (no point in splitting the first paint), NotFound is a tiny fallback.
+const TvBranchPicker = lazyWithRetry(() => import("@/pages/TvBranchPicker"));
 const HomePage = lazyWithRetry(() => import("@/pages/HomePage"));
 const MissionsPage = lazyWithRetry(() => import("@/pages/MissionsPage"));
 // LevelMapPage — /rank-up 에 탭으로 통합, /levelmap 경로는 리다이렉트만 유지.
@@ -291,6 +292,8 @@ const AppRoutes = () => {
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         {/* 사이니지용 짧은 주소 — 리모컨으로 치기 쉽게. /tv/sunreung/1 처럼 화면 번호를 붙이면
             나란히 놓인 2대에 좌·우로 나눠 띄운다(번호 없으면 예전처럼 한 화면에 전부). */}
+        {/* 지점 코드 없이 /tv 만 치면 지점 선택 화면 — TV 리모컨 입력을 줄이려는 것 */}
+        <Route path="/tv" element={<TvBranchPicker />} />
         <Route path="/tv/:branchCode" element={<LiveBoardPage />} />
         <Route path="/tv/:branchCode/:screen" element={<LiveBoardPage />} />
         <Route path="/face-kiosk/:branchCode" element={<FaceKioskPage />} />
