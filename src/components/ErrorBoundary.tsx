@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { isChunkLoadError } from "@/lib/lazyWithRetry";
 
 interface Props {
   children: ReactNode;
@@ -38,6 +39,30 @@ export default class ErrorBoundary extends Component<Props, State> {
 
     const message = error.message || String(error);
     const stack = info?.componentStack || error.stack || "";
+
+    // 화면 파일을 못 받아온 경우 — 회원 잘못이 아니고 대개 새로고침이면 끝난다.
+    // (lazyWithRetry 가 먼저 재시도·자동 새로고침을 하므로 여기까지 오는 건 드물다.)
+    if (isChunkLoadError(error)) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-foreground">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-elev-3">
+            <div className="mb-3 text-4xl">🔄</div>
+            <h1 className="mb-2 text-lg font-bold">잠깐 연결이 끊겼어요</h1>
+            <p className="mb-5 text-sm text-muted-foreground">
+              새로고침을 누르면 바로 이어서 사용할 수 있어요.
+              <br />
+              계속 이러면 데스크에 말씀해주세요.
+            </p>
+            <button
+              onClick={this.handleReload}
+              className="w-full rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]"
+            >
+              새로고침
+            </button>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-foreground">

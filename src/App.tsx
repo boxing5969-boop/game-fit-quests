@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
@@ -33,55 +34,55 @@ import { initBackExit } from "@/lib/androidBackExit";
 // Route-level code splitting — every page below is fetched on demand.
 // LoginPage + NotFound stay eager: Login is the cold-start screen
 // (no point in splitting the first paint), NotFound is a tiny fallback.
-const HomePage = lazy(() => import("@/pages/HomePage"));
-const MissionsPage = lazy(() => import("@/pages/MissionsPage"));
+const HomePage = lazyWithRetry(() => import("@/pages/HomePage"));
+const MissionsPage = lazyWithRetry(() => import("@/pages/MissionsPage"));
 // LevelMapPage — /rank-up 에 탭으로 통합, /levelmap 경로는 리다이렉트만 유지.
-const RewardsPage = lazy(() => import("@/pages/RewardsPage"));
-const HallOfFamePage = lazy(() => import("@/pages/HallOfFamePage"));
-const MyPage = lazy(() => import("@/pages/MyPage"));
-const MembershipPage = lazy(() => import("@/pages/MembershipPage"));
-const SignupApply = lazy(() => import("@/pages/SignupApply"));
-const MembershipSelectPage = lazy(() => import("@/pages/MembershipSelectPage"));
-const CoachDashboard = lazy(() => import("@/pages/CoachDashboard"));
-const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
-const CertBenefitsPage = lazy(() => import("@/pages/CertBenefitsPage"));
-const BranchManagerHome = lazy(() => import("@/pages/BranchManagerHome"));
-const MemberDetailPage = lazy(() => import("@/pages/MemberDetailPage"));
-const MemberPreviewPage = lazy(() => import("@/pages/MemberPreviewPage"));
-const OnboardingPage = lazy(() => import("@/pages/OnboardingPage"));
-const SelectBranchPage = lazy(() => import("@/pages/SelectBranchPage"));
-const WaitingApprovalPage = lazy(() => import("@/pages/WaitingApprovalPage"));
-const GuidePage = lazy(() => import("@/pages/GuidePage"));
-const GuideProgramPage = lazy(() => import("@/pages/guide/GuideProgramPage"));
-const GuideSciencePage = lazy(() => import("@/pages/guide/GuideSciencePage"));
-const GuideValueMapPage = lazy(() => import("@/pages/guide/GuideValueMapPage"));
-const GuideExercisePurposePage = lazy(() => import("@/pages/guide/GuideExercisePurposePage"));
-const GuideSafetyPage = lazy(() => import("@/pages/guide/GuideSafetyPage"));
-const GuideFaqPage = lazy(() => import("@/pages/guide/GuideFaqPage"));
-const RankUpPage = lazy(() => import("@/pages/RankUpPage"));
-const CharacterStudioPage = lazy(() => import("@/pages/CharacterStudioPage"));
-const MasterTrackPage = lazy(() => import("@/pages/MasterTrackPage"));
-const MinigamePage = lazy(() => import("@/pages/MinigamePage"));
-const CheckinBoardPage = lazy(() => import("@/pages/CheckinBoardPage"));
-const DietHubPage = lazy(() => import("@/pages/diet/DietHubPage"));
-const DietOnboardingPage = lazy(() => import("@/pages/diet/DietOnboardingPage"));
-const DietTrackerPage = lazy(() => import("@/pages/diet/DietTrackerPage"));
-const DietProgressPage = lazy(() => import("@/pages/diet/DietProgressPage"));
-const DietFoodGuidePage = lazy(() => import("@/pages/diet/DietFoodGuidePage"));
-const DietRankingPage = lazy(() => import("@/pages/diet/DietRankingPage"));
-const DietValuePage = lazy(() => import("@/pages/diet/DietValuePage"));
-const DietMealPlanPage = lazy(() => import("@/pages/diet/DietMealPlanPage"));
-const DietAfter21GuidePage = lazy(() => import("@/pages/diet/DietAfter21GuidePage"));
-const ChallengesPage = lazy(() => import("@/pages/ChallengesPage"));
-const DietAutoMealsPage = lazy(() => import("@/pages/diet/DietAutoMealsPage"));
-const DietPostProgramPage = lazy(() => import("@/pages/diet/DietPostProgramPage"));
-const DietPhotoGalleryPage = lazy(() => import("@/pages/diet/DietPhotoGalleryPage"));
-const AboutOneFiveThreePage = lazy(() => import("@/pages/AboutOneFiveThreePage"));
-const DietCoachInboxPage = lazy(() => import("@/pages/diet/coach/DietCoachInboxPage"));
-const DietMemberDetailPage = lazy(() => import("@/pages/diet/coach/DietMemberDetailPage"));
-const LiveBoardPage = lazy(() => import("@/pages/LiveBoardPage"));
-const FaceKioskPage = lazy(() => import("@/pages/FaceKioskPage"));
-const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdminDashboard"));
+const RewardsPage = lazyWithRetry(() => import("@/pages/RewardsPage"));
+const HallOfFamePage = lazyWithRetry(() => import("@/pages/HallOfFamePage"));
+const MyPage = lazyWithRetry(() => import("@/pages/MyPage"));
+const MembershipPage = lazyWithRetry(() => import("@/pages/MembershipPage"));
+const SignupApply = lazyWithRetry(() => import("@/pages/SignupApply"));
+const MembershipSelectPage = lazyWithRetry(() => import("@/pages/MembershipSelectPage"));
+const CoachDashboard = lazyWithRetry(() => import("@/pages/CoachDashboard"));
+const SettingsPage = lazyWithRetry(() => import("@/pages/SettingsPage"));
+const CertBenefitsPage = lazyWithRetry(() => import("@/pages/CertBenefitsPage"));
+const BranchManagerHome = lazyWithRetry(() => import("@/pages/BranchManagerHome"));
+const MemberDetailPage = lazyWithRetry(() => import("@/pages/MemberDetailPage"));
+const MemberPreviewPage = lazyWithRetry(() => import("@/pages/MemberPreviewPage"));
+const OnboardingPage = lazyWithRetry(() => import("@/pages/OnboardingPage"));
+const SelectBranchPage = lazyWithRetry(() => import("@/pages/SelectBranchPage"));
+const WaitingApprovalPage = lazyWithRetry(() => import("@/pages/WaitingApprovalPage"));
+const GuidePage = lazyWithRetry(() => import("@/pages/GuidePage"));
+const GuideProgramPage = lazyWithRetry(() => import("@/pages/guide/GuideProgramPage"));
+const GuideSciencePage = lazyWithRetry(() => import("@/pages/guide/GuideSciencePage"));
+const GuideValueMapPage = lazyWithRetry(() => import("@/pages/guide/GuideValueMapPage"));
+const GuideExercisePurposePage = lazyWithRetry(() => import("@/pages/guide/GuideExercisePurposePage"));
+const GuideSafetyPage = lazyWithRetry(() => import("@/pages/guide/GuideSafetyPage"));
+const GuideFaqPage = lazyWithRetry(() => import("@/pages/guide/GuideFaqPage"));
+const RankUpPage = lazyWithRetry(() => import("@/pages/RankUpPage"));
+const CharacterStudioPage = lazyWithRetry(() => import("@/pages/CharacterStudioPage"));
+const MasterTrackPage = lazyWithRetry(() => import("@/pages/MasterTrackPage"));
+const MinigamePage = lazyWithRetry(() => import("@/pages/MinigamePage"));
+const CheckinBoardPage = lazyWithRetry(() => import("@/pages/CheckinBoardPage"));
+const DietHubPage = lazyWithRetry(() => import("@/pages/diet/DietHubPage"));
+const DietOnboardingPage = lazyWithRetry(() => import("@/pages/diet/DietOnboardingPage"));
+const DietTrackerPage = lazyWithRetry(() => import("@/pages/diet/DietTrackerPage"));
+const DietProgressPage = lazyWithRetry(() => import("@/pages/diet/DietProgressPage"));
+const DietFoodGuidePage = lazyWithRetry(() => import("@/pages/diet/DietFoodGuidePage"));
+const DietRankingPage = lazyWithRetry(() => import("@/pages/diet/DietRankingPage"));
+const DietValuePage = lazyWithRetry(() => import("@/pages/diet/DietValuePage"));
+const DietMealPlanPage = lazyWithRetry(() => import("@/pages/diet/DietMealPlanPage"));
+const DietAfter21GuidePage = lazyWithRetry(() => import("@/pages/diet/DietAfter21GuidePage"));
+const ChallengesPage = lazyWithRetry(() => import("@/pages/ChallengesPage"));
+const DietAutoMealsPage = lazyWithRetry(() => import("@/pages/diet/DietAutoMealsPage"));
+const DietPostProgramPage = lazyWithRetry(() => import("@/pages/diet/DietPostProgramPage"));
+const DietPhotoGalleryPage = lazyWithRetry(() => import("@/pages/diet/DietPhotoGalleryPage"));
+const AboutOneFiveThreePage = lazyWithRetry(() => import("@/pages/AboutOneFiveThreePage"));
+const DietCoachInboxPage = lazyWithRetry(() => import("@/pages/diet/coach/DietCoachInboxPage"));
+const DietMemberDetailPage = lazyWithRetry(() => import("@/pages/diet/coach/DietMemberDetailPage"));
+const LiveBoardPage = lazyWithRetry(() => import("@/pages/LiveBoardPage"));
+const FaceKioskPage = lazyWithRetry(() => import("@/pages/FaceKioskPage"));
+const SuperAdminDashboard = lazyWithRetry(() => import("@/pages/SuperAdminDashboard"));
 // 153마인드셋 — 시각화 훈련 (153복싱짐으로 돌아온 사람).
 //
 // 보존된 RPG 자산:
@@ -90,14 +91,14 @@ const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdminDashboard"));
 //   · public/assets/story-rpg/ 17장 PNG
 //   · src/pages/BoxerRoutePage.tsx (직전 단계 — 7 라운드 RoundTimer 시각화)
 // 위 파일은 모두 그대로 보존. 라우트 import 만 신규 페이지로 교체 — 1커밋 rollback 가능.
-const MyBoxerVisualizationPage = lazy(
+const MyBoxerVisualizationPage = lazyWithRetry(
   () => import("@/pages/MyBoxerVisualizationPage"),
 );
-const MyBoxerQuestPage = lazy(() => import("@/pages/MyBoxerQuestPage"));
-const MyBoxerCommunityPage = lazy(() => import("@/pages/MyBoxerCommunityPage"));
-const TrainingLibraryPage = lazy(() => import("@/pages/TrainingLibraryPage"));
-const RoutineBuilderPage = lazy(() => import("@/pages/RoutineBuilderPage"));
-const RoutinesPage = lazy(() => import("@/pages/RoutinesPage"));
+const MyBoxerQuestPage = lazyWithRetry(() => import("@/pages/MyBoxerQuestPage"));
+const MyBoxerCommunityPage = lazyWithRetry(() => import("@/pages/MyBoxerCommunityPage"));
+const TrainingLibraryPage = lazyWithRetry(() => import("@/pages/TrainingLibraryPage"));
+const RoutineBuilderPage = lazyWithRetry(() => import("@/pages/RoutineBuilderPage"));
+const RoutinesPage = lazyWithRetry(() => import("@/pages/RoutinesPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
