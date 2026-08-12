@@ -13,6 +13,7 @@ import NotFound from "@/pages/NotFound";
 import ChatAssistant from "@/components/ChatAssistant";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { isManagerRole } from "@/lib/rankLabels";
+import { isSignageRoute } from "@/lib/displayMode";
 import TutorialFloatingMascot from "@/components/tutorial/TutorialFloatingMascot";
 import TutorialActionSpotlight from "@/components/tutorial/TutorialActionSpotlight";
 import OsamiWelcomeModal from "@/components/tutorial/OsamiWelcomeModal";
@@ -185,6 +186,9 @@ const AppRoutes = () => {
   const { user, loading } = useAuth();
   const { pathname } = useLocation();
 
+  // 사이니지(TV)·키오스크에서는 앱 UI를 통째로 끈다. 아래 전역 크롬 전부가 이 한 줄에 걸린다.
+  const signage = isSignageRoute(pathname);
+
   // 65-A: 앱 부팅 시 1회 — 관리자가 publish 한 글로벌 튜토리얼 오버라이드 로드.
   // 실패해도 조용히 — base + 본인 local 만으로 동작.
   useTutorialGlobalOverridesBoot();
@@ -208,12 +212,13 @@ const AppRoutes = () => {
   useEffect(() => { initBackExit(() => setExitAsk(true), ["/", "/login"]); }, []);
 
   if (loading) {
-    return <RouteLoader />;
+    // 사이니지는 153 로고 풀스크린이 깜빡이면 안 된다 — 배경색만 깔고 기다린다.
+    return signage ? <div className="fixed inset-0 bg-background" /> : <RouteLoader />;
   }
 
   return (
     <>
-      <Suspense fallback={<RouteLoader />}>
+      <Suspense fallback={signage ? <div className="fixed inset-0 bg-background" /> : <RouteLoader />}>
       <Routes>
         <Route path="/" element={user ? <RoleBasedRedirect /> : <LoginPage />} />
         {/* OAuth callback 안전망 — Google/Apple/Microsoft broker 가 흔히 사용하는 path 들.
@@ -294,30 +299,33 @@ const AppRoutes = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       </Suspense>
-      <BottomNav />
-      <ChatAssistant />
+      {/* 토스트는 라우터 안에 둬야 경로를 알 수 있다 — TV에 토스트가 뜨면 안 된다 */}
+      {!signage && <Toaster />}
+      {!signage && <Sonner />}
+      {!signage && <BottomNav />}
+      {!signage && <ChatAssistant />}
       {/* 마이복서153 — 오삼 마스코트 튜토리얼 (행동기반 미션 5개). */}
-      {user && splashDone && <TutorialFloatingMascotWithDetect />}
+      {user && splashDone && !signage && <TutorialFloatingMascotWithDetect />}
       {/* 5개 미션 spotlight 가이드 — navTarget 페이지에서 어떤 element 누를지 안내 */}
-      {user && splashDone && <TutorialActionSpotlight />}
+      {user && splashDone && !signage && <TutorialActionSpotlight />}
       {/* 첫 로그인 환영 모달 — 신규 회원 1회 노출, 오삼이 코치 인사 + 앱 핵심 안내 */}
-      {user && splashDone && <OsamiWelcomeModal />}
+      {user && splashDone && !signage && <OsamiWelcomeModal />}
       {/* 감동편지 — 웰컴 1통 + 리그 승급(블루/레드/블랙) 3통, localStorage 1회 노출 */}
-      {user && splashDone && <WelcomeLetter />}
+      {user && splashDone && !signage && <WelcomeLetter />}
       {/* 7일 스타터 캠프 overlay — localStorage 기반, isActive 시에만 렌더 */}
-      {user && splashDone && <TutorialCampProvider />}
+      {user && splashDone && !signage && <TutorialCampProvider />}
       {/* 개발자 preview 패널 — localhost / ?tutorialDev=1 / dev 토글 ON 일 때만 노출 */}
-      {user && splashDone && <TutorialDevPanel />}
+      {user && splashDone && !signage && <TutorialDevPanel />}
       {/* 64-V: 관리자 floating 커스텀 도구 — 화면 위 element picker + 토글 */}
-      {user && splashDone && <TutorialCustomizer />}
+      {user && splashDone && !signage && <TutorialCustomizer />}
       {/* 활동 후 30초 마무리 sheet — 글로벌 trigger 이벤트 listen, 하루 1회 큰 sheet */}
-      {user && splashDone && <PostActionReflectionSheet />}
+      {user && splashDone && !signage && <PostActionReflectionSheet />}
       {/* 최초 로그인 아이디·비번 변경 권장(스킵 가능) — 일괄등록 회원 must_change_credentials */}
-      {user && splashDone && <CredentialChangePrompt />}
+      {user && splashDone && !signage && <CredentialChangePrompt />}
       {/* 소셜 첫 로그인 전화번호 연동(권장·스킵) — phone 없는 소셜 회원 */}
-      {user && splashDone && <LinkAccountPrompt />}
+      {user && splashDone && !signage && <LinkAccountPrompt />}
       {/* 쿨드 스타트 스플래시 (z-[80] · 포털). 세션 1회. */}
-      {showSplash && <AppLaunchSplash onFinished={markFinished} />}
+      {showSplash && !signage && <AppLaunchSplash onFinished={markFinished} />}
       {/* 안드로이드 뒤로가기로 앱이 그냥 꺼지지 않게 — 홈에서 한 번 물어본다 */}
       <ExitConfirm open={exitAsk} onClose={() => setExitAsk(false)} />
     </>
@@ -346,8 +354,6 @@ const App = () => {
       >
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <Toaster />
-            <Sonner />
             <BrowserRouter>
               <AuthProvider>
                 <AppRoutes />

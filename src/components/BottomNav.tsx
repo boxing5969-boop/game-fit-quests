@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { isSignageRoute } from "@/lib/displayMode";
 import {
   Home,
   Trophy,
@@ -110,7 +111,8 @@ const BottomNav = () => {
     hiddenPaths.includes(location.pathname) ||
     location.pathname.startsWith("/manager/") ||
     location.pathname.startsWith("/guide/") ||
-    location.pathname.startsWith("/live-board/")
+    // 전시용 화면(TV 사이니지·키오스크)은 displayMode 한 곳에서 관리한다.
+    isSignageRoute(location.pathname)
   ) {
     return null;
   }

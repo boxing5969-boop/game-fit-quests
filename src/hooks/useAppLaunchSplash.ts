@@ -22,6 +22,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { isSignageRoute } from "@/lib/displayMode";
 
 const STORAGE_KEY = "rankingup_splash_seen_v1";
 
@@ -36,6 +37,8 @@ const BYPASS_PATH_PREFIXES: readonly string[] = [
 ];
 
 function isBypassPath(pathname: string): boolean {
+  // 전시용 화면(TV·키오스크) 경로는 displayMode 한 곳에서만 관리한다.
+  if (isSignageRoute(pathname)) return true;
   if (BYPASS_PATH_EXACT.has(pathname)) return true;
   return BYPASS_PATH_PREFIXES.some((p) => pathname.startsWith(p));
 }

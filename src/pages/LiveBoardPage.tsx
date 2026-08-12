@@ -632,7 +632,7 @@ const LiveBoardPage = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-950 text-white overflow-hidden select-none">
+    <div className="fixed inset-0 flex flex-col bg-gray-950 text-white overflow-hidden select-none">
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-8 py-3 bg-gray-900/90 border-b border-gray-800/60">
         <div className="flex items-center gap-5">
@@ -691,7 +691,9 @@ const LiveBoardPage = () => {
         </div>
       </div>
 
-      <div className={`flex h-[calc(100vh-80px)] min-h-0 ${only2 ? "flex-col" : ""}`}>
+      {/* 헤더 높이를 숫자로 빼지 않는다. 예전엔 calc(100vh-80px) 였는데 실제 헤더는 109px 이라
+          29px 이 화면 밖으로 밀려 명예의 전당 띠 아래가 잘려 있었다. flex-1 이면 항상 정확하다. */}
+      <div className={`flex min-h-0 flex-1 ${only2 ? "flex-col" : ""}`}>
         {/* ═══ Center: Main area — 명예의 전당 sticky bottom + 위쪽만 스크롤 ═══ */}
         <div className={`flex flex-col min-w-0 overflow-hidden ${only2 ? "flex-shrink-0" : "flex-1"}`}>
           {/* 상단: 스포트라이트 + 컴팩트 그리드 (37명까지 스크롤 없이 fit) */}
