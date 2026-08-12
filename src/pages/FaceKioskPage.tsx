@@ -27,15 +27,50 @@ const CDN = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2";
 // 번들이 없으면 기존 CDN 그대로 — 동작 변화 없음. 버전을 바꾸면 등록된 특징값이
 // 깨지므로 반드시 0.22.2 동일 파일만 번들할 것(임의 교체 금지).
 const LOCAL_ASSETS = "/vendor/face-api";
+const IS_NATIVE_APP = typeof window !== "undefined"
+  && (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.() === true;
+
+// 번들 자산의 정확한 바이트 수(face-api 0.22.2 원본과 SHA256 동일 확인됨).
+// 하나라도 다르면 받다가 잘린 것이고, 그게 "tensor should have N values but has M" 의 원인이다.
+const ASSET_BYTES: Record<string, number> = {
+  "dist/face-api.min.js": 663829,
+  "weights/tiny_face_detector_model-weights_manifest.json": 2953,
+  "weights/tiny_face_detector_model-shard1": 193321,
+  "weights/face_landmark_68_model-weights_manifest.json": 7889,
+  "weights/face_landmark_68_model-shard1": 356840,
+  "weights/face_recognition_model-weights_manifest.json": 18303,
+  "weights/face_recognition_model-shard1": 4194304,
+  "weights/face_recognition_model-shard2": 2249728,
+};
+
 let assetBase: string | null = null;
 const resolveAssetBase = async (): Promise<string> => {
   if (assetBase) return assetBase;
+  // 설치형 앱은 자산이 APK 안에 있다 — 탐지 없이 바로 번들 사용(CDN 폴백 금지).
+  if (IS_NATIVE_APP) { assetBase = LOCAL_ASSETS; return assetBase; }
   try {
-    const r = await fetch(`${LOCAL_ASSETS}/weights/tiny_face_detector_model-weights_manifest.json`, { method: "HEAD" });
-    if (r.ok) { assetBase = LOCAL_ASSETS; return assetBase; }
+    // HEAD 는 서버에 따라 본문 없이 애매하게 응답한다 → 실제 GET 으로 확인.
+    const r = await fetch(`${LOCAL_ASSETS}/weights/tiny_face_detector_model-weights_manifest.json`);
+    if (r.ok && (await r.text()).trimStart().startsWith("[")) { assetBase = LOCAL_ASSETS; return assetBase; }
   } catch { /* 번들 없음 → CDN */ }
   assetBase = CDN;
   return assetBase;
+};
+
+// 모델 로드가 실패했을 때 "어느 파일이 몇 바이트로 왔는지" 를 그대로 보여준다.
+// 추측 대신 화면에 근거를 남기기 위한 것.
+const diagnoseAssets = async (base: string): Promise<string> => {
+  const bad: string[] = [];
+  for (const [rel, want] of Object.entries(ASSET_BYTES)) {
+    const name = rel.split("/").pop() || rel;
+    try {
+      const r = await fetch(`${base}/${rel}`, { cache: "no-store" });
+      if (!r.ok) { bad.push(`${name} HTTP${r.status}`); continue; }
+      const got = (await r.arrayBuffer()).byteLength;
+      if (got !== want) bad.push(`${name} ${got}/${want}B`);
+    } catch { bad.push(`${name} 실패`); }
+  }
+  return bad.length ? bad.join(" · ") : "파일 크기는 모두 정상";
 };
 const MATCH_DIST = 0.5;          // face-api 권장 임계 (낮을수록 엄격)
 const REMATCH_MS = 5 * 60_000;   // 같은 회원 재인식 무시 간격
@@ -43,6 +78,13 @@ const DETECT_INPUT = 224;        // 탐지 해상도 (320→224: 키오스크는
 const DETECT_SCORE = 0.45;
 const IDLE_MS = 120;             // 얼굴 없을 때 다음 탐지까지 휴식 (CPU 보호)
 const GREET_MS = 4500;           // 환영 오버레이 표시 시간
+
+// 회원에게 보이는 문구는 "왜"가 아니라 "그래서 뭘 해야 하는지"만 말한다.
+// 키오스크는 회원이 만지는 기기가 아니므로 "새로고침" 같은 안내는 무의미하다.
+// 기술적 원인은 화면에 띄우지 않고, 모서리 3번 탭으로 직원만 본다.
+const MSG_PREP = "잠시만요, 준비 중이에요";
+const MSG_DOWN_TITLE = "지금은 얼굴 출석이 안 돼요";
+const MSG_DOWN_SUB = "데스크에 말씀해주시면 도와드릴게요";
 
 interface FaceProfile { user_id: string; name: string; embedding: number[] } // user_id = 153OS member_id
 
@@ -95,6 +137,20 @@ const FaceKioskPage = () => {
   const [soundOn, setSoundOn] = useState<boolean>(() => lsGet(SOUND_LS) !== "off");
   // FC-6: 이 기기의 키가 어느 지점에 묶여 있는지(서버가 알려줌). 화면 URL 지점과 다르면 즉시 눈에 띈다.
   const [keyBranch, setKeyBranch] = useState<string | null>(null);
+  // 고장 상태(회원용) / 기술 진단(직원용, 평소엔 숨김)
+  const [down, setDown] = useState(false);
+  const [diag, setDiag] = useState<string>("");
+  const [showDiag, setShowDiag] = useState(false);
+  const diagTapRef = useRef<{ n: number; t: number }>({ n: 0, t: 0 });
+  // 직원용 — 우측 상단 모서리를 1.2초 안에 3번 탭하면 기술 정보가 열린다.
+  // 회원 눈에는 아무것도 없는 영역이라 우연히 열릴 일이 없다.
+  const onCornerTap = () => {
+    const now = Date.now();
+    const r = diagTapRef.current;
+    r.n = now - r.t < 1200 ? r.n + 1 : 1;
+    r.t = now;
+    if (r.n >= 3) { r.n = 0; setShowDiag((v) => !v); }
+  };
   // 지점명: 웹은 주소(branchCode)로, 앱은 키가 알려준 지점(keyBranch)으로.
   const branchLabelRef = useRef<string>("");
   branchLabelRef.current = branchName || keyBranch || "";
@@ -205,7 +261,7 @@ const FaceKioskPage = () => {
     let stop = false;
     (async () => {
       try {
-        setStatus("AI 모델 준비 중…");
+        setStatus(MSG_PREP);
         const BASE = await resolveAssetBase();
         if (!(window as any).faceapi) {
           await new Promise<void>((resolve, reject) => {
@@ -239,7 +295,9 @@ const FaceKioskPage = () => {
         if (!listRes.json?.success) {
           // 명단 로드 실패를 무음으로 넘기면 "멀쩡해 보이는데 아무도 인식 안 되는" 상태가 된다(검수 반영)
           stream.getTracks().forEach((t) => t.stop());
-          setStatus("등록 명단을 불러오지 못했어요 — 새로고침 해주세요");
+          setDown(true);
+          setDiag("등록 명단(list) 응답 실패 — 워커/네트워크 확인");
+          setStatus("");
           return;
         }
         const list = (listRes.json?.data?.profiles || []) as { member_id: string; name: string; embedding: number[] }[];
@@ -248,15 +306,23 @@ const FaceKioskPage = () => {
         if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
         if (stop) { stream.getTracks().forEach((t) => t.stop()); return; }
         // 워밍업: 첫 추론에서 발생하는 수 초의 셰이더 컴파일 지연을 미리 소모
-        setStatus("인식 엔진 예열 중…");
+        setStatus(MSG_PREP);
         try {
           await fa.detectSingleFace(videoRef.current, detOpts(fa)).withFaceLandmarks().withFaceDescriptor();
         } catch { /* 워밍업 실패는 무시 */ }
         if (stop) return;
         setReady(true);
+        setDown(false);
+        setDiag("");
         setStatus("");
       } catch (e) {
-        setStatus(e instanceof Error ? e.message : "초기화 실패 — 새로고침 해주세요");
+        const msg = e instanceof Error ? e.message : "초기화 실패";
+        setDown(true);
+        setStatus("");
+        setDiag("진단 중…");
+        const where = assetBase === LOCAL_ASSETS ? "앱내장" : "CDN";
+        const detail = await diagnoseAssets(assetBase || CDN).catch(() => "진단 실패");
+        setDiag(`[${where}] ${detail} / ${msg}`);
       }
     })();
     return () => {
@@ -450,8 +516,28 @@ const FaceKioskPage = () => {
             ? <span className="ml-2 font-medium text-white/70">🔑 {keyBranch}</span>
             : <span className="ml-2 font-medium text-white/70">(공용 키)</span>}
         </p>
-        {status && <p className="rounded-full bg-black/60 px-4 py-2 text-sm text-white">{status}</p>}
+        {status && <p className="max-w-[58vw] rounded-2xl bg-black/70 px-4 py-2 text-xs leading-snug text-white break-words">{status}</p>}
       </div>
+
+      {/* 고장 안내(회원용) — 원인은 말하지 않는다. 회원이 할 수 있는 행동만 말한다. */}
+      {down && (
+        <div className="absolute inset-0 z-[85] flex flex-col items-center justify-center gap-3 bg-black/90 p-8 text-center">
+          <p className="text-3xl font-black text-white">{MSG_DOWN_TITLE}</p>
+          <p className="text-lg text-white/70">{MSG_DOWN_SUB}</p>
+        </div>
+      )}
+
+      {/* 기술 정보(직원용) — 평소엔 숨김. 모서리 3번 탭으로 열고 닫는다. */}
+      {showDiag && (
+        <div className="absolute inset-x-4 bottom-24 z-[95] rounded-xl bg-black/90 p-3 text-left text-[11px] leading-relaxed text-white/80">
+          <p className="mb-1 font-bold text-white/50">진단 정보 (직원용 · 모서리 3번 탭으로 닫기)</p>
+          <p className="break-words">{diag || "이상 없음"}</p>
+        </div>
+      )}
+
+      {/* 진단 토글용 투명 영역 — 회원에게는 보이지 않는다 */}
+      <button aria-hidden tabIndex={-1} onClick={onCornerTap}
+        className="absolute right-0 top-0 z-[99] h-16 w-16 opacity-0" />
 
       {/* 인사 오버레이 — 매칭 즉시 표시, 기록 확정 시 문구 갱신 */}
       {greet && (
@@ -509,10 +595,10 @@ const FaceKioskPage = () => {
                 const list = (json?.data?.profiles || []) as { member_id: string; name: string; embedding: number[] }[];
                 profilesRef.current = list.map((r) => ({ p: { user_id: r.member_id, name: r.name, embedding: r.embedding }, f32: Float32Array.from(r.embedding) }));
               } else {
-                setStatus("명단 갱신 실패 — 새로고침 해주세요");
+                setDown(true); setDiag("명단 갱신(list) 실패 — 워커/네트워크 확인");
               }
             } catch {
-              setStatus("명단 갱신 실패 — 새로고침 해주세요");
+              setDown(true); setDiag("명단 갱신(list) 실패 — 워커/네트워크 확인");
             }
           }}
           onClose={() => setEnrollOpen(false)}

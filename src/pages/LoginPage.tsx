@@ -88,12 +88,6 @@ const SignaturePad = ({ onSignatureChange }: { onSignatureChange: (data: string 
   };
 
   useEffect(() => {
-    let alive = true;
-    canUsePasskey().then((ok) => { if (alive) setPasskeyReady(ok); });
-    return () => { alive = false; };
-  }, []);
-
-  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     canvas.width = canvas.offsetWidth * 2;
@@ -204,6 +198,13 @@ const LoginPage = () => {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { data: branches } = useBranches();
+
+  // 이 기기·이 주소에서 지문/얼굴 로그인이 되는지 확인 후에만 버튼을 띄운다.
+  useEffect(() => {
+    let alive = true;
+    canUsePasskey().then((ok) => { if (alive) setPasskeyReady(ok); });
+    return () => { alive = false; };
+  }, []);
 
   const isSignUp = tab === "member" || tab === "coach";
 

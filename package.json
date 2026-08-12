@@ -12,11 +12,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "help": "node scripts/help.mjs",
-    "check": "tsc --noEmit",
+    "check": "tsc --noEmit -p tsconfig.app.json",
     "deploy": "cmd /c _face-app-3-deploy.bat",
     "passkey": "cmd /c _app-passkey-deploy.bat",
     "apk": "cmd /c _face-app-4-build-apk.bat",
-    "tablet": "node scripts/serve-apk.mjs"
+    "tablet": "node scripts/serve-apk.mjs",
+    "tv": "cmd /c _tv-signage-deploy.bat"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

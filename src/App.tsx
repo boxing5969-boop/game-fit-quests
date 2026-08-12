@@ -283,6 +283,10 @@ const AppRoutes = () => {
         <Route path="/routine-builder" element={<ProtectedRoute><ManagerRoute><RoutineBuilderPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/routines" element={<ProtectedRoute><RoutinesPage /></ProtectedRoute>} />
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
+        {/* 사이니지용 짧은 주소 — 리모컨으로 치기 쉽게. /tv/sunreung/1 처럼 화면 번호를 붙이면
+            나란히 놓인 2대에 좌·우로 나눠 띄운다(번호 없으면 예전처럼 한 화면에 전부). */}
+        <Route path="/tv/:branchCode" element={<LiveBoardPage />} />
+        <Route path="/tv/:branchCode/:screen" element={<LiveBoardPage />} />
         <Route path="/face-kiosk/:branchCode" element={<FaceKioskPage />} />
         {/* 설치형 앱 전용 — 지점은 키오스크 키가 결정한다(주소에 지점코드 불필요) */}
         <Route path="/face-kiosk" element={<FaceKioskPage />} />

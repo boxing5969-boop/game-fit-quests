@@ -103,7 +103,13 @@ const MemberAvatar = ({
 );
 
 const LiveBoardPage = () => {
-  const { branchCode } = useParams<{ branchCode: string }>();
+  const { branchCode, screen } = useParams<{ branchCode: string; screen?: string }>();
+  // 사이니지 2대를 나란히 놓았을 때 좌·우로 나눠 띄운다.
+  //   /tv/sunreung/1 → 지금 운동 중인 회원만 (크게)
+  //   /tv/sunreung/2 → 오늘 방문 명단 + 명예의 전당 + 짐 레이드
+  //   번호를 안 붙이면 예전처럼 한 화면에 전부 나온다.
+  const only1 = screen === "1";
+  const only2 = screen === "2";
   const [branchName, setBranchName] = useState("");
   const [dailyVisits, setDailyVisits] = useState<DailyVisit[]>([]);
   const [activeMembers, setActiveMembers] = useState<ActiveMember[]>([]);
@@ -157,6 +163,38 @@ const LiveBoardPage = () => {
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 15000);
     return () => clearInterval(t);
+  }, []);
+
+  // 사이니지(TV)에서 화면이 저절로 꺼지지 않게 잡아둔다.
+  // 브라우저가 지원할 때만 동작하고, 탭이 뒤로 갔다 돌아오면 다시 잡는다.
+  useEffect(() => {
+    type WakeLockSentinelLike = { release: () => Promise<void> };
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (type: "screen") => Promise<WakeLockSentinelLike> };
+    };
+    if (!nav.wakeLock) return;
+
+    let sentinel: WakeLockSentinelLike | null = null;
+    let cancelled = false;
+
+    const acquire = async () => {
+      if (cancelled || document.visibilityState !== "visible") return;
+      try {
+        sentinel = await nav.wakeLock!.request("screen");
+      } catch {
+        /* 배터리 절약 모드 등 — 못 잡아도 화면은 그대로 나온다 */
+      }
+    };
+
+    const onVisible = () => { if (document.visibilityState === "visible") void acquire(); };
+
+    void acquire();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      void sentinel?.release().catch(() => {});
+    };
   }, []);
 
   // Check admin/manager role
@@ -653,10 +691,11 @@ const LiveBoardPage = () => {
         </div>
       </div>
 
-      <div className="flex h-[calc(100vh-80px)] min-h-0">
+      <div className={`flex h-[calc(100vh-80px)] min-h-0 ${only2 ? "flex-col" : ""}`}>
         {/* ═══ Center: Main area — 명예의 전당 sticky bottom + 위쪽만 스크롤 ═══ */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className={`flex flex-col min-w-0 overflow-hidden ${only2 ? "flex-shrink-0" : "flex-1"}`}>
           {/* 상단: 스포트라이트 + 컴팩트 그리드 (37명까지 스크롤 없이 fit) */}
+          {!only2 && (
           <div className="flex-1 flex flex-col relative px-4 py-2 overflow-y-auto min-h-0">
             {/*
               Cinematic 업그레이드:
@@ -749,9 +788,11 @@ const LiveBoardPage = () => {
             )}
           </div>
 
+          )}
+
           {/* ── Bottom: Hall of Fame banner ── */}
           {/* 명예의 전당 — 항상 맨 아래 sticky, 한 줄, 가로 스크롤 */}
-          {hallMembers.length > 0 && (
+          {!only1 && hallMembers.length > 0 && (
             <div className="mx-4 mb-3 flex-shrink-0 rounded-xl border border-yellow-600/40 bg-gradient-to-r from-yellow-950/60 via-gray-900/80 to-yellow-950/60 px-4 py-2.5">
               <div className="flex items-center gap-3">
                 <div className="flex flex-shrink-0 items-center gap-1.5">
@@ -785,7 +826,8 @@ const LiveBoardPage = () => {
         </div>
 
         {/* ═══ Right panel ═══ */}
-        <div className="w-[26rem] bg-gray-900/60 border-l border-gray-800/60 flex flex-col min-h-0">
+        {!only1 && (
+        <div className={`bg-gray-900/60 flex flex-col min-h-0 ${only2 ? "flex-1 w-full border-t border-gray-800/60" : "w-[26rem] border-l border-gray-800/60"}`}>
           {/* Active members — 인원수 많을 때 더 많이 보이게 flex-1 + 최소 절반 보장 */}
           <div className="flex-1 border-b border-gray-800/60 flex flex-col min-h-[40vh]">
             <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0">
@@ -833,6 +875,7 @@ const LiveBoardPage = () => {
             {branchName && <LiveGymRaidStrip branchName={branchName} variant="sidebar" />}
           </div>
         </div>
+        )}
       </div>
 
       {/* 레벨업 인터럽트 — 최상위 z-index, 5초 풀스크린 */}
