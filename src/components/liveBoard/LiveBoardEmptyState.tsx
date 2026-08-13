@@ -12,6 +12,7 @@
  */
 
 import { motion } from "framer-motion";
+import markWhite from "@/assets/branding/153-mark-white.png";
 
 export interface LiveBoardEmptyStateProps {
   branchName: string;
@@ -51,7 +52,7 @@ const LiveBoardEmptyState = ({
               ease: "easeInOut",
             }}
           >
-            {i % 4 === 0 ? "✨" : i % 4 === 1 ? "⭐" : i % 4 === 2 ? "🥊" : "·"}
+            {i % 3 === 0 ? "✨" : i % 3 === 1 ? "⭐" : "·"}
           </motion.span>
         ))}
       </div>
@@ -71,7 +72,8 @@ const LiveBoardEmptyState = ({
           }}
           className="flex flex-col items-center gap-3"
         >
-          <div className="text-7xl">🥊</div>
+          {/* 이모지 대신 153 공식 심볼 — 기기마다 글러브 모양이 달라지지 않게 */}
+          <img src={markWhite} alt="153 BOXING GYM" className="h-24 w-auto opacity-90" draggable={false} />
           <p className="text-2xl font-black tracking-wider text-yellow-300">
             마이복서153
           </p>
@@ -93,7 +95,7 @@ const LiveBoardEmptyState = ({
             <span className="text-reward">누가 시작할까요?</span>
           </p>
           <p className="text-lg text-gray-400">
-            출석 체크 후 운동을 시작하면 이곳에 표시됩니다 🥊
+            출석 체크 후 운동을 시작하면 이곳에 표시됩니다
           </p>
         </motion.div>
 

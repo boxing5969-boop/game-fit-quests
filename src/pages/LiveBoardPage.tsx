@@ -3,6 +3,7 @@ import SDBoxerCharacter from "@/components/SDBoxerCharacter";
 import CharacterSprite from "@/components/CharacterSprite";
 import { useParams } from "react-router-dom";
 import { resolveBranchCode } from "@/lib/branchAlias";
+import markWhite from "@/assets/branding/153-mark-white.png";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -683,7 +684,13 @@ const LiveBoardPage = () => {
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-8 py-3 bg-gray-900/90 border-b border-gray-800/60">
         <div className="flex items-center gap-5">
-          <span className="text-5xl">🥊</span>
+          {/* 153 공식 심볼. 예전엔 🥊 이모지였는데 기기·폰트마다 모양이 달라 브랜드가 흔들렸다. */}
+          <img
+            src={markWhite}
+            alt="153 BOXING GYM"
+            className="h-14 w-auto shrink-0"
+            draggable={false}
+          />
           <div>
             <h1 className="text-4xl font-black tracking-tight leading-none">마이복서153</h1>
             <p className="text-xs font-bold tracking-[0.25em] text-yellow-400">MY BOXER 153</p>
