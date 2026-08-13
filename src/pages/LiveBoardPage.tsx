@@ -3,7 +3,7 @@ import SDBoxerCharacter from "@/components/SDBoxerCharacter";
 import CharacterSprite from "@/components/CharacterSprite";
 import { useParams } from "react-router-dom";
 import { resolveBranchCode } from "@/lib/branchAlias";
-import markWhite from "@/assets/branding/153-mark-white.png";
+import logoWhite from "@/assets/branding/153-logo-white.png";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -684,11 +684,12 @@ const LiveBoardPage = () => {
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-8 py-3 bg-gray-900/90 border-b border-gray-800/60">
         <div className="flex items-center gap-5">
-          {/* 153 공식 심볼. 예전엔 🥊 이모지였는데 기기·폰트마다 모양이 달라 브랜드가 흔들렸다. */}
+          {/* 153 공식 로고(심볼+워드마크). 원본 비율 그대로 — w-auto 로 절대 늘리지 않는다.
+              예전엔 🥊 이모지였는데 기기·폰트마다 모양이 달라 브랜드가 흔들렸다. */}
           <img
-            src={markWhite}
+            src={logoWhite}
             alt="153 BOXING GYM"
-            className="h-14 w-auto shrink-0"
+            className="h-[72px] w-auto shrink-0"
             draggable={false}
           />
           <div>

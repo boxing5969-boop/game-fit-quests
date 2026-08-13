@@ -12,7 +12,7 @@
  */
 
 import { motion } from "framer-motion";
-import markWhite from "@/assets/branding/153-mark-white.png";
+import logoWhite from "@/assets/branding/153-logo-white.png";
 
 export interface LiveBoardEmptyStateProps {
   branchName: string;
@@ -72,8 +72,8 @@ const LiveBoardEmptyState = ({
           }}
           className="flex flex-col items-center gap-3"
         >
-          {/* 이모지 대신 153 공식 심볼 — 기기마다 글러브 모양이 달라지지 않게 */}
-          <img src={markWhite} alt="153 BOXING GYM" className="h-24 w-auto opacity-90" draggable={false} />
+          {/* 153 공식 로고(심볼+워드마크). 원본 비율 그대로. */}
+          <img src={logoWhite} alt="153 BOXING GYM" className="h-40 w-auto opacity-90" draggable={false} />
           <p className="text-2xl font-black tracking-wider text-yellow-300">
             마이복서153
           </p>
