@@ -671,7 +671,8 @@ const LiveBoardPage = () => {
     }
   };
 
-  const fmtTime = (s: string) => new Date(s).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+  const fmtTime = (s: string) =>
+    new Date(s).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul" });
   const elapsedMin = (t: number) => {
     const mins = Math.floor((Date.now() - t) / 60000);
     return mins > 120 ? "–" : mins; // Cap abnormal durations
@@ -729,8 +730,17 @@ const LiveBoardPage = () => {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-black text-gray-500 tabular-nums">
-              {currentTime.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+            {/* 사이니지 기기는 공장 초기 표준시(UTC 등)로 놓인 경우가 많아 timeZone 을 못 박는다.
+                기기 시계만 맞으면 지역 설정이 틀려도 한국 시각으로 나온다. */}
+            <p className="text-lg font-bold text-gray-500 leading-none">
+              {currentTime.toLocaleDateString("ko-KR", {
+                month: "long", day: "numeric", weekday: "long", timeZone: "Asia/Seoul",
+              })}
+            </p>
+            <p className="mt-1.5 text-3xl font-black text-gray-500 tabular-nums leading-none">
+              {currentTime.toLocaleTimeString("ko-KR", {
+                hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul",
+              })}
             </p>
           </div>
           <div className={`h-4 w-4 rounded-full ${connected ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
