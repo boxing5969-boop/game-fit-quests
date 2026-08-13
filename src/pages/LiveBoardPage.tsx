@@ -72,6 +72,13 @@ interface ActiveMember {
   partsJson?: { style?: string; customization?: Record<string, unknown> } | null;
 }
 
+/**
+ * 얼굴 출석 후 "운동 중"으로 보여줄 시간(분).
+ * 브로제이가 퇴실을 기록하지 않아 시간으로 추정한다. 늘리면 화면이 풍성해지지만
+ * 이미 나간 회원이 오래 남고, 줄이면 정확하지만 한가한 시간에 보드가 빨리 빈다.
+ */
+const CHECKIN_ACTIVE_MINUTES = 120;
+
 interface HallMember {
   r_user_id: string;
   r_nickname: string;
@@ -128,36 +135,49 @@ const LiveBoardPage = () => {
   // 테스트 모드 — 가상 회원 (DB 변경 없음)
   const [mockMembers, setMockMembers] = useState<MockActiveMember[]>([]);
 
-  /* __SCREENSHOT_SEED__ — 스크린샷 전용(클라우드 사본에만 존재, 배포 안 함).
-     ?seed=활동수,방문수,전당수 로 가짜 데이터를 채워 화면을 눈으로 확인한다. */
-  useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("seed");
-    if (!q) return;
-    const [a = "0", d = "0", h = "0"] = q.split(",");
-    const NAMES = ["코브라펀치","잽마스터","훅의달인","어퍼킷킹","스피드복서","헤비웨잇","라이트스피드","그림자복서","철벽수비","카운터킹","복싱IQ100","원투쓰리","파워펀처","테크니션","리듬복서","더블잽"];
-    const LG = ["white","white","white","blue","blue","red","black"];
-    const n = (i: number) => NAMES[i % NAMES.length]!;
-    setBranchName("선릉역점");
-    if (+a > 0) setMockMembers(generateMockMembers(+a, { fresh: false }));
-    if (+d > 0) setDailyVisits(Array.from({ length: +d }, (_, i) => ({
-      user_id: "s" + i, display_name: n(i + 3), league: LG[i % LG.length]!,
-      level: 1 + (i * 3) % 10,
-      last_checkin_at: new Date(Date.now() - i * 17 * 60000).toISOString(),
-    })));
-    if (+h > 0) setHallMembers(Array.from({ length: +h }, (_, i) => ({
-      r_user_id: "h" + i, r_nickname: n(i + 9), r_avatar_url: null,
-      r_current_rank: LG[(i + 4) % LG.length]!, r_current_level: 10 - i,
-      r_bosses_cleared: 12 - i * 2,
-    })));
-  }, []);
 
-  /** 실제 + mock 합쳐서 시각효과에 전달 */
-  const combinedMembers = useMemo<ActiveMember[]>(
-    () => [...activeMembers, ...mockMembers],
-    [activeMembers, mockMembers],
-  );
   const [connected, setConnected] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  /**
+   * 얼굴 출석(브로제이) 회원을 "지금 운동 중"으로 올린다.
+   *
+   * 왜 필요한가: 화면 가운데는 원래 activity_sessions(앱에서 직접 "운동 시작"을 누른 기록)만
+   * 봤는데, 회원들은 출입구에서 얼굴만 찍고 들어가지 앱을 켜지 않는다. 그래서 실제로는
+   * 사람이 가득한 시간에도 보드가 늘 0명이었다.
+   *
+   * 브로제이는 입실만 기록하고 퇴실은 남기지 않는다. 그래서 "언제까지 운동 중인가"는
+   * 시간으로 판단할 수밖에 없다 — 입실 후 CHECKIN_ACTIVE_MINUTES 동안 운동 중으로 본다.
+   * (대표님 결정: 120분. 50분 수업 + 씻고 나가는 시간까지 넉넉히 잡은 값)
+   *
+   * 앱에서 실제 운동세션을 시작한 회원은 activeMembers 에 이미 있으므로 중복 제외한다.
+   */
+  const checkinMembers = useMemo<ActiveMember[]>(() => {
+    const cutoff = currentTime.getTime() - CHECKIN_ACTIVE_MINUTES * 60_000;
+    const already = new Set(activeMembers.map((m) => m.user_id));
+    return dailyVisits
+      .filter((v) => {
+        if (already.has(v.user_id)) return false;
+        const t = new Date(v.last_checkin_at).getTime();
+        return Number.isFinite(t) && t >= cutoff;
+      })
+      .map((v) => ({
+        id: `checkin-${v.user_id}`,
+        user_id: v.user_id,
+        name: v.display_name,
+        league: v.league,
+        level: v.level,
+        startedAt: new Date(v.last_checkin_at).getTime(),
+        avatar_url: null,
+        partsJson: null,
+      }));
+  }, [dailyVisits, activeMembers, currentTime]);
+
+  /** 앱 운동세션 + 얼굴 출석 + mock 을 합쳐 시각효과에 전달 */
+  const combinedMembers = useMemo<ActiveMember[]>(
+    () => [...activeMembers, ...checkinMembers, ...mockMembers],
+    [activeMembers, checkinMembers, mockMembers],
+  );
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
   const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
 
