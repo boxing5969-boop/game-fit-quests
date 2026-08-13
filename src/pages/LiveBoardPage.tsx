@@ -174,6 +174,12 @@ const LiveBoardPage = () => {
       }));
   }, [dailyVisits, activeMembers, currentTime]);
 
+  /** 지금 운동 중인 회원 id — 아래 이름 티커에서 밝게 구분하는 데 쓴다 */
+  const activeUserIds = useMemo(
+    () => new Set([...activeMembers, ...checkinMembers].map((m) => m.user_id)),
+    [activeMembers, checkinMembers],
+  );
+
   /** 앱 운동세션 + 얼굴 출석 + mock 을 합쳐 시각효과에 전달 */
   const combinedMembers = useMemo<ActiveMember[]>(
     () => [...activeMembers, ...checkinMembers, ...mockMembers],
@@ -857,6 +863,62 @@ const LiveBoardPage = () => {
             )}
           </div>
 
+          )}
+
+          {/* ── Bottom: 오늘 다녀간 회원 (이름 티커) ── */}
+          {/* 하루 30~40명이라 한 줄에 다 안 들어간다. 잘라서 일부만 보여주면 대부분의 회원은
+              자기 이름을 영영 못 보므로, 아주 느리게 흘려 모두가 한 번씩 지나가게 한다.
+              목록을 두 벌 이어붙이고 -50% 까지 옮기면 이음매 없이 반복된다. */}
+          {!only1 && dailyVisits.length > 0 && (
+            <div className="mx-4 mb-2 flex-shrink-0 overflow-hidden rounded-xl border border-gray-800/60 bg-gray-900/50 px-4 py-2.5">
+              <div className="flex items-center gap-4">
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <h2 className="whitespace-nowrap text-base font-black tracking-wide text-white/50">
+                    오늘 다녀간 회원
+                  </h2>
+                  <span className="number-font rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-black tabular-nums text-white/70">
+                    {dailyVisits.length}
+                  </span>
+                </div>
+                {/* 양 끝을 페이드 처리 — 안 하면 이름이 가장자리에서 뚝 잘려 보인다 */}
+                <div
+                  className="relative min-w-0 flex-1 overflow-hidden"
+                  style={{
+                    maskImage:
+                      "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)",
+                    WebkitMaskImage:
+                      "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)",
+                  }}
+                >
+                  <div
+                    className="flex w-max items-center gap-6 whitespace-nowrap"
+                    style={{
+                      animation: `tv-marquee ${Math.max(30, dailyVisits.length * 2.4)}s linear infinite`,
+                    }}
+                  >
+                    {[0, 1].map((copy) => (
+                      <div key={copy} className="flex items-center gap-6" aria-hidden={copy === 1}>
+                        {dailyVisits.map((v) => {
+                          const training = activeUserIds.has(v.user_id);
+                          return (
+                            <span key={`${copy}-${v.user_id}`} className="flex items-center gap-1.5">
+                              {training && (
+                                <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" aria-hidden />
+                              )}
+                              <span
+                                className={`text-lg font-bold ${training ? "text-white" : "text-white/45"}`}
+                              >
+                                {v.display_name}
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* ── Bottom: Hall of Fame banner ── */}

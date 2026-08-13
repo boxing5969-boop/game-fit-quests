@@ -771,3 +771,14 @@ html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: va
   .animate-emote-punch { animation: none !important; }
 }
 
+/* 사이니지 라이브보드 — 오늘 다녀간 회원 이름 띠.
+   목록을 두 벌 이어붙였으므로 -50% 까지만 옮기면 이음매 없이 이어진다.
+   느린 등속 이동만 쓴다(가감속·바운스 없음) — 벽에 붙어 종일 도는 화면이라
+   눈에 걸리지 않는 게 우선이다. 모션을 줄이도록 설정한 기기에선 멈춘다. */
+@keyframes tv-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="tv-marquee"] { animation: none !important; }
+}
