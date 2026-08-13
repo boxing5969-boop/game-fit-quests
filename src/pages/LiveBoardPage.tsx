@@ -692,10 +692,11 @@ const LiveBoardPage = () => {
             className="h-[72px] w-auto shrink-0"
             draggable={false}
           />
-          <div>
-            <h1 className="text-4xl font-black tracking-tight leading-none">마이복서153</h1>
-            <p className="text-xs font-bold tracking-[0.25em] text-yellow-400">MY BOXER 153</p>
-            <p className="text-lg text-gray-400 font-bold mt-0.5">{branchName || "지점"}</p>
+          {/* 로고가 이미 "153 BOXING GYM" 을 담고 있어 같은 워드마크를 글자로 반복하지 않는다.
+              남기는 건 앱 이름과 지점명 둘뿐 — 로고 높이(72)에 맞춰 2줄로 정렬한다. */}
+          <div className="flex flex-col justify-center gap-1">
+            <h1 className="text-4xl font-black leading-none tracking-tight text-white">마이복서153</h1>
+            <p className="text-xl font-bold leading-none text-white/50">{branchName || "지점"}</p>
           </div>
         </div>
         <div className="flex items-center gap-8">
@@ -711,7 +712,7 @@ const LiveBoardPage = () => {
                   <div className="max-h-60 overflow-y-auto">
                     {branches.map(b => (
                       <button key={b.id} onClick={() => handleBranchSwitch(b.name)}
-                        className={`w-full px-5 py-3 text-left text-base hover:bg-gray-700 transition-colors ${b.name === branchName ? "text-orange-400 font-bold bg-gray-700/50" : "text-gray-300"}`}>
+                        className={`w-full px-5 py-3 text-left text-base hover:bg-gray-700 transition-colors ${b.name === branchName ? "text-primary font-bold bg-gray-700/50" : "text-gray-300"}`}>
                         {b.name}{b.name === branchName && " ✓"}
                       </button>
                     ))}
@@ -728,30 +729,32 @@ const LiveBoardPage = () => {
             </button>
           )}
           <div className="flex items-center gap-8">
+            {/* 강조색은 화면에 하나만 — 민트는 "지금 살아있다"는 뜻으로만 쓴다.
+                오늘 방문은 하루 동안 쌓이는 누적값이라 강조 대상이 아니다. */}
             <div className="text-center">
-              <p className="text-5xl font-black text-green-400 tabular-nums leading-none">{combinedMembers.length}</p>
-              <p className="text-base text-gray-500 mt-1 font-bold">활동 중</p>
+              <p className="text-5xl font-black leading-none tabular-nums text-primary">{combinedMembers.length}</p>
+              <p className="mt-1.5 text-base font-bold text-white/40">활동 중</p>
             </div>
             <div className="text-center">
-              <p className="text-5xl font-black text-orange-400 tabular-nums leading-none">{dailyVisits.length}</p>
-              <p className="text-base text-gray-500 mt-1 font-bold">오늘 방문</p>
+              <p className="text-5xl font-black leading-none tabular-nums text-white">{dailyVisits.length}</p>
+              <p className="mt-1.5 text-base font-bold text-white/40">오늘 방문</p>
             </div>
           </div>
           <div className="text-right">
             {/* 사이니지 기기는 공장 초기 표준시(UTC 등)로 놓인 경우가 많아 timeZone 을 못 박는다.
                 기기 시계만 맞으면 지역 설정이 틀려도 한국 시각으로 나온다. */}
-            <p className="text-lg font-bold text-gray-500 leading-none">
+            <p className="text-lg font-bold leading-none text-white/40">
               {currentTime.toLocaleDateString("ko-KR", {
                 month: "long", day: "numeric", weekday: "long", timeZone: "Asia/Seoul",
               })}
             </p>
-            <p className="mt-1.5 text-3xl font-black text-gray-500 tabular-nums leading-none">
+            <p className="mt-1.5 text-3xl font-black leading-none tabular-nums text-white/70">
               {currentTime.toLocaleTimeString("ko-KR", {
                 hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul",
               })}
             </p>
           </div>
-          <div className={`h-4 w-4 rounded-full ${connected ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+          <div className={`h-4 w-4 rounded-full ${connected ? "bg-primary animate-pulse" : "bg-destructive"}`} />
         </div>
       </div>
 
@@ -796,7 +799,7 @@ const LiveBoardPage = () => {
                     >
                       {latestPopup.display_name_snapshot}
                     </p>
-                    <p className="mt-1 text-xl font-bold text-emerald-300">
+                    <p className="mt-1 text-xl font-bold text-primary">
                       입실! · Lv.{latestPopup.level_snapshot}
                     </p>
                   </div>
@@ -806,15 +809,15 @@ const LiveBoardPage = () => {
               <div className="flex flex-1 flex-col">
                 <div className="mb-2 flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <h2 className="text-base font-black tracking-wide text-emerald-300">
-                    🥊 지금 운동 중
+                  <h2 className="text-base font-black tracking-wide text-primary">
+                    지금 운동 중
                   </h2>
-                  <p className="number-font text-base font-black text-emerald-400 tabular-nums">
+                  <p className="number-font text-base font-black text-primary tabular-nums">
                     {combinedMembers.length}
-                    <span className="ml-1 text-xs text-emerald-500/70">명</span>
+                    <span className="ml-1 text-xs text-primary/70">명</span>
                   </p>
                   {mockMembers.length > 0 && (
-                    <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-black text-purple-300">
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-black text-white/50">
                       mock {mockMembers.length}
                     </span>
                   )}
@@ -909,8 +912,8 @@ const LiveBoardPage = () => {
           {/* Active members — 인원수 많을 때 더 많이 보이게 flex-1 + 최소 절반 보장 */}
           <div className="flex-1 border-b border-gray-800/60 flex flex-col min-h-[40vh]">
             <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0">
-              <span className="h-4 w-4 rounded-full bg-green-400 animate-pulse" />
-              <h2 className="text-2xl font-black text-green-400">현재 활동 중 ({combinedMembers.length})</h2>
+              <span className="h-4 w-4 rounded-full bg-primary animate-pulse" />
+              <h2 className="text-2xl font-black text-primary">현재 활동 중 ({combinedMembers.length})</h2>
             </div>
             <div className="flex-1 overflow-y-auto px-3 pb-3">
               {combinedMembers.length === 0 ? (

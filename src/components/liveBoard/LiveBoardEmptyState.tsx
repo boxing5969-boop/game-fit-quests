@@ -72,15 +72,10 @@ const LiveBoardEmptyState = ({
           }}
           className="flex flex-col items-center gap-3"
         >
-          {/* 153 공식 로고(심볼+워드마크). 원본 비율 그대로. */}
-          <img src={logoWhite} alt="153 BOXING GYM" className="h-40 w-auto opacity-90" draggable={false} />
-          <p className="text-2xl font-black tracking-wider text-yellow-300">
-            마이복서153
-          </p>
-          <p className="text-xs font-bold tracking-[0.3em] text-yellow-400">
-            MY BOXER 153
-          </p>
-          <p className="text-sm text-gray-400">{branchName} · 오늘도 복싱 레벨업 중</p>
+          {/* 153 공식 로고(심볼+워드마크). 원본 비율 그대로.
+              로고가 브랜드를 이미 말하고 있어 같은 이름을 글자로 반복하지 않는다. */}
+          <img src={logoWhite} alt="153 BOXING GYM" className="h-40 w-auto" draggable={false} />
+          <p className="text-lg font-bold text-white/40">{branchName} · 오늘도 복싱 레벨업 중</p>
         </motion.div>
 
         {/* 시그니처 메시지 */}
@@ -94,7 +89,7 @@ const LiveBoardEmptyState = ({
             오늘 첫 라운드를{" "}
             <span className="text-reward">누가 시작할까요?</span>
           </p>
-          <p className="text-lg text-gray-400">
+          <p className="text-lg font-bold text-white/40">
             출석 체크 후 운동을 시작하면 이곳에 표시됩니다
           </p>
         </motion.div>
