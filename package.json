@@ -18,7 +18,8 @@
     "apk": "cmd /c _face-app-4-build-apk.bat",
     "tablet": "node scripts/serve-apk.mjs",
     "tv": "cmd /c _tv-signage-deploy.bat",
-    "fix": "cmd /c _app-loading-fix.bat"
+    "fix": "cmd /c _app-loading-fix.bat",
+    "push": "git push origin main"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
