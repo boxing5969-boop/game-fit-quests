@@ -14,6 +14,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import type {
+  MealConfidence,
+  MealKcalSource,
+  MealVisionItem,
+  MealVisionResponse,
+} from "@/lib/diet/mealCalories";
 
 type DietTrack = Database["public"]["Enums"]["diet_track"];
 type DietLogStatus = Database["public"]["Enums"]["diet_log_status"];
@@ -532,4 +538,102 @@ export async function saveDietPreferences(
     _settings: settings as never,
   } as never);
   return !error;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// 9. 사진 칼로리 추정 (Vision)
+//
+// 분석은 chat-assistant Edge Function 의 action="meal-vision" 입구를 쓴다.
+// 새 AI 라우트를 만들지 않기 위한 결정 — 백엔드는 Gemini → Groq 순으로
+// 자동 전환하고, 둘 다 안 되면 여기서 실패를 돌려준다 (앱은 rules 폴백).
+// ──────────────────────────────────────────────────────────────────
+
+export type MealVisionErrorCode =
+  | "not_authenticated"
+  | "daily_limit"
+  | "image_too_large"
+  | "invalid_image"
+  | "vision_unavailable"
+  | "unknown";
+
+/** Edge Function 이 준 에러 본문에서 코드만 뽑아낸다. */
+async function readFunctionErrorCode(e: unknown): Promise<MealVisionErrorCode> {
+  const ctx = (e as { context?: unknown })?.context;
+  if (ctx instanceof Response) {
+    try {
+      const body = (await ctx.clone().json()) as { error?: string };
+      const code = body?.error;
+      if (
+        code === "not_authenticated" ||
+        code === "daily_limit" ||
+        code === "image_too_large" ||
+        code === "invalid_image" ||
+        code === "vision_unavailable"
+      ) {
+        return code;
+      }
+    } catch {
+      // 본문이 JSON 이 아니면 unknown 으로 떨어뜨린다.
+    }
+  }
+  return "unknown";
+}
+
+/**
+ * 사진 한 장을 AI 에 보내 음식 목록·칼로리 추정을 받아온다.
+ * imageDataUrl 은 "data:image/jpeg;base64,..." 형태여야 한다.
+ */
+export async function analyzeMealPhotoVision(input: {
+  imageDataUrl: string;
+  mealSlot?: DietMealSlot;
+  localTime?: string;
+}): Promise<DietRpcResult<{ vision: MealVisionResponse }>> {
+  try {
+    const { data, error } = await supabase.functions.invoke("chat-assistant", {
+      body: {
+        action: "meal-vision",
+        imageDataUrl: input.imageDataUrl,
+        mealSlot: input.mealSlot,
+        localTime: input.localTime,
+      },
+    });
+    if (error) return err(await readFunctionErrorCode(error));
+    if (!data || typeof data !== "object") return err("vision_unavailable");
+    return ok({ vision: data as MealVisionResponse });
+  } catch (e) {
+    return err(await readFunctionErrorCode(e));
+  }
+}
+
+/**
+ * 회원이 확인·수정한 최종 칼로리를 저장한다.
+ * 여기서 confirmed_at 이 찍혀야 오늘 합계에 잡힌다.
+ */
+export async function confirmMealCalories(input: {
+  photoId: string;
+  items: MealVisionItem[];
+  totalKcal: number;
+  totalProteinG?: number;
+  source?: MealKcalSource;
+  confidence?: MealConfidence | null;
+  category?: "good" | "normal" | "adjust" | null;
+  feedback?: string | null;
+  detectedTags?: string[] | null;
+  provider?: string | null;
+}): Promise<DietRpcResult<{ photo_id: string; total_kcal: number }>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)("confirm_diet_photo_calories", {
+    _photo_id: input.photoId,
+    _items: input.items,
+    _total_kcal: input.totalKcal,
+    _total_protein_g: input.totalProteinG ?? null,
+    _source: input.source ?? "ai",
+    _confidence: input.confidence ?? null,
+    _category: input.category ?? null,
+    _feedback: input.feedback ?? null,
+    _detected_tags: input.detectedTags ?? null,
+    _provider: input.provider ?? null,
+  });
+  if (error) return err(error.message);
+  return asJsonRpc(data);
 }

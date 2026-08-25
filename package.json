@@ -19,7 +19,8 @@
     "tablet": "node scripts/serve-apk.mjs",
     "tv": "cmd /c _tv-signage-deploy.bat",
     "fix": "cmd /c _app-loading-fix.bat",
-    "push": "git push origin main"
+    "push": "git push origin main",
+    "ai": "npx supabase functions deploy chat-assistant --project-ref whnczhxyjmyywhlfbgsd"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

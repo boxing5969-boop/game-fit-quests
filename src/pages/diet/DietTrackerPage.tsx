@@ -53,6 +53,16 @@ import DailyHabitCheckList from "@/components/diet/DailyHabitCheckList";
 import DailyMissionList from "@/components/diet/DailyMissionList";
 import DietMoodPicker from "@/components/diet/DietMoodPicker";
 import DietPhotoUpload from "@/components/diet/DietPhotoUpload";
+import MealCalorieSheet, {
+  type MealCalorieConfirmPayload,
+} from "@/components/diet/MealCalorieSheet";
+import {
+  useAnalyzeMealPhoto,
+  useConfirmMealCalories,
+  VISION_ERROR_MESSAGE,
+} from "@/hooks/useMealCalories";
+import { sumConfirmedKcal } from "@/lib/diet/mealCalories";
+import type { MealVisionErrorCode } from "@/services/dietService";
 import { cn } from "@/lib/utils";
 
 const todayIso = () => {
@@ -108,6 +118,15 @@ const DietTrackerPage = () => {
   const photosQuery = useDailyLogPhotos(logRow?.id);
   const submitMutation = useSubmitDailyLog();
   const photoMutation = useUploadMealPhoto();
+  const analyzeMutation = useAnalyzeMealPhoto();
+  const confirmCaloriesMutation = useConfirmMealCalories();
+  // 사진 한 장에 대한 칼로리 확인 시트 상태. photoId 가 있어야 저장할 수 있다.
+  const [calorieSheet, setCalorieSheet] = useState<{
+    open: boolean;
+    slot: DietMealSlot;
+    photoId: string | null;
+    error: string | null;
+  }>({ open: false, slot: "lunch", photoId: null, error: null });
   const attendanceQuery = useAttendanceToday(user?.id, logDate);
   const recordQuestEvent = useRecordQuestEvent();
   const { logEvent } = useDietAnalytics();
@@ -437,13 +456,29 @@ const DietTrackerPage = () => {
       toast.error("먼저 체크인을 저장해 주세요.");
       return;
     }
-    await photoMutation.mutateAsync({
+    const uploaded = await photoMutation.mutateAsync({
       userId: user.id,
       logId: logRow.id,
       logDate,
       mealSlot: slot,
       file: blob,
     });
+
+    // 사진은 여기까지로 이미 저장됐다. 아래 칼로리 추정이 실패해도 사진은 남는다.
+    setCalorieSheet({ open: true, slot, photoId: uploaded.photoId, error: null });
+    analyzeMutation.reset();
+    analyzeMutation.mutate(
+      { blob, mealSlot: slot },
+      {
+        onError: (e) => {
+          const code = (e.message || "unknown") as MealVisionErrorCode;
+          setCalorieSheet((prev) => ({
+            ...prev,
+            error: VISION_ERROR_MESSAGE[code] ?? VISION_ERROR_MESSAGE.unknown,
+          }));
+        },
+      },
+    );
     void logEvent(DIET_EVENT_TYPES.MEAL_PHOTO_UPLOADED, {
       log_id: logRow.id,
       meal_slot: slot,
@@ -485,6 +520,34 @@ const DietTrackerPage = () => {
       points: 2,
     });
   };
+
+  const handleConfirmCalories = async (payload: MealCalorieConfirmPayload) => {
+    const photoId = calorieSheet.photoId;
+    const vision = analyzeMutation.data;
+    if (!photoId || !vision) return;
+    try {
+      await confirmCaloriesMutation.mutateAsync({
+        photoId,
+        logId: logRow?.id,
+        items: payload.items,
+        totalKcal: payload.totalKcal,
+        totalProteinG: payload.totalProteinG,
+        source: payload.source,
+        confidence: vision.confidence,
+        category: vision.category,
+        feedback: vision.feedback,
+        detectedTags: vision.detectedTags,
+        provider: vision.provider,
+      });
+      setCalorieSheet((prev) => ({ ...prev, open: false }));
+      toast.success(`기록했어요 · 약 ${payload.totalKcal.toLocaleString()} kcal`);
+    } catch {
+      toast.error("저장이 안 됐어요. 잠시 후 다시 눌러주세요.");
+    }
+  };
+
+  // 오늘 확정된 사진들의 칼로리 합계 (확정 안 한 사진은 세지 않는다)
+  const todayKcal = sumConfirmedKcal(photosQuery.data ?? []);
 
   const stageLabel =
     DIET_STAGES.find((s) => s.id === enrollment?.current_stage)?.label ?? "";
@@ -700,13 +763,31 @@ const DietTrackerPage = () => {
         </Section>
 
         {/* 사진 업로드 (로그 저장 후 활성화) */}
-        <Section title="식단 사진 (선택)" subtitle="촬영 즉시 업로드됩니다">
+        <Section
+          title="식단 사진 (선택)"
+          subtitle={
+            todayKcal > 0
+              ? `오늘 기록 · 약 ${todayKcal.toLocaleString()} kcal`
+              : "찍으면 칼로리를 같이 읽어드립니다"
+          }
+        >
           <DietPhotoUpload
             photos={photosQuery.data ?? []}
             onUpload={handlePhoto}
             disabled={!logRow?.id}
           />
         </Section>
+
+        <MealCalorieSheet
+          open={calorieSheet.open}
+          onOpenChange={(v) => setCalorieSheet((prev) => ({ ...prev, open: v }))}
+          mealSlot={calorieSheet.slot}
+          vision={analyzeMutation.data ?? null}
+          loading={analyzeMutation.isPending}
+          errorMessage={calorieSheet.error}
+          saving={confirmCaloriesMutation.isPending}
+          onConfirm={handleConfirmCalories}
+        />
 
         {/* 저장 / 임시저장 — 자가 기록 모드에서는 언제든 재수정 가능 */}
         <div className="sticky bottom-0 -mx-5 border-t border-border bg-background/95 px-5 py-3 backdrop-blur-md">

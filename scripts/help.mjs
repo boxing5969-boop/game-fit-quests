@@ -3,6 +3,7 @@ const L = [
   ["bun run help",    "이 목록 보기"],
   ["bun run check",   "코드 문법 검사 (배포 전 확인용, 아무것도 바꾸지 않음)"],
   ["", ""],
+  ["bun run ai",      "식단 사진 칼로리 AI 배포 (chat-assistant 엣지 함수)"],
   ["bun run push",    "클로드가 고친 내용을 GitHub 에 올리기 (포함: 사이니지)"],
   ["bun run deploy",  "앱 배포 — 커밋하고 올린다. 2~4분 뒤 회원에게 반영"],
   ["bun run passkey", "지문·얼굴 로그인 적용 (supabase-js 올리고 배포)"],

@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { SYSTEM_PROMPT_153 } from "../_shared/systemPrompt153.ts";
 import { KNOWLEDGE_153 } from "../_shared/knowledge153.ts";
 import { KNOWLEDGE_BOXING_153 } from "../_shared/knowledgeBoxing153.ts";
+import { analyzeMealImage } from "../_shared/mealVision.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -231,10 +232,121 @@ function buildPersonalContext(profile: any, progress: any, recentRejections: any
   }
   return lines.length > 0 ? "\n\n" + lines.join("\n") : "";
 }
+// ────────────────────────────────────────────────────────────────
+// 식단 사진 칼로리 추정 (action = "meal-vision")
+//
+// 별도 Edge Function 을 새로 만들지 않고 여기서 분기한다 — AI 경로를 하나로
+// 유지하기 위해서다. 채팅과 달리 스트리밍이 아니라 JSON 한 번에 응답한다.
+//
+// 추가 시크릿 (선택):
+//   GEMINI_API_KEY        1차. 없으면 조용히 건너뛰고 GROQ 로 간다.
+//   GEMINI_VISION_MODEL   기본 gemini-3.1-flash-lite (모델 단종 시 여기만 교체)
+//   GROQ_VISION_MODEL     기본 qwen/qwen3.6-27b
+// ────────────────────────────────────────────────────────────────
+const VISION_DAILY_LIMIT = 40;
+
+async function handleMealVision(
+  body: Record<string, unknown>,
+  authHeader: string | null,
+): Promise<Response> {
+  const jsonRes = (payload: unknown, status = 200) =>
+    new Response(JSON.stringify(payload), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  const imageDataUrl = typeof body.imageDataUrl === "string" ? body.imageDataUrl : "";
+  if (!imageDataUrl.startsWith("data:image/")) {
+    return jsonRes({ error: "invalid_image" }, 400);
+  }
+  // 클라이언트가 768px 로 줄여 보내므로 보통 150KB 미만이다.
+  // 그보다 훨씬 크면 모델이 거부하거나 요금만 나가므로 여기서 막는다.
+  if (imageDataUrl.length > 6_000_000) {
+    return jsonRes({ error: "image_too_large" }, 413);
+  }
+
+  // 로그인한 회원만. AI 요금이 나가는 경로라 익명 호출은 막는다.
+  if (!authHeader) return jsonRes({ error: "not_authenticated" }, 401);
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const {
+    data: { user },
+  } = await userClient.auth.getUser();
+  if (!user) return jsonRes({ error: "not_authenticated" }, 401);
+
+  // 기록·집계용 클라이언트. 서비스 키가 없으면 사용자 클라이언트로 대체하고,
+  // 그래도 안 되면 상한 검사를 건너뛴다 (기능이 죽지 않게).
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const logClient = serviceKey
+    ? createClient(supabaseUrl, serviceKey)
+    : userClient;
+
+  // 하루 상한 — 정상 사용은 하루 네 끼 남짓이라 40회면 넉넉하다.
+  try {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count } = await logClient
+      .from("diet_analytics_events")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("event_type", "meal_vision_call")
+      .gte("created_at", since);
+    if ((count ?? 0) >= VISION_DAILY_LIMIT) {
+      return jsonRes({ error: "daily_limit" }, 429);
+    }
+  } catch (_e) {
+    // 집계 실패는 무시 — 상한은 요금 방어용이지 기능 차단용이 아니다.
+  }
+
+  const startedAt = Date.now();
+  const { result, tried, lastError } = await analyzeMealImage({
+    imageDataUrl,
+    mealSlot: typeof body.mealSlot === "string" ? body.mealSlot : undefined,
+    localTime: typeof body.localTime === "string" ? body.localTime : undefined,
+  });
+
+  // 정확도를 나중에 되짚어보려면 호출 기록이 남아 있어야 한다.
+  // (사진 자체는 저장하지 않는다 — 결과 요약만)
+  try {
+    await logClient.from("diet_analytics_events").insert({
+      user_id: user.id,
+      event_type: "meal_vision_call",
+      event_data: {
+        ok: !!result,
+        provider: result?.provider ?? null,
+        confidence: result?.confidence ?? null,
+        item_count: result?.items.length ?? 0,
+        total_kcal: result?.totalKcal ?? null,
+        meal_slot: typeof body.mealSlot === "string" ? body.mealSlot : null,
+        ms: Date.now() - startedAt,
+        tried,
+      },
+    });
+  } catch (_e) {
+    // 기록 실패로 회원 화면이 막히면 안 된다.
+  }
+
+  if (!result) {
+    console.error("meal-vision failed", { tried, lastError });
+    return jsonRes({ error: "vision_unavailable", tried }, 502);
+  }
+  return jsonRes(result);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
+
+    // 식단 사진 칼로리 추정 — 같은 함수 안의 다른 입구.
+    if (body?.action === "meal-vision") {
+      return await handleMealVision(body, req.headers.get("authorization"));
+    }
+
+    const { messages } = body;
 
     // 활성화된 provider 만 걸러낸다. 최소 1개는 있어야 함.
     const activeProviders = PROVIDERS.filter((p) => !!Deno.env.get(p.keyEnv));
