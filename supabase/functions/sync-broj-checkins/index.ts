@@ -73,13 +73,14 @@ Deno.serve(async (req) => {
     //    ⚠️ 단일 limit 은 백필(days=30)에서 조용히 잘린다 → 1000행 페이지 루프로 전량 수집.
     type OsRow = {
       broj_attendance_id: string; phone: string | null; member_name: string | null;
-      attended_at: string; attend_date: string; branches: { name: string } | { name: string }[] | null;
+      attended_at: string; attend_date: string; user_type: string | null;
+      branches: { name: string } | { name: string }[] | null;
     };
     const rows: OsRow[] = [];
     for (let off = 0; off < 20000; off += 1000) {
       const { data: page, error: osErr } = await os
         .from("attendance_logs")
-        .select("broj_attendance_id, phone, member_name, attended_at, attend_date, branches!inner(name)")
+        .select("broj_attendance_id, phone, member_name, attended_at, attend_date, user_type, branches!inner(name)")
         .gte("attend_date", from).lte("attend_date", to)
         .order("attended_at", { ascending: true })
         .range(off, off + 999);
@@ -127,6 +128,20 @@ Deno.serve(async (req) => {
         profMap.set(onlyDigits(p.phone_number), { user_id: p.user_id, nickname: p.nickname, name: p.name });
       }
     }
+
+    // 4-2) 직원 출근이 잡힌 계정은 profiles.is_staff 를 켠다 — 라이브보드가 코치를
+    //      회원 목록과 분리해 보여주는 근거. 실패해도 출석 기록은 계속 진행한다.
+    try {
+      const staffUserIds = [...new Set(
+        todo.filter((r) => r.user_type === "직원")
+          .map((r) => profMap.get(onlyDigits(r.phone))?.user_id)
+          .filter((v): v is string => !!v),
+      )];
+      if (staffUserIds.length > 0) {
+        await app.from("profiles").update({ is_staff: true })
+          .in("user_id", staffUserIds).eq("is_staff", false);
+      }
+    } catch (_e) { /* 직원 표시는 부가 기능 — 출석 동기화를 막지 않는다 */ }
 
     const userIds = [...new Set([...profMap.values()].map((p) => p.user_id))];
     if (userIds.length === 0) {

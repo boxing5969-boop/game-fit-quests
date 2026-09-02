@@ -61,6 +61,13 @@ interface DailyVisit {
   last_checkin_at: string;
 }
 
+/** 오늘 출근한 코치·직원 — 회원 목록과 분리해 헤더 코치 줄에 표시 */
+interface StaffVisit {
+  user_id: string;
+  display_name: string;
+  last_checkin_at: string;
+}
+
 interface ActiveMember {
   id: string;
   user_id: string;
@@ -123,6 +130,9 @@ const LiveBoardPage = () => {
   const only2 = screen === "2";
   const [branchName, setBranchName] = useState("");
   const [dailyVisits, setDailyVisits] = useState<DailyVisit[]>([]);
+  const [staffToday, setStaffToday] = useState<StaffVisit[]>([]);
+  // user_id → 직원 여부 캐시. Realtime 이벤트마다 다시 조회하지 않는다.
+  const staffFlagRef = useRef<Map<string, boolean>>(new Map());
   const [activeMembers, setActiveMembers] = useState<ActiveMember[]>([]);
   const [hallMembers, setHallMembers] = useState<HallMember[]>([]);
   const [latestPopup, setLatestPopup] = useState<CheckinEvent | null>(null);
@@ -181,9 +191,12 @@ const LiveBoardPage = () => {
   );
 
   /** 앱 운동세션 + 얼굴 출석 + mock 을 합쳐 시각효과에 전달 */
+  const staffIdSet = useMemo(() => new Set(staffToday.map((v) => v.user_id)), [staffToday]);
+
   const combinedMembers = useMemo<ActiveMember[]>(
-    () => [...activeMembers, ...checkinMembers, ...mockMembers],
-    [activeMembers, checkinMembers, mockMembers],
+    () => [...activeMembers, ...checkinMembers, ...mockMembers]
+      .filter((m) => !staffIdSet.has(m.user_id)),
+    [activeMembers, checkinMembers, mockMembers, staffIdSet],
   );
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
   const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
@@ -406,6 +419,18 @@ const LiveBoardPage = () => {
     setActiveMembers(members);
   }, [branchName]);
 
+  /** public_profiles.is_staff — 캐시 우선, 처음 보는 계정만 1회 조회 */
+  const isStaffUser = useCallback(async (userId: string): Promise<boolean> => {
+    const cached = staffFlagRef.current.get(userId);
+    if (cached !== undefined) return cached;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase as any)
+      .from("public_profiles").select("is_staff").eq("user_id", userId).maybeSingle();
+    const flag = (data as { is_staff?: boolean | null } | null)?.is_staff === true;
+    staffFlagRef.current.set(userId, flag);
+    return flag;
+  }, []);
+
   // Load today visits — deduplicated by user_id
   const loadToday = useCallback(async () => {
     if (!branchName) return;
@@ -433,10 +458,30 @@ const LiveBoardPage = () => {
         }
       }
       const visits = Array.from(userMap.values());
-      setDailyVisits(visits);
+
+      // 코치·직원은 여기서 갈라낸다 — dailyVisits 를 회원 전용으로 유지하면
+      // 카운트·티커·그리드·2번 화면이 전부 손대지 않아도 회원만 남는다.
+      const flags = staffFlagRef.current;
+      const unknownIds = visits.map((v) => v.user_id).filter((id) => !flags.has(id));
+      for (let i = 0; i < unknownIds.length; i += 300) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: staffRows } = await (supabase as any)
+          .from("public_profiles").select("user_id, is_staff")
+          .in("user_id", unknownIds.slice(i, i + 300));
+        for (const r of (staffRows || []) as { user_id: string; is_staff?: boolean | null }[]) {
+          flags.set(r.user_id, r.is_staff === true);
+        }
+      }
+      const memberVisits = visits.filter((v) => flags.get(v.user_id) !== true);
+      setDailyVisits(memberVisits);
+      setStaffToday(
+        visits
+          .filter((v) => flags.get(v.user_id) === true)
+          .map((v) => ({ user_id: v.user_id, display_name: v.display_name, last_checkin_at: v.last_checkin_at })),
+      );
 
       // Prefetch avatars + 알려진 레벨 시드 (Realtime 비교용)
-      for (const v of visits) {
+      for (const v of memberVisits) {
         getAvatarUrl(v.user_id);
         if (!knownLevelsRef.current.has(v.user_id)) {
           knownLevelsRef.current.set(v.user_id, v.level);
@@ -444,6 +489,7 @@ const LiveBoardPage = () => {
       }
     } else {
       setDailyVisits([]);
+      setStaffToday([]);
     }
   }, [branchName, getAvatarUrl]);
 
@@ -566,19 +612,33 @@ const LiveBoardPage = () => {
           const t = new Date(n.checked_in_at).getTime();
           if (!Number.isFinite(t) || t < kstDayStart) return;
           const event: CheckinEvent = { id: n.id, display_name_snapshot: n.display_name_snapshot, league_snapshot: n.league_snapshot, level_snapshot: n.level_snapshot, checked_in_at: n.checked_in_at, user_id: n.user_id };
-          getAvatarUrl(n.user_id);
-          // Update daily visits (deduplicated)
-          setDailyVisits(prev => {
-            const exists = prev.find(v => v.user_id === n.user_id);
-            if (exists) {
-              // 최신 시각일 때만 갱신 — 늦게 도착한 과거 행이 시각을 되돌리지 않게
-              if (new Date(exists.last_checkin_at).getTime() >= t) return prev;
-              return prev.map(v => v.user_id === n.user_id ? { ...v, last_checkin_at: n.checked_in_at, display_name: n.display_name_snapshot, league: n.league_snapshot, level: n.level_snapshot } : v);
+          void (async () => {
+            // 코치·직원 출근은 회원 명단·환영 팝업에 넣지 않고 헤더 코치 줄로 보낸다.
+            if (await isStaffUser(n.user_id)) {
+              setStaffToday(prev => {
+                const exists = prev.find(v => v.user_id === n.user_id);
+                if (exists) {
+                  if (new Date(exists.last_checkin_at).getTime() >= t) return prev;
+                  return prev.map(v => v.user_id === n.user_id ? { ...v, last_checkin_at: n.checked_in_at, display_name: n.display_name_snapshot } : v);
+                }
+                return [...prev, { user_id: n.user_id, display_name: n.display_name_snapshot, last_checkin_at: n.checked_in_at }];
+              });
+              return;
             }
-            return [{ user_id: n.user_id, display_name: n.display_name_snapshot, league: n.league_snapshot, level: n.level_snapshot, last_checkin_at: n.checked_in_at }, ...prev];
-          });
-          triggerPopup(event);
-          void loadActivitySessions();
+            getAvatarUrl(n.user_id);
+            // Update daily visits (deduplicated)
+            setDailyVisits(prev => {
+              const exists = prev.find(v => v.user_id === n.user_id);
+              if (exists) {
+                // 최신 시각일 때만 갱신 — 늦게 도착한 과거 행이 시각을 되돌리지 않게
+                if (new Date(exists.last_checkin_at).getTime() >= t) return prev;
+                return prev.map(v => v.user_id === n.user_id ? { ...v, last_checkin_at: n.checked_in_at, display_name: n.display_name_snapshot, league: n.league_snapshot, level: n.level_snapshot } : v);
+              }
+              return [{ user_id: n.user_id, display_name: n.display_name_snapshot, league: n.league_snapshot, level: n.level_snapshot, last_checkin_at: n.checked_in_at }, ...prev];
+            });
+            triggerPopup(event);
+            void loadActivitySessions();
+          })();
         })
       .on("postgres_changes", { event: "*", schema: "public", table: "activity_sessions", filter: `branch_name=eq.${branchName}` },
         () => {
@@ -703,6 +763,12 @@ const LiveBoardPage = () => {
           <div className="flex flex-col justify-center gap-1">
             <h1 className="text-4xl font-black leading-none tracking-tight text-white">마이복서153</h1>
             <p className="text-xl font-bold leading-none text-white/50">{branchName || "지점"}</p>
+            {staffToday.length > 0 && (
+              <p className="flex items-center gap-2 text-base font-bold leading-none text-white/60">
+                <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+                코치 {staffToday.map((v) => v.display_name).join(" · ")}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-8">
