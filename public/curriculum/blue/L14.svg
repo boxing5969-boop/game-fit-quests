@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 300" role="img" font-family="'IBM Plex Sans KR', system-ui, -apple-system, 'Malgun Gothic', sans-serif"
+   aria-label="네 방의 연타가 머리와 몸통 높이를 번갈아 오가며 서로 다른 각도로 들어간다."><defs><marker id="k-m" viewBox="0 0 10 10" refX="9" refY="5"
+   markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse">
+   <path d="M0,0 L10,5 L0,10 z" fill="var(--mint, #15B88A)"/></marker></defs>
+<text x="230" y="24" fill="var(--ink, #E9EEEA)" font-size="13"
+    font-weight="700" text-anchor="middle">연타는 같은 높이로 치지 않는다</text>
+<g stroke="var(--gold, #C08A2E)" fill="none" stroke-width="2.2">
+  <circle cx="356" cy="88" r="24"/><rect x="330" y="122" width="52" height="74" rx="12"/></g>
+<text x="356" y="218" fill="var(--gold, #C08A2E)" font-size="11"
+    font-weight="500" text-anchor="middle">상대</text>
+<line x1="96" y1="64" x2="328" y2="80" stroke="var(--mint, #15B88A)" stroke-width="2.6" marker-end="url(#k-m)"/>
+<text x="84" y="68" fill="var(--mint, #15B88A)" font-size="12"
+    font-weight="700" text-anchor="end">①</text>
+<line x1="96" y1="106" x2="330" y2="94" stroke="var(--mint, #15B88A)" stroke-width="2.6" marker-end="url(#k-m)"/>
+<text x="84" y="110" fill="var(--mint, #15B88A)" font-size="12"
+    font-weight="700" text-anchor="end">②</text>
+<line x1="96" y1="160" x2="326" y2="150" stroke="var(--mint, #15B88A)" stroke-width="2.6" marker-end="url(#k-m)"/>
+<text x="84" y="164" fill="var(--mint, #15B88A)" font-size="12"
+    font-weight="700" text-anchor="end">③</text>
+<path d="M96,202 Q212,226 328,112" fill="none" stroke="var(--mint, #15B88A)" stroke-width="2.6" marker-end="url(#k-m)"/>
+<text x="84" y="206" fill="var(--mint, #15B88A)" font-size="12"
+    font-weight="700" text-anchor="end">④</text>
+<text x="244" y="48" fill="var(--ink-3, #8A968E)" font-size="11"
+    font-weight="500" text-anchor="middle">머리</text>
+<text x="196" y="178" fill="var(--ink-3, #8A968E)" font-size="11"
+    font-weight="500" text-anchor="middle">몸통</text>
+<text x="230" y="256" fill="var(--mint, #15B88A)" font-size="12"
+    font-weight="700" text-anchor="middle">머리 · 머리 · 몸통 · 몸통에서 머리</text>
+<text x="230" y="278" fill="var(--ink-3, #8A968E)" font-size="11.5"
+    font-weight="500" text-anchor="middle">높이가 바뀌니 상대 가드가 한 자리에 못 머문다</text></svg>

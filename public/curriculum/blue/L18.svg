@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 250" role="img" font-family="'IBM Plex Sans KR', system-ui, -apple-system, 'Malgun Gothic', sans-serif"
+   aria-label="코치가 부른 번호를 듣고 1초 안에 첫 방이 나가야 하며, 3라운드 내내 같은 자세를 유지한다."><defs><marker id="t-m" viewBox="0 0 10 10" refX="9" refY="5"
+   markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse">
+   <path d="M0,0 L10,5 L0,10 z" fill="var(--mint, #15B88A)"/></marker></defs>
+<text x="230" y="24" fill="var(--ink, #E9EEEA)" font-size="13"
+    font-weight="700" text-anchor="middle">내 박자가 아니라 코치 박자</text>
+<circle cx="56" cy="110" r="20" fill="none" stroke="var(--gold, #C08A2E)" stroke-width="2.4"/>
+<text x="56" y="148" fill="var(--gold, #C08A2E)" font-size="11"
+    font-weight="500" text-anchor="middle">코치</text>
+<path d="M100,80 h120 a8,8 0 0 1 8,8 v30 a8,8 0 0 1 -8,8 h-104 l-14,12 v-12 h-2 a8,8 0 0 1 -8,-8 v-30 a8,8 0 0 1 8,-8 z"
+  fill="none" stroke="var(--gold, #C08A2E)" stroke-width="1.8"/>
+<text x="164" y="110" fill="var(--gold, #C08A2E)" font-size="17"
+    font-weight="700" text-anchor="middle" letter-spacing="1.5">1 - 2 - 3</text>
+<line x1="244" y1="110" x2="302" y2="110" stroke="var(--mint, #15B88A)" stroke-width="2.6" marker-end="url(#t-m)"/>
+<text x="273" y="98" fill="var(--mint, #15B88A)" font-size="11"
+    font-weight="500" text-anchor="middle">1초 안에</text>
+<circle cx="336" cy="110" r="20" fill="none" stroke="var(--mint, #15B88A)" stroke-width="2.8"/>
+<text x="336" y="148" fill="var(--mint, #15B88A)" font-size="11"
+    font-weight="500" text-anchor="middle">나</text>
+<rect x="150" y="178" width="48" height="10" rx="5"
+  fill="none" stroke="var(--mint, #15B88A)" stroke-width="1.8" opacity="1"/><rect x="206" y="178" width="48" height="10" rx="5"
+  fill="none" stroke="var(--mint, #15B88A)" stroke-width="1.8" opacity="0.74"/><rect x="262" y="178" width="48" height="10" rx="5"
+  fill="none" stroke="var(--mint, #15B88A)" stroke-width="1.8" opacity="0.48"/>
+<text x="174" y="170" fill="var(--ink-3, #8A968E)" font-size="10.5"
+    font-weight="500" text-anchor="middle">1R</text><text x="230" y="170" fill="var(--ink-3, #8A968E)" font-size="10.5"
+    font-weight="500" text-anchor="middle">2R</text><text x="286" y="170" fill="var(--ink-3, #8A968E)" font-size="10.5"
+    font-weight="500" text-anchor="middle">3R</text>
+<text x="230" y="212" fill="var(--mint, #15B88A)" font-size="11.5"
+    font-weight="500" text-anchor="middle">번호를 듣고 1초 안에 첫 방이 나가야 한다</text>
+<text x="230" y="234" fill="var(--ink-3, #8A968E)" font-size="11.5"
+    font-weight="500" text-anchor="middle">3라운드 — 지쳐도 같은 자세</text></svg>

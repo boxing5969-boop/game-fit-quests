@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 430" role="img" font-family="'IBM Plex Sans KR', system-ui, -apple-system, 'Malgun Gothic', sans-serif"
+   aria-label="위: 화이트는 뒤로 물러나 상대와의 거리가 벌어지고 되칠 수 없다. 아래: 블루는 발을 둔 채 머리만 옮겨 거리를 유지하고 그 자리에서 되친다."><defs><marker id="cn-s" viewBox="0 0 10 10" refX="9" refY="5"
+   markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse">
+   <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-3, #8A968E)"/></marker><marker id="cn-m" viewBox="0 0 10 10" refX="9" refY="5"
+   markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse">
+   <path d="M0,0 L10,5 L0,10 z" fill="var(--mint, #15B88A)"/></marker><marker id="cn-g" viewBox="0 0 10 10" refX="9" refY="5"
+   markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse">
+   <path d="M0,0 L10,5 L0,10 z" fill="var(--gold, #C08A2E)"/></marker></defs>
+<text x="230" y="24" fill="var(--ink, #E9EEEA)" font-size="13"
+    font-weight="700" text-anchor="middle">화이트 — 뒤로 물러난다</text>
+<circle cx="70" cy="92" r="20" fill="none" stroke="var(--gold, #C08A2E)" stroke-width="2.4"/>
+<circle cx="170" cy="92" r="20" fill="none" stroke="var(--ink-3, #8A968E)" stroke-width="1.8" stroke-dasharray="4 4"/>
+<circle cx="300" cy="92" r="20" fill="none" stroke="var(--ink, #E9EEEA)" stroke-width="2.4"/>
+<text x="70" y="130" fill="var(--gold, #C08A2E)" font-size="11"
+    font-weight="500" text-anchor="middle">상대</text>
+<text x="170" y="130" fill="var(--ink-3, #8A968E)" font-size="11"
+    font-weight="500" text-anchor="middle">원래 자리</text>
+<text x="300" y="130" fill="var(--ink, #E9EEEA)" font-size="11"
+    font-weight="500" text-anchor="middle">나</text>
+<line x1="196" y1="92" x2="272" y2="92" stroke="var(--ink-3, #8A968E)" stroke-width="2.2" marker-end="url(#cn-s)"/>
+<text x="234" y="82" fill="var(--ink-3, #8A968E)" font-size="11"
+    font-weight="500" text-anchor="middle">물러남</text>
+<line x1="70" y1="158" x2="300" y2="158" stroke="var(--ink-3, #8A968E)" stroke-width="1.4" marker-start="url(#cn-s)" marker-end="url(#cn-s)"/>
+<text x="185" y="180" fill="var(--ink-3, #8A968E)" font-size="12"
+    font-weight="500" text-anchor="middle">거리가 멀어진다</text>
+<text x="185" y="202" fill="var(--warn, #D2603A)" font-size="12.5"
+    font-weight="700" text-anchor="middle">→ 되칠 수 없다</text>
+<line x1="24" y1="228" x2="436" y2="228" stroke="var(--ink-3, #8A968E)" stroke-width="1" stroke-dasharray="4 6" opacity=".5"/>
+<text x="230" y="264" fill="var(--mint, #15B88A)" font-size="13"
+    font-weight="700" text-anchor="middle">블루 — 제자리에서 피한다</text>
+<circle cx="70" cy="332" r="20" fill="none" stroke="var(--gold, #C08A2E)" stroke-width="2.4"/>
+<circle cx="212" cy="324" r="19" fill="none" stroke="var(--ink-3, #8A968E)" stroke-width="1.8" stroke-dasharray="4 4"/>
+<circle cx="262" cy="340" r="19" fill="none" stroke="var(--mint, #15B88A)" stroke-width="2.6"/>
+<path d="M214,304 Q240,286 264,320" fill="none" stroke="var(--mint, #15B88A)" stroke-width="2.2" marker-end="url(#cn-m)"/>
+<text x="300" y="296" fill="var(--mint, #15B88A)" font-size="11"
+    font-weight="500" text-anchor="start">머리만 옆으로</text>
+<line x1="245" y1="352" x2="94" y2="342" stroke="var(--mint, #15B88A)" stroke-width="2.8" marker-end="url(#cn-m)"/>
+<text x="70" y="380" fill="var(--gold, #C08A2E)" font-size="11"
+    font-weight="500" text-anchor="middle">상대</text>
+<text x="262" y="380" fill="var(--ink, #E9EEEA)" font-size="11"
+    font-weight="500" text-anchor="middle">나 — 발은 그대로</text>
+<line x1="70" y1="400" x2="212" y2="400" stroke="var(--mint, #15B88A)" stroke-width="1.4" marker-start="url(#cn-m)" marker-end="url(#cn-m)"/>
+<text x="141" y="422" fill="var(--mint, #15B88A)" font-size="12.5"
+    font-weight="700" text-anchor="middle">거리는 그대로 → 바로 되친다</text></svg>
