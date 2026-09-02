@@ -100,6 +100,7 @@ const MyBoxerCommunityPage = lazyWithRetry(() => import("@/pages/MyBoxerCommunit
 const TrainingLibraryPage = lazyWithRetry(() => import("@/pages/TrainingLibraryPage"));
 const RoutineBuilderPage = lazyWithRetry(() => import("@/pages/RoutineBuilderPage"));
 const RoutinesPage = lazyWithRetry(() => import("@/pages/RoutinesPage"));
+const BoxingLibraryPage = lazyWithRetry(() => import("@/pages/BoxingLibraryPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -287,6 +288,7 @@ const AppRoutes = () => {
         <Route path="/training-library" element={<ProtectedRoute><TrainingLibraryPage /></ProtectedRoute>} />
         <Route path="/routine-builder" element={<ProtectedRoute><ManagerRoute><RoutineBuilderPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/routines" element={<ProtectedRoute><RoutinesPage /></ProtectedRoute>} />
+        <Route path="/library" element={<ProtectedRoute><BoxingLibraryPage /></ProtectedRoute>} />
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         {/* 사이니지용 짧은 주소 — 리모컨으로 치기 쉽게. /tv/sunreung/1 처럼 화면 번호를 붙이면
             나란히 놓인 2대에 좌·우로 나눠 띄운다(번호 없으면 예전처럼 한 화면에 전부). */}

@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useLevelVideos, youtubeThumb, parseVideoTitle } from "@/hooks/useLevelVideos";
 
 interface Cycle {
   sessions: number; days: number; minutes: number;
@@ -71,10 +72,16 @@ const LevelUpRequestCard = () => {
     },
   });
 
+  // 다음 레벨에서 배울 동작 미리보기 — 커리큘럼 영상(missions)이 있으면 2개까지
+  const league = progress?.current_rank ?? "white";
+  const nextLevel = Math.min(10, (progress?.current_level ?? 1) + 1);
+  const { data: nextVideos = [] } = useLevelVideos(league, nextLevel);
+
   if (!cycle) return null;
   const isPending = statusNow === "pending";
   const isRevision = statusNow === "revision_requested";
   const isBossLevel = (progress?.current_level ?? 1) === 10;
+  const previews = nextVideos.filter((v) => !!youtubeThumb(v.videoUrl)).slice(0, 2);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
@@ -101,6 +108,45 @@ const LevelUpRequestCard = () => {
           🥊 출석 3회 달성 — 자동으로 처리 중이에요!
         </div>
       ) : null}
+
+      {/* 다음 레벨 미리보기 — 영상으로 다음에 배울 동작을 미리 본다 */}
+      {!isBossLevel && (
+        <div className="mt-3 border-t border-border pt-3">
+          <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-muted-foreground">
+            다음 레벨({nextLevel})에서 배울 동작
+          </p>
+          {previews.length > 0 ? (
+            <div className="flex gap-2">
+              {previews.map((v) => (
+                <a
+                  key={v.id}
+                  href={v.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="min-w-0 flex-1 overflow-hidden rounded-xl border border-border active:scale-[0.98]"
+                >
+                  <div className="bg-black" style={{ aspectRatio: "16/9" }}>
+                    <img src={youtubeThumb(v.videoUrl) ?? ""} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  </div>
+                  <p className="truncate px-2 py-1.5 text-[11px] font-bold text-foreground">
+                    {parseVideoTitle(v.title).name}
+                  </p>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11.5px] text-muted-foreground">
+              이 레벨의 커리큘럼 영상이 준비 중이에요 — 라이브러리에서 내 리그 영상을 미리 봐도 좋아요.
+            </p>
+          )}
+          <button
+            onClick={() => navigate("/library")}
+            className="mt-2 w-full rounded-xl bg-primary/10 py-2.5 text-center text-[12px] font-black text-primary active:opacity-80"
+          >
+            🌍 월드 복싱 라이브러리에서 더 보기 →
+          </button>
+        </div>
+      )}
 
       <button onClick={() => navigate("/routines")} className="mt-2 w-full text-center text-[11px] font-semibold text-primary active:opacity-70">
         추천 수업 루틴 보기 →
