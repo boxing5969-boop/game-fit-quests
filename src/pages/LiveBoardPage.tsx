@@ -549,12 +549,33 @@ const LiveBoardPage = () => {
 
   useEffect(() => { loadToday(); loadHall(); loadActivitySessions(); loadOnDutyStaff(); }, [loadToday, loadHall, loadActivitySessions, loadOnDutyStaff]);
 
-  // 근무중 판정은 시간이 지나면 바뀐다(코치 4시간). TV 는 새로고침되지 않으니
-  // 1분마다 다시 물어본다 — 앱 계정 없는 코치의 첫 등장도 이 주기로 잡힌다.
+  // 근무중 판정은 시간이 지나면 바뀐다(코치 4시간). 페이지 자동 새로고침은
+  // 20분 주기라 그 사이를 1분마다 메운다 — 앱 계정 없는 코치의 첫 등장도 여기서 잡힌다.
   useEffect(() => {
     const t = setInterval(() => { void loadOnDutyStaff(); }, 60_000);
     return () => clearInterval(t);
   }, [loadOnDutyStaff]);
+
+  /** 자동 새로고침이 연출 도중 끼어들지 않게 하는 현재 상태 스냅샷 */
+  const busyRef = useRef(false);
+  useEffect(() => { busyRef.current = showPopup || levelUpEvent !== null; }, [showPopup, levelUpEvent]);
+
+  // ── 20분마다 페이지 통째로 새로고침 (대표님 요청) ─────────────────
+  // TV 는 몇 주씩 켜둔 채로 두기 때문에 (1) 새로 배포한 화면이 안 걸리고
+  // (2) 오래 켜두면 메모리·소켓이 조금씩 쌓인다. 주기적으로 다시 띄워 둘 다 해결한다.
+  //
+  // 단, 환영 팝업이나 레벨업 연출이 떠 있는 동안에는 미룬다 — 회원이 자기 이름을
+  // 보고 있는 순간을 끊어버리면 안 된다. 연출이 끝날 때까지 15초 간격으로 기다린다.
+  useEffect(() => {
+    const RELOAD_MS = 20 * 60_000;
+    let timer: ReturnType<typeof setTimeout>;
+    const tryReload = () => {
+      if (busyRef.current) { timer = setTimeout(tryReload, 15_000); return; }
+      window.location.reload();
+    };
+    timer = setTimeout(tryReload, RELOAD_MS);
+    return () => clearTimeout(timer);
+  }, []);
 
   const triggerPopup = useCallback(async (event: CheckinEvent) => {
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
