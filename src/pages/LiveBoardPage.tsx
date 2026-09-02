@@ -82,6 +82,12 @@ const COACH_TITLE_ORDER: Record<string, number> = {
 };
 const coachOrder = (title: string): number => COACH_TITLE_ORDER[title] ?? 2;
 
+/** 화면 표기용 직함 — 항상 님을 붙인다 (지점장 → 지점장님, 코치 → 코치님) */
+const honorTitle = (title: string): string => {
+  const t = (title || "코치").trim();
+  return t.endsWith("님") ? t : `${t}님`;
+};
+
 interface ActiveMember {
   id: string;
   user_id: string;
@@ -805,7 +811,12 @@ const LiveBoardPage = () => {
             {only1 && staffToday.length > 0 && (
               <p className="flex items-center gap-2 text-base font-bold leading-none text-white/60">
                 <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-                코치 {staffToday.map((v) => v.display_name).join(" · ")}
+                {staffToday
+                  .map((v) => {
+                    const entry = coachRoster.find((c) => c.user_id === v.user_id);
+                    return `${entry?.name ?? v.display_name} ${honorTitle(entry?.title ?? "코치")}`;
+                  })
+                  .join(" · ")}
               </p>
             )}
           </div>
@@ -1018,9 +1029,9 @@ const LiveBoardPage = () => {
           )}
 
           {/* ── Bottom: COACHING STAFF 띠 ── */}
-          {/* 명예의 전당과 같은 격으로 코치진을 세운다 — 출근 여부와 무관하게 항상 서 있고,
-              오늘 출근한 코치에게만 민트 점이 켜진다. 이름 뒤 직함(관장·수석코치·코치)이 예우다. */}
-          {!only1 && (coachRoster.length > 0 || staffToday.length > 0) && (
+          {/* 명예의 전당과 같은 격으로 코치진을 세운다 — 활동 중(오늘 출근)인 코치만 이름이 걸리고,
+              아무도 없으면 띠 자체를 접는다. 이름 뒤 직함(지점장님·코치님)이 예우다. */}
+          {!only1 && staffToday.length > 0 && (
             <div className="mx-4 mb-2 flex-shrink-0 rounded-xl border border-yellow-600/40 bg-gradient-to-r from-yellow-950/60 via-gray-900/80 to-yellow-950/60 px-4 py-2.5">
               <div className="flex items-center gap-3">
                 <div className="flex flex-shrink-0 items-center gap-1.5">
@@ -1031,24 +1042,29 @@ const LiveBoardPage = () => {
                 </div>
                 <div className="flex flex-1 items-center gap-2 overflow-x-auto">
                   {(() => {
-                    // 명단에 아직 없는 신규 코치(오늘 첫 감지)도 빠지지 않게 합쳐서 그린다.
-                    const rosterIds = new Set(coachRoster.map((c) => c.user_id));
-                    const extras: CoachEntry[] = staffToday
-                      .filter((v) => !rosterIds.has(v.user_id))
-                      .map((v) => ({ user_id: v.user_id, name: v.display_name, title: "코치", avatar_url: null }));
-                    const onDuty = new Set(staffToday.map((v) => v.user_id));
-                    return [...coachRoster, ...extras].map((c) => (
+                    // 오늘 출근(활동 중)한 코치만 — 명단 정보(직함·아바타)가 있으면 붙이고,
+                    // 명단에 아직 없는 신규 코치도 이름만으로 바로 걸린다.
+                    const byId = new Map(coachRoster.map((c) => [c.user_id, c] as const));
+                    const onDuty: CoachEntry[] = staffToday
+                      .map((v) => {
+                        const c = byId.get(v.user_id);
+                        return {
+                          user_id: v.user_id,
+                          name: c?.name ?? v.display_name,
+                          title: c?.title ?? "코치",
+                          avatar_url: c?.avatar_url ?? null,
+                        };
+                      })
+                      .sort((a, b) => coachOrder(a.title) - coachOrder(b.title) || a.name.localeCompare(b.name, "ko"));
+                    return onDuty.map((c) => (
                       <div
                         key={c.user_id}
                         className="flex flex-shrink-0 items-center gap-2 rounded-lg border border-yellow-700/30 bg-yellow-900/20 px-2.5 py-1"
                       >
                         <MemberAvatar url={c.avatar_url} name={c.name} sizeClass="h-7 w-7" />
                         <div>
-                          <p className="flex items-center gap-1.5 text-sm font-black leading-tight text-yellow-100 whitespace-nowrap">
-                            {onDuty.has(c.user_id) && (
-                              <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" aria-hidden />
-                            )}
-                            {c.name} {c.title}
+                          <p className="text-sm font-black leading-tight text-yellow-100 whitespace-nowrap">
+                            {c.name} {honorTitle(c.title)}
                           </p>
                           <p className="text-[10px] font-black uppercase tracking-wider text-yellow-500/80">
                             153 BOXING
