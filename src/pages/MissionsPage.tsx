@@ -463,7 +463,7 @@ const MissionsPage = () => {
                     ? "👆 🤍 올리그"
                     : "🤍 올리그",
               },
-              { value: "missions", label: "🥊 복싱 컨텐츠" },
+              { value: "missions", label: "🥊 레벨 미션 영상" },
             ]}
             fullWidth
           />
@@ -547,10 +547,10 @@ const MissionsPage = () => {
                         />
                         <div className="min-w-0 flex-1">
                           <h3 className="text-body-lg text-foreground">
-                            {/* 64-M: 화이트 리그만 컨텐츠 영상 라벨로 노출.
+                            {/* 64-M: 화이트 리그만 레벨 미션 영상 라벨로 노출.
                                 다른 리그는 기존 'X 리그' 표기 유지. */}
                             {rank === "white"
-                              ? "화이트 리그 컨텐츠 영상"
+                              ? "화이트 리그 레벨 미션 영상"
                               : `${RANK_LABELS[rank]} 리그`}
                           </h3>
                           <p className="text-caption text-muted-foreground">

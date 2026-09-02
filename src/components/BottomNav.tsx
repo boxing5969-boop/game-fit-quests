@@ -20,7 +20,7 @@ import {
   X,
   Ticket,
   Dumbbell,
-  ClipboardList, PlayCircle } from "lucide-react";
+  ClipboardList } from "lucide-react";
 import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,7 +47,6 @@ const mainTabs = [
 const baseMenuItems = [
   { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝" },
   { path: "/training-library",  icon: Dumbbell,   label: "훈련 라이브러리" },
-  { path: "/library",           icon: PlayCircle, label: "레벨 미션 영상" },
   { path: "/routines",          icon: ClipboardList, label: "수업 루틴" },
   // 153 챌린지 — 개인 보조 퀘스트 (IQ / 챌린지 아레나) + 회원 간 랭킹 경쟁.
   // 라우트는 /myboxer/quest 유지 (DB anchor 호환). 챔피언 일기는 153 커뮤니티로 이관.

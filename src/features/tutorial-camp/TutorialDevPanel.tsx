@@ -593,11 +593,11 @@ function Section({
 // ─────────────────────────────────────────────────────────────
 const SELECTOR_LABELS: Record<string, string> = {
   '[data-tour="missions-official-training"]': "훈련 화면 (전체 영역)",
-  '[data-tour="missions-tab-control"]': "올리그 / 복싱 컨텐츠 토글",
+  '[data-tour="missions-tab-control"]': "올리그 / 레벨 미션 영상 토글",
   '[data-tour="missions-league-header-white"]':
-    "복싱 컨텐츠 안 — 화이트 리그 헤더",
+    "레벨 미션 영상 안 — 화이트 리그 헤더",
   '[data-tour="missions-tab-control"] button[aria-selected="false"]':
-    "올리그/복싱 컨텐츠 — 비활성 토글",
+    "올리그/레벨 미션 영상 — 비활성 토글",
   '[data-tour="white-league-tabs"]': "화이트 리그 — 탭 줄 (배우기/수업실행/심사)",
   '[data-tour="white-league-tab-learn"]': "📖 배우기 탭",
   '[data-tour="white-league-tab-session"]': "🥊 수업실행 탭",

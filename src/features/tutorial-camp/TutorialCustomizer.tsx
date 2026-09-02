@@ -66,7 +66,7 @@ import { TUTORIAL_DEV_OPEN_EVENT } from "./TutorialDevPanel";
 
 const SELECTOR_LABELS_LITE: Record<string, string> = {
   '[data-tour="missions-official-training"]': "훈련 화면 (전체)",
-  '[data-tour="missions-tab-control"]': "올리그/복싱 컨텐츠 토글",
+  '[data-tour="missions-tab-control"]': "올리그/레벨 미션 영상 토글",
   '[data-tour="missions-league-header-white"]': "화이트 리그 헤더",
   '[data-tour="white-league-tabs"]': "화이트 — 탭 줄",
   '[data-tour="white-league-tab-learn"]': "📖 배우기 탭",

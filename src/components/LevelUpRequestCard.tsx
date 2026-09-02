@@ -140,10 +140,10 @@ const LevelUpRequestCard = () => {
             </p>
           )}
           <button
-            onClick={() => navigate(`/library?lv=${nextLevel}`)}
+            onClick={() => navigate("/missions")}
             className="mt-2 w-full rounded-xl bg-primary/10 py-2.5 text-center text-[12px] font-black text-primary active:opacity-80"
           >
-            🎬 다음 레벨 미션 영상 보러 가기 →
+            🥊 레벨 미션 영상 보러 가기 →
           </button>
         </div>
       )}
