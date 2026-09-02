@@ -471,10 +471,10 @@ const HomePage = () => {
           onClick={() => navigate("/library")}
           className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left active:scale-[0.99]"
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-xl">🌍</span>
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-xl">🎬</span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-black text-foreground">월드 복싱 라이브러리</span>
-            <span className="block text-[11.5px] text-muted-foreground">전 세계 검증된 복싱 영상 1,500개 — 내 리그에 맞게</span>
+            <span className="block text-[14px] font-black text-foreground">레벨 미션 영상</span>
+            <span className="block text-[11.5px] text-muted-foreground">다음 레벨에서 배울 동작 예습 · 월드 복싱 영상 1,500개</span>
           </span>
           <span className="text-muted-foreground">›</span>
         </button>

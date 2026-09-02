@@ -136,14 +136,14 @@ const LevelUpRequestCard = () => {
             </div>
           ) : (
             <p className="text-[11.5px] text-muted-foreground">
-              이 레벨의 커리큘럼 영상이 준비 중이에요 — 라이브러리에서 내 리그 영상을 미리 봐도 좋아요.
+              이 레벨의 미션 영상이 준비 중이에요 — 레벨 미션 영상에서 다른 레벨을 미리 봐도 좋아요.
             </p>
           )}
           <button
-            onClick={() => navigate("/library")}
+            onClick={() => navigate(`/library?lv=${nextLevel}`)}
             className="mt-2 w-full rounded-xl bg-primary/10 py-2.5 text-center text-[12px] font-black text-primary active:opacity-80"
           >
-            🌍 월드 복싱 라이브러리에서 더 보기 →
+            🎬 다음 레벨 미션 영상 보러 가기 →
           </button>
         </div>
       )}
