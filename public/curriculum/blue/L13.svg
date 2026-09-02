@@ -1,37 +1,58 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 442" role="img" font-family="'IBM Plex Sans KR', system-ui, -apple-system, 'Malgun Gothic', sans-serif"
-   aria-label="위: 무릎을 굽혀 낮추면 등이 세워지고 시선이 유지된다. 아래: 허리를 접어 숙이면 시선을 잃고 허리에 부담이 간다."><defs><marker id="b-m" viewBox="0 0 10 10" refX="9" refY="5"
-   markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse">
-   <path d="M0,0 L10,5 L0,10 z" fill="var(--mint, #15B88A)"/></marker><marker id="b-w" viewBox="0 0 10 10" refX="9" refY="5"
-   markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse">
-   <path d="M0,0 L10,5 L0,10 z" fill="var(--warn, #D2603A)"/></marker></defs>
-<text x="230" y="24" fill="var(--mint, #15B88A)" font-size="13"
-    font-weight="700" text-anchor="middle">○ 무릎을 굽혀 낮춘다</text>
-<line x1="30" y1="180" x2="430" y2="180" stroke="var(--ink-3, #8A968E)" stroke-width="1.2" opacity=".55"/>
-<g stroke="var(--mint, #15B88A)" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="152" cy="80" r="15"/><path d="M152,95 L152,130"/>
-  <path d="M152,130 L130,156 L130,180 M152,130 L174,156 L174,180"/>
-  <path d="M152,106 L206,112"/></g>
-<circle cx="216" cy="113" r="8" fill="var(--mint, #15B88A)"/>
-<line x1="168" y1="72" x2="204" y2="68" stroke="var(--mint, #15B88A)" stroke-width="2" marker-end="url(#b-m)"/>
-<text x="212" y="66" fill="var(--mint, #15B88A)" font-size="11"
-    font-weight="500" text-anchor="start">시선 유지</text>
-<line x1="118" y1="100" x2="140" y2="106" stroke="var(--ink-3, #8A968E)" stroke-width="1.2"/>
-<text x="112" y="104" fill="var(--ink-3, #8A968E)" font-size="11"
-    font-weight="500" text-anchor="end">등이 세워짐</text>
-<text x="230" y="206" fill="var(--mint, #15B88A)" font-size="11.5"
-    font-weight="500" text-anchor="middle">무릎으로 낮추니 시선과 자세가 유지된다</text>
-<line x1="24" y1="232" x2="436" y2="232" stroke="var(--ink-3, #8A968E)" stroke-width="1" stroke-dasharray="4 6" opacity=".5"/>
-<text x="230" y="270" fill="var(--warn, #D2603A)" font-size="13"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 288" role="img"
+   font-family="'Pretendard','IBM Plex Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif" aria-label="몸통을 칠 때 무릎을 굽혀 낮추면 등이 세워지고 시선이 유지되지만, 허리를 접어 숙이면 시선을 잃고 허리에 부담이 간다.">
+   <defs><marker id="b-m" viewBox="0 0 10 10" refX="8.5" refY="5"
+   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10B981"/></marker><marker id="b-w" viewBox="0 0 10 10" refX="8.5" refY="5"
+   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#E0562C"/></marker></defs>
+   <rect x="0" y="0" width="500" height="288" rx="16" fill="#FFFFFF"/>
+<text x="250" y="31" fill="#15181B" font-size="15"
+    font-weight="800" text-anchor="middle">레벨13 · 바디</text>
+<line x1="250" y1="46" x2="250" y2="234" stroke="#E3E7E4" stroke-width="1.2"/>
+<rect x="38" y="50" width="156" height="21" rx="10.5" fill="#E7F7F0"/><text x="116" y="65" fill="#0A7A55" font-size="11.5"
+    font-weight="700" text-anchor="middle">○ 무릎으로 낮춘다</text>
+<rect x="300" y="50" width="142" height="21" rx="10.5" fill="#FCEBE4"/><text x="371" y="65" fill="#E0562C" font-size="11.5"
     font-weight="700" text-anchor="middle">× 허리를 접는다</text>
-<line x1="30" y1="404" x2="430" y2="404" stroke="var(--ink-3, #8A968E)" stroke-width="1.2" opacity=".55"/>
-<g stroke="var(--warn, #D2603A)" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="238" cy="356" r="15"/><path d="M224,346 L168,312"/>
-  <path d="M168,312 L150,404 M168,312 L186,404"/></g>
-<line x1="250" y1="370" x2="274" y2="394" stroke="var(--warn, #D2603A)" stroke-width="2" marker-end="url(#b-w)"/>
-<text x="282" y="398" fill="var(--warn, #D2603A)" font-size="11"
-    font-weight="500" text-anchor="start">시선이 바닥</text>
-<path d="M156,302 A15,15 0 0 0 152,326" fill="none" stroke="var(--warn, #D2603A)" stroke-width="2.4"/>
-<text x="144" y="310" fill="var(--warn, #D2603A)" font-size="11"
-    font-weight="500" text-anchor="end">허리 부담</text>
-<text x="230" y="430" fill="var(--warn, #D2603A)" font-size="11.5"
-    font-weight="500" text-anchor="middle">시선을 잃고 허리에 부담이 쌓인다</text></svg>
+<line x1="28" y1="204" x2="232" y2="204" stroke="#E3E7E4" stroke-width="2"/><line x1="268" y1="204" x2="472" y2="204" stroke="#E3E7E4" stroke-width="2"/>
+<g opacity="1">
+    <polyline points="101,143 87,156 109,150" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="109" cy="150" r="6.8" fill="#15181B"/>
+    <polyline points="98,168 81,186 75,201" fill="none" stroke="#15181B"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="100,137 98,168" fill="none" stroke="#15181B"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="98,168 119,184 123,201" fill="none" stroke="#15181B"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="100" cy="128" r="9" fill="#15181B"/>
+    <polyline points="101,143 118,152 131,154" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="131" cy="154" r="6.8" fill="#15181B"/>
+  </g>
+<line x1="114" y1="122" x2="158" y2="118" stroke="#10B981" stroke-width="2.4" marker-end="url(#b-m)"/>
+<text x="164" y="116" fill="#10B981" font-size="10"
+    font-weight="700" text-anchor="start">시선 유지</text>
+<line x1="66" y1="140" x2="88" y2="146" stroke="#AEB7BE" stroke-width="1.4"/>
+<text x="60" y="137" fill="#5B6570" font-size="10.5"
+    font-weight="600" text-anchor="end">등이 세워짐</text>
+<text x="116" y="226" fill="#10B981" font-size="10.5"
+    font-weight="600" text-anchor="middle">무릎이 굽는다</text>
+<g opacity="1">
+    <polyline points="370,148 369,167 371,187" fill="none" stroke="#E0562C"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="371" cy="187" r="6.8" fill="#E0562C"/>
+    <polyline points="340,134 331,169 332,201" fill="none" stroke="#E0562C"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="378,150 340,134" fill="none" stroke="#E0562C"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="340,134 344,168 347,201" fill="none" stroke="#E0562C"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="388" cy="154" r="9" fill="#E0562C"/>
+    <polyline points="370,148 380,168 382,188" fill="none" stroke="#E0562C"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="382" cy="188" r="6.8" fill="#E0562C"/>
+  </g>
+<line x1="396" y1="168" x2="420" y2="188" stroke="#E0562C" stroke-width="2.4" marker-end="url(#b-w)"/>
+<text x="426" y="190" fill="#E0562C" font-size="10"
+    font-weight="700" text-anchor="start">시선이 바닥</text>
+<path d="M328,124 A14,14 0 0 0 324,148" fill="none" stroke="#E0562C" stroke-width="2.4"/>
+<text x="316" y="128" fill="#E0562C" font-size="10.5"
+    font-weight="600" text-anchor="end">허리 부담</text>
+<text x="356" y="226" fill="#E0562C" font-size="10.5"
+    font-weight="600" text-anchor="middle">허리가 접힌다</text>
+<line x1="24" y1="242" x2="476" y2="242" stroke="#E3E7E4" stroke-width="2"/><text x="250" y="266" fill="#5B6570" font-size="11.5"
+    font-weight="700" text-anchor="middle">허리를 접으면 시선이 끊겨 다음 방을 못 봅니다</text></svg>

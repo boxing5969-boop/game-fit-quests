@@ -1,31 +1,57 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 250" role="img" font-family="'IBM Plex Sans KR', system-ui, -apple-system, 'Malgun Gothic', sans-serif"
-   aria-label="코치가 부른 번호를 듣고 1초 안에 첫 방이 나가야 하며, 3라운드 내내 같은 자세를 유지한다."><defs><marker id="t-m" viewBox="0 0 10 10" refX="9" refY="5"
-   markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse">
-   <path d="M0,0 L10,5 L0,10 z" fill="var(--mint, #15B88A)"/></marker></defs>
-<text x="230" y="24" fill="var(--ink, #E9EEEA)" font-size="13"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 288" role="img"
+   font-family="'Pretendard','IBM Plex Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif" aria-label="코치가 부른 번호를 듣고 1초 안에 첫 방이 나가야 하며, 3라운드 내내 같은 자세를 유지한다.">
+   <defs><marker id="t-m" viewBox="0 0 10 10" refX="8.5" refY="5"
+   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10B981"/></marker></defs>
+   <rect x="0" y="0" width="500" height="288" rx="16" fill="#FFFFFF"/>
+<text x="250" y="31" fill="#15181B" font-size="15"
+    font-weight="800" text-anchor="middle">레벨18 · 미트</text>
+<rect x="150" y="46" width="200" height="21" rx="10.5" fill="#F7D96B"/><text x="250" y="61" fill="#7A5A08" font-size="11.5"
     font-weight="700" text-anchor="middle">내 박자가 아니라 코치 박자</text>
-<circle cx="56" cy="110" r="20" fill="none" stroke="var(--gold, #C08A2E)" stroke-width="2.4"/>
-<text x="56" y="148" fill="var(--gold, #C08A2E)" font-size="11"
-    font-weight="500" text-anchor="middle">코치</text>
-<path d="M100,80 h120 a8,8 0 0 1 8,8 v30 a8,8 0 0 1 -8,8 h-104 l-14,12 v-12 h-2 a8,8 0 0 1 -8,-8 v-30 a8,8 0 0 1 8,-8 z"
-  fill="none" stroke="var(--gold, #C08A2E)" stroke-width="1.8"/>
-<text x="164" y="110" fill="var(--gold, #C08A2E)" font-size="17"
-    font-weight="700" text-anchor="middle" letter-spacing="1.5">1 - 2 - 3</text>
-<line x1="244" y1="110" x2="302" y2="110" stroke="var(--mint, #15B88A)" stroke-width="2.6" marker-end="url(#t-m)"/>
-<text x="273" y="98" fill="var(--mint, #15B88A)" font-size="11"
-    font-weight="500" text-anchor="middle">1초 안에</text>
-<circle cx="336" cy="110" r="20" fill="none" stroke="var(--mint, #15B88A)" stroke-width="2.8"/>
-<text x="336" y="148" fill="var(--mint, #15B88A)" font-size="11"
-    font-weight="500" text-anchor="middle">나</text>
-<rect x="150" y="178" width="48" height="10" rx="5"
-  fill="none" stroke="var(--mint, #15B88A)" stroke-width="1.8" opacity="1"/><rect x="206" y="178" width="48" height="10" rx="5"
-  fill="none" stroke="var(--mint, #15B88A)" stroke-width="1.8" opacity="0.74"/><rect x="262" y="178" width="48" height="10" rx="5"
-  fill="none" stroke="var(--mint, #15B88A)" stroke-width="1.8" opacity="0.48"/>
-<text x="174" y="170" fill="var(--ink-3, #8A968E)" font-size="10.5"
-    font-weight="500" text-anchor="middle">1R</text><text x="230" y="170" fill="var(--ink-3, #8A968E)" font-size="10.5"
-    font-weight="500" text-anchor="middle">2R</text><text x="286" y="170" fill="var(--ink-3, #8A968E)" font-size="10.5"
-    font-weight="500" text-anchor="middle">3R</text>
-<text x="230" y="212" fill="var(--mint, #15B88A)" font-size="11.5"
-    font-weight="500" text-anchor="middle">번호를 듣고 1초 안에 첫 방이 나가야 한다</text>
-<text x="230" y="234" fill="var(--ink-3, #8A968E)" font-size="11.5"
-    font-weight="500" text-anchor="middle">3라운드 — 지쳐도 같은 자세</text></svg>
+<g opacity="1">
+    <polyline points="91,115 76,128 112,130" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="112" cy="130" r="6.8" fill="#AEB7BE"/>
+    <polyline points="88,143 76,165 68,185" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="90,108 88,143" fill="none" stroke="#AEB7BE"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="88,143 104,163 112,185" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="90" cy="99" r="9.5" fill="#AEB7BE"/>
+    <polyline points="91,115 110,122 120,114" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="120" cy="114" r="6.8" fill="#AEB7BE"/>
+  </g>
+<rect x="110" y="110" width="19" height="25" rx="9" fill="#F7D96B" stroke="#7A5A08" stroke-width="1.6"/>
+<rect x="102" y="130" width="19" height="25" rx="9" fill="#F7D96B" stroke="#7A5A08" stroke-width="1.6"/>
+<text x="140" y="168" fill="#7A5A08" font-size="9.5"
+    font-weight="700" text-anchor="middle">미트</text>
+<text x="90" y="214" fill="#AEB7BE" font-size="10.5"
+    font-weight="600" text-anchor="middle">코치</text>
+<path d="M150,90 h122 a9,9 0 0 1 9,9 v26 a9,9 0 0 1 -9,9 h-104 l-13,12 v-12 h-5 a9,9 0 0 1 -9,-9 v-26 a9,9 0 0 1 9,-9 z"
+  fill="#F7D96B" opacity=".28"/>
+<text x="212" y="122" fill="#7A5A08" font-size="17"
+    font-weight="800" text-anchor="middle">1 - 2 - 3</text>
+<line x1="292" y1="122" x2="336" y2="122" stroke="#10B981" stroke-width="2.8" marker-end="url(#t-m)"/>
+<text x="314" y="112" fill="#10B981" font-size="10"
+    font-weight="700" text-anchor="middle">1초 안에</text>
+<g transform="translate(784,0) scale(-1,1)"><g opacity="1">
+    <polyline points="393,115 379,129 402,122" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="402" cy="122" r="6.8" fill="#15181B"/>
+    <polyline points="390,143 378,165 370,185" fill="none" stroke="#15181B"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="392,108 390,143" fill="none" stroke="#15181B"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="390,143 406,163 414,185" fill="none" stroke="#15181B"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="392" cy="99" r="9.5" fill="#15181B"/>
+    <polyline points="393,115 412,118 428,116" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="428" cy="116" r="6.8" fill="#15181B"/>
+  </g></g>
+<text x="392" y="214" fill="#15181B" font-size="10.5"
+    font-weight="600" text-anchor="middle">나</text>
+<rect x="172" y="238" width="46" height="10" rx="5" fill="#10B981" opacity="1"/><rect x="228" y="238" width="46" height="10" rx="5" fill="#10B981" opacity="0.72"/><rect x="284" y="238" width="46" height="10" rx="5" fill="#10B981" opacity="0.43999999999999995"/>
+<text x="195" y="232" fill="#5B6570" font-size="9.5"
+    font-weight="700" text-anchor="middle">1R</text><text x="251" y="232" fill="#5B6570" font-size="9.5"
+    font-weight="700" text-anchor="middle">2R</text><text x="307" y="232" fill="#5B6570" font-size="9.5"
+    font-weight="700" text-anchor="middle">3R</text>
+<text x="250" y="272" fill="#5B6570" font-size="11.5"
+    font-weight="700" text-anchor="middle">번호를 듣고 1초 안에 · 3라운드 내내 같은 자세</text></svg>

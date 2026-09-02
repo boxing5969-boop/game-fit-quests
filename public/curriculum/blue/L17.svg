@@ -1,41 +1,89 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 320" role="img" font-family="'IBM Plex Sans KR', system-ui, -apple-system, 'Malgun Gothic', sans-serif"
-   aria-label="위: 피하고 멈춘 뒤 치면 세 박자가 걸려 늦는다. 아래: 피하면서 동시에 치면 한 박자로 끝난다."><defs><marker id="x-m" viewBox="0 0 10 10" refX="9" refY="5"
-   markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse">
-   <path d="M0,0 L10,5 L0,10 z" fill="var(--mint, #15B88A)"/></marker></defs>
-<text x="230" y="24" fill="var(--warn, #D2603A)" font-size="13"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 424" role="img"
+   font-family="'Pretendard','IBM Plex Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif" aria-label="피하고 멈춘 뒤 치면 세 박자가 걸려 늦지만, 피하면서 동시에 치면 한 박자로 끝난다.">
+   <defs><marker id="x-m" viewBox="0 0 10 10" refX="8.5" refY="5"
+   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10B981"/></marker><marker id="x-w" viewBox="0 0 10 10" refX="8.5" refY="5"
+   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#E0562C"/></marker></defs>
+   <rect x="0" y="0" width="500" height="424" rx="16" fill="#FFFFFF"/>
+<text x="250" y="31" fill="#15181B" font-size="15"
+    font-weight="800" text-anchor="middle">레벨17 · 카운터</text>
+<rect x="30" y="46" width="176" height="21" rx="10.5" fill="#FCEBE4"/><text x="118" y="61" fill="#E0562C" font-size="11.5"
     font-weight="700" text-anchor="middle">× 피하고 → 멈추고 → 친다</text>
-<line x1="60" y1="80" x2="400" y2="80" stroke="var(--ink-3, #8A968E)" stroke-width="1.4" opacity=".6"/>
-
-<circle cx="110" cy="80" r="14" fill="none" stroke="var(--warn, #D2603A)" stroke-width="2.4"/>
-<text x="110" y="85" fill="var(--warn, #D2603A)" font-size="12"
-    font-weight="700" text-anchor="middle">1</text>
-<text x="110" y="112" fill="var(--warn, #D2603A)" font-size="11.5"
-    font-weight="500" text-anchor="middle">피함</text>
-<circle cx="230" cy="80" r="14" fill="none" stroke="var(--warn, #D2603A)" stroke-width="2.4"/>
-<text x="230" y="85" fill="var(--warn, #D2603A)" font-size="12"
-    font-weight="700" text-anchor="middle">2</text>
-<text x="230" y="112" fill="var(--warn, #D2603A)" font-size="11.5"
-    font-weight="500" text-anchor="middle">멈춤</text>
-<circle cx="350" cy="80" r="14" fill="none" stroke="var(--warn, #D2603A)" stroke-width="2.4"/>
-<text x="350" y="85" fill="var(--warn, #D2603A)" font-size="12"
-    font-weight="700" text-anchor="middle">3</text>
-<text x="350" y="112" fill="var(--warn, #D2603A)" font-size="11.5"
-    font-weight="500" text-anchor="middle">침</text>
-<text x="230" y="140" fill="var(--warn, #D2603A)" font-size="11.5"
-    font-weight="500" text-anchor="middle">세 박자 — 그 사이 상대가 다음 방을 던진다</text>
-<line x1="24" y1="166" x2="436" y2="166" stroke="var(--ink-3, #8A968E)" stroke-width="1" stroke-dasharray="4 6" opacity=".5"/>
-<text x="230" y="202" fill="var(--mint, #15B88A)" font-size="13"
+<g opacity="1">
+    <polyline points="79,105 65,119 88,112" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="88" cy="112" r="6.8" fill="#AEB7BE"/>
+    <polyline points="76,133 64,155 56,175" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="83,103 76,133" fill="none" stroke="#AEB7BE"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="76,133 92,153 100,175" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="86" cy="97" r="9.5" fill="#AEB7BE"/>
+    <polyline points="79,105 92,121 99,103" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="99" cy="103" r="6.8" fill="#AEB7BE"/>
+  </g><g opacity="1">
+    <polyline points="179,105 165,119 188,112" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="188" cy="112" r="6.8" fill="#AEB7BE"/>
+    <polyline points="176,133 164,155 156,175" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="178,98 176,133" fill="none" stroke="#AEB7BE"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="176,133 192,153 200,175" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="178" cy="89" r="9.5" fill="#AEB7BE"/>
+    <polyline points="179,105 192,121 199,103" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="199" cy="103" r="6.8" fill="#AEB7BE"/>
+  </g><g opacity="1">
+    <polyline points="279,105 265,119 288,112" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="288" cy="112" r="6.8" fill="#AEB7BE"/>
+    <polyline points="276,133 264,155 256,175" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="278,98 276,133" fill="none" stroke="#AEB7BE"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="276,133 292,153 300,175" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="278" cy="89" r="9.5" fill="#AEB7BE"/>
+    <polyline points="279,105 298,108 314,106" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="314" cy="106" r="6.8" fill="#AEB7BE"/>
+  </g>
+<text x="78" y="196" fill="#E0562C" font-size="10.5"
+    font-weight="700" text-anchor="middle">① 피함</text>
+<text x="178" y="196" fill="#E0562C" font-size="10.5"
+    font-weight="700" text-anchor="middle">② 멈춤</text>
+<text x="278" y="196" fill="#E0562C" font-size="10.5"
+    font-weight="700" text-anchor="middle">③ 침</text>
+<text x="404" y="132" fill="#E0562C" font-size="14"
+    font-weight="800" text-anchor="middle">세 박자</text>
+<text x="404" y="154" fill="#5B6570" font-size="10"
+    font-weight="600" text-anchor="middle">그 사이 상대가</text>
+<text x="404" y="170" fill="#5B6570" font-size="10"
+    font-weight="600" text-anchor="middle">다음 방을 던진다</text>
+<line x1="24" y1="218" x2="476" y2="218" stroke="#E3E7E4" stroke-width="1.2"/>
+<rect x="30" y="234" width="168" height="21" rx="10.5" fill="#E7F7F0"/><text x="114" y="249" fill="#0A7A55" font-size="11.5"
     font-weight="700" text-anchor="middle">○ 피하면서 동시에 친다</text>
-<line x1="60" y1="258" x2="400" y2="258" stroke="var(--ink-3, #8A968E)" stroke-width="1.4" opacity=".6"/>
-<circle cx="110" cy="258" r="18" fill="none" stroke="var(--mint, #15B88A)" stroke-width="2.8"/>
-<text x="110" y="264" fill="var(--mint, #15B88A)" font-size="13"
-    font-weight="700" text-anchor="middle">1</text>
-<text x="110" y="292" fill="var(--mint, #15B88A)" font-size="11.5"
+<g opacity="1">
+    <polyline points="97,281 83,295 106,288" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="106" cy="288" r="6.8" fill="#15181B"/>
+    <polyline points="94,309 82,331 74,351" fill="none" stroke="#15181B"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="101,279 94,309" fill="none" stroke="#15181B"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="94,309 110,329 118,351" fill="none" stroke="#15181B"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="104" cy="273" r="9.5" fill="#15181B"/>
+    <polyline points="97,281 117,285 133,281" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="133" cy="281" r="6.8" fill="#15181B"/>
+  </g>
+<path d="M96,256 Q82,252 84,268" fill="none" stroke="#10B981" stroke-width="2.2" marker-end="url(#x-m)"/>
+<line x1="140" y1="282" x2="256" y2="282" stroke="#10B981" stroke-width="3.2" marker-end="url(#x-m)"/>
+<text x="198" y="274" fill="#10B981" font-size="10"
+    font-weight="700" text-anchor="middle">반격</text>
+<text x="288" y="272" fill="#0A7A55" font-size="14"
+    font-weight="800" text-anchor="start">① 한 박자</text>
+<text x="288" y="294" fill="#5B6570" font-size="10"
+    font-weight="600" text-anchor="start">상대는 아직</text>
+<text x="288" y="310" fill="#5B6570" font-size="10"
+    font-weight="600" text-anchor="start">팔을 뻗은 상태</text>
+<text x="96" y="372" fill="#10B981" font-size="10.5"
     font-weight="600" text-anchor="middle">피함 + 침</text>
-<line x1="136" y1="240" x2="386" y2="240" stroke="var(--mint, #15B88A)" stroke-width="3" marker-end="url(#x-m)"/>
-<text x="270" y="228" fill="var(--mint, #15B88A)" font-size="11"
-    font-weight="500" text-anchor="middle">반격</text>
-<text x="272" y="292" fill="var(--mint, #15B88A)" font-size="11.5"
-    font-weight="500" text-anchor="middle">상대는 아직 팔을 뻗은 상태</text>
-<text x="230" y="314" fill="var(--mint, #15B88A)" font-size="12"
-    font-weight="700" text-anchor="middle">한 박자로 끝난다</text></svg>
+<line x1="24" y1="378" x2="476" y2="378" stroke="#E3E7E4" stroke-width="2"/><text x="250" y="402" fill="#5B6570" font-size="11.5"
+    font-weight="700" text-anchor="middle">블루의 정점 — 회피와 반격이 한 동작이 됩니다</text></svg>
