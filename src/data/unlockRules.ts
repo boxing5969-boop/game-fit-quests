@@ -388,16 +388,16 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     key: "first_checkin",
     order: 4,
-    label: "4단계 — QR 출석체크 연습하기",
+    label: "4단계 — 자동 출석 알아보기",
     description:
-      "홈 화면의 'QR 체크인 하기' 버튼을 눌러 카메라를 켜보세요. 실제 출석 기록은 코치님 QR 을 스캔할 때부터 — 지금은 카메라 한 번 켜면 연습 완료!",
-    hint: "👆 홈 화면 상단의 'QR 체크인 하기' 버튼을 누르세요. 카메라가 열리면 4단계 자동 완료!",
-    ctaLabel: "QR 카메라 켜기 →",
+      "출석은 체육관 입구에서 얼굴 인식하면 자동으로 기록돼요. 홈 화면의 출석 카드를 한 번 눌러 확인해 보세요 — 누르기만 하면 연습 완료!",
+    hint: "👆 홈 화면 상단의 출석 카드를 누르세요. 안내가 뜨면 4단계 자동 완료!",
+    ctaLabel: "출석 카드 눌러보기 →",
     navTarget: "/home",
     detector: "qr_camera_opened",
     icon: "📍",
     spotlightSelector: '[data-tutorial-target="qr-checkin-button"]',
-    spotlightHint: "👆 여기를 눌러 QR 카메라를 켜보세요. 카메라만 열려도 연습 완료!",
+    spotlightHint: "👆 여기를 눌러보세요. 안내만 떠도 연습 완료!",
   },
   {
     key: "first_challenge",

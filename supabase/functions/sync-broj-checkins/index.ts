@@ -226,6 +226,18 @@ Deno.serve(async (req) => {
       inserted += chunk.length;
     }
 
+    // 9) 새 출석이 기록된 회원마다 자동 승급 검사.
+    //    1~9레벨은 출석 3회 자동 승급, 10레벨은 코치 승인함으로 자동 신청 (DB 함수가 판정).
+    //    개별 실패는 삼킨다 — 다음 출석 동기화 때 같은 검사가 다시 돈다.
+    const advanceTargets = [...new Set(
+      inserts.filter((r) => r.is_duplicate === false).map((r) => String(r.user_id)),
+    )];
+    for (const uid of advanceTargets) {
+      try {
+        await app.rpc("auto_advance_from_attendance", { _user_id: uid });
+      } catch (_e) { /* 무시 — 출석 기록이 우선이다 */ }
+    }
+
     const skipped = rows.length - todo.length;
     await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, inserted, skipped, unmatched });
     return json({ ok: true, from, to, scanned: rows.length, inserted, skipped, unmatched });

@@ -1,15 +1,14 @@
 // 🥊 오늘의 코스 — 훈련 탭 첫 화면.
 // 오삼 코치가 오늘 할 일을 1·2·3 순서로 알려준다. 완료한 건 체크, 지금 할 건 강조.
 // 회원이 원하면 "코스 접기"로 숨길 수 있다(기기에 기억).
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  QrCode, Play, Dumbbell, Trophy, Clock, ChevronRight, ChevronDown, CheckCircle2,
+  ScanFace, Play, Dumbbell, Trophy, Clock, ChevronRight, ChevronDown, CheckCircle2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLevelVideos, useWatchedVideos, parseVideoTitle, youtubeId } from "@/hooks/useLevelVideos";
-import { toast } from "sonner";
 import { RANK_LABELS } from "@/data/sharedConstants";
 
 interface Cycle {
@@ -29,8 +28,7 @@ interface Props {
 const COURSE_KEY = "153_course_collapsed";
 
 // 홈 화면과 같은 QR 스캐너를 재사용한다(새로 만들지 않는다).
-// qr.js(359KB)는 모달을 열 때만 내려받도록 lazy 유지.
-const QRScannerModal = lazy(() => import("@/components/QRScannerModal"));
+// QR 체크인은 폐지 — 출석은 입구 얼굴 인식으로 자동 기록된다 (2026-09-02).
 
 // KST 자정 (기기 타임존과 무관) — 해외폰에서도 '오늘' 판정이 체육관 기준과 일치해야 한다.
 const kstDayStartIso = () => {
@@ -42,10 +40,8 @@ const safeGet = (k: string) => { try { return localStorage.getItem(k); } catch {
 const safeSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* 프라이빗 모드 등 */ } };
 
 const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpenDetail, onOpenVideos }: Props) => {
-  const { user, refreshProgress } = useAuth();
-  const qc = useQueryClient();
+  const { user } = useAuth();
   const [playing, setPlaying] = useState<{ id: string; url: string; title: string } | null>(null);
-  const [showQR, setShowQR] = useState(false);
   const [collapsed, setCollapsed] = useState(() => safeGet(COURSE_KEY) === "1");
   const { data: videos = [], isFetched: videosFetched } = useLevelVideos(league, levelNumber);
   const { watched, toggle, countFor } = useWatchedVideos();
@@ -72,11 +68,10 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     staleTime: 60_000,
     refetchOnMount: "always", // 홈에서 QR 찍고 넘어와도 즉시 최신 (탭 재진입 시 항상 재조회)
     queryFn: async () => {
-      // method='qr' 만 인정 — 브로제이 출입(method='broj')은 라이브보드 표시용이고
-      // XP 는 앱에서 QR 을 찍어야 지급되므로 1번 스텝 완료로 치지 않는다.
+      // 출석은 수단을 가리지 않는다 — 얼굴 인식(broj)이 정식 출석이다 (2026-09-02 개편).
       const { data } = await supabase
         .from("attendance_logs").select("id")
-        .eq("user_id", user!.id).eq("is_duplicate", false).eq("method", "qr")
+        .eq("user_id", user!.id).eq("is_duplicate", false)
         .gte("checked_in_at", kstDayStartIso()).limit(1);
       return (data?.length ?? 0) > 0;
     },
@@ -126,18 +121,6 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     },
   });
 
-  const requestReview = useMutation({
-    mutationFn: async () => {
-      const { error } = await (supabase.rpc as any)("request_level_review", {});
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["my-level-status"] });
-      toast.success("레벨업 신청 완료 — 코치님 승인을 기다려주세요! 🎉");
-    },
-    onError: (e: any) => toast.error(e?.message || "신청 실패"),
-  });
-
   const doneCount = countFor(videos.map((v) => v.id));
   const nextVideo = useMemo(() => videos.find((v) => !watched[v.id]) ?? null, [videos, watched]);
   // 영상이 없는 레벨(블루·레드·블랙 다수)은 2번 스텝을 완료로 간주 — 교착 방지.
@@ -155,16 +138,14 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
   const steps = [
     {
       n: 1,
-      title: arrivalLabel && !checkedInToday ? "체육관 도착!" : "체육관에서 QR 체크인",
+      title: "체육관 도착 (자동 출석)",
       desc: checkedInToday
-        ? (arrivalLabel ? `${arrivalLabel} 입장 · 체크인 완료` : "체크인 완료")
-        : arrivalLabel
-          ? `${arrivalLabel} 입장 — QR 찍으면 XP 받아요`
-          : "체크인해야 오늘 훈련이 기록돼요",
-      icon: QrCode,
+        ? (arrivalLabel ? `${arrivalLabel} 입장 · 출석 완료` : "출석 완료")
+        : "입구에서 얼굴 인식하면 자동으로 출석돼요",
+      icon: ScanFace,
       done: !!checkedInToday,
-      action: (() => setShowQR(true)) as null | (() => void),
-      actionLabel: arrivalLabel ? "QR 스캔하고 +10 XP 받기" : "QR 스캔하기",
+      action: null as null | (() => void),
+      actionLabel: "",
     },
     {
       n: 2,
@@ -196,7 +177,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
   const coach = isPending
     ? { face: "osami_shy", line: "심사 신청 완료! 조금만 기다려요" }
     : canLevelUp
-      ? { face: "osami_victory", line: "조건 달성! 레벨업 신청하세요" }
+      ? { face: "osami_victory", line: "출석 다 채웠어요! 곧 자동 처리돼요" }
       : !currentStep
         ? { face: "osami_happy", line: "오늘 코스 완료! 잘하셨어요" }
         : doneSteps === 0
@@ -361,13 +342,9 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
                 <Clock className="h-4 w-4" /> 코치님 승인 대기 중
               </div>
             ) : canLevelUp ? (
-              <button
-                onClick={() => requestReview.mutate()}
-                disabled={requestReview.isPending}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-reward py-3.5 text-[13px] font-black text-reward-foreground shadow-elev-1 active:scale-[0.98] disabled:opacity-60"
-              >
-                <Trophy className="h-4 w-4" /> 레벨업 신청하기
-              </button>
+              <div className="flex items-center justify-center gap-2 rounded-2xl bg-reward/10 py-3.5 text-[13px] font-black text-reward">
+                <Trophy className="h-4 w-4" /> 출석 3회 달성 — 자동으로 처리 중이에요!
+              </div>
             ) : null}
           </div>
         )}
@@ -453,27 +430,6 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
 
       {/* QR 체크인 — 홈 화면과 같은 스캐너·같은 qr-checkin 경로를 그대로 쓴다.
           XP 지급·중복 판정은 전부 Edge Function 이 하고, 여기서는 결과만 반영한다. */}
-      {showQR && (
-        <Suspense fallback={null}>
-          <QRScannerModal
-            open={showQR}
-            onClose={() => setShowQR(false)}
-            onSuccess={(r) => {
-              setShowQR(false);
-              if (!r.is_duplicate) refreshProgress(); // XP 바·레벨은 AuthContext 상태라 직접 갱신
-              qc.invalidateQueries({ queryKey: ["today-checkin"] });
-              qc.invalidateQueries({ queryKey: ["today-arrival"] });
-              qc.invalidateQueries({ queryKey: ["member-progress"] });
-              qc.invalidateQueries({ queryKey: ["level-cycle"] });
-              toast.success(
-                r.is_duplicate
-                  ? "오늘은 이미 체크인했어요"
-                  : `체크인 완료! +${r.xp_granted} XP 🥊`,
-              );
-            }}
-          />
-        </Suspense>
-      )}
     </div>
   );
 };

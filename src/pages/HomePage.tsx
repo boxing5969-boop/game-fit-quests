@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, lazy, Suspense, Fragment } from "react";
+import { useEffect, useState, useCallback, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Ticket, Trophy, Settings } from "lucide-react";
 import { toast } from "sonner";
@@ -23,11 +23,10 @@ import { getLevelById } from "@/data/allLevelsData";
 import { RANK_LABELS } from "@/data/sharedConstants";
 
 import CharacterSprite from "@/components/CharacterSprite";
+import RankBadge from "@/components/RankBadge";
 import SelfChallengeFlow from "@/components/SelfChallengeFlow";
-// 64-Q: QRScannerModal lazy import — qr.js (359KB) 첫 페인트에서 제거.
 //   회원이 QR 체크인 버튼 누를 때만 다운로드. 평소 홈 진입엔 불필요.
-const QRScannerModal = lazy(() => import("@/components/QRScannerModal"));
-import CheckinSuccessModal from "@/components/CheckinSuccessModal";
+// QR 체크인은 폐지 — 출석은 입구 얼굴 인식으로 자동 기록된다 (2026-09-02).
 import LevelUpModal from "@/components/LevelUpModal";
 // 단계 47 — 홈 상단 정리: 오늘 할 일 / 오삼이 한마디 (기존 컴포넌트 0 변경)
 import TodayFocusCard from "@/components/home/TodayFocusCard";
@@ -78,11 +77,8 @@ const HomePage = () => {
 
   const [showChallenge, setShowChallenge] = useState(false);
   const [qrAutoStarted, setQrAutoStarted] = useState(false);
-  const [showQRScanner, setShowQRScanner] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const { visibility: homeWidgets, order: homeWidgetOrder } = useHomeLayout();
-  const [checkinResult, setCheckinResult] = useState<any>(null);
-  const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
   const [checkedInToday, setCheckedInToday] = useState(false);
   const [levelUpModal, setLevelUpModal] = useState<{
     show: boolean;
@@ -101,7 +97,6 @@ const HomePage = () => {
       .select("id")
       .eq("user_id", user.id)
       .eq("branch_name", profile.branch_name)
-      .eq("method", "qr")
       .eq("is_duplicate", false)
       .gte("checked_in_at", todayStart.toISOString())
       .limit(1);
@@ -132,52 +127,14 @@ const HomePage = () => {
     if (activitySession.isActive && !showChallenge) setShowChallenge(true);
   }, [activitySession.isActive]); // eslint-disable-line
 
-  const handleCheckinFeedback = useCallback(
-    (isDuplicate: boolean, xpGranted: number) => {
-      if (isDuplicate) {
-        toast.success("라이브보드에 다시 입장합니다");
-        toast.success("오늘 도전을 다시 시작합니다 🥊");
-      } else {
-        toast.success(`출석 완료! +${xpGranted}XP 🥊`);
-        toast.success("오늘 도전 시작! 💪");
-      }
-    },
-    [],
-  );
-
-  const ensureActiveSession = useCallback(async () => {
-    let session = await activitySession.refreshSession();
-    if (session) return session;
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    session = await activitySession.refreshSession();
-    if (session) return session;
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return activitySession.refreshSession();
-  }, [activitySession]);
-
   const handleStartChallenge = useCallback(async () => {
     if (!checkedInToday) {
-      toast.error("QR 체크인 후 오늘 도전이 오픈됩니다");
+      toast.error("출석(입구 얼굴 인식) 후 오늘 도전이 오픈됩니다");
       return;
     }
     const session = await activitySession.startChallenge();
     if (session) setShowChallenge(true);
   }, [activitySession, checkedInToday]);
-
-  const handleQrCheckinSuccess = useCallback(
-    async (result: any) => {
-      setShowQRScanner(false);
-      setCheckedInToday(true);
-      if (!result.is_duplicate) refreshProgress();
-      setQrAutoStarted(true);
-      setShowChallenge(true);
-      await ensureActiveSession();
-      setCheckinResult(result);
-      setShowCheckinSuccess(true);
-      handleCheckinFeedback(result.is_duplicate, result.xp_granted);
-    },
-    [ensureActiveSession, handleCheckinFeedback, refreshProgress],
-  );
 
   if (!profile || !progress) return <LoadingState />;
 
@@ -230,8 +187,9 @@ const HomePage = () => {
           : "evaluate";
   const handleTodayAction = () => {
     if (todayActionState === "qr_checkin") {
-      setShowQRScanner(true);
-      // 64-P: 오삼 가이드 step 4 'QR 출석체크 연습하기' detector 트리거
+      // QR 은 폐지 — 출석은 입구 얼굴 인식으로 자동 기록된다 (10분 안에 반영).
+      toast.info("입구에서 얼굴 인식하면 자동으로 출석돼요 🥊");
+      // 64-P: 오삼 가이드 step 4 '자동 출석 확인하기' detector 트리거 (기존 이벤트명 유지)
       if (typeof window !== "undefined") {
         try {
           window.dispatchEvent(new Event("tutorial-qr-opened"));
@@ -275,6 +233,14 @@ const HomePage = () => {
       header={
         <PageHeader
           title={displayName}
+          titlePrefix={
+            <RankBadge
+              rank={rank}
+              level={progress.current_level}
+              size="inline"
+              isMaster={isManagerRole(role)}
+            />
+          }
           subtitle={profile.branch_name || undefined}
           leftAction={
             myCharacter?.character_presets ? (
@@ -466,10 +432,10 @@ const HomePage = () => {
                       icon={<Trophy className="h-8 w-8 text-reward" />}
                       title="아직 순위에 없어요"
                       description="첫 도전을 완료하면 랭킹에 진입합니다."
-                      ctaText={checkedInToday ? "🥊 오늘 도전 시작" : "QR 체크인 하기"}
+                      ctaText={checkedInToday ? "🥊 오늘 도전 시작" : "얼굴 인식으로 자동 출석"}
                       onCtaClick={() => {
                         if (checkedInToday) handleStartChallenge();
-                        else setShowQRScanner(true);
+                        else toast.info("입구에서 얼굴 인식하면 자동으로 출석돼요 🥊");
                       }}
                     />
                   )}
@@ -632,24 +598,6 @@ const HomePage = () => {
         newLevel={levelUpModal.level}
         newRank={levelUpModal.rank}
         xpGranted={levelUpModal.xp}
-      />
-
-      {/* 64-Q: QRScannerModal 은 modal open 시점에만 chunk 다운로드.
-          fallback=null — 미열린 평소엔 아무것도 안 그림. */}
-      {showQRScanner && (
-        <Suspense fallback={null}>
-          <QRScannerModal
-            open={showQRScanner}
-            onClose={() => setShowQRScanner(false)}
-            onSuccess={handleQrCheckinSuccess}
-          />
-        </Suspense>
-      )}
-
-      <CheckinSuccessModal
-        open={showCheckinSuccess}
-        onClose={() => setShowCheckinSuccess(false)}
-        result={checkinResult}
       />
 
       {/* 튜토리얼 오버레이는 App.tsx 의 글로벌 InductionCeremonyOverlay 로 이관. */}

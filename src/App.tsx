@@ -65,7 +65,6 @@ const RankUpPage = lazyWithRetry(() => import("@/pages/RankUpPage"));
 const CharacterStudioPage = lazyWithRetry(() => import("@/pages/CharacterStudioPage"));
 const MasterTrackPage = lazyWithRetry(() => import("@/pages/MasterTrackPage"));
 const MinigamePage = lazyWithRetry(() => import("@/pages/MinigamePage"));
-const CheckinBoardPage = lazyWithRetry(() => import("@/pages/CheckinBoardPage"));
 const DietHubPage = lazyWithRetry(() => import("@/pages/diet/DietHubPage"));
 const DietOnboardingPage = lazyWithRetry(() => import("@/pages/diet/DietOnboardingPage"));
 const DietTrackerPage = lazyWithRetry(() => import("@/pages/diet/DietTrackerPage"));
@@ -276,7 +275,6 @@ const AppRoutes = () => {
         <Route path="/manager" element={<ProtectedRoute><ManagerRoute><BranchManagerHome /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/member/:memberId" element={<ProtectedRoute><ManagerRoute><MemberDetailPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/member/:memberId/preview" element={<ProtectedRoute><ManagerRoute><MemberPreviewPage /></ManagerRoute></ProtectedRoute>} />
-        <Route path="/manager/checkin-board" element={<ProtectedRoute><ManagerRoute><CheckinBoardPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><ManagerRoute><SuperAdminDashboard /></ManagerRoute></ProtectedRoute>} />
         {/* 153마인드셋 — 시각화 훈련 (153복싱짐으로 돌아온 사람). */}
         {/* 일반 회원에게 공개. ProtectedRoute 만 유지 — 비로그인 진입 차단. */}

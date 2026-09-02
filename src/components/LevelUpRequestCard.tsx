@@ -1,11 +1,12 @@
-// 레벨업 신청 카드 — 서버 집계(get_level_cycle_progress) 3·3·3 표시 + 신청(request_level_review).
-// 회원이 출석 3회·3일·훈련 180분을 채우면 코치/관장에게 레벨업 심사를 신청한다.
-// 코치 승인은 CoachLevelReviewInbox → approve_level_review 로 실제 레벨을 올린다.
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+// 레벨 진행 카드 — 출석 기반 자동 승급 (2026-09-02 개편).
+//
+// 얼굴 인식 출석이 레벨당 3회 쌓이면:
+//   · 1~9레벨  → 자동 승급 (+50XP, 💎+10). 회원이 누를 버튼이 없다.
+//   · 10레벨   → 코치 승인함에 자동 신청 (승급은 코치의 approve_level_review 만 가능)
+// 이 카드는 그 진행을 보여주기만 한다. 신청 버튼은 폐지됐다.
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface Cycle {
@@ -32,21 +33,21 @@ const Bar = ({ label, cur, req, unit }: { label: string; cur: number; req: numbe
 };
 
 const LevelUpRequestCard = () => {
-  const { user } = useAuth();
+  const { user, progress } = useAuth();
   const navigate = useNavigate();
-  const qc = useQueryClient();
 
   const { data: cycle } = useQuery({
     queryKey: ["level-cycle", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase.rpc as any)("get_level_cycle_progress", {});
       if (error) throw error;
       return data as Cycle;
     },
   });
 
-  // 현재 레벨 심사 상태 (pending 이면 이미 신청됨)
+  // 현재 레벨 심사 상태 — 10레벨 자동 신청(pending)·보완 요청 표시용
   const { data: statusNow } = useQuery({
     queryKey: ["my-level-status", user?.id],
     enabled: !!user?.id,
@@ -58,6 +59,7 @@ const LevelUpRequestCard = () => {
         .maybeSingle();
       if (!mp) return null;
       const m = mp as { current_rank: string; current_level: number };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any)
         .from("level_status")
         .select("status")
@@ -69,54 +71,37 @@ const LevelUpRequestCard = () => {
     },
   });
 
-  const req = useMutation({
-    mutationFn: async () => {
-      const { error } = await (supabase.rpc as any)("request_level_review", {});
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("레벨업 신청 완료 — 코치님 승인을 기다려주세요!");
-      qc.invalidateQueries({ queryKey: ["my-level-status"] });
-      qc.invalidateQueries({ queryKey: ["level-cycle"] });
-    },
-    onError: (e: any) => toast.error(e?.message || "신청 실패"),
-  });
-
   if (!cycle) return null;
   const isPending = statusNow === "pending";
   const isRevision = statusNow === "revision_requested";
+  const isBossLevel = (progress?.current_level ?? 1) === 10;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-      <p className="mb-1 text-sm font-black text-foreground">레벨업 조건</p>
+      <p className="mb-1 text-sm font-black text-foreground">레벨업까지</p>
       <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
-        출석 3회 · 서로 다른 3일 · 훈련 180분을 채우면 코치님께 레벨업을 신청할 수 있어요. 코치님이 자세를 확인하고 승인하면 레벨이 오릅니다.
+        {isBossLevel
+          ? "보스 레벨! 출석 3회를 채우면 자동으로 승급 심사에 올라가고, 코치님이 승인하면 다음 리그로 갑니다."
+          : "입구에서 얼굴 인식하면 출석이 자동으로 쌓여요. 출석 3회마다 자동으로 다음 레벨! (10레벨은 코치님 승인)"}
       </p>
-      <div className="space-y-2.5">
-        <Bar label="출석" cur={cycle.sessions} req={cycle.reqSessions} unit="회" />
-        <Bar label="출석일" cur={cycle.days} req={cycle.reqDays} unit="일" />
-        <Bar label="훈련시간" cur={cycle.minutes} req={cycle.reqMinutes} unit="분" />
-      </div>
+      <Bar label="이번 레벨 출석" cur={cycle.sessions} req={cycle.reqSessions} unit="회" />
 
       {isRevision && (
         <p className="mt-3 rounded-lg bg-status-pending/10 px-3 py-2 text-[11px] font-semibold text-status-pending">
-          ✏️ 코치님이 보완을 요청했어요. 부족한 부분을 더 연습한 뒤 다시 신청해 주세요.
+          ✏️ 코치님이 보완을 요청했어요. 더 연습하고 출석하면 자동으로 다시 심사에 올라갑니다.
         </p>
       )}
 
       {isPending ? (
         <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-status-pending/10 py-3 text-sm font-bold text-status-pending">
-          ⏳ 심사 대기중 — 코치님 승인을 기다리는 중
+          ⏳ 승급 심사 대기중 — 코치님 승인만 남았어요
         </div>
-      ) : (
-        <button
-          onClick={() => req.mutate()}
-          disabled={!cycle.meets || req.isPending}
-          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-40"
-        >
-          <Check className="h-4 w-4" /> {cycle.meets ? "레벨업 신청하기" : "조건을 더 채워주세요"}
-        </button>
-      )}
+      ) : cycle.meets ? (
+        <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary/10 py-3 text-sm font-bold text-primary">
+          🥊 출석 3회 달성 — 자동으로 처리 중이에요!
+        </div>
+      ) : null}
+
       <button onClick={() => navigate("/routines")} className="mt-2 w-full text-center text-[11px] font-semibold text-primary active:opacity-70">
         추천 수업 루틴 보기 →
       </button>

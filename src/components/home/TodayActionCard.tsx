@@ -2,7 +2,7 @@
  * 마이복서153 — 홈 화면 우선순위 액션 카드.
  *
  * 사용자 상태에 따라 자동으로 변형:
- *   1. 미체크인        → QR 체크인 하기 (+XP)
+ *   1. 미체크인        → 얼굴 인식 자동 출석 안내
  *   2. 체크인 + 미시작  → 오늘의 미션 시작
  *   3. 활동 세션 진행중  → 운동 중 N분째 (탭하면 challenge UI 열림)
  *   4. 활동 종료, 미션 미완료 → 오늘 활동 평가 (혹은 다음 행동)
@@ -15,7 +15,7 @@
  */
 
 import { motion } from "framer-motion";
-import { QrCode, Zap, Clock, Trophy, Sparkles, ChevronRight } from "lucide-react";
+import { ScanFace, Zap, Clock, Trophy, Sparkles, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
 export type TodayActionState =
@@ -57,14 +57,14 @@ const TodayActionCard = ({
     switch (state) {
       case "qr_checkin":
         return {
-          icon: <QrCode className="h-7 w-7" />,
+          icon: <ScanFace className="h-7 w-7" />,
           iconBg: "bg-primary/15",
           iconColor: "text-primary",
           badge: "오늘의 시작",
           badgeColor: "bg-primary/20 text-primary",
-          title: "QR 체크인 하기",
-          subtitle: "출석 + 오늘 도전이 한 번에 시작돼요",
-          cta: "+10 XP",
+          title: "입구에서 얼굴 인식하면 출석 완료",
+          subtitle: "출석은 자동으로 쌓여요 — 3회마다 레벨업!",
+          cta: "자동 출석",
           ctaBg: "bg-gradient-to-r from-primary to-primary/80",
           glow: "rgba(246, 196, 83, 0.35)",
         };

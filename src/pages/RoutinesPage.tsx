@@ -1,5 +1,5 @@
 // 회원 수업 루틴 — 코치가 만든 4단계 루틴을 열람하고, '수업 완료'를 기록하면
-// 출석·훈련시간(3·3·3)이 쌓인다. 서로 다른 3일 채우면 레벨업을 신청할 수 있다(심사 탭).
+// 얼굴 인식 출석이 레벨당 3회 쌓이면 자동 승급된다 (10레벨은 코치 승인). 2026-09-02 개편.
 // 연결: 훈련 라이브러리 → (코치)루틴 빌더 → (회원)수업 실행·기록 → 3·3·3 → 레벨업.
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -78,17 +78,15 @@ const RoutinesPage = () => {
           <div className="mb-2 flex items-center gap-1.5">
             <TrendingUp className="h-4 w-4 text-primary" />
             <span className="text-xs font-bold text-foreground">레벨업까지</span>
-            <span className="text-[10px] text-muted-foreground">수업을 하고 기록하면 채워져요</span>
+            <span className="text-[10px] text-muted-foreground">출석 3회마다 자동 승급</span>
           </div>
           <div className="flex gap-2">
             <CycleBar label="출석" cur={cycle.sessions} req={cycle.reqSessions} unit="회" />
-            <CycleBar label="출석일" cur={cycle.days} req={cycle.reqDays} unit="일" />
-            <CycleBar label="훈련" cur={cycle.minutes} req={cycle.reqMinutes} unit="분" />
           </div>
           {cycle.meets && (
-            <button onClick={() => navigate("/missions")} className="mt-2 w-full rounded-lg bg-primary py-2 text-xs font-bold text-primary-foreground active:scale-95">
-              조건 충족! 레벨업 신청하러 가기 →
-            </button>
+            <p className="mt-2 w-full rounded-lg bg-primary/10 py-2 text-center text-xs font-bold text-primary">
+              출석을 다 채웠어요 — 자동으로 처리 중!
+            </p>
           )}
         </div>
       )}
@@ -157,7 +155,7 @@ const RoutinesPage = () => {
             >
               <CheckCircle2 className="h-4 w-4" /> 이 수업 완료로 기록
             </button>
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">기록하면 출석·훈련시간이 쌓여요. 서로 다른 3일 동안 하면 레벨업을 신청할 수 있어요.</p>
+            <p className="mt-2 text-center text-[11px] text-muted-foreground">출석은 입구 얼굴 인식으로 자동으로 쌓여요. 레벨당 3회면 자동 승급!</p>
           </div>
         </div>
       )}

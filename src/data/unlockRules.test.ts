@@ -348,7 +348,7 @@ describe("tutorial helpers", () => {
     expect(byKey.profile_photo.label).toBe("1단계 — 프로필 사진 설정");
     expect(byKey.discover_app.label).toBe("2단계 — 마이복서153 알아보기");
     expect(byKey.first_mission.label).toBe("3단계 — 훈련 미션 둘러보기");
-    expect(byKey.first_checkin.label).toBe("4단계 — QR 출석체크 연습하기");
+    expect(byKey.first_checkin.label).toBe("4단계 — 자동 출석 알아보기");
     expect(byKey.first_challenge.label).toBe("5단계 — 더 다이어터 챌린지 둘러보기");
   });
 });
