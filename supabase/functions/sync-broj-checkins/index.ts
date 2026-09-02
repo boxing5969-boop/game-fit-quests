@@ -129,19 +129,65 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 4-2) 직원 출근이 잡힌 계정은 profiles.is_staff 를 켠다 — 라이브보드가 코치를
-    //      회원 목록과 분리해 보여주는 근거. 실패해도 출석 기록은 계속 진행한다.
+    // 4-2) 직원(코치) 출근 처리 — 라이브보드 COACHING STAFF 띠의 유일한 근거.
+    //
+    //   회원 매칭(전화번호) 성공 여부와 무관하게 저장한다. 코치가 앱에 가입하지
+    //   않았거나 브로제이와 번호가 다른 경우가 실제로 있어서(2026-09 이재우 코치),
+    //   앱 계정에 의존하면 보드에서 통째로 사라진다.
+    //
+    //   퇴근 기록은 브로제이에 없다(GO_TO_WORK 만 존재) → "언제까지 근무중으로
+    //   볼지" 판정은 public_staff_on_duty 뷰가 한다. 여기서는 사실만 적는다.
+    //
+    //   todo 가 아니라 rows 전체를 쓴다 — 이미 출석이 기록된 코치도 근무 기록은
+    //   남아야 하고, source_ref 유니크라 재실행해도 중복되지 않는다.
+    let staffIds = new Set<string>();
     try {
-      const staffUserIds = [...new Set(
-        todo.filter((r) => r.user_type === "직원")
-          .map((r) => profMap.get(onlyDigits(r.phone))?.user_id)
-          .filter((v): v is string => !!v),
-      )];
-      if (staffUserIds.length > 0) {
-        await app.from("profiles").update({ is_staff: true })
-          .in("user_id", staffUserIds).eq("is_staff", false);
+      const staffRows = rows.filter((r) => r.user_type === "직원");
+      if (staffRows.length > 0) {
+        const staffPhones = [...new Set(
+          staffRows.map((r) => onlyDigits(r.phone)).filter((p) => p.length >= 10),
+        )];
+        const staffProf = new Map<string, string>(); // 전화번호 → user_id
+        for (let i = 0; i < staffPhones.length; i += 300) {
+          const { data } = await app
+            .from("profiles").select("user_id, phone_number")
+            .in("phone_number", staffPhones.slice(i, i + 300));
+          for (const pr of (data || []) as { user_id: string; phone_number: string }[]) {
+            staffProf.set(onlyDigits(pr.phone_number), pr.user_id);
+          }
+        }
+
+        const dutyRows = staffRows
+          .map((r) => {
+            const branch = branchOf(r);
+            const phone = onlyDigits(r.phone);
+            if (!branch || !phone) return null;
+            return {
+              source_ref: `broj:${r.broj_attendance_id}`,
+              branch_name: branch,
+              phone_digits: phone,
+              staff_name: (r.member_name ?? "").trim() || "코치",
+              user_id: staffProf.get(phone) ?? null,
+              checked_in_at: r.attended_at,
+              attend_date: r.attend_date,
+            };
+          })
+          .filter((v): v is NonNullable<typeof v> => v !== null);
+
+        for (let i = 0; i < dutyRows.length; i += 300) {
+          await app.from("staff_duty_logs")
+            .upsert(dutyRows.slice(i, i + 300), { onConflict: "source_ref", ignoreDuplicates: true });
+        }
+
+        // 앱 계정이 있는 직원은 is_staff 를 켠다 — 회원 목록에서 빼는 근거.
+        const staffUserIds = [...new Set([...staffProf.values()])];
+        if (staffUserIds.length > 0) {
+          await app.from("profiles").update({ is_staff: true })
+            .in("user_id", staffUserIds).eq("is_staff", false);
+        }
+        staffIds = new Set(staffUserIds);
       }
-    } catch (_e) { /* 직원 표시는 부가 기능 — 출석 동기화를 막지 않는다 */ }
+    } catch (_e) { /* 코치 표시는 부가 기능 — 출석 동기화를 막지 않는다 */ }
 
     const userIds = [...new Set([...profMap.values()].map((p) => p.user_id))];
     if (userIds.length === 0) {
@@ -229,9 +275,10 @@ Deno.serve(async (req) => {
     // 9) 새 출석이 기록된 회원마다 자동 승급 검사.
     //    1~9레벨은 출석 3회 자동 승급, 10레벨은 코치 승인함으로 자동 신청 (DB 함수가 판정).
     //    개별 실패는 삼킨다 — 다음 출석 동기화 때 같은 검사가 다시 돈다.
+    //    코치·지점장은 제외한다 — 출근 도장이 회원 레벨 승급으로 이어지면 안 된다.
     const advanceTargets = [...new Set(
       inserts.filter((r) => r.is_duplicate === false).map((r) => String(r.user_id)),
-    )];
+    )].filter((uid) => !staffIds.has(uid));
     for (const uid of advanceTargets) {
       try {
         await app.rpc("auto_advance_from_attendance", { _user_id: uid });

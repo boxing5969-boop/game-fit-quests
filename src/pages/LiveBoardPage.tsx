@@ -61,24 +61,28 @@ interface DailyVisit {
   last_checkin_at: string;
 }
 
-/** 오늘 출근한 코치·직원 — 회원 목록과 분리해 헤더 코치 줄에 표시 */
-interface StaffVisit {
-  user_id: string;
-  display_name: string;
-  last_checkin_at: string;
-}
-
-/** COACHING STAFF 띠에 항상 서 있는 지점 코치 명단 (출근 여부와 무관) */
-interface CoachEntry {
-  user_id: string;
+/**
+ * 지금 근무중인 코치 — 판정은 DB(public_staff_on_duty 뷰)가 한다.
+ *
+ * 브로제이는 출근만 기록하고 퇴근은 남기지 않는다(GO_TO_WORK 만 존재). 그래서
+ * "언제까지 근무중인가" 는 시간으로 판단할 수밖에 없다 — 대표님 결정:
+ *   · 지점장/관장/대표 : 오늘 출근했으면 하루 종일
+ *   · 그 외 코치        : 출근 후 4시간
+ *
+ * 근거가 앱 계정이 아니라 브로제이 직원 출근이라, 앱에 가입하지 않은 코치도
+ * 그대로 걸린다 — 대신 user_id 는 없을 수 있다.
+ */
+interface OnDutyCoach {
+  user_id: string | null;
   name: string;
   title: string;
   avatar_url: string | null;
+  checked_in_at: string;
 }
 
 /** 직함 정렬 — 관장이 앞, 그다음 수석, 나머지는 코치 */
 const COACH_TITLE_ORDER: Record<string, number> = {
-  "대표": 0, "관장": 0, "수석코치": 1, "헤드코치": 1,
+  "대표": 0, "관장": 0, "지점장": 0, "수석코치": 1, "헤드코치": 1,
 };
 const coachOrder = (title: string): number => COACH_TITLE_ORDER[title] ?? 2;
 
@@ -150,10 +154,12 @@ const LiveBoardPage = () => {
   const only2 = screen === "2";
   const [branchName, setBranchName] = useState("");
   const [dailyVisits, setDailyVisits] = useState<DailyVisit[]>([]);
-  const [staffToday, setStaffToday] = useState<StaffVisit[]>([]);
+  const [onDutyStaff, setOnDutyStaff] = useState<OnDutyCoach[]>([]);
   // user_id → 직원 여부 캐시. Realtime 이벤트마다 다시 조회하지 않는다.
   const staffFlagRef = useRef<Map<string, boolean>>(new Map());
-  const [coachRoster, setCoachRoster] = useState<CoachEntry[]>([]);
+  /** is_staff 계정 id — 회원 목록에서 빼는 용도. 근무중 여부와는 별개다
+   *  (4시간이 지나 띠에서 내려간 코치도 회원 그리드에 나타나면 안 된다). */
+  const [staffUserIds, setStaffUserIds] = useState<Set<string>>(new Set());
   const [activeMembers, setActiveMembers] = useState<ActiveMember[]>([]);
   const [hallMembers, setHallMembers] = useState<HallMember[]>([]);
   const [latestPopup, setLatestPopup] = useState<CheckinEvent | null>(null);
@@ -212,12 +218,10 @@ const LiveBoardPage = () => {
   );
 
   /** 앱 운동세션 + 얼굴 출석 + mock 을 합쳐 시각효과에 전달 */
-  const staffIdSet = useMemo(() => new Set(staffToday.map((v) => v.user_id)), [staffToday]);
-
   const combinedMembers = useMemo<ActiveMember[]>(
     () => [...activeMembers, ...checkinMembers, ...mockMembers]
-      .filter((m) => !staffIdSet.has(m.user_id)),
-    [activeMembers, checkinMembers, mockMembers, staffIdSet],
+      .filter((m) => !staffUserIds.has(m.user_id)),
+    [activeMembers, checkinMembers, mockMembers, staffUserIds],
   );
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
   const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
@@ -440,28 +444,23 @@ const LiveBoardPage = () => {
     setActiveMembers(members);
   }, [branchName]);
 
-  /** 지점 코치 명단 — COACHING STAFF 띠는 출근 여부와 무관하게 항상 서 있는다. */
-  const loadCoachRoster = useCallback(async () => {
+  /**
+   * 지금 근무중인 코치 — 필터·시간 판정은 전부 DB 뷰가 끝내고 내려준다.
+   * 여기서는 직함 순서로 정렬만 한다(지점장·관장이 앞).
+   */
+  const loadOnDutyStaff = useCallback(async () => {
     if (!branchName) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any)
-      .from("public_profiles")
-      .select("user_id, nickname, avatar_url, staff_name, staff_title")
-      .eq("branch_name", branchName)
-      .eq("is_staff", true);
-    const rows = (data || []) as {
-      user_id: string; nickname: string | null; avatar_url: string | null;
-      staff_name: string | null; staff_title: string | null;
-    }[];
-    const roster: CoachEntry[] = rows
-      .map((r) => ({
-        user_id: r.user_id,
-        name: (r.staff_name || r.nickname || "코치").trim(),
-        title: (r.staff_title || "코치").trim(),
-        avatar_url: r.avatar_url,
-      }))
-      .sort((a, b) => coachOrder(a.title) - coachOrder(b.title) || a.name.localeCompare(b.name, "ko"));
-    setCoachRoster(roster);
+      .from("public_staff_on_duty")
+      .select("user_id, name, title, avatar_url, checked_in_at")
+      .eq("branch_name", branchName);
+    const rows = (data || []) as OnDutyCoach[];
+    setOnDutyStaff(
+      [...rows].sort(
+        (a, b) => coachOrder(a.title) - coachOrder(b.title) || a.name.localeCompare(b.name, "ko"),
+      ),
+    );
   }, [branchName]);
 
   /** public_profiles.is_staff — 캐시 우선, 처음 보는 계정만 1회 조회 */
@@ -519,10 +518,8 @@ const LiveBoardPage = () => {
       }
       const memberVisits = visits.filter((v) => flags.get(v.user_id) !== true);
       setDailyVisits(memberVisits);
-      setStaffToday(
-        visits
-          .filter((v) => flags.get(v.user_id) === true)
-          .map((v) => ({ user_id: v.user_id, display_name: v.display_name, last_checkin_at: v.last_checkin_at })),
+      setStaffUserIds(
+        new Set(visits.filter((v) => flags.get(v.user_id) === true).map((v) => v.user_id)),
       );
 
       // Prefetch avatars + 알려진 레벨 시드 (Realtime 비교용)
@@ -534,7 +531,7 @@ const LiveBoardPage = () => {
       }
     } else {
       setDailyVisits([]);
-      setStaffToday([]);
+      setStaffUserIds(new Set());
     }
   }, [branchName, getAvatarUrl]);
 
@@ -550,7 +547,14 @@ const LiveBoardPage = () => {
     }
   }, [branchName]);
 
-  useEffect(() => { loadToday(); loadHall(); loadActivitySessions(); loadCoachRoster(); }, [loadToday, loadHall, loadActivitySessions, loadCoachRoster]);
+  useEffect(() => { loadToday(); loadHall(); loadActivitySessions(); loadOnDutyStaff(); }, [loadToday, loadHall, loadActivitySessions, loadOnDutyStaff]);
+
+  // 근무중 판정은 시간이 지나면 바뀐다(코치 4시간). TV 는 새로고침되지 않으니
+  // 1분마다 다시 물어본다 — 앱 계정 없는 코치의 첫 등장도 이 주기로 잡힌다.
+  useEffect(() => {
+    const t = setInterval(() => { void loadOnDutyStaff(); }, 60_000);
+    return () => clearInterval(t);
+  }, [loadOnDutyStaff]);
 
   const triggerPopup = useCallback(async (event: CheckinEvent) => {
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
@@ -658,16 +662,11 @@ const LiveBoardPage = () => {
           if (!Number.isFinite(t) || t < kstDayStart) return;
           const event: CheckinEvent = { id: n.id, display_name_snapshot: n.display_name_snapshot, league_snapshot: n.league_snapshot, level_snapshot: n.level_snapshot, checked_in_at: n.checked_in_at, user_id: n.user_id };
           void (async () => {
-            // 코치·직원 출근은 회원 명단·환영 팝업에 넣지 않고 헤더 코치 줄로 보낸다.
+            // 코치·직원 출근은 회원 명단·환영 팝업에 넣지 않는다.
+            // 코치 띠는 DB 판정만 따르므로 여기서는 다시 불러오기만 한다.
             if (await isStaffUser(n.user_id)) {
-              setStaffToday(prev => {
-                const exists = prev.find(v => v.user_id === n.user_id);
-                if (exists) {
-                  if (new Date(exists.last_checkin_at).getTime() >= t) return prev;
-                  return prev.map(v => v.user_id === n.user_id ? { ...v, last_checkin_at: n.checked_in_at, display_name: n.display_name_snapshot } : v);
-                }
-                return [...prev, { user_id: n.user_id, display_name: n.display_name_snapshot, last_checkin_at: n.checked_in_at }];
-              });
+              setStaffUserIds(prev => (prev.has(n.user_id) ? prev : new Set(prev).add(n.user_id)));
+              void loadOnDutyStaff();
               return;
             }
             getAvatarUrl(n.user_id);
@@ -712,7 +711,7 @@ const LiveBoardPage = () => {
         })
       .subscribe((status) => setConnected(status === "SUBSCRIBED"));
     return () => { supabase.removeChannel(channel); };
-  }, [branchName, triggerPopup, loadActivitySessions, getAvatarUrl, triggerLevelUp]);
+  }, [branchName, triggerPopup, loadActivitySessions, getAvatarUrl, triggerLevelUp, loadOnDutyStaff, isStaffUser]);
 
   // Reconnect fallback
   useEffect(() => {
@@ -808,15 +807,10 @@ const LiveBoardPage = () => {
           <div className="flex flex-col justify-center gap-1">
             <h1 className="text-4xl font-black leading-none tracking-tight text-white">마이복서153</h1>
             <p className="text-xl font-bold leading-none text-white/50">{branchName || "지점"}</p>
-            {only1 && staffToday.length > 0 && (
+            {only1 && onDutyStaff.length > 0 && (
               <p className="flex items-center gap-2 text-base font-bold leading-none text-white/60">
                 <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-                {staffToday
-                  .map((v) => {
-                    const entry = coachRoster.find((c) => c.user_id === v.user_id);
-                    return `${entry?.name ?? v.display_name} ${honorTitle(entry?.title ?? "코치")}`;
-                  })
-                  .join(" · ")}
+                {onDutyStaff.map((c) => `${c.name} ${honorTitle(c.title)}`).join(" · ")}
               </p>
             )}
           </div>
@@ -1029,9 +1023,9 @@ const LiveBoardPage = () => {
           )}
 
           {/* ── Bottom: COACHING STAFF 띠 ── */}
-          {/* 명예의 전당과 같은 격으로 코치진을 세운다 — 활동 중(오늘 출근)인 코치만 이름이 걸리고,
+          {/* 명예의 전당과 같은 격으로 코치진을 세운다 — 지금 근무중인 코치만 이름이 걸리고,
               아무도 없으면 띠 자체를 접는다. 이름 뒤 직함(지점장님·코치님)이 예우다. */}
-          {!only1 && staffToday.length > 0 && (
+          {!only1 && onDutyStaff.length > 0 && (
             <div className="mx-4 mb-2 flex-shrink-0 rounded-xl border border-yellow-600/40 bg-gradient-to-r from-yellow-950/60 via-gray-900/80 to-yellow-950/60 px-4 py-2.5">
               <div className="flex items-center gap-3">
                 <div className="flex flex-shrink-0 items-center gap-1.5">
@@ -1041,24 +1035,9 @@ const LiveBoardPage = () => {
                   </h2>
                 </div>
                 <div className="flex flex-1 items-center gap-2 overflow-x-auto">
-                  {(() => {
-                    // 오늘 출근(활동 중)한 코치만 — 명단 정보(직함·아바타)가 있으면 붙이고,
-                    // 명단에 아직 없는 신규 코치도 이름만으로 바로 걸린다.
-                    const byId = new Map(coachRoster.map((c) => [c.user_id, c] as const));
-                    const onDuty: CoachEntry[] = staffToday
-                      .map((v) => {
-                        const c = byId.get(v.user_id);
-                        return {
-                          user_id: v.user_id,
-                          name: c?.name ?? v.display_name,
-                          title: c?.title ?? "코치",
-                          avatar_url: c?.avatar_url ?? null,
-                        };
-                      })
-                      .sort((a, b) => coachOrder(a.title) - coachOrder(b.title) || a.name.localeCompare(b.name, "ko"));
-                    return onDuty.map((c) => (
+                  {onDutyStaff.map((c) => (
                       <div
-                        key={c.user_id}
+                        key={c.user_id ?? `${c.name}-${c.checked_in_at}`}
                         className="flex flex-shrink-0 items-center gap-2 rounded-lg border border-yellow-700/30 bg-yellow-900/20 px-2.5 py-1"
                       >
                         <MemberAvatar url={c.avatar_url} name={c.name} sizeClass="h-7 w-7" />
@@ -1071,8 +1050,7 @@ const LiveBoardPage = () => {
                           </p>
                         </div>
                       </div>
-                    ));
-                  })()}
+                  ))}
                 </div>
               </div>
             </div>
