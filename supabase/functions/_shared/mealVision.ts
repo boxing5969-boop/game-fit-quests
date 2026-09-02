@@ -57,6 +57,10 @@ const VISION_PROVIDERS: VisionProvider[] = [
   },
 ];
 
+// chat-assistant 와 동일한 이유로 키를 위생 처리한다 (헤더 ByteString 오류 방지).
+const cleanKey = (raw: string | undefined | null): string =>
+  (raw ?? "").replace(/[^\x21-\x7E]/g, "");
+
 const SLOT_LABEL: Record<string, string> = {
   breakfast: "아침",
   lunch: "점심",
@@ -217,6 +221,9 @@ async function callProvider(
     model,
     temperature: 0.2,
     max_tokens: 700,
+    // qwen 계열은 추론 모델 — <think> 블록이 섞이면 JSON 파싱이 깨진다.
+    // groq 외 provider 가 모르는 파라미터면 400 → 아래 재시도 로직이 처리한다.
+    ...(provider.name === "groq" ? { reasoning_effort: "none", reasoning_format: "hidden" } : {}),
     messages: [
       { role: "system", content: VISION_PROMPT },
       {
@@ -258,7 +265,7 @@ export async function analyzeMealImage(input: {
   let lastError: string | null = null;
 
   for (const provider of VISION_PROVIDERS) {
-    const apiKey = Deno.env.get(provider.keyEnv);
+    const apiKey = cleanKey(Deno.env.get(provider.keyEnv));
     if (!apiKey) continue;
     tried.push(provider.name);
 
@@ -277,7 +284,8 @@ export async function analyzeMealImage(input: {
           lastError = `${provider.name} ${res.status}: ${errText}`;
           // json 모드를 안 받아주는 모델이면 한 번 더, 그 외에는 다음 provider 로.
           const jsonModeRejected =
-            res.status === 400 && /response_format|json/i.test(errText);
+            res.status === 400 &&
+            /response_format|json|reasoning/i.test(errText);
           if (useJsonMode && jsonModeRejected) continue;
           break;
         }

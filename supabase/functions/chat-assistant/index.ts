@@ -24,6 +24,7 @@ const corsHeaders = {
 // Supabase 시크릿 등록 방법:
 //   Dashboard → Edge Functions → chat-assistant → Secrets → 아래 이름으로 추가
 //     GROQ_API_KEY        (필수, 1차)
+//     GROQ_CHAT_MODEL     (선택 — 채팅 모델 교체용. 기본값은 아래 PROVIDERS 참고)
 //     CEREBRAS_API_KEY    (선택, 2차 폴백)
 //     SAMBANOVA_API_KEY   (선택, 3차 폴백 — cloud.sambanova.ai)
 //     DEEPSEEK_API_KEY    (선택, 4차 폴백 — platform.deepseek.com, 크레딧 필요할 수 있음)
@@ -33,6 +34,10 @@ type Provider = {
   keyEnv: string;
   url: string;
   model: string;
+  /** 모델명을 시크릿으로 덮어쓰고 싶을 때 (재배포 없이 교체). */
+  modelEnv?: string;
+  /** provider 전용 추가 파라미터. 400 이 나면 이것만 빼고 1회 재시도한다. */
+  extraBody?: Record<string, unknown>;
 };
 
 const PROVIDERS: Provider[] = [
@@ -40,11 +45,15 @@ const PROVIDERS: Provider[] = [
     name: "groq",
     keyEnv: "GROQ_API_KEY",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    // llama-3.1-8b-instant — 한국어 품질 안정. (gemma2-9b-it 는 TPM 여유는 컸지만
-    // 한국어 출력에 중국어/영어 혼입·임의 단어 생성·부적절 표현 발생.)
-    // 시스템 프롬프트 3500자 + history slice(-2) + max_tokens 500 으로 토큰 합산 ~2650
-    // → llama-3.1-8b-instant TPM 6K 한도 안에 풍부히 들어감.
-    model: "llama-3.1-8b-instant",
+    // qwen3.6-27b — groq 가 2026-08-16 에 llama-3.1-8b-instant 를 은퇴시켜 교체.
+    // (공식 대체안: openai/gpt-oss-20b 또는 qwen/qwen3.6-27b. 한국어 품질이 나은
+    //  qwen 선택 — 식단 사진 분석과 같은 모델이라 관리도 단순하다.)
+    // 또 단종되면 GROQ_CHAT_MODEL 시크릿만 바꾸면 된다 (재배포 불필요).
+    model: "qwen/qwen3.6-27b",
+    modelEnv: "GROQ_CHAT_MODEL",
+    // qwen 은 추론 모델이라 기본값이면 <think> 블록이 그대로 스트리밍돼
+    // 회원 화면에 노출된다. 코치 답변은 추론이 필요 없으니 아예 끈다.
+    extraBody: { reasoning_effort: "none", reasoning_format: "hidden" },
   },
   {
     name: "cerebras",
@@ -65,6 +74,20 @@ const PROVIDERS: Provider[] = [
     model: "deepseek-chat",
   },
 ];
+// 시크릿 위생 처리 — 대시보드에 API 키를 붙여넣을 때 섞여 들어오는 비ASCII
+// 문자(한글·스마트따옴표·보이지 않는 문자)가 fetch 헤더에서
+// "not a valid ByteString" 500 오류를 일으킨다 (2026-09-02 실제 발생).
+// API 키는 전부 인쇄 가능한 ASCII 라 그 외 문자는 제거해도 안전하다.
+const cleanKey = (raw: string | undefined | null, name = "secret"): string => {
+  const s = raw ?? "";
+  const cleaned = s.replace(/[^\x21-\x7E]/g, "");
+  if (cleaned !== s) {
+    console.warn(
+      `[chat-assistant] ${name}: ${s.length - cleaned.length} invalid char(s) stripped — 대시보드에서 이 시크릿을 깨끗하게 다시 저장하세요`,
+    );
+  }
+  return cleaned;
+};
 // 종합 코어 프롬프트 — CS 톤 + 앱 전체 기능 + 안전 규칙. 약 3500자.
 // 토큰 예산: 시스템 ~1750 + 히스토리 2개 ~400 + 출력 200 = 약 2350 → TPM 6K 안전.
 const SYSTEM_PROMPT = `너는 랭킹업(RANKING-UP) 앱의 AI 코치 "오삼"이야. 153복싱짐 회원의 복싱 훈련과 21일 다이어트를 같이 코칭해.
@@ -349,7 +372,7 @@ serve(async (req) => {
     const { messages } = body;
 
     // 활성화된 provider 만 걸러낸다. 최소 1개는 있어야 함.
-    const activeProviders = PROVIDERS.filter((p) => !!Deno.env.get(p.keyEnv));
+    const activeProviders = PROVIDERS.filter((p) => cleanKey(Deno.env.get(p.keyEnv), p.keyEnv) !== "");
     if (activeProviders.length === 0) {
       throw new Error(
         "No AI provider API key configured (GROQ_API_KEY / CEREBRAS_API_KEY / SAMBANOVA_API_KEY / DEEPSEEK_API_KEY)",
@@ -544,39 +567,38 @@ serve(async (req) => {
     let usedProvider = "";
     for (let i = 0; i < activeProviders.length; i++) {
       const p = activeProviders[i];
-      const key = Deno.env.get(p.keyEnv)!;
-      usedProvider = p.name;
-      response = await fetch(p.url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${key}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: p.model,
-          messages: fullMessages,
-          stream: true,
-          max_tokens: 500,
-        }),
-      });
-      if (response.ok) break;
-
-      // 413 시 동일 provider 에서 초경량 페이로드로 즉시 재시도 — 컨텍스트 누적이 원인일 때 효과.
-      if (response.status === 413 && minimalMessages !== fullMessages) {
-        console.warn(`[chat-assistant] ${p.name} 413 — retry with minimal payload (last user only)`);
-        response = await fetch(p.url, {
+      const key = cleanKey(Deno.env.get(p.keyEnv), p.keyEnv);
+      const model = (p.modelEnv ? Deno.env.get(p.modelEnv) : undefined)?.trim() || p.model;
+      const call = (msgs: unknown, withExtra: boolean) =>
+        fetch(p.url, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${key}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: p.model,
-            messages: minimalMessages,
+            model,
+            messages: msgs,
             stream: true,
             max_tokens: 500,
+            ...(withExtra ? (p.extraBody ?? {}) : {}),
           }),
         });
+      usedProvider = p.name;
+      response = await call(fullMessages, true);
+      if (response.ok) break;
+
+      // extraBody(추론 끄기 등)를 provider 가 모르면 400 이 온다 → 그것만 빼고 1회 재시도.
+      if (response.status === 400 && p.extraBody) {
+        console.warn(`[chat-assistant] ${p.name} 400 — retry without extra params`);
+        response = await call(fullMessages, false);
+        if (response.ok) break;
+      }
+
+      // 413 시 동일 provider 에서 초경량 페이로드로 즉시 재시도 — 컨텍스트 누적이 원인일 때 효과.
+      if (response.status === 413 && minimalMessages !== fullMessages) {
+        console.warn(`[chat-assistant] ${p.name} 413 — retry with minimal payload (last user only)`);
+        response = await call(minimalMessages, true);
         if (response.ok) break;
       }
       // 폴백 조건 확대 — 다른 provider 로 시도해도 같은 결과가 나올 가능성이 낮은 코드 모두.

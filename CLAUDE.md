@@ -55,7 +55,7 @@ talktalk 변경은 별도 commit 으로 처리하고 prefix 는 `chore(talktalk)
 |---|---|
 | [src/components/ChatAssistant.tsx](src/components/ChatAssistant.tsx) | 🥊 플로팅 버튼 UI + 스트리밍 렌더 |
 | `{SUPABASE_URL}/functions/v1/chat-assistant` | 요청 엔드포인트 |
-| [supabase/functions/chat-assistant/index.ts](supabase/functions/chat-assistant/index.ts) | Deno Edge Function. Groq `llama-3.1-8b-instant` 스트리밍 |
+| [supabase/functions/chat-assistant/index.ts](supabase/functions/chat-assistant/index.ts) | Deno Edge Function. Groq `qwen/qwen3.6-27b` 스트리밍 (추론 끔). `action:"meal-vision"` 으로 식단 사진 칼로리 분기 |
 | [supabase/functions/_shared/systemPrompt153.ts](supabase/functions/_shared/systemPrompt153.ts) | 153 시스템 프롬프트 |
 | [supabase/functions/_shared/knowledge153.ts](supabase/functions/_shared/knowledge153.ts) | 153 공식 지식 문서 |
 
