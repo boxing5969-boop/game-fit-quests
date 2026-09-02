@@ -6,7 +6,7 @@
  * 요소:
  *   · 마이복서153 로고 + 잔잔한 호흡
  *   · "오늘 첫 라운드를 누가 시작할까요?" 타이포
- *   · 누적 통계 (오늘 방문 수 / 명예의 전당 수)
+ *   · 누적 통계 (명예의 전당 수 — 오늘 방문 수는 대표님 요청으로 제거)
  *   · 별 / 입자 잔잔한 떠다님 (배경)
  *   · 시그니처 색감: 153 브랜드 톤
  */
@@ -16,13 +16,11 @@ import logoWhite from "@/assets/branding/153-logo-white.png";
 
 export interface LiveBoardEmptyStateProps {
   branchName: string;
-  todayVisitCount: number;
   hallOfFameCount: number;
 }
 
 const LiveBoardEmptyState = ({
   branchName,
-  todayVisitCount,
   hallOfFameCount,
 }: LiveBoardEmptyStateProps) => {
   return (
@@ -95,24 +93,13 @@ const LiveBoardEmptyState = ({
         </motion.div>
 
         {/* 통계 카드 */}
-        {(todayVisitCount > 0 || hallOfFameCount > 0) && (
+        {hallOfFameCount > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
             className="mt-2 flex items-center gap-4"
           >
-            {todayVisitCount > 0 && (
-              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-6 py-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                  오늘 방문
-                </p>
-                <p className="number-font mt-0.5 text-3xl font-black text-emerald-300 tabular-nums">
-                  {todayVisitCount}
-                  <span className="ml-1 text-base text-emerald-500">명</span>
-                </p>
-              </div>
-            )}
             {hallOfFameCount > 0 && (
               <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-6 py-3">
                 <p className="text-xs font-bold uppercase tracking-wider text-yellow-400">

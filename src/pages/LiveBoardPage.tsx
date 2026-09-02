@@ -801,15 +801,11 @@ const LiveBoardPage = () => {
             </button>
           )}
           <div className="flex items-center gap-8">
-            {/* 강조색은 화면에 하나만 — 민트는 "지금 살아있다"는 뜻으로만 쓴다.
-                오늘 방문은 하루 동안 쌓이는 누적값이라 강조 대상이 아니다. */}
+            {/* 숫자는 "활동 중" 하나만 남긴다 — 오늘 방문 누적치는 대표님 요청으로 화면에서 뺐다.
+                (방문이 적은 시간대에 작게 보이는 숫자가 오히려 썰렁해 보인다) */}
             <div className="text-center">
               <p className="text-5xl font-black leading-none tabular-nums text-primary">{combinedMembers.length}</p>
               <p className="mt-1.5 text-base font-bold text-white/40">활동 중</p>
-            </div>
-            <div className="text-center">
-              <p className="text-5xl font-black leading-none tabular-nums text-white">{dailyVisits.length}</p>
-              <p className="mt-1.5 text-base font-bold text-white/40">오늘 방문</p>
             </div>
           </div>
           <div className="text-right">
@@ -923,7 +919,6 @@ const LiveBoardPage = () => {
             ) : (
               <LiveBoardEmptyState
                 branchName={branchName}
-                todayVisitCount={dailyVisits.length}
                 hallOfFameCount={hallMembers.length}
               />
             )}
@@ -938,14 +933,10 @@ const LiveBoardPage = () => {
           {!only1 && dailyVisits.length > 0 && (
             <div className="mx-4 mb-2 flex-shrink-0 overflow-hidden rounded-xl border border-gray-800/60 bg-gray-900/50 px-4 py-2.5">
               <div className="flex items-center gap-4">
-                <div className="flex flex-shrink-0 items-center gap-2">
-                  <h2 className="whitespace-nowrap text-base font-black tracking-wide text-white/50">
-                    오늘 다녀간 회원
-                  </h2>
-                  <span className="number-font rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-black tabular-nums text-white/70">
-                    {dailyVisits.length}
-                  </span>
-                </div>
+                {/* 인원수 배지는 대표님 요청으로 뺐다 — 이름만 흐르게 둔다 */}
+                <h2 className="flex-shrink-0 whitespace-nowrap text-base font-black tracking-wide text-white/50">
+                  오늘 다녀간 회원
+                </h2>
                 {/* 양 끝을 페이드 처리 — 안 하면 이름이 가장자리에서 뚝 잘려 보인다 */}
                 <div
                   className="relative min-w-0 flex-1 overflow-hidden"
