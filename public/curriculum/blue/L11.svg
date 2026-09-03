@@ -1,63 +1,70 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 262" role="img"
-   font-family="'Pretendard','IBM Plex Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif" aria-label="훅은 팔꿈치를 어깨 높이로 들고 감아 치며, 힘은 앞발 뒤꿈치가 안쪽으로 비틀리는 회전에서 나온다. 발이 돌지 않으면 팔만 휘두르게 된다.">
-   <defs><marker id="h-m" viewBox="0 0 10 10" refX="8.5" refY="5"
-   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10B981"/></marker><marker id="h-w" viewBox="0 0 10 10" refX="8.5" refY="5"
-   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#E0562C"/></marker></defs>
-   <rect x="0" y="0" width="500" height="262" rx="16" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 306" role="img"
+   font-family="'Pretendard','IBM Plex Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif" aria-label="직선은 슬립으로 옆으로 흘리고, 훅은 위빙으로 밑을 지나고, 상단은 더킹으로 그 자리에서 낮춘다. 셋 다 발은 움직이지 않는다.">
+   <defs><marker id="d-g" viewBox="0 0 10 10" refX="8.5" refY="5"
+   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7A5A08"/></marker><marker id="d-m" viewBox="0 0 10 10" refX="8.5" refY="5"
+   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10B981"/></marker></defs>
+   <rect x="0" y="0" width="500" height="306" rx="16" fill="#FFFFFF"/>
 <text x="250" y="31" fill="#15181B" font-size="15"
-    font-weight="800" text-anchor="middle">레벨11 · 훅</text>
-<line x1="178" y1="46" x2="178" y2="214" stroke="#E3E7E4" stroke-width="1.2"/><line x1="340" y1="46" x2="340" y2="214" stroke="#E3E7E4" stroke-width="1.2"/>
-<rect x="22" y="50" width="134" height="21" rx="10.5" fill="#F7D96B"/><text x="89" y="65" fill="#7A5A08" font-size="11.5"
-    font-weight="700" text-anchor="middle">① 팔꿈치 90°</text>
-<g opacity="1">
-    <polyline points="85,111 71,125 94,118" fill="none" stroke="#15181B"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="94" cy="118" r="6.8" fill="#15181B"/>
-    <polyline points="82,139 70,161 62,181" fill="none" stroke="#15181B"
+    font-weight="800" text-anchor="middle">레벨11 · 슬립 · 위빙 · 더킹</text>
+<line x1="174" y1="48" x2="174" y2="232" stroke="#E3E7E4" stroke-width="1.2"/><line x1="336" y1="48" x2="336" y2="232" stroke="#E3E7E4" stroke-width="1.2"/>
+<rect x="20" y="50" width="134" height="21" rx="10.5" fill="#F7D96B"/><text x="87" y="65" fill="#7A5A08" font-size="11.5"
+    font-weight="700" text-anchor="middle">① 슬립 — 직선</text>
+<rect x="188" y="50" width="134" height="21" rx="10.5" fill="#F7D96B"/><text x="255" y="65" fill="#7A5A08" font-size="11.5"
+    font-weight="700" text-anchor="middle">② 위빙 — 훅</text>
+<rect x="348" y="50" width="134" height="21" rx="10.5" fill="#F7D96B"/><text x="415" y="65" fill="#7A5A08" font-size="11.5"
+    font-weight="700" text-anchor="middle">③ 더킹 — 상단</text>
+<line x1="20" y1="102" x2="120" y2="102" stroke="#7A5A08" stroke-width="3" marker-end="url(#d-g)"/>
+<g transform="translate(224,0) scale(-1,1)"><g opacity="1">
+    <polyline points="113,119 99,133 122,126" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="122" cy="126" r="6.8" fill="#15181B"/>
+    <polyline points="110,147 98,169 90,189" fill="none" stroke="#15181B"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="84,104 82,139" fill="none" stroke="#15181B"
+    <polyline points="119,128 110,147" fill="none" stroke="#15181B"
       stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="82,139 98,159 106,181" fill="none" stroke="#15181B"
+    <polyline points="110,147 126,167 134,189" fill="none" stroke="#15181B"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="84" cy="95" r="9.5" fill="#15181B"/>
-    <polyline points="85,111 107,109 90,99" fill="none" stroke="#15181B"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="90" cy="99" r="6.8" fill="#15181B"/>
-  </g>
-<path d="M92,100 Q134,90 128,128" fill="none" stroke="#10B981" stroke-width="3.2" marker-end="url(#h-m)"/>
-<text x="89" y="196" fill="#10B981" font-size="10.5"
-    font-weight="600" text-anchor="middle">팔꿈치를 들고 감아 친다</text>
-<rect x="198" y="50" width="122" height="21" rx="10.5" fill="#F7D96B"/><text x="259" y="65" fill="#7A5A08" font-size="11.5"
-    font-weight="700" text-anchor="middle">② 앞발이 돈다</text>
-<ellipse cx="222" cy="120" rx="9" ry="17" fill="none" stroke="#AEB7BE" stroke-width="2" stroke-dasharray="4 3"/>
-<ellipse cx="230" cy="118" rx="10" ry="17" fill="none" stroke="#10B981" stroke-width="3"
-    transform="rotate(28 230 118)"/>
-<circle cx="228" cy="134" r="3.4" fill="#10B981"/>
-<ellipse cx="298" cy="120" rx="10" ry="17" fill="none" stroke="#AEB7BE" stroke-width="3"
-    transform="rotate(0 298 120)"/>
-<path d="M244,136 Q268,130 264,110" fill="none" stroke="#10B981" stroke-width="2.6" marker-end="url(#h-m)"/>
-<text x="224" y="156" fill="#10B981" font-size="10.5"
-    font-weight="600" text-anchor="middle">앞발이 비틀린다</text><text x="298" y="156" fill="#AEB7BE" font-size="10.5"
-    font-weight="600" text-anchor="middle">뒷발 고정</text>
-<text x="259" y="178" fill="#10B981" font-size="10.5"
-    font-weight="600" text-anchor="middle">뒤꿈치를 안쪽으로</text>
-<text x="259" y="196" fill="#5B6570" font-size="10.5"
-    font-weight="600" text-anchor="middle">이 회전이 주먹을 민다</text>
-<rect x="360" y="50" width="118" height="21" rx="10.5" fill="#FCEBE4"/><text x="419" y="65" fill="#E0562C" font-size="11.5"
-    font-weight="700" text-anchor="middle">× 팔만 휘두름</text>
-<g opacity="1">
-    <polyline points="421,111 407,125 430,118" fill="none" stroke="#E0562C"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="430" cy="118" r="6.8" fill="#E0562C"/>
-    <polyline points="418,139 406,161 398,181" fill="none" stroke="#E0562C"
+    <circle cx="123" cy="123" r="9.5" fill="#15181B"/>
+    <polyline points="113,119 126,135 133,117" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="133" cy="117" r="6.8" fill="#15181B"/>
+  </g></g>
+<circle cx="112" cy="103" r="9" fill="none" stroke="#AEB7BE" stroke-width="1.6" stroke-dasharray="3 3"/>
+<text x="87" y="210" fill="#10B981" font-size="10.5"
+    font-weight="600" text-anchor="middle">머리만 옆으로</text>
+<path d="M186,110 Q246,74 306,106" fill="none" stroke="#7A5A08" stroke-width="3" marker-end="url(#d-g)"/>
+<g transform="translate(524,0) scale(-1,1)"><g opacity="1">
+    <polyline points="267,141 250,150 274,143" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="274" cy="143" r="6.8" fill="#15181B"/>
+    <polyline points="260,160 242,176 236,189" fill="none" stroke="#15181B"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="420,104 418,139" fill="none" stroke="#E0562C"
+    <polyline points="270,137 260,160" fill="none" stroke="#15181B"
       stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="418,139 434,159 442,181" fill="none" stroke="#E0562C"
+    <polyline points="260,160 282,174 286,189" fill="none" stroke="#15181B"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="420" cy="95" r="9.5" fill="#E0562C"/>
-    <polyline points="421,111 441,126 422,122" fill="none" stroke="#E0562C"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="422" cy="122" r="6.8" fill="#E0562C"/>
-  </g>
-<path d="M452,128 Q432,140 410,132" fill="none" stroke="#E0562C" stroke-width="2.6" stroke-dasharray="5 4"/>
-<text x="419" y="196" fill="#E0562C" font-size="10.5"
-    font-weight="600" text-anchor="middle">팔 힘만 실린다</text>
-<line x1="24" y1="216" x2="476" y2="216" stroke="#E3E7E4" stroke-width="2"/><text x="250" y="240" fill="#5B6570" font-size="11.5"
-    font-weight="700" text-anchor="middle">앞발이 돌아야 주먹이 나갑니다 — 팔 힘으로 치면 훅이 아닙니다</text></svg>
+    <circle cx="276" cy="128" r="9" fill="#15181B"/>
+    <polyline points="267,141 280,150 285,137" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="285" cy="137" r="6.8" fill="#15181B"/>
+  </g></g>
+<path d="M224,138 Q254,186 292,142" fill="none" stroke="#10B981" stroke-width="2.4" stroke-dasharray="6 4"/>
+<text x="255" y="210" fill="#10B981" font-size="10.5"
+    font-weight="600" text-anchor="middle">훅 밑을 U자로</text>
+<line x1="356" y1="76" x2="442" y2="112" stroke="#7A5A08" stroke-width="3" marker-end="url(#d-g)"/>
+<g transform="translate(820,0) scale(-1,1)"><circle cx="410" cy="103" r="9" fill="none" stroke="#AEB7BE" stroke-width="1.6" stroke-dasharray="3 3"/><g opacity="1">
+    <polyline points="411,142 397,152 419,143" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="419" cy="143" r="6.8" fill="#15181B"/>
+    <polyline points="408,162 391,178 385,189" fill="none" stroke="#15181B"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="410,137 408,162" fill="none" stroke="#15181B"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="408,162 429,176 433,189" fill="none" stroke="#15181B"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="410" cy="128" r="9" fill="#15181B"/>
+    <polyline points="411,142 425,152 429,137" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="429" cy="137" r="6.8" fill="#15181B"/>
+  </g></g>
+<line x1="448" y1="104" x2="448" y2="142" stroke="#10B981" stroke-width="2.4" marker-end="url(#d-m)"/>
+<text x="415" y="210" fill="#10B981" font-size="10.5"
+    font-weight="600" text-anchor="middle">그 자리에서 아래로</text>
+<text x="250" y="250" fill="#0A7A55" font-size="12.5"
+    font-weight="800" text-anchor="middle">셋 다 발은 제자리 — 뒤로 빠지지 않는다</text>
+<line x1="24" y1="260" x2="476" y2="260" stroke="#E3E7E4" stroke-width="2"/><text x="250" y="284" fill="#5B6570" font-size="11.5"
+    font-weight="700" text-anchor="middle">무기보다 회피를 먼저 배웁니다 — 블루의 반격은 전부 이 자리에서 나갑니다</text></svg>

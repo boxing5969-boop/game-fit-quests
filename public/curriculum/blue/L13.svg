@@ -1,58 +1,94 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 288" role="img"
-   font-family="'Pretendard','IBM Plex Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif" aria-label="몸통을 칠 때 무릎을 굽혀 낮추면 등이 세워지고 시선이 유지되지만, 허리를 접어 숙이면 시선을 잃고 허리에 부담이 간다.">
-   <defs><marker id="b-m" viewBox="0 0 10 10" refX="8.5" refY="5"
-   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10B981"/></marker><marker id="b-w" viewBox="0 0 10 10" refX="8.5" refY="5"
-   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#E0562C"/></marker></defs>
-   <rect x="0" y="0" width="500" height="288" rx="16" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 312" role="img"
+   font-family="'Pretendard','IBM Plex Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif" aria-label="피하고 멈춘 뒤 치면 세 박자가 걸리지만, 슬립으로 몸이 도는 그 회전으로 그대로 훅을 던지면 한 박자로 끝난다.">
+   <defs><marker id="sh-m" viewBox="0 0 10 10" refX="8.5" refY="5"
+   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10B981"/></marker><marker id="sh-g" viewBox="0 0 10 10" refX="8.5" refY="5"
+   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7A5A08"/></marker></defs>
+   <rect x="0" y="0" width="500" height="312" rx="16" fill="#FFFFFF"/>
 <text x="250" y="31" fill="#15181B" font-size="15"
-    font-weight="800" text-anchor="middle">레벨13 · 바디</text>
-<line x1="250" y1="46" x2="250" y2="234" stroke="#E3E7E4" stroke-width="1.2"/>
-<rect x="38" y="50" width="156" height="21" rx="10.5" fill="#E7F7F0"/><text x="116" y="65" fill="#0A7A55" font-size="11.5"
-    font-weight="700" text-anchor="middle">○ 무릎으로 낮춘다</text>
-<rect x="300" y="50" width="142" height="21" rx="10.5" fill="#FCEBE4"/><text x="371" y="65" fill="#E0562C" font-size="11.5"
-    font-weight="700" text-anchor="middle">× 허리를 접는다</text>
-<line x1="28" y1="204" x2="232" y2="204" stroke="#E3E7E4" stroke-width="2"/><line x1="268" y1="204" x2="472" y2="204" stroke="#E3E7E4" stroke-width="2"/>
+    font-weight="800" text-anchor="middle">레벨13 · 슬립 + 훅</text>
+<line x1="250" y1="46" x2="250" y2="252" stroke="#E3E7E4" stroke-width="1.2"/>
+<rect x="16" y="50" width="218" height="21" rx="10.5" fill="#FCEBE4"/><text x="125" y="65" fill="#E0562C" font-size="11.5"
+    font-weight="700" text-anchor="middle">× 피하고 → 멈추고 → 친다</text>
 <g opacity="1">
-    <polyline points="101,143 87,156 109,150" fill="none" stroke="#15181B"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="109" cy="150" r="6.8" fill="#15181B"/>
-    <polyline points="98,168 81,186 75,201" fill="none" stroke="#15181B"
+    <polyline points="57,117 43,131 66,124" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="66" cy="124" r="6.8" fill="#AEB7BE"/>
+    <polyline points="54,145 42,167 34,187" fill="none" stroke="#AEB7BE"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="100,137 98,168" fill="none" stroke="#15181B"
+    <polyline points="61,115 54,145" fill="none" stroke="#AEB7BE"
       stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="98,168 119,184 123,201" fill="none" stroke="#15181B"
+    <polyline points="54,145 70,165 78,187" fill="none" stroke="#AEB7BE"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="100" cy="128" r="9" fill="#15181B"/>
-    <polyline points="101,143 118,152 131,154" fill="none" stroke="#15181B"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="131" cy="154" r="6.8" fill="#15181B"/>
+    <circle cx="64" cy="109" r="9.5" fill="#AEB7BE"/>
+    <polyline points="57,117 70,133 77,115" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="77" cy="115" r="6.8" fill="#AEB7BE"/>
+  </g><g opacity="1">
+    <polyline points="127,117 113,131 136,124" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="136" cy="124" r="6.8" fill="#AEB7BE"/>
+    <polyline points="124,145 112,167 104,187" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="126,110 124,145" fill="none" stroke="#AEB7BE"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="124,145 140,165 148,187" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="126" cy="101" r="9.5" fill="#AEB7BE"/>
+    <polyline points="127,117 140,133 147,115" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="147" cy="115" r="6.8" fill="#AEB7BE"/>
+  </g><g opacity="1">
+    <polyline points="197,117 183,131 206,124" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="206" cy="124" r="6.8" fill="#AEB7BE"/>
+    <polyline points="194,145 182,167 174,187" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="196,110 194,145" fill="none" stroke="#AEB7BE"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="194,145 210,165 218,187" fill="none" stroke="#AEB7BE"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="196" cy="101" r="9.5" fill="#AEB7BE"/>
+    <polyline points="197,117 219,115 202,105" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="202" cy="105" r="6.8" fill="#AEB7BE"/>
   </g>
-<line x1="114" y1="122" x2="158" y2="118" stroke="#10B981" stroke-width="2.4" marker-end="url(#b-m)"/>
-<text x="164" y="116" fill="#10B981" font-size="10"
-    font-weight="700" text-anchor="start">시선 유지</text>
-<line x1="66" y1="140" x2="88" y2="146" stroke="#AEB7BE" stroke-width="1.4"/>
-<text x="60" y="137" fill="#5B6570" font-size="10.5"
-    font-weight="600" text-anchor="end">등이 세워짐</text>
-<text x="116" y="226" fill="#10B981" font-size="10.5"
-    font-weight="600" text-anchor="middle">무릎이 굽는다</text>
+<text x="56" y="204" fill="#E0562C" font-size="10"
+    font-weight="700" text-anchor="middle">① 피함</text>
+<text x="126" y="204" fill="#E0562C" font-size="10"
+    font-weight="700" text-anchor="middle">② 멈춤</text>
+<text x="196" y="204" fill="#E0562C" font-size="10"
+    font-weight="700" text-anchor="middle">③ 훅</text>
+<text x="126" y="232" fill="#E0562C" font-size="10.5"
+    font-weight="700" text-anchor="middle">세 박자 — 그 사이 다음 방이 온다</text>
+<rect x="268" y="50" width="200" height="21" rx="10.5" fill="#E7F7F0"/><text x="368" y="65" fill="#0A7A55" font-size="11.5"
+    font-weight="700" text-anchor="middle">○ 같은 회전으로 이어 친다</text>
 <g opacity="1">
-    <polyline points="370,148 369,167 371,187" fill="none" stroke="#E0562C"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="371" cy="187" r="6.8" fill="#E0562C"/>
-    <polyline points="340,134 331,169 332,201" fill="none" stroke="#E0562C"
+    <polyline points="309,105 295,119 318,112" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="318" cy="112" r="6.8" fill="#AEB7BE"/>
+    <polyline points="306,133 294,155 286,175" fill="none" stroke="#AEB7BE"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="378,150 340,134" fill="none" stroke="#E0562C"
+    <polyline points="308,98 306,133" fill="none" stroke="#AEB7BE"
       stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="340,134 344,168 347,201" fill="none" stroke="#E0562C"
+    <polyline points="306,133 322,153 330,175" fill="none" stroke="#AEB7BE"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="388" cy="154" r="9" fill="#E0562C"/>
-    <polyline points="370,148 380,168 382,188" fill="none" stroke="#E0562C"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="382" cy="188" r="6.8" fill="#E0562C"/>
+    <circle cx="308" cy="89" r="9.5" fill="#AEB7BE"/>
+    <polyline points="309,105 328,108 344,106" fill="none" stroke="#AEB7BE"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="344" cy="106" r="6.8" fill="#AEB7BE"/>
   </g>
-<line x1="396" y1="168" x2="420" y2="188" stroke="#E0562C" stroke-width="2.4" marker-end="url(#b-w)"/>
-<text x="426" y="190" fill="#E0562C" font-size="10"
-    font-weight="700" text-anchor="start">시선이 바닥</text>
-<path d="M328,124 A14,14 0 0 0 324,148" fill="none" stroke="#E0562C" stroke-width="2.4"/>
-<text x="316" y="128" fill="#E0562C" font-size="10.5"
-    font-weight="600" text-anchor="end">허리 부담</text>
-<text x="356" y="226" fill="#E0562C" font-size="10.5"
-    font-weight="600" text-anchor="middle">허리가 접힌다</text>
-<line x1="24" y1="242" x2="476" y2="242" stroke="#E3E7E4" stroke-width="2"/><text x="250" y="266" fill="#5B6570" font-size="11.5"
-    font-weight="700" text-anchor="middle">허리를 접으면 시선이 끊겨 다음 방을 못 봅니다</text></svg>
+<text x="308" y="204" fill="#AEB7BE" font-size="10.5"
+    font-weight="600" text-anchor="middle">상대 직선</text>
+<line x1="344" y1="106" x2="430" y2="106" stroke="#7A5A08" stroke-width="3" marker-end="url(#sh-g)"/>
+<g transform="translate(860,0) scale(-1,1)"><circle cx="430" cy="103" r="9.5" fill="none" stroke="#AEB7BE" stroke-width="1.6" stroke-dasharray="3 3"/><g opacity="1">
+    <polyline points="431,119 422,114 446,106" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="446" cy="106" r="6.8" fill="#15181B"/>
+    <polyline points="428,147 416,169 408,189" fill="none" stroke="#15181B"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="436,118 428,147" fill="none" stroke="#15181B"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="428,147 444,167 452,189" fill="none" stroke="#15181B"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="439" cy="112" r="9.5" fill="#15181B"/>
+    <polyline points="431,119 444,135 451,117" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="451" cy="117" r="6.8" fill="#15181B"/>
+  </g></g>
+<text x="430" y="204" fill="#10B981" font-size="10.5"
+    font-weight="600" text-anchor="middle">① 한 박자</text>
+<path d="M436,116 Q404,140 380,120" fill="none" stroke="#10B981" stroke-width="3" marker-end="url(#sh-m)"/>
+<text x="390" y="232" fill="#0A7A55" font-size="10.5"
+    font-weight="700" text-anchor="middle">피하는 회전 = 치는 회전</text>
+<line x1="24" y1="266" x2="476" y2="266" stroke="#E3E7E4" stroke-width="2"/><text x="250" y="290" fill="#5B6570" font-size="11.5"
+    font-weight="700" text-anchor="middle">블루에서 처음으로 회피와 반격이 한 동작이 되는 레벨입니다</text></svg>

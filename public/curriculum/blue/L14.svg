@@ -1,57 +1,69 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 296" role="img"
-   font-family="'Pretendard','IBM Plex Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif" aria-label="네 방의 연타가 머리와 몸통 높이를 번갈아 오가며 들어간다.">
-   <defs><marker id="k-m" viewBox="0 0 10 10" refX="8.5" refY="5"
-   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10B981"/></marker></defs>
-   <rect x="0" y="0" width="500" height="296" rx="16" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 284" role="img"
+   font-family="'Pretendard','IBM Plex Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif" aria-label="무릎을 굽혔다 펴는 힘이 골반을 거쳐 주먹을 위로 올린다. 다리를 쓰지 않고 팔만 들어올리면 어퍼컷이 올라가지 않는다.">
+   <defs><marker id="u-m" viewBox="0 0 10 10" refX="8.5" refY="5"
+   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10B981"/></marker><marker id="u-w" viewBox="0 0 10 10" refX="8.5" refY="5"
+   markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#E0562C"/></marker></defs>
+   <rect x="0" y="0" width="500" height="284" rx="16" fill="#FFFFFF"/>
 <text x="250" y="31" fill="#15181B" font-size="15"
-    font-weight="800" text-anchor="middle">레벨14 · 연타</text>
-<rect x="166" y="46" width="168" height="21" rx="10.5" fill="#E7F7F0"/><text x="250" y="61" fill="#0A7A55" font-size="11.5"
-    font-weight="700" text-anchor="middle">높이를 바꿔 친다</text>
+    font-weight="800" text-anchor="middle">레벨14 · 어퍼컷</text>
+<line x1="340" y1="46" x2="340" y2="232" stroke="#E3E7E4" stroke-width="1.2"/>
+<rect x="30" y="50" width="118" height="21" rx="10.5" fill="#F7D96B"/><text x="89" y="65" fill="#7A5A08" font-size="11.5"
+    font-weight="700" text-anchor="middle">① 무릎을 굽힌다</text>
+<rect x="184" y="50" width="130" height="21" rx="10.5" fill="#E7F7F0"/><text x="249" y="65" fill="#0A7A55" font-size="11.5"
+    font-weight="700" text-anchor="middle">② 펴며 올린다</text>
+<rect x="356" y="50" width="126" height="21" rx="10.5" fill="#FCEBE4"/><text x="419" y="65" fill="#E0562C" font-size="11.5"
+    font-weight="700" text-anchor="middle">× 팔만 들어올림</text>
+<line x1="24" y1="202" x2="476" y2="202" stroke="#E3E7E4" stroke-width="2"/>
 <g opacity="1">
-    <polyline points="79,123 65,137 88,130" fill="none" stroke="#15181B"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="88" cy="130" r="6.8" fill="#15181B"/>
-    <polyline points="76,151 64,173 56,193" fill="none" stroke="#15181B"
+    <polyline points="89,136 75,150 97,143" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="97" cy="143" r="6.8" fill="#15181B"/>
+    <polyline points="86,162 70,180 64,197" fill="none" stroke="#15181B"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="78,116 76,151" fill="none" stroke="#15181B"
+    <polyline points="88,130 86,162" fill="none" stroke="#15181B"
       stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="76,151 92,171 100,193" fill="none" stroke="#15181B"
+    <polyline points="86,162 106,178 110,197" fill="none" stroke="#15181B"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="78" cy="107" r="9.5" fill="#15181B"/>
-    <polyline points="79,123 98,126 114,124" fill="none" stroke="#15181B"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="114" cy="124" r="6.8" fill="#15181B"/>
+    <circle cx="88" cy="121" r="9" fill="#15181B"/>
+    <polyline points="89,136 102,150 108,136" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="108" cy="136" r="6.8" fill="#15181B"/>
   </g>
-<g transform="translate(720,0) scale(-1,1)"><g opacity="1">
-    <polyline points="361,123 347,137 370,130" fill="none" stroke="#AEB7BE"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="370" cy="130" r="6.8" fill="#AEB7BE"/>
-    <polyline points="358,151 346,173 338,193" fill="none" stroke="#AEB7BE"
+<line x1="46" y1="116" x2="46" y2="162" stroke="#10B981" stroke-width="2.8" marker-end="url(#u-m)"/>
+<text x="88" y="222" fill="#10B981" font-size="10.5"
+    font-weight="600" text-anchor="middle">무게가 아래로</text>
+<g opacity="1">
+    <polyline points="249,121 235,135 258,128" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="258" cy="128" r="6.8" fill="#15181B"/>
+    <polyline points="246,149 238,171 231,197" fill="none" stroke="#15181B"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="360,116 358,151" fill="none" stroke="#AEB7BE"
+    <polyline points="248,114 246,149" fill="none" stroke="#15181B"
       stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="358,151 374,171 382,193" fill="none" stroke="#AEB7BE"
+    <polyline points="246,149 258,170 264,197" fill="none" stroke="#15181B"
       stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="360" cy="107" r="9.5" fill="#AEB7BE"/>
-    <polyline points="361,123 374,139 381,121" fill="none" stroke="#AEB7BE"
-      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="381" cy="121" r="6.8" fill="#AEB7BE"/>
-  </g></g>
-<text x="78" y="218" fill="#15181B" font-size="10.5"
-    font-weight="600" text-anchor="middle">나</text><text x="360" y="218" fill="#AEB7BE" font-size="10.5"
-    font-weight="600" text-anchor="middle">상대</text>
-<line x1="136" y1="104" x2="326" y2="104" stroke="#10B981" stroke-width="2.6" marker-end="url(#k-m)"/>
-<line x1="136" y1="124" x2="326" y2="112" stroke="#10B981" stroke-width="2.6" marker-end="url(#k-m)"/>
-<line x1="136" y1="170" x2="326" y2="158" stroke="#10B981" stroke-width="2.6" marker-end="url(#k-m)"/>
-<path d="M136,192 Q240,210 322,122" fill="none" stroke="#10B981" stroke-width="2.6" marker-end="url(#k-m)"/>
-<text x="128" y="108" fill="#10B981" font-size="11"
-    font-weight="800" text-anchor="end">①</text>
-<text x="128" y="128" fill="#10B981" font-size="11"
-    font-weight="800" text-anchor="end">②</text>
-<text x="128" y="174" fill="#10B981" font-size="11"
-    font-weight="800" text-anchor="end">③</text>
-<text x="128" y="196" fill="#10B981" font-size="11"
-    font-weight="800" text-anchor="end">④</text>
-<text x="238" y="92" fill="#5B6570" font-size="10.5"
-    font-weight="600" text-anchor="middle">머리 높이</text><text x="196" y="152" fill="#5B6570" font-size="10.5"
-    font-weight="600" text-anchor="middle">몸통 높이</text>
-<text x="250" y="238" fill="#0A7A55" font-size="12"
-    font-weight="800" text-anchor="middle">머리 · 머리 · 몸통 · 몸통에서 다시 머리</text>
-<line x1="24" y1="250" x2="476" y2="250" stroke="#E3E7E4" stroke-width="2"/><text x="250" y="274" fill="#5B6570" font-size="11.5"
-    font-weight="700" text-anchor="middle">높이가 바뀌니 상대 가드가 한 자리에 못 머뭅니다</text></svg>
+    <circle cx="248" cy="105" r="9.5" fill="#15181B"/>
+    <polyline points="249,121 263,128 268,101" fill="none" stroke="#15181B"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="268" cy="101" r="6.8" fill="#15181B"/>
+  </g>
+<line x1="200" y1="164" x2="200" y2="112" stroke="#10B981" stroke-width="2.8" marker-end="url(#u-m)"/>
+<line x1="272" y1="112" x2="272" y2="74" stroke="#10B981" stroke-width="3.4" marker-end="url(#u-m)"/>
+<text x="294" y="78" fill="#10B981" font-size="11.5"
+    font-weight="800" text-anchor="start">어퍼컷</text>
+<text x="248" y="222" fill="#10B981" font-size="10.5"
+    font-weight="600" text-anchor="middle">펴는 힘이 주먹까지</text>
+<g opacity="1">
+    <polyline points="415,127 401,141 424,134" fill="none" stroke="#E0562C"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="424" cy="134" r="6.8" fill="#E0562C"/>
+    <polyline points="412,155 400,177 392,197" fill="none" stroke="#E0562C"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="414,120 412,155" fill="none" stroke="#E0562C"
+      stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="412,155 428,175 436,197" fill="none" stroke="#E0562C"
+      stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="414" cy="111" r="9.5" fill="#E0562C"/>
+    <polyline points="415,127 429,134 434,109" fill="none" stroke="#E0562C"
+      stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="434" cy="109" r="6.8" fill="#E0562C"/>
+  </g>
+<line x1="446" y1="128" x2="446" y2="98" stroke="#E0562C" stroke-width="2.6" stroke-dasharray="5 4" marker-end="url(#u-w)"/>
+<text x="414" y="222" fill="#E0562C" font-size="10.5"
+    font-weight="600" text-anchor="middle">다리는 그대로</text>
+<line x1="24" y1="238" x2="476" y2="238" stroke="#E3E7E4" stroke-width="2"/><text x="250" y="262" fill="#5B6570" font-size="11.5"
+    font-weight="700" text-anchor="middle">다리를 쓰지 않으면 어퍼컷은 아예 올라가지 않습니다</text></svg>
