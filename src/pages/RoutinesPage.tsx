@@ -11,7 +11,11 @@ import { ArrowLeft, X, Clock, CheckCircle2, TrendingUp } from "lucide-react";
 import { PHASE_META, type RoutinePhases, emptyPhases } from "@/lib/routineComposer";
 
 interface Routine { id: string; name: string; description: string; target_level: number | null; phases: RoutinePhases; total_min: number; }
-interface Cycle { sessions: number; days: number; minutes: number; reqSessions: number; reqDays: number; reqMinutes: number; meets: boolean; }
+interface Cycle {
+  sessions: number; days: number; minutes: number;
+  reqSessions: number; reqDays: number; reqMinutes: number; meets: boolean;
+  reqMinDays?: number; elapsedDays?: number; rank?: string;
+}
 
 const CycleBar = ({ label, cur, req, unit }: { label: string; cur: number; req: number; unit: string }) => {
   const done = cur >= req;
@@ -78,7 +82,9 @@ const RoutinesPage = () => {
           <div className="mb-2 flex items-center gap-1.5">
             <TrendingUp className="h-4 w-4 text-primary" />
             <span className="text-xs font-bold text-foreground">레벨업까지</span>
-            <span className="text-[10px] text-muted-foreground">출석 3회마다 자동 승급</span>
+            <span className="text-[10px] text-muted-foreground">
+              출석 {cycle.reqSessions}회마다 {cycle.rank === "red" || cycle.rank === "black" ? "승급 심사" : "자동 승급"}
+            </span>
           </div>
           <div className="flex gap-2">
             <CycleBar label="출석" cur={cycle.sessions} req={cycle.reqSessions} unit="회" />

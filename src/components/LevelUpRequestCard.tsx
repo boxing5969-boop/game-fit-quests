@@ -13,6 +13,8 @@ import { useLevelVideos, youtubeThumb, parseVideoTitle } from "@/hooks/useLevelV
 interface Cycle {
   sessions: number; days: number; minutes: number;
   reqSessions: number; reqDays: number; reqMinutes: number; meets: boolean;
+  // 리그별 차등 요건 — 화이트3 / 블루5 / 레드8 / 블랙20회, 블랙은 레벨당 최소 45일 체류
+  reqMinDays?: number; elapsedDays?: number; rank?: string;
 }
 
 const Bar = ({ label, cur, req, unit }: { label: string; cur: number; req: number; unit: string }) => {
@@ -81,6 +83,8 @@ const LevelUpRequestCard = () => {
   const isPending = statusNow === "pending";
   const isRevision = statusNow === "revision_requested";
   const isBossLevel = (progress?.current_level ?? 1) === 10;
+  // 레드·블랙은 출석을 채워도 코치 승인이 있어야 올라간다
+  const isApprovalOnly = cycle.rank === "red" || cycle.rank === "black";
   const previews = nextVideos.filter((v) => !!youtubeThumb(v.videoUrl)).slice(0, 2);
 
   return (
@@ -88,10 +92,20 @@ const LevelUpRequestCard = () => {
       <p className="mb-1 text-sm font-black text-foreground">레벨업까지</p>
       <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
         {isBossLevel
-          ? "보스 레벨! 출석 3회를 채우면 자동으로 승급 심사에 올라가고, 코치님이 승인하면 다음 리그로 갑니다."
-          : "입구에서 얼굴 인식하면 출석이 자동으로 쌓여요. 출석 3회마다 자동으로 다음 레벨! (10레벨은 코치님 승인)"}
+          ? `보스 레벨! 출석 ${cycle.reqSessions}회를 채우면 승급 심사에 올라가고, 코치님이 승인하면 다음 리그로 갑니다.`
+          : isApprovalOnly
+            ? `이 리그부터는 출석 ${cycle.reqSessions}회를 채우면 승급 심사가 열리고, 코치님이 직접 보고 승급합니다.`
+            : `입구에서 얼굴 인식하면 출석이 자동으로 쌓여요. 출석 ${cycle.reqSessions}회마다 자동으로 다음 레벨! (10레벨은 코치님 승인)`}
       </p>
       <Bar label="이번 레벨 출석" cur={cycle.sessions} req={cycle.reqSessions} unit="회" />
+      {(cycle.reqMinDays ?? 0) > 0 && (
+        <div className="mt-2">
+          <Bar label="연한 (이 레벨에 머문 기간)" cur={cycle.elapsedDays ?? 0} req={cycle.reqMinDays ?? 0} unit="일" />
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            블랙 리그는 출석을 몰아쳐도 건너뛸 수 없어요 — 레벨마다 최소 {cycle.reqMinDays}일이 필요합니다.
+          </p>
+        </div>
+      )}
 
       {isRevision && (
         <p className="mt-3 rounded-lg bg-status-pending/10 px-3 py-2 text-[11px] font-semibold text-status-pending">
@@ -105,7 +119,7 @@ const LevelUpRequestCard = () => {
         </div>
       ) : cycle.meets ? (
         <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary/10 py-3 text-sm font-bold text-primary">
-          🥊 출석 3회 달성 — 자동으로 처리 중이에요!
+          🥊 출석 {cycle.reqSessions}회 달성 — 자동으로 처리 중이에요!
         </div>
       ) : null}
 
