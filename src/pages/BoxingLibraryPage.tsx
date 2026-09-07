@@ -1,9 +1,11 @@
 // 153플레이 — 회원이 리그·레벨별 커리큘럼 영상(관장님이 올린 미션 영상)으로
 // 다음 레벨에서 배울 동작을 예습하고, 시청 완료를 체크하며 훈련 흐름을 잇는 화면.
 //
-// ⚠️ 보조 탭 "월드"(boxing_programs = 외부 채널 큐레이션)는 저작권 이슈가 있어
-//    관리자(admin/super_admin) 계정에만 노출한다. DB 쪽도 RLS 로 같이 막혀 있으므로
-//    여기 UI 조건만 풀어도 일반 회원에게는 데이터가 내려가지 않는다.
+// ⚠️ 보조 탭 "월드"(boxing_programs = 외부 채널 큐레이션)는 전 회원에게 열려 있고,
+//    저작권 소지가 있는 영상만 DB RLS 가 걸러낸다 (UI 에서 따로 막지 않는다).
+//    · official / creator (공식 채널 · 제작자 본인 채널) → visibility='public' → 전 회원
+//    · reupload / archive (재업로드 · 방송 아카이브) → visibility='admin' → 관리자만
+//    회원 계정에는 애초에 해당 행이 내려오지 않는다.
 //
 // 가치 전달: 영상마다 핵심 포인트(키포인트)를 함께 보여주고, 시청 완료 시
 // 오삼이 코치가 "몸으로 완성하러 가자"고 잇는다 — 예습(영상) → 출석(3회) → 레벨업.
@@ -25,6 +27,7 @@ import {
 interface ProgramLite {
   id: string; yt_id: string; title: string; channel: string | null; country: string | null;
   tags: string[] | null; league: string; minutes: number | null; score: number | null;
+  platform: string | null; visibility: string | null; rights_tier: string | null;
 }
 interface ProgramFull extends ProgramLite {
   equipment: string[] | null; summary: string | null; coach_points: string[] | null; target: string | null;
@@ -39,6 +42,12 @@ const LEAGUE_BADGE: Record<string, string> = {
   블랙: "bg-black text-primary border border-primary/40",
 };
 const thumbOf = (yt: string) => `https://img.youtube.com/vi/${yt}/hqdefault.jpg`;
+// 유튜브 외 플랫폼(인스타그램 릴스)은 썸네일·임베드 경로가 다르다
+const isIG = (p: { platform?: string | null }) => (p.platform ?? "youtube") === "instagram";
+const igUrl = (code: string) => `https://www.instagram.com/reel/${code}/`;
+const TIER_LABEL: Record<string, string> = {
+  official: "공식", creator: "제작자", reupload: "재업로드", archive: "아카이브",
+};
 
 const Chips = ({ items, value, onPick }: { items: readonly string[]; value: string; onPick: (v: string) => void }) => (
   <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -57,7 +66,7 @@ const Chips = ({ items, value, onPick }: { items: readonly string[]; value: stri
   </div>
 );
 
-const WorldTab = ({ myLeague }: { myLeague: string }) => {
+const WorldTab = ({ myLeague, isAdmin }: { myLeague: string; isAdmin: boolean }) => {
   const [league, setLeague] = useState<string>(myLeague || "전체");
   const [tag, setTag] = useState("전체");
   const [time, setTime] = useState<string>("전체");
@@ -68,7 +77,8 @@ const WorldTab = ({ myLeague }: { myLeague: string }) => {
     queryKey: ["boxing-library"],
     staleTime: 10 * 60_000,
     queryFn: async (): Promise<ProgramLite[]> => {
-      const cols = "id, yt_id, title, channel, country, tags, league, minutes, score";
+      const cols =
+        "id, yt_id, title, channel, country, tags, league, minutes, score, platform, visibility, rights_tier";
       const out: ProgramLite[] = [];
       for (let off = 0; off < 4000; off += 1000) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -126,15 +136,27 @@ const WorldTab = ({ myLeague }: { myLeague: string }) => {
           <div className="py-16 text-center text-sm text-muted-foreground">불러오는 중…</div>
         ) : (
           <>
-            <div className="overflow-hidden rounded-2xl bg-black shadow-elev-1" style={{ aspectRatio: "16/9" }}>
-              <iframe
-                title={sel.title}
-                src={`https://www.youtube-nocookie.com/embed/${sel.yt_id}?rel=0&playsinline=1`}
-                className="h-full w-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            </div>
+            {isIG(sel) ? (
+              <div className="mx-auto overflow-hidden rounded-2xl border border-border bg-card" style={{ maxWidth: 400 }}>
+                <iframe
+                  title={sel.title}
+                  src={`https://www.instagram.com/reel/${sel.yt_id}/embed/captioned`}
+                  className="h-[540px] w-full border-0"
+                  scrolling="no"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-2xl bg-black shadow-elev-1" style={{ aspectRatio: "16/9" }}>
+                <iframe
+                  title={sel.title}
+                  src={`https://www.youtube-nocookie.com/embed/${sel.yt_id}?rel=0&playsinline=1`}
+                  className="h-full w-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            )}
             <div className="mt-3 flex items-center gap-2 text-[12px] text-muted-foreground">
               <span className={`rounded-md px-2 py-0.5 text-[11px] font-black ${LEAGUE_BADGE[sel.league] ?? LEAGUE_BADGE["화이트"]}`}>{sel.league} 리그</span>
               <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{sel.minutes ?? 0}분</span>
@@ -166,9 +188,10 @@ const WorldTab = ({ myLeague }: { myLeague: string }) => {
                 <p className="text-[13.5px] leading-relaxed text-foreground">{sel.target}</p>
               </div>
             )}
-            <a href={`https://www.youtube.com/watch?v=${sel.yt_id}`} target="_blank" rel="noopener noreferrer"
+            <a href={isIG(sel) ? igUrl(sel.yt_id) : `https://www.youtube.com/watch?v=${sel.yt_id}`}
+              target="_blank" rel="noopener noreferrer"
               className="mt-3 flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-card py-3 text-sm font-bold text-foreground active:scale-[0.98]">
-              <ExternalLink className="h-4 w-4" /> 유튜브 앱에서 열기
+              <ExternalLink className="h-4 w-4" /> {isIG(sel) ? "인스타그램에서 열기" : "유튜브 앱에서 열기"}
             </a>
           </>
         )}
@@ -191,7 +214,11 @@ const WorldTab = ({ myLeague }: { myLeague: string }) => {
         <Chips items={topTags} value={tag} onPick={setTag} />
         <Chips items={W_TIMES} value={time} onPick={setTime} />
       </div>
-      <p className="my-2.5 text-[12px] text-muted-foreground">{list.length.toLocaleString()}개 프로그램</p>
+      <p className="my-2.5 text-[12px] text-muted-foreground">
+        {list.length.toLocaleString()}개 프로그램
+        {isAdmin && list.some((p) => p.visibility === "admin") &&
+          ` · 관리자 전용 ${list.filter((p) => p.visibility === "admin").length}개 포함`}
+      </p>
       {isLoading ? (
         <div className="py-16 text-center text-sm text-muted-foreground">불러오는 중…</div>
       ) : list.length === 0 ? (
@@ -201,14 +228,26 @@ const WorldTab = ({ myLeague }: { myLeague: string }) => {
           <button key={p.id} type="button" onClick={() => setSelId(p.id)}
             className="mb-3 w-full overflow-hidden rounded-2xl border border-border bg-card text-left active:scale-[0.99]">
             <div className="relative bg-black" style={{ aspectRatio: "16/9" }}>
-              <img src={thumbOf(p.yt_id)} alt="" loading="lazy" className="h-full w-full object-cover opacity-95" />
+              {isIG(p) ? (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-secondary">
+                  <PlayCircle className="h-9 w-9 text-primary" />
+                  <span className="text-[11px] font-black tracking-widest text-muted-foreground">인스타그램 릴스</span>
+                </div>
+              ) : (
+                <img src={thumbOf(p.yt_id)} alt="" loading="lazy" className="h-full w-full object-cover opacity-95" />
+              )}
               <span className={`absolute left-2.5 top-2.5 rounded-md px-2 py-0.5 text-[11px] font-black ${LEAGUE_BADGE[p.league] ?? LEAGUE_BADGE["화이트"]}`}>{p.league} 리그</span>
-              <span className="absolute bottom-2.5 right-2.5 rounded-md bg-black/75 px-2 py-0.5 text-[11px] font-bold text-white">{p.minutes ?? 0}분</span>
+              <span className="absolute bottom-2.5 right-2.5 rounded-md bg-black/75 px-2 py-0.5 text-[11px] font-bold text-white">{isIG(p) ? "릴스" : `${p.minutes ?? 0}분`}</span>
             </div>
             <div className="p-3.5">
               <p className="text-[14.5px] font-bold leading-snug text-foreground">{p.title}</p>
               <div className="mt-1 flex items-center gap-1.5 text-[12px] text-muted-foreground">
                 <span className="truncate">{p.country} {p.channel}</span>
+                {isAdmin && p.visibility === "admin" && (
+                  <span className="shrink-0 rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-black text-destructive">
+                    관리자 전용 · {TIER_LABEL[p.rights_tier ?? ""] ?? "미분류"}
+                  </span>
+                )}
                 <span className="ml-auto flex shrink-0 items-center gap-0.5 font-black text-reward"><Star className="h-3 w-3 fill-current" />{p.score ?? 7}</span>
               </div>
             </div>
@@ -386,16 +425,16 @@ const BoxingLibraryPage = () => {
   const navigate = useNavigate();
   const { progress, role } = useAuth();
   const [params] = useSearchParams();
-  // 외부 큐레이션(월드)은 관리자만 — 저작권 보호
+  // 월드 탭은 전 회원 공개. 저작권 소지 영상은 DB(RLS)에서 걸러지므로 UI 로 막지 않는다.
+  // isAdmin 은 "관리자 전용" 표시 배지 용도로만 쓴다.
   const isAdmin = role === "admin" || role === "super_admin";
 
   const myLeague = (progress?.current_rank as string) ?? "white";
   const myLevel = progress?.current_level ?? 1;
   const initLevel = Math.min(10, Math.max(1, Number(params.get("lv")) || myLevel));
   const [tab, setTab] = useState<"level" | "world">(
-    isAdmin && params.get("tab") === "world" ? "world" : "level",
+    params.get("tab") === "world" ? "world" : "level",
   );
-  const activeTab = isAdmin ? tab : "level";
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -409,23 +448,21 @@ const BoxingLibraryPage = () => {
           다음 레벨에서 배울 동작을 영상으로 예습하세요 — 출석 3회면 자동 레벨업
         </p>
 
-        {isAdmin && (
-          <div className="mb-3 flex rounded-xl border border-border bg-card p-1">
-            {([["level", "레벨 미션 영상"], ["world", "월드 라이브러리 (관리자)"]] as const).map(([k, label]) => (
-              <button key={k} type="button" onClick={() => setTab(k)}
-                className={`flex-1 rounded-lg py-2 text-[12.5px] font-black transition-colors ${
-                  tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-                }`}>
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="mb-3 flex rounded-xl border border-border bg-card p-1">
+          {([["level", "레벨 미션 영상"], ["world", "월드 라이브러리"]] as const).map(([k, label]) => (
+            <button key={k} type="button" onClick={() => setTab(k)}
+              className={`flex-1 rounded-lg py-2 text-[12.5px] font-black transition-colors ${
+                tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}>
+              {label}
+            </button>
+          ))}
+        </div>
 
-        {activeTab === "level" ? (
+        {tab === "level" ? (
           <LevelTab initLeague={myLeague} initLevel={initLevel} myLeague={myLeague} myLevel={myLevel} />
         ) : (
-          <WorldTab myLeague={RANK_LABELS[myLeague] ?? "전체"} />
+          <WorldTab myLeague={RANK_LABELS[myLeague] ?? "전체"} isAdmin={isAdmin} />
         )}
       </div>
     </div>
