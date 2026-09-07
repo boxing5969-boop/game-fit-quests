@@ -1,6 +1,9 @@
-// 레벨 미션 영상 — 회원이 리그·레벨별 커리큘럼 영상(관장님이 올린 미션 영상)으로
+// 153플레이 — 회원이 리그·레벨별 커리큘럼 영상(관장님이 올린 미션 영상)으로
 // 다음 레벨에서 배울 동작을 예습하고, 시청 완료를 체크하며 훈련 흐름을 잇는 화면.
-// 보조 탭 "월드"에서는 전 세계 큐레이션 복싱 프로그램(boxing_programs)을 즐긴다.
+//
+// ⚠️ 보조 탭 "월드"(boxing_programs = 외부 채널 큐레이션)는 저작권 이슈가 있어
+//    관리자(admin/super_admin) 계정에만 노출한다. DB 쪽도 RLS 로 같이 막혀 있으므로
+//    여기 UI 조건만 풀어도 일반 회원에게는 데이터가 내려가지 않는다.
 //
 // 가치 전달: 영상마다 핵심 포인트(키포인트)를 함께 보여주고, 시청 완료 시
 // 오삼이 코치가 "몸으로 완성하러 가자"고 잇는다 — 예습(영상) → 출석(3회) → 레벨업.
@@ -344,7 +347,7 @@ const LevelTab = ({ initLeague, initLevel, myLeague, myLevel }: {
         <div className="py-16 text-center text-sm text-muted-foreground">불러오는 중…</div>
       ) : videos.length === 0 ? (
         <div className="mt-3 rounded-2xl border border-dashed border-border p-6 text-center text-sm leading-relaxed text-muted-foreground">
-          이 레벨의 미션 영상이 아직 준비 중이에요.<br />월드 탭에서 같은 리그 영상을 먼저 봐도 좋아요.
+          이 레벨의 미션 영상이 아직 준비 중이에요.<br />코치님께 물어보고 먼저 몸으로 익혀도 좋아요.
         </div>
       ) : (
         videos.map((v) => {
@@ -381,13 +384,18 @@ const LevelTab = ({ initLeague, initLevel, myLeague, myLevel }: {
 
 const BoxingLibraryPage = () => {
   const navigate = useNavigate();
-  const { progress } = useAuth();
+  const { progress, role } = useAuth();
   const [params] = useSearchParams();
+  // 외부 큐레이션(월드)은 관리자만 — 저작권 보호
+  const isAdmin = role === "admin" || role === "super_admin";
 
   const myLeague = (progress?.current_rank as string) ?? "white";
   const myLevel = progress?.current_level ?? 1;
   const initLevel = Math.min(10, Math.max(1, Number(params.get("lv")) || myLevel));
-  const [tab, setTab] = useState<"level" | "world">(params.get("tab") === "world" ? "world" : "level");
+  const [tab, setTab] = useState<"level" | "world">(
+    isAdmin && params.get("tab") === "world" ? "world" : "level",
+  );
+  const activeTab = isAdmin ? tab : "level";
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -395,24 +403,26 @@ const BoxingLibraryPage = () => {
         <button onClick={() => navigate(-1)} className="mb-2 flex items-center gap-1.5 text-sm font-black text-primary active:opacity-70">
           <ArrowLeft className="h-4 w-4" /> 뒤로
         </button>
-        <p className="text-[11px] font-black tracking-[3px] text-primary">153 BOXING</p>
-        <h1 className="mt-1 text-2xl font-black text-foreground">레벨 미션 <span className="text-primary">영상</span></h1>
+        <p className="text-[11px] font-black tracking-[3px] text-primary">153 PLAY</p>
+        <h1 className="mt-1 text-2xl font-black text-foreground">153<span className="text-primary">플레이</span></h1>
         <p className="mb-3 mt-0.5 text-[12.5px] text-muted-foreground">
           다음 레벨에서 배울 동작을 영상으로 예습하세요 — 출석 3회면 자동 레벨업
         </p>
 
-        <div className="mb-3 flex rounded-xl border border-border bg-card p-1">
-          {([["level", "레벨 미션 영상"], ["world", "월드 라이브러리"]] as const).map(([k, label]) => (
-            <button key={k} type="button" onClick={() => setTab(k)}
-              className={`flex-1 rounded-lg py-2 text-[12.5px] font-black transition-colors ${
-                tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-              }`}>
-              {label}
-            </button>
-          ))}
-        </div>
+        {isAdmin && (
+          <div className="mb-3 flex rounded-xl border border-border bg-card p-1">
+            {([["level", "레벨 미션 영상"], ["world", "월드 라이브러리 (관리자)"]] as const).map(([k, label]) => (
+              <button key={k} type="button" onClick={() => setTab(k)}
+                className={`flex-1 rounded-lg py-2 text-[12.5px] font-black transition-colors ${
+                  tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                }`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {tab === "level" ? (
+        {activeTab === "level" ? (
           <LevelTab initLeague={myLeague} initLevel={initLevel} myLeague={myLeague} myLevel={myLevel} />
         ) : (
           <WorldTab myLeague={RANK_LABELS[myLeague] ?? "전체"} />

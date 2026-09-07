@@ -20,7 +20,8 @@ import {
   X,
   Ticket,
   Dumbbell,
-  ClipboardList } from "lucide-react";
+  ClipboardList,
+  PlayCircle } from "lucide-react";
 import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,6 +46,8 @@ const mainTabs = [
 // /cert-benefits(단증혜택)는 하단탭에서 빠져 전체메뉴에서만 접근한다.
 // 하단탭에 이미 있는 홈·훈련·수강권·랭킹·랭크업은 전체메뉴에서 제외(중복 제거).
 const baseMenuItems = [
+  // 153플레이 — 레벨 미션 영상. 월드(외부 큐레이션) 탭은 관리자 계정에만 열린다.
+  { path: "/library",           icon: PlayCircle, label: "153플레이" },
   { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝" },
   { path: "/training-library",  icon: Dumbbell,   label: "훈련 라이브러리" },
   { path: "/routines",          icon: ClipboardList, label: "수업 루틴" },
