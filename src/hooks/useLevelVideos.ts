@@ -35,6 +35,32 @@ export const parseVideoTitle = (raw: string) => {
   return { tag, name: name.trim(), sub: subParts.join("ㅣ").trim() };
 };
 
+type MissionRow = {
+  id: string; title: string; description: string | null;
+  key_point_1: string | null; key_point_2: string | null; key_point_3: string | null;
+  sort_order: number | null;
+  mission_videos: Array<{ video_url: string | null; poster_url: string | null }> | null;
+};
+
+const MISSION_COLS =
+  "id, title, description, key_point_1, key_point_2, key_point_3, sort_order, mission_videos(video_url, poster_url)";
+
+const mapMissions = (data: unknown): LevelVideo[] =>
+  ((data || []) as unknown as MissionRow[])
+    .map((m) => {
+      const v = m.mission_videos?.[0];
+      return {
+        id: m.id,
+        title: m.title,
+        description: m.description,
+        keyPoints: [m.key_point_1, m.key_point_2, m.key_point_3].filter(Boolean) as string[],
+        videoUrl: v?.video_url || "",
+        posterUrl: v?.poster_url || null,
+        sortOrder: m.sort_order ?? 0,
+      };
+    })
+    .filter((v) => !!v.videoUrl);
+
 export const useLevelVideos = (league: string, levelNumber: number) =>
   useQuery({
     queryKey: ["level-videos", league, levelNumber],
@@ -49,27 +75,33 @@ export const useLevelVideos = (league: string, levelNumber: number) =>
         .eq("levels.level_number", levelNumber)
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return ((data || []) as unknown as Array<{
-        id: string; title: string; description: string | null;
-        key_point_1: string | null; key_point_2: string | null; key_point_3: string | null;
-        sort_order: number | null;
-        mission_videos: Array<{ video_url: string | null; poster_url: string | null }> | null;
-      }>)
-        .map((m) => {
-          const v = m.mission_videos?.[0];
-          return {
-            id: m.id,
-            title: m.title,
-            description: m.description,
-            keyPoints: [m.key_point_1, m.key_point_2, m.key_point_3].filter(Boolean) as string[],
-            videoUrl: v?.video_url || "",
-            posterUrl: v?.poster_url || null,
-            sortOrder: m.sort_order ?? 0,
-          };
-        })
-        .filter((v) => !!v.videoUrl);
+      return mapMissions(data);
     },
   });
+
+/**
+ * 보관함용 — 저장해 둔 미션 id 로 직접 조회한다.
+ * 예전에는 보관함이 월드 영상(W:)만 걸러내서, 레벨 미션 영상(L:)을 담아도
+ * 보관함이 늘 비어 보였다.
+ */
+export const useLevelVideosByIds = (ids: string[]) => {
+  const key = useMemo(() => [...ids].sort().join(","), [ids]);
+  return useQuery({
+    queryKey: ["level-videos-by-ids", key],
+    enabled: ids.length > 0,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<LevelVideo[]> => {
+      const { data, error } = await supabase
+        .from("missions")
+        .select(MISSION_COLS)
+        .in("id", ids)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return mapMissions(data);
+    },
+  });
+};
 
 /** 시청 완료 체크 — 기기 로컬 저장 (레벨별) */
 const WATCH_KEY = "153_video_watched";
@@ -88,7 +120,8 @@ export const useWatchedVideos = () => {
       const next = { ...prev };
       if (next[id]) delete next[id];
       else next[id] = true;
-      localStorage.setItem(WATCH_KEY, JSON.stringify(next));
+      // 사파리 시크릿 모드 등 저장이 막힌 환경에서 여기서 던지면 화면이 통째로 죽는다.
+      try { localStorage.setItem(WATCH_KEY, JSON.stringify(next)); } catch { /* 저장 실패는 무시 */ }
       return next;
     });
   }, []);

@@ -9,7 +9,7 @@
 //    · reupload / archive → visibility='admin' → 관리자만 (타일에 '비공개' 배지)
 //
 // 레벨 미션 영상(관장님 업로드)은 '내 레벨' 메뉴와 홈 최상단 행에 붙는다 —
-// 예습(영상) → 출석(3회) → 레벨업 흐름을 잇는다.
+// 예습(영상) → 출석(리그별 요건) → 레벨업 흐름을 잇는다.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,7 @@ import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { RANK_LABELS } from "@/data/sharedConstants";
 import {
-  useLevelVideos, useWatchedVideos, youtubeId, youtubeThumb, parseVideoTitle,
+  useLevelVideos, useLevelVideosByIds, useWatchedVideos, youtubeId, youtubeThumb, parseVideoTitle,
   type LevelVideo,
 } from "@/hooks/useLevelVideos";
 
@@ -28,7 +28,7 @@ const CSS = `
 .p153{--mint:#45E0CE;--gold:#E6B94D;--bg:#141414;--card:#1F1F1F;--line:#2E2E2E;
   --txt:#FFFFFF;--sub:#B3B3B3;--dim:#8C8C8C;--ink2:#E5E5E5;
   background:var(--bg);color:var(--txt);min-height:100vh;padding-bottom:84px;
-  font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;overflow-x:hidden}
+  font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;overflow-x:clip}
 .p153 *{box-sizing:border-box}
 .p153 button{font-family:inherit}
 
@@ -137,7 +137,7 @@ const CSS = `
 .p153modal button{font-family:inherit}
 .p153modal .mdBox{background:var(--bg);color:var(--txt);max-width:920px;margin:0 auto;
   border-radius:0 0 10px 10px;overflow:hidden;position:relative;min-height:100%}
-.p153modal .mdX{position:fixed;top:12px;left:12px;z-index:110;width:38px;height:38px;border-radius:50%;
+.p153modal .mdX{position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;z-index:110;width:38px;height:38px;border-radius:50%;
   border:none;background:rgba(0,0,0,.72);color:#fff;font-size:19px;cursor:pointer}
 .p153modal .mdVid{position:relative;aspect-ratio:16/9;background:#000}
 .p153modal .mdVid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
@@ -220,11 +220,16 @@ const useWorldPrograms = () =>
       const cols = "id, yt_id, title, channel, country, tags, league, minutes, score, " +
         "platform, visibility, rights_tier, created_at";
       const out: ProgramLite[] = [];
-      for (let off = 0; off < 4000; off += 1000) {
+      // score 만으로 정렬하면 동점(점수 종류가 6가지뿐)에서 페이지마다 순서가 흔들려
+      // 같은 영상이 두 번 나오거나 아예 빠졌다 — 실측 중복 208편 / 누락 413편.
+      // id 로 동점 처리를 못 박는다. 상한도 4000 → 20000 (공개분이 이미 2,700편을 넘었다).
+      for (let off = 0; off < 20000; off += 1000) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await (supabase as any)
           .from("boxing_programs").select(cols).eq("is_active", true)
-          .order("score", { ascending: false }).range(off, off + 999);
+          .order("score", { ascending: false })
+          .order("id", { ascending: true })
+          .range(off, off + 999);
         if (error) throw error;
         const page = (data || []) as ProgramLite[];
         out.push(...page);
@@ -537,6 +542,8 @@ const BoxingLibraryPage = () => {
   const [fTime, setFTime] = useState("전체");
   const [lvLeague, setLvLeague] = useState<string>(myLeague);
   const [lvLevel, setLvLevel] = useState<number>(initLevel);
+  // 회원이 직접 등급/레벨을 고르기 전인지. 고르기 전이면 실제 등급을 따라간다.
+  const [lvTouched, setLvTouched] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
   const savedApi = useSaved();
@@ -545,6 +552,21 @@ const BoxingLibraryPage = () => {
   const { data: nowVideos = [] } = useLevelVideos(myLeague, initLevel);
   const { data: nextVideos = [] } = useLevelVideos(myLeague, Math.min(10, initLevel + 1));
   const { data: lvVideos = [] } = useLevelVideos(lvLeague, lvLevel);
+
+  // 보관함에 담아 둔 레벨 미션 영상 (L: 접두사)
+  const savedLevelIds = useMemo(
+    () => Object.keys(savedApi.saved).filter((k) => k.startsWith("L:")).map((k) => k.slice(2)),
+    [savedApi.saved],
+  );
+  const { data: savedLevelVideos = [] } = useLevelVideosByIds(savedLevelIds);
+
+  // 로그인 직후엔 progress 가 아직 안 와서 myLeague/myLevel 이 기본값(화이트 L1)이다.
+  // 그 값이 useState 초기값으로 굳어버려 '내 레벨' 탭이 화이트 L1 에 잠겨 있었다.
+  useEffect(() => {
+    if (lvTouched) return;
+    setLvLeague(myLeague);
+    setLvLevel(initLevel);
+  }, [myLeague, initLevel, lvTouched]);
 
   useEffect(() => {
     const on = () => setSolid(window.scrollY > 24);
@@ -597,14 +619,17 @@ const BoxingLibraryPage = () => {
       const l = programs.filter((p) => p.country === c && isMeta(p));
       if (l.length >= 6) out.push({ t: `${c} ${cn(c)} 복싱`, items: top(l) });
     });
-    const sv = programs.filter((p) => savedApi.saved[`W:${p.id}`]);
-    if (sv.length) out.unshift({ t: "보관함에 담은 영상", items: top(sv), more: "saved" });
+    const sv: Item[] = [
+      ...savedLevelVideos.filter((v) => savedApi.saved[`L:${v.id}`]).map(L),
+      ...programs.filter((p) => savedApi.saved[`W:${p.id}`]).map(W),
+    ];
+    if (sv.length) out.unshift({ t: "보관함에 담은 영상", items: sv.slice(0, 24), more: "saved" });
     if (isAdmin) {
       const ad = programs.filter((p) => p.visibility === "admin");
       if (ad.length) out.push({ t: "관리자 전용 · 권리 확인 필요", items: top(ad, 30) });
     }
     return out.filter((r) => r.items.length > 0);
-  }, [programs, libList, byTag, nowVideos, nextVideos, myLeagueLabel, initLevel, isAdmin, savedApi.saved]);
+  }, [programs, libList, byTag, nowVideos, nextVideos, myLeagueLabel, initLevel, isAdmin, savedApi.saved, savedLevelVideos]);
 
   // ── 카테고리 목록 ──
   const catList = useMemo(() => {
@@ -623,6 +648,13 @@ const BoxingLibraryPage = () => {
     return l;
   }, [cat, byTag, libList, programs, savedApi.saved, fLeague, fTime]);
 
+  // 보관함 탭은 월드 영상뿐 아니라 레벨 미션 영상도 함께 보여준다.
+  const catItems = useMemo<Item[]>(() => {
+    const wd = catList.map(W);
+    if (cat !== "saved") return wd;
+    return [...savedLevelVideos.filter((v) => savedApi.saved[`L:${v.id}`]).map(L), ...wd];
+  }, [catList, cat, savedLevelVideos, savedApi.saved]);
+
   // ── 검색 ──
   const results = useMemo(() => {
     const k = q.trim().toLowerCase();
@@ -632,7 +664,7 @@ const BoxingLibraryPage = () => {
       .filter((v) => v.title.toLowerCase().includes(k)).map(L);
     const wd = programs.filter((p) =>
       `${p.title} ${p.channel ?? ""} ${cn(p.country)} ${(p.tags ?? []).join(" ")}`.toLowerCase().includes(k),
-    ).slice(0, 120).map(W);
+    ).map(W);
     return [...lv, ...wd];
   }, [q, programs, nowVideos, nextVideos, lvVideos]);
 
@@ -725,14 +757,14 @@ const BoxingLibraryPage = () => {
             <div className="seg">
               {LEAGUE_KEYS.map((k) => (
                 <button key={k} className={lvLeague === k ? "on" : ""}
-                  onClick={() => { setLvLeague(k); setLvLevel(1); }}>{RANK_LABELS[k] ?? k}</button>
+                  onClick={() => { setLvTouched(true); setLvLeague(k); setLvLevel(1); }}>{RANK_LABELS[k] ?? k}</button>
               ))}
             </div>
           </div>
           <div className="catBar">
             <div className="seg">
               {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                <button key={n} className={lvLevel === n ? "on" : ""} onClick={() => setLvLevel(n)}>
+                <button key={n} className={lvLevel === n ? "on" : ""} onClick={() => { setLvTouched(true); setLvLevel(n); }}>
                   L{n}{lvLeague === myLeague && n === myLevel ? " ·지금" : ""}
                 </button>
               ))}
@@ -750,7 +782,7 @@ const BoxingLibraryPage = () => {
           <div className="navPad" />
           <div className="catHead">
             <h1>{CAT_META[cat].t}</h1>
-            <div className="cs">{CAT_META[cat].sub} · {catList.length.toLocaleString()}편</div>
+            <div className="cs">{CAT_META[cat].sub} · {catItems.length.toLocaleString()}편</div>
           </div>
           <div className="catBar">
             <div className="seg">
@@ -766,16 +798,16 @@ const BoxingLibraryPage = () => {
               ))}
             </div>
           </div>
-          {catList.length === 0
+          {catItems.length === 0
             ? <div className="emptyS">
                 {cat === "saved"
                   ? <>보관함이 비어 있어요.<br />타일 오른쪽 위 <b>+</b> 를 누르면 여기에 담깁니다.</>
                   : <>조건에 맞는 영상이 없어요.<br />필터를 조정해 보세요.</>}
               </div>
-            : gridOf(catList.slice(0, lim).map(W))}
-          {catList.length > lim && (
+            : gridOf(catItems.slice(0, lim))}
+          {catItems.length > lim && (
             <button className="moreBtn" onClick={() => setLim((n) => n + PAGE)}>
-              더 보기 ({(catList.length - lim).toLocaleString()}편 남음)
+              더 보기 ({(catItems.length - lim).toLocaleString()}편 남음)
             </button>
           )}
         </>

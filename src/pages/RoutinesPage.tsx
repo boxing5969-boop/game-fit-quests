@@ -1,5 +1,6 @@
 // 회원 수업 루틴 — 코치가 만든 4단계 루틴을 열람하고, '수업 완료'를 기록하면
-// 얼굴 인식 출석이 레벨당 3회 쌓이면 자동 승급된다 (10레벨은 코치 승인). 2026-09-02 개편.
+// 얼굴 인식 출석이 리그별 요건(화이트3·블루5·레드8·블랙20회)만큼 쌓이면 승급된다.
+// 화이트·블루는 자동, 레드·블랙은 승급 심사, 10레벨은 코치 승인. 2026-09-07 개편.
 // 연결: 훈련 라이브러리 → (코치)루틴 빌더 → (회원)수업 실행·기록 → 3·3·3 → 레벨업.
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -49,12 +50,16 @@ const RoutinesPage = () => {
 
   const { data: cycle } = useQuery({
     queryKey: ["level-cycle", user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
       const { data, error } = await (supabase.rpc as any)("get_level_cycle_progress", {});
       if (error) throw error;
       return data as Cycle;
     },
   });
+
+  // 레드·블랙은 출석만으로 승급되지 않는다 — 반드시 승급 심사를 거친다.
+  const needsReview = cycle?.rank === "red" || cycle?.rank === "black";
 
   const record = useMutation({
     mutationFn: async (r: Routine) => {
@@ -88,10 +93,16 @@ const RoutinesPage = () => {
           </div>
           <div className="flex gap-2">
             <CycleBar label="출석" cur={cycle.sessions} req={cycle.reqSessions} unit="회" />
+            {/* 블랙 리그는 출석 수와 별개로 최소 연한이 있다 */}
+            {(cycle.reqMinDays ?? 0) > 0 && (
+              <CycleBar label="연한" cur={cycle.elapsedDays ?? 0} req={cycle.reqMinDays ?? 0} unit="일" />
+            )}
           </div>
           {cycle.meets && (
             <p className="mt-2 w-full rounded-lg bg-primary/10 py-2 text-center text-xs font-bold text-primary">
-              출석을 다 채웠어요 — 자동으로 처리 중!
+              {needsReview
+                ? "요건을 다 채웠어요 — 코치님 승급 심사를 신청하세요"
+                : "출석을 다 채웠어요 — 자동으로 처리 중!"}
             </p>
           )}
         </div>
@@ -161,7 +172,10 @@ const RoutinesPage = () => {
             >
               <CheckCircle2 className="h-4 w-4" /> 이 수업 완료로 기록
             </button>
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">출석은 입구 얼굴 인식으로 자동으로 쌓여요. 레벨당 3회면 자동 승급!</p>
+            <p className="mt-2 text-center text-[11px] text-muted-foreground">
+              출석은 입구 얼굴 인식으로 자동으로 쌓여요.
+              {cycle ? ` 레벨당 ${cycle.reqSessions}회${needsReview ? " + 코치님 승급 심사" : "면 자동 승급"}!` : ""}
+            </p>
           </div>
         </div>
       )}

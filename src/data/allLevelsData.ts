@@ -717,9 +717,13 @@ function createFullLeagueLevel(
   reviewCriteria: ReviewCriteria[],
   isBoss: boolean,
 ): UnifiedLevel {
-  // 3-day baseline, boss levels stricter
-  const baseSessions = isBoss ? 5 : 3;
-  const baseDays = isBoss ? 5 : 3;
+  // 출석 요건은 서버(level_visit_requirement)와 같은 숫자를 쓴다.
+  // 예전엔 리그와 무관하게 3회(보스 5회)로 고정돼 있어서, 블루 회원 화면에
+  // 서버는 "5회", 이 값은 "3회"를 동시에 띄웠다.
+  //   화이트 3 · 블루 5 · 레드 8 · 블랙 20  (블랙은 추가로 레벨당 최소 45일 연한)
+  const LEAGUE_SESSIONS: Record<"blue" | "red" | "black", number> = { blue: 5, red: 8, black: 20 };
+  const baseSessions = LEAGUE_SESSIONS[league];
+  const baseDays = LEAGUE_SESSIONS[league];
   const baseMinutes = isBoss ? 250 : 150;
   const baseXp = isBoss ? 500 : 300;
 

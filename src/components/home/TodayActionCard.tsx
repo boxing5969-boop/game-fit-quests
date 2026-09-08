@@ -63,7 +63,7 @@ const TodayActionCard = ({
           badge: "오늘의 시작",
           badgeColor: "bg-primary/20 text-primary",
           title: "입구에서 얼굴 인식하면 출석 완료",
-          subtitle: "출석은 자동으로 쌓여요 — 3회마다 레벨업!",
+          subtitle: "출석은 자동으로 쌓여요 — 레벨업으로 이어집니다",
           cta: "자동 출석",
           ctaBg: "bg-gradient-to-r from-primary to-primary/80",
           glow: "rgba(246, 196, 83, 0.35)",
