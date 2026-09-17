@@ -74,3 +74,12 @@ export type { FunChallengeSubmitFormProps } from "./FunChallengeSubmitForm";
 export type { SafetyCheckPanelProps } from "./SafetyCheckPanel";
 export type { ChampionJournalCardProps } from "./ChampionJournalCard";
 export type { ChampionJournalPromptListProps } from "./ChampionJournalPromptList";
+
+// v2 NN단계 — 153 커뮤니티 확장 (오늘 파트너 · 타이틀매치 축하 · 장비 나눔 · 시간대 팀)
+export { default as PartnerCallCard } from "./PartnerCallCard";
+export { default as PartnerCallSheet } from "./PartnerCallSheet";
+export { default as TitleMatchFeedCard } from "./TitleMatchFeedCard";
+export { default as TitleMatchFeedSheet } from "./TitleMatchFeedSheet";
+export { default as GearShareCard } from "./GearShareCard";
+export { default as GearShareSheet } from "./GearShareSheet";
+export { default as TimeCrewCard } from "./TimeCrewCard";

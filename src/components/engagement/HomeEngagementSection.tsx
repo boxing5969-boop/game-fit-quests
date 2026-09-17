@@ -20,6 +20,10 @@ import ReturnRoundSheet from "./ReturnRoundSheet";
 import CornermanCard from "./CornermanCard";
 import CornermanSheet from "./CornermanSheet";
 import GymRaidCard from "./GymRaidCard";
+import PartnerCallCard from "./PartnerCallCard";
+import TitleMatchFeedCard from "./TitleMatchFeedCard";
+import GearShareCard from "./GearShareCard";
+import TimeCrewCard from "./TimeCrewCard";
 
 export interface HomeEngagementSectionProps {
   /** 외부에서 복싱 IQ 진입을 가로채고 싶을 때만 지정. 기본은 본 컴포넌트가 모달을 연다. */
@@ -156,6 +160,15 @@ const HomeEngagementSection = ({
 
       {/* ─── v2 21단계: 짐 레이드 (지점 누적 목표) ─── */}
       <GymRaidCard />
+
+      {/* ─── 153 커뮤니티 확장 ───
+           복싱은 짝이 필요한 운동이라 '오늘 파트너'를 맨 앞에 둔다.
+           타이틀매치 축하는 회원이 글을 쓰지 않아도 채워지는 유일한 카드다.
+           네 카드 모두 시트를 자체 보유한다(부모 state 폭증 방지 — GymRaidCard 방식). */}
+      <PartnerCallCard />
+      <TitleMatchFeedCard />
+      <GearShareCard />
+      <TimeCrewCard />
         </>
       )}
 
