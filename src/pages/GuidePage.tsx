@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, FlaskConical, Map, Dumbbell, ShieldCheck, Play, ChevronDown, Lock, CheckCircle2, HelpCircle } from "lucide-react";
+import { BookOpen, FlaskConical, Map, Dumbbell, ShieldCheck, Play, ChevronDown, Lock, CheckCircle2, HelpCircle, TrendingUp } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { RANK_LABELS } from "@/data/sharedConstants";
 import { LEAGUE_SUMMARIES, FULL_VALUE_MAP } from "@/data/valueMapData";
 import { EXERCISE_REASONS } from "@/data/exerciseReasonsData";
 import { SAFETY_BLOCKS } from "@/data/safetyCheckData";
@@ -8,10 +11,11 @@ import { GUIDE_CARDS } from "@/data/whiteLevel1Data";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTutorialState } from "@/hooks/useTutorialState";
 
-type GuideTab = "program" | "science" | "valuemap" | "exercise" | "safety" | "whitefaq";
+type GuideTab = "program" | "levelup" | "science" | "valuemap" | "exercise" | "safety" | "whitefaq";
 
 const TABS: { id: GuideTab; label: string; icon: typeof BookOpen }[] = [
   { id: "program", label: "프로그램", icon: BookOpen },
+  { id: "levelup", label: "승급 기준", icon: TrendingUp },
   { id: "whitefaq", label: "화이트 FAQ", icon: HelpCircle },
   { id: "science", label: "과학설계", icon: FlaskConical },
   { id: "valuemap", label: "가치맵", icon: Map },
@@ -73,7 +77,7 @@ const GuidePage = () => {
         <div className="mb-3 flex items-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
           <span className="text-base">👆</span>
           <span className="flex-1">
-            아래 6개 탭을 한 번씩 눌러보세요. 클릭{" "}
+            아래 <span className="number-font">{TABS.length}</span>개 탭을 한 번씩 눌러보세요. 클릭{" "}
             <span className="number-font">{clickedTabs.size}</span> /{" "}
             <span className="number-font">{TABS.length}</span> 완료 시 자동 진행.
           </span>
@@ -120,6 +124,7 @@ const GuidePage = () => {
       </div>
 
       {activeTab === "program" && <ProgramTab />}
+      {activeTab === "levelup" && <LevelUpTab />}
       {activeTab === "whitefaq" && (
         <div className="space-y-3 animate-slide-up">
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
@@ -198,6 +203,232 @@ const ProgramTab = () => (
     ))}
   </div>
 );
+
+/* ═══════════ 2. 승급 기준 ═══════════
+   숫자는 전부 서버(get_levelup_rules)에서 받는다. 여기에 하드코딩하면
+   서버 기준이 바뀔 때 또 어긋난다 — 이미 "레벨당 3회"가 세 군데 박혀
+   블루 회원에게 틀린 숫자를 보여주던 문제가 있었다. */
+interface LevelUpRule {
+  rank: string;
+  firstLevel: number;
+  lastLevel: number;
+  visitsPerLevel: number;
+  minDaysPerLevel: number;
+  autoAdvance: boolean;
+  levelAuthority: "coach" | "manager" | "owner";
+  titleAuthority: "coach" | "manager" | "owner";
+}
+interface MyCycle {
+  sessions: number; reqSessions: number; rank?: string;
+  reqMinDays?: number; elapsedDays?: number; meets: boolean;
+}
+
+const WHO: Record<LevelUpRule["titleAuthority"], string> = {
+  coach: "담당 코치님",
+  manager: "지점장·관장님",
+  owner: "관장님",
+};
+
+const LevelUpTab = () => {
+  const { user } = useAuth();
+
+  const { data: rules = [] } = useQuery({
+    queryKey: ["levelup-rules"],
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("get_levelup_rules", {});
+      if (error) throw error;
+      return (data || []) as LevelUpRule[];
+    },
+  });
+
+  const { data: cycle } = useQuery({
+    queryKey: ["level-cycle", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("get_level_cycle_progress", {});
+      if (error) throw error;
+      return data as MyCycle;
+    },
+  });
+
+  const mine = rules.find((r) => r.rank === cycle?.rank);
+
+  return (
+    <div className="space-y-4 animate-slide-up">
+      {/* 두 가지 길 */}
+      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+        <h2 className="mb-2 text-sm font-bold text-foreground">레벨이 오르는 길은 두 개입니다</h2>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          하나는 <b className="text-foreground">출석</b>으로 저절로 오르는 길, 하나는
+          <b className="text-foreground"> 코치님이 직접 보고</b> 올려주는 길입니다.
+          어느 쪽이든 레벨업 조건은 모두에게 같습니다.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="rounded-2xl border border-border bg-card p-3.5 shadow-elev-1">
+          <p className="mb-1.5 text-xs font-bold text-primary">🚪 출석으로 저절로</p>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            입구에서 얼굴 인식만 하면 출석이 쌓입니다. 리그 요건만큼 모이면 다음 레벨로
+            자동 승급됩니다. 누를 버튼도 없습니다.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-reward/30 bg-reward/5 p-3.5 shadow-elev-1">
+          <p className="mb-1.5 text-xs font-bold text-reward-foreground">🥇 코치님 심사로</p>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            <b className="text-foreground">레벨 10·20·30·40</b>은 출석을 다 채워도 자동으로
+            오르지 않습니다. 코치님이 직접 보고 승인해야 넘어갑니다.
+          </p>
+        </div>
+      </div>
+
+      {/* 내 기준 */}
+      {cycle && mine && (
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+          <p className="mb-2 text-xs font-bold text-foreground">
+            지금 회원님 기준 — {RANK_LABELS[mine.rank] || mine.rank} 리그
+          </p>
+          <div className="mb-2 flex items-end gap-1.5">
+            <span className="number-font text-2xl font-bold text-primary">{cycle.sessions}</span>
+            <span className="number-font text-sm text-muted-foreground">/ {cycle.reqSessions}회</span>
+            <span className="ml-1 pb-0.5 text-[11px] text-muted-foreground">이번 레벨 출석</span>
+          </div>
+          <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary"
+              style={{ width: `${Math.min(100, (cycle.sessions / Math.max(1, cycle.reqSessions)) * 100)}%` }}
+            />
+          </div>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            {mine.autoAdvance
+              ? `이 리그는 출석 ${mine.visitsPerLevel}회를 채우면 자동으로 다음 레벨로 갑니다. 단, 레벨 ${mine.lastLevel}은 심사를 거칩니다.`
+              : `이 리그는 출석을 채워도 자동으로 오르지 않습니다. ${mine.visitsPerLevel}회를 채우면 심사가 열리고, ${WHO[mine.levelAuthority]}이 보고 승급합니다.`}
+            {(mine.minDaysPerLevel ?? 0) > 0 &&
+              ` 그리고 레벨마다 최소 ${mine.minDaysPerLevel}일을 머물러야 합니다 — 출석을 몰아쳐도 건너뛸 수 없습니다.`}
+          </p>
+        </div>
+      )}
+
+      {/* 리그별 요건 */}
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-elev-1">
+        <div className="border-b border-border px-4 py-2.5">
+          <p className="text-xs font-bold text-foreground">리그별 승급 요건</p>
+        </div>
+        {rules.map((r) => (
+          <div key={r.rank} className="flex items-start gap-3 border-b border-border px-4 py-3 last:border-b-0">
+            <div className="w-[68px] shrink-0">
+              <p className="text-xs font-bold text-foreground">{RANK_LABELS[r.rank] || r.rank}</p>
+              <p className="number-font text-[10px] text-muted-foreground">
+                Lv {r.firstLevel}~{r.lastLevel}
+              </p>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-foreground">
+                한 레벨에 출석{" "}
+                <b className="number-font text-primary">{r.visitsPerLevel}회</b>
+                {(r.minDaysPerLevel ?? 0) > 0 && (
+                  <>
+                    {" + 레벨마다 "}
+                    <b className="number-font text-primary">{r.minDaysPerLevel}일</b>
+                  </>
+                )}
+              </p>
+              <p className="mt-0.5 text-[10.5px] leading-relaxed text-muted-foreground">
+                {r.autoAdvance
+                  ? `출석만 채우면 자동 승급 · 레벨 ${r.lastLevel}만 심사`
+                  : "출석을 채우면 심사가 열립니다 · 전 레벨 심사"}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 타이틀매치 */}
+      <div className="overflow-hidden rounded-2xl border border-reward/30 bg-card shadow-elev-1">
+        <div className="border-b border-border bg-reward/5 px-4 py-2.5">
+          <p className="text-xs font-bold text-reward-foreground">🥇 타이틀매치 — 리그를 넘는 네 개의 문</p>
+        </div>
+        <div className="px-4 py-3">
+          <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+            레벨 10·20·30·40은 다음 리그로 넘어가는 문입니다. 출석을 다 채워도 자동으로
+            열리지 않고, <b className="text-foreground">직접 보여드리고 승인을 받아야</b> 넘어갑니다.
+          </p>
+          <div className="space-y-1.5">
+            {rules.map((r) => (
+              <div key={r.rank} className="flex items-center gap-2.5 rounded-lg bg-muted/30 px-3 py-2">
+                <span className="number-font w-[52px] shrink-0 text-xs font-bold text-foreground">
+                  레벨 {r.lastLevel}
+                </span>
+                <span className="min-w-0 flex-1 text-[11px] text-muted-foreground">
+                  {RANK_LABELS[r.rank] || r.rank} 마지막 관문
+                </span>
+                <span className="shrink-0 text-[11px] font-bold text-primary">{WHO[r.titleAuthority]}</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+            위로 갈수록 승인하는 분이 달라집니다. 레벨 20을 넘으면 실제로 맞대는 스파링 구간이
+            열리고, 레벨 30을 넘으면 다른 회원을 지도하는 리그에 들어가기 때문입니다.
+          </p>
+        </div>
+      </div>
+
+      {/* 심사에서 보는 것 */}
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+        <p className="mb-2 text-xs font-bold text-foreground">심사에서는 무엇을 보나요</p>
+        <ul className="space-y-1.5">
+          {[
+            "그 레벨의 미션 동작을 하나씩 보여드립니다. 앱에서 미리 영상으로 볼 수 있습니다.",
+            "항목을 전부 통과해야 승급됩니다. 하나라도 남으면 승인 버튼이 열리지 않습니다.",
+            "부족한 항목이 있으면 '보완 요청'을 드립니다. 레벨이 내려가지는 않습니다.",
+            "누가 어느 항목을 통과시켰는지 기록에 남습니다.",
+          ].map((t, i) => (
+            <li key={i} className="relative pl-3.5 text-[11px] leading-relaxed text-muted-foreground">
+              <span className="absolute left-0 top-[7px] h-[3px] w-[3px] rounded-full bg-primary" />
+              {t}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* 자주 묻는 것 */}
+      <div className="space-y-2.5">
+        {LEVELUP_FAQ.map((item, i) => (
+          <div key={i} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+            <p className="mb-1.5 text-xs font-bold text-foreground">❓ {item.q}</p>
+            <p className="text-[11px] leading-relaxed text-muted-foreground">{item.a}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const LEVELUP_FAQ = [
+  {
+    q: "오래 다녔는데 왜 바로 높은 레벨이 아닌가요?",
+    a: "다닌 기간이 아니라 몸에 남은 기술로 기준을 잡습니다. 2년을 다니셨어도 타이틀매치는 똑같이 보십니다. 대신 앞 레벨은 그동안 쌓인 출석이 반영되어 빠르게 지나갑니다.",
+  },
+  {
+    q: "출석을 몰아서 하면 빨리 올라가나요?",
+    a: "화이트와 블루는 그렇습니다. 출석이 쌓인 만큼 레벨이 이어서 오릅니다. 레드부터는 출석만으로는 오르지 않고 반드시 심사를 거치며, 블랙은 레벨마다 최소 머무는 기간이 있어 몰아쳐도 건너뛸 수 없습니다.",
+  },
+  {
+    q: "보완 요청을 받으면 떨어진 건가요?",
+    a: "아닙니다. 레벨이 내려가지 않습니다. 부족한 항목만 더 연습해서 다시 보여주시면 됩니다. 그동안 통과한 항목은 그대로 남아 있습니다.",
+  },
+  {
+    q: "심사는 따로 신청해야 하나요?",
+    a: "아닙니다. 출석이 요건을 채우면 자동으로 심사함에 올라갑니다. 회원님이 누를 버튼은 없습니다.",
+  },
+  {
+    q: "레벨이 오르면 무엇을 받나요?",
+    a: "레벨이 오를 때마다 XP +50, 파이트 머니 +10이 들어옵니다. 리그를 넘으면 캐릭터에 쓸 수 있는 아이템이 함께 열립니다.",
+  },
+];
 
 /* ═══════════ White FAQ Tab ═══════════ */
 const WHITE_FAQ = [
