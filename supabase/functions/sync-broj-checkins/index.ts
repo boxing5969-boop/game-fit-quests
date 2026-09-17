@@ -1,12 +1,18 @@
 // 브로제이 출입 → 마이복서153 라이브보드 자동 표시.
 //
-// 흐름: pg_cron(10분) → 이 함수 → 153OS(CRM) attendance_logs 조회 → 앱 attendance_logs 기록
+// 흐름: pg_cron(5분) → 이 함수 → 153OS(CRM) attendance_logs 조회 → 앱 attendance_logs 기록
 //
 // 원칙 (절대 어기지 말 것):
 //   - XP 를 지급하지 않는다. xp_granted=0, member_progress·xp_logs 를 건드리지 않는다.
 //     XP 는 앱 QR 체크인(qr-checkin Edge Function)에서만 지급된다.
 //   - 앱 계정을 새로 만들지 않는다. 전화번호로 못 찾으면 건너뛴다(unmatched 로 집계).
 //   - source_ref 유니크(broj:<attendance_id>)로 재실행해도 중복되지 않는다.
+//
+// 백필 (2026-09-17 추가):
+//   기본 동작은 "오늘부터 days 일"이다. 과거 구간을 채우려면 from/to 를 직접 준다.
+//     { "from": "2026-02-01", "to": "2026-02-28", "skipAdvance": true }
+//   skipAdvance=true 면 자동 승급 검사를 돌리지 않는다 — 과거 출석을 넣는 것과
+//   레벨을 움직이는 것은 분리해야 한다(한꺼번에 하면 수천 명 레벨이 통제 없이 이동).
 //
 // 인증: DB(internal_sync_config.auto_sync_key)에 저장된 내부 키를 x-auto-key 헤더로 검증.
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -63,21 +69,26 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
+
+    // 기간 결정 — from/to 를 주면 그 구간(백필), 없으면 기존처럼 "오늘부터 days 일".
+    const ymd = /^\d{4}-\d{2}-\d{2}$/;
     const days = Number(body?.days) > 0 ? Math.min(30, Number(body.days)) : 1;
-    const from = kstDate(days - 1);
-    const to = kstDate(0);
+    const from = ymd.test(String(body?.from ?? "")) ? String(body.from) : kstDate(days - 1);
+    const to = ymd.test(String(body?.to ?? "")) ? String(body.to) : kstDate(0);
+    if (from > to) return json({ error: "from 이 to 보다 늦습니다" }, 400);
+    const skipAdvance = body?.skipAdvance === true;
 
     const os = createClient(OS_URL, OS_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
     // 2) CRM 출입 이력 조회 (지점명 필요 → branches 조인)
-    //    ⚠️ 단일 limit 은 백필(days=30)에서 조용히 잘린다 → 1000행 페이지 루프로 전량 수집.
+    //    ⚠️ 단일 limit 은 백필에서 조용히 잘린다 → 1000행 페이지 루프로 전량 수집.
     type OsRow = {
       broj_attendance_id: string; phone: string | null; member_name: string | null;
       attended_at: string; attend_date: string; user_type: string | null;
       branches: { name: string } | { name: string }[] | null;
     };
     const rows: OsRow[] = [];
-    for (let off = 0; off < 20000; off += 1000) {
+    for (let off = 0; off < 40000; off += 1000) {
       const { data: page, error: osErr } = await os
         .from("attendance_logs")
         .select("broj_attendance_id, phone, member_name, attended_at, attend_date, user_type, branches!inner(name)")
@@ -100,7 +111,7 @@ Deno.serve(async (req) => {
 
     if (rows.length === 0) {
       await app.from("broj_checkin_runs").insert({ ok: true, scanned: 0 });
-      return json({ ok: true, from, to, scanned: 0, inserted: 0, skipped: 0, unmatched: 0 });
+      return json({ ok: true, from, to, scanned: 0, inserted: 0, skipped: 0, unmatched: 0, skipAdvance });
     }
 
     // 3) 이미 기록된 건 제외 (source_ref 유니크)
@@ -114,7 +125,7 @@ Deno.serve(async (req) => {
     const todo = rows.filter((r) => !existing.has(`broj:${r.broj_attendance_id}`));
     if (todo.length === 0) {
       await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, skipped: rows.length });
-      return json({ ok: true, from, to, scanned: rows.length, inserted: 0, skipped: rows.length, unmatched: 0 });
+      return json({ ok: true, from, to, scanned: rows.length, inserted: 0, skipped: rows.length, unmatched: 0, skipAdvance });
     }
 
     // 4) 전화번호 → 앱 회원 매칭
@@ -192,7 +203,7 @@ Deno.serve(async (req) => {
     const userIds = [...new Set([...profMap.values()].map((p) => p.user_id))];
     if (userIds.length === 0) {
       await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, skipped: rows.length - todo.length, unmatched: todo.length });
-      return json({ ok: true, from, to, scanned: rows.length, inserted: 0, skipped: rows.length - todo.length, unmatched: todo.length });
+      return json({ ok: true, from, to, scanned: rows.length, inserted: 0, skipped: rows.length - todo.length, unmatched: todo.length, skipAdvance });
     }
 
     // 5) 리그·레벨 스냅샷 + 지점별 표시명 모드
@@ -218,12 +229,13 @@ Deno.serve(async (req) => {
     const dayKeys = new Set<string>();
     {
       const startIso = new Date(`${from}T00:00:00+09:00`).toISOString();
+      const endIso = new Date(`${to}T23:59:59+09:00`).toISOString();
       for (let i = 0; i < userIds.length; i += 300) {
         const { data } = await app
           .from("attendance_logs").select("user_id, checked_in_at")
           .in("user_id", userIds.slice(i, i + 300))
           .eq("is_duplicate", false)
-          .gte("checked_in_at", startIso);
+          .gte("checked_in_at", startIso).lte("checked_in_at", endIso);
         for (const a of (data || []) as { user_id: string; checked_in_at: string }[]) {
           const d = new Date(new Date(a.checked_in_at).getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
           dayKeys.add(`${a.user_id}|${d}`);
@@ -276,18 +288,24 @@ Deno.serve(async (req) => {
     //    1~9레벨은 출석 3회 자동 승급, 10레벨은 코치 승인함으로 자동 신청 (DB 함수가 판정).
     //    개별 실패는 삼킨다 — 다음 출석 동기화 때 같은 검사가 다시 돈다.
     //    코치·지점장은 제외한다 — 출근 도장이 회원 레벨 승급으로 이어지면 안 된다.
-    const advanceTargets = [...new Set(
-      inserts.filter((r) => r.is_duplicate === false).map((r) => String(r.user_id)),
-    )].filter((uid) => !staffIds.has(uid));
-    for (const uid of advanceTargets) {
-      try {
-        await app.rpc("auto_advance_from_attendance", { _user_id: uid });
-      } catch (_e) { /* 무시 — 출석 기록이 우선이다 */ }
+    //    skipAdvance=true(백필)면 건너뛴다 — 과거 출석 적재와 레벨 이동은 분리한다.
+    //    (한꺼번에 하면 수천 명 레벨이 통제 없이 움직인다).
+    let advanced = 0;
+    if (!skipAdvance) {
+      const advanceTargets = [...new Set(
+        inserts.filter((r) => r.is_duplicate === false).map((r) => String(r.user_id)),
+      )].filter((uid) => !staffIds.has(uid));
+      for (const uid of advanceTargets) {
+        try {
+          await app.rpc("auto_advance_from_attendance", { _user_id: uid });
+          advanced++;
+        } catch (_e) { /* 무시 — 출석 기록이 우선이다 */ }
+      }
     }
 
     const skipped = rows.length - todo.length;
     await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, inserted, skipped, unmatched });
-    return json({ ok: true, from, to, scanned: rows.length, inserted, skipped, unmatched });
+    return json({ ok: true, from, to, scanned: rows.length, inserted, skipped, unmatched, skipAdvance, advanced });
   } catch (e) {
     await app.from("broj_checkin_runs").insert({
       ok: false, error: (e instanceof Error ? e.message : String(e)).slice(0, 500),
