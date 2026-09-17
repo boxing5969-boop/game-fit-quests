@@ -217,8 +217,11 @@ const CHEER_ERROR_KO: { match: string; ko: string }[] = [
  * 새 테이블을 만들지 않고 기존 send_boxing_cheer 를 쓴다 —
  * 일일 한도·보상·멱등키가 전부 그 RPC 안에 있어서 한 곳에서 관리된다.
  */
-export async function clapTitleMatch(receiverUserId: string, sourceId: string) {
-  const res = await sbRpc<{ success?: boolean }>("send_boxing_cheer", {
+export async function clapTitleMatch(
+  receiverUserId: string,
+  sourceId: string,
+): Promise<{ success?: boolean; cheer_id?: string } | null> {
+  const res = await sbRpc<{ success?: boolean; cheer_id?: string }>("send_boxing_cheer", {
     p_receiver_user_id: receiverUserId,
     p_cheer_type: "clap",
     p_message: null,

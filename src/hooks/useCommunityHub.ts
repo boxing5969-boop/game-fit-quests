@@ -10,6 +10,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useGymRaidContributeTrigger } from "@/hooks/useGymRaid";
 import {
   EMPTY_GEAR_POSTS,
   EMPTY_PARTNER_CALLS,
@@ -128,13 +129,19 @@ export function useTitleMatchFeed(enabled = true) {
 
 export function useClapTitleMatch() {
   const qc = useQueryClient();
+  const { triggerContribute } = useGymRaidContributeTrigger();
+
   return useMutation({
     mutationFn: (v: { receiverUserId: string; sourceId: string }) =>
       clapTitleMatch(v.receiverUserId, v.sourceId),
-    onSuccess: () => {
+    onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: TITLEMATCH_FEED_KEY });
       // 박수는 기존 응원 한도·짐 레이드 기여와 같은 원장을 쓴다
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+      // 지점 짐 레이드(cheer_sent)에 1점 — 세컨드 응원과 같은 카운터.
+      // cheer_id 가 없으면 서버가 조용히 넘긴다(회원 흐름을 막지 않는다).
+      if (result?.cheer_id) triggerContribute("boxing_cheer", result.cheer_id);
     },
   });
 }
