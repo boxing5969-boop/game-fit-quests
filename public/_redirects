@@ -1,1 +1,6 @@
+# /rankup — 회원 안내 상세 페이지(정적 HTML). 아래 SPA 스플랫보다 먼저 와야 한다.
+# Cloudflare Pages 는 위에서부터 평가하고, 200 은 리다이렉트가 아니라 내부 재작성이다.
+/rankup   /rankup/index.html   200
+/rankup/  /rankup/index.html   200
+
 /*  /index.html  200

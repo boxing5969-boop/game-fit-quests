@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>153 랭크업 시스템 — 회원 안내</title>
+<meta name="description" content="40레벨 승급 기준 · 타이틀매치 · 관문 직행권. 입구에서 얼굴 인식만 하면 기록이 됩니다.">
+<link rel="canonical" href="https://myboxer153.com/rankup">
+<meta name="theme-color" content="#F5F8F7">
+
+<!-- 링크 미리보기 (카카오톡·RCS문자·iMessage). og:image 는 절대 URL 필수.
+     이미지를 교체하면 카카오 캐시가 남는다 →
+     https://developers.kakao.com/tool/debugger/sharing 에서 '초기화'. -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="마이복서153">
+<meta property="og:title" content="153 랭크업 시스템 — 회원 안내">
+<meta property="og:description" content="40레벨 승급 기준 · 타이틀매치 · 관문 직행권. 입구에서 얼굴 인식만 하면 기록이 됩니다.">
+<meta property="og:url" content="https://myboxer153.com/rankup">
+<meta property="og:image" content="https://myboxer153.com/rankup/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="153 랭크업 시스템 — 회원 안내">
+<meta name="twitter:description" content="40레벨 승급 기준 · 타이틀매치 · 관문 직행권. 입구에서 얼굴 인식만 하면 기록이 됩니다.">
+<meta name="twitter:image" content="https://myboxer153.com/rankup/og.png">
+
+<link rel="icon" type="image/svg+xml" href="/myboxer-icon.svg">
+<link rel="icon" type="image/png" href="/myboxer-icon.png">
+<link rel="apple-touch-icon" href="/myboxer-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&family=Oswald:wght@500;600&display=swap">
+<style>
+:root{
+  /* 라이트 단일 테마 (대표님 지시: 항상 라이트). 보는 사람 기기가 다크여도
+     다크로 안 넘어가도록 다크 블록을 두지 않고, 색을 전부 명시한다.
+     --mint/--gold 는 글자용(대비 확보), --mintFill/--goldFill 은 칠하는 용. */
+  --bg:#F5F8F7; --panel:#FFFFFF; --panel2:#E9EEEC; --sunk:#EFF3F2;
+  --ink:#11161A; --ink2:#5A666C; --ink3:#6E7A80;
+  --line:#DCE3E1; --line2:#C3CDCA;
+  --mint:#07784F; --mintFill:#10B981; --gold:#8A6510; --goldFill:#EFC94C;
+  --lg-w:#A9B3B8; --lg-b:#2F6FB8; --lg-r:#C8461F; --lg-k:#2B3438;
+  --display:"Black Han Sans","Noto Sans KR","Malgun Gothic",sans-serif;
+  --body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --num:"Oswald","Noto Sans KR",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);
+  font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px;padding-block:0 64px}
+.tnum{font-family:var(--num);font-variant-numeric:tabular-nums}
+
+/* ── 히어로 ── */
+.hero{padding-block:52px 40px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.22em;color:var(--mint);
+  text-transform:uppercase}
+.hero h1{font-family:var(--display);font-weight:400;font-size:clamp(46px,12vw,86px);
+  line-height:1.0;margin:16px 0 0;letter-spacing:-.01em;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--mint)}
+.hero p{font-size:clamp(17px,4.4vw,21px);font-weight:500;color:var(--ink2);
+  margin:22px 0 0;max-width:32em}
+.hero p b{color:var(--ink);font-weight:700}
+.applink{display:inline-flex;align-items:center;gap:10px;margin-top:28px;
+  padding:13px 20px;border:1px solid var(--line2);border-radius:999px;
+  background:var(--panel);color:var(--ink);text-decoration:none;
+  font-weight:700;font-size:15.5px}
+.applink span{font-family:var(--num);color:var(--mint);letter-spacing:.02em}
+.applink:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+
+/* ── 섹션 ── */
+section{padding-block:44px;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+.snum{font-family:var(--num);font-size:13px;font-weight:600;letter-spacing:.16em;
+  color:var(--ink3)}
+h2{font-family:var(--display);font-weight:400;font-size:clamp(27px,6.6vw,38px);
+  line-height:1.2;margin:8px 0 0;letter-spacing:-.005em;text-wrap:balance}
+h2 em{font-style:normal;color:var(--mint)}
+h2.g em{color:var(--gold)}
+.sub{font-size:15.5px;color:var(--ink2);margin:14px 0 0;max-width:34em}
+.sub b{color:var(--ink);font-weight:700}
+
+.track{display:block;width:100%;height:auto;margin:26px 0 8px}
+
+/* 리그 4줄 — 좁은 화면에서도 한 줄로 읽히게 */
+.leagues{display:grid;gap:10px;margin-top:22px}
+.league{display:flex;align-items:center;gap:16px;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:14px 18px 14px 0;overflow:hidden;box-shadow:0 1px 2px rgba(17,22,26,.04)}
+.league i{flex:none;width:4px;align-self:stretch;background:var(--rail);
+  border-radius:0 3px 3px 0;min-height:44px}
+.league .main{flex:1;min-width:0}
+.league .nm{display:block;font-weight:900;font-size:18px;line-height:1.3}
+.league .lv{font-family:var(--num);font-size:13px;font-weight:500;color:var(--ink3);
+  letter-spacing:.04em}
+.league .rq{flex:none;max-width:52%;text-align:right;font-size:15px;font-weight:700;
+  line-height:1.45}
+.league .rq b{font-family:var(--num);font-size:21px;color:var(--mint);font-weight:600}
+.league .rq small{display:block;font-size:12.5px;font-weight:600;color:var(--ink3)}
+.league .rq .aut{display:block;font-size:12px;font-weight:700;margin-top:3px}
+/* 01 은 '무엇을 배우나', 02 는 '몇 회 필요한가' — 같은 표로 두 번 읽히지 않게 구분 */
+.leagues.plain{gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.leagues.plain .league{border:0;border-radius:0;padding:12px 18px 12px 0}
+.leagues.plain .league+.league{border-top:1px solid var(--line)}
+.leagues.plain .rq{font-weight:600;font-size:13.5px;color:var(--ink2)}
+
+/* 두 갈래 */
+.paths{display:grid;gap:12px;margin-top:24px}
+@media(min-width:560px){.paths{grid-template-columns:1fr 1fr}}
+.path{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;
+  box-shadow:0 1px 2px rgba(17,22,26,.04)}
+.path h3{margin:0;font-size:17px;font-weight:900}
+.path.a h3{color:var(--mint)} .path.b h3{color:var(--gold)}
+.path p{margin:10px 0 0;font-size:14.5px;color:var(--ink2)}
+
+/* 관문 4개 */
+.gates{margin-top:24px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.gate{display:flex;align-items:baseline;gap:14px;padding:15px 18px;background:var(--panel)}
+.gate+.gate{border-top:1px solid var(--line)}
+.gate .lv{font-family:var(--num);font-size:19px;font-weight:600;min-width:86px}
+.gate .rg{font-size:13.5px;color:var(--ink3);flex:1}
+.gate .who{font-size:14.5px;font-weight:700;color:var(--gold);text-align:right}
+
+/* 직행권 */
+.tix{display:grid;gap:12px;margin-top:24px}
+@media(min-width:560px){.tix{grid-template-columns:1fr 1fr}}
+.tik{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--goldFill);
+  border-radius:14px;padding:20px}
+.tik .h{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.tik .h b{font-size:21px;font-weight:900;color:var(--gold)}
+.tik .h span{font-family:var(--num);font-size:13px;color:var(--ink3)}
+.tik .cond{font-size:13.5px;color:var(--ink2);margin-top:8px;line-height:1.5}
+.tik .goal{font-family:var(--num);font-size:20px;font-weight:600;margin-top:14px;
+  padding-top:14px;border-top:1px solid var(--line)}
+.tik .cnt{font-size:13px;font-weight:700;color:var(--mint);margin-top:2px}
+
+/* 3단계 */
+.steps{display:grid;gap:12px;margin-top:24px;counter-reset:s}
+.step{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.step::before{counter-increment:s;content:counter(s);font-family:var(--num);
+  font-size:26px;font-weight:600;color:var(--mint);line-height:1}
+.step h3{margin:0;font-size:16.5px;font-weight:900}
+.step p{margin:6px 0 0;font-size:14.5px;color:var(--ink2)}
+.step code{font-family:var(--num);font-size:15px;color:var(--mint);letter-spacing:.02em}
+
+/* 강조 블록 */
+.call{margin-top:22px;background:var(--sunk);border:1px solid var(--line2);
+  border-radius:14px;padding:20px}
+.call p{margin:0;font-size:14.5px;color:var(--ink2)}
+.call p+p{margin-top:12px}
+.call b{color:var(--ink);font-weight:700}
+.call .gd{color:var(--gold);font-weight:700}
+
+/* FAQ */
+.faq{margin-top:22px;display:grid;gap:0;border:1px solid var(--line);border-radius:14px;
+  overflow:hidden}
+details{background:var(--panel)}
+details+details{border-top:1px solid var(--line)}
+summary{cursor:pointer;padding:15px 18px;font-size:15px;font-weight:700;
+  list-style:none;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"＋";color:var(--ink3);font-weight:400;line-height:1.5}
+details[open] summary::after{content:"－"}
+summary:focus-visible{outline:2px solid var(--mint);outline-offset:-2px}
+details p{margin:0;padding:0 18px 17px;font-size:14.5px;color:var(--ink2)}
+
+/* 직원용 사이니지 */
+.staff{margin-top:14px;background:var(--sunk);border:1px solid var(--line2);
+  border-radius:14px;padding:20px}
+.staff dl{margin:14px 0 0;display:grid;gap:10px}
+.staff dt{font-size:12.5px;font-weight:700;letter-spacing:.1em;color:var(--mint)}
+.staff dd{margin:2px 0 0;font-size:14.5px;color:var(--ink2)}
+.shots{display:grid;gap:14px;margin-top:22px}
+figure{margin:0}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--line);
+  border-radius:10px;background:var(--panel)}
+figcaption{margin-top:8px;font-size:13px;color:var(--ink3);font-weight:700}
+figcaption b{font-family:var(--num);color:var(--ink2);margin-right:8px}
+
+.end{padding-block:36px 0;font-size:13.5px;color:var(--ink3)}
+.end b{display:block;color:var(--ink2);font-weight:700;margin-bottom:4px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<style>
+  :root{color-scheme:light}
+  html,body{background:var(--bg)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">153복싱짐 · 마이복서153</p>
+    <h1>153<br>랭크업 <em>시스템</em></h1>
+    <p>입구에서 <b>얼굴 인식</b>만 하시면, 오늘 나오신 것이 그대로 <b>기록</b>이 됩니다.
+       그 기록으로 레벨이 오릅니다.</p>
+    <a class="applink" href="https://myboxer153.com" target="_blank" rel="noopener noreferrer">
+      앱 열기 <span>myboxer153.com</span></a>
+  </header>
+
+  <section>
+    <p class="snum">01 — 전체 구조</p>
+    <h2>리그 4개, 레벨 <em>40개</em></h2>
+    
+<svg viewBox="0 0 560 96" class="track" role="img"
+     aria-label="레벨 1부터 40까지 이어지는 진행선. 10·20·30·40 네 곳에 타이틀매치 관문이 있습니다.">
+  <line x1="20" y1="54" x2="540" y2="54" stroke="var(--line2)" stroke-width="2"/>
+  <rect x="25.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-w)" opacity=".75"/><rect x="38.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-w)" opacity=".75"/><rect x="51.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-w)" opacity=".75"/><rect x="64.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-w)" opacity=".75"/><rect x="77.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-w)" opacity=".75"/><rect x="90.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-w)" opacity=".75"/><rect x="103.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-w)" opacity=".75"/><rect x="116.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-w)" opacity=".75"/><rect x="129.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-w)" opacity=".75"/><rect x="139.5" y="44" width="8" height="20" rx="2.5" fill="var(--goldFill)"/><rect x="155.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-b)" opacity=".75"/><rect x="168.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-b)" opacity=".75"/><rect x="181.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-b)" opacity=".75"/><rect x="194.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-b)" opacity=".75"/><rect x="207.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-b)" opacity=".75"/><rect x="220.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-b)" opacity=".75"/><rect x="233.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-b)" opacity=".75"/><rect x="246.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-b)" opacity=".75"/><rect x="259.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-b)" opacity=".75"/><rect x="269.5" y="44" width="8" height="20" rx="2.5" fill="var(--goldFill)"/><rect x="285.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-r)" opacity=".75"/><rect x="298.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-r)" opacity=".75"/><rect x="311.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-r)" opacity=".75"/><rect x="324.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-r)" opacity=".75"/><rect x="337.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-r)" opacity=".75"/><rect x="350.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-r)" opacity=".75"/><rect x="363.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-r)" opacity=".75"/><rect x="376.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-r)" opacity=".75"/><rect x="389.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-r)" opacity=".75"/><rect x="399.5" y="44" width="8" height="20" rx="2.5" fill="var(--goldFill)"/><rect x="415.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-k)" opacity=".75"/><rect x="428.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-k)" opacity=".75"/><rect x="441.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-k)" opacity=".75"/><rect x="454.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-k)" opacity=".75"/><rect x="467.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-k)" opacity=".75"/><rect x="480.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-k)" opacity=".75"/><rect x="493.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-k)" opacity=".75"/><rect x="506.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-k)" opacity=".75"/><rect x="519.2" y="49" width="2.6" height="10" rx="1.3" fill="var(--lg-k)" opacity=".75"/><rect x="529.5" y="44" width="8" height="20" rx="2.5" fill="var(--goldFill)"/>
+  <text x="143.5" y="32" text-anchor="middle" fill="var(--gold)" class="tnum" font-size="24" font-weight="700">10</text><text x="273.5" y="32" text-anchor="middle" fill="var(--gold)" class="tnum" font-size="24" font-weight="700">20</text><text x="403.5" y="32" text-anchor="middle" fill="var(--gold)" class="tnum" font-size="24" font-weight="700">30</text><text x="533.5" y="32" text-anchor="middle" fill="var(--gold)" class="tnum" font-size="24" font-weight="700">40</text>
+  <text x="280" y="86" text-anchor="middle" fill="var(--ink3)" font-size="16" font-weight="700">금색 네 곳이 타이틀매치입니다</text>
+</svg>
+    <div class="leagues plain">
+      
+      <div class="league" style="--rail:var(--lg-w)">
+        <i></i>
+        <div class="main"><span class="nm">화이트</span><span class="lv">Lv 1 ~ 10</span></div>
+        <div class="rq" style="color:var(--ink)">기본기<small>자세 · 잽 · 스텝</small></div>
+      </div>
+      <div class="league" style="--rail:var(--lg-b)">
+        <i></i>
+        <div class="main"><span class="nm">블루</span><span class="lv">Lv 11 ~ 20</span></div>
+        <div class="rq" style="color:var(--lg-b)">회피와 연결<small>슬립 · 위빙 · 더킹에서 이어지는 공격</small></div>
+      </div>
+      <div class="league" style="--rail:var(--lg-r)">
+        <i></i>
+        <div class="main"><span class="nm">레드</span><span class="lv">Lv 21 ~ 30</span></div>
+        <div class="rq" style="color:var(--lg-r)">실전<small>맞대는 구간 · 체력</small></div>
+      </div>
+      <div class="league" style="--rail:var(--lg-k)">
+        <i></i>
+        <div class="main"><span class="nm">블랙</span><span class="lv">Lv 31 ~ 40</span></div>
+        <div class="rq" style="color:var(--lg-k)">지도<small>배운 것을 전하는 단계</small></div>
+      </div>
+    </div>
+    <p class="sub">리그를 넘을 때마다 배우는 내용이 바뀝니다. 레벨 10 · 20 · 30 · 40이
+      리그를 넘는 네 개의 문입니다.</p>
+  </section>
+
+  <section>
+    <p class="snum">02 — 오르는 방법</p>
+    <h2>레벨이 오르는 길은 <em>두 개</em>입니다</h2>
+    <div class="paths">
+      <div class="path a">
+        <h3>출석으로 저절로</h3>
+        <p>입구에서 얼굴 인식만 하시면 출석이 자동으로 쌓입니다. 누를 버튼도, 신청할 것도
+           없습니다. 출석은 하루 1회까지 인정됩니다.</p>
+      </div>
+      <div class="path b">
+        <h3>코치님 심사로</h3>
+        <p>레벨 10 · 20 · 30 · 40은 출석을 다 채워도 자동으로 오르지 않습니다.
+           직접 보여드리고 승인을 받아야 넘어갑니다.</p>
+      </div>
+    </div>
+    <div class="leagues">
+      
+      <div class="league" style="--rail:var(--lg-w)">
+        <i></i>
+        <div class="main"><span class="nm">화이트</span><span class="lv">Lv 1 ~ 10</span></div>
+        <div class="rq">한 레벨에 출석 <b>3회</b>
+          
+          <span class="aut" style="color:var(--mint)">요건을 채우면 자동 승급</span>
+        </div>
+      </div>
+      <div class="league" style="--rail:var(--lg-b)">
+        <i></i>
+        <div class="main"><span class="nm">블루</span><span class="lv">Lv 11 ~ 20</span></div>
+        <div class="rq">한 레벨에 출석 <b>5회</b>
+          
+          <span class="aut" style="color:var(--mint)">요건을 채우면 자동 승급</span>
+        </div>
+      </div>
+      <div class="league" style="--rail:var(--lg-r)">
+        <i></i>
+        <div class="main"><span class="nm">레드</span><span class="lv">Lv 21 ~ 30</span></div>
+        <div class="rq">한 레벨에 출석 <b>8회</b>
+          
+          <span class="aut" style="color:var(--gold)">출석만으로는 안 오릅니다 · 전 레벨 심사</span>
+        </div>
+      </div>
+      <div class="league" style="--rail:var(--lg-k)">
+        <i></i>
+        <div class="main"><span class="nm">블랙</span><span class="lv">Lv 31 ~ 40</span></div>
+        <div class="rq">한 레벨에 출석 <b>20회</b>
+          <small>+ 레벨마다 45일</small>
+          <span class="aut" style="color:var(--gold)">출석만으로는 안 오릅니다 · 전 레벨 심사</span>
+        </div>
+      </div>
+    </div>
+    <div class="call">
+      <p>블랙 리그에 <b>레벨마다 45일</b> 조건이 붙는 이유가 있습니다. 마지막 리그는
+         몰아치기로 통과할 수 있는 구간이 아니기 때문입니다. 출석을 몰아서 하셔도
+         기간은 건너뛸 수 없습니다.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="snum">03 — 리그를 넘는 문</p>
+    <h2 class="g"><em>타이틀매치</em></h2>
+    <p class="sub"><b>레벨 10 · 20 · 30 · 40</b> — 네 번 모두 사람이 직접 보고 승인합니다.
+      위로 갈수록 승인하시는 분이 달라집니다. 레벨 20을 넘으면 맞대는 스파링 구간이
+      열리고, 레벨 30을 넘으면 다른 회원님을 지도하는 리그에 들어가기 때문입니다.</p>
+    <div class="gates">
+      
+      <div class="gate">
+        <span class="lv">레벨 10</span>
+        <span class="rg">화이트 마지막 관문</span>
+        <span class="who">담당 코치님</span>
+      </div>
+      <div class="gate">
+        <span class="lv">레벨 20</span>
+        <span class="rg">블루 마지막 관문</span>
+        <span class="who">지점장 · 관장님</span>
+      </div>
+      <div class="gate">
+        <span class="lv">레벨 30</span>
+        <span class="rg">레드 마지막 관문</span>
+        <span class="who">관장님</span>
+      </div>
+      <div class="gate">
+        <span class="lv">레벨 40</span>
+        <span class="rg">블랙 마지막 관문</span>
+        <span class="who">관장님</span>
+      </div>
+    </div>
+    <div class="call">
+      <p><b>심사에서 보는 것</b></p>
+      <p>· 그 레벨의 미션 동작을 하나씩 보여드립니다. 앱에서 미리 영상으로 보실 수 있습니다.<br>
+         · 항목을 <b>전부</b> 통과해야 승급됩니다. 하나라도 남으면 승인 버튼이 열리지 않습니다.<br>
+         · 부족한 항목이 있으면 보완 요청을 드립니다. <b>레벨이 내려가지는 않습니다.</b>
+           통과한 항목은 그대로 남습니다.<br>
+         · 누가 어느 항목을 통과시켰는지 기록에 남습니다.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="snum">04 — 오래 다니신 회원님</p>
+    <h2 class="g"><em>관문 직행권</em></h2>
+    <p class="sub"><b>1레벨부터 다시 밟지 않으십니다.</b> 타이틀매치를 통과하시면 다음
+      리그의 1레벨이 아니라 <b>그 리그의 타이틀매치로 바로</b> 넘어가십니다.</p>
+    <div class="tix">
+      <div class="tik">
+        <div class="h"><b>직행권 2장</b><span>13명</span></div>
+        <p class="cond">누적 출석 80회 이상</p>
+        <p class="goal">레벨 10 · 20 · 30</p>
+        <p class="cnt">세 번의 도전</p>
+      </div>
+      <div class="tik">
+        <div class="h"><b>직행권 1장</b><span>17명</span></div>
+        <p class="cond">재적 1년 이상 <b>그리고</b> 누적 출석 30회 이상</p>
+        <p class="goal">레벨 10 · 20</p>
+        <p class="cnt">두 번의 도전</p>
+      </div>
+    </div>
+    <div class="call">
+      <p><b>왜 다닌 기간이 아니라 출석으로 정했나</b></p>
+      <p>출석 80회는 정상 경로로 화이트(3회 × 10)와 블루(5회 × 10)를 지나는 분량입니다.
+         그 자체가 증명이 됩니다. 기간만으로 자르면
+         <b>129회 나오신 분이 82회 나오신 분보다 불리해지는 역전</b>이 생깁니다.</p>
+      <p><span class="gd">직행권이 있어도 심사는 면제되지 않습니다.</span>
+         타이틀매치 항목을 전부 보여주셔야 넘어가고, 기준은 다른 회원님과 완전히 같습니다.
+         레벨을 올려드리는 것이 아니라 <b>도전 기회를 앞으로 당겨</b> 드리는 것입니다.</p>
+      <p>해당되시는 회원님은 앱의 레벨 카드에 <span class="gd">⚡ 패스트 트랙</span>으로
+         표시됩니다.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="snum">05 — 지금</p>
+    <h2>오늘 하실 일은 <em>세 가지</em></h2>
+    <div class="steps">
+      <div class="step">
+        <div><h3>앱 열기</h3>
+          <p><code>myboxer153.com</code> 을 열고 휴대폰 홈 화면에 추가하시면 앱처럼 쓰실 수 있습니다.</p></div>
+      </div>
+      <div class="step">
+        <div><h3>로그인</h3>
+          <p>등록하신 번호로 로그인하십니다. 첫 로그인은 데스크에서 안내해 드립니다.
+             비밀번호는 <b style="color:var(--ink)">본인만 아는 것으로 꼭 바꿔</b> 주세요.</p></div>
+      </div>
+      <div class="step">
+        <div><h3>입구에서 얼굴 인식</h3>
+          <p>그게 출석입니다. QR을 찍거나 휴대폰을 꺼낼 일은 없습니다.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="snum">06 — 자주 묻는 것</p>
+    <h2>궁금한 것들</h2>
+    <div class="faq">
+      
+      <details open>
+        <summary>오래 다녔는데 왜 바로 높은 레벨이 아닌가요?</summary>
+        <p>다닌 기간이 아니라 몸에 남은 기술로 기준을 잡습니다. 오래 다니신 분께는 앞 레벨을 건너뛰는 관문 직행권을 드리지만, 타이틀매치 자체는 똑같이 보십니다.</p>
+      </details>
+      <details>
+        <summary>출석을 몰아서 하면 빨리 올라가나요?</summary>
+        <p>화이트와 블루는 그렇습니다. 쌓인 만큼 레벨이 이어서 오릅니다. 레드부터는 출석만으로는 오르지 않고 반드시 심사를 거치며, 블랙은 레벨마다 최소 45일이 필요합니다.</p>
+      </details>
+      <details>
+        <summary>하루에 두 번 오면 출석 2회인가요?</summary>
+        <p>아닙니다. 하루 1회까지만 인정됩니다.</p>
+      </details>
+      <details>
+        <summary>심사는 따로 신청해야 하나요?</summary>
+        <p>아닙니다. 출석이 요건을 채우면 자동으로 심사함에 올라갑니다. 회원님이 누르실 버튼은 없습니다.</p>
+      </details>
+      <details>
+        <summary>보완 요청을 받으면 떨어진 건가요?</summary>
+        <p>아닙니다. 레벨이 내려가지 않습니다. 부족한 항목만 더 연습해서 다시 보여주시면 되고, 통과한 항목은 그대로 남아 있습니다.</p>
+      </details>
+      <details>
+        <summary>직행권을 쓰면 중간 레벨은 못 배우고 넘어가는 건가요?</summary>
+        <p>배울 내용이 사라지는 것은 아닙니다. 중간 레벨의 미션 영상은 앱에서 계속 보실 수 있고, 타이틀매치에서는 그 리그에서 쌓아야 할 동작을 통째로 확인합니다.</p>
+      </details>
+      <details>
+        <summary>레벨이 오르면 무엇을 받나요?</summary>
+        <p>레벨이 오를 때마다 XP +50, 파이트 머니 +10이 들어옵니다. 리그를 넘으면 캐릭터에 쓸 수 있는 아이템이 함께 열립니다.</p>
+      </details>
+      <details>
+        <summary>내 레벨과 출석은 어디서 보나요?</summary>
+        <p>앱 홈의 '레벨업까지' 카드에서 이번 레벨 출석이 몇 회 쌓였는지 바로 보입니다. 기준 전체는 앱 가이드 → 승급 기준 탭에 들어 있습니다.</p>
+      </details>
+    </div>
+  </section>
+
+  <section>
+    <p class="snum">07 — 앞으로</p>
+    <h2>기준은 <em>모두에게 같습니다</em></h2>
+    <p class="sub">지금은 전 회원님이 <b>화이트 리그</b>에서 시작합니다. 오래 다니신 회원님은
+      직행권으로 관문부터 도전하십니다.</p>
+    <div class="call">
+      <p><b>블루 리그</b>의 미션 영상과 심사 항목은 준비되는 대로 순차 공개됩니다.
+         준비되기 전까지는 블루 타이틀매치가 열리지 않습니다 —
+         내용 없이 통과시키지 않기 위한 것입니다.</p>
+      <p>기준이나 내 레벨이 궁금하시면 담당 코치님께, 또는 데스크로 말씀해 주세요.</p>
+    </div>
+  </section>
+
+
+  <p class="end">
+    <b>153복싱짐</b>
+    선릉역점 · 잠실점 · 역삼점 · 칠금점 &nbsp;·&nbsp; myboxer153.com
+  </p>
+
+</div>
+
+</body>
+</html>
