@@ -66,3 +66,7 @@ _tmp_*
 /talktalk-webhook-*.js
 /*-talktalk.js
 /\[*\]talktalk.js
+
+# 삭제할 파일을 모아두는 폴더 — 이 환경에서는 rm 이 막혀 있어 여기로 옮긴다.
+# 실제 키가 담긴 백업 파일이 섞여 있어서, git add -A 로 통째로 올라가면 유출된다.
+_to_delete/
