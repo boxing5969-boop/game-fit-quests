@@ -54,6 +54,9 @@ interface Checklist {
   isTitleMatch: boolean;
   requiredAuthority: "coach" | "manager" | "owner";
   canApprove: boolean;
+  // 이 회원이 패스트 트랙인지 — 승인하면 다음 리그의 타이틀매치로 직행한다.
+  // 코치가 "왜 이 회원이 1레벨이 아니라 10레벨에 있는지" 알 수 있어야 한다.
+  fastTrackGates?: number;
   items: ChecklistItem[];
   total: number;
   passedCount: number;
@@ -350,6 +353,11 @@ const ReviewCard = ({ member, busy, onDecide }: {
               타이틀매치
             </span>
           )}
+          {isTitleMatch && (cl?.fastTrackGates ?? 0) > 0 && (
+            <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[9px] font-bold text-primary">
+              ⚡ 패스트 트랙
+            </span>
+          )}
         </div>
         <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${color}`}>
           <Icon className="h-3 w-3" /> {STATUS_LABEL[member.status]}
@@ -423,6 +431,13 @@ const ReviewCard = ({ member, busy, onDecide }: {
         </p>
       )}
       {member.note && <p className="mb-2 text-[10px] text-muted-foreground">📝 {member.note}</p>}
+      {isTitleMatch && (cl?.fastTrackGates ?? 0) > 0 && (
+        <p className="mb-2 rounded-lg bg-primary/10 px-2.5 py-1.5 text-[10px] leading-relaxed text-foreground">
+          ⚡ 오래 다니신 회원입니다 — 승인하면 다음 리그의 1레벨이 아니라{" "}
+          <b>그 리그의 타이틀매치로 바로</b> 갑니다 (남은 직행권 {cl?.fastTrackGates}장).
+          심사 기준은 다른 회원과 같습니다.
+        </p>
+      )}
       {blockReason && (
         <p className="mb-2 rounded-lg bg-muted/40 px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground">
           {blockReason}

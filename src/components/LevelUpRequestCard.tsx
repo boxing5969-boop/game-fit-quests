@@ -17,6 +17,9 @@ interface Cycle {
   reqSessions: number; reqDays: number; reqMinutes: number; meets: boolean;
   // 리그별 차등 요건 — 화이트3 / 블루5 / 레드8 / 블랙20회, 블랙은 레벨당 최소 45일 체류
   reqMinDays?: number; elapsedDays?: number; rank?: string;
+  // 패스트 트랙 직행권 — 1 이상이면 타이틀매치를 통과할 때 다음 리그의 1레벨이 아니라
+  // 그 리그의 타이틀매치로 바로 간다 (오래 다니신 회원 예우, 2026-09-17 대표님 결정)
+  fastTrackGates?: number;
 }
 
 const Bar = ({ label, cur, req, unit }: { label: string; cur: number; req: number; unit: string }) => {
@@ -87,13 +90,17 @@ const LevelUpRequestCard = () => {
   const isBossLevel = (progress?.current_level ?? 1) === 10;
   // 레드·블랙은 출석을 채워도 코치 승인이 있어야 올라간다
   const isApprovalOnly = cycle.rank === "red" || cycle.rank === "black";
+  const gates = cycle.fastTrackGates ?? 0;
+  const isFastTrack = gates > 0;
   const previews = nextVideos.filter((v) => !!youtubeThumb(v.videoUrl)).slice(0, 2);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
       <p className="mb-1 text-sm font-black text-foreground">레벨업까지</p>
       <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
-        {isBossLevel
+        {isFastTrack && isBossLevel
+          ? "타이틀매치입니다. 심사 항목을 코치님께 보여드리고 통과하면 다음 리그의 타이틀매치로 바로 넘어갑니다."
+          : isBossLevel
           ? `보스 레벨! 출석 ${cycle.reqSessions}회를 채우면 승급 심사에 올라가고, 코치님이 승인하면 다음 리그로 갑니다.`
           : isApprovalOnly
             ? `이 리그부터는 출석 ${cycle.reqSessions}회를 채우면 승급 심사가 열리고, 코치님이 직접 보고 승급합니다.`
@@ -105,6 +112,19 @@ const LevelUpRequestCard = () => {
           <Bar label="연한 (이 레벨에 머문 기간)" cur={cycle.elapsedDays ?? 0} req={cycle.reqMinDays ?? 0} unit="일" />
           <p className="mt-1 text-[10px] text-muted-foreground">
             블랙 리그는 출석을 몰아쳐도 건너뛸 수 없어요 — 레벨마다 최소 {cycle.reqMinDays}일이 필요합니다.
+          </p>
+        </div>
+      )}
+
+      {isFastTrack && (
+        <div className="mt-3 rounded-xl border border-reward/30 bg-reward/5 px-3 py-2.5">
+          <p className="text-[11.5px] font-black text-reward-foreground">
+            ⚡ 패스트 트랙 — 남은 직행권 {gates}장
+          </p>
+          <p className="mt-1 text-[10.5px] leading-relaxed text-muted-foreground">
+            오래 다니신 만큼 앞 레벨은 건너뜁니다. 타이틀매치를 통과하면 다음 리그의 1레벨이 아니라{" "}
+            <b className="text-foreground">그 리그의 타이틀매치로 바로</b> 갑니다.
+            다만 심사가 면제되는 것은 아닙니다 — 항목을 전부 보여주셔야 넘어갑니다.
           </p>
         </div>
       )}

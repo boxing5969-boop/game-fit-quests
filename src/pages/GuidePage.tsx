@@ -221,6 +221,8 @@ interface LevelUpRule {
 interface MyCycle {
   sessions: number; reqSessions: number; rank?: string;
   reqMinDays?: number; elapsedDays?: number; meets: boolean;
+  // 패스트 트랙 직행권 잔여 수 (get_level_cycle_progress)
+  fastTrackGates?: number;
 }
 
 const WHO: Record<LevelUpRule["titleAuthority"], string> = {
@@ -309,6 +311,12 @@ const LevelUpTab = () => {
             {(mine.minDaysPerLevel ?? 0) > 0 &&
               ` 그리고 레벨마다 최소 ${mine.minDaysPerLevel}일을 머물러야 합니다 — 출석을 몰아쳐도 건너뛸 수 없습니다.`}
           </p>
+          {(cycle.fastTrackGates ?? 0) > 0 && (
+            <p className="mt-2 rounded-lg border border-reward/30 bg-reward/5 px-2.5 py-2 text-[11px] font-semibold leading-relaxed text-reward-foreground">
+              ⚡ 회원님은 패스트 트랙입니다 — 남은 직행권 {cycle.fastTrackGates}장.
+              타이틀매치를 통과하면 다음 리그의 타이틀매치로 바로 넘어갑니다.
+            </p>
+          )}
         </div>
       )}
 
@@ -376,6 +384,43 @@ const LevelUpTab = () => {
         </div>
       </div>
 
+      {/* 패스트 트랙 — 오래 다니신 회원 */}
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-elev-1">
+        <div className="border-b border-border px-4 py-2.5">
+          <p className="text-xs font-bold text-foreground">⚡ 패스트 트랙 — 오래 다니신 회원</p>
+        </div>
+        <div className="px-4 py-3">
+          <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+            이미 오래 다니신 분께 1레벨부터 다시 밟게 하는 것은 맞지 않습니다. 그래서
+            <b className="text-foreground"> 관문 직행권</b>을 드립니다. 타이틀매치를 통과하면
+            다음 리그의 1레벨이 아니라 <b className="text-foreground">그 리그의 타이틀매치로 바로</b> 넘어갑니다.
+          </p>
+          <div className="space-y-1.5">
+            {[
+              { n: "직행권 2장", who: "누적 출석 80회 이상", what: "레벨 10 · 20 · 30 — 세 번의 도전" },
+              { n: "직행권 1장", who: "재적 1년 이상 + 누적 출석 30회 이상", what: "레벨 10 · 20 — 두 번의 도전" },
+            ].map((r) => (
+              <div key={r.n} className="rounded-lg bg-muted/30 px-3 py-2">
+                <p className="text-[11px] font-bold text-foreground">
+                  {r.n} <span className="font-normal text-muted-foreground">— {r.who}</span>
+                </p>
+                <p className="mt-0.5 text-[10.5px] text-primary">{r.what}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+            기준을 <b className="text-foreground">기간이 아니라 출석</b>으로 잡은 이유가 있습니다.
+            출석 80회는 정상 경로로 화이트(30회)와 블루(50회)를 통과하는 분량이라 그 자체가
+            증명이 됩니다. 기간만 보면 129회 나오신 분이 82회 나오신 분보다 불리해지는
+            역전이 생깁니다.
+          </p>
+          <p className="mt-2 rounded-lg bg-muted/40 px-2.5 py-2 text-[10.5px] font-semibold leading-relaxed text-foreground">
+            직행권이 있어도 심사는 면제되지 않습니다. 타이틀매치 항목을 전부 보여주셔야 넘어가고,
+            기준은 다른 회원과 완전히 같습니다.
+          </p>
+        </div>
+      </div>
+
       {/* 심사에서 보는 것 */}
       <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <p className="mb-2 text-xs font-bold text-foreground">심사에서는 무엇을 보나요</p>
@@ -410,7 +455,11 @@ const LevelUpTab = () => {
 const LEVELUP_FAQ = [
   {
     q: "오래 다녔는데 왜 바로 높은 레벨이 아닌가요?",
-    a: "다닌 기간이 아니라 몸에 남은 기술로 기준을 잡습니다. 2년을 다니셨어도 타이틀매치는 똑같이 보십니다. 대신 앞 레벨은 그동안 쌓인 출석이 반영되어 빠르게 지나갑니다.",
+    a: "다닌 기간이 아니라 몸에 남은 기술로 기준을 잡습니다. 오래 다니신 분께는 앞 레벨을 건너뛰는 관문 직행권을 드리지만, 타이틀매치 자체는 똑같이 보십니다. 레벨을 올려드리는 것이 아니라 도전 기회를 앞으로 당겨드리는 것입니다.",
+  },
+  {
+    q: "직행권을 쓰면 중간 레벨은 못 배우고 넘어가는 건가요?",
+    a: "배울 내용이 사라지는 것은 아닙니다. 중간 레벨의 미션 영상은 앱에서 계속 볼 수 있고, 타이틀매치에서는 그 리그에서 쌓아야 할 동작을 통째로 확인합니다. 통과하지 못하면 보완 요청을 드리며, 레벨이 내려가지는 않습니다.",
   },
   {
     q: "출석을 몰아서 하면 빨리 올라가나요?",
