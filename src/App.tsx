@@ -82,6 +82,7 @@ const AboutOneFiveThreePage = lazyWithRetry(() => import("@/pages/AboutOneFiveTh
 const DietCoachInboxPage = lazyWithRetry(() => import("@/pages/diet/coach/DietCoachInboxPage"));
 const DietMemberDetailPage = lazyWithRetry(() => import("@/pages/diet/coach/DietMemberDetailPage"));
 const LiveBoardPage = lazyWithRetry(() => import("@/pages/LiveBoardPage"));
+const SignageBoardPage = lazyWithRetry(() => import("@/pages/SignageBoardPage"));
 const FaceKioskPage = lazyWithRetry(() => import("@/pages/FaceKioskPage"));
 const SuperAdminDashboard = lazyWithRetry(() => import("@/pages/SuperAdminDashboard"));
 // 153마인드셋 — 시각화 훈련 (153복싱짐으로 돌아온 사람).
@@ -295,6 +296,9 @@ const AppRoutes = () => {
         {/* 지점 코드 없이 /tv 만 치면 지점 선택 화면 — TV 리모컨 입력을 줄이려는 것 */}
         <Route path="/tv" element={<TvBranchPicker />} />
         <Route path="/tv/:branchCode" element={<LiveBoardPage />} />
+        {/* 3번 화면은 실시간 보드가 아니라 회원 안내 카드뉴스 슬라이드쇼다.
+            정적 세그먼트("3")가 :screen 보다 우선 매칭되므로 순서와 무관하게 잡힌다. */}
+        <Route path="/tv/:branchCode/3" element={<SignageBoardPage />} />
         <Route path="/tv/:branchCode/:screen" element={<LiveBoardPage />} />
         <Route path="/face-kiosk/:branchCode" element={<FaceKioskPage />} />
         {/* 설치형 앱 전용 — 지점은 키오스크 키가 결정한다(주소에 지점코드 불필요) */}

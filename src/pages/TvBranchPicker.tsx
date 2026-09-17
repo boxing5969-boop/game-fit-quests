@@ -44,6 +44,10 @@ const TvBranchPicker = () => {
         <p className="mt-2 text-lg font-bold text-gray-500">
           s 선릉 · j 잠실 · y 역삼 · c 칠금 &nbsp;|&nbsp; 두 대로 나누려면 뒤에 /1 · /2
         </p>
+        <p className="mt-3 border-t border-gray-800 pt-3 text-lg font-bold text-gray-400">
+          뒤에 <span className="font-black text-green-400">/3</span> 을 붙이면
+          실시간 보드 대신 <span className="text-gray-200">회원 안내 카드뉴스</span>가 돌아갑니다
+        </p>
       </div>
     </div>
   );
