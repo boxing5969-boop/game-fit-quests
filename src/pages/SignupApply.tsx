@@ -60,12 +60,15 @@ const SignupApply = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from("membership_products")
         .select("id, name, price, duration_days")
         .eq("is_active", true)
         .gt("duration_days", 0)
         .order("sort_order", { ascending: true });
+      // 조회가 막히면(RLS 등) 조용히 빈 목록이 되어 "수강권이 없습니다" 로만 보인다.
+      // 원인을 남겨야 다음에 같은 일로 헤매지 않는다.
+      if (error) console.error("[SignupApply] 수강권 목록 조회 실패:", error);
       setProducts((data as Product[]) || []);
     })();
   }, []);
@@ -119,14 +122,24 @@ const SignupApply = () => {
     setSubmitting(true);
     try {
       const phoneDigits = rawDigits(phone);
-      // 전화번호 중복 체크 (소셜 로그인 본인은 제외)
-      let dupQ = supabase.from("profiles").select("user_id").eq("phone_number", phoneDigits);
-      if (loggedIn && user) dupQ = dupQ.neq("user_id", user.id);
-      const { data: dup } = await dupQ.maybeSingle();
-      if (dup) {
-        setErr("이미 등록된 전화번호입니다. 한 번호당 하나의 계정만 가능합니다.");
-        setSubmitting(false);
-        return;
+      // 전화번호 중복 확인 — 반드시 서버 함수로 물어본다.
+      // profiles 를 직접 조회하면 비로그인 방문자에게는 RLS 가 0행을 주므로
+      // 중복이 있어도 "없음" 으로 통과해 버린다(조용한 실패). check_phone_available 은
+      // 회원 정보를 일절 돌려주지 않고 사용 가능 여부만 판정한다.
+      if (!(loggedIn && user)) {
+        const { data: usable, error: chkErr } = await (supabase as any).rpc("check_phone_available", {
+          p_phone: phoneDigits,
+        });
+        if (chkErr) {
+          setErr("전화번호 확인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+          setSubmitting(false);
+          return;
+        }
+        if (usable !== true) {
+          setErr("이미 등록된 전화번호입니다. 한 번호당 하나의 계정만 가능합니다.");
+          setSubmitting(false);
+          return;
+        }
       }
 
       let uid: string | null = user?.id ?? null;
