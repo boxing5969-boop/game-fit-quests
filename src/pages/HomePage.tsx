@@ -40,6 +40,7 @@ import HomeCustomizeSheet from "@/components/home/HomeCustomizeSheet";
 // HomeEngagementSection 은 별도 메뉴 (/myboxer/quest, MyBoxerQuestPage) 로 이전.
 import { useHomeLayout, type HomeWidgetId } from "@/lib/homeLayout";
 import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
+import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
@@ -384,12 +385,17 @@ const HomePage = () => {
             },
             todayAction: () =>
               homeWidgets.todayAction ? (
-                <TodayActionCard
-                  state={todayActionState}
-                  activeMinutes={activeMinutes}
-                  streakDays={progress.streak_days}
-                  onClick={handleTodayAction}
-                />
+                <div className="space-y-2">
+                  <TodayActionCard
+                    state={todayActionState}
+                    activeMinutes={activeMinutes}
+                    streakDays={progress.streak_days}
+                    onClick={handleTodayAction}
+                  />
+                  {/* 오늘 출석이 없으면 스스로 렌더하지 않는다. 위젯 on/off 대상에서
+                      빼둔 이유 — 끄는 걸 잊어 종료를 못 누르는 일이 없어야 한다. */}
+                  <WorkoutFinishCard />
+                </div>
               ) : null,
             osamiNote: () => (homeWidgets.osamiNote ? <OsamiHomeNote /> : null),
             rankingPreview: () =>
