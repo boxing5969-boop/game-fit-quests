@@ -8,6 +8,9 @@
  *
  * 안 눌러도 50분(한 타임)으로 기록된다는 사실을 문구로 분명히 적는다.
  * 눌러야만 손해를 면하는 구조가 아니라는 것을 회원이 알아야 불만이 안 생긴다.
+ *
+ * 120분까지는 오래 할수록 XP 와 승급 진행이 더 쌓인다(workout_progress).
+ * 그 숫자는 서버에만 있고 여기서 계산하지 않는다 — 화면과 랭킹이 어긋나지 않게.
  */
 
 import { motion } from "framer-motion";
@@ -78,7 +81,7 @@ const WorkoutFinishCard = () => {
         <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
           {done
             ? `이번 달 ${formatMinutes(data.month_minutes)} · ${data.month_days}일`
-            : `안 누르면 ${data.default_minutes}분으로 기록돼요`}
+            : `안 누르면 ${data.default_minutes}분으로 기록돼요 · 오래 할수록 XP↑`}
         </p>
       </div>
 
