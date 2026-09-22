@@ -12,6 +12,9 @@
  *   · QR 내용은 https://myboxer153.com/qr-checkin?b=<지점코드>&t=<토큰>.
  *     앱 안 스캐너(QrCheckinPage)가 이 URL 에서 b·t 를 꺼내 qr_manual_checkin 을 부른다.
  *   · 토큰을 못 받으면 카드 자리에 안내만 남긴다 — 보드의 다른 부분은 영향 없음.
+ *   · 보드 키(선택): 지점에 키가 등록되면(internal_sync_config board_key:<지점명>) 그 키를 가진
+ *     TV 에만 토큰이 나온다. TV 에서 /tv/<코드>?k=<키> 를 한 번 열면 localStorage 에 남는다.
+ *     키가 등록되지 않은 지점은 지금처럼 열려 있다.
  *
  * variant:
  *   · sidebar  — 오른쪽 패널 맨 위 (기본 화면·2번 화면)
@@ -54,12 +57,27 @@ interface Props {
   variant?: "sidebar" | "floating";
 }
 
+/** TV 마다 한 번 /tv/<코드>?k=<키> 로 열면 저장되는 보드 키. 지점에 키가 등록돼 있을 때만 쓰인다. */
+function readBoardKey(branchName: string): string | null {
+  const store = `153_board_key:${branchName}`;
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get("k");
+    if (fromUrl) {
+      localStorage.setItem(store, fromUrl);
+      return fromUrl;
+    }
+    return localStorage.getItem(store);
+  } catch {
+    return null;
+  }
+}
+
 const POLL_MS = 30_000;
 const QR_SIZE = 168;
 
 const LiveBoardQrCard = ({ branchName, variant = "sidebar" }: Props) => {
   const [url, setUrl] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<null | "key" | "net">(null);
 
   useEffect(() => {
     if (!branchName) return;
@@ -70,13 +88,17 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar" }: Props) => {
       let nextMs = POLL_MS;
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase as any).rpc("get_board_qr_token", { p_branch: branchName });
+        const { data, error } = await (supabase as any).rpc("get_board_qr_token", {
+          p_branch: branchName,
+          p_key: readBoardKey(branchName),
+        });
         if (!alive) return;
         const res = (data ?? null) as TokenRes | null;
         if (error || !res?.ok || !res.token) {
-          setFailed(true);
+          setFailed(res?.error === "board_key_required" ? "key" : "net");
+          if (res?.error === "board_key_required") setUrl(null); // 잠긴 지점 — 이전 QR 을 남기지 않는다
         } else {
-          setFailed(false);
+          setFailed(null);
           setUrl(buildQrCheckinUrl(res.code || res.branch || branchName, res.token));
           // 토큰이 바뀌는 순간 바로 새 QR 로 — 단, 3초보다 잦게는 안 부른다.
           const untilRotate = ((res.expires_in_sec ?? 30) + 1) * 1000;
@@ -84,7 +106,7 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar" }: Props) => {
         }
       } catch {
         if (!alive) return;
-        setFailed(true);
+        setFailed("net");
       }
       timer = setTimeout(load, nextMs);
     };
@@ -119,7 +141,10 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar" }: Props) => {
         <p className="mt-2 text-xs font-bold leading-snug text-white/40">
           마이복서153 → 홈 → 오늘의 시작 → QR 출석
         </p>
-        {failed && !url && (
+        {failed === "key" && (
+          <p className="mt-1 text-xs font-bold text-destructive/80">이 TV 는 보드 키 등록이 필요해요 — 관리자에게 문의</p>
+        )}
+        {failed === "net" && !url && (
           <p className="mt-1 text-xs font-bold text-destructive/80">QR 을 불러오지 못했어요 — 잠시 후 다시 시도합니다</p>
         )}
       </div>

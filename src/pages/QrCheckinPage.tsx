@@ -35,6 +35,7 @@ interface CheckinResult {
   display_name?: string;
   staff?: boolean;
   method?: string;
+  xp_granted?: number;
 }
 
 /** 보드 QR 의 URL(https://myboxer153.com/qr-checkin?b=..&t=..)에서 지점·토큰을 꺼낸다. */
@@ -233,6 +234,9 @@ const QrCheckinPage = () => {
               {result.branch}
               {result.checked_in_at ? ` · ${fmtTime(result.checked_in_at)}` : ""}
             </p>
+            {!result.already && (result.xp_granted ?? 0) > 0 && (
+              <p className="mt-2 text-sm font-black text-primary">XP +{result.xp_granted}</p>
+            )}
             <p className="mt-3 text-[12px] text-muted-foreground">
               {result.already
                 ? result.method === "qr_manual"
