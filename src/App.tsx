@@ -63,6 +63,8 @@ const GuideValueMapPage = lazyWithRetry(() => import("@/pages/guide/GuideValueMa
 const GuideExercisePurposePage = lazyWithRetry(() => import("@/pages/guide/GuideExercisePurposePage"));
 const GuideSafetyPage = lazyWithRetry(() => import("@/pages/guide/GuideSafetyPage"));
 const GuideFaqPage = lazyWithRetry(() => import("@/pages/guide/GuideFaqPage"));
+// 레벨 40까지 가는 길 — 내 페이스로 몇 년 걸리나 (2026-09-22)
+const GuideJourneyPage = lazyWithRetry(() => import("@/pages/guide/GuideJourneyPage"));
 const RankUpPage = lazyWithRetry(() => import("@/pages/RankUpPage"));
 const CharacterStudioPage = lazyWithRetry(() => import("@/pages/CharacterStudioPage"));
 const MasterTrackPage = lazyWithRetry(() => import("@/pages/MasterTrackPage"));
@@ -252,6 +254,7 @@ const AppRoutes = () => {
         <Route path="/guide/exercise-purpose" element={<ProtectedRoute><GuideExercisePurposePage /></ProtectedRoute>} />
         <Route path="/guide/safety" element={<ProtectedRoute><GuideSafetyPage /></ProtectedRoute>} />
         <Route path="/guide/faq" element={<ProtectedRoute><GuideFaqPage /></ProtectedRoute>} />
+        <Route path="/guide/journey" element={<ProtectedRoute><GuideJourneyPage /></ProtectedRoute>} />
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/membership" element={<ProtectedRoute><MembershipPage /></ProtectedRoute>} />
         <Route path="/signup" element={<SignupApply />} />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, FlaskConical, Map, Dumbbell, ShieldCheck, Play, ChevronDown, Lock, CheckCircle2, HelpCircle, TrendingUp } from "lucide-react";
+import { BookOpen, FlaskConical, Map, Dumbbell, ShieldCheck, Play, ChevronDown, ChevronRight, Lock, CheckCircle2, HelpCircle, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS } from "@/data/sharedConstants";
@@ -220,6 +220,8 @@ interface LevelUpRule {
 }
 interface MyCycle {
   sessions: number; reqSessions: number; rank?: string;
+  /** 승급 진행도 (출석 1회 = 1.0, 운동시간 보너스 최대 1.25) — 홈 카드 막대와 같은 값 */
+  progress?: number;
   reqMinDays?: number; elapsedDays?: number; meets: boolean;
   // 패스트 트랙 직행권 잔여 수 (get_level_cycle_progress)
   fastTrackGates?: number;
@@ -233,6 +235,7 @@ const WHO: Record<LevelUpRule["titleAuthority"], string> = {
 
 const LevelUpTab = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const { data: rules = [] } = useQuery({
     queryKey: ["levelup-rules"],
@@ -257,6 +260,8 @@ const LevelUpTab = () => {
   });
 
   const mine = rules.find((r) => r.rank === cycle?.rank);
+  // 이번 레벨 진행도 — 홈 카드 막대와 같은 값(progress). 한 자리 내림: 판정은 floor 다.
+  const cur = cycle ? Math.floor(Number(cycle.progress ?? cycle.sessions) * 10) / 10 : 0;
 
   return (
     <div className="space-y-4 animate-slide-up">
@@ -269,6 +274,19 @@ const LevelUpTab = () => {
           어느 쪽이든 레벨업 조건은 모두에게 같습니다.
         </p>
       </div>
+
+      {/* 레벨 40까지 얼마나 걸리나 — 상세 페이지 (2026-09-22) */}
+      <button
+        onClick={() => navigate("/guide/journey")}
+        className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-elev-1 transition-all active:scale-[0.99]"
+      >
+        <span className="text-xl">⏱</span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold text-foreground">레벨 40까지 얼마나 걸릴까요?</span>
+          <span className="block text-[11px] text-muted-foreground">내 출석 페이스로 계산한 예상 기간 · 리그별 필요 출석</span>
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </button>
 
       <div className="grid grid-cols-2 gap-2.5">
         <div className="rounded-2xl border border-border bg-card p-3.5 shadow-elev-1">
@@ -294,14 +312,14 @@ const LevelUpTab = () => {
             지금 회원님 기준 — {RANK_LABELS[mine.rank] || mine.rank} 리그
           </p>
           <div className="mb-2 flex items-end gap-1.5">
-            <span className="number-font text-2xl font-bold text-primary">{cycle.sessions}</span>
+            <span className="number-font text-2xl font-bold text-primary">{cur.toLocaleString()}</span>
             <span className="number-font text-sm text-muted-foreground">/ {cycle.reqSessions}회</span>
-            <span className="ml-1 pb-0.5 text-[11px] text-muted-foreground">이번 레벨 출석</span>
+            <span className="ml-1 pb-0.5 text-[11px] text-muted-foreground">이번 레벨 진행도</span>
           </div>
           <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full rounded-full bg-primary"
-              style={{ width: `${Math.min(100, (cycle.sessions / Math.max(1, cycle.reqSessions)) * 100)}%` }}
+              style={{ width: `${Math.min(100, (cur / Math.max(1, cycle.reqSessions)) * 100)}%` }}
             />
           </div>
           <p className="text-[11px] leading-relaxed text-muted-foreground">
