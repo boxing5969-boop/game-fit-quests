@@ -83,6 +83,8 @@ const hiddenPaths = [
   "/live-board",
   // 복싱 트레이닝은 100dvh 풀스크린 게임 UI 라 하단 탭바가 겹치면 안 됨.
   "/minigame",
+  // QR 출석 — 카메라 화면이라 탭바가 겹치면 안 됨.
+  "/qr-checkin",
 ];
 
 // Inactive tone — spec #8C95A3. Kept as an arbitrary Tailwind value

@@ -17,6 +17,7 @@ import LiveLevelUpInterrupt, {
   type LevelUpEvent,
 } from "@/components/liveBoard/LiveLevelUpInterrupt";
 import LiveBoardTestPanel from "@/components/liveBoard/LiveBoardTestPanel";
+import LiveBoardQrCard from "@/components/liveBoard/LiveBoardQrCard";
 import {
   generateMockMembers,
   type MockActiveMember,
@@ -1127,6 +1128,8 @@ const LiveBoardPage = () => {
         {/* ═══ Right panel ═══ */}
         {!only1 && (
         <div className={`bg-gray-900/60 flex flex-col min-h-0 ${only2 ? "flex-1 w-full border-t border-gray-800/60" : "w-[26rem] border-l border-gray-800/60"}`}>
+          {/* QR 출석 — 항상 표시. 브로제이가 느릴 때 회원이 앱에서 찍으면 보드에 바로 올라온다 (2026-09-22) */}
+          {branchName && <LiveBoardQrCard branchName={branchName} />}
           {/* Active members — 인원수 많을 때 더 많이 보이게 flex-1 + 최소 절반 보장 */}
           <div className="flex-1 border-b border-gray-800/60 flex flex-col min-h-[40vh]">
             <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0">
@@ -1176,6 +1179,9 @@ const LiveBoardPage = () => {
         </div>
         )}
       </div>
+
+      {/* 1번 화면(운동 중만)엔 오른쪽 패널이 없다 — QR 출석 카드를 우하단에 띄운다 */}
+      {only1 && branchName && <LiveBoardQrCard branchName={branchName} variant="floating" />}
 
       {/* 레벨업 인터럽트 — 최상위 z-index, 5초 풀스크린 */}
       <LiveLevelUpInterrupt

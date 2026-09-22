@@ -188,8 +188,9 @@ const HomePage = () => {
           : "evaluate";
   const handleTodayAction = () => {
     if (todayActionState === "qr_checkin") {
-      // QR 은 폐지 — 출석은 입구 얼굴 인식으로 자동 기록된다 (10분 안에 반영).
-      toast.info("입구에서 얼굴 인식하면 자동으로 출석돼요 🥊");
+      // 출석은 입구 얼굴 인식으로 자동 기록된다. 브로제이가 느려 보드에 안 뜰 때는
+      // 라이브보드 화면의 QR 을 앱에서 찍어 바로 올린다 (2026-09-22, /qr-checkin).
+      navigate("/qr-checkin");
       // 64-P: 오삼 가이드 step 4 '자동 출석 확인하기' detector 트리거 (기존 이벤트명 유지)
       if (typeof window !== "undefined") {
         try {
@@ -438,10 +439,10 @@ const HomePage = () => {
                       icon={<Trophy className="h-8 w-8 text-reward" />}
                       title="아직 순위에 없어요"
                       description="첫 도전을 완료하면 랭킹에 진입합니다."
-                      ctaText={checkedInToday ? "🥊 오늘 도전 시작" : "얼굴 인식으로 자동 출석"}
+                      ctaText={checkedInToday ? "🥊 오늘 도전 시작" : "QR 로 출석하기"}
                       onCtaClick={() => {
                         if (checkedInToday) handleStartChallenge();
-                        else toast.info("입구에서 얼굴 인식하면 자동으로 출석돼요 🥊");
+                        else navigate("/qr-checkin");
                       }}
                     />
                   )}

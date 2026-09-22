@@ -37,6 +37,8 @@ import { initBackExit } from "@/lib/androidBackExit";
 // (no point in splitting the first paint), NotFound is a tiny fallback.
 const TvBranchPicker = lazyWithRetry(() => import("@/pages/TvBranchPicker"));
 const HomePage = lazyWithRetry(() => import("@/pages/HomePage"));
+// QR 수동 출석 — 라이브보드 QR 을 앱에서 찍어 출석 행을 바로 만든다 (2026-09-22, 브로제이 지연 보조).
+const QrCheckinPage = lazyWithRetry(() => import("@/pages/QrCheckinPage"));
 const MissionsPage = lazyWithRetry(() => import("@/pages/MissionsPage"));
 // LevelMapPage — /rank-up 에 탭으로 통합, /levelmap 경로는 리다이렉트만 유지.
 const RewardsPage = lazyWithRetry(() => import("@/pages/RewardsPage"));
@@ -234,6 +236,7 @@ const AppRoutes = () => {
         <Route path="/waiting-approval" element={<ProtectedRoute><WaitingApprovalPage /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/qr-checkin" element={<ProtectedRoute><QrCheckinPage /></ProtectedRoute>} />
         <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
         <Route path="/quests" element={<Navigate to="/missions" replace />} />
         {/* /levelmap 은 /rank-up 안에 levelmap 탭으로 통합됨. 기존 링크 깨짐 방지용 리다이렉트. */}
