@@ -47,6 +47,8 @@ export function useFinishWorkout() {
       // XP 가 올라가므로 지갑·진행도 화면도 같이 새로 물어본다.
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["member-progress"] });
+      // 운동시간이 길면 승급 진행도(최대 1.25회)도 바뀐다 — 홈 카드 막대 갱신
+      qc.invalidateQueries({ queryKey: ["level-cycle"] });
     },
   });
 }

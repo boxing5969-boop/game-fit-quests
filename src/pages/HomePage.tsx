@@ -41,6 +41,7 @@ import HomeCustomizeSheet from "@/components/home/HomeCustomizeSheet";
 import { useHomeLayout, type HomeWidgetId } from "@/lib/homeLayout";
 import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
 import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
+import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
@@ -71,6 +72,8 @@ const HomePage = () => {
   const attendance = useRecordAttendance();
   const { onboardingDone } = useOnboardingState();
   const { totalXp, metrics } = useLocalProgress();
+  // 승급 진행도 — 홈 카드 막대의 단일 출처 (서버 계산). 대표님 결정(2026-09-22): 막대 = 승급 진행도.
+  const { data: levelCycle } = useLevelCycleProgress();
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
   const { resolveSlot: resolveDisplaySlot } = useDisplayMode();
   useLevelUpNotifications();
@@ -379,6 +382,15 @@ const HomePage = () => {
                   streakDays={progress.streak_days}
                   totalXp={totalXp}
                   xpToNext={Math.max(metrics.xp.target, totalXp || 1)}
+                  promotion={
+                    levelCycle
+                      ? {
+                          current: Number(levelCycle.progress ?? 0),
+                          target: Number(levelCycle.reqSessions ?? 0),
+                          hint: promotionHint(levelCycle),
+                        }
+                      : undefined
+                  }
                   isMaster={isMaster40}
                   masterTitle={masterDef?.title}
                 />

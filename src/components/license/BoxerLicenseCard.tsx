@@ -134,6 +134,15 @@ export interface BoxerLicenseCardProps {
   totalXp?: number;
   /** XP (다음 승급까지) */
   xpToNext?: number;
+  /** 승급 진행도 (출석 횟수 + 운동시간 보너스). 있으면 XP 막대 대신 이 막대를 그린다 (2026-09-22) */
+  promotion?: {
+    /** 예: 2.25 */
+    current: number;
+    /** 필요 횟수, 예: 3 */
+    target: number;
+    /** 막대 아래 한 줄 — 가득 차면 무슨 일이 생기는지 */
+    hint?: string;
+  };
   /** 마스터 (블랙 Lv.10 + 보스 4클리어) */
   isMaster?: boolean;
   /** 마스터 트랙 타이틀 (예: "그랜드 챔피언") — 있으면 isMaster 일 때 "MASTER" 대신 표시 */
@@ -158,6 +167,7 @@ const BoxerLicenseCard = ({
   streakDays = 0,
   totalXp,
   xpToNext,
+  promotion,
   isMaster = false,
   masterTitle,
   isLive = false,
@@ -172,6 +182,21 @@ const BoxerLicenseCard = ({
   const accentText = isMaster ? "text-yellow-300" : RANK_ACCENT_TEXT[rankKey] ?? "text-gray-300";
   const borderGrad = isMaster ? RANK_BORDER.black : RANK_BORDER[rankKey] ?? RANK_BORDER.white;
   const bgGrad = isMaster ? RANK_BG.black : RANK_BG[rankKey] ?? RANK_BG.white;
+  // 막대 — promotion(승급 진행도)이 오면 그것, 아니면 예전 XP 막대.
+  // 숫자는 한 자리 내림(2.96 → 2.9): 판정이 floor 라 "가득 찼는데 왜 안 올라가요" 를 만들지 않는다.
+  const bar = promotion
+    ? {
+        show: promotion.target > 0,
+        label: "승급 진행도",
+        value: `${(Math.floor(promotion.current * 10) / 10).toLocaleString()} / ${promotion.target}회`,
+        ratio: promotion.target > 0 ? promotion.current / promotion.target : 0,
+      }
+    : {
+        show: totalXp !== undefined && xpToNext !== undefined && xpToNext > 0,
+        label: "XP",
+        value: `${(totalXp ?? 0).toLocaleString()} / ${(xpToNext ?? 0).toLocaleString()}`,
+        ratio: xpToNext ? (totalXp ?? 0) / xpToNext : 0,
+      };
 
   // ── 사이즈별 dimensions ──
   const cfg = (() => {
@@ -451,19 +476,17 @@ const BoxerLicenseCard = ({
           </div>
         </div>
 
-        {/* ── XP 막대 (hero 만) ── */}
-        {cfg.showXp && totalXp !== undefined && xpToNext !== undefined && xpToNext > 0 && (
+        {/* ── 승급 진행도 막대 (hero 만) ── promotion 이 오면 그것, 아니면 예전 XP 막대 */}
+        {cfg.showXp && (bar.show) && (
           <div className="mt-3">
             <div className={`flex items-center justify-between text-[10px] ${accentText} mb-1`}>
-              <span className="font-black uppercase tracking-wider">XP</span>
-              <span className="font-mono font-black tabular-nums">
-                {totalXp.toLocaleString()} / {xpToNext.toLocaleString()}
-              </span>
+              <span className="font-black uppercase tracking-wider">{bar.label}</span>
+              <span className="font-mono font-black tabular-nums">{bar.value}</span>
             </div>
             <div className={`overflow-hidden rounded-full bg-black/40 ${cfg.xpHeight}`}>
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${Math.min(100, (totalXp / xpToNext) * 100)}%` }}
+                animate={{ width: `${Math.min(100, bar.ratio * 100)}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
                 className={`h-full ${
                   isMaster
@@ -478,6 +501,14 @@ const BoxerLicenseCard = ({
                 }`}
               />
             </div>
+            {promotion?.hint && (
+              <div className={`mt-1 flex items-center justify-between gap-2 text-[10px] ${accentText} opacity-80`}>
+                <span className="truncate">{promotion.hint}</span>
+                {totalXp !== undefined && (
+                  <span className="shrink-0 font-mono tabular-nums">XP {totalXp.toLocaleString()}</span>
+                )}
+              </div>
+            )}
           </div>
         )}
 

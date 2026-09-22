@@ -115,8 +115,11 @@ const QrCheckinPage = () => {
         }
         setResult(res);
         setPhase("done");
-        // 운동시간 카드(오늘 출석 = 시작)가 바로 켜지도록
+        // 운동시간 카드(오늘 출석 = 시작)가 바로 켜지고, 승급 진행도·XP 도 새로 묻도록
         void qc.invalidateQueries({ queryKey: WORKOUT_TIME_KEY });
+        void qc.invalidateQueries({ queryKey: ["level-cycle"] });
+        void qc.invalidateQueries({ queryKey: ["member-progress"] });
+        void qc.invalidateQueries({ queryKey: ["wallet"] });
       } catch {
         setErrorMsg("네트워크 오류가 발생했어요. 다시 시도해 주세요");
         setPhase("error");
