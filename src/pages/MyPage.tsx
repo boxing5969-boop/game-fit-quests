@@ -11,6 +11,7 @@ import CharacterSprite from "@/components/CharacterSprite";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import { ArrowLeft, MapPin, Calendar, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles, Clock } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
+import { isStaffProfile, staffTitleLabel } from "@/lib/staffDisplay";
 import { useNavigate } from "react-router-dom";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
 import { toast } from "sonner";
@@ -92,6 +93,8 @@ const MyPage = () => {
   const earned = (allBadges || []).filter(b => earnedIds.has(b.id));
   const locked = (allBadges || []).filter(b => !earnedIds.has(b.id));
   const isMaster40 = progress.current_rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
+  // 지도진(profiles.is_staff)은 리그·레벨 배지 대신 직함 칩 (2026-09-22)
+  const isStaff = isStaffProfile(profile);
   const levelUpLogs = (xpLogs || []).filter(l => l.reason.includes("클리어") || l.reason.includes("타이틀매치"));
 
   // (수강권 계산·표시는 MembershipCard 컴포넌트로 이동)
@@ -164,7 +167,7 @@ const MyPage = () => {
               <div className="min-w-0 flex-1 pt-1">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h2 className="truncate text-lg text-foreground">{profile.nickname || profile.name}</h2>
+                    <h2 className="truncate text-lg text-foreground">{isStaff ? `${profile.name || profile.nickname} ${staffTitleLabel(profile)}` : (profile.nickname || profile.name)}</h2>
                     <p className="truncate text-sm text-muted-foreground">{profile.name}</p>
                   </div>
                   {/* 보유 젬 (기존 중복 버튼에서 프로필로 통합) */}
@@ -178,7 +181,13 @@ const MyPage = () => {
                   </div>
                 </div>
                 <div className="mt-1.5 flex items-center gap-2">
-                  <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} isMaster={isManagerRole(role)} />
+                  {isStaff ? (
+                    <span className="rounded-full bg-reward/30 px-2 py-0.5 text-xs font-bold text-reward-foreground">
+                      {staffTitleLabel(profile)} · 지도진
+                    </span>
+                  ) : (
+                    <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} isMaster={isManagerRole(role)} />
+                  )}
                   {role && role !== "member" && (
                     <span className="rounded-full bg-reward/30 px-2 py-0.5 text-xs font-bold text-reward-foreground">
                       {role === "branch_manager" || role === "coach" ? "관장님" : role === "super_admin" || role === "admin" ? "전체 관리자" : role}
@@ -235,7 +244,11 @@ const MyPage = () => {
                 <p className="text-2xl font-bold text-foreground">{progress.total_xp.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">총 XP</p>
               </div>
-              <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
+              {isStaff ? (
+                <span className="rounded-full bg-reward/30 px-3 py-1 text-sm font-bold text-reward-foreground">{staffTitleLabel(profile)}</span>
+              ) : (
+                <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
+              )}
             </div>
             <XPBar current={progress.total_xp} max={getXpToNext(progress.current_level, progress.current_rank)} />
           </div>

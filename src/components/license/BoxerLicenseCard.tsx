@@ -153,6 +153,8 @@ export interface BoxerLicenseCardProps {
   isFresh?: boolean;
   /** 운동 시간 (분, 라이브보드용) */
   elapsedMinutes?: number;
+  /** 지도진 카드 (2026-09-22): 리그·레벨·승급 막대 대신 직함("지점장님")을 보인다. name 에는 이름+직함을 넘긴다. */
+  staff?: { title: string } | null;
 }
 
 const BoxerLicenseCard = ({
@@ -173,6 +175,7 @@ const BoxerLicenseCard = ({
   isLive = false,
   isFresh = false,
   elapsedMinutes,
+  staff = null,
 }: BoxerLicenseCardProps) => {
   const rankKey = (league || "white").toLowerCase();
   const lic = licenseNumber(userId);
@@ -299,7 +302,7 @@ const BoxerLicenseCard = ({
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>
-              {isMaster ? "★ MASTER LICENSE" : "PRO BOXER LICENSE"}
+              {staff ? "153 COACHING STAFF" : isMaster ? "★ MASTER LICENSE" : "PRO BOXER LICENSE"}
             </span>
           </div>
           <span className={`font-mono font-black ${cfg.licText} text-gray-400 tabular-nums`}>
@@ -423,7 +426,15 @@ const BoxerLicenseCard = ({
               </p>
             )}
 
-            {/* 리그 + 레벨 라인 */}
+            {/* 리그 + 레벨 라인 — 지도진은 직함만 (레벨 없음) */}
+            {staff ? (
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <span className={`rounded-md font-black uppercase tracking-wider bg-yellow-500 text-gray-900 ${cfg.rankBadge}`}>
+                  STAFF
+                </span>
+                <span className={`font-black text-white ${cfg.levelText}`}>{staff.title}</span>
+              </div>
+            ) : (
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
               <span
                 className={`rounded-md font-black uppercase tracking-wider ${cfg.rankBadge} ${
@@ -445,9 +456,10 @@ const BoxerLicenseCard = ({
                 Lv.{level}
               </span>
             </div>
+            )}
 
-            {/* 메타 정보 (연속일 / 운동시간) */}
-            {(cfg.showStreak || elapsedMinutes !== undefined) && size !== "compact" && (
+            {/* 메타 정보 (연속일 / 운동시간) — 지도진은 연속 출석을 세지 않는다 */}
+            {!staff && (cfg.showStreak || elapsedMinutes !== undefined) && size !== "compact" && (
               <div className={`mt-2 flex flex-wrap items-center gap-2 ${cfg.metaText}`}>
                 {streakDays > 0 && cfg.showStreak && (
                   <span className="inline-flex items-center gap-1 text-orange-300">
@@ -476,8 +488,8 @@ const BoxerLicenseCard = ({
           </div>
         </div>
 
-        {/* ── 승급 진행도 막대 (hero 만) ── promotion 이 오면 그것, 아니면 예전 XP 막대 */}
-        {cfg.showXp && (bar.show) && (
+        {/* ── 승급 진행도 막대 (hero 만) ── promotion 이 오면 그것, 아니면 예전 XP 막대. 지도진은 없음 */}
+        {!staff && cfg.showXp && (bar.show) && (
           <div className="mt-3">
             <div className={`flex items-center justify-between text-[10px] ${accentText} mb-1`}>
               <span className="font-black uppercase tracking-wider">{bar.label}</span>

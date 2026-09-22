@@ -18,6 +18,7 @@ import LiveLevelUpInterrupt, {
 } from "@/components/liveBoard/LiveLevelUpInterrupt";
 import LiveBoardTestPanel from "@/components/liveBoard/LiveBoardTestPanel";
 import LiveBoardQrCard from "@/components/liveBoard/LiveBoardQrCard";
+import { honorTitle } from "@/lib/staffDisplay";
 import {
   generateMockMembers,
   type MockActiveMember,
@@ -87,11 +88,7 @@ const COACH_TITLE_ORDER: Record<string, number> = {
 };
 const coachOrder = (title: string): number => COACH_TITLE_ORDER[title] ?? 2;
 
-/** 화면 표기용 직함 — 항상 님을 붙인다 (지점장 → 지점장님, 코치 → 코치님) */
-const honorTitle = (title: string): string => {
-  const t = (title || "코치").trim();
-  return t.endsWith("님") ? t : `${t}님`;
-};
+// 화면 표기용 직함(honorTitle)은 src/lib/staffDisplay 로 이동 — 홈 카드·마이페이지와 같은 규칙을 쓴다.
 
 interface ActiveMember {
   id: string;

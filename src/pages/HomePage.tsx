@@ -42,6 +42,7 @@ import { useHomeLayout, type HomeWidgetId } from "@/lib/homeLayout";
 import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
 import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
+import { isStaffProfile, staffDisplayName, staffTitleLabel } from "@/lib/staffDisplay";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
@@ -74,6 +75,8 @@ const HomePage = () => {
   const { totalXp, metrics } = useLocalProgress();
   // 승급 진행도 — 홈 카드 막대의 단일 출처 (서버 계산). 대표님 결정(2026-09-22): 막대 = 승급 진행도.
   const { data: levelCycle } = useLevelCycleProgress();
+  // 지도진(profiles.is_staff)은 리그·레벨 대신 "이름 직함님" 으로 — 승급 막대도 없다 (2026-09-22).
+  const staffCard = isStaffProfile(profile) ? { title: staffTitleLabel(profile ?? {}) } : null;
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
   const { resolveSlot: resolveDisplaySlot } = useDisplayMode();
   useLevelUpNotifications();
@@ -373,7 +376,8 @@ const HomePage = () => {
                       </div>
                     )
                   }
-                  name={profile.nickname || profile.name || "복서"}
+                  name={staffCard ? staffDisplayName(profile) : (profile.nickname || profile.name || "복서")}
+                  staff={staffCard}
                   branch={profile.branch_name}
                   league={rank}
                   level={onMasterTrack ? progress.overall_level : progress.current_level}
@@ -383,7 +387,7 @@ const HomePage = () => {
                   totalXp={totalXp}
                   xpToNext={Math.max(metrics.xp.target, totalXp || 1)}
                   promotion={
-                    levelCycle
+                    levelCycle && !staffCard
                       ? {
                           current: Number(levelCycle.progress ?? 0),
                           target: Number(levelCycle.reqSessions ?? 0),
