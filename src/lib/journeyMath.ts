@@ -18,6 +18,10 @@ export interface LeagueRule {
   visitsPerLevel: number;
   minDaysPerLevel: number;
   autoAdvance: boolean;
+  /** 1~9레벨 승급 승인 주체 (coach|manager|owner) */
+  levelAuthority?: string | null;
+  /** 10레벨(타이틀매치) 승인 주체 */
+  titleAuthority?: string | null;
 }
 
 export interface WorkoutRules {
@@ -68,11 +72,22 @@ export function totalVisits(rules: LeagueRule[]): number {
   return leaguePlans(rules).reduce((s, p) => s + p.visits, 0);
 }
 
-/** 한 패스에 걸리는 일수: 필요 출석을 보너스로 나눠 주당 횟수로 채우는 시간과 최소 일수 중 큰 쪽. */
+/** 보너스(회당 진행량)로 필요 진행량을 채우는 데 드는 출석 횟수 — DB 는 레벨마다 floor(합) 로 판정하므로 올림. */
+export function visitsAtBonus(progressNeeded: number, bonus: number): number {
+  if (progressNeeded <= 0) return 0;
+  return Math.ceil(progressNeeded / Math.max(bonus, 1) - 1e-9);
+}
+
+/** 한 패스에 걸리는 일수: 필요 출석(올림)을 주당 횟수로 채우는 시간과 최소 일수 중 큰 쪽. */
 function passDays(visitsNeeded: number, perWeek: number, bonus: number, minDays: number): number {
   if (perWeek <= 0) return Number.POSITIVE_INFINITY;
-  const byVisits = (visitsNeeded / bonus / perWeek) * 7;
+  const byVisits = (visitsAtBonus(visitsNeeded, bonus) / perWeek) * 7;
   return Math.max(byVisits, minDays);
+}
+
+/** 매번 bonus 만큼 쌓을 때 레벨 40 까지 총 출석 횟수 (리그·패스별 올림의 합). */
+export function totalVisitsAtBonus(rules: LeagueRule[], bonus: number): number {
+  return leaguePlans(rules).reduce((s, p) => s + visitsAtBonus(p.visitsPerPass, bonus) * p.passes, 0);
 }
 
 /** 화이트 L1 출발, 레벨 40 까지 총 일수. bonus 1.0 = 매번 기본(50분), maxProgress = 매번 120분. */

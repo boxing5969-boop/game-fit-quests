@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.sync-broj-checkins]
 verify_jwt = false
+
+[functions.sync-members-to-app]
+verify_jwt = false

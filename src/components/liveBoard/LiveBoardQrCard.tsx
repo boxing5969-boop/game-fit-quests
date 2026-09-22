@@ -55,17 +55,28 @@ interface TokenRes {
 interface Props {
   branchName: string;
   variant?: "sidebar" | "floating";
+  /** sidebar 변형에 덧붙일 클래스 (2번 화면은 폭 제한) */
+  className?: string;
 }
 
 /** TV 마다 한 번 /tv/<코드>?k=<키> 로 열면 저장되는 보드 키. 지점에 키가 등록돼 있을 때만 쓰인다. */
 function readBoardKey(branchName: string): string | null {
   const store = `153_board_key:${branchName}`;
+  let fromUrl: string | null = null;
   try {
-    const fromUrl = new URLSearchParams(window.location.search).get("k");
-    if (fromUrl) {
+    fromUrl = new URLSearchParams(window.location.search).get("k");
+  } catch {
+    /* noop */
+  }
+  if (fromUrl) {
+    try {
       localStorage.setItem(store, fromUrl);
-      return fromUrl;
+    } catch {
+      /* 저장소가 막혀도 URL 의 키는 그대로 쓴다 */
     }
+    return fromUrl;
+  }
+  try {
     return localStorage.getItem(store);
   } catch {
     return null;
@@ -75,9 +86,12 @@ function readBoardKey(branchName: string): string | null {
 const POLL_MS = 30_000;
 const QR_SIZE = 168;
 
-const LiveBoardQrCard = ({ branchName, variant = "sidebar" }: Props) => {
+const LiveBoardQrCard = ({ branchName, variant = "sidebar", className = "" }: Props) => {
   const [url, setUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState<null | "key" | "net">(null);
+  // 마지막으로 받은 토큰이 서버에서 거부되기 시작하는 시각(만료 + 직전 구간 허용 300초).
+  // 네트워크가 끊겨 갱신을 못 하면 이 시각 뒤엔 QR 을 내린다 — 멀쩡해 보이는 죽은 QR 을 두지 않는다.
+  const [staleAt, setStaleAt] = useState<number>(0);
 
   useEffect(() => {
     if (!branchName) return;
@@ -97,9 +111,11 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar" }: Props) => {
         if (error || !res?.ok || !res.token) {
           setFailed(res?.error === "board_key_required" ? "key" : "net");
           if (res?.error === "board_key_required") setUrl(null); // 잠긴 지점 — 이전 QR 을 남기지 않는다
+          else if (staleAt && Date.now() > staleAt) setUrl(null); // 갱신 실패가 길어져 토큰이 죽었다
         } else {
           setFailed(null);
           setUrl(buildQrCheckinUrl(res.code || res.branch || branchName, res.token));
+          setStaleAt(Date.now() + ((res.expires_in_sec ?? 300) + (res.rotate_sec ?? 300)) * 1000);
           // 토큰이 바뀌는 순간 바로 새 QR 로 — 단, 3초보다 잦게는 안 부른다.
           const untilRotate = ((res.expires_in_sec ?? 30) + 1) * 1000;
           nextMs = Math.min(POLL_MS, Math.max(3_000, untilRotate));
@@ -107,6 +123,7 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar" }: Props) => {
       } catch {
         if (!alive) return;
         setFailed("net");
+        if (staleAt && Date.now() > staleAt) setUrl(null);
       }
       timer = setTimeout(load, nextMs);
     };
@@ -116,6 +133,8 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar" }: Props) => {
       alive = false;
       if (timer) clearTimeout(timer);
     };
+    // staleAt 은 load 안에서 최신값을 읽기만 하면 되므로 effect 재시작 대상이 아니다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchName]);
 
   const body = (
@@ -159,7 +178,7 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar" }: Props) => {
     );
   }
   return (
-    <div className="mx-3 mt-3 flex-shrink-0 rounded-2xl border border-primary/30 bg-gray-950/70 p-4">
+    <div className={`mx-3 mt-3 flex-shrink-0 rounded-2xl border border-primary/30 bg-gray-950/70 p-4 ${className}`}>
       {body}
     </div>
   );

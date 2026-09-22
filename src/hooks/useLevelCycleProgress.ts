@@ -57,9 +57,17 @@ export function useInvalidateLevelCycle() {
   return () => qc.invalidateQueries({ queryKey: LEVEL_CYCLE_KEY });
 }
 
-/** 카드 막대 아래 한 줄 — 가득 차면 무슨 일이 생기는지. */
-export function promotionHint(p: Pick<LevelCycleProgress, "currentLevel" | "autoAdvances"> | undefined): string {
+/** 카드 막대 아래 한 줄 — 가득 차면 무슨 일이 생기는지. authority 는 levelAuthority/authorityLabel 로 구한 승인 주체 라벨. */
+export function promotionHint(
+  p: Pick<LevelCycleProgress, "currentLevel" | "autoAdvances" | "rank" | "reqMinDays"> | undefined,
+  authority?: string,
+): string {
   if (!p) return "";
-  if (p.currentLevel >= 10) return "타이틀매치 · 코치 승인으로 다음 리그";
-  return p.autoAdvances ? "가득 차면 자동 승급 · 오래 운동할수록 빨리 차요" : "가득 차면 승급 심사 신청";
+  const who = authority || "코치님";
+  if (p.rank === "black" && p.currentLevel >= 10) return "레벨 40 · 마스터의 길";
+  if (p.currentLevel >= 10) return `타이틀매치 · ${who} 승인으로 다음 리그`;
+  const minDays = (p.reqMinDays ?? 0) > 0 ? ` · 레벨마다 최소 ${p.reqMinDays}일` : "";
+  return p.autoAdvances
+    ? `가득 차면 자동 승급 · 오래 운동할수록 빨리 차요${minDays}`
+    : `가득 차면 ${who} 승급 심사${minDays}`;
 }

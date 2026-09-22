@@ -15,7 +15,7 @@
  */
 
 import { motion } from "framer-motion";
-import { ScanFace, Zap, Clock, Trophy, Sparkles, ChevronRight } from "lucide-react";
+import { QrCode, Zap, Clock, Trophy, Sparkles, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
 export type TodayActionState =
@@ -57,7 +57,7 @@ const TodayActionCard = ({
     switch (state) {
       case "qr_checkin":
         return {
-          icon: <ScanFace className="h-7 w-7" />,
+          icon: <QrCode className="h-7 w-7" />,
           iconBg: "bg-primary/15",
           iconColor: "text-primary",
           badge: "오늘의 시작",

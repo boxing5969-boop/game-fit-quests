@@ -109,6 +109,13 @@ interface ActiveMember {
  */
 const CHECKIN_ACTIVE_MINUTES = 120;
 
+/** KST 오늘 00:00 의 ISO — 사이니지 기기는 공장 초기 표준시(UTC 등)인 경우가 많아 기기 자정을 쓰면
+ *  KST 00~09시 출석자가 "오늘" 에서 빠진다. realtime 핸들러와 같은 계산을 한 곳에 둔다. */
+const kstTodayStartIso = (): string => {
+  const kstMs = Date.now() + 9 * 3600 * 1000;
+  return new Date(Math.floor(kstMs / 86400000) * 86400000 - 9 * 3600 * 1000).toISOString();
+};
+
 interface HallMember {
   r_user_id: string;
   r_nickname: string;
@@ -379,14 +386,12 @@ const LiveBoardPage = () => {
     }
 
     // Fallback: fetch today's attendance_logs for display info (anon CAN read these)
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
     const { data: todayLogs } = await supabase
       .from("attendance_logs")
       .select("user_id, display_name_snapshot, league_snapshot, level_snapshot")
       .eq("branch_name", branchName)
       .in("user_id", userIds)
-      .gte("checked_in_at", todayStart.toISOString())
+      .gte("checked_in_at", kstTodayStartIso())
       .order("checked_in_at", { ascending: false });
 
     // Build attendance fallback map (latest log per user)
@@ -476,13 +481,11 @@ const LiveBoardPage = () => {
   // Load today visits — deduplicated by user_id
   const loadToday = useCallback(async () => {
     if (!branchName) return;
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
     const { data } = await supabase
       .from("attendance_logs")
       .select("id, display_name_snapshot, league_snapshot, level_snapshot, checked_in_at, user_id")
       .eq("branch_name", branchName)
-      .gte("checked_in_at", todayStart.toISOString())
+      .gte("checked_in_at", kstTodayStartIso())
       .order("checked_in_at", { ascending: false }).limit(500);
 
     if (data && data.length > 0) {
@@ -1126,9 +1129,9 @@ const LiveBoardPage = () => {
         {!only1 && (
         <div className={`bg-gray-900/60 flex flex-col min-h-0 ${only2 ? "flex-1 w-full border-t border-gray-800/60" : "w-[26rem] border-l border-gray-800/60"}`}>
           {/* QR 출석 — 항상 표시. 브로제이가 느릴 때 회원이 앱에서 찍으면 보드에 바로 올라온다 (2026-09-22) */}
-          {branchName && <LiveBoardQrCard branchName={branchName} />}
-          {/* Active members — 인원수 많을 때 더 많이 보이게 flex-1 + 최소 절반 보장 */}
-          <div className="flex-1 border-b border-gray-800/60 flex flex-col min-h-[40vh]">
+          {branchName && <LiveBoardQrCard branchName={branchName} className={only2 ? "max-w-[40rem]" : ""} />}
+          {/* Active members — 인원수 많을 때 더 많이 보이게 flex-1 + 최소 보장 (QR 카드 232px 이 위에 생겨 40vh → 28vh) */}
+          <div className="flex-1 border-b border-gray-800/60 flex flex-col min-h-[28vh]">
             <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0">
               <span className="h-4 w-4 rounded-full bg-primary animate-pulse" />
               <h2 className="text-2xl font-black text-primary">현재 활동 중 ({combinedMembers.length})</h2>

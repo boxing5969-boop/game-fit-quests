@@ -10,6 +10,7 @@ import { SAFETY_BLOCKS } from "@/data/safetyCheckData";
 import { GUIDE_CARDS } from "@/data/whiteLevel1Data";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTutorialState } from "@/hooks/useTutorialState";
+import { WHO as AUTHORITY_WHO } from "@/lib/levelAuthority";
 
 type GuideTab = "program" | "levelup" | "science" | "valuemap" | "exercise" | "safety" | "whitefaq";
 
@@ -227,11 +228,8 @@ interface MyCycle {
   fastTrackGates?: number;
 }
 
-const WHO: Record<LevelUpRule["titleAuthority"], string> = {
-  coach: "담당 코치님",
-  manager: "지점장·관장님",
-  owner: "관장님",
-};
+// 승인 주체 라벨은 src/lib/levelAuthority 가 단일 출처 (홈 카드 힌트·레벨 40 페이지와 같은 문구)
+const WHO: Record<LevelUpRule["titleAuthority"], string> = AUTHORITY_WHO;
 
 const LevelUpTab = () => {
   const { user } = useAuth();

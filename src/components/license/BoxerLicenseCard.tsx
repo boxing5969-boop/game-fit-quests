@@ -432,7 +432,7 @@ const BoxerLicenseCard = ({
                 <span className={`rounded-md font-black uppercase tracking-wider bg-yellow-500 text-gray-900 ${cfg.rankBadge}`}>
                   STAFF
                 </span>
-                <span className={`font-black text-white ${cfg.levelText}`}>{staff.title}</span>
+                <span className={`font-black text-white ${cfg.levelText}`}>153 지도진</span>
               </div>
             ) : (
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -515,7 +515,7 @@ const BoxerLicenseCard = ({
             </div>
             {promotion?.hint && (
               <div className={`mt-1 flex items-center justify-between gap-2 text-[10px] ${accentText} opacity-80`}>
-                <span className="truncate">{promotion.hint}</span>
+                <span className="min-w-0 flex-1 truncate">{promotion.hint}</span>
                 {totalXp !== undefined && (
                   <span className="shrink-0 font-mono tabular-nums">XP {totalXp.toLocaleString()}</span>
                 )}

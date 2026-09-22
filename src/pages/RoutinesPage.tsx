@@ -14,6 +14,8 @@ import { PHASE_META, type RoutinePhases, emptyPhases } from "@/lib/routineCompos
 interface Routine { id: string; name: string; description: string; target_level: number | null; phases: RoutinePhases; total_min: number; }
 interface Cycle {
   sessions: number; days: number; minutes: number;
+  /** 승급 진행량 내림값 (출석 1회 = 1, 운동시간 보너스 포함) — 판정(meets)과 같은 숫자 */
+  progressFloor?: number;
   reqSessions: number; reqDays: number; reqMinutes: number; meets: boolean;
   reqMinDays?: number; elapsedDays?: number; rank?: string;
 }
@@ -92,7 +94,7 @@ const RoutinesPage = () => {
             </span>
           </div>
           <div className="flex gap-2">
-            <CycleBar label="출석" cur={cycle.sessions} req={cycle.reqSessions} unit="회" />
+            <CycleBar label="출석" cur={cycle.progressFloor ?? cycle.sessions} req={cycle.reqSessions} unit="회" />
             {/* 블랙 리그는 출석 수와 별개로 최소 연한이 있다 */}
             {(cycle.reqMinDays ?? 0) > 0 && (
               <CycleBar label="연한" cur={cycle.elapsedDays ?? 0} req={cycle.reqMinDays ?? 0} unit="일" />
@@ -101,8 +103,8 @@ const RoutinesPage = () => {
           {cycle.meets && (
             <p className="mt-2 w-full rounded-lg bg-primary/10 py-2 text-center text-xs font-bold text-primary">
               {needsReview
-                ? "요건을 다 채웠어요 — 코치님 승급 심사를 신청하세요"
-                : "출석을 다 채웠어요 — 자동으로 처리 중!"}
+                ? "요건을 다 채웠어요 — 심사가 열리면 담당자 확인 후 승급돼요"
+                : "출석을 다 채웠어요 — 다음 출석 때 자동으로 승급돼요"}
             </p>
           )}
         </div>

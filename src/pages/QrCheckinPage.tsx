@@ -23,6 +23,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, AlertCircle, CheckCircle2, QrCode, RotateCcw, Home } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { WORKOUT_TIME_KEY } from "@/hooks/useWorkoutTime";
 
 interface CheckinResult {
@@ -38,15 +39,19 @@ interface CheckinResult {
   xp_granted?: number;
 }
 
-/** 보드 QR 의 URL(https://myboxer153.com/qr-checkin?b=..&t=..)에서 지점·토큰을 꺼낸다. */
+/** 보드 QR 의 URL(https://myboxer153.com/qr-checkin?b=..&t=..)에서 지점·토큰을 꺼낸다.
+ *  우리 도메인·우리 경로·24자리 hex 토큰만 인정 — 다른 QR 은 "보드 QR 아님" 으로 바로 안내한다. */
+const BOARD_HOSTS = new Set(["myboxer153.com", "www.myboxer153.com"]);
 function parseBoardQr(raw: string): { b: string; t: string } | null {
   const s = raw.trim();
   if (!s) return null;
   try {
     const url = /^https?:\/\//i.test(s) ? new URL(s) : new URL(s, "https://myboxer153.com");
+    if (!BOARD_HOSTS.has(url.hostname.toLowerCase())) return null;
+    if (!url.pathname.endsWith("/qr-checkin")) return null;
     const b = url.searchParams.get("b");
     const t = url.searchParams.get("t");
-    if (b && t) return { b, t };
+    if (b && t && /^[0-9a-f]{24}$/i.test(t)) return { b, t };
   } catch {
     /* URL 이 아니면 보드 QR 이 아니다 */
   }
@@ -64,6 +69,7 @@ const fmtTime = (iso?: string) =>
 const QrCheckinPage = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { refreshProgress } = useAuth();
   const [params] = useSearchParams();
   const deepB = params.get("b");
   const deepT = params.get("t");
@@ -118,8 +124,9 @@ const QrCheckinPage = () => {
         // 운동시간 카드(오늘 출석 = 시작)가 바로 켜지고, 승급 진행도·XP 도 새로 묻도록
         void qc.invalidateQueries({ queryKey: WORKOUT_TIME_KEY });
         void qc.invalidateQueries({ queryKey: ["level-cycle"] });
-        void qc.invalidateQueries({ queryKey: ["member-progress"] });
         void qc.invalidateQueries({ queryKey: ["wallet"] });
+        // 레벨·XP 는 AuthContext.progress 에 산다 — QR 이 승급을 만들었으면 여기서 바로 새로 받는다.
+        void refreshProgress();
       } catch {
         setErrorMsg("네트워크 오류가 발생했어요. 다시 시도해 주세요");
         setPhase("error");
@@ -127,7 +134,7 @@ const QrCheckinPage = () => {
         busyRef.current = false;
       }
     },
-    [qc, stopScanner],
+    [qc, stopScanner, refreshProgress],
   );
 
   // 딥링크(폰 카메라로 찍은 경우) — 카메라 없이 바로 제출
@@ -160,6 +167,21 @@ const QrCheckinPage = () => {
             /* 프레임마다 나는 미인식 오류 — 무시 */
           },
         );
+        // 카메라가 켜지는 동안(권한 프롬프트·워밍업) 화면을 떠났으면 여기서 직접 끈다 —
+        // cleanup 은 아직 SCANNING 이 아니라 stop() 을 건너뛰어 스트림이 살아남는다.
+        if (cancelled) {
+          scannerRef.current = null;
+          try {
+            await scanner.stop();
+          } catch {
+            /* noop */
+          }
+          try {
+            scanner.clear();
+          } catch {
+            /* noop */
+          }
+        }
       } catch (err) {
         if (cancelled) return;
         const s = String(err ?? "");

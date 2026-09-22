@@ -40,9 +40,12 @@ export function useWorkoutTimeRanking(limit = 30, enabled = true) {
 
 export function useFinishWorkout() {
   const qc = useQueryClient();
+  const { refreshProgress } = useAuth();
   return useMutation({
     mutationFn: (atGym: boolean | null) => finishWorkoutSession(atGym),
     onSuccess: () => {
+      // 레벨·XP 의 실제 저장소는 AuthContext.progress — ["member-progress"] 키는 구독자가 없다.
+      void refreshProgress();
       qc.invalidateQueries({ queryKey: WORKOUT_TIME_KEY });
       // XP 가 올라가므로 지갑·진행도 화면도 같이 새로 물어본다.
       qc.invalidateQueries({ queryKey: ["wallet"] });

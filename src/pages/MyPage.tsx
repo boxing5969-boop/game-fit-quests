@@ -11,7 +11,7 @@ import CharacterSprite from "@/components/CharacterSprite";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import { ArrowLeft, MapPin, Calendar, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles, Clock } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
-import { isStaffProfile, staffTitleLabel } from "@/lib/staffDisplay";
+import { isStaffProfile, staffDisplayName, staffTitleLabel } from "@/lib/staffDisplay";
 import { useNavigate } from "react-router-dom";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
 import { toast } from "sonner";
@@ -167,8 +167,8 @@ const MyPage = () => {
               <div className="min-w-0 flex-1 pt-1">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h2 className="truncate text-lg text-foreground">{isStaff ? `${profile.name || profile.nickname} ${staffTitleLabel(profile)}` : (profile.nickname || profile.name)}</h2>
-                    <p className="truncate text-sm text-muted-foreground">{profile.name}</p>
+                    <h2 className="truncate text-lg text-foreground">{isStaff ? staffDisplayName(profile) : (profile.nickname || profile.name)}</h2>
+                    {!isStaff && <p className="truncate text-sm text-muted-foreground">{profile.name}</p>}
                   </div>
                   {/* 보유 젬 (기존 중복 버튼에서 프로필로 통합) */}
                   <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-reward/20 px-2.5 py-1">
@@ -188,7 +188,7 @@ const MyPage = () => {
                   ) : (
                     <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} isMaster={isManagerRole(role)} />
                   )}
-                  {role && role !== "member" && (
+                  {role && role !== "member" && !isStaff && (
                     <span className="rounded-full bg-reward/30 px-2 py-0.5 text-xs font-bold text-reward-foreground">
                       {role === "branch_manager" || role === "coach" ? "관장님" : role === "super_admin" || role === "admin" ? "전체 관리자" : role}
                     </span>

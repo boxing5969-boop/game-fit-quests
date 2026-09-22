@@ -14,6 +14,8 @@ import { useLevelVideos, youtubeThumb, parseVideoTitle } from "@/hooks/useLevelV
 
 interface Cycle {
   sessions: number; days: number; minutes: number;
+  /** 승급 진행량 내림값 (출석 1회 = 1, 운동시간 보너스 포함) — 판정(meets)과 같은 숫자 */
+  progressFloor?: number;
   reqSessions: number; reqDays: number; reqMinutes: number; meets: boolean;
   // 리그별 차등 요건 — 화이트3 / 블루5 / 레드8 / 블랙20회, 블랙은 레벨당 최소 45일 체류
   reqMinDays?: number; elapsedDays?: number; rank?: string;
@@ -106,7 +108,7 @@ const LevelUpRequestCard = () => {
             ? `이 리그부터는 출석 ${cycle.reqSessions}회를 채우면 승급 심사가 열리고, 코치님이 직접 보고 승급합니다.`
             : `입구에서 얼굴 인식하면 출석이 자동으로 쌓여요. 출석 ${cycle.reqSessions}회마다 자동으로 다음 레벨! (10레벨은 코치님 승인)`}
       </p>
-      <Bar label="이번 레벨 출석" cur={cycle.sessions} req={cycle.reqSessions} unit="회" />
+      <Bar label="이번 레벨 진행도" cur={cycle.progressFloor ?? cycle.sessions} req={cycle.reqSessions} unit="회" />
       {(cycle.reqMinDays ?? 0) > 0 && (
         <div className="mt-2">
           <Bar label="연한 (이 레벨에 머문 기간)" cur={cycle.elapsedDays ?? 0} req={cycle.reqMinDays ?? 0} unit="일" />
@@ -141,7 +143,7 @@ const LevelUpRequestCard = () => {
         </div>
       ) : cycle.meets ? (
         <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary/10 py-3 text-sm font-bold text-primary">
-          🥊 출석 {cycle.reqSessions}회 달성 — 자동으로 처리 중이에요!
+          🥊 출석 {cycle.reqSessions}회 달성 — 다음 출석 때 자동으로 승급돼요!
         </div>
       ) : null}
 

@@ -21,7 +21,7 @@ export interface StaffLikeProfile {
 
 /** 화면 표기용 직함 — 항상 님을 붙인다 (지점장 → 지점장님, 코치 → 코치님). 빈 값은 코치님. */
 export const honorTitle = (title?: string | null): string => {
-  const t = (title || "코치").trim();
+  const t = (title ?? "").trim() || "코치";
   return t.endsWith("님") ? t : `${t}님`;
 };
 
@@ -30,7 +30,7 @@ export const isStaffProfile = (p: unknown): boolean =>
 
 /** "임OO 지점장님" — 실명 + 직함. 실명이 없으면 닉네임, 그것도 없으면 직함만. */
 export const staffDisplayName = (p: StaffLikeProfile): string => {
-  const base = (p.name || p.nickname || "").trim();
+  const base = (p.name ?? "").trim() || (p.nickname ?? "").trim();
   const title = honorTitle(p.staff_title);
   return base ? `${base} ${title}` : title;
 };

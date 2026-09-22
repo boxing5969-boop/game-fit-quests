@@ -43,6 +43,9 @@ import TodayActionCard, { type TodayActionState } from "@/components/home/TodayA
 import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
 import { isStaffProfile, staffDisplayName, staffTitleLabel } from "@/lib/staffDisplay";
+import { useLevelupRules } from "@/hooks/useLevelupRules";
+import { authorityLabel } from "@/lib/levelAuthority";
+import { useMyWorkoutToday } from "@/hooks/useWorkoutTime";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
@@ -75,6 +78,11 @@ const HomePage = () => {
   const { totalXp, metrics } = useLocalProgress();
   // 승급 진행도 — 홈 카드 막대의 단일 출처 (서버 계산). 대표님 결정(2026-09-22): 막대 = 승급 진행도.
   const { data: levelCycle } = useLevelCycleProgress();
+  const { data: levelupRules } = useLevelupRules();
+  // 오늘 출석 여부 — 서버(get_my_workout_today, KST·지점 무관)가 단일 출처. 예전엔 기기 자정·지점 필터로 따로 세어
+  // WorkoutFinishCard 와 다른 답을 냈다 (검수 발견).
+  const { data: workoutToday } = useMyWorkoutToday();
+  const checkedInToday = !!workoutToday?.checked_in;
   // 지도진(profiles.is_staff)은 리그·레벨 대신 "이름 직함님" 으로 — 승급 막대도 없다 (2026-09-22).
   const staffCard = isStaffProfile(profile) ? { title: staffTitleLabel(profile ?? {}) } : null;
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
@@ -86,7 +94,6 @@ const HomePage = () => {
   const [qrAutoStarted, setQrAutoStarted] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const { visibility: homeWidgets, order: homeWidgetOrder } = useHomeLayout();
-  const [checkedInToday, setCheckedInToday] = useState(false);
   const [levelUpModal, setLevelUpModal] = useState<{
     show: boolean;
     level: number;
@@ -95,24 +102,7 @@ const HomePage = () => {
   }>({ show: false, level: 0, rank: "", xp: 0 });
 
   // ───── Data side-effects (unchanged behavior) ─────
-  const checkTodayAttendance = useCallback(async () => {
-    if (!user?.id || !profile?.branch_name) return;
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const { data, error } = await supabase
-      .from("attendance_logs")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("branch_name", profile.branch_name)
-      .eq("is_duplicate", false)
-      .gte("checked_in_at", todayStart.toISOString())
-      .limit(1);
-    setCheckedInToday(!error && !!data && data.length > 0);
-  }, [user?.id, profile?.branch_name]);
-
-  useEffect(() => {
-    checkTodayAttendance();
-  }, [checkTodayAttendance]);
+  // (오늘 출석 여부는 위 useMyWorkoutToday 가 담당 — 기기 자정·지점 필터 로컬 조회는 2026-09-22 제거)
 
   useEffect(() => {
     if (!onboardingDone) navigate("/onboarding", { replace: true });
@@ -231,7 +221,7 @@ const HomePage = () => {
   // 전체 관리자는 파이트 머니 개념이 없음 — 상단 표기를 ∞ 로 통일.
   const isAdmin = role === "admin" || role === "super_admin";
   const gemsDisplay = isAdmin ? "∞" : gemCount.toLocaleString();
-  const displayName = profile.nickname || profile.name;
+  const displayName = staffCard ? staffDisplayName(profile) : (profile.nickname || profile.name);
   // 153 스토리 RPG: 미공개 — admin/super_admin 만 진입/표시 (회원 노출 차단).
   // 추가로 admin 도 본인 customize 토글로 끌 수 있음.
   const showStoryRpg = isAdmin && homeWidgets.storyRpg;
@@ -242,12 +232,14 @@ const HomePage = () => {
         <PageHeader
           title={displayName}
           titlePrefix={
+            staffCard ? undefined : (
             <RankBadge
               rank={rank}
               level={progress.current_level}
               size="inline"
               isMaster={isManagerRole(role)}
             />
+            )
           }
           subtitle={profile.branch_name || undefined}
           leftAction={
@@ -387,13 +379,17 @@ const HomePage = () => {
                   totalXp={totalXp}
                   xpToNext={Math.max(metrics.xp.target, totalXp || 1)}
                   promotion={
-                    levelCycle && !staffCard
-                      ? {
-                          current: Number(levelCycle.progress ?? 0),
-                          target: Number(levelCycle.reqSessions ?? 0),
-                          hint: promotionHint(levelCycle),
-                        }
-                      : undefined
+                    staffCard
+                      ? undefined
+                      : levelCycle
+                        ? {
+                            // 요건을 넘긴 값(승인 대기·다음 출석 때 승급)은 막대를 넘치지 않게 목표에서 자른다
+                            current: Math.min(Number(levelCycle.progress ?? 0), Number(levelCycle.reqSessions ?? 0)),
+                            target: Number(levelCycle.reqSessions ?? 0),
+                            hint: promotionHint(levelCycle, authorityLabel(levelupRules, levelCycle.rank, levelCycle.currentLevel)),
+                          }
+                        // 서버 값이 오기 전엔 막대를 비워 둔다 — 옛 "XP / 300" 막대가 잠깐 그려졌다 바뀌는 깜빡임 방지
+                        : { current: 0, target: 0 }
                   }
                   isMaster={isMaster40}
                   masterTitle={masterDef?.title}
@@ -433,7 +429,7 @@ const HomePage = () => {
                       name={displayName}
                       score={totalXp}
                       isMe
-                      meta={`${RANK_LABELS[rank]} · Lv.${progress.current_level}`}
+                      meta={staffCard ? staffTitleLabel(profile) : `${RANK_LABELS[rank]} · Lv.${progress.current_level}`}
                       avatar={
                         myCharacter?.character_presets ? (
                           <CharacterSprite

@@ -13,6 +13,8 @@ import { RANK_LABELS } from "@/data/sharedConstants";
 
 interface Cycle {
   sessions: number; days: number; minutes: number;
+  /** 승급 진행량 내림값 (출석 1회 = 1, 운동시간 보너스 포함) — 판정(meets)과 같은 숫자 */
+  progressFloor?: number;
   reqSessions: number; reqDays: number; reqMinutes: number; meets: boolean;
   // 리그별 차등 요건 — 화이트3 / 블루5 / 레드8 / 블랙20회, 블랙은 레벨당 최소 45일 체류
   reqMinDays?: number; elapsedDays?: number; rank?: string;
@@ -233,7 +235,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
   const isApprovalOnly = c?.rank === "red" || c?.rank === "black";
   // 지표 타일 — 요건이 0인 항목은 빼고, 블랙 리그는 '연한'(최소 체류일)을 보여준다
   const metrics = [
-    { label: "출석", cur: c?.sessions ?? 0, req: c?.reqSessions ?? 3, unit: "회" },
+    { label: "출석", cur: c?.progressFloor ?? c?.sessions ?? 0, req: c?.reqSessions ?? 3, unit: "회" },
     ...((c?.reqMinDays ?? 0) > 0
       ? [{ label: "연한", cur: c?.elapsedDays ?? 0, req: c?.reqMinDays ?? 0, unit: "일" }]
       : [{ label: "다른 날", cur: c?.days ?? 0, req: c?.reqDays ?? 3, unit: "일" }]),
@@ -357,7 +359,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
               </div>
             ) : canLevelUp ? (
               <div className="flex items-center justify-center gap-2 rounded-2xl bg-reward/10 py-3.5 text-[13px] font-black text-reward">
-                <Trophy className="h-4 w-4" /> 출석 {c?.reqSessions ?? 3}회 달성 — 자동으로 처리 중이에요!
+                <Trophy className="h-4 w-4" /> 출석 {c?.reqSessions ?? 3}회 달성 — 다음 출석 때 자동으로 승급돼요!
               </div>
             ) : null}
           </div>
