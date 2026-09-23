@@ -8,6 +8,7 @@ import { RANK_LABELS } from "@/data/sharedConstants";
 import { cn } from "@/lib/utils";
 
 import RankBadge from "@/components/RankBadge";
+import { isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
 import type { Enums } from "@/integrations/supabase/types";
 import {
   EarnedBadgeGrid,
@@ -31,7 +32,9 @@ const REWARD_HERO_STYLE: React.CSSProperties = {
 
 const RewardsPage = () => {
   const navigate = useNavigate();
-  const { progress, role } = useAuth();
+  const { progress, role, profile } = useAuth();
+  // 지도진(코치님)은 회원 리그 대신 챔피언 · Lv.77 (2026-09-23 대표님 지시, 화면 전용)
+  const isStaff = isStaffProfile(profile);
   const { data: allBadges, isLoading: badgesLoading } = useBadges();
   const { data: myBadges } = useMyBadges();
   const { data: xpLogs } = useXpLogs(30);
@@ -145,14 +148,20 @@ const RewardsPage = () => {
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-caption text-muted-foreground">현재 리그</p>
+                <p className="text-caption text-muted-foreground">{isStaff ? "코치님" : "현재 리그"}</p>
                 <div className="mt-1">
-                  <RankBadge
-                    rank={progress.current_rank as Enums<"rank_name">}
-                    level={progress.current_level}
-                    size="lg"
-                    isMaster={isManagerRole(role)}
-                  />
+                  {isStaff ? (
+                    <span className="inline-flex rounded-full bg-yellow-500/15 px-3 py-1 text-sm font-black text-yellow-600 dark:text-yellow-400">
+                      {staffChampionLine(profile ?? {})}
+                    </span>
+                  ) : (
+                    <RankBadge
+                      rank={progress.current_rank as Enums<"rank_name">}
+                      level={progress.current_level}
+                      size="lg"
+                      isMaster={isManagerRole(role)}
+                    />
+                  )}
                 </div>
               </div>
               <div className="text-right">

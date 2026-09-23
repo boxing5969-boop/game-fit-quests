@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, X, Pencil, Trophy, ChevronUp, Home, Swords, Map as MapIcon, Gift } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
 import RankBadge from "@/components/RankBadge";
+import { isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import { useLevels } from "@/hooks/useQuestData";
@@ -198,7 +199,12 @@ const MemberPreviewPage = () => {
                 <p className="text-sm font-bold text-primary-foreground">{p.nickname || p.name}</p>
               </div>
             </div>
-            <RankBadge rank={prog.current_rank as Enums<"rank_name">} level={prog.current_level} size="sm" />
+            {isStaffProfile(p) ? (
+              // 지도진(코치님)은 챔피언 · Lv.77 (화면 전용)
+              <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] font-black text-yellow-300">{staffChampionLine(p)}</span>
+            ) : (
+              <RankBadge rank={prog.current_rank as Enums<"rank_name">} level={prog.current_level} size="sm" />
+            )}
           </div>
           {/* Quick actions */}
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
