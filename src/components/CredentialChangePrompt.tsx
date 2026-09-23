@@ -1,11 +1,13 @@
 // 최초 로그인 아이디·비밀번호 변경 프롬프트 (권장·스킵 가능).
 // 일괄등록 회원은 아이디·비번이 전화번호라, must_change_credentials=true 시 노출.
 // "나중에" = 이번 세션 스킵(플래그 유지 → 다음 로그인 때 다시 권장).
-import { useState } from "react";
+// 다른 화면(닉네임 좋아요 등)이 openCredentialChange() 신호를 보내면 다시 연다 (2026-09-23).
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { KeyRound } from "lucide-react";
+import { OPEN_CREDENTIAL_CHANGE_EVENT } from "@/lib/appEvents";
 
 const USERNAME_RE = /^[a-z0-9_]{4,20}$/;
 
@@ -17,6 +19,12 @@ const CredentialChangePrompt = () => {
   const [confirmPw, setConfirmPw] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const reopen = () => setDismissed(false);
+    window.addEventListener(OPEN_CREDENTIAL_CHANGE_EVENT, reopen);
+    return () => window.removeEventListener(OPEN_CREDENTIAL_CHANGE_EVENT, reopen);
+  }, []);
 
   const mustChange = !!(profile as { must_change_credentials?: boolean } | null)?.must_change_credentials;
   if (!user || !mustChange || dismissed) return null;

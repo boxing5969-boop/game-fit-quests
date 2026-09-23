@@ -15,6 +15,7 @@ import {
 } from "@/services/boxingEngagementService";
 import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
 import { useGymRaidContributeTrigger } from "@/hooks/useGymRaid";
+import { KING_153_KEY } from "@/hooks/use153King";
 
 export const BOXING_FUN_CHALLENGES_KEY = ["boxing-fun-challenges"] as const;
 
@@ -42,6 +43,8 @@ export function useSubmitBoxingFunChallengeAttempt() {
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
       qc.invalidateQueries({ queryKey: ["boxing-fun-challenges"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
+      // 153 챌린지 킹 보드(버피왕·체력왕·앱활동왕)도 다시 읽는다 — 아레나를 킹 보드 밖에서 열어도 순위가 맞게
+      qc.invalidateQueries({ queryKey: KING_153_KEY });
       // v1.5 16단계: 숨겨진 미션 평가 트리거 (디바운스)
       triggerCheck();
       // v2 21단계: 짐 레이드 contribute (completed 일 때만, 자동 매칭)

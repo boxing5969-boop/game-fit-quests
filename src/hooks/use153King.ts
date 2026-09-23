@@ -1,5 +1,5 @@
 /**
- * 153 챌린지 킹 보드 hooks — 요약(6개 왕좌) + 카테고리 순위표. 읽기 전용.
+ * 153 챌린지 킹 보드 hooks — 요약(8개 왕좌) + 카테고리 순위표 + 닉네임 좋아요 + 런칭 이벤트 기간.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,15 +55,17 @@ export function useBranchNicknames(search: string, enabled: boolean) {
   });
 }
 
-/** 좋아요 토글 — 성공하면 목록·킹 보드를 다시 읽는다 */
+/** 좋아요 토글 — 성공하면 목록·킹 보드를 다시 읽는다. 목록이 다시 읽힐 때까지 mutateAsync 가 끝나지 않게
+ *  Promise 를 돌려준다(화면이 그동안 하트를 잠가 연타로 좋아요→취소 되는 걸 막는다). */
 export function useToggleNicknameLike() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (targetUserId: string) => toggleNicknameLike(targetUserId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: NICKNAME_LIKE_KEY });
-      qc.invalidateQueries({ queryKey: KING_153_KEY });
-    },
+    onSuccess: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: NICKNAME_LIKE_KEY }),
+        qc.invalidateQueries({ queryKey: KING_153_KEY }),
+      ]),
   });
 }
 

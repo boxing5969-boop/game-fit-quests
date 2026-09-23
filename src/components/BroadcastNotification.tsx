@@ -37,11 +37,13 @@ const BroadcastNotification = () => {
         }
         return query;
       });
-      if (!profiles.length) throw new Error("대상 회원이 없습니다");
+      // 페이지를 읽는 사이 회원이 늘면 경계에서 같은 사람이 두 번 올 수 있다 — 한 사람에 한 통만.
+      const userIds = [...new Set(profiles.map(p => p.user_id))];
+      if (!userIds.length) throw new Error("대상 회원이 없습니다");
 
       // Insert notifications in batches
-      const batch = profiles.map(p => ({
-        user_id: p.user_id,
+      const batch = userIds.map(user_id => ({
+        user_id,
         title: title.trim(),
         body: body.trim(),
       }));
@@ -53,7 +55,7 @@ const BroadcastNotification = () => {
         if (insertErr) throw insertErr;
       }
 
-      return profiles.length;
+      return userIds.length;
     },
     onSuccess: (count) => {
       toast.success(`${count}명에게 공지 발송 완료`);

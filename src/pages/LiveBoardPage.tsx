@@ -19,7 +19,7 @@ import LiveLevelUpInterrupt, {
 import LiveBoardTestPanel from "@/components/liveBoard/LiveBoardTestPanel";
 import LiveBoardQrCard from "@/components/liveBoard/LiveBoardQrCard";
 import LaunchEventBoard from "@/components/liveBoard/LaunchEventBoard";
-import { honorTitle } from "@/lib/staffDisplay";
+import { STAFF_CHAMPION_LEVEL, honorTitle } from "@/lib/staffDisplay";
 import {
   generateMockMembers,
   type MockActiveMember,
@@ -356,11 +356,13 @@ const LiveBoardPage = () => {
     const userIds = Array.from(latestByUser.keys());
 
     // 공개 안전컬럼 뷰 사용 (민감정보 제외)
-    type PublicProfileLite = { user_id: string; nickname: string | null; avatar_url: string | null };
+    type PublicProfileLite = { user_id: string; nickname: string | null; avatar_url: string | null; is_staff?: boolean | null };
     const { data: profiles } = (await (supabase as any)
       .from("public_profiles")
-      .select("user_id, nickname, avatar_url")
+      .select("user_id, nickname, avatar_url, is_staff")
       .in("user_id", userIds)) as { data: PublicProfileLite[] | null };
+    // 지도진(코치님)은 '활동 중' 회원 칸에 넣지 않는다 — 코치님은 아래 COACHING STAFF 띠에 챔피언으로 따로 선다.
+    for (const p of profiles || []) staffFlagRef.current.set(p.user_id, p.is_staff === true);
 
     const { data: progressData } = await supabase
       .from("member_progress")
@@ -410,6 +412,7 @@ const LiveBoardPage = () => {
     const members: ActiveMember[] = [];
     for (const [userId, session] of latestByUser) {
       const profile = profileMap.get(userId);
+      if (profile?.is_staff === true) continue;
       const progress = progressMap.get(userId);
       const attendanceFallback = attendanceMap.get(userId);
 
@@ -628,6 +631,8 @@ const LiveBoardPage = () => {
 
   const triggerLevelUp = useCallback(
     async (userId: string, oldLevel: number, newLevel: number, league: string) => {
+      // 코치님(지도진)은 TV 에서 챔피언 · Lv.77 — 회원 레벨업 연출을 띄우지 않는다.
+      if (await isStaffUser(userId)) return;
       const active = activeMembersRef.current.find((m) => m.user_id === userId);
       const visit = dailyVisitsRef.current.find((v) => v.user_id === userId);
       const name = active?.name || visit?.display_name;
@@ -665,7 +670,7 @@ const LiveBoardPage = () => {
         partsJson,
       });
     },
-    [getAvatarUrl],
+    [getAvatarUrl, isStaffUser],
   );
 
   // Realtime subscriptions
@@ -1076,7 +1081,8 @@ const LiveBoardPage = () => {
                             {c.name} {honorTitle(c.title)}
                           </p>
                           <p className="text-[10px] font-black uppercase tracking-wider text-yellow-500/80">
-                            153 BOXING
+                            {/* 대표님 지시(2026-09-23): 코치님은 모두 챔피언 · Lv.77 */}
+                            CHAMPION · LV.{STAFF_CHAMPION_LEVEL}
                           </p>
                         </div>
                       </div>

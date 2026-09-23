@@ -42,7 +42,9 @@ import { useHomeLayout, type HomeWidgetId } from "@/lib/homeLayout";
 import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
 import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
-import { isStaffProfile, staffDisplayName, staffTitleLabel } from "@/lib/staffDisplay";
+import {
+  STAFF_CHAMPION_LEVEL, STAFF_CHAMPION_LINE, isStaffProfile, staffChampionLine, staffDisplayName, staffTitleLabel,
+} from "@/lib/staffDisplay";
 import { useLevelupRules } from "@/hooks/useLevelupRules";
 import { authorityLabel } from "@/lib/levelAuthority";
 import { useMyWorkoutToday } from "@/hooks/useWorkoutTime";
@@ -83,7 +85,7 @@ const HomePage = () => {
   // WorkoutFinishCard 와 다른 답을 냈다 (검수 발견).
   const { data: workoutToday } = useMyWorkoutToday();
   const checkedInToday = !!workoutToday?.checked_in;
-  // 지도진(profiles.is_staff)은 리그·레벨 대신 "이름 직함님" 으로 — 승급 막대도 없다 (2026-09-22).
+  // 지도진(profiles.is_staff)은 리그·레벨 대신 "이름 직함님" + 챔피언 · Lv.77 로 — 승급 막대도 없다 (2026-09-22, 09-23).
   const staffCard = isStaffProfile(profile) ? { title: staffTitleLabel(profile ?? {}) } : null;
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
   const { resolveSlot: resolveDisplaySlot } = useDisplayMode();
@@ -232,7 +234,15 @@ const HomePage = () => {
         <PageHeader
           title={displayName}
           titlePrefix={
-            staffCard ? undefined : (
+            // 지도진은 리그 배지 대신 챔피언 표식 (2026-09-23 대표님 지시: 코치님은 모두 챔피언 · Lv.77)
+            staffCard ? (
+              <span
+                className="inline-flex shrink-0 items-center rounded-md bg-yellow-500 px-1.5 py-0.5 text-[10px] font-black leading-none text-gray-900"
+                aria-label={STAFF_CHAMPION_LINE}
+              >
+                챔피언 {STAFF_CHAMPION_LEVEL}
+              </span>
+            ) : (
             <RankBadge
               rank={rank}
               level={progress.current_level}
@@ -429,7 +439,7 @@ const HomePage = () => {
                       name={displayName}
                       score={totalXp}
                       isMe
-                      meta={staffCard ? staffTitleLabel(profile) : `${RANK_LABELS[rank]} · Lv.${progress.current_level}`}
+                      meta={staffCard ? staffChampionLine(profile) : `${RANK_LABELS[rank]} · Lv.${progress.current_level}`}
                       avatar={
                         myCharacter?.character_presets ? (
                           <CharacterSprite

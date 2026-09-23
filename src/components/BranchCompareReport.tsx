@@ -27,14 +27,15 @@ const BranchCompareReport = () => {
       for (const branch of branches) {
         // 지점 회원 id 를 1,000행씩 끝까지 읽고(칠금점 1,996명), 조인은 150명씩 나눠 부른다 —
         // 한 번에 받으면 1,000명에서 잘리고, .in() 에 수천 개를 넣으면 URL 길이 한도에 걸린다.
+        // 지도진(코치님)은 회원 비교에서 뺀다 — 회원관리 "전체 회원" 카드와 같은 기준.
         const branchIds = (await fetchAllRows((from, to) =>
-          supabase.from("profiles").select("user_id").eq("branch_name", branch.name)
+          supabase.from("profiles").select("user_id").eq("branch_name", branch.name).not("is_staff", "is", true)
             .order("user_id", { ascending: true }).range(from, to),
         )).map(p => p.user_id);
         const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
         const [profilesRes, progData, weeklyXpRows, pendingRows] = await Promise.all([
-          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("branch_name", branch.name).eq("is_approved", true),
+          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("branch_name", branch.name).eq("is_approved", true).not("is_staff", "is", true),
           inChunks(branchIds, ids =>
             supabase.from("member_progress").select("user_id, current_rank, current_level, streak_days").in("user_id", ids)),
           inChunks(branchIds, ids =>

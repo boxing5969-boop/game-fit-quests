@@ -5,7 +5,10 @@
  *
  * 점수는 전부 서버(get_153_king_board / get_153_king_summary)가 계산한다. 이 파일은
  * 카테고리 이름·설명·단위·행동 버튼 같은 "말" 만 들고 있다 — 숫자를 여기서 만들지 않는다.
- * 규칙 문구는 마이그레이션 20260923053413 / 053518 의 정의와 같아야 한다.
+ * 규칙 문구는 서버 점수 정의(_king_scores v3, 마이그레이션 20260923132101)와 같아야 한다:
+ *   출석 계열 = 얼굴 인식 출석만 · 얼리버드 = 새벽 5시~오전 9시 · 앱활동 = 행동 종류별 하루 1점 ·
+ *   버피 = 하루 최고 기록의 합(상급 목표 × 3 까지) · 체력 = 종목별 하루 1라운드 · 닉네임 = 지금 받고 있는 좋아요(누적).
+ * 순위에는 승인된 지점 회원만 오른다(지도진·관리자·이용 기록 없는 계정 제외).
  *
  * 보호 원칙: 읽기 전용. 공식 XP / wallet / level 변경 0건.
  */
@@ -89,7 +92,7 @@ export interface KingMeta {
   how: string;
   /** 점수 단위 */
   unit: string;
-  /** 기간 토글과 무관한 지표면 true (연속출석) */
+  /** 기간 토글과 무관한 지표면 true (연속출석 = 지금 연속, 닉네임 = 누적) */
   periodless?: boolean;
   action: KingAction;
   actionLabel?: string;
@@ -98,51 +101,51 @@ export interface KingMeta {
 export const KING_META: Record<KingCategory, KingMeta> = {
   attendance: {
     key: "attendance", emoji: "🗓️", title: "출석왕", tagline: "많이 온 사람",
-    what: "얼굴 인식·QR 출석으로 체육관에 온 날 수를 셉니다. 하루에 여러 번 와도 1일.",
+    what: "얼굴 인식으로 체육관에 들어온 날 수를 셉니다. 하루에 여러 번 와도 1일. (QR 출석은 체육관 밖에서도 찍힐 수 있어 왕좌에는 넣지 않아요)",
     how: "그냥 자주 오세요. 동점이면 먼저 채운 사람이 앞섭니다.",
     unit: "일", action: null,
   },
   streak: {
     key: "streak", emoji: "🔥", title: "연속출석왕", tagline: "끊기지 않은 사람",
-    what: "오늘 또는 어제까지 하루도 빠지지 않고 이어진 출석 일수입니다. 하루 빠지면 0부터.",
-    how: "매일 오는 게 전부예요. 이 왕좌는 주·월 기간과 상관없이 '지금 연속' 으로 정합니다.",
+    what: "얼굴 인식 출석이 오늘 또는 어제까지 하루도 빠지지 않고 이어진 일수입니다. 하루 빠지면 0부터.",
+    how: "매일 오는 게 전부예요. 주·월 기간과 상관없이 '지금 연속' 으로 정하고, 런칭 이벤트 탭에서는 이벤트 시작일부터 셉니다.",
     unit: "일 연속", periodless: true, action: null,
   },
   early_bird: {
-    key: "early_bird", emoji: "🌅", title: "얼리버드왕", tagline: "오전 9시 전 출석",
-    what: "오전 9시 전에 출석 체크한 횟수를 셉니다.",
+    key: "early_bird", emoji: "🌅", title: "얼리버드왕", tagline: "새벽 5시~오전 9시 출석",
+    what: "새벽 5시~오전 9시 사이에 얼굴 인식으로 출석한 날 수입니다. 하루에 한 번만 셉니다.",
     how: "아침 운동 습관이 있으면 자동으로 올라갑니다.",
-    unit: "회", action: null,
+    unit: "일", action: null,
   },
   levelup: {
     key: "levelup", emoji: "⬆️", title: "레벨업왕", tagline: "가장 많이 승급",
-    what: "이 기간에 레벨이 오른 횟수입니다 (자동 승급·코치 승인 승급 모두).",
+    what: "이 기간에 레벨이 오른 횟수입니다 (출석 자동 승급·코치 승인 승급·타이틀매치 클리어).",
     how: "출석이 쌓이면 레벨이 오르고, 오래 운동하면(종료 버튼) 더 빨리 오릅니다.",
     unit: "회", action: null,
   },
   burpee: {
     key: "burpee", emoji: "💥", title: "버피왕", tagline: "버피 총 개수",
-    what: "챌린지 아레나 '버피 폭발 챌린지' 에 기록한 버피 개수를 모두 더합니다.",
+    what: "챌린지 아레나 '버피 폭발 챌린지' 기록을 더합니다. 하루에 여러 번 기록해도 그날 최고 기록 하나만, 한 번에 75개까지 인정해요.",
     how: "아레나에서 60초 버피를 하고 개수를 기록하세요. 통증 체크에 걸린 기록은 세지 않습니다.",
     unit: "개", action: "arena_burpee", actionLabel: "버피 기록하기",
   },
   fitness: {
     key: "fitness", emoji: "💪", title: "체력왕", tagline: "아레나 클리어 라운드",
-    what: "챌린지 아레나 체력 종목(스쿼트·푸시업·버피·줄넘기·샌드백·잽·원투·콤보·가드)에서 목표를 달성한 라운드 수입니다.",
-    how: "아레나 챌린지를 골라 목표 개수를 채우면 1라운드. 종목은 자유입니다.",
+    what: "챌린지 아레나 체력 종목(스쿼트·푸시업·버피·줄넘기·샌드백·잽·원투·콤보·가드)에서 목표를 달성한 라운드 수입니다. 같은 종목은 하루 1라운드만 셉니다.",
+    how: "아레나 챌린지를 골라 목표 개수를 채우면 1라운드. 여러 종목을 돌면 하루에 여러 라운드가 쌓여요.",
     unit: "라운드", action: "arena", actionLabel: "아레나 열기",
   },
   app: {
-    key: "app", emoji: "📱", title: "앱활동왕", tagline: "앱에서 한 행동 수",
-    what: "마이복서153 앱에서 한 행동을 셉니다 — 앱을 연 날, QR 출석, 운동 종료 기록, 아레나 도전, 퀴즈, 일기·댓글, 응원, 장비 나눔, 내가 보낸 닉네임 좋아요. 각 1점.",
-    how: "매일 앱을 열고, 운동 끝나면 종료를 누르고, 챌린지·퀴즈·좋아요를 남기세요. 런칭 이벤트 ②번 왕좌예요.",
+    key: "app", emoji: "📱", title: "앱활동왕", tagline: "앱에서 한 행동",
+    what: "마이복서153 앱에서 한 행동을 셉니다 — 앱 열기, QR 출석, 운동 종료, 아레나 도전, 퀴즈, 일기, 댓글, 응원, 장비 나눔, 닉네임 좋아요. 행동 종류마다 하루 1점(하루 최대 10점).",
+    how: "매일 앱을 열고, 운동이 끝나면 종료를 누르고, 챌린지·퀴즈·좋아요를 남기세요. 같은 행동을 여러 번 해도 하루 1점이에요. 런칭 이벤트 ②번 왕좌예요.",
     unit: "점", action: null,
   },
   nickname: {
     key: "nickname", emoji: "❤️", title: "닉네임왕", tagline: "받은 좋아요",
-    what: "같은 지점 회원들이 내 닉네임에 보낸 좋아요 수입니다. 한 사람이 한 명에게 하나만 보낼 수 있어요.",
-    how: "마이페이지에서 멋진 닉네임을 정하고, 아래 버튼으로 다른 회원 닉네임에 좋아요를 보내세요. 런칭 이벤트 ③번 왕좌예요.",
-    unit: "개", action: "nickname_like", actionLabel: "닉네임 좋아요 보내기",
+    what: "같은 지점 회원들이 내 닉네임에 보낸 좋아요 수입니다. 한 사람이 한 명에게 하나만 보낼 수 있고, 취소하지 않으면 계속 유지돼요(누적).",
+    how: "설정에서 나만의 닉네임(12자 이내)을 정하면 목록에 올라가요. 아래 버튼으로 다른 회원 닉네임에 좋아요를 보내세요. 런칭 이벤트 ③번 왕좌예요.",
+    unit: "개", periodless: true, action: "nickname_like", actionLabel: "닉네임 좋아요 보내기",
   },
 };
 
@@ -194,28 +197,44 @@ export interface BranchNicknameRow {
   user_id: string;
   display: string;
   has_nickname: boolean;
-  likes_month: number;
+  /** 지금 받고 있는 좋아요(닉네임왕 점수와 같은 정의) */
+  likes: number;
   liked_by_me: boolean;
 }
+/** 좋아요를 못 누르는 이유 — change_credentials: 처음 받은 아이디·비밀번호 그대로, not_member: 지점 회원 아님, no_branch: 지점 없음 */
+export type NicknameLikeBlock = "change_credentials" | "not_member" | "no_branch";
 export interface BranchNicknames {
   branch: string | null;
   rows: BranchNicknameRow[];
   my_given: number;
+  can_like: boolean;
+  /** null = 가능, admin_test = 관리자 체험(점수에는 안 들어감) */
+  reason: NicknameLikeBlock | "admin_test" | null;
 }
 
-/** 같은 지점 회원 닉네임 목록 (본인·지도진 제외, 좋아요 많은 순) */
+type RawNicknameRow = Omit<BranchNicknameRow, "likes"> & { likes?: number | string | null; likes_month?: number | string | null };
+
+/** 같은 지점 닉네임 목록 — 닉네임을 정한 회원만(본인·지도진·관리자 제외), 좋아요 많은 순. 검색은 닉네임만. */
 export async function getBranchNicknames(search: string | null, limit = 60): Promise<BranchNicknames> {
-  const { data, error } = await sbRpc<BranchNicknames>("get_branch_nicknames", { p_search: search, p_limit: limit });
+  const { data, error } = await sbRpc<Omit<BranchNicknames, "rows"> & { rows?: RawNicknameRow[] }>(
+    "get_branch_nicknames", { p_search: search, p_limit: limit },
+  );
   if (error) throw new Error(translateError(error));
-  return { branch: data?.branch ?? null, rows: data?.rows ?? [], my_given: Number(data?.my_given ?? 0) };
+  return {
+    branch: data?.branch ?? null,
+    rows: (data?.rows ?? []).map((r) => ({ ...r, likes: Number(r.likes ?? r.likes_month ?? 0) })),
+    my_given: Number(data?.my_given ?? 0),
+    can_like: data?.can_like ?? false,
+    reason: data?.reason ?? null,
+  };
 }
 
-/** 좋아요 토글 — 서버가 같은 지점·본인 제외·1인 1좋아요를 검사한다 */
-export async function toggleNicknameLike(targetUserId: string): Promise<{ liked: boolean; likes_month: number; likes_total: number }> {
-  const { data, error } = await sbRpc<{ liked: boolean; likes_month: number; likes_total: number }>("toggle_nickname_like", { _target: targetUserId });
+/** 좋아요 토글 — 서버가 같은 지점·본인 제외·1인 1좋아요·자격을 검사한다. likes = 대상이 지금 받고 있는 좋아요 */
+export async function toggleNicknameLike(targetUserId: string): Promise<{ liked: boolean; likes: number }> {
+  const { data, error } = await sbRpc<{ liked: boolean; likes?: number; likes_month?: number }>("toggle_nickname_like", { _target: targetUserId });
   if (error) throw new Error(translateError(error));
   if (!data) throw new Error("처리 결과를 받지 못했어요");
-  return data;
+  return { liked: !!data.liked, likes: Number(data.likes ?? data.likes_month ?? 0) };
 }
 
 // ── 런칭 이벤트 기간 설정 ────────────────────────────────────

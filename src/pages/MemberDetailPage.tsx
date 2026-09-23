@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Banknote } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
-import { isStaffProfile, staffTitleLabel } from "@/lib/staffDisplay";
+import { STAFF_CHAMPION_LEVEL, isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
@@ -276,7 +276,8 @@ const MemberDetailPage = () => {
             <h1 className="text-lg text-foreground">{p.nickname || p.name}</h1>
             {isStaffProfile(p) ? (
               // 153OS 지도진 명단에 있는 코치님·지점장님 — 역할이 member 여도 회원이 아니다 (2026-09-23)
-              <span className="rounded-full bg-reward/20 px-2 py-0.5 text-[10px] font-bold text-reward">{staffTitleLabel(p)}</span>
+              // 대표님 지시: 코치님은 모두 챔피언 · Lv.77 (화면 전용)
+              <span className="rounded-full bg-reward/20 px-2 py-0.5 text-[10px] font-bold text-reward">{staffChampionLine(p)}</span>
             ) : member.memberRole === "branch_manager" || member.memberRole === "coach" ? (
               <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">관장님</span>
             ) : member.memberRole === "super_admin" || member.memberRole === "admin" ? (
@@ -301,7 +302,9 @@ const MemberDetailPage = () => {
         <div className="grid grid-cols-4 gap-2 text-center">
           <MiniStat label="총 XP" value={prog.total_xp.toLocaleString()} />
           <MiniStat label="출석" value={`${prog.streak_days}일`} />
-          <MiniStat label="진행" value={`${globalLevel}/40`} />
+          {isStaffProfile(p)
+            ? <MiniStat label="챔피언" value={`Lv.${STAFF_CHAMPION_LEVEL}`} />
+            : <MiniStat label="진행" value={`${globalLevel}/40`} />}
           <MiniStat label="대기" value={`${pendingSubs.length}건`} highlight={pendingSubs.length > 0} />
         </div>
       </div>

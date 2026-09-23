@@ -13,7 +13,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, Users, User, ChevronRight, Bell, Inbox, UserCheck, UserX, Download, AlertTriangle, BarChart3 } from "lucide-react";
 import { formatRank, RANK_ICONS, isManagerRole } from "@/lib/rankLabels";
 import { fetchAllRows, inChunks } from "@/lib/supabasePaging";
-import { isStaffProfile, staffTitleLabel } from "@/lib/staffDisplay";
+import { isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
 import { Input } from "@/components/ui/input";
 import ApprovalInbox from "@/components/ApprovalInbox";
 import BulkMemberImport from "@/components/admin/BulkMemberImport";
@@ -22,6 +22,18 @@ import { toast } from "sonner";
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
 
 type FilterType = "all" | "staff" | "pending" | "active" | "boss_ready" | "unapproved";
+
+/** KST 오늘 0시 / 이번 주 월요일 0시 (ISO) — 기기 시간대와 무관 */
+const KST_MS = 9 * 3600 * 1000;
+const kstTodayStartIso = () => {
+  const k = new Date(Date.now() + KST_MS);
+  return new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate()) - KST_MS).toISOString();
+};
+const kstWeekStartIso = () => {
+  const k = new Date(Date.now() + KST_MS);
+  const sinceMonday = (k.getUTCDay() + 6) % 7;
+  return new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate() - sinceMonday) - KST_MS).toISOString();
+};
 type SortType = "recent_submission" | "level_desc" | "pending_count";
 type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk";
 
@@ -53,11 +65,13 @@ const BranchManagerHome = () => {
         const [profilesRes, unapprovedRes, pendingMissionsRes, pendingQuestsRes, xpRes, submissionsRes] = await Promise.all([
           // 지도진(is_staff)은 회원이 아니다 — "전체 회원" 에서 빼고, 목록도 지도진 필터로 분리한다.
           supabase.from("profiles").select("user_id", { count: "exact", head: true }).not("is_staff", "is", true),
-          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false).not("is_staff", "is", true),
+          // 가입 승인 대기는 지도진도 센다 — 새로 가입한 코치님도 승인해야 앱을 쓴다(승인함 목록과 같은 기준).
+          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false),
           supabase.from("mission_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("quest_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
-          supabase.from("xp_logs").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString()),
-          supabase.from("mission_submissions").select("id", { count: "exact", head: true }).gte("requested_at", new Date().toISOString().split("T")[0]),
+          // 이번 주(KST 월요일 0시부터) 레벨업 — 지점 통계(get_branch_stats)와 같은 기준
+          supabase.from("xp_logs").select("id", { count: "exact", head: true }).like("reason", "%레벨업%").gte("created_at", kstWeekStartIso()),
+          supabase.from("mission_submissions").select("id", { count: "exact", head: true }).gte("requested_at", kstTodayStartIso()),
         ]);
         return {
           total_members: profilesRes.count || 0,
@@ -73,7 +87,7 @@ const BranchManagerHome = () => {
   });
 
   // Members list
-  const { data: members, isLoading } = useQuery({
+  const { data: members, isLoading, isError: membersError } = useQuery({
     queryKey: ["branch-members", branchName, isSuperAdmin],
     enabled: (!!branchName || isSuperAdmin) && isManagerRole(role),
     queryFn: async () => {
@@ -97,7 +111,8 @@ const BranchManagerHome = () => {
         inChunks(userIds, ids => supabase.from("mission_submissions").select("user_id").in("user_id", ids).eq("status", "pending")),
         inChunks(userIds, ids => supabase.from("quest_submissions").select("user_id").in("user_id", ids).eq("status", "pending")),
         inChunks(userIds, ids => supabase.from("user_roles").select("user_id, role").in("user_id", ids)),
-        supabase.rpc("get_signup_providers", { _user_ids: userIds }),
+        // RPC 결과도 1,000행 상한에 걸린다 — 150명씩 나눠 부른다(3,000명이면 뒤 2,000명의 가입 경로가 비었다).
+        inChunks(userIds, ids => supabase.rpc("get_signup_providers", { _user_ids: ids }) as unknown as PromiseLike<{ data: { user_id: string; signup_provider: string }[] | null; error: { message: string } | null }>),
       ]);
 
       const progressMap = new Map<string, (typeof progressRows)[number]>();
@@ -111,7 +126,7 @@ const BranchManagerHome = () => {
       const roleMap = new Map<string, string>();
       roleRows.forEach((r: any) => roleMap.set(r.user_id, r.role));
       const providerMap = new Map<string, string>();
-      (providerRes.data || []).forEach((r: any) => providerMap.set(r.user_id, r.signup_provider));
+      providerRes.forEach((r) => providerMap.set(r.user_id, r.signup_provider));
 
       return profiles.map(p => {
         const prog = progressMap.get(p.user_id) || null;
@@ -215,6 +230,8 @@ const BranchManagerHome = () => {
   };
 
   const handleExportCsv = () => {
+    // 지도진 필터는 회원 목록(filtered)과 따로 그려진다 — 그대로 내보내면 지도진이 아니라 회원 전체가 나간다.
+    if (filter === "staff") { toast.info("지도진은 CSV로 내보내지 않아요. 회원 필터에서 내보내 주세요."); return; }
     if (!filtered?.length) { toast.info("내보낼 데이터가 없습니다"); return; }
     const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
     const header = "이름,닉네임,지점,리그,레벨,XP,연속일,승인\n";
@@ -305,6 +322,10 @@ const BranchManagerHome = () => {
       <div className="space-y-2">
         {isLoading ? (
           Array(5).fill(0).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />)
+        ) : membersError ? (
+          <div className="rounded-2xl border border-dashed border-destructive/40 p-8 text-center">
+            <p className="text-sm text-destructive">회원 목록을 불러오지 못했어요. 잠시 후 다시 열어 주세요.</p>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border p-8 text-center">
             <span className="text-3xl">👥</span>
@@ -342,7 +363,7 @@ const BranchManagerHome = () => {
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-bold text-foreground truncate">{m.nickname || m.name}</span>
                       {staff ? (
-                        <span className="shrink-0 rounded-full bg-reward/20 px-1.5 py-0.5 text-[9px] font-bold text-reward">{staffTitleLabel(m)}</span>
+                        <span className="shrink-0 rounded-full bg-reward/20 px-1.5 py-0.5 text-[9px] font-bold text-reward">{staffChampionLine(m)}</span>
                       ) : (m as any).memberRole === "branch_manager" || (m as any).memberRole === "coach" ? (
                         <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold text-primary">관장님</span>
                       ) : null}

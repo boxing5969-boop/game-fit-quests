@@ -6,7 +6,7 @@
  * 데이터 출처는 profiles.is_staff / staff_title / staff_source 하나뿐이다 (홈 라이센스 카드·라이브보드·
  * 회원 상세와 같은 기준). 출처(staff_source):
  *   · '153os'  — 153OS 직원 명단(staff_work_profiles)에서 매시 25분 자동 반영. 여기서 해제 불가 —
- *                153OS 에서 비활성 처리하면 다음 정각에 자동 해제된다.
+ *                153OS 명단에서 빼거나 비활성으로 바꾸면 매시 25분 동기화 때 자동 해제된다.
  *   · 'manual' — 관리자가 이 화면에서 직접 지정. 여기서 해제 가능.
  * 쓰기는 RPC set_staff_designation 하나로만 한다 (프로필 UPDATE 정책은 admin 전용이라 super_admin 도
  * PostgREST 로 직접 못 바꾼다). 지정하면 이용권은 무제한(membership_end=null).
@@ -19,7 +19,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Pencil, Search, UserMinus, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { honorTitle, staffDisplayName } from "@/lib/staffDisplay";
+import { STAFF_CHAMPION_LINE, honorTitle, staffDisplayName } from "@/lib/staffDisplay";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
@@ -167,13 +167,14 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
   }, [filtered]);
 
   // ── 지도진 추가 후보 검색 (이름·닉네임·전화 2글자 이상) ──
-  const addQ = addQuery.trim();
+  // PostgREST .or() 구문을 깨는 문자(쉼표·괄호·%·_)는 뺀다 — 글자·숫자·공백만 남긴다.
+  // 길이 검사는 정리한 뒤에 한다 — "()" 같은 입력이 빈 패턴(%%)이 되어 전체 회원을 끌어오지 않게.
+  const addQ = addQuery.replace(/[^\p{L}\p{N}\s]/gu, "").trim();
   const { data: candidates, isFetching: searching } = useQuery({
     queryKey: ["staff-roster-candidates", addQ, branchName, isSuperAdmin],
     enabled: adding && addQ.length >= 2,
     queryFn: async () => {
-      // PostgREST .or() 구문을 깨는 문자(쉼표·괄호·%·_)는 뺀다 — 글자·숫자·공백만 남긴다
-      const like = `%${addQ.replace(/[^\p{L}\p{N}\s]/gu, "")}%`;
+      const like = `%${addQ}%`;
       let q = supabase.from("profiles").select("*")
         .or(`name.ilike.${like},nickname.ilike.${like},phone_number.ilike.${like}`)
         .order("name", { ascending: true }).limit(12);
@@ -189,6 +190,8 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
     queryClient.invalidateQueries({ queryKey: ["branch-members"] });
     queryClient.invalidateQueries({ queryKey: ["branch-stats"] });
     queryClient.invalidateQueries({ queryKey: ["global-admin-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["member-detail"] });
+    queryClient.invalidateQueries({ queryKey: ["staff-roster-candidates"] });
   };
 
   const designate = useMutation({
@@ -313,6 +316,9 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span className="truncate text-sm font-bold text-foreground">{staffDisplayName(s)}</span>
+                          <span className="shrink-0 rounded-full bg-yellow-500/15 px-1.5 py-0.5 text-[9px] font-black text-yellow-600 dark:text-yellow-400">
+                            {STAFF_CHAMPION_LINE}
+                          </span>
                           <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${fromOs ? "bg-reward/20 text-reward" : "bg-secondary text-secondary-foreground"}`}>
                             {sourceLabel(s.staff_source)}
                           </span>
@@ -346,7 +352,7 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
                           }}
                           className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10 text-destructive transition-all active:scale-95 disabled:opacity-40"
                           aria-label="지도진 해제"
-                          title={fromOs ? "153OS 직원 명단에서 비활성 처리해야 해제됩니다" : "지도진 해제"}
+                          title={fromOs ? "153OS 직원 명단에서 빼거나 비활성으로 바꿔야 해제됩니다" : "지도진 해제"}
                         >
                           <UserMinus className="h-3.5 w-3.5" />
                         </button>
@@ -374,8 +380,9 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
       )}
 
       <p className="px-1 text-[10px] leading-relaxed text-muted-foreground">
-        153OS 직원 명단은 매시 25분 자동 반영됩니다. 명단에 있는 지도진은 153OS에서 비활성 처리하면 다음 정각에 자동 해제되고,
-        여기서 직접 지정한 지도진은 명단과 무관하게 유지됩니다. 지도진은 레벨·XP 없이 이름과 직함으로 표시되고 이용권은 무제한입니다.
+        153OS 직원 명단은 매시 25분 자동 반영됩니다. 명단에 있는 지도진은 153OS 명단에서 빼거나 비활성으로 바꾸면 그다음 25분 동기화 때
+        자동 해제되고, 여기서 직접 지정한 지도진은 명단과 무관하게 유지됩니다. 지도진은 회원 리그 대신 &quot;{STAFF_CHAMPION_LINE}&quot; 과
+        직함으로 표시되고(회원 순위·왕좌에는 들어가지 않아요) 이용권은 무제한입니다.
       </p>
     </div>
   );

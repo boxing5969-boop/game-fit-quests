@@ -11,7 +11,7 @@ import CharacterSprite from "@/components/CharacterSprite";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import { ArrowLeft, MapPin, Calendar, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles, Clock } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
-import { isStaffProfile, staffDisplayName, staffTitleLabel } from "@/lib/staffDisplay";
+import { isStaffProfile, staffChampionLine, staffDisplayName } from "@/lib/staffDisplay";
 import { useNavigate } from "react-router-dom";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
 import { toast } from "sonner";
@@ -182,8 +182,9 @@ const MyPage = () => {
                 </div>
                 <div className="mt-1.5 flex items-center gap-2">
                   {isStaff ? (
+                    // 대표님 지시(2026-09-23): 코치님은 모두 챔피언 · Lv.77 — 화면 전용 표기
                     <span className="rounded-full bg-reward/30 px-2 py-0.5 text-xs font-bold text-reward-foreground">
-                      {staffTitleLabel(profile)} · 지도진
+                      {staffChampionLine(profile)}
                     </span>
                   ) : (
                     <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} isMaster={isManagerRole(role)} />
@@ -245,7 +246,7 @@ const MyPage = () => {
                 <p className="text-xs text-muted-foreground">총 XP</p>
               </div>
               {isStaff ? (
-                <span className="rounded-full bg-reward/30 px-3 py-1 text-sm font-bold text-reward-foreground">{staffTitleLabel(profile)}</span>
+                <span className="rounded-full bg-reward/30 px-3 py-1 text-sm font-bold text-reward-foreground">{staffChampionLine(profile)}</span>
               ) : (
                 <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
               )}

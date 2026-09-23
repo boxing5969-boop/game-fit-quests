@@ -78,11 +78,24 @@ const FunChallengeSubmitForm = ({
     [requiredPainAreas, painChecks],
   );
 
+  // 서버(submit_boxing_fun_challenge_attempt v2)와 같은 범위 — 라운드 15 · 분 60 · 그 밖은 상급 목표 × 3.
+  // 개수·콤보·라운드는 정수만. 화면에서 먼저 막아 두면 서버 거절 토스트를 볼 일이 없다.
+  const maxValue =
+    challenge.target_metric === "rounds" ? 15
+      : challenge.target_metric === "minutes" ? 60
+      : Math.max(Number(challenge.difficulty_targets?.advanced ?? 0) * 3, 1);
+  const integerOnly = challenge.target_metric !== "minutes";
   const numericValue = Number(submittedValue);
   const isNumberValid =
     submittedValue.length > 0 &&
     Number.isFinite(numericValue) &&
-    numericValue > 0;
+    numericValue > 0 &&
+    numericValue <= maxValue &&
+    (!integerOnly || Number.isInteger(numericValue));
+  const valueHint =
+    submittedValue.length > 0 && !isNumberValid
+      ? `0보다 크고 ${maxValue} ${unit} 이하${integerOnly ? "의 정수" : ""}로 입력해 주세요`
+      : null;
 
   const canSubmit =
     isNumberValid && allPainChecked && !hasPain && !pending;
@@ -311,12 +324,15 @@ const FunChallengeSubmitForm = ({
           type="number"
           inputMode="numeric"
           min={0}
+          max={maxValue}
           step={challenge.target_metric === "minutes" ? "0.1" : "1"}
           value={submittedValue}
           onChange={(e) => setSubmittedValue(e.target.value)}
           placeholder={`예: ${targetValue} ${unit}`}
+          aria-invalid={!!valueHint}
           className="w-full rounded-card border border-border bg-card px-3 py-2.5 text-[14px] text-foreground focus:border-primary focus:outline-none"
         />
+        {valueHint && <p className="mt-1 text-[10.5px] font-medium text-destructive">{valueHint}</p>}
       </div>
 
       <SafetyCheckPanel

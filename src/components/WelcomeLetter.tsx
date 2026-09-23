@@ -5,12 +5,16 @@
  * 오삼이 환영 모달(OsamiWelcomeModal · 첫 로그인 사용법 안내)과는 별개로,
  * "마음을 건드리는 편지" 하나를 정해진 순간에 단 1회 보여준다.
  *
- * 편지 종류 (총 4통):
- *   · welcome — 시작(화이트 리그)에 도착하는 환영 편지
- *   · blue/red/black — 각 리그 승급 시 도착하는 축하 편지
+ * 편지 종류 (총 5통):
+ *   · welcome — 회원에게: 시작(화이트 리그)에 도착하는 환영 편지
+ *   · coach   — 코치님에게: 지도진(is_staff)·코치·관장 계정이 처음 들어오면 도착하는 편지 (2026-09-23)
+ *   · blue/red/black — 회원 리그 승급 시 도착하는 축하 편지
+ *   웰컴·코치 편지 문구는 설정 화면(관리자)에서 고친다 — src/lib/welcomeLetters.ts (app_settings.welcome_letters).
+ *   전체관리자·관리자 계정은 자동 편지를 받지 않는다(예전엔 회원 편지가 닉네임 그대로 "…개발자님께" 로 떴다).
  *
- * 노출 규칙 (DB / RPC 호출 0, 전부 localStorage):
+ * 노출 규칙 (본 기록은 localStorage — 계정별 키):
  *   · 웰컴: 온보딩+튜토리얼을 마친 회원에게 1회 (오삼 모달과 안 겹침).
+ *   · 코치: 온보딩·튜토리얼과 무관하게 처음 들어올 때 1회.
  *   · 승급: 처음 마운트 시 현재 리그를 "기준선"으로 silent 저장 →
  *           이후 다음 앱 진입에서 리그가 올라가 있으면 그 리그 편지 1회.
  *           (기존 회원이 현재 리그 편지로 도배되지 않도록 기준선 초기화)
@@ -21,18 +25,30 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getTutorialCampState } from "@/features/tutorial-camp/tutorialCampStorage";
+import { isStaffProfile } from "@/lib/staffDisplay";
+import {
+  WELCOME_LETTERS_KEY, buildLetter, fetchWelcomeLetters, resolveLetter,
+  type LetterAudience, type LetterContent,
+} from "@/lib/welcomeLetters";
 
 const RANK_ORDER = ["white", "blue", "red", "black"] as const;
 type RankKey = (typeof RANK_ORDER)[number];
-type LetterKey = "welcome" | "blue" | "red" | "black";
+type RankLetterKey = "blue" | "red" | "black";
+type LetterKey = "welcome" | "coach" | RankLetterKey;
 
-const WELCOME_KEY = "153_letter_welcome_v1";
-const RANK_BASELINE_KEY = "153_letter_rank_baseline_v1";
+// 기기 단위 옛 키(2026-09-23 이전) — 이미 본 회원에게 다시 띄우지 않으려고 읽기만 한다
+const LEGACY_WELCOME_KEY = "153_letter_welcome_v1";
+const LEGACY_RANK_BASELINE_KEY = "153_letter_rank_baseline_v1";
+// 계정 단위 키 — 한 기기를 여러 계정이 써도(짐 태블릿·가족 폰) 각자 한 번씩 받는다
+const welcomeKey = (uid: string) => `153_letter_welcome_v2:${uid}`;
+const coachKey = (uid: string) => `153_letter_coach_v1:${uid}`;
+const rankBaselineKey = (uid: string) => `153_letter_rank_baseline_v2:${uid}`;
 
 const SETUP_ROUTES = ["/", "/onboarding", "/select-branch", "/waiting-approval"];
 function isSetupPath(pathname: string): boolean {
@@ -49,39 +65,8 @@ interface Letter {
   cta: string;
 }
 
-const LETTERS: Record<LetterKey, Letter> = {
-  welcome: {
-    eyebrow: "Welcome Letter",
-    title: (n) => `첫 라운드를 앞둔\n${n}님께`,
-    body: (n) => `지금, 더 단단해지고 싶은 마음이 있나요?
-누군가는 그걸 목표라 부르고,
-누군가는 그냥 '오기'라 부르죠.
-
-뭐라 부르든,
-링 위에 서기로 마음먹은 건
-그 자체로 멋진 일입니다.
-
-복싱은 상대를 이기는 운동처럼 보이지만,
-사실은 매일의 나와 겨루는 일이에요.
-어제보다 1초 더 버틴 스텝,
-한 번 더 뻗은 잽,
-그만두고 싶던 순간을 넘긴 오늘.
-
-그 작은 승리들이 조용히 쌓이면
-어느새 거울 앞에서
-조금 다른 나를 마주하게 됩니다.
-
-화이트 리그, 레벨 1.
-${n}님의 153랭크업은 지금부터예요.
-
-빠르지 않아도 괜찮아요.
-오늘 한 걸음이면 충분합니다.
-
-153복싱짐에서
-${n}님만의 단단한 날들을 만들어 가시길.`,
-    sign: "— 153 일동",
-    cta: "오늘, 한 라운드 시작 🥊",
-  },
+// 웰컴(회원)·코치 편지 문구는 src/lib/welcomeLetters.ts (관리자가 설정 화면에서 고칠 수 있다). 여기는 승급 편지만.
+const RANK_LETTERS: Record<RankLetterKey, Letter> = {
   blue: {
     eyebrow: "Promotion Letter",
     title: (n) => `블루 리그에 오른\n${n}님께`,
@@ -178,81 +163,15 @@ function lsSet(key: string, val: string) {
 type LetterProfile = {
   nickname?: string | null;
   name?: string | null;
+  staff_title?: string | null;
   onboarding_done?: boolean | null;
   tutorial_completed?: boolean | null;
   tutorial_skipped?: boolean | null;
 };
 
-const WelcomeLetter = () => {
-  const location = useLocation();
-  const { user, profile, progress } = useAuth();
-
-  const [activeKey, setActiveKey] = useState<LetterKey | null>(null);
-  const [open, setOpen] = useState(false);
-  const decidedRef = useRef(false);
-
-  // 마운트 시 1회만 어떤 편지를 보여줄지 결정 (세션 중 승급은 LevelUpModal 담당)
-  useEffect(() => {
-    if (decidedRef.current) return;
-    if (!user || !profile) return;
-    if (isSetupPath(location.pathname)) return;
-
-    // 튜토리얼·7일 스타터 캠프가 진행/대기 중이면 편지 보류 — 캠프 안내와 겹침 방지.
-    // 캠프는 튜토리얼 5단계 완료 시 자동 시작되므로 끝나기 전엔 안 띄운다.
-    // completed/skipped(종료) 또는 not_started(튜토리얼 건너뛰어 캠프 미진행) 진입에서만 도착.
-    const campStatus = getTutorialCampState().status;
-    if (campStatus === "active" || campStatus === "paused") return;
-
-    const p = profile as unknown as LetterProfile;
-    const rank = ((progress as unknown as { current_rank?: string } | null)?.current_rank ??
-      "white") as RankKey;
-    const rankIdx = Math.max(0, RANK_ORDER.indexOf(rank));
-
-    decidedRef.current = true;
-
-    // 1) 승급 편지 — 기준선과 비교
-    const baseline = lsGet(RANK_BASELINE_KEY);
-    if (baseline === null) {
-      // 최초: 현재 리그를 기준선으로 silent 저장 (도배 방지)
-      lsSet(RANK_BASELINE_KEY, rank);
-    } else {
-      const baseIdx = Math.max(0, RANK_ORDER.indexOf(baseline as RankKey));
-      if (rankIdx > baseIdx && rankIdx >= 1) {
-        setActiveKey(RANK_ORDER[rankIdx] as LetterKey);
-        return; // 승급 편지가 웰컴보다 우선
-      }
-    }
-
-    // 2) 웰컴 편지 — 온보딩+튜토리얼 마친 회원 1회
-    const tutorialDone = !!(p.tutorial_completed || p.tutorial_skipped);
-    if (!lsGet(WELCOME_KEY) && p.onboarding_done && tutorialDone) {
-      setActiveKey("welcome");
-    }
-  }, [user, profile, progress, location.pathname]);
-
-  // 결정되면 살짝 지연 후 등장 (스플래시/다른 모달 정리 후)
-  useEffect(() => {
-    if (!activeKey) return;
-    const t = window.setTimeout(() => setOpen(true), 1000);
-    return () => window.clearTimeout(t);
-  }, [activeKey]);
-
-  const handleClose = () => {
-    if (activeKey === "welcome") {
-      lsSet(WELCOME_KEY, "1");
-    } else if (activeKey) {
-      // 승급 편지 닫으면 기준선을 현재 리그로 올림
-      lsSet(RANK_BASELINE_KEY, activeKey);
-    }
-    setOpen(false);
-  };
-
-  if (typeof document === "undefined" || !activeKey) return null;
-
-  const letter = LETTERS[activeKey];
-  const p = profile as unknown as LetterProfile;
-  const name = (p?.nickname || p?.name || "복서").toString().trim() || "복서";
-
+/** 편지 화면 — 앱이 자동으로 띄우는 편지와 설정 화면(관리자) 미리보기가 같이 쓴다 */
+export const LetterModal = ({ open, letter, onClose }: { open: boolean; letter: LetterContent | null; onClose: () => void }) => {
+  if (typeof document === "undefined" || !letter) return null;
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -264,7 +183,7 @@ const WelcomeLetter = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[114] bg-black/80 backdrop-blur-md"
-            onClick={handleClose}
+            onClick={onClose}
           />
 
           {/* 편지 */}
@@ -274,7 +193,7 @@ const WelcomeLetter = () => {
             exit={{ scale: 0.96, opacity: 0 }}
             transition={{ type: "spring", damping: 24, stiffness: 220 }}
             className="fixed inset-0 z-[115] flex items-center justify-center px-4 py-8"
-            onClick={handleClose}
+            onClick={onClose}
           >
             <div
               className="relative max-h-[86vh] w-full max-w-sm overflow-y-auto rounded-3xl border border-amber-400/35 bg-gradient-to-b from-[#0d1530] via-[#0a1024] to-[#080d1e] p-7 text-amber-50 shadow-[0_24px_70px_rgba(0,0,0,0.65),0_0_40px_rgba(246,196,83,0.12)]"
@@ -282,7 +201,7 @@ const WelcomeLetter = () => {
             >
               {/* 닫기 */}
               <button
-                onClick={handleClose}
+                onClick={onClose}
                 className="absolute right-3 top-3 rounded-full bg-white/5 p-1.5 text-amber-200/60 transition hover:bg-white/10 hover:text-amber-200"
                 aria-label="닫기"
               >
@@ -301,12 +220,12 @@ const WelcomeLetter = () => {
 
               {/* 제목 */}
               <h2 className="mt-4 whitespace-pre-line text-center text-[22px] font-black leading-[1.3] text-amber-50">
-                {letter.title(name)}
+                {letter.title}
               </h2>
 
               {/* 본문 */}
               <p className="mt-5 whitespace-pre-line text-center text-[13.5px] leading-[1.85] text-amber-100/80">
-                {letter.body(name)}
+                {letter.body}
               </p>
 
               {/* 서명 */}
@@ -319,7 +238,7 @@ const WelcomeLetter = () => {
 
               {/* CTA */}
               <button
-                onClick={handleClose}
+                onClick={onClose}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 px-5 py-3.5 text-[14px] font-black tracking-wide text-amber-950 transition hover:from-amber-400 hover:to-amber-300 active:scale-[0.98]"
               >
                 {letter.cta}
@@ -331,6 +250,122 @@ const WelcomeLetter = () => {
     </AnimatePresence>,
     document.body,
   );
+};
+
+const WelcomeLetter = () => {
+  const location = useLocation();
+  const { user, profile, progress, role } = useAuth();
+
+  const [activeKey, setActiveKey] = useState<LetterKey | null>(null);
+  const [open, setOpen] = useState(false);
+  const decidedRef = useRef(false);
+
+  // 받는 사람 — 관리자 계정은 자동 편지 없음, 지도진·코치·관장은 코치 편지, 나머지는 회원 편지
+  const isAdminRole = role === "super_admin" || role === "admin";
+  const isCoach = !isAdminRole && (isStaffProfile(profile) || role === "coach" || role === "branch_manager");
+
+  // 관리자가 설정 화면에서 고친 문구 — 웰컴·코치 편지를 띄울 때만 읽는다(없으면 기본 문구)
+  const needsTemplate = activeKey === "welcome" || activeKey === "coach";
+  const lettersQ = useQuery({
+    queryKey: WELCOME_LETTERS_KEY,
+    queryFn: fetchWelcomeLetters,
+    enabled: needsTemplate,
+    staleTime: 5 * 60_000,
+  });
+
+  // 마운트 시 1회만 어떤 편지를 보여줄지 결정 (세션 중 승급은 LevelUpModal 담당)
+  useEffect(() => {
+    if (decidedRef.current) return;
+    if (!user || !profile) return;
+    if (isSetupPath(location.pathname)) return;
+    const uid = user.id;
+
+    // 관리자 계정 — 자동 편지 없음 (편지는 설정 화면 미리보기로 확인)
+    if (isAdminRole) {
+      decidedRef.current = true;
+      return;
+    }
+
+    // 코치님 — 처음 들어오면 코치 편지 1회. 온보딩·튜토리얼과 무관하고 승급 편지도 없다.
+    if (isCoach) {
+      decidedRef.current = true;
+      if (!lsGet(coachKey(uid))) setActiveKey("coach");
+      return;
+    }
+
+    // 튜토리얼·7일 스타터 캠프가 진행/대기 중이면 편지 보류 — 캠프 안내와 겹침 방지.
+    // 캠프는 튜토리얼 5단계 완료 시 자동 시작되므로 끝나기 전엔 안 띄운다.
+    // completed/skipped(종료) 또는 not_started(튜토리얼 건너뛰어 캠프 미진행) 진입에서만 도착.
+    const campStatus = getTutorialCampState().status;
+    if (campStatus === "active" || campStatus === "paused") return;
+
+    const p = profile as unknown as LetterProfile;
+    const rank = ((progress as unknown as { current_rank?: string } | null)?.current_rank ??
+      "white") as RankKey;
+    const rankIdx = Math.max(0, RANK_ORDER.indexOf(rank));
+
+    decidedRef.current = true;
+
+    // 1) 승급 편지 — 기준선과 비교 (계정별 기준선. 옛 기기 단위 기준선이 있으면 이어받는다)
+    const ownBaseline = lsGet(rankBaselineKey(uid));
+    const baseline = ownBaseline ?? lsGet(LEGACY_RANK_BASELINE_KEY);
+    if (baseline === null) {
+      // 최초: 현재 리그를 기준선으로 silent 저장 (도배 방지)
+      lsSet(rankBaselineKey(uid), rank);
+    } else {
+      if (ownBaseline === null) lsSet(rankBaselineKey(uid), baseline);
+      const baseIdx = Math.max(0, RANK_ORDER.indexOf(baseline as RankKey));
+      if (rankIdx > baseIdx && rankIdx >= 1) {
+        setActiveKey(RANK_ORDER[rankIdx] as LetterKey);
+        return; // 승급 편지가 웰컴보다 우선
+      }
+    }
+
+    // 2) 웰컴 편지 — 온보딩+튜토리얼 마친 회원 1회 (이 기기에서 예전에 이미 본 경우도 다시 안 띄운다)
+    const tutorialDone = !!(p.tutorial_completed || p.tutorial_skipped);
+    if (!lsGet(welcomeKey(uid)) && !lsGet(LEGACY_WELCOME_KEY) && p.onboarding_done && tutorialDone) {
+      setActiveKey("welcome");
+    }
+  }, [user, profile, progress, isAdminRole, isCoach, location.pathname]);
+
+  // 결정되면 살짝 지연 후 등장 (스플래시/다른 모달 정리 후). 문구를 읽는 중이면 기다린다(기본 문구 깜빡임 방지).
+  const templateLoading = needsTemplate && lettersQ.isLoading;
+  useEffect(() => {
+    if (!activeKey || templateLoading) return;
+    const t = window.setTimeout(() => setOpen(true), 1000);
+    return () => window.clearTimeout(t);
+  }, [activeKey, templateLoading]);
+
+  const handleClose = () => {
+    const uid = user?.id;
+    if (uid) {
+      if (activeKey === "welcome") lsSet(welcomeKey(uid), "1");
+      else if (activeKey === "coach") lsSet(coachKey(uid), "1");
+      // 승급 편지 닫으면 기준선을 현재 리그로 올림
+      else if (activeKey) lsSet(rankBaselineKey(uid), activeKey);
+    }
+    setOpen(false);
+  };
+
+  if (!activeKey) return null;
+
+  const p = profile as unknown as LetterProfile;
+  const memberName = (p?.nickname || p?.name || "복서").toString().trim() || "복서";
+  // 코치님은 "이름 직함" — 제목이 "…님께" 로 끝나므로 직함에서 '님' 을 뗀다 (홍길동 코치 → 홍길동 코치님께)
+  const coachTitle = ((p?.staff_title ?? "").trim() || (role === "branch_manager" ? "관장" : "코치")).replace(/님$/, "");
+  const coachBase = ((p?.name ?? "").trim() || (p?.nickname ?? "").trim());
+  const coachName = coachBase ? `${coachBase} ${coachTitle}` : coachTitle;
+
+  let letter: LetterContent;
+  if (activeKey === "welcome" || activeKey === "coach") {
+    const aud: LetterAudience = activeKey === "coach" ? "coach" : "member";
+    letter = buildLetter(aud, resolveLetter(lettersQ.data, aud), aud === "coach" ? coachName : memberName);
+  } else {
+    const r = RANK_LETTERS[activeKey];
+    letter = { eyebrow: r.eyebrow, title: r.title(memberName), body: r.body(memberName), sign: r.sign, cta: r.cta };
+  }
+
+  return <LetterModal open={open} letter={letter} onClose={handleClose} />;
 };
 
 export default WelcomeLetter;

@@ -6,7 +6,7 @@
  * 같은 기간으로 즉시 바뀐다 (서버 app_settings.launch_event 한 곳만 읽는다).
  * 저장은 set_app_setting RPC — super_admin·admin 만 통과, 종료일 < 시작일이면 서버가 거절.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PartyPopper, Save } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,11 +21,13 @@ const LaunchEventSettingsCard = () => {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
 
-  // 서버 값이 오면 폼에 채운다 (사용자가 아직 안 만졌을 때만)
+  // 서버 값은 처음 한 번만 폼에 채운다 — 다시 읽을 때마다 채우면 비워 둔 종료일이 되살아난다(검수 발견).
+  const initialized = useRef(false);
   useEffect(() => {
-    if (!win) return;
-    setStart((s) => s || win.start_date);
-    setEnd((e) => e || (win.end_date ?? ""));
+    if (!win || initialized.current) return;
+    initialized.current = true;
+    setStart(win.start_date);
+    setEnd(win.end_date ?? "");
   }, [win]);
 
   const dirty = !!win && (start !== win.start_date || (end || null) !== (win.end_date ?? null));
@@ -48,7 +50,7 @@ const LaunchEventSettingsCard = () => {
       </h2>
       <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
         사이니지 TV2 보드(①출석왕 ②앱활동왕 ③닉네임좋아요왕)와 153 챌린지 "이벤트" 탭이 이 기간으로 집계돼요.
-        시작 전엔 TV에 D-day 안내가, 종료 후엔 최종 결과가 고정돼 보입니다.
+        시작 전엔 TV에 D-day 안내가, 종료 후엔 종료일까지의 기록으로 최종 결과가 보입니다.
       </p>
 
       <div className="mb-3 rounded-xl border border-reward/30 bg-reward/10 px-3 py-2 text-[12px] font-bold text-foreground">

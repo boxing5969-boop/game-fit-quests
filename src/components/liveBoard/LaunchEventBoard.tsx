@@ -11,6 +11,9 @@
  *
  * 화면(1920×1080, 2~4m 거리): 열 3개. 1위는 왕관 + 큰 글자, 2~5위는 한 줄씩.
  * 개인정보는 표시 이름(닉네임 우선)만 — 서버가 그것만 내려준다.
+ *
+ * 2026-09-23 검수 반영: ① 부제를 서버 정의(이벤트 기간 얼굴 인식 출석 일수)와 맞춤 · 첫 응답 전엔 상태 문구를 비움 ·
+ * 2~4m 거리용 보조 글자 키움 · 닉네임은 '설정' 에서 정한다 · 앱활동은 행동 종류별 하루 1점.
  */
 import { useEffect, useState } from "react";
 import { Crown, Heart, Smartphone, CalendarCheck, Trophy } from "lucide-react";
@@ -33,8 +36,8 @@ interface TvBoard {
 const REFRESH_MS = 60_000;
 
 const COLUMN: Record<string, { no: string; title: string; sub: string; Icon: typeof Crown }> = {
-  attendance: { no: "①", title: "출석왕", sub: "이번 달 얼굴 인식 출석 일수", Icon: CalendarCheck },
-  app: { no: "②", title: "마이복서153 앱 활동왕", sub: "앱을 연 날 + 앱에서 한 행동", Icon: Smartphone },
+  attendance: { no: "①", title: "출석왕", sub: "이벤트 기간 얼굴 인식 출석 일수", Icon: CalendarCheck },
+  app: { no: "②", title: "마이복서153 앱 활동왕", sub: "앱에서 한 행동 · 종류별 하루 1점", Icon: Smartphone },
   nickname: { no: "③", title: "닉네임 좋아요왕", sub: "같은 지점 회원이 보낸 좋아요 (1인 1개)", Icon: Heart },
 };
 
@@ -98,13 +101,16 @@ const LaunchEventBoard = ({ branchName }: Props) => {
           </h2>
         </div>
         <div className="text-right">
-          {upcoming ? (
-            <p className="text-3xl font-black text-yellow-400">D-{data?.days_until_start ?? "?"}</p>
+          {!data ? (
+            // 첫 응답 전 — "진행 중" 을 먼저 띄웠다가 D-day 로 바뀌는 깜빡임 방지
+            <p className="text-2xl font-black text-white/40">&nbsp;</p>
+          ) : upcoming ? (
+            <p className="text-3xl font-black text-yellow-400">D-{data.days_until_start}</p>
           ) : (
             <p className="text-2xl font-black text-white/90">{ended ? "최종 결과" : "진행 중"}</p>
           )}
-          <p className="text-sm font-bold text-gray-400">
-            {periodLine}{ended ? " · 순위 확정" : ""} · 지도진 제외{stale ? " · 갱신 지연" : ""}
+          <p className="text-base font-bold text-gray-400">
+            {periodLine}{ended ? " · 순위 확정" : ""}{data ? " · 지점 회원만 (코치님 제외)" : ""}{stale ? " · 갱신 지연" : ""}
           </p>
         </div>
       </div>
@@ -130,7 +136,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
                   ) : (
                     <p className="mt-1 text-2xl font-black text-white/80">아직 기록이 없어요</p>
                   )}
-                  <p className="mt-1 truncate text-sm font-bold text-gray-400">
+                  <p className="mt-1 truncate text-base font-bold text-gray-400">
                     {blk.sub}
                     {blk.rows.length > 1 && ` · ${blk.rows.slice(1, 3).map((r) => `${r.rank}위 ${r.display_name} ${fmt(r.score, "attendance")}`).join(" · ")}`}
                   </p>
@@ -150,7 +156,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
       )}
       {data && upcoming && (
         <p className="mb-3 flex-shrink-0 text-center text-xl font-black text-white/90">
-          <span className="text-yellow-400">{fmtKstDate(data.start_date)}</span>부터 런칭 이벤트 왕좌 경쟁이 시작됩니다 — 지금 앱을 설치하고 닉네임을 정해두세요
+          <span className="text-yellow-400">{fmtKstDate(data.start_date)}</span>부터 런칭 이벤트 왕좌 경쟁이 시작됩니다 — 지금 앱을 설치하고 설정에서 닉네임을 정해두세요
         </p>
       )}
 
@@ -170,7 +176,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
                 <Icon className="h-7 w-7 text-yellow-400" />
                 <div className="min-w-0">
                   <h3 className="truncate text-2xl font-black text-white">{col.title}</h3>
-                  <p className="truncate text-sm font-bold text-gray-400">{col.sub}</p>
+                  <p className="truncate text-base font-bold text-gray-400">{col.sub}</p>
                 </div>
               </div>
 
@@ -183,7 +189,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
                     <Trophy className="h-8 w-8 text-yellow-500/60" />
                     <div>
                       <p className="text-2xl font-black text-white/90">{fmtKstDate(data.start_date)} 개막</p>
-                      <p className="text-sm font-bold text-gray-400">첫날 첫 기록이 첫 왕이 됩니다</p>
+                      <p className="text-base font-bold text-gray-400">첫날 첫 기록이 첫 왕이 됩니다</p>
                     </div>
                   </div>
                 ) : king ? (
@@ -199,7 +205,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
                     <Trophy className="h-8 w-8 text-yellow-500/60" />
                     <div>
                       <p className="text-2xl font-black text-white/90">왕좌가 비어 있어요</p>
-                      <p className="text-sm font-bold text-gray-400">첫 기록이 곧 왕이 됩니다</p>
+                      <p className="text-base font-bold text-gray-400">첫 기록이 곧 왕이 됩니다</p>
                     </div>
                   </div>
                 )}
@@ -219,14 +225,14 @@ const LaunchEventBoard = ({ branchName }: Props) => {
                 )}
                 {upcoming && (
                   <li className="px-4 py-3 text-lg font-bold leading-relaxed text-gray-400">
-                    {cat === "attendance" && "얼굴 인식·QR 출석 하루 1회씩 쌓입니다."}
-                    {cat === "app" && "앱을 연 날, 운동 종료 기록, 챌린지·퀴즈·좋아요가 모두 1점."}
-                    {cat === "nickname" && "같은 지점 회원이 내 닉네임에 보낸 좋아요. 한 사람에게 하나."}
+                    {cat === "attendance" && "얼굴 인식으로 들어온 날이 하루 1일씩 쌓입니다."}
+                    {cat === "app" && "앱 열기·운동 종료·챌린지·퀴즈·좋아요 — 행동 종류마다 하루 1점."}
+                    {cat === "nickname" && "설정에서 닉네임을 정하면 같은 지점 회원이 좋아요를 보낼 수 있어요. 한 사람에게 하나."}
                   </li>
                 )}
               </ol>
 
-              <p className="mt-2 flex-shrink-0 text-sm font-bold text-gray-500">
+              <p className="mt-2 flex-shrink-0 text-base font-bold text-gray-500">
                 {item && !upcoming ? `참가 ${Number(item.total).toLocaleString("ko-KR")}명` : ""}
               </p>
             </div>
@@ -236,7 +242,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
 
       {/* 참여 방법 — 한 줄 */}
       <p className="mt-3 flex-shrink-0 text-center text-lg font-bold text-gray-300">
-        참여 방법 · 마이복서153 앱 설치 → 마이페이지에서 닉네임 설정 → 매일 앱 열기 → 153 챌린지에서 닉네임 좋아요 보내기
+        참여 방법 · 마이복서153 앱 설치 → 설정에서 닉네임 정하기 → 매일 앱 열기 → 153 챌린지에서 닉네임 좋아요 보내기
       </p>
     </section>
   );

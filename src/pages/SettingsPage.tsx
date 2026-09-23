@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useTutorialCamp } from "@/features/tutorial-camp/useTutorialCamp";
 import LaunchEventSettingsCard from "@/components/admin/LaunchEventSettingsCard";
+import WelcomeLetterSettingsCard from "@/components/admin/WelcomeLetterSettingsCard";
 
 // ── Home widget toggle helpers ──
 const HOME_PREFS_KEY = "home-widget-prefs";
@@ -59,6 +60,15 @@ const useBranches = () =>
     },
   });
 
+/** 받침에 맞는 조사 — "선릉역점으로", "잠실로" (받침 없음·ㄹ 받침은 "로") */
+const withRo = (word: string): string => {
+  const ch = word.trim().slice(-1);
+  const code = ch.charCodeAt(0) - 0xac00;
+  if (code < 0 || code > 11171) return "(으)로";
+  const jong = code % 28;
+  return jong === 0 || jong === 8 ? "로" : "으로";
+};
+
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { profile, user, role, refreshProfile, signOut } = useAuth();
@@ -72,6 +82,7 @@ const SettingsPage = () => {
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
   const [saving, setSaving] = useState(false);
+  const [switchingBranch, setSwitchingBranch] = useState(false);
   const [linkingGoogle, setLinkingGoogle] = useState(false);
   // 지문·얼굴 로그인 — 도메인·기기가 지원할 때만 화면에 띄운다.
   const [passkeyReady, setPasskeyReady] = useState(false);
@@ -183,8 +194,10 @@ const SettingsPage = () => {
       await refreshProfile();
       toast.success("프로필이 저장되었습니다 ✅");
       navigate("/mypage");
-    } catch {
-      toast.error("저장에 실패했습니다");
+    } catch (e) {
+      // 서버 가드 메시지(예: 닉네임 12자)를 그대로 보여 준다
+      const msg = (e as { message?: string } | null)?.message;
+      toast.error(msg && /[가-힣]/.test(msg) ? msg : "저장에 실패했습니다");
     } finally {
       setSaving(false);
     }
@@ -242,12 +255,17 @@ const SettingsPage = () => {
   // 회원은 '지점 이전 요청' 승인 절차를 타지만, 본사 계정은 승인자가 자기 자신이라 즉시 전환한다.
   // 지점 기준으로 읽는 화면(커뮤니티·라이브보드·회원관리 통계 등)이 많아 캐시를 전부 비운다.
   const handleAdminSwitchBranch = async (name: string) => {
-    if (!user || !name || name === profile.branch_name) return;
-    const { error } = await supabase.from("profiles").update({ branch_name: name }).eq("user_id", user.id);
-    if (error) { toast.error(`지점 전환 실패: ${error.message}`); return; }
-    await refreshProfile();
-    await qc.invalidateQueries();
-    toast.success(`${name}으로 전환했습니다. 이제 이 지점 회원 화면으로 보여요.`);
+    if (!user || !name || name === profile.branch_name || switchingBranch) return;
+    setSwitchingBranch(true);
+    try {
+      const { error } = await supabase.from("profiles").update({ branch_name: name }).eq("user_id", user.id);
+      if (error) { toast.error(`지점 전환 실패: ${error.message}`); return; }
+      await refreshProfile();
+      await qc.invalidateQueries();
+      toast.success(`${name}${withRo(name)} 전환했습니다. 이제 이 지점 회원 화면으로 보여요.`);
+    } finally {
+      setSwitchingBranch(false);
+    }
   };
 
   const handleAddBranch = async () => {
@@ -394,13 +412,16 @@ const SettingsPage = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="nickname" className="text-sm text-muted-foreground">닉네임</Label>
-              <Input id="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="닉네임을 입력하세요" className="rounded-xl" />
+              <Input id="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="닉네임을 입력하세요" maxLength={12} className="rounded-xl" />
+              <p className="text-[10px] text-muted-foreground">
+                12자 이내 · 순위와 사이니지 TV에 이 이름이 보여요. 실명과 다른 닉네임을 정하면 153 챌린지 &apos;닉네임 좋아요&apos;에 참여할 수 있어요.
+              </p>
             </div>
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">소속 지점</Label>
               {isAdmin ? (
                 <>
-                  <Select value={profile.branch_name || ""} onValueChange={handleAdminSwitchBranch}>
+                  <Select value={profile.branch_name || ""} onValueChange={handleAdminSwitchBranch} disabled={switchingBranch}>
                     <SelectTrigger className="rounded-xl">
                       <SelectValue placeholder="지점 선택" />
                     </SelectTrigger>
@@ -588,6 +609,9 @@ const SettingsPage = () => {
 
         {/* Admin: 런칭 이벤트 기간 (TV2 보드 · 153 챌린지 이벤트 탭) */}
         {isAdmin && <LaunchEventSettingsCard />}
+
+        {/* Admin: 웰컴 편지 — 회원님께 / 코치님께 (관리자 계정엔 자동으로 안 뜬다 → 미리보기) */}
+        {isAdmin && <WelcomeLetterSettingsCard />}
 
         {/* Admin: Branch Management */}
         {isAdmin && (

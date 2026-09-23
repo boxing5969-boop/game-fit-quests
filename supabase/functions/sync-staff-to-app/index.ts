@@ -6,10 +6,13 @@
 //   · profiles.staff_title = 직함 (비어 있을 때만: coach→코치, manager→지점장)
 //   · profiles.membership_end = null (지도진 이용권은 무제한 — 화면은 "무제한")
 //   · profiles.staff_source = '153os' (출처 기록 — 앱 지도진 관리 화면이 "153OS 명단" 배지로 보여준다)
-// 으로 맞춘다. 153OS 에서 비활성(active=false)으로 내린 사람은 is_staff 를 내린다(활성 명단에 없고
-// 출처가 '153os' 일 때만 — 관리자가 앱에서 직접 지정한 'manual' 지도진은 건드리지 않는다).
+// 으로 맞춘다. 153OS 활성 명단에 없는 '153os' 출처 지도진은 is_staff 를 내린다 — 비활성으로 바꾼 경우와
+// 명단에서 지웠거나 번호를 바꾼 경우 모두 (2026-09-23 검수 v3: 예전엔 '비활성' 만 해제해 삭제·번호 변경 시 영구 지도진).
+// 관리자가 앱에서 직접 지정한 'manual' 지도진은 건드리지 않는다.
+// 안전장치: 명단 조회 실패·활성 0명이면 해제 전부 보류, 번호 형식 오류가 있거나 한 번에 너무 많이(지도진의 30% 초과,
+// 최소 2명) 빠지면 '명단에서 사라진' 쪽 해제만 보류하고 보고한다(명단 일시 오류로 코치님이 한꺼번에 풀리지 않게).
 // 앱 계정이 없는 지도진은 보고만 한다(이름 첫 글자·번호 끝 4자리만 남긴다).
-// 명단에 아예 없는 사람의 is_staff 는 건드리지 않는다(대표님이 손으로 지정한 값 보호).
+// 전화번호는 숫자만 + 국가번호 82 로 시작하면 0 으로 바꿔 비교한다(+82 10-… → 010…).
 //
 // 흐름: pg_cron(sync-staff-to-app, 매시 25분) → 이 함수. 인증은 auto-sync-members 와 같은
 // x-auto-key(internal_sync_config.auto_sync_key). verify_jwt=false 필수(config.toml).
@@ -23,6 +26,11 @@ const cors = {
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const onlyDigits = (s: unknown) => String(s ?? "").replace(/[^0-9]/g, "");
+// +82 10-1234-5678 → 01012345678 (앱은 숫자만, 0 으로 시작하는 국내 번호로 저장한다)
+const normPhone = (s: unknown) => {
+  const d = onlyDigits(s);
+  return d.startsWith("82") && d.length >= 11 ? `0${d.slice(2)}` : d;
+};
 // 보고용 마스킹 — 이름 첫 글자 + 번호 끝 4자리만.
 const mask = (name: unknown, phone: string) => `${String(name ?? "").trim().slice(0, 1) || "?"}OO(…${phone.slice(-4)})`;
 
@@ -66,7 +74,7 @@ Deno.serve(async (req) => {
     const inactive = new Map<string, RosterRow>();
     const badPhone: string[] = [];
     for (const r of roster) {
-      const phone = onlyDigits(r.person_phone);
+      const phone = normPhone(r.person_phone);
       if (phone.length < 10) { badPhone.push(mask(r.person_name, phone)); continue; }
       if (r.active === true) {
         if (!active.has(phone) || r.role_kind === "manager") active.set(phone, r);
@@ -109,14 +117,38 @@ Deno.serve(async (req) => {
       if (patch.is_staff) flagged++; else updated++;
     }
 
-    // 5) 비활성(활성 명단에 없음) → is_staff 내림. 출처가 153OS 인 사람만 — 앱에서 직접 지정한 지도진은 그대로.
+    // 5) 활성 명단에 없는 '153os' 지도진 → is_staff 내림. 앱에서 직접 지정한('manual') 지도진은 그대로.
     //    이용권은 건드리지 않는다(다시 회원이면 CRM 동기화가 채운다).
-    for (const [phone, r] of inactive) {
-      const p = byPhone.get(phone);
-      if (!p || p.is_staff !== true || p.staff_source !== "153os") continue;
+    //    (a) 명단에 '비활성'으로 남은 사람 (b) 명단에서 지웠거나 번호가 바뀐 사람 — 둘 다 해제하되 (b) 는 안전장치를 건다.
+    const { data: osStaffRaw, error: sErr } = await app
+      .from("profiles").select("user_id, phone_number, is_staff, staff_title, membership_end, staff_source")
+      .eq("is_staff", true).eq("staff_source", "153os");
+    if (sErr) return json({ error: "앱 지도진 조회 실패: " + sErr.message }, 502);
+    const osStaff = (osStaffRaw || []) as AppProfile[];
+    const toInactive: { p: AppProfile; label: string }[] = [];
+    const toAbsent: { p: AppProfile; label: string }[] = [];
+    for (const p of osStaff) {
+      const phone = normPhone(p.phone_number);
+      if (active.has(phone)) continue;
+      const r = inactive.get(phone);
+      if (r) toInactive.push({ p, label: mask(r.person_name, phone) });
+      else toAbsent.push({ p, label: `?OO(…${phone.slice(-4)})` });
+    }
+    const absentCap = Math.max(2, Math.ceil(osStaff.length * 0.3));
+    let held = "";
+    let toUnflag: { p: AppProfile; label: string }[] = [];
+    if (active.size === 0) {
+      held = `활성 명단 0명 — 해제 ${toInactive.length + toAbsent.length}명 보류`;
+    } else if (toAbsent.length && (badPhone.length > 0 || toAbsent.length > absentCap)) {
+      held = `명단에서 사라진 지도진 ${toAbsent.length}명 해제 보류(${badPhone.length > 0 ? "번호 형식 오류 있음" : `한 번에 ${absentCap}명 초과`}): ${toAbsent.map((x) => x.label).join(", ")}`;
+      toUnflag = toInactive;
+    } else {
+      toUnflag = [...toInactive, ...toAbsent];
+    }
+    for (const { p, label } of toUnflag) {
       if (!dryRun) {
         const { error } = await app.from("profiles").update({ is_staff: false, staff_title: null, staff_source: null }).eq("user_id", p.user_id);
-        if (error) { failed.push(`${mask(r.person_name, phone)}: ${error.message}`); continue; }
+        if (error) { failed.push(`${label}: ${error.message}`); continue; }
       }
       unflagged++;
     }
@@ -127,6 +159,7 @@ Deno.serve(async (req) => {
       `활성 ${active.size}명 · 신규지정 ${flagged} · 갱신 ${updated} · 해제 ${unflagged}`,
       unmatched.length ? `앱 계정 없음 ${unmatched.length}명: ${unmatched.join(", ")}` : null,
       badPhone.length ? `번호 형식 오류 ${badPhone.length}명: ${badPhone.join(", ")}` : null,
+      held || null,
       `${elapsed}초${dryRun ? " (dry-run)" : ""}`,
     ].filter(Boolean).join(" / ");
 
@@ -136,7 +169,7 @@ Deno.serve(async (req) => {
         failed: failed.length, error: failed.length ? failed.join(" | ").slice(0, 500) : null, note: note.slice(0, 500),
       });
     }
-    return json({ ok, dry_run: dryRun, active: active.size, flagged, updated, unflagged, unmatched, bad_phone: badPhone, failed, note }, ok ? 200 : 502);
+    return json({ ok, dry_run: dryRun, active: active.size, flagged, updated, unflagged, held: held || null, unmatched, bad_phone: badPhone, failed, note }, ok ? 200 : 502);
   } catch (e) {
     console.error("sync-staff-to-app error:", e);
     await app.from("member_sync_runs")
