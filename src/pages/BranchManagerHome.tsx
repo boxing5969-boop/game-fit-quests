@@ -5,6 +5,7 @@ import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
 import DailyReportCard from "@/components/DailyReportCard";
 import MembershipRequestsInbox from "@/components/MembershipRequestsInbox";
 import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
+import StaffRosterPanel from "@/components/admin/StaffRosterPanel";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +21,7 @@ import { toast } from "sonner";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
 
-type FilterType = "all" | "pending" | "active" | "boss_ready" | "unapproved";
+type FilterType = "all" | "staff" | "pending" | "active" | "boss_ready" | "unapproved";
 type SortType = "recent_submission" | "level_desc" | "pending_count";
 type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk";
 
@@ -50,8 +51,9 @@ const BranchManagerHome = () => {
         // 총원·미승인은 count 헤더로 센다. 행을 받아 length 로 세면 PostgREST 1,000행 상한 때문에
         // 회원이 3,000명이어도 "전체 회원 1000" 으로 보였다 (2026-09-23 대표님 제보).
         const [profilesRes, unapprovedRes, pendingMissionsRes, pendingQuestsRes, xpRes, submissionsRes] = await Promise.all([
-          supabase.from("profiles").select("user_id", { count: "exact", head: true }),
-          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false),
+          // 지도진(is_staff)은 회원이 아니다 — "전체 회원" 에서 빼고, 목록도 지도진 필터로 분리한다.
+          supabase.from("profiles").select("user_id", { count: "exact", head: true }).not("is_staff", "is", true),
+          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false).not("is_staff", "is", true),
           supabase.from("mission_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("quest_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("xp_logs").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString()),
@@ -78,7 +80,8 @@ const BranchManagerHome = () => {
       // 1,000행씩 끝까지 읽는다 — 한 번에 받으면 1,000명에서 잘려 나머지 회원은 목록에 안 나왔다.
       // 정렬은 created_at 동률(일괄등록 2,000명)이 많아 user_id 를 2차 키로 고정한다.
       const profiles = await fetchAllRows((from, to) => {
-        let q = supabase.from("profiles").select("*")
+        // 지도진은 회원 목록에서 분리 — "지도진" 필터(StaffRosterPanel)에서 따로 본다.
+        let q = supabase.from("profiles").select("*").not("is_staff", "is", true)
           .order("created_at", { ascending: false }).order("user_id", { ascending: true })
           .range(from, to);
         if (!isSuperAdmin) q = q.eq("branch_name", branchName);
@@ -170,6 +173,7 @@ const BranchManagerHome = () => {
 
   const FILTERS: { key: FilterType; label: string }[] = [
     { key: "all", label: "전체" },
+    { key: "staff", label: "🥊 지도진" },
     { key: "unapproved", label: `가입승인 (${unapprovedCount})` },
     { key: "pending", label: "미션대기" },
     { key: "boss_ready", label: "보스전 대기" },
@@ -237,7 +241,9 @@ const BranchManagerHome = () => {
   };
 
   // ── Member List Panel (shared between mobile and desktop) ──
-  const MemberListContent = () => (
+  // 렌더 함수로 부른다({renderMemberList()}). 컴포넌트(<MemberListContent />)로 만들면 부모가 렌더될 때마다
+  // 새 컴포넌트 타입이 되어 검색창이 글자마다 리마운트 → 한 글자 치면 포커스가 빠지고 키보드가 내려갔다 (2026-09-23).
+  const renderMemberList = () => (
     <>
       {/* Search */}
       <div className="mb-3 relative">
@@ -265,6 +271,10 @@ const BranchManagerHome = () => {
         ))}
       </div>
 
+      {filter === "staff" ? (
+        <StaffRosterPanel search={search} />
+      ) : (
+      <>
       {/* Sort */}
       <div className="mb-4 flex gap-1.5">
         {([
@@ -429,6 +439,8 @@ const BranchManagerHome = () => {
           </button>
         </div>
       )}
+      </>
+      )}
 
       {/* Quick action: checkin board + member app + admin */}
       <div className="mt-6 space-y-2">
@@ -514,7 +526,8 @@ const BranchManagerHome = () => {
   );
 
   // ── Desktop Right Panel (iframe preview) ──
-  const DesktopDetailPanel = () => {
+  // 렌더 함수 — 위 renderMemberList 와 같은 이유(리마운트 방지: 안의 LevelAdminPanel 쿼리가 글자마다 재요청되지 않게)
+  const renderDesktopDetailPanel = () => {
     if (!selectedMemberId) {
       return (
         <div className="flex h-full items-center justify-center text-center">
@@ -704,7 +717,7 @@ const BranchManagerHome = () => {
         </div>
 
         {mainTab === "inbox" && <ApprovalInbox />}
-        {mainTab === "members" && <MemberListContent />}
+        {mainTab === "members" && renderMemberList()}
         {mainTab === "level_review" && <CoachLevelReviewInbox />}
         {mainTab === "operations" && <DailyOperationsBoard />}
         {mainTab === "at_risk" && <AtRiskMembersPanel />}
@@ -789,13 +802,13 @@ const BranchManagerHome = () => {
           </div>
 
           {mainTab === "inbox" && <ApprovalInbox />}
-          {mainTab === "members" && <MemberListContent />}
+          {mainTab === "members" && renderMemberList()}
           {mainTab === "level_review" && <CoachLevelReviewInbox />}
         </div>
 
         {/* Right: Detail Panel */}
         <div className="flex-1 overflow-hidden bg-muted/20">
-          <DesktopDetailPanel />
+          {renderDesktopDetailPanel()}
         </div>
       </div>
 

@@ -5,7 +5,9 @@
 //   · profiles.is_staff = true
 //   · profiles.staff_title = 직함 (비어 있을 때만: coach→코치, manager→지점장)
 //   · profiles.membership_end = null (지도진 이용권은 무제한 — 화면은 "무제한")
-// 으로 맞춘다. 153OS 에서 비활성(active=false)으로 내린 사람은 is_staff 를 내린다(활성 명단에 없을 때만).
+//   · profiles.staff_source = '153os' (출처 기록 — 앱 지도진 관리 화면이 "153OS 명단" 배지로 보여준다)
+// 으로 맞춘다. 153OS 에서 비활성(active=false)으로 내린 사람은 is_staff 를 내린다(활성 명단에 없고
+// 출처가 '153os' 일 때만 — 관리자가 앱에서 직접 지정한 'manual' 지도진은 건드리지 않는다).
 // 앱 계정이 없는 지도진은 보고만 한다(이름 첫 글자·번호 끝 4자리만 남긴다).
 // 명단에 아예 없는 사람의 is_staff 는 건드리지 않는다(대표님이 손으로 지정한 값 보호).
 //
@@ -28,7 +30,10 @@ const mask = (name: unknown, phone: string) => `${String(name ?? "").trim().slic
 const TITLE: Record<string, string> = { coach: "코치", manager: "지점장", owner: "관장" };
 
 type RosterRow = { id: string; person_name: string | null; person_phone: string | null; role_kind: string | null; active: boolean | null };
-type AppProfile = { user_id: string; phone_number: string | null; is_staff: boolean | null; staff_title: string | null; membership_end: string | null };
+type AppProfile = {
+  user_id: string; phone_number: string | null; is_staff: boolean | null; staff_title: string | null;
+  membership_end: string | null; staff_source: string | null;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -76,7 +81,7 @@ Deno.serve(async (req) => {
     let profs: AppProfile[] = [];
     if (phones.length) {
       const { data, error: pErr } = await app
-        .from("profiles").select("user_id, phone_number, is_staff, staff_title, membership_end").in("phone_number", phones);
+        .from("profiles").select("user_id, phone_number, is_staff, staff_title, membership_end, staff_source").in("phone_number", phones);
       if (pErr) return json({ error: "앱 조회 실패: " + pErr.message }, 502);
       profs = (data || []) as AppProfile[];
     }
@@ -94,6 +99,8 @@ Deno.serve(async (req) => {
       if (p.is_staff !== true) patch.is_staff = true;
       if (!String(p.staff_title ?? "").trim()) patch.staff_title = TITLE[String(r.role_kind ?? "")] ?? "코치";
       if (p.membership_end !== null) patch.membership_end = null;
+      // 명단에 있는 사람은 출처가 153OS — 수동('manual')으로 지정돼 있었어도 명단이 우선한다.
+      if (p.staff_source !== "153os") patch.staff_source = "153os";
       if (Object.keys(patch).length === 0) continue;
       if (!dryRun) {
         const { error } = await app.from("profiles").update(patch).eq("user_id", p.user_id);
@@ -102,12 +109,13 @@ Deno.serve(async (req) => {
       if (patch.is_staff) flagged++; else updated++;
     }
 
-    // 5) 비활성(활성 명단에 없음) → is_staff 내림. 이용권은 건드리지 않는다(다시 회원이면 CRM 동기화가 채운다).
+    // 5) 비활성(활성 명단에 없음) → is_staff 내림. 출처가 153OS 인 사람만 — 앱에서 직접 지정한 지도진은 그대로.
+    //    이용권은 건드리지 않는다(다시 회원이면 CRM 동기화가 채운다).
     for (const [phone, r] of inactive) {
       const p = byPhone.get(phone);
-      if (!p || p.is_staff !== true) continue;
+      if (!p || p.is_staff !== true || p.staff_source !== "153os") continue;
       if (!dryRun) {
-        const { error } = await app.from("profiles").update({ is_staff: false, staff_title: null }).eq("user_id", p.user_id);
+        const { error } = await app.from("profiles").update({ is_staff: false, staff_title: null, staff_source: null }).eq("user_id", p.user_id);
         if (error) { failed.push(`${mask(r.person_name, phone)}: ${error.message}`); continue; }
       }
       unflagged++;

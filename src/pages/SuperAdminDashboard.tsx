@@ -32,8 +32,9 @@ const SuperAdminDashboard = () => {
       // 총원은 행을 받아 세지 않고 count 헤더로 — 행으로 세면 PostgREST 1,000행 상한에 걸려
       // 회원이 3,000명이어도 "1000" 으로 보인다 (2026-09-23 대표님 제보).
       const [membersRes, unapprovedRes, pendingMissionsRes, pendingQuestsRes, transferRes, branchesRes] = await Promise.all([
-        supabase.from("profiles").select("user_id", { count: "exact", head: true }),
-        supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false),
+        // 지도진(is_staff)은 회원 수에서 뺀다 — 회원관리 목록·"전체 회원" 카드와 같은 기준.
+        supabase.from("profiles").select("user_id", { count: "exact", head: true }).not("is_staff", "is", true),
+        supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false).not("is_staff", "is", true),
         supabase.from("mission_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("quest_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("branch_transfer_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
@@ -54,7 +55,7 @@ const SuperAdminDashboard = () => {
     try {
       // 1,000행씩 끝까지 — 한 번에 받으면 1,000명에서 잘린 CSV 가 나간다.
       const profiles = await fetchAllRows((from, to) =>
-        supabase.from("profiles").select("*")
+        supabase.from("profiles").select("*").not("is_staff", "is", true)   // 지도진 제외(회원 목록 기준)
           .order("created_at", { ascending: false }).order("user_id", { ascending: true })
           .range(from, to),
       );
