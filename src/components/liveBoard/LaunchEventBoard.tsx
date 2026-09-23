@@ -23,6 +23,11 @@ interface TvItem { category: KingCategory; board: TvRow[]; total: number }
 interface TvBoard {
   branch: string; since: string; period: string; items: TvItem[];
   start_date: string; end_date: string | null; status: LaunchEventStatus; days_until_start: number; days_left: number | null;
+  /** 현재 출석왕 등재 — 이번 달 Top 3 · 기록 시작(2026-02)부터 Top 3 */
+  current_attendance?: {
+    month: { since: string; board: TvRow[] };
+    all_time: { since_date: string | null; board: TvRow[] };
+  };
 }
 
 const REFRESH_MS = 60_000;
@@ -67,6 +72,12 @@ const LaunchEventBoard = ({ branchName }: Props) => {
   const status: LaunchEventStatus | null = data?.status ?? null;
   const upcoming = status === "upcoming";
   const ended = status === "ended";
+  // 현재 출석왕 (이번 달) · 역대 출석왕 (기록 시작부터) — 서버가 같은 계산(_king_scores)으로 준다
+  const curMonth = data?.current_attendance?.month.board ?? [];
+  const curAll = data?.current_attendance?.all_time.board ?? [];
+  const kstMonthLabel = (iso?: string) => (iso ? `${new Date(new Date(iso).getTime() + 9 * 3600 * 1000).getUTCMonth() + 1}월` : "이번 달");
+  const monthLabel = kstMonthLabel(data?.current_attendance?.month.since);
+  const allSince = fmtKstDate(data?.current_attendance?.all_time.since_date);
   // 기간 문구 — 서버가 준 KST 날짜 문자열을 그대로 쓴다(기기 시간대와 무관)
   const periodLine = !data
     ? ""
@@ -98,14 +109,49 @@ const LaunchEventBoard = ({ branchName }: Props) => {
         </div>
       </div>
 
-      {/* 시작 전 티저 — 큰 글자 한 줄 */}
-      {upcoming && data && (
-        <div className="mb-3 flex flex-shrink-0 items-center justify-center gap-4 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 px-6 py-4">
-          <Crown className="h-10 w-10 text-yellow-400" />
-          <p className="text-3xl font-black text-white">
-            <span className="text-yellow-400">{fmtKstDate(data.start_date)}</span> 부터 왕좌 경쟁이 시작됩니다 — 지금 앱을 설치하고 닉네임을 정해두세요
-          </p>
+      {/* 현재 출석왕 등재 — 시작 전엔 크게(이번 달 왕 + 역대 왕), 진행 중엔 한 줄 */}
+      {data && upcoming && (
+        <div className="mb-3 grid flex-shrink-0 grid-cols-2 gap-4">
+          {[
+            { label: `현재 출석왕 · ${monthLabel}`, sub: `${monthLabel} 1일부터 오늘까지 출석 일수`, rows: curMonth },
+            { label: "역대 출석왕", sub: allSince ? `${allSince}부터 누적 출석 일수` : "누적 출석 일수", rows: curAll },
+          ].map((blk) => {
+            const k = blk.rows[0];
+            return (
+              <div key={blk.label} className="flex items-center gap-5 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 px-6 py-4">
+                <Crown className="h-12 w-12 flex-shrink-0 text-yellow-400" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-black uppercase tracking-[0.25em] text-yellow-400/90">{blk.label}</p>
+                  {k ? (
+                    <div className="mt-1 flex items-baseline justify-between gap-4">
+                      <p className="truncate text-4xl font-black text-white">{k.display_name}</p>
+                      <p className="flex-shrink-0 text-4xl font-black tabular-nums text-yellow-400">{fmt(k.score, "attendance")}</p>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-2xl font-black text-white/80">아직 기록이 없어요</p>
+                  )}
+                  <p className="mt-1 truncate text-sm font-bold text-gray-400">
+                    {blk.sub}
+                    {blk.rows.length > 1 && ` · ${blk.rows.slice(1, 3).map((r) => `${r.rank}위 ${r.display_name} ${fmt(r.score, "attendance")}`).join(" · ")}`}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
+      )}
+      {data && !upcoming && curAll[0] && (
+        <p className="mb-3 flex flex-shrink-0 items-center justify-center gap-2 text-lg font-bold text-gray-300">
+          <Crown className="h-5 w-5 text-yellow-400" />
+          역대 출석왕 <span className="text-white">{curAll[0].display_name}</span> {fmt(curAll[0].score, "attendance")}
+          {allSince ? ` (${allSince}부터)` : ""} · {monthLabel} 출석왕 <span className="text-white">{curMonth[0]?.display_name ?? "—"}</span>
+          {curMonth[0] ? ` ${fmt(curMonth[0].score, "attendance")}` : ""}
+        </p>
+      )}
+      {data && upcoming && (
+        <p className="mb-3 flex-shrink-0 text-center text-xl font-black text-white/90">
+          <span className="text-yellow-400">{fmtKstDate(data.start_date)}</span>부터 런칭 이벤트 왕좌 경쟁이 시작됩니다 — 지금 앱을 설치하고 닉네임을 정해두세요
+        </p>
       )}
 
       {/* 세 왕좌 */}
