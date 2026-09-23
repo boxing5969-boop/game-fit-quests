@@ -13,11 +13,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
 
-export type KingCategory = "attendance" | "streak" | "early_bird" | "levelup" | "burpee" | "fitness";
+export type KingCategory = "attendance" | "streak" | "early_bird" | "levelup" | "burpee" | "fitness" | "app" | "nickname";
 export type KingPeriod = "weekly" | "monthly";
 export type KingScope = "branch" | "all";
 
-export const KING_CATEGORIES: KingCategory[] = ["attendance", "streak", "early_bird", "levelup", "burpee", "fitness"];
+export const KING_CATEGORIES: KingCategory[] = ["attendance", "app", "nickname", "streak", "early_bird", "levelup", "burpee", "fitness"];
+
+/** 사이니지 TV2 런칭 이벤트에 걸리는 세 왕좌 — ① 출석왕 ② 앱활동왕 ③ 닉네임왕 (서버 get_launch_event_board 와 같은 순서) */
+export const LAUNCH_EVENT_CATEGORIES: KingCategory[] = ["attendance", "app", "nickname"];
 
 export interface KingBoardRow {
   rank: number;
@@ -55,7 +58,7 @@ export interface KingSummary {
 }
 
 /** 행동 버튼 종류 — 화면이 어떤 시트/페이지를 열지 결정한다 */
-export type KingAction = "arena_burpee" | "arena" | null;
+export type KingAction = "arena_burpee" | "arena" | "nickname_like" | null;
 
 export interface KingMeta {
   key: KingCategory;
@@ -112,6 +115,18 @@ export const KING_META: Record<KingCategory, KingMeta> = {
     how: "아레나 챌린지를 골라 목표 개수를 채우면 1라운드. 종목은 자유입니다.",
     unit: "라운드", action: "arena", actionLabel: "아레나 열기",
   },
+  app: {
+    key: "app", emoji: "📱", title: "앱활동왕", tagline: "앱에서 한 행동 수",
+    what: "마이복서153 앱에서 한 행동을 셉니다 — 앱을 연 날, QR 출석, 운동 종료 기록, 아레나 도전, 퀴즈, 일기·댓글, 응원, 장비 나눔, 내가 보낸 닉네임 좋아요. 각 1점.",
+    how: "매일 앱을 열고, 운동 끝나면 종료를 누르고, 챌린지·퀴즈·좋아요를 남기세요. 런칭 이벤트 ②번 왕좌예요.",
+    unit: "점", action: null,
+  },
+  nickname: {
+    key: "nickname", emoji: "❤️", title: "닉네임왕", tagline: "받은 좋아요",
+    what: "같은 지점 회원들이 내 닉네임에 보낸 좋아요 수입니다. 한 사람이 한 명에게 하나만 보낼 수 있어요.",
+    how: "마이페이지에서 멋진 닉네임을 정하고, 아래 버튼으로 다른 회원 닉네임에 좋아요를 보내세요. 런칭 이벤트 ③번 왕좌예요.",
+    unit: "개", action: "nickname_like", actionLabel: "닉네임 좋아요 보내기",
+  },
 };
 
 export const KING_PERIOD_LABEL: Record<KingPeriod, string> = { weekly: "이번 주", monthly: "이번 달" };
@@ -138,6 +153,35 @@ export async function get153KingSummary(period: KingPeriod, scope: KingScope): P
   if (error) throw new Error(translateError(error));
   if (!data) throw new Error("왕좌 정보를 불러오지 못했어요");
   return { ...data, items: (data.items ?? []).map((i) => ({ ...i, king: i.king ?? null, me: i.me ?? null, total: Number(i.total ?? 0) })) };
+}
+
+// ── 닉네임 좋아요 ──────────────────────────────────────────
+export interface BranchNicknameRow {
+  user_id: string;
+  display: string;
+  has_nickname: boolean;
+  likes_month: number;
+  liked_by_me: boolean;
+}
+export interface BranchNicknames {
+  branch: string | null;
+  rows: BranchNicknameRow[];
+  my_given: number;
+}
+
+/** 같은 지점 회원 닉네임 목록 (본인·지도진 제외, 좋아요 많은 순) */
+export async function getBranchNicknames(search: string | null, limit = 60): Promise<BranchNicknames> {
+  const { data, error } = await sbRpc<BranchNicknames>("get_branch_nicknames", { p_search: search, p_limit: limit });
+  if (error) throw new Error(translateError(error));
+  return { branch: data?.branch ?? null, rows: data?.rows ?? [], my_given: Number(data?.my_given ?? 0) };
+}
+
+/** 좋아요 토글 — 서버가 같은 지점·본인 제외·1인 1좋아요를 검사한다 */
+export async function toggleNicknameLike(targetUserId: string): Promise<{ liked: boolean; likes_month: number; likes_total: number }> {
+  const { data, error } = await sbRpc<{ liked: boolean; likes_month: number; likes_total: number }>("toggle_nickname_like", { _target: targetUserId });
+  if (error) throw new Error(translateError(error));
+  if (!data) throw new Error("처리 결과를 받지 못했어요");
+  return data;
 }
 
 /** 점수 표시 — 숫자 + 단위. numeric 이 문자열로 올 수 있어 Number 로 정리한다. */

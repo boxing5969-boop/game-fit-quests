@@ -18,6 +18,7 @@ import LiveLevelUpInterrupt, {
 } from "@/components/liveBoard/LiveLevelUpInterrupt";
 import LiveBoardTestPanel from "@/components/liveBoard/LiveBoardTestPanel";
 import LiveBoardQrCard from "@/components/liveBoard/LiveBoardQrCard";
+import LaunchEventBoard from "@/components/liveBoard/LaunchEventBoard";
 import { honorTitle } from "@/lib/staffDisplay";
 import {
   generateMockMembers,
@@ -894,9 +895,16 @@ const LiveBoardPage = () => {
 
       {/* 헤더 높이를 숫자로 빼지 않는다. 예전엔 calc(100vh-80px) 였는데 실제 헤더는 109px 이라
           29px 이 화면 밖으로 밀려 명예의 전당 띠 아래가 잘려 있었다. flex-1 이면 항상 정확하다. */}
-      <div className={`flex min-h-0 flex-1 ${only2 ? "flex-col" : ""}`}>
+      <div className="flex min-h-0 flex-1">
         {/* ═══ Center: Main area — 명예의 전당 sticky bottom + 위쪽만 스크롤 ═══ */}
-        <div className={`flex flex-col min-w-0 overflow-hidden ${only2 ? "flex-shrink-0" : "flex-1"}`}>
+        <div className="flex flex-col min-w-0 overflow-hidden flex-1">
+          {/* 2번 화면(TV2): 스포트라이트 대신 런칭 이벤트 보드 — ① 출석왕 ② 앱 활동왕 ③ 닉네임 좋아요왕 (2026-09-23 대표님 지시).
+              아래 띠(오늘 다녀간 회원·COACHING STAFF·명예의 전당)와 오른쪽 패널(QR·활동 중)은 그대로 둔다. */}
+          {only2 && branchName && (
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <LaunchEventBoard branchName={branchName} />
+            </div>
+          )}
           {/* 상단: 스포트라이트 + 컴팩트 그리드 (37명까지 스크롤 없이 fit) */}
           {!only2 && (
           <div className="flex-1 flex flex-col relative px-4 py-2 overflow-y-auto min-h-0">
@@ -1127,9 +1135,9 @@ const LiveBoardPage = () => {
 
         {/* ═══ Right panel ═══ */}
         {!only1 && (
-        <div className={`bg-gray-900/60 flex flex-col min-h-0 ${only2 ? "flex-1 w-full border-t border-gray-800/60" : "w-[26rem] border-l border-gray-800/60"}`}>
+        <div className="bg-gray-900/60 flex flex-col min-h-0 w-[26rem] border-l border-gray-800/60">
           {/* QR 출석 — 항상 표시. 브로제이가 느릴 때 회원이 앱에서 찍으면 보드에 바로 올라온다 (2026-09-22) */}
-          {branchName && <LiveBoardQrCard branchName={branchName} className={only2 ? "max-w-[40rem]" : ""} />}
+          {branchName && <LiveBoardQrCard branchName={branchName} />}
           {/* Active members — 인원수 많을 때 더 많이 보이게 flex-1 + 최소 보장 (QR 카드 232px 이 위에 생겨 40vh → 28vh) */}
           <div className="flex-1 border-b border-gray-800/60 flex flex-col min-h-[28vh]">
             <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0">

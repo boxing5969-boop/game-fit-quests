@@ -5,8 +5,9 @@
  *
  * 구조
  *   · 컨트롤: 이번 주 / 이번 달 · 내 지점 / 전체
- *   · 왕좌 버튼 6개 (3×2): 이모지 + 이름 + 현재 왕 이름 + 내 순위. 글 없음.
- *   · 버튼을 누르면 아래에 상세: 규칙 두 줄 → 현재 왕(골드) → 나 → Top 10 → 행동 버튼(버피 기록·아레나)
+ *   · 왕좌 버튼 8개 (4×2): 이모지 + 이름 + 현재 왕 이름 + 내 순위. 글 없음.
+ *     앞 세 개(출석왕·앱활동왕·닉네임왕)가 사이니지 TV2 런칭 이벤트 ①②③ 과 같은 왕좌다 (같은 서버 점수).
+ *   · 버튼을 누르면 아래에 상세: 규칙 두 줄 → 현재 왕(골드) → 나 → Top 10 → 행동 버튼(버피 기록·아레나·닉네임 좋아요)
  * 숫자는 전부 서버 RPC(get_153_king_summary / get_153_king_board)에서 온다.
  *
  * 보호 원칙: 읽기 전용 — 공식 XP / wallet / level 변경 0건. 아레나 기록은 기존 FunChallengeArenaSheet 경로.
@@ -18,10 +19,11 @@ import { Crown, ChevronUp, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { KING_153_KEY, use153KingBoard, use153KingSummary } from "@/hooks/use153King";
 import {
-  KING_CATEGORIES, KING_META, KING_PERIOD_LABEL, KING_PERIOD_RESET, formatKingScore,
-  type KingBoardRow, type KingCategory, type KingPeriod, type KingScope,
+  KING_CATEGORIES, KING_META, KING_PERIOD_LABEL, KING_PERIOD_RESET, LAUNCH_EVENT_CATEGORIES, formatKingScore,
+  type KingBoardRow, type KingCategory, type KingMeta, type KingPeriod, type KingScope,
 } from "@/services/king153Service";
 import FunChallengeArenaSheet from "./FunChallengeArenaSheet";
+import NicknameLikeSheet from "./NicknameLikeSheet";
 
 const PERIODS: Array<{ key: KingPeriod; label: string }> = [
   { key: "weekly", label: "이번 주" },
@@ -69,6 +71,7 @@ const King153Board = () => {
   const [scope, setScope] = useState<KingScope>(hasBranch ? "branch" : "all");
   const [selected, setSelected] = useState<KingCategory | null>(null);
   const [arena, setArena] = useState<{ open: boolean; code: string | null }>({ open: false, code: null });
+  const [likeOpen, setLikeOpen] = useState(false);
 
   const summaryQ = use153KingSummary(period, scope);
   const boardQ = use153KingBoard(selected, period, scope, 10);
@@ -83,6 +86,14 @@ const King153Board = () => {
     scope === "branch" && !summaryQ.isLoading && !!summaryQ.data && summaryQ.data.items.every((i) => i.total === 0);
 
   const openArena = (code: string | null) => setArena({ open: true, code });
+  const closeLike = () => {
+    setLikeOpen(false);
+    queryClient.invalidateQueries({ queryKey: KING_153_KEY });
+  };
+  const runAction = (action: NonNullable<KingMeta["action"]>) => {
+    if (action === "nickname_like") setLikeOpen(true);
+    else openArena(action === "arena_burpee" ? "burpee_blast" : null);
+  };
   const closeArena = () => {
     setArena((a) => ({ ...a, open: false }));
     // 아레나에서 기록했으면 순위가 바뀐다 — 킹 보드 전부 다시 읽기
@@ -104,8 +115,8 @@ const King153Board = () => {
         {hasBranch && <Segmented<KingScope> value={scope} options={SCOPES} onChange={setScope} ariaLabel="범위" />}
       </div>
 
-      {/* 왕좌 버튼 6개 */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* 왕좌 버튼 8개 — 앞 세 개가 런칭 이벤트 ①②③ */}
+      <div className="grid grid-cols-4 gap-1.5">
         {items.map(({ meta: m, item }) => {
           const on = selected === m.key;
           const kingName = item?.king?.display_name ?? null;
@@ -115,12 +126,17 @@ const King153Board = () => {
               type="button"
               aria-pressed={on}
               onClick={() => setSelected(on ? null : m.key)}
-              className={`min-w-0 rounded-2xl border p-3 text-left transition-all active:scale-[0.97] ${
+              className={`relative min-w-0 rounded-2xl border p-2.5 text-left transition-all active:scale-[0.97] ${
                 on ? "border-primary bg-primary/10 shadow-elev-1" : "border-border bg-card hover:border-primary/40"
               }`}
             >
-              <span className="text-2xl leading-none" aria-hidden>{m.emoji}</span>
-              <p className="mt-2 truncate text-[13px] font-black text-foreground">{m.title}</p>
+              {LAUNCH_EVENT_CATEGORIES.includes(m.key) && (
+                <span className="absolute right-1.5 top-1.5 rounded-full bg-reward/20 px-1.5 py-0.5 text-[8px] font-black text-reward">
+                  이벤트 {LAUNCH_EVENT_CATEGORIES.indexOf(m.key) + 1}
+                </span>
+              )}
+              <span className="text-xl leading-none" aria-hidden>{m.emoji}</span>
+              <p className="mt-1.5 truncate text-[12px] font-black text-foreground">{m.title}</p>
               {summaryQ.isLoading ? (
                 <div className="mt-1 h-3 w-14 animate-pulse rounded bg-muted" />
               ) : kingName ? (
@@ -259,7 +275,7 @@ const King153Board = () => {
           {meta.action && (
             <button
               type="button"
-              onClick={() => openArena(meta.action === "arena_burpee" ? "burpee_blast" : null)}
+              onClick={() => runAction(meta.action!)}
               className="w-full rounded-xl bg-primary py-3 text-[13px] font-black text-primary-foreground transition-all active:scale-[0.98]"
             >
               {meta.actionLabel}
@@ -275,6 +291,7 @@ const King153Board = () => {
       )}
 
       <FunChallengeArenaSheet open={arena.open} initialCode={arena.code} onClose={closeArena} />
+      <NicknameLikeSheet open={likeOpen} onClose={closeLike} />
     </section>
   );
 };
