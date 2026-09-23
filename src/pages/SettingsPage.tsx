@@ -237,6 +237,18 @@ const SettingsPage = () => {
   const hasPendingTransfer = (transferRequests || []).some((r: any) => r.status === "pending");
   const otherBranches = (branches || []).filter(b => b.name !== profile.branch_name);
 
+  // 전체관리자 전용 — 내 소속 지점을 바로 바꾼다 (2026-09-23 대표님 지시: 지점을 골라 커뮤니티 등 회원 화면을 체험).
+  // 회원은 '지점 이전 요청' 승인 절차를 타지만, 본사 계정은 승인자가 자기 자신이라 즉시 전환한다.
+  // 지점 기준으로 읽는 화면(커뮤니티·라이브보드·회원관리 통계 등)이 많아 캐시를 전부 비운다.
+  const handleAdminSwitchBranch = async (name: string) => {
+    if (!user || !name || name === profile.branch_name) return;
+    const { error } = await supabase.from("profiles").update({ branch_name: name }).eq("user_id", user.id);
+    if (error) { toast.error(`지점 전환 실패: ${error.message}`); return; }
+    await refreshProfile();
+    await qc.invalidateQueries();
+    toast.success(`${name}으로 전환했습니다. 이제 이 지점 회원 화면으로 보여요.`);
+  };
+
   const handleAddBranch = async () => {
     const trimmed = newBranch.trim();
     if (!trimmed) return;
@@ -385,10 +397,30 @@ const SettingsPage = () => {
             </div>
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">소속 지점</Label>
-              <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-foreground">
-                {profile.branch_name || "미지정"}
-              </div>
-              <p className="text-[10px] text-muted-foreground">지점 변경은 아래 '지점 이전 요청'을 이용해주세요</p>
+              {isAdmin ? (
+                <>
+                  <Select value={profile.branch_name || ""} onValueChange={handleAdminSwitchBranch}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="지점 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(branches || []).map(b => (
+                        <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">
+                    전체관리자는 바로 전환돼요 — 고른 지점의 회원 화면(커뮤니티·챌린지·라이브보드)을 그대로 체험할 수 있습니다.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-foreground">
+                    {profile.branch_name || "미지정"}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">지점 변경은 아래 '지점 이전 요청'을 이용해주세요</p>
+                </>
+              )}
             </div>
           </div>
         </div>

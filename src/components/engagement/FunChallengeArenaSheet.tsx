@@ -9,7 +9,7 @@
  *   · ChatAssistant 미참조
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Swords, X } from "lucide-react";
 
@@ -23,17 +23,31 @@ import FunChallengeSubmitForm from "./FunChallengeSubmitForm";
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** 열릴 때 바로 이 챌린지(code)의 기록 화면으로 — 153 챌린지 버피왕 "버피 기록하기" 가 쓴다 */
+  initialCode?: string | null;
 }
 
-const FunChallengeArenaSheet = ({ open, onClose }: Props) => {
+const FunChallengeArenaSheet = ({ open, onClose, initialCode = null }: Props) => {
   // open=false 일 때는 RPC 가 발사되지 않도록 enabled gate.
   const { data: challenges, isLoading } = useBoxingFunChallenges(open);
   const [selected, setSelected] = useState<BoxingFunChallenge | null>(null);
   useModalDismiss(open, onClose);
+  // 한 번 열릴 때 한 번만 미리 고른다 — "챌린지 목록" 으로 돌아간 뒤 다시 골라 주면 목록을 못 본다.
+  const preselected = useRef(false);
 
   useEffect(() => {
     if (open) setSelected(null);
+    preselected.current = false;
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !initialCode || preselected.current) return;
+    const target = (challenges ?? []).find((c) => c.code === initialCode);
+    if (target) {
+      setSelected(target);
+      preselected.current = true;
+    }
+  }, [open, initialCode, challenges]);
 
   const renderHeader = () => (
     <div className="flex items-start justify-between border-b border-border px-5 pt-5 pb-3">

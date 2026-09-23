@@ -161,6 +161,7 @@ const CHALLENGE_CATEGORY_WEIGHTS: Record<FunChallengeCategory, Partial<Record<Bo
   combo:      { technician: 3, speed_fighter: 1 },
   community:  { second_leader: 3 },
   recovery:   { guard_master: 2, endurance_boxer: 1 },
+  burpee:     { endurance_boxer: 3, power_puncher: 1 },
 };
 
 const ZERO_SCORES: Record<BoxerStyle, number> = {

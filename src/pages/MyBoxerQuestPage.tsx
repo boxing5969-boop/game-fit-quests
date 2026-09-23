@@ -1,24 +1,24 @@
 /**
- * 153 챌린지 — 회원 간 랭킹 경쟁 + 개인 보조 챌린지 페이지.
+ * 153 챌린지 — 회원끼리 왕좌를 겨루는 페이지 (2026-09-23 개편).
  *
  * 라우트: /myboxer/quest (DB / 튜토리얼 anchor 호환을 위해 path 는 유지).
- * 라벨/카피는 '153 챌린지' 로 리브랜드.
  *
- * 포함:
- *   · 153 챌린지 랭킹 — quest_xp 기반 회원 간 리더보드 (기존 명예의 전당과 별개)
- *   · 리턴 라운드 / 오삼 코치 브리핑 / 오늘의 보조 챌린지 미니 패널
- *   · 복싱 IQ 퀴즈 / 챌린지 아레나
+ * 구성:
+ *   · 킹 보드 — 출석왕·연속출석왕·얼리버드왕·레벨업왕·버피왕·체력왕 (King153Board)
+ *     글 대신 버튼 6개, 누르면 규칙·현재 왕·내 순위·Top 10 이 열린다.
+ *   · 개인 보조 챌린지 (HomeEngagementSection personal) — 리턴 라운드 / 오삼 브리핑 / 아레나 / 퀴즈
  *
  * 챔피언 일기는 153 커뮤니티 메뉴로 이관됨 (/myboxer/community).
+ * 예전 quest_xp 기반 "도전 점수 랭킹" 카드(Challenge153LeaderboardCard)는 킹 보드로 대체됐다.
  *
  * 보호 원칙:
- *   · 공식 1~40 레벨업 / 코치 승인 미션과 무관
- *   · 기존 명예의 전당 랭킹 (/halloffame) 과 별개 — quest_xp 만 활용
+ *   · 공식 1~40 레벨업 / 코치 승인 미션과 무관 — 왕좌는 읽기 전용 순위
+ *   · 기존 명예의 전당 랭킹 (/halloffame) 과 별개
  */
 
 import { motion } from "framer-motion";
 import HomeEngagementSection from "@/components/engagement/HomeEngagementSection";
-import Challenge153LeaderboardCard from "@/components/engagement/Challenge153LeaderboardCard";
+import King153Board from "@/components/engagement/King153Board";
 
 const MyBoxerQuestPage = () => {
   return (
@@ -41,28 +41,22 @@ const MyBoxerQuestPage = () => {
             153 챌린지
           </h1>
           <p className="text-[12px] text-muted-foreground">
-            회원끼리 도전 점수로 겨루는 별도 랭킹
+            이번 주 왕좌는 누구? 버튼을 눌러 확인하세요
           </p>
         </header>
 
-        {/* 안내 — 공식 레벨업과 무관 */}
-        <div
+        {/* 킹 보드 — 6개 왕좌 */}
+        <King153Board />
+
+        {/* 안내 — 공식 레벨업과 무관 (한 줄) */}
+        <p
           data-tour="challenge153-intro"
-          className="rounded-xl border-l-2 border-primary/40 bg-primary/5 px-3.5 py-2.5"
+          className="rounded-xl border-l-2 border-primary/40 bg-primary/5 px-3.5 py-2 text-[10.5px] leading-relaxed text-muted-foreground"
         >
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
-            153 챌린지는 공식 1~40 레벨업 / 명예의 전당 랭킹과 별개입니다.
-            <br />
-            공식 훈련은 <strong className="text-foreground">훈련</strong> 메뉴, 공식 랭킹은 <strong className="text-foreground">랭킹</strong> 메뉴에서 확인하세요.
-          </p>
-        </div>
+          153 챌린지 왕좌는 재미와 습관을 위한 순위예요. 공식 1~40 레벨업·명예의 전당 랭킹과는 별개입니다.
+        </p>
 
-        {/* 153 챌린지 회원 간 랭킹 — quest_xp 누적 기반 */}
-        <div data-tour="challenge153-leaderboard">
-          <Challenge153LeaderboardCard />
-        </div>
-
-        {/* 본문 — 개인 챌린지 (일기는 153 커뮤니티 로 이관됨) */}
+        {/* 본문 — 개인 보조 챌린지 (일기는 153 커뮤니티 로 이관됨) */}
         <HomeEngagementSection mode="personal" />
       </div>
     </motion.div>

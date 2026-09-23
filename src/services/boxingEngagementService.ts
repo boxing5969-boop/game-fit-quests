@@ -202,7 +202,8 @@ export type FunChallengeCategory =
   | "guard"
   | "combo"
   | "community"
-  | "recovery";
+  | "recovery"
+  | "burpee";
 
 export interface BoxingFunChallenge {
   id: string;
