@@ -12,20 +12,21 @@
  *
  * 보호 원칙: 읽기 전용 — 공식 XP / wallet / level 변경 0건. 아레나 기록은 기존 FunChallengeArenaSheet 경로.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Crown, ChevronUp, Info } from "lucide-react";
+import { Crown, ChevronUp, Info, PartyPopper } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { KING_153_KEY, use153KingBoard, use153KingSummary } from "@/hooks/use153King";
+import { KING_153_KEY, use153KingBoard, use153KingSummary, useLaunchEventWindow } from "@/hooks/use153King";
 import {
-  KING_CATEGORIES, KING_META, KING_PERIOD_LABEL, KING_PERIOD_RESET, LAUNCH_EVENT_CATEGORIES, formatKingScore,
+  KING_CATEGORIES, KING_META, KING_PERIOD_LABEL, KING_PERIOD_RESET, LAUNCH_EVENT_CATEGORIES, formatKingScore, launchEventLine,
   type KingBoardRow, type KingCategory, type KingMeta, type KingPeriod, type KingScope,
 } from "@/services/king153Service";
 import FunChallengeArenaSheet from "./FunChallengeArenaSheet";
 import NicknameLikeSheet from "./NicknameLikeSheet";
 
 const PERIODS: Array<{ key: KingPeriod; label: string }> = [
+  { key: "event", label: "🎉 이벤트" },
   { key: "weekly", label: "이번 주" },
   { key: "monthly", label: "이번 달" },
 ];
@@ -67,7 +68,14 @@ const King153Board = () => {
   const queryClient = useQueryClient();
   const hasBranch = !!(profile?.branch_name || "").trim();
 
+  // 런칭 이벤트가 진행 중이면 이벤트 탭을 기본으로 — 시작 전/종료 후엔 이번 주
+  const eventQ = useLaunchEventWindow();
   const [period, setPeriod] = useState<KingPeriod>("weekly");
+  const [periodTouched, setPeriodTouched] = useState(false);
+  useEffect(() => {
+    if (!periodTouched && eventQ.data?.status === "active") setPeriod("event");
+  }, [eventQ.data?.status, periodTouched]);
+  const choosePeriod = (p: KingPeriod) => { setPeriodTouched(true); setPeriod(p); };
   const [scope, setScope] = useState<KingScope>(hasBranch ? "branch" : "all");
   const [selected, setSelected] = useState<KingCategory | null>(null);
   const [arena, setArena] = useState<{ open: boolean; code: string | null }>({ open: false, code: null });
@@ -82,8 +90,9 @@ const King153Board = () => {
   }, [summaryQ.data]);
 
   // 내 지점에 아직 기록이 하나도 없으면(본사 계정·새 지점) 전체 보기로 안내
+  const eventUpcoming = period === "event" && eventQ.data?.status === "upcoming";
   const branchEmpty =
-    scope === "branch" && !summaryQ.isLoading && !!summaryQ.data && summaryQ.data.items.every((i) => i.total === 0);
+    scope === "branch" && !eventUpcoming && !summaryQ.isLoading && !!summaryQ.data && summaryQ.data.items.every((i) => i.total === 0);
 
   const openArena = (code: string | null) => setArena({ open: true, code });
   const closeLike = () => {
@@ -111,9 +120,22 @@ const King153Board = () => {
     <section data-tour="challenge153-leaderboard" aria-label="153 챌린지 킹 보드" className="space-y-3">
       {/* 컨트롤 */}
       <div className="flex items-center justify-between gap-2">
-        <Segmented<KingPeriod> value={period} options={PERIODS} onChange={setPeriod} ariaLabel="기간" />
+        <Segmented<KingPeriod> value={period} options={PERIODS} onChange={choosePeriod} ariaLabel="기간" />
         {hasBranch && <Segmented<KingScope> value={scope} options={SCOPES} onChange={setScope} ariaLabel="범위" />}
       </div>
+
+      {/* 런칭 이벤트 띠 — 이벤트 탭일 때만. 시작 전엔 D-day, 진행 중엔 기간, 종료 후엔 최종 결과 */}
+      {period === "event" && (
+        <div className="flex items-center gap-2 rounded-xl border border-reward/30 bg-reward/10 px-3 py-2">
+          <PartyPopper className="h-4 w-4 shrink-0 text-reward" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] font-black text-foreground">153 마이복서 런칭 이벤트</p>
+            <p className="truncate text-[10.5px] text-muted-foreground">
+              {eventQ.data ? launchEventLine(eventQ.data) : "기간 확인 중…"} · 사이니지 TV에 ①출석왕 ②앱활동왕 ③닉네임왕이 걸려요
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 왕좌 버튼 8개 — 앞 세 개가 런칭 이벤트 ①②③ */}
       <div className="grid grid-cols-4 gap-1.5">
@@ -144,7 +166,9 @@ const King153Board = () => {
                   <Crown className="h-3 w-3 shrink-0" /> <span className="truncate">{kingName}</span>
                 </p>
               ) : (
-                <p className="mt-1 truncate text-[10.5px] text-muted-foreground">왕좌 비어 있음</p>
+                <p className="mt-1 truncate text-[10.5px] text-muted-foreground">
+                  {period === "event" && eventQ.data?.status === "upcoming" ? "시작 전" : "왕좌 비어 있음"}
+                </p>
               )}
               {item?.me && (
                 <p className="mt-0.5 truncate text-[10px] font-bold text-primary">나 {item.me.rank}위</p>
@@ -175,7 +199,7 @@ const King153Board = () => {
                 <span className="text-xl leading-none" aria-hidden>{meta.emoji}</span>
                 <h3 className="text-[15px] font-black text-foreground">{meta.title}</h3>
                 <span className="badge-pill bg-secondary text-secondary-foreground text-[10px]">
-                  {meta.periodless ? "지금 연속" : KING_PERIOD_LABEL[period]}
+                  {meta.periodless && period !== "event" ? "지금 연속" : KING_PERIOD_LABEL[period]}
                   {board && board.scope === "all" ? " · 전체" : ""}
                 </span>
               </div>
@@ -196,6 +220,13 @@ const King153Board = () => {
           <div className="rounded-card border border-reward/30 bg-reward/10 px-4 py-3">
             {boardQ.isLoading ? (
               <div className="h-7 w-40 animate-pulse rounded bg-reward/20" />
+            ) : eventUpcoming ? (
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-reward">런칭 이벤트 시작 전</p>
+                <p className="mt-0.5 text-[13px] font-bold text-foreground">
+                  {eventQ.data ? launchEventLine(eventQ.data) : ""} — 그날부터 기록이 쌓여요
+                </p>
+              </div>
             ) : king ? (
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -219,7 +250,7 @@ const King153Board = () => {
           </div>
 
           {/* 나 */}
-          {!boardQ.isLoading && (
+          {!boardQ.isLoading && !eventUpcoming && (
             <div className="flex items-center justify-between rounded-card border border-primary/20 bg-primary/5 px-4 py-2.5">
               <p className="text-[12px] font-bold text-foreground">
                 나 · {me ? `${me.rank}위` : "기록 없음"}
@@ -232,7 +263,7 @@ const King153Board = () => {
                     {me.rank === 1 && <span> · 👑 지금 왕은 나</span>}
                   </>
                 ) : (
-                  <span>{meta.periodless ? "이어지는 출석이 없어요" : `${KING_PERIOD_LABEL[period]} 기록이 없어요`}</span>
+                  <span>{meta.periodless && period !== "event" ? "이어지는 출석이 없어요" : `${KING_PERIOD_LABEL[period]} 기록이 없어요`}</span>
                 )}
               </p>
             </div>
@@ -283,7 +314,7 @@ const King153Board = () => {
           )}
 
           <p className="text-[10px] leading-relaxed text-muted-foreground">
-            {meta.periodless ? "하루라도 빠지면 연속이 끊어져요." : KING_PERIOD_RESET[period]}
+            {period === "event" ? (eventQ.data ? launchEventLine(eventQ.data) : KING_PERIOD_RESET.event) : meta.periodless ? "하루라도 빠지면 연속이 끊어져요." : KING_PERIOD_RESET[period]}
             {board ? ` · 참가 ${board.total.toLocaleString("ko-KR")}명` : ""} · 동점이면 먼저 달성한 사람이 앞서요.
             {boardQ.isError && " · 순위를 불러오지 못했어요. 잠시 후 다시 시도해 주세요."}
           </p>

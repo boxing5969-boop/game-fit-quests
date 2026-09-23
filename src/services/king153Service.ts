@@ -14,7 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
 
 export type KingCategory = "attendance" | "streak" | "early_bird" | "levelup" | "burpee" | "fitness" | "app" | "nickname";
-export type KingPeriod = "weekly" | "monthly";
+/** weekly/monthly = 정기 왕좌, event = 런칭 이벤트 기간(설정 화면에서 시작·종료일을 정한다) */
+export type KingPeriod = "weekly" | "monthly" | "event";
 export type KingScope = "branch" | "all";
 
 export const KING_CATEGORIES: KingCategory[] = ["attendance", "app", "nickname", "streak", "early_bird", "levelup", "burpee", "fitness"];
@@ -31,13 +32,28 @@ export interface KingBoardRow {
   is_me: boolean;
 }
 
+/** 런칭 이벤트 기간 — 서버 get_launch_event_window 가 준다. 날짜는 KST. */
+export type LaunchEventStatus = "upcoming" | "active" | "ended";
+export interface LaunchEventWindow {
+  start_date: string;
+  end_date: string | null;
+  since: string;
+  until: string | null;
+  status: LaunchEventStatus;
+  days_until_start: number;
+  days_left: number | null;
+}
+
 export interface KingBoard {
   category: KingCategory;
   period: KingPeriod;
   /** 서버가 실제 적용한 범위 — 내 지점이 비어 있으면 'all' 로 내려온다 */
   scope: KingScope;
   since: string;
+  until?: string | null;
   branch: string | null;
+  /** period=event 일 때만 */
+  event?: LaunchEventWindow | null;
   board: KingBoardRow[];
   me: { rank: number; score: number } | null;
   total: number;
@@ -54,6 +70,7 @@ export interface KingSummary {
   period: KingPeriod;
   scope: KingScope;
   since: string;
+  event?: LaunchEventWindow | null;
   items: KingSummaryItem[];
 }
 
@@ -129,8 +146,25 @@ export const KING_META: Record<KingCategory, KingMeta> = {
   },
 };
 
-export const KING_PERIOD_LABEL: Record<KingPeriod, string> = { weekly: "이번 주", monthly: "이번 달" };
-export const KING_PERIOD_RESET: Record<KingPeriod, string> = { weekly: "매주 월요일 0시에 새로 시작", monthly: "매월 1일 0시에 새로 시작" };
+export const KING_PERIOD_LABEL: Record<KingPeriod, string> = { weekly: "이번 주", monthly: "이번 달", event: "런칭 이벤트" };
+export const KING_PERIOD_RESET: Record<KingPeriod, string> = {
+  weekly: "매주 월요일 0시에 새로 시작", monthly: "매월 1일 0시에 새로 시작", event: "런칭 이벤트 기간 동안 누적",
+};
+
+/** "2026-10-01" → "10월 1일" */
+export const fmtKstDate = (d?: string | null): string => {
+  if (!d) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d);
+  return m ? `${Number(m[2])}월 ${Number(m[3])}일` : d;
+};
+
+/** 이벤트 기간 한 줄 — "10월 1일 시작 · D-8" / "10월 1일 ~ 10월 31일" / "10월 1일부터 · 종료일 미정" */
+export const launchEventLine = (w: LaunchEventWindow | null | undefined): string => {
+  if (!w) return "";
+  if (w.status === "upcoming") return `${fmtKstDate(w.start_date)} 시작 · D-${w.days_until_start}`;
+  const range = w.end_date ? `${fmtKstDate(w.start_date)} ~ ${fmtKstDate(w.end_date)}` : `${fmtKstDate(w.start_date)}부터 · 종료일 미정`;
+  return w.status === "ended" ? `종료 · ${range} 최종 결과` : `진행 중 · ${range}`;
+};
 
 type SbResult<T> = { data: T | null; error: { message: string } | null };
 
@@ -182,6 +216,20 @@ export async function toggleNicknameLike(targetUserId: string): Promise<{ liked:
   if (error) throw new Error(translateError(error));
   if (!data) throw new Error("처리 결과를 받지 못했어요");
   return data;
+}
+
+// ── 런칭 이벤트 기간 설정 ────────────────────────────────────
+export async function getLaunchEventWindow(): Promise<LaunchEventWindow> {
+  const { data, error } = await sbRpc<LaunchEventWindow>("get_launch_event_window");
+  if (error) throw new Error(translateError(error));
+  if (!data) throw new Error("이벤트 기간을 불러오지 못했어요");
+  return data;
+}
+
+/** 관리자만 — 서버(set_app_setting)가 권한·날짜 순서를 검사한다 */
+export async function setLaunchEventSettings(input: { start_date: string; end_date: string | null }): Promise<void> {
+  const { error } = await sbRpc<unknown>("set_app_setting", { _key: "launch_event", _value: input });
+  if (error) throw new Error(translateError(error));
 }
 
 /** 점수 표시 — 숫자 + 단위. numeric 이 문자열로 올 수 있어 Number 로 정리한다. */

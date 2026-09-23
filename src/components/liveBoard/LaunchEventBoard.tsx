@@ -4,7 +4,8 @@
  * 대표님 지시: TV2 에 "153 마이복서 런칭 이벤트 ① 출석왕 ② 마이복서153 앱 활동왕 ③ 닉네임 좋아요왕".
  *
  * 동작:
- *   · get_launch_event_board(지점명) — anon 호출 가능(TV 는 로그인이 없다). 이번 달(KST) 기준 세 왕좌 Top 5.
+ *   · get_launch_event_board(지점명) — anon 호출 가능(TV 는 로그인이 없다). 이벤트 기간(설정 화면에서 정한 시작·종료일) 세 왕좌 Top 5.
+ *   · 시작 전(upcoming)엔 D-day 티저, 진행 중엔 순위, 종료 후엔 "최종 결과" 로 고정.
  *   · 60초마다 다시 읽는다. 실패하면 마지막 값을 그대로 두고 조용히 재시도 — TV 가 비면 안 된다.
  *   · 점수·순위는 전부 서버가 계산한다. 앱의 153 챌린지 킹 보드와 같은 함수(_king_scores)를 쓴다.
  *
@@ -15,11 +16,14 @@ import { useEffect, useState } from "react";
 import { Crown, Heart, Smartphone, CalendarCheck, Trophy } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { LAUNCH_EVENT_CATEGORIES, KING_META, type KingCategory } from "@/services/king153Service";
+import { LAUNCH_EVENT_CATEGORIES, KING_META, fmtKstDate, type KingCategory, type LaunchEventStatus } from "@/services/king153Service";
 
 interface TvRow { rank: number; display_name: string; score: number | string }
 interface TvItem { category: KingCategory; board: TvRow[]; total: number }
-interface TvBoard { branch: string; since: string; period: string; items: TvItem[] }
+interface TvBoard {
+  branch: string; since: string; period: string; items: TvItem[];
+  start_date: string; end_date: string | null; status: LaunchEventStatus; days_until_start: number; days_left: number | null;
+}
 
 const REFRESH_MS = 60_000;
 
@@ -59,10 +63,18 @@ const LaunchEventBoard = ({ branchName }: Props) => {
     return () => { cancelled = true; clearInterval(t); };
   }, [branchName]);
 
-  // 월 표기는 KST 로 — 사이니지 기기가 UTC 면 9월 1일 0시(KST)가 8월 31일로 읽힌다
-  const kstMonth = (iso?: string) => new Date((iso ? new Date(iso).getTime() : Date.now()) + 9 * 3600 * 1000).getUTCMonth() + 1;
-  const month = kstMonth(data?.since);
   const items = new Map((data?.items ?? []).map((i) => [i.category, i]));
+  const status: LaunchEventStatus | null = data?.status ?? null;
+  const upcoming = status === "upcoming";
+  const ended = status === "ended";
+  // 기간 문구 — 서버가 준 KST 날짜 문자열을 그대로 쓴다(기기 시간대와 무관)
+  const periodLine = !data
+    ? ""
+    : upcoming
+      ? `${fmtKstDate(data.start_date)} 시작`
+      : data.end_date
+        ? `${fmtKstDate(data.start_date)} ~ ${fmtKstDate(data.end_date)}`
+        : `${fmtKstDate(data.start_date)}부터 진행 중`;
 
   return (
     <section aria-label="153 마이복서 런칭 이벤트" className="flex h-full min-h-0 flex-col px-6 py-4">
@@ -75,10 +87,26 @@ const LaunchEventBoard = ({ branchName }: Props) => {
           </h2>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-black text-white/90">{month}월 왕좌</p>
-          <p className="text-sm font-bold text-gray-400">매월 1일 새로 시작 · 지도진 제외{stale ? " · 갱신 지연" : ""}</p>
+          {upcoming ? (
+            <p className="text-3xl font-black text-yellow-400">D-{data?.days_until_start ?? "?"}</p>
+          ) : (
+            <p className="text-2xl font-black text-white/90">{ended ? "최종 결과" : "진행 중"}</p>
+          )}
+          <p className="text-sm font-bold text-gray-400">
+            {periodLine}{ended ? " · 순위 확정" : ""} · 지도진 제외{stale ? " · 갱신 지연" : ""}
+          </p>
         </div>
       </div>
+
+      {/* 시작 전 티저 — 큰 글자 한 줄 */}
+      {upcoming && data && (
+        <div className="mb-3 flex flex-shrink-0 items-center justify-center gap-4 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 px-6 py-4">
+          <Crown className="h-10 w-10 text-yellow-400" />
+          <p className="text-3xl font-black text-white">
+            <span className="text-yellow-400">{fmtKstDate(data.start_date)}</span> 부터 왕좌 경쟁이 시작됩니다 — 지금 앱을 설치하고 닉네임을 정해두세요
+          </p>
+        </div>
+      )}
 
       {/* 세 왕좌 */}
       <div className="grid min-h-0 flex-1 grid-cols-3 gap-4">
@@ -104,6 +132,14 @@ const LaunchEventBoard = ({ branchName }: Props) => {
               <div className="mt-4 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 px-5 py-4">
                 {!data ? (
                   <div className="h-12 animate-pulse rounded-lg bg-yellow-500/10" />
+                ) : upcoming ? (
+                  <div className="flex items-center gap-3">
+                    <Trophy className="h-8 w-8 text-yellow-500/60" />
+                    <div>
+                      <p className="text-2xl font-black text-white/90">{fmtKstDate(data.start_date)} 개막</p>
+                      <p className="text-sm font-bold text-gray-400">첫날 첫 기록이 첫 왕이 됩니다</p>
+                    </div>
+                  </div>
                 ) : king ? (
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
@@ -135,10 +171,17 @@ const LaunchEventBoard = ({ branchName }: Props) => {
                 {data && rest.length === 0 && king && (
                   <li className="px-4 py-2 text-lg font-bold text-gray-500">다음 자리가 비어 있어요</li>
                 )}
+                {upcoming && (
+                  <li className="px-4 py-3 text-lg font-bold leading-relaxed text-gray-400">
+                    {cat === "attendance" && "얼굴 인식·QR 출석 하루 1회씩 쌓입니다."}
+                    {cat === "app" && "앱을 연 날, 운동 종료 기록, 챌린지·퀴즈·좋아요가 모두 1점."}
+                    {cat === "nickname" && "같은 지점 회원이 내 닉네임에 보낸 좋아요. 한 사람에게 하나."}
+                  </li>
+                )}
               </ol>
 
               <p className="mt-2 flex-shrink-0 text-sm font-bold text-gray-500">
-                {item ? `참가 ${Number(item.total).toLocaleString("ko-KR")}명` : ""}
+                {item && !upcoming ? `참가 ${Number(item.total).toLocaleString("ko-KR")}명` : ""}
               </p>
             </div>
           );

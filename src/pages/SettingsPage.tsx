@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useTutorialCamp } from "@/features/tutorial-camp/useTutorialCamp";
+import LaunchEventSettingsCard from "@/components/admin/LaunchEventSettingsCard";
 
 // ── Home widget toggle helpers ──
 const HOME_PREFS_KEY = "home-widget-prefs";
@@ -584,6 +585,9 @@ const SettingsPage = () => {
             </div>
           </div>
         )}
+
+        {/* Admin: 런칭 이벤트 기간 (TV2 보드 · 153 챌린지 이벤트 탭) */}
+        {isAdmin && <LaunchEventSettingsCard />}
 
         {/* Admin: Branch Management */}
         {isAdmin && (

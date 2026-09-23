@@ -7,8 +7,11 @@ import {
   get153KingBoard,
   get153KingSummary,
   getBranchNicknames,
+  getLaunchEventWindow,
+  setLaunchEventSettings,
   toggleNicknameLike,
   type BranchNicknames,
+  type LaunchEventWindow,
   type KingBoard,
   type KingCategory,
   type KingPeriod,
@@ -59,6 +62,29 @@ export function useToggleNicknameLike() {
     mutationFn: (targetUserId: string) => toggleNicknameLike(targetUserId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: NICKNAME_LIKE_KEY });
+      qc.invalidateQueries({ queryKey: KING_153_KEY });
+    },
+  });
+}
+
+export const LAUNCH_EVENT_KEY = ["launch-event"] as const;
+
+/** 런칭 이벤트 기간 — 로그인 여부와 무관하게 읽을 수 있다(anon 허용) */
+export function useLaunchEventWindow() {
+  return useQuery<LaunchEventWindow>({
+    queryKey: [...LAUNCH_EVENT_KEY, "window"],
+    staleTime: 60_000,
+    queryFn: getLaunchEventWindow,
+  });
+}
+
+/** 관리자 — 시작·종료일 저장. 킹 보드·이벤트 창을 다시 읽는다. */
+export function useSetLaunchEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: setLaunchEventSettings,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: LAUNCH_EVENT_KEY });
       qc.invalidateQueries({ queryKey: KING_153_KEY });
     },
   });
