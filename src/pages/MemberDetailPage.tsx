@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Banknote } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
+import { isStaffProfile, staffTitleLabel } from "@/lib/staffDisplay";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
@@ -273,7 +274,10 @@ const MemberDetailPage = () => {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-lg text-foreground">{p.nickname || p.name}</h1>
-            {member.memberRole === "branch_manager" || member.memberRole === "coach" ? (
+            {isStaffProfile(p) ? (
+              // 153OS 지도진 명단에 있는 코치님·지점장님 — 역할이 member 여도 회원이 아니다 (2026-09-23)
+              <span className="rounded-full bg-reward/20 px-2 py-0.5 text-[10px] font-bold text-reward">{staffTitleLabel(p)}</span>
+            ) : member.memberRole === "branch_manager" || member.memberRole === "coach" ? (
               <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">관장님</span>
             ) : member.memberRole === "super_admin" || member.memberRole === "admin" ? (
               <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-bold text-destructive">관리자</span>
@@ -287,7 +291,9 @@ const MemberDetailPage = () => {
             {member.signupProvider === "google" ? "Google 가입" : member.signupProvider === "apple" ? "Apple 가입" : "일반 가입"}
           </p>
         </div>
-        <RankBadge rank={prog.current_rank as Enums<"rank_name">} level={prog.current_level} size="sm" />
+        {!isStaffProfile(p) && (
+          <RankBadge rank={prog.current_rank as Enums<"rank_name">} level={prog.current_level} size="sm" />
+        )}
       </div>
 
       {/* Summary Card */}

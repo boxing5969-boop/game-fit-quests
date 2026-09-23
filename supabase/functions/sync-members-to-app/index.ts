@@ -20,6 +20,10 @@
 //      이제 앱 계정을 이미 보유한 회원 행의 이름을 확인해서
 //      - 같은 이름  → 다지점 등록(정상). dup_skipped 로 세고 실패로 남기지 않는다.
 //      - 다른 이름  → 전화번호가 잘못 등록된 실제 데이터 오류. 사람이 고쳐야 하므로 failed 에 남긴다.
+//
+// 2026-09-23 수정 — 지도진(profiles.is_staff) 계정에는 수강권·결제 정보를 쓰지 않는다.
+//   코치님도 CRM 에 회원으로 등록돼 있으면(옛 회원권) 이 동기화가 만료된 membership_end 를
+//   계속 되살려 "만료 D+62" 로 보였다. 지도진 이용권은 무제한(sync-staff-to-app 가 관리).
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
@@ -102,12 +106,13 @@ Deno.serve(async (req) => {
       const cumulative = onlyDigits(m.cumulative_payment);
       if (cumulative) billing.payment_total = Number(cumulative);
 
-      const { data: dup } = await app.from("profiles").select("user_id").eq("phone_number", phone).maybeSingle();
+      const { data: dup } = await app.from("profiles").select("user_id, is_staff").eq("phone_number", phone).maybeSingle();
       let appUserId: string | null = null;
 
       if (dup) {
         // 반영할 값이 하나도 없으면 쓰기 자체를 건너뛴다(빈 update 로 updated_at 만 흔들지 않는다).
-        if (Object.keys(billing).length > 0) {
+        // 지도진 계정은 수강권·결제를 CRM 회원권으로 덮지 않는다(무제한).
+        if (Object.keys(billing).length > 0 && dup.is_staff !== true) {
           await app.from("profiles").update(billing).eq("user_id", dup.user_id);
         }
         appUserId = dup.user_id as string;

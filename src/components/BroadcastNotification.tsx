@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { fetchAllRows } from "@/lib/supabasePaging";
 import { Send, Users } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,16 +26,18 @@ const BroadcastNotification = () => {
     mutationFn: async () => {
       if (!title.trim()) throw new Error("제목을 입력하세요");
 
-      let query = supabase.from("profiles").select("user_id").eq("is_approved", true);
-      if (targetBranch !== "all") {
-        query = query.eq("branch_name", targetBranch);
-      } else if (!isSuperAdmin) {
-        query = query.eq("branch_name", profile?.branch_name || "");
-      }
-
-      const { data: profiles, error } = await query;
-      if (error) throw error;
-      if (!profiles?.length) throw new Error("대상 회원이 없습니다");
+      // 1,000행씩 끝까지 — 한 번에 받으면 PostgREST 상한(1,000)에서 잘려 나머지 회원은 공지를 못 받았다.
+      const profiles = await fetchAllRows((from, to) => {
+        let query = supabase.from("profiles").select("user_id").eq("is_approved", true)
+          .order("user_id", { ascending: true }).range(from, to);
+        if (targetBranch !== "all") {
+          query = query.eq("branch_name", targetBranch);
+        } else if (!isSuperAdmin) {
+          query = query.eq("branch_name", profile?.branch_name || "");
+        }
+        return query;
+      });
+      if (!profiles.length) throw new Error("대상 회원이 없습니다");
 
       // Insert notifications in batches
       const batch = profiles.map(p => ({

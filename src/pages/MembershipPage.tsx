@@ -7,6 +7,7 @@ import { calcRefund, NORMAL_MONTHLY_DEFAULT } from "@/lib/refundPolicy";
 import { ArrowLeft, Pause, ArrowLeftRight, RotateCcw, X, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
+import { isStaffProfile } from "@/lib/staffDisplay";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import MembershipCard from "@/components/MembershipCard";
@@ -46,7 +47,10 @@ const MembershipPage = () => {
   const memEnd = (profile as { membership_end?: string } | null)?.membership_end ?? null;
   const regDate = (profile as { gym_reg_date?: string } | null)?.gym_reg_date ?? null;
   const payment = (profile as { payment_total?: number } | null)?.payment_total ?? null;
-  const isStaff = isManagerRole(role);
+  // 지도진(profiles.is_staff)은 역할이 member 여도 무제한 이용권 (2026-09-23).
+  // 홀딩·양도·환불 "본사 테스트 모드" 는 관리 역할(관장·본사)에게만 — 코치님 화면엔 안 보인다.
+  const isManager = isManagerRole(role);
+  const isStaff = isManager || isStaffProfile(profile);
   const hasMembership = isStaff || !!memEnd;
 
   const [requests, setRequests] = useState<MReq[]>([]);
@@ -95,7 +99,7 @@ const MembershipPage = () => {
 
   // 제14조 일시정지(홀딩) 자격
   const holdTier =
-    isStaff
+    isManager
       ? { maxCount: 2, maxDays: 30 } // 본사 테스트: 12개월+ 자격으로 가정
       : contractMonths == null
       ? null
@@ -198,9 +202,9 @@ const MembershipPage = () => {
           <MembershipProducts />
 
           {/* 홀딩/양도/환불 신청 — 회원은 본인 수강권 기준, 본사는 테스트 모드 */}
-          {(memEnd || isStaff) && (
+          {(memEnd || isManager) && (
             <>
-              {isStaff && (
+              {isManager && (
                 <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
                   <span className="font-bold text-primary">본사 테스트 모드</span> — 무제한 계정이라 실제 회원에겐 없는 신청 버튼이 테스트용으로 표시됩니다. 신청하면 아래 내역과 홈 화면 관리 메뉴에서 승인/반려를 확인할 수 있습니다.
                 </div>
@@ -235,7 +239,7 @@ const MembershipPage = () => {
               {/* 자격 안내 (약관 기준) */}
               <div className="rounded-xl bg-muted/30 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
                 {holdTier && holdTier.maxCount > 0 ? (
-                  <p>홀딩 가능: 남은 {remainCount}회 · {remainDays}일{isStaff ? " (본사 테스트)" : ` (약정 ${Math.round(contractMonths ?? 0)}개월 기준)`}</p>
+                  <p>홀딩 가능: 남은 {remainCount}회 · {remainDays}일{isManager ? " (본사 테스트)" : ` (약정 ${Math.round(contractMonths ?? 0)}개월 기준)`}</p>
                 ) : (
                   <p>홀딩 불가: 6개월 미만 약정은 일시정지가 제공되지 않습니다(약관 제14조).</p>
                 )}

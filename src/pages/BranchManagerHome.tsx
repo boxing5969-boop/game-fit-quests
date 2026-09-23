@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, Users, User, ChevronRight, Bell, Inbox, UserCheck, UserX, Download, AlertTriangle, BarChart3 } from "lucide-react";
 import { formatRank, RANK_ICONS, isManagerRole } from "@/lib/rankLabels";
+import { fetchAllRows, inChunks } from "@/lib/supabasePaging";
+import { isStaffProfile, staffTitleLabel } from "@/lib/staffDisplay";
 import { Input } from "@/components/ui/input";
 import ApprovalInbox from "@/components/ApprovalInbox";
 import BulkMemberImport from "@/components/admin/BulkMemberImport";
@@ -45,18 +47,19 @@ const BranchManagerHome = () => {
     queryFn: async () => {
       if (isSuperAdmin) {
         // Super admin: aggregate stats from all branches
-        const [profilesRes, pendingMissionsRes, pendingQuestsRes, xpRes, submissionsRes] = await Promise.all([
-          supabase.from("profiles").select("user_id, is_approved", { count: "exact" }),
+        // 총원·미승인은 count 헤더로 센다. 행을 받아 length 로 세면 PostgREST 1,000행 상한 때문에
+        // 회원이 3,000명이어도 "전체 회원 1000" 으로 보였다 (2026-09-23 대표님 제보).
+        const [profilesRes, unapprovedRes, pendingMissionsRes, pendingQuestsRes, xpRes, submissionsRes] = await Promise.all([
+          supabase.from("profiles").select("user_id", { count: "exact", head: true }),
+          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false),
           supabase.from("mission_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("quest_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("xp_logs").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString()),
           supabase.from("mission_submissions").select("id", { count: "exact", head: true }).gte("requested_at", new Date().toISOString().split("T")[0]),
         ]);
-        const profiles = profilesRes.data || [];
-        const unapproved = profiles.filter(p => !p.is_approved).length;
         return {
-          total_members: profiles.length,
-          pending_count: unapproved + (pendingMissionsRes.count || 0) + (pendingQuestsRes.count || 0),
+          total_members: profilesRes.count || 0,
+          pending_count: (unapprovedRes.count || 0) + (pendingMissionsRes.count || 0) + (pendingQuestsRes.count || 0),
           weekly_levelups: xpRes.count || 0,
           today_submissions: submissionsRes.count || 0,
         };
@@ -72,38 +75,42 @@ const BranchManagerHome = () => {
     queryKey: ["branch-members", branchName, isSuperAdmin],
     enabled: (!!branchName || isSuperAdmin) && isManagerRole(role),
     queryFn: async () => {
-      let query = supabase.from("profiles").select("*").order("created_at", { ascending: false });
-      if (!isSuperAdmin) {
-        query = query.eq("branch_name", branchName);
-      }
-      const { data: profiles, error: profErr } = await query;
-      if (profErr) throw profErr;
+      // 1,000행씩 끝까지 읽는다 — 한 번에 받으면 1,000명에서 잘려 나머지 회원은 목록에 안 나왔다.
+      // 정렬은 created_at 동률(일괄등록 2,000명)이 많아 user_id 를 2차 키로 고정한다.
+      const profiles = await fetchAllRows((from, to) => {
+        let q = supabase.from("profiles").select("*")
+          .order("created_at", { ascending: false }).order("user_id", { ascending: true })
+          .range(from, to);
+        if (!isSuperAdmin) q = q.eq("branch_name", branchName);
+        return q;
+      });
 
-      const userIds = (profiles || []).map(p => p.user_id);
+      const userIds = profiles.map(p => p.user_id);
       if (!userIds.length) return [];
 
-      const [progressRes, missionPendingRes, questPendingRes, rolesRes, providerRes] = await Promise.all([
-        supabase.from("member_progress").select("*").in("user_id", userIds),
-        supabase.from("mission_submissions").select("user_id").in("user_id", userIds).eq("status", "pending"),
-        supabase.from("quest_submissions").select("user_id").in("user_id", userIds).eq("status", "pending"),
-        supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
+      // .in() 은 URL 길이 한도가 있어 150명씩 나눠 부른다.
+      const [progressRows, missionPending, questPending, roleRows, providerRes] = await Promise.all([
+        inChunks(userIds, ids => supabase.from("member_progress").select("*").in("user_id", ids)),
+        inChunks(userIds, ids => supabase.from("mission_submissions").select("user_id").in("user_id", ids).eq("status", "pending")),
+        inChunks(userIds, ids => supabase.from("quest_submissions").select("user_id").in("user_id", ids).eq("status", "pending")),
+        inChunks(userIds, ids => supabase.from("user_roles").select("user_id, role").in("user_id", ids)),
         supabase.rpc("get_signup_providers", { _user_ids: userIds }),
       ]);
 
-      const progressMap = new Map<string, typeof progressRes.data extends (infer T)[] | null ? T : never>();
-      (progressRes.data || []).forEach(p => progressMap.set(p.user_id, p));
+      const progressMap = new Map<string, (typeof progressRows)[number]>();
+      progressRows.forEach(p => progressMap.set(p.user_id, p));
 
       const pendingMap = new Map<string, number>();
-      [...(missionPendingRes.data || []), ...(questPendingRes.data || [])].forEach(s => {
+      [...missionPending, ...questPending].forEach(s => {
         pendingMap.set(s.user_id, (pendingMap.get(s.user_id) || 0) + 1);
       });
 
       const roleMap = new Map<string, string>();
-      (rolesRes.data || []).forEach((r: any) => roleMap.set(r.user_id, r.role));
+      roleRows.forEach((r: any) => roleMap.set(r.user_id, r.role));
       const providerMap = new Map<string, string>();
       (providerRes.data || []).forEach((r: any) => providerMap.set(r.user_id, r.signup_provider));
 
-      return (profiles || []).map(p => {
+      return profiles.map(p => {
         const prog = progressMap.get(p.user_id) || null;
         return {
           ...p,
@@ -298,7 +305,9 @@ const BranchManagerHome = () => {
         ) : (
           pageItems.map(m => {
             const isApproved = (m as any).is_approved;
-            const memEnd = (m as any).membership_end as string | null;
+            // 지도진(profiles.is_staff)은 회원이 아니라 "코치님·지점장님" 으로, 이용권은 무제한으로 보인다.
+            const staff = isStaffProfile(m);
+            const memEnd = staff ? null : ((m as any).membership_end as string | null);
             const memDdays = memEnd ? Math.ceil((new Date(memEnd + "T23:59:59").getTime() - Date.now()) / 86400000) : null;
             return (
             <div
@@ -322,7 +331,9 @@ const BranchManagerHome = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-bold text-foreground truncate">{m.nickname || m.name}</span>
-                      {(m as any).memberRole === "branch_manager" || (m as any).memberRole === "coach" ? (
+                      {staff ? (
+                        <span className="shrink-0 rounded-full bg-reward/20 px-1.5 py-0.5 text-[9px] font-bold text-reward">{staffTitleLabel(m)}</span>
+                      ) : (m as any).memberRole === "branch_manager" || (m as any).memberRole === "coach" ? (
                         <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold text-primary">관장님</span>
                       ) : null}
                       {!isApproved && (
@@ -356,6 +367,12 @@ const BranchManagerHome = () => {
                         <>
                           <span>·</span>
                           <span>{m.phone_number.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")}</span>
+                        </>
+                      )}
+                      {staff && (
+                        <>
+                          <span>·</span>
+                          <span className="font-medium text-reward">무제한</span>
                         </>
                       )}
                       {memEnd && (

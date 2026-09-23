@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { fetchAllRows, inChunks } from "@/lib/supabasePaging";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { TrendingUp, Users, Trophy, Zap } from "lucide-react";
 
@@ -24,24 +25,29 @@ const BranchCompareReport = () => {
       const results: BranchStat[] = [];
 
       for (const branch of branches) {
-        const [profilesRes, progressRes, weeklyXpRes, pendingRes] = await Promise.all([
-          supabase.from("profiles").select("user_id", { count: "exact" }).eq("branch_name", branch.name).eq("is_approved", true),
-          supabase.from("member_progress").select("user_id, current_rank, current_level, streak_days")
-            .in("user_id", (await supabase.from("profiles").select("user_id").eq("branch_name", branch.name)).data?.map(p => p.user_id) || []),
-          supabase.from("xp_logs").select("amount")
-            .gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString())
-            .in("user_id", (await supabase.from("profiles").select("user_id").eq("branch_name", branch.name)).data?.map(p => p.user_id) || []),
-          supabase.from("mission_submissions").select("id", { count: "exact", head: true })
-            .eq("status", "pending")
-            .in("user_id", (await supabase.from("profiles").select("user_id").eq("branch_name", branch.name)).data?.map(p => p.user_id) || []),
+        // 지점 회원 id 를 1,000행씩 끝까지 읽고(칠금점 1,996명), 조인은 150명씩 나눠 부른다 —
+        // 한 번에 받으면 1,000명에서 잘리고, .in() 에 수천 개를 넣으면 URL 길이 한도에 걸린다.
+        const branchIds = (await fetchAllRows((from, to) =>
+          supabase.from("profiles").select("user_id").eq("branch_name", branch.name)
+            .order("user_id", { ascending: true }).range(from, to),
+        )).map(p => p.user_id);
+        const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+
+        const [profilesRes, progData, weeklyXpRows, pendingRows] = await Promise.all([
+          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("branch_name", branch.name).eq("is_approved", true),
+          inChunks(branchIds, ids =>
+            supabase.from("member_progress").select("user_id, current_rank, current_level, streak_days").in("user_id", ids)),
+          inChunks(branchIds, ids =>
+            supabase.from("xp_logs").select("amount").gte("created_at", weekAgo).in("user_id", ids)),
+          inChunks(branchIds, ids =>
+            supabase.from("mission_submissions").select("id").eq("status", "pending").in("user_id", ids)),
         ]);
 
         const RANK_ORDER: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
-        const progData = progressRes.data || [];
         const globalLevels = progData.map(p => (RANK_ORDER[p.current_rank] || 0) * 10 + p.current_level);
         const avgLevel = globalLevels.length ? Math.round(globalLevels.reduce((a, b) => a + b, 0) / globalLevels.length * 10) / 10 : 0;
         const activeMembers = progData.filter(p => p.streak_days > 0).length;
-        const weeklyXp = (weeklyXpRes.data || []).reduce((s, x) => s + x.amount, 0);
+        const weeklyXp = weeklyXpRows.reduce((s, x) => s + x.amount, 0);
 
         results.push({
           branch_name: branch.name,
@@ -49,7 +55,7 @@ const BranchCompareReport = () => {
           active_members: activeMembers,
           weekly_xp: weeklyXp,
           avg_level: avgLevel,
-          pending_count: pendingRes.count || 0,
+          pending_count: pendingRows.length,
         });
       }
 

@@ -9,6 +9,7 @@ import TransferApprovalCenter from "@/components/TransferApprovalCenter";
 import BroadcastNotification from "@/components/BroadcastNotification";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
 import { formatRankShort } from "@/lib/rankLabels";
+import { fetchAllRows, inChunks } from "@/lib/supabasePaging";
 import { toast } from "sonner";
 
 type AdminTab = "overview" | "branches" | "transfers" | "broadcast" | "at_risk" | "settings";
@@ -28,18 +29,19 @@ const SuperAdminDashboard = () => {
     queryKey: ["global-admin-stats"],
     enabled: isAuthorized,
     queryFn: async () => {
-      const [membersRes, pendingMissionsRes, pendingQuestsRes, transferRes, branchesRes] = await Promise.all([
-        supabase.from("profiles").select("user_id, is_approved", { count: "exact" }),
+      // 총원은 행을 받아 세지 않고 count 헤더로 — 행으로 세면 PostgREST 1,000행 상한에 걸려
+      // 회원이 3,000명이어도 "1000" 으로 보인다 (2026-09-23 대표님 제보).
+      const [membersRes, unapprovedRes, pendingMissionsRes, pendingQuestsRes, transferRes, branchesRes] = await Promise.all([
+        supabase.from("profiles").select("user_id", { count: "exact", head: true }),
+        supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false),
         supabase.from("mission_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("quest_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("branch_transfer_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("branches").select("id", { count: "exact", head: true }),
       ]);
-      const profiles = membersRes.data || [];
-      const unapproved = profiles.filter(p => !p.is_approved).length;
       return {
-        totalMembers: profiles.length,
-        unapproved,
+        totalMembers: membersRes.count || 0,
+        unapproved: unapprovedRes.count || 0,
         pendingSubmissions: (pendingMissionsRes.count || 0) + (pendingQuestsRes.count || 0),
         pendingTransfers: transferRes.count || 0,
         totalBranches: branchesRes.count || 0,
@@ -50,12 +52,17 @@ const SuperAdminDashboard = () => {
   // CSV export
   const handleExportMembers = async () => {
     try {
-      const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
-      if (!profiles?.length) { toast.info("내보낼 데이터가 없습니다"); return; }
+      // 1,000행씩 끝까지 — 한 번에 받으면 1,000명에서 잘린 CSV 가 나간다.
+      const profiles = await fetchAllRows((from, to) =>
+        supabase.from("profiles").select("*")
+          .order("created_at", { ascending: false }).order("user_id", { ascending: true })
+          .range(from, to),
+      );
+      if (!profiles.length) { toast.info("내보낼 데이터가 없습니다"); return; }
 
       const userIds = profiles.map(p => p.user_id);
-      const { data: progress } = await supabase.from("member_progress").select("*").in("user_id", userIds);
-      const progMap = new Map((progress || []).map(p => [p.user_id, p]));
+      const progress = await inChunks(userIds, ids => supabase.from("member_progress").select("*").in("user_id", ids));
+      const progMap = new Map(progress.map(p => [p.user_id, p]));
 
       const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
       const header = "이름,닉네임,지점,리그,레벨,전체레벨,XP,연속일,보스클리어,가입승인,가입일,전화번호\n";

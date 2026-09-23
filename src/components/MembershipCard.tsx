@@ -1,7 +1,10 @@
 // 153 디지털 수강권 — 프리미엄 멤버십 카드 (마이페이지·전체메뉴 수강권 공용).
 // 회원: 등록일·만료일·D-day / 마스터·관장·코치: 무제한(골드). 수강권 정보 없으면 렌더 안 함.
+// 지도진 판정은 역할(user_roles)뿐 아니라 profiles.is_staff 도 본다 — 153OS 지도진 명단으로
+// 표시된 코치님은 역할이 member 여도 무제한 (2026-09-23).
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
+import { isStaffProfile } from "@/lib/staffDisplay";
 
 const fmt = (d: string) => new Date(d).toLocaleDateString("ko-KR");
 
@@ -12,7 +15,7 @@ const MembershipCard = () => {
   const memEnd = (profile as { membership_end?: string }).membership_end ?? null;
   const regDate = (profile as { gym_reg_date?: string }).gym_reg_date ?? null;
   const payment = (profile as { payment_total?: number }).payment_total ?? null;
-  const isStaff = isManagerRole(role);
+  const isStaff = isManagerRole(role) || isStaffProfile(profile);
   if (!isStaff && !memEnd) return null;
 
   const ddays = memEnd ? Math.ceil((new Date(memEnd + "T23:59:59").getTime() - Date.now()) / 86400000) : null;
