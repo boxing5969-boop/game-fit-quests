@@ -15,7 +15,10 @@ const json = (body: unknown, status = 200) =>
 const onlyDigits = (s: unknown) => String(s ?? "").replace(/[^0-9]/g, "");
 
 // 소셜(구글/카카오) 회원이 전화번호로 기존 일괄등록 계정을 연동.
-// 일괄등록 계정(A)의 지점·수강권 정보를 소셜 계정(B)으로 복사하고, A(placeholder)는 삭제해 전화번호 해제 후 B에 부여.
+// 2026-09-28: 예전에는 일괄등록 계정(A)의 지점·수강권만 복사하고 A 를 바로 삭제해서
+//   레벨·XP·배지가 cascade 로 사라지고, 출석 기록은 고아가 되어 라이브보드에 같은 회원이
+//   두 명(Lv.10 / Lv.1)으로 떴다. 이제는 merge_linked_account(DB 함수, 한 트랜잭션)가
+//   A 의 모든 기록(출석·레벨·XP·젬·배지·알림…)과 전화번호를 소셜 계정(B)으로 옮긴 뒤에만 A 를 지운다.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -41,7 +44,7 @@ Deno.serve(async (req) => {
     // 기존 일괄등록 계정(A) 조회
     const { data: a } = await admin
       .from("profiles")
-      .select("user_id, name, branch_name, gym_reg_date, membership_end, birth_date, is_approved, must_change_credentials")
+      .select("user_id, branch_name, must_change_credentials")
       .eq("phone_number", phone)
       .maybeSingle();
 
@@ -58,36 +61,38 @@ Deno.serve(async (req) => {
       return json({ error: "이미 사용 중인 계정으로 등록된 번호입니다. 관장님께 문의해주세요." }, 400);
     }
 
-    // 1) A 의 지점·수강권 정보를 B 프로필로 복사 (전화번호는 A 삭제 후 부여)
-    const { error: copyErr } = await admin
+    // 연동 창은 번호가 없는 소셜 가입자에게만 뜬다 — 이미 다른 번호가 있는 계정은 연동 대상이 아니다.
+    const { data: me } = await admin
       .from("profiles")
-      .update({
-        branch_name: a.branch_name,
-        gym_reg_date: a.gym_reg_date,
-        membership_end: a.membership_end,
-        birth_date: a.birth_date,
-        is_approved: a.is_approved ?? true,
-      })
-      .eq("user_id", user.id);
-    if (copyErr) return json({ error: "연동 중 오류(복사): " + copyErr.message }, 400);
+      .select("phone_number")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!me) return json({ error: "프로필을 찾을 수 없습니다. 다시 로그인해 주세요." }, 400);
+    if (me.phone_number && onlyDigits(me.phone_number) !== phone) {
+      return json({ error: "이미 다른 전화번호가 등록된 계정입니다. 관장님께 문의해주세요." }, 400);
+    }
 
-    // 2) A 의 전화번호를 먼저 해제 (UNIQUE 충돌 방지)
-    const { error: relErr } = await admin
-      .from("profiles")
-      .update({ phone_number: null })
-      .eq("user_id", a.user_id);
-    if (relErr) return json({ error: "연동 준비 중 오류: " + relErr.message }, 400);
+    // 1) A → B 기록 병합 + 전화번호 이전 (DB 한 트랜잭션 — 실패하면 아무것도 바뀌지 않는다)
+    const { data: merged, error: mErr } = await admin.rpc("merge_linked_account", {
+      p_from: a.user_id,
+      p_to: user.id,
+      p_phone: phone,
+    });
+    if (mErr) {
+      console.error("merge_linked_account failed:", mErr.message);
+      return json({ error: "기존 기록을 옮기는 중 오류가 발생했습니다. 잠시 후 다시 시도하거나 관장님께 문의해주세요." }, 400);
+    }
 
-    // 3) 전화번호를 B 에 먼저 부여 (삭제 전에 확정 → 부분 실패 시에도 복구 가능)
-    const { error: phoneErr } = await admin
-      .from("profiles")
-      .update({ phone_number: phone })
-      .eq("user_id", user.id);
-    if (phoneErr) return json({ error: "전화번호 연결 중 오류: " + phoneErr.message }, 400);
-
-    // 4) A(placeholder 계정) 삭제 → 관련 행 cascade
+    // 2) 기록을 모두 옮긴 빈 A 계정 정리 (실패해도 연동은 완료 — 이력에 남긴다)
+    const eventId = (merged as { event_id?: number } | null)?.event_id ?? null;
     const { error: delErr } = await admin.auth.admin.deleteUser(a.user_id);
-    if (delErr) return json({ error: "기존 계정 정리 중 오류: " + delErr.message }, 400);
+    if (delErr) console.error("deleteUser(A) failed after merge:", delErr.message);
+    if (eventId) {
+      await admin
+        .from("account_link_events")
+        .update(delErr ? { note: "A 삭제 실패: " + delErr.message } : { from_deleted_at: new Date().toISOString() })
+        .eq("id", eventId);
+    }
 
     return json({ matched: true, ok: true, branch: a.branch_name });
   } catch (e) {

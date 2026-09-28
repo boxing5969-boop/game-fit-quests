@@ -2,6 +2,7 @@
 // 대상: role=member 이고 프로필에 전화번호가 없는 회원(소셜 가입자). 일괄등록 회원은 전화번호가 있어 제외.
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,7 +16,8 @@ const formatPhone = (val: string) => {
 };
 
 const LinkAccountPrompt = () => {
-  const { user, profile, role, refreshProfile } = useAuth();
+  const { user, profile, role, refreshProfile, refreshProgress } = useAuth();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const [dismissed, setDismissed] = useState(false);
@@ -47,7 +49,10 @@ const LinkAccountPrompt = () => {
         return;
       }
       await refreshProfile();
-      toast.success("기존 등록 정보가 연동되었습니다 🥊");
+      // 기존 계정의 레벨·XP·젬·출석 기록이 이 계정으로 합쳐졌다 — 화면에 남은 예전 값(Lv.1 등)을 모두 새로 읽는다.
+      await refreshProgress();
+      void queryClient.invalidateQueries();
+      toast.success("기존 레벨·출석 기록까지 연동되었습니다 🥊");
       setDismissed(true);
     } catch {
       setError("연동 중 오류가 발생했습니다. 다시 시도해주세요.");
