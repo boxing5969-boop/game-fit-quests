@@ -134,13 +134,23 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
       const ids = staff.map((s) => s.user_id);
       const today = new Map<string, string>();
       if (ids.length) {
-        const { data: att } = await supabase
-          .from("attendance_logs").select("user_id, checked_in_at, is_duplicate")
-          .in("user_id", ids).gte("checked_in_at", kstTodayStartIso()).order("checked_in_at", { ascending: true });
-        (att || []).forEach((a) => {
-          if (a.is_duplicate === true) return;
-          if (!today.has(a.user_id)) today.set(a.user_id, a.checked_in_at);
-        });
+        // 오늘 출근 — 브로제이 출근 도장은 출근부(staff_duty_logs)에만 적힌다(2026-09-28, 회원 출석과 분리).
+        // QR 로 찍은 날은 출석 기록에 남으므로 둘 중 이른 시각을 쓴다.
+        const since = kstTodayStartIso();
+        const [{ data: duty }, { data: att }] = await Promise.all([
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (supabase as any).from("staff_duty_logs").select("user_id, checked_in_at")
+            .in("user_id", ids).gte("checked_in_at", since),
+          supabase.from("attendance_logs").select("user_id, checked_in_at, is_duplicate")
+            .in("user_id", ids).gte("checked_in_at", since),
+        ]);
+        const note = (uid: string | null, at: string) => {
+          if (!uid || !at) return;
+          const prev = today.get(uid);
+          if (!prev || new Date(at).getTime() < new Date(prev).getTime()) today.set(uid, at);
+        };
+        ((duty || []) as { user_id: string | null; checked_in_at: string }[]).forEach((d) => note(d.user_id, d.checked_in_at));
+        (att || []).forEach((a) => { if (a.is_duplicate !== true) note(a.user_id, a.checked_in_at); });
       }
       return { staff, today };
     },

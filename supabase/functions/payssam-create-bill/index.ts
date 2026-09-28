@@ -33,7 +33,12 @@ Deno.serve(async (req) => {
     const PAYSSAM_MERCHANT = Deno.env.get("PAYSSAM_MERCHANT") || "";
     const PAYSSAM_MEMBER = Deno.env.get("PAYSSAM_MEMBER") || ""; // 샌드박스 테스트 Member ID. 비우면 회원 user.id 사용.
     const PAYSSAM_BASE_URL = Deno.env.get("PAYSSAM_BASE_URL") || "https://sandbox.paymint.co.kr/partner";
-    const APP_URL = Deno.env.get("APP_URL") || "https://game-fit-quests.pages.dev";
+    // 도메인 전환(2026-08): 시크릿에 옛 주소가 남아 있어도 새 도메인으로 보낸다.
+    // 대시보드에서 APP_URL 을 따로 바꾸지 않아도 되게 하기 위한 것.
+    const APP_URL_RAW = Deno.env.get("APP_URL") || "";
+    const APP_URL = (!APP_URL_RAW || APP_URL_RAW.includes("game-fit-quests.pages.dev"))
+      ? "https://myboxer153.com"
+      : APP_URL_RAW;
     const authHeader = req.headers.get("Authorization") || "";
 
     const caller = createClient(SUPABASE_URL, ANON, {
@@ -95,8 +100,8 @@ Deno.serve(async (req) => {
       .single();
     if (oErr || !order) return json({ error: "주문 생성에 실패했습니다." }, 500);
 
-    // 앱 가입 신청 회원 자동 승인 (결제 진행 = 가입 확정). 기존 승인 회원은 무변화.
-    await admin.from("profiles").update({ is_approved: true }).eq("user_id", user.id);
+    // 가입 승인은 여기서 하지 않는다(2026-09-28). 예전엔 청구서를 만들기만 해도(결제 전) 승인돼
+    // 결제창을 닫아도 지점 승인 없이 앱을 쓸 수 있었다. 승인은 결제 완료 콜백(payssam-callback)이 한다.
 
     // 결제선생 청구서 생성·발송 (sendType=URL → shortUrl 응답)
     const res = await fetch(`${PAYSSAM_BASE_URL}/bill`, {
@@ -122,12 +127,28 @@ Deno.serve(async (req) => {
       }),
     });
     const out = await res.json().catch(() => ({}));
+    // 결제선생 응답에는 우리 운영 API 키가 그대로 들어 있다.
+    // payment_orders 는 RLS 상 회원이 자기 주문을 읽을 수 있으므로(own orders select),
+    // 그대로 저장하면 회원이 결제 API 키를 조회할 수 있게 된다 → 저장 전에 제거.
+    const scrub = (v: unknown): unknown => {
+      if (Array.isArray(v)) return v.map(scrub);
+      if (v && typeof v === "object") {
+        const o: Record<string, unknown> = {};
+        for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+          if (k === "apiKey" || k === "apikey" || k === "api_key") continue;
+          o[k] = scrub(val);
+        }
+        return o;
+      }
+      return v;
+    };
+    const safeOut = scrub(out);
     const shortUrl = out?.data?.shortUrl || "";
     if (!res.ok || !shortUrl) {
-      await admin.from("payment_orders").update({ status: "failed", raw: out }).eq("id", order.id);
+      await admin.from("payment_orders").update({ status: "failed", raw: safeOut }).eq("id", order.id);
       return json({ error: "결제 요청 실패: " + (out?.msg || out?.message || res.status) }, 502);
     }
-    await admin.from("payment_orders").update({ status: "sent", short_url: shortUrl, raw: out }).eq("id", order.id);
+    await admin.from("payment_orders").update({ status: "sent", short_url: shortUrl, raw: safeOut }).eq("id", order.id);
     return json({ ok: true, shortUrl, billId });
   } catch (e) {
     console.error("payssam-create-bill error:", e);

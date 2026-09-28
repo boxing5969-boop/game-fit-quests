@@ -4,7 +4,8 @@ import { RANK_LABELS, RANK_ICONS, formatRank } from "@/lib/rankLabels";
 interface RankBadgeProps {
   rank: Enums<"rank_name">;
   level: number;
-  size?: "sm" | "lg";
+  /** inline = 이름 앞에 붙이는 아주 작은 표식 (인스타 인증 배지 느낌) */
+  size?: "inline" | "sm" | "lg";
   isMaster?: boolean;
 }
 
@@ -17,6 +18,23 @@ const rankColors: Record<string, string> = {
 
 const RankBadge = ({ rank, level, size = "sm", isMaster }: RankBadgeProps) => {
   const isLg = size === "lg";
+
+  // 이름 앞 인라인 표식 — 글줄을 밀지 않게 아주 작게, 아이콘만.
+  // 자세한 내용은 title(길게 눌러 보기)로만 노출해 화면을 어지럽히지 않는다.
+  if (size === "inline") {
+    const title = isMaster ? "MASTER 40" : formatRank(rank, level);
+    return (
+      <span
+        title={title}
+        aria-label={title}
+        className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border align-middle text-[9px] leading-none ${
+          isMaster ? "border-reward bg-reward/20" : rankColors[rank]
+        }`}
+      >
+        {isMaster ? "👑" : RANK_ICONS[rank]}
+      </span>
+    );
+  }
 
   if (isMaster) {
     return (

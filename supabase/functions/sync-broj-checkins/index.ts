@@ -1,12 +1,17 @@
 // 브로제이 출입 → 마이복서153 라이브보드 자동 표시.
 //
-// 흐름: pg_cron(5분) → 이 함수 → 153OS(CRM) attendance_logs 조회 → 앱 attendance_logs 기록
+// 흐름: pg_cron(1분) → 이 함수 → 153OS(CRM) attendance_logs 조회 → 앱 attendance_logs 기록
 //
 // 원칙 (절대 어기지 말 것):
-//   - XP 를 지급하지 않는다. xp_granted=0, member_progress·xp_logs 를 건드리지 않는다.
-//     XP 는 앱 QR 체크인(qr-checkin Edge Function)에서만 지급된다.
+//   - 이 함수는 XP 를 직접 주지 않는다(xp_granted=0 으로 넣는다). 기본 출석 XP 는
+//     DB 트리거(attendance_base_xp)가 회원 출석 행에 준다.
 //   - 앱 계정을 새로 만들지 않는다. 전화번호로 못 찾으면 건너뛴다(unmatched 로 집계).
 //   - source_ref 유니크(broj:<attendance_id>)로 재실행해도 중복되지 않는다.
+//   - 회원 출석은 "문이 열린 회원 입장"(ENTRY·SUCCESS)만 넣는다 (2026-09-28).
+//     브로제이는 이용권 기간 만료·월간 입장 횟수 소진으로 문이 안 열린 입장도 FAILURE 로 남긴다.
+//     예전엔 이것까지 출석으로 넣어서, 문 앞에서 돌아간 회원이 출석·XP·자동 승급·순위에 잡혔다.
+//   - 직원 출근(GO_TO_WORK)은 회원 출석이 아니다 → staff_duty_logs(출근부)에만 적는다.
+//   - 지도진 표시(is_staff)는 여기서 바꾸지 않는다 — 153OS 직원 명단 동기화(sync-staff-to-app)만 정한다.
 //
 // 백필 (2026-09-17 추가):
 //   기본 동작은 "오늘부터 days 일"이다. 과거 구간을 채우려면 from/to 를 직접 준다.
@@ -85,13 +90,14 @@ Deno.serve(async (req) => {
     type OsRow = {
       broj_attendance_id: string; phone: string | null; member_name: string | null;
       attended_at: string; attend_date: string; user_type: string | null;
+      attendance_type: string | null; attendance_status: string | null;
       branches: { name: string } | { name: string }[] | null;
     };
     const rows: OsRow[] = [];
     for (let off = 0; off < 40000; off += 1000) {
       const { data: page, error: osErr } = await os
         .from("attendance_logs")
-        .select("broj_attendance_id, phone, member_name, attended_at, attend_date, user_type, branches!inner(name)")
+        .select("broj_attendance_id, phone, member_name, attended_at, attend_date, user_type, attendance_type, attendance_status, branches!inner(name)")
         .gte("attend_date", from).lte("attend_date", to)
         .order("attended_at", { ascending: true })
         .range(off, off + 999);
@@ -114,19 +120,23 @@ Deno.serve(async (req) => {
       return json({ ok: true, from, to, scanned: 0, inserted: 0, skipped: 0, unmatched: 0, skipAdvance });
     }
 
+    // 2-2) 회원 출석으로 인정하는 행 — 문이 열린 회원 입장만.
+    //   FAILURE(이용권 기간 만료·월간 입장 횟수 소진 등 문 거절)와 직원 출근(GO_TO_WORK)은 뺀다.
+    //   user_type 이 비어 있는 옛 행(2026-06 이전)은 회원 입장이다.
+    //   직원 행은 아래 4-2 에서 출근부(staff_duty_logs)로만 간다.
+    const memberRows = rows.filter((r) =>
+      r.user_type !== "직원" && r.attendance_type === "ENTRY" && r.attendance_status === "SUCCESS");
+    const rejected = rows.filter((r) => r.attendance_status === "FAILURE").length;
+
     // 3) 이미 기록된 건 제외 (source_ref 유니크)
-    const refs = rows.map((r) => `broj:${r.broj_attendance_id}`);
+    const refs = memberRows.map((r) => `broj:${r.broj_attendance_id}`);
     const existing = new Set<string>();
     for (let i = 0; i < refs.length; i += 500) {
       const { data } = await app
         .from("attendance_logs").select("source_ref").in("source_ref", refs.slice(i, i + 500));
       for (const e of (data || []) as { source_ref: string }[]) existing.add(e.source_ref);
     }
-    const todo = rows.filter((r) => !existing.has(`broj:${r.broj_attendance_id}`));
-    if (todo.length === 0) {
-      await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, skipped: rows.length });
-      return json({ ok: true, from, to, scanned: rows.length, inserted: 0, skipped: rows.length, unmatched: 0, skipAdvance });
-    }
+    const todo = memberRows.filter((r) => !existing.has(`broj:${r.broj_attendance_id}`));
 
     // 4) 전화번호 → 앱 회원 매칭
     const phones = [...new Set(todo.map((r) => onlyDigits(r.phone)).filter((p) => p.length >= 10))];
@@ -149,8 +159,8 @@ Deno.serve(async (req) => {
     //   퇴근 기록은 브로제이에 없다(GO_TO_WORK 만 존재) → "언제까지 근무중으로
     //   볼지" 판정은 public_staff_on_duty 뷰가 한다. 여기서는 사실만 적는다.
     //
-    //   todo 가 아니라 rows 전체를 쓴다 — 이미 출석이 기록된 코치도 근무 기록은
-    //   남아야 하고, source_ref 유니크라 재실행해도 중복되지 않는다.
+    //   회원 출석(todo)과 무관하게 rows 전체의 직원 행을 쓴다 — 출근부는
+    //   source_ref 유니크라 재실행해도 중복되지 않는다.
     let staffIds = new Set<string>();
     try {
       const staffRows = rows.filter((r) => r.user_type === "직원");
@@ -190,20 +200,23 @@ Deno.serve(async (req) => {
             .upsert(dutyRows.slice(i, i + 300), { onConflict: "source_ref", ignoreDuplicates: true });
         }
 
-        // 앱 계정이 있는 직원은 is_staff 를 켠다 — 회원 목록에서 빼는 근거.
-        const staffUserIds = [...new Set([...staffProf.values()])];
-        if (staffUserIds.length > 0) {
-          await app.from("profiles").update({ is_staff: true })
-            .in("user_id", staffUserIds).eq("is_staff", false);
-        }
-        staffIds = new Set(staffUserIds);
+        // 지도진 표시(is_staff)는 153OS 직원 명단 동기화(sync-staff-to-app)만 정한다 (2026-09-28).
+        // 예전엔 여기서도 켰는데, 그러면 관리자가 해제해도 1분 안에 되살아나고
+        // 직함·출처 없이 켜져 명단 동기화로도 지워지지 않았다.
+        // 브로제이 직원 번호는 자동 승급 제외 판정에만 쓴다.
+        staffIds = new Set([...staffProf.values()]);
       }
     } catch (_e) { /* 코치 표시는 부가 기능 — 출석 동기화를 막지 않는다 */ }
+
+    if (todo.length === 0) {
+      await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, skipped: rows.length });
+      return json({ ok: true, from, to, scanned: rows.length, inserted: 0, skipped: rows.length, unmatched: 0, rejected, skipAdvance });
+    }
 
     const userIds = [...new Set([...profMap.values()].map((p) => p.user_id))];
     if (userIds.length === 0) {
       await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, skipped: rows.length - todo.length, unmatched: todo.length });
-      return json({ ok: true, from, to, scanned: rows.length, inserted: 0, skipped: rows.length - todo.length, unmatched: todo.length, skipAdvance });
+      return json({ ok: true, from, to, scanned: rows.length, inserted: 0, skipped: rows.length - todo.length, unmatched: todo.length, rejected, skipAdvance });
     }
 
     // 5) 리그·레벨 스냅샷 + 지점별 표시명 모드
@@ -260,7 +273,7 @@ Deno.serve(async (req) => {
         branch_name: branch,
         method: "broj",
         checked_in_at: r.attended_at,
-        xp_granted: 0,                 // ⚠️ XP 는 QR 체크인에서만 — 여기서 절대 주지 않는다
+        xp_granted: 0,                 // 여기서는 0 — 기본 출석 XP 는 DB 트리거(attendance_base_xp)가 준다
         is_duplicate: dup,
         display_name_snapshot: displayName(modeMap.get(branch) ?? "nickname", prof.nickname, prof.name),
         league_snapshot: prog?.current_rank ?? "white",
@@ -285,11 +298,10 @@ Deno.serve(async (req) => {
     }
 
     // 9) 새 출석이 기록된 회원마다 자동 승급 검사.
-    //    1~9레벨은 출석 3회 자동 승급, 10레벨은 코치 승인함으로 자동 신청 (DB 함수가 판정).
+    //    1~9레벨은 출석 요건 자동 승급, 10레벨은 승인함으로 자동 신청 (DB 함수가 판정).
     //    개별 실패는 삼킨다 — 다음 출석 동기화 때 같은 검사가 다시 돈다.
     //    코치·지점장은 제외한다 — 출근 도장이 회원 레벨 승급으로 이어지면 안 된다.
     //    skipAdvance=true(백필)면 건너뛴다 — 과거 출석 적재와 레벨 이동은 분리한다.
-    //    (한꺼번에 하면 수천 명 레벨이 통제 없이 움직인다).
     let advanced = 0;
     if (!skipAdvance) {
       const advanceTargets = [...new Set(
@@ -305,7 +317,7 @@ Deno.serve(async (req) => {
 
     const skipped = rows.length - todo.length;
     await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, inserted, skipped, unmatched });
-    return json({ ok: true, from, to, scanned: rows.length, inserted, skipped, unmatched, skipAdvance, advanced });
+    return json({ ok: true, from, to, scanned: rows.length, inserted, skipped, unmatched, rejected, skipAdvance, advanced });
   } catch (e) {
     await app.from("broj_checkin_runs").insert({
       ok: false, error: (e instanceof Error ? e.message : String(e)).slice(0, 500),

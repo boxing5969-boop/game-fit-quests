@@ -1,7 +1,8 @@
-// 결제선생(Payssam) 결제 승인 콜백 수신 — 공개 엔드포인트.
+// 결제선생(Payssam) 결제 승인·취소 콜백 수신 — 공개 엔드포인트.
 // 결제선생이 결제 승인/취소 결과를 이 URL 로 POST 한다. (청구서 생성 시 callbackUrl 로 등록)
 // 승인(apprState=F) 이면 주문을 paid 처리하고 수강권 만료일을 duration_days 만큼 연장,
 // 회원 누적 결제금액(payment_total)을 가산한다.
+// 취소(apprState=C) 이면 그 반대로 전부 되돌린다.
 // ⚠️ 이 함수는 결제선생 서버가 호출하므로 JWT 없이 접근 가능해야 한다 → Supabase 에서 verify_jwt=false 설정 필요.
 //
 // 인증 (2026-08-04 수정):
@@ -10,12 +11,20 @@
 //   한 번도 작동한 적이 없었다 → 청구서번호만 알면 누구나 결제완료를 위조할 수 있었다.
 //   결제선생이 공개한 발신 서버 IP 로 발신지를 검증한다(현재 유일한 실효 인증수단).
 //   apiKey 가 오는 경우엔 기존대로 함께 검증한다.
+//   ※ 2026-09-18 실결제 검증 결과, 콜백에는 apiKey 가 실제로 실려 온다(발신 IP 3.39.97.44).
 //
-// 2026-09-18 수정 (2건) — 첫 실결제·취소 검증에서 드러난 문제.
-//   ① API 키 저장 금지: 콜백에는 운영 API 키가 실제로 실려 온다(발신 IP 3.39.97.44 확인).
-//      raw 에 그대로 저장돼 회원이 자기 주문을 통해 조회할 수 있었다. 저장 전에 제거한다.
-//   ② 취소가 아무것도 되돌리지 않던 문제: 수강권 만료일·누적결제액·CRM 이용권·출입권한까지
-//      승인 때 한 일을 역순으로 되돌린다.
+// 2026-09-18 수정 (3건) — 첫 실결제·취소 검증에서 드러난 문제들.
+//   ① API 키 저장 금지: raw 에 결제선생 운영 API 키가 그대로 저장되고 있었다.
+//      payment_orders 는 'own orders select' 정책으로 회원이 자기 주문을 읽으므로
+//      회원이 결제 API 키를 꺼내볼 수 있었다. 저장 전에 제거한다
+//      (청구서 생성 함수에는 이미 있던 방어가 콜백에만 빠져 있었다).
+//   ② 취소가 아무것도 되돌리지 않았다: status 글자만 바꾸고 수강권 만료일·누적결제액은
+//      그대로 두고, CRM 이용권·출입권한도 살아 있었다. 환불받은 회원이 계속 다닐 수 있었다.
+//      이제 승인 때 한 일을 역순으로 전부 되돌린다.
+//   ③ 멱등성: 이미 canceled 인 주문에 취소 콜백이 또 오면 만료일을 두 번 깎지 않는다.
+//
+// 2026-09-28: 앱 가입 승인(is_approved)을 청구서 생성 시점에서 결제 완료(apprState=F) 시점으로 옮겼다.
+//   예전엔 '결제하기'만 눌러도(결제 전) 승인돼, 결제창을 닫아도 지점 승인 없이 앱을 쓸 수 있었다.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 // 결제선생 발신 서버 IP — 2026-08 서버 이전 공지 기준.
@@ -50,9 +59,7 @@ const pick = (o: Record<string, unknown>, ...keys: string[]): string => {
   return "";
 };
 
-/** 결제선생 콜백에는 운영 API 키가 실려 온다. DB 에 남기기 전에 반드시 제거한다.
-    payment_orders 는 'own orders select' 정책으로 회원이 자기 주문을 읽으므로,
-    그대로 저장하면 회원이 결제 API 키를 조회할 수 있다. */
+/** 결제선생 응답·콜백에는 운영 API 키가 실려 온다. DB 에 남기기 전에 반드시 제거한다. */
 const scrub = (v: unknown): unknown => {
   if (Array.isArray(v)) return v.map(scrub);
   if (v && typeof v === "object") {
@@ -80,12 +87,12 @@ Deno.serve(async (req) => {
     const apprState = pick(body, "apprState", "appr_state");
     const apprPrice = pick(body, "apprPrice", "appr_price");
 
-    // 인증 1 — apiKey 가 실려 온 경우엔 반드시 일치해야 한다(평소엔 오지 않음).
+    // 인증 1 — apiKey 가 실려 온 경우엔 반드시 일치해야 한다.
     if (PAYSSAM_API_KEY && apiKey && apiKey !== PAYSSAM_API_KEY) {
       return json({ code: "9999", message: "invalid apiKey" }, 401);
     }
 
-    // 인증 2 — 발신지 IP. 결제선생이 apiKey 를 보내지 않으므로 이것이 실질적인 유일한 인증이다.
+    // 인증 2 — 발신지 IP.
     //   · 정상 호출이 막히면 PAYSSAM_ALLOWED_IPS 에 그 IP 를 추가하면 즉시 풀린다.
     //   · 급하면 PAYSSAM_IP_ENFORCE=false 로 차단을 끌 수 있다(기록은 계속 남는다).
     const allowed = new Set(
@@ -98,7 +105,7 @@ Deno.serve(async (req) => {
     console.log(`[payssam-callback] ip=${srcIp} allowed=${ipOk} enforce=${enforce} billId=${billId} apprState=${apprState}`);
     if (!ipOk) {
       if (enforce) {
-        // 정상 호출이 잘못 막혔을 때 손으로 복구할 수 있도록 payload 를 통째로 남긴다.
+        // 정상 호출이 잘못 막혔을 때 손으로 복구할 수 있도록 payload 를 통째로 남긴다(키는 제외).
         console.error(
           `[payssam-callback] 차단 — 미등록 IP ${srcIp}. 정상 호출이었다면 PAYSSAM_ALLOWED_IPS 에 추가하세요. payload=`,
           JSON.stringify(scrub(body)),
@@ -147,6 +154,8 @@ Deno.serve(async (req) => {
         const base = cur && cur.getTime() > today.getTime() ? cur : today;
         const updates: Record<string, unknown> = {
           payment_total: Number(prof?.payment_total || 0) + Number(order.amount),
+          // 결제가 실제로 끝났을 때 가입을 승인한다. 이미 승인된 회원은 그대로다.
+          is_approved: true,
         };
         if (days > 0) {
           updates.membership_end = new Date(base.getTime() + days * DAY).toISOString().slice(0, 10);
@@ -187,15 +196,17 @@ Deno.serve(async (req) => {
         }
       }
     } else if (apprState === "C") {
-      // ── 취소 ────────────────────────────────────────────────────────────────
-      // 예전에는 주문 status 만 바꿨다. 그래서 환불된 회원의 수강권 만료일도,
-      // CRM 이용권도, 출입권한도 전부 살아 있었다 — 환불받고 한 달 더 다닐 수 있었다.
-      // 승인 때 한 일을 역순으로 되돌린다. 이미 canceled 면 아무것도 하지 않는다
-      // (취소 콜백 중복 수신 시 이중 차감 방지).
+      // ── 취소 ─────────────────────────────────────────────────────────────
+      // 예전에는 여기서 주문 status 만 바꿨다. 그래서 환불된 회원의 수강권 만료일도,
+      // CRM 이용권도, 출입권한도 전부 살아 있었다. 승인 때 한 일을 역순으로 되돌린다.
+      // 이미 canceled 면 아무것도 하지 않는다(취소 콜백 중복 수신 시 이중 차감 방지).
       if (order.status === "canceled") return json(OK);
       const wasPaid = order.status === "paid";
 
-      await admin.from("payment_orders").update({ status: "canceled", raw: safeRaw }).eq("id", order.id);
+      await admin
+        .from("payment_orders")
+        .update({ status: "canceled", raw: safeRaw })
+        .eq("id", order.id);
 
       if (wasPaid) {
         // 1) 앱 프로필 되돌리기 — 연장했던 일수만큼 빼고, 누적결제액에서 차감.
@@ -218,8 +229,7 @@ Deno.serve(async (req) => {
         await admin.from("profiles").update(updates).eq("user_id", order.user_id);
 
         // 2) CRM 이용권·출입권한 해지 — 승인 때 만든 것을 같은 주문ID로 되돌린다.
-        //    실패해도 취소 처리 자체는 막지 않되(비차단), 반드시 로그로 남긴다.
-        //    조용히 넘어가면 환불된 회원이 계속 출입하게 된다.
+        //    실패해도 취소 처리 자체는 막지 않는다(비차단). 실패 시 로그로 남겨 손으로 복구한다.
         try {
           const OS_API_URL = Deno.env.get("OS_API_URL") || "https://153-boxing-os-api.boxing5969.workers.dev";
           const OS_PARTNER_KEY = Deno.env.get("OS_PARTNER_KEY") || "";
@@ -242,15 +252,17 @@ Deno.serve(async (req) => {
             });
             clearTimeout(timer);
             if (!r.ok) {
+              // 워커에 아직 취소 엔드포인트가 없을 수 있다. 그 경우 수동 처리가 필요하다는 것을
+              // 확실히 남긴다 — 조용히 넘어가면 환불된 회원이 계속 출입하게 된다.
               console.error(
-                `[payssam-callback] CRM 취소 반영 실패 (${r.status}) — 이용권·출입권한을 데스크에서 직접 해지해야 합니다.`,
+                `[payssam-callback] ⚠️ CRM 취소 반영 실패 (${r.status}) — 이용권·출입권한을 데스크에서 직접 해지해야 합니다.`,
                 `order_id=${order.id} bill_id=${billId}`,
                 await r.text().catch(() => ""),
               );
             }
           }
         } catch (e) {
-          console.error("[payssam-callback] CRM 취소 반영 오류 — 수동 해지 필요:", `order_id=${order.id}`, e);
+          console.error("[payssam-callback] ⚠️ CRM 취소 반영 오류 — 수동 해지 필요:", `order_id=${order.id}`, e);
         }
       }
     }
