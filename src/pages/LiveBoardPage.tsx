@@ -180,7 +180,9 @@ const LiveBoardPage = () => {
   const [mockMembers, setMockMembers] = useState<MockActiveMember[]>([]);
 
 
-  const [connected, setConnected] = useState(true);
+  // 실시간 구독 상태 — SUBSCRIBED 를 받기 전까지는 '끊김' 으로 보고 10초 폴링으로 메운다.
+  // (예전엔 true 로 시작해서, 구독이 한 번도 안 된 TV 는 초록불인 채 20분 새로고침만 기다렸다)
+  const [connected, setConnected] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   /**
@@ -673,7 +675,53 @@ const LiveBoardPage = () => {
     [getAvatarUrl, isStaffUser],
   );
 
+  /**
+   * 출석 직후 레벨업 확인 (2026-09-28).
+   *
+   * 예전엔 member_progress UPDATE 를 실시간으로 받으려 했는데 (1) member_progress 는 실시간 발행
+   * (supabase_realtime publication)에 없고 (2) TV(anon)는 RLS 로 읽을 수도 없다. 게다가 발행에 없는 테이블을
+   * 같은 채널에 넣으면 Realtime 이 그 채널의 구독을 통째로 등록하지 않아 출석 이벤트까지 한 건도 안 왔다
+   * (운영에서 실측 — 라이브보드에 이름이 늦게/안 뜨고 QR 출석이 안 보이던 원인).
+   * 그래서 출석 행이 들어오면 몇 초 뒤(자동 승급이 끝날 시간) 좁은 RPC 로 그 회원의 리그·레벨만 다시 묻는다.
+   */
+  const levelTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  useEffect(() => () => {
+    levelTimersRef.current.forEach((t) => clearTimeout(t));
+    levelTimersRef.current.clear();
+  }, []);
+  const checkLevelUpSoon = useCallback(
+    (userId: string, snapLevel: number, snapRank: string) => {
+      if (!branchName) return;
+      const RANK_IDX: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
+      const timer = setTimeout(async () => {
+        levelTimersRef.current.delete(timer);
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data } = await (supabase.rpc as any)("get_board_member_levels", {
+            p_branch: branchName, p_user_ids: [userId],
+          });
+          const row = ((data ?? []) as { user_id: string; current_rank: string; current_level: number }[])
+            .find((r) => r.user_id === userId);
+          if (!row) return;
+          const before = RANK_IDX[(snapRank || "white").toLowerCase()] ?? 0;
+          const after = RANK_IDX[(row.current_rank || "white").toLowerCase()] ?? 0;
+          const oldLevel = Number(snapLevel) || 1;
+          if (after > before || (after === before && row.current_level > oldLevel)) {
+            knownLevelsRef.current.set(userId, row.current_level);
+            void triggerLevelUp(userId, oldLevel, row.current_level, row.current_rank || "white");
+          }
+        } catch {
+          /* 레벨업 연출은 부가 기능 — 실패해도 조용히 넘어간다 */
+        }
+      }, 8000);
+      levelTimersRef.current.add(timer);
+    },
+    [branchName, triggerLevelUp],
+  );
+
   // Realtime subscriptions
+  // ⚠️ 이 채널에는 실시간 발행(supabase_realtime)에 들어 있는 테이블만 넣는다 — attendance_logs · activity_sessions.
+  //    발행에 없는 테이블(member_progress 등)을 하나라도 섞으면 Realtime 이 채널 전체의 구독을 등록하지 않는다.
   useEffect(() => {
     if (!branchName) return;
     const channel = supabase
@@ -710,42 +758,35 @@ const LiveBoardPage = () => {
             });
             triggerPopup(event);
             void loadActivitySessions();
+            checkLevelUpSoon(n.user_id, n.level_snapshot, n.league_snapshot);
           })();
         })
       .on("postgres_changes", { event: "*", schema: "public", table: "activity_sessions", filter: `branch_name=eq.${branchName}` },
         () => {
           loadActivitySessions();
         })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "member_progress" },
-        (payload) => {
-          // 운영 DB 모든 지점의 회원 변경이 들어옴 — member_progress 에는 branch
-          // 컬럼이 없어 서버 필터가 불가. knownLevelsRef 는 이 지점의 활동/방문
-          // 회원으로만 시드되므로, 그것으로 우리 지점 회원인지 판별해 처리한다.
-          const n = payload.new as { user_id: string; current_level: number; current_rank: string };
-          const o = payload.old as { current_level?: number };
-          if (!n?.user_id || typeof n.current_level !== "number") return;
-          const knownToBranch = knownLevelsRef.current.has(n.user_id);
-          const oldLevel = typeof o?.current_level === "number"
-            ? o.current_level
-            : knownLevelsRef.current.get(n.user_id);
-          if (oldLevel === undefined) return; // 모르는 회원 (다른 지점) — 무시
-          if (n.current_level > oldLevel) {
-            void triggerLevelUp(n.user_id, oldLevel, n.current_level, n.current_rank || "white");
-          }
-          knownLevelsRef.current.set(n.user_id, n.current_level);
-          // 다른 지점 회원의 변경으로 무거운 loadActivitySessions() 를 호출하지 않음 —
-          // 이 지점에서 활동/방문한 회원의 변경일 때만 세션을 다시 불러온다.
-          if (knownToBranch) void loadActivitySessions();
-        })
       .subscribe((status) => setConnected(status === "SUBSCRIBED"));
     return () => { supabase.removeChannel(channel); };
-  }, [branchName, triggerPopup, loadActivitySessions, getAvatarUrl, triggerLevelUp, loadOnDutyStaff, isStaffUser]);
+  }, [branchName, triggerPopup, loadActivitySessions, getAvatarUrl, loadOnDutyStaff, isStaffUser, checkLevelUpSoon]);
 
-  // Reconnect fallback
+  // Reconnect fallback — 구독이 안 된 동안엔 10초마다 직접 읽는다
   useEffect(() => {
     const i = setInterval(() => { if (!connected) { loadToday(); loadActivitySessions(); } }, 10000);
     return () => clearInterval(i);
   }, [connected, loadToday, loadActivitySessions]);
+
+  // 자가 복구 — 구독이 '됐다' 고 해도 TV 절전·공유기 재시작 등으로 이벤트가 조용히 끊길 수 있다.
+  // 1분마다, 그리고 화면이 다시 보일 때 오늘 출석·활동을 새로 읽어 놓친 회원을 채운다(팝업 없이 목록만).
+  useEffect(() => {
+    const refresh = () => { void loadToday(); void loadActivitySessions(); };
+    const i = setInterval(refresh, 60_000);
+    const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(i);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [loadToday, loadActivitySessions]);
 
   const handleBranchSwitch = (name: string) => {
     window.location.href = `/live-board/${encodeURIComponent(name)}`;

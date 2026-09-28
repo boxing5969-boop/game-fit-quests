@@ -9,6 +9,7 @@ import LoginErrorModal, { classifyLoginError } from "@/components/LoginErrorModa
 import { Fingerprint } from "lucide-react";
 import { canUsePasskey, signInWithPasskey } from "@/lib/passkey";
 import { translateAuthError } from "@/lib/errorMessages";
+import { peekPostLoginPath } from "@/lib/postLoginRedirect";
 import MyBoxerWordmark from "@/components/brand/MyBoxerWordmark";
 import InstallAppButton from "@/components/install/InstallAppButton";
 import {
@@ -240,7 +241,7 @@ const LoginPage = () => {
           setError(translateAuthError(error));
           return;
         }
-        navigate("/home");
+        navigate(peekPostLoginPath() ?? "/home");
       } finally { setIsLoading(false); }
       return;
     }
@@ -528,7 +529,7 @@ const LoginPage = () => {
                   const err = await signInWithPasskey();
                   setPasskeyBusy(false);
                   if (err) { setError(err); return; }
-                  navigate("/home");
+                  navigate(peekPostLoginPath() ?? "/home");
                 }}
                 className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-foreground transition-all hover:bg-primary/15 active:scale-[0.98] disabled:opacity-50"
               >

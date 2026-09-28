@@ -19,6 +19,10 @@
  * variant:
  *   · sidebar  — 오른쪽 패널 맨 위 (기본 화면·2번 화면)
  *   · floating — 1번 화면(운동 중만)엔 오른쪽 패널이 없어서 우하단에 띄운다
+ *
+ * 2026-09-28 "QR 인식이 잘 안 된다" — TV 에서 QR 이 168px(55형 기준 약 10cm, 칸 하나 2mm 남짓)라 1m 밖에서는
+ * 폰 카메라가 칸을 못 가렸다. 오른쪽 패널에서는 QR 을 위로 올려 크게(256px), 1번 화면 떠 있는 카드는 220px 로 키우고,
+ * 둘레에 여백(quiet zone)을 규격대로 둔다. 내용·토큰 규칙은 그대로.
  */
 
 import { useEffect, useState } from "react";
@@ -84,7 +88,9 @@ function readBoardKey(branchName: string): string | null {
 }
 
 const POLL_MS = 30_000;
-const QR_SIZE = 168;
+/** 오른쪽 패널(26rem)에서는 QR 을 위에 크게, 1번 화면 떠 있는 카드는 옆에 글과 함께 */
+const QR_SIZE_SIDEBAR = 256;
+const QR_SIZE_FLOATING = 220;
 
 const LiveBoardQrCard = ({ branchName, variant = "sidebar", className = "" }: Props) => {
   const [url, setUrl] = useState<string | null>(null);
@@ -137,42 +143,56 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar", className = "" }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchName]);
 
-  const body = (
+  const stacked = variant === "sidebar";
+  const qrSize = stacked ? QR_SIZE_SIDEBAR : QR_SIZE_FLOATING;
+  const qr = (
+    // 흰 바탕 + marginSize 2(칸 2개) + 패딩 — 규격 여백(칸 4개) 이상을 흰색으로 확보해야 TV 화면에서도 잘 잡힌다
+    <div className="shrink-0 rounded-xl bg-white p-2">
+      {url ? (
+        <QRCodeSVG value={url} size={qrSize} level="M" marginSize={2} bgColor="#ffffff" fgColor="#000000" />
+      ) : (
+        <div
+          className="flex items-center justify-center rounded-lg bg-gray-200 text-gray-400"
+          style={{ width: qrSize, height: qrSize }}
+        >
+          <QrCode className="h-10 w-10" />
+        </div>
+      )}
+    </div>
+  );
+  const text = (
+    <div className={stacked ? "mt-3 w-full text-center" : "min-w-0 flex-1"}>
+      <p className={`flex items-center gap-1.5 text-base font-black tracking-wide text-primary ${stacked ? "justify-center" : ""}`}>
+        <QrCode className="h-4 w-4" /> 앱에서 QR 출석
+      </p>
+      <p className="mt-1.5 text-sm font-bold leading-snug text-white">{BOARD_QR_NOTICE_MAIN}</p>
+      <p className="mt-1 text-sm font-bold leading-snug text-white/80">{BOARD_QR_NOTICE_SUB}</p>
+      <p className="mt-1.5 text-xs font-bold leading-snug text-white/40">
+        마이복서153 → 홈 → 오늘의 시작 → QR 출석 · 폰 기본 카메라로 찍어도 돼요
+      </p>
+      {failed === "key" && (
+        <p className="mt-1 text-xs font-bold text-destructive/80">이 TV 는 보드 키 등록이 필요해요 — 관리자에게 문의</p>
+      )}
+      {failed === "net" && !url && (
+        <p className="mt-1 text-xs font-bold text-destructive/80">QR 을 불러오지 못했어요 — 잠시 후 다시 시도합니다</p>
+      )}
+    </div>
+  );
+  const body = stacked ? (
+    <div className="flex flex-col items-center">
+      {qr}
+      {text}
+    </div>
+  ) : (
     <div className="flex items-center gap-4">
-      <div className="shrink-0 rounded-xl bg-white p-2.5">
-        {url ? (
-          <QRCodeSVG value={url} size={QR_SIZE} level="M" marginSize={0} />
-        ) : (
-          <div
-            className="flex items-center justify-center rounded-lg bg-gray-200 text-gray-400"
-            style={{ width: QR_SIZE, height: QR_SIZE }}
-          >
-            <QrCode className="h-10 w-10" />
-          </div>
-        )}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 text-sm font-black tracking-wide text-primary">
-          <QrCode className="h-4 w-4" /> 앱에서 QR 출석
-        </p>
-        <p className="mt-2 text-sm font-bold leading-snug text-white">{BOARD_QR_NOTICE_MAIN}</p>
-        <p className="mt-1.5 text-sm font-bold leading-snug text-white/80">{BOARD_QR_NOTICE_SUB}</p>
-        <p className="mt-2 text-xs font-bold leading-snug text-white/40">
-          마이복서153 → 홈 → 오늘의 시작 → QR 출석
-        </p>
-        {failed === "key" && (
-          <p className="mt-1 text-xs font-bold text-destructive/80">이 TV 는 보드 키 등록이 필요해요 — 관리자에게 문의</p>
-        )}
-        {failed === "net" && !url && (
-          <p className="mt-1 text-xs font-bold text-destructive/80">QR 을 불러오지 못했어요 — 잠시 후 다시 시도합니다</p>
-        )}
-      </div>
+      {qr}
+      {text}
     </div>
   );
 
   if (variant === "floating") {
     return (
-      <div className="fixed bottom-5 right-5 z-40 w-[27rem] rounded-2xl border border-primary/30 bg-gray-950/90 p-4 shadow-2xl backdrop-blur">
+      <div className="fixed bottom-5 right-5 z-40 w-[33rem] rounded-2xl border border-primary/30 bg-gray-950/90 p-4 shadow-2xl backdrop-blur">
         {body}
       </div>
     );

@@ -1,5 +1,6 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
+import { peekPostLoginPath, rememberPostLoginPath } from "@/lib/postLoginRedirect";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
@@ -131,7 +132,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (loading) {
     return <RouteLoader />;
   }
-  if (!user) return <Navigate to="/" replace />;
+  if (!user) {
+    // 라이브보드 QR 을 폰 카메라로 찍고 들어온 경우 — 로그인 뒤 그 QR 출석으로 돌아오게 적어 둔다
+    rememberPostLoginPath(window.location.pathname + window.location.search);
+    return <Navigate to="/" replace />;
+  }
   
   // Allow select-branch and waiting-approval pages without checks
   const path = window.location.pathname;
@@ -171,7 +176,11 @@ const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
 
 const RoleBasedRedirect = () => {
   const { role, profile, loading } = useAuth();
+  // 소셜 로그인은 "/" 로 돌아온다 — 로그인 전에 적어 둔 QR 출석 주소가 있으면 그리로 보낸다(도착 화면이 지운다)
+  const nextRef = useRef<string | null | undefined>(undefined);
+  if (!loading && nextRef.current === undefined) nextRef.current = peekPostLoginPath();
   if (loading) return <RouteLoader />;
+  if (nextRef.current) return <Navigate to={nextRef.current} replace />;
   
   // Social login users without branch need to select one
   if (profile && !profile.branch_name) {
