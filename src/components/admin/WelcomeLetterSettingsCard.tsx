@@ -3,10 +3,11 @@
  *
  * 대표님 지시: "웰컴 편지는 개발자에게 보내는 편지 말고 회원님들에게 보내는 편지,
  * 코치님이 회원가입하면 코치님에게 보내는 편지로".
- *   · 회원님께 — 회원이 온보딩·튜토리얼을 마치면 한 번 도착
+ *   · 회원님께 — 회원이 앱에 처음 들어오면(온보딩 뒤) 한 번 도착 — 기존 회원 연동·일괄등록 회원 포함 (2026-09-28)
  *   · 코치님께 — 지도진·코치·관장 계정이 처음 들어오면 한 번 도착
  *   · 관리자 계정에는 자동으로 뜨지 않는다 → 여기 "미리보기" 로 확인한다.
  * {이름} 자리에 회원은 닉네임(없으면 이름), 코치님은 "이름 직함"(예: 홍길동 코치)이 들어간다.
+ * {리그레벨} 자리에는 회원의 지금 리그·레벨(예: 화이트 리그, 레벨 1)이 들어간다. 미리보기는 화이트 L1 로 보여 준다.
  * 저장은 set_app_setting('welcome_letters') — 서버가 권한(전체관리자·관리자)·형식·글자 수를 검사한다.
  * 비워 둔 칸은 기본 문구로 나간다. "기본 편지로" 는 저장본에서 그 대상을 지운다.
  */
@@ -20,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LetterModal } from "@/components/WelcomeLetter";
 import {
-  DEFAULT_LETTERS, LETTER_AUDIENCE_LABEL, LETTER_LIMITS, NAME_TOKEN, WELCOME_LETTERS_KEY,
+  DEFAULT_LETTERS, LEAGUE_TOKEN, LETTER_AUDIENCE_LABEL, LETTER_LIMITS, NAME_TOKEN, WELCOME_LETTERS_KEY,
   buildLetter, fetchWelcomeLetters, resolveLetter, saveWelcomeLetters,
   type LetterAudience, type LetterTemplate, type WelcomeLetters,
 } from "@/lib/welcomeLetters";
@@ -112,8 +113,9 @@ const WelcomeLetterSettingsCard = () => {
         <Mail className="h-4 w-4 text-reward" /> 웰컴 편지
       </h2>
       <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
-        회원은 앱을 처음 시작할 때(온보딩·튜토리얼 뒤), 코치님은 처음 들어올 때 한 번 받는 편지예요.
-        <b className="text-foreground"> {NAME_TOKEN}</b> 자리에 회원은 닉네임, 코치님은 &quot;이름 직함&quot;이 들어갑니다.
+        회원은 앱에 처음 들어올 때(온보딩 뒤 · 기존 회원 연동 포함), 코치님은 처음 들어올 때 한 번 받는 편지예요.
+        <b className="text-foreground"> {NAME_TOKEN}</b> 자리에 회원은 닉네임, 코치님은 &quot;이름 직함&quot;이 들어가고,
+        <b className="text-foreground"> {LEAGUE_TOKEN}</b> 자리에는 회원의 지금 리그·레벨(예: 화이트 리그, 레벨 1)이 들어갑니다.
         관리자 계정에는 자동으로 뜨지 않으니 미리보기로 확인하세요.
       </p>
 

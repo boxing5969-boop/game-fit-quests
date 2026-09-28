@@ -13,14 +13,17 @@
  *   전체관리자·관리자 계정은 자동 편지를 받지 않는다(예전엔 회원 편지가 닉네임 그대로 "…개발자님께" 로 떴다).
  *
  * 노출 규칙 (본 기록은 localStorage — 계정별 키):
- *   · 웰컴: 온보딩+튜토리얼을 마친 회원에게 1회 (오삼 모달과 안 겹침).
+ *   · 웰컴: 앱에 처음 들어온 회원에게 1회 — 온보딩을 마치고, 소셜 가입이면 기존 회원 연동(전화번호)까지 끝난 뒤.
+ *           (2026-09-28 대표님 제보 "기존 회원이 연동해 처음 들어와도 감동 편지가 안 뜬다" —
+ *            예전엔 튜토리얼까지 마쳐야 와서 연동·일괄등록 회원은 사실상 아무도 못 받았다.)
+ *           오삼 환영 모달과 같이 뜨면 편지가 위에 뜨고, 닫으면 오삼 안내가 이어진다.
  *   · 코치: 온보딩·튜토리얼과 무관하게 처음 들어올 때 1회.
  *   · 승급: 처음 마운트 시 현재 리그를 "기준선"으로 silent 저장 →
  *           이후 다음 앱 진입에서 리그가 올라가 있으면 그 리그 편지 1회.
  *           (기존 회원이 현재 리그 편지로 도배되지 않도록 기준선 초기화)
  *   · 마운트 시 1회만 결정 — 세션 중 승급은 LevelUpModal 이 담당,
  *     편지는 다음 진입에서 도착 (두 모달 동시 노출 방지).
- *   · 셋업 라우트(/, /onboarding 등)에서는 노출 안 함.
+ *   · 셋업 라우트(/, /onboarding 등)와 QR 출석 화면에서는 노출 안 함.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -50,7 +53,8 @@ const welcomeKey = (uid: string) => `153_letter_welcome_v2:${uid}`;
 const coachKey = (uid: string) => `153_letter_coach_v1:${uid}`;
 const rankBaselineKey = (uid: string) => `153_letter_rank_baseline_v2:${uid}`;
 
-const SETUP_ROUTES = ["/", "/onboarding", "/select-branch", "/waiting-approval"];
+// QR 출석 화면은 출석이 먼저 — 편지는 홈으로 넘어간 뒤에 뜬다
+const SETUP_ROUTES = ["/", "/onboarding", "/select-branch", "/waiting-approval", "/qr-checkin"];
 function isSetupPath(pathname: string): boolean {
   if (SETUP_ROUTES.includes(pathname)) return true;
   if (pathname.startsWith("/live-board")) return true;
@@ -164,10 +168,13 @@ type LetterProfile = {
   nickname?: string | null;
   name?: string | null;
   staff_title?: string | null;
+  phone_number?: string | null;
   onboarding_done?: boolean | null;
-  tutorial_completed?: boolean | null;
-  tutorial_skipped?: boolean | null;
 };
+
+// 온보딩 완료 기기 표시 — useOnboardingState 와 같은 키(프로필 값이 늦게 오거나 저장이 실패해도 온보딩은 끝난 것)
+const ONBOARDING_LS_KEY = "153_onboarding_done";
+const RANK_KO: Record<RankKey, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 
 /** 편지 화면 — 앱이 자동으로 띄우는 편지와 설정 화면(관리자) 미리보기가 같이 쓴다 */
 export const LetterModal = ({ open, letter, onClose }: { open: boolean; letter: LetterContent | null; onClose: () => void }) => {
@@ -273,60 +280,78 @@ const WelcomeLetter = () => {
     staleTime: 5 * 60_000,
   });
 
-  // 마운트 시 1회만 어떤 편지를 보여줄지 결정 (세션 중 승급은 LevelUpModal 담당)
+  // 어떤 편지를 보여줄지 한 번만 결정 (세션 중 승급은 LevelUpModal 담당).
+  // 값이 막 바뀌는 중일 수 있다 — 기존 회원 연동 직후엔 프로필 → 리그 순서로 다시 읽는다. 그래서 마지막 변화 뒤
+  // 1.2초 기다렸다 판단하고, 그 사이 값이 또 바뀌면 타이머를 새로 건다. 예전 리그로 기준선을 잡으면 다음 접속에
+  // 엉뚱한 승급 편지가 온다(2026-09-28).
   useEffect(() => {
     if (decidedRef.current) return;
     if (!user || !profile) return;
     if (isSetupPath(location.pathname)) return;
     const uid = user.id;
 
-    // 관리자 계정 — 자동 편지 없음 (편지는 설정 화면 미리보기로 확인)
-    if (isAdminRole) {
-      decidedRef.current = true;
-      return;
-    }
+    const decide = () => {
+      if (decidedRef.current) return;
 
-    // 코치님 — 처음 들어오면 코치 편지 1회. 온보딩·튜토리얼과 무관하고 승급 편지도 없다.
-    if (isCoach) {
-      decidedRef.current = true;
-      if (!lsGet(coachKey(uid))) setActiveKey("coach");
-      return;
-    }
-
-    // 튜토리얼·7일 스타터 캠프가 진행/대기 중이면 편지 보류 — 캠프 안내와 겹침 방지.
-    // 캠프는 튜토리얼 5단계 완료 시 자동 시작되므로 끝나기 전엔 안 띄운다.
-    // completed/skipped(종료) 또는 not_started(튜토리얼 건너뛰어 캠프 미진행) 진입에서만 도착.
-    const campStatus = getTutorialCampState().status;
-    if (campStatus === "active" || campStatus === "paused") return;
-
-    const p = profile as unknown as LetterProfile;
-    const rank = ((progress as unknown as { current_rank?: string } | null)?.current_rank ??
-      "white") as RankKey;
-    const rankIdx = Math.max(0, RANK_ORDER.indexOf(rank));
-
-    decidedRef.current = true;
-
-    // 1) 승급 편지 — 기준선과 비교 (계정별 기준선. 옛 기기 단위 기준선이 있으면 이어받는다)
-    const ownBaseline = lsGet(rankBaselineKey(uid));
-    const baseline = ownBaseline ?? lsGet(LEGACY_RANK_BASELINE_KEY);
-    if (baseline === null) {
-      // 최초: 현재 리그를 기준선으로 silent 저장 (도배 방지)
-      lsSet(rankBaselineKey(uid), rank);
-    } else {
-      if (ownBaseline === null) lsSet(rankBaselineKey(uid), baseline);
-      const baseIdx = Math.max(0, RANK_ORDER.indexOf(baseline as RankKey));
-      if (rankIdx > baseIdx && rankIdx >= 1) {
-        setActiveKey(RANK_ORDER[rankIdx] as LetterKey);
-        return; // 승급 편지가 웰컴보다 우선
+      // 관리자 계정 — 자동 편지 없음 (편지는 설정 화면 미리보기로 확인)
+      if (isAdminRole) {
+        decidedRef.current = true;
+        return;
       }
-    }
 
-    // 2) 웰컴 편지 — 온보딩+튜토리얼 마친 회원 1회 (이 기기에서 예전에 이미 본 경우도 다시 안 띄운다)
-    const tutorialDone = !!(p.tutorial_completed || p.tutorial_skipped);
-    if (!lsGet(welcomeKey(uid)) && !lsGet(LEGACY_WELCOME_KEY) && p.onboarding_done && tutorialDone) {
-      setActiveKey("welcome");
-    }
-  }, [user, profile, progress, isAdminRole, isCoach, location.pathname]);
+      // 코치님 — 처음 들어오면 코치 편지 1회. 온보딩·튜토리얼과 무관하고 승급 편지도 없다.
+      if (isCoach) {
+        decidedRef.current = true;
+        if (!lsGet(coachKey(uid))) setActiveKey("coach");
+        return;
+      }
+
+      // 튜토리얼·7일 스타터 캠프가 진행/대기 중이면 편지 보류 — 캠프 안내와 겹침 방지.
+      // 캠프는 튜토리얼 5단계 완료 시 자동 시작되므로 끝나기 전엔 안 띄운다.
+      // completed/skipped(종료) 또는 not_started(튜토리얼 건너뛰어 캠프 미진행) 진입에서만 도착.
+      const campStatus = getTutorialCampState().status;
+      if (campStatus === "active" || campStatus === "paused") return;
+
+      const p = profile as unknown as LetterProfile;
+      // 아래 경우엔 결정을 미룬다(잠그지 않는다) — 조건이 갖춰지면 같은 세션 안에서도 다시 판단한다.
+      //   · 리그 정보가 아직 안 옴: 기본값(화이트)으로 기준선을 잘못 잡으면 다음 접속에 엉뚱한 승급 편지가 온다
+      //   · 온보딩 전: 온보딩을 마치고 홈에 오면 그때 판단(예전엔 여기서 결정이 잠겨 첫 접속에 편지가 안 왔다)
+      //   · 소셜 가입 회원이 기존 회원 연동(전화번호) 전: 연동이 끝나야 이름·리그가 기존 회원 것으로 바뀐다
+      if (!progress) return;
+      const onboarded = !!p.onboarding_done || lsGet(ONBOARDING_LS_KEY) === "true";
+      if (!onboarded) return;
+      if (role === "member" && !(p.phone_number ?? "").trim()) return;
+
+      const rank = ((progress as unknown as { current_rank?: string } | null)?.current_rank ??
+        "white") as RankKey;
+      const rankIdx = Math.max(0, RANK_ORDER.indexOf(rank));
+
+      decidedRef.current = true;
+
+      // 1) 승급 편지 — 기준선과 비교 (계정별 기준선. 옛 기기 단위 기준선이 있으면 이어받는다)
+      const ownBaseline = lsGet(rankBaselineKey(uid));
+      const baseline = ownBaseline ?? lsGet(LEGACY_RANK_BASELINE_KEY);
+      if (baseline === null) {
+        // 최초: 현재 리그를 기준선으로 silent 저장 (도배 방지)
+        lsSet(rankBaselineKey(uid), rank);
+      } else {
+        if (ownBaseline === null) lsSet(rankBaselineKey(uid), baseline);
+        const baseIdx = Math.max(0, RANK_ORDER.indexOf(baseline as RankKey));
+        if (rankIdx > baseIdx && rankIdx >= 1) {
+          setActiveKey(RANK_ORDER[rankIdx] as LetterKey);
+          return; // 승급 편지가 웰컴보다 우선
+        }
+      }
+
+      // 2) 웰컴 편지 — 앱에 처음 들어온 회원 1회 (이 기기에서 예전에 이미 본 경우도 다시 안 띄운다).
+      //    튜토리얼 조건은 뺐다(2026-09-28) — 기존 회원은 튜토리얼을 거의 안 해서 편지가 영영 안 왔다.
+      if (!lsGet(welcomeKey(uid)) && !lsGet(LEGACY_WELCOME_KEY)) {
+        setActiveKey("welcome");
+      }
+    };
+    const t = window.setTimeout(decide, 1200);
+    return () => window.clearTimeout(t);
+  }, [user, profile, progress, role, isAdminRole, isCoach, location.pathname]);
 
   // 결정되면 살짝 지연 후 등장 (스플래시/다른 모달 정리 후). 문구를 읽는 중이면 기다린다(기본 문구 깜빡임 방지).
   const templateLoading = needsTemplate && lettersQ.isLoading;
@@ -351,6 +376,10 @@ const WelcomeLetter = () => {
 
   const p = profile as unknown as LetterProfile;
   const memberName = (p?.nickname || p?.name || "복서").toString().trim() || "복서";
+  // {리그레벨} — 기존 회원은 화이트 L1 이 아닐 수 있다(예: "블루 리그, 레벨 3")
+  const prog = progress as unknown as { current_rank?: string; current_level?: number } | null;
+  const rankKo = RANK_KO[(prog?.current_rank ?? "white") as RankKey] ?? RANK_KO.white;
+  const leagueLevel = `${rankKo} 리그, 레벨 ${Math.max(1, Number(prog?.current_level) || 1)}`;
   // 코치님은 "이름 직함" — 제목이 "…님께" 로 끝나므로 직함에서 '님' 을 뗀다 (홍길동 코치 → 홍길동 코치님께)
   const coachTitle = ((p?.staff_title ?? "").trim() || (role === "branch_manager" ? "관장" : "코치")).replace(/님$/, "");
   const coachBase = ((p?.name ?? "").trim() || (p?.nickname ?? "").trim());
@@ -359,7 +388,7 @@ const WelcomeLetter = () => {
   let letter: LetterContent;
   if (activeKey === "welcome" || activeKey === "coach") {
     const aud: LetterAudience = activeKey === "coach" ? "coach" : "member";
-    letter = buildLetter(aud, resolveLetter(lettersQ.data, aud), aud === "coach" ? coachName : memberName);
+    letter = buildLetter(aud, resolveLetter(lettersQ.data, aud), aud === "coach" ? coachName : memberName, leagueLevel);
   } else {
     const r = RANK_LETTERS[activeKey];
     letter = { eyebrow: r.eyebrow, title: r.title(memberName), body: r.body(memberName), sign: r.sign, cta: r.cta };

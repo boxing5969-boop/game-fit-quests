@@ -15,6 +15,13 @@
  *    react-router 가 push 한 하위 화면 항목도 우리 marker 가 없어서
  *    2단계 깊이에서 뒤로가기 한 번에 "종료할까요?"가 뜬다(시뮬레이션으로 재현함).
  *    그래서 **경로까지** 같이 본다.
+ *
+ * ⚠️ 조각(#) 이동도 popstate 를 쏜다 (2026-09-28 수정 — 대표님 제보 "가입·로그인만 해도 종료 팝업이 뜬다").
+ *    카카오·구글 로그인은 https://…/#access_token=… 로 돌아오고, supabase 가 토큰을 읽은 뒤
+ *    location.hash = '' 로 주소를 지운다. 브라우저는 이걸 state 가 빈(null) popstate 로 알린다.
+ *    그 순간 경로가 "/" 라서 예전엔 "홈에서 뒤로가기"로 착각해 로그인하자마자 "앱을 종료할까요?"가 떴다
+ *    (크로미움으로 재현함). 앱 화면 항목은 라우터가 항상 state({idx…})를 붙이므로
+ *    state 가 null 인 popstate 는 조각 이동이다 → 묻지 않는다.
  */
 const MARKER = "__abx";
 
@@ -41,7 +48,8 @@ function arm(): void {
 
 function onPop(): void {
   const s = window.history.state as Record<string, unknown> | null;
-  if (s && s[MARKER]) return;      // 홈으로 돌아온 것 — 묻지 않는다
+  if (s === null) return;          // 조각(#) 이동 — 로그인 복귀 때 주소 정리 등. 뒤로가기가 아니다
+  if (s[MARKER]) return;           // 홈으로 돌아온 것 — 묻지 않는다
   if (!atHome()) return;           // 하위 화면 이동 — 라우터가 처리
   if (!askFn) return;
   try { askFn(); } catch { /* 무시 */ }

@@ -2,12 +2,15 @@
  * 웰컴 편지 — 회원용 · 코치님용 (2026-09-23)
  *
  * 대표님 지시: "웰컴 편지는 회원님들에게 보내는 편지, 코치님이 회원가입하면 코치님에게 보내는 편지로".
- *   · 회원 — 온보딩·튜토리얼을 마치면 1회: "첫 라운드를 앞둔 {이름}님께"
+ *   · 회원 — 앱에 처음 들어오면(온보딩 뒤) 1회: "첫 라운드를 앞둔 {이름}님께"
+ *     기존 회원 연동·일괄등록 회원도 첫 접속에 받는다 (2026-09-28 — 예전엔 튜토리얼까지 마쳐야 와서 거의 아무도 못 받았다)
  *   · 코치님(지도진 is_staff, 코치·관장 역할) — 처음 들어오면 1회: "153의 링을 함께 지킬 {이름}님께"
  *   · 전체관리자·관리자 계정 — 자동 편지 없음(설정 화면 미리보기로만 본다).
  *     예전엔 관리자 계정도 회원 편지를 받아 닉네임이 그대로 들어가 "…개발자님께" 처럼 보였다.
  * 문구는 설정 화면(관리자)에서 고친다 — app_settings.welcome_letters 에 저장하고, 비어 있는 칸은 아래 기본 문구를 쓴다.
  * {이름} 자리에 회원은 닉네임(없으면 이름), 코치님은 "이름 직함"(예: 홍길동 코치)이 들어간다.
+ * {리그레벨} 자리에는 회원의 지금 리그·레벨(예: "화이트 리그, 레벨 1" · "블루 리그, 레벨 3")이 들어간다 —
+ *   기존 회원은 화이트 L1 이 아닐 수 있어서 고정 문구 대신 쓴다.
  * 저장 형식은 서버 set_app_setting 이 검사한다(대상 member·coach, 항목 title·body·sign·cta, 글자 수 제한).
  */
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +26,9 @@ export interface LetterTemplate {
 export type WelcomeLetters = Partial<Record<LetterAudience, Partial<LetterTemplate>>>;
 
 export const NAME_TOKEN = "{이름}";
+export const LEAGUE_TOKEN = "{리그레벨}";
+/** 리그·레벨을 모를 때(미리보기 등) 쓰는 값 — 새 회원의 시작점 */
+export const DEFAULT_LEAGUE_LEVEL = "화이트 리그, 레벨 1";
 /** 서버 검사와 같은 글자 수 제한 */
 export const LETTER_LIMITS: Record<keyof LetterTemplate, number> = { title: 80, body: 3000, sign: 80, cta: 30 };
 export const LETTER_AUDIENCE_LABEL: Record<LetterAudience, string> = { member: "회원님께", coach: "코치님께" };
@@ -48,7 +54,7 @@ export const DEFAULT_LETTERS: Record<LetterAudience, LetterTemplate> = {
 어느새 거울 앞에서
 조금 다른 나를 마주하게 됩니다.
 
-화이트 리그, 레벨 1.
+{리그레벨}.
 {이름}님의 153랭크업은 지금부터예요.
 
 빠르지 않아도 괜찮아요.
@@ -130,11 +136,19 @@ export interface LetterContent {
   cta: string;
 }
 
-/** 편지 서식(관리자가 고친 문구 또는 기본 문구) + 이름 → 화면용 편지 */
-export const buildLetter = (aud: LetterAudience, t: LetterTemplate, name: string): LetterContent => ({
+/** {리그레벨} 자리에 리그·레벨 넣기 */
+const fillLeague = (text: string, leagueLevel: string): string => text.split(LEAGUE_TOKEN).join(leagueLevel);
+
+/** 편지 서식(관리자가 고친 문구 또는 기본 문구) + 이름 (+ 회원의 리그·레벨) → 화면용 편지 */
+export const buildLetter = (
+  aud: LetterAudience,
+  t: LetterTemplate,
+  name: string,
+  leagueLevel: string = DEFAULT_LEAGUE_LEVEL,
+): LetterContent => ({
   eyebrow: aud === "coach" ? "Coach Letter" : "Welcome Letter",
-  title: fillName(t.title, name),
-  body: fillName(t.body, name),
+  title: fillLeague(fillName(t.title, name), leagueLevel),
+  body: fillLeague(fillName(t.body, name), leagueLevel),
   sign: t.sign,
   cta: t.cta,
 });
