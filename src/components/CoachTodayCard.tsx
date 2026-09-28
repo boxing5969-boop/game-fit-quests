@@ -2,6 +2,7 @@
 // 오삼 코치가 오늘 할 일을 1·2·3 순서로 알려준다. 완료한 건 체크, 지금 할 건 강조.
 // 회원이 원하면 "코스 접기"로 숨길 수 있다(기기에 기억).
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ScanFace, Play, Dumbbell, Trophy, Clock, ChevronRight, ChevronDown, CheckCircle2,
@@ -10,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLevelVideos, useWatchedVideos, parseVideoTitle, youtubeId } from "@/hooks/useLevelVideos";
 import { RANK_LABELS } from "@/data/sharedConstants";
+import { hasPracticedToday } from "@/lib/levelPractice";
 
 interface Cycle {
   sessions: number; days: number; minutes: number;
@@ -24,7 +26,8 @@ interface Props {
   league: string;
   levelNumber: number;
   levelTitle: string;
-  onStartSession: () => void;
+  /** 3번 '내 레벨 연습하기' — 이번 레벨 동작 + 레벨 10 타이틀매치 영상 화면(MyLevelPractice)을 연다 */
+  onOpenPractice: () => void;
   onOpenDetail: () => void;
   onOpenVideos: () => void;
 }
@@ -43,7 +46,7 @@ const kstDayStartIso = () => {
 const safeGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 const safeSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* 프라이빗 모드 등 */ } };
 
-const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpenDetail, onOpenVideos }: Props) => {
+const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpenDetail, onOpenVideos }: Props) => {
   const { user } = useAuth();
   const [playing, setPlaying] = useState<{ id: string; url: string; title: string } | null>(null);
   const [collapsed, setCollapsed] = useState(() => safeGet(COURSE_KEY) === "1");
@@ -98,19 +101,10 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     },
   });
 
-  const { data: todaySession, isFetched: sessionFetched } = useQuery({
-    queryKey: ["today-session-done", user?.id],
-    enabled: !!user?.id,
-    staleTime: 60_000,
-    refetchOnMount: "always", // 홈에서 QR 찍고 넘어와도 즉시 최신 (탭 재진입 시 항상 재조회)
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("activity_sessions").select("id")
-        .eq("user_id", user!.id).eq("status", "completed")
-        .gte("started_at", kstDayStartIso()).limit(1);
-      return (data?.length ?? 0) > 0;
-    },
-  });
+  // 3번 '내 레벨 연습하기' 완료 — 연습 화면의 "오늘 연습 완료"가 기기에 남긴 KST 날짜로 판정한다.
+  // (예전 3번 '50분 수업하기'는 홈 '오늘 도전' 완료 기록을 봤는데 최근 30일 1건뿐이라 사실상 끝나지 않았다.)
+  // 매 렌더 읽는다 — 연습 화면에서 돌아오면 카드가 새로 떠서 바로 반영되고, 자정이 지나면 다음 렌더에 풀린다.
+  const practicedToday = hasPracticedToday(user?.id);
 
   const { data: reviewStatus } = useQuery({
     queryKey: ["my-level-status", user?.id, league, levelNumber],
@@ -166,12 +160,17 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     },
     {
       n: 3,
-      title: "50분 수업하기",
-      desc: "영상에서 본 동작을 몸으로 익혀요",
+      title: "내 레벨 연습하기",
+      // 한 줄(말줄임)에 들어가게 짧게 — 360px 폰 기준 15자 안팎
+      desc: practicedToday
+        ? "오늘 연습 완료!"
+        : levelNumber >= 10
+          ? "타이틀매치 동작 완성하기"
+          : "목표: 레벨 10 타이틀매치",
       icon: Dumbbell,
-      done: !!todaySession,
-      action: onStartSession,
-      actionLabel: "수업 시작",
+      done: practicedToday,
+      action: onOpenPractice,
+      actionLabel: "연습하러 가기",
     },
   ];
   const currentStep = steps.find((s) => !s.done) ?? null;
@@ -204,7 +203,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
     return () => clearTimeout(t);
   }, [coachFace]);
 
-  const queriesReady = checkinFetched && videosFetched && sessionFetched;
+  const queriesReady = checkinFetched && videosFetched;
   useEffect(() => {
     // 콜드 로드(이미 완료한 날 재접속)에서는 축하 펀치를 치지 않는다 —
     // 쿼리가 다 도착하기 전 doneSteps 0→3 점프는 '방금 완료'가 아니다.
@@ -294,6 +293,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
             {steps.map((s) => {
               const isCurrent = currentStep?.n === s.n; // 심사 대기·레벨업 가능 중에도 일일 코스 버튼은 유지
               const Icon = s.icon;
+              // 지금 단계가 아니어도 영상·연습은 언제든 열 수 있게 — 줄을 누르면 연다 (큰 버튼은 지금 단계만)
+              const rowAction = !isCurrent && s.action ? s.action : null;
               return (
                 <div
                   key={s.n}
@@ -306,7 +307,13 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
                         : "border-border bg-card opacity-60"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div
+                    className={`flex items-center gap-3 ${rowAction ? "cursor-pointer active:scale-[0.99]" : ""}`}
+                    onClick={rowAction ?? undefined}
+                    role={rowAction ? "button" : undefined}
+                    tabIndex={rowAction ? 0 : undefined}
+                    onKeyDown={rowAction ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rowAction(); } } : undefined}
+                  >
                     <span
                       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black ${
                         s.done
@@ -330,10 +337,15 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
                       </p>
                       <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{s.desc}</p>
                     </div>
-                    <Icon className={`h-4 w-4 shrink-0 ${isCurrent ? "text-primary" : "text-muted-foreground"}`} />
+                    {rowAction ? (
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <Icon className={`h-4 w-4 shrink-0 ${isCurrent ? "text-primary" : "text-muted-foreground"}`} />
+                    )}
                   </div>
 
                   {/* 지금 할 단계만 큰 버튼 노출 */}
+                  {/* 할 일이 앱 밖에 있는 단계(1번 자동 출석)는 빈 안내 막대를 띄우지 않는다 */}
                   {isCurrent && (
                     s.action ? (
                       <button
@@ -342,11 +354,11 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
                       >
                         {s.actionLabel}
                       </button>
-                    ) : (
+                    ) : s.actionLabel ? (
                       <p className="mt-2.5 rounded-xl bg-primary/10 py-2.5 text-center text-[12px] font-bold text-primary">
                         {s.actionLabel}
                       </p>
-                    )
+                    ) : null
                   )}
                 </div>
               );
@@ -414,14 +426,14 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
         <span>
           <span className="block text-sm font-black text-foreground">📚 훈련 상세 보기</span>
           <span className="mt-0.5 block text-[11px] text-muted-foreground">
-            영상 전체 · 교육 그림 · 50분 수업 구성 · 심사 기준
+            영상 전체 · 교육 그림 · 수업 구성 · 심사 기준
           </span>
         </span>
         <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
       </button>
 
-      {/* 영상 재생 모달 */}
-      {playing && (
+      {/* 영상 재생 모달 — body 로 portal: 상세 화면(animate-slide-up 루트) 안에서도 화면 기준으로 뜨게 */}
+      {playing && createPortal(
         <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/85 p-4" onClick={() => setPlaying(null)}>
           <div className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
             {youtubeId(playing.url) ? (
@@ -443,7 +455,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onStartSession, onOpe
               <CheckCircle2 className="h-4 w-4" /> 따라했어요
             </button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* QR 체크인 — 홈 화면과 같은 스캐너·같은 qr-checkin 경로를 그대로 쓴다.

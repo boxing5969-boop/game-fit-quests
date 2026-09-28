@@ -1,5 +1,8 @@
 // 드릴 그림 설명 시트 — 초등학생도 이해할 수 있게: 큰 그림 + 쉬운 한 줄 + 번호 포인트.
 // 훈련 라이브러리(training_exercises)의 어떤 드릴이든 이름으로 열 수 있다.
+// body 로 portal 한다 (2026-09-28): 상세 화면 루트의 animate-slide-up 이 끝난 뒤에도 transform 을 남겨
+// 그 안의 fixed 시트가 화면이 아니라 긴 루트의 맨 아래에 붙었다 → 드릴을 눌러도 화면만 어두워지고 시트가 안 보였다.
+import { createPortal } from "react-dom";
 import type { TrainingExercise } from "@/hooks/useTrainingLibrary";
 import { X } from "lucide-react";
 
@@ -10,7 +13,7 @@ interface TrainingDrillSheetProps {
 
 const TrainingDrillSheet = ({ exercise, onClose }: TrainingDrillSheetProps) => {
   if (!exercise) return null;
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/60" onClick={onClose}>
       <div
         className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-background p-5 pb-8 animate-slide-up"
@@ -78,7 +81,8 @@ const TrainingDrillSheet = ({ exercise, onClose }: TrainingDrillSheetProps) => {
           <p className="mt-3 text-xs text-muted-foreground">💡 {exercise.benefits}</p>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

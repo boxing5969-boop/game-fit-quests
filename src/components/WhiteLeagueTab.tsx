@@ -22,6 +22,7 @@ import { useComposedSession, usePriorityDrills, type TrainingExercise } from "@/
 import TrainingDrillSheet from "@/components/TrainingDrillSheet";
 import LevelVideoMaster from "@/components/LevelVideoMaster";
 import CoachTodayCard from "@/components/CoachTodayCard";
+import MyLevelPractice from "@/components/MyLevelPractice";
 import { getChecklistForLevel } from "@/data/levelRuleEngine";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { useTutorialState } from "@/hooks/useTutorialState";
@@ -40,7 +41,8 @@ import { supabase } from "@/integrations/supabase/client";
 import SparringConsentModal from "@/components/SparringConsentModal";
 
 type LevelState = "complete" | "active" | "locked";
-type DetailView = null | { league: string; level: number; intent?: "session" };
+type DetailView = null | { league: string; level: number };
+type PracticeView = null | { league: string; level: number };
 
 const INTENSITY_STYLE: Record<string, string> = {
   "가볍게": "bg-status-complete/10 text-status-complete",
@@ -58,6 +60,8 @@ const LEAGUE_CONFIG = [
 const WhiteLeagueTab = () => {
   const { progress } = useAuth();
   const [detailView, setDetailView] = useState<DetailView>(null);
+  // 🥊 내 레벨 연습하기 (오늘의 코스 3번) — 탭 안에서 화면을 바꿔 연다
+  const [practiceView, setPracticeView] = useState<PracticeView>(null);
   const [expandedLeague, setExpandedLeague] = useState<string | null>(null);
   // 리그 전체 목록은 기본 접힘 — 첫 화면은 코치 지시 카드만 보이게
   const [showLeagueList, setShowLeagueList] = useState(false);
@@ -83,8 +87,12 @@ const WhiteLeagueTab = () => {
   // Auto-expand current league
   const activeLeague = expandedLeague ?? currentRank;
 
+  if (practiceView) {
+    return <MyLevelPractice league={practiceView.league} levelNumber={practiceView.level} onBack={() => setPracticeView(null)} />;
+  }
+
   if (detailView) {
-    return <UnifiedLevelDetailView key={`${detailView.league}-${detailView.level}`} league={detailView.league} levelNum={detailView.level} autoStart={detailView.intent === "session"} onBack={() => setDetailView(null)} />;
+    return <UnifiedLevelDetailView key={`${detailView.league}-${detailView.level}`} league={detailView.league} levelNum={detailView.level} onBack={() => setDetailView(null)} />;
   }
 
   return (
@@ -94,7 +102,7 @@ const WhiteLeagueTab = () => {
         league={currentRank}
         levelNumber={currentLevel}
         levelTitle={getLevelById(currentRank, currentLevel)?.title ?? ""}
-        onStartSession={() => setDetailView({ league: currentRank, level: currentLevel, intent: "session" })}
+        onOpenPractice={() => setPracticeView({ league: currentRank, level: currentLevel })}
         onOpenDetail={() => setDetailView({ league: currentRank, level: currentLevel })}
         onOpenVideos={() => setDetailView({ league: currentRank, level: currentLevel })}
       />
@@ -226,7 +234,7 @@ const WhiteLeagueTab = () => {
    Unified Level Detail View — 40레벨 3탭 구조
    배우기 / 수업실행 / 심사
    ═══════════════════════════════════════════════════════ */
-const UnifiedLevelDetailView = ({ league, levelNum, onBack, autoStart = false }: { league: string; levelNum: number; onBack: () => void; autoStart?: boolean }) => {
+const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; levelNum: number; onBack: () => void }) => {
   const ul = getLevelById(league, levelNum);
   const { user, progress, role, profile } = useAuth();
   const { data: myCharacter } = useMemberCharacterAssignment(user?.id);
@@ -237,8 +245,11 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack, autoStart = false }:
   const [showChecklist, setShowChecklist] = useState(false);
   const [showCurriculumReview, setShowCurriculumReview] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
-  // autoStart: 메인 화면 "수업 시작" 버튼의 의도 전달 — 상세를 거치지 않고 바로 세션 러너를 연다(이중 퍼널 해소)
-  const [showSession, setShowSession] = useState(autoStart);
+  // 수업실행 탭의 "수업 시작"으로 세션 러너를 연다.
+  // (메인 코스 3번 '50분 수업하기' 바로가기는 2026-09-28 '내 레벨 연습하기'로 바뀌어 폐지)
+  const [showSession, setShowSession] = useState(false);
+  // 🥊 내 레벨 연습하기 — 간단히 보기의 코스 3번에서 연다
+  const [showPractice, setShowPractice] = useState(false);
   const checklist = getChecklistForLevel(`${league}-${levelNum}`);
   const [checkResults, setCheckResults] = useState<boolean[]>(checklist.map(() => false));
 
@@ -308,6 +319,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack, autoStart = false }:
 
   if (!ul) return <div className="p-4 text-center text-muted-foreground">레벨 데이터를 불러올 수 없습니다</div>;
 
+  if (showPractice) {
+    return <MyLevelPractice league={league} levelNumber={levelNum} onBack={() => setShowPractice(false)} />;
+  }
+
   // Use whiteLevel1/2 detailed session data if available, else use routineA
   const isWhiteLv1 = league === "white" && levelNum === 1;
   const isWhiteLv2 = league === "white" && levelNum === 2;
@@ -353,7 +368,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack, autoStart = false }:
           league={league}
           levelNumber={levelNum}
           levelTitle={ul.title}
-          onStartSession={() => (sessionBlocks ? setShowSession(true) : (setDetailMode(true), setActiveSection("session")))}
+          onOpenPractice={() => setShowPractice(true)}
           onOpenDetail={() => { setDetailMode(true); setActiveSection("video"); }}
           onOpenVideos={() => { setDetailMode(true); setActiveSection("video"); }}
         />

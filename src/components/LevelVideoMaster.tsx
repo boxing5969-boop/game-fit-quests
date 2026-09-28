@@ -1,6 +1,7 @@
 // 🎬 영상 마스터 — 관장님 훈련 영상으로 집에서 예습하는 탭.
 // 큰 썸네일 + 진행 바 + 체크. 회원이 "오늘 뭘 보면 되는지" 3초 안에 알도록 단순하게.
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Play, CheckCircle2, X } from "lucide-react";
 import {
   useLevelVideos, useWatchedVideos, youtubeId, youtubeThumb, parseVideoTitle,
@@ -127,8 +128,10 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
         );
       })}
 
-      {/* 재생 모달 */}
-      {playing && (
+      {/* 재생 모달 — body 로 portal 한다 (2026-09-28).
+          상세 화면 루트의 animate-slide-up 은 끝난 뒤에도 transform 을 남겨(fill-mode both) 그 안의 fixed 가
+          화면이 아니라 루트 기준으로 붙었다 → 아래로 스크롤한 뒤 영상을 누르면 화면만 어두워지고 영상은 화면 밖에 떴다. */}
+      {playing && createPortal(
         <div
           className="fixed inset-0 z-[95] flex items-center justify-center bg-black/85 p-4"
           onClick={() => setPlaying(null)}
@@ -163,7 +166,8 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
               따라했어요 ✓
             </button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
