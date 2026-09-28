@@ -24,6 +24,7 @@ import { isManagerRole } from "@/lib/rankLabels";
 import { useTutorialCamp } from "@/features/tutorial-camp/useTutorialCamp";
 import LaunchEventSettingsCard from "@/components/admin/LaunchEventSettingsCard";
 import MileageSettingsCard from "@/components/admin/MileageSettingsCard";
+import LevelTestCard from "@/components/admin/LevelTestCard";
 import WelcomeLetterSettingsCard from "@/components/admin/WelcomeLetterSettingsCard";
 
 // ── Home widget toggle helpers ──
@@ -322,6 +323,9 @@ const SettingsPage = () => {
       </div>
 
       <div className="space-y-5">
+        {/* 레벨 테스트 — 체험용 계정·전체 관리자만 (그 외 계정엔 카드가 스스로 안 그려진다) */}
+        <LevelTestCard />
+
         {/* 65-O: 화면 모드 (다크/라이트) — next-themes 기반 */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1">
           <h2 className="mb-1 text-base font-bold text-foreground">화면 모드</h2>
