@@ -1,11 +1,13 @@
 // ═══════════════════════════════════════════════════════
 // DailyReportCard — 관장·코치 홈(/manager) 진입 일일 운영 리포트 카드
 // 오늘 출석/신규/제출/처리대기 등 실데이터 요약 (read-only)
+// 2026-09-28 — "브로제이 대조" 칸: 브로제이 화면과 같은 기준(회원 입장 건수·회원 인원·코치 인원)과
+//   앱 반영 인원, 그 차이(코치 회원권 입장·앱 미연결·문 거절)를 한눈에. 숫자는 출입 동기화가 1분마다 남긴다.
 // 153 브랜드: 블랙·차콜 베이스 + 민트(primary) 포인트 + 골드(reward) 강조
 // ═══════════════════════════════════════════════════════
 import type { ReactNode } from "react";
-import { Users, UserPlus, FileText, Clock, Activity, ChevronRight, CalendarDays } from "lucide-react";
-import { useDailyOpsReport } from "@/hooks/useDailyOpsReport";
+import { Users, UserPlus, FileText, Clock, Activity, ChevronRight, CalendarDays, DoorOpen } from "lucide-react";
+import { useDailyOpsReport, type BrojCounts } from "@/hooks/useDailyOpsReport";
 
 interface DailyReportCardProps {
   branchName: string;
@@ -21,6 +23,27 @@ interface DailyReportCardProps {
 
 const todayLabel = () =>
   new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
+
+/** "22:40" (KST) */
+const kstTime = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const k = new Date(d.getTime() + 9 * 3600 * 1000);
+  return `${String(k.getUTCHours()).padStart(2, "0")}:${String(k.getUTCMinutes()).padStart(2, "0")}`;
+};
+
+const shortBranch = (name: string): string => name.replace(/^153복싱짐\s*/, "") || name;
+
+/** 브로제이 회원 인원과 앱 반영 인원의 차이를 말로 — 차이가 없으면 "전원 반영" */
+const brojGapLine = (c: BrojCounts): string => {
+  const parts: string[] = [];
+  if (c.staffMemberPeople > 0) parts.push(`코치 ${c.staffMemberPeople}명은 회원권으로 입장(앱은 코치로 셈)`);
+  if (c.unlinkedPeople > 0) parts.push(`앱 계정 없음 ${c.unlinkedPeople}명`);
+  if (c.rejectedEntries > 0) parts.push(`문 거절 ${c.rejectedEntries}건(출석 제외)`);
+  const head = `앱 반영 ${c.appMemberPeople}명`;
+  if (parts.length === 0) return `${head} · 전원 반영`;
+  return `${head} · ${parts.join(" · ")}`;
+};
 
 const DailyReportCard = ({
   branchName,
@@ -40,14 +63,20 @@ const DailyReportCard = ({
   const weekCheckins = data?.weekCheckins ?? 0;
   const pending = pendingCount ?? 0;
   const submissions = todaySubmissions ?? 0;
+  const broj = data?.broj ?? null;
 
+  // 방문 인원은 브로제이(문 출입) 기준이 있으면 그 숫자로 — 대표님이 브로제이 화면과 바로 맞춰 볼 수 있게.
+  const visitLine = broj
+    ? `오늘 회원 ${broj.total.memberPeople}명 방문 (입장 ${broj.total.memberEntries}건 · 브로제이 기준)`
+    : `오늘 ${unique}명 방문 (앱 출석 기준)`;
   const summary = isLoading
     ? "오늘 현황을 불러오는 중…"
-    : checkins === 0 && newSignups === 0 && submissions === 0
+    : !broj && checkins === 0 && newSignups === 0 && submissions === 0
       ? "오늘은 아직 출석·가입·제출 기록이 없습니다."
-      : `오늘 ${unique}명 방문 (출석 ${checkins}회)` +
+      : visitLine +
         (newSignups > 0 ? ` · 신규 ${newSignups}명` : "") +
         (pending > 0 ? ` · 처리 대기 ${pending}건` : "");
+  const brojOk = !!broj && broj.total.unlinkedPeople === 0;
 
   return (
     <div className="mb-5 overflow-hidden rounded-3xl border border-border bg-card shadow-elev-1">
@@ -71,9 +100,9 @@ const DailyReportCard = ({
         <div className="grid grid-cols-2 gap-2.5">
           <MetricTile
             icon={<Users className="h-4 w-4 text-primary" />}
-            label="출석"
-            value={isLoading ? "–" : checkins}
-            sub={isLoading ? undefined : `순방문 ${unique}명`}
+            label="앱 출석"
+            value={isLoading ? "–" : unique}
+            sub={isLoading ? undefined : "회원만 · 코치 제외"}
           />
           <MetricTile
             icon={<UserPlus className="h-4 w-4 text-reward" />}
@@ -93,6 +122,41 @@ const DailyReportCard = ({
             highlight={!isLoading && pending > 0}
           />
         </div>
+
+        {/* 브로제이 대조 — 브로제이 화면과 같은 기준 + 앱 반영 인원과 차이 */}
+        {!isLoading && broj && (
+          <div className="mt-3 rounded-2xl border border-border bg-secondary/30 p-3">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
+                <DoorOpen className="h-3.5 w-3.5 text-primary" /> 브로제이 대조
+              </span>
+              {broj.total.updatedAt && (
+                <span className="text-[10px] text-muted-foreground">{kstTime(broj.total.updatedAt)} 기준</span>
+              )}
+            </div>
+            <p className="text-sm font-bold text-foreground">
+              입장 {broj.total.memberEntries}건 · 회원 {broj.total.memberPeople}명
+              <span className="font-medium text-muted-foreground"> · 코치 {broj.total.staffPeople}명</span>
+            </p>
+            <p className={`mt-0.5 text-[11px] leading-relaxed ${brojOk ? "text-primary" : "text-status-pending"}`}>
+              {brojGapLine(broj.total)}
+            </p>
+            {broj.branches.length > 1 && (
+              <ul className="mt-2 space-y-0.5 border-t border-border/60 pt-2">
+                {broj.branches.map((b) => (
+                  <li key={b.branchName} className="flex items-center justify-between gap-2 text-[11px]">
+                    <span className="truncate text-muted-foreground">{shortBranch(b.branchName)}</span>
+                    <span className="shrink-0 tabular-nums text-foreground">
+                      입장 {b.memberEntries} · 회원 {b.memberPeople} · 앱 {b.appMemberPeople}
+                      {b.staffMemberPeople > 0 ? ` · 코치 ${b.staffMemberPeople}` : ""}
+                      {b.unlinkedPeople > 0 ? ` · 미연결 ${b.unlinkedPeople}` : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         {/* Context line */}
         <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">

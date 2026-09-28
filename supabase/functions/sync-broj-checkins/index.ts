@@ -5,13 +5,22 @@
 // 원칙 (절대 어기지 말 것):
 //   - 이 함수는 XP 를 직접 주지 않는다(xp_granted=0 으로 넣는다). 기본 출석 XP 는
 //     DB 트리거(attendance_base_xp)가 회원 출석 행에 준다.
-//   - 앱 계정을 새로 만들지 않는다. 전화번호로 못 찾으면 건너뛴다(unmatched 로 집계).
+//   - 전화번호로 앱 계정을 못 찾은 회원 입장은 그 자리에서 앱 계정을 만들어 연결한다 (2026-09-28, 대표님 승인).
+//     예전엔 건너뛰었다 — 브로제이 신규 회원은 153OS 로 밤 00:05 에 한 번만 넘어오고 앱 계정은 그 뒤에 생겨서,
+//     등록 첫날 입장이 라이브보드·출석·마일리지에서 통째로 빠졌다.
+//     만드는 방식은 153OS 회원 가져오기(sync-members-to-app)와 같다(아이디 전화번호@153rankup.app,
+//     첫 로그인 때 아이디·비밀번호 변경). 밤에 그 회원이 153OS 로 넘어오면 같은 번호의 이 계정에 연결만 된다
+//     (profiles.phone_number 유니크 — 같은 번호로 두 번 만들어질 수 없다).
+//     안전장치: 휴대폰 번호 형식 + 이름이 있을 때만 · 직원 번호 제외 · 한 번 실행 5명, 하루 30명까지 ·
+//     프로필 조회가 한 번이라도 실패한 실행과 백필(from/to) 실행에서는 만들지 않는다.
 //   - source_ref 유니크(broj:<attendance_id>)로 재실행해도 중복되지 않는다.
 //   - 회원 출석은 "문이 열린 회원 입장"(ENTRY·SUCCESS)만 넣는다 (2026-09-28).
 //     브로제이는 이용권 기간 만료·월간 입장 횟수 소진으로 문이 안 열린 입장도 FAILURE 로 남긴다.
 //     예전엔 이것까지 출석으로 넣어서, 문 앞에서 돌아간 회원이 출석·XP·자동 승급·순위에 잡혔다.
 //   - 직원 출근(GO_TO_WORK)은 회원 출석이 아니다 → staff_duty_logs(출근부)에만 적는다.
 //   - 지도진 표시(is_staff)는 여기서 바꾸지 않는다 — 153OS 직원 명단 동기화(sync-staff-to-app)만 정한다.
+//   - 지점·날짜별 "브로제이 기준" 숫자를 broj_daily_counts 에 남긴다 (2026-09-28) — 관리자 홈 운영 리포트가
+//     브로제이 화면과 같은 기준(회원 입장 건수·회원 인원·코치 인원)으로 보여 주고, 앱 반영 인원과의 차이를 설명한다.
 //
 // 백필 (2026-09-17 추가):
 //   기본 동작은 "오늘부터 days 일"이다. 과거 구간을 채우려면 from/to 를 직접 준다.
@@ -33,6 +42,12 @@ const onlyDigits = (s: unknown) => String(s ?? "").replace(/[^0-9]/g, "");
 
 // 지점명 매핑 — 153OS ↔ 앱 이름 불일치 보정. sync-members-to-app 과 동일 규약.
 const BRANCH_MAP: Record<string, string> = { "153복싱짐 선릉점": "153복싱짐 선릉역점" };
+
+// 첫 입장 계정 생성 — 휴대폰 번호만, 0000·1111 같은 가짜 번호 제외, 생성 한도
+const MOBILE_RE = /^01[016789][0-9]{7,8}$/;
+const FAKE_PHONE_RE = /^01[016789]([0-9])\1+$/;
+const MAX_CREATE_PER_RUN = 5;
+const MAX_CREATE_PER_DAY = 30;
 
 /** KST 기준 오늘(YYYY-MM-DD)에서 n일 전 */
 function kstDate(offsetDays = 0): string {
@@ -82,6 +97,8 @@ Deno.serve(async (req) => {
     const to = ymd.test(String(body?.to ?? "")) ? String(body.to) : kstDate(0);
     if (from > to) return json({ error: "from 이 to 보다 늦습니다" }, 400);
     const skipAdvance = body?.skipAdvance === true;
+    // from/to 를 직접 준 실행 = 과거 구간 백필 — 계정을 새로 만들지 않는다(오래전 방문자까지 계정이 생기면 안 된다).
+    const isBackfill = ymd.test(String(body?.from ?? "")) || ymd.test(String(body?.to ?? ""));
 
     const os = createClient(OS_URL, OS_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
@@ -138,17 +155,26 @@ Deno.serve(async (req) => {
     }
     const todo = memberRows.filter((r) => !existing.has(`broj:${r.broj_attendance_id}`));
 
-    // 4) 전화번호 → 앱 회원 매칭
-    const phones = [...new Set(todo.map((r) => onlyDigits(r.phone)).filter((p) => p.length >= 10))];
-    const profMap = new Map<string, { user_id: string; nickname: string | null; name: string | null }>();
+    // 4) 전화번호 → 앱 계정 매칭 — 창 안의 회원 입장 전체(브로제이 대조 집계에도 쓴다).
+    //    조회가 한 번이라도 실패하면 profLookupOk=false — 그 실행에서는 계정을 만들지 않고 집계도 덮어쓰지 않는다
+    //    (있는 회원을 없는 줄 알고 계정을 만들거나, 틀린 숫자로 리포트를 덮는 일 방지).
+    type Prof = { user_id: string; nickname: string | null; name: string | null; is_staff: boolean };
+    const phones = [...new Set(memberRows.map((r) => onlyDigits(r.phone)).filter((p) => p.length >= 10))];
+    const profMap = new Map<string, Prof>();
+    let profLookupOk = true;
     for (let i = 0; i < phones.length; i += 300) {
-      const { data } = await app
-        .from("profiles").select("user_id, nickname, name, phone_number")
+      const { data, error: pErr } = await app
+        .from("profiles").select("user_id, nickname, name, phone_number, is_staff")
         .in("phone_number", phones.slice(i, i + 300));
-      for (const p of (data || []) as { user_id: string; nickname: string | null; name: string | null; phone_number: string }[]) {
-        profMap.set(onlyDigits(p.phone_number), { user_id: p.user_id, nickname: p.nickname, name: p.name });
+      if (pErr) { profLookupOk = false; continue; }
+      for (const p of (data || []) as { user_id: string; nickname: string | null; name: string | null; phone_number: string; is_staff: boolean | null }[]) {
+        profMap.set(onlyDigits(p.phone_number), { user_id: p.user_id, nickname: p.nickname, name: p.name, is_staff: p.is_staff === true });
       }
     }
+    // 브로제이 직원 번호 — 회원 계정으로 만들지 않는다
+    const staffPhoneSet = new Set(
+      rows.filter((r) => r.user_type === "직원").map((r) => onlyDigits(r.phone)).filter((p) => p.length >= 10),
+    );
 
     // 4-2) 직원(코치) 출근 처리 — 라이브보드 COACHING STAFF 띠의 유일한 근거.
     //
@@ -208,15 +234,122 @@ Deno.serve(async (req) => {
       }
     } catch (_e) { /* 코치 표시는 부가 기능 — 출석 동기화를 막지 않는다 */ }
 
+    // 4-3) 첫 입장 회원 — 앱 계정이 없으면 만든다 (2026-09-28 대표님 승인).
+    //   브로제이 신규 회원은 153OS 로 밤 00:05 에 한 번만 넘어온다 → 기다리면 등록 첫날 입장이 통째로 빠진다.
+    let createdAccounts = 0;
+    let createCapped = false;
+    const createFailed: string[] = [];
+    if (!isBackfill && profLookupOk) {
+      const candidates = new Map<string, OsRow>(); // 전화번호 → 첫 입장 행
+      for (const r of todo) {
+        const phone = onlyDigits(r.phone);
+        if (candidates.has(phone) || profMap.has(phone)) continue;
+        if (!MOBILE_RE.test(phone) || FAKE_PHONE_RE.test(phone)) continue; // 휴대폰 번호만
+        if (staffPhoneSet.has(phone)) continue;                          // 코치 계정은 직원 명단 동기화가 만든다
+        if (!(r.member_name ?? "").trim() || !branchOf(r)) continue;     // 이름 없이 만들면 보드에 번호가 뜬다
+        candidates.set(phone, r);
+      }
+      if (candidates.size > 0) {
+        // 예전에 직원으로 출근한 적 있는 번호도 회원으로 만들지 않는다.
+        const { data: duty, error: dutyErr } = await app
+          .from("staff_duty_logs").select("phone_digits").in("phone_digits", [...candidates.keys()]);
+        // 하루 생성 한도 — 번호 형식이 바뀌는 등 이상 상황에서 계정이 쏟아지지 않게.
+        const dayStartIso = new Date(`${kstDate(0)}T00:00:00+09:00`).toISOString();
+        const { data: runsToday, error: runsErr } = await app
+          .from("broj_checkin_runs").select("created_accounts")
+          .gte("ran_at", dayStartIso).gt("created_accounts", 0);
+        if (dutyErr || runsErr) {
+          createFailed.push("사전 확인 실패 — 이번 실행은 계정 생성을 건너뜀");
+        } else {
+          for (const d of (duty || []) as { phone_digits: string }[]) candidates.delete(d.phone_digits);
+          const createdToday = ((runsToday || []) as { created_accounts: number | null }[])
+            .reduce((sum, x) => sum + (Number(x.created_accounts) || 0), 0);
+          let budget = Math.min(MAX_CREATE_PER_RUN, MAX_CREATE_PER_DAY - createdToday);
+          if (budget <= 0 && candidates.size > 0) createCapped = true;
+          for (const [phone, r] of candidates) {
+            if (budget <= 0) break;
+            budget--;
+            const name = (r.member_name ?? "").trim();
+            const branch = branchOf(r);
+            const { data: cu, error: cErr } = await app.auth.admin.createUser({
+              email: `${phone}@153rankup.app`,
+              password: phone,
+              email_confirm: true,
+              user_metadata: { name, nickname: name, phone_number: phone, branch_name: branch, signup_source: "broj_first_entry" },
+            });
+            if (cErr || !cu?.user) {
+              // 로그에는 번호 끝 4자리만 남긴다.
+              createFailed.push(`*${phone.slice(-4)}: ${(cErr?.message || "계정 생성 실패").slice(0, 80)}`);
+              continue;
+            }
+            const uid = cu.user.id;
+            // 153OS 에서 가져온 회원과 같은 상태 — 승인됨 · 첫 로그인 때 아이디·비밀번호 변경
+            const { error: upErr } = await app.from("profiles")
+              .update({ is_approved: true, must_change_credentials: true }).eq("user_id", uid);
+            if (upErr) createFailed.push(`*${phone.slice(-4)}: 승인 표시 실패`);
+            profMap.set(phone, { user_id: uid, nickname: name, name, is_staff: false });
+            createdAccounts++;
+          }
+        }
+      }
+    }
+
+    // 4-4) 브로제이 대조 집계 — 지점·날짜별로 브로제이 화면과 같은 기준의 숫자(broj_daily_counts).
+    //   관리자 홈 운영 리포트가 "입장 48건 · 회원 45명 · 코치 6명 → 앱 반영 43명" 처럼 보여 준다.
+    //   계정 조회가 온전할 때만 쓴다. 실패해도 출석 동기화는 계속한다.
+    if (profLookupOk) {
+      try {
+        type Agg = { entries: number; people: Set<string>; staff: Set<string>; rejected: number };
+        const agg = new Map<string, Agg>();
+        for (const r of rows) {
+          const branch = branchOf(r);
+          if (!branch || !r.attend_date) continue;
+          const key = `${branch}|${r.attend_date}`;
+          let a = agg.get(key);
+          if (!a) { a = { entries: 0, people: new Set(), staff: new Set(), rejected: 0 }; agg.set(key, a); }
+          const phone = onlyDigits(r.phone);
+          if (r.user_type === "직원") { if (phone) a.staff.add(phone); continue; }
+          if (r.attendance_status === "FAILURE") { a.rejected++; continue; }
+          if (r.attendance_type === "ENTRY" && r.attendance_status === "SUCCESS") {
+            a.entries++;
+            if (phone) a.people.add(phone);
+          }
+        }
+        const nowIso = new Date().toISOString();
+        const countRows = [...agg].map(([key, a]) => {
+          const [branch_name, day] = key.split("|");
+          let appMember = 0, staffMember = 0, unlinked = 0;
+          for (const ph of a.people) {
+            const prof = profMap.get(ph);
+            if (!prof) unlinked++;
+            else if (prof.is_staff) staffMember++;
+            else appMember++;
+          }
+          return {
+            branch_name, day,
+            member_entries: a.entries, member_people: a.people.size, staff_people: a.staff.size,
+            app_member_people: appMember, staff_member_people: staffMember, unlinked_people: unlinked,
+            rejected_entries: a.rejected, updated_at: nowIso,
+          };
+        });
+        if (countRows.length > 0) {
+          await app.from("broj_daily_counts").upsert(countRows, { onConflict: "branch_name,day" });
+        }
+      } catch (_e) { /* 대조 집계는 보조 기능 — 출석 동기화를 막지 않는다 */ }
+    }
+
     if (todo.length === 0) {
       await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, skipped: rows.length });
       return json({ ok: true, from, to, scanned: rows.length, inserted: 0, skipped: rows.length, unmatched: 0, rejected, skipAdvance });
     }
 
-    const userIds = [...new Set([...profMap.values()].map((p) => p.user_id))];
+    // 이번에 넣을 행(todo)의 회원만 — profMap 은 대조 집계 때문에 창 전체를 들고 있다.
+    const userIds = [...new Set(
+      todo.map((r) => profMap.get(onlyDigits(r.phone))?.user_id).filter((v): v is string => !!v),
+    )];
     if (userIds.length === 0) {
-      await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, skipped: rows.length - todo.length, unmatched: todo.length });
-      return json({ ok: true, from, to, scanned: rows.length, inserted: 0, skipped: rows.length - todo.length, unmatched: todo.length, rejected, skipAdvance });
+      await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, skipped: rows.length - todo.length, unmatched: todo.length, created_accounts: createdAccounts });
+      return json({ ok: true, from, to, scanned: rows.length, inserted: 0, skipped: rows.length - todo.length, unmatched: todo.length, rejected, skipAdvance, created_accounts: createdAccounts, create_failed: createFailed, create_capped: createCapped });
     }
 
     // 5) 리그·레벨 스냅샷 + 지점별 표시명 모드
@@ -290,7 +423,7 @@ Deno.serve(async (req) => {
         .from("attendance_logs").upsert(chunk, { onConflict: "source_ref", ignoreDuplicates: true });
       if (error) {
         await app.from("broj_checkin_runs").insert({
-          ok: false, scanned: rows.length, inserted, unmatched, error: error.message.slice(0, 500),
+          ok: false, scanned: rows.length, inserted, unmatched, created_accounts: createdAccounts, error: error.message.slice(0, 500),
         });
         return json({ error: "저장 실패" }, 500);
       }
@@ -316,8 +449,8 @@ Deno.serve(async (req) => {
     }
 
     const skipped = rows.length - todo.length;
-    await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, inserted, skipped, unmatched });
-    return json({ ok: true, from, to, scanned: rows.length, inserted, skipped, unmatched, rejected, skipAdvance, advanced });
+    await app.from("broj_checkin_runs").insert({ ok: true, scanned: rows.length, inserted, skipped, unmatched, created_accounts: createdAccounts });
+    return json({ ok: true, from, to, scanned: rows.length, inserted, skipped, unmatched, rejected, skipAdvance, advanced, created_accounts: createdAccounts, create_failed: createFailed, create_capped: createCapped });
   } catch (e) {
     await app.from("broj_checkin_runs").insert({
       ok: false, error: (e instanceof Error ? e.message : String(e)).slice(0, 500),
