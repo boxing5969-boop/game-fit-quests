@@ -51,7 +51,7 @@ export const HOME_WIDGETS: readonly HomeWidgetMeta[] = Object.freeze([
   {
     id: "todayAction",
     label: "QR 체크인",
-    description: "QR 체크인 / 도전 시작 / 활성 세션 안내 카드",
+    description: "QR 체크인 / 도전 시작 / 활성 세션 안내 카드 · 운동 종료 · 마일리지",
   },
   {
     id: "osamiNote",

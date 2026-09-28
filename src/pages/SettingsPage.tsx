@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useTutorialCamp } from "@/features/tutorial-camp/useTutorialCamp";
 import LaunchEventSettingsCard from "@/components/admin/LaunchEventSettingsCard";
+import MileageSettingsCard from "@/components/admin/MileageSettingsCard";
 import WelcomeLetterSettingsCard from "@/components/admin/WelcomeLetterSettingsCard";
 
 // ── Home widget toggle helpers ──
@@ -609,6 +610,9 @@ const SettingsPage = () => {
 
         {/* Admin: 런칭 이벤트 기간 (TV2 보드 · 153 챌린지 이벤트 탭) */}
         {isAdmin && <LaunchEventSettingsCard />}
+
+        {/* Admin: 마일리지 적립 규칙 (출석 · 레벨업 · 타이틀매치 승급) */}
+        {isAdmin && <MileageSettingsCard />}
 
         {/* Admin: 웰컴 편지 — 회원님께 / 코치님께 (관리자 계정엔 자동으로 안 뜬다 → 미리보기) */}
         {isAdmin && <WelcomeLetterSettingsCard />}

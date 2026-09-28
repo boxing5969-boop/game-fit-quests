@@ -41,6 +41,7 @@ import HomeCustomizeSheet from "@/components/home/HomeCustomizeSheet";
 import { useHomeLayout, type HomeWidgetId } from "@/lib/homeLayout";
 import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
 import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
+import MileageCard from "@/components/home/MileageCard";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
 import {
   STAFF_CHAMPION_LEVEL, STAFF_CHAMPION_LINE, isStaffProfile, staffChampionLine, staffDisplayName, staffTitleLabel,
@@ -418,6 +419,8 @@ const HomePage = () => {
                   {/* 오늘 출석이 없으면 스스로 렌더하지 않는다. 위젯 on/off 대상에서
                       빼둔 이유 — 끄는 걸 잊어 종료를 못 누르는 일이 없어야 한다. */}
                   <WorkoutFinishCard />
+                  {/* 마일리지 — 출석 · 레벨업 · 타이틀매치 승급 때 서버가 적립. 지도진·관리자는 적립 대상이 아니라 안 그린다. */}
+                  {!staffCard && !isAdmin && <MileageCard />}
                 </div>
               ) : null,
             osamiNote: () => (homeWidgets.osamiNote ? <OsamiHomeNote /> : null),
