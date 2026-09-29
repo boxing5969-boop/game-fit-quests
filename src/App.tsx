@@ -89,6 +89,9 @@ const DietCoachInboxPage = lazyWithRetry(() => import("@/pages/diet/coach/DietCo
 const DietMemberDetailPage = lazyWithRetry(() => import("@/pages/diet/coach/DietMemberDetailPage"));
 const LiveBoardPage = lazyWithRetry(() => import("@/pages/LiveBoardPage"));
 const SignageBoardPage = lazyWithRetry(() => import("@/pages/SignageBoardPage"));
+// 관리자용 라이브보드 고르기 — TV 화면 1·2·3·4 를 앱 안에서 바로 본다 (2026-09-29)
+const LiveBoardPickerPage = lazyWithRetry(() => import("@/pages/LiveBoardPickerPage"));
+const LiveBoardPreviewPage = lazyWithRetry(() => import("@/pages/LiveBoardPreviewPage"));
 const FaceKioskPage = lazyWithRetry(() => import("@/pages/FaceKioskPage"));
 const SuperAdminDashboard = lazyWithRetry(() => import("@/pages/SuperAdminDashboard"));
 // 153마인드셋 — 시각화 훈련 (153복싱짐으로 돌아온 사람).
@@ -225,7 +228,12 @@ const AppRoutes = () => {
   // (하위 화면에서의 뒤로가기는 라우터가 그대로 처리 — 여기서 가로채지 않는다)
   const [exitAsk, setExitAsk] = useState(false);
   // 홈 = 메인 화면과 로그인 화면. 여기서 뒤로가면 더 갈 곳이 없으므로 종료를 묻는다.
-  useEffect(() => { initBackExit(() => setExitAsk(true), ["/", "/login"]); }, []);
+  // 액자(iframe) 안의 앱 — 관리자 라이브보드 미리보기가 TV 화면을 iframe 으로 담는다 — 은 뒤로가기를 건드리지 않는다.
+  // 여기서 sentinel 을 쌓으면 부모 창의 방문 기록에 섞여 '나가기'를 두 번 눌러야 나가진다.
+  useEffect(() => {
+    if (window.self !== window.top) return;
+    initBackExit(() => setExitAsk(true), ["/", "/login"]);
+  }, []);
 
   if (loading) {
     // 사이니지는 153 로고 풀스크린이 깜빡이면 안 된다 — 배경색만 깔고 기다린다.
@@ -294,6 +302,10 @@ const AppRoutes = () => {
         <Route path="/manager/member/:memberId" element={<ProtectedRoute><ManagerRoute><MemberDetailPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/manager/member/:memberId/preview" element={<ProtectedRoute><ManagerRoute><MemberPreviewPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><ManagerRoute><SuperAdminDashboard /></ManagerRoute></ProtectedRoute>} />
+        <Route path="/manager/live-board" element={<ProtectedRoute><ManagerRoute><LiveBoardPickerPage /></ManagerRoute></ProtectedRoute>} />
+        <Route path="/manager/live-board/view" element={<ProtectedRoute><ManagerRoute><LiveBoardPreviewPage /></ManagerRoute></ProtectedRoute>} />
+        {/* 옛 입구(체크인 보드 관리)는 QR 체크인을 걷어낼 때(9/2) 화면째 빠졌다 — 남아 있는 링크·즐겨찾기는 라이브보드 고르기로 */}
+        <Route path="/manager/checkin-board" element={<Navigate to="/manager/live-board" replace />} />
         {/* 153마인드셋 — 시각화 훈련 (153복싱짐으로 돌아온 사람). */}
         {/* 일반 회원에게 공개. ProtectedRoute 만 유지 — 비로그인 진입 차단. */}
         {/* admin/super_admin 전용 제한 (AdminOnlyRoute) 은 제거. */}

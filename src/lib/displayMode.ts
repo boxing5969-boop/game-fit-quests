@@ -12,6 +12,8 @@ const SIGNAGE_PREFIXES = [
   "/tv",          // 50인치 사이니지 라이브보드
   "/live-board",  // 라이브보드 원래 주소
   "/face-kiosk",  // 얼굴인식 출석 키오스크 (설치형 앱 포함)
+  // 관리자 앱의 라이브보드 미리보기 — TV 화면을 줄여 담는 전체화면이라 앱 UI 를 똑같이 끈다 (2026-09-29)
+  "/manager/live-board/view",
 ] as const;
 
 export const isSignageRoute = (pathname: string): boolean =>

@@ -18,7 +18,7 @@ interface DailyReportCardProps {
   todaySubmissions?: number;
   /** 모바일에서만 전달 (데스크톱 좌측 패널엔 운영 탭이 없어 미전달) */
   onOpenOperations?: () => void;
-  onOpenCheckin?: () => void;
+  onOpenLiveBoard?: () => void;
 }
 
 const todayLabel = () =>
@@ -52,7 +52,7 @@ const DailyReportCard = ({
   pendingCount,
   todaySubmissions,
   onOpenOperations,
-  onOpenCheckin,
+  onOpenLiveBoard,
 }: DailyReportCardProps) => {
   const { data, isLoading } = useDailyOpsReport({ branchName, isSuperAdmin, enabled });
 
@@ -171,7 +171,7 @@ const DailyReportCard = ({
         <p className="mt-2 text-xs leading-relaxed text-foreground/80">{summary}</p>
 
         {/* Footer actions */}
-        {(onOpenOperations || onOpenCheckin) && (
+        {(onOpenOperations || onOpenLiveBoard) && (
           <div className="mt-3 flex gap-2">
             {onOpenOperations && (
               <button
@@ -181,12 +181,12 @@ const DailyReportCard = ({
                 운영 보드 열기 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             )}
-            {onOpenCheckin && (
+            {onOpenLiveBoard && (
               <button
-                onClick={onOpenCheckin}
+                onClick={onOpenLiveBoard}
                 className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-border bg-card py-2.5 text-xs font-bold text-foreground transition-all active:scale-95"
               >
-                체크인 보드 <ChevronRight className="h-3.5 w-3.5" />
+                라이브보드 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             )}
           </div>

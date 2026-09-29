@@ -463,18 +463,18 @@ const BranchManagerHome = () => {
       </>
       )}
 
-      {/* Quick action: checkin board + member app + admin */}
+      {/* Quick action: live board + member app + admin */}
       <div className="mt-6 space-y-2">
         <button
-          onClick={() => navigate("/manager/checkin-board")}
+          onClick={() => navigate("/manager/live-board")}
           className="w-full rounded-2xl border border-primary/30 bg-primary/5 p-4 text-left shadow-elev-1 transition-all active:scale-[0.98]"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">📷</span>
+              <span className="text-2xl">📺</span>
               <div>
-                <p className="text-sm font-bold text-foreground">체크인 보드 관리</p>
-                <p className="text-xs text-muted-foreground">QR 체크인 · 라이브 보드 · 로그</p>
+                <p className="text-sm font-bold text-foreground">라이브보드</p>
+                <p className="text-xs text-muted-foreground">TV 화면 1 · 2 · 3 · 4 골라서 바로 보기</p>
               </div>
             </div>
             <ChevronRight className="h-5 w-5 text-primary" />
@@ -669,7 +669,7 @@ const BranchManagerHome = () => {
           pendingCount={stats?.pending_count}
           todaySubmissions={stats?.today_submissions}
           onOpenOperations={() => setMainTab("operations")}
-          onOpenCheckin={() => navigate("/manager/checkin-board")}
+          onOpenLiveBoard={() => navigate("/manager/live-board")}
         />
 
         {/* 수강권 홀딩·환불 신청 처리 (신청 있을 때만 노출) */}
@@ -773,7 +773,7 @@ const BranchManagerHome = () => {
             enabled={isManagerRole(role)}
             pendingCount={stats?.pending_count}
             todaySubmissions={stats?.today_submissions}
-            onOpenCheckin={() => navigate("/manager/checkin-board")}
+            onOpenLiveBoard={() => navigate("/manager/live-board")}
           />
 
           {/* 수강권 홀딩·환불 신청 처리 (신청 있을 때만 노출) */}
