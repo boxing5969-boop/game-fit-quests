@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import { Crown, Flame } from "lucide-react";
 import type { ReactNode } from "react";
 import { STAFF_CHAMPION_LEVEL } from "@/lib/staffDisplay";
+import PtBadge from "@/components/license/PtBadge";
 
 const RANK_LABELS: Record<string, string> = {
   white: "WHITE",
@@ -156,6 +157,8 @@ export interface BoxerLicenseCardProps {
   elapsedMinutes?: number;
   /** 지도진 카드 (2026-09-22): 리그·레벨·승급 막대 대신 직함("지점장님")을 보인다. name 에는 이름+직함을 넘긴다. */
   staff?: { title: string } | null;
+  /** PT(퍼스널 트레이닝) 회원 (2026-09-29) — 이름 옆 파란 배지 + "PT · 경험치 2배". 2배 적립 자체는 서버(DB 트리거)가 한다. */
+  pt?: boolean;
 }
 
 const BoxerLicenseCard = ({
@@ -177,6 +180,7 @@ const BoxerLicenseCard = ({
   isFresh = false,
   elapsedMinutes,
   staff = null,
+  pt = false,
 }: BoxerLicenseCardProps) => {
   const rankKey = (league || "white").toLowerCase();
   const lic = licenseNumber(userId);
@@ -211,6 +215,7 @@ const BoxerLicenseCard = ({
           headerText: "text-[9px]",
           photoBox: "h-28 w-28",
           nameText: "text-2xl",
+          ptBadge: "h-5 w-5",
           metaText: "text-xs",
           rankBadge: "text-sm px-2.5 py-1",
           levelText: "text-xl",
@@ -227,6 +232,7 @@ const BoxerLicenseCard = ({
           headerText: "text-[8px]",
           photoBox: "h-20 w-20",
           nameText: "text-lg",
+          ptBadge: "h-4 w-4",
           metaText: "text-[10px]",
           rankBadge: "text-[10px] px-2 py-0.5",
           levelText: "text-base",
@@ -243,6 +249,7 @@ const BoxerLicenseCard = ({
           headerText: "text-[7px]",
           photoBox: "h-14 w-14",
           nameText: "text-xs",
+          ptBadge: "h-3 w-3",
           metaText: "text-[9px]",
           rankBadge: "text-[8px] px-1 py-0",
           levelText: "text-[11px]",
@@ -418,9 +425,13 @@ const BoxerLicenseCard = ({
 
           {/* 정보 영역 */}
           <div className="flex-1 min-w-0">
-            <p className={`truncate font-black text-white ${cfg.nameText}`}>
-              {name}
-            </p>
+            {/* 이름은 길면 말줄임, PT 배지는 항상 보인다 */}
+            <div className="flex min-w-0 items-center gap-1">
+              <p className={`min-w-0 truncate font-black text-white ${cfg.nameText}`}>
+                {name}
+              </p>
+              {pt && !staff && <PtBadge className={`${cfg.ptBadge} shrink-0`} glow={size === "hero"} />}
+            </div>
             {branch && size !== "compact" && (
               <p className={`mt-0.5 truncate text-gray-400 ${cfg.metaText}`}>
                 {branch}
@@ -462,6 +473,11 @@ const BoxerLicenseCard = ({
             {/* 메타 정보 (연속일 / 운동시간) — 지도진은 연속 출석을 세지 않는다 */}
             {!staff && (cfg.showStreak || elapsedMinutes !== undefined) && size !== "compact" && (
               <div className={`mt-2 flex flex-wrap items-center gap-2 ${cfg.metaText}`}>
+                {pt && (
+                  <span className="inline-flex items-center rounded-full bg-[#3182F6]/20 px-2 py-0.5 font-black text-[#9CC8FF] ring-1 ring-inset ring-[#3182F6]/45">
+                    PT · 경험치 2배
+                  </span>
+                )}
                 {streakDays > 0 && cfg.showStreak && (
                   <span className="inline-flex items-center gap-1 text-orange-300">
                     <Flame className="h-3 w-3" />

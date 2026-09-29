@@ -56,6 +56,7 @@ import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import { getMasterLevelDefinition } from "@/data/masterTierData";
 import { useDisplayMode } from "@/hooks/useDisplayMode";
+import { isPtMember } from "@/lib/ptMember";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
 
@@ -386,6 +387,7 @@ const HomePage = () => {
                   }
                   name={staffCard ? staffDisplayName(profile) : (profile.nickname || profile.name || "복서")}
                   staff={staffCard}
+                  pt={!staffCard && isPtMember(profile)}
                   branch={profile.branch_name}
                   league={rank}
                   level={onMasterTrack ? progress.overall_level : progress.current_level}

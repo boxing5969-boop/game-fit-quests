@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.sync-staff-to-app]
 verify_jwt = false
+
+[functions.sync-pt-members]
+verify_jwt = false

@@ -3585,6 +3585,9 @@ export type Database = {
           nickname: string
           onboarding_done: boolean
           phone_number: string | null
+          pt_remaining: number | null
+          pt_ticket: string | null
+          pt_until: string | null
           safety_done: boolean
           tutorial_completed: boolean
           tutorial_completed_at: string | null
@@ -3609,6 +3612,9 @@ export type Database = {
           nickname?: string
           onboarding_done?: boolean
           phone_number?: string | null
+          pt_remaining?: number | null
+          pt_ticket?: string | null
+          pt_until?: string | null
           safety_done?: boolean
           tutorial_completed?: boolean
           tutorial_completed_at?: string | null
@@ -3633,6 +3639,9 @@ export type Database = {
           nickname?: string
           onboarding_done?: boolean
           phone_number?: string | null
+          pt_remaining?: number | null
+          pt_ticket?: string | null
+          pt_until?: string | null
           safety_done?: boolean
           tutorial_completed?: boolean
           tutorial_completed_at?: string | null
