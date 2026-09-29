@@ -895,7 +895,7 @@ function InventorySection({
                           ? "border-reward bg-reward/10 shadow-[0_0_16px_rgba(246,196,83,0.35)]"
                           : "border-primary bg-primary/10 shadow-glow-soft"
                         : isHof
-                          ? "border-reward/40 bg-gradient-to-br from-[hsl(42_92%_10%)] via-card to-card"
+                          ? "border-reward/40 bg-gradient-to-br from-amber-50 via-card to-card dark:from-[hsl(42_92%_10%)]"
                           : "border-border bg-card",
                     )}
                   >
@@ -1106,10 +1106,10 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
                 // HoF 카드는 금빛 테두리로 시각 차별화 (admin 포함)
                 isHof
                   ? visuallyLocked
-                    ? "border-reward/40 bg-gradient-to-br from-[hsl(42_92%_14%)] via-card to-card"
+                    ? "border-reward/40 bg-gradient-to-br from-amber-100/70 via-card to-card dark:from-[hsl(42_92%_14%)]"
                     : isSelected
                     ? "border-reward bg-reward/5 shadow-[0_0_18px_rgba(246,196,83,0.25)]"
-                    : "border-reward/60 bg-gradient-to-br from-[hsl(42_92%_10%)] via-card to-card"
+                    : "border-reward/60 bg-gradient-to-br from-amber-50 via-card to-card dark:from-[hsl(42_92%_10%)]"
                   : visuallyLocked
                   ? "border-border bg-muted/30"
                   : isSelected
@@ -1306,7 +1306,7 @@ function CustomizationPurchaseModal({
         <div
           className={`mx-auto mb-4 flex h-32 w-32 items-center justify-center rounded-2xl ${
             isHof
-              ? "bg-gradient-to-br from-[hsl(42_92%_14%)] via-card to-card ring-2 ring-reward/60"
+              ? "bg-gradient-to-br from-amber-100/70 via-card to-card ring-2 ring-reward/60 dark:from-[hsl(42_92%_14%)]"
               : "bg-muted/40"
           }`}
         >

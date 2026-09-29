@@ -63,7 +63,7 @@ const CertBenefitsPage = () => {
       {/* ─── Hero splash (kept dark for brand impact) ─── */}
       <section
         data-tour="cert-hero"
-        className="bg-gradient-to-b from-[hsl(220_34%_7%)] to-[hsl(8_60%_14%)] px-5 py-10 text-center text-white"
+        className="on-dark bg-gradient-to-b from-[hsl(220_34%_7%)] to-[hsl(8_60%_14%)] px-5 py-10 text-center text-white"
       >
         <h2 className="text-[26px] font-extrabold leading-tight">
           단증이 열어주는 미래
@@ -100,7 +100,7 @@ const CertBenefitsPage = () => {
               const Icon = card.icon;
               return (
                 <CarouselItem key={i}>
-                  <Card className="overflow-hidden border-0 bg-gradient-to-br from-[hsl(220_35%_11%)] to-[hsl(220_34%_7%)] text-white shadow-elev-3">
+                  <Card className="on-dark overflow-hidden border-0 bg-gradient-to-br from-[hsl(220_35%_11%)] to-[hsl(220_34%_7%)] text-white shadow-elev-3">
                     <div className="p-6">
                       <div className="mb-4 flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
@@ -235,7 +235,7 @@ const CertBenefitsPage = () => {
 
       {/* ─── Master splash (dark premium) ─── */}
       <section data-tour="cert-master-reward" className="px-5 py-6">
-        <div className="rounded-hero bg-gradient-to-br from-[hsl(220_35%_11%)] to-[hsl(8_50%_12%)] p-6 text-white shadow-elev-3">
+        <div className="on-dark rounded-hero bg-gradient-to-br from-[hsl(220_35%_11%)] to-[hsl(8_50%_12%)] p-6 text-white shadow-elev-3">
           <h3 className="text-[20px] font-extrabold">
             🏆 블랙 레벨 마스터 달성 시
           </h3>

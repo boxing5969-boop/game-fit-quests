@@ -38,6 +38,12 @@
 
     --primary: 165 70% 52%;             /* #29C39C mint — 두 모드 공통 브랜드 */
     --primary-foreground: 220 34% 7%;
+    /* 글자 잉크 (2026-09-29) — 밝은 민트·금색은 흰 바탕 글씨로 쓰면 대비 1.6~1.8:1 로 흐리다.
+       text-primary / text-reward / text-status-complete 만 한 톤 진한 잉크를 쓴다 (흰 바탕 4.6:1).
+       배경(bg-primary 등)·다크 모드·.on-dark 안에서는 원래 밝은 색 그대로. tailwind.config textColor 참고 */
+    --primary-text: 165 80% 29%;        /* #0F8568 */
+    --reward-text: 38 88% 33%;          /* #9E680A */
+    --status-complete-text: 38 88% 33%;
     --secondary: 214 16% 95%;           /* Toss 연회색 fill #F1F3F5 */
     --secondary-foreground: 216 16% 24%;/* #333D4B */
     --muted: 214 16% 95%;
@@ -97,6 +103,20 @@
 
     --btn-disabled-bg: 218 18% 93%;
     --btn-disabled-fg: 221 11% 60%;
+
+    /* 153 글리프(메뉴 아이콘) 재질 — components/icons/menuGlyphs.ts.
+       ink = 먹색 부품(TV 테두리·책·톱니 등) · paper = 종이/흰 부품 · tile = 아이콘 칸 */
+    --glyph-ink-t: #5B6778;
+    --glyph-ink-b: #1E2632;
+    --glyph-ink: #1E2632;
+    --glyph-paper-t: #FFFFFF;
+    --glyph-paper-b: #E3E9F0;
+    --glyph-paper-edge: #CBD3DE;
+    --glyph-tile-t: #F6F8FA;
+    --glyph-tile-b: #EBEFF3;
+    --glyph-tile-edge: rgba(15, 23, 42, 0.06);
+    --glyph-tile-hl: rgba(255, 255, 255, 1);
+    --glyph-shadow: rgba(16, 24, 40, 0.16);
   }
 
   .dark {
@@ -171,6 +191,41 @@
 
     --btn-disabled-bg: 218 24% 22%;
     --btn-disabled-fg: 221 13% 47%;
+
+    /* 다크에서는 글자 잉크 = 원래 밝은 색 */
+    --primary-text: 165 70% 52%;
+    --reward-text: 42 90% 64%;
+    --status-complete-text: 42 90% 64%;
+
+    /* 글리프 재질 — 먹색 부품은 은색으로 뒤집어 어두운 칸에서도 보이게 */
+    --glyph-ink-t: #D3DAE4;
+    --glyph-ink-b: #8E9BAE;
+    --glyph-ink: #AEB9C8;
+    --glyph-paper-t: #F3F6F9;
+    --glyph-paper-b: #C9D2DD;
+    --glyph-paper-edge: #7E8A9C;
+    --glyph-tile-t: #273142;
+    --glyph-tile-b: #1C2431;
+    --glyph-tile-edge: rgba(255, 255, 255, 0.07);
+    --glyph-tile-hl: rgba(255, 255, 255, 0.14);
+    --glyph-shadow: rgba(0, 0, 0, 0.4);
+  }
+
+  /* 밝은 화면 속 어두운 섬(단증 배너·그랜드 보스 카드 등) — 그 안의 글자 토큰만 다크 값으로.
+     바탕(--card 등)은 그대로라, 안쪽이 어두운 면이거나 투명한 곳에만 붙인다. */
+  .on-dark {
+    --foreground: 210 40% 98%;
+    --card-foreground: 210 40% 98%;
+    --muted-foreground: 220 14% 71%;
+    --border: 218 24% 22%;
+  }
+  /* 글자 잉크를 원래 밝은 색으로 — var() 로 그 자리의 --primary 를 따라가므로
+     미니게임처럼 --primary 를 바꾼 곳도 맞는다. */
+  .on-dark,
+  .minigame-app {
+    --primary-text: var(--primary);
+    --reward-text: var(--reward);
+    --status-complete-text: var(--status-complete);
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -209,6 +264,10 @@
     --btn-disabled-bg: 218 18% 93%;
     --btn-disabled-fg: 221 11% 60%;
 
+    --primary-text: 165 80% 29%;
+    --reward-text: 38 88% 33%;
+    --status-complete-text: 38 88% 33%;
+
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
   }
@@ -236,11 +295,34 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* 타이포 디테일 (2026-09-29)
+       · 한국어는 띄어쓰기 단위로만 줄바꿈 ("출석하/면" 같은 음절 끊김 방지).
+         칸보다 긴 단어·URL 은 anywhere 로 어디서든 끊겨 넘치지 않는다 (최소 폭 계산도 예전과 같다).
+       · 프리텐다드 본문은 자간 -0.01em — 한글이 성글지 않게.
+       · 없는 굵기를 브라우저가 가짜로 만들지 않게 (가변 폰트라 전 굵기 있음). */
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    letter-spacing: -0.01em;
+    font-synthesis: none;
+    font-kerning: normal;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
     font-weight: 700;
+    /* 제목은 조금 더 조이고, 줄이 나뉘면 양쪽 길이를 맞춘다.
+       (text-wrap 단축 속성은 truncate 의 nowrap 까지 덮으므로 스타일 롱핸드만 쓴다) */
+    letter-spacing: -0.02em;
+    text-wrap-style: balance;
+  }
+
+  /* 문단 마지막 줄에 한 글자만 남는 것 방지 */
+  p {
+    text-wrap-style: pretty;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.28);
   }
 }
 
@@ -307,6 +389,11 @@
   }
   .badge-pill {
     @apply inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-badge;
+  }
+
+  /* ── 153 글리프 (components/icons/GlyphTile) — 칸에서 살짝 떠 보이는 얕은 그림자 ── */
+  .glyph-art {
+    filter: drop-shadow(0 1px 1.1px var(--glyph-shadow));
   }
 
   /* ── Number treatment (rankings, levels, XP) ── */

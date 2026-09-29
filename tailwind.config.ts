@@ -195,6 +195,25 @@ export default {
           legend: "hsl(var(--tier-legend))",
         },
       },
+      // 글자색 전용 (2026-09-29) — 밝은 화면에서 민트·금색 글씨는 한 톤 진한 잉크(--*-text)를 쓴다.
+      // bg-primary·border-primary 같은 면 색은 colors 그대로라 브랜드 민트가 유지된다.
+      // 다크·.on-dark 안에서는 --*-text 가 원래 밝은 색과 같다 (src/index.css).
+      textColor: {
+        primary: {
+          DEFAULT: "hsl(var(--primary-text))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        reward: {
+          DEFAULT: "hsl(var(--reward-text))",
+          foreground: "hsl(var(--reward-foreground))",
+        },
+        status: {
+          locked: "hsl(var(--status-locked))",
+          active: "hsl(var(--primary-text))",
+          pending: "hsl(var(--status-pending))",
+          complete: "hsl(var(--status-complete-text))",
+        },
+      },
       borderRadius: {
         // Existing semantic aliases (kept for back-compat with
         // shadcn primitives that use rounded-lg/md/sm).

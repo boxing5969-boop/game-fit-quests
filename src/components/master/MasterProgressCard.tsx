@@ -52,7 +52,7 @@ export const MasterProgressCard = ({
   return (
     <article
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-reward/30 bg-gradient-to-br from-[hsl(42_92%_12%)] via-card to-card p-4 shadow-glow-soft",
+        "relative overflow-hidden rounded-2xl border border-reward/30 bg-gradient-to-br from-amber-50 via-card to-card p-4 shadow-glow-soft dark:from-[hsl(42_92%_12%)]",
         className,
       )}
     >

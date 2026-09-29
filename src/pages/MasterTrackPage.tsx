@@ -105,7 +105,7 @@ const MasterTrackPage = () => {
         className={cn(
           "relative overflow-hidden rounded-2xl border p-4",
           unlocked
-            ? "border-reward/40 bg-gradient-to-br from-[hsl(42_92%_12%)] via-card to-card shadow-glow-soft"
+            ? "border-reward/40 bg-gradient-to-br from-amber-50 via-card to-card shadow-glow-soft dark:from-[hsl(42_92%_12%)]"
             : "border-border bg-card",
         )}
       >

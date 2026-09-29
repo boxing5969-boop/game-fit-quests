@@ -27,9 +27,10 @@ export const PageHeader = ({
 }: PageHeaderProps) => (
   <header
     className={cn(
-      "w-full backdrop-blur-xl",
+      // 반투명 유리 머리글 — 스크롤되는 내용이 흐리게 비친다 + 머리카락 두께 밑줄
+      "w-full backdrop-blur-xl backdrop-saturate-[1.8]",
       variant === "light" ? "light-surface" : undefined,
-      "bg-background/80 border-b border-border",
+      "bg-background/[0.86] border-b-[0.5px] border-black/[0.1] dark:border-white/[0.08]",
       sticky && "sticky top-0 z-30",
       className,
     )}

@@ -361,7 +361,23 @@ const TutorialFloatingMascotWithDetect = () => {
   return <TutorialFloatingMascot />;
 };
 
+/**
+ * 전시용 화면(TV 사이니지·얼굴 키오스크)은 회원이 고른 테마와 상관없이 항상 다크.
+ * 벽 TV·키오스크는 어두운 매장 조명 기준으로 디자인됐고, 회원 앱 기본이 밝은 톤(2026-09-29)이 되어도 그대로여야 한다.
+ */
+const SignageThemeLock = ({ onChange }: { onChange: (theme: string | undefined) => void }) => {
+  const { pathname } = useLocation();
+  const signage = isSignageRoute(pathname);
+  useEffect(() => {
+    onChange(signage ? "dark" : undefined);
+  }, [signage, onChange]);
+  return null;
+};
+
 const App = () => {
+  const [forcedTheme, setForcedTheme] = useState<string | undefined>(() =>
+    typeof window !== "undefined" && isSignageRoute(window.location.pathname) ? "dark" : undefined,
+  );
   return (
     <ErrorBoundary>
       {/* 65-O: 다크/라이트 모드 — next-themes 가 <html class> 토글.
@@ -375,6 +391,7 @@ const App = () => {
         defaultTheme="light"
         enableSystem={false}
         storageKey="myboxer-theme-v2"
+        forcedTheme={forcedTheme}
         disableTransitionOnChange
       >
         {/* 브라우저 상단바(theme-color) 색을 지금 테마에 맞춤 */}
@@ -382,6 +399,7 @@ const App = () => {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <BrowserRouter>
+              <SignageThemeLock onChange={setForcedTheme} />
               <AuthProvider>
                 <AppRoutes />
               </AuthProvider>

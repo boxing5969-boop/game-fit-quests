@@ -46,7 +46,7 @@ export const MasterLevelCard = ({
         "relative rounded-2xl border transition-all",
         // Variant base
         isGrand &&
-          "border-reward/50 bg-gradient-to-br from-[hsl(42_92%_18%)] via-[hsl(36_96%_14%)] to-[hsl(24_94%_12%)] shadow-[0_0_24px_rgba(246,196,83,0.25)]",
+          "on-dark border-reward/50 bg-gradient-to-br from-[hsl(42_92%_18%)] via-[hsl(36_96%_14%)] to-[hsl(24_94%_12%)] shadow-[0_0_24px_rgba(246,196,83,0.25)]",
         isBoss && !isGrand &&
           "border-primary/40 bg-gradient-to-br from-primary/10 via-card to-card shadow-glow-soft",
         !isBoss &&

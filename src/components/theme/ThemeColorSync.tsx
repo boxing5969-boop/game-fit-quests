@@ -6,11 +6,13 @@ import { useTheme } from "next-themes";
 const THEME_COLORS = { light: "#F2F4F6", dark: "#0B0F17" } as const;
 
 const ThemeColorSync = () => {
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme, forcedTheme } = useTheme();
+  // TV·키오스크는 App 이 dark 로 강제한다 — 그때는 강제 테마를 따른다
+  const theme = forcedTheme ?? resolvedTheme;
 
   useEffect(() => {
     if (typeof document === "undefined") return;
-    const color = resolvedTheme === "dark" ? THEME_COLORS.dark : THEME_COLORS.light;
+    const color = theme === "dark" ? THEME_COLORS.dark : THEME_COLORS.light;
     let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (!meta) {
       meta = document.createElement("meta");
@@ -18,7 +20,7 @@ const ThemeColorSync = () => {
       document.head.appendChild(meta);
     }
     meta.content = color;
-  }, [resolvedTheme]);
+  }, [theme]);
 
   return null;
 };

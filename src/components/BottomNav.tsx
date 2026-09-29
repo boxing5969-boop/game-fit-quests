@@ -1,24 +1,23 @@
 import { useState } from "react";
 import { isSignageRoute } from "@/lib/displayMode";
-import { Home, Trophy, Menu, TrendingUp, Star, X, Ticket } from "lucide-react";
-import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
+import { Star, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import HomeMenuGrid from "@/components/home/HomeMenuGrid";
+import { TabIcon, type TabIconName } from "@/components/icons/tabIcons";
 
 // ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
 // 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 랭크업(로드맵+가치맵 통합 페이지).
-// 접근성은 전체 메뉴 오버레이에 보존.
-// 모든 탭이 선형 아이콘으로 통일. 훈련은 복싱 글러브 커스텀 SVG.
 // 3번째 슬롯: 결제형 수강권(/membership). 단증혜택은 하단탭에서 빼고 전체메뉴에만 둔다.
-const mainTabs = [
-  { path: "/home",          icon: Home,            label: "홈",     emoji: null },
-  { path: "/missions",      icon: BoxingGloveIcon, label: "훈련",    emoji: null },
-  { path: "/membership",    icon: Ticket,          label: "수강권",   emoji: null },
-  { path: "/halloffame",    icon: Trophy,          label: "랭킹",    emoji: null },
-  { path: "/rank-up",       icon: TrendingUp,      label: "랭크업",   emoji: null },
-] as const;
+// 아이콘 = 153 글리프 탭 세트 (components/icons/tabIcons) — 안 고른 탭은 선, 고른 탭은 꽉 찬 모양(애플식).
+const mainTabs: ReadonlyArray<{ path: string; icon: TabIconName; label: string }> = [
+  { path: "/home",       icon: "home",   label: "홈" },
+  { path: "/missions",   icon: "glove",  label: "훈련" },
+  { path: "/membership", icon: "ticket", label: "수강권" },
+  { path: "/halloffame", icon: "trophy", label: "랭킹" },
+  { path: "/rank-up",    icon: "rankup", label: "랭크업" },
+];
 
 // ── Full menu overlay ───────────────────────────────────────────────
 // 전체 메뉴 목록은 lib/appMenu.ts 한 곳 — 홈 첫 화면의 전체 메뉴(HomeMenuGrid)와 같은 목록·같은 버튼.
@@ -73,18 +72,19 @@ const BottomNav = () => {
           />
           <div className="relative z-[61] max-h-[85vh] overflow-y-auto rounded-t-hero border-t border-border bg-card px-4 pb-8 pt-5 shadow-elev-3 safe-area-bottom animate-slide-up">
             <div className="mb-4 flex items-center justify-between px-1">
-              <span className="text-[17px] font-black text-foreground">
+              <span className="text-[17px] font-extrabold text-foreground">
                 전체 메뉴
               </span>
               <div className="flex items-center gap-2">
                 {/* 65-O: 빠른 테마 토글 — Sun/Moon 아이콘 */}
                 <ThemeToggle variant="icon" />
                 <button
+                  type="button"
                   aria-label="메뉴 닫기"
                   onClick={() => setMenuOpen(false)}
-                  className="rounded-pill bg-muted p-1.5 active:scale-95"
+                  className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary transition-transform active:scale-90"
                 >
-                  <X className="h-4 w-4 text-muted-foreground" />
+                  <X className="h-4 w-4 text-muted-foreground" strokeWidth={2.4} />
                 </button>
               </div>
             </div>
@@ -94,17 +94,15 @@ const BottomNav = () => {
         </div>
       )}
 
-      {/* Bottom tab bar */}
+      {/* Bottom tab bar — 반투명 유리(뒤 화면이 흐리게 비침) + 머리카락 두께 윗선 */}
       <nav
         aria-label="주요 메뉴"
-        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card safe-area-bottom"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t-[0.5px] border-black/[0.12] bg-card/[0.86] backdrop-blur-xl backdrop-saturate-[1.8] safe-area-bottom dark:border-white/[0.1]"
       >
         <div className="mx-auto flex max-w-lg items-stretch justify-around px-1">
-          {mainTabs.map(({ path, icon: Icon, label, emoji }) => {
+          {mainTabs.map(({ path, icon, label }) => {
             const active = location.pathname === path;
-            // 훈련 탭 — 핵심 기능이지만 색상·크기는 다른 탭과 100% 동일.
-            //   강조는 아이콘 우상단 별표 배지로만 (차분한 표시).
-            //   active 시 색상은 다른 탭과 같은 규칙 (text-primary).
+            // 훈련 탭 — 핵심 기능. 색·크기는 다른 탭과 같고 아이콘 우상단 별표로만 표시.
             const isTraining = path === "/missions";
             // 65-R: 7일 캠프 Day 7 회고 cascade 가 BottomNav 탭별 click 가능하도록
             //   data-tour 부여. 형식: bottomnav-<path 마지막 segment>.
@@ -112,64 +110,59 @@ const BottomNav = () => {
             return (
               <button
                 key={path}
+                type="button"
                 onClick={() => navigate(path)}
                 aria-current={active ? "page" : undefined}
                 data-tour={`bottomnav-${navSlug}`}
                 className={cn(
-                  "group relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2 transition-transform duration-150 hover:scale-105 active:scale-95",
+                  "group relative flex min-w-0 flex-1 flex-col items-center justify-center gap-[3px] pb-[7px] pt-2 outline-none",
                   active ? "text-primary" : INACTIVE_TONE,
                 )}
               >
-                {emoji ? (
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "text-[22px] leading-none transition-transform duration-150 group-hover:-translate-y-0.5",
-                      active
-                        ? "drop-shadow-[0_0_8px_hsl(8_75%_48%_/_0.55)]"
-                        : "opacity-70",
-                    )}
-                  >
-                    {emoji}
-                  </span>
-                ) : Icon ? (
-                  <span className="relative">
-                    <Icon
-                      size={24}
-                      strokeWidth={active ? 2.5 : 2}
-                      className="transition-transform duration-150 group-hover:-translate-y-0.5"
+                <span className="relative transition-transform duration-150 ease-out group-active:scale-90">
+                  <TabIcon name={icon} active={active} className="h-[26px] w-[26px]" />
+                  {isTraining && (
+                    <Star
+                      aria-hidden
+                      strokeWidth={2}
+                      className="absolute -right-1.5 -top-0.5 h-[11px] w-[11px] fill-amber-400 text-amber-400"
                     />
-                    {/* 훈련 탭 — 핵심 표시 별표 배지 (색·크기는 다른 탭과 동일,
-                        별표만 추가). hover 시 살짝 커지고 회전. */}
-                    {isTraining && (
-                      <Star
-                        size={11}
-                        strokeWidth={2}
-                        aria-hidden
-                        className="absolute -right-2 -top-1 fill-amber-400 text-amber-400 drop-shadow-sm transition-transform duration-150 group-hover:scale-125 group-hover:rotate-[18deg]"
-                      />
-                    )}
-                  </span>
-                ) : null}
-                <span className="relative text-[11px] font-semibold leading-none">
+                  )}
+                </span>
+                <span
+                  className={cn(
+                    "text-[11px] leading-none tracking-[-0.01em]",
+                    active ? "font-bold" : "font-medium",
+                  )}
+                >
                   {label}
                 </span>
               </button>
             );
           })}
 
-          {/* Menu button — opens overlay */}
+          {/* 전체 — 홈의 전체 메뉴와 같은 버튼 시트를 연다 */}
           <button
+            type="button"
             onClick={() => setMenuOpen(true)}
             aria-expanded={menuOpen}
             aria-label="전체 메뉴 열기"
             className={cn(
-              "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2 transition-all active:scale-95",
+              "group flex min-w-0 flex-1 flex-col items-center justify-center gap-[3px] pb-[7px] pt-2 outline-none",
               menuOpen ? "text-primary" : INACTIVE_TONE,
             )}
           >
-            <Menu size={24} strokeWidth={menuOpen ? 2.5 : 2} />
-            <span className="text-[11px] font-semibold leading-none">전체</span>
+            <span className="transition-transform duration-150 ease-out group-active:scale-90">
+              <TabIcon name="all" active={menuOpen} className="h-[26px] w-[26px]" />
+            </span>
+            <span
+              className={cn(
+                "text-[11px] leading-none tracking-[-0.01em]",
+                menuOpen ? "font-bold" : "font-medium",
+              )}
+            >
+              전체
+            </span>
           </button>
         </div>
       </nav>
