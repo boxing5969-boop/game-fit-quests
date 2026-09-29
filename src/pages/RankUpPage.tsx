@@ -4,7 +4,7 @@ import { ArrowLeft, Gift, ChevronDown, Lock, Star, Trophy, User, Play, CheckCirc
 import { useAuth } from "@/contexts/AuthContext";
 import { LEAGUE_SUMMARIES, FULL_VALUE_MAP } from "@/data/valueMapData";
 import { useLevels, useManualLevelUp, usePassBossBattle } from "@/hooks/useQuestData";
-import { useMissions, useMyMissionSubmissions } from "@/hooks/useMissionData";
+import { useMissions, useMyMissionSubmissions, isWarmupMission } from "@/hooks/useMissionData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import RankBadge from "@/components/RankBadge";
@@ -56,14 +56,16 @@ const RankUpPage = () => {
   const subMap = new Map((missionSubs || []).map(s => [s.mission_id, s.status]));
   const isMaxLevel = isManager || (progress?.current_rank === "black" && progress?.current_level === 10);
 
-  const selectedMissions = selectedNode ? (missions || []).filter(m => m.level_id === selectedNode.id) : [];
+  // 워밍업 참고 영상은 레벨 미션이 아니다 — 레벨별 미션·완료 수에서 뺀다 (2026-09-29)
+  const levelMissionList = (missions || []).filter(m => !isWarmupMission(m));
+  const selectedMissions = selectedNode ? levelMissionList.filter(m => m.level_id === selectedNode.id) : [];
 
   const completedForLevel = (levelId: string) => {
-    const levelMissions = (missions || []).filter(m => m.level_id === levelId);
+    const levelMissions = levelMissionList.filter(m => m.level_id === levelId);
     if (isManager) return levelMissions.length;
     return levelMissions.filter(m => subMap.get(m.id) === "approved").length;
   };
-  const totalForLevel = (levelId: string) => (missions || []).filter(m => m.level_id === levelId).length;
+  const totalForLevel = (levelId: string) => levelMissionList.filter(m => m.level_id === levelId).length;
 
   return (
     // 랭크업(게임) 화면은 라이트 모드에서도 다크 톤으로 렌더 — 카드들이 다크 기준으로

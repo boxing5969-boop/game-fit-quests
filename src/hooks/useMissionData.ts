@@ -2,6 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * 워밍업 참고 영상인지 (missions.category = 'warmup', 2026-09-29).
+ * 워밍업은 운동 전 몸풀기 참고용이라 레벨 미션 목록·진행률·미션 제출·레벨 심사에서 뺀다.
+ * (level_id 는 필수라 원래 레벨에 붙어 있으므로 레벨별로 셀 때 반드시 이걸로 걸러야 한다)
+ */
+export const isWarmupMission = (m: { category?: string | null } | null | undefined): boolean =>
+  m?.category === "warmup";
+
 // ─── Missions with videos ────
 export const useMissions = () =>
   useQuery({

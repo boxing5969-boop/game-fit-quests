@@ -25,6 +25,7 @@ import {
   useMissions,
   useMyMissionSubmissions,
   useSubmitMission,
+  isWarmupMission,
 } from "@/hooks/useMissionData";
 import { useLevels } from "@/hooks/useQuestData";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,7 +94,19 @@ interface MissionForm {
   key_point_3: string;
   video_url: string;
   poster_url: string;
+  /** level: 레벨 미션 / warmup: 워밍업 참고 영상 (레벨 목록·진행률·제출에서 빠진다) */
+  category: "level" | "warmup";
 }
+/** 워밍업 참고 영상 행에 필요한 필드만 (useMissions 결과의 부분 집합) */
+type WarmupMission = {
+  id: string;
+  title: string;
+  key_point_1: string;
+  key_point_2: string;
+  key_point_3: string;
+  mission_videos?: Array<{ video_url: string | null; poster_url: string | null }> | null;
+};
+
 const emptyMissionForm: MissionForm = {
   title: "",
   description: "",
@@ -106,6 +119,7 @@ const emptyMissionForm: MissionForm = {
   key_point_3: "",
   video_url: "",
   poster_url: "",
+  category: "level",
 };
 
 const MissionsPage = () => {
@@ -142,6 +156,8 @@ const MissionsPage = () => {
     keyPoints: string[];
     missionId: string;
     canSubmit: boolean;
+    /** 워밍업 참고 영상 — 도전 시작·즉시 클리어 버튼 없이 보기만 */
+    reference?: boolean;
   } | null>(null);
 
   // League expand/collapse — default: current rank expanded.
@@ -166,7 +182,8 @@ const MissionsPage = () => {
           .sort((a, b) => a.level_number - b.level_number);
         const rankMissions = rankLevels.flatMap((level) =>
           (missions || [])
-            .filter((m) => m.level_id === level.id)
+            // 워밍업 참고 영상은 레벨 미션이 아니다 — 위의 🔥 워밍업 칸에서 따로 보여준다
+            .filter((m) => m.level_id === level.id && !isWarmupMission(m))
             .map((m) => ({ mission: m, level })),
         );
         return { rank, rankLevels, rankMissions };
@@ -203,8 +220,11 @@ const MissionsPage = () => {
     return "active";
   };
 
-  const totalMissions = (missions || []).length;
-  const completedCount = (missions || []).filter(
+  // 진행률은 레벨 미션만 센다 — 워밍업 참고 영상(제출 없음)은 뺀다
+  const levelMissionList = (missions || []).filter((m) => !isWarmupMission(m));
+  const warmupMissions = (missions || []).filter((m) => isWarmupMission(m));
+  const totalMissions = levelMissionList.length;
+  const completedCount = levelMissionList.filter(
     (m) => submissionMap.get(m.id) === "approved",
   ).length;
   const progressPct =
@@ -268,6 +288,29 @@ const MissionsPage = () => {
     });
   };
 
+  // 🔥 워밍업 참고 영상 — 제출·즉시 클리어 없이 보기만 한다
+  const openWarmup = (mission: WarmupMission) => {
+    const video = mission.mission_videos?.[0];
+    if (!video) {
+      toast.error("영상이 아직 등록되지 않았습니다");
+      return;
+    }
+    setVideoModal({
+      show: true,
+      videoUrl: video.video_url ?? "",
+      posterUrl: video.poster_url,
+      title: mission.title,
+      keyPoints: [
+        mission.key_point_1,
+        mission.key_point_2,
+        mission.key_point_3,
+      ],
+      missionId: mission.id,
+      canSubmit: false,
+      reference: true,
+    });
+  };
+
   const handleFileUpload = async (file: File, type: "video" | "poster") => {
     const setUploading =
       type === "video" ? setUploadingVideo : setUploadingPoster;
@@ -308,6 +351,7 @@ const MissionsPage = () => {
       key_point_3: mission.key_point_3,
       video_url: video?.video_url || "",
       poster_url: video?.poster_url || "",
+      category: isWarmupMission(mission) ? "warmup" : "level",
     });
     setEditingId(mission.id);
     setShowForm(true);
@@ -330,6 +374,7 @@ const MissionsPage = () => {
         key_point_1: form.key_point_1.trim(),
         key_point_2: form.key_point_2.trim(),
         key_point_3: form.key_point_3.trim(),
+        category: form.category,
       };
       if (editingId) {
         const { error } = await supabase
@@ -500,6 +545,36 @@ const MissionsPage = () => {
               </div>
             </section>
 
+            {/* ─── 🔥 워밍업 영상 — 레벨 미션과 별개, 몸풀기 참고용 (2026-09-29) ─── */}
+            {warmupMissions.length > 0 && (
+              <section className="overflow-hidden rounded-card border border-border bg-card shadow-elev-1">
+                <div className="px-5 py-4">
+                  <h3 className="text-body-lg text-foreground">🔥 워밍업 영상</h3>
+                  <p className="text-caption text-muted-foreground">
+                    운동 전 몸풀기 참고용 · 레벨 미션과 별개예요
+                  </p>
+                </div>
+                <ul className="divide-y divide-border border-t border-border">
+                  {warmupMissions.map((mission) => (
+                    <WarmupRow
+                      key={mission.id}
+                      mission={mission}
+                      onClick={() => openWarmup(mission)}
+                      admin={
+                        isAdmin
+                          ? {
+                              onEdit: () => openEditMission(mission),
+                              onDelete: () =>
+                                handleDeleteMission(mission.id, mission.title),
+                            }
+                          : undefined
+                      }
+                    />
+                  ))}
+                </ul>
+              </section>
+            )}
+
             {/* ─── League sections ─── */}
             {isLoading ? (
               <SkeletonList />
@@ -631,7 +706,7 @@ const MissionsPage = () => {
           keyPoints={videoModal.keyPoints}
           onClose={() => setVideoModal(null)}
           onStartChallenge={
-            videoModal.canSubmit || isAdmin
+            !videoModal.reference && (videoModal.canSubmit || isAdmin)
               ? () => handleSubmit(videoModal.missionId)
               : undefined
           }
@@ -688,6 +763,41 @@ const MissionsPage = () => {
                   ))}
                 </select>
               </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setForm((f) => ({
+                    ...f,
+                    category: f.category === "warmup" ? "level" : "warmup",
+                  }))
+                }
+                aria-pressed={form.category === "warmup"}
+                className={cn(
+                  "flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-all",
+                  form.category === "warmup"
+                    ? "border-reward/50 bg-reward/10"
+                    : "border-border bg-background",
+                )}
+              >
+                <span className="min-w-0">
+                  <span className="block text-body-sm font-bold text-foreground">
+                    🔥 워밍업 영상으로 분류
+                  </span>
+                  <span className="block text-caption text-muted-foreground">
+                    켜면 레벨 미션·진행률에서 빠지고 워밍업 칸에만 보여요 (제출 없음)
+                  </span>
+                </span>
+                <span
+                  className={cn(
+                    "shrink-0 rounded-pill px-2.5 py-1 text-caption font-bold",
+                    form.category === "warmup"
+                      ? "bg-reward text-reward-foreground"
+                      : "bg-secondary text-secondary-foreground",
+                  )}
+                >
+                  {form.category === "warmup" ? "켜짐" : "꺼짐"}
+                </span>
+              </button>
               <div>
                 <label className="mb-1 block text-caption text-muted-foreground">
                   미션 제목 *
@@ -961,7 +1071,8 @@ const MissionRow = ({
         type="button"
         onClick={isLocked ? undefined : onClick}
         disabled={isLocked}
-        className="flex flex-1 items-center gap-3 text-left disabled:cursor-default"
+        // min-w-0: 긴 제목이 말줄임 없이 줄 밖으로 밀어내 오른쪽 상태 아이콘이 잘리던 문제 (360px 폰)
+        className="flex min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
       >
         {/* Level tile */}
         <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-[hsl(var(--surface-2))] text-center">
@@ -1004,12 +1115,13 @@ const MissionRow = ({
         {/* Title + difficulty + reward */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h4 className="truncate text-[15px] font-bold leading-tight text-foreground">
+            {/* 폰(360px)에선 LV·썸네일·상태 아이콘과 한 줄에 들어가야 해서 제목은 2줄까지 보여준다 */}
+            <h4 className="line-clamp-2 text-[14px] font-bold leading-snug text-foreground">
               {mission.title}
             </h4>
             {hasVideo && (
               <span
-                className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-primary"
+                className="hidden shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-primary sm:inline-block"
                 aria-label="영상 있음"
               >
                 ▶ 영상
@@ -1030,7 +1142,7 @@ const MissionRow = ({
                 />
               ))}
             </div>
-            <span className="number-font text-caption font-bold text-reward">
+            <span className="number-font whitespace-nowrap text-caption font-bold text-reward">
               +{mission.xp_reward} XP
             </span>
           </div>
@@ -1075,6 +1187,84 @@ const MissionRow = ({
         {!isLocked && (
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         )}
+      </div>
+    </li>
+  );
+};
+
+/** 🔥 워밍업 참고 영상 한 줄 — 상태·XP 없이 영상만 (제출 없음) */
+const WarmupRow = ({
+  mission,
+  onClick,
+  admin,
+}: {
+  mission: WarmupMission;
+  onClick: () => void;
+  admin?: { onEdit: () => void; onDelete: () => void };
+}) => {
+  const posterUrl = mission.mission_videos?.[0]?.poster_url ?? null;
+  return (
+    <li className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-[hsl(var(--surface-2))]/40">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+      >
+        <div
+          className="relative h-10 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-[hsl(var(--surface-2))]"
+          aria-hidden
+        >
+          {posterUrl ? (
+            <img
+              src={posterUrl}
+              alt=""
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-reward/20 to-reward/5" />
+          )}
+          <div className="absolute inset-0 flex items-center justify-center bg-foreground/30">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/95 shadow">
+              <Play className="h-2.5 w-2.5 fill-foreground text-foreground" />
+            </span>
+          </div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <h4 className="truncate text-[15px] font-bold leading-tight text-foreground">
+            {mission.title}
+          </h4>
+          <span className="mt-1 inline-block rounded-md bg-reward/15 px-1.5 py-0.5 text-[10px] font-black text-reward">
+            🔥 워밍업 · 참고용
+          </span>
+        </div>
+      </button>
+      <div className="flex shrink-0 items-center gap-1.5">
+        {admin && (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                admin.onEdit();
+              }}
+              className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary/70 text-foreground active:scale-95"
+              aria-label="워밍업 영상 수정"
+            >
+              <Pencil className="h-3 w-3" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                admin.onDelete();
+              }}
+              className="flex h-7 w-7 items-center justify-center rounded-lg bg-destructive/70 text-destructive-foreground active:scale-95"
+              aria-label="워밍업 영상 삭제"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          </>
+        )}
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </div>
     </li>
   );

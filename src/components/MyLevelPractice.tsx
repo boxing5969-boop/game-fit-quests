@@ -9,6 +9,7 @@
 //     레벨이 있어(예: 블루 2 '잽 마스터리' 글 ↔ '1-2-3 콤비' 그림) 여기엔 붙이지 않는다.
 //   · 영상이 있는 레벨은 영상 기준으로만 보여준다 — 커리큘럼 글과 올린 영상의 레벨 배치가 달라서
 //     둘을 섞으면 "레벨 3 = 카운터" 글 옆에 십자스텝 영상이 붙는다.
+//   · 맨 위 🔥 워밍업 — 레벨과 상관없는 몸풀기 참고 영상(줄넘기 등, missions.category='warmup'). 따라했어요·진행에 안 들어간다.
 // 따라했어요 체크는 영상 마스터·오늘의 영상과 같은 기기 저장(153_video_watched)을 공유한다.
 // "오늘 연습 완료"는 levelPractice 가 기기에 KST 날짜로 남기고, 코스 3번이 그걸 보고 완료 표시한다.
 import { useEffect, useState, type SyntheticEvent } from "react";
@@ -20,7 +21,7 @@ import { getLevelById } from "@/data/allLevelsData";
 import { RANK_LABELS, RANK_ORDER, formatRank } from "@/lib/rankLabels";
 import VideoPlayer from "@/components/VideoPlayer";
 import {
-  useLevelVideos, useWatchedVideos, parseVideoTitle, youtubeId, youtubeThumb,
+  useLevelVideos, useWarmupVideos, useWatchedVideos, parseVideoTitle, youtubeId, youtubeThumb,
   type LevelVideo,
 } from "@/hooks/useLevelVideos";
 import { hasPracticedToday, markPracticedToday } from "@/lib/levelPractice";
@@ -68,10 +69,13 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
   const { user, progress } = useAuth();
   const [viewLevel, setViewLevel] = useState(levelNumber);
   const [playing, setPlaying] = useState<LevelVideo | null>(null);
+  // 워밍업 영상은 보기만 한다(따라했어요 없음) — 레벨 영상 플레이어와 따로 연다
+  const [warmupPlaying, setWarmupPlaying] = useState<LevelVideo | null>(null);
   const [doneToday, setDoneToday] = useState(() => hasPracticedToday(user?.id));
   const { watched, toggle, countFor } = useWatchedVideos();
   const { data: levelVideos = [], isLoading: levelLoading } = useLevelVideos(league, viewLevel);
   const { data: titleVideos = [], isLoading: titleLoading } = useLevelVideos(league, TITLE_LEVEL);
+  const { data: warmupVideos = [] } = useWarmupVideos();
 
   // 코스 카드에서 눌러 들어오면 화면 맨 위(목표)부터 보이게
   useEffect(() => {
@@ -136,6 +140,43 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
         <h2 className="text-lg font-black text-foreground">🥊 내 레벨 연습하기</h2>
         <p className="mt-0.5 text-[12px] text-muted-foreground">{formatRank(league, levelNumber)}</p>
       </div>
+
+      {/* ── 🔥 워밍업 — 연습 전 몸풀기 참고 영상 (레벨과 상관없음) ── */}
+      {warmupVideos.length > 0 && (
+        <section className="rounded-2xl border border-border bg-card p-3.5 shadow-elev-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[13px] font-black text-foreground">🔥 워밍업</p>
+            <span className="text-[10px] font-bold text-muted-foreground">연습 전 몸풀기 · 참고용</span>
+          </div>
+          <div className="mt-2.5 grid grid-cols-3 gap-2">
+            {warmupVideos.map((v) => {
+              const t = parseVideoTitle(v.title);
+              const thumb = v.posterUrl || youtubeThumb(v.videoUrl);
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setWarmupPlaying(v)}
+                  aria-label={`워밍업 ${t.name} 영상 보기`}
+                  className="min-w-0 text-left transition-transform active:scale-[0.97]"
+                >
+                  <span className="relative block aspect-video overflow-hidden rounded-xl bg-muted">
+                    {thumb && (
+                      <img src={thumb} alt="" loading="lazy" onError={hideImg} className="h-full w-full object-cover" />
+                    )}
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/55">
+                        <Play className="ml-0.5 h-3.5 w-3.5 fill-white text-white" />
+                      </span>
+                    </span>
+                  </span>
+                  <span className="mt-1 line-clamp-2 block text-[11px] font-bold leading-tight text-foreground">{t.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* ── 🏆 최종 목표: 레벨 10 타이틀매치 영상 → 1~10 여정 ── */}
       <section className="rounded-3xl border-2 border-reward/40 bg-card p-4 shadow-elev-1">
@@ -395,6 +436,18 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
             setPlaying(null);
           }}
           challengeLabel="따라했어요 ✓"
+        />,
+        document.body,
+      )}
+
+      {/* 워밍업 플레이어 — 보기만 (따라했어요 버튼 없음) */}
+      {warmupPlaying && createPortal(
+        <VideoPlayer
+          videoUrl={playableUrl(warmupPlaying.videoUrl)}
+          posterUrl={warmupPlaying.posterUrl}
+          title={parseVideoTitle(warmupPlaying.title).name}
+          keyPoints={warmupPlaying.keyPoints}
+          onClose={() => setWarmupPlaying(null)}
         />,
         document.body,
       )}

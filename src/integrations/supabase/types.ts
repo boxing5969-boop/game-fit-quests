@@ -3393,6 +3393,7 @@ export type Database = {
       }
       missions: {
         Row: {
+          category: string
           created_at: string
           description: string
           difficulty: number
@@ -3407,6 +3408,7 @@ export type Database = {
           xp_reward: number
         }
         Insert: {
+          category?: string
           created_at?: string
           description?: string
           difficulty?: number
@@ -3421,6 +3423,7 @@ export type Database = {
           xp_reward?: number
         }
         Update: {
+          category?: string
           created_at?: string
           description?: string
           difficulty?: number

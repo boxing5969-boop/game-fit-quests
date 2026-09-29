@@ -225,7 +225,12 @@ const MissionManager = () => {
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-foreground truncate">{mission.title}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{getLevelLabel(mission.level_id)}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {getLevelLabel(mission.level_id)}
+                    {mission.category === "warmup" && (
+                      <span className="ml-1.5 rounded-md bg-reward/15 px-1.5 py-0.5 text-[10px] font-black text-reward">🔥 워밍업</span>
+                    )}
+                  </p>
                   <div className="mt-1.5 flex items-center gap-2">
                     <span className="text-xs font-bold text-primary">+{mission.xp_reward} XP</span>
                     <span className="flex items-center gap-0.5">

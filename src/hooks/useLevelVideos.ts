@@ -71,8 +71,30 @@ export const useLevelVideos = (league: string, levelNumber: number) =>
         .from("missions")
         .select("id, title, description, key_point_1, key_point_2, key_point_3, sort_order, mission_videos(video_url, poster_url), levels!inner(rank_name, level_number)")
         .eq("is_active", true)
+        // 워밍업 참고 영상(줄넘기 등)은 레벨 영상이 아니다 — 워밍업 칸(useWarmupVideos)에서 따로 보여준다
+        .neq("category", "warmup")
         .eq("levels.rank_name", league as never)
         .eq("levels.level_number", levelNumber)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return mapMissions(data);
+    },
+  });
+
+/**
+ * 🔥 워밍업 참고 영상 — 레벨과 상관없이 운동 전 몸풀기용 (missions.category = 'warmup', 2026-09-29).
+ * 따라했어요·레벨 진행에는 들어가지 않는다.
+ */
+export const useWarmupVideos = () =>
+  useQuery({
+    queryKey: ["level-videos", "warmup"],
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<LevelVideo[]> => {
+      const { data, error } = await supabase
+        .from("missions")
+        .select(MISSION_COLS)
+        .eq("is_active", true)
+        .eq("category", "warmup")
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return mapMissions(data);
