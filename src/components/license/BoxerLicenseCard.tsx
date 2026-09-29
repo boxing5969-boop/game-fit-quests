@@ -157,7 +157,8 @@ export interface BoxerLicenseCardProps {
   elapsedMinutes?: number;
   /** 지도진 카드 (2026-09-22): 리그·레벨·승급 막대 대신 직함("지점장님")을 보인다. name 에는 이름+직함을 넘긴다. */
   staff?: { title: string } | null;
-  /** PT(퍼스널 트레이닝) 회원 (2026-09-29) — 이름 옆 파란 배지 + "PT · 경험치 2배". 2배 적립 자체는 서버(DB 트리거)가 한다. */
+  /** PT(퍼스널 트레이닝) 회원 (2026-09-29) — 이름 옆 파란 배지만. 경험치 2배는 서버(DB 트리거)가 조용히 준다 —
+   *  화면에 "경험치 2배" 같은 글은 쓰지 않는다(대표님: 일반 회원님들이 차별로 느낄 수 있다). */
   pt?: boolean;
 }
 
@@ -473,11 +474,6 @@ const BoxerLicenseCard = ({
             {/* 메타 정보 (연속일 / 운동시간) — 지도진은 연속 출석을 세지 않는다 */}
             {!staff && (cfg.showStreak || elapsedMinutes !== undefined) && size !== "compact" && (
               <div className={`mt-2 flex flex-wrap items-center gap-2 ${cfg.metaText}`}>
-                {pt && (
-                  <span className="inline-flex items-center rounded-full bg-[#3182F6]/20 px-2 py-0.5 font-black text-[#9CC8FF] ring-1 ring-inset ring-[#3182F6]/45">
-                    PT · 경험치 2배
-                  </span>
-                )}
                 {streakDays > 0 && cfg.showStreak && (
                   <span className="inline-flex items-center gap-1 text-orange-300">
                     <Flame className="h-3 w-3" />

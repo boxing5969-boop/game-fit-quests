@@ -4,6 +4,7 @@
  * 인증 배지 문법(물결 로제트 + 흰 체크)을 153 글리프 결로 그렸다: 위→아래 블루 그라데이션 면 + 위쪽 하이라이트.
  * 로제트는 r = 10.1 + 0.95·cos(8θ) 를 96점으로 뽑은 8잎 경로(24×24) — 12px 에서도 톱니가 뭉개지지 않는다.
  * 색은 토스 블루 계열. 리그 블루(bg-blue-500 사각 배지)와는 모양으로 구분된다.
+ * 이름표(툴팁·읽어 주기)도 "PT 회원" 까지만 — "경험치 2배" 는 화면에 쓰지 않는다(일반 회원 차별감, 대표님 2026-09-29).
  */
 import { useId } from "react";
 
@@ -17,7 +18,7 @@ interface PtBadgeProps {
   title?: string;
 }
 
-const PtBadge = ({ className = "h-5 w-5", glow = false, title = "PT 회원 · 경험치 2배" }: PtBadgeProps) => {
+const PtBadge = ({ className = "h-5 w-5", glow = false, title = "PT 회원" }: PtBadgeProps) => {
   // useId 는 ":r0:" 꼴이라 url(#…) 참조가 깨질 수 있어 영문·숫자만 남긴다 (GlyphTile 과 같은 방식)
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const fill = `ptb-fill-${uid}`;

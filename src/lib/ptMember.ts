@@ -4,6 +4,7 @@
  * PT 여부는 브로제이 PT 수업권 기준이다. 153OS 가 회원별 이용권을 확인할 때 같이 기록하고,
  * sync-pt-members(매시 40분)가 profiles.pt_until(KST 날짜)에 옮긴다. pt_until 이 오늘 이후면 PT 회원.
  * 경험치 2배는 서버(DB 트리거 trg_pt_xp_bonus)가 같은 기준(is_pt_active)으로 준다 — 이 함수는 화면 표시만 한다.
+ * 화면에는 파란 배지만 — "경험치 2배" 같은 글은 쓰지 않는다(일반 회원님들이 차별로 느낄 수 있다, 대표님 2026-09-29).
  */
 import { kstToday } from "@/lib/levelPractice";
 
