@@ -99,7 +99,7 @@ const MileageSettingsCard = () => {
         <Coins className="h-4 w-4 text-reward" /> 마일리지 적립 규칙
       </h2>
       <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
-        회원 앱 홈의 마일리지 카드에 쌓여요. 지도진·관리자 계정은 적립되지 않아요.
+        회원 앱 MY복서의 마일리지 카드에 쌓여요. 지도진·관리자 계정은 적립되지 않아요.
         금액을 바꾸면 그 다음 적립부터 적용되고, 껐다가 다시 켜면 켠 시각부터 적립돼요(소급 없음).
       </p>
 

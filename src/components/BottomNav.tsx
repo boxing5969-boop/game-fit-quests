@@ -101,7 +101,8 @@ const BottomNav = () => {
       >
         <div className="mx-auto flex max-w-lg items-stretch justify-around px-1">
           {mainTabs.map(({ path, icon, label }) => {
-            const active = location.pathname === path;
+            // MY복서(예전 홈 화면)는 '홈' 탭 영역으로 본다 (2026-09-29)
+            const active = location.pathname === path || (path === "/home" && location.pathname === "/myboxer");
             // 훈련 탭 — 핵심 기능. 색·크기는 다른 탭과 같고 아이콘 우상단 별표로만 표시.
             const isTraining = path === "/missions";
             // 65-R: 7일 캠프 Day 7 회고 cascade 가 BottomNav 탭별 click 가능하도록

@@ -200,6 +200,10 @@ export interface BranchNicknameRow {
   /** 지금 받고 있는 좋아요(닉네임왕 점수와 같은 정의) */
   likes: number;
   liked_by_me: boolean;
+  /** 2026-09-29 — 목록에서도 누군지 알아보게: 지점(전체관리자 전 지점 보기용)·리그·레벨 */
+  branch?: string | null;
+  rank?: string | null;
+  level?: number | null;
 }
 /** 좋아요를 못 누르는 이유 — change_credentials: 처음 받은 아이디·비밀번호 그대로, not_member: 지점 회원 아님, no_branch: 지점 없음 */
 export type NicknameLikeBlock = "change_credentials" | "not_member" | "no_branch";
@@ -210,6 +214,8 @@ export interface BranchNicknames {
   can_like: boolean;
   /** null = 가능, admin_test = 관리자 체험(점수에는 안 들어감) */
   reason: NicknameLikeBlock | "admin_test" | null;
+  /** 전체관리자·관리자(대표님 153본사 계정) — 지점과 상관없이 전 지점 회원 목록 */
+  all_branches: boolean;
 }
 
 type RawNicknameRow = Omit<BranchNicknameRow, "likes"> & { likes?: number | string | null; likes_month?: number | string | null };
@@ -226,7 +232,44 @@ export async function getBranchNicknames(search: string | null, limit = 60): Pro
     my_given: Number(data?.my_given ?? 0),
     can_like: data?.can_like ?? false,
     reason: data?.reason ?? null,
+    all_branches: data?.all_branches === true,
   };
+}
+
+// ── 라이센스 카드 한 장 (2026-09-29) — 하트 = 닉네임 좋아요와 같은 하트 ──────────────
+/** 하트를 못 누르는 이유 — self: 내 카드, target_no_nickname: 닉네임을 안 정한 회원, admin_test: 관리자 체험(점수 제외) */
+export type LicenseLikeReason =
+  | "self" | "target_no_nickname" | "target_not_member" | "admin_test" | "not_member" | "change_credentials" | null;
+export interface MemberLicense {
+  user_id: string;
+  /** 랭킹과 같은 이름 규칙 — 닉네임, 비었으면 '익명xxxxxx' (실명·전화번호는 오지 않는다) */
+  display: string;
+  has_nickname: boolean;
+  branch: string | null;
+  rank: string;
+  level: number;
+  bosses_cleared: number;
+  streak_days: number;
+  master_track_unlocked: boolean;
+  master_level: number;
+  overall_level: number | null;
+  avatar_url: string | null;
+  parts_json: { style?: string; customization?: Record<string, unknown> } | null;
+  issued_at: string | null;
+  pt: boolean;
+  likes: number;
+  liked_by_me: boolean;
+  is_me: boolean;
+  can_like: boolean;
+  like_reason: LicenseLikeReason;
+}
+
+/** 다른 회원(또는 나)의 라이센스 — 서버가 같은 지점·관리자 전 지점 규칙을 검사한다 */
+export async function getMemberLicense(userId: string): Promise<MemberLicense> {
+  const { data, error } = await sbRpc<MemberLicense>("get_member_license", { p_user: userId });
+  if (error) throw new Error(translateError(error));
+  if (!data) throw new Error("라이센스를 불러오지 못했어요");
+  return { ...data, likes: Number(data.likes ?? 0), level: Number(data.level ?? 1), streak_days: Number(data.streak_days ?? 0) };
 }
 
 /** 좋아요 토글 — 서버가 같은 지점·본인 제외·1인 1좋아요·자격을 검사한다. likes = 대상이 지금 받고 있는 좋아요 */

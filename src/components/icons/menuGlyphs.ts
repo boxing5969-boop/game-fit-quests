@@ -11,6 +11,7 @@
  */
 
 export type MenuGlyphName =
+  | "myboxer"
   | "play"
   | "glove"
   | "books"
@@ -52,6 +53,13 @@ const GEAR_TEETH = [0, 45, 90, 135, 180, 225, 270, 315]
   .join("");
 
 export const MENU_GLYPHS: Record<MenuGlyphName, (p: string) => string> = {
+  /** MY복서 — 내 복서 홈(예전 홈 화면: 라이센스 카드·오늘의 할 일·순위). 먹색 집 + 민트 지붕 + 금별 (2026-09-29) */
+  myboxer: (p) => `${defs(p, ["ink", "mint", "gold"])}
+<path d="M10.5 22.3 22.2 12.1a2.8 2.8 0 0 1 3.6 0l11.7 10.2v16.2a4 4 0 0 1-4 4h-19a4 4 0 0 1-4-4Z" fill="url(#${p}ink)"/>
+<path d="M6.2 23.8 24 8.2l17.8 15.6" fill="none" stroke="url(#${p}mint)" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.8 19.9 19.6 13" stroke="#fff" stroke-opacity=".6" stroke-width="1.8" stroke-linecap="round"/>
+<path d="M24 25.6l2.2 4.5 5 .7-3.6 3.5.8 4.9-4.4-2.3-4.4 2.3.8-4.9-3.6-3.5 5-.7Z" fill="url(#${p}gold)" stroke="url(#${p}gold)" stroke-width="1.4" stroke-linejoin="round"/>`,
+
   /** 153플레이 — 영상관: 먹색 모니터 + 민트 화면 + 재생 */
   play: (p) => `${defs(p, ["ink", "mint"])}
 <rect x="4.5" y="8.5" width="39" height="28" rx="8" fill="url(#${p}ink)"/>

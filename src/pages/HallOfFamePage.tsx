@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
+import MemberLicenseSheet from "@/components/license/MemberLicenseSheet";
 
 import {
   AppPage,
@@ -145,6 +146,8 @@ const HallOfFamePage = () => {
     currentRank: string;
     currentLevel: number;
   } | null>(null);
+  // 랭킹에서 누른 회원의 라이센스 (2026-09-29 — 킹즈오브아너식 프로필 보기 + 하트. 추격 목표 지정은 그 안의 버튼으로)
+  const [licenseMember, setLicenseMember] = useState<{ id: string; nickname: string } | null>(null);
   const [setRank, setSetRank] = useState("white");
   const [setLevel, setSetLevel] = useState(1);
   const [settingLevel, setSettingLevel] = useState(false);
@@ -333,13 +336,13 @@ const HallOfFamePage = () => {
                 getScore={getScore}
                 getMeta={getMeta}
                 isAdmin={isAdmin}
-                onRowSetRival={handleSetRival}
+                onRowOpen={(m) => setLicenseMember({ id: m.r_user_id, nickname: m.r_nickname })}
                 onAdminEdit={openLevelSet}
               />
             ) : (
               <RankingEmpty
                 tab={activeTab}
-                onCheckin={() => navigate("/home")}
+                onCheckin={() => navigate("/myboxer")}
                 onMissions={() => navigate("/missions")}
                 onBoss={() => navigate("/rank-up")}
               />
@@ -386,6 +389,30 @@ const HallOfFamePage = () => {
           </>
         )}
       </div>
+
+      {/* 랭킹에서 누른 회원의 라이센스 — 하트 + (남이면) 추격 목표 지정 */}
+      <MemberLicenseSheet
+        userId={licenseMember?.id ?? null}
+        onClose={() => setLicenseMember(null)}
+        extraAction={
+          licenseMember && licenseMember.id !== user?.id && progress?.rival_id !== licenseMember.id ? (
+            <button
+              type="button"
+              onClick={() => {
+                handleSetRival({ r_user_id: licenseMember.id, r_nickname: licenseMember.nickname });
+                setLicenseMember(null);
+              }}
+              className="h-11 w-full rounded-xl border border-border bg-card text-[14px] font-bold text-foreground transition-transform active:scale-[0.98]"
+            >
+              🎯 추격 목표로 정하기
+            </button>
+          ) : licenseMember && progress?.rival_id === licenseMember.id ? (
+            <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-center text-[12.5px] font-semibold text-muted-foreground">
+              🎯 지금 추격 중인 회원이에요
+            </p>
+          ) : null
+        }
+      />
 
       {/* Admin: Level Set Modal */}
       {levelSetModal?.show && (
@@ -489,6 +516,12 @@ const HallOfFamePage = () => {
  *  user's own row gets a subtle primary ring.
  * ────────────────────────────────────────────────────────── */
 
+/** 라이센스를 여는 데 필요한 최소 정보 — 랭킹 행에서 꺼낸다 */
+interface RankRowRef {
+  r_user_id: string;
+  r_nickname: string;
+}
+
 interface PodiumMember {
   r_user_id: string;
   r_nickname: string;
@@ -504,6 +537,7 @@ const PodiumCard = ({
   tall,
   isMe,
   score,
+  onOpen,
 }: {
   member: PodiumMember;
   rank: 1 | 2 | 3;
@@ -511,11 +545,17 @@ const PodiumCard = ({
   tall?: boolean;
   isMe?: boolean;
   score: string | number;
+  onOpen?: () => void;
 }) => {
   const t = PODIUM_TONE[tone];
+  const Root = onOpen ? "button" : "div";
   return (
-    <div
+    <Root
+      type={onOpen ? "button" : undefined}
+      onClick={onOpen}
+      aria-label={onOpen ? `${member.r_nickname} 라이센스 보기` : undefined}
       className={cn(
+        onOpen && "w-full transition-transform active:scale-[0.98]",
         "flex flex-col items-center gap-2 rounded-card border bg-card p-3 text-center",
         t.border,
         t.bg,
@@ -549,7 +589,7 @@ const PodiumCard = ({
       {isMe && (
         <span className={cn("badge-pill", t.pillClass)}>내 순위</span>
       )}
-    </div>
+    </Root>
   );
 };
 
@@ -557,10 +597,12 @@ const Podium = ({
   top3,
   userId,
   getScore,
+  onOpen,
 }: {
   top3: any[];
   userId?: string;
   getScore: (m: any) => string | number;
+  onOpen?: (m: RankRowRef) => void;
 }) => {
   const [first, second, third] = top3;
   return (
@@ -572,6 +614,7 @@ const Podium = ({
           tone="silver"
           score={getScore(second)}
           isMe={second.r_user_id === userId}
+          onOpen={onOpen ? () => onOpen(second) : undefined}
         />
       )}
       {first && (
@@ -582,6 +625,7 @@ const Podium = ({
           tall
           score={getScore(first)}
           isMe={first.r_user_id === userId}
+          onOpen={onOpen ? () => onOpen(first) : undefined}
         />
       )}
       {third && (
@@ -591,6 +635,7 @@ const Podium = ({
           tone="bronze"
           score={getScore(third)}
           isMe={third.r_user_id === userId}
+          onOpen={onOpen ? () => onOpen(third) : undefined}
         />
       )}
     </div>
@@ -608,7 +653,7 @@ const RankingList = ({
   getScore,
   getMeta,
   isAdmin,
-  onRowSetRival,
+  onRowOpen,
   onAdminEdit,
 }: {
   list: any[];
@@ -617,7 +662,8 @@ const RankingList = ({
   getScore: (m: any) => string | number;
   getMeta: (m: any) => string;
   isAdmin: boolean;
-  onRowSetRival: (m: any) => void;
+  /** 행·시상대를 누르면 그 회원 라이센스 (추격 목표 지정은 라이센스 시트 안에서) */
+  onRowOpen: (m: RankRowRef) => void;
   onAdminEdit: (m: any) => void;
 }) => {
   const showPodium = list.length >= 3;
@@ -627,7 +673,7 @@ const RankingList = ({
   return (
     <div className="space-y-4">
       {showPodium && (
-        <Podium top3={top3} userId={userId} getScore={getScore} />
+        <Podium top3={top3} userId={userId} getScore={getScore} onOpen={onRowOpen} />
       )}
       <div className="space-y-2">
         {rest.map((m) => {
@@ -641,11 +687,7 @@ const RankingList = ({
                 meta={getMeta(m)}
                 isMe={isMe}
                 avatar={m.r_avatar_url ?? undefined}
-                onClick={
-                  !isMe && myRivalId !== m.r_user_id
-                    ? () => onRowSetRival(m)
-                    : undefined
-                }
+                onClick={() => onRowOpen(m)}
               />
               {isAdmin && (
                 <button

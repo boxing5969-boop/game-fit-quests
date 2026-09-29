@@ -256,6 +256,8 @@ const AppRoutes = () => {
         <Route path="/waiting-approval" element={<ProtectedRoute><WaitingApprovalPage /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        {/* MY복서 — 예전 홈 화면(라이센스 카드·오늘의 할 일·순위). 첫 화면은 전체 메뉴만 (2026-09-29 대표님) */}
+        <Route path="/myboxer" element={<ProtectedRoute><HomePage view="myboxer" /></ProtectedRoute>} />
         <Route path="/qr-checkin" element={<ProtectedRoute><QrCheckinPage /></ProtectedRoute>} />
         <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
         <Route path="/quests" element={<Navigate to="/missions" replace />} />

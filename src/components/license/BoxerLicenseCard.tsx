@@ -8,7 +8,9 @@
  *   · 좌측: 캐릭터/사진 (정사각 photo frame, 153 워터마크)
  *   · 우측: 닉네임 + 지점 + 리그/레벨 + 라이센스 번호 + 연속일
  *   · 하단: XP 막대 + "MY BOXER 153 · OFFICIAL"
- *   · 헤더 줄: "153 PRO BOXER LICENSE" + Lic.#XXXXXX
+ *   · 헤더 줄: "153 BOXER LICENSE" + Lic.#XXXXXX (2026-09-29 대표님: PRO BOXER → 153 BOXER)
+ *   · 하트(2026-09-29): 아래 줄 오른쪽 — 받은 하트 수. 닉네임 좋아요와 같은 하트(한 사람에게 하나).
+ *   · onCardClick 이 오면 카드 전체가 버튼 — 내 카드는 누르면 닉네임 바꾸기.
  *
  * Size:
  *   · hero      — 홈 메인 (큰 사이즈, 모든 정보)
@@ -17,7 +19,7 @@
  */
 
 import { motion } from "framer-motion";
-import { Crown, Flame } from "lucide-react";
+import { Crown, Flame, Heart, PenLine } from "lucide-react";
 import type { ReactNode } from "react";
 import { STAFF_CHAMPION_LEVEL } from "@/lib/staffDisplay";
 import PtBadge from "@/components/license/PtBadge";
@@ -160,6 +162,16 @@ export interface BoxerLicenseCardProps {
   /** PT(퍼스널 트레이닝) 회원 (2026-09-29) — 이름 옆 파란 배지만. 경험치 2배는 서버(DB 트리거)가 조용히 준다 —
    *  화면에 "경험치 2배" 같은 글은 쓰지 않는다(대표님: 일반 회원님들이 차별로 느낄 수 있다). */
   pt?: boolean;
+  /** 받은 하트 수 (2026-09-29) — 있으면 아래 줄 오른쪽에 하트 알약. 없으면 예전처럼 "· OFFICIAL ·" */
+  likes?: number;
+  /** 내가 이 카드에 하트를 보냈는가 — 알약이 금색으로 꽉 찬다 */
+  liked?: boolean;
+  /** 하트 알약을 눌렀을 때 (내 카드: 추천 복서 목록 열기 · 다른 회원 카드: 하트 보내기/취소) */
+  onLikeClick?: () => void;
+  /** 하트 처리 중 — 알약을 잠근다 (연타로 보내기→취소 방지) */
+  likeBusy?: boolean;
+  /** 카드 전체를 눌렀을 때 (내 카드: 닉네임 바꾸기). 오면 이름 옆에 연필 표시가 붙는다 */
+  onCardClick?: () => void;
 }
 
 const BoxerLicenseCard = ({
@@ -182,6 +194,11 @@ const BoxerLicenseCard = ({
   elapsedMinutes,
   staff = null,
   pt = false,
+  likes,
+  liked = false,
+  onLikeClick,
+  likeBusy = false,
+  onCardClick,
 }: BoxerLicenseCardProps) => {
   const rankKey = (league || "white").toLowerCase();
   const lic = licenseNumber(userId);
@@ -269,7 +286,24 @@ const BoxerLicenseCard = ({
       layout
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`relative w-full overflow-hidden rounded-2xl ${cfg.padding}`}
+      whileTap={onCardClick ? { scale: 0.985 } : undefined}
+      onClick={onCardClick}
+      onKeyDown={
+        onCardClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onCardClick();
+              }
+            }
+          : undefined
+      }
+      role={onCardClick ? "button" : undefined}
+      tabIndex={onCardClick ? 0 : undefined}
+      aria-label={onCardClick ? `${name} 라이센스 — 눌러서 닉네임 바꾸기` : undefined}
+      className={`relative w-full overflow-hidden rounded-2xl ${cfg.padding} ${
+        onCardClick ? "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/70" : ""
+      }`}
       style={{
         background: `linear-gradient(135deg, hsla(0, 0%, 6%, 0.97) 0%, hsla(0, 0%, 10%, 0.95) 100%)`,
         boxShadow: isFresh
@@ -311,7 +345,7 @@ const BoxerLicenseCard = ({
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>
-              {staff ? "153 COACHING STAFF" : isMaster ? "★ MASTER LICENSE" : "PRO BOXER LICENSE"}
+              {staff ? "153 COACHING STAFF" : isMaster ? "★ MASTER LICENSE" : "153 BOXER LICENSE"}
             </span>
           </div>
           <span className={`font-mono font-black ${cfg.licText} text-gray-400 tabular-nums`}>
@@ -432,6 +466,7 @@ const BoxerLicenseCard = ({
                 {name}
               </p>
               {pt && !staff && <PtBadge className={`${cfg.ptBadge} shrink-0`} glow={size === "hero"} />}
+              {onCardClick && <PenLine className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/40" aria-hidden="true" />}
             </div>
             {branch && size !== "compact" && (
               <p className={`mt-0.5 truncate text-gray-400 ${cfg.metaText}`}>
@@ -546,9 +581,33 @@ const BoxerLicenseCard = ({
                 MY BOXER 153
               </span>
             </div>
-            <span className={`font-mono ${cfg.licText} text-gray-500 uppercase`}>
-              · OFFICIAL ·
-            </span>
+            {likes !== undefined ? (
+              // 하트 알약 — 카드 누르기(닉네임 바꾸기)와 겹치지 않게 이벤트를 여기서 멈춘다
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLikeClick?.();
+                }}
+                onKeyDown={(e) => e.stopPropagation()}
+                disabled={!onLikeClick || likeBusy}
+                aria-pressed={onLikeClick ? liked : undefined}
+                aria-label={liked ? `하트 ${likes}개 · 내가 하트를 보냈어요` : `받은 하트 ${likes}개`}
+                className={`-my-1.5 inline-flex min-h-[34px] items-center gap-1.5 rounded-full px-3 transition-transform active:scale-95 disabled:cursor-default ${
+                  liked ? "bg-[#F5C542] text-[#1A1206]" : "bg-white/10 text-white ring-1 ring-inset ring-white/15"
+                }`}
+              >
+                <Heart
+                  className={`h-3.5 w-3.5 ${liked ? "fill-current" : "fill-[#F5C542]/25 text-[#F5C542]"} ${likeBusy ? "animate-pulse" : ""}`}
+                  aria-hidden="true"
+                />
+                <span className="text-[12px] font-black tabular-nums">{likes.toLocaleString("ko-KR")}</span>
+              </button>
+            ) : (
+              <span className={`font-mono ${cfg.licText} text-gray-500 uppercase`}>
+                · OFFICIAL ·
+              </span>
+            )}
           </div>
         )}
       </div>

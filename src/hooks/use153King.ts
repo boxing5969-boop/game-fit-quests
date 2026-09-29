@@ -8,10 +8,12 @@ import {
   get153KingSummary,
   getBranchNicknames,
   getLaunchEventWindow,
+  getMemberLicense,
   setLaunchEventSettings,
   toggleNicknameLike,
   type BranchNicknames,
   type LaunchEventWindow,
+  type MemberLicense,
   type KingBoard,
   type KingCategory,
   type KingPeriod,
@@ -65,7 +67,21 @@ export function useToggleNicknameLike() {
       Promise.all([
         qc.invalidateQueries({ queryKey: NICKNAME_LIKE_KEY }),
         qc.invalidateQueries({ queryKey: KING_153_KEY }),
+        qc.invalidateQueries({ queryKey: MEMBER_LICENSE_KEY }),
       ]),
+  });
+}
+
+export const MEMBER_LICENSE_KEY = ["member-license"] as const;
+
+/** 라이센스 카드 한 장 (2026-09-29) — 추천 복서 목록·랭킹에서 누른 회원, 또는 내 카드의 받은 하트 수 */
+export function useMemberLicense(userId: string | null | undefined, enabled = true) {
+  return useQuery<MemberLicense>({
+    queryKey: [...MEMBER_LICENSE_KEY, userId ?? "none"],
+    enabled: enabled && !!userId,
+    staleTime: 30_000,
+    retry: false,
+    queryFn: () => getMemberLicense(userId!),
   });
 }
 

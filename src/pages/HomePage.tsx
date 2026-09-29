@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Ticket, Trophy, Settings } from "lucide-react";
+import { User, Ticket, Trophy, Settings, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,6 +59,9 @@ import { useDisplayMode } from "@/hooks/useDisplayMode";
 import { isPtMember } from "@/lib/ptMember";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
+import { useMemberLicense } from "@/hooks/use153King";
+import NicknameLikeSheet from "@/components/engagement/NicknameLikeSheet";
+import NicknameEditSheet from "@/components/license/NicknameEditSheet";
 
 import {
   AppPage,
@@ -69,7 +72,14 @@ import {
   NotificationBanner,
 } from "@/components/ui/rankingup";
 
-const HomePage = () => {
+/**
+ * 2026-09-29 대표님: "로그인해서 들어가면 전체 메뉴만 보이게 · 1번 메뉴 MY복서에 기존 홈 화면".
+ *   · view="menu"    (/home)    — 머리글 + 전체 메뉴만. 로그인·하단 '홈' 탭이 여기로 온다.
+ *   · view="myboxer" (/myboxer) — 예전 홈 화면 그대로(라이센스 카드·오늘의 할 일·순위·더 보기) + 뒤로 버튼.
+ * 두 화면이 같은 컴포넌트라 앱 접속 출석·레벨업 알림·명예의 전당 보상·온보딩 이동·진행 중 도전(전체 화면)
+ * 같은 부수 동작은 첫 화면(전체 메뉴)에서도 예전과 똑같이 돈다.
+ */
+const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const navigate = useNavigate();
   const { user, profile, progress, role, refreshProgress } = useAuth();
   const { data: levels } = useLevels();
@@ -90,6 +100,10 @@ const HomePage = () => {
   const checkedInToday = !!workoutToday?.checked_in;
   // 지도진(profiles.is_staff)은 리그·레벨 대신 "이름 직함님" + 챔피언 · Lv.77 로 — 승급 막대도 없다 (2026-09-22, 09-23).
   const staffCard = isStaffProfile(profile) ? { title: staffTitleLabel(profile ?? {}) } : null;
+  // 내 라이센스의 받은 하트 수 (MY복서 카드 아래 줄) — 지도진 카드는 하트·닉네임 바꾸기가 없다
+  const { data: myLicense } = useMemberLicense(view === "myboxer" && !staffCard ? user?.id : null);
+  const [likeListOpen, setLikeListOpen] = useState(false);
+  const [nickEditOpen, setNickEditOpen] = useState(false);
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
   const { resolveSlot: resolveDisplaySlot } = useDisplayMode();
   useLevelUpNotifications();
@@ -231,9 +245,72 @@ const HomePage = () => {
   // 추가로 admin 도 본인 customize 토글로 끌 수 있음.
   const showStoryRpg = isAdmin && homeWidgets.storyRpg;
 
+  // 진행 중 도전(전체 화면) — 전체 메뉴·MY복서 어느 쪽에서든 이어서 연다 (예전 홈과 같은 동작)
+  const challengeFlow = showChallenge ? (
+    <SelfChallengeFlow
+      league={rank}
+      levelInLeague={progress.current_level}
+      autoStart={qrAutoStarted}
+      resumeStartedAt={activitySession.activeSession?.started_at}
+      onComplete={async () => {
+        await activitySession.completeChallenge();
+        setShowChallenge(false);
+        setQrAutoStarted(false);
+      }}
+      onLeave={async () => {
+        const ok = await activitySession.leaveChallenge();
+        if (ok) {
+          toast.success("라이브보드에서 퇴장했습니다");
+          setShowChallenge(false);
+          setQrAutoStarted(false);
+        } else {
+          toast.error("퇴장 처리 실패");
+        }
+      }}
+      onClose={() => {
+        setShowChallenge(false);
+        setQrAutoStarted(false);
+      }}
+    />
+  ) : null;
+
+  // MY복서 머리글 — 뒤로(전체 메뉴) + 제목. 이름·지점은 바로 아래 라이센스 카드에 있다.
+  const goBack = () => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) navigate(-1);
+    else navigate("/home", { replace: true });
+  };
+  const myBoxerHeader = (
+    <PageHeader
+      title="MY복서"
+      subtitle={profile.branch_name ? `${displayName} · ${profile.branch_name}` : displayName}
+      leftAction={
+        <button
+          type="button"
+          onClick={goBack}
+          aria-label="뒤로"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary transition-transform active:scale-95"
+        >
+          <ChevronLeft className="h-5 w-5 text-secondary-foreground" />
+        </button>
+      }
+      rightAction={
+        <button
+          onClick={() => navigate("/mypage")}
+          className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"
+          aria-label="내 정보"
+        >
+          <User className="h-4 w-4 text-secondary-foreground" />
+        </button>
+      }
+      sticky
+    />
+  );
+
   return (
     <AppPage
       header={
+        view === "myboxer" ? myBoxerHeader : (
         <PageHeader
           title={displayName}
           titlePrefix={
@@ -308,13 +385,18 @@ const HomePage = () => {
           }
           sticky
         />
+        )
       }
     >
+      {view === "menu" ? (
+        // ─── 🗂 첫 화면 = 전체 메뉴만 (2026-09-29 대표님). 1번 'MY복서' 가 예전 홈 화면.
+        //     하단 '전체' 탭 시트와 같은 목록·같은 버튼 (lib/appMenu.ts).
+        <div className="space-y-5">
+          <HomeMenuGrid />
+          {challengeFlow}
+        </div>
+      ) : (
       <div className="space-y-5">
-        {/* ─── 🗂 전체 메뉴 — 첫 화면 맨 위 (2026-09-29 대표님: 처음 접속하면 전체 메뉴가 먼저 보이게).
-             하단 '전체' 탭 시트와 같은 목록·같은 버튼 (lib/appMenu.ts). ─── */}
-        <HomeMenuGrid />
-
         {/* ─── Master-40 celebration (조건부 — 항상 상단 고정) ─── */}
         {isMaster40 && (
           <NotificationBanner
@@ -388,6 +470,9 @@ const HomePage = () => {
                   name={staffCard ? staffDisplayName(profile) : (profile.nickname || profile.name || "복서")}
                   staff={staffCard}
                   pt={!staffCard && isPtMember(profile)}
+                  likes={staffCard ? undefined : (myLicense?.likes ?? 0)}
+                  onLikeClick={staffCard ? undefined : () => setLikeListOpen(true)}
+                  onCardClick={staffCard ? undefined : () => setNickEditOpen(true)}
                   branch={profile.branch_name}
                   league={rank}
                   level={onMasterTrack ? progress.overall_level : progress.current_level}
@@ -508,33 +593,7 @@ const HomePage = () => {
         <TodayFocusCard />
 
         {/* ─── 활동 세션 진행 중일 때만 SelfChallengeFlow 표시 (전체 화면 모달) ─── */}
-        {showChallenge && (
-          <SelfChallengeFlow
-            league={rank}
-            levelInLeague={progress.current_level}
-            autoStart={qrAutoStarted}
-            resumeStartedAt={activitySession.activeSession?.started_at}
-            onComplete={async () => {
-              await activitySession.completeChallenge();
-              setShowChallenge(false);
-              setQrAutoStarted(false);
-            }}
-            onLeave={async () => {
-              const ok = await activitySession.leaveChallenge();
-              if (ok) {
-                toast.success("라이브보드에서 퇴장했습니다");
-                setShowChallenge(false);
-                setQrAutoStarted(false);
-              } else {
-                toast.error("퇴장 처리 실패");
-              }
-            }}
-            onClose={() => {
-              setShowChallenge(false);
-              setQrAutoStarted(false);
-            }}
-          />
-        )}
+        {challengeFlow}
 
         {/* ─── "더 보기" — 펼침 가능한 보조 콘텐츠 ───
              rankingPreview 는 primary 슬롯으로 이전 — 더보기 안에서는 제거. */}
@@ -622,6 +681,11 @@ const HomePage = () => {
           </div>
         </HomeMoreSection>
       </div>
+      )}
+
+      {/* MY복서 카드: 하트 → 추천 복서 목록 · 카드 → 닉네임 바꾸기 */}
+      <NicknameLikeSheet open={likeListOpen} onClose={() => setLikeListOpen(false)} />
+      <NicknameEditSheet open={nickEditOpen} onClose={() => setNickEditOpen(false)} />
 
       <HomeCustomizeSheet
         open={showCustomize}

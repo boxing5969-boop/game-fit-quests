@@ -618,15 +618,15 @@ const SELECTOR_LABELS: Record<string, string> = {
   '[data-tour="journal-reflection-input"]': "일기 — 한 줄 입력칸",
   '[data-tour="journal-condition-options"]': "일기 — 컨디션 선택지",
   '[data-tour="journal-submit"]': "일기 — '기록 남기기' 버튼",
-  '[data-tour="home-osami-note"]': "홈 — 오삼이 노트",
-  '[data-tour="home-today-focus"]': "홈 — 오늘의 포커스",
+  '[data-tour="home-osami-note"]': "MY복서 — 오삼이 노트",
+  '[data-tour="home-today-focus"]': "MY복서 — 오늘의 포커스",
   '[data-tour="home-quest-recommendation"]': "홈 — QUEST 추천 카드 (anchor 미존재)",
   '[data-tour="missions-master-road"]': "마스터로드 카드 (anchor 미존재)",
   '[data-tour="missions-submit-note"]': "공식 미션 제출 안내 (anchor 미존재)",
   '[data-tour="missions-coach-approval-note"]': "코치 승인 안내 (anchor 미존재)",
   '[data-tutorial-target="profile-photo-button"]': "마이페이지 — 카메라 아이콘",
   '[data-tutorial-target="guide-first-card"]': "가이드 페이지 — 첫 카드",
-  '[data-tutorial-target="qr-checkin-button"]': "홈 — 'QR 체크인 하기' 버튼",
+  '[data-tutorial-target="qr-checkin-button"]': "MY복서 — 'QR 체크인 하기' 버튼",
   '[data-tutorial-target="first-mission-card"]': "전체 미션 — 첫 카드",
   '[data-tutorial-target="first-challenge-card"]': "더 파이터 — 첫 챌린지 카드",
   // 65-F: 7일 캠프 재구성 — 새 커리큘럼 anchor
@@ -712,7 +712,8 @@ function describeSelector(sel: string): string {
 //   여기 없는 경로도 직접 입력 가능 (input 자유 입력 허용).
 // ─────────────────────────────────────────────────────────────
 const ROUTE_OPTIONS: { value: string; label: string }[] = [
-  { value: "/home", label: "홈" },
+  { value: "/home", label: "홈 (전체 메뉴)" },
+  { value: "/myboxer", label: "MY복서 (라이센스 카드·출석)" },
   { value: "/missions", label: "훈련" },
   { value: "/myboxer/quest", label: "153 챌린지 (153 QUEST)" },
   { value: "/myboxer/community", label: "153 커뮤니티 (챔피언 일기·세컨드 응원)" },

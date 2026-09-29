@@ -51,7 +51,7 @@ const LevelTestCard = () => {
     try {
       await setTestLevel(r, l, complete);
       await afterChange();
-      toast.success(`${TEST_RANK_KO[r]} 리그 · 레벨 ${l}${complete ? " 완주" : ""}(으)로 바꿨어요. 홈에서 확인해 보세요.`);
+      toast.success(`${TEST_RANK_KO[r]} 리그 · 레벨 ${l}${complete ? " 완주" : ""}(으)로 바꿨어요. MY복서에서 확인해 보세요.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "레벨을 바꾸지 못했어요");
     } finally {

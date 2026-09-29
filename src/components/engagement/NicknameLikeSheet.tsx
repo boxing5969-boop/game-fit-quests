@@ -14,9 +14,13 @@
  *   · 누르는 동안 하트를 잠그고, 목록이 다시 읽힌 뒤에 푼다(연타로 좋아요→취소 되는 것 방지).
  *
  * 보호 원칙: 쓰기는 RPC 한 개(toggle_nickname_like). 프로필·XP·wallet 직접 변경 0건.
+ *
+ * 2026-09-29 대표님 — '추천 복서'로 확장: "킹즈오브아너처럼 추천 아이디가 보이고, 아이디를 누르면 상대방 정보".
+ *   · 닉네임을 누르면 그 회원의 라이센스(MemberLicenseSheet)가 열리고 거기서도 하트를 누른다(같은 하트).
+ *   · 행에 리그·레벨을 같이 보여 준다. 전체관리자·관리자(대표님 153본사 계정)는 전 지점 회원 + 지점 표시.
+ *   · 내 닉네임이 없을 때 띠를 누르면 설정 화면 대신 닉네임 바꾸기 시트가 바로 열린다.
  */
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, KeyRound, PenLine, Search, X } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +30,11 @@ import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useBranchNicknames, useToggleNicknameLike } from "@/hooks/use153King";
 import { Input } from "@/components/ui/input";
 import { openCredentialChange } from "@/lib/appEvents";
+import { formatRankShort } from "@/lib/rankLabels";
+import MemberLicenseSheet from "@/components/license/MemberLicenseSheet";
+import NicknameEditSheet from "@/components/license/NicknameEditSheet";
+
+const shortBranch = (b: string | null | undefined) => (b ?? "").replace(/^153복싱짐\s*/, "");
 
 interface Props {
   open: boolean;
@@ -33,8 +42,10 @@ interface Props {
 }
 
 const NicknameLikeSheet = ({ open, onClose }: Props) => {
-  const navigate = useNavigate();
   const { profile } = useAuth();
+  // 닉네임을 누르면 그 회원 라이센스 · 내 닉네임 정하기 시트
+  const [viewUserId, setViewUserId] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
   useModalDismiss(open, onClose);
@@ -63,7 +74,7 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
     setPending(userId);
     try {
       const res = await toggle.mutateAsync(userId);
-      toast.success(res.liked ? `${display} 닉네임에 좋아요를 보냈어요 ❤️` : `${display} 좋아요를 취소했어요`);
+      toast.success(res.liked ? `${display}님께 하트를 보냈어요 ❤️` : `${display}님 하트를 취소했어요`);
     } catch (e) {
       // 실패해도 화면 상태는 서버 재조회로 맞춰진다
       toast.error(e instanceof Error ? e.message : "처리 실패");
@@ -72,18 +83,18 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
     }
   };
 
-  const goSettings = () => {
-    onClose();
-    navigate("/settings");
-  };
+  // 설정 화면으로 보내지 않고 이 자리에서 바로 닉네임을 정한다
+  const goSettings = () => setEditOpen(true);
   const changeCredentials = () => {
     onClose();
     openCredentialChange();
   };
 
   const rows = data?.rows ?? [];
+  const allBranches = data?.all_branches === true;
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <motion.div
@@ -101,7 +112,7 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="닉네임 좋아요"
+            aria-label="추천 복서"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {/* 헤더 */}
@@ -111,11 +122,14 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   <Heart className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-reward">런칭 이벤트 ③</p>
-                  <h2 className="mt-0.5 text-[15px] font-bold text-foreground">닉네임 좋아요</h2>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-reward">153 BOXER LICENSE</p>
+                  <h2 className="mt-0.5 text-[15px] font-bold text-foreground">추천 복서</h2>
                   <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                    {data?.branch ? `${data.branch.replace(/^153복싱짐\s*/, "")} 회원끼리 · ` : ""}한 명에게 하나 · 다시 누르면 취소
-                    {data ? ` · 내가 보낸 좋아요 ${data.my_given}개` : ""}
+                    {allBranches
+                      ? "전 지점 회원 · 관리자 보기 · "
+                      : data?.branch ? `${shortBranch(data.branch)} 회원끼리 · ` : ""}
+                    한 명에게 하트 하나 · 다시 누르면 취소
+                    {data ? ` · 내가 보낸 하트 ${data.my_given}개` : ""}
                   </p>
                 </div>
               </div>
@@ -139,14 +153,14 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                 >
                   <KeyRound className="h-4 w-4 shrink-0 text-primary" />
                   <span className="min-w-0 flex-1 text-[11.5px] leading-snug text-foreground">
-                    처음 받은 아이디·비밀번호(전화번호)를 바꾸면 좋아요를 보낼 수 있어요.
+                    처음 받은 아이디·비밀번호(전화번호)를 바꾸면 하트를 보낼 수 있어요.
                     <span className="font-bold text-primary"> 지금 바꾸기 →</span>
                   </span>
                 </button>
               )}
               {data?.reason === "not_member" && (
                 <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-[11.5px] leading-snug text-muted-foreground">
-                  지점 회원만 좋아요를 보낼 수 있어요. (코치님·관리자 계정, 이용 기록이 없는 계정은 참여하지 않아요)
+                  지점 회원만 하트를 보낼 수 있어요. (코치님·관리자 계정, 이용 기록이 없는 계정은 참여하지 않아요)
                 </p>
               )}
               {data?.reason === "admin_test" && (
@@ -162,8 +176,8 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                 >
                   <PenLine className="h-4 w-4 shrink-0 text-reward" />
                   <span className="min-w-0 flex-1 text-[11.5px] leading-snug text-foreground">
-                    내 닉네임을 정해야 다른 회원이 나에게 좋아요를 보낼 수 있어요.
-                    <span className="font-bold text-reward"> 설정에서 닉네임 정하기 →</span>
+                    내 닉네임을 정해야 다른 회원이 나에게 하트를 보낼 수 있어요.
+                    <span className="font-bold text-reward"> 닉네임 정하기 →</span>
                   </span>
                 </button>
               )}
@@ -191,8 +205,8 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                 </div>
               ) : isError ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">목록을 불러오지 못했어요. 잠시 후 다시 열어 주세요.</p>
-              ) : !data?.branch ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">소속 지점이 있어야 좋아요를 보낼 수 있어요.</p>
+              ) : !data?.branch && !allBranches ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">소속 지점이 있어야 하트를 보낼 수 있어요.</p>
               ) : rows.length === 0 ? (
                 <div className="py-8 text-center">
                   <p className="text-sm text-muted-foreground">
@@ -207,24 +221,39 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   {rows.map((r) => {
                     const busy = pending === r.user_id;
                     const locked = !canLike && !r.liked_by_me;
+                    const meta = [
+                      r.rank && r.level ? formatRankShort(r.rank, r.level) : null,
+                      allBranches && r.branch ? shortBranch(r.branch) : null,
+                    ].filter(Boolean).join(" · ");
                     return (
                       <li
                         key={r.user_id}
-                        className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
+                        className={`flex items-center gap-2 rounded-xl border py-2 pl-2 pr-2.5 ${
                           r.liked_by_me ? "border-reward/40 bg-reward/10" : "border-border bg-card"
                         }`}
                       >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[14px] font-bold text-foreground">{r.display}</p>
-                          <p className="text-[10.5px] text-muted-foreground">
-                            받은 좋아요 <span className="font-bold text-reward tabular-nums">{r.likes.toLocaleString("ko-KR")}</span>
-                          </p>
-                        </div>
+                        {/* 닉네임을 누르면 그 회원 라이센스 (킹즈오브아너식 프로필 보기) */}
+                        <button
+                          type="button"
+                          onClick={() => setViewUserId(r.user_id)}
+                          aria-label={`${r.display} 라이센스 보기`}
+                          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-0.5 text-left transition-opacity active:opacity-60"
+                        >
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-[15px] font-black text-foreground">
+                            {r.display.charAt(0)}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[14px] font-bold text-foreground">{r.display}</span>
+                            <span className="block truncate text-[11.5px] text-muted-foreground">
+                              {meta ? `${meta} · ` : ""}하트 <span className="font-bold text-reward tabular-nums">{r.likes.toLocaleString("ko-KR")}</span>
+                            </span>
+                          </span>
+                        </button>
                         <button
                           type="button"
                           disabled={busy || !!pending || locked}
                           aria-pressed={r.liked_by_me}
-                          aria-label={r.liked_by_me ? `${r.display} 좋아요 취소` : `${r.display} 좋아요`}
+                          aria-label={r.liked_by_me ? `${r.display} 하트 취소` : `${r.display}님께 하트`}
                           onClick={() => onToggle(r.user_id, r.display, r.liked_by_me)}
                           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all active:scale-90 disabled:opacity-50 ${
                             r.liked_by_me ? "bg-reward text-reward-foreground" : "bg-secondary text-muted-foreground"
@@ -237,15 +266,18 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   })}
                 </ul>
               )}
-              <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
-                좋아요 많은 순으로 60명까지 보여요. 안 보이면 닉네임으로 검색하세요.
-                받은 좋아요는 취소하기 전까지 계속 쌓여 있고, 이 숫자가 닉네임왕 점수예요.
+              <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+                닉네임을 누르면 그 회원의 라이센스를 볼 수 있어요. 하트 많은 순으로 60명까지 보이고, 안 보이면 닉네임으로 검색하세요.
+                받은 하트는 취소하기 전까지 계속 쌓이고, 이 숫자가 닉네임 좋아요왕 점수예요.
               </p>
             </div>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
+    <MemberLicenseSheet userId={viewUserId} onClose={() => setViewUserId(null)} />
+    <NicknameEditSheet open={editOpen} onClose={() => setEditOpen(false)} />
+    </>
   );
 };
 

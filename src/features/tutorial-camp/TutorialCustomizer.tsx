@@ -81,7 +81,7 @@ const SELECTOR_LABELS_LITE: Record<string, string> = {
   '[data-tour="challenge-arena-card"]': "챌린지 아레나 카드",
   '[data-tour="challenge-arena-scroll"]': "챌린지 스크롤 영역",
   '[data-tutorial-target="profile-photo-button"]': "마이페이지 — 카메라",
-  '[data-tutorial-target="qr-checkin-button"]': "홈 — QR 체크인 버튼",
+  '[data-tutorial-target="qr-checkin-button"]': "MY복서 — QR 체크인 버튼",
   '[data-tutorial-target="guide-first-card"]': "가이드 — 첫 카드",
   // 65-F: 7일 캠프 재구성 — 새 커리큘럼 anchor
   '[data-tour="challenge153-leaderboard"]': "153 챌린지 — 회원 간 랭킹",
@@ -135,7 +135,8 @@ function describeSelector(sel: string): string {
 
 // 65-D: step 이 가리킬 페이지(route) 목록 — 메뉴 이동/통합 시 admin 이 교체.
 const ROUTE_OPTIONS_LITE: { value: string; label: string }[] = [
-  { value: "/home", label: "홈" },
+  { value: "/home", label: "홈 (전체 메뉴)" },
+  { value: "/myboxer", label: "MY복서 (라이센스 카드·출석)" },
   { value: "/missions", label: "훈련" },
   { value: "/myboxer/quest", label: "153 챌린지 (153 QUEST)" },
   { value: "/myboxer/community", label: "153 커뮤니티 (챔피언 일기·세컨드 응원)" },

@@ -85,7 +85,8 @@ const TodayFocusCard = () => {
     setRecommend({
       label: "오늘 한 줄 챙기기",
       detail: "복싱 IQ 한 줄 또는 챔피언 일기 한 문장",
-      to: "/home",
+      // 2026-09-29: 복싱 IQ·챔피언 일기는 MY복서 화면에 있다 (첫 화면 /home 은 전체 메뉴만)
+      to: "/myboxer",
       icon: Compass,
     });
 
