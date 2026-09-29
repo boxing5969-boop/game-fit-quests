@@ -1,32 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { isSignageRoute } from "@/lib/displayMode";
-import {
-  Home,
-  Trophy,
-  Menu,
-  TrendingUp,
-  Award,
-  BookOpen,
-  Sparkles,
-  Salad,
-  User,
-  Settings,
-  Gamepad2,
-  Fish,
-  Compass,
-  Target,
-  Users,
-  Star,
-  X,
-  Ticket,
-  Dumbbell,
-  ClipboardList,
-  PlayCircle } from "lucide-react";
+import { Home, Trophy, Menu, TrendingUp, Star, X, Ticket } from "lucide-react";
 import { BoxingGloveIcon } from "@/components/icons/BoxingGloveIcon";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import HomeMenuGrid from "@/components/home/HomeMenuGrid";
 
 // ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
 // 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 랭크업(로드맵+가치맵 통합 페이지).
@@ -41,34 +20,10 @@ const mainTabs = [
   { path: "/rank-up",       icon: TrendingUp,      label: "랭크업",   emoji: null },
 ] as const;
 
-// ── Full menu overlay (everything not on the primary bar) ───────────
-// /diet 항목은 feature flag 에 따라 조건부로 포함 — 아래 useMemo 참조.
-// /cert-benefits(단증혜택)는 하단탭에서 빠져 전체메뉴에서만 접근한다.
+// ── Full menu overlay ───────────────────────────────────────────────
+// 전체 메뉴 목록은 lib/appMenu.ts 한 곳 — 홈 첫 화면의 전체 메뉴(HomeMenuGrid)와 같은 목록·같은 버튼.
 // 하단탭에 이미 있는 홈·훈련·수강권·랭킹·랭크업은 전체메뉴에서 제외(중복 제거).
-const baseMenuItems = [
-  // 153플레이 — 레벨 미션 영상. 월드(외부 큐레이션) 탭은 관리자 계정에만 열린다.
-  { path: "/library",           icon: PlayCircle, label: "153플레이" },
-  { path: "/minigame",          icon: Gamepad2,   label: "복싱 트레이닝" },
-  { path: "/training-library",  icon: Dumbbell,   label: "훈련 라이브러리" },
-  { path: "/routines",          icon: ClipboardList, label: "수업 루틴" },
-  // 153 챌린지 — 개인 보조 퀘스트 (IQ / 챌린지 아레나) + 회원 간 랭킹 경쟁.
-  // 라우트는 /myboxer/quest 유지 (DB anchor 호환). 챔피언 일기는 153 커뮤니티로 이관.
-  { path: "/myboxer/quest",     icon: Target,     label: "153 챌린지" },
-  // 64-AS: 153 커뮤니티 — 세컨드 응원 / 코너맨 / 짐 레이드 (회원 간 소통).
-  { path: "/myboxer/community", icon: Users,      label: "153 커뮤니티" },
-  // 153마인드셋 — 시각화 훈련. 일반 회원 공개 (ProtectedRoute 만 적용).
-  { path: "/myboxer/visualization", icon: Compass, label: "153마인드셋" },
-  { path: "/cert-benefits",     icon: Award,      label: "단증혜택" },
-  // 65-S: 보상(/rewards)은 전체 메뉴에서 제거 — 마이페이지 안으로 이관.
-  { path: "/character-studio",  icon: Sparkles,   label: "캐릭터" },
-  { path: "/guide",             icon: BookOpen,   label: "가이드" },
-  { path: "/about/153",         icon: Fish,       label: "153이란?" },
-  { path: "/mypage",            icon: User,       label: "내정보" },
-  { path: "/settings",          icon: Settings,   label: "설정" },
-] as const;
-
-type IconComponent = React.ComponentType<{ size?: number | string; strokeWidth?: number | string; className?: string }>;
-type MenuItem = { path: string; icon: IconComponent; label: string };
+// /diet(153다이어트)는 feature flag 켜진 회원만, /cert-benefits(단증혜택)는 전체메뉴에서만 접근.
 
 const hiddenPaths = [
   "/",
@@ -94,22 +49,7 @@ const INACTIVE_TONE = "text-[#8C95A3]";
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-
-  // /diet 은 feature flag(`profiles.diet_program_enabled`) ON 일 때만 노출.
-  // 캐릭터(index 8) 뒤, 가이드(index 9) 앞에 삽입해 "활동 → 꾸미기 → 다이어트 → 가이드" 순 유지.
-  const allMenuItems = useMemo<readonly MenuItem[]>(() => {
-    if (!profile?.diet_program_enabled) return baseMenuItems;
-    const dietItem: MenuItem = { path: "/diet", icon: Salad, label: "153다이어트" };
-    const insertAt = baseMenuItems.findIndex((i) => i.path === "/guide");
-    const idx = insertAt === -1 ? baseMenuItems.length : insertAt;
-    return [
-      ...baseMenuItems.slice(0, idx),
-      dietItem,
-      ...baseMenuItems.slice(idx),
-    ];
-  }, [profile?.diet_program_enabled]);
 
   if (
     hiddenPaths.includes(location.pathname) ||
@@ -126,13 +66,14 @@ const BottomNav = () => {
       {/* Full menu overlay */}
       {menuOpen && (
         <div className="fixed inset-0 z-[60] flex flex-col">
+          {/* 뒤 배경 — 라이트는 토스·카카오 시트처럼 반투명 검정, 다크는 기존 그대로 */}
           <div
-            className="flex-1 bg-background/80 backdrop-blur-sm"
+            className="flex-1 bg-black/40 dark:bg-background/80 dark:backdrop-blur-sm"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="relative z-[61] rounded-t-hero border-t border-border bg-card px-5 pb-8 pt-4 shadow-elev-3 safe-area-bottom animate-slide-up">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-body-sm font-bold text-foreground">
+          <div className="relative z-[61] max-h-[85vh] overflow-y-auto rounded-t-hero border-t border-border bg-card px-4 pb-8 pt-5 shadow-elev-3 safe-area-bottom animate-slide-up">
+            <div className="mb-4 flex items-center justify-between px-1">
+              <span className="text-[17px] font-black text-foreground">
                 전체 메뉴
               </span>
               <div className="flex items-center gap-2">
@@ -147,41 +88,8 @@ const BottomNav = () => {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-4 gap-3">
-              {allMenuItems.map(({ path, icon: Icon, label }) => {
-                const active = location.pathname === path;
-                // 훈련 — 핵심 기능. 전체 메뉴에서도 별표 배지로 표시.
-                const isTraining = path === "/missions";
-                return (
-                  <button
-                    key={path}
-                    onClick={() => {
-                      navigate(path);
-                      setMenuOpen(false);
-                    }}
-                    className={cn(
-                      "group flex flex-col items-center gap-1.5 rounded-xl p-3 transition-all active:scale-95",
-                      active
-                        ? "bg-primary/10 text-primary"
-                        : "bg-muted/40 text-muted-foreground hover:bg-muted",
-                    )}
-                  >
-                    <span className="relative">
-                      <Icon size={22} strokeWidth={active ? 2.5 : 2} />
-                      {isTraining && (
-                        <Star
-                          size={11}
-                          strokeWidth={2}
-                          aria-hidden
-                          className="absolute -right-2 -top-1 fill-amber-400 text-amber-400 drop-shadow-sm transition-transform duration-150 group-hover:scale-125 group-hover:rotate-[18deg]"
-                        />
-                      )}
-                    </span>
-                    <span className="text-[11px] font-semibold">{label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            {/* 홈 첫 화면과 같은 버튼 그리드 (components/home/HomeMenuGrid) */}
+            <HomeMenuGrid variant="sheet" onNavigate={() => setMenuOpen(false)} />
           </div>
         </div>
       )}

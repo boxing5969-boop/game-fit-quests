@@ -2,6 +2,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { peekPostLoginPath, rememberPostLoginPath } from "@/lib/postLoginRedirect";
 import { ThemeProvider } from "next-themes";
+import ThemeColorSync from "@/components/theme/ThemeColorSync";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -364,16 +365,20 @@ const App = () => {
   return (
     <ErrorBoundary>
       {/* 65-O: 다크/라이트 모드 — next-themes 가 <html class> 토글.
-          · defaultTheme="dark" — 기존 비주얼 그대로 유지
+          · defaultTheme="light" — 2026-09-29 대표님: 토스·카카오처럼 밝은 톤이 기본
           · enableSystem=false — 회원 명시적 선택만 (OS 변경에 휘둘리지 않음)
-          · storageKey="myboxer-theme" — localStorage 키 */}
+          · storageKey="myboxer-theme-v2" — 밝은 톤 전환 때 키를 바꿔 모든 회원이 한 번은 밝은 화면으로 시작한다
+            (옛 키 "myboxer-theme" 는 더 읽지 않음). 다크를 원하면 전체 메뉴의 ☀/🌙 버튼이나
+            설정 > 화면 모드에서 고르면 그대로 기억된다. */}
       <ThemeProvider
         attribute="class"
-        defaultTheme="dark"
+        defaultTheme="light"
         enableSystem={false}
-        storageKey="myboxer-theme"
+        storageKey="myboxer-theme-v2"
         disableTransitionOnChange
       >
+        {/* 브라우저 상단바(theme-color) 색을 지금 테마에 맞춤 */}
+        <ThemeColorSync />
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <BrowserRouter>

@@ -68,9 +68,9 @@ const RankUpPage = () => {
   const totalForLevel = (levelId: string) => levelMissionList.filter(m => m.level_id === levelId).length;
 
   return (
-    // 랭크업(게임) 화면은 라이트 모드에서도 다크 톤으로 렌더 — 카드들이 다크 기준으로
-    // 디자인돼 라이트에선 빛바래 보이므로, .dark 컨텍스트를 씌워 다크모드와 동일하게 표시.
-    <div className="dark mx-auto min-h-screen max-w-lg bg-background px-4 pb-24 pt-4 text-foreground">
+    // 2026-09-29 대표님: 앱 기본을 밝은 톤으로 — 랭크업도 회원이 고른 테마를 따른다 (예전엔 .dark 로 고정).
+    // 라이트에서 빛바래던 금색 글자·잠긴 칸·마스터 카드는 라이트 전용 색(amber)으로 보정하고, 다크는 dark: 로 기존 그대로.
+    <div className="mx-auto min-h-screen max-w-lg bg-background px-4 pb-24 pt-4 text-foreground">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-[22px] font-extrabold tracking-tight text-foreground">랭크업</h1>
         <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
@@ -134,8 +134,8 @@ const RankUpPage = () => {
                     <div className="text-left">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-bold text-foreground">{league.label}</p>
-                        {isCompleted && <span className="text-xs text-status-complete">✓ 완료</span>}
-                        {isCurrentLeague && <span className="text-xs text-primary font-bold">진행 중</span>}
+                        {isCompleted && <span className="text-xs text-amber-700 dark:text-status-complete">✓ 완료</span>}
+                        {isCurrentLeague && <span className="text-xs font-bold text-emerald-700 dark:text-primary">진행 중</span>}
                       </div>
                       <p className="text-xs text-muted-foreground">{league.theme}</p>
                     </div>
@@ -167,7 +167,7 @@ const RankUpPage = () => {
                     {lvls.length > 0 && (
                       <div className="rounded-xl border border-reward/20 bg-reward/5 p-3">
                         <div className="mb-1.5 flex items-center gap-1.5">
-                          <Gift className="h-3.5 w-3.5 text-reward" />
+                          <Gift className="h-3.5 w-3.5 text-amber-500 dark:text-reward" />
                           <p className="text-xs font-bold text-foreground">Lv {lvls[lvls.length - 1].level} 해금 보상</p>
                         </div>
                         <p className="text-xs text-muted-foreground">🎁 {lvls[lvls.length - 1].unlockedBenefit}</p>
@@ -213,18 +213,17 @@ const RankUpPage = () => {
                         return (
                           <button key={node.id} onClick={() => setSelectedNode(node)}
                             className={`relative flex flex-col items-center justify-center rounded-2xl border-2 p-2 transition-all active:scale-95 ${
-                              isCurrent ? "border-primary bg-primary/10 shadow-glow-soft"
-                              : allDone && unlocked ? "border-status-complete/30 bg-status-complete/5"
+                              isCurrent ? "border-primary bg-primary/10 shadow-glow-soft animate-pulse-glow"
+                              : allDone && unlocked ? "border-amber-300/70 bg-amber-50 dark:border-status-complete/30 dark:bg-status-complete/5"
                               : unlocked ? "border-border bg-card hover:border-primary/30"
-                              : "border-border/30 bg-muted/30 opacity-40"
+                              : "border-border bg-card/70 opacity-60 dark:border-border/30 dark:bg-muted/30 dark:opacity-40"
                             } ${node.is_boss ? "col-span-2 py-3" : ""}`}
-                            style={isCurrent ? { animation: "pulse-glow 2s ease-in-out infinite" } : {}}
                           >
-                            {node.is_boss ? <Trophy className={`h-7 w-7 ${unlocked ? "text-reward" : "text-muted-foreground"}`} />
-                              : allDone && unlocked ? <CheckCircle2 className="h-4 w-4 text-status-complete" />
-                              : unlocked ? <Star className={`h-4 w-4 ${isCurrent ? "text-primary" : "text-muted-foreground"}`} />
+                            {node.is_boss ? <Trophy className={`h-7 w-7 ${unlocked ? "text-amber-500 dark:text-reward" : "text-muted-foreground"}`} />
+                              : allDone && unlocked ? <CheckCircle2 className="h-4 w-4 text-amber-500 dark:text-status-complete" />
+                              : unlocked ? <Star className={`h-4 w-4 ${isCurrent ? "text-emerald-600 dark:text-primary" : "text-muted-foreground"}`} />
                               : <Lock className="h-4 w-4 text-muted-foreground" />}
-                            <span className={`mt-0.5 text-[10px] font-bold ${isCurrent ? "text-primary" : allDone ? "text-status-complete" : "text-muted-foreground"}`}>
+                            <span className={`mt-0.5 text-[10px] font-bold ${isCurrent ? "text-emerald-700 dark:text-primary" : allDone ? "text-amber-700 dark:text-status-complete" : "text-muted-foreground"}`}>
                               {node.is_boss ? "BOSS" : `Lv.${node.level_number}`}
                             </span>
                             {total > 0 && unlocked && <span className="text-[8px] text-muted-foreground">{completed}/{total}</span>}
@@ -246,7 +245,7 @@ const RankUpPage = () => {
                               <p className="text-sm font-black text-foreground">{challenge.dan} 단증 도전 가능! 🔥</p>
                               <p className="text-xs text-muted-foreground">{RANK_LABELS[rank]} 마스터 완료 — 탭하여 도전하기</p>
                             </div>
-                            <ExternalLink className="h-5 w-5 text-reward" />
+                            <ExternalLink className="h-5 w-5 text-amber-500 dark:text-reward" />
                           </div>
                         </button>
                       );
@@ -265,18 +264,18 @@ const RankUpPage = () => {
                   <span className="text-lg">👑</span>
                   <h2 className="text-lg text-foreground">마스터 리그</h2>
                 </div>
-                <div className="relative overflow-hidden rounded-3xl border-2 border-reward/40 bg-gradient-to-br from-[hsl(42_92%_10%)] via-card to-card p-5 shadow-2xl">
+                <div className="relative overflow-hidden rounded-3xl border-2 border-reward/40 bg-gradient-to-br from-amber-50 via-card to-card p-5 shadow-elev-2 dark:from-[hsl(42_92%_10%)] dark:shadow-2xl">
                   <div className="pointer-events-none absolute inset-0 overflow-hidden">
                     <div className="absolute -left-4 -top-4 h-32 w-32 rounded-full bg-reward/20 blur-3xl" />
                     <div className="absolute -bottom-4 -right-4 h-32 w-32 rounded-full bg-primary/20 blur-3xl" />
                   </div>
                   <div className="relative mb-4 text-center">
                     <div className="mb-2 flex items-center justify-center gap-2">
-                      <Sparkles className="h-5 w-5 text-reward" style={{ animation: "pulse 2s ease-in-out infinite" }} />
-                      <span className="text-xs font-bold uppercase tracking-[0.2em] text-reward">Secret Mission</span>
-                      <Sparkles className="h-5 w-5 text-reward" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
+                      <Sparkles className="h-5 w-5 text-amber-500 dark:text-reward" style={{ animation: "pulse 2s ease-in-out infinite" }} />
+                      <span className="text-xs font-bold uppercase tracking-[0.2em] text-amber-700 dark:text-reward">Secret Mission</span>
+                      <Sparkles className="h-5 w-5 text-amber-500 dark:text-reward" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
                     </div>
-                    <h3 className="text-xl font-black text-reward">🏆 마스터 리그 최종 미션</h3>
+                    <h3 className="text-xl font-black text-amber-600 dark:text-reward">🏆 마스터 리그 최종 미션</h3>
                     <p className="mt-1 text-xs text-muted-foreground">블랙 리그 레벨 10 달성 후 도전할 수 있는 시크릿 미션</p>
                   </div>
                   <div className="relative space-y-3">
@@ -288,21 +287,21 @@ const RankUpPage = () => {
                           className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-all active:scale-[0.98] ${isMaxLevel ? "border-reward/40 bg-reward/10 hover:border-reward/60" : "border-border bg-muted/30"}`}>
                           <div className="flex items-center gap-3 p-4">
                             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isMaxLevel ? "bg-reward/20" : "bg-muted"}`}>
-                              {isMaxLevel ? <MIcon className="h-6 w-6 text-reward" /> : <Lock className="h-6 w-6 text-muted-foreground" />}
+                              {isMaxLevel ? <MIcon className="h-6 w-6 text-amber-500 dark:text-reward" /> : <Lock className="h-6 w-6 text-muted-foreground" />}
                             </div>
                             <div className="flex-1 min-w-0">
                               <span className="text-sm font-black text-foreground">{mission.emoji} {mission.title}</span>
                               <p className="mt-0.5 text-xs text-muted-foreground">{mission.subtitle}</p>
-                              {isMaxLevel && <p className="mt-0.5 text-[10px] text-reward font-semibold">탭하여 도전하기 →</p>}
+                              {isMaxLevel && <p className="mt-0.5 text-[10px] font-semibold text-amber-700 dark:text-reward">탭하여 도전하기 →</p>}
                             </div>
-                            {isMaxLevel && <Crown className="h-5 w-5 text-reward" style={{ animation: "pulse 2s ease-in-out infinite" }} />}
+                            {isMaxLevel && <Crown className="h-5 w-5 text-amber-500 dark:text-reward" style={{ animation: "pulse 2s ease-in-out infinite" }} />}
                           </div>
                         </button>
                       );
                     })}
                   </div>
                   <div className="relative mt-4 rounded-2xl border border-reward/30 bg-reward/5 p-4">
-                    <p className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-reward">✨ 마스터 리그 달성 보상 ✨</p>
+                    <p className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-reward">✨ 마스터 리그 달성 보상 ✨</p>
                     <div className="space-y-2">
                       {FINAL_REWARDS.map((r, i) => (
                         <div key={i} className="flex items-center gap-2.5 rounded-xl bg-card/60 border border-border px-3 py-2">
@@ -377,7 +376,7 @@ const RankUpPage = () => {
                       return (
                         <div key={m.id} className="flex items-center justify-between rounded-xl bg-background p-3">
                           <div className="flex items-center gap-2">
-                            {status === "approved" ? <CheckCircle2 className="h-4 w-4 text-status-complete" /> : status === "pending" ? <span className="text-xs text-status-pending">⏳</span> : <Play className="h-4 w-4 text-muted-foreground" />}
+                            {status === "approved" ? <CheckCircle2 className="h-4 w-4 text-amber-500 dark:text-status-complete" /> : status === "pending" ? <span className="text-xs text-status-pending">⏳</span> : <Play className="h-4 w-4 text-muted-foreground" />}
                             <span className="text-sm text-foreground">{m.title}</span>
                           </div>
                           <span className="text-xs font-bold text-primary">+{m.xp_reward} XP</span>
@@ -492,7 +491,7 @@ const WhiteLv1ProgressionCard = () => {
 
   const STATUS_STYLE: Record<string, string> = {
     "진행중": "bg-primary/10 text-primary",
-    "레벨업 심사 가능": "bg-status-complete/10 text-status-complete",
+    "레벨업 심사 가능": "bg-status-complete/15 text-amber-700 dark:bg-status-complete/10 dark:text-status-complete",
     "보완 필요": "bg-status-pending/10 text-status-pending",
     "레벨업 완료": "bg-reward/10 text-reward-foreground",
     "코치 확인 필요": "bg-destructive/10 text-destructive",
@@ -527,7 +526,7 @@ const WhiteLv1ProgressionCard = () => {
               <div key={m.id} className="rounded-xl border border-border p-2.5">
                 <div className="mb-0.5 flex items-center justify-between">
                   <span className="text-[10px] text-muted-foreground">{m.emoji} {m.label}</span>
-                  {done && <CheckCircle2 className="h-3 w-3 text-status-complete" />}
+                  {done && <CheckCircle2 className="h-3 w-3 text-amber-500 dark:text-status-complete" />}
                 </div>
                 <p className="text-sm font-bold text-foreground">{met?.current ?? 0}<span className="text-xs text-muted-foreground">/{m.target}{m.unit}</span></p>
                 <div className="mt-1 h-1 overflow-hidden rounded-full bg-muted">

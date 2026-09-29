@@ -51,6 +51,7 @@ import { authorityLabel } from "@/lib/levelAuthority";
 import { useMyWorkoutToday } from "@/hooks/useWorkoutTime";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
+import HomeMenuGrid from "@/components/home/HomeMenuGrid";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import { getMasterLevelDefinition } from "@/data/masterTierData";
@@ -309,6 +310,10 @@ const HomePage = () => {
       }
     >
       <div className="space-y-5">
+        {/* ─── 🗂 전체 메뉴 — 첫 화면 맨 위 (2026-09-29 대표님: 처음 접속하면 전체 메뉴가 먼저 보이게).
+             하단 '전체' 탭 시트와 같은 목록·같은 버튼 (lib/appMenu.ts). ─── */}
+        <HomeMenuGrid />
+
         {/* ─── Master-40 celebration (조건부 — 항상 상단 고정) ─── */}
         {isMaster40 && (
           <NotificationBanner

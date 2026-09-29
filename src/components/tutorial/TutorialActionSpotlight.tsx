@@ -65,6 +65,9 @@ const TutorialActionSpotlight = () => {
   const [softened, setSoftened] = useState(false);
   const advancedKeyRef = useRef<string | null>(null);
   const rafRef = useRef<number | null>(null);
+  // 대상이 화면 밖에 있을 때 한 번만 스크롤해 준 selector|경로 (2026-09-29 — 홈 맨 위에 전체 메뉴가 생기며
+  // 출석 카드가 첫 화면 아래로 내려갔다. 스크롤을 안 하면 구멍 없는 어두운 화면만 보인다)
+  const scrolledForRef = useRef<string | null>(null);
 
   // 라우트 매칭 + 활성 step 결정
   const stepKey = currentStep?.key ?? "";
@@ -96,6 +99,7 @@ const TutorialActionSpotlight = () => {
     if (typeof document === "undefined") return;
 
     let cancelled = false;
+    const scrollKey = `${selector}|${location.pathname}`;
     const measure = () => {
       if (cancelled) return;
       let el: Element | null = null;
@@ -109,6 +113,16 @@ const TutorialActionSpotlight = () => {
       } else {
         const r = el.getBoundingClientRect();
         if (r.width > 0 && r.height > 0) {
+          if (scrolledForRef.current !== scrollKey) {
+            scrolledForRef.current = scrollKey;
+            if (r.top < 0 || r.bottom > window.innerHeight) {
+              try {
+                el.scrollIntoView({ block: "center", behavior: "smooth" });
+              } catch {
+                /* 구형 브라우저 — 스크롤 없이 진행 */
+              }
+            }
+          }
           setRect((prev) => {
             // 같으면 set 호출 안 함 — 불필요 리렌더 방지
             if (

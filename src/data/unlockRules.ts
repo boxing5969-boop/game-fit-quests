@@ -391,7 +391,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     label: "4단계 — 자동 출석 알아보기",
     description:
       "출석은 체육관 입구에서 얼굴 인식하면 자동으로 기록돼요. 홈 화면의 출석 카드를 한 번 눌러 확인해 보세요 — 누르기만 하면 연습 완료!",
-    hint: "👆 홈 화면 상단의 출석 카드를 누르세요. 안내가 뜨면 4단계 자동 완료!",
+    hint: "👆 홈 화면 전체 메뉴 아래의 출석 카드를 누르세요. 안내가 뜨면 4단계 자동 완료!",
     ctaLabel: "출석 카드 눌러보기 →",
     navTarget: "/home",
     detector: "qr_camera_opened",

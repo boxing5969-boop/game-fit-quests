@@ -52,7 +52,8 @@ export const ThemeToggle = ({
     );
   }
 
-  const current = (theme === "system" ? resolvedTheme : theme) ?? "dark";
+  // 기본은 라이트 (2026-09-29 — App.tsx ThemeProvider defaultTheme 와 같게)
+  const current = (theme === "system" ? resolvedTheme : theme) ?? "light";
 
   if (variant === "icon") {
     const next = current === "dark" ? "light" : "dark";

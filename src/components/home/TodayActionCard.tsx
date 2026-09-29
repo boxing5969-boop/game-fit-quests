@@ -12,11 +12,12 @@
  *   · 큰 카드 — 첫 화면에서 가장 눈에 띄어야 함
  *   · 1초 안에 "오늘 뭐 해야 하지?" 답이 보이도록
  *   · 보상 텍스트 + 강한 CTA
+ *   · 라이트(기본, 2026-09-29) = 흰 카드 + 은은한 그림자 · 다크 = 기존 검정 그라데이션 + 색 글로우
  */
 
 import { motion } from "framer-motion";
 import { QrCode, Zap, Clock, Trophy, Sparkles, ChevronRight } from "lucide-react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 export type TodayActionState =
   | "qr_checkin"      // 미체크인
@@ -44,6 +45,8 @@ interface ActionConfig {
   subtitle: string;
   cta: string;
   ctaBg: string;
+  /** CTA 글자색 — 밝은 바탕(민트·노랑)은 진한 글자 */
+  ctaText: string;
   glow: string;
 }
 
@@ -59,65 +62,70 @@ const TodayActionCard = ({
         return {
           icon: <QrCode className="h-7 w-7" />,
           iconBg: "bg-primary/15",
-          iconColor: "text-primary",
+          iconColor: "text-emerald-600 dark:text-primary",
           badge: "오늘의 시작",
-          badgeColor: "bg-primary/20 text-primary",
+          badgeColor: "bg-primary/15 text-emerald-700 dark:bg-primary/20 dark:text-primary",
           title: "입구 얼굴 인식 = 출석 완료",
           subtitle: "보드에 이름이 안 뜨면 화면 QR 을 찍어 주세요",
           cta: "QR 출석",
           ctaBg: "bg-gradient-to-r from-primary to-primary/80",
+          ctaText: "text-primary-foreground",
           glow: "rgba(246, 196, 83, 0.35)",
         };
       case "start_mission":
         return {
           icon: <Zap className="h-7 w-7" />,
           iconBg: "bg-emerald-500/15",
-          iconColor: "text-emerald-400",
+          iconColor: "text-emerald-600 dark:text-emerald-400",
           badge: streakDays > 0 ? `${streakDays}일 연속 ✓` : "체크인 완료",
-          badgeColor: "bg-emerald-500/20 text-emerald-400",
+          badgeColor: "bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400",
           title: "오늘의 미션 시작",
           subtitle: "체력 쌓는 가장 빠른 길이에요",
           cta: "+ XP 보너스",
           ctaBg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
+          ctaText: "text-white",
           glow: "rgba(34, 197, 94, 0.35)",
         };
       case "active_session":
         return {
           icon: <Clock className="h-7 w-7" />,
           iconBg: "bg-orange-500/15",
-          iconColor: "text-orange-400",
+          iconColor: "text-orange-500 dark:text-orange-400",
           badge: "🥊 LIVE",
           badgeColor: "bg-orange-500 text-white animate-pulse",
           title: `운동 중 — ${activeMinutes}분째`,
           subtitle: "라이브 보드에 표시되고 있어요",
           cta: "이어하기",
           ctaBg: "bg-gradient-to-r from-orange-500 to-red-500",
+          ctaText: "text-white",
           glow: "rgba(249, 115, 22, 0.45)",
         };
       case "evaluate":
         return {
           icon: <Sparkles className="h-7 w-7" />,
           iconBg: "bg-purple-500/15",
-          iconColor: "text-purple-400",
+          iconColor: "text-purple-600 dark:text-purple-400",
           badge: "오늘의 마무리",
-          badgeColor: "bg-purple-500/20 text-purple-300",
+          badgeColor: "bg-purple-500/15 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300",
           title: "오늘 활동 평가",
           subtitle: "수고했어요. 잠깐 회고하면 더 빠르게 성장해요",
           cta: "기록 보기",
           ctaBg: "bg-gradient-to-r from-purple-500 to-pink-500",
+          ctaText: "text-white",
           glow: "rgba(168, 85, 247, 0.35)",
         };
       case "all_done":
         return {
           icon: <Trophy className="h-7 w-7" />,
           iconBg: "bg-yellow-500/15",
-          iconColor: "text-yellow-400",
+          iconColor: "text-amber-500 dark:text-yellow-400",
           badge: "오늘 모두 완료",
-          badgeColor: "bg-yellow-500/20 text-yellow-300",
+          badgeColor: "bg-yellow-500/20 text-amber-700 dark:text-yellow-300",
           title: "오늘 잘 해냈어요",
           subtitle: "내일 또 만나요. 명예의 전당도 둘러볼까요?",
           cta: "전당 보기",
           ctaBg: "bg-gradient-to-r from-yellow-400 to-orange-400",
+          ctaText: "text-gray-900",
           glow: "rgba(234, 179, 8, 0.35)",
         };
     }
@@ -132,19 +140,21 @@ const TodayActionCard = ({
         state === "qr_checkin" ? "qr-checkin-button" : undefined
       }
       data-tour={state === "qr_checkin" ? "home-qr-checkin" : undefined}
-      className="group relative w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-gray-900 via-gray-900 to-black p-5 text-left transition-all hover:border-white/20"
-      style={{
-        boxShadow: `0 8px 32px ${config.glow}, 0 0 0 1px ${config.glow}`,
-      }}
+      className="group relative w-full overflow-hidden rounded-3xl border border-border bg-card p-5 text-left shadow-elev-2 transition-all hover:border-primary/30 dark:border-white/10 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-900 dark:to-black dark:shadow-[0_8px_32px_var(--tac-glow),0_0_0_1px_var(--tac-glow)] dark:hover:border-white/20"
+      style={{ "--tac-glow": config.glow } as CSSProperties}
     >
-      {/* 배경 글로우 (hover/idle 펄스) */}
-      <motion.div
-        animate={{ opacity: [0.4, 0.7, 0.4] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl"
-        style={{ background: config.glow }}
+      {/* 배경 글로우 (idle 펄스) — 라이트에선 모서리에 은은한 색만 */}
+      <div
+        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 opacity-40 dark:opacity-100"
         aria-hidden="true"
-      />
+      >
+        <motion.div
+          animate={{ opacity: [0.4, 0.7, 0.4] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="h-full w-full rounded-full blur-3xl"
+          style={{ background: config.glow }}
+        />
+      </div>
 
       <div className="relative">
         {/* Top row — badge + CTA pill */}
@@ -155,7 +165,7 @@ const TodayActionCard = ({
             {config.badge}
           </span>
           <span
-            className={`rounded-pill ${config.ctaBg} px-3 py-1 text-[11px] font-black text-white shadow-lg`}
+            className={`rounded-pill ${config.ctaBg} ${config.ctaText} px-3 py-1 text-[11px] font-black shadow-sm dark:shadow-lg`}
           >
             {config.cta}
           </span>
@@ -169,12 +179,12 @@ const TodayActionCard = ({
             {config.icon}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xl font-black text-white">{config.title}</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-gray-400">
+            <p className="text-xl font-black text-foreground dark:text-white">{config.title}</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground dark:text-gray-400">
               {config.subtitle}
             </p>
           </div>
-          <ChevronRight className="h-5 w-5 text-gray-500 transition-transform group-hover:translate-x-1" />
+          <ChevronRight className="h-5 w-5 text-muted-foreground/60 transition-transform group-hover:translate-x-1 dark:text-gray-500" />
         </div>
       </div>
     </motion.button>

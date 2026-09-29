@@ -57,17 +57,17 @@ const MileageCard = () => {
         aria-expanded={open}
         className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors active:bg-secondary/40"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-reward/15 text-reward">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-reward/15 text-amber-500 dark:text-reward">
           <Coins className="h-5 w-5" />
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-reward">마일리지</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-700 dark:text-reward">마일리지</p>
           <p className="flex items-center gap-1.5 truncate text-sm font-bold text-foreground">
             <span className="tabular-nums">{formatMileage(data.balance)}</span>
             <span className="text-[12px] font-bold text-muted-foreground">마일리지</span>
             {todayGain > 0 && (
-              <span className="rounded-full bg-reward/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-reward">
+              <span className="rounded-full bg-reward/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-amber-700 dark:text-reward">
                 오늘 +{formatMileage(todayGain)}
               </span>
             )}
@@ -106,7 +106,7 @@ const MileageCard = () => {
                       <span className="w-10 shrink-0 text-[11px] tabular-nums text-muted-foreground">{kstShortDate(it.at)}</span>
                       <span className="min-w-0 flex-1 truncate text-[12px] text-foreground">{itemLabel(it)}</span>
                       <span
-                        className={`shrink-0 text-[12px] font-black tabular-nums ${it.amount >= 0 ? "text-reward" : "text-muted-foreground"}`}
+                        className={`shrink-0 text-[12px] font-black tabular-nums ${it.amount >= 0 ? "text-amber-700 dark:text-reward" : "text-muted-foreground"}`}
                       >
                         {it.amount > 0 ? "+" : ""}
                         {formatMileage(it.amount)}

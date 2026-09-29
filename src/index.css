@@ -24,7 +24,8 @@
    * ───────────────────────────────────────────────────────────── */
   /* 65-O: Tailwind 표준 패턴 — :root = 라이트, .dark = 다크 오버라이드.
      · ThemeProvider 가 <html> 에 class="dark" 를 토글
-     · 기본값은 .dark (next-themes defaultTheme="dark") → 기존 비주얼 유지
+     · 기본값은 라이트 (next-themes defaultTheme="light" — 2026-09-29 대표님: 토스·카카오처럼 밝은 톤).
+       다크는 회원이 전체 메뉴 ☀/🌙 버튼이나 설정 > 화면 모드에서 고를 때만
      · .light-surface 는 별도 강제 라이트 페이지용으로 그대로 보존 */
   :root {
     /* ─── LIGHT MODE (default — no .dark class on html) ─── */
