@@ -20,6 +20,7 @@ import { Check, Users, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   useClaimCornermanDailyBonus,
   useCornermanCandidates,
@@ -44,6 +45,9 @@ interface Props {
 
 const CornermanSheet = ({ open, onClose }: Props) => {
   useModalDismiss(open, onClose);
+  // 본사(전체관리자·관리자) 계정: 전 지점 회원을 둘러보기만 한다 (2026-09-30 대표님 "본사는 모든 회원이 보이게")
+  const { role } = useAuth();
+  const isHq = role === "super_admin" || role === "admin";
 
   const { data: status, isLoading: statusLoading } = useMyCornermanStatus();
   const { data: candidates, isLoading: candLoading } = useCornermanCandidates(
@@ -245,16 +249,19 @@ const CornermanSheet = ({ open, onClose }: Props) => {
 
         <div>
           <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
-            같은 지점 회원 후보
+            {isHq ? "전 지점 회원 · 본사 보기" : "같은 지점 회원 후보"}
           </p>
           <p className="mb-2 text-[10.5px] leading-relaxed text-muted-foreground">
-            {CORNERMAN_COPY.emptyHint}
+            {isHq
+              ? "최근 출석한 회원부터 보여요. 코너맨은 같은 지점 회원끼리 맺어서 본사 계정은 둘러보기만 해요."
+              : CORNERMAN_COPY.emptyHint}
           </p>
           <CornermanCandidateList
             candidates={candidates ?? []}
             isLoading={candLoading}
             pendingUserId={pendingRequestId}
             onRequest={handleRequest}
+            readOnly={isHq}
           />
         </div>
 

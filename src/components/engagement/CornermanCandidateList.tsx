@@ -3,6 +3,9 @@
  *
  * 같은 지점 회원 + active pair 없는 회원만 후보로 보임.
  * 민감정보 미노출 — display_name + rank + level 만.
+ *
+ * 2026-09-30: 본사(전체관리자·관리자) 계정은 전 지점 회원을 둘러보기만 한다(readOnly) — 요청 버튼 대신 지점 이름.
+ * 코너맨 요청은 서버(request_cornerman_pair)가 같은 지점끼리만 받는다.
  */
 
 import { Loader2, UserPlus } from "lucide-react";
@@ -15,13 +18,18 @@ export interface CornermanCandidateListProps {
   isLoading: boolean;
   pendingUserId: string | null;
   onRequest: (userId: string) => void;
+  /** 본사 계정 둘러보기 — 요청 버튼 없이 지점 이름을 보인다 */
+  readOnly?: boolean;
 }
+
+const shortBranch = (b: string | null | undefined) => (b ?? "").replace(/^153복싱짐\s*/, "");
 
 const CornermanCandidateList = ({
   candidates,
   isLoading,
   pendingUserId,
   onRequest,
+  readOnly = false,
 }: CornermanCandidateListProps) => {
   if (isLoading) {
     return (
@@ -33,7 +41,7 @@ const CornermanCandidateList = ({
     return (
       <div className="rounded-card border border-border bg-background/40 p-3.5">
         <p className="text-[12.5px] leading-relaxed text-foreground">
-          지금 매칭 가능한 같은 지점 회원이 없습니다.
+          {readOnly ? "지금 둘러볼 회원이 없습니다." : "지금 매칭 가능한 같은 지점 회원이 없습니다."}
         </p>
         <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
           신규 회원이 가입하거나 다른 회원의 코너맨 관계가 종료되면 후보로
@@ -62,27 +70,30 @@ const CornermanCandidateList = ({
               <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
                 {RANK_KOREAN_LABEL[c.current_rank] ?? c.current_rank} 리그 · Lv.
                 {c.current_level}
+                {readOnly && c.branch_name ? ` · ${shortBranch(c.branch_name)}` : ""}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => onRequest(c.user_id)}
-              disabled={isPending}
-              className={`shrink-0 rounded-card border px-3 py-1.5 text-[11.5px] font-bold transition-all ${
-                isPending
-                  ? "cursor-not-allowed border-border bg-muted text-muted-foreground"
-                  : "border-primary bg-primary text-primary-foreground active:scale-[0.98]"
-              }`}
-            >
-              {isPending ? (
-                <span className="flex items-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  요청 중
-                </span>
-              ) : (
-                "요청 보내기"
-              )}
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => onRequest(c.user_id)}
+                disabled={isPending}
+                className={`shrink-0 rounded-card border px-3 py-1.5 text-[11.5px] font-bold transition-all ${
+                  isPending
+                    ? "cursor-not-allowed border-border bg-muted text-muted-foreground"
+                    : "border-primary bg-primary text-primary-foreground active:scale-[0.98]"
+                }`}
+              >
+                {isPending ? (
+                  <span className="flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    요청 중
+                  </span>
+                ) : (
+                  "요청 보내기"
+                )}
+              </button>
+            )}
           </li>
         );
       })}
