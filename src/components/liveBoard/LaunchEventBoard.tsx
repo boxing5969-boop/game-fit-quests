@@ -38,7 +38,7 @@ const REFRESH_MS = 60_000;
 const COLUMN: Record<string, { no: string; title: string; sub: string; Icon: typeof Crown }> = {
   attendance: { no: "①", title: "출석왕", sub: "이벤트 기간 얼굴 인식 출석 일수", Icon: CalendarCheck },
   app: { no: "②", title: "마이복서153 앱 활동왕", sub: "앱에서 한 행동 · 종류별 하루 1점", Icon: Smartphone },
-  nickname: { no: "③", title: "닉네임 좋아요왕", sub: "같은 지점 회원이 보낸 좋아요 (1인 1개)", Icon: Heart },
+  nickname: { no: "③", title: "닉네임 좋아요왕", sub: "받은 하트 · 회원마다 1개씩", Icon: Heart },
 };
 
 const fmt = (score: number | string, cat: KingCategory) => `${Number(score).toLocaleString("ko-KR")}${KING_META[cat].unit}`;
@@ -227,7 +227,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
                   <li className="px-4 py-3 text-lg font-bold leading-relaxed text-gray-400">
                     {cat === "attendance" && "얼굴 인식으로 들어온 날이 하루 1일씩 쌓입니다."}
                     {cat === "app" && "앱 열기·운동 종료·챌린지·퀴즈·좋아요 — 행동 종류마다 하루 1점."}
-                    {cat === "nickname" && "설정에서 닉네임을 정하면 같은 지점 회원이 좋아요를 보낼 수 있어요. 한 사람에게 하나."}
+                    {cat === "nickname" && "랭킹·추천 복서에서 동료를 눌러 하트를 보내요. 회원마다 1개씩."}
                   </li>
                 )}
               </ol>
@@ -242,7 +242,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
 
       {/* 참여 방법 — 한 줄 */}
       <p className="mt-3 flex-shrink-0 text-center text-lg font-bold text-gray-300">
-        참여 방법 · 마이복서153 앱 설치 → 설정에서 닉네임 정하기 → 매일 앱 열기 → 153 챌린지에서 닉네임 좋아요 보내기
+        참여 방법 · 마이복서153 앱 설치 → 매일 앱 열기 → 랭킹·추천 복서에서 동료에게 하트 보내기
       </p>
     </section>
   );

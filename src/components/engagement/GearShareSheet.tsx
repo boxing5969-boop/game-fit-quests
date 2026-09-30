@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useGearActions, useGearPosts } from "@/hooks/useCommunityHub";
 import {
+  shortBranchName,
   CONDITION_LABEL,
   DEAL_LABEL,
   GEAR_LABEL,
@@ -48,6 +49,8 @@ const GearShareSheet = ({ open, onClose }: Props) => {
   const [formOpen, setFormOpen] = useState(false);
 
   const posts = data?.posts ?? [];
+  // 본사 계정: 전 지점 글을 보기만 한다 (2026-09-30)
+  const allBranches = data?.all_branches === true;
 
   const handleCreate = async () => {
     try {
@@ -127,6 +130,7 @@ const GearShareSheet = ({ open, onClose }: Props) => {
               </div>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {p.isMine ? "내 글" : p.nickname}
+                {allBranches && p.branch && ` · ${shortBranchName(p.branch)}`}
                 {p.note && ` · ${p.note}`}
               </p>
             </div>
@@ -255,7 +259,7 @@ const GearShareSheet = ({ open, onClose }: Props) => {
                     안 쓰는 장비, 필요한 사람에게
                   </h2>
                   <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                    같은 지점 회원에게만 보입니다.
+                    {allBranches ? "본사 계정 — 전 지점 글이 보여요." : "같은 지점 회원에게만 보입니다."}
                   </p>
                 </div>
               </div>
@@ -276,7 +280,7 @@ const GearShareSheet = ({ open, onClose }: Props) => {
                 </p>
               </div>
               {renderList()}
-              {renderForm()}
+              {!allBranches && renderForm()}
             </div>
           </motion.div>
         </motion.div>

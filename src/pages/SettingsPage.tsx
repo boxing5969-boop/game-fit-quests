@@ -419,7 +419,7 @@ const SettingsPage = () => {
               <Label htmlFor="nickname" className="text-sm text-muted-foreground">닉네임</Label>
               <Input id="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="닉네임을 입력하세요" maxLength={12} className="rounded-xl" />
               <p className="text-[10px] text-muted-foreground">
-                12자 이내 · 순위와 사이니지 TV에 이 이름이 보여요. 실명과 다른 닉네임을 정하면 153 챌린지 &apos;닉네임 좋아요&apos;에 참여할 수 있어요.
+                12자 이내 · 순위·라이센스·사이니지 TV에 이 이름이 보여요. 닉네임을 정하면 실명 대신 닉네임으로 보여요.
               </p>
             </div>
             <div className="space-y-2">

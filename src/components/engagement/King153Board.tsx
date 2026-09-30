@@ -292,7 +292,7 @@ const King153Board = () => {
                 ) : (
                   <span>
                     {meta.key === "streak" ? "이어지는 출석이 없어요"
-                      : meta.key === "nickname" ? "받은 좋아요가 없어요"
+                      : meta.key === "nickname" ? "받은 하트가 없어요"
                       : `${KING_PERIOD_LABEL[period]} 기록이 없어요`}
                   </span>
                 )}
@@ -345,7 +345,7 @@ const King153Board = () => {
           )}
 
           <p className="text-[10px] leading-relaxed text-muted-foreground">
-            {meta.key === "nickname" ? "좋아요는 취소하기 전까지 계속 쌓여 있어요."
+            {meta.key === "nickname" ? "하트는 취소하기 전까지 계속 쌓여 있어요."
               : period === "event" ? (eventQ.data ? launchEventLine(eventQ.data) : KING_PERIOD_RESET.event)
               : meta.periodless ? "하루라도 빠지면 연속이 끊어져요." : KING_PERIOD_RESET[period]}
             {board ? ` · 참가 ${board.total.toLocaleString("ko-KR")}명` : ""} · 동점이면 먼저 달성한 사람이 앞서요.

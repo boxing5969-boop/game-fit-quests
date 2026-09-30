@@ -19,6 +19,11 @@
  *   · 닉네임을 누르면 그 회원의 라이센스(MemberLicenseSheet)가 열리고 거기서도 하트를 누른다(같은 하트).
  *   · 행에 리그·레벨을 같이 보여 준다. 전체관리자·관리자(대표님 153본사 계정)는 전 지점 회원 + 지점 표시.
  *   · 내 닉네임이 없을 때 띠를 누르면 설정 화면 대신 닉네임 바꾸기 시트가 바로 열린다.
+ *
+ * 2026-09-30 대표님 — "모든 회원님들이 모든 회원님들에게 하트 1개씩" · "하트를 눌러도 1이 안 올라가":
+ *   · 닉네임을 안 정한 회원도 목록에 나오고 하트를 받는다 (랭킹과 같은 이름). 하트 많은 순 → 최근 출석 순.
+ *   · 본사(전체관리자·관리자) 하트도 점수에 들어간다 — 누르면 바로 +1. '관리자 체험' 띠는 없앴다.
+ *   · "한 명에게 하트 하나"를 '하트 1개만'으로 읽는 일이 없게 "회원마다 1개씩"으로 쓴다.
  */
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -126,9 +131,9 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   <h2 className="mt-0.5 text-[15px] font-bold text-foreground">추천 복서</h2>
                   <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
                     {allBranches
-                      ? "전 지점 회원 · 관리자 보기 · "
+                      ? "전 지점 회원 · 본사 보기 · "
                       : data?.branch ? `${shortBranch(data.branch)} 회원끼리 · ` : ""}
-                    한 명에게 하트 하나 · 다시 누르면 취소
+                    회원마다 하트 1개씩 · 다시 누르면 취소
                     {data ? ` · 내가 보낸 하트 ${data.my_given}개` : ""}
                   </p>
                 </div>
@@ -160,15 +165,10 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
               )}
               {data?.reason === "not_member" && (
                 <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-[11.5px] leading-snug text-muted-foreground">
-                  지점 회원만 하트를 보낼 수 있어요. (코치님·관리자 계정, 이용 기록이 없는 계정은 참여하지 않아요)
+                  지점 회원만 하트를 보낼 수 있어요. (코치님 계정, 이용 기록이 없는 계정은 참여하지 않아요)
                 </p>
               )}
-              {data?.reason === "admin_test" && (
-                <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-[11.5px] leading-snug text-muted-foreground">
-                  관리자 체험 중 — 눌러볼 수는 있지만 점수에는 들어가지 않아요.
-                </p>
-              )}
-              {!hasMyNickname && data?.reason !== "admin_test" && data?.reason !== "not_member" && (
+              {!hasMyNickname && !allBranches && data && data.reason !== "not_member" && (
                 <button
                   type="button"
                   onClick={goSettings}
@@ -176,7 +176,7 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                 >
                   <PenLine className="h-4 w-4 shrink-0 text-reward" />
                   <span className="min-w-0 flex-1 text-[11.5px] leading-snug text-foreground">
-                    내 닉네임을 정해야 다른 회원이 나에게 하트를 보낼 수 있어요.
+                    지금은 실명으로 보여요. 닉네임을 정하면 목록·랭킹에 닉네임으로 보여요.
                     <span className="font-bold text-reward"> 닉네임 정하기 →</span>
                   </span>
                 </button>
@@ -190,7 +190,7 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="닉네임 검색"
+                  placeholder="이름(닉네임) 검색"
                   maxLength={30}
                   className="h-10 rounded-xl pl-9"
                 />
@@ -210,10 +210,10 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
               ) : rows.length === 0 ? (
                 <div className="py-8 text-center">
                   <p className="text-sm text-muted-foreground">
-                    {debounced ? "일치하는 닉네임이 없어요" : "아직 닉네임을 정한 회원이 없어요"}
+                    {debounced ? "일치하는 회원이 없어요" : "아직 하트를 보낼 수 있는 회원이 없어요"}
                   </p>
                   {!debounced && (
-                    <p className="mt-1 text-[11px] text-muted-foreground">설정에서 닉네임을 정한 회원이 이 목록에 올라와요.</p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">지점에서 운동을 시작한 회원이 이 목록에 올라와요.</p>
                   )}
                 </div>
               ) : (
@@ -267,8 +267,8 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                 </ul>
               )}
               <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
-                닉네임을 누르면 그 회원의 라이센스를 볼 수 있어요. 하트 많은 순으로 60명까지 보이고, 안 보이면 닉네임으로 검색하세요.
-                받은 하트는 취소하기 전까지 계속 쌓이고, 이 숫자가 닉네임 좋아요왕 점수예요.
+                이름을 누르면 그 회원의 라이센스를 볼 수 있어요. 회원마다 하트를 1개씩 보낼 수 있고, 다시 누르면 취소돼요.
+                하트 많은 순으로 60명까지 보이고, 안 보이면 검색하세요. 받은 하트 수가 닉네임 좋아요왕 점수예요.
               </p>
             </div>
           </motion.div>

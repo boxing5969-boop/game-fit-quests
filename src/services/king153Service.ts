@@ -137,15 +137,15 @@ export const KING_META: Record<KingCategory, KingMeta> = {
   },
   app: {
     key: "app", emoji: "📱", title: "앱활동왕", tagline: "앱에서 한 행동",
-    what: "마이복서153 앱에서 한 행동을 셉니다 — 앱 열기, QR 출석, 운동 종료, 아레나 도전, 퀴즈, 일기, 댓글, 응원, 장비 나눔, 닉네임 좋아요. 행동 종류마다 하루 1점(하루 최대 10점).",
-    how: "매일 앱을 열고, 운동이 끝나면 종료를 누르고, 챌린지·퀴즈·좋아요를 남기세요. 같은 행동을 여러 번 해도 하루 1점이에요. 런칭 이벤트 ②번 왕좌예요.",
+    what: "마이복서153 앱에서 한 행동을 셉니다 — 앱 열기, QR 출석, 운동 종료, 아레나 도전, 퀴즈, 일기, 댓글, 응원, 장비 나눔, 하트 보내기. 행동 종류마다 하루 1점(하루 최대 10점).",
+    how: "매일 앱을 열고, 운동이 끝나면 종료를 누르고, 챌린지·퀴즈·하트를 남기세요. 같은 행동을 여러 번 해도 하루 1점이에요. 런칭 이벤트 ②번 왕좌예요.",
     unit: "점", action: null,
   },
   nickname: {
-    key: "nickname", emoji: "❤️", title: "닉네임왕", tagline: "받은 좋아요",
-    what: "같은 지점 회원들이 내 닉네임에 보낸 좋아요 수입니다. 한 사람이 한 명에게 하나만 보낼 수 있고, 취소하지 않으면 계속 유지돼요(누적).",
-    how: "설정에서 나만의 닉네임(12자 이내)을 정하면 목록에 올라가요. 아래 버튼으로 다른 회원 닉네임에 좋아요를 보내세요. 런칭 이벤트 ③번 왕좌예요.",
-    unit: "개", periodless: true, action: "nickname_like", actionLabel: "닉네임 좋아요 보내기",
+    key: "nickname", emoji: "❤️", title: "닉네임왕", tagline: "받은 하트",
+    what: "같은 지점 회원들이 내 라이센스에 보낸 하트 수입니다(본사 하트 포함). 한 사람이 회원마다 하트 1개씩 보낼 수 있고, 취소하지 않으면 계속 유지돼요(누적).",
+    how: "아래 버튼이나 랭킹에서 동료를 눌러 하트를 보내세요. 닉네임을 정하면 실명 대신 닉네임으로 보여요. 런칭 이벤트 ③번 왕좌예요.",
+    unit: "개", periodless: true, action: "nickname_like", actionLabel: "동료에게 하트 보내기",
   },
 };
 
@@ -212,7 +212,7 @@ export interface BranchNicknames {
   rows: BranchNicknameRow[];
   my_given: number;
   can_like: boolean;
-  /** null = 가능, admin_test = 관리자 체험(점수에는 안 들어감) */
+  /** null = 가능. admin_test 는 2026-09-30부터 오지 않는다(본사 하트도 점수에 들어감) — 옛 응답 호환용 */
   reason: NicknameLikeBlock | "admin_test" | null;
   /** 전체관리자·관리자(대표님 153본사 계정) — 지점과 상관없이 전 지점 회원 목록 */
   all_branches: boolean;
@@ -220,7 +220,7 @@ export interface BranchNicknames {
 
 type RawNicknameRow = Omit<BranchNicknameRow, "likes"> & { likes?: number | string | null; likes_month?: number | string | null };
 
-/** 같은 지점 닉네임 목록 — 닉네임을 정한 회원만(본인·지도진·관리자 제외), 좋아요 많은 순. 검색은 닉네임만. */
+/** 추천 복서 목록 — 같은 지점 회원(본사는 전 지점, 본인·지도진·관리자 제외), 하트 많은 순 → 최근 출석 순. 검색은 보이는 이름(닉네임)만. */
 export async function getBranchNicknames(search: string | null, limit = 60): Promise<BranchNicknames> {
   const { data, error } = await sbRpc<Omit<BranchNicknames, "rows"> & { rows?: RawNicknameRow[] }>(
     "get_branch_nicknames", { p_search: search, p_limit: limit },
@@ -237,7 +237,8 @@ export async function getBranchNicknames(search: string | null, limit = 60): Pro
 }
 
 // ── 라이센스 카드 한 장 (2026-09-29) — 하트 = 닉네임 좋아요와 같은 하트 ──────────────
-/** 하트를 못 누르는 이유 — self: 내 카드, target_no_nickname: 닉네임을 안 정한 회원, admin_test: 관리자 체험(점수 제외) */
+/** 하트를 못 누르는 이유 — self: 내 카드, target_not_member: 이용 기록 없는 계정, not_member: 지점 회원 아님, change_credentials: 처음 받은 아이디 그대로.
+ *  target_no_nickname · admin_test 는 2026-09-30부터 오지 않는다(닉네임 조건 삭제 · 본사 하트도 점수) — 옛 응답 호환용 */
 export type LicenseLikeReason =
   | "self" | "target_no_nickname" | "target_not_member" | "admin_test" | "not_member" | "change_credentials" | null;
 export interface MemberLicense {

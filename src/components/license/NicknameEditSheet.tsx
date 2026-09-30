@@ -4,7 +4,7 @@
  * MY복서의 내 라이센스 카드를 누르면 열린다(추천 복서 목록의 '내 닉네임 정하기' 띠도 여기로).
  * 저장은 설정 화면과 같은 길 — profiles 본인 행의 nickname 만 바꾼다(RLS 본인 행, 서버 가드가 12자 제한).
  * 0행 갱신도 에러 없이 끝나는 RLS 무음 실패를 막으려고 바뀐 행을 돌려받아 확인한다.
- * 실명과 같으면 추천 복서 목록·하트에서 빠진다(닉네임 좋아요 규칙) — 그 사실을 미리 알려 준다.
+ * 닉네임을 안 정해도 하트는 받는다(2026-09-30) — 실명과 같으면 다른 회원에게 실명이 보인다는 것만 알려 준다.
  */
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -162,7 +162,7 @@ const NicknameEditSheet = ({ open, onClose }: Props) => {
                 {tooLong
                   ? `${MAX}자까지 정할 수 있어요`
                   : sameAsName
-                    ? "실명과 같으면 추천 복서 목록에 안 나오고 하트도 받을 수 없어요"
+                    ? "실명과 같아요 — 다른 회원에게 실명이 그대로 보여요"
                     : "다른 회원이 보는 이름이라 실명 대신 닉네임을 추천해요"}
               </p>
               <button

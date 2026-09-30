@@ -20,14 +20,17 @@ import { useGymRaidContributeTrigger } from "@/hooks/useGymRaid";
 
 export const SECOND_CHEER_KEY = ["second-cheer"] as const;
 
-export function useSecondCheerCandidates(limit = 30, enabled = true) {
+export function useSecondCheerCandidates(limit = 30, enabled = true, search = "") {
   const { user } = useAuth();
+  const q = search.trim();
 
   return useQuery<SecondCheerCandidate[]>({
-    queryKey: [...SECOND_CHEER_KEY, "candidates", user?.id ?? "anon", limit],
+    queryKey: [...SECOND_CHEER_KEY, "candidates", user?.id ?? "anon", limit, q],
     enabled: enabled && !!user?.id,
     staleTime: 60_000,
-    queryFn: () => getSecondCheerCandidates(limit),
+    // 검색어를 바꾸는 동안 이전 목록을 그대로 보여 준다 (깜빡임 방지)
+    placeholderData: (prev) => prev,
+    queryFn: () => getSecondCheerCandidates(limit, q),
   });
 }
 

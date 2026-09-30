@@ -19,6 +19,9 @@ async function sbRpc<T>(name: string, args?: Record<string, unknown>): Promise<S
   return (supabase as any).rpc(name, args);
 }
 
+/** "153복싱짐 선릉역점" → "선릉역점" — 본사 계정의 전 지점 보기에서 글마다 지점을 붙일 때 */
+export const shortBranchName = (b: string | null | undefined) => (b ?? "").replace(/^153복싱짐\s*/, "");
+
 function unwrap<T>(res: SbResult<T>, fallback: string): T {
   if (res.error) throw new Error(res.error.message || fallback);
   if (!res.data) throw new Error(fallback);
@@ -42,6 +45,8 @@ export const SPARRING_RANKS = ["red", "black"] as const;
 export interface PartnerCall {
   id: string;
   nickname: string;
+  /** 글쓴 회원 지점 (2026-09-30 — 본사 계정 전 지점 보기용) */
+  branch?: string | null;
   isMine: boolean;
   slotHour: number;
   purpose: PartnerPurpose;
@@ -54,6 +59,8 @@ export interface PartnerCall {
 export interface PartnerCallsResult {
   success: boolean;
   branch?: string;
+  /** 본사(전체관리자·관리자) 계정 — 전 지점 모집을 본다 (참여는 같은 지점만) */
+  all_branches?: boolean;
   calls: PartnerCall[];
 }
 
@@ -125,6 +132,8 @@ export const DEAL_LABEL: Record<GearDeal, string> = {
 export interface GearPost {
   id: string;
   nickname: string;
+  /** 글쓴 회원 지점 (2026-09-30 — 본사 계정 전 지점 보기용) */
+  branch?: string | null;
   isMine: boolean;
   kind: GearKind;
   size: string | null;
@@ -137,6 +146,8 @@ export interface GearPost {
 export interface GearPostsResult {
   success: boolean;
   branch?: string;
+  /** 본사(전체관리자·관리자) 계정 — 전 지점 글을 본다 */
+  all_branches?: boolean;
   posts: GearPost[];
 }
 
@@ -181,6 +192,8 @@ export interface TitleMatchItem {
   id: string;
   userId: string;
   nickname: string;
+  /** 통과한 회원 지점 (2026-09-30 — 본사 계정 전 지점 보기용) */
+  branch?: string | null;
   isMine: boolean;
   rank: string;
   globalLevel: number;
@@ -192,6 +205,8 @@ export interface TitleMatchItem {
 export interface TitleMatchFeedResult {
   success: boolean;
   branch?: string;
+  /** 본사(전체관리자·관리자) 계정 — 전 지점 소식을 본다 */
+  all_branches?: boolean;
   items: TitleMatchItem[];
 }
 

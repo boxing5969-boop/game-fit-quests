@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useClapTitleMatch, useTitleMatchFeed } from "@/hooks/useCommunityHub";
 import { RANK_LABELS } from "@/data/sharedConstants";
+import { shortBranchName } from "@/services/communityHubService";
 
 interface Props {
   open: boolean;
@@ -33,6 +34,8 @@ const TitleMatchFeedSheet = ({ open, onClose }: Props) => {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const items = data?.items ?? [];
+  // 본사 계정: 전 지점 소식 (2026-09-30)
+  const allBranches = data?.all_branches === true;
 
   const handleClap = async (id: string, userId: string) => {
     setBusyId(id);
@@ -83,6 +86,7 @@ const TitleMatchFeedSheet = ({ open, onClose }: Props) => {
               </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {formatDay(it.at)}
+                {allBranches && it.branch && ` · ${shortBranchName(it.branch)}`}
                 {it.claps > 0 && ` · 👏 ${it.claps}`}
               </p>
             </div>
@@ -105,8 +109,9 @@ const TitleMatchFeedSheet = ({ open, onClose }: Props) => {
           </div>
         ))}
         <p className="pt-1 text-[10.5px] leading-relaxed text-muted-foreground">
-          같은 지점, 최근 30일 통과한 동료만 표시됩니다. 박수는 기존 응원과 같은
-          일일 한도를 씁니다.
+          {allBranches
+            ? "본사 계정 — 전 지점에서 최근 30일 통과한 회원이 보여요. 박수는 기존 응원과 같은 일일 한도를 씁니다."
+            : "같은 지점, 최근 30일 통과한 동료만 표시됩니다. 박수는 기존 응원과 같은 일일 한도를 씁니다."}
         </p>
       </div>
     );

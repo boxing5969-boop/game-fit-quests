@@ -2,7 +2,8 @@
  * 다른 회원 라이센스 보기 (2026-09-29 대표님: "킹즈오브아너처럼 추천 아이디가 보이고, 아이디를 누르면 상대방 정보").
  *
  * 추천 복서 목록·랭킹에서 회원을 누르면 열린다. 카드는 MY복서와 같은 BoxerLicenseCard, 아래에 큰 하트 버튼.
- * 하트 = 닉네임 좋아요와 같은 하트(한 사람에게 하나 · toggle_nickname_like). 자격은 서버가 다시 검사한다.
+ * 하트 = 닉네임 좋아요와 같은 하트(회원마다 1개씩 · toggle_nickname_like). 자격은 서버가 다시 검사한다.
+ * 2026-09-30: 닉네임을 안 정한 회원도 하트를 받는다 · 본사 하트도 점수에 들어간다(누르면 +1).
  * 보이는 정보는 서버(get_member_license)가 고른 공개 정보뿐 — 실명·전화번호는 오지 않는다.
  * 회원은 같은 지점만, 전체관리자·관리자(대표님 153본사 계정)는 전 지점을 본다.
  */
@@ -21,9 +22,11 @@ import CharacterSprite from "@/components/CharacterSprite";
 /** 하트를 못 누를 때 한 줄 안내 */
 const REASON_TEXT: Record<Exclude<LicenseLikeReason, null>, string> = {
   self: "내 라이센스예요 — 다른 회원님께 하트를 보내 보세요",
-  target_no_nickname: "아직 닉네임을 정하지 않은 회원이라 하트를 보낼 수 없어요",
+  // 2026-09-30부터 서버가 보내지 않는다 (닉네임 조건 삭제) — 옛 응답 호환용
+  target_no_nickname: "지금은 이 회원에게 하트를 보낼 수 없어요",
   target_not_member: "이용 기록이 확인되지 않은 계정이라 하트를 받을 수 없어요",
-  admin_test: "관리자 체험 — 눌러볼 수는 있지만 점수에는 들어가지 않아요",
+  // 2026-09-30부터 서버가 보내지 않는다 (본사 하트도 점수에 들어간다) — 옛 응답 호환용
+  admin_test: "본사 계정 하트예요",
   not_member: "지점 회원만 하트를 보낼 수 있어요",
   change_credentials: "처음 받은 아이디·비밀번호(전화번호)를 바꾸면 하트를 보낼 수 있어요",
 };
@@ -202,7 +205,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction }: Props) => {
                 {extraAction && <div className="mt-3">{extraAction}</div>}
 
                 <p className="mt-3 px-1 text-[11.5px] leading-relaxed text-muted-foreground">
-                  하트는 한 사람에게 하나 · 다시 누르면 취소 · 받은 하트는 닉네임 좋아요왕 점수와 같아요
+                  회원마다 하트 1개씩 · 다시 누르면 취소 · 받은 하트 수가 닉네임 좋아요왕 점수예요
                 </p>
               </>
             )}

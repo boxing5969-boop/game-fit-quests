@@ -20,6 +20,7 @@ import { usePartnerCallActions, usePartnerCalls } from "@/hooks/useCommunityHub"
 import {
   PURPOSE_LABEL,
   SPARRING_RANKS,
+  shortBranchName,
   type PartnerPurpose,
 } from "@/services/communityHubService";
 
@@ -52,6 +53,8 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
 
   const calls = data?.calls ?? [];
   const mine = calls.find((c) => c.isMine);
+  // 본사 계정: 전 지점 모집을 보기만 한다 (참여는 서버가 같은 지점만 허용 — 2026-09-30)
+  const allBranches = data?.all_branches === true;
 
   const run = async (fn: () => Promise<unknown>, id: string, fail: string) => {
     setBusyId(id);
@@ -89,10 +92,12 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
             오늘 파트너 구하기
           </p>
           <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
-            같은 지점, 오늘만 보입니다
+            {allBranches ? "전 지점 모집 · 본사 보기" : "같은 지점, 오늘만 보입니다"}
           </h2>
           <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-            하루가 지나면 저절로 사라집니다. 부담 없이 올려주세요.
+            {allBranches
+              ? "오늘 올라온 모집만 보여요. 참여는 같은 지점 회원끼리 해요."
+              : "하루가 지나면 저절로 사라집니다. 부담 없이 올려주세요."}
           </p>
         </div>
       </div>
@@ -116,7 +121,9 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
           <p className="text-2xl">🥊</p>
           <p className="mt-2 text-[13px] font-bold text-foreground">아직 오늘 모집이 없습니다</p>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            아래에서 첫 모집을 올려보세요. 같은 지점 회원에게만 보입니다.
+            {allBranches
+              ? "오늘 올라온 모집이 전 지점에 아직 없어요."
+              : "아래에서 첫 모집을 올려보세요. 같은 지점 회원에게만 보입니다."}
           </p>
         </div>
       );
@@ -133,6 +140,11 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
                 <span className="truncate text-[13px] font-bold text-foreground">
                   {c.isMine ? "내 모집" : c.nickname}
                 </span>
+                {allBranches && c.branch && (
+                  <span className="shrink-0 text-[10.5px] font-semibold text-muted-foreground">
+                    {shortBranchName(c.branch)}
+                  </span>
+                )}
                 <span className="rounded-pill bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
                   {PURPOSE_LABEL[c.purpose]}
                 </span>
@@ -156,7 +168,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
               >
                 내리기
               </button>
-            ) : c.joined ? (
+            ) : allBranches ? null : c.joined ? (
               <button
                 type="button"
                 disabled={busyId === c.id}
@@ -278,7 +290,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
             {renderHeader()}
             <div className="flex-1 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
               {renderList()}
-              {renderForm()}
+              {!allBranches && renderForm()}
             </div>
           </motion.div>
         </motion.div>

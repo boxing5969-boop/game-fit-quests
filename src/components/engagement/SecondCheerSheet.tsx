@@ -27,6 +27,7 @@ import {
   useSendBoxingCheer,
 } from "@/hooks/useSecondCheer";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { useAuth } from "@/contexts/AuthContext";
 import type {
   SecondCheerCandidate,
   SendCheerResult,
@@ -43,15 +44,24 @@ interface Props {
 const MAX_MESSAGE = 80;
 
 const SecondCheerSheet = ({ open, onClose }: Props) => {
+  const { role } = useAuth();
+  // 본사(전체관리자·관리자) 계정은 전 지점 회원이 보인다 — 서버가 같은 기준으로 고른다 (2026-09-30)
+  const allBranches = role === "super_admin" || role === "admin";
+  const [search, setSearch] = useState("");
+  const [debounced, setDebounced] = useState("");
+  // 타이핑마다 RPC 를 부르지 않게 300ms 뒤에 반영 — 검색은 서버가 지점 전체(본사는 전 지점)에서 찾는다
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
   // open=false 일 때는 RPC 가 발사되지 않도록 enabled gate.
-  const { data: candidates, isLoading } = useSecondCheerCandidates(30, open);
+  const { data: candidates, isLoading } = useSecondCheerCandidates(30, open, debounced);
   const send = useSendBoxingCheer();
   useModalDismiss(open, onClose);
 
   const [target, setTarget] = useState<SecondCheerCandidate | null>(null);
   const [sticker, setSticker] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-  const [search, setSearch] = useState("");
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<SendCheerResult | null>(null);
 
@@ -61,11 +71,13 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
       setSticker(null);
       setMessage("");
       setSearch("");
+      setDebounced("");
       setResult(null);
       setPending(false);
     }
   }, [open]);
 
+  // 서버 결과를 받기 전(300ms 사이)에도 지금 목록에서 바로 걸러 보여 준다
   const filtered = useMemo(() => {
     const list = candidates ?? [];
     const q = search.trim().toLowerCase();
@@ -240,8 +252,9 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
               혼자 강해지는 복서보다 함께 오래 가는 복서가 더 강합니다.
             </p>
             <p className="mt-1 text-[10.5px] leading-relaxed text-muted-foreground">
-              ※ 같은 지점 동료만 표시됩니다. 본인 / 다른 지점 / 코치·관리자 계정은
-              제외됩니다. 민감정보는 노출되지 않습니다.
+              {allBranches
+                ? "※ 본사 계정 — 전 지점 회원이 최근 출석한 순서로 보여요. 이름으로 찾을 수 있어요. 코치·관리자 계정은 제외됩니다."
+                : "※ 같은 지점 동료가 최근 출석한 순서로 보여요. 이름으로 찾으면 지점 전체에서 찾아요. 본인 / 다른 지점 / 코치·관리자 계정은 제외됩니다. 민감정보는 노출되지 않습니다."}
             </p>
           </div>
 
@@ -264,10 +277,12 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
             <div className="flex flex-col items-center px-1 py-6 text-center">
               <p className="text-2xl">🥊</p>
               <p className="mt-2 text-[12.5px] font-bold text-foreground">
-                응원할 동료가 아직 없어요
+                {search.trim() ? "이 이름의 동료를 찾지 못했어요" : "응원할 동료가 아직 없어요"}
               </p>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                같은 지점 동료가 가입하면 여기에 표시됩니다.
+                {search.trim()
+                  ? "보이는 이름(닉네임) 그대로 다시 찾아보세요."
+                  : "같은 지점 동료가 가입하면 여기에 표시됩니다."}
               </p>
             </div>
           ) : (

@@ -442,10 +442,13 @@ export async function getRecentChampionJournalEntries(
 
 export async function getSecondCheerCandidates(
   limit = 30,
+  search = "",
 ): Promise<SecondCheerCandidate[]> {
+  // 2026-09-30: 이름 검색은 서버에서 (지점 동료가 30명을 넘어도 찾게) · 본사 계정은 전 지점 회원
+  const q = search.trim();
   const { data, error } = await sbRpc<SecondCheerCandidate[]>(
     "get_second_cheer_candidates",
-    { p_limit: limit },
+    { p_limit: limit, p_search: q ? q : null },
   );
   if (error) throwKo(error);
   return data ?? [];
