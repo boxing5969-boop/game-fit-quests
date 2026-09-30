@@ -54,6 +54,8 @@ const BottomNav = () => {
     hiddenPaths.includes(location.pathname) ||
     location.pathname.startsWith("/manager/") ||
     location.pathname.startsWith("/guide/") ||
+    // 메시지 대화방 — 아래 입력창 자리. 받은함(/messages)에는 탭바가 그대로 있다
+    location.pathname.startsWith("/messages/") ||
     // 전시용 화면(TV 사이니지·키오스크)은 displayMode 한 곳에서 관리한다.
     isSignageRoute(location.pathname)
   ) {

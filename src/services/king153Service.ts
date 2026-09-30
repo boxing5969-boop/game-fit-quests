@@ -243,7 +243,7 @@ export type LicenseLikeReason =
   | "self" | "target_no_nickname" | "target_not_member" | "admin_test" | "not_member" | "change_credentials" | null;
 export interface MemberLicense {
   user_id: string;
-  /** 랭킹과 같은 이름 규칙 — 닉네임, 비었으면 '익명xxxxxx' (실명·전화번호는 오지 않는다) */
+  /** 랭킹과 같은 이름 규칙 — 닉네임 → 이름 → '익명 복서' (2026-09-30). 전화번호·생년월일은 오지 않는다 */
   display: string;
   has_nickname: boolean;
   branch: string | null;

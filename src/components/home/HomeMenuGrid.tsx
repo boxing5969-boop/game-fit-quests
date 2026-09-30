@@ -7,6 +7,7 @@
 import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDmSummary } from "@/hooks/useDm";
 import { buildAppMenu } from "@/lib/appMenu";
 import GlyphTile from "@/components/icons/GlyphTile";
 import { cn } from "@/lib/utils";
@@ -36,7 +37,15 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
   const { pathname } = useLocation();
   const { profile } = useAuth();
   const diet = !!profile?.diet_program_enabled;
-  const items = useMemo(() => buildAppMenu({ diet }), [diet]);
+  // 메시지 타일 오른쪽 위 — 안 읽은 대화 + 새 요청 (+ 본사: 처리 안 한 신고) (2026-09-30).
+  // 메시지를 쓸 수 없는 계정(지점 회원 확인 전)에는 타일을 빼 둔다 — 머리글 종이비행기와 같은 기준
+  const { data: dm } = useDmSummary();
+  const dmBadge = dm?.badge ?? 0;
+  const dmOff = dm?.enabled === false;
+  const items = useMemo(
+    () => buildAppMenu({ diet }).filter((m) => !(dmOff && m.path === "/messages")),
+    [diet, dmOff],
+  );
 
   const grid = (
     <div className="grid grid-cols-4 gap-x-1 gap-y-4">
@@ -53,8 +62,16 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
             aria-current={active ? "page" : undefined}
             className="group flex min-w-0 flex-col items-center gap-2 rounded-2xl px-0.5 pb-0.5 outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           >
-            <span className="transition-transform duration-200 ease-out group-active:scale-[0.92]">
+            <span className="relative transition-transform duration-200 ease-out group-active:scale-[0.92]">
               <GlyphTile name={it.glyph} />
+              {it.path === "/messages" && dmBadge > 0 && (
+                <span
+                  className="absolute -right-1.5 -top-1.5 flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-bold leading-none text-white ring-2 ring-card"
+                  aria-label={`새 메시지 ${dmBadge}개`}
+                >
+                  {dmBadge > 99 ? "99+" : dmBadge}
+                </span>
+              )}
             </span>
             <span
               className={cn(

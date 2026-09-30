@@ -28,6 +28,8 @@ const SETUP_ROUTES = ["/", "/onboarding", "/select-branch", "/waiting-approval"]
 const isSetupPath = (pathname: string): boolean => {
   if (SETUP_ROUTES.includes(pathname)) return true;
   if (pathname.startsWith("/live-board")) return true;
+  // 메시지 대화방 — 왼쪽 아래 오삼이가 입력창을 가린다 (2026-09-30)
+  if (pathname.startsWith("/messages/")) return true;
   return false;
 };
 

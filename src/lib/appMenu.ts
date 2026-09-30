@@ -27,6 +27,8 @@ export const APP_MENU: readonly AppMenuItem[] = [
   // 153 챌린지 — 킹 보드(왕좌). 라우트는 /myboxer/quest 유지 (DB anchor 호환).
   { path: "/myboxer/quest", label: "153 챌린지", glyph: "crown" },
   { path: "/myboxer/community", label: "153 커뮤니티", glyph: "chat" },
+  // 메시지(DM) — 같은 지점 회원·코치님과 1:1 (2026-09-30). 안 읽은 수가 타일 오른쪽 위에 뜬다.
+  { path: "/messages", label: "메시지", glyph: "dm" },
   { path: "/myboxer/visualization", label: "153마인드셋", glyph: "mind" },
   { path: "/cert-benefits", label: "단증혜택", glyph: "medal" },
   { path: "/character-studio", label: "캐릭터", glyph: "avatar" },

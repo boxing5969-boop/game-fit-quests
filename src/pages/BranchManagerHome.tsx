@@ -17,6 +17,7 @@ import { isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
 import { Input } from "@/components/ui/input";
 import ApprovalInbox from "@/components/ApprovalInbox";
 import BulkMemberImport from "@/components/admin/BulkMemberImport";
+import DmHeaderButton from "@/components/dm/DmHeaderButton";
 import { toast } from "sonner";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
@@ -647,6 +648,8 @@ const BranchManagerHome = () => {
             <h1 className="text-2xl text-foreground">{isSuperAdmin ? "전체 회원관리" : "우리 지점 회원관리"}</h1>
           </div>
           <div className="flex items-center gap-2">
+            {/* 메시지(DM) — 본사는 처리 안 한 신고도 같은 배지에 (2026-09-30) */}
+            <DmHeaderButton className="h-10 w-10" />
             <button onClick={() => navigate("/mypage")} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
               <Bell className="h-5 w-5 text-secondary-foreground" />
               {unreadCount && unreadCount > 0 ? (
@@ -755,6 +758,7 @@ const BranchManagerHome = () => {
               <h1 className="text-xl text-foreground">{isSuperAdmin ? "전체 회원관리" : "회원관리"}</h1>
             </div>
             <div className="flex items-center gap-2">
+              <DmHeaderButton />
               <button onClick={() => navigate("/mypage")} className="relative flex h-9 w-9 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
                 <Bell className="h-4 w-4 text-secondary-foreground" />
                 {unreadCount && unreadCount > 0 ? (

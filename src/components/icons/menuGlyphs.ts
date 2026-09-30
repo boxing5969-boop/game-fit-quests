@@ -18,6 +18,7 @@ export type MenuGlyphName =
   | "clipboard"
   | "crown"
   | "chat"
+  | "dm"
   | "mind"
   | "medal"
   | "avatar"
@@ -113,6 +114,14 @@ export const MENU_GLYPHS: Record<MenuGlyphName, (p: string) => string> = {
 <g fill="#fff" opacity=".7"><rect x="11" y="13.2" width="15" height="2.4" rx="1.2"/><rect x="11" y="18" width="9" height="2.4" rx="1.2" opacity=".7"/></g>
 <path d="M22 18.5h14a8 8 0 0 1 8 8V29a8 8 0 0 1-4 6.9l.4 4.1c.1 1-1 1.6-1.8 1l-5.2-4H22a8 8 0 0 1-8-8v-2.5a8 8 0 0 1 8-8Z" fill="url(#${p}mint)"/>
 <g fill="#fff"><circle cx="22.5" cy="27.8" r="2.1"/><circle cx="29" cy="27.8" r="2.1"/><circle cx="35.5" cy="27.8" r="2.1"/></g>`,
+
+  /** 메시지(DM) — 민트 종이비행기(윗날개 밝게·아랫날개 진하게 + 먹색 접힌 자락) + 금색 속도선 (2026-09-30) */
+  dm: (p) => `${defs(p, ["mint", "mintD", "ink", "gold"])}
+<path d="M5.8 21.6 41.6 6.9 20.9 27.4Z" fill="url(#${p}mint)" stroke="url(#${p}mint)" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="M20.9 27.4 41.6 6.9 29.2 41.2Z" fill="url(#${p}mintD)" stroke="url(#${p}mintD)" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="M20.9 27.4 22.6 38.2 27 33Z" fill="url(#${p}ink)" stroke="url(#${p}ink)" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M10.4 21 33.6 11.6" stroke="#fff" stroke-opacity=".6" stroke-width="1.8" stroke-linecap="round"/>
+<g stroke="url(#${p}gold)" stroke-width="2.6" stroke-linecap="round"><path d="M4.6 32.4h7.2"/><path d="M8.6 38.6h6.2"/></g>`,
 
   /** 153마인드셋 — 옆얼굴 + 민트 반짝임 */
   mind: (p) => `${defs(p, ["ink", "mint", "gold"])}

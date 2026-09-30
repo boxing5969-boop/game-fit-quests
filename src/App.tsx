@@ -107,6 +107,9 @@ const MyBoxerVisualizationPage = lazyWithRetry(
 );
 const MyBoxerQuestPage = lazyWithRetry(() => import("@/pages/MyBoxerQuestPage"));
 const MyBoxerCommunityPage = lazyWithRetry(() => import("@/pages/MyBoxerCommunityPage"));
+// 메시지(DM) — 받은함 · 대화방 (2026-09-30 대표님: 인스타그램처럼 1:1 메시지)
+const MessagesPage = lazyWithRetry(() => import("@/pages/MessagesPage"));
+const MessageThreadPage = lazyWithRetry(() => import("@/pages/MessageThreadPage"));
 const TrainingLibraryPage = lazyWithRetry(() => import("@/pages/TrainingLibraryPage"));
 const RoutineBuilderPage = lazyWithRetry(() => import("@/pages/RoutineBuilderPage"));
 const RoutinesPage = lazyWithRetry(() => import("@/pages/RoutinesPage"));
@@ -316,6 +319,10 @@ const AppRoutes = () => {
         <Route path="/myboxer/visualization" element={<ProtectedRoute><MyBoxerVisualizationPage /></ProtectedRoute>} />
         <Route path="/myboxer/quest" element={<ProtectedRoute><MyBoxerQuestPage /></ProtectedRoute>} />
         <Route path="/myboxer/community" element={<ProtectedRoute><MyBoxerCommunityPage /></ProtectedRoute>} />
+        {/* 메시지(DM) — 같은 지점 회원·코치님과 1:1. /messages/to/:userId = 아직 대화가 없는 사람에게 첫 메시지 */}
+        <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+        <Route path="/messages/to/:userId" element={<ProtectedRoute><MessageThreadPage /></ProtectedRoute>} />
+        <Route path="/messages/:threadId" element={<ProtectedRoute><MessageThreadPage /></ProtectedRoute>} />
         <Route path="/training-library" element={<ProtectedRoute><TrainingLibraryPage /></ProtectedRoute>} />
         <Route path="/routine-builder" element={<ProtectedRoute><ManagerRoute><RoutineBuilderPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/routines" element={<ProtectedRoute><RoutinesPage /></ProtectedRoute>} />

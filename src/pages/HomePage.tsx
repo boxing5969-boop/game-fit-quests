@@ -52,6 +52,7 @@ import { useMyWorkoutToday } from "@/hooks/useWorkoutTime";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
 import HomeMenuGrid from "@/components/home/HomeMenuGrid";
+import DmHeaderButton from "@/components/dm/DmHeaderButton";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import { getMasterLevelDefinition } from "@/data/masterTierData";
@@ -374,6 +375,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
                 <Ticket className="h-3.5 w-3.5" />
                 <span>멤버십</span>
               </button>
+              {/* 메시지(DM) — 인스타그램처럼 오른쪽 위 종이비행기 (2026-09-30) */}
+              <DmHeaderButton />
               <button
                 onClick={() => navigate("/mypage")}
                 className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"

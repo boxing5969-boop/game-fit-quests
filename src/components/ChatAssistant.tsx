@@ -187,7 +187,8 @@ const ChatAssistant = () => {
 
   // 복싱 트레이닝은 풀스크린 터치 게임이라 플로팅 버튼이 펀치 입력에 겹쳐 오조작을 유발함.
   // QR 출석 화면은 카메라 뷰 위에 버튼이 겹치면 안 된다.
-  if (location.pathname === "/minigame" || location.pathname === "/qr-checkin") return null;
+  // 메시지 대화방은 내 말풍선(오른쪽 아래)·입력창을 가린다 (2026-09-30).
+  if (location.pathname === "/minigame" || location.pathname === "/qr-checkin" || location.pathname.startsWith("/messages/")) return null;
 
   return (
     <>
