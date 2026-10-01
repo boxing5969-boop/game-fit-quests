@@ -13,6 +13,7 @@
 export type MenuGlyphName =
   | "myboxer"
   | "play"
+  | "titlematch"
   | "glove"
   | "books"
   | "clipboard"
@@ -69,6 +70,17 @@ export const MENU_GLYPHS: Record<MenuGlyphName, (p: string) => string> = {
 <path d="M21 18.3v9.4c0 1 1.1 1.6 1.9 1.1l7.5-4.7c.8-.5.8-1.7 0-2.2l-7.5-4.7c-.8-.5-1.9.1-1.9 1.1Z" fill="#fff"/>
 <rect x="21.5" y="36" width="5" height="4" ${INK_FILL} opacity=".85"/>
 <rect x="15" y="39.5" width="18" height="3.5" rx="1.75" fill="url(#${p}ink)"/>`,
+
+  /** 타이틀매치 — 금 트로피 + 흰 재생 표시(타이틀매치 영상 모음) + 먹 받침·민트 명판 (2026-10-01) */
+  titlematch: (p) => `${defs(p, ["gold", "goldD", "ink", "mint"])}
+<path d="M13 10.6H9.3a1.7 1.7 0 0 0-1.7 1.8c.5 5.6 3.7 9 8.3 9.8" fill="none" stroke="url(#${p}goldD)" stroke-width="2.9" stroke-linecap="round"/>
+<path d="M35 10.6h3.7a1.7 1.7 0 0 1 1.7 1.8c-.5 5.6-3.7 9-8.3 9.8" fill="none" stroke="url(#${p}goldD)" stroke-width="2.9" stroke-linecap="round"/>
+<rect x="21.2" y="26" width="5.6" height="8" fill="url(#${p}goldD)"/>
+<path d="M13 7.5h22v9a11 11 0 0 1-22 0Z" fill="url(#${p}gold)" stroke="url(#${p}gold)" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M16.6 10.6v5.6" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/>
+<path d="M21.3 11.9v8.6c0 .9 1 1.4 1.8.9l6.9-4.3c.7-.4.7-1.4 0-1.9l-6.9-4.3c-.8-.5-1.8.1-1.8 1Z" fill="#fff"/>
+<rect x="14" y="33.2" width="20" height="9.6" rx="2.8" fill="url(#${p}ink)"/>
+<rect x="18.5" y="36.7" width="11" height="2.6" rx="1.3" fill="url(#${p}mint)"/>`,
 
   /** 복싱 트레이닝 — 뻗는 민트 글러브(둥근 주먹 + 엄지 감싼 선 + 흰 끈) + 금색 타격감 */
   glove: (p) => `${defs(p, ["mint", "mintD", "gold"])}

@@ -70,6 +70,18 @@ describe("대표님 예시 — 타이틀매치 미션", () => {
   it("타이틀매치 바로가기도 같이 나온다", () => {
     expect(ids("타이틀매치미션")).toContain("f:title-match");
   });
+  it("타이틀매치 바로가기는 타이틀매치 메뉴로 간다", () => {
+    const e = FEATURES.find((x) => x.id === "f:title-match")!;
+    expect(e.action).toEqual({ kind: "route", to: "/title-match" });
+    expect(e.glyph).toBe("titlematch");
+  });
+  it.each(["블루 타이틀매치", "레벨 20", "레벨40", "타이틀매치 영상"])("'%s' → 타이틀매치 메뉴가 바로가기 맨 위", (q) => {
+    const features = searchEntries(ALL, q).filter((h) => h.entry.group === "feature");
+    expect(features[0]?.entry.id).toBe("f:title-match");
+  });
+  it("레벨 2 는 레벨 20 관련어에 걸리지 않는다", () => {
+    expect(ids("레벨 2")).not.toContain("f:title-match");
+  });
   it("영상 묶음이 먼저 보일 만큼 점수가 높다", () => {
     const groups = groupHits(searchEntries(ALL, "타이틀매치미션"));
     expect(groups.map((g) => g.group).slice(0, 2)).toEqual(expect.arrayContaining(["video", "feature"]));

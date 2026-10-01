@@ -128,8 +128,10 @@ const SearchPage = () => {
   };
 
   const goBack = () => {
-    // 검색 화면으로 바로 들어온 경우(새 창 등)에는 홈으로
-    if (window.history.length > 1) navigate(-1);
+    // 검색 화면으로 바로 들어온 경우(새 창·주소 직접 입력)에는 홈으로.
+    // history.length 는 앱 밖 기록까지 세서 믿을 수 없다 — 라우터가 붙이는 idx 로 앱 안 이전 화면이 있는지 본다
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) navigate(-1);
     else navigate("/home", { replace: true });
   };
 

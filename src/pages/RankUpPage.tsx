@@ -400,9 +400,14 @@ const RankUpPage = () => {
                   <Trophy className="mr-1 inline h-4 w-4" />{bossBattleMutation.isPending ? "처리 중..." : "🏆 즉시 타이틀매치 클리어 (관리자)"}
                 </button>
               )}
-              <button onClick={() => { setSelectedNode(null); navigate("/missions"); }}
+              <button onClick={() => {
+                  // 타이틀매치 칸이면 타이틀매치 메뉴의 그 리그 영상으로 (레벨 10·20·30·40, 2026-10-01)
+                  const to = selectedNode.is_boss ? `/title-match?lv=${(RANK_ORDER.indexOf(selectedNode.rank_name) + 1) * 10}` : "/missions";
+                  setSelectedNode(null);
+                  navigate(to);
+                }}
                 className={`w-full rounded-xl ${isAdmin ? "bg-secondary text-secondary-foreground shadow-elev-1" : "bg-primary text-primary-foreground shadow-glow-soft hover:shadow-glow-primary"} py-3 text-sm font-bold transition-all active:scale-[0.98]`}>
-                미션 보러가기
+                {selectedNode.is_boss ? "🏆 타이틀매치 영상 보기" : "미션 보러가기"}
               </button>
             </div>
           )}

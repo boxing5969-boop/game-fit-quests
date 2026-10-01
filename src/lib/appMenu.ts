@@ -21,6 +21,8 @@ export const APP_MENU: readonly AppMenuItem[] = [
   { path: "/myboxer", label: "MY복서", glyph: "myboxer" },
   // 153플레이 — 레벨 미션 영상. 월드(외부 큐레이션) 탭은 관리자 계정에만 열린다.
   { path: "/library", label: "153플레이", glyph: "play" },
+  // 타이틀매치 — 레벨 10·20·30·40 심사 동작 영상만 모아 둔 곳 (2026-10-01). 첫 줄에 둔다.
+  { path: "/title-match", label: "타이틀매치", glyph: "titlematch" },
   { path: "/minigame", label: "복싱 트레이닝", glyph: "glove" },
   { path: "/training-library", label: "훈련 라이브러리", glyph: "books" },
   { path: "/routines", label: "수업 루틴", glyph: "clipboard" },
