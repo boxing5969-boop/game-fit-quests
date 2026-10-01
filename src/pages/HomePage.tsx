@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback, Fragment } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { User, Ticket, Trophy, Settings, ChevronLeft } from "lucide-react";
+import { User, Ticket, Trophy, Settings, ChevronLeft, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 // useRetention: 홈 리스타트 루틴 배너 제거로 사용처 없음 (필요 시 복구).
 import { useOnboardingState } from "@/hooks/useOnboardingState";
-import { useActivitySession } from "@/hooks/useActivitySession";
+import { useActivitySession, type ActivitySession } from "@/hooks/useActivitySession";
 import { useWallet } from "@/hooks/useWallet";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import {
@@ -112,8 +113,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   useLevelUpNotifications();
   useHofRewardsAutoClaim();
 
-  const [showChallenge, setShowChallenge] = useState(false);
-  const [qrAutoStarted, setQrAutoStarted] = useState(false);
+  // 오늘 도전 전체 화면 — 열린 세션(id·시작 시각)을 붙잡아 둔다. 끝내서 서버 세션이 사라져도 결과 화면은 남는다.
+  const [challengeOpen, setChallengeOpen] = useState<{ id: string; startedAt: string } | null>(null);
+  const openChallenge = useCallback((s: ActivitySession) => setChallengeOpen({ id: s.id, startedAt: s.started_at }), []);
   const [showCustomize, setShowCustomize] = useState(false);
   const { visibility: homeWidgets, order: homeWidgetOrder } = useHomeLayout();
   const [levelUpModal, setLevelUpModal] = useState<{
@@ -142,18 +144,41 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
     });
   }, [progress?.user_id]); // eslint-disable-line
 
+  // 진행 중인 도전이 처음 보이면(QR 출석 직후 등) 전체 화면으로 한 번 연다.
+  // 같은 도전으로 홈에 돌아올 때마다 다시 띄우지는 않는다 — 그때는 '운동 중 · 이어하기' 카드로 연다.
+  const activeSessionId = activitySession.activeSession?.id;
   useEffect(() => {
-    if (activitySession.isActive && !showChallenge) setShowChallenge(true);
-  }, [activitySession.isActive]); // eslint-disable-line
+    const s = activitySession.activeSession;
+    if (!s) return;
+    const key = `153challenge:opened:${s.id}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch {
+      /* 저장이 막혀도 이번 한 번은 연다 */
+    }
+    openChallenge(s);
+  }, [activeSessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 2026-10-01 대표님: "오늘 도전 시작이 안 눌러져" — 눌러도 도전 화면이 홈 맨 아래에 생겨 아무 일도 없는 것처럼 보였고,
+  // 거기서 '오늘 도전 시작'을 한 번 더 눌러야 시계가 갔다. 이제 한 번 누르면 바로 전체 화면 시계가 뜬다 (원탭 시작).
   const handleStartChallenge = useCallback(async () => {
     if (!checkedInToday) {
       toast.error("출석(입구 얼굴 인식) 후 오늘 도전이 오픈됩니다");
       return;
     }
     const session = await activitySession.startChallenge();
-    if (session) setShowChallenge(true);
-  }, [activitySession, checkedInToday]);
+    if (!session) {
+      toast.error("오늘 도전을 시작하지 못했어요", { description: "인터넷 연결을 확인하고 다시 눌러 주세요." });
+      return;
+    }
+    try {
+      sessionStorage.setItem(`153challenge:opened:${session.id}`, "1");
+    } catch {
+      /* noop */
+    }
+    openChallenge(session);
+  }, [activitySession, checkedInToday, openChallenge]);
 
   if (!profile || !progress) return <LoadingState />;
 
@@ -201,7 +226,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
       ? "active_session"
       : bothDone
         ? "all_done"
-        : !showChallenge && !sessionMet.current && !minuteMet.current
+        : !challengeOpen && !sessionMet.current && !minuteMet.current
           ? "start_mission"
           : "evaluate";
   const handleTodayAction = () => {
@@ -227,7 +252,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
     ? "locked"
     : bothDone
       ? "done"
-      : showChallenge || activitySession.isActive
+      : challengeOpen || activitySession.isActive
         ? "in_progress"
         : "ready";
   const weeklyProgress = Math.min(
@@ -248,34 +273,55 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   // 추가로 admin 도 본인 customize 토글로 끌 수 있음.
   const showStoryRpg = isAdmin && homeWidgets.storyRpg;
 
-  // 진행 중 도전(전체 화면) — 전체 메뉴·MY복서 어느 쪽에서든 이어서 연다 (예전 홈과 같은 동작)
-  const challengeFlow = showChallenge ? (
-    <SelfChallengeFlow
-      league={rank}
-      levelInLeague={progress.current_level}
-      autoStart={qrAutoStarted}
-      resumeStartedAt={activitySession.activeSession?.started_at}
-      onComplete={async () => {
-        await activitySession.completeChallenge();
-        setShowChallenge(false);
-        setQrAutoStarted(false);
-      }}
-      onLeave={async () => {
-        const ok = await activitySession.leaveChallenge();
-        if (ok) {
-          toast.success("라이브보드에서 퇴장했습니다");
-          setShowChallenge(false);
-          setQrAutoStarted(false);
-        } else {
-          toast.error("퇴장 처리 실패");
-        }
-      }}
-      onClose={() => {
-        setShowChallenge(false);
-        setQrAutoStarted(false);
-      }}
-    />
-  ) : null;
+  // 오늘 도전 — 전체 화면 (body 로 portal: 홈 어느 보기에서 열어도 화면 기준으로 뜬다).
+  // 열자마자 시계가 간다 (서버 도전 시작 시각부터). 닫아도 도전은 계속 — '운동 중 · 이어하기'로 다시 연다.
+  const challengeFlow = challengeOpen
+    ? createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="오늘 도전"
+          className="fixed inset-0 z-[75] flex flex-col bg-background pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]"
+        >
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <h2 className="text-base font-bold text-foreground">🥊 오늘 도전</h2>
+            <button
+              type="button"
+              onClick={() => setChallengeOpen(null)}
+              aria-label="닫기"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary active:scale-95"
+            >
+              <X className="h-5 w-5 text-secondary-foreground" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 py-4">
+            <div className="mx-auto max-w-lg">
+              <SelfChallengeFlow
+                key={challengeOpen.id}
+                league={rank}
+                levelInLeague={progress.current_level}
+                autoStart
+                resumeStartedAt={challengeOpen.startedAt}
+                onFinish={() => {
+                  void activitySession.completeChallenge();
+                }}
+                onComplete={() => setChallengeOpen(null)}
+                onLeave={async () => {
+                  const ok = await activitySession.leaveChallenge();
+                  if (ok) {
+                    toast.success("라이브보드에서 퇴장했습니다");
+                    setChallengeOpen(null);
+                  } else {
+                    toast.error("퇴장 처리 실패");
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )
+    : null;
 
   // MY복서 머리글 — 뒤로(전체 메뉴) + 제목. 이름·지점은 바로 아래 라이센스 카드에 있다.
   const goBack = () => {
@@ -399,10 +445,18 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         // ─── 🗂 첫 화면 = 전체 메뉴만 (2026-09-29 대표님). 1번 'MY복서' 가 예전 홈 화면.
         //     하단 '전체' 탭 시트와 같은 목록·같은 버튼 (lib/appMenu.ts).
         <div className="space-y-5">
+          {/* 오늘 도전 중이면 맨 위에 '운동 중 · 이어하기' — 누르면 도전 화면(시계)이 다시 열린다 */}
+          {activitySession.isActive && !challengeOpen && (
+            <TodayActionCard
+              state="active_session"
+              activeMinutes={activeMinutes}
+              streakDays={progress.streak_days}
+              onClick={handleStartChallenge}
+            />
+          )}
           {/* 기능 검색 — "타이틀매치" 처럼 치면 영상·기능이 바로 (2026-10-01) */}
           <AppSearchButton />
           <HomeMenuGrid />
-          {challengeFlow}
         </div>
       ) : (
       <div className="space-y-5">
@@ -565,7 +619,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
                       icon={<Trophy className="h-8 w-8 text-reward" />}
                       title="아직 순위에 없어요"
                       description="첫 도전을 완료하면 랭킹에 진입합니다."
-                      ctaText={checkedInToday ? "🥊 오늘 도전 시작" : "QR 로 출석하기"}
+                      ctaText={checkedInToday ? (activitySession.isActive ? "🥊 오늘 도전 이어하기" : "🥊 오늘 도전 시작") : "QR 로 출석하기"}
                       onCtaClick={() => {
                         if (checkedInToday) handleStartChallenge();
                         else navigate("/qr-checkin");
@@ -601,8 +655,6 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         {/* ─── 오늘 한 줄 포커스 카드 (always-on, customize 토글 대상 아님) ─── */}
         <TodayFocusCard />
 
-        {/* ─── 활동 세션 진행 중일 때만 SelfChallengeFlow 표시 (전체 화면 모달) ─── */}
-        {challengeFlow}
 
         {/* ─── "더 보기" — 펼침 가능한 보조 콘텐츠 ───
              rankingPreview 는 primary 슬롯으로 이전 — 더보기 안에서는 제거. */}
@@ -711,6 +763,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         newRank={levelUpModal.rank}
         xpGranted={levelUpModal.xp}
       />
+
+      {/* 오늘 도전 — 전체 화면 (홈 어느 보기에서든) */}
+      {challengeFlow}
 
       {/* 튜토리얼 오버레이는 App.tsx 의 글로벌 InductionCeremonyOverlay 로 이관. */}
     </AppPage>

@@ -23,16 +23,21 @@ interface SelfChallengeFlowProps {
   autoStart?: boolean;
   /** If resuming an existing session, pass its started_at timestamp */
   resumeStartedAt?: string;
+  /** '오늘 도전 완료'를 누른 순간 (결과 화면이 뜨기 전) — 서버 도전 세션을 여기서 끝낸다 */
+  onFinish?: () => void;
 }
 
-const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave, autoStart, resumeStartedAt }: SelfChallengeFlowProps) => {
+const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave, autoStart, resumeStartedAt, onFinish }: SelfChallengeFlowProps) => {
   const level = getLevelById(league, levelInLeague);
   const { recordSession, recordSelfChallenge } = useLocalProgress();
   const [state, setState] = useState<FlowState>(autoStart ? "active" : "ready");
   const [startTime, setStartTime] = useState<number | null>(
     autoStart ? (resumeStartedAt ? new Date(resumeStartedAt).getTime() : Date.now()) : null
   );
-  const [elapsed, setElapsed] = useState(0);
+  // 이어서 열 때는 첫 화면부터 지금까지 흐른 시간을 보여 준다 (1초 뒤에야 맞춰지며 00:00 이 깜빡이지 않게)
+  const [elapsed, setElapsed] = useState(() =>
+    autoStart && resumeStartedAt ? Math.max(0, Math.floor((Date.now() - new Date(resumeStartedAt).getTime()) / 1000)) : 0,
+  );
   const [showRoutineA, setShowRoutineA] = useState(true);
   const [routineExpanded, setRoutineExpanded] = useState(false);
   const intervalRef = useRef<number | null>(null);
@@ -74,11 +79,13 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
 
     setResult({ minutes: actualMinutes, xp, bonusXp, qualifies, streak });
     setState("result");
+    // 결과 화면을 닫기 전에 창을 닫아도 도전이 '진행 중'으로 남지 않게 — 끝낸 순간 서버 세션도 끝낸다
+    onFinish?.();
 
     if (xp > 0) {
       celebrateSmall();
     }
-  }, [startTime, recordSession, recordSelfChallenge]);
+  }, [startTime, recordSession, recordSelfChallenge, onFinish]);
 
   if (!level) return null;
 
@@ -86,6 +93,48 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
   const formatTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
   const elapsedMin = Math.floor(elapsed / 60);
   const progressPct = Math.min(100, (elapsedMin / 50) * 100);
+
+  // 루틴 A/B 와 오늘의 추천 루틴 — 준비 화면과 운동 중 화면에 같이 쓴다
+  const routinePanel = (
+    <>
+      {/* Routine selector */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setShowRoutineA(true)}
+          className={`flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all ${showRoutineA ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}
+        >
+          루틴 A
+        </button>
+        <button
+          onClick={() => setShowRoutineA(false)}
+          className={`flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all ${!showRoutineA ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}
+        >
+          루틴 B
+        </button>
+      </div>
+
+      {/* Routine preview (collapsible) */}
+      <div className="rounded-2xl border border-border bg-card shadow-elev-1 overflow-hidden">
+        <button onClick={() => setRoutineExpanded(!routineExpanded)} className="flex w-full items-center justify-between p-4 text-left">
+          <span className="text-sm font-bold text-foreground">📋 오늘의 추천 루틴</span>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${routineExpanded ? "rotate-180" : ""}`} />
+        </button>
+        {routineExpanded && (
+          <div className="border-t border-border px-4 pb-4 space-y-2">
+            {routine.map((block, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-xl bg-muted/30 p-2.5">
+                <span className="text-lg">{block.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-foreground">{block.title}</p>
+                  <p className="text-[10px] text-muted-foreground">{block.durationMin}분 · {block.drills.slice(0, 2).join(", ")}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
 
   // ─── Ready State ───
   if (state === "ready") {
@@ -112,42 +161,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
           </p>
         </div>
 
-        {/* Routine selector */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowRoutineA(true)}
-            className={`flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all ${showRoutineA ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}
-          >
-            루틴 A
-          </button>
-          <button
-            onClick={() => setShowRoutineA(false)}
-            className={`flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all ${!showRoutineA ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}
-          >
-            루틴 B
-          </button>
-        </div>
-
-        {/* Routine preview (collapsible) */}
-        <div className="rounded-2xl border border-border bg-card shadow-elev-1 overflow-hidden">
-          <button onClick={() => setRoutineExpanded(!routineExpanded)} className="flex w-full items-center justify-between p-4 text-left">
-            <span className="text-sm font-bold text-foreground">📋 오늘의 추천 루틴</span>
-            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${routineExpanded ? "rotate-180" : ""}`} />
-          </button>
-          {routineExpanded && (
-            <div className="border-t border-border px-4 pb-4 space-y-2">
-              {routine.map((block, i) => (
-                <div key={i} className="flex items-center gap-3 rounded-xl bg-muted/30 p-2.5">
-                  <span className="text-lg">{block.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-foreground">{block.title}</p>
-                    <p className="text-[10px] text-muted-foreground">{block.durationMin}분 · {block.drills.slice(0, 2).join(", ")}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {routinePanel}
 
         {/* Start button */}
         <button
@@ -208,6 +222,9 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
             <LogOut className="h-4 w-4" /> 라이브보드 나가기
           </button>
         )}
+
+        {/* 오늘의 루틴 — 완료 버튼 아래, 접혀 있다가 필요할 때 펼쳐 본다 */}
+        {routinePanel}
       </div>
     );
   }
