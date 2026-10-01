@@ -3,6 +3,7 @@
  *
  *   · inbox    — 알림함 맨 위. 아직 안 켰거나 막혀 있을 때만 보인다 (켜졌거나 지원 안 하는 PC 면 숨김). '나중에'로 2주 접기.
  *   · settings — 설정 화면 카드. 켜짐/꺼짐/막힘/지원 안 함을 모두 보여 주고, 켜진 기기는 테스트 알림 · 끄기.
+ *   · manager  — 지점장·본사 관리 화면 맨 위. inbox 와 같게 동작하고 문구만 '결제 알림' (2026-10-01 앱 결제 알림).
  * 아이폰 사파리 탭에서는 켤 수 없다 → '홈 화면에 추가' 안내. 카카오톡 안 화면 → 다른 브라우저로 열기 안내.
  */
 import { useState } from "react";
@@ -12,11 +13,12 @@ import { deniedHelp, usePushNotifications } from "@/hooks/usePushNotifications";
 import type { PushBlock } from "@/lib/pushClient";
 
 const HIDE_KEY = "153push:card-hidden-until";
+const HIDE_KEY_MANAGER = "153push:card-hidden-until:manager";
 const HIDE_DAYS = 14;
 
-const readHidden = (): boolean => {
+const readHidden = (key: string): boolean => {
   try {
-    const until = Number(window.localStorage.getItem(HIDE_KEY));
+    const until = Number(window.localStorage.getItem(key));
     return Number.isFinite(until) && until > Date.now();
   } catch {
     return false;
@@ -47,17 +49,20 @@ const BLOCK_TEXT: Record<PushBlock, { title: string; body: string }> = {
 };
 
 interface Props {
-  variant: "inbox" | "settings";
+  variant: "inbox" | "settings" | "manager";
   className?: string;
 }
 
 const PushOptInCard = ({ variant, className }: Props) => {
   const { state, busy, enable, disable, test, signedIn } = usePushNotifications();
-  const [hidden, setHidden] = useState(readHidden);
+  const hideKey = variant === "manager" ? HIDE_KEY_MANAGER : HIDE_KEY;
+  const [hidden, setHidden] = useState(() => readHidden(hideKey));
 
   if (!signedIn || !state) return null;
 
-  const inbox = variant === "inbox";
+  // 관리 화면 카드는 알림함 카드와 똑같이 동작한다 (켜졌거나 PC 미지원이면 숨김 · 나중에)
+  const inbox = variant === "inbox" || variant === "manager";
+  const manager = variant === "manager";
   if (inbox) {
     if (hidden) return null;
     if (state.kind === "on") return null;
@@ -67,7 +72,7 @@ const PushOptInCard = ({ variant, className }: Props) => {
   const hideForNow = () => {
     setHidden(true);
     try {
-      window.localStorage.setItem(HIDE_KEY, String(Date.now() + HIDE_DAYS * 86_400_000));
+      window.localStorage.setItem(hideKey, String(Date.now() + HIDE_DAYS * 86_400_000));
     } catch {
       /* 저장 못 해도 이번 화면에서는 접힌다 */
     }
@@ -153,9 +158,13 @@ const PushOptInCard = ({ variant, className }: Props) => {
           <BellRing className="h-5 w-5" strokeWidth={2.2} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[14.5px] font-bold leading-snug text-foreground">휴대폰으로도 알림 받기</p>
+          <p className="text-[14.5px] font-bold leading-snug text-foreground">
+            {manager ? "💳 결제 알림을 휴대폰으로 받기" : "휴대폰으로도 알림 받기"}
+          </p>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
-            공지 · 출석 · 수업 소식이 오면 앱을 열지 않아도 바로 알려 드려요.
+            {manager
+              ? "앱에서 결제·취소되면 1분 안에 이 기기가 울려요 — 브로제이 입력을 바로 하세요. 공지 소식도 함께 와요."
+              : "공지 · 출석 · 수업 소식이 오면 앱을 열지 않아도 바로 알려 드려요."}
           </p>
         </div>
       </div>

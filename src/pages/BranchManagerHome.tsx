@@ -19,6 +19,7 @@ import ApprovalInbox from "@/components/ApprovalInbox";
 import BulkMemberImport from "@/components/admin/BulkMemberImport";
 import DmHeaderButton from "@/components/dm/DmHeaderButton";
 import NotificationBellButton from "@/components/notifications/NotificationBellButton";
+import PushOptInCard from "@/components/notifications/PushOptInCard";
 import { toast } from "sonner";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
@@ -647,6 +648,9 @@ const BranchManagerHome = () => {
           </div>
         </div>
 
+        {/* 💳 앱 결제 알림 — 이 기기 휴대폰 알림 켜기 (켜져 있으면 안 보인다 · 2026-10-01) */}
+        <PushOptInCard variant="manager" className="mb-4" />
+
         {/* 일일 운영 리포트 (홈 진입 카드) */}
         <DailyReportCard
           branchName={branchName}
@@ -745,6 +749,9 @@ const BranchManagerHome = () => {
               <NotificationBellButton />
             </div>
           </div>
+
+          {/* 💳 앱 결제 알림 — 데스크 PC 도 크롬이면 알림을 받을 수 있다 */}
+          <PushOptInCard variant="manager" className="mb-4" />
 
           {/* 일일 운영 리포트 (홈 진입 카드) */}
           <DailyReportCard
