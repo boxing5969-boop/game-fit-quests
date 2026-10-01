@@ -5,12 +5,13 @@
  * "2일차 = 1일차 반복" 같은 날은 앞날 내용을 그대로 보여 주고 위에 반복이라고 알린다.
  * 아래 버튼으로 앞뒤 일차를 넘겨 본다 (코치님이 수업 전에 훑어보기 좋게).
  */
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Play, Repeat2, Trophy, X } from "lucide-react";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
-import { useLevelVideosByIds, youtubeId } from "@/hooks/useLevelVideos";
+import { useLevelVideosByIds } from "@/hooks/useLevelVideos";
+import VideoOverlay from "@/components/common/VideoOverlay";
 import {
   levelShort,
   resolveDay,
@@ -101,6 +102,7 @@ const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
   const open = !!day;
   useModalDismiss(open, onClose);
   const [playing, setPlaying] = useState<{ url: string; title: string } | null>(null);
+  const closeVideo = useCallback(() => setPlaying(null), []);
   // 시트가 닫히면(뒤로가기 포함) 틀어 둔 영상도 같이 닫는다
   useEffect(() => {
     if (!open) setPlaying(null);
@@ -242,33 +244,8 @@ const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
         )}
       </AnimatePresence>
 
-      {/* 153 영상 — 시트 위에 뜬다 (훈련 탭 오늘의 코스와 같은 재생 방식) */}
-      {playing &&
-        createPortal(
-          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/85 p-4" onClick={() => setPlaying(null)}>
-            <div className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-              {youtubeId(playing.url) ? (
-                <iframe
-                  src={`https://www.youtube.com/embed/${youtubeId(playing.url)}?autoplay=1&rel=0&playsinline=1`}
-                  title={playing.title}
-                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="aspect-video w-full rounded-2xl bg-black"
-                />
-              ) : (
-                <video src={playing.url} controls autoPlay playsInline className="aspect-video w-full rounded-2xl bg-black" />
-              )}
-              <button
-                type="button"
-                onClick={() => setPlaying(null)}
-                className="mt-3 flex h-12 w-full items-center justify-center rounded-2xl bg-white/10 text-sm font-bold text-white active:scale-[0.98]"
-              >
-                닫기
-              </button>
-            </div>
-          </div>,
-          document.body,
-        )}
+      {/* 153 영상 — 시트 위에 뜬다 */}
+      <VideoOverlay video={playing} onClose={closeVideo} />
     </>,
     document.body,
   );

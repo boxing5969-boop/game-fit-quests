@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { whiteLevels, WhiteLevelDetail } from "@/data/whiteLevelData";
 import LevelUpRequestCard from "@/components/LevelUpRequestCard";
 import {
@@ -91,6 +92,17 @@ const WhiteLeagueTab = () => {
 
   // Auto-expand current league
   const activeLeague = expandedLeague ?? currentRank;
+
+  // 기능 검색 바로가기 — /missions?open=practice 면 '내 레벨 연습하기'(맨 위에 타이틀매치 영상)를 바로 연다 (2026-10-01)
+  const [params, setParams] = useSearchParams();
+  const openParam = params.get("open");
+  useEffect(() => {
+    if (openParam !== "practice") return;
+    setPracticeView({ league: currentRank, level: currentLevel });
+    const next = new URLSearchParams(params);
+    next.delete("open");
+    setParams(next, { replace: true });
+  }, [openParam, params, setParams, currentRank, currentLevel]);
 
   if (practiceView) {
     return <MyLevelPractice league={practiceView.league} levelNumber={practiceView.level} onBack={() => setPracticeView(null)} />;

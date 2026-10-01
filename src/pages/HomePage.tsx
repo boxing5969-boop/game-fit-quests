@@ -52,6 +52,7 @@ import { useMyWorkoutToday } from "@/hooks/useWorkoutTime";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import HomeMoreSection from "@/components/home/HomeMoreSection";
 import HomeMenuGrid from "@/components/home/HomeMenuGrid";
+import AppSearchButton from "@/components/search/AppSearchButton";
 import DmHeaderButton from "@/components/dm/DmHeaderButton";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
@@ -395,6 +396,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         // ─── 🗂 첫 화면 = 전체 메뉴만 (2026-09-29 대표님). 1번 'MY복서' 가 예전 홈 화면.
         //     하단 '전체' 탭 시트와 같은 목록·같은 버튼 (lib/appMenu.ts).
         <div className="space-y-5">
+          {/* 기능 검색 — "타이틀매치" 처럼 치면 영상·기능이 바로 (2026-10-01) */}
+          <AppSearchButton />
           <HomeMenuGrid />
           {challengeFlow}
         </div>

@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import HomeMenuGrid from "@/components/home/HomeMenuGrid";
+import AppSearchButton from "@/components/search/AppSearchButton";
 import { TabIcon, type TabIconName } from "@/components/icons/tabIcons";
 
 // ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
@@ -39,6 +40,8 @@ const hiddenPaths = [
   "/minigame",
   // QR 출석 — 카메라 화면이라 탭바가 겹치면 안 됨.
   "/qr-checkin",
+  // 기능 검색 — 키보드가 올라오는 전체 화면. 위 '뒤로'로 나간다.
+  "/search",
 ];
 
 // Inactive tone — spec #8C95A3. Kept as an arbitrary Tailwind value
@@ -90,6 +93,8 @@ const BottomNav = () => {
                 </button>
               </div>
             </div>
+            {/* 기능 검색 — 메뉴 이름을 몰라도 찾게 (2026-10-01) */}
+            <AppSearchButton variant="sheet" onNavigate={() => setMenuOpen(false)} className="mb-5" />
             {/* 홈 첫 화면과 같은 버튼 그리드 (components/home/HomeMenuGrid) */}
             <HomeMenuGrid variant="sheet" onNavigate={() => setMenuOpen(false)} />
           </div>
