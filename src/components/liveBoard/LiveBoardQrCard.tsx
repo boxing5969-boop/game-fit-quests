@@ -46,6 +46,16 @@ function buildQrCheckinUrl(branchKey: string, token: string): string {
 const BOARD_QR_NOTICE_MAIN = "브로제이 서버 불안정으로 인해 출석 반영이 늦어지고 있어요~";
 const BOARD_QR_NOTICE_SUB = "앱에서 QR을 통해 출석체크 부탁드립니다";
 
+/**
+ * QR 바로 밑 — 이 QR 로 앱도 받을 수 있다는 안내 (2026-10-01 대표님: 출석 전용인 줄 알고 앱을 안 받는다).
+ * 폰 기본 카메라로 찍으면 회원 앱이 열리고(로그인 전이면 로그인 화면), 로그인 화면에
+ * '앱으로 설치하기' 버튼(아이폰은 홈 화면에 추가 안내)이 있다 — components/install/InstallAppButton.
+ * 첫 로그인 정보는 안내물에 쓰지 않는다 — 데스크에서 안내 (안내물 보안 규칙).
+ */
+const BOARD_APP_NOTICE_MAIN = "📲 이 QR로 앱 다운로드도 돼요";
+const BOARD_APP_NOTICE_SUB = "폰 카메라로 찍기 → 로그인 화면 ‘앱으로 설치하기’";
+const BOARD_APP_NOTICE_HINT = "첫 로그인은 데스크에서 안내해 드려요";
+
 interface TokenRes {
   ok: boolean;
   branch?: string;
@@ -178,15 +188,27 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar", className = "" }: Pr
       )}
     </div>
   );
+  // 앱 받기 안내 — 금색 띠로 QR 바로 밑에 (오른쪽 패널: QR 아래 · 1번 화면 떠 있는 카드: QR·글 줄 아래 전체 폭)
+  const appNote = (
+    <div className="mt-3 w-full rounded-xl bg-reward px-3.5 py-2.5 text-center text-reward-foreground">
+      <p className="text-[26px] font-black leading-tight">{BOARD_APP_NOTICE_MAIN}</p>
+      <p className="mt-1 text-base font-bold leading-snug">{BOARD_APP_NOTICE_SUB}</p>
+      <p className="mt-0.5 text-[13px] font-bold leading-snug opacity-75">{BOARD_APP_NOTICE_HINT}</p>
+    </div>
+  );
   const body = stacked ? (
     <div className="flex flex-col items-center">
       {qr}
+      {appNote}
       {text}
     </div>
   ) : (
-    <div className="flex items-center gap-4">
-      {qr}
-      {text}
+    <div>
+      <div className="flex items-center gap-4">
+        {qr}
+        {text}
+      </div>
+      {appNote}
     </div>
   );
 
