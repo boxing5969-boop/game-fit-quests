@@ -236,12 +236,12 @@ export function useMittEngine() {
     setRoundOutcome(outcome);
 
     if (cleared) {
-      audio.fanfare();
+      audio.roundClear();
       vibrate([40, 60, 40]);
       setPhase('clear');
       phaseRef.current = 'clear';
     } else {
-      audio.miss();
+      audio.fail();
       vibrate([80, 40, 80, 40, 120]);
       setPhase('fail');
       phaseRef.current = 'fail';
@@ -465,7 +465,7 @@ export function useMittEngine() {
       const newCombo = combo + 1;
       if ([3, 5, 10, 15, 20, 30].includes(newCombo)) {
         setComboMilestone({ value: newCombo, key: performance.now() });
-        if (newCombo >= 5) audio.fanfare();
+        if (newCombo >= 5) audio.combo();
       }
       allHits.current.push({ punch: type, result: rating, reactionMs: Math.round(bestDelta), stage: currentStageRef.current });
       return prev.map(g => g.id === t.id ? { ...g, hit: true, result: rating } : g);
@@ -474,7 +474,7 @@ export function useMittEngine() {
     if (!target) {
       setCombo(0);
       setWrongShake(s => s + 1);
-      audio.miss();
+      audio.whoosh();
       vibrate([50, 30, 50]);
       setLastResult({ rating: 'miss', punch: type });
       allHits.current.push({ punch: type, result: 'miss', reactionMs: 9999, stage: currentStageRef.current });

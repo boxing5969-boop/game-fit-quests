@@ -1,28 +1,42 @@
+/**
+ * 첫 입장 안내 슬라이드 (2026-10-01 다크 아레나 개편: 이모지 → 입체 아이콘).
+ */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Play } from 'lucide-react';
+import Icon3D, { type Icon3DName } from './Icon3D';
+import { audio } from '@/features/minigame/lib/audio';
 
 interface IntroSliderProps {
   onComplete: () => void;
 }
 
-const CARDS = [
+const CARDS: {
+  icon: Icon3DName;
+  title: string;
+  points?: string[];
+  visual?: React.ReactNode;
+  highlight?: string;
+  steps?: { step: number; text: string }[];
+  footer?: string;
+}[] = [
   {
-    emoji: '🥊',
+    icon: 'mitt',
     title: '미트 트레이닝이란?',
     points: [
       '트레이너가 들고 있는 미트(패드)를 정확한 타이밍에 치는 훈련',
       '단순한 운동이 아닌 타이밍, 반응속도, 정확도를 동시에 키우는 복싱의 핵심 훈련',
     ],
     visual: (
-      <div className="flex items-center justify-center gap-4 text-6xl my-6 animate-pulse">
-        <span>🥊</span>
-        <span className="text-4xl">💥</span>
-        <span>🎯</span>
+      <div className="my-5 flex items-center justify-center gap-3">
+        <Icon3D name="glove_mint" size={64} float />
+        <Icon3D name="bolt" size={40} />
+        <Icon3D name="mitt" size={64} float />
       </div>
     ),
   },
   {
-    emoji: '⚡',
+    icon: 'bolt',
     title: '왜 미트 트레이닝인가?',
     points: [
       '샌드백은 기다려주지만 미트는 움직입니다',
@@ -32,7 +46,7 @@ const CARDS = [
     highlight: '"샌드백 1000번보다 미트 100번이 실전에 가깝다"',
   },
   {
-    emoji: '🏆',
+    icon: 'trophy',
     title: '타이밍 마스터가 되는 법',
     steps: [
       { step: 1, text: '트레이너 미트 위치 인식' },
@@ -50,13 +64,13 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
   const isLast = index === CARDS.length - 1;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-8 relative">
+    <div className="arena-bg arena-ropes relative flex min-h-screen flex-col items-center justify-center px-6 py-8">
       {/* Skip button */}
       <button
-        onClick={onComplete}
-        className="absolute top-4 right-4 text-sm text-muted-foreground font-display tracking-wider z-10 hover:text-foreground transition-colors"
+        onClick={() => { audio.tap(); onComplete(); }}
+        className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex items-center gap-1 font-display text-sm tracking-wider text-muted-foreground"
       >
-        SKIP →
+        SKIP <ArrowRight className="h-3.5 w-3.5" />
       </button>
 
       {/* Dots */}
@@ -64,8 +78,8 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
         {CARDS.map((_, i) => (
           <span
             key={i}
-            className={`w-2.5 h-2.5 rounded-full transition-colors ${
-              i === index ? 'bg-primary' : 'bg-muted'
+            className={`h-2.5 rounded-full transition-all ${
+              i === index ? 'w-6 bg-primary' : 'w-2.5 bg-white/15'
             }`}
           />
         ))}
@@ -78,11 +92,11 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -60 }}
           transition={{ duration: 0.3 }}
-          className="max-w-sm w-full bg-card border border-border rounded-2xl p-6"
+          className="mg-card w-full max-w-sm p-6"
         >
-          <div className="text-center mb-4">
-            <div className="text-5xl mb-2">{card.emoji}</div>
-            <h2 className="font-display text-3xl tracking-wider text-foreground">
+          <div className="mb-4 text-center">
+            <div className="mb-2 flex justify-center"><Icon3D name={card.icon} size={64} /></div>
+            <h2 className="text-[22px] font-black tracking-tight text-foreground">
               {card.title}
             </h2>
           </div>
@@ -101,8 +115,8 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
           )}
 
           {card.highlight && (
-            <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 my-4 text-center">
-              <p className="text-sm font-bold text-secondary italic">
+            <div className="my-4 rounded-xl bg-primary/10 p-4 text-center ring-1 ring-primary/20">
+              <p className="text-sm font-bold italic text-secondary">
                 {card.highlight}
               </p>
             </div>
@@ -112,7 +126,7 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
             <div className="space-y-3 mb-4">
               {card.steps.map(s => (
                 <div key={s.step} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 text-primary font-display text-lg flex items-center justify-center shrink-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 font-display text-lg text-primary">
                     {s.step}
                   </div>
                   <span className="text-sm text-foreground/90">{s.text}</span>
@@ -133,18 +147,18 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
         {isLast ? (
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={onComplete}
-            className="w-full punch-btn bg-primary text-primary-foreground py-4 text-lg font-display tracking-widest"
+            onClick={() => { audio.tap(); onComplete(); }}
+            className="mg-btn-primary flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-display text-xl tracking-widest"
           >
-            훈련 시작하기 🥊
+            <Play className="h-5 w-5 fill-current" /> 훈련 시작하기
           </motion.button>
         ) : (
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={() => setIndex(i => i + 1)}
-            className="w-full punch-btn bg-muted text-foreground py-4 font-display tracking-widest"
+            onClick={() => { audio.tap(); setIndex(i => i + 1); }}
+            className="mg-btn-ghost flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-display text-xl tracking-widest"
           >
-            다음 →
+            다음 <ArrowRight className="h-5 w-5" />
           </motion.button>
         )}
       </div>

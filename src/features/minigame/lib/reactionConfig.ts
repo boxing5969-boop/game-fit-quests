@@ -217,12 +217,13 @@ export function pickCuePattern(elapsedSec: number, firstPlay = false, round = 1)
 }
 
 /** 라운드별 배경 톤 (HSL hue 기준 + 강조 컬러 토큰) */
+// 153 브랜드 톤 — 민트(워밍업) → 골드 → 아이스 → 오렌지 → 레드(인페르노). 보라·네온 없음 (2026-10-01)
 export const ROUND_THEMES = [
-  { hue: 0,   name: 'WARMUP',   accent: 'hsl(220 80% 60%)' }, // round 1-2
-  { hue: 280, name: 'NEON',     accent: 'hsl(280 80% 65%)' }, // round 3-4
-  { hue: 200, name: 'ICE',      accent: 'hsl(195 90% 60%)' }, // round 5-6
-  { hue: 30,  name: 'SUNSET',   accent: 'hsl(30 95% 60%)'  }, // round 7-9
-  { hue: 350, name: 'INFERNO',  accent: 'hsl(350 90% 60%)' }, // round 10+
+  { hue: 160, name: 'WARMUP',   accent: 'hsl(160 84% 48%)' }, // round 1-2
+  { hue: 43,  name: 'GOLD',     accent: 'hsl(43 90% 62%)'  }, // round 3-4
+  { hue: 195, name: 'ICE',      accent: 'hsl(195 85% 66%)' }, // round 5-6
+  { hue: 28,  name: 'SUNSET',   accent: 'hsl(28 92% 60%)'  }, // round 7-9
+  { hue: 8,   name: 'INFERNO',  accent: 'hsl(8 85% 58%)'   }, // round 10+
 ] as const;
 
 export function getRoundTheme(round: number) {

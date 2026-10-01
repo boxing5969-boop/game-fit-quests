@@ -2,24 +2,23 @@ export type PunchType = 'jab' | 'straight' | 'hook' | 'upper';
 
 export interface PunchCommand {
   type: PunchType;
-  emoji: string;
   nameKo: string;
   nameEn: string;
   color: string;
 }
 
+/** 펀치 기호는 components/PunchGlyph (이모지 대신 방향 기호, 2026-10-01) */
 export const PUNCHES: Record<PunchType, PunchCommand> = {
-  jab:      { type: 'jab',      emoji: '👊', nameKo: '잽',       nameEn: 'JAB',      color: 'punch-jab' },
-  straight: { type: 'straight', emoji: '🤜', nameKo: '스트레이트', nameEn: 'STRAIGHT', color: 'punch-straight' },
-  hook:     { type: 'hook',     emoji: '🥊', nameKo: '훅',       nameEn: 'HOOK',     color: 'punch-hook' },
-  upper:    { type: 'upper',    emoji: '⬆️', nameKo: '어퍼컷',    nameEn: 'UPPER',    color: 'punch-upper' },
+  jab:      { type: 'jab',      nameKo: '잽',       nameEn: 'JAB',      color: 'punch-jab' },
+  straight: { type: 'straight', nameKo: '스트레이트', nameEn: 'STRAIGHT', color: 'punch-straight' },
+  hook:     { type: 'hook',     nameKo: '훅',       nameEn: 'HOOK',     color: 'punch-hook' },
+  upper:    { type: 'upper',    nameKo: '어퍼컷',    nameEn: 'UPPER',    color: 'punch-upper' },
 };
 
 export type ReactionRating = 'lightning' | 'fast' | 'good' | 'slow' | 'miss';
 
 export interface RatingInfo {
   key: ReactionRating;
-  emoji: string;
   nameKo: string;
   nameEn: string;
   color: string;
@@ -28,11 +27,11 @@ export interface RatingInfo {
 }
 
 export const RATINGS: RatingInfo[] = [
-  { key: 'lightning', emoji: '⚡', nameKo: '번개', nameEn: 'LIGHTNING', color: 'rating-lightning', points: 100, maxMs: 200 },
-  { key: 'fast',      emoji: '✅', nameKo: '빠름', nameEn: 'FAST',      color: 'rating-fast',      points: 75,  maxMs: 350 },
-  { key: 'good',      emoji: '👍', nameKo: '좋음', nameEn: 'GOOD',      color: 'rating-good',      points: 50,  maxMs: 500 },
-  { key: 'slow',      emoji: '🐢', nameKo: '느림', nameEn: 'SLOW',      color: 'rating-slow',      points: 25,  maxMs: 700 },
-  { key: 'miss',      emoji: '❌', nameKo: '미스', nameEn: 'MISS',      color: 'rating-miss',      points: -10, maxMs: Infinity },
+  { key: 'lightning', nameKo: '번개', nameEn: 'LIGHTNING', color: 'rating-lightning', points: 100, maxMs: 200 },
+  { key: 'fast',      nameKo: '빠름', nameEn: 'FAST',      color: 'rating-fast',      points: 75,  maxMs: 350 },
+  { key: 'good',      nameKo: '좋음', nameEn: 'GOOD',      color: 'rating-good',      points: 50,  maxMs: 500 },
+  { key: 'slow',      nameKo: '느림', nameEn: 'SLOW',      color: 'rating-slow',      points: 25,  maxMs: 700 },
+  { key: 'miss',      nameKo: '미스', nameEn: 'MISS',      color: 'rating-miss',      points: -10, maxMs: Infinity },
 ];
 
 export function getRating(ms: number): RatingInfo {
@@ -76,19 +75,19 @@ export type TierKey = 'bronze' | 'silver' | 'gold' | 'platinum' | 'legend';
 
 export interface TierInfo {
   key: TierKey;
-  emoji: string;
   nameKo: string;
   nameEn: string;
   color: string;
   maxAvgMs: number;
 }
 
+/** 등급 아이콘은 components/Icon3D 의 TIER_ICON (메달·젬·왕관) */
 export const TIERS: TierInfo[] = [
-  { key: 'legend',   emoji: '⚡', nameKo: '레전드',     nameEn: 'Legend',   color: 'tier-legend',   maxAvgMs: 250 },
-  { key: 'platinum', emoji: '💎', nameKo: '챔피언',     nameEn: 'Platinum', color: 'tier-platinum', maxAvgMs: 350 },
-  { key: 'gold',     emoji: '🥇', nameKo: '프로 복서',   nameEn: 'Gold',     color: 'tier-gold',     maxAvgMs: 450 },
-  { key: 'silver',   emoji: '🥈', nameKo: '프로 지망생', nameEn: 'Silver',   color: 'tier-silver',   maxAvgMs: 600 },
-  { key: 'bronze',   emoji: '🥉', nameKo: '아마추어',   nameEn: 'Bronze',   color: 'tier-bronze',   maxAvgMs: Infinity },
+  { key: 'legend',   nameKo: '레전드',     nameEn: 'Legend',   color: 'tier-legend',   maxAvgMs: 250 },
+  { key: 'platinum', nameKo: '챔피언',     nameEn: 'Platinum', color: 'tier-platinum', maxAvgMs: 350 },
+  { key: 'gold',     nameKo: '프로 복서',   nameEn: 'Gold',     color: 'tier-gold',     maxAvgMs: 450 },
+  { key: 'silver',   nameKo: '프로 지망생', nameEn: 'Silver',   color: 'tier-silver',   maxAvgMs: 600 },
+  { key: 'bronze',   nameKo: '아마추어',   nameEn: 'Bronze',   color: 'tier-bronze',   maxAvgMs: Infinity },
 ];
 
 export function getTier(avgMs: number): TierInfo {

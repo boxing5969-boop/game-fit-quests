@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Dumbbell } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useRankupUser } from "@/features/minigame/lib/rankupAuth";
@@ -18,6 +18,8 @@ import UnifiedLeaderboard from "@/features/minigame/components/UnifiedLeaderboar
 import MittDrillScreen from "@/features/minigame/components/MittDrillScreen";
 import MittResultsScreen from "@/features/minigame/components/MittResultsScreen";
 import BoxingDefenseScreen from "@/features/minigame/components/BoxingDefenseScreen";
+import Icon3D from "@/features/minigame/components/Icon3D";
+import { audio } from "@/features/minigame/lib/audio";
 
 // 게임 스코프 전용 스타일 — .minigame-app 아래로만 적용됨.
 import "@/features/minigame/minigame.css";
@@ -99,6 +101,44 @@ const MinigamePage = () => {
     mitt.goHome();
   };
 
+  // 🔊 첫 터치에 소리를 열고(브라우저 자동재생 제한) 음원을 미리 받아 둔다
+  useEffect(() => {
+    const unlock = () => {
+      audio.preload();
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
+
+  // 🎵 메뉴·결과 화면에서는 로비 음악, 플레이 중에는 엔진이 플레이 음악을 튼다.
+  // 디펜스 러시(mode3)는 자기 화면(DefenseHome · GameOver)이 알아서 켠다.
+  const lobbyActive =
+    appMode === "select" ||
+    appMode === "leaderboard" ||
+    appMode === "education" ||
+    (appMode === "mode1" && ["intro", "home", "results", "ranking"].includes(game.phase)) ||
+    (appMode === "mode2" && mitt.phase === "results");
+  useEffect(() => {
+    if (lobbyActive) audio.startLobby();
+    else if (appMode !== "mode3") audio.stopLobby();
+  }, [lobbyActive, appMode]);
+  useEffect(() => () => { audio.stopLobby(); audio.stopBgm(); }, []);
+
+  // 🎨 게임은 어두운 무대 — 브라우저 상단바(theme-color)도 게임 색으로, 나가면 원래대로
+  useEffect(() => {
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!meta) return;
+    const prev = meta.content;
+    meta.content = "#0C1116";
+    return () => { meta.content = prev; };
+  }, []);
+
   if (loading) {
     return <div className="minigame-app flex min-h-screen items-center justify-center" />;
   }
@@ -106,9 +146,7 @@ const MinigamePage = () => {
   if (!user) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-          <Dumbbell className="h-8 w-8" />
-        </div>
+        <Icon3D name="hero_gloves" size={120} />
         <h1 className="text-lg font-bold text-foreground">로그인이 필요합니다</h1>
         <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
           복싱 트레이닝은 로그인 후 이용할 수 있어요. 점수는 내 계정에 연동됩니다.
@@ -301,12 +339,12 @@ const MinigamePage = () => {
       {appMode === "select" && (
         <button
           type="button"
-          onClick={() => navigate("/home")}
-          className="fixed left-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[55] flex items-center gap-1.5 rounded-full border border-border bg-card/90 px-3 py-1.5 text-[11px] font-bold text-foreground shadow-lg backdrop-blur-sm active:scale-95"
-          aria-label="랭킹업으로 돌아가기"
+          onClick={() => { audio.tap(); navigate("/home"); }}
+          className="fixed left-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[55] flex h-9 items-center gap-1.5 rounded-full border border-white/10 bg-card/80 px-3 text-[12px] font-bold text-foreground shadow-lg backdrop-blur-md active:scale-95"
+          aria-label="홈으로 돌아가기"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          랭킹업
+          <ArrowLeft className="h-4 w-4" />
+          홈
         </button>
       )}
 
@@ -318,7 +356,7 @@ const MinigamePage = () => {
 };
 
 // ──────────────────────────────────────────────────────────────────
-// Intro overlay — 진입 시 복싱 명언 + 글러브 펀치 애니메이션
+// Intro overlay — 진입 시 복싱 명언 + 두 글러브 맞대기 (입체 아이콘)
 // ──────────────────────────────────────────────────────────────────
 const IntroOverlay = ({
   quoteIdx,
@@ -331,34 +369,17 @@ const IntroOverlay = ({
   return (
     <div
       aria-live="polite"
-      className={`fixed inset-0 z-[70] flex flex-col items-center justify-center bg-background px-6 transition-opacity duration-500 ${
+      className={`arena-bg fixed inset-0 z-[70] flex flex-col items-center justify-center px-6 transition-opacity duration-500 ${
         fadingOut ? "opacity-0" : "opacity-100"
       }`}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 35%, hsl(8 75% 48% / 0.22), transparent 55%)",
-        }}
-      />
-
-      <div className="relative mb-7 flex h-16 w-28 items-center justify-center">
-        <span
+      <div className="relative mb-6 flex items-center justify-center">
+        <div
           aria-hidden
-          className="absolute left-0 animate-[mg-punchL_0.9s_ease-in-out_infinite] text-[44px]"
-          style={{ filter: "drop-shadow(0 6px 14px rgba(217,54,32,0.45))" }}
-        >
-          🥊
-        </span>
-        <span
-          aria-hidden
-          className="absolute right-0 scale-x-[-1] animate-[mg-punchR_0.9s_ease-in-out_infinite] text-[44px]"
-          style={{ filter: "drop-shadow(0 6px 14px rgba(217,54,32,0.45))" }}
-        >
-          🥊
-        </span>
+          className="pointer-events-none absolute h-40 w-40 rounded-full"
+          style={{ background: "radial-gradient(circle, hsl(160 84% 39% / 0.35), transparent 65%)" }}
+        />
+        <Icon3D name="hero_gloves" size={168} className="glove-tap relative" />
       </div>
 
       <div className="relative mx-auto flex min-h-[88px] max-w-[320px] flex-col items-center justify-center text-center">
@@ -376,21 +397,13 @@ const IntroOverlay = ({
         </p>
       </div>
 
-      <div className="mt-7 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-primary">
+      <div className="mt-7 flex items-center gap-2 font-display text-[12px] tracking-[0.3em] text-primary">
         <span className="inline-block h-1 w-8 animate-pulse rounded-full bg-primary/60" />
-        ROUND 1 · READY
+        153 BOXING ARENA
         <span className="inline-block h-1 w-8 animate-pulse rounded-full bg-primary/60" />
       </div>
 
       <style>{`
-        @keyframes mg-punchL {
-          0%, 100% { transform: translateX(-16px) rotate(-8deg) scale(1); }
-          50%      { transform: translateX(14px)  rotate(8deg)  scale(1.15); }
-        }
-        @keyframes mg-punchR {
-          0%, 100% { transform: translateX(16px)  rotate(8deg)  scale(1); }
-          50%      { transform: translateX(-14px) rotate(-8deg) scale(1.15); }
-        }
         @keyframes mg-quoteIn {
           0%   { opacity: 0; transform: translateY(8px); }
           100% { opacity: 1; transform: translateY(0); }

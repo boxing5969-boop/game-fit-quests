@@ -1,9 +1,15 @@
+/**
+ * 🎯 미트 드릴 — 플레이 화면 (2026-10-01 다크 아레나 개편: 이모지 → 입체 아이콘·방향 기호).
+ */
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
+import { ArrowUp, BarChart3, Check, Flag, Home, Pause, PartyPopper, Play, RotateCcw, Wind, X } from 'lucide-react';
 import { PunchType, PUNCHES } from '@/features/minigame/types/game';
 import type { FallingGlove, RoundOutcome } from '@/features/minigame/hooks/useMittEngine';
-import { audio, setVibrationEnabled, isVibrationEnabled } from '@/features/minigame/lib/audio';
 import { getRoundConfig } from '@/features/minigame/lib/mittDrillConfig';
+import Icon3D from './Icon3D';
+import PunchGlyph from './PunchGlyph';
+import PauseMenu from './PauseMenu';
 
 interface MittDrillScreenProps {
   currentStage: number;
@@ -40,6 +46,13 @@ const PUNCH_BG: Record<PunchType, string> = {
   hook: 'bg-punch-hook',
   upper: 'bg-punch-upper',
 };
+/** 레인 색 위 글자색 — 골드·아이스는 어두운 글자 */
+const PUNCH_TEXT: Record<PunchType, string> = {
+  jab: 'text-[hsl(165_70%_7%)]',
+  straight: 'text-[hsl(40_60%_8%)]',
+  hook: 'text-white',
+  upper: 'text-[hsl(210_22%_10%)]',
+};
 
 /** Mitt pad — circular leather target with bullseye rings. */
 const MittPad = ({
@@ -60,23 +73,39 @@ const MittPad = ({
       aria-label={`${meta.nameEn} mitt`}
     >
       <div
-        className={`relative w-16 h-16 rounded-full ${PUNCH_BG[punch]} ring-4 ring-black/40 shadow-[0_6px_18px_rgba(0,0,0,0.5)] flex items-center justify-center transition-all ${
-          flashing ? 'brightness-150 scale-110' : 'active:brightness-110'
+        className={`relative flex h-[68px] w-[68px] items-center justify-center rounded-full ${PUNCH_BG[punch]} ${PUNCH_TEXT[punch]} shadow-[0_8px_20px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.35)] ring-4 ring-black/40 transition-all ${
+          flashing ? 'scale-110 brightness-150' : 'active:brightness-110'
         }`}
         style={{
           backgroundImage:
-            'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25), transparent 55%)',
+            'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.28), transparent 55%)',
         }}
       >
-        <div className="absolute inset-2 rounded-full border-2 border-black/30" />
-        <div className="w-3 h-3 rounded-full bg-black/60 shadow-inner" />
+        <div className="absolute inset-2 rounded-full border-2 border-black/25" />
+        <PunchGlyph type={punch} size={30} strokeWidth={2.8} className="relative" />
       </div>
-      <span className="font-display text-xs tracking-wider text-foreground/90 mt-1.5">
+      <span className="mt-1.5 font-display text-[13px] tracking-wider text-foreground/90">
         {meta.nameEn}
       </span>
     </motion.button>
   );
 };
+
+/** 통계 칸 */
+const StatBox = ({ label, value, tone = 'muted' }: { label: string; value: string | number; tone?: 'muted' | 'gold' | 'red' }) => (
+  <div
+    className={`rounded-xl p-1.5 ${
+      tone === 'gold'
+        ? 'bg-secondary/15 ring-1 ring-secondary/30'
+        : tone === 'red'
+        ? 'bg-destructive/10 ring-1 ring-destructive/30'
+        : 'bg-white/[0.05]'
+    }`}
+  >
+    <div className={`font-display text-[10px] tracking-[0.2em] ${tone === 'gold' ? 'text-secondary/80' : tone === 'red' ? 'text-destructive/80' : 'text-muted-foreground'}`}>{label}</div>
+    <div className={`mg-num font-display text-base ${tone === 'gold' ? 'text-secondary' : tone === 'red' ? 'text-destructive' : 'text-foreground'}`}>{value}</div>
+  </div>
+);
 
 const MittDrillScreen = ({
   currentStage,
@@ -111,9 +140,6 @@ const MittDrillScreen = ({
   const fieldRef = useRef<HTMLDivElement>(null);
   const [fieldH, setFieldH] = useState(500);
   const [now, setNow] = useState(performance.now());
-  const [soundOn, setSoundOn] = useState(() => audio.isEnabled());
-  const [vibrationOn, setVibrationOn] = useState(() => isVibrationEnabled());
-  const [confirmQuit, setConfirmQuit] = useState(false);
 
   const cfg = getRoundConfig(currentStage);
   const energyLow = energy <= 30;
@@ -122,11 +148,11 @@ const MittDrillScreen = ({
 
   // 라운드별 분위기 톤 (배경 글로우 색상)
   const moodHue = currentStage <= 2
-    ? 'hsl(var(--secondary) / 0.18)'      // 차분
+    ? 'hsl(var(--primary) / 0.22)'        // 민트 — 차분
     : currentStage <= 5
-    ? 'hsl(var(--primary) / 0.22)'        // 텐션
+    ? 'hsl(var(--secondary) / 0.2)'       // 골드 — 텐션
     : currentStage <= 9
-    ? 'hsl(35 90% 55% / 0.25)'            // 주황 — 긴장
+    ? 'hsl(28 90% 55% / 0.25)'            // 주황 — 긴장
     : 'hsl(var(--destructive) / 0.28)';   // 빨강 — 고난도
 
   // ROUND banner: READY (450ms) → GO (550ms) → done
@@ -186,25 +212,11 @@ const MittDrillScreen = ({
     };
   }, [paused, phase, onPause]);
 
-  const toggleSound = () => {
-    const next = !soundOn;
-    audio.setEnabled(next);
-    setSoundOn(next);
-  };
-  const toggleVibration = () => {
-    const next = !vibrationOn;
-    setVibrationEnabled(next);
-    setVibrationOn(next);
-    if (next && 'vibrate' in navigator) {
-      try { navigator.vibrate(20); } catch {}
-    }
-  };
-
   const HIT_ZONE_RATIO = 0.82;
 
   return (
     <div
-      className={`relative overflow-hidden bg-background ${shaking ? 'shake' : ''}`}
+      className={`arena-bg relative overflow-hidden ${shaking ? 'shake' : ''}`}
       // 아이폰: body 가 상태바만큼 위 여백을 갖고 있어 100dvh 그대로면 아래 미트가 화면 밖으로 밀린다 (2026-10-01)
       style={{ height: 'calc(100dvh - env(safe-area-inset-top, 0px))', display: 'flex', flexDirection: 'column' }}
     >
@@ -244,19 +256,19 @@ const MittDrillScreen = ({
       )}
 
       {/* ===== TOP HUD ===== */}
-      <div className="border-b border-border bg-card/95 backdrop-blur relative z-20">
+      <div className="relative z-20 border-b border-white/[0.07] bg-card/90 backdrop-blur">
         {/* Energy bar (전면) */}
         <div className="px-3 pt-2">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[9px] font-display tracking-widest text-muted-foreground">ENERGY</span>
-            <span className={`text-[10px] font-display tabular-nums ${energyLow ? 'text-destructive' : 'text-foreground/80'}`}>
+          <div className="mb-1 flex items-center justify-between pr-11">
+            <span className="font-display text-[10px] tracking-[0.25em] text-muted-foreground">ENERGY</span>
+            <span className={`mg-num font-display text-[11px] ${energyLow ? 'text-destructive' : 'text-foreground/80'}`}>
               {Math.round(energy)}
             </span>
           </div>
-          <div className="h-2.5 bg-muted rounded-full overflow-hidden relative">
+          <div className="relative mr-11 h-2.5 overflow-hidden rounded-full bg-white/10">
             <motion.div
               className={`h-full rounded-full ${
-                energy > 60 ? 'bg-gradient-to-r from-emerald-500 to-secondary' :
+                energy > 60 ? 'bg-gradient-to-r from-primary to-secondary' :
                 energy > 30 ? 'bg-gradient-to-r from-amber-400 to-orange-500' :
                               'bg-gradient-to-r from-rose-500 to-destructive'
               }`}
@@ -274,29 +286,29 @@ const MittDrillScreen = ({
         </div>
 
         {/* Stats row */}
-        <div className="flex items-center justify-between px-3 py-2 gap-2">
-          <div className="flex flex-col min-w-0 shrink-0">
-            <span className="text-[9px] uppercase text-muted-foreground tracking-widest">Round</span>
-            <span className="font-display text-2xl text-primary tabular-nums leading-none">
+        <div className="flex items-center justify-between gap-2 px-3 py-2">
+          <div className="flex min-w-0 shrink-0 flex-col">
+            <span className="font-display text-[10px] tracking-[0.25em] text-muted-foreground">ROUND</span>
+            <span className="mg-num font-display text-2xl leading-none text-primary">
               {currentStage}
             </span>
-            <span className="text-[9px] text-muted-foreground tabular-nums">BEST {highestCleared}</span>
+            <span className="mg-num text-[10px] text-muted-foreground">BEST {highestCleared}</span>
           </div>
-          <div className="flex flex-col items-center min-w-0 flex-1">
-            <span className="text-[9px] uppercase text-muted-foreground tracking-widest">Score</span>
-            <span className="font-display text-xl text-secondary tabular-nums leading-none truncate">
+          <div className="flex min-w-0 flex-1 flex-col items-center">
+            <span className="font-display text-[10px] tracking-[0.25em] text-muted-foreground">SCORE</span>
+            <span className="mg-num truncate font-display text-xl leading-none text-secondary">
               {score.toLocaleString()}
             </span>
             {combo >= 3 && (
-              <span className="text-[10px] font-display text-secondary tracking-widest mt-0.5">
-                🔥 x{combo}
+              <span className="mg-num mt-0.5 flex items-center gap-1 font-display text-[11px] tracking-widest text-secondary">
+                <Icon3D name="fire" size={12} /> x{combo}
               </span>
             )}
           </div>
-          <div className="flex flex-col items-end min-w-0 shrink-0">
-            <span className="text-[9px] uppercase text-muted-foreground tracking-widest">Time</span>
-            <span className={`font-display text-2xl tabular-nums leading-none ${
-              stageTime <= 5 ? 'text-destructive animate-pulse' : 'text-foreground'
+          <div className="flex min-w-0 shrink-0 flex-col items-end">
+            <span className="font-display text-[10px] tracking-[0.25em] text-muted-foreground">TIME</span>
+            <span className={`mg-num font-display text-2xl leading-none ${
+              stageTime <= 5 ? 'animate-pulse text-destructive' : 'text-foreground'
             }`}>
               {stageTime}<span className="text-xs text-muted-foreground">s</span>
             </span>
@@ -312,12 +324,9 @@ const MittDrillScreen = ({
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 18 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed top-[calc(env(safe-area-inset-top)+0.75rem)] right-3 z-40 w-10 h-10 rounded-full bg-card/90 border border-border text-foreground shadow-lg flex items-center justify-center"
+        className="fixed right-3 top-[calc(env(safe-area-inset-top)+0.6rem)] z-40 flex h-10 w-10 items-center justify-center rounded-full bg-card/85 text-foreground shadow-lg ring-1 ring-white/10 backdrop-blur-md"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <rect x="6" y="5" width="4" height="14" rx="1" />
-          <rect x="14" y="5" width="4" height="14" rx="1" />
-        </svg>
+        <Pause className="h-4 w-4" fill="currentColor" />
       </motion.button>
 
       {/* ===== ROUND START BANNER (READY → GO) ===== */}
@@ -331,8 +340,9 @@ const MittDrillScreen = ({
             transition={{ duration: 0.25 }}
             className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none bg-background/55 backdrop-blur-sm"
           >
-            <div className="font-display text-xs tracking-[0.6em] text-muted-foreground mb-3">READY</div>
-            <div className="font-display text-7xl text-primary leading-none drop-shadow-[0_0_30px_hsl(var(--primary)/0.7)]">
+            <Icon3D name="bell" size={44} className="mb-2" />
+            <div className="mb-3 font-display text-xs tracking-[0.6em] text-muted-foreground">READY</div>
+            <div className="mg-num font-display text-7xl leading-none text-primary drop-shadow-[0_0_30px_hsl(var(--primary)/0.7)]">
               ROUND {currentStage}
             </div>
             <div className="text-[11px] text-muted-foreground mt-3 font-display tracking-widest">
@@ -359,9 +369,9 @@ const MittDrillScreen = ({
       {/* ===== FALLING FIELD ===== */}
       <div
         ref={fieldRef}
-        className="flex-1 relative overflow-hidden"
+        className="arena-ropes relative flex-1 overflow-hidden"
         style={{
-          background: 'radial-gradient(ellipse at top, hsl(var(--card)) 0%, hsl(var(--background)) 60%)',
+          background: 'radial-gradient(ellipse at top, hsl(210 18% 11%) 0%, hsl(var(--background)) 60%)',
         }}
       >
         {/* Lane dividers */}
@@ -403,13 +413,13 @@ const MittDrillScreen = ({
                 style={{ left: `${left}%`, top: `${HIT_ZONE_RATIO * 100}%`, transform: 'translate(-50%, -50%)' }}
               >
                 <div
-                  className={`text-5xl ${
+                  className={
                     g.result === 'perfect'
                       ? 'drop-shadow-[0_0_18px_hsl(var(--rating-lightning))]'
                       : 'drop-shadow-[0_0_10px_hsl(var(--rating-fast))]'
-                  }`}
+                  }
                 >
-                  {g.result === 'perfect' ? '⚡' : '✨'}
+                  <Icon3D name={g.result === 'perfect' ? 'bolt' : 'star'} size={52} />
                 </div>
               </motion.div>
             );
@@ -421,10 +431,10 @@ const MittDrillScreen = ({
                 initial={{ opacity: 1 }}
                 animate={{ opacity: 0, y: 30 }}
                 transition={{ duration: 0.4 }}
-                className="absolute pointer-events-none text-3xl"
+                className="pointer-events-none absolute text-muted-foreground"
                 style={{ left: `${left}%`, top: `${(HIT_ZONE_RATIO + 0.05) * 100}%`, transform: 'translate(-50%, -50%)' }}
               >
-                💨
+                <Wind className="h-8 w-8" />
               </motion.div>
             );
           }
@@ -436,15 +446,15 @@ const MittDrillScreen = ({
               style={{ left: `${left}%`, top: `${y}px`, transform: 'translate(-50%, -50%)' }}
             >
               <div
-                className={`w-14 h-14 rounded-full ${PUNCH_BG[g.punch]} shadow-[0_4px_14px_rgba(0,0,0,0.5)] flex items-center justify-center text-3xl border-2 border-white/20`}
+                className={`flex h-14 w-14 items-center justify-center rounded-full ${PUNCH_BG[g.punch]} ${PUNCH_TEXT[g.punch]} border-2 border-white/25 shadow-[0_4px_14px_rgba(0,0,0,0.5)]`}
                 style={{
                   backgroundImage:
                     'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.3), transparent 55%)',
                 }}
               >
-                {PUNCHES[g.punch].emoji}
+                <PunchGlyph type={g.punch} size={28} strokeWidth={2.8} />
               </div>
-              <div className="text-[10px] font-display tracking-wider text-foreground/70 mt-1">
+              <div className="mt-1 font-display text-[11px] tracking-wider text-foreground/70">
                 {PUNCHES[g.punch].nameEn}
               </div>
             </div>
@@ -468,7 +478,7 @@ const MittDrillScreen = ({
               style={{ top: `${HIT_ZONE_RATIO * 100 - 14}%`, transform: 'translateX(-50%)' }}
             >
               <div
-                className={`font-display tracking-widest whitespace-nowrap ${
+                className={`flex items-center gap-1.5 whitespace-nowrap font-display tracking-widest ${
                   lastResult.rating === 'perfect'
                     ? 'text-5xl text-rating-lightning drop-shadow-[0_0_18px_hsl(var(--rating-lightning))]'
                     : lastResult.rating === 'good'
@@ -476,11 +486,13 @@ const MittDrillScreen = ({
                     : 'text-3xl text-rating-miss'
                 }`}
               >
-                {lastResult.rating === 'perfect'
-                  ? '⚡ PERFECT!'
-                  : lastResult.rating === 'good'
-                  ? '✅ GOOD'
-                  : '❌ MISS'}
+                {lastResult.rating === 'perfect' ? (
+                  <><Icon3D name="bolt" size={40} /> PERFECT!</>
+                ) : lastResult.rating === 'good' ? (
+                  <><Check className="h-7 w-7" strokeWidth={3} /> GOOD</>
+                ) : (
+                  <><X className="h-7 w-7" strokeWidth={3} /> MISS</>
+                )}
               </div>
             </motion.div>
           )}
@@ -498,8 +510,8 @@ const MittDrillScreen = ({
               className="absolute inset-x-0 pointer-events-none z-20 flex justify-center"
               style={{ top: '24%' }}
             >
-              <div className="font-display text-5xl tracking-widest text-secondary drop-shadow-[0_0_24px_hsl(var(--secondary)/0.9)]">
-                {comboMilestone.value >= 10 ? '🔥 ' : ''}{comboMilestone.value} COMBO!
+              <div className="flex items-center gap-2 font-display text-5xl tracking-widest text-secondary drop-shadow-[0_0_24px_hsl(var(--secondary)/0.9)]">
+                {comboMilestone.value >= 10 && <Icon3D name="fire" size={44} />}{comboMilestone.value} COMBO!
               </div>
             </motion.div>
           )}
@@ -536,7 +548,7 @@ const MittDrillScreen = ({
       </div>
 
       {/* ===== MITT PADS ===== */}
-      <div className="bg-gradient-to-b from-card to-background border-t border-border relative z-30 pt-3 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] px-3">
+      <div className="relative z-30 border-t border-white/[0.07] bg-gradient-to-b from-card to-background px-3 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-3">
         <div className="grid grid-cols-4 gap-1">
           {PUNCHES_LIST.map(type => (
             <div key={type} className="flex justify-center">
@@ -562,7 +574,7 @@ const MittDrillScreen = ({
               initial={{ scale: 0.7, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               transition={{ type: 'spring', damping: 16, stiffness: 220 }}
-              className="bg-card border-2 border-secondary/50 rounded-3xl p-5 w-full max-w-sm shadow-[0_0_60px_hsl(var(--secondary)/0.4)] text-center my-auto"
+              className="mg-card my-auto w-full max-w-sm p-5 text-center ring-2 ring-secondary/50 shadow-[0_0_60px_hsl(var(--secondary)/0.35)]"
             >
               {/* Top badges */}
               <div className="flex flex-wrap justify-center gap-1.5 mb-2 min-h-[22px]">
@@ -571,9 +583,9 @@ const MittDrillScreen = ({
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: [0.5, 1.15, 1], opacity: 1 }}
                     transition={{ duration: 0.55 }}
-                    className="bg-gradient-to-r from-secondary to-primary text-secondary-foreground rounded-full px-2.5 py-0.5 font-display text-[10px] tracking-widest"
+                    className="mg-btn-gold flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-[11px] tracking-widest"
                   >
-                    🏆 NEW BEST
+                    <Icon3D name="trophy" size={14} /> NEW BEST
                   </motion.span>
                 )}
                 {roundOutcome.isFirstClear && (
@@ -581,9 +593,9 @@ const MittDrillScreen = ({
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: [0.5, 1.15, 1], opacity: 1 }}
                     transition={{ duration: 0.55, delay: 0.1 }}
-                    className="bg-primary/90 text-primary-foreground rounded-full px-2.5 py-0.5 font-display text-[10px] tracking-widest"
+                    className="mg-btn-primary flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-[11px] tracking-widest"
                   >
-                    🎉 FIRST CLEAR
+                    <PartyPopper className="h-3 w-3" /> FIRST CLEAR
                   </motion.span>
                 )}
                 {roundOutcome.isFirstThreeStar && (
@@ -591,9 +603,9 @@ const MittDrillScreen = ({
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: [0.5, 1.2, 1], opacity: 1 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
-                    className="bg-gradient-to-r from-amber-400 to-yellow-500 text-black rounded-full px-2.5 py-0.5 font-display text-[10px] tracking-widest"
+                    className="mg-btn-gold flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-[11px] tracking-widest"
                   >
-                    ⭐ FIRST 3-STAR
+                    <Icon3D name="star" size={14} /> FIRST 3-STAR
                   </motion.span>
                 )}
                 {roundOutcome.newStarRecord && !roundOutcome.isFirstClear && !roundOutcome.isFirstThreeStar && (
@@ -601,16 +613,16 @@ const MittDrillScreen = ({
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: [0.5, 1.15, 1], opacity: 1 }}
                     transition={{ duration: 0.55 }}
-                    className="bg-amber-500/90 text-black rounded-full px-2.5 py-0.5 font-display text-[10px] tracking-widest"
+                    className="mg-btn-gold flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-[11px] tracking-widest"
                   >
-                    ⬆ STAR UP {roundOutcome.prevStars}→{roundOutcome.stars?.stars}
+                    <ArrowUp className="h-3 w-3" strokeWidth={3} /> STAR UP {roundOutcome.prevStars}→{roundOutcome.stars?.stars}
                   </motion.span>
                 )}
               </div>
 
-              <div className="text-4xl mb-1">🥊</div>
-              <div className="font-display text-3xl text-secondary tracking-widest">ROUND CLEAR</div>
-              <div className="text-[11px] text-muted-foreground mb-3">ROUND {roundOutcome.round}</div>
+              <div className="mb-1 flex justify-center"><Icon3D name="mitt" size={56} /></div>
+              <div className="font-display text-3xl tracking-widest text-secondary">ROUND CLEAR</div>
+              <div className="mg-num mb-3 text-[11px] text-muted-foreground">ROUND {roundOutcome.round}</div>
 
               {/* Stars */}
               {roundOutcome.stars && (
@@ -628,15 +640,15 @@ const MittDrillScreen = ({
                           opacity: 1,
                         }}
                         transition={{ delay: 0.3 + i * 0.2, duration: 0.6, type: 'spring', damping: 8 }}
-                        className={`text-5xl ${
+                        className={
                           earned
                             ? isNew
                               ? 'drop-shadow-[0_0_18px_hsl(45_100%_60%/0.95)]'
                               : 'drop-shadow-[0_0_8px_hsl(45_100%_60%/0.6)]'
-                            : 'opacity-20 grayscale'
-                        }`}
+                            : ''
+                        }
                       >
-                        ⭐
+                        <Icon3D name="star" size={52} dim={!earned} />
                       </motion.div>
                     );
                   })}
@@ -652,41 +664,26 @@ const MittDrillScreen = ({
               </motion.div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-1.5 mb-2">
-                <div className="bg-muted/30 rounded-lg p-1.5">
-                  <div className="text-[8px] text-muted-foreground tracking-widest">SCORE</div>
-                  <div className="font-display text-sm text-foreground tabular-nums">+{roundOutcome.score.toLocaleString()}</div>
-                </div>
-                <div className="bg-muted/30 rounded-lg p-1.5">
-                  <div className="text-[8px] text-muted-foreground tracking-widest">ACC</div>
-                  <div className="font-display text-sm text-foreground tabular-nums">{roundOutcome.accuracy}%</div>
-                </div>
-                <div className="bg-muted/30 rounded-lg p-1.5">
-                  <div className="text-[8px] text-muted-foreground tracking-widest">ENERGY</div>
-                  <div className="font-display text-sm text-foreground tabular-nums">{roundOutcome.remainingEnergy}</div>
-                </div>
+              <div className="mb-2 grid grid-cols-3 gap-1.5">
+                <StatBox label="SCORE" value={`+${roundOutcome.score.toLocaleString()}`} />
+                <StatBox label="ACC" value={`${roundOutcome.accuracy}%`} />
+                <StatBox label="ENERGY" value={roundOutcome.remainingEnergy} />
               </div>
-              <div className="grid grid-cols-3 gap-1.5 mb-4">
-                <div className="bg-secondary/15 rounded-lg p-1.5 border border-secondary/30">
-                  <div className="text-[8px] text-secondary/80 tracking-widest">⚡PERFECT</div>
-                  <div className="font-display text-sm text-secondary tabular-nums">{roundOutcome.perfectCount}</div>
-                </div>
-                <div className="bg-muted/30 rounded-lg p-1.5">
-                  <div className="text-[8px] text-muted-foreground tracking-widest">✓ GOOD</div>
-                  <div className="font-display text-sm text-foreground tabular-nums">{roundOutcome.goodCount}</div>
-                </div>
-                <div className="bg-destructive/10 rounded-lg p-1.5 border border-destructive/30">
-                  <div className="text-[8px] text-destructive/80 tracking-widest">✗ MISS</div>
-                  <div className="font-display text-sm text-destructive tabular-nums">{roundOutcome.missCount}</div>
-                </div>
+              <div className="mb-4 grid grid-cols-3 gap-1.5">
+                <StatBox label="PERFECT" value={roundOutcome.perfectCount} tone="gold" />
+                <StatBox label="GOOD" value={roundOutcome.goodCount} />
+                <StatBox label="MISS" value={roundOutcome.missCount} tone="red" />
               </div>
 
               {/* 다음 목표 힌트 */}
               {roundOutcome.stars && roundOutcome.stars.stars < 3 && (
-                <div className="bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 mb-3 text-[11px] text-foreground/80">
-                  💡 {roundOutcome.stars.stars === 1
-                    ? '정확도 75%면 ⭐⭐, 90%+에너지 50이면 ⭐⭐⭐!'
-                    : '정확도 90% + 에너지 50 이상이면 ⭐⭐⭐!'}
+                <div className="mb-3 flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-left text-[12px] text-foreground/85 ring-1 ring-primary/30">
+                  <Icon3D name="star" size={22} />
+                  <span>
+                    {roundOutcome.stars.stars === 1
+                      ? '정확도 75%면 별 2개, 90% + 에너지 50이면 별 3개!'
+                      : '정확도 90% + 에너지 50 이상이면 별 3개!'}
+                  </span>
                 </div>
               )}
 
@@ -696,22 +693,22 @@ const MittDrillScreen = ({
                 animate={{ scale: [1, 1.03, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
                 onClick={onNextRound}
-                className="w-full bg-primary text-primary-foreground rounded-2xl font-display tracking-widest py-4 text-2xl shadow-[0_8px_30px_hsl(var(--primary)/0.6)] border-2 border-primary-foreground/20 active:brightness-110 mb-2"
+                className="mg-btn-primary mb-2 flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-display text-2xl tracking-widest active:brightness-110"
               >
-                ▶ NEXT ROUND {roundOutcome.round + 1}
+                <Play className="h-6 w-6 fill-current" /> NEXT ROUND {roundOutcome.round + 1}
               </motion.button>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={onRetryRound}
-                  className="bg-card border border-border text-foreground py-2.5 rounded-xl font-display text-xs tracking-widest active:scale-95"
+                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-[14px] tracking-widest active:scale-95"
                 >
-                  🔄 {roundOutcome.stars && roundOutcome.stars.stars < 3 ? '3성 도전' : 'RETRY'}
+                  <RotateCcw className="h-4 w-4" /> {roundOutcome.stars && roundOutcome.stars.stars < 3 ? '별 3개 도전' : 'RETRY'}
                 </button>
                 <button
                   onClick={onEndSession}
-                  className="bg-card border border-border text-foreground py-2.5 rounded-xl font-display text-xs tracking-widest active:scale-95"
+                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-[14px] tracking-widest active:scale-95"
                 >
-                  🏁 END
+                  <Flag className="h-4 w-4" /> END
                 </button>
               </div>
             </motion.div>
@@ -731,18 +728,18 @@ const MittDrillScreen = ({
               initial={{ scale: 0.7, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               transition={{ type: 'spring', damping: 16, stiffness: 220 }}
-              className="bg-card border-2 border-destructive/60 rounded-3xl p-5 w-full max-w-sm shadow-[0_0_60px_hsl(var(--destructive)/0.4)] text-center my-auto"
+              className="mg-card my-auto w-full max-w-sm p-5 text-center ring-2 ring-destructive/50 shadow-[0_0_60px_hsl(var(--destructive)/0.35)]"
             >
               <motion.div
                 initial={{ scale: 0.5, rotate: -10 }}
                 animate={{ scale: [0.5, 1.2, 1], rotate: [-10, 5, 0] }}
                 transition={{ duration: 0.6 }}
-                className="text-5xl mb-1"
+                className="mb-1 flex justify-center"
               >
-                💥
+                <Icon3D name="glove_red" size={64} />
               </motion.div>
-              <div className="font-display text-3xl text-destructive tracking-widest">K.O.</div>
-              <div className="text-[11px] text-muted-foreground mb-3">
+              <div className="font-display text-3xl tracking-widest text-destructive">K.O.</div>
+              <div className="mg-num mb-3 text-[11px] text-muted-foreground">
                 ROUND {roundOutcome.round} ·{' '}
                 {roundOutcome.reason === 'ko-streak'
                   ? '연속 미스'
@@ -752,46 +749,29 @@ const MittDrillScreen = ({
               </div>
 
               {roundOutcome.prevStars > 0 && (
-                <div className="flex justify-center items-center gap-1 mb-3">
+                <div className="mb-3 flex items-center justify-center gap-1">
                   {[1, 2, 3].map(i => (
-                    <span key={i} className={`text-2xl ${i <= roundOutcome.prevStars ? '' : 'opacity-20 grayscale'}`}>⭐</span>
+                    <Icon3D key={i} name="star" size={26} dim={i > roundOutcome.prevStars} />
                   ))}
-                  <span className="text-[10px] text-muted-foreground ml-1 font-display">현재 기록</span>
+                  <span className="ml-1 font-display text-[11px] text-muted-foreground">현재 기록</span>
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-1.5 mb-2">
-                <div className="bg-muted/30 rounded-lg p-1.5">
-                  <div className="text-[8px] text-muted-foreground tracking-widest">SCORE</div>
-                  <div className="font-display text-sm text-foreground tabular-nums">+{roundOutcome.score.toLocaleString()}</div>
-                </div>
-                <div className="bg-muted/30 rounded-lg p-1.5">
-                  <div className="text-[8px] text-muted-foreground tracking-widest">ACC</div>
-                  <div className="font-display text-sm text-foreground tabular-nums">{roundOutcome.accuracy}%</div>
-                </div>
-                <div className="bg-muted/30 rounded-lg p-1.5">
-                  <div className="text-[8px] text-muted-foreground tracking-widest">ENERGY</div>
-                  <div className="font-display text-sm text-foreground tabular-nums">{roundOutcome.remainingEnergy}</div>
-                </div>
+              <div className="mb-2 grid grid-cols-3 gap-1.5">
+                <StatBox label="SCORE" value={`+${roundOutcome.score.toLocaleString()}`} />
+                <StatBox label="ACC" value={`${roundOutcome.accuracy}%`} />
+                <StatBox label="ENERGY" value={roundOutcome.remainingEnergy} />
               </div>
-              <div className="grid grid-cols-3 gap-1.5 mb-3">
-                <div className="bg-secondary/15 rounded-lg p-1.5 border border-secondary/30">
-                  <div className="text-[8px] text-secondary/80 tracking-widest">⚡PERFECT</div>
-                  <div className="font-display text-sm text-secondary tabular-nums">{roundOutcome.perfectCount}</div>
-                </div>
-                <div className="bg-muted/30 rounded-lg p-1.5">
-                  <div className="text-[8px] text-muted-foreground tracking-widest">✓ GOOD</div>
-                  <div className="font-display text-sm text-foreground tabular-nums">{roundOutcome.goodCount}</div>
-                </div>
-                <div className="bg-destructive/10 rounded-lg p-1.5 border border-destructive/30">
-                  <div className="text-[8px] text-destructive/80 tracking-widest">✗ MISS</div>
-                  <div className="font-display text-sm text-destructive tabular-nums">{roundOutcome.missCount}</div>
-                </div>
+              <div className="mb-3 grid grid-cols-3 gap-1.5">
+                <StatBox label="PERFECT" value={roundOutcome.perfectCount} tone="gold" />
+                <StatBox label="GOOD" value={roundOutcome.goodCount} />
+                <StatBox label="MISS" value={roundOutcome.missCount} tone="red" />
               </div>
 
               {roundOutcome.failHint && (
-                <div className="bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 mb-3 text-[11px] text-foreground/85">
-                  💡 {roundOutcome.failHint}
+                <div className="mb-3 flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-left text-[12px] text-foreground/85 ring-1 ring-primary/30">
+                  <Icon3D name="book" size={22} />
+                  <span>{roundOutcome.failHint}</span>
                 </div>
               )}
 
@@ -802,22 +782,22 @@ const MittDrillScreen = ({
                 animate={{ scale: [0.9, 1.05, 1] }}
                 transition={{ duration: 0.5 }}
                 onClick={onRetryRound}
-                className="w-full bg-primary text-primary-foreground rounded-2xl font-display tracking-widest py-4 text-3xl shadow-[0_10px_40px_hsl(var(--primary)/0.7)] border-2 border-primary-foreground/20 active:brightness-110 mb-2"
+                className="mg-btn-primary mb-2 flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-display text-3xl tracking-widest active:brightness-110"
               >
-                🔄 RETRY
+                <RotateCcw className="h-7 w-7" strokeWidth={2.5} /> RETRY
               </motion.button>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={onEndSession}
-                  className="bg-card border border-border text-foreground py-2.5 rounded-xl font-display text-xs tracking-widest active:scale-95"
+                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-[14px] tracking-widest active:scale-95"
                 >
-                  📊 결과 보기
+                  <BarChart3 className="h-4 w-4" /> 결과 보기
                 </button>
                 <button
                   onClick={onQuit}
-                  className="bg-card border border-border text-foreground py-2.5 rounded-xl font-display text-xs tracking-widest active:scale-95"
+                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-[14px] tracking-widest active:scale-95"
                 >
-                  🏠 HOME
+                  <Home className="h-4 w-4" /> HOME
                 </button>
               </div>
             </motion.div>
@@ -828,91 +808,16 @@ const MittDrillScreen = ({
       {/* ===== PAUSE OVERLAY ===== */}
       <AnimatePresence>
         {paused && phase === 'playing' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/85 backdrop-blur-md flex items-center justify-center px-6"
-          >
-            <motion.div
-              initial={{ scale: 0.85, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', damping: 18, stiffness: 220 }}
-              className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm shadow-2xl"
-            >
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-1">⏸</div>
-                <h3 className="font-display text-2xl tracking-widest text-foreground">PAUSED</h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  ROUND {currentStage} · {score.toLocaleString()}점
-                </p>
-              </div>
-
-              <div className="bg-muted/40 rounded-xl p-3 mb-3 space-y-2 border border-border/60">
-                <button
-                  onClick={toggleSound}
-                  className="w-full flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/60"
-                >
-                  <span className="flex items-center gap-2 text-sm text-foreground">
-                    <span className="text-base">{soundOn ? '🔊' : '🔇'}</span>사운드
-                  </span>
-                  <span className={`relative w-10 h-5 rounded-full transition-colors ${soundOn ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
-                    <span className={`absolute top-0.5 w-4 h-4 bg-background rounded-full shadow transition-all ${soundOn ? 'left-[22px]' : 'left-0.5'}`} />
-                  </span>
-                </button>
-                <button
-                  onClick={toggleVibration}
-                  className="w-full flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/60"
-                >
-                  <span className="flex items-center gap-2 text-sm text-foreground">
-                    <span className="text-base">{vibrationOn ? '📳' : '📴'}</span>진동
-                  </span>
-                  <span className={`relative w-10 h-5 rounded-full transition-colors ${vibrationOn ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
-                    <span className={`absolute top-0.5 w-4 h-4 bg-background rounded-full shadow transition-all ${vibrationOn ? 'left-[22px]' : 'left-0.5'}`} />
-                  </span>
-                </button>
-              </div>
-
-              <button
-                onClick={onResume}
-                className="w-full bg-primary text-primary-foreground py-4 rounded-xl font-display tracking-widest mb-2 active:brightness-110"
-              >
-                ▶ RESUME
-              </button>
-              <button
-                onClick={onRestart}
-                className="w-full bg-card border border-border text-foreground py-3 rounded-xl font-display text-sm tracking-widest mb-2 active:scale-95"
-              >
-                🔄 처음부터
-              </button>
-              <button
-                onClick={() => setConfirmQuit(true)}
-                className="w-full bg-card border border-border text-muted-foreground py-3 rounded-xl font-display text-sm tracking-widest active:scale-95"
-              >
-                🏠 메뉴로
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Quit confirm */}
-      <AnimatePresence>
-        {confirmQuit && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-background/95 flex items-center justify-center px-6"
-          >
-            <div className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm text-center">
-              <div className="text-3xl mb-2">⚠️</div>
-              <p className="text-sm text-foreground mb-4">정말 메뉴로 나갈까요? 진행 상황이 사라집니다.</p>
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => setConfirmQuit(false)} className="bg-muted text-foreground py-3 rounded-xl font-display text-xs">취소</button>
-                <button onClick={onQuit} className="bg-destructive text-destructive-foreground py-3 rounded-xl font-display text-xs">나가기</button>
-              </div>
-            </div>
-          </motion.div>
+          <PauseMenu
+            summary={`ROUND ${currentStage} · ${score.toLocaleString()}점`}
+            onResume={onResume}
+            onRestart={onRestart}
+            onQuit={onQuit}
+            resumeLabel="RESUME"
+            quitLabel="메뉴로"
+            restartNote="ROUND 1부터 다시 시작해요"
+            quitNote="정말 메뉴로 나갈까요? 진행 상황이 사라집니다."
+          />
         )}
       </AnimatePresence>
     </div>

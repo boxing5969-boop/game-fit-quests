@@ -65,7 +65,7 @@ export function useAutoSaveScore(record: MinigameRecordInput | null) {
           .eq('game_type', finalRecord.game_type)
           .neq('player_name', displayName);
 
-        toast.success(`🏆 ${displayName} 님 기록 저장 완료!`, { duration: 2500 });
+        toast.success(`${displayName} 님 기록이 랭킹에 저장됐어요`, { duration: 2500 });
       } catch (err: any) {
         console.error('[saveMinigameRecord]', err);
         if (err?.code === 'PGRST205') {

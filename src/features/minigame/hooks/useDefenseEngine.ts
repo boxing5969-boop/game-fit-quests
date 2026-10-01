@@ -205,7 +205,7 @@ export function useDefenseEngine() {
     audio.cheer();
     audio.setBgmIntensity(3);
     triggerShake(true);
-    showBanner('⚠ BOSS RUSH', '연속 6연타를 막아라', 'text-primary', 1100);
+    showBanner('BOSS RUSH', '연속 6연타를 막아라', 'text-primary', 1100);
     vibrate([40, 30, 40]);
     const len = DEFENSE_CONFIG.bossPatternLength;
     const pattern: DefenseSide[] = [];
@@ -231,7 +231,7 @@ export function useDefenseEngine() {
     audio.fanfare();
     audio.setBgmIntensity(3);
     triggerHitstop(180);
-    showBanner('⚡ COUNTER TIME', '아무 버튼이나 빠르게 탭!', 'text-secondary', 900);
+    showBanner('COUNTER TIME', '아무 버튼이나 빠르게 탭!', 'text-secondary', 900);
     vibrate([30, 20, 30, 20, 50]);
     setAttacks([]);
     setCounterHits(0);
@@ -288,7 +288,7 @@ export function useDefenseEngine() {
         nextSpawnAtRef.current = Math.max(nextSpawnAtRef.current, t + DEFENSE_CONFIG.graceWindowAfterStepMs);
         // Skip banner for the very first tier transition to avoid intro spam
         if (newIdx >= 2) {
-          showBanner(`▲ ${tierInfo.label}`, '난이도 상승!', 'text-primary', 850);
+          showBanner(`${tierInfo.label}`, '난이도 상승!', 'text-primary', 850);
           audio.beep(true);
           vibrate(20);
         }
@@ -418,12 +418,12 @@ export function useDefenseEngine() {
         triggerHitstop(120);
         triggerShake();
         pushFloat(inFever ? `PERFECT x${DEFENSE_CONFIG.feverScoreMultiplier}` : 'PERFECT', 'text-secondary', side, true);
-        pushBurst(side, inFever ? 'hsl(355 100% 65%)' : 'hsl(45 100% 60%)');
+        pushBurst(side, inFever ? 'hsl(28 92% 60%)' : 'hsl(43 90% 62%)');
       } else {
-        audio.punch();
+        audio.block();
         vibrate(10);
         pushFloat(inFever ? `GOOD x${DEFENSE_CONFIG.feverScoreMultiplier}` : 'GOOD', 'text-rating-good', side);
-        pushBurst(side, 'hsl(217 91% 60%)');
+        pushBurst(side, 'hsl(160 84% 48%)');
       }
 
       setStats(prev => {
@@ -453,7 +453,7 @@ export function useDefenseEngine() {
           audio.setBgmIntensity(3);
           vibrate([30, 20, 30, 20, 60]);
           triggerShake(true);
-          showBanner('🔥 FEVER!', `${DEFENSE_CONFIG.feverScoreMultiplier}x SCORE · ${(DEFENSE_CONFIG.feverDurationMs / 1000).toFixed(1)}s`, 'text-primary', 1100);
+          showBanner('FEVER!', `${DEFENSE_CONFIG.feverScoreMultiplier}x SCORE · ${(DEFENSE_CONFIG.feverDurationMs / 1000).toFixed(1)}s`, 'text-primary', 1100);
         }
 
         // Boss clear detection
@@ -490,7 +490,7 @@ export function useDefenseEngine() {
           setRoundClearFx({ id: fxIdSeq++, round: clearedRound });
           setTimeout(() => setRoundClearFx(null), DEFENSE_CONFIG.roundClearBannerMs);
           triggerHitstop(DEFENSE_CONFIG.roundClearHitstopMs);
-          audio.cheer();
+          audio.roundClear();
           vibrate([20, 40, 30]);
 
           // 실드 드롭 판정
@@ -601,6 +601,7 @@ export function useDefenseEngine() {
   const endRun = useCallback((_reason: string) => {
     if (tryConsumeShield()) return; // 실드로 살아남음 — 게임 계속
     triggerShake(true);
+    audio.fail();
     audio.bell();
     audio.stopBgm();
     const finalSurvived = survivedMsLive();

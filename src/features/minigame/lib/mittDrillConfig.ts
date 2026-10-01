@@ -229,7 +229,7 @@ export function getFailHint(args: {
   }
   // time-up but not cleared
   if (args.accuracy < 60) return '판정을 놓치지 말고 끝까지 글러브에 집중!';
-  if (args.accuracy < 75) return `정확도 75% 넘기면 ⭐⭐를 받을 수 있어요.`;
-  if (args.accuracy < 90) return `정확도 90% + 에너지 50 이상이면 ⭐⭐⭐!`;
+  if (args.accuracy < 75) return `정확도 75% 넘기면 별 2개를 받을 수 있어요.`;
+  if (args.accuracy < 90) return `정확도 90% + 에너지 50 이상이면 별 3개!`;
   return '한 번만 더 시도하면 클리어!';
 }

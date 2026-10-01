@@ -4391,6 +4391,30 @@ export type Database = {
           total_participants: number
         }[]
       }
+      get_minigame_leaderboard: {
+        Args: { p_game: string; p_since?: string | null; p_limit?: number }
+        Returns: {
+          rank: number
+          user_id: string
+          player_name: string
+          score: number
+          avg_reaction_ms: number | null
+          accuracy: number | null
+          combo_peak: number | null
+          tier: string | null
+          played_at: string
+          is_me: boolean
+        }[]
+      }
+      get_minigame_my_rank: {
+        Args: { p_game: string; p_since?: string | null }
+        Returns: {
+          rank: number
+          score: number
+          played_at: string
+          total_players: number
+        }[]
+      }
       get_my_boxing_engagement_summary: { Args: never; Returns: Json }
       get_my_branch: { Args: never; Returns: string }
       get_my_cornerman_status: { Args: never; Returns: Json }

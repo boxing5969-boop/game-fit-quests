@@ -1,10 +1,15 @@
+/**
+ * 🛡 복싱 디펜스 러시 — 플레이 화면 (2026-10-01 다크 아레나 개편: 이모지 → 입체 아이콘).
+ */
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { Crosshair, Hourglass, Pause, Play, Swords, Timer, Volume2, VolumeX } from 'lucide-react';
 import { useDefenseEngine } from '@/features/minigame/hooks/useDefenseEngine';
 import { DEFENSE_CONFIG } from '@/features/minigame/lib/defenseConfig';
 import { audio } from '@/features/minigame/lib/audio';
 import DefenseHome from './DefenseHome';
 import DefenseGameOver from './DefenseGameOver';
+import Icon3D from './Icon3D';
 
 interface Props {
   onExit: () => void;
@@ -46,10 +51,10 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
         transition: 'background 600ms ease, filter 80ms',
       }}
     >
-      {/* Ring corner posts */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/30 to-primary opacity-60" />
-        <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-blue-500/30 to-blue-500 opacity-60" />
+      {/* Ring corner posts — 왼쪽 레드 코너 · 오른쪽 블루 코너 */}
+      <div className="pointer-events-none absolute inset-0 arena-ropes">
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-destructive via-destructive/30 to-destructive opacity-60" />
+        <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-sky-500 via-sky-500/30 to-sky-500 opacity-60" />
         {/* center spotlight pulsing */}
         <div
           className="absolute inset-0 opacity-40 mix-blend-screen"
@@ -66,15 +71,15 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
         <div className="flex items-start justify-between gap-3">
           <button
             onClick={eng.togglePause}
-            className="w-11 h-11 rounded-full bg-card/80 border border-border text-foreground text-base active:scale-90 transition-transform backdrop-blur-md flex items-center justify-center"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-card/85 text-foreground ring-1 ring-white/10 backdrop-blur-md transition-transform active:scale-90"
             aria-label="pause"
           >
-            {paused ? '▶' : '❚❚'}
+            {paused ? <Play className="h-4 w-4" fill="currentColor" /> : <Pause className="h-4 w-4" fill="currentColor" />}
           </button>
 
           <div className="flex-1 text-center">
             {/* ROUND — primary metric */}
-            <div className="text-[10px] tracking-[0.3em] text-muted-foreground font-display">⚔ ROUND</div>
+            <div className="flex items-center justify-center gap-1 font-display text-[11px] tracking-[0.3em] text-muted-foreground"><Swords className="h-3 w-3" /> ROUND</div>
             <motion.div
               key={stats.roundReached}
               initial={{ scale: 1.4, color: 'hsl(45 100% 60%)' }}
@@ -90,7 +95,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
             <div className="text-[9px] tracking-[0.3em] text-muted-foreground/70 mt-0.5 font-display flex items-center justify-center gap-1.5">
               <span>SCORE {stats.score}</span>
               <span>·</span>
-              <span>⏱ {eng.elapsedSec.toFixed(1)}s</span>
+              <span className="flex items-center gap-0.5"><Timer className="h-3 w-3" /> {eng.elapsedSec.toFixed(1)}s</span>
               <span>·</span>
               <span className={boxerStyle.accent}>VS {boxerStyle.name}</span>
             </div>
@@ -104,10 +109,9 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
                   key={i}
                   animate={i < shields ? { scale: [1, 1.15, 1] } : { scale: 1 }}
                   transition={{ repeat: i < shields ? Infinity : 0, duration: 1.6 }}
-                  className={`text-xl leading-none ${i < shields ? '' : 'opacity-25 grayscale'}`}
                   style={i < shields ? { filter: 'drop-shadow(0 0 6px hsl(45 100% 60%))' } : undefined}
                 >
-                  🪖
+                  <Icon3D name="headgear" size={24} dim={i >= shields} />
                 </motion.div>
               ))}
             </div>
@@ -152,7 +156,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
         </div>
         <div className="mt-0.5 flex items-center justify-between text-[9px] font-display tracking-widest">
           <span className="text-muted-foreground/70">PERFECT x{DEFENSE_CONFIG.counterTriggerCombo}</span>
-          <span className="text-secondary/80">→ ⚡ COUNTER</span>
+          <span className="flex items-center gap-1 text-secondary/80">→ <Icon3D name="bolt" size={12} /> COUNTER</span>
         </div>
       </div>
 
@@ -160,10 +164,10 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
       <div className="relative flex-1 flex items-end justify-center pb-4 overflow-hidden">
         {/* Opponent silhouette far above */}
         <div
-          className="absolute top-6 left-1/2 -translate-x-1/2 text-7xl opacity-25"
+          className="absolute top-6 left-1/2 -translate-x-1/2 opacity-30"
           style={{ filter: `drop-shadow(0 4px 20px ${opponentTheme.glow})` }}
         >
-          {opponentTheme.emoji}
+          <Icon3D name={opponentTheme.icon} size={88} />
         </div>
 
         {/* Boxer (player) */}
@@ -176,7 +180,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
           transition={{ type: 'spring', stiffness: 600, damping: 18 }}
           className="relative z-10"
         >
-          <div className="text-7xl drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]">🥊</div>
+          <Icon3D name="glove_mint" size={96} className="drop-shadow-[0_0_20px_rgba(16,185,129,0.45)]" />
           {/* shadow */}
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-16 h-3 bg-black/50 rounded-full blur-sm" />
         </motion.div>
@@ -280,15 +284,15 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               style={{
                 background: shieldFx.kind === 'save'
                   ? 'radial-gradient(circle, rgba(250,204,21,0.32) 0%, rgba(0,0,0,0.7) 80%)'
-                  : 'radial-gradient(circle, rgba(56,189,248,0.20) 0%, rgba(0,0,0,0) 80%)',
+                  : 'radial-gradient(circle, rgba(16,185,129,0.22) 0%, rgba(0,0,0,0) 80%)',
               }}
             >
               <motion.div
                 animate={{ scale: [1, 1.15, 1] }}
                 transition={{ duration: 0.6, repeat: shieldFx.kind === 'save' ? 1 : 0 }}
-                className="text-7xl drop-shadow-[0_0_24px_rgba(250,204,21,0.9)]"
+                className="drop-shadow-[0_0_24px_rgba(250,204,21,0.9)]"
               >
-                🪖
+                <Icon3D name="headgear" size={88} />
               </motion.div>
               <div className={`mt-2 font-display text-4xl tracking-widest ${shieldFx.kind === 'save' ? 'text-secondary' : 'text-foreground'} drop-shadow-[0_0_18px_currentColor]`}>
                 {shieldFx.kind === 'save' ? 'SAVE!' : 'HEADGEAR +1'}
@@ -304,13 +308,13 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
         {(focusEndsAt || adrenalineEndsAt) && (
           <div className="absolute top-2 left-1/2 -translate-x-1/2 z-25 flex gap-1.5 pointer-events-none">
             {focusEndsAt && (
-              <div className="px-2 py-0.5 rounded-full bg-secondary/30 border border-secondary/60 text-secondary text-[10px] font-display tracking-widest backdrop-blur-md">
-                🎯 FOCUS
+              <div className="flex items-center gap-1 rounded-full border border-secondary/60 bg-secondary/30 px-2 py-0.5 font-display text-[11px] tracking-widest text-secondary backdrop-blur-md">
+                <Crosshair className="h-3 w-3" /> FOCUS
               </div>
             )}
             {adrenalineEndsAt && (
-              <div className="px-2 py-0.5 rounded-full bg-blue-500/30 border border-blue-400/60 text-blue-200 text-[10px] font-display tracking-widest backdrop-blur-md">
-                💉 SLOW-MO
+              <div className="flex items-center gap-1 rounded-full border border-sky-400/60 bg-sky-500/30 px-2 py-0.5 font-display text-[11px] tracking-widest text-sky-200 backdrop-blur-md">
+                <Hourglass className="h-3 w-3" /> SLOW-MO
               </div>
             )}
           </div>
@@ -322,7 +326,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
             className="absolute inset-0 pointer-events-none z-20 mix-blend-screen"
             animate={{ opacity: [0.35, 0.6, 0.35] }}
             transition={{ duration: 0.5, repeat: Infinity }}
-            style={{ background: 'radial-gradient(ellipse at center, rgba(255,80,80,0.35) 0%, transparent 70%)' }}
+            style={{ background: 'radial-gradient(ellipse at center, rgba(249,115,22,0.32) 0%, transparent 70%)' }}
           />
         )}
 
@@ -336,14 +340,14 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               exit={{ opacity: 0, scale: 0.6 }}
               transition={{ type: 'spring', stiffness: 280, damping: 16 }}
               className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none"
-              style={{ background: 'radial-gradient(circle, rgba(220,38,38,0.32) 0%, rgba(0,0,0,0.55) 80%)' }}
+              style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.3) 0%, rgba(0,0,0,0.55) 80%)' }}
             >
               <motion.div
                 animate={{ scale: [1, 1.18, 1] }}
                 transition={{ duration: 0.5, repeat: 2 }}
-                className="font-display text-7xl text-primary tracking-widest drop-shadow-[0_0_30px_rgba(255,80,80,0.95)]"
+                className="flex items-center gap-3 font-display text-7xl tracking-widest text-secondary drop-shadow-[0_0_30px_rgba(249,115,22,0.95)]"
               >
-                🔥 FEVER!
+                <Icon3D name="fire" size={64} /> FEVER!
               </motion.div>
               <div className="mt-2 font-display text-xl text-foreground tracking-widest">2x SCORE · 4.5s</div>
             </motion.div>
@@ -356,21 +360,24 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               exit={{ y: -10, opacity: 0 }}
               className="absolute top-[18%] left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-xl bg-card/90 border border-secondary/50 backdrop-blur-md font-display tracking-widest text-secondary text-sm shadow-[0_0_24px_rgba(250,204,21,0.5)] pointer-events-none"
             >
-              {itemPickupFx.kind === 'focus' ? '🎯 FOCUS +5s' : '💉 ADRENALINE +3s'}
+              {itemPickupFx.kind === 'focus' ? <span className="flex items-center gap-1"><Crosshair className="h-4 w-4" /> FOCUS +5s</span> : <span className="flex items-center gap-1"><Hourglass className="h-4 w-4" /> ADRENALINE +3s</span>}
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Pause overlay */}
         {paused && (
-          <div className="absolute inset-0 bg-background/85 z-40 flex flex-col items-center justify-center gap-4 backdrop-blur-md">
-            <div className="font-display text-6xl text-foreground tracking-widest">PAUSED</div>
+          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 bg-background/85 backdrop-blur-md">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06] ring-1 ring-white/10">
+              <Pause className="h-7 w-7 text-foreground" fill="currentColor" />
+            </div>
+            <div className="font-display text-5xl tracking-[0.2em] text-foreground">PAUSED</div>
             <SoundToggle />
             <button
-              onClick={eng.togglePause}
-              className="px-10 py-3 bg-primary text-primary-foreground font-display tracking-widest rounded-xl text-lg shadow-[0_0_24px_rgba(220,38,38,0.5)]"
+              onClick={() => { audio.tap(); eng.togglePause(); }}
+              className="mg-btn-primary flex h-12 items-center gap-2 rounded-2xl px-10 py-3 font-display text-xl tracking-widest"
             >
-              ▶ RESUME
+              <Play className="h-5 w-5 fill-current" /> RESUME
             </button>
             <button onClick={eng.goHome} className="text-sm text-muted-foreground underline">
               포기하고 홈으로
@@ -420,10 +427,10 @@ function AttackIndicator({ attack }: { attack: ReturnType<typeof useDefenseEngin
   const isLeft = displaySide === 'L';
   const isFakeShown = attack.kind === 'feint' && attack.feintCancelAt && t < attack.feintCancelAt;
 
-  const colorBg = attack.kind === 'hook' ? 'bg-amber-500'
-                : attack.kind === 'rush' ? 'bg-fuchsia-500'
+  const colorBg = attack.kind === 'hook' ? 'bg-amber-500 text-black'
+                : attack.kind === 'rush' ? 'bg-destructive'
                 : isFakeShown ? 'bg-zinc-500'
-                : 'bg-primary';
+                : 'bg-sky-600';
   const label = attack.kind === 'hook' ? 'HOOK'
               : attack.kind === 'rush' ? 'RUSH!'
               : isFakeShown ? 'FAKE?'
@@ -442,15 +449,16 @@ function AttackIndicator({ attack }: { attack: ReturnType<typeof useDefenseEngin
       className={`absolute top-[35%] ${isLeft ? 'left-2' : 'right-2'} z-20 flex flex-col items-center pointer-events-none`}
       style={{ transform: `translateX(${xOffset})` }}
     >
-      <div className={`text-[10px] font-display tracking-widest ${colorBg} text-white px-2 py-0.5 rounded shadow-lg mb-1`}>
+      <div className={`mb-1 rounded px-2 py-0.5 font-display text-[11px] tracking-widest text-white shadow-lg ${colorBg}`}>
         {label}
       </div>
       <motion.div
         animate={{ scale: [1, 1.1, 1] }}
         transition={{ duration: 0.3, repeat: Infinity }}
-        className="text-5xl drop-shadow-[0_0_14px_rgba(255,255,255,0.6)]"
+        className="drop-shadow-[0_0_14px_rgba(255,255,255,0.5)]"
+        style={{ transform: isLeft ? undefined : 'scaleX(-1)' }}
       >
-        🥊
+        <Icon3D name="glove_red" size={64} />
       </motion.div>
       {/* speed line */}
       <div
@@ -565,34 +573,34 @@ function GuardButton({ side, onPress, phase, pressed }: { side: 'L' | 'R'; onPre
   const accentColor = isCounter
     ? 'border-secondary active:bg-secondary/40'
     : isLeft
-    ? 'border-primary/60 active:bg-primary/40'
-    : 'border-blue-500/60 active:bg-blue-500/40';
+    ? 'border-destructive/60 active:bg-destructive/40'
+    : 'border-sky-500/60 active:bg-sky-500/40';
 
   const innerGlow = isCounter
-    ? 'inset 0 0 40px rgba(250,204,21,0.3)'
+    ? 'inset 0 0 40px rgba(239,201,76,0.3)'
     : isLeft
-    ? 'inset 0 0 35px rgba(220,38,38,0.2)'
-    : 'inset 0 0 35px rgba(59,130,246,0.2)';
+    ? 'inset 0 0 35px rgba(217,54,32,0.2)'
+    : 'inset 0 0 35px rgba(14,165,233,0.2)';
 
   return (
     <motion.button
       animate={pressed ? { scale: 0.92 } : { scale: 1 }}
       transition={{ duration: 0.08 }}
       onPointerDown={(e) => { e.preventDefault(); onPress(); }}
-      className={`relative h-32 sm:h-36 rounded-2xl bg-card/80 border-2 ${accentColor} flex flex-col items-center justify-center font-display tracking-widest text-foreground backdrop-blur-md transition-colors active:scale-90 ${isCounter || isBoss ? 'pulse-glow' : ''}`}
+      className={`relative flex h-32 flex-col items-center justify-center rounded-2xl border-2 bg-card/80 font-display tracking-widest text-foreground backdrop-blur-md transition-colors active:scale-90 sm:h-36 ${accentColor} ${isCounter || isBoss ? 'pulse-glow' : ''}`}
       style={{ boxShadow: innerGlow }}
     >
-      <div className="text-4xl mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
-        {isCounter ? '👊' : '🛡️'}
+      <div className="mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
+        <Icon3D name={isCounter ? 'glove_mint' : 'shield'} size={48} />
       </div>
       <div className="text-xl">
         {isCounter ? 'PUNCH!' : (isLeft ? 'GUARD L' : 'GUARD R')}
       </div>
-      <div className={`absolute top-2 ${isLeft ? 'left-2' : 'right-2'} text-[10px] tracking-widest opacity-50`}>
-        {isLeft ? '◀ LEFT' : 'RIGHT ▶'}
+      <div className={`absolute top-2 ${isLeft ? 'left-2' : 'right-2'} text-[11px] tracking-widest opacity-50`}>
+        {isLeft ? '< LEFT' : 'RIGHT >'}
       </div>
       {/* corner accent */}
-      <div className={`absolute bottom-1 ${isLeft ? 'left-1' : 'right-1'} text-[9px] font-display ${isLeft ? 'text-primary/60' : 'text-blue-400/60'}`}>
+      <div className={`absolute bottom-1 ${isLeft ? 'left-1' : 'right-1'} font-display text-[10px] ${isLeft ? 'text-destructive/70' : 'text-sky-400/70'}`}>
         {isLeft ? 'RED CORNER' : 'BLUE CORNER'}
       </div>
     </motion.button>
@@ -604,9 +612,10 @@ function SoundToggle() {
   return (
     <button
       onClick={() => { const v = !on; audio.setEnabled(v); setOn(v); }}
-      className="text-xs text-muted-foreground border border-border rounded-full px-3 py-1"
+      className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-[12px] font-bold text-muted-foreground"
     >
-      {on ? '🔊 사운드 ON' : '🔇 사운드 OFF'}
+      {on ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4" />}
+      {on ? '사운드 ON' : '사운드 OFF'}
     </button>
   );
 }

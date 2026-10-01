@@ -156,12 +156,13 @@ export function getTierProgress(elapsedMs: number) {
 }
 
 // ===== 등급 (생존 시간 기준) =====
+// 아이콘은 Icon3D 의 TIER_ICON (왕관·젬·메달), 빛은 153 브랜드 톤 (2026-10-01)
 export const DEFENSE_TIERS = [
-  { key: 'legend',   minSeconds: 90, emoji: '⚡', label: 'LEGEND',   ko: '레전드',     glow: 'rgba(168,85,247,0.6)' },
-  { key: 'platinum', minSeconds: 60, emoji: '💎', label: 'PLATINUM', ko: '챔피언',     glow: 'rgba(56,189,248,0.6)' },
-  { key: 'gold',     minSeconds: 45, emoji: '🥇', label: 'GOLD',     ko: '프로 디펜더', glow: 'rgba(250,204,21,0.6)' },
-  { key: 'silver',   minSeconds: 25, emoji: '🥈', label: 'SILVER',   ko: '디펜더',     glow: 'rgba(203,213,225,0.5)' },
-  { key: 'bronze',   minSeconds: 0,  emoji: '🥉', label: 'BRONZE',   ko: '아마추어',   glow: 'rgba(180,83,9,0.5)' },
+  { key: 'legend',   minSeconds: 90, label: 'LEGEND',   ko: '레전드',     glow: 'rgba(255,214,120,0.6)' },
+  { key: 'platinum', minSeconds: 60, label: 'PLATINUM', ko: '챔피언',     glow: 'rgba(16,185,129,0.55)' },
+  { key: 'gold',     minSeconds: 45, label: 'GOLD',     ko: '프로 디펜더', glow: 'rgba(239,201,76,0.6)' },
+  { key: 'silver',   minSeconds: 25, label: 'SILVER',   ko: '디펜더',     glow: 'rgba(203,213,225,0.5)' },
+  { key: 'bronze',   minSeconds: 0,  label: 'BRONZE',   ko: '아마추어',   glow: 'rgba(197,138,58,0.5)' },
 ] as const;
 
 export function getDefenseTier(scoreOrSeconds: number) {
@@ -182,18 +183,20 @@ export function getGemReward(seconds: number): number {
 export interface OpponentTheme {
   key: string;
   name: string;
-  emoji: string;
+  /** 상대 실루엣 아이콘 (Icon3D 이름) */
+  icon: 'glove_red' | 'glove_mint' | 'headgear' | 'crown' | 'bolt';
   bgFrom: string;
   bgTo: string;
   glow: string;
   minSeconds: number;
 }
+// 시간이 갈수록 조명이 민트 → 골드 → 오렌지 → 레드로 (보라·핑크 없음, 2026-10-01)
 export const OPPONENT_THEMES: OpponentTheme[] = [
-  { key: 'rookie',  name: 'ROOKIE',   emoji: '🥊', bgFrom: 'hsl(0 25% 8%)',    bgTo: 'hsl(0 0% 3%)',  glow: 'rgba(220,38,38,0.35)', minSeconds: 0   },
-  { key: 'street',  name: 'BRAWLER',  emoji: '👊', bgFrom: 'hsl(280 30% 10%)', bgTo: 'hsl(0 0% 3%)',  glow: 'rgba(168,85,247,0.4)',  minSeconds: 20  },
-  { key: 'pro',     name: 'PRO',      emoji: '🥋', bgFrom: 'hsl(220 35% 10%)', bgTo: 'hsl(0 0% 3%)',  glow: 'rgba(59,130,246,0.45)', minSeconds: 45  },
-  { key: 'champ',   name: 'CHAMPION', emoji: '👑', bgFrom: 'hsl(45 50% 12%)',  bgTo: 'hsl(0 0% 3%)',  glow: 'rgba(250,204,21,0.5)',  minSeconds: 75  },
-  { key: 'legend',  name: 'LEGEND',   emoji: '⚡', bgFrom: 'hsl(300 50% 14%)', bgTo: 'hsl(0 0% 3%)',  glow: 'rgba(236,72,153,0.55)', minSeconds: 110 },
+  { key: 'rookie',  name: 'ROOKIE',   icon: 'glove_red', bgFrom: 'hsl(210 22% 10%)', bgTo: 'hsl(210 24% 4%)', glow: 'rgba(16,185,129,0.30)',  minSeconds: 0   },
+  { key: 'street',  name: 'BRAWLER',  icon: 'headgear',  bgFrom: 'hsl(200 22% 11%)', bgTo: 'hsl(210 24% 4%)', glow: 'rgba(56,189,248,0.30)',  minSeconds: 20  },
+  { key: 'pro',     name: 'PRO',      icon: 'glove_red', bgFrom: 'hsl(43 30% 10%)',  bgTo: 'hsl(210 24% 4%)', glow: 'rgba(239,201,76,0.38)',  minSeconds: 45  },
+  { key: 'champ',   name: 'CHAMPION', icon: 'crown',     bgFrom: 'hsl(28 40% 11%)',  bgTo: 'hsl(210 24% 4%)', glow: 'rgba(249,115,22,0.42)',  minSeconds: 75  },
+  { key: 'legend',  name: 'LEGEND',   icon: 'bolt',      bgFrom: 'hsl(8 45% 12%)',   bgTo: 'hsl(210 24% 4%)', glow: 'rgba(217,54,32,0.5)',    minSeconds: 110 },
 ];
 export function getOpponentTheme(seconds: number): OpponentTheme {
   for (let i = OPPONENT_THEMES.length - 1; i >= 0; i--) {
@@ -217,7 +220,7 @@ export const BOXER_STYLES: BoxerStyle[] = [
   { key: 'rookie',   name: 'ROOKIE',   ko: '신인',     accent: 'text-foreground',   weightBias: {},                                       minRound: 1 },
   { key: 'jabber',   name: 'JABBER',   ko: '잽 전문',   accent: 'text-primary',      weightBias: { jab: 1.4 },                              minRound: 3 },
   { key: 'hooker',   name: 'HOOKER',   ko: '훅 마스터', accent: 'text-amber-400',    weightBias: { hook: 1.6, jab: 0.7 },                   minRound: 5 },
-  { key: 'trickster',name: 'TRICKSTER',ko: '페인트',   accent: 'text-fuchsia-400',  weightBias: { feint: 2.0, jab: 0.8 },                  minRound: 7 },
+  { key: 'trickster',name: 'TRICKSTER',ko: '페인트',   accent: 'text-sky-300',      weightBias: { feint: 2.0, jab: 0.8 },                  minRound: 7 },
   { key: 'rusher',   name: 'RUSHER',   ko: '연타',     accent: 'text-rose-400',     weightBias: { rush: 1.8, hook: 1.2, jab: 0.6 },        minRound: 9 },
   { key: 'phantom',  name: 'PHANTOM',  ko: '환영',     accent: 'text-secondary',    weightBias: { feint: 1.6, rush: 1.4, hook: 1.2 },      minRound: 12 },
 ];

@@ -1,0 +1,328 @@
+{
+  "sample_rate": 44100,
+  "music": {
+    "bgm_lobby.mp3": {
+      "bpm": 92,
+      "bars": 8,
+      "seconds": 20.869565217391305,
+      "samples": 920348,
+      "peak_dbfs": -3.33,
+      "rms_dbfs": -16.27,
+      "lufs": -16.0,
+      "channels": 2,
+      "bitrate_kbps": 96,
+      "bytes": 251089,
+      "mp3_decoded_seconds": 20.869569,
+      "mp3_decoded_peak_dbfs": -3.73,
+      "mp3_decoded_rms_dbfs": -16.72,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 676,
+      "loop_seam_wav": {
+        "abs": 0.00337,
+        "dbfs": -49.4,
+        "vs_typical_step": 0.032
+      },
+      "loop_seam_mp3": {
+        "abs": 0.01259,
+        "dbfs": -38.0,
+        "vs_typical_step": 0.128
+      }
+    },
+    "bgm_play_base.mp3": {
+      "bpm": 128,
+      "bars": 8,
+      "seconds": 15.0,
+      "samples": 661500,
+      "peak_dbfs": -7.19,
+      "rms_dbfs": -18.0,
+      "lufs": -18.33,
+      "channels": 2,
+      "bitrate_kbps": 96,
+      "bytes": 180871,
+      "mp3_decoded_seconds": 15.0,
+      "mp3_decoded_peak_dbfs": -7.24,
+      "mp3_decoded_rms_dbfs": -18.44,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 1476,
+      "loop_seam_wav": {
+        "abs": 0.00245,
+        "dbfs": -52.2,
+        "vs_typical_step": 0.032
+      },
+      "loop_seam_mp3": {
+        "abs": 0.00802,
+        "dbfs": -41.9,
+        "vs_typical_step": 0.121
+      }
+    },
+    "bgm_play_mid.mp3": {
+      "bpm": 128,
+      "bars": 8,
+      "seconds": 15.0,
+      "samples": 661500,
+      "peak_dbfs": -7.0,
+      "rms_dbfs": -21.0,
+      "lufs": -16.37,
+      "channels": 2,
+      "bitrate_kbps": 96,
+      "bytes": 180871,
+      "mp3_decoded_seconds": 15.0,
+      "mp3_decoded_peak_dbfs": -4.83,
+      "mp3_decoded_rms_dbfs": -21.41,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 1476,
+      "loop_seam_wav": {
+        "abs": 0.00524,
+        "dbfs": -45.6,
+        "vs_typical_step": 0.018
+      },
+      "loop_seam_mp3": {
+        "abs": 0.00407,
+        "dbfs": -47.8,
+        "vs_typical_step": 0.016
+      }
+    },
+    "bgm_play_top.mp3": {
+      "bpm": 128,
+      "bars": 8,
+      "seconds": 15.0,
+      "samples": 661500,
+      "peak_dbfs": -9.0,
+      "rms_dbfs": -23.0,
+      "lufs": -19.3,
+      "channels": 2,
+      "bitrate_kbps": 96,
+      "bytes": 180871,
+      "mp3_decoded_seconds": 15.0,
+      "mp3_decoded_peak_dbfs": -8.34,
+      "mp3_decoded_rms_dbfs": -23.68,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 1476,
+      "loop_seam_wav": {
+        "abs": 0.00776,
+        "dbfs": -42.2,
+        "vs_typical_step": 0.032
+      },
+      "loop_seam_mp3": {
+        "abs": 0.03069,
+        "dbfs": -30.3,
+        "vs_typical_step": 0.149
+      }
+    }
+  },
+  "stems": {
+    "play": {
+      "files": [
+        "bgm_play_base.mp3",
+        "bgm_play_mid.mp3",
+        "bgm_play_top.mp3"
+      ],
+      "combined_peak_dbfs_wav": -1.47,
+      "combined_rms_dbfs_wav": -15.46,
+      "combined_lufs_wav": -13.11,
+      "combined_peak_dbfs_mp3": -2.14,
+      "combined_rms_dbfs_mp3": -15.94
+    }
+  },
+  "sfx": {
+    "punch_1.mp3": {
+      "seconds": 0.312,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -15.46,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 5850,
+      "mp3_decoded_seconds": 0.312,
+      "mp3_decoded_peak_dbfs": -3.01,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 641
+    },
+    "punch_2.mp3": {
+      "seconds": 0.312,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -15.56,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 5850,
+      "mp3_decoded_seconds": 0.312,
+      "mp3_decoded_peak_dbfs": -3.05,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 641
+    },
+    "punch_3.mp3": {
+      "seconds": 0.312,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -15.1,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 5850,
+      "mp3_decoded_seconds": 0.312,
+      "mp3_decoded_peak_dbfs": -3.19,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 641
+    },
+    "perfect.mp3": {
+      "seconds": 0.712,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -13.57,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 12537,
+      "mp3_decoded_seconds": 0.712,
+      "mp3_decoded_peak_dbfs": -3.26,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 1433
+    },
+    "miss.mp3": {
+      "seconds": 0.462,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -14.44,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 8358,
+      "mp3_decoded_seconds": 0.462,
+      "mp3_decoded_peak_dbfs": -3.37,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 938
+    },
+    "whoosh.mp3": {
+      "seconds": 0.3234,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -11.43,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 6268,
+      "mp3_decoded_seconds": 0.3234,
+      "mp3_decoded_peak_dbfs": -2.55,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 1288
+    },
+    "block.mp3": {
+      "seconds": 0.512,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -15.33,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 9194,
+      "mp3_decoded_seconds": 0.512,
+      "mp3_decoded_peak_dbfs": -3.36,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 1037
+    },
+    "bell.mp3": {
+      "seconds": 1.3529,
+      "peak_dbfs": -2.0,
+      "rms_dbfs": -19.32,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 22568,
+      "mp3_decoded_seconds": 1.3529,
+      "mp3_decoded_peak_dbfs": -2.4,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 818
+    },
+    "beep_low.mp3": {
+      "seconds": 0.152,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -11.21,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 3342,
+      "mp3_decoded_seconds": 0.152,
+      "mp3_decoded_peak_dbfs": -3.39,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 785
+    },
+    "beep_high.mp3": {
+      "seconds": 0.152,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -10.97,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 3342,
+      "mp3_decoded_seconds": 0.152,
+      "mp3_decoded_peak_dbfs": -3.38,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 785
+    },
+    "cheer.mp3": {
+      "seconds": 1.3103,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -13.16,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 22150,
+      "mp3_decoded_seconds": 1.3103,
+      "mp3_decoded_peak_dbfs": -3.13,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 1545
+    },
+    "fanfare.mp3": {
+      "seconds": 1.4111,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -15.97,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 23822,
+      "mp3_decoded_seconds": 1.4117,
+      "mp3_decoded_peak_dbfs": -3.47,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 1681
+    },
+    "combo.mp3": {
+      "seconds": 0.762,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -11.94,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 13373,
+      "mp3_decoded_seconds": 0.762,
+      "mp3_decoded_peak_dbfs": -3.0,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 1533
+    },
+    "tap.mp3": {
+      "seconds": 0.072,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -21.01,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 2088,
+      "mp3_decoded_seconds": 0.072,
+      "mp3_decoded_peak_dbfs": -6.32,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 858
+    },
+    "round_clear.mp3": {
+      "seconds": 1.112,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -10.47,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 18807,
+      "mp3_decoded_seconds": 1.112,
+      "mp3_decoded_peak_dbfs": -2.41,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 1074
+    },
+    "fail.mp3": {
+      "seconds": 0.9618,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -8.13,
+      "channels": 1,
+      "bitrate_kbps": 128,
+      "bytes": 16299,
+      "mp3_decoded_seconds": 0.9618,
+      "mp3_decoded_peak_dbfs": -3.38,
+      "encoder_delay_samples": 576,
+      "encoder_padding_samples": 785
+    }
+  },
+  "notes": {
+    "loop": "Music loops are rendered as exact bar multiples; set Web Audio loopEnd = seconds (loopStart = 0) after trimming the MP3 lead-in.",
+    "mp3_lead_in": "LAME/Xing gapless tag is written. Decoders honouring it (Chrome/ffmpeg/CoreAudio) return exactly `samples`; otherwise skip encoder_delay_samples + 529 decoder-delay samples (= 1105 samples, 25.06 ms) at the start and trim the end to `seconds`.",
+    "stems": "bgm_play_* stems are sample-aligned, same length; start all three together and crossfade by gain. Peaks are set so base+mid+top at unity gain stays below -0.5 dBFS.",
+    "levels": "Lobby mastered to -16 LUFS integrated; stems to RMS targets (-18 / -21 / -23 dBFS). SFX peak-normalised (-3 dBFS, tap -6, bell -2)."
+  },
+  "total_bytes": 973400
+}

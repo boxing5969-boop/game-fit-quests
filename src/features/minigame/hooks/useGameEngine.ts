@@ -389,7 +389,7 @@ export function useGameEngine() {
       s.round++;
       if (s.round > s.bestRoundReached) s.bestRoundReached = s.round;
       setRoundClearFlash(f => f + 1);
-      audio.bell();
+      audio.roundClear();
       // 쉴드 드롭 (첫 플레이는 상한이 더 높음)
       const shieldCap = isFirstPlay.current
         ? REACTION_CONFIG.firstPlayMaxShields

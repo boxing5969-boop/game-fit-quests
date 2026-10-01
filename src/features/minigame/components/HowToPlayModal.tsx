@@ -1,32 +1,35 @@
+/**
+ * 게임 설명서 모달 (2026-10-01 다크 아레나 개편: 이모지 → 입체 아이콘·라인 아이콘).
+ */
+import type { ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import {
+  AlertTriangle, ArrowLeft, ArrowRight, Crosshair, Ear, EyeOff, FastForward, Hand, Lightbulb,
+  Rewind, Timer, TrendingUp, Wind, X, Zap, type LucideIcon,
+} from 'lucide-react';
+import Icon3D, { type Icon3DName } from './Icon3D';
+import { audio } from '@/features/minigame/lib/audio';
 
 export type GameMode = 'reaction' | 'mitt' | 'defense';
 
-interface HowToPlayModalProps {
-  open: boolean;
-  mode: GameMode;
-  onClose: () => void;
-}
-
 interface Section {
   title: string;
-  items: { icon: string; text: React.ReactNode }[];
+  items: { icon: LucideIcon | Icon3DName; text: ReactNode }[];
 }
 
 interface Guide {
-  emoji: string;
+  icon: Icon3DName;
   title: string;
   subtitle: string;
   accent: string; // tailwind text color class
   goal: string;
   sections: Section[];
-  tips: string[];
+  tips: ReactNode[];
 }
 
 const GUIDES: Record<GameMode, Guide> = {
   reaction: {
-    emoji: '⚡',
+    icon: 'bolt',
     title: '반응속도 트레이닝',
     subtitle: 'REACTION SPEED MODE',
     accent: 'text-rating-lightning',
@@ -35,17 +38,17 @@ const GUIDES: Record<GameMode, Guide> = {
       {
         title: '조작법',
         items: [
-          { icon: '👊', text: <>화면에 뜬 펀치(잽/훅/어퍼 등)를 <b className="text-foreground">동일한 버튼</b>으로 탭</> },
-          { icon: '⏱️', text: <>반응이 빠를수록 <b className="text-rating-lightning">PERFECT</b> → <b className="text-rating-fast">FAST</b> → GOOD 순으로 점수 차등</> },
-          { icon: '❌', text: <>다른 버튼을 누르면 <b className="text-destructive">오타</b>로 콤보 초기화</> },
+          { icon: Hand, text: <>화면에 뜬 펀치(잽/훅/어퍼 등)를 <b className="text-foreground">같은 색 버튼</b>으로 탭</> },
+          { icon: Timer, text: <>반응이 빠를수록 <b className="text-rating-lightning">PERFECT</b> → <b className="text-rating-fast">FAST</b> → GOOD 순으로 점수 차등</> },
+          { icon: X, text: <>다른 버튼을 누르면 <b className="text-destructive">오타</b>로 콤보 초기화</> },
         ],
       },
       {
         title: '점수 / 콤보',
         items: [
-          { icon: '⚡', text: 'PERFECT(<200ms): 최대 점수 + 콤보 +1' },
-          { icon: '🔥', text: '연속 성공 시 콤보 보너스 누적' },
-          { icon: '👻', text: '본인 최고기록(고스트)과 실시간 격차 표시' },
+          { icon: 'bolt', text: 'PERFECT(<200ms): 최대 점수 + 콤보 +1' },
+          { icon: 'fire', text: '연속 성공 시 콤보 보너스 누적' },
+          { icon: TrendingUp, text: '본인 최고 기록과 실시간 격차 표시' },
         ],
       },
     ],
@@ -56,7 +59,7 @@ const GUIDES: Record<GameMode, Guide> = {
     ],
   },
   mitt: {
-    emoji: '🎯',
+    icon: 'mitt',
     title: '미트 드릴 트레이닝',
     subtitle: 'MITT DRILL MODE',
     accent: 'text-secondary',
@@ -65,17 +68,17 @@ const GUIDES: Record<GameMode, Guide> = {
       {
         title: '조작법',
         items: [
-          { icon: '👂', text: <>트레이너 호출 → <b className="text-foreground">표시된 글러브 순서</b>대로 탭</> },
-          { icon: '🎯', text: <>미트가 나오는 <b className="text-secondary">정확한 타이밍</b>에 맞춰 치기</> },
-          { icon: '🎭', text: <><b className="text-foreground">FEINT</b>(페인트): 미트가 빠지면 치지 않기 — 안 치는 게 정답</> },
+          { icon: Ear, text: <>트레이너 호출 → <b className="text-foreground">표시된 글러브 순서</b>대로 탭</> },
+          { icon: Crosshair, text: <>미트가 나오는 <b className="text-secondary">정확한 타이밍</b>에 맞춰 치기</> },
+          { icon: EyeOff, text: <><b className="text-foreground">FEINT</b>(페인트): 미트가 빠지면 치지 않기 — 안 치는 게 정답</> },
         ],
       },
       {
         title: '판정',
         items: [
-          { icon: '⚡', text: 'PERFECT — 정확한 타이밍' },
-          { icon: '⏩', text: 'TOO EARLY — 너무 빨라서 허공 가르기' },
-          { icon: '🐢', text: 'TOO LATE — 미트가 이미 지나감' },
+          { icon: 'bolt', text: 'PERFECT — 정확한 타이밍' },
+          { icon: FastForward, text: 'TOO EARLY — 너무 빨라서 허공 가르기' },
+          { icon: Rewind, text: 'TOO LATE — 미트가 이미 지나감' },
         ],
       },
     ],
@@ -86,7 +89,7 @@ const GUIDES: Record<GameMode, Guide> = {
     ],
   },
   defense: {
-    emoji: '🛡️',
+    icon: 'shield',
     title: '복싱 디펜스 러시',
     subtitle: 'DEFENSE RUSH',
     accent: 'text-primary',
@@ -95,38 +98,54 @@ const GUIDES: Record<GameMode, Guide> = {
       {
         title: '조작법 (단 2개 버튼)',
         items: [
-          { icon: '⬅️', text: <>왼쪽에서 공격이 오면 → <b className="text-primary">왼쪽 GUARD</b></> },
-          { icon: '➡️', text: <>오른쪽에서 공격이 오면 → <b className="text-blue-400">오른쪽 GUARD</b></> },
-          { icon: '🎯', text: <>도착 직전 <b className="text-secondary">±200ms</b> 안에 누르면 PERFECT</> },
-          { icon: '🎭', text: <><b className="text-foreground">FEINT</b>: 글러브가 도중에 사라지면 누르지 않기 (속지 않기)</> },
+          { icon: ArrowLeft, text: <>왼쪽에서 공격이 오면 → <b className="text-destructive">왼쪽 GUARD</b></> },
+          { icon: ArrowRight, text: <>오른쪽에서 공격이 오면 → <b className="text-sky-400">오른쪽 GUARD</b></> },
+          { icon: Crosshair, text: <>도착 직전 <b className="text-secondary">±200ms</b> 안에 누르면 PERFECT</> },
+          { icon: EyeOff, text: <><b className="text-foreground">FEINT</b>: 글러브가 도중에 사라지면 누르지 않기 (속지 않기)</> },
         ],
       },
       {
         title: '공격 종류',
         items: [
-          { icon: '👊', text: '잽 — 기본 속도, 가장 자주 나옴' },
-          { icon: '💥', text: '훅 — 예고 짧고 빠름, 집중 필요' },
-          { icon: '🌀', text: '페인트 — 누르지 않고 참는 게 정답' },
-          { icon: '⚠️', text: '러시 — 3~5연타 빠르게, 리듬 유지' },
+          { icon: 'glove_red', text: '잽 — 기본 속도, 가장 자주 나옴' },
+          { icon: Zap, text: '훅 — 예고 짧고 빠름, 집중 필요' },
+          { icon: Wind, text: '페인트 — 누르지 않고 참는 게 정답' },
+          { icon: AlertTriangle, text: '러시 — 3~5연타 빠르게, 리듬 유지' },
         ],
       },
       {
         title: '특수 시스템',
         items: [
-          { icon: '⚡', text: <><b className="text-secondary">5연속 PERFECT</b> → COUNTER TIME 발동, 중앙 펀치 연타로 보너스</> },
-          { icon: '👑', text: <><b className="text-primary">20점마다 BOSS RUSH</b> — 짧은 폭주 패턴 클리어 시 +10점</> },
-          { icon: '💎', text: '점수 구간별 GEM 보상 + 일일 미션 진행' },
+          { icon: 'bolt', text: <><b className="text-secondary">5연속 PERFECT</b> → COUNTER TIME 발동, 중앙 펀치 연타로 보너스</> },
+          { icon: 'crown', text: <><b className="text-primary">20점마다 BOSS RUSH</b> — 짧은 폭주 패턴 클리어 시 +10점</> },
+          { icon: 'gem', text: '점수 구간별 GEM 보상 + 일일 미션 진행' },
         ],
       },
     ],
     tips: [
-      '글러브 색을 보지 말고 <b>방향</b>만 보기 — 좌/우 판단이 핵심',
+      <>글러브 색을 보지 말고 <b>방향</b>만 보기 — 좌/우 판단이 핵심</>,
       '페인트가 두려우면 약간 늦게 누르는 게 안전',
       '카운터 타임은 무조건 빠르게 — 모든 탭이 점수',
       '초반 10점은 학습 구간, 천천히 리듬 잡기',
     ],
   },
 };
+
+const ItemIcon = ({ icon }: { icon: LucideIcon | Icon3DName }) => {
+  if (typeof icon === 'string') return <Icon3D name={icon} size={26} />;
+  const Lucide = icon;
+  return (
+    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.06] text-foreground/80">
+      <Lucide className="h-4 w-4" />
+    </span>
+  );
+};
+
+interface HowToPlayModalProps {
+  open: boolean;
+  mode: GameMode;
+  onClose: () => void;
+}
 
 const HowToPlayModal = ({ open, mode, onClose }: HowToPlayModalProps) => {
   const guide = GUIDES[mode];
@@ -139,7 +158,7 @@ const HowToPlayModal = ({ open, mode, onClose }: HowToPlayModalProps) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 z-[100] bg-background/90 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-background/85 p-0 backdrop-blur-md sm:items-center sm:p-4"
         >
           <motion.div
             initial={{ y: '100%', opacity: 0 }}
@@ -147,47 +166,45 @@ const HowToPlayModal = ({ open, mode, onClose }: HowToPlayModalProps) => {
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-card border border-border rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh]"
+            className="flex max-h-[88vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-card shadow-2xl ring-1 ring-white/10 sm:rounded-3xl"
           >
             {/* Header */}
-            <div className="relative px-5 pt-5 pb-4 border-b border-border bg-gradient-to-b from-card to-card/60">
+            <div className="relative border-b border-white/[0.07] px-5 pb-4 pt-5">
               <button
                 onClick={onClose}
-                className="absolute top-3 right-3 w-9 h-9 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center text-muted-foreground"
+                className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.06] text-muted-foreground"
                 aria-label="닫기"
               >
-                <X className="w-5 h-5" />
+                <X className="h-5 w-5" />
               </button>
               <div className="flex items-center gap-3 pr-10">
-                <div className="text-4xl">{guide.emoji}</div>
+                <Icon3D name={guide.icon} size={56} />
                 <div>
-                  <div className={`font-display text-xs tracking-widest ${guide.accent}`}>{guide.subtitle}</div>
-                  <h2 className="font-display text-2xl tracking-wider text-foreground leading-tight">
-                    {guide.title}
-                  </h2>
+                  <div className={`font-display text-[12px] tracking-[0.25em] ${guide.accent}`}>{guide.subtitle}</div>
+                  <h2 className="text-[20px] font-black leading-tight text-foreground">{guide.title}</h2>
                 </div>
               </div>
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+            <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
               {/* Goal */}
-              <div className="bg-muted/40 border border-border/60 rounded-xl p-3">
-                <div className="text-[10px] font-display tracking-widest text-muted-foreground mb-1">GOAL</div>
-                <div className="text-sm text-foreground leading-relaxed">{guide.goal}</div>
+              <div className="rounded-2xl bg-white/[0.05] p-3 ring-1 ring-white/[0.06]">
+                <div className="mb-1 font-display text-[11px] tracking-widest text-muted-foreground">GOAL</div>
+                <div className="text-sm leading-relaxed text-foreground">{guide.goal}</div>
               </div>
 
               {/* Sections */}
               {guide.sections.map((sec) => (
                 <div key={sec.title}>
-                  <div className={`text-[11px] font-display tracking-widest mb-2 ${guide.accent}`}>
-                    ▣ {sec.title.toUpperCase()}
+                  <div className={`mb-2 font-display text-[12px] tracking-widest ${guide.accent}`}>
+                    {sec.title.toUpperCase()}
                   </div>
                   <div className="space-y-2">
                     {sec.items.map((it, i) => (
-                      <div key={i} className="flex items-start gap-3 bg-background/50 border border-border/60 rounded-lg p-2.5">
-                        <span className="text-xl shrink-0 leading-none mt-0.5">{it.icon}</span>
-                        <div className="text-sm text-foreground/90 leading-relaxed">{it.text}</div>
+                      <div key={i} className="flex items-center gap-3 rounded-xl bg-white/[0.04] p-2.5 ring-1 ring-white/[0.05]">
+                        <span className="shrink-0"><ItemIcon icon={it.icon} /></span>
+                        <div className="text-sm leading-relaxed text-foreground/90">{it.text}</div>
                       </div>
                     ))}
                   </div>
@@ -196,14 +213,14 @@ const HowToPlayModal = ({ open, mode, onClose }: HowToPlayModalProps) => {
 
               {/* Tips */}
               <div>
-                <div className="text-[11px] font-display tracking-widest text-rating-lightning mb-2">
-                  💡 PRO TIPS
+                <div className="mb-2 flex items-center gap-1.5 font-display text-[12px] tracking-widest text-rating-lightning">
+                  <Lightbulb className="h-4 w-4" /> PRO TIPS
                 </div>
                 <ul className="space-y-1.5">
                   {guide.tips.map((t, i) => (
-                    <li key={i} className="text-sm text-foreground/85 flex gap-2">
-                      <span className="text-rating-lightning shrink-0">·</span>
-                      <span dangerouslySetInnerHTML={{ __html: t }} />
+                    <li key={i} className="flex gap-2 text-sm text-foreground/85">
+                      <span className="shrink-0 text-rating-lightning">·</span>
+                      <span>{t}</span>
                     </li>
                   ))}
                 </ul>
@@ -211,19 +228,15 @@ const HowToPlayModal = ({ open, mode, onClose }: HowToPlayModalProps) => {
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-4 border-t border-border bg-card">
+            <div className="border-t border-white/[0.07] bg-card px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
               <motion.button
                 whileTap={{ scale: 0.97 }}
-                onClick={onClose}
-                className={`w-full py-4 rounded-2xl font-display tracking-widest text-lg ${
-                  mode === 'defense'
-                    ? 'bg-primary text-primary-foreground'
-                    : mode === 'mitt'
-                    ? 'bg-secondary text-secondary-foreground'
-                    : 'bg-foreground text-background'
+                onClick={() => { audio.tap(); onClose(); }}
+                className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-display text-lg tracking-widest ${
+                  mode === 'mitt' ? 'mg-btn-gold' : 'mg-btn-primary'
                 }`}
               >
-                이해했어요! 시작 🥊
+                이해했어요! 시작 <Icon3D name="glove_mint" size={22} />
               </motion.button>
             </div>
           </motion.div>

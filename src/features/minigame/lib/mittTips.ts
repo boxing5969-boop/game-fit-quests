@@ -1,15 +1,16 @@
 import { PunchType } from '@/features/minigame/types/game';
 
 export const PUNCH_MITT_TIPS: Record<PunchType, string> = {
-  jab: '💡 잽 카운터: 짧고 빠르게, 미트 중앙을 노려라',
-  straight: '💡 스트레이트: 체중을 실어 미트 정면을 강하게',
-  hook: '💡 훅 카운터: 옆으로 스텝 후 반격이 핵심',
-  upper: '💡 어퍼: 무릎을 살짝 굽혀 아래에서 위로',
+  jab: '잽 카운터: 짧고 빠르게, 미트 중앙을 노려라',
+  straight: '스트레이트: 체중을 실어 미트 정면을 강하게',
+  hook: '훅 카운터: 옆으로 스텝 후 반격이 핵심',
+  upper: '어퍼: 무릎을 살짝 굽혀 아래에서 위로',
 };
 
+/** icon = Icon3D 이름 */
 export const REST_TIPS = [
   {
-    icon: '🥊',
+    icon: 'mitt' as const,
     title: '미트 트레이닝 TIP #1',
     lines: [
       '눈은 항상 트레이너의 어깨를 봐라.',
@@ -18,7 +19,7 @@ export const REST_TIPS = [
     ],
   },
   {
-    icon: '⚡',
+    icon: 'bolt' as const,
     title: '미트 트레이닝 TIP #2',
     lines: [
       '타이밍은 연습할수록 몸에 저장됩니다.',
@@ -29,10 +30,11 @@ export const REST_TIPS = [
   },
 ];
 
-export function getMittReport(perfectPct: number): { emoji: string; title: string; lines: string[] } {
+/** icon = Icon3D 이름 */
+export function getMittReport(perfectPct: number): { icon: 'trophy' | 'fire' | 'glove_mint'; title: string; lines: string[] } {
   if (perfectPct >= 70) {
     return {
-      emoji: '🏆',
+      icon: 'trophy',
       title: '타이밍 마스터 등급!',
       lines: [
         '오늘 체육관에서 미트 트레이닝 하면',
@@ -43,7 +45,7 @@ export function getMittReport(perfectPct: number): { emoji: string; title: strin
   }
   if (perfectPct >= 40) {
     return {
-      emoji: '💪',
+      icon: 'fire',
       title: '타이밍이 늘고 있어요!',
       lines: [
         '미트 트레이닝을 꾸준히 하면',
@@ -53,12 +55,12 @@ export function getMittReport(perfectPct: number): { emoji: string; title: strin
     };
   }
   return {
-    emoji: '🌱',
+    icon: 'glove_mint',
     title: '타이밍 훈련 시작 단계',
     lines: [
       '괜찮아요! 모든 고수는 여기서 시작했어요.',
       '미트 트레이닝의 핵심은 반복입니다.',
-      '매일 이 게임으로 눈과 손을 깨우세요 🥊',
+      '매일 이 게임으로 눈과 손을 깨우세요.',
     ],
   };
 }

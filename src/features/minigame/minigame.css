@@ -1,74 +1,159 @@
-/* 153 랭킹업 · 복싱 트레이닝 게임 전용 스타일.
-   원본: speed-strike-trainer/src/index.css
+/* 153 마이복서 · 복싱 트레이닝 게임 전용 스타일 (2026-10-01 다크 아레나 개편).
    .minigame-app 서브트리에만 적용되도록 CSS 변수·컴포넌트 클래스를 스코프함.
-   전역 키프레임은 이름 충돌 방지를 위해 'mg-' 접두사로 리네임. */
+   전역 키프레임은 이름 충돌 방지를 위해 'mg-' 접두사로 리네임.
 
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;900&display=swap');
+   팔레트 = 153 브랜드: 차콜 바탕 · 민트 포인트 · 골드 보상 · 빨강은 미스/위험에만.
+   (예전 빨강+노랑 아케이드 톤에서 교체 — 보라·네온 금지) */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 
 /* ── 테마 변수 오버라이드 (.minigame-app 서브트리 한정) */
 .minigame-app {
-  --background: 0 0% 4%;
-  --foreground: 0 0% 95%;
+  --background: 210 22% 6%;
+  --foreground: 210 20% 96%;
 
-  --card: 0 0% 8%;
-  --card-foreground: 0 0% 95%;
+  --card: 210 18% 10%;
+  --card-foreground: 210 20% 96%;
 
-  --popover: 0 0% 8%;
-  --popover-foreground: 0 0% 95%;
+  --popover: 210 18% 10%;
+  --popover-foreground: 210 20% 96%;
 
-  --primary: 355 82% 56%;
-  --primary-foreground: 0 0% 100%;
+  /* 민트 — 행동·강조 (글자용은 --primary-text, index.css 가 .minigame-app 에 맞춰 준다) */
+  --primary: 160 84% 39%;
+  --primary-foreground: 165 70% 7%;
 
-  --secondary: 45 100% 50%;
-  --secondary-foreground: 0 0% 4%;
+  /* 골드 — 보상·기록·점수 */
+  --secondary: 43 83% 62%;
+  --secondary-foreground: 40 60% 8%;
 
-  --muted: 0 0% 14%;
-  --muted-foreground: 0 0% 55%;
+  --muted: 210 14% 15%;
+  --muted-foreground: 210 10% 62%;
 
-  --accent: 45 100% 50%;
-  --accent-foreground: 0 0% 4%;
+  --accent: 43 83% 62%;
+  --accent-foreground: 40 60% 8%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 8 75% 52%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 0 0% 18%;
-  --input: 0 0% 18%;
-  --ring: 355 82% 56%;
+  --border: 210 14% 19%;
+  --input: 210 14% 19%;
+  --ring: 160 84% 39%;
 
-  --radius: 0.75rem;
+  --radius: 1rem;
 
-  /* Boxing-specific tokens */
-  --punch-jab: 217 91% 60%;
-  --punch-straight: 355 82% 56%;
-  --punch-hook: 45 100% 50%;
-  --punch-upper: 142 71% 45%;
+  /* 게임 토큰 — 네 펀치 레인 (민트·골드·레드·아이스) */
+  --punch-jab: 160 84% 42%;
+  --punch-straight: 43 90% 58%;
+  --punch-hook: 8 78% 55%;
+  --punch-upper: 200 70% 92%;
 
-  --rating-lightning: 270 70% 60%;
-  --rating-fast: 142 71% 45%;
-  --rating-good: 217 91% 60%;
-  --rating-slow: 25 95% 53%;
-  --rating-miss: 0 84% 60%;
+  /* 판정 */
+  --rating-lightning: 43 95% 62%;
+  --rating-fast: 160 84% 50%;
+  --rating-good: 195 80% 68%;
+  --rating-slow: 28 90% 58%;
+  --rating-miss: 8 78% 58%;
 
-  --tier-bronze: 30 60% 50%;
-  --tier-silver: 0 0% 70%;
-  --tier-gold: 45 100% 50%;
-  --tier-platinum: 195 80% 65%;
-  --tier-legend: 270 70% 60%;
+  /* 등급 */
+  --tier-bronze: 28 55% 55%;
+  --tier-silver: 210 12% 74%;
+  --tier-gold: 43 83% 62%;
+  --tier-platinum: 170 70% 62%;
+  --tier-legend: 43 100% 76%;
 
-  /* 게임 루트 자체에 body 수준 스타일 적용 */
+  /* 아레나 배경 — 조명 두 개 + 바닥 */
+  --arena-glow: 160 84% 39%;
+  --arena-glow-2: 43 83% 62%;
+
+  /* 게임 루트 자체에 body 수준 스타일 적용 — 화면 전체를 차지해 밝은 앱 바탕이 비치지 않게 */
+  min-height: 100dvh;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: 'Inter', sans-serif;
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto,
+    'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .minigame-app .font-display {
-  font-family: 'Bebas Neue', cursive;
+  font-family: 'Bebas Neue', 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* 게임 안에서는 아이폰 상태바 자리(body 위 여백)까지 어둡게 — 밝은 띠가 남지 않게.
+   상단바 글자색은 MinigamePage 가 theme-color 를 게임 색으로 바꿔 맞춘다. */
+body:has(.minigame-app) {
+  background-color: hsl(210 22% 6%);
+}
+
+/* ── 아레나 바닥 — 화면 공통 배경 (링 로프 선 + 위 민트 조명 + 아래 골드 조명 + 차콜 바닥)
+   한 규칙에 겹겹이 — 따로 두면 background-image 가 서로를 지운다. */
+.minigame-app .arena-bg {
+  background-color: hsl(var(--background));
+  background-image:
+    linear-gradient(180deg, transparent 0, transparent calc(100% - 1px), hsl(0 0% 100% / 0.05) calc(100% - 1px)),
+    radial-gradient(ellipse 70% 45% at 50% -10%, hsl(var(--arena-glow) / 0.22), transparent 70%),
+    radial-gradient(ellipse 60% 35% at 50% 110%, hsl(var(--arena-glow-2) / 0.10), transparent 70%),
+    linear-gradient(180deg, hsl(210 22% 8%) 0%, hsl(var(--background)) 55%, hsl(210 24% 4%) 100%);
+  background-size: 100% 96px, 100% 100%, 100% 100%, 100% 100%;
+  background-repeat: repeat-y, no-repeat, no-repeat, no-repeat;
+}
+/* 예전 이름 호환 — 로프 선은 arena-bg 에 들어 있다 */
+.minigame-app .arena-ropes {
+  background-color: hsl(var(--background));
+}
+
+/* ── 유리 카드 (HUD·패널 공통) */
+.minigame-app .mg-card {
+  background: hsl(var(--card) / 0.86);
+  border: 1px solid hsl(0 0% 100% / 0.08);
+  box-shadow: 0 1px 0 hsl(0 0% 100% / 0.04) inset, 0 10px 30px hsl(0 0% 0% / 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 1.25rem;
+}
+
+/* 입체 아이콘 — 은은한 바닥 그림자 */
+.minigame-app .icon3d {
+  filter: drop-shadow(0 8px 14px hsl(0 0% 0% / 0.45));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.minigame-app .icon3d-float {
+  animation: mg-float 3.2s ease-in-out infinite;
 }
 
 /* ── 컴포넌트 클래스 — 게임 스코프 내에서만 동작 */
 .minigame-app .punch-btn {
-  @apply flex flex-col items-center justify-center rounded-xl font-bold text-lg transition-all duration-100 active:scale-95 select-none;
+  @apply flex flex-col items-center justify-center rounded-2xl font-bold text-lg transition-all duration-100 active:scale-95 select-none;
   min-height: 80px;
+}
+
+/* 민트 메인 버튼 — 글자는 어두운 민트, 위쪽 하이라이트 한 줄 */
+.minigame-app .mg-btn-primary {
+  background: linear-gradient(180deg, hsl(160 80% 46%) 0%, hsl(160 84% 36%) 100%);
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 1px 0 hsl(0 0% 100% / 0.35) inset, 0 10px 28px hsl(160 84% 39% / 0.35);
+}
+.minigame-app .mg-btn-gold {
+  background: linear-gradient(180deg, hsl(45 92% 66%) 0%, hsl(40 85% 52%) 100%);
+  color: hsl(var(--secondary-foreground));
+  box-shadow: 0 1px 0 hsl(0 0% 100% / 0.45) inset, 0 10px 28px hsl(43 83% 62% / 0.35);
+}
+.minigame-app .mg-btn-ghost {
+  background: hsl(0 0% 100% / 0.06);
+  border: 1px solid hsl(0 0% 100% / 0.1);
+  color: hsl(var(--foreground));
+}
+.minigame-app .mg-btn-danger {
+  background: hsl(var(--destructive) / 0.14);
+  border: 1px solid hsl(var(--destructive) / 0.4);
+  color: hsl(var(--destructive));
+}
+
+/* 기록 숫자 */
+.minigame-app .mg-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 
 .minigame-app .flash-overlay {
@@ -116,7 +201,7 @@
     100deg,
     hsl(var(--secondary)) 0%,
     hsl(var(--secondary)) 35%,
-    hsl(45 100% 80%) 50%,
+    hsl(45 100% 82%) 50%,
     hsl(var(--secondary)) 65%,
     hsl(var(--secondary)) 100%
   );
@@ -139,6 +224,11 @@
 }
 
 /* ── 키프레임 (전역 — 이름 충돌 방지 'mg-' 접두사) */
+@keyframes mg-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
 @keyframes mg-flash-in {
   from { opacity: 0; transform: scale(1.1); }
   to   { opacity: 1; transform: scale(1); }
@@ -208,4 +298,14 @@
 @keyframes mg-new-best-shine {
   0%   { background-position: -200% 0; }
   100% { background-position:  200% 0; }
+}
+
+/* 진입 연출 — 두 글러브 맞대기 */
+@keyframes mg-glove-tap {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  45%      { transform: scale(0.94) rotate(-3deg); }
+  55%      { transform: scale(1.08) rotate(2deg); }
+}
+.minigame-app .glove-tap {
+  animation: mg-glove-tap 1.1s ease-in-out infinite;
 }
