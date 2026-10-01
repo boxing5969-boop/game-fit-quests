@@ -169,7 +169,7 @@ const TutorialFloatingMascot = () => {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0.5 }}
               transition={{ type: "spring", damping: 22, stiffness: 240 }}
-              className="fixed inset-x-0 bottom-0 z-[81] max-h-[88vh] overflow-y-auto rounded-t-3xl border-t-2 border-yellow-400/40 bg-gray-950 pb-8 shadow-2xl"
+              className="fixed inset-x-0 bottom-0 z-[81] max-h-[88vh] overflow-y-auto rounded-t-3xl border-t-2 border-yellow-400/40 bg-gray-950 pb-[calc(env(safe-area-inset-bottom)+2rem)] shadow-2xl"
             >
               {/* Drag handle */}
               <div className="mx-auto mt-2 h-1 w-12 rounded-full bg-gray-700" />

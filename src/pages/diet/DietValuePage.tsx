@@ -116,7 +116,7 @@ const DietValuePage = () => {
       }
     >
       {/* 챕터 챕 — sticky sub-nav */}
-      <div className="sticky top-[56px] z-20 -mx-5 mb-4 border-b border-border bg-background/90 px-5 py-2 backdrop-blur-md">
+      <div className="sticky top-[calc(56px+env(safe-area-inset-top))] z-20 -mx-5 mb-4 border-b border-border bg-background/90 px-5 py-2 backdrop-blur-md">
         <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
           {CHAPTER_ORDER.map((c) => (
             <button

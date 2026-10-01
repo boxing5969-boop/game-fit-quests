@@ -137,7 +137,7 @@ const SearchPage = () => {
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-lg bg-background pb-10 text-foreground">
-      <div className="sticky top-0 z-20 bg-background/95 px-3 pb-3 pt-[calc(env(safe-area-inset-top)+10px)] backdrop-blur">
+      <div className="sticky top-[env(safe-area-inset-top)] z-20 bg-background/95 px-3 pb-3 pt-2.5 backdrop-blur">
         <div className="flex items-center gap-1.5">
           <button
             type="button"

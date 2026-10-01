@@ -57,7 +57,7 @@ const OnboardingPage = () => {
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-[#0C0C0E] text-white overflow-hidden">
       {/* Top bar: progress + skip */}
-      <div className="flex items-center justify-between px-5 pt-5 pb-2">
+      <div className="flex items-center justify-between px-5 pb-2 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
         <span className="text-xs font-medium text-white/40 tracking-wider">
           {current + 1} / {total}
         </span>
@@ -162,7 +162,7 @@ const OnboardingPage = () => {
       </div>
 
       {/* Bottom navigation */}
-      <div className="px-6 pb-8">
+      <div className="px-6 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
         {isLast ? (
           <div className="space-y-3">
             <button

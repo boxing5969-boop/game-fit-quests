@@ -62,7 +62,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
       </div>
 
       {/* Top HUD */}
-      <div className="relative z-10 px-4 pt-3 pb-2">
+      <div className="relative z-10 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
         <div className="flex items-start justify-between gap-3">
           <button
             onClick={eng.togglePause}
@@ -380,7 +380,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
       </div>
 
       {/* Bottom guard buttons */}
-      <div className="relative z-10 grid grid-cols-2 gap-3 p-4 pb-6">
+      <div className="relative z-10 grid grid-cols-2 gap-3 p-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
         <GuardButton
           side="L"
           pressed={eng.pressedSide === 'L'}

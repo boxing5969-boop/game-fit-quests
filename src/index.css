@@ -307,6 +307,26 @@
     font-kerning: normal;
   }
 
+  /* 아이폰 상태바(시계) 가림막 (2026-10-01 대표님: 아이폰은 X 가 시계 밑에 깔린다).
+     홈 화면 앱·iOS 26 처럼 화면이 상태바 밑까지 그려지면, 스크롤한 내용이 시계와 겹쳐 보인다.
+     상태바 높이(env)만큼 배경색으로 덮는다 — 안전영역이 없는 기기(안드로이드·PC)는 높이 0 이라 변화 없다.
+     z 49: 페이지 머리글(z-20~40)보다 위, 팝업·시트(z-50 이상)보다 아래 — 팝업은 자기 배경·여백으로 시계를 피한다. */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background: hsl(var(--background));
+    z-index: 49;
+    pointer-events: none;
+  }
+  /* 게임 화면은 어두운 배경이 시계 뒤까지 이어지게 가림막을 뺀다 (게임은 자체 여백으로 시계를 피한다) */
+  body:has(.minigame-app)::before {
+    display: none;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
     font-weight: 700;
@@ -423,6 +443,10 @@
   }
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
+  }
+  /* 아이폰 홈 막대 자리 (서랍 시트 등에서 쓰던 이름인데 정의가 없어 아무 효과가 없었다 — 2026-10-01) */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   /* 모바일 가독성 — 초소형 보조 글씨를 전 화면에서 상향(고객경험 최적화).
      9~10px → 11px, 11px → 12px(모바일 최소 가독 기준). */

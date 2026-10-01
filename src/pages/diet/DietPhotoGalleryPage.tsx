@@ -381,7 +381,7 @@ const Lightbox = ({
     };
   }, []);
   return (
-    <div className="fixed inset-0 z-[80] flex flex-col bg-black/90 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[80] flex flex-col bg-black/90 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] backdrop-blur-sm">
       <div className="flex items-center justify-between px-4 py-3 text-white">
         <div className="text-[12px]">
           <p className="font-bold">{photo.uploaded_at.slice(0, 10)}</p>

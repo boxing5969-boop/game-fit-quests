@@ -47,7 +47,7 @@ const CertBenefitsPage = () => {
     //   stay dark to preserve the brand punch
     <div data-tour="cert-benefits-page" className="light-surface min-h-screen pb-24">
       {/* ─── Header ─── */}
-      <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card/95 px-5 py-3 backdrop-blur-md">
+      <header className="sticky top-[env(safe-area-inset-top)] z-40 flex items-center gap-3 border-b border-border bg-card/95 px-5 py-3 backdrop-blur-md">
         <button
           onClick={() => navigate(-1)}
           aria-label="뒤로가기"

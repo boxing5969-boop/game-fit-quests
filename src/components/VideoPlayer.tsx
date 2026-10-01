@@ -66,7 +66,8 @@ const VideoPlayer = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-background">
+    // 아이폰: 위 X 가 시계 밑에 깔리지 않게 상태바·홈 막대 자리만큼 비운다 (2026-10-01)
+    <div className="fixed inset-0 z-[70] flex flex-col bg-background pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <h2 className="truncate text-base font-bold text-foreground">{title}</h2>

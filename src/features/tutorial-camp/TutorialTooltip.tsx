@@ -162,7 +162,7 @@ const TutorialTooltip = ({
     //   카드를 하단에 두면 아래쪽 컨텐츠 가림). 그 외는 BottomNav 위쪽 (bottom-20).
     const compactPos =
       step.placement === "top"
-        ? "top-14 inset-x-0 z-[112] flex justify-center px-3 fixed pointer-events-none"
+        ? "top-[calc(env(safe-area-inset-top)+3.5rem)] inset-x-0 z-[112] flex justify-center px-3 fixed pointer-events-none"
         : "bottom-20 inset-x-0 z-[112] flex justify-center px-3 fixed pointer-events-none";
     return (
       <motion.div

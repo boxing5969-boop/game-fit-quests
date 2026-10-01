@@ -160,7 +160,7 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
           </div>
 
           {/* Actions — RETRY 가장 크게 */}
-          <div className="flex flex-col gap-3 sticky bottom-0 pt-3 pb-3 bg-gradient-to-t from-background via-background/95 to-transparent -mx-1 px-1">
+          <div className="flex flex-col gap-3 sticky bottom-0 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-gradient-to-t from-background via-background/95 to-transparent -mx-1 px-1">
             <motion.button
               whileTap={{ scale: 0.96 }}
               initial={{ scale: 0.9, opacity: 0 }}

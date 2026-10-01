@@ -138,7 +138,7 @@ const TutorialOverlay = ({
         )}
 
         {/* Progress dots — tooltip 위쪽에 별도 고정 위치 */}
-        <div className="pointer-events-none fixed inset-x-0 top-3 z-[113] flex justify-center px-4">
+        <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[113] flex justify-center px-4">
           <div className="rounded-full border border-amber-400/30 bg-black/55 px-3 py-1.5 backdrop-blur-sm">
             <TutorialProgressDots
               total={totalStepsInDay}

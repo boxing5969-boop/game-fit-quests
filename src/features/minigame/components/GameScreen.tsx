@@ -334,7 +334,7 @@ const GameScreen = ({
       </div>
 
       {/* === Top HUD === */}
-      <div className="relative z-20 px-3 pt-2 pb-2">
+      <div className="relative z-20 px-3 pb-2 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
         <div className="flex items-center justify-between gap-2">
           {/* Round */}
           <div className="bg-card/80 backdrop-blur border border-border rounded-xl px-3 py-1.5 min-w-[78px]">
@@ -391,7 +391,7 @@ const GameScreen = ({
         onClick={onPause}
         aria-label="일시정지"
         whileTap={{ scale: 0.9 }}
-        className="fixed top-3 right-3 z-40 w-10 h-10 rounded-full bg-primary/90 text-primary-foreground shadow-lg border-2 border-primary-foreground/20 flex items-center justify-center"
+        className="fixed top-[calc(env(safe-area-inset-top)+0.75rem)] right-3 z-40 w-10 h-10 rounded-full bg-primary/90 text-primary-foreground shadow-lg border-2 border-primary-foreground/20 flex items-center justify-center"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <rect x="6" y="5" width="4" height="14" rx="1" />
@@ -442,7 +442,7 @@ const GameScreen = ({
       </div>
 
       {/* === Punch buttons === */}
-      <div className="grid grid-cols-4 gap-2 p-3 pb-6 relative z-40">
+      <div className="grid grid-cols-4 gap-2 p-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] relative z-40">
         {(['jab', 'straight', 'hook', 'upper'] as PunchType[]).map(type => (
           <motion.button
             key={type}
@@ -470,7 +470,7 @@ const GameScreen = ({
                 mixBlendMode: 'screen',
               }}
             />
-            <div className="absolute top-[110px] left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+            <div className="absolute top-[calc(110px+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-30 pointer-events-none">
               <motion.div
                 initial={{ scale: 0.7 }}
                 animate={{ scale: [1, 1.06, 1] }}

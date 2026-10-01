@@ -347,7 +347,8 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
 
   return (
     // 100dvh = 키보드가 올라오면 줄어드는 높이 (모르는 브라우저는 h-screen)
-    <div className="flex h-screen flex-col bg-background" style={{ height: "100dvh" }}>
+    // 아이폰: body 가 상태바만큼 위 여백을 갖고 있어 그만큼 빼야 아래 입력창이 화면 밖으로 밀리지 않는다 (2026-10-01)
+    <div className="flex h-screen flex-col bg-background" style={{ height: "calc(100dvh - env(safe-area-inset-top, 0px))" }}>
       {/* 머리글 */}
       <header className="z-30 shrink-0 border-b-[0.5px] border-black/[0.1] bg-background/[0.86] backdrop-blur-xl backdrop-saturate-[1.8] dark:border-white/[0.08]">
         <div className="mx-auto flex max-w-lg items-center gap-2.5 px-3 py-2.5">

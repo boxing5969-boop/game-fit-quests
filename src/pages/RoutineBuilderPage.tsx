@@ -149,7 +149,7 @@ const RoutineBuilderPage = () => {
 
       {/* 편집 오버레이 */}
       {edit && (
-        <div className="fixed inset-0 z-[80] flex flex-col bg-background">
+        <div className="fixed inset-0 z-[80] flex flex-col bg-background pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <button onClick={() => setEdit(null)} className="rounded-lg p-1 active:scale-95"><X className="h-5 w-5" /></button>
             <span className="text-base font-black">{edit.id ? "루틴 수정" : "새 루틴"}</span>

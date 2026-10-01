@@ -80,7 +80,7 @@ const DefenseGameOver = ({ stats, gemsEarned, onRetry, onHome }: Props) => {
 
   return (
     <div
-      className="fixed inset-0 flex flex-col items-center justify-center px-5 py-6 overflow-y-auto"
+      className="fixed inset-0 flex flex-col items-center justify-center px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+1.5rem)] overflow-y-auto"
       style={{
         background: `radial-gradient(ellipse at center, hsl(0 30% 8%) 0%, hsl(0 0% 3%) 70%, hsl(0 0% 1%) 100%)`,
       }}

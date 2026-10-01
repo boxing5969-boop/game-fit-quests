@@ -188,7 +188,7 @@ const MemberPreviewPage = () => {
     <div className="mx-auto max-w-lg pb-40">
       {/* Admin Action Bar - Fixed top */}
       {showActionBar && (
-        <div className="sticky top-0 z-50 border-b border-reward/30 bg-foreground/95 backdrop-blur-md px-4 py-3">
+        <div className="sticky top-[env(safe-area-inset-top)] z-50 border-b border-reward/30 bg-foreground/95 backdrop-blur-md px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button onClick={() => navigate(-1)} className="rounded-full bg-primary-foreground/10 p-1.5 active:scale-95">
@@ -390,7 +390,7 @@ const MemberPreviewPage = () => {
       </div>
 
       {/* Bottom Tab Bar (Member-style) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
         <div className="mx-auto flex max-w-lg">
           {TABS.map(tab => (
             <button

@@ -213,7 +213,8 @@ const ChatAssistant = () => {
         <div className="fixed inset-0 z-50 flex flex-col sm:inset-auto sm:bottom-24 sm:right-4 sm:h-[540px] sm:w-[400px] sm:rounded-3xl sm:shadow-[0_8px_40px_rgba(0,0,0,0.25)] overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
           
           {/* ── 헤더 ── */}
-          <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black px-5 py-4">
+          {/* 아이폰: 휴대폰에서는 전체 화면이라 머리글(X)이 시계 밑에 깔리지 않게 상태바만큼 내린다 (2026-10-01) */}
+          <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black px-5 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)] sm:pt-4">
             {/* 배경 워터마크 — 브랜드 "153" 을 연하게 배치. */}
             <div className="absolute inset-0 opacity-10 pointer-events-none">
               <div className="absolute top-2 right-4 text-5xl font-black tracking-tighter text-white">153</div>
@@ -316,7 +317,7 @@ const ChatAssistant = () => {
           </div>
 
           {/* ── 입력 영역 ── */}
-          <div className="border-t border-gray-100 bg-white p-3">
+          <div className="border-t border-gray-100 bg-white p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:pb-3">
             {isApiLimitReached && (
               <div className="mb-2 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
                 <span className="text-lg">💤</span>

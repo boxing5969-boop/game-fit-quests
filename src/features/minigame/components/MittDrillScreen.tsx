@@ -205,7 +205,8 @@ const MittDrillScreen = ({
   return (
     <div
       className={`relative overflow-hidden bg-background ${shaking ? 'shake' : ''}`}
-      style={{ height: '100dvh', display: 'flex', flexDirection: 'column' }}
+      // 아이폰: body 가 상태바만큼 위 여백을 갖고 있어 100dvh 그대로면 아래 미트가 화면 밖으로 밀린다 (2026-10-01)
+      style={{ height: 'calc(100dvh - env(safe-area-inset-top, 0px))', display: 'flex', flexDirection: 'column' }}
     >
       {/* 라운드 분위기 배경 글로우 */}
       <motion.div
@@ -311,7 +312,7 @@ const MittDrillScreen = ({
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 18 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed top-3 right-3 z-40 w-10 h-10 rounded-full bg-card/90 border border-border text-foreground shadow-lg flex items-center justify-center"
+        className="fixed top-[calc(env(safe-area-inset-top)+0.75rem)] right-3 z-40 w-10 h-10 rounded-full bg-card/90 border border-border text-foreground shadow-lg flex items-center justify-center"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <rect x="6" y="5" width="4" height="14" rx="1" />
@@ -535,7 +536,7 @@ const MittDrillScreen = ({
       </div>
 
       {/* ===== MITT PADS ===== */}
-      <div className="bg-gradient-to-b from-card to-background border-t border-border relative z-30 pt-3 pb-5 px-3">
+      <div className="bg-gradient-to-b from-card to-background border-t border-border relative z-30 pt-3 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] px-3">
         <div className="grid grid-cols-4 gap-1">
           {PUNCHES_LIST.map(type => (
             <div key={type} className="flex justify-center">
@@ -555,7 +556,7 @@ const MittDrillScreen = ({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center px-4 py-6 overflow-y-auto"
+            className="fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+1.5rem)] overflow-y-auto"
           >
             <motion.div
               initial={{ scale: 0.7, y: 30 }}
@@ -724,7 +725,7 @@ const MittDrillScreen = ({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex items-center justify-center px-4 py-6 overflow-y-auto"
+            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex items-center justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+1.5rem)] overflow-y-auto"
           >
             <motion.div
               initial={{ scale: 0.7, y: 30 }}

@@ -21,7 +21,7 @@ const DefenseHome = ({ onStart, onExit }: Props) => {
   }, []);
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-between px-5 py-8 overflow-y-auto"
+    <div className="fixed inset-0 flex flex-col items-center justify-between px-5 pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-[calc(env(safe-area-inset-top)+2rem)] overflow-y-auto"
       style={{
         background: 'radial-gradient(ellipse at top, hsl(355 60% 12%) 0%, hsl(0 0% 4%) 70%)',
       }}

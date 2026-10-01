@@ -302,7 +302,7 @@ const MinigamePage = () => {
         <button
           type="button"
           onClick={() => navigate("/home")}
-          className="fixed left-3 top-3 z-[55] flex items-center gap-1.5 rounded-full border border-border bg-card/90 px-3 py-1.5 text-[11px] font-bold text-foreground shadow-lg backdrop-blur-sm active:scale-95"
+          className="fixed left-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[55] flex items-center gap-1.5 rounded-full border border-border bg-card/90 px-3 py-1.5 text-[11px] font-bold text-foreground shadow-lg backdrop-blur-sm active:scale-95"
           aria-label="랭킹업으로 돌아가기"
         >
           <ArrowLeft className="h-3.5 w-3.5" />

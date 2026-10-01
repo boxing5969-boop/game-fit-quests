@@ -33,7 +33,8 @@ const CSS = `
 .p153 button{font-family:inherit}
 
 /* 상단 내비 */
-.p153 .nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:7px;padding:12px;
+/* 아이폰: 붙는 내비는 시계(상태바) 바로 아래에 — top:0 이면 스크롤할 때 메뉴가 시계 밑에 깔린다 (2026-10-01) */
+.p153 .nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;display:flex;align-items:center;gap:7px;padding:12px;
   background:linear-gradient(180deg,rgba(0,0,0,.85),rgba(0,0,0,.15));transition:background .25s ease}
 .p153 .nav.solid{background:var(--bg);box-shadow:0 1px 0 var(--line)}
 .p153 .navMenu{display:flex;gap:2px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}

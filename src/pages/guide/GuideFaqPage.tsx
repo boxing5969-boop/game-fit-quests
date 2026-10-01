@@ -11,7 +11,7 @@ const GuideFaqPage = () => {
   return (
     <div className="light-surface min-h-screen">
       {/* Header — clean, sticky, no decoration */}
-      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-card/95 px-5 py-3 backdrop-blur-md">
+      <header className="sticky top-[env(safe-area-inset-top)] z-30 flex items-center gap-3 border-b border-border bg-card/95 px-5 py-3 backdrop-blur-md">
         <button
           onClick={() => navigate("/guide")}
           aria-label="뒤로가기"

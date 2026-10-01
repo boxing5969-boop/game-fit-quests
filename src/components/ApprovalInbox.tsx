@@ -385,7 +385,7 @@ const ApprovalInbox = () => {
 
       {/* Batch actions */}
       {selected.size > 0 && (
-        <div className="sticky top-0 z-20 flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/5 p-3 shadow-md backdrop-blur-sm">
+        <div className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/5 p-3 shadow-md backdrop-blur-sm">
           <div className="flex items-center gap-2">
             <button onClick={selectAll} className="text-xs text-primary font-bold active:scale-95">
               {selected.size === sorted.length ? "전체 해제" : "전체 선택"}

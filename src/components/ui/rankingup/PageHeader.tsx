@@ -31,7 +31,8 @@ export const PageHeader = ({
       "w-full backdrop-blur-xl backdrop-saturate-[1.8]",
       variant === "light" ? "light-surface" : undefined,
       "bg-background/[0.86] border-b-[0.5px] border-black/[0.1] dark:border-white/[0.08]",
-      sticky && "sticky top-0 z-30",
+      // 붙는 머리글은 아이폰 시계(상태바) 바로 아래에 붙는다 — top-0 이면 스크롤할 때 뒤로가기가 시계 밑에 깔린다 (2026-10-01)
+      sticky && "sticky top-[env(safe-area-inset-top)] z-30",
       className,
     )}
   >
