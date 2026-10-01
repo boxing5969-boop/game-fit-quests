@@ -32,6 +32,7 @@ import RouteLoader from "@/components/splash/RouteLoader";
 import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
 import { useTutorialGlobalOverridesBoot } from "@/hooks/useTutorialGlobalOverrides";
 import ExitConfirm from "@/components/ExitConfirm";
+import PushBridge from "@/components/notifications/PushBridge";
 import { initBackExit } from "@/lib/androidBackExit";
 
 // Route-level code splitting — every page below is fetched on demand.
@@ -355,6 +356,8 @@ const AppRoutes = () => {
       {/* 토스트는 라우터 안에 둬야 경로를 알 수 있다 — TV에 토스트가 뜨면 안 된다 */}
       {!signage && <Toaster />}
       {!signage && <Sonner />}
+      {/* 📲 휴대폰 알림 — 구독 동기화 · 알림 눌러 이동 · 로그아웃 시 이 기기 구독 정리 */}
+      {!signage && <PushBridge />}
       {!signage && <BottomNav />}
       {!signage && <ChatAssistant />}
       {/* 마이복서153 — 오삼 마스코트 튜토리얼 (행동기반 미션 5개). */}

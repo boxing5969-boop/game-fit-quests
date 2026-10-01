@@ -5,12 +5,13 @@
  *   · 날짜별(오늘·어제·9월 30일 수요일)로 최신순. 30개씩, 아래 '이전 알림 더 보기'.
  *   · 이 화면을 열면 서버에는 바로 모두 읽음 처리 — 화면에 있는 동안은 새로 온 것을 민트로 강조해 둔다.
  *   · 링크가 있는 알림은 눌러서 그 화면으로, 없는 알림은 눌러서 내용을 펼친다.
- *   · 맨 위 휴대폰 알림 켜기 카드는 (2번) 웹 푸시에서 붙는다.
+ *   · 맨 위 '휴대폰으로도 알림 받기' 카드 — 켜면 같은 알림이 휴대폰 알림으로도 온다 (components/notifications/PushOptInCard).
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
+import PushOptInCard from "@/components/notifications/PushOptInCard";
 import { useMarkNotificationsRead, useMyNotifications, useUnreadNotificationCount } from "@/hooks/useNotifications";
 import { groupNotificationsByDay, notificationTime, type AppNotification } from "@/lib/notifications";
 import { cn } from "@/lib/utils";
@@ -137,6 +138,7 @@ const NotificationsPage = () => {
         />
       }
     >
+      <PushOptInCard variant="inbox" className="mb-4" />
       {list.isLoading ? (
         <ul className="space-y-2" aria-busy="true" aria-label="알림 불러오는 중">
           {[0, 1, 2].map((i) => (

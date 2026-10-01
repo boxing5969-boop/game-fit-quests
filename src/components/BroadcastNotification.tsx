@@ -138,7 +138,7 @@ const BroadcastNotification = () => {
             ))}
           </select>
           <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-            회원 앱 오른쪽 위 🔔 알림함에 들어가요.
+            회원 앱 오른쪽 위 🔔 알림함에 들어가고, 휴대폰 알림을 켠 회원은 휴대폰으로도 바로 받아요.
           </p>
         </div>
 

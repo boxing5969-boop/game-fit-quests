@@ -26,6 +26,7 @@ import LaunchEventSettingsCard from "@/components/admin/LaunchEventSettingsCard"
 import MileageSettingsCard from "@/components/admin/MileageSettingsCard";
 import LevelTestCard from "@/components/admin/LevelTestCard";
 import WelcomeLetterSettingsCard from "@/components/admin/WelcomeLetterSettingsCard";
+import PushOptInCard from "@/components/notifications/PushOptInCard";
 
 // ── Home widget toggle helpers ──
 const HOME_PREFS_KEY = "home-widget-prefs";
@@ -334,6 +335,9 @@ const SettingsPage = () => {
           </p>
           <ThemeToggle variant="segment" />
         </div>
+
+        {/* 📲 휴대폰 알림 — 이 기기 켜기 · 끄기 · 테스트 (2026-10-01) */}
+        <PushOptInCard variant="settings" />
 
         {/* Home Widget Toggles */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1">

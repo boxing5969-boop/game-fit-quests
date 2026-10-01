@@ -20,3 +20,7 @@ verify_jwt = false
 
 [functions.sync-pt-members]
 verify_jwt = false
+
+# 휴대폰 알림 발송 — 알림 저장 트리거(pg_net)가 JWT 없이 x-push-key 로 호출 (2026-10-01).
+[functions.push-send]
+verify_jwt = false
