@@ -22,6 +22,11 @@ import { useComposedSession, usePriorityDrills, type TrainingExercise } from "@/
 import TrainingDrillSheet from "@/components/TrainingDrillSheet";
 import LevelVideoMaster from "@/components/LevelVideoMaster";
 import CoachTodayCard from "@/components/CoachTodayCard";
+import LessonTodayCard from "@/components/lesson/LessonTodayCard";
+import LessonDayList from "@/components/lesson/LessonDayList";
+import LessonDaySheet from "@/components/lesson/LessonDaySheet";
+import { useLessonDays, useLessonToday } from "@/hooks/useLessonDays";
+import { groupByLevel } from "@/lib/lessonDays";
 import MyLevelPractice from "@/components/MyLevelPractice";
 import { getChecklistForLevel } from "@/data/levelRuleEngine";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
@@ -105,6 +110,8 @@ const WhiteLeagueTab = () => {
         onOpenPractice={() => setPracticeView({ league: currentRank, level: currentLevel })}
         onOpenDetail={() => setDetailView({ league: currentRank, level: currentLevel })}
         onOpenVideos={() => setDetailView({ league: currentRank, level: currentLevel })}
+        // 📋 오늘(다음) 수업 — 대표님 일차별 매뉴얼 (2026-09-30). 수업이 없는 레벨이면 저절로 숨는다
+        extra={<LessonTodayCard />}
       />
 
       {/* 리그 전체 목록 — 접어두고, 보고 싶은 회원만 펼친다 */}
@@ -278,6 +285,12 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   const { blocks: sessionBlocks, refetch: refetchSession } = useSessionTemplate(sessionLevelKey, sessionFallback);
   const isMaster = role === "admin" || role === "super_admin";
   const [showSessionEditor, setShowSessionEditor] = useState(false);
+
+  // 📋 이 레벨의 일차별 수업 매뉴얼 (2026-09-30 대표님) — 수업실행 탭 맨 위. 누르면 이 화면 위에 그날 수업 시트
+  const lessonDays = useLessonDays();
+  const { data: lessonToday } = useLessonToday();
+  const levelLessonGroups = groupByLevel((lessonDays.data ?? []).filter((d) => d.level === (ul?.globalLevel ?? 0)));
+  const [lessonDayNo, setLessonDayNo] = useState<number | null>(null);
 
   // 🥊 스파링 신청 — 접촉 레벨(Lv.26+) 전용. 본인 최신 동의서 조회.
   const [showSparring, setShowSparring] = useState(false);
@@ -721,6 +734,22 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {/* ═══ 수업 실행 Section ═══ */}
       {activeSection === "session" && (
         <>
+          {levelLessonGroups.length > 0 && (
+            <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
+              <p className="text-sm font-black text-foreground">📋 일차별 수업 매뉴얼</p>
+              <p className="mb-3 mt-0.5 text-[11px] text-muted-foreground">
+                코치님과 이 순서대로 배워요 · 누르면 라운드와 주의할 점이 나와요
+              </p>
+              <LessonDayList groups={levelLessonGroups} today={lessonToday} onOpen={setLessonDayNo} />
+            </div>
+          )}
+          <LessonDaySheet
+            day={lessonDayNo != null ? lessonDays.byDayNo.get(lessonDayNo) ?? null : null}
+            byDayNo={lessonDays.byDayNo}
+            today={lessonToday}
+            onClose={() => setLessonDayNo(null)}
+            onOpenDay={setLessonDayNo}
+          />
           {showSessionEditor && sessionLevelKey && (
             <SessionTemplateEditor
               levelKey={sessionLevelKey}

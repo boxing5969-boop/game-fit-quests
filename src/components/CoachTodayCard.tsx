@@ -1,7 +1,7 @@
 // 🥊 오늘의 코스 — 훈련 탭 첫 화면.
 // 오삼 코치가 오늘 할 일을 1·2·3 순서로 알려준다. 완료한 건 체크, 지금 할 건 강조.
 // 회원이 원하면 "코스 접기"로 숨길 수 있다(기기에 기억).
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -30,6 +30,8 @@ interface Props {
   onOpenPractice: () => void;
   onOpenDetail: () => void;
   onOpenVideos: () => void;
+  /** 오늘의 코스 카드 바로 아래에 끼우는 칸 — 훈련 탭은 '오늘 수업(일차별 매뉴얼)' 카드를 넣는다 */
+  extra?: ReactNode;
 }
 
 const COURSE_KEY = "153_course_collapsed";
@@ -46,7 +48,7 @@ const kstDayStartIso = () => {
 const safeGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 const safeSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* 프라이빗 모드 등 */ } };
 
-const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpenDetail, onOpenVideos }: Props) => {
+const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpenDetail, onOpenVideos, extra }: Props) => {
   const { user } = useAuth();
   const [playing, setPlaying] = useState<{ id: string; url: string; title: string } | null>(null);
   const [collapsed, setCollapsed] = useState(() => safeGet(COURSE_KEY) === "1");
@@ -377,6 +379,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
           </div>
         )}
       </div>
+
+      {extra}
 
       {/* ── 레벨업까지 ── */}
       {/* 요건이 0인 항목(훈련 분수)은 빼고, 블랙 리그는 '연한'을 대신 보여준다 */}

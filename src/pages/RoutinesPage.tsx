@@ -2,14 +2,23 @@
 // 얼굴 인식 출석이 리그별 요건(화이트3·블루5·레드8·블랙20회)만큼 쌓이면 승급된다.
 // 화이트·블루는 자동, 레드·블랙은 승급 심사, 10레벨은 코치 승인. 2026-09-07 개편.
 // 연결: 훈련 라이브러리 → (코치)루틴 빌더 → (회원)수업 실행·기록 → 3·3·3 → 레벨업.
-import { useState } from "react";
+//
+// 📋 2026-09-30 대표님: 레벨마다 3일 수업 — 일차별 수업 매뉴얼(level_lesson_days)을 이 화면 맨 위에.
+//   오늘(다음) 수업 카드 → 레벨별 1·2·3일차 목록 → 누르면 그날 수업 시트(?day=N, 뒤로가기로 닫힘).
+//   코치님이 만든 루틴(class_routines)은 있을 때만 아래에 따로 보인다.
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, X, Clock, CheckCircle2, TrendingUp } from "lucide-react";
 import { PHASE_META, type RoutinePhases, emptyPhases } from "@/lib/routineComposer";
+import { useLessonDays, useLessonToday } from "@/hooks/useLessonDays";
+import { groupByLevel } from "@/lib/lessonDays";
+import LessonTodayCard from "@/components/lesson/LessonTodayCard";
+import LessonDayList from "@/components/lesson/LessonDayList";
+import LessonDaySheet from "@/components/lesson/LessonDaySheet";
 
 interface Routine { id: string; name: string; description: string; target_level: number | null; phases: RoutinePhases; total_min: number; }
 interface Cycle {
@@ -40,6 +49,32 @@ const RoutinesPage = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [sel, setSel] = useState<Routine | null>(null);
+
+  // 📋 일차별 수업 매뉴얼
+  const lessonDays = useLessonDays();
+  const { data: lessonToday } = useLessonToday();
+  const lessonGroups = groupByLevel(lessonDays.data ?? []);
+  const [params, setParams] = useSearchParams();
+  const openDayNo = Number(params.get("day")) || null;
+  const openDay = openDayNo ? lessonDays.byDayNo.get(openDayNo) ?? null : null;
+  // 목록에서 열었으면(주소를 한 칸 쌓았으면) 닫을 때 한 칸 뒤로 — 훈련 탭에서 ?day 로 바로 왔으면 주소만 지운다
+  const pushedDay = useRef(false);
+  useEffect(() => {
+    if (!openDayNo) pushedDay.current = false;
+  }, [openDayNo]);
+  const openLesson = (dayNo: number) => {
+    pushedDay.current = true;
+    setParams({ day: String(dayNo) });
+  };
+  const switchLesson = (dayNo: number) => setParams({ day: String(dayNo) }, { replace: true });
+  const closeLesson = () => {
+    if (pushedDay.current) {
+      pushedDay.current = false;
+      navigate(-1);
+    } else {
+      setParams({}, { replace: true });
+    }
+  };
 
   const { data: routines = [], isLoading } = useQuery({
     queryKey: ["member-routines"],
@@ -110,13 +145,50 @@ const RoutinesPage = () => {
         </div>
       )}
 
-      <p className="mb-3 text-xs leading-relaxed text-muted-foreground">코치가 준비한 수업 루틴이에요. 오늘 수업을 마치면 아래에서 '수업 완료'를 눌러 기록하세요.</p>
+      {/* ── 📋 일차별 수업 매뉴얼 ── */}
+      <LessonTodayCard onOpen={openLesson} showEmpty className="mb-4" />
 
-      {isLoading ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">불러오는 중...</p>
-      ) : routines.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">아직 등록된 수업 루틴이 없습니다. 코치님이 곧 준비해요.</p>
+      <div className="mb-2.5 px-1">
+        <h2 className="text-[17px] font-black text-foreground">153 수업 매뉴얼</h2>
+        <p className="mt-0.5 text-[12.5px] leading-snug text-muted-foreground">
+          레벨마다 3일 — 코치님과 이 순서대로 배워요. 누르면 그날 라운드·주의할 점이 나와요.
+        </p>
+      </div>
+      {lessonDays.isLoading ? (
+        <div className="space-y-2" aria-hidden>
+          {[0, 1].map((i) => (
+            <div key={i} className="h-[150px] animate-pulse rounded-2xl bg-muted" />
+          ))}
+        </div>
+      ) : lessonDays.isError ? (
+        <div className="rounded-2xl bg-card px-4 py-8 text-center shadow-elev-1">
+          <p className="text-[14px] font-bold text-foreground">수업 매뉴얼을 불러오지 못했어요</p>
+          <button
+            type="button"
+            onClick={() => lessonDays.refetch()}
+            className="mt-3 rounded-full bg-secondary px-4 py-2 text-[13px] font-bold active:scale-95"
+          >
+            다시 불러오기
+          </button>
+        </div>
+      ) : lessonGroups.length === 0 ? (
+        <p className="rounded-2xl bg-muted/50 px-4 py-8 text-center text-[13px] text-muted-foreground">
+          수업 매뉴얼을 준비하고 있어요
+        </p>
       ) : (
+        <LessonDayList groups={lessonGroups} today={lessonToday} onOpen={openLesson} />
+      )}
+
+      {/* ── 코치님이 만든 루틴 — 있을 때만 ── */}
+      {!isLoading && routines.length > 0 && (
+        <div className="mb-2.5 mt-6 px-1">
+          <h2 className="text-[17px] font-black text-foreground">코치님 루틴</h2>
+          <p className="mt-0.5 text-[12.5px] leading-snug text-muted-foreground">
+            코치가 준비한 수업 루틴이에요. 오늘 수업을 마치면 '수업 완료'를 눌러 기록하세요.
+          </p>
+        </div>
+      )}
+      {isLoading || routines.length === 0 ? null : (
         <div className="space-y-2.5">
           {routines.map((r) => (
             <button key={r.id} onClick={() => setSel(r)} className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-elev-1 transition-all active:scale-[0.99]">
@@ -181,6 +253,14 @@ const RoutinesPage = () => {
           </div>
         </div>
       )}
+
+      <LessonDaySheet
+        day={openDay}
+        byDayNo={lessonDays.byDayNo}
+        today={lessonToday}
+        onClose={closeLesson}
+        onOpenDay={switchLesson}
+      />
     </div>
   );
 };
