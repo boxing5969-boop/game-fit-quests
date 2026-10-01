@@ -6,12 +6,25 @@ import { fetchAllRows } from "@/lib/supabasePaging";
 import { Send, Users } from "lucide-react";
 import { toast } from "sonner";
 
+/** 회원이 알림을 누르면 열 화면 — 앱 안 주소만 (DB notifications_link_internal 과 같은 규칙, 2026-10-01) */
+const LINK_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+  { value: "", label: "없음 — 알림함에서 내용만 보기" },
+  { value: "/myboxer/quest", label: "153 챌린지 · 런칭 이벤트" },
+  { value: "/title-match", label: "타이틀매치" },
+  { value: "/missions", label: "훈련 (오늘의 코스)" },
+  { value: "/myboxer", label: "MY복서 (마일리지·라이센스)" },
+  { value: "/membership", label: "수강권" },
+  { value: "/membership-plans", label: "멤버십 상품 (재등록·연장)" },
+  { value: "/messages", label: "메시지" },
+];
+
 const BroadcastNotification = () => {
   const { role, profile } = useAuth();
   const isSuperAdmin = role === "super_admin" || role === "admin";
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [targetBranch, setTargetBranch] = useState<string>("all");
+  const [link, setLink] = useState<string>("");
 
   const { data: branches } = useQuery({
     queryKey: ["branches-list"],
@@ -46,12 +59,15 @@ const BroadcastNotification = () => {
         user_id,
         title: title.trim(),
         body: body.trim(),
+        link: link || null,
       }));
 
       const BATCH_SIZE = 100;
       for (let i = 0; i < batch.length; i += BATCH_SIZE) {
         const chunk = batch.slice(i, i + BATCH_SIZE);
-        const { error: insertErr } = await supabase.from("notifications").insert(chunk);
+        // link 칸은 생성된 타입보다 새것 (2026-10-01) — 느슨한 클라이언트로 넣는다
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: insertErr } = await (supabase as any).from("notifications").insert(chunk);
         if (insertErr) throw insertErr;
       }
 
@@ -61,6 +77,7 @@ const BroadcastNotification = () => {
       toast.success(`${count}명에게 공지 발송 완료`);
       setTitle("");
       setBody("");
+      setLink("");
     },
     onError: (e: any) => toast.error(e.message || "발송 실패"),
   });
@@ -107,6 +124,22 @@ const BroadcastNotification = () => {
             rows={3}
             maxLength={500}
           />
+        </div>
+
+        <div className="mb-4">
+          <label className="mb-1 block text-xs text-muted-foreground">누르면 열 화면 (선택)</label>
+          <select
+            value={link}
+            onChange={e => setLink(e.target.value)}
+            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none"
+          >
+            {LINK_OPTIONS.map(o => (
+              <option key={o.value || "none"} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+            회원 앱 오른쪽 위 🔔 알림함에 들어가요.
+          </p>
         </div>
 
         <button

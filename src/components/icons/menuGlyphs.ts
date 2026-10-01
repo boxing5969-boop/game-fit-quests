@@ -20,6 +20,7 @@ export type MenuGlyphName =
   | "crown"
   | "chat"
   | "dm"
+  | "bell"
   | "mind"
   | "medal"
   | "avatar"
@@ -134,6 +135,13 @@ export const MENU_GLYPHS: Record<MenuGlyphName, (p: string) => string> = {
 <path d="M20.9 27.4 22.6 38.2 27 33Z" fill="url(#${p}ink)" stroke="url(#${p}ink)" stroke-width="1.6" stroke-linejoin="round"/>
 <path d="M10.4 21 33.6 11.6" stroke="#fff" stroke-opacity=".6" stroke-width="1.8" stroke-linecap="round"/>
 <g stroke="url(#${p}gold)" stroke-width="2.6" stroke-linecap="round"><path d="M4.6 32.4h7.2"/><path d="M8.6 38.6h6.2"/></g>`,
+
+  /** 알림 — 금 종 + 민트 추 (2026-10-01, 검색 '알림' 바로가기) */
+  bell: (p) => `${defs(p, ["gold", "goldD", "mint"])}
+<rect x="21.6" y="3.8" width="4.8" height="5.4" rx="2.4" fill="url(#${p}goldD)"/>
+<path d="M24 7c-7 0-12.2 5.3-12.2 12.2v7.2l-3.1 5c-.7 1.1.1 2.6 1.4 2.6h27.8c1.3 0 2.1-1.5 1.4-2.6l-3.1-5v-7.2C36.2 12.3 31 7 24 7Z" fill="url(#${p}gold)" stroke="url(#${p}gold)" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M18.8 37.6a5.2 5.2 0 0 0 10.4 0Z" fill="url(#${p}mint)"/>
+<path d="M16.8 15c1.2-2.3 3.4-3.9 5.9-4.4" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round" fill="none"/>`,
 
   /** 153마인드셋 — 옆얼굴 + 민트 반짝임 */
   mind: (p) => `${defs(p, ["ink", "mint", "gold"])}

@@ -99,6 +99,10 @@ describe("자주 찾는 말", () => {
   it("닉네임 → 닉네임 바꾸기가 1등", () => {
     expect(ids("닉네임")[0]).toBe("f:nickname");
   });
+  it("알림 · 공지 → 알림함", () => {
+    expect(ids("알림")[0]).toBe("f:notifications");
+    expect(ids("공지")[0]).toBe("f:notifications");
+  });
   it("출석왕 → 153 챌린지", () => {
     expect(ids("출석왕")[0]).toBe("f:challenge");
   });

@@ -54,6 +54,7 @@ import HomeMoreSection from "@/components/home/HomeMoreSection";
 import HomeMenuGrid from "@/components/home/HomeMenuGrid";
 import AppSearchButton from "@/components/search/AppSearchButton";
 import DmHeaderButton from "@/components/dm/DmHeaderButton";
+import NotificationBellButton from "@/components/notifications/NotificationBellButton";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import { getMasterLevelDefinition } from "@/data/masterTierData";
@@ -374,9 +375,11 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
                 aria-label="153멤버십"
               >
                 <Ticket className="h-3.5 w-3.5" />
-                <span>멤버십</span>
+                {/* 폭이 좁은 폰(390px 미만)에선 글자를 빼 닉네임 자리를 지킨다 — 머리글에 종이 늘어서 (2026-10-01) */}
+                <span className="hidden min-[390px]:inline">멤버십</span>
               </button>
-              {/* 메시지(DM) — 인스타그램처럼 오른쪽 위 종이비행기 (2026-09-30) */}
+              {/* 알림 — 공지·출석·수업 소식 (2026-10-01) · 메시지(DM) — 인스타그램처럼 오른쪽 위 종이비행기 (2026-09-30) */}
+              <NotificationBellButton />
               <DmHeaderButton />
               <button
                 onClick={() => navigate("/mypage")}

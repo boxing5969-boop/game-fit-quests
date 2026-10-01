@@ -254,6 +254,8 @@ export const FEATURES: readonly SearchEntry[] = [
     ["하트", "좋아요", "닉네임 좋아요", "응원", "하트 보내기"]),
   f("community", "153 커뮤니티", "챔피언 일기 · 코너맨 · 응원", "chat", go("/myboxer/community"),
     ["커뮤니티", "일기", "챔피언 일기", "코너맨", "장비 나눔", "게시판"]),
+  f("notifications", "알림", "공지 · 출석 · 수업 소식 모아 보기", "bell", go("/notifications"),
+    ["알림", "알림함", "공지", "공지사항", "소식", "새 소식", "알람", "푸시", "휴대폰 알림"], { boost: 2 }),
   f("messages", "메시지", "회원·코치님과 1:1 대화", "dm", go("/messages"),
     ["메시지", "dm", "디엠", "쪽지", "대화", "채팅", "코치님께 연락", "문의"], { requires: "dm" }),
   f("ranking", "랭킹 · 명예의 전당", "지점 순위", "medal", go("/halloffame"),

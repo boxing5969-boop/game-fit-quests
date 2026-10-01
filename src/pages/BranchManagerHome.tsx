@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Users, User, ChevronRight, Bell, Inbox, UserCheck, UserX, Download, AlertTriangle, BarChart3 } from "lucide-react";
+import { Search, Users, User, ChevronRight, Inbox, UserCheck, UserX, Download, AlertTriangle, BarChart3 } from "lucide-react";
 import { formatRank, RANK_ICONS, isManagerRole } from "@/lib/rankLabels";
 import { fetchAllRows, inChunks } from "@/lib/supabasePaging";
 import { isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import ApprovalInbox from "@/components/ApprovalInbox";
 import BulkMemberImport from "@/components/admin/BulkMemberImport";
 import DmHeaderButton from "@/components/dm/DmHeaderButton";
+import NotificationBellButton from "@/components/notifications/NotificationBellButton";
 import { toast } from "sonner";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
@@ -143,18 +144,6 @@ const BranchManagerHome = () => {
     },
   });
 
-  // Notifications count
-  const { data: unreadCount } = useQuery({
-    queryKey: ["unread-notifications", user?.id],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("notifications")
-        .select("*", { count: "exact", head: true })
-        .is("read_at", null);
-      if (error) return 0;
-      return count || 0;
-    },
-  });
 
   const filtered = useMemo(() => {
     if (!members) return [];
@@ -650,14 +639,8 @@ const BranchManagerHome = () => {
           <div className="flex items-center gap-2">
             {/* 메시지(DM) — 본사는 처리 안 한 신고도 같은 배지에 (2026-09-30) */}
             <DmHeaderButton className="h-10 w-10" />
-            <button onClick={() => navigate("/mypage")} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
-              <Bell className="h-5 w-5 text-secondary-foreground" />
-              {unreadCount && unreadCount > 0 ? (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              ) : null}
-            </button>
+            {/* 알림 — 예전엔 내정보로 가고 본사 계정은 전 회원 알림 수가 떠 있었다 → 알림함 · 내 알림만 (2026-10-01) */}
+            <NotificationBellButton className="h-10 w-10" iconClassName="h-5 w-5" />
             <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
               <User className="h-5 w-5 text-secondary-foreground" />
             </button>
@@ -759,14 +742,7 @@ const BranchManagerHome = () => {
             </div>
             <div className="flex items-center gap-2">
               <DmHeaderButton />
-              <button onClick={() => navigate("/mypage")} className="relative flex h-9 w-9 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
-                <Bell className="h-4 w-4 text-secondary-foreground" />
-                {unreadCount && unreadCount > 0 ? (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                ) : null}
-              </button>
+              <NotificationBellButton />
             </div>
           </div>
 
