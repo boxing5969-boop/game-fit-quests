@@ -33,8 +33,14 @@ import { celebrateSmall } from "@/lib/celebrations";
 import { cn } from "@/lib/utils";
 import type { Enums } from "@/integrations/supabase/types";
 
-import VideoPlayer from "@/components/VideoPlayer";
+import VideoPlayer, { type PlayerVariant } from "@/components/VideoPlayer";
 import WhiteLeagueTab from "@/components/WhiteLeagueTab";
+import {
+  extraVariantLabels,
+  primaryMissionVideo,
+  videoVariants,
+  type MissionVideoRow,
+} from "@/lib/missionVideos";
 import { Input } from "@/components/ui/input";
 
 import {
@@ -104,8 +110,12 @@ type WarmupMission = {
   key_point_1: string;
   key_point_2: string;
   key_point_3: string;
-  mission_videos?: Array<{ video_url: string | null; poster_url: string | null }> | null;
+  mission_videos?: MissionVideoRow[] | null;
 };
+
+/** 플레이어의 '실사 | 애니메이션' 칸 — 미션의 영상 버전들 */
+const playerVariantsOf = (rows: MissionVideoRow[] | null | undefined): PlayerVariant[] =>
+  videoVariants(rows).map((v) => ({ label: v.label, videoUrl: v.videoUrl, posterUrl: v.posterUrl }));
 
 const emptyMissionForm: MissionForm = {
   title: "",
@@ -141,6 +151,8 @@ const MissionsPage = () => {
   // Admin form state
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // 고치는 미션에 대표 말고 다른 영상 버전(애니메이션 등)이 붙어 있으면 그 이름들 — 폼에 안내만 한다
+  const [editingExtras, setEditingExtras] = useState<string[]>([]);
   const [form, setForm] = useState<MissionForm>(emptyMissionForm);
   const [saving, setSaving] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -158,6 +170,8 @@ const MissionsPage = () => {
     canSubmit: boolean;
     /** 워밍업 참고 영상 — 도전 시작·즉시 클리어 버튼 없이 보기만 */
     reference?: boolean;
+    /** 실사 · 애니메이션 같은 버전 (대표 포함) */
+    variants?: PlayerVariant[];
   } | null>(null);
 
   // League expand/collapse — default: current rank expanded.
@@ -267,7 +281,7 @@ const MissionsPage = () => {
   };
 
   const openVideo = (mission: any) => {
-    const video = mission.mission_videos?.[0];
+    const video = primaryMissionVideo(mission.mission_videos as MissionVideoRow[] | null);
     if (!video) {
       toast.error("영상이 아직 등록되지 않았습니다");
       return;
@@ -285,12 +299,13 @@ const MissionsPage = () => {
       ],
       missionId: mission.id,
       canSubmit: status === "active",
+      variants: playerVariantsOf(mission.mission_videos),
     });
   };
 
   // 🔥 워밍업 참고 영상 — 제출·즉시 클리어 없이 보기만 한다
   const openWarmup = (mission: WarmupMission) => {
-    const video = mission.mission_videos?.[0];
+    const video = primaryMissionVideo(mission.mission_videos);
     if (!video) {
       toast.error("영상이 아직 등록되지 않았습니다");
       return;
@@ -308,6 +323,7 @@ const MissionsPage = () => {
       missionId: mission.id,
       canSubmit: false,
       reference: true,
+      variants: playerVariantsOf(mission.mission_videos),
     });
   };
 
@@ -338,7 +354,9 @@ const MissionsPage = () => {
   };
 
   const openEditMission = (mission: any) => {
-    const video = mission.mission_videos?.[0];
+    // 대표 영상(sort_order 0)만 고친다 — 애니메이션 같은 다른 버전은 그대로 둔다
+    const video = primaryMissionVideo(mission.mission_videos as MissionVideoRow[] | null);
+    setEditingExtras(extraVariantLabels(videoVariants(mission.mission_videos as MissionVideoRow[] | null)));
     setForm({
       title: mission.title,
       description: mission.description,
@@ -383,12 +401,15 @@ const MissionsPage = () => {
           .eq("id", editingId);
         if (error) throw error;
         if (form.video_url.trim()) {
+          // 대표 영상 행 — 버전(애니메이션 등)이 여러 개면 sort_order 가 가장 작은(먼저 올린) 것
           const { data: existingVideo } = await supabase
             .from("mission_videos")
             .select("id")
             .eq("mission_id", editingId)
+            .order("sort_order", { ascending: true })
+            .order("created_at", { ascending: true })
             .limit(1)
-            .single();
+            .maybeSingle();
           if (existingVideo) {
             await supabase
               .from("mission_videos")
@@ -702,6 +723,7 @@ const MissionsPage = () => {
         <VideoPlayer
           videoUrl={videoModal.videoUrl}
           posterUrl={videoModal.posterUrl}
+          variants={videoModal.variants}
           title={videoModal.title}
           keyPoints={videoModal.keyPoints}
           onClose={() => setVideoModal(null)}
@@ -933,6 +955,11 @@ const MissionsPage = () => {
                     )}
                   </button>
                 </div>
+                {editingId && editingExtras.length > 0 && (
+                  <p className="mt-1 text-caption text-muted-foreground">
+                    🎨 {editingExtras.join(" · ")} 버전도 붙어 있어요 — 여기서 고치는 건 대표(실사) 영상이에요
+                  </p>
+                )}
               </div>
               <div>
                 <label className="mb-1 block text-caption text-muted-foreground">
@@ -1052,8 +1079,8 @@ const MissionRow = ({
   const v = STATUS_VISUAL[status];
   const Icon = v.statusIcon;
   const isLocked = status === "locked";
-  // 영상 등록된 미션이면 썸네일 + ▶ 노출 ("훈련 탭의 영상" UI 복구)
-  const video = mission.mission_videos?.[0] ?? null;
+  // 영상 등록된 미션이면 썸네일 + ▶ 노출 ("훈련 탭의 영상" UI 복구) — 대표 영상(sort_order 0) 기준
+  const video = primaryMissionVideo(mission.mission_videos as MissionVideoRow[] | null);
   const hasVideo = !!video?.video_url;
   const posterUrl = video?.poster_url ?? null;
 
@@ -1084,7 +1111,7 @@ const MissionRow = ({
           </span>
         </div>
 
-        {/* 영상 썸네일 — mission_videos[0] 있을 때만 노출. ▶ 오버레이로 클릭 영역 시각화. */}
+        {/* 영상 썸네일 — 대표 영상 있을 때만 노출. ▶ 오버레이로 클릭 영역 시각화. */}
         {hasVideo && (
           <div
             className={cn(
@@ -1202,7 +1229,7 @@ const WarmupRow = ({
   onClick: () => void;
   admin?: { onEdit: () => void; onDelete: () => void };
 }) => {
-  const posterUrl = mission.mission_videos?.[0]?.poster_url ?? null;
+  const posterUrl = primaryMissionVideo(mission.mission_videos)?.poster_url ?? null;
   return (
     <li className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-[hsl(var(--surface-2))]/40">
       <button

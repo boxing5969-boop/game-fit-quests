@@ -8,6 +8,7 @@ import { Plus, Pencil, Trash2, X, Video, Upload, Image, Loader2 } from "lucide-r
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
+import { extraVariantLabels, primaryMissionVideo, videoVariants, type MissionVideoRow } from "@/lib/missionVideos";
 
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
@@ -39,6 +40,8 @@ const MissionManager = () => {
   const qc = useQueryClient();
   const [form, setForm] = useState<MissionForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // 고치는 미션에 대표 말고 다른 영상 버전(애니메이션 등)이 붙어 있으면 그 이름들 — 폼에 안내만 한다
+  const [editingExtras, setEditingExtras] = useState<string[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filterRank, setFilterRank] = useState<string>("all");
@@ -85,7 +88,9 @@ const MissionManager = () => {
   };
 
   const openEdit = (mission: any) => {
-    const video = mission.mission_videos?.[0];
+    // 대표 영상(sort_order 0)만 고친다 — 애니메이션 같은 다른 버전은 그대로 둔다
+    const video = primaryMissionVideo(mission.mission_videos as MissionVideoRow[] | null);
+    setEditingExtras(extraVariantLabels(videoVariants(mission.mission_videos as MissionVideoRow[] | null)));
     setForm({
       title: mission.title,
       description: mission.description,
@@ -128,8 +133,11 @@ const MissionManager = () => {
 
         // Update or create video
         if (form.video_url.trim()) {
+          // 대표 영상 행 — 버전(애니메이션 등)이 여러 개면 sort_order 가 가장 작은(먼저 올린) 것
           const { data: existingVideo } = await supabase
-            .from("mission_videos").select("id").eq("mission_id", editingId).limit(1).maybeSingle();
+            .from("mission_videos").select("id").eq("mission_id", editingId)
+            .order("sort_order", { ascending: true }).order("created_at", { ascending: true })
+            .limit(1).maybeSingle();
           if (existingVideo) {
             await supabase.from("mission_videos").update({
               video_url: form.video_url.trim(),
@@ -219,7 +227,7 @@ const MissionManager = () => {
         </div>
       ) : (
         filteredMissions.map((mission: any) => {
-          const video = mission.mission_videos?.[0];
+          const video = primaryMissionVideo(mission.mission_videos as MissionVideoRow[] | null);
           return (
             <div key={mission.id} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
               <div className="flex items-start justify-between gap-2">
@@ -355,6 +363,11 @@ const MissionManager = () => {
                 </div>
                 {form.video_url && (
                   <p className="mt-1 truncate text-[10px] text-status-complete">✅ 영상 설정됨</p>
+                )}
+                {editingId && editingExtras.length > 0 && (
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    🎨 {editingExtras.join(" · ")} 버전도 붙어 있어요 — 여기서 고치는 건 대표(실사) 영상이에요
+                  </p>
                 )}
               </div>
 

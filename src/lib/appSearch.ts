@@ -22,8 +22,8 @@ export type SearchAction =
   | { kind: "route"; to: string }
   /** 앱 밖 정적 페이지(예: /rankup 안내 페이지) — 전체 새로 열기 */
   | { kind: "href"; href: string }
-  /** 영상 바로 재생 */
-  | { kind: "video"; url: string; title: string }
+  /** 영상 바로 재생 — variants: 실사 · 애니메이션 같은 버전 (대표 포함, 2개 이상일 때만) */
+  | { kind: "video"; url: string; title: string; variants?: ReadonlyArray<{ label: string; url: string }> }
   /** 아이디·비밀번호 바꾸기 창 열기 */
   | { kind: "credentials" };
 
@@ -340,6 +340,8 @@ export interface VideoSource {
   category?: string | null;
   rank?: string | null;
   level?: number | null;
+  /** 대표 영상을 포함한 모든 버전 (실사 · 애니메이션) */
+  variants?: ReadonlyArray<{ label: string; url: string }>;
 }
 
 const RANK_KO: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
@@ -359,8 +361,11 @@ export function videoEntry(v: VideoSource): SearchEntry {
   const isWarmup = v.category === "warmup";
   const rankKo = v.rank ? RANK_KO[v.rank] ?? v.rank : "";
   const where = isWarmup ? "워밍업 영상" : rankKo && v.level ? `${rankKo} L${v.level}` : "153 영상";
+  const versions = v.variants && v.variants.length > 1 ? v.variants : null;
+  // 대표 말고 다른 버전 이름 — "애니메이션"으로 찾아도 이 동작이 나온다
+  const extraLabels = versions ? versions.slice(1).map((x) => x.label) : [];
   const keywords = [
-    tag, sub, v.description ?? "", ...v.keyPoints,
+    tag, sub, v.description ?? "", ...v.keyPoints, ...extraLabels,
     rankKo, v.level ? `레벨${v.level}` : "", v.level ? `레벨 ${v.level}` : "",
     "영상", "동영상",
     ...(isTitle ? ["타이틀매치", "타이틀 매치", "타이틀매치 미션", "타이틀미션", "미션", "심사", "심사 동작", "승급 심사", "관문"] : []),
@@ -374,7 +379,9 @@ export function videoEntry(v: VideoSource): SearchEntry {
     keywords,
     thumb: v.thumb ?? null,
     badge: isTitle ? "타이틀매치" : undefined,
-    action: { kind: "video", url: v.videoUrl, title: v.title },
+    action: versions
+      ? { kind: "video", url: v.videoUrl, title: v.title, variants: versions }
+      : { kind: "video", url: v.videoUrl, title: v.title },
     // 타이틀매치 영상은 같은 점수면 위로
     boost: isTitle ? 8 : 0,
   };

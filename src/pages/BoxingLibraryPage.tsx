@@ -21,6 +21,8 @@ import {
   useLevelVideos, useLevelVideosByIds, useWatchedVideos, youtubeId, youtubeThumb, parseVideoTitle,
   type LevelVideo,
 } from "@/hooks/useLevelVideos";
+import VideoVariantTabs from "@/components/common/VideoVariantTabs";
+import { extraVariantLabels } from "@/lib/missionVideos";
 
 // ───────────────────────── 스타일 (원본 153플레이 그대로) ─────────────────────────
 
@@ -142,6 +144,7 @@ const CSS = `
   border:none;background:rgba(0,0,0,.72);color:#fff;font-size:19px;cursor:pointer}
 .p153modal .mdVid{position:relative;aspect-ratio:16/9;background:#000}
 .p153modal .mdVid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.p153modal .mdVid video{position:absolute;inset:0;width:100%;height:100%;background:#000;object-fit:contain}
 .p153modal .mdVid.igr{aspect-ratio:9/16;max-width:340px;margin:0 auto}
 .p153modal .mdIn{padding:18px 18px 28px}
 .p153modal .mdT{font-size:20px;font-weight:900;line-height:1.35;letter-spacing:-.4px}
@@ -291,7 +294,12 @@ const Tile = ({ it, onPick, savedApi, watchedApi }: {
           {done && <i className="pg" style={{ width: "100%" }} />}
         </div>
         <div className="tt">{t.name}</div>
-        <div className="tm"><span className="chn">153복싱짐{t.tag ? ` · ${t.tag}` : ""}</span></div>
+        <div className="tm">
+          <span className="chn">
+            153복싱짐{t.tag ? ` · ${t.tag}` : ""}
+            {extraVariantLabels(it.v.variants).map((l) => ` · +${l}`).join("")}
+          </span>
+        </div>
       </button>
     );
   }
@@ -376,8 +384,15 @@ const Modal = ({ it, autoplay, onClose, isAdmin, watchedApi }: {
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  // 레벨 미션 영상: 실사 | 애니메이션 같은 버전을 고른다 (버전이 하나면 대표 영상 그대로)
+  const versions = it.kind === "level" && it.v.variants.length > 1 ? it.v.variants : null;
+  const [versionIdx, setVersionIdx] = useState(0);
+  const version = versions ? versions[Math.min(versionIdx, versions.length - 1)] : null;
+  const levelSrc = it.kind === "level" ? version?.videoUrl ?? it.v.videoUrl : "";
+  const levelPoster = it.kind === "level" ? (version ? version.posterUrl : it.v.posterUrl) : null;
+
   const ig = it.kind === "world" && isIG(it.p);
-  const ytId = it.kind === "level" ? youtubeId(it.v.videoUrl) : it.p.yt_id;
+  const ytId = it.kind === "level" ? youtubeId(levelSrc) : it.p.yt_id;
   const ap = autoplay ? "&autoplay=1" : "";
 
   return (
@@ -391,12 +406,26 @@ const Modal = ({ it, autoplay, onClose, isAdmin, watchedApi }: {
               scrolling="no" allowFullScreen />
           ) : ytId ? (
             <iframe
+              key={ytId}
               title={it.kind === "level" ? parseVideoTitle(it.v.title).name : cleanT(it.p.title)}
               src={`https://www.youtube-nocookie.com/embed/${ytId}?rel=0&playsinline=1${ap}`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen />
+          ) : it.kind === "level" && levelSrc ? (
+            // 관장님이 올린 mp4 — 예전엔 유튜브만 틀 수 있어서 이 칸이 검은 화면으로 비어 있었다
+            <video key={levelSrc} src={levelSrc} poster={levelPoster || undefined}
+              controls playsInline autoPlay={autoplay} />
           ) : null}
         </div>
+        {versions && (
+          <VideoVariantTabs
+            labels={versions.map((x) => x.label)}
+            value={versionIdx}
+            onChange={setVersionIdx}
+            tone="dark"
+            className="mx-[18px] mt-3"
+          />
+        )}
 
         <div className="mdIn">
           {it.kind === "world" ? (
@@ -815,7 +844,7 @@ const BoxingLibraryPage = () => {
       )}
 
       {open && (
-        <Modal it={open.it} autoplay={open.ap} isAdmin={isAdmin}
+        <Modal key={itemId(open.it)} it={open.it} autoplay={open.ap} isAdmin={isAdmin}
           watchedApi={watchedApi} onClose={() => setOpen(null)} />
       )}
     </div>

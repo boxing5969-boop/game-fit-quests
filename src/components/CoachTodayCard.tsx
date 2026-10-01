@@ -9,7 +9,9 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLevelVideos, useWatchedVideos, parseVideoTitle, youtubeId } from "@/hooks/useLevelVideos";
+import { useLevelVideos, useWatchedVideos, parseVideoTitle } from "@/hooks/useLevelVideos";
+import { OverlayMedia, type OverlayVariant } from "@/components/common/VideoOverlay";
+import { overlayVariants } from "@/lib/missionVideos";
 import { RANK_LABELS } from "@/data/sharedConstants";
 import { hasPracticedToday } from "@/lib/levelPractice";
 
@@ -50,7 +52,7 @@ const safeSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } 
 
 const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpenDetail, onOpenVideos, extra }: Props) => {
   const { user } = useAuth();
-  const [playing, setPlaying] = useState<{ id: string; url: string; title: string } | null>(null);
+  const [playing, setPlaying] = useState<{ id: string; url: string; title: string; variants: OverlayVariant[] } | null>(null);
   const [collapsed, setCollapsed] = useState(() => safeGet(COURSE_KEY) === "1");
   const { data: videos = [], isFetched: videosFetched } = useLevelVideos(league, levelNumber);
   const { watched, toggle, countFor } = useWatchedVideos();
@@ -157,7 +159,10 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
           : "이번 레벨 영상을 모두 봤어요",
       icon: Play,
       done: videoDone,
-      action: () => (nextVideo ? setPlaying({ id: nextVideo.id, url: nextVideo.videoUrl, title: nextVideo.title }) : onOpenVideos()),
+      action: () =>
+        nextVideo
+          ? setPlaying({ id: nextVideo.id, url: nextVideo.videoUrl, title: nextVideo.title, variants: overlayVariants(nextVideo.variants) })
+          : onOpenVideos(),
       actionLabel: "영상 보기",
     },
     {
@@ -440,17 +445,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
       {playing && createPortal(
         <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/85 p-4" onClick={() => setPlaying(null)}>
           <div className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-            {youtubeId(playing.url) ? (
-              <iframe
-                src={`https://www.youtube.com/embed/${youtubeId(playing.url)}?autoplay=1&rel=0&playsinline=1`}
-                title={playing.title}
-                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="aspect-video w-full rounded-2xl bg-black"
-              />
-            ) : (
-              <video src={playing.url} controls autoPlay playsInline className="aspect-video w-full rounded-2xl bg-black" />
-            )}
+            {/* 실사 | 애니메이션 — 버전이 둘 이상이면 영상 아래에서 바꿔 본다 */}
+            <OverlayMedia key={playing.id} url={playing.url} title={playing.title} variants={playing.variants} />
             <button
               type="button"
               onClick={() => { toggle(playing.id); setPlaying(null); }}

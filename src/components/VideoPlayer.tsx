@@ -1,5 +1,13 @@
 import { useState, useRef } from "react";
 import { X, Play, Pause, Maximize, RotateCcw } from "lucide-react";
+import VideoVariantTabs from "@/components/common/VideoVariantTabs";
+
+/** 같은 동작의 다른 버전 (실사 · 애니메이션 — 2026-10-01) */
+export interface PlayerVariant {
+  label: string;
+  videoUrl: string;
+  posterUrl?: string | null;
+}
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -10,6 +18,8 @@ interface VideoPlayerProps {
   onClose: () => void;
   challengeDisabled?: boolean;
   challengeLabel?: string;
+  /** 대표 영상을 포함한 모든 버전 — 2개 이상이면 영상 아래에 '실사 | 애니메이션' 칸이 뜬다 */
+  variants?: ReadonlyArray<PlayerVariant>;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -23,11 +33,27 @@ const VideoPlayer = ({
   onClose,
   challengeDisabled,
   challengeLabel = "🥊 도전 시작",
+  variants,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [error, setError] = useState(false);
+  // 실사 | 애니메이션 — 고른 버전 (버전이 하나면 videoUrl 그대로)
+  const versions = variants && variants.length > 1 ? variants : null;
+  const [versionIdx, setVersionIdx] = useState(0);
+  const current = versions ? versions[Math.min(versionIdx, versions.length - 1)] : null;
+  const src = current ? current.videoUrl : videoUrl;
+  const poster = current ? current.posterUrl ?? null : posterUrl;
+
+  const pickVersion = (i: number) => {
+    if (i === versionIdx) return;
+    videoRef.current?.pause();
+    setVersionIdx(i);
+    // 새 영상은 처음부터 — 큰 재생 버튼이 다시 보인다 (속도는 그대로 이어간다)
+    setPlaying(false);
+    setError(false);
+  };
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -51,7 +77,7 @@ const VideoPlayer = ({
   };
 
   // Detect if it's a YouTube/external embed
-  const isEmbed = videoUrl.includes("youtube") || videoUrl.includes("youtu.be") || videoUrl.includes("vimeo");
+  const isEmbed = src.includes("youtube") || src.includes("youtu.be") || src.includes("vimeo");
 
   const getEmbedUrl = (url: string) => {
     if (url.includes("youtu.be/")) {
@@ -91,7 +117,8 @@ const VideoPlayer = ({
           </div>
         ) : isEmbed ? (
           <iframe
-            src={getEmbedUrl(videoUrl)}
+            key={src}
+            src={getEmbedUrl(src)}
             className="h-full w-full"
             allow="autoplay; fullscreen; picture-in-picture"
             allowFullScreen
@@ -99,13 +126,16 @@ const VideoPlayer = ({
         ) : (
           <>
             <video
+              key={src}
               ref={videoRef}
-              src={videoUrl}
-              poster={posterUrl || undefined}
+              src={src}
+              poster={poster || undefined}
               className="h-full w-full object-contain"
               onError={() => setError(true)}
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
+              // 버전을 바꾸면 새 영상이 기본 속도로 돌아가므로 고른 속도를 다시 건다
+              onLoadedMetadata={(e) => { e.currentTarget.playbackRate = speed; }}
               playsInline
             />
             {/* Big play button overlay */}
@@ -122,6 +152,13 @@ const VideoPlayer = ({
           </>
         )}
       </div>
+
+      {/* 실사 | 애니메이션 — 같은 동작의 다른 버전 */}
+      {versions && (
+        <div className="border-b border-border bg-card px-4 py-2.5">
+          <VideoVariantTabs labels={versions.map((v) => v.label)} value={versionIdx} onChange={pickVersion} />
+        </div>
+      )}
 
       {/* Controls (for native video only) */}
       {!isEmbed && !error && (

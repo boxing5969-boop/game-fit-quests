@@ -4,15 +4,25 @@
 import { useMemo, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  MISSION_VIDEO_EMBED,
+  primaryMissionVideo,
+  videoVariants,
+  type MissionVideoRow,
+  type VideoVariant,
+} from "@/lib/missionVideos";
 
 export interface LevelVideo {
   id: string;
   title: string;
   description: string | null;
   keyPoints: string[];
+  /** 대표 영상 (sort_order 0 — 보통 관장님 실사 시범) */
   videoUrl: string;
   posterUrl: string | null;
   sortOrder: number;
+  /** 대표 영상을 포함한 모든 버전 (실사 · 애니메이션 — 2026-10-01). 하나뿐이면 길이 1 */
+  variants: VideoVariant[];
 }
 
 /** 유튜브 URL → embed/썸네일에 쓰는 video id */
@@ -39,24 +49,26 @@ type MissionRow = {
   id: string; title: string; description: string | null;
   key_point_1: string | null; key_point_2: string | null; key_point_3: string | null;
   sort_order: number | null;
-  mission_videos: Array<{ video_url: string | null; poster_url: string | null }> | null;
+  mission_videos: MissionVideoRow[] | null;
 };
 
 const MISSION_COLS =
-  "id, title, description, key_point_1, key_point_2, key_point_3, sort_order, mission_videos(video_url, poster_url)";
+  `id, title, description, key_point_1, key_point_2, key_point_3, sort_order, ${MISSION_VIDEO_EMBED}`;
 
 const mapMissions = (data: unknown): LevelVideo[] =>
   ((data || []) as unknown as MissionRow[])
     .map((m) => {
-      const v = m.mission_videos?.[0];
+      // 한 동작에 영상이 여러 개(실사 · 애니메이션)여도 대표는 sort_order 0 — DB 가 돌려주는 순서에 맡기지 않는다
+      const v = primaryMissionVideo(m.mission_videos);
       return {
         id: m.id,
         title: m.title,
         description: m.description,
         keyPoints: [m.key_point_1, m.key_point_2, m.key_point_3].filter(Boolean) as string[],
-        videoUrl: v?.video_url || "",
+        videoUrl: v?.video_url?.trim() || "",
         posterUrl: v?.poster_url || null,
         sortOrder: m.sort_order ?? 0,
+        variants: videoVariants(m.mission_videos),
       };
     })
     .filter((v) => !!v.videoUrl);
@@ -69,7 +81,7 @@ export const useLevelVideos = (league: string, levelNumber: number) =>
     queryFn: async (): Promise<LevelVideo[]> => {
       const { data, error } = await supabase
         .from("missions")
-        .select("id, title, description, key_point_1, key_point_2, key_point_3, sort_order, mission_videos(video_url, poster_url), levels!inner(rank_name, level_number)")
+        .select(`${MISSION_COLS}, levels!inner(rank_name, level_number)`)
         .eq("is_active", true)
         // 워밍업 참고 영상(줄넘기 등)은 레벨 영상이 아니다 — 워밍업 칸(useWarmupVideos)에서 따로 보여준다
         .neq("category", "warmup")

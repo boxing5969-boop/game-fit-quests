@@ -11,7 +11,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Play, Repeat2, Trophy, X } from "lucide-react";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useLevelVideosByIds } from "@/hooks/useLevelVideos";
-import VideoOverlay from "@/components/common/VideoOverlay";
+import VideoOverlay, { type OverlayVideo } from "@/components/common/VideoOverlay";
+import { overlayVariants } from "@/lib/missionVideos";
 import {
   levelShort,
   resolveDay,
@@ -36,11 +37,14 @@ const StepCard = ({
   step,
   index,
   onPlay,
+  versions,
   showNew,
 }: {
   step: LessonStep;
   index: number;
   onPlay: (() => void) | null;
+  /** 영상 버전 이름 (실사 · 애니메이션) — 2개 이상일 때만 버튼 옆에 적는다 */
+  versions: string[];
   /** 반복하는 날에는 '새로 배워요'를 달지 않는다 (앞날에 이미 배웠다) */
   showNew: boolean;
 }) => (
@@ -91,6 +95,9 @@ const StepCard = ({
             className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-full bg-card px-3.5 text-[12.5px] font-bold text-foreground shadow-elev-1 active:scale-95"
           >
             <Play className="h-3.5 w-3.5 fill-current" /> 153 영상 보기
+            {versions.length > 1 && (
+              <span className="font-semibold text-muted-foreground">· {versions.join(" · ")}</span>
+            )}
           </button>
         )}
       </div>
@@ -101,7 +108,7 @@ const StepCard = ({
 const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
   const open = !!day;
   useModalDismiss(open, onClose);
-  const [playing, setPlaying] = useState<{ url: string; title: string } | null>(null);
+  const [playing, setPlaying] = useState<OverlayVideo | null>(null);
   const closeVideo = useCallback(() => setPlaying(null), []);
   // 시트가 닫히면(뒤로가기 포함) 틀어 둔 영상도 같이 닫는다
   useEffect(() => {
@@ -200,7 +207,12 @@ const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
                           step={s}
                           index={i}
                           showNew={!resolved?.repeatOf}
-                          onPlay={v ? () => setPlaying({ url: v.videoUrl, title: v.title }) : null}
+                          versions={v ? v.variants.map((x) => x.label) : []}
+                          onPlay={
+                            v
+                              ? () => setPlaying({ url: v.videoUrl, title: v.title, variants: overlayVariants(v.variants) })
+                              : null
+                          }
                         />
                       );
                     })}

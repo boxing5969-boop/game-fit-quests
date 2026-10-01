@@ -3358,8 +3358,10 @@ export type Database = {
           created_at: string
           duration_seconds: number | null
           id: string
+          label: string | null
           mission_id: string
           poster_url: string | null
+          sort_order: number
           source_type: string
           video_url: string
         }
@@ -3367,8 +3369,10 @@ export type Database = {
           created_at?: string
           duration_seconds?: number | null
           id?: string
+          label?: string | null
           mission_id: string
           poster_url?: string | null
+          sort_order?: number
           source_type?: string
           video_url: string
         }
@@ -3376,8 +3380,10 @@ export type Database = {
           created_at?: string
           duration_seconds?: number | null
           id?: string
+          label?: string | null
           mission_id?: string
           poster_url?: string | null
+          sort_order?: number
           source_type?: string
           video_url?: string
         }

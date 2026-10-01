@@ -4,9 +4,11 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Play, CheckCircle2, X } from "lucide-react";
 import {
-  useLevelVideos, useWatchedVideos, youtubeId, youtubeThumb, parseVideoTitle,
+  useLevelVideos, useWatchedVideos, youtubeThumb, parseVideoTitle,
   type LevelVideo,
 } from "@/hooks/useLevelVideos";
+import { OverlayMedia } from "@/components/common/VideoOverlay";
+import { overlayVariants } from "@/lib/missionVideos";
 
 interface Props {
   league: string;
@@ -147,17 +149,13 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            {youtubeId(playing.videoUrl) ? (
-              <iframe
-                src={`https://www.youtube.com/embed/${youtubeId(playing.videoUrl)}?autoplay=1&rel=0&playsinline=1`}
-                title={playing.title}
-                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="aspect-video w-full rounded-2xl bg-black"
-              />
-            ) : (
-              <video src={playing.videoUrl} controls autoPlay playsInline className="aspect-video w-full rounded-2xl bg-black" />
-            )}
+            {/* 실사 | 애니메이션 — 버전이 둘 이상이면 영상 아래에서 바꿔 본다 */}
+            <OverlayMedia
+              key={playing.id}
+              url={playing.videoUrl}
+              title={playing.title}
+              variants={overlayVariants(playing.variants)}
+            />
             <button
               type="button"
               onClick={() => { toggle(playing.id); setPlaying(null); }}

@@ -7,6 +7,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TITLE_LEVEL_IN_LEAGUE, toTitleVideos, type TitleVideo } from "@/lib/titleMatch";
+import { MISSION_VIDEO_EMBED } from "@/lib/missionVideos";
 
 /** 쿼리키 — 다른 화면 캐시와 겹치지 않게 153title: 로 시작 */
 export const TITLE_VIDEOS_KEY = ["153title:videos"] as const;
@@ -20,7 +21,7 @@ export const useTitleMatchVideos = () =>
       const { data, error } = await supabase
         .from("missions")
         .select(
-          "id, title, description, key_point_1, key_point_2, key_point_3, sort_order, mission_videos(video_url, poster_url), levels!inner(rank_name, level_number)",
+          `id, title, description, key_point_1, key_point_2, key_point_3, sort_order, ${MISSION_VIDEO_EMBED}, levels!inner(rank_name, level_number)`,
         )
         .eq("is_active", true)
         .neq("category", "warmup")

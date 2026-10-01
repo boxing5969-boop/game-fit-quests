@@ -121,7 +121,7 @@ const SearchPage = () => {
   const open = (e: SearchEntry) => {
     setRecent(pushRecent(text));
     const a = e.action;
-    if (a.kind === "video") setVideo({ url: a.url, title: a.title });
+    if (a.kind === "video") setVideo({ url: a.url, title: a.title, variants: a.variants });
     else if (a.kind === "route") navigate(a.to);
     else if (a.kind === "href") window.location.assign(a.href);
     else if (a.kind === "credentials") openCredentialChange();

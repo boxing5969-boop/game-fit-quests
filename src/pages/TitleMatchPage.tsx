@@ -382,6 +382,7 @@ const TitleMatchPage = () => {
           <VideoPlayer
             videoUrl={playableUrl(playing.videoUrl)}
             posterUrl={playing.posterUrl}
+            variants={playing.variants.map((x) => ({ label: x.label, videoUrl: playableUrl(x.videoUrl), posterUrl: x.posterUrl }))}
             title={parseVideoTitle(playing.title).name || playing.title}
             keyPoints={playing.keyPoints}
             onClose={closePlayer}

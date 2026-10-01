@@ -15,6 +15,13 @@ import { youtubeThumb } from "@/hooks/useLevelVideos";
 import { isManagerRole } from "@/lib/rankLabels";
 import { levelShort, resolveDay } from "@/lib/lessonDays";
 import {
+  MISSION_VIDEO_EMBED,
+  overlayVariants,
+  primaryMissionVideo,
+  videoVariants,
+  type MissionVideoRow,
+} from "@/lib/missionVideos";
+import {
   FEATURES,
   lessonEntry,
   videoEntry,
@@ -33,7 +40,7 @@ type MissionRow = {
   key_point_2: string | null;
   key_point_3: string | null;
   category: string | null;
-  mission_videos: Array<{ video_url: string | null; poster_url: string | null }> | null;
+  mission_videos: MissionVideoRow[] | null;
   levels: { rank_name: string | null; level_number: number | null } | null;
 };
 
@@ -42,15 +49,16 @@ async function fetchSearchVideos(): Promise<VideoSource[]> {
   const { data, error } = await (supabase as any)
     .from("missions")
     .select(
-      "id, title, description, key_point_1, key_point_2, key_point_3, category, sort_order, mission_videos(video_url, poster_url), levels(rank_name, level_number)",
+      `id, title, description, key_point_1, key_point_2, key_point_3, category, sort_order, ${MISSION_VIDEO_EMBED}, levels(rank_name, level_number)`,
     )
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return ((data ?? []) as MissionRow[])
     .map((m) => {
-      const v = m.mission_videos?.find((x) => !!x.video_url) ?? null;
-      const url = v?.video_url ?? "";
+      // 대표 영상 (버전이 여러 개면 sort_order 0) + 실사 · 애니메이션 같은 버전들
+      const v = primaryMissionVideo(m.mission_videos);
+      const url = v?.video_url?.trim() ?? "";
       return {
         id: m.id,
         title: m.title,
@@ -61,6 +69,7 @@ async function fetchSearchVideos(): Promise<VideoSource[]> {
         category: m.category,
         rank: m.levels?.rank_name ?? null,
         level: m.levels?.level_number ?? null,
+        variants: overlayVariants(videoVariants(m.mission_videos)),
       };
     })
     .filter((v) => !!v.videoUrl);

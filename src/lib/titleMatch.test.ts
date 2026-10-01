@@ -114,6 +114,19 @@ describe("영상 정리", () => {
     expect(v[0].videoUrl).toBe("https://youtu.be/real01");
     expect(v[0].posterUrl).toBe("p1");
   });
+  it("실사 · 애니메이션 두 버전 — DB 가 애니를 먼저 줘도 대표는 실사(sort_order 0)", () => {
+    const v = toTitleVideos([
+      row("a", "white", 10, null, {
+        mission_videos: [
+          { video_url: "https://x/anime.mp4", poster_url: "pa", label: "애니메이션", sort_order: 1 },
+          { video_url: "https://x/live.mp4", poster_url: "pl", label: null, sort_order: 0 },
+        ],
+      }),
+    ]);
+    expect(v[0].videoUrl).toBe("https://x/live.mp4");
+    expect(v[0].posterUrl).toBe("pl");
+    expect(v[0].variants.map((x) => x.label)).toEqual(["실사", "애니메이션"]);
+  });
   it("엉뚱한 응답이면 빈 목록", () => {
     expect(toTitleVideos(null)).toEqual([]);
     expect(toTitleVideos({})).toEqual([]);

@@ -178,3 +178,33 @@ describe("최근 검색", () => {
     expect(loadRecent()).toEqual([]);
   });
 });
+
+describe("실사 · 애니메이션 버전 (2026-10-01)", () => {
+  const twoVersions = videoEntry({
+    id: "m1b", title: "[복싱/잽] 4스텝 잽ㅣ앞으로 나갈 때 잽을 동시에", keyPoints: [],
+    videoUrl: "https://x/live.mp4", category: "level", rank: "white", level: 1,
+    variants: [
+      { label: "실사", url: "https://x/live.mp4" },
+      { label: "애니메이션", url: "https://x/anime.mp4" },
+    ],
+  });
+  it.each(["애니", "애니메이션", "4스텝 잽 애니"])("'%s' 로 찾아도 그 동작이 나온다", (q) => {
+    expect(searchEntries([twoVersions, warmupVideo], q).map((h) => h.entry.id)).toContain("v:m1b");
+  });
+  it("누르면 두 버전을 함께 넘긴다 · 버전이 하나면 예전 모양 그대로", () => {
+    expect(twoVersions.action).toEqual({
+      kind: "video",
+      url: "https://x/live.mp4",
+      title: "[복싱/잽] 4스텝 잽ㅣ앞으로 나갈 때 잽을 동시에",
+      variants: [
+        { label: "실사", url: "https://x/live.mp4" },
+        { label: "애니메이션", url: "https://x/anime.mp4" },
+      ],
+    });
+    expect(level1Video.action).toEqual({
+      kind: "video",
+      url: "https://youtu.be/xyz987abc",
+      title: "[복싱/잽] 4스텝 잽ㅣ리듬 스텝 위에서 옆 각도로 찌르는 잽",
+    });
+  });
+});

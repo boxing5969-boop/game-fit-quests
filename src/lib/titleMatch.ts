@@ -6,6 +6,8 @@
  * 여기에는 화면(pages/TitleMatchPage)이 쓰는 순수 계산만 둔다 (테스트: titleMatch.test.ts).
  */
 
+import { primaryMissionVideo, videoVariants, type MissionVideoRow, type VideoVariant } from "@/lib/missionVideos";
+
 export type TitleLeague = "white" | "blue" | "red" | "black";
 
 export interface TitleStage {
@@ -88,6 +90,8 @@ export interface TitleVideo {
   keyPoints: string[];
   videoUrl: string;
   posterUrl: string | null;
+  /** 대표 영상을 포함한 모든 버전 (실사 · 애니메이션 — 2026-10-01) */
+  variants: VideoVariant[];
 }
 
 type MissionRow = {
@@ -97,7 +101,7 @@ type MissionRow = {
   key_point_1: string | null;
   key_point_2: string | null;
   key_point_3: string | null;
-  mission_videos: Array<{ video_url: string | null; poster_url: string | null }> | null;
+  mission_videos: MissionVideoRow[] | null;
   levels: { rank_name: string | null; level_number: number | null } | null;
 };
 
@@ -113,7 +117,8 @@ export function toTitleVideos(rows: unknown): TitleVideo[] {
   for (const r of rows as MissionRow[]) {
     const league = r?.levels?.rank_name;
     if (!isLeague(league) || r.levels?.level_number !== TITLE_LEVEL_IN_LEAGUE) continue;
-    const v = r.mission_videos?.find((x) => !!x?.video_url?.trim()) ?? null;
+    // 대표 영상 — 버전이 여러 개면 sort_order 0 (주소가 빈 칸은 건너뛴다)
+    const v = primaryMissionVideo(r.mission_videos);
     const url = v?.video_url?.trim() ?? "";
     if (!url) continue;
     out.push({
@@ -126,6 +131,7 @@ export function toTitleVideos(rows: unknown): TitleVideo[] {
         .filter(Boolean),
       videoUrl: url,
       posterUrl: v?.poster_url?.trim() || null,
+      variants: videoVariants(r.mission_videos),
     });
   }
   return out;

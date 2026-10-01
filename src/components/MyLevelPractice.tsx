@@ -39,6 +39,10 @@ const playableUrl = (url: string) => {
   return id ? `https://youtu.be/${id}` : url;
 };
 
+/** 플레이어의 '실사 | 애니메이션' 칸 — 버전마다 같은 주소 정리 */
+const playerVariants = (v: LevelVideo) =>
+  v.variants.map((x) => ({ label: x.label, videoUrl: playableUrl(x.videoUrl), posterUrl: x.posterUrl }));
+
 const hideImg = (e: SyntheticEvent<HTMLImageElement>) => {
   e.currentTarget.style.display = "none";
 };
@@ -353,6 +357,11 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
                     </span>
                     <span className="line-clamp-2 block text-[13px] font-black leading-snug text-foreground">{t.name}</span>
                     {t.sub && <span className="mt-0.5 line-clamp-1 block text-[11px] text-muted-foreground">{t.sub}</span>}
+                    {v.variants.length > 1 && (
+                      <span className="mt-1 inline-flex rounded-full bg-secondary px-2 py-0.5 text-[10.5px] font-bold text-secondary-foreground">
+                        🎬 {v.variants.map((x) => x.label).join(" · ")}
+                      </span>
+                    )}
                   </span>
                 </button>
                 <PointList points={v.keyPoints} />
@@ -428,6 +437,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
         <VideoPlayer
           videoUrl={playableUrl(playing.videoUrl)}
           posterUrl={playing.posterUrl}
+          variants={playerVariants(playing)}
           title={parseVideoTitle(playing.title).name}
           keyPoints={playing.keyPoints}
           onClose={() => setPlaying(null)}
@@ -445,6 +455,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
         <VideoPlayer
           videoUrl={playableUrl(warmupPlaying.videoUrl)}
           posterUrl={warmupPlaying.posterUrl}
+          variants={playerVariants(warmupPlaying)}
           title={parseVideoTitle(warmupPlaying.title).name}
           keyPoints={warmupPlaying.keyPoints}
           onClose={() => setWarmupPlaying(null)}
