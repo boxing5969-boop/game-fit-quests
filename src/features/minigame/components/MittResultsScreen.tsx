@@ -22,7 +22,8 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
   const mitt = getMittReport(extras.perfectPct);
   const highestCleared = getHighestClearedRound();
   const reachedRound = result.round;
-  const newBest = highestCleared > 0 && extras.stagesCleared >= highestCleared;
+  // 엔진이 라운드를 깰 때 저장소를 먼저 갱신하므로 "저장값 >= 이번 결과" 비교는 동률도 신기록으로 보였다 — 엔진이 알려 준 값을 쓴다
+  const newBest = extras.newBestRound;
   const starsByRound = getAllStars();
   const totalStars = getTotalStars();
   const maxStars = Math.max(1, highestCleared * 3);
@@ -35,7 +36,7 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
     best_reaction_ms: result.bestReaction,
     accuracy: result.accuracy,
     total_punches: result.totalSteps,
-    combo_peak: result.completedCombos,
+    combo_peak: result.totalCombos, // 최고 콤보 (completedCombos 는 PERFECT 횟수)
     tier: null,
     xp_earned: Math.floor(result.score / 10),
   });
@@ -134,7 +135,8 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
               <div className="mb-2 font-display text-[11px] tracking-widest text-muted-foreground">ROUND 기록</div>
               <div className="max-h-40 space-y-1.5 overflow-y-auto">
                 {extras.drillResults.map((dr, i) => {
-                  const roundNum = i + 1;
+                  // 같은 라운드를 다시 하면 결과가 한 줄 더 쌓이므로 순번이 아니라 'ROUND N' 라벨에서 라운드를 읽는다
+                  const roundNum = Number((dr.comboId.match(/\d+/) || [i + 1])[0]);
                   const stars = (starsByRound[roundNum] || 0) as 0 | 1 | 2 | 3;
                   return (
                     <div key={i} className="flex items-center gap-2 text-xs">

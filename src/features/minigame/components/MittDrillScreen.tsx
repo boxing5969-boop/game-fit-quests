@@ -217,8 +217,8 @@ const MittDrillScreen = ({
   return (
     <div
       className={`arena-bg relative overflow-hidden ${shaking ? 'shake' : ''}`}
-      // 아이폰: body 가 상태바만큼 위 여백을 갖고 있어 100dvh 그대로면 아래 미트가 화면 밖으로 밀린다 (2026-10-01)
-      style={{ height: 'calc(100dvh - env(safe-area-inset-top, 0px))', display: 'flex', flexDirection: 'column' }}
+      // 게임 안에서는 body 의 상태바 여백을 빼므로(minigame.css) 화면 높이를 꽉 채우고, 상태바 자리는 HUD 가 자기 여백으로 피한다
+      style={{ height: '100dvh', display: 'flex', flexDirection: 'column' }}
     >
       {/* 라운드 분위기 배경 글로우 */}
       <motion.div
@@ -256,7 +256,7 @@ const MittDrillScreen = ({
       )}
 
       {/* ===== TOP HUD ===== */}
-      <div className="relative z-20 border-b border-white/[0.07] bg-card/90 backdrop-blur">
+      <div className="relative z-20 border-b border-white/[0.07] bg-card/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur">
         {/* Energy bar (전면) */}
         <div className="px-3 pt-2">
           <div className="mb-1 flex items-center justify-between pr-11">
@@ -410,7 +410,7 @@ const MittDrillScreen = ({
                 animate={{ opacity: 0, scale: 1.8 }}
                 transition={{ duration: 0.35 }}
                 className="absolute pointer-events-none"
-                style={{ left: `${left}%`, top: `${HIT_ZONE_RATIO * 100}%`, transform: 'translate(-50%, -50%)' }}
+                style={{ left: `${left}%`, top: `${HIT_ZONE_RATIO * 100}%`, x: '-50%', y: '-50%' }}
               >
                 <div
                   className={
@@ -432,7 +432,7 @@ const MittDrillScreen = ({
                 animate={{ opacity: 0, y: 30 }}
                 transition={{ duration: 0.4 }}
                 className="pointer-events-none absolute text-muted-foreground"
-                style={{ left: `${left}%`, top: `${(HIT_ZONE_RATIO + 0.05) * 100}%`, transform: 'translate(-50%, -50%)' }}
+                style={{ left: `${left}%`, top: `${(HIT_ZONE_RATIO + 0.05) * 100}%`, x: '-50%' }}
               >
                 <Wind className="h-8 w-8" />
               </motion.div>
@@ -475,7 +475,7 @@ const MittDrillScreen = ({
               exit={{ opacity: 0, scale: 1.3, y: -10 }}
               transition={{ duration: lastResult.rating === 'perfect' ? 0.35 : 0.28 }}
               className="absolute left-1/2 pointer-events-none z-20"
-              style={{ top: `${HIT_ZONE_RATIO * 100 - 14}%`, transform: 'translateX(-50%)' }}
+              style={{ top: `${HIT_ZONE_RATIO * 100 - 14}%`, x: '-50%' }}
             >
               <div
                 className={`flex items-center gap-1.5 whitespace-nowrap font-display tracking-widest ${

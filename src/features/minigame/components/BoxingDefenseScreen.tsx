@@ -208,8 +208,9 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               animate={{ opacity: 1, y: -50, scale: f.big ? 1.5 : 1.1 }}
               exit={{ opacity: 0, y: -90 }}
               transition={{ duration: 0.7, ease: 'easeOut' }}
-              className={`absolute top-1/3 ${f.side === 'L' ? 'left-[20%]' : f.side === 'R' ? 'right-[20%]' : 'left-1/2 -translate-x-1/2'} font-display ${f.big ? 'text-4xl' : 'text-2xl'} tracking-widest ${f.color} drop-shadow-[0_3px_10px_rgba(0,0,0,0.85)]`}
-              style={{ textShadow: f.big ? '0 0 20px currentColor' : undefined }}
+              className={`absolute top-1/3 ${f.side === 'L' ? 'left-[20%]' : f.side === 'R' ? 'right-[20%]' : 'left-1/2'} font-display ${f.big ? 'text-4xl' : 'text-2xl'} tracking-widest ${f.color} drop-shadow-[0_3px_10px_rgba(0,0,0,0.85)]`}
+              // 가운데 정렬은 framer 의 x 로 — Tailwind translate 클래스는 framer 가 쓰는 inline transform 에 덮여 사라진다
+              style={{ x: f.side ? 0 : '-50%', textShadow: f.big ? '0 0 20px currentColor' : undefined }}
             >
               {f.text}
             </motion.div>
@@ -229,7 +230,8 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ type: 'spring', stiffness: 350, damping: 20 }}
-              className="absolute top-1/4 left-1/2 -translate-x-1/2 z-30 text-center pointer-events-none"
+              className="absolute top-1/4 left-1/2 z-30 text-center pointer-events-none"
+              style={{ x: '-50%' }}
             >
               <div className={`font-display text-5xl tracking-widest ${bannerEvent.color} drop-shadow-[0_0_24px_currentColor]`}>
                 {bannerEvent.text}
@@ -306,7 +308,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
 
         {/* Persistent buff badges (Focus / Adrenaline) */}
         {(focusEndsAt || adrenalineEndsAt) && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-25 flex gap-1.5 pointer-events-none">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[25] flex gap-1.5 pointer-events-none">
             {focusEndsAt && (
               <div className="flex items-center gap-1 rounded-full border border-secondary/60 bg-secondary/30 px-2 py-0.5 font-display text-[11px] tracking-widest text-secondary backdrop-blur-md">
                 <Crosshair className="h-3 w-3" /> FOCUS
@@ -358,7 +360,8 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               initial={{ y: -20, opacity: 0, scale: 0.8 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: -10, opacity: 0 }}
-              className="absolute top-[18%] left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-xl bg-card/90 border border-secondary/50 backdrop-blur-md font-display tracking-widest text-secondary text-sm shadow-[0_0_24px_rgba(250,204,21,0.5)] pointer-events-none"
+              className="absolute top-[18%] left-1/2 z-30 px-4 py-2 rounded-xl bg-card/90 border border-secondary/50 backdrop-blur-md font-display tracking-widest text-secondary text-sm shadow-[0_0_24px_rgba(250,204,21,0.5)] pointer-events-none"
+              style={{ x: '-50%' }}
             >
               {itemPickupFx.kind === 'focus' ? <span className="flex items-center gap-1"><Crosshair className="h-4 w-4" /> FOCUS +5s</span> : <span className="flex items-center gap-1"><Hourglass className="h-4 w-4" /> ADRENALINE +3s</span>}
             </motion.div>
@@ -447,7 +450,8 @@ function AttackIndicator({ attack }: { attack: ReturnType<typeof useDefenseEngin
       exit={{ opacity: 0, scale: 1.7 }}
       transition={{ duration: 0.12 }}
       className={`absolute top-[35%] ${isLeft ? 'left-2' : 'right-2'} z-20 flex flex-col items-center pointer-events-none`}
-      style={{ transform: `translateX(${xOffset})` }}
+      // 접근 이동은 framer 의 x 값으로 — inline transform 은 framer 가 scale 을 쓰면서 덮어써 버린다 (2026-10-01 검수)
+      style={{ x: xOffset }}
     >
       <div className={`mb-1 rounded px-2 py-0.5 font-display text-[11px] tracking-widest text-white shadow-lg ${colorBg}`}>
         {label}
@@ -456,7 +460,7 @@ function AttackIndicator({ attack }: { attack: ReturnType<typeof useDefenseEngin
         animate={{ scale: [1, 1.1, 1] }}
         transition={{ duration: 0.3, repeat: Infinity }}
         className="drop-shadow-[0_0_14px_rgba(255,255,255,0.5)]"
-        style={{ transform: isLeft ? undefined : 'scaleX(-1)' }}
+        style={{ scaleX: isLeft ? 1 : -1 }}
       >
         <Icon3D name="glove_red" size={64} />
       </motion.div>
@@ -487,7 +491,7 @@ function BurstFx({ side, color }: { side: 'L' | 'R'; color: string }) {
   const particles = Array.from({ length: 8 });
   return (
     <div
-      className={`absolute top-1/3 ${side === 'L' ? 'left-[20%]' : 'right-[20%]'} w-0 h-0 z-25 pointer-events-none`}
+      className={`absolute top-1/3 ${side === 'L' ? 'left-[20%]' : 'right-[20%]'} w-0 h-0 z-[25] pointer-events-none`}
     >
       {particles.map((_, i) => {
         const angle = (i / particles.length) * Math.PI * 2;
@@ -513,8 +517,8 @@ function BurstFx({ side, color }: { side: 'L' | 'R'; color: string }) {
         initial={{ scale: 0.3, opacity: 0.9 }}
         animate={{ scale: 2.2, opacity: 0 }}
         transition={{ duration: 0.35 }}
-        className="absolute -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full"
-        style={{ background: `radial-gradient(circle, ${color} 0%, transparent 70%)` }}
+        className="absolute w-12 h-12 rounded-full"
+        style={{ x: '-50%', y: '-50%', background: `radial-gradient(circle, ${color} 0%, transparent 70%)` }}
       />
     </div>
   );

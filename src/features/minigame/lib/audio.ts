@@ -31,6 +31,8 @@ const LOOP_SECONDS: Record<MusicName, number> = {
 };
 /** MP3 앞머리(인코더 지연 576 + 디코더 529 샘플) — 갭리스 정보를 안 읽는 디코더용 */
 const MP3_LEAD_IN_SEC = 1105 / 44100;
+/** 음원 받기에 실패하면 이 시간 동안은 같은 파일을 다시 요청하지 않는다 */
+const LOAD_RETRY_AFTER_MS = 15_000;
 
 const SFX_NAMES: SfxName[] = [
   'punch_1', 'punch_2', 'punch_3', 'perfect', 'miss', 'whoosh', 'block', 'bell',
@@ -59,6 +61,8 @@ class AudioEngine {
 
   private buffers = new Map<string, AudioBuffer>();
   private loading = new Map<string, Promise<AudioBuffer | null>>();
+  /** 받기 실패한 시각 — 한동안 다시 요청하지 않는다 (실패 → 재시도 → 실패의 무한 요청 방지, 2026-10-01 검수) */
+  private failedAt = new Map<string, number>();
   private preloaded = false;
 
   // 재생 중인 음악
@@ -95,7 +99,8 @@ class AudioEngine {
       this.musicBus.gain.value = 1;
       this.musicBus.connect(this.master);
     }
-    if (this.ctx.state === 'suspended') {
+    // 'suspended' 뿐 아니라 iOS 의 'interrupted'(통화·백그라운드 뒤) 에서도 다시 깨운다
+    if (this.ctx.state !== 'running' && this.ctx.state !== 'closed') {
       this.ctx.resume().catch(() => {});
     }
     return this.ctx;
@@ -110,6 +115,8 @@ class AudioEngine {
     if (cached) return Promise.resolve(cached);
     const inflight = this.loading.get(name);
     if (inflight) return inflight;
+    const failed = this.failedAt.get(name);
+    if (failed && Date.now() - failed < LOAD_RETRY_AFTER_MS) return Promise.resolve(null);
     const ctx = this.getCtx();
     if (!ctx) return Promise.resolve(null);
     const p = fetch(this.url(name))
@@ -117,9 +124,13 @@ class AudioEngine {
       .then((ab) => ctx.decodeAudioData(ab))
       .then((buf) => {
         this.buffers.set(name, buf);
+        this.failedAt.delete(name);
         return buf;
       })
-      .catch(() => null)
+      .catch(() => {
+        this.failedAt.set(name, Date.now());
+        return null;
+      })
       .finally(() => this.loading.delete(name));
     this.loading.set(name, p);
     return p;
@@ -288,6 +299,7 @@ class AudioEngine {
   }
 
   private stopAllMusic(fade = 0.25) {
+    this.stopSynthBgm();
     if (this.lobbyNode) { this.fadeOutAndStop(this.lobbyNode, fade); this.lobbyNode = null; }
     if (this.stems) { this.stems.forEach((s) => this.fadeOutAndStop(s, fade)); this.stems = null; }
   }
@@ -302,8 +314,9 @@ class AudioEngine {
     if (this.lobbyNode) return;
     const buf = this.buffers.get('bgm_lobby');
     if (!buf) {
-      void this.load('bgm_lobby').then(() => {
-        if (this.lobbyWanted && this.enabled && !this.lobbyNode) this.startLobby();
+      // 받고 나서 틀되, 실패했으면 여기서 멈춘다 (다음 화면 전환 때 백오프 지나면 다시 시도)
+      void this.load('bgm_lobby').then((loaded) => {
+        if (loaded && this.lobbyWanted && this.enabled && !this.lobbyNode) this.startLobby();
       });
       return;
     }
@@ -330,9 +343,9 @@ class AudioEngine {
     const names: MusicName[] = ['bgm_play_base', 'bgm_play_mid', 'bgm_play_top'];
     const bufs = names.map((n) => this.buffers.get(n));
     if (bufs.some((b) => !b)) {
-      // 아직 안 받았으면 받고 나서 (그 사이 플레이가 끝났으면 틀지 않는다)
-      void Promise.all(names.map((n) => this.load(n))).then(() => {
-        if (this.wanted?.kind === 'play' && this.enabled && !this.stems) this.startBgm(this.wanted.intensity);
+      // 아직 안 받았으면 받고 나서 (그 사이 플레이가 끝났으면 틀지 않는다). 하나라도 실패하면 합성 비트로 간다.
+      void Promise.all(names.map((n) => this.load(n))).then((loaded) => {
+        if (loaded.every(Boolean) && this.wanted?.kind === 'play' && this.enabled && !this.stems) this.startBgm(this.wanted.intensity);
       });
       if (!this.lobbyNode) this.synthBgmFallback();
       return;

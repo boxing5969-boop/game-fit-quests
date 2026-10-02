@@ -3,12 +3,11 @@
  */
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, Play } from 'lucide-react';
-import { getProfile, getSavedPlayerName, getTodaysChallenge, isChallengeCompletedToday, PlayerProfile, DailyChallenge } from '@/features/minigame/lib/storage';
-import { TIERS } from '@/features/minigame/types/game';
+import { ArrowLeft, Play } from 'lucide-react';
+import { getEndlessStats, type EndlessStats } from '@/features/minigame/lib/reactionStorage';
 import { useRankupUser } from '@/features/minigame/lib/rankupAuth';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import Icon3D, { TIER_ICON } from './Icon3D';
+import Icon3D from './Icon3D';
 import { audio } from '@/features/minigame/lib/audio';
 
 interface HomeScreenProps {
@@ -18,22 +17,19 @@ interface HomeScreenProps {
 }
 
 const HomeScreen = ({ onStart, onRanking, onBack }: HomeScreenProps) => {
-  const [profile, setProfile] = useState<PlayerProfile | null>(null);
-  const [challenge, setChallenge] = useState<DailyChallenge | null>(null);
-  const [completed, setCompleted] = useState(false);
+  // 이 기기에 남은 실제 기록 (엔진이 매 판 쓰는 reactionStorage) — 예전 storage.ts 프로필·오늘의 도전 카드는
+  // 아무 데서도 채워지지 않아 늘 기본값·'완료 시 +500점' 약속만 보여 주던 죽은 UI 였다 (2026-10-01 검수).
+  const [stats, setStats] = useState<EndlessStats | null>(null);
   const { user: rankupUser } = useRankupUser();
 
   useEffect(() => {
-    const name = getSavedPlayerName();
-    if (name) setProfile(getProfile(name));
-    setChallenge(getTodaysChallenge());
-    setCompleted(isChallengeCompletedToday());
+    try { setStats(getEndlessStats()); } catch { setStats(null); }
   }, []);
 
-  const tier = profile ? TIERS.find(t => t.key === profile.highestTier) : null;
-  const displayName = rankupUser?.nickname || profile?.name;
+  const displayName = rankupUser?.nickname;
   const avatarUrl = rankupUser?.avatarUrl;
   const initial = (displayName || '?').slice(0, 1).toUpperCase();
+  const hasRecord = !!stats && stats.totalGames > 0;
 
   return (
     <div className="arena-bg arena-ropes relative flex min-h-screen flex-col items-center overflow-hidden px-5 pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-[calc(env(safe-area-inset-top)+1rem)]">
@@ -66,68 +62,52 @@ const HomeScreen = ({ onStart, onRanking, onBack }: HomeScreenProps) => {
         </h1>
         <p className="mb-5 mt-1 text-[12.5px] font-semibold text-muted-foreground">복싱 반응속도 트레이너</p>
 
-        {/* 프로필 — 랭킹업 아바타 + 최고 등급 */}
-        {(profile && tier) || rankupUser ? (
+        {/* 프로필 — 랭킹업 아바타 + 이 기기의 최고 기록 */}
+        {rankupUser && (
           <div className="mg-card mb-3 flex items-center gap-3 p-3 text-left">
             {avatarUrl ? (
               <Avatar className="h-12 w-12 shrink-0 ring-2 ring-primary/40">
                 <AvatarImage src={avatarUrl} alt={displayName || 'avatar'} />
                 <AvatarFallback className="bg-primary/20 font-display text-lg text-primary">{initial}</AvatarFallback>
               </Avatar>
-            ) : tier ? (
-              <Icon3D name={TIER_ICON[tier.key]} size={48} />
             ) : (
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 font-display text-lg text-primary">{initial}</div>
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 truncate text-[15px] font-black text-foreground">
-                {displayName || '게스트'}
-                {rankupUser && (
-                  <span className="rounded bg-primary/15 px-1.5 py-0.5 font-display text-[10px] tracking-widest text-primary">MEMBER</span>
-                )}
+                {displayName || '회원'}
+                <span className="rounded bg-primary/15 px-1.5 py-0.5 font-display text-[10px] tracking-widest text-primary">MEMBER</span>
               </div>
-              {tier && (
-                <div className={`flex items-center gap-1 text-[12px] font-semibold text-tier-${tier.key}`}>
-                  {avatarUrl && <Icon3D name={TIER_ICON[tier.key]} size={16} />}
-                  {tier.nameKo} · {tier.nameEn}
-                </div>
-              )}
+              <div className="text-[12px] font-semibold text-muted-foreground">
+                {hasRecord ? `${stats!.totalGames}판 플레이 · 오늘 최고 ${stats!.todayBestScore.toLocaleString()}` : '첫 판을 기다리고 있어요'}
+              </div>
             </div>
-            {profile && (
+            {hasRecord && (
               <div className="shrink-0 text-right">
-                <div className="mg-num font-display text-xl leading-none text-secondary">
-                  {profile.bestAvgReaction < 9999 ? `${profile.bestAvgReaction}ms` : '—'}
-                </div>
-                <div className="font-display text-[10px] tracking-widest text-muted-foreground">BEST AVG</div>
+                <div className="mg-num font-display text-xl leading-none text-secondary">{stats!.bestScore.toLocaleString()}</div>
+                <div className="font-display text-[10px] tracking-widest text-muted-foreground">BEST SCORE</div>
               </div>
             )}
           </div>
-        ) : null}
-
-        {/* 연속 훈련 */}
-        {profile && profile.streakDays > 0 && (
-          <div className="mg-card mb-3 flex items-center justify-center gap-2 px-3 py-2 text-[13px]">
-            <Icon3D name="fire" size={22} />
-            <span className="mg-num font-display text-lg text-secondary">{profile.streakDays}</span>
-            <span className="font-semibold text-muted-foreground">일 연속 훈련</span>
-          </div>
         )}
 
-        {/* 오늘의 도전 */}
-        {challenge && (
-          <div className={`mg-card mb-3 flex items-center gap-3 p-3 text-left ${completed ? 'ring-1 ring-primary/40' : ''}`}>
-            <Icon3D name="calendar" size={40} />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between">
-                <div className="font-display text-[11px] tracking-[0.25em] text-muted-foreground">TODAY'S CHALLENGE</div>
-                {completed && (
-                  <div className="flex items-center gap-0.5 font-display text-[11px] tracking-widest text-primary">
-                    <Check className="h-3 w-3" strokeWidth={3} /> 완료
-                  </div>
-                )}
-              </div>
-              <div className="text-[13.5px] font-bold text-foreground">{challenge.descriptionKo}</div>
-              <div className="mt-0.5 text-[11px] text-muted-foreground">완료 시 +{challenge.bonusPoints}점 보너스</div>
+        {/* 이 기기 기록 — 최고 라운드 · 최고 생존 · 누적 PERFECT */}
+        {hasRecord && (
+          <div className="mb-3 grid grid-cols-3 gap-2">
+            <div className="mg-card p-2.5 text-center">
+              <div className="mb-0.5 flex justify-center"><Icon3D name="trophy" size={22} /></div>
+              <div className="mg-num font-display text-xl leading-none text-foreground">R{stats!.bestRound}</div>
+              <div className="font-display text-[10px] tracking-widest text-muted-foreground">BEST ROUND</div>
+            </div>
+            <div className="mg-card p-2.5 text-center">
+              <div className="mb-0.5 flex justify-center"><Icon3D name="stopwatch" size={22} /></div>
+              <div className="mg-num font-display text-xl leading-none text-foreground">{stats!.bestSurvivalSec}s</div>
+              <div className="font-display text-[10px] tracking-widest text-muted-foreground">SURVIVED</div>
+            </div>
+            <div className="mg-card p-2.5 text-center">
+              <div className="mb-0.5 flex justify-center"><Icon3D name="bolt" size={22} /></div>
+              <div className="mg-num font-display text-xl leading-none text-secondary">{stats!.totalPerfect.toLocaleString()}</div>
+              <div className="font-display text-[10px] tracking-widest text-muted-foreground">PERFECT</div>
             </div>
           </div>
         )}

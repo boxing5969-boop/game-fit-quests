@@ -18,6 +18,10 @@ const todayStr = () => new Date().toLocaleDateString("en-CA");
 
 const num = (v: string | null) => (v ? Number(v) || 0 : 0);
 
+// 저장소가 막힌 환경(사파리 프라이빗·용량 초과)에서 throw 가 결과 화면 전환을 막지 않게 — 읽기는 null, 쓰기는 조용히 포기
+const getItem = (k: string): string | null => { try { return localStorage.getItem(k); } catch { return null; } };
+const setItem = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* 저장 못 해도 게임은 계속 */ } };
+
 export interface EndlessStats {
   bestScore: number;
   bestRound: number;
@@ -38,23 +42,23 @@ export function getEndlessStats(): EndlessStats {
   }
   // today 자동 리셋
   const today = todayStr();
-  if (localStorage.getItem(K.todayDate) !== today) {
-    localStorage.setItem(K.todayDate, today);
-    localStorage.setItem(K.todayBest, '0');
+  if (getItem(K.todayDate) !== today) {
+    setItem(K.todayDate, today);
+    setItem(K.todayBest, '0');
   }
-  if (localStorage.getItem(K.dailyGemDate) !== today) {
-    localStorage.setItem(K.dailyGemDate, today);
-    localStorage.setItem(K.dailyGem, '0');
+  if (getItem(K.dailyGemDate) !== today) {
+    setItem(K.dailyGemDate, today);
+    setItem(K.dailyGem, '0');
   }
   return {
-    bestScore:        num(localStorage.getItem(K.bestScore)),
-    bestRound:        num(localStorage.getItem(K.bestRound)),
-    bestSurvivalSec:  num(localStorage.getItem(K.bestSurvival)),
-    todayBestScore:   num(localStorage.getItem(K.todayBest)),
-    totalPerfect:     num(localStorage.getItem(K.totalPerfect)),
-    totalGames:       num(localStorage.getItem(K.totalGames)),
-    totalGems:        num(localStorage.getItem(K.totalGems)),
-    dailyGemEarnedToday: num(localStorage.getItem(K.dailyGem)),
+    bestScore:        num(getItem(K.bestScore)),
+    bestRound:        num(getItem(K.bestRound)),
+    bestSurvivalSec:  num(getItem(K.bestSurvival)),
+    todayBestScore:   num(getItem(K.todayBest)),
+    totalPerfect:     num(getItem(K.totalPerfect)),
+    totalGames:       num(getItem(K.totalGames)),
+    totalGems:        num(getItem(K.totalGems)),
+    dailyGemEarnedToday: num(getItem(K.dailyGem)),
   };
 }
 
@@ -85,20 +89,20 @@ export function applyEndlessRun(run: EndlessRunSummary): EndlessApplyResult {
   const newBestRound    = run.round > prev.bestRound;
   const newBestSurvival = run.survivalSec > prev.bestSurvivalSec;
 
-  if (newBestScore)    localStorage.setItem(K.bestScore,    String(run.score));
-  if (newBestRound)    localStorage.setItem(K.bestRound,    String(run.round));
-  if (newBestSurvival) localStorage.setItem(K.bestSurvival, String(Math.round(run.survivalSec)));
+  if (newBestScore)    setItem(K.bestScore,    String(run.score));
+  if (newBestRound)    setItem(K.bestRound,    String(run.round));
+  if (newBestSurvival) setItem(K.bestSurvival, String(Math.round(run.survivalSec)));
 
   // today best
   if (run.score > prev.todayBestScore) {
-    localStorage.setItem(K.todayBest, String(run.score));
+    setItem(K.todayBest, String(run.score));
   }
 
-  localStorage.setItem(K.totalPerfect, String(prev.totalPerfect + run.perfectCount));
-  localStorage.setItem(K.totalGames,   String(prev.totalGames + 1));
+  setItem(K.totalPerfect, String(prev.totalPerfect + run.perfectCount));
+  setItem(K.totalGames,   String(prev.totalGames + 1));
   const newTotalGems = prev.totalGems + run.gemsEarned;
-  localStorage.setItem(K.totalGems,    String(newTotalGems));
-  localStorage.setItem(K.dailyGem,     String(prev.dailyGemEarnedToday + run.gemsEarned));
+  setItem(K.totalGems,    String(newTotalGems));
+  setItem(K.dailyGem,     String(prev.dailyGemEarnedToday + run.gemsEarned));
 
   return {
     newBestScore, newBestRound, newBestSurvival,

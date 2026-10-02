@@ -4,8 +4,8 @@
 import type { ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  AlertTriangle, ArrowLeft, ArrowRight, Crosshair, Ear, EyeOff, FastForward, Hand, Lightbulb,
-  Rewind, Timer, TrendingUp, Wind, X, Zap, type LucideIcon,
+  AlertTriangle, ArrowLeft, ArrowRight, Crosshair, EyeOff, Hand, Hourglass, Lightbulb,
+  Timer, TrendingUp, X, Zap, type LucideIcon,
 } from 'lucide-react';
 import Icon3D, { type Icon3DName } from './Icon3D';
 import { audio } from '@/features/minigame/lib/audio';
@@ -27,35 +27,36 @@ interface Guide {
   tips: ReactNode[];
 }
 
+// 수치·규칙은 reactionConfig / mittDrillConfig / defenseConfig 와 엔진을 그대로 옮긴 것 (2026-10-01 검수 — 설명서가 엔진과 달랐다)
 const GUIDES: Record<GameMode, Guide> = {
   reaction: {
     icon: 'bolt',
     title: '반응속도 트레이닝',
     subtitle: 'REACTION SPEED MODE',
     accent: 'text-rating-lightning',
-    goal: '화면에 뜬 펀치 명령을 최대한 빠르게 따라치세요. 빠를수록 점수가 올라갑니다.',
+    goal: '화면에 뜨는 펀치 명령과 같은 버튼을 가능한 빨리 누르세요. 5번 성공하면 다음 라운드 — 라운드가 오를수록 빨라집니다.',
     sections: [
       {
         title: '조작법',
         items: [
-          { icon: Hand, text: <>화면에 뜬 펀치(잽/훅/어퍼 등)를 <b className="text-foreground">같은 색 버튼</b>으로 탭</> },
-          { icon: Timer, text: <>반응이 빠를수록 <b className="text-rating-lightning">PERFECT</b> → <b className="text-rating-fast">FAST</b> → GOOD 순으로 점수 차등</> },
-          { icon: X, text: <>다른 버튼을 누르면 <b className="text-destructive">오타</b>로 콤보 초기화</> },
+          { icon: Hand, text: <>화면에 뜬 펀치(잽·스트레이트·훅·어퍼)와 <b className="text-foreground">같은 버튼</b>을 탭</> },
+          { icon: Timer, text: <>빠르면 <b className="text-rating-lightning">PERFECT 100점</b>, 조금 늦으면 <b className="text-rating-good">GOOD 50점</b> — 1~5라운드는 3초 안이면 OK</> },
+          { icon: X, text: <><b className="text-destructive">다른 버튼</b>을 누르거나 시간 안에 못 치면 MISS → 실드가 없으면 게임 끝</> },
         ],
       },
       {
-        title: '점수 / 콤보',
+        title: '보호 / 보너스',
         items: [
-          { icon: 'bolt', text: 'PERFECT(<200ms): 최대 점수 + 콤보 +1' },
-          { icon: 'fire', text: '연속 성공 시 콤보 보너스 누적' },
-          { icon: TrendingUp, text: '본인 최고 기록과 실시간 격차 표시' },
+          { icon: 'shield', text: <>라운드 2 클리어 때 <b className="text-foreground">실드 1개</b> 확정(이후 18%) — MISS 한 번을 대신 막고 콤보는 절반으로</> },
+          { icon: 'fire', text: <><b className="text-foreground">PERFECT 7연속 → FEVER</b> 4.5초, 점수 2배</> },
+          { icon: TrendingUp, text: '6라운드부터 반응 시간이 줄고, 30초 뒤부터 페이크·연속 큐가 섞인다' },
         ],
       },
     ],
     tips: [
-      '손가락은 항상 버튼 위에 올려두기',
+      '손가락은 항상 네 버튼 위에',
       '명령이 뜨자마자 반응 — 생각하지 말고 직감',
-      '오타 1번보다 PERFECT 1번이 훨씬 큼',
+      '첫 판은 실드 5개로 시작 — 틀려도 괜찮으니 리듬부터',
     ],
   },
   mitt: {
@@ -63,29 +64,29 @@ const GUIDES: Record<GameMode, Guide> = {
     title: '미트 드릴 트레이닝',
     subtitle: 'MITT DRILL MODE',
     accent: 'text-secondary',
-    goal: '트레이너의 콤보 호출(예: "원-투-훅")을 듣고 순서대로 정확히 따라치세요.',
+    goal: '네 레인으로 떨어지는 글러브가 아래 타격선에 닿는 순간, 같은 펀치 버튼을 치세요. 시간이 끝날 때 에너지가 남아 있으면 라운드 클리어.',
     sections: [
       {
         title: '조작법',
         items: [
-          { icon: Ear, text: <>트레이너 호출 → <b className="text-foreground">표시된 글러브 순서</b>대로 탭</> },
-          { icon: Crosshair, text: <>미트가 나오는 <b className="text-secondary">정확한 타이밍</b>에 맞춰 치기</> },
-          { icon: EyeOff, text: <><b className="text-foreground">FEINT</b>(페인트): 미트가 빠지면 치지 않기 — 안 치는 게 정답</> },
+          { icon: Hand, text: <>떨어지는 글러브와 <b className="text-foreground">같은 레인 버튼</b>을 글러브가 <b className="text-secondary">타격선에 닿을 때</b> 탭</> },
+          { icon: Crosshair, text: <>딱 맞추면 <b className="text-rating-lightning">PERFECT 100점</b>(에너지 회복), 조금 빗나가면 <b className="text-rating-good">GOOD 50점</b></> },
+          { icon: X, text: <>놓치거나 <b className="text-destructive">엉뚱한 버튼</b>을 치면 에너지가 깎인다 — 0이 되거나 연속 미스(4~6회)면 KO</> },
         ],
       },
       {
-        title: '판정',
+        title: '라운드 / 별점',
         items: [
-          { icon: 'bolt', text: 'PERFECT — 정확한 타이밍' },
-          { icon: FastForward, text: 'TOO EARLY — 너무 빨라서 허공 가르기' },
-          { icon: Rewind, text: 'TOO LATE — 미트가 이미 지나감' },
+          { icon: Timer, text: '라운드마다 제한 시간 — ROUND 1은 18초, 올라갈수록 길고 빨라진다' },
+          { icon: 'star', text: '정확도 90% + 에너지 50% 이상이면 별 3개 · 정확도 75% 이상이면 별 2개' },
+          { icon: 'fire', text: '콤보가 쌓이면 타격마다 보너스 (+5점 × 콤보, 최대 30콤보)' },
         ],
       },
     ],
     tips: [
-      '호출을 끝까지 듣고 시작 — 성급함 금지',
-      '리듬을 만들어서 일정한 템포로',
-      '페인트는 보면 멈출 수 있다 — 침착하게',
+      '글러브를 끝까지 보고 타격선에서 치기',
+      '안 떨어진 레인은 치지 않기 — 헛스윙이 가장 비싸다',
+      '미스가 이어지면 한 박자 멈추고 리듬 다시 잡기',
     ],
   },
   defense: {
@@ -93,40 +94,43 @@ const GUIDES: Record<GameMode, Guide> = {
     title: '복싱 디펜스 러시',
     subtitle: 'DEFENSE RUSH',
     accent: 'text-primary',
-    goal: '좌/우에서 들어오는 공격을 같은 쪽 가드로 막아내고, 콤보를 쌓아 카운터로 점수를 폭발시키세요.',
+    goal: '좌·우에서 들어오는 공격을 같은 쪽 GUARD로 막아 버티세요. 기록은 생존 시간 — 오래 살아남을수록 등급이 오릅니다.',
     sections: [
       {
         title: '조작법 (단 2개 버튼)',
         items: [
           { icon: ArrowLeft, text: <>왼쪽에서 공격이 오면 → <b className="text-destructive">왼쪽 GUARD</b></> },
           { icon: ArrowRight, text: <>오른쪽에서 공격이 오면 → <b className="text-sky-400">오른쪽 GUARD</b></> },
-          { icon: Crosshair, text: <>도착 직전 <b className="text-secondary">±200ms</b> 안에 누르면 PERFECT</> },
-          { icon: EyeOff, text: <><b className="text-foreground">FEINT</b>: 글러브가 도중에 사라지면 누르지 않기 (속지 않기)</> },
+          { icon: Crosshair, text: <>도착 직전 <b className="text-secondary">±0.23초</b> 안에 누르면 PERFECT(2점), ±0.43초면 GOOD(1점)</> },
+          { icon: X, text: <>반대쪽을 막거나, 너무 빠르거나, 놓치면 한 방 — <b className="text-foreground">헤드기어가 없으면 끝</b></> },
         ],
       },
       {
         title: '공격 종류',
         items: [
-          { icon: 'glove_red', text: '잽 — 기본 속도, 가장 자주 나옴' },
-          { icon: Zap, text: '훅 — 예고 짧고 빠름, 집중 필요' },
-          { icon: Wind, text: '페인트 — 누르지 않고 참는 게 정답' },
-          { icon: AlertTriangle, text: '러시 — 3~5연타 빠르게, 리듬 유지' },
+          { icon: 'glove_red', text: '잽 — 기본 속도(1초), 가장 자주 나온다' },
+          { icon: Zap, text: '훅 — 예고가 짧다(0.7초), 20초부터 등장' },
+          { icon: EyeOff, text: <>페인트 — <b className="text-foreground">처음 보인 쪽은 가짜</b>, 중간에 바뀐 진짜 쪽을 막아야 한다 (30초부터)</> },
+          { icon: AlertTriangle, text: '러시 — 가장 빠른 한 방(0.56초), 45초부터' },
         ],
       },
       {
         title: '특수 시스템',
         items: [
-          { icon: 'bolt', text: <><b className="text-secondary">5연속 PERFECT</b> → COUNTER TIME 발동, 중앙 펀치 연타로 보너스</> },
-          { icon: 'crown', text: <><b className="text-primary">20점마다 BOSS RUSH</b> — 짧은 폭주 패턴 클리어 시 +10점</> },
-          { icon: 'gem', text: '점수 구간별 GEM 보상 + 일일 미션 진행' },
+          { icon: 'bolt', text: <><b className="text-secondary">PERFECT 5연속 → COUNTER TIME</b> 2.2초 — 아무 버튼이나 연타 (최대 8회, 1점씩)</> },
+          { icon: 'fire', text: <><b className="text-foreground">PERFECT 7연속 → FEVER</b> 4.5초, 점수 2배 · 공격이 느려진다</> },
+          { icon: 'crown', text: <><b className="text-primary">30초마다 BOSS RUSH</b> — 잽 6연타, 다 막으면 +10점</> },
+          { icon: 'headgear', text: <>10번 막으면 라운드 클리어 — 라운드 2 클리어 때 <b className="text-foreground">헤드기어</b> 확정(이후 18%), 한 방을 대신 맞아 준다</> },
+          { icon: Hourglass, text: '라운드 3 클리어부터 가끔 FOCUS(5초 판정 넉넉) · SLOW-MO(3초 공격 느려짐) 드롭' },
+          { icon: 'gem', text: '생존 15초부터 젬 — 15s 5 · 30s 10 · 45s 15 · 60s 20 · 90s 30 (하루 60 상한)' },
         ],
       },
     ],
     tips: [
-      <>글러브 색을 보지 말고 <b>방향</b>만 보기 — 좌/우 판단이 핵심</>,
-      '페인트가 두려우면 약간 늦게 누르는 게 안전',
-      '카운터 타임은 무조건 빠르게 — 모든 탭이 점수',
-      '초반 10점은 학습 구간, 천천히 리듬 잡기',
+      <>글러브 색이 아니라 <b>방향</b>만 보기 — 좌/우 판단이 핵심</>,
+      '페인트는 바뀐 뒤의 쪽이 진짜 — 끝까지 보고 막기',
+      '카운터 타임은 무조건 빠르게 연타 — 모든 탭이 점수',
+      '처음 10초는 잽만 나온다 — 리듬 먼저 잡기',
     ],
   },
 };

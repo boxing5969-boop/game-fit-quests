@@ -83,6 +83,9 @@
    상단바 글자색은 MinigamePage 가 theme-color 를 게임 색으로 바꿔 맞춘다. */
 body:has(.minigame-app) {
   background-color: hsl(210 22% 6%);
+  /* 게임 화면은 저마다 env(safe-area-inset-top) 여백을 두고 그린다 — body 의 상태바 여백까지 더하면
+     아이폰에서 여백이 두 배가 되고 문서가 그만큼 스크롤된다 (2026-10-01 검수). */
+  padding-top: 0;
 }
 
 /* ── 아레나 바닥 — 화면 공통 배경 (링 로프 선 + 위 민트 조명 + 아래 골드 조명 + 차콜 바닥)
@@ -266,9 +269,9 @@ body:has(.minigame-app) {
 }
 
 @keyframes mg-hit-stop {
-  0%   { transform: scale(1); filter: brightness(1); }
-  18%  { transform: scale(1.06); filter: brightness(1.7) saturate(1.4); }
-  100% { transform: scale(1); filter: brightness(1); }
+  0%   { transform: scale(1); filter: brightness(1); opacity: 1; }
+  18%  { transform: scale(1.06); filter: brightness(1.7) saturate(1.4); opacity: 1; }
+  100% { transform: scale(1); filter: brightness(1); opacity: 0; } /* 끝나면 사라진다 — 흰 안개가 게임 끝까지 남던 문제 */
 }
 
 @keyframes mg-perfect-pop {

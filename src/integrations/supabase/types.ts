@@ -3272,7 +3272,7 @@ export type Database = {
           tier: string | null
           total_punches: number | null
           user_id: string
-          xp_earned: number | null
+          xp_earned: number
         }
         Insert: {
           accuracy?: number | null

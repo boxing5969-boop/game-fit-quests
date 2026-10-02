@@ -19,20 +19,19 @@ async function resolveDisplayName(userId: string, fallback: string): Promise<str
   try {
     const { data } = await supabase
       .from('profiles')
-      .select('nickname, name, email')
+      .select('nickname, name')
       .eq('user_id', userId)
       .maybeSingle();
 
+    // 다른 보드와 같은 규칙: 닉네임 → 이름 → '익명 복서'. 이메일 앞부분은 쓰지 않는다 (전 회원이 읽는 표에 남는다).
     const nick = (data?.nickname || '').trim();
     if (nick) return nick;
     const name = (data?.name || '').trim();
     if (name) return name;
-    const emailLocal = (data?.email || '').split('@')[0]?.trim();
-    if (emailLocal) return emailLocal;
   } catch (e) {
     console.warn('[resolveDisplayName] profile fetch failed', e);
   }
-  return fallback || '회원';
+  return fallback && fallback !== 'Fighter' && fallback !== 'Defender' ? fallback : '익명 복서';
 }
 
 /** 결과 화면에 마운트되면 1회만 자동 저장 */

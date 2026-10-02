@@ -208,7 +208,7 @@ const GameScreen = ({
         ))}
         {/* 올라가는 글러브 */}
         <motion.div
-          className="absolute left-1/2 -translate-x-1/2 select-none opacity-40"
+          className="absolute left-1/2 select-none opacity-40"
           animate={{
             bottom: `${20 + climbProgress * 18}%`,
             scale: feverActive ? [1, 1.08, 1] : 1,
@@ -217,7 +217,8 @@ const GameScreen = ({
             bottom: { type: 'spring', damping: 18, stiffness: 120 },
             scale: { duration: 0.6, repeat: feverActive ? Infinity : 0 },
           }}
-          style={{ filter: `drop-shadow(0 0 16px ${theme.accent})` }}
+          // 가운데 정렬은 framer 의 x 로 (Tailwind translate 는 framer 의 inline transform 에 덮인다)
+          style={{ x: '-50%', filter: `drop-shadow(0 0 16px ${theme.accent})` }}
         >
           <Icon3D name="glove_mint" size={56} />
         </motion.div>
@@ -466,7 +467,8 @@ const GameScreen = ({
             />
             <div className="round-banner-in relative text-center">
               <div className="mg-num font-display text-7xl tracking-widest" style={{ color: 'hsl(var(--secondary))', textShadow: `0 0 30px ${theme.accent}, 0 4px 0 hsl(0 0% 0% / 0.5)` }}>
-                ROUND {round}
+                {/* 엔진은 클리어 순간 이미 round 를 올려 두므로, 방금 깬 라운드는 하나 전 */}
+                ROUND {Math.max(1, round - 1)}
               </div>
               <div className="mt-2 flex items-center justify-center gap-2 font-display text-3xl tracking-[0.4em]" style={{ color: theme.accent, textShadow: `0 0 16px ${theme.accent}` }}>
                 CLEAR <Icon3D name="glove_mint" size={30} />

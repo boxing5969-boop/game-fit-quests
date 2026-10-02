@@ -93,6 +93,11 @@ export function useGameEngine() {
   const burstQueue = useRef<PunchType[]>([]);
   const fakePending = useRef(false);
   const isFirstPlay = useRef(false);
+  /** 플레이어 이름의 "지금" 값 — 타임아웃 경로는 첫 렌더 클로저에 묶여 있어 state 로 읽으면 '' 가 나온다 */
+  const playerNameRef = useRef('');
+  /** 일시정지로 흘려보낸 시간 — 경과·생존 시간에서 뺀다 */
+  const pausedMsRef = useRef(0);
+  const pausedAtRef = useRef<number | null>(null);
 
   function createSession(): EndlessSession {
     return {
@@ -120,7 +125,8 @@ export function useGameEngine() {
     audio.stopBgm();
 
     const s = session.current;
-    s.survivalSec = (performance.now() - s.startedAt) / 1000;
+    const pausedNow = pausedAtRef.current != null ? performance.now() - pausedAtRef.current : 0;
+    s.survivalSec = Math.max(0, (performance.now() - s.startedAt - pausedMsRef.current - pausedNow) / 1000);
 
     // 젬: 기본 + 라운드 도달 + 피버 보너스 + 점수 보너스
     const gemsEarned =
@@ -148,7 +154,7 @@ export function useGameEngine() {
     correctResults.forEach(r => { breakdown[r.punchType]++; });
 
     const result: SessionResult = {
-      playerName,
+      playerName: playerNameRef.current || playerName,
       score: s.score,
       avgReaction: Math.round(avg),
       bestReaction: Math.round(best),
@@ -288,8 +294,10 @@ export function useGameEngine() {
 
   // ===== 입력 처리 =====
 
+  // 타임아웃 → 판정은 항상 최신 handleJudgement 로 (deps [] 클로저가 첫 렌더의 finishSession 을 영원히 붙잡던 문제)
+  const handleJudgementRef = useRef<(punch: PunchType, pattern: 'normal' | 'fast' | 'delayed' | 'fake' | 'burst', judgement: ReactionJudgement, reactionMs: number, correct: boolean) => void>(() => {});
   const handleMissTimeout = useCallback((punch: PunchType, pattern: 'normal' | 'fast' | 'delayed' | 'fake' | 'burst') => {
-    handleJudgement(punch, pattern, 'miss', 9999, false);
+    handleJudgementRef.current(punch, pattern, 'miss', 9999, false);
   }, []);
 
   const handleJudgement = useCallback((
@@ -443,6 +451,7 @@ export function useGameEngine() {
       : REACTION_CONFIG.postSuccessDelayMs;
     scheduleNextCue(nextDelay);
   }, [scheduleNextCue, finishSession]);
+  useEffect(() => { handleJudgementRef.current = handleJudgement; }, [handleJudgement]);
 
   const handlePunch = useCallback((type: PunchType) => {
     if (pausedRef.current) return;
@@ -500,6 +509,8 @@ export function useGameEngine() {
     fakePending.current = false;
     invincibleUntil.current = 0;
     elapsedSecRef.current = 0;
+    pausedMsRef.current = 0;
+    pausedAtRef.current = null;
 
     // 첫 플레이 감지: 누적 게임 수 0이면 튜토리얼 모드
     const stats = getEndlessStats();
@@ -520,7 +531,7 @@ export function useGameEngine() {
       if (pausedRef.current) return;
       const s = session.current;
       const now = performance.now();
-      elapsedSecRef.current = (now - s.startedAt) / 1000;
+      elapsedSecRef.current = Math.max(0, (now - s.startedAt - pausedMsRef.current) / 1000);
       setElapsedSec(elapsedSecRef.current);
       // fever progress 시각용
       if (s.feverActive) {
@@ -536,6 +547,7 @@ export function useGameEngine() {
 
   const startGame = useCallback((name: string) => {
     setPlayerName(name);
+    playerNameRef.current = name;
     savePlayerName(name);
     const stats = getEndlessStats();
     setBestRoundLive(stats.bestRound);
@@ -551,6 +563,7 @@ export function useGameEngine() {
     if (phase !== 'playing') return;
     if (pausedRef.current) return;
     pausedRef.current = true;
+    pausedAtRef.current = performance.now();
     setPaused(true);
     clearTimeout(cueExpireTimer.current);
     clearTimeout(nextCueTimer.current);
@@ -560,6 +573,13 @@ export function useGameEngine() {
   const resumeGame = useCallback(() => {
     if (!pausedRef.current) return;
     pausedRef.current = false;
+    if (pausedAtRef.current != null) {
+      const pausedDur = performance.now() - pausedAtRef.current;
+      pausedMsRef.current += pausedDur;
+      pausedAtRef.current = null;
+      // 멈춰 있던 동안이 "큐에 반응한 시간"으로 잡히지 않게 큐 표시 시각도 그만큼 뒤로
+      if (currentPunchRef.current) cueShownAt.current += pausedDur;
+    }
     setPaused(false);
     audio.startBgm(2);
     // 화면에 cue 가 남아있으면 그대로 두고 expire 만 다시 건다
@@ -588,9 +608,16 @@ export function useGameEngine() {
     setPhase('home');
   }, [clearAllTimers]);
 
+  // 일시정지 중에 홈으로 나가도 paused 가 남지 않게 quitToMenu 와 같은 리셋을 한다 (2026-10-01 검수)
   const goHome = useCallback(() => {
     clearAllTimers();
     audio.stopBgm();
+    pausedRef.current = false;
+    pausedAtRef.current = null;
+    setPaused(false);
+    setCurrentPunch(null);
+    setShowFeedback(false);
+    setWaiting(false);
     setPhase('home');
   }, [clearAllTimers]);
 
@@ -608,6 +635,7 @@ export function useGameEngine() {
     clearAllTimers();
     audio.stopBgm();
     pausedRef.current = false;
+    pausedAtRef.current = null;
     setPaused(false);
     if (name) startGame(name);
     else setPhase('home');

@@ -54,9 +54,9 @@ const MinigamePage = () => {
   const game = useGameEngine();
   const mitt = useMittEngine();
   const { user: rankupUser } = useRankupUser();
-  const [showTutorial, setShowTutorial] = useState(
-    () => !(typeof window !== "undefined" && localStorage.getItem("mitt_tutorial_seen")),
-  );
+  const [showTutorial, setShowTutorial] = useState(() => {
+    try { return !(typeof window !== "undefined" && localStorage.getItem("mitt_tutorial_seen")); } catch { return false; }
+  });
 
   // 진입 애니메이션 — 글러브 펀치 + 명언 순환. 게임은 같은 번들에 있어 즉시 로드되지만
   // 트랜지션 연출을 위해 짧게(INTRO_VISIBLE_MS) 오버레이를 띄운다.
@@ -92,14 +92,39 @@ const MinigamePage = () => {
     return "Fighter";
   };
 
-  const startMode1 = () => game.startGame(resolvePlayerName());
+  // 첫 플레이 안내는 카운트다운 "전에" 보여 준다 — 카운트다운 위에 겹치면 2.8초 뒤 게임이 시작되며
+  // 안내가 읽기도 전에 사라지고, 확인 버튼을 못 눌러 매 판 다시 뜨던 문제 (2026-10-01 검수).
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  const startMode1 = () => {
+    if (showTutorial) { setTutorialOpen(true); return; }
+    game.startGame(resolvePlayerName());
+  };
+  const dismissTutorialAndStart = () => {
+    try { localStorage.setItem("mitt_tutorial_seen", "1"); } catch { /* 저장 못 해도 진행 */ }
+    setShowTutorial(false);
+    setTutorialOpen(false);
+    game.startGame(resolvePlayerName());
+  };
   const startMode2 = () => mitt.startGame(resolvePlayerName());
 
   const goToModeSelect = () => {
     setAppMode("select");
+    setTutorialOpen(false);
     game.goHome();
     mitt.goHome();
   };
+
+  // 모드에 들어왔을 때 엔진이 아직 home/name 이면 바로 시작 — 렌더 중이 아니라 효과에서 (렌더 중 setState·타이머 생성 방지)
+  const mittIdle = appMode === "mode2" && (mitt.phase === "home" || mitt.phase === "name");
+  useEffect(() => {
+    if (mittIdle) startMode2();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mittIdle]);
+  const reactionNaming = appMode === "mode1" && game.phase === "name";
+  useEffect(() => {
+    if (reactionNaming) startMode1();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reactionNaming]);
 
   // 🔊 첫 터치에 소리를 열고(브라우저 자동재생 제한) 음원을 미리 받아 둔다
   useEffect(() => {
@@ -197,8 +222,7 @@ const MinigamePage = () => {
       switch (mitt.phase) {
         case "home":
         case "name":
-          startMode2();
-          return null;
+          return null; // 위 효과(mittIdle)가 곧 시작한다
         case "countdown":
           return <CountdownScreen countdown={mitt.countdown} round={mitt.currentStage} />;
         case "playing":
@@ -252,29 +276,20 @@ const MinigamePage = () => {
         return <IntroSlider onComplete={game.dismissIntro} />;
       case "home":
         return (
-          <HomeScreen
-            onStart={startMode1}
-            onRanking={game.goToRanking}
-            onBack={goToModeSelect}
-          />
-        );
-      case "name":
-        startMode1();
-        return null;
-      case "countdown":
-        return (
           <>
-            {showTutorial && (
-              <TutorialOverlay
-                onDismiss={() => {
-                  localStorage.setItem("mitt_tutorial_seen", "1");
-                  setShowTutorial(false);
-                }}
-              />
-            )}
-            <CountdownScreen countdown={game.countdown} round={game.currentRound} />
+            <HomeScreen
+              onStart={startMode1}
+              onRanking={game.goToRanking}
+              onBack={goToModeSelect}
+            />
+            {tutorialOpen && <TutorialOverlay onDismiss={dismissTutorialAndStart} />}
           </>
         );
+      case "name":
+        // 위 효과(reactionNaming)가 곧 시작한다 — 첫 플레이면 안내가 먼저 뜬다
+        return tutorialOpen ? <TutorialOverlay onDismiss={dismissTutorialAndStart} /> : null;
+      case "countdown":
+        return <CountdownScreen countdown={game.countdown} round={game.currentRound} />;
       case "playing":
         return (
           <GameScreen

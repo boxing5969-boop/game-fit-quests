@@ -73,6 +73,13 @@ export function useDefenseEngine() {
 
   // ===== Round / Shield =====
   const [shields, setShields] = useState(0);
+  // 실드 보유 수의 "지금" 값. setShields 업데이터 안에서 판정하면 React 18 이 업데이터를 렌더 때까지 미뤄
+  // 소모 여부를 바깥에서 못 읽는다 (HEADGEAR 가 한 번도 발동하지 않던 원인, 2026-10-01 검수).
+  const shieldsRef = useRef(0);
+  const commitShields = useCallback((n: number) => {
+    shieldsRef.current = n;
+    setShields(n);
+  }, []);
   const [bestRound, setBestRound] = useState(0);
   const [roundClearFx, setRoundClearFx] = useState<{ id: number; round: number } | null>(null);
   const [shieldFx, setShieldFx] = useState<{ id: number; kind: 'gain' | 'save' } | null>(null);
@@ -499,16 +506,13 @@ export function useDefenseEngine() {
           else if (clearedRound > DEFENSE_CONFIG.firstGuaranteedShieldRound) {
             drop = Math.random() < DEFENSE_CONFIG.shieldDropChance;
           }
-          if (drop) {
-            setShields(curr => {
-              if (curr >= DEFENSE_CONFIG.maxShieldCount) return curr;
-              extraShieldsCollected = 1;
-              setShieldFx({ id: fxIdSeq++, kind: 'gain' });
-              setTimeout(() => setShieldFx(f => (f?.kind === 'gain' ? null : f)), 1100);
-              audio.fanfare();
-              vibrate(30);
-              return curr + 1;
-            });
+          if (drop && shieldsRef.current < DEFENSE_CONFIG.maxShieldCount) {
+            commitShields(shieldsRef.current + 1);
+            extraShieldsCollected = 1;
+            setShieldFx({ id: fxIdSeq++, kind: 'gain' });
+            setTimeout(() => setShieldFx(f => (f?.kind === 'gain' ? null : f)), 1100);
+            audio.fanfare();
+            vibrate(30);
           }
           // ===== Focus / Adrenaline drop (라운드 3 이후, shield와 무관) =====
           if (clearedRound >= DEFENSE_CONFIG.itemDropEarliestRound) {
@@ -554,10 +558,10 @@ export function useDefenseEngine() {
 
       return list.filter(x => x.id !== a.id);
     });
-  }, [phase, paused, combo, startCounterTime, pushFloat, pushBurst, triggerHitstop, triggerShake, triggerBoxerHit, showBanner]);
+  }, [phase, paused, combo, commitShields, startCounterTime, pushFloat, pushBurst, triggerHitstop, triggerShake, triggerBoxerHit, showBanner]);
 
   const handleCounterTap = useCallback(() => {
-    if (phase !== 'counter') return;
+    if (phase !== 'counter' || paused) return;
     const t = now();
     if (t - lastInputAtRef.current < 50) return;
     lastInputAtRef.current = t;
@@ -568,19 +572,14 @@ export function useDefenseEngine() {
     vibrate(15);
     pushFloat(`+${DEFENSE_CONFIG.scoreCounterHit}`, 'text-secondary');
     pushBurst(Math.random() < 0.5 ? 'L' : 'R', 'hsl(45 100% 60%)');
-  }, [phase, counterHits, pushFloat, pushBurst]);
+  }, [phase, paused, counterHits, pushFloat, pushBurst]);
 
   // ===== shield save =====
   // Returns true if a shield absorbed the hit; in that case death is prevented.
   const tryConsumeShield = useCallback((): boolean => {
     if (now() < invincibleUntilRef.current) return true; // 무적 중엔 그냥 무시
-    let consumed = false;
-    setShields(curr => {
-      if (curr <= 0) return curr;
-      consumed = true;
-      return curr - 1;
-    });
-    if (!consumed) return false;
+    if (shieldsRef.current <= 0) return false;
+    commitShields(shieldsRef.current - 1);
     // SAVE 연출
     invincibleUntilRef.current = now() + DEFENSE_CONFIG.reviveInvincibleMs;
     setShieldFx({ id: fxIdSeq++, kind: 'save' });
@@ -595,7 +594,7 @@ export function useDefenseEngine() {
     setStats(s => ({ ...s, shieldsSaved: s.shieldsSaved + 1 }));
     nextSpawnAtRef.current = now() + 900;
     return true;
-  }, [showBanner, triggerHitstop, triggerShake]);
+  }, [commitShields, showBanner, triggerHitstop, triggerShake]);
 
   // ===== end =====
   const endRun = useCallback((_reason: string) => {
@@ -621,7 +620,7 @@ export function useDefenseEngine() {
     setCounterEndsAt(null);
     setCounterHits(0);
     setElapsedSec(0);
-    setShields(0);
+    commitShields(0);
     setRoundClearFx(null);
     setShieldFx(null);
     setBestRound(getDefenseState().bestRound);
@@ -647,7 +646,7 @@ export function useDefenseEngine() {
     audio.startBgm(1);
     setPhase('playing');
     showBanner('READY?', 'GO!', 'text-primary', 700);
-  }, [showBanner]);
+  }, [commitShields, showBanner]);
 
   const goHome = useCallback(() => {
     audio.stopBgm();
@@ -677,6 +676,28 @@ export function useDefenseEngine() {
       return !p;
     });
   }, [counterEndsAt, elapsedSec]);
+
+  // 화면을 벗어나면(앱 전환·잠금) 자동 일시정지 — 숨겨진 동안 rAF 는 멈추지만 performance.now() 는 흐르므로
+  // 그 시간이 생존 기록(랭킹 점수)으로 쌓이던 구멍을 막는다. 반응속도·미트 화면과 같은 규칙 (2026-10-01 검수).
+  const togglePauseRef = useRef(togglePause);
+  useEffect(() => { togglePauseRef.current = togglePause; }, [togglePause]);
+  const activeRun = phase === 'playing' || phase === 'counter' || phase === 'boss';
+  useEffect(() => {
+    if (!activeRun || paused) return;
+    let latched = false; // blur 와 visibilitychange 가 연달아 와도 한 번만 멈춘다 (두 번이면 다시 켜진다)
+    const pauseOnce = () => {
+      if (latched) return;
+      latched = true;
+      togglePauseRef.current();
+    };
+    const onHide = () => { if (document.hidden) pauseOnce(); };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('blur', pauseOnce);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('blur', pauseOnce);
+    };
+  }, [activeRun, paused]);
 
   // Stop BGM if the component unmounts mid-run (e.g., navigating away)
   useEffect(() => () => audio.stopBgm(), []);

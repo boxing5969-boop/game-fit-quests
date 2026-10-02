@@ -33,6 +33,9 @@ const DefenseGameOver = ({ stats, gemsEarned, onRetry, onHome }: Props) => {
     : 0;
 
   const recorded = useRef(false);
+  // 결과 화면이 사라지면(ONE MORE·뒤로가기) 예약해 둔 소리는 취소 — 안 하면 새 판 위에 로비 음악이 덮인다
+  const soundTimers = useRef<number[]>([]);
+  useEffect(() => () => { soundTimers.current.forEach(t => window.clearTimeout(t)); soundTimers.current = []; }, []);
   const [granted, setGranted] = useState(0);
   const [capped, setCapped] = useState(false);
   const [bestSeconds, setBestSeconds] = useState(0);
@@ -61,14 +64,13 @@ const DefenseGameOver = ({ stats, gemsEarned, onRetry, onHome }: Props) => {
     setBestRound(res.state.bestRound);
     setPreviousBestRound(res.prevBestRound);
 
+    // 실패음·벨은 엔진(endRun)이 이미 냈다 — 여기서는 신기록 축하만
     if ((survivedSeconds > res.prevBestSeconds && survivedSeconds > 0) || stats.roundReached > res.prevBestRound) {
       audio.fanfare();
-      setTimeout(() => audio.cheer(), 400);
-    } else {
-      audio.fail();
+      soundTimers.current.push(window.setTimeout(() => audio.cheer(), 400));
     }
     // 결과 화면 음악
-    setTimeout(() => audio.startLobby(), 900);
+    soundTimers.current.push(window.setTimeout(() => audio.startLobby(), 900));
   }, [stats, gemsEarned, survivedSeconds]);
 
   useAutoSaveScore(useMemo(() => ({

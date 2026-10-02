@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { invalidateMissionVideoQueries } from "@/lib/missionVideoQueries";
 import { toast } from "sonner";
 import {
   User,
@@ -411,19 +412,21 @@ const MissionsPage = () => {
             .limit(1)
             .maybeSingle();
           if (existingVideo) {
-            await supabase
+            const { error: vErr } = await supabase
               .from("mission_videos")
               .update({
                 video_url: form.video_url.trim(),
                 poster_url: form.poster_url.trim() || null,
               })
               .eq("id", existingVideo.id);
+            if (vErr) throw vErr;
           } else {
-            await supabase.from("mission_videos").insert({
+            const { error: vErr } = await supabase.from("mission_videos").insert({
               mission_id: editingId,
               video_url: form.video_url.trim(),
               poster_url: form.poster_url.trim() || null,
             });
+            if (vErr) throw vErr;
           }
         }
         toast.success("미션 수정 완료 ✅");
@@ -435,15 +438,16 @@ const MissionsPage = () => {
           .single();
         if (error) throw error;
         if (form.video_url.trim() && newMission) {
-          await supabase.from("mission_videos").insert({
+          const { error: vErr } = await supabase.from("mission_videos").insert({
             mission_id: newMission.id,
             video_url: form.video_url.trim(),
             poster_url: form.poster_url.trim() || null,
           });
+          if (vErr) throw vErr;
         }
         toast.success("미션 추가 완료 ✅");
       }
-      qc.invalidateQueries({ queryKey: ["missions"] });
+      invalidateMissionVideoQueries(qc);
       setShowForm(false);
       setEditingId(null);
       setForm(emptyMissionForm);
@@ -461,7 +465,7 @@ const MissionsPage = () => {
       const { error } = await supabase.from("missions").delete().eq("id", id);
       if (error) throw error;
       toast.success("미션 삭제 완료");
-      qc.invalidateQueries({ queryKey: ["missions"] });
+      invalidateMissionVideoQueries(qc);
     } catch {
       toast.error("삭제 실패");
     }

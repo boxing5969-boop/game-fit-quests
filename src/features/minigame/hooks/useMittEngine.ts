@@ -43,6 +43,8 @@ export interface MittSessionExtras {
   perfectPct: number;
   drillResults: DrillResult[];
   stagesCleared: number;
+  /** 이번 세션에서 최고 클리어 라운드를 갱신했는지 (동률은 false) */
+  newBestRound: boolean;
 }
 
 export interface RoundOutcome {
@@ -95,6 +97,17 @@ export function useMittEngine() {
   const [sessionResult, setSessionResult] = useState<MittSessionResult | null>(null);
   const [sessionExtras, setSessionExtras] = useState<MittSessionExtras | null>(null);
 
+  // 글러브 목록의 "지금" 값 — 판정은 여기서 하고 화면용 state 는 뒤따라 바꾼다.
+  // setGloves 업데이터 안에서 판정하면 React 18 이 업데이터를 렌더 때까지 미룰 수 있어
+  // 정타가 헛스윙(MISS)으로 먼저 처리되던 경쟁 상태를 없앤다 (2026-10-01 검수).
+  const glovesRef = useRef<FallingGlove[]>([]);
+  const commitGloves = useCallback((next: FallingGlove[]) => {
+    glovesRef.current = next;
+    setGloves(next);
+  }, []);
+  // 이번 세션에서 최고 라운드를 갱신했는지 (결과 화면 NEW BEST 배너 — 동률은 신기록이 아니다)
+  const newBestInSessionRef = useRef(false);
+
   // 라운드 단위 통계 누적
   const allHits = useRef<{ punch: PunchType; result: 'perfect' | 'good' | 'miss'; reactionMs: number; stage: number }[]>([]);
   const roundStatsRef = useRef<{
@@ -114,6 +127,8 @@ export function useMittEngine() {
   const tickRafRef = useRef<number>();
   const countdownTimerRef = useRef<ReturnType<typeof setInterval>>();
   const drainTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  /** 라운드 시간이 다 된 뒤 마지막 글러브를 기다리는 마감 시각 — 일시정지하면 멈췄다가 재개 때 남은 만큼 다시 건다 */
+  const drainDueAtRef = useRef<number | null>(null);
   const currentStageRef = useRef(1);
   const phaseRef = useRef<MittPhase>('home');
   const pausedRef = useRef(false);
@@ -132,6 +147,7 @@ export function useMittEngine() {
     clearInterval(stageTimerRef.current);
     clearInterval(countdownTimerRef.current);
     clearTimeout(drainTimeoutRef.current);
+    drainDueAtRef.current = null;
     if (tickRafRef.current) cancelAnimationFrame(tickRafRef.current);
   }, []);
 
@@ -140,7 +156,7 @@ export function useMittEngine() {
     if (phaseRef.current !== 'playing') return;
     phaseRef.current = 'ending' as MittPhase; // 중복 finalize 차단
     clearAllTimers();
-    setGloves([]);
+    commitGloves([]);
 
     const rs = roundStatsRef.current;
     const cfg = getRoundConfig(rs.round);
@@ -185,7 +201,7 @@ export function useMittEngine() {
 
     if (cleared) {
       newBest = setHighestClearedRound(rs.round);
-      if (newBest) setHighestCleared(rs.round);
+      if (newBest) { setHighestCleared(rs.round); newBestInSessionRef.current = true; }
       const rec = recordRoundBest(rs.round, roundScore, accuracy);
       newBestScore = rec.newBestScore;
       newBestAccuracy = rec.newBestAcc;
@@ -249,7 +265,7 @@ export function useMittEngine() {
 
     // bgm fade
     audio.stopBgm();
-  }, [clearAllTimers]);
+  }, [clearAllTimers, commitGloves]);
 
   const finishSession = useCallback(() => {
     clearAllTimers();
@@ -286,6 +302,7 @@ export function useMittEngine() {
       perfectPct,
       drillResults: drillResultsRef.current,
       stagesCleared: Math.max(0, reachedRound - 1),
+      newBestRound: newBestInSessionRef.current,
     });
     setPhase('results');
     phaseRef.current = 'results';
@@ -305,8 +322,8 @@ export function useMittEngine() {
       hit: false,
       missed: false,
     };
-    setGloves(prev => [...prev, newGlove]);
-  }, []);
+    commitGloves([...glovesRef.current, newGlove]);
+  }, [commitGloves]);
 
   const scheduleSpawn = useCallback(() => {
     if (phaseRef.current !== 'playing' || pausedRef.current) return;
@@ -344,33 +361,32 @@ export function useMittEngine() {
     }
     const now = performance.now();
     const cfg = getRoundConfig(currentStageRef.current);
-    setGloves(prev => {
-      let changed = false;
-      const next = prev.map(g => {
-        if (g.hit || g.missed) return g;
-        const elapsed = now - g.spawnedAt;
-        if (elapsed > g.duration + cfg.goodWindowMs) {
-          changed = true;
-          allHits.current.push({ punch: g.punch, result: 'miss', reactionMs: 9999, stage: currentStageRef.current });
-          roundStatsRef.current.miss += 1;
-          roundStatsRef.current.consecutiveMiss += 1;
-          setCombo(0);
-          setLastResult({ rating: 'miss', punch: g.punch });
-          audio.miss();
-          vibrate(40);
-          applyEnergyDelta(-cfg.missPenalty);
-          if (roundStatsRef.current.consecutiveMiss >= cfg.consecutiveMissKO) {
-            setTimeout(() => finalizeRound('ko-streak'), 0);
-          }
-          return { ...g, missed: true, result: 'miss' as const };
+    const prev = glovesRef.current;
+    let changed = false;
+    const next = prev.map(g => {
+      if (g.hit || g.missed) return g;
+      const elapsed = now - g.spawnedAt;
+      if (elapsed > g.duration + cfg.goodWindowMs) {
+        changed = true;
+        allHits.current.push({ punch: g.punch, result: 'miss', reactionMs: 9999, stage: currentStageRef.current });
+        roundStatsRef.current.miss += 1;
+        roundStatsRef.current.consecutiveMiss += 1;
+        setCombo(0);
+        setLastResult({ rating: 'miss', punch: g.punch });
+        audio.miss();
+        vibrate(40);
+        applyEnergyDelta(-cfg.missPenalty);
+        if (roundStatsRef.current.consecutiveMiss >= cfg.consecutiveMissKO) {
+          setTimeout(() => finalizeRound('ko-streak'), 0);
         }
-        return g;
-      });
-      const filtered = next.filter(g => now - g.spawnedAt < g.duration + 800);
-      return changed || filtered.length !== prev.length ? filtered : prev;
+        return { ...g, missed: true, result: 'miss' as const };
+      }
+      return g;
     });
+    const filtered = next.filter(g => now - g.spawnedAt < g.duration + 800);
+    if (changed || filtered.length !== prev.length) commitGloves(filtered);
     tickRafRef.current = requestAnimationFrame(tick);
-  }, [applyEnergyDelta, finalizeRound]);
+  }, [applyEnergyDelta, finalizeRound, commitGloves]);
 
   // ===== 라운드 시작 =====
   const startStage = useCallback((stageNum: number) => {
@@ -380,7 +396,7 @@ export function useMittEngine() {
     setStageTime(cfg.durationSec);
     setEnergy(cfg.energyStart);
     energyRef.current = cfg.energyStart;
-    setGloves([]);
+    commitGloves([]);
     setLastResult(null);
     setRoundOutcome(null);
     roundStatsRef.current = {
@@ -389,7 +405,9 @@ export function useMittEngine() {
       good: 0,
       miss: 0,
       consecutiveMiss: 0,
-      startScore: score,
+      // ref 로 읽는다 — 카운트다운이 캡처한 옛 클로저의 score(직전 게임 점수)를 쓰면
+      // 재시작 후 1라운드 점수가 음수로 찍히던 문제 (2026-10-01 검수)
+      startScore: scoreRef.current,
     };
 
     setPhase('playing');
@@ -409,39 +427,45 @@ export function useMittEngine() {
           clearInterval(stageTimerRef.current);
           clearTimeout(spawnTimerRef.current);
           // grace: 마지막 글러브가 도착할 시간 대기
+          const graceMs = cfg.fallDurationMs + STAGE_END_GRACE_MS;
+          drainDueAtRef.current = performance.now() + graceMs;
           drainTimeoutRef.current = setTimeout(() => {
+            drainDueAtRef.current = null;
             finalizeRound('time-up');
-          }, cfg.fallDurationMs + STAGE_END_GRACE_MS);
+          }, graceMs);
           return 0;
         }
         return t - 1;
       });
     }, 1000);
-  }, [scheduleSpawn, tick, finalizeRound, score]);
+  }, [scheduleSpawn, tick, finalizeRound, commitGloves]);
 
   const handlePunch = useCallback((type: PunchType) => {
     if (phaseRef.current !== 'playing') return;
     const now = performance.now();
     const cfg = getRoundConfig(currentStageRef.current);
 
+    // 판정은 ref(지금 값)로 — state 업데이터 안에서 하면 지연 실행돼 정타가 MISS 로 먼저 처리될 수 있다
     let target: FallingGlove | undefined;
     let bestDelta = Infinity;
-    setGloves(prev => {
-      prev.forEach(g => {
-        if (g.hit || g.missed) return;
-        if (g.punch !== type) return;
-        const elapsed = now - g.spawnedAt;
-        const delta = Math.abs(elapsed - g.duration);
-        if (delta < bestDelta && delta <= cfg.goodWindowMs) {
-          bestDelta = delta;
-          target = g;
-        }
-      });
-      if (!target) return prev;
+    const prev = glovesRef.current;
+    prev.forEach(g => {
+      if (g.hit || g.missed) return;
+      if (g.punch !== type) return;
+      const elapsed = now - g.spawnedAt;
+      const delta = Math.abs(elapsed - g.duration);
+      if (delta < bestDelta && delta <= cfg.goodWindowMs) {
+        bestDelta = delta;
+        target = g;
+      }
+    });
+
+    if (target) {
       const t = target;
       const rating: 'perfect' | 'good' = bestDelta <= cfg.perfectWindowMs ? 'perfect' : 'good';
       const points = rating === 'perfect' ? 100 : 50;
       const comboBonus = Math.min(combo, 30) * 5;
+      commitGloves(prev.map(g => g.id === t.id ? { ...g, hit: true, result: rating } : g));
       setScore(s => s + points + comboBonus);
       setCombo(c => {
         const nc = c + 1;
@@ -468,10 +492,7 @@ export function useMittEngine() {
         if (newCombo >= 5) audio.combo();
       }
       allHits.current.push({ punch: type, result: rating, reactionMs: Math.round(bestDelta), stage: currentStageRef.current });
-      return prev.map(g => g.id === t.id ? { ...g, hit: true, result: rating } : g);
-    });
-
-    if (!target) {
+    } else {
       setCombo(0);
       setWrongShake(s => s + 1);
       audio.whoosh();
@@ -485,7 +506,7 @@ export function useMittEngine() {
         setTimeout(() => finalizeRound('ko-streak'), 0);
       }
     }
-  }, [combo, applyEnergyDelta, finalizeRound]);
+  }, [combo, applyEnergyDelta, finalizeRound, commitGloves]);
 
   const startCountdown = useCallback((onDone: () => void) => {
     setPhase('countdown');
@@ -515,16 +536,19 @@ export function useMittEngine() {
     savePlayerName(name);
     allHits.current = [];
     drillResultsRef.current = [];
+    newBestInSessionRef.current = false;
     setScore(0);
+    scoreRef.current = 0;
     setCombo(0);
     setBestCombo(0);
     setEnergy(100);
     energyRef.current = 100;
+    commitGloves([]);
     setSessionResult(null);
     setSessionExtras(null);
     setRoundOutcome(null);
     startCountdown(() => startStage(1));
-  }, [startCountdown, startStage]);
+  }, [startCountdown, startStage, commitGloves]);
 
   // 다음 라운드로 진행 (clear 모달의 NEXT)
   const nextRound = useCallback(() => {
@@ -548,8 +572,9 @@ export function useMittEngine() {
     audio.stopBgm();
     setPaused(false);
     pausedRef.current = false;
-    setGloves([]);
+    commitGloves([]);
     setScore(0);
+    scoreRef.current = 0;
     setCombo(0);
     setBestCombo(0);
     setEnergy(100);
@@ -558,13 +583,14 @@ export function useMittEngine() {
     setRoundOutcome(null);
     allHits.current = [];
     drillResultsRef.current = [];
+    newBestInSessionRef.current = false;
     if (name) {
       startCountdown(() => startStage(1));
     } else {
       setPhase('home');
       phaseRef.current = 'home';
     }
-  }, [playerName, clearAllTimers, startCountdown, startStage]);
+  }, [playerName, clearAllTimers, startCountdown, startStage, commitGloves]);
 
   const goHome = useCallback(() => {
     clearAllTimers();
@@ -573,9 +599,9 @@ export function useMittEngine() {
     pausedRef.current = false;
     setPhase('home');
     phaseRef.current = 'home';
-    setGloves([]);
+    commitGloves([]);
     setRoundOutcome(null);
-  }, [clearAllTimers]);
+  }, [clearAllTimers, commitGloves]);
 
   const pauseGame = useCallback(() => {
     if (phaseRef.current !== 'playing' || pausedRef.current) return;
@@ -584,20 +610,32 @@ export function useMittEngine() {
     pausedAtRef.current = performance.now();
     audio.stopBgm();
     clearTimeout(spawnTimerRef.current);
+    // 라운드 마감 대기(drain)도 멈춘다 — 안 멈추면 일시정지 중에 라운드가 끝나 버린다
+    clearTimeout(drainTimeoutRef.current);
   }, []);
 
   const resumeGame = useCallback(() => {
     if (phaseRef.current !== 'playing' || !pausedRef.current) return;
     const pauseDuration = performance.now() - pausedAtRef.current;
-    setGloves(prev => prev.map(g =>
+    commitGloves(glovesRef.current.map(g =>
       (g.hit || g.missed) ? g : { ...g, spawnedAt: g.spawnedAt + pauseDuration }
     ));
     pausedRef.current = false;
     setPaused(false);
     const intensity: 1 | 2 | 3 = currentStageRef.current <= 3 ? 1 : currentStageRef.current <= 7 ? 2 : 3;
     audio.startBgm(intensity);
+    if (drainDueAtRef.current != null) {
+      // 시간이 다 된 뒤 멈췄던 경우 — 남은 마감 시간만큼 다시 건다 (스폰은 더 하지 않는다)
+      const remain = Math.max(60, drainDueAtRef.current - pausedAtRef.current);
+      drainDueAtRef.current = performance.now() + remain;
+      drainTimeoutRef.current = setTimeout(() => {
+        drainDueAtRef.current = null;
+        finalizeRound('time-up');
+      }, remain);
+      return;
+    }
     scheduleSpawn();
-  }, [scheduleSpawn]);
+  }, [scheduleSpawn, finalizeRound, commitGloves]);
 
   // 결과 화면으로 이동 (clear/fail 모달에서 "그만하기")
   const endSession = useCallback(() => {
