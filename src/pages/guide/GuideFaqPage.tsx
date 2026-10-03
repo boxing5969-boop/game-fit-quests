@@ -58,7 +58,7 @@ const GuideFaqPage = () => {
                 </button>
                 {open && (
                   <div className="border-t border-border px-4 pb-4 pt-3">
-                    <p className="text-[14px] leading-6 text-muted-foreground">
+                    <p className="whitespace-pre-line text-[14px] leading-6 text-muted-foreground">
                       {item.a}
                     </p>
                   </div>

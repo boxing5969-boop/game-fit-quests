@@ -1,4 +1,5 @@
 import { BookOpen, FlaskConical, Map, Dumbbell, ShieldCheck, HelpCircle } from "lucide-react";
+import { findOsamiFaq } from "@/data/osamiFaq";
 
 export interface GuideSection {
   id: string;
@@ -36,7 +37,8 @@ export const FAQ_ITEMS = [
   },
   {
     q: "언제 레벨업하나요?",
-    a: "각 레벨의 인정 세션 3회, 출석일 3일, 훈련 시간 150분을 달성하고 체크테스트를 통과하면 다음 레벨로 올라갑니다. 레벨 10마다 리그가 변경됩니다.",
+    // 숫자는 오삼 코치 지식 베이스(data/osamiFaq.ts)가 정본 — 챗봇과 가이드가 같은 답을 보이게 그대로 가져온다
+    a: findOsamiFaq("lv-requirements")?.answer ?? "필요한 출석을 채우면 레벨이 올라가요. 자세한 기준은 랭크업 로드맵에서 확인해 주세요.",
   },
   {
     q: "왜 이 프로그램은 필수인가요?",
