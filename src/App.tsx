@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { peekPostLoginPath, rememberPostLoginPath } from "@/lib/postLoginRedirect";
 import { ThemeProvider } from "next-themes";
@@ -12,7 +12,6 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import LoginPage from "@/pages/LoginPage";
 import NotFound from "@/pages/NotFound";
-import ChatAssistant from "@/components/ChatAssistant";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { isManagerRole } from "@/lib/rankLabels";
 import { isSignageRoute } from "@/lib/displayMode";
@@ -39,6 +38,11 @@ import { initBackExit } from "@/lib/androidBackExit";
 // LoginPage + NotFound stay eager: Login is the cold-start screen
 // (no point in splitting the first paint), NotFound is a tiny fallback.
 const TvBranchPicker = lazyWithRetry(() => import("@/pages/TvBranchPicker"));
+// 오삼 코치 챗 — 지식 베이스(약 24KB gzip)가 첫 화면·TV 사이니지 번들에 실리지 않게 따로 받는다.
+// 떠 있는 보조 버튼이라 받기에 실패해도 화면을 새로고침하지 않고 조용히 숨긴다 (lazyWithRetry 를 쓰지 않는 이유).
+const ChatAssistant = lazy(() =>
+  import("@/components/ChatAssistant").catch(() => ({ default: () => null })),
+);
 const HomePage = lazyWithRetry(() => import("@/pages/HomePage"));
 // QR 수동 출석 — 라이브보드 QR 을 앱에서 찍어 출석 행을 바로 만든다 (2026-09-22, 브로제이 지연 보조).
 const QrCheckinPage = lazyWithRetry(() => import("@/pages/QrCheckinPage"));
@@ -359,7 +363,11 @@ const AppRoutes = () => {
       {/* 📲 휴대폰 알림 — 구독 동기화 · 알림 눌러 이동 · 로그아웃 시 이 기기 구독 정리 */}
       {!signage && <PushBridge />}
       {!signage && <BottomNav />}
-      {!signage && <ChatAssistant />}
+      {!signage && (
+        <Suspense fallback={null}>
+          <ChatAssistant />
+        </Suspense>
+      )}
       {/* 마이복서153 — 오삼 마스코트 튜토리얼 (행동기반 미션 5개). */}
       {user && splashDone && !signage && <TutorialFloatingMascotWithDetect />}
       {/* 5개 미션 spotlight 가이드 — navTarget 페이지에서 어떤 element 누를지 안내 */}

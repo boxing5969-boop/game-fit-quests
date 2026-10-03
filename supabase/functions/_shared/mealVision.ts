@@ -52,7 +52,8 @@ const VISION_PROVIDERS: VisionProvider[] = [
     name: "groq",
     keyEnv: "GROQ_API_KEY",
     modelEnv: "GROQ_VISION_MODEL",
-    defaultModel: "qwen/qwen3.6-27b",
+    // qwen3.6-27b 는 2026-10 에 groq 에서 사라져(404) qwen3.8-27b 로 교체 — groq 의 유일한 이미지 입력 모델.
+    defaultModel: "qwen/qwen3.8-27b",
     url: "https://api.groq.com/openai/v1/chat/completions",
   },
 ];
