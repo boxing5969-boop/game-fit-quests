@@ -1,15 +1,24 @@
 // 신규 회원 가입 신청 (앱으로 가입신청서 작성) — 153복싱짐 선릉역점.
 // 계정정보 → 추가정보(성별·목표·건강) → 규정·동의(약관·개인정보·스파링·면책) → 수강권(개월수) 선택 → 바로 결제.
 // 결제 진행 시 create-bill 이 회원을 자동 승인(가입 확정)하고 결제선생 결제창으로 이동한다.
+//
+// 기존 회원(2026-10-07): 체육관에 등록된 회원은 자동 동기화로 앱 계정이 이미 있다(아직 넘겨받지 않은 계정).
+//   1단계 '다음'에서 전화번호·이름(·생년월일)을 서버(claim-member-account)에 확인해 기존 회원이면
+//   수강권 선택·결제 없이 [계정 정보 → 추가 정보 → 규정 동의 → 가입 완료]로 끝난다.
+//   · 방문자: 그 계정을 내가 정한 아이디·비밀번호로 넘겨받는다(레벨·출석·수강권 기록 그대로) → 바로 로그인.
+//   · 소셜 로그인 회원: 기존 연동(link-imported-by-phone)으로 기존 계정의 기록을 이 계정에 합친다.
 import { useState, useEffect, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ChevronDown, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { GYM_POLICIES } from "@/data/gymPolicies";
+import { kstToday } from "@/lib/levelPractice";
 import { toast } from "sonner";
 
 const BRANCH = "153복싱짐 선릉역점";
+const AGREEMENT_VERSION = "2026-06";
 const toFakeEmail = (id: string) => `${id.toLowerCase().trim()}@153rankup.app`;
 const rawDigits = (s: string) => s.replace(/[^0-9]/g, "");
 const formatPhone = (v: string) => {
@@ -19,6 +28,7 @@ const formatPhone = (v: string) => {
   return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
 };
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
+const toIsoBirth = (b: string) => `${b.slice(0, 4)}-${b.slice(4, 6)}-${b.slice(6, 8)}`;
 
 interface Product {
   id: string;
@@ -27,17 +37,35 @@ interface Product {
   duration_days: number;
 }
 
+/** claim-member-account 응답 — 회원 정보는 담겨 오지 않는다(판정 결과만). */
+interface ClaimResponse {
+  ok?: boolean;
+  status?: string;
+  error?: string;
+  membershipActive?: boolean;
+}
+
+type MemberMode = "new" | "existing";
+
 const inputClass =
   "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground";
-const STEPS = ["계정 정보", "추가 정보", "규정 동의", "수강권 선택"];
+const STEPS_NEW = ["계정 정보", "추가 정보", "규정 동의", "수강권 선택"];
+const STEPS_EXISTING = ["계정 정보", "추가 정보", "규정 동의"];
 
 const SignupApply = () => {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const queryClient = useQueryClient();
+  const { user, profile, refreshProfile, refreshProgress } = useAuth();
   const loggedIn = !!user; // 소셜(구글/카카오) 로그인 후 가입 신청 → 계정 생성 단계 건너뜀
   const [step, setStep] = useState(1);
   const [err, setErr] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // 기존 회원 확인 — 1단계 '다음'에서 서버가 판정한다. existing 이면 결제 단계가 없다.
+  const [memberMode, setMemberMode] = useState<MemberMode>("new");
+  const [checking, setChecking] = useState(false);
+  const [registeredPhone, setRegisteredPhone] = useState(false); // 이미 앱 계정이 있는 번호 → 로그인 안내 버튼
+  const steps = memberMode === "existing" ? STEPS_EXISTING : STEPS_NEW;
+  const lastStep = steps.length;
 
   // 계정
   const [username, setUsername] = useState("");
@@ -89,29 +117,66 @@ const SignupApply = () => {
 
   const validateStep1 = () => {
     if (!loggedIn) {
-      if (!/^[a-z0-9_]{4,}$/.test(username.trim())) return "아이디는 영문·숫자·밑줄(_) 4자 이상이어야 합니다";
+      const id = username.trim().toLowerCase();
+      if (!/^[a-z0-9_]{4,20}$/.test(id)) return "아이디는 영문·숫자·밑줄(_) 4~20자여야 합니다";
+      // {전화번호}@153rankup.app 은 체육관 등록 회원 계정이 쓰는 주소 — 아이디로 쓰면 그 회원 계정과 부딪힌다.
+      if (/^0\d{9,10}$/.test(id)) return "전화번호는 아이디로 쓸 수 없어요. 다른 아이디를 정해 주세요";
       if (password.length < 6) return "비밀번호는 6자 이상이어야 합니다";
       if (password !== confirm) return "비밀번호가 일치하지 않습니다";
     }
     if (!name.trim()) return "이름을 입력해주세요";
     if (!nickname.trim()) return "닉네임을 입력해주세요";
+    // 닉네임은 TV·순위에 그대로 나간다 — 12자를 넘으면 프로필 저장이 서버에서 거절된다.
+    if ([...nickname.trim()].length > 12) return "닉네임은 12자 이내로 정해 주세요";
     if (rawDigits(phone).length < 10) return "전화번호를 정확히 입력해주세요";
     if (birth.length !== 8) return "생년월일 8자리를 입력해주세요 (예: 19990315)";
     if (!gender) return "성별을 선택해주세요";
     return "";
   };
 
-  const next = () => {
+  // 기존 회원 확인 — 서버는 판정(new/existing/…)만 돌려주고 회원 정보는 주지 않는다.
+  const checkMember = async (): Promise<boolean> => {
+    setChecking(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("claim-member-account", {
+        body: { action: "check", phone: rawDigits(phone), name: name.trim(), birthDate: birth },
+      });
+      const r = (data ?? null) as ClaimResponse | null;
+      if (error || !r?.status) {
+        setErr("회원 확인 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
+        return false;
+      }
+      if (r.status === "new" || r.status === "existing") {
+        setMemberMode(r.status);
+        return true;
+      }
+      setMemberMode("new");
+      setRegisteredPhone(r.status === "registered");
+      setErr(r.error || "가입을 진행할 수 없어요. 지점 데스크에 문의해 주세요.");
+      return false;
+    } catch {
+      setErr("회원 확인 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
+      return false;
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const next = async () => {
+    if (checking) return;
     setErr("");
+    setRegisteredPhone(false);
     if (step === 1) {
       const e = validateStep1();
       if (e) return setErr(e);
+      if (!(await checkMember())) return;
     }
     if (step === 3 && !allAgreed) return setErr("필수 약관에 모두 동의해주세요");
-    setStep((s) => Math.min(4, s + 1));
+    setStep((s) => Math.min(lastStep, s + 1));
   };
   const back = () => {
     setErr("");
+    setRegisteredPhone(false);
     if (step === 1) navigate(loggedIn ? "/home" : "/login");
     else setStep((s) => s - 1);
   };
@@ -168,7 +233,7 @@ const SignupApply = () => {
         if (!su.session) await supabase.auth.signInWithPassword({ email, password });
       }
       if (uid) {
-        await supabase
+        const { error: pErr } = await supabase
           .from("profiles")
           .update({
             name: name.trim(),
@@ -179,11 +244,19 @@ const SignupApply = () => {
             gender,
             fitness_goal: goal.trim() || null,
             health_notes: health.trim() || null,
-            signup_agreements: { ...agree, version: "2026-06" },
+            signup_agreements: { ...agree, version: AGREEMENT_VERSION },
             signup_agreed_at: new Date().toISOString(),
             gym_reg_date: new Date().toISOString().slice(0, 10),
           } as never)
           .eq("user_id", uid);
+        if (pErr) {
+          console.error("[SignupApply] 가입 정보 저장 실패:", pErr);
+          // 소셜 계정은 저장이 안 되면 결제로 넘기지 않는다 — 전화번호가 안 붙은 계정으로 결제되는 것을 막는다.
+          if (loggedIn) {
+            setErr("가입 정보를 저장하지 못했어요. 잠시 후 다시 시도하거나 지점 데스크에 문의해 주세요.");
+            return;
+          }
+        }
       }
       const { data, error } = await supabase.functions.invoke("payssam-create-bill", { body: { product_id: productId } });
       if (error || (data && (data as { error?: string }).error)) {
@@ -205,7 +278,115 @@ const SignupApply = () => {
     }
   };
 
+  // 기존 회원 가입 완료 — 결제 없이. 이용 중인 수강권이 확인되지 않는 회원(만료·기록 없음)은
+  // 수강권 탭으로 안내한다(결제는 강요하지 않는다).
+  const finishExisting = (membershipActive: boolean) => {
+    if (membershipActive) {
+      toast.success("기존 회원 확인 완료! 결제 없이 가입됐어요 🥊");
+      navigate("/home", { replace: true });
+    } else {
+      toast.success("가입 완료! 이용 중인 수강권이 확인되지 않아 수강권 탭으로 안내해 드려요.");
+      navigate("/membership", { replace: true });
+    }
+  };
+
+  const submitExisting = async () => {
+    if (!allAgreed) return setErr("필수 약관에 모두 동의해주세요");
+    setErr("");
+    setSubmitting(true);
+    const agreements = { ...agree, version: AGREEMENT_VERSION };
+    try {
+      if (loggedIn && user) {
+        // 소셜 로그인 회원 — 전화번호로 기존 계정의 레벨·출석·수강권 기록을 이 계정에 합친다(기존 연동 경로).
+        const { data, error } = await supabase.functions.invoke("link-imported-by-phone", {
+          body: { phone: rawDigits(phone) },
+        });
+        const r = (data ?? null) as { ok?: boolean; matched?: boolean; error?: string; message?: string } | null;
+        if (error || !r) {
+          setErr("기존 회원 연동 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+        if (r.error) return setErr(r.error);
+        if (r.matched === false) return setErr(r.message || "해당 전화번호로 등록된 기존 회원 계정이 없어요. 지점 데스크에 문의해 주세요.");
+        // 회원이 입력한 가입 정보만 저장 — 전화·지점·등록일·수강권은 기존 계정 값이 이미 옮겨졌다.
+        const { error: pErr } = await supabase
+          .from("profiles")
+          .update({
+            name: name.trim(),
+            nickname: nickname.trim(),
+            gender,
+            ...(goal.trim() ? { fitness_goal: goal.trim() } : {}),
+            ...(health.trim() ? { health_notes: health.trim() } : {}),
+            signup_agreements: agreements,
+            signup_agreed_at: new Date().toISOString(),
+          } as never)
+          .eq("user_id", user.id);
+        if (pErr) console.error("[SignupApply] 연동 후 가입 정보 저장 실패:", pErr);
+        // 생년월일이 비어 있던 회원만 채운다(있는 값은 건드리지 않는다).
+        await supabase
+          .from("profiles")
+          .update({ birth_date: toIsoBirth(birth) } as never)
+          .eq("user_id", user.id)
+          .is("birth_date", null);
+        await refreshProfile();
+        await refreshProgress();
+        void queryClient.invalidateQueries();
+        const { data: me } = await supabase.from("profiles").select("membership_end").eq("user_id", user.id).maybeSingle();
+        const end = (me as { membership_end?: string | null } | null)?.membership_end;
+        finishExisting(!!end && end.slice(0, 10) >= kstToday());
+        return;
+      }
+
+      // 방문자 — 기존 계정을 내가 정한 아이디·비밀번호로 넘겨받는다(서버가 처음부터 다시 확인한다).
+      const id = username.trim().toLowerCase();
+      const { data, error } = await supabase.functions.invoke("claim-member-account", {
+        body: {
+          action: "claim",
+          phone: rawDigits(phone),
+          name: name.trim(),
+          birthDate: birth,
+          username: id,
+          password,
+          nickname: nickname.trim(),
+          gender,
+          fitnessGoal: goal.trim(),
+          healthNotes: health.trim(),
+          agreements,
+        },
+      });
+      const r = (data ?? null) as ClaimResponse | null;
+      if (error || !r?.status) {
+        setErr("가입 처리 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
+        return;
+      }
+      if (!r.ok) {
+        // 아이디 문제는 아이디를 고치는 1단계로 돌려보낸다.
+        if (r.status === "username_taken" || r.status === "invalid") setStep(1);
+        if (r.status === "registered") {
+          setMemberMode("new");
+          setStep(1);
+          setRegisteredPhone(true);
+        }
+        // 그사이 기존 회원 계정이 없어졌다면 일반 가입(수강권 선택)으로 이어 간다.
+        if (r.status === "new") setMemberMode("new");
+        return setErr(r.error || "가입을 진행할 수 없어요. 지점 데스크에 문의해 주세요.");
+      }
+      const { error: siErr } = await supabase.auth.signInWithPassword({ email: toFakeEmail(id), password });
+      if (siErr) {
+        toast.success("가입이 완료됐어요. 새 아이디로 로그인해 주세요.");
+        navigate("/", { replace: true });
+        return;
+      }
+      finishExisting(r.membershipActive === true);
+    } catch (e) {
+      setErr("처리 중 오류가 발생했습니다: " + ((e as Error)?.message || ""));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const selectedProduct = products.find((p) => p.id === productId);
+  const existing = memberMode === "existing";
 
   return (
     <div className="mx-auto min-h-screen max-w-lg px-4 pb-28 pt-4">
@@ -215,20 +396,32 @@ const SignupApply = () => {
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-foreground">신규 회원 가입 신청</h1>
+          <h1 className="text-lg font-bold text-foreground">{existing ? "기존 회원 앱 가입" : "신규 회원 가입 신청"}</h1>
           <p className="text-[11px] text-muted-foreground">153복싱짐 선릉역점</p>
         </div>
       </div>
 
       {/* 진행바 */}
       <div className="mb-5 flex gap-1.5">
-        {STEPS.map((label, i) => (
+        {steps.map((label, i) => (
           <div key={label} className="flex-1">
             <div className={`h-1.5 rounded-full ${i + 1 <= step ? "bg-primary" : "bg-muted"}`} />
             <p className={`mt-1 text-center text-[10px] ${i + 1 === step ? "font-bold text-primary" : "text-muted-foreground"}`}>{label}</p>
           </div>
         ))}
       </div>
+
+      {/* 기존 회원 확인됨 — 결제 단계 없음 */}
+      {existing && step >= 2 && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5">
+          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <Check className="h-3.5 w-3.5" />
+          </span>
+          <p className="text-xs leading-relaxed text-foreground">
+            <b className="text-primary">기존 회원으로 확인됐어요.</b> 수강권 결제 없이 가입이 끝나요. 레벨·출석·수강권 기록도 그대로 이어져요.
+          </p>
+        </div>
+      )}
 
       {/* STEP 1 — 계정 */}
       {step === 1 && (
@@ -237,7 +430,7 @@ const SignupApply = () => {
             <div className="rounded-xl bg-primary/5 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">소셜 계정으로 로그인됨 — 아래 가입 정보만 작성하면 됩니다.</div>
           ) : (
             <>
-              <Field label="아이디"><input className={inputClass} value={username} onChange={(e) => setUsername(e.target.value)} placeholder="영문·숫자 4자 이상" autoCapitalize="none" autoCorrect="off" /></Field>
+              <Field label="아이디"><input className={inputClass} value={username} onChange={(e) => setUsername(e.target.value)} placeholder="영문·숫자 4~20자" autoCapitalize="none" autoCorrect="off" maxLength={20} /></Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="비밀번호"><input type="password" className={inputClass} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6자 이상" /></Field>
                 <Field label="비밀번호 확인"><input type="password" className={inputClass} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="다시 입력" /></Field>
@@ -245,8 +438,11 @@ const SignupApply = () => {
             </>
           )}
           <Field label="이름(실명)"><input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="실명" /></Field>
-          <Field label="닉네임"><input className={inputClass} value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="링 위의 이름" /></Field>
-          <Field label="전화번호"><input type="tel" className={inputClass} value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" /></Field>
+          <Field label="닉네임"><input className={inputClass} value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="링 위의 이름 (12자 이내)" maxLength={12} /></Field>
+          <Field label="전화번호">
+            <input type="tel" className={inputClass} value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" />
+            <p className="mt-1 px-1 text-[11px] leading-relaxed text-muted-foreground">이미 체육관에 다니고 계신가요? 등록된 번호를 입력하면 결제 없이 가입돼요.</p>
+          </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="생년월일"><input className={inputClass} value={birth} onChange={(e) => setBirth(rawDigits(e.target.value).slice(0, 8))} placeholder="19990315" inputMode="numeric" maxLength={8} /></Field>
             <Field label="성별">
@@ -299,8 +495,8 @@ const SignupApply = () => {
         </div>
       )}
 
-      {/* STEP 4 — 수강권 선택 */}
-      {step === 4 && (
+      {/* STEP 4 — 수강권 선택 (신규 회원만) */}
+      {step === 4 && !existing && (
         <div className="space-y-2.5">
           <p className="px-1 text-xs text-muted-foreground">등록하실 수강권을 선택하세요. 다음 단계에서 안전한 결제창으로 이동합니다.</p>
           {products.map((p) => (
@@ -313,15 +509,27 @@ const SignupApply = () => {
             </button>
           ))}
           {products.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">등록 가능한 수강권이 없습니다. 관장님께 문의해주세요.</p>}
+          <p className="px-1 pt-1 text-[11px] leading-relaxed text-muted-foreground">이미 체육관에 등록된 회원인데 이 화면이 보이면 등록된 전화번호가 다를 수 있어요. 결제하지 말고 지점 데스크에 문의해 주세요.</p>
         </div>
       )}
 
       {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">{err}</p>}
+      {registeredPhone && !loggedIn && (
+        <button onClick={() => navigate("/", { replace: true })} className="mt-2 w-full rounded-xl border border-border bg-card py-2.5 text-sm font-bold text-foreground transition-all active:scale-[0.98]">
+          로그인 화면으로 가기 (아이디·비밀번호 찾기)
+        </button>
+      )}
 
       {/* 하단 버튼 */}
       <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg border-t border-border bg-card p-4 safe-area-bottom">
-        {step < 4 ? (
-          <button onClick={next} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]">다음</button>
+        {step < lastStep ? (
+          <button onClick={next} disabled={checking} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+            {checking ? "회원 정보 확인 중..." : "다음"}
+          </button>
+        ) : existing ? (
+          <button onClick={submitExisting} disabled={submitting} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+            {submitting ? "처리 중..." : "가입 완료 (결제 없음)"}
+          </button>
         ) : (
           <button onClick={submit} disabled={submitting || !productId} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
             {submitting ? "처리 중..." : selectedProduct ? `${won(selectedProduct.price)} 결제하고 가입` : "수강권을 선택하세요"}

@@ -510,6 +510,9 @@ const LoginPage = () => {
             >
               🥊 처음 오셨나요? 신규 회원 가입 신청
             </button>
+            <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
+              체육관 기존 회원도 여기서 가입하면 결제 없이 바로 끝나요
+            </p>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border" />
