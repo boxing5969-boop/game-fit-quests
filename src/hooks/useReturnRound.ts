@@ -3,7 +3,7 @@
  *
  * 보호 원칙:
  *   · 공식 1~40 levels/missions/member_progress 미수정
- *   · 공식 XP 지급 0 — QUEST XP / 파이트 머니만
+ *   · 공식 XP 지급 0 — QUEST XP / 챔피언 머니만
  *   · record_attendance 호출 0 / approve_mission_submission 호출 0
  *   · 마지막 활동일은 boxing_engagement_events 단일 소스 (RPC 내부 계산)
  */

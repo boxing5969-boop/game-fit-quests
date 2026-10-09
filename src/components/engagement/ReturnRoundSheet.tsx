@@ -130,7 +130,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
           </div>
           <div className="rounded-card border border-border bg-card p-3">
             <p className="text-[10px] font-black uppercase tracking-wider text-reward">
-              파이트 머니
+              챔피언 머니
             </p>
             <p className="number-font mt-0.5 text-[18px] font-black text-reward">
               +{result.gems_granted.toLocaleString()}
@@ -218,7 +218,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
             {copy.rewardLine}
           </p>
           <p className="mt-1 text-[10.5px] leading-relaxed text-muted-foreground">
-            ※ 보상은 QUEST XP / 파이트 머니로만 지급됩니다. 공식 XP는
+            ※ 보상은 QUEST XP / 챔피언 머니로만 지급됩니다. 공식 XP는
             지급되지 않습니다.
           </p>
         </div>

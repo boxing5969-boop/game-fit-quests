@@ -265,7 +265,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   );
 
   const gemCount = walletData?.gems_balance ?? 0;
-  // 전체 관리자는 파이트 머니 개념이 없음 — 상단 표기를 ∞ 로 통일.
+  // 전체 관리자는 챔피언 머니 개념이 없음 — 상단 표기를 ∞ 로 통일.
   const isAdmin = role === "admin" || role === "super_admin";
   const gemsDisplay = isAdmin ? "∞" : gemCount.toLocaleString();
   const displayName = staffCard ? staffDisplayName(profile) : (profile.nickname || profile.name);

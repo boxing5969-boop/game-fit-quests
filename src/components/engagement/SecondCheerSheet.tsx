@@ -206,14 +206,14 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
             <p className="mt-0.5 text-[12.5px] font-bold text-foreground">
               {noReceiverReward
                 ? "응원 알림이 전달되었습니다"
-                : `+${result.receiver_gems_granted.toLocaleString()} 파이트 머니`}
+                : `+${result.receiver_gems_granted.toLocaleString()} 챔피언 머니`}
             </p>
           </div>
         </div>
 
         <p className="text-[10.5px] leading-relaxed text-muted-foreground">
           ※ 응원은 공식 레벨업에 영향을 주지 않는 커뮤니티 활동입니다. RP 와
-          파이트 머니만 적용됩니다.
+          챔피언 머니만 적용됩니다.
         </p>
 
         <div className="grid grid-cols-2 gap-2 pt-1">

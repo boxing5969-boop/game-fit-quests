@@ -5,7 +5,7 @@
  * v1.5 14단계: 컨디션 게이지 선택 시 카드 우선순위가 컨디션별로 재정렬됨.
  *
  * 보호 원칙:
- *   · 공식 미션/공식 XP 무관 — QUEST XP / 파이트 머니만 미리보기
+ *   · 공식 미션/공식 XP 무관 — QUEST XP / 챔피언 머니만 미리보기
  *   · 카드 클릭은 콜백 → 호출측에서 toast (현재는 "다음 단계에서 열립니다")
  *   · 공식 missions 필터링 / 수정 0 — 본 컴포넌트는 보조 카드 정렬만 담당
  */
@@ -154,7 +154,7 @@ const TodayQuestMiniPanel = ({
           <h3 className="mt-0.5 text-display-sm">보조 퀘스트</h3>
         </div>
         <span className="badge-pill bg-reward/15 text-reward">
-          QUEST XP · 파이트 머니
+          QUEST XP · 챔피언 머니
         </span>
       </div>
 

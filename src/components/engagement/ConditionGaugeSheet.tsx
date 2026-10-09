@@ -267,7 +267,7 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
       </button>
 
       <p className="text-[10.5px] leading-relaxed text-muted-foreground">
-        ※ 컨디션 선택 자체에는 QUEST XP / 파이트 머니 / RP 보상이 없습니다.
+        ※ 컨디션 선택 자체에는 QUEST XP / 챔피언 머니 / RP 보상이 없습니다.
         공식 1~40 레벨업과 무관합니다.
       </p>
     </div>

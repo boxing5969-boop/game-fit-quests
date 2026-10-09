@@ -6,8 +6,8 @@
  *
  * 보호 원칙:
  *   · 공식 missions / member_progress 미수정
- *   · 공식 XP 지급 0 — QUEST XP / 파이트 머니 / RP 만
- *   · 파이트 머니는 RPC 내부 grant_gems 만 경유
+ *   · 공식 XP 지급 0 — QUEST XP / 챔피언 머니 / RP 만
+ *   · 챔피언 머니는 RPC 내부 grant_gems 만 경유
  */
 
 import { useCallback, useRef } from "react";

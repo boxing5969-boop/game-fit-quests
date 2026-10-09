@@ -9,7 +9,7 @@
  *
  * 데이터:
  *   useAuth().progress (공식 — 읽기만)
- *   useWallet() (파이트 머니 — 읽기만)
+ *   useWallet() (챔피언 머니 — 읽기만)
  *   useBoxingEngagementSummary() (QUEST 보조)
  */
 
@@ -149,7 +149,7 @@ const BoxingHallSummaryCard = () => {
         </div>
       </div>
 
-      {/* C. 파이트 머니 + CTA */}
+      {/* C. 챔피언 머니 + CTA */}
       <button
         type="button"
         onClick={() => navigate("/character-studio")}
@@ -160,7 +160,7 @@ const BoxingHallSummaryCard = () => {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-black uppercase tracking-wider text-reward">
-            파이트 머니
+            챔피언 머니
           </p>
           <p className="number-font mt-0.5 text-[16px] font-black text-foreground">
             {gemsDisplay}

@@ -584,7 +584,7 @@ const StoryRpgPage = () => {
                 STORY XP +{mode.result.story_xp_granted} · 링 코인 +
                 {mode.result.ring_coins_granted}
                 {mode.result.real_gems_granted > 0
-                  ? ` · 파이트 머니 +${mode.result.real_gems_granted}`
+                  ? ` · 챔피언 머니 +${mode.result.real_gems_granted}`
                   : ""}
               </p>
               <button

@@ -133,7 +133,7 @@ export interface DailyHabitsPayload {
 }
 
 /**
- * 자가 기록 모드 — 첫 제출 시 파이트 머니 3 + 배지 + (21일째면 보너스 50).
+ * 자가 기록 모드 — 첫 제출 시 챔피언 머니 3 + 배지 + (21일째면 보너스 50).
  * 같은 날 재제출은 필드만 갱신하고 보상은 지급하지 않는다 (granted_gems=0).
  */
 export interface SubmitDailyLogResult {

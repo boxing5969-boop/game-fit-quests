@@ -223,7 +223,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
           </div>
           <div className="rounded-card border border-border bg-card p-3">
             <p className="text-[10px] font-black uppercase tracking-wider text-reward">
-              파이트 머니
+              챔피언 머니
             </p>
             <p className="number-font mt-0.5 text-[18px] font-black text-reward">
               +{result.gems_granted.toLocaleString()}

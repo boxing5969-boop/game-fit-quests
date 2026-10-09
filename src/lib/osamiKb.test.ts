@@ -16,7 +16,7 @@ const DIRECT: [string, string][] = [
   ["마일리지 어떻게 쌓여요", "rw-mileage"],
   ["마일리지 어디에 써요", "rw-mileage-use"],
   ["젬은 어떻게 얻어요", "rw-gems"],
-  ["파이트머니 뭐예요", "rw-gems"],
+  ["챔피언머니 뭐예요", "rw-gems"],
   ["닉네임 변경 어떻게 해요", "acct-nickname"],
   ["닉네임 바꾸는법", "acct-nickname"],
   ["비밀번호 잊어버렸어요", "acct-reset-pw"],

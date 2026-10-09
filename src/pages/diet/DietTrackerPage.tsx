@@ -362,8 +362,8 @@ const DietTrackerPage = () => {
         const total = base + bonus;
         toast.success(
           bonus > 0
-            ? `🥊 21일 완주! 파이트 머니 +${total} (기본 ${base} · 보너스 ${bonus})`
-            : `🥊 기록 완료! 파이트 머니 +${total}`,
+            ? `🥊 21일 완주! 챔피언 머니 +${total} (기본 ${base} · 보너스 ${bonus})`
+            : `🥊 기록 완료! 챔피언 머니 +${total}`,
         );
       } else {
         toast.success("오늘 기록이 업데이트됐어요. 언제든 다시 수정 가능합니다.");

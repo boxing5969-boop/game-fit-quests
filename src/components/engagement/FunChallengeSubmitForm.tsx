@@ -220,7 +220,7 @@ const FunChallengeSubmitForm = ({
           </div>
           <div className="rounded-card border border-border bg-card p-3">
             <p className="text-[10px] font-black uppercase tracking-wider text-reward">
-              파이트 머니
+              챔피언 머니
             </p>
             <p className="number-font mt-0.5 text-[18px] font-black text-reward">
               +{result.gems_granted.toLocaleString()}
@@ -235,7 +235,7 @@ const FunChallengeSubmitForm = ({
         )}
 
         <p className="text-[10.5px] leading-relaxed text-muted-foreground">
-          ※ QUEST XP 는 보조 경험치로, 공식 1~40 레벨업과 무관합니다. 파이트
+          ※ QUEST XP 는 보조 경험치로, 공식 1~40 레벨업과 무관합니다. 챔피언
           머니는 기존 지갑에 합산됩니다.
         </p>
 

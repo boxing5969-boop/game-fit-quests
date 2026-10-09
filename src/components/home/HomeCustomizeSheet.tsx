@@ -177,7 +177,7 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
             항상 표시 (고정)
           </p>
           <ul className="mt-1.5 space-y-0.5 text-[11.5px] text-foreground/85">
-            <li>· 상단 💵 파이트 머니 뱃지</li>
+            <li>· 상단 💵 챔피언 머니 뱃지</li>
             <li>· 오늘 한 줄 포커스 카드</li>
             <li>· 마스터 리그 달성 축하 배너 (자격 달성 시)</li>
           </ul>

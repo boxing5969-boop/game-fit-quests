@@ -27,7 +27,7 @@ import {
   useOwnedSet,
   usePurchaseCustomization,
 } from "@/hooks/useCustomizationPurchase";
-import { useWallet, useSpendGems } from "@/hooks/useWallet";
+import { useWallet } from "@/hooks/useWallet";
 import CharacterSprite from "@/components/CharacterSprite";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -128,7 +128,7 @@ const CharacterStudioPage = () => {
     hasSyncedFromAssignmentRef.current = true;
   }, [assignment, currentStyle, currentCustomization]);
 
-  const spendGems = useSpendGems();
+  const purchaseBoxer = usePurchaseCustomization();
   const [purchaseModal, setPurchaseModal] = useState<typeof PREBUILT_CHARACTERS[0] | null>(null);
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
 
@@ -158,6 +158,21 @@ const CharacterStudioPage = () => {
       return next;
     });
   }, [user?.id]);
+
+  // 서버 보유 목록(user_owned_customizations, category='boxer')을 ownedStyles 에 병합.
+  // 구매가 purchase_customization RPC 로 서버에 영속되므로, 어느 기기에서 로그인해도
+  // 보유 복서가 그대로 보인다. localStorage 는 즉시 반영용 캐시로만 유지.
+  useEffect(() => {
+    const serverBoxers = ownedCustomizations
+      .filter((o) => o.category === "boxer")
+      .map((o) => o.item_key);
+    if (serverBoxers.length === 0) return;
+    setOwnedStyles(prev => {
+      const missing = serverBoxers.filter(s => !prev.has(s));
+      if (missing.length === 0) return prev;
+      return new Set([...prev, ...missing]);
+    });
+  }, [ownedCustomizations]);
 
   const handleApplyStyle = useCallback(async (style: string) => {
     if (!user?.id) return;
@@ -191,8 +206,11 @@ const CharacterStudioPage = () => {
     const char = purchaseModal;
     setIsProcessingPurchase(true);
     try {
-      if (!isAdmin && char.price > 0) {
-        await spendGems.mutateAsync(char.price);
+      if (char.price > 0) {
+        // 서버 영속 구매 — purchase_customization RPC 가 가격표 검증·지갑 차감·
+        // 보유 기록(user_owned_customizations)을 원자적으로 처리한다.
+        // admin 은 RPC 내부에서 지갑 차감 없이 통과한다.
+        await purchaseBoxer.mutateAsync({ category: "boxer", itemKey: char.style, price: char.price });
       }
       markOwned(char.style);
       setPurchaseModal(null);
@@ -820,7 +838,7 @@ function InventorySection({
             아직 구매한 아이템이 없어요
           </p>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            꾸미기 탭에서 💵 파이트 머니로 이펙트·프레임·칭호를 구매하면 여기에 쌓입니다.
+            꾸미기 탭에서 💵 챔피언 머니로 이펙트·프레임·칭호를 구매하면 여기에 쌓입니다.
           </p>
         </div>
       )}
@@ -1009,7 +1027,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
     }
 
     // 유료 + 미소유 → 구매 모달. admin 도 예외 없이 진입 — 서버 RPC 가
-    // admin 지갑 체크를 우회하므로 '파이트 머니 무제한' 으로 항상 구매 성공.
+    // admin 지갑 체크를 우회하므로 '챔피언 머니 무제한' 으로 항상 구매 성공.
     const needsPurchase =
       opt.price > 0 && !isItemOwned(catCode, opt.key);
     if (needsPurchase) {
@@ -1282,7 +1300,7 @@ function CustomizationPurchaseModal({
   onCancel: () => void;
 }) {
   const afterBalance = walletBalance - option.price;
-  // admin 은 파이트 머니 ∞ 취급 — 서버 RPC 가 지갑 체크 우회하므로 항상 구매 가능.
+  // admin 은 챔피언 머니 ∞ 취급 — 서버 RPC 가 지갑 체크 우회하므로 항상 구매 가능.
   const canAfford = isAdmin || walletBalance >= option.price;
   const isHof = option.requirement === "hall_of_fame";
   const displayLabel = resolveDisplayName(
@@ -1359,7 +1377,7 @@ function CustomizationPurchaseModal({
 
         {!canAfford && !isAdmin && (
           <div className="mb-3 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-center text-[12px] font-bold text-destructive">
-            파이트 머니가 {(option.price - walletBalance).toLocaleString()}원 부족합니다
+            챔피언 머니가 {(option.price - walletBalance).toLocaleString()}원 부족합니다
           </div>
         )}
 
@@ -1388,7 +1406,7 @@ function CustomizationPurchaseModal({
                 구매 중...
               </span>
             ) : !canAfford ? (
-              "파이트 머니 부족"
+              "챔피언 머니 부족"
             ) : (
               "💰 구매하기"
             )}
@@ -1795,7 +1813,7 @@ function PurchaseConfirmModal({ char, walletBalance, isAdmin, isPurchasing, onCo
                 구매 중...
               </span>
             ) : !canAfford && !isAdmin ? (
-              "파이트 머니 부족"
+              "챔피언 머니 부족"
             ) : (
               "💰 구매하기"
             )}

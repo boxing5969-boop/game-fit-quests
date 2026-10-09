@@ -205,7 +205,7 @@ const HubShell = ({
             <button
               type="button"
               onClick={() => navigate("/character-studio")}
-              aria-label="파이트 머니 — 캐릭터 스튜디오로 이동"
+              aria-label="챔피언 머니 — 캐릭터 스튜디오로 이동"
               className="inline-flex items-center gap-1 rounded-pill bg-[rgba(246,196,83,0.12)] px-3 py-1.5 text-caption font-bold text-[#F6C453] transition-transform active:scale-95"
             >
               <Banknote className="h-3.5 w-3.5" />
@@ -522,7 +522,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
               오늘의 미션을 클릭하세요
             </p>
             <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
-              5가지 습관 체크 + 식단 사진 · 자가 기록 시 파이트 머니 지급
+              5가지 습관 체크 + 식단 사진 · 자가 기록 시 챔피언 머니 지급
             </p>
           </div>
           <ArrowRight className="h-5 w-5 text-primary" />

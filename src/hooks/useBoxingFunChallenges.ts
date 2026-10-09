@@ -2,7 +2,7 @@
  * 153 QUEST — 재미 챌린지 hook.
  *
  * boxing_fun_challenges / submit_boxing_fun_challenge_attempt RPC 래퍼.
- * 공식 1~40 미션과 완전히 분리. 보상은 QUEST XP + 파이트 머니만.
+ * 공식 1~40 미션과 완전히 분리. 보상은 QUEST XP + 챔피언 머니만.
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

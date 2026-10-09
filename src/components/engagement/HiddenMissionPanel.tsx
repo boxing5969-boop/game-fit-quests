@@ -87,7 +87,7 @@ const HiddenMissionPanel = () => {
       )}
 
       <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
-        ※ 숨겨진 미션 보상은 QUEST XP / 파이트 머니 / RP 입니다. 공식 1~40
+        ※ 숨겨진 미션 보상은 QUEST XP / 챔피언 머니 / RP 입니다. 공식 1~40
         레벨업과 무관합니다.
       </p>
     </section>

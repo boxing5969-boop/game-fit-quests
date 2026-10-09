@@ -5,8 +5,8 @@
  *
  * 보호 원칙(절대):
  *   · 공식 1~40 levels/missions/member_progress 미수정
- *   · 공식 XP 미지급 — QUEST XP / RP / 파이트 머니만 지급
- *   · 파이트 머니는 RPC 내부 grant_gems 경유 (클라이언트 직접 wallet update 금지)
+ *   · 공식 XP 미지급 — QUEST XP / RP / 챔피언 머니만 지급
+ *   · 챔피언 머니는 RPC 내부 grant_gems 경유 (클라이언트 직접 wallet update 금지)
  *   · 클라이언트는 amount 를 보내지 않는다 — 서버가 row 와 내부 규칙으로 결정
  *
  * 타입 주의:

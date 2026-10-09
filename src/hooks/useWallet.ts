@@ -71,7 +71,7 @@ export const useSpendGems = () => {
       // 중복탭/연타에도 잔액 초과 사용이 불가능하다. (-1 = 잔액 부족)
       const { data, error } = await (supabase.rpc as any)("spend_gems", { _amount: amount });
       if (error) throw error;
-      if (typeof data === "number" && data < 0) throw new Error("파이트 머니가 부족합니다");
+      if (typeof data === "number" && data < 0) throw new Error("챔피언 머니가 부족합니다");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["wallet"] }),
   });

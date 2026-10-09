@@ -44,6 +44,12 @@ import boxer_new_14 from "@/assets/boxers/boxer_new_14.png";
 import boxer_new_16 from "@/assets/boxers/boxer_new_16.png";
 import boxer_new_17 from "@/assets/boxers/boxer_new_17.png";
 import boxer_new_18 from "@/assets/boxers/boxer_new_18.png";
+import boxer_champ_01 from "@/assets/boxers/boxer_champ_01.png";
+import boxer_champ_02 from "@/assets/boxers/boxer_champ_02.png";
+import boxer_champ_03 from "@/assets/boxers/boxer_champ_03.png";
+import boxer_champ_04 from "@/assets/boxers/boxer_champ_04.png";
+import boxer_champ_05 from "@/assets/boxers/boxer_champ_05.png";
+import boxer_champ_06 from "@/assets/boxers/boxer_champ_06.png";
 
 export interface PrebuiltCharacter {
   style: string;
@@ -92,6 +98,14 @@ export const PREBUILT_CHARACTERS: PrebuiltCharacter[] = [
   { style: "female_gm_01",     label: "실버 페가수스", gender: "female", image: boxer_female_grandmaster_01, color: "silver-purple", league: "black", price: 8000 },
   { style: "female_gm_02",     label: "어비스",        gender: "female", image: boxer_female_grandmaster_02, color: "black-red",    league: "black", price: 8000 },
   { style: "female_gm_03",     label: "도미네이터",    gender: "female", image: boxer_female_grandmaster_03, color: "black-lightning", league: "black", price: 10000 },
+
+  // ── 챔피언 에디션 (2026-10 신규 — 챔피언 머니로 구매) ──────────────────
+  { style: "champ_02", label: "섀도우",      gender: "male",   image: boxer_champ_02, color: "black",        league: "black", price: 3000 },
+  { style: "champ_03", label: "국가대표",    gender: "male",   image: boxer_champ_03, color: "red-blue",     league: "black", price: 5000 },
+  { style: "champ_04", label: "타이거 킹",   gender: "male",   image: boxer_champ_04, color: "orange-black", league: "black", price: 7000 },
+  { style: "champ_01", label: "더 챔피언",   gender: "male",   image: boxer_champ_01, color: "gold-red",     league: "black", price: 10000 },
+  { style: "champ_05", label: "사이버 엣지", gender: "male",   image: boxer_champ_05, color: "neon-cyan",    league: "black", price: 12000 },
+  { style: "champ_06", label: "골든 퀸",     gender: "female", image: boxer_champ_06, color: "white-gold",   league: "black", price: 15000 },
   // ── Black league — Hall of Fame only (180000~320000) ───────────────
   { style: "new_16", label: "153 블레이즈",       gender: "male",   image: boxer_new_16, color: "hof", league: "black", price: 190000, requirement: "hall_of_fame" },
   { style: "new_17", label: "153 퓨리",           gender: "male",   image: boxer_new_17, color: "hof", league: "black", price: 190000, requirement: "hall_of_fame" },

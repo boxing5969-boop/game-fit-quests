@@ -6,7 +6,7 @@
  *
  * 보호 원칙(절대):
  *   · levels / missions / mission_submissions / member_progress 미수정.
- *   · 공식 XP 미지급. 파이트 머니는 RPC 내부 grant_gems 경유.
+ *   · 공식 XP 미지급. 챔피언 머니는 RPC 내부 grant_gems 경유.
  *   · wallet 직접 update 금지.
  *   · ChatAssistant / chat-assistant Edge 호출 금지.
  *

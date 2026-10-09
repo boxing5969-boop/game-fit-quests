@@ -216,7 +216,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
           </div>
 
           <p className="pt-1 text-[10.5px] leading-relaxed text-muted-foreground">
-            ※ 본 퀴즈 보상은 보조 경험치(QUEST XP)와 파이트 머니입니다. 공식
+            ※ 본 퀴즈 보상은 보조 경험치(QUEST XP)와 챔피언 머니입니다. 공식
             레벨 XP가 아니며, 1~40 레벨업과 무관합니다.
           </p>
         </div>
@@ -283,7 +283,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
           </div>
           <div className="rounded-card border border-border bg-card p-3">
             <p className="text-[10px] font-black uppercase tracking-wider text-reward">
-              파이트 머니
+              챔피언 머니
             </p>
             <p className="number-font mt-0.5 text-[18px] font-black text-reward">
               +{result.gems_granted.toLocaleString()}
@@ -303,7 +303,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
 
         <p className="text-[10.5px] leading-relaxed text-muted-foreground">
           ※ QUEST XP 는 보조 경험치이며, 공식 1~40 레벨업과 무관합니다.
-          파이트 머니는 기존 지갑에 합산됩니다.
+          챔피언 머니는 기존 지갑에 합산됩니다.
         </p>
       </div>
     );

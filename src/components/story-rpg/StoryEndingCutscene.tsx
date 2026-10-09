@@ -142,7 +142,7 @@ const StoryEndingCutscene = ({
             {typeof reward.real_gems_first_time === "number" &&
               reward.real_gems_first_time > 0 && (
                 <RewardRow
-                  label="파이트 머니 (최초 1회)"
+                  label="챔피언 머니 (최초 1회)"
                   value={`+${reward.real_gems_first_time}`}
                   tone="emerald"
                 />
