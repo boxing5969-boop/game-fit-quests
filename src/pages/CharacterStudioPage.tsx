@@ -28,6 +28,7 @@ import {
   usePurchaseCustomization,
 } from "@/hooks/useCustomizationPurchase";
 import { useWallet } from "@/hooks/useWallet";
+import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
 import CharacterSprite from "@/components/CharacterSprite";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,6 +96,8 @@ const CharacterStudioPage = () => {
   const { data: assignment } = useMemberCharacterAssignment();
   const { data: templatePresets } = useTemplatePresets();
   const { data: walletData } = useWallet();
+  // 승급 진행도 — 홈 라이센스 카드와 같은 RPC·캐시 (내 캐릭터 탭의 "다음 레벨까지" 막대)
+  const { data: levelCycle } = useLevelCycleProgress();
   const assignCharacter = useAssignCharacter();
   const saveCustomization = useSaveCustomization();
   const { data: isInHallOfFame = false } = useIsInHallOfFame();
@@ -580,6 +583,20 @@ const CharacterStudioPage = () => {
               ownedCustomizations={ownedCustomizations}
               onEquip={handleEquipFromInventory}
               isEquipping={saveCustomization.isPending}
+              walletBalance={walletData?.gems_balance ?? 0}
+              isAdminWallet={isAdmin}
+              streakDays={progress?.streak_days ?? 0}
+              promotion={
+                levelCycle && Number(levelCycle.reqSessions ?? 0) > 0
+                  ? {
+                      // 요건을 넘긴 값은 막대를 넘치지 않게 목표에서 자른다 (홈 카드와 동일)
+                      current: Math.min(Number(levelCycle.progress ?? 0), Number(levelCycle.reqSessions ?? 0)),
+                      target: Number(levelCycle.reqSessions ?? 0),
+                      hint: promotionHint(levelCycle),
+                    }
+                  : undefined
+              }
+              onGoCustomize={() => setActiveTab("customize")}
             />
           )}
           {activeTab === "preset" && (
@@ -639,7 +656,7 @@ const CharacterStudioPage = () => {
 };
 
 // ========== MY CHARACTER TAB ==========
-function MyCharacterTab({ currentStyle, league, level, navigate, currentMilestone, nextMilestone, currentCustomization, ownedStyles, ownedCustomizations, onEquip, isEquipping }: {
+function MyCharacterTab({ currentStyle, league, level, navigate, currentMilestone, nextMilestone, currentCustomization, ownedStyles, ownedCustomizations, onEquip, isEquipping, walletBalance, isAdminWallet, streakDays, promotion, onGoCustomize }: {
   currentStyle?: string;
   league: string;
   level: number;
@@ -651,6 +668,11 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
   currentCustomization: CharacterCustomization;
   onEquip: (category: string, itemKey: string | undefined) => Promise<void>;
   isEquipping: boolean;
+  walletBalance: number;
+  isAdminWallet: boolean;
+  streakDays: number;
+  promotion?: { current: number; target: number; hint?: string };
+  onGoCustomize: () => void;
 }) {
   const hasCharacter = !!currentStyle;
   const customCount = Object.values(currentCustomization).filter(Boolean).length;
@@ -668,6 +690,54 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
           </p>
         </div>
       )}
+
+      {/* 내 카드 — 챔피언 머니 + 다음 레벨까지 출석 (2026-10-10 대표님:
+          새 카드틀은 홈이 아니라 캐릭터 탭에만. 홈 MY복서 카드는 그대로 둔다) */}
+      <div className="rounded-card border border-border bg-card p-4 shadow-elev-1 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(246,196,83,0.12)] text-xl">
+              🏆
+            </div>
+            <div className="min-w-0">
+              <p className="text-caption text-muted-foreground">내 챔피언 머니</p>
+              <p className="text-[20px] font-extrabold leading-tight text-foreground number-font">
+                {isAdminWallet ? "∞" : walletBalance.toLocaleString()}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onGoCustomize}
+            className="shrink-0 rounded-pill bg-primary px-3.5 py-2 text-caption font-bold text-primary-foreground active:scale-95"
+          >
+            꾸미기 하러가기
+          </button>
+        </div>
+        {promotion && promotion.target > 0 && (
+          <div className="space-y-1.5">
+            <div className="flex items-baseline justify-between">
+              <span className="text-body-sm font-bold text-foreground">
+                다음 레벨까지 출석{" "}
+                <span className="number-font">{Math.max(0, Math.ceil(promotion.target - promotion.current))}</span>회
+              </span>
+              <span className="text-caption text-muted-foreground number-font">
+                {Math.floor(promotion.current)} / {promotion.target}회
+              </span>
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-pill bg-muted">
+              <div
+                className="h-full rounded-pill bg-primary transition-all"
+                style={{ width: `${Math.min(100, (promotion.current / promotion.target) * 100)}%` }}
+              />
+            </div>
+            <p className="text-caption text-muted-foreground">
+              {streakDays > 0 ? `연속 출석 ${streakDays}일 🔥` : ""}
+              {streakDays > 0 && promotion.hint ? " · " : ""}
+              {promotion.hint || ""}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* 3 stat cards — number-font pinned via StatCard */}
       <div className="grid grid-cols-3 gap-2">
