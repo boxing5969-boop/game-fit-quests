@@ -442,6 +442,48 @@ const LoginPage = () => {
           </>
         )}
 
+        {/* 2026-10-10 대표님: "로그인은 카카오 버튼 하나를 크게" — 로그인 탭 맨 위에 큰 카카오 버튼.
+            기존 회원(아이디/비밀번호)은 아래 폼 그대로. */}
+        {!isSignUp && tab === "login" && (
+          <>
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={async () => {
+                setIsLoading(true);
+                try {
+                  const { error } = await supabase.auth.signInWithOAuth({
+                    provider: "kakao",
+                    // 비즈 앱 아님 → account_email 요청 시 KOE205. 닉네임만 요청.
+                    options: { redirectTo: window.location.origin, scopes: "profile_nickname" },
+                  });
+                  if (error) {
+                    setError("카카오 로그인에 실패했습니다. " + (error.message ?? ""));
+                  }
+                } catch (e) {
+                  setError("카카오 로그인에 실패했습니다.");
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#FEE500] py-4 text-[16px] font-bold text-black shadow-elev-1 transition-all hover:brightness-95 active:scale-[0.98] disabled:opacity-50"
+            >
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="#000000">
+                <path d="M12 3C6.48 3 2 6.58 2 11c0 2.85 1.86 5.35 4.66 6.77-.2.74-.74 2.7-.85 3.12-.13.52.19.51.4.37.16-.11 2.6-1.77 3.66-2.49.69.1 1.4.15 2.13.15 5.52 0 10-3.58 10-8S17.52 3 12 3z"/>
+              </svg>
+              카카오로 시작하기
+            </button>
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-background px-3 text-muted-foreground">또는 아이디로 로그인</span>
+              </div>
+            </div>
+          </>
+        )}
+
         <div>
           <label className="mb-1 block text-sm font-medium text-muted-foreground">아이디</label>
           <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={isSignUp ? "영문, 숫자 4자 이상" : "아이디 입력"} required className={inputClass} autoCapitalize="none" autoCorrect="off" />
@@ -574,34 +616,8 @@ const LoginPage = () => {
                 </svg>
                 Google
               </button>
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={async () => {
-                  setIsLoading(true);
-                  try {
-                    const { error } = await supabase.auth.signInWithOAuth({
-                      provider: "kakao",
-                      // 비즈 앱 아님 → account_email 요청 시 KOE205. 닉네임만 요청.
-                      options: { redirectTo: window.location.origin, scopes: "profile_nickname" },
-                    });
-                    if (error) {
-                      setError("카카오 로그인에 실패했습니다. " + (error.message ?? ""));
-                    }
-                  } catch (e) {
-                    setError("카카오 로그인에 실패했습니다.");
-                  } finally {
-                    setIsLoading(false);
-                  }
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#FEE500] py-3.5 text-sm font-medium text-black transition-all hover:brightness-95 active:scale-[0.98]"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="#000000">
-                  <path d="M12 3C6.48 3 2 6.58 2 11c0 2.85 1.86 5.35 4.66 6.77-.2.74-.74 2.7-.85 3.12-.13.52.19.51.4.37.16-.11 2.6-1.77 3.66-2.49.69.1 1.4.15 2.13.15 5.52 0 10-3.58 10-8S17.52 3 12 3z"/>
-                </svg>
-                카카오
-              </button>
-              {/* Apple 버튼은 Apple Developer 계정 ($99/년) 발급 전까지 임시 숨김.
+              {/* 카카오는 맨 위 큰 버튼으로 이동 (2026-10-10).
+                  Apple 버튼은 Apple Developer 계정 ($99/년) 발급 전까지 임시 숨김.
                   계정 등록 후 supabase.auth.signInWithOAuth({ provider: "apple" }) 으로 재활성. */}
             </div>
 

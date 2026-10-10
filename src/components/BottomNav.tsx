@@ -1,23 +1,20 @@
-import { useState } from "react";
 import { isSignageRoute } from "@/lib/displayMode";
-import { Star, X } from "lucide-react";
+import { Star } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import HomeMenuGrid from "@/components/home/HomeMenuGrid";
-import AppSearchButton from "@/components/search/AppSearchButton";
 import { TabIcon, type TabIconName } from "@/components/icons/tabIcons";
 
-// ── Primary tab bar (5 slots: 5 routes + menu) ─────────────────────
-// 보상(/rewards)은 전체 메뉴로 이관. 5번째 슬롯은 랭크업(로드맵+가치맵 통합 페이지).
-// 3번째 슬롯: 결제형 수강권(/membership). 단증혜택은 하단탭에서 빼고 전체메뉴에만 둔다.
+// ── Primary tab bar (4 slots) ───────────────────────────────────────
+// 2026-10-10 대표님: "아래 탭을 4개로 줄여요. 홈 · 훈련 · 랭킹 · 내정보."
+//   · 수강권(/membership) → 내정보 안으로 (MyPage 멤버십 카드 + 수강권 관리 줄)
+//   · 랭크업(/rank-up)   → 홈 내 카드의 승급 진행 막대를 누르면 열린다
+//   · 전체 메뉴           → 홈 첫 화면의 '전체 메뉴' 접기에서 연다 (이 파일의 시트는 제거)
 // 아이콘 = 153 글리프 탭 세트 (components/icons/tabIcons) — 안 고른 탭은 선, 고른 탭은 꽉 찬 모양(애플식).
 const mainTabs: ReadonlyArray<{ path: string; icon: TabIconName; label: string }> = [
   { path: "/home",       icon: "home",   label: "홈" },
   { path: "/missions",   icon: "glove",  label: "훈련" },
-  { path: "/membership", icon: "ticket", label: "수강권" },
   { path: "/halloffame", icon: "trophy", label: "랭킹" },
-  { path: "/rank-up",    icon: "rankup", label: "랭크업" },
+  { path: "/mypage",     icon: "user",   label: "내정보" },
 ];
 
 // ── Full menu overlay ───────────────────────────────────────────────
@@ -51,7 +48,6 @@ const INACTIVE_TONE = "text-[#8C95A3]";
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   if (
     hiddenPaths.includes(location.pathname) ||
@@ -67,40 +63,6 @@ const BottomNav = () => {
 
   return (
     <>
-      {/* Full menu overlay */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-[60] flex flex-col">
-          {/* 뒤 배경 — 라이트는 토스·카카오 시트처럼 반투명 검정, 다크는 기존 그대로 */}
-          <div
-            className="flex-1 bg-black/40 dark:bg-background/80 dark:backdrop-blur-sm"
-            onClick={() => setMenuOpen(false)}
-          />
-          <div className="relative z-[61] max-h-[85vh] overflow-y-auto rounded-t-hero border-t border-border bg-card px-4 pb-8 pt-5 shadow-elev-3 safe-area-bottom animate-slide-up">
-            <div className="mb-4 flex items-center justify-between px-1">
-              <span className="text-[17px] font-extrabold text-foreground">
-                전체 메뉴
-              </span>
-              <div className="flex items-center gap-2">
-                {/* 65-O: 빠른 테마 토글 — Sun/Moon 아이콘 */}
-                <ThemeToggle variant="icon" />
-                <button
-                  type="button"
-                  aria-label="메뉴 닫기"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary transition-transform active:scale-90"
-                >
-                  <X className="h-4 w-4 text-muted-foreground" strokeWidth={2.4} />
-                </button>
-              </div>
-            </div>
-            {/* 기능 검색 — 메뉴 이름을 몰라도 찾게 (2026-10-01) */}
-            <AppSearchButton variant="sheet" onNavigate={() => setMenuOpen(false)} className="mb-5" />
-            {/* 홈 첫 화면과 같은 버튼 그리드 (components/home/HomeMenuGrid) */}
-            <HomeMenuGrid variant="sheet" onNavigate={() => setMenuOpen(false)} />
-          </div>
-        </div>
-      )}
-
       {/* Bottom tab bar — 반투명 유리(뒤 화면이 흐리게 비침) + 머리카락 두께 윗선 */}
       <nav
         aria-label="주요 메뉴"
@@ -149,29 +111,6 @@ const BottomNav = () => {
             );
           })}
 
-          {/* 전체 — 홈의 전체 메뉴와 같은 버튼 시트를 연다 */}
-          <button
-            type="button"
-            onClick={() => setMenuOpen(true)}
-            aria-expanded={menuOpen}
-            aria-label="전체 메뉴 열기"
-            className={cn(
-              "group flex min-w-0 flex-1 flex-col items-center justify-center gap-[3px] pb-[7px] pt-2 outline-none",
-              menuOpen ? "text-primary" : INACTIVE_TONE,
-            )}
-          >
-            <span className="transition-transform duration-150 ease-out group-active:scale-90">
-              <TabIcon name="all" active={menuOpen} className="h-[26px] w-[26px]" />
-            </span>
-            <span
-              className={cn(
-                "text-[11px] leading-none tracking-[-0.01em]",
-                menuOpen ? "font-bold" : "font-medium",
-              )}
-            >
-              전체
-            </span>
-          </button>
         </div>
       </nav>
     </>

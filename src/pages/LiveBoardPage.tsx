@@ -935,6 +935,11 @@ const LiveBoardPage = () => {
               })}
             </p>
           </div>
+          {/* 내 레벨 보기 QR — 출석하고 이름·레벨이 뜬 회원이 그 자리에서 앱으로 (2026-10-10 대표님) */}
+          <div className="flex shrink-0 flex-col items-center gap-1.5 rounded-xl bg-white p-2.5">
+            <QRCodeSVG value="https://myboxer153.com/?from=tv" size={74} level="M" marginSize={0} />
+            <p className="text-[13px] font-black leading-none text-gray-900">📱 내 레벨 보기</p>
+          </div>
           <div className={`h-4 w-4 rounded-full ${connected ? "bg-primary animate-pulse" : "bg-destructive"}`} />
         </div>
       </div>

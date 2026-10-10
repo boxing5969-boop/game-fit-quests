@@ -6,7 +6,7 @@
  */
 import { cn } from "@/lib/utils";
 
-export type TabIconName = "home" | "glove" | "ticket" | "trophy" | "rankup" | "all";
+export type TabIconName = "home" | "glove" | "ticket" | "trophy" | "rankup" | "all" | "user";
 
 const LINE: Record<TabIconName, string> = {
   home: '<path d="M3.9 10.5 12 4.1l8.1 6.4v8.4c0 .9-.7 1.6-1.6 1.6h-3.4v-5.1c0-.6-.4-1-1-1H9.9c-.6 0-1 .4-1 1v5.1H5.5c-.9 0-1.6-.7-1.6-1.6Z"/>',
@@ -19,6 +19,7 @@ const LINE: Record<TabIconName, string> = {
   rankup:
     '<path d="M3.7 20.3v-3.9c0-.6.4-1 1-1h3.2v-3.5c0-.6.4-1 1-1h3.2V7.4c0-.6.4-1 1-1h5.9c.6 0 1 .4 1 1v12.9Z"/><path d="M15.9 6.4V2.8l3.9 1.6-3.9 1.5"/>',
   all: '<rect x="3.8" y="3.8" width="7" height="7" rx="2.2"/><rect x="13.2" y="3.8" width="7" height="7" rx="2.2"/><rect x="3.8" y="13.2" width="7" height="7" rx="2.2"/><rect x="13.2" y="13.2" width="7" height="7" rx="2.2"/>',
+  user: '<circle cx="12" cy="8.1" r="3.7"/><path d="M4.9 20.2c.7-3.4 3.6-5.6 7.1-5.6s6.4 2.2 7.1 5.6"/>',
 };
 
 const FILL: Record<TabIconName, string> = {
@@ -32,6 +33,7 @@ const FILL: Record<TabIconName, string> = {
   rankup:
     '<path d="M15.5 2c.3-.2.6-.2.9-.1l3.9 1.6c.4.1.6.5.6.9s-.3.7-.6.8l-2.9 1.2h.8c1.1 0 1.9.8 1.9 1.9v11.9c0 .5-.4.9-.9.9H4.7c-1.1 0-1.9-.8-1.9-1.9v-3.1c0-1.1.8-1.9 1.9-1.9H7v-2.6c0-1.1.8-1.9 1.9-1.9h2.3V7.4c0-1.1.8-1.9 1.9-1.9H15V2.8c0-.3.2-.6.5-.8Z"/>',
   all: '<rect x="2.9" y="2.9" width="8.8" height="8.8" rx="2.8"/><rect x="12.3" y="2.9" width="8.8" height="8.8" rx="2.8"/><rect x="2.9" y="12.3" width="8.8" height="8.8" rx="2.8"/><rect x="12.3" y="12.3" width="8.8" height="8.8" rx="2.8"/>',
+  user: '<path d="M12 12.4a4.6 4.6 0 1 0 0-9.2 4.6 4.6 0 0 0 0 9.2Z"/><path d="M12 14.1c-4.2 0-7.6 2.7-8.2 6.4-.1.6.4 1.2 1 1.2h14.4c.6 0 1.1-.6 1-1.2-.6-3.7-4-6.4-8.2-6.4Z"/>',
 };
 
 interface TabIconProps {

@@ -172,6 +172,9 @@ export interface BoxerLicenseCardProps {
   likeBusy?: boolean;
   /** 카드 전체를 눌렀을 때 (내 카드: 닉네임 바꾸기). 오면 이름 옆에 연필 표시가 붙는다 */
   onCardClick?: () => void;
+  /** 승급 진행도 막대를 눌렀을 때 (2026-10-10 — 하단 랭크업 탭 대체: 누르면 랭크업 로드맵).
+   *  카드 전체 클릭(onCardClick)과 겹치면 막대 클릭이 우선한다 (stopPropagation). */
+  onPromotionClick?: () => void;
 }
 
 const BoxerLicenseCard = ({
@@ -199,6 +202,7 @@ const BoxerLicenseCard = ({
   onLikeClick,
   likeBusy = false,
   onCardClick,
+  onPromotionClick,
 }: BoxerLicenseCardProps) => {
   const rankKey = (league || "white").toLowerCase();
   const lic = licenseNumber(userId);
@@ -536,11 +540,39 @@ const BoxerLicenseCard = ({
           </div>
         </div>
 
-        {/* ── 승급 진행도 막대 (hero 만) ── promotion 이 오면 그것, 아니면 예전 XP 막대. 지도진은 없음 */}
+        {/* ── 승급 진행도 막대 (hero 만) ── promotion 이 오면 그것, 아니면 예전 XP 막대. 지도진은 없음.
+             onPromotionClick 이 오면 막대 영역이 버튼 — 누르면 랭크업 로드맵 (하단 탭 대체, 2026-10-10) */}
         {!staff && cfg.showXp && (bar.show) && (
-          <div className="mt-3">
+          <div
+            className={`mt-3 ${onPromotionClick ? "-m-1.5 cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-white/5 active:bg-white/10" : ""}`}
+            role={onPromotionClick ? "button" : undefined}
+            tabIndex={onPromotionClick ? 0 : undefined}
+            aria-label={onPromotionClick ? "승급 진행도 — 눌러서 랭크업 로드맵 보기" : undefined}
+            onClick={
+              onPromotionClick
+                ? (e) => {
+                    e.stopPropagation();
+                    onPromotionClick();
+                  }
+                : undefined
+            }
+            onKeyDown={
+              onPromotionClick
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onPromotionClick();
+                    }
+                  }
+                : undefined
+            }
+          >
             <div className={`flex items-center justify-between text-[10px] ${accentText} mb-1`}>
-              <span className="font-black uppercase tracking-wider">{bar.label}</span>
+              <span className="font-black uppercase tracking-wider">
+                {bar.label}
+                {onPromotionClick && <span className="ml-1.5 font-bold normal-case opacity-80">랭크업 →</span>}
+              </span>
               <span className="font-mono font-black tabular-nums">{bar.value}</span>
             </div>
             <div className={`overflow-hidden rounded-full bg-black/40 ${cfg.xpHeight}`}>

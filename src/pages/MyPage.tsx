@@ -424,8 +424,16 @@ const MyPage = () => {
           </div>
 
           {/* Actions — 회원관리/가이드/153다이어트/설정/로그아웃 은 /settings 로 이관됨.
-              보상(/rewards) + 튜토리얼 다시 시작만 여기 유지. */}
+              보상(/rewards) + 튜토리얼 다시 시작 유지.
+              수강권: 하단 탭에서 빠지면서 (2026-10-10 탭 4개) 내정보가 공식 진입점 — 맨 위 줄. */}
           <div className="rounded-2xl border border-border bg-card shadow-elev-1">
+            <button onClick={() => navigate("/membership")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">🎟️</span>
+                <span className="text-sm text-foreground">수강권</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
             <button onClick={() => navigate("/rewards")} className={`flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50 ${(tutorialDone || tutorialSkipped) ? "border-b border-border" : ""}`}>
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">🎁</span>

@@ -10,7 +10,20 @@ export interface OnboardingSlide {
   ctaSub?: string;
 }
 
+// 2026-10-10 대표님: "처음 뜨는 안내는 한 장으로 줄여요" — 8장 → 1장.
+// 예전 8장은 아래 ONBOARDING_SLIDES_ARCHIVE 에 보존 (복구 시 이름만 바꾸면 됨).
 export const ONBOARDING_SLIDES: OnboardingSlide[] = [
+  {
+    id: 1,
+    icon: "🥊",
+    title: "출석만 하면\n레벨이 오릅니다",
+    body: "체육관에 올 때마다 출석이 쌓여 4개 리그 · 40레벨을 올라갑니다.\n출석과 레벨업으로 챔피언 머니를 모아 내 캐릭터를 꾸미고,\n이번 주 랭킹에서 내 순위를 확인하세요.",
+    keywords: ["출석", "레벨", "챔피언 머니"],
+    cta: "🥊 시작하기",
+  },
+];
+
+export const ONBOARDING_SLIDES_ARCHIVE: OnboardingSlide[] = [
   {
     id: 1,
     icon: "🥊",
