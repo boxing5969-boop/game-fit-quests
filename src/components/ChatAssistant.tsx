@@ -341,18 +341,19 @@ const ChatAssistant = () => {
 
   return (
     <>
-      {/* ── 플로팅 버튼 ── */}
+      {/* ── 플로팅 버튼 ──
+          2026-10-10 대표님: "AI 오삼코치가 화면을 가린다" — 화면 위에 떠 있던 64px 원형 버튼을
+          오른쪽 가장자리에 붙는 작은 손잡이(홈의 '커스텀' 손잡이와 같은 패턴)로 교체.
+          콘텐츠 위로 들어오는 폭이 80px → 44px 로 줄고, 가장자리에 붙어 글줄을 가리지 않는다. */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-24 right-4 z-50 group"
+          className="fixed bottom-28 right-0 z-50 group"
           aria-label="오삼 코치에게 물어보기"
         >
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-red-600 to-orange-500 shadow-[0_4px_20px_rgba(232,85,58,0.45)] transition-transform active:scale-90 group-hover:scale-105">
-            <img src="/assets/mascot/osami_wink.png" alt="오삼 코치" className="h-12 w-12 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]" draggable={false} />
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-black text-red-600 shadow ring-2 ring-red-500">
-              AI
-            </span>
+          <div className="flex flex-col items-center gap-0.5 rounded-l-2xl bg-gradient-to-b from-red-600 to-orange-500 px-1.5 py-2 shadow-[0_3px_14px_rgba(232,85,58,0.4)] transition-transform active:scale-95 group-hover:-translate-x-0.5">
+            <img src="/assets/mascot/osami_wink.png" alt="오삼 코치" className="h-8 w-8 object-contain drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]" draggable={false} />
+            <span className="rounded-full bg-white px-1 text-[9px] font-black leading-[14px] text-red-600">AI</span>
           </div>
         </button>
       )}
