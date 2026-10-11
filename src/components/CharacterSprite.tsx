@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { getCharacterImage, getCharacterByHash } from "@/data/characterPresets";
 import BlackLeagueAura from "@/components/BlackLeagueAura";
 import type { CharacterCustomization } from "@/data/characterCustomizationData";
+import { EFFECT_ART } from "@/data/effectArt";
 import {
   EFFECT_EMOJIS,
   FRAME_STYLES,
@@ -349,6 +350,28 @@ const PREMIUM_EFFECTS: Record<string, [string, string]> = {
 const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, size }) => {
   const emoji = EFFECT_EMOJIS[effect] || "✨";
   const premium = PREMIUM_EFFECTS[effect];
+  const art = EFFECT_ART[effect];
+
+  // 고퀄 VFX 아트가 있으면 이모지 대신 PNG 오버레이 (2026-10-11 대표님: 자산 퀄리티 업)
+  // 링 구성 아트라 캐릭터를 가리지 않는다. 숨쉬기 애니메이션으로 살아있는 느낌만 더한다.
+  if (art) {
+    const small = size === "sm" || size === "xs";
+    return (
+      <img
+        src={art}
+        alt=""
+        aria-hidden
+        draggable={false}
+        loading="lazy"
+        decoding="async"
+        className={
+          small
+            ? "absolute left-[-6%] top-[-6%] h-[112%] w-[112%] max-w-none object-contain"
+            : "absolute left-[-14%] top-[-14%] h-[128%] w-[128%] max-w-none object-contain animate-[breathe_3s_ease-in-out_infinite]"
+        }
+      />
+    );
+  }
 
   if (size === "sm" || size === "xs") {
     return (

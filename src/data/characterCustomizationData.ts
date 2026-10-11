@@ -78,6 +78,13 @@ const EFFECT_OPTIONS: CustomizationOption[] = [
   { key: "lotus",        label: "연꽃",       price: 10000, league: "black", rarity: "epic",     description: "신비로운 연꽃이 피어나는 이펙트", blackOnly: true },
   { key: "sakura_storm", label: "벚꽃폭풍",   price: 15000, league: "black", rarity: "epic",     description: "벚꽃잎이 폭풍처럼 휘몰아치는 이펙트", blackOnly: true },
   { key: "rose_gold",    label: "로즈골드",   price: 20000, league: "black", rarity: "epic",     description: "황금빛 장미가 화려하게 피어나는 이펙트", blackOnly: true },
+  // ── 신규 전설급 (2026-10-11 고퀄 VFX 아트와 함께 추가) ──────
+  { key: "gold_confetti",  label: "골드 컨페티",   price: 8000,  league: "black", rarity: "epic",      description: "황금 꽃가루와 리본이 쏟아지는 축하 이펙트", blackOnly: true },
+  { key: "aurora",         label: "오로라",        price: 12000, league: "black", rarity: "epic",      description: "초록·보라 오로라가 감싸는 이펙트", blackOnly: true },
+  { key: "fire_ring",      label: "화염의 링",     price: 15000, league: "black", rarity: "epic",      description: "불꽃 링이 타오르는 챔피언의 입장 이펙트", blackOnly: true },
+  { key: "galaxy_ring",    label: "은하 링",       price: 25000, league: "black", rarity: "legendary", description: "은하수가 회전하는 우주급 이펙트", blackOnly: true },
+  { key: "champion_glory", label: "챔피언 글로리", price: 35000, league: "black", rarity: "legendary", description: "황금 승리의 빛과 컨페티 — 챔피언의 영광", blackOnly: true },
+  { key: "ko_impact",      label: "KO 임팩트",     price: 50000, league: "black", rarity: "legendary", description: "황금 충격파가 터지는 최강의 피니시 이펙트", blackOnly: true },
 ];
 
 // ===== FRAMES =====
@@ -244,6 +251,13 @@ export const EFFECT_EMOJIS: Record<string, string> = {
   lotus:        "🪷",
   sakura_storm: "🌸",
   rose_gold:    "🌹",
+  // 신규 전설급 (고퀄 VFX 아트 — 이모지는 폴백용)
+  gold_confetti:  "🎊",
+  aurora:         "🌌",
+  fire_ring:      "🔥",
+  galaxy_ring:    "🌠",
+  champion_glory: "🏆",
+  ko_impact:      "🥊",
 };
 
 export const FRAME_STYLES: Record<string, string> = {

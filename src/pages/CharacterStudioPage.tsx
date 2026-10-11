@@ -43,6 +43,7 @@ import {
   type CharacterCustomization,
   type CustomizationOption,
 } from "@/data/characterCustomizationData";
+import { EFFECT_ART } from "@/data/effectArt";
 import {
   computeUserLevel,
   getUnlockStatus,
@@ -1490,6 +1491,15 @@ function CustomizationPurchaseModal({
 // Visual preview for static option types
 function OptionPreview({ category, optionKey }: { category: string; optionKey: string }) {
   if (category === "effect") {
+    // 고퀄 VFX 아트 우선 (2026-10-11) — 없으면 이모지 폴백
+    const art = EFFECT_ART[optionKey];
+    if (art) {
+      return (
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#101d17]">
+          <img src={art} alt="" loading="lazy" decoding="async" className="h-10 w-10 object-contain" />
+        </span>
+      );
+    }
     const emoji = EFFECT_EMOJIS[optionKey] || "✨";
     return <span className="text-2xl">{emoji}</span>;
   }
