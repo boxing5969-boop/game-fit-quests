@@ -37,6 +37,8 @@ export const APP_MENU: readonly AppMenuItem[] = [
   // 153다이어트 — profiles.diet_program_enabled 가 켜진 회원만. "꾸미기 → 다이어트 → 가이드" 순서 유지.
   { path: "/diet", label: "153다이어트", glyph: "bowl", requires: "diet" },
   { path: "/guide", label: "가이드", glyph: "compass" },
+  // 오류 신고 — 앱이 안 되는 부분을 대표님에게 바로 보낸다 (2026-10-11).
+  { path: "/feedback", label: "오류 신고", glyph: "bell" },
   { path: "/about/153", label: "153이란?", glyph: "fish" },
   { path: "/mypage", label: "내정보", glyph: "idcard" },
   { path: "/settings", label: "설정", glyph: "gear" },

@@ -49,6 +49,7 @@ const QrCheckinPage = lazyWithRetry(() => import("@/pages/QrCheckinPage"));
 const MissionsPage = lazyWithRetry(() => import("@/pages/MissionsPage"));
 // LevelMapPage — /rank-up 에 탭으로 통합, /levelmap 경로는 리다이렉트만 유지.
 const RewardsPage = lazyWithRetry(() => import("@/pages/RewardsPage"));
+const FeedbackPage = lazyWithRetry(() => import("@/pages/FeedbackPage"));
 const HallOfFamePage = lazyWithRetry(() => import("@/pages/HallOfFamePage"));
 const MyPage = lazyWithRetry(() => import("@/pages/MyPage"));
 const MembershipPage = lazyWithRetry(() => import("@/pages/MembershipPage"));
@@ -279,6 +280,7 @@ const AppRoutes = () => {
         <Route path="/levelmap" element={<Navigate to="/rank-up" replace />} />
         <Route path="/rank-up" element={<ProtectedRoute><RankUpPage /></ProtectedRoute>} />
         <Route path="/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
+        <Route path="/feedback" element={<ProtectedRoute><FeedbackPage /></ProtectedRoute>} />
         <Route path="/halloffame" element={<ProtectedRoute><HallOfFamePage /></ProtectedRoute>} />
         <Route path="/cert-benefits" element={<ProtectedRoute><CertBenefitsPage /></ProtectedRoute>} />
         <Route path="/guide" element={<ProtectedRoute><GuidePage /></ProtectedRoute>} />
