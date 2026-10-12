@@ -33,6 +33,10 @@ export interface TutorialGlobalOverridesRow
 }
 
 export async function fetchTutorialGlobalOverrides(): Promise<TutorialGlobalOverridesRow | null> {
+  // 비로그인(지점 TV 사이니지 등)은 RPC 실행 권한이 없어 401 로그만 쌓인다.
+  // 튜토리얼은 로그인 회원 전용이므로 세션 없으면 호출 생략 (base + local 만 사용).
+  const { data: auth } = await supabase.auth.getSession();
+  if (!auth.session) return null;
   const { data, error } = await sbRpc<TutorialGlobalOverridesRow[]>(
     "get_tutorial_global_overrides",
   );
