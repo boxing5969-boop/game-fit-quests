@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import SDBoxerCharacter from "@/components/SDBoxerCharacter";
 import CharacterSprite from "@/components/CharacterSprite";
 import { useParams } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import { resolveBranchCode } from "@/lib/branchAlias";
 import logoWhite from "@/assets/branding/153-logo-white.png";
 import { supabase } from "@/integrations/supabase/client";
