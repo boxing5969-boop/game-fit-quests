@@ -9,7 +9,9 @@
 // ─────────────────────────────────────────────────────────────
 
 export const PENALTY_RATE = 0.1; // 위약금 10%
-export const NORMAL_MONTHLY_DEFAULT = 300000; // 정상 1개월 이용요금 기준(주5회 정상가). 상품 정상가 미상 시 기준.
+// 정상 1개월 이용요금 = 선릉역점 1개월권 실판매가(무제한·주5회 220,000원). 상품 정상가 미상 시 기준.
+// 경영리포트 환불계산기(REGULAR_MONTHLY_PRICES)·회원 이용계약서 제2조와 같은 값 — 바꾸면 함께.
+export const NORMAL_MONTHLY_DEFAULT = 220000;
 
 export interface RefundBreakdown {
   paid: number; // 결제(할인)금액
@@ -21,9 +23,13 @@ export interface RefundBreakdown {
   loss: number; // 손해액 = 결제금액 − 환불액
 }
 
-// 정상 일요금: 상품 정상가/기간 우선, 없으면 월 기준 상수.
+// 정상 일요금 = 1개월 정상가 ÷ 30. 상품 정상가(기간 전체)가 있으면 개월수로 나눠 1개월 정상가를 구한다
+// (365일 1년권도 12개월로 나눠 경영리포트·계약서와 같은 1일 금액이 되게). 없으면 월 기준 상수.
 export function normalDailyRate(normalPrice: number | null | undefined, durationDays: number): number {
-  if (normalPrice && normalPrice > 0 && durationDays > 0) return normalPrice / durationDays;
+  if (normalPrice && normalPrice > 0 && durationDays > 0) {
+    const months = Math.max(1, Math.round(durationDays / 30));
+    return normalPrice / months / 30;
+  }
   return NORMAL_MONTHLY_DEFAULT / 30;
 }
 

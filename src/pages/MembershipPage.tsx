@@ -1,9 +1,11 @@
 // 수강권 전용 화면 (/membership) — 전체메뉴 "수강권"에서 진입.
 // 디지털 멤버십 카드 + 홀딩/양도/환불 신청(회원) → 관장·마스터가 승인·처리.
 // 규칙 근거: 153복싱짐 통합 상품 이용약관 — 제14조(일시정지), 제15조(양도), 제18조(환불).
+// 홀딩 표는 회원 이용계약서 제3조와 같은 data/gymPolicies.holdPolicy (153OS 셀프 홀딩 app_hold_policy 와도 동일).
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { calcRefund, NORMAL_MONTHLY_DEFAULT } from "@/lib/refundPolicy";
+import { holdPolicy, type HoldTier } from "@/data/gymPolicies";
 import { ArrowLeft, Pause, ArrowLeftRight, RotateCcw, X, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
@@ -87,6 +89,10 @@ const MembershipPage = () => {
   }, [searchParams, setSearchParams, refreshProfile]);
 
   // ── 약관 기반 계산 ──────────────────────────────
+  // 승인된 홀딩은 만료일을 그만큼 늘렸으므로, 계약 개월·이용일수 계산에서 빼야 홀딩해도 구간·환불액이 바뀌지 않는다.
+  const approvedHolds = requests.filter((r) => r.type === "hold" && r.status === "approved");
+  const usedHoldCount = approvedHolds.length;
+  const usedHoldDays = approvedHolds.reduce((s, r) => s + (r.hold_days || 0), 0);
   const totalDays = useMemo(
     () => (regDate && memEnd ? Math.round((new Date(memEnd).getTime() - new Date(regDate).getTime()) / DAY) : null),
     [regDate, memEnd],
@@ -95,46 +101,43 @@ const MembershipPage = () => {
     () => (regDate ? Math.max(0, Math.floor((Date.now() - new Date(regDate).getTime()) / DAY)) : null),
     [regDate],
   );
-  const contractMonths = totalDays ? totalDays / 30 : null;
+  const contractDays = totalDays != null ? Math.max(0, totalDays - usedHoldDays) : null;
+  const usedDaysExHold = elapsedDays != null ? Math.max(0, elapsedDays - usedHoldDays) : null;
+  const contractMonths = contractDays ? contractDays / 30 : null;
 
-  // 제14조 일시정지(홀딩) 자격
-  const holdTier =
+  // 일시정지(홀딩) 자격 — 회원 이용계약서 제3조: 1~2개월 불가 · 3~4개월 1회 15일 · 5~11개월 2회 합계 30일 · 12개월 이상 3회 합계 30일 · 1회 최대 15일
+  const holdTier: HoldTier | null =
     isManager
-      ? { maxCount: 2, maxDays: 30 } // 본사 테스트: 12개월+ 자격으로 가정
+      ? holdPolicy(12) // 본사 테스트: 12개월+ 자격으로 가정
       : contractMonths == null
       ? null
-      : contractMonths < 6
-      ? { maxCount: 0, maxDays: 0 }
-      : contractMonths < 12
-      ? { maxCount: 1, maxDays: 10 }
-      : { maxCount: 2, maxDays: 30 };
-  const approvedHolds = requests.filter((r) => r.type === "hold" && r.status === "approved");
-  const usedHoldCount = approvedHolds.length;
-  const usedHoldDays = approvedHolds.reduce((s, r) => s + (r.hold_days || 0), 0);
+      : holdPolicy(Math.round(contractMonths));
   const remainCount = holdTier ? Math.max(0, holdTier.maxCount - usedHoldCount) : 0;
   const remainDays = holdTier ? Math.max(0, holdTier.maxDays - usedHoldDays) : 0;
+  // 이번 신청 최대 = min(남은 합계, 1회 최대 15일)
+  const perRequestMax = holdTier ? Math.min(remainDays, holdTier.perHold) : 0;
   const pendingHold = requests.some((r) => r.type === "hold" && r.status === "pending");
-  const holdEligible = !!holdTier && holdTier.maxCount > 0 && remainCount > 0 && remainDays > 0 && !pendingHold;
+  const holdEligible = !!holdTier && holdTier.maxCount > 0 && remainCount > 0 && perRequestMax > 0 && !pendingHold;
 
   // 제15조 양도 — 1회만
   const transferUsed = requests.some((r) => r.type === "transfer" && (r.status === "approved" || r.status === "pending"));
 
   // 환불 예상액 — 정상가 재산정(할인 회수): 결제액 − (정상 일요금 × 이용일수) − 위약금10%.
-  // 정상 일요금은 월 30만원(주5회 정상가) 기준. 최종은 관장이 153경영앱에서 확정.
+  // 정상 일요금은 1개월 정상가 22만원 ÷ 30. 이용일수는 승인된 홀딩 일수를 뺀 날(홀딩해도 금액 불변). 최종은 관장이 153경영앱에서 확정.
   const estBreak = useMemo(() => {
     if (payment == null) return null;
-    return calcRefund({ paid: payment, normalDaily: NORMAL_MONTHLY_DEFAULT / 30, elapsedDays: elapsedDays ?? 0 });
-  }, [payment, elapsedDays]);
+    return calcRefund({ paid: payment, normalDaily: NORMAL_MONTHLY_DEFAULT / 30, elapsedDays: usedDaysExHold ?? 0 });
+  }, [payment, usedDaysExHold]);
   const estRefund = estBreak ? estBreak.refund : null;
   const pendingRefund = requests.some((r) => r.type === "refund" && r.status === "pending");
 
-  const holdPresets = [7, 14, 30].filter((d) => d <= remainDays);
+  const holdPresets = [7, 10, 15].filter((d) => d <= perRequestMax);
 
   const openModal = (t: "hold" | "transfer" | "refund") => {
     setReason("");
     setTName("");
     setTPhone("");
-    setHoldDays(Math.min(7, remainDays || 7));
+    setHoldDays(Math.min(7, perRequestMax || 7));
     setModal(t);
   };
 
@@ -153,7 +156,7 @@ const MembershipPage = () => {
         reason: reason.trim() || null,
         member_name: profile?.nickname || profile?.name || null,
       };
-      if (modal === "hold") payload.hold_days = Math.min(holdDays, remainDays);
+      if (modal === "hold") payload.hold_days = Math.min(holdDays, perRequestMax);
       if (modal === "transfer") {
         payload.transferee_name = tName.trim();
         payload.transferee_phone = tPhone.trim();
@@ -239,12 +242,14 @@ const MembershipPage = () => {
               {/* 자격 안내 (약관 기준) */}
               <div className="rounded-xl bg-muted/30 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
                 {holdTier && holdTier.maxCount > 0 ? (
-                  <p>홀딩 가능: 남은 {remainCount}회 · {remainDays}일{isManager ? " (본사 테스트)" : ` (약정 ${Math.round(contractMonths ?? 0)}개월 기준)`}</p>
+                  <p>홀딩 가능: 남은 {remainCount}회 · 합계 {remainDays}일 · 1회 최대 {holdTier.perHold}일{isManager ? " (본사 테스트)" : ` (약정 ${Math.round(contractMonths ?? 0)}개월 기준)`}</p>
+                ) : holdTier ? (
+                  <p>홀딩 불가: 1~2개월 이용권은 일시정지가 제공되지 않습니다.</p>
                 ) : (
-                  <p>홀딩 불가: 6개월 미만 약정은 일시정지가 제공되지 않습니다(약관 제14조).</p>
+                  <p>홀딩 가능 여부는 데스크에서 확인해 드려요.</p>
                 )}
                 <p className="mt-0.5">양도 1회 가능 · 수수료 {won(TRANSFER_FEE)} (관장 승인 후 처리, 재양도 불가).</p>
-                <p className="mt-0.5">환불은 소비자분쟁해결기준(체육시설업)에 따라 결제금액에서 이용하신 기간과 결제 수수료·세금(10%)을 공제해 산정하며, 위생용품·부대서비스는 별도 반영될 수 있습니다. 최종 금액은 관장님이 확정합니다.</p>
+                <p className="mt-0.5">환불은 결제금액에서 이용하신 기간(홀딩 기간 제외)과 위약금(결제금액의 10%)을 빼서 산정하며, 지급 장비(글러브 50,000원·붕대 10,000원)·부대서비스는 별도 반영될 수 있습니다. 카드 수수료 등 다른 비용은 받지 않으며, 최종 금액은 관장님이 확정합니다.</p>
               </div>
 
               {/* 내 신청 내역 */}
@@ -297,7 +302,7 @@ const MembershipPage = () => {
             {modal === "hold" && (
               <div className="mb-4">
                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                  홀딩 일수 (남은 {remainCount}회 · 최대 {remainDays}일)
+                  홀딩 일수 (남은 {remainCount}회 · 이번에 최대 {perRequestMax}일)
                 </label>
                 {holdPresets.length > 0 && (
                   <div className="mb-2 flex gap-2">
@@ -317,9 +322,9 @@ const MembershipPage = () => {
                 <input
                   type="number"
                   min={1}
-                  max={remainDays}
+                  max={perRequestMax}
                   value={holdDays}
-                  onChange={(e) => setHoldDays(Math.max(1, Math.min(remainDays, Number(e.target.value) || 1)))}
+                  onChange={(e) => setHoldDays(Math.max(1, Math.min(perRequestMax, Number(e.target.value) || 1)))}
                   className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
                   placeholder="직접 입력 (일)"
                 />
@@ -357,10 +362,10 @@ const MembershipPage = () => {
                       <span className="text-muted-foreground">결제 금액</span>
                       <span className="font-semibold text-foreground">{won(payment)}</span>
                     </div>
-                    {totalDays && elapsedDays != null && (
+                    {contractDays && usedDaysExHold != null && (
                       <div className="mt-1 flex items-center justify-between">
-                        <span className="text-muted-foreground">이용 경과</span>
-                        <span className="text-foreground">{Math.min(elapsedDays, totalDays)} / {totalDays}일</span>
+                        <span className="text-muted-foreground">이용 경과{usedHoldDays > 0 ? ` (홀딩 ${usedHoldDays}일 제외)` : ""}</span>
+                        <span className="text-foreground">{Math.min(usedDaysExHold, contractDays)} / {contractDays}일</span>
                       </div>
                     )}
                     {estBreak && (
@@ -384,7 +389,7 @@ const MembershipPage = () => {
                         <span className="text-[11px] font-bold text-destructive">지금 환불하면 약 {won(estBreak.loss)} 손해예요</span>
                       </div>
                     )}
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">할인 상품은 중도 해지 시 이용기간이 정상가로 재산정됩니다(정상 월 30만원 기준). 위생용품·부대서비스는 별도이며, 최종 금액은 관장님이 확정합니다.</p>
+                    <p className="mt-1.5 text-[11px] text-muted-foreground">할인 상품은 중도 해지 시 이용기간이 정상가로 재산정됩니다. 예상액은 1개월 정상가 22만원 ÷ 30일 기준이며, 주3회권은 확정할 때 18만원 기준으로 다시 계산합니다. 홀딩 기간은 빼고 계산하며, 지급 장비·부대서비스는 별도이고 최종 금액은 관장님이 확정합니다.</p>
                   </>
                 ) : (
                   <p className="text-muted-foreground">결제 금액 정보가 없어 예상액을 계산할 수 없습니다. 신청 후 관장님이 금액을 확정합니다.</p>
