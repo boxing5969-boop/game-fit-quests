@@ -679,7 +679,7 @@ const BranchManagerHome = () => {
         <div className="mb-4 flex gap-1.5 rounded-2xl border border-border bg-muted/30 p-1">
           <button
             onClick={() => setMainTab("members")}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
               mainTab === "members" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
@@ -688,7 +688,7 @@ const BranchManagerHome = () => {
           </button>
           <button
             onClick={() => setMainTab("inbox")}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
               mainTab === "inbox" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
@@ -702,7 +702,7 @@ const BranchManagerHome = () => {
           </button>
           <button
             onClick={() => setMainTab("level_review")}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
               mainTab === "level_review" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
@@ -710,7 +710,7 @@ const BranchManagerHome = () => {
           </button>
           <button
             onClick={() => setMainTab("operations")}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
               mainTab === "operations" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
@@ -718,7 +718,7 @@ const BranchManagerHome = () => {
           </button>
           <button
             onClick={() => setMainTab("at_risk")}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
               mainTab === "at_risk" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >

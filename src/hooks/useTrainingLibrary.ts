@@ -141,7 +141,8 @@ export const usePriorityDrills = (globalLevel: number, count = 4): TrainingExerc
   const { data: library } = useTrainingLibrary();
   return useMemo(() => {
     if (!library) return [];
-    const SKIP = new Set(["워밍업", "줄넘기", "쿨다운", "컨디셔닝", "회복"]);
+    // '준비' = 붕대 감기처럼 수업 전 준비 (2026-10-13) — 레벨업 심사 기술이 아니다
+    const SKIP = new Set(["워밍업", "줄넘기", "쿨다운", "컨디셔닝", "회복", "준비"]);
     const tech = library.filter((e) => !SKIP.has(e.category) && e.level_min <= globalLevel);
     // 현재 레벨에 가장 가까운(=이번에 배우는) 순 → 정렬 우선
     tech.sort((a, b) => (b.level_min - a.level_min) || (a.sort_order - b.sort_order));

@@ -7,7 +7,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { toast } from "sonner";
-import { ArrowLeft, X, Target, AlertTriangle, CheckCircle2, PlayCircle, Plus, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, X, Target, AlertTriangle, CheckCircle2, PlayCircle, Plus, Pencil, Trash2, ChevronRight } from "lucide-react";
+import { strictYoutubeId } from "@/lib/videoUrl";
+import { HANDWRAP_EXERCISE_NAME } from "@/data/handWrapGuide";
 
 interface Ex {
   id: string; category: string; name: string; summary: string; description: string;
@@ -175,7 +177,32 @@ const TrainingLibraryPage = () => {
               {sel.target && <span className="text-muted-foreground">{sel.target}</span>}
             </div>
             {sel.image_url && <img src={sel.image_url} alt={sel.name} className="mb-3 max-h-64 w-full rounded-xl object-cover" />}
-            {sel.video_url && <video src={sel.video_url} controls playsInline className="mb-3 w-full rounded-xl bg-black" />}
+            {/* 영상 URL 이 유튜브 주소면 유튜브 플레이어로, 아니면 바로 재생 (2026-10-13 — 코치가 유튜브 링크를 넣어도 나오게) */}
+            {sel.video_url &&
+              (strictYoutubeId(sel.video_url) ? (
+                <div className="mb-3 aspect-video w-full overflow-hidden rounded-xl bg-black">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${strictYoutubeId(sel.video_url)}`}
+                    title={sel.name}
+                    className="h-full w-full"
+                    allow="encrypted-media; fullscreen; picture-in-picture"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <video src={sel.video_url} controls playsInline className="mb-3 w-full rounded-xl bg-black" />
+              ))}
+            {/* 붕대 감기는 전용 화면(그림 8단계·집 연습 미션)으로 */}
+            {sel.name === HANDWRAP_EXERCISE_NAME && (
+              <button
+                onClick={() => navigate("/handwrap")}
+                className="mb-3 flex w-full items-center justify-between rounded-xl bg-primary/10 px-3.5 py-3 text-left text-sm font-bold text-primary transition-all active:scale-[0.99]"
+              >
+                그림 8단계로 따라 하기 · 집 연습 미션
+                <ChevronRight className="h-4 w-4 shrink-0" />
+              </button>
+            )}
             <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{sel.description}</p>
             {sel.benefits && (
               <div className="mt-3 rounded-xl bg-status-complete/10 p-3">

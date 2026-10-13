@@ -15,6 +15,7 @@ export type MenuGlyphName =
   | "play"
   | "titlematch"
   | "glove"
+  | "handwrap"
   | "books"
   | "clipboard"
   | "crown"
@@ -93,6 +94,24 @@ export const MENU_GLYPHS: Record<MenuGlyphName, (p: string) => string> = {
 <path d="M17.6 10.3c1.8-1.7 4.1-2.7 6.7-2.9" stroke="#fff" stroke-opacity=".75" stroke-width="2.4" stroke-linecap="round" fill="none"/>
 </g>
 <g stroke="url(#${p}gold)" stroke-width="2.6" stroke-linecap="round"><path d="M39.9 6.8l2.3-3.2"/><path d="M42.8 11.8l3.4-1.2"/><path d="M43.2 17.5l3.2.5"/></g>`,
+
+  /** 붕대 감기 — 손등에 감긴 민트 붕대(주먹 마디 띠 + 손등 X + 손목 띠) + 금색 벨크로 (2026-10-13) */
+  handwrap: (p) => `${defs(p, ["skin", "mint", "mintD", "gold"])}
+<g transform="rotate(-6 24 26)">
+<rect x="12.6" y="8.6" width="5.8" height="15" rx="2.9" fill="url(#${p}skin)"/>
+<rect x="19" y="5.4" width="6" height="17" rx="3" fill="url(#${p}skin)"/>
+<rect x="25.6" y="6.4" width="6" height="16" rx="3" fill="url(#${p}skin)"/>
+<rect x="32.2" y="10" width="5.6" height="13" rx="2.8" fill="url(#${p}skin)"/>
+<rect x="34.6" y="17.4" width="6.4" height="15" rx="3.2" transform="rotate(48 37.8 31)" fill="url(#${p}skin)"/>
+<rect x="12" y="18" width="26.4" height="22" rx="6.6" fill="url(#${p}skin)"/>
+<path d="M15 32.8 35.6 21.6M15 21.6l20.6 11.2" stroke="url(#${p}mint)" stroke-width="3.4" stroke-linecap="round"/>
+<rect x="10.8" y="17.2" width="28.8" height="6.6" rx="3.3" fill="url(#${p}mint)"/>
+<path d="M14 18.9h9.5" stroke="#fff" stroke-opacity=".6" stroke-width="1.6" stroke-linecap="round"/>
+<rect x="12.8" y="33.4" width="24.8" height="11" rx="3.4" fill="url(#${p}mintD)"/>
+<path d="M12.8 39h24.8" stroke="#fff" stroke-opacity=".45" stroke-width="1.3"/>
+<rect x="20.6" y="35.2" width="9.2" height="7.4" rx="1.8" fill="url(#${p}gold)"/>
+</g>
+<path d="M41.6 4.6c.3 2.4 1 3.1 3.4 3.4-2.4.3-3.1 1-3.4 3.4-.3-2.4-1-3.1-3.4-3.4 2.4-.3 3.1-1 3.4-3.4Z" fill="url(#${p}gold)"/>`,
 
   /** 훈련 라이브러리 — 책장 (민트·먹·금 책) */
   books: (p) => `${defs(p, ["mint", "ink", "gold"])}

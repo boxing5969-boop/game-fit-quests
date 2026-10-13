@@ -126,6 +126,8 @@ const SearchPage = lazyWithRetry(() => import("@/pages/SearchPage"));
 const TitleMatchPage = lazyWithRetry(() => import("@/pages/TitleMatchPage"));
 // 알림함 — 공지·출석·수업 소식 (2026-10-01 대표님)
 const NotificationsPage = lazyWithRetry(() => import("@/pages/NotificationsPage"));
+// 붕대 감기 — 그림 8단계·영상·집 연습 미션 (2026-10-13 대표님)
+const HandWrapGuidePage = lazyWithRetry(() => import("@/pages/HandWrapGuidePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -342,6 +344,7 @@ const AppRoutes = () => {
         <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
         <Route path="/title-match" element={<ProtectedRoute><TitleMatchPage /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+        <Route path="/handwrap" element={<ProtectedRoute><HandWrapGuidePage /></ProtectedRoute>} />
         <Route path="/library" element={<ProtectedRoute><BoxingLibraryPage /></ProtectedRoute>} />
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         {/* 사이니지용 짧은 주소 — 리모컨으로 치기 쉽게. /tv/sunreung/1 처럼 화면 번호를 붙이면

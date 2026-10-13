@@ -65,6 +65,12 @@ const DIRECT: [string, string][] = [
   ["실사 애니메이션 영상 차이", "tr-video-variant"],
   ["내 레벨 연습하기", "tr-practice"],
   ["타이틀매치 영상 어디서 봐요", "tr-title-videos"],
+  ["붕대 감는 법", "tr-handwrap"],
+  ["붕대 어떻게 감아요?", "tr-handwrap"],
+  ["핸드랩 감는 법", "tr-handwrap"],
+  ["붕대 연습 미션", "tr-handwrap"],
+  ["집에서 붕대 연습", "tr-handwrap"],
+  ["붕대 미션 뭐예요", "tr-handwrap"],
   ["명예의 전당 조건", "lv-master"],
   ["레벨업하면 뭐 받아요", "lv-reward"],
   ["승인은 누가 해요", "lv-review"],
@@ -115,6 +121,8 @@ const PLAN: [string, "small" | "faq" | "suggest" | "ai", string?][] = [
   ["앱이 먹통이에요", "faq", "osami-app-error"],
   ["운동하다 어지러우면 어떡해요", "faq", "gd-safety"], // 안전 안내는 코칭 화제여도 공식 문구로
   ["식단 사진 칼로리", "faq", "dt-photo"],
+  ["붕대 감는 법", "faq", "tr-handwrap"],
+  ["핸드랩 어떻게 감아요", "faq", "tr-handwrap"],
   ["타이틀매치 통과하면 마일리지 얼마나 줘요", "suggest"],
   ["다이어트 중에 치킨 먹어도 돼요", "ai"], // 153다이어트 소개문으로 답하지 않는다
   ["복싱이 다이어트에 좋아요?", "ai"],

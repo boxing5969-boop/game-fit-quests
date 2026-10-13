@@ -21,7 +21,12 @@ const GuideSafetyPage = () => {
         <div className="space-y-2 text-sm text-muted-foreground">
           <p>• 처음에는 강도보다 정확한 자세에 집중하세요.</p>
           <p>• 충분히 워밍업한 뒤 본 훈련을 시작하세요.</p>
-          <p>• 핸드랩과 글러브를 올바르게 착용하세요.</p>
+          <p>
+            • 핸드랩과 글러브를 올바르게 착용하세요.{" "}
+            <button onClick={() => navigate("/handwrap")} className="font-bold text-primary underline-offset-2 active:underline">
+              붕대 감는 법 보기 ›
+            </button>
+          </p>
           <p>• 쿨다운과 스트레칭으로 마무리하세요.</p>
         </div>
       </div>

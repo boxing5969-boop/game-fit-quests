@@ -440,7 +440,7 @@ const ApprovalInbox = () => {
 
             <button
               onClick={() => navigate(`/manager/member/${item.user_id}`)}
-              className="flex flex-1 items-center gap-2 text-left active:opacity-70"
+              className="flex min-w-0 flex-1 items-center gap-2 text-left active:opacity-70"
             >
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm">
                 {item.avatar_url ? (

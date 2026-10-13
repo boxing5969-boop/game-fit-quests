@@ -15,6 +15,7 @@ import BulkCompleteModal from "@/components/BulkCompleteModal";
 import { useMemberWallet, useGrantGems } from "@/hooks/useWallet";
 import RouteLoader from "@/components/splash/RouteLoader";
 import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
+import { useMemberHandWrapPractice } from "@/hooks/useHandWrap";
 
 type TabKey = "overview" | "missions" | "levelmap" | "activity" | "notes";
 
@@ -43,6 +44,8 @@ const MemberDetailPage = () => {
   const [gemReason, setGemReason] = useState("");
   const memberWallet = useMemberWallet(memberId);
   const grantGems = useGrantGems();
+  // 붕대 감기 집 연습 — 다음 수업 때 코치님 앞에서 혼자 감아 보게 하는 확인용 (2026-10-13)
+  const handWrap = useMemberHandWrapPractice(memberId, isManagerRole(role));
 
   // Member profile + progress
   const { data: member, isLoading } = useQuery({
@@ -341,6 +344,18 @@ const MemberDetailPage = () => {
         <div className="space-y-3">
           <InfoCard label="현재 랭크" value={formatRank(prog.current_rank, prog.current_level)} />
           <InfoCard label="보스전 클리어" value={`${prog.bosses_cleared}회`} />
+          {handWrap.data && handWrap.data.goal > 0 && (
+            <InfoCard
+              label="붕대 집 연습"
+              value={
+                handWrap.data.days === 0
+                  ? "아직 기록 없음"
+                  : `${Math.min(handWrap.data.days, handWrap.data.goal)}/${handWrap.data.goal}일${
+                      handWrap.data.rewarded || handWrap.data.days >= handWrap.data.goal ? " 완료" : ""
+                    }${handWrap.data.lastOn ? ` · 마지막 ${handWrap.data.lastOn.slice(5).replace("-", "/")}` : ""}`
+              }
+            />
+          )}
           <InfoCard label="이름" value={p.name} />
           <InfoCard label="전화번호" value={p.phone_number || "미등록"} />
 
@@ -383,14 +398,14 @@ const MemberDetailPage = () => {
                 value={gemAmount}
                 onChange={e => setGemAmount(e.target.value)}
                 placeholder="수량"
-                className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
               />
               <input
                 type="text"
                 value={gemReason}
                 onChange={e => setGemReason(e.target.value)}
                 placeholder="사유"
-                className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
               />
             </div>
             <div className="grid grid-cols-2 gap-2">

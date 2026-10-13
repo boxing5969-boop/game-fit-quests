@@ -58,6 +58,7 @@ import { TabIcon } from "@/components/icons/tabIcons";
 import DmHeaderButton from "@/components/dm/DmHeaderButton";
 import NotificationBellButton from "@/components/notifications/NotificationBellButton";
 import PushOptInCard from "@/components/notifications/PushOptInCard";
+import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import { getMasterLevelDefinition } from "@/data/masterTierData";
@@ -609,6 +610,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
           {/* 휴대폰 알림 켜기 — 아직 안 켠 회원에게만 보인다 ('나중에'는 2주 접힘).
               첫 로그인 직후 한 번 권하라는 대표님 지시(2026-10-10)의 자리. */}
           <PushOptInCard variant="inbox" />
+
+          {/* 붕대 감기 집 연습 미션 — 화이트 리그 레벨 1~3 회원에게만, 다 채우기 전까지 (2026-10-13 대표님) */}
+          <HandWrapPracticeCard variant="home" />
 
           {/* ─── 전체 메뉴 (접기) — 하단 탭이 4개로 줄면서 전체 메뉴는 여기서 연다 ─── */}
           <section>
