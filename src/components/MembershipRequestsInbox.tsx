@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { supabase } from "@/integrations/supabase/client";
 import { holdDocSignedUrl, purgeHoldDoc, isPdfPath } from "@/lib/holdDocs";
+import { TRANSFER_FEE } from "@/data/gymPolicies";
 import { toast } from "sonner";
 
 interface PReq {
@@ -242,7 +243,7 @@ const MembershipRequestsInbox = () => {
                 <p className="mt-1 text-xs text-foreground">
                   양수인 <span className="font-semibold">{r.transferee_name || "-"}</span>
                   {r.transferee_phone ? ` · ${r.transferee_phone}` : ""}
-                  <span className="ml-1 text-muted-foreground">(수수료 50,000원 안내)</span>
+                  <span className="ml-1 text-muted-foreground">(수수료 {won(TRANSFER_FEE)} 안내)</span>
                 </p>
               )}
 

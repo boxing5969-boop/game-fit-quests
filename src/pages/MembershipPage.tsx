@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { calcRefund, NORMAL_MONTHLY_DEFAULT } from "@/lib/refundPolicy";
-import { holdPolicy, type HoldTier, MEDICAL_HOLD_MAX_DAYS } from "@/data/gymPolicies";
+import { holdPolicy, type HoldTier, MEDICAL_HOLD_MAX_DAYS, TRANSFER_FEE } from "@/data/gymPolicies";
 import { uploadHoldDoc, removeHoldDoc, HOLD_DOC_ACCEPT } from "@/lib/holdDocs";
 import { ArrowLeft, Pause, ArrowLeftRight, RotateCcw, X, Clock, CheckCircle2, XCircle, Stethoscope, Paperclip } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,7 +30,6 @@ interface MReq {
   est_refund: number | null;
 }
 
-const TRANSFER_FEE = 50000;
 const DAY = 86400000;
 
 const fmt = (d: string) => new Date(d).toLocaleDateString("ko-KR");
