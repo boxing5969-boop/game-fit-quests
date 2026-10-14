@@ -65,6 +65,8 @@ import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import { getMasterLevelDefinition } from "@/data/masterTierData";
 import { useDisplayMode } from "@/hooks/useDisplayMode";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
+import { useAvatarRewardAutoClaim, useAvatarRewardState } from "@/hooks/useAvatarReward";
+import { rewardHint } from "@/lib/avatarReward";
 import { isPtMember } from "@/lib/ptMember";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
@@ -119,6 +121,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   // 내 카드 사진을 누르면 프로필 사진 올리기·바꾸기 (2026-10-14 대표님) — 내정보와 같은 함수
   const { upload: uploadAvatar, uploading: avatarUploading } = useAvatarUpload();
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  // 처음 올리면 챔피언 머니 (2026-10-14 대표님) — 카드 사진 위 금색 알약 · 예전에 올려 둔 회원은 열 때 한 번 받는다
+  const { data: avatarReward } = useAvatarRewardState();
+  useAvatarRewardAutoClaim();
   useLevelUpNotifications();
   useHofRewardsAutoClaim();
 
@@ -425,6 +430,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         onCardClick={staffCard ? undefined : () => setNickEditOpen(true)}
         onPhotoClick={() => avatarInputRef.current?.click()}
         photoBusy={avatarUploading}
+        photoBadge={staffCard ? undefined : rewardHint(avatarReward, !!profile?.avatar_url) ?? undefined}
         branch={profile.branch_name}
         league={rank}
         level={onMasterTrack ? progress.overall_level : progress.current_level}

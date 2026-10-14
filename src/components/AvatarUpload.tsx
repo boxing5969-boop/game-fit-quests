@@ -3,6 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
+import { useAvatarRewardState } from "@/hooks/useAvatarReward";
+import { rewardHint } from "@/lib/avatarReward";
 
 interface AvatarUploadProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -21,6 +23,8 @@ const AvatarUpload = ({ size = "md", editable = true }: AvatarUploadProps) => {
   // 올리기·바꾸기는 홈 라이센스 카드와 같은 함수 (hooks/useAvatarUpload)
   const { upload, uploading } = useAvatarUpload();
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null);
+  // 처음 올리면 받는 챔피언 머니 — 홈 카드와 같은 금색 알약 (서버 금액)
+  const { data: reward } = useAvatarRewardState();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,6 +37,7 @@ const AvatarUpload = ({ size = "md", editable = true }: AvatarUploadProps) => {
   };
 
   const displayUrl = avatarUrl || profile?.avatar_url;
+  const badge = editable ? rewardHint(reward, !!displayUrl) : null;
 
   return (
     <div className="relative inline-block">
@@ -42,11 +47,17 @@ const AvatarUpload = ({ size = "md", editable = true }: AvatarUploadProps) => {
         ) : null}
         <AvatarFallback className="bg-primary/10 text-lg">🥊</AvatarFallback>
       </Avatar>
+      {badge && !uploading && (
+        <span className="pointer-events-none absolute -top-2 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-reward px-2 py-0.5 text-[10px] font-black text-reward-foreground shadow-md">
+          🎁 {badge}
+        </span>
+      )}
       {editable && (
         <>
           <button
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
+            aria-label={badge ? `프로필 사진 올리기 (처음 올리면 챔피언 머니 ${badge})` : "프로필 사진 올리기·바꾸기"}
             className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-all active:scale-90"
           >
             {uploading ? (

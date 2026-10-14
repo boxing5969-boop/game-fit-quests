@@ -12,6 +12,7 @@
  *   · 하트(2026-09-29): 아래 줄 오른쪽 — 받은 하트 수. 닉네임 좋아요와 같은 하트(한 사람에게 하나).
  *   · onCardClick 이 오면 카드 전체가 버튼 — 내 카드는 누르면 닉네임 바꾸기.
  *   · onPhotoClick 이 오면 사진이 따로 버튼 (2026-10-14) — 내 카드는 누르면 프로필 사진 올리기·바꾸기.
+ *     photoBadge 가 오면 사진 위에 금색 알약 (처음 올리면 받는 챔피언 머니).
  *
  * Size:
  *   · hero      — 홈 메인 (큰 사이즈, 모든 정보)
@@ -181,6 +182,8 @@ export interface BoxerLicenseCardProps {
   onPhotoClick?: () => void;
   /** 사진 올리는 중 — 사진 위에 도는 표시, 다시 누르기 잠금 */
   photoBusy?: boolean;
+  /** 사진 위 금색 알약 (2026-10-14 — 처음 올리면 받는 챔피언 머니, 예: "+5,000"). onPhotoClick 이 있을 때만 보인다 */
+  photoBadge?: string;
 }
 
 const BoxerLicenseCard = ({
@@ -211,6 +214,7 @@ const BoxerLicenseCard = ({
   onPromotionClick,
   onPhotoClick,
   photoBusy = false,
+  photoBadge,
 }: BoxerLicenseCardProps) => {
   const rankKey = (league || "white").toLowerCase();
   const lic = licenseNumber(userId);
@@ -372,7 +376,13 @@ const BoxerLicenseCard = ({
             className={`relative flex-shrink-0 ${onPhotoClick ? "cursor-pointer rounded-xl transition-transform active:scale-95" : ""}`}
             role={onPhotoClick ? "button" : undefined}
             tabIndex={onPhotoClick ? 0 : undefined}
-            aria-label={onPhotoClick ? "프로필 사진 올리기·바꾸기" : undefined}
+            aria-label={
+              onPhotoClick
+                ? photoBadge
+                  ? `프로필 사진 올리기·바꾸기 (처음 올리면 챔피언 머니 ${photoBadge})`
+                  : "프로필 사진 올리기·바꾸기"
+                : undefined
+            }
             aria-busy={onPhotoClick ? photoBusy : undefined}
             onPointerDown={onPhotoClick ? (e) => e.stopPropagation() : undefined}
             onClick={
@@ -495,6 +505,16 @@ const BoxerLicenseCard = ({
                 aria-hidden="true"
               >
                 <Camera className="h-3.5 w-3.5" />
+              </span>
+            )}
+
+            {/* 처음 올리면 받는 보상 — 금색 알약 (보상은 금색 · 브랜드 규칙) */}
+            {onPhotoClick && !photoBusy && photoBadge && (
+              <span
+                className="pointer-events-none absolute -top-2 left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-reward px-2 py-0.5 text-[10px] font-black text-reward-foreground shadow-md ring-2 ring-black/60"
+                aria-hidden="true"
+              >
+                🎁 {photoBadge}
               </span>
             )}
 

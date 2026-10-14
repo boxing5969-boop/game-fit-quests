@@ -12,6 +12,7 @@
  *   · compact    → BoxerLicenseCard size="compact"
  */
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -53,16 +54,20 @@ const PhotoSlot = ({
   member: LiveActiveMember;
   size: LicenseSize;
 }) => {
+  // 사진을 못 불러오면(지워진 파일 등) 깨진 그림 대신 캐릭터·이니셜로 (2026-10-14)
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const rankKey = (member.league ?? "white").toLowerCase();
   const spriteSize: "xs" | "sm" | "md" = size === "compact" ? "xs" : size === "spotlight" ? "md" : "sm";
 
   // 1순위 — 본인이 업로드한 사진
-  if (member.avatar_url) {
+  if (member.avatar_url && member.avatar_url !== failedUrl) {
+    const url = member.avatar_url;
     return (
       <img
-        src={member.avatar_url}
+        src={url}
         alt={member.name}
         className="h-full w-full object-cover"
+        onError={() => setFailedUrl(url)}
       />
     );
   }

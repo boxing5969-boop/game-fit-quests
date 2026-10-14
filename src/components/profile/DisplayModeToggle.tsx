@@ -6,7 +6,8 @@
  *   · 사진       — 업로드한 사진 강제
  *   · 캐릭터     — 캐릭터 스튜디오 캐릭터 강제
  *
- * localStorage 저장 (디바이스마다 다름).
+ * localStorage 저장 (디바이스마다 다름) — 그래서 이 폰의 홈 카드에만 적용된다.
+ * 체육관 TV(라이브보드)는 회원 폰 설정을 알 수 없어 늘 사진 > 캐릭터 > 이니셜 순서다 (2026-10-14 문구 정정).
  */
 
 import { Camera, User, Sparkles } from "lucide-react";
@@ -25,7 +26,7 @@ const DisplayModeToggle = () => {
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-bold text-foreground">라이센스 카드 표시</h3>
-        <span className="text-[10px] text-muted-foreground">홈 / 라이브보드</span>
+        <span className="text-[10px] text-muted-foreground">이 폰의 홈 카드</span>
       </div>
       <div className="grid grid-cols-3 gap-2">
         {OPTIONS.map((opt) => {
@@ -49,6 +50,7 @@ const DisplayModeToggle = () => {
           );
         })}
       </div>
+      <p className="mt-2 text-[10px] text-muted-foreground">체육관 라이브보드에는 올린 프로필 사진이 먼저 보여요</p>
     </div>
   );
 };

@@ -40,6 +40,14 @@ const RANK_GLOW: Record<string, string> = {
   black: "shadow-[0_0_80px_rgba(234,179,8,0.4)]",
 };
 
+/** 입장 환영 사진 테두리 — 리그 색 (RANK_COLORS 와 같은 계열, 2026-10-14) */
+const WELCOME_RING: Record<string, string> = {
+  white: "from-gray-200 to-gray-400",
+  blue: "from-blue-300 to-blue-600",
+  red: "from-red-300 to-red-600",
+  black: "from-yellow-300 to-yellow-600",
+};
+
 const RANK_BADGE_COLORS: Record<string, string> = {
   white: "bg-gray-300 text-gray-900",
   blue: "bg-blue-500 text-white",
@@ -186,6 +194,11 @@ const LiveBoardPage = () => {
   const [connected, setConnected] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Avatar cache with state to trigger re-renders
+  // (얼굴·QR 출석 회원 카드도 이 사진을 쓰므로 checkinMembers 보다 먼저 선언한다 — 2026-10-14)
+  const avatarCacheRef = useRef<Record<string, string | null>>({});
+  const [avatarMap, setAvatarMap] = useState<Record<string, string | null>>({});
+
   /**
    * 얼굴 출석(브로제이) 회원을 "지금 운동 중"으로 올린다.
    *
@@ -215,10 +228,12 @@ const LiveBoardPage = () => {
         league: v.league,
         level: v.level,
         startedAt: new Date(v.last_checkin_at).getTime(),
-        avatar_url: null,
+        // 회원이 올린 프로필 사진 — TV 가 읽어 둔 값(getAvatarUrl → avatarMap). 입실하면 새로 읽는다.
+        // 예전엔 null 고정이라 얼굴·QR 출석 회원은 사진을 올려도 '활동 중' 칸에 글자만 나왔다 (2026-10-14 대표님)
+        avatar_url: avatarMap[v.user_id] ?? null,
         partsJson: null,
       }));
-  }, [dailyVisits, activeMembers, currentTime]);
+  }, [dailyVisits, activeMembers, currentTime, avatarMap]);
 
   /** 지금 운동 중인 회원 id — 아래 이름 티커에서 밝게 구분하는 데 쓴다 */
   const activeUserIds = useMemo(
@@ -240,24 +255,24 @@ const LiveBoardPage = () => {
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
   const [showBranchSwitch, setShowBranchSwitch] = useState(false);
 
-  // Avatar cache with state to trigger re-renders
-  const avatarCacheRef = useRef<Record<string, string | null>>({});
-  const [avatarMap, setAvatarMap] = useState<Record<string, string | null>>({});
-
-  const getAvatarUrl = useCallback(async (userId: string): Promise<string | null> => {
-    if (avatarCacheRef.current[userId] !== undefined) {
-      if (avatarMap[userId] === undefined) {
-        setAvatarMap(prev => ({ ...prev, [userId]: avatarCacheRef.current[userId] }));
-      }
-      return avatarCacheRef.current[userId];
+  // fresh=true 면 저장해 둔 값을 건너뛰고 새로 읽는다 — 입장 환영 화면용 (오늘 사진을 새로 올린 회원도 바로 사진으로, 2026-10-14)
+  const getAvatarUrl = useCallback(async (userId: string, fresh = false): Promise<string | null> => {
+    // 같은 값이면 상태를 바꾸지 않는다 — 출석 카드가 avatarMap 을 보므로 쓸데없는 다시 그리기를 막는다
+    if (!fresh && avatarCacheRef.current[userId] !== undefined) {
+      const cached = avatarCacheRef.current[userId];
+      setAvatarMap(prev => (prev[userId] === cached ? prev : { ...prev, [userId]: cached }));
+      return cached;
     }
     // 공개 안전컬럼 뷰 사용 (민감정보 제외, 회원 간 닉네임/아바타만 노출)
-    const { data } = await (supabase as any).from("public_profiles").select("avatar_url").eq("user_id", userId).single();
+    const { data, error } = await (supabase as any).from("public_profiles").select("avatar_url").eq("user_id", userId).single();
+    // 읽기가 실패하면(네트워크 등) 알던 사진을 그대로 쓴다 — '회원 없음'(PGRST116)일 때만 사진 없음으로 본다
+    // (알던 값이 없으면 기억하지 않고 null — 1분 뒤 다시 읽는다)
+    if (error && error.code !== "PGRST116") return avatarCacheRef.current[userId] ?? null;
     const url = data?.avatar_url || null;
     avatarCacheRef.current[userId] = url;
-    setAvatarMap(prev => ({ ...prev, [userId]: url }));
+    setAvatarMap(prev => (prev[userId] === url ? prev : { ...prev, [userId]: url }));
     return url;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Clock — update every 15s so elapsed times refresh
   useEffect(() => {
@@ -585,29 +600,38 @@ const LiveBoardPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // 입장 환영 순번 — 여러 명이 한꺼번에 들어와도(얼굴 출석은 1분마다 묶어서 들어온다) 맨 마지막 입실만 보여 준다.
+  // 사진·캐릭터를 다 읽은 뒤 한 번에 바꾸므로 A 의 얼굴에 B 의 이름이 붙는 일이 없다 (2026-10-14).
+  const popupSeqRef = useRef(0);
   const triggerPopup = useCallback(async (event: CheckinEvent) => {
+    const seq = ++popupSeqRef.current;
+    const [avatar, partsJson] = await Promise.all([
+      getAvatarUrl(event.user_id, true),
+      // 회원이 설정한 캐릭터 fetch (RLS 거부 시 null fallback)
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from("member_character_assignments")
+            .select("character_presets(parts_json)")
+            .eq("user_id", event.user_id)
+            .eq("is_active", true)
+            .maybeSingle();
+          const cp = (data as { character_presets?: { parts_json?: unknown } } | null)
+            ?.character_presets;
+          const pj = cp?.parts_json as
+            | { style?: string; customization?: Record<string, unknown> }
+            | undefined;
+          return pj ?? null;
+        } catch {
+          return null;
+        }
+      })(),
+    ]);
+    if (seq !== popupSeqRef.current) return; // 그 사이 더 새 입실이 왔다
+
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
-    const avatar = await getAvatarUrl(event.user_id);
     setPopupAvatarUrl(avatar);
-
-    // 회원이 설정한 캐릭터 fetch (RLS 거부 시 null fallback)
-    try {
-      const { data } = await supabase
-        .from("member_character_assignments")
-        .select("character_presets(parts_json)")
-        .eq("user_id", event.user_id)
-        .eq("is_active", true)
-        .maybeSingle();
-      const cp = (data as { character_presets?: { parts_json?: unknown } } | null)
-        ?.character_presets;
-      const pj = cp?.parts_json as
-        | { style?: string; customization?: Record<string, unknown> }
-        | undefined;
-      setPopupPartsJson(pj ?? null);
-    } catch {
-      setPopupPartsJson(null);
-    }
-
+    setPopupPartsJson(partsJson);
     setLatestPopup(event);
     setShowPopup(true);
     popupTimeoutRef.current = setTimeout(() => setShowPopup(false), 7000);
@@ -968,7 +992,22 @@ const LiveBoardPage = () => {
             */}
             {showPopup && latestPopup ? (
               <div className="flex flex-1 flex-col items-center justify-center gap-4">
-                {popupPartsJson ? (
+                {/* 입장 환영 — 사진(본인이 올린 프로필) > 캐릭터 > 기본 복서. 활동 중 카드와 같은 순서 (2026-10-14 대표님) */}
+                {popupAvatarUrl ? (
+                  <div
+                    className={`rounded-full bg-gradient-to-br p-[6px] ${
+                      WELCOME_RING[(latestPopup.league_snapshot || "white").toLowerCase()] ?? WELCOME_RING.white
+                    } ${RANK_GLOW[(latestPopup.league_snapshot || "white").toLowerCase()] ?? RANK_GLOW.white}`}
+                  >
+                    <img
+                      src={popupAvatarUrl}
+                      alt={latestPopup.display_name_snapshot}
+                      className="h-72 w-72 rounded-full object-cover ring-4 ring-black/70"
+                      // 사진을 못 불러오면 캐릭터·기본 복서로 돌아간다
+                      onError={() => setPopupAvatarUrl(null)}
+                    />
+                  </div>
+                ) : popupPartsJson ? (
                   <CharacterSprite
                     partsJson={popupPartsJson}
                     size="lg"
@@ -984,8 +1023,8 @@ const LiveBoardPage = () => {
                     state="enter"
                   />
                 )}
-                {/* 캐릭터일 때는 이름/리그 별도 표시 (SDBoxerCharacter 는 자체 포함) */}
-                {popupPartsJson && (
+                {/* 사진·캐릭터일 때는 이름/리그 별도 표시 (SDBoxerCharacter 는 자체 포함) */}
+                {(popupAvatarUrl || popupPartsJson) && (
                   <div className="text-center">
                     <p
                       className="text-4xl font-black text-white"

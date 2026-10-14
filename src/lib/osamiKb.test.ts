@@ -22,6 +22,10 @@ const DIRECT: [string, string][] = [
   ["마일리지 어디에 써요", "rw-mileage-use"],
   ["젬은 어떻게 얻어요", "rw-gems"],
   ["챔피언머니 뭐예요", "rw-gems"],
+  // 프로필 사진 첫 등록 보상 (2026-10-14) — 예전 이름 '파이트머니'로 물어도
+  ["파이트머니 어떻게 얻어요", "rw-gems"],
+  ["프로필 사진 올리면 보상 있어요?", "acct-photo"],
+  ["라이브보드에 내 사진 나와요?", "acct-photo"],
   ["닉네임 변경 어떻게 해요", "acct-nickname"],
   ["닉네임 바꾸는법", "acct-nickname"],
   ["비밀번호 잊어버렸어요", "acct-reset-pw"],
