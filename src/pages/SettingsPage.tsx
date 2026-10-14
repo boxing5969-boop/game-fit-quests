@@ -707,6 +707,21 @@ const SettingsPage = () => {
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
+          {/* 정적 페이지(public/privacy, public/account-delete) — SPA 라우터 밖이라 a 태그로 이동 */}
+          <a href="/privacy" className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
+            <div className="flex items-center gap-3">
+              <span className="text-muted-foreground">📄</span>
+              <span className="text-sm text-foreground">개인정보처리방침</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </a>
+          <a href="/account-delete" className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
+            <div className="flex items-center gap-3">
+              <span className="text-muted-foreground">🗑️</span>
+              <span className="text-sm text-foreground">계정 삭제 요청</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </a>
           <button
             onClick={async () => {
               await signOut();
