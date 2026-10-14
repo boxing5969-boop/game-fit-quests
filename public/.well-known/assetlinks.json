@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "kr.boxing153.myboxer",
+      "sha256_cert_fingerprints": [
+        "1C:BF:71:BC:49:EB:23:A1:FD:AD:57:DD:D6:3A:AB:82:61:DC:D7:5E:10:81:9E:3C:D6:69:BE:1E:B2:33:5C:94",
+        "30:3B:50:06:8C:33:10:42:C7:1F:67:23:E7:A9:0E:95:16:3C:24:BA:34:A5:31:D4:63:46:49:57:87:9F:0F:8C"
+      ]
+    }
+  }
+]
