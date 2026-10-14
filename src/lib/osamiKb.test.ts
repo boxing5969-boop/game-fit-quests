@@ -39,6 +39,9 @@ const DIRECT: [string, string][] = [
   ["이미 다니고 있는데 가입하면 결제해야 돼요?", "start-existing-signup"],
   ["결제 안 하고 가입할 수 있어요?", "start-existing-signup"],
   ["처음 로그인은 어떻게 해요", "start-first-login"],
+  // 기존 회원 첫 로그인 = 카카오로 시작하기 (2026-10-14)
+  ["카카오로 로그인해도 돼요", "start-first-login"],
+  ["기존 회원 처음 로그인", "start-first-login"],
   ["기존 회원 연동", "start-social-link"],
   ["카카오 로그인했더니 기존 기록이 없어요", "start-social-link"],
   ["가입 승인 대기 중이에요", "start-approval"],

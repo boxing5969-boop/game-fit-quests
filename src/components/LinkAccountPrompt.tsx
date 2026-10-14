@@ -71,7 +71,7 @@ const LinkAccountPrompt = () => {
           <h2 className="text-base font-bold text-foreground">회원 등록 확인</h2>
         </div>
         <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
-          <b className="text-foreground">기존 153복싱짐 회원</b>이시면 가입하신 전화번호로 연동하세요. 처음이시면 아래에서 <b className="text-foreground">가입 신청</b>을 진행해주세요.
+          <b className="text-foreground">153복싱짐 회원</b>이시면 <b className="text-foreground">체육관에 등록된 전화번호</b>를 넣어 주세요 — 레벨·출석 기록이 그대로 이어져요. 체육관에 처음 오셨다면 아래에서 <b className="text-foreground">가입 신청</b>을 진행해주세요.
         </p>
         <input
           type="tel"

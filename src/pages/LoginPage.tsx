@@ -446,6 +446,33 @@ const LoginPage = () => {
             기존 회원(아이디/비밀번호)은 아래 폼 그대로. */}
         {!isSignUp && tab === "login" && (
           <>
+            {/* 2026-10-14 대표님: "기존 회원님들이 처음 가입할 때 몰라서 나에게 물어본다 — 복싱짐 회원님은 카카오로 로그인하기 안내"
+                카카오 첫 로그인 → '회원 등록 확인' 창에서 체육관에 등록된 전화번호를 넣으면 기존 계정(레벨·출석)이 합쳐진다
+                (LinkAccountPrompt · link-imported-by-phone). 이미 아이디로 쓰는 회원은 연동이 막히므로 아이디 로그인 그대로. */}
+            <section
+              aria-labelledby="gym-member-kakao-guide"
+              className="rounded-2xl border border-primary/30 bg-card p-4 shadow-elev-1"
+            >
+              <p id="gym-member-kakao-guide" className="text-[15px] font-black text-foreground">
+                🥊 153복싱짐 회원님이세요?
+              </p>
+              <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
+                따로 가입하지 마시고 <b className="text-foreground">카카오로 시작하기</b>만 누르세요
+              </p>
+              <ol className="mt-3 space-y-1.5">
+                {["아래 노란 '카카오로 시작하기' 누르기", "체육관에 등록된 전화번호 입력", "끝! 레벨·출석 기록이 그대로 이어져요"].map((step, i) => (
+                  <li key={step} className="flex items-center gap-2.5 text-[12.5px] font-semibold text-foreground">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-black text-primary-foreground">
+                      {i + 1}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-2.5 text-[11px] leading-relaxed text-muted-foreground">
+                이미 아이디로 쓰고 계시면 아래 아이디 로그인을 그대로 쓰세요
+              </p>
+            </section>
             <button
               type="button"
               disabled={isLoading}
@@ -553,7 +580,7 @@ const LoginPage = () => {
               🥊 처음 오셨나요? 신규 회원 가입 신청
             </button>
             <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
-              체육관 기존 회원도 여기서 가입하면 결제 없이 바로 끝나요
+              체육관 회원님은 위의 <b className="text-foreground">카카오로 시작하기</b>가 가장 쉬워요 · 카카오가 없으면 여기서 등록된 전화번호·이름으로 가입하면 결제 없이 끝나요
             </p>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
