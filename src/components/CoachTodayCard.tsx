@@ -14,6 +14,8 @@ import { OverlayMedia, type OverlayVariant } from "@/components/common/VideoOver
 import { overlayVariants } from "@/lib/missionVideos";
 import { RANK_LABELS } from "@/data/sharedConstants";
 import { hasPracticedToday } from "@/lib/levelPractice";
+import { isTitleFlowLeague, titleMatchLink } from "@/lib/titleMatchChallenge";
+import { useNavigate } from "react-router-dom";
 
 interface Cycle {
   sessions: number; days: number; minutes: number;
@@ -130,6 +132,9 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
   const videoDone = videosFetched && (videos.length === 0 || doneCount >= videos.length);
   const isPending = reviewStatus === "pending";
   const canLevelUp = !!cycle?.meets;
+  // 화이트 타이틀매치(레벨 10) — 자동 '심사 대기'가 아니라 회원이 파트너와 연습한 뒤 지점장님께 신청한다 (2026-10-14)
+  const isTitleFlow = levelNumber >= 10 && isTitleFlowLeague(league);
+  const navigate = useNavigate();
 
   // 브로제이 도착 시각 (오후 7:12 형태)
   const arrivalLabel = arrivedAt
@@ -184,7 +189,9 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
   const doneSteps = steps.filter((s) => s.done).length;
 
   // 상황별 오삼 코치 표정 + 한마디 (듀오링고식 말풍선)
-  const coach = isPending
+  const coach = isTitleFlow
+    ? { face: "osami_determined", line: "타이틀매치! 파트너와 연습하고 심사 신청해요" }
+    : isPending
     ? { face: "osami_shy", line: "심사 신청 완료! 조금만 기다려요" }
     : canLevelUp
       ? { face: "osami_victory", line: "출석 다 채웠어요! 곧 자동 처리돼요" }
@@ -371,8 +378,16 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
               );
             })}
 
-            {/* 레벨업 신청 / 대기 */}
-            {isPending ? (
+            {/* 레벨업 신청 / 대기 — 화이트 타이틀매치는 타이틀미션 화면에서 신청 */}
+            {isTitleFlow ? (
+              <button
+                type="button"
+                onClick={() => navigate(titleMatchLink(league))}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-reward/15 py-3.5 text-[13px] font-black text-reward transition-all active:scale-[0.98]"
+              >
+                <Trophy className="h-4 w-4" /> 타이틀미션 보기 · 지점장님께 심사 신청
+              </button>
+            ) : isPending ? (
               <div className="flex items-center justify-center gap-2 rounded-2xl bg-status-pending/10 py-3.5 text-[13px] font-bold text-status-pending">
                 <Clock className="h-4 w-4" /> 코치님 승인 대기 중
               </div>
@@ -420,7 +435,9 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
           })}
         </div>
         <p className="mt-3 text-[11px] text-muted-foreground">
-          {isApprovalOnly
+          {isTitleFlow
+            ? "레벨 10은 타이틀매치 — 파트너와 연습하고 지점장님께 심사를 신청해요 (도전 3번)"
+            : isApprovalOnly
             ? "이 리그부터는 조건을 채우면 승급 심사가 열리고, 코치님이 직접 보고 승급합니다"
             : "조건을 채우면 코치님이 자세를 확인하고 승인해요"}
         </p>

@@ -6,11 +6,16 @@
 //   · 10레벨             → 코치 승인함에 자동 신청 (승급은 코치의 approve_level_review 만 가능)
 //   · 블랙               → 레벨마다 최소 45일 연한까지 채워야 한다
 // 이 카드는 그 진행을 보여주기만 한다. 신청 버튼은 폐지됐다.
+//   · 화이트 레벨 10(타이틀매치 신청 흐름, 2026-10-14) → 출석 막대 대신 '타이틀미션 보기' — 회원이 파트너와 연습한 뒤
+//     타이틀매치 화면에서 지점장님께 심사를 신청하고, 지점장님이 영상으로 심사한다 (도전 3번).
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useLevelVideos, youtubeThumb, parseVideoTitle } from "@/hooks/useLevelVideos";
+import { isTitleFlowLeague, titleMatchLink } from "@/lib/titleMatchChallenge";
+import { useLevelupRules } from "@/hooks/useLevelupRules";
+import { authorityLabel } from "@/lib/levelAuthority";
 
 interface Cycle {
   sessions: number; days: number; minutes: number;
@@ -85,11 +90,15 @@ const LevelUpRequestCard = () => {
   const league = progress?.current_rank ?? "white";
   const nextLevel = Math.min(10, (progress?.current_level ?? 1) + 1);
   const { data: nextVideos = [] } = useLevelVideos(league, nextLevel);
+  // 10레벨 승인 주체 — DB 규칙(get_levelup_rules)이 정본 (화이트·블루 = 지점장·관장님, 2026-10-14)
+  const { data: levelupRules } = useLevelupRules();
 
   if (!cycle) return null;
   const isPending = statusNow === "pending";
   const isRevision = statusNow === "revision_requested";
   const isBossLevel = (progress?.current_level ?? 1) === 10;
+  // 화이트 타이틀매치 = 회원 신청 · 지점장 영상 심사 — 출석 막대·'승인 대기' 대신 타이틀미션으로 안내
+  const isTitleFlow = isBossLevel && isTitleFlowLeague(league);
   // 레드·블랙은 출석을 채워도 코치 승인이 있어야 올라간다
   const isApprovalOnly = cycle.rank === "red" || cycle.rank === "black";
   const gates = cycle.fastTrackGates ?? 0;
@@ -100,15 +109,28 @@ const LevelUpRequestCard = () => {
     <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
       <p className="mb-1 text-sm font-black text-foreground">레벨업까지</p>
       <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
-        {isFastTrack && isBossLevel
+        {isTitleFlow
+          ? "타이틀매치예요! 파트너와 타이틀미션을 연습하고 지점장님께 심사를 신청하세요. 지점장님이 영상으로 심사해요 (도전 3번)."
+          : isFastTrack && isBossLevel
           ? "타이틀매치입니다. 심사 항목을 코치님께 보여드리고 통과하면 다음 리그의 타이틀매치로 바로 넘어갑니다."
           : isBossLevel
           ? `보스 레벨! 출석 ${cycle.reqSessions}회를 채우면 승급 심사에 올라가고, 코치님이 승인하면 다음 리그로 갑니다.`
           : isApprovalOnly
             ? `이 리그부터는 출석 ${cycle.reqSessions}회를 채우면 승급 심사가 열리고, 코치님이 직접 보고 승급합니다.`
-            : `입구에서 얼굴 인식하면 출석이 자동으로 쌓여요. 출석 ${cycle.reqSessions}회마다 자동으로 다음 레벨! (10레벨은 코치님 승인)`}
+            : `입구에서 얼굴 인식하면 출석이 자동으로 쌓여요. 출석 ${cycle.reqSessions}회마다 자동으로 다음 레벨! (10레벨은 ${
+                isTitleFlowLeague(league) ? "타이틀매치 — 지점장님께 심사 신청" : `${authorityLabel(levelupRules, league, 10)} 승인`
+              })`}
       </p>
-      <Bar label="이번 레벨 진행도" cur={cycle.progressFloor ?? cycle.sessions} req={cycle.reqSessions} unit="회" />
+      {isTitleFlow ? (
+        <button
+          onClick={() => navigate(titleMatchLink(league))}
+          className="w-full rounded-xl bg-primary py-3 text-center text-[13px] font-black text-primary-foreground active:scale-[0.98]"
+        >
+          🏆 타이틀미션 보기 · 심사 신청
+        </button>
+      ) : (
+        <Bar label="이번 레벨 진행도" cur={cycle.progressFloor ?? cycle.sessions} req={cycle.reqSessions} unit="회" />
+      )}
       {(cycle.reqMinDays ?? 0) > 0 && (
         <div className="mt-2">
           <Bar label="연한 (이 레벨에 머문 기간)" cur={cycle.elapsedDays ?? 0} req={cycle.reqMinDays ?? 0} unit="일" />
@@ -131,13 +153,13 @@ const LevelUpRequestCard = () => {
         </div>
       )}
 
-      {isRevision && (
+      {isRevision && !isTitleFlow && (
         <p className="mt-3 rounded-lg bg-status-pending/10 px-3 py-2 text-[11px] font-semibold text-status-pending">
           ✏️ 코치님이 보완을 요청했어요. 더 연습하고 출석하면 자동으로 다시 심사에 올라갑니다.
         </p>
       )}
 
-      {isPending ? (
+      {isTitleFlow ? null : isPending ? (
         <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-status-pending/10 py-3 text-sm font-bold text-status-pending">
           ⏳ 승급 심사 대기중 — 코치님 승인만 남았어요
         </div>

@@ -6,7 +6,7 @@ import DailyReportCard from "@/components/DailyReportCard";
 import MembershipRequestsInbox from "@/components/MembershipRequestsInbox";
 import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
 import StaffRosterPanel from "@/components/admin/StaffRosterPanel";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,6 +39,10 @@ const kstWeekStartIso = () => {
 };
 type SortType = "recent_submission" | "level_desc" | "pending_count";
 type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk";
+const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk"];
+/** 알림에서 바로 여는 탭 — /manager?tab=level_review (타이틀매치 심사 신청 알림, 2026-10-14) */
+const tabFromParam = (raw: string | null): MainTab | null =>
+  MAIN_TABS.find((t) => t === raw) ?? null;
 
 const BranchManagerHome = () => {
   const navigate = useNavigate();
@@ -47,7 +51,13 @@ const BranchManagerHome = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [sort, setSort] = useState<SortType>("level_desc");
-  const [mainTab, setMainTab] = useState<MainTab>("members");
+  const [params] = useSearchParams();
+  const tabParam = tabFromParam(params.get("tab"));
+  const [mainTab, setMainTab] = useState<MainTab>(() => tabParam ?? "members");
+  // 이미 이 화면에 있을 때 알림을 눌러도(주소만 바뀜) 그 탭으로
+  useEffect(() => {
+    if (tabParam) setMainTab(tabParam);
+  }, [tabParam]);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [page, setPage] = useState(1);

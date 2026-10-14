@@ -59,6 +59,7 @@ import DmHeaderButton from "@/components/dm/DmHeaderButton";
 import NotificationBellButton from "@/components/notifications/NotificationBellButton";
 import PushOptInCard from "@/components/notifications/PushOptInCard";
 import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
+import TitleMatchInvitePopup from "@/components/titlematch/TitleMatchInvitePopup";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import { getMasterLevelDefinition } from "@/data/masterTierData";
@@ -832,6 +833,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
 
       {/* 오늘 도전 — 전체 화면 (홈 어느 보기에서든) */}
       {challengeFlow}
+
+      {/* 🏆 레벨 10 회원 — "타이틀매치로 다음 리그로" 팝업 + '타이틀미션 보기' (하루 한 번 · 신청 전 회원만, 2026-10-14) */}
+      <TitleMatchInvitePopup />
 
       {/* 튜토리얼 오버레이는 App.tsx 의 글로벌 InductionCeremonyOverlay 로 이관. */}
     </AppPage>

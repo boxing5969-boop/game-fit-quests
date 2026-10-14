@@ -25,6 +25,8 @@ import {
   type LevelVideo,
 } from "@/hooks/useLevelVideos";
 import { hasPracticedToday, markPracticedToday } from "@/lib/levelPractice";
+import { isTitleFlowLeague, titleMatchLink } from "@/lib/titleMatchChallenge";
+import { useNavigate } from "react-router-dom";
 
 /** 각 리그의 타이틀매치 레벨 */
 const TITLE_LEVEL = 10;
@@ -71,6 +73,7 @@ interface Props {
 
 const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
   const { user, progress } = useAuth();
+  const navigate = useNavigate();
   const [viewLevel, setViewLevel] = useState(levelNumber);
   const [playing, setPlaying] = useState<LevelVideo | null>(null);
   // 워밍업 영상은 보기만 한다(따라했어요 없음) — 레벨 영상 플레이어와 따로 연다
@@ -249,6 +252,17 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
         <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
           레벨마다 익힌 동작이 모여 타이틀매치에서 하나로 완성돼요
         </p>
+
+        {/* 지금이 화이트 타이틀매치 — 파트너와 연습한 뒤 지점장님께 신청 (2026-10-14) */}
+        {hereLevel === TITLE_LEVEL && isTitleFlowLeague(league) && (
+          <button
+            type="button"
+            onClick={() => navigate(titleMatchLink(league))}
+            className="mt-3 flex h-11 w-full items-center justify-center rounded-2xl bg-reward/15 text-[13px] font-black text-reward transition-transform active:scale-[0.98]"
+          >
+            🏆 타이틀미션 보기 · 지점장님께 심사 신청 →
+          </button>
+        )}
 
         {/* 1~10 여정 — 지나온 레벨·지금 레벨은 눌러서 그 레벨 동작을 본다 */}
         <div className="mt-3 grid grid-cols-10 gap-1" aria-label={`${leagueLabel} 리그 레벨 여정`}>

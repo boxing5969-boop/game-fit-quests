@@ -1,6 +1,9 @@
 // Coach Level Review Inbox — 레벨업 심사 인박스
 // 실데이터 연동: level_status(pending/revision_requested) 큐 + set_level_status RPC.
 // 이전 목데이터 데모를 대체 — UI 구조·스타일은 유지.
+// 2026-10-14 대표님: 화이트 타이틀매치는 회원이 앱에서 신청 → 지점장이 영상으로 심사(도전 3번).
+//   그 카드는 심사 항목 체크·승인 버튼 대신 TitleMatchJudgePanel(영상 + 합격·불합격)을 쓴다.
+//   신청한 회원이 맨 위로 오고, '🏆 타이틀 신청' 칸으로 모아 볼 수 있다.
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, AlertTriangle, Clock } from "lucide-react";
@@ -8,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { RANK_LABELS } from "@/data/sharedConstants";
 import { parseVideoTitle } from "@/hooks/useLevelVideos";
+import { isTitleFlowLeague, retryAtFrom, DEFAULT_MAX_ATTEMPTS } from "@/lib/titleMatchChallenge";
+import TitleMatchJudgePanel from "@/components/titlematch/TitleMatchJudgePanel";
 import { toast } from "sonner";
 
 // Quick feedback templates — 승인/보완 시 approval_note 로 전송됨
@@ -35,9 +40,19 @@ interface ReviewMember {
   bossesCleared: number;
   requestedAt: string;
   note: string | null;
+  /** 타이틀매치 신청 흐름(화이트 레벨 10) — 신청·도전 수·7일 잠금 */
+  title?: TitleQueueInfo;
 }
 
-type FilterKey = "all" | "review_ready" | "remediation" | "deadline";
+interface TitleQueueInfo {
+  requested: boolean;
+  requestedAt: string | null;
+  attemptsUsed: number;
+  /** 3번 마감 뒤 다시 신청할 수 있는 시각 (지났으면 null) */
+  retryAt: string | null;
+}
+
+type FilterKey = "all" | "title_requested" | "review_ready" | "remediation" | "deadline";
 
 /** 타이틀매치 심사 항목 — 서버(get_level_review_checklist)가 정본 */
 interface ChecklistItem {
@@ -133,6 +148,48 @@ const CoachLevelReviewInbox = () => {
         attDays.get(a.user_id)!.add(day);
       }
 
+      // 🏆 타이틀매치 신청 흐름 회원(화이트 레벨 10) — 열린 신청 · 도전 수 · 최근 3번 마감 (RLS: 지점장은 자기 지점만)
+      const titleIds = [...new Set(rows.filter((r) => r.level_number === 10 && isTitleFlowLeague(r.rank_name)).map((r) => r.user_id))];
+      const titleMap = new Map<string, TitleQueueInfo>();
+      if (titleIds.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: chRows, error: chErr } = await (supabase as any)
+          .from("title_match_challenges")
+          .select("id, user_id, rank_name, status, requested_at, closed_at")
+          .in("user_id", titleIds)
+          .in("status", ["requested", "failed"])
+          .order("requested_at", { ascending: false })
+          .limit(1000);
+        const chs = (chRows || []) as Array<{
+          id: string; user_id: string; rank_name: string; status: string; requested_at: string; closed_at: string | null;
+        }>;
+        const openIds = chs.filter((c) => c.status === "requested").map((c) => c.id);
+        const usedBy = new Map<string, number>();
+        if (openIds.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: atRows } = await (supabase as any)
+            .from("title_match_attempts")
+            .select("challenge_id")
+            .in("challenge_id", openIds);
+          for (const a of (atRows || []) as Array<{ challenge_id: string }>) {
+            usedBy.set(a.challenge_id, (usedBy.get(a.challenge_id) ?? 0) + 1);
+          }
+        }
+        // 못 읽었으면 신청 정보를 비워 둔다 — 카드가 '신청 안 함'으로 잘못 보이지 않게 (보류 버튼도 숨겨진다)
+        for (const uid of chErr ? [] : titleIds) {
+          const mine = chs.filter((c) => c.user_id === uid && isTitleFlowLeague(c.rank_name));
+          const open = mine.find((c) => c.status === "requested");
+          const lastFailed = mine.find((c) => c.status === "failed");
+          const retry = lastFailed ? retryAtFrom(lastFailed.closed_at) : null;
+          titleMap.set(uid, {
+            requested: !!open,
+            requestedAt: open?.requested_at ?? null,
+            attemptsUsed: open ? usedBy.get(open.id) ?? 0 : 0,
+            retryAt: !open && retry && Date.parse(retry) > Date.now() ? retry : null,
+          });
+        }
+      }
+
       return rows
         .filter((r) => {
           const p = pMap.get(r.user_id);
@@ -154,7 +211,16 @@ const CoachLevelReviewInbox = () => {
             bossesCleared: g?.bosses_cleared ?? 0,
             requestedAt: r.updated_at,
             note: r.approval_note,
+            title: r.level_number === 10 ? titleMap.get(r.user_id) : undefined,
           };
+        })
+        // 타이틀매치를 신청한 회원이 맨 위 (신청 순) — 나머지는 기존 순서(오래 기다린 순) 그대로
+        .sort((a, b) => {
+          const ar = a.title?.requested ? 0 : 1;
+          const br = b.title?.requested ? 0 : 1;
+          if (ar !== br) return ar - br;
+          if (ar === 0) return (a.title?.requestedAt ?? "").localeCompare(b.title?.requestedAt ?? "");
+          return 0;
         });
     },
   });
@@ -196,14 +262,17 @@ const CoachLevelReviewInbox = () => {
     onError: (e: any) => toast.error(e?.message || "처리 실패 — 다시 시도해주세요"),
   });
 
+  const titleRequestedCount = queue.filter((m) => m.title?.requested).length;
   const FILTERS: { key: FilterKey; label: string }[] = [
     { key: "all", label: "전체" },
+    ...(titleRequestedCount > 0 ? [{ key: "title_requested" as const, label: `🏆 타이틀 신청 ${titleRequestedCount}` }] : []),
     { key: "review_ready", label: "심사 가능" },
     { key: "remediation", label: "보완중" },
     { key: "deadline", label: "마감 임박" },
   ];
 
   const filtered = queue.filter((m) => {
+    if (filter === "title_requested") return !!m.title?.requested;
     if (filter === "review_ready") return m.status === "pending";
     if (filter === "remediation") return m.status === "revision_requested";
     if (filter === "deadline") return m.status === "revision_requested" && daysLeft(m) <= 2;
@@ -296,10 +365,12 @@ const ReviewCard = ({ member, busy, onDecide }: {
   const Icon = STATUS_ICON[member.status] || Clock;
   const color = STATUS_COLOR[member.status] || "text-muted-foreground bg-muted";
   const isTitleMatch = member.level === 10;
+  // 화이트 타이틀매치 = 회원 신청 · 지점장 영상 심사 (항목 체크·승인 버튼 대신 영상 칸)
+  const isTitleFlow = isTitleMatch && isTitleFlowLeague(member.rank);
 
   const { data: cl } = useQuery({
     queryKey: ["level-review-checklist", member.userId],
-    enabled: isTitleMatch,
+    enabled: isTitleMatch && !isTitleFlow,
     staleTime: 60_000,
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -342,26 +413,40 @@ const ReviewCard = ({ member, busy, onDecide }: {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-      <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-foreground">{member.nickname}</span>
-          <span className="text-[10px] text-muted-foreground">
+      {/* 배지가 늘어도 좁은 폰에서 닉네임이 쪼개지지 않게 — 줄을 넘겨 쌓는다 */}
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="whitespace-nowrap text-sm font-bold text-foreground">{member.nickname}</span>
+          <span className="whitespace-nowrap text-[10px] text-muted-foreground">
             {RANK_LABELS[member.rank] || member.rank} Lv.{member.level}
           </span>
           {isTitleMatch && (
-            <span className="rounded-full bg-reward/15 px-2 py-0.5 text-[9px] font-bold text-reward-foreground">
+            <span className="whitespace-nowrap rounded-full bg-reward/15 px-2 py-0.5 text-[9px] font-bold text-reward-foreground">
               타이틀매치
             </span>
           )}
           {isTitleMatch && (cl?.fastTrackGates ?? 0) > 0 && (
-            <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[9px] font-bold text-primary">
+            <span className="whitespace-nowrap rounded-full bg-primary/15 px-2 py-0.5 text-[9px] font-bold text-primary">
               ⚡ 패스트 트랙
             </span>
           )}
+          {isTitleFlow && member.title?.requested && (
+            <span className="whitespace-nowrap rounded-full bg-primary/15 px-2 py-0.5 text-[9px] font-bold text-primary">
+              🙋 신청 · 도전 {member.title.attemptsUsed}/{DEFAULT_MAX_ATTEMPTS}
+            </span>
+          )}
+          {isTitleFlow && !member.title?.requested && member.title?.retryAt && (
+            <span className="whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-[9px] font-bold text-muted-foreground">
+              🔒 재도전 대기
+            </span>
+          )}
         </div>
-        <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${color}`}>
-          <Icon className="h-3 w-3" /> {STATUS_LABEL[member.status]}
-        </span>
+        {/* 화이트 타이틀매치 카드는 위 배지·아래 영상 칸이 상태를 말한다 ('심사 가능'은 자동 신청 상태라 헷갈린다) */}
+        {!isTitleFlow && (
+          <span className={`flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold ${color}`}>
+            <Icon className="h-3 w-3" /> {STATUS_LABEL[member.status]}
+          </span>
+        )}
       </div>
 
       {/* Metrics — 서버 실측치 */}
@@ -372,8 +457,11 @@ const ReviewCard = ({ member, busy, onDecide }: {
         <MiniMetric label="보스" value={`${member.bossesCleared}회`} />
       </div>
 
+      {/* 🏆 화이트 타이틀매치 — 영상 심사 (도전 3번) */}
+      {isTitleFlow && <TitleMatchJudgePanel memberId={member.userId} nickname={member.nickname} rank={member.rank} />}
+
       {/* 타이틀매치 심사 항목 */}
-      {isTitleMatch && cl && cl.total > 0 && (
+      {isTitleMatch && !isTitleFlow && cl && cl.total > 0 && (
         <div className="mb-3 rounded-xl border border-border bg-muted/20 p-3">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-[11px] font-bold text-foreground">
@@ -438,37 +526,44 @@ const ReviewCard = ({ member, busy, onDecide }: {
           심사 기준은 다른 회원과 같습니다.
         </p>
       )}
-      {blockReason && (
+      {blockReason && !isTitleFlow && (
         <p className="mb-2 rounded-lg bg-muted/40 px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground">
           {blockReason}
         </p>
       )}
 
-      {/* Quick actions */}
+      {/* Quick actions — 화이트 타이틀매치는 위 영상 칸이 합격(=승급)·불합격을 맡는다. 보류만 남긴다.
+          회원이 신청해 둔 카드(또는 신청 여부를 못 읽은 카드)는 보류도 숨긴다 (빼 두면 신청이 열린 채로 심사함에서 사라진다) */}
+      {!(isTitleFlow && (member.title?.requested || !member.title)) && (
       <div className="flex gap-2">
-        <button
-          onClick={() => onDecide("approved")}
-          disabled={busy || !canApprove}
-          className="flex-1 rounded-xl bg-status-complete py-2.5 text-xs font-bold text-white transition-all active:scale-95 disabled:opacity-40"
-        >
-          ✅ 레벨업 승인
-        </button>
-        <button
-          onClick={() => onDecide("revision_requested")}
-          disabled={busy}
-          className="flex-1 rounded-xl bg-status-pending/20 py-2.5 text-xs font-bold text-status-pending transition-all active:scale-95 disabled:opacity-50"
-        >
-          🔄 보완 요청
-        </button>
+        {!isTitleFlow && (
+          <button
+            onClick={() => onDecide("approved")}
+            disabled={busy || !canApprove}
+            className="flex-1 rounded-xl bg-status-complete py-2.5 text-xs font-bold text-white transition-all active:scale-95 disabled:opacity-40"
+          >
+            ✅ 레벨업 승인
+          </button>
+        )}
+        {!isTitleFlow && (
+          <button
+            onClick={() => onDecide("revision_requested")}
+            disabled={busy}
+            className="flex-1 rounded-xl bg-status-pending/20 py-2.5 text-xs font-bold text-status-pending transition-all active:scale-95 disabled:opacity-50"
+          >
+            🔄 보완 요청
+          </button>
+        )}
         <button
           onClick={() => onDecide("in_progress")}
           disabled={busy}
           title="심사 보류 — 진행중으로 되돌림"
-          className="rounded-xl bg-muted px-3 py-2.5 text-xs font-bold text-muted-foreground transition-all active:scale-95 disabled:opacity-50"
+          className={`rounded-xl bg-muted px-3 py-2.5 text-xs font-bold text-muted-foreground transition-all active:scale-95 disabled:opacity-50 ${isTitleFlow ? "flex-1" : ""}`}
         >
-          ⏸️
+          {isTitleFlow ? "⏸️ 심사함에서 잠시 빼기" : "⏸️"}
         </button>
       </div>
+      )}
     </div>
   );
 };

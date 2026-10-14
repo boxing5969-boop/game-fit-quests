@@ -8,6 +8,11 @@ const DIRECT: [string, string][] = [
   ["출석 몇 번 해야 레벨 올라요?", "lv-requirements"],
   ["레벨업 하려면 어떻게 해야돼", "lv-requirements"],
   ["타이틀매치가 뭐야", "lv-title-match"],
+  // 화이트 타이틀매치 신청 흐름 (2026-10-14)
+  ["타이틀매치 신청 어떻게 해요", "lv-title-apply"],
+  ["지점장님께 심사 신청하는 법", "lv-title-apply"],
+  ["타이틀미션이 뭐예요", "lv-title-apply"],
+  ["타이틀매치 몇 번 도전할 수 있어요", "lv-title-apply"],
   ["직행권이 뭐예요", "lv-fast-track"],
   ["출석은 어떻게 해요", "att-how"],
   ["QR 출석 어떻게 찍어요", "att-qr"],
