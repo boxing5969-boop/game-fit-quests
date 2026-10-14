@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, FlaskConical, Map, Dumbbell, ShieldCheck, Play, ChevronDown, ChevronRight, Lock, CheckCircle2, HelpCircle, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +10,7 @@ import { SAFETY_BLOCKS } from "@/data/safetyCheckData";
 import { GUIDE_CARDS } from "@/data/whiteLevel1Data";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTutorialState } from "@/hooks/useTutorialState";
-import { WHO as AUTHORITY_WHO } from "@/lib/levelAuthority";
+import { WHO as AUTHORITY_WHO, withBranchAuthority } from "@/lib/levelAuthority";
 
 type GuideTab = "program" | "levelup" | "science" | "valuemap" | "exercise" | "safety" | "whitefaq";
 
@@ -232,12 +232,16 @@ interface MyCycle {
 const WHO: Record<LevelUpRule["titleAuthority"], string> = AUTHORITY_WHO;
 
 const LevelUpTab = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const branch = profile?.branch_name ?? null;
+  // 화이트 레벨 10 승인 주체 — 지점 기준 (시범 지점이 아니면 담당 코치님, 2026-10-14)
+  const selectRules = useCallback((rows: LevelUpRule[]) => withBranchAuthority(rows, branch) ?? rows, [branch]);
 
   const { data: rules = [] } = useQuery({
     queryKey: ["levelup-rules"],
     staleTime: 10 * 60_000,
+    select: selectRules,
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase.rpc as any)("get_levelup_rules", {});

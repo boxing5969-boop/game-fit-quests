@@ -18,7 +18,7 @@ import { isStaffProfile } from "@/lib/staffDisplay";
 import {
   TITLE_MISSION_STEPS,
   invitePopupKey,
-  isTitleFlowLeague,
+  isTitleFlowFor,
   leagueKo,
   nextLeagueKo,
   reviewerLabel,
@@ -71,7 +71,8 @@ const TitleMatchInvitePopup = () => {
     !isManagerRole(role) &&
     !isStaffProfile(profile) &&
     (progress?.current_level ?? 0) === 10 &&
-    isTitleFlowLeague(rank);
+    // 시범 지점(선릉역점)부터 — 서버도 다른 지점은 flowEnabled=false 로 답한다
+    isTitleFlowFor(rank, profile?.branch_name);
 
   const { data: state } = useTitleMatchState(null, eligible);
   const key = user?.id ? invitePopupKey(user.id) : "";

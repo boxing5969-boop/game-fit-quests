@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useLevelVideos, youtubeThumb, parseVideoTitle } from "@/hooks/useLevelVideos";
-import { isTitleFlowLeague, titleMatchLink } from "@/lib/titleMatchChallenge";
+import { isTitleFlowFor, titleMatchLink } from "@/lib/titleMatchChallenge";
 import { useLevelupRules } from "@/hooks/useLevelupRules";
 import { authorityLabel } from "@/lib/levelAuthority";
 
@@ -48,7 +48,7 @@ const Bar = ({ label, cur, req, unit }: { label: string; cur: number; req: numbe
 };
 
 const LevelUpRequestCard = () => {
-  const { user, progress } = useAuth();
+  const { user, progress, profile } = useAuth();
   const navigate = useNavigate();
 
   const { data: cycle } = useQuery({
@@ -98,7 +98,9 @@ const LevelUpRequestCard = () => {
   const isRevision = statusNow === "revision_requested";
   const isBossLevel = (progress?.current_level ?? 1) === 10;
   // 화이트 타이틀매치 = 회원 신청 · 지점장 영상 심사 — 출석 막대·'승인 대기' 대신 타이틀미션으로 안내
-  const isTitleFlow = isBossLevel && isTitleFlowLeague(league);
+  // 신청 흐름은 시범 지점(선릉역점)부터 — 다른 지점은 어제처럼 코치님 승인 (2026-10-14)
+  const titleFlowHere = isTitleFlowFor(league, profile?.branch_name);
+  const isTitleFlow = isBossLevel && titleFlowHere;
   // 레드·블랙은 출석을 채워도 코치 승인이 있어야 올라간다
   const isApprovalOnly = cycle.rank === "red" || cycle.rank === "black";
   const gates = cycle.fastTrackGates ?? 0;
@@ -118,7 +120,7 @@ const LevelUpRequestCard = () => {
           : isApprovalOnly
             ? `이 리그부터는 출석 ${cycle.reqSessions}회를 채우면 승급 심사가 열리고, 코치님이 직접 보고 승급합니다.`
             : `입구에서 얼굴 인식하면 출석이 자동으로 쌓여요. 출석 ${cycle.reqSessions}회마다 자동으로 다음 레벨! (10레벨은 ${
-                isTitleFlowLeague(league) ? "타이틀매치 — 지점장님께 심사 신청" : `${authorityLabel(levelupRules, league, 10)} 승인`
+                titleFlowHere ? "타이틀매치 — 지점장님께 심사 신청" : `${authorityLabel(levelupRules, league, 10)} 승인`
               })`}
       </p>
       {isTitleFlow ? (

@@ -13,6 +13,8 @@
  * 여기는 화면이 쓰는 순수 계산과 안내 문구만 둔다 (테스트: titleMatchChallenge.test.ts).
  */
 
+import { isPilotBranch } from "./pilotBranches";
+
 export type ChallengeStatus = "requested" | "passed" | "failed" | "cancelled";
 export type GateAuthority = "coach" | "manager" | "owner";
 
@@ -58,6 +60,13 @@ export const DEFAULT_RETRY_DAYS = 7;
 export const TITLE_FLOW_LEAGUES: readonly string[] = ["white"];
 export const isTitleFlowLeague = (rank: string | null | undefined): boolean =>
   !!rank && TITLE_FLOW_LEAGUES.includes(rank);
+
+/**
+ * 이 회원이 신청 흐름을 쓰는가 — 리그 + 시범 지점 (2026-10-14: 선릉역점부터, DB title_match_flow_enabled_for 와 같은 규칙).
+ * 다른 지점의 화이트 레벨 10은 어제처럼 심사 항목 확인 → 담당 코치님 승인.
+ */
+export const isTitleFlowFor = (rank: string | null | undefined, branch: string | null | undefined): boolean =>
+  isTitleFlowLeague(rank) && isPilotBranch(branch);
 
 /** 리그 → 타이틀매치 화면 칸 (?lv=) */
 export const titleStageLevel = (rank: string | null | undefined): number => {

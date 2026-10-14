@@ -20,6 +20,7 @@ import LiveLevelUpInterrupt, {
 import LiveBoardTestPanel from "@/components/liveBoard/LiveBoardTestPanel";
 import LiveBoardQrCard from "@/components/liveBoard/LiveBoardQrCard";
 import LaunchEventBoard from "@/components/liveBoard/LaunchEventBoard";
+import { isPilotBranch } from "@/lib/pilotBranches";
 import { STAFF_CHAMPION_LEVEL, honorTitle } from "@/lib/staffDisplay";
 import {
   generateMockMembers,
@@ -194,6 +195,10 @@ const LiveBoardPage = () => {
   const [connected, setConnected] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // 회원 사진을 새 자리(입장 환영 화면 · 얼굴/QR 출석 카드)에도 쓰는 TV — 시범 지점(선릉역점)부터 (2026-10-14 대표님:
+  // "잠실점 역삼점은 일단 빼줘"). 다른 지점 TV 는 어제처럼 캐릭터·이니셜 (앱 운동 카드·레벨업 연출의 사진은 원래대로).
+  const boardPhotos = isPilotBranch(branchName);
+
   // Avatar cache with state to trigger re-renders
   // (얼굴·QR 출석 회원 카드도 이 사진을 쓰므로 checkinMembers 보다 먼저 선언한다 — 2026-10-14)
   const avatarCacheRef = useRef<Record<string, string | null>>({});
@@ -230,10 +235,10 @@ const LiveBoardPage = () => {
         startedAt: new Date(v.last_checkin_at).getTime(),
         // 회원이 올린 프로필 사진 — TV 가 읽어 둔 값(getAvatarUrl → avatarMap). 입실하면 새로 읽는다.
         // 예전엔 null 고정이라 얼굴·QR 출석 회원은 사진을 올려도 '활동 중' 칸에 글자만 나왔다 (2026-10-14 대표님)
-        avatar_url: avatarMap[v.user_id] ?? null,
+        avatar_url: boardPhotos ? avatarMap[v.user_id] ?? null : null,
         partsJson: null,
       }));
-  }, [dailyVisits, activeMembers, currentTime, avatarMap]);
+  }, [dailyVisits, activeMembers, currentTime, avatarMap, boardPhotos]);
 
   /** 지금 운동 중인 회원 id — 아래 이름 티커에서 밝게 구분하는 데 쓴다 */
   const activeUserIds = useMemo(
@@ -606,7 +611,8 @@ const LiveBoardPage = () => {
   const triggerPopup = useCallback(async (event: CheckinEvent) => {
     const seq = ++popupSeqRef.current;
     const [avatar, partsJson] = await Promise.all([
-      getAvatarUrl(event.user_id, true),
+      // 시범 지점 TV 만 사진을 새로 읽어 환영 화면에 쓴다 — 다른 지점은 어제처럼 캐릭터
+      boardPhotos ? getAvatarUrl(event.user_id, true) : Promise.resolve(null),
       // 회원이 설정한 캐릭터 fetch (RLS 거부 시 null fallback)
       (async () => {
         try {
@@ -635,7 +641,7 @@ const LiveBoardPage = () => {
     setLatestPopup(event);
     setShowPopup(true);
     popupTimeoutRef.current = setTimeout(() => setShowPopup(false), 7000);
-  }, [getAvatarUrl]);
+  }, [getAvatarUrl, boardPhotos]);
 
   /**
    * member_progress 의 current_level 이 증가할 때 인터럽트 발동.

@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { RANK_LABELS } from "@/data/sharedConstants";
 import { parseVideoTitle } from "@/hooks/useLevelVideos";
-import { isTitleFlowLeague, retryAtFrom, DEFAULT_MAX_ATTEMPTS } from "@/lib/titleMatchChallenge";
+import { isTitleFlowFor, isTitleFlowLeague, retryAtFrom, DEFAULT_MAX_ATTEMPTS } from "@/lib/titleMatchChallenge";
 import TitleMatchJudgePanel from "@/components/titlematch/TitleMatchJudgePanel";
 import { toast } from "sonner";
 
@@ -40,6 +40,8 @@ interface ReviewMember {
   bossesCleared: number;
   requestedAt: string;
   note: string | null;
+  /** 회원 지점 — 타이틀매치 신청 흐름은 시범 지점(선릉역점)부터 (2026-10-14) */
+  branch: string | null;
   /** 타이틀매치 신청 흐름(화이트 레벨 10) — 신청·도전 수·7일 잠금 */
   title?: TitleQueueInfo;
 }
@@ -149,7 +151,9 @@ const CoachLevelReviewInbox = () => {
       }
 
       // 🏆 타이틀매치 신청 흐름 회원(화이트 레벨 10) — 열린 신청 · 도전 수 · 최근 3번 마감 (RLS: 지점장은 자기 지점만)
-      const titleIds = [...new Set(rows.filter((r) => r.level_number === 10 && isTitleFlowLeague(r.rank_name)).map((r) => r.user_id))];
+      const titleIds = [...new Set(rows
+        .filter((r) => r.level_number === 10 && isTitleFlowFor(r.rank_name, pMap.get(r.user_id)?.branch_name))
+        .map((r) => r.user_id))];
       const titleMap = new Map<string, TitleQueueInfo>();
       if (titleIds.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -211,6 +215,7 @@ const CoachLevelReviewInbox = () => {
             bossesCleared: g?.bosses_cleared ?? 0,
             requestedAt: r.updated_at,
             note: r.approval_note,
+            branch: p.branch_name ?? null,
             title: r.level_number === 10 ? titleMap.get(r.user_id) : undefined,
           };
         })
@@ -366,7 +371,8 @@ const ReviewCard = ({ member, busy, onDecide }: {
   const color = STATUS_COLOR[member.status] || "text-muted-foreground bg-muted";
   const isTitleMatch = member.level === 10;
   // 화이트 타이틀매치 = 회원 신청 · 지점장 영상 심사 (항목 체크·승인 버튼 대신 영상 칸)
-  const isTitleFlow = isTitleMatch && isTitleFlowLeague(member.rank);
+  // 시범 지점(선릉역점) 회원만 — 다른 지점 화이트 레벨 10은 어제처럼 심사 항목 확인 → 승인 (서버 권한도 담당 코치님)
+  const isTitleFlow = isTitleMatch && isTitleFlowFor(member.rank, member.branch);
 
   const { data: cl } = useQuery({
     queryKey: ["level-review-checklist", member.userId],

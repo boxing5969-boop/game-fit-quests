@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { compressImage } from "@/lib/imageCompression";
 import { claimAvatarReward, markAvatarRewardDone, useInvalidateAvatarReward } from "@/hooks/useAvatarReward";
-import { rewardText } from "@/lib/avatarReward";
+import { claimSettles, rewardText } from "@/lib/avatarReward";
 
 export const AVATAR_MAX_BYTES = 10 * 1024 * 1024;
 
@@ -67,7 +67,7 @@ export function useAvatarUpload() {
         } else {
           toast.success("프로필 사진이 업데이트되었습니다! 🥊");
         }
-        if (reward && reward.reason !== "no_photo") markAvatarRewardDone(user.id);
+        if (claimSettles(reward)) markAvatarRewardDone(user.id);
         invalidateReward();
         return publicUrl;
       } catch (err) {

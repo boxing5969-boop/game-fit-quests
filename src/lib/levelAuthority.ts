@@ -6,6 +6,9 @@
  * 예전엔 홈 힌트·가이드가 "코치 승인" 으로 통일해 블루(지점장)·레드·블랙(관장) 과 어긋났다.
  */
 
+import { isPilotBranch } from "./pilotBranches";
+import { isTitleFlowLeague } from "./titleMatchChallenge";
+
 export type GateAuthority = "coach" | "manager" | "owner";
 
 export const WHO: Record<GateAuthority, string> = {
@@ -21,6 +24,18 @@ export interface RuleAuthority {
 }
 
 export const whoLabel = (a?: string | null): string => WHO[(a ?? "coach") as GateAuthority] ?? WHO.coach;
+
+/**
+ * 지점 기준 규칙 — 타이틀매치 신청 흐름이 아직 안 열린 지점(시범 지점이 아닌 곳)의 화이트 레벨 10은 담당 코치님.
+ * DB level_gate_authority_for 와 같은 규칙 (2026-10-14 대표님: 선릉역점부터). 원본 배열은 건드리지 않는다.
+ */
+export function withBranchAuthority<T extends RuleAuthority>(
+  rules: T[] | undefined,
+  branch: string | null | undefined,
+): T[] | undefined {
+  if (!rules || isPilotBranch(branch)) return rules;
+  return rules.map((r) => (isTitleFlowLeague(r.rank) ? { ...r, titleAuthority: "coach" } : r));
+}
 
 /** 이 리그·레벨에서 승급을 승인하는 사람 (10레벨 = 타이틀매치 주체) */
 export function authorityLabel(rules: RuleAuthority[] | undefined, rank: string | undefined, level: number | undefined): string {

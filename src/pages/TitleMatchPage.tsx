@@ -20,7 +20,7 @@ import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { parseVideoTitle, useWatchedVideos, youtubeId, youtubeThumb } from "@/hooks/useLevelVideos";
 import { useTitleMatchVideos } from "@/hooks/useTitleMatchVideos";
 import { formatRankShort } from "@/lib/rankLabels";
-import { isTitleFlowLeague } from "@/lib/titleMatchChallenge";
+import { isTitleFlowFor } from "@/lib/titleMatchChallenge";
 import TitleMatchChallengeCard from "@/components/titlematch/TitleMatchChallengeCard";
 import {
   TITLE_STAGES,
@@ -193,7 +193,7 @@ const VideoCard = ({
 const TitleMatchPage = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { progress, role } = useAuth();
+  const { progress, role, profile } = useAuth();
   const { data: videos, isLoading, isError, refetch, isRefetching } = useTitleMatchVideos();
   const { watched, toggle } = useWatchedVideos();
   const [playing, setPlaying] = useState<TitleVideo | null>(null);
@@ -304,8 +304,8 @@ const TitleMatchPage = () => {
           </div>
         </div>
 
-        {/* 🏆 타이틀미션 — 도전 방법·심사 기준·신청 (내 리그 칸 · 신청 흐름이 열린 리그만) */}
-        {state === "mine" && spot && isTitleFlowLeague(stage.league) && (
+        {/* 🏆 타이틀미션 — 도전 방법·심사 기준·신청 (내 리그 칸 · 신청 흐름이 열린 리그 · 시범 지점 회원만) */}
+        {state === "mine" && spot && isTitleFlowFor(stage.league, profile?.branch_name) && (
           <TitleMatchChallengeCard league={stage.league} level={spot.level} />
         )}
 

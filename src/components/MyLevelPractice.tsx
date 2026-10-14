@@ -25,7 +25,7 @@ import {
   type LevelVideo,
 } from "@/hooks/useLevelVideos";
 import { hasPracticedToday, markPracticedToday } from "@/lib/levelPractice";
-import { isTitleFlowLeague, titleMatchLink } from "@/lib/titleMatchChallenge";
+import { isTitleFlowFor, titleMatchLink } from "@/lib/titleMatchChallenge";
 import { useNavigate } from "react-router-dom";
 
 /** 각 리그의 타이틀매치 레벨 */
@@ -72,7 +72,7 @@ interface Props {
 }
 
 const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
-  const { user, progress } = useAuth();
+  const { user, progress, profile } = useAuth();
   const navigate = useNavigate();
   const [viewLevel, setViewLevel] = useState(levelNumber);
   const [playing, setPlaying] = useState<LevelVideo | null>(null);
@@ -254,7 +254,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
         </p>
 
         {/* 지금이 화이트 타이틀매치 — 파트너와 연습한 뒤 지점장님께 신청 (2026-10-14) */}
-        {hereLevel === TITLE_LEVEL && isTitleFlowLeague(league) && (
+        {hereLevel === TITLE_LEVEL && isTitleFlowFor(league, profile?.branch_name) && (
           <button
             type="button"
             onClick={() => navigate(titleMatchLink(league))}

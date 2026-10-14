@@ -6,6 +6,8 @@
  *   · 이 기능 전에 사진을 올려 둔 회원은 홈을 열 때 한 번 받는다 (useAvatarRewardAutoClaim)
  *   · 받았거나 대상이 아니면 이 기기에 적어 두고 다시 묻지 않는다
  * 지도진·관리 계정은 묻지 않는다 (서버도 0 을 준다). 쿼리키는 다른 화면 캐시와 겹치지 않게 153photo: 로 시작한다.
+ * 시범 지점(선릉역점)부터 연다 — 다른 지점 회원은 서버가 open=false · 금액 0 으로 답하고, '끝남'으로 기억하지 않는다
+ * (지점이 열리면 사진이 있는 회원은 홈을 열 때 자동으로 받는다).
  */
 import { useCallback, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { isStaffProfile } from "@/lib/staffDisplay";
 import {
+  claimSettles,
   parseAvatarRewardClaim,
   parseAvatarRewardState,
   rewardDoneKey,
@@ -106,7 +109,7 @@ export function useAvatarRewardAutoClaim() {
           description: "캐릭터 꾸미기에서 쓸 수 있어요",
         });
       }
-      if (r && r.reason !== "no_photo") markAvatarRewardDone(uid);
+      if (claimSettles(r)) markAvatarRewardDone(uid);
       invalidate();
     })();
   }, [state, hasAvatar, uid, invalidate]);

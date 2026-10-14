@@ -8,6 +8,7 @@
  *
  * localStorage 저장 (디바이스마다 다름) — 그래서 이 폰의 홈 카드에만 적용된다.
  * 체육관 TV(라이브보드)는 회원 폰 설정을 알 수 없어 늘 사진 > 캐릭터 > 이니셜 순서다 (2026-10-14 문구 정정).
+ * 입장 환영·얼굴/QR 출석 카드의 사진은 시범 지점(선릉역점)부터 (lib/pilotBranches).
  */
 
 import { Camera, User, Sparkles } from "lucide-react";
@@ -50,7 +51,7 @@ const DisplayModeToggle = () => {
           );
         })}
       </div>
-      <p className="mt-2 text-[10px] text-muted-foreground">체육관 라이브보드에는 올린 프로필 사진이 먼저 보여요</p>
+      <p className="mt-2 text-[10px] text-muted-foreground">선릉역점 라이브보드에는 올린 프로필 사진이 먼저 보여요 (다른 지점은 순서대로)</p>
     </div>
   );
 };

@@ -8,7 +8,7 @@
  * 구성: 내 페이스(주인공 숫자) → 총 필요 출석 → 주당 출석별 표 → 리그별 구간 → 규칙 한눈에.
  */
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Timer, Flag } from "lucide-react";
@@ -16,7 +16,7 @@ import { ArrowLeft, Clock, Timer, Flag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { RANK_LABELS, RANK_ICONS } from "@/data/sharedConstants";
-import { whoLabel } from "@/lib/levelAuthority";
+import { whoLabel, withBranchAuthority } from "@/lib/levelAuthority";
 import { useLevelCycleProgress } from "@/hooks/useLevelCycleProgress";
 import {
   daysToLevel40,
@@ -36,11 +36,15 @@ const TABLE_RATES = [1, 2, 3, 4, 5];
 
 const GuideJourneyPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const branch = profile?.branch_name ?? null;
+  // 화이트 레벨 10 승인 주체 — 지점 기준 (시범 지점이 아니면 담당 코치님, 2026-10-14)
+  const selectRules = useCallback((rows: LeagueRule[]) => withBranchAuthority(rows, branch) ?? rows, [branch]);
 
   const { data: rules = [] } = useQuery({
     queryKey: ["levelup-rules"],
     staleTime: 10 * 60_000,
+    select: selectRules,
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase.rpc as any)("get_levelup_rules", {});

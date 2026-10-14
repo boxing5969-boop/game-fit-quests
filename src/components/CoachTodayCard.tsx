@@ -14,7 +14,7 @@ import { OverlayMedia, type OverlayVariant } from "@/components/common/VideoOver
 import { overlayVariants } from "@/lib/missionVideos";
 import { RANK_LABELS } from "@/data/sharedConstants";
 import { hasPracticedToday } from "@/lib/levelPractice";
-import { isTitleFlowLeague, titleMatchLink } from "@/lib/titleMatchChallenge";
+import { isTitleFlowFor, titleMatchLink } from "@/lib/titleMatchChallenge";
 import { useNavigate } from "react-router-dom";
 
 interface Cycle {
@@ -53,7 +53,7 @@ const safeGet = (k: string) => { try { return localStorage.getItem(k); } catch {
 const safeSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* 프라이빗 모드 등 */ } };
 
 const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpenDetail, onOpenVideos, extra }: Props) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [playing, setPlaying] = useState<{ id: string; url: string; title: string; variants: OverlayVariant[] } | null>(null);
   const [collapsed, setCollapsed] = useState(() => safeGet(COURSE_KEY) === "1");
   const { data: videos = [], isFetched: videosFetched } = useLevelVideos(league, levelNumber);
@@ -133,7 +133,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
   const isPending = reviewStatus === "pending";
   const canLevelUp = !!cycle?.meets;
   // 화이트 타이틀매치(레벨 10) — 자동 '심사 대기'가 아니라 회원이 파트너와 연습한 뒤 지점장님께 신청한다 (2026-10-14)
-  const isTitleFlow = levelNumber >= 10 && isTitleFlowLeague(league);
+  // 신청 흐름은 시범 지점(선릉역점)부터 — 다른 지점은 어제처럼 '승인 대기' (2026-10-14)
+  const isTitleFlow = levelNumber >= 10 && isTitleFlowFor(league, profile?.branch_name);
   const navigate = useNavigate();
 
   // 브로제이 도착 시각 (오후 7:12 형태)
