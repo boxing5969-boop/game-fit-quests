@@ -3,4 +3,10 @@
 /rankup   /rankup/index.html   200
 /rankup/  /rankup/index.html   200
 
+# 개인정보처리방침 · 계정 삭제 요청 안내 (Google Play 등록 필수 공개 URL, 정적 HTML)
+/privacy          /privacy/index.html          200
+/privacy/         /privacy/index.html          200
+/account-delete   /account-delete/index.html   200
+/account-delete/  /account-delete/index.html   200
+
 /*  /index.html  200
