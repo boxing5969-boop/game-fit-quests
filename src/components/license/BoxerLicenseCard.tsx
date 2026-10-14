@@ -24,6 +24,7 @@ import { motion } from "framer-motion";
 import { Camera, Crown, Flame, Heart, PenLine } from "lucide-react";
 import type { ReactNode } from "react";
 import { STAFF_CHAMPION_LEVEL } from "@/lib/staffDisplay";
+import LeagueBadge from "@/components/badges/LeagueBadge";
 import PtBadge from "@/components/license/PtBadge";
 
 const RANK_LABELS: Record<string, string> = {
@@ -539,6 +540,8 @@ const BoxerLicenseCard = ({
               <p className={`min-w-0 truncate font-black text-white ${cfg.nameText}`}>
                 {name}
               </p>
+              {/* 리그 뱃지 (2026-10-15) — 모든 회원. 지도진(코치님)은 '챔피언' 표기라 리그 뱃지 없음 */}
+              {!staff && <LeagueBadge league={rankKey} className={`${cfg.ptBadge} shrink-0`} />}
               {pt && !staff && <PtBadge className={`${cfg.ptBadge} shrink-0`} glow={size === "hero"} />}
               {onCardClick && <PenLine className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/40" aria-hidden="true" />}
             </div>

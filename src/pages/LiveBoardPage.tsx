@@ -14,6 +14,7 @@ import LiveBoardEmptyState from "@/components/liveBoard/LiveBoardEmptyState";
 import LiveGymRaidStrip from "@/components/liveBoard/LiveGymRaidStrip";
 import LiveSpotlightStage from "@/components/liveBoard/LiveSpotlightStage";
 import LiveCompactGrid from "@/components/liveBoard/LiveCompactGrid";
+import LeagueBadge from "@/components/badges/LeagueBadge";
 import PtBadge from "@/components/license/PtBadge";
 import LiveLevelUpInterrupt, {
   type LevelUpEvent,
@@ -1280,6 +1281,7 @@ const LiveBoardPage = () => {
                         {/* 이름은 길면 말줄임, PT 파란 배지는 항상 보인다 (앱 라이선스 카드와 같은 배지) */}
                         <div className="flex min-w-0 items-center gap-1.5">
                           <p className="min-w-0 text-2xl font-black text-white truncate leading-tight">{m.name}</p>
+                          <LeagueBadge league={m.league} className="h-7 w-7" />
                           {m.pt && <PtBadge className="h-6 w-6 shrink-0" />}
                         </div>
                         <div className="flex items-center gap-2 mt-1">

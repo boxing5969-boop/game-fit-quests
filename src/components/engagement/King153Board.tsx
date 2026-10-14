@@ -15,6 +15,7 @@
  * 2026-09-23 검수 반영: 범위 기본값을 프로필 로딩 뒤에 맞춤 · 이벤트 종료 후 "최종" 표기(격차·행동 버튼 숨김) ·
  * 연속출석은 '지금 연속', 닉네임왕은 '누적' 배지 · 불러오기 실패를 빈 왕좌와 구분 · 320px 줄바꿈.
  */
+import UserLeagueBadge from "@/components/badges/UserLeagueBadge";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Crown, ChevronUp, Info, PartyPopper } from "lucide-react";
@@ -311,9 +312,10 @@ const King153Board = () => {
                   }`}
                 >
                   <span className="w-7 shrink-0 text-center text-[13px] font-black tabular-nums">{medal(r.rank)}</span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-foreground">
-                    {r.display_name}
-                    {r.is_me && <span className="ml-1 text-[10px] font-black text-primary">나</span>}
+                  <span className="flex min-w-0 flex-1 items-center gap-1">
+                    <span className="truncate text-[13px] font-bold text-foreground">{r.display_name}</span>
+                    <UserLeagueBadge userId={r.user_id} className="h-3.5 w-3.5" animated={false} />
+                    {r.is_me && <span className="shrink-0 text-[10px] font-black text-primary">나</span>}
                   </span>
                   {board.scope === "all" && (
                     <span className="shrink-0 text-[10px] text-muted-foreground">{shortBranch(r.branch_name)}</span>

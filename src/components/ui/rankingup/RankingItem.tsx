@@ -14,6 +14,8 @@ interface RankingItemProps {
   isMe?: boolean;
   /** Scoreboard secondary line e.g. "블랙 리그 Lv.8". */
   meta?: string;
+  /** 이름 옆 작은 뱃지 (리그 뱃지 등) — 2026-10-15 */
+  badge?: ReactNode;
   onClick?: () => void;
   className?: string;
 }
@@ -35,6 +37,7 @@ export const RankingItem = ({
   delta,
   isMe = false,
   meta,
+  badge,
   onClick,
   className,
 }: RankingItemProps) => {
@@ -87,6 +90,7 @@ export const RankingItem = ({
           <p className="truncate text-body-sm font-bold text-foreground">
             {name}
           </p>
+          {badge}
           {isMe && (
             <span className="badge-pill bg-primary/20 text-primary">나</span>
           )}

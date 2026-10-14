@@ -14,6 +14,7 @@ import { usePartnerJournalFeed } from "@/hooks/useChampionJournalPartner";
 import type { PartnerJournalFeedRow } from "@/services/championJournalPartnerService";
 
 import PartnerJournalCommentSheet from "./PartnerJournalCommentSheet";
+import UserLeagueBadge from "@/components/badges/UserLeagueBadge";
 
 function relationLabel(rel: PartnerJournalFeedRow["relation"]): string {
   return rel === "cornerman" ? "코너맨" : "세컨드";
@@ -108,6 +109,7 @@ const PartnerJournalFeedCard = () => {
                     <p className="truncate text-[12px] font-bold text-foreground">
                       {e.display_name}
                     </p>
+                    <UserLeagueBadge userId={e.user_id} className="h-3.5 w-3.5" animated={false} />
                   </div>
                   <p className="shrink-0 text-[10px] text-muted-foreground">
                     {formatTime(e.created_at)}

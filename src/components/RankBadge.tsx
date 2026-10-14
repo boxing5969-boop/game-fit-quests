@@ -1,5 +1,6 @@
 import type { Enums } from "@/integrations/supabase/types";
-import { RANK_LABELS, RANK_ICONS, formatRank } from "@/lib/rankLabels";
+import { RANK_LABELS, formatRank } from "@/lib/rankLabels";
+import LeagueBadge from "@/components/badges/LeagueBadge";
 
 interface RankBadgeProps {
   rank: Enums<"rank_name">;
@@ -24,15 +25,18 @@ const RankBadge = ({ rank, level, size = "sm", isMaster }: RankBadgeProps) => {
   if (size === "inline") {
     const title = isMaster ? "MASTER 40" : formatRank(rank, level);
     return (
-      <span
-        title={title}
-        aria-label={title}
-        className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border align-middle text-[9px] leading-none ${
-          isMaster ? "border-reward bg-reward/20" : rankColors[rank]
-        }`}
-      >
-        {isMaster ? "👑" : RANK_ICONS[rank]}
-      </span>
+      isMaster ? (
+        <span
+          title={title}
+          aria-label={title}
+          className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-reward bg-reward/20 align-middle text-[9px] leading-none"
+        >
+          👑
+        </span>
+      ) : (
+        // 2026-10-15: 이모지 → 리그 방패 엠블럼 (LeagueBadge)
+        <LeagueBadge league={rank} className="inline-block h-4 w-4 align-middle" title={title} />
+      )
     );
   }
 
@@ -49,7 +53,7 @@ const RankBadge = ({ rank, level, size = "sm", isMaster }: RankBadgeProps) => {
 
   return (
     <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 ${rankColors[rank]}`}>
-      <span className={isLg ? "text-lg" : "text-sm"}>{RANK_ICONS[rank]}</span>
+      <LeagueBadge league={rank} className={isLg ? "h-6 w-6" : "h-4 w-4"} />
       <span className={`font-bold ${isLg ? "text-base" : "text-xs"}`}>
         {formatRank(rank, level)}
       </span>
