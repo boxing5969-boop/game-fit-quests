@@ -14,6 +14,7 @@ import LiveBoardEmptyState from "@/components/liveBoard/LiveBoardEmptyState";
 import LiveGymRaidStrip from "@/components/liveBoard/LiveGymRaidStrip";
 import LiveSpotlightStage from "@/components/liveBoard/LiveSpotlightStage";
 import LiveCompactGrid from "@/components/liveBoard/LiveCompactGrid";
+import PtBadge from "@/components/license/PtBadge";
 import LiveLevelUpInterrupt, {
   type LevelUpEvent,
 } from "@/components/liveBoard/LiveLevelUpInterrupt";
@@ -111,6 +112,8 @@ interface ActiveMember {
   avatar_url?: string | null;
   /** member_character_assignments → character_presets.parts_json (사용자 설정 캐릭터) */
   partsJson?: { style?: string; customization?: Record<string, unknown> } | null;
+  /** PT 회원 — 카드 이름 옆 파란 배지 (ptIds 에서 채운다) */
+  pt?: boolean;
 }
 
 /**
@@ -246,11 +249,34 @@ const LiveBoardPage = () => {
     [activeMembers, checkinMembers],
   );
 
+  /**
+   * PT 회원 파란 배지 (2026-10-14 대표님: "블루버튼 — 앱에서는 보이는데 pt 회원님들").
+   * TV 는 로그인하지 않아 PT 기간을 직접 못 읽는다 — DB 가 "이 지점에 오늘 왔거나 운동 중인 PT 회원 id" 만 준다.
+   * 화면에 오는 회원이 바뀔 때(입실·운동 시작/종료)와 10분마다 다시 묻는다 — 한 번 실패해도, PT 등록(매시 동기화)이
+   * 바뀌어도 늦어도 10분 안에 맞춰진다. 실패하면 그전 배지를 그대로 둔다.
+   */
+  const [ptIds, setPtIds] = useState<Set<string>>(() => new Set());
+  const presentKey = useMemo(() => Array.from(activeUserIds).sort().join(","), [activeUserIds]);
+  const ptRefreshSlot = Math.floor(currentTime.getTime() / 600_000);
+  useEffect(() => {
+    if (!branchName || !presentKey) return;
+    let cancelled = false;
+    void (async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("get_live_board_pt_members", { _branch_name: branchName });
+      if (cancelled || error || !Array.isArray(data)) return;
+      const next = new Set((data as { user_id: string }[]).map((r) => r.user_id));
+      setPtIds((prev) => (prev.size === next.size && [...next].every((id) => prev.has(id)) ? prev : next));
+    })();
+    return () => { cancelled = true; };
+  }, [branchName, presentKey, ptRefreshSlot]);
+
   /** 앱 운동세션 + 얼굴 출석 + mock 을 합쳐 시각효과에 전달 */
   const combinedMembers = useMemo<ActiveMember[]>(
     () => [...activeMembers, ...checkinMembers, ...mockMembers]
-      .filter((m) => !staffUserIds.has(m.user_id)),
-    [activeMembers, checkinMembers, mockMembers, staffUserIds],
+      .filter((m) => !staffUserIds.has(m.user_id))
+      .map((m) => (ptIds.has(m.user_id) ? { ...m, pt: true } : m)),
+    [activeMembers, checkinMembers, mockMembers, staffUserIds, ptIds],
   );
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
   const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
@@ -1251,7 +1277,11 @@ const LiveBoardPage = () => {
                     <div key={m.user_id} className="flex items-center gap-4 rounded-xl bg-gray-800/40 px-4 py-4 group">
                       <MemberAvatar url={m.avatar_url} name={m.name} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-2xl font-black text-white truncate leading-tight">{m.name}</p>
+                        {/* 이름은 길면 말줄임, PT 파란 배지는 항상 보인다 (앱 라이선스 카드와 같은 배지) */}
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <p className="min-w-0 text-2xl font-black text-white truncate leading-tight">{m.name}</p>
+                          {m.pt && <PtBadge className="h-6 w-6 shrink-0" />}
+                        </div>
                         <div className="flex items-center gap-2 mt-1">
                           <span className={`inline-flex px-2 py-0.5 rounded text-sm font-black ${RANK_BADGE_COLORS[m.league] || "bg-gray-700 text-gray-300"}`}>
                             {RANK_LABELS[m.league] || m.league} 리그

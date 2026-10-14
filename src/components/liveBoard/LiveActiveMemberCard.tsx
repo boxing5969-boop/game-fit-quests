@@ -29,6 +29,8 @@ export interface LiveActiveMember {
   avatar_url?: string | null;
   /** 회원이 설정한 캐릭터 preset (member_character_assignments → character_presets.parts_json) */
   partsJson?: { style?: string; customization?: Record<string, unknown> } | null;
+  /** PT 회원 — 이름 옆 파란 배지 (앱 라이선스 카드와 같다). TV 는 get_live_board_pt_members 로 받는다 (2026-10-14) */
+  pt?: boolean;
 }
 
 export type LiveCardSize = "spotlight" | "medium" | "compact";
@@ -145,6 +147,7 @@ const LiveActiveMemberCard = ({
         level={member.level}
         userId={member.user_id}
         isLive
+        pt={member.pt === true}
         isFresh={isFresh}
         elapsedMinutes={elapsedMinutes}
       />
