@@ -58,6 +58,7 @@ import { TabIcon } from "@/components/icons/tabIcons";
 import DmHeaderButton from "@/components/dm/DmHeaderButton";
 import NotificationBellButton from "@/components/notifications/NotificationBellButton";
 import PushOptInCard from "@/components/notifications/PushOptInCard";
+import SurveyNudgeCard from "@/components/survey/SurveyNudgeCard";
 import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
 import TitleMatchInvitePopup from "@/components/titlematch/TitleMatchInvitePopup";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
@@ -626,6 +627,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
 
           {/* 붕대 감기 집 연습 미션 — 화이트 리그 레벨 1~3 회원에게만, 다 채우기 전까지 (2026-10-13 대표님) */}
           <HandWrapPracticeCard variant="home" />
+
+          {/* 이번 달 만족도 조사 — 설문이 열린 지점 · 아직 참여 전인 회원에게만 (2026-10-15 대표님) */}
+          <SurveyNudgeCard />
 
           {/* ─── 전체 메뉴 (접기) — 하단 탭이 4개로 줄면서 전체 메뉴는 여기서 연다 ─── */}
           <section>

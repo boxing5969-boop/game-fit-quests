@@ -29,7 +29,8 @@ export type MenuGlyphName =
   | "compass"
   | "fish"
   | "idcard"
-  | "gear";
+  | "gear"
+  | "survey";
 
 type GradientKey = "mint" | "mintD" | "gold" | "goldD" | "ink" | "paper" | "skin";
 
@@ -129,6 +130,16 @@ export const MENU_GLYPHS: Record<MenuGlyphName, (p: string) => string> = {
 <circle cx="17.5" cy="18.5" r="2.7" fill="url(#${p}mint)"/><circle cx="17.5" cy="26" r="2.7" fill="url(#${p}mint)"/><circle cx="17.5" cy="33.5" r="2.7" ${EDGE_FILL}/>
 <g fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.3 18.6l.9.9 1.7-1.9"/><path d="M16.3 26.1l.9.9 1.7-1.9"/></g>
 <g ${INK_FILL}><rect x="22.5" y="17.2" width="10.5" height="2.6" rx="1.3" opacity=".55"/><rect x="22.5" y="24.7" width="8.5" height="2.6" rx="1.3" opacity=".55"/><rect x="22.5" y="32.2" width="10" height="2.6" rx="1.3" opacity=".25"/></g>`,
+
+  /** 설문·고객의 소리 — 먹색 보드 + 금빛 별점 2개 반 + 민트 클립 (2026-10-15) */
+  survey: (p) => `${defs(p, ["ink", "paper", "mint", "gold"])}
+<rect x="8.5" y="7" width="31" height="37" rx="6.5" fill="url(#${p}ink)"/>
+<rect x="12" y="11" width="24" height="29.5" rx="3.6" fill="url(#${p}paper)"/>
+<rect x="17" y="4.2" width="14" height="7.6" rx="3.8" fill="url(#${p}mint)"/>
+<path d="M16.6 16.9L17.7 19.5L20.5 19.7L18.3 21.6L19.0 24.3L16.6 22.8L14.2 24.3L14.9 21.6L12.7 19.7L15.5 19.5Z" fill="url(#${p}gold)" stroke="url(#${p}gold)" stroke-width="1" stroke-linejoin="round"/>
+<path d="M24.0 16.9L25.1 19.5L27.9 19.7L25.7 21.6L26.4 24.3L24.0 22.8L21.6 24.3L22.3 21.6L20.1 19.7L22.9 19.5Z" fill="url(#${p}gold)" stroke="url(#${p}gold)" stroke-width="1" stroke-linejoin="round"/>
+<path d="M31.4 16.9L32.5 19.5L35.3 19.7L33.1 21.6L33.8 24.3L31.4 22.8L29.0 24.3L29.7 21.6L27.5 19.7L30.3 19.5Z" ${EDGE_FILL} stroke-width="1" stroke-linejoin="round"/>
+<g ${INK_FILL}><rect x="16" y="28.5" width="16" height="2.6" rx="1.3" opacity=".55"/><rect x="16" y="33.6" width="10.5" height="2.6" rx="1.3" opacity=".3"/></g>`,
 
   /** 153 챌린지 — 왕좌(킹 보드) 금관 + 민트 보석 */
   crown: (p) => `${defs(p, ["gold", "goldD", "mint"])}
