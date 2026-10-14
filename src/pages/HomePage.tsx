@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, Fragment } from "react";
+import { useEffect, useState, useCallback, useRef, Fragment } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { User, Ticket, Trophy, Settings, ChevronLeft, X } from "lucide-react";
@@ -63,6 +63,7 @@ import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import { getMasterLevelDefinition } from "@/data/masterTierData";
 import { useDisplayMode } from "@/hooks/useDisplayMode";
+import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { isPtMember } from "@/lib/ptMember";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
@@ -113,7 +114,10 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const [likeListOpen, setLikeListOpen] = useState(false);
   const [nickEditOpen, setNickEditOpen] = useState(false);
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
-  const { resolveSlot: resolveDisplaySlot } = useDisplayMode();
+  const { mode: displayMode, setMode: setDisplayMode, resolveSlot: resolveDisplaySlot } = useDisplayMode();
+  // 내 카드 사진을 누르면 프로필 사진 올리기·바꾸기 (2026-10-14 대표님) — 내정보와 같은 함수
+  const { upload: uploadAvatar, uploading: avatarUploading } = useAvatarUpload();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   useLevelUpNotifications();
   useHofRewardsAutoClaim();
 
@@ -418,6 +422,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         likes={staffCard ? undefined : (myLicense?.likes ?? 0)}
         onLikeClick={staffCard ? undefined : () => setLikeListOpen(true)}
         onCardClick={staffCard ? undefined : () => setNickEditOpen(true)}
+        onPhotoClick={() => avatarInputRef.current?.click()}
+        photoBusy={avatarUploading}
         branch={profile.branch_name}
         league={rank}
         level={onMasterTrack ? progress.overall_level : progress.current_level}
@@ -787,7 +793,24 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
       </div>
       )}
 
-      {/* MY복서 카드: 하트 → 추천 복서 목록 · 카드 → 닉네임 바꾸기 */}
+      {/* MY복서 카드: 하트 → 추천 복서 목록 · 카드 → 닉네임 바꾸기 · 사진 → 프로필 사진 바꾸기 */}
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          // 같은 사진을 다시 골라도 onChange 가 오게 비운다
+          e.target.value = "";
+          if (!file) return;
+          const url = await uploadAvatar(file);
+          // 카드 표시를 '캐릭터'로 고정해 둔 기기면, 방금 올린 사진이 보이게 '자동'으로 돌린다
+          if (url && displayMode === "character") setDisplayMode("auto");
+        }}
+      />
       <NicknameLikeSheet open={likeListOpen} onClose={() => setLikeListOpen(false)} />
       <NicknameEditSheet open={nickEditOpen} onClose={() => setNickEditOpen(false)} />
 

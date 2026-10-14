@@ -11,6 +11,7 @@
  *   · 헤더 줄: "153 BOXER LICENSE" + Lic.#XXXXXX (2026-09-29 대표님: PRO BOXER → 153 BOXER)
  *   · 하트(2026-09-29): 아래 줄 오른쪽 — 받은 하트 수. 닉네임 좋아요와 같은 하트(한 사람에게 하나).
  *   · onCardClick 이 오면 카드 전체가 버튼 — 내 카드는 누르면 닉네임 바꾸기.
+ *   · onPhotoClick 이 오면 사진이 따로 버튼 (2026-10-14) — 내 카드는 누르면 프로필 사진 올리기·바꾸기.
  *
  * Size:
  *   · hero      — 홈 메인 (큰 사이즈, 모든 정보)
@@ -19,7 +20,7 @@
  */
 
 import { motion } from "framer-motion";
-import { Crown, Flame, Heart, PenLine } from "lucide-react";
+import { Camera, Crown, Flame, Heart, PenLine } from "lucide-react";
 import type { ReactNode } from "react";
 import { STAFF_CHAMPION_LEVEL } from "@/lib/staffDisplay";
 import PtBadge from "@/components/license/PtBadge";
@@ -175,6 +176,11 @@ export interface BoxerLicenseCardProps {
   /** 승급 진행도 막대를 눌렀을 때 (2026-10-10 — 하단 랭크업 탭 대체: 누르면 랭크업 로드맵).
    *  카드 전체 클릭(onCardClick)과 겹치면 막대 클릭이 우선한다 (stopPropagation). */
   onPromotionClick?: () => void;
+  /** 사진을 눌렀을 때 (2026-10-14 대표님 — 내 카드: 프로필 사진 올리기·바꾸기). 오면 사진 모서리에 카메라 표시.
+   *  카드 전체 클릭(onCardClick)과 겹치면 사진 클릭이 우선한다 (stopPropagation). */
+  onPhotoClick?: () => void;
+  /** 사진 올리는 중 — 사진 위에 도는 표시, 다시 누르기 잠금 */
+  photoBusy?: boolean;
 }
 
 const BoxerLicenseCard = ({
@@ -203,6 +209,8 @@ const BoxerLicenseCard = ({
   likeBusy = false,
   onCardClick,
   onPromotionClick,
+  onPhotoClick,
+  photoBusy = false,
 }: BoxerLicenseCardProps) => {
   const rankKey = (league || "white").toLowerCase();
   const lic = licenseNumber(userId);
@@ -359,8 +367,34 @@ const BoxerLicenseCard = ({
 
         {/* ── 본문: 사진 + 정보 (가로) ── */}
         <div className="flex items-start gap-3">
-          {/* 사진 frame */}
-          <div className="relative flex-shrink-0">
+          {/* 사진 frame — onPhotoClick 이 오면 사진만 따로 버튼 (카드 클릭·눌림 효과로 번지지 않게 막는다) */}
+          <div
+            className={`relative flex-shrink-0 ${onPhotoClick ? "cursor-pointer rounded-xl transition-transform active:scale-95" : ""}`}
+            role={onPhotoClick ? "button" : undefined}
+            tabIndex={onPhotoClick ? 0 : undefined}
+            aria-label={onPhotoClick ? "프로필 사진 올리기·바꾸기" : undefined}
+            aria-busy={onPhotoClick ? photoBusy : undefined}
+            onPointerDown={onPhotoClick ? (e) => e.stopPropagation() : undefined}
+            onClick={
+              onPhotoClick
+                ? (e) => {
+                    e.stopPropagation();
+                    if (!photoBusy) onPhotoClick();
+                  }
+                : undefined
+            }
+            onKeyDown={
+              onPhotoClick
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!photoBusy) onPhotoClick();
+                    }
+                  }
+                : undefined
+            }
+          >
             {/* 사진 frame + 회전 aurora ring (리그별 강도) */}
             <div
               className={`${cfg.photoBox} relative flex items-center justify-center rounded-xl`}
@@ -447,6 +481,22 @@ const BoxerLicenseCard = ({
                 </span>
               )}
             </div>
+
+            {/* 올리는 중 — 사진 위를 어둡게 덮고 돈다 */}
+            {onPhotoClick && photoBusy && (
+              <div className="absolute inset-[3px] z-30 flex items-center justify-center rounded-[10px] bg-black/55" aria-hidden="true">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/90 border-t-transparent" />
+              </div>
+            )}
+            {/* 카메라 표시 — 누르면 사진을 바꿀 수 있다는 신호 (내정보 사진의 카메라 버튼과 같은 모양) */}
+            {onPhotoClick && !photoBusy && (
+              <span
+                className="pointer-events-none absolute -bottom-1.5 -right-1.5 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-2 ring-black/70"
+                aria-hidden="true"
+              >
+                <Camera className="h-3.5 w-3.5" />
+              </span>
+            )}
 
             {/* LIVE 인디케이터 (라이브보드 활동중) */}
             {isLive && (
