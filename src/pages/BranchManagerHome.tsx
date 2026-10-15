@@ -5,6 +5,7 @@ import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
 import DailyReportCard from "@/components/DailyReportCard";
 import TodayListPanel from "@/components/manager/TodayListPanel";
 import Test153MeasurePanel from "@/components/test153/Test153MeasurePanel";
+import BroadcastNotification from "@/components/BroadcastNotification";
 import MembershipRequestsInbox from "@/components/MembershipRequestsInbox";
 import CoachDraftsInbox from "@/components/CoachDraftsInbox";
 import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
@@ -43,8 +44,9 @@ const kstWeekStartIso = () => {
 type SortType = "recent_submission" | "level_desc" | "pending_count";
 // today_new · today_submissions — 운영 리포트 칸을 눌러야 열리는 명단 (탭 버튼은 없음, 2026-10-15)
 // test153 — '153 TEST 측정' 카드를 눌러 여는 코치 측정 화면 (2026-10-15)
-type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk" | "today_new" | "today_submissions" | "test153";
-const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk", "today_new", "today_submissions", "test153"];
+// broadcast — '유효회원 전체 메시지' 카드 (대표님·지점장만, 2026-10-15)
+type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk" | "today_new" | "today_submissions" | "test153" | "broadcast";
+const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk", "today_new", "today_submissions", "test153", "broadcast"];
 /** 알림에서 바로 여는 탭 — /manager?tab=level_review (타이틀매치 심사 신청 알림, 2026-10-14) */
 const tabFromParam = (raw: string | null): MainTab | null =>
   MAIN_TABS.find((t) => t === raw) ?? null;
@@ -78,6 +80,8 @@ const BranchManagerHome = () => {
 
   const branchName = profile?.branch_name || "";
   const isSuperAdmin = role === "super_admin" || role === "admin";
+  // 유효회원 전체 메시지는 대표님(전체관리자)·지점장만 — 코치는 카드가 안 보인다 (서버도 막는다)
+  const canBroadcast = isSuperAdmin || role === "branch_manager";
 
   // Branch stats
   const { data: stats } = useQuery({
@@ -709,6 +713,21 @@ const BranchManagerHome = () => {
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
 
+        {canBroadcast && (
+          <button
+            type="button"
+            onClick={() => openTab("broadcast")}
+            className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left active:scale-[0.99]"
+          >
+            <span className="text-2xl">📢</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-black text-foreground">유효회원 전체 메시지</span>
+              <span className="block text-xs text-muted-foreground">알림함·휴대폰 알림으로 한 번에 보내기</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
+
 
         {/* Stats Cards */}
         <div className="mb-5 grid grid-cols-2 gap-2.5">
@@ -780,6 +799,7 @@ const BranchManagerHome = () => {
         {mainTab === "test153" && (
           <Test153MeasurePanel branchName={branchName} isSuperAdmin={isSuperAdmin} onBack={() => setMainTab("members")} />
         )}
+        {mainTab === "broadcast" && canBroadcast && <BroadcastNotification />}
         {(mainTab === "today_new" || mainTab === "today_submissions") && (
           <TodayListPanel
             kind={mainTab === "today_new" ? "new" : "submissions"}
@@ -843,6 +863,21 @@ const BranchManagerHome = () => {
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
 
+          {canBroadcast && (
+            <button
+              type="button"
+              onClick={() => openTab("broadcast")}
+              className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left active:scale-[0.99]"
+            >
+              <span className="text-2xl">📢</span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-black text-foreground">유효회원 전체 메시지</span>
+                <span className="block text-xs text-muted-foreground">알림함·휴대폰 알림으로 한 번에 보내기</span>
+              </span>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
+
 
           {/* Stats */}
           <div className="mb-4 grid grid-cols-2 gap-2">
@@ -893,6 +928,7 @@ const BranchManagerHome = () => {
           {mainTab === "test153" && (
             <Test153MeasurePanel branchName={branchName} isSuperAdmin={isSuperAdmin} onBack={() => setMainTab("members")} />
           )}
+          {mainTab === "broadcast" && canBroadcast && <BroadcastNotification />}
           {(mainTab === "today_new" || mainTab === "today_submissions") && (
             <TodayListPanel
               kind={mainTab === "today_new" ? "new" : "submissions"}
