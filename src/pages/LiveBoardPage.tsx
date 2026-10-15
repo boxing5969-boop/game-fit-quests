@@ -225,6 +225,40 @@ const LiveBoardPage = () => {
   const avatarCacheRef = useRef<Record<string, string | null>>({});
   const [avatarMap, setAvatarMap] = useState<Record<string, string | null>>({});
 
+  // 회원 캐릭터 + '카드에 보일 것'(자동·사진·캐릭터) — 얼굴·QR 출석 회원도 캐릭터가 뜨게 (2026-10-15 대표님)
+  type PartsJson = { style?: string; customization?: Record<string, unknown> };
+  const lookLoadedRef = useRef<Set<string>>(new Set());
+  const [charLookMap, setCharLookMap] = useState<Record<string, PartsJson | null>>({});
+  const [displayPrefMap, setDisplayPrefMap] = useState<Record<string, "auto" | "photo" | "character">>({});
+  const loadCardLooks = useCallback(async (ids: string[]) => {
+    const fresh = ids.filter((id) => !lookLoadedRef.current.has(id));
+    if (fresh.length === 0) return;
+    fresh.forEach((id) => lookLoadedRef.current.add(id));
+    for (let i = 0; i < fresh.length; i += 200) {
+      const chunk = fresh.slice(i, i + 200);
+      const [{ data: chars }, { data: prefs }] = await Promise.all([
+        supabase
+          .from("member_character_assignments")
+          .select("user_id, character_presets(parts_json)")
+          .in("user_id", chunk)
+          .eq("is_active", true),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).from("member_card_display").select("user_id, mode").in("user_id", chunk),
+      ]);
+      const nextChars: Record<string, PartsJson | null> = {};
+      for (const a of (chars || []) as { user_id: string; character_presets?: { parts_json?: unknown } | null }[]) {
+        const pj = a.character_presets?.parts_json as PartsJson | undefined;
+        if (pj) nextChars[a.user_id] = pj;
+      }
+      const nextPrefs: Record<string, "auto" | "photo" | "character"> = {};
+      for (const r of (prefs || []) as { user_id: string; mode: string }[]) {
+        if (r.mode === "photo" || r.mode === "character" || r.mode === "auto") nextPrefs[r.user_id] = r.mode;
+      }
+      if (Object.keys(nextChars).length) setCharLookMap((prev) => ({ ...prev, ...nextChars }));
+      if (Object.keys(nextPrefs).length) setDisplayPrefMap((prev) => ({ ...prev, ...nextPrefs }));
+    }
+  }, []);
+
   /**
    * 얼굴 출석(브로제이) 회원을 "지금 운동 중"으로 올린다.
    *
@@ -257,9 +291,9 @@ const LiveBoardPage = () => {
         // 회원이 올린 프로필 사진 — TV 가 읽어 둔 값(getAvatarUrl → avatarMap). 입실하면 새로 읽는다.
         // 예전엔 null 고정이라 얼굴·QR 출석 회원은 사진을 올려도 '활동 중' 칸에 글자만 나왔다 (2026-10-14 대표님)
         avatar_url: boardPhotos ? avatarMap[v.user_id] ?? null : null,
-        partsJson: null,
+        partsJson: charLookMap[v.user_id] ?? null,
       }));
-  }, [dailyVisits, activeMembers, currentTime, avatarMap, boardPhotos]);
+  }, [dailyVisits, activeMembers, currentTime, avatarMap, boardPhotos, charLookMap]);
 
   /** 지금 운동 중인 회원 id — 아래 이름 티커에서 밝게 구분하는 데 쓴다 */
   const activeUserIds = useMemo(
@@ -290,11 +324,18 @@ const LiveBoardPage = () => {
   }, [branchName, presentKey, ptRefreshSlot]);
 
   /** 앱 운동세션 + 얼굴 출석 + mock 을 합쳐 시각효과에 전달 */
+  //   회원이 앱에서 고른 '카드에 보일 것'을 따른다 — 사진만이면 캐릭터를 빼고, 캐릭터만이면(캐릭터가 있을 때) 사진을 뺀다
   const combinedMembers = useMemo<ActiveMember[]>(
     () => [...activeMembers, ...checkinMembers, ...mockMembers]
       .filter((m) => !staffUserIds.has(m.user_id))
-      .map((m) => (ptIds.has(m.user_id) ? { ...m, pt: true } : m)),
-    [activeMembers, checkinMembers, mockMembers, staffUserIds, ptIds],
+      .map((m) => {
+        const pref = displayPrefMap[m.user_id] ?? "auto";
+        let next = m;
+        if (pref === "photo" && m.partsJson) next = { ...next, partsJson: null };
+        if (pref === "character" && m.partsJson && m.avatar_url) next = { ...next, avatar_url: null };
+        return ptIds.has(m.user_id) ? { ...next, pt: true } : next;
+      }),
+    [activeMembers, checkinMembers, mockMembers, staffUserIds, ptIds, displayPrefMap],
   );
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
   const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
@@ -518,7 +559,8 @@ const LiveBoardPage = () => {
     });
 
     setActiveMembers(members);
-  }, [branchName]);
+    void loadCardLooks(userIds);
+  }, [branchName, loadCardLooks]);
 
   /**
    * 지금 근무중인 코치 — 필터·시간 판정은 전부 DB 뷰가 끝내고 내려준다.
@@ -592,6 +634,7 @@ const LiveBoardPage = () => {
       }
       const memberVisits = visits.filter((v) => flags.get(v.user_id) !== true);
       setDailyVisits(memberVisits);
+      void loadCardLooks(memberVisits.map((v) => v.user_id));
       setStaffUserIds(
         new Set(visits.filter((v) => flags.get(v.user_id) === true).map((v) => v.user_id)),
       );
@@ -607,7 +650,7 @@ const LiveBoardPage = () => {
       setDailyVisits([]);
       setStaffUserIds(new Set());
     }
-  }, [branchName, getAvatarUrl]);
+  }, [branchName, getAvatarUrl, loadCardLooks]);
 
   // Load hall of fame
   const loadHall = useCallback(async () => {

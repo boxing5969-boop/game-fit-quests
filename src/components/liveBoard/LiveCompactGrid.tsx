@@ -24,7 +24,7 @@ import LiveActiveMemberCard, {
 
 const ROTATE_INTERVAL_MS = 15_000;
 const ROTATE_THRESHOLD = 13; // 13명 이상부터 페이지 회전
-const PAGE_SIZE = 12; // 페이지당 최대 12명
+const PAGE_SIZE = 18; // 페이지당 최대 18명 — 6칸 × 3줄 (2026-10-15 대표님: "작은 카드 2줄 → 3줄")
 
 export interface LiveCompactGridProps {
   members: LiveActiveMember[];
