@@ -72,6 +72,7 @@ messages 조립 순서: boxing SYSTEM_PROMPT + 개인컨텍스트 → SYSTEM_PRO
 
 검수(review_required)가 켜져 있으면 승인된 메시지만 나간다. 대상 확대는 `coach_config.audience` 와 `pilot_branch_names()` 로.
 미리보기(DB 에 안 씀): coach-build 에 body `{preview: 1~6}` → 문구·검사 결과·사용량을 바로 돌려준다.
+보낸 기록: 메시지 탭 '오삼코치' ([src/components/dm/CoachSentList.tsx](src/components/dm/CoachSentList.tsx) → `coach_sent_list()`, 지점장=자기 지점 · 본사=전체, 보기 전용).
 
 ### Claude API 크레딧 (2026-10-15 연결)
 

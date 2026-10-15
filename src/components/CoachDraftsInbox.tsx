@@ -8,6 +8,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Check, ChevronDown, ChevronUp, Pencil, RotateCcw, SkipForward } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -217,6 +218,12 @@ const CoachDraftsInbox = () => {
       <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
         승인한 것만 회원에게 가요. 오늘의 목표는 아침 8시(지났으면 5분 안에), 출석 칭찬은 그 회원이 출석할 때 출석 알림으로 가요.
         {!q.data?.enabled && " 지금은 오삼코치가 꺼져 있어요."}
+        {/* 보낸 기록은 메시지 탭 '오삼코치' — 지점장·본사만 (2026-10-15) */}
+        {(role === "branch_manager" || role === "super_admin" || role === "admin") && (
+          <Link to="/messages?tab=coach" className="ml-1 font-semibold text-primary">
+            보낸 메시지 기록 →
+          </Link>
+        )}
       </p>
 
       {counts.ready > 1 && (

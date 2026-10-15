@@ -2,6 +2,7 @@
  * 메시지(DM) 받은함 — /messages (2026-09-30 대표님: "인스타그램처럼 DM").
  *
  * 탭: 대화 · 요청(같은 지점 회원이 처음 보낸 메시지 — 수락하면 대화) · 신고(본사 계정만)
+ *     · 오삼코치(지점장·본사만 — 오삼코치가 회원에게 보낸 메시지 기록, 2026-10-15)
  * 오른쪽 위: 설정(메시지 요청 받기·차단 목록) · 새 메시지(보낼 사람 고르기)
  * 탭은 주소(?tab=)에 남겨 대화방에서 돌아와도 그대로.
  */
@@ -20,8 +21,10 @@ import { DmAvatar, DmKindBadge } from "@/components/dm/DmParts";
 import NewMessageSheet from "@/components/dm/NewMessageSheet";
 import DmSettingsSheet from "@/components/dm/DmSettingsSheet";
 import DmAdminReports from "@/components/dm/DmAdminReports";
+import CoachSentList from "@/components/dm/CoachSentList";
+import { useAuth } from "@/contexts/AuthContext";
 
-type Tab = "inbox" | "requests" | "reports";
+type Tab = "inbox" | "requests" | "reports" | "coach";
 
 const previewLine = (r: DmThreadRow): string => {
   const text = r.last_preview ?? "";
@@ -93,8 +96,14 @@ const MessagesPage = () => {
   const isHq = summary?.kind === "hq";
   // 메시지 요청은 회원끼리만 생긴다 — 코치님·본사 계정에는 요청 탭이 없다
   const isMember = summary?.kind === "member";
+  // 오삼코치가 보낸 메시지 — 지점장·본사만 (서버 coach_sent_list 도 같은 기준으로 막는다)
+  const { role } = useAuth();
+  const canSeeCoach = role === "branch_manager" || role === "super_admin" || role === "admin";
   const raw = params.get("tab");
-  const tab: Tab = (raw === "requests" && (isMember || !summary)) || (raw === "reports" && isHq) ? raw : "inbox";
+  const tab: Tab =
+    (raw === "requests" && (isMember || !summary)) || (raw === "reports" && isHq) || (raw === "coach" && canSeeCoach)
+      ? raw
+      : "inbox";
   const setTab = (t: Tab) => setParams(t === "inbox" ? {} : { tab: t }, { replace: true });
 
   const inbox = useDmThreads("inbox");
@@ -122,6 +131,7 @@ const MessagesPage = () => {
       ? [{ value: "requests" as const, label: requestCount > 0 ? `요청 ${requestCount}` : "요청", badge: newRequests }]
       : []),
     ...(isHq ? [{ value: "reports" as const, label: reportCount > 0 ? `신고 ${reportCount}` : "신고", badge: reportCount, urgent: true }] : []),
+    ...(canSeeCoach ? [{ value: "coach" as const, label: "오삼코치", badge: 0 }] : []),
   ];
 
   return (
@@ -225,6 +235,8 @@ const MessagesPage = () => {
 
           {tab === "reports" ? (
             <DmAdminReports />
+          ) : tab === "coach" ? (
+            <CoachSentList />
           ) : active.isLoading ? (
             <ListSkeleton />
           ) : active.isError && !active.data ? (
@@ -277,7 +289,7 @@ const MessagesPage = () => {
             </ul>
           )}
 
-          {tab !== "reports" && (
+          {tab !== "reports" && tab !== "coach" && (
             <p className="px-1 pt-1 text-[11.5px] leading-relaxed text-muted-foreground">
               {tab === "requests"
                 ? "처음 보낸 사람은 수락 전까지 메시지를 1개만 보낼 수 있어요."
