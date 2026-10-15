@@ -4,6 +4,21 @@ import { OSAMI_FAQ } from "../data/osamiFaq";
 
 /** 회원이 실제로 칠 만한 말 → 바로 답해야 하는 항목 */
 const DIRECT: [string, string][] = [
+  // 랭킹·이벤트·보상 보강 (2026-10-15 대표님: "랭킹왕 같은 걸 오삼코치가 모른다")
+  ["랭킹은 어떻게 정해져요", "rk-how"],
+  ["같은 레벨이면 누가 위예요", "rk-how"],
+  ["랭킹왕이 뭐예요", "rk-kings"],
+  ["153 TEST가 뭐예요", "rk-test153"],
+  ["체력테스트 어떻게 해요", "rk-test153"],
+  ["153 레코드가 뭐야", "rk-records"],
+  ["이름 옆 금메달 뭐예요", "rk-medal"],
+  ["마일리지로 결제할 수 있어요?", "rw-mileage-use"],
+  ["알림 켜면 보상 있어요?", "nt-push"],
+  ["XP 어떻게 얻어요", "lv-xp"],
+  ["지금 하는 이벤트 뭐 있어요", "ev-now"],
+  ["이번주 153왕이 뭐예요", "rk-weekly-153king"],
+  ["설문 보상 있어요?", "rw-survey"],
+  ["오류 신고 어디서 해요", "osami-app-error"],
   ["레벨업 조건이 뭐예요", "lv-requirements"],
   ["출석 몇 번 해야 레벨 올라요?", "lv-requirements"],
   ["레벨업 하려면 어떻게 해야돼", "lv-requirements"],
