@@ -5,10 +5,32 @@
 //   2) coach_messages 에 기본 문구로 넣는다 (이미 있는 날은 건너뜀 — 여러 번 불러도 한 번).
 //   3) ANTHROPIC_API_KEY 가 있으면 Haiku 5.5 배치(반값)로 문구를 요청 → coach-collect 가 거둔다.
 //      키가 없거나 배치가 실패하면 기본 문구 그대로 검수 대기(ready)로 둔다 — 기능이 멈추지 않게.
-// body: { for_date?: "YYYY-MM-DD", no_ai?: boolean }
+// body: { for_date?: "YYYY-MM-DD", no_ai?: boolean, preview?: 1~6 }
+//   preview — 키·모델 설정 점검용 미리보기: 대상 몇 명만 바로(배치 아님) 불러 문구와 검사 결과를 돌려준다.
+//             coach_messages 에는 아무것도 쓰지 않는다. 비용은 ai_usage_log(feature 'coach_preview').
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { buildClaudeBody, CLAUDE_COACH_MODEL, claudeCreateBatch, hasClaude, type BatchRequest } from "../_shared/claude.ts";
-import { COACH_SCHEMA, COACH_SYSTEM, coachUserPrompt, safeFallback, type CoachFacts } from "../_shared/coach.ts";
+import {
+  buildClaudeBody,
+  CLAUDE_COACH_MODEL,
+  claudeCreateBatch,
+  claudeMessage,
+  hasClaude,
+  logAiUsage,
+  messageText,
+  usageOf,
+  type BatchRequest,
+} from "../_shared/claude.ts";
+import { checkCoachText, COACH_SCHEMA, COACH_SYSTEM, coachUserPrompt, parseCoachJson, safeFallback, type CoachFacts } from "../_shared/coach.ts";
+
+const coachRequest = (facts: CoachFacts) =>
+  buildClaudeBody({
+    model: CLAUDE_COACH_MODEL,
+    system: [COACH_SYSTEM],
+    messages: [{ role: "user", content: coachUserPrompt(facts) }],
+    maxTokens: 1024, // Haiku 5.5 는 생각 토큰도 여기에 들어간다
+    cacheFirstSystem: true,
+    jsonSchema: COACH_SCHEMA,
+  });
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -39,6 +61,47 @@ Deno.serve(async (req) => {
     return json({ error: "targets_failed" }, 500);
   }
   const useAi = hasClaude() && body?.no_ai !== true;
+
+  // ── 미리보기: 종류별로 골고루 몇 명만 바로 불러 본다 (DB 에 쓰지 않음) ──
+  const previewN = Math.min(6, Math.max(0, Math.floor(Number(body?.preview) || 0)));
+  if (previewN > 0) {
+    if (!hasClaude()) return json({ ok: false, preview: true, error: "no_key" });
+    // deno-lint-ignore no-explicit-any
+    const all = (targets ?? []) as any[];
+    const picked: typeof all = [];
+    for (const kind of ["daily_goal", "attendance_praise", "comeback"]) {
+      const t = all.find((x) => x.kind === kind && !picked.includes(x));
+      if (t && picked.length < previewN) picked.push(t);
+    }
+    for (const t of all) if (picked.length < previewN && !picked.includes(t)) picked.push(t);
+    const out: Record<string, unknown>[] = [];
+    for (const t of picked) {
+      const facts = t.facts as CoachFacts;
+      try {
+        const msg = await claudeMessage(coachRequest(facts));
+        const u = usageOf(msg);
+        await logAiUsage(db, { feature: "coach_preview", model: CLAUDE_COACH_MODEL, usage: u, userId: t.user_id, meta: { kind: t.kind } });
+        const raw = messageText(msg);
+        const text = parseCoachJson(raw);
+        const verdict = msg.stop_reason === "refusal" ? { ok: false, reason: "refusal" } : checkCoachText(text, facts);
+        out.push({
+          kind: t.kind,
+          state: facts.state,
+          level_label: facts.level_label,
+          ai: text,
+          raw: text ? undefined : raw.slice(0, 300),
+          check: verdict,
+          stop_reason: msg.stop_reason ?? null,
+          thinking_blocks: (msg.content ?? []).filter((b: { type?: string }) => b?.type === "thinking").length,
+          usage: u,
+          fallback: safeFallback(facts),
+        });
+      } catch (e) {
+        out.push({ kind: t.kind, state: facts.state, error: (e instanceof Error ? e.message : String(e)).slice(0, 400) });
+      }
+    }
+    return json({ ok: true, preview: true, model: CLAUDE_COACH_MODEL, for_date: forDate, results: out });
+  }
 
   // deno-lint-ignore no-explicit-any
   const rows = ((targets ?? []) as any[]).map((t) => {
@@ -77,17 +140,7 @@ Deno.serve(async (req) => {
   }
   if (!useAi || fresh.length === 0) return json({ ok: true, for_date: forDate, created: fresh.length, ai: false });
 
-  const requests: BatchRequest[] = fresh.map((m) => ({
-    custom_id: m.id,
-    params: buildClaudeBody({
-      model: CLAUDE_COACH_MODEL,
-      system: [COACH_SYSTEM],
-      messages: [{ role: "user", content: coachUserPrompt(m.facts) }],
-      maxTokens: 1024, // Haiku 5.5 는 생각 토큰도 여기에 들어간다
-      cacheFirstSystem: true,
-      jsonSchema: COACH_SCHEMA,
-    }),
-  }));
+  const requests: BatchRequest[] = fresh.map((m) => ({ custom_id: m.id, params: coachRequest(m.facts) }));
 
   const ids = fresh.map((m) => m.id);
   try {
