@@ -343,6 +343,44 @@ const SettingsPage = () => {
       </div>
 
       <div className="space-y-5">
+        {/* 테스트 지점 — 전체관리자 전용 (2026-10-15 대표님: "153본사 소속에서 선릉점·역삼점으로 선택할 수 있게").
+            누르면 내 소속 지점이 바로 바뀌어 그 지점 회원 화면(커뮤니티·랭킹·챌린지·라이브보드)으로 보인다.
+            앱에서 숨긴 지점(지점 관리 스위치 꺼짐)도 여기선 고를 수 있다 — 테스트용. '153본사' 로 누르면 원래대로. */}
+        {isSuperAdmin && (
+          <div className="animate-slide-up rounded-2xl border-2 border-primary/30 bg-primary/5 p-5 shadow-elev-1">
+            <h2 className="mb-1 text-base font-bold text-foreground">🧪 테스트 지점 바꾸기</h2>
+            <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
+              지금 <b className="text-foreground">{profile.branch_name || "미지정"}</b> 소속으로 보고 있어요. 지점을 누르면 그 지점 회원 화면으로 바로 바뀌어요.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {(branches || []).map((b) => {
+                const active = b.name === profile.branch_name;
+                const hidden = (b as { is_visible?: boolean }).is_visible === false;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    disabled={switchingBranch || active}
+                    onClick={() => handleAdminSwitchBranch(b.name)}
+                    className={`rounded-pill border px-3.5 py-2 text-[12.5px] font-bold transition-all active:scale-95 disabled:cursor-default ${
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    {b.name.replace("153복싱짐 ", "")}
+                    {hidden && !active && <span className="ml-1 text-[10px] font-medium opacity-60">(숨김)</span>}
+                  </button>
+                );
+              })}
+            </div>
+            {switchingBranch && <p className="mt-2 text-[11px] text-muted-foreground">바꾸는 중…</p>}
+            <p className="mt-2 text-[10.5px] text-muted-foreground">
+              테스트가 끝나면 '153본사'를 눌러 원래대로 돌려 주세요. 전체관리자 계정은 회원 랭킹에 들어가지 않아요.
+            </p>
+          </div>
+        )}
+
         {/* 레벨 테스트 — 체험용 계정·전체 관리자만 (그 외 계정엔 카드가 스스로 안 그려진다) */}
         <LevelTestCard />
 
