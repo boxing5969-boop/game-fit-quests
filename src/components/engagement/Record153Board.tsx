@@ -5,6 +5,8 @@
  *   · 최초 기록은 한 번 새겨지면 바뀌지 않는다 (DB records_153)
  *   · 비어 있는 기록은 '아직 주인 없음' — 누가 처음이 될지 보이게
  *   · 153 체력테스트 = 챌린지 아레나 체력 종목. 종목별 신기록은 계속 바뀐다.
+ *   · 2026-10-16: 최초 기록을 세우면 마일리지 10,000 (DB 트리거) · 아레나 칸 → '최초 153 TEST 완주'
+ *     기록 칸 목록은 records153Service RECORD_153_FIRSTS (랭킹·명예의 전당 띠와 같이 씀)
  */
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,27 +14,23 @@ import { ScrollText } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import FunChallengeArenaSheet from "@/components/engagement/FunChallengeArenaSheet";
-import { RECORDS_153_KEY, useRecords153, type Record153First } from "@/services/records153Service";
+import {
+  RECORD_153_FIRSTS,
+  RECORD_153_MILEAGE,
+  RECORDS_153_KEY,
+  useRecords153,
+  type Record153First,
+  type Record153Section,
+} from "@/services/records153Service";
 
-type Section = "start" | "level" | "fitness";
-
-const FIRSTS: Array<{ key: string; section: Section; emoji: string; title: string; desc: string; empty: string }> = [
-  { key: "first_signup", section: "start", emoji: "🥇", title: "최초 가입자", desc: "마이복서153에 가장 먼저 이름을 올린 회원", empty: "" },
-  { key: "first_checkin", section: "start", emoji: "🚪", title: "최초 출석", desc: "앱이 생기고 처음으로 앱 출석을 찍은 회원", empty: "" },
-  { key: "first_100_checkins", section: "start", emoji: "💯", title: "최초 출석 100회", desc: "가장 먼저 100번 출석한 회원", empty: "100번째 출석을 가장 먼저 찍는 회원이 주인이 돼요" },
-  { key: "first_journal", section: "start", emoji: "✍️", title: "최초 커뮤니티 글", desc: "153 커뮤니티에 처음 글을 남긴 회원", empty: "커뮤니티에 처음 글을 쓰는 회원이 주인이 돼요" },
-  { key: "first_handwrap", section: "start", emoji: "🩹", title: "최초 붕대 감기 연습", desc: "집에서 붕대 감기를 처음 해 본 회원", empty: "붕대 감기 연습을 처음 하는 회원이 주인이 돼요" },
-  { key: "first_lv10", section: "level", emoji: "🔟", title: "최초 레벨 10", desc: "화이트 리그 끝까지 가장 먼저 오른 회원", empty: "레벨 10에 가장 먼저 오르는 회원이 주인이 돼요" },
-  { key: "first_lv11", section: "level", emoji: "🔵", title: "최초 레벨 11", desc: "블루 리그 첫 입성", empty: "블루 리그에 가장 먼저 오르는 회원이 주인이 돼요" },
-  { key: "first_lv21", section: "level", emoji: "🔴", title: "최초 레벨 21", desc: "레드 리그 첫 입성", empty: "레드 리그에 가장 먼저 오르는 회원이 주인이 돼요" },
-  { key: "first_lv31", section: "level", emoji: "⚫", title: "최초 레벨 31", desc: "블랙 리그 첫 입성", empty: "블랙 리그에 가장 먼저 오르는 회원이 주인이 돼요" },
-  { key: "first_fitness", section: "fitness", emoji: "💪", title: "최초 체력테스트 기록", desc: "153 체력테스트에 처음 기록을 남긴 회원", empty: "아레나에서 첫 기록을 남기면 바로 주인이 돼요" },
-];
+type Section = Record153Section;
+const FIRSTS = RECORD_153_FIRSTS;
+const MILEAGE_LABEL = RECORD_153_MILEAGE.toLocaleString();
 
 const SECTION_TITLE: Record<Section, string> = {
   start: "153의 첫 페이지",
   level: "레벨의 역사",
-  fitness: "153 체력테스트",
+  fitness: "153 TEST",
 };
 
 /** 종목별 신기록 + '체력테스트 하러 가기' — 보류 중 (2026-10-15 대표님). 다시 보이려면 true */
@@ -102,6 +100,9 @@ const Record153Board = ({ onOpenMember }: Props) => {
             세계로 갈 153복싱짐의 첫 역사.
             <br />
             한 번 새겨진 이름은 영원히 남아요.
+          </p>
+          <p className="text-[13px] font-black text-reward">
+            🎁 최초 기록을 세우면 마일리지 {MILEAGE_LABEL} 적립
           </p>
           {data && (
             <span className="mt-1 rounded-pill bg-reward/15 px-3 py-1 text-[12.5px] font-black text-reward">
@@ -225,8 +226,9 @@ const RecordCard = ({
           <p className="text-[15px] font-black text-foreground">{title}</p>
           <p className="text-[12.5px] font-semibold text-muted-foreground">{empty || desc}</p>
         </div>
-        <span className="shrink-0 rounded-pill border border-dashed border-border px-2.5 py-1 text-[11.5px] font-black text-muted-foreground">
-          주인 없음
+        <span className="flex shrink-0 flex-col items-center rounded-xl border border-dashed border-reward/50 px-2.5 py-1 leading-tight">
+          <span className="text-[10.5px] font-bold text-muted-foreground">주인 없음</span>
+          <span className="text-[12px] font-black text-reward">🎁 +{MILEAGE_LABEL}</span>
         </span>
       </div>
     );

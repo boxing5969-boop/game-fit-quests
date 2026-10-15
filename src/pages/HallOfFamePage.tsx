@@ -22,6 +22,7 @@ import MemberLicenseSheet from "@/components/license/MemberLicenseSheet";
 import LeagueBadge from "@/components/badges/LeagueBadge";
 import NameBadge from "@/components/badges/NameBadge";
 import Record153Board from "@/components/engagement/Record153Board";
+import Records153Strip from "@/components/engagement/Records153Strip";
 import Test153Board from "@/components/test153/Test153Board";
 import MedalMark from "@/components/MedalMark";
 import {
@@ -282,6 +283,11 @@ const HallOfFamePage = () => {
           // 칸이 4개라 좁은 폰에서 넘치지 않게 양옆 여백을 줄인다
           className="[&>button]:px-1.5"
         />
+
+        {/* 153 레코드 최초 기록자 — 랭킹·명예의 전당 탭에서도 보이게 (2026-10-16 대표님) */}
+        {(topTab === "ranking" || topTab === "halloffame") && (
+          <Records153Strip onOpenAll={() => setTopTab("records")} onOpenMember={(m) => setLicenseMember(m)} />
+        )}
 
         {topTab === "ranking" && isSuperAdmin && branches && branches.length > 0 && (
           // Super-admin only: switch between branches or view the global
