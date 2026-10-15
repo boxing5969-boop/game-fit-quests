@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { isVisibleBranch } from "@/lib/branchVisibility";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -31,7 +32,7 @@ const SelectBranchPage = () => {
   const [isCoach, setIsCoach] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: branches } = useQuery({
+  const { data: allBranches } = useQuery({
     queryKey: ["branches"],
     queryFn: async () => {
       const { data, error } = await supabase.from("branches").select("*").order("name");
@@ -39,6 +40,9 @@ const SelectBranchPage = () => {
       return data;
     },
   });
+
+  // 꺼진 지점(설정 > 지점 관리)은 고를 수 없다 — 2026-10-15 선릉역점만
+  const branches = (allBranches ?? []).filter((b) => isVisibleBranch(b as { is_visible?: boolean }));
 
   const formatPhone = (val: string) => {
     const digits = val.replace(/\D/g, "").slice(0, 11);

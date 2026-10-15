@@ -273,10 +273,13 @@ export const useBranchesList = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("branches")
-        .select("id, name")
+        .select("*")
         .order("name");
       if (error) throw error;
-      return (data || []) as { id: string; name: string }[];
+      // 꺼진 지점(설정 > 지점 관리)은 관리자 지점 칩에서도 뺀다 (2026-10-15)
+      return ((data || []) as { id: string; name: string; is_visible?: boolean }[])
+        .filter((b) => b.is_visible !== false)
+        .map((b) => ({ id: b.id, name: b.name }));
     },
   });
 };

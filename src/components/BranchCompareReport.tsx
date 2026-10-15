@@ -19,7 +19,9 @@ const BranchCompareReport = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["branch-compare"],
     queryFn: async () => {
-      const { data: branches } = await supabase.from("branches").select("name").order("name");
+      // 꺼진 지점(설정 > 지점 관리)은 비교하지 않는다 — 수천 명을 읽는 일 자체를 안 한다 (2026-10-15)
+      const { data: allBranches } = await supabase.from("branches").select("*").order("name");
+      const branches = (allBranches ?? []).filter((b) => (b as { is_visible?: boolean }).is_visible !== false);
       if (!branches?.length) return [];
 
       const results: BranchStat[] = [];

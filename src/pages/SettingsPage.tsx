@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { isManagerRole } from "@/lib/rankLabels";
 import { useTutorialCamp } from "@/features/tutorial-camp/useTutorialCamp";
+import { openTutorialCustomizer } from "@/features/tutorial-camp/TutorialCustomizer";
 import LaunchEventSettingsCard from "@/components/admin/LaunchEventSettingsCard";
 import MileageSettingsCard from "@/components/admin/MileageSettingsCard";
 import LevelTestCard from "@/components/admin/LevelTestCard";
@@ -252,7 +253,25 @@ const SettingsPage = () => {
   const isManager = isManagerRole(role);
   const googleLinked = (user?.identities ?? []).some((i) => i.provider === "google");
   const hasPendingTransfer = (transferRequests || []).some((r: any) => r.status === "pending");
-  const otherBranches = (branches || []).filter(b => b.name !== profile.branch_name);
+  // 꺼진 지점(아래 '지점 관리' 스위치)은 이전 대상에서 뺀다 (2026-10-15)
+  const otherBranches = (branches || []).filter(
+    (b) => b.name !== profile.branch_name && (b as { is_visible?: boolean }).is_visible !== false,
+  );
+  const isSuperAdmin = role === "super_admin";
+
+  // 지점 표시 켜기/끄기 — 꺼진 지점은 랭킹 · 명예의 전당 · 지점 선택에서 안 보인다 (회원·출석 데이터는 그대로)
+  const toggleBranchVisible = async (id: string, visible: boolean) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).rpc("set_branch_visible", { p_branch_id: id, p_visible: visible });
+    if (error) {
+      toast.error(error.message || "바꾸지 못했어요");
+      return;
+    }
+    toast.success(visible ? "앱에 보이게 했어요" : "앱에서 숨겼어요");
+    qc.invalidateQueries({ queryKey: ["branches"] });
+    qc.invalidateQueries({ queryKey: ["branches-list"] });
+    qc.invalidateQueries({ queryKey: ["division-ranking"] });
+  };
 
   // 전체관리자 전용 — 내 소속 지점을 바로 바꾼다 (2026-09-23 대표님 지시: 지점을 골라 커뮤니티 등 회원 화면을 체험).
   // 회원은 '지점 이전 요청' 승인 절차를 타지만, 본사 계정은 승인자가 자기 자신이라 즉시 전환한다.
@@ -628,7 +647,10 @@ const SettingsPage = () => {
         {/* Admin: Branch Management */}
         {isAdmin && (
           <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.15s" }}>
-            <h2 className="mb-4 text-base font-bold text-foreground">지점 관리</h2>
+            <h2 className="mb-1 text-base font-bold text-foreground">지점 관리</h2>
+            <p className="mb-4 text-[11.5px] leading-relaxed text-muted-foreground">
+              스위치를 끈 지점은 랭킹 · 명예의 전당 · 지점 선택에서 안 보여요. 회원·출석 기록은 지워지지 않고, 켜면 바로 돌아와요.
+            </p>
             <div className="mb-4 flex gap-2">
               <Input
                 value={newBranch}
@@ -661,7 +683,12 @@ const SettingsPage = () => {
                     </>
                   ) : (
                     <>
-                      <span className="flex-1 text-sm text-foreground">{b.name}</span>
+                      <span className={`flex-1 text-sm ${(b as { is_visible?: boolean }).is_visible === false ? "text-muted-foreground line-through" : "text-foreground"}`}>{b.name}</span>
+                      <Switch
+                        checked={(b as { is_visible?: boolean }).is_visible !== false}
+                        onCheckedChange={(on) => toggleBranchVisible(b.id, on)}
+                        aria-label={`${b.name} 앱에 보이기`}
+                      />
                       <button onClick={() => { setEditingId(b.id); setEditingName(b.name); }}
                         className="rounded-lg bg-muted p-1.5 text-muted-foreground transition-colors hover:text-foreground active:scale-95">
                         <Pencil className="h-3.5 w-3.5" />
@@ -684,6 +711,25 @@ const SettingsPage = () => {
         {/* 65-S: 마이페이지에서 이관 — 회원관리/가이드/153다이어트/로그아웃 */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.18s" }}>
           <h2 className="border-b border-border px-5 py-4 text-base font-bold text-foreground">메뉴</h2>
+          {/* 화면 커스텀 도구 — 전체관리자 계정 전용 (2026-10-15 대표님: 떠 있는 '커스텀' 버튼을 설정 메뉴로, 내 계정만) */}
+          {isSuperAdmin && (
+            <button
+              onClick={() => {
+                openTutorialCustomizer();
+                navigate("/home");
+              }}
+              className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">🛠️</span>
+                <span className="min-w-0 text-left">
+                  <span className="block text-sm text-foreground">화면 커스텀 도구</span>
+                  <span className="block text-[11px] text-muted-foreground">튜토리얼 강조 위치 · 순서 편집 (내 계정 전용)</span>
+                </span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
           {(role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin") && (
             <button onClick={() => navigate("/manager")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">

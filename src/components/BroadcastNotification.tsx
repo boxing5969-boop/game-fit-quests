@@ -30,8 +30,9 @@ const BroadcastNotification = () => {
     queryKey: ["branches-list"],
     enabled: isSuperAdmin,
     queryFn: async () => {
-      const { data } = await supabase.from("branches").select("name").order("name");
-      return data || [];
+      const { data } = await supabase.from("branches").select("*").order("name");
+      // 꺼진 지점(설정 > 지점 관리)은 보내기 대상에서 뺀다 (2026-10-15)
+      return (data || []).filter((b) => (b as { is_visible?: boolean }).is_visible !== false).map((b) => ({ name: b.name }));
     },
   });
 

@@ -497,7 +497,8 @@ function buildSelectorFor(el: Element): string {
 const TutorialCustomizer = () => {
   const { role } = useAuth();
   const eligible = shouldShowDevPanel(role);
-  const isAdmin = isAdminPreviewRole(role);
+  // 2026-10-15 대표님: 떠 있는 '커스텀' 버튼은 없애고 설정 메뉴에서 연다 — 전체관리자(super_admin) 계정만
+  const isAdmin = isAdminPreviewRole(role) && role === "super_admin";
 
   const camp = useTutorialCamp();
   const [open, setOpen] = useState(false);
@@ -555,8 +556,16 @@ const TutorialCustomizer = () => {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const onClose = () => setOpen(false);
+    const onOpen = () => {
+      setOpen(true);
+      setMinimized(false);
+    };
     window.addEventListener(CUSTOMIZER_CLOSE_EVENT, onClose);
-    return () => window.removeEventListener(CUSTOMIZER_CLOSE_EVENT, onClose);
+    window.addEventListener(CUSTOMIZER_OPEN_EVENT, onOpen);
+    return () => {
+      window.removeEventListener(CUSTOMIZER_CLOSE_EVENT, onClose);
+      window.removeEventListener(CUSTOMIZER_OPEN_EVENT, onOpen);
+    };
   }, []);
 
   // 64-AG: customizer 흐리게 / 선명 토글 — 회원이 홈 화면 잘 보이도록.
@@ -750,8 +759,8 @@ const TutorialCustomizer = () => {
         )}
       </AnimatePresence>
 
-      {/* floating button — 닫힘 상태 (open=false) */}
-      {!open && (
+      {/* floating button — 2026-10-15 숨김: 설정 > 메뉴 > 화면 커스텀 도구에서 연다 */}
+      {false && !open && (
         <motion.button
           type="button"
           initial={{ opacity: 0, x: 20 }}
@@ -1538,6 +1547,14 @@ function NewStepForm({
 
 // 64-AD: customizer sidebar 닫기 — window event 로 깊은 prop drilling 회피
 const CUSTOMIZER_CLOSE_EVENT = "tutorial-customizer-close";
+/** 설정 > 메뉴 > 화면 커스텀 도구 → 이 이벤트로 연다 (2026-10-15) */
+const CUSTOMIZER_OPEN_EVENT = "tutorial-customizer-open";
+export const openTutorialCustomizer = () => {
+  if (typeof window !== "undefined") {
+    // 홈으로 이동한 뒤 열리게 한 박자 늦춘다
+    window.setTimeout(() => window.dispatchEvent(new Event(CUSTOMIZER_OPEN_EVENT)), 400);
+  }
+};
 // 64-AG: customizer 흐리게 (닫지 않고 dim) — 회원이 화면 작업 가능, focus 시 복귀
 const CUSTOMIZER_DIM_EVENT = "tutorial-customizer-dim";
 // 64-AP: picker 중 sidebar 완전 hide (visibility:hidden + pointer-events:none) —

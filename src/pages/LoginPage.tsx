@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { isVisibleBranch } from "@/lib/branchVisibility";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useQuery } from "@tanstack/react-query";
@@ -198,7 +199,9 @@ const LoginPage = () => {
   const [signUpSuccess, setSignUpSuccess] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  const { data: branches } = useBranches();
+  const { data: allBranches } = useBranches();
+  // 꺼진 지점(설정 > 지점 관리)은 고를 수 없다 — 2026-10-15 선릉역점만
+  const branches = (allBranches ?? []).filter((b) => isVisibleBranch(b as { is_visible?: boolean }));
 
   // 이 기기·이 주소에서 지문/얼굴 로그인이 되는지 확인 후에만 버튼을 띄운다.
   useEffect(() => {

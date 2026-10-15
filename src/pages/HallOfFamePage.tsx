@@ -282,7 +282,8 @@ const HallOfFamePage = () => {
             }}
             chips={[
               { value: "__all__", label: "전 지점" },
-              ...(profile?.branch_name
+              // 내 지점이 꺼진 지점(예: 153본사)이면 칩을 숨긴다 (2026-10-15 지점 표시 설정)
+              ...(profile?.branch_name && branches.some((b) => b.name === profile.branch_name)
                 ? [{ value: "__mine__", label: `내 지점 (${profile.branch_name})` }]
                 : []),
               ...branches.map((b) => ({ value: b.name, label: b.name })),
