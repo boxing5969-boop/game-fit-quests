@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const QUEST_TYPE_LABELS: Record<string, string> = { main: "메인", sub: "서브", weekly: "주간", boss: "보스" };
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
@@ -192,7 +193,7 @@ const QuestManager = () => {
                     className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none">
                     <option value="">없음</option>
                     {sortedLevels.map(l => (
-                      <option key={l.id} value={l.id}>{RANK_LABELS[l.rank_name]} Lv.{l.level_number}</option>
+                      <option key={l.id} value={l.id}>{RANK_LABELS[l.rank_name]} Lv.{toGlobalLevel(l.rank_name, l.level_number)}</option>
                     ))}
                   </select>
                 </div>

@@ -12,6 +12,7 @@ import { Loader2, UserPlus } from "lucide-react";
 
 import { RANK_KOREAN_LABEL } from "@/data/cornermanMessages";
 import type { CornermanCandidate } from "@/services/boxingEngagementService";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 export interface CornermanCandidateListProps {
   candidates: CornermanCandidate[];
@@ -69,7 +70,7 @@ const CornermanCandidateList = ({
               </p>
               <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
                 {RANK_KOREAN_LABEL[c.current_rank] ?? c.current_rank} 리그 · Lv.
-                {c.current_level}
+                {toGlobalLevel(c.current_rank, c.current_level)}
                 {readOnly && c.branch_name ? ` · ${shortBranch(c.branch_name)}` : ""}
               </p>
             </div>

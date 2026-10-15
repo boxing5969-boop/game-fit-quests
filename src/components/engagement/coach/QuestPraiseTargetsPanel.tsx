@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronRight, Sparkles } from "lucide-react";
 
 import type { CoachPraiseTarget } from "@/services/boxingEngagementService";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const RANK_LABELS: Record<string, string> = {
   white: "화이트",
@@ -59,7 +60,7 @@ const QuestPraiseTargetsPanel = ({ targets }: Props) => {
                 </p>
                 <p className="mt-0.5 text-[10.5px] text-muted-foreground">
                   {RANK_LABELS[t.current_rank] ?? t.current_rank} Lv.
-                  {t.current_level}
+                  {toGlobalLevel(t.current_rank, t.current_level)}
                 </p>
                 <p className="mt-0.5 text-[10.5px] text-primary">{t.reason}</p>
                 <p className="mt-0.5 text-[10px] text-muted-foreground">

@@ -12,7 +12,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { isManagerRole } from "@/lib/rankLabels";
+import { isManagerRole, toGlobalLevel } from "@/lib/rankLabels";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { useLocalProgress } from "@/hooks/useLocalProgress";
 import { PROMOTION_METRICS, RECOMMENDED_PATHS } from "@/data/whiteLevel1Data";
@@ -224,7 +224,7 @@ const RankUpPage = () => {
                               : unlocked ? <Star className={`h-4 w-4 ${isCurrent ? "text-emerald-600 dark:text-primary" : "text-muted-foreground"}`} />
                               : <Lock className="h-4 w-4 text-muted-foreground" />}
                             <span className={`mt-0.5 text-[10px] font-bold ${isCurrent ? "text-emerald-700 dark:text-primary" : allDone ? "text-amber-700 dark:text-status-complete" : "text-muted-foreground"}`}>
-                              {node.is_boss ? "BOSS" : `Lv.${node.level_number}`}
+                              {node.is_boss ? "BOSS" : `Lv.${toGlobalLevel(node.rank_name, node.level_number)}`}
                             </span>
                             {total > 0 && unlocked && <span className="text-[8px] text-muted-foreground">{completed}/{total}</span>}
                           </button>
@@ -330,7 +330,7 @@ const RankUpPage = () => {
           <DrawerHeader className="pb-2">
             <div className="flex items-center gap-2">
               <span className="text-lg">{selectedNode ? RANK_ICONS[selectedNode.rank_name] : ""}</span>
-              <DrawerTitle>{selectedNode ? `${RANK_LABELS[selectedNode.rank_name]} Lv.${selectedNode.level_number}` : ""}</DrawerTitle>
+              <DrawerTitle>{selectedNode ? `${RANK_LABELS[selectedNode.rank_name]} Lv.${toGlobalLevel(selectedNode.rank_name, selectedNode.level_number)}` : ""}</DrawerTitle>
               {selectedNode?.is_boss && <span className="rounded-full bg-reward/20 px-2 py-0.5 text-xs font-bold text-reward-foreground">🏆 타이틀매치</span>}
             </div>
           </DrawerHeader>
@@ -388,7 +388,7 @@ const RankUpPage = () => {
               )}
               {isAdmin && user && !selectedNode.is_boss && (
                 <button onClick={async () => {
-                  try { const result = await levelUpMutation.mutateAsync(user.id); toast.success(`Lv.${result.new_level}로 레벨업! 🥊`); refreshProgress(); setSelectedNode(null); } catch (e: any) { toast.error(e?.message || "레벨업 실패"); }
+                  try { const result = await levelUpMutation.mutateAsync(user.id); toast.success(`Lv.${toGlobalLevel(result.current_rank, result.new_level)}로 레벨업! 🥊`); refreshProgress(); setSelectedNode(null); } catch (e: any) { toast.error(e?.message || "레벨업 실패"); }
                 }} disabled={levelUpMutation.isPending} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                   <ArrowUp className="mr-1 inline h-4 w-4" />{levelUpMutation.isPending ? "레벨업 중..." : "⚡ 즉시 레벨업 (관리자)"}
                 </button>

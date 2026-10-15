@@ -30,6 +30,7 @@ import { useBoxingEngagementSummary } from "@/hooks/useBoxingEngagement";
 import BoxingHallStatTile from "./BoxingHallStatTile";
 import LeagueStoryBadge from "./LeagueStoryBadge";
 import OsamiHallComment from "./OsamiHallComment";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const BoxingHallSummaryCard = () => {
   const navigate = useNavigate();
@@ -92,7 +93,7 @@ const BoxingHallSummaryCard = () => {
           <BoxingHallStatTile
             icon="🥊"
             label="레벨"
-            value={`Lv.${level}`}
+            value={`Lv.${toGlobalLevel(rank, level)}`}
           />
           <BoxingHallStatTile
             icon="🏆"

@@ -365,7 +365,7 @@ const MemberPreviewPage = () => {
                           isCurrent ? "border-primary bg-primary/10 ring-2 ring-primary/30" : STATUS_COLORS[status] || ""
                         }`}
                       >
-                        <span className="text-[10px] font-bold text-foreground">{lvl}</span>
+                        <span className="text-[10px] font-bold text-foreground">{gLvl}</span>
                         <span className="text-[10px]">{STATUS_EMOJI[status] || "🔒"}</span>
                       </button>
                     );

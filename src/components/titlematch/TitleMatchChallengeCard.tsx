@@ -27,6 +27,7 @@ import {
   titleMissionRules,
 } from "@/lib/titleMatchChallenge";
 import TitleAttemptList, { AttemptDots } from "./TitleAttemptList";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 interface Props {
   /** 지금 보는 칸의 리그 — 회원의 리그와 같을 때만 그린다 (화면에서 거른다) */
@@ -182,7 +183,7 @@ const TitleMatchChallengeCard = ({ league, level }: Props) => {
           </p>
         ) : (
           <p className="rounded-2xl bg-muted px-4 py-3 text-center text-[13px] font-bold text-muted-foreground">
-            레벨 10이 되면 여기서 신청할 수 있어요 · 지금 레벨 {state?.level ?? level}
+            레벨 {toGlobalLevel(league, 10)}이 되면 여기서 신청할 수 있어요 · 지금 레벨 {toGlobalLevel(state?.rank ?? league, state?.level ?? level)}
           </p>
         )}
       </div>

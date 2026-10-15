@@ -15,6 +15,7 @@ import CoachSparringInbox from "@/components/CoachSparringInbox";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import QuestCoachSummaryPanel from "@/components/engagement/coach/QuestCoachSummaryPanel";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
@@ -114,7 +115,7 @@ const CoachDashboard = () => {
     try {
       const result = await approveMutation.mutateAsync({ id: subId });
       if (result?.leveled_up) {
-        toast.success(`레벨 업! Lv.${result.new_level} (+${result.xp_granted} XP)`);
+        toast.success(`레벨 업! Lv.${toGlobalLevel(result.new_rank, result.new_level)} (+${result.xp_granted} XP)`);
       } else {
         toast.success(`승인 완료! +${result?.xp_granted || 0} XP`);
       }
@@ -157,7 +158,7 @@ const CoachDashboard = () => {
   const handleLevelUp = async (member: any) => {
     try {
       const result = await levelUpMutation.mutateAsync(member.user_id);
-      toast.success(`${member.nickname || member.name} → Lv.${result.new_level} 레벨업! 🥊`);
+      toast.success(`${member.nickname || member.name} → Lv.${toGlobalLevel(result.current_rank, result.new_level)} 레벨업! 🥊`);
     } catch (e: any) {
       if (e?.message?.includes("boss battle")) {
         toast.error("Lv.10은 타이틀매치로 리그 승격해야 합니다");
@@ -177,7 +178,7 @@ const CoachDashboard = () => {
     if (!confirm(`${member.nickname || member.name}을(를) 1레벨 강등하시겠습니까?`)) return;
     try {
       const result = await levelDownMutation.mutateAsync(member.user_id);
-      toast.success(`${member.nickname || member.name} → ${RANK_LABELS[result.new_rank] || result.new_rank} Lv.${result.new_level}로 강등`);
+      toast.success(`${member.nickname || member.name} → ${RANK_LABELS[result.new_rank] || result.new_rank} Lv.${toGlobalLevel(result.new_rank, result.new_level)}로 강등`);
     } catch (e: any) {
       toast.error(e?.message || "강등 실패");
     }
@@ -187,7 +188,7 @@ const CoachDashboard = () => {
     if (!levelSetModal.memberId) return;
     try {
       const result = await setLevelMutation.mutateAsync({ memberId: levelSetModal.memberId, rank: setRank, level: setLevel });
-      toast.success(`${levelSetModal.memberName} → ${RANK_LABELS[result.new_rank] || result.new_rank} Lv.${result.new_level} 설정 완료`);
+      toast.success(`${levelSetModal.memberName} → ${RANK_LABELS[result.new_rank] || result.new_rank} Lv.${toGlobalLevel(result.new_rank, result.new_level)} 설정 완료`);
       setLevelSetModal({ show: false, memberId: "", memberName: "", currentRank: "white", currentLevel: 1 });
     } catch (e: any) {
       toast.error(e?.message || "레벨 설정 실패");
@@ -319,7 +320,7 @@ const CoachDashboard = () => {
                       {prog && (
                         <div className="mt-1 flex items-center gap-2">
                           <span className="rounded-full bg-rank-blue/15 px-2 py-0.5 text-[10px] font-bold text-rank-blue">
-                            {RANK_LABELS[prog.current_rank] || prog.current_rank} Lv.{prog.current_level}
+                            {RANK_LABELS[prog.current_rank] || prog.current_rank} Lv.{toGlobalLevel(prog.current_rank, prog.current_level)}
                           </span>
                           <span className="text-[10px] text-muted-foreground">{prog.total_xp} XP</span>
                         </div>
@@ -572,7 +573,7 @@ const CoachDashboard = () => {
           <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
             <h3 className="mb-4 text-lg text-foreground">⚙️ 레벨 직접 설정</h3>
             <p className="mb-3 text-sm text-muted-foreground">대상: <strong className="text-foreground">{levelSetModal.memberName}</strong></p>
-            <p className="mb-3 text-xs text-muted-foreground">현재: {RANK_LABELS[levelSetModal.currentRank] || levelSetModal.currentRank} Lv.{levelSetModal.currentLevel}</p>
+            <p className="mb-3 text-xs text-muted-foreground">현재: {RANK_LABELS[levelSetModal.currentRank] || levelSetModal.currentRank} Lv.{toGlobalLevel(levelSetModal.currentRank, levelSetModal.currentLevel)}</p>
             <div className="space-y-3">
               <div>
                 <label className="mb-1 block text-xs text-muted-foreground">랭크</label>
@@ -585,18 +586,18 @@ const CoachDashboard = () => {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">레벨 (1~10)</label>
+                <label className="mb-1 block text-xs text-muted-foreground">레벨 ({toGlobalLevel(setRank, 1)}~{toGlobalLevel(setRank, 10)})</label>
                 <div className="flex gap-1.5 flex-wrap">
                   {Array.from({ length: 10 }, (_, i) => i + 1).map(l => (
                     <button key={l} onClick={() => setSetLevel(l)}
                       className={`h-9 w-9 rounded-lg text-sm font-bold transition-all ${setLevel === l ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
-                    >{l}</button>
+                    >{toGlobalLevel(setRank, l)}</button>
                   ))}
                 </div>
               </div>
               <button onClick={handleSetLevel} disabled={setLevelMutation.isPending}
                 className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
-                {setLevelMutation.isPending ? "설정 중..." : `${RANK_LABELS[setRank] || setRank} Lv.${setLevel}로 설정`}
+                {setLevelMutation.isPending ? "설정 중..." : `${RANK_LABELS[setRank] || setRank} Lv.${toGlobalLevel(setRank, setLevel)}로 설정`}
               </button>
             </div>
           </div>
@@ -641,7 +642,7 @@ const MemberDetailModal = ({ member, onClose }: { member: any; onClose: () => vo
           <div className="mb-4 rounded-xl bg-secondary p-4">
             <div className="flex items-center justify-between">
               <span className="rounded-full bg-rank-blue/15 px-2 py-0.5 text-xs font-bold text-rank-blue">
-                {RANK_LABELS[prog.current_rank] || prog.current_rank} Lv.{prog.current_level}
+                {RANK_LABELS[prog.current_rank] || prog.current_rank} Lv.{toGlobalLevel(prog.current_rank, prog.current_level)}
               </span>
               <span className="text-sm font-bold text-foreground">{prog.total_xp} XP</span>
             </div>

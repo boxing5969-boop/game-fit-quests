@@ -18,6 +18,7 @@ import { RANK_LABELS } from "@/data/sharedConstants";
 import type { Enums } from "@/integrations/supabase/types";
 
 import GrowthReportDetailSheet from "./GrowthReportDetailSheet";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const GrowthReportCard = () => {
   const { report, isLoading } = useGrowthReport();
@@ -67,7 +68,7 @@ const GrowthReportCard = () => {
                     리그·레벨
                   </p>
                   <p className="number-font mt-0.5 text-[13px] font-black text-foreground">
-                    {RANK_LABELS[rank]} {report.official.currentLevel}
+                    {RANK_LABELS[rank]} {toGlobalLevel(rank, report.official.currentLevel)}
                   </p>
                 </div>
                 <div className="rounded-card border border-border bg-background/40 px-3 py-2">

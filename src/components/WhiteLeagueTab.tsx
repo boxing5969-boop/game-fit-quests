@@ -45,6 +45,7 @@ import CharacterSprite from "@/components/CharacterSprite";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SparringConsentModal from "@/components/SparringConsentModal";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 type LevelState = "complete" | "active" | "locked";
 type DetailView = null | { league: string; level: number };
@@ -375,7 +376,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         <button onClick={() => setShowSession(false)} className="flex items-center gap-1.5 text-sm font-bold text-primary active:scale-95">
           <ArrowLeft className="h-4 w-4" /> 돌아가기
         </button>
-        <SessionRunner blocks={composedBlocks ?? sessionBlocks} levelLabel={`${league.charAt(0).toUpperCase()}${league.slice(1)} Lv.${levelNum}`} onComplete={() => setShowSession(false)} />
+        <SessionRunner blocks={composedBlocks ?? sessionBlocks} levelLabel={`${league.charAt(0).toUpperCase()}${league.slice(1)} Lv.${toGlobalLevel(league, levelNum)}`} onComplete={() => setShowSession(false)} />
       </div>
     );
   }
@@ -765,7 +766,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           {showSessionEditor && sessionLevelKey && (
             <SessionTemplateEditor
               levelKey={sessionLevelKey}
-              levelLabel={`${league.charAt(0).toUpperCase()}${league.slice(1)} Lv.${levelNum}`}
+              levelLabel={`${league.charAt(0).toUpperCase()}${league.slice(1)} Lv.${toGlobalLevel(league, levelNum)}`}
               initialBlocks={sessionBlocks ?? []}
               onClose={() => setShowSessionEditor(false)}
               onSaved={() => {

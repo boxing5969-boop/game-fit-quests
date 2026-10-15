@@ -19,7 +19,7 @@ import { useDivisionRanking } from "@/hooks/useRankingData";
 import { supabase } from "@/integrations/supabase/client";
 
 import type { Enums } from "@/integrations/supabase/types";
-import { isManagerRole } from "@/lib/rankLabels";
+import { isManagerRole, toGlobalLevel } from "@/lib/rankLabels";
 import { getLevelById } from "@/data/allLevelsData";
 import { RANK_LABELS } from "@/data/sharedConstants";
 
@@ -494,7 +494,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
             name={displayName}
             score={totalXp}
             isMe
-            meta={staffCard ? staffChampionLine(profile) : `${RANK_LABELS[rank]} · Lv.${progress.current_level}`}
+            meta={staffCard ? staffChampionLine(profile) : `${RANK_LABELS[rank]} · Lv.${toGlobalLevel(rank, progress.current_level)}`}
             avatar={
               myCharacter?.character_presets ? (
                 <CharacterSprite

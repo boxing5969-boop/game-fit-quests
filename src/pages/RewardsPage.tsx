@@ -3,7 +3,7 @@ import { User, Crown, Trophy, Flame, Medal } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
-import { isManagerRole } from "@/lib/rankLabels";
+import { isManagerRole, toGlobalLevel } from "@/lib/rankLabels";
 import { RANK_LABELS } from "@/data/sharedConstants";
 import { cn } from "@/lib/utils";
 
@@ -356,7 +356,7 @@ function getXpToNext(level: number, rank: string): number {
 
 function getNextRankLabel(rank: string, level: number): string {
   // Next level within the same league
-  if (level < 10) return `Lv.${level + 1}`;
+  if (level < 10) return `Lv.${toGlobalLevel(rank, level + 1)}`;
   // End of league → next league label
   const rankIdx = ["white", "blue", "red", "black"].indexOf(rank);
   if (rankIdx === -1 || rankIdx >= 3) return "마스터";

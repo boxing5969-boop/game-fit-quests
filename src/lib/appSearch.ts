@@ -14,6 +14,7 @@
  *   · 초성만 쳐도 된다 — "ㅌㅇㅌㅁㅊ" → 타이틀매치
  */
 import type { MenuGlyphName } from "@/components/icons/menuGlyphs";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 export type SearchGroup = "feature" | "video" | "lesson";
 
@@ -363,13 +364,16 @@ export function videoEntry(v: VideoSource): SearchEntry {
   const isTitle = v.level === 10 && v.category !== "warmup";
   const isWarmup = v.category === "warmup";
   const rankKo = v.rank ? RANK_KO[v.rank] ?? v.rank : "";
-  const where = isWarmup ? "워밍업 영상" : rankKo && v.level ? `${rankKo} L${v.level}` : "153 영상";
+  const where = isWarmup ? "워밍업 영상" : rankKo && v.level ? `${rankKo} L${toGlobalLevel(v.rank, v.level)}` : "153 영상";
+  // 화면은 누적 레벨(블루 L3 → L13) — 보이는 숫자로 찾아도 나오게 누적 레벨 검색어도 넣는다
+  const gLevel = v.level ? toGlobalLevel(v.rank, v.level) : 0;
   const versions = v.variants && v.variants.length > 1 ? v.variants : null;
   // 대표 말고 다른 버전 이름 — "애니메이션"으로 찾아도 이 동작이 나온다
   const extraLabels = versions ? versions.slice(1).map((x) => x.label) : [];
   const keywords = [
     tag, sub, v.description ?? "", ...v.keyPoints, ...extraLabels,
     rankKo, v.level ? `레벨${v.level}` : "", v.level ? `레벨 ${v.level}` : "",
+    gLevel && gLevel !== v.level ? `레벨${gLevel}` : "", gLevel && gLevel !== v.level ? `레벨 ${gLevel}` : "",
     "영상", "동영상",
     ...(isTitle ? ["타이틀매치", "타이틀 매치", "타이틀매치 미션", "타이틀미션", "미션", "심사", "심사 동작", "승급 심사", "관문"] : []),
     ...(isWarmup ? ["워밍업", "몸풀기", "준비운동", "줄넘기"] : ["레벨 미션", "미션 영상"]),

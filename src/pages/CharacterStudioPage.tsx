@@ -45,6 +45,7 @@ import {
   type CustomizationOption,
 } from "@/data/characterCustomizationData";
 import { EFFECT_ART } from "@/data/effectArt";
+import { toGlobalLevel } from "@/lib/rankLabels";
 import {
   computeUserLevel,
   getUnlockStatus,
@@ -529,7 +530,7 @@ const CharacterStudioPage = () => {
               <div className="mt-2 flex items-center gap-2">
                 <span className={cn("badge-pill", LEAGUE_COLORS[currentLeague])}>
                   {LEAGUE_LABELS[currentLeague]} 리그 · Lv.
-                  <span className="number-font">{currentLevel}</span>
+                  <span className="number-font">{toGlobalLevel(currentLeague, currentLevel)}</span>
                 </span>
               </div>
 
@@ -761,7 +762,7 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
       <div className="grid grid-cols-3 gap-2">
         <StatCard
           label="현재 리그"
-          value={`${LEAGUE_LABELS[league]} · Lv.${level}`}
+          value={`${LEAGUE_LABELS[league]} · Lv.${toGlobalLevel(league, level)}`}
           accent="accent"
           icon={<Sparkles className="h-5 w-5" />}
         />
@@ -802,7 +803,7 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
               <p className="text-[10px] text-primary mt-0.5">
                 {LEAGUE_LABELS[nextMilestone.league]} 리그 Lv.
                 <span className="number-font">
-                  {nextMilestone.levelRange[0]}
+                  {toGlobalLevel(nextMilestone.league, nextMilestone.levelRange[0])}
                 </span>{" "}
                 도달 시
               </p>
@@ -1952,7 +1953,7 @@ function GrowthTab({ league, level }: { league: string; level: number }) {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-foreground">{m.label}</span>
                   <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${LEAGUE_COLORS[m.league]}`}>
-                    {LEAGUE_LABELS[m.league]} Lv.{m.levelRange[0]}-{m.levelRange[1]}
+                    {LEAGUE_LABELS[m.league]} Lv.{toGlobalLevel(m.league, m.levelRange[0])}-{toGlobalLevel(m.league, m.levelRange[1])}
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">{m.description}</p>

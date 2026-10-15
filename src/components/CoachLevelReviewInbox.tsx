@@ -14,6 +14,7 @@ import { parseVideoTitle } from "@/hooks/useLevelVideos";
 import { isTitleFlowFor, isTitleFlowLeague, retryAtFrom, DEFAULT_MAX_ATTEMPTS } from "@/lib/titleMatchChallenge";
 import TitleMatchJudgePanel from "@/components/titlematch/TitleMatchJudgePanel";
 import { toast } from "sonner";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 // Quick feedback templates — 승인/보완 시 approval_note 로 전송됨
 const QUICK_FEEDBACK = [
@@ -424,7 +425,7 @@ const ReviewCard = ({ member, busy, onDecide }: {
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="whitespace-nowrap text-sm font-bold text-foreground">{member.nickname}</span>
           <span className="whitespace-nowrap text-[10px] text-muted-foreground">
-            {RANK_LABELS[member.rank] || member.rank} Lv.{member.level}
+            {RANK_LABELS[member.rank] || member.rank} Lv.{toGlobalLevel(member.rank, member.level)}
           </span>
           {isTitleMatch && (
             <span className="whitespace-nowrap rounded-full bg-reward/15 px-2 py-0.5 text-[9px] font-bold text-reward-foreground">

@@ -35,6 +35,7 @@ import { createPortal } from "react-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getTutorialCampState } from "@/features/tutorial-camp/tutorialCampStorage";
 import { isStaffProfile } from "@/lib/staffDisplay";
+import { toGlobalLevel } from "@/lib/rankLabels";
 import {
   WELCOME_LETTERS_KEY, buildLetter, fetchWelcomeLetters, resolveLetter,
   type LetterAudience, type LetterContent,
@@ -376,10 +377,10 @@ const WelcomeLetter = () => {
 
   const p = profile as unknown as LetterProfile;
   const memberName = (p?.nickname || p?.name || "복서").toString().trim() || "복서";
-  // {리그레벨} — 기존 회원은 화이트 L1 이 아닐 수 있다(예: "블루 리그, 레벨 3")
+  // {리그레벨} — 기존 회원은 화이트 L1 이 아닐 수 있다(예: "블루 리그, 레벨 13" — 레벨은 누적 표시)
   const prog = progress as unknown as { current_rank?: string; current_level?: number } | null;
   const rankKo = RANK_KO[(prog?.current_rank ?? "white") as RankKey] ?? RANK_KO.white;
-  const leagueLevel = `${rankKo} 리그, 레벨 ${Math.max(1, Number(prog?.current_level) || 1)}`;
+  const leagueLevel = `${rankKo} 리그, 레벨 ${toGlobalLevel(prog?.current_rank ?? "white", Math.max(1, Number(prog?.current_level) || 1))}`;
   // 코치님은 "이름 직함" — 제목이 "…님께" 로 끝나므로 직함에서 '님' 을 뗀다 (홍길동 코치 → 홍길동 코치님께)
   const coachTitle = ((p?.staff_title ?? "").trim() || (role === "branch_manager" ? "관장" : "코치")).replace(/님$/, "");
   const coachBase = ((p?.name ?? "").trim() || (p?.nickname ?? "").trim());

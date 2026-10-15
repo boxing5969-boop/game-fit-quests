@@ -9,6 +9,7 @@ import { CheckCircle2, Clock, Users, AlertTriangle, TrendingUp, ChevronDown, Shi
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 interface TodayVisitor {
   userId: string;
@@ -200,7 +201,7 @@ const DailyOperationsBoard = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-foreground">{v.nickname}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      {RANK_LABELS[v.currentRank] || v.currentRank} Lv.{v.currentLevel}
+                      {RANK_LABELS[v.currentRank] || v.currentRank} Lv.{toGlobalLevel(v.currentRank, v.currentLevel)}
                     </p>
                   </div>
                 </div>
@@ -264,7 +265,7 @@ const DailyOperationsBoard = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="text-xs font-bold text-foreground">{v.nickname}</p>
-                      <span className="text-[9px] text-muted-foreground">{RANK_LABELS[v.currentRank]} Lv.{v.currentLevel}</span>
+                      <span className="text-[9px] text-muted-foreground">{RANK_LABELS[v.currentRank]} Lv.{toGlobalLevel(v.currentRank, v.currentLevel)}</span>
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${style.bg} ${style.text}`}>

@@ -14,6 +14,7 @@ import { useBoxerStyleDiagnosis } from "@/hooks/useBoxerStyleDiagnosis";
 import { BOXER_STYLE_METADATA } from "@/data/boxerStyleRules";
 import { RANK_LABELS } from "@/data/sharedConstants";
 import type { Enums } from "@/integrations/supabase/types";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const BoxerStyleDiagnosisCard = () => {
   const { progress } = useAuth();
@@ -79,7 +80,7 @@ const BoxerStyleDiagnosisCard = () => {
 
       <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
         ※ 복서 스타일은 QUEST 활동 데이터로 분석한 보조 표시입니다. 공식 리그
-        / 공식 레벨 ({RANK_LABELS[rank]} Lv.{level}) 와는 분리됩니다.
+        / 공식 레벨 ({RANK_LABELS[rank]} Lv.{toGlobalLevel(rank, level)}) 와는 분리됩니다.
       </p>
     </section>
   );

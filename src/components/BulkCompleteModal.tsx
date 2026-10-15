@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Award, CheckCircle2, Crown, Shield, Star, Trophy, X, Zap } from "lucide-react";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 interface Props {
   open: boolean;
@@ -110,7 +111,7 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
             <p className="text-xs text-muted-foreground">대상 회원</p>
             <p className="text-lg font-bold text-foreground">{memberName}</p>
             <p className="text-xs text-muted-foreground">
-              현재: {RANK_LABELS[currentRank] || currentRank} 리그 · 레벨 {currentLevel} · {currentXp} XP · 보스전 {bossesCleard}회
+              현재: {RANK_LABELS[currentRank] || currentRank} 리그 · 레벨 {toGlobalLevel(currentRank, currentLevel)} · {currentXp} XP · 보스전 {bossesCleard}회
             </p>
           </div>
 
@@ -234,7 +235,7 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
                 <ResultRow label="보스전 클리어" value={`${result.bosses_cleared}회`} />
                 <ResultRow label="배지 지급" value={`${result.badges_granted}개`} />
                 <ResultRow label="XP 보정" value={`+${result.xp_added}`} />
-                <ResultRow label="최종 상태" value={`${RANK_LABELS[result.final_rank]} 리그 · 레벨 ${result.final_level}`} highlight />
+                <ResultRow label="최종 상태" value={`${RANK_LABELS[result.final_rank]} 리그 · 레벨 ${toGlobalLevel(result.final_rank, result.final_level)}`} highlight />
                 {result.master40 && <ResultRow label="MASTER 40" value="달성 ✅" highlight />}
               </div>
 

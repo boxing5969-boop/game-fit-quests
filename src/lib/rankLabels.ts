@@ -15,13 +15,21 @@ export const RANK_ICONS: Record<string, string> = {
 
 export const RANK_ORDER = ["white", "blue", "red", "black"] as const;
 
-/** Format rank display: "화이트 리그 · 레벨 3" */
-export const formatRank = (rank: string, level: number) =>
-  `${RANK_LABELS[rank] || rank} 리그 · 레벨 ${level}`;
+/** 화면 표시용 누적 레벨 — DB 는 리그마다 1~10, 화면은 화이트 1~10 · 블루 11~20 · 레드 21~30 · 블랙 31~40 (2026-10-15 대표님) */
+export const toGlobalLevel = (rank: string | null | undefined, level: number | null | undefined): number => {
+  const lv = Number(level ?? 0);
+  const i = RANK_ORDER.indexOf((rank ?? "") as (typeof RANK_ORDER)[number]);
+  if (i < 0 || lv > 10) return lv; // 알 수 없는 리그거나 이미 누적 값이면 그대로
+  return i * 10 + lv;
+};
 
-/** Short format for badges/cards: "화이트 L3" */
+/** Format rank display: "블루 리그 · 레벨 13" (레벨은 누적 표시) */
+export const formatRank = (rank: string, level: number) =>
+  `${RANK_LABELS[rank] || rank} 리그 · 레벨 ${toGlobalLevel(rank, level)}`;
+
+/** Short format for badges/cards: "블루 L13" (레벨은 누적 표시) */
 export const formatRankShort = (rank: string, level: number) =>
-  `${RANK_LABELS[rank] || rank} L${level}`;
+  `${RANK_LABELS[rank] || rank} L${toGlobalLevel(rank, level)}`;
 
 /** Role labels for UI */
 export const ROLE_LABELS: Record<string, { label: string; color: string }> = {

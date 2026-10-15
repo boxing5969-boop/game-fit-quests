@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
@@ -132,7 +133,7 @@ const LevelManager = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm">{RANK_ICONS[l.rank_name]}</span>
-                  <span className="text-xs font-bold text-muted-foreground">{RANK_LABELS[l.rank_name]} Lv.{l.level_number}</span>
+                  <span className="text-xs font-bold text-muted-foreground">{RANK_LABELS[l.rank_name]} Lv.{toGlobalLevel(l.rank_name, l.level_number)}</span>
                   {l.is_boss && <span className="rounded-full bg-reward/20 px-1.5 py-0.5 text-[9px] font-bold text-reward-foreground">BOSS</span>}
                 </div>
                 <p className="mt-0.5 text-sm font-bold text-foreground truncate">{l.title}</p>

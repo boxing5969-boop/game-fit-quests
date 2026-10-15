@@ -16,6 +16,7 @@ import {
   type OsamiPersona,
 } from "@/data/osamiEngagementMessages";
 import { useBoxingEngagementSummary } from "@/hooks/useBoxingEngagement";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const PERSONA_LABEL: Record<OsamiPersona, string> = {
   white: "자상한 관장님",
@@ -66,7 +67,7 @@ const OsamiDailyBriefingCard = () => {
             오삼 코치 · 오늘의 브리핑
           </p>
           <p className="mt-0.5 truncate text-[14px] font-bold text-foreground">
-            {RANK_LABELS[rank]} 리그 · Lv.{progress?.current_level ?? 1}
+            {RANK_LABELS[rank]} 리그 · Lv.{toGlobalLevel(rank, progress?.current_level ?? 1)}
             <span className="ml-2 text-[11px] font-medium text-muted-foreground">
               {PERSONA_LABEL[persona]}
             </span>

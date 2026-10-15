@@ -16,6 +16,7 @@ import { RANK_LABELS } from "@/data/sharedConstants";
 import { hasPracticedToday } from "@/lib/levelPractice";
 import { isTitleFlowFor, titleMatchLink } from "@/lib/titleMatchChallenge";
 import { useNavigate } from "react-router-dom";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 interface Cycle {
   sessions: number; days: number; minutes: number;
@@ -409,7 +410,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
         <div className="mb-3 flex items-center justify-between">
           <p className="text-sm font-black text-foreground">🏆 레벨업까지</p>
           <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">
-            {RANK_LABELS[league] || league} Lv.{levelNumber}{levelTitle ? ` · ${levelTitle}` : ""}
+            {RANK_LABELS[league] || league} Lv.{toGlobalLevel(league, levelNumber)}{levelTitle ? ` · ${levelTitle}` : ""}
           </span>
         </div>
         <div

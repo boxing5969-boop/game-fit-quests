@@ -5,6 +5,7 @@
  */
 
 import { RANK_LABELS } from "@/data/sharedConstants";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const STORY: Record<string, { archetype: string; tagline: string }> = {
   white: {
@@ -37,7 +38,7 @@ const LeagueStoryBadge = ({ rank, level }: LeagueStoryBadgeProps) => {
   return (
     <div className="rounded-card border border-primary/15 bg-primary/5 px-3 py-2.5">
       <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-        {rankLabel} 리그{level != null ? ` · Lv.${level}` : ""}
+        {rankLabel} 리그{level != null ? ` · Lv.${toGlobalLevel(rank, level)}` : ""}
       </p>
       <p className="mt-1 text-[13px] font-bold text-foreground">
         {s.archetype}

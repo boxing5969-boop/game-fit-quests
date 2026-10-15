@@ -1,7 +1,7 @@
 /**
  * 메시지(DM) 사람 표기 — 지점 짧은 이름 · 이름 아래 한 줄.
  */
-import { RANK_LABELS } from "@/lib/rankLabels";
+import { RANK_LABELS, toGlobalLevel } from "@/lib/rankLabels";
 import type { DmPerson } from "@/services/dmService";
 
 /** "153복싱짐 선릉역점" → "선릉역점" */
@@ -13,6 +13,6 @@ export const dmPersonLine = (p: Pick<DmPerson, "kind" | "rank" | "level" | "bran
   const branch = withBranch ? shortBranch(p.branch) : "";
   if (p.kind === "coach") return branch ? `${branch} 지도진` : "지도진";
   if (p.kind === "hq") return "153 본사";
-  const league = `${RANK_LABELS[(p.rank ?? "white").toLowerCase()] ?? "화이트"} L${p.level ?? 1}`;
+  const league = `${RANK_LABELS[(p.rank ?? "white").toLowerCase()] ?? "화이트"} L${toGlobalLevel((p.rank ?? "white").toLowerCase(), p.level ?? 1)}`;
   return branch ? `${league} · ${branch}` : league;
 };

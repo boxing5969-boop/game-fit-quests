@@ -12,6 +12,7 @@ import { CheckCircle2, Circle, LogOut } from "lucide-react";
 
 import { CORNERMAN_COPY, RANK_KOREAN_LABEL } from "@/data/cornermanMessages";
 import type { CornermanStatus } from "@/services/boxingEngagementService";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 export interface CornermanStatusPanelProps {
   status: CornermanStatus;
@@ -58,7 +59,7 @@ const CornermanStatusPanel = ({
         </p>
         <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
           {RANK_KOREAN_LABEL[status.partner_rank ?? "white"]} 리그 · Lv.
-          {status.partner_level ?? 1}
+          {toGlobalLevel(status.partner_rank ?? "white", status.partner_level ?? 1)}
         </p>
       </div>
 

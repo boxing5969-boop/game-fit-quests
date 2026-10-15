@@ -26,6 +26,7 @@ import type { ReactNode } from "react";
 import { STAFF_CHAMPION_LEVEL } from "@/lib/staffDisplay";
 import LeagueBadge from "@/components/badges/LeagueBadge";
 import NameBadge from "@/components/badges/NameBadge";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const RANK_LABELS: Record<string, string> = {
   white: "WHITE",
@@ -580,7 +581,8 @@ const BoxerLicenseCard = ({
               {/* 리그 방패 — 'WHITE / 방패 / Lv.10' 줄 (2026-10-15 대표님) */}
               <LeagueBadge league={rankKey} className={`${cfg.ptBadge} shrink-0`} />
               <span className={`font-black text-white ${cfg.levelText}`}>
-                Lv.{level}
+                {/* 누적 레벨 표시 — 마스터 트랙의 전체 레벨(>10)은 그대로, 블랙 10 은 40 */}
+                Lv.{toGlobalLevel(rankKey, level)}
               </span>
             </div>
             )}

@@ -6,7 +6,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { resolveBranchCode } from "@/lib/branchAlias";
 import logoWhite from "@/assets/branding/153-logo-white.png";
 import { supabase } from "@/integrations/supabase/client";
-import { RANK_LABELS } from "@/lib/rankLabels";
+import { RANK_LABELS, toGlobalLevel } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Building2, Clock, X, Trophy, RotateCcw, Medal } from "lucide-react";
 import { toast } from "sonner";
@@ -689,7 +689,7 @@ const LiveBoardPage = () => {
   }, [avatarMap]);
 
   const triggerLevelUp = useCallback(
-    async (userId: string, oldLevel: number, newLevel: number, league: string) => {
+    async (userId: string, oldLevel: number, newLevel: number, league: string, oldLeague?: string) => {
       // 코치님(지도진)은 TV 에서 챔피언 · Lv.77 — 회원 레벨업 연출을 띄우지 않는다.
       if (await isStaffUser(userId)) return;
       const active = activeMembersRef.current.find((m) => m.user_id === userId);
@@ -723,6 +723,7 @@ const LiveBoardPage = () => {
         user_id: userId,
         name,
         league,
+        oldLeague,
         oldLevel,
         newLevel,
         avatar_url: avatar,
@@ -765,7 +766,7 @@ const LiveBoardPage = () => {
           const oldLevel = Number(snapLevel) || 1;
           if (after > before || (after === before && row.current_level > oldLevel)) {
             knownLevelsRef.current.set(userId, row.current_level);
-            void triggerLevelUp(userId, oldLevel, row.current_level, row.current_rank || "white");
+            void triggerLevelUp(userId, oldLevel, row.current_level, row.current_rank || "white", snapRank || "white");
           }
         } catch {
           /* 레벨업 연출은 부가 기능 — 실패해도 조용히 넘어간다 */
@@ -1065,7 +1066,7 @@ const LiveBoardPage = () => {
                       {latestPopup.display_name_snapshot}
                     </p>
                     <p className="mt-1 text-xl font-bold text-primary">
-                      입실! · Lv.{latestPopup.level_snapshot}
+                      입실! · Lv.{toGlobalLevel(latestPopup.league_snapshot, latestPopup.level_snapshot)}
                     </p>
                   </div>
                 )}
@@ -1291,7 +1292,7 @@ const LiveBoardPage = () => {
                           <span className={`inline-flex px-2 py-0.5 rounded text-sm font-black ${RANK_BADGE_COLORS[m.league] || "bg-gray-700 text-gray-300"}`}>
                             {RANK_LABELS[m.league] || m.league} 리그
                           </span>
-                          <span className="text-lg text-gray-400 font-bold">레벨 {m.level}</span>
+                          <span className="text-lg text-gray-400 font-bold">레벨 {toGlobalLevel(m.league, m.level)}</span>
                           <span className="text-gray-600">·</span>
                           <Clock className="h-4 w-4 text-gray-500 inline" />
                           <span className="text-lg text-gray-500 font-bold">{elapsedMin(m.startedAt)}분</span>

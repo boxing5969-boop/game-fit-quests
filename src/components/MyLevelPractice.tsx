@@ -18,7 +18,7 @@ import { ArrowLeft, CheckCircle2, Play, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { getLevelById } from "@/data/allLevelsData";
-import { RANK_LABELS, RANK_ORDER, formatRank } from "@/lib/rankLabels";
+import { RANK_LABELS, RANK_ORDER, formatRank, toGlobalLevel } from "@/lib/rankLabels";
 import VideoPlayer from "@/components/VideoPlayer";
 import {
   useLevelVideos, useWarmupVideos, useWatchedVideos, parseVideoTitle, youtubeId, youtubeThumb,
@@ -113,7 +113,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
       : hereLevel === TITLE_LEVEL
         ? `지금이 타이틀매치예요 — 통과하면 ${NEXT_STAGE[league] ?? "다음 단계"}!`
         : hereLevel >= 1
-          ? `지금 레벨 ${hereLevel} · 타이틀매치까지 ${TITLE_LEVEL - hereLevel}레벨 남았어요`
+          ? `지금 레벨 ${toGlobalLevel(league, hereLevel)} · 타이틀매치까지 ${TITLE_LEVEL - hereLevel}레벨 남았어요`
           : `${leagueLabel} 리그 미리 보기`;
 
   const isTitleView = viewLevel === TITLE_LEVEL;
@@ -192,7 +192,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
             <Trophy className="h-5 w-5 text-reward" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-black tracking-wide text-reward">최종 목표 · 레벨 {TITLE_LEVEL}</p>
+            <p className="text-[11px] font-black tracking-wide text-reward">최종 목표 · 레벨 {toGlobalLevel(league, TITLE_LEVEL)}</p>
             <p className="text-base font-black leading-snug text-foreground">{leagueLabel} 타이틀매치</p>
           </div>
         </div>
@@ -286,12 +286,12 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
                 disabled={!canView(n)}
                 onClick={() => setViewLevel(n)}
                 aria-pressed={isView}
-                aria-label={`레벨 ${n}${isGoal ? " 타이틀매치" : ""}${st === "current" ? " (지금 레벨)" : st === "locked" ? " (잠김)" : ""}`}
+                aria-label={`레벨 ${toGlobalLevel(league, n)}${isGoal ? " 타이틀매치" : ""}${st === "current" ? " (지금 레벨)" : st === "locked" ? " (잠김)" : ""}`}
                 className={`number-font flex aspect-square w-full items-center justify-center rounded-full text-[11px] font-black transition-all active:scale-90 disabled:active:scale-100 ${tone} ${
                   isView ? "ring-2 ring-foreground/60 ring-offset-1 ring-offset-card" : ""
                 }`}
               >
-                {isGoal ? "🏆" : n}
+                {isGoal ? "🏆" : toGlobalLevel(league, n)}
               </button>
             );
           })}
@@ -307,7 +307,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
         <div className="flex items-end justify-between gap-2">
           <div className="min-w-0">
             <h3 className="text-sm font-black text-foreground">
-              {isTitleView ? `🏆 ${leagueLabel} 타이틀매치 동작` : `🥊 레벨 ${viewLevel} 동작`}
+              {isTitleView ? `🏆 ${leagueLabel} 타이틀매치 동작` : `🥊 레벨 ${toGlobalLevel(league, viewLevel)} 동작`}
               {isReview && (
                 <span className="ml-1.5 rounded-full bg-secondary px-1.5 py-0.5 align-middle text-[10px] font-bold text-secondary-foreground">
                   복습
@@ -330,7 +330,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
             onClick={() => setViewLevel(levelNumber)}
             className="text-[12px] font-bold text-primary active:scale-95"
           >
-            ← 레벨 {levelNumber} 동작으로 돌아가기
+            ← 레벨 {toGlobalLevel(league, levelNumber)} 동작으로 돌아가기
           </button>
         )}
 

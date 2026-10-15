@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ChevronRight } from "lucide-react";
 
 import type { CoachAtRiskMember } from "@/services/boxingEngagementService";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const RANK_LABELS: Record<string, string> = {
   white: "화이트",
@@ -59,7 +60,7 @@ const QuestAtRiskMembersPanel = ({ members }: Props) => {
                 </p>
                 <p className="mt-0.5 text-[10.5px] text-muted-foreground">
                   {RANK_LABELS[m.current_rank] ?? m.current_rank} Lv.
-                  {m.current_level} · 비활동 {m.inactive_days}일
+                  {toGlobalLevel(m.current_rank, m.current_level)} · 비활동 {m.inactive_days}일
                 </p>
                 <p className="mt-0.5 text-[10.5px] text-amber-700">
                   {m.suggested_action}

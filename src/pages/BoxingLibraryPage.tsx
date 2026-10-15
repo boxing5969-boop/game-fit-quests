@@ -23,6 +23,7 @@ import {
 } from "@/hooks/useLevelVideos";
 import VideoVariantTabs from "@/components/common/VideoVariantTabs";
 import { extraVariantLabels } from "@/lib/missionVideos";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 // ───────────────────────── 스타일 (원본 153플레이 그대로) ─────────────────────────
 
@@ -625,8 +626,8 @@ const BoxingLibraryPage = () => {
   const rows = useMemo(() => {
     const top = (l: ProgramLite[], n = 24) => l.slice(0, n).map(W);
     const out: { t: string; items: Item[]; more?: string }[] = [
-      { t: `지금 내 레벨 · ${myLeagueLabel} L${initLevel}`, items: nowVideos.map(L), more: "mylv" },
-      { t: `다음 레벨 미리보기 · L${Math.min(10, initLevel + 1)}`,
+      { t: `지금 내 레벨 · ${myLeagueLabel} L${toGlobalLevel(myLeague, initLevel)}`, items: nowVideos.map(L), more: "mylv" },
+      { t: `다음 레벨 미리보기 · L${toGlobalLevel(myLeague, Math.min(10, initLevel + 1))}`,
         items: initLevel < 10 ? nextVideos.map(L) : [], more: "mylv" },
       { t: "레전드 매치 — 세계 타이틀전", items: top(byTag("명경기")), more: "lgd" },
       { t: "한국 복싱 서사", items: top(programs.filter((p) => p.country === "🇰🇷" && hasT(p, "명경기"))), more: "lgd" },
@@ -659,7 +660,7 @@ const BoxingLibraryPage = () => {
       if (ad.length) out.push({ t: "관리자 전용 · 권리 확인 필요", items: top(ad, 30) });
     }
     return out.filter((r) => r.items.length > 0);
-  }, [programs, libList, byTag, nowVideos, nextVideos, myLeagueLabel, initLevel, isAdmin, savedApi.saved, savedLevelVideos]);
+  }, [programs, libList, byTag, nowVideos, nextVideos, myLeague, myLeagueLabel, initLevel, isAdmin, savedApi.saved, savedLevelVideos]);
 
   // ── 카테고리 목록 ──
   const catList = useMemo(() => {
@@ -795,7 +796,7 @@ const BoxingLibraryPage = () => {
             <div className="seg">
               {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                 <button key={n} className={lvLevel === n ? "on" : ""} onClick={() => { setLvTouched(true); setLvLevel(n); }}>
-                  L{n}{lvLeague === myLeague && n === myLevel ? " ·지금" : ""}
+                  L{toGlobalLevel(lvLeague, n)}{lvLeague === myLeague && n === myLevel ? " ·지금" : ""}
                 </button>
               ))}
             </div>

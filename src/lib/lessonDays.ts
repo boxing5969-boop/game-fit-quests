@@ -6,6 +6,7 @@
  * "2일차 = 1일차 반복" 같은 날은 repeat_of_day 로 앞날 내용을 빌려 온다.
  */
 import { RANK_LABELS } from "@/data/sharedConstants";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 export type LessonStepKind = "warmup" | "step" | "punch" | "sandbag" | "strength";
 
@@ -161,16 +162,16 @@ export function leagueOf(level: number): { league: (typeof LEAGUES)[number]; n: 
   return { league: LEAGUES[Math.floor((g - 1) / 10)], n: ((g - 1) % 10) + 1 };
 }
 
-/** "화이트 리그 · 레벨 1" */
+/** "화이트 리그 · 레벨 1" — 레벨은 누적 표시 (블루 2 → 레벨 12) */
 export function levelLong(level: number): string {
   const { league, n } = leagueOf(level);
-  return `${RANK_LABELS[league] ?? league} 리그 · 레벨 ${n}`;
+  return `${RANK_LABELS[league] ?? league} 리그 · 레벨 ${toGlobalLevel(league, n)}`;
 }
 
-/** "화이트 L1" */
+/** "화이트 L1" — 레벨은 누적 표시 (블루 2 → L12) */
 export function levelShort(level: number): string {
   const { league, n } = leagueOf(level);
-  return `${RANK_LABELS[league] ?? league} L${n}`;
+  return `${RANK_LABELS[league] ?? league} L${toGlobalLevel(league, n)}`;
 }
 
 /** 오늘 카드 머리말 — 오늘 출석했으면 '오늘 수업', 아직이면 '다음 수업' (1일차 제목이 이미 '첫 수업'이라 겹치지 않게) */

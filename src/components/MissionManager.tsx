@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import { extraVariantLabels, primaryMissionVideo, videoVariants, type MissionVideoRow } from "@/lib/missionVideos";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const RANK_ORDER: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 const RANK_LABELS: Record<string, string> = { white: "화이트", blue: "블루", red: "레드", black: "블랙" };
@@ -198,7 +199,7 @@ const MissionManager = () => {
   const getLevelLabel = (levelId: string) => {
     const level = (levels || []).find(l => l.id === levelId);
     if (!level) return "?";
-    return `${RANK_ICONS[level.rank_name]} ${RANK_LABELS[level.rank_name]} Lv.${level.level_number}`;
+    return `${RANK_ICONS[level.rank_name]} ${RANK_LABELS[level.rank_name]} Lv.${toGlobalLevel(level.rank_name, level.level_number)}`;
   };
 
   return (
@@ -288,7 +289,7 @@ const MissionManager = () => {
                   <option value="">레벨 선택</option>
                   {sortedLevels.map(l => (
                     <option key={l.id} value={l.id}>
-                      {RANK_LABELS[l.rank_name]} Lv.{l.level_number} - {l.title}
+                      {RANK_LABELS[l.rank_name]} Lv.{toGlobalLevel(l.rank_name, l.level_number)} - {l.title}
                     </option>
                   ))}
                 </select>

@@ -8,6 +8,7 @@
 import { ChevronRight } from "lucide-react";
 import { RANK_LABELS } from "@/data/sharedConstants";
 import type { SecondCheerCandidate } from "@/services/boxingEngagementService";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const RANK_TONE: Record<string, string> = {
   white: "bg-zinc-200 text-zinc-800",
@@ -43,7 +44,7 @@ const SecondCheerCard = ({ candidate, onSelect }: SecondCheerCardProps) => {
         <div className="mt-0.5 flex items-center gap-1.5">
           {rankLabel && candidate.current_level != null ? (
             <span className={`badge-pill text-[9.5px] ${tone}`}>
-              {rankLabel} · Lv.{candidate.current_level}
+              {rankLabel} · Lv.{toGlobalLevel(rank, candidate.current_level)}
             </span>
           ) : null}
           <span className="truncate text-[10.5px] text-muted-foreground">

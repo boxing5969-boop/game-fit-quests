@@ -15,6 +15,7 @@ import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { GROWTH_REPORT_DISCLAIMERS } from "@/data/growthReportMessages";
 import { RANK_LABELS } from "@/data/sharedConstants";
 import type { Enums } from "@/integrations/supabase/types";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 interface Props {
   open: boolean;
@@ -88,7 +89,7 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
                     </p>
                     <ul className="mt-1.5 space-y-1 text-[12.5px] text-foreground">
                       <li>
-                        리그 / 레벨: <strong>{RANK_LABELS[rank]} Lv.{report.official.currentLevel}</strong>
+                        리그 / 레벨: <strong>{RANK_LABELS[rank]} Lv.{toGlobalLevel(rank, report.official.currentLevel)}</strong>
                       </li>
                       <li>
                         총 공식 XP:{" "}

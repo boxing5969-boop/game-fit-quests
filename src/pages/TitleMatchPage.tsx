@@ -363,7 +363,7 @@ const TitleMatchPage = () => {
               )}
               {isHq && (
                 <p className="mt-4 rounded-xl bg-secondary px-3 py-2.5 text-left text-[11.5px] leading-relaxed text-muted-foreground">
-                  관리자 안내 · 코치 화면 → 🎯 미션 → 추가에서 레벨을 ‘{stage.name} Lv.10’으로 고르고 영상 주소를
+                  관리자 안내 · 코치 화면 → 🎯 미션 → 추가에서 레벨을 ‘{stage.name} Lv.{stage.level}’으로 고르고 영상 주소를
                   넣으면 여기에 바로 나와요
                 </p>
               )}

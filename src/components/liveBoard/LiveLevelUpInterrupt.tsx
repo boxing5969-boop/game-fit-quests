@@ -21,6 +21,7 @@ import confetti from "canvas-confetti";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import CharacterSprite from "@/components/CharacterSprite";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 const RANK_LABELS: Record<string, string> = {
   white: "화이트",
@@ -47,6 +48,8 @@ export interface LevelUpEvent {
   user_id: string;
   name: string;
   league: string;
+  /** 레벨업 전 리그 — 리그 승급이면 league 와 다르다 (화면 누적 레벨 표시용) */
+  oldLeague?: string;
   oldLevel: number;
   newLevel: number;
   avatar_url?: string | null;
@@ -234,7 +237,7 @@ const LiveLevelUpInterrupt = ({
               </p>
               <div className="flex items-center justify-center gap-5">
                 <span className="rounded-xl bg-white/10 px-4 py-2 text-2xl font-black text-gray-300">
-                  Lv.{event.oldLevel}
+                  Lv.{toGlobalLevel((event.oldLeague ?? event.league).toLowerCase(), event.oldLevel)}
                 </span>
                 <span className="text-5xl font-black text-yellow-400">
                   →
@@ -253,7 +256,7 @@ const LiveLevelUpInterrupt = ({
                     boxShadow: "0 0 40px hsla(42, 90%, 64%, 0.5)",
                   }}
                 >
-                  Lv.{event.newLevel}
+                  Lv.{toGlobalLevel(rankKey, event.newLevel)}
                 </motion.span>
               </div>
               <p className="mt-2 text-xl font-bold text-gray-400">

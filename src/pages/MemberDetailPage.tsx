@@ -563,7 +563,7 @@ const MemberDetailPage = () => {
                         "border-border bg-card"
                       }`}
                     >
-                      <span className="text-[10px] font-bold text-foreground">{lvl}</span>
+                      <span className="text-[10px] font-bold text-foreground">{gLvl}</span>
                       <span className={`text-[8px] font-medium ${statusInfo.color}`}>
                         {status === "approved" ? "✅" : status === "boss_cleared" ? "🏆" : status === "pending" ? "⏳" : status === "revision_requested" ? "✏️" : status === "rejected" ? "❌" : status === "in_progress" ? "▶️" : "🔒"}
                       </span>

@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import CharacterSprite from "@/components/CharacterSprite";
 import { STORY_ROUTE_VISUAL } from "@/data/storyRpgVisuals";
+import { toGlobalLevel } from "@/lib/rankLabels";
 import type {
   StoryOfficialSummary,
   StoryProgress,
@@ -83,7 +84,7 @@ const StoryCharacterPanel = ({
             {profile?.nickname || profile?.name || "이름 없는 복서"}
           </p>
           <p className="mt-0.5 text-[12px] text-muted-foreground">
-            {official?.current_rank ?? "-"} 리그 · Lv.{level}
+            {official?.current_rank ?? "-"} 리그 · Lv.{toGlobalLevel(official?.current_rank, level)}
           </p>
 
           {activeRoute && visual && (

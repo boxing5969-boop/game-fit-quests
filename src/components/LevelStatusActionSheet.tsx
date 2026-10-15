@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { toast } from "sonner";
 import { Undo2, Clock } from "lucide-react";
-import { RANK_LABELS } from "@/lib/rankLabels";
+import { RANK_LABELS, toGlobalLevel } from "@/lib/rankLabels";
 import type { Enums } from "@/integrations/supabase/types";
 
 const STATUS_OPTIONS: { value: Enums<"level_status_type">; label: string; emoji: string; color: string }[] = [
@@ -109,7 +109,7 @@ const LevelStatusActionSheet = ({ open, onOpenChange, memberId, rank, level, cur
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="mx-auto max-w-lg pb-safe">
         <DrawerHeader>
-          <DrawerTitle>{rankLabel} 레벨 {level} 상태 변경</DrawerTitle>
+          <DrawerTitle>{rankLabel} 레벨 {toGlobalLevel(rank, level)} 상태 변경</DrawerTitle>
         </DrawerHeader>
         <div className="space-y-4 px-4 pb-6">
           {/* Current status */}

@@ -15,7 +15,7 @@ import {
   useBranchesList,
 } from "@/hooks/useRankingData";
 import { supabase } from "@/integrations/supabase/client";
-import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION } from "@/lib/rankLabels";
+import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION, toGlobalLevel } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
 import MemberLicenseSheet from "@/components/license/MemberLicenseSheet";
 
@@ -168,7 +168,7 @@ const HallOfFamePage = () => {
       toast.success(
         `${levelSetModal.nickname} → ${
           RANK_LABELS[result.new_rank] || result.new_rank
-        } Lv.${result.new_level} 설정 완료`,
+        } Lv.${toGlobalLevel(result.new_rank, result.new_level)} 설정 완료`,
       );
       setLevelSetModal(null);
       qc.invalidateQueries({ queryKey: ["division-ranking"] });
@@ -225,7 +225,7 @@ const HallOfFamePage = () => {
   };
 
   const getMeta = (m: any) =>
-    `${RANK_LABELS[m.r_current_rank]} · Lv.${m.r_current_level}`;
+    `${RANK_LABELS[m.r_current_rank]} · Lv.${toGlobalLevel(m.r_current_rank, m.r_current_level)}`;
 
   const handleSetRival = (m: any) => {
     setRival.mutate(m.r_user_id);
@@ -309,7 +309,7 @@ const HallOfFamePage = () => {
                     <p className="text-caption text-muted-foreground">
                       {RANK_LABELS[progress.current_rank]} Lv.
                       <span className="number-font">
-                        {progress.current_level}
+                        {toGlobalLevel(progress.current_rank, progress.current_level)}
                       </span>
                     </p>
                     <p className="number-font text-body-sm font-bold text-foreground">
@@ -449,7 +449,7 @@ const HallOfFamePage = () => {
                 levelSetModal.currentRank}{" "}
               Lv.
               <span className="number-font">
-                {levelSetModal.currentLevel}
+                {toGlobalLevel(levelSetModal.currentRank, levelSetModal.currentLevel)}
               </span>
             </p>
             <div className="space-y-3">
@@ -476,7 +476,7 @@ const HallOfFamePage = () => {
               </div>
               <div>
                 <label className="mb-1 block text-caption text-muted-foreground">
-                  레벨 (1~10)
+                  레벨 ({toGlobalLevel(setRank, 1)}~{toGlobalLevel(setRank, 10)})
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {Array.from({ length: 10 }, (_, i) => i + 1).map((l) => (
@@ -490,7 +490,7 @@ const HallOfFamePage = () => {
                           : "bg-secondary text-secondary-foreground",
                       )}
                     >
-                      {l}
+                      {toGlobalLevel(setRank, l)}
                     </button>
                   ))}
                 </div>
@@ -502,7 +502,7 @@ const HallOfFamePage = () => {
               >
                 {settingLevel
                   ? "설정 중..."
-                  : `${RANK_LABELS[setRank] || setRank} Lv.${setLevel}로 설정`}
+                  : `${RANK_LABELS[setRank] || setRank} Lv.${toGlobalLevel(setRank, setLevel)}로 설정`}
               </button>
             </div>
           </div>
@@ -870,7 +870,7 @@ const HoFMemberCard = ({
       <p className="text-caption flex items-center gap-1 truncate text-muted-foreground">
         <LeagueBadge league={rankName} className="h-3.5 w-3.5" animated={false} />
         {RANK_LABELS[rankName] || rankName} · Lv.
-        <span className="number-font">{level}</span>
+        <span className="number-font">{toGlobalLevel(rankName, level)}</span>
         {branch && ` · ${branch}`}
       </p>
       <span className="mt-1 inline-flex items-center gap-1 rounded-pill border border-reward/50 bg-reward/10 px-2 py-0.5 text-[10px] font-bold text-reward">

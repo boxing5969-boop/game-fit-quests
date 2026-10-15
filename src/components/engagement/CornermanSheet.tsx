@@ -37,6 +37,7 @@ import {
 
 import CornermanCandidateList from "./CornermanCandidateList";
 import CornermanStatusPanel from "./CornermanStatusPanel";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 interface Props {
   open: boolean;
@@ -158,7 +159,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
                 </p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
                   {RANK_KOREAN_LABEL[p.requester_rank] ?? p.requester_rank} 리그
-                  · Lv.{p.requester_level}
+                  · Lv.{toGlobalLevel(p.requester_rank, p.requester_level)}
                 </p>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   <button

@@ -16,6 +16,7 @@ import { useLevelVideos, youtubeThumb, parseVideoTitle } from "@/hooks/useLevelV
 import { isTitleFlowFor, titleMatchLink } from "@/lib/titleMatchChallenge";
 import { useLevelupRules } from "@/hooks/useLevelupRules";
 import { authorityLabel } from "@/lib/levelAuthority";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 interface Cycle {
   sessions: number; days: number; minutes: number;
@@ -175,7 +176,7 @@ const LevelUpRequestCard = () => {
       {!isBossLevel && (
         <div className="mt-3 border-t border-border pt-3">
           <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-muted-foreground">
-            다음 레벨({nextLevel})에서 배울 동작
+            다음 레벨({toGlobalLevel(league, nextLevel)})에서 배울 동작
           </p>
           {previews.length > 0 ? (
             <div className="flex gap-2">

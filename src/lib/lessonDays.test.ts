@@ -117,7 +117,7 @@ describe("레벨 표기", () => {
   });
   it("153 표기 — 벨트·계급 없이 리그·레벨", () => {
     expect(levelLong(2)).toBe("화이트 리그 · 레벨 2");
-    expect(levelShort(12)).toBe("블루 L2");
+    expect(levelShort(12)).toBe("블루 L12");
   });
 });
 

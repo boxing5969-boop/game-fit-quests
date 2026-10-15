@@ -36,6 +36,7 @@ import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { toGlobalLevel } from "@/lib/rankLabels";
 import {
   useGrantManualXp,
   useManualLevelDown,
@@ -137,7 +138,7 @@ const LevelAdminPanel = ({
     try {
       const r = await levelUp.mutateAsync(memberId);
       toast.success(
-        `${memberName} → ${RANK_LABELS[r.current_rank] ?? r.current_rank} Lv.${r.new_level} 🥊`,
+        `${memberName} → ${RANK_LABELS[r.current_rank] ?? r.current_rank} Lv.${toGlobalLevel(r.current_rank, r.new_level)} 🥊`,
       );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "레벨업 실패");
@@ -149,7 +150,7 @@ const LevelAdminPanel = ({
     try {
       const r = await levelDown.mutateAsync(memberId);
       toast.success(
-        `${memberName} → ${RANK_LABELS[r.new_rank] ?? r.new_rank} Lv.${r.new_level}`,
+        `${memberName} → ${RANK_LABELS[r.new_rank] ?? r.new_rank} Lv.${toGlobalLevel(r.new_rank, r.new_level)}`,
       );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "레벨다운 실패");
@@ -163,7 +164,7 @@ const LevelAdminPanel = ({
       const r = await passBoss.mutateAsync({ memberId });
       if (r.ranked_up) {
         toast.success(
-          `🏆 ${memberName} 리그 승급! ${RANK_LABELS[r.new_rank] ?? r.new_rank} Lv.${r.new_level}`,
+          `🏆 ${memberName} 리그 승급! ${RANK_LABELS[r.new_rank] ?? r.new_rank} Lv.${toGlobalLevel(r.new_rank, r.new_level)}`,
         );
       } else {
         toast.success(`${memberName} 타이틀매치 합격`);
@@ -181,7 +182,7 @@ const LevelAdminPanel = ({
         level: pickLevel,
       });
       toast.success(
-        `${memberName} → ${RANK_LABELS[r.new_rank] ?? r.new_rank} Lv.${r.new_level}`,
+        `${memberName} → ${RANK_LABELS[r.new_rank] ?? r.new_rank} Lv.${toGlobalLevel(r.new_rank, r.new_level)}`,
       );
       setSetLevelModal(false);
     } catch (e) {
@@ -235,7 +236,7 @@ const LevelAdminPanel = ({
               관리자 — 레벨 조정
             </p>
             <p className="mt-0.5 truncate text-[12px] font-bold text-foreground">
-              현재: {RANK_LABELS[currentRank] ?? currentRank} 리그 Lv.{currentLevel}
+              현재: {RANK_LABELS[currentRank] ?? currentRank} 리그 Lv.{toGlobalLevel(currentRank, currentLevel)}
             </p>
           </div>
         </div>
@@ -250,7 +251,7 @@ const LevelAdminPanel = ({
           >
             <ArrowUp className="h-4 w-4" />
             레벨업
-            <span className="text-[9px] opacity-80">Lv.{currentLevel + 1}</span>
+            <span className="text-[9px] opacity-80">Lv.{toGlobalLevel(currentRank, currentLevel) + 1}</span>
           </button>
           <button
             type="button"
@@ -261,7 +262,7 @@ const LevelAdminPanel = ({
             <ArrowDown className="h-4 w-4" />
             레벨다운
             <span className="text-[9px] opacity-80">
-              {currentLevel > 1 ? `Lv.${currentLevel - 1}` : "—"}
+              {currentLevel > 1 ? `Lv.${toGlobalLevel(currentRank, currentLevel) - 1}` : "—"}
             </span>
           </button>
           <button
@@ -358,7 +359,7 @@ const LevelAdminPanel = ({
 
             {/* 레벨 선택 */}
             <p className="mb-1.5 text-[11px] font-bold text-foreground">
-              레벨 (1~10)
+              레벨 ({toGlobalLevel(pickRank, 1)}~{toGlobalLevel(pickRank, 10)})
             </p>
             <div className="mb-4 flex flex-wrap gap-1.5">
               {Array.from({ length: 10 }, (_, i) => i + 1).map((lv) => (
@@ -372,7 +373,7 @@ const LevelAdminPanel = ({
                       : "bg-secondary text-secondary-foreground"
                   }`}
                 >
-                  {lv}
+                  {toGlobalLevel(pickRank, lv)}
                 </button>
               ))}
             </div>
@@ -385,7 +386,7 @@ const LevelAdminPanel = ({
             >
               {setLevel.isPending
                 ? "설정 중..."
-                : `${RANK_LABELS[pickRank] ?? pickRank} Lv.${pickLevel} 로 설정`}
+                : `${RANK_LABELS[pickRank] ?? pickRank} Lv.${toGlobalLevel(pickRank, pickLevel)} 로 설정`}
             </button>
 
             <p className="mt-2 text-[10.5px] leading-relaxed text-muted-foreground">

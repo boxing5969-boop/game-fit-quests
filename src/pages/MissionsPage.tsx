@@ -43,6 +43,7 @@ import {
   type MissionVideoRow,
 } from "@/lib/missionVideos";
 import { Input } from "@/components/ui/input";
+import { toGlobalLevel } from "@/lib/rankLabels";
 
 import {
   AppPage,
@@ -783,7 +784,7 @@ const MissionsPage = () => {
                   <option value="">레벨 선택</option>
                   {sortedLevels.map((l) => (
                     <option key={l.id} value={l.id}>
-                      {RANK_LABELS[l.rank_name]} Lv.{l.level_number} -{" "}
+                      {RANK_LABELS[l.rank_name]} Lv.{toGlobalLevel(l.rank_name, l.level_number)} -{" "}
                       {l.title}
                     </option>
                   ))}
@@ -1111,7 +1112,7 @@ const MissionRow = ({
             Lv
           </span>
           <span className="number-font text-[13px] font-bold leading-none text-foreground">
-            {level.level_number}
+            {toGlobalLevel(level.rank_name, level.level_number)}
           </span>
         </div>
 

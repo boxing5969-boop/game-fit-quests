@@ -10,7 +10,7 @@
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useEffect, useState } from "react";
 
-import { RANK_LABELS } from "@/lib/rankLabels";
+import { RANK_LABELS, toGlobalLevel } from "@/lib/rankLabels";
 
 export interface LevelUpHeadlineProps {
   newLevel: number;
@@ -138,7 +138,7 @@ const LevelUpHeadline = ({
       >
         {!isRankUp && (
           <span>
-            {rankLabel} <span className="text-reward">Lv.{newLevel}</span>
+            {rankLabel} <span className="text-reward">Lv.{toGlobalLevel(rankKey, newLevel)}</span>
           </span>
         )}
         {isRankUp && (
