@@ -11,6 +11,11 @@ import { BookOpen, Megaphone } from "lucide-react";
 
 import OsamiDailyBriefingCard from "./OsamiDailyBriefingCard";
 import TodayQuestMiniPanel from "./TodayQuestMiniPanel";
+
+/** 리턴 라운드 · 오늘의 라운드 보조 퀘스트 — 잠시 숨김 (2026-10-15 대표님: "복잡하기만 하고, 기존에 하고 있는
+ *  챌린지(라이브 보드에 떠 있는 153 챌린지)만 보이게"). 다시 보이려면 true. 튜토리얼 1일차의 해당 단계도 함께 뺐다
+ *  (tutorial_global_overrides.step_order["1"]). */
+const SHOW_SIDE_QUESTS = false;
 import BoxingAcademyQuizModal from "./BoxingAcademyQuizModal";
 import FunChallengeArenaSheet from "./FunChallengeArenaSheet";
 import ChampionJournalSheet from "./ChampionJournalSheet";
@@ -72,20 +77,24 @@ const HomeEngagementSection = ({
     <div className="space-y-4">
       {showPersonal && (
         <>
-          <div data-tour="return-round-banner">
-            <ReturnRoundBanner onOpen={() => setShowReturn(true)} />
-          </div>
+          {SHOW_SIDE_QUESTS && (
+            <div data-tour="return-round-banner">
+              <ReturnRoundBanner onOpen={() => setShowReturn(true)} />
+            </div>
+          )}
           {/* 컨디션 게이지는 챔피언 일기 시트로 통합됨 — 일기 작성 시 함께 기록. */}
           <div data-tour="osami-briefing-card">
             <OsamiDailyBriefingCard />
           </div>
-          <div data-tour="quest-mini-panel">
-            <TodayQuestMiniPanel
-              onOpenAcademy={handleAcademy}
-              onOpenChallengeArena={handleChallenge}
-              onOpenChampionJournal={handleJournal}
-            />
-          </div>
+          {SHOW_SIDE_QUESTS && (
+            <div data-tour="quest-mini-panel">
+              <TodayQuestMiniPanel
+                onOpenAcademy={handleAcademy}
+                onOpenChallengeArena={handleChallenge}
+                onOpenChampionJournal={handleJournal}
+              />
+            </div>
+          )}
         </>
       )}
 

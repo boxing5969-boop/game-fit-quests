@@ -35,6 +35,9 @@ const SECTION_TITLE: Record<Section, string> = {
   fitness: "153 체력테스트",
 };
 
+/** 종목별 신기록 + '체력테스트 하러 가기' — 보류 중 (2026-10-15 대표님). 다시 보이려면 true */
+const SHOW_BESTS = false;
+
 const UNIT: Record<string, string> = { count: "회", minutes: "분", rounds: "라운드", combos: "콤보" };
 
 const fmtDate = (iso: string) =>
@@ -131,7 +134,8 @@ const Record153Board = ({ onOpenMember }: Props) => {
           {renderSection("level")}
           {renderSection("fitness")}
 
-          {/* 153 체력테스트 종목별 신기록 — 계속 바뀌는 기록 */}
+          {/* 153 체력테스트 종목별 신기록 — 계속 바뀌는 기록. 2026-10-15 대표님 '일단 보류' → SHOW_BESTS */}
+          {SHOW_BESTS && (
           <section className="space-y-2.5">
             <div className="flex items-end justify-between px-1">
               <h3 className="text-[13px] font-black tracking-wide text-muted-foreground">종목별 신기록</h3>
@@ -183,6 +187,7 @@ const Record153Board = ({ onOpenMember }: Props) => {
               💪 153 체력테스트 하러 가기
             </button>
           </section>
+          )}
         </>
       )}
 
