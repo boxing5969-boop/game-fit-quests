@@ -4,6 +4,7 @@ import DailyOperationsBoard from "@/components/DailyOperationsBoard";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
 import DailyReportCard from "@/components/DailyReportCard";
 import MembershipRequestsInbox from "@/components/MembershipRequestsInbox";
+import CoachDraftsInbox from "@/components/CoachDraftsInbox";
 import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
 import StaffRosterPanel from "@/components/admin/StaffRosterPanel";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -675,6 +676,9 @@ const BranchManagerHome = () => {
         {/* 수강권 홀딩·환불 신청 처리 (신청 있을 때만 노출) */}
         <MembershipRequestsInbox />
 
+        {/* 🥊 오삼코치 오늘 메시지 검수 (초안 있을 때만 노출 · 2026-10-15) */}
+        <CoachDraftsInbox />
+
         {/* Stats Cards */}
         <div className="mb-5 grid grid-cols-2 gap-2.5">
           <StatCard icon="👥" label="전체 회원" value={stats?.total_members ?? "-"} />
@@ -775,6 +779,9 @@ const BranchManagerHome = () => {
 
           {/* 수강권 홀딩·환불 신청 처리 (신청 있을 때만 노출) */}
           <MembershipRequestsInbox />
+
+          {/* 🥊 오삼코치 오늘 메시지 검수 (초안 있을 때만 노출 · 2026-10-15) */}
+          <CoachDraftsInbox />
 
           {/* Stats */}
           <div className="mb-4 grid grid-cols-2 gap-2">

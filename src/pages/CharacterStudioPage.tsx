@@ -29,6 +29,7 @@ import {
 } from "@/hooks/useCustomizationPurchase";
 import { useWallet } from "@/hooks/useWallet";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
+import { useCoachToday, type CoachToday } from "@/hooks/useCoachToday";
 import CharacterSprite from "@/components/CharacterSprite";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,6 +100,8 @@ const CharacterStudioPage = () => {
   const { data: walletData } = useWallet();
   // 승급 진행도 — 홈 라이센스 카드와 같은 RPC·캐시 (내 캐릭터 탭의 "다음 레벨까지" 막대)
   const { data: levelCycle } = useLevelCycleProgress();
+  // 🥊 오삼코치 오늘의 목표 (오늘 받은 것만 · 알림으로 열면 기록) — 내 카드 안
+  const { data: coachToday } = useCoachToday();
   const assignCharacter = useAssignCharacter();
   const saveCustomization = useSaveCustomization();
   const { data: isInHallOfFame = false } = useIsInHallOfFame();
@@ -597,6 +600,7 @@ const CharacterStudioPage = () => {
                     }
                   : undefined
               }
+              coachToday={coachToday ?? null}
               onGoCustomize={() => setActiveTab("customize")}
             />
           )}
@@ -657,7 +661,7 @@ const CharacterStudioPage = () => {
 };
 
 // ========== MY CHARACTER TAB ==========
-function MyCharacterTab({ currentStyle, league, level, navigate, currentMilestone, nextMilestone, currentCustomization, ownedStyles, ownedCustomizations, onEquip, isEquipping, walletBalance, isAdminWallet, streakDays, promotion, onGoCustomize }: {
+function MyCharacterTab({ currentStyle, league, level, navigate, currentMilestone, nextMilestone, currentCustomization, ownedStyles, ownedCustomizations, onEquip, isEquipping, walletBalance, isAdminWallet, streakDays, promotion, coachToday, onGoCustomize }: {
   currentStyle?: string;
   league: string;
   level: number;
@@ -673,6 +677,7 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
   isAdminWallet: boolean;
   streakDays: number;
   promotion?: { current: number; target: number; hint?: string };
+  coachToday?: CoachToday | null;
   onGoCustomize: () => void;
 }) {
   const hasCharacter = !!currentStyle;
@@ -736,6 +741,18 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
               {streakDays > 0 && promotion.hint ? " · " : ""}
               {promotion.hint || ""}
             </p>
+          </div>
+        )}
+        {/* 🥊 오삼코치 오늘의 목표 — 오늘 받은 메시지가 있을 때만 (2026-10-15) */}
+        {coachToday && (
+          <div className="rounded-xl border border-primary/20 bg-primary/[0.06] px-3.5 py-3">
+            <p className="text-caption font-bold text-primary">
+              {coachToday.kind === "comeback" ? "오삼코치 한마디" : "오늘의 목표"} · 오삼코치
+            </p>
+            <p className="mt-0.5 text-body-sm font-bold leading-snug text-foreground">{coachToday.body}</p>
+            {coachToday.detail && (
+              <p className="mt-0.5 text-caption leading-relaxed text-muted-foreground">{coachToday.detail}</p>
+            )}
           </div>
         )}
       </div>
