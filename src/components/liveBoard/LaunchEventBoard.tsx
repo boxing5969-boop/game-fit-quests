@@ -231,7 +231,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
                 {upcoming && (
                   <li className="px-4 py-3 text-lg font-bold leading-relaxed text-gray-400">
                     {cat === "attendance" && "얼굴 인식으로 들어온 날이 하루 1일씩 쌓입니다."}
-                    {cat === "app" && "앱 열기·운동 종료·챌린지·퀴즈·좋아요 — 행동 종류마다 하루 1점."}
+                    {cat === "app" && "앱 열기·커뮤니티 글·댓글·153·응원·게임·하트 — 행동 종류마다 하루 1점."}
                     {cat === "nickname" && "랭킹·추천 복서에서 동료를 눌러 하트를 보내요. 회원마다 1개씩."}
                   </li>
                 )}
