@@ -22,6 +22,7 @@ import MemberLicenseSheet from "@/components/license/MemberLicenseSheet";
 import LeagueBadge from "@/components/badges/LeagueBadge";
 import NameBadge from "@/components/badges/NameBadge";
 import Record153Board from "@/components/engagement/Record153Board";
+import Test153Board from "@/components/test153/Test153Board";
 import {
   AppPage,
   PageHeader,
@@ -31,7 +32,7 @@ import {
   EmptyState,
 } from "@/components/ui/rankingup";
 
-type TopTab = "ranking" | "halloffame" | "records";
+type TopTab = "ranking" | "halloffame" | "records" | "test153";
 type RankingTabKey = "weekly" | "streak" | "official" | "monthly" | "boss";
 
 const RANK_LABELS: Record<string, string> = {
@@ -87,7 +88,7 @@ const HallOfFamePage = () => {
   const [searchParams] = useSearchParams();
   const [topTab, setTopTab] = useState<TopTab>(() => {
     const t = searchParams.get("tab");
-    return t === "records" || t === "halloffame" ? t : "ranking";
+    return t === "records" || t === "halloffame" || t === "test153" ? t : "ranking";
   });
   // Default to the "official" (total XP) view so users land on the
   // full branch roster first instead of the weekly slice.
@@ -273,8 +274,12 @@ const HallOfFamePage = () => {
             { value: "halloffame", label: <span className="whitespace-nowrap">명예의 전당</span> },
             // 153 레코드 — 153복싱짐의 최초 기록 (2026-10-15 대표님)
             { value: "records", label: <span className="whitespace-nowrap">153 레코드</span> },
+            // 153 TEST — 코치가 재는 153 체력테스트 기록·순위 (2026-10-15 대표님)
+            { value: "test153", label: <span className="whitespace-nowrap">153 TEST</span> },
           ]}
           fullWidth
+          // 칸이 4개라 좁은 폰에서 넘치지 않게 양옆 여백을 줄인다
+          className="[&>button]:px-1.5"
         />
 
         {topTab === "ranking" && isSuperAdmin && branches && branches.length > 0 && (
@@ -403,6 +408,8 @@ const HallOfFamePage = () => {
         {topTab === "records" && (
           <Record153Board onOpenMember={(m) => setLicenseMember(m)} />
         )}
+
+        {topTab === "test153" && <Test153Board onOpenMember={(m) => setLicenseMember(m)} />}
       </div>
 
       {/* 랭킹에서 누른 회원의 라이센스 — 하트 + (남이면) 추격 목표 지정 */}

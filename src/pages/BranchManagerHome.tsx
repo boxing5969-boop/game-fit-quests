@@ -4,6 +4,7 @@ import DailyOperationsBoard from "@/components/DailyOperationsBoard";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
 import DailyReportCard from "@/components/DailyReportCard";
 import TodayListPanel from "@/components/manager/TodayListPanel";
+import Test153MeasurePanel from "@/components/test153/Test153MeasurePanel";
 import MembershipRequestsInbox from "@/components/MembershipRequestsInbox";
 import CoachDraftsInbox from "@/components/CoachDraftsInbox";
 import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
@@ -41,8 +42,9 @@ const kstWeekStartIso = () => {
 };
 type SortType = "recent_submission" | "level_desc" | "pending_count";
 // today_new · today_submissions — 운영 리포트 칸을 눌러야 열리는 명단 (탭 버튼은 없음, 2026-10-15)
-type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk" | "today_new" | "today_submissions";
-const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk", "today_new", "today_submissions"];
+// test153 — '153 TEST 측정' 카드를 눌러 여는 코치 측정 화면 (2026-10-15)
+type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk" | "today_new" | "today_submissions" | "test153";
+const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk", "today_new", "today_submissions", "test153"];
 /** 알림에서 바로 여는 탭 — /manager?tab=level_review (타이틀매치 심사 신청 알림, 2026-10-14) */
 const tabFromParam = (raw: string | null): MainTab | null =>
   MAIN_TABS.find((t) => t === raw) ?? null;
@@ -693,6 +695,21 @@ const BranchManagerHome = () => {
         {/* 🥊 오삼코치 오늘 메시지 검수 (초안 있을 때만 노출 · 2026-10-15) */}
         <CoachDraftsInbox />
 
+        {/* ⏱ 153 TEST 측정 — 코치가 회원 체력테스트를 재는 화면 (2026-10-15) */}
+        <button
+          type="button"
+          onClick={() => openTab("test153")}
+          className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-left active:scale-[0.99]"
+        >
+          <span className="text-2xl">⏱</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-black text-foreground">153 TEST 측정</span>
+            <span className="block text-xs text-muted-foreground">셀트런 + 8종목 · 코치가 재는 공식 기록</span>
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
+
+
         {/* Stats Cards */}
         <div className="mb-5 grid grid-cols-2 gap-2.5">
           <StatCard icon="👥" label="전체 회원" value={stats?.total_members ?? "-"} />
@@ -760,6 +777,9 @@ const BranchManagerHome = () => {
         {mainTab === "level_review" && <CoachLevelReviewInbox />}
         {mainTab === "operations" && <DailyOperationsBoard />}
         {mainTab === "at_risk" && <AtRiskMembersPanel />}
+        {mainTab === "test153" && (
+          <Test153MeasurePanel branchName={branchName} isSuperAdmin={isSuperAdmin} onBack={() => setMainTab("members")} />
+        )}
         {(mainTab === "today_new" || mainTab === "today_submissions") && (
           <TodayListPanel
             kind={mainTab === "today_new" ? "new" : "submissions"}
@@ -809,6 +829,21 @@ const BranchManagerHome = () => {
           {/* 🥊 오삼코치 오늘 메시지 검수 (초안 있을 때만 노출 · 2026-10-15) */}
           <CoachDraftsInbox />
 
+          {/* ⏱ 153 TEST 측정 — 코치가 회원 체력테스트를 재는 화면 (2026-10-15) */}
+          <button
+            type="button"
+            onClick={() => openTab("test153")}
+            className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-left active:scale-[0.99]"
+          >
+            <span className="text-2xl">⏱</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-black text-foreground">153 TEST 측정</span>
+              <span className="block text-xs text-muted-foreground">셀트런 + 8종목 · 코치가 재는 공식 기록</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+
+
           {/* Stats */}
           <div className="mb-4 grid grid-cols-2 gap-2">
             <StatCard icon="👥" label="전체 회원" value={stats?.total_members ?? "-"} />
@@ -855,6 +890,9 @@ const BranchManagerHome = () => {
           {mainTab === "inbox" && <ApprovalInbox />}
           {mainTab === "members" && renderMemberList()}
           {mainTab === "level_review" && <CoachLevelReviewInbox />}
+          {mainTab === "test153" && (
+            <Test153MeasurePanel branchName={branchName} isSuperAdmin={isSuperAdmin} onBack={() => setMainTab("members")} />
+          )}
           {(mainTab === "today_new" || mainTab === "today_submissions") && (
             <TodayListPanel
               kind={mainTab === "today_new" ? "new" : "submissions"}
