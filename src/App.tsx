@@ -94,6 +94,7 @@ const DietPhotoGalleryPage = lazyWithRetry(() => import("@/pages/diet/DietPhotoG
 const AboutOneFiveThreePage = lazyWithRetry(() => import("@/pages/AboutOneFiveThreePage"));
 const DietCoachInboxPage = lazyWithRetry(() => import("@/pages/diet/coach/DietCoachInboxPage"));
 const DietMemberDetailPage = lazyWithRetry(() => import("@/pages/diet/coach/DietMemberDetailPage"));
+import TvFitFrame from "@/components/liveBoard/TvFitFrame";
 const LiveBoardPage = lazyWithRetry(() => import("@/pages/LiveBoardPage"));
 const SignageBoardPage = lazyWithRetry(() => import("@/pages/SignageBoardPage"));
 // 관리자용 라이브보드 고르기 — TV 화면 1·2·3·4 를 앱 안에서 바로 본다 (2026-09-29)
@@ -353,11 +354,12 @@ const AppRoutes = () => {
             나란히 놓인 2대에 좌·우로 나눠 띄운다(번호 없으면 예전처럼 한 화면에 전부). */}
         {/* 지점 코드 없이 /tv 만 치면 지점 선택 화면 — TV 리모컨 입력을 줄이려는 것 */}
         <Route path="/tv" element={<TvBranchPicker />} />
-        <Route path="/tv/:branchCode" element={<LiveBoardPage />} />
+        {/* TvFitFrame — 창이 1920×1080 이 아니면 앱 미리보기와 똑같이 맞춰 줄인다 (2026-10-15) */}
+        <Route path="/tv/:branchCode" element={<TvFitFrame><LiveBoardPage /></TvFitFrame>} />
         {/* 3번 화면은 실시간 보드가 아니라 회원 안내 카드뉴스 슬라이드쇼다.
             정적 세그먼트("3")가 :screen 보다 우선 매칭되므로 순서와 무관하게 잡힌다. */}
-        <Route path="/tv/:branchCode/3" element={<SignageBoardPage />} />
-        <Route path="/tv/:branchCode/:screen" element={<LiveBoardPage />} />
+        <Route path="/tv/:branchCode/3" element={<TvFitFrame><SignageBoardPage /></TvFitFrame>} />
+        <Route path="/tv/:branchCode/:screen" element={<TvFitFrame><LiveBoardPage /></TvFitFrame>} />
         <Route path="/face-kiosk/:branchCode" element={<FaceKioskPage />} />
         {/* 설치형 앱 전용 — 지점은 키오스크 키가 결정한다(주소에 지점코드 불필요) */}
         <Route path="/face-kiosk" element={<FaceKioskPage />} />
