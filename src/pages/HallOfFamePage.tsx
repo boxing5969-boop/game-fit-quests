@@ -23,6 +23,7 @@ import LeagueBadge from "@/components/badges/LeagueBadge";
 import NameBadge from "@/components/badges/NameBadge";
 import Record153Board from "@/components/engagement/Record153Board";
 import Test153Board from "@/components/test153/Test153Board";
+import MedalMark from "@/components/MedalMark";
 import {
   AppPage,
   PageHeader,
@@ -606,6 +607,7 @@ const PodiumCard = ({
         <p className="min-w-0 truncate text-caption font-bold text-foreground">
           {member.r_nickname}
         </p>
+        <MedalMark userId={member.r_user_id} className="text-sm" />
         <NameBadge league={member.r_current_rank} className="h-4 w-4" />
       </div>
       <p className="number-font text-[11px] font-bold text-muted-foreground">
@@ -710,7 +712,12 @@ const RankingList = ({
                 name={m.r_nickname}
                 score={getScore(m)}
                 meta={getMeta(m)}
-                badge={<NameBadge league={m.r_current_rank} className="h-[18px] w-[18px]" glow={false} />}
+                badge={
+                  <>
+                    <MedalMark userId={m.r_user_id} className="text-base" />
+                    <NameBadge league={m.r_current_rank} className="h-[18px] w-[18px]" glow={false} />
+                  </>
+                }
                 isMe={isMe}
                 avatar={m.r_avatar_url ?? undefined}
                 onClick={() => onRowOpen(m)}

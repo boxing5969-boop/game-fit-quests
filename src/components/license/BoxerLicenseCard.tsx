@@ -20,6 +20,7 @@
  *   · compact   — 라이브보드 컴팩트 그리드 (작음, 사진+레벨만)
  */
 
+import MedalMark from "@/components/MedalMark";
 import { motion } from "framer-motion";
 import { Camera, Crown, Flame, Heart, PenLine } from "lucide-react";
 import type { ReactNode } from "react";
@@ -541,6 +542,8 @@ const BoxerLicenseCard = ({
               <p className={`min-w-0 truncate font-black text-white ${cfg.nameText}`}>
                 {name}
               </p>
+              {/* 대회 메달 🥇🥈🥉 (2026-10-15 대표님) */}
+              <MedalMark userId={userId} className={cfg.nameText} />
               {/* 리그 버튼 (2026-10-15 대표님) — 모든 회원, 색 = 내 리그 (화이트·블루·레드·골드). PT 전용 배지는 없앰.
                   지도진(코치님)은 '챔피언' 표기라 버튼 없음 */}
               {!staff && <NameBadge league={rankKey} className={`${cfg.ptBadge} shrink-0`} glow={size === "hero"} />}
@@ -561,9 +564,10 @@ const BoxerLicenseCard = ({
                 <span className={`font-black text-white ${cfg.levelText}`}>Lv.{STAFF_CHAMPION_LEVEL} · {staff.title}</span>
               </div>
             ) : (
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            // TV 카드는 'WHITE · 방패 · Lv.10' 을 한 줄로 — 줄이 넘어가면 카드마다 키가 달라졌다 (2026-10-15 대표님)
+            <div className={`mt-1.5 flex items-center gap-1.5 ${isLive ? "flex-nowrap whitespace-nowrap" : "flex-wrap"}`}>
               <span
-                className={`rounded-md font-black uppercase tracking-wider ${cfg.rankBadge} ${
+                className={`shrink-0 rounded-md font-black uppercase tracking-wider ${cfg.rankBadge} ${
                   isMaster
                     ? "bg-yellow-500 text-gray-900"
                     : rankKey === "blue"

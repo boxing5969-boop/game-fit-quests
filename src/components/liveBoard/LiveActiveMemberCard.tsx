@@ -12,7 +12,7 @@
  *   · compact    → BoxerLicenseCard size="compact"
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -57,7 +57,13 @@ const PhotoSlot = ({
   size: LicenseSize;
 }) => {
   // 사진을 못 불러오면(지워진 파일 등) 깨진 그림 대신 캐릭터·이니셜로 (2026-10-14)
+  // 한 번 실패해도(TV 와이파이 끊김 등) 30초 뒤 다시 시도한다 — 예전엔 20분 새로고침까지 이니셜로 남았다 (2026-10-15)
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!failedUrl) return;
+    const t = window.setTimeout(() => setFailedUrl(null), 30_000);
+    return () => window.clearTimeout(t);
+  }, [failedUrl]);
   const rankKey = (member.league ?? "white").toLowerCase();
   const spriteSize: "xs" | "sm" | "md" = size === "compact" ? "xs" : size === "spotlight" ? "md" : "sm";
 

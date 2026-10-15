@@ -8,6 +8,7 @@ import logoWhite from "@/assets/branding/153-logo-white.png";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS, toGlobalLevel } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import MedalMark from "@/components/MedalMark";
 import { Building2, Clock, X, Trophy, RotateCcw, Medal } from "lucide-react";
 import { toast } from "sonner";
 import LiveBoardEmptyState from "@/components/liveBoard/LiveBoardEmptyState";
@@ -486,8 +487,10 @@ const LiveBoardPage = () => {
       const displayName = profile?.nickname || attendanceFallback?.display_name;
       if (!displayName) continue; // truly unknown user — skip
 
-      const avatarUrl = profile?.avatar_url || null;
-      avatarCacheRef.current[userId] = avatarUrl;
+      // 프로필을 못 읽은 회원(일시 오류·권한)은 알던 사진을 그대로 둔다 — 예전엔 null 로 덮어써서
+      // 사진이 떴다가 사라졌다 (2026-10-15 대표님 "프로필 사진이 떴다가 갑자기 또 안 떠")
+      const avatarUrl = profile ? profile.avatar_url || null : avatarCacheRef.current[userId] ?? null;
+      if (profile) avatarCacheRef.current[userId] = avatarUrl;
 
       const level = progress?.current_level || attendanceFallback?.level || 1;
       // 알려진 레벨 시드 — Realtime 비교용
@@ -1186,6 +1189,7 @@ const LiveBoardPage = () => {
                               >
                                 {v.display_name}
                               </span>
+                              <MedalMark userId={v.user_id} className="text-lg" />
                             </span>
                           );
                         })}
@@ -1218,7 +1222,7 @@ const LiveBoardPage = () => {
                         <MemberAvatar url={c.avatar_url} name={c.name} sizeClass="h-7 w-7" />
                         <div>
                           <p className="text-sm font-black leading-tight text-yellow-100 whitespace-nowrap">
-                            {c.name} {honorTitle(c.title)}
+                            {c.name} {honorTitle(c.title)} <MedalMark userId={c.user_id} />
                           </p>
                           <p className="text-[10px] font-black uppercase tracking-wider text-yellow-500/80">
                             {/* 대표님 지시(2026-09-23): 코치님은 모두 챔피언 · Lv.77 */}
@@ -1257,7 +1261,10 @@ const LiveBoardPage = () => {
                         </span>
                         <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-7 w-7" />
                         <div className="min-w-0">
-                          <p className={`truncate text-sm font-black leading-tight ${tone.name}`}>{m.r_nickname}</p>
+                          <p className={`flex min-w-0 items-center gap-1 text-sm font-black leading-tight ${tone.name}`}>
+                            <span className="truncate">{m.r_nickname}</span>
+                            <MedalMark userId={m.r_user_id} />
+                          </p>
                           <p className="text-[10px] font-black uppercase tracking-wider text-white/50">
                             {RANK_LABELS[m.r_current_rank] ?? m.r_current_rank} · LV.{toGlobalLevel(m.r_current_rank, m.r_current_level)}
                           </p>
@@ -1298,7 +1305,7 @@ const LiveBoardPage = () => {
                         <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-7 w-7" />
                         <div>
                           <p className="text-sm font-black text-yellow-200 leading-tight whitespace-nowrap">
-                            {m.r_nickname}
+                            {m.r_nickname} <MedalMark userId={m.r_user_id} />
                           </p>
                           <p className="text-[10px] text-yellow-500/80 font-black">MASTER 40</p>
                         </div>
@@ -1340,6 +1347,7 @@ const LiveBoardPage = () => {
                         {/* 이름 + 리그 버튼(모든 회원, 앱 라이센스 카드와 같은 버튼). PT 회원은 'PT' 글자 (2026-10-15 대표님) */}
                         <div className="flex min-w-0 items-center gap-1.5">
                           <p className="min-w-0 text-2xl font-black text-white truncate leading-tight">{m.name}</p>
+                          <MedalMark userId={m.user_id} className="text-2xl" />
                           <NameBadge league={m.league} className="h-7 w-7" />
                           {m.pt && (
                             <span className="shrink-0 rounded-md border border-blue-400/50 bg-blue-500/20 px-2 py-0.5 text-base font-black tracking-wider text-blue-200">

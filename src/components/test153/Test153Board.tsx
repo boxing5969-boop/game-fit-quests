@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Timer } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import MedalMark from "@/components/MedalMark";
 import { cn } from "@/lib/utils";
 import {
   buildSegments,
@@ -265,6 +266,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold text-foreground">
                         {r.r_nickname}
+                        <MedalMark userId={r.r_user_id} className="ml-1 text-sm" />
                         {me && <span className="ml-1 text-xs text-primary">나</span>}
                       </span>
                       <span className="block truncate text-[11px] text-muted-foreground">
