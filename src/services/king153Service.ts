@@ -21,7 +21,8 @@ export type KingCategory = "attendance" | "streak" | "early_bird" | "levelup" | 
 export type KingPeriod = "weekly" | "monthly" | "event";
 export type KingScope = "branch" | "all";
 
-export const KING_CATEGORIES: KingCategory[] = ["attendance", "app", "nickname", "streak", "early_bird", "levelup", "burpee", "fitness"];
+// 2026-10-15 대표님: 버피왕·체력왕(아레나 기록) 빼기 — 하이록스 같은 공식 153 체력테스트로 새로 만든다. 서버 카테고리는 그대로 둔다.
+export const KING_CATEGORIES: KingCategory[] = ["attendance", "app", "nickname", "streak", "early_bird", "levelup"];
 
 /** 사이니지 TV2 런칭 이벤트에 걸리는 세 왕좌 — ① 출석왕 ② 앱활동왕 ③ 닉네임왕 (서버 get_launch_event_board 와 같은 순서) */
 export const LAUNCH_EVENT_CATEGORIES: KingCategory[] = ["attendance", "app", "nickname"];

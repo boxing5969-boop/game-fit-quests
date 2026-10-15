@@ -159,7 +159,7 @@ const King153Board = () => {
       )}
 
       {/* 왕좌 버튼 8개 — 앞 세 개가 런칭 이벤트 ①②③. 튜토리얼 1일차 스포트라이트가 이 격자를 가리킨다. */}
-      <div data-tour="challenge153-leaderboard" className="grid grid-cols-4 gap-1.5">
+      <div data-tour="challenge153-leaderboard" className="grid grid-cols-3 gap-1.5">
         {items.map(({ meta: m, item }) => {
           const on = selected === m.key;
           const kingName = item?.king?.display_name ?? null;

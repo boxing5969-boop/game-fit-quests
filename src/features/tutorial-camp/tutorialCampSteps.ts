@@ -185,7 +185,7 @@ const DAY_1_STEPS: TutorialCampStep[] = [
     targetKey: "day1.leaderboard",
     targetSelector: '[data-tour="challenge153-leaderboard"]',
     title: "이번 주 왕좌는 누구?",
-    body: "출석왕·앱활동왕·닉네임왕·버피왕처럼 8개 왕좌가 있어요.\n버튼을 누르면 규칙과 순위가 열려요. 한 번 눌러볼까요?",
+    body: "출석왕·앱활동왕·닉네임왕·레벨업왕처럼 6개 왕좌가 있어요.\n버튼을 누르면 규칙과 순위가 열려요. 한 번 눌러볼까요?",
     osamiMessage: "내 순위가 어디쯤인지 보여요.",
     actionType: "click",
     requireTargetClick: true,
