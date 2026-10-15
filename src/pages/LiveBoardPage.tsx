@@ -330,9 +330,9 @@ const LiveBoardPage = () => {
       .filter((m) => !staffUserIds.has(m.user_id))
       .map((m) => {
         const pref = displayPrefMap[m.user_id] ?? "auto";
-        let next = m;
-        if (pref === "photo" && m.partsJson) next = { ...next, partsJson: null };
-        if (pref === "character" && m.partsJson && m.avatar_url) next = { ...next, avatar_url: null };
+        let next: ActiveMember = m;
+        if (pref === "photo" && next.partsJson) next = { ...next, partsJson: null };
+        if (pref === "character" && next.partsJson && next.avatar_url) next = { ...next, avatar_url: null };
         return ptIds.has(m.user_id) ? { ...next, pt: true } : next;
       }),
     [activeMembers, checkinMembers, mockMembers, staffUserIds, ptIds, displayPrefMap],
@@ -1232,7 +1232,7 @@ const LiveBoardPage = () => {
                               >
                                 {v.display_name}
                               </span>
-                              <MedalMark userId={v.user_id} className="text-lg" />
+                              <MedalMark animated userId={v.user_id} className="text-lg" />
                             </span>
                           );
                         })}
@@ -1265,7 +1265,7 @@ const LiveBoardPage = () => {
                         <MemberAvatar url={c.avatar_url} name={c.name} sizeClass="h-7 w-7" />
                         <div>
                           <p className="text-sm font-black leading-tight text-yellow-100 whitespace-nowrap">
-                            {c.name} {honorTitle(c.title)} <MedalMark userId={c.user_id} />
+                            {c.name} {honorTitle(c.title)} <MedalMark animated userId={c.user_id} />
                           </p>
                           <p className="text-[10px] font-black uppercase tracking-wider text-yellow-500/80">
                             {/* 대표님 지시(2026-09-23): 코치님은 모두 챔피언 · Lv.77 */}
@@ -1306,7 +1306,7 @@ const LiveBoardPage = () => {
                         <div className="min-w-0">
                           <p className={`flex min-w-0 items-center gap-1 text-sm font-black leading-tight ${tone.name}`}>
                             <span className="truncate">{m.r_nickname}</span>
-                            <MedalMark userId={m.r_user_id} />
+                            <MedalMark animated userId={m.r_user_id} />
                           </p>
                           <p className="text-[10px] font-black uppercase tracking-wider text-white/50">
                             {RANK_LABELS[m.r_current_rank] ?? m.r_current_rank} · LV.{toGlobalLevel(m.r_current_rank, m.r_current_level)}
@@ -1348,7 +1348,7 @@ const LiveBoardPage = () => {
                         <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-7 w-7" />
                         <div>
                           <p className="text-sm font-black text-yellow-200 leading-tight whitespace-nowrap">
-                            {m.r_nickname} <MedalMark userId={m.r_user_id} />
+                            {m.r_nickname} <MedalMark animated userId={m.r_user_id} />
                           </p>
                           <p className="text-[10px] text-yellow-500/80 font-black">MASTER 40</p>
                         </div>
@@ -1390,7 +1390,7 @@ const LiveBoardPage = () => {
                         {/* 이름 + 리그 버튼(모든 회원, 앱 라이센스 카드와 같은 버튼). PT 회원은 'PT' 글자 (2026-10-15 대표님) */}
                         <div className="flex min-w-0 items-center gap-1.5">
                           <p className="min-w-0 text-2xl font-black text-white truncate leading-tight">{m.name}</p>
-                          <MedalMark userId={m.user_id} className="text-2xl" />
+                          <MedalMark animated userId={m.user_id} className="text-2xl" />
                           <NameBadge league={m.league} className="h-7 w-7" />
                           {m.pt && (
                             <span className="shrink-0 rounded-md border border-blue-400/50 bg-blue-500/20 px-2 py-0.5 text-base font-black tracking-wider text-blue-200">
