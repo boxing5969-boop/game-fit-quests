@@ -134,6 +134,48 @@ const MemberDetailPage = () => {
     },
   });
 
+  // 153 마일리지 — 데스크 결제 할인 (지점장·전체관리자, 2026-10-15)
+  const canMileage = role === "branch_manager" || role === "super_admin";
+  const [mlPay, setMlPay] = useState("");
+  const [mlUse, setMlUse] = useState("");
+  const [mlMemo, setMlMemo] = useState("");
+  const { data: mileage, refetch: refetchMileage } = useQuery({
+    queryKey: ["member-mileage", memberId],
+    enabled: !!memberId && canMileage,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("get_member_mileage", { p_user_id: memberId });
+      if (error) throw error;
+      return data as { balance: number; items: Array<{ amount: number; reason: string; at: string }> };
+    },
+  });
+  const useMileageMut = useMutation({
+    mutationFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("admin_use_mileage", {
+        p_user_id: memberId,
+        p_amount: Number(mlUse.replace(/\D/g, "")),
+        p_payment_amount: Number(mlPay.replace(/\D/g, "")),
+        p_memo: mlMemo.trim() || null,
+      });
+      if (error) throw error;
+      return data as { balance: number };
+    },
+    onSuccess: (d) => {
+      toast.success(`마일리지 ${Number(mlUse.replace(/\D/g, "")).toLocaleString("ko-KR")}점 사용 · 남은 ${Number(d?.balance ?? 0).toLocaleString("ko-KR")}점`);
+      setMlUse("");
+      setMlPay("");
+      setMlMemo("");
+      void refetchMileage();
+    },
+    onError: (e: Error) => toast.error(e.message || "마일리지를 쓰지 못했어요"),
+  });
+  const mlMax = (() => {
+    const pay = Number(mlPay.replace(/\D/g, "")) || 0;
+    const bal = mileage?.balance ?? 0;
+    return Math.max(0, Math.min(Math.floor(Math.max(bal, 0) / 1000) * 1000, Math.floor((pay * 0.1) / 1000) * 1000));
+  })();
+
   // 출석 기록 (출입기·앱 QR) — 개요 요약 + 출석·활동 탭 목록
   const { data: attendance } = useQuery({
     queryKey: ["member-attendance", memberId],
@@ -452,6 +494,74 @@ const MemberDetailPage = () => {
               )}
             </div>
           </div>
+
+          {/* 153 마일리지 — 데스크 결제 할인 */}
+          {canMileage && mileage && (
+            <div className="space-y-2 pt-2 border-t border-border">
+              <h3 className="text-sm font-bold text-foreground">🪙 153 마일리지 · 데스크 결제 할인</h3>
+              <div className="rounded-xl bg-amber-500/10 p-3 text-center">
+                <span className="text-2xl font-bold text-foreground">{mileage.balance.toLocaleString("ko-KR")}점</span>
+                <p className="mt-1 text-xs text-muted-foreground">1점 = 1원 · 결제 금액의 10%까지 · 1,000점 단위</p>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  inputMode="numeric"
+                  value={mlPay}
+                  onChange={(e) => setMlPay(e.target.value)}
+                  placeholder="결제 금액(원)"
+                  className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                />
+                <input
+                  inputMode="numeric"
+                  value={mlUse}
+                  onChange={(e) => setMlUse(e.target.value)}
+                  placeholder={mlMax > 0 ? `사용 점수 (최대 ${mlMax.toLocaleString("ko-KR")})` : "사용 점수"}
+                  className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <input
+                value={mlMemo}
+                onChange={(e) => setMlMemo(e.target.value)}
+                placeholder="메모 (예: 3개월권 재등록)"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => mlMax > 0 && setMlUse(String(mlMax))}
+                  disabled={mlMax <= 0}
+                  className="rounded-xl border border-border bg-card py-2.5 text-sm font-bold text-foreground active:scale-95 disabled:opacity-40"
+                >
+                  최대로 쓰기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => useMileageMut.mutate()}
+                  disabled={useMileageMut.isPending || !mlUse || !mlPay}
+                  className="rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground active:scale-95 disabled:opacity-40"
+                >
+                  {useMileageMut.isPending ? "처리 중..." : "마일리지 사용"}
+                </button>
+              </div>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                차감한 만큼 브로제이 결제 금액에서 직접 빼 주세요. 누가 언제 얼마를 썼는지 기록이 남아요.
+              </p>
+              {mileage.items.length > 0 && (
+                <ul className="divide-y divide-border/60 rounded-xl border border-border bg-card px-3">
+                  {mileage.items.slice(0, 5).map((it, i) => (
+                    <li key={`${it.at}-${i}`} className="flex items-center gap-2 py-1.5">
+                      <span className="w-12 shrink-0 text-[11px] text-muted-foreground">{fmtDay(it.at)}</span>
+                      <span className="min-w-0 flex-1 truncate text-[12px] text-foreground">{it.reason || "마일리지"}</span>
+                      <span className={`shrink-0 text-[12px] font-bold ${it.amount >= 0 ? "text-amber-600" : "text-muted-foreground"}`}>
+                        {it.amount > 0 ? "+" : ""}
+                        {it.amount.toLocaleString("ko-KR")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           {/* Fight Money Management */}
           <div className="space-y-2 pt-2 border-t border-border">

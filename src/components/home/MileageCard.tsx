@@ -5,6 +5,7 @@
  * 적립은 서버가 그 순간에 끝낸다(출석 기록 · 레벨 승인 트리거) — 이 카드는 잔액과 최근 내역만 보여 준다.
  * 누르면 최근 내역이 펼쳐진다. 지도진·관리자 계정엔 홈에서 아예 그리지 않는다(적립 대상이 아니다).
  *
+ * 2026-10-15: '153 마일리지' · 1점 = 1원 — 수강권 결제 때 앱(결제 금액의 10%까지)·데스크에서 할인으로 쓴다.
  * 지금은 앱에 먼저 쌓인다. 브로제이(데스크) 공개 API 에는 마일리지 적립 기능이 없어서
  * 자동 이전은 그 기능이 생기면 연결한다 — 회원에게도 그렇게 적어 둔다.
  */
@@ -62,10 +63,10 @@ const MileageCard = () => {
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-700 dark:text-reward">마일리지</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-700 dark:text-reward">153 마일리지 · 1점 = 1원</p>
           <p className="flex items-center gap-1.5 truncate text-sm font-bold text-foreground">
             <span className="tabular-nums">{formatMileage(data.balance)}</span>
-            <span className="text-[12px] font-bold text-muted-foreground">마일리지</span>
+            <span className="text-[12px] font-bold text-muted-foreground">점 · 결제 할인에 사용</span>
             {todayGain > 0 && (
               <span className="rounded-full bg-reward/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-amber-700 dark:text-reward">
                 오늘 +{formatMileage(todayGain)}
@@ -116,8 +117,9 @@ const MileageCard = () => {
                 </ul>
               )}
               <p className="mt-2 text-[10.5px] leading-relaxed text-muted-foreground">
-                출석은 하루 1번, 레벨업·타이틀매치 승급은 승인되는 순간 쌓여요. 지금은 앱에 먼저 쌓이고,
-                브로제이(데스크) 마일리지 연동은 준비 중이에요.
+                출석은 하루 1번, 레벨업·타이틀매치 승급은 승인되는 순간 쌓여요. 수강권을 결제할 때 1점 = 1원으로
+                할인받아요 — 앱 결제는 ‘마일리지 쓰기’, 데스크 결제는 지점장님께 말씀해 주세요. 한 번에 결제 금액의 10%까지,
+                1,000점 단위로 쓸 수 있고, 쌓인 날부터 1년이 지나면 사라져요.
               </p>
             </div>
           </motion.div>

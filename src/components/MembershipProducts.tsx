@@ -1,7 +1,7 @@
 // 수강권/부가상품 결제 — 회원: 탭(주5회·주3회·PT·용품·렌탈·1일권) + 상품 선택 후 결제 / 관장·마스터: 상품 관리.
 // 수강권 탭은 정상가·할인율·원/일(하루 단가)을 노출하는 153멤버십 선택형 카드.
 // 결제는 payssam-create-bill 엣지함수가 결제선생 청구서를 만들고 결제 URL(shortUrl)을 반환 → 그 URL 로 이동.
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { CreditCard, Plus, Pencil, Trash2, X, Settings, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
@@ -10,6 +10,11 @@ import { toast } from "sonner";
 import PromoBanner from "@/components/PromoBanner";
 import PayssamInspectPanel from "@/components/PayssamInspectPanel";
 import { calcRefund, normalDailyRate, SIM_MONTHS } from "@/lib/refundPolicy";
+import { useMyMileage } from "@/hooks/useMileage";
+
+/** 153 마일리지 — 이번 결제에 쓸 수 있는 최대 점수 = min(보유, 결제 금액의 10%) 를 1,000 단위로 (서버 mileage_max_use 와 같은 식) */
+const maxMileageUse = (balance: number, price: number) =>
+  Math.max(0, Math.min(Math.floor(Math.max(balance, 0) / 1000) * 1000, Math.floor((price * 0.1) / 1000) * 1000));
 
 interface Product {
   id: string;
@@ -63,6 +68,11 @@ const MembershipProducts = () => {
   const [showProductAdmin, setShowProductAdmin] = useState(false); // 마스터 전용 상품 설정 패널 열림 여부
   const [confirmProduct, setConfirmProduct] = useState<Product | null>(null); // 결제 전 환불규정 확인 대상
   const [confirmAgree, setConfirmAgree] = useState(false);
+  // 153 마일리지 쓰기 (2026-10-15) — 결제 확인 창에서 고른 점수. 결제선생 청구 금액에서 빠지고, 결제가 끝나야 차감된다.
+  const [useMileage, setUseMileage] = useState(false);
+  const pendingMileage = useRef(0); // 번호 입력 창을 거쳐도 고른 점수가 남게
+  const mileage = useMyMileage(!isManagerRole(role));
+  const mileageBalance = mileage.data?.balance ?? 0;
 
   const load = useCallback(async () => {
     const { data } = await (supabase as any)
@@ -80,7 +90,8 @@ const MembershipProducts = () => {
   }, [load]);
 
   // ── 회원 결제 ── 전화번호 있으면 바로 결제, 없으면(카톡/구글 가입자) 번호 입력 모달 먼저.
-  const pay = (p: Product) => {
+  const pay = (p: Product, mileagePts = 0) => {
+    pendingMileage.current = mileagePts;
     if (memberPhone.length < 10) {
       setPhoneInput("");
       setPhoneModal(p);
@@ -96,13 +107,16 @@ const MembershipProducts = () => {
       return;
     }
     setConfirmAgree(false);
+    setUseMileage(false);
     setConfirmProduct(p);
   };
 
   const runBill = async (p: Product) => {
     setPaying(p.id);
     try {
-      const { data, error } = await supabase.functions.invoke("payssam-create-bill", { body: { product_id: p.id } });
+      const use_mileage = pendingMileage.current;
+      pendingMileage.current = 0;
+      const { data, error } = await supabase.functions.invoke("payssam-create-bill", { body: { product_id: p.id, use_mileage } });
       if (error) throw error;
       if (data?.error) {
         toast.error(data.error);
@@ -238,7 +252,7 @@ const MembershipProducts = () => {
           disabled={savingPhone}
           className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
         >
-          {savingPhone ? "처리 중..." : `${won(phoneModal.price)} 결제하기`}
+          {savingPhone ? "처리 중..." : `${won(phoneModal.price - pendingMileage.current)} 결제하기`}
         </button>
       </div>
     </div>
@@ -401,13 +415,33 @@ const MembershipProducts = () => {
 
                 <p className="mt-3 text-xs leading-relaxed text-muted-foreground">끝까지 이용하시면 하루 {(p.duration_days > 0 ? Math.round(p.price / p.duration_days) : 0).toLocaleString("ko-KR")}원으로 가장 이득입니다. 위약금(10%)·개인 위생용품은 별도이며, 최종 환불액은 관장님이 확정합니다.</p>
 
+                {(() => {
+                  const maxUse = maxMileageUse(mileageBalance, p.price);
+                  if (maxUse <= 0) return null;
+                  return (
+                    <label className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
+                      <input type="checkbox" checked={useMileage} onChange={(e) => setUseMileage(e.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
+                      <span className="text-sm text-foreground">
+                        <b>153 마일리지 {maxUse.toLocaleString("ko-KR")}점 쓰기</b> → {won(p.price - maxUse)} 결제
+                        <span className="block text-[11.5px] text-muted-foreground">
+                          보유 {mileageBalance.toLocaleString("ko-KR")}점 · 한 번에 결제 금액의 10%까지 · 결제가 끝나야 빠져요
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })()}
+
                 <label className="mt-4 flex items-center gap-2 text-sm font-semibold text-foreground">
                   <input type="checkbox" checked={confirmAgree} onChange={(e) => setConfirmAgree(e.target.checked)} className="h-4 w-4 accent-primary" />
                   위 환불 규정을 확인했으며 이에 동의합니다.
                 </label>
 
                 <button
-                  onClick={() => { const t = confirmProduct; setConfirmProduct(null); if (t) pay(t); }}
+                  onClick={() => {
+                    const t = confirmProduct;
+                    setConfirmProduct(null);
+                    if (t) pay(t, useMileage ? maxMileageUse(mileageBalance, t.price) : 0);
+                  }}
                   disabled={!confirmAgree}
                   className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-40"
                 >

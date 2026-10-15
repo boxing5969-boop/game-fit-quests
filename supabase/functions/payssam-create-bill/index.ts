@@ -8,6 +8,8 @@
 //   APP_URL          : 결제 완료 후 복귀할 앱 주소
 // ⚠️ hash 규격은 공개문서에 알고리즘이 명시돼 있지 않다 → 검수 단계에서 결제선생 기술지원으로 확정 필요.
 //    현재는 문서의 입력 문자열({billId},{phone},{price}) 기준 SHA-256(hex) 로 둠. [확인필요]
+// 2026-10-15: 153 마일리지 할인 — body.use_mileage(점) 를 DB mileage_max_use 로 검사(보유·결제 금액 10%·1,000점 단위)한 뒤
+//    청구 금액에서 뺀다. 실제 차감은 결제 완료 때 DB 트리거(payment_orders_mileage)가 한다 — 안 내면 안 빠진다.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
@@ -77,7 +79,18 @@ Deno.serve(async (req) => {
       return json({ error: "결제 설정이 아직 완료되지 않았습니다(API 키 미설정)." }, 503);
     }
 
-    const price = String(product.price);
+    // 153 마일리지 (1점 = 1원)
+    const useMileage = Math.max(0, Math.floor(Number(body?.use_mileage) || 0));
+    if (useMileage > 0) {
+      if (useMileage % 1000 !== 0) return json({ error: "마일리지는 1,000점 단위로 쓸 수 있어요." }, 400);
+      const { data: maxUse, error: mErr } = await admin.rpc("mileage_max_use", { _uid: user.id, _price: product.price });
+      if (mErr) return json({ error: "마일리지를 확인하지 못했어요. 잠시 후 다시 시도해주세요." }, 500);
+      if (useMileage > Number(maxUse || 0)) {
+        return json({ error: `이번 결제에는 마일리지를 최대 ${Number(maxUse || 0).toLocaleString("ko-KR")}점까지 쓸 수 있어요.` }, 400);
+      }
+    }
+    const payAmount = Number(product.price) - useMileage;
+    const price = String(payAmount);
     const billId = ("mb" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)).slice(0, 20);
     const hash = await sha256hex(`${billId},${phone},${price}`); // [확인필요] 결제선생 해시 규격 검수 시 확정
     const callbackUrl = `${SUPABASE_URL}/functions/v1/payssam-callback`;
@@ -91,7 +104,9 @@ Deno.serve(async (req) => {
         branch_name: profile?.branch_name ?? null,
         product_id: product.id,
         product_name: product.name,
-        amount: product.price,
+        amount: payAmount,
+        list_price: product.price,
+        mileage_used: useMileage,
         duration_days: product.duration_days,
         bill_id: billId,
         status: "created",
