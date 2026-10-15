@@ -121,6 +121,7 @@ const MemberDetailPage = () => {
         .from("manager_notes")
         .select("*")
         .eq("user_id", memberId!)
+        .eq("note_type", "internal") // 오늘 운영 보드의 코치 처리 기록(daily_ops)은 빼고 회원 메모만
         .order("created_at", { ascending: false });
       const rows = data || [];
       // 누가 쓴 메모인지 — 이름을 못 읽으면(다른 지점 관리자 등) '관리자'

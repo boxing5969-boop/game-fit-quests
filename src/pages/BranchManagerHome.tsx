@@ -3,6 +3,7 @@ import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
 import DailyOperationsBoard from "@/components/DailyOperationsBoard";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
 import DailyReportCard from "@/components/DailyReportCard";
+import TodayListPanel from "@/components/manager/TodayListPanel";
 import MembershipRequestsInbox from "@/components/MembershipRequestsInbox";
 import CoachDraftsInbox from "@/components/CoachDraftsInbox";
 import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
@@ -39,8 +40,9 @@ const kstWeekStartIso = () => {
   return new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate() - sinceMonday) - KST_MS).toISOString();
 };
 type SortType = "recent_submission" | "level_desc" | "pending_count";
-type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk";
-const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk"];
+// today_new · today_submissions — 운영 리포트 칸을 눌러야 열리는 명단 (탭 버튼은 없음, 2026-10-15)
+type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk" | "today_new" | "today_submissions";
+const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk", "today_new", "today_submissions"];
 /** 알림에서 바로 여는 탭 — /manager?tab=level_review (타이틀매치 심사 신청 알림, 2026-10-14) */
 const tabFromParam = (raw: string | null): MainTab | null =>
   MAIN_TABS.find((t) => t === raw) ?? null;
@@ -55,6 +57,14 @@ const BranchManagerHome = () => {
   const [params] = useSearchParams();
   const tabParam = tabFromParam(params.get("tab"));
   const [mainTab, setMainTab] = useState<MainTab>(() => tabParam ?? "members");
+  // 운영 리포트 칸 → 그 탭으로 바꾸고 탭 자리까지 내려 준다 (2026-10-15)
+  const openTab = (t: MainTab) => {
+    setMainTab(t);
+    window.setTimeout(() => {
+      const el = Array.from(document.querySelectorAll<HTMLElement>("[data-manager-tabs]")).find((n) => n.offsetParent !== null);
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  };
   // 이미 이 화면에 있을 때 알림을 눌러도(주소만 바뀜) 그 탭으로
   useEffect(() => {
     if (tabParam) setMainTab(tabParam);
@@ -671,6 +681,10 @@ const BranchManagerHome = () => {
           todaySubmissions={stats?.today_submissions}
           onOpenOperations={() => setMainTab("operations")}
           onOpenLiveBoard={() => navigate("/manager/live-board")}
+          onOpenAttendance={() => openTab("operations")}
+          onOpenNewToday={() => openTab("today_new")}
+          onOpenSubmissionsToday={() => openTab("today_submissions")}
+          onOpenApprovals={() => openTab("inbox")}
         />
 
         {/* 수강권 홀딩·환불 신청 처리 (신청 있을 때만 노출) */}
@@ -690,7 +704,7 @@ const BranchManagerHome = () => {
         </div>
 
         {/* Main Tab Switch */}
-        <div className="mb-4 flex gap-1.5 rounded-2xl border border-border bg-muted/30 p-1">
+        <div data-manager-tabs className="mb-4 scroll-mt-4 flex gap-1.5 rounded-2xl border border-border bg-muted/30 p-1">
           <button
             onClick={() => setMainTab("members")}
             className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
@@ -746,6 +760,15 @@ const BranchManagerHome = () => {
         {mainTab === "level_review" && <CoachLevelReviewInbox />}
         {mainTab === "operations" && <DailyOperationsBoard />}
         {mainTab === "at_risk" && <AtRiskMembersPanel />}
+        {(mainTab === "today_new" || mainTab === "today_submissions") && (
+          <TodayListPanel
+            kind={mainTab === "today_new" ? "new" : "submissions"}
+            branchName={branchName}
+            isSuperAdmin={isSuperAdmin}
+            onBack={() => setMainTab("members")}
+            onOpenApprovals={() => openTab("inbox")}
+          />
+        )}
       </div>
 
       {/* ── Desktop 2-Column Layout (>= lg) ── */}
@@ -775,6 +798,9 @@ const BranchManagerHome = () => {
             pendingCount={stats?.pending_count}
             todaySubmissions={stats?.today_submissions}
             onOpenLiveBoard={() => navigate("/manager/live-board")}
+            onOpenNewToday={() => openTab("today_new")}
+            onOpenSubmissionsToday={() => openTab("today_submissions")}
+            onOpenApprovals={() => openTab("inbox")}
           />
 
           {/* 수강권 홀딩·환불 신청 처리 (신청 있을 때만 노출) */}
@@ -792,7 +818,7 @@ const BranchManagerHome = () => {
           </div>
 
           {/* Tabs */}
-          <div className="mb-4 flex gap-1.5 rounded-2xl border border-border bg-muted/30 p-1">
+          <div data-manager-tabs className="mb-4 scroll-mt-4 flex gap-1.5 rounded-2xl border border-border bg-muted/30 p-1">
             <button
               onClick={() => setMainTab("members")}
               className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold transition-all ${
@@ -829,6 +855,15 @@ const BranchManagerHome = () => {
           {mainTab === "inbox" && <ApprovalInbox />}
           {mainTab === "members" && renderMemberList()}
           {mainTab === "level_review" && <CoachLevelReviewInbox />}
+          {(mainTab === "today_new" || mainTab === "today_submissions") && (
+            <TodayListPanel
+              kind={mainTab === "today_new" ? "new" : "submissions"}
+              branchName={branchName}
+              isSuperAdmin={isSuperAdmin}
+              onBack={() => setMainTab("members")}
+              onOpenApprovals={() => openTab("inbox")}
+            />
+          )}
         </div>
 
         {/* Right: Detail Panel */}

@@ -18,3 +18,11 @@ alter policy "Branch managers create notes" on public.manager_notes
     and note_type = 'internal'
     and (public.is_same_branch(user_id) or public.has_role((select auth.uid()), 'admin'::app_role))
   );
+
+-- 바로잡기(같은 날): 오늘 운영 보드(DailyOperationsBoard)의 코치 처리 기록도 manager_notes(note_type='daily_ops') 를 쓴다 — 함께 허용
+alter policy "Branch managers create notes" on public.manager_notes
+  with check (
+    manager_id = (select auth.uid())
+    and note_type in ('internal', 'daily_ops')
+    and (public.is_same_branch(user_id) or public.has_role((select auth.uid()), 'admin'::app_role))
+  );

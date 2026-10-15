@@ -19,6 +19,11 @@ interface DailyReportCardProps {
   /** 모바일에서만 전달 (데스크톱 좌측 패널엔 운영 탭이 없어 미전달) */
   onOpenOperations?: () => void;
   onOpenLiveBoard?: () => void;
+  /** 칸을 누르면 그 명단으로 (2026-10-15 대표님) — 앱 출석 → 출석자(운영 보드) · 오늘 신규 · 오늘 제출 · 처리 대기 → 승인 탭 */
+  onOpenAttendance?: () => void;
+  onOpenNewToday?: () => void;
+  onOpenSubmissionsToday?: () => void;
+  onOpenApprovals?: () => void;
 }
 
 const todayLabel = () =>
@@ -53,6 +58,10 @@ const DailyReportCard = ({
   todaySubmissions,
   onOpenOperations,
   onOpenLiveBoard,
+  onOpenAttendance,
+  onOpenNewToday,
+  onOpenSubmissionsToday,
+  onOpenApprovals,
 }: DailyReportCardProps) => {
   const { data, isLoading } = useDailyOpsReport({ branchName, isSuperAdmin, enabled });
 
@@ -103,23 +112,27 @@ const DailyReportCard = ({
             label="앱 출석"
             value={isLoading ? "–" : unique}
             sub={isLoading ? undefined : "회원만 · 코치 제외"}
+            onClick={onOpenAttendance}
           />
           <MetricTile
             icon={<UserPlus className="h-4 w-4 text-reward" />}
             label="오늘 신규"
             value={isLoading ? "–" : newSignups}
             gold={!isLoading && newSignups > 0}
+            onClick={onOpenNewToday}
           />
           <MetricTile
             icon={<FileText className="h-4 w-4 text-primary" />}
             label="오늘 제출"
             value={isLoading ? "–" : submissions}
+            onClick={onOpenSubmissionsToday}
           />
           <MetricTile
             icon={<Clock className="h-4 w-4 text-status-pending" />}
             label="처리 대기"
             value={isLoading ? "–" : pending}
             highlight={!isLoading && pending > 0}
+            onClick={onOpenApprovals}
           />
         </div>
 
@@ -203,6 +216,7 @@ const MetricTile = ({
   sub,
   highlight,
   gold,
+  onClick,
 }: {
   icon: ReactNode;
   label: string;
@@ -210,9 +224,13 @@ const MetricTile = ({
   sub?: string;
   highlight?: boolean;
   gold?: boolean;
+  onClick?: () => void;
 }) => (
-  <div
-    className={`rounded-2xl border p-3 ${
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={!onClick}
+    className={`block w-full rounded-2xl border p-3 text-left transition-transform enabled:active:scale-[0.97] ${
       highlight
         ? "border-status-pending/30 bg-status-pending/5"
         : gold
@@ -223,10 +241,11 @@ const MetricTile = ({
     <div className="mb-1 flex items-center gap-1.5">
       {icon}
       <span className="text-[11px] text-muted-foreground">{label}</span>
+      {onClick && <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground/70" />}
     </div>
     <p className={`text-xl font-bold ${highlight ? "text-status-pending" : "text-foreground"}`}>{value}</p>
     {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
-  </div>
+  </button>
 );
 
 export default DailyReportCard;
