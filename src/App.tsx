@@ -127,7 +127,7 @@ const SearchPage = lazyWithRetry(() => import("@/pages/SearchPage"));
 const TitleMatchPage = lazyWithRetry(() => import("@/pages/TitleMatchPage"));
 // 알림함 — 공지·출석·수업 소식 (2026-10-01 대표님)
 const NotificationsPage = lazyWithRetry(() => import("@/pages/NotificationsPage"));
-// 붕대 감기 — 그림 8단계·영상·집 연습 미션 (2026-10-13 대표님)
+// 붕대 감기 — 사진 13단계·영상·집 연습 미션 (2026-10-13 대표님)
 const HandWrapGuidePage = lazyWithRetry(() => import("@/pages/HandWrapGuidePage"));
 
 const queryClient = new QueryClient({

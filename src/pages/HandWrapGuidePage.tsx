@@ -1,10 +1,10 @@
 /**
- * 🥊 붕대 감기 — 그림 8단계 · 영상 · 집 연습 미션 (2026-10-13 대표님).
+ * 🥊 붕대 감기 — 사진 13단계 · 영상 · 집 연습 미션 (2026-10-13 대표님, 2026-10-15 사진·방향 화살표로 다시).
  *
  *   신규 회원 첫날: 코치님은 한 손만 빠르게 감아 주고, 다른 손은 회원이 이 화면을 보며 직접 감는다.
  *   그리고 집에서 혼자 감아 보는 미션(HandWrapPracticeCard) — 다음 수업 때 코치님이 회원 상세에서 기록을 본다.
  *
- *   · 그림: 지금 단계 붕대는 민트, 앞 단계는 흰 붕대로 쌓인다. 왼손/오른손 전환(기기에 기억). 좌우로 밀어서 넘길 수 있다.
+ *   · 사진: 단계마다 실제 손 사진 + 감는 방향 화살표(그려지는 선 · 흐르는 빛 · 시작점 · 들어갈 곳). 왼손/오른손 전환(기기에 기억). 좌우로 밀어서 넘길 수 있다.
  *   · 영상: 훈련 라이브러리 '복싱 붕대 감기' 항목의 영상 URL (코치·관장이 넣으면 바로 나온다). 없으면 '준비 중'.
  *   · 글: data/handWrapGuide.ts — 그림과 같은 목록을 쓴다.
  */
@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { Check, ChevronLeft, ChevronRight, Clapperboard, Play, RotateCcw, X } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import VideoPlayer from "@/components/VideoPlayer";
-import HandWrapIllustration from "@/components/handwrap/HandWrapIllustration";
+import HandWrapPhoto from "@/components/handwrap/HandWrapPhoto";
 import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
@@ -27,6 +27,7 @@ import {
   HANDWRAP_KEY_POINTS,
   HANDWRAP_MISTAKES,
   HANDWRAP_STEPS,
+  HANDWRAP_WRIST_TOTAL,
 } from "@/data/handWrapGuide";
 import { isManagerRole } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
@@ -122,7 +123,7 @@ const HandWrapGuidePage = () => {
       header={
         <PageHeader
           title="붕대 감기"
-          subtitle="그림 8단계 · 영상 · 집 연습 미션"
+          subtitle="사진 13단계 · 영상 · 집 연습 미션"
           sticky
           leftAction={
             <button
@@ -144,13 +145,22 @@ const HandWrapGuidePage = () => {
 
       {/* ── 단계 그림 ── */}
       <section ref={stepsRef} aria-label="붕대 감는 순서" className="mt-4 scroll-mt-20 overflow-hidden rounded-3xl bg-card shadow-elev-1 ring-1 ring-border/60">
-        <div className="relative bg-secondary/70" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-          <HandWrapIllustration
-            step={step}
-            mirrored={hand === "right"}
-            label={`${handLabel} 손등 그림 — ${done ? "다 감은 모습" : `${step + 1}단계 ${title}`}`}
-            className="mx-auto block h-[min(46vh,330px)] w-auto py-2"
-          />
+        <div className="relative" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+          {current ? (
+            <HandWrapPhoto
+              photo={current.photo}
+              arrow={current.arrow}
+              mirrored={hand === "right"}
+              stepKey={step}
+              alt={`${handLabel} ${step + 1}단계 ${title} 사진`}
+            />
+          ) : (
+            <div className="grid grid-cols-2 gap-0.5 bg-[#2B2622]">
+              {HANDWRAP_DONE.photos.map((src, i) => (
+                <HandWrapPhoto key={src} photo={src} mirrored={hand === "right"} stepKey={`done-${i}`} alt={`다 감은 모습 ${i + 1}`} />
+              ))}
+            </div>
+          )}
           <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11.5px] font-black tabular-nums text-white backdrop-blur-sm">
             {done ? "완성" : `${step + 1} / ${TOTAL}`}
           </span>
@@ -177,10 +187,15 @@ const HandWrapGuidePage = () => {
           <h2 className="text-[19px] font-black leading-tight text-foreground" aria-live="polite">
             {title}
           </h2>
+          {(current?.chip || done) && (
+            <span className="mt-1.5 inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[12px] font-black text-primary">
+              {current?.chip ?? HANDWRAP_WRIST_TOTAL}
+            </span>
+          )}
           <p className="mt-1.5 min-h-[3.75rem] text-[13.5px] leading-relaxed text-foreground/85">{body}</p>
 
           {/* 단계 점 — 눌러서 바로 가기 */}
-          <div className="mt-3 flex items-center justify-center gap-1.5">
+          <div className="mt-3 grid gap-1" style={{ gridTemplateColumns: `repeat(${TOTAL}, minmax(0, 1fr))` }}>
             {HANDWRAP_STEPS.map((s, i) => (
               <button
                 key={i}
@@ -188,12 +203,12 @@ const HandWrapGuidePage = () => {
                 onClick={() => go(i)}
                 aria-label={`${i + 1}단계 ${s.title}`}
                 aria-current={i === step ? "step" : undefined}
-                className="flex h-6 w-6 items-center justify-center"
+                className="flex h-6 items-center"
               >
                 <span
                   className={cn(
-                    "block rounded-full transition-all",
-                    i === step ? "h-2.5 w-5 bg-primary" : i < step ? "h-2 w-2 bg-primary/45" : "h-2 w-2 bg-border",
+                    "block h-1.5 w-full rounded-full transition-all duration-300",
+                    i === step ? "h-2 bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.6)]" : i < step || done ? "bg-primary/45" : "bg-border",
                   )}
                 />
               </button>
@@ -281,7 +296,7 @@ const HandWrapGuidePage = () => {
                 <Clapperboard className="h-5 w-5 text-muted-foreground" />
               </span>
               <p className="mt-3 text-[15px] font-bold text-foreground">영상 준비 중이에요</p>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">지금은 위 그림 8단계로 따라 해요</p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">지금은 위 사진 13단계로 따라 해요</p>
               {isStaff && (
                 <div className="mt-4 rounded-xl bg-secondary px-3 py-2.5 text-left">
                   <p className="text-[11.5px] leading-relaxed text-muted-foreground">
@@ -337,9 +352,10 @@ const HandWrapGuidePage = () => {
       {/* ── 한눈에 ── */}
       <section aria-labelledby="handwrap-all-h" className="mt-7">
         <h2 id="handwrap-all-h" className="px-1 text-[16px] font-black text-foreground">
-          8단계 한눈에
+          13단계 한눈에
         </h2>
-        <ol className="mt-2 grid grid-cols-4 gap-2">
+        <p className="mt-0.5 px-1 text-[12.5px] font-bold text-primary">{HANDWRAP_WRIST_TOTAL}</p>
+        <ol className="mt-2 grid grid-cols-3 gap-2">
           {HANDWRAP_STEPS.map((s, i) => (
             <li key={s.title}>
               <button
@@ -351,7 +367,7 @@ const HandWrapGuidePage = () => {
                   i === step ? "ring-2 ring-primary" : "ring-1 ring-border/60",
                 )}
               >
-                <HandWrapIllustration step={i} mirrored={hand === "right"} hideBadge className="block h-auto w-full rounded-lg bg-secondary/70" />
+                <HandWrapPhoto photo={s.photo} arrow={s.arrow} mirrored={hand === "right"} animate={false} alt="" className="rounded-lg" />
                 <span className="mt-1 block truncate px-0.5 text-center text-[10.5px] font-bold text-foreground">
                   {i + 1}. {s.title}
                 </span>
