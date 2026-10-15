@@ -32,7 +32,7 @@ const MIN_LEN = 1;
 const MAX_LEN = 500;
 
 function relationLabel(rel: PartnerJournalFeedRow["relation"]): string {
-  return rel === "cornerman" ? "🤝 코너맨" : "📣 세컨드";
+  return rel === "cornerman" ? "🤝 운동 짝꿍" : rel === "second" ? "📣 응원 동료" : "";
 }
 
 function formatTime(iso: string): string {
@@ -105,7 +105,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="파트너 일기 댓글"
+            aria-label="한 줄 댓글"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {/* 헤더 */}
@@ -116,10 +116,10 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-                    {relationLabel(entry.relation)} · {entry.display_name}
+                    {relationLabel(entry.relation) ? `${relationLabel(entry.relation)} · ` : ""}{entry.display_name}
                   </p>
                   <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
-                    파트너의 한 줄
+                    오늘 운동 한 줄
                   </h2>
                   <p className="mt-0.5 text-[10.5px] text-muted-foreground">
                     {formatTime(entry.created_at)}
@@ -199,7 +199,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
               </div>
 
               <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
-                ※ 댓글은 보상이 없으며 공식 1~40 레벨업과 무관합니다.
+                ※ 댓글은 보상이 없어요. 공식 레벨업과 무관해요.
               </p>
             </div>
 

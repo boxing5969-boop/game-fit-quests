@@ -50,6 +50,8 @@ interface Props {
 const LaunchEventBoard = ({ branchName }: Props) => {
   const [data, setData] = useState<TvBoard | null>(null);
   const [stale, setStale] = useState(false);
+  // 이번 주 153왕 — 커뮤니티에서 153을 가장 많이 보낸 회원 (2026-10-15 대표님 커뮤니티 개편 · 받은 수가 아니라 보낸 수)
+  const [king153, setKing153] = useState<TvRow[] | null>(null);
 
   useEffect(() => {
     if (!branchName) return;
@@ -62,6 +64,9 @@ const LaunchEventBoard = ({ branchName }: Props) => {
         if (error || !res) { setStale(true); return; }
         setData(res as TvBoard);
         setStale(false);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: k } = await (supabase as any).rpc("get_weekly_153_king", { p_branch: branchName, p_limit: 3 });
+        if (!cancelled && k?.board) setKing153(k.board as TvRow[]);
       } catch {
         if (!cancelled) setStale(true);
       }
@@ -239,6 +244,28 @@ const LaunchEventBoard = ({ branchName }: Props) => {
           );
         })}
       </div>
+
+      {/* 이번 주 153왕 — 153 커뮤니티 (월요일 0시부터) */}
+      {king153 && (
+        <div className="mt-3 flex flex-shrink-0 items-center justify-center gap-4 rounded-2xl border border-sky-400/40 bg-sky-500/10 px-6 py-3">
+          <span className="rounded-xl bg-sky-400 px-3 py-1 text-2xl font-black tabular-nums text-gray-950">153</span>
+          <span className="text-2xl font-black text-white">이번 주 153왕</span>
+          {king153[0] ? (
+            <>
+              <Crown className="h-7 w-7 text-yellow-400" />
+              <span className="text-3xl font-black text-white">{king153[0].display_name}</span>
+              <span className="text-2xl font-black tabular-nums text-sky-300">{Number(king153[0].score).toLocaleString("ko-KR")}번 응원</span>
+              {king153.length > 1 && (
+                <span className="text-lg font-bold text-gray-400">
+                  · {king153.slice(1, 3).map((r) => `${r.rank}위 ${r.display_name} ${r.score}`).join(" · ")}
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="text-xl font-bold text-gray-300">앱 커뮤니티에서 동료에게 153을 가장 많이 보낸 회원이 이 자리에 올라요</span>
+          )}
+        </div>
+      )}
 
       {/* 참여 방법 — 한 줄 */}
       <p className="mt-3 flex-shrink-0 text-center text-lg font-bold text-gray-300">

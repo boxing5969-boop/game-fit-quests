@@ -103,7 +103,7 @@ const LiveGymRaidStrip = ({ branchName, variant = "center" }: LiveGymRaidStripPr
             isSidebar ? "text-base" : "text-2xl"
           }`}
         >
-          {isSidebar ? "짐 레이드" : "짐 레이드 — 우리 지점이 함께 깨는 목표"}
+          {isSidebar ? "우리 지점 목표" : "우리 지점 목표 — 함께 채워요"}
         </h2>
         <div className="h-px flex-1 bg-gradient-to-r from-primary/40 to-transparent" />
       </div>

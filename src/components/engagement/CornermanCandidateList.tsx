@@ -45,7 +45,7 @@ const CornermanCandidateList = ({
           {readOnly ? "지금 둘러볼 회원이 없습니다." : "지금 매칭 가능한 같은 지점 회원이 없습니다."}
         </p>
         <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-          신규 회원이 가입하거나 다른 회원의 코너맨 관계가 종료되면 후보로
+          신규 회원이 가입하거나 다른 회원의 짝꿍 관계가 끝나면 후보로
           표시됩니다.
         </p>
       </div>

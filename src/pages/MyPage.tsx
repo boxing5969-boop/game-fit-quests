@@ -6,6 +6,9 @@ import RankBadge from "@/components/RankBadge";
 import MembershipCard from "@/components/MembershipCard";
 import AvatarUpload from "@/components/AvatarUpload";
 import DisplayModeToggle from "@/components/profile/DisplayModeToggle";
+import TimeCrewCard from "@/components/engagement/TimeCrewCard";
+import { setCommunityAutoPost } from "@/services/communityFeedService";
+import { Switch } from "@/components/ui/switch";
 import XPBar from "@/components/XPBar";
 import CharacterSprite from "@/components/CharacterSprite";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
@@ -51,6 +54,9 @@ const MyPage = () => {
   const [pwError, setPwError] = useState("");
   const [showBirthEdit, setShowBirthEdit] = useState(false);
   const [birthInput, setBirthInput] = useState(profile?.birth_date ?? "");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [autoPost, setAutoPost] = useState<boolean>((profile as any)?.community_auto_post ?? true);
+  const [autoPostSaving, setAutoPostSaving] = useState(false);
   const [birthLoading, setBirthLoading] = useState(false);
   const [birthError, setBirthError] = useState("");
   const [tutorialRestartBusy, setTutorialRestartBusy] = useState(false);
@@ -237,6 +243,9 @@ const MyPage = () => {
         {/* ═══════════ 내 기록 ═══════════ */}
         <section className="animate-slide-up space-y-3">
           <SectionHeader>내 기록</SectionHeader>
+
+          {/* 같은 시간대에 오는 사람 — 153 커뮤니티에서 옮겨 옴 (2026-10-15 커뮤니티 개편) */}
+          <TimeCrewCard />
 
           {/* XP & Stats */}
           <div className="rounded-2xl border border-border bg-card p-5 shadow-elev-1">
@@ -434,6 +443,33 @@ const MyPage = () => {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
+            {/* 153 커뮤니티 '오늘도 한 판' — 출석하면 피드에 내 이름이 올라가는 것 (기본 켬, 2026-10-15) */}
+            <label className="flex w-full items-center justify-between border-b border-border px-4 py-4">
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">🥊</span>
+                <span className="min-w-0">
+                  <span className="block text-sm text-foreground">출석하면 커뮤니티에 알리기</span>
+                  <span className="block text-[11px] text-muted-foreground">'오늘도 한 판' 카드에 내 이름이 올라가요</span>
+                </span>
+              </div>
+              <Switch
+                checked={autoPost}
+                disabled={autoPostSaving}
+                onCheckedChange={async (on) => {
+                  setAutoPostSaving(true);
+                  try {
+                    await setCommunityAutoPost(on);
+                    setAutoPost(on);
+                    await refreshProfile();
+                  } catch (e) {
+                    toast.error((e as Error).message);
+                  } finally {
+                    setAutoPostSaving(false);
+                  }
+                }}
+                aria-label="출석하면 커뮤니티에 알리기"
+              />
+            </label>
             <button onClick={() => navigate("/survey")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">⭐</span>

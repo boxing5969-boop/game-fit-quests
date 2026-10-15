@@ -38,7 +38,7 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
     try {
       const result = await claimMut.mutateAsync(raidId);
       toast.success(result.message, {
-        description: `+${result.quest_xp_granted} XP · +${result.gems_granted} GEM${result.respect_granted > 0 ? ` · +${result.respect_granted} RP` : ""} (기여 ${result.contribution_count}회)`,
+        description: `챔피언 머니 +${result.gems_granted} (기여 ${result.contribution_count}회)`,
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "보상 처리 실패");
@@ -63,7 +63,7 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="짐 레이드"
+            aria-label="우리 지점 목표"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             <div className="flex items-start justify-between border-b border-border px-5 pt-5 pb-3">
@@ -73,13 +73,13 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-                    짐 레이드
+                    우리 지점 목표
                   </p>
                   <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
                     {branch ? `${branch} 함께 깨는 목표` : "지점이 함께 깨는 목표"}
                   </h2>
                   <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                    내 한 라운드가 우리 지점 누적에 더해집니다.
+                    내 오늘 운동이 우리 지점 목표에 더해져요.
                   </p>
                 </div>
               </div>
@@ -95,15 +95,15 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
             <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
               {isLoading ? (
                 <p className="text-[12px] text-muted-foreground">
-                  레이드 정보를 불러오는 중…
+                  지점 목표를 불러오는 중…
                 </p>
               ) : raids.length === 0 ? (
                 <div className="rounded-card border border-border bg-background/40 p-3.5">
                   <p className="text-[12.5px] leading-relaxed text-foreground">
-                    현재 진행 중인 짐 레이드가 없습니다.
+                    지금 진행 중인 지점 목표가 없어요.
                   </p>
                   <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                    새 레이드가 시작되면 여기에 표시됩니다.
+                    코치님이 새 목표를 열면 여기에 보여요.
                   </p>
                 </div>
               ) : (

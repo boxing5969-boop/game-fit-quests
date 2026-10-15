@@ -30,7 +30,7 @@ const QuestCommunityPanel = ({ community }: Props) => {
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
           <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
             <Users className="h-3 w-3" />
-            코너맨 활성
+            운동 짝꿍
           </p>
           <p className="number-font mt-0.5 text-[14px] font-black text-foreground">
             {community.active_cornerman_pairs ?? 0}쌍
@@ -52,7 +52,7 @@ const QuestCommunityPanel = ({ community }: Props) => {
         <div className="mt-3">
           <p className="mb-1.5 flex items-center gap-1 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
             <Flag className="h-3 w-3 text-primary" />
-            짐 레이드 진척
+            우리 지점 목표
           </p>
           <ul className="space-y-1.5">
             {raids.slice(0, 5).map((r) => (

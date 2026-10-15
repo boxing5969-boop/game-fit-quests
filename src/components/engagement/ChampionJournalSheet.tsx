@@ -10,7 +10,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, CheckCircle2, AlertTriangle, X } from "lucide-react";
+import { BookOpen, CheckCircle2, AlertTriangle, X, ImagePlus, Users, Lock } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { setJournalEntryOptions, uploadCommunityPhoto } from "@/services/communityFeedService";
 import { toast } from "sonner";
 
 import {
@@ -83,6 +86,13 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
   const [painArea, setPainArea] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<JournalEntryResult | null>(null);
+  // 153 커뮤니티 개편 (2026-10-15) — 공개 범위(기본: 같은 지점 모두) + 사진 한 장
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [visibility, setVisibility] = useState<"branch" | "partners">("branch");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const photoPreview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);
+  useEffect(() => () => { if (photoPreview) URL.revokeObjectURL(photoPreview); }, [photoPreview]);
 
   useEffect(() => {
     if (open) {
@@ -93,6 +103,8 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
       setPainArea(todayCondition?.pain_area ?? []);
       setResult(null);
       setPending(false);
+      setVisibility("branch");
+      setPhoto(null);
     }
   }, [open, todayCondition?.condition_type, todayCondition?.pain_area]);
 
@@ -118,11 +130,21 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
     try {
       // 일기와 컨디션을 함께 저장. 일기는 필수 결과(result) 라 await 필수.
       // 컨디션은 오늘 첫 기록일 때만 새로 저장 (중복 방지).
+      // 사진은 글보다 먼저 올린다 — 실패하면 글도 안 올라가게 (사진 없는 글이 올라가 버리는 일 방지)
+      const photoUrl = photo && user ? await uploadCommunityPhoto(user.id, photo) : null;
       const data = await submit.mutateAsync({
         prompt,
         content: tidyContent(content),
         mood: conditionToMoodLabel(condition),
       });
+      if (photoUrl || visibility !== "branch") {
+        try {
+          await setJournalEntryOptions(data.entry_id, visibility, photoUrl);
+        } catch {
+          toast.error("사진·공개 범위를 저장하지 못했어요. 글은 올라갔어요.");
+        }
+      }
+      qc.invalidateQueries({ queryKey: ["community-feed"] });
       if (condition && !alreadyHasTodayCondition) {
         try {
           await submitCondition.mutateAsync({
@@ -154,13 +176,13 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         </div>
         <div className="min-w-0">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-            오늘의 한 줄
+            오늘 운동 한 줄
           </p>
           <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
-            챔피언 일기 · 오늘의 컨디션
+            오늘 컨디션 · 한 줄 · 사진
           </h2>
           <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-            한 줄 회고와 오늘 컨디션을 한 번에 기록합니다.
+            남긴 한 줄은 커뮤니티에 올라가고, 동료들이 153으로 응원해요.
           </p>
         </div>
       </div>
@@ -194,13 +216,10 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             )}
             <p className="text-[13.5px] font-bold text-foreground">
               {isReward
-                ? "기록 완료! 오늘의 복서 일기가 저장되었습니다."
-                : "오늘 보상은 이미 받았습니다. 하지만 기록은 계속 쌓입니다."}
+                ? (visibility === "branch" ? "올렸어요! 지점 동료들이 153으로 응원할 거예요." : "올렸어요! 짝꿍만 볼 수 있어요.")
+                : "올렸어요! 오늘 보상은 이미 받았어요."}
             </p>
           </div>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
-            {result.message}
-          </p>
         </div>
 
         <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
@@ -215,7 +234,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-card border border-border bg-card p-3">
             <p className="text-[10px] font-black uppercase tracking-wider text-primary">
-              QUEST XP
+              경험치
             </p>
             <p className="number-font mt-0.5 text-[18px] font-black text-foreground">
               +{result.quest_xp_granted}
@@ -232,8 +251,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         </div>
 
         <p className="text-[10.5px] leading-relaxed text-muted-foreground">
-          ※ QUEST XP 는 보조 경험치로, 공식 1~40 레벨업과 무관합니다. 공식
-          레벨업은 코치 승인 기준으로만 진행됩니다.
+          ※ 커뮤니티 활동은 공식 레벨업과 무관해요.
         </p>
 
         <button
@@ -360,7 +378,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             2
           </span>
           <p className="text-[10px] font-black uppercase tracking-wider text-primary">
-            챔피언 일기
+            오늘 운동 한 줄
           </p>
         </div>
 
@@ -371,7 +389,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
           </p>
           <div className="mt-2 flex items-center justify-between gap-2">
             <span className="badge-pill bg-reward/15 text-reward">
-              첫 작성 +20 XP · +50
+              오늘 첫 글 챔피언 머니 +50
             </span>
           </div>
         </div>
@@ -385,7 +403,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
 
         <div>
           <p className="mb-1.5 flex items-center justify-between text-[11.5px] font-bold text-foreground">
-            한 줄 회고
+            한 줄
             <span
               className={`text-[10.5px] font-medium ${
                 tooLong
@@ -403,7 +421,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             onChange={(e) => setContent(e.target.value.slice(0, MAX_LEN + 50))}
             placeholder={
               condition
-                ? "오늘의 라운드를 한 줄로…"
+                ? "오늘 운동을 한 줄로…"
                 : "위에서 컨디션을 먼저 선택해주세요."
             }
             rows={4}
@@ -411,6 +429,54 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             data-tour="journal-reflection-input"
             className="w-full resize-none rounded-card border border-border bg-card px-3 py-2 text-[13px] text-foreground focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
+        </div>
+      </div>
+
+      {/* 사진 한 장 + 공개 범위 (153 커뮤니티 개편 2026-10-15) */}
+      <div className="space-y-2 rounded-card border border-border bg-card p-3">
+        <div className="flex items-center gap-2">
+          <label className="flex cursor-pointer items-center gap-1.5 rounded-pill border border-border px-3 py-1.5 text-[12px] font-bold text-foreground active:scale-[0.98]">
+            <ImagePlus className="h-4 w-4 text-primary" />
+            {photo ? "사진 바꾸기" : "사진 한 장 (선택)"}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+            />
+          </label>
+          {photo && (
+            <button type="button" onClick={() => setPhoto(null)} className="text-[11px] font-bold text-muted-foreground underline">
+              빼기
+            </button>
+          )}
+        </div>
+        {photoPreview && (
+          <img src={photoPreview} alt="올릴 사진 미리보기" className="max-h-44 w-full rounded-xl object-cover" />
+        )}
+        <div className="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label="누가 볼 수 있나요">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={visibility === "branch"}
+            onClick={() => setVisibility("branch")}
+            className={`flex items-center justify-center gap-1 rounded-pill border px-2 py-1.5 text-[11.5px] font-bold ${
+              visibility === "branch" ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"
+            }`}
+          >
+            <Users className="h-3.5 w-3.5" /> 지점 동료 모두
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={visibility === "partners"}
+            onClick={() => setVisibility("partners")}
+            className={`flex items-center justify-center gap-1 rounded-pill border px-2 py-1.5 text-[11.5px] font-bold ${
+              visibility === "partners" ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"
+            }`}
+          >
+            <Lock className="h-3.5 w-3.5" /> 짝꿍만
+          </button>
         </div>
       </div>
 
@@ -478,7 +544,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="챔피언 일기"
+            aria-label="오늘 운동 한 줄"
             data-tour="champion-journal-sheet"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >

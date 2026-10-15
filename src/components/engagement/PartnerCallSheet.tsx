@@ -89,7 +89,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         </div>
         <div className="min-w-0">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-            오늘 파트너 구하기
+            오늘 같이 해요
           </p>
           <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
             {allBranches ? "전 지점 모집 · 본사 보기" : "같은 지점, 오늘만 보입니다"}
@@ -284,7 +284,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="오늘 파트너 구하기"
+            aria-label="오늘 같이 해요"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {renderHeader()}

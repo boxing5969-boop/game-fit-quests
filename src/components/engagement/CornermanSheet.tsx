@@ -70,7 +70,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
       const result = await requestMut.mutateAsync(userId);
       toast.success(result.message);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "코너맨 요청 실패");
+      toast.error(err instanceof Error ? err.message : "짝꿍 요청 실패");
     } finally {
       setPendingRequestId(null);
     }
@@ -93,10 +93,10 @@ const CornermanSheet = ({ open, onClose }: Props) => {
 
   const handleEnd = async () => {
     if (!status?.pair_id) return;
-    if (!confirm("정말 코너맨 관계를 종료하시겠습니까?")) return;
+    if (!confirm("정말 운동 짝꿍을 그만할까요?")) return;
     try {
       await endMut.mutateAsync(status.pair_id);
-      toast.success("코너맨 관계가 종료되었습니다.");
+      toast.success("운동 짝꿍을 그만했어요.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "종료 처리 실패");
     }
@@ -119,7 +119,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
         </div>
         <div className="min-w-0">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-            코너맨 매칭
+            운동 짝꿍
           </p>
           <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
             {CORNERMAN_COPY.cardHeadline}
@@ -219,7 +219,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
     if (statusLoading) {
       return (
         <p className="text-[12px] text-muted-foreground">
-          코너맨 정보를 불러오는 중…
+          짝꿍 정보를 불러오는 중…
         </p>
       );
     }
@@ -254,7 +254,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
           </p>
           <p className="mb-2 text-[10.5px] leading-relaxed text-muted-foreground">
             {isHq
-              ? "최근 출석한 회원부터 보여요. 코너맨은 같은 지점 회원끼리 맺어서 본사 계정은 둘러보기만 해요."
+              ? "최근 출석한 회원부터 보여요. 짝꿍은 같은 지점 회원끼리 맺어서 본사 계정은 둘러보기만 해요."
               : CORNERMAN_COPY.emptyHint}
           </p>
           <CornermanCandidateList
@@ -291,7 +291,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="코너맨 매칭"
+            aria-label="운동 짝꿍"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {renderHeader()}

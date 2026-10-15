@@ -69,7 +69,7 @@ const QuestCoachSummaryPanel = () => {
     },
     {
       icon: <ClipboardList className="h-3.5 w-3.5" />,
-      label: "챔피언 일기",
+      label: "오늘 운동 한 줄",
       value: `${summary?.journals_7d ?? 0}건`,
     },
     {
@@ -79,7 +79,7 @@ const QuestCoachSummaryPanel = () => {
     },
     {
       icon: <Heart className="h-3.5 w-3.5" />,
-      label: "코너맨 활성",
+      label: "운동 짝꿍",
       value: `${summary?.cornerman_active_pairs ?? 0}쌍`,
     },
     {

@@ -41,10 +41,10 @@ const CornermanCard = ({ onOpen }: Props) => {
   let title: string;
   let subtitle: string;
   if (isLoading) {
-    title = "코너맨";
+    title = "운동 짝꿍";
     subtitle = "정보를 불러오는 중…";
   } else if (hasActive) {
-    title = `🥊 ${status?.partner_name ?? "코너맨"}`;
+    title = `🥊 ${status?.partner_name ?? "운동 짝꿍"}`;
     if (status?.today?.bonus_claimed) {
       subtitle = "오늘 보너스 받음";
     } else if (status?.today?.both_completed) {
@@ -55,7 +55,7 @@ const CornermanCard = ({ onOpen }: Props) => {
       subtitle = CORNERMAN_COPY.noneCompletedHint;
     }
   } else if (pendingReceivedCount > 0) {
-    title = "코너맨 요청 도착";
+    title = "짝꿍 요청 도착";
     subtitle = CORNERMAN_COPY.pendingReceivedHint;
   } else if (pendingSentCount > 0) {
     title = "수락 대기 중";
@@ -71,14 +71,14 @@ const CornermanCard = ({ onOpen }: Props) => {
       onClick={onOpen}
       data-tour="cornerman-card"
       className="flex w-full items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3 text-left transition-all active:scale-[0.99] hover:border-primary/40"
-      aria-label="코너맨 매칭 열기"
+      aria-label="운동 짝꿍 열기"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Users className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-          코너맨 · 함께 가는 라운드
+          운동 짝꿍 · 같이 하면 보너스
         </p>
         <p className="mt-0.5 truncate text-[13.5px] font-bold text-foreground">
           {title}

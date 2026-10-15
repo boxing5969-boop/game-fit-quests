@@ -41,14 +41,14 @@ const GymRaidCard = () => {
         type="button"
         onClick={() => setShowSheet(true)}
         className="flex w-full items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3 text-left transition-all active:scale-[0.99] hover:border-primary/40"
-        aria-label="짐 레이드 열기"
+        aria-label="우리 지점 목표 열기"
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Flag className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-            짐 레이드 · 함께 깨는 목표
+            우리 지점 목표 · 함께 채워요
           </p>
           {isLoading ? (
             <p className="mt-0.5 text-[13px] font-bold text-foreground">

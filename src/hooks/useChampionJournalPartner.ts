@@ -54,6 +54,7 @@ export function useAddJournalComment(entryId: string | null) {
       });
       // 피드의 comment_count 도 갱신되도록
       qc.invalidateQueries({ queryKey: [...PARTNER_JOURNAL_KEY, "feed"] });
+      qc.invalidateQueries({ queryKey: ["community-feed"] });
     },
   });
 }
@@ -67,6 +68,7 @@ export function useDeleteJournalComment(entryId: string | null) {
         queryKey: [...PARTNER_JOURNAL_KEY, "comments", entryId ?? "none"],
       });
       qc.invalidateQueries({ queryKey: [...PARTNER_JOURNAL_KEY, "feed"] });
+      qc.invalidateQueries({ queryKey: ["community-feed"] });
     },
   });
 }

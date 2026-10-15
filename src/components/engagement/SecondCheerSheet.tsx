@@ -121,13 +121,13 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
         </div>
         <div className="min-w-0">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-            오늘의 박수
+            응원 보내기
           </p>
           <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
-            세컨드 응원
+            동료에게 응원 한마디
           </h2>
           <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-            동료의 라운드에 박수를 보내세요. 응원도 실력입니다.
+            오늘 운동한 동료에게 응원을 보내요. 응원도 실력입니다.
           </p>
         </div>
       </div>
@@ -193,10 +193,10 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-card border border-border bg-card p-3">
             <p className="text-[10px] font-black uppercase tracking-wider text-primary">
-              내 RP
+              보낸 응원
             </p>
-            <p className="number-font mt-0.5 text-[18px] font-black text-foreground">
-              +{result.respect_granted}
+            <p className="mt-0.5 text-[12.5px] font-bold text-foreground">
+              전달 완료
             </p>
           </div>
           <div className="rounded-card border border-border bg-card p-3">
@@ -212,8 +212,7 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
         </div>
 
         <p className="text-[10.5px] leading-relaxed text-muted-foreground">
-          ※ 응원은 공식 레벨업에 영향을 주지 않는 커뮤니티 활동입니다. RP 와
-          챔피언 머니만 적용됩니다.
+          ※ 커뮤니티 활동은 공식 레벨업과 무관해요.
         </p>
 
         <div className="grid grid-cols-2 gap-2 pt-1">
@@ -322,8 +321,7 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
             {target.branch_name}
           </p>
           <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-            응원은 공식 레벨업에 영향을 주지 않는 커뮤니티 활동입니다. 보낸
-            사람에게는 RP +5, 받은 사람에게는 응원 알림이 전달됩니다.
+            받은 사람에게 응원 알림이 바로 전달돼요.
           </p>
         </div>
 
@@ -395,7 +393,7 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="세컨드 응원"
+            aria-label="응원 보내기"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {renderHeader()}

@@ -76,8 +76,7 @@ const GymRaidContributionList = ({
           <p className="text-[9.5px] uppercase text-reward">보상</p>
           <p className="mt-0.5 text-[11.5px] font-bold text-reward">
             {raid.reward_quest_xp > 0 && `+${raid.reward_quest_xp} XP `}
-            {raid.reward_gems > 0 && `· +${raid.reward_gems} GEM `}
-            {raid.reward_respect > 0 && `· +${raid.reward_respect} RP`}
+            {raid.reward_gems > 0 && `· 챔피언 머니 +${raid.reward_gems} `}
           </p>
         </div>
       </div>

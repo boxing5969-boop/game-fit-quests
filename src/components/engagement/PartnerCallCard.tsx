@@ -26,16 +26,16 @@ const PartnerCallCard = () => {
   let title: string;
   let subtitle: string;
   if (isLoading) {
-    title = "오늘 파트너";
+    title = "오늘 같이 해요";
     subtitle = "불러오는 중…";
   } else if (others > 0) {
-    title = `오늘 ${others}명이 파트너를 찾고 있어요`;
+    title = `오늘 ${others}명이 같이 할 사람을 찾고 있어요`;
     subtitle = "미트·줄넘기·같이 운동 — 눌러서 '저요' 하면 됩니다";
   } else if (mine) {
     title = "내 모집이 올라가 있어요";
     subtitle = `참여 ${mine.joinCount}명 — 아직 없으면 조금 기다려 주세요`;
   } else {
-    title = "오늘 파트너 구하기";
+    title = "오늘 같이 해요";
     subtitle = "미트 잡아줄 사람이 필요한 날, 한 줄 올려두세요";
   }
 
@@ -45,14 +45,14 @@ const PartnerCallCard = () => {
         type="button"
         onClick={() => setOpen(true)}
         className="flex w-full items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3 text-left transition-all active:scale-[0.99] hover:border-primary/40"
-        aria-label="오늘 파트너 구하기 열기"
+        aria-label="오늘 같이 해요 열기"
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Handshake className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-            오늘 파트너 · 같은 지점
+            오늘 같이 해요 · 같은 지점
           </p>
           <p className="mt-0.5 truncate text-[13.5px] font-bold text-foreground">{title}</p>
           <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{subtitle}</p>

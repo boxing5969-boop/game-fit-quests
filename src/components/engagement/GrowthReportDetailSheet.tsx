@@ -121,10 +121,10 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
                         {" "}{report.quest.challengeAttempts}회 시도
                       </li>
                       <li>
-                        챔피언 일기: <strong>{report.quest.journalCount}회</strong>
+                        오늘 운동 한 줄: <strong>{report.quest.journalCount}회</strong>
                       </li>
                       <li>
-                        세컨드 응원: 보냄 <strong>{report.quest.cheerSent}</strong> · 받음{" "}
+                        응원: 보냄 <strong>{report.quest.cheerSent}</strong> · 받음{" "}
                         <strong>{report.quest.cheerReceived}</strong>
                       </li>
                       <li>

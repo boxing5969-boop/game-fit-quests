@@ -59,7 +59,8 @@ function throwKo(err: unknown): never {
 // 타입
 // ──────────────────────────────────────────────────────────────────
 
-export type JournalPartnerRelation = "cornerman" | "second";
+/** branch = 같은 지점 공개 글 (153 커뮤니티 피드에서 열 때) */
+export type JournalPartnerRelation = "cornerman" | "second" | "branch";
 
 export interface PartnerJournalFeedRow {
   id: string;

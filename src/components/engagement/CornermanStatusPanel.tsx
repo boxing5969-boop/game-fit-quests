@@ -65,7 +65,7 @@ const CornermanStatusPanel = ({
 
       <div className="rounded-card border border-border bg-card p-3.5">
         <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-          오늘의 라운드
+          오늘 운동
         </p>
         <ul className="mt-2 space-y-1.5">
           <li className="flex items-center gap-2 text-[12.5px]">
@@ -79,7 +79,7 @@ const CornermanStatusPanel = ({
                 me ? "font-bold text-foreground" : "text-muted-foreground"
               }
             >
-              내 라운드 — {me ? "완료" : "미완료"}
+              나 — {me ? "오늘 운동 완료" : "아직"}
             </span>
           </li>
           <li className="flex items-center gap-2 text-[12.5px]">
@@ -93,7 +93,7 @@ const CornermanStatusPanel = ({
                 partner ? "font-bold text-foreground" : "text-muted-foreground"
               }
             >
-              {status.partner_name} 라운드 — {partner ? "완료" : "미완료"}
+              {status.partner_name} — {partner ? "오늘 운동 완료" : "아직"}
             </span>
           </li>
         </ul>
@@ -117,8 +117,8 @@ const CornermanStatusPanel = ({
           : claimed
             ? "오늘 보너스 받음"
             : both
-              ? "코너 보너스 받기 (+50 XP · +100 GEM · +10 RP)"
-              : "둘 다 라운드 완료 시 열림"}
+              ? "짝꿍 보너스 받기 (챔피언 머니 +100)"
+              : "둘 다 오늘 운동하면 열려요"}
       </button>
 
       <button
@@ -128,7 +128,7 @@ const CornermanStatusPanel = ({
         className="flex w-full items-center justify-center gap-1.5 rounded-card border border-border bg-card py-2.5 text-[12px] font-medium text-muted-foreground transition-all active:scale-[0.99] hover:border-destructive/40 hover:text-destructive disabled:opacity-60"
       >
         <LogOut className="h-3.5 w-3.5" />
-        {endPending ? "종료 중…" : "코너맨 관계 종료"}
+        {endPending ? "종료 중…" : "짝꿍 그만하기"}
       </button>
     </div>
   );

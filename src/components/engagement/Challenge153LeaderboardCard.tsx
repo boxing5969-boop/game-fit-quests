@@ -117,7 +117,7 @@ const Challenge153LeaderboardCard = () => {
             아직 이 기간 랭킹에 오른 회원이 없습니다
           </p>
           <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-            복싱 IQ 퀴즈 / 챌린지 아레나 / 챔피언 일기로
+            복싱 IQ 퀴즈 / 챌린지 아레나 / 오늘 운동 한 줄로
             <br />
             QUEST XP 를 쌓으면 자동으로 랭킹에 반영됩니다.
           </p>
