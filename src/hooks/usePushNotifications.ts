@@ -1,9 +1,16 @@
 /**
  * 📲 휴대폰 알림 — 이 기기 상태 + 켜기 · 끄기 · 테스트 (2026-10-01).
  * 상태는 화면에 돌아올 때마다 다시 읽는다 (휴대폰 설정에서 알림을 끄고 돌아오는 경우).
+ *
+ * 🔔 알림 켜기 보상 (2026-10-15 대표님: 오삼코치 AI 1주차 — 챔피언 머니 500, 한 사람 한 번).
+ *   서버가 정본 — get_my_push_reward() · claim_push_optin_reward() (시범 지점 회원만, 켜진 기기가 있어야, 지갑은 grant_gems).
+ *   · 켜기에 성공하면 바로 받는다
+ *   · 이미 켜 둔 회원은 이 카드가 있는 화면(홈·알림함)을 열 때 한 번 받는다
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   disablePush,
@@ -15,6 +22,19 @@ import {
 } from "@/lib/pushClient";
 
 export type PushBusy = null | "enable" | "disable" | "test";
+
+export const PUSH_REWARD_KEY = "153push:reward";
+export type PushReward = { amount: number; eligible: boolean; claimed: boolean };
+
+// 새 함수들은 types.ts 재생성 전 — 기존 파일들과 같은 캐스트 패턴
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const rpc = (name: string) => (supabase.rpc as any)(name, {});
+
+const parsePushReward = (d: unknown): PushReward | null => {
+  if (!d || typeof d !== "object") return null;
+  const o = d as Record<string, unknown>;
+  return { amount: Number(o.amount) || 0, eligible: o.eligible === true, claimed: o.claimed === true };
+};
 
 /** 알림이 막혔을 때 다시 허용하는 길 — 기기별로 */
 export function deniedHelp(ua: string = typeof navigator === "undefined" ? "" : navigator.userAgent): string {
@@ -29,6 +49,46 @@ export function usePushNotifications() {
   const uid = user?.id ?? null;
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState<PushBusy>(null);
+  const qc = useQueryClient();
+
+  // 알림 켜기 보상 상태 — 대상이 아니면 서버가 eligible=false · 금액 0 으로 답한다
+  const rewardQ = useQuery({
+    queryKey: [PUSH_REWARD_KEY, uid],
+    enabled: !!uid,
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await rpc("get_my_push_reward");
+      if (error) throw error;
+      return parsePushReward(data);
+    },
+  });
+  const reward = rewardQ.data ?? null;
+  const rewardClaimable = !!reward && reward.eligible && !reward.claimed;
+
+  /** 보상 받기 — 서버가 한 번만 준다. 실패해도 알림 켜기는 그대로 성공이다 */
+  const claimReward = useCallback(async () => {
+    try {
+      const { data, error } = await rpc("claim_push_optin_reward");
+      const r = !error && data && typeof data === "object" ? (data as { granted?: boolean; amount?: number }) : null;
+      if (r?.granted) {
+        toast.success(`🔔 알림 켜기 보상 · 챔피언 머니 +${Number(r.amount || 0).toLocaleString("ko-KR")}`, {
+          description: "캐릭터 꾸미기에서 쓸 수 있어요",
+        });
+      }
+    } catch {
+      /* 다음에 이 화면을 열 때 다시 */
+    }
+    void qc.invalidateQueries({ queryKey: [PUSH_REWARD_KEY] });
+    void qc.invalidateQueries({ queryKey: ["wallet"] });
+  }, [qc]);
+
+  // 이미 켜 둔 회원 — 화면을 열 때 한 번 받는다
+  const autoClaimed = useRef(false);
+  useEffect(() => {
+    if (autoClaimed.current || state?.kind !== "on" || !rewardClaimable) return;
+    autoClaimed.current = true;
+    void claimReward();
+  }, [state, rewardClaimable, claimReward]);
 
   const refresh = useCallback(async () => {
     try {
@@ -59,6 +119,10 @@ export function usePushNotifications() {
           toast.success("휴대폰 알림을 켰어요 🔔", {
             description: "공지 · 출석 · 수업 소식을 휴대폰으로 바로 알려 드릴게요.",
           });
+          if (rewardClaimable) {
+            autoClaimed.current = true;
+            await claimReward();
+          }
         } else if (reason === "denied") {
           toast.error("알림이 막혀 있어요", { description: deniedHelp(), duration: 9000 });
         } else if (reason === "dismissed") {
@@ -73,7 +137,7 @@ export function usePushNotifications() {
         await refresh();
       })
       .finally(() => setBusy(null));
-  }, [uid, busy, refresh]);
+  }, [uid, busy, refresh, rewardClaimable, claimReward]);
 
   const disable = useCallback(() => {
     if (busy) return;
@@ -109,5 +173,5 @@ export function usePushNotifications() {
       .finally(() => setBusy(null));
   }, [busy]);
 
-  return { state, busy, enable, disable, test, refresh, signedIn: !!uid };
+  return { state, busy, enable, disable, test, refresh, signedIn: !!uid, reward, rewardClaimable };
 }

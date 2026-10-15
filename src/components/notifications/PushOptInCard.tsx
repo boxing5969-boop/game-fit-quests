@@ -5,6 +5,7 @@
  *   · settings — 설정 화면 카드. 켜짐/꺼짐/막힘/지원 안 함을 모두 보여 주고, 켜진 기기는 테스트 알림 · 끄기.
  *   · manager  — 지점장·본사 관리 화면 맨 위. inbox 와 같게 동작하고 문구만 '결제 알림' (2026-10-01 앱 결제 알림).
  * 아이폰 사파리 탭에서는 켤 수 없다 → '홈 화면에 추가' 안내. 카카오톡 안 화면 → 다른 브라우저로 열기 안내.
+ * 🔔 알림 켜기 보상 (2026-10-15) — 받을 수 있는 회원(시범 지점)에게만 '챔피언 머니 500' 문구를 보인다. 금액은 서버가 준 숫자.
  */
 import { useState } from "react";
 import { BellRing, Check, Share, Smartphone } from "lucide-react";
@@ -54,7 +55,7 @@ interface Props {
 }
 
 const PushOptInCard = ({ variant, className }: Props) => {
-  const { state, busy, enable, disable, test, signedIn } = usePushNotifications();
+  const { state, busy, enable, disable, test, signedIn, reward, rewardClaimable } = usePushNotifications();
   const hideKey = variant === "manager" ? HIDE_KEY_MANAGER : HIDE_KEY;
   const [hidden, setHidden] = useState(() => readHidden(hideKey));
 
@@ -81,6 +82,10 @@ const PushOptInCard = ({ variant, className }: Props) => {
   const shell = inbox
     ? "rounded-2xl bg-card p-4 shadow-elev-1"
     : "animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1";
+
+  // 알림 켜기 보상 문구 — 회원 화면에서, 아직 받을 수 있을 때만
+  const showReward = !manager && rewardClaimable && !!reward;
+  const rewardText = showReward ? `챔피언 머니 ${reward.amount.toLocaleString("ko-KR")}` : "";
 
   // ── 켜짐 (설정 화면) ──
   if (state.kind === "on") {
@@ -132,6 +137,9 @@ const PushOptInCard = ({ variant, className }: Props) => {
           <div className="min-w-0 flex-1">
             <p className="text-[14px] font-bold leading-snug text-foreground">{t.title}</p>
             <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{t.body}</p>
+            {showReward && state.kind === "unsupported" && state.why === "ios-install" && (
+              <p className="mt-1.5 text-[12.5px] font-semibold text-primary">홈 화면 앱에서 알림을 켜면 {rewardText}을 드려요.</p>
+            )}
           </div>
         </div>
         {inbox && (
@@ -159,11 +167,17 @@ const PushOptInCard = ({ variant, className }: Props) => {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[14.5px] font-bold leading-snug text-foreground">
-            {manager ? "💳 결제 알림을 휴대폰으로 받기" : "휴대폰으로도 알림 받기"}
+            {manager
+              ? "💳 결제 알림을 휴대폰으로 받기"
+              : showReward
+              ? `알림 켜고 ${rewardText} 받기`
+              : "휴대폰으로도 알림 받기"}
           </p>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
             {manager
               ? "앱에서 결제·취소되면 1분 안에 이 기기가 울려요 — 브로제이 입력을 바로 하세요. 공지 소식도 함께 와요."
+              : showReward
+              ? "공지 · 출석 소식과 곧 시작하는 오삼코치 '오늘의 목표'를 휴대폰으로 받아요. 보상은 한 번만 드려요."
               : "공지 · 출석 · 수업 소식이 오면 앱을 열지 않아도 바로 알려 드려요."}
           </p>
         </div>

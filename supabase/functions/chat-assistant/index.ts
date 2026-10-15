@@ -4,6 +4,7 @@ import { SYSTEM_PROMPT_153 } from "../_shared/systemPrompt153.ts";
 import { KNOWLEDGE_153 } from "../_shared/knowledge153.ts";
 import { KNOWLEDGE_BOXING_153 } from "../_shared/knowledgeBoxing153.ts";
 import { analyzeMealImage } from "../_shared/mealVision.ts";
+import { CLAUDE_CHAT_MODEL, claudeStream, claudeToOpenAiSse, hasClaude, keepAlive, logAiUsage } from "../_shared/claude.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -19,6 +20,9 @@ const corsHeaders = {
 //          여기서 [앱 안내]·[앱 기능 지도] 로 프롬프트에 끼운다 → AI 가 앱 사실을 틀리지 않는다.
 //          서버에 데이터 복사본을 두지 않으므로 숫자·규칙은 src/data/osamiFaq.ts 한 곳만 고친다.
 //
+// 0순위 Claude (2026-10-15 대표님: 월 200달러 API 크레딧) — ANTHROPIC_API_KEY 가 있으면 Claude Sonnet 5.5 로 먼저 답한다.
+//   실패(키·한도·장애)하면 아래 Groq 체인이 예비로 받는다. 스트림 형식 변환·비용 기록은 _shared/claude.ts.
+//
 // AI Provider 체인 — 위에서 아래로. 각 provider 는 KEY 시크릿이 있어야 활성화(없으면 조용히 스킵).
 // 모두 OpenAI 호환 SSE 포맷이라 클라이언트 스트리밍 파서를 바꿀 필요 없음.
 //
@@ -29,7 +33,8 @@ const corsHeaders = {
 //
 // Supabase 시크릿 등록 방법:
 //   Dashboard → Edge Functions → chat-assistant → Secrets → 아래 이름으로 추가
-//     GROQ_API_KEY        (필수, 1차)
+//     ANTHROPIC_API_KEY   (0순위 — Claude. CLAUDE_CHAT_MODEL 로 모델 교체 가능, 기본 claude-sonnet-5-5)
+//     GROQ_API_KEY        (1차 — Claude 가 없거나 실패할 때)
 //     GROQ_CHAT_MODEL     (선택 — 가장 먼저 시도할 모델을 바꾸고 싶을 때. 아래 기본 목록 앞에 끼워진다)
 //     CEREBRAS_API_KEY    (선택, 2차 폴백)
 //     SAMBANOVA_API_KEY   (선택, 3차 폴백 — cloud.sambanova.ai)
@@ -176,6 +181,8 @@ async function resolveModels(p: Provider, key: string): Promise<string[]> {
 // 자세한 답을 위해 출력 상한을 넉넉히 두되, 413 이면 히스토리 → 지식 문서 순으로 덜어내며 재시도한다.
 const MAX_TOKENS = 1100; // 한국어 약 1,000~1,500자 — 결론·원리·단계·주의·다음 행동까지 충분히
 const LEAN_MAX_TOKENS = 700;
+// Claude 는 groq 분당 토큰 한도가 없어 넉넉히 둔다. 새 토크나이저가 한국어를 약 30% 더 잘게 센다.
+const CLAUDE_MAX_TOKENS = 2000;
 
 // ────────────────────────────────────────────────────────────────
 // 최고 성능 시스템 프롬프트 — 오삼 코치 (2026-10-03)
@@ -184,7 +191,7 @@ const LEAN_MAX_TOKENS = 700;
 //   · 회원이 코치에게 묻듯 물으면 전문가답게 "자세하고 끝까지" 답한다 (결론 → 원리 → 단계 → 주의 → 다음 행동).
 //   · 화면은 글자만 보여 주므로 마크다운 기호 금지 (번호·글머리·빈 줄만).
 //   · 앱 사실은 [앱 안내]/[앱 기능 지도] 자료로만 — 없는 숫자·규정은 지어내지 않고 데스크·코치님 확인 안내.
-//   · 153 용어(리그·레벨·타이틀매치·마일리지·파이트 머니) 고정, 벨트·계급·확정 혜택 금지.
+//   · 153 용어(리그·레벨·타이틀매치·마일리지·챔피언 머니) 고정, 벨트·계급·확정 혜택 금지.
 //   · 의료·보안·개인정보 선. 시스템 규칙 변경 요청 거절.
 // 토큰 예산: 이 프롬프트 ≈ 3,000자. 여기에 [앱 기능 지도](≈1,600자, 앱 질문일 때만)·[앱 안내](≤2,200자, 관련 있을 때만)·
 //            지식 문서(복싱 ≈2,700자 / 다이어트 ≈2,500자, 화제일 때만)·히스토리(≤1,200토큰)·출력 1,100토큰.
@@ -215,11 +222,11 @@ const SYSTEM_PROMPT = `너는 153복싱짐 공식 앱 "마이복서153"의 AI �
 [앱 주요 메뉴 — 메뉴 이름은 여기 있는 것과 [앱 안내]·[앱 기능 지도] 자료에 있는 것만 쓴다. 없는 메뉴 이름을 만들지 않는다]
 - MY복서(라이센스 카드·레벨업 진행도·마일리지·하트·운동 종료) · 훈련 탭(오늘의 코스·내 레벨 연습하기·레벨업까지) · 수업 루틴(레벨별 1·2·3일차 수업 매뉴얼) · 훈련 라이브러리(훈련 방법·코치 포인트) · 153플레이(레벨 영상·복싱 영상) · 타이틀매치(심사 동작 영상)
 - 153다이어트(트래커 체크인·식단 사진 분석) · 랭킹(지점 순위·명예의 전당) · 153 챌린지(왕좌) · 복싱 트레이닝 게임 · 153 커뮤니티(파트너 구하기·장비 나눔·코너맨) · 153마인드셋(3분 시각화)
-- 메시지(코치님 1:1) · 알림함 · 수강권(남은 기간·홀딩·환불·양도) · 캐릭터(파이트 머니 꾸미기) · 설정 · 가이드 · 검색
+- 메시지(코치님 1:1) · 알림함 · 수강권(남은 기간·홀딩·환불·양도) · 캐릭터(챔피언 머니 꾸미기) · 설정 · 가이드 · 검색
 
 [153 용어 — 반드시 이렇게]
 - 프로그램 이름은 "153랭크업 시스템". 리그 4개(화이트 → 블루 → 레드 → 블랙) × 각 레벨 1~10. 표기는 "화이트 리그 · 레벨 3" 또는 "화이트 L3".
-- 리그 마지막 레벨(10·20·30·40)의 승급 시험은 "타이틀매치"이고 지도진(코치님·관장님)이 심사한다. 그 밖의 레벨은 출석으로 오르며, 레드·블랙은 지도진 승인을 거친다. 적립 포인트는 "마일리지", 캐릭터 꾸미기 재화는 "파이트 머니(젬)".
+- 리그 마지막 레벨(10·20·30·40)의 승급 시험은 "타이틀매치"이고 지도진(코치님·관장님)이 심사한다. 그 밖의 레벨은 출석으로 오르며, 레드·블랙은 지도진 승인을 거친다. 적립 포인트는 "마일리지", 캐릭터 꾸미기 재화는 "챔피언 머니(젬)" (예전 이름 "파이트 머니").
 - 쓰지 않는 말: 벨트, 계급, 급수, 승단, 확정 혜택, 무조건, 자동 가산점. 잽은 "잽"(쩁·쨉 금지), 식이섬유는 "식이섬유". 카운터 = 되받아치기.
 
 [정확성·안전 규칙]
@@ -497,14 +504,15 @@ serve(async (req) => {
 
     // 활성화된 provider 만 걸러낸다. 최소 1개는 있어야 함.
     const activeProviders = PROVIDERS.filter((p) => cleanKey(Deno.env.get(p.keyEnv), p.keyEnv) !== "");
-    if (activeProviders.length === 0) {
+    if (activeProviders.length === 0 && !hasClaude()) {
       throw new Error(
-        "No AI provider API key configured (GROQ_API_KEY / CEREBRAS_API_KEY / SAMBANOVA_API_KEY / DEEPSEEK_API_KEY)",
+        "No AI provider API key configured (ANTHROPIC_API_KEY / GROQ_API_KEY / CEREBRAS_API_KEY / SAMBANOVA_API_KEY / DEEPSEEK_API_KEY)",
       );
     }
     // Try to get user context from auth token
     let personalContext = "";
     let dietContext = "";
+    let requestUserId: string | null = null; // 비용 기록(ai_usage_log)용
     const authHeader = req.headers.get("authorization");
     if (authHeader) {
       try {
@@ -517,6 +525,7 @@ serve(async (req) => {
           data: { user },
         } = await supabase.auth.getUser();
         if (user) {
+          requestUserId = user.id;
           const [
             profileRes,
             progressRes,
@@ -722,6 +731,58 @@ serve(async (req) => {
       attempts.push({ label: "lean", messages: [...baseSystem.filter((m) => !m.content.startsWith("[앱 기능 지도]")), ...memberDiet, ...lastOnly], maxTokens: LEAN_MAX_TOKENS });
     }
     const promptChars = attempts[0].messages.reduce((s, m) => s + m.content.length, 0);
+
+    // ── 0순위: Claude (ANTHROPIC_API_KEY 가 있을 때만) ───────────────────────────
+    // groq 의 8K TPM 제약이 없으므로 'full' 단계(시스템 전부 + 최근 대화)를 그대로 보낸다.
+    // 키·한도·장애로 실패하면 로그만 남기고 아래 Groq 체인이 예비로 받는다 — 회원 화면은 끊기지 않는다.
+    if (hasClaude()) {
+      const full = attempts[0].messages;
+      const sys = full.filter((m) => m.role === "system").map((m) => m.content);
+      const conv = full.filter((m): m is ChatMsg => m.role === "user" || m.role === "assistant");
+      try {
+        const r = await claudeStream({ system: sys, messages: conv, maxTokens: CLAUDE_MAX_TOKENS });
+        if (r.ok && r.body) {
+          console.log(
+            `[chat-assistant] ok anthropic/${CLAUDE_CHAT_MODEL} prompt≈${promptChars}자 hints=${hints.length} index=${includeIndex} diet=${isDietTopic} boxing=${isBoxingTopic}`,
+          );
+          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+          const usageDb = serviceKey ? createClient(Deno.env.get("SUPABASE_URL")!, serviceKey) : null;
+          const uid = requestUserId;
+          const stream = claudeToOpenAiSse(r.body, (usage, stop) => {
+            keepAlive(
+              logAiUsage(usageDb, {
+                feature: "chat",
+                model: CLAUDE_CHAT_MODEL,
+                userId: uid,
+                usage,
+                meta: { stop, diet: isDietTopic, boxing: isBoxingTopic, hints: hints.length },
+              }),
+            );
+          });
+          return new Response(stream, {
+            headers: {
+              ...corsHeaders,
+              "X-AI-Provider": "anthropic",
+              "X-AI-Model": CLAUDE_CHAT_MODEL,
+              "Content-Type": "text/event-stream",
+            },
+          });
+        }
+        const t = await r.text().catch(() => "");
+        console.warn(`[chat-assistant] anthropic/${CLAUDE_CHAT_MODEL} ${r.status} → Groq 예비로`, t.slice(0, 300));
+      } catch (e) {
+        console.warn("[chat-assistant] anthropic 호출 실패 → Groq 예비로:", e instanceof Error ? e.message : e);
+      }
+      if (activeProviders.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "AI 서비스 오류", provider: "anthropic", model: CLAUDE_CHAT_MODEL }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "X-AI-Provider": "anthropic", "X-AI-Model": CLAUDE_CHAT_MODEL, "Content-Type": "application/json" },
+          },
+        );
+      }
+    }
 
     // activeProviders → 그 안의 models 를 순서대로 시도. 첫 성공(2xx) 응답을 사용.
     //   · 413            : 같은 모델에서 다음 attempt(더 작은 페이로드)로 재시도
