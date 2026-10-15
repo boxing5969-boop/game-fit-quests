@@ -289,9 +289,10 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         />
       </div>
 
-      {/* ── 5. 이펙트 이모지 — z-[11] ── */}
+      {/* ── 5. 이펙트 — 고퀄 VFX 아트는 캐릭터 뒤 z-[2] (2026-10-15 대표님: "캐릭터가 가려지지 않게"),
+               이모지 이펙트는 테두리에 작게 도는 것이라 앞 z-[11] 그대로 ── */}
       {customization?.effect && (showOverlays || showEffectSmall) && (
-        <div className="absolute inset-0 z-[11] pointer-events-none">
+        <div className={`absolute inset-0 pointer-events-none ${EFFECT_ART[customization.effect] ? "z-[2]" : "z-[11]"}`}>
           <EffectOverlay effect={customization.effect} size={size} />
         </div>
       )}
