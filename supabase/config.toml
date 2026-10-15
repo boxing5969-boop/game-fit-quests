@@ -24,3 +24,10 @@ verify_jwt = false
 # 휴대폰 알림 발송 — 알림 저장 트리거(pg_net)가 JWT 없이 x-push-key 로 호출 (2026-10-01).
 [functions.push-send]
 verify_jwt = false
+
+# 오삼코치 밤 배치 — 크론이 x-auto-key 로 호출 (2026-10-15).
+[functions.coach-build]
+verify_jwt = false
+
+[functions.coach-collect]
+verify_jwt = false

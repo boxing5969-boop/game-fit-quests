@@ -39,7 +39,7 @@ export const COACH_SYSTEM = `너는 153복싱짐 앱 "마이복서153"의 AI 코
 
 [메시지 종류 — 입력의 kind]
 - daily_goal (오늘의 목표): 아침 8시에 받는다. 오늘 체육관에서 바로 할 수 있는 목표 하나. 입력의 drill(동작 이름)과 drill.point(코치 포인트)를 쓴다.
-- attendance_praise (출석 칭찬): 방금 출석한 회원이 1~2분 뒤 받는다. 출석을 칭찬하고, remaining_after_today(다음 레벨까지 남은 출석)가 있으면 알려 준다.
+- attendance_praise (출석 칭찬): 방금 출석한 회원이 받는다 (출석 알림 본문으로 나간다). 출석을 칭찬하고, remaining_after_today(다음 레벨까지 남은 출석)가 있으면 알려 준다. 0 이면 이번 레벨 출석을 다 채운 것이다. absent_days 가 있으면 오랜만에 다시 온 회원이니 반갑게 맞는다.
 - comeback (복귀 응원): 마지막 출석 뒤 absent_days 일째인 회원이 받는다. 탓하지 않고 "이번 주 한 번만" 같은 아주 작은 다음 한 걸음만 말한다.
 
 [회원 상태 — 입력의 state 로 목표 크기를 정한다]
@@ -99,6 +99,8 @@ export function coachPromptFacts(f: CoachFacts): Record<string, unknown> {
   if (f.kind === "attendance_praise" && f.remaining_after_today != null) o.remaining_after_today = f.remaining_after_today;
   if (f.kind === "daily_goal" && f.remaining != null && f.state === "near_levelup") o.remaining = f.remaining;
   if (f.kind === "comeback" && f.absent_days != null) o.absent_days = f.absent_days;
+  // 칭찬: 7일 넘게 쉬다 온 회원이면 '반가워요'를 쓸 수 있게
+  if (f.kind === "attendance_praise" && f.absent_days != null && f.absent_days >= 7) o.absent_days = f.absent_days;
   if (f.goal) o.goal = f.goal;
   if (f.drill && f.kind === "daily_goal") o.drill = f.drill.point ? f.drill : { name: f.drill.name };
   if (f.recent.length > 0) o.recent = f.recent.slice(0, 3);
@@ -178,12 +180,34 @@ export function parseCoachJson(text: string): CoachText | null {
 
 const cut = (s: string, n: number) => (chars(s) <= n ? s : Array.from(s).slice(0, n - 1).join("") + "…");
 
+/** '잽'을 · '스텝'을 · '자세'를 — 마지막 글자 받침으로 을/를 */
+const eulReul = (w: string): string => {
+  const last = Array.from(w).pop() ?? "";
+  const c = last.charCodeAt(0);
+  const batchim = c >= 0xac00 && c <= 0xd7a3 ? (c - 0xac00) % 28 !== 0 : true;
+  return batchim ? "을" : "를";
+};
+
 /** 기본 문구 — API 오류·크레딧 소진·검사 탈락 때 그대로 나간다. 숫자는 사실(facts) 값만 */
 export function fallbackText(f: CoachFacts): CoachText {
   const drill = f.drill?.name ? cut(f.drill.name, 16) : null;
   const point = f.drill?.point ? cut(f.drill.point, 60) : null;
   if (f.kind === "attendance_praise") {
     const r = f.remaining_after_today;
+    if (f.absent_days != null && f.absent_days >= 7) {
+      return {
+        title: "다시 오셨네요 👏",
+        body: "다시 와 주셔서 반가워요! 오늘 한 번이 제일 큰 한 걸음이에요.",
+        detail: "처음처럼 가볍게 해도 충분해요. 다음 출석도 기다릴게요.",
+      };
+    }
+    if (r === 0 && f.state !== "title_match") {
+      return {
+        title: "출석 완료 👏",
+        body: "오늘 출석으로 이번 레벨 출석을 다 채웠어요!",
+        detail: "꾸준히 쌓은 덕분이에요. 다음 단계도 같이 가요.",
+      };
+    }
     if (f.state === "title_match") {
       return {
         title: "출석 완료 👏",
@@ -238,20 +262,20 @@ export function fallbackText(f: CoachFacts): CoachText {
       return {
         title: "오늘의 목표 🥊",
         body: drill ? `회원님, 오늘은 '${drill}' 하나만 천천히 익혀 봐요.` : "회원님, 오늘은 체육관에 오는 것 하나만 해내요.",
-        detail: point ?? "처음엔 자세 하나만 정확하면 충분해요.",
+        detail: point ? `코치 포인트: ${point}` : "처음엔 자세 하나만 정확하면 충분해요.",
       };
     case "near_levelup": {
       const r = f.remaining;
       return {
         title: "레벨업이 코앞이에요 🔥",
         body: r != null && r > 0 ? `다음 레벨까지 출석 ${r}번! 이번 주에 레벨업해요.` : "이번 주에 레벨업을 노려 봐요.",
-        detail: drill ? `오늘은 '${drill}'을 점검해요. ${point ?? ""}`.trim() : "한 번 한 번이 레벨이 돼요.",
+        detail: drill ? `오늘은 '${drill}'${eulReul(drill)} 점검해요. ${point ?? ""}`.trim() : "한 번 한 번이 레벨이 돼요.",
       };
     }
     case "title_match":
       return {
         title: "타이틀매치 준비 🥊",
-        body: "오늘은 타이틀매치 심사 동작을 한 번 점검해 봐요.",
+        body: drill ? `타이틀매치 준비! 오늘은 '${drill}'${eulReul(drill)} 점검해 봐요.` : "오늘은 타이틀매치 심사 동작을 한 번 점검해 봐요.",
         detail: "심사는 코치님·관장님이 봐 주세요. 궁금한 동작은 코치님께 물어보세요.",
       };
     case "slump":
@@ -264,7 +288,7 @@ export function fallbackText(f: CoachFacts): CoachText {
       return {
         title: "오늘의 목표 🥊",
         body: drill ? `회원님, 오늘은 '${drill}' 한 가지만 다듬어 봐요.` : "회원님, 오늘은 기본자세 하나만 다듬어 봐요.",
-        detail: point ?? "하나만 제대로 챙기면 충분해요.",
+        detail: point ? `코치 포인트: ${point}` : "하나만 제대로 챙기면 충분해요.",
       };
   }
 }
