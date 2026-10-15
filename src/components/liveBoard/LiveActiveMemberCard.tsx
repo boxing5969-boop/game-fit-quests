@@ -46,6 +46,8 @@ export interface LiveActiveMemberCardProps {
   onForceExit?: () => void;
   /** "방금 입실" 글로우 강조 (5분 이내) */
   isFresh?: boolean;
+  /** 작은 카드여도 퇴장 버튼 허용 — 자동 크기 그리드가 카드를 크게 키웠을 때 (2026-10-16) */
+  exitOnCompact?: boolean;
 }
 
 /** 라이브 카드 photo 우선순위: avatar_url(사진) > 회원 설정 캐릭터(CharacterSprite) > 이니셜 */
@@ -120,6 +122,7 @@ const LiveActiveMemberCard = ({
   showForceExit,
   onForceExit,
   isFresh,
+  exitOnCompact,
 }: LiveActiveMemberCardProps) => {
   // medium → spotlight 로 매핑 (라이센스 카드의 size 와 일치)
   const licenseSize: LicenseSize = size === "compact" ? "compact" : "spotlight";
@@ -134,7 +137,7 @@ const LiveActiveMemberCard = ({
       className="relative group"
     >
       {/* Force exit 버튼 — 라이센스 카드 위 hover 시 노출 */}
-      {showForceExit && onForceExit && size !== "compact" && (
+      {showForceExit && onForceExit && (size !== "compact" || exitOnCompact) && (
         <button
           onClick={onForceExit}
           className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-red-600/40 text-red-100 opacity-0 transition-opacity hover:bg-red-600/70 group-hover:opacity-100"

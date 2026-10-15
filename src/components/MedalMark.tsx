@@ -33,6 +33,13 @@ const MEDAL_LABEL: Record<MedalKind, string> = { gold: "우승", silver: "준우
 
 export const MEMBER_MEDALS_KEY = ["member-medals"] as const;
 
+/** 라이브보드 테스트 모드 '메달 예시' — 가상 회원에게만, 이 기기 화면에서만 (DB 와 무관) */
+const PREVIEW_MEDALS = new Map<string, MemberMedal>();
+export const setPreviewMedal = (userId: string, medal: MedalKind, count = 1) => {
+  const title = "메달 예시";
+  PREVIEW_MEDALS.set(userId, { medal, title, count, all: Array.from({ length: count }, () => ({ medal, title })) });
+};
+
 /** user_id → 메달 요약 (10분 캐시 · 실패해도 화면은 그대로) */
 export const useMemberMedals = () =>
   useQuery({
@@ -120,7 +127,7 @@ interface Props {
 /** 메달이 있는 회원이면 이름 옆에 메달(+ 같은 메달 횟수), 없으면 아무것도 안 그린다 */
 const MedalMark = ({ userId, className, animated = false }: Props) => {
   const { data } = useMemberMedals();
-  const m = userId ? data?.get(userId) : undefined;
+  const m = userId ? data?.get(userId) ?? PREVIEW_MEDALS.get(userId) : undefined;
   if (!m) return null;
   const label = m.all.map((x) => `${x.title} ${MEDAL_LABEL[x.medal]}`).join(" · ");
   return (

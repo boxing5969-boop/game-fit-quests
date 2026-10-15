@@ -34,9 +34,13 @@ export interface LiveBoardTestPanelProps {
   onRemoveOne: () => void;
   onReset: () => void;
   onTriggerLevelUp: () => void;
+  /** 우리 지점의 메달·사진·캐릭터 회원을 진짜 모습으로 (2026-10-16 대표님) */
+  onAddReal?: () => void;
+  /** 가상 회원에게 메달 예시(금 ×2 · 은 · 동) */
+  onAddMedalSamples?: () => void;
 }
 
-const PRESETS = [1, 2, 5, 12, 30];
+const PRESETS = [1, 2, 5, 12, 30, 45];
 
 const LiveBoardTestPanel = ({
   mockCount,
@@ -44,6 +48,8 @@ const LiveBoardTestPanel = ({
   onRemoveOne,
   onReset,
   onTriggerLevelUp,
+  onAddReal,
+  onAddMedalSamples,
 }: LiveBoardTestPanelProps) => {
   const [expanded, setExpanded] = useState(true);
 
@@ -107,6 +113,35 @@ const LiveBoardTestPanel = ({
                     ))}
                   </div>
                 </div>
+
+                {/* 실제 회원 미리보기 — 메달·사진·캐릭터가 실제로 어떻게 보이는지 (이 기기에서만) */}
+                {(onAddReal || onAddMedalSamples) && (
+                  <div>
+                    <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                      실제 모습 미리보기
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {onAddReal && (
+                        <button
+                          onClick={onAddReal}
+                          className="rounded-lg bg-amber-500/20 px-2.5 py-1.5 text-xs font-black text-amber-200 hover:bg-amber-500/40 transition-colors"
+                          title="우리 지점 메달·사진·캐릭터 회원을 진짜 이름·모습으로 추가"
+                        >
+                          실제 회원 미리보기
+                        </button>
+                      )}
+                      {onAddMedalSamples && (
+                        <button
+                          onClick={onAddMedalSamples}
+                          className="rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-xs font-black text-amber-300 hover:bg-amber-500/30 transition-colors"
+                          title="가상 회원 3명에게 금 ×2 · 은 · 동 메달 예시"
+                        >
+                          메달 예시
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* 단일 조작 */}
                 <div>

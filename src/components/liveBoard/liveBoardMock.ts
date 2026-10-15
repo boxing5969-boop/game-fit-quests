@@ -55,6 +55,8 @@ export interface MockActiveMember {
   level: number;
   startedAt: number;
   avatar_url?: string | null;
+  /** 실제 회원 미리보기용 캐릭터 */
+  partsJson?: { style?: string; customization?: Record<string, unknown> } | null;
 }
 
 let counter = 0;

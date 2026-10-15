@@ -8,7 +8,7 @@ import logoWhite from "@/assets/branding/153-logo-white.png";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_LABELS, toGlobalLevel } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import MedalMark from "@/components/MedalMark";
+import MedalMark, { setPreviewMedal } from "@/components/MedalMark";
 import { Building2, Clock, X, Trophy, RotateCcw, Medal } from "lucide-react";
 import { toast } from "sonner";
 import LiveBoardEmptyState from "@/components/liveBoard/LiveBoardEmptyState";
@@ -936,6 +936,67 @@ const LiveBoardPage = () => {
   const handleMockAdd = useCallback((count: number, asFresh = false) => {
     setMockMembers((prev) => [...prev, ...generateMockMembers(count, { fresh: asFresh })]);
   }, []);
+  // 실제 회원 미리보기 (2026-10-16 대표님: "테스트할 때 메달 딴 사람, 사진 올린 사람, 캐릭터로 설정한 사람도 보이게")
+  //   우리 지점의 메달·사진·캐릭터 회원을 진짜 이름·모습으로 카드에 올린다. 이 기기 화면에서만 (테스트 패널 = 관리자 전용).
+  const handleMockAddReal = useCallback(async () => {
+    if (!branchName) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any;
+    const [{ data: profs }, { data: medals }, { data: chars }] = await Promise.all([
+      sb.from("public_profiles").select("user_id, nickname, avatar_url, is_staff").eq("branch_name", branchName).limit(2000),
+      sb.from("member_medals").select("user_id").eq("branch_name", branchName).not("user_id", "is", null),
+      supabase.from("member_character_assignments").select("user_id, character_presets(parts_json)").eq("is_active", true).limit(2000),
+    ]);
+    type Prof = { user_id: string; nickname: string | null; avatar_url: string | null; is_staff: boolean | null };
+    const profMap = new Map<string, Prof>();
+    for (const p of (profs || []) as Prof[]) if (!p.is_staff && p.nickname) profMap.set(p.user_id, p);
+    const charOf = new Map<string, { style?: string; customization?: Record<string, unknown> }>();
+    for (const a of (chars || []) as { user_id: string; character_presets?: { parts_json?: unknown } | null }[]) {
+      const pj = a.character_presets?.parts_json as { style?: string; customization?: Record<string, unknown> } | undefined;
+      if (pj && profMap.has(a.user_id)) charOf.set(a.user_id, pj);
+    }
+    const medalIds = new Set(((medals || []) as { user_id: string }[]).map((m) => m.user_id).filter((id) => profMap.has(id)));
+    const picked = [...profMap.values()].filter(
+      (p) => medalIds.has(p.user_id) || (boardPhotos && !!p.avatar_url) || charOf.has(p.user_id),
+    );
+    // 메달 → 사진 → 캐릭터 순으로 앞에
+    picked.sort((a, b) => Number(medalIds.has(b.user_id)) - Number(medalIds.has(a.user_id)) || Number(!!b.avatar_url) - Number(!!a.avatar_url));
+    const ids = picked.map((p) => p.user_id);
+    if (ids.length === 0) {
+      toast.info("이 지점엔 메달·사진·캐릭터 회원이 아직 없어요");
+      return;
+    }
+    const { data: prog } = await supabase.from("member_progress").select("user_id, current_rank, current_level").in("user_id", ids);
+    const progMap = new Map(((prog || []) as { user_id: string; current_rank: string | null; current_level: number | null }[]).map((p) => [p.user_id, p]));
+    void loadCardLooks(ids); // 회원이 고른 '카드에 보일 것'(사진만·캐릭터만)도 따른다
+    const now = Date.now();
+    setMockMembers((prev) => {
+      const taken = new Set([...prev.map((m) => m.user_id), ...activeMembers.map((m) => m.user_id), ...checkinMembers.map((m) => m.user_id)]);
+      const add = picked
+        .filter((p) => !taken.has(p.user_id))
+        .map((p, i) => ({
+          id: `mock-real-${p.user_id}`,
+          user_id: p.user_id,
+          name: p.nickname as string,
+          league: progMap.get(p.user_id)?.current_rank || "white",
+          level: progMap.get(p.user_id)?.current_level || 1,
+          startedAt: now - (10 + i * 3) * 60_000,
+          avatar_url: boardPhotos ? p.avatar_url : null,
+          partsJson: charOf.get(p.user_id) ?? null,
+        }));
+      return [...prev, ...add];
+    });
+    toast.success(`실제 회원 ${ids.length}명 미리보기 (메달 ${medalIds.size}명)`);
+  }, [branchName, boardPhotos, loadCardLooks, activeMembers, checkinMembers]);
+
+  // 메달 예시 — 가상 회원 3명에게 금 ×2 · 은 · 동 (MedalMark 미리보기, DB 와 무관)
+  const handleMockMedalSamples = useCallback(() => {
+    const three = generateMockMembers(3);
+    setPreviewMedal(three[0].user_id, "gold", 2);
+    setPreviewMedal(three[1].user_id, "silver");
+    setPreviewMedal(three[2].user_id, "bronze");
+    setMockMembers((prev) => [...prev, ...three]);
+  }, []);
   const handleMockRemoveOne = useCallback(() => {
     setMockMembers((prev) => prev.slice(0, -1));
   }, []);
@@ -1449,6 +1510,8 @@ const LiveBoardPage = () => {
           onRemoveOne={handleMockRemoveOne}
           onReset={handleMockReset}
           onTriggerLevelUp={handleMockTriggerLevelUp}
+          onAddReal={handleMockAddReal}
+          onAddMedalSamples={handleMockMedalSamples}
         />
       )}
 
