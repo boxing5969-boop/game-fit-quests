@@ -894,3 +894,28 @@ html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: va
 @media (prefers-reduced-motion: reduce) {
   [style*="tv-marquee"] { animation: none !important; }
 }
+
+/* 🏅 대회 메달 — TV 에서 빛이 지나가고 금메달이 반짝 (src/components/MedalMark.tsx, 2026-10-16) */
+@keyframes medal-shine {
+  0%   { background-position: 160% 0; }
+  45%  { background-position: -60% 0; }
+  100% { background-position: -60% 0; }
+}
+@keyframes medal-twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.25; transform: scale(0.7); }
+}
+.medal-shine {
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.85) 50%, transparent 62%) no-repeat;
+  background-size: 250% 100%;
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+  mix-blend-mode: screen;
+  animation: medal-shine 3.6s ease-in-out infinite;
+}
+.medal-twinkle { animation: medal-twinkle 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .medal-shine { display: none; }
+  .medal-twinkle { animation: none; }
+}
