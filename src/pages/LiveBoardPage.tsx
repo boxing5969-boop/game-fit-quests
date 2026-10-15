@@ -139,6 +139,22 @@ interface HallMember {
   r_bosses_cleared: number;
 }
 
+/** 마이복서153 랭킹 1·2·3위 (get_live_board_top3 — 앱 랭킹 '전체'와 같은 순서) */
+interface TopRankMember {
+  r_user_id: string;
+  r_nickname: string;
+  r_avatar_url: string | null;
+  r_current_rank: string;
+  r_current_level: number;
+  r_position: number;
+}
+
+const TOP_TONE = [
+  { ring: "border-[#F6C453]/60 bg-[#F6C453]/15", num: "bg-[#F6C453] text-black", name: "text-[#FCE7A8]" },
+  { ring: "border-[#C9D1DC]/50 bg-[#C9D1DC]/10", num: "bg-[#C9D1DC] text-black", name: "text-[#E5EAF0]" },
+  { ring: "border-[#C8874A]/50 bg-[#C8874A]/10", num: "bg-[#C8874A] text-black", name: "text-[#F1C9A0]" },
+];
+
 /**
  * 회원 아바타 — 모듈 스코프로 hoist.
  * (이전엔 LiveBoardPage 본문 안에 정의되어 매 렌더마다 새 컴포넌트 identity 가
@@ -181,6 +197,7 @@ const LiveBoardPage = () => {
   const [staffUserIds, setStaffUserIds] = useState<Set<string>>(new Set());
   const [activeMembers, setActiveMembers] = useState<ActiveMember[]>([]);
   const [hallMembers, setHallMembers] = useState<HallMember[]>([]);
+  const [topRank, setTopRank] = useState<TopRankMember[]>([]);
   const [latestPopup, setLatestPopup] = useState<CheckinEvent | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const popupTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -599,6 +616,10 @@ const LiveBoardPage = () => {
       );
       setHallMembers(masters);
     }
+    // 마이복서153 랭킹 1·2·3위 (2026-10-15 대표님) — 페이지가 20분마다 새로고침되니 한 번 읽으면 된다
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: top } = await (supabase as any).rpc("get_live_board_top3", { p_branch_name: branchName, p_limit: 3 });
+    setTopRank(Array.isArray(top) ? (top as TopRankMember[]) : []);
   }, [branchName]);
 
   useEffect(() => { loadToday(); loadHall(); loadActivitySessions(); loadOnDutyStaff(); }, [loadToday, loadHall, loadActivitySessions, loadOnDutyStaff]);
@@ -1206,6 +1227,43 @@ const LiveBoardPage = () => {
                         </div>
                       </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Bottom: 마이복서153 랭킹 TOP 3 (2026-10-15 대표님) ── */}
+          {/* 앱 랭킹 '전체'와 같은 순서: 레벨 → 보스 클리어 → 누적 XP. 순위가 없으면(새 지점) 띠를 접는다. */}
+          {!only1 && topRank.length > 0 && (
+            <div className="mx-4 mb-2 flex-shrink-0 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-gray-900/80 to-primary/10 px-4 py-2.5">
+              <div className="flex items-center gap-3">
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  <h2 className="whitespace-nowrap text-base font-black tracking-wide text-primary">
+                    마이복서153 랭킹
+                  </h2>
+                </div>
+                <div className="grid flex-1 grid-cols-3 gap-2">
+                  {topRank.slice(0, 3).map((m, i) => {
+                    const tone = TOP_TONE[i] ?? TOP_TONE[2];
+                    return (
+                      <div
+                        key={m.r_user_id}
+                        className={`flex min-w-0 items-center gap-2 rounded-lg border px-2.5 py-1 ${tone.ring}`}
+                      >
+                        <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-black ${tone.num}`}>
+                          {i + 1}
+                        </span>
+                        <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-7 w-7" />
+                        <div className="min-w-0">
+                          <p className={`truncate text-sm font-black leading-tight ${tone.name}`}>{m.r_nickname}</p>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-white/50">
+                            {RANK_LABELS[m.r_current_rank] ?? m.r_current_rank} · LV.{toGlobalLevel(m.r_current_rank, m.r_current_level)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
