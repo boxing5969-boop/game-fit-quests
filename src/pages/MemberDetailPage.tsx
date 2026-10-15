@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +36,8 @@ const MemberDetailPage = () => {
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [noteContent, setNoteContent] = useState("");
-  const [noteType, setNoteType] = useState<"internal" | "visible">("internal");
+  const [myId, setMyId] = useState<string | null>(null);
+  useEffect(() => { void supabase.auth.getUser().then(({ data }) => setMyId(data.user?.id ?? null)); }, []);
   const [actionNote, setActionNote] = useState("");
   const [actionSheet, setActionSheet] = useState<{ rank: Enums<"rank_name">; level: number; status: string } | null>(null);
   const [showBulkComplete, setShowBulkComplete] = useState(false);
@@ -110,17 +111,56 @@ const MemberDetailPage = () => {
     },
   });
 
-  // Manager notes
+  // 회원 메모 — 지점장·관리자·전체관리자만 (2026-10-15 대표님: 회원 본인과 다른 사람은 못 보는 회원 특성 기록)
+  const canMemo = role === "branch_manager" || role === "admin" || role === "super_admin";
   const { data: notes } = useQuery({
     queryKey: ["manager-notes", memberId],
-    enabled: !!memberId && isManagerRole(role) && activeTab === "notes",
+    enabled: !!memberId && canMemo && activeTab === "notes",
     queryFn: async () => {
       const { data } = await supabase
         .from("manager_notes")
         .select("*")
         .eq("user_id", memberId!)
         .order("created_at", { ascending: false });
-      return data || [];
+      const rows = data || [];
+      // 누가 쓴 메모인지 — 이름을 못 읽으면(다른 지점 관리자 등) '관리자'
+      const ids = Array.from(new Set(rows.map((r) => r.manager_id)));
+      const names: Record<string, string> = {};
+      if (ids.length > 0) {
+        const { data: ps } = await supabase.from("profiles").select("user_id, nickname, name").in("user_id", ids);
+        (ps || []).forEach((x) => { names[x.user_id] = x.name || x.nickname || "관리자"; });
+      }
+      return rows.map((r) => ({ ...r, author: names[r.manager_id] ?? "관리자" }));
+    },
+  });
+
+  // 출석 기록 (출입기·앱 QR) — 개요 요약 + 출석·활동 탭 목록
+  const { data: attendance } = useQuery({
+    queryKey: ["member-attendance", memberId],
+    enabled: !!memberId && isManagerRole(role),
+    queryFn: async () => {
+      const [listRes, totalRes] = await Promise.all([
+        // 생성된 타입에 ended_at 이 아직 없다 — DB 에는 있음
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any)
+          .from("attendance_logs")
+          .select("id, checked_in_at, ended_at, method")
+          .eq("user_id", memberId!)
+          .eq("is_duplicate", false)
+          .order("checked_in_at", { ascending: false })
+          .limit(120),
+        supabase
+          .from("attendance_logs")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", memberId!)
+          .eq("is_duplicate", false),
+      ]);
+      const list = (listRes.data || []) as Array<{ id: string; checked_in_at: string; ended_at: string | null; method: string }>;
+      const kstMonth = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 7);
+      const thisMonth = list.filter(
+        (a) => new Date(new Date(a.checked_in_at).getTime() + 9 * 3600_000).toISOString().slice(0, 7) === kstMonth,
+      ).length;
+      return { list, total: totalRes.count ?? list.length, thisMonth, last: list[0]?.checked_in_at ?? null };
     },
   });
 
@@ -205,8 +245,8 @@ const MemberDetailPage = () => {
       const { error } = await supabase.from("manager_notes").insert({
         user_id: memberId!,
         manager_id: (await supabase.auth.getUser()).data.user!.id,
-        note_type: noteType,
-        content: noteContent,
+        note_type: "internal", // 회원에게 보이는 메모는 쓰지 않는다 (2026-10-15)
+        content: noteContent.trim(),
       });
       if (error) throw error;
     },
@@ -215,6 +255,16 @@ const MemberDetailPage = () => {
       setNoteContent("");
       qc.invalidateQueries({ queryKey: ["manager-notes", memberId] });
     },
+    onError: () => toast.error("메모를 저장하지 못했어요 — 같은 지점 회원만 메모할 수 있어요"),
+  });
+
+  const deleteNote = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase.from("manager_notes").delete().eq("id", noteId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["manager-notes", memberId] }),
+    onError: () => toast.error("내가 쓴 메모만 지울 수 있어요"),
   });
 
   const deleteUserMut = useMutation({
@@ -259,12 +309,15 @@ const MemberDetailPage = () => {
     return found?.status || "locked";
   };
 
+  // 생성된 타입에 아직 없는 회원권 칸 — DB 에는 있음
+  const memberPlan = p as typeof p & { gym_reg_date?: string | null; membership_end?: string | null };
+
   const TABS: { key: TabKey; label: string; icon: any }[] = [
     { key: "overview", label: "개요", icon: User },
     { key: "missions", label: "미션 승인", icon: FileText },
     { key: "levelmap", label: "로드맵 체크", icon: Map },
-    { key: "activity", label: "활동기록", icon: Activity },
-    { key: "notes", label: "메모", icon: MessageSquare },
+    { key: "activity", label: "출석·활동", icon: Activity },
+    ...(canMemo ? [{ key: "notes" as TabKey, label: "회원 메모", icon: MessageSquare }] : []),
   ];
 
   return (
@@ -342,6 +395,23 @@ const MemberDetailPage = () => {
       {/* ── Overview Tab ── */}
       {activeTab === "overview" && (
         <div className="space-y-3">
+          {/* 출석 요약 (2026-10-15 대표님: 이름 누르면 출석 데이터·기록 등 상세) */}
+          <div className="grid grid-cols-3 gap-2">
+            <StatTile label="총 출석" value={attendance ? `${attendance.total}회` : "…"} />
+            <StatTile label="이번 달" value={attendance ? `${attendance.thisMonth}회` : "…"} />
+            <StatTile label="마지막 출석" value={attendance ? (attendance.last ? fmtDay(attendance.last) : "없음") : "…"} />
+          </div>
+          {(memberPlan.gym_reg_date || memberPlan.membership_end) && (
+            <InfoCard label="회원권" value={`${memberPlan.gym_reg_date ?? "?"} ~ ${memberPlan.membership_end ?? "?"}`} />
+          )}
+          {(p.pt_ticket || p.pt_remaining != null || p.pt_until) && (
+            <InfoCard
+              label="PT"
+              value={[p.pt_ticket, p.pt_remaining != null ? `남은 ${p.pt_remaining}회` : null, p.pt_until ? `~${p.pt_until}` : null]
+                .filter(Boolean)
+                .join(" · ") || "-"}
+            />
+          )}
           <InfoCard label="현재 랭크" value={formatRank(prog.current_rank, prog.current_level)} />
           <InfoCard label="보스전 클리어" value={`${prog.bosses_cleared}회`} />
           {handWrap.data && handWrap.data.goal > 0 && (
@@ -595,6 +665,33 @@ const MemberDetailPage = () => {
       {/* ── Activity Tab ── */}
       {activeTab === "activity" && (
         <div className="space-y-2">
+          <h3 className="px-1 pt-1 text-sm font-bold text-foreground">
+            출석 기록 {attendance ? <span className="text-muted-foreground">· 총 {attendance.total}회</span> : null}
+          </h3>
+          {(attendance?.list ?? []).length === 0 ? (
+            <EmptyState text="출석 기록이 없습니다" />
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
+              {(attendance?.list ?? []).slice(0, 60).map((a, i) => {
+                const mins = a.ended_at ? Math.round((new Date(a.ended_at).getTime() - new Date(a.checked_in_at).getTime()) / 60000) : null;
+                return (
+                  <div key={a.id} className={`flex items-center justify-between px-4 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{fmtDay(a.checked_in_at)} {fmtTime(a.checked_in_at)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {a.method === "qr_manual" ? "앱 QR 출석" : "출입기"}
+                        {a.ended_at ? ` · ${fmtTime(a.ended_at)} 퇴실` : ""}
+                      </p>
+                    </div>
+                    {mins != null && mins > 0 && mins < 600 && (
+                      <span className="text-xs font-bold text-primary">{mins}분</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <h3 className="px-1 pt-3 text-sm font-bold text-foreground">XP 기록</h3>
           {(xpLogs || []).length === 0 ? (
             <EmptyState text="활동 기록이 없습니다" />
           ) : (
@@ -618,18 +715,13 @@ const MemberDetailPage = () => {
         <div className="space-y-4">
           {/* Add note */}
           <div className="rounded-2xl border border-border bg-card p-4">
-            <div className="mb-2 flex gap-2">
-              <button onClick={() => setNoteType("internal")} className={`rounded-full px-3 py-1 text-xs font-bold ${noteType === "internal" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
-                내부 메모
-              </button>
-              <button onClick={() => setNoteType("visible")} className={`rounded-full px-3 py-1 text-xs font-bold ${noteType === "visible" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
-                회원 표시
-              </button>
-            </div>
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">
+              🔒 지점장·전체관리자만 봐요. 회원 본인과 다른 회원·코치님에게는 보이지 않아요.
+            </p>
             <textarea
               value={noteContent}
               onChange={e => setNoteContent(e.target.value)}
-              placeholder="메모를 입력하세요..."
+              placeholder="예) 왼쪽 어깨 수술 이력 · 평일 저녁 7시 운동 · 다이어트 목표"
               className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
               rows={3}
             />
@@ -643,17 +735,25 @@ const MemberDetailPage = () => {
           </div>
 
           {/* Notes list */}
+          {(notes || []).length === 0 && <EmptyState text="아직 메모가 없어요" />}
           {(notes || []).map(note => (
-            <div key={note.id} className={`rounded-xl border p-3 ${note.note_type === "visible" ? "border-primary/20 bg-primary/5" : "border-border bg-card"}`}>
+            <div key={note.id} className="rounded-xl border border-border bg-card p-3">
               <div className="mb-1 flex items-center gap-2">
-                <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${note.note_type === "visible" ? "bg-primary/20 text-primary" : "bg-secondary text-secondary-foreground"}`}>
-                  {note.note_type === "visible" ? "회원 표시" : "내부"}
-                </span>
+                <span className="text-[11px] font-bold text-foreground">{note.author}</span>
                 <span className="text-[10px] text-muted-foreground">
                   {new Date(note.created_at).toLocaleDateString("ko-KR")}
                 </span>
+                {(note.manager_id === myId || role === "super_admin") && (
+                  <button
+                    onClick={() => deleteNote.mutate(note.id)}
+                    disabled={deleteNote.isPending}
+                    className="ml-auto text-[11px] font-bold text-muted-foreground underline disabled:opacity-50"
+                  >
+                    지우기
+                  </button>
+                )}
               </div>
-              <p className="text-sm text-foreground">{note.content}</p>
+              <p className="whitespace-pre-wrap text-sm text-foreground">{note.content}</p>
             </div>
           ))}
         </div>
@@ -675,6 +775,18 @@ const MemberDetailPage = () => {
     </div>
   );
 };
+
+const fmtDay = (iso: string) =>
+  new Date(iso).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", weekday: "short" });
+const fmtTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false });
+
+const StatTile = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-xl border border-border bg-card px-2 py-3 text-center">
+    <p className="text-[11px] text-muted-foreground">{label}</p>
+    <p className="text-[15px] font-bold text-foreground">{value}</p>
+  </div>
+);
 
 const MiniStat = ({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) => (
   <div>

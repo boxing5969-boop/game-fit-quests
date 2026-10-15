@@ -16,6 +16,7 @@ import { Heart, Send, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { useAuth } from "@/contexts/AuthContext";
 import { useMemberLicense, useToggleNicknameLike } from "@/hooks/use153King";
 import { useDmPeer } from "@/hooks/useDm";
 import type { LicenseLikeReason } from "@/services/king153Service";
@@ -58,6 +59,9 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
   const open = !!userId;
   useModalDismiss(open, onClose);
   const navigate = useNavigate();
+  // 지점장·관리자·전체관리자 — 회원 상세(출석·기록·회원 메모)로 바로 (2026-10-15 대표님)
+  const { role, user } = useAuth();
+  const canSeeDetail = role === "branch_manager" || role === "admin" || role === "super_admin";
   const { data, isLoading, isError, error } = useMemberLicense(userId, open);
   const toggle = useToggleNicknameLike();
   const [busy, setBusy] = useState(false);
@@ -227,6 +231,20 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                       {REASON_TEXT[data.like_reason]}
                     </p>
                   )
+                )}
+
+                {canSeeDetail && userId && userId !== user?.id && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const id = userId;
+                      onClose();
+                      navigate(`/manager/member/${id}`);
+                    }}
+                    className="mt-3 h-11 w-full rounded-xl border border-primary/40 bg-primary/10 text-[14px] font-bold text-primary transition-transform active:scale-[0.98]"
+                  >
+                    🗂 회원 상세 · 출석 · 메모 (관리자)
+                  </button>
                 )}
 
                 {extraAction && <div className="mt-3">{extraAction}</div>}
