@@ -1451,8 +1451,8 @@ const LiveBoardPage = () => {
                         {/* 이름 + 리그 버튼(모든 회원, 앱 라이센스 카드와 같은 버튼). PT 회원은 'PT' 글자 (2026-10-15 대표님) */}
                         <div className="flex min-w-0 items-center gap-1.5">
                           <p className="min-w-0 text-2xl font-black text-white truncate leading-tight">{m.name}</p>
-                          <MedalMark animated userId={m.user_id} className="text-2xl" />
                           <NameBadge league={m.league} className="h-7 w-7" />
+                          <MedalMark animated userId={m.user_id} className="text-2xl" />
                           {m.pt && (
                             <span className="shrink-0 rounded-md border border-blue-400/50 bg-blue-500/20 px-2 py-0.5 text-base font-black tracking-wider text-blue-200">
                               PT

@@ -542,11 +542,11 @@ const BoxerLicenseCard = ({
               <p className={`min-w-0 truncate font-black text-white ${cfg.nameText}`}>
                 {name}
               </p>
-              {/* 대회 메달 🥇🥈🥉 (2026-10-15 대표님) */}
-              <MedalMark userId={userId} className={cfg.nameText} />
               {/* 리그 버튼 (2026-10-15 대표님) — 모든 회원, 색 = 내 리그 (화이트·블루·레드·골드). PT 전용 배지는 없앰.
                   지도진(코치님)은 '챔피언' 표기라 버튼 없음 */}
               {!staff && <NameBadge league={rankKey} className={`${cfg.ptBadge} shrink-0`} glow={size === "hero"} />}
+              {/* 대회 메달 — 리그 버튼 다음 자리 (2026-10-16 대표님: "이름 옆 버튼, 메달은 그 옆") */}
+              <MedalMark userId={userId} className={cfg.nameText} />
               {onCardClick && <PenLine className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/40" aria-hidden="true" />}
             </div>
             {branch && size !== "compact" && (
