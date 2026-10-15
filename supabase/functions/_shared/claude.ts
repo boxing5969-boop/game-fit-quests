@@ -73,6 +73,19 @@ export function normalizeTurns(msgs: Turn[]): Turn[] {
   return out;
 }
 
+/**
+ * 모델별 생각(thinking) 설정 — 5.5 세대는 기본으로 생각이 켜진다 (2026-10-15 각 모델 마이그레이션 가이드).
+ *   · Sonnet 5.5: { type: "between_tools" } — 도구가 없는 대화에서는 생각하지 않는다 ("disabled" 는 400)
+ *   · Haiku 5.5: "adaptive" 만 받는다 ("enabled" 는 400, 끄는 값 없음) → effort "low" 로 쉬운 요청은 생각을 건너뛰게 한다.
+ *     생각 토큰도 max_tokens 에 들어가니 max_tokens 를 넉넉히 준다.
+ *   · 그 밖의 모델: 보내지 않는다 (서버 기본값)
+ */
+export function thinkingFor(model: string): { thinking?: Record<string, unknown>; effort?: string } {
+  if (model.startsWith("claude-sonnet-5-5")) return { thinking: { type: "between_tools" } };
+  if (model.startsWith("claude-haiku-5-5")) return { thinking: { type: "adaptive" }, effort: "low" };
+  return {};
+}
+
 /** Messages API 요청 본문 — 스트림·배치가 같은 모양을 쓴다 */
 export function buildClaudeBody(opts: {
   model: string;
@@ -82,6 +95,8 @@ export function buildClaudeBody(opts: {
   stream?: boolean;
   /** 모든 요청에 똑같이 들어가는 첫 시스템 블록을 캐시한다 (배치에서 같은 지시문을 반복할 때) */
   cacheFirstSystem?: boolean;
+  /** 답을 이 JSON 스키마 모양으로만 받는다 (output_config.format — minLength·maxLength 는 못 쓴다, 길이는 코드에서 검사) */
+  jsonSchema?: Record<string, unknown>;
 }): Record<string, unknown> {
   const system = opts.system
     .filter((s) => s.trim() !== "")
@@ -90,11 +105,17 @@ export function buildClaudeBody(opts: {
         ? { type: "text", text, cache_control: { type: "ephemeral", ttl: "1h" } }
         : { type: "text", text },
     );
+  const t = thinkingFor(opts.model);
+  const outputConfig: Record<string, unknown> = {
+    ...(t.effort ? { effort: t.effort } : {}),
+    ...(opts.jsonSchema ? { format: { type: "json_schema", schema: opts.jsonSchema } } : {}),
+  };
   return {
     model: opts.model,
     max_tokens: opts.maxTokens,
     ...(opts.stream ? { stream: true } : {}),
-    thinking: { type: "between_tools" },
+    ...(t.thinking ? { thinking: t.thinking } : {}),
+    ...(Object.keys(outputConfig).length > 0 ? { output_config: outputConfig } : {}),
     ...(system.length > 0 ? { system } : {}),
     messages: normalizeTurns(opts.messages),
   };
@@ -240,6 +261,99 @@ export function claudeToOpenAiSse(
       void reader.cancel(reason).catch(() => {});
     },
   });
+}
+
+// ───────────────────────── 단건 호출 · 배치 (오삼코치 메시지) ─────────────────────────
+
+// deno-lint-ignore no-explicit-any
+export type ClaudeMessage = { content?: any[]; usage?: Record<string, number>; stop_reason?: string | null; model?: string };
+
+/** 응답의 text 블록만 이어 붙인다 (thinking 블록은 버린다) */
+export function messageText(msg: ClaudeMessage | null | undefined): string {
+  return (msg?.content ?? [])
+    .filter((b) => b && b.type === "text" && typeof b.text === "string")
+    .map((b) => b.text as string)
+    .join("")
+    .trim();
+}
+
+export function usageOf(msg: ClaudeMessage | null | undefined): ClaudeUsage {
+  const u = msg?.usage ?? {};
+  return {
+    input_tokens: Number(u.input_tokens) || 0,
+    output_tokens: Number(u.output_tokens) || 0,
+    cache_read_input_tokens: Number(u.cache_read_input_tokens) || 0,
+    cache_creation_input_tokens: Number(u.cache_creation_input_tokens) || 0,
+  };
+}
+
+/** 스트림 없는 단건 호출 — 실패하면 throw (메시지에 상태 코드와 앞부분만) */
+export async function claudeMessage(body: Record<string, unknown>): Promise<ClaudeMessage> {
+  const r = await fetch(CLAUDE_API_URL, { method: "POST", headers: claudeHeaders(), body: JSON.stringify(body) });
+  const text = await r.text();
+  if (!r.ok) throw new Error(`claude ${r.status}: ${text.slice(0, 300)}`);
+  return JSON.parse(text) as ClaudeMessage;
+}
+
+export const CLAUDE_BATCHES_URL = "https://api.anthropic.com/v1/messages/batches";
+
+export type BatchInfo = {
+  id: string;
+  processing_status: "in_progress" | "canceling" | "ended" | string;
+  request_counts?: Record<string, number>;
+  results_url?: string | null;
+  created_at?: string;
+  ended_at?: string | null;
+  expires_at?: string;
+};
+
+export type BatchRequest = { custom_id: string; params: Record<string, unknown> };
+
+export type BatchResult = {
+  custom_id: string;
+  result:
+    | { type: "succeeded"; message: ClaudeMessage }
+    | { type: "errored"; error?: unknown }
+    | { type: "canceled" }
+    | { type: "expired" };
+};
+
+/** 배치 만들기 — custom_id 는 영문·숫자·_·- 1~64자 (uuid 그대로 된다) */
+export async function claudeCreateBatch(requests: BatchRequest[]): Promise<BatchInfo> {
+  const r = await fetch(CLAUDE_BATCHES_URL, { method: "POST", headers: claudeHeaders(), body: JSON.stringify({ requests }) });
+  const text = await r.text();
+  if (!r.ok) throw new Error(`batch create ${r.status}: ${text.slice(0, 300)}`);
+  return JSON.parse(text) as BatchInfo;
+}
+
+export async function claudeGetBatch(id: string): Promise<BatchInfo> {
+  const r = await fetch(`${CLAUDE_BATCHES_URL}/${encodeURIComponent(id)}`, { headers: claudeHeaders() });
+  const text = await r.text();
+  if (!r.ok) throw new Error(`batch get ${r.status}: ${text.slice(0, 300)}`);
+  return JSON.parse(text) as BatchInfo;
+}
+
+/** 끝난 배치의 결과(JSONL) — 한 줄에 요청 하나. 깨진 줄은 건너뛴다 */
+export async function claudeBatchResults(info: BatchInfo): Promise<BatchResult[]> {
+  const url = info.results_url || `${CLAUDE_BATCHES_URL}/${encodeURIComponent(info.id)}/results`;
+  const r = await fetch(url, { headers: claudeHeaders() });
+  const text = await r.text();
+  if (!r.ok) throw new Error(`batch results ${r.status}: ${text.slice(0, 300)}`);
+  return parseBatchJsonl(text);
+}
+
+export function parseBatchJsonl(text: string): BatchResult[] {
+  const out: BatchResult[] = [];
+  for (const line of text.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const j = JSON.parse(line);
+      if (j && typeof j.custom_id === "string" && j.result && typeof j.result.type === "string") out.push(j as BatchResult);
+    } catch {
+      /* 깨진 줄은 건너뛴다 */
+    }
+  }
+  return out;
 }
 
 /** ai_usage_log 에 한 줄 남긴다. db 는 서비스 롤 클라이언트(없으면 건너뜀). 실패해도 조용히. */
