@@ -1234,8 +1234,9 @@ const LiveBoardPage = () => {
 
           {/* ── Bottom: 마이복서153 랭킹 TOP 3 (2026-10-15 대표님) ── */}
           {/* 앱 랭킹 '전체'와 같은 순서: 레벨 → 보스 클리어 → 누적 XP. 순위가 없으면(새 지점) 띠를 접는다. */}
-          {!only1 && topRank.length > 0 && (
-            <div className="mx-4 mb-2 flex-shrink-0 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-gray-900/80 to-primary/10 px-4 py-2.5">
+          {/* 1번 화면(운동 중만)에도 보인다 — 2026-10-15 대표님. 우하단 QR 카드(33rem)를 피해 오른쪽을 비운다 */}
+          {topRank.length > 0 && (
+            <div className={`mx-4 mb-2 flex-shrink-0 rounded-xl border border-primary/30 ${only1 ? "mr-[35rem]" : ""} bg-gradient-to-r from-primary/10 via-gray-900/80 to-primary/10 px-4 py-2.5`}>
               <div className="flex items-center gap-3">
                 <div className="flex flex-shrink-0 items-center gap-1.5">
                   <Trophy className="h-5 w-5 text-primary" />
