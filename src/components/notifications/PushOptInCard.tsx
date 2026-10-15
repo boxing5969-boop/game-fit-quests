@@ -85,7 +85,10 @@ const PushOptInCard = ({ variant, className }: Props) => {
 
   // 알림 켜기 보상 문구 — 회원 화면에서, 아직 받을 수 있을 때만
   const showReward = !manager && rewardClaimable && !!reward;
-  const rewardText = showReward ? `챔피언 머니 ${reward.amount.toLocaleString("ko-KR")}` : "";
+  // 2026-10-15: 첫 켜기 XP + 켜 둔 동안 출석할 때마다 XP (랭킹에 도움)
+  const rewardText = showReward
+    ? `챔피언 머니 ${reward.amount.toLocaleString("ko-KR")}${reward.xp > 0 ? ` + ${reward.xp} XP` : ""}`
+    : "";
 
   // ── 켜짐 (설정 화면) ──
   if (state.kind === "on") {
@@ -138,7 +141,7 @@ const PushOptInCard = ({ variant, className }: Props) => {
             <p className="text-[14px] font-bold leading-snug text-foreground">{t.title}</p>
             <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{t.body}</p>
             {showReward && state.kind === "unsupported" && state.why === "ios-install" && (
-              <p className="mt-1.5 text-[12.5px] font-semibold text-primary">홈 화면 앱에서 알림을 켜면 {rewardText}을 드려요.</p>
+              <p className="mt-1.5 text-[12.5px] font-semibold text-primary">홈 화면 앱에서 알림을 켜면 {rewardText}를 드려요.</p>
             )}
           </div>
         </div>
@@ -177,7 +180,7 @@ const PushOptInCard = ({ variant, className }: Props) => {
             {manager
               ? "앱에서 결제·취소되면 1분 안에 이 기기가 울려요 — 브로제이 입력을 바로 하세요. 공지 소식도 함께 와요."
               : showReward
-              ? "공지 · 출석 소식과 곧 시작하는 오삼코치 '오늘의 목표'를 휴대폰으로 받아요. 보상은 한 번만 드려요."
+              ? `켜 두면 체육관 출석할 때마다 XP +${reward?.dailyXp || 3}를 더 받아요 — 랭킹에 도움이 돼요. 공지 · 출석 소식도 휴대폰으로 와요.`
               : "공지 · 출석 · 수업 소식이 오면 앱을 열지 않아도 바로 알려 드려요."}
           </p>
         </div>

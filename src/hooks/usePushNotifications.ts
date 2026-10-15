@@ -24,7 +24,8 @@ import {
 export type PushBusy = null | "enable" | "disable" | "test";
 
 export const PUSH_REWARD_KEY = "153push:reward";
-export type PushReward = { amount: number; eligible: boolean; claimed: boolean };
+/** amount = 챔피언 머니, xp = 첫 켜기 XP, dailyXp = 켜 둔 동안 출석할 때마다 XP (2026-10-15) */
+export type PushReward = { amount: number; xp: number; dailyXp: number; eligible: boolean; claimed: boolean };
 
 // 새 함수들은 types.ts 재생성 전 — 기존 파일들과 같은 캐스트 패턴
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,7 +34,13 @@ const rpc = (name: string) => (supabase.rpc as any)(name, {});
 const parsePushReward = (d: unknown): PushReward | null => {
   if (!d || typeof d !== "object") return null;
   const o = d as Record<string, unknown>;
-  return { amount: Number(o.amount) || 0, eligible: o.eligible === true, claimed: o.claimed === true };
+  return {
+    amount: Number(o.amount) || 0,
+    xp: Number(o.xp) || 0,
+    dailyXp: Number(o.daily_xp) || 0,
+    eligible: o.eligible === true,
+    claimed: o.claimed === true,
+  };
 };
 
 /** 알림이 막혔을 때 다시 허용하는 길 — 기기별로 */
@@ -69,10 +76,11 @@ export function usePushNotifications() {
   const claimReward = useCallback(async () => {
     try {
       const { data, error } = await rpc("claim_push_optin_reward");
-      const r = !error && data && typeof data === "object" ? (data as { granted?: boolean; amount?: number }) : null;
+      const r = !error && data && typeof data === "object" ? (data as { granted?: boolean; amount?: number; xp?: number }) : null;
       if (r?.granted) {
-        toast.success(`🔔 알림 켜기 보상 · 챔피언 머니 +${Number(r.amount || 0).toLocaleString("ko-KR")}`, {
-          description: "캐릭터 꾸미기에서 쓸 수 있어요",
+        const xp = Number(r.xp || 0);
+        toast.success(`🔔 알림 켜기 보상 · 챔피언 머니 +${Number(r.amount || 0).toLocaleString("ko-KR")}${xp > 0 ? ` · XP +${xp}` : ""}`, {
+          description: "알림을 켜 두면 체육관 출석할 때마다 XP를 더 받아요 — 랭킹에 도움이 돼요",
         });
       }
     } catch {
