@@ -86,25 +86,41 @@ export function thinkingFor(model: string): { thinking?: Record<string, unknown>
   return {};
 }
 
+/**
+ * 시스템 블록 — 글 그대로, 또는 { text, cache }.
+ * cache: true 면 그 블록까지(앞 블록 포함)를 5분 캐시한다 — 쓰일 때마다 5분 연장, 읽기 값은 입력값의 5%(Sonnet 5.5).
+ * 바뀌지 않는 글을 앞에, 매번 바뀌는 글을 뒤에 둬야 맞는다. 캐시 지점은 요청당 4개까지(넘는 표시는 무시).
+ */
+export type SystemPart = string | { text: string; cache?: boolean };
+
 /** Messages API 요청 본문 — 스트림·배치가 같은 모양을 쓴다 */
 export function buildClaudeBody(opts: {
   model: string;
-  system: string[];
+  system: SystemPart[];
   messages: Turn[];
   maxTokens: number;
   stream?: boolean;
-  /** 모든 요청에 똑같이 들어가는 첫 시스템 블록을 캐시한다 (배치에서 같은 지시문을 반복할 때) */
+  /** 모든 요청에 똑같이 들어가는 첫 시스템 블록을 1시간 캐시한다 (배치에서 같은 지시문을 반복할 때) */
   cacheFirstSystem?: boolean;
   /** 답을 이 JSON 스키마 모양으로만 받는다 (output_config.format — minLength·maxLength 는 못 쓴다, 길이는 코드에서 검사) */
   jsonSchema?: Record<string, unknown>;
 }): Record<string, unknown> {
+  let marks = 0;
   const system = opts.system
-    .filter((s) => s.trim() !== "")
-    .map((text, i) =>
-      opts.cacheFirstSystem && i === 0
-        ? { type: "text", text, cache_control: { type: "ephemeral", ttl: "1h" } }
-        : { type: "text", text },
-    );
+    .map((s) => (typeof s === "string" ? { text: s, cache: false } : { text: s.text ?? "", cache: !!s.cache }))
+    .filter((s) => s.text.trim() !== "")
+    .map((s, i) => {
+      // 1시간 캐시(첫 블록)가 5분 캐시보다 앞에 와야 한다 — 이 순서라 늘 맞는다
+      if (opts.cacheFirstSystem && i === 0) {
+        marks++;
+        return { type: "text", text: s.text, cache_control: { type: "ephemeral", ttl: "1h" } };
+      }
+      if (s.cache && marks < 4) {
+        marks++;
+        return { type: "text", text: s.text, cache_control: { type: "ephemeral" } };
+      }
+      return { type: "text", text: s.text };
+    });
   const t = thinkingFor(opts.model);
   const outputConfig: Record<string, unknown> = {
     ...(t.effort ? { effort: t.effort } : {}),
@@ -129,7 +145,7 @@ export const claudeHeaders = (): Record<string, string> => ({
 
 /** 스트리밍 호출. 응답 본문은 claudeToOpenAiSse 로 바꿔 앱에 넘긴다 */
 export async function claudeStream(opts: {
-  system: string[];
+  system: SystemPart[];
   messages: Turn[];
   maxTokens: number;
   model?: string;
