@@ -6,7 +6,7 @@
  *   A 챔피언 벨트 — 금속 테두리 + 153 명판 + 윗단 징 3개
  *   B 크레스트   — 윗단 별 3개 띠 + 글러브
  *   C 미니멀     — 단색 면 + 굵은 테두리 + 글러브
- * 대표님이 고른 시안 하나만 SHIELD_DESIGN 에 둔다 — 한 줄만 바꾸면 앱 전체 방패가 바뀐다.
+ * 대표님 선택: A 챔피언 벨트 (2026-10-15). 한 줄(SHIELD_DESIGN)만 바꾸면 앱 전체 방패가 바뀐다.
  * 블랙: 흑요석 면 + 골드 테두리 + 반짝이 2개 + 빛 지나가기(SMIL) + 금빛 광채.
  */
 import { useId } from "react";
@@ -15,7 +15,7 @@ export type LeagueKey = "white" | "blue" | "red" | "black";
 export type ShieldDesign = "A" | "B" | "C";
 
 /** 대표님이 고른 방패 시안 */
-export const SHIELD_DESIGN: ShieldDesign = "B";
+export const SHIELD_DESIGN: ShieldDesign = "A";
 
 const LABEL: Record<LeagueKey, string> = {
   white: "화이트 리그",
