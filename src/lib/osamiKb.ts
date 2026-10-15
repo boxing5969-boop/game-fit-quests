@@ -278,7 +278,7 @@ export interface OsamiKbHint {
  * 질문과 관련 있는 항목 몇 개를 고른다 — AI 가 앱 사실을 틀리지 않게 참고하도록.
  * 점수 문턱을 낮게 잡아(살짝만 닿아도) 최대 k 개, 글자 수 상한 안에서.
  */
-export function pickOsamiKbHints(query: string, k = 4, maxChars = 2200): OsamiKbHint[] {
+export function pickOsamiKbHints(query: string, k = 4, maxChars = 3200): OsamiKbHint[] {
   const q = kbNormalize(query);
   if (!q) return [];
   const c = kbContent(query);
@@ -290,7 +290,7 @@ export function pickOsamiKbHints(query: string, k = 4, maxChars = 2200): OsamiKb
   const out: OsamiKbHint[] = [];
   let used = 0;
   for (const m of scored) {
-    const a = m.entry.answer.length > 700 ? m.entry.answer.slice(0, 700) + "…" : m.entry.answer;
+    const a = m.entry.answer.length > 790 ? m.entry.answer.slice(0, 790) + "…" : m.entry.answer;
     const cost = m.entry.q.length + a.length;
     if (used + cost > maxChars) break;
     out.push({ id: m.entry.id, q: m.entry.q, answer: a });
