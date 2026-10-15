@@ -199,7 +199,7 @@ const TrainingLibraryPage = () => {
                 onClick={() => navigate("/handwrap")}
                 className="mb-3 flex w-full items-center justify-between rounded-xl bg-primary/10 px-3.5 py-3 text-left text-sm font-bold text-primary transition-all active:scale-[0.99]"
               >
-                사진 13단계로 따라 하기 · 집 연습 미션
+                그림 13단계로 따라 하기 · 집 연습 미션
                 <ChevronRight className="h-4 w-4 shrink-0" />
               </button>
             )}

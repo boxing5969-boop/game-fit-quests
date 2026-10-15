@@ -240,7 +240,7 @@ export const FEATURES: readonly SearchEntry[] = [
   f("rankup-guide", "타이틀매치 · 직행권 안내", "심사 기준과 관문 직행권 한 장 정리", "medal", { kind: "href", href: "/rankup" },
     ["타이틀매치", "직행권", "관문 직행권", "패스트트랙", "심사 기준", "타이틀매치 미션", "승급 안내"]),
   // 붕대 감기 (/handwrap) — 사진 13단계·영상·집 연습 미션 (2026-10-13)
-  f("handwrap", "붕대 감기", "사진 13단계 · 영상 · 집 연습 미션", "handwrap", go("/handwrap"),
+  f("handwrap", "붕대 감기", "그림 13단계 · 영상 · 집 연습 미션", "handwrap", go("/handwrap"),
     ["붕대", "붕대 감기", "붕대 감는 법", "붕대 감는 방법", "핸드랩", "핸드 랩", "랩 감기", "밴디지", "손 붕대", "집 연습", "붕대 미션"], { boost: 2 }),
   f("training-library", "훈련 라이브러리", "동작 설명 · 그림", "books", go("/training-library"),
     ["라이브러리", "운동 설명", "드릴", "동작 그림", "운동법"]),

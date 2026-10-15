@@ -36,7 +36,7 @@ const HandWrapPhoto = ({ photo, arrow, mirrored, animate = true, stepKey, alt, c
   const hasTarget = !!arrow?.tr && arrow.tx != null && arrow.ty != null;
 
   return (
-    <div className={cn("relative aspect-[120/98] w-full overflow-hidden bg-[#2B2622]", className)}>
+    <div className={cn("relative aspect-[120/98] w-full overflow-hidden bg-[#EEF4F2]", className)}>
       <AnimatePresence mode="popLayout">
         <motion.div
           key={stepKey ?? photo}

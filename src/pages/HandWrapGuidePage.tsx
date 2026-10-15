@@ -123,7 +123,7 @@ const HandWrapGuidePage = () => {
       header={
         <PageHeader
           title="붕대 감기"
-          subtitle="사진 13단계 · 영상 · 집 연습 미션"
+          subtitle="그림 13단계 · 영상 · 집 연습 미션"
           sticky
           leftAction={
             <button
@@ -152,10 +152,10 @@ const HandWrapGuidePage = () => {
               arrow={current.arrow}
               mirrored={hand === "right"}
               stepKey={step}
-              alt={`${handLabel} ${step + 1}단계 ${title} 사진`}
+              alt={`${handLabel} ${step + 1}단계 ${title} 그림`}
             />
           ) : (
-            <div className="grid grid-cols-2 gap-0.5 bg-[#2B2622]">
+            <div className="grid grid-cols-2 gap-0.5 bg-[#EEF4F2]">
               {HANDWRAP_DONE.photos.map((src, i) => (
                 <HandWrapPhoto key={src} photo={src} mirrored={hand === "right"} stepKey={`done-${i}`} alt={`다 감은 모습 ${i + 1}`} />
               ))}
@@ -296,7 +296,7 @@ const HandWrapGuidePage = () => {
                 <Clapperboard className="h-5 w-5 text-muted-foreground" />
               </span>
               <p className="mt-3 text-[15px] font-bold text-foreground">영상 준비 중이에요</p>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">지금은 위 사진 13단계로 따라 해요</p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">지금은 위 그림 13단계로 따라 해요</p>
               {isStaff && (
                 <div className="mt-4 rounded-xl bg-secondary px-3 py-2.5 text-left">
                   <p className="text-[11.5px] leading-relaxed text-muted-foreground">
