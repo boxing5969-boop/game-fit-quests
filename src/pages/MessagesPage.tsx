@@ -5,7 +5,7 @@
  * 오른쪽 위: 설정(메시지 요청 받기·차단 목록) · 새 메시지(보낼 사람 고르기)
  * 탭은 주소(?tab=)에 남겨 대화방에서 돌아와도 그대로.
  */
-import LeagueBadge from "@/components/badges/LeagueBadge";
+import NameBadge from "@/components/badges/NameBadge";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, Settings, SquarePen } from "lucide-react";
@@ -44,8 +44,8 @@ const ThreadRow = ({ r, onOpen }: { r: DmThreadRow; onOpen: () => void }) => {
             <span className={cn("truncate text-[15px] text-foreground", unread ? "font-extrabold" : "font-bold")}>
               {r.peer?.display ?? "알 수 없는 회원"}
             </span>
-            {/* 리그 뱃지 (2026-10-15) — 코치님(champion)은 직함 배지만 */}
-            {r.peer && r.peer.rank !== "champion" && <LeagueBadge league={r.peer.rank} className="h-4 w-4" animated={false} />}
+            {/* 리그 버튼 (2026-10-15) — 코치님(champion)은 직함 배지만 */}
+            {r.peer && r.peer.rank !== "champion" && <NameBadge league={r.peer.rank} className="h-4 w-4" glow={false} />}
             <DmKindBadge kind={r.peer?.kind} />
           </span>
           <span

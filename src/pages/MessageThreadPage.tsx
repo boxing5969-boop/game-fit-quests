@@ -30,7 +30,7 @@ import { isEmojiOnly } from "@/lib/dmText";
 import { openCredentialChange } from "@/lib/appEvents";
 import { cn } from "@/lib/utils";
 import { DmAvatar, DmKindBadge, DmSheet } from "@/components/dm/DmParts";
-import LeagueBadge from "@/components/badges/LeagueBadge";
+import NameBadge from "@/components/badges/NameBadge";
 import DmReportSheet from "@/components/dm/DmReportSheet";
 import MemberLicenseSheet from "@/components/license/MemberLicenseSheet";
 
@@ -371,7 +371,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
             <span className="min-w-0">
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="truncate text-[16px] font-bold text-foreground">{peer ? name : " "}</span>
-                {peer && peer.rank !== "champion" && <LeagueBadge league={peer.rank} className="h-[18px] w-[18px]" />}
+                {peer && peer.rank !== "champion" && <NameBadge league={peer.rank} className="h-[18px] w-[18px]" />}
                 <DmKindBadge kind={peer?.kind} />
               </span>
               <span className="block truncate text-[12px] text-muted-foreground">{dmPersonLine(peer)}</span>

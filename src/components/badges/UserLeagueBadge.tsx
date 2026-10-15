@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import LeagueBadge from "@/components/badges/LeagueBadge";
+import NameBadge from "@/components/badges/NameBadge";
 
 type Entry = { league: string | null; at: number };
 const cache = new Map<string, Entry>();
@@ -72,7 +72,8 @@ interface Props {
 const UserLeagueBadge = ({ userId, className = "h-4 w-4", animated }: Props) => {
   const league = useMemberLeague(userId);
   if (!league || league === "champion") return null;
-  return <LeagueBadge league={league} className={className} animated={animated} />;
+  // 이름 옆 = 리그 버튼 (2026-10-15 대표님 개편 — 방패는 리그·레벨 줄에)
+  return <NameBadge league={league} className={className} glow={animated} />;
 };
 
 export default UserLeagueBadge;

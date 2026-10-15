@@ -1,6 +1,7 @@
 import type { Enums } from "@/integrations/supabase/types";
 import { RANK_LABELS, formatRank } from "@/lib/rankLabels";
 import LeagueBadge from "@/components/badges/LeagueBadge";
+import NameBadge from "@/components/badges/NameBadge";
 
 interface RankBadgeProps {
   rank: Enums<"rank_name">;
@@ -34,8 +35,8 @@ const RankBadge = ({ rank, level, size = "sm", isMaster }: RankBadgeProps) => {
           👑
         </span>
       ) : (
-        // 2026-10-15: 이모지 → 리그 방패 엠블럼 (LeagueBadge)
-        <LeagueBadge league={rank} className="inline-block h-4 w-4 align-middle" title={title} />
+        // 2026-10-15: 이름 옆 = 리그 버튼 (NameBadge) — 방패는 리그·레벨 줄에
+        <NameBadge league={rank} className="inline-block h-4 w-4 align-middle" title={title} />
       )
     );
   }

@@ -14,8 +14,7 @@ import LiveBoardEmptyState from "@/components/liveBoard/LiveBoardEmptyState";
 import LiveGymRaidStrip from "@/components/liveBoard/LiveGymRaidStrip";
 import LiveSpotlightStage from "@/components/liveBoard/LiveSpotlightStage";
 import LiveCompactGrid from "@/components/liveBoard/LiveCompactGrid";
-import LeagueBadge from "@/components/badges/LeagueBadge";
-import PtBadge from "@/components/license/PtBadge";
+import NameBadge from "@/components/badges/NameBadge";
 import LiveLevelUpInterrupt, {
   type LevelUpEvent,
 } from "@/components/liveBoard/LiveLevelUpInterrupt";
@@ -1278,11 +1277,15 @@ const LiveBoardPage = () => {
                     <div key={m.user_id} className="flex items-center gap-4 rounded-xl bg-gray-800/40 px-4 py-4 group">
                       <MemberAvatar url={m.avatar_url} name={m.name} />
                       <div className="flex-1 min-w-0">
-                        {/* 이름은 길면 말줄임, PT 파란 배지는 항상 보인다 (앱 라이선스 카드와 같은 배지) */}
+                        {/* 이름 + 리그 버튼(모든 회원, 앱 라이센스 카드와 같은 버튼). PT 회원은 'PT' 글자 (2026-10-15 대표님) */}
                         <div className="flex min-w-0 items-center gap-1.5">
                           <p className="min-w-0 text-2xl font-black text-white truncate leading-tight">{m.name}</p>
-                          <LeagueBadge league={m.league} className="h-7 w-7" />
-                          {m.pt && <PtBadge className="h-6 w-6 shrink-0" />}
+                          <NameBadge league={m.league} className="h-7 w-7" />
+                          {m.pt && (
+                            <span className="shrink-0 rounded-md border border-blue-400/50 bg-blue-500/20 px-2 py-0.5 text-base font-black tracking-wider text-blue-200">
+                              PT
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <span className={`inline-flex px-2 py-0.5 rounded text-sm font-black ${RANK_BADGE_COLORS[m.league] || "bg-gray-700 text-gray-300"}`}>

@@ -25,7 +25,7 @@ import { Camera, Crown, Flame, Heart, PenLine } from "lucide-react";
 import type { ReactNode } from "react";
 import { STAFF_CHAMPION_LEVEL } from "@/lib/staffDisplay";
 import LeagueBadge from "@/components/badges/LeagueBadge";
-import PtBadge from "@/components/license/PtBadge";
+import NameBadge from "@/components/badges/NameBadge";
 
 const RANK_LABELS: Record<string, string> = {
   white: "WHITE",
@@ -535,14 +535,14 @@ const BoxerLicenseCard = ({
 
           {/* 정보 영역 */}
           <div className="flex-1 min-w-0">
-            {/* 이름은 길면 말줄임, PT 배지는 항상 보인다 */}
+            {/* 이름은 길면 말줄임, 리그 버튼은 항상 보인다 */}
             <div className="flex min-w-0 items-center gap-1">
               <p className={`min-w-0 truncate font-black text-white ${cfg.nameText}`}>
                 {name}
               </p>
-              {/* 리그 뱃지 (2026-10-15) — 모든 회원. 지도진(코치님)은 '챔피언' 표기라 리그 뱃지 없음 */}
-              {!staff && <LeagueBadge league={rankKey} className={`${cfg.ptBadge} shrink-0`} />}
-              {pt && !staff && <PtBadge className={`${cfg.ptBadge} shrink-0`} glow={size === "hero"} />}
+              {/* 리그 버튼 (2026-10-15 대표님) — 모든 회원, 색 = 내 리그 (화이트·블루·레드·골드). PT 전용 배지는 없앰.
+                  지도진(코치님)은 '챔피언' 표기라 버튼 없음 */}
+              {!staff && <NameBadge league={rankKey} className={`${cfg.ptBadge} shrink-0`} glow={size === "hero"} />}
               {onCardClick && <PenLine className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/40" aria-hidden="true" />}
             </div>
             {branch && size !== "compact" && (
@@ -577,6 +577,8 @@ const BoxerLicenseCard = ({
                 {isMaster && <Crown className="inline h-3 w-3 -mt-0.5 mr-0.5" />}
                 {rankLabelEN}
               </span>
+              {/* 리그 방패 — 'WHITE / 방패 / Lv.10' 줄 (2026-10-15 대표님) */}
+              <LeagueBadge league={rankKey} className={`${cfg.ptBadge} shrink-0`} />
               <span className={`font-black text-white ${cfg.levelText}`}>
                 Lv.{level}
               </span>

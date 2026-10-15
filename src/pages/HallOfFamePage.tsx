@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import MemberLicenseSheet from "@/components/license/MemberLicenseSheet";
 
 import LeagueBadge from "@/components/badges/LeagueBadge";
+import NameBadge from "@/components/badges/NameBadge";
 import {
   AppPage,
   PageHeader,
@@ -585,7 +586,7 @@ const PodiumCard = ({
         <p className="min-w-0 truncate text-caption font-bold text-foreground">
           {member.r_nickname}
         </p>
-        <LeagueBadge league={member.r_current_rank} className="h-4 w-4" />
+        <NameBadge league={member.r_current_rank} className="h-4 w-4" />
       </div>
       <p className="number-font text-[11px] font-bold text-muted-foreground">
         {score}
@@ -689,7 +690,7 @@ const RankingList = ({
                 name={m.r_nickname}
                 score={getScore(m)}
                 meta={getMeta(m)}
-                badge={<LeagueBadge league={m.r_current_rank} className="h-[18px] w-[18px]" />}
+                badge={<NameBadge league={m.r_current_rank} className="h-[18px] w-[18px]" glow={false} />}
                 isMe={isMe}
                 avatar={m.r_avatar_url ?? undefined}
                 onClick={() => onRowOpen(m)}
@@ -861,12 +862,13 @@ const HoFMemberCard = ({
         <p className="truncate text-body-sm font-bold text-foreground">
           {nickname}
         </p>
-        <LeagueBadge league={rankName} className="h-[18px] w-[18px]" />
+        <NameBadge league={rankName} className="h-[18px] w-[18px]" />
         {isMe && (
           <span className="badge-pill bg-primary/20 text-primary">나</span>
         )}
       </div>
-      <p className="text-caption truncate text-muted-foreground">
+      <p className="text-caption flex items-center gap-1 truncate text-muted-foreground">
+        <LeagueBadge league={rankName} className="h-3.5 w-3.5" animated={false} />
         {RANK_LABELS[rankName] || rankName} · Lv.
         <span className="number-font">{level}</span>
         {branch && ` · ${branch}`}
