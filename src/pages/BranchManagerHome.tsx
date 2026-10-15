@@ -716,13 +716,13 @@ const BranchManagerHome = () => {
         {canBroadcast && (
           <button
             type="button"
-            onClick={() => openTab("broadcast")}
+            onClick={() => navigate("/messages?tab=broadcast")}
             className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left active:scale-[0.99]"
           >
             <span className="text-2xl">📢</span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-black text-foreground">유효회원 전체 메시지</span>
-              <span className="block text-xs text-muted-foreground">알림함·휴대폰 알림으로 한 번에 보내기</span>
+              <span className="block text-sm font-black text-foreground">단체 메시지</span>
+              <span className="block text-xs text-muted-foreground">유효회원·전체·만료·PT 회원에게 DM 으로 한 번에</span>
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -866,7 +866,7 @@ const BranchManagerHome = () => {
           {canBroadcast && (
             <button
               type="button"
-              onClick={() => openTab("broadcast")}
+              onClick={() => navigate("/messages?tab=broadcast")}
               className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left active:scale-[0.99]"
             >
               <span className="text-2xl">📢</span>

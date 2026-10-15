@@ -22,9 +22,11 @@ import NewMessageSheet from "@/components/dm/NewMessageSheet";
 import DmSettingsSheet from "@/components/dm/DmSettingsSheet";
 import DmAdminReports from "@/components/dm/DmAdminReports";
 import CoachSentList from "@/components/dm/CoachSentList";
+import BroadcastNotification from "@/components/BroadcastNotification";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Tab = "inbox" | "requests" | "reports" | "coach";
+// broadcast — 단체 메시지(유효회원·전체·만료·PT), 지점장·본사만 (2026-10-15)
+type Tab = "inbox" | "requests" | "reports" | "coach" | "broadcast";
 
 const previewLine = (r: DmThreadRow): string => {
   const text = r.last_preview ?? "";
@@ -101,7 +103,7 @@ const MessagesPage = () => {
   const canSeeCoach = role === "branch_manager" || role === "super_admin" || role === "admin";
   const raw = params.get("tab");
   const tab: Tab =
-    (raw === "requests" && (isMember || !summary)) || (raw === "reports" && isHq) || (raw === "coach" && canSeeCoach)
+    (raw === "requests" && (isMember || !summary)) || (raw === "reports" && isHq) || (raw === "coach" && canSeeCoach) || (raw === "broadcast" && canSeeCoach)
       ? raw
       : "inbox";
   const setTab = (t: Tab) => setParams(t === "inbox" ? {} : { tab: t }, { replace: true });
@@ -131,6 +133,7 @@ const MessagesPage = () => {
       ? [{ value: "requests" as const, label: requestCount > 0 ? `요청 ${requestCount}` : "요청", badge: newRequests }]
       : []),
     ...(isHq ? [{ value: "reports" as const, label: reportCount > 0 ? `신고 ${reportCount}` : "신고", badge: reportCount, urgent: true }] : []),
+    ...(canSeeCoach ? [{ value: "broadcast" as const, label: "단체", badge: 0 }] : []),
     ...(canSeeCoach ? [{ value: "coach" as const, label: "오삼코치", badge: 0 }] : []),
   ];
 
@@ -237,6 +240,8 @@ const MessagesPage = () => {
             <DmAdminReports />
           ) : tab === "coach" ? (
             <CoachSentList />
+          ) : tab === "broadcast" ? (
+            <BroadcastNotification />
           ) : active.isLoading ? (
             <ListSkeleton />
           ) : active.isError && !active.data ? (
@@ -289,7 +294,7 @@ const MessagesPage = () => {
             </ul>
           )}
 
-          {tab !== "reports" && tab !== "coach" && (
+          {tab !== "reports" && tab !== "coach" && tab !== "broadcast" && (
             <p className="px-1 pt-1 text-[11.5px] leading-relaxed text-muted-foreground">
               {tab === "requests"
                 ? "처음 보낸 사람은 수락 전까지 메시지를 1개만 보낼 수 있어요."
