@@ -18,7 +18,7 @@ type Section = "start" | "level" | "fitness";
 
 const FIRSTS: Array<{ key: string; section: Section; emoji: string; title: string; desc: string; empty: string }> = [
   { key: "first_signup", section: "start", emoji: "🥇", title: "최초 가입자", desc: "마이복서153에 가장 먼저 이름을 올린 회원", empty: "" },
-  { key: "first_checkin", section: "start", emoji: "🚪", title: "최초 출석", desc: "기록에 남은 153의 첫 출석", empty: "" },
+  { key: "first_checkin", section: "start", emoji: "🚪", title: "최초 출석", desc: "앱이 생기고 처음으로 앱 출석을 찍은 회원", empty: "" },
   { key: "first_100_checkins", section: "start", emoji: "💯", title: "최초 출석 100회", desc: "가장 먼저 100번 출석한 회원", empty: "100번째 출석을 가장 먼저 찍는 회원이 주인이 돼요" },
   { key: "first_journal", section: "start", emoji: "✍️", title: "최초 커뮤니티 글", desc: "153 커뮤니티에 처음 글을 남긴 회원", empty: "커뮤니티에 처음 글을 쓰는 회원이 주인이 돼요" },
   { key: "first_handwrap", section: "start", emoji: "🩹", title: "최초 붕대 감기 연습", desc: "집에서 붕대 감기를 처음 해 본 회원", empty: "붕대 감기 연습을 처음 하는 회원이 주인이 돼요" },
