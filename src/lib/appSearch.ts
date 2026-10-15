@@ -264,6 +264,8 @@ export const FEATURES: readonly SearchEntry[] = [
     ["메시지", "dm", "디엠", "쪽지", "대화", "채팅", "코치님께 연락", "문의"], { requires: "dm" }),
   f("ranking", "랭킹 · 명예의 전당", "지점 순위", "medal", go("/halloffame"),
     ["랭킹", "순위", "등수", "명예의 전당", "명예의전당"]),
+  f("records153", "153 레코드", "153복싱짐의 최초 기록 · 체력테스트 신기록", "medal", go("/halloffame?tab=records"),
+    ["153 레코드", "레코드", "최초", "기록", "신기록", "최초 가입자", "체력테스트"]),
 
   // 내 정보 · 혜택
   f("myboxer", "MY복서 · 내 라이센스", "내 레벨 카드 · 오늘의 할 일", "myboxer", go("/myboxer"),

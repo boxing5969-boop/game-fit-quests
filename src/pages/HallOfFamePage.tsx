@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { User, Settings2, X, Trophy, Crown } from "lucide-react";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import MemberLicenseSheet from "@/components/license/MemberLicenseSheet";
 
 import LeagueBadge from "@/components/badges/LeagueBadge";
 import NameBadge from "@/components/badges/NameBadge";
+import Record153Board from "@/components/engagement/Record153Board";
 import {
   AppPage,
   PageHeader,
@@ -30,7 +31,7 @@ import {
   EmptyState,
 } from "@/components/ui/rankingup";
 
-type TopTab = "ranking" | "halloffame";
+type TopTab = "ranking" | "halloffame" | "records";
 type RankingTabKey = "weekly" | "streak" | "official" | "monthly" | "boss";
 
 const RANK_LABELS: Record<string, string> = {
@@ -82,7 +83,12 @@ const PODIUM_TONE = {
 const HallOfFamePage = () => {
   const navigate = useNavigate();
   const { user, profile, progress, role } = useAuth();
-  const [topTab, setTopTab] = useState<TopTab>("ranking");
+  // ?tab=records → 153 레코드 탭으로 바로 (검색·공유 링크)
+  const [searchParams] = useSearchParams();
+  const [topTab, setTopTab] = useState<TopTab>(() => {
+    const t = searchParams.get("tab");
+    return t === "records" || t === "halloffame" ? t : "ranking";
+  });
   // Default to the "official" (total XP) view so users land on the
   // full branch roster first instead of the weekly slice.
   const [activeTab, setActiveTab] = useState<RankingTabKey>("official");
@@ -263,8 +269,10 @@ const HallOfFamePage = () => {
           value={topTab}
           onChange={(v) => setTopTab(v)}
           segments={[
-            { value: "ranking", label: "🏆 랭킹" },
-            { value: "halloffame", label: "🏅 명예의 전당" },
+            { value: "ranking", label: "랭킹" },
+            { value: "halloffame", label: <span className="whitespace-nowrap">명예의 전당</span> },
+            // 153 레코드 — 153복싱짐의 최초 기록 (2026-10-15 대표님)
+            { value: "records", label: <span className="whitespace-nowrap">153 레코드</span> },
           ]}
           fullWidth
         />
@@ -390,6 +398,10 @@ const HallOfFamePage = () => {
               />
             )}
           </>
+        )}
+
+        {topTab === "records" && (
+          <Record153Board onOpenMember={(m) => setLicenseMember(m)} />
         )}
       </div>
 
