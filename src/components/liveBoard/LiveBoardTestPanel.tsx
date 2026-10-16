@@ -38,6 +38,8 @@ export interface LiveBoardTestPanelProps {
   onAddReal?: () => void;
   /** 가상 회원에게 메달 예시(금 ×2 · 은 · 동) */
   onAddMedalSamples?: () => void;
+  /** 🎂 생일 회원 입장 — 생일 환영 화면 + 오로라·황금 버튼 카드 미리보기 (2026-10-16) */
+  onBirthdaySample?: () => void;
 }
 
 const PRESETS = [1, 2, 5, 12, 30, 45];
@@ -50,6 +52,7 @@ const LiveBoardTestPanel = ({
   onTriggerLevelUp,
   onAddReal,
   onAddMedalSamples,
+  onBirthdaySample,
 }: LiveBoardTestPanelProps) => {
   const [expanded, setExpanded] = useState(true);
 
@@ -115,7 +118,7 @@ const LiveBoardTestPanel = ({
                 </div>
 
                 {/* 실제 회원 미리보기 — 메달·사진·캐릭터가 실제로 어떻게 보이는지 (이 기기에서만) */}
-                {(onAddReal || onAddMedalSamples) && (
+                {(onAddReal || onAddMedalSamples || onBirthdaySample) && (
                   <div>
                     <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
                       실제 모습 미리보기
@@ -137,6 +140,15 @@ const LiveBoardTestPanel = ({
                           title="가상 회원 3명에게 금 ×2 · 은 · 동 메달 예시"
                         >
                           메달 예시
+                        </button>
+                      )}
+                      {onBirthdaySample && (
+                        <button
+                          onClick={onBirthdaySample}
+                          className="rounded-lg bg-gradient-to-r from-emerald-500/25 via-violet-500/25 to-pink-500/25 px-2.5 py-1.5 text-xs font-black text-amber-100 hover:from-emerald-500/40 hover:via-violet-500/40 hover:to-pink-500/40 transition-colors"
+                          title="생일 회원이 들어온 것처럼 — 생일 환영 화면 + 오로라·황금 버튼 카드"
+                        >
+                          🎂 생일 회원 입장
                         </button>
                       )}
                     </div>

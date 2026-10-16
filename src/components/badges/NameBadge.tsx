@@ -29,23 +29,32 @@ const TONE: Record<LeagueKey, Tone> = {
   black: { f1: "#FFF1BF", f2: "#F2C35B", f3: "#B07A1E", rim: "#8A5A12", rimW: 0.5, check: "#4A2E00", glow: "drop-shadow(0 0 5px rgba(242,195,91,0.7))", label: "블랙 리그" },
 };
 
+/** 생일 황금 버튼 (2026-10-16 대표님) — 블랙 리그 골드보다 밝은 금빛 + 빛이 지나가고 반짝인다 */
+const BIRTHDAY_TONE: Tone = {
+  f1: "#FFF8DC", f2: "#FFD24D", f3: "#D99A00", rim: "#8A5A00", rimW: 0.5, check: "#3F2600",
+  glow: "drop-shadow(0 0 6px rgba(255,204,64,0.95))", label: "오늘 생일",
+};
+
 interface NameBadgeProps {
   league: string | null | undefined;
   className?: string;
   /** 은은한 리그색 빛 (기본 켬). 아주 긴 목록에서는 꺼서 가볍게. */
   glow?: boolean;
   title?: string;
+  /** 오늘 생일 — 리그 색 대신 황금 버튼 (라이브보드, 2026-10-16) */
+  birthday?: boolean;
 }
 
-const NameBadge = ({ league, className = "h-5 w-5", glow = true, title }: NameBadgeProps) => {
+const NameBadge = ({ league, className = "h-5 w-5", glow = true, title, birthday = false }: NameBadgeProps) => {
   // useId 는 ":r0:" 꼴이라 url(#…) 참조가 깨질 수 있어 영문·숫자만 남긴다 (PtBadge 와 같은 방식)
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   if ((league ?? "").toLowerCase() === "champion") return null;
   const key = toLeagueKey(league);
-  const t = TONE[key];
+  const t = birthday ? BIRTHDAY_TONE : TONE[key];
   const label = title ?? t.label;
   const fill = `nmb-f-${uid}`;
   const shine = `nmb-s-${uid}`;
+  const sweep = `nmb-w-${uid}`;
   return (
     <svg
       viewBox="0 0 24 24"
@@ -65,11 +74,33 @@ const NameBadge = ({ league, className = "h-5 w-5", glow = true, title }: NameBa
           <stop offset="0" stopColor="#fff" stopOpacity="0.45" />
           <stop offset="0.55" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
+        {birthday && (
+          // 대각선으로 지나가는 빛 — 밖에서 시작해 버튼을 가로질러 밖으로 (pad 라 바깥은 투명)
+          <linearGradient id={sweep} x1="0" y1="0" x2="1" y2="1" gradientTransform="translate(-1 -1)">
+            <stop offset="0.38" stopColor="#fff" stopOpacity="0" />
+            <stop offset="0.5" stopColor="#fff" stopOpacity="0.9" />
+            <stop offset="0.62" stopColor="#fff" stopOpacity="0" />
+            {glow && (
+              <animateTransform attributeName="gradientTransform" type="translate" values="-1 -1;1 1;1 1" keyTimes="0;0.55;1" dur="2.6s" repeatCount="indefinite" />
+            )}
+          </linearGradient>
+        )}
       </defs>
       <path d={ROSETTE} fill={`url(#${fill})`} stroke={t.rim ?? "none"} strokeWidth={t.rimW ?? 0} />
       <path d={ROSETTE} fill={`url(#${shine})`} />
+      {birthday && <path d={ROSETTE} fill={`url(#${sweep})`} />}
       <path d="M7.7 12.2l2.8 2.8 5.8-5.9" fill="none" stroke={t.check} strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round" />
-      {key === "black" && (
+      {birthday && (
+        <>
+          <path d="M21.4 0.4l.45 1.1 1.1.45-1.1.45-.45 1.1-.45-1.1-1.1-.45 1.1-.45z" fill="#FFF4CC">
+            {glow && <animate attributeName="opacity" values="1;0.2;1" dur="1.6s" repeatCount="indefinite" />}
+          </path>
+          <path d="M2.2 18.6l.35.85.85.35-.85.35-.35.85-.35-.85-.85-.35.85-.35z" fill="#FFF4CC">
+            {glow && <animate attributeName="opacity" values="0.2;1;0.2" dur="1.6s" repeatCount="indefinite" />}
+          </path>
+        </>
+      )}
+      {key === "black" && !birthday && (
         <path d="M21.4 0.4l.45 1.1 1.1.45-1.1.45-.45 1.1-.45-1.1-1.1-.45 1.1-.45z" fill="#FFF4CC">
           {glow && <animate attributeName="opacity" values="1;0.25;1" dur="1.8s" repeatCount="indefinite" />}
         </path>

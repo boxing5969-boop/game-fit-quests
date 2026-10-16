@@ -28,6 +28,8 @@ import { STAFF_CHAMPION_LEVEL } from "@/lib/staffDisplay";
 import LeagueBadge from "@/components/badges/LeagueBadge";
 import NameBadge from "@/components/badges/NameBadge";
 import { toGlobalLevel } from "@/lib/rankLabels";
+import birthdayCake from "@/assets/birthday/cake.webp";
+import fxAurora from "@/assets/effects/fx_aurora.png";
 
 const RANK_LABELS: Record<string, string> = {
   white: "WHITE",
@@ -97,6 +99,12 @@ const CARD_GLOW: Record<string, string> = {
   black:
     "0 10px 50px hsla(42, 95%, 60%, 0.55), 0 0 0 2px hsla(42, 95%, 60%, 0.6), 0 0 120px hsla(280, 70%, 55%, 0.25)",
 };
+
+/** 🎂 생일 회원 (라이브보드, 2026-10-16 대표님: "오로라 표시와 황금버튼, 생일축하 표시") */
+const BIRTHDAY_RING =
+  "conic-gradient(from 0deg, #34f5c5, #22d3ee, #a78bfa, #f472b6, #fbbf24, #34f5c5)";
+const BIRTHDAY_GLOW =
+  "0 0 0 2px hsla(165, 90%, 60%, 0.55), 0 8px 30px hsla(165, 90%, 50%, 0.35), 0 0 64px hsla(270, 85%, 65%, 0.4)";
 
 /** user_id 해시 → 6자리 라이센스 번호 */
 function licenseNumber(userId?: string): string {
@@ -187,6 +195,9 @@ export interface BoxerLicenseCardProps {
   photoBusy?: boolean;
   /** 사진 위 금색 알약 (2026-10-14 — 처음 올리면 받는 챔피언 머니, 예: "+5,000"). onPhotoClick 이 있을 때만 보인다 */
   photoBadge?: string;
+  /** 🎂 오늘 생일 (라이브보드, 2026-10-16) — 오로라 테두리·광채, 이름 옆 황금 버튼, 머리줄 HAPPY BIRTHDAY,
+   *  사진 모서리 케이크, (spotlight 이상) 아래 줄 "생일 축하해 주세요". 카드 높이는 그대로 (자동 크기 그리드가 잰다) */
+  birthday?: boolean;
 }
 
 const BoxerLicenseCard = ({
@@ -218,7 +229,10 @@ const BoxerLicenseCard = ({
   onPhotoClick,
   photoBusy = false,
   photoBadge,
+  birthday: birthdayProp = false,
 }: BoxerLicenseCardProps) => {
+  // 지도진 카드에는 생일 연출을 하지 않는다 (회원 카드 전용)
+  const birthday = birthdayProp && !staff;
   const rankKey = (league || "white").toLowerCase();
   const lic = licenseNumber(userId);
   const issuedFmt = formatIssueDate(issueDate);
@@ -325,21 +339,23 @@ const BoxerLicenseCard = ({
       }`}
       style={{
         background: `linear-gradient(135deg, hsla(0, 0%, 6%, 0.97) 0%, hsla(0, 0%, 10%, 0.95) 100%)`,
-        boxShadow: isFresh
-          ? "0 8px 24px hsla(160, 80%, 50%, 0.4), 0 0 0 2px hsla(160, 80%, 50%, 0.6)"
-          : CARD_GLOW[isMaster ? "black" : rankKey] ?? CARD_GLOW.white,
+        boxShadow: birthday
+          ? BIRTHDAY_GLOW
+          : isFresh
+            ? "0 8px 24px hsla(160, 80%, 50%, 0.4), 0 0 0 2px hsla(160, 80%, 50%, 0.6)"
+            : CARD_GLOW[isMaster ? "black" : rankKey] ?? CARD_GLOW.white,
       }}
     >
-      {/* ── 골드 트림 (얇은 외곽 그라디언트 라인) ── */}
+      {/* ── 골드 트림 (얇은 외곽 그라디언트 라인) — 생일이면 흐르는 오로라 테두리 ── */}
       <div
-        className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${borderGrad} opacity-50`}
-        style={{ padding: "1.5px", WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }}
+        className={`absolute inset-0 rounded-2xl ${birthday ? "bday-aurora-ring" : `bg-gradient-to-br ${borderGrad} opacity-50`}`}
+        style={{ padding: birthday ? "2px" : "1.5px", WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }}
         aria-hidden="true"
       />
 
-      {/* ── 배경 그라디언트 ── */}
+      {/* ── 배경 그라디언트 — 생일이면 오로라 빛이 은은하게 ── */}
       <div
-        className={`absolute inset-[2px] rounded-2xl bg-gradient-to-br ${bgGrad}`}
+        className={`absolute inset-[2px] rounded-2xl bg-gradient-to-br ${birthday ? "from-gray-900 via-emerald-950/50 to-violet-950/50" : bgGrad}`}
         aria-hidden="true"
       />
 
@@ -362,14 +378,24 @@ const BoxerLicenseCard = ({
       <div className="relative">
         {/* ── Header — 라이센스 타이틀 + 번호 ── */}
         <div className="mb-2 flex items-center justify-between">
+          {/* 생일 — 왼쪽은 사진 위 케이크 자리라 비우고, 오른쪽(번호 자리)에 금빛 HAPPY BIRTHDAY */}
           <div className="flex items-center gap-1.5">
-            <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>
-              {staff ? "153 COACHING STAFF" : isMaster ? "★ MASTER LICENSE" : "153 BOXER LICENSE"}
-            </span>
+            {!birthday && (
+              <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>
+                {staff ? "153 COACHING STAFF" : isMaster ? "★ MASTER LICENSE" : "153 BOXER LICENSE"}
+              </span>
+            )}
           </div>
-          <span className={`font-mono font-black ${cfg.licText} text-gray-400 tabular-nums`}>
-            #{lic}
-          </span>
+          {birthday ? (
+            // 번호와 같은 글자 크기 — 머리줄 높이가 그대로라 카드 키가 같다
+            <span className={`bday-gold-text font-black uppercase tracking-[0.2em] ${cfg.licText}`}>
+              ✦ HAPPY BIRTHDAY ✦
+            </span>
+          ) : (
+            <span className={`font-mono font-black ${cfg.licText} text-gray-400 tabular-nums`}>
+              #{lic}
+            </span>
+          )}
         </div>
 
         {/* ── 본문: 사진 + 정보 (가로) ── */}
@@ -408,21 +434,33 @@ const BoxerLicenseCard = ({
                 : undefined
             }
           >
+            {/* 🎂 생일 — 사진 뒤로 오로라 빛무리가 천천히 돈다 (캐릭터 효과 '오로라'와 같은 그림) */}
+            {birthday && (
+              <img
+                src={fxAurora}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                className="bday-halo pointer-events-none absolute left-1/2 top-1/2 max-w-none select-none"
+                style={{ width: "185%", height: "185%", marginLeft: "-92.5%", marginTop: "-92.5%", mixBlendMode: "screen", opacity: 0.95 }}
+              />
+            )}
+
             {/* 사진 frame + 회전 aurora ring (리그별 강도) */}
             <div
               className={`${cfg.photoBox} relative flex items-center justify-center rounded-xl`}
             >
-              {/* 외곽 회전 aurora — 리그별 conic-gradient (등급↑ 빠르게) */}
+              {/* 외곽 회전 aurora — 리그별 conic-gradient (등급↑ 빠르게). 생일이면 오로라 색 */}
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{
-                  duration: AURORA_SPEED[isMaster ? "black" : rankKey] ?? AURORA_SPEED.white,
+                  duration: birthday ? 5 : AURORA_SPEED[isMaster ? "black" : rankKey] ?? AURORA_SPEED.white,
                   repeat: Infinity,
                   ease: "linear",
                 }}
                 className="absolute inset-0 rounded-xl"
                 style={{
-                  background: AURORA_RING[isMaster ? "black" : rankKey] ?? AURORA_RING.white,
+                  background: birthday ? BIRTHDAY_RING : AURORA_RING[isMaster ? "black" : rankKey] ?? AURORA_RING.white,
                   filter: "blur(3px)",
                 }}
                 aria-hidden="true"
@@ -521,6 +559,17 @@ const BoxerLicenseCard = ({
               </span>
             )}
 
+            {/* 🎂 생일 케이크 — 사진 오른쪽 위 모서리에 살짝 흔들리며 */}
+            {birthday && (
+              <img
+                src={birthdayCake}
+                alt="오늘 생일"
+                draggable={false}
+                className="bday-bob pointer-events-none absolute -right-3 -top-3.5 z-30 w-[58%] select-none"
+                style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.6))" }}
+              />
+            )}
+
             {/* LIVE 인디케이터 (라이브보드 활동중) */}
             {isLive && (
               <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-2 py-0.5 text-[8px] font-black text-white shadow-lg whitespace-nowrap">
@@ -544,7 +593,10 @@ const BoxerLicenseCard = ({
               </p>
               {/* 리그 버튼 (2026-10-15 대표님) — 모든 회원, 색 = 내 리그 (화이트·블루·레드·골드). PT 전용 배지는 없앰.
                   지도진(코치님)은 '챔피언' 표기라 버튼 없음 */}
-              {!staff && <NameBadge league={rankKey} className={`${cfg.ptBadge} shrink-0`} glow={size === "hero"} />}
+              {/* 생일이면 황금 버튼 (2026-10-16 대표님) — 리그는 아래 'WHITE · 방패 · Lv' 줄에 그대로 보인다 */}
+              {!staff && (
+                <NameBadge league={rankKey} birthday={birthday} className={`${cfg.ptBadge} shrink-0`} glow={size === "hero" || birthday} />
+              )}
               {/* 대회 메달 — 리그 버튼 다음 자리 (2026-10-16 대표님: "이름 옆 버튼, 메달은 그 옆") */}
               <MedalMark userId={userId} className={cfg.nameText} />
               {onCardClick && <PenLine className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/40" aria-hidden="true" />}
@@ -688,12 +740,20 @@ const BoxerLicenseCard = ({
         {/* ── Footer — 153 OFFICIAL 마크 ── */}
         {cfg.showFooter && (
           <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2">
-            <div className="flex items-center gap-1">
-              <span className="text-base">🥊</span>
-              <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>
-                MY BOXER 153
-              </span>
-            </div>
+            {birthday ? (
+              // 생일 — 다른 회원님들께 축하를 부탁하는 한 줄 (같은 높이: 이모지 text-base 한 칸)
+              <div className="flex min-w-0 items-center gap-1">
+                <span className="text-base">🎉</span>
+                <span className={`truncate font-black text-amber-200 ${cfg.metaText}`}>오늘 생일이에요 · 축하해 주세요!</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <span className="text-base">🥊</span>
+                <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>
+                  MY BOXER 153
+                </span>
+              </div>
+            )}
             {likes !== undefined ? (
               // 하트 알약 — 카드 누르기(닉네임 바꾸기)와 겹치지 않게 이벤트를 여기서 멈춘다
               <button

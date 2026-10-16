@@ -25,9 +25,17 @@ import LaunchEventBoard from "@/components/liveBoard/LaunchEventBoard";
 import { isPilotBranch } from "@/lib/pilotBranches";
 import { STAFF_CHAMPION_LEVEL, honorTitle } from "@/lib/staffDisplay";
 import {
+  generateMockMember,
   generateMockMembers,
   type MockActiveMember,
 } from "@/components/liveBoard/liveBoardMock";
+import birthdayCake from "@/assets/birthday/cake.webp";
+import fxAurora from "@/assets/effects/fx_aurora.png";
+import fxGoldConfetti from "@/assets/effects/fx_gold_confetti.png";
+
+/** 🎂 생일 회원 입장 환영은 보통(7초)보다 길게 — 다 같이 보고 축하할 시간 (2026-10-16 대표님) */
+const POPUP_MS = 7000;
+const BIRTHDAY_POPUP_MS = 12000;
 
 const RANK_COLORS: Record<string, string> = {
   white: "border-gray-400 bg-gray-200 text-gray-900",
@@ -115,6 +123,8 @@ interface ActiveMember {
   partsJson?: { style?: string; customization?: Record<string, unknown> } | null;
   /** PT 회원 — 카드 이름 옆 파란 배지 (ptIds 에서 채운다) */
   pt?: boolean;
+  /** 🎂 오늘 생일 — 오로라·황금 버튼·HAPPY BIRTHDAY (birthdayIds 에서 채운다, 2026-10-16) */
+  birthday?: boolean;
 }
 
 /**
@@ -323,6 +333,27 @@ const LiveBoardPage = () => {
     return () => { cancelled = true; };
   }, [branchName, presentKey, ptRefreshSlot]);
 
+  /**
+   * 🎂 오늘 생일인 회원 (2026-10-16 대표님: "생일 회원이 운동하러 오면 오로라 표시와 황금버튼, 생일축하 표시 —
+   * 다른 회원님들이 축하하는 문화를 만들자"). PT 배지와 같은 방식 — TV 는 생년월일을 못 읽으므로 DB 가
+   * "오늘 생일이고 오늘 이 지점에 왔거나 운동 중인 회원 id" 만 준다. 오늘 다녀간 명단이 바뀔 때와 10분마다 다시 묻는다
+   * (자정이 지나면 다음 날 생일로 바뀐다). 입장 환영 화면은 입실하는 순간 따로 확인한다(triggerPopup).
+   */
+  const [birthdayIds, setBirthdayIds] = useState<Set<string>>(() => new Set());
+  const visitKey = useMemo(() => dailyVisits.map((v) => v.user_id).sort().join(","), [dailyVisits]);
+  useEffect(() => {
+    if (!branchName) return;
+    let cancelled = false;
+    void (async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("get_live_board_birthday_members", { _branch_name: branchName });
+      if (cancelled || error || !Array.isArray(data)) return;
+      const next = new Set((data as { user_id: string }[]).map((r) => r.user_id));
+      setBirthdayIds((prev) => (prev.size === next.size && [...next].every((id) => prev.has(id)) ? prev : next));
+    })();
+    return () => { cancelled = true; };
+  }, [branchName, presentKey, visitKey, ptRefreshSlot]);
+
   /** 앱 운동세션 + 얼굴 출석 + mock 을 합쳐 시각효과에 전달 */
   //   회원이 앱에서 고른 '카드에 보일 것'을 따른다 — 사진만이면 캐릭터를 빼고, 캐릭터만이면(캐릭터가 있을 때) 사진을 뺀다
   const combinedMembers = useMemo<ActiveMember[]>(
@@ -333,12 +364,15 @@ const LiveBoardPage = () => {
         let next: ActiveMember = m;
         if (pref === "photo" && next.partsJson) next = { ...next, partsJson: null };
         if (pref === "character" && next.partsJson && next.avatar_url) next = { ...next, avatar_url: null };
+        if (birthdayIds.has(m.user_id)) next = { ...next, birthday: true };
         return ptIds.has(m.user_id) ? { ...next, pt: true } : next;
       }),
-    [activeMembers, checkinMembers, mockMembers, staffUserIds, ptIds, displayPrefMap],
+    [activeMembers, checkinMembers, mockMembers, staffUserIds, ptIds, displayPrefMap, birthdayIds],
   );
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
   const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
+  /** 🎂 지금 환영 화면의 회원이 오늘 생일인가 — 오로라·축하 문구·12초 (2026-10-16) */
+  const [popupBirthday, setPopupBirthday] = useState(false);
 
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isBranchManager, setIsBranchManager] = useState(false);
@@ -703,7 +737,7 @@ const LiveBoardPage = () => {
   const popupSeqRef = useRef(0);
   const triggerPopup = useCallback(async (event: CheckinEvent) => {
     const seq = ++popupSeqRef.current;
-    const [avatar, partsJson] = await Promise.all([
+    const [avatar, partsJson, isBirthday] = await Promise.all([
       // 시범 지점 TV 만 사진을 새로 읽어 환영 화면에 쓴다 — 다른 지점은 어제처럼 캐릭터
       boardPhotos ? getAvatarUrl(event.user_id, true) : Promise.resolve(null),
       // 회원이 설정한 캐릭터 fetch (RLS 거부 시 null fallback)
@@ -725,16 +759,29 @@ const LiveBoardPage = () => {
           return null;
         }
       })(),
+      // 🎂 오늘 생일인가 — 입실 행이 들어온 뒤라 DB 가 이 회원을 '오늘 온 회원'으로 본다 (실패하면 보통 환영)
+      (async () => {
+        if (!branchName) return false;
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data } = await (supabase.rpc as any)("get_live_board_birthday_members", { _branch_name: branchName });
+          return Array.isArray(data) && (data as { user_id: string }[]).some((r) => r.user_id === event.user_id);
+        } catch {
+          return false;
+        }
+      })(),
     ]);
     if (seq !== popupSeqRef.current) return; // 그 사이 더 새 입실이 왔다
 
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
+    if (isBirthday) setBirthdayIds((prev) => (prev.has(event.user_id) ? prev : new Set(prev).add(event.user_id)));
     setPopupAvatarUrl(avatar);
     setPopupPartsJson(partsJson);
+    setPopupBirthday(isBirthday);
     setLatestPopup(event);
     setShowPopup(true);
-    popupTimeoutRef.current = setTimeout(() => setShowPopup(false), 7000);
-  }, [getAvatarUrl, boardPhotos]);
+    popupTimeoutRef.current = setTimeout(() => setShowPopup(false), isBirthday ? BIRTHDAY_POPUP_MS : POPUP_MS);
+  }, [getAvatarUrl, boardPhotos, branchName]);
 
   /**
    * member_progress 의 current_level 이 증가할 때 인터럽트 발동.
@@ -997,6 +1044,30 @@ const LiveBoardPage = () => {
     setPreviewMedal(three[2].user_id, "bronze");
     setMockMembers((prev) => [...prev, ...three]);
   }, []);
+  // 🎂 생일 회원 입장 미리보기 (2026-10-16) — 생일 환영 화면 12초 → 오로라·황금 버튼 카드.
+  //   '실제 회원 미리보기'로 올린 사진·캐릭터 회원이 있으면 그 회원으로(진짜 모습), 없으면 가상 회원 1명.
+  const handleMockBirthday = useCallback(() => {
+    const real = mockMembers.find((m) => !m.birthday && (m.avatar_url || m.partsJson));
+    const target: MockActiveMember = real
+      ? { ...real, birthday: true, startedAt: Date.now() }
+      : { ...generateMockMember({ fresh: true, usedNames: new Set(mockMembers.map((m) => m.name)) }), birthday: true };
+    setMockMembers((prev) => (real ? prev.map((m) => (m.id === real.id ? target : m)) : [...prev, target]));
+    if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
+    popupSeqRef.current += 1; // 읽는 중이던 실제 입실 환영이 이 미리보기를 덮지 않게
+    setPopupAvatarUrl(target.avatar_url ?? null);
+    setPopupPartsJson(target.partsJson ?? null);
+    setPopupBirthday(true);
+    setLatestPopup({
+      id: target.id,
+      user_id: target.user_id,
+      display_name_snapshot: target.name,
+      league_snapshot: target.league,
+      level_snapshot: target.level,
+      checked_in_at: new Date().toISOString(),
+    });
+    setShowPopup(true);
+    popupTimeoutRef.current = setTimeout(() => setShowPopup(false), BIRTHDAY_POPUP_MS);
+  }, [mockMembers]);
   const handleMockRemoveOne = useCallback(() => {
     setMockMembers((prev) => prev.slice(0, -1));
   }, []);
@@ -1152,50 +1223,115 @@ const LiveBoardPage = () => {
               · 활동 0명일 때는 시그니처 빈 상태 (LiveBoardEmptyState)
             */}
             {showPopup && latestPopup ? (
-              <div className="flex flex-1 flex-col items-center justify-center gap-4">
-                {/* 입장 환영 — 사진(본인이 올린 프로필) > 캐릭터 > 기본 복서. 활동 중 카드와 같은 순서 (2026-10-14 대표님) */}
-                {popupAvatarUrl ? (
-                  <div
-                    className={`rounded-full bg-gradient-to-br p-[6px] ${
-                      WELCOME_RING[(latestPopup.league_snapshot || "white").toLowerCase()] ?? WELCOME_RING.white
-                    } ${RANK_GLOW[(latestPopup.league_snapshot || "white").toLowerCase()] ?? RANK_GLOW.white}`}
-                  >
-                    <img
-                      src={popupAvatarUrl}
-                      alt={latestPopup.display_name_snapshot}
-                      className="h-72 w-72 rounded-full object-cover ring-4 ring-black/70"
-                      // 사진을 못 불러오면 캐릭터·기본 복서로 돌아간다
-                      onError={() => setPopupAvatarUrl(null)}
-                    />
-                  </div>
-                ) : popupPartsJson ? (
-                  <CharacterSprite
-                    partsJson={popupPartsJson}
-                    size="lg"
-                    league={(latestPopup.league_snapshot as "white" | "blue" | "red" | "black") || "white"}
-                    level={latestPopup.level_snapshot}
-                    animate
-                  />
-                ) : (
-                  <SDBoxerCharacter
-                    league={(latestPopup.league_snapshot as "white" | "blue" | "red" | "black") || "white"}
-                    nickname={latestPopup.display_name_snapshot}
-                    level={latestPopup.level_snapshot}
-                    state="enter"
-                  />
-                )}
-                {/* 사진·캐릭터일 때는 이름/리그 별도 표시 (SDBoxerCharacter 는 자체 포함) */}
-                {(popupAvatarUrl || popupPartsJson) && (
-                  <div className="text-center">
-                    <p
-                      className="text-4xl font-black text-white"
-                      style={{ textShadow: "0 4px 20px rgba(0,0,0,0.8)" }}
+              <div className="relative flex flex-1 flex-col items-center justify-center gap-4 overflow-hidden">
+                {/* 입장 환영 — 사진(본인이 올린 프로필) > 캐릭터 > 기본 복서. 활동 중 카드와 같은 순서 (2026-10-14 대표님)
+                    🎂 생일 회원이면 (2026-10-16 대표님): 뒤로 오로라 빛무리와 금빛 꽃가루가 돌고, 사진 테두리가 오로라로 흐르고,
+                    케이크가 얹히고, "생일 축하합니다!" — 12초 동안 (보통 7초) */}
+                <div className="relative flex items-center justify-center">
+                  {popupBirthday && (
+                    <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 h-0 w-0">
+                      <div
+                        className="absolute -left-[20rem] -top-[20rem] h-[40rem] w-[40rem] rounded-full blur-3xl"
+                        style={{ background: "radial-gradient(circle, rgba(52,245,197,0.32), rgba(167,139,250,0.24) 45%, transparent 70%)" }}
+                      />
+                      <img
+                        src={fxAurora}
+                        alt=""
+                        draggable={false}
+                        className="bday-halo absolute -left-[18rem] -top-[18rem] h-[36rem] w-[36rem] max-w-none select-none"
+                        style={{ mixBlendMode: "screen" }}
+                      />
+                      <img
+                        src={fxGoldConfetti}
+                        alt=""
+                        draggable={false}
+                        className="bday-halo-reverse absolute -left-[21rem] -top-[21rem] h-[42rem] w-[42rem] max-w-none select-none opacity-85"
+                        style={{ mixBlendMode: "screen" }}
+                      />
+                    </div>
+                  )}
+                  {popupAvatarUrl ? (
+                    <div
+                      className={`relative rounded-full p-[6px] ${
+                        popupBirthday
+                          ? "bday-aurora-ring shadow-[0_0_90px_rgba(52,245,197,0.55)]"
+                          : `bg-gradient-to-br ${
+                              WELCOME_RING[(latestPopup.league_snapshot || "white").toLowerCase()] ?? WELCOME_RING.white
+                            } ${RANK_GLOW[(latestPopup.league_snapshot || "white").toLowerCase()] ?? RANK_GLOW.white}`
+                      }`}
                     >
-                      {latestPopup.display_name_snapshot}
-                    </p>
-                    <p className="mt-1 text-xl font-bold text-primary">
-                      입실! · Lv.{toGlobalLevel(latestPopup.league_snapshot, latestPopup.level_snapshot)}
-                    </p>
+                      <img
+                        src={popupAvatarUrl}
+                        alt={latestPopup.display_name_snapshot}
+                        className="h-72 w-72 rounded-full object-cover ring-4 ring-black/70"
+                        // 사진을 못 불러오면 캐릭터·기본 복서로 돌아간다
+                        onError={() => setPopupAvatarUrl(null)}
+                      />
+                    </div>
+                  ) : popupPartsJson ? (
+                    <div className="relative">
+                      <CharacterSprite
+                        partsJson={popupPartsJson}
+                        size="lg"
+                        league={(latestPopup.league_snapshot as "white" | "blue" | "red" | "black") || "white"}
+                        level={latestPopup.level_snapshot}
+                        animate
+                      />
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <SDBoxerCharacter
+                        league={(latestPopup.league_snapshot as "white" | "blue" | "red" | "black") || "white"}
+                        nickname={latestPopup.display_name_snapshot}
+                        level={latestPopup.level_snapshot}
+                        state="enter"
+                      />
+                    </div>
+                  )}
+                  {popupBirthday && (
+                    <img
+                      src={birthdayCake}
+                      alt="생일 케이크"
+                      draggable={false}
+                      className="bday-bob pointer-events-none absolute -right-14 -top-10 h-36 w-36 select-none"
+                      style={{ filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.6))" }}
+                    />
+                  )}
+                </div>
+                {/* 사진·캐릭터일 때는 이름/리그 별도 표시 (SDBoxerCharacter 는 자체 포함). 생일 문구는 늘 */}
+                {(popupAvatarUrl || popupPartsJson || popupBirthday) && (
+                  // 생일이면 글자 뒤에 어두운 판 — 금빛 꽃가루 위에서도 또렷하게
+                  <div
+                    className={`relative text-center ${
+                      popupBirthday ? "rounded-[2rem] bg-gray-950/80 px-14 py-5 ring-1 ring-white/10 backdrop-blur-sm" : ""
+                    }`}
+                  >
+                    {(popupAvatarUrl || popupPartsJson) && (
+                      <p
+                        className="text-4xl font-black text-white"
+                        style={{ textShadow: "0 4px 20px rgba(0,0,0,0.8)" }}
+                      >
+                        {latestPopup.display_name_snapshot}
+                        {popupBirthday ? " 님" : ""}
+                      </p>
+                    )}
+                    {popupBirthday ? (
+                      <>
+                        <p
+                          className="bday-pop bday-gold-text mt-1 text-6xl font-black tracking-tight"
+                          style={{ filter: "drop-shadow(0 4px 14px rgba(0,0,0,0.75))" }}
+                        >
+                          생일 축하합니다!
+                        </p>
+                        <p className="mt-3 text-2xl font-black text-amber-100" style={{ textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>
+                          🎉 오늘 생일이에요 · 다 같이 축하해 주세요! 👏
+                        </p>
+                      </>
+                    ) : (
+                      <p className="mt-1 text-xl font-bold text-primary">
+                        입실! · Lv.{toGlobalLevel(latestPopup.league_snapshot, latestPopup.level_snapshot)}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -1293,6 +1429,10 @@ const LiveBoardPage = () => {
                               >
                                 {v.display_name}
                               </span>
+                              {/* 🎂 오늘 생일 (2026-10-16) */}
+                              {birthdayIds.has(v.user_id) && (
+                                <img src={birthdayCake} alt="오늘 생일" draggable={false} className="h-6 w-6 shrink-0 select-none" />
+                              )}
                               <MedalMark animated userId={v.user_id} className="text-lg" />
                             </span>
                           );
@@ -1444,14 +1584,26 @@ const LiveBoardPage = () => {
                 <div className="text-center py-6 text-gray-600"><p className="text-xl">활동 중인 회원 없음</p></div>
               ) : (
                 <div className="space-y-2">
-                  {combinedMembers.map((m) => (
-                    <div key={m.user_id} className="flex items-center gap-4 rounded-xl bg-gray-800/40 px-4 py-4 group">
+                  {/* 🎂 생일 회원이 맨 위 (2026-10-16) — 나머지 순서는 그대로 (sort 는 안정 정렬) */}
+                  {[...combinedMembers].sort((a, b) => Number(!!b.birthday) - Number(!!a.birthday)).map((m) => (
+                    <div
+                      key={m.user_id}
+                      className={`flex items-center gap-4 rounded-xl px-4 py-4 group ${
+                        m.birthday
+                          ? "bg-gradient-to-r from-emerald-500/15 via-violet-500/15 to-pink-500/15 ring-1 ring-inset ring-emerald-300/40"
+                          : "bg-gray-800/40"
+                      }`}
+                    >
                       <MemberAvatar url={m.avatar_url} name={m.name} />
                       <div className="flex-1 min-w-0">
                         {/* 이름 + 리그 버튼(모든 회원, 앱 라이센스 카드와 같은 버튼). PT 회원은 'PT' 글자 (2026-10-15 대표님) */}
                         <div className="flex min-w-0 items-center gap-1.5">
                           <p className="min-w-0 text-2xl font-black text-white truncate leading-tight">{m.name}</p>
-                          <NameBadge league={m.league} className="h-7 w-7" />
+                          {/* 생일이면 황금 버튼 + 케이크 (2026-10-16 대표님) */}
+                          <NameBadge league={m.league} birthday={m.birthday} className="h-7 w-7" />
+                          {m.birthday && (
+                            <img src={birthdayCake} alt="오늘 생일" draggable={false} className="h-8 w-8 shrink-0 select-none" />
+                          )}
                           <MedalMark animated userId={m.user_id} className="text-2xl" />
                           {m.pt && (
                             <span className="shrink-0 rounded-md border border-blue-400/50 bg-blue-500/20 px-2 py-0.5 text-base font-black tracking-wider text-blue-200">
@@ -1512,6 +1664,7 @@ const LiveBoardPage = () => {
           onTriggerLevelUp={handleMockTriggerLevelUp}
           onAddReal={handleMockAddReal}
           onAddMedalSamples={handleMockMedalSamples}
+          onBirthdaySample={handleMockBirthday}
         />
       )}
 

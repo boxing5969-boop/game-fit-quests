@@ -46,10 +46,12 @@ const LiveSpotlightStage = ({
 }: LiveSpotlightStageProps) => {
   const now = Date.now();
 
-  /** 정렬된 회원 — fresh > 가장 오래 운동 > 레벨 high */
+  /** 정렬된 회원 — 🎂 오늘 생일 > fresh > 가장 오래 운동 > 레벨 high
+   *  (2026-10-16 대표님: 생일 회원이 운동하러 오면 모두가 축하하도록 — 있는 동안 늘 무대 첫 자리) */
   const sorted = useMemo(() => {
     const arr = [...members];
     arr.sort((a, b) => {
+      if (!!a.birthday !== !!b.birthday) return a.birthday ? -1 : 1;
       const aFresh = now - a.startedAt < FRESH_THRESHOLD_MS;
       const bFresh = now - b.startedAt < FRESH_THRESHOLD_MS;
       if (aFresh !== bFresh) return aFresh ? -1 : 1;

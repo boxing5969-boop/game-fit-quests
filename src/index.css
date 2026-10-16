@@ -919,3 +919,45 @@ html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: va
   .medal-shine { display: none; }
   .medal-twinkle { animation: none; }
 }
+
+/* 🎂 생일 회원 — 라이브보드 카드·입장 환영 (2026-10-16 대표님: "오로라 표시와 황금버튼, 생일축하 표시 —
+   다른 회원님들이 축하하는 문화를 만들자"). 오로라 테두리는 같은 색 두 바퀴를 이어 붙여(200%) 끊김 없이 흐른다. */
+@keyframes bday-aurora-shift {
+  from { background-position: 0% 50%; }
+  to   { background-position: 100% 50%; }
+}
+@keyframes bday-spin { to { transform: rotate(360deg); } }
+@keyframes bday-bob {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50%      { transform: translateY(-7%) rotate(5deg); }
+}
+@keyframes bday-gold-sweep {
+  0%   { background-position: 160% 0; }
+  45%  { background-position: -60% 0; }
+  100% { background-position: -60% 0; }
+}
+@keyframes bday-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.bday-aurora-ring {
+  background: linear-gradient(90deg, #34f5c5, #22d3ee, #a78bfa, #f472b6, #fbbf24, #34f5c5, #22d3ee, #a78bfa, #f472b6, #fbbf24, #34f5c5);
+  background-size: 200% 100%;
+  animation: bday-aurora-shift 5s linear infinite;
+}
+.bday-halo { animation: bday-spin 16s linear infinite; }
+.bday-halo-reverse { animation: bday-spin 24s linear infinite reverse; }
+.bday-bob { animation: bday-bob 2.6s ease-in-out infinite; }
+.bday-pop { animation: bday-pop 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.bday-gold-text {
+  background: linear-gradient(100deg, #f6c453 0%, #f6c453 38%, #fff6cf 50%, #f6c453 62%, #e0a326 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: bday-gold-sweep 3.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bday-aurora-ring, .bday-halo, .bday-halo-reverse, .bday-bob, .bday-pop, .bday-gold-text { animation: none !important; }
+}

@@ -57,6 +57,8 @@ export interface MockActiveMember {
   avatar_url?: string | null;
   /** 실제 회원 미리보기용 캐릭터 */
   partsJson?: { style?: string; customization?: Record<string, unknown> } | null;
+  /** 생일 연출 미리보기 (테스트 패널 '생일 회원', 2026-10-16) */
+  birthday?: boolean;
 }
 
 let counter = 0;
