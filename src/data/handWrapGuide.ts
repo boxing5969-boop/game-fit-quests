@@ -1,5 +1,5 @@
 /**
- * 🥊 붕대 감기 가이드 — 153 표준 12단계 · 흔한 실수 · 영상 포인트.
+ * 🥊 붕대 감기 가이드 — 153 표준 13단계 · 흔한 실수 · 영상 포인트.
  *
  *   2026-10-13: 처음 만듦 (그림 8단계).
  *   2026-10-15 대표님: "손 모양이 너무 AI 티가 나" → 그린 손 대신 실제 사진 + 감는 방향 화살표.
@@ -13,7 +13,10 @@
  *     → 그 영상 순서대로 12단계를 다시 쓰고 그림을 같은 그림체로 새로 그림(Higgsfield). 주먹 패드부터 만든다:
  *       검지·중지로 끝 잡기 → 손가락 벌려 감기(남자 2~3·여자 3~4바퀴) → 빼서 한 번 접기 → 주먹 위에 → 끝 라인 2번 고정 → 손목 1바퀴
  *       → 새끼·검지·중지 쪽으로 들어가 엄지 사이로 나오기(지날 때마다 손목 1바퀴) → 남은 붕대는 손목에 → 벨크로 → 손바닥 정리.
- *     예전 '엄지 고리 · 손목 처음 2바퀴 · 손가락 사이 통과'는 뺐다. 완성 화면 = 주먹(step14) + 다 감은 손(step13).
+ *     예전 '엄지 고리 · 손목 처음 2바퀴 · 손가락 사이 통과'는 뺐다.
+ *   2026-10-16 (밤): 영상처럼 '벨크로'와 '손바닥 정리'를 두 단계로 나눠 13단계. 손바닥 정리 그림(step13)과
+ *     패드가 보이게 고친 9단계 그림은 제미나이(나노 바나나)로 그림 — 힉스필드 크레딧이 없어서 (대표님: "힉스필드 먼저, 안 되면 다른 서비스").
+ *     완성 화면 = 주먹(done-fist) + 다 감은 손(done-open).
  *
  *   신규 회원 첫날: 코치님은 한 손만 빠르게 감아 주고, 다른 손은 회원이 이 화면을 보며 직접 감는다.
  *   그다음 '집에서 혼자 감아 보기' 미션 — 목표 일수·보상 숫자는 DB 함수가 정본이다
@@ -34,7 +37,8 @@ import step10 from "@/assets/handwrap/step10.webp";
 import step11 from "@/assets/handwrap/step11.webp";
 import step12 from "@/assets/handwrap/step12.webp";
 import step13 from "@/assets/handwrap/step13.webp";
-import step14 from "@/assets/handwrap/step14.webp";
+import doneFist from "@/assets/handwrap/done-fist.webp";
+import doneOpen from "@/assets/handwrap/done-open.webp";
 
 /** 훈련 라이브러리에서 영상을 찾는 이름 — DB 마이그레이션(handwrap_home_practice)이 이 이름으로 넣는다. 바꾸면 둘 다 */
 export const HANDWRAP_EXERCISE_NAME = "복싱 붕대 감기";
@@ -126,7 +130,7 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     body: "같은 방법으로 이번엔 검지 쪽으로 들어가 엄지와 검지 사이로 나와요. 손등에 X자가 생겨요. 그다음 손목 한 바퀴.",
     chip: "손목 1바퀴",
     photo: step09,
-    arrow: { d: "M84 62 Q70 50 56 38", sx: 84, sy: 62, tx: 47, ty: 44, tr: 5 },
+    arrow: { d: "M86 62 Q72 51 59 42", sx: 86, sy: 62, tx: 53, ty: 45, tr: 5 },
   },
   {
     title: "중지 쪽 → 엄지 사이",
@@ -142,22 +146,28 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     arrow: { d: "M58 66 Q76 60 92 66 Q96 76 86 82 Q72 86 58 78", sx: 58, sy: 66 },
   },
   {
-    title: "벨크로 붙이고 손바닥 정리",
-    body: "벨크로(찍찍이)를 손목 바깥쪽(손등 쪽)에 꾹 눌러 붙이고, 손바닥 쪽 주름을 펴서 정리해요.",
+    title: "벨크로 붙이기",
+    body: "벨크로(찍찍이)를 손목 바깥쪽(손등 쪽)에 꾹 눌러 붙여요.",
     chip: "벨크로 마무리",
     photo: step12,
     arrow: { d: "M58 78 Q64 73 69 70", sx: 58, sy: 78, tx: 73, ty: 68, tr: 6 },
   },
+  {
+    title: "손바닥 정리",
+    body: "손을 돌려 손바닥 쪽 주름을 손가락으로 쓸어 펴요. 너무 느슨하지도, 너무 꽉 조이지도 않게 정리하면 끝!",
+    photo: step13,
+    arrow: { d: "M57 43 Q71 39.5 86 43", sx: 57, sy: 43 },
+  },
 ];
 
 /** 한눈에 요약 줄 (예전 이름 그대로 — 화면이 이 이름으로 읽는다) */
-export const HANDWRAP_WRIST_TOTAL = "주먹 패드 → 2바퀴 고정 → 새끼·검지·중지 쪽 (지날 때마다 손목 1바퀴) → 벨크로";
+export const HANDWRAP_WRIST_TOTAL = "주먹 패드 → 2바퀴 고정 → 새끼·검지·중지 쪽 (지날 때마다 손목 1바퀴) → 벨크로 → 손바닥 정리";
 
 /** 다 감은 뒤(완성 화면) */
 export const HANDWRAP_DONE = {
   title: "완성!",
   body: "주먹을 꽉 쥐었다 펴 보세요. 마디가 푹신하고 손목이 단단하면 잘 감긴 거예요. 너무 느슨하거나 너무 꽉 감지 않게 여러 번 연습해요 — 손끝이 저리거나 하얘지면 풀고 다시 감아요.",
-  photos: [step14, step13] as const,
+  photos: [doneFist, doneOpen] as const,
 } as const;
 
 export interface HandWrapMistake {

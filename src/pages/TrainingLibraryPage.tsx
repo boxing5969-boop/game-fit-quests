@@ -193,13 +193,13 @@ const TrainingLibraryPage = () => {
               ) : (
                 <video src={sel.video_url} controls playsInline className="mb-3 w-full rounded-xl bg-black" />
               ))}
-            {/* 붕대 감기는 전용 화면(그림 12단계·집 연습 미션)으로 */}
+            {/* 붕대 감기는 전용 화면(그림 13단계·집 연습 미션)으로 */}
             {sel.name === HANDWRAP_EXERCISE_NAME && (
               <button
                 onClick={() => navigate("/handwrap")}
                 className="mb-3 flex w-full items-center justify-between rounded-xl bg-primary/10 px-3.5 py-3 text-left text-sm font-bold text-primary transition-all active:scale-[0.99]"
               >
-                그림 12단계로 따라 하기 · 집 연습 미션
+                그림 13단계로 따라 하기 · 집 연습 미션
                 <ChevronRight className="h-4 w-4 shrink-0" />
               </button>
             )}
