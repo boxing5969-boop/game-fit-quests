@@ -219,6 +219,33 @@ const LiveBoardPage = () => {
   const [levelUpEvent, setLevelUpEvent] = useState<LevelUpEvent | null>(null);
   const knownLevelsRef = useRef<Map<string, number>>(new Map());
 
+  /**
+   * 카드 레벨은 '지금 레벨'로 (2026-10-16 대표님: "비볼 왜 랭킹에서 레벨 10인데 라이브 보드에선 9로 나와?")
+   *   출석 기록(attendance_logs.level_snapshot)에는 출석하던 순간의 레벨이 찍힌다. 그 출석으로 자동 승급하면
+   *   레벨이 곧바로 하나 오르는데, 카드는 출석 기록의 레벨을 그날 내내 보여 줬다(랭킹은 지금 레벨).
+   *   TV(비로그인)는 member_progress 를 못 읽으므로, 오늘 이 지점에 온 회원의 리그·레벨만 돌려주는
+   *   get_board_member_levels(한 번에 50명)로 오늘 명단을 읽을 때마다(1분마다) 다시 읽어 카드에 덮어쓴다.
+   */
+  const [liveLevels, setLiveLevels] = useState<Record<string, { league: string; level: number }>>({});
+  const loadLiveLevels = useCallback(async (ids: string[]) => {
+    if (!branchName || ids.length === 0) return;
+    const got: Record<string, { league: string; level: number }> = {};
+    for (let i = 0; i < ids.length; i += 50) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("get_board_member_levels", {
+        p_branch: branchName, p_user_ids: ids.slice(i, i + 50),
+      });
+      if (error || !Array.isArray(data)) break; // 실패하면 그전 값을 그대로 둔다
+      for (const r of data as { user_id: string; current_rank: string | null; current_level: number | null }[]) {
+        if (r.current_level) got[r.user_id] = { league: r.current_rank || "white", level: r.current_level };
+      }
+    }
+    setLiveLevels((prev) => {
+      const changed = Object.entries(got).some(([id, v]) => prev[id]?.level !== v.level || prev[id]?.league !== v.league);
+      return changed ? { ...prev, ...got } : prev;
+    });
+  }, [branchName]);
+
   // 테스트 모드 — 가상 회원 (DB 변경 없음)
   const [mockMembers, setMockMembers] = useState<MockActiveMember[]>([]);
 
@@ -369,7 +396,14 @@ const LiveBoardPage = () => {
   /** 앱 운동세션 + 얼굴 출석 + mock 을 합쳐 시각효과에 전달 */
   //   회원이 앱에서 고른 '카드에 보일 것'을 따른다 — 사진만이면 캐릭터를 빼고, 캐릭터만이면(캐릭터가 있을 때) 사진을 뺀다
   const combinedMembers = useMemo<ActiveMember[]>(
-    () => [...activeMembers, ...checkinMembers, ...mockMembers]
+    () => [
+      // 리그·레벨은 지금 값으로 (liveLevels — 출석 기록의 레벨은 그 출석으로 승급하기 전 값일 수 있다, 2026-10-16)
+      ...[...activeMembers, ...checkinMembers].map((m) => {
+        const live = liveLevels[m.user_id];
+        return live && (live.level !== m.level || live.league !== m.league) ? { ...m, league: live.league, level: live.level } : m;
+      }),
+      ...mockMembers,
+    ]
       .filter((m) => !staffUserIds.has(m.user_id))
       .map((m) => {
         const pref = displayPrefMap[m.user_id] ?? "auto";
@@ -379,7 +413,7 @@ const LiveBoardPage = () => {
         if (birthdayIds.has(m.user_id)) next = { ...next, birthday: true, birthdayCongrats: birthdayCongrats[m.user_id] ?? 0 };
         return ptIds.has(m.user_id) ? { ...next, pt: true } : next;
       }),
-    [activeMembers, checkinMembers, mockMembers, staffUserIds, ptIds, displayPrefMap, birthdayIds, birthdayCongrats],
+    [activeMembers, checkinMembers, mockMembers, liveLevels, staffUserIds, ptIds, displayPrefMap, birthdayIds, birthdayCongrats],
   );
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
   const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
@@ -681,6 +715,7 @@ const LiveBoardPage = () => {
       const memberVisits = visits.filter((v) => flags.get(v.user_id) !== true);
       setDailyVisits(memberVisits);
       void loadCardLooks(memberVisits.map((v) => v.user_id));
+      void loadLiveLevels(memberVisits.map((v) => v.user_id));
       setStaffUserIds(
         new Set(visits.filter((v) => flags.get(v.user_id) === true).map((v) => v.user_id)),
       );
@@ -696,7 +731,7 @@ const LiveBoardPage = () => {
       setDailyVisits([]);
       setStaffUserIds(new Set());
     }
-  }, [branchName, getAvatarUrl, loadCardLooks]);
+  }, [branchName, getAvatarUrl, loadCardLooks, loadLiveLevels]);
 
   // Load hall of fame
   const loadHall = useCallback(async () => {
@@ -887,6 +922,12 @@ const LiveBoardPage = () => {
           const row = ((data ?? []) as { user_id: string; current_rank: string; current_level: number }[])
             .find((r) => r.user_id === userId);
           if (!row) return;
+          // 카드도 곧바로 지금 레벨로 — 레벨업 연출만 띄우고 카드는 출석 때 레벨로 남던 것 (2026-10-16)
+          setLiveLevels((prev) =>
+            prev[userId]?.level === row.current_level && prev[userId]?.league === (row.current_rank || "white")
+              ? prev
+              : { ...prev, [userId]: { league: row.current_rank || "white", level: row.current_level } },
+          );
           const before = RANK_IDX[(snapRank || "white").toLowerCase()] ?? 0;
           const after = RANK_IDX[(row.current_rank || "white").toLowerCase()] ?? 0;
           const oldLevel = Number(snapLevel) || 1;
