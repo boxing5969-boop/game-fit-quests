@@ -31,6 +31,9 @@ import {
 
 const STEP_COUNT = TUTORIAL_STEPS.length; // 5
 
+/** 같은 단계 축하를 여러 화면(이 훅을 쓰는 컴포넌트 여럿)이 한꺼번에 터뜨리지 않게 — 10초 안에는 한 번만 */
+const recentCelebrations = new Map<string, number>();
+
 const clampSteps = (raw: unknown): number => {
   if (typeof raw !== "number" || Number.isNaN(raw)) return 0;
   if (raw < 0) return 0;
@@ -76,14 +79,30 @@ export function useTutorialState() {
   // 64-H: stepsCompleted 가 늘어날 때마다 ✓ 완료 toast + 폭죽 효과.
   //   sonner toast id 로 dedup (다중 인스턴스 호출 시 중복 표시 방지).
   //   마지막 5 단계는 큰 폭죽 시퀀스 + 졸업 메시지.
-  const lastStepsRef = useRef(stepsCompleted);
+  // 2026-10-16 대표님: "이게 자꾸 진행되...반복적으로" — 앱을 열 때마다 '5단계 모두 완료!' 폭죽이 다시 터졌다.
+  //   원인: 화면이 프로필보다 먼저 그려져(로그인 확인 → 프로필은 나중에 도착) 기준이 0 으로 잡히고,
+  //         프로필이 오면 0 → 5 로 '올라간' 것처럼 보였다. 지금은 프로필이 온 뒤의 값을 기준으로 삼고,
+  //         이번 화면에서 실제로 단계가 올라갔을 때만 축하한다. 회원이 바뀌면 기준도 새로 잡는다.
+  const profileReady = !!p;
+  const lastStepsRef = useRef<number | null>(profileReady ? stepsCompleted : null);
+  const baselineUserRef = useRef<string | null>(profileReady ? user?.id ?? null : null);
   useEffect(() => {
-    if (stepsCompleted <= lastStepsRef.current) {
-      lastStepsRef.current = stepsCompleted;
+    if (!profileReady) return; // 프로필이 오기 전에는 기준을 잡지 않는다
+    const uid = user?.id ?? null;
+    if (baselineUserRef.current !== uid) {
+      baselineUserRef.current = uid;
+      lastStepsRef.current = null;
+    }
+    if (lastStepsRef.current === null || stepsCompleted <= lastStepsRef.current) {
+      lastStepsRef.current = stepsCompleted; // 첫 기준 · 다시 시작해서 내려간 경우
       return;
     }
     const justFinished = stepsCompleted; // 1..STEP_COUNT
     lastStepsRef.current = stepsCompleted;
+    const celebrateKey = `${uid ?? "anon"}:${justFinished}`;
+    const lastAt = recentCelebrations.get(celebrateKey) ?? 0;
+    if (Date.now() - lastAt < 10_000) return; // 다른 화면이 방금 축하했다
+    recentCelebrations.set(celebrateKey, Date.now());
 
     const justStep = TUTORIAL_STEPS[justFinished - 1];
     const isFinal = justFinished === STEP_COUNT;
@@ -152,7 +171,7 @@ export function useTutorialState() {
         }
       }, 2000);
     }
-  }, [stepsCompleted, campState.status, startCamp]);
+  }, [profileReady, user?.id, stepsCompleted, campState.status, startCamp]);
 
   const persistStep = useCallback(
     async (step: number) => {
@@ -264,8 +283,9 @@ export function useTutorialState() {
         /* noop */
       }
     }
-    // step toast dedup ref 도 reset (다음 advance 에서 toast 재발사 보장)
-    lastStepsRef.current = 0;
+    // 기준을 비운다 — 프로필이 0 으로 새로 오면 그 값이 기준이 되고, 다음 advance 에서 다시 축하한다
+    //   (0 으로 두면 새 프로필이 오기 전의 옛 값 5 가 '올라간' 것처럼 보여 폭죽이 터졌다)
+    lastStepsRef.current = null;
     void refreshProfile();
     return true;
   }, [refreshProfile]);
