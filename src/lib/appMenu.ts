@@ -24,7 +24,7 @@ export const APP_MENU: readonly AppMenuItem[] = [
   // 타이틀매치 — 레벨 10·20·30·40 심사 동작 영상만 모아 둔 곳 (2026-10-01). 첫 줄에 둔다.
   { path: "/title-match", label: "타이틀매치", glyph: "titlematch" },
   { path: "/minigame", label: "복싱 트레이닝", glyph: "glove" },
-  // 붕대 감기 — 사진 13단계·영상·집 연습 미션 (2026-10-13). 신규 회원 첫날 코치님이 한 손, 회원이 이 화면 보며 한 손.
+  // 붕대 감기 — 그림 12단계·영상·집 연습 미션 (2026-10-13, 2026-10-16 153 방법으로 다시). 신규 회원 첫날 코치님이 한 손, 회원이 이 화면 보며 한 손.
   { path: "/handwrap", label: "붕대 감기", glyph: "handwrap" },
   { path: "/training-library", label: "훈련 라이브러리", glyph: "books" },
   { path: "/routines", label: "수업 루틴", glyph: "clipboard" },

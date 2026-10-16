@@ -1,5 +1,5 @@
 /**
- * 🥊 붕대 감기 — 사진 13단계 · 영상 · 집 연습 미션 (2026-10-13 대표님, 2026-10-15 사진·방향 화살표로 다시).
+ * 🥊 붕대 감기 — 그림 12단계 · 영상 · 집 연습 미션 (2026-10-13 대표님, 2026-10-15 사진·방향 화살표로 다시, 2026-10-16 153 방법(주먹 패드)으로 다시).
  *
  *   신규 회원 첫날: 코치님은 한 손만 빠르게 감아 주고, 다른 손은 회원이 이 화면을 보며 직접 감는다.
  *   그리고 집에서 혼자 감아 보는 미션(HandWrapPracticeCard) — 다음 수업 때 코치님이 회원 상세에서 기록을 본다.
@@ -26,6 +26,7 @@ import {
   HANDWRAP_EXERCISE_NAME,
   HANDWRAP_KEY_POINTS,
   HANDWRAP_MISTAKES,
+  HANDWRAP_PHOTO_HAND,
   HANDWRAP_STEPS,
   HANDWRAP_WRIST_TOTAL,
 } from "@/data/handWrapGuide";
@@ -74,6 +75,8 @@ const HandWrapGuidePage = () => {
   const title = current ? current.title : HANDWRAP_DONE.title;
   const body = current ? current.body : HANDWRAP_DONE.body;
   const handLabel = hand === "left" ? "왼손" : "오른손";
+  /** 그림은 오른손 — 다른 손을 고르면 좌우로 뒤집는다 */
+  const mirrored = hand !== HANDWRAP_PHOTO_HAND;
 
   const go = (next: number) => setStep(Math.max(0, Math.min(TOTAL, next)));
   const prev = () => go(step - 1);
@@ -123,7 +126,7 @@ const HandWrapGuidePage = () => {
       header={
         <PageHeader
           title="붕대 감기"
-          subtitle="그림 13단계 · 영상 · 집 연습 미션"
+          subtitle={`그림 ${TOTAL}단계 · 영상 · 집 연습 미션`}
           sticky
           leftAction={
             <button
@@ -150,14 +153,14 @@ const HandWrapGuidePage = () => {
             <HandWrapPhoto
               photo={current.photo}
               arrow={current.arrow}
-              mirrored={hand === "right"}
+              mirrored={mirrored}
               stepKey={step}
               alt={`${handLabel} ${step + 1}단계 ${title} 그림`}
             />
           ) : (
             <div className="grid grid-cols-2 gap-0.5 bg-[#EEF4F2]">
               {HANDWRAP_DONE.photos.map((src, i) => (
-                <HandWrapPhoto key={src} photo={src} mirrored={hand === "right"} stepKey={`done-${i}`} alt={`다 감은 모습 ${i + 1}`} />
+                <HandWrapPhoto key={src} photo={src} mirrored={mirrored} stepKey={`done-${i}`} alt={`다 감은 모습 ${i + 1}`} />
               ))}
             </div>
           )}
@@ -296,7 +299,7 @@ const HandWrapGuidePage = () => {
                 <Clapperboard className="h-5 w-5 text-muted-foreground" />
               </span>
               <p className="mt-3 text-[15px] font-bold text-foreground">영상 준비 중이에요</p>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">지금은 위 그림 13단계로 따라 해요</p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">지금은 위 그림 {TOTAL}단계로 따라 해요</p>
               {isStaff && (
                 <div className="mt-4 rounded-xl bg-secondary px-3 py-2.5 text-left">
                   <p className="text-[11.5px] leading-relaxed text-muted-foreground">
@@ -352,7 +355,7 @@ const HandWrapGuidePage = () => {
       {/* ── 한눈에 ── */}
       <section aria-labelledby="handwrap-all-h" className="mt-7">
         <h2 id="handwrap-all-h" className="px-1 text-[16px] font-black text-foreground">
-          13단계 한눈에
+          {TOTAL}단계 한눈에
         </h2>
         <p className="mt-0.5 px-1 text-[12.5px] font-bold text-primary">{HANDWRAP_WRIST_TOTAL}</p>
         <ol className="mt-2 grid grid-cols-3 gap-2">
@@ -367,7 +370,7 @@ const HandWrapGuidePage = () => {
                   i === step ? "ring-2 ring-primary" : "ring-1 ring-border/60",
                 )}
               >
-                <HandWrapPhoto photo={s.photo} arrow={s.arrow} mirrored={hand === "right"} animate={false} alt="" className="rounded-lg" />
+                <HandWrapPhoto photo={s.photo} arrow={s.arrow} mirrored={mirrored} animate={false} alt="" className="rounded-lg" />
                 <span className="mt-1 block truncate px-0.5 text-center text-[10.5px] font-bold text-foreground">
                   {i + 1}. {s.title}
                 </span>

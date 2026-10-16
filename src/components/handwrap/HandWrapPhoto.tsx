@@ -4,7 +4,7 @@
  *   · 사진 위에 SVG(viewBox 0 0 120 98)를 겹친다 — 사진과 같은 비율이라 좌표가 그대로 맞는다.
  *   · 단계가 바뀌면: 사진이 살짝 커지며 나타나고 → 화살표가 시작점에서 끝까지 그려지고 →
  *     빛나는 점이 감는 길을 따라 계속 흐른다. 시작점(흰 점)·들어갈 곳(원)은 숨 쉬듯 깜빡인다.
- *   · 오른손 = 사진과 화살표를 함께 좌우로 뒤집는다.
+ *   · 다른 손 = 사진과 화살표를 함께 좌우로 뒤집는다 (그림은 오른손 — data/handWrapGuide.ts HANDWRAP_PHOTO_HAND).
  *   · '움직임 줄이기'를 켠 폰에서는 멈춘 화살표만 보인다.
  */
 import { useId } from "react";
@@ -17,7 +17,7 @@ const ORANGE = "#FF7A1A";
 interface Props {
   photo: string;
   arrow?: WrapArrow | null;
-  /** 오른손 — 좌우 반전 */
+  /** 그림과 다른 손 — 좌우 반전 */
   mirrored?: boolean;
   /** 큰 화면은 true, 한눈에 보기 썸네일은 false (멈춘 화살표) */
   animate?: boolean;
@@ -46,7 +46,7 @@ const HandWrapPhoto = ({ photo, arrow, mirrored, animate = true, stepKey, alt, c
           exit={live ? { opacity: 0 } : undefined}
           transition={{ duration: 0.35, ease: "easeOut" }}
         >
-          {/* 오른손 = 사진·화살표 함께 뒤집기 (움직임은 바깥 motion.div 가 맡는다) */}
+          {/* 다른 손 = 사진·화살표 함께 뒤집기 (움직임은 바깥 motion.div 가 맡는다) */}
           <div className="absolute inset-0" style={mirrored ? { transform: "scaleX(-1)" } : undefined}>
           <img src={photo} alt={alt} draggable={false} className="h-full w-full select-none object-cover" />
 
