@@ -4,7 +4,7 @@ import { SYSTEM_PROMPT_153 } from "../_shared/systemPrompt153.ts";
 import { KNOWLEDGE_153 } from "../_shared/knowledge153.ts";
 import { KNOWLEDGE_BOXING_153 } from "../_shared/knowledgeBoxing153.ts";
 import { analyzeMealImage } from "../_shared/mealVision.ts";
-import { CLAUDE_CHAT_MODEL, claudeStream, claudeToOpenAiSse, hasClaude, keepAlive, logAiUsage, type SystemPart } from "../_shared/claude.ts";
+import { buildClaudeBody, CLAUDE_CHAT_MODEL, CLAUDE_COACH_MODEL, claudeMessage, claudeStream, claudeToOpenAiSse, hasClaude, keepAlive, logAiUsage, messageText, usageOf, type SystemPart } from "../_shared/claude.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -413,6 +413,118 @@ async function handleMealVision(
   return jsonRes(result);
 }
 
+// ────────────────────────────────────────────────────────────────
+// 전략 회의실 지시 다듬기 (action = "polish-directive", 2026-10-16 대표님:
+//   "회원 한 명에게만 오래 붙어 있어서 화가 나니까 내가 감정적으로 지시하게 되더라")
+//   대표님·지점장님이 화난 채로 쓴 글 → 상황·기준·요청·대상 4칸의 차분한 지시로. 스트리밍 없이 JSON 한 번.
+//   · 지시권자만 (서버 strategy_me 가 can_direct 로 판정) · 하루 30회 · 원문은 저장하지 않는다(사용량만 ai_usage_log)
+//   · 새 채팅 박스가 아니라 기존 AI 경로의 다른 입구 (CLAUDE.md 규칙 3)
+// ────────────────────────────────────────────────────────────────
+const POLISH_DAILY_LIMIT = 30;
+
+const POLISH_SYSTEM = `너는 153복싱짐 대표·지점장이 코치진에게 보내는 업무 지시를 다듬는 비서다.
+대표가 화가 난 상태로 쓴 글을 받으면, 코치가 기분 상하지 않고 정확히 행동할 수 있는 차분한 지시로 바꾼다.
+
+[규칙]
+- 존댓말("~해 주세요")로, 비난·욕설·비꼬기·감정 표현은 모두 뺀다. 사람을 탓하지 말고 행동과 기준을 말한다.
+- 원문에 있는 사실만 쓴다. 원문에 없는 숫자·시간·이름·사건을 지어내지 않는다.
+- 회원 이름 등 개인 정보는 쓰지 않는다 ("회원 한 분"처럼).
+- title: 한 줄 요약 (40자 이내, 행동 중심. 예: "그룹 수업 중에는 모든 회원을 순회해 주세요")
+- situation: 무슨 일이 있었는지 사실만 (120자 이내)
+- standard: 우리가 지키는 기준·원칙 (120자 이내)
+- request: 앞으로 해 줄 구체적인 행동 (160자 이내, 필요하면 1~2개)
+- target: 대상과 시점. 원문에 없으면 빈 문자열 ""
+- 원문이 지시가 아니어도 같은 4칸 모양으로만 답한다.`;
+
+const POLISH_SCHEMA = {
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    situation: { type: "string" },
+    standard: { type: "string" },
+    request: { type: "string" },
+    target: { type: "string" },
+  },
+  required: ["title", "situation", "standard", "request", "target"],
+  additionalProperties: false,
+};
+
+async function handlePolishDirective(
+  body: Record<string, unknown>,
+  authHeader: string | null,
+): Promise<Response> {
+  const jsonRes = (payload: unknown, status = 200) =>
+    new Response(JSON.stringify(payload), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  const text = typeof body.text === "string" ? body.text.trim().slice(0, 1500) : "";
+  if (!text) return jsonRes({ ok: false, error: "empty", message: "다듬을 글을 써 주세요" }, 400);
+  if (!authHeader) return jsonRes({ ok: false, error: "not_authenticated", message: "다시 로그인해 주세요" }, 401);
+  if (!hasClaude()) return jsonRes({ ok: false, error: "ai_unavailable", message: "지금은 정리할 수 없어요 — 4칸을 직접 써 주세요" }, 503);
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
+  const { data: { user } } = await userClient.auth.getUser();
+  if (!user) return jsonRes({ ok: false, error: "not_authenticated", message: "다시 로그인해 주세요" }, 401);
+
+  // 지시권자만 — 전략 회의실과 같은 서버 판정
+  const { data: me } = await userClient.rpc("strategy_me", { p_branch: null });
+  if (!me?.staff || !me?.can_direct) {
+    return jsonRes({ ok: false, error: "forbidden", message: "지시 다듬기는 대표님·지점장님만 쓸 수 있어요" }, 403);
+  }
+
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const db = serviceKey ? createClient(supabaseUrl, serviceKey) : null;
+  if (db) {
+    try {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count } = await db
+        .from("ai_usage_log")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("feature", "directive_polish")
+        .gte("created_at", since);
+      if ((count ?? 0) >= POLISH_DAILY_LIMIT) {
+        return jsonRes({ ok: false, error: "daily_limit", message: "오늘은 다듬기를 많이 썼어요 — 내일 다시 써 주세요" }, 429);
+      }
+    } catch (_e) {
+      // 집계 실패는 무시 — 상한은 요금 방어용
+    }
+  }
+
+  try {
+    const model = CLAUDE_COACH_MODEL;
+    const msg = await claudeMessage(
+      buildClaudeBody({
+        model,
+        system: [POLISH_SYSTEM],
+        messages: [{ role: "user", content: `[대표가 쓴 원문]\n${text}` }],
+        maxTokens: 900,
+        jsonSchema: POLISH_SCHEMA,
+      }),
+    );
+    keepAlive(logAiUsage(db, { feature: "directive_polish", model, usage: usageOf(msg), userId: user.id }));
+    const raw = messageText(msg);
+    const parsed = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1)) as Record<string, unknown>;
+    const clip = (v: unknown, n: number) => (typeof v === "string" ? v.trim().slice(0, n) : "");
+    return jsonRes({
+      ok: true,
+      result: {
+        title: clip(parsed.title, 80),
+        situation: clip(parsed.situation, 400),
+        standard: clip(parsed.standard, 400),
+        request: clip(parsed.request, 500),
+        target: clip(parsed.target, 120),
+      },
+    });
+  } catch (e) {
+    console.error("polish-directive failed", e instanceof Error ? e.message : e);
+    return jsonRes({ ok: false, error: "ai_failed", message: "지금은 정리하지 못했어요 — 잠시 후 다시 눌러 주세요" }, 502);
+  }
+}
+
 // ── 앱이 보낸 지식 베이스 컨텍스트 위생 처리 ─────────────────────
 // body.kb = { hints: [{ q, answer }], index?: string } — 앱(lib/osamiKb.ts)이 질문과 관련 있는 항목을 골라 보낸다.
 // 회원 본인의 답에만 영향을 주는 자료지만 크기와 모양은 여기서 다시 묶는다 (토큰 예산·프롬프트 보호).
@@ -484,6 +596,11 @@ serve(async (req) => {
     // 식단 사진 칼로리 추정 — 같은 함수 안의 다른 입구.
     if (body?.action === "meal-vision") {
       return await handleMealVision(body, req.headers.get("authorization"));
+    }
+
+    // 전략 회의실 지시 다듬기 — 같은 함수 안의 다른 입구 (2026-10-16)
+    if (body?.action === "polish-directive") {
+      return await handlePolishDirective(body, req.headers.get("authorization"));
     }
 
     // AI 채팅은 로그인한 회원만 (식단 사진 분석과 같은 기준). 앱은 로그인 전에는 앱 안내만 보여 준다.

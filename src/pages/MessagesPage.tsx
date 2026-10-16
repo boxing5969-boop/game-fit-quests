@@ -3,6 +3,7 @@
  *
  * 탭: 대화 · 요청(같은 지점 회원이 처음 보낸 메시지 — 수락하면 대화) · 신고(본사 계정만)
  *     · 오삼코치(지점장·본사만 — 오삼코치가 회원에게 보낸 메시지 기록, 2026-10-15)
+ *     · 전략(코치진만 — 전략 회의실: 지시·전략 · 오늘 프로그램 · 수업 기록 · 영상, 2026-10-16)
  * 오른쪽 위: 설정(메시지 요청 받기·차단 목록) · 새 메시지(보낼 사람 고르기)
  * 탭은 주소(?tab=)에 남겨 대화방에서 돌아와도 그대로.
  */
@@ -23,10 +24,13 @@ import DmSettingsSheet from "@/components/dm/DmSettingsSheet";
 import DmAdminReports from "@/components/dm/DmAdminReports";
 import CoachSentList from "@/components/dm/CoachSentList";
 import BroadcastNotification from "@/components/BroadcastNotification";
+import StrategyRoom from "@/components/strategy/StrategyRoom";
+import { useStrategyBadge } from "@/services/strategyService";
 import { useAuth } from "@/contexts/AuthContext";
 
 // broadcast — 단체 메시지(유효회원·전체·만료·PT), 지점장·본사만 (2026-10-15)
-type Tab = "inbox" | "requests" | "reports" | "coach" | "broadcast";
+// strategy — 전략 회의실(코치진만: 지도진·관리 권한), 2026-10-16
+type Tab = "inbox" | "requests" | "reports" | "coach" | "broadcast" | "strategy";
 
 const previewLine = (r: DmThreadRow): string => {
   const text = r.last_preview ?? "";
@@ -101,9 +105,16 @@ const MessagesPage = () => {
   // 오삼코치가 보낸 메시지 — 지점장·본사만 (서버 coach_sent_list 도 같은 기준으로 막는다)
   const { role } = useAuth();
   const canSeeCoach = role === "branch_manager" || role === "super_admin" || role === "admin";
+  // 전략 회의실 — 코치님(지도진, 앱 권한이 '회원'이어도) · 지점장 · 본사. 서버 _dm_kind 가 coach/hq 로 본 사람
+  const canSeeStrategy = summary?.kind === "coach" || summary?.kind === "hq" || canSeeCoach;
+  const { data: strategyBadge = 0 } = useStrategyBadge(canSeeStrategy);
   const raw = params.get("tab");
   const tab: Tab =
-    (raw === "requests" && (isMember || !summary)) || (raw === "reports" && isHq) || (raw === "coach" && canSeeCoach) || (raw === "broadcast" && canSeeCoach)
+    (raw === "requests" && (isMember || !summary)) ||
+    (raw === "reports" && isHq) ||
+    (raw === "coach" && canSeeCoach) ||
+    (raw === "broadcast" && canSeeCoach) ||
+    (raw === "strategy" && canSeeStrategy)
       ? raw
       : "inbox";
   const setTab = (t: Tab) => setParams(t === "inbox" ? {} : { tab: t }, { replace: true });
@@ -133,6 +144,7 @@ const MessagesPage = () => {
       ? [{ value: "requests" as const, label: requestCount > 0 ? `요청 ${requestCount}` : "요청", badge: newRequests }]
       : []),
     ...(isHq ? [{ value: "reports" as const, label: reportCount > 0 ? `신고 ${reportCount}` : "신고", badge: reportCount, urgent: true }] : []),
+    ...(canSeeStrategy ? [{ value: "strategy" as const, label: "전략", badge: strategyBadge, urgent: true }] : []),
     ...(canSeeCoach ? [{ value: "broadcast" as const, label: "단체", badge: 0 }] : []),
     ...(canSeeCoach ? [{ value: "coach" as const, label: "오삼코치", badge: 0 }] : []),
   ];
@@ -242,6 +254,8 @@ const MessagesPage = () => {
             <CoachSentList />
           ) : tab === "broadcast" ? (
             <BroadcastNotification />
+          ) : tab === "strategy" ? (
+            <StrategyRoom />
           ) : active.isLoading ? (
             <ListSkeleton />
           ) : active.isError && !active.data ? (
@@ -294,7 +308,7 @@ const MessagesPage = () => {
             </ul>
           )}
 
-          {tab !== "reports" && tab !== "coach" && tab !== "broadcast" && (
+          {tab !== "reports" && tab !== "coach" && tab !== "broadcast" && tab !== "strategy" && (
             <p className="px-1 pt-1 text-[11.5px] leading-relaxed text-muted-foreground">
               {tab === "requests"
                 ? "처음 보낸 사람은 수락 전까지 메시지를 1개만 보낼 수 있어요."

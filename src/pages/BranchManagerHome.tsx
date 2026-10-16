@@ -713,6 +713,20 @@ const BranchManagerHome = () => {
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
 
+        {/* 🧠 전략 회의실 — 코치진 지시·전략 · 오늘 프로그램 · 수업 기록 · 영상 (2026-10-16 대표님) */}
+        <button
+          type="button"
+          onClick={() => navigate("/messages?tab=strategy")}
+          className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-foreground/15 bg-foreground/[0.03] px-4 py-3 text-left active:scale-[0.99]"
+        >
+          <span className="text-2xl">🧠</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-black text-foreground">전략 회의실</span>
+            <span className="block text-xs text-muted-foreground">코치진 지시·운영 원칙 · 오늘 프로그램 · 수업 기록 · 드릴 영상</span>
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
+
         {canBroadcast && (
           <button
             type="button"
