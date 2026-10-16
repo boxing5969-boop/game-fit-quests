@@ -1,51 +1,30 @@
 /**
- * 🥊 붕대 감기 — 그림 13단계 · 영상 · 집 연습 미션 (2026-10-13 대표님, 2026-10-15 사진·방향 화살표로 다시, 2026-10-16 153 방법(주먹 패드)으로 다시).
+ * 🥊 붕대 감기 — 영상 · 집 연습 미션 (2026-10-13 대표님 처음 만듦).
  *
- *   신규 회원 첫날: 코치님은 한 손만 빠르게 감아 주고, 다른 손은 회원이 이 화면을 보며 직접 감는다.
+ *   2026-10-17 대표님: "붕대 감기 버튼 손이 이상해 … 2가지 방식 모두 지워줘. 내가 직접 영상 찍어서 올려야 할 것 같아"
+ *     → 그림으로 따라 하기(단계 넘기기 · 한눈에 보기)를 지우고 영상을 맨 위로. 영상은 대표님이 직접 찍어 올린다.
+ *
+ *   신규 회원 첫날: 코치님은 한 손만 빠르게 감아 주고, 다른 손은 회원이 영상을 보며 직접 감는다.
  *   그리고 집에서 혼자 감아 보는 미션(HandWrapPracticeCard) — 다음 수업 때 코치님이 회원 상세에서 기록을 본다.
  *
- *   · 사진: 단계마다 실제 손 사진 + 감는 방향 화살표(그려지는 선 · 흐르는 빛 · 시작점 · 들어갈 곳). 왼손/오른손 전환(기기에 기억). 좌우로 밀어서 넘길 수 있다.
  *   · 영상: 훈련 라이브러리 '복싱 붕대 감기' 항목의 영상 URL (코치·관장이 넣으면 바로 나온다). 없으면 '준비 중'.
- *   · 글: data/handWrapGuide.ts — 그림과 같은 목록을 쓴다.
+ *   · 글: data/handWrapGuide.ts — 흔한 실수 · 영상 핵심 포인트.
  */
-import { useCallback, useRef, useState, type SyntheticEvent, type TouchEvent } from "react";
+import { useCallback, useState, type SyntheticEvent } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Check, ChevronLeft, ChevronRight, Clapperboard, Play, RotateCcw, X } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import VideoPlayer from "@/components/VideoPlayer";
-import HandWrapPhoto from "@/components/handwrap/HandWrapPhoto";
 import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useHandWrapVideo } from "@/hooks/useHandWrap";
 import { youtubeThumb } from "@/hooks/useLevelVideos";
 import { strictYoutubeId } from "@/lib/videoUrl";
-import {
-  HANDWRAP_DONE,
-  HANDWRAP_EXERCISE_NAME,
-  HANDWRAP_KEY_POINTS,
-  HANDWRAP_MISTAKES,
-  HANDWRAP_PHOTO_HAND,
-  HANDWRAP_STEPS,
-  HANDWRAP_WRIST_TOTAL,
-} from "@/data/handWrapGuide";
+import { HANDWRAP_EXERCISE_NAME, HANDWRAP_KEY_POINTS, HANDWRAP_MISTAKES } from "@/data/handWrapGuide";
 import { isManagerRole } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
-
-type Hand = "left" | "right";
-const HAND_KEY = "153handwrap:hand";
-const TOTAL = HANDWRAP_STEPS.length;
-/** 이만큼 밀면 다음·이전 단계 */
-const SWIPE_PX = 48;
-
-const readHand = (): Hand => {
-  try {
-    return window.localStorage.getItem(HAND_KEY) === "right" ? "right" : "left";
-  } catch {
-    return "left";
-  }
-};
 
 /** VideoPlayer 는 youtu.be·watch 주소만 embed 로 바꾼다 — shorts·embed 주소도 youtu.be 로 맞춰 넘긴다 (유튜브 호스트일 때만) */
 const playableUrl = (url: string) => {
@@ -61,57 +40,10 @@ const HandWrapGuidePage = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
   const isStaff = isManagerRole(role);
-  const [step, setStep] = useState(0);
-  const [hand, setHand] = useState<Hand>(readHand);
   const [playing, setPlaying] = useState(false);
   const closePlayer = useCallback(() => setPlaying(false), []);
   useModalDismiss(playing, closePlayer);
   const video = useHandWrapVideo();
-  const stepsRef = useRef<HTMLElement>(null);
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
-
-  const done = step >= TOTAL;
-  const current = done ? null : HANDWRAP_STEPS[step];
-  const title = current ? current.title : HANDWRAP_DONE.title;
-  const body = current ? current.body : HANDWRAP_DONE.body;
-  const handLabel = hand === "left" ? "왼손" : "오른손";
-  /** 그림은 오른손 — 다른 손을 고르면 좌우로 뒤집는다 */
-  const mirrored = hand !== HANDWRAP_PHOTO_HAND;
-
-  const go = (next: number) => setStep(Math.max(0, Math.min(TOTAL, next)));
-  const prev = () => go(step - 1);
-  const next = () => go(done ? 0 : step + 1);
-
-  const pickHand = (h: Hand) => {
-    setHand(h);
-    try {
-      window.localStorage.setItem(HAND_KEY, h);
-    } catch {
-      /* 저장 못 해도 이번 화면에서는 바뀐다 */
-    }
-  };
-
-  // 한 손가락으로 가로로 뚜렷하게 밀었을 때만 넘긴다 (세로 스크롤·두 손가락 확대는 무시)
-  const onTouchStart = (e: TouchEvent) => {
-    const t = e.touches.length === 1 ? e.touches[0] : null;
-    touchStart.current = t ? { x: t.clientX, y: t.clientY } : null;
-  };
-  const onTouchEnd = (e: TouchEvent) => {
-    const start = touchStart.current;
-    touchStart.current = null;
-    const end = e.changedTouches[0];
-    if (!start || !end || e.touches.length > 0) return;
-    const dx = end.clientX - start.x;
-    const dy = end.clientY - start.y;
-    if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    if (dx < 0 && !done) go(step + 1);
-    else if (dx > 0) go(step - 1);
-  };
-
-  const jumpTo = (i: number) => {
-    go(i);
-    stepsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   const goBack = () => {
     const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
@@ -126,7 +58,7 @@ const HandWrapGuidePage = () => {
       header={
         <PageHeader
           title="붕대 감기"
-          subtitle={`그림 ${TOTAL}단계 · 영상 · 집 연습 미션`}
+          subtitle="영상 · 집 연습 미션"
           sticky
           leftAction={
             <button
@@ -142,116 +74,12 @@ const HandWrapGuidePage = () => {
       }
     >
       <p className="px-1 text-[13px] leading-relaxed text-muted-foreground">
-        첫날엔 코치님이 한 손을 빠르게 감아 드려요. 다른 손은 이 화면을 보면서 직접 감아 보세요 — 주로 쓰는 손으로 감는 쪽이
+        첫날엔 코치님이 한 손을 빠르게 감아 드려요. 다른 손은 영상을 보면서 직접 감아 보세요 — 주로 쓰는 손으로 감는 쪽이
         쉬워요.
       </p>
 
-      {/* ── 단계 그림 ── */}
-      <section ref={stepsRef} aria-label="붕대 감는 순서" className="mt-4 scroll-mt-20 overflow-hidden rounded-3xl bg-card shadow-elev-1 ring-1 ring-border/60">
-        <div className="relative" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-          {current ? (
-            <HandWrapPhoto
-              photo={current.photo}
-              arrow={current.arrow}
-              mirrored={mirrored}
-              stepKey={step}
-              alt={`${handLabel} ${step + 1}단계 ${title} 그림`}
-            />
-          ) : (
-            <div className="grid grid-cols-2 gap-0.5 bg-[#EEF4F2]">
-              {HANDWRAP_DONE.photos.map((src, i) => (
-                <HandWrapPhoto key={src} photo={src} mirrored={mirrored} stepKey={`done-${i}`} alt={`다 감은 모습 ${i + 1}`} />
-              ))}
-            </div>
-          )}
-          <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11.5px] font-black tabular-nums text-white backdrop-blur-sm">
-            {done ? "완성" : `${step + 1} / ${TOTAL}`}
-          </span>
-          <div role="group" aria-label="그림 손 고르기" className="absolute right-3 top-3 flex rounded-full bg-card/95 p-0.5 shadow-elev-1 ring-1 ring-border/60">
-            {(["left", "right"] as const).map((h) => (
-              <button
-                key={h}
-                type="button"
-                aria-pressed={hand === h}
-                onClick={() => pickHand(h)}
-                className={cn(
-                  "h-8 rounded-full px-3 text-[12px] font-bold transition-colors",
-                  hand === h ? "bg-foreground text-background" : "text-muted-foreground",
-                )}
-              >
-                {h === "left" ? "왼손" : "오른손"}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="px-4 pb-4 pt-3">
-          <p className="text-[11.5px] font-bold text-primary">{done ? "다 감았어요" : `${step + 1}단계`}</p>
-          <h2 className="text-[19px] font-black leading-tight text-foreground" aria-live="polite">
-            {title}
-          </h2>
-          {(current?.chip || done) && (
-            <span className="mt-1.5 inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[12px] font-black text-primary">
-              {current?.chip ?? HANDWRAP_WRIST_TOTAL}
-            </span>
-          )}
-          <p className="mt-1.5 min-h-[3.75rem] text-[13.5px] leading-relaxed text-foreground/85">{body}</p>
-
-          {/* 단계 점 — 눌러서 바로 가기 */}
-          <div className="mt-3 grid gap-1" style={{ gridTemplateColumns: `repeat(${TOTAL}, minmax(0, 1fr))` }}>
-            {HANDWRAP_STEPS.map((s, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => go(i)}
-                aria-label={`${i + 1}단계 ${s.title}`}
-                aria-current={i === step ? "step" : undefined}
-                className="flex h-6 items-center"
-              >
-                <span
-                  className={cn(
-                    "block h-1.5 w-full rounded-full transition-all duration-300",
-                    i === step ? "h-2 bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.6)]" : i < step || done ? "bg-primary/45" : "bg-border",
-                  )}
-                />
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={prev}
-              disabled={step === 0}
-              className="flex h-12 items-center justify-center gap-1 rounded-xl bg-secondary text-[14.5px] font-bold text-foreground transition-transform active:scale-[0.98] disabled:opacity-40 disabled:active:scale-100"
-            >
-              <ChevronLeft className="h-4 w-4" /> 이전
-            </button>
-            <button
-              type="button"
-              onClick={next}
-              className="flex h-12 items-center justify-center gap-1 rounded-xl bg-primary text-[14.5px] font-bold text-primary-foreground transition-transform active:scale-[0.98]"
-            >
-              {done ? (
-                <>
-                  <RotateCcw className="h-4 w-4" /> 처음부터
-                </>
-              ) : step === TOTAL - 1 ? (
-                <>
-                  완성 보기 <ChevronRight className="h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  다음 <ChevronRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </section>
-
       {/* ── 영상 ── */}
-      <section aria-labelledby="handwrap-video-h" className="mt-7">
+      <section aria-labelledby="handwrap-video-h" className="mt-4">
         <h2 id="handwrap-video-h" className="px-1 text-[16px] font-black text-foreground">
           영상으로 보기
         </h2>
@@ -299,7 +127,7 @@ const HandWrapGuidePage = () => {
                 <Clapperboard className="h-5 w-5 text-muted-foreground" />
               </span>
               <p className="mt-3 text-[15px] font-bold text-foreground">영상 준비 중이에요</p>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">지금은 위 그림 {TOTAL}단계로 따라 해요</p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">153 코치님이 직접 감는 영상이 곧 올라와요. 그 전엔 수업 때 코치님께 물어보세요</p>
               {isStaff && (
                 <div className="mt-4 rounded-xl bg-secondary px-3 py-2.5 text-left">
                   <p className="text-[11.5px] leading-relaxed text-muted-foreground">
@@ -350,34 +178,6 @@ const HandWrapGuidePage = () => {
             </li>
           ))}
         </ul>
-      </section>
-
-      {/* ── 한눈에 ── */}
-      <section aria-labelledby="handwrap-all-h" className="mt-7">
-        <h2 id="handwrap-all-h" className="px-1 text-[16px] font-black text-foreground">
-          {TOTAL}단계 한눈에
-        </h2>
-        <p className="mt-0.5 px-1 text-[12.5px] font-bold text-primary">{HANDWRAP_WRIST_TOTAL}</p>
-        <ol className="mt-2 grid grid-cols-3 gap-2">
-          {HANDWRAP_STEPS.map((s, i) => (
-            <li key={s.title}>
-              <button
-                type="button"
-                onClick={() => jumpTo(i)}
-                aria-label={`${i + 1}단계 ${s.title} 크게 보기`}
-                className={cn(
-                  "block w-full rounded-xl bg-card p-1 shadow-elev-1 transition-transform active:scale-[0.97]",
-                  i === step ? "ring-2 ring-primary" : "ring-1 ring-border/60",
-                )}
-              >
-                <HandWrapPhoto photo={s.photo} arrow={s.arrow} mirrored={mirrored} animate={false} alt="" className="rounded-lg" />
-                <span className="mt-1 block truncate px-0.5 text-center text-[10.5px] font-bold text-foreground">
-                  {i + 1}. {s.title}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ol>
       </section>
 
       <p className="mt-6 px-1 text-[12px] leading-relaxed text-muted-foreground">

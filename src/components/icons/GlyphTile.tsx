@@ -5,10 +5,16 @@
  * · 글리프: 칸의 64% 크기, 아주 얕은 그림자로 칸에서 살짝 떠 보이게 (.glyph-art — src/index.css).
  * · 색은 전부 CSS 변수(--glyph-*)라 라이트·다크가 자동으로 맞는다.
  * · 장식이므로 aria-hidden — 이름은 옆의 라벨이 읽힌다.
+ * · 그림 글리프(GLYPH_IMAGES) — SVG 대신 153 그림(투명 webp)을 같은 칸에 얹는다. 붕대 감기 = 붕대 감은 주먹 (2026-10-17).
  */
 import { useId } from "react";
-import { MENU_GLYPHS, type MenuGlyphName } from "@/components/icons/menuGlyphs";
+import { MENU_GLYPHS, type ImageGlyphName, type MenuGlyphName } from "@/components/icons/menuGlyphs";
+import handwrapGlyph from "@/assets/glyphs/handwrap.webp";
 import { cn } from "@/lib/utils";
+
+/** 그림으로 그리는 글리프 — 붕대 감기 화면의 '다 감은 주먹' 그림을 오려 낸 것 */
+const GLYPH_IMAGES: Record<ImageGlyphName, string> = { handwrap: handwrapGlyph };
+const isImageGlyph = (n: MenuGlyphName): n is ImageGlyphName => n in GLYPH_IMAGES;
 
 /** 슈퍼엘립스(n=5) — viewBox 0 0 100 100. 모서리는 촘촘히, 변은 곧게. */
 const SQUIRCLE =
@@ -50,13 +56,23 @@ const GlyphTile = ({ name, size = 56, className }: GlyphTileProps) => {
           transform="translate(50 50) scale(0.985) translate(-50 -50)"
         />
       </svg>
-      <svg
-        viewBox="0 0 48 48"
-        className="glyph-art absolute"
-        style={{ inset: "17.9%" }}
-        // 고정 마크업(menuGlyphs.ts) — 사용자 입력이 섞이지 않는다
-        dangerouslySetInnerHTML={{ __html: MENU_GLYPHS[name](`${uid}-`) }}
-      />
+      {isImageGlyph(name) ? (
+        <img
+          src={GLYPH_IMAGES[name]}
+          alt=""
+          draggable={false}
+          className="glyph-art absolute select-none object-contain"
+          style={{ inset: "14%" }}
+        />
+      ) : (
+        <svg
+          viewBox="0 0 48 48"
+          className="glyph-art absolute"
+          style={{ inset: "17.9%" }}
+          // 고정 마크업(menuGlyphs.ts) — 사용자 입력이 섞이지 않는다
+          dangerouslySetInnerHTML={{ __html: MENU_GLYPHS[name](`${uid}-`) }}
+        />
+      )}
     </span>
   );
 };
