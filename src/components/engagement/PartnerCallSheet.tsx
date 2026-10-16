@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { usePartnerCallActions, usePartnerCalls } from "@/hooks/useCommunityHub";
+import MemberLicenseSheet from "@/components/license/MemberLicenseSheet";
+import WorkingOutNowCard from "./WorkingOutNow";
 import {
   PURPOSE_LABEL,
   SPARRING_RANKS,
@@ -47,6 +49,8 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
   const [hour, setHour] = useState<number>(19);
   const [note, setNote] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  // '지금 운동 중인 동료'에서 누른 회원 라이센스 (관리자는 회원 상세 정보로 바로 간다)
+  const [licenseMember, setLicenseMember] = useState<{ id: string; nickname: string } | null>(null);
 
   const myRank = progress?.current_rank ?? "white";
   const canSpar = (SPARRING_RANKS as readonly string[]).includes(myRank);
@@ -267,6 +271,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
   );
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <motion.div
@@ -289,6 +294,16 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
           >
             {renderHeader()}
             <div className="flex-1 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
+              {/* 지금 체육관에 있는 동료 — 모집이 없어도 같이 할 사람이 보이게 (2026-10-16 대표님: "오늘 같이해요는 회원 리스트가 안나오는데") */}
+              <div className="mb-4">
+                <WorkingOutNowCard
+                  branch={null}
+                  title="지금 운동 중인 동료"
+                  emptyText="지금은 운동 중인 동료가 없어요. 모집을 올리면 오늘 오는 동료가 볼 수 있어요"
+                  onOpenMember={setLicenseMember}
+                />
+              </div>
+              <p className="mb-2 text-[12px] font-black text-foreground">오늘 올라온 모집</p>
               {renderList()}
               {!allBranches && renderForm()}
             </div>
@@ -296,6 +311,8 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         </motion.div>
       )}
     </AnimatePresence>
+    <MemberLicenseSheet userId={licenseMember?.id ?? null} onClose={() => setLicenseMember(null)} />
+    </>
   );
 };
 

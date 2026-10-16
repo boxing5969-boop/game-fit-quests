@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { User, Settings2, X, Trophy, Crown } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,8 +15,7 @@ import {
   useBranchesList,
 } from "@/hooks/useRankingData";
 import { supabase } from "@/integrations/supabase/client";
-import { shortBranchName } from "@/services/communityHubService";
-import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION, toGlobalLevel } from "@/lib/rankLabels";
+import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION, toGlobalLevel, isManagerRole } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
 import MemberLicenseSheet from "@/components/license/MemberLicenseSheet";
 
@@ -24,6 +23,7 @@ import LeagueBadge from "@/components/badges/LeagueBadge";
 import NameBadge from "@/components/badges/NameBadge";
 import Record153Board from "@/components/engagement/Record153Board";
 import Records153Strip from "@/components/engagement/Records153Strip";
+import WorkingOutNowCard from "@/components/engagement/WorkingOutNow";
 import Test153Board from "@/components/test153/Test153Board";
 import MedalMark from "@/components/MedalMark";
 import {
@@ -315,7 +315,7 @@ const HallOfFamePage = () => {
         {topTab === "ranking" && (
           <>
             {/* 지금 운동 중 — 체육관 TV 와 같은 기준 (2026-10-16 대표님) */}
-            <WorkingOutNow
+            <WorkingOutNowCard
               branch={branchFilter === undefined ? profile?.branch_name ?? null : branchFilter}
               onOpenMember={(m) => setLicenseMember(m)}
             />
@@ -431,21 +431,39 @@ const HallOfFamePage = () => {
         userId={licenseMember?.id ?? null}
         onClose={() => setLicenseMember(null)}
         extraAction={
-          licenseMember && licenseMember.id !== user?.id && progress?.rival_id !== licenseMember.id ? (
-            <button
-              type="button"
-              onClick={() => {
-                handleSetRival({ r_user_id: licenseMember.id, r_nickname: licenseMember.nickname });
-                setLicenseMember(null);
-              }}
-              className="h-11 w-full rounded-xl border border-border bg-card text-[14px] font-bold text-foreground transition-transform active:scale-[0.98]"
-            >
-              🎯 추격 목표로 정하기
-            </button>
-          ) : licenseMember && progress?.rival_id === licenseMember.id ? (
-            <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-center text-[12.5px] font-semibold text-muted-foreground">
-              🎯 지금 추격 중인 회원이에요
-            </p>
+          licenseMember && (isManagerRole(role) || licenseMember.id !== user?.id) ? (
+          <div className="space-y-2">
+            {/* 코치·지점장·본사는 회원 상세 정보로 (2026-10-16 대표님: "회원이름클릭하면 상세 정보 볼수있게") */}
+            {licenseMember && isManagerRole(role) && (
+              <button
+                type="button"
+                onClick={() => {
+                  const id = licenseMember.id;
+                  setLicenseMember(null);
+                  navigate(`/manager/member/${id}`);
+                }}
+                className="h-11 w-full rounded-xl bg-primary text-[14px] font-bold text-primary-foreground transition-transform active:scale-[0.98]"
+              >
+                회원 상세 정보 보기
+              </button>
+            )}
+            {licenseMember && licenseMember.id !== user?.id && progress?.rival_id !== licenseMember.id ? (
+              <button
+                type="button"
+                onClick={() => {
+                  handleSetRival({ r_user_id: licenseMember.id, r_nickname: licenseMember.nickname });
+                  setLicenseMember(null);
+                }}
+                className="h-11 w-full rounded-xl border border-border bg-card text-[14px] font-bold text-foreground transition-transform active:scale-[0.98]"
+              >
+                🎯 추격 목표로 정하기
+              </button>
+            ) : licenseMember && progress?.rival_id === licenseMember.id ? (
+              <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-center text-[12.5px] font-semibold text-muted-foreground">
+                🎯 지금 추격 중인 회원이에요
+              </p>
+            ) : null}
+          </div>
           ) : null
         }
       />
@@ -543,140 +561,6 @@ const HallOfFamePage = () => {
         </div>
       )}
     </AppPage>
-  );
-};
-
-/* ──────────────────────────────────────────────────────────
- *  지금 운동 중 — 랭킹 탭 맨 위 (2026-10-16 대표님: "마이복서 153랭킹 탭에서
- *  현재 운동중인 회원 확인할수있게 해줘~")
- *   · 기준은 체육관 TV 와 같다: 앱 운동 세션이 켜져 있거나(60분) 오늘 출석 후 120분 안 · 코치님 제외
- *   · 내정보 '출석하면 커뮤니티에 알리기'를 끈 회원은 다른 회원에게 안 보인다 (본인·본사는 보임)
- *   · DB get_working_out_now — 회원은 자기 지점 고정, 본사는 고른 지점 / 전 지점
- * ────────────────────────────────────────────────────────── */
-
-interface WorkingOutMember {
-  user_id: string;
-  nickname: string;
-  avatar_url: string | null;
-  league: string;
-  level: number;
-  /** 앱 운동 시작 시각, 없으면 오늘 마지막 출석 시각 */
-  since: string;
-  /** 지금 운동 중인 지점 */
-  branch: string | null;
-  is_me: boolean;
-}
-
-interface WorkingOutNowData {
-  branch: string | null;
-  all_branches: boolean;
-  members: WorkingOutMember[];
-}
-
-const WorkingOutNow = ({
-  branch,
-  onOpenMember,
-}: {
-  /** 본사가 고른 지점 (null = 전 지점). 회원은 서버가 자기 지점으로 고정한다 */
-  branch: string | null;
-  onOpenMember: (m: { id: string; nickname: string }) => void;
-}) => {
-  const { data } = useQuery({
-    queryKey: ["working-out-now", branch ?? "__all__"],
-    queryFn: async (): Promise<WorkingOutNowData> => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: raw, error } = await (supabase as any).rpc("get_working_out_now", { p_branch: branch });
-      if (error) throw error;
-      const d = (raw ?? {}) as Partial<WorkingOutNowData>;
-      return {
-        branch: typeof d.branch === "string" ? d.branch : null,
-        all_branches: d.all_branches === true,
-        members: Array.isArray(d.members) ? d.members : [],
-      };
-    },
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-  });
-  // 'N분째' 를 1분마다 새로 센다
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), 60_000);
-    return () => window.clearInterval(t);
-  }, []);
-
-  if (!data) return null;
-  const list = data.members;
-  const scope = data.all_branches ? "전 지점" : data.branch ? shortBranchName(data.branch) : "";
-
-  return (
-    <section className="rounded-card border border-emerald-500/30 bg-gradient-to-b from-emerald-500/10 to-card p-3.5">
-      <div className="flex items-center gap-2">
-        <span className="relative flex h-2.5 w-2.5 shrink-0">
-          {list.length > 0 && (
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/70" />
-          )}
-          <span
-            className={cn(
-              "relative inline-flex h-2.5 w-2.5 rounded-full",
-              list.length > 0 ? "bg-emerald-500" : "bg-muted-foreground/40",
-            )}
-          />
-        </span>
-        <span className="text-[15px] font-black text-foreground">지금 운동 중</span>
-        <span className="number-font text-[15px] font-black text-emerald-600 dark:text-emerald-400">
-          {list.length}
-          <span className="ml-0.5 text-[12px]">명</span>
-        </span>
-        {scope && <span className="ml-auto truncate text-[12px] font-bold text-muted-foreground">{scope}</span>}
-      </div>
-
-      {list.length > 0 ? (
-        <div className="-mx-3.5 mt-2.5 flex gap-2 overflow-x-auto px-3.5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {list.map((m) => {
-            const mins = Math.max(0, Math.floor((now - new Date(m.since).getTime()) / 60_000));
-            return (
-              <button
-                key={m.user_id}
-                type="button"
-                onClick={() => onOpenMember({ id: m.user_id, nickname: m.nickname })}
-                className={cn(
-                  "flex w-[4.75rem] shrink-0 flex-col items-center gap-1 rounded-xl border bg-card px-1.5 pb-2 pt-2.5 active:scale-[0.97]",
-                  m.is_me ? "border-primary/60" : "border-border",
-                )}
-              >
-                <span className="relative">
-                  <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-pill bg-secondary text-[16px] font-black text-secondary-foreground">
-                    {m.avatar_url ? (
-                      <img src={m.avatar_url} alt="" className="h-full w-full object-cover" loading="lazy" />
-                    ) : (
-                      m.nickname.slice(0, 1)
-                    )}
-                  </span>
-                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-emerald-500" />
-                </span>
-                <span className="flex w-full min-w-0 items-center justify-center gap-0.5">
-                  <NameBadge league={m.league} className="h-3.5 w-3.5 shrink-0" glow={false} />
-                  <span className="truncate text-[12px] font-black text-foreground">{m.nickname}</span>
-                </span>
-                <span className="whitespace-nowrap text-[10.5px] font-bold text-muted-foreground">
-                  {m.is_me && <span className="text-primary">나 · </span>}
-                  {mins < 1 ? "방금" : `${mins}분째`}
-                </span>
-                {data.all_branches && m.branch && (
-                  <span className="max-w-full truncate text-[10px] font-bold text-muted-foreground/80">
-                    {shortBranchName(m.branch)}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <p className="mt-2 text-[12.5px] font-semibold text-muted-foreground">
-          지금은 운동 중인 회원이 없어요. 출석하면 여기에 떠요
-        </p>
-      )}
-    </section>
   );
 };
 
