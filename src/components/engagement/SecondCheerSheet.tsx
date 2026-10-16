@@ -1,116 +1,180 @@
 /**
- * 153 QUEST — 세컨드 응원 바텀시트 (MVP).
+ * 153 QUEST — 동료에게 응원 보내기 바텀시트.
+ *
+ * 2026-10-16 업그레이드 (대표님 승인 — 기획안 '동료에게 응원 보내기 업그레이드', TV 표시 없음):
+ *   · 받을 사람: 지금 운동 중(TV 기준) → 오늘 다녀간 동료 → 최근 출석 순, 오늘 보낸 동료는 '보냄'
+ *   · 153 입체 스티커 + 상황 추천(생일·승급·오랜만의 복귀) · 한마디 추천 문구
+ *   · 보낸 뒤 바로 다음 동료에게 · 하루 첫 응원 챔피언 머니 +30 · 받은 사람에게 알림
+ *   · 라이센스에서 열면 받을 사람이 채워진 채로 (initialTarget) — 라이센스 시트 위로 뜨게 stacked
  *
  * 보호 원칙:
  *   · 공식 1~40 levels/missions/member_progress 일절 미수정
- *   · 보상 amount 는 RPC 반환값(respect_granted/receiver_gems_granted)만 사용
- *   · grant_gems 직접 호출 0건 — send_boxing_cheer RPC 내부에서만 처리
+ *   · 보상은 send_boxing_cheer RPC 안에서만 (grant_gems 직접 호출 0건)
  *   · ChatAssistant 미참조 / 새 AI 챗박스 0건
- *   · 후보 조회는 SECURITY DEFINER RPC get_second_cheer_candidates 경유 →
- *     민감정보(phone_number/email/birth_date) 자체가 반환 컬럼에 없음.
+ *   · 후보는 SECURITY DEFINER RPC get_cheer_candidates — 생일은 날짜가 아니라 '오늘 생일' 여부만
  */
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  AlertTriangle,
-  Megaphone,
-  Search,
-  X,
-} from "lucide-react";
+import { ArrowLeft, ChevronRight, Megaphone, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
-import {
-  useSecondCheerCandidates,
-  useSendBoxingCheer,
-} from "@/hooks/useSecondCheer";
+import NameBadge from "@/components/badges/NameBadge";
+import { useCheerCandidates, useSendBoxingCheer } from "@/hooks/useSecondCheer";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
-import { useAuth } from "@/contexts/AuthContext";
-import type {
-  SecondCheerCandidate,
-  SendCheerResult,
-} from "@/services/boxingEngagementService";
+import { cn } from "@/lib/utils";
+import { CHEER_NOTE_SUGGESTIONS, cheerStickerImage } from "@/lib/cheerStickers";
+import { shortBranchName } from "@/services/communityHubService";
+import type { CheerCandidate } from "@/services/cheerService";
+import type { SendCheerResult } from "@/services/boxingEngagementService";
 
-import CheerStickerPicker, { CHEER_STICKERS } from "./CheerStickerPicker";
-import SecondCheerCard from "./SecondCheerCard";
+import CheerStickerPicker from "./CheerStickerPicker";
+
+export interface CheerInitialTarget {
+  user_id: string;
+  nickname: string;
+  avatar_url?: string | null;
+  league?: string | null;
+  branch?: string | null;
+}
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** 라이센스 등에서 받을 사람을 정해서 열 때 */
+  initialTarget?: CheerInitialTarget | null;
+  /** 다른 시트(라이센스 z-[110]) 위로 띄운다 */
+  stacked?: boolean;
 }
+
+type Target = CheerInitialTarget & Partial<Pick<CheerCandidate, "group" | "since" | "cheered_today" | "birthday" | "promoted" | "returning">>;
 
 const MAX_MESSAGE = 80;
 
-const SecondCheerSheet = ({ open, onClose }: Props) => {
-  const { role } = useAuth();
-  // 본사(전체관리자·관리자) 계정은 전 지점 회원이 보인다 — 서버가 같은 기준으로 고른다 (2026-09-30)
-  const allBranches = role === "super_admin" || role === "admin";
+const kstTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Seoul" });
+const kstDay = (iso: string) =>
+  new Date(iso).toLocaleDateString("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" });
+const minsSince = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60_000));
+
+const situationLine = (t: Target): string | null => {
+  if (t.birthday) return "오늘 생일이에요! 축하를 보내 주세요";
+  if (t.promoted) return "얼마 전 승급했어요";
+  if (t.returning) return "오랜만에 체육관에 돌아왔어요";
+  if (t.group === "now" && t.since) return `지금 ${minsSince(t.since)}분째 운동 중`;
+  if (t.group === "today" && t.since) return `오늘 ${kstTime(t.since)}에 다녀갔어요`;
+  return null;
+};
+
+const Avatar = ({ url, name, size = "md" }: { url?: string | null; name: string; size?: "md" | "lg" }) => (
+  <span
+    className={cn(
+      "flex shrink-0 items-center justify-center overflow-hidden rounded-pill bg-secondary font-black text-secondary-foreground",
+      size === "lg" ? "h-12 w-12 text-[18px]" : "h-10 w-10 text-[15px]",
+    )}
+  >
+    {url ? <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" /> : name.slice(0, 1)}
+  </span>
+);
+
+const SituationTags = ({ m }: { m: Pick<CheerCandidate, "birthday" | "promoted" | "returning"> }) => (
+  <>
+    {m.birthday && (
+      <span className="shrink-0 rounded-pill bg-pink-500/15 px-1.5 py-[1px] text-[10px] font-black text-pink-600 dark:text-pink-300">생일</span>
+    )}
+    {m.promoted && (
+      <span className="shrink-0 rounded-pill bg-reward/20 px-1.5 py-[1px] text-[10px] font-black text-reward-foreground">승급</span>
+    )}
+    {m.returning && (
+      <span className="shrink-0 rounded-pill bg-emerald-500/15 px-1.5 py-[1px] text-[10px] font-black text-emerald-700 dark:text-emerald-300">복귀</span>
+    )}
+  </>
+);
+
+const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false }: Props) => {
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
-  // 타이핑마다 RPC 를 부르지 않게 300ms 뒤에 반영 — 검색은 서버가 지점 전체(본사는 전 지점)에서 찾는다
+  // 타이핑마다 RPC 를 부르지 않게 300ms 뒤에 반영 — 검색은 서버가 지점 전체(본사는 켜 둔 지점)에서 찾는다
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search), 300);
     return () => clearTimeout(t);
   }, [search]);
-  // open=false 일 때는 RPC 가 발사되지 않도록 enabled gate.
-  const { data: candidates, isLoading } = useSecondCheerCandidates(30, open, debounced);
+  const { data, isLoading, dataUpdatedAt } = useCheerCandidates(open, debounced);
   const send = useSendBoxingCheer();
   useModalDismiss(open, onClose);
 
-  const [target, setTarget] = useState<SecondCheerCandidate | null>(null);
+  const [target, setTarget] = useState<Target | null>(null);
   const [sticker, setSticker] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<SendCheerResult | null>(null);
+  // 방금 보낸 동료 — 목록을 다시 받기 전에도 '보냄'으로
+  const [sentIds, setSentIds] = useState<Set<string>>(() => new Set());
+  // 보낸 시각 — 서버 목록(sent_today)이 아직 반영하지 못한 것만 더한다
+  const [sendTimes, setSendTimes] = useState<number[]>([]);
 
   useEffect(() => {
     if (open) {
-      setTarget(null);
+      setTarget(initialTarget ? { ...initialTarget } : null);
       setSticker(null);
       setMessage("");
       setSearch("");
       setDebounced("");
       setResult(null);
       setPending(false);
+      setSentIds(new Set());
+      setSendTimes([]);
     }
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialTarget?.user_id]);
 
-  // 서버 결과를 받기 전(300ms 사이)에도 지금 목록에서 바로 걸러 보여 준다
-  const filtered = useMemo(() => {
-    const list = candidates ?? [];
+  const members = useMemo(() => {
+    const list = data?.members ?? [];
     const q = search.trim().toLowerCase();
-    if (!q) return list;
-    return list.filter((c) => c.display_name.toLowerCase().includes(q));
-  }, [candidates, search]);
+    const filtered = q ? list.filter((c) => c.nickname.toLowerCase().includes(q)) : list;
+    return filtered.map((c) => (sentIds.has(c.user_id) ? { ...c, cheered_today: true } : c));
+  }, [data, search, sentIds]);
 
+  // 라이센스에서 연 경우 — 목록에 있는 같은 회원의 상황(지금 운동 중·생일 등)을 덧붙인다
+  const targetInfo: Target | null = useMemo(() => {
+    if (!target) return null;
+    const m = (data?.members ?? []).find((c) => c.user_id === target.user_id);
+    const merged: Target = m ? { ...target, ...m, avatar_url: m.avatar_url ?? target.avatar_url } : target;
+    return sentIds.has(target.user_id) ? { ...merged, cheered_today: true } : merged;
+  }, [target, data, sentIds]);
+
+  const sentToday = (data?.sent_today ?? 0) + sendTimes.filter((t) => t > dataUpdatedAt).length;
+  const dailyLimit = data?.daily_limit ?? 10;
   const trimmedMessage = message.trim().slice(0, MAX_MESSAGE);
-  const canSend = !!target && !!sticker && !pending;
+  const alreadySent = !!targetInfo?.cheered_today;
+  const canSend = !!targetInfo && !!sticker && !pending && !alreadySent && sentToday < dailyLimit;
 
   const handleSend = async () => {
-    if (!canSend || !target || !sticker) return;
+    if (!canSend || !targetInfo || !sticker) return;
     setPending(true);
     try {
-      const data = await send.mutateAsync({
-        receiverUserId: target.user_id,
+      const res = await send.mutateAsync({
+        receiverUserId: targetInfo.user_id,
         cheerType: trimmedMessage ? "comment" : "sticker",
-        message: trimmedMessage
-          ? `${sticker} — ${trimmedMessage}`
-          : sticker,
-        sourceType: "home_second_cheer",
+        message: trimmedMessage ? `${sticker} — ${trimmedMessage}` : sticker,
+        sourceType: initialTarget ? "license_cheer" : "home_second_cheer",
         sourceId: null,
       });
-      setResult(data);
+      setSentIds((prev) => new Set(prev).add(targetInfo.user_id));
+      setSendTimes((prev) => [...prev, Date.now()]);
+      setResult(res);
     } catch (err) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "응원 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
-      toast.error(msg);
+      toast.error(err instanceof Error ? err.message : "응원 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setPending(false);
     }
+  };
+
+  const nextTarget = () => {
+    setResult(null);
+    setTarget(null);
+    setSticker(null);
+    setMessage("");
   };
 
   const renderHeader = () => (
@@ -120,14 +184,10 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
           <Megaphone className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-            응원 보내기
-          </p>
-          <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
-            동료에게 응원 한마디
-          </h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">응원 보내기</p>
+          <h2 className="mt-0.5 text-[15px] font-bold text-foreground">동료에게 응원 한마디</h2>
           <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-            오늘 운동한 동료에게 응원을 보내요. 응원도 실력입니다.
+            오늘 같이 땀 흘린 동료에게 스티커 하나면 충분해요.
           </p>
         </div>
       </div>
@@ -141,165 +201,171 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
     </div>
   );
 
-  // 결과 화면 렌더 (단일 AnimatePresence 안에서 분기 — 깜빡임 방지)
   const renderResult = () => {
-    if (!result) return null;
-    const sentReceiver = target?.display_name ?? "동료";
-    const noReceiverReward = result.receiver_gems_granted === 0;
-    const senderLimitReached = result.respect_granted === 0;
-
-    const banner = senderLimitReached
-      ? {
-          icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
-          tone: "border-amber-400/40 bg-amber-400/10",
-          title:
-            "오늘 응원 보상 한도를 모두 사용했어요. 응원은 계속 보낼 수 있습니다.",
-        }
-      : {
-          icon: <CheckCircle2 className="h-5 w-5 text-emerald-500" />,
-          tone: "border-emerald-400/40 bg-emerald-400/10",
-          title: "응원 완료! 링 위에서 혼자가 아닙니다.",
-        };
-
+    if (!result || !targetInfo) return null;
+    const img = cheerStickerImage(sticker);
+    const remaining = typeof result.remaining_today === "number" ? result.remaining_today : Math.max(0, dailyLimit - sentToday);
     return (
       <div className="space-y-3">
-        <div className={`rounded-card border p-3.5 ${banner.tone}`}>
-          <div className="flex items-center gap-2">
-            {banner.icon}
-            <p className="text-[13.5px] font-bold text-foreground">
-              {banner.title}
-            </p>
-          </div>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
-            {result.message}
+        <div className="flex flex-col items-center rounded-card border border-emerald-400/40 bg-emerald-400/10 px-4 pb-4 pt-5 text-center">
+          {img && <img src={img} alt="" className="h-20 w-20 object-contain" />}
+          <p className="mt-2 text-[16px] font-black text-foreground">응원 완료!</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+            <b className="text-foreground">{targetInfo.nickname}</b>님에게 “{sticker}”
+            {trimmedMessage && <> — {trimmedMessage}</>}
           </p>
+          <p className="mt-1 text-[11.5px] text-muted-foreground">받은 동료에게 알림이 갔어요</p>
         </div>
 
-        <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
-            {sentReceiver} 에게
-          </p>
-          <p className="mt-1 text-[13px] font-bold text-foreground">
-            {sticker}
-            {trimmedMessage && (
-              <span className="text-muted-foreground font-normal">
-                {" "}
-                — {trimmedMessage}
-              </span>
-            )}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-primary">
-              보낸 응원
-            </p>
-            <p className="mt-0.5 text-[12.5px] font-bold text-foreground">
-              전달 완료
+        {!!result.sender_gems_granted && result.sender_gems_granted > 0 && (
+          <div className="rounded-card border border-reward/40 bg-reward/10 px-3.5 py-3 text-center">
+            <p className="text-[13.5px] font-black text-foreground">
+              오늘 첫 응원 · 챔피언 머니 +{result.sender_gems_granted.toLocaleString()}
             </p>
           </div>
-          <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-reward">
-              받은 사람
-            </p>
-            <p className="mt-0.5 text-[12.5px] font-bold text-foreground">
-              {noReceiverReward
-                ? "응원 알림이 전달되었습니다"
-                : `+${result.receiver_gems_granted.toLocaleString()} 챔피언 머니`}
-            </p>
-          </div>
-        </div>
+        )}
 
-        <p className="text-[10.5px] leading-relaxed text-muted-foreground">
-          ※ 커뮤니티 활동은 공식 레벨업과 무관해요.
+        <p className="text-center text-[11.5px] font-semibold text-muted-foreground">
+          {remaining > 0 ? `오늘 ${remaining}번 더 보낼 수 있어요` : "오늘 보낼 수 있는 응원을 모두 보냈어요. 내일 또 만나요"}
         </p>
 
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <button
-            type="button"
-            onClick={() => {
-              setResult(null);
-              setTarget(null);
-              setSticker(null);
-              setMessage("");
-            }}
-            className="rounded-card bg-secondary py-3 text-[13px] font-bold text-secondary-foreground active:scale-[0.98]"
-          >
-            다른 동료에게도
-          </button>
+        <div className={cn("grid gap-2 pt-1", remaining > 0 && !initialTarget ? "grid-cols-2" : "grid-cols-1")}>
+          {remaining > 0 && !initialTarget && (
+            <button
+              type="button"
+              onClick={nextTarget}
+              className="rounded-card bg-primary py-3 text-[13px] font-bold text-primary-foreground active:scale-[0.98]"
+            >
+              다음 동료에게
+            </button>
+          )}
           <button
             type="button"
             onClick={onClose}
-            className="rounded-card bg-primary py-3 text-[13px] font-bold text-primary-foreground active:scale-[0.98]"
+            className={cn(
+              "rounded-card py-3 text-[13px] font-bold active:scale-[0.98]",
+              remaining > 0 && !initialTarget ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground",
+            )}
           >
             닫기
           </button>
         </div>
+        <p className="text-[10.5px] leading-relaxed text-muted-foreground">※ 커뮤니티 활동은 공식 레벨업과 무관해요.</p>
       </div>
     );
   };
 
-  // 후보 선택 / 응원 작성 분기
-  const renderBody = () => {
-    if (!target) {
-      // 후보 선택 화면
-      return (
-        <div className="space-y-3">
-          <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-            <p className="text-[11.5px] leading-relaxed text-foreground">
-              혼자 강해지는 복서보다 함께 오래 가는 복서가 더 강합니다.
-            </p>
-            <p className="mt-1 text-[10.5px] leading-relaxed text-muted-foreground">
-              {allBranches
-                ? "※ 본사 계정 — 전 지점 회원이 최근 출석한 순서로 보여요. 이름으로 찾을 수 있어요. 코치·관리자 계정은 제외됩니다."
-                : "※ 같은 지점 동료가 최근 출석한 순서로 보여요. 이름으로 찾으면 지점 전체에서 찾아요. 본인 / 다른 지점 / 코치·관리자 계정은 제외됩니다. 민감정보는 노출되지 않습니다."}
-            </p>
-          </div>
-
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="이름으로 찾기"
-              className="w-full rounded-card border border-border bg-card px-3 py-2 pl-8 text-[12.5px] text-foreground focus:border-primary focus:outline-none"
-            />
-          </div>
-
-          {isLoading ? (
-            <p className="px-1 py-3 text-[12px] text-muted-foreground">
-              동료 목록을 불러오고 있어요…
-            </p>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center px-1 py-6 text-center">
-              <p className="text-2xl">🥊</p>
-              <p className="mt-2 text-[12.5px] font-bold text-foreground">
-                {search.trim() ? "이 이름의 동료를 찾지 못했어요" : "응원할 동료가 아직 없어요"}
-              </p>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                {search.trim()
-                  ? "보이는 이름(닉네임) 그대로 다시 찾아보세요."
-                  : "같은 지점 동료가 가입하면 여기에 표시됩니다."}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filtered.map((c) => (
-                <SecondCheerCard
-                  key={c.user_id}
-                  candidate={c}
-                  onSelect={setTarget}
-                />
-              ))}
-            </div>
+  const renderRow = (m: CheerCandidate) => {
+    const sub =
+      m.group === "now" && m.since
+        ? `${minsSince(m.since)}분째 운동 중`
+        : m.group === "today" && m.since
+          ? `오늘 ${kstTime(m.since)} 출석`
+          : m.last_at
+            ? `${kstDay(m.last_at)} 출석`
+            : "출석 기록 없음";
+    return (
+      <button
+        key={m.user_id}
+        type="button"
+        disabled={m.cheered_today}
+        onClick={() => setTarget(m)}
+        className={cn(
+          "flex w-full items-center gap-3 rounded-card border px-3 py-2.5 text-left transition-all",
+          m.cheered_today ? "border-border bg-muted/40 opacity-70" : "border-border bg-card active:scale-[0.99]",
+        )}
+      >
+        <span className="relative">
+          <Avatar url={m.avatar_url} name={m.nickname} />
+          {m.group === "now" && (
+            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-emerald-500" />
           )}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1">
+            <NameBadge league={m.league} className="h-3.5 w-3.5 shrink-0" glow={false} />
+            <span className="truncate text-[13.5px] font-bold text-foreground">{m.nickname}</span>
+            <SituationTags m={m} />
+          </span>
+          <span className="block truncate text-[11px] text-muted-foreground">
+            Lv.{m.level} · {sub}
+            {data?.all_branches && m.branch ? ` · ${shortBranchName(m.branch)}` : ""}
+          </span>
+        </span>
+        {m.cheered_today ? (
+          <span className="shrink-0 rounded-pill bg-secondary px-2 py-0.5 text-[10.5px] font-bold text-muted-foreground">보냄</span>
+        ) : (
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        )}
+      </button>
+    );
+  };
+
+  const renderList = () => {
+    const now = members.filter((m) => m.group === "now");
+    const today = members.filter((m) => m.group === "today");
+    const recent = members.filter((m) => m.group === "recent");
+    const section = (title: string, list: CheerCandidate[], live = false) =>
+      list.length > 0 && (
+        <div className="space-y-2">
+          <p className="flex items-center gap-1.5 px-0.5 text-[12px] font-black text-foreground">
+            {live && <span className="h-2 w-2 rounded-full bg-emerald-500" />}
+            {title}
+            <span className="font-bold text-muted-foreground">{list.length}명</span>
+          </p>
+          {list.map(renderRow)}
         </div>
       );
-    }
+    return (
+      <div className="space-y-4">
+        <div className="rounded-card border border-primary/15 bg-primary/5 px-3.5 py-3">
+          <p className="text-[12.5px] font-bold text-foreground">
+            오늘 {Math.min(sentToday, dailyLimit)}/{dailyLimit}번 보냈어요
+          </p>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+            {sentToday === 0 ? "오늘 첫 응원은 챔피언 머니 +30 · " : ""}같은 동료에게는 하루 한 번 · 받은 동료에게 알림이 가요
+          </p>
+        </div>
 
-    // 응원 작성 화면
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="이름으로 찾기"
+            className="w-full rounded-card border border-border bg-card px-3 py-2 pl-8 text-[12.5px] text-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
+
+        {isLoading && !data ? (
+          <p className="px-1 py-3 text-[12px] text-muted-foreground">동료 목록을 불러오고 있어요…</p>
+        ) : members.length === 0 ? (
+          <div className="flex flex-col items-center px-1 py-6 text-center">
+            <p className="text-[12.5px] font-bold text-foreground">
+              {search.trim() ? "이 이름의 동료를 찾지 못했어요" : "응원할 동료가 아직 없어요"}
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {search.trim() ? "보이는 이름(닉네임) 그대로 다시 찾아보세요." : "같은 지점 동료가 가입하면 여기에 표시됩니다."}
+            </p>
+          </div>
+        ) : (
+          <>
+            {section("지금 운동 중", now, true)}
+            {section("오늘 다녀간 동료", today)}
+            {section(search.trim() ? "찾은 동료" : "최근 출석한 동료", recent)}
+          </>
+        )}
+        <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+          같은 지점 동료만 보여요 (코치님 제외). '출석하면 커뮤니티에 알리기'를 끈 동료는 지금·오늘 표시 없이 최근 목록에만 있어요.
+        </p>
+      </div>
+    );
+  };
+
+  const renderCompose = () => {
+    if (!targetInfo) return null;
+    const line = situationLine(targetInfo);
     return (
       <div className="space-y-3">
         <button
@@ -310,35 +376,58 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
           <ArrowLeft className="h-3.5 w-3.5" /> 동료 다시 고르기
         </button>
 
-        <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
-            응원 받을 동료
-          </p>
-          <p className="mt-1 text-[13.5px] font-bold text-foreground">
-            {target.display_name}
-          </p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            {target.branch_name}
-          </p>
-          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-            받은 사람에게 응원 알림이 바로 전달돼요.
-          </p>
+        <div className="flex items-center gap-3 rounded-card border border-primary/15 bg-primary/5 p-3">
+          <Avatar url={targetInfo.avatar_url} name={targetInfo.nickname} size="lg" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-black uppercase tracking-wider text-primary">응원 받을 동료</p>
+            <p className="mt-0.5 flex items-center gap-1 text-[14px] font-bold text-foreground">
+              {targetInfo.league && <NameBadge league={targetInfo.league} className="h-4 w-4 shrink-0" glow={false} />}
+              <span className="truncate">{targetInfo.nickname}</span>
+              <SituationTags m={{ birthday: !!targetInfo.birthday, promoted: !!targetInfo.promoted, returning: !!targetInfo.returning }} />
+            </p>
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+              {line ?? (targetInfo.branch ? shortBranchName(targetInfo.branch) : "")}
+            </p>
+          </div>
         </div>
 
-        <div>
-          <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
-            응원 스티커
+        {alreadySent && (
+          <p className="rounded-card bg-muted/60 px-3 py-2.5 text-[12px] font-semibold text-muted-foreground">
+            오늘은 이 동료에게 이미 응원을 보냈어요. 내일 또 보내 주세요.
           </p>
-          <CheerStickerPicker selected={sticker} onSelect={setSticker} />
+        )}
+
+        <div>
+          <p className="mb-1.5 text-[11.5px] font-bold text-foreground">응원 스티커</p>
+          <CheerStickerPicker
+            selected={sticker}
+            onSelect={setSticker}
+            receiverId={targetInfo.user_id}
+            situations={{ birthday: !!targetInfo.birthday, promoted: !!targetInfo.promoted, returning: !!targetInfo.returning }}
+          />
         </div>
 
         <div>
           <p className="mb-1.5 flex items-center justify-between text-[11.5px] font-bold text-foreground">
-            한마디 <span className="text-muted-foreground font-normal">(선택)</span>
+            <span>
+              한마디 <span className="font-normal text-muted-foreground">(선택)</span>
+            </span>
             <span className="text-[10px] text-muted-foreground">
               {trimmedMessage.length} / {MAX_MESSAGE}
             </span>
           </p>
+          <div className="mb-1.5 flex flex-wrap gap-1.5">
+            {CHEER_NOTE_SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setMessage(s)}
+                className="rounded-pill border border-border bg-card px-2.5 py-1 text-[11px] font-semibold text-muted-foreground active:scale-95"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value.slice(0, MAX_MESSAGE + 30))}
@@ -346,31 +435,30 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
             rows={2}
             className="w-full resize-none rounded-card border border-border bg-card px-3 py-2 text-[12.5px] text-foreground focus:border-primary focus:outline-none"
           />
-          {!sticker && (
-            <p className="mt-1.5 text-[11px] text-amber-600">
-              스티커를 먼저 선택해주세요. (총 {CHEER_STICKERS.length}종)
-            </p>
-          )}
         </div>
 
         <button
           type="button"
           onClick={handleSend}
           disabled={!canSend}
-          className={`w-full rounded-card py-3 text-[14px] font-bold transition-all ${
-            canSend
-              ? "bg-primary text-primary-foreground active:scale-[0.98]"
-              : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60"
-          }`}
+          className={cn(
+            "w-full rounded-card py-3 text-[14px] font-bold transition-all",
+            canSend ? "bg-primary text-primary-foreground active:scale-[0.98]" : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60",
+          )}
         >
           {pending
-            ? "전송 중…"
-            : !target
-              ? "동료를 선택해주세요"
-              : !sticker
-                ? "스티커를 선택해주세요"
-                : "응원 보내기"}
+            ? "보내는 중…"
+            : alreadySent
+              ? "오늘은 이미 보냈어요"
+              : sentToday >= dailyLimit
+                ? "오늘 응원 10번을 모두 보냈어요"
+                : !sticker
+                  ? "스티커를 골라 주세요"
+                  : "응원 보내기"}
         </button>
+        <p className="text-center text-[10.5px] text-muted-foreground">
+          받은 동료에게 알림이 가요 · 같은 동료에게는 하루 한 번
+        </p>
       </div>
     );
   };
@@ -383,7 +471,10 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-background/85 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          className={cn(
+            "fixed inset-0 flex items-end justify-center bg-background/85 p-0 backdrop-blur-sm sm:items-center sm:p-4",
+            stacked ? "z-[120]" : "z-[100]",
+          )}
         >
           <motion.div
             initial={{ y: "100%", opacity: 0 }}
@@ -398,7 +489,7 @@ const SecondCheerSheet = ({ open, onClose }: Props) => {
           >
             {renderHeader()}
             <div className="flex-1 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
-              {result ? renderResult() : renderBody()}
+              {result ? renderResult() : targetInfo ? renderCompose() : renderList()}
             </div>
           </motion.div>
         </motion.div>

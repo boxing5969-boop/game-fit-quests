@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useTutorialState } from "@/hooks/useTutorialState";
@@ -8,6 +8,9 @@ import AvatarUpload from "@/components/AvatarUpload";
 import DisplayModeToggle from "@/components/profile/DisplayModeToggle";
 import TimeCrewCard from "@/components/engagement/TimeCrewCard";
 import { setCommunityAutoPost } from "@/services/communityFeedService";
+import { setCheerNotify } from "@/services/cheerService";
+import { useMyReceivedCheers } from "@/hooks/useSecondCheer";
+import ReceivedCheersSheet from "@/components/engagement/ReceivedCheersSheet";
 import { Switch } from "@/components/ui/switch";
 import XPBar from "@/components/XPBar";
 import CharacterSprite from "@/components/CharacterSprite";
@@ -15,7 +18,7 @@ import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import { ArrowLeft, MapPin, Calendar, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles, Clock } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { isStaffProfile, staffChampionLine, staffDisplayName } from "@/lib/staffDisplay";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
@@ -57,6 +60,24 @@ const MyPage = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [autoPost, setAutoPost] = useState<boolean>((profile as any)?.community_auto_post ?? true);
   const [autoPostSaving, setAutoPostSaving] = useState(false);
+  // 받은 응원함 · 응원 알림 받기 (2026-10-16 응원 업그레이드) — 응원 알림은 /mypage?cheers=1 로 온다
+  const [showCheers, setShowCheers] = useState(false);
+  const [cheerNotify, setCheerNotifyOn] = useState<boolean>((profile as any)?.cheer_notify ?? true);
+  const [cheerNotifySaving, setCheerNotifySaving] = useState(false);
+  // 프로필이 늦게 오면 그 값으로 맞춘다
+  const profileCheerNotify = (profile as any)?.cheer_notify;
+  useEffect(() => {
+    if (typeof profileCheerNotify === "boolean") setCheerNotifyOn(profileCheerNotify);
+  }, [profileCheerNotify]);
+  const { data: receivedCheers } = useMyReceivedCheers();
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("cheers") !== "1") return;
+    setShowCheers(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("cheers");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
   const [birthLoading, setBirthLoading] = useState(false);
   const [birthError, setBirthError] = useState("");
   const [tutorialRestartBusy, setTutorialRestartBusy] = useState(false);
@@ -443,6 +464,22 @@ const MyPage = () => {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
+            {/* 받은 응원함 — 누가 어떤 응원을 보냈는지 · 고마워요 153 (2026-10-16) */}
+            <button onClick={() => setShowCheers(true)} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">📣</span>
+                <span className="text-sm text-foreground">받은 응원</span>
+              </div>
+              <span className="flex items-center gap-1.5">
+                <span className="number-font text-[13px] font-bold text-muted-foreground">{receivedCheers?.total ?? 0}개</span>
+                {(receivedCheers?.unthanked ?? 0) > 0 && (
+                  <span className="number-font min-w-[18px] rounded-full bg-destructive px-1 text-center text-[10px] font-black leading-[18px] text-white">
+                    {receivedCheers!.unthanked}
+                  </span>
+                )}
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </span>
+            </button>
             {/* 153 커뮤니티 '오늘도 한 판' — 출석하면 피드에 내 이름이 올라가는 것 (기본 켬, 2026-10-15) */}
             <label className="flex w-full items-center justify-between border-b border-border px-4 py-4">
               <div className="flex items-center gap-3">
@@ -468,6 +505,33 @@ const MyPage = () => {
                   }
                 }}
                 aria-label="출석하면 커뮤니티에 알리기"
+              />
+            </label>
+            {/* 응원 알림 받기 — 끄면 알림함·휴대폰으로 안 오고 받은 응원함에만 쌓인다 (2026-10-16) */}
+            <label className="flex w-full items-center justify-between border-b border-border px-4 py-4">
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">🔔</span>
+                <span className="min-w-0">
+                  <span className="block text-sm text-foreground">응원 알림 받기</span>
+                  <span className="block text-[11px] text-muted-foreground">동료가 응원을 보내면 알려 드려요 (휴대폰은 하루 3번까지)</span>
+                </span>
+              </div>
+              <Switch
+                checked={cheerNotify}
+                disabled={cheerNotifySaving}
+                onCheckedChange={async (on) => {
+                  setCheerNotifySaving(true);
+                  try {
+                    await setCheerNotify(on);
+                    setCheerNotifyOn(on);
+                    await refreshProfile();
+                  } catch (e) {
+                    toast.error((e as Error).message);
+                  } finally {
+                    setCheerNotifySaving(false);
+                  }
+                }}
+                aria-label="응원 알림 받기"
               />
             </label>
             <button onClick={() => navigate("/survey")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
@@ -509,11 +573,12 @@ const MyPage = () => {
           </div>
         </section>
       </div>
+      <ReceivedCheersSheet open={showCheers} onClose={() => setShowCheers(false)} />
     </div>
   );
 };
 
-const SectionHeader = ({ children }: { children: React.ReactNode }) => (
+const SectionHeader =({ children }: { children: React.ReactNode }) => (
   <h2 className="flex items-center gap-2 px-1 text-[13px] font-bold text-muted-foreground">
     <span className="h-3.5 w-1 rounded-full bg-primary/60" />
     {children}

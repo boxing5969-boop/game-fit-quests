@@ -2,8 +2,8 @@
  * 153 QUEST — 세컨드 응원 hook.
  *
  * send_boxing_cheer RPC 래퍼 + 후보 조회.
- * 본인에게는 보낼 수 없고, 일일 sender 20회 / 같은 receiver 3회 RP 인정
- * 한도가 서버에서 적용된다.
+ * 2026-10-16 업그레이드: 스티커·한마디 응원은 하루 10번, 같은 동료에게 하루 1번 (타이틀매치 박수는 예전 규칙)
+ *   받을 사람 고르기(useCheerCandidates) · 받은 응원함(useMyReceivedCheers) · 고마워요 153(useThankCheer)
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +15,15 @@ import {
   type SendCheerInput,
   type SendCheerResult,
 } from "@/services/boxingEngagementService";
+import {
+  getCheerCandidates,
+  getMemberCheerSummary,
+  getMyReceivedCheers,
+  thankCheer,
+  type CheerCandidates,
+  type MemberCheerSummary,
+  type ReceivedCheers,
+} from "@/services/cheerService";
 import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
 import { useGymRaidContributeTrigger } from "@/hooks/useGymRaid";
 
@@ -44,11 +53,60 @@ export function useSendBoxingCheer() {
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
       qc.invalidateQueries({ queryKey: ["second-cheer"] });
+      qc.invalidateQueries({ queryKey: CHEER_CANDIDATES_KEY });
       qc.invalidateQueries({ queryKey: ["wallet"] });
       // v1.5 16단계: 숨겨진 미션 평가 트리거 (디바운스)
       triggerCheck();
       // v2 21단계: 짐 레이드 contribute (cheer_id 사용)
       triggerContribute("boxing_cheer", result.cheer_id);
     },
+  });
+}
+
+/* ══════════ 2026-10-16 응원 업그레이드 ══════════ */
+
+export const CHEER_CANDIDATES_KEY = ["cheer-candidates"] as const;
+export const RECEIVED_CHEERS_KEY = ["received-cheers"] as const;
+
+/** 받을 사람 고르기 — 지금 운동 중 → 오늘 다녀간 동료 → 최근 출석 순 */
+export function useCheerCandidates(enabled: boolean, search = "") {
+  const { user } = useAuth();
+  const q = search.trim();
+  return useQuery<CheerCandidates>({
+    queryKey: [...CHEER_CANDIDATES_KEY, user?.id ?? "anon", q],
+    enabled: enabled && !!user?.id,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+    queryFn: () => getCheerCandidates(q),
+  });
+}
+
+/** 받은 응원함 */
+export function useMyReceivedCheers(enabled = true) {
+  const { user } = useAuth();
+  return useQuery<ReceivedCheers>({
+    queryKey: [...RECEIVED_CHEERS_KEY, user?.id ?? "anon"],
+    enabled: enabled && !!user?.id,
+    staleTime: 30_000,
+    queryFn: () => getMyReceivedCheers(80),
+  });
+}
+
+/** 고마워요 153 — 보낸 사람에게 알림 */
+export function useThankCheer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (cheerId: string) => thankCheer(cheerId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: RECEIVED_CHEERS_KEY }),
+  });
+}
+
+/** 라이센스 '받은 응원' */
+export function useMemberCheerSummary(userId: string | null | undefined, enabled = true) {
+  return useQuery<MemberCheerSummary>({
+    queryKey: ["member-cheer-summary", userId ?? ""],
+    enabled: enabled && !!userId,
+    staleTime: 60_000,
+    queryFn: () => getMemberCheerSummary(userId!),
   });
 }

@@ -7,7 +7,7 @@
  *   · 기준은 체육관 TV 와 같다: 앱 운동 세션이 켜져 있거나(60분) 오늘 출석 후 120분 안 · 코치님 제외
  *   · 내정보 '출석하면 커뮤니티에 알리기'를 끈 회원은 다른 회원에게 안 보인다 (본인·본사는 보임)
  *   · DB get_working_out_now — 회원은 자기 지점 고정, 본사는 고른 지점 / 전 지점(켜 둔 지점만)
- *   · 카드를 누르면 전체화면 · 회원을 누르면 관리자(코치·지점장·본사)는 회원 상세 정보, 회원은 라이센스
+ *   · 카드를 누르면 전체화면 · 회원을 누르면 지점장·본사는 회원 상세 정보, 그 밖에는 라이센스
  */
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -20,7 +20,6 @@ import NameBadge from "@/components/badges/NameBadge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { supabase } from "@/integrations/supabase/client";
-import { isManagerRole } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
 import { shortBranchName } from "@/services/communityHubService";
 
@@ -113,7 +112,7 @@ const Avatar = ({ m, size }: { m: WorkingOutMember; size: "md" | "lg" }) => (
 interface CardProps {
   /** 본사가 고른 지점 (null = 전 지점). 회원은 서버가 자기 지점으로 고정한다 */
   branch: string | null;
-  /** 회원 계정이 이름을 눌렀을 때 — 라이센스 열기 (관리자는 회원 상세 정보로 바로 간다) */
+  /** 이름을 눌렀을 때 — 라이센스 열기 (지점장·본사는 회원 상세 정보로 바로 간다) */
   onOpenMember: (m: { id: string; nickname: string }) => void;
   title?: string;
   emptyText?: string;
@@ -127,7 +126,8 @@ const WorkingOutNowCard = ({
 }: CardProps) => {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const manager = isManagerRole(role);
+  // 회원 상세로 바로 가는 사람 — 라이센스의 '회원 상세 · 출석 · 메모' 버튼과 같은 기준 (지점장·관리자·전체관리자)
+  const manager = role === "branch_manager" || role === "admin" || role === "super_admin";
   const { data } = useWorkingOutNow(branch);
   const now = useMinuteNow();
   const [full, setFull] = useState(false);
@@ -136,7 +136,7 @@ const WorkingOutNowCard = ({
   const list = data.members;
   const scope = data.all_branches ? "전 지점" : data.branch ? shortBranchName(data.branch) : "";
 
-  // 관리자(코치·지점장·본사) = 회원 상세 정보 · 회원 = 라이센스
+  // 지점장·본사 = 회원 상세 정보 · 그 밖 = 라이센스
   const openMember = (m: WorkingOutMember) => {
     if (manager) {
       setFull(false);

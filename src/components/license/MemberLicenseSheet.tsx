@@ -9,7 +9,7 @@
  * 회원은 같은 지점만, 전체관리자·관리자(대표님 153본사 계정)는 전 지점을 본다.
  * 2026-09-30: 하트 옆 '메시지' 버튼 — 메시지를 보낼 수 있는 사람일 때만 보인다(서버 dm_peer 가 판단).
  */
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Heart, Send, X } from "lucide-react";
@@ -23,6 +23,9 @@ import type { LicenseLikeReason } from "@/services/king153Service";
 import { openCredentialChange } from "@/lib/appEvents";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import CharacterSprite from "@/components/CharacterSprite";
+import SecondCheerSheet from "@/components/engagement/SecondCheerSheet";
+import { useMemberCheerSummary } from "@/hooks/useSecondCheer";
+import { CHEER_BUMP_ICON, cheerStickerImage } from "@/lib/cheerStickers";
 
 /** 하트를 못 누를 때 한 줄 안내 */
 const REASON_TEXT: Record<Exclude<LicenseLikeReason, null>, string> = {
@@ -60,7 +63,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
   useModalDismiss(open, onClose);
   const navigate = useNavigate();
   // 지점장·관리자·전체관리자 — 회원 상세(출석·기록·회원 메모)로 바로 (2026-10-15 대표님)
-  const { role, user } = useAuth();
+  const { role, user, profile } = useAuth();
   const canSeeDetail = role === "branch_manager" || role === "admin" || role === "super_admin";
   const { data, isLoading, isError, error } = useMemberLicense(userId, open);
   const toggle = useToggleNicknameLike();
@@ -75,6 +78,20 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
   };
 
   const canPress = !!data && !busy && (data.can_like || data.liked_by_me);
+
+  // 응원 보내기 · 받은 응원 (2026-10-16 응원 업그레이드) — 같은 지점 동료(본사는 켜 둔 지점)에게. 서버가 다시 확인한다
+  const { data: cheerSummary } = useMemberCheerSummary(userId, open);
+  const [cheerOpen, setCheerOpen] = useState(false);
+  useEffect(() => {
+    if (!open) setCheerOpen(false);
+  }, [open]);
+  const canCheer =
+    !!data && !data.is_me && (role === "admin" || role === "super_admin" || (!!profile?.branch_name && profile.branch_name === data.branch));
+  const cheerTarget = useMemo(
+    () => (data ? { user_id: data.user_id, nickname: data.display, avatar_url: data.avatar_url ?? null, league: data.rank ?? null, branch: data.branch ?? null } : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data?.user_id, data?.display, data?.avatar_url],
+  );
 
   const onHeart = async () => {
     if (!data || !canPress) return;
@@ -117,6 +134,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
   const isMaster40 = rank === "black" && (data?.level ?? 0) === 10 && (data?.bosses_cleared ?? 0) >= 4;
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <motion.div
@@ -213,6 +231,42 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                   </div>
                 )}
 
+                {canCheer && (
+                  <button
+                    type="button"
+                    onClick={() => setCheerOpen(true)}
+                    className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-[15px] font-bold text-emerald-700 transition-transform active:scale-[0.98] dark:text-emerald-300"
+                  >
+                    <img src={CHEER_BUMP_ICON} alt="" className="h-7 w-7 object-contain" />
+                    응원 보내기
+                  </button>
+                )}
+
+                {!!cheerSummary && cheerSummary.total > 0 && (
+                  <div className="mt-3 rounded-xl bg-muted/40 px-3 py-2.5">
+                    <p className="text-[12px] font-bold text-foreground">
+                      받은 응원 <span className="number-font text-primary">{cheerSummary.total}</span>개
+                    </p>
+                    {cheerSummary.top.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {cheerSummary.top.map((t) => {
+                          const img = cheerStickerImage(t.sticker);
+                          return (
+                            <span
+                              key={t.sticker}
+                              className="flex items-center gap-1 rounded-pill bg-card px-2 py-1 text-[11px] font-semibold text-foreground"
+                            >
+                              {img && <img src={img} alt="" className="h-5 w-5 object-contain" />}
+                              {t.sticker}
+                              <span className="number-font font-black text-primary">×{t.count}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {data.like_reason && (
                   data.like_reason === "change_credentials" ? (
                     <button
@@ -258,6 +312,9 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
         </motion.div>
       )}
     </AnimatePresence>
+    {/* 라이센스에서 바로 응원 — 라이센스 위로 (z-[120]) */}
+    <SecondCheerSheet open={cheerOpen} onClose={() => setCheerOpen(false)} initialTarget={cheerTarget} stacked />
+    </>
   );
 };
 

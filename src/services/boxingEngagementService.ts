@@ -288,6 +288,11 @@ export interface SendCheerResult {
   sender_daily_count_today: number;
   limit_reached: boolean;
   message: string;
+  /** 2026-10-16 업그레이드 — 하루 첫 응원 챔피언 머니 +30 */
+  sender_gems_granted?: number;
+  first_today?: boolean;
+  /** 스티커·한마디 응원 오늘 남은 횟수 (하루 10번) */
+  remaining_today?: number | null;
 }
 
 export interface SecondCheerCandidate {

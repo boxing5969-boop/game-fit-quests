@@ -15,7 +15,7 @@ import {
   useBranchesList,
 } from "@/hooks/useRankingData";
 import { supabase } from "@/integrations/supabase/client";
-import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION, toGlobalLevel, isManagerRole } from "@/lib/rankLabels";
+import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION, toGlobalLevel } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
 import MemberLicenseSheet from "@/components/license/MemberLicenseSheet";
 
@@ -431,39 +431,21 @@ const HallOfFamePage = () => {
         userId={licenseMember?.id ?? null}
         onClose={() => setLicenseMember(null)}
         extraAction={
-          licenseMember && (isManagerRole(role) || licenseMember.id !== user?.id) ? (
-          <div className="space-y-2">
-            {/* 코치·지점장·본사는 회원 상세 정보로 (2026-10-16 대표님: "회원이름클릭하면 상세 정보 볼수있게") */}
-            {licenseMember && isManagerRole(role) && (
-              <button
-                type="button"
-                onClick={() => {
-                  const id = licenseMember.id;
-                  setLicenseMember(null);
-                  navigate(`/manager/member/${id}`);
-                }}
-                className="h-11 w-full rounded-xl bg-primary text-[14px] font-bold text-primary-foreground transition-transform active:scale-[0.98]"
-              >
-                회원 상세 정보 보기
-              </button>
-            )}
-            {licenseMember && licenseMember.id !== user?.id && progress?.rival_id !== licenseMember.id ? (
-              <button
-                type="button"
-                onClick={() => {
-                  handleSetRival({ r_user_id: licenseMember.id, r_nickname: licenseMember.nickname });
-                  setLicenseMember(null);
-                }}
-                className="h-11 w-full rounded-xl border border-border bg-card text-[14px] font-bold text-foreground transition-transform active:scale-[0.98]"
-              >
-                🎯 추격 목표로 정하기
-              </button>
-            ) : licenseMember && progress?.rival_id === licenseMember.id ? (
-              <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-center text-[12.5px] font-semibold text-muted-foreground">
-                🎯 지금 추격 중인 회원이에요
-              </p>
-            ) : null}
-          </div>
+          licenseMember && licenseMember.id !== user?.id && progress?.rival_id !== licenseMember.id ? (
+            <button
+              type="button"
+              onClick={() => {
+                handleSetRival({ r_user_id: licenseMember.id, r_nickname: licenseMember.nickname });
+                setLicenseMember(null);
+              }}
+              className="h-11 w-full rounded-xl border border-border bg-card text-[14px] font-bold text-foreground transition-transform active:scale-[0.98]"
+            >
+              🎯 추격 목표로 정하기
+            </button>
+          ) : licenseMember && progress?.rival_id === licenseMember.id ? (
+            <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-center text-[12.5px] font-semibold text-muted-foreground">
+              🎯 지금 추격 중인 회원이에요
+            </p>
           ) : null
         }
       />
