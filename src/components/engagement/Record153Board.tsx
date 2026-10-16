@@ -7,20 +7,26 @@
  *   · 153 체력테스트 = 챌린지 아레나 체력 종목. 종목별 신기록은 계속 바뀐다.
  *   · 2026-10-16: 최초 기록을 세우면 마일리지 10,000 (DB 트리거) · 아레나 칸 → '최초 153 TEST 완주'
  *     기록 칸 목록은 records153Service RECORD_153_FIRSTS (랭킹·명예의 전당 띠와 같이 씀)
+ *   · 2026-10-16: '대회의 역사' — 153복싱짐이 처음 나간 대회의 우승·준우승 (한 칸에 여러 명, 메달 그림은 이름 옆 메달과 같다)
  */
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ScrollText } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MedalBadge } from "@/components/MedalMark";
 import FunChallengeArenaSheet from "@/components/engagement/FunChallengeArenaSheet";
 import {
   RECORD_153_FIRSTS,
   RECORD_153_MILEAGE,
+  RECORD_153_TOURNAMENT,
   RECORDS_153_KEY,
+  sortTournamentHolders,
   useRecords153,
   type Record153First,
   type Record153Section,
+  type Record153TournamentHolder,
 } from "@/services/records153Service";
 
 type Section = Record153Section;
@@ -132,6 +138,30 @@ const Record153Board = ({ onOpenMember }: Props) => {
       ) : (
         <>
           {renderSection("start")}
+
+          {/* 대회의 역사 — 153복싱짐 첫 대회 우승·준우승 (2026-10-16 대표님) */}
+          {data?.tournament && (
+            <section className="space-y-2.5">
+              <h3 className="px-1 text-[13px] font-black tracking-wide text-muted-foreground">대회의 역사</h3>
+              {RECORD_153_TOURNAMENT.map((t) => {
+                const holders = sortTournamentHolders(data.tournament!.holders.filter((h) => h.medal === t.medal));
+                if (holders.length === 0) return null;
+                return (
+                  <TournamentCard
+                    key={t.medal}
+                    medal={t.medal}
+                    title={t.title}
+                    desc={t.desc}
+                    event={data.tournament!.title}
+                    eventDate={data.tournament!.event_date}
+                    holders={holders}
+                    onOpenMember={onOpenMember}
+                  />
+                );
+              })}
+            </section>
+          )}
+
           {renderSection("level")}
           {renderSection("fitness")}
 
@@ -261,6 +291,99 @@ const RecordCard = ({
       {rec.is_me && (
         <span className="shrink-0 rounded-pill bg-primary/15 px-2.5 py-1 text-[11.5px] font-black text-primary">내 기록</span>
       )}
+    </div>
+  );
+};
+
+/** 첫 대회 우승·준우승 — 한 칸에 수상자 여러 명. 가입한 회원은 이름을 누르면 라이센스 */
+const TournamentCard = ({
+  medal,
+  title,
+  desc,
+  event,
+  eventDate,
+  holders,
+  onOpenMember,
+}: {
+  medal: "gold" | "silver";
+  title: string;
+  desc: string;
+  event: string;
+  eventDate: string | null;
+  holders: Record153TournamentHolder[];
+  onOpenMember?: (m: { id: string; nickname: string }) => void;
+}) => {
+  const gold = medal === "gold";
+  const mine = holders.some((h) => h.is_me);
+  return (
+    <div
+      className={cn(
+        "rounded-card border p-4",
+        gold
+          ? "border-[#F6C453]/40 bg-gradient-to-b from-[#F6C453]/10 to-card"
+          : "border-slate-300/70 bg-gradient-to-b from-slate-300/20 to-card dark:border-slate-400/35 dark:from-slate-300/10",
+        mine && "border-primary/60 shadow-glow-soft",
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <MedalBadge kind={medal} className="h-12 w-12" glow title={`${title} 메달`} />
+        <div className="min-w-0 flex-1">
+          <p
+            className={cn(
+              "truncate text-[11px] font-black tracking-wider",
+              gold ? "text-reward" : "text-slate-500 dark:text-slate-300",
+            )}
+          >
+            {event}
+            {eventDate && ` · ${fmtDate(eventDate)}`}
+          </p>
+          <p className="text-[17px] font-black text-foreground">
+            {title}
+            <span className="ml-1.5 text-[13px] font-bold text-muted-foreground">{holders.length}명</span>
+          </p>
+          <p className="text-[12px] font-semibold text-muted-foreground">{desc}</p>
+        </div>
+        {mine && (
+          <span className="shrink-0 rounded-pill bg-primary/15 px-2.5 py-1 text-[11.5px] font-black text-primary">내 기록</span>
+        )}
+      </div>
+
+      <ul className="mt-3 flex flex-wrap gap-1.5">
+        {holders.map((h) => {
+          const inner = (
+            <>
+              <Avatar className="h-6 w-6 shrink-0">
+                {h.avatar_url && <AvatarImage src={h.avatar_url} alt={h.name} className="object-cover" />}
+                <AvatarFallback className="text-[11px] font-black">{h.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <span className="truncate">{h.name}</span>
+              {h.staff && (
+                <span className="rounded-pill bg-muted px-1.5 py-px text-[10.5px] font-bold text-muted-foreground">코치</span>
+              )}
+              {h.is_me && <span className="text-[11px] font-black text-primary">나</span>}
+            </>
+          );
+          const cls = cn(
+            "flex max-w-full items-center gap-1.5 rounded-pill border bg-card py-1 pl-1 pr-2.5 text-[13.5px] font-black text-foreground",
+            h.is_me ? "border-primary/60" : "border-border",
+          );
+          return (
+            <li key={`${h.medal}-${h.user_id ?? h.name}`} className="min-w-0">
+              {h.user_id ? (
+                <button
+                  type="button"
+                  onClick={() => onOpenMember?.({ id: h.user_id!, nickname: h.name })}
+                  className={cn(cls, "active:scale-[0.97]")}
+                >
+                  {inner}
+                </button>
+              ) : (
+                <span className={cls}>{inner}</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 };

@@ -3,6 +3,7 @@
  * DB: supabase/migrations/20261015170000_records_153.sql (get_153_records)
  *   · firsts — 한 번 새겨지면 바뀌지 않는 최초 기록
  *   · bests  — 챌린지 아레나 체력 종목별 지금 최고 기록 (계속 바뀜)
+ *   · tournament — 153복싱짐이 처음 나간 대회의 우승·준우승 (member_medals, 2026-10-16 · 20261016070000_records_153_tournament.sql)
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,9 +32,31 @@ export interface Record153Best {
   is_me: boolean | null;
 }
 
+/** 153복싱짐 첫 대회 수상자 한 명 (2026-10-16 대표님 — 우승·준우승만) */
+export interface Record153TournamentHolder {
+  medal: "gold" | "silver";
+  /** 메달에 새겨진 이름 */
+  name: string;
+  /** 앱 가입 전이면 null — 가입하면 이름으로 이어진다 */
+  user_id: string | null;
+  avatar_url: string | null;
+  /** 코치님 수상 */
+  staff: boolean;
+  is_me: boolean;
+}
+
+export interface Record153Tournament {
+  title: string;
+  branch_name: string | null;
+  event_date: string | null;
+  holders: Record153TournamentHolder[];
+}
+
 export interface Records153 {
   firsts: Record153First[];
   bests: Record153Best[];
+  /** 153복싱짐이 처음 나간 대회의 우승·준우승 — 메달 기록이 없으면 null */
+  tournament: Record153Tournament | null;
   members: number;
 }
 
@@ -66,12 +89,40 @@ export const RECORD_153_FIRSTS: ReadonlyArray<{
   { key: "first_test153", section: "fitness", emoji: "⏱️", title: "최초 153 TEST 완주", desc: "코치님과 공식 153 TEST를 처음 끝까지 마친 회원", empty: "153 TEST를 처음 완주하는 회원이 주인이 돼요" },
 ];
 
+/** 첫 대회 기록 칸 — 우승 · 준우승 (153 레코드 탭 '대회의 역사' · 랭킹/명예의 전당 띠) */
+export const RECORD_153_TOURNAMENT: ReadonlyArray<{ medal: "gold" | "silver"; title: string; desc: string }> = [
+  { medal: "gold", title: "최초 대회 우승", desc: "153복싱짐이 처음 나간 대회에서 금메달" },
+  { medal: "silver", title: "최초 대회 준우승", desc: "153복싱짐이 처음 나간 대회에서 은메달" },
+];
+
+/** 회원 먼저, 코치님은 뒤로 (그 안의 이름 순은 서버가 맞춰 준다) */
+export const sortTournamentHolders = (list: Record153TournamentHolder[]) =>
+  [...list].sort((a, b) => Number(a.staff) - Number(b.staff));
+
+const normalizeTournament = (raw: unknown): Record153Tournament | null => {
+  const t = raw as Partial<Record153Tournament> | null | undefined;
+  if (!t || typeof t !== "object" || !Array.isArray(t.holders) || t.holders.length === 0) return null;
+  return {
+    title: typeof t.title === "string" ? t.title : "",
+    branch_name: typeof t.branch_name === "string" ? t.branch_name : null,
+    event_date: typeof t.event_date === "string" ? t.event_date : null,
+    holders: t.holders
+      .filter((h) => h && (h.medal === "gold" || h.medal === "silver") && typeof h.name === "string")
+      .map((h) => ({ ...h, staff: h.staff === true, is_me: h.is_me === true })),
+  };
+};
+
 export async function getRecords153(): Promise<Records153> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).rpc("get_153_records");
   if (error) throw new Error(translateError(error));
   const d = (data ?? {}) as Partial<Records153>;
-  return { firsts: d.firsts ?? [], bests: d.bests ?? [], members: Number(d.members ?? 0) };
+  return {
+    firsts: d.firsts ?? [],
+    bests: d.bests ?? [],
+    tournament: normalizeTournament(d.tournament),
+    members: Number(d.members ?? 0),
+  };
 }
 
 export function useRecords153(enabled = true) {
