@@ -32,6 +32,10 @@ export interface TodayBirthdays {
 /** 축하 한 줄 — 한 번 누르면 이 문구로 간다 */
 export const DEFAULT_CONGRATS_MESSAGE = "생일 축하해요! 🎉";
 
+/** 축하를 보낸 회원 보상 — 챔피언 머니 (서버 send_birthday_congrats 와 같은 값, 2026-10-16 대표님).
+ *  생일 회원 1명당 하루 한 번 · 코치(지도진)는 보상 없음 */
+export const BIRTHDAY_CONGRATS_REWARD = 100;
+
 const KEY = ["today-birthdays"] as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -76,9 +80,10 @@ export const useSendBirthdayCongrats = () => {
         p_message: input.message ?? DEFAULT_CONGRATS_MESSAGE,
       });
       if (error) throw new Error(translateError(error, "지금은 축하를 보낼 수 없어요"));
-      return data as { ok: boolean; already: boolean; congrats: number };
+      return data as { ok: boolean; already: boolean; congrats: number; reward?: number };
     },
     onSuccess: (res, input) => {
+      if ((res?.reward ?? 0) > 0) void qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.setQueryData<TodayBirthdays>(KEY, (prev) =>
         prev
           ? {

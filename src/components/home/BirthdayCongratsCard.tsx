@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import NameBadge from "@/components/badges/NameBadge";
 import birthdayCake from "@/assets/birthday/cake.webp";
-import { useSendBirthdayCongrats, useTodayBirthdays } from "@/services/birthdayService";
+import { BIRTHDAY_CONGRATS_REWARD, useSendBirthdayCongrats, useTodayBirthdays } from "@/services/birthdayService";
 
 const BirthdayCongratsCard = () => {
   const { user, profile } = useAuth();
@@ -24,6 +24,8 @@ const BirthdayCongratsCard = () => {
 
   const myName = profile?.nickname || profile?.name || "복서";
   const recent = data.me?.recent ?? [];
+  // 코치(지도진)는 보상이 없다 — 안내에서도 뺀다
+  const staff = (profile as { is_staff?: boolean } | null)?.is_staff === true;
 
   return (
     <section
@@ -73,7 +75,9 @@ const BirthdayCongratsCard = () => {
               <div className="min-w-0">
                 <p className="text-[14.5px] font-extrabold leading-snug text-foreground">오늘 생일인 동료가 운동하러 왔어요</p>
                 <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
-                  한 번 누르면 축하가 가고, 체육관 TV 생일 카드에 🎉 숫자가 올라가요
+                  {staff
+                    ? "한 번 누르면 축하가 가고, 체육관 TV 생일 카드에 🎉 숫자가 올라가요"
+                    : `축하를 보내면 💵 +${BIRTHDAY_CONGRATS_REWARD} 챔피언 머니 · 체육관 TV 생일 카드에 🎉 숫자가 올라가요`}
                 </p>
               </div>
             </div>
@@ -103,7 +107,13 @@ const BirthdayCongratsCard = () => {
                           { receiverId: m.user_id },
                           {
                             onSuccess: (r) =>
-                              toast.success(r?.already ? "이미 축하했어요" : `${m.name}님께 생일 축하를 보냈어요 🎉`),
+                              toast.success(
+                                r?.already
+                                  ? "이미 축하했어요"
+                                  : (r?.reward ?? 0) > 0
+                                    ? `${m.name}님께 생일 축하를 보냈어요 🎉 · 💵 +${(r?.reward ?? 0).toLocaleString("ko-KR")} 챔피언 머니`
+                                    : `${m.name}님께 생일 축하를 보냈어요 🎉`,
+                              ),
                             onError: (e) => toast.error((e as Error).message),
                           },
                         )
