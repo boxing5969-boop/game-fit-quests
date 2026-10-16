@@ -449,7 +449,7 @@ const MyPage = () => {
                 <span className="text-muted-foreground">🥊</span>
                 <span className="min-w-0">
                   <span className="block text-sm text-foreground">출석하면 커뮤니티에 알리기</span>
-                  <span className="block text-[11px] text-muted-foreground">'오늘도 한 판' 카드에 내 이름이 올라가요</span>
+                  <span className="block text-[11px] text-muted-foreground">'오늘도 한 판' 카드와 랭킹 '지금 운동 중'에 내 이름이 올라가요</span>
                 </span>
               </div>
               <Switch
