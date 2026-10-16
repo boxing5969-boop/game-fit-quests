@@ -59,6 +59,8 @@ export interface MockActiveMember {
   partsJson?: { style?: string; customization?: Record<string, unknown> } | null;
   /** 생일 연출 미리보기 (테스트 패널 '생일 회원', 2026-10-16) */
   birthday?: boolean;
+  /** 생일 축하 수 미리보기 */
+  birthdayCongrats?: number;
 }
 
 let counter = 0;

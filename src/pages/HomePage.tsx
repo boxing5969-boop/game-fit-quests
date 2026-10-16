@@ -59,6 +59,8 @@ import DmHeaderButton from "@/components/dm/DmHeaderButton";
 import NotificationBellButton from "@/components/notifications/NotificationBellButton";
 import PushOptInCard from "@/components/notifications/PushOptInCard";
 import SurveyNudgeCard from "@/components/survey/SurveyNudgeCard";
+import BirthdayCongratsCard from "@/components/home/BirthdayCongratsCard";
+import { useTodayBirthdays } from "@/services/birthdayService";
 import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
 import TitleMatchInvitePopup from "@/components/titlematch/TitleMatchInvitePopup";
 import StoryRpgEntryCard from "@/components/story-rpg/StoryRpgEntryCard";
@@ -115,6 +117,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   // 내 라이센스의 받은 하트 수 (MY복서 카드 아래 줄) — 지도진 카드는 하트·닉네임 바꾸기가 없다
   // 내 카드가 첫 화면(/home)에도 그려지므로 두 보기 모두에서 하트 수를 읽는다 (2026-10-10)
   const { data: myLicense } = useMemberLicense(!staffCard ? user?.id : null);
+  // 🎂 오늘 내 생일이면 내 카드도 오로라·HAPPY BIRTHDAY + 받은 축하 수 (2026-10-16 — 아래 BirthdayCongratsCard 와 같은 캐시)
+  const { data: todayBirthdays } = useTodayBirthdays(!!user);
+  const myBirthday = staffCard ? null : todayBirthdays?.me ?? null;
   const [likeListOpen, setLikeListOpen] = useState(false);
   const [nickEditOpen, setNickEditOpen] = useState(false);
   const activitySession = useActivitySession(user?.id, profile?.branch_name);
@@ -457,6 +462,15 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         onPromotionClick={staffCard ? undefined : () => navigate("/rank-up")}
         isMaster={isMaster40}
         masterTitle={masterDef?.title}
+        birthday={!!myBirthday}
+        birthdayCongrats={myBirthday?.congrats ?? 0}
+        birthdayLine={
+          myBirthday
+            ? myBirthday.congrats > 0
+              ? `생일 축하해요! 받은 축하 ${myBirthday.congrats.toLocaleString("ko-KR")}개`
+              : "생일 축하해요! 오늘은 회원님의 날이에요"
+            : undefined
+        }
       />
     );
   };
@@ -618,6 +632,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         //     (2026-09-29 "첫 화면 = 전체 메뉴만" 결정은 이 결정으로 대체)
         <div className="space-y-5">
           {renderHero(true)}
+          {/* 🎂 오늘 생일인 동료가 운동하러 왔거나 오늘 내 생일일 때만 보인다 (2026-10-16 대표님) */}
+          <BirthdayCongratsCard />
           {renderTodayAction(true)}
           {renderRankingPreview(true)}
 

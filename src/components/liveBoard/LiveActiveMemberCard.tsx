@@ -31,8 +31,10 @@ export interface LiveActiveMember {
   partsJson?: { style?: string; customization?: Record<string, unknown> } | null;
   /** PT 회원 — 이름 옆 파란 배지 (앱 라이선스 카드와 같다). TV 는 get_live_board_pt_members 로 받는다 (2026-10-14) */
   pt?: boolean;
-  /** 🎂 오늘 생일 — 오로라·황금 버튼·HAPPY BIRTHDAY. TV 는 get_live_board_birthday_members 로 받는다 (2026-10-16) */
+  /** 🎂 오늘 생일 — 오로라·황금 버튼·HAPPY BIRTHDAY. TV 는 get_live_board_birthdays 로 받는다 (2026-10-16) */
   birthday?: boolean;
+  /** 앱에서 받은 생일 축하 수 — 카드에 🎉 N */
+  birthdayCongrats?: number;
 }
 
 export type LiveCardSize = "spotlight" | "medium" | "compact";
@@ -160,6 +162,7 @@ const LiveActiveMemberCard = ({
         isLive
         pt={member.pt === true}
         birthday={member.birthday === true}
+        birthdayCongrats={member.birthdayCongrats ?? 0}
         isFresh={isFresh}
         elapsedMinutes={elapsedMinutes}
       />

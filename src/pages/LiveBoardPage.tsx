@@ -125,6 +125,8 @@ interface ActiveMember {
   pt?: boolean;
   /** 🎂 오늘 생일 — 오로라·황금 버튼·HAPPY BIRTHDAY (birthdayIds 에서 채운다, 2026-10-16) */
   birthday?: boolean;
+  /** 앱에서 받은 생일 축하 수 */
+  birthdayCongrats?: number;
 }
 
 /**
@@ -340,19 +342,29 @@ const LiveBoardPage = () => {
    * (자정이 지나면 다음 날 생일로 바뀐다). 입장 환영 화면은 입실하는 순간 따로 확인한다(triggerPopup).
    */
   const [birthdayIds, setBirthdayIds] = useState<Set<string>>(() => new Set());
+  /** 앱 '축하하기'로 받은 생일 축하 수 — 카드 🎉 N (2026-10-16 대표님: "진행") */
+  const [birthdayCongrats, setBirthdayCongrats] = useState<Record<string, number>>({});
   const visitKey = useMemo(() => dailyVisits.map((v) => v.user_id).sort().join(","), [dailyVisits]);
+  // 생일 회원이 와 있으면 1분마다 다시 읽는다 — 앱에서 보낸 축하가 TV 에 곧바로 쌓여 보이게
+  const birthdaySlot = birthdayIds.size > 0 ? Math.floor(currentTime.getTime() / 60_000) : 0;
   useEffect(() => {
     if (!branchName) return;
     let cancelled = false;
     void (async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)("get_live_board_birthday_members", { _branch_name: branchName });
+      const { data, error } = await (supabase.rpc as any)("get_live_board_birthdays", { _branch_name: branchName });
       if (cancelled || error || !Array.isArray(data)) return;
-      const next = new Set((data as { user_id: string }[]).map((r) => r.user_id));
+      const rows = data as { user_id: string; congrats: number | null }[];
+      const next = new Set(rows.map((r) => r.user_id));
       setBirthdayIds((prev) => (prev.size === next.size && [...next].every((id) => prev.has(id)) ? prev : next));
+      const counts: Record<string, number> = Object.fromEntries(rows.map((r) => [r.user_id, Number(r.congrats) || 0]));
+      setBirthdayCongrats((prev) => {
+        const keys = Object.keys(counts);
+        return keys.length === Object.keys(prev).length && keys.every((k) => prev[k] === counts[k]) ? prev : counts;
+      });
     })();
     return () => { cancelled = true; };
-  }, [branchName, presentKey, visitKey, ptRefreshSlot]);
+  }, [branchName, presentKey, visitKey, ptRefreshSlot, birthdaySlot]);
 
   /** 앱 운동세션 + 얼굴 출석 + mock 을 합쳐 시각효과에 전달 */
   //   회원이 앱에서 고른 '카드에 보일 것'을 따른다 — 사진만이면 캐릭터를 빼고, 캐릭터만이면(캐릭터가 있을 때) 사진을 뺀다
@@ -364,10 +376,10 @@ const LiveBoardPage = () => {
         let next: ActiveMember = m;
         if (pref === "photo" && next.partsJson) next = { ...next, partsJson: null };
         if (pref === "character" && next.partsJson && next.avatar_url) next = { ...next, avatar_url: null };
-        if (birthdayIds.has(m.user_id)) next = { ...next, birthday: true };
+        if (birthdayIds.has(m.user_id)) next = { ...next, birthday: true, birthdayCongrats: birthdayCongrats[m.user_id] ?? 0 };
         return ptIds.has(m.user_id) ? { ...next, pt: true } : next;
       }),
-    [activeMembers, checkinMembers, mockMembers, staffUserIds, ptIds, displayPrefMap, birthdayIds],
+    [activeMembers, checkinMembers, mockMembers, staffUserIds, ptIds, displayPrefMap, birthdayIds, birthdayCongrats],
   );
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
   const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
@@ -764,7 +776,7 @@ const LiveBoardPage = () => {
         if (!branchName) return false;
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { data } = await (supabase.rpc as any)("get_live_board_birthday_members", { _branch_name: branchName });
+          const { data } = await (supabase.rpc as any)("get_live_board_birthdays", { _branch_name: branchName });
           return Array.isArray(data) && (data as { user_id: string }[]).some((r) => r.user_id === event.user_id);
         } catch {
           return false;
@@ -1048,9 +1060,10 @@ const LiveBoardPage = () => {
   //   '실제 회원 미리보기'로 올린 사진·캐릭터 회원이 있으면 그 회원으로(진짜 모습), 없으면 가상 회원 1명.
   const handleMockBirthday = useCallback(() => {
     const real = mockMembers.find((m) => !m.birthday && (m.avatar_url || m.partsJson));
+    // 축하 수는 미리보기용 예시(3개) — 실제로는 앱에서 받은 수가 1분마다 올라간다
     const target: MockActiveMember = real
-      ? { ...real, birthday: true, startedAt: Date.now() }
-      : { ...generateMockMember({ fresh: true, usedNames: new Set(mockMembers.map((m) => m.name)) }), birthday: true };
+      ? { ...real, birthday: true, birthdayCongrats: 3, startedAt: Date.now() }
+      : { ...generateMockMember({ fresh: true, usedNames: new Set(mockMembers.map((m) => m.name)) }), birthday: true, birthdayCongrats: 3 };
     setMockMembers((prev) => (real ? prev.map((m) => (m.id === real.id ? target : m)) : [...prev, target]));
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
     popupSeqRef.current += 1; // 읽는 중이던 실제 입실 환영이 이 미리보기를 덮지 않게
@@ -1325,6 +1338,10 @@ const LiveBoardPage = () => {
                         </p>
                         <p className="mt-3 text-2xl font-black text-amber-100" style={{ textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>
                           🎉 오늘 생일이에요 · 다 같이 축하해 주세요! 👏
+                        </p>
+                        {/* 앱 '축하하기' 안내 — 보낸 축하는 이 회원 카드에 '🎉 N'으로 쌓인다 */}
+                        <p className="mt-2 text-lg font-bold text-white/70">
+                          📱 마이복서153 앱 홈에서 <span className="font-black text-amber-200">🎂 축하하기</span>를 눌러 주세요
                         </p>
                       </>
                     ) : (
@@ -1603,6 +1620,11 @@ const LiveBoardPage = () => {
                           <NameBadge league={m.league} birthday={m.birthday} className="h-7 w-7" />
                           {m.birthday && (
                             <img src={birthdayCake} alt="오늘 생일" draggable={false} className="h-8 w-8 shrink-0 select-none" />
+                          )}
+                          {m.birthday && (m.birthdayCongrats ?? 0) > 0 && (
+                            <span className="shrink-0 rounded-full bg-amber-400/20 px-2 py-0.5 text-base font-black tabular-nums text-amber-200">
+                              🎉 {m.birthdayCongrats}
+                            </span>
                           )}
                           <MedalMark animated userId={m.user_id} className="text-2xl" />
                           {m.pt && (

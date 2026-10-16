@@ -198,6 +198,10 @@ export interface BoxerLicenseCardProps {
   /** 🎂 오늘 생일 (라이브보드, 2026-10-16) — 오로라 테두리·광채, 이름 옆 황금 버튼, 머리줄 HAPPY BIRTHDAY,
    *  사진 모서리 케이크, (spotlight 이상) 아래 줄 "생일 축하해 주세요". 카드 높이는 그대로 (자동 크기 그리드가 잰다) */
   birthday?: boolean;
+  /** 오늘 받은 생일 축하 수 (앱 '축하하기', 2026-10-16) — 머리줄 🎉 N · 아래 줄 '축하 N개' */
+  birthdayCongrats?: number;
+  /** 생일 아래 줄 문구를 바꾼다 (내 카드: "생일 축하해요! 받은 축하 N개") */
+  birthdayLine?: string;
 }
 
 const BoxerLicenseCard = ({
@@ -230,9 +234,16 @@ const BoxerLicenseCard = ({
   photoBusy = false,
   photoBadge,
   birthday: birthdayProp = false,
+  birthdayCongrats = 0,
+  birthdayLine,
 }: BoxerLicenseCardProps) => {
   // 지도진 카드에는 생일 연출을 하지 않는다 (회원 카드 전용)
   const birthday = birthdayProp && !staff;
+  const bdayFooter =
+    birthdayLine ??
+    (birthdayCongrats > 0
+      ? `축하 ${birthdayCongrats.toLocaleString("ko-KR")}개 · 앱에서 축하해 주세요!`
+      : "오늘 생일이에요 · 앱에서 축하해 주세요!");
   const rankKey = (league || "white").toLowerCase();
   const lic = licenseNumber(userId);
   const issuedFmt = formatIssueDate(issueDate);
@@ -387,9 +398,16 @@ const BoxerLicenseCard = ({
             )}
           </div>
           {birthday ? (
-            // 번호와 같은 글자 크기 — 머리줄 높이가 그대로라 카드 키가 같다
-            <span className={`bday-gold-text font-black uppercase tracking-[0.2em] ${cfg.licText}`}>
-              ✦ HAPPY BIRTHDAY ✦
+            // 번호와 같은 글자 크기 — 머리줄 높이가 그대로라 카드 키가 같다. 받은 축하가 있으면 앞에 🎉 N
+            <span className="flex items-center gap-1.5">
+              {birthdayCongrats > 0 && (
+                <span className={`font-black tabular-nums text-amber-200 ${cfg.licText}`}>
+                  🎉 {birthdayCongrats.toLocaleString("ko-KR")}
+                </span>
+              )}
+              <span className={`bday-gold-text font-black uppercase tracking-[0.2em] ${cfg.licText}`}>
+                ✦ HAPPY BIRTHDAY ✦
+              </span>
             </span>
           ) : (
             <span className={`font-mono font-black ${cfg.licText} text-gray-400 tabular-nums`}>
@@ -744,7 +762,7 @@ const BoxerLicenseCard = ({
               // 생일 — 다른 회원님들께 축하를 부탁하는 한 줄 (같은 높이: 이모지 text-base 한 칸)
               <div className="flex min-w-0 items-center gap-1">
                 <span className="text-base">🎉</span>
-                <span className={`truncate font-black text-amber-200 ${cfg.metaText}`}>오늘 생일이에요 · 축하해 주세요!</span>
+                <span className={`truncate font-black text-amber-200 ${cfg.metaText}`}>{bdayFooter}</span>
               </div>
             ) : (
               <div className="flex items-center gap-1">
@@ -776,7 +794,8 @@ const BoxerLicenseCard = ({
                 />
                 <span className="text-[12px] font-black tabular-nums">{likes.toLocaleString("ko-KR")}</span>
               </button>
-            ) : (
+            ) : birthday ? null : (
+              // 생일이면 축하 문구가 길어 이 자리를 비워 준다
               <span className={`font-mono ${cfg.licText} text-gray-500 uppercase`}>
                 · OFFICIAL ·
               </span>
