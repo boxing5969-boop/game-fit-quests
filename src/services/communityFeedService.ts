@@ -2,6 +2,7 @@
  * 153 커뮤니티 — 모두의 피드 · 153 반응 (2026-10-15 대표님: "커뮤니티 개편안대로 — 반응 이름은 153").
  *
  * 서버(supabase/migrations/20261015130000_community_feed_153.sql)가 볼 수 있는 글만 내려준다.
+ * 본사 계정은 모든 지점의 모든 글(짝꿍만 · 숨긴 글 포함, 30일)이 온다 — 20261016080000_hq_sees_all_community.sql
  *   · get_community_feed       — 코치 이번 주 목표(고정) · 승급 축하(고정) · 오늘 운동 한 줄 · 오늘도 한 판(출석)
  *   · toggle_community_153     — 153 누르기/취소 (내 글에는 못 누름)
  *   · set_journal_entry_options — 한 줄 공개 범위(지점 모두/짝꿍만) + 사진
@@ -49,6 +50,10 @@ export interface FeedItem {
   promoRank: string | null;
   promoLevel: number | null;
   isMine: boolean;
+  /** 글쓴이 지점 — 본사 보기에서 글마다 붙인다 */
+  branch?: string | null;
+  /** 숨긴 글 (본사 보기에서만 내려온다) */
+  hidden?: boolean;
   comments: number;
   count153: number;
   reacted: boolean;
@@ -57,6 +62,8 @@ export interface FeedItem {
 export interface CommunityFeed {
   success: boolean;
   branch: string | null;
+  /** 본사(전체관리자·관리자) — 모든 지점 · 짝꿍만 · 숨긴 글까지 (2026-10-16 대표님, 20261016080000_hq_sees_all_community.sql) */
+  all_branches?: boolean;
   is_staff: boolean;
   items: FeedItem[];
 }

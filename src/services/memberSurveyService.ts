@@ -147,7 +147,8 @@ export async function submitFeedback(input: FeedbackInput): Promise<{ drawEntere
 
 // ── 참여 보상 (마이복서153 DB) ───────────────────────────────
 export type SurveyRewardKind = "satisfaction" | "feedback";
-export const SURVEY_REWARD: Record<SurveyRewardKind, number> = { satisfaction: 300, feedback: 100 };
+/** 참여 보상 챔피언 머니 (2026-10-16 대표님: 만족도 조사 3,000 · 고객의 소리 5,000 — 서버 claim_survey_reward 와 같은 값) */
+export const SURVEY_REWARD: Record<SurveyRewardKind, number> = { satisfaction: 3000, feedback: 5000 };
 
 export async function getMySurveyRewards(): Promise<Record<SurveyRewardKind, boolean>> {
   const { data } = await (supabase as any).rpc("get_my_survey_rewards");

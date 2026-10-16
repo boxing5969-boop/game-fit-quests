@@ -418,16 +418,20 @@ export async function submitChampionJournalEntry(
 }
 
 // ──────────────────────────────────────────────────────────────────
-// 6b. getRecentChampionJournalEntries — RLS 가 본인 것만 SELECT 허용
+// 6b. getRecentChampionJournalEntries — 내 글만 (user_id 로 거른다)
+//     RLS 는 짝꿍·관리자·같은 지점 지점장 글도 허용해서, 거르지 않으면 '최근 기록'에 남의 글이 섞였다 (2026-10-16 수정)
 // ──────────────────────────────────────────────────────────────────
 
 export async function getRecentChampionJournalEntries(
   limit = 3,
+  userId?: string,
 ): Promise<ChampionJournalEntryRow[]> {
+  if (!userId) return [];
   const { data, error } = (await sbFrom("champion_journal_entries")
     .select(
       "id, user_id, prompt, content, mood, quest_xp_granted, gems_granted, created_at",
     )
+    .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit)) as SbResult<ChampionJournalEntryRow[]>;
 

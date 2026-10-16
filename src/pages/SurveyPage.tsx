@@ -23,7 +23,7 @@ import {
 
 // ── 회원 설문 (2026-10-15 대표님: "일일경영리포트에서 QR로 하는 설문·만족도 조사를 앱에 넣어줘") ──
 // 만족도 조사 + 고객의 소리(경품 추첨). 응답은 경영리포트로 바로 간다 — memberSurveyService 참고.
-// 참여 보상: 만족도 조사 +300 · 고객의 소리 +100 챔피언 머니 (종류별 한 달 한 번).
+// 참여 보상: 만족도 조사 +3,000 · 고객의 소리 +5,000 챔피언 머니 (종류별 한 달 한 번, 2026-10-16 대표님).
 
 type View = "hub" | "satisfaction" | "feedback" | "done";
 
@@ -445,7 +445,7 @@ const SurveyPage = () => {
       <span className="rounded-pill bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">이번 달 참여 완료 ✓</span>
     ) : (
       <span className="rounded-pill bg-amber-400/15 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-300">
-        💵 +{SURVEY_REWARD[kind]}
+        💵 +{SURVEY_REWARD[kind].toLocaleString()}
       </span>
     );
 

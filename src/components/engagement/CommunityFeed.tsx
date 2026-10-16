@@ -4,11 +4,14 @@
  * 순서: 코치 이번 주 목표(고정) → 승급 축하(고정) → 오늘도 한 판(오늘 출석한 동료, 한 장으로 묶음) → 새 식구 → 오늘 운동 한 줄.
  * 반응은 '153' 하나. 내 글에는 누를 수 없다. 153·댓글에는 보상이 없다 (공식 레벨업과 무관).
  * 이번 주 153을 가장 많이 보낸 회원이 라이브보드 TV 의 '이번 주 153왕' — 받은 수가 아니라 보낸 수.
+ * 본사 보기 (2026-10-16 대표님: "회원이 쓴 커뮤니티 글 내가 확인할수있나? 나는 모든 활동을 확인할수있게해줘"):
+ *   전체관리자·관리자는 모든 지점의 모든 글(짝꿍만 · 숨긴 글 포함, 최근 30일) — 지점 골라 보기, 이름을 누르면 회원 상세(전체 활동).
  */
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Flag, Lock, MessageCircle, MoreHorizontal, PartyPopper, Sprout, Target, EyeOff } from "lucide-react";
+import { Building2, Flag, Lock, MessageCircle, MoreHorizontal, PartyPopper, Sprout, Target, EyeOff } from "lucide-react";
 
 import {
   getCommunityFeed,
@@ -22,6 +25,8 @@ import {
 } from "@/services/communityFeedService";
 import type { PartnerJournalFeedRow } from "@/services/championJournalPartnerService";
 import { RANK_LABELS } from "@/lib/rankLabels";
+import { shortBranchName } from "@/services/communityHubService";
+import { useAuth } from "@/contexts/AuthContext";
 import NameBadge from "@/components/badges/NameBadge";
 import PartnerJournalCommentSheet from "./PartnerJournalCommentSheet";
 
@@ -74,15 +79,21 @@ const Avatar = ({ item, size = 36 }: { item: FeedItem; size?: number }) => (
 
 const CommunityFeed = () => {
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { role } = useAuth();
+  // 본사는 모든 지점 글이 와서 더 많이 받는다 (서버가 본사인지 다시 확인한다)
+  const hqRole = role === "super_admin" || role === "admin";
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: FEED_KEY,
-    queryFn: () => getCommunityFeed(40),
+    queryFn: () => getCommunityFeed(hqRole ? 150 : 40),
     staleTime: 30_000,
   });
   const [openEntry, setOpenEntry] = useState<PartnerJournalFeedRow | null>(null);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [showAllCheckins, setShowAllCheckins] = useState(false);
   const [goalDraft, setGoalDraft] = useState<string | null>(null);
+  const [branchFilter, setBranchFilter] = useState<string | null>(null);
+  const allBranches = !!data?.all_branches;
 
   const react = useMutation({
     mutationFn: (i: FeedItem) => toggle153(reactTargetOf(i.type), i.id),
@@ -135,7 +146,18 @@ const CommunityFeed = () => {
     onError: (e) => toast.error((e as Error).message),
   });
 
-  const items = data?.items ?? [];
+  const allItems = data?.items ?? [];
+  // 본사 보기 — 지점별 글 수 (지점 칩)
+  const branchChips = useMemo(() => {
+    if (!allBranches) return [];
+    const m = new Map<string, number>();
+    for (const it of allItems) if (it.branch) m.set(it.branch, (m.get(it.branch) ?? 0) + 1);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }, [allBranches, allItems]);
+  const items = useMemo(
+    () => (allBranches && branchFilter ? allItems.filter((i) => i.branch === branchFilter) : allItems),
+    [allBranches, branchFilter, allItems],
+  );
   const { pinned, checkins, newbies, posts } = useMemo(() => {
     const p: FeedItem[] = [];
     const c: FeedItem[] = [];
@@ -193,7 +215,7 @@ const CommunityFeed = () => {
         </button>
         {menuFor === i.id && (
           <div className="absolute right-0 top-8 z-10 w-32 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
-            {i.isMine || data?.is_staff ? (
+            {(i.isMine || data?.is_staff) && !i.hidden ? (
               <button
                 type="button"
                 onClick={() => {
@@ -223,9 +245,26 @@ const CommunityFeed = () => {
     </div>
   );
 
+  /** 본사 보기 — 글마다 지점 이름 */
+  const branchTag = (i: FeedItem) =>
+    allBranches && i.branch ? (
+      <span className="shrink-0 text-[10.5px] font-bold text-muted-foreground">· {shortBranchName(i.branch)}</span>
+    ) : null;
+
   const nameLine = (i: FeedItem) => (
     <div className="flex min-w-0 items-center gap-1">
-      <span className="truncate text-[13px] font-bold text-foreground">{i.nickname}</span>
+      {allBranches ? (
+        <button
+          type="button"
+          onClick={() => navigate(`/manager/member/${i.userId}`)}
+          className="truncate text-left text-[13px] font-bold text-foreground underline decoration-border underline-offset-2 active:opacity-70"
+          aria-label={`${i.nickname} 회원 상세 · 전체 활동 보기`}
+        >
+          {i.nickname}
+        </button>
+      ) : (
+        <span className="truncate text-[13px] font-bold text-foreground">{i.nickname}</span>
+      )}
       {i.isStaff ? (
         <span className="shrink-0 rounded-pill bg-yellow-500/15 px-1.5 py-0.5 text-[9.5px] font-black text-yellow-600">
           {i.staffTitle || "코치"}
@@ -236,6 +275,7 @@ const CommunityFeed = () => {
           <span className="number-font shrink-0 text-[10.5px] font-bold text-muted-foreground">Lv.{i.level}</span>
         </>
       )}
+      {branchTag(i)}
     </div>
   );
 
@@ -252,7 +292,7 @@ const CommunityFeed = () => {
       </div>
     );
   }
-  if (!data?.branch) {
+  if (!data?.branch && !allBranches) {
     return (
       <div className="rounded-card border border-dashed border-border bg-muted/30 px-4 py-5 text-center text-[12px] text-muted-foreground">
         지점이 정해지면 같은 지점 동료들의 피드가 보여요.
@@ -262,8 +302,37 @@ const CommunityFeed = () => {
 
   return (
     <div className="space-y-3">
-      {/* 코치님 — 이번 주 목표 올리기 */}
-      {data.is_staff && (
+      {/* 본사 보기 — 모든 지점 · 모든 글 (짝꿍만 · 숨긴 글 포함) */}
+      {allBranches && (
+        <div className="rounded-card border border-primary/30 bg-primary/5 p-3">
+          <p className="flex items-center gap-1.5 text-[12.5px] font-black text-foreground">
+            <Building2 className="h-4 w-4 text-primary" /> 본사 보기 — 모든 지점의 모든 글
+          </p>
+          <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+            짝꿍만 공개한 글 · 숨긴 글까지 최근 30일이 보여요. 이름을 누르면 그 회원의 전체 활동(회원 상세)으로 가요.
+          </p>
+          {branchChips.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {[{ b: null as string | null, n: allItems.length }, ...branchChips.map(([b, n]) => ({ b, n }))].map(({ b, n }) => (
+                <button
+                  key={b ?? "all"}
+                  type="button"
+                  onClick={() => setBranchFilter(b)}
+                  aria-pressed={branchFilter === b}
+                  className={`rounded-pill border px-2.5 py-1 text-[11.5px] font-bold ${
+                    branchFilter === b ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"
+                  }`}
+                >
+                  {b ? shortBranchName(b) : "전체"} {n}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 코치님 — 이번 주 목표 올리기 (본사 보기에서는 지점이 섞여 있어 감춘다) */}
+      {data.is_staff && !allBranches && (
         <div className="rounded-card border border-yellow-500/30 bg-yellow-500/5 p-3">
           {goalDraft === null ? (
             <button
@@ -311,6 +380,8 @@ const CommunityFeed = () => {
           <article key={`g-${i.id}`} className="rounded-card border-2 border-yellow-500/40 bg-yellow-500/5 p-3.5">
             <p className="flex items-center gap-1.5 text-[10.5px] font-black tracking-wider text-yellow-600">
               <Target className="h-3.5 w-3.5" /> 이번 주 목표 · {i.nickname} {i.staffTitle || "코치"}
+              {allBranches && i.branch ? ` · ${shortBranchName(i.branch)}` : ""}
+              {i.hidden && " · 숨긴 글"}
             </p>
             <p className="mt-1.5 whitespace-pre-wrap text-[14px] font-bold leading-relaxed text-foreground">{i.content}</p>
             {actions(i)}
@@ -322,6 +393,7 @@ const CommunityFeed = () => {
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1 text-[10.5px] font-black tracking-wider text-primary">
                   <PartyPopper className="h-3.5 w-3.5" /> 승급 축하 · {timeAgo(i.at)}
+                  {allBranches && i.branch ? ` · ${shortBranchName(i.branch)}` : ""}
                 </p>
                 <p className="mt-0.5 text-[13.5px] font-bold text-foreground">
                   {i.nickname}님 레벨 {i.promoLevel} 통과!
@@ -347,7 +419,9 @@ const CommunityFeed = () => {
       {checkins.length > 0 && (
         <article className="rounded-card border border-border bg-card p-3.5">
           <p className="text-[10.5px] font-black tracking-wider text-primary">오늘도 한 판</p>
-          <p className="mt-0.5 text-[13px] font-bold text-foreground">오늘 {checkins.length}명이 왔어요</p>
+          <p className="mt-0.5 text-[13px] font-bold text-foreground">
+            오늘 {checkins.length}명이 왔어요{allBranches ? (branchFilter ? ` · ${shortBranchName(branchFilter)}` : " · 전 지점") : ""}
+          </p>
           <div className="mt-2.5 flex flex-wrap gap-1.5">
             {(showAllCheckins ? checkins : checkins.slice(0, 12)).map((i) => (
               <span
@@ -402,6 +476,11 @@ const CommunityFeed = () => {
                     · <Lock className="h-3 w-3" /> 짝꿍만
                   </span>
                 )}
+                {i.hidden && (
+                  <span className="inline-flex items-center gap-0.5 font-bold text-destructive">
+                    · <EyeOff className="h-3 w-3" /> 숨긴 글
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -421,8 +500,10 @@ const CommunityFeed = () => {
 
       {posts.length === 0 && (
         <div className="rounded-card border border-dashed border-border bg-muted/30 px-4 py-5 text-center">
-          <p className="text-[12.5px] font-bold text-foreground">아직 올라온 한 줄이 없어요</p>
-          <p className="mt-1 text-[11.5px] text-muted-foreground">오늘 운동을 한 줄로 남기고 첫 153을 받아보세요.</p>
+          <p className="text-[12.5px] font-bold text-foreground">
+            {allBranches ? "최근 30일 올라온 글이 없어요" : "아직 올라온 한 줄이 없어요"}
+          </p>
+          {!allBranches && <p className="mt-1 text-[11.5px] text-muted-foreground">오늘 운동을 한 줄로 남기고 첫 153을 받아보세요.</p>}
         </div>
       )}
 

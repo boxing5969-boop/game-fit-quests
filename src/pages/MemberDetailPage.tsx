@@ -111,6 +111,20 @@ const MemberDetailPage = () => {
     },
   });
 
+  // 앱·커뮤니티 활동 — 본사만 (2026-10-16 대표님: "나는 모든 활동을 확인할수있게해줘", admin_member_activity)
+  const isHq = role === "super_admin" || role === "admin";
+  const [actShowAll, setActShowAll] = useState(false);
+  const { data: appActivity, isLoading: appActivityLoading } = useQuery({
+    queryKey: ["member-app-activity", memberId],
+    enabled: !!memberId && isHq && activeTab === "activity",
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("admin_member_activity", { p_user_id: memberId, p_limit: 200 });
+      if (error) throw error;
+      return ((data?.items ?? []) as AppActivityItem[]).filter((x) => x && x.at);
+    },
+  });
+
   // 회원 메모 — 지점장·관리자·전체관리자만 (2026-10-15 대표님: 회원 본인과 다른 사람은 못 보는 회원 특성 기록)
   const canMemo = role === "branch_manager" || role === "admin" || role === "super_admin";
   const { data: notes } = useQuery({
@@ -140,6 +154,8 @@ const MemberDetailPage = () => {
   const [mlPay, setMlPay] = useState("");
   const [mlUse, setMlUse] = useState("");
   const [mlMemo, setMlMemo] = useState("");
+  // 받은·쓴 기록 전부 펼치기 (2026-10-16 대표님: "회원님 마일리지 어떻게 받은건지 기록을 볼수있도록 해줘~")
+  const [mlShowAll, setMlShowAll] = useState(false);
   const { data: mileage, refetch: refetchMileage } = useQuery({
     queryKey: ["member-mileage", memberId],
     enabled: !!memberId && canMileage,
@@ -147,7 +163,12 @@ const MemberDetailPage = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any).rpc("get_member_mileage", { p_user_id: memberId });
       if (error) throw error;
-      return data as { balance: number; items: Array<{ amount: number; reason: string; at: string }> };
+      return data as {
+        balance: number;
+        count?: number;
+        summary?: Array<{ kind: string; count: number; earned: number; spent: number }>;
+        items: Array<{ amount: number; kind?: string; reason: string; at: string }>;
+      };
     },
   });
   const useMileageMut = useMutation({
@@ -504,6 +525,18 @@ const MemberDetailPage = () => {
                 <span className="text-2xl font-bold text-foreground">{mileage.balance.toLocaleString("ko-KR")}점</span>
                 <p className="mt-1 text-xs text-muted-foreground">1점 = 1원 · 결제 금액의 10%까지 · 1,000점 단위</p>
               </div>
+              {(mileage.summary ?? []).length > 0 && (
+                <div className="flex flex-wrap gap-1.5" aria-label="마일리지 받은 곳 합계">
+                  {(mileage.summary ?? []).map((sm) => (
+                    <span key={sm.kind} className="rounded-pill border border-border bg-card px-2.5 py-1 text-[11.5px] font-bold text-foreground">
+                      {MILEAGE_KIND_LABEL[sm.kind] ?? sm.kind}{" "}
+                      {sm.earned > 0 && <span className="text-amber-600">+{sm.earned.toLocaleString("ko-KR")}</span>}
+                      {sm.spent < 0 && <span className="text-muted-foreground"> {sm.spent.toLocaleString("ko-KR")}</span>}
+                      <span className="font-medium text-muted-foreground"> · {sm.count.toLocaleString("ko-KR")}건</span>
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="flex gap-2">
                 <input
                   inputMode="numeric"
@@ -548,18 +581,39 @@ const MemberDetailPage = () => {
                 차감한 만큼 브로제이 결제 금액에서 직접 빼 주세요. 누가 언제 얼마를 썼는지 기록이 남아요.
               </p>
               {mileage.items.length > 0 && (
-                <ul className="divide-y divide-border/60 rounded-xl border border-border bg-card px-3">
-                  {mileage.items.slice(0, 5).map((it, i) => (
-                    <li key={`${it.at}-${i}`} className="flex items-center gap-2 py-1.5">
-                      <span className="w-12 shrink-0 text-[11px] text-muted-foreground">{fmtDay(it.at)}</span>
-                      <span className="min-w-0 flex-1 truncate text-[12px] text-foreground">{it.reason || "마일리지"}</span>
-                      <span className={`shrink-0 text-[12px] font-bold ${it.amount >= 0 ? "text-amber-600" : "text-muted-foreground"}`}>
-                        {it.amount > 0 ? "+" : ""}
-                        {it.amount.toLocaleString("ko-KR")}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="space-y-1.5">
+                  <p className="px-0.5 text-xs font-bold text-foreground">
+                    받은·쓴 기록 <span className="font-medium text-muted-foreground">· {(mileage.count ?? mileage.items.length).toLocaleString("ko-KR")}건</span>
+                  </p>
+                  <ul className="divide-y divide-border/60 rounded-xl border border-border bg-card px-3">
+                    {(mlShowAll ? mileage.items : mileage.items.slice(0, 8)).map((it, i) => (
+                      <li key={`${it.at}-${i}`} className="flex items-start gap-2 py-2">
+                        <span className="w-16 shrink-0 pt-0.5 text-[11px] text-muted-foreground">{fmtDay(it.at)}</span>
+                        <span className="min-w-0 flex-1 text-[12px] leading-snug text-foreground">
+                          {it.kind && (
+                            <span className="mr-1 rounded bg-secondary px-1 py-px text-[10px] font-bold text-muted-foreground">
+                              {MILEAGE_KIND_LABEL[it.kind] ?? it.kind}
+                            </span>
+                          )}
+                          {it.reason || "마일리지"}
+                        </span>
+                        <span className={`shrink-0 pt-0.5 text-[12px] font-bold ${it.amount >= 0 ? "text-amber-600" : "text-muted-foreground"}`}>
+                          {it.amount > 0 ? "+" : ""}
+                          {it.amount.toLocaleString("ko-KR")}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {mileage.items.length > 8 && (
+                    <button
+                      type="button"
+                      onClick={() => setMlShowAll((v) => !v)}
+                      className="w-full rounded-xl border border-border bg-card py-2 text-[12px] font-bold text-foreground active:scale-[0.99]"
+                    >
+                      {mlShowAll ? "접기" : `전체 ${mileage.items.length.toLocaleString("ko-KR")}건 보기`}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -776,6 +830,58 @@ const MemberDetailPage = () => {
       {/* ── Activity Tab ── */}
       {activeTab === "activity" && (
         <div className="space-y-2">
+          {isHq && (
+            <>
+              <h3 className="px-1 pt-1 text-sm font-bold text-foreground">
+                앱·커뮤니티 활동 <span className="text-muted-foreground">· 본사만</span>
+              </h3>
+              <p className="px-1 text-[11px] leading-relaxed text-muted-foreground">
+                글·댓글·153·응원·짝꿍·같이 운동·하트·퀴즈·컨디션·게임·챌린지·153 TEST·레벨·설문 참여·마일리지. 메시지(DM) 내용과 설문 답변(익명)은 보이지 않아요.
+              </p>
+              {appActivityLoading ? (
+                <p className="px-1 py-3 text-xs text-muted-foreground">불러오는 중…</p>
+              ) : (appActivity ?? []).length === 0 ? (
+                <EmptyState text="앱·커뮤니티 활동이 없습니다" />
+              ) : (
+                <>
+                  <div className="overflow-hidden rounded-xl border border-border bg-card">
+                    {(actShowAll ? appActivity ?? [] : (appActivity ?? []).slice(0, 30)).map((a, i) => (
+                      <div key={`${a.type}-${a.at}-${i}`} className={`px-4 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="shrink-0 rounded bg-secondary px-1.5 py-px text-[10px] font-bold text-muted-foreground">
+                            {APP_ACTIVITY_LABEL[a.type] ?? a.type}
+                          </span>
+                          <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{a.title}</p>
+                          <span className="shrink-0 text-[11px] text-muted-foreground">
+                            {fmtDay(a.at)} {fmtTime(a.at)}
+                          </span>
+                        </div>
+                        {(a.detail || a.meta?.visibility === "partners" || a.meta?.hidden) && (
+                          <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] leading-relaxed text-muted-foreground">
+                            {a.meta?.visibility === "partners" && <span className="mr-1 font-bold">[짝꿍만]</span>}
+                            {a.meta?.hidden && <span className="mr-1 font-bold text-destructive">[숨긴 글]</span>}
+                            {a.detail}
+                          </p>
+                        )}
+                        {a.meta?.photo && (
+                          <img src={a.meta.photo} alt="회원이 올린 사진" loading="lazy" className="mt-1.5 max-h-48 rounded-lg object-cover" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {(appActivity ?? []).length > 30 && (
+                    <button
+                      type="button"
+                      onClick={() => setActShowAll((v) => !v)}
+                      className="w-full rounded-xl border border-border bg-card py-2 text-[12px] font-bold text-foreground active:scale-[0.99]"
+                    >
+                      {actShowAll ? "접기" : `전체 ${(appActivity ?? []).length}건 보기`}
+                    </button>
+                  )}
+                </>
+              )}
+            </>
+          )}
           <h3 className="px-1 pt-1 text-sm font-bold text-foreground">
             출석 기록 {attendance ? <span className="text-muted-foreground">· 총 {attendance.total}회</span> : null}
           </h3>
@@ -885,6 +991,47 @@ const MemberDetailPage = () => {
       )}
     </div>
   );
+};
+
+/** 마일리지 종류 (mileage_ledger.kind) */
+const MILEAGE_KIND_LABEL: Record<string, string> = {
+  attendance: "출석",
+  level_up: "레벨업",
+  title_match: "타이틀매치",
+  record: "153 레코드",
+  adjust: "사용·조정",
+};
+
+/** 앱·커뮤니티 활동 한 줄 (admin_member_activity) */
+interface AppActivityItem {
+  type: string;
+  at: string;
+  title: string;
+  detail: string | null;
+  meta?: { visibility?: string; hidden?: boolean; photo?: string | null } | null;
+}
+
+const APP_ACTIVITY_LABEL: Record<string, string> = {
+  post: "글",
+  comment: "댓글",
+  "153": "153",
+  cheer_sent: "응원",
+  cheer_got: "응원",
+  birthday_sent: "생일",
+  birthday_got: "생일",
+  cornerman: "짝꿍",
+  partner_call: "같이 운동",
+  partner_join: "같이 운동",
+  heart: "하트",
+  quiz: "퀴즈",
+  condition: "컨디션",
+  game: "게임",
+  challenge: "챌린지",
+  test153: "153 TEST",
+  handwrap: "붕대",
+  level: "레벨",
+  survey: "설문",
+  mileage: "마일리지",
 };
 
 const fmtDay = (iso: string) =>

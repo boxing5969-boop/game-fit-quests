@@ -37,7 +37,7 @@ const SurveyNudgeCard = () => {
       <span className="min-w-0 flex-1">
         <span className="block text-[14.5px] font-extrabold text-foreground">이번 달 만족도 조사 (1분)</span>
         <span className="mt-0.5 block text-[12px] text-muted-foreground">
-          익명으로 전달돼요 · 참여하면 💵 +{SURVEY_REWARD.satisfaction} 챔피언 머니
+          익명으로 전달돼요 · 참여하면 💵 +{SURVEY_REWARD.satisfaction.toLocaleString()} 챔피언 머니
         </span>
       </span>
       <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />

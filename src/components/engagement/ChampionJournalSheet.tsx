@@ -478,6 +478,10 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             <Lock className="h-3.5 w-3.5" /> 짝꿍만
           </button>
         </div>
+        {/* 2026-10-16: 본사가 모든 글을 보게 되어 미리 알린다 (20261016080000_hq_sees_all_community.sql) */}
+        <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+          본사 운영진은 커뮤니티 운영을 위해 모든 글을 볼 수 있어요.
+        </p>
       </div>
 
       <button

@@ -46,6 +46,6 @@ export function useRecentChampionJournalEntries(limit = 3, enabled = true) {
     queryKey: [...CHAMPION_JOURNAL_KEY, "recent", user?.id ?? "anon", limit],
     enabled: enabled && !!user?.id,
     staleTime: 30_000,
-    queryFn: () => getRecentChampionJournalEntries(limit),
+    queryFn: () => getRecentChampionJournalEntries(limit, user?.id),
   });
 }
