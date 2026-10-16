@@ -15,7 +15,7 @@
  *
  * 변경 시: VERSION 을 올려 강제 갱신 트리거.
  */
-const VERSION = "myboxer-153-sw-v3";
+const VERSION = "myboxer-153-sw-v4";
 
 self.addEventListener("install", (event) => {
   // 즉시 active — 이전 SW 가 대기 중이지 않은 첫 설치에서 빠르게 활성.
@@ -58,8 +58,24 @@ function safeAppPath(url) {
   return typeof url === "string" && url.length <= 300 && /^\/([^/\\\s][^\\\s]*)?$/.test(url) ? url : "/notifications";
 }
 
+// 휴대폰 알림에는 그림을 못 넣는다 → 문구 속 이모지를 지운다 (2026-10-16 대표님: "이모지는 모두 빼고").
+// 앱 안 알림함은 같은 이모지를 153 입체 아이콘으로 보여 준다 (src/lib/emoji3d). ▶ ↔ ⚙ 같은 글자 기호는 남긴다.
+const EMOJI_SEQ =
+  /\p{Regional_Indicator}{2}|\p{Extended_Pictographic}[\uFE0E\uFE0F]?\p{Emoji_Modifier}?(?:\u200D\p{Extended_Pictographic}[\uFE0E\uFE0F]?\p{Emoji_Modifier}?)*/gu;
+const TEXT_SYMBOLS = "▶◀↔↕↩↪⚙☀‼⁉©®™ℹ➡⬅";
+function noEmoji(text) {
+  if (typeof text !== "string") return "";
+  return text
+    .replace(EMOJI_SEQ, (m) => {
+      const base = m.replace(/[\uFE0E\uFE0F]/g, "");
+      return TEXT_SYMBOLS.includes(base) && [...base].length === 1 ? base : "\u0000";
+    })
+    .replace(/[ \t]*\u0000+[ \t]*/g, " ")
+    .replace(/^ +| +$/gm, "");
+}
+
 function clip(text, max) {
-  const t = typeof text === "string" ? text.trim() : "";
+  const t = noEmoji(text).trim();
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 }
 

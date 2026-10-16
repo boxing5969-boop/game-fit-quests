@@ -89,7 +89,7 @@ const Records153Strip = ({ onOpenAll, onOpenMember }: Props) => {
                   rec.is_me ? "border-primary/60" : "border-border"
                 }`}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-pill bg-reward/15 text-[16px]">{f.emoji}</span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-pill bg-reward/15 text-[19px]">{f.emoji}</span>
                 <span className="min-w-0">
                   <span className="block whitespace-nowrap text-[10.5px] font-black text-reward">{f.title}</span>
                   <span className="block max-w-[8.5rem] truncate text-[13.5px] font-black text-foreground">

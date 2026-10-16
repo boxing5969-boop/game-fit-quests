@@ -961,3 +961,20 @@ html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: va
 @media (prefers-reduced-motion: reduce) {
   .bday-aurora-ring, .bday-halo, .bday-halo-reverse, .bday-bob, .bday-pop, .bday-gold-text { animation: none !important; }
 }
+
+/* 이모지 → 153 입체 아이콘 (src/lib/emoji3d, 2026-10-16 대표님: "이모지는 모두 빼고 … 퀄리티있는 디자인")
+   JSX 글자 속 이모지가 이 그림으로 바뀐다. 글자 크기를 따라 1.2em — text-3xl 자리면 크게, 본문이면 본문만큼. */
+img.emo3d {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  max-width: none;
+  margin: 0 0.04em;
+  vertical-align: -0.24em;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+/* 아이콘+글자 한 덩어리 — 부모 flex 에서도 예전 글자처럼 한 칸 (스타일 없음, 자리만) */
+.emo3d-run { display: inline; }

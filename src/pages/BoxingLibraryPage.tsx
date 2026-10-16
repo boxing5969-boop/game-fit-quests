@@ -332,7 +332,8 @@ const Tile = ({ it, onPick, savedApi, watchedApi }: {
       </div>
       <div className="tt">{cleanT(p.title)}</div>
       <div className="tm">
-        <span>{p.country}</span>
+        {/* 국기 이모지 대신 나라 이름 (2026-10-16 대표님: 이모지는 모두 빼고) */}
+        {p.country && <span>{cn(p.country)}</span>}
         <span className="chn">{p.channel}</span>
         <span>· ★{p.score ?? 7}</span>
       </div>

@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { findOsamiFaq, type OsamiFaqLink } from "@/data/osamiFaq";
 import { buildKbContext, isCoachingTopic, matchOsamiFaq, planOsamiReply, type OsamiMatch } from "@/lib/osamiKb";
+import { dropUnknownEmoji } from "@/lib/emoji3d/core";
 
 /**
  * 🥊 오삼 코치 — 2단 답변 (2026-10-03)
@@ -441,7 +442,8 @@ const ChatAssistant = () => {
                   {m.role === "assistant" && !m.isError && m.source === "ai" && (
                     <div className="mb-1 flex items-center gap-1 text-[10px] font-bold tracking-wide text-orange-500"><Bot size={11} /> AI 코치</div>
                   )}
-                  {m.source === "ai" ? stripMarkdown(m.content) : m.content}
+                  {/* AI 답변: 153 아이콘이 없는 이모지는 지운다 (있는 것은 입체 아이콘으로 보인다, 2026-10-16) */}
+                  {m.source === "ai" ? dropUnknownEmoji(stripMarkdown(m.content)) : m.content}
 
                   {/* 앱 안 바로가기 */}
                   {m.links && m.links.length > 0 && (

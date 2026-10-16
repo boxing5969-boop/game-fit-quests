@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { stripEmoji } from "@/lib/emoji3d/core";
 
 // 설치형 앱(Capacitor)으로 켜면 랭킹앱 홈이 아니라 얼굴 키오스크로 진입한다.
 // React Router 가 경로를 읽기 전에 바꿔야 하므로 렌더보다 먼저 실행.
@@ -17,6 +18,14 @@ const isIOS =
 if (isIOS) {
   const vp = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
   if (vp && !/maximum-scale/.test(vp.content)) vp.content = `${vp.content}, maximum-scale=1`;
+}
+
+// 브라우저 알림창(alert/confirm/prompt)은 그림을 못 넣는다 → 문구 속 이모지를 지운다 (2026-10-16 대표님: "이모지는 모두 빼고").
+// 화면 글자·토스트의 이모지는 src/lib/emoji3d 가 153 입체 아이콘으로 바꾼다.
+for (const k of ["alert", "confirm", "prompt"] as const) {
+  const original = window[k].bind(window) as (...args: unknown[]) => unknown;
+  (window as unknown as Record<string, unknown>)[k] = (message?: unknown, ...rest: unknown[]) =>
+    original(typeof message === "string" ? stripEmoji(message) : message, ...rest);
 }
 
 createRoot(document.getElementById("root")!).render(<App />);

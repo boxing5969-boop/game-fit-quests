@@ -14,7 +14,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   plugins: [
-    react(),
+    // 앱 JSX 를 src/lib/emoji3d/jsx-runtime 으로 컴파일 — 글자 속 이모지를 153 입체 아이콘으로 바꾼다 (2026-10-16 대표님)
+    react({ jsxImportSource: "@/lib/emoji3d" }),
     mode === "development" && componentTagger(),
     // Re-compress PNG/JPG/SVG at build time. Format is preserved so
     // existing imports keep working; browsers just download smaller
@@ -36,9 +37,12 @@ export default defineConfig(({ mode }) => ({
     }),
   ].filter(Boolean),
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: [
+      // 토스트 문구 이모지 → 입체 아이콘: "sonner" 를 감싼 파일로, 감싼 파일은 진짜 sonner 를 "sonner-original" 로 읽는다
+      { find: /^sonner$/, replacement: path.resolve(__dirname, "./src/lib/emoji3d/sonner.ts") },
+      { find: /^sonner-original$/, replacement: path.resolve(__dirname, "./node_modules/sonner/dist/index.mjs") },
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+    ],
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
   },
   build: {

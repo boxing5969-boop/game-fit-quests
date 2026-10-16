@@ -248,7 +248,7 @@ const RecordCard = ({
   if (!rec) {
     return (
       <div className="flex items-center gap-3 rounded-card border border-dashed border-border bg-card/50 p-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-pill bg-muted text-[22px] opacity-50">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-pill bg-muted text-[28px] opacity-50 grayscale">
           {emoji}
         </div>
         <div className="min-w-0 flex-1">
@@ -270,7 +270,7 @@ const RecordCard = ({
         rec.is_me ? "border-primary/60 shadow-glow-soft" : "border-[#F6C453]/40",
       )}
     >
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-pill bg-reward/15 text-[22px] ring-1 ring-[#F6C453]/40">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-pill bg-reward/15 text-[28px] ring-1 ring-[#F6C453]/40">
         {emoji}
       </div>
       <div className="min-w-0 flex-1">
