@@ -175,7 +175,7 @@ async function registerOnServer(sub: PushSubscription): Promise<{ ok: boolean; d
     p_auth: j.keys?.auth ?? "",
     p_device: deviceLabelFrom(navigator.userAgent, navigator.maxTouchPoints || 0),
   });
-  if (error) return { ok: false, devices: 0, error: "failed" };
+  if (error) return { ok: false, devices: 0, error: errText(error) };
   const r = (data ?? {}) as { ok?: boolean; devices?: number; error?: string };
   return r.ok ? { ok: true, devices: Number(r.devices) || 1 } : { ok: false, devices: 0, error: r.error || "failed" };
 }
@@ -192,9 +192,19 @@ function askPermission(): Promise<NotificationPermission> {
   });
 }
 
+/** 켜기가 어디서 막혔는지 — 2026-10-18 오류 신고("소리 켜기가 와이파이 연결 안 됐다고 나와요")로 원인을 나눠 안내·기록한다 */
+export type PushFailStage = "key" | "subscribe" | "server" | "unknown";
+
 export type EnableResult =
   | { ok: true; devices: number }
-  | { ok: false; reason: "unsupported" | "denied" | "dismissed" | "unsupported_endpoint" | "failed" };
+  | { ok: false; reason: "unsupported" | "denied" | "dismissed" | "unsupported_endpoint" }
+  | { ok: false; reason: "failed"; stage: PushFailStage; detail: string };
+
+const errText = (e: unknown): string => {
+  const x = e as { name?: string; message?: string } | null;
+  return `${x?.name ?? "Error"}: ${String(x?.message ?? e ?? "").slice(0, 200)}`;
+};
+const failed = (stage: PushFailStage, detail: string): EnableResult => ({ ok: false, reason: "failed", stage, detail });
 
 /**
  * 켜기 — 반드시 버튼을 누른 그 자리에서 부른다.
@@ -204,9 +214,11 @@ export async function enablePush(uid: string): Promise<EnableResult> {
   if (pushBlock()) return { ok: false, reason: "unsupported" };
   const perm = Notification.permission === "granted" ? "granted" : await askPermission();
   if (perm !== "granted") return { ok: false, reason: perm === "denied" ? "denied" : "dismissed" };
+  let stage: PushFailStage = "key";
   try {
     const { data: key, error: keyErr } = await db.rpc("get_push_public_key");
-    if (keyErr || typeof key !== "string" || !key) return { ok: false, reason: "failed" };
+    if (keyErr || typeof key !== "string" || !key) return failed("key", keyErr ? errText(keyErr) : "no key");
+    stage = "unknown";
     const reg = await swRegistration();
     if (!reg) return { ok: false, reason: "unsupported" };
     const appKey = b64urlToBytes(key);
@@ -215,21 +227,50 @@ export async function enablePush(uid: string): Promise<EnableResult> {
       await sub.unsubscribe().catch(() => false);
       sub = null;
     }
+    stage = "subscribe";
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toArrayBuffer(appKey) });
+    stage = "server";
     const r = await registerOnServer(sub);
     if (!r.ok) {
       if (r.error === "unsupported_endpoint") {
         await sub.unsubscribe().catch(() => false);
         return { ok: false, reason: "unsupported_endpoint" };
       }
-      return { ok: false, reason: "failed" };
+      return failed("server", r.error || "failed");
     }
     ls.set(OWNER_KEY, uid);
     ls.set(SYNC_KEY, `${uid}|${sub.endpoint}|${kstDay()}`);
     return { ok: true, devices: r.devices };
-  } catch {
-    return { ok: false, reason: "failed" };
+  } catch (e) {
+    return failed(stage, errText(e));
   }
+}
+
+/** 켜기 실패 기록 — 원인을 나중에 확인하려고 (기기·단계·오류 이름만, 하루 20건까지). 실패해도 화면엔 영향 없음 */
+export async function logPushEnableFailure(stage: PushFailStage, detail: string): Promise<void> {
+  try {
+    await db.rpc("log_push_enable_failure", {
+      p_stage: stage,
+      p_detail: detail.slice(0, 300),
+      p_ua: typeof navigator === "undefined" ? "" : navigator.userAgent.slice(0, 300),
+    });
+  } catch {
+    /* 기록은 덤 */
+  }
+}
+
+/** 브라우저가 알림 등록(subscribe)을 거절했을 때 — 기기별 안내 */
+export function subscribeHelp(ua: string = typeof navigator === "undefined" ? "" : navigator.userAgent): string {
+  if (/SamsungBrowser/i.test(ua)) {
+    return "삼성 인터넷 ≡ → 설정 → 사이트 및 다운로드 → 알림에서 마이복서153을 허용해 주세요. 비밀 모드에서는 알림을 켤 수 없어요. 그래도 안 되면 크롬으로 열어 '알림 켜기'를 눌러 주세요.";
+  }
+  if (isIosUA(ua, typeof navigator === "undefined" ? 0 : navigator.maxTouchPoints || 0)) {
+    return "홈 화면에 추가한 마이복서153 앱에서 다시 눌러 주세요.";
+  }
+  if (/Android/i.test(ua)) {
+    return "휴대폰 설정 → 애플리케이션 → Chrome(또는 마이복서153) → 알림이 켜져 있는지 확인하고 다시 눌러 주세요.";
+  }
+  return "브라우저 설정에서 이 사이트의 알림을 허용한 뒤 다시 눌러 주세요.";
 }
 
 /** 끄기 — 이 기기만 (다른 기기는 그대로) */

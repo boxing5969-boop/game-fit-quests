@@ -16,8 +16,11 @@ import {
   disablePush,
   enablePush,
   isIosUA,
+  logPushEnableFailure,
   readPushState,
   sendTestPush,
+  subscribeHelp,
+  type PushFailStage,
   type PushState,
 } from "@/lib/pushClient";
 
@@ -140,7 +143,20 @@ export function usePushNotifications() {
             description: "안드로이드는 크롬, 아이폰은 홈 화면에 추가한 앱에서 켤 수 있어요.",
           });
         } else {
-          toast.error("알림을 켜지 못했어요", { description: "인터넷 연결을 확인하고 잠시 후 다시 눌러 주세요." });
+          // 2026-10-18 오류 신고: 무조건 "인터넷 연결 확인"이라 와이파이 문제로 오해 → 막힌 곳에 따라 안내를 나누고 기록한다
+          const f = r as { stage?: PushFailStage; detail?: string };
+          const stage = f.stage ?? "unknown";
+          const detail = f.detail ?? "";
+          void logPushEnableFailure(stage, detail);
+          const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+          const netErr = /fetch|network|timeout|timed out/i.test(detail);
+          if (offline || (stage !== "subscribe" && netErr)) {
+            toast.error("알림을 켜지 못했어요", { description: "인터넷이 잠깐 끊긴 것 같아요. 연결을 확인하고 다시 눌러 주세요." });
+          } else if (stage === "subscribe") {
+            toast.error("이 브라우저가 알림 등록을 막았어요", { description: subscribeHelp(), duration: 9000 });
+          } else {
+            toast.error("알림을 켜지 못했어요", { description: "잠시 후 다시 눌러 주세요. 계속 안 되면 오류 신고로 알려 주세요." });
+          }
         }
         await refresh();
       })

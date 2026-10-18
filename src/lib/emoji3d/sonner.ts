@@ -30,15 +30,23 @@ type Toast = typeof baseToast;
 type Msg = Parameters<Toast["success"]>[0];
 type Data = Parameters<Toast["success"]>[1];
 
+/**
+ * 같은 문구를 다시 띄우면 새로 쌓지 않고 떠 있는 것을 바꾼다 (2026-10-18 오류 신고: 같은 버튼을 계속 누르면 알림이 여러 개 겹침).
+ * id 를 직접 준 토스트는 그대로 둔다.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const dedupe = (kind: string, m: unknown, d: any) =>
+  d?.id != null || typeof m !== "string" ? d : { ...(d ?? {}), id: `${kind}:${m}` };
+
 export const toast: Toast = Object.assign(
   (message: Parameters<Toast>[0], data?: Parameters<Toast>[1]) =>
-    baseToast(fixNode(message) as Parameters<Toast>[0], fixData(data)),
+    baseToast(fixNode(message) as Parameters<Toast>[0], fixData(dedupe("default", message, data))),
   {
-    success: (m: Msg, d?: Data) => baseToast.success(fixNode(m), fixData(d)),
-    info: (m: Msg, d?: Data) => baseToast.info(fixNode(m), fixData(d)),
-    warning: (m: Msg, d?: Data) => baseToast.warning(fixNode(m), fixData(d)),
-    error: (m: Msg, d?: Data) => baseToast.error(fixNode(m), fixData(d)),
-    message: (m: Msg, d?: Data) => baseToast.message(fixNode(m), fixData(d)),
+    success: (m: Msg, d?: Data) => baseToast.success(fixNode(m), fixData(dedupe("success", m, d))),
+    info: (m: Msg, d?: Data) => baseToast.info(fixNode(m), fixData(dedupe("info", m, d))),
+    warning: (m: Msg, d?: Data) => baseToast.warning(fixNode(m), fixData(dedupe("warning", m, d))),
+    error: (m: Msg, d?: Data) => baseToast.error(fixNode(m), fixData(dedupe("error", m, d))),
+    message: (m: Msg, d?: Data) => baseToast.message(fixNode(m), fixData(dedupe("message", m, d))),
     loading: (m: Msg, d?: Data) => baseToast.loading(fixNode(m), fixData(d)),
     custom: baseToast.custom,
     dismiss: baseToast.dismiss,
