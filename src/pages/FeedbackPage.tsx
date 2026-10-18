@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
+import AppFeedbackInbox, { useAppFeedbackInbox } from "@/components/feedback/AppFeedbackInbox";
 
 // ── 오류/불편 신고 (2026-10-11 대표님: "앱 오류나 안되는 부분 보내는 기능") ──
 // 보낸 내용은 public.app_feedback 에 저장되고, DB 트리거가 대표님(super_admin)에게
 // 알림(기존 알림·푸시 파이프라인)을 보낸다. 진입점: 전체 메뉴 + 내정보.
+// 2026-10-18 대표님: "회원님들이 보낸 신고 자세히 볼 수 있게 · 알림에서도 클릭하면 바로" → 본사(super_admin·admin)에게
+// '받은 신고' 탭(components/feedback/AppFeedbackInbox). 알림 바로 가기 = /feedback?inbox=1&id=<신고>.
 
 const CATEGORIES = ["오류", "불편", "제안"] as const;
 
@@ -18,7 +21,14 @@ const PLACEHOLDER =
 
 const FeedbackPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isHq = role === "super_admin" || role === "admin";
+  const [params] = useSearchParams();
+  const focusId = params.get("id");
+  // 역할은 늦게 올 수 있어 탭은 주소로 정하고, 받은 신고는 본사일 때만 그린다
+  const [tab, setTab] = useState<"inbox" | "send">(() => (params.get("inbox") === "1" || params.get("id") ? "inbox" : "send"));
+  const showInbox = isHq && tab === "inbox";
+  const inboxCounts = useAppFeedbackInbox(isHq).data?.counts;
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("오류");
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
@@ -56,7 +66,7 @@ const FeedbackPage = () => {
         <PageHeader
           sticky
           title="오류 신고"
-          subtitle="안 되는 부분을 알려주시면 바로 고칠게요"
+          subtitle={isHq ? "회원님이 보낸 신고 보기 · 보내기" : "안 되는 부분을 알려주시면 바로 고칠게요"}
           leftAction={
             <button
               type="button"
@@ -70,7 +80,39 @@ const FeedbackPage = () => {
         />
       }
     >
-      {done ? (
+      {isHq && (
+        <div className="mb-4 grid grid-cols-2 gap-1 rounded-2xl bg-secondary p-1" role="tablist" aria-label="오류 신고">
+          {(
+            [
+              ["inbox", "받은 신고"],
+              ["send", "신고 보내기"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={tab === key}
+              onClick={() => setTab(key)}
+              className={cn(
+                "flex h-10 items-center justify-center gap-1.5 rounded-xl text-[14px] font-bold transition-colors",
+                tab === key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
+              )}
+            >
+              {label}
+              {key === "inbox" && !!inboxCounts?.new && (
+                <span className="min-w-[20px] rounded-full bg-destructive px-1.5 text-[11px] font-bold leading-5 text-white tabular-nums">
+                  {inboxCounts.new}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {showInbox ? (
+        <AppFeedbackInbox focusId={focusId} />
+      ) : done ? (
         <div className="mt-10 flex flex-col items-center gap-3 text-center">
           <span className="text-4xl">🥊</span>
           <p className="text-lg font-bold text-foreground">접수됐습니다!</p>

@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, Lightbulb, MessageCircle, MessageSquareHeart, Star, ThumbsUp, Gift, Check } from "lucide-react";
+import { ArrowLeft, ChevronRight, Inbox, Lightbulb, MessageCircle, MessageSquareHeart, Star, ThumbsUp, Gift, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
+import MemberVoiceInbox from "@/components/survey/MemberVoiceInbox";
 import {
   SURVEY_REWARD,
   claimSurveyReward,
@@ -24,8 +25,10 @@ import {
 // ── 회원 설문 (2026-10-15 대표님: "일일경영리포트에서 QR로 하는 설문·만족도 조사를 앱에 넣어줘") ──
 // 만족도 조사 + 고객의 소리(경품 추첨). 응답은 경영리포트로 바로 간다 — memberSurveyService 참고.
 // 참여 보상: 만족도 조사 +3,000 · 고객의 소리 +5,000 챔피언 머니 (종류별 한 달 한 번, 2026-10-16 대표님).
+// 2026-10-18 대표님: "회원님들이 보낸 것 자세히 볼 수 있게" → 본사(super_admin·admin)에게 '받은 설문·고객의 소리'
+// (components/survey/MemberVoiceInbox — 경영리포트에서 서버로 읽어 온다). 주소: /survey?inbox=1 (&tab=voice).
 
-type View = "hub" | "satisfaction" | "feedback" | "done";
+type View = "hub" | "satisfaction" | "feedback" | "done" | "inbox";
 
 const CATS: { key: FeedbackCategory; label: string; hint: string; Icon: typeof ThumbsUp; tone: string }[] = [
   { key: "coach_praise", label: "코치 칭찬", hint: "고마운 코치님이 있어요", Icon: ThumbsUp, tone: "text-emerald-500 bg-emerald-500/10" },
@@ -145,9 +148,11 @@ function QuestionBlock({ q, idx, value, onChange }: { q: SurveyQuestion; idx: nu
 const SurveyPage = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
+  const isHq = role === "super_admin" || role === "admin";
+  const [params] = useSearchParams();
   const branch = profile?.branch_name ?? null;
-  const [view, setView] = useState<View>("hub");
+  const [view, setView] = useState<View>(() => (params.get("inbox") === "1" ? "inbox" : "hub"));
   const [busy, setBusy] = useState(false);
   const [doneInfo, setDoneInfo] = useState<{ kind: SurveyRewardKind; reward: number; drawNote?: string | null; drawEntered?: boolean } | null>(null);
 
@@ -243,6 +248,15 @@ const SurveyPage = () => {
   const header = (title: string, subtitle: string, onBack: () => void) => (
     <PageHeader sticky title={title} subtitle={subtitle} leftAction={<BackBtn onClick={onBack} />} />
   );
+
+  // ── 본사: 받은 설문·고객의 소리 ──
+  if (view === "inbox" && isHq) {
+    return (
+      <AppPage header={header("받은 설문·고객의 소리", "회원님이 보낸 응답 · 본사만 봐요", () => setView("hub"))}>
+        <MemberVoiceInbox initialTab={params.get("tab") === "voice" ? "voices" : "surveys"} />
+      </AppPage>
+    );
+  }
 
   // ── 완료 ──
   if (view === "done" && doneInfo) {
@@ -451,6 +465,22 @@ const SurveyPage = () => {
 
   return (
     <AppPage header={header("설문·고객의 소리", "여러분의 목소리로 체육관이 좋아집니다", () => navigate(-1))}>
+      {isHq && (
+        <button
+          type="button"
+          onClick={() => setView("inbox")}
+          className="mb-3 flex w-full items-center gap-3.5 rounded-2xl border border-primary/30 bg-primary/5 p-4 text-left shadow-elev-1 transition-transform active:scale-[0.99]"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+            <Inbox className="h-6 w-6" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[16px] font-extrabold text-foreground">받은 설문·고객의 소리</span>
+            <span className="mt-0.5 block text-[12.5px] text-muted-foreground">본사 · 회원님이 보낸 응답을 자세히 봐요</span>
+          </span>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </button>
+      )}
       {links.isLoading ? (
         <p className="mt-10 text-center text-sm text-muted-foreground">불러오는 중…</p>
       ) : !hasAny ? (
