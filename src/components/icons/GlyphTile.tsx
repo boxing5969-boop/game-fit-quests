@@ -57,13 +57,15 @@ const GlyphTile = ({ name, size = 56, className }: GlyphTileProps) => {
         />
       </svg>
       {isImageGlyph(name) ? (
-        <img
-          src={GLYPH_IMAGES[name]}
-          alt=""
-          draggable={false}
-          className="glyph-art absolute select-none object-contain"
-          style={{ inset: "14%" }}
-        />
+        // img 는 inset 만으로는 크기가 안 잡혀(제 크기·칸 너비로 그려져 칸 밖으로 나감) — 크기를 가진 칸 안에 꽉 채운다
+        <span className="glyph-art absolute" style={{ inset: "14%" }}>
+          <img
+            src={GLYPH_IMAGES[name]}
+            alt=""
+            draggable={false}
+            className="block h-full w-full select-none object-contain"
+          />
+        </span>
       ) : (
         <svg
           viewBox="0 0 48 48"
