@@ -13,3 +13,22 @@ export const openCredentialChange = (): void => {
     /* SSR·구형 브라우저 — 무시 */
   }
 };
+
+/**
+ * 회원 카드 열기 (2026-10-18 대표님: "이름을 클릭하면 회원 상세 정보 … 좋아요 · 메시지 · 짝꿍 신청 · 응원 보내기 —
+ * 랭킹에서 회원 카드를 클릭해도, 회원 이름을 클릭하면 항상 그렇게").
+ * App 에 한 번만 떠 있는 GlobalMemberCard(라이센스 카드)가 이 신호를 받아 연다 — 어느 화면에서든 openMemberCard(userId).
+ */
+export const OPEN_MEMBER_CARD_EVENT = "153:open-member-card";
+export interface OpenMemberCardDetail {
+  userId: string;
+}
+
+export const openMemberCard = (userId: string | null | undefined): void => {
+  if (!userId) return;
+  try {
+    window.dispatchEvent(new CustomEvent<OpenMemberCardDetail>(OPEN_MEMBER_CARD_EVENT, { detail: { userId } }));
+  } catch {
+    /* 구형 브라우저 — 무시 */
+  }
+};

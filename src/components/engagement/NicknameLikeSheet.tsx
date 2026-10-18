@@ -131,7 +131,7 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   <h2 className="mt-0.5 text-[15px] font-bold text-foreground">추천 복서</h2>
                   <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
                     {allBranches
-                      ? "전 지점 회원 · 본사 보기 · "
+                      ? "전 지점 회원 · "
                       : data?.branch ? `${shortBranch(data.branch)} 회원끼리 · ` : ""}
                     회원마다 하트 1개씩 · 다시 누르면 취소
                     {data ? ` · 내가 보낸 하트 ${data.my_given}개` : ""}

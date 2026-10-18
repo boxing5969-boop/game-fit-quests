@@ -488,7 +488,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         />
         {/* 오늘 출석이 없으면 스스로 렌더하지 않는다. */}
         <WorkoutFinishCard />
-        {!staffCard && !isAdmin && <MileageCard />}
+        {/* 전체관리자도 회원 화면 그대로 본다 (2026-10-18 대표님: "모든 메뉴도 회원 관점에서") */}
+        {!staffCard && <MileageCard />}
       </div>
     ) : null;
 

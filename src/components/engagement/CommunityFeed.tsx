@@ -5,18 +5,23 @@
  * 반응은 '153' 하나. 내 글에는 누를 수 없다. 153·댓글에는 보상이 없다 (공식 레벨업과 무관).
  * 이번 주 153을 가장 많이 보낸 회원이 라이브보드 TV 의 '이번 주 153왕' — 받은 수가 아니라 보낸 수.
  * 본사 보기 (2026-10-16 대표님: "회원이 쓴 커뮤니티 글 내가 확인할수있나? 나는 모든 활동을 확인할수있게해줘"):
- *   전체관리자·관리자는 모든 지점의 모든 글(친구만 · 나만 보기 · 숨긴 글 포함, 최근 30일) — 지점 골라 보기, 이름을 누르면 회원 상세(전체 활동).
+ *   전체관리자·관리자는 모든 지점의 모든 글(친구만 · 나만 보기 · 숨긴 글 포함, 최근 30일) — 지점 골라 보기.
  * 공개 범위 3가지 (2026-10-18 대표님: "개인 공개 전체공개 친구만 공개할수있는 기능 … 본사는 지점장이나 코치에게 볼수있는 권한"):
  *   전체 공개 · 친구만 · 나만 보기 — 내 글에는 늘 표시하고 ⋯ 에서 바꾼다. 남의 글은 전체 공개가 아닐 때만 표시.
- *   본사 보기에서 지점장·코치에게 '우리 지점 글 모두 보기' 권한을 켜고 끈다(CommunityViewGrants). 받은 사람은 맨 위에 안내.
+ *   전 지점 보기에서 지점장·코치 권한을 켜고 끈다(CommunityViewGrants). 받은 사람은 맨 위에 안내.
+ * 2026-10-18 대표님 더:
+ *   · "이름을 클릭하면 회원 상세 … 좋아요 · 메시지 · 짝꿍 신청 · 응원" → 이름·사진을 누르면 누구나 회원 카드(openMemberCard)
+ *   · "회원님들에게는 어떻게 보이나?" → 전 지점 보기에 '회원 화면으로 보기' (그 지점 일반 회원이 보는 그대로)
+ *   · "새식구가 가입하면 환영하는 문화" → 새 식구 카드에 환영 인사 (NewbieWelcome)
+ *   · 화면 글에 '본사'를 쓰지 않는다 · 전체관리자도 이번 주 목표를 올려 본다(내 지점으로)
  */
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Building2,
   Check,
+  Eye,
   EyeOff,
   Flag,
   Handshake,
@@ -35,6 +40,7 @@ import {
   JOURNAL_VISIBILITIES,
   VISIBILITY_LABEL,
   getCommunityFeed,
+  getCommunityFeedMemberView,
   hideCommunityEntry,
   postWeeklyGoal,
   reactTargetOf,
@@ -46,6 +52,8 @@ import {
   type JournalVisibility,
 } from "@/services/communityFeedService";
 import CommunityViewGrants from "./CommunityViewGrants";
+import NewbieWelcome from "./NewbieWelcome";
+import { openMemberCard } from "@/lib/appEvents";
 import type { PartnerJournalFeedRow } from "@/services/championJournalPartnerService";
 import { RANK_LABELS } from "@/lib/rankLabels";
 import { shortBranchName } from "@/services/communityHubService";
@@ -103,15 +111,29 @@ const Avatar = ({ item, size = 36 }: { item: FeedItem; size?: number }) => (
 
 const CommunityFeed = () => {
   const qc = useQueryClient();
-  const navigate = useNavigate();
   const { role } = useAuth();
-  // 본사는 모든 지점 글이 와서 더 많이 받는다 (서버가 본사인지 다시 확인한다)
+  // 전체관리자는 모든 지점 글이 와서 더 많이 받는다 (서버가 다시 확인한다)
   const hqRole = role === "super_admin" || role === "admin";
-  const { data, isLoading, isError, refetch } = useQuery({
+  const feedQ = useQuery({
     queryKey: FEED_KEY,
     queryFn: () => getCommunityFeed(hqRole ? 150 : 40),
     staleTime: 30_000,
   });
+  // 회원 화면으로 보기 (전체관리자) — 고른 지점의 일반 회원이 보는 피드 그대로. null = 끔
+  const [memberView, setMemberView] = useState<string | null>(null);
+  const mvKey = ["community-feed-mv", memberView ?? ""] as const;
+  const mvQ = useQuery({
+    queryKey: mvKey,
+    queryFn: () => getCommunityFeedMemberView(memberView as string, 40),
+    enabled: !!memberView,
+    staleTime: 30_000,
+  });
+  const activeKey = memberView ? mvKey : FEED_KEY;
+  const { data, isLoading, isError, refetch } = memberView ? mvQ : feedQ;
+  const refreshFeeds = () => {
+    qc.invalidateQueries({ queryKey: FEED_KEY });
+    qc.invalidateQueries({ queryKey: ["community-feed-mv"] });
+  };
   const [openEntry, setOpenEntry] = useState<PartnerJournalFeedRow | null>(null);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [showAllCheckins, setShowAllCheckins] = useState(false);
@@ -123,9 +145,9 @@ const CommunityFeed = () => {
   const react = useMutation({
     mutationFn: (i: FeedItem) => toggle153(reactTargetOf(i.type), i.id),
     onMutate: async (i) => {
-      await qc.cancelQueries({ queryKey: FEED_KEY });
-      const prev = qc.getQueryData<Feed>(FEED_KEY);
-      qc.setQueryData<Feed>(FEED_KEY, (old) =>
+      await qc.cancelQueries({ queryKey: activeKey });
+      const prev = qc.getQueryData<Feed>(activeKey);
+      qc.setQueryData<Feed>(activeKey, (old) =>
         old
           ? {
               ...old,
@@ -140,17 +162,17 @@ const CommunityFeed = () => {
       return { prev };
     },
     onError: (e, _i, ctx) => {
-      if (ctx?.prev) qc.setQueryData(FEED_KEY, ctx.prev);
+      if (ctx?.prev) qc.setQueryData(activeKey, ctx.prev);
       toast.error((e as Error).message);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: FEED_KEY }),
+    onSettled: refreshFeeds,
   });
 
   const hide = useMutation({
     mutationFn: (i: FeedItem) => hideCommunityEntry(i.id),
     onSuccess: () => {
       toast.success("글을 숨겼어요");
-      qc.invalidateQueries({ queryKey: FEED_KEY });
+      refreshFeeds();
     },
     onError: (e) => toast.error((e as Error).message),
   });
@@ -165,9 +187,9 @@ const CommunityFeed = () => {
   const changeVis = useMutation({
     mutationFn: ({ item, v }: { item: FeedItem; v: JournalVisibility }) => setJournalEntryVisibility(item.id, v),
     onMutate: async ({ item, v }) => {
-      await qc.cancelQueries({ queryKey: FEED_KEY });
-      const prev = qc.getQueryData<Feed>(FEED_KEY);
-      qc.setQueryData<Feed>(FEED_KEY, (old) =>
+      await qc.cancelQueries({ queryKey: activeKey });
+      const prev = qc.getQueryData<Feed>(activeKey);
+      qc.setQueryData<Feed>(activeKey, (old) =>
         old
           ? { ...old, items: old.items.map((x) => (x.id === item.id && x.type === item.type ? { ...x, visibility: v } : x)) }
           : old,
@@ -175,11 +197,11 @@ const CommunityFeed = () => {
       return { prev };
     },
     onError: (e, _vars, ctx) => {
-      if (ctx?.prev) qc.setQueryData(FEED_KEY, ctx.prev);
+      if (ctx?.prev) qc.setQueryData(activeKey, ctx.prev);
       toast.error((e as Error).message);
     },
     onSuccess: (_d, { v }) => toast.success(`공개 범위를 바꿨어요 — ${VISIBILITY_LABEL[v]}`),
-    onSettled: () => qc.invalidateQueries({ queryKey: FEED_KEY }),
+    onSettled: refreshFeeds,
   });
 
   const goal = useMutation({
@@ -187,19 +209,20 @@ const CommunityFeed = () => {
     onSuccess: () => {
       toast.success("이번 주 목표를 올렸어요");
       setGoalDraft(null);
-      qc.invalidateQueries({ queryKey: FEED_KEY });
+      refreshFeeds();
     },
     onError: (e) => toast.error((e as Error).message),
   });
 
   const allItems = data?.items ?? [];
-  // 본사 보기 — 지점별 글 수 (지점 칩)
+  // 전 지점 보기 — 지점별 글 수 (지점 칩). 회원 화면으로 볼 때도 같은 칩으로 지점을 바꾼다
+  const hqFeed = feedQ.data?.all_branches ? feedQ.data : null;
   const branchChips = useMemo(() => {
-    if (!allBranches) return [];
+    if (!hqFeed) return [];
     const m = new Map<string, number>();
-    for (const it of allItems) if (it.branch) m.set(it.branch, (m.get(it.branch) ?? 0) + 1);
+    for (const it of hqFeed.items) if (it.branch) m.set(it.branch, (m.get(it.branch) ?? 0) + 1);
     return [...m.entries()].sort((a, b) => b[1] - a[1]);
-  }, [allBranches, allItems]);
+  }, [hqFeed]);
   const items = useMemo(
     () => (allBranches && branchFilter ? allItems.filter((i) => i.branch === branchFilter) : allItems),
     [allBranches, branchFilter, allItems],
@@ -323,7 +346,19 @@ const CommunityFeed = () => {
     </div>
   );
 
-  /** 본사 보기 — 글마다 지점 이름 */
+  /** 사진 — 누르면 회원 카드 */
+  const avatarBtn = (i: FeedItem, size?: number) => (
+    <button
+      type="button"
+      onClick={() => openMemberCard(i.userId)}
+      aria-label={`${i.nickname}님 회원 카드 보기`}
+      className="shrink-0 rounded-full active:scale-95"
+    >
+      <Avatar item={i} size={size} />
+    </button>
+  );
+
+  /** 전 지점 보기 — 글마다 지점 이름 */
   const branchTag = (i: FeedItem) =>
     allBranches && i.branch ? (
       <span className="shrink-0 text-[10.5px] font-bold text-muted-foreground">· {shortBranchName(i.branch)}</span>
@@ -331,18 +366,15 @@ const CommunityFeed = () => {
 
   const nameLine = (i: FeedItem) => (
     <div className="flex min-w-0 items-center gap-1">
-      {allBranches ? (
-        <button
-          type="button"
-          onClick={() => navigate(`/manager/member/${i.userId}`)}
-          className="truncate text-left text-[13px] font-bold text-foreground underline decoration-border underline-offset-2 active:opacity-70"
-          aria-label={`${i.nickname} 회원 상세 · 전체 활동 보기`}
-        >
-          {i.nickname}
-        </button>
-      ) : (
-        <span className="truncate text-[13px] font-bold text-foreground">{i.nickname}</span>
-      )}
+      {/* 이름을 누르면 누구나 회원 카드 — 좋아요 · 메시지 · 짝꿍 신청 · 응원 (관리자는 카드에서 회원 상세로) */}
+      <button
+        type="button"
+        onClick={() => openMemberCard(i.userId)}
+        className="truncate text-left text-[13px] font-bold text-foreground active:opacity-70"
+        aria-label={`${i.nickname}님 회원 카드 보기`}
+      >
+        {i.nickname}
+      </button>
       {i.isStaff ? (
         <span className="shrink-0 rounded-pill bg-yellow-500/15 px-1.5 py-0.5 text-[9.5px] font-black text-yellow-600">
           {i.staffTitle || "코치"}
@@ -380,14 +412,49 @@ const CommunityFeed = () => {
 
   return (
     <div className="space-y-3">
-      {/* 본사 보기 — 모든 지점 · 모든 글 (친구만 · 나만 보기 · 숨긴 글 포함) */}
+      {/* 회원 화면으로 보는 중 — 그 지점 일반 회원에게 보이는 그대로 (2026-10-18) */}
+      {memberView && (
+        <div className="rounded-card border-2 border-primary/50 bg-card p-3">
+          <p className="flex items-center gap-1.5 text-[12.5px] font-black text-foreground">
+            <Eye className="h-4 w-4 text-primary" /> 회원 화면으로 보는 중 · {shortBranchName(memberView)}
+          </p>
+          <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+            이 지점 회원에게 보이는 그대로예요. 친구만 글은 그 친구에게만, 나만 보기 글은 쓴 사람에게만 보여서 여기선 빠져요.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {branchChips.length > 1 &&
+              branchChips.map(([b]) => (
+                <button
+                  key={b}
+                  type="button"
+                  onClick={() => setMemberView(b)}
+                  aria-pressed={memberView === b}
+                  className={`rounded-pill border px-2.5 py-1 text-[11.5px] font-bold ${
+                    memberView === b ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"
+                  }`}
+                >
+                  {shortBranchName(b)}
+                </button>
+              ))}
+            <button
+              type="button"
+              onClick={() => setMemberView(null)}
+              className="rounded-pill border border-primary/40 bg-primary/5 px-3 py-1 text-[11.5px] font-bold text-primary active:scale-95"
+            >
+              전 지점 보기로 돌아가기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 전 지점 보기 — 모든 지점 · 모든 글 (친구만 · 나만 보기 · 숨긴 글 포함) */}
       {allBranches && (
         <div className="rounded-card border border-primary/30 bg-primary/5 p-3">
           <p className="flex items-center gap-1.5 text-[12.5px] font-black text-foreground">
-            <Building2 className="h-4 w-4 text-primary" /> 본사 보기 — 모든 지점의 모든 글
+            <Building2 className="h-4 w-4 text-primary" /> 전 지점 보기 — 모든 지점의 모든 글
           </p>
           <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
-            친구만 · 나만 보기 · 숨긴 글까지 최근 30일이 보여요. 이름을 누르면 그 회원의 전체 활동(회원 상세)으로 가요.
+            친구만 · 나만 보기 · 숨긴 글까지 최근 30일이 보여요. 이름을 누르면 회원 카드가 열려요.
           </p>
           {branchChips.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -406,16 +473,27 @@ const CommunityFeed = () => {
               ))}
             </div>
           )}
-          {/* 지점장·코치에게 '우리 지점 글 모두 보기' 권한 주기 (2026-10-18) */}
-          <button
-            type="button"
-            onClick={() => setShowGrants((v) => !v)}
-            aria-expanded={showGrants}
-            aria-controls="community-view-grants"
-            className="mt-2 inline-flex items-center gap-1.5 rounded-pill border border-primary/40 bg-card px-3 py-1.5 text-[12px] font-bold text-primary active:scale-95"
-          >
-            <KeyRound className="h-3.5 w-3.5" /> 지점장·코치 보기 권한 {showGrants ? "접기" : "관리"}
-          </button>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {/* 회원 화면으로 보기 — 고른 지점(없으면 글이 가장 많은 지점) 일반 회원 화면 */}
+            <button
+              type="button"
+              disabled={branchChips.length === 0}
+              onClick={() => setMemberView(branchFilter ?? branchChips[0]?.[0] ?? null)}
+              className="inline-flex items-center gap-1.5 rounded-pill border border-primary/40 bg-card px-3 py-1.5 text-[12px] font-bold text-primary active:scale-95 disabled:opacity-50"
+            >
+              <Eye className="h-3.5 w-3.5" /> 회원 화면으로 보기
+            </button>
+            {/* 지점장·코치 권한 — 커뮤니티 모든 글 보기 · 우리 지점 목표 만들기 (2026-10-18) */}
+            <button
+              type="button"
+              onClick={() => setShowGrants((v) => !v)}
+              aria-expanded={showGrants}
+              aria-controls="community-view-grants"
+              className="inline-flex items-center gap-1.5 rounded-pill border border-primary/40 bg-card px-3 py-1.5 text-[12px] font-bold text-primary active:scale-95"
+            >
+              <KeyRound className="h-3.5 w-3.5" /> 지점장·코치 권한 {showGrants ? "접기" : "관리"}
+            </button>
+          </div>
           {showGrants && <CommunityViewGrants />}
         </div>
       )}
@@ -427,13 +505,13 @@ const CommunityFeed = () => {
             <KeyRound className="h-4 w-4 text-primary" /> 운영진 보기 — 우리 지점의 모든 글
           </p>
           <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
-            본사가 권한을 줘서 친구만 · 나만 보기 · 숨긴 글까지 보여요. 회원 관리와 응원에만 써 주세요.
+            권한을 받아 친구만 · 나만 보기 · 숨긴 글까지 보여요. 회원 관리와 응원에만 써 주세요.
           </p>
         </div>
       )}
 
-      {/* 코치님 — 이번 주 목표 올리기 (본사 보기에서는 지점이 섞여 있어 감춘다) */}
-      {data.is_staff && !allBranches && (
+      {/* 코치님 — 이번 주 목표 올리기 (전체관리자도 해 볼 수 있다 — 내 지점으로 올라간다, 2026-10-18) */}
+      {data.is_staff && !memberView && (
         <div className="rounded-card border border-yellow-500/30 bg-yellow-500/5 p-3">
           {goalDraft === null ? (
             <button
@@ -443,6 +521,11 @@ const CommunityFeed = () => {
             >
               <Target className="h-4 w-4 text-yellow-600" />
               {hasGoal ? "이번 주 목표 다시 올리기 (코치님)" : "이번 주 목표 올리기 (코치님)"}
+              {allBranches && data.branch && (
+                <span className="ml-auto shrink-0 text-[11px] font-semibold text-muted-foreground">
+                  {shortBranchName(data.branch)}에 올라가요
+                </span>
+              )}
             </button>
           ) : (
             <div className="space-y-2">
@@ -490,14 +573,17 @@ const CommunityFeed = () => {
         ) : (
           <article key={`p-${i.id}`} className="rounded-card border-2 border-primary/40 bg-primary/5 p-3.5">
             <div className="flex items-center gap-2.5">
-              <Avatar item={i} size={40} />
+              {avatarBtn(i, 40)}
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1 text-[10.5px] font-black tracking-wider text-primary">
                   <PartyPopper className="h-3.5 w-3.5" /> 승급 축하 · {timeAgo(i.at)}
                   {allBranches && i.branch ? ` · ${shortBranchName(i.branch)}` : ""}
                 </p>
                 <p className="mt-0.5 text-[13.5px] font-bold text-foreground">
-                  {i.nickname}님 레벨 {i.promoLevel} 통과!
+                  <button type="button" onClick={() => openMemberCard(i.userId)} className="text-left active:opacity-70">
+                    {i.nickname}님
+                  </button>{" "}
+                  레벨 {i.promoLevel} 통과!
                 </p>
                 <p className="mt-0.5 flex items-center gap-1 text-[12px] text-muted-foreground">
                   {i.promoRank && NEXT_LEAGUE[i.promoRank] ? (
@@ -529,8 +615,15 @@ const CommunityFeed = () => {
                 key={`c-${i.id}`}
                 className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-muted/30 py-1 pl-1 pr-1.5"
               >
-                <Avatar item={i} size={22} />
-                <span className="max-w-[5.5rem] truncate text-[11.5px] font-bold text-foreground">{i.nickname}</span>
+                <button
+                  type="button"
+                  onClick={() => openMemberCard(i.userId)}
+                  aria-label={`${i.nickname}님 회원 카드 보기`}
+                  className="inline-flex min-w-0 items-center gap-1.5 active:opacity-70"
+                >
+                  <Avatar item={i} size={22} />
+                  <span className="max-w-[5.5rem] truncate text-[11.5px] font-bold text-foreground">{i.nickname}</span>
+                </button>
                 <NameBadge league={i.league} className="h-3 w-3" glow={false} />
                 <Btn153 item={i} onToggle={onToggle} compact />
               </span>
@@ -550,15 +643,25 @@ const CommunityFeed = () => {
 
       {/* 새 식구 — 첫 출석 */}
       {newbies.map((i) => (
-        <article key={`n-${i.id}`} className="flex items-center gap-2.5 rounded-card border border-emerald-500/30 bg-emerald-500/5 p-3.5">
-          <Avatar item={i} size={40} />
-          <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-1 text-[10.5px] font-black tracking-wider text-emerald-600">
-              <Sprout className="h-3.5 w-3.5" /> 새 식구
-            </p>
-            <p className="mt-0.5 text-[13px] font-bold text-foreground">{i.nickname}님 첫 출석! 환영해요</p>
+        <article key={`n-${i.id}`} className="rounded-card border border-emerald-500/30 bg-emerald-500/5 p-3.5">
+          <div className="flex items-center gap-2.5">
+            {avatarBtn(i, 40)}
+            <div className="min-w-0 flex-1">
+              <p className="flex items-center gap-1 text-[10.5px] font-black tracking-wider text-emerald-600">
+                <Sprout className="h-3.5 w-3.5" /> 새 식구
+                {allBranches && i.branch ? ` · ${shortBranchName(i.branch)}` : ""}
+              </p>
+              <p className="mt-0.5 text-[13px] font-bold text-foreground">
+                <button type="button" onClick={() => openMemberCard(i.userId)} className="text-left active:opacity-70">
+                  {i.nickname}님
+                </button>{" "}
+                첫 출석! 환영해요
+              </p>
+            </div>
+            <Btn153 item={i} onToggle={onToggle} />
           </div>
-          <Btn153 item={i} onToggle={onToggle} />
+          {/* 환영 인사 — 동료가 한마디씩 (2026-10-18) */}
+          <NewbieWelcome item={i} onSent={refreshFeeds} />
         </article>
       ))}
 
@@ -566,7 +669,7 @@ const CommunityFeed = () => {
       {posts.map((i) => (
         <article key={`j-${i.id}`} className="rounded-card border border-border bg-card p-3.5">
           <div className="flex items-center gap-2.5">
-            <Avatar item={i} />
+            {avatarBtn(i)}
             <div className="min-w-0 flex-1">
               {nameLine(i)}
               <p className="flex items-center gap-1 text-[10.5px] text-muted-foreground">

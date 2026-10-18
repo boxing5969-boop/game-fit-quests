@@ -7,17 +7,15 @@
  *   · 기준은 체육관 TV 와 같다: 앱 운동 세션이 켜져 있거나(60분) 오늘 출석 후 120분 안 · 코치님 제외
  *   · 내정보 '출석하면 커뮤니티에 알리기'를 끈 회원은 다른 회원에게 안 보인다 (본인·본사는 보임)
  *   · DB get_working_out_now — 회원은 자기 지점 고정, 본사는 고른 지점 / 전 지점(켜 둔 지점만)
- *   · 카드를 누르면 전체화면 · 회원을 누르면 지점장·본사는 회원 상세 정보, 그 밖에는 라이센스
+ *   · 카드를 누르면 전체화면 · 회원을 누르면 누구나 회원 카드(라이센스 — 하트·메시지·응원·짝꿍, 2026-10-18)
  */
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { Maximize2, X } from "lucide-react";
 
 import NameBadge from "@/components/badges/NameBadge";
-import { useAuth } from "@/contexts/AuthContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -124,10 +122,6 @@ const WorkingOutNowCard = ({
   title = "지금 운동 중",
   emptyText = "지금은 운동 중인 회원이 없어요. 출석하면 여기에 떠요",
 }: CardProps) => {
-  const navigate = useNavigate();
-  const { role } = useAuth();
-  // 회원 상세로 바로 가는 사람 — 라이센스의 '회원 상세 · 출석 · 메모' 버튼과 같은 기준 (지점장·관리자·전체관리자)
-  const manager = role === "branch_manager" || role === "admin" || role === "super_admin";
   const { data } = useWorkingOutNow(branch);
   const now = useMinuteNow();
   const [full, setFull] = useState(false);
@@ -136,14 +130,10 @@ const WorkingOutNowCard = ({
   const list = data.members;
   const scope = data.all_branches ? "전 지점" : data.branch ? shortBranchName(data.branch) : "";
 
-  // 지점장·본사 = 회원 상세 정보 · 그 밖 = 라이센스
+  // 누구나 회원 카드(라이센스) — 2026-10-18 대표님: "회원 카드를 클릭해도 이름을 클릭하면 항상 그렇게".
+  // 지점장·관리자는 카드 아래 '회원 상세 · 출석 · 메모' 버튼으로 간다
   const openMember = (m: WorkingOutMember) => {
-    if (manager) {
-      setFull(false);
-      navigate(`/manager/member/${m.user_id}`);
-    } else {
-      onOpenMember({ id: m.user_id, nickname: m.nickname });
-    }
+    onOpenMember({ id: m.user_id, nickname: m.nickname });
   };
 
   return (
@@ -218,7 +208,6 @@ const WorkingOutNowCard = ({
         scope={scope}
         members={list}
         allBranches={data.all_branches}
-        manager={manager}
         emptyText={emptyText}
         now={now}
         onOpenMember={openMember}
@@ -235,7 +224,6 @@ const WorkingOutNowFullscreen = ({
   scope,
   members,
   allBranches,
-  manager,
   emptyText,
   now,
   onOpenMember,
@@ -246,7 +234,6 @@ const WorkingOutNowFullscreen = ({
   scope: string;
   members: WorkingOutMember[];
   allBranches: boolean;
-  manager: boolean;
   emptyText: string;
   now: number;
   onOpenMember: (m: WorkingOutMember) => void;
@@ -288,7 +275,7 @@ const WorkingOutNowFullscreen = ({
             <p className="mb-3 text-[12px] font-semibold leading-relaxed text-muted-foreground">
               체육관 TV와 같은 기준이에요 · 앱에서 운동 시작 또는 출석 후 2시간 · 1분마다 새로고침
               <br />
-              {manager ? "이름을 누르면 회원 상세 정보가 열려요" : "이름을 누르면 라이센스를 보고 하트를 보낼 수 있어요"}
+              이름을 누르면 회원 카드가 열려요 — 하트 · 메시지 · 응원 · 짝꿍 신청
             </p>
             {members.length > 0 ? (
               <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">

@@ -96,7 +96,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
             오늘 같이 해요
           </p>
           <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
-            {allBranches ? "전 지점 모집 · 본사 보기" : "같은 지점, 오늘만 보입니다"}
+            {allBranches ? "전 지점 모집" : "같은 지점, 오늘만 보입니다"}
           </h2>
           <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
             {allBranches
@@ -172,7 +172,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
               >
                 내리기
               </button>
-            ) : allBranches ? null : c.joined ? (
+            ) : c.joined ? (
               <button
                 type="button"
                 disabled={busyId === c.id}
@@ -305,7 +305,8 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
               </div>
               <p className="mb-2 text-[12px] font-black text-foreground">오늘 올라온 모집</p>
               {renderList()}
-              {!allBranches && renderForm()}
+              {/* 전체관리자도 회원처럼 올려 볼 수 있다 (2026-10-18) */}
+              {renderForm()}
             </div>
           </motion.div>
         </motion.div>

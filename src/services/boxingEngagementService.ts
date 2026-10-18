@@ -825,6 +825,25 @@ export async function getCornermanCandidates(
   return data ?? [];
 }
 
+/** 이름으로 찾은 같은 지점 회원 — 이미 짝꿍이 있거나 요청이 오가는 중이면 state 로 알린다 (2026-10-18) */
+export interface CornermanSearchResult extends CornermanCandidate {
+  state: "available" | "paired" | "pending";
+}
+
+export async function searchCornermanCandidates(
+  query: string,
+  limit = 20,
+): Promise<CornermanSearchResult[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const { data, error } = await sbRpc<CornermanSearchResult[]>(
+    "search_cornerman_candidates",
+    { p_query: q, p_limit: limit },
+  );
+  if (error) throwKo(error);
+  return data ?? [];
+}
+
 export async function getMyCornermanStatus(): Promise<CornermanStatus> {
   const { data, error } = await sbRpc<CornermanStatus>(
     "get_my_cornerman_status",

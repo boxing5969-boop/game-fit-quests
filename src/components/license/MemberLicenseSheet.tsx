@@ -8,17 +8,20 @@
  * 전화번호·생년월일은 오지 않는다.
  * 회원은 같은 지점만, 전체관리자·관리자(대표님 153본사 계정)는 전 지점을 본다.
  * 2026-09-30: 하트 옆 '메시지' 버튼 — 메시지를 보낼 수 있는 사람일 때만 보인다(서버 dm_peer 가 판단).
+ * 2026-10-18: 어디서든 이름·카드를 누르면 열린다(GlobalMemberCard · openMemberCard) + '짝꿍 신청'(같은 지점 회원,
+ *   서로 짝꿍이 없을 때 · 받은 요청이면 바로 수락). 요청 규칙은 서버(request_cornerman_pair)가 다시 확인한다.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Heart, Send, X } from "lucide-react";
+import { Handshake, Heart, Send, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemberLicense, useToggleNicknameLike } from "@/hooks/use153King";
 import { useDmPeer } from "@/hooks/useDm";
+import { useMyCornermanStatus, useRequestCornermanPair, useRespondCornermanPair } from "@/hooks/useCornerman";
 import type { LicenseLikeReason } from "@/services/king153Service";
 import { openCredentialChange } from "@/lib/appEvents";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
@@ -92,6 +95,29 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data?.user_id, data?.display, data?.avatar_url],
   );
+
+  // 짝꿍 신청 (2026-10-18) — 같은 지점 회원끼리. 내 짝꿍 · 보낸 요청 · 받은 요청이면 그 상태로 보인다
+  const { data: cm } = useMyCornermanStatus();
+  const requestPair = useRequestCornermanPair();
+  const respondPair = useRespondCornermanPair();
+  const sameBranch = !!data && !!profile?.branch_name && data.branch === profile.branch_name;
+  const isMyPartner = !!data && !!cm?.has_active && cm.partner_user_id === data.user_id;
+  const sentPending = !!data && !!cm?.pending_sent?.some((p) => p.receiver_user_id === data.user_id);
+  const receivedPending = data ? cm?.pending_received?.find((p) => p.requester_user_id === data.user_id) : undefined;
+  const showPair =
+    !!data && !data.is_me && data.like_reason !== "target_not_member" && (isMyPartner || ((sameBranch || !!receivedPending) && !cm?.has_active));
+  const onPair = async () => {
+    if (!data) return;
+    try {
+      const res = receivedPending
+        ? await respondPair.mutateAsync({ pairId: receivedPending.pair_id, action: "accept" })
+        : await requestPair.mutateAsync(data.user_id);
+      toast.success(res.message);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "짝꿍 요청을 보내지 못했어요");
+    }
+  };
+  const pairBusy = requestPair.isPending || respondPair.isPending;
 
   const onHeart = async () => {
     if (!data || !canPress) return;
@@ -241,6 +267,23 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                     응원 보내기
                   </button>
                 )}
+
+                {showPair &&
+                  (isMyPartner ? (
+                    <p className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary/10 text-[15px] font-bold text-primary">
+                      <Handshake className="h-5 w-5" /> 내 운동 짝꿍이에요
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={onPair}
+                      disabled={sentPending || pairBusy}
+                      className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-card text-[15px] font-bold text-primary transition-transform active:scale-[0.98] disabled:opacity-60"
+                    >
+                      <Handshake className={`h-5 w-5 ${pairBusy ? "animate-pulse" : ""}`} />
+                      {sentPending ? "짝꿍 요청 보냄 · 대기 중" : receivedPending ? "짝꿍 요청 왔어요 — 수락하기" : "운동 짝꿍 신청"}
+                    </button>
+                  ))}
 
                 {!!cheerSummary && cheerSummary.total > 0 && (
                   <div className="mt-3 rounded-xl bg-muted/40 px-3 py-2.5">

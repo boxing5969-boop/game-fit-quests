@@ -110,7 +110,7 @@ const TitleMatchFeedSheet = ({ open, onClose }: Props) => {
         ))}
         <p className="pt-1 text-[10.5px] leading-relaxed text-muted-foreground">
           {allBranches
-            ? "본사 계정 — 전 지점에서 최근 30일 통과한 회원이 보여요. 박수는 기존 응원과 같은 일일 한도를 씁니다."
+            ? "전 지점에서 최근 30일 통과한 회원이 보여요. 박수는 기존 응원과 같은 일일 한도를 씁니다."
             : "같은 지점, 최근 30일 통과한 동료만 표시됩니다. 박수는 기존 응원과 같은 일일 한도를 씁니다."}
         </p>
       </div>

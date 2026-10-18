@@ -49,7 +49,7 @@ export const VISIBILITY_HINT: Record<JournalVisibility, string> = {
   private: "나만 볼 수 있어요",
 };
 /** 운영진 안내 — 본사 · 권한 받은 지점장·코치는 공개 범위와 상관없이 본다 */
-export const VISIBILITY_STAFF_NOTE = "본사와 본사가 허락한 지점장·코치는 커뮤니티 운영을 위해 모든 글을 볼 수 있어요.";
+export const VISIBILITY_STAFF_NOTE = "운영진은 커뮤니티 운영을 위해 모든 글을 볼 수 있어요.";
 
 export interface FeedItem {
   type: FeedItemType;
@@ -79,6 +79,9 @@ export interface FeedItem {
   comments: number;
   count153: number;
   reacted: boolean;
+  /** 새 식구 카드 — 받은 환영 인사 수 · 내가 남겼는지 (2026-10-18) */
+  welcomes?: number;
+  welcomedByMe?: boolean;
 }
 
 export interface CommunityFeed {
@@ -88,6 +91,8 @@ export interface CommunityFeed {
   all_branches?: boolean;
   /** 본사가 보기 권한을 준 지점장·코치 — 자기 지점 글이 공개 범위·숨김과 상관없이 온다 (2026-10-18) */
   granted?: boolean;
+  /** 회원 화면으로 보기 — 전체관리자가 고른 지점의 일반 회원 피드 (get_community_feed_member_view) */
+  member_view?: boolean;
   is_staff: boolean;
   items: FeedItem[];
 }
@@ -107,6 +112,29 @@ export interface ViewGrantStaff {
 export const reactTargetOf = (t: FeedItemType): ReactTarget => (t === "goal" ? "journal" : t);
 
 export const getCommunityFeed = (limit = 40) => rpc<CommunityFeed>("get_community_feed", { p_limit: limit });
+
+/** 회원 화면으로 보기 (전체관리자) — 그 지점 일반 회원이 보는 그대로: 전체 공개 글 · 목표 · 승급 · 오늘도 한 판 · 새 식구 */
+export const getCommunityFeedMemberView = (branch: string, limit = 40) =>
+  rpc<CommunityFeed>("get_community_feed_member_view", { p_branch: branch, p_limit: limit });
+
+/** 새 식구 환영 인사 (2026-10-18) — 같은 지점, 한 사람 한 번(다시 쓰면 고쳐짐), 첫 출석 뒤 7일까지 */
+export interface WelcomeItem {
+  id: string;
+  senderId: string;
+  name: string;
+  avatarUrl: string | null;
+  isStaff: boolean;
+  message: string;
+  at: string;
+  isMine: boolean;
+}
+export const WELCOME_PRESETS = ["환영합니다!", "같이 열심히 해요!", "반가워요, 화이팅!", "편하게 물어보세요!"] as const;
+
+export const sendCommunityWelcome = (newbieId: string, message: string) =>
+  rpc<{ success: boolean; new: boolean; count: number }>("send_community_welcome", { p_newbie: newbieId, p_message: message });
+
+export const getCommunityWelcomes = (newbieId: string) =>
+  rpc<{ items: WelcomeItem[] }>("get_community_welcomes", { p_newbie: newbieId });
 
 export const toggle153 = (type: ReactTarget, id: string) =>
   rpc<{ success: boolean; reacted: boolean; count153: number }>("toggle_community_153", { p_type: type, p_id: id });

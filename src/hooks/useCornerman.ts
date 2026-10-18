@@ -17,10 +17,12 @@ import {
   getMyCornermanStatus,
   requestCornermanPair,
   respondCornermanPair,
+  searchCornermanCandidates,
   EMPTY_CORNERMAN_STATUS,
   type ClaimCornermanBonusResult,
   type CornermanCandidate,
   type CornermanRequestResult,
+  type CornermanSearchResult,
   type CornermanStatus,
 } from "@/services/boxingEngagementService";
 import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
@@ -52,6 +54,18 @@ export function useCornermanCandidates(limit = 30, enabled = true) {
     enabled: enabled && !!user?.id,
     staleTime: 60_000,
     queryFn: () => getCornermanCandidates(limit),
+  });
+}
+
+/** 같은 지점 회원 이름으로 찾기 (2026-10-18) — 짝꿍 요청을 보내면 CORNERMAN_KEY 와 같이 새로 받는다 */
+export function useCornermanSearch(query: string, enabled = true) {
+  const { user } = useAuth();
+  const q = query.trim();
+  return useQuery<CornermanSearchResult[]>({
+    queryKey: [...CORNERMAN_KEY, "search", user?.id ?? "anon", q],
+    enabled: enabled && !!user?.id && q.length > 0,
+    staleTime: 30_000,
+    queryFn: () => searchCornermanCandidates(q),
   });
 }
 

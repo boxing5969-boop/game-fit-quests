@@ -48,7 +48,7 @@ const NewMessageSheet = ({ open, onClose }: Props) => {
       title="새 메시지"
       subtitle={
         data?.all_branches
-          ? "본사 계정 — 전 지점 회원·코치님께 보낼 수 있어요"
+          ? "전 지점 회원·코치님께 보낼 수 있어요"
           : `${shortBranch(data?.branch) || "우리 지점"} 회원·코치님께 보낼 수 있어요`
       }
     >

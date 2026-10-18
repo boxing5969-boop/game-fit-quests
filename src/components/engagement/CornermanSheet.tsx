@@ -14,9 +14,9 @@
  *   · z-[100] / role='dialog' / aria-modal='true' / useModalDismiss
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Users, X } from "lucide-react";
+import { Check, Search, Users, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useModalDismiss } from "@/hooks/useModalDismiss";
@@ -24,11 +24,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   useClaimCornermanDailyBonus,
   useCornermanCandidates,
+  useCornermanSearch,
   useEndCornermanPair,
   useMyCornermanStatus,
   useRequestCornermanPair,
   useRespondCornermanPair,
 } from "@/hooks/useCornerman";
+import { openMemberCard } from "@/lib/appEvents";
 import {
   CORNERMAN_COPY,
   CORNERMAN_DISCLAIMER,
@@ -46,7 +48,8 @@ interface Props {
 
 const CornermanSheet = ({ open, onClose }: Props) => {
   useModalDismiss(open, onClose);
-  // 본사(전체관리자·관리자) 계정: 전 지점 회원을 둘러보기만 한다 (2026-09-30 대표님 "본사는 모든 회원이 보이게")
+  // 전체관리자 계정: 전 지점 회원이 보인다 (2026-09-30 대표님 "본사는 모든 회원이 보이게").
+  // 2026-10-18: 회원과 똑같이 요청 버튼도 보인다 — 요청은 서버가 같은 지점끼리만 받는다
   const { role } = useAuth();
   const isHq = role === "super_admin" || role === "admin";
 
@@ -55,6 +58,22 @@ const CornermanSheet = ({ open, onClose }: Props) => {
     30,
     open && !status?.has_active,
   );
+
+  // 같은 지점 회원 이름으로 찾기 (2026-10-18 대표님: "운동짝꿍에 같은 지점 회원 검색하는 기능") — 0.25초 멈추면 찾는다
+  const [query, setQuery] = useState("");
+  const [q, setQ] = useState("");
+  useEffect(() => {
+    const t = window.setTimeout(() => setQ(query.trim()), 250);
+    return () => window.clearTimeout(t);
+  }, [query]);
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+      setQ("");
+    }
+  }, [open]);
+  const search = useCornermanSearch(q, open && !status?.has_active);
+  const searching = q.length > 0;
 
   const requestMut = useRequestCornermanPair();
   const respondMut = useRespondCornermanPair();
@@ -154,9 +173,13 @@ const CornermanSheet = ({ open, onClose }: Props) => {
                 key={p.pair_id}
                 className="rounded-card border border-primary/20 bg-primary/5 p-3.5"
               >
-                <p className="text-[13px] font-bold text-foreground">
+                <button
+                  type="button"
+                  onClick={() => openMemberCard(p.requester_user_id)}
+                  className="text-left text-[13px] font-bold text-foreground underline decoration-border underline-offset-2 active:opacity-70"
+                >
                   🥊 {p.requester_name}
-                </p>
+                </button>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
                   {RANK_KOREAN_LABEL[p.requester_rank] ?? p.requester_rank} 리그
                   · Lv.{toGlobalLevel(p.requester_rank, p.requester_level)}
@@ -203,7 +226,13 @@ const CornermanSheet = ({ open, onClose }: Props) => {
               className="rounded-card border border-border bg-background/40 p-3"
             >
               <p className="text-[12.5px] font-medium text-foreground">
-                {p.receiver_name}
+                <button
+                  type="button"
+                  onClick={() => openMemberCard(p.receiver_user_id)}
+                  className="text-left underline decoration-border underline-offset-2 active:opacity-70"
+                >
+                  {p.receiver_name}
+                </button>
                 <span className="ml-2 badge-pill bg-amber-400/15 text-amber-700">
                   대기 중
                 </span>
@@ -250,20 +279,56 @@ const CornermanSheet = ({ open, onClose }: Props) => {
 
         <div>
           <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
-            {isHq ? "전 지점 회원 · 본사 보기" : "같은 지점 회원 후보"}
+            {isHq ? "전 지점 회원" : "같은 지점 회원 후보"}
           </p>
           <p className="mb-2 text-[10.5px] leading-relaxed text-muted-foreground">
             {isHq
-              ? "최근 출석한 회원부터 보여요. 짝꿍은 같은 지점 회원끼리 맺어서 본사 계정은 둘러보기만 해요."
+              ? "최근 출석한 회원부터 보여요. 짝꿍은 같은 지점 회원끼리 맺어요."
               : CORNERMAN_COPY.emptyHint}
           </p>
-          <CornermanCandidateList
-            candidates={candidates ?? []}
-            isLoading={candLoading}
-            pendingUserId={pendingRequestId}
-            onRequest={handleRequest}
-            readOnly={isHq}
-          />
+          {/* 이름으로 찾기 */}
+          <label className="mb-2.5 flex h-11 items-center gap-2 rounded-xl border border-border bg-background px-3 focus-within:border-primary">
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <input
+              type="text"
+              inputMode="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value.slice(0, 30))}
+              placeholder={isHq ? "회원 이름으로 찾기" : "같은 지점 회원 이름으로 찾기"}
+              aria-label="회원 이름으로 찾기"
+              enterKeyHint="search"
+              className="min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label="지우기"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground active:scale-95"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </label>
+          {searching ? (
+            <CornermanCandidateList
+              candidates={search.data ?? []}
+              isLoading={search.isLoading}
+              pendingUserId={pendingRequestId}
+              onRequest={handleRequest}
+              showBranch={isHq}
+              emptyText={search.isError ? "찾지 못했어요. 잠시 후 다시 해 주세요." : `'${q}' 이름의 회원이 없어요.`}
+              emptyHint="앱에 보이는 이름(닉네임)으로 찾아요. 이름을 누르면 회원 카드가 열려요."
+            />
+          ) : (
+            <CornermanCandidateList
+              candidates={candidates ?? []}
+              isLoading={candLoading}
+              pendingUserId={pendingRequestId}
+              onRequest={handleRequest}
+              showBranch={isHq}
+            />
+          )}
         </div>
 
         <p className="text-[10.5px] leading-relaxed text-muted-foreground">

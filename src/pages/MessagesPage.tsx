@@ -154,7 +154,7 @@ const MessagesPage = () => {
       header={
         <PageHeader
           title="메시지"
-          subtitle={isHq ? "본사 · 전 지점 회원·코치님과 1:1" : "같은 지점 회원 · 코치님과 1:1 대화"}
+          subtitle={isHq ? "전 지점 회원·코치님과 1:1" : "같은 지점 회원 · 코치님과 1:1 대화"}
           leftAction={
             <button
               type="button"
@@ -312,7 +312,7 @@ const MessagesPage = () => {
             <p className="px-1 pt-1 text-[11.5px] leading-relaxed text-muted-foreground">
               {tab === "requests"
                 ? "처음 보낸 사람은 수락 전까지 메시지를 1개만 보낼 수 있어요."
-                : "글자·이모지로 대화해요 · 불편한 메시지는 대화방 ⋯ 에서 신고하면 본사가 확인해요."}
+                : "글자·이모지로 대화해요 · 불편한 메시지는 대화방 ⋯ 에서 신고하면 운영진이 확인해요."}
             </p>
           )}
         </div>
