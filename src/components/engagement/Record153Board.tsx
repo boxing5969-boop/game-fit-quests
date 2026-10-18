@@ -13,6 +13,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ScrollText } from "lucide-react";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -379,7 +380,18 @@ const TournamentCard = ({
                   {inner}
                 </button>
               ) : (
-                <span className={cls}>{inner}</span>
+                // 앱 계정이 아직 연결되지 않은 수상자 — 눌러도 아무 일 없던 것을 안내로 (2026-10-18 대표님: "이설아도 아예 클릭이 안 되고")
+                <button
+                  type="button"
+                  onClick={() =>
+                    toast(`${h.name}님은 아직 앱 계정이 연결되지 않았어요`, {
+                      description: "앱에 들어오면 메달이 라이센스에 이어지고, 이름을 눌러 카드를 볼 수 있어요.",
+                    })
+                  }
+                  className={cn(cls, "active:scale-[0.97]")}
+                >
+                  {inner}
+                </button>
               )}
             </li>
           );

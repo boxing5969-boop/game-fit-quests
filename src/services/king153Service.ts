@@ -242,7 +242,10 @@ export async function getBranchNicknames(search: string | null, limit = 60): Pro
 /** 하트를 못 누르는 이유 — self: 내 카드, target_not_member: 이용 기록 없는 계정, not_member: 지점 회원 아님, change_credentials: 처음 받은 아이디 그대로.
  *  target_no_nickname · admin_test 는 2026-09-30부터 오지 않는다(닉네임 조건 삭제 · 본사 하트도 점수) — 옛 응답 호환용 */
 export type LicenseLikeReason =
-  | "self" | "target_no_nickname" | "target_not_member" | "admin_test" | "not_member" | "change_credentials" | null;
+  | "self" | "target_no_nickname" | "target_not_member" | "target_staff" | "admin_test" | "not_member" | "change_credentials" | null;
+/** 코치·지점장·운영진 표시 (2026-10-18 — 이 계정들도 카드가 열린다, 하트는 안 받는다 = like_reason 'target_staff') */
+export type LicenseStaffRole = "coach" | "branch_manager" | "admin";
+export const LICENSE_STAFF_LABEL: Record<LicenseStaffRole, string> = { coach: "코치", branch_manager: "지점장", admin: "운영진" };
 export interface MemberLicense {
   user_id: string;
   /** 랭킹과 같은 이름 규칙 — 닉네임 → 이름 → '익명 복서' (2026-09-30). 전화번호·생년월일은 오지 않는다 */
@@ -265,6 +268,8 @@ export interface MemberLicense {
   is_me: boolean;
   can_like: boolean;
   like_reason: LicenseLikeReason;
+  /** 코치·지점장·운영진이면 표시 — 회원이면 null (옛 응답에는 없다) */
+  staff_role?: LicenseStaffRole | null;
 }
 
 /** 다른 회원(또는 나)의 라이센스 — 서버가 같은 지점·관리자 전 지점 규칙을 검사한다 */

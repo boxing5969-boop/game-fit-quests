@@ -10,6 +10,8 @@
  * 2026-09-30: 하트 옆 '메시지' 버튼 — 메시지를 보낼 수 있는 사람일 때만 보인다(서버 dm_peer 가 판단).
  * 2026-10-18: 어디서든 이름·카드를 누르면 열린다(GlobalMemberCard · openMemberCard) + '짝꿍 신청'(같은 지점 회원,
  *   서로 짝꿍이 없을 때 · 받은 요청이면 바로 수락). 요청 규칙은 서버(request_cornerman_pair)가 다시 확인한다.
+ * 2026-10-18: 코치·지점장·운영진 카드도 열린다(대표님: "강건형은 라이센스를 볼 수 없는 계정인가?") — 이름 옆 표시,
+ *   하트·짝꿍은 없고(like_reason 'target_staff') 메시지·응원은 그대로.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMemberLicense, useToggleNicknameLike } from "@/hooks/use153King";
 import { useDmPeer } from "@/hooks/useDm";
 import { useMyCornermanStatus, useRequestCornermanPair, useRespondCornermanPair } from "@/hooks/useCornerman";
-import type { LicenseLikeReason } from "@/services/king153Service";
+import { LICENSE_STAFF_LABEL, type LicenseLikeReason } from "@/services/king153Service";
 import { openCredentialChange } from "@/lib/appEvents";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import CharacterSprite from "@/components/CharacterSprite";
@@ -36,8 +38,10 @@ const REASON_TEXT: Record<Exclude<LicenseLikeReason, null>, string> = {
   // 2026-09-30부터 서버가 보내지 않는다 (닉네임 조건 삭제) — 옛 응답 호환용
   target_no_nickname: "지금은 이 회원에게 하트를 보낼 수 없어요",
   target_not_member: "이용 기록이 확인되지 않은 계정이라 하트를 받을 수 없어요",
-  // 2026-09-30부터 서버가 보내지 않는다 (본사 하트도 점수에 들어간다) — 옛 응답 호환용
-  admin_test: "본사 계정 하트예요",
+  // 2026-10-18: 코치·지점장·운영진 카드 — 하트 순위 밖
+  target_staff: "코치님·운영진은 하트를 받지 않아요. 응원이나 메시지로 마음을 전해 주세요",
+  // 2026-09-30부터 서버가 보내지 않는다 (운영진 하트도 점수에 들어간다) — 옛 응답 호환용
+  admin_test: "운영진 계정 하트예요",
   not_member: "지점 회원만 하트를 보낼 수 있어요",
   change_credentials: "처음 받은 아이디·비밀번호(전화번호)를 바꾸면 하트를 보낼 수 있어요",
 };
@@ -81,6 +85,8 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
   };
 
   const canPress = !!data && !busy && (data.can_like || data.liked_by_me);
+  /** 코치·지점장·운영진 카드 — 하트·짝꿍 없이 메시지·응원만 */
+  const staffCard = !!data && !data.is_me && data.like_reason === "target_staff";
 
   // 응원 보내기 · 받은 응원 (2026-10-16 응원 업그레이드) — 같은 지점 동료(본사는 켜 둔 지점)에게. 서버가 다시 확인한다
   const { data: cheerSummary } = useMemberCheerSummary(userId, open);
@@ -105,7 +111,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
   const sentPending = !!data && !!cm?.pending_sent?.some((p) => p.receiver_user_id === data.user_id);
   const receivedPending = data ? cm?.pending_received?.find((p) => p.requester_user_id === data.user_id) : undefined;
   const showPair =
-    !!data && !data.is_me && data.like_reason !== "target_not_member" && (isMyPartner || ((sameBranch || !!receivedPending) && !cm?.has_active));
+    !!data && !data.is_me && data.like_reason !== "target_not_member" && data.like_reason !== "target_staff" && (isMyPartner || ((sameBranch || !!receivedPending) && !cm?.has_active));
   const onPair = async () => {
     if (!data) return;
     try {
@@ -183,8 +189,13 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
           >
             <div className="mb-3 flex items-center justify-between px-1">
               <div className="min-w-0">
-                <h2 className="truncate text-[17px] font-bold text-foreground">
-                  {data ? `${data.display}님의 라이센스` : "라이센스"}
+                <h2 className="flex min-w-0 items-center gap-1.5 text-[17px] font-bold text-foreground">
+                  <span className="truncate">{data ? `${data.display}님의 라이센스` : "라이센스"}</span>
+                  {data?.staff_role && (
+                    <span className="shrink-0 rounded-pill bg-primary/15 px-2 py-0.5 text-[11.5px] font-black text-primary">
+                      {LICENSE_STAFF_LABEL[data.staff_role]}
+                    </span>
+                  )}
                 </h2>
                 {data?.branch && <p className="text-[12.5px] text-muted-foreground">{shortBranch(data.branch)}</p>}
               </div>
@@ -227,23 +238,26 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                   onLikeClick={canPress ? onHeart : undefined}
                 />
 
-                {/* 큰 하트 버튼 — 엄지 닿는 곳. 메시지를 보낼 수 있는 사람이면 옆에 '메시지' */}
-                {!data.is_me && (
-                  <div className={`mt-4 grid gap-2 ${showDm ? "grid-cols-2" : "grid-cols-1"}`}>
-                    <button
-                      type="button"
-                      onClick={onHeart}
-                      disabled={!canPress}
-                      aria-pressed={data.liked_by_me}
-                      className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-bold transition-transform active:scale-[0.98] disabled:opacity-45 ${
-                        data.liked_by_me
-                          ? "bg-secondary text-foreground"
-                          : "bg-[#F5C542] text-[#1A1206]"
-                      }`}
-                    >
-                      <Heart className={`h-5 w-5 ${data.liked_by_me ? "fill-[#F5C542] text-[#F5C542]" : "fill-current"} ${busy ? "animate-pulse" : ""}`} />
-                      {data.liked_by_me ? "하트 취소" : "하트 보내기"}
-                    </button>
+                {/* 큰 하트 버튼 — 엄지 닿는 곳. 메시지를 보낼 수 있는 사람이면 옆에 '메시지'.
+                    코치·지점장·운영진 카드는 하트 없이 메시지만 (2026-10-18) */}
+                {!data.is_me && (!staffCard || showDm) && (
+                  <div className={`mt-4 grid gap-2 ${showDm && !staffCard ? "grid-cols-2" : "grid-cols-1"}`}>
+                    {!staffCard && (
+                      <button
+                        type="button"
+                        onClick={onHeart}
+                        disabled={!canPress}
+                        aria-pressed={data.liked_by_me}
+                        className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-bold transition-transform active:scale-[0.98] disabled:opacity-45 ${
+                          data.liked_by_me
+                            ? "bg-secondary text-foreground"
+                            : "bg-[#F5C542] text-[#1A1206]"
+                        }`}
+                      >
+                        <Heart className={`h-5 w-5 ${data.liked_by_me ? "fill-[#F5C542] text-[#F5C542]" : "fill-current"} ${busy ? "animate-pulse" : ""}`} />
+                        {data.liked_by_me ? "하트 취소" : "하트 보내기"}
+                      </button>
+                    )}
                     {showDm && (
                       <button
                         type="button"
