@@ -450,7 +450,8 @@ const Test153Board = ({ onOpenMember }: Props) => {
               </p>
               <ol className="space-y-2">
                 <Point title="① 내 체력을 정확히 알아요">
-                  달리기 · 근력 · 복싱 스텝 · 줄넘기를 한 번에 재서, 어디가 강하고 어디가 약한지 구간 16개의 기록으로 보여 줘요.
+                  달리기 · 근력 · 복싱 동작(원투·스텝) · 줄넘기를 한 번에 재서, 어디가 강하고 어디가 약한지 구간 16개의 기록으로 보여
+                  줘요.
                 </Point>
                 <Point title="② 기록으로 남겨요">
                   코치님이 잰 공식 기록만 쌓여요. 느낌이 아니라 숫자로, 첫 기록부터 지금까지 얼마나 좋아졌는지 알 수 있어요.
@@ -509,6 +510,10 @@ const Test153Board = ({ onOpenMember }: Props) => {
               <p>
                 기준을 안 지키면 코치님이 <b className="text-foreground">“노렙(No rep)”</b> — 그 한 번은 개수에 안 들어가요. 오른쪽
                 숫자는 오픈 개수, 아래는 스타터 개수예요.
+              </p>
+              <p>
+                🥊 표시 종목은 원투나 복싱 스텝이 들어간 종목이에요. 원투는 세게 치는 게 아니라{" "}
+                <b className="text-foreground">팔을 끝까지 뻗고 가드로 돌아와야</b> 1번으로 세요.
               </p>
               <ul className="space-y-2">
                 <MoveCard
