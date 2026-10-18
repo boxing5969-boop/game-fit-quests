@@ -2,12 +2,17 @@
  * 153 커뮤니티 — 모두의 피드 · 153 반응 (2026-10-15 대표님: "커뮤니티 개편안대로 — 반응 이름은 153").
  *
  * 서버(supabase/migrations/20261015130000_community_feed_153.sql)가 볼 수 있는 글만 내려준다.
- * 본사 계정은 모든 지점의 모든 글(짝꿍만 · 숨긴 글 포함, 30일)이 온다 — 20261016080000_hq_sees_all_community.sql
+ * 본사 계정은 모든 지점의 모든 글(친구만 · 나만 보기 · 숨긴 글 포함, 30일)이 온다 — 20261016080000_hq_sees_all_community.sql
  *   · get_community_feed       — 코치 이번 주 목표(고정) · 승급 축하(고정) · 오늘 운동 한 줄 · 오늘도 한 판(출석)
  *   · toggle_community_153     — 153 누르기/취소 (내 글에는 못 누름)
- *   · set_journal_entry_options — 한 줄 공개 범위(지점 모두/짝꿍만) + 사진
+ *   · set_journal_entry_options — 글 올린 직후 사진 (+ 공개 범위)
+ *   · set_journal_entry_visibility — 쓴 뒤에 내 한 줄 공개 범위 바꾸기
  *   · post_weekly_goal · hide_community_entry · report_community_entry · set_community_auto_post
  * 153·댓글·목표 글에는 보상이 없다. 공식 레벨업과 무관.
+ *
+ * 공개 범위 3가지 (2026-10-18 대표님: "개인 공개 전체공개 친구만 공개할수있는 기능" — 20261018110000_community_visibility_private.sql)
+ *   branch 전체 공개(같은 지점 회원 모두) · partners 친구만(운동 짝꿍 · 최근 서로 응원한 동료) · private 나만 보기.
+ *   본사와, 본사가 권한을 준 지점장·코치(자기 지점만)는 공개 범위와 상관없이 본다 — list/set_community_view_grant.
  */
 import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
@@ -29,6 +34,23 @@ async function rpc<T>(name: string, args?: Record<string, unknown>): Promise<T> 
 export type FeedItemType = "goal" | "promotion" | "journal" | "checkin";
 export type ReactTarget = "journal" | "checkin" | "promotion";
 
+/** 한 줄 공개 범위 (2026-10-18) */
+export type JournalVisibility = "branch" | "partners" | "private";
+export const JOURNAL_VISIBILITIES: readonly JournalVisibility[] = ["branch", "partners", "private"];
+export const VISIBILITY_LABEL: Record<JournalVisibility, string> = {
+  branch: "전체 공개",
+  partners: "친구만",
+  private: "나만 보기",
+};
+/** 누가 보는지 — 고를 때 한 줄로 */
+export const VISIBILITY_HINT: Record<JournalVisibility, string> = {
+  branch: "우리 지점 회원 모두 볼 수 있어요",
+  partners: "운동 짝꿍과 최근 서로 응원한 동료만 볼 수 있어요",
+  private: "나만 볼 수 있어요",
+};
+/** 운영진 안내 — 본사 · 권한 받은 지점장·코치는 공개 범위와 상관없이 본다 */
+export const VISIBILITY_STAFF_NOTE = "본사와 본사가 허락한 지점장·코치는 커뮤니티 운영을 위해 모든 글을 볼 수 있어요.";
+
 export interface FeedItem {
   type: FeedItemType;
   id: string;
@@ -45,7 +67,7 @@ export interface FeedItem {
   content: string | null;
   mood: string | null;
   photoUrl: string | null;
-  visibility: "branch" | "partners" | null;
+  visibility: JournalVisibility | null;
   newbie: boolean;
   promoRank: string | null;
   promoLevel: number | null;
@@ -62,10 +84,23 @@ export interface FeedItem {
 export interface CommunityFeed {
   success: boolean;
   branch: string | null;
-  /** 본사(전체관리자·관리자) — 모든 지점 · 짝꿍만 · 숨긴 글까지 (2026-10-16 대표님, 20261016080000_hq_sees_all_community.sql) */
+  /** 본사(전체관리자·관리자) — 모든 지점 · 친구만 · 나만 보기 · 숨긴 글까지 (2026-10-16 대표님, 20261016080000_hq_sees_all_community.sql) */
   all_branches?: boolean;
+  /** 본사가 보기 권한을 준 지점장·코치 — 자기 지점 글이 공개 범위·숨김과 상관없이 온다 (2026-10-18) */
+  granted?: boolean;
   is_staff: boolean;
   items: FeedItem[];
+}
+
+/** 본사 화면 — 지점장·코치 한 명과 보기 권한 */
+export interface ViewGrantStaff {
+  user_id: string;
+  name: string;
+  title: string;
+  branch: string | null;
+  avatar_url: string | null;
+  granted: boolean;
+  granted_at: string | null;
 }
 
 /** 피드 글(목표 포함)의 153 대상 종류 */
@@ -76,12 +111,23 @@ export const getCommunityFeed = (limit = 40) => rpc<CommunityFeed>("get_communit
 export const toggle153 = (type: ReactTarget, id: string) =>
   rpc<{ success: boolean; reacted: boolean; count153: number }>("toggle_community_153", { p_type: type, p_id: id });
 
-export const setJournalEntryOptions = (entryId: string, visibility: "branch" | "partners", photoUrl: string | null) =>
+export const setJournalEntryOptions = (entryId: string, visibility: JournalVisibility, photoUrl: string | null) =>
   rpc<{ success: boolean }>("set_journal_entry_options", {
     p_entry_id: entryId,
     p_visibility: visibility,
     p_photo_url: photoUrl,
   });
+
+export const setJournalEntryVisibility = (entryId: string, visibility: JournalVisibility) =>
+  rpc<{ success: boolean; visibility: JournalVisibility }>("set_journal_entry_visibility", {
+    p_entry_id: entryId,
+    p_visibility: visibility,
+  });
+
+export const listCommunityViewStaff = () => rpc<{ staff: ViewGrantStaff[] }>("list_community_view_staff");
+
+export const setCommunityViewGrant = (userId: string, on: boolean) =>
+  rpc<{ success: boolean; granted: boolean }>("set_community_view_grant", { p_user_id: userId, p_on: on });
 
 export const postWeeklyGoal = (content: string) => rpc<{ success: boolean; entry_id: string }>("post_weekly_goal", { p_content: content });
 

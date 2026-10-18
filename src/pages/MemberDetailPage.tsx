@@ -856,9 +856,11 @@ const MemberDetailPage = () => {
                             {fmtDay(a.at)} {fmtTime(a.at)}
                           </span>
                         </div>
-                        {(a.detail || a.meta?.visibility === "partners" || a.meta?.hidden) && (
+                        {(a.detail || a.meta?.visibility === "partners" || a.meta?.visibility === "private" || a.meta?.hidden) && (
                           <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] leading-relaxed text-muted-foreground">
-                            {a.meta?.visibility === "partners" && <span className="mr-1 font-bold">[짝꿍만]</span>}
+                            {/* 공개 범위 — 전체 공개는 표시 안 함 (2026-10-18 친구만 · 나만 보기) */}
+                            {a.meta?.visibility === "partners" && <span className="mr-1 font-bold">[친구만]</span>}
+                            {a.meta?.visibility === "private" && <span className="mr-1 font-bold">[나만 보기]</span>}
                             {a.meta?.hidden && <span className="mr-1 font-bold text-destructive">[숨긴 글]</span>}
                             {a.detail}
                           </p>

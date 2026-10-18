@@ -248,6 +248,8 @@ export interface SubmitJournalInput {
   prompt: string;
   content: string;
   mood?: string | null;
+  /** 공개 범위 — 보내면 글 저장과 같이 정해진다 (submit_champion_journal_entry_v2, 2026-10-18). 없으면 전체 공개 */
+  visibility?: "branch" | "partners" | "private";
 }
 
 export interface JournalEntryResult {
@@ -407,12 +409,14 @@ export async function submitBoxingFunChallengeAttempt(
 export async function submitChampionJournalEntry(
   payload: SubmitJournalInput,
 ): Promise<JournalEntryResult> {
+  // 공개 범위를 같이 보내면 _v2 — 글이 처음부터 그 범위로 저장된다 (전체 공개로 잠깐 올라가는 순간이 없다)
   const { data, error } = await sbRpc<JournalEntryResult>(
-    "submit_champion_journal_entry",
+    payload.visibility ? "submit_champion_journal_entry_v2" : "submit_champion_journal_entry",
     {
       p_prompt: payload.prompt,
       p_content: payload.content,
       p_mood: payload.mood ?? null,
+      ...(payload.visibility ? { p_visibility: payload.visibility } : {}),
     },
   );
   if (error) throwKo(error);

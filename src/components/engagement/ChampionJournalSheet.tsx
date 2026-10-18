@@ -10,10 +10,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, CheckCircle2, AlertTriangle, X, ImagePlus, Users, Lock } from "lucide-react";
+import { BookOpen, CheckCircle2, AlertTriangle, X, ImagePlus, Users, Lock, Handshake, type LucideIcon } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { setJournalEntryOptions, uploadCommunityPhoto } from "@/services/communityFeedService";
+import {
+  JOURNAL_VISIBILITIES,
+  VISIBILITY_HINT,
+  VISIBILITY_LABEL,
+  VISIBILITY_STAFF_NOTE,
+  setJournalEntryOptions,
+  uploadCommunityPhoto,
+  type JournalVisibility,
+} from "@/services/communityFeedService";
 import { toast } from "sonner";
 
 import {
@@ -71,6 +79,29 @@ function tidyContent(s: string): string {
   return s.replace(/\n{3,}/g, "\n\n").trim();
 }
 
+// 공개 범위 3가지 (2026-10-18 대표님: "개인 공개 전체공개 친구만 공개할수있는 기능")
+const VIS_ICON: Record<JournalVisibility, LucideIcon> = { branch: Users, partners: Handshake, private: Lock };
+
+// 마지막으로 고른 공개 범위를 기억한다 — 나만 보기로 쓰는 회원이 매번 바꾸지 않게 (이 기기에서만, 못 읽으면 전체 공개)
+const visKey = (uid: string) => `journal-visibility:${uid}`;
+function readLastVisibility(uid?: string): JournalVisibility {
+  if (!uid) return "branch";
+  try {
+    const v = localStorage.getItem(visKey(uid));
+    return v === "partners" || v === "private" ? v : "branch";
+  } catch {
+    return "branch";
+  }
+}
+function saveLastVisibility(uid: string | undefined, v: JournalVisibility) {
+  if (!uid) return;
+  try {
+    localStorage.setItem(visKey(uid), v);
+  } catch {
+    /* 저장 못 해도 글쓰기는 그대로 */
+  }
+}
+
 const ChampionJournalSheet = ({ open, onClose }: Props) => {
   const submit = useSubmitChampionJournalEntry();
   const submitCondition = useSubmitBoxingCondition();
@@ -86,10 +117,10 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
   const [painArea, setPainArea] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<JournalEntryResult | null>(null);
-  // 153 커뮤니티 개편 (2026-10-15) — 공개 범위(기본: 같은 지점 모두) + 사진 한 장
+  // 153 커뮤니티 개편 (2026-10-15) — 공개 범위(전체 공개 · 친구만 · 나만 보기, 지난번 고른 것) + 사진 한 장
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [visibility, setVisibility] = useState<"branch" | "partners">("branch");
+  const [visibility, setVisibility] = useState<JournalVisibility>("branch");
   const [photo, setPhoto] = useState<File | null>(null);
   const photoPreview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);
   useEffect(() => () => { if (photoPreview) URL.revokeObjectURL(photoPreview); }, [photoPreview]);
@@ -103,10 +134,10 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
       setPainArea(todayCondition?.pain_area ?? []);
       setResult(null);
       setPending(false);
-      setVisibility("branch");
+      setVisibility(readLastVisibility(user?.id));
       setPhoto(null);
     }
-  }, [open, todayCondition?.condition_type, todayCondition?.pain_area]);
+  }, [open, todayCondition?.condition_type, todayCondition?.pain_area, user?.id]);
 
   const showPainArea = condition === "pain";
   const alreadyHasTodayCondition = !!todayCondition?.has_today;
@@ -132,16 +163,19 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
       // 컨디션은 오늘 첫 기록일 때만 새로 저장 (중복 방지).
       // 사진은 글보다 먼저 올린다 — 실패하면 글도 안 올라가게 (사진 없는 글이 올라가 버리는 일 방지)
       const photoUrl = photo && user ? await uploadCommunityPhoto(user.id, photo) : null;
+      // 공개 범위는 글과 함께 저장된다 (전체 공개로 먼저 올라갔다 바뀌는 일 없음 — 2026-10-18)
       const data = await submit.mutateAsync({
         prompt,
         content: tidyContent(content),
         mood: conditionToMoodLabel(condition),
+        visibility,
       });
-      if (photoUrl || visibility !== "branch") {
+      saveLastVisibility(user?.id, visibility);
+      if (photoUrl) {
         try {
           await setJournalEntryOptions(data.entry_id, visibility, photoUrl);
         } catch {
-          toast.error("사진·공개 범위를 저장하지 못했어요. 글은 올라갔어요.");
+          toast.error("사진을 붙이지 못했어요. 글은 올라갔어요.");
         }
       }
       qc.invalidateQueries({ queryKey: ["community-feed"] });
@@ -182,7 +216,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             오늘 컨디션 · 한 줄 · 사진
           </h2>
           <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-            남긴 한 줄은 커뮤니티에 올라가고, 동료들이 153으로 응원해요.
+            남긴 한 줄은 커뮤니티에 올라가요. 누가 볼지는 아래에서 골라요.
           </p>
         </div>
       </div>
@@ -216,7 +250,11 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             )}
             <p className="text-[13.5px] font-bold text-foreground">
               {isReward
-                ? (visibility === "branch" ? "올렸어요! 지점 동료들이 153으로 응원할 거예요." : "올렸어요! 짝꿍만 볼 수 있어요.")
+                ? visibility === "branch"
+                  ? "올렸어요! 지점 동료들이 153으로 응원할 거예요."
+                  : visibility === "partners"
+                    ? "올렸어요! 친구(운동 짝꿍 · 서로 응원한 동료)만 볼 수 있어요."
+                    : "올렸어요! 나만 볼 수 있어요."
                 : "올렸어요! 오늘 보상은 이미 받았어요."}
             </p>
           </div>
@@ -454,34 +492,34 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         {photoPreview && (
           <img src={photoPreview} alt="올릴 사진 미리보기" className="max-h-44 w-full rounded-xl object-cover" />
         )}
-        <div className="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label="누가 볼 수 있나요">
-          <button
-            type="button"
-            role="radio"
-            aria-checked={visibility === "branch"}
-            onClick={() => setVisibility("branch")}
-            className={`flex items-center justify-center gap-1 rounded-pill border px-2 py-1.5 text-[11.5px] font-bold ${
-              visibility === "branch" ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"
-            }`}
-          >
-            <Users className="h-3.5 w-3.5" /> 지점 동료 모두
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={visibility === "partners"}
-            onClick={() => setVisibility("partners")}
-            className={`flex items-center justify-center gap-1 rounded-pill border px-2 py-1.5 text-[11.5px] font-bold ${
-              visibility === "partners" ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"
-            }`}
-          >
-            <Lock className="h-3.5 w-3.5" /> 짝꿍만
-          </button>
+        {/* 공개 범위 3가지 (2026-10-18) — 누가 보는지 한 줄로 바로 보여 준다 */}
+        <div>
+          <p className="mb-1.5 text-[11.5px] font-bold text-foreground">누가 볼 수 있나요?</p>
+          <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="누가 볼 수 있나요">
+            {JOURNAL_VISIBILITIES.map((v) => {
+              const Icon = VIS_ICON[v];
+              const on = visibility === v;
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => setVisibility(v)}
+                  className={`flex min-w-0 items-center justify-center gap-1 rounded-pill border px-1.5 py-1.5 text-[11.5px] font-bold ${
+                    on ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{VISIBILITY_LABEL[v]}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-[11px] font-semibold text-foreground">{VISIBILITY_HINT[visibility]}</p>
         </div>
-        {/* 2026-10-16: 본사가 모든 글을 보게 되어 미리 알린다 (20261016080000_hq_sees_all_community.sql) */}
-        <p className="text-[10.5px] leading-relaxed text-muted-foreground">
-          본사 운영진은 커뮤니티 운영을 위해 모든 글을 볼 수 있어요.
-        </p>
+        {/* 2026-10-16: 본사가 모든 글을 본다 · 2026-10-18: 본사가 허락한 지점장·코치도 */}
+        <p className="text-[10.5px] leading-relaxed text-muted-foreground">{VISIBILITY_STAFF_NOTE}</p>
       </div>
 
       <button

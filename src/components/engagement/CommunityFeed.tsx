@@ -5,24 +5,47 @@
  * 반응은 '153' 하나. 내 글에는 누를 수 없다. 153·댓글에는 보상이 없다 (공식 레벨업과 무관).
  * 이번 주 153을 가장 많이 보낸 회원이 라이브보드 TV 의 '이번 주 153왕' — 받은 수가 아니라 보낸 수.
  * 본사 보기 (2026-10-16 대표님: "회원이 쓴 커뮤니티 글 내가 확인할수있나? 나는 모든 활동을 확인할수있게해줘"):
- *   전체관리자·관리자는 모든 지점의 모든 글(짝꿍만 · 숨긴 글 포함, 최근 30일) — 지점 골라 보기, 이름을 누르면 회원 상세(전체 활동).
+ *   전체관리자·관리자는 모든 지점의 모든 글(친구만 · 나만 보기 · 숨긴 글 포함, 최근 30일) — 지점 골라 보기, 이름을 누르면 회원 상세(전체 활동).
+ * 공개 범위 3가지 (2026-10-18 대표님: "개인 공개 전체공개 친구만 공개할수있는 기능 … 본사는 지점장이나 코치에게 볼수있는 권한"):
+ *   전체 공개 · 친구만 · 나만 보기 — 내 글에는 늘 표시하고 ⋯ 에서 바꾼다. 남의 글은 전체 공개가 아닐 때만 표시.
+ *   본사 보기에서 지점장·코치에게 '우리 지점 글 모두 보기' 권한을 켜고 끈다(CommunityViewGrants). 받은 사람은 맨 위에 안내.
  */
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Building2, Flag, Lock, MessageCircle, MoreHorizontal, PartyPopper, Sprout, Target, EyeOff } from "lucide-react";
+import {
+  Building2,
+  Check,
+  EyeOff,
+  Flag,
+  Handshake,
+  KeyRound,
+  Lock,
+  MessageCircle,
+  MoreHorizontal,
+  PartyPopper,
+  Sprout,
+  Target,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
 import {
+  JOURNAL_VISIBILITIES,
+  VISIBILITY_LABEL,
   getCommunityFeed,
   hideCommunityEntry,
   postWeeklyGoal,
   reactTargetOf,
   reportCommunityEntry,
+  setJournalEntryVisibility,
   toggle153,
   type CommunityFeed as Feed,
   type FeedItem,
+  type JournalVisibility,
 } from "@/services/communityFeedService";
+import CommunityViewGrants from "./CommunityViewGrants";
 import type { PartnerJournalFeedRow } from "@/services/championJournalPartnerService";
 import { RANK_LABELS } from "@/lib/rankLabels";
 import { shortBranchName } from "@/services/communityHubService";
@@ -32,6 +55,7 @@ import PartnerJournalCommentSheet from "./PartnerJournalCommentSheet";
 
 const FEED_KEY = ["community-feed"] as const;
 const NEXT_LEAGUE: Record<string, string> = { white: "blue", blue: "red", red: "black" };
+const VIS_ICON: Record<JournalVisibility, LucideIcon> = { branch: Users, partners: Handshake, private: Lock };
 
 function timeAgo(iso: string): string {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -93,6 +117,7 @@ const CommunityFeed = () => {
   const [showAllCheckins, setShowAllCheckins] = useState(false);
   const [goalDraft, setGoalDraft] = useState<string | null>(null);
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
+  const [showGrants, setShowGrants] = useState(false);
   const allBranches = !!data?.all_branches;
 
   const react = useMutation({
@@ -134,6 +159,27 @@ const CommunityFeed = () => {
     mutationFn: (i: FeedItem) => reportCommunityEntry(i.id, ""),
     onSuccess: () => toast.success("신고를 받았어요. 코치님과 대표님이 확인할게요"),
     onError: (e) => toast.error((e as Error).message),
+  });
+
+  // 내 한 줄 공개 범위 바꾸기 (2026-10-18) — 바로 바뀐 것처럼 보이고, 실패하면 되돌린다
+  const changeVis = useMutation({
+    mutationFn: ({ item, v }: { item: FeedItem; v: JournalVisibility }) => setJournalEntryVisibility(item.id, v),
+    onMutate: async ({ item, v }) => {
+      await qc.cancelQueries({ queryKey: FEED_KEY });
+      const prev = qc.getQueryData<Feed>(FEED_KEY);
+      qc.setQueryData<Feed>(FEED_KEY, (old) =>
+        old
+          ? { ...old, items: old.items.map((x) => (x.id === item.id && x.type === item.type ? { ...x, visibility: v } : x)) }
+          : old,
+      );
+      return { prev };
+    },
+    onError: (e, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(FEED_KEY, ctx.prev);
+      toast.error((e as Error).message);
+    },
+    onSuccess: (_d, { v }) => toast.success(`공개 범위를 바꿨어요 — ${VISIBILITY_LABEL[v]}`),
+    onSettled: () => qc.invalidateQueries({ queryKey: FEED_KEY }),
   });
 
   const goal = useMutation({
@@ -214,7 +260,39 @@ const CommunityFeed = () => {
           <MoreHorizontal className="h-4 w-4" />
         </button>
         {menuFor === i.id && (
-          <div className="absolute right-0 top-8 z-10 w-32 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+          <div
+            className={`absolute right-0 top-8 z-10 overflow-hidden rounded-xl border border-border bg-card shadow-lg ${
+              i.isMine && i.type === "journal" ? "w-40" : "w-32"
+            }`}
+          >
+            {/* 내 한 줄 — 공개 범위 바꾸기 (2026-10-18) */}
+            {i.isMine && i.type === "journal" && !i.hidden && (
+              <div role="group" aria-label="공개 범위" className="border-b border-border pb-1">
+                <p className="px-3 pb-1 pt-2.5 text-[10.5px] font-bold text-muted-foreground">공개 범위</p>
+                {JOURNAL_VISIBILITIES.map((v) => {
+                  const Icon = VIS_ICON[v];
+                  const on = (i.visibility ?? "branch") === v;
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={on}
+                      onClick={() => {
+                        setMenuFor(null);
+                        if (!on) changeVis.mutate({ item: i, v });
+                      }}
+                      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-bold hover:bg-muted ${
+                        on ? "text-primary" : "text-foreground"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" /> {VISIBILITY_LABEL[v]}
+                      {on && <Check className="ml-auto h-3.5 w-3.5" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {(i.isMine || data?.is_staff) && !i.hidden ? (
               <button
                 type="button"
@@ -302,14 +380,14 @@ const CommunityFeed = () => {
 
   return (
     <div className="space-y-3">
-      {/* 본사 보기 — 모든 지점 · 모든 글 (짝꿍만 · 숨긴 글 포함) */}
+      {/* 본사 보기 — 모든 지점 · 모든 글 (친구만 · 나만 보기 · 숨긴 글 포함) */}
       {allBranches && (
         <div className="rounded-card border border-primary/30 bg-primary/5 p-3">
           <p className="flex items-center gap-1.5 text-[12.5px] font-black text-foreground">
             <Building2 className="h-4 w-4 text-primary" /> 본사 보기 — 모든 지점의 모든 글
           </p>
           <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
-            짝꿍만 공개한 글 · 숨긴 글까지 최근 30일이 보여요. 이름을 누르면 그 회원의 전체 활동(회원 상세)으로 가요.
+            친구만 · 나만 보기 · 숨긴 글까지 최근 30일이 보여요. 이름을 누르면 그 회원의 전체 활동(회원 상세)으로 가요.
           </p>
           {branchChips.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -328,6 +406,29 @@ const CommunityFeed = () => {
               ))}
             </div>
           )}
+          {/* 지점장·코치에게 '우리 지점 글 모두 보기' 권한 주기 (2026-10-18) */}
+          <button
+            type="button"
+            onClick={() => setShowGrants((v) => !v)}
+            aria-expanded={showGrants}
+            aria-controls="community-view-grants"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-pill border border-primary/40 bg-card px-3 py-1.5 text-[12px] font-bold text-primary active:scale-95"
+          >
+            <KeyRound className="h-3.5 w-3.5" /> 지점장·코치 보기 권한 {showGrants ? "접기" : "관리"}
+          </button>
+          {showGrants && <CommunityViewGrants />}
+        </div>
+      )}
+
+      {/* 본사가 보기 권한을 준 지점장·코치 — 무엇이 보이는지 알린다 (2026-10-18) */}
+      {data.granted && !allBranches && (
+        <div className="rounded-card border border-primary/30 bg-primary/5 p-3">
+          <p className="flex items-center gap-1.5 text-[12.5px] font-black text-foreground">
+            <KeyRound className="h-4 w-4 text-primary" /> 운영진 보기 — 우리 지점의 모든 글
+          </p>
+          <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+            본사가 권한을 줘서 친구만 · 나만 보기 · 숨긴 글까지 보여요. 회원 관리와 응원에만 써 주세요.
+          </p>
         </div>
       )}
 
@@ -471,11 +572,17 @@ const CommunityFeed = () => {
               <p className="flex items-center gap-1 text-[10.5px] text-muted-foreground">
                 {timeAgo(i.at)}
                 {i.mood ? ` · ${i.mood}` : ""}
-                {i.visibility === "partners" && (
-                  <span className="inline-flex items-center gap-0.5">
-                    · <Lock className="h-3 w-3" /> 짝꿍만
-                  </span>
-                )}
+                {/* 공개 범위 — 내 글은 늘, 남의 글은 전체 공개가 아닐 때만 (2026-10-18) */}
+                {i.visibility && (i.isMine || i.visibility !== "branch") && (() => {
+                  const Icon = VIS_ICON[i.visibility];
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-0.5 ${i.visibility === "private" ? "font-bold text-foreground" : ""}`}
+                    >
+                      · <Icon className="h-3 w-3" /> {VISIBILITY_LABEL[i.visibility]}
+                    </span>
+                  );
+                })()}
                 {i.hidden && (
                   <span className="inline-flex items-center gap-0.5 font-bold text-destructive">
                     · <EyeOff className="h-3 w-3" /> 숨긴 글
