@@ -6,8 +6,9 @@
  * · 색은 전부 CSS 변수(--glyph-*)라 라이트·다크가 자동으로 맞는다.
  * · 장식이므로 aria-hidden — 이름은 옆의 라벨이 읽힌다.
  * · 그림 글리프(GLYPH_IMAGES) — SVG 대신 153 그림(투명 webp)을 같은 칸에 얹는다. 붕대 감기 = 붕대 감은 주먹 (2026-10-17).
+ * · 묶음 칸(GlyphFolderTile) — 연관 메뉴를 한 칸에 모을 때 안의 글리프를 작게 2×2 로 (2026-10-18).
  */
-import { useId } from "react";
+import { useId, type CSSProperties } from "react";
 import { MENU_GLYPHS, type ImageGlyphName, type MenuGlyphName } from "@/components/icons/menuGlyphs";
 import handwrapGlyph from "@/assets/glyphs/handwrap.webp";
 import membershipGlyph from "@/assets/glyphs/membership.webp";
@@ -28,54 +29,82 @@ interface GlyphTileProps {
   className?: string;
 }
 
+/** 칸 바탕 — 연속 곡률 칸 + 윗면 하이라이트 */
+const TileBack = ({ uid }: { uid: string }) => (
+  <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
+    <defs>
+      <linearGradient id={`${uid}-tile`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style={{ stopColor: "var(--glyph-tile-t)" }} />
+        <stop offset="1" style={{ stopColor: "var(--glyph-tile-b)" }} />
+      </linearGradient>
+      <linearGradient id={`${uid}-hl`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style={{ stopColor: "var(--glyph-tile-hl)" }} />
+        <stop offset="0.35" stopColor="#fff" stopOpacity={0} />
+      </linearGradient>
+    </defs>
+    <path d={SQUIRCLE} fill={`url(#${uid}-tile)`} strokeWidth={1.2} style={{ stroke: "var(--glyph-tile-edge)" }} />
+    <path
+      d={SQUIRCLE}
+      fill="none"
+      stroke={`url(#${uid}-hl)`}
+      strokeWidth={1.6}
+      transform="translate(50 50) scale(0.985) translate(-50 -50)"
+    />
+  </svg>
+);
+
+/** 글리프 그림만 (칸 없이) — 그림 글리프면 img, 아니면 SVG */
+const GlyphArt = ({ name, uid, style }: { name: MenuGlyphName; uid: string; style: CSSProperties }) =>
+  isImageGlyph(name) ? (
+    // img 는 inset 만으로는 크기가 안 잡혀(제 크기·칸 너비로 그려져 칸 밖으로 나감) — 크기를 가진 칸 안에 꽉 채운다
+    <span className="glyph-art absolute" style={style}>
+      <img src={GLYPH_IMAGES[name]} alt="" draggable={false} className="block h-full w-full select-none object-contain" />
+    </span>
+  ) : (
+    <svg
+      viewBox="0 0 48 48"
+      className="glyph-art absolute"
+      style={style}
+      // 고정 마크업(menuGlyphs.ts) — 사용자 입력이 섞이지 않는다
+      dangerouslySetInnerHTML={{ __html: MENU_GLYPHS[name](`${uid}-`) }}
+    />
+  );
+
 const GlyphTile = ({ name, size = 56, className }: GlyphTileProps) => {
   // useId 의 ":" 는 url(#…) 참조에서 빼 둔다
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   return (
-    <span
-      aria-hidden
-      className={cn("relative inline-block shrink-0", className)}
-      style={{ width: size, height: size }}
-    >
-      <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
-        <defs>
-          <linearGradient id={`${uid}-tile`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" style={{ stopColor: "var(--glyph-tile-t)" }} />
-            <stop offset="1" style={{ stopColor: "var(--glyph-tile-b)" }} />
-          </linearGradient>
-          <linearGradient id={`${uid}-hl`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" style={{ stopColor: "var(--glyph-tile-hl)" }} />
-            <stop offset="0.35" stopColor="#fff" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <path d={SQUIRCLE} fill={`url(#${uid}-tile)`} strokeWidth={1.2} style={{ stroke: "var(--glyph-tile-edge)" }} />
-        <path
-          d={SQUIRCLE}
-          fill="none"
-          stroke={`url(#${uid}-hl)`}
-          strokeWidth={1.6}
-          transform="translate(50 50) scale(0.985) translate(-50 -50)"
+    <span aria-hidden className={cn("relative inline-block shrink-0", className)} style={{ width: size, height: size }}>
+      <TileBack uid={uid} />
+      <GlyphArt name={name} uid={uid} style={{ inset: isImageGlyph(name) ? "14%" : "17.9%" }} />
+    </span>
+  );
+};
+
+/**
+ * 묶음 칸 — 연관 메뉴를 한 칸에 모은 것 (2026-10-18 대표님: "전체 메뉴 정리 — 연관성 있는 메뉴는 하나에 붙여줘").
+ * 아이폰 폴더처럼 안에 든 메뉴 글리프를 2×2 로 작게 보여 준다 (2개면 가운데 한 줄).
+ */
+export const GlyphFolderTile = ({ names, size = 56, className }: { names: readonly MenuGlyphName[]; size?: number; className?: string }) => {
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const cells = names.slice(0, 4);
+  const oneRow = cells.length <= 2;
+  return (
+    <span aria-hidden className={cn("relative inline-block shrink-0", className)} style={{ width: size, height: size }}>
+      <TileBack uid={uid} />
+      {cells.map((n, i) => (
+        <GlyphArt
+          key={`${n}-${i}`}
+          name={n}
+          uid={`${uid}-${i}`}
+          style={{
+            left: i % 2 === 0 ? "13%" : "51%",
+            top: oneRow ? "32%" : i < 2 ? "13%" : "51%",
+            width: "36%",
+            height: "36%",
+          }}
         />
-      </svg>
-      {isImageGlyph(name) ? (
-        // img 는 inset 만으로는 크기가 안 잡혀(제 크기·칸 너비로 그려져 칸 밖으로 나감) — 크기를 가진 칸 안에 꽉 채운다
-        <span className="glyph-art absolute" style={{ inset: "14%" }}>
-          <img
-            src={GLYPH_IMAGES[name]}
-            alt=""
-            draggable={false}
-            className="block h-full w-full select-none object-contain"
-          />
-        </span>
-      ) : (
-        <svg
-          viewBox="0 0 48 48"
-          className="glyph-art absolute"
-          style={{ inset: "17.9%" }}
-          // 고정 마크업(menuGlyphs.ts) — 사용자 입력이 섞이지 않는다
-          dangerouslySetInnerHTML={{ __html: MENU_GLYPHS[name](`${uid}-`) }}
-        />
-      )}
+      ))}
     </span>
   );
 };

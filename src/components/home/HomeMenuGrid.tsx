@@ -3,13 +3,15 @@
 //
 // 버튼 = 153 글리프 타일(연속 곡률 칸 + 직접 그린 아이콘) + 두 줄까지 라벨.
 // 누르면 타일만 살짝 눌리고(0.92) 라벨은 제자리 — 손가락 아래에서만 반응하는 애플식 감각.
-// 360px 폰에서 4칸 × 4줄이 스크롤 없이 첫 화면에 들어간다.
-import { useMemo } from "react";
+// 2026-10-18 대표님: "연관성 있는 메뉴는 하나에 붙여줘" → 묶음 칸(GlyphFolderTile). 누르면 그 줄 바로 아래에
+//   안의 메뉴가 펼쳐진다(한 번에 하나). 지금 보고 있는 화면이 묶음 안에 있으면 묶음 칸 이름이 초록색.
+import { Fragment, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDmSummary } from "@/hooks/useDm";
-import { buildAppMenu } from "@/lib/appMenu";
-import GlyphTile from "@/components/icons/GlyphTile";
+import { buildAppMenu, isMenuFolder, type AppMenuEntry, type AppMenuItem } from "@/lib/appMenu";
+import GlyphTile, { GlyphFolderTile } from "@/components/icons/GlyphTile";
 import { cn } from "@/lib/utils";
 
 // "153마인드셋"처럼 띄어쓰기 없는 긴 이름은 좁은 칸에서 "153마인드 / 셋"으로 끊긴다 —
@@ -25,6 +27,18 @@ const labelWithBreak = (label: string) =>
     label
   );
 
+const COLS = 4;
+
+const Badge = ({ n }: { n: number }) =>
+  n > 0 ? (
+    <span
+      className="absolute -right-1.5 -top-1.5 flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-bold leading-none text-white ring-2 ring-card"
+      aria-label={`새 메시지 ${n}개`}
+    >
+      {n > 99 ? "99+" : n}
+    </span>
+  ) : null;
+
 interface Props {
   /** card: 홈 첫 화면 카드(제목 포함) · sheet: 하단 '전체' 시트 안(그리드만) */
   variant?: "card" | "sheet";
@@ -37,51 +51,140 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
   const { pathname } = useLocation();
   const { profile } = useAuth();
   const diet = !!profile?.diet_program_enabled;
-  // 메시지 타일 오른쪽 위 — 안 읽은 대화 + 새 요청 (+ 본사: 처리 안 한 신고) (2026-09-30).
-  // 메시지를 쓸 수 없는 계정(지점 회원 확인 전)에는 타일을 빼 둔다 — 머리글 종이비행기와 같은 기준
+  // 메시지 칸 오른쪽 위 — 안 읽은 대화 + 새 요청 (+ 본사: 처리 안 한 신고) (2026-09-30).
+  // 메시지를 쓸 수 없는 계정(지점 회원 확인 전)에는 메시지를 빼 둔다 — 머리글 종이비행기와 같은 기준
   const { data: dm } = useDmSummary();
   const dmBadge = dm?.badge ?? 0;
   const dmOff = dm?.enabled === false;
-  const items = useMemo(
-    () => buildAppMenu({ diet }).filter((m) => !(dmOff && m.path === "/messages")),
+  const entries = useMemo(
+    () => buildAppMenu({ diet, hide: (path) => dmOff && path === "/messages" }),
     [diet, dmOff],
   );
+  const [open, setOpen] = useState<string | null>(null);
+
+  const go = (path: string) => {
+    navigate(path);
+    setOpen(null);
+    onNavigate?.();
+  };
+  const badgeOf = (m: AppMenuItem) => (m.path === "/messages" ? dmBadge : 0);
+
+  const tile = (e: AppMenuEntry) => {
+    if (!isMenuFolder(e)) {
+      const active = pathname === e.path;
+      return (
+        <button
+          key={e.path}
+          type="button"
+          onClick={() => go(e.path)}
+          aria-current={active ? "page" : undefined}
+          className="group flex min-w-0 flex-col items-center gap-2 rounded-2xl px-0.5 pb-0.5 outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+        >
+          <span className="relative transition-transform duration-200 ease-out group-active:scale-[0.92]">
+            <GlyphTile name={e.glyph} />
+            <Badge n={badgeOf(e)} />
+          </span>
+          <span
+            className={cn(
+              "line-clamp-2 w-full text-center text-[12.5px] leading-[1.25] tracking-[-0.02em]",
+              active ? "font-bold text-primary" : "font-semibold text-foreground",
+            )}
+          >
+            {labelWithBreak(e.label)}
+          </span>
+        </button>
+      );
+    }
+    const isOpen = open === e.folder;
+    const inside = e.items.some((m) => m.path === pathname);
+    const badge = e.items.reduce((n, m) => n + badgeOf(m), 0);
+    return (
+      <button
+        key={`folder:${e.folder}`}
+        type="button"
+        onClick={() => setOpen(isOpen ? null : e.folder)}
+        aria-expanded={isOpen}
+        aria-controls={`menu-folder-${e.folder}`}
+        aria-label={`${e.label} — ${e.items.map((m) => m.label).join(", ")}`}
+        className="group flex min-w-0 flex-col items-center gap-2 rounded-2xl px-0.5 pb-0.5 outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+      >
+        <span
+          className={cn(
+            "relative rounded-[16px] transition-transform duration-200 ease-out group-active:scale-[0.92]",
+            isOpen && "ring-2 ring-primary/70 ring-offset-2 ring-offset-card",
+          )}
+        >
+          <GlyphFolderTile names={e.items.map((m) => m.glyph)} />
+          <Badge n={badge} />
+        </span>
+        <span
+          className={cn(
+            "line-clamp-2 w-full text-center text-[12.5px] leading-[1.25] tracking-[-0.02em]",
+            inside || isOpen ? "font-bold text-primary" : "font-semibold text-foreground",
+          )}
+        >
+          {labelWithBreak(e.label)}
+        </span>
+      </button>
+    );
+  };
+
+  // 4칸씩 줄을 나누고, 펼친 묶음이 있는 줄 바로 아래에 안의 메뉴를 그린다
+  const rows: AppMenuEntry[][] = [];
+  for (let i = 0; i < entries.length; i += COLS) rows.push(entries.slice(i, i + COLS));
 
   const grid = (
     <div className="grid grid-cols-4 gap-x-1 gap-y-4">
-      {items.map((it) => {
-        const active = pathname === it.path;
+      {rows.map((row, ri) => {
+        const folder = row.find((e) => isMenuFolder(e) && e.folder === open);
         return (
-          <button
-            key={it.path}
-            type="button"
-            onClick={() => {
-              navigate(it.path);
-              onNavigate?.();
-            }}
-            aria-current={active ? "page" : undefined}
-            className="group flex min-w-0 flex-col items-center gap-2 rounded-2xl px-0.5 pb-0.5 outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-          >
-            <span className="relative transition-transform duration-200 ease-out group-active:scale-[0.92]">
-              <GlyphTile name={it.glyph} />
-              {it.path === "/messages" && dmBadge > 0 && (
-                <span
-                  className="absolute -right-1.5 -top-1.5 flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-bold leading-none text-white ring-2 ring-card"
-                  aria-label={`새 메시지 ${dmBadge}개`}
+          <Fragment key={`row-${ri}`}>
+            {row.map(tile)}
+            <AnimatePresence initial={false}>
+              {folder && isMenuFolder(folder) && (
+                <motion.div
+                  key={`panel-${folder.folder}`}
+                  id={`menu-folder-${folder.folder}`}
+                  role="group"
+                  aria-label={folder.label}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="col-span-4 rounded-2xl bg-secondary/70 px-2 pb-3 pt-2.5 ring-1 ring-border/60"
                 >
-                  {dmBadge > 99 ? "99+" : dmBadge}
-                </span>
+                  <p className="mb-2.5 px-1.5 text-[12px] font-bold text-muted-foreground">{folder.label}</p>
+                  <div className="grid grid-cols-4 gap-x-1 gap-y-3">
+                    {folder.items.map((m) => {
+                      const active = pathname === m.path;
+                      return (
+                        <button
+                          key={m.path}
+                          type="button"
+                          onClick={() => go(m.path)}
+                          aria-current={active ? "page" : undefined}
+                          className="group flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                        >
+                          <span className="relative transition-transform duration-200 ease-out group-active:scale-[0.92]">
+                            <GlyphTile name={m.glyph} size={50} />
+                            <Badge n={badgeOf(m)} />
+                          </span>
+                          <span
+                            className={cn(
+                              "line-clamp-2 w-full text-center text-[12px] leading-[1.25] tracking-[-0.02em]",
+                              active ? "font-bold text-primary" : "font-semibold text-foreground",
+                            )}
+                          >
+                            {labelWithBreak(m.label)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
               )}
-            </span>
-            <span
-              className={cn(
-                "line-clamp-2 w-full text-center text-[12.5px] leading-[1.25] tracking-[-0.02em]",
-                active ? "font-bold text-primary" : "font-semibold text-foreground",
-              )}
-            >
-              {labelWithBreak(it.label)}
-            </span>
-          </button>
+            </AnimatePresence>
+          </Fragment>
         );
       })}
     </div>
