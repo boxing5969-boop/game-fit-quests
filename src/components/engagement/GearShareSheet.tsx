@@ -2,7 +2,10 @@
  * 중고 장비 나눔 — 시트.
  *
  * 운영 원칙 (화면에도 명시한다):
- *   · 금액은 앱에 적지 않는다. 주고받는 것은 데스크를 통한다 — 회원 간 금전 분쟁 방지.
+ *   · 주고받는 것은 데스크를 통한다 — 회원 간 직접 거래 분쟁 방지.
+ *   · 양도 글은 금액을 적을 수 있다(선택, 0원~1,000만 원) — 사려는 사람이 바로 정할 수 있게
+ *     (2026-10-18 대표님: "금액을 적어야할것같아 그래야 구매할지 말지 결정할수있으니까"). 나눔 글은 금액 없음.
+ *   · 전 지점을 보는 계정도 회원처럼 글을 올려 본다 (2026-10-18 대표님: "회원 관점에서 모든 기능을 해볼 수 있게").
  *   · 사진 업로드는 두지 않는다(1차). 종류·사이즈·상태 텍스트로 충분하고,
  *     자유 사진 업로드는 관리 부담이 크다.
  *   · 진행중 글은 한 사람 3개까지(서버에서도 막는다).
@@ -33,6 +36,8 @@ interface Props {
 const KINDS: GearKind[] = ["glove", "handwrap", "shoes", "rope", "headgear", "other"];
 const CONDITIONS: GearCondition[] = ["new", "good", "used"];
 const DEALS: GearDeal[] = ["free", "transfer"];
+const PRICE_MAX = 10_000_000;
+const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
 const GearShareSheet = ({ open, onClose }: Props) => {
   useModalDismiss(open, onClose);
@@ -45,14 +50,19 @@ const GearShareSheet = ({ open, onClose }: Props) => {
   const [condition, setCondition] = useState<GearCondition>("good");
   const [deal, setDeal] = useState<GearDeal>("free");
   const [note, setNote] = useState("");
+  // 양도 금액(원) — 숫자만 (2026-10-18)
+  const [price, setPrice] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
   const posts = data?.posts ?? [];
-  // 본사 계정: 전 지점 글을 보기만 한다 (2026-09-30)
+  // 전 지점 계정(본사): 전 지점 글이 보이고, 회원처럼 글도 올려 본다 (2026-09-30 · 2026-10-18 올리기 열림)
   const allBranches = data?.all_branches === true;
+  const priceNum = deal === "transfer" && price !== "" ? Number(price) : null;
+  const priceTooBig = priceNum != null && priceNum > PRICE_MAX;
 
   const handleCreate = async () => {
+    if (priceTooBig) return;
     try {
       await create.mutateAsync({
         kind,
@@ -60,10 +70,12 @@ const GearShareSheet = ({ open, onClose }: Props) => {
         condition,
         deal,
         note: note.trim() || null,
+        price: priceNum,
       });
       toast.success("장비 글을 올렸습니다");
       setSize("");
       setNote("");
+      setPrice("");
       setFormOpen(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "글을 올리지 못했습니다");
@@ -128,6 +140,10 @@ const GearShareSheet = ({ open, onClose }: Props) => {
                   {CONDITION_LABEL[p.condition]}
                 </span>
               </div>
+              {/* 양도 금액 — 사려는 사람이 바로 정할 수 있게 크게 (2026-10-18) */}
+              {p.deal === "transfer" && p.price != null && (
+                <p className="number-font mt-0.5 text-[14px] font-black text-foreground">{won(p.price)}</p>
+              )}
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {p.isMine ? "내 글" : p.nickname}
                 {allBranches && p.branch && ` · ${shortBranchName(p.branch)}`}
@@ -198,6 +214,29 @@ const GearShareSheet = ({ open, onClose }: Props) => {
           ))}
         </div>
 
+        {/* 양도 금액 (선택) — 2026-10-18 */}
+        {deal === "transfer" && (
+          <div className="mt-3">
+            <p className="text-[11px] font-bold text-muted-foreground">금액 (선택)</p>
+            <div className="mt-1.5 flex items-center gap-2">
+              <input
+                value={price}
+                onChange={(e) => setPrice(e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 8))}
+                inputMode="numeric"
+                placeholder="예: 30000"
+                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground"
+                aria-label="금액(원)"
+              />
+              <span className="shrink-0 text-[13px] font-bold text-foreground">원</span>
+            </div>
+            {priceNum != null && (
+              <p className={`mt-1 text-[11px] ${priceTooBig ? "font-bold text-destructive" : "text-muted-foreground"}`}>
+                {priceTooBig ? "1,000만 원까지 적을 수 있어요" : `${won(priceNum)}으로 올라가요`}
+              </p>
+            )}
+          </div>
+        )}
+
         <input
           value={size}
           onChange={(e) => setSize(e.target.value.slice(0, 30))}
@@ -216,7 +255,7 @@ const GearShareSheet = ({ open, onClose }: Props) => {
         <button
           type="button"
           onClick={handleCreate}
-          disabled={create.isPending}
+          disabled={create.isPending || priceTooBig}
           className="mt-3 w-full rounded-xl bg-primary py-3 text-[13px] font-black text-primary-foreground active:scale-[0.99] disabled:opacity-60"
         >
           {create.isPending ? "올리는 중…" : "올리기"}
@@ -259,7 +298,7 @@ const GearShareSheet = ({ open, onClose }: Props) => {
                     안 쓰는 장비, 필요한 사람에게
                   </h2>
                   <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                    {allBranches ? "본사 계정 — 전 지점 글이 보여요." : "같은 지점 회원에게만 보입니다."}
+                    {allBranches ? "전 지점 글이 보여요." : "같은 지점 회원에게만 보입니다."}
                   </p>
                 </div>
               </div>
@@ -276,11 +315,11 @@ const GearShareSheet = ({ open, onClose }: Props) => {
                 <p className="text-[11px] leading-relaxed text-muted-foreground">
                   <b className="text-foreground">주고받는 것은 데스크를 통해 주세요.</b>
                   <br />
-                  금액은 앱에 적지 않습니다 — 회원 간 직접 거래에서 생기는 문제를 막기 위한 것입니다.
+                  금액을 적어 두면 사려는 분이 바로 정할 수 있어요.
                 </p>
               </div>
               {renderList()}
-              {!allBranches && renderForm()}
+              {renderForm()}
             </div>
           </motion.div>
         </motion.div>

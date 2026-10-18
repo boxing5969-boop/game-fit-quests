@@ -140,6 +140,8 @@ export interface GearPost {
   condition: GearCondition;
   deal: GearDeal;
   note: string | null;
+  /** 양도 금액(원) — 나눔이거나 안 적었으면 null (2026-10-18) */
+  price?: number | null;
   createdAt: string;
 }
 
@@ -166,14 +168,17 @@ export async function createGearPost(input: {
   condition: GearCondition;
   deal: GearDeal;
   note: string | null;
+  /** 양도 금액(원) — 나눔이면 서버가 비운다 (2026-10-18, create_gear_post_v2) */
+  price?: number | null;
 }) {
   return unwrap(
-    await sbRpc<{ success: boolean; post_id?: string }>("create_gear_post", {
+    await sbRpc<{ success: boolean; post_id?: string }>("create_gear_post_v2", {
       p_kind: input.kind,
       p_gear_size: input.size ?? null,
       p_condition: input.condition,
       p_deal: input.deal,
       p_note: input.note ?? null,
+      p_price: input.deal === "transfer" ? input.price ?? null : null,
     }),
     "장비 글을 올리지 못했습니다.",
   );

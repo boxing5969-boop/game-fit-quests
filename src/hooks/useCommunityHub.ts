@@ -101,6 +101,8 @@ export function useGearActions() {
       condition: GearCondition;
       deal: GearDeal;
       note: string | null;
+      /** 양도 금액(원) — 2026-10-18 */
+      price?: number | null;
     }) => createGearPost(v),
     onSuccess: invalidate,
   });
