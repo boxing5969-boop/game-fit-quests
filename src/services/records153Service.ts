@@ -86,8 +86,8 @@ export const RECORD_153_FIRSTS: ReadonlyArray<{
   { key: "first_lv11", section: "level", emoji: "🔵", title: "최초 블루리그 달성", desc: "레벨 11 — 블루 리그에 가장 먼저 오른 회원", empty: "블루 리그에 가장 먼저 오르는 회원이 주인이 돼요" },
   { key: "first_lv21", section: "level", emoji: "🔴", title: "최초 레드리그 달성", desc: "레벨 21 — 레드 리그에 가장 먼저 오른 회원", empty: "레드 리그에 가장 먼저 오르는 회원이 주인이 돼요" },
   { key: "first_lv31", section: "level", emoji: "⚫", title: "최초 블랙리그 달성", desc: "레벨 31 — 블랙 리그에 가장 먼저 오른 회원", empty: "블랙 리그에 가장 먼저 오르는 회원이 주인이 돼요" },
-  // 아레나 '최초 체력테스트 기록'은 아레나가 빠져서 153 TEST 완주로 바꿈 (2026-10-16)
-  { key: "first_test153", section: "fitness", emoji: "⏱️", title: "최초 153 TEST 완주", desc: "코치님과 공식 153 TEST를 처음 끝까지 마친 회원", empty: "153 TEST를 처음 완주하는 회원이 주인이 돼요" },
+  // 아레나 '최초 체력테스트 기록'은 아레나가 빠져서 153 PB 완주로 바꿈 (2026-10-16)
+  { key: "first_test153", section: "fitness", emoji: "⏱️", title: "최초 153 PB 완주", desc: "코치님과 공식 153 PB를 처음 끝까지 마친 회원", empty: "153 PB를 처음 완주하는 회원이 주인이 돼요" },
 ];
 
 /** 첫 대회 기록 칸 — 우승 · 준우승 (153 레코드 탭 '대회의 역사' · 랭킹/명예의 전당 띠) */

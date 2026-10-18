@@ -1,5 +1,5 @@
 /**
- * 153 TEST 기록 — DB 함수 호출 (supabase/migrations/20261015220000_test153_records.sql)
+ * 153 PB 기록 — DB 함수 호출 (supabase/migrations/20261015220000_test153_records.sql)
  *   생성된 타입에 아직 없어서 (supabase as any) 로 부른다.
  */
 import { supabase } from "@/integrations/supabase/client";

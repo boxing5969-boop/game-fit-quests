@@ -1,5 +1,8 @@
 /**
- * 153 TEST (153 체력테스트) — 종목 정의 · 구간 · 시간 표시 (2026-10-15 대표님 확정, 기획안 '153 체력테스트 기획안')
+ * 153 PB (Personal Best · 내 최고 기록) — 153 체력 평가. 종목 정의 · 구간 · 시간 표시
+ *   (2026-10-15 대표님 확정, 기획안 '153 체력테스트 기획안' — 처음 이름 '153 TEST')
+ *   2026-10-18 이름 → '153 PB' (대표님: "153 PB (Personal Best)(내 최고 기록) 이렇게 표현하자").
+ *   코드 식별자(test153 · first_test153 · test153_records)는 그대로 둔다.
  *   8라운드 × (셀트런 100m → 스테이션). 순서는 항상 같다. 타임캡 25분.
  *   스타터 = 모든 개수 절반(셀트런 거리는 그대로), 푸시업은 무릎 허용.
  *   DB: supabase/migrations/20261015220000_test153_records.sql — splits_ms 는 아래 구간 순서(16개)대로.
@@ -7,7 +10,10 @@
 
 export type Test153Division = "starter" | "open";
 
-export const TEST153_NAME = "153 TEST";
+export const TEST153_NAME = "153 PB";
+/** 이름 풀이 — 이름을 처음 보여 주는 곳에 같이 쓴다 */
+export const TEST153_NAME_EN = "Personal Best";
+export const TEST153_NAME_KO = "내 최고 기록";
 export const TEST153_CAP_MS = 25 * 60 * 1000;
 
 export interface Test153Station {

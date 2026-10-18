@@ -277,8 +277,8 @@ const HallOfFamePage = () => {
             { value: "halloffame", label: <span className="whitespace-nowrap">명예의 전당</span> },
             // 153 레코드 — 153복싱짐의 최초 기록 (2026-10-15 대표님)
             { value: "records", label: <span className="whitespace-nowrap">153 레코드</span> },
-            // 153 TEST — 코치가 재는 153 체력테스트 기록·순위 (2026-10-15 대표님)
-            { value: "test153", label: <span className="whitespace-nowrap">153 TEST</span> },
+            // 153 PB — 코치가 재는 153 체력테스트 기록·순위 (2026-10-15 대표님)
+            { value: "test153", label: <span className="whitespace-nowrap">153 PB</span> },
           ]}
           fullWidth
           // 칸이 4개라 좁은 폰에서 넘치지 않게 양옆 여백을 줄인다

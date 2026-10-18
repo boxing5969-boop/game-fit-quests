@@ -43,7 +43,7 @@ const kstWeekStartIso = () => {
 };
 type SortType = "recent_submission" | "level_desc" | "pending_count";
 // today_new · today_submissions — 운영 리포트 칸을 눌러야 열리는 명단 (탭 버튼은 없음, 2026-10-15)
-// test153 — '153 TEST 측정' 카드를 눌러 여는 코치 측정 화면 (2026-10-15)
+// test153 — '153 PB 측정' 카드를 눌러 여는 코치 측정 화면 (2026-10-15)
 // broadcast — '유효회원 전체 메시지' 카드 (대표님·지점장만, 2026-10-15)
 type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk" | "today_new" | "today_submissions" | "test153" | "broadcast";
 const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk", "today_new", "today_submissions", "test153", "broadcast"];
@@ -699,7 +699,7 @@ const BranchManagerHome = () => {
         {/* 🥊 오삼코치 오늘 메시지 검수 (초안 있을 때만 노출 · 2026-10-15) */}
         <CoachDraftsInbox />
 
-        {/* ⏱ 153 TEST 측정 — 코치가 회원 체력테스트를 재는 화면 (2026-10-15) */}
+        {/* ⏱ 153 PB 측정 — 코치가 회원 체력테스트를 재는 화면 (2026-10-15) */}
         <button
           type="button"
           onClick={() => openTab("test153")}
@@ -707,7 +707,7 @@ const BranchManagerHome = () => {
         >
           <span className="text-2xl">⏱</span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-black text-foreground">153 TEST 측정</span>
+            <span className="block text-sm font-black text-foreground">153 PB 측정</span>
             <span className="block text-xs text-muted-foreground">셀트런 + 8종목 · 코치가 재는 공식 기록</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -863,7 +863,7 @@ const BranchManagerHome = () => {
           {/* 🥊 오삼코치 오늘 메시지 검수 (초안 있을 때만 노출 · 2026-10-15) */}
           <CoachDraftsInbox />
 
-          {/* ⏱ 153 TEST 측정 — 코치가 회원 체력테스트를 재는 화면 (2026-10-15) */}
+          {/* ⏱ 153 PB 측정 — 코치가 회원 체력테스트를 재는 화면 (2026-10-15) */}
           <button
             type="button"
             onClick={() => openTab("test153")}
@@ -871,7 +871,7 @@ const BranchManagerHome = () => {
           >
             <span className="text-2xl">⏱</span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-black text-foreground">153 TEST 측정</span>
+              <span className="block text-sm font-black text-foreground">153 PB 측정</span>
               <span className="block text-xs text-muted-foreground">셀트런 + 8종목 · 코치가 재는 공식 기록</span>
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />

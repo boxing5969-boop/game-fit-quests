@@ -17,6 +17,10 @@ const DIRECT: [string, string][] = [
   ["응원 알림 끄기", "cm-cheer"],
   ["153 TEST가 뭐예요", "rk-test153"],
   ["체력테스트 어떻게 해요", "rk-test153"],
+  // 153 TEST → 153 PB (Personal Best · 내 최고 기록) 이름 바꿈 (2026-10-18) — 새 이름·옛 이름 둘 다
+  ["153 PB가 뭐예요", "rk-test153"],
+  ["153 PB 어떻게 해요", "rk-test153"],
+  ["153pb 타임캡", "rk-test153"],
   ["153 레코드가 뭐야", "rk-records"],
   ["이름 옆 금메달 뭐예요", "rk-medal"],
   ["마일리지로 결제할 수 있어요?", "rw-mileage-use"],

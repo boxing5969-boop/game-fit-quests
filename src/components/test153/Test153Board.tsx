@@ -1,12 +1,13 @@
 /**
- * 🏃 153 TEST — 랭킹 화면 '153 TEST' 칸 (2026-10-15 대표님: "기록을 체크하고 본인의 기록이 얼마나 좋아졌는지")
+ * 🏃 153 PB (Personal Best · 내 최고 기록) — 랭킹 화면 '153 PB' 칸 (2026-10-15 대표님: "기록을 체크하고 본인의 기록이 얼마나 좋아졌는지")
+ *   2026-10-18 이름 153 TEST → 153 PB · "복싱은 상대방을 이기기 위해 자신과의 싸움에서 승리해야 한다는 메시지도 함께"
  *   · 내 기록: 개인 최고(PB) · 순위(우리 지점 / 전체) · 첫 기록보다 얼마나 빨라졌는지 · 구간별 최고 vs 최근 · 지난 기록
  *   · 순위: 부문(스타터/오픈) · 우리 지점/전체 · 성별 · 연령대
  *   · 안내 (2026-10-18 대표님: "자신과의 싸움 — 마라토너가 자신의 기록 1초를 당기기 위해 노력하는 것처럼 …
  *     이 방향성을 회원님들이 알 수 있도록 그 탭에 설명 자세히, 어떤 동작을 어떻게 하고 어떻게 평가하는지도")
  *     맨 위 '상대는 지난번의 나' 카드 → 맨 아래 안내(왜 하나요 · 진행 · 동작별 하는 법·인정 기준 · 평가 · 1초 당기는 법)
  *     내 기록에는 '다음 목표'(PB보다 1초 빠르게)를 보인다.
- *   기록은 코치가 관리자 홈 '153 TEST 측정'에서 잰 공식 기록만 (회원이 직접 넣는 길은 없다).
+ *   기록은 코치가 관리자 홈 '153 PB 측정'에서 잰 공식 기록만 (회원이 직접 넣는 길은 없다).
  */
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -23,6 +24,8 @@ import {
   stationReps,
   TEST153_AGE_GROUPS,
   TEST153_NAME,
+  TEST153_NAME_EN,
+  TEST153_NAME_KO,
   TEST153_RUN_GUIDE,
   TEST153_STATIONS,
   type Test153Division,
@@ -165,14 +168,22 @@ const Test153Board = ({ onOpenMember }: Props) => {
 
   return (
     <div className="space-y-4">
-      {/* 방향 — 상대는 지난번의 나 */}
+      {/* 방향 — 153 PB (Personal Best)(내 최고 기록) · 상대는 지난번의 나 · 복싱은 먼저 나와의 싸움에서 이긴다 */}
       <section className="rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-4 shadow-elev-1">
-        <p className="flex items-center gap-1.5 text-[11px] font-black tracking-wide text-primary">
-          <Timer className="h-3.5 w-3.5" />
-          {TEST153_NAME}
+        <div className="flex items-start gap-2">
+          <Timer className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          <div className="min-w-0">
+            <p className="text-2xl font-black leading-none tracking-tight text-primary">{TEST153_NAME}</p>
+            <p className="mt-1 text-[11.5px] font-bold text-muted-foreground">
+              ({TEST153_NAME_EN}) ({TEST153_NAME_KO})
+            </p>
+          </div>
+        </div>
+        <h2 className="mt-3 text-xl font-black leading-tight text-foreground [text-wrap:balance]">상대는 지난번의 나</h2>
+        <p className="mt-2 border-l-[3px] border-primary pl-3 text-[13.5px] font-bold leading-relaxed text-foreground">
+          복싱은 상대를 이기기 위해, 먼저 나와의 싸움에서 이겨야 하는 운동이에요.
         </p>
-        <h2 className="mt-1 text-xl font-black leading-tight text-foreground [text-wrap:balance]">상대는 지난번의 나</h2>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
+        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
           마라토너가 지난 기록에서 1초를 당기려고 달리듯, 내 체력을 정확히 재고 기록해서{" "}
           <b className="text-foreground">지난번의 나를 이기는</b> 체력 평가예요.
         </p>
@@ -219,7 +230,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
           <div className="mt-3 rounded-2xl bg-muted/30 p-4 text-center">
             <p className="text-sm font-bold text-foreground">아직 {DIVISION_LABEL[division]} 공식 기록이 없어요</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              체육관에서 코치님께 “{TEST153_NAME} 재 주세요” 하면 코치님이 시간을 재서 기록해 줘요.
+              체육관에서 코치님께 “{TEST153_NAME} 도전할게요” 하면 코치님이 시간을 재서 기록해 줘요.
               <br />
               처음이면 스타터부터 추천해요. 첫 기록이 앞으로 이겨야 할 ‘지난번의 나’가 돼요.
             </p>
@@ -235,7 +246,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
           <>
             <div className="mt-3 flex items-end justify-between gap-3">
               <div>
-                <p className="text-xs text-muted-foreground">개인 최고 기록</p>
+                <p className="text-xs text-muted-foreground">{TEST153_NAME_KO} (PB)</p>
                 <p className="text-4xl font-black tabular-nums text-foreground">{fmtScore(best)}</p>
                 <p className="text-xs text-muted-foreground">{fmtDate(best.measured_at)}</p>
               </div>
@@ -429,8 +440,13 @@ const Test153Board = ({ onOpenMember }: Props) => {
             </AccordionTrigger>
             <AccordionContent className="space-y-3 text-[13px] leading-relaxed text-muted-foreground">
               <p>
-                마라토너는 옆 사람을 이기려고 달리지 않아요. 지난번 자기 기록에서 <b className="text-foreground">1초</b>를 당기려고
-                달려요. {TEST153_NAME}도 같아요 — 이 테스트의 상대는 단 한 명, <b className="text-foreground">지난번의 나</b>예요.
+                복싱은 상대를 이기기 위해, 먼저 <b className="text-foreground">나와의 싸움</b>에서 이겨야 하는 운동이에요. 숨이 턱까지
+                차도 가드를 올리고, 다리가 무거워도 한 발 더 나가는 힘 — 링 위에서 상대를 이기는 힘은 거기서 나와요.
+              </p>
+              <p>
+                마라토너도 옆 사람이 아니라 지난번 자기 기록에서 <b className="text-foreground">1초</b>를 당기려고 달려요.{" "}
+                {TEST153_NAME}도 같아요 — 이 평가의 상대는 단 한 명, <b className="text-foreground">지난번의 나</b>예요. 그래서 이름도{" "}
+                <b className="text-foreground">{TEST153_NAME}</b>({TEST153_NAME_EN} · {TEST153_NAME_KO})예요.
               </p>
               <ol className="space-y-2">
                 <Point title="① 내 체력을 정확히 알아요">
@@ -440,7 +456,8 @@ const Test153Board = ({ onOpenMember }: Props) => {
                   코치님이 잰 공식 기록만 쌓여요. 느낌이 아니라 숫자로, 첫 기록부터 지금까지 얼마나 좋아졌는지 알 수 있어요.
                 </Point>
                 <Point title="③ 나를 이겨요">
-                  순위는 참고예요. 지난 기록보다 1초라도 빠르면, 그날은 내가 이긴 날이에요.
+                  순위는 참고예요. 지난 기록보다 1초라도 빠르면, 그날은 내가 이긴 날이에요. 나를 이긴 만큼 링 위의 상대도 이길 수
+                  있어요.
                 </Point>
               </ol>
             </AccordionContent>
@@ -476,7 +493,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
                   스타터부터 추천해요.
                 </Point>
                 <Point title="재는 법">
-                  체육관에서 코치님께 “{TEST153_NAME} 재 주세요” 하면 코치님이 옆에서 시간을 재고 개수를 세요. 회원이 직접 기록을
+                  체육관에서 코치님께 “{TEST153_NAME} 도전할게요” 하면 코치님이 옆에서 시간을 재고 개수를 세요. 회원이 직접 기록을
                   넣는 방법은 없어서 모든 기록이 공평해요.
                 </Point>
                 <Point title="안전이 먼저">어지럽거나 가슴이 아프면 바로 멈추고 코치님께 말해요. 기록보다 몸이 먼저예요.</Point>
@@ -554,7 +571,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
                 <Point title="누가 앞인가요?">
                   완주한 기록은 언제나 캡 기록보다 앞이에요. 완주끼리는 시간이 짧을수록, 캡끼리는 남은 개수가 적을수록 앞이에요.
                 </Point>
-                <Point title="PB (개인 최고 기록)">
+                <Point title={`PB (${TEST153_NAME_EN} · ${TEST153_NAME_KO})`}>
                   부문마다 가장 좋은 기록이 내 PB예요. 새 기록이 PB보다 좋으면 PB가 바뀌어요 — 그 순간이 지난번의 나를 이긴
                   거예요.
                 </Point>
@@ -595,7 +612,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
                 <Point title="6. 컨디션을 맞춰요">잘 자고, 식사는 2시간쯤 전에 하고, 몸을 충분히 풀고 시작해요.</Point>
               </ol>
               <p className="rounded-xl bg-primary/10 px-3 py-2 text-[13px] font-bold text-primary">
-                순위가 내려가도 PB가 1초 줄었다면, 오늘은 이긴 날이에요. 🏆
+                순위가 내려가도 PB가 1초 줄었다면, 오늘은 이긴 날이에요. 나를 이긴 만큼 링 위에서도 강해져요. 🏆
               </p>
             </AccordionContent>
           </AccordionItem>
