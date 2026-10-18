@@ -8,9 +8,12 @@
  *     기기마다 목소리가 달라서 가장 자연스러운 한국어 목소리를 골라 쓴다(Google · Natural/Neural · Yuna · SunHi …).
  *     목소리를 끄거나 기기에 한국어 음성이 없으면 자막만으로 같은 속도로 진행한다.
  *     나중에 녹음 파일(대표님 목소리 등)이 생기면 문장마다 clip 으로 바꿔 끼울 수 있다(playClip).
+ *     '153'은 '일오삼'으로 읽게 바꿔서 보낸다(toSpokenKo) — 휴대폰 음성은 그냥 두면 '백오십삼'이라 읽는다. 자막은 153 그대로.
  *   · 공 소리(라운드 시작·끝) · 10초 전 딱딱이 · 배경 소리(새벽 체육관 · 빗소리 · 심장 박동)는 파일 없이 Web Audio 로 만든다.
  *   · 화면 꺼짐 막기(Wake Lock) · 진동(되는 기기만).
  */
+
+import { toSpokenKo } from "@/lib/spokenKo";
 
 export type Soundscape = "off" | "gym" | "rain" | "heartbeat";
 
@@ -430,7 +433,7 @@ export function speak(text: string, opts: { enabled: boolean; voice: SpeechSynth
     timer = window.setTimeout(finish, est * 1000);
   } else {
     try {
-      const u = new SpeechSynthesisUtterance(text);
+      const u = new SpeechSynthesisUtterance(toSpokenKo(text));
       u.lang = "ko-KR";
       if (opts.voice) u.voice = opts.voice;
       u.rate = opts.rate;
