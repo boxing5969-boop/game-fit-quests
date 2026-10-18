@@ -16,6 +16,7 @@ export type MenuGlyphName =
   | "titlematch"
   | "glove"
   | "handwrap"
+  | "membership"
   | "books"
   | "clipboard"
   | "crown"
@@ -60,8 +61,9 @@ const GEAR_TEETH = [0, 45, 90, 135, 180, 225, 270, 315]
 /**
  * 그림(webp)으로 그리는 칸 — SVG 대신 153 그림을 쓴다 (GlyphTile 의 GLYPH_IMAGES).
  * 2026-10-17 대표님: "붕대 감기 버튼 손이 이상해 — 우리가 만든 이미지로" → 붕대 감은 주먹 그림.
+ * 2026-10-18 수강권(결제·양도·환불·홀딩) — 153 입체 아이콘 '금색 티켓'(icons3d/ticket).
  */
-export type ImageGlyphName = "handwrap";
+export type ImageGlyphName = "handwrap" | "membership";
 export type SvgGlyphName = Exclude<MenuGlyphName, ImageGlyphName>;
 
 export const MENU_GLYPHS: Record<SvgGlyphName, (p: string) => string> = {

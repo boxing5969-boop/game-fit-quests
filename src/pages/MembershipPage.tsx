@@ -257,7 +257,10 @@ const MembershipPage = () => {
         <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
-        <h1 className="text-xl text-foreground">수강권</h1>
+        <div className="min-w-0">
+          <h1 className="text-xl text-foreground">수강권</h1>
+          <p className="text-[12px] text-muted-foreground">결제 · 양도 · 환불 · 홀딩</p>
+        </div>
       </div>
 
       <div className="space-y-4">

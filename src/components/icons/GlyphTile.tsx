@@ -10,10 +10,11 @@
 import { useId } from "react";
 import { MENU_GLYPHS, type ImageGlyphName, type MenuGlyphName } from "@/components/icons/menuGlyphs";
 import handwrapGlyph from "@/assets/glyphs/handwrap.webp";
+import membershipGlyph from "@/assets/glyphs/membership.webp";
 import { cn } from "@/lib/utils";
 
-/** 그림으로 그리는 글리프 — 붕대 감기 화면의 '다 감은 주먹' 그림을 오려 낸 것 */
-const GLYPH_IMAGES: Record<ImageGlyphName, string> = { handwrap: handwrapGlyph };
+/** 그림으로 그리는 글리프 — 붕대 감기 = '다 감은 주먹' 그림을 오려 낸 것 · 수강권 = 153 입체 아이콘 금색 티켓 */
+const GLYPH_IMAGES: Record<ImageGlyphName, string> = { handwrap: handwrapGlyph, membership: membershipGlyph };
 const isImageGlyph = (n: MenuGlyphName): n is ImageGlyphName => n in GLYPH_IMAGES;
 
 /** 슈퍼엘립스(n=5) — viewBox 0 0 100 100. 모서리는 촘촘히, 변은 곧게. */
