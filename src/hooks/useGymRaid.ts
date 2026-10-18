@@ -21,8 +21,52 @@ import {
   type GymRaidContributeSourceType,
 } from "@/services/boxingEngagementService";
 import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
+import {
+  createGymRaid,
+  endGymRaid,
+  getBranchGymRaids,
+  type BranchRaidsResult,
+  type CreateGoalInput,
+} from "@/services/branchGoalService";
 
 export const GYM_RAID_KEY = ["gym-raid"] as const;
+
+/**
+ * 우리 지점 목표 시트 (2026-10-18) — 목표 + 내가 열고 끝낼 수 있는지 + (전체관리자·관리자) 지점 고르기.
+ * branch 를 비우면 서버가 정한 기본 지점 (회원·코치는 늘 자기 지점).
+ */
+export function useBranchGymRaids(branch: string | null, enabled = true) {
+  const { user } = useAuth();
+
+  return useQuery<BranchRaidsResult>({
+    queryKey: [...GYM_RAID_KEY, "branch", user?.id ?? "anon", branch ?? "__mine__"],
+    enabled: enabled && !!user?.id,
+    staleTime: 30_000,
+    queryFn: () => getBranchGymRaids(branch),
+  });
+}
+
+/** 목표 열기 — 전체관리자·관리자 · 권한 받은 지점장·코치 (서버가 다시 확인) */
+export function useCreateGymRaid() {
+  const qc = useQueryClient();
+  return useMutation<{ success: boolean; raid_id: string; branch: string }, Error, CreateGoalInput>({
+    mutationFn: createGymRaid,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: GYM_RAID_KEY });
+    },
+  });
+}
+
+/** 진행 중인 목표 끝내기 */
+export function useEndGymRaid() {
+  const qc = useQueryClient();
+  return useMutation<{ success: boolean }, Error, string>({
+    mutationFn: endGymRaid,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: GYM_RAID_KEY });
+    },
+  });
+}
 
 export function useActiveGymRaids(enabled = true) {
   const { user } = useAuth();
