@@ -16,28 +16,31 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Search, Users, X } from "lucide-react";
+import { Check, Gift, Search, Users, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useClaimCornermanDailyBonus,
-  useCornermanCandidates,
+  useCornermanPeople,
   useCornermanSearch,
   useEndCornermanPair,
   useMyCornermanStatus,
+  useMyInviteStats,
   useRequestCornermanPair,
   useRespondCornermanPair,
+  useSendMemberInvite,
 } from "@/hooks/useCornerman";
 import { openMemberCard } from "@/lib/appEvents";
+import { shareAppInvite } from "@/lib/appInvite";
 import {
   CORNERMAN_COPY,
   CORNERMAN_DISCLAIMER,
   RANK_KOREAN_LABEL,
 } from "@/data/cornermanMessages";
 
-import CornermanCandidateList from "./CornermanCandidateList";
+import CornermanCandidateList, { type CornermanListItem } from "./CornermanCandidateList";
 import CornermanStatusPanel from "./CornermanStatusPanel";
 import { toGlobalLevel } from "@/lib/rankLabels";
 
@@ -50,14 +53,31 @@ const CornermanSheet = ({ open, onClose }: Props) => {
   useModalDismiss(open, onClose);
   // 전체관리자 계정: 전 지점 회원이 보인다 (2026-09-30 대표님 "본사는 모든 회원이 보이게").
   // 2026-10-18: 회원과 똑같이 요청 버튼도 보인다 — 요청은 서버가 같은 지점끼리만 받는다
-  const { role } = useAuth();
+  const { role, profile } = useAuth();
   const isHq = role === "super_admin" || role === "admin";
 
   const { data: status, isLoading: statusLoading } = useMyCornermanStatus();
-  const { data: candidates, isLoading: candLoading } = useCornermanCandidates(
-    30,
-    open && !status?.has_active,
-  );
+  // 짝꿍 후보(앱 쓰는 회원) + 앱에 아직 없는 우리 지점 회원 (2026-10-18 대표님: "가입안한회원도 뜨게 · 초대하면 챔피언머니 1000원")
+  const { data: people, isLoading: candLoading } = useCornermanPeople(30, open);
+  const candidates = (people ?? []).filter((p) => p.joined);
+  const notJoined = (people ?? []).filter((p) => !p.joined);
+  const { data: inviteStats } = useMyInviteStats(open);
+  const inviteMut = useSendMemberInvite();
+  const [invitingId, setInvitingId] = useState<string | null>(null);
+  const myName = profile?.nickname?.trim() || profile?.name?.trim() || "동료";
+  // 공유 창은 누른 순간에만 열리므로 서버 기록을 기다리지 않고 바로 띄운다
+  const handleInvite = (c: CornermanListItem) => {
+    setInvitingId(c.user_id);
+    inviteMut.mutate(c.user_id, {
+      onError: (e) => toast.error(e instanceof Error ? e.message : "초대를 기록하지 못했어요"),
+      onSettled: () => setInvitingId(null),
+    });
+    void shareAppInvite(c.display_name, myName).then((r) => {
+      if (r === "shared") toast.success(`${c.display_name}님께 초대를 보냈어요 — 앱에 들어오면 챔피언 머니 1,000!`);
+      else if (r === "copied") toast.success("초대 문구를 복사했어요 — 카톡이나 문자에 붙여 넣어 보내 주세요");
+      else if (r === "failed") toast.error("공유 창을 열지 못했어요");
+    });
+  };
 
   // 같은 지점 회원 이름으로 찾기 (2026-10-18 대표님: "운동짝꿍에 같은 지점 회원 검색하는 기능") — 0.25초 멈추면 찾는다
   const [query, setQuery] = useState("");
@@ -72,7 +92,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
       setQ("");
     }
   }, [open]);
-  const search = useCornermanSearch(q, open && !status?.has_active);
+  const search = useCornermanSearch(q, open);
   const searching = q.length > 0;
 
   const requestMut = useRequestCornermanPair();
@@ -244,6 +264,73 @@ const CornermanSheet = ({ open, onClose }: Props) => {
     );
   };
 
+  /** 앱에 아직 없는 우리 지점 회원 — 초대하기 */
+  const renderInvite = () => (
+    <div>
+      <p className="mb-1 flex items-center gap-1.5 text-[11.5px] font-bold text-foreground">
+        <Gift className="h-3.5 w-3.5 text-amber-600" /> 아직 앱에 없는 우리 지점 회원
+      </p>
+      <p className="mb-2 text-[10.5px] leading-relaxed text-muted-foreground">
+        초대 링크를 보내 보세요. 초대한 회원이 앱에 처음 들어오면 챔피언 머니 1,000을 드려요 (한 사람당 처음 초대한 1명).
+        {inviteStats && inviteStats.invited > 0
+          ? ` 내 초대 ${inviteStats.invited}명 · 들어온 ${inviteStats.joined}명${inviteStats.reward > 0 ? ` · 받은 보상 ${inviteStats.reward.toLocaleString()}` : ""}`
+          : ""}
+      </p>
+      <CornermanCandidateList
+        candidates={notJoined}
+        isLoading={candLoading}
+        pendingUserId={null}
+        onRequest={() => undefined}
+        onInvite={handleInvite}
+        invitingUserId={invitingId}
+        showBranch={isHq}
+        emptyText="아직 앱에 없는 회원이 없어요"
+        emptyHint="우리 지점 회원이 모두 앱을 쓰고 있어요."
+      />
+    </div>
+  );
+
+  /** 이름으로 찾기 칸 */
+  const renderSearchBox = () => (
+    <label className="mb-2.5 flex h-11 items-center gap-2 rounded-xl border border-border bg-background px-3 focus-within:border-primary">
+      <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <input
+        type="text"
+        inputMode="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value.slice(0, 30))}
+        placeholder={isHq ? "회원 이름으로 찾기" : "같은 지점 회원 이름으로 찾기"}
+        aria-label="회원 이름으로 찾기"
+        enterKeyHint="search"
+        className="min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
+      />
+      {query && (
+        <button
+          type="button"
+          onClick={() => setQuery("")}
+          aria-label="지우기"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground active:scale-95"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </label>
+  );
+
+  const renderSearchResults = () => (
+    <CornermanCandidateList
+      candidates={search.data ?? []}
+      isLoading={search.isLoading}
+      pendingUserId={pendingRequestId}
+      onRequest={handleRequest}
+      onInvite={handleInvite}
+      invitingUserId={invitingId}
+      showBranch={isHq}
+      emptyText={search.isError ? "찾지 못했어요. 잠시 후 다시 해 주세요." : `'${q}' 이름의 회원이 없어요.`}
+      emptyHint="앱에 보이는 이름(닉네임)으로 찾아요. 이름을 누르면 회원 카드가 열려요."
+    />
+  );
+
   const renderBody = () => {
     if (statusLoading) {
       return (
@@ -264,6 +351,11 @@ const CornermanSheet = ({ open, onClose }: Props) => {
             claimPending={claimMut.isPending}
             endPending={endMut.isPending}
           />
+          {/* 짝꿍이 있어도 앱에 없는 동료는 초대할 수 있다 (2026-10-18) */}
+          <div className="pt-1">
+            {renderSearchBox()}
+            {searching ? renderSearchResults() : renderInvite()}
+          </div>
           <p className="text-[10.5px] leading-relaxed text-muted-foreground">
             ※ {CORNERMAN_DISCLAIMER}
           </p>
@@ -286,43 +378,13 @@ const CornermanSheet = ({ open, onClose }: Props) => {
               ? "최근 출석한 회원부터 보여요. 짝꿍은 같은 지점 회원끼리 맺어요."
               : CORNERMAN_COPY.emptyHint}
           </p>
-          {/* 이름으로 찾기 */}
-          <label className="mb-2.5 flex h-11 items-center gap-2 rounded-xl border border-border bg-background px-3 focus-within:border-primary">
-            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <input
-              type="text"
-              inputMode="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value.slice(0, 30))}
-              placeholder={isHq ? "회원 이름으로 찾기" : "같은 지점 회원 이름으로 찾기"}
-              aria-label="회원 이름으로 찾기"
-              enterKeyHint="search"
-              className="min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                aria-label="지우기"
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground active:scale-95"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </label>
+          {/* 이름으로 찾기 — 앱에 없는 회원도 나온다 */}
+          {renderSearchBox()}
           {searching ? (
-            <CornermanCandidateList
-              candidates={search.data ?? []}
-              isLoading={search.isLoading}
-              pendingUserId={pendingRequestId}
-              onRequest={handleRequest}
-              showBranch={isHq}
-              emptyText={search.isError ? "찾지 못했어요. 잠시 후 다시 해 주세요." : `'${q}' 이름의 회원이 없어요.`}
-              emptyHint="앱에 보이는 이름(닉네임)으로 찾아요. 이름을 누르면 회원 카드가 열려요."
-            />
+            renderSearchResults()
           ) : (
             <CornermanCandidateList
-              candidates={candidates ?? []}
+              candidates={candidates}
               isLoading={candLoading}
               pendingUserId={pendingRequestId}
               onRequest={handleRequest}
@@ -330,6 +392,8 @@ const CornermanSheet = ({ open, onClose }: Props) => {
             />
           )}
         </div>
+
+        {!searching && renderInvite()}
 
         <p className="text-[10.5px] leading-relaxed text-muted-foreground">
           ※ {CORNERMAN_DISCLAIMER}

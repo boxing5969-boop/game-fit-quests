@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { runInviteClaim } from "@/components/InviteRewardBridge";
 import { toast } from "sonner";
 import { Link2 } from "lucide-react";
 
@@ -53,6 +54,8 @@ const LinkAccountPrompt = () => {
       await refreshProgress();
       void queryClient.invalidateQueries();
       toast.success("기존 레벨·출석 기록까지 연동되었습니다 🥊");
+      // 초대받은 회원이면 초대한 사람에게 보상 (합친 뒤 전화번호로 맞춘다, 2026-10-18)
+      void runInviteClaim();
       setDismissed(true);
     } catch {
       setError("연동 중 오류가 발생했습니다. 다시 시도해주세요.");

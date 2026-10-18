@@ -844,6 +844,53 @@ export async function searchCornermanCandidates(
   return data ?? [];
 }
 
+/**
+ * 짝꿍 후보 + 앱에 아직 안 들어온 우리 지점 회원 (2026-10-18 대표님: "가입안한회원도 뜨게 · 초대하면 챔피언머니 1000원").
+ * joined=false → 짝꿍 요청 대신 '초대하기'. invited_by_me → 내가 이미 초대했다.
+ */
+export interface CornermanPerson extends CornermanSearchResult {
+  joined: boolean;
+  invited_by_me: boolean;
+}
+
+export async function getCornermanPeople(limit = 30): Promise<CornermanPerson[]> {
+  const { data, error } = await sbRpc<CornermanPerson[]>("get_cornerman_people", { p_limit: limit });
+  if (error) throwKo(error);
+  return data ?? [];
+}
+
+export async function searchCornermanPeople(query: string, limit = 20): Promise<CornermanPerson[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const { data, error } = await sbRpc<CornermanPerson[]>("search_cornerman_people", { p_query: q, p_limit: limit });
+  if (error) throwKo(error);
+  return data ?? [];
+}
+
+/** 초대 기록 — 결과의 이름으로 공유 문구를 만든다 (링크는 화면이 공유 창으로 보낸다) */
+export async function sendMemberInvite(userId: string): Promise<{ success: boolean; name: string; first_inviter: boolean; inviter_name: string }> {
+  const { data, error } = await sbRpc<{ success: boolean; name: string; first_inviter: boolean; inviter_name: string }>(
+    "send_member_invite",
+    { p_invitee: userId },
+  );
+  if (error) throwKo(error);
+  if (!data) throw new Error("초대를 기록하지 못했어요");
+  return data;
+}
+
+/** 앱을 열 때 — 내가 초대받아 처음 들어온 사람이면 초대한 사람에게 보상 */
+export async function claimInviteReward(): Promise<{ success: boolean; rewarded: boolean; inviter?: string | null }> {
+  const { data, error } = await sbRpc<{ success: boolean; rewarded: boolean; inviter?: string | null }>("claim_invite_reward");
+  if (error) throwKo(error);
+  return data ?? { success: true, rewarded: false };
+}
+
+export async function getMyInviteStats(): Promise<{ invited: number; joined: number; reward: number }> {
+  const { data, error } = await sbRpc<{ invited: number; joined: number; reward: number }>("my_invite_stats");
+  if (error) throwKo(error);
+  return data ?? { invited: 0, joined: 0, reward: 0 };
+}
+
 export async function getMyCornermanStatus(): Promise<CornermanStatus> {
   const { data, error } = await sbRpc<CornermanStatus>(
     "get_my_cornerman_status",

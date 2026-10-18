@@ -8,16 +8,22 @@
  * 2026-10-18: 전체관리자도 회원처럼 요청 버튼이 보인다(대표님: "본사 계정도 모든 기능을 해볼 수 있게") —
  *   요청은 서버(request_cornerman_pair)가 같은 지점끼리만 받는다.
  *   이름을 누르면 회원 카드(openMemberCard) · 이름 찾기 결과는 state 로 '짝꿍 있음/대기 중'을 보인다.
+ *   앱에 아직 안 들어온 회원(joined=false)은 요청 대신 '초대하기' — 앱 공유 링크 (초대한 회원이 들어오면 챔피언 머니 1,000).
  */
 
-import { Loader2, UserPlus } from "lucide-react";
+import { Check, Loader2, Send, UserPlus } from "lucide-react";
 
 import { RANK_KOREAN_LABEL } from "@/data/cornermanMessages";
 import type { CornermanCandidate } from "@/services/boxingEngagementService";
 import { toGlobalLevel } from "@/lib/rankLabels";
 import { openMemberCard } from "@/lib/appEvents";
 
-export type CornermanListItem = CornermanCandidate & { state?: "available" | "paired" | "pending" };
+export type CornermanListItem = CornermanCandidate & {
+  state?: "available" | "paired" | "pending";
+  /** false = 앱에 아직 안 들어온 회원 (요청 대신 초대) */
+  joined?: boolean;
+  invited_by_me?: boolean;
+};
 
 export interface CornermanCandidateListProps {
   candidates: CornermanListItem[];
@@ -29,6 +35,9 @@ export interface CornermanCandidateListProps {
   /** 비었을 때 문구 (이름 찾기 결과 등) */
   emptyText?: string;
   emptyHint?: string;
+  /** 앱에 없는 회원 초대 */
+  onInvite?: (c: CornermanListItem) => void;
+  invitingUserId?: string | null;
 }
 
 const shortBranch = (b: string | null | undefined) => (b ?? "").replace(/^153복싱짐\s*/, "");
@@ -41,6 +50,8 @@ const CornermanCandidateList = ({
   showBranch = false,
   emptyText,
   emptyHint,
+  onInvite,
+  invitingUserId,
 }: CornermanCandidateListProps) => {
   if (isLoading) {
     return (
@@ -66,6 +77,7 @@ const CornermanCandidateList = ({
       {candidates.map((c) => {
         const isPending = pendingUserId === c.user_id;
         const state = c.state ?? "available";
+        const notJoined = c.joined === false;
         return (
           <li
             key={c.user_id}
@@ -86,13 +98,39 @@ const CornermanCandidateList = ({
                   {c.display_name}
                 </span>
                 <span className="mt-0.5 block text-[11px] leading-relaxed text-muted-foreground">
-                  {RANK_KOREAN_LABEL[c.current_rank] ?? c.current_rank} 리그 · Lv.
-                  {toGlobalLevel(c.current_rank, c.current_level)}
+                  {notJoined ? (
+                    <span className="font-semibold text-amber-700 dark:text-amber-300">아직 앱을 안 써요</span>
+                  ) : (
+                    <>
+                      {RANK_KOREAN_LABEL[c.current_rank] ?? c.current_rank} 리그 · Lv.
+                      {toGlobalLevel(c.current_rank, c.current_level)}
+                    </>
+                  )}
                   {showBranch && c.branch_name ? ` · ${shortBranch(c.branch_name)}` : ""}
                 </span>
               </span>
             </button>
-            {state === "paired" ? (
+            {notJoined ? (
+              <button
+                type="button"
+                onClick={() => onInvite?.(c)}
+                disabled={!onInvite || invitingUserId === c.user_id}
+                className={`flex shrink-0 items-center gap-1 rounded-card border px-3 py-1.5 text-[11.5px] font-bold transition-all active:scale-[0.98] disabled:opacity-60 ${
+                  c.invited_by_me
+                    ? "border-amber-400/50 bg-amber-400/10 text-amber-700 dark:text-amber-300"
+                    : "border-amber-500 bg-amber-500 text-white"
+                }`}
+              >
+                {invitingUserId === c.user_id ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : c.invited_by_me ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  <Send className="h-3.5 w-3.5" />
+                )}
+                {c.invited_by_me ? "다시 초대" : "초대하기"}
+              </button>
+            ) : state === "paired" ? (
               <span className="shrink-0 rounded-pill bg-muted px-2.5 py-1 text-[11px] font-bold text-muted-foreground">
                 짝꿍 있음
               </span>

@@ -26,6 +26,7 @@ import TutorialCustomizer from "@/features/tutorial-camp/TutorialCustomizer";
 import PostActionReflectionSheet from "@/components/home/PostActionReflectionSheet";
 import CredentialChangePrompt from "@/components/CredentialChangePrompt";
 import GlobalMemberCard from "@/components/license/GlobalMemberCard";
+import InviteRewardBridge from "@/components/InviteRewardBridge";
 import LinkAccountPrompt from "@/components/LinkAccountPrompt";
 import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
 import RouteLoader from "@/components/splash/RouteLoader";
@@ -398,6 +399,8 @@ const AppRoutes = () => {
       {user && splashDone && !signage && <CredentialChangePrompt />}
       {/* 회원 이름·카드를 누르면 어디서든 회원 카드 (좋아요·메시지·짝꿍 신청·응원) — openMemberCard(userId) */}
       {user && !signage && <GlobalMemberCard />}
+      {/* 초대받아 처음 들어온 회원이면 초대한 사람에게 챔피언 머니 1,000 (2026-10-18) */}
+      {user && !signage && <InviteRewardBridge />}
       {/* 소셜 첫 로그인 전화번호 연동(권장·스킵) — phone 없는 소셜 회원 */}
       {user && splashDone && !signage && <LinkAccountPrompt />}
       {/* 쿨드 스타트 스플래시 (z-[80] · 포털). 세션 1회. */}
