@@ -244,7 +244,8 @@ const BoxerLicenseCard = ({
     (birthdayCongrats > 0
       ? `축하 ${birthdayCongrats.toLocaleString("ko-KR")}개 · 앱에서 축하해 주세요!`
       : "오늘 생일이에요 · 앱에서 축하해 주세요!");
-  const rankKey = (league || "white").toLowerCase();
+  // 지도진 카드는 블랙 리그 모양 (2026-10-19 대표님: "코치님은 블랙으로")
+  const rankKey = staff ? "black" : (league || "white").toLowerCase();
   const lic = licenseNumber(userId);
   const issuedFmt = formatIssueDate(issueDate);
   const rankLabelKR = isMaster ? "마스터" : RANK_LABELS_KR[rankKey] ?? rankKey;
@@ -625,12 +626,13 @@ const BoxerLicenseCard = ({
               </p>
             )}
 
-            {/* 리그 + 레벨 라인 — 지도진은 회원 리그 대신 챔피언 · Lv.77 (2026-09-23 대표님 지시, 화면 전용) */}
+            {/* 리그 + 레벨 라인 — 지도진은 BLACK · Lv.77 (2026-09-23 챔피언 → 2026-10-19 블랙, 대표님 지시, 화면 전용) */}
             {staff ? (
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                <span className={`rounded-md font-black uppercase tracking-wider bg-yellow-500 text-gray-900 ${cfg.rankBadge}`}>
-                  CHAMPION
+                <span className={`rounded-md font-black uppercase tracking-wider bg-gray-900 text-yellow-400 border border-yellow-600 ${cfg.rankBadge}`}>
+                  BLACK
                 </span>
+                <LeagueBadge league="black" className={`${cfg.ptBadge} shrink-0`} />
                 <span className={`font-black text-white ${cfg.levelText}`}>Lv.{STAFF_CHAMPION_LEVEL} · {staff.title}</span>
               </div>
             ) : (

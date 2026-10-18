@@ -15,12 +15,13 @@
  * 지도진은 회원 리그(화이트~블랙 · 레벨 1~10) 대신 "챔피언 · Lv.77" 로 보인다. 화면 전용 표기다 —
  * DB 의 리그·레벨(member_progress)은 건드리지 않는다(리그는 4단계, 레벨은 1~10 까지라 77 을 저장하면
  * 승급·보상 계산이 깨진다). 회원 순위표에서는 지도진을 뺀다(서버 랭킹 RPC).
+ * 2026-10-19 대표님: "코치님은 리그를 … 블랙으로 표현하자" — 챔피언 → 블랙(카드도 블랙 리그 모양). 레벨 77 은 그대로.
  */
 
-/** 지도진 표기 — 챔피언 · Lv.77 (화면 전용) */
-export const STAFF_CHAMPION_LABEL = "챔피언";
+/** 지도진 표기 — 블랙 · Lv.77 (화면 전용, 2026-10-19 챔피언 → 블랙) */
+export const STAFF_CHAMPION_LABEL = "블랙";
 export const STAFF_CHAMPION_LEVEL = 77;
-/** "챔피언 · Lv.77" */
+/** "블랙 · Lv.77" */
 export const STAFF_CHAMPION_LINE = `${STAFF_CHAMPION_LABEL} · Lv.${STAFF_CHAMPION_LEVEL}`;
 
 export interface StaffLikeProfile {
@@ -49,5 +50,5 @@ export const staffDisplayName = (p: StaffLikeProfile): string => {
 /** 직함만 ("지점장님") */
 export const staffTitleLabel = (p: StaffLikeProfile): string => honorTitle(p.staff_title);
 
-/** "챔피언 · Lv.77 · 코치님" — 칩·메타 한 줄 */
+/** "블랙 · Lv.77 · 코치님" — 칩·메타 한 줄 */
 export const staffChampionLine = (p: StaffLikeProfile): string => `${STAFF_CHAMPION_LINE} · ${honorTitle(p.staff_title)}`;

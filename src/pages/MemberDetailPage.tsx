@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Banknote } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
-import { STAFF_CHAMPION_LEVEL, isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
+import { STAFF_CHAMPION_LABEL, STAFF_CHAMPION_LEVEL, isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
 import RankBadge from "@/components/RankBadge";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
@@ -423,7 +423,7 @@ const MemberDetailPage = () => {
           <MiniStat label="총 XP" value={prog.total_xp.toLocaleString()} />
           <MiniStat label="출석" value={`${prog.streak_days}일`} />
           {isStaffProfile(p)
-            ? <MiniStat label="챔피언" value={`Lv.${STAFF_CHAMPION_LEVEL}`} />
+            ? <MiniStat label={STAFF_CHAMPION_LABEL} value={`Lv.${STAFF_CHAMPION_LEVEL}`} />
             : <MiniStat label="진행" value={`${globalLevel}/40`} />}
           <MiniStat label="대기" value={`${pendingSubs.length}건`} highlight={pendingSubs.length > 0} />
         </div>

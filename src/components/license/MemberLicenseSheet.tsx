@@ -25,6 +25,7 @@ import { useMemberLicense, useToggleNicknameLike } from "@/hooks/use153King";
 import { useDmPeer } from "@/hooks/useDm";
 import { useMyCornermanStatus, useRequestCornermanPair, useRespondCornermanPair } from "@/hooks/useCornerman";
 import { LICENSE_STAFF_LABEL, type LicenseLikeReason } from "@/services/king153Service";
+import { honorTitle } from "@/lib/staffDisplay";
 import { openCredentialChange } from "@/lib/appEvents";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
 import CharacterSprite from "@/components/CharacterSprite";
@@ -139,7 +140,13 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
     }
   };
 
-  const rank = (data?.rank ?? "white").toLowerCase();
+  // 코치·지점장·운영진은 블랙 리그 모양 + 'BLACK · Lv.77 · 코치님' (2026-10-19 대표님: "코치님은 블랙으로")
+  const staffTitle = data?.staff_role
+    ? data.staff_role === "admin"
+      ? LICENSE_STAFF_LABEL.admin
+      : honorTitle(LICENSE_STAFF_LABEL[data.staff_role])
+    : null;
+  const rank = staffTitle ? "black" : (data?.rank ?? "white").toLowerCase();
   const photo = data?.avatar_url ? (
     <img src={data.avatar_url} alt={data.display} className="h-full w-full object-cover" />
   ) : data?.parts_json ? (
@@ -163,7 +170,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
   );
 
   const onMaster = !!data?.master_track_unlocked && (data?.master_level ?? 0) >= 1;
-  const isMaster40 = rank === "black" && (data?.level ?? 0) === 10 && (data?.bosses_cleared ?? 0) >= 4;
+  const isMaster40 = !staffTitle && rank === "black" && (data?.level ?? 0) === 10 && (data?.bosses_cleared ?? 0) >= 4;
 
   return (
     <>
@@ -231,8 +238,9 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                   issueDate={data.issued_at}
                   streakDays={data.streak_days}
                   isMaster={isMaster40}
-                  pt={data.pt}
-                  likes={data.likes}
+                  staff={staffTitle ? { title: staffTitle } : null}
+                  pt={!staffTitle && data.pt}
+                  likes={staffTitle ? undefined : data.likes}
                   liked={data.liked_by_me}
                   likeBusy={busy}
                   onLikeClick={canPress ? onHeart : undefined}
@@ -360,9 +368,11 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
 
                 {extraAction && <div className="mt-3">{extraAction}</div>}
 
-                <p className="mt-3 px-1 text-[11.5px] leading-relaxed text-muted-foreground">
-                  회원마다 하트 1개씩 · 다시 누르면 취소 · 받은 하트 수가 닉네임 좋아요왕 점수예요
-                </p>
+                {!staffTitle && (
+                  <p className="mt-3 px-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                    회원마다 하트 1개씩 · 다시 누르면 취소 · 받은 하트 수가 닉네임 좋아요왕 점수예요
+                  </p>
+                )}
               </>
             )}
           </motion.div>
