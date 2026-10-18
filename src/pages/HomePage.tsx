@@ -386,7 +386,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const renderHero = (force = false) => {
     if (!force && !homeWidgets.hero) return null;
     const hasAvatar = !!profile?.avatar_url;
-    const hasCharacter = !!myCharacter?.character_presets;
+    // 2026-10-18 대표님: "홈 화면에 캐릭터가 보여서 게임 같아 — 안 보이게" → 홈 카드는 사진 → 이니셜.
+    // 캐릭터는 회원이 카드 표시를 '캐릭터'로 직접 골랐을 때만 (자동으로 캐릭터를 끼우지 않는다).
+    const hasCharacter = displayMode === "character" && !!myCharacter?.character_presets;
     const slot = resolveDisplaySlot(hasAvatar, hasCharacter);
     return (
       <BoxerLicenseCard
@@ -509,20 +511,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
             score={totalXp}
             isMe
             meta={staffCard ? staffChampionLine(profile) : `${RANK_LABELS[rank]} · Lv.${toGlobalLevel(rank, progress.current_level)}`}
-            avatar={
-              myCharacter?.character_presets ? (
-                <CharacterSprite
-                  style={(myCharacter.character_presets.parts_json as any)?.style}
-                  userId={user?.id}
-                  partsJson={myCharacter.character_presets.parts_json as any}
-                  size="xs"
-                  league={rank}
-                  level={progress.current_level}
-                />
-              ) : (
-                "🥊"
-              )
-            }
+            // 순위 줄도 캐릭터 대신 내 사진 (2026-10-18)
+            avatar={profile?.avatar_url || "🥊"}
             onClick={() => navigate("/halloffame")}
           />
         ) : (
@@ -566,36 +556,19 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
           }
           subtitle={profile.branch_name || undefined}
           leftAction={
-            myCharacter?.character_presets ? (
-              <button
-                type="button"
-                onClick={() => navigate("/character-studio")}
-                aria-label="캐릭터 스튜디오로 이동"
-                className="relative h-9 w-9 shrink-0 overflow-visible rounded-full transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-              >
-                <CharacterSprite
-                  style={
-                    (myCharacter.character_presets.parts_json as any)?.style
-                  }
-                  userId={user?.id}
-                  partsJson={
-                    myCharacter.character_presets.parts_json as any
-                  }
-                  size="xs"
-                  league={rank}
-                  level={progress.current_level}
-                />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => navigate("/character-studio")}
-                aria-label="캐릭터 만들러 가기"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-muted text-base transition-transform active:scale-95"
-              >
-                🥊
-              </button>
-            )
+            // 2026-10-18 대표님: "홈 화면에 캐릭터가 보여서 게임 같아" → 머리글은 캐릭터 대신 내 사진(없으면 이름 첫 글자)
+            <button
+              type="button"
+              onClick={() => navigate("/mypage")}
+              aria-label="내 정보"
+              className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary text-[14px] font-bold text-secondary-foreground ring-1 ring-border/60 transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            >
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                (profile?.nickname || profile?.name || "복").charAt(0)
+              )}
+            </button>
           }
           rightAction={
             <>
