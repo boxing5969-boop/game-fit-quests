@@ -9,6 +9,10 @@
 /account-delete   /account-delete/index.html   200
 /account-delete/  /account-delete/index.html   200
 
+# 고객지원 (App Store 등록 필수 Support URL, 2026-10-19)
+/support          /support/index.html          200
+/support/         /support/index.html          200
+
 # 아이폰 앱(App Store) 로그인 돌아오는 길 (2026-10-19 · src/lib/iosAppNative.ts)
 /app-auth-return   /app-auth-return/index.html   200
 /app-auth-return/  /app-auth-return/index.html   200

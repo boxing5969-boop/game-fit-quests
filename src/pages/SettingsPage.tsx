@@ -28,6 +28,7 @@ import MileageSettingsCard from "@/components/admin/MileageSettingsCard";
 import LevelTestCard from "@/components/admin/LevelTestCard";
 import WelcomeLetterSettingsCard from "@/components/admin/WelcomeLetterSettingsCard";
 import PushOptInCard from "@/components/notifications/PushOptInCard";
+import AccountDeleteDialog from "@/components/account/AccountDeleteDialog";
 
 // ── Home widget toggle helpers ──
 const HOME_PREFS_KEY = "home-widget-prefs";
@@ -79,6 +80,7 @@ const SettingsPage = () => {
   const { data: branches } = useBranches();
   const { resetOnboarding } = useOnboardingState();
   const qc = useQueryClient();
+  const [deleteOpen, setDeleteOpen] = useState(false); // 계정 삭제 확인 창
 
   // 7일 스타터 캠프 — admin 진입 (옵션 C)
   const { start: startCamp, reset: resetCamp } = useTutorialCamp();
@@ -799,13 +801,26 @@ const SettingsPage = () => {
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </a>
-          <a href="/account-delete" className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
+          {/* 계정 삭제 — 앱 안에서 바로 요청 (App Store 심사 5.1.1, 2026-10-19). 자세한 안내는 창 안 링크(/account-delete) */}
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50"
+          >
             <div className="flex items-center gap-3">
               <span className="text-muted-foreground">🗑️</span>
-              <span className="text-sm text-foreground">계정 삭제 요청</span>
+              <span className="text-sm text-foreground">계정 삭제</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </a>
+          </button>
+          <AccountDeleteDialog
+            open={deleteOpen}
+            onOpenChange={setDeleteOpen}
+            onDone={async () => {
+              await signOut().catch(() => undefined);
+              navigate("/");
+            }}
+          />
           <button
             onClick={async () => {
               await signOut();

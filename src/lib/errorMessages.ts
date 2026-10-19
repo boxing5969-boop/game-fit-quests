@@ -16,6 +16,11 @@
 
 /** Supabase Auth / 일반 에러 메시지 매핑 (소문자 키 ↔ 한국어). */
 const AUTH_ERROR_MAP: ReadonlyArray<{ match: string; ko: string }> = [
+  // 계정 삭제를 요청해 잠긴 계정 (설정 › 계정 삭제, 2026-10-19)
+  {
+    match: "user is banned",
+    ko: "계정 삭제를 요청해 잠긴 계정입니다. 다시 쓰시려면 이용 중인 지점에 문의해 주세요.",
+  },
   // 로그인 자격 — Supabase Auth
   {
     match: "invalid login credentials",
