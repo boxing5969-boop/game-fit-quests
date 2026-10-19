@@ -50,8 +50,6 @@ interface Props {
 const LaunchEventBoard = ({ branchName }: Props) => {
   const [data, setData] = useState<TvBoard | null>(null);
   const [stale, setStale] = useState(false);
-  // 이번 주 153왕 — 커뮤니티에서 153을 가장 많이 보낸 회원 (2026-10-15 대표님 커뮤니티 개편 · 받은 수가 아니라 보낸 수)
-  const [king153, setKing153] = useState<TvRow[] | null>(null);
 
   useEffect(() => {
     if (!branchName) return;
@@ -64,9 +62,6 @@ const LaunchEventBoard = ({ branchName }: Props) => {
         if (error || !res) { setStale(true); return; }
         setData(res as TvBoard);
         setStale(false);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: k } = await (supabase as any).rpc("get_weekly_153_king", { p_branch: branchName, p_limit: 3 });
-        if (!cancelled && k?.board) setKing153(k.board as TvRow[]);
       } catch {
         if (!cancelled) setStale(true);
       }
@@ -175,14 +170,21 @@ const LaunchEventBoard = ({ branchName }: Props) => {
           const rest = rows.slice(1, 5);
           const Icon = col.Icon;
           return (
-            <div key={cat} className="flex min-h-0 flex-col rounded-2xl border border-yellow-600/30 bg-gradient-to-b from-yellow-950/40 via-gray-900/70 to-gray-900/80 p-5">
+            // 칸 밖으로 넘친 줄이 아래 글 위에 겹쳐 그려지지 않게 칸 안에서 자른다 (2026-10-19)
+            <div key={cat} className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-yellow-600/30 bg-gradient-to-b from-yellow-950/40 via-gray-900/70 to-gray-900/80 p-5">
               <div className="flex items-center gap-3">
                 <span className="text-3xl font-black text-yellow-400">{col.no}</span>
                 <Icon className="h-7 w-7 text-yellow-400" />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h3 className="truncate text-2xl font-black text-white">{col.title}</h3>
                   <p className="truncate text-base font-bold text-gray-400">{col.sub}</p>
                 </div>
+                {/* 참가 인원 — 칸 맨 아래 줄에 있던 것을 머리줄 오른쪽으로 (아래 줄이 칸 밖으로 넘쳐 '참여 방법'과 겹쳤다) */}
+                {item && !upcoming && (
+                  <span className="flex-shrink-0 self-start rounded-full bg-white/10 px-3 py-1 text-base font-bold tabular-nums text-gray-300">
+                    참가 {Number(item.total).toLocaleString("ko-KR")}명
+                  </span>
+                )}
               </div>
 
               {/* 1위 */}
@@ -236,37 +238,13 @@ const LaunchEventBoard = ({ branchName }: Props) => {
                   </li>
                 )}
               </ol>
-
-              <p className="mt-2 flex-shrink-0 text-base font-bold text-gray-500">
-                {item && !upcoming ? `참가 ${Number(item.total).toLocaleString("ko-KR")}명` : ""}
-              </p>
             </div>
           );
         })}
       </div>
 
-      {/* 이번 주 153왕 — 153 커뮤니티 (월요일 0시부터) */}
-      {king153 && (
-        <div className="mt-3 flex flex-shrink-0 items-center justify-center gap-4 rounded-2xl border border-sky-400/40 bg-sky-500/10 px-6 py-3">
-          <span className="rounded-xl bg-sky-400 px-3 py-1 text-2xl font-black tabular-nums text-gray-950">153</span>
-          <span className="text-2xl font-black text-white">이번 주 153왕</span>
-          {king153[0] ? (
-            <>
-              <Crown className="h-7 w-7 text-yellow-400" />
-              <span className="text-3xl font-black text-white">{king153[0].display_name}</span>
-              <span className="text-2xl font-black tabular-nums text-sky-300">{Number(king153[0].score).toLocaleString("ko-KR")}번 응원</span>
-              {king153.length > 1 && (
-                <span className="text-lg font-bold text-gray-400">
-                  · {king153.slice(1, 3).map((r) => `${r.rank}위 ${r.display_name} ${r.score}`).join(" · ")}
-                </span>
-              )}
-            </>
-          ) : (
-            <span className="text-xl font-bold text-gray-300">앱 커뮤니티에서 동료에게 153을 가장 많이 보낸 회원이 이 자리에 올라요</span>
-          )}
-        </div>
-      )}
-
+      {/* '이번 주 153왕' 띠는 뺐다 (2026-10-19 대표님: "화면이 겹쳐있어 이번주 153왕 빼줘") —
+          아래 153 RECORD 띠가 생기면서 세 왕좌 칸이 짧아져 5위 줄 위에 겹쳐 그려졌다. 앱 커뮤니티의 153 기록은 그대로다. */}
       {/* 참여 방법 — 한 줄 */}
       <p className="mt-3 flex-shrink-0 text-center text-lg font-bold text-gray-300">
         참여 방법 · 마이복서153 앱 설치 → 매일 앱 열기 → 랭킹·추천 복서에서 동료에게 하트 보내기
