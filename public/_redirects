@@ -9,4 +9,8 @@
 /account-delete   /account-delete/index.html   200
 /account-delete/  /account-delete/index.html   200
 
+# 아이폰 앱(App Store) 로그인 돌아오는 길 (2026-10-19 · src/lib/iosAppNative.ts)
+/app-auth-return   /app-auth-return/index.html   200
+/app-auth-return/  /app-auth-return/index.html   200
+
 /*  /index.html  200

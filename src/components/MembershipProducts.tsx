@@ -11,6 +11,7 @@ import PromoBanner from "@/components/PromoBanner";
 import PayssamInspectPanel from "@/components/PayssamInspectPanel";
 import { calcRefund, normalDailyRate, SIM_MONTHS } from "@/lib/refundPolicy";
 import { useMyMileage } from "@/hooks/useMileage";
+import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 
 /** 153 마일리지 — 이번 결제에 쓸 수 있는 최대 점수 = min(보유, 결제 금액의 10%) 를 1,000 단위로 (서버 mileage_max_use 와 같은 식) */
 const maxMileageUse = (balance: number, price: number) =>
@@ -123,7 +124,12 @@ const MembershipProducts = () => {
         return;
       }
       if (data?.shortUrl) {
-        window.location.href = data.shortUrl as string;
+        if (isIosApp()) {
+          // 아이폰 앱: 앱 안 사파리 창으로 결제 (카드사 앱 이동이 그대로 된다). 창을 닫으면 결제 결과를 다시 읽는다 (2026-10-19)
+          await (await loadIosAppNative()).openInAppBrowser(data.shortUrl as string, () => window.location.reload());
+        } else {
+          window.location.href = data.shortUrl as string;
+        }
       } else {
         toast.error("결제 URL을 받지 못했습니다.");
       }

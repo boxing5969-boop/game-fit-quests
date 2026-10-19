@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { NOTIF_KEY } from "@/hooks/useNotifications";
 import { isSafeAppLink } from "@/lib/notifications";
 import { forgetPushOnThisDevice, syncPushSubscription } from "@/lib/pushClient";
+import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 
 const PushBridge = () => {
   const { user } = useAuth();
@@ -38,6 +39,24 @@ const PushBridge = () => {
     };
     navigator.serviceWorker.addEventListener("message", onMessage);
     return () => navigator.serviceWorker.removeEventListener("message", onMessage);
+  }, [navigate, qc]);
+
+  // 아이폰 앱(App Store): 알림을 누르면 그 화면으로 · 앱이 열려 있을 때 오면 알림함 숫자 새로 (2026-10-19)
+  useEffect(() => {
+    if (!isIosApp()) return;
+    let off: (() => void) | null = null;
+    let alive = true;
+    void loadIosAppNative().then((m) => {
+      if (!alive) return;
+      off = m.listenPush(
+        (path) => navigate(path),
+        () => void qc.invalidateQueries({ queryKey: NOTIF_KEY }),
+      );
+    });
+    return () => {
+      alive = false;
+      off?.();
+    };
   }, [navigate, qc]);
 
   useEffect(() => {

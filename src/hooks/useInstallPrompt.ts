@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { isIosApp } from "@/lib/iosApp";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -58,8 +59,8 @@ export function useInstallPrompt() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // 이미 설치된 상태면 prompt 잡을 필요 없음
-    if (isStandalone()) {
+    // 이미 설치된 상태면 prompt 잡을 필요 없음 (아이폰 앱(App Store) 안도 '설치됨' — 2026-10-19)
+    if (isStandalone() || isIosApp()) {
       setStatus("installed");
       return;
     }

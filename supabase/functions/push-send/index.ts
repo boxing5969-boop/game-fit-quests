@@ -10,8 +10,11 @@
 // 보내는 곳은 브라우저 회사 푸시 서버뿐(구글·애플·모질라·MS) — webpush.ts isAllowedEndpoint.
 // 404·410 이면 그 기기 구독을 끄고(active=false), 실패가 20번 쌓인 구독도 끈다(push_report).
 // 로그에는 개수만 남긴다 (이름·내용·주소를 찍지 않는다).
+// 아이폰 앱(App Store) 기기(kind = 'apns', 주소 'apns:<토큰>')는 애플 푸시 서버로 직접 보낸다 — apns.ts (2026-10-19).
+//   키(internal_sync_config.apns_key)가 아직 없으면 그 기기들은 건너뛴다(실패로 세지 않는다).
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { generateVapidKeys, isAllowedEndpoint, sendWebPush, type VapidKeys } from "./webpush.ts";
+import { apnsToken, isApnsKey, noEmoji, sendApns, type ApnsKey } from "./apns.ts";
 
 /** VAPID 연락처 — 푸시 회사가 문제 있을 때 연락하는 곳. 개인 이메일 대신 공식 주소 */
 const SUBJECT = "https://myboxer153.com";
@@ -72,7 +75,22 @@ const safePath = (link: unknown): string =>
   typeof link === "string" && /^\/([^/\\\s][^\\\s]*)?$/.test(link) && link.length <= 300 ? link : "/notifications";
 
 type Claimed = { id: string; user_id: string; title: string; body: string | null; link: string | null };
-type Sub = { id: string; user_id: string; endpoint: string; p256dh: string; auth: string };
+type Sub = { id: string; user_id: string; endpoint: string; p256dh: string; auth: string; kind: string | null; apns_env: string | null };
+
+let apnsCache: ApnsKey | null = null;
+/** 아이폰 앱 알림 키 — 없으면 null (그동안 아이폰 앱 기기는 건너뛴다). 찾은 키만 기억한다 — 나중에 넣어도 바로 쓰게 */
+async function loadApnsKey(): Promise<ApnsKey | null> {
+  if (apnsCache) return apnsCache;
+  const raw = await readConfig("apns_key");
+  let k: unknown = null;
+  try {
+    k = raw ? JSON.parse(raw) : null;
+  } catch {
+    k = null;
+  }
+  if (isApnsKey(k)) apnsCache = k;
+  return apnsCache;
+}
 
 async function runPool<T>(items: T[], size: number, fn: (item: T) => Promise<void>) {
   let i = 0;
@@ -99,7 +117,7 @@ async function send(ids: string[]) {
   for (let i = 0; i < userIds.length; i += 200) {
     const { data, error } = await db
       .from("push_subscriptions")
-      .select("id, user_id, endpoint, p256dh, auth")
+      .select("id, user_id, endpoint, p256dh, auth, kind, apns_env")
       .eq("active", true)
       .in("user_id", userIds.slice(i, i + 200));
     if (error) throw error;
@@ -111,10 +129,43 @@ async function send(ids: string[]) {
   const jobs: { n: Claimed; s: Sub }[] = [];
   for (const n of claimed) for (const s of byUser.get(n.user_id) ?? []) jobs.push({ n, s });
 
+  const apnsKey = jobs.some((j) => j.s.kind === "apns") ? await loadApnsKey() : null;
+
   const ok = new Set<string>();
   const gone = new Set<string>();
   const failed = new Set<string>();
+  let skipped = 0;
   await runPool(jobs, CONCURRENCY, async ({ n, s }) => {
+    if (s.kind === "apns") {
+      const token = apnsToken(s.endpoint);
+      if (!token) {
+        gone.add(s.id);
+        return;
+      }
+      if (!apnsKey) {
+        skipped++;
+        return;
+      }
+      try {
+        const r = await sendApns(
+          apnsKey,
+          token,
+          {
+            title: clip(noEmoji(n.title ?? ""), TITLE_MAX) || "마이복서153",
+            body: clip(noEmoji(n.body ?? ""), BODY_MAX),
+            url: safePath(n.link),
+            collapseId: n.id,
+          },
+          { sandbox: s.apns_env === "sandbox", ttlSec: 86_400 },
+        );
+        if (r.ok) ok.add(s.id);
+        else if (r.gone) gone.add(s.id);
+        else failed.add(s.id);
+      } catch {
+        failed.add(s.id);
+      }
+      return;
+    }
     if (!isAllowedEndpoint(s.endpoint)) {
       gone.add(s.id);
       return;
@@ -143,7 +194,7 @@ async function send(ids: string[]) {
     p_failed: [...failed],
   });
   if (repErr) console.error("push_report", repErr.message);
-  console.log(`push-send notifications=${claimed.length} jobs=${jobs.length} ok=${ok.size} gone=${gone.size} failed=${failed.size}`);
+  console.log(`push-send notifications=${claimed.length} jobs=${jobs.length} ok=${ok.size} gone=${gone.size} failed=${failed.size} apns_skipped=${skipped}`);
   return json(200, { ok: true, notifications: claimed.length, sent: ok.size, gone: gone.size, failed: failed.size });
 }
 

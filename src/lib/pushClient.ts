@@ -9,8 +9,12 @@
  *   · 로그아웃: 이 기기 구독을 지운다 (서버 기록은 다음 발송 때 '없는 주소'로 확인되어 저절로 꺼진다).
  * 아이폰은 iOS 16.4 이상 + '홈 화면에 추가'한 앱에서만 된다 (사파리 탭·카카오톡 안 화면에서는 안 된다).
  * 이 파일은 개인정보를 저장하지 않는다 — 기기 이름은 '아이폰'·'안드로이드' 정도만.
+ *
+ * 아이폰 앱(App Store, 2026-10-19)은 웹 푸시 대신 애플 푸시(APNs)를 쓴다 — 아래 각 함수 맨 앞의 isIosApp() 갈래.
+ *   같은 함수·같은 화면(PushOptInCard)·같은 보상 그대로, 서버 등록만 push_subscribe_native('apns:<토큰>').
  */
 import { supabase } from "@/integrations/supabase/client";
+import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 
 // 휴대폰 알림 함수들은 생성된 타입보다 새것이라 느슨한 클라이언트로 부른다
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,6 +45,8 @@ export interface PushEnv {
 
 const OWNER_KEY = "153push:owner";
 const SYNC_KEY = "153push:sync";
+/** 아이폰 앱 — 이 기기 애플 푸시 토큰 */
+const NATIVE_TOKEN_KEY = "153push:apns";
 
 export const isIosUA = (ua: string, maxTouchPoints = 0): boolean =>
   /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && maxTouchPoints > 1);
@@ -80,7 +86,7 @@ export function currentPushEnv(): PushEnv {
   };
 }
 
-export const pushBlock = (): PushBlock | null => pushBlockFrom(currentPushEnv());
+export const pushBlock = (): PushBlock | null => (isIosApp() ? null : pushBlockFrom(currentPushEnv()));
 
 /** 관리자가 볼 기기 이름 — 모델명 없이 종류만 */
 export function deviceLabelFrom(ua: string, maxTouchPoints = 0): string {
@@ -157,6 +163,7 @@ async function currentSubscription(): Promise<PushSubscription | null> {
 
 /** 지금 이 기기 상태 — 다른 사람이 켠 구독은 '꺼짐'으로 본다 */
 export async function readPushState(uid: string | null | undefined): Promise<PushState> {
+  if (isIosApp()) return readNativeState(uid);
   const why = pushBlock();
   if (why) return { kind: "unsupported", why };
   if (Notification.permission === "denied") return { kind: "denied" };
@@ -211,6 +218,7 @@ const failed = (stage: PushFailStage, detail: string): EnableResult => ({ ok: fa
  * 아이폰은 '누른 순간'에만 권한 창을 띄워 주므로, 권한 묻기 앞에 다른 await 를 두지 않는다.
  */
 export async function enablePush(uid: string): Promise<EnableResult> {
+  if (isIosApp()) return enableNative(uid);
   if (pushBlock()) return { ok: false, reason: "unsupported" };
   const perm = Notification.permission === "granted" ? "granted" : await askPermission();
   if (perm !== "granted") return { ok: false, reason: perm === "denied" ? "denied" : "dismissed" };
@@ -291,6 +299,7 @@ export function subscribeHelp(ua: string = typeof navigator === "undefined" ? ""
 
 /** 끄기 — 이 기기만 (다른 기기는 그대로) */
 export async function disablePush(): Promise<boolean> {
+  if (isIosApp()) return disableNative();
   const sub = await currentSubscription();
   ls.del(OWNER_KEY);
   ls.del(SYNC_KEY);
@@ -315,6 +324,7 @@ export async function sendTestPush(): Promise<{ ok: true } | { ok: false; reason
  * 다른 사람이 켠 구독(또는 주인을 모르는 구독)은 지운다.
  */
 export async function syncPushSubscription(uid: string): Promise<void> {
+  if (isIosApp()) return syncNative(uid);
   if (!uid || pushBlock() || Notification.permission !== "granted") return;
   const sub = await currentSubscription();
   if (!sub) return;
@@ -334,7 +344,90 @@ export async function syncPushSubscription(uid: string): Promise<void> {
 export async function forgetPushOnThisDevice(): Promise<void> {
   ls.del(OWNER_KEY);
   ls.del(SYNC_KEY);
+  if (isIosApp()) {
+    ls.del(NATIVE_TOKEN_KEY);
+    await (await loadIosAppNative()).unregisterPush();
+    return;
+  }
   if (pushBlock()) return;
   const sub = await currentSubscription();
   await sub?.unsubscribe().catch(() => false);
+}
+
+// ── 아이폰 앱(App Store) — 애플 푸시 ─────────────────────────────
+
+const NATIVE_DEVICE = "아이폰 앱";
+
+async function readNativeState(uid: string | null | undefined): Promise<PushState> {
+  const m = await loadIosAppNative();
+  const perm = await m.pushPermission();
+  if (perm === "denied") return { kind: "denied" };
+  const mine = !!uid && ls.get(OWNER_KEY) === uid && !!ls.get(NATIVE_TOKEN_KEY);
+  return perm === "granted" && mine ? { kind: "on" } : { kind: "off" };
+}
+
+async function registerNativeOnServer(token: string): Promise<{ ok: boolean; devices: number; error?: string }> {
+  const { data, error } = await db.rpc("push_subscribe_native", { p_token: token, p_device: NATIVE_DEVICE, p_env: "production" });
+  if (error) return { ok: false, devices: 0, error: errText(error) };
+  const r = (data ?? {}) as { ok?: boolean; devices?: number; error?: string };
+  return r.ok ? { ok: true, devices: Number(r.devices) || 1 } : { ok: false, devices: 0, error: r.error || "failed" };
+}
+
+async function enableNative(uid: string): Promise<EnableResult> {
+  const m = await loadIosAppNative();
+  let perm = await m.pushPermission();
+  if (perm !== "granted") perm = await m.requestPushPermission();
+  if (perm !== "granted") return { ok: false, reason: perm === "denied" ? "denied" : "dismissed" };
+  let token: string;
+  try {
+    token = await m.registerForPush();
+  } catch (e) {
+    return failed("subscribe", errText(e));
+  }
+  const r = await registerNativeOnServer(token);
+  if (!r.ok) return failed("server", r.error || "failed");
+  ls.set(OWNER_KEY, uid);
+  ls.set(NATIVE_TOKEN_KEY, token);
+  ls.set(SYNC_KEY, `${uid}|apns:${token}|${kstDay()}`);
+  return { ok: true, devices: r.devices };
+}
+
+async function disableNative(): Promise<boolean> {
+  const token = ls.get(NATIVE_TOKEN_KEY);
+  ls.del(OWNER_KEY);
+  ls.del(SYNC_KEY);
+  ls.del(NATIVE_TOKEN_KEY);
+  await (await loadIosAppNative()).unregisterPush();
+  if (!token) return true;
+  const { error } = await db.rpc("push_unsubscribe", { p_endpoint: `apns:${token}` });
+  return !error;
+}
+
+/** 앱을 열 때 — 켠 사람이면 하루 한 번 토큰을 다시 받아 서버에 알린다(토큰은 바뀔 수 있다). 다른 사람이 켠 기기면 끈다 */
+async function syncNative(uid: string): Promise<void> {
+  if (!uid) return;
+  const token = ls.get(NATIVE_TOKEN_KEY);
+  if (!token) return;
+  const m = await loadIosAppNative();
+  if (ls.get(OWNER_KEY) !== uid) {
+    ls.del(OWNER_KEY);
+    ls.del(SYNC_KEY);
+    ls.del(NATIVE_TOKEN_KEY);
+    await m.unregisterPush();
+    return;
+  }
+  if ((await m.pushPermission()) !== "granted") return;
+  const stamp = `${uid}|apns:${token}|${kstDay()}`;
+  if (ls.get(SYNC_KEY) === stamp) return;
+  let fresh = token;
+  try {
+    fresh = await m.registerForPush();
+  } catch {
+    return;
+  }
+  const r = await registerNativeOnServer(fresh);
+  if (r.ok) {
+    ls.set(NATIVE_TOKEN_KEY, fresh);
+    ls.set(SYNC_KEY, `${uid}|apns:${fresh}|${kstDay()}`);
+  }
 }

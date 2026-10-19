@@ -13,6 +13,7 @@ import { translateAuthError } from "@/lib/errorMessages";
 import { peekPostLoginPath } from "@/lib/postLoginRedirect";
 import MyBoxerWordmark from "@/components/brand/MyBoxerWordmark";
 import InstallAppButton from "@/components/install/InstallAppButton";
+import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 import {
   Select,
   SelectContent,
@@ -482,6 +483,12 @@ const LoginPage = () => {
               onClick={async () => {
                 setIsLoading(true);
                 try {
+                  // 아이폰 앱: 앱 속 화면 대신 안전한 로그인 창으로 (src/lib/iosAppNative.ts)
+                  if (isIosApp()) {
+                    const err = await (await loadIosAppNative()).signInWithOAuthInApp("kakao", "profile_nickname");
+                    if (err) setError("카카오 로그인에 실패했습니다. " + err);
+                    return;
+                  }
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: "kakao",
                     // 비즈 앱 아님 → account_email 요청 시 KOE205. 닉네임만 요청.
@@ -620,6 +627,12 @@ const LoginPage = () => {
                 onClick={async () => {
                   setIsLoading(true);
                   try {
+                    // 아이폰 앱: 구글은 앱 속 화면 로그인을 막는다 → 안전한 로그인 창으로 (src/lib/iosAppNative.ts)
+                    if (isIosApp()) {
+                      const err = await (await loadIosAppNative()).signInWithOAuthInApp("google");
+                      if (err) setError("Google 로그인에 실패했습니다. " + err);
+                      return;
+                    }
                     // Supabase 직접 OAuth — Lovable broker (/~oauth/initiate, Lovable 호스팅 전용)
                     // 우회. 인증 후 redirectTo 로 돌아오면 Supabase JS 가 자동 세션 설정.
                     const { error } = await supabase.auth.signInWithOAuth({
@@ -647,8 +660,32 @@ const LoginPage = () => {
                 Google
               </button>
               {/* 카카오는 맨 위 큰 버튼으로 이동 (2026-10-10).
-                  Apple 버튼은 Apple Developer 계정 ($99/년) 발급 전까지 임시 숨김.
-                  계정 등록 후 supabase.auth.signInWithOAuth({ provider: "apple" }) 으로 재활성. */}
+                  Apple 로 로그인 — 아이폰 앱(App Store)에서만 보인다 (2026-10-19, 심사 4.8: 카카오·구글이 있으면 애플도).
+                  앱의 기본 애플 로그인 창 → supabase.auth.signInWithIdToken. 웹·안드로이드에는 없다. */}
+              {isIosApp() && (
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      const r = await (await loadIosAppNative()).signInWithAppleInApp();
+                      if (r === true) navigate(peekPostLoginPath() ?? "/home");
+                      else if (r) setError("Apple 로그인에 실패했습니다. " + r);
+                    } catch (e) {
+                      setError("Apple 로그인에 실패했습니다.");
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-black py-3.5 text-sm font-medium text-white transition-all hover:bg-black/85 active:scale-[0.98] disabled:opacity-50 dark:bg-white dark:text-black"
+                >
+                  <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.53 2.66-.39 6.59 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.04 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.32-3.5zM14.2 6.13c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.64-1.05 1.67-.92 2.66.97.07 1.96-.49 2.56-1.21z" />
+                  </svg>
+                  Apple로 로그인
+                </button>
+              )}
             </div>
 
             <div className="flex items-center justify-center gap-3 pt-1">

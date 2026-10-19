@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { translateAuthError } from "@/lib/errorMessages";
+import { isIosApp } from "@/lib/iosApp";
 
 type AppRole = Enums<"app_role">;
 
@@ -180,6 +181,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    // 아이폰 앱: 로그아웃 전에(아직 로그인 상태일 때) 이 기기 알림을 서버에서도 끈다 — 다음 사람에게 앞사람 알림이 가지 않게.
+    // 웹은 브라우저 구독을 지우면 끝나지만, 애플 기기 토큰은 그대로 살아 있다 (2026-10-19)
+    if (isIosApp()) {
+      await import("@/lib/pushClient").then((m) => m.disablePush()).catch(() => false);
+    }
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);

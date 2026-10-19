@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<title>마이복서153 로그인</title>
+<style>
+  html,body{margin:0;height:100%;background:#F2F4F6;color:#191F28;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif}
+  body{display:flex;align-items:center;justify-content:center;text-align:center;padding:16px}
+  p{font-size:15px;color:#6B7684;margin:8px 0 0}
+  a{color:#0F8568;font-weight:700}
+</style>
+</head>
+<body>
+  <main>
+    <strong>로그인 중이에요…</strong>
+    <p>잠시 후 마이복서153 앱으로 돌아갑니다.</p>
+    <p id="manual" hidden><a id="link" href="#">앱으로 돌아가기</a> · <a id="web" href="/">웹에서 계속</a></p>
+  </main>
+  <script>
+    // 아이폰 앱(App Store) 로그인 돌아오는 길 (2026-10-19, src/lib/iosAppNative.ts).
+    // 앱의 로그인 창(ASWebAuthenticationSession)에서 Supabase 가 로그인 결과(?code= 또는 #access_token=)를 붙여
+    // 여기로 보낸다 → myboxer153:// 주소로 넘기면 로그인 창이 닫히고 앱이 이어받는다.
+    // 이 주소는 아이폰 앱 로그인에만 쓴다 (웹 로그인은 첫 화면으로 바로 돌아간다).
+    (function () {
+      var rest = location.search + location.hash;
+      var appUrl = "myboxer153://auth" + rest;
+      document.getElementById("link").href = appUrl;
+      document.getElementById("web").href = "/" + rest;
+      location.replace(appUrl);
+      setTimeout(function () { document.getElementById("manual").hidden = false; }, 1500);
+    })();
+  </script>
+</body>
+</html>
