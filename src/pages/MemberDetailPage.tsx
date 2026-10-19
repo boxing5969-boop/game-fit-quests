@@ -331,6 +331,24 @@ const MemberDetailPage = () => {
     onError: () => toast.error("내가 쓴 메모만 지울 수 있어요"),
   });
 
+  // 락카 (2026-10-19 대표님: 회원이 수강권 화면에서 락카 번호를 본다) — 브로제이에서 가져오기 전까지 데스크에서 넣는다.
+  //   권한은 서버(set_member_locker)가 본다: 관리자 = 전체, 지점장·코치 = 같은 지점 회원.
+  const [lockerDraft, setLockerDraft] = useState<string | null>(null);
+  const saveLocker = useMutation({
+    mutationFn: async (label: string) => {
+      type Rpc = (fn: string, args: Record<string, unknown>) => PromiseLike<{ error: { message: string } | null }>;
+      const { error } = await (supabase as unknown as { rpc: Rpc }).rpc("set_member_locker", { p_user_id: memberId, p_label: label });
+      if (error) throw error;
+      return label.trim();
+    },
+    onSuccess: (label) => {
+      toast.success(label ? "락카를 저장했어요 — 회원 수강권 화면에 보여요" : "락카를 지웠어요");
+      setLockerDraft(null);
+      qc.invalidateQueries({ queryKey: ["member-detail", memberId] });
+    },
+    onError: (e: Error) => toast.error(e.message || "락카를 저장하지 못했어요"),
+  });
+
   const deleteUserMut = useMutation({
     mutationFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -471,11 +489,68 @@ const MemberDetailPage = () => {
           {(p.pt_ticket || p.pt_remaining != null || p.pt_until) && (
             <InfoCard
               label="PT"
-              value={[p.pt_ticket, p.pt_remaining != null ? `남은 ${p.pt_remaining}회` : null, p.pt_until ? `~${p.pt_until}` : null]
+              value={[p.pt_ticket, p.pt_remaining != null ? `남은 ${p.pt_remaining}회` : null, (p.pt_end_date ?? p.pt_until) ? `~${p.pt_end_date ?? p.pt_until}` : null]
                 .filter(Boolean)
                 .join(" · ") || "-"}
             />
           )}
+          {/* 락카 — 회원 수강권 화면에 보인다 (2026-10-19) */}
+          <div className="rounded-xl border border-border bg-card px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm text-muted-foreground">락카</span>
+              {lockerDraft === null && (
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-sm font-medium text-foreground">{p.locker_label || "없음"}</span>
+                  <button
+                    onClick={() => setLockerDraft(p.locker_label ?? "")}
+                    className="shrink-0 rounded-lg bg-secondary px-2.5 py-1 text-xs font-bold text-secondary-foreground active:scale-95"
+                  >
+                    {p.locker_label ? "바꾸기" : "넣기"}
+                  </button>
+                </div>
+              )}
+            </div>
+            {lockerDraft !== null && (
+              <>
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    autoFocus
+                    value={lockerDraft}
+                    onChange={(e) => setLockerDraft(e.target.value.slice(0, 30))}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !saveLocker.isPending) saveLocker.mutate(lockerDraft); }}
+                    placeholder="예: 54 · 개인락카 / 54"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                  />
+                  <button
+                    disabled={saveLocker.isPending || !lockerDraft.trim()}
+                    onClick={() => saveLocker.mutate(lockerDraft)}
+                    className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground active:scale-95 disabled:opacity-50"
+                  >
+                    저장
+                  </button>
+                  <button
+                    disabled={saveLocker.isPending}
+                    onClick={() => setLockerDraft(null)}
+                    className="shrink-0 rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground active:scale-95"
+                  >
+                    취소
+                  </button>
+                </div>
+                <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                  <span>본인과 지도진만 볼 수 있어요</span>
+                  {p.locker_label && (
+                    <button
+                      disabled={saveLocker.isPending}
+                      onClick={() => saveLocker.mutate("")}
+                      className="shrink-0 font-bold text-destructive disabled:opacity-50"
+                    >
+                      락카 지우기
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
           <InfoCard label="현재 랭크" value={formatRank(prog.current_rank, prog.current_level)} />
           <InfoCard label="보스전 클리어" value={`${prog.bosses_cleared}회`} />
           {handWrap.data && handWrap.data.goal > 0 && (
@@ -1056,9 +1131,10 @@ const MiniStat = ({ label, value, highlight }: { label: string; value: string; h
 );
 
 const InfoCard = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3">
-    <span className="text-sm text-muted-foreground">{label}</span>
-    <span className="text-sm font-medium text-foreground">{value}</span>
+  <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
+    {/* 이름 칸은 줄지 않게 — 값이 길면 'P/T' 처럼 두 줄로 쪼개지던 것 (2026-10-19) */}
+    <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">{label}</span>
+    <span className="min-w-0 text-right text-sm font-medium text-foreground">{value}</span>
   </div>
 );
 

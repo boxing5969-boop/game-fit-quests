@@ -6,7 +6,9 @@
 // 이 함수는 그 기록을 앱 계정(전화번호 숫자만 비교)으로 옮긴다:
 //   · profiles.pt_until     = PT 유효일(KST). 오늘 이후면 PT 회원 → 회원카드 파란 배지 + 경험치 2배(DB 트리거 trg_pt_xp_bonus).
 //                             = min(수업권 종료일, 마지막 확인일 + 7일) — 확인이 끊겨도 7일 뒤 저절로 풀린다(낡은 정보로 계속 2배 방지).
-//   · profiles.pt_ticket    = 대표 PT 수업권 이름 · profiles.pt_remaining = 잔여 횟수 (참고용 — 화면에는 안 쓴다, 1~2일 늦을 수 있어서)
+//   · profiles.pt_ticket    = 대표 PT 수업권 이름 · profiles.pt_remaining = 잔여 횟수
+//   · profiles.pt_end_date  = 수업권 실제 기한 · profiles.pt_checked_at = 153OS 가 브로제이에서 확인한 시각
+//     (2026-10-19 대표님: 수강권 화면에 PT 남은 횟수 — 회원마다 24~48시간에 한 번 확인이라 '언제 기준'을 같이 보여 준다)
 // PT 가 끝난 회원(153OS 가 그 번호를 확인했는데 살아 있는 PT 수업권이 없음)은 pt_* 를 비운다.
 // 확인 기록이 없는 번호(스냅샷 행이 새로 생겼거나 번호가 바뀜)는 비우지 않고, pt_until 이 지나면 저절로 끝나게 둔다.
 // 안전장치: 153OS 에 PT 확인 기록이 하나도 없으면(워커 배포 전) 아무것도 바꾸지 않는다.
@@ -45,9 +47,14 @@ type OsPtRow = {
 };
 type AppProfile = {
   user_id: string; phone_number: string | null; pt_until: string | null; pt_ticket: string | null;
-  pt_remaining: number | null; is_test_account: boolean | null;
+  pt_remaining: number | null; pt_end_date: string | null; pt_checked_at: string | null; is_test_account: boolean | null;
 };
-type Want = { until: string; ticket: string | null; remaining: number | null; label: string };
+type Want = {
+  until: string; ticket: string | null; remaining: number | null; endDate: string | null; checkedAt: string | null; label: string;
+};
+/** 시각 비교용 — 같은 순간이면 같은 글자 (DB 는 +00:00, 153OS 는 Z 로 줄 수 있다) */
+const sameInstant = (a: string | null, b: string | null) =>
+  (a ?? null) === (b ?? null) || (!!a && !!b && Date.parse(a) === Date.parse(b));
 
 /** 스냅샷 한 행의 PT 유효일(KST) — 수업권 종료일과 '마지막 확인일 + 7일' 중 이른 날. 확인 기록이 없으면 null. */
 function ptUntilOf(r: Pick<OsPtRow, "pt_end_date" | "pt_checked_at">): string | null {
@@ -118,13 +125,15 @@ Deno.serve(async (req) => {
           until,
           ticket: String(r.pt_ticket_name ?? "").trim().slice(0, 60) || null,
           remaining: typeof r.pt_remaining === "number" ? r.pt_remaining : null,
+          endDate: r.pt_end_date ? String(r.pt_end_date).slice(0, 10) : null,
+          checkedAt: r.pt_checked_at ?? null,
           label: mask(r.member_name, phone),
         });
       }
     }
 
     // 4) 앱 계정 — PT 회원 번호로 찾기 + 지금 PT 표시가 있는 계정 전부
-    const SEL = "user_id, phone_number, pt_until, pt_ticket, pt_remaining, is_test_account";
+    const SEL = "user_id, phone_number, pt_until, pt_ticket, pt_remaining, pt_end_date, pt_checked_at, is_test_account";
     const phones = [...want.keys()];
     const byPhone = new Map<string, AppProfile[]>();
     for (let i = 0; i < phones.length; i += 150) {
@@ -147,11 +156,16 @@ Deno.serve(async (req) => {
       if (!ps.length) { unmatched.push(w.label); continue; }
       for (const p of ps) {
         if (p.is_test_account === true) { testSkipped++; continue; } // 체험용 계정은 그대로
-        if (p.pt_until === w.until && (p.pt_ticket ?? null) === w.ticket && (p.pt_remaining ?? null) === w.remaining) continue;
+        if (
+          p.pt_until === w.until && (p.pt_ticket ?? null) === w.ticket && (p.pt_remaining ?? null) === w.remaining &&
+          (p.pt_end_date ?? null) === w.endDate && sameInstant(p.pt_checked_at, w.checkedAt)
+        ) continue;
         const wasActive = !!p.pt_until && p.pt_until >= today;
         if (!dryRun) {
           const { error } = await app.from("profiles")
-            .update({ pt_until: w.until, pt_ticket: w.ticket, pt_remaining: w.remaining }).eq("user_id", p.user_id);
+            .update({
+              pt_until: w.until, pt_ticket: w.ticket, pt_remaining: w.remaining, pt_end_date: w.endDate, pt_checked_at: w.checkedAt,
+            }).eq("user_id", p.user_id);
           if (error) { failed.push(`${w.label}: ${error.message}`); continue; }
         }
         if (wasActive) refreshed++; else added++;
@@ -194,7 +208,7 @@ Deno.serve(async (req) => {
     for (const { p, label, expired } of clearList) {
       if (!dryRun) {
         const { error } = await app.from("profiles")
-          .update({ pt_until: null, pt_ticket: null, pt_remaining: null }).eq("user_id", p.user_id);
+          .update({ pt_until: null, pt_ticket: null, pt_remaining: null, pt_end_date: null, pt_checked_at: null }).eq("user_id", p.user_id);
         if (error) { failed.push(`${label}: ${error.message}`); continue; }
       }
       if (expired) tidied++; else ended++;

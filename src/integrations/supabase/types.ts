@@ -3587,10 +3587,15 @@ export type Database = {
           id: string
           is_approved: boolean
           last_unlock_check_level: number
+          locker_label: string | null
+          locker_updated_at: string | null
+          locker_updated_by: string | null
           name: string
           nickname: string
           onboarding_done: boolean
           phone_number: string | null
+          pt_checked_at: string | null
+          pt_end_date: string | null
           pt_remaining: number | null
           pt_ticket: string | null
           pt_until: string | null
@@ -3614,10 +3619,15 @@ export type Database = {
           id?: string
           is_approved?: boolean
           last_unlock_check_level?: number
+          locker_label?: string | null
+          locker_updated_at?: string | null
+          locker_updated_by?: string | null
           name?: string
           nickname?: string
           onboarding_done?: boolean
           phone_number?: string | null
+          pt_checked_at?: string | null
+          pt_end_date?: string | null
           pt_remaining?: number | null
           pt_ticket?: string | null
           pt_until?: string | null
@@ -3641,10 +3651,15 @@ export type Database = {
           id?: string
           is_approved?: boolean
           last_unlock_check_level?: number
+          locker_label?: string | null
+          locker_updated_at?: string | null
+          locker_updated_by?: string | null
           name?: string
           nickname?: string
           onboarding_done?: boolean
           phone_number?: string | null
+          pt_checked_at?: string | null
+          pt_end_date?: string | null
           pt_remaining?: number | null
           pt_ticket?: string | null
           pt_until?: string | null

@@ -15,6 +15,7 @@ import { isStaffProfile } from "@/lib/staffDisplay";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import MembershipCard from "@/components/MembershipCard";
+import { lockerView, ptTicketView } from "@/lib/gymTicketInfo";
 import MembershipProducts from "@/components/MembershipProducts";
 
 interface MReq {
@@ -55,7 +56,8 @@ const MembershipPage = () => {
   // 홀딩·양도·환불 "본사 테스트 모드" 는 관리 역할(관장·본사)에게만 — 코치님 화면엔 안 보인다.
   const isManager = isManagerRole(role);
   const isStaff = isManager || isStaffProfile(profile);
-  const hasMembership = isStaff || !!memEnd;
+  // PT 수업권만 있는 회원도 카드(남은 횟수·락카)를 본다 (2026-10-19)
+  const hasMembership = isStaff || !!memEnd || !!ptTicketView(profile) || !!lockerView(profile);
 
   const [requests, setRequests] = useState<MReq[]>([]);
   const [modal, setModal] = useState<null | "hold" | "transfer" | "refund">(null);
