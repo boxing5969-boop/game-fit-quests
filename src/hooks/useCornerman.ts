@@ -19,6 +19,7 @@ import {
   respondCornermanPair,
   getCornermanPeople,
   getMyInviteStats,
+  getMyInviteCode,
   searchCornermanPeople,
   sendMemberInvite,
   EMPTY_CORNERMAN_STATUS,
@@ -91,6 +92,17 @@ export function useSendMemberInvite() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: CORNERMAN_KEY });
     },
+  });
+}
+
+/** 내 초대 코드 — 초대 시트를 열 때 미리 받아 둔다 (공유 창은 누른 순간에만 열리므로 그때 기다릴 수 없다) */
+export function useMyInviteCode(enabled = true) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["invite-code", user?.id ?? "anon"],
+    enabled: enabled && !!user?.id,
+    staleTime: Infinity,
+    queryFn: getMyInviteCode,
   });
 }
 

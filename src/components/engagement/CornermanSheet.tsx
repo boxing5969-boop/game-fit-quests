@@ -27,6 +27,7 @@ import {
   useCornermanSearch,
   useEndCornermanPair,
   useMyCornermanStatus,
+  useMyInviteCode,
   useMyInviteStats,
   useRequestCornermanPair,
   useRespondCornermanPair,
@@ -62,14 +63,17 @@ const CornermanSheet = ({ open, onClose }: Props) => {
   const candidates = (people ?? []).filter((p) => p.joined);
   const notJoined = (people ?? []).filter((p) => !p.joined);
   const { data: inviteStats } = useMyInviteStats(open);
+  // 내 초대 코드 — 링크에 넣는다. 받기 전에는 초대 버튼이 잠깐 잠긴다 (2026-10-19 대표님 "4번 진행")
+  const { data: inviteCode } = useMyInviteCode(open);
   const inviteMut = useSendMemberInvite();
   const [invitingId, setInvitingId] = useState<string | null>(null);
   const myName = profile?.nickname?.trim() || profile?.name?.trim() || "동료";
   // 공유 창은 누른 순간에만 열리므로 바로 띄우고, 실제로 보냈거나 복사했을 때만 초대를 기록한다
   // (2026-10-19 검수: 공유 창을 닫기만 해도 기록이 남아 초대 보상을 먼저 차지할 수 있었다)
   const handleInvite = (c: CornermanListItem) => {
+    if (!inviteCode) return;
     setInvitingId(c.user_id);
-    void shareAppInvite(c.display_name, myName).then((r) => {
+    void shareAppInvite(c.display_name, myName, inviteCode).then((r) => {
       if (r !== "shared" && r !== "copied") {
         setInvitingId(null);
         if (r === "failed") toast.error("공유 창을 열지 못했어요");
@@ -276,7 +280,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
         <Gift className="h-3.5 w-3.5 text-amber-600" /> 아직 앱에 없는 우리 지점 회원
       </p>
       <p className="mb-2 text-[10.5px] leading-relaxed text-muted-foreground">
-        초대 링크를 보내 보세요. 초대한 회원이 앱에 처음 들어오면 챔피언 머니 1,000을 드려요 (한 사람당 처음 초대한 1명).
+        초대 링크를 보내 보세요. 초대한 회원이 그 링크로 앱에 처음 들어오면 챔피언 머니 1,000을 드려요 (링크를 누른 초대 1명에게).
         {inviteStats && inviteStats.invited > 0
           ? ` 내 초대 ${inviteStats.invited}명 · 들어온 ${inviteStats.joined}명${inviteStats.reward > 0 ? ` · 받은 보상 ${inviteStats.reward.toLocaleString()}` : ""}`
           : ""}
@@ -286,7 +290,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
         isLoading={candLoading}
         pendingUserId={null}
         onRequest={() => undefined}
-        onInvite={handleInvite}
+        onInvite={inviteCode ? handleInvite : undefined}
         invitingUserId={invitingId}
         showBranch={isHq}
         emptyText="아직 앱에 없는 회원이 없어요"
@@ -328,7 +332,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
       isLoading={search.isLoading}
       pendingUserId={pendingRequestId}
       onRequest={handleRequest}
-      onInvite={handleInvite}
+      onInvite={inviteCode ? handleInvite : undefined}
       invitingUserId={invitingId}
       showBranch={isHq}
       emptyText={search.isError ? "찾지 못했어요. 잠시 후 다시 해 주세요." : `'${q}' 이름의 회원이 없어요.`}

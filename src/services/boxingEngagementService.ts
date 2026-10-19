@@ -878,9 +878,22 @@ export async function sendMemberInvite(userId: string): Promise<{ success: boole
   return data;
 }
 
-/** 앱을 열 때 — 내가 초대받아 처음 들어온 사람이면 초대한 사람에게 보상 */
-export async function claimInviteReward(): Promise<{ success: boolean; rewarded: boolean; inviter?: string | null }> {
-  const { data, error } = await sbRpc<{ success: boolean; rewarded: boolean; inviter?: string | null }>("claim_invite_reward");
+/** 내 초대 코드 — 초대 링크(?inv=)에 들어간다 (없으면 서버가 만든다) */
+export async function getMyInviteCode(): Promise<string> {
+  const { data, error } = await sbRpc<string>("get_my_invite_code");
+  if (error) throwKo(error);
+  if (!data) throw new Error("초대 코드를 받지 못했어요");
+  return String(data);
+}
+
+/** 앱을 열 때 — 초대 링크로 들어와 처음 로그인한 사람이면 그 링크 주인에게 보상 (done = 확인 끝, 코드를 지워도 된다) */
+export async function claimInviteReward(
+  code: string | null,
+): Promise<{ success: boolean; rewarded: boolean; done?: boolean; inviter?: string | null }> {
+  const { data, error } = await sbRpc<{ success: boolean; rewarded: boolean; done?: boolean; inviter?: string | null }>(
+    "claim_invite_reward_v2",
+    { p_code: code },
+  );
   if (error) throwKo(error);
   return data ?? { success: true, rewarded: false };
 }

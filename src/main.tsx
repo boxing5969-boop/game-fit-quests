@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { stripEmoji } from "@/lib/emoji3d/core";
+import { captureInviteCodeFromUrl } from "@/lib/appInvite";
 
 // 설치형 앱(Capacitor)으로 켜면 랭킹앱 홈이 아니라 얼굴 키오스크로 진입한다.
 // React Router 가 경로를 읽기 전에 바꿔야 하므로 렌더보다 먼저 실행.
@@ -27,5 +28,8 @@ for (const k of ["alert", "confirm", "prompt"] as const) {
   (window as unknown as Record<string, unknown>)[k] = (message?: unknown, ...rest: unknown[]) =>
     original(typeof message === "string" ? stripEmoji(message) : message, ...rest);
 }
+
+// 초대 링크(?inv=코드)로 들어왔으면 코드를 남긴다 — 로그인하러 카카오에 다녀와도 쓰게 (2026-10-19)
+captureInviteCodeFromUrl();
 
 createRoot(document.getElementById("root")!).render(<App />);
