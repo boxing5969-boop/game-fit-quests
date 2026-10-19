@@ -14,8 +14,8 @@ export interface AppMenuItem {
   path: string;
   label: string;
   glyph: MenuGlyphName;
-  /** 이 조건이 켜진 회원에게만 보인다 */
-  requires?: "diet";
+  /** 이 조건이 켜진 사람에게만 보인다 — diet: 다이어트 프로그램 회원 · staff: 코치님·지점장·운영진 */
+  requires?: "diet" | "staff";
 }
 
 /**
@@ -35,6 +35,9 @@ export const isMenuFolder = (e: AppMenuEntry): e is AppMenuFolder => "items" in 
 export const APP_MENU: readonly AppMenuEntry[] = [
   // MY복서 — 예전 홈 화면(내 라이센스·오늘의 할 일·순위). 1번 자리 고정.
   { path: "/myboxer", label: "MY복서", glyph: "myboxer" },
+  // 전략 회의실 — 코치님·지점장·운영진만 (2026-10-19 대표님: "전략회의실 코치님들에게는 메뉴에 보이게 해줘 회원님들에게는 안보이고").
+  //   메시지 화면의 '전략' 칸으로 바로 간다. 회원에게는 칸 자체가 없다 (서버도 strategy_* 를 코치진만 받는다).
+  { path: "/messages?tab=strategy", label: "전략 회의실", glyph: "clipboard", requires: "staff" },
   // 영상 미션 — 153플레이(레벨 미션 영상, 월드 탭은 관리자만) + 타이틀매치(레벨 10·20·30·40 심사 동작 영상, 2026-10-01)
   {
     folder: "videos",
@@ -103,8 +106,9 @@ export const APP_MENU: readonly AppMenuEntry[] = [
 ];
 
 /** 회원에게 보일 메뉴 — 조건에 안 맞는 메뉴를 빼고, 하나만 남은 묶음은 그 메뉴로 펼친다 */
-export const buildAppMenu = (opts: { diet: boolean; hide?: (path: string) => boolean }): AppMenuEntry[] => {
-  const visible = (m: AppMenuItem) => (m.requires !== "diet" || opts.diet) && !opts.hide?.(m.path);
+export const buildAppMenu = (opts: { diet: boolean; staff?: boolean; hide?: (path: string) => boolean }): AppMenuEntry[] => {
+  const visible = (m: AppMenuItem) =>
+    (m.requires !== "diet" || opts.diet) && (m.requires !== "staff" || opts.staff === true) && !opts.hide?.(m.path);
   const out: AppMenuEntry[] = [];
   for (const e of APP_MENU) {
     if (!isMenuFolder(e)) {
@@ -119,5 +123,5 @@ export const buildAppMenu = (opts: { diet: boolean; hide?: (path: string) => boo
 };
 
 /** 펼친 목록 — 묶음 안의 메뉴까지 한 줄로 (검색·테스트용) */
-export const flatAppMenu = (opts: { diet: boolean }): AppMenuItem[] =>
+export const flatAppMenu = (opts: { diet: boolean; staff?: boolean }): AppMenuItem[] =>
   buildAppMenu(opts).flatMap((e) => (isMenuFolder(e) ? [...e.items] : [e]));

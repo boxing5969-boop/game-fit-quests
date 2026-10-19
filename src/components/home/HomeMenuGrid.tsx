@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDmSummary } from "@/hooks/useDm";
+import { useStrategyBadge } from "@/services/strategyService";
 import { buildAppMenu, isMenuFolder, type AppMenuEntry, type AppMenuItem } from "@/lib/appMenu";
 import GlyphTile, { GlyphFolderTile } from "@/components/icons/GlyphTile";
 import { cn } from "@/lib/utils";
@@ -49,16 +50,20 @@ interface Props {
 const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const diet = !!profile?.diet_program_enabled;
   // 메시지 칸 오른쪽 위 — 안 읽은 대화 + 새 요청 (+ 본사: 처리 안 한 신고) (2026-09-30).
   // 메시지를 쓸 수 없는 계정(지점 회원 확인 전)에는 메시지를 빼 둔다 — 머리글 종이비행기와 같은 기준
   const { data: dm } = useDmSummary();
   const dmBadge = dm?.badge ?? 0;
   const dmOff = dm?.enabled === false;
+  // 전략 회의실 칸 — 코치님(앱 권한이 '회원'이어도 서버가 코치로 본 사람) · 지점장 · 운영진만. 메시지 화면 '전략' 칸과 같은 기준 (2026-10-19)
+  const staff =
+    dm?.kind === "coach" || dm?.kind === "hq" || role === "branch_manager" || role === "super_admin" || role === "admin";
+  const { data: strategyBadge = 0 } = useStrategyBadge(staff);
   const entries = useMemo(
-    () => buildAppMenu({ diet, hide: (path) => dmOff && path === "/messages" }),
-    [diet, dmOff],
+    () => buildAppMenu({ diet, staff, hide: (path) => dmOff && path === "/messages" }),
+    [diet, staff, dmOff],
   );
   const [open, setOpen] = useState<string | null>(null);
 
@@ -67,7 +72,9 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
     setOpen(null);
     onNavigate?.();
   };
-  const badgeOf = (m: AppMenuItem) => (m.path === "/messages" ? dmBadge : 0);
+  // 칸 오른쪽 위 숫자 — 메시지: 안 읽은 대화 · 전략 회의실: 아직 확인 안 한 지시·전략
+  const badgeOf = (m: AppMenuItem) =>
+    m.path === "/messages" ? dmBadge : m.path.startsWith("/messages?tab=strategy") ? strategyBadge : 0;
 
   const tile = (e: AppMenuEntry) => {
     if (!isMenuFolder(e)) {
