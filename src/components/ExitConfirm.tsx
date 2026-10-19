@@ -4,13 +4,12 @@
  */
 import { useEffect } from "react";
 import { exitApp } from "@/lib/androidBackExit";
+import { lockBodyScroll } from "@/lib/scrollLock";
 
 export default function ExitConfirm({ open, onClose }: { open: boolean; onClose: () => void }) {
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    return lockBodyScroll(); // 겹친 창이 있어도 마지막 창이 닫힐 때만 풀린다
   }, [open]);
 
   if (!open) return null;

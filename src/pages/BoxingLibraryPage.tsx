@@ -11,6 +11,7 @@
 // 레벨 미션 영상(관장님 업로드)은 '내 레벨' 메뉴와 홈 최상단 행에 붙는다 —
 // 예습(영상) → 출석(리그별 요건) → 레벨업 흐름을 잇는다.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lockBodyScroll } from "@/lib/scrollLock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -380,11 +381,7 @@ const Modal = ({ it, autoplay, onClose, isAdmin, watchedApi }: {
     },
   });
 
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
-  }, []);
+  useEffect(() => lockBodyScroll(), []); // 겹친 창이 있어도 마지막 창이 닫힐 때만 풀린다
 
   // 레벨 미션 영상: 실사 | 애니메이션 같은 버전을 고른다 (버전이 하나면 대표 영상 그대로)
   const versions = it.kind === "level" && it.v.variants.length > 1 ? it.v.variants : null;

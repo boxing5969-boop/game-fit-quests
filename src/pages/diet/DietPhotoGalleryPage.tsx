@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { lockBodyScroll } from "@/lib/scrollLock";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import JSZip from "jszip";
 import { toast } from "sonner";
@@ -373,13 +374,7 @@ const Lightbox = ({
   onClose: () => void;
   onDelete: () => void;
 }) => {
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
+  useEffect(() => lockBodyScroll(), []); // 겹친 창이 있어도 마지막 창이 닫힐 때만 풀린다
   return (
     <div className="fixed inset-0 z-[80] flex flex-col bg-black/90 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] backdrop-blur-sm">
       <div className="flex items-center justify-between px-4 py-3 text-white">
