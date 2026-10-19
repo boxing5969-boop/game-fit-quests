@@ -155,6 +155,24 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
   // 알림 '바로 가기'로 온 신고는 화면 가운데로
   const focusRef = useRef<HTMLLIElement | null>(null);
   const scrolled = useRef(false);
+  // 신고함이 열린 채로 다른 신고 알림을 누르면 focusId 만 바뀐다 (2026-10-19) — 고른 칸이 그 신고를 가리지 않게
+  // 처음 열 때처럼('전체') 되돌리고, 다시 가운데로 데려온다. 처음 열 때는 아무것도 바꾸지 않는다.
+  const lastFocus = useRef(focusId);
+  useEffect(() => {
+    if (lastFocus.current === focusId) return;
+    lastFocus.current = focusId;
+    scrolled.current = false;
+    if (focusId) setFilter(null);
+  }, [focusId]);
+  // 방금 들어온 신고라 불러 둔 목록(30초 캐시)에 없으면 — 그 신고마다 한 번만 다시 불러온다
+  const { data: inboxData, isFetching: inboxFetching, refetch: refetchInbox } = inbox;
+  const refetchedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusId || !inboxData || inboxFetching || refetchedFor.current === focusId) return;
+    if (inboxData.items.some((it) => it.id === focusId)) return;
+    refetchedFor.current = focusId;
+    void refetchInbox();
+  }, [focusId, inboxData, inboxFetching, refetchInbox]);
   useEffect(() => {
     if (!focusId || scrolled.current || !focusRef.current) return;
     scrolled.current = true;
@@ -302,7 +320,7 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
         </ul>
       )}
       <p className="px-1 pt-1 text-center text-[11.5px] leading-relaxed text-muted-foreground">
-        회원님이 보낸 신고는 본사만 볼 수 있어요. 고친 뒤 '고쳤어요'를 눌러 두면 나중에 다시 찾기 쉬워요.
+        회원님이 보낸 신고는 운영진만 볼 수 있어요. 고친 뒤 '고쳤어요'를 눌러 두면 나중에 다시 찾기 쉬워요.
       </p>
     </div>
   );

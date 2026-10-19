@@ -651,7 +651,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
               className="w-full rounded-2xl bg-secondary/60 px-4 py-3.5 text-left active:scale-[0.99]"
             >
               <span className="block text-[14.5px] font-bold text-destructive">신고하기</span>
-              <span className="block text-[12px] text-muted-foreground">본사만 확인하고, 상대에게는 알리지 않아요</span>
+              <span className="block text-[12px] text-muted-foreground">운영진만 확인하고, 상대에게는 알리지 않아요</span>
             </button>
           </li>
           <li>

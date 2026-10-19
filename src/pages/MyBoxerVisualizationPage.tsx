@@ -56,16 +56,25 @@ const MyBoxerVisualizationPage = () => {
   });
 
   const vars: MindVars = useMemo(() => {
-    const best = pbSummary?.best.open ?? pbSummary?.best.starter ?? null;
-    const finished = !!best?.finished;
+    // 완주한 기록만 PB — 오픈에서 시간 초과로 못 끝낸 기록보다 스타터 완주 기록을 쓴다 (2026-10-19 검수)
+    const open = pbSummary?.best.open;
+    const starter = pbSummary?.best.starter;
+    const best = open?.finished ? open : starter?.finished ? starter : null;
     return {
       goal: stats?.goal ?? null,
       cue: stats?.cue ?? null,
-      pb: finished && best ? spokenTime(best.score_ms) : null,
-      pbGoal: finished && best ? spokenTime(best.score_ms - 1000) : null,
-      division: pbSummary?.best.open ? "오픈" : pbSummary?.best.starter ? "스타터" : null,
+      pb: best ? spokenTime(best.score_ms) : null,
+      pbGoal: best ? spokenTime(best.score_ms - 1000) : null,
+      division: best ? (best === open ? "오픈" : "스타터") : null,
     };
   }, [pbSummary, stats?.goal, stats?.cue]);
+
+  // 바로 들어온 경우(새 창 · 링크)에는 홈으로 — 앱 밖으로 나가지 않게 (SearchPage 와 같은 방식)
+  const goBack = () => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) navigate(-1);
+    else navigate("/home", { replace: true });
+  };
 
   const pick = useMemo(
     () =>
@@ -92,11 +101,13 @@ const MyBoxerVisualizationPage = () => {
       className="relative min-h-dvh w-full overflow-hidden text-amber-50"
       style={{ background: "linear-gradient(180deg, #070b1a 0%, #0c1328 55%, #070b1a 100%)" }}
     >
-      <div
-        className="pointer-events-none absolute -top-36 left-1/2 h-[440px] w-[440px] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
-        style={{ background: "radial-gradient(circle, #fdb85c 0%, transparent 70%)" }}
-        aria-hidden
-      />
+      {/* 빛 번짐은 화면 크기 칸 안에서만 — 바깥 상자가 옆·위로 밀린 채 굳지 않게 (2026-10-19 검수) */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+        <div
+          className="absolute -top-36 left-1/2 h-[440px] w-[440px] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
+          style={{ background: "radial-gradient(circle, #fdb85c 0%, transparent 70%)" }}
+        />
+      </div>
 
       <motion.section
         initial={{ opacity: 0, y: 10 }}
@@ -108,7 +119,7 @@ const MyBoxerVisualizationPage = () => {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             aria-label="뒤로"
             className="rounded-full border border-amber-200/15 bg-black/30 p-2 text-amber-100/70 active:scale-95"
           >
@@ -168,7 +179,7 @@ const MyBoxerVisualizationPage = () => {
               <span className="inline-flex items-center gap-1">
                 <Timer className="h-3.5 w-3.5" />총 {stats?.total_minutes ?? 0}분 · {stats?.total_sessions ?? 0}번
               </span>
-              {stats && stats.rated >= 3 && stats.vivid_first > 0 && (
+              {stats && stats.rated >= 6 && stats.vivid_first > 0 && (
                 <span>
                   또렷함 {stats.vivid_first.toFixed(1)} → {stats.vivid_recent.toFixed(1)}
                 </span>
@@ -228,7 +239,8 @@ const MyBoxerVisualizationPage = () => {
           })}
         </div>
 
-        <GoalCard goal={stats?.goal ?? null} cue={stats?.cue ?? null} />
+        {/* 기록을 불러온 뒤에 그린다 — 빈 칸으로 먼저 열려서 저장된 목표를 지우지 않게 (2026-10-19 검수) */}
+        {stats && <GoalCard key={`${stats.goal ?? ""}|${stats.cue ?? ""}`} goal={stats.goal ?? null} cue={stats.cue ?? null} />}
 
         <p className="pb-2 text-center text-[11px] leading-relaxed text-amber-200/45">
           이어폰을 끼고, 눈을 감고 들으면 가장 좋아요.
@@ -292,8 +304,9 @@ function GoalCard({ goal, cue }: { goal: string | null; cue: string | null }) {
   const dirty = g.trim() !== (goal ?? "") || c.trim() !== (cue ?? "");
 
   const onSave = async () => {
-    await save.mutateAsync({ goal: g, cue: c });
-    toast.success("저장했어요. 다음 세션부터 대본에 들어가요");
+    const res = await save.mutateAsync({ goal: g, cue: c });
+    if (res.synced) toast.success("저장했어요. 다음 세션부터 대본에 들어가요");
+    else toast("이 기기에 먼저 저장했어요. 인터넷이 되면 계정에도 올라가요");
     setEditing(false);
   };
 

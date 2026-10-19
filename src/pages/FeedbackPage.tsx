@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -25,8 +25,13 @@ const FeedbackPage = () => {
   const isHq = role === "super_admin" || role === "admin";
   const [params] = useSearchParams();
   const focusId = params.get("id");
+  const inboxParam = params.get("inbox") === "1";
   // 역할은 늦게 올 수 있어 탭은 주소로 정하고, 받은 신고는 본사일 때만 그린다
-  const [tab, setTab] = useState<"inbox" | "send">(() => (params.get("inbox") === "1" || params.get("id") ? "inbox" : "send"));
+  const [tab, setTab] = useState<"inbox" | "send">(() => (inboxParam || focusId ? "inbox" : "send"));
+  // 이 화면이 열려 있을 때 알림을 누르면 주소(?inbox=1&id=새 신고)만 바뀌고 화면은 새로 열리지 않는다 → 주소를 따라 받은 신고 탭으로 (2026-10-19)
+  useEffect(() => {
+    if (inboxParam || focusId) setTab("inbox");
+  }, [inboxParam, focusId]);
   const showInbox = isHq && tab === "inbox";
   const inboxCounts = useAppFeedbackInbox(isHq).data?.counts;
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("오류");

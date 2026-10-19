@@ -15,6 +15,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
+import { STAFF_CHAMPION_LINE } from "@/lib/staffDisplay";
 
 export type LetterAudience = "member" | "coach";
 export interface LetterTemplate {
@@ -83,7 +84,7 @@ export const DEFAULT_LETTERS: Record<LetterAudience, LetterTemplate> = {
 승급 심사와 미션 확인,
 그리고 응원 한마디는 코치님의 몫입니다.
 
-앱에서 코치님은 챔피언 · Lv.77 로 표시됩니다.
+앱에서 코치님은 ${STAFF_CHAMPION_LINE} 로 표시됩니다.
 회원님들이 바라보며 올라갈 자리예요.
 
 코치님의 한마디가

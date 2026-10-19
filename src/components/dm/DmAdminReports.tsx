@@ -59,7 +59,7 @@ const ReportDetailSheet = ({ reportId, onClose }: { reportId: string | null; onC
             <input
               value={note}
               onChange={(e) => setNote(e.target.value.slice(0, 300))}
-              placeholder="처리 메모 (선택 · 본사만 봐요)"
+              placeholder="처리 메모 (선택 · 운영진만 봐요)"
               className="w-full rounded-xl bg-secondary/70 px-3.5 py-2.5 text-[16px] text-foreground outline-none placeholder:text-muted-foreground"
               aria-label="처리 메모"
             />
@@ -246,7 +246,7 @@ const DmAdminReports = () => {
       )}
 
       <p className="mt-4 px-1 text-[11.5px] leading-relaxed text-muted-foreground">
-        본사는 신고할 때 남긴 대화 사본만 볼 수 있어요. 신고되지 않은 대화는 본사도 볼 수 없어요.
+        운영진은 신고할 때 남긴 대화 사본만 볼 수 있어요. 신고되지 않은 대화는 운영진도 볼 수 없어요.
       </p>
 
       <ReportDetailSheet reportId={openId} onClose={() => setOpenId(null)} />

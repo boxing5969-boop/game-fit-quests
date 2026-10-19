@@ -12,7 +12,7 @@ export const dmPersonLine = (p: Pick<DmPerson, "kind" | "rank" | "level" | "bran
   if (!p) return "";
   const branch = withBranch ? shortBranch(p.branch) : "";
   if (p.kind === "coach") return branch ? `${branch} 지도진` : "지도진";
-  if (p.kind === "hq") return "153 본사";
+  if (p.kind === "hq") return "153 운영진";
   const league = `${RANK_LABELS[(p.rank ?? "white").toLowerCase()] ?? "화이트"} L${toGlobalLevel((p.rank ?? "white").toLowerCase(), p.level ?? 1)}`;
   return branch ? `${league} · ${branch}` : league;
 };

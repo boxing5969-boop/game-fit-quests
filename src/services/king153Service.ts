@@ -145,7 +145,7 @@ export const KING_META: Record<KingCategory, KingMeta> = {
   },
   nickname: {
     key: "nickname", emoji: "❤️", title: "닉네임왕", tagline: "받은 하트",
-    what: "같은 지점 회원들이 내 라이센스에 보낸 하트 수입니다(본사 하트 포함). 한 사람이 회원마다 하트 1개씩 보낼 수 있고, 취소하지 않으면 계속 유지돼요(누적).",
+    what: "같은 지점 회원들이 내 라이센스에 보낸 하트 수입니다(운영진 하트 포함). 한 사람이 회원마다 하트 1개씩 보낼 수 있고, 취소하지 않으면 계속 유지돼요(누적).",
     how: "아래 버튼이나 랭킹에서 동료를 눌러 하트를 보내세요. 닉네임을 정하면 실명 대신 닉네임으로 보여요. 런칭 이벤트 ③번 왕좌예요.",
     unit: "개", periodless: true, action: "nickname_like", actionLabel: "동료에게 하트 보내기",
   },
@@ -270,6 +270,8 @@ export interface MemberLicense {
   like_reason: LicenseLikeReason;
   /** 코치·지점장·운영진이면 표시 — 회원이면 null (옛 응답에는 없다) */
   staff_role?: LicenseStaffRole | null;
+  /** 직함(profiles.staff_title — 예: 코치·지점장·헤드코치). 비어 있으면 staff_role 로 표시 (2026-10-19 추가 — 옛 응답에는 없다) */
+  staff_title?: string | null;
 }
 
 /** 다른 회원(또는 나)의 라이센스 — 서버가 같은 지점·관리자 전 지점 규칙을 검사한다 */

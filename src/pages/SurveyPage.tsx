@@ -252,7 +252,7 @@ const SurveyPage = () => {
   // ── 본사: 받은 설문·고객의 소리 ──
   if (view === "inbox" && isHq) {
     return (
-      <AppPage header={header("받은 설문·고객의 소리", "회원님이 보낸 응답 · 본사만 봐요", () => setView("hub"))}>
+      <AppPage header={header("받은 설문·고객의 소리", "회원님이 보낸 응답 · 전체관리자만 봐요", () => setView("hub"))}>
         <MemberVoiceInbox initialTab={params.get("tab") === "voice" ? "voices" : "surveys"} />
       </AppPage>
     );
@@ -268,7 +268,7 @@ const SurveyPage = () => {
           </span>
           <p className="text-lg font-extrabold text-foreground">접수됐습니다!</p>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            보내주신 내용은 지점장님과 본사가 직접 확인하고
+            보내주신 내용은 지점장님과 운영진이 직접 확인하고
             <br />
             체육관을 더 좋게 만드는 데 쓰입니다.
           </p>
@@ -476,7 +476,7 @@ const SurveyPage = () => {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[16px] font-extrabold text-foreground">받은 설문·고객의 소리</span>
-            <span className="mt-0.5 block text-[12.5px] text-muted-foreground">본사 · 회원님이 보낸 응답을 자세히 봐요</span>
+            <span className="mt-0.5 block text-[12.5px] text-muted-foreground">전 지점 보기 · 회원님이 보낸 응답을 자세히 봐요</span>
           </span>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </button>
@@ -530,7 +530,7 @@ const SurveyPage = () => {
             </button>
           )}
           <p className="px-1 pt-2 text-center text-[12px] leading-relaxed text-muted-foreground">
-            보내주신 내용은 지점장님과 본사가 직접 확인합니다.
+            보내주신 내용은 지점장님과 운영진이 직접 확인합니다.
             <br />
             참여 보상은 종류별로 한 달에 한 번 지급돼요.
           </p>

@@ -833,7 +833,7 @@ const MemberDetailPage = () => {
           {isHq && (
             <>
               <h3 className="px-1 pt-1 text-sm font-bold text-foreground">
-                앱·커뮤니티 활동 <span className="text-muted-foreground">· 본사만</span>
+                앱·커뮤니티 활동 <span className="text-muted-foreground">· 전체관리자만</span>
               </h3>
               <p className="px-1 text-[11px] leading-relaxed text-muted-foreground">
                 글·댓글·153·응원·짝꿍·같이 운동·하트·퀴즈·컨디션·게임·챌린지·153 PB·레벨·설문 참여·마일리지. 메시지(DM) 내용과 설문 답변(익명)은 보이지 않아요.

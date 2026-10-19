@@ -71,7 +71,7 @@ export const DmKindBadge = ({ kind, className }: { kind: DmKind | null | undefin
   if (kind === "hq")
     return (
       <span className={cn("inline-flex shrink-0 items-center rounded-md bg-foreground px-1.5 py-[1px] text-[10px] font-black leading-[14px] text-background", className)}>
-        본사
+        운영진
       </span>
     );
   return null;

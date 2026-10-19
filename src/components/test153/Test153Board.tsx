@@ -521,8 +521,8 @@ const Test153Board = ({ onOpenMember }: Props) => {
                   name={TEST153_RUN_GUIDE.name}
                   reps={
                     <>
-                      매 라운드 8번
-                      <span className="block text-[11px] font-medium text-muted-foreground">스타터도 같아요</span>
+                      매 라운드 1번
+                      <span className="block text-[11px] font-medium text-muted-foreground">모두 8번 · 스타터도 같아요</span>
                     </>
                   }
                   howTo={TEST153_RUN_GUIDE.howTo}

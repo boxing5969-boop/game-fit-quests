@@ -1527,8 +1527,8 @@ const LiveBoardPage = () => {
                             {c.name} {honorTitle(c.title)} <MedalMark animated userId={c.user_id} />
                           </p>
                           <p className="text-[10px] font-black uppercase tracking-wider text-yellow-500/80">
-                            {/* 대표님 지시(2026-09-23): 코치님은 모두 챔피언 · Lv.77 */}
-                            CHAMPION · LV.{STAFF_CHAMPION_LEVEL}
+                            {/* 대표님 지시: 코치님은 모두 Lv.77 — 리그 표기 2026-09-23 챔피언 → 2026-10-19 블랙 */}
+                            BLACK · LV.{STAFF_CHAMPION_LEVEL}
                           </p>
                         </div>
                       </div>

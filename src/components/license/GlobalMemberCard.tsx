@@ -4,8 +4,10 @@
  *
  * App 에 한 번만 둔다. 화면들은 openMemberCard(userId) (lib/appEvents) 만 부르면 된다.
  * 카드 자체는 MemberLicenseSheet — 처음 열 때 불러온다(첫 화면 무게를 늘리지 않게).
+ * 화면이 바뀌면 닫는다 — App 에 계속 떠 있어서, 안드로이드 뒤로가기로 뒤 화면만 바뀌고 카드는 남던 것 (2026-10-19 검수)
  */
 import { lazy, Suspense, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { OPEN_MEMBER_CARD_EVENT, type OpenMemberCardDetail } from "@/lib/appEvents";
 
 const MemberLicenseSheet = lazy(() => import("@/components/license/MemberLicenseSheet"));
@@ -13,6 +15,11 @@ const MemberLicenseSheet = lazy(() => import("@/components/license/MemberLicense
 const GlobalMemberCard = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [used, setUsed] = useState(false);
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    setUserId(null);
+  }, [pathname]);
 
   useEffect(() => {
     const onOpen = (e: Event) => {

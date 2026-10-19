@@ -1129,11 +1129,11 @@ const DAY_4_STEPS: TutorialCampStep[] = [
     fallbackText: "153마인드셋 화면 위쪽에 소개 영역이 있어요.",
     completionText: "마음을 먼저 데우는 이유예요.",
     helperMessage: "잠깐 보고 있어요. 곧 다음으로 가요.",
-    successMessage: "다음은 두 가지 세션이에요.",
+    successMessage: "다음은 상황마다 고르는 세션이에요.",
     completionRule: "quiz_question_read",
     autoAdvance: true,
   },
-  // ── 2. 두 가지 세션 ──
+  // ── 2. 상황마다 고르는 세션 ──
   {
     day: 4,
     step: 2,
@@ -1148,8 +1148,8 @@ const DAY_4_STEPS: TutorialCampStep[] = [
     allowNextWithoutClick: true,
     animation: "spotlight",
     placement: "top",
-    fallbackText: "153마인드셋 화면에 두 가지 세션 카드가 있어요.",
-    completionText: "두 가지 세션이 있어요.",
+    fallbackText: "153마인드셋 화면 아래쪽에 세션 카드들이 있어요.",
+    completionText: "상황마다 고르는 세션이 있어요.",
     helperMessage: "잠깐 보고 있어요. 곧 다음으로 가요.",
     successMessage: "첫 세션을 한 번 열어볼까요?",
     completionRule: "quiz_question_read",
@@ -1215,7 +1215,7 @@ const DAY_4_STEPS: TutorialCampStep[] = [
     allowNextWithoutClick: true,
     animation: "spotlight",
     placement: "center",
-    fallbackText: "153마인드셋 세션은 1분 안에 끝나는 짧은 시각화예요.",
+    fallbackText: "153마인드셋 세션은 대부분 3분 안팎의 짧은 시각화예요.",
     completionText: "마인드셋의 효과를 알게 됐어요.",
     helperMessage: "잠깐 읽어보세요. 곧 다음으로 가요.",
     successMessage: "Day 4 마무리할게요.",

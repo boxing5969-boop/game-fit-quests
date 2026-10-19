@@ -16,6 +16,7 @@ import {
   disablePush,
   enablePush,
   isIosUA,
+  isPushServiceError,
   logPushEnableFailure,
   readPushState,
   sendTestPush,
@@ -152,6 +153,9 @@ export function usePushNotifications() {
           const netErr = /fetch|network|timeout|timed out/i.test(detail);
           if (offline || (stage !== "subscribe" && netErr)) {
             toast.error("알림을 켜지 못했어요", { description: "인터넷이 잠깐 끊긴 것 같아요. 연결을 확인하고 다시 눌러 주세요." });
+          } else if (stage === "subscribe" && isPushServiceError(detail)) {
+            // 2026-10-19: 등록 단계 AbortError·'push service' = 알림 서버에 닿지 못함 — 브라우저가 막은 게 아니다
+            toast.error("알림을 켜지 못했어요", { description: "알림 서버에 연결하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요." });
           } else if (stage === "subscribe") {
             toast.error("이 브라우저가 알림 등록을 막았어요", { description: subscribeHelp(), duration: 9000 });
           } else {

@@ -59,8 +59,15 @@ function getCtx(): Ctx | null {
 
 /** 버튼을 누른 순간에 불러야 한다(아이폰·사파리는 손가락으로 누를 때만 소리를 연다) */
 export function unlockAudio(): void {
-  const c = getCtx();
-  if (c && c.state === "suspended") void c.resume().catch(() => undefined);
+  // 아이폰 무음(벨소리 끔) 모드에서도 공 소리·배경 소리가 나게 — iOS 17+ 는 '재생' 오디오로 바꿀 수 있다
+  // (기본값 'ambient' 는 무음 스위치를 따라 Web Audio 가 통째로 꺼진다. 2026-10-19 검수)
+  try {
+    const as = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+    if (as && as.type !== "playback") as.type = "playback";
+  } catch {
+    /* 지원하지 않는 기기 */
+  }
+  resumeAudio();
   // 음성도 같이 깨운다 — 빈 문장을 한 번 말해 두면 iOS 에서 다음 문장부터 막히지 않는다
   try {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -71,6 +78,22 @@ export function unlockAudio(): void {
   } catch {
     /* 무시 */
   }
+}
+
+/** 세션이 끝나면 아이폰 오디오를 원래대로 — '재생'으로 둔 채면 회원이 듣던 음악이 계속 멈춰 있다 */
+export function restoreAudioSession(): void {
+  try {
+    const as = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+    if (as && as.type === "playback") as.type = "auto";
+  } catch {
+    /* 지원하지 않는 기기 */
+  }
+}
+
+/** 멈춰 있으면 다시 깨운다 — 다른 앱에 다녀오면 'suspended'(크롬) 또는 'interrupted'(사파리)가 된다 */
+export function resumeAudio(): void {
+  const c = ctx;
+  if (c && c.state !== "running" && c.state !== "closed") void c.resume().catch(() => undefined);
 }
 
 function noiseBuffer(c: Ctx, seconds: number, kind: "white" | "brown" | "pink"): AudioBuffer {
@@ -439,12 +462,18 @@ export function speak(text: string, opts: { enabled: boolean; voice: SpeechSynth
       u.rate = opts.rate;
       u.pitch = 1;
       u.volume = 1;
-      u.onend = () => {
-        if (!cancelled) finish();
+      const startedAt = performance.now();
+      // 한국어 음성이 없는 엔진은 읽지도 않고 곧바로 끝을 알린다 → 자막이 순식간에 지나가지 않게 읽는 시간만큼 기다린다
+      const endedEarly = () => {
+        if (cancelled) return;
+        const spent = (performance.now() - startedAt) / 1000;
+        if (spent < est * 0.35 && text.replace(/\s+/g, "").length > 4) {
+          if (timer) window.clearTimeout(timer);
+          timer = window.setTimeout(finish, (est - spent) * 1000);
+        } else finish();
       };
-      u.onerror = () => {
-        if (!cancelled) finish();
-      };
+      u.onend = endedEarly;
+      u.onerror = endedEarly;
       window.speechSynthesis.speak(u);
       timer = window.setTimeout(finish, (est * 1.8 + 2) * 1000);
     } catch {
@@ -482,9 +511,21 @@ export function playClip(url: string): SpeakHandle {
   const done = new Promise<void>((resolve) => {
     resolveFn = resolve;
   });
-  a.onended = () => resolveFn();
-  a.onerror = () => resolveFn();
-  void a.play().catch(() => resolveFn());
+  // 파일이 멈춰 버려도 재생기가 서지 않게 — 길이를 알면 길이 + 3초, 모르면 45초 뒤 넘어간다
+  let safety = window.setTimeout(() => resolveFn(), 45_000);
+  const finish = () => {
+    window.clearTimeout(safety);
+    resolveFn();
+  };
+  a.onloadedmetadata = () => {
+    if (Number.isFinite(a.duration) && a.duration > 0) {
+      window.clearTimeout(safety);
+      safety = window.setTimeout(finish, (a.duration + 3) * 1000);
+    }
+  };
+  a.onended = finish;
+  a.onerror = finish;
+  void a.play().catch(finish);
   return {
     done,
     cancel: () => {
@@ -493,7 +534,7 @@ export function playClip(url: string): SpeakHandle {
       } catch {
         /* 무시 */
       }
-      resolveFn();
+      finish();
     },
   };
 }
@@ -502,16 +543,25 @@ export function playClip(url: string): SpeakHandle {
 // 화면 꺼짐 막기 · 진동
 // ─────────────────────────────────────────────────────────────
 
-type WakeLockLike = { release: () => Promise<void> };
+type WakeLockLike = {
+  release: () => Promise<void>;
+  released?: boolean;
+  addEventListener?: (type: "release", fn: () => void) => void;
+};
 let wakeLock: WakeLockLike | null = null;
 
 export async function keepScreenOn(on: boolean): Promise<void> {
   try {
     if (on) {
-      if (wakeLock) return;
+      // 다른 앱에 다녀오면 브라우저가 잠금을 스스로 푼다(released) — 그때는 새로 건다 (2026-10-19 검수)
+      if (wakeLock && !wakeLock.released) return;
       const nav = navigator as unknown as { wakeLock?: { request: (t: "screen") => Promise<WakeLockLike> } };
       if (!nav.wakeLock) return;
-      wakeLock = await nav.wakeLock.request("screen");
+      const lock = await nav.wakeLock.request("screen");
+      wakeLock = lock;
+      lock.addEventListener?.("release", () => {
+        if (wakeLock === lock) wakeLock = null;
+      });
     } else if (wakeLock) {
       const w = wakeLock;
       wakeLock = null;
@@ -535,4 +585,5 @@ export function releaseAll(): void {
   stopSpeech();
   stopSoundscape();
   void keepScreenOn(false);
+  restoreAudioSession();
 }

@@ -45,7 +45,7 @@ import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
 import MileageCard from "@/components/home/MileageCard";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
 import {
-  STAFF_CHAMPION_LEVEL, STAFF_CHAMPION_LINE, isStaffProfile, staffChampionLine, staffDisplayName, staffTitleLabel,
+  STAFF_CHAMPION_LABEL, STAFF_CHAMPION_LEVEL, STAFF_CHAMPION_LINE, isStaffProfile, staffChampionLine, staffDisplayName, staffTitleLabel,
 } from "@/lib/staffDisplay";
 import { useLevelupRules } from "@/hooks/useLevelupRules";
 import { authorityLabel } from "@/lib/levelAuthority";
@@ -538,13 +538,13 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         <PageHeader
           title={displayName}
           titlePrefix={
-            // 지도진은 리그 배지 대신 챔피언 표식 (2026-09-23 대표님 지시: 코치님은 모두 챔피언 · Lv.77)
+            // 지도진은 리그 배지 대신 지도진 표식 (2026-09-23 챔피언 · Lv.77 → 2026-10-19 대표님: 블랙 · Lv.77)
             staffCard ? (
               <span
                 className="inline-flex shrink-0 items-center rounded-md bg-yellow-500 px-1.5 py-0.5 text-[10px] font-black leading-none text-gray-900"
                 aria-label={STAFF_CHAMPION_LINE}
               >
-                챔피언 {STAFF_CHAMPION_LEVEL}
+                {STAFF_CHAMPION_LABEL} {STAFF_CHAMPION_LEVEL}
               </span>
             ) : (
             <RankBadge

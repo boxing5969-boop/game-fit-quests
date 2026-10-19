@@ -248,7 +248,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
       )}
 
       <p className="px-1 pt-1 text-center text-[11.5px] leading-relaxed text-muted-foreground">
-        일일경영리포트에 저장된 최근 6개월 응답이에요 (본사만 볼 수 있어요). 처리 상태 바꾸기와 경품 추첨은 경영리포트에서 해요.
+        일일경영리포트에 저장된 최근 6개월 응답이에요 (전체관리자만 볼 수 있어요). 처리 상태 바꾸기와 경품 추첨은 경영리포트에서 해요.
       </p>
     </div>
   );

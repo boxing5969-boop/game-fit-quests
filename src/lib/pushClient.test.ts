@@ -9,10 +9,12 @@ import {
   enablePush,
   forgetPushOnThisDevice,
   isInAppUA,
+  isPushServiceError,
   kstDay,
   pushBlockFrom,
   readPushState,
   sameKey,
+  subscribeHelp,
   syncPushSubscription,
   type PushEnv,
 } from "./pushClient";
@@ -92,6 +94,33 @@ describe("작은 도우미", () => {
   it("동기화 날짜는 한국 날짜 (자정 경계)", () => {
     expect(kstDay(new Date("2026-09-30T14:59:59Z"))).toBe("2026-09-30");
     expect(kstDay(new Date("2026-09-30T15:00:00Z"))).toBe("2026-10-01");
+  });
+});
+
+describe("등록(subscribe) 실패 안내 — 사이트 권한은 이미 허용인 뒤라 휴대폰 설정·연결을 안내", () => {
+  it("삼성 인터넷은 휴대폰 설정의 삼성 인터넷 앱 알림 → 허용, 첫 대안은 Chrome (사이트 설정 안내 아님)", () => {
+    const samsung30 = SAMSUNG.replace("SamsungBrowser/26.0", "SamsungBrowser/30.0");
+    for (const ua of [SAMSUNG, samsung30]) {
+      const t = subscribeHelp(ua);
+      expect(t).toContain("휴대폰 설정 → 애플리케이션 → 삼성 인터넷 → 알림 → 허용");
+      expect(t).toContain("Chrome으로");
+      expect(t).not.toContain("사이트");
+    }
+  });
+  it("아이폰(홈 화면 앱)은 설정 → 알림 → 마이복서153 → 알림 허용 · 집중 모드·스크린 타임", () => {
+    const t = subscribeHelp(IPHONE);
+    expect(t).toContain("설정 → 알림 → 마이복서153 → '알림 허용'");
+    expect(t).toContain("집중 모드");
+    expect(t).toContain("스크린 타임");
+    expect(t).not.toContain("홈 화면에 추가");
+  });
+  it("AbortError · 'push service' 는 연결 문제, NotAllowedError 는 아니다", () => {
+    expect(isPushServiceError("AbortError: Registration failed - push service error")).toBe(true);
+    expect(isPushServiceError("AbortError: Registration failed - push service not available")).toBe(true);
+    expect(isPushServiceError("UnknownError: push service unavailable")).toBe(true);
+    expect(isPushServiceError("NotAllowedError: Registration failed - permission denied")).toBe(false);
+    expect(isPushServiceError("InvalidStateError: Failed to execute 'subscribe'")).toBe(false);
+    expect(isPushServiceError("")).toBe(false);
   });
 });
 
@@ -190,6 +219,14 @@ describe("enablePush — 켜기", () => {
     expect(requestPermission).not.toHaveBeenCalled(); // 이미 허용이면 다시 묻지 않는다
     expect(old.unsubscribe).toHaveBeenCalled();
     expect(subscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("등록(subscribe)이 실패하면 단계와 '오류 이름: 내용'을 돌려준다 (안내를 나누는 근거)", async () => {
+    rpcOk({ get_push_public_key: KEY });
+    subscribe.mockRejectedValueOnce(Object.assign(new Error("Registration failed - push service error"), { name: "AbortError" }));
+    const r = await enablePush("user-a");
+    expect(r).toEqual({ ok: false, reason: "failed", stage: "subscribe", detail: "AbortError: Registration failed - push service error" });
+    expect(localStorage.getItem("153push:owner")).toBeNull();
   });
 
   it("서버가 모르는 푸시 주소면 구독을 지우고 알려 준다", async () => {

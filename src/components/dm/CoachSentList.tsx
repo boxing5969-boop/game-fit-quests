@@ -127,7 +127,7 @@ const CoachSentList = () => {
     return (
       <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
         <p className="text-[14px] font-bold text-foreground">보낸 메시지를 불러오지 못했어요</p>
-        <p className="mt-1 text-[12.5px] text-muted-foreground">지점장·본사 계정만 볼 수 있어요. 인터넷 연결도 확인해 주세요.</p>
+        <p className="mt-1 text-[12.5px] text-muted-foreground">지점장·운영진 계정만 볼 수 있어요. 인터넷 연결도 확인해 주세요.</p>
         <button
           type="button"
           onClick={() => q.refetch()}

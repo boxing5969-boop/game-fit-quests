@@ -8,7 +8,9 @@
  *   4. 내 최근 변화 1줄
  *
  * 보호 규칙:
- *   · DB / API 호출 0 — localStorage(153마인드셋 records, 캠프 state) read-only
+ *   · 캠프 state 는 localStorage read-only
+ *   · 153마인드셋 횟수는 마인드셋 화면과 같은 숫자 — 계정 기록(get_my_mindset_stats, 30초 캐시).
+ *     불러오기 전에는 이 기기에 남은 '내 계정' 기록으로 (2026-10-19 검수: 홈 '20회 완료'인데 화면은 '총 0번'이던 것)
  *   · 153마인드셋 / 캠프 / 공식 훈련 흐름 0 변경
  *   · 표현 금지어 0
  */
@@ -17,6 +19,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Compass, Sparkles, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useMindsetStats } from "@/services/mindsetService";
 import { getTutorialCampState } from "@/features/tutorial-camp/tutorialCampStorage";
 import { getStep, getStepsCountByDay } from "@/features/tutorial-camp/tutorialCampSteps";
 
@@ -25,23 +29,33 @@ const VIZ_RECORDS_KEY = "myboxer.visualization.records";
 interface VizRecordLite {
   sessionId?: string;
   completedAt?: string;
+  durationSec?: number;
+  completed?: boolean;
+  /** 기록한 계정 (2026-10-19부터) — 같은 폰을 여럿이 쓰면 내 것만 센다 */
+  uid?: string;
 }
 
-function readVizCount(): { total: number; lastDate: string | null } {
-  if (typeof window === "undefined") return { total: 0, lastDate: null };
+/** 한국 날짜 (YYYY-MM-DD) */
+const kstDate = (iso: string) => {
+  const t = new Date(iso).getTime();
+  return Number.isFinite(t) ? new Date(t + 9 * 3600 * 1000).toISOString().slice(0, 10) : null;
+};
+
+/** 이 기기에 남은 내 계정 기록 중 세는 것 (대본 60% 이상 또는 3분 넘게) — 마인드셋 화면과 같은 기준 */
+function readVizCount(uid: string | null): { total: number; lastIso: string | null } {
+  if (typeof window === "undefined" || !uid) return { total: 0, lastIso: null };
   try {
     const raw = window.localStorage.getItem(VIZ_RECORDS_KEY);
-    if (!raw) return { total: 0, lastDate: null };
-    const list = JSON.parse(raw) as VizRecordLite[];
-    if (!Array.isArray(list)) return { total: 0, lastDate: null };
-    const total = list.length;
-    const lastDate =
-      list[0] && typeof list[0].completedAt === "string"
-        ? list[0].completedAt.slice(0, 10)
-        : null;
-    return { total, lastDate };
+    if (!raw) return { total: 0, lastIso: null };
+    const all = JSON.parse(raw) as VizRecordLite[];
+    if (!Array.isArray(all)) return { total: 0, lastIso: null };
+    const list = all.filter(
+      (r) => r && r.uid === uid && (r.completed !== false || (r.durationSec ?? 0) >= 180),
+    );
+    const lastIso = typeof list[0]?.completedAt === "string" ? list[0].completedAt : null;
+    return { total: list.length, lastIso };
   } catch {
-    return { total: 0, lastDate: null };
+    return { total: 0, lastIso: null };
   }
 }
 
@@ -54,9 +68,12 @@ interface FocusItem {
 
 const TodayFocusCard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [today, setToday] = useState<FocusItem | null>(null);
   const [recommend, setRecommend] = useState<FocusItem | null>(null);
-  const [recentLine, setRecentLine] = useState<string>("");
+  const [campDays, setCampDays] = useState(0);
+  const { data: mind } = useMindsetStats();
+  const localViz = useMemo(() => readVizCount(user?.id ?? null), [user?.id]);
 
   useEffect(() => {
     // 캠프 활성 상태에 따라 "오늘 할 일" 결정
@@ -90,17 +107,22 @@ const TodayFocusCard = () => {
       icon: Compass,
     });
 
-    // 최근 변화 1줄 — 153마인드셋 누적
-    const { total, lastDate } = readVizCount();
-    if (total > 0) {
-      const dateText = lastDate ? ` · 마지막 ${lastDate}` : "";
-      setRecentLine(`153마인드셋 ${total}회 완료${dateText}`);
-    } else if (camp.completedDays.length > 0) {
-      setRecentLine(`입문 캠프 ${camp.completedDays.length}일 진행`);
-    } else {
-      setRecentLine("오늘부터 한 칸씩 쌓으면 됩니다.");
-    }
+    setCampDays(camp.completedDays.length);
   }, []);
+
+  // 최근 변화 1줄 — 153마인드셋 누적 (마인드셋 화면과 같은 숫자)
+  const recentLine = useMemo(() => {
+    const total = mind ? mind.total_sessions : localViz.total;
+    const lastIso = mind
+      ? (mind.recent.find((r) => r.completed !== false || r.duration_sec >= 180)?.created_at ?? null)
+      : localViz.lastIso;
+    if (total > 0) {
+      const day = lastIso ? kstDate(lastIso) : null;
+      return `153마인드셋 ${total}회 완료${day ? ` · 마지막 ${day}` : ""}`;
+    }
+    if (campDays > 0) return `입문 캠프 ${campDays}일 진행`;
+    return "오늘부터 한 칸씩 쌓으면 됩니다.";
+  }, [mind, localViz, campDays]);
 
   const lines = useMemo(() => [today, recommend].filter(Boolean) as FocusItem[], [
     today,

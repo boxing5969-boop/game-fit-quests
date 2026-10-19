@@ -37,7 +37,7 @@ const DmReportSheet = ({ open, onClose, threadId, peerName, onDone }: Props) => 
     if (!reason) return;
     try {
       const res = await report.mutateAsync({ threadId, reason, detail, block });
-      toast.success(res.blocked ? "신고했어요 · 차단도 했어요. 본사가 확인할게요" : "신고했어요. 본사가 확인할게요");
+      toast.success(res.blocked ? "신고했어요 · 차단도 했어요. 운영진이 확인할게요" : "신고했어요. 운영진이 확인할게요");
       onClose();
       onDone?.(res.blocked);
     } catch (e) {
@@ -50,7 +50,7 @@ const DmReportSheet = ({ open, onClose, threadId, peerName, onDone }: Props) => 
       open={open}
       onClose={onClose}
       title={`${peerName}님 신고하기`}
-      subtitle="본사만 확인하고, 상대에게는 알리지 않아요"
+      subtitle="운영진만 확인하고, 상대에게는 알리지 않아요"
       footer={
         <button
           type="button"
@@ -115,7 +115,7 @@ const DmReportSheet = ({ open, onClose, threadId, peerName, onDone }: Props) => 
       </label>
 
       <p className="mt-3 px-1 text-[11.5px] leading-relaxed text-muted-foreground">
-        신고하면 이 대화의 최근 메시지 50개가 본사에 함께 전달돼요. 본사가 확인한 뒤 메시지 보내기를 제한할 수 있어요.
+        신고하면 이 대화의 최근 메시지 50개가 운영진에게 함께 전달돼요. 운영진이 확인한 뒤 메시지 보내기를 제한할 수 있어요.
       </p>
     </DmSheet>
   );

@@ -69,7 +69,7 @@ const DmSettingsSheet = ({ open, onClose }: Props) => {
             <div className="min-w-0">
               <p className="text-[15px] font-bold text-foreground">메시지 요청 받기</p>
               <p className="mt-0.5 text-[12.5px] leading-snug text-muted-foreground">
-                끄면 다른 회원이 새 대화를 시작할 수 없어요. 이미 나눈 대화와 코치님·본사 메시지는 그대로 와요.
+                끄면 다른 회원이 새 대화를 시작할 수 없어요. 이미 나눈 대화와 코치님·운영진 메시지는 그대로 와요.
               </p>
             </div>
             <Switch
@@ -113,7 +113,7 @@ const DmSettingsSheet = ({ open, onClose }: Props) => {
       </section>
 
       <p className="mt-5 px-1 text-[11.5px] leading-relaxed text-muted-foreground">
-        차단하면 서로 메시지를 보낼 수 없고, 상대에게는 알리지 않아요. 불편한 메시지는 대화방 ⋯ 에서 신고하면 본사가 확인해요.
+        차단하면 서로 메시지를 보낼 수 없고, 상대에게는 알리지 않아요. 불편한 메시지는 대화방 ⋯ 에서 신고하면 운영진이 확인해요.
       </p>
     </DmSheet>
   );

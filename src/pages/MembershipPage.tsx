@@ -282,7 +282,7 @@ const MembershipPage = () => {
             <>
               {isManager && (
                 <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
-                  <span className="font-bold text-primary">본사 테스트 모드</span> — 무제한 계정이라 실제 회원에겐 없는 신청 버튼이 테스트용으로 표시됩니다. 신청하면 아래 내역과 홈 화면 관리 메뉴에서 승인/반려를 확인할 수 있습니다.
+                  <span className="font-bold text-primary">관리자 테스트 모드</span> — 무제한 계정이라 실제 회원에겐 없는 신청 버튼이 테스트용으로 표시됩니다. 신청하면 아래 내역과 홈 화면 관리 메뉴에서 승인/반려를 확인할 수 있습니다.
                 </div>
               )}
               <div className="grid grid-cols-3 gap-2.5">
@@ -317,7 +317,7 @@ const MembershipPage = () => {
                 {expired && !isManager ? (
                   <p>이용권이 만료되어 일반 홀딩은 신청할 수 없어요.</p>
                 ) : holdTier && holdTier.maxCount > 0 ? (
-                  <p>홀딩 가능: 남은 {remainCount}회 · 남은 {remainDays}일 · 한 번에 최대 {holdTier.perHold}일{isManager ? " (본사 테스트)" : ` (약정 ${Math.round(contractMonths ?? 0)}개월 기준)`}</p>
+                  <p>홀딩 가능: 남은 {remainCount}회 · 남은 {remainDays}일 · 한 번에 최대 {holdTier.perHold}일{isManager ? " (관리자 테스트)" : ` (약정 ${Math.round(contractMonths ?? 0)}개월 기준)`}</p>
                 ) : holdTier ? (
                   <p>일반 홀딩 불가: 1~2개월 이용권은 일반 홀딩이 없습니다.</p>
                 ) : (

@@ -112,6 +112,10 @@ const MyBoxerVisualizationSession = ({ session, vars, onClose }: MyBoxerVisualiz
   const [control, setControl] = useState<number | null>(null);
   const [note, setNote] = useState("");
   const [playedSec, setPlayedSec] = useState(0);
+  /** 대본을 어디까지 갔는지 (0~1) — 60% 넘으면 '끝까지 한 것'으로 센다 */
+  const [reached, setReached] = useState(0);
+  /** 재생 중에 바꾼 배경 소리 — 이번 한 번만 (다른 세션의 기본 소리를 덮지 않게) */
+  const [runScape, setRunScape] = useState<Soundscape | null>(null);
   const [result, setResult] = useState<MindsetStats | null>(null);
   const logMut = useLogMindsetSession();
 
@@ -129,7 +133,7 @@ const MyBoxerVisualizationSession = ({ session, vars, onClose }: MyBoxerVisualiz
     () => Object.fromEntries((session.variants ?? []).map((v) => [v.key, estimateMinutes(v.cues, vars, prefs.rate)])),
     [session.variants, vars, prefs.rate],
   );
-  const scape: Soundscape = prefs.scape ?? session.soundscape;
+  const scape: Soundscape = runScape ?? prefs.scape ?? session.soundscape;
 
   useEffect(() => setAmbientVolume(prefs.ambient), [prefs.ambient]);
 
@@ -139,8 +143,9 @@ const MyBoxerVisualizationSession = ({ session, vars, onClose }: MyBoxerVisualiz
     voiceOn: prefs.voiceOn,
     rate: prefs.rate,
     soundscape: scape,
-    onDone: (sec) => {
+    onDone: (sec, reachedFrac) => {
       setPlayedSec(sec);
+      setReached(reachedFrac);
       window.setTimeout(() => setStep("post"), 1400);
     },
   });
@@ -158,7 +163,7 @@ const MyBoxerVisualizationSession = ({ session, vars, onClose }: MyBoxerVisualiz
   };
 
   const save = async () => {
-    const completed = playedSec >= player.state.total * 0.6;
+    const completed = reached >= 0.6;
     try {
       const st = await logMut.mutateAsync({
         sessionId: session.id,
@@ -173,8 +178,9 @@ const MyBoxerVisualizationSession = ({ session, vars, onClose }: MyBoxerVisualiz
       });
       setResult(st);
       setStep("done");
-    } catch {
-      toast.error("기록을 남기지 못했어요. 잠시 후 다시 눌러 주세요");
+    } catch (e) {
+      // 서버가 알려 준 이유(예: 하루 30번)는 그대로, 그 밖에는 다시 눌러 달라고
+      toast.error(e instanceof Error && e.message ? e.message : "기록을 남기지 못했어요. 잠시 후 다시 눌러 주세요");
     }
   };
 
@@ -208,7 +214,8 @@ const MyBoxerVisualizationSession = ({ session, vars, onClose }: MyBoxerVisualiz
             <PostStep
               key="post"
               session={session}
-              early={playedSec < player.state.total * 0.6}
+              early={reached < 0.6}
+              onSkip={onClose}
               moodBefore={moodBefore}
               moodAfter={moodAfter}
               onMoodAfter={setMoodAfter}
@@ -230,6 +237,7 @@ const MyBoxerVisualizationSession = ({ session, vars, onClose }: MyBoxerVisualiz
               moodBefore={moodBefore}
               moodAfter={moodAfter}
               playedSec={playedSec}
+              counted={reached >= 0.6 || playedSec >= 180}
               onClose={onClose}
             />
           )}
@@ -251,7 +259,7 @@ const MyBoxerVisualizationSession = ({ session, vars, onClose }: MyBoxerVisualiz
           onVoice={() => updatePrefs({ voiceOn: !prefs.voiceOn })}
           onScape={() => {
             const next = SCAPES[(SCAPES.indexOf(scape) + 1) % SCAPES.length];
-            updatePrefs({ scape: next });
+            setRunScape(next);
             player.changeSoundscape(next);
           }}
         />
@@ -264,20 +272,22 @@ const MyBoxerVisualizationSession = ({ session, vars, onClose }: MyBoxerVisualiz
 // 배경 빛
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * 빛 번짐은 화면 크기 그대로인 칸 안에서만 — 칸 밖으로 튀어나가면 바깥 상자(overflow-hidden)가 '스크롤되는 상자'가 되어
+ * 메모 칸을 누르거나 화면 읽기로 옮겨 갈 때 옆·위로 밀린 채 굳는다 (2026-10-19 검수: 마무리 화면이 왼쪽으로 20px 밀림)
+ */
 function Glow({ tint }: { tint: [string, string] }) {
   return (
-    <>
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       <div
-        className="pointer-events-none absolute -top-40 left-1/2 h-[460px] w-[460px] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
+        className="absolute -top-40 left-1/2 h-[460px] w-[460px] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
         style={{ background: `radial-gradient(circle, ${tint[0]} 0%, transparent 70%)` }}
-        aria-hidden
       />
       <div
-        className="pointer-events-none absolute -bottom-40 right-[-120px] h-[380px] w-[380px] rounded-full opacity-15 blur-3xl"
+        className="absolute -bottom-40 right-[-120px] h-[380px] w-[380px] rounded-full opacity-15 blur-3xl"
         style={{ background: `radial-gradient(circle, ${tint[1]} 0%, transparent 70%)` }}
-        aria-hidden
       />
-    </>
+    </div>
   );
 }
 
@@ -399,7 +409,7 @@ function IntroStep({
           <div className="min-w-0">
             <p className="text-[13px] font-bold">목소리 안내</p>
             <p className="text-[11px] text-amber-200/55">
-              {hasVoice === false ? "이 기기에 한국어 음성이 없어 자막으로 진행돼요" : "끄면 자막만 보고 따라가요"}
+              {hasVoice === false ? "한국어 음성을 찾지 못했어요 · 소리가 안 나면 자막을 보고 따라가요" : "끄면 자막만 보고 따라가요"}
             </p>
           </div>
           <Toggle on={prefs.voiceOn} onClick={() => onPrefs({ voiceOn: !prefs.voiceOn })} label="목소리 안내" />
@@ -438,17 +448,18 @@ function IntroStep({
         <div>
           <p className="text-[13px] font-bold">배경 소리</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {SCAPES.map((k) => (
+            {/* '세션 기본' = 세션마다 어울리는 소리 (고르면 모든 세션에 같은 소리로 고정) */}
+            {([null, ...SCAPES] as Array<Soundscape | null>).map((k) => (
               <button
-                key={k}
+                key={k ?? "default"}
                 type="button"
                 onClick={() => onPrefs({ scape: k })}
                 className={cn(
                   "rounded-full border px-3 py-1 text-[11.5px] font-bold",
-                  scape === k ? "border-amber-300/60 bg-amber-400/15 text-amber-50" : "border-amber-200/10 text-amber-100/55",
+                  prefs.scape === k ? "border-amber-300/60 bg-amber-400/15 text-amber-50" : "border-amber-200/10 text-amber-100/55",
                 )}
               >
-                {SOUNDSCAPE_LABEL[k]}
+                {k ? SOUNDSCAPE_LABEL[k] : `세션 기본 · ${SOUNDSCAPE_LABEL[session.soundscape]}`}
               </button>
             ))}
           </div>
@@ -659,7 +670,7 @@ function PlayerOverlay({
         <div className="mt-10 flex min-h-[96px] w-full items-start justify-center">
           <AnimatePresence mode="wait">
             <motion.p
-              key={`${state.cueIndex}-${state.caption}`}
+              key={`${state.cueIndex}-${state.beat}`}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
@@ -702,8 +713,9 @@ function PlayerOverlay({
         <button
           type="button"
           onClick={playing ? onPause : onPlay}
+          disabled={state.status === "done"}
           aria-label={playing ? "잠깐 멈추기" : "이어서 듣기"}
-          className="flex h-[72px] w-[72px] items-center justify-center rounded-full text-[#1a1206] shadow-[0_0_30px_rgba(253,184,92,0.35)] active:scale-95"
+          className="flex h-[72px] w-[72px] items-center justify-center rounded-full text-[#1a1206] shadow-[0_0_30px_rgba(253,184,92,0.35)] active:scale-95 disabled:opacity-40"
           style={{ background: "linear-gradient(135deg, #fde68a, #f59e0b)" }}
         >
           {playing ? <Pause className="h-7 w-7" /> : <Play className="ml-1 h-7 w-7" />}
@@ -782,7 +794,7 @@ function Orb({ state, tint, pct }: { state: ReturnType<typeof useMindPlayer>["st
         />
       </svg>
       <motion.div
-        key={b ? `b-${b.key}` : state.captionKind === "call" ? `c-${state.cueIndex}-${state.caption}` : "idle"}
+        key={b ? `b-${b.key}` : state.captionKind === "call" ? `c-${state.beat}` : "idle"}
         className="absolute inset-[56px] rounded-full"
         animate={breathAnim}
         style={{
@@ -824,6 +836,7 @@ function BreathCount({ sec }: { sec: number }) {
 function PostStep({
   session,
   early,
+  onSkip,
   moodBefore,
   moodAfter,
   onMoodAfter,
@@ -838,6 +851,8 @@ function PostStep({
 }: {
   session: MindSession;
   early: boolean;
+  /** 기록 없이 닫기 (잠깐 해 보고 나온 때) */
+  onSkip: () => void;
   moodBefore: number | null;
   moodAfter: number | null;
   onMoodAfter: (v: number) => void;
@@ -916,6 +931,16 @@ function PostStep({
         <Check className="h-5 w-5" />
         {saving ? "남기는 중…" : "기록 남기기"}
       </button>
+      {early && (
+        <button
+          type="button"
+          onClick={onSkip}
+          disabled={saving}
+          className="mx-auto block text-[12px] font-semibold text-amber-200/50 underline-offset-4 active:underline"
+        >
+          기록 없이 닫기
+        </button>
+      )}
     </motion.section>
   );
 }
@@ -975,6 +1000,7 @@ function DoneStep({
   moodBefore,
   moodAfter,
   playedSec,
+  counted,
   onClose,
 }: {
   session: MindSession;
@@ -982,18 +1008,23 @@ function DoneStep({
   moodBefore: number | null;
   moodAfter: number | null;
   playedSec: number;
+  /** 이번 주 횟수에 세는 기록인지 (대본 60% 이상 또는 3분 넘게 — 서버와 같은 기준) */
+  counted: boolean;
   onClose: () => void;
 }) {
   const week = stats?.week_count ?? 1;
   const ring = Math.min(1, week / WEEK_GOAL);
   const R = 54;
   const C = 2 * Math.PI * R;
-  const trend = stats && stats.rated >= 3 && stats.vivid_first > 0 ? { from: stats.vivid_first, to: stats.vivid_recent } : null;
+  // 처음 3번 평균 → 최근 3번 평균 (6번 쌓인 뒤부터 — 겹치는 구간을 비교하지 않게)
+  const trend = stats && stats.rated >= 6 && stats.vivid_first > 0 ? { from: stats.vivid_first, to: stats.vivid_recent } : null;
 
   const headline = useMemo(() => {
+    // 짧게 해 보고 나온 날은 '0번째 라운드'가 되지 않게 (2026-10-19 검수)
+    if (!counted) return "오늘 한 만큼 남겼어요";
     if (week >= WEEK_GOAL) return week === WEEK_GOAL ? "이번 주 목표 달성!" : `이번 주 ${week}번째 — 목표를 넘었어요`;
     return `이번 주 ${week}번째 라운드`;
-  }, [week]);
+  }, [week, counted]);
 
   return (
     <motion.section
@@ -1035,6 +1066,9 @@ function DoneStep({
           {Math.max(1, Math.round(playedSec / 60))}분 · {session.title}
           {stats && stats.streak >= 2 ? ` · ${stats.streak}일 연속` : ""}
         </p>
+        {!counted && (
+          <p className="text-[12px] text-amber-200/55">끝까지 듣거나 3분 넘게 하면 이번 주 횟수에 들어가요</p>
+        )}
       </div>
 
       {(moodBefore && moodAfter) || trend ? (
@@ -1076,7 +1110,7 @@ function DoneStep({
       </div>
 
       {stats?.local && (
-        <p className="text-[11px] text-amber-200/45">인터넷이 불안해서 이 기기에만 먼저 남겼어요.</p>
+        <p className="text-[11px] text-amber-200/45">인터넷이 불안해서 이 기기에 먼저 남겼어요. 다음에 앱을 열면 계정에 올라가요.</p>
       )}
 
       <button

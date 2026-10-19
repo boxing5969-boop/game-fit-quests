@@ -65,17 +65,22 @@ const CornermanSheet = ({ open, onClose }: Props) => {
   const inviteMut = useSendMemberInvite();
   const [invitingId, setInvitingId] = useState<string | null>(null);
   const myName = profile?.nickname?.trim() || profile?.name?.trim() || "동료";
-  // 공유 창은 누른 순간에만 열리므로 서버 기록을 기다리지 않고 바로 띄운다
+  // 공유 창은 누른 순간에만 열리므로 바로 띄우고, 실제로 보냈거나 복사했을 때만 초대를 기록한다
+  // (2026-10-19 검수: 공유 창을 닫기만 해도 기록이 남아 초대 보상을 먼저 차지할 수 있었다)
   const handleInvite = (c: CornermanListItem) => {
     setInvitingId(c.user_id);
-    inviteMut.mutate(c.user_id, {
-      onError: (e) => toast.error(e instanceof Error ? e.message : "초대를 기록하지 못했어요"),
-      onSettled: () => setInvitingId(null),
-    });
     void shareAppInvite(c.display_name, myName).then((r) => {
+      if (r !== "shared" && r !== "copied") {
+        setInvitingId(null);
+        if (r === "failed") toast.error("공유 창을 열지 못했어요");
+        return;
+      }
+      inviteMut.mutate(c.user_id, {
+        onError: (e) => toast.error(e instanceof Error ? e.message : "초대를 기록하지 못했어요"),
+        onSettled: () => setInvitingId(null),
+      });
       if (r === "shared") toast.success(`${c.display_name}님께 초대를 보냈어요 — 앱에 들어오면 챔피언 머니 1,000!`);
-      else if (r === "copied") toast.success("초대 문구를 복사했어요 — 카톡이나 문자에 붙여 넣어 보내 주세요");
-      else if (r === "failed") toast.error("공유 창을 열지 못했어요");
+      else toast.success("초대 문구를 복사했어요 — 카톡이나 문자에 붙여 넣어 보내 주세요");
     });
   };
 

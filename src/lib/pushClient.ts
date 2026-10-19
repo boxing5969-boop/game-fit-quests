@@ -259,13 +259,29 @@ export async function logPushEnableFailure(stage: PushFailStage, detail: string)
   }
 }
 
-/** 브라우저가 알림 등록(subscribe)을 거절했을 때 — 기기별 안내 */
+/**
+ * 등록(subscribe) 단계 오류가 알림 서버 연결 문제인지 — AbortError("Registration failed - push service error" 등)·'push service'.
+ * 브라우저가 막은 게 아니라 알림 서버에 닿지 못한 것이라 '인터넷 연결 확인'으로 안내한다 (2026-10-19).
+ * NotAllowedError(권한 거절)는 여기 들지 않는다 — subscribeHelp 로 안내.
+ */
+export function isPushServiceError(detail: string): boolean {
+  if (/\bNotAllowedError\b/.test(detail)) return false;
+  return /\bAbortError\b/.test(detail) || /push service/i.test(detail);
+}
+
+/**
+ * 브라우저가 알림 등록(subscribe)을 거절했을 때 — 기기별 안내.
+ * 등록은 사이트 알림 권한이 이미 '허용'인 뒤에만 시도한다 → 사이트 설정이 아니라 휴대폰의 앱 알림 설정을 안내한다 (2026-10-19).
+ */
 export function subscribeHelp(ua: string = typeof navigator === "undefined" ? "" : navigator.userAgent): string {
   if (/SamsungBrowser/i.test(ua)) {
-    return "삼성 인터넷 ≡ → 설정 → 사이트 및 다운로드 → 알림에서 마이복서153을 허용해 주세요. 비밀 모드에서는 알림을 켤 수 없어요. 그래도 안 되면 크롬으로 열어 '알림 켜기'를 눌러 주세요.";
+    // 운영 기록(SamsungBrowser/30): 사이트 권한은 허용인데 'NotAllowedError: Registration failed - permission denied'
+    //   = 휴대폰 설정에서 삼성 인터넷 앱의 알림이 꺼져 있을 때
+    return "휴대폰에서 삼성 인터넷 앱의 알림이 꺼져 있어요. 휴대폰 설정 → 애플리케이션 → 삼성 인터넷 → 알림 → 허용으로 바꾼 뒤 다시 눌러 주세요. 또는 Chrome으로 마이복서153을 열어 '알림 켜기'를 눌러 주세요.";
   }
   if (isIosUA(ua, typeof navigator === "undefined" ? 0 : navigator.maxTouchPoints || 0)) {
-    return "홈 화면에 추가한 마이복서153 앱에서 다시 눌러 주세요.";
+    // 아이폰은 홈 화면 앱에서만 여기까지 온다 (사파리 탭은 pushBlock 'ios-install' 에서 먼저 막힌다)
+    return "아이폰 설정 → 알림 → 마이복서153 → '알림 허용'을 켠 뒤 다시 눌러 주세요. 집중 모드나 스크린 타임에서 알림을 막아 두지 않았는지도 확인해 주세요.";
   }
   if (/Android/i.test(ua)) {
     return "휴대폰 설정 → 애플리케이션 → Chrome(또는 마이복서153) → 알림이 켜져 있는지 확인하고 다시 눌러 주세요.";

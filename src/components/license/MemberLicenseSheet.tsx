@@ -141,10 +141,14 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
   };
 
   // 코치·지점장·운영진은 블랙 리그 모양 + 'BLACK · Lv.77 · 코치님' (2026-10-19 대표님: "코치님은 블랙으로")
+  // 직함은 profiles.staff_title(헤드코치·지점장 등)이 있으면 그것, 없으면(옛 응답·빈 칸) 역할로 정한다 (2026-10-19)
+  const staffTitleRaw = typeof data?.staff_title === "string" ? data.staff_title.trim() : "";
   const staffTitle = data?.staff_role
-    ? data.staff_role === "admin"
-      ? LICENSE_STAFF_LABEL.admin
-      : honorTitle(LICENSE_STAFF_LABEL[data.staff_role])
+    ? staffTitleRaw
+      ? honorTitle(staffTitleRaw)
+      : data.staff_role === "admin"
+        ? LICENSE_STAFF_LABEL.admin
+        : honorTitle(LICENSE_STAFF_LABEL[data.staff_role])
     : null;
   const rank = staffTitle ? "black" : (data?.rank ?? "white").toLowerCase();
   const photo = data?.avatar_url ? (
@@ -200,7 +204,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                   <span className="truncate">{data ? `${data.display}님의 라이센스` : "라이센스"}</span>
                   {data?.staff_role && (
                     <span className="shrink-0 rounded-pill bg-primary/15 px-2 py-0.5 text-[11.5px] font-black text-primary">
-                      {LICENSE_STAFF_LABEL[data.staff_role]}
+                      {staffTitleRaw || LICENSE_STAFF_LABEL[data.staff_role]}
                     </span>
                   )}
                 </h2>
@@ -366,7 +370,10 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                   </button>
                 )}
 
-                {extraAction && <div className="mt-3">{extraAction}</div>}
+                {/* 보조 버튼(랭킹의 '추격 목표로 정하기')은 회원 카드에만 — 코치·지점장·운영진은 순위 밖 (2026-10-19) */}
+                {extraAction && !data.staff_role && data.like_reason !== "target_staff" && (
+                  <div className="mt-3">{extraAction}</div>
+                )}
 
                 {!staffTitle && (
                   <p className="mt-3 px-1 text-[11.5px] leading-relaxed text-muted-foreground">
