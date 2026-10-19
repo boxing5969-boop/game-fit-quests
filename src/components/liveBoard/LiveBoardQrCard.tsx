@@ -30,6 +30,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { QrCode } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { readBoardKey } from "@/lib/boardKey";
 
 /** 회원 앱의 공식 주소 — 보드가 어느 도메인에서 열려도 QR 은 항상 이 주소를 가리킨다.
  *  (pages.dev 등 다른 도메인이면 회원 폰의 로그인 세션이 없어 로그인부터 다시 하게 된다) */
@@ -71,30 +72,6 @@ interface Props {
   variant?: "sidebar" | "floating";
   /** sidebar 변형에 덧붙일 클래스 (2번 화면은 폭 제한) */
   className?: string;
-}
-
-/** TV 마다 한 번 /tv/<코드>?k=<키> 로 열면 저장되는 보드 키. 지점에 키가 등록돼 있을 때만 쓰인다. */
-function readBoardKey(branchName: string): string | null {
-  const store = `153_board_key:${branchName}`;
-  let fromUrl: string | null = null;
-  try {
-    fromUrl = new URLSearchParams(window.location.search).get("k");
-  } catch {
-    /* noop */
-  }
-  if (fromUrl) {
-    try {
-      localStorage.setItem(store, fromUrl);
-    } catch {
-      /* 저장소가 막혀도 URL 의 키는 그대로 쓴다 */
-    }
-    return fromUrl;
-  }
-  try {
-    return localStorage.getItem(store);
-  } catch {
-    return null;
-  }
 }
 
 const POLL_MS = 30_000;

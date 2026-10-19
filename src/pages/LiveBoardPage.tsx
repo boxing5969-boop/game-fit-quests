@@ -6,6 +6,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { resolveBranchCode } from "@/lib/branchAlias";
 import logoWhite from "@/assets/branding/153-logo-white.png";
 import { supabase } from "@/integrations/supabase/client";
+import { isBoardKeyError, readBoardKey } from "@/lib/boardKey";
 import { RANK_LABELS, toGlobalLevel } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import MedalMark, { setPreviewMedal } from "@/components/MedalMark";
@@ -75,6 +76,27 @@ interface CheckinEvent {
   user_id: string;
 }
 
+/** 오늘 출석 한 줄 — board_checkins_today (age_sec = 서버에 들어온 지 몇 초, TV 시계와 무관) */
+interface TodayCheckinRow extends CheckinEvent {
+  is_duplicate: boolean;
+  age_sec: number;
+}
+
+/** 방금 들어온 출석으로 보는 시간 — 얼굴 출석은 찍은 뒤 평균 3분 늦게 들어오므로 '들어온 시각' 기준 */
+const FRESH_CHECKIN_SEC = 150;
+
+/** 카드에 그릴 회원 정보 — board_people (오늘 이 지점에 왔거나 운동 중인 사람만 돌려준다) */
+interface BoardPerson {
+  user_id: string;
+  nickname: string | null;
+  avatar_url: string | null;
+  is_staff: boolean | null;
+  current_rank: string | null;
+  current_level: number | null;
+  parts_json: { style?: string; customization?: Record<string, unknown> } | null;
+  card_mode: string | null;
+}
+
 /** Deduplicated daily visit: one row per user */
 interface DailyVisit {
   user_id: string;
@@ -135,13 +157,6 @@ interface ActiveMember {
  * 이미 나간 회원이 오래 남고, 줄이면 정확하지만 한가한 시간에 보드가 빨리 빈다.
  */
 const CHECKIN_ACTIVE_MINUTES = 120;
-
-/** KST 오늘 00:00 의 ISO — 사이니지 기기는 공장 초기 표준시(UTC 등)인 경우가 많아 기기 자정을 쓰면
- *  KST 00~09시 출석자가 "오늘" 에서 빠진다. realtime 핸들러와 같은 계산을 한 곳에 둔다. */
-const kstTodayStartIso = (): string => {
-  const kstMs = Date.now() + 9 * 3600 * 1000;
-  return new Date(Math.floor(kstMs / 86400000) * 86400000 - 9 * 3600 * 1000).toISOString();
-};
 
 interface HallMember {
   r_user_id: string;
@@ -249,6 +264,31 @@ const LiveBoardPage = () => {
   // 테스트 모드 — 가상 회원 (DB 변경 없음)
   const [mockMembers, setMockMembers] = useState<MockActiveMember[]>([]);
 
+  /**
+   * TV 전용 읽기 (2026-10-19 회원 정보 잠그기) — 예전엔 공개된 표(public_profiles·출석·운동·캐릭터)를 직접 읽었다.
+   * 이제 board_* 함수가 '오늘 이 지점에 온 회원'만 준다. 지점에 TV 열쇠가 걸렸는데 이 TV 에 없으면 안내를 띄운다.
+   * 실패하면 null — 부르는 쪽은 그전 화면을 그대로 둔다.
+   */
+  const [keyRequired, setKeyRequired] = useState(false);
+  const boardRpc = useCallback(async <T,>(fn: string, args: Record<string, unknown>): Promise<T[] | null> => {
+    if (!branchName) return null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.rpc as any)(fn, { p_branch: branchName, p_key: readBoardKey(branchName), ...args });
+    if (error) {
+      if (isBoardKeyError(error)) setKeyRequired(true);
+      return null;
+    }
+    setKeyRequired(false);
+    return Array.isArray(data) ? (data as T[]) : [];
+  }, [branchName]);
+  /** 마지막으로 읽은 오늘 출석 (최신이 앞) — 운동 중 카드의 이름 대신 쓰기 */
+  const todayRowsRef = useRef<TodayCheckinRow[]>([]);
+  /** 이미 본 출석 id — 새 출석에만 환영 화면을 띄운다 (첫 읽기는 조용히 기억만) */
+  const seenCheckinIdsRef = useRef<Set<string>>(new Set());
+  const firstTodayLoadRef = useRef(true);
+  /** 새 출석이 들어왔을 때 할 일 — 아래에서 채운다 (환영 화면 · 운동 중 다시 읽기 · 레벨업 확인) */
+  const onNewCheckinRef = useRef<(row: TodayCheckinRow) => void>(() => {});
+
 
   // 실시간 구독 상태 — SUBSCRIBED 를 받기 전까지는 '끊김' 으로 보고 10초 폴링으로 메운다.
   // (예전엔 true 로 시작해서, 구독이 한 번도 안 된 TV 는 초록불인 채 20분 새로고침만 기다렸다)
@@ -269,34 +309,49 @@ const LiveBoardPage = () => {
   const lookLoadedRef = useRef<Set<string>>(new Set());
   const [charLookMap, setCharLookMap] = useState<Record<string, PartsJson | null>>({});
   const [displayPrefMap, setDisplayPrefMap] = useState<Record<string, "auto" | "photo" | "character">>({});
+  /** 기억해 둔 캐릭터 — 환영 화면·레벨업 연출이 다시 읽기 전에 쓴다 */
+  const charLookMapRef = useRef(charLookMap);
+  useEffect(() => {
+    charLookMapRef.current = charLookMap;
+  }, [charLookMap]);
+  /** board_people 로 받은 정보를 한 번에 기억 — 코치 여부 · 사진 · 캐릭터 · 카드에 보일 것 */
+  const absorbPeople = useCallback((list: BoardPerson[]) => {
+    if (list.length === 0) return;
+    const nextAvatars: Record<string, string | null> = {};
+    const nextChars: Record<string, PartsJson | null> = {};
+    const nextPrefs: Record<string, "auto" | "photo" | "character"> = {};
+    for (const p of list) {
+      staffFlagRef.current.set(p.user_id, p.is_staff === true);
+      const url = p.avatar_url || null;
+      avatarCacheRef.current[p.user_id] = url;
+      nextAvatars[p.user_id] = url;
+      lookLoadedRef.current.add(p.user_id);
+      if (p.parts_json) nextChars[p.user_id] = p.parts_json;
+      if (p.card_mode === "photo" || p.card_mode === "character" || p.card_mode === "auto") nextPrefs[p.user_id] = p.card_mode;
+    }
+    setAvatarMap((prev) => (Object.entries(nextAvatars).every(([id, u]) => prev[id] === u) ? prev : { ...prev, ...nextAvatars }));
+    if (Object.keys(nextChars).length) setCharLookMap((prev) => ({ ...prev, ...nextChars }));
+    if (Object.keys(nextPrefs).length) setDisplayPrefMap((prev) => ({ ...prev, ...nextPrefs }));
+  }, []);
+
+  /** 오늘 이 지점에 온 사람들의 카드 정보 — 300명씩. 실패하면 null (알던 값을 그대로 둔다) */
+  const fetchPeople = useCallback(async (ids: string[]): Promise<Map<string, BoardPerson> | null> => {
+    const out = new Map<string, BoardPerson>();
+    for (let i = 0; i < ids.length; i += 300) {
+      const rows = await boardRpc<BoardPerson>("board_people", { p_user_ids: ids.slice(i, i + 300) });
+      if (rows === null) return null;
+      for (const r of rows) out.set(r.user_id, r);
+    }
+    absorbPeople([...out.values()]);
+    return out;
+  }, [boardRpc, absorbPeople]);
+
   const loadCardLooks = useCallback(async (ids: string[]) => {
     const fresh = ids.filter((id) => !lookLoadedRef.current.has(id));
     if (fresh.length === 0) return;
     fresh.forEach((id) => lookLoadedRef.current.add(id));
-    for (let i = 0; i < fresh.length; i += 200) {
-      const chunk = fresh.slice(i, i + 200);
-      const [{ data: chars }, { data: prefs }] = await Promise.all([
-        supabase
-          .from("member_character_assignments")
-          .select("user_id, character_presets(parts_json)")
-          .in("user_id", chunk)
-          .eq("is_active", true),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any).from("member_card_display").select("user_id, mode").in("user_id", chunk),
-      ]);
-      const nextChars: Record<string, PartsJson | null> = {};
-      for (const a of (chars || []) as { user_id: string; character_presets?: { parts_json?: unknown } | null }[]) {
-        const pj = a.character_presets?.parts_json as PartsJson | undefined;
-        if (pj) nextChars[a.user_id] = pj;
-      }
-      const nextPrefs: Record<string, "auto" | "photo" | "character"> = {};
-      for (const r of (prefs || []) as { user_id: string; mode: string }[]) {
-        if (r.mode === "photo" || r.mode === "character" || r.mode === "auto") nextPrefs[r.user_id] = r.mode;
-      }
-      if (Object.keys(nextChars).length) setCharLookMap((prev) => ({ ...prev, ...nextChars }));
-      if (Object.keys(nextPrefs).length) setDisplayPrefMap((prev) => ({ ...prev, ...nextPrefs }));
-    }
-  }, []);
+    await fetchPeople(fresh);
+  }, [fetchPeople]);
 
   /**
    * 얼굴 출석(브로제이) 회원을 "지금 운동 중"으로 올린다.
@@ -433,16 +488,19 @@ const LiveBoardPage = () => {
       setAvatarMap(prev => (prev[userId] === cached ? prev : { ...prev, [userId]: cached }));
       return cached;
     }
-    // 공개 안전컬럼 뷰 사용 (민감정보 제외, 회원 간 닉네임/아바타만 노출)
-    const { data, error } = await (supabase as any).from("public_profiles").select("avatar_url").eq("user_id", userId).single();
-    // 읽기가 실패하면(네트워크 등) 알던 사진을 그대로 쓴다 — '회원 없음'(PGRST116)일 때만 사진 없음으로 본다
+    // TV 전용 읽기(board_people) — 읽기가 실패하면(네트워크 등) 알던 사진을 그대로 쓴다.
+    // 돌려받지 못한 사람(오늘 이 지점에 안 온 사람)만 사진 없음으로 본다
     // (알던 값이 없으면 기억하지 않고 null — 1분 뒤 다시 읽는다)
-    if (error && error.code !== "PGRST116") return avatarCacheRef.current[userId] ?? null;
-    const url = data?.avatar_url || null;
-    avatarCacheRef.current[userId] = url;
-    setAvatarMap(prev => (prev[userId] === url ? prev : { ...prev, [userId]: url }));
-    return url;
-  }, []);
+    const got = await fetchPeople([userId]);
+    if (got === null) return avatarCacheRef.current[userId] ?? null;
+    const person = got.get(userId);
+    if (!person) {
+      avatarCacheRef.current[userId] = null;
+      setAvatarMap(prev => (prev[userId] === null ? prev : { ...prev, [userId]: null }));
+      return null;
+    }
+    return person.avatar_url || null; // absorbPeople 가 이미 기억했다
+  }, [fetchPeople]);
 
   // Clock — update every 15s so elapsed times refresh
   useEffect(() => {
@@ -518,16 +576,13 @@ const LiveBoardPage = () => {
 
     // Auto-end stale sessions (>60 minutes old)
     // ⚠️ RPC 경유 — 직접 UPDATE 는 RLS(본인·super_admin만)에 걸려 비로그인 TV 에서 0행 무음 실패했다.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase.rpc as any)("end_stale_sessions", { _branch_name: branchName });
 
-    const { data: activeSessions } = await supabase
-      .from("activity_sessions")
-      .select("id, user_id, started_at")
-      .eq("branch_name", branchName)
-      .eq("status", "active")
-      .is("ended_at", null);
-
-    if (!activeSessions || activeSessions.length === 0) {
+    // TV 전용 읽기 — 실패하면 그전 화면 그대로 (예전엔 읽기 실패에도 '운동 중 0명'으로 지웠다)
+    const activeSessions = await boardRpc<{ id: string; user_id: string; started_at: string }>("board_active_sessions", {});
+    if (activeSessions === null) return;
+    if (activeSessions.length === 0) {
       setActiveMembers([]);
       return;
     }
@@ -543,51 +598,14 @@ const LiveBoardPage = () => {
 
     const userIds = Array.from(latestByUser.keys());
 
-    // 공개 안전컬럼 뷰 사용 (민감정보 제외)
-    type PublicProfileLite = { user_id: string; nickname: string | null; avatar_url: string | null; is_staff?: boolean | null };
-    const { data: profiles } = (await (supabase as any)
-      .from("public_profiles")
-      .select("user_id, nickname, avatar_url, is_staff")
-      .in("user_id", userIds)) as { data: PublicProfileLite[] | null };
+    // 이름·사진·코치 여부·지금 레벨·캐릭터 — TV 전용 읽기 한 번 (실패하면 null → 오늘 출석 기록의 이름으로)
     // 지도진(코치님)은 '활동 중' 회원 칸에 넣지 않는다 — 코치님은 아래 COACHING STAFF 띠에 챔피언으로 따로 선다.
-    for (const p of profiles || []) staffFlagRef.current.set(p.user_id, p.is_staff === true);
+    const profileMap = (await fetchPeople(userIds)) ?? new Map<string, BoardPerson>();
 
-    const { data: progressData } = await supabase
-      .from("member_progress")
-      .select("user_id, current_rank, current_level")
-      .in("user_id", userIds);
-
-    // 회원이 설정한 캐릭터 (member_character_assignments → character_presets.parts_json)
-    // anon RLS 거부 가능 — 거부 시 빈 배열, fallback 으로 letter avatar 사용
-    const { data: charAssignments } = await supabase
-      .from("member_character_assignments")
-      .select("user_id, character_presets(parts_json)")
-      .in("user_id", userIds)
-      .eq("is_active", true);
-
-    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
-    const progressMap = new Map((progressData || []).map(p => [p.user_id, p]));
-    const charMap = new Map<string, { style?: string; customization?: Record<string, unknown> }>();
-    for (const a of (charAssignments || [])) {
-      const cp = (a as { character_presets?: { parts_json?: unknown } }).character_presets;
-      const pj = cp?.parts_json as { style?: string; customization?: Record<string, unknown> } | undefined;
-      if (pj && (a as { user_id: string }).user_id) {
-        charMap.set((a as { user_id: string }).user_id, pj);
-      }
-    }
-
-    // Fallback: fetch today's attendance_logs for display info (anon CAN read these)
-    const { data: todayLogs } = await supabase
-      .from("attendance_logs")
-      .select("user_id, display_name_snapshot, league_snapshot, level_snapshot")
-      .eq("branch_name", branchName)
-      .in("user_id", userIds)
-      .gte("checked_in_at", kstTodayStartIso())
-      .order("checked_in_at", { ascending: false });
-
-    // Build attendance fallback map (latest log per user)
+    // 이름을 못 받으면 오늘 출석 기록의 이름·리그·레벨로 (loadToday 가 읽어 둔 것, 최신이 앞)
     const attendanceMap = new Map<string, { display_name: string; league: string; level: number }>();
-    for (const log of (todayLogs || [])) {
+    for (const log of todayRowsRef.current) {
+      if (!latestByUser.has(log.user_id)) continue;
       if (!attendanceMap.has(log.user_id)) {
         attendanceMap.set(log.user_id, {
           display_name: log.display_name_snapshot,
@@ -601,7 +619,6 @@ const LiveBoardPage = () => {
     for (const [userId, session] of latestByUser) {
       const profile = profileMap.get(userId);
       if (profile?.is_staff === true) continue;
-      const progress = progressMap.get(userId);
       const attendanceFallback = attendanceMap.get(userId);
 
       // Determine display name: profile > attendance_log > skip
@@ -613,7 +630,7 @@ const LiveBoardPage = () => {
       const avatarUrl = profile ? profile.avatar_url || null : avatarCacheRef.current[userId] ?? null;
       if (profile) avatarCacheRef.current[userId] = avatarUrl;
 
-      const level = progress?.current_level || attendanceFallback?.level || 1;
+      const level = profile?.current_level || attendanceFallback?.level || 1;
       // 알려진 레벨 시드 — Realtime 비교용
       knownLevelsRef.current.set(userId, level);
 
@@ -621,11 +638,11 @@ const LiveBoardPage = () => {
         id: session.id,
         user_id: userId,
         name: displayName,
-        league: progress?.current_rank || attendanceFallback?.league || "white",
+        league: profile?.current_rank || attendanceFallback?.league || "white",
         level,
         startedAt: new Date(session.started_at).getTime(),
         avatar_url: avatarUrl,
-        partsJson: charMap.get(userId) ?? null,
+        partsJson: profile?.parts_json ?? null,
       });
     }
 
@@ -639,8 +656,7 @@ const LiveBoardPage = () => {
     });
 
     setActiveMembers(members);
-    void loadCardLooks(userIds);
-  }, [branchName, loadCardLooks]);
+  }, [branchName, boardRpc, fetchPeople]);
 
   /**
    * 지금 근무중인 코치 — 필터·시간 판정은 전부 DB 뷰가 끝내고 내려준다.
@@ -661,29 +677,35 @@ const LiveBoardPage = () => {
     );
   }, [branchName]);
 
-  /** public_profiles.is_staff — 캐시 우선, 처음 보는 계정만 1회 조회 */
+  /** 코치·직원 여부 — 캐시 우선, 처음 보는 계정만 1회 조회 (TV 전용 읽기. 실패하면 기억하지 않고 다음에 다시) */
   const isStaffUser = useCallback(async (userId: string): Promise<boolean> => {
     const cached = staffFlagRef.current.get(userId);
     if (cached !== undefined) return cached;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
-      .from("public_profiles").select("is_staff").eq("user_id", userId).maybeSingle();
-    const flag = (data as { is_staff?: boolean | null } | null)?.is_staff === true;
-    staffFlagRef.current.set(userId, flag);
+    const got = await fetchPeople([userId]);
+    const flag = got?.get(userId)?.is_staff === true;
+    if (got !== null) staffFlagRef.current.set(userId, flag);
     return flag;
-  }, []);
+  }, [fetchPeople]);
 
   // Load today visits — deduplicated by user_id
   const loadToday = useCallback(async () => {
     if (!branchName) return;
-    const { data } = await supabase
-      .from("attendance_logs")
-      .select("id, display_name_snapshot, league_snapshot, level_snapshot, checked_in_at, user_id")
-      .eq("branch_name", branchName)
-      .gte("checked_in_at", kstTodayStartIso())
-      .order("checked_in_at", { ascending: false }).limit(500);
+    // TV 전용 읽기 — 실패하면 그전 명단 그대로 (예전엔 읽기 실패에도 명단을 비웠다)
+    const data = await boardRpc<TodayCheckinRow>("board_checkins_today", {});
+    if (data === null) return;
+    todayRowsRef.current = data;
 
-    if (data && data.length > 0) {
+    // 새로 들어온 출석 — 첫 읽기(화면을 막 켰을 때 · 20분마다 새로고침)는 기억만 한다
+    const first = firstTodayLoadRef.current;
+    firstTodayLoadRef.current = false;
+    const fresh: TodayCheckinRow[] = [];
+    for (const r of data) {
+      if (seenCheckinIdsRef.current.has(r.id)) continue;
+      seenCheckinIdsRef.current.add(r.id);
+      if (!first && !r.is_duplicate && r.age_sec <= FRESH_CHECKIN_SEC) fresh.push(r);
+    }
+
+    if (data.length > 0) {
       // Deduplicate by user_id — keep last checkin time
       const userMap = new Map<string, DailyVisit>();
       for (const c of data) {
@@ -703,15 +725,8 @@ const LiveBoardPage = () => {
       // 카운트·티커·그리드·2번 화면이 전부 손대지 않아도 회원만 남는다.
       const flags = staffFlagRef.current;
       const unknownIds = visits.map((v) => v.user_id).filter((id) => !flags.has(id));
-      for (let i = 0; i < unknownIds.length; i += 300) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: staffRows } = await (supabase as any)
-          .from("public_profiles").select("user_id, is_staff")
-          .in("user_id", unknownIds.slice(i, i + 300));
-        for (const r of (staffRows || []) as { user_id: string; is_staff?: boolean | null }[]) {
-          flags.set(r.user_id, r.is_staff === true);
-        }
-      }
+      // 처음 보는 사람은 한 번에 — 코치 여부와 함께 사진·캐릭터도 기억한다 (absorbPeople)
+      if (unknownIds.length > 0) await fetchPeople(unknownIds);
       const memberVisits = visits.filter((v) => flags.get(v.user_id) !== true);
       setDailyVisits(memberVisits);
       void loadCardLooks(memberVisits.map((v) => v.user_id));
@@ -731,7 +746,12 @@ const LiveBoardPage = () => {
       setDailyVisits([]);
       setStaffUserIds(new Set());
     }
-  }, [branchName, getAvatarUrl, loadCardLooks, loadLiveLevels]);
+
+    // 방금 들어온 출석 — 들어온 순서대로 (환영 화면은 맨 마지막 사람이 남는다)
+    fresh
+      .sort((a, b) => new Date(a.checked_in_at).getTime() - new Date(b.checked_in_at).getTime())
+      .forEach((r) => onNewCheckinRef.current(r));
+  }, [branchName, boardRpc, fetchPeople, getAvatarUrl, loadCardLooks, loadLiveLevels]);
 
   // Load hall of fame
   const loadHall = useCallback(async () => {
@@ -784,28 +804,9 @@ const LiveBoardPage = () => {
   const popupSeqRef = useRef(0);
   const triggerPopup = useCallback(async (event: CheckinEvent) => {
     const seq = ++popupSeqRef.current;
-    const [avatar, partsJson, isBirthday] = await Promise.all([
-      // 시범 지점 TV 만 사진을 새로 읽어 환영 화면에 쓴다 — 다른 지점은 어제처럼 캐릭터
-      boardPhotos ? getAvatarUrl(event.user_id, true) : Promise.resolve(null),
-      // 회원이 설정한 캐릭터 fetch (RLS 거부 시 null fallback)
-      (async () => {
-        try {
-          const { data } = await supabase
-            .from("member_character_assignments")
-            .select("character_presets(parts_json)")
-            .eq("user_id", event.user_id)
-            .eq("is_active", true)
-            .maybeSingle();
-          const cp = (data as { character_presets?: { parts_json?: unknown } } | null)
-            ?.character_presets;
-          const pj = cp?.parts_json as
-            | { style?: string; customization?: Record<string, unknown> }
-            | undefined;
-          return pj ?? null;
-        } catch {
-          return null;
-        }
-      })(),
+    const [person, isBirthday] = await Promise.all([
+      // 사진·캐릭터를 새로 읽는다 — 오늘 사진을 새로 올린 회원도 바로 (TV 전용 읽기, 실패하면 알던 값)
+      fetchPeople([event.user_id]).then((m) => m?.get(event.user_id) ?? null),
       // 🎂 오늘 생일인가 — 입실 행이 들어온 뒤라 DB 가 이 회원을 '오늘 온 회원'으로 본다 (실패하면 보통 환영)
       (async () => {
         if (!branchName) return false;
@@ -819,6 +820,9 @@ const LiveBoardPage = () => {
       })(),
     ]);
     if (seq !== popupSeqRef.current) return; // 그 사이 더 새 입실이 왔다
+    // 시범 지점 TV 만 사진을 환영 화면에 쓴다 — 다른 지점은 어제처럼 캐릭터
+    const avatar = boardPhotos ? (person ? person.avatar_url || null : avatarCacheRef.current[event.user_id] ?? null) : null;
+    const partsJson = person?.parts_json ?? charLookMapRef.current[event.user_id] ?? null;
 
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
     if (isBirthday) setBirthdayIds((prev) => (prev.has(event.user_id) ? prev : new Set(prev).add(event.user_id)));
@@ -828,7 +832,7 @@ const LiveBoardPage = () => {
     setLatestPopup(event);
     setShowPopup(true);
     popupTimeoutRef.current = setTimeout(() => setShowPopup(false), isBirthday ? BIRTHDAY_POPUP_MS : POPUP_MS);
-  }, [getAvatarUrl, boardPhotos, branchName]);
+  }, [fetchPeople, boardPhotos, branchName]);
 
   /**
    * member_progress 의 current_level 이 증가할 때 인터럽트 발동.
@@ -861,22 +865,11 @@ const LiveBoardPage = () => {
       const avatar =
         active?.avatar_url ?? avatarMapRef.current[userId] ?? (await getAvatarUrl(userId));
 
-      // 회원 설정 캐릭터 — 활동 중이면 이미 가지고 있고, 아니면 fetch
-      let partsJson = active?.partsJson ?? null;
+      // 회원 설정 캐릭터 — 활동 중이면 이미 가지고 있고, 아니면 기억해 둔 것 → 없으면 TV 전용 읽기
+      let partsJson = active?.partsJson ?? charLookMapRef.current[userId] ?? null;
       if (!partsJson) {
-        try {
-          const { data } = await supabase
-            .from("member_character_assignments")
-            .select("character_presets(parts_json)")
-            .eq("user_id", userId)
-            .eq("is_active", true)
-            .maybeSingle();
-          const cp = (data as { character_presets?: { parts_json?: unknown } } | null)
-            ?.character_presets;
-          partsJson = (cp?.parts_json as { style?: string; customization?: Record<string, unknown> } | undefined) ?? null;
-        } catch {
-          /* RLS 거부 — letter fallback */
-        }
+        const got = await fetchPeople([userId]);
+        partsJson = got?.get(userId)?.parts_json ?? null;
       }
 
       setLevelUpEvent({
@@ -891,7 +884,7 @@ const LiveBoardPage = () => {
         partsJson,
       });
     },
-    [getAvatarUrl, isStaffUser],
+    [getAvatarUrl, isStaffUser, fetchPeople],
   );
 
   /**
@@ -944,55 +937,59 @@ const LiveBoardPage = () => {
     [branchName, triggerLevelUp],
   );
 
-  // Realtime subscriptions
-  // ⚠️ 이 채널에는 실시간 발행(supabase_realtime)에 들어 있는 테이블만 넣는다 — attendance_logs · activity_sessions.
-  //    발행에 없는 테이블(member_progress 등)을 하나라도 섞으면 Realtime 이 채널 전체의 구독을 등록하지 않는다.
+  // 새 출석이 들어왔을 때 — 예전 실시간 출석 처리 그대로 (loadToday 가 '방금 들어온' 출석마다 부른다)
+  //   코치·직원 출근은 회원 명단·환영 팝업에 넣지 않는다. 코치 띠는 DB 판정만 따르므로 다시 불러오기만 한다.
+  useEffect(() => {
+    onNewCheckinRef.current = (n: TodayCheckinRow) => {
+      void (async () => {
+        if (await isStaffUser(n.user_id)) {
+          setStaffUserIds(prev => (prev.has(n.user_id) ? prev : new Set(prev).add(n.user_id)));
+          void loadOnDutyStaff();
+          return;
+        }
+        const event: CheckinEvent = {
+          id: n.id, display_name_snapshot: n.display_name_snapshot, league_snapshot: n.league_snapshot,
+          level_snapshot: n.level_snapshot, checked_in_at: n.checked_in_at, user_id: n.user_id,
+        };
+        triggerPopup(event);
+        void loadActivitySessions();
+        checkLevelUpSoon(n.user_id, n.level_snapshot, n.league_snapshot);
+      })();
+    };
+  }, [isStaffUser, loadOnDutyStaff, triggerPopup, loadActivitySessions, checkLevelUpSoon]);
+
+  // 실시간 — 이름 없는 신호(board-ping:<지점>)만 받는다 (2026-10-19 회원 정보 잠그기).
+  //   예전엔 출석·운동 표의 바뀐 줄(이름 포함)을 그대로 받았는데, 그러려면 로그인 안 한 누구나 그 표를 읽을 수 있어야 했다.
+  //   이제 DB 트리거(_board_ping)가 '다시 읽어요' 신호만 보내고, TV 는 TV 전용 읽기로 다시 읽는다.
+  //   얼굴 출석은 1분마다 여러 줄이 한꺼번에 들어오니 0.7초 모았다가 한 번에 읽는다.
+  const loadTodayRef = useRef(loadToday);
+  const loadSessionsRef = useRef(loadActivitySessions);
+  useEffect(() => { loadTodayRef.current = loadToday; }, [loadToday]);
+  useEffect(() => { loadSessionsRef.current = loadActivitySessions; }, [loadActivitySessions]);
   useEffect(() => {
     if (!branchName) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let wantToday = false;
+    let wantSessions = false;
+    const flush = () => {
+      timer = undefined;
+      if (wantToday) { wantToday = false; void loadTodayRef.current(); }
+      if (wantSessions) { wantSessions = false; void loadSessionsRef.current(); }
+    };
     const channel = supabase
-      .channel(`live-board-${branchName}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "attendance_logs", filter: `branch_name=eq.${branchName}` },
-        (payload) => {
-          const n = payload.new as any;
-          // 백필·과거 데이터 가드: 중복 표시 행이거나 KST 오늘이 아니면 무시 —
-          // 과거 30일 백필이 TV 에 팝업 폭풍·시각 회귀를 일으키는 것을 막는다.
-          if (n.is_duplicate) return;
-          const kstMs = Date.now() + 9 * 3600 * 1000;
-          const kstDayStart = Math.floor(kstMs / 86400000) * 86400000 - 9 * 3600 * 1000;
-          const t = new Date(n.checked_in_at).getTime();
-          if (!Number.isFinite(t) || t < kstDayStart) return;
-          const event: CheckinEvent = { id: n.id, display_name_snapshot: n.display_name_snapshot, league_snapshot: n.league_snapshot, level_snapshot: n.level_snapshot, checked_in_at: n.checked_in_at, user_id: n.user_id };
-          void (async () => {
-            // 코치·직원 출근은 회원 명단·환영 팝업에 넣지 않는다.
-            // 코치 띠는 DB 판정만 따르므로 여기서는 다시 불러오기만 한다.
-            if (await isStaffUser(n.user_id)) {
-              setStaffUserIds(prev => (prev.has(n.user_id) ? prev : new Set(prev).add(n.user_id)));
-              void loadOnDutyStaff();
-              return;
-            }
-            getAvatarUrl(n.user_id);
-            // Update daily visits (deduplicated)
-            setDailyVisits(prev => {
-              const exists = prev.find(v => v.user_id === n.user_id);
-              if (exists) {
-                // 최신 시각일 때만 갱신 — 늦게 도착한 과거 행이 시각을 되돌리지 않게
-                if (new Date(exists.last_checkin_at).getTime() >= t) return prev;
-                return prev.map(v => v.user_id === n.user_id ? { ...v, last_checkin_at: n.checked_in_at, display_name: n.display_name_snapshot, league: n.league_snapshot, level: n.level_snapshot } : v);
-              }
-              return [{ user_id: n.user_id, display_name: n.display_name_snapshot, league: n.league_snapshot, level: n.level_snapshot, last_checkin_at: n.checked_in_at }, ...prev];
-            });
-            triggerPopup(event);
-            void loadActivitySessions();
-            checkLevelUpSoon(n.user_id, n.level_snapshot, n.league_snapshot);
-          })();
-        })
-      .on("postgres_changes", { event: "*", schema: "public", table: "activity_sessions", filter: `branch_name=eq.${branchName}` },
-        () => {
-          loadActivitySessions();
-        })
+      .channel(`board-ping:${branchName}`)
+      .on("broadcast", { event: "changed" }, (msg) => {
+        const kind = (msg?.payload as { t?: string } | undefined)?.t;
+        if (kind === "activity_sessions") wantSessions = true;
+        else wantToday = true;
+        if (!timer) timer = setTimeout(flush, 700);
+      })
       .subscribe((status) => setConnected(status === "SUBSCRIBED"));
-    return () => { supabase.removeChannel(channel); };
-  }, [branchName, triggerPopup, loadActivitySessions, getAvatarUrl, loadOnDutyStaff, isStaffUser, checkLevelUpSoon]);
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [branchName]);
 
   // Reconnect fallback — 구독이 안 된 동안엔 10초마다 직접 읽는다
   useEffect(() => {
@@ -1023,6 +1020,7 @@ const LiveBoardPage = () => {
       setMockMembers((prev) => prev.filter((m) => m.id !== sessionId));
       return;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase.rpc as any)("force_end_session", { _session_id: sessionId });
     if (error || !data?.success) {
       toast.error(error?.message?.includes("authorized") ? "권한이 없습니다 (관리자 로그인 필요)" : "퇴장 처리 실패");
@@ -1153,6 +1151,7 @@ const LiveBoardPage = () => {
   // Reset all active sessions for this branch (admin tool)
   const handleResetActiveSessions = async () => {
     if (!branchName) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase.rpc as any)("reset_active_sessions", { _branch_name: branchName });
     if (error) {
       toast.error(error.message?.includes("authorized") ? "권한이 없습니다 (관리자 로그인 필요)" : "초기화 실패");
@@ -1171,6 +1170,12 @@ const LiveBoardPage = () => {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-gray-950 text-white overflow-hidden select-none">
+      {/* 지점에 TV 열쇠가 걸렸는데 이 TV 에 없을 때 (2026-10-19 회원 정보 잠그기) */}
+      {keyRequired && (
+        <div className="pointer-events-none fixed left-1/2 top-4 z-[70] -translate-x-1/2 rounded-full bg-amber-400 px-6 py-2.5 text-[16px] font-black text-gray-950 shadow-2xl">
+          이 TV는 열쇠 주소로 열어야 회원이 보여요 · 관리자 앱 › 라이브보드에서 주소를 확인해 주세요
+        </div>
+      )}
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-8 py-3 bg-gray-900/90 border-b border-gray-800/60">
         <div className="flex items-center gap-5">

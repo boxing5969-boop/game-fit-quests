@@ -8,14 +8,20 @@
  * 번호 = TV 주소 끝 번호 (lib/liveBoards) — TV 세팅 때 그대로 쓴다:
  *   1 지금 운동 중 · 2 런칭 이벤트 · 3 회원 안내 카드뉴스 · 4 전체 한 화면(번호 없는 원래 주소 /tv/{지점})
  * 전체관리자는 네 지점 모두, 지점 관리자·코치는 자기 지점(지점을 못 찾으면 전부)을 고른다.
+ *
+ * 2026-10-19 TV 열쇠 주소 — TV 가 회원 이름을 읽으려면 지점별 열쇠가 필요하다(회원 정보 잠그기).
+ *   이 화면에서 그 지점 운영진에게만 열쇠가 붙은 TV 주소를 보여 준다(get_board_tv_key). 열쇠 주소로 처음 연 순간 지점이 잠긴다.
  */
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Copy, KeyRound } from "lucide-react";
+import { toast } from "sonner";
 import PageHeader from "@/components/ui/rankingup/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { TV_BRANCHES } from "@/lib/branchAlias";
-import { liveBoardPreviewPath, tvBoardPath, type LiveBoardNo } from "@/lib/liveBoards";
+import { boardKeyUrl } from "@/lib/boardKey";
+import { LIVE_BOARD_NOS, liveBoardPreviewPath, tvBoardPath, type LiveBoardNo } from "@/lib/liveBoards";
 
 const STORE_KEY = "153liveboard:branch";
 const DOMAIN = "myboxer153.com";
@@ -130,6 +136,30 @@ const LiveBoardPickerPage = () => {
 
   const open = (no: LiveBoardNo) => navigate(liveBoardPreviewPath(branch.code, no));
 
+  // TV 열쇠 — 그 지점 운영진만 받는다 (못 받으면 칸을 숨긴다)
+  const [tvKey, setTvKey] = useState<{ key: string; locked: boolean } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    setTvKey(null);
+    void (async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("get_board_tv_key", { p_branch: branch.code });
+      if (!alive || error || !data?.key) return;
+      setTvKey({ key: String(data.key), locked: data.locked === true });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [branch.code]);
+  const copyText = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("주소를 복사했어요");
+    } catch {
+      toast.error("복사하지 못했어요 — 주소를 길게 눌러 복사해 주세요");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-10">
       <PageHeader
@@ -209,6 +239,50 @@ const LiveBoardPickerPage = () => {
           </p>
           <p className="mt-1">앱에서는 TV 화면을 그대로 줄여서 보여 드려요 — 가로로 돌리면 크게 보여요.</p>
         </div>
+
+        {tvKey && (
+          <div className="rounded-2xl bg-card p-4 text-[12.5px] leading-relaxed text-muted-foreground shadow-elev-1 ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+            <p className="flex items-center gap-1.5 text-[13px] font-bold text-foreground">
+              <KeyRound className="h-4 w-4 text-primary" />
+              {branch.label} TV 열쇠 주소
+              <span
+                className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                  tvKey.locked ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                }`}
+              >
+                {tvKey.locked ? "잠김" : "아직 열림"}
+              </span>
+            </p>
+            <p className="mt-1">
+              TV 시작 페이지를 아래 주소로 바꾸면 열쇠가 있는 TV에서만 회원 이름이 보여요. 앱 주소만 아는 사람은 회원 명단을 볼 수 없어요.
+            </p>
+            {!tvKey.locked && (
+              <p className="mt-1 font-semibold text-amber-600 dark:text-amber-400">
+                열쇠 주소로 처음 여는 순간 이 지점이 잠겨요. 이 지점 TV를 모두 함께 바꿔 주세요 — 안 바꾼 TV에는 &lsquo;열쇠 주소로 열어야 회원이 보여요&rsquo; 안내가 떠요.
+              </p>
+            )}
+            <ul className="mt-2 space-y-1.5">
+              {LIVE_BOARD_NOS.map((n) => {
+                const url = boardKeyUrl(DOMAIN, tvBoardPath(branch.short, n), tvKey.key);
+                return (
+                  <li key={n} className="flex items-center gap-2 rounded-lg bg-muted px-2.5 py-2">
+                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-foreground text-[11px] font-black text-background">{n}</span>
+                    <span className="min-w-0 flex-1 select-all break-all font-mono text-[11.5px] text-foreground">{url}</span>
+                    <button
+                      type="button"
+                      onClick={() => void copyText(`https://${url}`)}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-card text-muted-foreground active:scale-95"
+                      aria-label={`라이브보드 ${n} 열쇠 주소 복사`}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-2">열쇠 주소는 운영진만 볼 수 있어요. 회원·외부에 보내지 마세요.</p>
+          </div>
+        )}
       </div>
     </div>
   );
