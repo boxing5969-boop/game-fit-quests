@@ -1,0 +1,148 @@
+# 마이복서153 아이폰 앱 빌드 (맥 없이 GitHub 의 맥 서버에서)
+#
+# · ios-app/ 이 바뀌면(main) 자동으로 돈다. 웹 앱(myboxer153.com) 변경만으로는 돌지 않는다 —
+#   아이폰 앱은 웹을 그대로 담기 때문에 웹 수정은 앱 재심사 없이 바로 반영된다.
+# · 비밀값(ASC_*)이 없으면: 시뮬레이터용 빌드만 해서 '코드가 맞게 빌드되는지'만 확인한다.
+# · 비밀값이 있으면: 서명 → .ipa → TestFlight 업로드까지 한다.
+#   필요한 비밀값 3개 (저장소 Settings › Secrets and variables › Actions):
+#     ASC_KEY_ID      App Store Connect API 키 ID (10자리)
+#     ASC_ISSUER_ID   발급자 ID (uuid)
+#     ASC_PRIVATE_KEY AuthKey_XXXX.p8 파일 내용 전체
+# · 공개 저장소라 로그가 공개된다 — 비밀값·키 내용을 절대 echo 하지 않는다.
+# · 실패하면 오류 줄을 '주석(annotation)'으로 남긴다 (커밋 화면 › 체크에서 보인다).
+name: iOS 앱 빌드
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ios-app/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ios-build
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      HAS_ASC: ${{ secrets.ASC_PRIVATE_KEY != '' && secrets.ASC_KEY_ID != '' && secrets.ASC_ISSUER_ID != '' }}
+      BUNDLE_ID: kr.boxing153.myboxer
+    defaults:
+      run:
+        working-directory: ios-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 최신 Xcode 고르기
+        run: |
+          latest="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1 || true)"
+          if [ -n "$latest" ]; then sudo xcode-select -s "$latest"; fi
+          xcodebuild -version
+          echo "::notice::$(xcodebuild -version | tr '\n' ' ')"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Capacitor 준비
+        run: |
+          npm ci --no-audit --no-fund
+          npx cap sync ios
+
+      - name: 시뮬레이터 빌드 (코드 확인)
+        run: |
+          set -o pipefail
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/sim CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build-sim.log | grep -E "error:|warning: .*deprecated|BUILD (SUCCEEDED|FAILED)" || true
+          if ! grep -q "BUILD SUCCEEDED" build-sim.log; then
+            grep -E "error:" build-sim.log | sort -u | head -20 | while IFS= read -r l; do echo "::error::${l}"; done
+            tail -40 build-sim.log
+            exit 1
+          fi
+          echo "::notice::시뮬레이터 빌드 성공"
+
+      - name: 서명 도구 설치
+        if: env.HAS_ASC == 'true'
+        run: pip3 install --break-system-packages -q codemagic-cli-tools==0.70.0 pycryptodome==3.23.0
+
+      - name: 애플 계정 연결 · 앱 ID · 기능 · 인증서 · 프로필
+        if: env.HAS_ASC == 'true'
+        env:
+          APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.ASC_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          set -e
+          umask 077
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s\n' "$APP_STORE_CONNECT_PRIVATE_KEY" > "$RUNNER_TEMP/keys/asc.p8"
+          python3 ci/derive_cert_key.py "$RUNNER_TEMP/keys/asc.p8" "$RUNNER_TEMP/keys/cert.pem"
+
+          # 앱 ID(번들 ID) — 없으면 만든다
+          if ! app-store-connect bundle-ids list --bundle-id-identifier "$BUNDLE_ID" --strict-match-identifier --json > bid.json 2>bid.err; then
+            echo "::error::App Store Connect 연결 실패 — API 키 3개를 확인해 주세요"; cat bid.err | tail -5; exit 1
+          fi
+          BID_RES="$(python3 -c "import json;d=json.load(open('bid.json'));print(d[0]['id'] if d else '')")"
+          if [ -z "$BID_RES" ]; then
+            app-store-connect bundle-ids create "$BUNDLE_ID" --name "MyBoxer153" --platform IOS --json > bidc.json
+            BID_RES="$(python3 -c "import json;print(json.load(open('bidc.json'))['id'])")"
+            echo "::notice::앱 ID 새로 만듦: $BUNDLE_ID"
+          fi
+          # 앱이 쓰는 기능 켜기 (이미 켜져 있으면 넘어간다)
+          for cap in "Push Notifications" "Associated Domains" "Sign In with Apple"; do
+            app-store-connect bundle-ids enable-capabilities "$BID_RES" --capability "$cap" >/dev/null 2>cap.err \
+              || grep -qi "already\|exists\|409" cap.err \
+              || echo "::warning::기능 켜기 확인 필요: $cap — $(tail -1 cap.err)"
+          done
+
+          # 배포 인증서 + App Store 프로필 (기능이 바뀌었을 수 있으니 오래된 프로필은 지우고 새로)
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --strict-match-identifier \
+            --certificate-key "@file:$RUNNER_TEMP/keys/cert.pem" --create --delete-stale-profiles > fetch.log 2>&1 \
+            || { echo "::error::인증서·프로필 준비 실패"; tail -15 fetch.log; exit 1; }
+          keychain initialize
+          keychain add-certificates
+          xcode-project use-profiles --project ios/App/App.xcodeproj
+          rm -f "$RUNNER_TEMP/keys/asc.p8"
+
+      - name: 앱 파일(.ipa) 만들기
+        if: env.HAS_ASC == 'true'
+        run: |
+          set -o pipefail
+          xcode-project build-ipa --project ios/App/App.xcodeproj --scheme App --config Release \
+            --archive-xcargs "CURRENT_PROJECT_VERSION=${{ github.run_number }}" \
+            --ipa-directory build/ipa --disable-xcpretty 2>&1 | tee build-ipa.log | grep -E "error:|ARCHIVE (SUCCEEDED|FAILED)|EXPORT (SUCCEEDED|FAILED)" || true
+          if ! ls build/ipa/*.ipa >/dev/null 2>&1; then
+            grep -E "error:" build-ipa.log | sort -u | head -20 | while IFS= read -r l; do echo "::error::${l}"; done
+            tail -40 build-ipa.log
+            exit 1
+          fi
+          echo "::notice::.ipa 완성 (빌드 번호 ${{ github.run_number }})"
+
+      - name: TestFlight 업로드
+        if: env.HAS_ASC == 'true'
+        env:
+          APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.ASC_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          if app-store-connect publish --path build/ipa/*.ipa > publish.log 2>&1; then
+            echo "::notice::TestFlight 업로드 완료 — 빌드 ${{ github.run_number }} (애플 처리 10~30분)"
+          else
+            grep -iE "error|no suitable application|ITMS" publish.log | head -10 | while IFS= read -r l; do echo "::error::${l}"; done
+            tail -30 publish.log
+            exit 1
+          fi
+
+      - name: 정리
+        if: always()
+        run: |
+          rm -rf "$RUNNER_TEMP/keys" 2>/dev/null || true
+          keychain use-login 2>/dev/null || true

@@ -1,0 +1,28 @@
+{
+  "appId": "kr.boxing153.myboxer",
+  "appName": "마이복서153",
+  "webDir": "www",
+  "server": {
+    "url": "https://myboxer153.com",
+    "errorPath": "offline.html"
+  },
+  "ios": {
+    "appendUserAgent": "MyBoxer153App/1 (iOS)",
+    "backgroundColor": "#F2F4F6",
+    "contentInset": "never",
+    "allowsLinkPreview": false,
+    "loggingBehavior": "none",
+    "limitsNavigationsToAppBoundDomains": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#F2F4F6",
+      "showSpinner": false
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

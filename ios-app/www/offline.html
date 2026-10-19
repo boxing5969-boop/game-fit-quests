@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>마이복서153</title>
+<style>
+  :root { --bg:#F2F4F6; --card:#FFFFFF; --ink:#191F28; --ink2:#6B7684; --mint:#29C39C; --mintText:#0F8568; --line:#E5E8EB; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0B0F17; --card:#151B26; --ink:#F2F4F6; --ink2:#9AA4B2; --line:#232B38; --mintText:#5FE0BE; }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; }
+  body { display: flex; align-items: center; justify-content: center;
+    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom); }
+  .card { width: 100%; max-width: 360px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 20px; padding: 32px 24px 24px; text-align: center; }
+  .logo { width: 64px; height: 64px; border-radius: 16px; margin: 0 auto 18px; display: block; }
+  h1 { font-size: 20px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  p { font-size: 15px; line-height: 1.6; color: var(--ink2); margin: 0 0 22px; }
+  button { width: 100%; border: 0; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--mint); color: #0B0F17; }
+  button:active { transform: scale(0.98); }
+  .hint { margin-top: 14px; font-size: 13px; color: var(--ink2); }
+</style>
+</head>
+<body>
+  <main class="card">
+    <img class="logo" src="logo.png" alt="" />
+    <h1>인터넷에 연결되지 않았어요</h1>
+    <p>와이파이나 데이터 연결을 확인한 뒤<br />다시 시도해 주세요.</p>
+    <button type="button" id="retry">다시 시도</button>
+    <div class="hint" id="hint">연결되면 자동으로 다시 열려요</div>
+  </main>
+  <script>
+    var APP = "https://myboxer153.com/";
+    function go() { location.replace(APP); }
+    document.getElementById("retry").addEventListener("click", go);
+    window.addEventListener("online", go);
+  </script>
+</body>
+</html>
