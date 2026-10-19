@@ -9,6 +9,8 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { ensureAiConsent } from "@/lib/aiConsent";
 import {
   analyzeMealPhotoVision,
   confirmMealCalories,
@@ -29,6 +31,7 @@ export const VISION_ERROR_MESSAGE: Record<MealVisionErrorCode, string> = {
   image_too_large: "사진 용량이 커요. 한 번만 다시 찍어주세요.",
   invalid_image: "사진을 읽지 못했어요. 한 번만 다시 찍어주세요.",
   vision_unavailable: "지금은 사진 분석이 어려워요. 잠시 뒤 다시 시도해 주세요.",
+  ai_consent_declined: "AI 사진 분석에 동의하지 않으셔서 칼로리를 추정하지 않았어요. 사진은 그대로 저장됐어요.",
   unknown: "지금은 사진 분석이 어려워요. 잠시 뒤 다시 시도해 주세요.",
 };
 
@@ -53,6 +56,9 @@ export interface AnalyzeMealInput {
 export function useAnalyzeMealPhoto() {
   return useMutation<MealVisionResponse, Error, AnalyzeMealInput>({
     mutationFn: async ({ blob, mealSlot }) => {
+      // 아이폰 앱: 사진을 AI 회사로 보내기 전 한 번 동의 (App Store 5.1.2(i), lib/aiConsent)
+      const { data: auth } = await supabase.auth.getSession();
+      if (!ensureAiConsent(auth.session?.user?.id)) throw new Error("ai_consent_declined");
       const imageDataUrl = await blobToDataUrl(blob);
       const localTime = new Date().toLocaleTimeString("ko-KR", {
         hour: "2-digit",

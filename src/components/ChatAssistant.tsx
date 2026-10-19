@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { X, Send, AlertTriangle, Sparkles, ChevronRight, Bot } from "lucide-react";
+import { ensureAiConsent } from "@/lib/aiConsent";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { findOsamiFaq, type OsamiFaqLink } from "@/data/osamiFaq";
@@ -319,6 +320,11 @@ const ChatAssistant = () => {
     }
     if (isApiLimitReached) {
       push({ role: "assistant", isError: true, content: "AI 코치가 잠시 숨 고르는 중이에요 💦 1분 뒤에 다시 물어봐 주세요. (앱 사용법은 지금도 바로 답해 드려요)", suggestions: trailing });
+      return;
+    }
+    // 아이폰 앱: 질문을 AI 회사로 보내기 전 한 번 동의 (App Store 5.1.2(i), lib/aiConsent)
+    if (!ensureAiConsent(user.id)) {
+      push({ role: "assistant", source: "local", content: "알겠어요. AI 코치는 쉬고 있을게요. 앱 사용법은 지금처럼 바로 답해 드려요.", suggestions: trailing });
       return;
     }
     await askAi(text, [...history, userMsg], trailing);

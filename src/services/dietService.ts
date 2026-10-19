@@ -554,6 +554,7 @@ export type MealVisionErrorCode =
   | "image_too_large"
   | "invalid_image"
   | "vision_unavailable"
+  | "ai_consent_declined" // 아이폰 앱에서 AI 전송 동의를 안 함 (lib/aiConsent, 2026-10-19)
   | "unknown";
 
 /** Edge Function 이 준 에러 본문에서 코드만 뽑아낸다. */
