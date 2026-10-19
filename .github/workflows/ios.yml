@@ -38,7 +38,7 @@ jobs:
       run:
         working-directory: ios-app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: 최신 Xcode 고르기
         run: |
@@ -47,7 +47,7 @@ jobs:
           xcodebuild -version
           echo "::notice::$(xcodebuild -version | tr '\n' ' ')"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
