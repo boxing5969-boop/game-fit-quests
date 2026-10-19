@@ -77,7 +77,10 @@ export const RECORD_153_FIRSTS: ReadonlyArray<{
   desc: string;
   empty: string;
 }> = [
-  { key: "first_signup", section: "start", emoji: "🥇", title: "최초 가입자", desc: "마이복서153에 가장 먼저 직접 가입한 회원", empty: "" },
+  // 2026-10-19 대표님: "153복싱짐 선릉역점 최초 가입자 이성준 회원님이야 · 153마이복서 최초가입자도 있고" —
+  //   체육관 첫 회원(선릉역점)과 앱 첫 가입자를 나눈다. 선릉역점 기록은 대표님이 정해 준 회원으로 새김(DB 20261019220000)
+  { key: "first_member_sunreung", section: "start", emoji: "🥊", title: "선릉역점 최초 가입자", desc: "153복싱짐 선릉역점에 가장 먼저 등록한 회원", empty: "" },
+  { key: "first_signup", section: "start", emoji: "🥇", title: "마이복서153 최초 가입자", desc: "마이복서153 앱에 가장 먼저 직접 가입한 회원", empty: "" },
   { key: "first_checkin", section: "start", emoji: "🚪", title: "최초 출석", desc: "앱이 생기고 처음으로 앱 출석을 찍은 회원", empty: "" },
   { key: "first_100_checkins", section: "start", emoji: "💯", title: "최초 출석 100회", desc: "가장 먼저 100번 출석한 회원", empty: "100번째 출석을 가장 먼저 찍는 회원이 주인이 돼요" },
   { key: "first_journal", section: "start", emoji: "✍️", title: "최초 커뮤니티 글", desc: "153 커뮤니티에 처음 글을 남긴 회원", empty: "커뮤니티에 처음 글을 쓰는 회원이 주인이 돼요" },
