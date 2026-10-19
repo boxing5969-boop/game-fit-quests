@@ -151,7 +151,11 @@ export async function openInAppBrowser(url: string, onClose?: () => void): Promi
     const h = await Browser.addListener("browserFinished", () => {
       void h.remove();
       onClose();
-    });
+    }).catch(() => null);
+    if (!h) {
+      window.location.href = url;
+      return;
+    }
   }
   await Browser.open({ url, presentationStyle: "fullscreen" });
 }
@@ -191,10 +195,12 @@ export function registerForPush(timeoutMs = 15_000): Promise<string> {
     void Push.addListener("registration", (t) => {
       lastToken = t.value.toLowerCase();
       done(() => resolve(lastToken as string));
-    }).then((h) => handles.push(h));
-    void Push.addListener("registrationError", (e) => done(() => reject(new Error(e.error || "registration_error")))).then((h) =>
-      handles.push(h),
-    );
+    })
+      .then((h) => handles.push(h))
+      .catch((e) => done(() => reject(e)));
+    void Push.addListener("registrationError", (e) => done(() => reject(new Error(e.error || "registration_error"))))
+      .then((h) => handles.push(h))
+      .catch(() => undefined);
     void Push.register().catch((e) => done(() => reject(e)));
   });
 }
@@ -238,7 +244,7 @@ export function startIosApp(): void {
   new MutationObserver(syncStatusBar).observe(document.head, { subtree: true, childList: true, attributes: true, attributeFilter: ["content"] });
 
   // myboxer153.com 링크(초대 링크 등)로 앱이 열리면 그 화면으로
-  void App.addListener("appUrlOpen", ({ url }) => {
+  App.addListener("appUrlOpen", ({ url }) => {
     try {
       const u = new URL(url);
       if (u.origin === APP_ORIGIN) {
@@ -249,17 +255,17 @@ export function startIosApp(): void {
     } catch {
       /* 모르는 주소 */
     }
-  });
+  }).catch(() => undefined);
 }
 
 /** 알림 연결 — PushBridge 가 화면에 붙을 때. 반환값으로 떼어 낸다 */
 export function listenPush(onOpenPath: (path: string) => void, onReceived: () => void): () => void {
-  const handles: Promise<Handle>[] = [
+  const handles: Promise<Handle | null>[] = [
     Push.addListener("pushNotificationActionPerformed", (a) => {
       const p = safeAppPath(a.notification?.data?.url) ?? "/notifications";
       onOpenPath(p);
-    }),
-    Push.addListener("pushNotificationReceived", () => onReceived()),
+    }).catch(() => null),
+    Push.addListener("pushNotificationReceived", () => onReceived()).catch(() => null),
   ];
-  return () => handles.forEach((h) => void h.then((x) => x.remove()).catch(() => undefined));
+  return () => handles.forEach((h) => void h.then((x) => x?.remove()).catch(() => undefined));
 }

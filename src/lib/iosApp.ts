@@ -11,12 +11,15 @@
  */
 export const IOS_APP_MARK = "MyBoxer153App";
 
-/** 아이폰 앱 화면인지 */
+let cached: boolean | null = null;
+
+/** 아이폰 앱 화면인지 (처음 한 번 보고 기억한다 — 페이지가 열린 동안 바뀌지 않는다) */
 export function isIosApp(): boolean {
+  if (cached !== null) return cached;
   if (typeof window === "undefined" || typeof navigator === "undefined") return false;
-  if (!navigator.userAgent.includes(IOS_APP_MARK)) return false;
   const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
-  return cap?.isNativePlatform?.() === true;
+  cached = navigator.userAgent.includes(IOS_APP_MARK) && cap?.isNativePlatform?.() === true;
+  return cached;
 }
 
 /** 앱 기능 모듈 (필요할 때만 내려받는다) */
