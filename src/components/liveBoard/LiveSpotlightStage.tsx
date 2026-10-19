@@ -36,6 +36,8 @@ export interface LiveSpotlightStageProps {
   getElapsedMinutes: (startedAt: number) => number;
   showForceExit?: boolean;
   onForceExit?: (sessionId: string, name: string) => void;
+  /** 153 레코드 보유자를 생일 다음 첫 자리로 (2026-10-19 비교안 '다') */
+  recordsFirst?: boolean;
 }
 
 const LiveSpotlightStage = ({
@@ -43,6 +45,7 @@ const LiveSpotlightStage = ({
   getElapsedMinutes,
   showForceExit,
   onForceExit,
+  recordsFirst = false,
 }: LiveSpotlightStageProps) => {
   const now = Date.now();
 
@@ -52,6 +55,7 @@ const LiveSpotlightStage = ({
     const arr = [...members];
     arr.sort((a, b) => {
       if (!!a.birthday !== !!b.birthday) return a.birthday ? -1 : 1;
+      if (recordsFirst && !!a.records?.length !== !!b.records?.length) return a.records?.length ? -1 : 1;
       const aFresh = now - a.startedAt < FRESH_THRESHOLD_MS;
       const bFresh = now - b.startedAt < FRESH_THRESHOLD_MS;
       if (aFresh !== bFresh) return aFresh ? -1 : 1;
@@ -117,6 +121,7 @@ const LiveSpotlightStage = ({
         <Sparkles className="h-4 w-4 text-yellow-400" />
         <h3 className="text-sm font-black uppercase tracking-wider text-yellow-300">
           오늘의 스포트라이트
+          {recordsFirst && currentPage.some((m) => m.records?.length) ? " · 153 RECORD 보유자" : ""}
         </h3>
         {totalPages > 1 && (
           <div className="flex items-center gap-1">

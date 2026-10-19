@@ -105,6 +105,11 @@ const BIRTHDAY_RING =
   "conic-gradient(from 0deg, #34f5c5, #22d3ee, #a78bfa, #f472b6, #fbbf24, #34f5c5)";
 const BIRTHDAY_GLOW =
   "0 0 0 2px hsla(165, 90%, 60%, 0.55), 0 8px 30px hsla(165, 90%, 50%, 0.35), 0 0 64px hsla(270, 85%, 65%, 0.4)";
+/** 153 레코드(최초 기록) 보유자 — 금빛 광채 */
+const RECORD_GLOW =
+  "0 0 0 2px hsla(45, 100%, 62%, 0.85), 0 0 26px hsla(42, 100%, 55%, 0.55), 0 0 72px hsla(38, 100%, 55%, 0.4)";
+/** 153 레코드 머리 띠 — 금빛 리본 */
+const RECORD_BAND = "linear-gradient(90deg, #fff1b8 0%, #f6c453 28%, #e0a326 62%, #f6c453 85%, #fff1b8 100%)";
 
 /** user_id 해시 → 6자리 라이센스 번호 */
 function licenseNumber(userId?: string): string {
@@ -202,6 +207,9 @@ export interface BoxerLicenseCardProps {
   birthdayCongrats?: number;
   /** 생일 아래 줄 문구를 바꾼다 (내 카드: "생일 축하해요! 받은 축하 N개") */
   birthdayLine?: string;
+  /** 153 레코드 '최초' 기록 이름 (라이브보드, 2026-10-19) — 금빛 테두리·광채, 머리줄 153 RECORD, (spotlight 이상) 아래 줄 기록 이름.
+   *  생일이 먼저다(생일이면 생일 모양). 카드 높이는 그대로 */
+  record?: string | null;
 }
 
 const BoxerLicenseCard = ({
@@ -236,9 +244,12 @@ const BoxerLicenseCard = ({
   birthday: birthdayProp = false,
   birthdayCongrats = 0,
   birthdayLine,
+  record: recordProp = null,
 }: BoxerLicenseCardProps) => {
   // 지도진 카드에는 생일 연출을 하지 않는다 (회원 카드 전용)
   const birthday = birthdayProp && !staff;
+  // 153 레코드 — 회원 카드, 생일이 아닐 때만
+  const record = !staff && !birthday && recordProp ? recordProp : null;
   const bdayFooter =
     birthdayLine ??
     (birthdayCongrats > 0
@@ -353,15 +364,17 @@ const BoxerLicenseCard = ({
         background: `linear-gradient(135deg, hsla(0, 0%, 6%, 0.97) 0%, hsla(0, 0%, 10%, 0.95) 100%)`,
         boxShadow: birthday
           ? BIRTHDAY_GLOW
-          : isFresh
+          : record
+            ? RECORD_GLOW
+            : isFresh
             ? "0 8px 24px hsla(160, 80%, 50%, 0.4), 0 0 0 2px hsla(160, 80%, 50%, 0.6)"
             : CARD_GLOW[isMaster ? "black" : rankKey] ?? CARD_GLOW.white,
       }}
     >
       {/* ── 골드 트림 (얇은 외곽 그라디언트 라인) — 생일이면 흐르는 오로라 테두리 ── */}
       <div
-        className={`absolute inset-0 rounded-2xl ${birthday ? "bday-aurora-ring" : `bg-gradient-to-br ${borderGrad} opacity-50`}`}
-        style={{ padding: birthday ? "2px" : "1.5px", WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }}
+        className={`absolute inset-0 rounded-2xl ${birthday ? "bday-aurora-ring" : record ? "record-gold-ring" : `bg-gradient-to-br ${borderGrad} opacity-50`}`}
+        style={{ padding: birthday || record ? "2px" : "1.5px", WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }}
         aria-hidden="true"
       />
 
@@ -388,7 +401,23 @@ const BoxerLicenseCard = ({
 
       {/* ═══ 콘텐츠 ═══ */}
       <div className="relative">
-        {/* ── Header — 라이센스 타이틀 + 번호 ── */}
+        {/* ── Header — 라이센스 타이틀 + 번호 ──
+            153 레코드면 머리줄 전체가 금빛 리본 '✦ 153 RECORD · 기록 이름' (위아래 여백을 음수로 맞춰 카드 키는 그대로) */}
+        {record ? (
+          // 줄 높이를 원래 머리줄(글자 크기 × 1.5)로 못박는다 — ✦ 같은 기호 글꼴이 줄을 0.8px 키우던 것을 막는다
+          <div className={`relative mb-2 flex items-center justify-between gap-2 ${cfg.licText}`} style={{ height: "1.5em" }}>
+            {/* 띠 바탕은 글줄 밖으로 3px 넓게 */}
+            <span
+              aria-hidden="true"
+              className="absolute -inset-x-1.5 -inset-y-[3px] rounded-md"
+              style={{ background: RECORD_BAND, boxShadow: "0 0 14px hsla(42, 100%, 55%, 0.45)" }}
+            />
+            <span className="relative whitespace-nowrap font-black uppercase leading-none tracking-[0.18em] text-[#2a1a00]">
+              ✦ 153 RECORD
+            </span>
+            <span className={`relative min-w-0 truncate font-black leading-none text-[#2a1a00] ${cfg.metaText}`}>{record}</span>
+          </div>
+        ) : (
         <div className="mb-2 flex items-center justify-between">
           {/* 생일 — 왼쪽은 사진 위 케이크 자리라 비우고, 오른쪽(번호 자리)에 금빛 HAPPY BIRTHDAY */}
           <div className="flex items-center gap-1.5">
@@ -416,6 +445,7 @@ const BoxerLicenseCard = ({
             </span>
           )}
         </div>
+        )}
 
         {/* ── 본문: 사진 + 정보 (가로) ── */}
         <div className="flex items-start gap-3">

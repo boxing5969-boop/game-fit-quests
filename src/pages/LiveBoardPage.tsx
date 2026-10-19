@@ -37,6 +37,8 @@ import fxGoldConfetti from "@/assets/effects/fx_gold_confetti.png";
 /** 🎂 생일 회원 입장 환영은 보통(7초)보다 길게 — 다 같이 보고 축하할 시간 (2026-10-16 대표님) */
 const POPUP_MS = 7000;
 const BIRTHDAY_POPUP_MS = 12000;
+/** 153 레코드(최초 기록) 보유자 입장 환영 — 금빛 판 10초 (2026-10-19 비교안 '가') */
+const RECORD_POPUP_MS = 10000;
 
 const RANK_COLORS: Record<string, string> = {
   white: "border-gray-400 bg-gray-200 text-gray-900",
@@ -149,6 +151,8 @@ interface ActiveMember {
   birthday?: boolean;
   /** 앱에서 받은 생일 축하 수 */
   birthdayCongrats?: number;
+  /** 153 레코드 '최초' 기록 이름들 — 금빛 카드 (recordMap 에서 채운다, 2026-10-19) */
+  records?: string[];
 }
 
 /**
@@ -424,6 +428,22 @@ const LiveBoardPage = () => {
    * (자정이 지나면 다음 날 생일로 바뀐다). 입장 환영 화면은 입실하는 순간 따로 확인한다(triggerPopup).
    */
   const [birthdayIds, setBirthdayIds] = useState<Set<string>>(() => new Set());
+  /** 오늘 온 회원 중 153 레코드 '최초' 기록 보유자 → 기록 이름들 (2026-10-19) */
+  const [recordMap, setRecordMap] = useState<Record<string, string[]>>({});
+  const recordMapRef = useRef(recordMap);
+  useEffect(() => {
+    recordMapRef.current = recordMap;
+  }, [recordMap]);
+  // ── 153 레코드 표시 비교안 미리보기 (로컬 확인 전용 — ?recordPreview=a|b|c|d|e, 2026-10-19 대표님 "실제로 이미지를 확인") ──
+  const recordPreview = useMemo(() => {
+    try {
+      return new URLSearchParams(window.location.search).get("recordPreview");
+    } catch {
+      return null;
+    }
+  }, []);
+  /** 카드 금빛(나·다) — 미리보기 가·라·마에서는 그 방법만 보이게 카드는 평소대로 */
+  const recordCards = !recordPreview || recordPreview === "b" || recordPreview === "c";
   /** 앱 '축하하기'로 받은 생일 축하 수 — 카드 🎉 N (2026-10-16 대표님: "진행") */
   const [birthdayCongrats, setBirthdayCongrats] = useState<Record<string, number>>({});
   const visitKey = useMemo(() => dailyVisits.map((v) => v.user_id).sort().join(","), [dailyVisits]);
@@ -466,14 +486,17 @@ const LiveBoardPage = () => {
         if (pref === "photo" && next.partsJson) next = { ...next, partsJson: null };
         if (pref === "character" && next.partsJson && next.avatar_url) next = { ...next, avatar_url: null };
         if (birthdayIds.has(m.user_id)) next = { ...next, birthday: true, birthdayCongrats: birthdayCongrats[m.user_id] ?? 0 };
+        if (recordCards && recordMap[m.user_id]?.length) next = { ...next, records: recordMap[m.user_id] };
         return ptIds.has(m.user_id) ? { ...next, pt: true } : next;
       }),
-    [activeMembers, checkinMembers, mockMembers, liveLevels, staffUserIds, ptIds, displayPrefMap, birthdayIds, birthdayCongrats],
+    [activeMembers, checkinMembers, mockMembers, liveLevels, staffUserIds, ptIds, displayPrefMap, birthdayIds, birthdayCongrats, recordMap, recordCards],
   );
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
   const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
   /** 🎂 지금 환영 화면의 회원이 오늘 생일인가 — 오로라·축하 문구·12초 (2026-10-16) */
   const [popupBirthday, setPopupBirthday] = useState(false);
+  /** 지금 환영 화면의 회원이 153 레코드 보유자면 기록 이름들 — 금빛 판·10초 (2026-10-19) */
+  const [popupRecords, setPopupRecords] = useState<string[] | null>(null);
 
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isBranchManager, setIsBranchManager] = useState(false);
@@ -826,12 +849,17 @@ const LiveBoardPage = () => {
 
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
     if (isBirthday) setBirthdayIds((prev) => (prev.has(event.user_id) ? prev : new Set(prev).add(event.user_id)));
+    const records = recordMapRef.current[event.user_id]?.length ? recordMapRef.current[event.user_id] : null;
     setPopupAvatarUrl(avatar);
     setPopupPartsJson(partsJson);
     setPopupBirthday(isBirthday);
+    setPopupRecords(records);
     setLatestPopup(event);
     setShowPopup(true);
-    popupTimeoutRef.current = setTimeout(() => setShowPopup(false), isBirthday ? BIRTHDAY_POPUP_MS : POPUP_MS);
+    popupTimeoutRef.current = setTimeout(
+      () => setShowPopup(false),
+      isBirthday ? BIRTHDAY_POPUP_MS : records ? RECORD_POPUP_MS : POPUP_MS,
+    );
   }, [fetchPeople, boardPhotos, branchName]);
 
   /**
@@ -1148,6 +1176,70 @@ const LiveBoardPage = () => {
     });
   }, []);
 
+  // ── 153 레코드 비교안 미리보기 (로컬 확인 전용 — ?recordPreview=a|b|c|d|e) ──
+  //   가상 회원 11명(이름·사진은 예시)으로 화면을 채우고 그중 2명을 기록 보유자로 둔다.
+  const [recordOverlay, setRecordOverlay] = useState<MockActiveMember | null>(null);
+  useEffect(() => {
+    if (!recordPreview) return;
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase.from("character_presets").select("parts_json").limit(12);
+      if (cancelled) return;
+      const looks = ((data || []) as { parts_json: unknown }[])
+        .map((r) => r.parts_json as MockActiveMember["partsJson"])
+        .filter(Boolean);
+      const now = Date.now();
+      // [이름, 리그, 레벨, 운동 시간(분), 사진 번호(0=없음), 캐릭터 번호(-1=없음)]
+      const base: [string, string, number, number, number, number][] = [
+        ["코브라펀치", "blue", 6, 12, 1, -1],
+        ["잽마스터", "white", 8, 34, 0, 0],
+        ["훅의달인", "red", 3, 47, 2, -1],
+        ["스피드복서", "white", 4, 21, 0, 1],
+        ["철벽수비", "blue", 10, 72, 0, 2],
+        ["카운터킹", "white", 2, 15, 0, -1],
+        ["원투쓰리", "red", 7, 55, 3, -1],
+        ["리듬복서", "white", 5, 9, 0, 3],
+        ["바디블로우", "blue", 2, 28, 0, -1],
+        ["풋워크", "white", 9, 41, 4, -1],
+        ["라이트닝", "black", 1, 63, 0, 4],
+      ];
+      const ms: MockActiveMember[] = base.map(([name, league, level, ageMin, photo, look], i) => ({
+        id: `mock-rec-${i}`,
+        user_id: `mock-rec-${i}`,
+        name,
+        league,
+        level,
+        startedAt: now - ageMin * 60_000,
+        avatar_url: photo ? `/__preview/avatar-${photo}.jpg` : null,
+        partsJson: look >= 0 && looks.length ? looks[look % looks.length] : null,
+      }));
+      setMockMembers(ms);
+      setRecordMap({ [ms[0].user_id]: ["최초 출석 100회"], [ms[4].user_id]: ["최초 출석", "최초 레벨 10"] });
+      const holder = ms[0];
+      if (recordPreview === "a") {
+        if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
+        popupSeqRef.current += 1;
+        setPopupAvatarUrl(holder.avatar_url ?? null);
+        setPopupPartsJson(holder.partsJson ?? null);
+        setPopupBirthday(false);
+        setPopupRecords(["최초 출석 100회"]);
+        setLatestPopup({
+          id: holder.id,
+          user_id: holder.user_id,
+          display_name_snapshot: holder.name,
+          league_snapshot: holder.league,
+          level_snapshot: holder.level,
+          checked_in_at: new Date().toISOString(),
+        });
+        setShowPopup(true);
+      }
+      if (recordPreview === "e") setRecordOverlay(holder);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [recordPreview]);
+
   // Reset all active sessions for this branch (admin tool)
   const handleResetActiveSessions = async () => {
     if (!branchName) return;
@@ -1283,10 +1375,35 @@ const LiveBoardPage = () => {
             */}
             {showPopup && latestPopup ? (
               <div className="relative flex flex-1 flex-col items-center justify-center gap-4 overflow-hidden">
+                {/* 153 레코드 보유자 (2026-10-19 비교안 '가') — 위에 금빛 '153 RECORD' 알약 */}
+                {popupRecords && !popupBirthday && (
+                  <div className="bday-pop relative z-10 rounded-full p-[2px] record-gold-ring shadow-[0_0_40px_rgba(246,196,83,0.45)]">
+                    <div className="flex items-center gap-3 rounded-full bg-gray-950/90 px-7 py-2.5">
+                      <span className="text-3xl">🏆</span>
+                      <span className="bday-gold-text text-3xl font-black tracking-[0.25em]">153 RECORD</span>
+                    </div>
+                  </div>
+                )}
                 {/* 입장 환영 — 사진(본인이 올린 프로필) > 캐릭터 > 기본 복서. 활동 중 카드와 같은 순서 (2026-10-14 대표님)
                     🎂 생일 회원이면 (2026-10-16 대표님): 뒤로 오로라 빛무리와 금빛 꽃가루가 돌고, 사진 테두리가 오로라로 흐르고,
                     케이크가 얹히고, "생일 축하합니다!" — 12초 동안 (보통 7초) */}
                 <div className="relative flex items-center justify-center">
+                  {/* 153 레코드 — 뒤로 금빛 빛무리와 금빛 꽃가루 */}
+                  {popupRecords && !popupBirthday && (
+                    <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 h-0 w-0">
+                      <div
+                        className="absolute -left-[20rem] -top-[20rem] h-[40rem] w-[40rem] rounded-full blur-3xl"
+                        style={{ background: "radial-gradient(circle, rgba(246,196,83,0.38), rgba(224,163,38,0.18) 45%, transparent 70%)" }}
+                      />
+                      <img
+                        src={fxGoldConfetti}
+                        alt=""
+                        draggable={false}
+                        className="bday-halo-reverse absolute -left-[21rem] -top-[21rem] h-[42rem] w-[42rem] max-w-none select-none opacity-90"
+                        style={{ mixBlendMode: "screen" }}
+                      />
+                    </div>
+                  )}
                   {popupBirthday && (
                     <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 h-0 w-0">
                       <div
@@ -1314,7 +1431,9 @@ const LiveBoardPage = () => {
                       className={`relative rounded-full p-[6px] ${
                         popupBirthday
                           ? "bday-aurora-ring shadow-[0_0_90px_rgba(52,245,197,0.55)]"
-                          : `bg-gradient-to-br ${
+                          : popupRecords
+                            ? "record-gold-ring shadow-[0_0_90px_rgba(246,196,83,0.55)]"
+                            : `bg-gradient-to-br ${
                               WELCOME_RING[(latestPopup.league_snapshot || "white").toLowerCase()] ?? WELCOME_RING.white
                             } ${RANK_GLOW[(latestPopup.league_snapshot || "white").toLowerCase()] ?? RANK_GLOW.white}`
                       }`}
@@ -1358,11 +1477,15 @@ const LiveBoardPage = () => {
                   )}
                 </div>
                 {/* 사진·캐릭터일 때는 이름/리그 별도 표시 (SDBoxerCharacter 는 자체 포함). 생일 문구는 늘 */}
-                {(popupAvatarUrl || popupPartsJson || popupBirthday) && (
+                {(popupAvatarUrl || popupPartsJson || popupBirthday || popupRecords) && (
                   // 생일이면 글자 뒤에 어두운 판 — 금빛 꽃가루 위에서도 또렷하게
                   <div
                     className={`relative text-center ${
-                      popupBirthday ? "rounded-[2rem] bg-gray-950/80 px-14 py-5 ring-1 ring-white/10 backdrop-blur-sm" : ""
+                      popupBirthday
+                        ? "rounded-[2rem] bg-gray-950/80 px-14 py-5 ring-1 ring-white/10 backdrop-blur-sm"
+                        : popupRecords
+                          ? "rounded-[2rem] bg-gray-950/85 px-14 py-5 ring-1 ring-amber-300/30 backdrop-blur-sm"
+                          : ""
                     }`}
                   >
                     {(popupAvatarUrl || popupPartsJson) && (
@@ -1390,6 +1513,18 @@ const LiveBoardPage = () => {
                           📱 마이복서153 앱 홈에서 <span className="font-black text-amber-200">🎂 축하하기</span>를 눌러 주세요
                         </p>
                       </>
+                    ) : popupRecords ? (
+                      <>
+                        <p
+                          className="bday-pop bday-gold-text mt-1 text-5xl font-black tracking-tight"
+                          style={{ filter: "drop-shadow(0 4px 14px rgba(0,0,0,0.75))" }}
+                        >
+                          {popupRecords.join(" · ")}
+                        </p>
+                        <p className="mt-3 text-2xl font-black text-amber-100" style={{ textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>
+                          153복싱짐 최초 기록 보유자 · 입실! Lv.{toGlobalLevel(latestPopup.league_snapshot, latestPopup.level_snapshot)}
+                        </p>
+                      </>
                     ) : (
                       <p className="mt-1 text-xl font-bold text-primary">
                         입실! · Lv.{toGlobalLevel(latestPopup.league_snapshot, latestPopup.level_snapshot)}
@@ -1409,7 +1544,7 @@ const LiveBoardPage = () => {
                     {combinedMembers.length}
                     <span className="ml-1 text-xs text-primary/70">명</span>
                   </p>
-                  {mockMembers.length > 0 && (
+                  {mockMembers.length > 0 && !recordPreview && (
                     <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-black text-white/50">
                       mock {mockMembers.length}
                     </span>
@@ -1420,6 +1555,7 @@ const LiveBoardPage = () => {
                 {/* 스포트라이트 무대 — 항상 표시 (1명도 OK) */}
                 <LiveSpotlightStage
                   members={combinedMembers}
+                  recordsFirst={recordPreview === "c"}
                   getElapsedMinutes={(t) => {
                     const v = elapsedMin(t);
                     return typeof v === "number" ? v : 0;
@@ -1538,6 +1674,29 @@ const LiveBoardPage = () => {
                         </div>
                       </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── 153 레코드 — 오늘 온 최초 기록 보유자 띠 (비교안 '라', 미리보기 전용) ── */}
+          {recordPreview === "d" && Object.keys(recordMap).length > 0 && (
+            <div className="mx-4 mb-2 flex-shrink-0 rounded-xl p-[1.5px] record-gold-ring">
+              <div className="flex items-center gap-4 rounded-[11px] bg-gray-950/95 px-4 py-2.5">
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                  <span className="text-xl">🏆</span>
+                  <h2 className="bday-gold-text whitespace-nowrap text-base font-black tracking-widest">153 RECORD</h2>
+                  <span className="whitespace-nowrap text-sm font-bold text-amber-100/70">오늘 온 최초 기록 보유자</span>
+                </div>
+                <div className="flex min-w-0 flex-1 items-center gap-6 overflow-hidden whitespace-nowrap">
+                  {combinedMembers
+                    .filter((m) => recordMap[m.user_id]?.length)
+                    .map((m) => (
+                      <span key={m.user_id} className="flex items-center gap-2">
+                        <span className="text-lg font-black text-white">{m.name}</span>
+                        <span className="text-base font-bold text-amber-200">{recordMap[m.user_id].join(" · ")}</span>
+                      </span>
+                    ))}
                 </div>
               </div>
             </div>
@@ -1721,6 +1880,63 @@ const LiveBoardPage = () => {
         event={levelUpEvent}
         onDismiss={() => setLevelUpEvent(null)}
       />
+
+      {/* 153 레코드 전체 화면 끼어들기 (비교안 '마', 미리보기 전용) — 레벨업 연출과 같은 무대에 금빛 */}
+      {recordPreview === "e" && recordOverlay && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden"
+          style={{ background: "radial-gradient(ellipse at center, rgba(34,24,4,0.9) 0%, rgba(0,0,0,0.97) 70%)" }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "conic-gradient(from 20deg, transparent 0deg, rgba(246,196,83,0.6) 45deg, transparent 90deg, transparent 180deg, rgba(246,196,83,0.6) 225deg, transparent 270deg)",
+              opacity: 0.35,
+              filter: "blur(40px)",
+            }}
+          />
+          {/* 금빛 꽃가루 고리 — 사진 가운데에 맞춘다 (회전 애니메이션이 transform 을 쓰니 바깥 상자로 자리를 잡는다) */}
+          <div aria-hidden className="pointer-events-none absolute left-1/2 top-[34%] h-0 w-0">
+            <img
+              src={fxGoldConfetti}
+              alt=""
+              draggable={false}
+              className="bday-halo-reverse absolute -left-[27rem] -top-[27rem] h-[54rem] w-[54rem] max-w-none select-none opacity-80"
+              style={{ mixBlendMode: "screen" }}
+            />
+          </div>
+          <div className="relative z-10 flex flex-col items-center gap-6 px-12 text-center">
+            <div className="rounded-full p-[8px] record-gold-ring shadow-[0_0_120px_rgba(246,196,83,0.6)]">
+              {recordOverlay.avatar_url ? (
+                <img
+                  src={recordOverlay.avatar_url}
+                  alt={recordOverlay.name}
+                  className="h-72 w-72 rounded-full object-cover ring-4 ring-black/70"
+                />
+              ) : (
+                <div className="flex h-72 w-72 items-center justify-center rounded-full bg-gray-900 text-8xl font-black text-white ring-4 ring-black/70">
+                  {recordOverlay.name.charAt(0)}
+                </div>
+              )}
+            </div>
+            <p
+              className="bday-gold-text text-8xl font-black tracking-[0.16em]"
+              style={{ filter: "drop-shadow(0 0 24px rgba(246,196,83,0.55))" }}
+            >
+              153 RECORD
+            </p>
+            <p className="text-5xl font-black text-white" style={{ textShadow: "0 4px 20px rgba(0,0,0,0.8)" }}>
+              {recordOverlay.name}
+            </p>
+            <div className="rounded-2xl border-2 border-amber-300/60 bg-amber-400/15 px-8 py-3 text-4xl font-black text-amber-200 shadow-[0_0_40px_rgba(246,196,83,0.45)]">
+              🏆 {recordMap[recordOverlay.user_id]?.join(" · ")}
+            </div>
+            <p className="text-2xl font-bold text-amber-100/80">153복싱짐 역사에 처음 이름을 새긴 회원이 들어왔어요</p>
+          </div>
+        </div>
+      )}
 
       {/* ── 테스트 패널 (관리자 전용) — 가상 회원 추가/레벨업 시뮬레이트 ── */}
       {(isSuperAdmin || isBranchManager) && (
