@@ -35,6 +35,8 @@ export interface LiveActiveMember {
   birthday?: boolean;
   /** 앱에서 받은 생일 축하 수 — 카드에 🎉 N */
   birthdayCongrats?: number;
+  /** 153 레코드 '최초' 기록 이름들 — 금빛 카드 + 기록 이름 (2026-10-19) */
+  records?: string[];
 }
 
 export type LiveCardSize = "spotlight" | "medium" | "compact";
@@ -163,6 +165,7 @@ const LiveActiveMemberCard = ({
         pt={member.pt === true}
         birthday={member.birthday === true}
         birthdayCongrats={member.birthdayCongrats ?? 0}
+        record={member.records?.length ? member.records.join(" · ") : null}
         isFresh={isFresh}
         elapsedMinutes={elapsedMinutes}
       />

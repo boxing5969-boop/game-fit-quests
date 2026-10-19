@@ -946,6 +946,12 @@ html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: va
   background-size: 200% 100%;
   animation: bday-aurora-shift 5s linear infinite;
 }
+/* 153 레코드(최초 기록) 보유자 — 금빛이 흐르는 테두리 (라이브보드 카드·입장 환영, 2026-10-19) */
+.record-gold-ring {
+  background: linear-gradient(90deg, #fff1b8, #f6c453, #e0a326, #fff6cf, #f6c453, #b9791a, #fff1b8, #f6c453, #e0a326, #fff6cf, #fff1b8);
+  background-size: 200% 100%;
+  animation: bday-aurora-shift 6s linear infinite;
+}
 .bday-halo { animation: bday-spin 16s linear infinite; }
 .bday-halo-reverse { animation: bday-spin 24s linear infinite reverse; }
 .bday-bob { animation: bday-bob 2.6s ease-in-out infinite; }
@@ -959,7 +965,7 @@ html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: va
   animation: bday-gold-sweep 3.4s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .bday-aurora-ring, .bday-halo, .bday-halo-reverse, .bday-bob, .bday-pop, .bday-gold-text { animation: none !important; }
+  .bday-aurora-ring, .bday-halo, .bday-halo-reverse, .bday-bob, .bday-pop, .bday-gold-text, .record-gold-ring { animation: none !important; }
 }
 
 /* 이모지 → 153 입체 아이콘 (src/lib/emoji3d, 2026-10-16 대표님: "이모지는 모두 빼고 … 퀄리티있는 디자인")

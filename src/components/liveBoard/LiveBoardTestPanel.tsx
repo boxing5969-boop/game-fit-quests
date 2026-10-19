@@ -40,6 +40,8 @@ export interface LiveBoardTestPanelProps {
   onAddMedalSamples?: () => void;
   /** 🎂 생일 회원 입장 — 생일 환영 화면 + 오로라·황금 버튼 카드 미리보기 (2026-10-16) */
   onBirthdaySample?: () => void;
+  /** 🏆 153 레코드 보유자 입장 — 금색 환영 화면 10초 + 카드 금색 띠 + 아래 금색 띠 미리보기 (2026-10-19) */
+  onRecordSample?: () => void;
 }
 
 const PRESETS = [1, 2, 5, 12, 30, 45];
@@ -53,6 +55,7 @@ const LiveBoardTestPanel = ({
   onAddReal,
   onAddMedalSamples,
   onBirthdaySample,
+  onRecordSample,
 }: LiveBoardTestPanelProps) => {
   const [expanded, setExpanded] = useState(true);
 
@@ -118,7 +121,7 @@ const LiveBoardTestPanel = ({
                 </div>
 
                 {/* 실제 회원 미리보기 — 메달·사진·캐릭터가 실제로 어떻게 보이는지 (이 기기에서만) */}
-                {(onAddReal || onAddMedalSamples || onBirthdaySample) && (
+                {(onAddReal || onAddMedalSamples || onBirthdaySample || onRecordSample) && (
                   <div>
                     <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
                       실제 모습 미리보기
@@ -149,6 +152,15 @@ const LiveBoardTestPanel = ({
                           title="생일 회원이 들어온 것처럼 — 생일 환영 화면 + 오로라·황금 버튼 카드"
                         >
                           🎂 생일 회원 입장
+                        </button>
+                      )}
+                      {onRecordSample && (
+                        <button
+                          onClick={onRecordSample}
+                          className="rounded-lg bg-gradient-to-r from-amber-300/25 via-yellow-500/25 to-amber-600/25 px-2.5 py-1.5 text-xs font-black text-amber-100 hover:from-amber-300/40 hover:via-yellow-500/40 hover:to-amber-600/40 transition-colors"
+                          title="153 레코드 보유자가 들어온 것처럼 — 금색 환영 화면 10초 + 카드 금색 띠 + 아래 금색 띠"
+                        >
+                          🏆 153 레코드 회원 입장
                         </button>
                       )}
                     </div>

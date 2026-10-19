@@ -37,6 +37,8 @@ import fxGoldConfetti from "@/assets/effects/fx_gold_confetti.png";
 /** 🎂 생일 회원 입장 환영은 보통(7초)보다 길게 — 다 같이 보고 축하할 시간 (2026-10-16 대표님) */
 const POPUP_MS = 7000;
 const BIRTHDAY_POPUP_MS = 12000;
+/** 153 레코드(최초 기록) 보유자 입장 환영 — 금빛 판 10초 (2026-10-19 대표님 "가 적용시켜주고 10초정도") */
+const RECORD_POPUP_MS = 10000;
 
 const RANK_COLORS: Record<string, string> = {
   white: "border-gray-400 bg-gray-200 text-gray-900",
@@ -97,6 +99,14 @@ interface BoardPerson {
   card_mode: string | null;
 }
 
+/** 오늘 온 153 레코드 '최초' 기록 보유자 — board_record_holders (2026-10-19 대표님 가·나·라) */
+interface RecordHolderRow {
+  user_id: string;
+  name: string | null;
+  records: string[];
+  first_at: string;
+}
+
 /** Deduplicated daily visit: one row per user */
 interface DailyVisit {
   user_id: string;
@@ -149,6 +159,8 @@ interface ActiveMember {
   birthday?: boolean;
   /** 앱에서 받은 생일 축하 수 */
   birthdayCongrats?: number;
+  /** 153 레코드 '최초' 기록 이름들 — 금빛 카드 (recordMap 에서 채운다, 2026-10-19) */
+  records?: string[];
 }
 
 /**
@@ -424,6 +436,32 @@ const LiveBoardPage = () => {
    * (자정이 지나면 다음 날 생일로 바뀐다). 입장 환영 화면은 입실하는 순간 따로 확인한다(triggerPopup).
    */
   const [birthdayIds, setBirthdayIds] = useState<Set<string>>(() => new Set());
+  /** 오늘 온 회원 중 153 레코드 '최초' 기록 보유자 → 기록 이름들 (2026-10-19) */
+  // ── 153 레코드 — 오늘 온 '최초' 기록 보유자 (2026-10-19 대표님: 가·나·라) ──
+  //   가: 들어오면 금색 환영 화면 10초 · 나: 운동하는 동안 카드 맨 위 금색 띠 · 라: 아래 금색 띠 '오늘 온 최초 기록 보유자'
+  //   board_record_holders(TV 열쇠 길) — 오늘 이 지점에 왔거나 운동 중인 회원 중 보유자만. 출석이 들어올 때마다 다시 읽는다.
+  const [recordHolders, setRecordHolders] = useState<RecordHolderRow[]>([]);
+  const [recordMap, setRecordMap] = useState<Record<string, string[]>>({});
+  const recordMapRef = useRef(recordMap);
+  // 라 띠 — 한 줄에 다 들어가면 가만히, 넘치면 천천히 흐른다 (TV 크기·이름 길이에 따라 재어 본다)
+  const recordBoxRef = useRef<HTMLDivElement>(null);
+  const recordMeasureRef = useRef<HTMLDivElement>(null);
+  const [recordOverflow, setRecordOverflow] = useState(false);
+  useEffect(() => {
+    const box = recordBoxRef.current;
+    const m = recordMeasureRef.current;
+    if (!box || !m) {
+      setRecordOverflow(false);
+      return;
+    }
+    const check = () => setRecordOverflow(m.scrollWidth > box.clientWidth + 2);
+    check();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(check);
+    ro.observe(box);
+    ro.observe(m);
+    return () => ro.disconnect();
+  }, [recordHolders]);
   /** 앱 '축하하기'로 받은 생일 축하 수 — 카드 🎉 N (2026-10-16 대표님: "진행") */
   const [birthdayCongrats, setBirthdayCongrats] = useState<Record<string, number>>({});
   const visitKey = useMemo(() => dailyVisits.map((v) => v.user_id).sort().join(","), [dailyVisits]);
@@ -466,14 +504,17 @@ const LiveBoardPage = () => {
         if (pref === "photo" && next.partsJson) next = { ...next, partsJson: null };
         if (pref === "character" && next.partsJson && next.avatar_url) next = { ...next, avatar_url: null };
         if (birthdayIds.has(m.user_id)) next = { ...next, birthday: true, birthdayCongrats: birthdayCongrats[m.user_id] ?? 0 };
+        if (recordMap[m.user_id]?.length) next = { ...next, records: recordMap[m.user_id] };
         return ptIds.has(m.user_id) ? { ...next, pt: true } : next;
       }),
-    [activeMembers, checkinMembers, mockMembers, liveLevels, staffUserIds, ptIds, displayPrefMap, birthdayIds, birthdayCongrats],
+    [activeMembers, checkinMembers, mockMembers, liveLevels, staffUserIds, ptIds, displayPrefMap, birthdayIds, birthdayCongrats, recordMap],
   );
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
   const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
   /** 🎂 지금 환영 화면의 회원이 오늘 생일인가 — 오로라·축하 문구·12초 (2026-10-16) */
   const [popupBirthday, setPopupBirthday] = useState(false);
+  /** 지금 환영 화면의 회원이 153 레코드 보유자면 기록 이름들 — 금빛 판·10초 (2026-10-19) */
+  const [popupRecords, setPopupRecords] = useState<string[] | null>(null);
 
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isBranchManager, setIsBranchManager] = useState(false);
@@ -687,6 +728,21 @@ const LiveBoardPage = () => {
     return flag;
   }, [fetchPeople]);
 
+  /** 오늘 온 153 레코드 보유자 (가·나·라) — 실패하면 그전 것 그대로 */
+  const lastRecordLoadRef = useRef(0);
+  const loadRecordHolders = useCallback(async () => {
+    if (!branchName) return;
+    lastRecordLoadRef.current = Date.now();
+    const rows = await boardRpc<RecordHolderRow>("board_record_holders", {});
+    if (rows === null) return;
+    const list = rows.filter((r) => !!r.name && Array.isArray(r.records) && r.records.length > 0);
+    const map: Record<string, string[]> = {};
+    for (const r of list) map[r.user_id] = r.records;
+    recordMapRef.current = map; // 환영 화면이 바로 읽는다 (state 가 바뀌기 전에)
+    setRecordMap(map);
+    setRecordHolders(list);
+  }, [branchName, boardRpc]);
+
   // Load today visits — deduplicated by user_id
   const loadToday = useCallback(async () => {
     if (!branchName) return;
@@ -699,11 +755,15 @@ const LiveBoardPage = () => {
     const first = firstTodayLoadRef.current;
     firstTodayLoadRef.current = false;
     const fresh: TodayCheckinRow[] = [];
+    let unseen = 0;
     for (const r of data) {
       if (seenCheckinIdsRef.current.has(r.id)) continue;
       seenCheckinIdsRef.current.add(r.id);
+      unseen += 1;
       if (!first && !r.is_duplicate && r.age_sec <= FRESH_CHECKIN_SEC) fresh.push(r);
     }
+    // 153 레코드 보유자 — 새 출석이 있을 때(환영 화면보다 먼저) · 처음 · 5분마다(앱으로만 운동을 시작한 회원)
+    if (first || unseen > 0 || Date.now() - lastRecordLoadRef.current > 5 * 60_000) await loadRecordHolders();
 
     if (data.length > 0) {
       // Deduplicate by user_id — keep last checkin time
@@ -751,7 +811,7 @@ const LiveBoardPage = () => {
     fresh
       .sort((a, b) => new Date(a.checked_in_at).getTime() - new Date(b.checked_in_at).getTime())
       .forEach((r) => onNewCheckinRef.current(r));
-  }, [branchName, boardRpc, fetchPeople, getAvatarUrl, loadCardLooks, loadLiveLevels]);
+  }, [branchName, boardRpc, fetchPeople, getAvatarUrl, loadCardLooks, loadLiveLevels, loadRecordHolders]);
 
   // Load hall of fame
   const loadHall = useCallback(async () => {
@@ -826,12 +886,17 @@ const LiveBoardPage = () => {
 
     if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
     if (isBirthday) setBirthdayIds((prev) => (prev.has(event.user_id) ? prev : new Set(prev).add(event.user_id)));
+    const records = recordMapRef.current[event.user_id]?.length ? recordMapRef.current[event.user_id] : null;
     setPopupAvatarUrl(avatar);
     setPopupPartsJson(partsJson);
     setPopupBirthday(isBirthday);
+    setPopupRecords(records);
     setLatestPopup(event);
     setShowPopup(true);
-    popupTimeoutRef.current = setTimeout(() => setShowPopup(false), isBirthday ? BIRTHDAY_POPUP_MS : POPUP_MS);
+    popupTimeoutRef.current = setTimeout(
+      () => setShowPopup(false),
+      isBirthday ? BIRTHDAY_POPUP_MS : records ? RECORD_POPUP_MS : POPUP_MS,
+    );
   }, [fetchPeople, boardPhotos, branchName]);
 
   /**
@@ -1120,6 +1185,39 @@ const LiveBoardPage = () => {
     setShowPopup(true);
     popupTimeoutRef.current = setTimeout(() => setShowPopup(false), BIRTHDAY_POPUP_MS);
   }, [mockMembers]);
+  // 🏆 153 레코드 보유자 입장 미리보기 (2026-10-19) — 금색 환영 화면 10초 → 카드 금색 띠 + 아래 금색 띠.
+  //   '실제 회원 미리보기'로 올린 회원이 있으면 그 회원으로, 없으면 가상 회원 1명. 이 기기 화면에서만 (다음 읽기 때 실제 목록으로 돌아간다).
+  const handleMockRecord = useCallback(() => {
+    const real = mockMembers.find((m) => !m.birthday && (m.avatar_url || m.partsJson));
+    const target: MockActiveMember = real
+      ? { ...real, startedAt: Date.now() }
+      : generateMockMember({ fresh: true, usedNames: new Set(mockMembers.map((m) => m.name)) });
+    setMockMembers((prev) => (real ? prev.map((m) => (m.id === real.id ? target : m)) : [...prev, target]));
+    const records = ["최초 출석 100회"];
+    const map = { ...recordMapRef.current, [target.user_id]: records };
+    recordMapRef.current = map;
+    setRecordMap(map);
+    setRecordHolders((prev) => [
+      ...prev.filter((h) => h.user_id !== target.user_id),
+      { user_id: target.user_id, name: target.name, records, first_at: new Date().toISOString() },
+    ]);
+    if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
+    popupSeqRef.current += 1; // 읽는 중이던 실제 입실 환영이 이 미리보기를 덮지 않게
+    setPopupAvatarUrl(target.avatar_url ?? null);
+    setPopupPartsJson(target.partsJson ?? null);
+    setPopupBirthday(false);
+    setPopupRecords(records);
+    setLatestPopup({
+      id: target.id,
+      user_id: target.user_id,
+      display_name_snapshot: target.name,
+      league_snapshot: target.league,
+      level_snapshot: target.level,
+      checked_in_at: new Date().toISOString(),
+    });
+    setShowPopup(true);
+    popupTimeoutRef.current = setTimeout(() => setShowPopup(false), RECORD_POPUP_MS);
+  }, [mockMembers]);
   const handleMockRemoveOne = useCallback(() => {
     setMockMembers((prev) => prev.slice(0, -1));
   }, []);
@@ -1147,6 +1245,7 @@ const LiveBoardPage = () => {
       );
     });
   }, []);
+
 
   // Reset all active sessions for this branch (admin tool)
   const handleResetActiveSessions = async () => {
@@ -1283,10 +1382,35 @@ const LiveBoardPage = () => {
             */}
             {showPopup && latestPopup ? (
               <div className="relative flex flex-1 flex-col items-center justify-center gap-4 overflow-hidden">
+                {/* 153 레코드 보유자 (2026-10-19 대표님 '가') — 위에 금빛 '153 RECORD' 알약, 10초 */}
+                {popupRecords && !popupBirthday && (
+                  <div className="bday-pop relative z-10 rounded-full p-[2px] record-gold-ring shadow-[0_0_40px_rgba(246,196,83,0.45)]">
+                    <div className="flex items-center gap-3 rounded-full bg-gray-950/90 px-7 py-2.5">
+                      <span className="text-3xl">🏆</span>
+                      <span className="bday-gold-text text-3xl font-black tracking-[0.25em]">153 RECORD</span>
+                    </div>
+                  </div>
+                )}
                 {/* 입장 환영 — 사진(본인이 올린 프로필) > 캐릭터 > 기본 복서. 활동 중 카드와 같은 순서 (2026-10-14 대표님)
                     🎂 생일 회원이면 (2026-10-16 대표님): 뒤로 오로라 빛무리와 금빛 꽃가루가 돌고, 사진 테두리가 오로라로 흐르고,
                     케이크가 얹히고, "생일 축하합니다!" — 12초 동안 (보통 7초) */}
                 <div className="relative flex items-center justify-center">
+                  {/* 153 레코드 — 뒤로 금빛 빛무리와 금빛 꽃가루 */}
+                  {popupRecords && !popupBirthday && (
+                    <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 h-0 w-0">
+                      <div
+                        className="absolute -left-[20rem] -top-[20rem] h-[40rem] w-[40rem] rounded-full blur-3xl"
+                        style={{ background: "radial-gradient(circle, rgba(246,196,83,0.38), rgba(224,163,38,0.18) 45%, transparent 70%)" }}
+                      />
+                      <img
+                        src={fxGoldConfetti}
+                        alt=""
+                        draggable={false}
+                        className="bday-halo-reverse absolute -left-[21rem] -top-[21rem] h-[42rem] w-[42rem] max-w-none select-none opacity-90"
+                        style={{ mixBlendMode: "screen" }}
+                      />
+                    </div>
+                  )}
                   {popupBirthday && (
                     <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 h-0 w-0">
                       <div
@@ -1314,7 +1438,9 @@ const LiveBoardPage = () => {
                       className={`relative rounded-full p-[6px] ${
                         popupBirthday
                           ? "bday-aurora-ring shadow-[0_0_90px_rgba(52,245,197,0.55)]"
-                          : `bg-gradient-to-br ${
+                          : popupRecords
+                            ? "record-gold-ring shadow-[0_0_90px_rgba(246,196,83,0.55)]"
+                            : `bg-gradient-to-br ${
                               WELCOME_RING[(latestPopup.league_snapshot || "white").toLowerCase()] ?? WELCOME_RING.white
                             } ${RANK_GLOW[(latestPopup.league_snapshot || "white").toLowerCase()] ?? RANK_GLOW.white}`
                       }`}
@@ -1358,11 +1484,15 @@ const LiveBoardPage = () => {
                   )}
                 </div>
                 {/* 사진·캐릭터일 때는 이름/리그 별도 표시 (SDBoxerCharacter 는 자체 포함). 생일 문구는 늘 */}
-                {(popupAvatarUrl || popupPartsJson || popupBirthday) && (
+                {(popupAvatarUrl || popupPartsJson || popupBirthday || popupRecords) && (
                   // 생일이면 글자 뒤에 어두운 판 — 금빛 꽃가루 위에서도 또렷하게
                   <div
                     className={`relative text-center ${
-                      popupBirthday ? "rounded-[2rem] bg-gray-950/80 px-14 py-5 ring-1 ring-white/10 backdrop-blur-sm" : ""
+                      popupBirthday
+                        ? "rounded-[2rem] bg-gray-950/80 px-14 py-5 ring-1 ring-white/10 backdrop-blur-sm"
+                        : popupRecords
+                          ? "rounded-[2rem] bg-gray-950/85 px-14 py-5 ring-1 ring-amber-300/30 backdrop-blur-sm"
+                          : ""
                     }`}
                   >
                     {(popupAvatarUrl || popupPartsJson) && (
@@ -1385,9 +1515,28 @@ const LiveBoardPage = () => {
                         <p className="mt-3 text-2xl font-black text-amber-100" style={{ textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>
                           🎉 오늘 생일이에요 · 다 같이 축하해 주세요! 👏
                         </p>
+                        {/* 생일 + 153 레코드 — 생일 화면은 그대로, 기록 이름만 한 줄 더 (2026-10-19) */}
+                        {popupRecords && (
+                          <p className="mt-2 text-xl font-black">
+                            <span className="bday-gold-text tracking-[0.15em]">🏆 153 RECORD</span>
+                            <span className="ml-2 text-amber-200">{popupRecords.join(" · ")}</span>
+                          </p>
+                        )}
                         {/* 앱 '축하하기' 안내 — 보낸 축하는 이 회원 카드에 '🎉 N'으로 쌓인다 */}
                         <p className="mt-2 text-lg font-bold text-white/70">
                           📱 마이복서153 앱 홈에서 <span className="font-black text-amber-200">🎂 축하하기</span>를 눌러 주세요
+                        </p>
+                      </>
+                    ) : popupRecords ? (
+                      <>
+                        <p
+                          className="bday-pop bday-gold-text mt-1 text-5xl font-black tracking-tight"
+                          style={{ filter: "drop-shadow(0 4px 14px rgba(0,0,0,0.75))" }}
+                        >
+                          {popupRecords.join(" · ")}
+                        </p>
+                        <p className="mt-3 text-2xl font-black text-amber-100" style={{ textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>
+                          153복싱짐 최초 기록 보유자 · 입실! Lv.{toGlobalLevel(latestPopup.league_snapshot, latestPopup.level_snapshot)}
                         </p>
                       </>
                     ) : (
@@ -1538,6 +1687,57 @@ const LiveBoardPage = () => {
                         </div>
                       </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── 153 레코드 — 오늘 온 최초 기록 보유자 띠 (2026-10-19 대표님 '라') ── */}
+          {/* 랭킹 띠처럼 모든 화면에(1번 화면은 우하단 QR 카드를 피해 오른쪽을 비운다). 한 줄에 다 안 들어가면 오늘 다녀간 회원 띠처럼 천천히 흐른다 */}
+          {recordHolders.length > 0 && (
+            <div className={`mx-4 mb-2 flex-shrink-0 rounded-xl p-[1.5px] record-gold-ring ${only1 ? "mr-[35rem]" : ""}`}>
+              <div className="flex items-center gap-4 overflow-hidden rounded-[11px] bg-gray-950/95 px-4 py-2.5">
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                  <span className="text-xl">🏆</span>
+                  <h2 className="bday-gold-text whitespace-nowrap text-base font-black tracking-widest">153 RECORD</h2>
+                  <span className="whitespace-nowrap text-sm font-bold text-amber-100/70">오늘 온 최초 기록 보유자</span>
+                </div>
+                <div
+                  ref={recordBoxRef}
+                  className="relative min-w-0 flex-1 overflow-hidden"
+                  style={
+                    recordOverflow
+                      ? {
+                          maskImage: "linear-gradient(to right, transparent 0, #000 40px, #000 calc(100% - 40px), transparent 100%)",
+                          WebkitMaskImage: "linear-gradient(to right, transparent 0, #000 40px, #000 calc(100% - 40px), transparent 100%)",
+                        }
+                      : undefined
+                  }
+                >
+                  {/* 길이 재기용 한 벌 (보이지 않음) — 넘치면 두 벌을 이어 흘린다 */}
+                  <div ref={recordMeasureRef} aria-hidden className="invisible absolute left-0 top-0 flex w-max items-center gap-6 whitespace-nowrap">
+                    {recordHolders.map((h) => (
+                      <span key={h.user_id} className="flex items-center gap-2">
+                        <span className="text-lg font-black">{h.name}</span>
+                        <span className="text-base font-bold">{h.records.join(" · ")}</span>
+                      </span>
+                    ))}
+                  </div>
+                  <div
+                    className="flex w-max items-center whitespace-nowrap"
+                    style={recordOverflow ? { animation: `tv-marquee ${Math.max(24, recordHolders.length * 8)}s linear infinite` } : undefined}
+                  >
+                    {(recordOverflow ? [0, 1] : [0]).map((copy) => (
+                      <div key={copy} className={`flex items-center gap-6 ${recordOverflow ? "pr-6" : ""}`} aria-hidden={copy === 1}>
+                        {recordHolders.map((h) => (
+                          <span key={`${copy}-${h.user_id}`} className="flex items-center gap-2">
+                            <span className="text-lg font-black text-white">{h.name}</span>
+                            <span className="text-base font-bold text-amber-200">{h.records.join(" · ")}</span>
+                          </span>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1733,6 +1933,7 @@ const LiveBoardPage = () => {
           onAddReal={handleMockAddReal}
           onAddMedalSamples={handleMockMedalSamples}
           onBirthdaySample={handleMockBirthday}
+          onRecordSample={handleMockRecord}
         />
       )}
 
