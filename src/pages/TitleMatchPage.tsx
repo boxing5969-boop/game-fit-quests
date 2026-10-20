@@ -6,6 +6,8 @@
  *   · 영상 = 그 리그 Lv.10 미션 영상 (hooks/useTitleMatchVideos). 코치 화면 → 미션에서 올리면 여기에 바로 나온다.
  *     아직 영상이 없는 리그는 '준비 중' — 2026-10-01 기준 화이트만 있고 블루·레드·블랙은 준비 중.
  *   · 영상을 누르면 동작 포인트와 함께 크게 재생. '따라했어요'는 내 레벨 연습과 같은 기기 저장(153_video_watched)을 쓴다.
+ *   · 레벨 10 · 20 칸은 제목 바로 밑에 '동작 외우기' 카드 — 총 몇 동작 · 외우는 말 · 순서 · 허리와 다리 회전 · 가드 · 밸런스
+ *     (2026-10-20 대표님, components/titlematch/TitleMissionGuideCard · 내용은 lib/titleMissionGuide).
  *   · 내 리그 칸이고 그 리그가 신청 흐름(지금은 화이트)이면 영상 위에 '타이틀미션' 카드 — ① 파트너 ② 연습 ③ 지점장님께
  *     심사 신청 + 심사 기준 + 신청 버튼·도전 기록 (2026-10-14 대표님, components/titlematch/TitleMatchChallengeCard).
  */
@@ -22,6 +24,7 @@ import { useTitleMatchVideos } from "@/hooks/useTitleMatchVideos";
 import { formatRankShort } from "@/lib/rankLabels";
 import { isTitleFlowFor } from "@/lib/titleMatchChallenge";
 import TitleMatchChallengeCard from "@/components/titlematch/TitleMatchChallengeCard";
+import TitleMissionGuideCard from "@/components/titlematch/TitleMissionGuideCard";
 import {
   TITLE_STAGES,
   defaultStage,
@@ -303,6 +306,9 @@ const TitleMatchPage = () => {
             )}
           </div>
         </div>
+
+        {/* 📋 동작 외우기 — 총 몇 동작 · 외우는 말 · 순서 · 허리와 다리 회전 · 가드 · 밸런스 (레벨 10 · 20, 2026-10-20 대표님) */}
+        <TitleMissionGuideCard league={stage.league} />
 
         {/* 🏆 타이틀미션 — 도전 방법·심사 기준·신청 (내 리그 칸 · 신청 흐름이 열린 리그 · 시범 지점 회원만) */}
         {state === "mine" && spot && isTitleFlowFor(stage.league, profile?.branch_name) && (
