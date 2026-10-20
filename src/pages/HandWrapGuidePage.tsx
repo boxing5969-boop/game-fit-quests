@@ -1,30 +1,38 @@
 /**
- * 🥊 붕대 감기 — 영상 · 집 연습 미션 (2026-10-13 대표님 처음 만듦).
+ * 🥊 붕대 감기 — 영상(각도 2개) · 사진으로 한 장씩 · 집 연습 미션 (2026-10-13 대표님 처음 만듦).
  *
  *   2026-10-17 대표님: "붕대 감기 버튼 손이 이상해 … 2가지 방식 모두 지워줘. 내가 직접 영상 찍어서 올려야 할 것 같아"
- *     → 그림으로 따라 하기(단계 넘기기 · 한눈에 보기)를 지우고 영상을 맨 위로. 영상은 대표님이 직접 찍어 올린다.
+ *     → 그림으로 따라 하기를 지우고 영상을 맨 위로.
+ *   2026-10-20 대표님: "구글 드라이브에 오늘 날짜로 붕대 감는 동영상 올렸거든 — 앱에 적용해 주고 다양한 각도로 회원님들이
+ *     쉽게 보고 배울 수 있도록. 한 장 한 장 사진과 설명으로, 영상이 어려운 분들은 그림을 보고 배울 수 있게"
+ *     → 대표님 영상 2개 = '옆에서' · '앞에서' 두 각도 (플레이어 안에서도 바꿔 볼 수 있고, 거울 · 0.5배속도 된다)
+ *     → '사진으로 한 장씩' 10장 (components/handwrap/HandWrapStepViewer) — '이 장면 영상으로 보기'로 그 장면 초부터 영상
  *
  *   신규 회원 첫날: 코치님은 한 손만 빠르게 감아 주고, 다른 손은 회원이 영상을 보며 직접 감는다.
  *   그리고 집에서 혼자 감아 보는 미션(HandWrapPracticeCard) — 다음 수업 때 코치님이 회원 상세에서 기록을 본다.
  *
- *   · 영상: 훈련 라이브러리 '복싱 붕대 감기' 항목의 영상 URL (코치·관장이 넣으면 바로 나온다). 없으면 '준비 중'.
- *   · 글: data/handWrapGuide.ts — 흔한 실수 · 영상 핵심 포인트.
+ *   · 영상: data/handWrapGuide HANDWRAP_ANGLES (public/handwrap/) + 훈련 라이브러리 '복싱 붕대 감기'에 코치가 넣은
+ *     영상이 있으면 '코치 영상' 칸으로 하나 더.
+ *   · 글: data/handWrapGuide.ts — 사진 10장 · 흔한 실수 · 영상 핵심 포인트.
  */
-import { useCallback, useState, type SyntheticEvent } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronLeft, ChevronRight, Clapperboard, Play, RotateCcw, X } from "lucide-react";
+import { Check, ChevronLeft, FlipHorizontal2, Gauge, Play, X } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
-import VideoPlayer from "@/components/VideoPlayer";
+import VideoPlayer, { type PlayerVariant } from "@/components/VideoPlayer";
 import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
-import { useAuth } from "@/contexts/AuthContext";
+import HandWrapStepViewer from "@/components/handwrap/HandWrapStepViewer";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useHandWrapVideo } from "@/hooks/useHandWrap";
-import { youtubeThumb } from "@/hooks/useLevelVideos";
 import { strictYoutubeId } from "@/lib/videoUrl";
-import { HANDWRAP_EXERCISE_NAME, HANDWRAP_KEY_POINTS, HANDWRAP_MISTAKES } from "@/data/handWrapGuide";
-import { isManagerRole } from "@/lib/rankLabels";
-import { cn } from "@/lib/utils";
+import {
+  HANDWRAP_ANGLES,
+  HANDWRAP_KEY_POINTS,
+  HANDWRAP_MISTAKES,
+  handWrapAngleIndex,
+  type HandWrapStep,
+} from "@/data/handWrapGuide";
 
 /** VideoPlayer 는 youtu.be·watch 주소만 embed 로 바꾼다 — shorts·embed 주소도 youtu.be 로 맞춰 넘긴다 (유튜브 호스트일 때만) */
 const playableUrl = (url: string) => {
@@ -32,18 +40,27 @@ const playableUrl = (url: string) => {
   return id ? `https://youtu.be/${id}` : url;
 };
 
-const hideImg = (e: SyntheticEvent<HTMLImageElement>) => {
-  e.currentTarget.style.display = "none";
-};
+/** 플레이어를 어느 각도 · 몇 초로 열지 */
+type Opened = { variant: number; startAt?: number };
 
 const HandWrapGuidePage = () => {
   const navigate = useNavigate();
-  const { role } = useAuth();
-  const isStaff = isManagerRole(role);
-  const [playing, setPlaying] = useState(false);
-  const closePlayer = useCallback(() => setPlaying(false), []);
-  useModalDismiss(playing, closePlayer);
-  const video = useHandWrapVideo();
+  const [opened, setOpened] = useState<Opened | null>(null);
+  const closePlayer = useCallback(() => setOpened(null), []);
+  useModalDismiss(!!opened, closePlayer);
+  const coach = useHandWrapVideo();
+
+  // 각도 2개 + (있으면) 코치가 훈련 라이브러리에 넣은 영상
+  const variants = useMemo<PlayerVariant[]>(() => {
+    const list: PlayerVariant[] = HANDWRAP_ANGLES.map((a) => ({ label: a.label, videoUrl: a.videoUrl, posterUrl: a.posterUrl }));
+    const extra = coach.data?.url;
+    if (extra && !HANDWRAP_ANGLES.some((a) => extra.endsWith(a.videoUrl))) {
+      list.push({ label: "코치 영상", videoUrl: playableUrl(extra), posterUrl: coach.data?.poster ?? null });
+    }
+    return list;
+  }, [coach.data]);
+
+  const watchStep = (step: HandWrapStep) => setOpened({ variant: handWrapAngleIndex(step.video.angle), startAt: step.video.at });
 
   const goBack = () => {
     const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
@@ -51,14 +68,12 @@ const HandWrapGuidePage = () => {
     else navigate("/home", { replace: true });
   };
 
-  const thumb = video.data ? video.data.poster || (strictYoutubeId(video.data.url) ? youtubeThumb(video.data.url) : null) : null;
-
   return (
     <AppPage
       header={
         <PageHeader
           title="붕대 감기"
-          subtitle="영상 · 집 연습 미션"
+          subtitle="영상 · 사진 · 집 연습 미션"
           sticky
           leftAction={
             <button
@@ -74,78 +89,65 @@ const HandWrapGuidePage = () => {
       }
     >
       <p className="px-1 text-[13px] leading-relaxed text-muted-foreground">
-        첫날엔 코치님이 한 손을 빠르게 감아 드려요. 다른 손은 영상을 보면서 직접 감아 보세요 — 주로 쓰는 손으로 감는 쪽이
-        쉬워요.
+        첫날엔 코치님이 한 손을 빠르게 감아 드려요. 다른 손은 영상이나 사진을 보면서 직접 감아 보세요 — 주로 쓰는 손으로 감는
+        쪽이 쉬워요.
       </p>
 
-      {/* ── 영상 ── */}
+      {/* ── 영상 — 두 각도 ── */}
       <section aria-labelledby="handwrap-video-h" className="mt-4">
         <h2 id="handwrap-video-h" className="px-1 text-[16px] font-black text-foreground">
           영상으로 보기
         </h2>
-        <div className="mt-2">
-          {video.isLoading ? (
-            <div className="overflow-hidden rounded-2xl bg-card shadow-elev-1" aria-busy="true" aria-label="영상 불러오는 중">
-              <div className="aspect-video w-full animate-pulse bg-muted" />
-            </div>
-          ) : video.isError ? (
-            <div className="rounded-2xl bg-card px-5 py-6 text-center shadow-elev-1">
-              <p className="text-[14px] font-bold text-foreground">영상을 불러오지 못했어요</p>
-              <button
-                type="button"
-                onClick={() => video.refetch()}
-                disabled={video.isRefetching}
-                className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary px-4 text-[13px] font-bold text-foreground active:scale-95 disabled:opacity-50"
-              >
-                <RotateCcw className={cn("h-4 w-4", video.isRefetching && "animate-spin")} /> 다시 시도
-              </button>
-            </div>
-          ) : video.data ? (
+        <p className="mt-0.5 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
+          같은 감기를 두 각도에서 찍었어요. 보기 편한 쪽을 골라 보세요
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-2.5">
+          {HANDWRAP_ANGLES.map((a, i) => (
             <button
+              key={a.key}
               type="button"
-              onClick={() => setPlaying(true)}
-              aria-label="붕대 감기 영상 보기"
-              className="group block w-full overflow-hidden rounded-2xl bg-card text-left shadow-elev-1 ring-1 ring-border/60"
+              onClick={() => setOpened({ variant: i })}
+              aria-label={`붕대 감기 영상 ${a.label} 보기`}
+              className="group block overflow-hidden rounded-2xl bg-card text-left shadow-elev-1 ring-1 ring-border/60"
             >
               <span className="relative block aspect-video w-full overflow-hidden bg-muted">
-                {thumb && <img src={thumb} alt="" loading="lazy" onError={hideImg} className="h-full w-full object-cover" />}
-                <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10" />
+                <img src={a.posterUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
                 <span className="absolute inset-0 flex items-center justify-center">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm transition-transform group-active:scale-90">
-                    <Play className="ml-1 h-6 w-6 fill-white text-white" />
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm transition-transform group-active:scale-90">
+                    <Play className="ml-0.5 h-5 w-5 fill-white text-white" />
                   </span>
                 </span>
+                <span className="absolute bottom-1.5 right-2 rounded bg-black/55 px-1.5 text-[10.5px] font-bold tabular-nums text-white">
+                  0:{String(a.seconds).padStart(2, "0")}
+                </span>
               </span>
-              <span className="block px-4 py-3">
-                <span className="block text-[15px] font-black text-foreground">153 붕대 감기 영상</span>
-                <span className="block text-[12.5px] text-muted-foreground">멈춰 가며 한 단계씩 따라 해도 돼요</span>
+              <span className="block px-3 py-2.5">
+                <span className="block text-[14px] font-black text-foreground">{a.label} 보기</span>
+                <span className="block truncate text-[11.5px] text-muted-foreground">{a.hint}</span>
               </span>
             </button>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-border bg-card/60 px-5 py-7 text-center">
-              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary">
-                <Clapperboard className="h-5 w-5 text-muted-foreground" />
-              </span>
-              <p className="mt-3 text-[15px] font-bold text-foreground">영상 준비 중이에요</p>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">153 코치님이 직접 감는 영상이 곧 올라와요. 그 전엔 수업 때 코치님께 물어보세요</p>
-              {isStaff && (
-                <div className="mt-4 rounded-xl bg-secondary px-3 py-2.5 text-left">
-                  <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-                    코치 안내 · 훈련 라이브러리 → ‘준비’ → ‘{HANDWRAP_EXERCISE_NAME}’ → 수정 → 영상 URL에 주소를 넣으면 여기에 바로
-                    나와요 (유튜브 주소도 돼요)
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/training-library")}
-                    className="mt-2 inline-flex h-9 items-center gap-1 rounded-full bg-card px-3 text-[12.5px] font-bold text-foreground ring-1 ring-border/60 active:scale-95"
-                  >
-                    훈련 라이브러리 열기 <ChevronRight className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+          ))}
         </div>
+        <div className="mt-2 flex flex-wrap gap-1.5 px-1">
+          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[11.5px] font-bold text-muted-foreground">
+            <FlipHorizontal2 className="h-3.5 w-3.5" /> 거울 — 좌우를 뒤집어 거울 보듯
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[11.5px] font-bold text-muted-foreground">
+            <Gauge className="h-3.5 w-3.5" /> 0.5배속으로 천천히
+          </span>
+        </div>
+      </section>
+
+      {/* ── 사진으로 한 장씩 ── */}
+      <section aria-labelledby="handwrap-steps-h" className="mt-7">
+        <h2 id="handwrap-steps-h" className="px-1 text-[16px] font-black text-foreground">
+          사진으로 한 장씩
+        </h2>
+        <p className="mt-0.5 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
+          영상이 빠르면 사진을 한 장씩 넘기며 따라 하세요. 옆으로 밀어도 넘어가요
+        </p>
+        <HandWrapStepViewer onWatch={watchStep} className="mt-2" />
       </section>
 
       {/* ── 집 연습 미션 ── */}
@@ -185,12 +187,16 @@ const HandWrapGuidePage = () => {
       </p>
 
       {/* 영상 플레이어 — body 로 띄워 어떤 부모 아래서도 화면 전체를 덮는다 */}
-      {playing &&
-        video.data &&
+      {opened &&
         createPortal(
           <VideoPlayer
-            videoUrl={playableUrl(video.data.url)}
-            posterUrl={video.data.poster}
+            key={`${opened.variant}-${opened.startAt ?? 0}`}
+            videoUrl={variants[0].videoUrl}
+            posterUrl={variants[0].posterUrl}
+            variants={variants}
+            initialVariant={opened.variant}
+            startAt={opened.startAt}
+            mirrorable
             title="153 붕대 감기"
             keyPoints={[...HANDWRAP_KEY_POINTS]}
             onClose={closePlayer}

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { X, Play, Pause, Maximize, RotateCcw } from "lucide-react";
+import { X, Play, Pause, Maximize, RotateCcw, FlipHorizontal2 } from "lucide-react";
 import VideoVariantTabs from "@/components/common/VideoVariantTabs";
 
 /** 같은 동작의 다른 버전 (실사 · 애니메이션 — 2026-10-01) */
@@ -20,6 +20,12 @@ interface VideoPlayerProps {
   challengeLabel?: string;
   /** 대표 영상을 포함한 모든 버전 — 2개 이상이면 영상 아래에 '실사 | 애니메이션' 칸이 뜬다 */
   variants?: ReadonlyArray<PlayerVariant>;
+  /** 처음 고를 버전 (variants 순서) — 붕대 감기 '앞에서 보기' (2026-10-20) */
+  initialVariant?: number;
+  /** 처음 열 때 이 초로 가서 멈춰 있는다 — '이 장면 영상으로 보기' (처음 연 영상에만, 버전을 바꾸면 처음부터) */
+  startAt?: number;
+  /** '거울' 단추 — 좌우를 뒤집어 거울 보듯 따라 하기 (2026-10-20 붕대 감기) */
+  mirrorable?: boolean;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -34,6 +40,9 @@ const VideoPlayer = ({
   challengeDisabled,
   challengeLabel = "🥊 도전 시작",
   variants,
+  initialVariant = 0,
+  startAt,
+  mirrorable = false,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -41,7 +50,12 @@ const VideoPlayer = ({
   const [error, setError] = useState(false);
   // 실사 | 애니메이션 — 고른 버전 (버전이 하나면 videoUrl 그대로)
   const versions = variants && variants.length > 1 ? variants : null;
-  const [versionIdx, setVersionIdx] = useState(0);
+  const [versionIdx, setVersionIdx] = useState(() =>
+    versions ? Math.min(Math.max(0, Math.floor(initialVariant) || 0), versions.length - 1) : 0,
+  );
+  const [mirrored, setMirrored] = useState(false);
+  // '이 장면 영상으로 보기' — 처음 연 영상에서 한 번만 그 초로 간다
+  const seekRef = useRef<number | null>(typeof startAt === "number" && startAt > 0 ? startAt : null);
   const current = versions ? versions[Math.min(versionIdx, versions.length - 1)] : null;
   const src = current ? current.videoUrl : videoUrl;
   const poster = current ? current.posterUrl ?? null : posterUrl;
@@ -51,6 +65,7 @@ const VideoPlayer = ({
     videoRef.current?.pause();
     setVersionIdx(i);
     // 새 영상은 처음부터 — 큰 재생 버튼이 다시 보인다 (속도는 그대로 이어간다)
+    seekRef.current = null;
     setPlaying(false);
     setError(false);
   };
@@ -130,12 +145,20 @@ const VideoPlayer = ({
               ref={videoRef}
               src={src}
               poster={poster || undefined}
-              className="h-full w-full object-contain"
+              className={`h-full w-full object-contain ${mirrored ? "-scale-x-100" : ""}`}
               onError={() => setError(true)}
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
               // 버전을 바꾸면 새 영상이 기본 속도로 돌아가므로 고른 속도를 다시 건다
-              onLoadedMetadata={(e) => { e.currentTarget.playbackRate = speed; }}
+              onLoadedMetadata={(e) => {
+                e.currentTarget.playbackRate = speed;
+                const at = seekRef.current;
+                if (at != null) {
+                  seekRef.current = null;
+                  const d = e.currentTarget.duration;
+                  e.currentTarget.currentTime = Number.isFinite(d) && d > 0 ? Math.min(at, Math.max(0, d - 0.5)) : at;
+                }
+              }}
               playsInline
             />
             {/* Big play button overlay */}
@@ -172,6 +195,19 @@ const VideoPlayer = ({
           >
             {speed}x
           </button>
+          {mirrorable && (
+            <button
+              type="button"
+              onClick={() => setMirrored((m) => !m)}
+              aria-pressed={mirrored}
+              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold active:scale-95 ${
+                mirrored ? "bg-foreground text-background" : "bg-secondary text-secondary-foreground"
+              }`}
+            >
+              <FlipHorizontal2 className="h-4 w-4" />
+              거울
+            </button>
+          )}
           <button onClick={goFullscreen} className="rounded-full bg-secondary p-2.5 active:scale-95">
             <Maximize className="h-5 w-5 text-secondary-foreground" />
           </button>
