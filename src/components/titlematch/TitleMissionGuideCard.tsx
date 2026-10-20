@@ -5,8 +5,8 @@
  *     총 몇 동작인지(주인공 숫자) → 소리 내어 외우는 말 → 덩어리별 순서(번호) →
  *     허리와 다리 회전 · 가드 · 밸런스 · 동작별 하는 법 · 심사에서 보는 것 · 외우는 방법(펼쳐 보기).
  *   레드(레벨 30) — 도전 순서:
- *     153 PB 22분(주인공 숫자) → 한 줄로 외우기 → ① 153 PB ② 1분 쉬기 ③ 연타 3번 ④ 미트 3번 받아주기 →
- *     파트너 규칙 → 153 PB 요령 · 1분 쉬는 동안 · 연타 · 미트 · 파트너 · 심사(펼쳐 보기).
+ *     153 PB 22분(주인공 숫자) → 한 줄로 외우기 → ① 153 PB ② 1분 쉬기 ③ 미트 치기 3연속 ④ 미트 받기 3연속 →
+ *     도전 기회 3번 → 파트너 규칙 → 153 PB 요령 · 1분 쉬는 동안 · 연타 · 미트 · 파트너 · 심사(펼쳐 보기).
  *   내용은 lib/titleMissionGuide.ts 한 곳 — 블랙은 아직 없어서 그리지 않는다.
  */
 import { Link } from "react-router-dom";
@@ -112,7 +112,7 @@ const MovesCard = ({ guide }: { guide: TitleMissionGuide }) => {
   );
 };
 
-/** 레드 — 도전 순서 (153 PB → 1분 → 연타 3번 → 미트 3번) */
+/** 레드 — 도전 순서 (153 PB → 1분 → 미트 치기 3연속 → 미트 받기 3연속 · 기회 3번) */
 const CourseCard = ({ course }: { course: TitleMissionCourse }) => {
   const headingId = `title-guide-${course.league}`;
 
@@ -165,8 +165,19 @@ const CourseCard = ({ course }: { course: TitleMissionCourse }) => {
         ))}
       </ol>
 
+      {/* 도전 기회 — 미트 치기 · 받기 3번 (대표님 원문) */}
+      <div className="mx-4 mt-4 rounded-xl bg-secondary/70 px-3.5 py-3">
+        <p className="text-[12.5px] font-black text-foreground">
+          <span aria-hidden className="mr-1">
+            🎯
+          </span>
+          {course.chances.title}
+        </p>
+        <p className="mt-0.5 text-[13px] font-semibold leading-relaxed text-foreground">{course.chances.text}</p>
+      </div>
+
       {/* 파트너 규칙 */}
-      <div className="mx-4 mt-4 rounded-xl bg-primary/10 px-3.5 py-3">
+      <div className="mx-4 mt-2 rounded-xl bg-primary/10 px-3.5 py-3">
         <p className="text-[12.5px] font-black text-foreground">
           <span aria-hidden className="mr-1">
             🤝

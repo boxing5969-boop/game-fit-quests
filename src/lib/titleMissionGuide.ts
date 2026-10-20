@@ -12,6 +12,7 @@
  * 레드(레벨 30)는 동작 하나가 아니라 '도전 순서'다 (2026-10-20 대표님 확정):
  *   "153 PB 22분 안에 통과 → 1분 후 연타 3회 정확히 성공 → 3회 미트 받아주기.
  *    파트너와 함께 도전해도 되고 혼자 도전해도 된다. 미트 받아주는 파트너는 있어야 함"
+ *   + "미트 치기 · 미트 받기는 3번 도전할 수 있어요. 중간에 틀려도 3번의 기회 동안 3번 연속으로 완벽히 성공하면 통과"
  *   → TITLE_MISSION_COURSES. 연타 동작은 아직 없다(대표님이 만들면 영상 공유) — 그때 combo 칸에 순서를 채운다.
  *   153 PB 종목·개수·타임캡의 정본은 lib/test153.ts (오픈 기준 8라운드 · 캡 25분).
  */
@@ -236,6 +237,8 @@ export interface TitleMissionCourse {
   /** 한 줄로 외우는 순서 */
   chant: string;
   steps: readonly TitleCourseStep[];
+  /** 도전 기회 규칙 (대표님 원문 그대로) */
+  chances: { title: string; text: string };
   /** 파트너 규칙 (대표님 원문 그대로) */
   partner: string;
   sections: readonly TitleGuideSection[];
@@ -245,14 +248,18 @@ export interface TitleMissionCourse {
 export const RED_TITLE_PB_LIMIT_MIN = 22;
 /** 153 PB 다음 연타까지 쉬는 시간 */
 export const RED_TITLE_REST_MIN = 1;
+/** 미트 치기 · 미트 받기 도전 기회 */
+export const RED_TITLE_MITT_CHANCES = 3;
+/** 통과 = 기회 안에 연속 완벽 성공 횟수 */
+export const RED_TITLE_MITT_STREAK = 3;
 
 export const TITLE_MISSION_COURSES: readonly TitleMissionCourse[] = [
   {
     league: "red",
     level: 30,
-    headline: "153 PB → 1분 쉬고 → 연타 3번 → 미트 3번",
+    headline: "153 PB → 1분 쉬고 → 연타 3연속 → 미트 3연속",
     hero: { value: String(RED_TITLE_PB_LIMIT_MIN), unit: "분 안", label: "153 PB 오픈" },
-    chant: "22분 완주 — 1분 쉬고 — 연타 셋 — 미트 셋",
+    chant: "22분 완주 — 1분 쉬고 — 연타 연속 셋 — 미트 연속 셋",
     steps: [
       {
         title: `153 PB ${RED_TITLE_PB_LIMIT_MIN}분 안에 완주`,
@@ -263,15 +270,19 @@ export const TITLE_MISSION_COURSES: readonly TitleMissionCourse[] = [
         detail: "완주하고 1분 뒤 바로 다음 단계예요. 숨을 고르며 글러브와 미트를 준비해요.",
       },
       {
-        title: "연타 3번 정확히 성공",
-        detail: "파트너가 받아 주는 미트에 연타를 3번 — 3번 모두 순서·자세·가드가 정확해야 해요.",
+        title: "미트 치기 — 연타 3번 연속 완벽히",
+        detail: "파트너가 받아 주는 미트에 연타를 쳐요. 순서·자세·가드가 완벽한 연타를 3번 연속 성공하면 통과예요.",
         pending: "연타 동작은 영상이 올라오면 여기에 순서가 나와요",
       },
       {
-        title: "미트 3번 받아주기",
-        detail: "이어서 파트너가 치는 똑같은 연타를 내가 미트로 3번 받아 줘요.",
+        title: "미트 받기 — 3번 연속 완벽히",
+        detail: "이어서 파트너가 치는 똑같은 연타를 내가 미트로 받아 줘요. 3번 연속 완벽히 받아 주면 통과예요.",
       },
     ],
+    chances: {
+      title: `도전 기회 ${RED_TITLE_MITT_CHANCES}번`,
+      text: "미트 치기 · 미트 받기는 3번 도전할 수 있어요. 중간에 틀려도 3번의 기회 동안 3번 연속으로 완벽히 성공하면 통과예요.",
+    },
     partner: "혼자 도전해도 되고, 파트너와 함께 도전해도 돼요. 미트를 받아 줄 파트너는 꼭 있어야 해요.",
     sections: [
       {
@@ -295,21 +306,22 @@ export const TITLE_MISSION_COURSES: readonly TitleMissionCourse[] = [
       },
       {
         key: "combo",
-        title: "연타 3번 — 이렇게 봐요",
+        title: "미트 치기(연타) — 이렇게 봐요",
         points: [
           "연타 동작은 아직 준비 중이에요. 영상이 올라오면 이 카드에 순서와 총 동작 수가 나와요.",
           "정확히 = 순서를 틀리지 않고, 친 손은 바로 턱 옆으로, 치지 않는 손은 가드 그대로.",
           "숨이 찬 상태에서도 자세가 무너지지 않는지가 레드 미션의 핵심이에요.",
-          "3번 모두 정확해야 다음 단계(미트 받아주기)로 가요.",
+          "3번 연속 완벽히 성공하면 통과 — 중간에 틀려도 기회 3번 안에서 다시 3번 연속을 만들면 돼요.",
         ],
       },
       {
         key: "mitt",
-        title: "미트 받아주기 3번",
+        title: "미트 받기 3번 연속",
         points: [
           "미트는 내 얼굴 앞, 파트너 펀치가 뻗어 닿는 거리에 들어요. 맞는 순간 살짝 마주 밀어 줘요.",
           "다음 펀치가 올 자리로 미트를 먼저 옮겨 줘요 — 파트너가 순서대로 칠 수 있게 길을 열어 주는 거예요.",
           "받아 주는 동안에도 내 스탠스와 균형을 지켜요. 레벨 30을 넘으면 다른 회원님을 지도하는 리그예요.",
+          "미트 받기도 기회 3번 — 3번 연속 완벽히 받아 주면 통과예요.",
         ],
       },
       {
@@ -326,8 +338,9 @@ export const TITLE_MISSION_COURSES: readonly TitleMissionCourse[] = [
         title: "심사에서 보는 것",
         points: [
           "153 PB 오픈 완주 기록 22:00 안",
-          "완주 1분 뒤 연타 3번 — 3번 모두 정확히",
-          "이어서 파트너의 똑같은 연타를 미트로 3번 받아 주기",
+          "완주 1분 뒤 미트 치기 — 연타 3번 연속 완벽히",
+          "이어서 미트 받기 — 파트너의 똑같은 연타를 3번 연속 완벽히 받아 주기",
+          "미트 치기 · 받기는 기회 3번 — 중간에 틀려도 3번의 기회 안에 3번 연속 완벽히 성공하면 통과",
           "레드 타이틀매치(레벨 30)는 관장님이 직접 보고 확인해요",
         ],
       },

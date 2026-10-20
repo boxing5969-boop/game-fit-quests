@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  RED_TITLE_MITT_CHANCES,
+  RED_TITLE_MITT_STREAK,
   RED_TITLE_PB_LIMIT_MIN,
   RED_TITLE_REST_MIN,
   TITLE_MISSION_COURSES,
@@ -54,7 +56,7 @@ describe("타이틀 미션 동작 외우기", () => {
     }
   });
 
-  it("레드 = 레벨 30 · 153 PB 22분 → 1분 → 연타 3번 → 미트 3번 (대표님 2026-10-20)", () => {
+  it("레드 = 레벨 30 · 153 PB 22분 → 1분 → 미트 치기 3연속 → 미트 받기 3연속 · 기회 3번 (대표님 2026-10-20)", () => {
     const c = titleMissionCourseFor("red")!;
     expect(c.level).toBe(30);
     expect(RED_TITLE_PB_LIMIT_MIN).toBe(22);
@@ -62,7 +64,18 @@ describe("타이틀 미션 동작 외우기", () => {
     // 22분은 153 PB 타임캡(25분) 안이어야 한다
     expect(RED_TITLE_PB_LIMIT_MIN * 60_000).toBeLessThan(TEST153_CAP_MS);
     expect(c.hero.value).toBe("22");
-    expect(c.steps.map((s) => s.title)).toEqual(["153 PB 22분 안에 완주", "1분 쉬기", "연타 3번 정확히 성공", "미트 3번 받아주기"]);
+    expect(c.steps.map((s) => s.title)).toEqual([
+      "153 PB 22분 안에 완주",
+      "1분 쉬기",
+      "미트 치기 — 연타 3번 연속 완벽히",
+      "미트 받기 — 3번 연속 완벽히",
+    ]);
+    // 미트 치기 · 받기 = 기회 3번, 그 안에 3번 연속 완벽 성공이면 통과 (중간에 틀려도 됨)
+    expect(RED_TITLE_MITT_CHANCES).toBe(3);
+    expect(RED_TITLE_MITT_STREAK).toBe(3);
+    expect(c.chances.title).toBe("도전 기회 3번");
+    expect(c.chances.text).toContain("중간에 틀려도");
+    expect(c.chances.text).toContain("3번 연속으로 완벽히");
     // 라운드당 평균 = 22분 ÷ 8라운드 = 2분 45초
     expect((22 * 60) / 8).toBe(165);
     expect(c.steps[0].detail).toContain("2분 45초");
@@ -77,6 +90,7 @@ describe("타이틀 미션 동작 외우기", () => {
     const judge = c.sections.find((s) => s.key === "judge")!.points.join(" ");
     expect(judge).toContain("22:00");
     expect(judge).toContain("1분 뒤");
+    expect(judge).toContain("기회 3번");
   });
 
   it("금지 문구가 없다", () => {
