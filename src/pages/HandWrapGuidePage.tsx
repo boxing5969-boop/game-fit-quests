@@ -7,6 +7,7 @@
  *     쉽게 보고 배울 수 있도록. 한 장 한 장 사진과 설명으로, 영상이 어려운 분들은 그림을 보고 배울 수 있게"
  *     → 대표님 영상 2개 = '옆에서' · '앞에서' 두 각도 (플레이어 안에서도 바꿔 볼 수 있고, 거울 · 0.5배속도 된다)
  *     → '사진으로 한 장씩' 10장 (components/handwrap/HandWrapStepViewer) — '이 장면 영상으로 보기'로 그 장면 초부터 영상
+ *     → 같은 날 "애니메이션화 · 배경 없애 줘 · 감는 방향 상세하게" → '한 단계씩' = 배경 지운 짧은 반복 영상 + 방향 화살표
  *
  *   신규 회원 첫날: 코치님은 한 손만 빠르게 감아 주고, 다른 손은 회원이 영상을 보며 직접 감는다.
  *   그리고 집에서 혼자 감아 보는 미션(HandWrapPracticeCard) — 다음 수업 때 코치님이 회원 상세에서 기록을 본다.
@@ -73,7 +74,7 @@ const HandWrapGuidePage = () => {
       header={
         <PageHeader
           title="붕대 감기"
-          subtitle="영상 · 사진 · 집 연습 미션"
+          subtitle="영상 · 단계별 방향 화살표 · 집 연습 미션"
           sticky
           leftAction={
             <button
@@ -139,13 +140,13 @@ const HandWrapGuidePage = () => {
         </div>
       </section>
 
-      {/* ── 사진으로 한 장씩 ── */}
+      {/* ── 한 단계씩 — 배경 지운 짧은 영상 + 감는 방향 화살표 (2026-10-20 대표님) ── */}
       <section aria-labelledby="handwrap-steps-h" className="mt-7">
         <h2 id="handwrap-steps-h" className="px-1 text-[16px] font-black text-foreground">
-          사진으로 한 장씩
+          한 단계씩 · 감는 방향 화살표
         </h2>
         <p className="mt-0.5 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
-          영상이 빠르면 사진을 한 장씩 넘기며 따라 하세요. 옆으로 밀어도 넘어가요
+          영상이 빠르면 단계마다 짧은 영상을 보며 따라 하세요. 화살표가 감는 방향이에요 · 옆으로 밀어도 넘어가요
         </p>
         <HandWrapStepViewer onWatch={watchStep} className="mt-2" />
       </section>

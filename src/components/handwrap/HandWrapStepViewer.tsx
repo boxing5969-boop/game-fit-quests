@@ -1,13 +1,17 @@
 /**
- * 📷 붕대 감기 — 사진으로 한 장씩 (2026-10-20 대표님: "한 장 한 장 사진과 설명을 통해 영상이 어려운 분들은 그림을 보고 배울 수 있도록").
+ * 📷 붕대 감기 — 단계별로 한 장씩 (2026-10-20 대표님: "한 장 한 장 사진과 설명을 통해 영상이 어려운 분들은 그림을 보고 배울 수 있도록").
+ *   2026-10-20 대표님: "애니메이션화 시키고 배경 없애 줘 — 감는 방향, 올라가는 대각선, 내려가는 방향 등등 상세하게"
+ *   → 큰 그림 자리가 배경 지운 4~5초 반복 영상(소리 없음)이 됐다. 마지막 장면에서 멈추고 감는 방향 화살표가 그려진다.
+ *     움직임 줄이기 설정이면 화살표까지 그려진 마지막 장면(포스터)만 보여 준다.
  *
- *   큰 사진 1장 + 몇 번째 장인지 + 제목 · 설명 · 포인트 → 이전 · 다음 (옆으로 밀어도 넘어간다) → 아래 작은 사진 줄로 바로 가기.
- *   '이 장면 영상으로 보기'를 누르면 그 장면이 나오는 각도의 영상을 그 초부터 연다 (onWatch).
- *   사진 · 글은 data/handWrapGuide.ts HANDWRAP_STEPS 한 곳.
+ *   큰 영상 + 몇 번째 장인지 + 보는 방향 · 화살표 읽는 법 + 제목 · 설명 · 포인트 → 이전 · 다음 (옆으로 밀어도 넘어간다)
+ *   → 아래 작은 그림 줄로 바로 가기.
+ *   '이 장면 영상으로 보기'를 누르면 그 장면이 나오는 각도의 원본 영상을 그 초부터 연다 (onWatch).
+ *   영상 · 글은 data/handWrapGuide.ts HANDWRAP_STEPS 한 곳.
  */
 import { useEffect, useRef, useState, type TouchEvent } from "react";
-import { ChevronLeft, ChevronRight, Play } from "lucide-react";
-import { HANDWRAP_STEPS, type HandWrapStep } from "@/data/handWrapGuide";
+import { ChevronLeft, ChevronRight, Eye, Play } from "lucide-react";
+import { HANDWRAP_ARROW_LEGEND, HANDWRAP_STEPS, HANDWRAP_VIEW_NOTE, type HandWrapStep } from "@/data/handWrapGuide";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -17,6 +21,14 @@ interface Props {
 
 const SWIPE_PX = 40;
 
+const prefersReducedMotion = () => {
+  try {
+    return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+};
+
 const HandWrapStepViewer = ({ onWatch, className }: Props) => {
   const steps = HANDWRAP_STEPS;
   const total = steps.length;
@@ -24,6 +36,7 @@ const HandWrapStepViewer = ({ onWatch, className }: Props) => {
   const step = steps[idx];
   const touchX = useRef<number | null>(null);
   const stripRef = useRef<HTMLOListElement>(null);
+  const [still] = useState(prefersReducedMotion);
 
   const go = (i: number) => setIdx(Math.min(total - 1, Math.max(0, i)));
 
@@ -63,21 +76,46 @@ const HandWrapStepViewer = ({ onWatch, className }: Props) => {
     <div className={cn("overflow-hidden rounded-2xl bg-card shadow-elev-1 ring-1 ring-border/60", className)}>
       {/* 큰 사진 */}
       <div
-        className="relative aspect-[4/3] w-full overflow-hidden bg-muted"
+        className="relative aspect-[4/3] w-full overflow-hidden bg-[#F5F8F7]"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
-        aria-roledescription="사진 넘기기"
+        aria-roledescription="단계 넘기기"
       >
-        <img
-          key={step.image}
-          src={step.image}
-          alt={`${idx + 1}단계 ${step.title}`}
-          className="h-full w-full object-cover"
-          decoding="async"
-        />
+        {still ? (
+          <img
+            key={step.image}
+            src={step.image}
+            alt={`${idx + 1}단계 ${step.title} — 감는 방향 화살표`}
+            className="h-full w-full object-contain"
+            decoding="async"
+          />
+        ) : (
+          <video
+            key={step.clip}
+            src={step.clip}
+            poster={step.image}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-label={`${idx + 1}단계 ${step.title} — 감는 방향 화살표가 나오는 짧은 영상`}
+            className="h-full w-full object-contain"
+          />
+        )}
         <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[12.5px] font-black tabular-nums text-white backdrop-blur-sm">
           {idx + 1} / {total}
         </span>
+      </div>
+      <div className="space-y-0.5 border-b border-border/60 px-4 py-2 text-[11.5px] font-semibold leading-snug text-muted-foreground">
+        <p className="flex items-center gap-1.5">
+          <Eye aria-hidden className="h-3.5 w-4 shrink-0 text-foreground" />
+          {HANDWRAP_VIEW_NOTE[step.view]}
+        </p>
+        <p className="flex items-center gap-1.5">
+          <span aria-hidden className="h-1.5 w-4 shrink-0 rounded-full bg-[#10B981]" />
+          {HANDWRAP_ARROW_LEGEND}
+        </p>
       </div>
 
       {/* 글 */}
