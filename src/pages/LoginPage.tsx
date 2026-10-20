@@ -374,9 +374,9 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
-      {/* Logo — CSS 워드마크 (PNG 의존 0). 검정 픽셀 0, 흰 글자 + 시안 외곽 */}
+      {/* Logo — CSS 워드마크 (PNG 의존 0). 밝은 바탕이라 빛 번짐 없는 light (2026-10-20 대표님: QR 찍었을 때 또렷하지 않다) */}
       <div className="mb-5 animate-bounce-in text-center">
-        <MyBoxerWordmark size="md" align="center" className="mx-auto" />
+        <MyBoxerWordmark size="md" align="center" tone="light" className="mx-auto" />
         <p className="mt-3 text-xs text-muted-foreground">
           153복싱짐 회원을 위한 복싱 성장 퀘스트 앱
         </p>

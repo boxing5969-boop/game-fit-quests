@@ -22,6 +22,11 @@ export interface MyBoxerWordmarkProps {
   size?: MyBoxerWordmarkSize;
   align?: "start" | "center";
   className?: string;
+  /**
+   * dark — 어두운 바탕용(흰 글자 + 시안 빛). light — 밝은 바탕용: 빛 번짐 없이 진한 글자 · 또렷한 민트
+   * (2026-10-20 대표님: QR 찍었을 때 로고 색이 또렷하지 않고 깨져 보인다 → 밝은 화면은 light)
+   */
+  tone?: "dark" | "light";
 }
 
 interface SizeSpec {
@@ -44,12 +49,20 @@ const CYAN = "rgb(45, 212, 191)";        // tailwind teal-400 톤
 const CYAN_SOFT = "rgba(45, 212, 191, 0.55)";
 const CYAN_GLOW = "rgba(45, 212, 191, 0.7)";
 
+/** 밝은 바탕 — 라이트 팔레트 (153-visual-output): 글자 ink · 민트는 칠하는 색/글자 색 분리 */
+const INK = "#11161A";
+const INK2 = "#5A666C";
+const MINT = "#10B981";
+const MINT_INK = "#07784F";
+
 const MyBoxerWordmark = ({
   size = "md",
   align = "center",
   className = "",
+  tone = "dark",
 }: MyBoxerWordmarkProps) => {
   const s = SIZE_MAP[size];
+  if (tone === "light") return <LightWordmark s={s} align={align} className={className} />;
 
   const containerStyle: CSSProperties = {
     gap: s.gap,
@@ -162,5 +175,51 @@ const MyBoxerWordmark = ({
     </div>
   );
 };
+
+/** 밝은 바탕용 — 앱 아이콘과 같은 진한 M3 타일 + 진한 글자. 빛 번짐(text-shadow) · 반투명 글자 없음 */
+const LightWordmark = ({ s, align, className }: { s: SizeSpec; align: "start" | "center"; className: string }) => (
+  <div
+    className={`inline-flex items-center ${className}`}
+    style={{ gap: s.gap, justifyContent: align === "center" ? "center" : "flex-start" }}
+    role="img"
+    aria-label="MY BOXER 마이복서 by 153 BOXING GYM"
+  >
+    <div
+      className="relative inline-flex shrink-0 items-center justify-center"
+      style={{
+        width: s.iconBox,
+        height: s.iconBox,
+        borderRadius: s.iconBox * 0.24,
+        background: "linear-gradient(145deg, #1B2430 0%, #0B0F17 100%)",
+        border: `${s.iconBorder}px solid ${MINT}`,
+        boxShadow: "0 6px 16px -6px rgba(17,22,26,0.45)",
+      }}
+    >
+      <span
+        className="font-black text-white"
+        style={{ fontSize: s.iconText, fontFamily: "'Space Grotesk', system-ui, sans-serif", letterSpacing: "-0.04em" }}
+      >
+        M3
+      </span>
+    </div>
+    <div className="flex flex-col" style={{ gap: s.byline * 0.3 }}>
+      <span
+        className="font-black"
+        style={{ fontSize: s.myBoxer, lineHeight: 1, letterSpacing: "0.04em", color: INK, fontFamily: "'Space Grotesk', system-ui, sans-serif" }}
+      >
+        MY BOXER
+      </span>
+      <span className="font-black" style={{ fontSize: s.hangul * 1.05, color: MINT_INK, letterSpacing: "0.32em" }}>
+        마이복서153
+      </span>
+      <span
+        className="font-bold uppercase"
+        style={{ fontSize: s.byline, color: INK2, letterSpacing: "0.14em", fontFamily: "'Space Grotesk', system-ui, sans-serif" }}
+      >
+        by <span style={{ color: INK }}>153 BOXING GYM</span>
+      </span>
+    </div>
+  </div>
+);
 
 export default MyBoxerWordmark;
