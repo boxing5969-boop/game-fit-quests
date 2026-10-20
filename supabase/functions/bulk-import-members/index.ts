@@ -14,7 +14,6 @@ const json = (body: unknown, status = 200) =>
 
 const onlyDigits = (s: unknown) => String(s ?? "").replace(/[^0-9]/g, "");
 
-// 날짜 정규화: "2026-09-14" / "2026. 9. 14." / Date → "YYYY-MM-DD" or null
 function toISODate(v: unknown): string | null {
   if (v === null || v === undefined || v === "" || v === "-") return null;
   const s = String(v).trim();
@@ -28,9 +27,7 @@ function toISODate(v: unknown): string | null {
   return null;
 }
 
-// 브로제이 회원정보 일괄 등록 — 관리자 전용.
-// 행마다: auth 계정 생성(이메일/비번 = 전화번호) → handle_new_user 트리거가 프로필·역할·진행도 생성
-//          → 프로필 is_approved=true + 등록일/만료일 + must_change_credentials=true 로 UPDATE.
+// 브로제이 회원정보 일괄 등록 — 관리자 전용. 중복 전화번호는 수강권 정보 갱신.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -42,7 +39,6 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const authHeader = req.headers.get("Authorization") || "";
 
-    // 1) 호출자 인증 + 권한(관리자/관장/코치만)
     const caller = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
       auth: { autoRefreshToken: false, persistSession: false },
@@ -65,13 +61,11 @@ Deno.serve(async (req) => {
       (r: { role: string }) => r.role === "admin" || r.role === "super_admin",
     );
 
-    // 2) 입력
     const body = await req.json();
     const members: Array<Record<string, unknown>> = Array.isArray(body?.members) ? body.members : [];
     if (!members.length) return json({ error: "등록할 회원이 없습니다." }, 400);
     if (members.length > 1000) return json({ error: "한 번에 1000명까지만 가능합니다." }, 400);
 
-    // 지점 스코프: 관장/코치는 본인 지점에만, 마스터(admin/super_admin)는 지정한 지점에.
     const { data: callerProfile } = await admin
       .from("profiles")
       .select("branch_name")
@@ -91,6 +85,7 @@ Deno.serve(async (req) => {
     if (!branchRow) return json({ error: `등록되지 않은 지점입니다: ${effectiveBranch}` }, 400);
 
     let created = 0;
+    let updated = 0;
     let skipped = 0;
     const failed: Array<{ name: string; phone: string; reason: string }> = [];
 
@@ -102,14 +97,21 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // 중복 전화번호 skip
       const { data: dup } = await admin
         .from("profiles")
         .select("user_id")
         .eq("phone_number", phone)
         .maybeSingle();
       if (dup) {
-        skipped++;
+        await admin
+          .from("profiles")
+          .update({
+            gym_reg_date: toISODate(m.reg_date),
+            membership_end: toISODate(m.membership_end),
+            payment_total: onlyDigits(m.payment) ? Number(onlyDigits(m.payment)) : null,
+          })
+          .eq("user_id", dup.user_id);
+        updated++;
         continue;
       }
 
@@ -131,13 +133,13 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // handle_new_user 트리거가 프로필/역할/진행도 생성 → 승인 + 등록일/만료일 + 최초변경 플래그 UPDATE
       const { error: upErr } = await admin
         .from("profiles")
         .update({
           is_approved: true,
           gym_reg_date: toISODate(m.reg_date),
           membership_end: toISODate(m.membership_end),
+          payment_total: onlyDigits(m.payment) ? Number(onlyDigits(m.payment)) : null,
           must_change_credentials: true,
         })
         .eq("user_id", cu.user.id);
@@ -148,7 +150,7 @@ Deno.serve(async (req) => {
       created++;
     }
 
-    return json({ ok: true, branch: effectiveBranch, total: members.length, created, skipped, failed });
+    return json({ ok: true, branch: effectiveBranch, total: members.length, created, updated, skipped, failed });
   } catch (e) {
     console.error("bulk-import-members error:", e);
     return json({ error: "처리 중 오류가 발생했습니다. 다시 시도해주세요." }, 500);
