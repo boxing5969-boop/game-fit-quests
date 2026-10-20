@@ -3,6 +3,7 @@
 //   `bun run build` 앞에서 돌아, 같은 번호의 파일이 둘 이상이면 알린다.
 //   · 클로드 세션(CLAUDECODE=1)에서 돌면 빌드를 멈춘다 — 푸시 전에 번호를 고치게.
 //   · Cloudflare Pages · CI · 그 밖의 곳은 알리기만 하고 빌드를 계속한다(배포는 절대 막지 않는다).
+//   · GitHub 「앱 자동 검사」는 MIGRATIONS_STRICT=1 — 겹치면 검사만 빨간불(배포와 무관).
 import { readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,7 +12,8 @@ import { fileURLToPath } from "node:url";
 const KNOWN_DUPLICATES = new Set(["20260712000000", "20261015235500"]);
 
 const env = process.env;
-const strict = !!env.CLAUDECODE && !env.CF_PAGES && !env.CI;
+// GitHub 자동 검사(ci.yml)는 MIGRATIONS_STRICT=1 로 돌려 겹치면 빨간불 — Cloudflare 배포는 그대로 막지 않는다 (2026-10-20)
+const strict = env.MIGRATIONS_STRICT === "1" || (!!env.CLAUDECODE && !env.CF_PAGES && !env.CI);
 
 try {
   const dir = join(dirname(fileURLToPath(import.meta.url)), "..", "supabase", "migrations");

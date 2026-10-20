@@ -1,0 +1,67 @@
+# 마이복서153 앱 자동 검사 (2026-10-20 대표님: "여러 계정으로 업데이트해도 문제 없이 앱에 잘 적용되게")
+#
+# · 어느 계정이 어느 브랜치에 올리든 같은 검사를 돈다 — 두 계정의 수정이 합쳐져 앱이 깨지면 여기서 빨간불.
+# · 빨간불이면 GitHub 이 메일로 알린다. 배포(Cloudflare Pages)는 막지 않는다 — 다음 작업 전에 먼저 고친다.
+# · 순서: 마이그레이션 번호 겹침 → 타입 검사 → 테스트 → 빌드 (CLAUDE.md 「두 계정 동시 작업」)
+# · 공개 저장소라 로그가 공개된다 — 비밀값을 쓰지 않는다(빌드는 가짜 주소·키로).
+name: 앱 자동 검사
+
+on:
+  push:
+    branches: ["**"]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "ios-app/**"
+      - "android/**"
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: 설치
+        run: bun install
+
+      - name: 마이그레이션 번호 겹침
+        run: node scripts/check-migrations.mjs
+        env:
+          MIGRATIONS_STRICT: "1"
+
+      - name: 타입 검사
+        run: node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json
+
+      - name: 테스트
+        run: node node_modules/vitest/vitest.mjs run
+
+      - name: 빌드
+        run: bun run build
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: ci-dummy-key
+
+      - name: 결과 안내
+        if: failure()
+        run: |
+          {
+            echo "### ✖ 앱 자동 검사 실패"
+            echo "위 단계 중 빨간 단계의 로그를 보세요. 고쳐서 다시 올리면 자동으로 다시 돕니다."
+            echo "다른 계정 커밋이 원인이어도 되돌리지 말고 고쳐서 올립니다 (CLAUDE.md 「두 계정 동시 작업」)."
+          } >> "$GITHUB_STEP_SUMMARY"

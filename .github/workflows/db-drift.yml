@@ -1,0 +1,41 @@
+# DB 어긋남 점검 (2026-10-20 대표님: "여러 계정으로 업데이트해도 문제 없이 앱에 잘 적용되게")
+#
+# · 운영 DB 함수 본문 지문(public.repo_drift_fingerprints)과 저장소 supabase/migrations 정의를 비교한다.
+#   DB 에서만 고치고 저장소에 안 남긴 함수 · 저장소에 있는데 DB 에 안 들어간 함수가 새로 생기면 빨간불 + 메일.
+# · 매일 07:40 KST, 그리고 마이그레이션·점검 파일이 main 에 올라올 때.
+# · 이미 알던 어긋남은 scripts/db-drift-baseline.json(기준선) — 고친 뒤 --write-baseline 으로 다시 저장.
+# · 비밀값 없음: 운영 사이트에 공개된 앱 키로 지문(이름·md5)만 읽는다.
+name: DB 어긋남 점검
+
+on:
+  schedule:
+    - cron: "40 22 * * *"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "scripts/check-db-drift.mjs"
+      - "scripts/db-drift-baseline.json"
+      - ".github/workflows/db-drift.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: db-drift
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: DB 함수 ↔ 저장소 비교
+        run: node scripts/check-db-drift.mjs
