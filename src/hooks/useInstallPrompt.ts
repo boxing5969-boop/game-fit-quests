@@ -6,12 +6,14 @@
  *   · iOS Safari — beforeinstallprompt 미지원. iOS 감지 후 '공유 → 홈 화면에 추가' 안내 노출
  *   · 이미 설치된 standalone 상태 — 둘 다 숨김 (재설치 불필요)
  *   · 데스크탑 Chrome — beforeinstallprompt 지원, 동일 흐름
+ *   · 안드로이드 폰(앱 밖 브라우저) — 2026-10-20 구글 플레이 출시: 웹 설치 대신 구글 플레이로 ('android-store')
  *
  * 보호 원칙: 회원 노출 텍스트는 한글, 보호 영역 (payment/Workers/door) 무관.
  */
 
 import { useCallback, useEffect, useState } from "react";
 import { isIosApp } from "@/lib/iosApp";
+import { isAndroidBrowser, isInAndroidApp } from "@/lib/androidApp";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -22,6 +24,7 @@ export type InstallStatus =
   | "loading"        // 초기 — 아직 플랫폼 판단 전
   | "installable"    // Android/Chrome — beforeinstallprompt 잡혀서 prompt() 호출 가능
   | "ios-manual"     // iOS Safari — 수동 안내 필요
+  | "android-store"  // 안드로이드 폰 브라우저 — 구글 플레이 앱 받기 (2026-10-20)
   | "installed"      // 이미 standalone 모드로 실행 중
   | "unsupported";   // 그 외 (in-app webview 등) — 버튼 숨김
 
@@ -59,9 +62,16 @@ export function useInstallPrompt() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // 이미 설치된 상태면 prompt 잡을 필요 없음 (아이폰 앱(App Store) 안도 '설치됨' — 2026-10-19)
-    if (isStandalone() || isIosApp()) {
+    // 이미 설치된 상태면 prompt 잡을 필요 없음 (아이폰 앱(App Store) 안도 '설치됨' — 2026-10-19,
+    //   구글 플레이 앱 안도 '설치됨' — 2026-10-20)
+    if (isStandalone() || isIosApp() || isInAndroidApp()) {
       setStatus("installed");
+      return;
+    }
+
+    // 안드로이드 폰 — 구글 플레이 앱으로 (카카오톡 안 화면 같은 곳에서도 링크는 열린다)
+    if (isAndroidBrowser()) {
+      setStatus("android-store");
       return;
     }
 

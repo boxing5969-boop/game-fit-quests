@@ -52,9 +52,11 @@ const BOARD_QR_NOTICE_SUB = "앱에서 QR을 통해 출석체크 부탁드립니
  * 폰 기본 카메라로 찍으면 회원 앱이 열리고(로그인 전이면 로그인 화면), 로그인 화면에
  * '앱으로 설치하기' 버튼(아이폰은 홈 화면에 추가 안내)이 있다 — components/install/InstallAppButton.
  * 첫 로그인 정보는 안내물에 쓰지 않는다 — 데스크에서 안내 (안내물 보안 규칙).
+ * 2026-10-20 대표님: 구글 스토어 출시 — 안드로이드는 찍으면 구글 플레이로(components/install/AndroidAppGate),
+ *   아이폰은 지금처럼 로그인 화면 '앱으로 설치하기'.
  */
 const BOARD_APP_NOTICE_MAIN = "📲 이 QR로 앱 다운로드도 돼요";
-const BOARD_APP_NOTICE_SUB = "폰 카메라로 찍기 → 로그인 화면 ‘앱으로 설치하기’";
+const BOARD_APP_NOTICE_SUB = "안드로이드: 찍으면 구글 플레이 · 아이폰: 로그인 화면 ‘앱으로 설치하기’";
 const BOARD_APP_NOTICE_HINT = "첫 로그인은 데스크에서 안내해 드려요";
 
 interface TokenRes {

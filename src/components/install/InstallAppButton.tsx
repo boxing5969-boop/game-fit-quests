@@ -2,7 +2,8 @@
  * 마이복서153 — '앱으로 설치' 버튼 + iOS 안내 모달.
  *
  * 로그인 화면 / 홈 등 어디에든 mount 하면 자동으로 플랫폼 판단:
- *   · Android Chrome  — beforeinstallprompt 잡힌 후 버튼 노출 → 클릭 시 native prompt
+ *   · Android 폰       — 구글 플레이 '마이복서153' 받기 링크 (2026-10-20 출시 — 웹 설치 대신)
+ *   · 그 외 Chrome     — beforeinstallprompt 잡힌 후 버튼 노출 → 클릭 시 native prompt
  *   · iOS Safari      — 자동으로 안내 모달 노출 (공유 → 홈 화면에 추가)
  *   · 이미 설치됨      — 버튼 숨김 (반복 권유 방지)
  *   · in-app webview  — 숨김 (인스타/카톡 in-app 등에서 설치 불가)
@@ -13,6 +14,7 @@
 import { useEffect, useState } from "react";
 import { Download, Smartphone, Share, Plus, X } from "lucide-react";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
+import { PLAY_STORE_URL } from "@/lib/androidApp";
 
 const IOS_DISMISS_KEY = "myboxer.installPrompt.ios.dismissedAt";
 const IOS_REPROMPT_DAYS = 14;
@@ -61,6 +63,20 @@ const InstallAppButton = ({ inline = false, label = "앱으로 설치하기" }: 
   // 노출 분기
   if (status === "loading" || status === "installed" || status === "unsupported") {
     return null;
+  }
+
+  const btnClass = inline
+    ? "inline-flex items-center justify-center gap-2 rounded-pill border border-primary/50 bg-primary/10 px-4 py-2 text-[12.5px] font-bold text-primary transition-all active:scale-95 hover:bg-primary/20"
+    : "flex w-full items-center justify-center gap-2 rounded-card bg-gradient-to-r from-primary to-primary/85 px-4 py-3 text-[13.5px] font-bold text-primary-foreground shadow-[0_4px_14px_-4px_rgba(11,15,23,0.6)] transition-all active:scale-[0.98] hover:brightness-110";
+
+  // 안드로이드 — 구글 플레이로 (2026-10-20 대표님: 구글 스토어 출시)
+  if (status === "android-store") {
+    return (
+      <a href={PLAY_STORE_URL} aria-label="구글 플레이에서 마이복서153 앱 받기" className={btnClass}>
+        <Download className="h-4 w-4" />
+        구글 플레이에서 앱 받기
+      </a>
+    );
   }
 
   const handleClick = async () => {

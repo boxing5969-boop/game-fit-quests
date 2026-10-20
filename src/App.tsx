@@ -11,6 +11,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import LoginPage from "@/pages/LoginPage";
+import AndroidAppGate from "@/components/install/AndroidAppGate";
 import NotFound from "@/pages/NotFound";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { isManagerRole } from "@/lib/rankLabels";
@@ -279,7 +280,8 @@ const AppRoutes = () => {
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         {/* MY복서 — 예전 홈 화면(라이센스 카드·오늘의 할 일·순위). 첫 화면은 전체 메뉴만 (2026-09-29 대표님) */}
         <Route path="/myboxer" element={<ProtectedRoute><HomePage view="myboxer" /></ProtectedRoute>} />
-        <Route path="/qr-checkin" element={<ProtectedRoute><QrCheckinPage /></ProtectedRoute>} />
+        {/* 안드로이드 폰이 앱 밖 브라우저로 QR 을 열면 먼저 구글 플레이 안내 (2026-10-20 대표님: 구글 스토어 출시) */}
+        <Route path="/qr-checkin" element={<AndroidAppGate><ProtectedRoute><QrCheckinPage /></ProtectedRoute></AndroidAppGate>} />
         <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
         <Route path="/quests" element={<Navigate to="/missions" replace />} />
         {/* /levelmap 은 /rank-up 안에 levelmap 탭으로 통합됨. 기존 링크 깨짐 방지용 리다이렉트. */}
