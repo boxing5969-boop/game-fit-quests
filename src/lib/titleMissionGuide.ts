@@ -8,6 +8,12 @@
  *   · 블루 Lv.10(=레벨 20): 콤보 드릴 18동작 — 영상 음성 콜 그대로 (정면 1회 · 측면 1회)
  * 동작 세는 법은 블루 '18동작'과 같다 — 원투는 한 동작.
  * 오른손잡이(왼발 앞) 기준 — 왼손잡이는 좌우를 바꾼다.
+ *
+ * 레드(레벨 30)는 동작 하나가 아니라 '도전 순서'다 (2026-10-20 대표님 확정):
+ *   "153 PB 22분 안에 통과 → 1분 후 연타 3회 정확히 성공 → 3회 미트 받아주기.
+ *    파트너와 함께 도전해도 되고 혼자 도전해도 된다. 미트 받아주는 파트너는 있어야 함"
+ *   → TITLE_MISSION_COURSES. 연타 동작은 아직 없다(대표님이 만들면 영상 공유) — 그때 combo 칸에 순서를 채운다.
+ *   153 PB 종목·개수·타임캡의 정본은 lib/test153.ts (오픈 기준 8라운드 · 캡 25분).
  */
 
 export interface TitleMove {
@@ -21,8 +27,22 @@ export interface TitleMoveGroup {
   moves: readonly TitleMove[];
 }
 
+export type TitleGuideSectionKey =
+  | "rotation"
+  | "guard"
+  | "balance"
+  | "moves"
+  | "judge"
+  | "memorize"
+  // 레드 도전 순서 (TITLE_MISSION_COURSES)
+  | "pb"
+  | "rest"
+  | "combo"
+  | "mitt"
+  | "partner";
+
 export interface TitleGuideSection {
-  key: "rotation" | "guard" | "balance" | "moves" | "judge" | "memorize";
+  key: TitleGuideSectionKey;
   title: string;
   points: readonly string[];
 }
@@ -196,6 +216,127 @@ export const TITLE_MISSION_GUIDES: readonly TitleMissionGuide[] = [
     ],
   },
 ];
+
+// ── 레드(레벨 30) — 도전 순서 ─────────────────────────────────
+
+export interface TitleCourseStep {
+  title: string;
+  /** 한 줄 기준 */
+  detail: string;
+  /** 아직 준비 중인 것 — 카드에 '준비 중' 표시와 함께 보여 준다 */
+  pending?: string;
+}
+
+export interface TitleMissionCourse {
+  league: "red";
+  level: 30;
+  headline: string;
+  /** 주인공 숫자 — "22" + "분 안" */
+  hero: { value: string; unit: string; label: string };
+  /** 한 줄로 외우는 순서 */
+  chant: string;
+  steps: readonly TitleCourseStep[];
+  /** 파트너 규칙 (대표님 원문 그대로) */
+  partner: string;
+  sections: readonly TitleGuideSection[];
+}
+
+/** 레드 153 PB 통과 기준 — 오픈 완주 22분 안 (2026-10-20 대표님) */
+export const RED_TITLE_PB_LIMIT_MIN = 22;
+/** 153 PB 다음 연타까지 쉬는 시간 */
+export const RED_TITLE_REST_MIN = 1;
+
+export const TITLE_MISSION_COURSES: readonly TitleMissionCourse[] = [
+  {
+    league: "red",
+    level: 30,
+    headline: "153 PB → 1분 쉬고 → 연타 3번 → 미트 3번",
+    hero: { value: String(RED_TITLE_PB_LIMIT_MIN), unit: "분 안", label: "153 PB 오픈" },
+    chant: "22분 완주 — 1분 쉬고 — 연타 셋 — 미트 셋",
+    steps: [
+      {
+        title: `153 PB ${RED_TITLE_PB_LIMIT_MIN}분 안에 완주`,
+        detail: "오픈 기준 8라운드(셀트런 100m → 스테이션)를 22분 안에 — 라운드당 평균 2분 45초예요.",
+      },
+      {
+        title: `${RED_TITLE_REST_MIN}분 쉬기`,
+        detail: "완주하고 1분 뒤 바로 다음 단계예요. 숨을 고르며 글러브와 미트를 준비해요.",
+      },
+      {
+        title: "연타 3번 정확히 성공",
+        detail: "파트너가 받아 주는 미트에 연타를 3번 — 3번 모두 순서·자세·가드가 정확해야 해요.",
+        pending: "연타 동작은 영상이 올라오면 여기에 순서가 나와요",
+      },
+      {
+        title: "미트 3번 받아주기",
+        detail: "이어서 파트너가 치는 똑같은 연타를 내가 미트로 3번 받아 줘요.",
+      },
+    ],
+    partner: "혼자 도전해도 되고, 파트너와 함께 도전해도 돼요. 미트를 받아 줄 파트너는 꼭 있어야 해요.",
+    sections: [
+      {
+        key: "pb",
+        title: "153 PB 22분 통과 요령",
+        points: [
+          "22분 = 라운드당 평균 2분 45초. 라운드가 끝날 때마다 시계를 보고 이 속도를 지켜요.",
+          "앞 라운드에서 힘을 다 쓰지 않아요 — 빨리 하고 오래 쉬기보다, 천천히라도 멈추지 않는 쪽이 빨라요.",
+          "푸시업 · 버피는 한계까지 버티지 말고 힘이 남았을 때 미리 끊어 쉬어요. 끝까지 버티면 다음 개수가 무너져요.",
+          "기록은 오픈 기준이에요 (스타터 기록은 이 미션에 쓰지 않아요). 종목과 개수는 랭킹 → 153 PB에서 볼 수 있어요.",
+        ],
+      },
+      {
+        key: "rest",
+        title: "1분 쉬는 동안",
+        points: [
+          "완주 시각을 확인하고 1분 뒤 바로 연타를 시작해요. 1분보다 길게 쉬지 않아요.",
+          "코로 들이마시고 입으로 길게 내쉬며 숨을 골라요.",
+          "글러브를 끼고, 파트너는 미트를 들고 자리에 서요. 첫 연타를 머릿속으로 한 번 그려 봐요.",
+        ],
+      },
+      {
+        key: "combo",
+        title: "연타 3번 — 이렇게 봐요",
+        points: [
+          "연타 동작은 아직 준비 중이에요. 영상이 올라오면 이 카드에 순서와 총 동작 수가 나와요.",
+          "정확히 = 순서를 틀리지 않고, 친 손은 바로 턱 옆으로, 치지 않는 손은 가드 그대로.",
+          "숨이 찬 상태에서도 자세가 무너지지 않는지가 레드 미션의 핵심이에요.",
+          "3번 모두 정확해야 다음 단계(미트 받아주기)로 가요.",
+        ],
+      },
+      {
+        key: "mitt",
+        title: "미트 받아주기 3번",
+        points: [
+          "미트는 내 얼굴 앞, 파트너 펀치가 뻗어 닿는 거리에 들어요. 맞는 순간 살짝 마주 밀어 줘요.",
+          "다음 펀치가 올 자리로 미트를 먼저 옮겨 줘요 — 파트너가 순서대로 칠 수 있게 길을 열어 주는 거예요.",
+          "받아 주는 동안에도 내 스탠스와 균형을 지켜요. 레벨 30을 넘으면 다른 회원님을 지도하는 리그예요.",
+        ],
+      },
+      {
+        key: "partner",
+        title: "파트너",
+        points: [
+          "혼자 도전 — 153 PB와 연타는 나 혼자 해요. 파트너는 내 연타를 미트로 받아 주고, 내 미트에 연타를 쳐 줘요.",
+          "함께 도전 — 둘이 153 PB부터 같이 하고, 서로 미트를 받아 줘요.",
+          "어느 쪽이든 미트를 받아 줄 파트너는 꼭 있어야 해요.",
+        ],
+      },
+      {
+        key: "judge",
+        title: "심사에서 보는 것",
+        points: [
+          "153 PB 오픈 완주 기록 22:00 안",
+          "완주 1분 뒤 연타 3번 — 3번 모두 정확히",
+          "이어서 파트너의 똑같은 연타를 미트로 3번 받아 주기",
+          "레드 타이틀매치(레벨 30)는 관장님이 직접 보고 확인해요",
+        ],
+      },
+    ],
+  },
+];
+
+export const titleMissionCourseFor = (league: string): TitleMissionCourse | null =>
+  TITLE_MISSION_COURSES.find((c) => c.league === league) ?? null;
 
 export const titleMissionGuideFor = (league: string): TitleMissionGuide | null =>
   TITLE_MISSION_GUIDES.find((g) => g.league === league) ?? null;
