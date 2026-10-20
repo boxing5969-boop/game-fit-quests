@@ -9,6 +9,8 @@
  *   · 2026-10-16: 최초 기록을 세우면 마일리지 10,000 (DB 트리거) · 아레나 칸 → '최초 153 PB 완주'
  *     기록 칸 목록은 records153Service RECORD_153_FIRSTS (랭킹·명예의 전당 띠와 같이 씀)
  *   · 2026-10-16: '대회의 역사' — 153복싱짐이 처음 나간 대회의 우승·준우승 (한 칸에 여러 명, 메달 그림은 이름 옆 메달과 같다)
+ *   · 2026-10-20: '마이복서153 최초 결제' · '최초 153 PB 1위 · 남자/여자' — 1위 칸은 빈 칸 안내가 한 달 일정에 따라 바뀌고,
+ *     새겨지면 1위 기록(시간)을 같이 보여 준다 (lib/record153PbTop)
  */
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,10 +20,12 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MedalBadge } from "@/components/MedalMark";
+import { pbTopEmptyText, pbTopValueLabel } from "@/lib/record153PbTop";
 import FunChallengeArenaSheet from "@/components/engagement/FunChallengeArenaSheet";
 import {
   RECORD_153_FIRSTS,
   RECORD_153_MILEAGE,
+  RECORD_153_PB_TOP,
   RECORD_153_TOURNAMENT,
   RECORDS_153_KEY,
   sortTournamentHolders,
@@ -74,18 +78,23 @@ const Record153Board = ({ onOpenMember }: Props) => {
     return (
       <section className="space-y-2.5">
         <h3 className="px-1 text-[13px] font-black tracking-wide text-muted-foreground">{SECTION_TITLE[section]}</h3>
-        {items.map((f) => (
-          <RecordCard
-            key={f.key}
-            no={f.no}
-            emoji={f.emoji}
-            title={f.title}
-            desc={f.desc}
-            empty={f.empty}
-            rec={byKey.get(f.key) ?? null}
-            onOpenMember={onOpenMember}
-          />
-        ))}
+        {items.map((f) => {
+          const pbTop = RECORD_153_PB_TOP[f.key];
+          const rec = byKey.get(f.key) ?? null;
+          return (
+            <RecordCard
+              key={f.key}
+              no={f.no}
+              emoji={f.emoji}
+              title={f.title}
+              desc={f.desc}
+              empty={pbTop ? pbTopEmptyText(pbTop, data?.pb_top_window ?? null) : f.empty}
+              valueLabel={pbTop && rec ? pbTopValueLabel(rec.value) : null}
+              rec={rec}
+              onOpenMember={onOpenMember}
+            />
+          );
+        })}
       </section>
     );
   };
@@ -235,6 +244,7 @@ const RecordCard = ({
   title,
   desc,
   empty,
+  valueLabel,
   rec,
   onOpenMember,
 }: {
@@ -243,6 +253,8 @@ const RecordCard = ({
   title: string;
   desc: string;
   empty: string;
+  /** 1위 기록처럼 숫자가 있는 기록 — 이름 옆에 크게 */
+  valueLabel?: string | null;
   rec: Record153First | null;
   onOpenMember?: (m: { id: string; nickname: string }) => void;
 }) => {
@@ -290,6 +302,12 @@ const RecordCard = ({
           {fmtDate(rec.achieved_at)} · {desc}
         </p>
       </div>
+      {valueLabel && (
+        <span className="shrink-0 text-right leading-tight">
+          <span className="block text-[10.5px] font-bold text-muted-foreground">1위 기록</span>
+          <span className="block text-[16px] font-black tabular-nums text-reward">{valueLabel}</span>
+        </span>
+      )}
       {rec.is_me && (
         <span className="shrink-0 rounded-pill bg-primary/15 px-2.5 py-1 text-[11.5px] font-black text-primary">내 기록</span>
       )}
