@@ -1,6 +1,8 @@
 // 수강권/부가상품 결제 — 회원: 탭(주5회·주3회·PT·용품·렌탈·1일권) + 상품 선택 후 결제 / 관장·마스터: 상품 관리.
 // 수강권 탭은 정상가·할인율·원/일(하루 단가)을 노출하는 153멤버십 선택형 카드.
 // 결제는 payssam-create-bill 엣지함수가 결제선생 청구서를 만들고 결제 URL(shortUrl)을 반환 → 그 URL 로 이동.
+// 2026-10-21 대표님: 칠금점은 결제선생이 아직 없다 → 그 지점 회원에게는 가격표·결제 대신 '계좌이체 · 현장 결제' 안내만
+//   (lib/branchPayment · components/membership/OfflinePayCard). 결제선생 흐름(선릉역점)은 그대로.
 import { useState, useEffect, useCallback, useRef } from "react";
 import { CreditCard, Plus, Pencil, Trash2, X, Settings, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +14,8 @@ import PayssamInspectPanel from "@/components/PayssamInspectPanel";
 import { calcRefund, normalDailyRate, SIM_MONTHS } from "@/lib/refundPolicy";
 import { useMyMileage } from "@/hooks/useMileage";
 import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
+import { isOfflinePayBranch } from "@/lib/branchPayment";
+import OfflinePayCard from "@/components/membership/OfflinePayCard";
 
 /** 153 마일리지 — 이번 결제에 쓸 수 있는 최대 점수 = min(보유, 결제 금액의 10%) 를 1,000 단위로 (서버 mileage_max_use 와 같은 식) */
 const maxMileageUse = (balance: number, price: number) =>
@@ -268,7 +272,10 @@ const MembershipProducts = () => {
   //    스태프는 아래에서 관리 패널을 함께 보되, 이 미리보기는 회원이 실제로
   //    보는 것과 동일하도록 활성 상품만(비활성 제외) 기준으로 렌더한다.
   const memberBase = isStaff ? products.filter((p) => p.is_active) : products;
+  // 데스크 결제 지점(칠금점) — 결제선생 결제를 열지 않는다
+  const offlinePay = isOfflinePayBranch(branch);
   const memberView = (() => {
+    if (offlinePay && branch) return <OfflinePayCard branch={branch} />;
     if (memberBase.length === 0) return null;
     const activeCats = CATS.filter((c) => memberBase.some((p) => c.match(p)));
     const cat = activeCats.find((c) => c.key === activeCatKey) ?? activeCats[0];

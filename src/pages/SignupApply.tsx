@@ -7,6 +7,9 @@
 //   수강권 선택·결제 없이 [계정 정보 → 추가 정보 → 규정 동의 → 가입 완료]로 끝난다.
 //   · 방문자: 그 계정을 내가 정한 아이디·비밀번호로 넘겨받는다(레벨·출석·수강권 기록 그대로) → 바로 로그인.
 //   · 소셜 로그인 회원: 기존 연동(link-imported-by-phone)으로 기존 계정의 기록을 이 계정에 합친다.
+// 지점 고르기(2026-10-21 대표님: "칠금점 수강권은 따로 결제선생을 통해서 구축해야 돼. 일단 계좌이체와 오프라인 결제만"):
+//   1단계 맨 위에서 지점을 고른다(선릉역점 · 칠금점). 선릉역점은 지금과 똑같이 수강권 선택 → 결제선생.
+//   칠금점은 결제 단계 대신 '계좌이체 · 현장 결제' 안내 → 가입 신청만 하고 승인 대기 (데스크가 결제 확인 후 승인).
 import { useState, useEffect, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,8 +19,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { GYM_POLICIES } from "@/data/gymPolicies";
 import { kstToday } from "@/lib/levelPractice";
 import { toast } from "sonner";
+import { SIGNUP_BRANCHES, branchShortName, isOfflinePayBranch } from "@/lib/branchPayment";
+import OfflinePayCard from "@/components/membership/OfflinePayCard";
 
-const BRANCH = "153복싱짐 선릉역점";
 const AGREEMENT_VERSION = "2026-06";
 const toFakeEmail = (id: string) => `${id.toLowerCase().trim()}@153rankup.app`;
 const rawDigits = (s: string) => s.replace(/[^0-9]/g, "");
@@ -50,6 +54,8 @@ type MemberMode = "new" | "existing";
 const inputClass =
   "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground";
 const STEPS_NEW = ["계정 정보", "추가 정보", "규정 동의", "수강권 선택"];
+/** 데스크 결제 지점(칠금점) 신규 회원 — 결제 대신 결제 안내 */
+const STEPS_NEW_OFFLINE = ["계정 정보", "추가 정보", "규정 동의", "결제 안내"];
 const STEPS_EXISTING = ["계정 정보", "추가 정보", "규정 동의"];
 
 const SignupApply = () => {
@@ -64,7 +70,13 @@ const SignupApply = () => {
   const [memberMode, setMemberMode] = useState<MemberMode>("new");
   const [checking, setChecking] = useState(false);
   const [registeredPhone, setRegisteredPhone] = useState(false); // 이미 앱 계정이 있는 번호 → 로그인 안내 버튼
-  const steps = memberMode === "existing" ? STEPS_EXISTING : STEPS_NEW;
+  // 다닐 지점 — 소셜 로그인 회원은 이미 고른 지점이 목록에 있으면 그대로, 아니면 직접 고른다
+  const [branch, setBranch] = useState<string>(() => {
+    const mine = (profile as { branch_name?: string | null } | null)?.branch_name ?? "";
+    return SIGNUP_BRANCHES.some((b) => b.name === mine) ? mine : "";
+  });
+  const offline = isOfflinePayBranch(branch);
+  const steps = memberMode === "existing" ? STEPS_EXISTING : offline ? STEPS_NEW_OFFLINE : STEPS_NEW;
   const lastStep = steps.length;
 
   // 계정
@@ -104,7 +116,8 @@ const SignupApply = () => {
   // 소셜 로그인 사용자: 기존 프로필 값 프리필(사용자가 입력 중이면 덮어쓰지 않음)
   useEffect(() => {
     if (!profile) return;
-    const p = profile as { name?: string; nickname?: string; phone_number?: string; birth_date?: string; gender?: string };
+    const p = profile as { name?: string; nickname?: string; phone_number?: string; birth_date?: string; gender?: string; branch_name?: string | null };
+    if (p.branch_name && SIGNUP_BRANCHES.some((b) => b.name === p.branch_name)) setBranch((v) => v || (p.branch_name as string));
     if (p.name) setName((v) => v || (p.name as string));
     if (p.nickname) setNickname((v) => v || (p.nickname as string));
     if (p.phone_number) setPhone((v) => v || formatPhone(p.phone_number as string));
@@ -116,6 +129,7 @@ const SignupApply = () => {
   const setAllAgree = (v: boolean) => setAgree(Object.fromEntries(GYM_POLICIES.map((p) => [p.key, v])));
 
   const validateStep1 = () => {
+    if (!branch) return "다니실 지점을 골라 주세요";
     if (!loggedIn) {
       const id = username.trim().toLowerCase();
       if (!/^[a-z0-9_]{4,20}$/.test(id)) return "아이디는 영문·숫자·밑줄(_) 4~20자여야 합니다";
@@ -182,7 +196,8 @@ const SignupApply = () => {
   };
 
   const submit = async () => {
-    if (!productId) return setErr("수강권(개월수)을 선택해주세요");
+    if (!branch) return setErr("다니실 지점을 골라 주세요");
+    if (!offline && !productId) return setErr("수강권(개월수)을 선택해주세요");
     setErr("");
     setSubmitting(true);
     try {
@@ -218,7 +233,7 @@ const SignupApply = () => {
               name: name.trim(),
               nickname: nickname.trim(),
               phone_number: phoneDigits,
-              branch_name: BRANCH,
+              branch_name: branch,
               birth_date: birth,
               is_coach_request: false,
             },
@@ -239,7 +254,7 @@ const SignupApply = () => {
             name: name.trim(),
             nickname: nickname.trim(),
             phone_number: phoneDigits,
-            branch_name: BRANCH,
+            branch_name: branch,
             birth_date: birth,
             gender,
             fitness_goal: goal.trim() || null,
@@ -257,6 +272,17 @@ const SignupApply = () => {
             return;
           }
         }
+      }
+      // 데스크 결제 지점(칠금점) — 결제선생으로 가지 않는다. 가입 신청만 하고 승인 대기 (데스크가 결제 확인 후 승인)
+      if (offline) {
+        if (!uid) {
+          setErr("가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+          return;
+        }
+        await refreshProfile();
+        toast.success(`가입 신청이 끝났어요. ${branchShortName(branch)} 데스크에서 결제(계좌이체 · 현장)가 확인되면 승인돼요.`);
+        navigate("/waiting-approval", { replace: true });
+        return;
       }
       const { data, error } = await supabase.functions.invoke("payssam-create-bill", { body: { product_id: productId } });
       if (error || (data && (data as { error?: string }).error)) {
@@ -397,7 +423,7 @@ const SignupApply = () => {
         </button>
         <div>
           <h1 className="text-lg font-bold text-foreground">{existing ? "기존 회원 앱 가입" : "신규 회원 가입 신청"}</h1>
-          <p className="text-[11px] text-muted-foreground">153복싱짐 선릉역점</p>
+          <p className="text-[11px] text-muted-foreground">{branch ? branch : "다니실 지점을 골라 주세요"}</p>
         </div>
       </div>
 
@@ -426,6 +452,25 @@ const SignupApply = () => {
       {/* STEP 1 — 계정 */}
       {step === 1 && (
         <div className="space-y-3">
+          {/* 지점 — 선릉역점은 앱 결제, 칠금점은 계좌이체 · 현장 결제 (2026-10-21) */}
+          <Field label="다니실 지점">
+            <div className="flex gap-2">
+              {SIGNUP_BRANCHES.map((b) => (
+                <button
+                  key={b.name}
+                  type="button"
+                  onClick={() => { setBranch(b.name); setProductId(""); }}
+                  aria-pressed={branch === b.name}
+                  className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${branch === b.name ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                >
+                  {b.label}
+                </button>
+              ))}
+            </div>
+            {offline && (
+              <p className="mt-1 px-1 text-[11px] leading-relaxed text-muted-foreground">{branchShortName(branch)}은 앱 결제 대신 계좌이체 · 현장 결제로 받아요. 가입 신청 뒤 데스크에서 승인해 드려요.</p>
+            )}
+          </Field>
           {loggedIn ? (
             <div className="rounded-xl bg-primary/5 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">소셜 계정으로 로그인됨 — 아래 가입 정보만 작성하면 됩니다.</div>
           ) : (
@@ -495,8 +540,11 @@ const SignupApply = () => {
         </div>
       )}
 
-      {/* STEP 4 — 수강권 선택 (신규 회원만) */}
-      {step === 4 && !existing && (
+      {/* STEP 4 — 결제 안내 (데스크 결제 지점 신규 회원) */}
+      {step === 4 && !existing && offline && <OfflinePayCard branch={branch} context="signup" />}
+
+      {/* STEP 4 — 수강권 선택 (신규 회원 · 앱 결제 지점) */}
+      {step === 4 && !existing && !offline && (
         <div className="space-y-2.5">
           <p className="px-1 text-xs text-muted-foreground">등록하실 수강권을 선택하세요. 다음 단계에서 안전한 결제창으로 이동합니다.</p>
           {products.map((p) => (
@@ -529,6 +577,10 @@ const SignupApply = () => {
         ) : existing ? (
           <button onClick={submitExisting} disabled={submitting} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
             {submitting ? "처리 중..." : "가입 완료 (결제 없음)"}
+          </button>
+        ) : offline ? (
+          <button onClick={submit} disabled={submitting} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+            {submitting ? "처리 중..." : "가입 신청하기 (결제는 데스크에서)"}
           </button>
         ) : (
           <button onClick={submit} disabled={submitting || !productId} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">

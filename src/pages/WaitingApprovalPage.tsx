@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { isOfflinePayBranch } from "@/lib/branchPayment";
+import OfflinePayCard from "@/components/membership/OfflinePayCard";
 
 const WaitingApprovalPage = () => {
   const { profile, signOut, refreshProfile } = useAuth();
@@ -47,12 +49,24 @@ const WaitingApprovalPage = () => {
         <p className="mb-2 text-muted-foreground">
           관장님이 가입을 승인하면 로그인할 수 있습니다.
         </p>
-        <p className="mb-2 text-sm text-muted-foreground">
-          수강권을 결제하셨다면 결제가 확인되는 대로 자동으로 들어가요.
-        </p>
-        <p className="mb-6 text-sm text-muted-foreground">
-          소속: <span className="font-medium text-foreground">{profile?.branch_name || "미지정"}</span>
-        </p>
+        {isOfflinePayBranch(profile?.branch_name) ? (
+          <>
+            <p className="mb-2 text-sm text-muted-foreground">
+              소속: <span className="font-medium text-foreground">{profile?.branch_name}</span>
+            </p>
+            {/* 칠금점 — 앱 결제가 없다. 계좌이체 · 현장 결제 후 데스크가 승인 (2026-10-21 대표님) */}
+            <OfflinePayCard branch={profile!.branch_name as string} context="waiting" className="mx-auto mb-6 max-w-sm" />
+          </>
+        ) : (
+          <>
+            <p className="mb-2 text-sm text-muted-foreground">
+              수강권을 결제하셨다면 결제가 확인되는 대로 자동으로 들어가요.
+            </p>
+            <p className="mb-6 text-sm text-muted-foreground">
+              소속: <span className="font-medium text-foreground">{profile?.branch_name || "미지정"}</span>
+            </p>
+          </>
+        )}
         <button
           onClick={handleLogout}
           className="rounded-xl border border-border px-8 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-muted active:scale-[0.98]"
