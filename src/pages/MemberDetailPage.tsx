@@ -1076,6 +1076,7 @@ const MILEAGE_KIND_LABEL: Record<string, string> = {
   level_up: "레벨업",
   title_match: "타이틀매치",
   record: "153 레코드",
+  milestone: "출석 축하",
   adjust: "사용·조정",
 };
 

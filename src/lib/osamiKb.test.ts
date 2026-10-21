@@ -48,6 +48,11 @@ const DIRECT: [string, string][] = [
   ["출석했는데 반영이 안돼요", "att-missing"],
   ["운동 종료 버튼 뭐예요", "att-finish"],
   ["마일리지 어떻게 쌓여요", "rw-mileage"],
+  // 출석 기록 · 50회마다 축하 (2026-10-21)
+  ["이번 달 출석 몇 번 했는지 어디서 봐요", "att-record"],
+  ["총 출석 수 확인하고 싶어요", "att-record"],
+  ["출석 50회 보상 뭐예요", "rw-attendance-milestone"],
+  ["100번 출석하면 뭐 줘요", "rw-attendance-milestone"],
   ["마일리지 어디에 써요", "rw-mileage-use"],
   ["젬은 어떻게 얻어요", "rw-gems"],
   ["챔피언머니 뭐예요", "rw-gems"],

@@ -16,7 +16,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
 
-export type MileageKind = "attendance" | "level_up" | "title_match" | "adjust";
+export type MileageKind = "attendance" | "level_up" | "title_match" | "adjust" | "record" | "milestone";
 
 export interface MileageRules {
   enabled: boolean;

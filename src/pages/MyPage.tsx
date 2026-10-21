@@ -7,6 +7,7 @@ import MembershipCard from "@/components/MembershipCard";
 import AvatarUpload from "@/components/AvatarUpload";
 import DisplayModeToggle from "@/components/profile/DisplayModeToggle";
 import TimeCrewCard from "@/components/engagement/TimeCrewCard";
+import AttendanceRecordCard from "@/components/profile/AttendanceRecordCard";
 import { setCommunityAutoPost } from "@/services/communityFeedService";
 import { setCheerNotify } from "@/services/cheerService";
 import { useMyReceivedCheers } from "@/hooks/useSecondCheer";
@@ -264,6 +265,9 @@ const MyPage = () => {
         {/* ═══════════ 내 기록 ═══════════ */}
         <section className="animate-slide-up space-y-3">
           <SectionHeader>내 기록</SectionHeader>
+
+          {/* 출석 기록 — 이번 달 · 지금까지 · 50회마다 축하 (2026-10-21 회원님들 요청) */}
+          <AttendanceRecordCard />
 
           {/* 같은 시간대에 오는 사람 — 153 커뮤니티에서 옮겨 옴 (2026-10-15 커뮤니티 개편) */}
           <TimeCrewCard />
