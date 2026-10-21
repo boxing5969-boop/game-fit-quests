@@ -5,7 +5,8 @@
  *   숫자는 서버 get_my_attendance_stats (lib/attendanceMilestone · hooks/useAttendanceStats).
  *   지도진 계정은 축하 보상이 없다 → 진행 막대 대신 안내 한 줄.
  */
-import { CalendarCheck, PartyPopper } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { CalendarCheck, ChevronRight, PartyPopper } from "lucide-react";
 import { useAttendanceStats } from "@/hooks/useAttendanceStats";
 import { milestoneProgress, shortDate } from "@/lib/attendanceMilestone";
 
@@ -18,6 +19,7 @@ const longDate = (iso: string) => {
 };
 
 const AttendanceRecordCard = () => {
+  const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useAttendanceStats();
 
   if (isLoading) {
@@ -113,6 +115,15 @@ const AttendanceRecordCard = () => {
           )}
         </div>
       )}
+
+      {/* 날짜별 출석 · 월별 · 요일별 그래프 (2026-10-21 대표님: 회원님들 출석 기록도 확인할 수 있게) */}
+      <button
+        type="button"
+        onClick={() => navigate("/mypage/attendance")}
+        className="mt-3 flex h-11 w-full items-center justify-center gap-1 rounded-xl bg-muted text-[13.5px] font-bold text-foreground transition-transform active:scale-[0.98]"
+      >
+        출석 기록 전체 보기 <ChevronRight className="h-4 w-4" />
+      </button>
 
       <p className="mt-2.5 text-[11px] leading-relaxed text-muted-foreground">
         하루에 여러 번 찍어도 1번으로 세요 · {longDate(data.recordsSince)}부터 센 기록이에요

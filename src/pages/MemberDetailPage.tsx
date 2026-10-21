@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Banknote } from "lucide-react";
+import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Banknote, CalendarCheck } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
 import { STAFF_CHAMPION_LABEL, STAFF_CHAMPION_LEVEL, isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
 import RankBadge from "@/components/RankBadge";
@@ -16,8 +16,10 @@ import { useMemberWallet, useGrantGems } from "@/hooks/useWallet";
 import RouteLoader from "@/components/splash/RouteLoader";
 import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
 import { useMemberHandWrapPractice } from "@/hooks/useHandWrap";
+import AttendanceHistoryPanel, { AttendanceSummaryCard } from "@/components/attendance/AttendanceHistoryPanel";
+import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
 
-type TabKey = "overview" | "missions" | "levelmap" | "activity" | "notes";
+type TabKey = "overview" | "attendance" | "missions" | "levelmap" | "activity" | "notes";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   locked: { label: "잠금", color: "text-muted-foreground" },
@@ -198,35 +200,11 @@ const MemberDetailPage = () => {
     return Math.max(0, Math.min(Math.floor(Math.max(bal, 0) / 1000) * 1000, Math.floor((pay * 0.1) / 1000) * 1000));
   })();
 
-  // 출석 기록 (출입기·앱 QR) — 개요 요약 + 출석·활동 탭 목록
-  const { data: attendance } = useQuery({
-    queryKey: ["member-attendance", memberId],
-    enabled: !!memberId && isManagerRole(role),
-    queryFn: async () => {
-      const [listRes, totalRes] = await Promise.all([
-        // 생성된 타입에 ended_at 이 아직 없다 — DB 에는 있음
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any)
-          .from("attendance_logs")
-          .select("id, checked_in_at, ended_at, method")
-          .eq("user_id", memberId!)
-          .eq("is_duplicate", false)
-          .order("checked_in_at", { ascending: false })
-          .limit(120),
-        supabase
-          .from("attendance_logs")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", memberId!)
-          .eq("is_duplicate", false),
-      ]);
-      const list = (listRes.data || []) as Array<{ id: string; checked_in_at: string; ended_at: string | null; method: string }>;
-      const kstMonth = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 7);
-      const thisMonth = list.filter(
-        (a) => new Date(new Date(a.checked_in_at).getTime() + 9 * 3600_000).toISOString().slice(0, 7) === kstMonth,
-      ).length;
-      return { list, total: totalRes.count ?? list.length, thisMonth, last: list[0]?.checked_in_at ?? null };
-    },
-  });
+  // 출석 기록 전체 — 관리자 · 지점장만 (2026-10-21 대표님: "관리자와 지점장은 회원 상세보기에서 총 몇 회 · 전체 출석 확인")
+  //   서버 get_attendance_history 가 같은 범위만 허락한다(전체관리자 · 관리자 · 같은 지점 지점장). 코치님은 출석 기록을 못 읽는다(RLS).
+  //   개요 요약 카드 · '출석' 탭 · 위 요약 숫자가 같은 캐시를 쓴다.
+  const canAttendance = role === "super_admin" || role === "admin" || role === "branch_manager";
+  const attHist = useAttendanceHistory(memberId, !!memberId && canAttendance);
 
   // Mutations
   const approveMission = useMutation({
@@ -396,9 +374,10 @@ const MemberDetailPage = () => {
 
   const TABS: { key: TabKey; label: string; icon: any }[] = [
     { key: "overview", label: "개요", icon: User },
+    ...(canAttendance ? [{ key: "attendance" as TabKey, label: "출석", icon: CalendarCheck }] : []),
     { key: "missions", label: "미션 승인", icon: FileText },
     { key: "levelmap", label: "로드맵 체크", icon: Map },
-    { key: "activity", label: "출석·활동", icon: Activity },
+    { key: "activity", label: "활동", icon: Activity },
     ...(canMemo ? [{ key: "notes" as TabKey, label: "회원 메모", icon: MessageSquare }] : []),
   ];
 
@@ -439,7 +418,9 @@ const MemberDetailPage = () => {
       <div className="mb-4 rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="grid grid-cols-4 gap-2 text-center">
           <MiniStat label="총 XP" value={prog.total_xp.toLocaleString()} />
-          <MiniStat label="출석" value={`${prog.streak_days}일`} />
+          {canAttendance
+            ? <MiniStat label="총 출석" value={attHist.data ? `${attHist.data.total.toLocaleString("ko-KR")}회` : "…"} />
+            : <MiniStat label="연속일" value={`${prog.streak_days}일`} />}
           {isStaffProfile(p)
             ? <MiniStat label={STAFF_CHAMPION_LABEL} value={`Lv.${STAFF_CHAMPION_LEVEL}`} />
             : <MiniStat label="진행" value={`${globalLevel}/40`} />}
@@ -477,12 +458,8 @@ const MemberDetailPage = () => {
       {/* ── Overview Tab ── */}
       {activeTab === "overview" && (
         <div className="space-y-3">
-          {/* 출석 요약 (2026-10-15 대표님: 이름 누르면 출석 데이터·기록 등 상세) */}
-          <div className="grid grid-cols-3 gap-2">
-            <StatTile label="총 출석" value={attendance ? `${attendance.total}회` : "…"} />
-            <StatTile label="이번 달" value={attendance ? `${attendance.thisMonth}회` : "…"} />
-            <StatTile label="마지막 출석" value={attendance ? (attendance.last ? fmtDay(attendance.last) : "없음") : "…"} />
-          </div>
+          {/* 출석 요약 — 총 출석 · 이번 달 · 지난달 · 주 평균 → '출석' 탭에 그래프 · 날짜별 전체 (2026-10-21) */}
+          {canAttendance && <AttendanceSummaryCard userId={memberId} onOpenAll={() => setActiveTab("attendance")} />}
           {(memberPlan.gym_reg_date || memberPlan.membership_end) && (
             <InfoCard label="회원권" value={`${memberPlan.gym_reg_date ?? "?"} ~ ${memberPlan.membership_end ?? "?"}`} />
           )}
@@ -778,6 +755,9 @@ const MemberDetailPage = () => {
         </div>
       )}
 
+      {/* ── Attendance Tab — 출석 기록 전체 (관리자 · 지점장) ── */}
+      {activeTab === "attendance" && canAttendance && <AttendanceHistoryPanel userId={memberId} />}
+
       {/* ── Missions Tab ── */}
       {activeTab === "missions" && (
         <div className="space-y-3">
@@ -959,32 +939,6 @@ const MemberDetailPage = () => {
               )}
             </>
           )}
-          <h3 className="px-1 pt-1 text-sm font-bold text-foreground">
-            출석 기록 {attendance ? <span className="text-muted-foreground">· 총 {attendance.total}회</span> : null}
-          </h3>
-          {(attendance?.list ?? []).length === 0 ? (
-            <EmptyState text="출석 기록이 없습니다" />
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-border bg-card">
-              {(attendance?.list ?? []).slice(0, 60).map((a, i) => {
-                const mins = a.ended_at ? Math.round((new Date(a.ended_at).getTime() - new Date(a.checked_in_at).getTime()) / 60000) : null;
-                return (
-                  <div key={a.id} className={`flex items-center justify-between px-4 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{fmtDay(a.checked_in_at)} {fmtTime(a.checked_in_at)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {a.method === "qr_manual" ? "앱 QR 출석" : "출입기"}
-                        {a.ended_at ? ` · ${fmtTime(a.ended_at)} 퇴실` : ""}
-                      </p>
-                    </div>
-                    {mins != null && mins > 0 && mins < 600 && (
-                      <span className="text-xs font-bold text-primary">{mins}분</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
           <h3 className="px-1 pt-3 text-sm font-bold text-foreground">XP 기록</h3>
           {(xpLogs || []).length === 0 ? (
             <EmptyState text="활동 기록이 없습니다" />
@@ -1116,13 +1070,6 @@ const fmtDay = (iso: string) =>
   new Date(iso).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", weekday: "short" });
 const fmtTime = (iso: string) =>
   new Date(iso).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false });
-
-const StatTile = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-xl border border-border bg-card px-2 py-3 text-center">
-    <p className="text-[11px] text-muted-foreground">{label}</p>
-    <p className="text-[15px] font-bold text-foreground">{value}</p>
-  </div>
-);
 
 const MiniStat = ({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) => (
   <div>

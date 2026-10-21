@@ -133,6 +133,7 @@ const TitleMatchPage = lazyWithRetry(() => import("@/pages/TitleMatchPage"));
 const NotificationsPage = lazyWithRetry(() => import("@/pages/NotificationsPage"));
 // 붕대 감기 — 영상·집 연습 미션 (2026-10-13 대표님, 2026-10-17 그림 단계는 지움 — 대표님이 직접 찍은 영상으로)
 const HandWrapGuidePage = lazyWithRetry(() => import("@/pages/HandWrapGuidePage"));
+const MyAttendancePage = lazyWithRetry(() => import("@/pages/MyAttendancePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -301,6 +302,8 @@ const AppRoutes = () => {
         <Route path="/guide/faq" element={<ProtectedRoute><GuideFaqPage /></ProtectedRoute>} />
         <Route path="/guide/journey" element={<ProtectedRoute><GuideJourneyPage /></ProtectedRoute>} />
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
+        {/* 내 출석 기록 전체 (2026-10-21) */}
+        <Route path="/mypage/attendance" element={<ProtectedRoute><MyAttendancePage /></ProtectedRoute>} />
         <Route path="/membership" element={<ProtectedRoute><MembershipPage /></ProtectedRoute>} />
         <Route path="/signup" element={<SignupApply />} />
         <Route path="/membership-plans" element={<ProtectedRoute><MembershipSelectPage /></ProtectedRoute>} />
