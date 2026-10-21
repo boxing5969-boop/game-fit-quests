@@ -7,6 +7,7 @@ import { ChevronLeft } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import AttendanceHistoryPanel from "@/components/attendance/AttendanceHistoryPanel";
 import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
+import AchievementCard from "@/components/profile/AchievementCard";
 
 const MyAttendancePage = () => {
   const navigate = useNavigate();
@@ -38,6 +39,8 @@ const MyAttendancePage = () => {
     >
       {/* 수강권이 끝나 갈 때만 — 지금까지의 기록 · 이어가기 (2026-10-21) */}
       <RenewalStoryCard className="mb-3" />
+      {/* 지금까지 이룬 것 (2026-10-21 대표님: "주평균 빼 주고 지금까지 이룬 것들을 보여 줘") */}
+      <AchievementCard className="mb-3" />
       <AttendanceHistoryPanel />
     </AppPage>
   );

@@ -8,6 +8,7 @@ import AvatarUpload from "@/components/AvatarUpload";
 import DisplayModeToggle from "@/components/profile/DisplayModeToggle";
 import TimeCrewCard from "@/components/engagement/TimeCrewCard";
 import AttendanceRecordCard from "@/components/profile/AttendanceRecordCard";
+import AchievementCard from "@/components/profile/AchievementCard";
 import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
 import { setCommunityAutoPost } from "@/services/communityFeedService";
 import { setCheerNotify } from "@/services/cheerService";
@@ -272,6 +273,9 @@ const MyPage = () => {
 
           {/* 출석 기록 — 이번 달 · 지금까지 · 50회마다 축하 (2026-10-21 회원님들 요청) */}
           <AttendanceRecordCard />
+
+          {/* 지금까지 이룬 것 — 펀치 · 스텝 · 스쿼트 · 칼로리 · 좋은 신호 · 신체 정보 (2026-10-21 대표님) */}
+          <AchievementCard />
 
           {/* 같은 시간대에 오는 사람 — 153 커뮤니티에서 옮겨 옴 (2026-10-15 커뮤니티 개편) */}
           <TimeCrewCard />

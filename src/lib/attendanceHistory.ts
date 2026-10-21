@@ -120,9 +120,6 @@ export function normalizeAttendanceHistory(raw: unknown): AttendanceHistory {
   };
 }
 
-/** 최근 8주 주 평균 (소수 한 자리) */
-export const weeklyAverage = (weeks8: number): number => Math.round((Math.max(0, weeks8) / 8) * 10) / 10;
-
 /** 가장 많이 온 시간대 — 출석이 없으면 null */
 export function topHourBucket(hours: Record<HourBucket, number>) {
   let best: (typeof HOUR_BUCKETS)[number] | null = null;

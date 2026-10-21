@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  dayLabel, groupByMonth, kstTime, methodLabel, monthLabel, normalizeAttendanceHistory, sessionMinutes, topHourBucket, topWeekday, weeklyAverage,
+  dayLabel, groupByMonth, kstTime, methodLabel, monthLabel, normalizeAttendanceHistory, sessionMinutes, topHourBucket, topWeekday,
 } from "./attendanceHistory";
 
 const RAW = {
@@ -36,9 +36,7 @@ describe("normalizeAttendanceHistory", () => {
 });
 
 describe("helpers", () => {
-  it("주 평균 · 가장 많은 요일 · 시간대", () => {
-    expect(weeklyAverage(19)).toBe(2.4);
-    expect(weeklyAverage(0)).toBe(0);
+  it("가장 많은 요일 · 시간대", () => {
     expect(topWeekday([26, 23, 21, 22, 14, 0, 1])).toBe(0);
     expect(topHourBucket({ dawn: 0, morning: 0, noon: 0, afternoon: 0, evening: 95, night: 12 })?.label).toBe("저녁");
   });

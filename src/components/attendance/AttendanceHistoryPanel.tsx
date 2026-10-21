@@ -1,13 +1,14 @@
 /**
  * 📅 출석 기록 전체 화면 조각 — 회원 상세 '출석' 탭(관리자 · 지점장)과 '내 출석 기록'(회원 본인)이 같이 쓴다 (2026-10-21 대표님)
- *   · AttendanceSummaryCard — 총 출석(주인공 숫자) · 이번 달 · 지난달 · 주 평균 · 첫/마지막 날 (+ 전체 보기 버튼)
+ *   · AttendanceSummaryCard — 총 출석(주인공 숫자) · 이번 달 · 지난달 · 연속 출석 · 첫/마지막 날 (+ 전체 보기 버튼)
  *   · AttendanceHistoryPanel — 요약 + 월별 막대(누르면 그 달) + 요일별 · 주로 오는 시간 + 받은 출석 축하 + 달별 출석 목록 전체
  *   숫자는 서버 get_attendance_history 한 곳 (hooks/useAttendanceHistory · lib/attendanceHistory).
  *   그래프: 한 계열이라 범례 없음 · 민트 한 색(고른 달 · 가장 많은 요일만 진하게) · 값은 고른 막대와 막대 끝에만 · 목록이 표 역할.
  *   보는 사람(audience)마다 요약이 다르다 (2026-10-21 대표님: "회원님들이 주 평균을 보면 손해 본다는 생각을 하지 않을까?"):
  *     · member(회원 본인) — 잘한 것만: 몇 월부터 함께 · 이번 달(늘었을 때만 +N) · 연속 출석 주 · 최고 기록 달 · 응원 한 줄 (lib/attendanceCheer)
  *       날 수(262일)는 쓰지 않는다 — 출석 수 옆에 두면 '그 많은 날 중 겨우 N번'으로 읽힌다
- *     · staff(관리자 · 지점장) — 이번 달 · 지난달 · 주 평균 + 연속 출석 주 · 최고 달 (줄어드는 회원을 먼저 챙기려고)
+ *     · staff(관리자 · 지점장) — 이번 달 · 지난달 · 연속 출석 주 + 최고 달 (줄어드는 회원을 먼저 챙기려고)
+ *     · 주 평균은 어디에도 두지 않는다 (2026-10-21 대표님: "주평균 빼 주고 지금까지 이룬 것들을 보여 줘")
  */
 import { useMemo, useState, type ReactNode } from "react";
 import { CalendarCheck, ChevronDown, ChevronRight } from "lucide-react";
@@ -22,7 +23,6 @@ import {
   sessionMinutes,
   topHourBucket,
   topWeekday,
-  weeklyAverage,
   type AttendanceHistory,
   type MonthCount,
 } from "@/lib/attendanceHistory";
@@ -122,7 +122,7 @@ const MemberSummary = ({ data, onOpenAll }: { data: AttendanceHistory; onOpenAll
   );
 };
 
-/** 관리자 · 지점장 요약 — 이번 달 · 지난달 · 주 평균 + 연속 출석 주 · 최고 달 */
+/** 관리자 · 지점장 요약 — 이번 달 · 지난달 · 연속 출석 주 + 최고 달 (주 평균 없음) */
 const SummaryBody = ({ data, onOpenAll }: { data: AttendanceHistory; onOpenAll?: () => void }) => (
   <Card label="출석 요약">
     <div className="flex items-start justify-between gap-3">
@@ -145,13 +145,11 @@ const SummaryBody = ({ data, onOpenAll }: { data: AttendanceHistory; onOpenAll?:
     <div className="mt-3 grid grid-cols-3 gap-2">
       <Mini label="이번 달" value={`${n(data.month)}회`} />
       <Mini label="지난달" value={`${n(data.lastMonth)}회`} />
-      <Mini label="주 평균" value={`${weeklyAverage(data.weeks8)}회`} hint="최근 8주" />
+      <Mini label="연속 출석" value={`${n(data.weekStreak)}주`} hint={data.bestWeekStreak > 0 ? `최고 ${n(data.bestWeekStreak)}주` : undefined} />
     </div>
     {data.total > 0 && (
       <p className="mt-2.5 text-[12px] text-muted-foreground">
-        연속 출석 <b className="text-foreground">{n(data.weekStreak)}주</b>
-        {data.bestWeekStreak > 0 ? ` · 최고 ${n(data.bestWeekStreak)}주` : ""}
-        {data.bestMonth ? ` · 가장 많이 온 달 ${monthLabel(data.bestMonth.month)} ${n(data.bestMonth.days)}회` : ""}
+        {data.bestMonth ? `가장 많이 온 달 ${monthLabel(data.bestMonth.month)} ${n(data.bestMonth.days)}회` : "가장 많이 온 달 —"}
         {data.thisWeek ? " · 이번 주 출석 ✓" : ""}
       </p>
     )}

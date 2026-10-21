@@ -458,7 +458,7 @@ const MemberDetailPage = () => {
       {/* ── Overview Tab ── */}
       {activeTab === "overview" && (
         <div className="space-y-3">
-          {/* 출석 요약 — 총 출석 · 이번 달 · 지난달 · 주 평균 → '출석' 탭에 그래프 · 날짜별 전체 (2026-10-21) */}
+          {/* 출석 요약 — 총 출석 · 이번 달 · 지난달 · 연속 출석 → '출석' 탭에 그래프 · 날짜별 전체 (2026-10-21) */}
           {canAttendance && <AttendanceSummaryCard userId={memberId} audience="staff" onOpenAll={() => setActiveTab("attendance")} />}
           {(memberPlan.gym_reg_date || memberPlan.membership_end) && (
             <InfoCard label="회원권" value={`${memberPlan.gym_reg_date ?? "?"} ~ ${memberPlan.membership_end ?? "?"}`} />
