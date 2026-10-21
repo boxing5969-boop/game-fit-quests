@@ -15,6 +15,7 @@ import { isStaffProfile } from "@/lib/staffDisplay";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import MembershipCard from "@/components/MembershipCard";
+import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
 import { lockerView, ptTicketView } from "@/lib/gymTicketInfo";
 import MembershipProducts from "@/components/MembershipProducts";
 
@@ -267,7 +268,11 @@ const MembershipPage = () => {
 
       <div className="space-y-4">
         {hasMembership ? (
-          <MembershipCard />
+          <>
+            <MembershipCard />
+            {/* 나의 153 기록 — 수강권이 끝나 갈 때 지금까지 쌓은 출석 (이 화면이 결제 화면이라 버튼은 없다 · 2026-10-21) */}
+            <RenewalStoryCard showCta={false} />
+          </>
         ) : (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center">
             <span className="text-3xl">🎫</span>

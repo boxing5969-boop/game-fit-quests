@@ -28,6 +28,13 @@ export interface AttendanceUnseen {
   mileage: number;
 }
 
+/** 가장 많이 온 달 (전체 기록) */
+export interface BestMonth {
+  /** 'YYYY-MM' */
+  month: string;
+  days: number;
+}
+
 export interface AttendanceStats {
   total: number;
   month: number;
@@ -41,6 +48,23 @@ export interface AttendanceStats {
   nextMileage: number;
   milestones: AttendanceMilestone[];
   unseen: AttendanceUnseen | null;
+  /** 연속 출석 주 — 매주 1번 이상 온 주가 몇 주 이어졌나 (이번 주에 아직 안 왔어도 지난주까지 이어졌으면 그대로) · 2026-10-21 */
+  weekStreak: number;
+  bestWeekStreak: number;
+  /** 이번 주(월~일, KST)에 출석했나 */
+  thisWeek: boolean;
+  bestMonth: BestMonth | null;
+  /** 첫 기록부터 오늘까지 며칠 (153과 함께한 날) */
+  daysWith: number;
+}
+
+/** 서버 best_month → { month, days } | null */
+export function readBestMonth(v: unknown): BestMonth | null {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+  const r = v as Record<string, unknown>;
+  const month = typeof r.month === "string" && /^\d{4}-\d{2}$/.test(r.month) ? r.month : null;
+  const days = typeof r.days === "number" ? Math.max(0, Math.trunc(r.days)) : Number(r.days);
+  return month && Number.isFinite(days) && days > 0 ? { month, days: Math.trunc(days) } : null;
 }
 
 const int = (v: unknown, d = 0): number => {
@@ -83,6 +107,11 @@ export function normalizeAttendanceStats(raw: unknown): AttendanceStats {
     nextMileage: int(r.next_mileage),
     milestones,
     unseen,
+    weekStreak: int(r.week_streak),
+    bestWeekStreak: int(r.best_week_streak),
+    thisWeek: r.this_week === true,
+    bestMonth: readBestMonth(r.best_month),
+    daysWith: int(r.days_with),
   };
 }
 

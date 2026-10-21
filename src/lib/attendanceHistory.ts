@@ -7,6 +7,8 @@
  *   출석 1회 = 그날(KST) 첫 인정 출석. 이 파일은 응답을 안전하게 읽고 그래프 · 목록용으로 다듬는다.
  */
 
+import { readBestMonth, type BestMonth } from "@/lib/attendanceMilestone";
+
 export interface AttendanceDay {
   /** 'YYYY-MM-DD' (KST) */
   day: string;
@@ -41,6 +43,12 @@ export interface AttendanceHistory {
   /** 최근 순 */
   list: AttendanceDay[];
   milestones: { milestone: number; reachedOn: string | null; gems: number; mileage: number }[];
+  /** 연속 출석 주 · 최고 연속 주 · 이번 주 출석 · 가장 많이 온 달 · 153과 함께한 날 (2026-10-21) */
+  weekStreak: number;
+  bestWeekStreak: number;
+  thisWeek: boolean;
+  bestMonth: BestMonth | null;
+  daysWith: number;
 }
 
 export const WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"] as const;
@@ -104,6 +112,11 @@ export function normalizeAttendanceHistory(raw: unknown): AttendanceHistory {
     hours,
     list,
     milestones,
+    weekStreak: int(r.week_streak),
+    bestWeekStreak: int(r.best_week_streak),
+    thisWeek: r.this_week === true,
+    bestMonth: readBestMonth(r.best_month),
+    daysWith: int(r.days_with),
   };
 }
 

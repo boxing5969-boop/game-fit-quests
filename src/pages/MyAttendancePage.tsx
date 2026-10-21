@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import AttendanceHistoryPanel from "@/components/attendance/AttendanceHistoryPanel";
+import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
 
 const MyAttendancePage = () => {
   const navigate = useNavigate();
@@ -35,6 +36,8 @@ const MyAttendancePage = () => {
         />
       }
     >
+      {/* 수강권이 끝나 갈 때만 — 지금까지의 기록 · 이어가기 (2026-10-21) */}
+      <RenewalStoryCard className="mb-3" />
       <AttendanceHistoryPanel />
     </AppPage>
   );

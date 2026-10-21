@@ -8,6 +8,7 @@ import AvatarUpload from "@/components/AvatarUpload";
 import DisplayModeToggle from "@/components/profile/DisplayModeToggle";
 import TimeCrewCard from "@/components/engagement/TimeCrewCard";
 import AttendanceRecordCard from "@/components/profile/AttendanceRecordCard";
+import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
 import { setCommunityAutoPost } from "@/services/communityFeedService";
 import { setCheerNotify } from "@/services/cheerService";
 import { useMyReceivedCheers } from "@/hooks/useSecondCheer";
@@ -260,6 +261,9 @@ const MyPage = () => {
 
           {/* 수강권 — 멤버십 카드 (공용 컴포넌트, 수강권 없으면 자동 숨김) */}
           <MembershipCard />
+
+          {/* 나의 153 기록 — 수강권이 끝나 갈 때만 (만료 21일 전 ~ 끝나고 14일 · 2026-10-21) */}
+          <RenewalStoryCard />
         </section>
 
         {/* ═══════════ 내 기록 ═══════════ */}

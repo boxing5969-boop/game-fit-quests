@@ -4,6 +4,9 @@
  *   · AttendanceHistoryPanel — 요약 + 월별 막대(누르면 그 달) + 요일별 · 주로 오는 시간 + 받은 출석 축하 + 달별 출석 목록 전체
  *   숫자는 서버 get_attendance_history 한 곳 (hooks/useAttendanceHistory · lib/attendanceHistory).
  *   그래프: 한 계열이라 범례 없음 · 민트 한 색(고른 달 · 가장 많은 요일만 진하게) · 값은 고른 막대와 막대 끝에만 · 목록이 표 역할.
+ *   보는 사람(audience)마다 요약이 다르다 (2026-10-21 대표님: "회원님들이 주 평균을 보면 손해 본다는 생각을 하지 않을까?"):
+ *     · member(회원 본인) — 잘한 것만: 153과 함께한 날 · 이번 달(늘었을 때만 +N) · 연속 출석 주 · 최고 기록 달 · 응원 한 줄 (lib/attendanceCheer)
+ *     · staff(관리자 · 지점장) — 이번 달 · 지난달 · 주 평균 + 연속 출석 주 · 최고 달 (줄어드는 회원을 먼저 챙기려고)
  */
 import { useMemo, useState, type ReactNode } from "react";
 import { CalendarCheck, ChevronDown, ChevronRight } from "lucide-react";
@@ -22,7 +25,10 @@ import {
   type AttendanceHistory,
   type MonthCount,
 } from "@/lib/attendanceHistory";
+import { attendanceCheer, monthGain } from "@/lib/attendanceCheer";
 import { cn } from "@/lib/utils";
+
+export type AttendanceAudience = "member" | "staff";
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 const shortBranch = (b: string) => b.replace(/^153복싱짐\s*/, "");
@@ -51,17 +57,73 @@ export const AttendanceSummaryCard = ({
   userId,
   onOpenAll,
   enabled = true,
+  audience = "member",
 }: {
   userId?: string | null;
   onOpenAll?: () => void;
   enabled?: boolean;
+  audience?: AttendanceAudience;
 }) => {
   const { data, isLoading, isError, refetch } = useAttendanceHistory(userId, enabled);
   if (isLoading) return <div className="h-[178px] animate-pulse rounded-2xl border border-border bg-card" aria-label="출석 기록을 불러오는 중" />;
   if (isError || !data) return <LoadError onRetry={() => void refetch()} />;
-  return <SummaryBody data={data} onOpenAll={onOpenAll} />;
+  return audience === "staff" ? <SummaryBody data={data} onOpenAll={onOpenAll} /> : <MemberSummary data={data} onOpenAll={onOpenAll} />;
 };
 
+const OpenAllButton = ({ onClick }: { onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="mt-3 flex h-11 w-full items-center justify-center gap-1 rounded-xl bg-muted text-[13.5px] font-bold text-foreground transition-transform active:scale-[0.98]"
+  >
+    출석 기록 전체 보기 <ChevronRight className="h-4 w-4" />
+  </button>
+);
+
+/** 회원 본인 요약 — 잘한 것만 센다 (주 평균 · 줄어든 비교 없음) */
+const MemberSummary = ({ data, onOpenAll }: { data: AttendanceHistory; onOpenAll?: () => void }) => {
+  const gain = monthGain(data.month, data.lastMonth);
+  const next = (Math.floor(data.total / 50) + 1) * 50;
+  const cheer = attendanceCheer({ ...data, next });
+  const best = data.bestMonth;
+  return (
+    <Card label="출석 요약">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[12px] font-bold text-muted-foreground">총 출석</p>
+          <p className="mt-1 text-[40px] font-black leading-none tracking-tight text-foreground">
+            {n(data.total)}
+            <span className="ml-1 text-[16px] font-bold text-muted-foreground">회</span>
+          </p>
+          <p className="mt-2 text-[12px] text-muted-foreground">
+            {data.daysWith > 0 && data.firstDay
+              ? `153과 함께한 지 ${n(data.daysWith)}일 · 첫 기록 ${dayLabel(data.firstDay)}`
+              : "아직 출석 기록이 없어요"}
+          </p>
+        </div>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <CalendarCheck className="h-5 w-5" />
+        </span>
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <Mini label="이번 달" value={`${n(data.month)}회`} hint={gain ? `지난달보다 +${n(gain)}` : data.thisWeek ? "이번 주 ✓" : undefined} />
+        <Mini
+          label="연속 출석"
+          value={`${n(data.weekStreak)}주`}
+          hint={data.weekStreak > 0 && data.weekStreak >= data.bestWeekStreak ? "내 최고 기록" : data.bestWeekStreak > 0 ? `최고 ${n(data.bestWeekStreak)}주` : undefined}
+        />
+        <Mini label="최고 기록" value={best ? `${monthLabel(best.month, true)} ${n(best.days)}회` : "—"} hint="가장 많이 온 달" />
+      </div>
+      <p className="mt-3 flex items-start gap-2 rounded-xl bg-primary/10 px-3.5 py-2.5 text-[13px] font-bold leading-snug text-foreground">
+        <span aria-hidden>{cheer.emoji}</span>
+        <span className="min-w-0">{cheer.text}</span>
+      </p>
+      {onOpenAll && <OpenAllButton onClick={onOpenAll} />}
+    </Card>
+  );
+};
+
+/** 관리자 · 지점장 요약 — 이번 달 · 지난달 · 주 평균 + 연속 출석 주 · 최고 달 */
 const SummaryBody = ({ data, onOpenAll }: { data: AttendanceHistory; onOpenAll?: () => void }) => (
   <Card label="출석 요약">
     <div className="flex items-start justify-between gap-3">
@@ -86,15 +148,15 @@ const SummaryBody = ({ data, onOpenAll }: { data: AttendanceHistory; onOpenAll?:
       <Mini label="지난달" value={`${n(data.lastMonth)}회`} />
       <Mini label="주 평균" value={`${weeklyAverage(data.weeks8)}회`} hint="최근 8주" />
     </div>
-    {onOpenAll && (
-      <button
-        type="button"
-        onClick={onOpenAll}
-        className="mt-3 flex h-11 w-full items-center justify-center gap-1 rounded-xl bg-muted text-[13.5px] font-bold text-foreground transition-transform active:scale-[0.98]"
-      >
-        출석 기록 전체 보기 <ChevronRight className="h-4 w-4" />
-      </button>
+    {data.total > 0 && (
+      <p className="mt-2.5 text-[12px] text-muted-foreground">
+        연속 출석 <b className="text-foreground">{n(data.weekStreak)}주</b>
+        {data.bestWeekStreak > 0 ? ` · 최고 ${n(data.bestWeekStreak)}주` : ""}
+        {data.bestMonth ? ` · 가장 많이 온 달 ${monthLabel(data.bestMonth.month)} ${n(data.bestMonth.days)}회` : ""}
+        {data.thisWeek ? " · 이번 주 출석 ✓" : ""}
+      </p>
     )}
+    {onOpenAll && <OpenAllButton onClick={onOpenAll} />}
   </Card>
 );
 
@@ -289,7 +351,15 @@ const AttendanceList = ({ data }: { data: AttendanceHistory }) => {
 };
 
 /** 전체 — 요약 · 그래프 · 받은 축하 · 목록 */
-const AttendanceHistoryPanel = ({ userId, enabled = true }: { userId?: string | null; enabled?: boolean }) => {
+const AttendanceHistoryPanel = ({
+  userId,
+  enabled = true,
+  audience = "member",
+}: {
+  userId?: string | null;
+  enabled?: boolean;
+  audience?: AttendanceAudience;
+}) => {
   const { data, isLoading, isError, refetch } = useAttendanceHistory(userId, enabled);
 
   if (isLoading) {
@@ -304,7 +374,7 @@ const AttendanceHistoryPanel = ({ userId, enabled = true }: { userId?: string | 
 
   return (
     <div className="space-y-3">
-      <SummaryBody data={data} />
+      {audience === "staff" ? <SummaryBody data={data} /> : <MemberSummary data={data} />}
       {data.total === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
           <p className="text-sm text-muted-foreground">아직 출석 기록이 없어요</p>

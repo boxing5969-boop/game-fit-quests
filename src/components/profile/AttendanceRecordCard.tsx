@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { CalendarCheck, ChevronRight, PartyPopper } from "lucide-react";
 import { useAttendanceStats } from "@/hooks/useAttendanceStats";
 import { milestoneProgress, shortDate } from "@/lib/attendanceMilestone";
+import { attendanceCheer, monthGain } from "@/lib/attendanceCheer";
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 
@@ -41,6 +42,10 @@ const AttendanceRecordCard = () => {
   }
 
   const prog = milestoneProgress(data.total, data.step);
+  // 회원 화면은 잘한 것만 — 지난달 비교는 늘었을 때만, 주 평균은 없다 (2026-10-21 대표님 · lib/attendanceCheer)
+  const gain = monthGain(data.month, data.lastMonth);
+  // 축하까지 남은 횟수는 아래 금색 칸이 보여 주니 응원 한 줄에선 뺀다 (next 0)
+  const cheer = attendanceCheer({ ...data, next: 0 });
   const gift = [
     data.nextGems > 0 ? `챔피언 머니 +${n(data.nextGems)}` : "",
     data.nextMileage > 0 ? `마일리지 +${n(data.nextMileage)}점` : "",
@@ -62,7 +67,17 @@ const AttendanceRecordCard = () => {
             {n(data.month)}
             <span className="ml-0.5 text-[15px] font-bold text-muted-foreground">회</span>
           </p>
-          <p className="mt-1.5 text-[11.5px] text-muted-foreground">지난달 {n(data.lastMonth)}회</p>
+          <p className="mt-1.5 text-[11.5px] text-muted-foreground">
+            {gain ? (
+              <b className="text-foreground">지난달보다 +{n(gain)} 📈</b>
+            ) : data.thisWeek ? (
+              "이번 주 출석 ✓"
+            ) : data.month > 0 ? (
+              "이번 달도 쌓이는 중"
+            ) : (
+              "이번 달 첫 출석을 기다려요"
+            )}
+          </p>
         </div>
         <div className="rounded-xl bg-muted/50 px-3.5 py-3">
           <p className="text-[12px] font-bold text-muted-foreground">지금까지</p>
@@ -71,10 +86,16 @@ const AttendanceRecordCard = () => {
             <span className="ml-0.5 text-[15px] font-bold text-muted-foreground">회</span>
           </p>
           <p className="mt-1.5 text-[11.5px] text-muted-foreground">
-            {data.since ? `첫 기록 ${shortDate(data.since)}` : "첫 출석을 하면 쌓여요"}
+            {data.daysWith > 0 ? `153과 함께 ${n(data.daysWith)}일째` : data.since ? `첫 기록 ${shortDate(data.since)}` : "첫 출석을 하면 쌓여요"}
           </p>
         </div>
       </div>
+
+      {/* 응원 한 줄 — 연속 출석 주 · 축하까지 · 늘어난 것 · 다시 시작 */}
+      <p className="mt-3 flex items-start gap-2 rounded-xl bg-primary/10 px-3.5 py-2.5 text-[13px] font-bold leading-snug text-foreground">
+        <span aria-hidden>{cheer.emoji}</span>
+        <span className="min-w-0">{cheer.text}</span>
+      </p>
 
       {data.isStaff ? (
         <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">지도진 계정은 출석 축하 보상이 없어요.</p>
