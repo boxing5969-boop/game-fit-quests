@@ -76,7 +76,7 @@ const withRo = (word: string): string => {
 
 const SettingsPage = () => {
   const navigate = useNavigate();
-  const { profile, user, role, refreshProfile, signOut } = useAuth();
+  const { profile, user, role, realRole, viewAsMember, setViewAsMember, refreshProfile, signOut } = useAuth();
   const { data: branches } = useBranches();
   const { resetOnboarding } = useOnboardingState();
   const qc = useQueryClient();
@@ -260,6 +260,8 @@ const SettingsPage = () => {
     (b) => b.name !== profile.branch_name && (b as { is_visible?: boolean }).is_visible !== false,
   );
   const isSuperAdmin = role === "super_admin";
+  // 진짜 전체관리자 — '회원으로 보기' 중(role 은 member)에도 이 카드는 보여야 끄고 지점을 바꿀 수 있다 (2026-10-21)
+  const isRealSuperAdmin = realRole === "super_admin";
 
   // 지점 표시 켜기/끄기 — 꺼진 지점은 랭킹 · 명예의 전당 · 지점 선택에서 안 보인다 (회원·출석 데이터는 그대로)
   const toggleBranchVisible = async (id: string, visible: boolean) => {
@@ -348,8 +350,27 @@ const SettingsPage = () => {
         {/* 테스트 지점 — 전체관리자 전용 (2026-10-15 대표님: "153본사 소속에서 선릉점·역삼점으로 선택할 수 있게").
             누르면 내 소속 지점이 바로 바뀌어 그 지점 회원 화면(커뮤니티·랭킹·챌린지·라이브보드)으로 보인다.
             앱에서 숨긴 지점(지점 관리 스위치 꺼짐)도 여기선 고를 수 있다 — 테스트용. '153본사' 로 누르면 원래대로. */}
-        {isSuperAdmin && (
+        {isRealSuperAdmin && (
           <div className="animate-slide-up rounded-2xl border-2 border-primary/30 bg-primary/5 p-5 shadow-elev-1">
+            {/* 👀 회원으로 보기 (2026-10-21 대표님: "내 계정은 모든 기능에 회원으로 보기 기능을 넣어 줘") — lib/viewAsMember */}
+            <div className="mb-4 flex items-start justify-between gap-3 rounded-xl bg-card p-3.5 ring-1 ring-border">
+              <div className="min-w-0">
+                <p className="text-[14px] font-black text-foreground">👀 회원으로 보기</p>
+                <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+                  켜면 앱 전체(홈 · 하단 탭 · 메뉴 · 랭킹 · 커뮤니티 · 내정보)가 아래 지점의 <b className="text-foreground">일반 회원 화면</b>으로 보여요.
+                  관리자 버튼과 관리자 화면은 숨고, 화면 아래 띠를 누르면 바로 돌아와요. 이 폰에서만 켜져요.
+                </p>
+              </div>
+              <Switch
+                checked={viewAsMember}
+                aria-label="회원으로 보기"
+                onCheckedChange={(on) => {
+                  setViewAsMember(on);
+                  toast.success(on ? "회원 화면으로 보는 중이에요 · 아래 띠를 누르면 돌아와요" : "관리자 화면으로 돌아왔어요");
+                  if (on) navigate("/home");
+                }}
+              />
+            </div>
             <h2 className="mb-1 text-base font-bold text-foreground">🧪 테스트 지점 바꾸기</h2>
             <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
               지금 <b className="text-foreground">{profile.branch_name || "미지정"}</b> 소속으로 보고 있어요. 지점을 누르면 그 지점 회원 화면으로 바로 바뀌어요.

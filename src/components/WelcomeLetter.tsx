@@ -300,7 +300,7 @@ export const LetterModal = ({ open, letter, onClose }: { open: boolean; letter: 
 
 const WelcomeLetter = () => {
   const location = useLocation();
-  const { user, profile, progress, role } = useAuth();
+  const { user, profile, progress, role, realRole } = useAuth();
 
   const [activeKey, setActiveKey] = useState<LetterKey | null>(null);
   const [open, setOpen] = useState(false);
@@ -309,7 +309,8 @@ const WelcomeLetter = () => {
   const [attUnseen, setAttUnseen] = useState<AttendanceUnseen | null>(null);
 
   // 받는 사람 — 관리자 계정은 자동 편지 없음, 지도진·코치·관장은 코치 편지, 나머지는 회원 편지
-  const isAdminRole = role === "super_admin" || role === "admin";
+  // '회원으로 보기' 중이어도 진짜 관리자 계정이면 자동 편지는 없다 (role 은 member 로 보인다 · 2026-10-21)
+  const isAdminRole = realRole === "super_admin" || realRole === "admin" || role === "super_admin" || role === "admin";
   const isCoach = !isAdminRole && (isStaffProfile(profile) || role === "coach" || role === "branch_manager");
 
   // 출석 축하(50회마다) — 회원만. 셋업 · QR 출석 화면에선 읽지 않는다(출석 뒤 홈에서 새로 읽게)

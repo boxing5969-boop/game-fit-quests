@@ -24,6 +24,7 @@ import BulkMemberImport from "@/components/admin/BulkMemberImport";
 import DmHeaderButton from "@/components/dm/DmHeaderButton";
 import NotificationBellButton from "@/components/notifications/NotificationBellButton";
 import PushOptInCard from "@/components/notifications/PushOptInCard";
+import { ViewAsMemberButton } from "@/components/admin/ViewAsMember";
 import { toast } from "sonner";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
@@ -665,6 +666,8 @@ const BranchManagerHome = () => {
             <h1 className="text-2xl text-foreground">{isSuperAdmin ? "전체 회원관리" : "우리 지점 회원관리"}</h1>
           </div>
           <div className="flex items-center gap-2">
+            {/* 👀 회원으로 보기 — 대표님 계정만 (2026-10-21) */}
+            <ViewAsMemberButton />
             {/* 메시지(DM) — 본사는 처리 안 한 신고도 같은 배지에 (2026-09-30) */}
             <DmHeaderButton className="h-10 w-10" />
             {/* 알림 — 예전엔 내정보로 가고 본사 계정은 전 회원 알림 수가 떠 있었다 → 알림함 · 내 알림만 (2026-10-01) */}
@@ -836,6 +839,7 @@ const BranchManagerHome = () => {
               <h1 className="text-xl text-foreground">{isSuperAdmin ? "전체 회원관리" : "회원관리"}</h1>
             </div>
             <div className="flex items-center gap-2">
+              <ViewAsMemberButton />
               <DmHeaderButton />
               <NotificationBellButton />
             </div>

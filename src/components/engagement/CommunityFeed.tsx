@@ -111,16 +111,19 @@ const Avatar = ({ item, size = 36 }: { item: FeedItem; size?: number }) => (
 
 const CommunityFeed = () => {
   const qc = useQueryClient();
-  const { role } = useAuth();
+  const { role, viewAsMember, profile } = useAuth();
   // 전체관리자는 모든 지점 글이 와서 더 많이 받는다 (서버가 다시 확인한다)
   const hqRole = role === "super_admin" || role === "admin";
+  // 👀 앱 전체 '회원으로 보기' 중 — 서버는 여전히 본사 권한이라 전 지점 글이 온다 → 내 지점 회원 피드로 읽는다 (2026-10-21)
+  const forcedMemberView = viewAsMember ? profile?.branch_name ?? null : null;
   const feedQ = useQuery({
     queryKey: FEED_KEY,
     queryFn: () => getCommunityFeed(hqRole ? 150 : 40),
     staleTime: 30_000,
   });
   // 회원 화면으로 보기 (전체관리자) — 고른 지점의 일반 회원이 보는 피드 그대로. null = 끔
-  const [memberView, setMemberView] = useState<string | null>(null);
+  const [memberViewPick, setMemberView] = useState<string | null>(null);
+  const memberView = forcedMemberView ?? memberViewPick;
   const mvKey = ["community-feed-mv", memberView ?? ""] as const;
   const mvQ = useQuery({
     queryKey: mvKey,
@@ -412,8 +415,9 @@ const CommunityFeed = () => {
 
   return (
     <div className="space-y-3">
-      {/* 회원 화면으로 보는 중 — 그 지점 일반 회원에게 보이는 그대로 (2026-10-18) */}
-      {memberView && (
+      {/* 회원 화면으로 보는 중 — 그 지점 일반 회원에게 보이는 그대로 (2026-10-18).
+          앱 전체 '회원으로 보기' 중엔 회원 화면 그대로라 이 안내도 숨긴다 (2026-10-21) */}
+      {memberView && !forcedMemberView && (
         <div className="rounded-card border-2 border-primary/50 bg-card p-3">
           <p className="flex items-center gap-1.5 text-[12.5px] font-black text-foreground">
             <Eye className="h-4 w-4 text-primary" /> 회원 화면으로 보는 중 · {shortBranchName(memberView)}

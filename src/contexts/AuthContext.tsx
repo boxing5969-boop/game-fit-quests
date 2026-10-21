@@ -5,6 +5,7 @@ import type { User, Session } from "@supabase/supabase-js";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { translateAuthError } from "@/lib/errorMessages";
 import { isIosApp } from "@/lib/iosApp";
+import { canViewAsMember as canViewAsMemberFor, effectiveRole, readViewAsMember, writeViewAsMember } from "@/lib/viewAsMember";
 
 type AppRole = Enums<"app_role">;
 
@@ -12,7 +13,15 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Tables<"profiles"> | null;
+  /** 화면이 쓰는 역할 — 대표님이 '회원으로 보기'를 켜면 'member' (lib/viewAsMember) */
   role: AppRole | null;
+  /** 진짜 역할 — '회원으로 보기' 스위치 · 띠 · 자동 편지 끄기에만 쓴다 */
+  realRole: AppRole | null;
+  /** 이 계정이 '회원으로 보기'를 쓸 수 있나 (전체관리자 · 관리자) */
+  canViewAsMember: boolean;
+  /** 지금 회원으로 보는 중인가 */
+  viewAsMember: boolean;
+  setViewAsMember: (on: boolean) => void;
   progress: Tables<"member_progress"> | null;
   loading: boolean;
   refreshProgress: () => Promise<void>;
@@ -37,6 +46,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole | null>(null);
   const [progress, setProgress] = useState<Tables<"member_progress"> | null>(null);
   const [loading, setLoading] = useState(true);
+  // 👀 회원으로 보기 (2026-10-21 대표님) — 이 기기 · 이 계정에만 저장
+  const [viewAsMemberRaw, setViewAsMemberRaw] = useState(false);
   // 공용 QueryClient — 로그아웃 시 이전 사용자의 React Query 캐시를 비워
   // 공용 기기(짐 로비 등)에서 계정 간 데이터가 새는 것을 막는다.
   const queryClient = useQueryClient();
@@ -101,6 +112,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => subscription.unsubscribe();
   }, [fetchUserData]);
+
+  // 계정이 바뀌면 그 계정의 '회원으로 보기' 상태를 읽는다 (로그아웃이면 꺼짐)
+  const uid = user?.id ?? null;
+  useEffect(() => {
+    setViewAsMemberRaw(readViewAsMember(uid));
+  }, [uid]);
+  const canViewAsMember = canViewAsMemberFor(role);
+  const viewAsMember = canViewAsMember && viewAsMemberRaw;
+  const shownRole = effectiveRole(role, viewAsMember) as AppRole | null;
+  const setViewAsMember = useCallback(
+    (on: boolean) => {
+      if (!uid) return;
+      writeViewAsMember(uid, on);
+      setViewAsMemberRaw(on);
+      // 역할마다 다르게 읽는 목록(피드 개수 · 지점 범위 등)을 새로 읽는다
+      void queryClient.invalidateQueries();
+    },
+    [uid, queryClient],
+  );
 
   const signUp = async (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean, birthDate?: string) => {
     // Check phone uniqueness first
@@ -198,7 +228,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, role, progress, loading, refreshProgress, refreshProfile, signUp, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user, session, profile, role: shownRole, realRole: role, canViewAsMember, viewAsMember, setViewAsMember,
+        progress, loading, refreshProgress, refreshProfile, signUp, signIn, signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

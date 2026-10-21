@@ -35,6 +35,7 @@ import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
 import { useTutorialGlobalOverridesBoot } from "@/hooks/useTutorialGlobalOverrides";
 import ExitConfirm from "@/components/ExitConfirm";
 import PushBridge from "@/components/notifications/PushBridge";
+import { ViewAsMemberBar } from "@/components/admin/ViewAsMember";
 import { initBackExit } from "@/lib/androidBackExit";
 
 // Route-level code splitting — every page below is fetched on demand.
@@ -379,6 +380,8 @@ const AppRoutes = () => {
       {/* 📲 휴대폰 알림 — 구독 동기화 · 알림 눌러 이동 · 로그아웃 시 이 기기 구독 정리 */}
       {!signage && <PushBridge />}
       {!signage && <BottomNav />}
+      {/* 👀 회원으로 보기 중 — 아래 띠 (대표님 계정 · 누르면 관리자 화면으로, 2026-10-21) */}
+      {user && !signage && <ViewAsMemberBar />}
       {!signage && (
         <Suspense fallback={null}>
           <ChatAssistant />
