@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { attendanceCheer, kstToday, monthGain, renewalBadge, renewalWindow, sinceLabel } from "./attendanceCheer";
 
-const base = { total: 37, month: 4, lastMonth: 9, weekStreak: 0, bestWeekStreak: 6, thisWeek: false, next: 50 };
+const base = { total: 37, totalMinutes: 2442, monthMinutes: 264, lastMonthMinutes: 594, weekStreak: 0, bestWeekStreak: 6, thisWeek: false, next: 50 };
 const BANNED = /벨트|계급|무조건|확정 혜택|자동 가산점|손해|평균|줄었/;
 
-describe("monthGain — 늘었을 때만", () => {
+describe("monthGain — 늘었을 때만 (운동 시간 분)", () => {
   it("늘면 차이, 줄거나 같거나 지난달 0이면 null", () => {
-    expect(monthGain(12, 9)).toBe(3);
+    expect(monthGain(600, 594)).toBe(6);
+    expect(monthGain(599, 594)).toBeNull(); // 5분 차이는 '+0시간'으로 보이니 안 보여 준다
     expect(monthGain(4, 9)).toBeNull();
     expect(monthGain(9, 9)).toBeNull();
     expect(monthGain(5, 0)).toBeNull();
@@ -23,18 +24,20 @@ describe("attendanceCheer — 늘 긍정적인 한 줄", () => {
     expect(attendanceCheer({ ...base, weekStreak: 6, bestWeekStreak: 6, thisWeek: true }).text).toContain("내 최고 기록");
     expect(attendanceCheer({ ...base, weekStreak: 3, bestWeekStreak: 10, thisWeek: true }).text).toContain("한 주도 안 빠졌어요");
   });
-  it("지난달보다 늘었을 때", () => {
-    expect(attendanceCheer({ ...base, month: 11, lastMonth: 9, weekStreak: 1, thisWeek: true }).text).toBe("이번 달 벌써 지난달보다 2번 더 왔어요");
+  it("지난달보다 운동 시간이 늘었을 때 — 시간으로", () => {
+    expect(attendanceCheer({ ...base, monthMinutes: 726, lastMonthMinutes: 594, weekStreak: 1, thisWeek: true }).text).toBe("이번 달 벌써 지난달보다 2시간 12분 더 운동했어요");
+    expect(attendanceCheer({ ...base, monthMinutes: 640, lastMonthMinutes: 594, weekStreak: 1, thisWeek: true }).text).toBe("이번 달 벌써 지난달보다 46분 더 운동했어요");
   });
   it("이번 주 출석 · 연속 1~2주 · 한동안 못 왔을 때도 탓하지 않는다", () => {
     expect(attendanceCheer({ ...base, weekStreak: 1, thisWeek: true }).text).toContain("이번 주도 출석 완료");
     expect(attendanceCheer({ ...base, weekStreak: 2, thisWeek: false }).text).toContain("2주 연속 출석 중");
     const gap = attendanceCheer({ ...base, weekStreak: 0, thisWeek: false }).text;
     expect(gap).toContain("다시 연속 출석이 시작돼요");
+    expect(gap).toContain("지금까지 40.7시간 운동");
   });
   it("어떤 경우에도 손해 · 평균 · 줄었다 · 금지 표현 없음", () => {
-    for (const total of [0, 1, 37, 46, 107]) for (const ws of [0, 1, 2, 3, 8]) for (const tw of [true, false]) for (const [m, l] of [[0, 9], [4, 9], [12, 9], [3, 0]]) {
-      expect(attendanceCheer({ total, month: m, lastMonth: l, weekStreak: ws, bestWeekStreak: 8, thisWeek: tw, next: 50 }).text).not.toMatch(BANNED);
+    for (const total of [0, 1, 37, 46, 107]) for (const ws of [0, 1, 2, 3, 8]) for (const tw of [true, false]) for (const [m, l] of [[0, 594], [264, 594], [792, 594], [198, 0]]) {
+      expect(attendanceCheer({ total, totalMinutes: total * 66, monthMinutes: m, lastMonthMinutes: l, weekStreak: ws, bestWeekStreak: 8, thisWeek: tw, next: 50 }).text).not.toMatch(BANNED);
     }
   });
 });

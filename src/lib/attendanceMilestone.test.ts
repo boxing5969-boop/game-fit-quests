@@ -20,6 +20,12 @@ describe("normalizeAttendanceStats", () => {
     expect(s.milestones.map((m) => m.milestone)).toEqual([50, 100]);
     expect(s.unseen).toEqual({ milestone: 100, count: 1, gems: 2000, mileage: 1000 });
   });
+  it("가장 많이 운동한 달 — 시간 기준 (2026-10-22)", () => {
+    expect(normalizeAttendanceStats({ best_month_minutes: { month: "2026-04", minutes: 1080, days: 16 } }).bestMinutesMonth).toEqual({ month: "2026-04", minutes: 1080, days: 16 });
+    expect(normalizeAttendanceStats({ best_month_minutes: null }).bestMinutesMonth).toBeNull();
+    expect(normalizeAttendanceStats({ best_month_minutes: { month: "2026-04", minutes: 0, days: 3 } }).bestMinutesMonth).toBeNull();
+    expect(normalizeAttendanceStats({}).bestMinutesMonth).toBeNull();
+  });
   it("빈 응답 · 이상한 값은 0 · 빈 값", () => {
     const s = normalizeAttendanceStats(null);
     expect(s.total).toBe(0);

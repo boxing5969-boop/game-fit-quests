@@ -7,6 +7,7 @@
  *   출석 1회 = 그날(KST) 첫 인정 출석. 이 파일은 응답을 안전하게 읽고 그래프 · 목록용으로 다듬는다.
  */
 
+import { DEFAULT_SESSION_MINUTES } from "@/lib/achievement153";
 import { readBestMonth, type BestMonth } from "@/lib/attendanceMilestone";
 
 export interface AttendanceDay {
@@ -15,6 +16,10 @@ export interface AttendanceDay {
   /** 체크인 시각 ISO */
   at: string;
   end: string | null;
+  /** 운동 끝을 어떻게 쟀나 — 'checkout_scan'(두 번째 체크) · 'member_app'(운동 종료 버튼) · null(기본 시간) */
+  endSource: string | null;
+  /** 그날 운동 시간(분) — 서버 workout_minutes 그대로 (두 번째 체크 · 종료 버튼 · 없으면 기본 66분, 최대 180분) */
+  minutes: number;
   method: string;
   branch: string | null;
 }
@@ -23,6 +28,8 @@ export interface MonthCount {
   /** 'YYYY-MM' */
   month: string;
   days: number;
+  /** 그 달 운동 시간(분) */
+  minutes: number;
 }
 
 export type HourBucket = "dawn" | "morning" | "noon" | "afternoon" | "evening" | "night";
@@ -32,6 +39,10 @@ export interface AttendanceHistory {
   month: number;
   lastMonth: number;
   weeks8: number;
+  /** 운동 시간(분) — 지금까지 · 이번 달 · 지난달 (2026-10-22 대표님: "횟수 말고 몇 시간 운동했는지로") */
+  totalMinutes: number;
+  monthMinutes: number;
+  lastMonthMinutes: number;
   firstDay: string | null;
   lastDay: string | null;
   recordsSince: string;
@@ -76,7 +87,7 @@ export function normalizeAttendanceHistory(raw: unknown): AttendanceHistory {
   const sinceMonth = recordsSince.slice(0, 7);
   const monthly = (Array.isArray(r.monthly) ? r.monthly : [])
     .map((m) => obj(m))
-    .map((m) => ({ month: str(m.month) ?? "", days: int(m.days) }))
+    .map((m) => ({ month: str(m.month) ?? "", days: int(m.days), minutes: int(m.minutes) }))
     .filter((m) => /^\d{4}-\d{2}$/.test(m.month) && m.month >= sinceMonth)
     .sort((a, b) => a.month.localeCompare(b.month));
   const wd = Array.isArray(r.weekday) ? r.weekday : [];
@@ -89,6 +100,8 @@ export function normalizeAttendanceHistory(raw: unknown): AttendanceHistory {
       day: str(x.day) ?? "",
       at: str(x.at) ?? "",
       end: str(x.end),
+      endSource: str(x.end_source),
+      minutes: int(x.minutes),
       method: str(x.method) ?? "",
       branch: str(x.branch),
     }))
@@ -104,6 +117,9 @@ export function normalizeAttendanceHistory(raw: unknown): AttendanceHistory {
     month: int(r.month),
     lastMonth: int(r.last_month),
     weeks8: int(r.weeks8),
+    totalMinutes: int(r.total_minutes),
+    monthMinutes: int(r.month_minutes),
+    lastMonthMinutes: int(r.last_month_minutes),
     firstDay: str(r.first_day),
     lastDay: str(r.last_day),
     recordsSince,
@@ -187,9 +203,40 @@ export const kstTime = (iso: string): string => {
 export const methodLabel = (m: string): string =>
   m === "qr_manual" ? "QR 출석" : m === "broj" || m === "face" ? "얼굴 인식" : "출석";
 
-/** 운동 시간(분) — 퇴실 기록이 있고 10분~10시간일 때만 */
-export function sessionMinutes(d: AttendanceDay): number | null {
-  if (!d.end) return null;
-  const mins = Math.round((new Date(d.end).getTime() - new Date(d.at).getTime()) / 60000);
-  return Number.isFinite(mins) && mins >= 10 && mins <= 600 ? mins : null;
+/** 운동 시간이 가장 많은 달 (최근 12달 안 · 같으면 최근 달) — 없으면 null */
+export function bestMonthByMinutes(monthly: readonly MonthCount[]): MonthCount | null {
+  let best: MonthCount | null = null;
+  for (const m of monthly) if (m.minutes > 0 && (!best || m.minutes >= best.minutes)) best = m;
+  return best;
+}
+
+/** 지금까지 가장 많이 운동한 달 — 날마다 목록(전체)에서. 서버 best_month_minutes 와 같은 규칙 (같으면 최근 달) */
+export function bestMonthAllTime(list: readonly AttendanceDay[]): MonthCount | null {
+  const by = new Map<string, MonthCount>();
+  for (const d of list) {
+    const month = d.day.slice(0, 7);
+    if (!/^\d{4}-\d{2}$/.test(month)) continue;
+    const m = by.get(month) ?? { month, days: 0, minutes: 0 };
+    m.days += 1;
+    m.minutes += Math.max(0, Number.isFinite(d.minutes) ? d.minutes : 0);
+    by.set(month, m);
+  }
+  let best: MonthCount | null = null;
+  for (const m of [...by.values()].sort((a, b) => a.month.localeCompare(b.month))) {
+    if (m.minutes > 0 && (!best || m.minutes >= best.minutes)) best = m;
+  }
+  return best;
+}
+
+/** 그날 운동 시간을 실제로 재서 기본보다 길게 쳤나 (두 번째 체크 · 운동 종료 버튼) — 아니면 '기본' */
+export const measuredDay = (d: AttendanceDay): boolean =>
+  !!d.end && (d.endSource === "checkout_scan" || d.endSource === "member_app") && d.minutes > DEFAULT_SESSION_MINUTES;
+
+/** 분 → '1시간 25분' · '45분' · '3시간' */
+export function durationLabel(minutes: number): string {
+  const m = Math.max(0, Math.round(Number.isFinite(minutes) ? minutes : 0));
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  if (h && r) return `${h}시간 ${r}분`;
+  return h ? `${h}시간` : `${r}분`;
 }

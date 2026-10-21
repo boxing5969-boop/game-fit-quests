@@ -6,7 +6,10 @@
  *   2. 운동 중          → 경과 시간 + "운동 종료" 버튼
  *   3. 종료함           → 확정된 기록과 받은 XP
  *
- * 안 눌러도 50분(한 타임)으로 기록된다는 사실을 문구로 분명히 적는다.
+ * 안 눌러도 기본 시간(서버 workout_default_minutes — 2026-10-22 부터 66분)으로 기록된다는 사실을 문구로 분명히 적는다.
+ * 2026-10-22 대표님: 운동 끝나고 입구 얼굴 인식을 한 번 더 해도 종료와 같다 (첫 출석에서 66분 ~ 3시간 · 최대 3시간,
+ *   서버 attendance_checkout_scan 트리거) — "오래 하신 분들은 한 번 더 안면 인식" 안내를 여기 한 줄로.
+ *   QR 출석은 하루 두 번째를 저장하지 않아(이미 출석) 두 번째 체크가 안 된다 — 얼굴 인식이 없는 지점은 종료 버튼.
  * 눌러야만 손해를 면하는 구조가 아니라는 것을 회원이 알아야 불만이 안 생긴다.
  *
  * 120분까지는 오래 할수록 XP 와 승급 진행이 더 쌓인다(workout_progress).
@@ -81,7 +84,7 @@ const WorkoutFinishCard = () => {
         <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
           {done
             ? `이번 달 ${formatMinutes(data.month_minutes)} · ${data.month_days}일`
-            : `안 누르면 ${data.default_minutes}분으로 기록돼요 · 오래 할수록 XP↑`}
+            : `끝나면 종료 버튼이나 얼굴 인식 한 번 더 · 안 하면 ${data.default_minutes}분`}
         </p>
       </div>
 

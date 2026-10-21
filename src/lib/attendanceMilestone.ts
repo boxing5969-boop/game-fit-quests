@@ -35,6 +35,11 @@ export interface BestMonth {
   days: number;
 }
 
+/** 가장 많이 운동한 달 — 시간 기준, 지금까지 (같으면 최근 달) · 2026-10-22 */
+export interface BestMinutesMonth extends BestMonth {
+  minutes: number;
+}
+
 export interface AttendanceStats {
   total: number;
   month: number;
@@ -56,6 +61,20 @@ export interface AttendanceStats {
   bestMonth: BestMonth | null;
   /** 첫 기록부터 오늘까지 며칠 — 회원 화면엔 쓰지 않는다 (출석 수 옆에 두면 비율로 읽힌다 · 2026-10-21) */
   daysWith: number;
+  /** 운동 시간(분) — 지금까지 · 이번 달 · 지난달 (서버 workout_minutes 합 · 2026-10-22) */
+  totalMinutes: number;
+  monthMinutes: number;
+  lastMonthMinutes: number;
+  /** 가장 많이 운동한 달 (서버 attendance_minutes_summary.best_month_minutes) */
+  bestMinutesMonth: BestMinutesMonth | null;
+}
+
+/** 서버 best_month_minutes → { month, days, minutes } | null */
+export function readBestMinutesMonth(v: unknown): BestMinutesMonth | null {
+  const base = readBestMonth(v);
+  if (!base) return null;
+  const minutes = Number((v as Record<string, unknown>).minutes);
+  return Number.isFinite(minutes) && minutes > 0 ? { ...base, minutes: Math.trunc(minutes) } : null;
 }
 
 /** 서버 best_month → { month, days } | null */
@@ -112,6 +131,10 @@ export function normalizeAttendanceStats(raw: unknown): AttendanceStats {
     thisWeek: r.this_week === true,
     bestMonth: readBestMonth(r.best_month),
     daysWith: int(r.days_with),
+    totalMinutes: int(r.total_minutes),
+    monthMinutes: int(r.month_minutes),
+    lastMonthMinutes: int(r.last_month_minutes),
+    bestMinutesMonth: readBestMinutesMonth(r.best_month_minutes),
   };
 }
 

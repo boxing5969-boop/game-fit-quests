@@ -19,6 +19,7 @@ import { useMemberHandWrapPractice } from "@/hooks/useHandWrap";
 import AttendanceHistoryPanel, { AttendanceSummaryCard } from "@/components/attendance/AttendanceHistoryPanel";
 import MemberMyInfoView from "@/components/admin/MemberMyInfoView";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
+import { minutesToHours } from "@/lib/achievement153";
 
 type TabKey = "overview" | "myinfo" | "attendance" | "missions" | "levelmap" | "activity" | "notes";
 
@@ -428,7 +429,7 @@ const MemberDetailPage = () => {
         <div className="grid grid-cols-4 gap-2 text-center">
           <MiniStat label="총 XP" value={prog.total_xp.toLocaleString()} />
           {canAttendance
-            ? <MiniStat label="총 출석" value={attHist.data ? `${attHist.data.total.toLocaleString("ko-KR")}회` : "…"} />
+            ? <MiniStat label="총 운동" value={attHist.data ? `${minutesToHours(attHist.data.totalMinutes)}시간` : "…"} />
             : <MiniStat label="연속일" value={`${prog.streak_days}일`} />}
           {isStaffProfile(p)
             ? <MiniStat label={STAFF_CHAMPION_LABEL} value={`Lv.${STAFF_CHAMPION_LEVEL}`} />
@@ -467,7 +468,7 @@ const MemberDetailPage = () => {
       {/* ── Overview Tab ── */}
       {activeTab === "overview" && (
         <div className="space-y-3">
-          {/* 출석 요약 — 총 출석 · 이번 달 · 지난달 · 연속 출석 → '출석' 탭에 그래프 · 날짜별 전체 (2026-10-21) */}
+          {/* 운동 요약 — 총 운동 시간 · 이번 달 · 지난달 · 연속 출석 → '출석' 탭에 그래프 · 날짜별 전체 (2026-10-22 횟수 → 시간) */}
           {canAttendance && <AttendanceSummaryCard userId={memberId} audience="staff" onOpenAll={() => setActiveTab("attendance")} />}
           {canAttendance && (
             <button

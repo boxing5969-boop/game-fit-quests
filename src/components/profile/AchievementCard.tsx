@@ -1,20 +1,22 @@
 /**
- * 🥊 지금까지 이룬 것 — 내정보 · 내 출석 기록 · 관리자 회원 상세 '내정보' (2026-10-21 대표님)
+ * 🥊 지금까지 이룬 것 — 내정보 · 내 운동 기록 · 관리자 회원 상세 '내정보' (2026-10-21~22 대표님)
  *   "주평균 빼 주고 지금까지 이룬 것들을 보여 줘 — 1시간당 평균 칼로리 · 건강 수치 · 긍정적인 신호 · 잽 · 스트레이트 · 스텝 등등"
- *   + "본인이 신체 정보(키 · 몸무게)를 넣고 153 PB 로 체력 측정" + "운동 시간 평균도 입력할 수 있게, 기준은 60분"
+ *   + "본인이 신체 정보(키 · 몸무게)를 넣고 153 PB 로 체력 측정"
  *   + "스쿼트는 빼고, 줄넘기 2분 3라운드 + 1시간 복싱 기준으로 펀치 수와 스텝 활동량으로"
  *   + "나는 관리자라 출석이 없는데, 회원 이름을 눌러 들어가면 그 회원 내정보를 볼 수 있게" (userId)
+ *   + "횟수 말고 총 몇 시간 운동했는지로 · 운동 끝나고 한 번 더 찍으면 그 시간까지(최대 3시간)" (2026-10-22)
  *
- *   · 주인공 숫자 = 뻗은 펀치(잽 + 스트레이트) · 아래 칸 = 잽 · 스트레이트 · 스텝 · 줄넘기 · 운동한 시간
- *   · 칼로리 = 1시간 평균 · 지금까지 (내 몸무게, 없으면 65kg 기준이라고 밝힘)
+ *   · 주인공 숫자 = 뻗은 펀치(잽 + 스트레이트) · 칸 = 잽 · 스트레이트 · 스텝 · 줄넘기 · 운동한 시간(이번 달 · 지금까지)
+ *   · 운동 시간은 서버 workout_minutes 합 (두 번째 체크 · 운동 종료로 잰 시간, 없으면 66분) — 승급 · 랭킹과 같은 숫자.
+ *     펀치 · 스텝은 그중 복싱한 시간(출석마다 줄넘기 6분 뺀 나머지)으로, 줄넘기는 출석마다 3라운드.
+ *     회원이 직접 넣던 '한 번 복싱 시간' 칸은 2026-10-22 없앴다 (실제 시간을 두 번째 체크로 잰다).
+ *   · 칼로리 = 1시간 평균 · 지금까지 (몸무게, 없으면 65kg 기준이라고 밝힘)
  *   · 좋은 신호 = 권장 운동량 채운 주 · 몸무게가 줄었을 때만 · 153 PB(완주 기록) — 잘한 것만
  *   숫자는 lib/achievement153 한 곳. 출석 = get_attendance_history(같은 캐시) · 신체 = get_my_body_info · PB = get_test153_summary.
- *   앱이 펀치를 직접 세지 않으므로 '기준 추정'을 늘 같이 쓴다.
+ *   앱이 펀치를 직접 세지 않으므로 '추정'을 늘 같이 쓴다.
  *
  *   userId 없음(회원 본인) — 회원(role member · 지도진 아님)만. 대표님 '회원으로 보기'에서도 보인다.
- *   userId 있음(관리자 · 지점장이 그 회원을 볼 때) — 부르는 쪽이 권한을 거른다. 회원이 넣은 키 · 몸무게 · 복싱 시간을
- *     get_member_body_info 로 그대로 읽어 회원 화면과 같은 숫자 (2026-10-22 대표님: "안내 문구를 아예 넣지 말자").
- *   운동한 시간 = 이번 달 · 지금까지 (2026-10-22 대표님: "한 달 동안 총 몇 시간, 지금까지 총 몇 시간 운동했는지")
+ *   userId 있음(관리자 · 지점장이 그 회원을 볼 때) — 부르는 쪽이 권한을 거른다. 키 · 몸무게는 get_member_body_info 로 읽기만.
  */
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
@@ -25,24 +27,22 @@ import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
 import { useMemberBodyInfo, useMyBodyInfo } from "@/hooks/useMyBodyInfo";
 import { fetchTest153Summary } from "@/services/test153Service";
 import {
+  CHECKOUT_WINDOW_HOURS,
+  DEFAULT_SESSION_MINUTES,
   DEFAULT_WEIGHT_KG,
-  ROPE_MINUTES,
   ROPE_ROUNDS,
   ROPE_ROUND_MINUTES,
   classesForRecommended,
   daysThisWeek,
-  exerciseHours,
-  formatHours,
   kcalPerHour,
   kcalTotal,
+  minutesToHours,
   moveTotals,
   pbView,
   punchPerSession,
   punchTotal,
   recommendedWeeks,
   roundApprox,
-  sessionMinutesOr60,
-  sessionTotalMinutes,
   spokenDuration,
   validWeight,
   weightLost,
@@ -62,14 +62,9 @@ const md = (d: string | null) => {
 };
 const oneDecimal = (v: number) => (Math.round(v * 10) / 10).toLocaleString("ko-KR", { maximumFractionDigits: 1 });
 const ROPE_LABEL = `줄넘기 ${ROPE_ROUND_MINUTES}분 × ${ROPE_ROUNDS}라운드`;
-const ROPE_SHORT = `줄넘기 ${ROPE_ROUND_MINUTES}분×${ROPE_ROUNDS}R`;
-/** '키 172.5cm · 몸무게 80kg · 복싱 90분' */
-const bodyLine = (b: { heightCm: number | null; weightKg: number | null; sessionMinutes: number | null }) =>
-  [
-    b.heightCm != null ? `키 ${oneDecimal(b.heightCm)}cm` : null,
-    b.weightKg != null ? `몸무게 ${oneDecimal(b.weightKg)}kg` : null,
-    b.sessionMinutes != null ? `복싱 ${n(b.sessionMinutes)}분` : null,
-  ]
+/** '키 172.5cm · 몸무게 80kg' */
+const bodyLine = (b: { heightCm: number | null; weightKg: number | null }) =>
+  [b.heightCm != null ? `키 ${oneDecimal(b.heightCm)}cm` : null, b.weightKg != null ? `몸무게 ${oneDecimal(b.weightKg)}kg` : null]
     .filter(Boolean)
     .join(" · ");
 
@@ -116,7 +111,7 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
   const show = staffView || (role === "member" && !isStaffProfile(profile)) || viewAsMember;
   const target = staffView ? userId : user?.id;
   const { data: att, isLoading, isError, refetch } = useAttendanceHistory(staffView ? userId : null, show);
-  // 신체 · 복싱 시간 — 본인은 get_my_body_info, 관리자 · 지점장은 그 회원 것(get_member_body_info)
+  // 키 · 몸무게 — 본인은 get_my_body_info, 관리자 · 지점장은 그 회원 것(get_member_body_info)
   const mine = useMyBodyInfo(show && !staffView);
   const theirs = useMemberBodyInfo(staffView ? userId : null, show && staffView);
   const body = staffView ? theirs.data : mine.data;
@@ -145,19 +140,20 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
   }
 
   const classes = att.total;
-  const minutes = sessionMinutesOr60(body?.sessionMinutes);
-  const ownMinutes = body?.sessionMinutes != null;
-  const needPerWeek = classesForRecommended(minutes);
-  const days = att.list.map((d) => d.day);
-  const recWeeks = recommendedWeeks(days, minutes);
-  const thisWeek = daysThisWeek(days, kstToday());
+  const totalMin = att.totalMinutes;
+  const needPerWeek = classesForRecommended();
+  const recWeeks = recommendedWeeks(att.list);
+  const thisWeek = daysThisWeek(
+    att.list.map((d) => d.day),
+    kstToday(),
+  );
   const myWeight = validWeight(body?.weightKg) ? body!.weightKg! : null;
   const lost = weightLost(body);
   const pb = pbView(pbSummary?.records);
-  const moves = moveTotals(classes, minutes);
+  const moves = moveTotals(classes, totalMin);
   const byKey = Object.fromEntries(moves.map((m) => [m.key, m])) as Record<(typeof moves)[number]["key"], (typeof moves)[number]>;
-  const punches = punchTotal(classes, minutes);
-  const perPunch = punchPerSession(minutes);
+  const punches = punchTotal(classes, totalMin);
+  const perPunch = punchPerSession(classes, totalMin);
   const who = staffView ? "회원" : "";
   const my = staffView ? "" : "내 ";
 
@@ -169,15 +165,16 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
         </span>
         <h3 className="text-[15px] font-black text-foreground">지금까지 이룬 것</h3>
         <span className="ml-auto text-right text-[11px] font-bold leading-tight text-muted-foreground">
-          운동 {n(classes)}번 · 복싱 {n(minutes)}분
-          <br />+ {ROPE_SHORT} 기준 추정
+          출석 {n(classes)}번 · {minutesToHours(totalMin)}시간
+          <br />
+          운동 기준 추정
         </span>
       </div>
 
       {classes <= 0 ? (
         <p className="mt-3 rounded-xl bg-muted/50 px-3.5 py-3 text-[13px] leading-relaxed text-foreground">
           {staffView ? "아직 출석이 없어요. " : "첫 운동부터 쌓여요. "}
-          복싱 {n(minutes)}분이면 잽 약 {n(byKey.jab.perSession)}번 · 스트레이트 약 {n(byKey.straight.perSession)}번을 뻗어요 👊
+          복싱 1시간이면 잽 약 {n(byKey.jab.perSession)}번 · 스트레이트 약 {n(byKey.straight.perSession)}번을 뻗어요 👊
         </p>
       ) : (
         <>
@@ -196,13 +193,13 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
             {(["jab", "straight", "step"] as const).map((k) => {
               const m = byKey[k];
               return (
-                <Tile key={k} emoji={m.emoji} label={m.label} value={approx(m.total)} unit={m.unit} sub={`1번에 ${n(m.perSession)}${m.unit}`} />
+                <Tile key={k} emoji={m.emoji} label={m.label} value={approx(m.total)} unit={m.unit} sub={`1번에 평균 ${n(m.perSession)}${m.unit}`} />
               );
             })}
             <Tile emoji={byKey.rope.emoji} label={byKey.rope.label} value={approx(byKey.rope.total)} unit={byKey.rope.unit} sub={`1번에 ${ROPE_ROUND_MINUTES}분 × ${ROPE_ROUNDS}R`} />
           </div>
 
-          {/* 운동한 시간 — 이번 달 · 지금까지 (2026-10-22 대표님) */}
+          {/* 운동한 시간 — 이번 달 · 지금까지 (서버 workout_minutes 합) */}
           <div className="mt-2 rounded-xl bg-primary/10 px-3.5 py-3" aria-label="운동한 시간">
             <div className="flex items-center gap-1.5 text-[12px] font-bold text-muted-foreground">
               <Clock className="h-3.5 w-3.5 text-primary" aria-hidden />
@@ -212,36 +209,23 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
               <div>
                 <p className="text-[11.5px] text-muted-foreground">이번 달</p>
                 <p className="text-[22px] font-black leading-tight tabular-nums text-foreground">
-                  {formatHours(exerciseHours(att.month, minutes))}
+                  {minutesToHours(att.monthMinutes)}
                   <span className="ml-0.5 text-[12px] font-bold text-muted-foreground">시간</span>
                 </p>
               </div>
               <div>
                 <p className="text-[11.5px] text-muted-foreground">지금까지</p>
                 <p className="text-[22px] font-black leading-tight tabular-nums text-foreground">
-                  {formatHours(exerciseHours(classes, minutes))}
+                  {minutesToHours(totalMin)}
                   <span className="ml-0.5 text-[12px] font-bold text-muted-foreground">시간</span>
                 </p>
               </div>
             </div>
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              출석 1번 = 복싱 {n(minutes)}분 + 줄넘기 {n(ROPE_MINUTES)}분 = {n(sessionTotalMinutes(minutes))}분
+            <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+              운동이 끝나면 입구 얼굴 인식을 한 번 더 — 그 시간까지(최대 {CHECKOUT_WINDOW_HOURS}시간) 쳐요. 안 하면 {DEFAULT_SESSION_MINUTES}분
+              (복싱 60분 + {ROPE_LABEL})
             </p>
           </div>
-
-          {/* 한 번 복싱 시간 — 안 넣었으면 60분 (본인 화면만 — 넣기 · 바꾸기) */}
-          {!staffView && (
-            <button
-              type="button"
-              onClick={() => setSheetOpen(true)}
-              className="mt-2 flex w-full items-center justify-between gap-2 rounded-xl px-1 py-1.5 text-left text-[12px] active:opacity-70"
-            >
-              <span className="text-muted-foreground">
-                {ownMinutes ? `내 복싱 시간 한 번 ${n(minutes)}분 기준` : `복싱 한 번 ${n(minutes)}분 기준이에요 — 더 오래 하면 넣어 주세요`}
-              </span>
-              <span className="shrink-0 font-bold text-primary">{ownMinutes ? "바꾸기" : "복싱 시간 넣기"}</span>
-            </button>
-          )}
 
           {/* 칼로리 */}
           <div className="mt-3 rounded-xl bg-amber-500/10 px-3.5 py-3">
@@ -251,11 +235,11 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
             </div>
             <div className="mt-1 flex items-end justify-between gap-2">
               <p className="text-[24px] font-black leading-none tabular-nums text-foreground">
-                약 {approx(kcalPerHour(myWeight, minutes))}
+                약 {approx(kcalPerHour(classes, totalMin, myWeight))}
                 <span className="ml-0.5 text-[13px] font-bold text-muted-foreground">kcal</span>
               </p>
               <p className="text-right text-[12px] text-muted-foreground">
-                지금까지 <b className="text-foreground">약 {approx(kcalTotal(classes, myWeight, minutes))}kcal</b>
+                지금까지 <b className="text-foreground">약 {approx(kcalTotal(classes, totalMin, myWeight))}kcal</b>
               </p>
             </div>
             <p className="mt-1.5 text-[11.5px] text-muted-foreground">
@@ -284,7 +268,7 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
             <Signal emoji="💚">
               권장 운동량을 채운 주 <b>{n(recWeeks)}주</b>
               <span className="block text-[11.5px] text-muted-foreground">
-                복싱 {n(minutes)}분 + 줄넘기면 주 {n(needPerWeek)}번으로 신체활동 권장량(주 500 MET·분)을 넘어요
+                주 {n(needPerWeek)}번(또는 한 번 오래) 오면 신체활동 권장량(주 500 MET·분)을 넘어요
               </span>
             </Signal>
           ) : (
@@ -324,13 +308,13 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
         </ul>
       </div>
 
-      {/* 신체 · 운동 정보 — 본인은 넣기 · 고치기, 관리자 · 지점장은 보기만 (넣은 값이 있을 때) */}
+      {/* 신체 정보 — 본인은 넣기 · 고치기, 관리자 · 지점장은 보기만 (넣은 값이 있을 때) */}
       {staffView ? (
-        body && (body.heightCm != null || body.weightKg != null || body.sessionMinutes != null) ? (
+        body && (body.heightCm != null || body.weightKg != null) ? (
           <div className="mt-2 flex items-center gap-2.5 rounded-xl bg-muted/50 px-3.5 py-3">
             <Ruler className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <span className="min-w-0 flex-1">
-              <span className="block text-[12px] font-bold text-muted-foreground">회원 신체 · 운동 정보</span>
+              <span className="block text-[12px] font-bold text-muted-foreground">회원 신체 정보</span>
               <span className="block truncate text-[13px] font-bold text-foreground">{bodyLine(body)}</span>
             </span>
           </div>
@@ -343,20 +327,18 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
         >
           <Ruler className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           <span className="min-w-0 flex-1">
-            <span className="block text-[12px] font-bold text-muted-foreground">내 신체 · 운동 정보</span>
+            <span className="block text-[12px] font-bold text-muted-foreground">내 신체 정보</span>
             <span className="block truncate text-[13px] font-bold text-foreground">
-              {body && (body.heightCm != null || body.weightKg != null || body.sessionMinutes != null) ? bodyLine(body) : "키 · 몸무게 · 복싱 시간 넣기"}
+              {body && (body.heightCm != null || body.weightKg != null) ? bodyLine(body) : "키 · 몸무게 넣기"}
             </span>
           </span>
-          <span className="shrink-0 text-[12px] font-bold text-primary">
-            {body && (body.count > 0 || body.sessionMinutes != null) ? "고치기" : "넣기"}
-          </span>
+          <span className="shrink-0 text-[12px] font-bold text-primary">{body && body.count > 0 ? "고치기" : "넣기"}</span>
         </button>
       )}
 
       <p className="mt-2.5 text-[10.5px] leading-relaxed text-muted-foreground">
-        앱이 펀치 · 스텝 수를 직접 세지는 않아요. 출석 1번을 복싱 {n(minutes)}분 + {ROPE_LABEL}로 보고 계산한 추정이에요. 칼로리는 신체활동 MET
-        표(2024) 기준이에요.
+        앱이 펀치 · 스텝 수를 직접 세지는 않아요. 운동한 시간에서 출석마다 {ROPE_LABEL}를 빼고 나머지를 복싱으로 보고 계산한 추정이에요. 칼로리는
+        신체활동 MET 표(2024) 기준이에요.
       </p>
 
       {!staffView && <BodyInfoSheet open={sheetOpen} onOpenChange={setSheetOpen} current={body ?? null} />}

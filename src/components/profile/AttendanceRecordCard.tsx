@@ -4,13 +4,15 @@
  *   · 다음 축하(50회마다)까지 남은 횟수 · 받을 선물 · 이미 받은 축하
  *   숫자는 서버 get_my_attendance_stats (lib/attendanceMilestone · hooks/useAttendanceStats).
  *   지도진 계정은 축하 보상이 없다 → 진행 막대 대신 안내 한 줄.
- *   이번 달 · 지금까지 운동한 시간(⏱) — 출석 수 × 한 번(복싱 + 줄넘기 2분×3R) (2026-10-22 대표님: "한 달 동안 총 몇 시간, 지금까지 총 몇 시간")
+ *   2026-10-22 대표님: "이번 달 · 지난달 총 몇 회 출석했는지 말고 총 몇 시간 운동했는지로 체크하자"
+ *     → 큰 숫자는 운동 시간(이번 달 · 지금까지), 출석 횟수는 그 아래 작은 글씨. 지난달 비교도 시간으로(늘었을 때만).
+ *     운동 시간은 서버 workout_minutes 합(두 번째 체크 · 운동 종료로 잰 시간, 없으면 66분) — 승급 · 랭킹과 같은 숫자.
+ *   출석 축하(50회마다)는 그대로 횟수 기준.
  */
 import { useNavigate } from "react-router-dom";
 import { CalendarCheck, ChevronRight, PartyPopper } from "lucide-react";
 import { useAttendanceStats } from "@/hooks/useAttendanceStats";
-import { useMyBodyInfo } from "@/hooks/useMyBodyInfo";
-import { exerciseHours, formatHours } from "@/lib/achievement153";
+import { CHECKOUT_WINDOW_HOURS, DEFAULT_SESSION_MINUTES, minutesToHours } from "@/lib/achievement153";
 import { milestoneProgress, shortDate } from "@/lib/attendanceMilestone";
 import { attendanceCheer, kstToday, monthGain, sinceLabel } from "@/lib/attendanceCheer";
 
@@ -25,8 +27,6 @@ const longDate = (iso: string) => {
 const AttendanceRecordCard = () => {
   const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useAttendanceStats();
-  // 운동한 시간 = 출석 수 × 한 번(복싱 + 줄넘기 2분×3R) — 회원이 넣은 복싱 시간, 없으면 60분 (2026-10-22 대표님)
-  const { data: body } = useMyBodyInfo();
 
   if (isLoading) {
     return <div className="h-[188px] animate-pulse rounded-2xl border border-border bg-card" aria-label="출석 기록을 불러오는 중" />;
@@ -47,8 +47,8 @@ const AttendanceRecordCard = () => {
   }
 
   const prog = milestoneProgress(data.total, data.step);
-  // 회원 화면은 잘한 것만 — 지난달 비교는 늘었을 때만, 주 평균은 없다 (2026-10-21 대표님 · lib/attendanceCheer)
-  const gain = monthGain(data.month, data.lastMonth);
+  // 회원 화면은 잘한 것만 — 지난달 비교는 운동 시간이 늘었을 때만, 주 평균은 없다 (lib/attendanceCheer)
+  const gain = monthGain(data.monthMinutes, data.lastMonthMinutes);
   // 축하까지 남은 횟수는 아래 금색 칸이 보여 주니 응원 한 줄에선 뺀다 (next 0)
   const cheer = attendanceCheer({ ...data, next: 0 });
   const gift = [
@@ -57,27 +57,25 @@ const AttendanceRecordCard = () => {
   ].filter(Boolean).join(" · ");
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 shadow-elev-1" aria-label="출석 기록">
+    <section className="rounded-2xl border border-border bg-card p-4 shadow-elev-1" aria-label="운동 기록">
       <div className="flex items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <CalendarCheck className="h-4 w-4" />
         </span>
-        <h3 className="text-[15px] font-black text-foreground">출석 기록</h3>
+        <h3 className="text-[15px] font-black text-foreground">운동 기록</h3>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2.5">
         <div className="rounded-xl bg-muted/50 px-3.5 py-3">
           <p className="text-[12px] font-bold text-muted-foreground">이번 달</p>
           <p className="mt-0.5 text-[28px] font-black leading-none tabular-nums text-foreground">
-            {n(data.month)}
-            <span className="ml-0.5 text-[15px] font-bold text-muted-foreground">회</span>
+            {minutesToHours(data.monthMinutes)}
+            <span className="ml-0.5 text-[15px] font-bold text-muted-foreground">시간</span>
           </p>
-          {!data.isStaff && data.month > 0 && (
-            <p className="mt-1.5 text-[12.5px] font-bold tabular-nums text-foreground">⏱ {formatHours(exerciseHours(data.month, body?.sessionMinutes))}시간 운동</p>
-          )}
-          <p className="mt-1.5 text-[11.5px] text-muted-foreground">
+          <p className="mt-1.5 text-[12px] font-bold tabular-nums text-foreground">{n(data.month)}번 출석</p>
+          <p className="mt-0.5 text-[11.5px] text-muted-foreground">
             {gain ? (
-              <b className="text-foreground">지난달보다 +{n(gain)} 📈</b>
+              <b className="text-foreground">지난달보다 +{minutesToHours(gain)}시간 📈</b>
             ) : data.thisWeek ? (
               "이번 주 출석 ✓"
             ) : data.month > 0 ? (
@@ -90,13 +88,11 @@ const AttendanceRecordCard = () => {
         <div className="rounded-xl bg-muted/50 px-3.5 py-3">
           <p className="text-[12px] font-bold text-muted-foreground">지금까지</p>
           <p className="mt-0.5 text-[28px] font-black leading-none tabular-nums text-foreground">
-            {n(data.total)}
-            <span className="ml-0.5 text-[15px] font-bold text-muted-foreground">회</span>
+            {minutesToHours(data.totalMinutes)}
+            <span className="ml-0.5 text-[15px] font-bold text-muted-foreground">시간</span>
           </p>
-          {!data.isStaff && data.total > 0 && (
-            <p className="mt-1.5 text-[12.5px] font-bold tabular-nums text-foreground">⏱ {formatHours(exerciseHours(data.total, body?.sessionMinutes))}시간 운동</p>
-          )}
-          <p className="mt-1.5 text-[11.5px] text-muted-foreground">
+          <p className="mt-1.5 text-[12px] font-bold tabular-nums text-foreground">{n(data.total)}번 출석</p>
+          <p className="mt-0.5 text-[11.5px] text-muted-foreground">
             {/* 날 수(262일)는 쓰지 않는다 — 출석 수 옆에 두면 '그중 겨우 N번'으로 읽힌다 (2026-10-21) */}
             {sinceLabel(data.since, kstToday()) ?? "첫 출석을 하면 쌓여요"}
           </p>
@@ -155,11 +151,13 @@ const AttendanceRecordCard = () => {
         onClick={() => navigate("/mypage/attendance")}
         className="mt-3 flex h-11 w-full items-center justify-center gap-1 rounded-xl bg-muted text-[13.5px] font-bold text-foreground transition-transform active:scale-[0.98]"
       >
-        출석 기록 전체 보기 <ChevronRight className="h-4 w-4" />
+        운동 기록 전체 보기 <ChevronRight className="h-4 w-4" />
       </button>
 
       <p className="mt-2.5 text-[11px] leading-relaxed text-muted-foreground">
-        하루에 여러 번 찍어도 1번으로 세요 · {longDate(data.recordsSince)}부터 센 기록이에요
+        {/* 오래 하신 분은 끝나고 한 번 더 — 그 시각까지가 운동 시간 (2026-10-22 대표님) */}
+        <b className="text-foreground">운동이 끝나면 입구 얼굴 인식을 한 번 더</b> 하세요 — 그 시간까지(최대 {CHECKOUT_WINDOW_HOURS}시간) 운동 시간으로 쳐요.
+        안 하면 {DEFAULT_SESSION_MINUTES}분으로 세요 · 출석은 하루 1번 · {longDate(data.recordsSince)}부터 센 기록이에요
       </p>
     </section>
   );

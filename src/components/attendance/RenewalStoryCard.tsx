@@ -1,7 +1,7 @@
 /**
  * 🌱 나의 153 기록 — 수강권이 끝나 갈 때(만료 21일 전 ~ 끝나고 14일) 지금까지 쌓은 출석을 보여 준다 (2026-10-21 대표님:
  *   "회원님들이 출석 데이터를 통해 재등록과 감정이 긍정적으로 생각할 수 있도록 세팅하자")
- *   · 숫자는 잘한 것만: 출석 횟수 · 최고 연속 주 · 가장 많이 온 달 · 다음 축하까지 (lib/attendanceCheer)
+ *   · 숫자는 잘한 것만: 운동 시간(주인공 · 2026-10-22 횟수 → 시간) · 출석 횟수 · 최고 연속 주 · 가장 많이 운동한 달(시간) · 다음 축하까지
  *     날 수는 쓰지 않는다 — "262일 동안 37번"은 "그중 37번밖에"로 읽힌다 (2026-10-21 대표님)
  *   · 압박 문구 · 할인 약속 없음 — '쌓아 온 기록이 이어진다' 는 사실만
  *   · 내정보 · 수강권 · 내 출석 기록에 같은 카드 (수강권 화면에선 버튼 없이)
@@ -12,6 +12,7 @@ import { ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAttendanceStats } from "@/hooks/useAttendanceStats";
 import { kstToday, renewalBadge, renewalWindow } from "@/lib/attendanceCheer";
+import { minutesToHours } from "@/lib/achievement153";
 import { monthLabel } from "@/lib/attendanceHistory";
 import { isStaffProfile } from "@/lib/staffDisplay";
 import { cn } from "@/lib/utils";
@@ -30,8 +31,10 @@ const RenewalStoryCard = ({ showCta = true, className }: { showCta?: boolean; cl
   const name = ((profile?.nickname || profile?.name || "") as string).trim() || "회원";
   const left = data.next - data.total;
   const chips = [
+    `🥊 출석 ${n(data.total)}번`,
     data.bestWeekStreak >= 2 ? `🔥 최고 ${n(data.bestWeekStreak)}주 연속` : null,
-    data.bestMonth ? `📅 ${monthLabel(data.bestMonth.month, true)} ${n(data.bestMonth.days)}회 최고` : null,
+    // 최고 달도 시간으로 (2026-10-22 대표님 "횟수 말고 몇 시간") — 서버 best_month_minutes
+    data.bestMinutesMonth ? `📅 ${monthLabel(data.bestMinutesMonth.month, true)} ${minutesToHours(data.bestMinutesMonth.minutes)}시간 최고` : null,
     left > 0 ? `🏅 ${n(data.next)}회 축하까지 ${n(left)}번` : null,
   ].filter(Boolean) as string[];
 
@@ -47,9 +50,9 @@ const RenewalStoryCard = ({ showCta = true, className }: { showCta?: boolean; cl
         </span>
       </div>
       <h3 className="mt-1.5 text-[17px] font-black leading-snug text-foreground">
-        {name}님이 153에서 쌓은 출석
+        {name}님이 153에서 운동한 시간
         <br />
-        <span className="text-[26px]">{n(data.total)}번</span>
+        <span className="text-[26px] tabular-nums">{minutesToHours(data.totalMinutes)}시간</span>
       </h3>
       {chips.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">

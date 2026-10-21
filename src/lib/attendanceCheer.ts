@@ -13,10 +13,16 @@
  *   금지 표현(벨트 · 계급 · 무조건 · 확정 혜택)은 쓰지 않는다.
  */
 
+import { minutesToHours } from "@/lib/achievement153";
+import { durationLabel } from "@/lib/attendanceHistory";
+
 export interface CheerInput {
+  /** 출석 횟수 (출석 축하 50회마다 — 보상은 횟수 기준 그대로) */
   total: number;
-  month: number;
-  lastMonth: number;
+  /** 운동 시간(분) — 지금까지 · 이번 달 · 지난달 (2026-10-22 대표님: "횟수 말고 몇 시간 운동했는지로") */
+  totalMinutes: number;
+  monthMinutes: number;
+  lastMonthMinutes: number;
   weekStreak: number;
   bestWeekStreak: number;
   thisWeek: boolean;
@@ -31,9 +37,12 @@ export interface Cheer {
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 
-/** 지난달보다 늘었을 때만 그 차이 (줄었거나 지난달 기록이 없으면 null) */
+/** 지난달보다 늘었다고 보여 줄 최소 차이(분) — 0.1시간. 1~5분 차이가 '+0시간'으로 보이지 않게 */
+export const MIN_GAIN_MINUTES = 6;
+
+/** 지난달보다 늘었을 때만 그 차이 (줄었거나 · 6분 미만이거나 · 지난달 기록이 없으면 null) — 운동 시간(분)에 쓴다 */
 export const monthGain = (month: number, lastMonth: number): number | null =>
-  lastMonth > 0 && month > lastMonth ? month - lastMonth : null;
+  lastMonth > 0 && month - lastMonth >= MIN_GAIN_MINUTES ? month - lastMonth : null;
 
 /** 회원에게 보여 줄 응원 한 줄 — 위에서부터 먼저 맞는 것 하나 */
 export function attendanceCheer(i: CheerInput): Cheer {
@@ -49,9 +58,9 @@ export function attendanceCheer(i: CheerInput): Cheer {
     if (!i.thisWeek) return { emoji: "🔥", text: `${n(i.weekStreak)}주 연속 출석 중 — 이번 주도 이어 가요` };
     return { emoji: "🔥", text: best ? `${n(i.weekStreak)}주 연속 출석 — 내 최고 기록을 이어 가는 중이에요` : `${n(i.weekStreak)}주 연속 출석 — 한 주도 안 빠졌어요` };
   }
-  const gain = monthGain(i.month, i.lastMonth);
+  const gain = monthGain(i.monthMinutes, i.lastMonthMinutes);
   if (gain) {
-    return { emoji: "📈", text: `이번 달 벌써 지난달보다 ${n(gain)}번 더 왔어요` };
+    return { emoji: "📈", text: `이번 달 벌써 지난달보다 ${durationLabel(gain)} 더 운동했어요` };
   }
   if (i.thisWeek) {
     return { emoji: "✅", text: "이번 주도 출석 완료 — 꾸준함이 쌓이고 있어요" };
@@ -59,7 +68,7 @@ export function attendanceCheer(i: CheerInput): Cheer {
   if (i.weekStreak >= 1) {
     return { emoji: "💪", text: `${n(i.weekStreak)}주 연속 출석 중 — 이번 주도 한 번 와서 이어 가요` };
   }
-  return { emoji: "🥊", text: `지금까지 ${n(i.total)}번 — 이번 주 한 번이면 다시 연속 출석이 시작돼요` };
+  return { emoji: "🥊", text: `지금까지 ${minutesToHours(i.totalMinutes)}시간 운동 — 이번 주 한 번이면 다시 연속 출석이 시작돼요` };
 }
 
 /** 시작한 달 — '2월부터 함께하는 중' (올해) · '2025년 11월부터 함께하는 중'. 날 수는 쓰지 않는다 */

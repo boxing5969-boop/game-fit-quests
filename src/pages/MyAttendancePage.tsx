@@ -21,8 +21,8 @@ const MyAttendancePage = () => {
     <AppPage
       header={
         <PageHeader
-          title="내 출석 기록"
-          subtitle="월별 · 요일별 · 날짜별 출석"
+          title="내 운동 기록"
+          subtitle="월별 운동 시간 · 요일별 · 날짜별"
           sticky
           leftAction={
             <button
