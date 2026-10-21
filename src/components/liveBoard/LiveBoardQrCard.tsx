@@ -2,6 +2,7 @@
  * 153 — 라이브보드 QR 출석 카드 (2026-09-22)
  *
  * 왜 있나:
+ *   (2026-10-21) 칠금점은 브로제이가 없어 이 QR 이 유일한 출석 방법이다 — 안내 문구가 지점별로 다르다(lib/checkinMode).
  *   브로제이(얼굴 인식) 서버가 느려지면 출석이 보드에 늦게 뜬다. 문은 얼굴 인식으로만
  *   열리니 출석 자체는 이미 된 상태 — 회원이 앱에서 이 QR을 찍으면 보드에 바로 올라간다.
  *   대표님 지시: 장애 때만이 아니라 "항상" 띄운다. 안내 문구도 그대로 상시 노출.
@@ -31,6 +32,7 @@ import { QrCode } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { readBoardKey } from "@/lib/boardKey";
+import { boardQrNotice } from "@/lib/checkinMode";
 
 /** 회원 앱의 공식 주소 — 보드가 어느 도메인에서 열려도 QR 은 항상 이 주소를 가리킨다.
  *  (pages.dev 등 다른 도메인이면 회원 폰의 로그인 세션이 없어 로그인부터 다시 하게 된다) */
@@ -43,9 +45,7 @@ function buildQrCheckinUrl(branchKey: string, token: string): string {
   return u.toString();
 }
 
-/** 보드에 항상 나오는 한 줄 — 대표님 문구 그대로. */
-const BOARD_QR_NOTICE_MAIN = "브로제이 서버 불안정으로 인해 출석 반영이 늦어지고 있어요~";
-const BOARD_QR_NOTICE_SUB = "앱에서 QR을 통해 출석체크 부탁드립니다";
+/** 보드에 항상 나오는 두 줄 — 브로제이 지점은 대표님 문구 그대로, 칠금점(QR 로만 출석)은 'QR 을 찍어 출석' (lib/checkinMode) */
 
 /**
  * QR 바로 밑 — 이 QR 로 앱도 받을 수 있다는 안내 (2026-10-01 대표님: 출석 전용인 줄 알고 앱을 안 받는다).
@@ -134,6 +134,7 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar", className = "" }: Pr
 
   const stacked = variant === "sidebar";
   const qrSize = stacked ? QR_SIZE_SIDEBAR : QR_SIZE_FLOATING;
+  const notice = boardQrNotice(branchName);
   const qr = (
     // 흰 바탕 + marginSize 2(칸 2개) + 패딩 — 규격 여백(칸 4개) 이상을 흰색으로 확보해야 TV 화면에서도 잘 잡힌다
     <div className="shrink-0 rounded-xl bg-white p-2">
@@ -154,8 +155,8 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar", className = "" }: Pr
       <p className={`flex items-center gap-1.5 text-base font-black tracking-wide text-primary ${stacked ? "justify-center" : ""}`}>
         <QrCode className="h-4 w-4" /> 앱에서 QR 출석
       </p>
-      <p className="mt-1.5 text-sm font-bold leading-snug text-white">{BOARD_QR_NOTICE_MAIN}</p>
-      <p className="mt-1 text-sm font-bold leading-snug text-white/80">{BOARD_QR_NOTICE_SUB}</p>
+      <p className="mt-1.5 text-sm font-bold leading-snug text-white">{notice.main}</p>
+      <p className="mt-1 text-sm font-bold leading-snug text-white/80">{notice.sub}</p>
       <p className="mt-1.5 text-xs font-bold leading-snug text-white/40">
         마이복서153 → 홈 → 오늘의 시작 → QR 출석 · 폰 기본 카메라로 찍어도 돼요
       </p>

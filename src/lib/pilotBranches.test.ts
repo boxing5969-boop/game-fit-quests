@@ -7,17 +7,21 @@ const SUN = "153복싱짐 선릉역점";
 const JAM = "153복싱짐 잠실점";
 const YEOK = "153복싱짐 역삼점";
 
-describe("시범 지점 (선릉역점부터)", () => {
-  it("선릉역점만 — 잠실·역삼·칠금·본사·빈 값은 아니다", () => {
-    expect(PILOT_BRANCHES).toEqual([SUN]);
+const CHIL = "153복싱짐 칠금점";
+
+describe("시범 지점 (선릉역점 · 칠금점)", () => {
+  it("선릉역점 · 칠금점 — 잠실·역삼·본사·빈 값은 아니다 (2026-10-21 칠금점 추가)", () => {
+    expect(PILOT_BRANCHES).toEqual([SUN, CHIL]);
     expect(isPilotBranch(SUN)).toBe(true);
-    for (const b of [JAM, YEOK, "153복싱짐 칠금점", "153본사", "", null, undefined, " 153복싱짐 선릉역점"]) {
+    expect(isPilotBranch(CHIL)).toBe(true);
+    for (const b of [JAM, YEOK, "153본사", "", null, undefined, " 153복싱짐 선릉역점"]) {
       expect(isPilotBranch(b)).toBe(false);
     }
   });
 
   it("화이트 타이틀매치 신청 흐름 = 화이트 리그 + 시범 지점", () => {
     expect(isTitleFlowFor("white", SUN)).toBe(true);
+    expect(isTitleFlowFor("white", CHIL)).toBe(true);
     expect(isTitleFlowFor("white", JAM)).toBe(false);
     expect(isTitleFlowFor("white", YEOK)).toBe(false);
     expect(isTitleFlowFor("white", null)).toBe(false);
