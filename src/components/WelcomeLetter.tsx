@@ -13,11 +13,14 @@
  *   전체관리자·관리자 계정은 자동 편지를 받지 않는다(예전엔 회원 편지가 닉네임 그대로 "…개발자님께" 로 떴다).
  *
  * 노출 규칙 (본 기록은 localStorage — 계정별 키):
- *   · 웰컴: 앱에 처음 들어온 회원에게 1회 — 온보딩을 마치고, 소셜 가입이면 기존 회원 연동(전화번호)까지 끝난 뒤.
+ *   · 웰컴 · 코치 편지 = 첫 로그인 편지: 앱에 들어올 때마다 한 번씩, 처음 3번 접속까지 (lib/letterSchedule).
+ *     (2026-10-21 대표님: "로그인 때는 앱 확인 차원에서 거의 대부분 건너뛰기를 해서 — 로그인 3회까지는 보이게")
+ *     같은 접속(세션) 안에서는 다시 안 뜬다. 예전에 한 번 본 계정은 1번 본 것으로 이어서 센다.
+ *   · 웰컴: 앱에 처음 들어온 회원 — 온보딩을 마치고, 소셜 가입이면 기존 회원 연동(전화번호)까지 끝난 뒤.
  *           (2026-09-28 대표님 제보 "기존 회원이 연동해 처음 들어와도 감동 편지가 안 뜬다" —
  *            예전엔 튜토리얼까지 마쳐야 와서 연동·일괄등록 회원은 사실상 아무도 못 받았다.)
  *           오삼 환영 모달과 같이 뜨면 편지가 위에 뜨고, 닫으면 오삼 안내가 이어진다.
- *   · 코치: 온보딩·튜토리얼과 무관하게 처음 들어올 때 1회.
+ *   · 코치: 온보딩·튜토리얼과 무관하게 처음 3번 접속까지.
  *   · 승급: 처음 마운트 시 현재 리그를 "기준선"으로 silent 저장 →
  *           이후 다음 앱 진입에서 리그가 올라가 있으면 그 리그 편지 1회.
  *           (기존 회원이 현재 리그 편지로 도배되지 않도록 기준선 초기화)
@@ -40,6 +43,7 @@ import {
   WELCOME_LETTERS_KEY, buildLetter, fetchWelcomeLetters, resolveLetter,
   type LetterAudience, type LetterContent,
 } from "@/lib/welcomeLetters";
+import { firstLetterDue, firstLetterShownCount, parseShownCount } from "@/lib/letterSchedule";
 
 const RANK_ORDER = ["white", "blue", "red", "black"] as const;
 type RankKey = (typeof RANK_ORDER)[number];
@@ -53,6 +57,10 @@ const LEGACY_RANK_BASELINE_KEY = "153_letter_rank_baseline_v1";
 const welcomeKey = (uid: string) => `153_letter_welcome_v2:${uid}`;
 const coachKey = (uid: string) => `153_letter_coach_v1:${uid}`;
 const rankBaselineKey = (uid: string) => `153_letter_rank_baseline_v2:${uid}`;
+// 첫 로그인 편지를 보여 준 횟수 (접속 3번까지) · 이번 접속에 이미 보여 줬는지 (2026-10-21)
+const welcomeCountKey = (uid: string) => `153_letter_welcome_count_v1:${uid}`;
+const coachCountKey = (uid: string) => `153_letter_coach_count_v1:${uid}`;
+const letterSessionKey = (uid: string) => `153_letter_session_v1:${uid}`;
 
 // QR 출석 화면은 출석이 먼저 — 편지는 홈으로 넘어간 뒤에 뜬다
 const SETUP_ROUTES = ["/", "/onboarding", "/select-branch", "/waiting-approval", "/qr-checkin"];
@@ -163,6 +171,31 @@ function lsSet(key: string, val: string) {
   } catch {
     /* ignore */
   }
+}
+function ssGet(key: string): string | null {
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function ssSet(key: string, val: string) {
+  try {
+    window.sessionStorage.setItem(key, val);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** 첫 로그인 편지 상태 — 보여 준 횟수 · 옛 '봤음' 표시 · 이번 접속에 보여 줬는지 */
+function firstLetterState(uid: string, kind: "welcome" | "coach") {
+  const legacySeen =
+    kind === "welcome" ? !!lsGet(welcomeKey(uid)) || !!lsGet(LEGACY_WELCOME_KEY) : !!lsGet(coachKey(uid));
+  return {
+    storedCount: parseShownCount(lsGet(kind === "welcome" ? welcomeCountKey(uid) : coachCountKey(uid))),
+    legacySeen,
+    shownThisSession: ssGet(letterSessionKey(uid)) === "1",
+  };
 }
 
 type LetterProfile = {
@@ -300,10 +333,10 @@ const WelcomeLetter = () => {
         return;
       }
 
-      // 코치님 — 처음 들어오면 코치 편지 1회. 온보딩·튜토리얼과 무관하고 승급 편지도 없다.
+      // 코치님 — 처음 3번 접속까지 코치 편지. 온보딩·튜토리얼과 무관하고 승급 편지도 없다.
       if (isCoach) {
         decidedRef.current = true;
-        if (!lsGet(coachKey(uid))) setActiveKey("coach");
+        if (firstLetterDue(firstLetterState(uid, "coach"))) setActiveKey("coach");
         return;
       }
 
@@ -344,9 +377,9 @@ const WelcomeLetter = () => {
         }
       }
 
-      // 2) 웰컴 편지 — 앱에 처음 들어온 회원 1회 (이 기기에서 예전에 이미 본 경우도 다시 안 띄운다).
+      // 2) 웰컴 편지 — 처음 3번 접속까지 (2026-10-21 대표님: 첫 로그인엔 대부분 건너뛴다).
       //    튜토리얼 조건은 뺐다(2026-09-28) — 기존 회원은 튜토리얼을 거의 안 해서 편지가 영영 안 왔다.
-      if (!lsGet(welcomeKey(uid)) && !lsGet(LEGACY_WELCOME_KEY)) {
+      if (firstLetterDue(firstLetterState(uid, "welcome"))) {
         setActiveKey("welcome");
       }
     };
@@ -358,9 +391,19 @@ const WelcomeLetter = () => {
   const templateLoading = needsTemplate && lettersQ.isLoading;
   useEffect(() => {
     if (!activeKey || templateLoading) return;
-    const t = window.setTimeout(() => setOpen(true), 1000);
+    const t = window.setTimeout(() => {
+      setOpen(true);
+      // 첫 로그인 편지는 '보여 준 횟수'로 센다 — 닫는 방법과 상관없이 보여 주는 순간 1 늘리고, 이번 접속엔 다시 안 띄운다
+      const uid = user?.id;
+      if (uid && (activeKey === "welcome" || activeKey === "coach")) {
+        const kind = activeKey;
+        const shown = firstLetterShownCount(firstLetterState(uid, kind));
+        lsSet(kind === "welcome" ? welcomeCountKey(uid) : coachCountKey(uid), String(shown + 1));
+        ssSet(letterSessionKey(uid), "1");
+      }
+    }, 1000);
     return () => window.clearTimeout(t);
-  }, [activeKey, templateLoading]);
+  }, [activeKey, templateLoading, user?.id]);
 
   const handleClose = () => {
     const uid = user?.id;
