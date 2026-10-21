@@ -54,7 +54,7 @@ export interface AttendanceStats {
   /** 이번 주(월~일, KST)에 출석했나 */
   thisWeek: boolean;
   bestMonth: BestMonth | null;
-  /** 첫 기록부터 오늘까지 며칠 (153과 함께한 날) */
+  /** 첫 기록부터 오늘까지 며칠 — 회원 화면엔 쓰지 않는다 (출석 수 옆에 두면 비율로 읽힌다 · 2026-10-21) */
   daysWith: number;
 }
 

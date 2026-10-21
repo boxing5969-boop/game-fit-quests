@@ -43,7 +43,7 @@ export interface AttendanceHistory {
   /** 최근 순 */
   list: AttendanceDay[];
   milestones: { milestone: number; reachedOn: string | null; gems: number; mileage: number }[];
-  /** 연속 출석 주 · 최고 연속 주 · 이번 주 출석 · 가장 많이 온 달 · 153과 함께한 날 (2026-10-21) */
+  /** 연속 출석 주 · 최고 연속 주 · 이번 주 출석 · 가장 많이 온 달 · 첫 기록부터 며칠(회원 화면엔 안 씀) (2026-10-21) */
   weekStreak: number;
   bestWeekStreak: number;
   thisWeek: boolean;

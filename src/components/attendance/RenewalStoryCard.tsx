@@ -1,7 +1,8 @@
 /**
  * 🌱 나의 153 기록 — 수강권이 끝나 갈 때(만료 21일 전 ~ 끝나고 14일) 지금까지 쌓은 출석을 보여 준다 (2026-10-21 대표님:
  *   "회원님들이 출석 데이터를 통해 재등록과 감정이 긍정적으로 생각할 수 있도록 세팅하자")
- *   · 숫자는 잘한 것만: 153과 함께한 날 · 출석 횟수 · 최고 연속 주 · 가장 많이 온 달 · 다음 축하까지 (lib/attendanceCheer)
+ *   · 숫자는 잘한 것만: 출석 횟수 · 최고 연속 주 · 가장 많이 온 달 · 다음 축하까지 (lib/attendanceCheer)
+ *     날 수는 쓰지 않는다 — "262일 동안 37번"은 "그중 37번밖에"로 읽힌다 (2026-10-21 대표님)
  *   · 압박 문구 · 할인 약속 없음 — '쌓아 온 기록이 이어진다' 는 사실만
  *   · 내정보 · 수강권 · 내 출석 기록에 같은 카드 (수강권 화면에선 버튼 없이)
  *   회원(role member · 지도진 아님)만. 출석이 한 번도 없으면 안 보인다.
@@ -46,9 +47,9 @@ const RenewalStoryCard = ({ showCta = true, className }: { showCta?: boolean; cl
         </span>
       </div>
       <h3 className="mt-1.5 text-[17px] font-black leading-snug text-foreground">
-        {name}님, 153에서 {n(data.daysWith)}일 동안
+        {name}님이 153에서 쌓은 출석
         <br />
-        <span className="text-[24px]">{n(data.total)}번</span> 왔어요
+        <span className="text-[26px]">{n(data.total)}번</span>
       </h3>
       {chips.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">

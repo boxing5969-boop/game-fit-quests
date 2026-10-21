@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { CalendarCheck, ChevronRight, PartyPopper } from "lucide-react";
 import { useAttendanceStats } from "@/hooks/useAttendanceStats";
 import { milestoneProgress, shortDate } from "@/lib/attendanceMilestone";
-import { attendanceCheer, monthGain } from "@/lib/attendanceCheer";
+import { attendanceCheer, kstToday, monthGain, sinceLabel } from "@/lib/attendanceCheer";
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 
@@ -86,7 +86,8 @@ const AttendanceRecordCard = () => {
             <span className="ml-0.5 text-[15px] font-bold text-muted-foreground">회</span>
           </p>
           <p className="mt-1.5 text-[11.5px] text-muted-foreground">
-            {data.daysWith > 0 ? `153과 함께 ${n(data.daysWith)}일째` : data.since ? `첫 기록 ${shortDate(data.since)}` : "첫 출석을 하면 쌓여요"}
+            {/* 날 수(262일)는 쓰지 않는다 — 출석 수 옆에 두면 '그중 겨우 N번'으로 읽힌다 (2026-10-21) */}
+            {sinceLabel(data.since, kstToday()) ?? "첫 출석을 하면 쌓여요"}
           </p>
         </div>
       </div>

@@ -5,7 +5,8 @@
  *   숫자는 서버 get_attendance_history 한 곳 (hooks/useAttendanceHistory · lib/attendanceHistory).
  *   그래프: 한 계열이라 범례 없음 · 민트 한 색(고른 달 · 가장 많은 요일만 진하게) · 값은 고른 막대와 막대 끝에만 · 목록이 표 역할.
  *   보는 사람(audience)마다 요약이 다르다 (2026-10-21 대표님: "회원님들이 주 평균을 보면 손해 본다는 생각을 하지 않을까?"):
- *     · member(회원 본인) — 잘한 것만: 153과 함께한 날 · 이번 달(늘었을 때만 +N) · 연속 출석 주 · 최고 기록 달 · 응원 한 줄 (lib/attendanceCheer)
+ *     · member(회원 본인) — 잘한 것만: 몇 월부터 함께 · 이번 달(늘었을 때만 +N) · 연속 출석 주 · 최고 기록 달 · 응원 한 줄 (lib/attendanceCheer)
+ *       날 수(262일)는 쓰지 않는다 — 출석 수 옆에 두면 '그 많은 날 중 겨우 N번'으로 읽힌다
  *     · staff(관리자 · 지점장) — 이번 달 · 지난달 · 주 평균 + 연속 출석 주 · 최고 달 (줄어드는 회원을 먼저 챙기려고)
  */
 import { useMemo, useState, type ReactNode } from "react";
@@ -25,7 +26,7 @@ import {
   type AttendanceHistory,
   type MonthCount,
 } from "@/lib/attendanceHistory";
-import { attendanceCheer, monthGain } from "@/lib/attendanceCheer";
+import { attendanceCheer, kstToday, monthGain, sinceLabel } from "@/lib/attendanceCheer";
 import { cn } from "@/lib/utils";
 
 export type AttendanceAudience = "member" | "staff";
@@ -96,9 +97,7 @@ const MemberSummary = ({ data, onOpenAll }: { data: AttendanceHistory; onOpenAll
             <span className="ml-1 text-[16px] font-bold text-muted-foreground">회</span>
           </p>
           <p className="mt-2 text-[12px] text-muted-foreground">
-            {data.daysWith > 0 && data.firstDay
-              ? `153과 함께한 지 ${n(data.daysWith)}일 · 첫 기록 ${dayLabel(data.firstDay)}`
-              : "아직 출석 기록이 없어요"}
+            {sinceLabel(data.firstDay, kstToday()) ?? "아직 출석 기록이 없어요"}
           </p>
         </div>
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">

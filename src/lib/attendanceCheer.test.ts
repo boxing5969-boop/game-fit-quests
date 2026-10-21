@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attendanceCheer, kstToday, monthGain, renewalBadge, renewalWindow } from "./attendanceCheer";
+import { attendanceCheer, kstToday, monthGain, renewalBadge, renewalWindow, sinceLabel } from "./attendanceCheer";
 
 const base = { total: 37, month: 4, lastMonth: 9, weekStreak: 0, bestWeekStreak: 6, thisWeek: false, next: 50 };
 const BANNED = /벨트|계급|무조건|확정 혜택|자동 가산점|손해|평균|줄었/;
@@ -58,5 +58,16 @@ describe("renewalWindow — 만료 21일 전 ~ 끝나고 14일", () => {
   it("KST 오늘 — UTC 15시 이후는 다음 날", () => {
     expect(kstToday(Date.UTC(2026, 9, 21, 14, 59))).toBe("2026-10-21");
     expect(kstToday(Date.UTC(2026, 9, 21, 15, 0))).toBe("2026-10-22");
+  });
+});
+
+describe("sinceLabel — 기간은 달로만 (날 수 없음)", () => {
+  it("올해면 'N월부터', 다른 해면 연도까지", () => {
+    expect(sinceLabel("2026-02-02", "2026-10-21")).toBe("2월부터 함께하는 중");
+    expect(sinceLabel("2025-11-30", "2026-10-21")).toBe("2025년 11월부터 함께하는 중");
+    expect(sinceLabel(null, "2026-10-21")).toBeNull();
+  });
+  it("'262일' 같은 날 수가 들어가지 않는다", () => {
+    expect(sinceLabel("2026-02-02", "2026-10-21")).not.toMatch(/\d+일/);
   });
 });

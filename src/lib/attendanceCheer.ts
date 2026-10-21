@@ -5,7 +5,9 @@
  *   원칙 — 회원 화면은 '잘한 것'만 센다:
  *     · 주 평균 · 지난달보다 줄어든 것 · 수강권 횟수 대비는 보여 주지 않는다 (관리자 · 지점장 화면에만)
  *     · 지난달과 비교는 늘었을 때만 (+N)
- *     · 연속 출석 주 · 최고 기록 · 153과 함께한 날 · 다음 축하까지 남은 횟수
+ *     · 연속 출석 주 · 최고 기록 · 몇 월부터 함께했는지 · 다음 축하까지 남은 횟수
+ *     · 날 수(262일)를 출석 수 옆에 두지 않는다 — "262일 동안 37번"은 "그 많은 날 중 37번밖에"로 읽힌다 (2026-10-21 대표님).
+ *       기간은 '2월부터 함께하는 중'처럼 달로만 쓴다 (sinceLabel)
  *     · 한동안 못 왔어도 탓하지 않고 '다시 시작'으로
  *   수강권이 끝나 갈 때(만료 21일 전 ~ 끝나고 14일) — 지금까지 쌓은 기록을 보여 주고 '이어 가기'로 (RenewalStoryCard)
  *   금지 표현(벨트 · 계급 · 무조건 · 확정 혜택)은 쓰지 않는다.
@@ -58,6 +60,14 @@ export function attendanceCheer(i: CheerInput): Cheer {
     return { emoji: "💪", text: `${n(i.weekStreak)}주 연속 출석 중 — 이번 주도 한 번 와서 이어 가요` };
   }
   return { emoji: "🥊", text: `지금까지 ${n(i.total)}번 — 이번 주 한 번이면 다시 연속 출석이 시작돼요` };
+}
+
+/** 시작한 달 — '2월부터 함께하는 중' (올해) · '2025년 11월부터 함께하는 중'. 날 수는 쓰지 않는다 */
+export function sinceLabel(firstDay: string | null | undefined, today: string): string | null {
+  const m = /^(\d{4})-(\d{2})/.exec(firstDay || "");
+  if (!m) return null;
+  const sameYear = today.slice(0, 4) === m[1];
+  return `${sameYear ? "" : `${m[1]}년 `}${Number(m[2])}월부터 함께하는 중`;
 }
 
 /** '2026-10-21' 기준 KST 오늘 */
