@@ -3,6 +3,9 @@
 // 결제는 payssam-create-bill 엣지함수가 결제선생 청구서를 만들고 결제 URL(shortUrl)을 반환 → 그 URL 로 이동.
 // 2026-10-21 대표님: 칠금점은 결제선생이 아직 없다 → 그 지점 회원에게는 가격표·결제 대신 '계좌이체 · 현장 결제' 안내만
 //   (lib/branchPayment · components/membership/OfflinePayCard). 결제선생 흐름(선릉역점)은 그대로.
+// 2026-10-21 대표님: "수강권 탭에서 결제하기 눌러도 마일리지 입력 탭이 없는데" → 모든 상품 결제 전에 확인 창을 띄우고
+//   '153 마일리지 쓰기' 칸(components/membership/MileagePayBox)을 항상 보여 준다. 수강권은 환불 규정 확인도 같이.
+//   점수 검사 · 청구 금액 계산은 그대로 서버(payssam-create-bill → DB mileage_max_use)가 한다.
 import { useState, useEffect, useCallback, useRef } from "react";
 import { CreditCard, Plus, Pencil, Trash2, X, Settings, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,10 +19,8 @@ import { useMyMileage } from "@/hooks/useMileage";
 import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 import { isOfflinePayBranch } from "@/lib/branchPayment";
 import OfflinePayCard from "@/components/membership/OfflinePayCard";
-
-/** 153 마일리지 — 이번 결제에 쓸 수 있는 최대 점수 = min(보유, 결제 금액의 10%) 를 1,000 단위로 (서버 mileage_max_use 와 같은 식) */
-const maxMileageUse = (balance: number, price: number) =>
-  Math.max(0, Math.min(Math.floor(Math.max(balance, 0) / 1000) * 1000, Math.floor((price * 0.1) / 1000) * 1000));
+import MileagePayBox from "@/components/membership/MileagePayBox";
+import { clampMileageUse, maxMileageUse } from "@/lib/mileagePay";
 
 interface Product {
   id: string;
@@ -74,9 +75,10 @@ const MembershipProducts = () => {
   const [confirmProduct, setConfirmProduct] = useState<Product | null>(null); // 결제 전 환불규정 확인 대상
   const [confirmAgree, setConfirmAgree] = useState(false);
   // 153 마일리지 쓰기 (2026-10-15) — 결제 확인 창에서 고른 점수. 결제선생 청구 금액에서 빠지고, 결제가 끝나야 차감된다.
-  const [useMileage, setUseMileage] = useState(false);
+  //   2026-10-21: 체크 하나(최대만) → 점수 입력칸. 지도진 계정도 읽는다 — 칸이 왜 비어 있는지(적립 제외) 보여 주려고.
+  const [mileagePts, setMileagePts] = useState(0);
   const pendingMileage = useRef(0); // 번호 입력 창을 거쳐도 고른 점수가 남게
-  const mileage = useMyMileage(!isManagerRole(role));
+  const mileage = useMyMileage();
   const mileageBalance = mileage.data?.balance ?? 0;
 
   const load = useCallback(async () => {
@@ -105,14 +107,10 @@ const MembershipProducts = () => {
     runBill(p);
   };
 
-  // 수강권 결제 전 '환불 규정 확인' 모달을 먼저 띄운다(환불 억제). 비수강권은 바로 결제.
+  // 결제 전 확인 창 — 수강권: '환불 규정 확인'(환불 억제) + 마일리지 / PT·용품·렌탈·1일권: 마일리지만 (2026-10-21)
   const askConfirm = (p: Product) => {
-    if (p.category !== "membership") {
-      pay(p);
-      return;
-    }
     setConfirmAgree(false);
-    setUseMileage(false);
+    setMileagePts(0);
     setConfirmProduct(p);
   };
 
@@ -390,19 +388,36 @@ const MembershipProducts = () => {
         {phoneModalJsx}
         {confirmProduct && (() => {
           const p = confirmProduct;
+          // 수강권만 환불 규정 확인 — PT·용품·렌탈·1일권은 금액 · 마일리지만 보고 결제 (2026-10-21)
+          const isMem = p.category === "membership";
           const nd = normalDailyRate(p.normal_price, p.duration_days);
           const months = Math.max(1, Math.round(p.duration_days / 30));
           const off = p.normal_price && p.normal_price > p.price ? Math.round((1 - p.price / p.normal_price) * 100) : 0;
-          const discountAmt = p.normal_price && p.normal_price > p.price ? p.normal_price - p.price : 0;
-          const rows = SIM_MONTHS.filter((m) => m * 30 < p.duration_days).map((m) => ({ m, ...calcRefund({ paid: p.price, normalDaily: nd, elapsedDays: m * 30 }) }));
+          const discountAmt = isMem && p.normal_price && p.normal_price > p.price ? p.normal_price - p.price : 0;
+          const rows = isMem
+            ? SIM_MONTHS.filter((m) => m * 30 < p.duration_days).map((m) => ({ m, ...calcRefund({ paid: p.price, normalDaily: nd, elapsedDays: m * 30 }) }))
+            : [];
+          const maxUse = maxMileageUse(mileageBalance, p.price);
+          const usePts = clampMileageUse(mileagePts, maxUse);
+          const payWon = won(p.price - usePts);
           return (
             <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setConfirmProduct(null)}>
-              <div className="w-full max-w-md rounded-t-2xl bg-card p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-2xl bg-card p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="mb-1 flex items-center justify-between">
-                  <h3 className="text-base font-black text-foreground">환불 규정 확인</h3>
-                  <button onClick={() => setConfirmProduct(null)} className="rounded-lg p-1 text-muted-foreground active:scale-95"><X className="h-5 w-5" /></button>
+                  <h3 className="text-base font-black text-foreground">{isMem ? "환불 규정 확인" : "결제 확인"}</h3>
+                  <button onClick={() => setConfirmProduct(null)} aria-label="닫기" className="rounded-lg p-1 text-muted-foreground active:scale-95"><X className="h-5 w-5" /></button>
                 </div>
-                <p className="text-sm text-muted-foreground">{months}개월 약정 · <span className="font-bold text-foreground">{won(p.price)}</span> 결제{off > 0 ? ` · 정상가 ${won(p.normal_price ?? 0)} (${off}% 할인)` : ""}</p>
+                {isMem ? (
+                  <p className="text-sm text-muted-foreground">{months}개월 약정 · <span className="font-bold text-foreground">{won(p.price)}</span> 결제{off > 0 ? ` · 정상가 ${won(p.normal_price ?? 0)} (${off}% 할인)` : ""}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {CAT_LABEL[p.category] ?? "상품"} · {p.name} · <span className="font-bold text-foreground">{won(p.price)}</span>
+                    {p.duration_days > 0 ? ` · ${p.duration_days}일` : ""}
+                  </p>
+                )}
 
                 {discountAmt > 0 && (
                   <div className="mt-3 rounded-xl border border-[#f97316]/40 bg-[#f97316]/10 p-3">
@@ -426,39 +441,38 @@ const MembershipProducts = () => {
                   </div>
                 )}
 
-                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">끝까지 이용하시면 하루 {(p.duration_days > 0 ? Math.round(p.price / p.duration_days) : 0).toLocaleString("ko-KR")}원으로 가장 이득입니다. 위약금(10%)·개인 위생용품은 별도이며, 최종 환불액은 관장님이 확정합니다.</p>
+                {isMem && (
+                  <p className="mt-3 text-xs leading-relaxed text-muted-foreground">끝까지 이용하시면 하루 {(p.duration_days > 0 ? Math.round(p.price / p.duration_days) : 0).toLocaleString("ko-KR")}원으로 가장 이득입니다. 위약금(10%)·개인 위생용품은 별도이며, 최종 환불액은 관장님이 확정합니다.</p>
+                )}
 
-                {(() => {
-                  const maxUse = maxMileageUse(mileageBalance, p.price);
-                  if (maxUse <= 0) return null;
-                  return (
-                    <label className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
-                      <input type="checkbox" checked={useMileage} onChange={(e) => setUseMileage(e.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
-                      <span className="text-sm text-foreground">
-                        <b>153 마일리지 {maxUse.toLocaleString("ko-KR")}점 쓰기</b> → {won(p.price - maxUse)} 결제
-                        <span className="block text-[11.5px] text-muted-foreground">
-                          보유 {mileageBalance.toLocaleString("ko-KR")}점 · 한 번에 결제 금액의 10%까지 · 결제가 끝나야 빠져요
-                        </span>
-                      </span>
-                    </label>
-                  );
-                })()}
+                <MileagePayBox
+                  className="mt-3"
+                  price={p.price}
+                  balance={mileageBalance}
+                  loading={mileage.isLoading}
+                  failed={mileage.isError}
+                  isStaff={isStaff}
+                  value={mileagePts}
+                  onChange={setMileagePts}
+                />
 
-                <label className="mt-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <input type="checkbox" checked={confirmAgree} onChange={(e) => setConfirmAgree(e.target.checked)} className="h-4 w-4 accent-primary" />
-                  위 환불 규정을 확인했으며 이에 동의합니다.
-                </label>
+                {isMem && (
+                  <label className="mt-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <input type="checkbox" checked={confirmAgree} onChange={(e) => setConfirmAgree(e.target.checked)} className="h-4 w-4 accent-primary" />
+                    위 환불 규정을 확인했으며 이에 동의합니다.
+                  </label>
+                )}
 
                 <button
                   onClick={() => {
                     const t = confirmProduct;
                     setConfirmProduct(null);
-                    if (t) pay(t, useMileage ? maxMileageUse(mileageBalance, t.price) : 0);
+                    if (t) pay(t, clampMileageUse(mileagePts, maxMileageUse(mileageBalance, t.price)));
                   }}
-                  disabled={!confirmAgree}
+                  disabled={isMem && !confirmAgree}
                   className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-40"
                 >
-                  동의하고 결제 진행
+                  {isMem ? `동의하고 ${payWon} 결제` : `${payWon} 결제하기`}
                 </button>
                 <button onClick={() => setConfirmProduct(null)} className="mt-2 w-full rounded-xl bg-muted py-2.5 text-sm font-bold text-muted-foreground active:scale-95">다시 볼게요</button>
               </div>
