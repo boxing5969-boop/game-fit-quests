@@ -369,6 +369,20 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                     🗂 회원 상세 · 출석 · 메모 (관리자)
                   </button>
                 )}
+                {/* 회원이 내정보에서 보는 것 — 출석 · 지금까지 이룬 것 (2026-10-21 대표님: "이름 클릭해서 들어가면 회원 내정보를") */}
+                {canSeeDetail && userId && userId !== user?.id && !data.staff_role && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const id = userId;
+                      onClose();
+                      navigate(`/manager/member/${id}?tab=myinfo`);
+                    }}
+                    className="mt-2 h-11 w-full rounded-xl bg-muted text-[14px] font-bold text-foreground transition-transform active:scale-[0.98]"
+                  >
+                    👤 회원 내정보 보기 (출석 · 이룬 것)
+                  </button>
+                )}
 
                 {/* 보조 버튼(랭킹의 '추격 목표로 정하기')은 회원 카드에만 — 코치·지점장·운영진은 순위 밖 (2026-10-19) */}
                 {extraAction && !data.staff_role && data.like_reason !== "target_staff" && (

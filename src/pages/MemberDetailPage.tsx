@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Banknote, CalendarCheck } from "lucide-react";
+import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Banknote, CalendarCheck, CircleUser } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
 import { STAFF_CHAMPION_LABEL, STAFF_CHAMPION_LEVEL, isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
 import RankBadge from "@/components/RankBadge";
@@ -17,9 +17,10 @@ import RouteLoader from "@/components/splash/RouteLoader";
 import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
 import { useMemberHandWrapPractice } from "@/hooks/useHandWrap";
 import AttendanceHistoryPanel, { AttendanceSummaryCard } from "@/components/attendance/AttendanceHistoryPanel";
+import MemberMyInfoView from "@/components/admin/MemberMyInfoView";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
 
-type TabKey = "overview" | "attendance" | "missions" | "levelmap" | "activity" | "notes";
+type TabKey = "overview" | "myinfo" | "attendance" | "missions" | "levelmap" | "activity" | "notes";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   locked: { label: "잠금", color: "text-muted-foreground" },
@@ -36,7 +37,9 @@ const MemberDetailPage = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  // ?tab=myinfo — 회원 카드의 '회원 내정보 보기'에서 바로 (2026-10-21 대표님: "이름 클릭해서 들어가면 회원 내정보를")
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<TabKey>(() => (searchParams.get("tab") === "myinfo" ? "myinfo" : "overview"));
   const [noteContent, setNoteContent] = useState("");
   const [myId, setMyId] = useState<string | null>(null);
   useEffect(() => { void supabase.auth.getUser().then(({ data }) => setMyId(data.user?.id ?? null)); }, []);
@@ -204,6 +207,10 @@ const MemberDetailPage = () => {
   //   서버 get_attendance_history 가 같은 범위만 허락한다(전체관리자 · 관리자 · 같은 지점 지점장). 코치님은 출석 기록을 못 읽는다(RLS).
   //   개요 요약 카드 · '출석' 탭 · 위 요약 숫자가 같은 캐시를 쓴다.
   const canAttendance = role === "super_admin" || role === "admin" || role === "branch_manager";
+  // 볼 권한이 없는데 ?tab=myinfo 로 들어오면 개요로
+  useEffect(() => {
+    if (activeTab === "myinfo" && role && !canAttendance) setActiveTab("overview");
+  }, [activeTab, role, canAttendance]);
   const attHist = useAttendanceHistory(memberId, !!memberId && canAttendance);
 
   // Mutations
@@ -374,6 +381,8 @@ const MemberDetailPage = () => {
 
   const TABS: { key: TabKey; label: string; icon: any }[] = [
     { key: "overview", label: "개요", icon: User },
+    // 회원이 내정보에서 보는 것 그대로 — 출석 요약 · 지금까지 이룬 것 (2026-10-21 대표님)
+    ...(canAttendance ? [{ key: "myinfo" as TabKey, label: "내정보", icon: CircleUser }] : []),
     ...(canAttendance ? [{ key: "attendance" as TabKey, label: "출석", icon: CalendarCheck }] : []),
     { key: "missions", label: "미션 승인", icon: FileText },
     { key: "levelmap", label: "로드맵 체크", icon: Map },
@@ -460,6 +469,15 @@ const MemberDetailPage = () => {
         <div className="space-y-3">
           {/* 출석 요약 — 총 출석 · 이번 달 · 지난달 · 연속 출석 → '출석' 탭에 그래프 · 날짜별 전체 (2026-10-21) */}
           {canAttendance && <AttendanceSummaryCard userId={memberId} audience="staff" onOpenAll={() => setActiveTab("attendance")} />}
+          {canAttendance && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("myinfo")}
+              className="flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 text-[13.5px] font-bold text-primary transition-transform active:scale-[0.98]"
+            >
+              <CircleUser className="h-4 w-4" /> 회원 내정보 보기 · 출석 · 지금까지 이룬 것
+            </button>
+          )}
           {(memberPlan.gym_reg_date || memberPlan.membership_end) && (
             <InfoCard label="회원권" value={`${memberPlan.gym_reg_date ?? "?"} ~ ${memberPlan.membership_end ?? "?"}`} />
           )}
@@ -757,6 +775,11 @@ const MemberDetailPage = () => {
 
       {/* ── Attendance Tab — 출석 기록 전체 (관리자 · 지점장) ── */}
       {activeTab === "attendance" && canAttendance && <AttendanceHistoryPanel userId={memberId} audience="staff" />}
+
+      {/* ── 내정보 Tab — 회원이 내정보 '내 기록'에서 보는 화면 (관리자 · 지점장) ── */}
+      {activeTab === "myinfo" && canAttendance && memberId && (
+        <MemberMyInfoView userId={memberId} name={p.nickname || p.name} onOpenAttendance={() => setActiveTab("attendance")} />
+      )}
 
       {/* ── Missions Tab ── */}
       {activeTab === "missions" && (

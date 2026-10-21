@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, X, Pencil, Trophy, ChevronUp, Home, Swords, Map as MapIcon, Gift } from "lucide-react";
+import { ArrowLeft, Check, X, Pencil, Trophy, ChevronUp, Home, Swords, Map as MapIcon, Gift, CircleUser } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
 import RankBadge from "@/components/RankBadge";
 import { isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
@@ -12,8 +12,9 @@ import type { Enums } from "@/integrations/supabase/types";
 import { useLevels } from "@/hooks/useQuestData";
 import { useMissions } from "@/hooks/useMissionData";
 import XPBar from "@/components/XPBar";
+import MemberMyInfoView from "@/components/admin/MemberMyInfoView";
 
-type PreviewTab = "home" | "missions" | "levelmap" | "rewards";
+type PreviewTab = "home" | "missions" | "levelmap" | "rewards" | "myinfo";
 
 const RANK_ORDER_ARR: Enums<"rank_name">[] = ["white", "blue", "red", "black"];
 
@@ -21,6 +22,7 @@ const MemberPreviewPage = () => {
   const { memberId } = useParams<{ memberId: string }>();
   const navigate = useNavigate();
   const { role } = useAuth();
+  const canMyInfo = role === "super_admin" || role === "admin" || role === "branch_manager";
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<PreviewTab>("home");
   const [actionNote, setActionNote] = useState("");
@@ -182,6 +184,8 @@ const MemberPreviewPage = () => {
     { key: "missions", label: "미션", icon: Swords },
     { key: "levelmap", label: "로드맵", icon: MapIcon },
     { key: "rewards", label: "보상", icon: Gift },
+    // 회원이 내정보 '내 기록'에서 보는 것 — 출석 기록 서버 함수와 같은 범위(관리자 · 지점장)만 (2026-10-21 대표님)
+    ...(canMyInfo ? [{ key: "myinfo" as PreviewTab, label: "내정보", icon: CircleUser }] : []),
   ];
 
   return (
@@ -374,6 +378,11 @@ const MemberPreviewPage = () => {
               </div>
             ))}
           </div>
+        )}
+
+        {/* ── 내정보 Tab — 출석 요약 · 지금까지 이룬 것 ── */}
+        {activeTab === "myinfo" && canMyInfo && memberId && (
+          <MemberMyInfoView userId={memberId} name={p.nickname || p.name} />
         )}
 
         {/* ── Rewards Tab ── */}

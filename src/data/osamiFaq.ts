@@ -14,7 +14,7 @@
  *   · keywords 는 회원이 실제로 칠 말(띄어쓰기·조사 상관없음). alts 는 같은 뜻의 다른 문장.
  *   · 서버(에지 함수)에는 복사하지 않는다 — AI 로 넘길 때 lib/osamiKb.ts 의 buildKbContext() 가 관련 항목을 골라 요청에 실어 보낸다.
  */
-import { BASIS_MINUTES, CLASS_BASIS, DEFAULT_WEIGHT_KG, classesForRecommended } from "@/lib/achievement153";
+import { BASIS_MINUTES, CLASS_BASIS, DEFAULT_WEIGHT_KG, ROPE_ROUNDS, ROPE_ROUND_MINUTES, classesForRecommended } from "@/lib/achievement153";
 
 export type OsamiFaqCategory =
   | "osami" | "start" | "account" | "attendance" | "level" | "training" | "rewards"
@@ -267,12 +267,12 @@ QR은 5분마다 바뀌어서 사진으로 돌려 쓸 수 없어요. 얼굴 인�
     [{ label: "내 출석 기록", to: "/mypage/attendance" }, { label: "내정보", to: "/mypage" }]),
   // 지금까지 이룬 것 · 신체 정보 (2026-10-21 대표님)
   e("att-achievement", "attendance", "지금까지 잽을 몇 번 뻗었는지 볼 수 있어요?",
-    ["잽 몇 번 뻗었어요", "펀치 몇 번 쳤어요", "운동으로 칼로리 얼마나 썼어요", "스쿼트 몇 개 했어요", "지금까지 이룬 것", "키 몸무게 넣기", "신체 정보 넣기", "몸무게 입력", "운동 시간 입력", "한 번 운동 시간 바꾸기"],
-    ["잽몇번", "펀치몇번", "뻗은펀치", "운동칼로리", "소모칼로리", "이룬것", "신체정보", "키몸무게", "스쿼트몇", "줄넘기몇", "운동시간입력", "운동시간바꾸"],
-    `내정보 → "내 기록"의 "지금까지 이룬 것" 카드에서 지금까지 뻗은 잽 · 스트레이트, 스텝 · 스쿼트 · 줄넘기, 운동한 시간, 1시간 평균 칼로리를 볼 수 있어요.
-앱이 펀치 수를 직접 세지는 않아요 — 출석 1번을 한 번 운동으로 보고 ${BASIS_MINUTES}분 기준(${CLASS_BASIS.map((b) => `${b.label} ${b.per}`).join(" · ")})으로 계산한 추정이에요.
-카드의 "내 신체 · 운동 정보"에 한 번 운동 시간(평균)을 넣으면 그 시간만큼 숫자가 커져요 (안 넣으면 ${BASIS_MINUTES}분). 키 · 몸무게를 넣으면 칼로리를 내 몸무게로 계산해요 (안 넣으면 ${DEFAULT_WEIGHT_KG}kg 기준). 나만 보고, 언제든 지울 수 있어요.
-${BASIS_MINUTES}분 운동이면 한 주에 ${classesForRecommended(BASIS_MINUTES)}번 오면 신체활동 권장량을 채운 주로 세고, 153 PB 기록이 있으면 내 최고 기록과 처음보다 빨라진 시간도 보여 줘요.`,
+    ["잽 몇 번 뻗었어요", "펀치 몇 번 쳤어요", "운동으로 칼로리 얼마나 썼어요", "스텝 몇 걸음", "지금까지 이룬 것", "키 몸무게 넣기", "신체 정보 넣기", "몸무게 입력", "복싱 시간 입력", "한 번 운동 시간 바꾸기"],
+    ["잽몇번", "펀치몇번", "뻗은펀치", "운동칼로리", "소모칼로리", "이룬것", "신체정보", "키몸무게", "스텝몇", "줄넘기몇", "운동시간입력", "복싱시간"],
+    `내정보 → "내 기록"의 "지금까지 이룬 것" 카드에서 지금까지 뻗은 잽 · 스트레이트, 스텝, 줄넘기, 운동한 시간, 1시간 평균 칼로리를 볼 수 있어요.
+앱이 펀치 수를 직접 세지는 않아요 — 출석 1번을 줄넘기 ${ROPE_ROUND_MINUTES}분 × ${ROPE_ROUNDS}라운드 + 복싱 ${BASIS_MINUTES}분으로 보고 (${CLASS_BASIS.map((b) => `${b.label} ${b.per}`).join(" · ")}) 계산한 추정이에요.
+카드의 "내 신체 · 운동 정보"에 한 번 복싱 시간(평균)을 넣으면 그 시간만큼 펀치 · 스텝이 커져요 (안 넣으면 ${BASIS_MINUTES}분). 키 · 몸무게를 넣으면 칼로리를 내 몸무게로 계산해요 (안 넣으면 ${DEFAULT_WEIGHT_KG}kg 기준). 나만 보고, 언제든 지울 수 있어요.
+복싱 ${BASIS_MINUTES}분이면 한 주에 ${classesForRecommended(BASIS_MINUTES)}번 오면 신체활동 권장량을 채운 주로 세고, 153 PB 기록이 있으면 내 최고 기록과 처음보다 빨라진 시간도 보여 줘요.`,
     [{ label: "내정보", to: "/mypage" }, { label: "내 출석 기록", to: "/mypage/attendance" }]),
 
   // ───────────────────────── 레벨·승급 ─────────────────────────

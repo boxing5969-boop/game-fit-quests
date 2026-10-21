@@ -1,7 +1,7 @@
 import {
   BASIS_MINUTES,
   CLASS_BASIS,
-  CLASS_MET,
+  ROPE_MINUTES,
   bodyErrorText,
   bodyInputError,
   classesForRecommended,
@@ -18,28 +18,35 @@ import {
   punchTotal,
   recommendedWeeks,
   roundApprox,
+  sessionMet,
   sessionMetMinutes,
   sessionMinutesOr60,
+  sessionTotalMinutes,
   spokenDuration,
   validSessionMinutes,
   weekMonday,
   weightLost,
 } from "./achievement153";
 
-describe("기준 — 60분 (대표님 확정)", () => {
-  it("MET 가중 평균 5.91 · 60분 354.6 MET·분 · 권장량은 60분이면 주 2번 · 40분이면 3번", () => {
+describe("기준 — 줄넘기 2분 × 3라운드 + 복싱 60분 (대표님 확정)", () => {
+  it("복싱 5.8 × 60분 + 줄넘기 8.3 × 6분 = 397.8 MET·분 · 한 번 66분", () => {
     expect(BASIS_MINUTES).toBe(60);
-    expect(CLASS_MET).toBe(5.91);
-    expect(sessionMetMinutes(null)).toBe(354.6);
+    expect(ROPE_MINUTES).toBe(6);
+    expect(sessionMetMinutes(null)).toBe(397.8);
+    expect(sessionTotalMinutes(null)).toBe(66);
+    expect(sessionMet(null)).toBeCloseTo(6.027, 3);
+  });
+  it("권장량 — 복싱 60분이면 주 2번 · 90분 1번 · 30분 3번 · 20분 4번", () => {
     expect(classesForRecommended(null)).toBe(2);
     expect(classesForRecommended(90)).toBe(1);
-    expect(classesForRecommended(40)).toBe(3);
-    expect(classesForRecommended(20)).toBe(5);
+    expect(classesForRecommended(30)).toBe(3);
+    expect(classesForRecommended(20)).toBe(4);
   });
-  it("60분 기준 숫자 — 잽 200 · 스트레이트 150 · 스텝 300 · 스쿼트 40 · 줄넘기 400", () => {
-    expect(Object.fromEntries(CLASS_BASIS.map((b) => [b.key, b.per]))).toEqual({ jab: 200, straight: 150, step: 300, squat: 40, rope: 400 });
+  it("한 번 기준 — 잽 200 · 스트레이트 150 · 스텝 300 (복싱 60분) · 줄넘기 600 (2분 × 3R) · 스쿼트 없음", () => {
+    expect(Object.fromEntries(CLASS_BASIS.map((b) => [b.key, b.per]))).toEqual({ jab: 200, straight: 150, step: 300, rope: 600 });
+    expect(CLASS_BASIS.some((b) => b.label.includes("스쿼트"))).toBe(false);
   });
-  it("운동 시간 — 20~240분 정수만, 아니면 60분", () => {
+  it("복싱 시간 — 20~240분 정수만, 아니면 60분", () => {
     expect(sessionMinutesOr60(null)).toBe(60);
     expect(sessionMinutesOr60(90)).toBe(90);
     expect(sessionMinutesOr60(19)).toBe(60);
@@ -49,22 +56,23 @@ describe("기준 — 60분 (대표님 확정)", () => {
   });
 });
 
-describe("지금까지 — 출석 수 × 기준 × (내 운동 시간 / 60)", () => {
-  it("37번 · 60분", () => {
+describe("지금까지 — 출석 수 × 기준 (펀치 · 스텝은 복싱 시간에 맞춰, 줄넘기는 늘 3라운드)", () => {
+  it("37번 · 복싱 60분", () => {
     const m = Object.fromEntries(moveTotals(37).map((x) => [x.key, x.total]));
-    expect(m).toEqual({ jab: 7400, straight: 5550, step: 11100, squat: 1480, rope: 14800 });
+    expect(m).toEqual({ jab: 7400, straight: 5550, step: 11100, rope: 22200 });
     // 큰 숫자 = 보이는 칸(내림)의 합 → 7,400 + 5,500
     expect(punchTotal(37)).toBe(12900);
     expect(punchPerSession(null)).toBe(350);
-    expect(exerciseHours(37)).toBe(37);
+    expect(exerciseHours(37)).toBe(40.7);
   });
-  it("37번 · 90분이면 1.5배 · 한 번에 잽 300", () => {
+  it("37번 · 복싱 90분 — 펀치 · 스텝은 1.5배, 줄넘기는 그대로", () => {
     const mv = moveTotals(37, 90);
     expect(mv.find((x) => x.key === "jab")).toMatchObject({ perSession: 300, total: 11100 });
-    expect(mv.find((x) => x.key === "squat")?.perSession).toBe(60);
+    expect(mv.find((x) => x.key === "step")?.perSession).toBe(450);
+    expect(mv.find((x) => x.key === "rope")).toMatchObject({ perSession: 600, total: 22200 });
     expect(punchTotal(37, 90)).toBe(11100 + 8300);
     expect(punchPerSession(90)).toBe(525);
-    expect(exerciseHours(37, 90)).toBe(55.5);
+    expect(exerciseHours(37, 90)).toBe(59.2);
   });
   it("큰 숫자와 칸 숫자가 늘 맞는다 (1~400번)", () => {
     for (let c = 1; c <= 400; c++) {
@@ -79,7 +87,7 @@ describe("지금까지 — 출석 수 × 기준 × (내 운동 시간 / 60)", ()
     expect(exerciseHours(0)).toBe(0);
   });
   it("추정은 내림 — 1,000 미만 10 · 10만 미만 100 · 그 위 1,000", () => {
-    expect(roundApprox(384.15)).toBe(380);
+    expect(roundApprox(391.77)).toBe(390);
     expect(roundApprox(12950)).toBe(12900);
     expect(roundApprox(5550)).toBe(5500);
     expect(roundApprox(123456)).toBe(123000);
@@ -88,16 +96,15 @@ describe("지금까지 — 출석 수 × 기준 × (내 운동 시간 / 60)", ()
 });
 
 describe("칼로리 — MET × 몸무게 × 시간", () => {
-  it("몸무게 없으면 65kg", () => {
-    expect(kcalPerHour(null)).toBeCloseTo(384.15, 2);
-    expect(kcalPerHour(10)).toBeCloseTo(384.15, 2); // 말이 안 되는 값도 65kg
+  it("몸무게 없으면 65kg — 1시간 약 390kcal", () => {
+    expect(kcalPerHour(null)).toBeCloseTo(391.77, 1);
+    expect(kcalPerHour(10)).toBeCloseTo(391.77, 1); // 말이 안 되는 값도 65kg
+    expect(roundApprox(kcalTotal(37, null))).toBe(15900);
   });
-  it("내 몸무게 · 내 운동 시간 · 지금까지", () => {
-    expect(kcalPerHour(80)).toBeCloseTo(472.8, 1);
-    // 6번 × 60분 = 6시간
-    expect(kcalTotal(6, 80)).toBeCloseTo(2836.8, 1);
-    // 6번 × 90분 = 9시간
-    expect(kcalTotal(6, 80, 90)).toBeCloseTo(4255.2, 1);
+  it("내 몸무게 · 내 복싱 시간 · 지금까지", () => {
+    expect(kcalPerHour(80)).toBeCloseTo(482.18, 1);
+    expect(kcalTotal(6, 80)).toBeCloseTo(3182.4, 1);
+    expect(kcalTotal(6, 80, 90)).toBeCloseTo(4574.4, 1);
     expect(kcalTotal(0, 80)).toBe(0);
   });
 });
@@ -110,11 +117,11 @@ describe("권장 운동량 — 한 주(월~일)에 2번 이상", () => {
     expect(weekMonday("2026-03-01")).toBe("2026-02-23"); // 달 넘김
     expect(weekMonday("bad")).toBeNull();
   });
-  it("주 수 세기 — 같은 날 두 번은 한 번 · 운동 시간에 따라 필요한 횟수가 다르다", () => {
+  it("주 수 세기 — 같은 날 두 번은 한 번 · 복싱 시간에 따라 필요한 횟수가 다르다", () => {
     const days = ["2026-10-19", "2026-10-25", "2026-10-12", "2026-10-12", "2026-10-05", "2026-10-06", "2026-10-07"];
     expect(recommendedWeeks(days)).toBe(2);
-    expect(recommendedWeeks(days, 90)).toBe(3); // 90분이면 한 번으로 채움
-    expect(recommendedWeeks(days, 40)).toBe(1); // 40분이면 3번 필요
+    expect(recommendedWeeks(days, 90)).toBe(3); // 복싱 90분이면 한 번으로 채움
+    expect(recommendedWeeks(days, 30)).toBe(1); // 30분이면 3번 필요
     expect(recommendedWeeks([])).toBe(0);
   });
   it("이번 주에 온 날", () => {
@@ -161,7 +168,7 @@ describe("신체 정보", () => {
   });
   it("서버 오류 한 줄", () => {
     expect(bodyErrorText({ message: "body_weight_range" })).toContain("몸무게");
-    expect(bodyErrorText({ message: "session_minutes_range" })).toContain("운동 시간");
+    expect(bodyErrorText({ message: "session_minutes_range" })).toContain("복싱 시간");
     expect(bodyErrorText(new Error("boom"))).toContain("저장하지 못했어요");
   });
 });

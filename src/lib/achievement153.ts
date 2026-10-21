@@ -1,87 +1,82 @@
 /**
- * 🥊 지금까지 이룬 것 — 내정보 · 내 출석 기록 (2026-10-21 대표님)
+ * 🥊 지금까지 이룬 것 — 내정보 · 내 출석 기록 · 관리자 회원 상세 '내정보' (2026-10-21 대표님)
  *   "주평균 빼 주고 지금까지 이룬 것들을 보여 줘 — 1시간당 평균 소비한 칼로리, 운동을 통해 얻은 건강 수치,
- *    긍정적인 신호들, 평균적으로 뻗은 잽의 수, 스트레이트, 스텝, 스쿼트 등등"
+ *    긍정적인 신호들, 평균적으로 뻗은 잽의 수, 스트레이트, 스텝 등등"
+ *   → "스쿼트는 빼고, 평균적으로 줄넘기 2분 3라운드 그리고 1시간 복싱을 한다는 기준으로 잡고 펀치 수와 스텝 활동량으로"
  *
- *   앱은 펀치 · 스텝 수를 직접 세지 않는다(펀치 센서 없음) → 출석 1번 = '한 번 운동 시간'만큼 운동한 것으로 보고
- *   '60분 기준' 숫자를 시간에 맞춰 곱한 추정이다. 화면에는 늘 '추정'을 같이 쓴다.
- *   기준 숫자는 여기 한 곳(CLASS_BASIS) — 바꾸면 모든 화면이 같이 바뀐다.
- *   (2026-10-21 대표님 확정: 잽 200 · 스트레이트 150 · 스텝 300 · 스쿼트 40 · 줄넘기 400 — 일부러 적게 잡은 값)
- *   한 번 운동 시간 = 회원이 넣은 평균(20~240분), 없으면 60분 (2026-10-21 대표님: "더 많이 하는 회원도 있으니까 기준은 60분").
+ *   앱은 펀치 · 스텝 수를 직접 세지 않는다(펀치 센서 없음) → 출석 1번 = 줄넘기 2분 × 3라운드 + 복싱 60분으로 보고
+ *   기준 숫자를 곱한 추정이다. 화면에는 늘 '추정'을 같이 쓴다. 기준 숫자는 여기 한 곳 — 바꾸면 모든 화면이 같이 바뀐다.
+ *     · 복싱 60분에 잽 200 · 스트레이트 150 · 스텝 300 (2026-10-21 대표님 확정 — 일부러 적게 잡은 값)
+ *     · 줄넘기 2분 × 3라운드 = 6분 × 1분에 100회(천천히) = 600회
+ *   복싱 시간 = 회원이 넣은 평균(20~240분), 없으면 60분 — 펀치 · 스텝만 시간에 맞춰 커지고 줄넘기는 늘 3라운드.
  *
- *   칼로리 = MET × 몸무게(kg) × 시간. MET 는 2024 Adult Compendium of Physical Activities 값으로
- *     153 수업 8블록을 가중 평균한 값(CLASS_BLOCKS · 5.91). 몸무게는 회원이 넣은 값, 없으면 65kg 기준이라고 밝힌다.
- *   권장 운동량 = 주 500 MET·분 — 미국 신체활동 지침의 '건강에 의미 있는 운동량' 하한
- *     (중강도 주 150분과 같은 범위). 60분이면 1번 ≈ 355 MET·분 → 한 주에 2번 오면 채운다 (시간이 짧으면 더 필요).
+ *   칼로리 = MET × 몸무게(kg) × 시간. MET 는 2024 Adult Compendium of Physical Activities —
+ *     복싱 5.8 (15110 boxing, punching bag) · 줄넘기 8.3 (15552 rope jumping, slow pace). 둘 다 낮은 쪽 값.
+ *     몸무게는 회원이 넣은 값, 없으면 65kg 기준이라고 밝힌다.
+ *   권장 운동량 = 주 500 MET·분 — 미국 신체활동 지침의 '건강에 의미 있는 운동량' 하한 (중강도 주 150분과 같은 범위).
+ *     복싱 60분 + 줄넘기 6분 = 397.8 MET·분 → 한 주에 2번 오면 채운다 (복싱 시간이 짧으면 더 필요).
  *   회원 화면은 잘한 것만 — 몸무게는 처음보다 줄었을 때만 변화를 보여 준다. 진단 · 의료 표현은 쓰지 않는다.
  */
 
-export interface ClassBlock {
-  name: string;
-  min: number;
-  met: number;
-  /** 2024 Adult Compendium 코드 — 근거 추적용 */
-  code: string;
-}
+/** 복싱 MET — 2024 Adult Compendium 15110 boxing, punching bag */
+export const BOXING_MET = 5.8;
+/** 줄넘기 MET — 2024 Adult Compendium 15552 rope jumping, slow pace */
+export const ROPE_MET = 8.3;
+/** 줄넘기 2분 × 3라운드 */
+export const ROPE_ROUNDS = 3;
+export const ROPE_ROUND_MINUTES = 2;
+export const ROPE_MINUTES = ROPE_ROUNDS * ROPE_ROUND_MINUTES;
+/** 줄넘기 1분에 100회 (천천히) */
+export const ROPE_PER_MINUTE = 100;
 
-/** 153 수업 50분 = 8블록 (153 커리큘럼 기본 뼈대) · MET 는 2024 Adult Compendium */
-export const CLASS_BLOCKS: readonly ClassBlock[] = [
-  { name: "워밍업", min: 5, met: 2.8, code: "02024 calisthenics, light effort" },
-  { name: "줄넘기", min: 5, met: 8.3, code: "15552 rope jumping, slow pace" },
-  { name: "리듬 · 발놀림", min: 8, met: 5.8, code: "15110 boxing, punching bag" },
-  { name: "거울 앞 기술", min: 8, met: 5.8, code: "15110 boxing, punching bag" },
-  { name: "새 기술", min: 8, met: 5.8, code: "15110 boxing, punching bag" },
-  { name: "기술 반복", min: 8, met: 7.0, code: "15113 boxing, punching bag, 60 b/min" },
-  { name: "하체 · 코어 서킷", min: 7, met: 6.0, code: "02032 circuit training, body weight exercises" },
-  { name: "마무리", min: 1, met: 2.8, code: "02024 calisthenics, light effort" },
-];
-
-/** 수업 블록 합(분) — MET 평균을 낼 때만 쓴다 (50) */
-const BLOCK_MINUTES = CLASS_BLOCKS.reduce((a, b) => a + b.min, 0);
-/** 153 수업 평균 MET — 5.91 (블록 가중 평균) */
-export const CLASS_MET = Math.round((CLASS_BLOCKS.reduce((a, b) => a + b.min * b.met, 0) / BLOCK_MINUTES) * 100) / 100;
-
-/** 기준 운동 시간 — 60분 (CLASS_BASIS 숫자가 60분 기준) */
+/** 기준 복싱 시간 — 60분 (펀치 · 스텝 숫자가 60분 기준) */
 export const BASIS_MINUTES = 60;
-/** 회원이 넣을 수 있는 한 번 운동 시간 */
+/** 회원이 넣을 수 있는 한 번 복싱 시간 */
 export const SESSION_MIN = 20;
 export const SESSION_MAX = 240;
 
-/** 쓸 수 있는 운동 시간인가 (20~240분, 정수) */
+/** 쓸 수 있는 복싱 시간인가 (20~240분, 정수) */
 export const validSessionMinutes = (m: number | null | undefined): m is number =>
   typeof m === "number" && Number.isInteger(m) && m >= SESSION_MIN && m <= SESSION_MAX;
 /** 회원 값이 없거나 이상하면 60분 */
 export const sessionMinutesOr60 = (m: number | null | undefined): number => (validSessionMinutes(m) ? m : BASIS_MINUTES);
 
+/** 한 번 운동 전체 시간(분) = 복싱 + 줄넘기 6분 (60분이면 66분) */
+export const sessionTotalMinutes = (boxingMinutes?: number | null): number => sessionMinutesOr60(boxingMinutes) + ROPE_MINUTES;
+
 /** 권장 운동량 — 주 500 MET·분 */
 export const RECOMMENDED_WEEKLY_MET_MINUTES = 500;
-/** 한 번 운동의 MET·분 (60분이면 354.6) */
-export const sessionMetMinutes = (minutes?: number | null): number => Math.round(CLASS_MET * sessionMinutesOr60(minutes) * 10) / 10;
-/** 권장 운동량을 채우는 한 주 운동 횟수 (60분 2번 · 40분 3번) */
-export const classesForRecommended = (minutes?: number | null): number =>
-  Math.ceil(RECOMMENDED_WEEKLY_MET_MINUTES / sessionMetMinutes(minutes));
+/** 한 번 운동의 MET·분 = 복싱 5.8 × 분 + 줄넘기 8.3 × 6분 (60분이면 397.8) */
+export const sessionMetMinutes = (boxingMinutes?: number | null): number =>
+  Math.round((BOXING_MET * sessionMinutesOr60(boxingMinutes) + ROPE_MET * ROPE_MINUTES) * 10) / 10;
+/** 한 번 운동의 평균 MET (60분이면 6.03) */
+export const sessionMet = (boxingMinutes?: number | null): number => sessionMetMinutes(boxingMinutes) / sessionTotalMinutes(boxingMinutes);
+/** 권장 운동량을 채우는 한 주 운동 횟수 (60분 2번 · 30분 3번) */
+export const classesForRecommended = (boxingMinutes?: number | null): number =>
+  Math.ceil(RECOMMENDED_WEEKLY_MET_MINUTES / sessionMetMinutes(boxingMinutes));
 
 /** 몸무게를 안 넣었을 때 칼로리 기준 */
 export const DEFAULT_WEIGHT_KG = 65;
 
-export type MoveKey = "jab" | "straight" | "step" | "squat" | "rope";
+export type MoveKey = "jab" | "straight" | "step" | "rope";
 
 export interface MoveBasis {
   key: MoveKey;
   label: string;
-  /** 60분 운동 1번에 */
+  /** 한 번 운동에 — 복싱 60분 기준 (scales: true) 또는 고정 (줄넘기 3라운드) */
   per: number;
+  /** 복싱 시간에 맞춰 커지는가 */
+  scales: boolean;
   unit: string;
   emoji: string;
 }
 
-/** 60분 운동 1번 기준 (2026-10-21 대표님 확정) — 여기만 바꾸면 된다 */
+/** 한 번 운동 기준 (2026-10-21 대표님 확정) — 여기만 바꾸면 된다 */
 export const CLASS_BASIS: readonly MoveBasis[] = [
-  { key: "jab", label: "잽", per: 200, unit: "번", emoji: "👊" },
-  { key: "straight", label: "스트레이트", per: 150, unit: "번", emoji: "🥊" },
-  { key: "step", label: "스텝", per: 300, unit: "걸음", emoji: "👟" },
-  { key: "squat", label: "스쿼트", per: 40, unit: "개", emoji: "🦵" },
-  { key: "rope", label: "줄넘기", per: 400, unit: "회", emoji: "🪢" },
+  { key: "jab", label: "잽", per: 200, scales: true, unit: "번", emoji: "👊" },
+  { key: "straight", label: "스트레이트", per: 150, scales: true, unit: "번", emoji: "🥊" },
+  { key: "step", label: "스텝", per: 300, scales: true, unit: "걸음", emoji: "👟" },
+  { key: "rope", label: "줄넘기", per: ROPE_MINUTES * ROPE_PER_MINUTE, scales: false, unit: "회", emoji: "🪢" },
 ];
 
 const safeCount = (v: number) => (Number.isFinite(v) ? Math.max(0, Math.trunc(v)) : 0);
@@ -94,29 +89,32 @@ export function roundApprox(v: number): number {
 }
 
 export interface MoveTotal extends MoveBasis {
-  /** 내 운동 시간 1번에 (반올림) */
+  /** 한 번 운동에 (반올림) */
   perSession: number;
   /** 지금까지 (반올림 전) */
   total: number;
 }
 
-/** 지금까지 뻗은 잽 · 스트레이트 · 스텝 · 스쿼트 · 줄넘기 — 출석 수 × 기준 × (내 운동 시간 / 60분) */
-export const moveTotals = (classes: number, minutes?: number | null): MoveTotal[] => {
-  const ratio = sessionMinutesOr60(minutes) / BASIS_MINUTES;
-  return CLASS_BASIS.map((b) => ({ ...b, perSession: Math.round(b.per * ratio), total: safeCount(classes) * b.per * ratio }));
+/** 지금까지 뻗은 잽 · 스트레이트 · 스텝(복싱 시간에 맞춰) · 줄넘기(늘 3라운드) */
+export const moveTotals = (classes: number, boxingMinutes?: number | null): MoveTotal[] => {
+  const ratio = sessionMinutesOr60(boxingMinutes) / BASIS_MINUTES;
+  return CLASS_BASIS.map((b) => {
+    const per = b.scales ? b.per * ratio : b.per;
+    return { ...b, perSession: Math.round(per), total: safeCount(classes) * per };
+  });
 };
 
 const isPunch = (m: MoveBasis) => m.key === "jab" || m.key === "straight";
 
 /** 뻗은 펀치 = 화면에 보이는 잽 + 스트레이트 (각각 내림한 값의 합 — 큰 숫자와 칸 숫자가 늘 맞게) */
-export const punchTotal = (classes: number, minutes?: number | null): number =>
-  moveTotals(classes, minutes)
+export const punchTotal = (classes: number, boxingMinutes?: number | null): number =>
+  moveTotals(classes, boxingMinutes)
     .filter(isPunch)
     .reduce((a, m) => a + roundApprox(m.total), 0);
 
-/** 내 운동 시간 1번에 뻗는 펀치 (잽 + 스트레이트) */
-export const punchPerSession = (minutes?: number | null): number =>
-  moveTotals(1, minutes)
+/** 한 번 운동에 뻗는 펀치 (잽 + 스트레이트) */
+export const punchPerSession = (boxingMinutes?: number | null): number =>
+  moveTotals(1, boxingMinutes)
     .filter(isPunch)
     .reduce((a, m) => a + m.perSession, 0);
 
@@ -124,17 +122,19 @@ export const punchPerSession = (minutes?: number | null): number =>
 export const validWeight = (kg: number | null | undefined): kg is number =>
   typeof kg === "number" && Number.isFinite(kg) && kg >= 25 && kg <= 250;
 
-/** 1시간 평균 칼로리 (kcal) — MET × 몸무게 */
-export const kcalPerHour = (weightKg: number | null | undefined): number =>
-  CLASS_MET * (validWeight(weightKg) ? weightKg : DEFAULT_WEIGHT_KG);
+const weightOr65 = (kg: number | null | undefined) => (validWeight(kg) ? kg : DEFAULT_WEIGHT_KG);
 
-/** 지금까지 쓴 칼로리 (kcal) */
-export const kcalTotal = (classes: number, weightKg: number | null | undefined, minutes?: number | null): number =>
-  kcalPerHour(weightKg) * ((safeCount(classes) * sessionMinutesOr60(minutes)) / 60);
+/** 1시간 평균 칼로리 (kcal) — 한 번 운동 평균 MET × 몸무게 */
+export const kcalPerHour = (weightKg: number | null | undefined, boxingMinutes?: number | null): number =>
+  sessionMet(boxingMinutes) * weightOr65(weightKg);
 
-/** 운동한 시간 (시간, 소수 한 자리) */
-export const exerciseHours = (classes: number, minutes?: number | null): number =>
-  Math.round(((safeCount(classes) * sessionMinutesOr60(minutes)) / 60) * 10) / 10;
+/** 지금까지 쓴 칼로리 (kcal) = MET·분 × 몸무게 / 60 × 출석 수 */
+export const kcalTotal = (classes: number, weightKg: number | null | undefined, boxingMinutes?: number | null): number =>
+  ((sessionMetMinutes(boxingMinutes) * weightOr65(weightKg)) / 60) * safeCount(classes);
+
+/** 운동한 시간 (시간, 소수 한 자리) — 복싱 + 줄넘기 */
+export const exerciseHours = (classes: number, boxingMinutes?: number | null): number =>
+  Math.round(((safeCount(classes) * sessionTotalMinutes(boxingMinutes)) / 60) * 10) / 10;
 
 /** 'YYYY-MM-DD' → 그 주 월요일 'YYYY-MM-DD' (KST 날짜 그대로 계산) */
 export function weekMonday(day: string): string | null {
@@ -178,7 +178,7 @@ export interface BodyInfo {
   firstWeightKg: number | null;
   firstWeightOn: string | null;
   count: number;
-  /** 한 번 운동 시간(분) — 안 넣었으면 null (화면은 60분) */
+  /** 한 번 복싱 시간(분) — 안 넣었으면 null (화면은 60분) · DB 칸 이름은 session_minutes */
   sessionMinutes: number | null;
 }
 
@@ -218,7 +218,7 @@ export function parseBodyNumber(text: string): number | null {
   return /^\d{1,3}(\.\d)?$/.test(t) ? Number(t) : NaN;
 }
 
-/** 운동 시간 칸 글자 → 분 (빈칸 = null, 정수 아니면 NaN) */
+/** 복싱 시간 칸 글자 → 분 (빈칸 = null, 정수 아니면 NaN) */
 export function parseMinutes(text: string): number | null {
   const t = text.trim();
   if (!t) return null;
@@ -227,8 +227,8 @@ export function parseMinutes(text: string): number | null {
 
 /** 입력 확인 — 문제 없으면 null, 있으면 회원에게 보여 줄 한 줄 */
 export function bodyInputError(height: number | null, weight: number | null, minutes: number | null = null): string | null {
-  if (height == null && weight == null && minutes == null) return "키 · 몸무게 · 운동 시간 중 하나는 넣어 주세요";
-  if (minutes != null && !validSessionMinutes(minutes)) return `운동 시간은 ${SESSION_MIN}~${SESSION_MAX}분 사이로 넣어 주세요`;
+  if (height == null && weight == null && minutes == null) return "키 · 몸무게 · 복싱 시간 중 하나는 넣어 주세요";
+  if (minutes != null && !validSessionMinutes(minutes)) return `복싱 시간은 ${SESSION_MIN}~${SESSION_MAX}분 사이로 넣어 주세요`;
   if (height != null && (Number.isNaN(height) || height < 100 || height > 230)) return "키는 100~230cm 사이 숫자로 넣어 주세요 (소수 한 자리까지)";
   if (weight != null && (Number.isNaN(weight) || weight < 25 || weight > 250)) return "몸무게는 25~250kg 사이 숫자로 넣어 주세요 (소수 한 자리까지)";
   return null;
@@ -239,8 +239,8 @@ export function bodyErrorText(err: unknown): string {
   const msg = err instanceof Error ? err.message : typeof err === "object" && err && "message" in err ? String((err as { message: unknown }).message) : String(err ?? "");
   if (msg.includes("body_height_range")) return "키는 100~230cm 사이로 넣어 주세요";
   if (msg.includes("body_weight_range")) return "몸무게는 25~250kg 사이로 넣어 주세요";
-  if (msg.includes("session_minutes_range")) return `운동 시간은 ${SESSION_MIN}~${SESSION_MAX}분 사이로 넣어 주세요`;
-  if (msg.includes("body_info_empty")) return "키 · 몸무게 · 운동 시간 중 하나는 넣어 주세요";
+  if (msg.includes("session_minutes_range")) return `복싱 시간은 ${SESSION_MIN}~${SESSION_MAX}분 사이로 넣어 주세요`;
+  if (msg.includes("body_info_empty")) return "키 · 몸무게 · 복싱 시간 중 하나는 넣어 주세요";
   if (msg.includes("not_authenticated")) return "로그인이 필요해요";
   return "저장하지 못했어요. 잠시 뒤 다시 해 주세요";
 }

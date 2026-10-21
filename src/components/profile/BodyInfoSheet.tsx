@@ -1,8 +1,9 @@
 /**
- * ⚖️ 내 신체 · 운동 정보 넣기 · 고치기 — 키 · 몸무게 · 한 번 운동 시간 (2026-10-21 대표님)
+ * ⚖️ 내 신체 · 운동 정보 넣기 · 고치기 — 키 · 몸무게 · 한 번 복싱 시간 (2026-10-21 대표님)
  *   "본인이 신체정보 넣을 수 있게 하자" · "운동 시간 평균도 입력할 수 있게 해 줘, 더 많이 하는 회원도 있으니까 기준은 60분"
  *   · 키 · 몸무게는 오늘(KST) 날짜로 저장 — 같은 날 다시 넣으면 고친다
- *   · 운동 시간은 하나만 둔다 (20~240분, 안 넣으면 60분으로 계산) — 자주 쓰는 시간은 칩으로
+ *   · 복싱 시간은 하나만 둔다 (20~240분, 안 넣으면 60분으로 계산) — 자주 쓰는 시간은 칩으로
+ *     줄넘기 2분 × 3라운드는 따로 더한다 ("줄넘기 2분 3라운드 + 1시간 복싱 기준")
  *   · 바꾼 칸만 보낸다 — 그대로 둔 몸무게가 '오늘 잰 값'으로 다시 찍히지 않게 (2026-10-21 검수)
  *   · 열 때 한 번만 채운다 — 입력하는 도중에 서버 값이 와도 덮어쓰지 않게
  *   본인만 본다(코치 · 관리자 화면 없음). '지우기'는 두 번 눌러야 지운다.
@@ -15,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { useClearBodyInfo, useSaveBodyInfo } from "@/hooks/useMyBodyInfo";
 import {
   BASIS_MINUTES,
+  ROPE_ROUNDS,
+  ROPE_ROUND_MINUTES,
   bodyErrorText,
   bodyInputError,
   parseBodyNumber,
@@ -160,7 +163,7 @@ const BodyInfoSheet = ({
 
           <div>
             <label className="block">
-              <span className="text-[12px] font-bold text-muted-foreground">한 번 운동 시간 (평균 · 분)</span>
+              <span className="text-[12px] font-bold text-muted-foreground">한 번 복싱 시간 (평균 · 분)</span>
               <Input
                 value={minutes}
                 onChange={(e) => {
@@ -169,11 +172,11 @@ const BodyInfoSheet = ({
                 }}
                 inputMode="numeric"
                 placeholder={`안 넣으면 ${BASIS_MINUTES}분`}
-                aria-label="한 번 운동 시간 (분)"
+                aria-label="한 번 복싱 시간 (분)"
                 className="mt-1 h-12 text-[16px] tabular-nums"
               />
             </label>
-            <div className="mt-2 flex gap-1.5" role="group" aria-label="자주 쓰는 운동 시간">
+            <div className="mt-2 flex gap-1.5" role="group" aria-label="자주 쓰는 복싱 시간">
               {MINUTE_CHIPS.map((m) => {
                 const on = minutes === String(m);
                 return (
@@ -198,7 +201,7 @@ const BodyInfoSheet = ({
           </div>
 
           <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-            체육관에서 한 번에 보통 몇 분 운동하는지 넣어 주세요 — 더 오래 하면 그만큼 더 쌓여요. 키 · 몸무게는 오늘 날짜로 저장되고, 처음보다 가벼워지면 &lsquo;지금까지 이룬 것&rsquo;에 보여 드려요.
+            체육관에서 한 번에 보통 몇 분 복싱하는지 넣어 주세요 — 더 오래 하면 펀치 · 스텝이 그만큼 더 쌓여요. 줄넘기 {ROPE_ROUND_MINUTES}분 × {ROPE_ROUNDS}라운드는 따로 더해서 계산해요. 키 · 몸무게는 오늘 날짜로 저장되고, 처음보다 가벼워지면 &lsquo;지금까지 이룬 것&rsquo;에 보여 드려요.
           </p>
           {error && (
             <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-[12.5px] font-bold text-destructive">
