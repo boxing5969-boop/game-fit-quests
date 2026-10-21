@@ -132,6 +132,10 @@ export const kcalPerHour = (weightKg: number | null | undefined, boxingMinutes?:
 export const kcalTotal = (classes: number, weightKg: number | null | undefined, boxingMinutes?: number | null): number =>
   ((sessionMetMinutes(boxingMinutes) * weightOr65(weightKg)) / 60) * safeCount(classes);
 
+/** 시간 표시 — 4.4 · 37 · 1,234.5 (소수 한 자리까지) */
+export const formatHours = (h: number): string =>
+  (Math.round((Number.isFinite(h) ? Math.max(0, h) : 0) * 10) / 10).toLocaleString("ko-KR", { maximumFractionDigits: 1 });
+
 /** 운동한 시간 (시간, 소수 한 자리) — 복싱 + 줄넘기 */
 export const exerciseHours = (classes: number, boxingMinutes?: number | null): number =>
   Math.round(((safeCount(classes) * sessionTotalMinutes(boxingMinutes)) / 60) * 10) / 10;

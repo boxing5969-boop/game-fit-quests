@@ -6,7 +6,7 @@
  *     줄넘기 2분 × 3라운드는 따로 더한다 ("줄넘기 2분 3라운드 + 1시간 복싱 기준")
  *   · 바꾼 칸만 보낸다 — 그대로 둔 몸무게가 '오늘 잰 값'으로 다시 찍히지 않게 (2026-10-21 검수)
  *   · 열 때 한 번만 채운다 — 입력하는 도중에 서버 값이 와도 덮어쓰지 않게
- *   본인만 본다(코치 · 관리자 화면 없음). '지우기'는 두 번 눌러야 지운다.
+ *   보는 사람 안내 문구는 넣지 않는다 (2026-10-22 대표님: "안내 문구를 아예 넣지 말자") · '지우기'는 두 번 눌러야 지운다.
  */
 import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -126,7 +126,7 @@ const BodyInfoSheet = ({
         <DrawerHeader className="pb-2 text-left">
           <DrawerTitle className="text-[15px] font-black">내 신체 · 운동 정보</DrawerTitle>
           <DrawerDescription className="text-[12px]">
-            넣은 값으로 펀치 수 · 칼로리를 내 기준으로 계산해요. 나만 볼 수 있어요.
+            넣은 값으로 펀치 수 · 칼로리 · 운동한 시간을 내 기준으로 계산해요.
           </DrawerDescription>
         </DrawerHeader>
         <div className="space-y-3 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">

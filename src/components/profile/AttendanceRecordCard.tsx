@@ -4,10 +4,13 @@
  *   · 다음 축하(50회마다)까지 남은 횟수 · 받을 선물 · 이미 받은 축하
  *   숫자는 서버 get_my_attendance_stats (lib/attendanceMilestone · hooks/useAttendanceStats).
  *   지도진 계정은 축하 보상이 없다 → 진행 막대 대신 안내 한 줄.
+ *   이번 달 · 지금까지 운동한 시간(⏱) — 출석 수 × 한 번(복싱 + 줄넘기 2분×3R) (2026-10-22 대표님: "한 달 동안 총 몇 시간, 지금까지 총 몇 시간")
  */
 import { useNavigate } from "react-router-dom";
 import { CalendarCheck, ChevronRight, PartyPopper } from "lucide-react";
 import { useAttendanceStats } from "@/hooks/useAttendanceStats";
+import { useMyBodyInfo } from "@/hooks/useMyBodyInfo";
+import { exerciseHours, formatHours } from "@/lib/achievement153";
 import { milestoneProgress, shortDate } from "@/lib/attendanceMilestone";
 import { attendanceCheer, kstToday, monthGain, sinceLabel } from "@/lib/attendanceCheer";
 
@@ -22,6 +25,8 @@ const longDate = (iso: string) => {
 const AttendanceRecordCard = () => {
   const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useAttendanceStats();
+  // 운동한 시간 = 출석 수 × 한 번(복싱 + 줄넘기 2분×3R) — 회원이 넣은 복싱 시간, 없으면 60분 (2026-10-22 대표님)
+  const { data: body } = useMyBodyInfo();
 
   if (isLoading) {
     return <div className="h-[188px] animate-pulse rounded-2xl border border-border bg-card" aria-label="출석 기록을 불러오는 중" />;
@@ -67,6 +72,9 @@ const AttendanceRecordCard = () => {
             {n(data.month)}
             <span className="ml-0.5 text-[15px] font-bold text-muted-foreground">회</span>
           </p>
+          {!data.isStaff && data.month > 0 && (
+            <p className="mt-1.5 text-[12.5px] font-bold tabular-nums text-foreground">⏱ {formatHours(exerciseHours(data.month, body?.sessionMinutes))}시간 운동</p>
+          )}
           <p className="mt-1.5 text-[11.5px] text-muted-foreground">
             {gain ? (
               <b className="text-foreground">지난달보다 +{n(gain)} 📈</b>
@@ -85,6 +93,9 @@ const AttendanceRecordCard = () => {
             {n(data.total)}
             <span className="ml-0.5 text-[15px] font-bold text-muted-foreground">회</span>
           </p>
+          {!data.isStaff && data.total > 0 && (
+            <p className="mt-1.5 text-[12.5px] font-bold tabular-nums text-foreground">⏱ {formatHours(exerciseHours(data.total, body?.sessionMinutes))}시간 운동</p>
+          )}
           <p className="mt-1.5 text-[11.5px] text-muted-foreground">
             {/* 날 수(262일)는 쓰지 않는다 — 출석 수 옆에 두면 '그중 겨우 N번'으로 읽힌다 (2026-10-21) */}
             {sinceLabel(data.since, kstToday()) ?? "첫 출석을 하면 쌓여요"}

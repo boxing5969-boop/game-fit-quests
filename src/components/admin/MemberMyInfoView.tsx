@@ -4,7 +4,7 @@
  *   회원이 내정보 '내 기록'에서 보는 것을 그대로: 출석 요약(회원 화면 문구) + 지금까지 이룬 것.
  *   쓰는 곳: 회원 상세 '내정보' 탭(/manager/member/:id?tab=myinfo) · 회원 앱 미리보기 '내정보' 탭.
  *   권한은 부르는 쪽이 거른다 (관리자 · 지점장 — 출석 기록 서버 함수와 같은 범위).
- *   키 · 몸무게 · 복싱 시간은 회원 본인만 — AchievementCard 가 읽지 않고 기본 기준으로 계산한다고 밝힌다.
+ *   키 · 몸무게 · 복싱 시간도 회원이 넣은 값 그대로 (get_member_body_info · 2026-10-22) — 회원 화면과 같은 숫자.
  */
 import { AttendanceSummaryCard } from "@/components/attendance/AttendanceHistoryPanel";
 import AchievementCard from "@/components/profile/AchievementCard";

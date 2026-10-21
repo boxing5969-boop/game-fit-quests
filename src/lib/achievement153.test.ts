@@ -7,6 +7,7 @@ import {
   classesForRecommended,
   daysThisWeek,
   exerciseHours,
+  formatHours,
   kcalPerHour,
   kcalTotal,
   moveTotals,
@@ -79,6 +80,13 @@ describe("지금까지 — 출석 수 × 기준 (펀치 · 스텝은 복싱 시�
       const tiles = moveTotals(c).filter((x) => x.key === "jab" || x.key === "straight").reduce((a, x) => a + roundApprox(x.total), 0);
       expect(punchTotal(c)).toBe(tiles);
     }
+  });
+  it("시간 표시 — 소수 한 자리까지 · 정수는 그대로", () => {
+    expect(formatHours(exerciseHours(4))).toBe("4.4");
+    expect(formatHours(exerciseHours(37))).toBe("40.7");
+    expect(formatHours(exerciseHours(10))).toBe("11");
+    expect(formatHours(exerciseHours(2000))).toBe("2,200");
+    expect(formatHours(Number.NaN)).toBe("0");
   });
   it("0 · 음수 · NaN 은 0", () => {
     expect(punchTotal(0)).toBe(0);

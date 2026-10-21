@@ -1,5 +1,5 @@
 /**
- * ⚖️ 내 신체 · 운동 정보 (키 · 몸무게 · 한 번 운동 시간) — 본인만
+ * ⚖️ 내 신체 · 운동 정보 (키 · 몸무게 · 한 번 복싱 시간) — 본인이 넣고 고친다 (관리자 · 지점장은 회원 내정보에서 읽기만)
  *   (2026-10-21 대표님: "본인이 신체정보 넣을 수 있게 하자" · "운동 시간 평균도 입력할 수 있게, 기준은 60분")
  *   서버: get_my_body_info · save_my_fitness_info
  *     (supabase/migrations/20261021225716_member_body_logs.sql · 20261021233204_member_session_minutes.sql)
@@ -24,6 +24,26 @@ export function useMyBodyInfo(enabled = true) {
     retry: 1,
     queryFn: async () => {
       const { data, error } = await sb.rpc("get_my_body_info");
+      if (error) throw error;
+      return normalizeBodyInfo(data);
+    },
+  });
+}
+
+/**
+ * 관리자 · 같은 지점 지점장이 회원 내정보를 볼 때 — 회원이 넣은 키 · 몸무게 · 복싱 시간 (2026-10-22 대표님: "안내 문구를 아예 넣지 말자")
+ *   서버: get_member_body_info (supabase/migrations/20261022013219_member_body_info_staff.sql)
+ *   '나만 볼 수 있어요' 안내를 보고 넣은 값은 서버가 빼고 준다.
+ */
+export function useMemberBodyInfo(userId: string | null | undefined, enabled = true) {
+  const { user } = useAuth();
+  return useQuery<BodyInfo>({
+    queryKey: ["153body", "member", userId ?? "none", user?.id ?? "anon"],
+    enabled: enabled && !!userId && !!user?.id,
+    staleTime: 60_000,
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await sb.rpc("get_member_body_info", { p_user_id: userId });
       if (error) throw error;
       return normalizeBodyInfo(data);
     },
