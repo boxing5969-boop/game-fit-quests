@@ -1,5 +1,5 @@
 /**
- * 💚 홈 '운동이 내게 준 것' (2026-10-22 대표님)
+ * 💚 홈 '153과 함께하며' (2026-10-22 대표님 — 처음 이름 '운동이 내게 준 것' → "153과 함께하며"로)
  *   "긍정적인 정보들 — 운동하길 잘했다고 느껴질 수 있고 지속하는 힘이 될 수 있도록:
  *    건강 수명이 얼마나 올랐고, 근력이 얼마나 늘었고, 심폐지구력이 얼마나 좋아졌고, 행복도가 얼마나 올라갔는지"
  *   → 네 가지 모두 숫자로 · "개인 상태에 따라 다를 수 있다"고 함께 쓴다 (대표님 확정).
@@ -62,12 +62,12 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
   const cheer = data.total > 0 ? attendanceCheer({ ...data, next: 0 }) : null;
 
   return (
-    <section aria-label="운동이 내게 준 것" className={cn("rounded-2xl border border-border bg-card p-4 shadow-elev-1", className)}>
+    <section aria-label="153과 함께하며" className={cn("rounded-2xl border border-border bg-card p-4 shadow-elev-1", className)}>
       <div className="flex items-center gap-2">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-reward/15 text-reward">
           <Sparkles className="h-4 w-4" aria-hidden />
         </span>
-        <h2 className="min-w-0 flex-1 truncate text-[16px] font-black text-foreground">운동이 내게 준 것</h2>
+        <h2 className="min-w-0 flex-1 truncate text-[16px] font-black text-foreground">153과 함께하며</h2>
         {data.totalMinutes > 0 && (
           <span className="shrink-0 text-[12px] font-bold tabular-nums text-muted-foreground">지금까지 {minutesToHours(data.totalMinutes)}시간</span>
         )}
