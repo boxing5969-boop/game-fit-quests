@@ -15,7 +15,8 @@
  *   · 서버(에지 함수)에는 복사하지 않는다 — AI 로 넘길 때 lib/osamiKb.ts 의 buildKbContext() 가 관련 항목을 골라 요청에 실어 보낸다.
  */
 import { BASIS_MINUTES, CHECKOUT_WINDOW_HOURS, CLASS_BASIS, DEFAULT_SESSION_MINUTES, DEFAULT_WEIGHT_KG, ROPE_ROUNDS, ROPE_ROUND_MINUTES, classesForRecommended } from "@/lib/achievement153";
-import { CARDIO_MAX_PCT, LIFE_HOURS_PER_EXERCISE_HOUR, MOOD_DAYS_PER_ACTIVE_MONTH, STRENGTH_MAX_PCT } from "@/lib/healthGains153";
+import { BODY_FAT_MAX_PP, CARDIO_MAX_PCT, ENDURANCE_MAX_PCT, LIFE_HOURS_PER_EXERCISE_HOUR, MOOD_DAYS_PER_ACTIVE_MONTH, STRENGTH_MAX_PCT } from "@/lib/healthGains153";
+import { ACCURACY_POINTS } from "@/lib/fitnessProfile153";
 
 export type OsamiFaqCategory =
   | "osami" | "start" | "account" | "attendance" | "level" | "training" | "rewards"
@@ -267,16 +268,20 @@ QR 출석은 하루 1번만 저장돼서 두 번째 체크가 안 돼요 — 얼
 "연속 출석"은 매주 1번 이상 온 주가 몇 주 이어졌는지예요 — 이번 주에 아직 안 왔어도 지난주까지 이어졌으면 그대로 세요. 수강권이 끝나 갈 때는 "나의 153 기록"으로 지금까지 쌓은 출석을 모아 보여 줘요.
 체육관 출석(얼굴 인식 · QR)을 하루 1번으로 세요 — 같은 날 여러 번 찍어도 1번이에요. 기록은 2026년 2월 1일부터 센 거예요.`,
     [{ label: "내 출석 기록", to: "/mypage/attendance" }, { label: "내정보", to: "/mypage" }]),
-  // 153과 함께하며 — 건강 수명 · 심폐지구력 · 근력 · 행복도 (2026-10-22 대표님)
-  e("att-health", "attendance", "건강 수명 · 심폐지구력 · 근력 · 행복도는 어떻게 계산해요?",
-    ["건강 수명", "기대 수명", "심폐지구력", "근력", "행복도", "153과 함께하며", "운동이 내게 준 것", "건강 수명 얼마나 늘었어요", "근력 몇 퍼센트", "체력 좋아졌어요"],
-    ["건강수명", "기대수명", "수명", "심폐", "지구력", "근력", "행복", "153과함께", "운동이준것"],
+  // 153과 함께하며 — 건강 수명 · 심폐지구력 · 근지구력 · 근력 · 체력 · 체지방률 · 행복도 · 정확도 (2026-10-22 대표님)
+  e("att-health", "attendance", "153과 함께하며의 심폐지구력 · 근력 · 체지방률은 어떻게 계산해요?",
+    ["건강 수명", "기대 수명", "심폐지구력", "근지구력", "근력", "체력", "체지방률", "행복도", "153과 함께하며", "운동이 내게 준 것", "건강 수명 얼마나 늘었어요", "근력 몇 퍼센트", "체력 좋아졌어요", "정확도", "정확도 올리기", "태운 지방", "칼로리 얼마나"],
+    ["건강수명", "기대수명", "수명", "심폐", "지구력", "근지구력", "근력", "체력", "체지방", "행복", "153과함께", "운동이준것", "정확도", "태운지방"],
     `홈의 "153과 함께하며" 카드는 내가 운동한 시간과 꾸준히 온 주 · 달을 운동 연구의 평균에 대어 추정한 값이에요. 앱이 몸을 직접 재지는 않아서, 개인 상태에 따라 다를 수 있어요.
+ · 운동한 주 분량: 한 주에 운동한 만큼만 세요 — 주 1번이면 0.8주, 2번이면 1주(건강 권장량). 주 1번만 와도 쌓여요
+ · 심폐지구력: 꾸준한 유산소 운동으로 보통 10~15% 좋아져요 — 쌓일수록 최대 ${CARDIO_MAX_PCT}%까지. 153 PB 기록이 있으면 실제로 빨라진 비율을 같이 보여 줘요
+ · 근지구력 · 근력: 복싱 + 맨몸 운동 연구 기준 — 근지구력 최대 ${ENDURANCE_MAX_PCT}% · 근력 최대 ${STRENGTH_MAX_PCT}%까지, 체력은 세 가지의 평균
+ · 체지방률: 식단 조절 없이 운동만 했을 때 연구 모음 기준, 최대 ${BODY_FAT_MAX_PP}%p까지. 인바디 체지방률을 넣으면 실제로 내려간 값을 먼저 보여 줘요
+ · 태운 지방: 쓴 칼로리를 지방 1kg 에너지(7,700kcal)로 나눈 양이에요
  · 건강 수명: 운동 1시간마다 기대 수명이 약 ${LIFE_HOURS_PER_EXERCISE_HOUR}시간 늘어난다는 연구로 계산해요 (최대 약 3년)
- · 심폐지구력: 꾸준한 유산소 운동으로 보통 10~15% 좋아져요 — 권장 운동량(주 2번쯤)을 채운 주가 쌓일수록 최대 ${CARDIO_MAX_PCT}%까지. 153 PB 기록이 있으면 실제로 빨라진 비율도 같이 보여 줘요
- · 근력: 한 주에 2번 이상 운동한 주가 쌓일수록 최대 ${STRENGTH_MAX_PCT}%까지 (맨몸 근력 운동 연구 기준)
  · 행복도: 운동하는 사람은 마음이 힘든 날이 한 달에 약 ${MOOD_DAYS_PER_ACTIVE_MONTH}일 적었다는 연구로, 한 달에 4번 이상 온 달마다 세요
-카드의 "계산 방법"을 누르면 근거를 볼 수 있어요. 진단이나 처방이 아니라 꾸준히 하는 힘이 되라고 보여 드리는 숫자예요.`,
+정확도는 넣은 정보만큼 올라가요 — 출석 기록 ${ACCURACY_POINTS.attendance}% + 운동 끝 얼굴 인식(실제 시간) ${ACCURACY_POINTS.endTime}% + 몸무게 ${ACCURACY_POINTS.weight}% · 성별 ${ACCURACY_POINTS.gender}% · 나이 ${ACCURACY_POINTS.age}% · 체지방률 ${ACCURACY_POINTS.bodyFat}% · 키 ${ACCURACY_POINTS.height}%. 아무것도 안 넣으면 출석 기록으로 남녀 평균(남 75kg · 여 60kg, 성별도 없으면 65kg) 기준으로 계산해요. 카드의 "정확도"를 누르면 바로 넣을 수 있어요.
+진단이나 처방이 아니라 꾸준히 하는 힘이 되라고 보여 드리는 숫자예요.`,
     [{ label: "홈", to: "/" }, { label: "내 운동 기록", to: "/mypage/attendance" }]),
   // 지금까지 이룬 것 · 신체 정보 (2026-10-21 대표님)
   e("att-achievement", "attendance", "지금까지 잽을 몇 번 뻗었는지 볼 수 있어요?",

@@ -24,7 +24,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Clock, Flame, Ruler, Swords } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
-import { useMemberBodyInfo, useMyBodyInfo } from "@/hooks/useMyBodyInfo";
+import { useMemberBodyInfo, useMyBodyInfo, useMyFitnessExtra } from "@/hooks/useMyBodyInfo";
+import { weightBasis } from "@/lib/fitnessProfile153";
 import { fetchTest153Summary } from "@/services/test153Service";
 import {
   CHECKOUT_WINDOW_HOURS,
@@ -115,6 +116,8 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
   const mine = useMyBodyInfo(show && !staffView);
   const theirs = useMemberBodyInfo(staffView ? userId : null, show && staffView);
   const body = staffView ? theirs.data : mine.data;
+  // 몸무게가 없으면 남녀 평균 → 65kg — 홈 '153과 함께하며'와 같은 칼로리 (2026-10-22). 관리자 화면은 성별을 읽지 않는다
+  const { data: extra } = useMyFitnessExtra(show && !staffView);
   const { data: pbSummary } = useQuery({
     queryKey: ["test153", "summary", target],
     enabled: show && !!target,
@@ -148,6 +151,7 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
     kstToday(),
   );
   const myWeight = validWeight(body?.weightKg) ? body!.weightKg! : null;
+  const wb = weightBasis(body?.weightKg, staffView ? null : extra?.gender);
   const lost = weightLost(body);
   const pb = pbView(pbSummary?.records);
   const moves = moveTotals(classes, totalMin);
@@ -235,11 +239,11 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
             </div>
             <div className="mt-1 flex items-end justify-between gap-2">
               <p className="text-[24px] font-black leading-none tabular-nums text-foreground">
-                약 {approx(kcalPerHour(classes, totalMin, myWeight))}
+                약 {approx(kcalPerHour(classes, totalMin, wb.kg))}
                 <span className="ml-0.5 text-[13px] font-bold text-muted-foreground">kcal</span>
               </p>
               <p className="text-right text-[12px] text-muted-foreground">
-                지금까지 <b className="text-foreground">약 {approx(kcalTotal(classes, totalMin, myWeight))}kcal</b>
+                지금까지 <b className="text-foreground">약 {approx(kcalTotal(classes, totalMin, wb.kg))}kcal</b>
               </p>
             </div>
             <p className="mt-1.5 text-[11.5px] text-muted-foreground">
@@ -249,7 +253,7 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
                 `몸무게 ${DEFAULT_WEIGHT_KG}kg 기준`
               ) : (
                 <>
-                  몸무게 {DEFAULT_WEIGHT_KG}kg 기준 ·{" "}
+                  {wb.label} ·{" "}
                   <button type="button" onClick={() => setSheetOpen(true)} className="font-bold text-primary underline-offset-2 active:opacity-70">
                     내 몸무게 넣으면 내 기준으로
                   </button>

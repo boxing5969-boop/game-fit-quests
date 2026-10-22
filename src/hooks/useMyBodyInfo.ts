@@ -9,8 +9,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeBodyInfo, type BodyInfo } from "@/lib/achievement153";
+import { normalizeFitnessExtra, type FitnessExtra, type Gender } from "@/lib/fitnessProfile153";
 
 export const BODY_INFO_KEY = ["153body", "me"] as const;
+/** 성별 · 출생 연도 · 체지방률 (2026-10-22) — 같은 "153body" 접두어라 지우기 · 새로 읽기가 같이 된다 */
+export const FITNESS_EXTRA_KEY = ["153body", "extra"] as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
@@ -69,7 +72,46 @@ export function useSaveBodyInfo() {
   });
 }
 
-/** 내 신체 · 운동 정보 전부 지우기 (키 · 몸무게 기록 + 운동 시간) */
+/**
+ * 내 성별 · 출생 연도 · 체지방률 (2026-10-22 대표님: "고객 데이터를 상세하게 기록할수록 정확도는 올라간다")
+ *   서버: get_my_fitness_extra · save_my_fitness_extra (supabase/migrations/20261022103930_member_fitness_extra.sql)
+ *   성별 · 출생 연도는 내가 넣은 값 → 없으면 지점 등록 정보(profiles)를 읽기만 한다.
+ */
+export function useMyFitnessExtra(enabled = true) {
+  const { user } = useAuth();
+  return useQuery<FitnessExtra>({
+    queryKey: [...FITNESS_EXTRA_KEY, user?.id ?? "anon"],
+    enabled: enabled && !!user?.id,
+    staleTime: 5 * 60_000,
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await sb.rpc("get_my_fitness_extra");
+      if (error) throw error;
+      return normalizeFitnessExtra(data);
+    },
+  });
+}
+
+export function useSaveFitnessExtra() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation<FitnessExtra, unknown, { gender: Gender | null; birthYear: number | null; bodyFatPct: number | null }>({
+    mutationFn: async ({ gender, birthYear, bodyFatPct }) => {
+      const { data, error } = await sb.rpc("save_my_fitness_extra", {
+        p_gender: gender,
+        p_birth_year: birthYear,
+        p_body_fat_pct: bodyFatPct,
+      });
+      if (error) throw error;
+      return normalizeFitnessExtra(data);
+    },
+    onSuccess: (extra) => {
+      qc.setQueryData([...FITNESS_EXTRA_KEY, user?.id ?? "anon"], extra);
+    },
+  });
+}
+
+/** 내 신체 · 운동 정보 전부 지우기 (키 · 몸무게 기록 + 운동 시간 + 성별 · 출생 연도 · 체지방률) */
 export function useClearBodyInfo() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -80,10 +122,15 @@ export function useClearBodyInfo() {
       if (error) throw error;
       const { error: e2 } = await sb.from("member_workout_settings").delete().eq("user_id", user.id);
       if (e2) throw e2;
+      const { error: e3 } = await sb.from("member_body_fat_logs").delete().eq("user_id", user.id);
+      if (e3) throw e3;
+      const { error: e4 } = await sb.from("member_fitness_profile").delete().eq("user_id", user.id);
+      if (e4) throw e4;
     },
     // 하나만 지워지고 실패해도 화면은 서버 값으로 다시 읽는다
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: [...BODY_INFO_KEY, user?.id ?? "anon"] });
+      void qc.invalidateQueries({ queryKey: [...FITNESS_EXTRA_KEY, user?.id ?? "anon"] });
     },
   });
 }

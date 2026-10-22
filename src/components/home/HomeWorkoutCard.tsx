@@ -1,5 +1,8 @@
 /**
  * ⏱ 홈 '내 운동 시간' (2026-10-22 대표님)
+ *   + 2026-10-22 대표님 ②: "총 며칠을 운동했고 한 달 동안 몇 시간을 운동했고 지난달 몇 시간을 운동했는지"
+ *     → 칸 3개(총 운동일 · 지난달 · 가장 많이 한 달) + 이번 달 숫자 밑에 '이번 달 뻗은 펀치 · 칼로리'.
+ *     (오전의 "총 몇 번 나왔는지는 보여 주지 말고"를 이 지시로 바꿈 — 횟수가 아니라 '운동한 날'로 쌓인 것만 보여 준다)
  *   "홈 화면에 기존 마일리지 정보 · 오늘의 시작 · 출석은 빼 주고, 한 달 총 몇 시간 · 전달 총 몇 시간 ·
  *    가장 많이 운동에 시간을 쏟은 달이 언제인지 상세하고 직관적으로" + "총 몇 번 나왔는지는 보여 주지 말고"
  *
@@ -11,17 +14,26 @@
  */
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Clock, QrCode, Trophy } from "lucide-react";
+import { CalendarCheck, ChevronRight, Clock, QrCode, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
+import { useMyBodyInfo, useMyFitnessExtra } from "@/hooks/useMyBodyInfo";
+import { weightBasis } from "@/lib/fitnessProfile153";
+import { valueTotals } from "@/lib/healthGains153";
 import { useFinishWorkout, useMyWorkoutToday } from "@/hooks/useWorkoutTime";
 import { minutesToHours } from "@/lib/achievement153";
-import { monthGain } from "@/lib/attendanceCheer";
+import { kstToday, monthGain } from "@/lib/attendanceCheer";
 import { bestMonthAllTime, monthLabel } from "@/lib/attendanceHistory";
 import { formatMinutes } from "@/services/workoutTimeService";
 import { cn } from "@/lib/utils";
 
 const hrs = (min: number) => `${minutesToHours(min)}시간`;
+/** 지난달 이름 — '9월' (KST) */
+const lastMonthName = () => {
+  const t = kstToday();
+  const m = Number(t.slice(5, 7)) - 1;
+  return `${m === 0 ? 12 : m}월`;
+};
 /** 최근 몇 달을 막대로 */
 const BAR_MONTHS = 6;
 
@@ -89,6 +101,9 @@ const TodayStrip = () => {
 const HomeWorkoutCard = ({ className }: { className?: string }) => {
   const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useAttendanceHistory(null);
+  // 이번 달 펀치 · 칼로리 — '153과 함께하며'와 같은 몸무게 기준(내 몸무게 → 남녀 평균 → 65kg)
+  const { data: body } = useMyBodyInfo();
+  const { data: extra } = useMyFitnessExtra();
   const openDetail = () => navigate("/mypage/attendance");
 
   const shell = (children: ReactNode) => (
@@ -128,6 +143,7 @@ const HomeWorkoutCard = ({ className }: { className?: string }) => {
   const bars = data.monthly.slice(-BAR_MONTHS);
   const maxMin = Math.max(1, ...bars.map((m) => m.minutes));
   const thisMonth = bars.length ? bars[bars.length - 1].month : null;
+  const monthValue = data.month > 0 && data.monthMinutes > 0 ? valueTotals(data.month, data.monthMinutes, weightBasis(body?.weightKg, extra?.gender).kg) : null;
 
   return shell(
     <button
@@ -147,26 +163,49 @@ const HomeWorkoutCard = ({ className }: { className?: string }) => {
           <span className="mb-0.5 rounded-full bg-primary/10 px-2.5 py-1 text-[12px] font-bold text-primary">지난달보다 +{hrs(gain)} 📈</span>
         ) : null}
       </div>
+      {monthValue && (
+        <p className="mt-1.5 text-[12px] font-bold text-muted-foreground">
+          이번 달 뻗은 펀치 <span className="tabular-nums text-foreground">약 {monthValue.punches.toLocaleString("ko-KR")}번</span> · 태운 칼로리{" "}
+          <span className="tabular-nums text-foreground">약 {monthValue.kcal.toLocaleString("ko-KR")}kcal</span>
+        </p>
+      )}
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <div className="rounded-xl bg-muted/50 px-3 py-2.5">
-          <p className="text-[11.5px] font-bold text-muted-foreground">지난달</p>
-          <p className="mt-0.5 text-[18px] font-black tabular-nums text-foreground">{hrs(data.lastMonthMinutes)}</p>
+      <div className="mt-3 grid grid-cols-3 gap-1.5">
+        <div className="min-w-0 rounded-xl bg-primary/10 px-2.5 py-2.5">
+          <p className="flex items-center gap-1 text-[11.5px] font-bold text-primary">
+            <CalendarCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            총 운동
+          </p>
+          <p className="mt-0.5 truncate text-[18px] font-black tabular-nums text-foreground">
+            {data.total.toLocaleString("ko-KR")}
+            <span className="ml-0.5 text-[12px] font-bold text-muted-foreground">일</span>
+          </p>
+          <p className="truncate text-[10.5px] text-muted-foreground">{hrs(data.totalMinutes)}</p>
         </div>
-        <div className="rounded-xl bg-reward/10 px-3 py-2.5">
+        <div className="min-w-0 rounded-xl bg-muted/50 px-2.5 py-2.5">
+          <p className="text-[11.5px] font-bold text-muted-foreground">지난달</p>
+          <p className="mt-0.5 truncate text-[18px] font-black tabular-nums text-foreground">
+            {minutesToHours(data.lastMonthMinutes)}
+            <span className="ml-0.5 text-[12px] font-bold text-muted-foreground">시간</span>
+          </p>
+          <p className="truncate text-[10.5px] text-muted-foreground">{lastMonthName()}</p>
+        </div>
+        <div className="min-w-0 rounded-xl bg-reward/10 px-2.5 py-2.5">
           <p className="flex items-center gap-1 text-[11.5px] font-bold text-reward">
-            <Trophy className="h-3.5 w-3.5" aria-hidden />
-            가장 많이 한 달
+            <Trophy className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span className="truncate">최고 달</span>
           </p>
           <p className="mt-0.5 truncate text-[18px] font-black tabular-nums text-foreground">
             {best ? (
               <>
-                {monthLabel(best.month, true)} <span className="text-[15px]">{hrs(best.minutes)}</span>
+                {minutesToHours(best.minutes)}
+                <span className="ml-0.5 text-[12px] font-bold text-muted-foreground">시간</span>
               </>
             ) : (
               "—"
             )}
           </p>
+          <p className="truncate text-[10.5px] text-muted-foreground">{best ? monthLabel(best.month, true) : "기록 쌓는 중"}</p>
         </div>
       </div>
 
