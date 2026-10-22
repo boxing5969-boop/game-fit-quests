@@ -165,9 +165,9 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
         </span>
         <h3 className="text-[15px] font-black text-foreground">지금까지 이룬 것</h3>
         <span className="ml-auto text-right text-[11px] font-bold leading-tight text-muted-foreground">
-          출석 {n(classes)}번 · {minutesToHours(totalMin)}시간
+          {minutesToHours(totalMin)}시간 운동
           <br />
-          운동 기준 추정
+          기준 추정
         </span>
       </div>
 

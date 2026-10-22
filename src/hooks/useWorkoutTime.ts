@@ -52,6 +52,8 @@ export function useFinishWorkout() {
       qc.invalidateQueries({ queryKey: ["member-progress"] });
       // 운동시간이 길면 승급 진행도(최대 1.25회)도 바뀐다 — 홈 카드 막대 갱신
       qc.invalidateQueries({ queryKey: ["level-cycle"] });
+      // 운동 시간 합계(홈 '내 운동 시간' · 내정보 · 운동 기록 전체)도 그날 시간이 바뀐다 (2026-10-22)
+      qc.invalidateQueries({ queryKey: ["153attendance"] });
     },
   });
 }

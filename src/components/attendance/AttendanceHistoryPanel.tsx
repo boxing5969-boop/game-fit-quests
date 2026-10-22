@@ -365,10 +365,13 @@ const AttendanceHistoryPanel = ({
   userId,
   enabled = true,
   audience = "member",
+  beforeList,
 }: {
   userId?: string | null;
   enabled?: boolean;
   audience?: AttendanceAudience;
+  /** 그래프 · 받은 축하 다음, 날짜별 목록 앞에 끼울 카드 — '내 운동 기록'의 축하 진행 · 운동이 준 것 · 이룬 것 (2026-10-22) */
+  beforeList?: ReactNode;
 }) => {
   const { data, isLoading, isError, refetch } = useAttendanceHistory(userId, enabled);
 
@@ -410,6 +413,7 @@ const AttendanceHistoryPanel = ({
               </div>
             </Card>
           )}
+          {beforeList}
           <AttendanceList data={data} />
         </>
       )}

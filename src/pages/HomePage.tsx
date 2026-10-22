@@ -43,6 +43,8 @@ import { useHomeLayout, type HomeWidgetId } from "@/lib/homeLayout";
 import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
 import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
 import MileageCard from "@/components/home/MileageCard";
+import HomeWorkoutCard from "@/components/home/HomeWorkoutCard";
+import HealthGainsCard from "@/components/home/HealthGainsCard";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
 import {
   STAFF_CHAMPION_LABEL, STAFF_CHAMPION_LEVEL, STAFF_CHAMPION_LINE, isStaffProfile, staffChampionLine, staffDisplayName, staffTitleLabel,
@@ -608,7 +610,12 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
           {renderHero(true)}
           {/* 🎂 오늘 생일인 동료가 운동하러 왔거나 오늘 내 생일일 때만 보인다 (2026-10-16 대표님) */}
           <BirthdayCongratsCard />
-          {renderTodayAction(true)}
+          {/* ⏱ 내 운동 시간 + 💚 운동이 내게 준 것 (2026-10-22 대표님: "마일리지 · 오늘의 시작 · 출석은 빼고,
+              한 달 · 전달 총 몇 시간 · 가장 많이 한 달 · 건강 수명 · 근력 · 심폐지구력 · 행복도를 직관적으로").
+              QR 출석 · 운동 종료는 '내 운동 시간' 카드 머리에 작게. 마일리지는 내정보로 옮겼다.
+              MY복서(/myboxer) 보기는 예전 '오늘의 시작' 카드 그대로 (renderTodayAction). */}
+          <HomeWorkoutCard />
+          <HealthGainsCard />
           {renderRankingPreview(true)}
 
           {/* 휴대폰 알림 켜기 — 아직 안 켠 회원에게만 보인다 ('나중에'는 2주 접힘).

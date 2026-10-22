@@ -1,7 +1,8 @@
 /**
  * 🌱 나의 153 기록 — 수강권이 끝나 갈 때(만료 21일 전 ~ 끝나고 14일) 지금까지 쌓은 출석을 보여 준다 (2026-10-21 대표님:
  *   "회원님들이 출석 데이터를 통해 재등록과 감정이 긍정적으로 생각할 수 있도록 세팅하자")
- *   · 숫자는 잘한 것만: 운동 시간(주인공 · 2026-10-22 횟수 → 시간) · 출석 횟수 · 최고 연속 주 · 가장 많이 운동한 달(시간) · 다음 축하까지
+ *   · 숫자는 잘한 것만: 운동 시간(주인공 · 2026-10-22 횟수 → 시간) · 최고 연속 주 · 가장 많이 운동한 달(시간)
+ *     출석 횟수 · 축하까지 남은 횟수는 쓰지 않는다 (2026-10-22 대표님: "총 몇 번 나왔는지는 보여 주지 말고" — 상세에서만)
  *     날 수는 쓰지 않는다 — "262일 동안 37번"은 "그중 37번밖에"로 읽힌다 (2026-10-21 대표님)
  *   · 압박 문구 · 할인 약속 없음 — '쌓아 온 기록이 이어진다' 는 사실만
  *   · 내정보 · 수강권 · 내 출석 기록에 같은 카드 (수강권 화면에선 버튼 없이)
@@ -29,13 +30,11 @@ const RenewalStoryCard = ({ showCta = true, className }: { showCta?: boolean; cl
   if (!win || !data || data.total <= 0) return null;
 
   const name = ((profile?.nickname || profile?.name || "") as string).trim() || "회원";
-  const left = data.next - data.total;
   const chips = [
-    `🥊 출석 ${n(data.total)}번`,
+    data.monthMinutes > 0 ? `🥊 이번 달 ${minutesToHours(data.monthMinutes)}시간` : null,
     data.bestWeekStreak >= 2 ? `🔥 최고 ${n(data.bestWeekStreak)}주 연속` : null,
     // 최고 달도 시간으로 (2026-10-22 대표님 "횟수 말고 몇 시간") — 서버 best_month_minutes
     data.bestMinutesMonth ? `📅 ${monthLabel(data.bestMinutesMonth.month, true)} ${minutesToHours(data.bestMinutesMonth.minutes)}시간 최고` : null,
-    left > 0 ? `🏅 ${n(data.next)}회 축하까지 ${n(left)}번` : null,
   ].filter(Boolean) as string[];
 
   return (
@@ -65,7 +64,7 @@ const RenewalStoryCard = ({ showCta = true, className }: { showCta?: boolean; cl
       )}
       <p className="mt-2.5 text-[12.5px] leading-relaxed text-foreground">
         {win.ended
-          ? `기록은 그대로 있어요. 다시 시작하면 ${n(data.total + 1)}번째 출석부터 이어서 세요.`
+          ? `기록은 그대로 있어요. 다시 시작하면 지금까지 쌓은 ${minutesToHours(data.totalMinutes)}시간에 이어서 쌓여요.`
           : "지금까지 쌓은 기록은 다음 수강권에서도 그대로 이어져요."}
       </p>
       {showCta && (

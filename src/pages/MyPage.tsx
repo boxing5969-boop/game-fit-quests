@@ -10,6 +10,7 @@ import TimeCrewCard from "@/components/engagement/TimeCrewCard";
 import AttendanceRecordCard from "@/components/profile/AttendanceRecordCard";
 import AchievementCard from "@/components/profile/AchievementCard";
 import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
+import MileageCard from "@/components/home/MileageCard";
 import { setCommunityAutoPost } from "@/services/communityFeedService";
 import { setCheerNotify } from "@/services/cheerService";
 import { useMyReceivedCheers } from "@/hooks/useSecondCheer";
@@ -263,6 +264,9 @@ const MyPage = () => {
           {/* 수강권 — 멤버십 카드 (공용 컴포넌트, 수강권 없으면 자동 숨김) */}
           <MembershipCard />
 
+          {/* 153 마일리지 — 홈에서 옮겨 옴 (2026-10-22 대표님: "홈에는 마일리지 정보 빼 줘"). 지도진은 적립 대상이 아니라 안 그린다 */}
+          {!isStaff && <MileageCard />}
+
           {/* 나의 153 기록 — 수강권이 끝나 갈 때만 (만료 21일 전 ~ 끝나고 14일 · 2026-10-21) */}
           <RenewalStoryCard />
         </section>
@@ -271,7 +275,7 @@ const MyPage = () => {
         <section className="animate-slide-up space-y-3">
           <SectionHeader>내 기록</SectionHeader>
 
-          {/* 출석 기록 — 이번 달 · 지금까지 · 50회마다 축하 (2026-10-21 회원님들 요청) */}
+          {/* 운동 기록 — 이번 달 · 지난달 운동 시간 (횟수 없음) · 누르면 그래프 · 날짜별 상세 (2026-10-22 대표님) */}
           <AttendanceRecordCard />
 
           {/* 지금까지 이룬 것 — 펀치 · 스텝 · 스쿼트 · 칼로리 · 좋은 신호 · 신체 정보 (2026-10-21 대표님) */}

@@ -165,12 +165,12 @@ describe("153 PB — 완주 기록만", () => {
   const rec = (division: string, score_ms: number, measured_at: string, finished = true) => ({ division, score_ms, measured_at, finished });
   it("오픈 완주가 있으면 오픈 · 첫 기록보다 빨라진 시간", () => {
     const v = pbView([rec("open", 1_200_000, "2026-10-01"), rec("open", 1_136_800, "2026-10-15"), rec("starter", 600_000, "2026-09-01")]);
-    expect(v).toEqual({ division: "open", bestMs: 1_136_800, improvedMs: 63_200, finishedCount: 2 });
+    expect(v).toEqual({ division: "open", bestMs: 1_136_800, improvedMs: 63_200, firstMs: 1_200_000, finishedCount: 2 });
     expect(spokenDuration(63_200)).toBe("1분 3초");
   });
   it("오픈은 못 끝냈으면 스타터 · 기록 하나면 빨라진 시간 없음", () => {
     const v = pbView([rec("open", 1_600_000, "2026-10-01", false), rec("starter", 700_000, "2026-09-01")]);
-    expect(v).toEqual({ division: "starter", bestMs: 700_000, improvedMs: null, finishedCount: 1 });
+    expect(v).toEqual({ division: "starter", bestMs: 700_000, improvedMs: null, firstMs: 700_000, finishedCount: 1 });
   });
   it("완주가 없으면 null · 느려졌으면 빨라진 시간 없음", () => {
     expect(pbView([rec("open", 1_600_000, "2026-10-01", false)])).toBeNull();

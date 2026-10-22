@@ -259,6 +259,8 @@ export interface PbView {
   bestMs: number;
   /** 첫 완주 기록보다 줄어든 시간(ms) — 완주 기록이 2개 이상이고 줄었을 때만 */
   improvedMs: number | null;
+  /** 첫 완주 기록(ms) — 빨라진 비율 계산용 (2026-10-22) */
+  firstMs: number;
   finishedCount: number;
 }
 
@@ -271,7 +273,7 @@ export function pbView(records: readonly PbRecordLike[] | null | undefined): PbV
     const bestMs = Math.min(...rows.map((r) => r.score_ms));
     const first = rows[0].score_ms;
     const improved = rows.length >= 2 && first - bestMs >= 1000 ? first - bestMs : null;
-    return { division: div, bestMs, improvedMs: improved, finishedCount: rows.length };
+    return { division: div, bestMs, improvedMs: improved, firstMs: first, finishedCount: rows.length };
   };
   return pick("open") ?? pick("starter");
 }
