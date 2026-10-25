@@ -16,6 +16,7 @@ import {
   parseMeasure,
   pbLine,
   recordTimeText,
+  relGripPct,
   resultSummary,
   shownDivision,
 } from "./test153Profile";
@@ -191,6 +192,16 @@ describe("문구", () => {
     expect(gripText(p.grip)).toBe("악력 42.3kg · 몸무게의 56%");
     expect(gripText({ ...p.grip!, relPct: null })).toBe("악력 42.3kg");
     expect(gripText(null)).toBeNull();
+  });
+
+  it("몸무게 대비 악력 — 서버 rel_pct 와 같은 식", () => {
+    expect(relGripPct(42.3, 75)).toBe(56);
+    expect(relGripPct(28, 52.4)).toBe(53);
+    expect(relGripPct(42.3, null)).toBeNull();
+    expect(relGripPct(null, 75)).toBeNull();
+    expect(relGripPct(NaN, 75)).toBeNull();
+    expect(relGripPct(95, 75)).toBeNull();
+    expect(relGripPct(42.3, 20)).toBeNull();
   });
 
   it("측정 직후 결과 한 장", () => {

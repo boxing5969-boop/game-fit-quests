@@ -401,6 +401,18 @@ export function gripText(grip: FitnessProfile["grip"]): string | null {
   return `악력 ${oneDecimal(grip.kg)}kg${rel}`;
 }
 
+/**
+ * 몸무게 대비 악력(%) — 상대악력 (국민체력100 근력 항목과 같은 식: 악력 ÷ 몸무게 × 100), 정수.
+ * 서버 get_my_fitness_profile rel_pct 와 같은 계산 — 내 신체 정보 악력 칸 옆에 바로 보여 준다 (2026-10-25).
+ * 둘 중 하나라도 없거나 넣을 수 있는 범위 밖이면 null.
+ */
+export function relGripPct(gripKg: number | null | undefined, weightKg: number | null | undefined): number | null {
+  if (gripKg == null || weightKg == null || !Number.isFinite(gripKg) || !Number.isFinite(weightKg)) return null;
+  const g = MEASURE_RANGE.grip_kg;
+  if (gripKg < g.min || gripKg > g.max || weightKg < 25 || weightKg > 250) return null;
+  return Math.round((gripKg / weightKg) * 100);
+}
+
 /** 측정 직후 '이번 결과 한 장' — 이번 vs 지난번 · 가장 좋아진 영역 */
 export interface ResultSummary {
   thisText: string;
