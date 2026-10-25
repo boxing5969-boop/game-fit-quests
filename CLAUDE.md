@@ -212,6 +212,19 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 빌드: `.github/workflows/ios.yml` — ios-app/ 이 바뀌면 GitHub 맥 서버에서 빌드. 비밀값 `ASC_KEY_ID`·`ASC_ISSUER_ID`·`ASC_PRIVATE_KEY` 가 있으면 서명 → TestFlight 업로드(빌드 번호 = 실행 번호). 공개 저장소라 로그에 비밀값을 찍지 않는다.
 - 스토어 글·심사 메모·개인정보 항목: [ios-app/store/listing-ko.md](ios-app/store/listing-ko.md).
 
+### 153 체력 프로필 — 1단계 '내 체력 보기' (2026-10-25 대표님 · 「153 PB 체력 프로필 · 몰입 기능 설계 보고서」)
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261025130557_fitness_profile_153.sql](supabase/migrations/20261025130557_fitness_profile_153.sql) | `member_fitness_measures`(악력 · 허리둘레 · 안정시 심박, source coach/me — 본인 · 같은 지점 지도진만 읽기) · `test153_areas`(16구간 → 영역 5개) · `save_fitness_measure` · `get_my_fitness_profile`(본인 또는 `can_measure_test153`) |
+| [src/lib/test153Profile.ts](src/lib/test153Profile.ts) | 서버 JSON 정규화 · 영역 비교(좋아진 % — 시간은 줄수록, 개수는 늘수록) · 화면 문구. 숫자는 서버 값 그대로 |
+| [src/components/profile/BodyInfoSheet.tsx](src/components/profile/BodyInfoSheet.tsx) | 맨 위 '153 체력 프로필' 카드(읽기 전용, 실측) + 선택 칸 허리둘레 · 안정시 심박 |
+| [src/components/test153/Test153MeasurePanel.tsx](src/components/test153/Test153MeasurePanel.tsx) | 공식 기록 저장 직후 '이번 결과 한 장'(이번 vs 지난번 · 가장 좋아진 영역) + 악력 칸 |
+
+- 영역 5개: 심폐(셀트런 8번 평균 · 끝까지 속도 유지율) · 하체(스쿼트 + 런지, 1분당) · 상체 · 코어(푸시업 + 복서 싯업) · 복싱(버피 + 원투쓰리 스텝 + 스텝 콤비 시간 합) · 리듬(줄넘기). 끝내지 못한 구간이 든 영역은 null.
+- `save_test153_record` 는 그대로 — 악력은 저장 직후 `save_fitness_measure` 로. 다음 측정 = 마지막 측정 + 42일(6주 시즌).
+- 백분위 · 체력 나이는 2단계(`get_my_fitness_profile` 키만 있고 null). TV(board_*)에는 체력 정보를 내보내지 않는다. 줄어든 것은 숫자로 말하지 않는다(잘한 것만).
+
 ### 창(모달·시트) 뒤 페이지 스크롤 잠금 (2026-10-19)
 
 - `useModalDismiss(open, onClose)` 또는 `lockBodyScroll()`([src/lib/scrollLock.ts](src/lib/scrollLock.ts))만 쓴다 — 잠금 개수를 세서 마지막 창이 닫힐 때만 푼다.

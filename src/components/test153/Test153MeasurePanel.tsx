@@ -5,6 +5,8 @@
  *      잘못 눌렀으면 '되돌리기'. 25:00 이 되면 자동으로 타임캡.
  *   ③ 끝 → (타임캡이면 하던 구간에서 남은 개수) → '공식 기록으로 저장' → 개인 최고 기록이면 크게 알려 준다.
  *   측정 중 화면이 꺼지거나 다른 화면에 다녀와도 이어지게 이 기기에 진행 상황을 적어 둔다(localStorage).
+ *   ④ 저장 직후 '이번 결과 한 장'(이번 vs 지난번 · 가장 좋아진 영역) + 악력(kg) 칸 (2026-10-25 대표님 — 체력 프로필 1단계)
+ *      영역 숫자는 서버 get_my_fitness_profile(회원) — 같은 지점 코치 · 지점장 · 관리자만 읽는다. 문구는 lib/test153Profile.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { translateError } from "@/lib/errorMessages";
+import { formatPct } from "@/lib/healthGains153";
 import {
   buildSegments,
   DIVISION_LABEL,
@@ -22,7 +25,8 @@ import {
   TEST153_NAME,
   type Test153Division,
 } from "@/lib/test153";
-import { saveTest153Record, type SaveTest153Result } from "@/services/test153Service";
+import { gripText, measureErrorText, measureInputError, parseMeasure, resultSummary } from "@/lib/test153Profile";
+import { fetchFitnessProfile, saveFitnessMeasure, saveTest153Record, type SaveTest153Result } from "@/services/test153Service";
 
 interface Member {
   id: string;
@@ -84,6 +88,9 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<SaveTest153Result | null>(null);
+  // 저장 직후 — 악력 칸
+  const [grip, setGrip] = useState("");
+  const [gripSaving, setGripSaving] = useState(false);
 
   const update = useCallback((next: RunState | null) => {
     setRun(next);
@@ -195,6 +202,7 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
     setResult(null);
     setPicked(null);
     setQ("");
+    setGrip("");
   };
 
   // 구간별 걸린 시간
@@ -244,6 +252,41 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
     setResult(null);
     setPicked(null);
     setQ("");
+    setGrip("");
+  };
+
+  // 저장 직후 '이번 결과 한 장' — 그 회원의 체력 프로필 (같은 지점 지도진만 읽힌다)
+  const memberId = run?.member.id ?? null;
+  const { data: memberProfile } = useQuery({
+    queryKey: ["test153", "profile", memberId ?? "none", result?.id ?? "none"],
+    enabled: !!result && !!memberId,
+    staleTime: 60_000,
+    retry: 1,
+    queryFn: () => fetchFitnessProfile(memberId),
+  });
+  const summaryDiv = run ? memberProfile?.divisions[run.division] ?? null : null;
+  const summary = summaryDiv && result && summaryDiv.latest.id === result.id ? resultSummary(summaryDiv) : null;
+  const gripLine = gripText(memberProfile?.grip ?? null);
+
+  const saveGrip = async () => {
+    if (!memberId || gripSaving) return;
+    const v = parseMeasure("grip_kg", grip);
+    const err = v == null ? "악력을 넣어 주세요 (좌우 각 2번 중 가장 높은 값)" : measureInputError("grip_kg", v);
+    if (v == null || err) {
+      toast.error(err ?? "악력을 넣어 주세요");
+      return;
+    }
+    setGripSaving(true);
+    try {
+      await saveFitnessMeasure(memberId, "grip_kg", v);
+      toast.success("악력을 저장했어요");
+      setGrip("");
+      void qc.invalidateQueries({ queryKey: ["test153", "profile", memberId] });
+    } catch (e) {
+      toast.error(measureErrorText(e));
+    } finally {
+      setGripSaving(false);
+    }
   };
 
   /* ───────── 화면 ───────── */
@@ -502,6 +545,71 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
           {result.prev_pb_ms != null && finished && result.prev_pb_ms > result.score_ms && result.prev_pb_ms <= TEST153_CAP_MS && (
             <p className="text-sm text-muted-foreground">이전 최고 {fmtMs(result.prev_pb_ms)} → {fmtMs(result.score_ms)} ({((result.prev_pb_ms - result.score_ms) / 1000).toFixed(1)}초 단축)</p>
           )}
+
+          {/* 이번 결과 한 장 — 회원과 함께 보며 이야기 (2026-10-25) */}
+          {summary && (
+            <div className="mt-3 rounded-xl bg-muted/50 p-3 text-left">
+              <p className="text-[12.5px] font-black text-foreground">이번 결과 한 장</p>
+              <p className="mt-1 text-[13px] text-foreground">
+                이번 <b className="tabular-nums">{summary.thisText}</b>
+                {summary.prevText && (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · 지난번 <span className="tabular-nums">{summary.prevText}</span>
+                  </span>
+                )}
+              </p>
+              {summary.fasterMs != null && (
+                <p className="text-[12.5px] font-bold text-primary">지난번보다 {(summary.fasterMs / 1000).toFixed(1)}초 빨라졌어요</p>
+              )}
+              {summary.best && (
+                <p className="text-[12.5px] font-bold text-primary">
+                  가장 좋아진 영역 · {summary.best.label} +{formatPct(summary.best.pct)}%
+                </p>
+              )}
+              <ul className="mt-2 space-y-1 text-[12px]">
+                {summary.changes.map((c) => (
+                  <li key={c.key} className="flex items-baseline justify-between gap-2">
+                    <span className="shrink-0 text-muted-foreground">{c.label}</span>
+                    <span className="min-w-0 text-right tabular-nums text-foreground">
+                      {c.value ?? "—"}
+                      {c.pct != null && <b className="ml-1 text-primary">+{formatPct(c.pct)}%</b>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {!summary.prevText && (
+                <p className="mt-1.5 text-[11.5px] text-muted-foreground">첫 기록이에요 — 다음 측정부터 지난번과 비교해 보여 드려요</p>
+              )}
+            </div>
+          )}
+
+          {/* 악력 — 좌우 각 2번 중 가장 높은 값 (공식 기록과 같은 날 · 같은 코치) */}
+          <div className="mt-3 rounded-xl border border-border p-3 text-left">
+            <p className="text-[12.5px] font-black text-foreground">
+              악력 (kg) <span className="font-normal text-muted-foreground">좌우 각 2번 중 가장 높은 값</span>
+            </p>
+            <div className="mt-2 flex gap-2">
+              <Input
+                inputMode="decimal"
+                value={grip}
+                onChange={(e) => setGrip(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))}
+                placeholder="예: 42.5"
+                aria-label="악력 (kg)"
+                className="h-11 text-center text-lg font-bold tabular-nums"
+              />
+              <button
+                type="button"
+                disabled={gripSaving || !grip.trim()}
+                onClick={() => void saveGrip()}
+                className="h-11 shrink-0 rounded-xl bg-foreground px-4 text-sm font-bold text-background active:scale-95 disabled:opacity-50"
+              >
+                {gripSaving ? "저장 중…" : "악력 저장"}
+              </button>
+            </div>
+            {gripLine && <p className="mt-1.5 text-[12px] font-bold text-primary">최근 {gripLine}</p>}
+          </div>
+
           <button
             type="button"
             onClick={doneAndNext}

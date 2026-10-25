@@ -4,6 +4,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { Test153Division } from "@/lib/test153";
+import { normalizeFitnessProfile, type FitnessProfile, type MeasureKind } from "@/lib/test153Profile";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
@@ -114,4 +115,21 @@ export const saveTest153Record = async (args: {
 export const voidTest153Record = async (id: string) => {
   const { error } = await sb.rpc("void_test153_record", { p_id: id });
   if (error) throw error;
+};
+
+/**
+ * 153 체력 프로필 (2026-10-25 · 1단계 '내 체력 보기') — supabase/migrations/20261025130557_fitness_profile_153.sql
+ *   userId 없으면 본인, 있으면 그 회원 (같은 지점 코치 · 지점장 · 관리자만 — 서버가 거른다)
+ */
+export const fetchFitnessProfile = async (userId?: string | null): Promise<FitnessProfile> => {
+  const { data, error } = await sb.rpc("get_my_fitness_profile", { p_user_id: userId ?? null });
+  if (error) throw error;
+  return normalizeFitnessProfile(data);
+};
+
+/** 악력 · 허리둘레 · 안정시 심박 저장 — userId 없으면 본인(me), 회원이면 코치 측정(coach). 같은 날 다시 넣으면 고친다 */
+export const saveFitnessMeasure = async (userId: string | null, kind: MeasureKind, value: number) => {
+  const { data, error } = await sb.rpc("save_fitness_measure", { p_user_id: userId, p_kind: kind, p_value: value });
+  if (error) throw error;
+  return data as { kind: MeasureKind; value: number; source: "coach" | "me"; measured_on: string };
 };

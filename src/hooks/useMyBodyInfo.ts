@@ -10,10 +10,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeBodyInfo, type BodyInfo } from "@/lib/achievement153";
 import { normalizeFitnessExtra, type FitnessExtra, type Gender } from "@/lib/fitnessProfile153";
+import type { FitnessProfile, MeasureKind } from "@/lib/test153Profile";
+import { fetchFitnessProfile, saveFitnessMeasure } from "@/services/test153Service";
 
 export const BODY_INFO_KEY = ["153body", "me"] as const;
 /** 성별 · 출생 연도 · 체지방률 (2026-10-22) — 같은 "153body" 접두어라 지우기 · 새로 읽기가 같이 된다 */
 export const FITNESS_EXTRA_KEY = ["153body", "extra"] as const;
+/** 153 체력 프로필 (2026-10-25) — 153 PB 기록 · 악력 · 허리둘레 · 안정시 심박 */
+export const FITNESS_PROFILE_KEY = ["153body", "pb-profile"] as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
@@ -111,7 +115,39 @@ export function useSaveFitnessExtra() {
   });
 }
 
-/** 내 신체 · 운동 정보 전부 지우기 (키 · 몸무게 기록 + 운동 시간 + 성별 · 출생 연도 · 체지방률) */
+/**
+ * 153 체력 프로필 (2026-10-25 · 1단계 '내 체력 보기') — 내 신체 정보 시트 맨 위 카드
+ *   서버: get_my_fitness_profile (supabase/migrations/20261025130557_fitness_profile_153.sql)
+ *   공식 기록은 코치님이 재서 넣는다 — 회원은 읽기만 (허리둘레 · 안정시 심박만 본인이 넣는다)
+ */
+export function useMyFitnessProfile(enabled = true) {
+  const { user } = useAuth();
+  return useQuery<FitnessProfile>({
+    queryKey: [...FITNESS_PROFILE_KEY, user?.id ?? "anon"],
+    enabled: enabled && !!user?.id,
+    staleTime: 5 * 60_000,
+    retry: 1,
+    queryFn: () => fetchFitnessProfile(null),
+  });
+}
+
+/** 내 허리둘레 · 안정시 심박 저장 — 바꾼 칸만 보낸다 (오늘 날짜 한 줄, 같은 날 다시 넣으면 고친다) */
+export function useSaveMyMeasures() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation<void, unknown, Partial<Record<MeasureKind, number>>>({
+    mutationFn: async (values) => {
+      for (const [kind, value] of Object.entries(values) as [MeasureKind, number | undefined][]) {
+        if (value != null) await saveFitnessMeasure(null, kind, value);
+      }
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: [...FITNESS_PROFILE_KEY, user?.id ?? "anon"] });
+    },
+  });
+}
+
+/** 내 신체 · 운동 정보 전부 지우기 (키 · 몸무게 기록 + 운동 시간 + 성별 · 출생 연도 · 체지방률 + 악력 · 허리둘레 · 안정시 심박) */
 export function useClearBodyInfo() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -126,11 +162,15 @@ export function useClearBodyInfo() {
       if (e3) throw e3;
       const { error: e4 } = await sb.from("member_fitness_profile").delete().eq("user_id", user.id);
       if (e4) throw e4;
+      // 153 PB 공식 기록은 그대로 둔다 (코치님이 잰 기록 · 순위) — 악력 · 허리둘레 · 안정시 심박만 지운다
+      const { error: e5 } = await sb.from("member_fitness_measures").delete().eq("user_id", user.id);
+      if (e5) throw e5;
     },
     // 하나만 지워지고 실패해도 화면은 서버 값으로 다시 읽는다
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: [...BODY_INFO_KEY, user?.id ?? "anon"] });
       void qc.invalidateQueries({ queryKey: [...FITNESS_EXTRA_KEY, user?.id ?? "anon"] });
+      void qc.invalidateQueries({ queryKey: [...FITNESS_PROFILE_KEY, user?.id ?? "anon"] });
     },
   });
 }

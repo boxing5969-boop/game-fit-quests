@@ -8,14 +8,26 @@
  *   · '한 번 복싱 시간' 칸은 2026-10-22 없앴다 — 운동 시간은 두 번째 체크(얼굴 인식 · QR)로 실제로 잰다 (대표님)
  *   보는 사람 안내 문구는 넣지 않는다 (2026-10-22 대표님: "안내 문구를 아예 넣지 말자") · '지우기'는 두 번 눌러야 지운다.
  *   칸 옆 '+15%' = 홈 '153과 함께하며' 정확도가 오르는 만큼 (lib/fitnessProfile153 ACCURACY_POINTS)
+ *   + 맨 위 '153 체력 프로필' 카드(읽기 전용) · 아래 선택 칸 허리둘레 · 안정시 심박 (2026-10-25 대표님 — 체력 프로필 1단계)
+ *     카드는 코치님이 잰 153 PB 공식 기록(실측)만 — 영역 5개 · PB · 처음보다 좋아진 정도 · 악력 · 다음 측정일.
+ *     숫자 · 문구는 lib/test153Profile 한 곳. 기록이 없으면 '153 PB로 내 체력 재기' → 랭킹 153 PB 탭.
  */
 import { useEffect, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronRight, Gauge, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
-import { useClearBodyInfo, useMyFitnessExtra, useSaveBodyInfo, useSaveFitnessExtra } from "@/hooks/useMyBodyInfo";
+import {
+  useClearBodyInfo,
+  useMyFitnessExtra,
+  useMyFitnessProfile,
+  useSaveBodyInfo,
+  useSaveFitnessExtra,
+  useSaveMyMeasures,
+} from "@/hooks/useMyBodyInfo";
 import { bodyErrorText, bodyInputError, parseBodyNumber, type BodyInfo } from "@/lib/achievement153";
+import { kstToday } from "@/lib/attendanceCheer";
 import {
   ACCURACY_POINTS,
   fitnessExtraErrorText,
@@ -24,6 +36,21 @@ import {
   parseBodyFat,
   type Gender,
 } from "@/lib/fitnessProfile153";
+import { formatPct } from "@/lib/healthGains153";
+import { DIVISION_LABEL } from "@/lib/test153";
+import {
+  areaRows,
+  gripText,
+  kstMonthDay,
+  measureErrorText,
+  measureInputError,
+  nextTestText,
+  parseMeasure,
+  pbLine,
+  recordTimeText,
+  shownDivision,
+  type FitnessProfile,
+} from "@/lib/test153Profile";
 import { cn } from "@/lib/utils";
 
 const show = (v: number | null | undefined) => (v == null ? "" : String(Math.round(v * 10) / 10));
@@ -35,6 +62,86 @@ const Plus = ({ points }: { points: number }) => (
   <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-px text-[10.5px] font-black text-primary">정확도 +{points}%</span>
 );
 
+/** 153 체력 프로필 — 코치님이 잰 153 PB 공식 기록(실측)으로 본 내 체력 (2026-10-25 · 1단계) */
+const ProfileCard = ({ profile, loading, onGoTest }: { profile: FitnessProfile | undefined; loading: boolean; onGoTest: () => void }) => {
+  const div = shownDivision(profile);
+  if (loading && !profile) return <div className="h-24 animate-pulse rounded-2xl bg-muted/60" aria-hidden />;
+  if (!div) {
+    return (
+      <button
+        type="button"
+        onClick={onGoTest}
+        className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary/40 bg-primary/[0.04] px-3.5 py-3 text-left transition-transform active:scale-[0.99]"
+      >
+        <Gauge className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[13.5px] font-black text-foreground">153 PB로 내 체력 재기</span>
+          <span className="block text-[11.5px] leading-snug text-muted-foreground">
+            코치님이 재 주시면 심폐지구력 · 근지구력 · 복싱 체력이 여기 실측으로 보여요
+          </span>
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+      </button>
+    );
+  }
+  const rows = areaRows(div);
+  const grip = gripText(profile?.grip ?? null);
+  const next = nextTestText(profile?.nextTestOn, kstToday());
+  return (
+    <section aria-label="153 체력 프로필" className="rounded-2xl border border-primary/30 bg-primary/[0.04] p-3.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[14px] font-black text-foreground">153 체력 프로필</p>
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10.5px] font-black text-primary">실측</span>
+      </div>
+      <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+        {kstMonthDay(div.latest.measuredAt)} 측정 · {DIVISION_LABEL[div.division]}
+        {div.latest.coachName ? ` · 코치 ${div.latest.coachName}` : ""}
+      </p>
+      <p className="mt-2.5 text-[11px] font-bold text-muted-foreground">개인 최고 기록 (PB)</p>
+      <p className="text-[22px] font-black leading-tight tabular-nums text-foreground">{recordTimeText(div.pb)}</p>
+      <p className="mt-0.5 text-[12px] font-bold leading-snug text-primary">{pbLine(div)}</p>
+      <ul className="mt-3 space-y-2.5">
+        {rows.map((r) => (
+          <li key={r.key}>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-[12.5px] font-bold text-foreground">{r.label}</span>
+              {r.gainPct != null && (
+                <span className="shrink-0 text-[11.5px] font-black tabular-nums text-primary">처음보다 +{formatPct(r.gainPct)}%</span>
+              )}
+            </div>
+            <p className="text-[11.5px] leading-snug text-muted-foreground">
+              {r.value ?? "다음 측정에서 채워져요"}
+              <span className="text-muted-foreground/70"> · {r.from}</span>
+            </p>
+            {r.ratio > 0 && (
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
+                <div className="h-full rounded-full bg-primary" style={{ width: `${Math.max(4, Math.round(r.ratio * 100))}%` }} />
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+      {(grip || next) && (
+        <div className="mt-3 space-y-1 border-t border-border/60 pt-2.5 text-[12px] text-foreground">
+          {grip && (
+            <p>
+              <b>{grip}</b>
+              {profile?.grip?.on && (
+                <span className="text-muted-foreground"> · {kstMonthDay(profile.grip.on)} {profile.grip.source === "coach" ? "코치 측정" : "내가 넣음"}</span>
+              )}
+            </p>
+          )}
+          {next && (
+            <p>
+              다음 측정 <b>{next}</b>
+            </p>
+          )}
+        </div>
+      )}
+    </section>
+  );
+};
+
 const BodyInfoSheet = ({
   open,
   onOpenChange,
@@ -44,22 +151,29 @@ const BodyInfoSheet = ({
   onOpenChange: (v: boolean) => void;
   current: BodyInfo | null;
 }) => {
+  const navigate = useNavigate();
   const save = useSaveBodyInfo();
   const saveExtra = useSaveFitnessExtra();
+  const saveMeasures = useSaveMyMeasures();
   const clear = useClearBodyInfo();
   const { data: extra } = useMyFitnessExtra(open);
+  const { data: profile, isLoading: profileLoading } = useMyFitnessProfile(open);
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [gender, setGender] = useState<Gender | null>(null);
   const [birth, setBirth] = useState("");
   const [fat, setFat] = useState("");
+  const [waist, setWaist] = useState("");
+  const [restHr, setRestHr] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
   // 열 때 채운 값 — 바뀌었는지 비교용
-  const initial = useRef({ height: "", weight: "", gender: null as Gender | null, birth: "", fat: "" });
+  const initial = useRef({ height: "", weight: "", gender: null as Gender | null, birth: "", fat: "", waist: "", restHr: "" });
   const wasOpen = useRef(false);
   const extraFilled = useRef(false);
   const touchedExtra = useRef(false);
+  const profileFilled = useRef(false);
+  const touchedMeasure = useRef(false);
 
   useEffect(() => {
     if (open && !wasOpen.current) {
@@ -71,9 +185,23 @@ const BodyInfoSheet = ({
       setConfirmClear(false);
       extraFilled.current = false;
       touchedExtra.current = false;
+      profileFilled.current = false;
+      touchedMeasure.current = false;
     }
     wasOpen.current = open;
   }, [open, current?.heightCm, current?.weightKg]);
+
+  // 허리둘레 · 안정시 심박 — 서버 값이 오면 한 번만 채운다 (그사이 회원이 고친 칸은 덮지 않는다)
+  useEffect(() => {
+    if (!open || !profile || profileFilled.current) return;
+    profileFilled.current = true;
+    const next = { waist: show(profile.waist?.cm), restHr: show(profile.restHr?.bpm) };
+    initial.current = { ...initial.current, ...next };
+    if (!touchedMeasure.current) {
+      setWaist(next.waist);
+      setRestHr(next.restHr);
+    }
+  }, [open, profile]);
 
   // 성별 · 출생 연도 · 체지방률 — 서버 값이 오면 한 번만 채운다 (그사이 회원이 고친 칸은 덮지 않는다)
   useEffect(() => {
@@ -92,10 +220,11 @@ const BodyInfoSheet = ({
     }
   }, [open, extra]);
 
-  const busy = save.isPending || saveExtra.isPending || clear.isPending;
+  const busy = save.isPending || saveExtra.isPending || saveMeasures.isPending || clear.isPending;
   const hasAny =
     (!!current && (current.count > 0 || current.sessionMinutes != null)) ||
-    (!!extra && (extra.bodyFatCount > 0 || extra.genderSource === "me" || extra.birthSource === "me"));
+    (!!extra && (extra.bodyFatCount > 0 || extra.genderSource === "me" || extra.birthSource === "me")) ||
+    (!!profile && profile.measureCount > 0);
 
   const onSave = async () => {
     const changed = {
@@ -104,22 +233,34 @@ const BodyInfoSheet = ({
       gender: gender !== initial.current.gender,
       birth: birth.trim() !== initial.current.birth,
       fat: fat.trim() !== initial.current.fat,
+      waist: waist.trim() !== initial.current.waist,
+      restHr: restHr.trim() !== initial.current.restHr,
     };
     const h = changed.height ? parseBodyNumber(height) : null;
     const w = changed.weight ? parseBodyNumber(weight) : null;
     const g = changed.gender ? gender : null;
     const by = changed.birth ? parseBirthYear(birth) : null;
     const bf = changed.fat ? parseBodyFat(fat) : null;
+    const wc = changed.waist ? parseMeasure("waist_cm", waist) : null;
+    const hr = changed.restHr ? parseMeasure("rest_hr", restHr) : null;
     const bodyChanged = h != null || w != null;
     const extraChanged = g != null || by != null || bf != null;
-    if (!bodyChanged && !extraChanged) {
+    const measureChanged = wc != null || hr != null;
+    if (!bodyChanged && !extraChanged && !measureChanged) {
       // 바꾼 게 없거나 칸을 비우기만 했다 — 서버 값은 그대로
-      if (changed.height || changed.weight || changed.birth || changed.fat) {
+      if (changed.height || changed.weight || changed.birth || changed.fat || changed.waist || changed.restHr) {
         setError("비운 칸은 지워지지 않아요. 모두 지우려면 아래 '신체 정보 지우기'를 눌러 주세요");
         return;
       }
       onOpenChange(false);
       return;
+    }
+    if (measureChanged) {
+      const err = measureInputError("waist_cm", wc) ?? measureInputError("rest_hr", hr);
+      if (err) {
+        setError(err);
+        return;
+      }
     }
     if (bodyChanged) {
       const err = bodyInputError(h, w);
@@ -146,6 +287,14 @@ const BodyInfoSheet = ({
       if (extraChanged) await saveExtra.mutateAsync({ gender: g, birthYear: by, bodyFatPct: bf });
     } catch (e) {
       setError(fitnessExtraErrorText(e));
+      return;
+    }
+    try {
+      if (measureChanged) {
+        await saveMeasures.mutateAsync({ ...(wc != null ? { waist_cm: wc } : {}), ...(hr != null ? { rest_hr: hr } : {}) });
+      }
+    } catch (e) {
+      setError(measureErrorText(e));
       return;
     }
     toast.success("저장했어요");
@@ -203,6 +352,14 @@ const BodyInfoSheet = ({
           </DrawerDescription>
         </DrawerHeader>
         <div className="space-y-3 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
+          <ProfileCard
+            profile={profile}
+            loading={profileLoading}
+            onGoTest={() => {
+              onOpenChange(false);
+              navigate("/halloffame?tab=test153");
+            }}
+          />
           <div>
             <span className="flex items-center text-[12px] font-bold text-muted-foreground">
               성별
@@ -256,8 +413,43 @@ const BodyInfoSheet = ({
               "decimal",
             )}
           </div>
+          <div>
+            <span className="text-[12px] font-bold text-muted-foreground">더 넣어 두면 좋아요 (선택)</span>
+            <div className="mt-1 grid grid-cols-2 gap-2.5">
+              <label className="block">
+                <span className="text-[11.5px] font-bold text-muted-foreground">허리둘레 (cm)</span>
+                <Input
+                  value={waist}
+                  onChange={(e) => {
+                    touchedMeasure.current = true;
+                    setWaist(clean(e.target.value));
+                    setError(null);
+                  }}
+                  inputMode="decimal"
+                  placeholder="예: 82.5"
+                  aria-label="허리둘레 (cm)"
+                  className="mt-1 h-12 text-[16px] tabular-nums"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[11.5px] font-bold text-muted-foreground">안정시 심박 (회/분)</span>
+                <Input
+                  value={restHr}
+                  onChange={(e) => {
+                    touchedMeasure.current = true;
+                    setRestHr(e.target.value.replace(/\D/g, "").slice(0, 3));
+                    setError(null);
+                  }}
+                  inputMode="numeric"
+                  placeholder="워치 값 · 예: 62"
+                  aria-label="안정시 심박 (회/분)"
+                  className="mt-1 h-12 text-[16px] tabular-nums"
+                />
+              </label>
+            </div>
+          </div>
           <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-            몸무게 · 키 · 체지방률은 오늘 날짜로 저장돼요. 다시 잴 때마다 넣으면 처음보다 좋아졌을 때 바로 보여 드려요.
+            몸무게 · 키 · 체지방률 · 허리둘레 · 안정시 심박은 오늘 날짜로 저장돼요. 다시 잴 때마다 넣으면 처음보다 좋아졌을 때 바로 보여 드려요.
           </p>
           {error && (
             <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-[12.5px] font-bold text-destructive">
