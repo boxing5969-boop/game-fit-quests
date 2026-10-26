@@ -193,8 +193,9 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar", className = "" }: Pr
   );
 
   if (variant === "floating") {
+    // 뒤 흐림(backdrop-blur)은 뺀다 — TV 가 카드 뒤를 매 순간 다시 흐리게 그리느라 1번 화면이 끊겼다. 바탕을 조금 더 진하게 (2026-10-26)
     return (
-      <div className="fixed bottom-5 right-5 z-40 w-[33rem] rounded-2xl border border-primary/30 bg-gray-950/90 p-4 shadow-2xl backdrop-blur">
+      <div className="fixed bottom-5 right-5 z-40 w-[33rem] rounded-2xl border border-primary/30 bg-gray-950/95 p-4 shadow-2xl">
         {body}
       </div>
     );

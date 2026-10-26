@@ -967,6 +967,10 @@ html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: va
 @media (prefers-reduced-motion: reduce) {
   .bday-aurora-ring, .bday-halo, .bday-halo-reverse, .bday-bob, .bday-pop, .bday-gold-text, .record-gold-ring { animation: none !important; }
 }
+/* 📺 TV 에 하루 종일 떠 있는 카드·띠는 같은 그림 그대로, 흐름만 멈춘다 (2026-10-26 대표님: "라이브보드 1번이 렉이 너무 심한데").
+   TV(LG 웹OS 내장 브라우저)는 이렇게 색이 흐르는 효과를 매 순간 통째로 다시 칠해서 화면이 끊긴다. 입장 환영(10초)은 그대로 흐른다. */
+.still.bday-aurora-ring, .still.record-gold-ring, .still.bday-halo { animation: none; }
+.still.bday-gold-text { animation: none; background-position: 50% 0; }
 
 /* 이모지 → 153 입체 아이콘 (src/lib/emoji3d, 2026-10-16 대표님: "이모지는 모두 빼고 … 퀄리티있는 디자인")
    JSX 글자 속 이모지가 이 그림으로 바뀐다. 글자 크기를 따라 1.2em — text-3xl 자리면 크게, 본문이면 본문만큼. */

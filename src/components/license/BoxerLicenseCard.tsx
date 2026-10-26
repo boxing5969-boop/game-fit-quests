@@ -337,9 +337,14 @@ const BoxerLicenseCard = ({
     }
   })();
 
+  // 📺 라이브보드(TV) 카드는 늘 같은 그림으로 — 도는 빛 테두리·반짝이·흐르는 금빛을 멈춘다 (2026-10-26 대표님: "라이브보드 1번이 렉이 너무 심한데").
+  //    TV(LG 웹OS 내장 브라우저)는 힘이 약해, 운동 중 카드 14장이 저마다 흐린 빛 테두리를 매 순간 다시 그리며 화면이 끊겼다(카드 테두리만 멈춰도 초당 그림 16 → 43장).
+  //    모양·색은 그대로, 움직임만 뺀다. 앱(폰) 카드는 예전처럼 움직인다.
+  const still = isLive;
+
   return (
     <motion.div
-      layout
+      layout={!still}
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       whileTap={onCardClick ? { scale: 0.985 } : undefined}
@@ -373,7 +378,7 @@ const BoxerLicenseCard = ({
     >
       {/* ── 골드 트림 (얇은 외곽 그라디언트 라인) — 생일이면 흐르는 오로라 테두리 ── */}
       <div
-        className={`absolute inset-0 rounded-2xl ${birthday ? "bday-aurora-ring" : record ? "record-gold-ring" : `bg-gradient-to-br ${borderGrad} opacity-50`}`}
+        className={`absolute inset-0 rounded-2xl ${birthday ? "bday-aurora-ring" : record ? "record-gold-ring" : `bg-gradient-to-br ${borderGrad} opacity-50`} ${still ? "still" : ""}`}
         style={{ padding: birthday || record ? "2px" : "1.5px", WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }}
         aria-hidden="true"
       />
@@ -387,13 +392,18 @@ const BoxerLicenseCard = ({
       {/* ── 마스터 hologram 효과 (블랙 + 마스터만) ── */}
       {isMaster && (
         <motion.div
-          animate={{
-            background: [
-              "linear-gradient(45deg, transparent 30%, rgba(246,196,83,0.15) 50%, transparent 70%)",
-              "linear-gradient(45deg, transparent 60%, rgba(246,196,83,0.15) 80%, transparent 100%)",
-            ],
-          }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          animate={
+            still
+              ? undefined
+              : {
+                  background: [
+                    "linear-gradient(45deg, transparent 30%, rgba(246,196,83,0.15) 50%, transparent 70%)",
+                    "linear-gradient(45deg, transparent 60%, rgba(246,196,83,0.15) 80%, transparent 100%)",
+                  ],
+                }
+          }
+          transition={still ? undefined : { duration: 3, repeat: Infinity, ease: "linear" }}
+          style={still ? { background: "linear-gradient(45deg, transparent 30%, rgba(246,196,83,0.15) 50%, transparent 70%)" } : undefined}
           className="absolute inset-[2px] rounded-2xl pointer-events-none"
           aria-hidden="true"
         />
@@ -435,7 +445,7 @@ const BoxerLicenseCard = ({
                   🎉 {birthdayCongrats.toLocaleString("ko-KR")}
                 </span>
               )}
-              <span className={`bday-gold-text font-black uppercase tracking-[0.2em] ${cfg.licText}`}>
+              <span className={`bday-gold-text font-black uppercase tracking-[0.2em] ${cfg.licText} ${still ? "still" : ""}`}>
                 ✦ HAPPY BIRTHDAY ✦
               </span>
             </span>
@@ -490,7 +500,7 @@ const BoxerLicenseCard = ({
                 alt=""
                 aria-hidden="true"
                 draggable={false}
-                className="bday-halo pointer-events-none absolute left-1/2 top-1/2 max-w-none select-none"
+                className={`bday-halo pointer-events-none absolute left-1/2 top-1/2 max-w-none select-none ${still ? "still" : ""}`}
                 style={{ width: "185%", height: "185%", marginLeft: "-92.5%", marginTop: "-92.5%", mixBlendMode: "screen", opacity: 0.95 }}
               />
             )}
@@ -501,12 +511,16 @@ const BoxerLicenseCard = ({
             >
               {/* 외곽 회전 aurora — 리그별 conic-gradient (등급↑ 빠르게). 생일이면 오로라 색 */}
               <motion.div
-                animate={{ rotate: 360 }}
-                transition={{
-                  duration: birthday ? 5 : AURORA_SPEED[isMaster ? "black" : rankKey] ?? AURORA_SPEED.white,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
+                animate={still ? undefined : { rotate: 360 }}
+                transition={
+                  still
+                    ? undefined
+                    : {
+                        duration: birthday ? 5 : AURORA_SPEED[isMaster ? "black" : rankKey] ?? AURORA_SPEED.white,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }
+                }
                 className="absolute inset-0 rounded-xl"
                 style={{
                   background: birthday ? BIRTHDAY_RING : AURORA_RING[isMaster ? "black" : rankKey] ?? AURORA_RING.white,
@@ -521,11 +535,12 @@ const BoxerLicenseCard = ({
               {/* 펄스 글로우 (블랙/마스터 추가 화려) */}
               {(rankKey === "black" || isMaster) && (
                 <motion.div
-                  animate={{ opacity: [0.4, 0.95, 0.4] }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                  animate={still ? undefined : { opacity: [0.4, 0.95, 0.4] }}
+                  transition={still ? undefined : { duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                   className="absolute inset-[3px] rounded-[10px] pointer-events-none"
                   style={{
                     boxShadow: "inset 0 0 30px hsla(42, 95%, 60%, 0.5), inset 0 0 60px hsla(280, 70%, 55%, 0.3)",
+                    ...(still ? { opacity: 0.7 } : null),
                   }}
                   aria-hidden="true"
                 />
@@ -543,17 +558,27 @@ const BoxerLicenseCard = ({
                         top: `${(i * 53) % 85 + 5}%`,
                         fontSize: "8px",
                         color: rankKey === "black" || isMaster ? "#F6C453" : rankKey === "red" ? "#FFB347" : "#A5D8FF",
+                        // TV 는 반짝이지 않고 은은하게 떠 있는 별 (위 still 설명)
+                        ...(still ? { opacity: i % 2 ? 0.45 : 0.8 } : null),
                       }}
-                      animate={{
-                        opacity: [0, 1, 0],
-                        scale: [0.5, 1.3, 0.5],
-                      }}
-                      transition={{
-                        duration: 1.6 + (i % 3) * 0.4,
-                        repeat: Infinity,
-                        delay: i * 0.25,
-                        ease: "easeInOut",
-                      }}
+                      animate={
+                        still
+                          ? undefined
+                          : {
+                              opacity: [0, 1, 0],
+                              scale: [0.5, 1.3, 0.5],
+                            }
+                      }
+                      transition={
+                        still
+                          ? undefined
+                          : {
+                              duration: 1.6 + (i % 3) * 0.4,
+                              repeat: Infinity,
+                              delay: i * 0.25,
+                              ease: "easeInOut",
+                            }
+                      }
                     >
                       ✦
                     </motion.span>

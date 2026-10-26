@@ -1695,11 +1695,12 @@ const LiveBoardPage = () => {
           {/* ── 153 레코드 — 오늘 온 최초 기록 보유자 띠 (2026-10-19 대표님 '라') ── */}
           {/* 랭킹 띠처럼 모든 화면에(1번 화면은 우하단 QR 카드를 피해 오른쪽을 비운다). 한 줄에 다 안 들어가면 오늘 다녀간 회원 띠처럼 천천히 흐른다 */}
           {recordHolders.length > 0 && (
-            <div className={`mx-4 mb-2 flex-shrink-0 rounded-xl p-[1.5px] record-gold-ring ${only1 ? "mr-[35rem]" : ""}`}>
+            // 금빛 테두리·글자는 흐르지 않는 같은 그림(still) — TV 가 하루 종일 다시 칠하느라 끊기던 것 (2026-10-26)
+            <div className={`mx-4 mb-2 flex-shrink-0 rounded-xl p-[1.5px] record-gold-ring still ${only1 ? "mr-[35rem]" : ""}`}>
               <div className="flex items-center gap-4 overflow-hidden rounded-[11px] bg-gray-950/95 px-4 py-2.5">
                 <div className="flex flex-shrink-0 items-center gap-1.5">
                   <span className="text-xl">🏆</span>
-                  <h2 className="bday-gold-text whitespace-nowrap text-base font-black tracking-widest">153 RECORD</h2>
+                  <h2 className="bday-gold-text still whitespace-nowrap text-base font-black tracking-widest">153 RECORD</h2>
                   <span className="whitespace-nowrap text-sm font-bold text-amber-100/70">오늘 온 최초 기록 보유자</span>
                 </div>
                 <div
