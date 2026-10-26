@@ -70,25 +70,32 @@ const NO_RENTALS: Record<RentalKind, number> = { sportswear: 0, locker: 0 };
 // 고른 운동복 · 락카를 이 창(탭)에서 기억 — 결제창에서 취소하고 돌아와 다시 열어도 그대로 (2026-10-27 대표님:
 //   "링크를 한번 만들었다가 취소하고 다시 결제 하려고 하니까 운동복 락카 선택 기능이 꺼졌어")
 //   addon = 수강권 결제 창(0 안 씀 · -1 수강권과 같은 개월 · n개월) · standalone = 렌탈 탭에서 고른 개월
-const RENTAL_MEMORY_KEY = "mb153.cart.rentals.v1";
+//   결제를 마치고 돌아오면(?paid=1) · 6시간이 지나면 처음부터 — 같은 락카 · 운동복을 또 담아 두지 않게
+const RENTAL_MEMORY_KEY = "mb153.cart.rentals.v2";
+const RENTAL_MEMORY_MS = 6 * 3600 * 1000;
 type RentalMemoryStore = { addon: Record<RentalKind, number>; standalone: Record<RentalKind, number> };
 const readRentalMemory = (): RentalMemoryStore => {
   const empty = { addon: { ...NO_RENTALS }, standalone: { ...NO_RENTALS } };
   try {
-    const raw = JSON.parse(sessionStorage.getItem(RENTAL_MEMORY_KEY) || "null") as Partial<RentalMemoryStore> | null;
+    if (new URLSearchParams(window.location.search).get("paid") === "1") {
+      sessionStorage.removeItem(RENTAL_MEMORY_KEY);
+      return empty;
+    }
+    const raw = JSON.parse(sessionStorage.getItem(RENTAL_MEMORY_KEY) || "null") as (Partial<RentalMemoryStore> & { at?: unknown }) | null;
+    if (!raw || typeof raw.at !== "number" || Date.now() - raw.at > RENTAL_MEMORY_MS) return empty;
     const pick = (o: unknown): Record<RentalKind, number> => {
       const r = (o && typeof o === "object" ? o : {}) as Record<string, unknown>;
       const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? Math.max(-1, Math.min(12, Math.trunc(v))) : 0);
       return { sportswear: n(r.sportswear), locker: n(r.locker) };
     };
-    return raw ? { addon: pick(raw.addon), standalone: pick(raw.standalone) } : empty;
+    return { addon: pick(raw.addon), standalone: pick(raw.standalone) };
   } catch {
     return empty;
   }
 };
 const writeRentalMemory = (m: RentalMemoryStore) => {
   try {
-    sessionStorage.setItem(RENTAL_MEMORY_KEY, JSON.stringify(m));
+    sessionStorage.setItem(RENTAL_MEMORY_KEY, JSON.stringify({ ...m, at: Date.now() }));
   } catch {
     /* 저장 못 하는 브라우저(사생활 보호 모드)면 이 화면에서만 기억 */
   }
