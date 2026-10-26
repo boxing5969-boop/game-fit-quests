@@ -132,7 +132,8 @@ const MembershipProducts = () => {
   const [checkout, setCheckout] = useState<Checkout | null>(null); // 결제 전 확인 창(환불 규정 · 운동복/락카 · 마일리지)
   const [confirmAgree, setConfirmAgree] = useState(false);
   // 렌탈 탭 — 운동복 · 락카만 연장할 개월 (2026-10-27) · 고른 것은 이 창에서 기억(결제창에서 돌아와도 그대로)
-  const rentalMemory = useRef<RentalMemoryStore>(readRentalMemory());
+  const [firstRentalMemory] = useState(readRentalMemory); // 처음 한 번만 읽는다
+  const rentalMemory = useRef<RentalMemoryStore>(firstRentalMemory);
   const [rentalPick, setRentalPickState] = useState<Record<RentalKind, number>>(() => {
     const s = rentalMemory.current.standalone;
     return { sportswear: Math.max(0, s.sportswear), locker: Math.max(0, s.locker) };
