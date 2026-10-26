@@ -15,7 +15,7 @@ import { Lock, Pencil, Shirt, Ticket, CalendarCheck, Receipt, Store } from "luci
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
-import { daysUntil, leftText, lockerNumberText, lockerView, termStateOf, type TermState } from "@/lib/gymTicketInfo";
+import { daysUntil, leftText, lockerNumberText, lockerView, termStateOf, ymdText, type TermState } from "@/lib/gymTicketInfo";
 import { kstToday } from "@/lib/levelPractice";
 import { translateError } from "@/lib/errorMessages";
 import { cn } from "@/lib/utils";
@@ -77,7 +77,12 @@ interface SalesHistory {
 
 const won = (n: number) => `${n < 0 ? "-" : ""}${Math.abs(Math.round(n)).toLocaleString("ko-KR")}원`;
 const kstDay = (iso: string) => new Date(Date.parse(iso) + 9 * 3600 * 1000).toISOString().slice(0, 10);
-const dot = (ymd: string) => ymd.slice(0, 10).replace(/-/g, ". ") + ".";
+const dot = (ymd: string) => ymdText(ymd.slice(0, 10));
+/** 항목 기간용 짧은 날짜 — "26.10.24" */
+const shortDay = (ymd: string) => {
+  const [y, m, d] = ymd.slice(0, 10).split("-").map(Number);
+  return `${String(y).slice(2)}.${m}.${d}`;
+};
 
 const DAGYM_CAT: Record<string, string> = {
   general: "회원권",
@@ -87,7 +92,6 @@ const DAGYM_CAT: Record<string, string> = {
   transferMembership: "양도",
   etc: "기타",
 };
-const KIND_LABEL: Record<OrderItem["kind"], string> = { membership: "수강권", sportswear: "운동복", locker: "락카" };
 
 const stateCls = (s: TermState) =>
   s === "ended" ? "bg-destructive/15 text-destructive" : s === "soon" ? "bg-status-pending/15 text-status-pending" : "bg-primary/10 text-primary";
@@ -327,8 +331,8 @@ const MemberPassPanel = ({ profile }: { profile: MemberProfile }) => {
                     {o.items.map((i, n) => (
                       <li key={n} className="flex items-center justify-between gap-3 text-[12px] text-muted-foreground">
                         <span className="min-w-0 truncate">
-                          {KIND_LABEL[i.kind]} · {i.product_name}
-                          {i.start_date && i.end_date ? ` · ${dot(i.start_date)} ~ ${dot(i.end_date)}` : ""}
+                          {i.product_name}
+                          {i.start_date && i.end_date ? ` · ${shortDay(i.start_date)}~${shortDay(i.end_date)}` : ""}
                           {i.reverted_at ? " · 되돌림" : ""}
                         </span>
                         <span className="shrink-0 tabular-nums">{won(i.list_amount)}</span>
