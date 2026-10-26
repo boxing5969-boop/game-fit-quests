@@ -7,6 +7,8 @@ export interface PlayerVariant {
   label: string;
   videoUrl: string;
   posterUrl?: string | null;
+  /** 180도 돌려 보여 준다 — 붕대 감기 '내 눈으로' (앞에서 찍은 영상을 내 손을 내려다보는 방향으로, 2026-10-27) */
+  rotate180?: boolean;
 }
 
 interface VideoPlayerProps {
@@ -26,6 +28,8 @@ interface VideoPlayerProps {
   startAt?: number;
   /** '거울' 단추 — 좌우를 뒤집어 거울 보듯 따라 하기 (2026-10-20 붕대 감기) */
   mirrorable?: boolean;
+  /** 처음 속도 — 붕대 감기는 천천히(0.75) 시작 (2026-10-27 대표님 "속도 조절") */
+  initialSpeed?: number;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -43,10 +47,11 @@ const VideoPlayer = ({
   initialVariant = 0,
   startAt,
   mirrorable = false,
+  initialSpeed = 1,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(() => (SPEED_OPTIONS.includes(initialSpeed) ? initialSpeed : 1));
   const [error, setError] = useState(false);
   // 실사 | 애니메이션 — 고른 버전 (버전이 하나면 videoUrl 그대로)
   const versions = variants && variants.length > 1 ? variants : null;
@@ -145,7 +150,7 @@ const VideoPlayer = ({
               ref={videoRef}
               src={src}
               poster={poster || undefined}
-              className={`h-full w-full object-contain ${mirrored ? "-scale-x-100" : ""}`}
+              className={`h-full w-full object-contain ${mirrored ? "-scale-x-100" : ""} ${current?.rotate180 ? "rotate-180" : ""}`}
               onError={() => setError(true)}
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}

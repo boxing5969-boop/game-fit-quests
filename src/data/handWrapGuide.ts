@@ -15,6 +15,14 @@
  *       포스터(stepNN.webp)는 화살표까지 다 그려진 마지막 장면 — 움직임 줄이기 설정이면 이 그림만 보여 준다.
  *       2~4 · 6~10단계는 앞에서 찍은 영상을 180도 돌린 것 = 내가 내 왼손을 내려다보는 방향(엄지가 오른쪽). 1 · 5단계는 옆에서.
  *
+ *   2026-10-27 대표님: "복싱붕대도 아직 화질도 많이 깨지고 … 영상도 편집을 통해서 방향이랑 속도 조절 등을 통해 좀 더 회원님들이
+ *     잘 따라 할 수 있게 · 사진 한 장씩 볼 수도 있지만 한눈에 처음부터 끝까지 설명서 보듯 그림과 글로"
+ *     → 단계 영상 10개를 다시: 배경 지운 멈춘 손(움직임 없음 · 87kbps) 대신 원본에서 그 단계를 실제로 감는 장면을 잘라
+ *       내 손을 내려다보는 방향(앞에서 찍은 영상 180도)으로 · 손 쪽으로 잘라 줄여서 선명하게 · 끝에서 가장 선명한 장면에 멈춤.
+ *       속도는 앱에서 고른다(아주 천천히 0.4 · 천천히 0.6 기본 · 원래 1) · 왼손/오른손(오른손은 거울로 뒤집어 보기).
+ *       화살표는 글로 옮겼다(dir — 감는 방향 한 줄). 큰 영상에 '내 눈으로'(앞에서 찍은 영상 180도) 각도를 더했다.
+ *       설명서 보기(HandWrapManual) = 10단계를 위에서 아래로 그림 + 글.
+ *
  *   영상 속 방법(왼손): 엄지에 고리 → 손목 → 손등을 건너 주먹 마디 → 손가락 펴고 마디 감기(손등에 X자) →
  *     손가락 사이사이로 넣기(한 칸 지날 때마다 손목 한 바퀴) → 남은 붕대는 손목에 → 벨크로는 손목 바깥쪽 → 주먹 쥐어 확인.
  *
@@ -29,7 +37,7 @@ export const HANDWRAP_EXERCISE_NAME = "복싱 붕대 감기";
 
 // ── 영상 — 같은 감기를 두 각도에서 ─────────────────────────────
 
-export type HandWrapAngleKey = "side" | "front";
+export type HandWrapAngleKey = "mine" | "side" | "front";
 
 export interface HandWrapAngle {
   key: HandWrapAngleKey;
@@ -41,9 +49,20 @@ export interface HandWrapAngle {
   posterUrl: string;
   /** 초 — 화면 표시용 */
   seconds: number;
+  /** 180도 돌려 보여 준다 — 앞에서 찍은 영상을 내 손을 내려다보는 방향으로 (2026-10-27) */
+  rotate180?: boolean;
 }
 
 export const HANDWRAP_ANGLES: readonly HandWrapAngle[] = [
+  {
+    key: "mine",
+    label: "내 눈으로",
+    hint: "내 왼손을 내려다보는 방향 · 따라 하기 가장 쉬워요",
+    videoUrl: "/handwrap/front.mp4",
+    posterUrl: "/handwrap/front.webp",
+    seconds: 44,
+    rotate180: true,
+  },
   {
     key: "side",
     label: "옆에서",
@@ -76,9 +95,11 @@ export interface HandWrapStep {
   desc: string;
   /** 놓치기 쉬운 것 한 줄 (없으면 생략) */
   tip?: string;
-  /** 배경 지운 반복 영상 (화살표 포함, 소리 없음) */
+  /** 감는 방향 한 줄 — 단계 영상 아래 · 설명서 (2026-10-27 화살표 대신) */
+  dir: string;
+  /** 그 단계를 실제로 감는 짧은 반복 영상 (원본에서 잘라 냄, 소리 없음) */
   clip: string;
-  /** 화살표까지 다 그려진 마지막 장면 — 영상 포스터 · 작은 그림 줄 · 움직임 줄이기 */
+  /** 단계가 끝난 장면(가장 선명한 곳) — 영상 포스터 · 작은 그림 줄 · 설명서 · 움직임 줄이기 */
   image: string;
   /** 영상을 보는 방향 — mine: 내 왼손을 내려다보는 방향 · side: 옆에서 */
   view: "mine" | "side";
@@ -86,8 +107,8 @@ export interface HandWrapStep {
   video: { angle: HandWrapAngleKey; at: number };
 }
 
-/** 단계 영상 · 포스터 고친 판 — 영상을 다시 만들면 올린다. 폰이 4시간 동안 예전 파일을 그대로 쓰지 않게 (2026-10-26 손 테두리 · 이음새 다시) */
-const STEP_MEDIA_VERSION = "20261026";
+/** 단계 영상 · 포스터 고친 판 — 영상을 다시 만들면 올린다. 폰이 4시간 동안 예전 파일을 그대로 쓰지 않게 (2026-10-27 실제 감는 장면으로 다시) */
+const STEP_MEDIA_VERSION = "20261027";
 
 /** 단계 영상 · 포스터 주소 (public/handwrap/steps/stepNN.mp4 · .webp) */
 const stepMedia = (n: number, view: HandWrapStep["view"] = "mine"): Pick<HandWrapStep, "clip" | "image" | "view"> => {
@@ -96,77 +117,100 @@ const stepMedia = (n: number, view: HandWrapStep["view"] = "mine"): Pick<HandWra
   return { clip: `/handwrap/steps/${id}.mp4${v}`, image: `/handwrap/steps/${id}.webp${v}`, view };
 };
 
-/** 화살표 읽는 법 — 단계 영상 아래 한 줄 */
-export const HANDWRAP_ARROW_LEGEND = "민트 화살표 = 붕대가 지나가는 방향 · 점선 = 손바닥 쪽";
+/** 어느 손을 감을 때 보나 — 오른손은 영상을 거울로 뒤집어 보여 준다 (2026-10-27 대표님 "방향 조절") */
+export type HandSide = "left" | "right";
+
 /** 단계 영상을 보는 방향 */
-export const HANDWRAP_VIEW_NOTE: Record<HandWrapStep["view"], string> = {
-  mine: "내 왼손을 내려다보는 방향 (엄지가 오른쪽)",
-  side: "옆에서 본 모습",
+export const HANDWRAP_VIEW_NOTE: Record<HandWrapStep["view"], Record<HandSide, string>> = {
+  mine: { left: "내 왼손을 내려다보는 방향 (엄지가 오른쪽)", right: "내 오른손을 내려다보는 방향 (엄지가 왼쪽) · 거울로 뒤집었어요" },
+  side: { left: "옆에서 본 모습", right: "옆에서 본 모습 · 거울로 뒤집었어요" },
 };
+
+/** 오른손(거울)일 때 글 속 대각선 화살표도 좌우를 바꾼다 — ↗ ↔ ↖ · ↘ ↔ ↙ */
+export const mirrorArrows = (text: string): string =>
+  text.replace(/[↗↖↘↙]/g, (c) => ({ "↗": "↖", "↖": "↗", "↘": "↙", "↙": "↘" })[c] ?? c);
+
+/** 단계 영상 속도 — 영상은 원래 속도로 만들고 앱이 느리게 튼다 */
+export const HANDWRAP_STEP_SPEEDS: ReadonlyArray<{ rate: number; label: string }> = [
+  { rate: 0.4, label: "아주 천천히" },
+  { rate: 0.6, label: "천천히" },
+  { rate: 1, label: "원래 속도" },
+];
+export const HANDWRAP_DEFAULT_STEP_RATE = 0.6;
 
 export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
   {
     title: "엄지에 고리 걸기",
     desc: "붕대 끝 고리를 엄지에 걸고, 붕대를 손등 쪽으로 넘겨 손목으로 가져가요.",
-    ...stepMedia(1, "side"),
-    video: { angle: "side", at: 0 },
+    dir: "고리는 엄지에 → 붕대는 손등 쪽으로 넘겨 손목으로",
+    ...stepMedia(1),
+    video: { angle: "mine", at: 0 },
   },
   {
     title: "손목 감기",
     desc: "손목을 단단히 2~3바퀴 감아요. 손등 쪽에서는 새끼손가락 쪽 → 엄지 쪽으로 지나가요.",
     tip: "손목도 마디도 끝까지 같은 방향(손등에서 새끼 → 엄지 쪽)으로 감아요.",
+    dir: "손등에서 새끼 → 엄지 쪽으로 2~3바퀴",
     ...stepMedia(2),
-    video: { angle: "side", at: 1.5 },
+    video: { angle: "mine", at: 2.9 },
   },
   {
     title: "손등을 건너 주먹 마디로",
     desc: "손목의 새끼손가락 쪽에서 손등을 대각선으로 올라가(↗) 검지 쪽 주먹 마디로 가요.",
+    dir: "손목 새끼 쪽에서 ↗ 대각선으로 검지 마디까지",
     ...stepMedia(3),
-    video: { angle: "side", at: 4.5 },
+    video: { angle: "mine", at: 5.8 },
   },
   {
     title: "손가락 펴고 마디 감기",
     desc: "손가락을 쫙 편 채로 주먹 마디를 감아요(손등에서 새끼 → 엄지 쪽). 다 감으면 손등을 대각선으로 내려와(↘) 손목 엄지 쪽으로 — 올라간 대각선과 겹쳐 손등에 X자가 생겨요.",
     tip: "손가락을 오므리고 감으면 주먹을 쥘 때 너무 조여요.",
+    dir: "마디를 새끼 → 엄지 쪽으로 감고 ↘ 대각선으로 손목 엄지 쪽 (손등에 X자)",
     ...stepMedia(4),
-    video: { angle: "side", at: 7.5 },
+    video: { angle: "mine", at: 9.2 },
   },
   {
     title: "주먹 쥐어 마디 확인",
     desc: "주먹을 쥐어 마디가 두툼하게 다 덮였는지 봐요.",
+    dir: "주먹을 쥐고 마디 위가 두툼한지 보기",
     ...stepMedia(5, "side"),
-    video: { angle: "side", at: 10.5 },
+    video: { angle: "side", at: 10.3 },
   },
   {
     title: "손가락 사이사이로",
     desc: "손등에서 손가락 사이로 붕대를 넣어(↑) 손바닥 쪽으로 넘기고, 손바닥 쪽으로 내려와 손목으로 가요. 한 칸씩 차례로 지나가요.",
+    dir: "손등에서 손가락 사이로 넣어 손바닥 쪽으로 → 손목으로",
     ...stepMedia(6),
-    video: { angle: "front", at: 18.5 },
+    video: { angle: "mine", at: 15.9 },
   },
   {
     title: "한 칸 지날 때마다 손목 한 바퀴",
     desc: "손가락 사이를 하나 지날 때마다 손목을 한 바퀴 감아 고정해요. 손목은 이번에도 손등에서 새끼 → 엄지 쪽으로.",
+    dir: "손가락 사이 한 칸 → 손목 한 바퀴 (새끼 → 엄지 쪽)",
     ...stepMedia(7),
-    video: { angle: "side", at: 23.5 },
+    video: { angle: "mine", at: 21 },
   },
   {
     title: "다 감은 모양",
     desc: "손가락 사이에 붕대 줄이 보이고, 마디 위가 두툼하고, 손등에 X자가 있으면 잘 감은 거예요.",
+    dir: "손가락 사이 줄 · 두툼한 마디 · 손등 X자",
     ...stepMedia(8),
-    video: { angle: "side", at: 33 },
+    video: { angle: "mine", at: 31 },
   },
   {
     title: "남은 붕대는 손목에 · 벨크로",
     desc: "남은 붕대는 손목에 전부 감고, 벨크로는 손목 바깥쪽(손등 쪽)에 붙여요.",
     tip: "벨크로가 손바닥 쪽에 있으면 장갑 안에서 쓸려요.",
+    dir: "남은 붕대는 손목에 다 감고 · 벨크로는 손목 바깥쪽(손등 쪽)",
     ...stepMedia(9),
-    video: { angle: "side", at: 36.5 },
+    video: { angle: "mine", at: 37.4 },
   },
   {
     title: "주먹 쥐어 확인",
     desc: "주먹을 쥐었다 폈다 해 봐요. 손끝이 저리거나 하얘지면 풀고 다시 감아요.",
+    dir: "쥐었다 폈다 — 저리거나 하얘지면 풀고 다시",
     ...stepMedia(10),
-    video: { angle: "front", at: 42.5 },
+    video: { angle: "mine", at: 41.6 },
   },
 ];
 

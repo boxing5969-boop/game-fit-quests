@@ -8,6 +8,9 @@
  *     → 대표님 영상 2개 = '옆에서' · '앞에서' 두 각도 (플레이어 안에서도 바꿔 볼 수 있고, 거울 · 0.5배속도 된다)
  *     → '사진으로 한 장씩' 10장 (components/handwrap/HandWrapStepViewer) — '이 장면 영상으로 보기'로 그 장면 초부터 영상
  *     → 같은 날 "애니메이션화 · 배경 없애 줘 · 감는 방향 상세하게" → '한 단계씩' = 배경 지운 짧은 반복 영상 + 방향 화살표
+ *   2026-10-27 대표님: "화질도 많이 깨지고 … 방향이랑 속도 조절 등을 통해 좀 더 잘 따라 할 수 있게 · 한눈에 처음부터 끝까지 설명서처럼"
+ *     → 큰 영상에 '내 눈으로'(앞에서 찍은 영상을 180도 = 내 손을 내려다보는 방향) · 처음 속도 0.75배
+ *     → '한 단계씩' = 실제로 감는 장면(선명하게) · 속도 · 왼손/오른손(거울) · '한눈에 설명서' (HandWrapStepViewer)
  *
  *   신규 회원 첫날: 코치님은 한 손만 빠르게 감아 주고, 다른 손은 회원이 영상을 보며 직접 감는다.
  *   그리고 집에서 혼자 감아 보는 미션(HandWrapPracticeCard) — 다음 수업 때 코치님이 회원 상세에서 기록을 본다.
@@ -53,7 +56,12 @@ const HandWrapGuidePage = () => {
 
   // 각도 2개 + (있으면) 코치가 훈련 라이브러리에 넣은 영상
   const variants = useMemo<PlayerVariant[]>(() => {
-    const list: PlayerVariant[] = HANDWRAP_ANGLES.map((a) => ({ label: a.label, videoUrl: a.videoUrl, posterUrl: a.posterUrl }));
+    const list: PlayerVariant[] = HANDWRAP_ANGLES.map((a) => ({
+      label: a.label,
+      videoUrl: a.videoUrl,
+      posterUrl: a.posterUrl,
+      rotate180: a.rotate180,
+    }));
     const extra = coach.data?.url;
     if (extra && !HANDWRAP_ANGLES.some((a) => extra.endsWith(a.videoUrl))) {
       list.push({ label: "코치 영상", videoUrl: playableUrl(extra), posterUrl: coach.data?.poster ?? null });
@@ -74,7 +82,7 @@ const HandWrapGuidePage = () => {
       header={
         <PageHeader
           title="붕대 감기"
-          subtitle="영상 · 단계별 방향 화살표 · 집 연습 미션"
+          subtitle="영상 · 한 단계씩 천천히 · 한눈에 설명서 · 집 연습"
           sticky
           leftAction={
             <button
@@ -100,7 +108,7 @@ const HandWrapGuidePage = () => {
           영상으로 보기
         </h2>
         <p className="mt-0.5 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
-          같은 감기를 두 각도에서 찍었어요. 보기 편한 쪽을 골라 보세요
+          같은 감기를 여러 방향에서 볼 수 있어요. &lsquo;내 눈으로&rsquo;는 내 손을 내려다보는 방향이라 따라 하기 가장 쉬워요
         </p>
         <div className="mt-2 grid grid-cols-2 gap-2.5">
           {HANDWRAP_ANGLES.map((a, i) => (
@@ -109,10 +117,18 @@ const HandWrapGuidePage = () => {
               type="button"
               onClick={() => setOpened({ variant: i })}
               aria-label={`붕대 감기 영상 ${a.label} 보기`}
-              className="group block overflow-hidden rounded-2xl bg-card text-left shadow-elev-1 ring-1 ring-border/60"
+              className={`group block overflow-hidden rounded-2xl bg-card text-left shadow-elev-1 ring-1 ring-border/60 ${
+                i === 0 ? "col-span-2" : ""
+              }`}
             >
               <span className="relative block aspect-video w-full overflow-hidden bg-muted">
-                <img src={a.posterUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                <img
+                  src={a.posterUrl}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className={`h-full w-full object-cover ${a.rotate180 ? "rotate-180" : ""}`}
+                />
                 <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
                 <span className="absolute inset-0 flex items-center justify-center">
                   <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm transition-transform group-active:scale-90">
@@ -124,7 +140,10 @@ const HandWrapGuidePage = () => {
                 </span>
               </span>
               <span className="block px-3 py-2.5">
-                <span className="block text-[14px] font-black text-foreground">{a.label} 보기</span>
+                <span className="block text-[14px] font-black text-foreground">
+                  {a.label} 보기
+                  {i === 0 && <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-px text-[10.5px] font-black text-primary">추천</span>}
+                </span>
                 <span className="block truncate text-[11.5px] text-muted-foreground">{a.hint}</span>
               </span>
             </button>
@@ -135,7 +154,7 @@ const HandWrapGuidePage = () => {
             <FlipHorizontal2 className="h-3.5 w-3.5" /> 거울 — 좌우를 뒤집어 거울 보듯
           </span>
           <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[11.5px] font-bold text-muted-foreground">
-            <Gauge className="h-3.5 w-3.5" /> 0.5배속으로 천천히
+            <Gauge className="h-3.5 w-3.5" /> 처음엔 0.75배 · 0.5배까지 천천히
           </span>
         </div>
       </section>
@@ -143,10 +162,10 @@ const HandWrapGuidePage = () => {
       {/* ── 한 단계씩 — 배경 지운 짧은 영상 + 감는 방향 화살표 (2026-10-20 대표님) ── */}
       <section aria-labelledby="handwrap-steps-h" className="mt-7">
         <h2 id="handwrap-steps-h" className="px-1 text-[16px] font-black text-foreground">
-          한 단계씩 · 감는 방향 화살표
+          한 단계씩 천천히 · 한눈에 설명서
         </h2>
         <p className="mt-0.5 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
-          영상이 빠르면 단계마다 짧은 영상을 보며 따라 하세요. 화살표가 감는 방향이에요 · 옆으로 밀어도 넘어가요
+          단계마다 실제로 감는 장면을 천천히 반복해요. 오른손을 감을 땐 &lsquo;오른손&rsquo;을 누르면 거울처럼 뒤집어 보여요 · 옆으로 밀어도 넘어가요
         </p>
         <HandWrapStepViewer onWatch={watchStep} className="mt-2" />
       </section>
@@ -198,6 +217,7 @@ const HandWrapGuidePage = () => {
             initialVariant={opened.variant}
             startAt={opened.startAt}
             mirrorable
+            initialSpeed={0.75}
             title="153 붕대 감기"
             keyPoints={[...HANDWRAP_KEY_POINTS]}
             onClose={closePlayer}
