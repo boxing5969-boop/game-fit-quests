@@ -11,6 +11,7 @@ import AttendanceRecordCard from "@/components/profile/AttendanceRecordCard";
 import AchievementCard from "@/components/profile/AchievementCard";
 import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
 import MileageCard from "@/components/home/MileageCard";
+import MyPayHistorySheet from "@/components/membership/MyPayHistorySheet";
 import { setCommunityAutoPost } from "@/services/communityFeedService";
 import { setCheerNotify } from "@/services/cheerService";
 import { useMyReceivedCheers } from "@/hooks/useSecondCheer";
@@ -19,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import XPBar from "@/components/XPBar";
 import CharacterSprite from "@/components/CharacterSprite";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
-import { ArrowLeft, MapPin, Calendar, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles, Clock } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles, Clock, Receipt } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { isStaffProfile, staffChampionLine, staffDisplayName } from "@/lib/staffDisplay";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -86,6 +87,7 @@ const MyPage = () => {
   const [birthError, setBirthError] = useState("");
   const [tutorialRestartBusy, setTutorialRestartBusy] = useState(false);
   const [showGrowthTools, setShowGrowthTools] = useState(false);
+  const [showPayHistory, setShowPayHistory] = useState(false); // 결제 · 마일리지 내역 (2026-10-27)
   const [showAllXp, setShowAllXp] = useState(false);
   const [showLocked, setShowLocked] = useState(false);
   const [showAllMedals, setShowAllMedals] = useState(false);
@@ -266,6 +268,23 @@ const MyPage = () => {
 
           {/* 153 마일리지 — 홈에서 옮겨 옴 (2026-10-22 대표님: "홈에는 마일리지 정보 빼 줘"). 지도진은 적립 대상이 아니라 안 그린다 */}
           {!isStaff && <MileageCard />}
+
+          {/* 결제 · 마일리지 내역 — 앱 결제(항목 · 기간 · 할인 · 취소) + 마일리지 들어오고 나간 것 (2026-10-27 대표님) */}
+          <button
+            type="button"
+            onClick={() => setShowPayHistory(true)}
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-left shadow-elev-1 transition-transform active:scale-[0.99]"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Receipt className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] font-bold text-foreground">결제 · 마일리지 내역</span>
+              <span className="block truncate text-[11.5px] text-muted-foreground">결제한 것 · 취소한 것 · 마일리지 쓴 것까지 자세히</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </button>
+          <MyPayHistorySheet open={showPayHistory} onOpenChange={setShowPayHistory} initialTab="pay" />
 
           {/* 나의 153 기록 — 수강권이 끝나 갈 때만 (만료 21일 전 ~ 끝나고 14일 · 2026-10-21) */}
           <RenewalStoryCard />

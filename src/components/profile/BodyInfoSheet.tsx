@@ -13,6 +13,8 @@
  *     숫자 · 문구는 lib/test153Profile 한 곳. 기록이 없으면 '153 PB로 내 체력 재기' → 랭킹 153 PB 탭.
  *   + 선택 칸 맨 위 악력(kg) — 체육관 악력계(코멧)로 좌우 각 2번 중 가장 높은 값 · 칸 옆에 몸무게 대비 %(상대악력) 바로 (2026-10-25 대표님)
  *     회원이 넣으면 source 'me'(카드에 '내가 넣음'), 같은 날 코치님이 넣은 값이 있으면 카드는 코치 값.
+ *   + 하루 평균 운동 시간 (2026-10-27 대표님: "하루에 평균 몇 시간 정도 운동하는지 본인이 넣을 수 있게") — 30분~4시간 중 고르기.
+ *     예전 '한 번 복싱 시간' 칸(member_workout_settings.session_minutes)을 그대로 쓴다. 계산에는 쓰지 않는다.
  */
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +30,14 @@ import {
   useSaveFitnessExtra,
   useSaveMyMeasures,
 } from "@/hooks/useMyBodyInfo";
-import { bodyErrorText, bodyInputError, parseBodyNumber, type BodyInfo } from "@/lib/achievement153";
+import {
+  DAILY_WORKOUT_CHOICES,
+  bodyErrorText,
+  bodyInputError,
+  dailyWorkoutText,
+  parseBodyNumber,
+  type BodyInfo,
+} from "@/lib/achievement153";
 import { kstToday } from "@/lib/attendanceCheer";
 import {
   ACCURACY_POINTS,
@@ -169,10 +178,21 @@ const BodyInfoSheet = ({
   const [grip, setGrip] = useState("");
   const [waist, setWaist] = useState("");
   const [restHr, setRestHr] = useState("");
+  const [daily, setDaily] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
   // 열 때 채운 값 — 바뀌었는지 비교용
-  const initial = useRef({ height: "", weight: "", gender: null as Gender | null, birth: "", fat: "", grip: "", waist: "", restHr: "" });
+  const initial = useRef({
+    height: "",
+    weight: "",
+    gender: null as Gender | null,
+    birth: "",
+    fat: "",
+    grip: "",
+    waist: "",
+    restHr: "",
+    daily: null as number | null,
+  });
   const wasOpen = useRef(false);
   const extraFilled = useRef(false);
   const touchedExtra = useRef(false);
@@ -181,10 +201,11 @@ const BodyInfoSheet = ({
 
   useEffect(() => {
     if (open && !wasOpen.current) {
-      const next = { height: show(current?.heightCm), weight: show(current?.weightKg) };
+      const next = { height: show(current?.heightCm), weight: show(current?.weightKg), daily: current?.sessionMinutes ?? null };
       initial.current = { ...initial.current, ...next };
       setHeight(next.height);
       setWeight(next.weight);
+      setDaily(next.daily);
       setError(null);
       setConfirmClear(false);
       extraFilled.current = false;
@@ -193,7 +214,7 @@ const BodyInfoSheet = ({
       touchedMeasure.current = false;
     }
     wasOpen.current = open;
-  }, [open, current?.heightCm, current?.weightKg]);
+  }, [open, current?.heightCm, current?.weightKg, current?.sessionMinutes]);
 
   // 악력 · 허리둘레 · 안정시 심박 — 서버 값이 오면 한 번만 채운다 (그사이 회원이 고친 칸은 덮지 않는다)
   useEffect(() => {
@@ -243,6 +264,7 @@ const BodyInfoSheet = ({
       grip: grip.trim() !== initial.current.grip,
       waist: waist.trim() !== initial.current.waist,
       restHr: restHr.trim() !== initial.current.restHr,
+      daily: daily !== initial.current.daily,
     };
     const h = changed.height ? parseBodyNumber(height) : null;
     const w = changed.weight ? parseBodyNumber(weight) : null;
@@ -252,7 +274,8 @@ const BodyInfoSheet = ({
     const gk = changed.grip ? parseMeasure("grip_kg", grip) : null;
     const wc = changed.waist ? parseMeasure("waist_cm", waist) : null;
     const hr = changed.restHr ? parseMeasure("rest_hr", restHr) : null;
-    const bodyChanged = h != null || w != null;
+    const sm = changed.daily ? daily : null;
+    const bodyChanged = h != null || w != null || sm != null;
     const extraChanged = g != null || by != null || bf != null;
     const measureChanged = gk != null || wc != null || hr != null;
     if (!bodyChanged && !extraChanged && !measureChanged) {
@@ -272,7 +295,7 @@ const BodyInfoSheet = ({
       }
     }
     if (bodyChanged) {
-      const err = bodyInputError(h, w);
+      const err = bodyInputError(h, w, sm);
       if (err) {
         setError(err);
         return;
@@ -287,7 +310,7 @@ const BodyInfoSheet = ({
     }
     setError(null);
     try {
-      if (bodyChanged) await save.mutateAsync({ heightCm: h, weightKg: w, sessionMinutes: null });
+      if (bodyChanged) await save.mutateAsync({ heightCm: h, weightKg: w, sessionMinutes: sm });
     } catch (e) {
       setError(bodyErrorText(e));
       return;
@@ -427,6 +450,32 @@ const BodyInfoSheet = ({
             )}
           </div>
           <div>
+            <span className="flex flex-wrap items-baseline gap-x-1.5 text-[12px] font-bold text-muted-foreground">
+              하루 평균 운동 시간
+              <span className="text-[11px] font-normal">체육관 · 집 운동 모두 합쳐서</span>
+            </span>
+            <div className="mt-1 grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="하루 평균 운동 시간">
+              {DAILY_WORKOUT_CHOICES.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  role="radio"
+                  aria-checked={daily === m}
+                  onClick={() => {
+                    setDaily(m);
+                    setError(null);
+                  }}
+                  className={cn(
+                    "h-11 rounded-xl border px-1 text-[12.5px] font-bold tabular-nums leading-tight transition-transform active:scale-[0.98]",
+                    daily === m ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground",
+                  )}
+                >
+                  {dailyWorkoutText(m)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
             <span className="text-[12px] font-bold text-muted-foreground">더 넣어 두면 좋아요 (선택)</span>
             <label className="mt-1 block">
               <span className="flex items-baseline justify-between gap-2">
@@ -484,7 +533,7 @@ const BodyInfoSheet = ({
             </div>
           </div>
           <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-            몸무게 · 키 · 체지방률 · 악력 · 허리둘레 · 안정시 심박은 오늘 날짜로 저장돼요. 다시 잴 때마다 넣으면 처음보다 좋아졌을 때 바로 보여 드려요.
+            몸무게 · 키 · 체지방률 · 악력 · 허리둘레 · 안정시 심박은 오늘 날짜로 저장돼요. 하루 평균 운동 시간은 바뀌면 다시 골라 주세요. 다시 잴 때마다 넣으면 처음보다 좋아졌을 때 바로 보여 드려요.
           </p>
           {error && (
             <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-[12.5px] font-bold text-destructive">

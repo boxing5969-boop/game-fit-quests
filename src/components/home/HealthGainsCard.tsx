@@ -19,7 +19,7 @@ import { ChevronDown, ChevronRight, Dumbbell, Flame, Gauge, HeartPulse, Smile, S
 import { useAuth } from "@/contexts/AuthContext";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
 import { useMyBodyInfo, useMyFitnessExtra } from "@/hooks/useMyBodyInfo";
-import { minutesToHours, weightLost } from "@/lib/achievement153";
+import { bodyInfoEmpty, minutesToHours, weightLost } from "@/lib/achievement153";
 import { attendanceCheer, kstToday } from "@/lib/attendanceCheer";
 import { bodyFatDrop, reportAccuracy, weightBasis } from "@/lib/fitnessProfile153";
 import {
@@ -43,6 +43,7 @@ import {
 } from "@/lib/healthGains153";
 import { fetchTest153Summary } from "@/services/test153Service";
 import BodyInfoSheet from "@/components/profile/BodyInfoSheet";
+import BodyInfoInvite from "@/components/profile/BodyInfoInvite";
 import { cn } from "@/lib/utils";
 
 const n = (v: number) => v.toLocaleString("ko-KR");
@@ -313,7 +314,10 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
         </div>
       )}
 
-      {/* ─── 정확도 — 넣을수록 올라간다 ─── */}
+      {/* ─── 정확도 — 넣을수록 올라간다. 신체 정보를 하나도 안 넣었으면 눈에 띄게 권한다 (2026-10-27 대표님) ─── */}
+      {bodyInfoEmpty(body) ? (
+        <BodyInfoInvite className="mt-3.5" accuracyPct={acc.pct} onClick={() => setSheetOpen(true)} />
+      ) : (
       <button
         type="button"
         onClick={() => setSheetOpen(true)}
@@ -348,6 +352,7 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
           </span>
         )}
       </button>
+      )}
 
       <button
         type="button"

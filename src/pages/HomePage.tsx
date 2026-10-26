@@ -62,6 +62,7 @@ import NotificationBellButton from "@/components/notifications/NotificationBellB
 import PushOptInCard from "@/components/notifications/PushOptInCard";
 import SurveyNudgeCard from "@/components/survey/SurveyNudgeCard";
 import BirthdayCongratsCard from "@/components/home/BirthdayCongratsCard";
+import GrowthLessonCard from "@/components/home/GrowthLessonCard";
 import { useTodayBirthdays } from "@/services/birthdayService";
 import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
 import TitleMatchInvitePopup from "@/components/titlematch/TitleMatchInvitePopup";
@@ -610,6 +611,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
           {renderHero(true)}
           {/* 🎂 오늘 생일인 동료가 운동하러 왔거나 오늘 내 생일일 때만 보인다 (2026-10-16 대표님) */}
           <BirthdayCongratsCard />
+          {/* 🌱 오늘의 1분 성장 교육 — 대표님이 공유한 글을 복싱에 옮긴 짧은 이야기 + 오늘의 방향 (2026-10-27 대표님) */}
+          <GrowthLessonCard />
           {/* ⏱ 내 운동 시간 + 💚 153과 함께하며 (2026-10-22 대표님: "마일리지 · 오늘의 시작 · 출석은 빼고,
               한 달 · 전달 총 몇 시간 · 가장 많이 한 달 · 건강 수명 · 근력 · 심폐지구력 · 행복도를 직관적으로").
               QR 출석 · 운동 종료는 '내 운동 시간' 카드 머리에 작게. 마일리지는 내정보로 옮겼다.

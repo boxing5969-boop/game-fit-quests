@@ -280,6 +280,11 @@ export default {
           "70%": { transform: "scale(0.95)" },
           "100%": { transform: "scale(1)", opacity: "1" },
         },
+        // 신체 정보 넣기 권유 — 무지개 테두리가 천천히 흐른다 (2026-10-27)
+        sheen: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "100%": { backgroundPosition: "200% 50%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -287,6 +292,7 @@ export default {
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "slide-up": "slide-up 0.35s ease-out",
         "bounce-in": "bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        sheen: "sheen 4s linear infinite",
       },
     },
   },

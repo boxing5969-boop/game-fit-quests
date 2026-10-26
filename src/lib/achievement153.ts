@@ -187,9 +187,28 @@ export interface BodyInfo {
   firstWeightKg: number | null;
   firstWeightOn: string | null;
   count: number;
-  /** 예전 '한 번 복싱 시간' 직접 입력 값 — 2026-10-22 입력 칸을 없앴다(두 번째 체크로 실제 시간을 잰다). 계산에 쓰지 않는다 */
+  /**
+   * 하루 평균 운동 시간(분, 회원이 직접) — member_workout_settings.session_minutes (20~240).
+   *   2026-10-22 '한 번 복싱 시간' 칸을 없앴다가(실제 시간은 두 번째 체크로 잰다), 2026-10-27 대표님 "하루에 평균 몇 시간 정도
+   *   운동하는지 본인이 넣을 수 있게" → 같은 칸을 '하루 평균 운동 시간'으로 다시 쓴다. 칼로리 · 펀치 계산에는 쓰지 않는다.
+   */
   sessionMinutes: number | null;
 }
+
+/** 하루 평균 운동 시간 고르기 (분) — 서버 범위 20~240 안 */
+export const DAILY_WORKOUT_CHOICES: readonly number[] = [30, 60, 90, 120, 150, 180, 240];
+
+/** 90 → "1시간 30분" · 60 → "1시간" · 30 → "30분" */
+export function dailyWorkoutText(minutes: number | null | undefined): string | null {
+  if (minutes == null || !Number.isFinite(minutes) || minutes <= 0) return null;
+  const m = Math.round(minutes);
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return h > 0 ? (r > 0 ? `${h}시간 ${r}분` : `${h}시간`) : `${r}분`;
+}
+
+/** 신체 정보를 아직 하나도 안 넣었나 (키 · 몸무게 둘 다 없음) — 넣기 권유를 눈에 띄게 (2026-10-27) */
+export const bodyInfoEmpty = (b: BodyInfo | null | undefined): boolean => !b || (b.heightCm == null && b.weightKg == null);
 
 const num = (v: unknown): number | null => {
   const n = typeof v === "number" ? v : typeof v === "string" && v.trim() ? Number(v) : NaN;
@@ -228,8 +247,8 @@ export function parseBodyNumber(text: string): number | null {
 }
 
 /** 입력 확인 — 문제 없으면 null, 있으면 회원에게 보여 줄 한 줄 */
-export function bodyInputError(height: number | null, weight: number | null): string | null {
-  if (height == null && weight == null) return "키나 몸무게 중 하나는 넣어 주세요";
+export function bodyInputError(height: number | null, weight: number | null, dailyMinutes: number | null = null): string | null {
+  if (height == null && weight == null && dailyMinutes == null) return "키나 몸무게 중 하나는 넣어 주세요";
   if (height != null && (Number.isNaN(height) || height < 100 || height > 230)) return "키는 100~230cm 사이 숫자로 넣어 주세요 (소수 한 자리까지)";
   if (weight != null && (Number.isNaN(weight) || weight < 25 || weight > 250)) return "몸무게는 25~250kg 사이 숫자로 넣어 주세요 (소수 한 자리까지)";
   return null;
@@ -241,6 +260,7 @@ export function bodyErrorText(err: unknown): string {
   if (msg.includes("body_height_range")) return "키는 100~230cm 사이로 넣어 주세요";
   if (msg.includes("body_weight_range")) return "몸무게는 25~250kg 사이로 넣어 주세요";
   if (msg.includes("body_info_empty")) return "키나 몸무게 중 하나는 넣어 주세요";
+  if (msg.includes("session_minutes_range")) return "하루 평균 운동 시간은 20분~4시간 사이로 골라 주세요";
   if (msg.includes("not_authenticated")) return "로그인이 필요해요";
   return "저장하지 못했어요. 잠시 뒤 다시 해 주세요";
 }

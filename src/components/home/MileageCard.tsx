@@ -17,6 +17,7 @@ import { ChevronDown, Coins } from "lucide-react";
 import { useMyMileage } from "@/hooks/useMileage";
 import { useMyWorkoutToday } from "@/hooks/useWorkoutTime";
 import { formatMileage, kstDateKey, kstShortDate, mileageRulesLine, type MileageItem } from "@/services/mileageService";
+import MyPayHistorySheet from "@/components/membership/MyPayHistorySheet";
 
 const itemLabel = (it: MileageItem): string => (it.kind === "attendance" ? "출석" : it.reason || "마일리지");
 
@@ -24,6 +25,7 @@ const MileageCard = () => {
   const { data, refetch } = useMyMileage();
   const { data: today, isPlaceholderData } = useMyWorkoutToday();
   const [open, setOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false); // 전체 내역 (2026-10-27)
 
   // 오늘 첫 출석이 잡히는 순간(얼굴 출입 · QR) 서버 적립도 같이 끝난다 → 그때 한 번 다시 읽는다.
   const checkedIn = !isPlaceholderData && !!today?.checked_in;
@@ -116,6 +118,13 @@ const MileageCard = () => {
                   ))}
                 </ul>
               )}
+              <button
+                type="button"
+                onClick={() => setHistoryOpen(true)}
+                className="mt-2 flex h-10 w-full items-center justify-center rounded-xl bg-reward/10 text-[12.5px] font-bold text-amber-700 active:scale-[0.98] dark:text-reward"
+              >
+                마일리지 · 결제 전체 내역 보기
+              </button>
               <p className="mt-2 text-[10.5px] leading-relaxed text-muted-foreground">
                 출석은 하루 1번, 레벨업·타이틀매치 승급은 승인되는 순간 쌓여요. 수강권 · PT · 용품을 결제할 때 1점 = 1원으로
                 할인받아요 — 앱 결제는 결제 확인 창의 ‘153 마일리지 쓰기’ 칸, 데스크 결제는 지점장님께 말씀해 주세요. 한 번에 결제 금액의 10%까지,
@@ -125,6 +134,7 @@ const MileageCard = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <MyPayHistorySheet open={historyOpen} onOpenChange={setHistoryOpen} initialTab="mileage" />
     </motion.div>
   );
 };

@@ -33,7 +33,9 @@ import {
   DEFAULT_WEIGHT_KG,
   ROPE_ROUNDS,
   ROPE_ROUND_MINUTES,
+  bodyInfoEmpty,
   classesForRecommended,
+  dailyWorkoutText,
   daysThisWeek,
   kcalPerHour,
   kcalTotal,
@@ -53,6 +55,7 @@ import { DIVISION_LABEL, TEST153_NAME, fmtMs, type Test153Division } from "@/lib
 import { isStaffProfile } from "@/lib/staffDisplay";
 import { cn } from "@/lib/utils";
 import BodyInfoSheet from "@/components/profile/BodyInfoSheet";
+import BodyInfoInvite from "@/components/profile/BodyInfoInvite";
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 const approx = (v: number) => n(roundApprox(v));
@@ -64,8 +67,12 @@ const md = (d: string | null) => {
 const oneDecimal = (v: number) => (Math.round(v * 10) / 10).toLocaleString("ko-KR", { maximumFractionDigits: 1 });
 const ROPE_LABEL = `줄넘기 ${ROPE_ROUND_MINUTES}분 × ${ROPE_ROUNDS}라운드`;
 /** '키 172.5cm · 몸무게 80kg' */
-const bodyLine = (b: { heightCm: number | null; weightKg: number | null }) =>
-  [b.heightCm != null ? `키 ${oneDecimal(b.heightCm)}cm` : null, b.weightKg != null ? `몸무게 ${oneDecimal(b.weightKg)}kg` : null]
+const bodyLine = (b: { heightCm: number | null; weightKg: number | null; sessionMinutes?: number | null }) =>
+  [
+    b.heightCm != null ? `키 ${oneDecimal(b.heightCm)}cm` : null,
+    b.weightKg != null ? `몸무게 ${oneDecimal(b.weightKg)}kg` : null,
+    dailyWorkoutText(b.sessionMinutes) ? `하루 ${dailyWorkoutText(b.sessionMinutes)} 운동` : null,
+  ]
     .filter(Boolean)
     .join(" · ");
 
@@ -323,6 +330,9 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
             </span>
           </div>
         ) : null
+      ) : bodyInfoEmpty(body) ? (
+        // 아직 하나도 안 넣었으면 눈에 띄게 권한다 (2026-10-27 대표님)
+        <BodyInfoInvite className="mt-3" onClick={() => setSheetOpen(true)} />
       ) : (
         <button
           type="button"
