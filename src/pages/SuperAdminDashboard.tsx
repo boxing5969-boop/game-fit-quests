@@ -3,16 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BarChart3, Users, Bell, Settings2, ArrowRightLeft, AlertTriangle, Download } from "lucide-react";
+import { ArrowLeft, BarChart3, Users, Bell, Settings2, ArrowRightLeft, AlertTriangle, Download, ClipboardList } from "lucide-react";
 import BranchCompareReport from "@/components/BranchCompareReport";
 import TransferApprovalCenter from "@/components/TransferApprovalCenter";
 import BroadcastNotification from "@/components/BroadcastNotification";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
+import RegistrationReportPanel from "@/components/RegistrationReportPanel";
 import { formatRankShort } from "@/lib/rankLabels";
 import { fetchAllRows, inChunks } from "@/lib/supabasePaging";
 import { toast } from "sonner";
 
-type AdminTab = "overview" | "branches" | "transfers" | "broadcast" | "at_risk" | "settings";
+type AdminTab = "overview" | "branches" | "transfers" | "broadcast" | "at_risk" | "settings" | "registrations";
 
 const SuperAdminDashboard = () => {
   const navigate = useNavigate();
@@ -101,6 +102,10 @@ const SuperAdminDashboard = () => {
     { key: "at_risk", label: "위험 회원", icon: <AlertTriangle className="h-4 w-4" /> },
     { key: "transfers", label: "이전 승인", icon: <ArrowRightLeft className="h-4 w-4" /> },
     { key: "broadcast", label: "공지", icon: <Bell className="h-4 w-4" /> },
+    // 전 지점 수강권 등록 — 전체관리자(대표님 계정)에게만 (2026-10-26 대표님 "일단 나만 볼 수 있게"). 서버(registration-report)도 super_admin 만 받는다.
+    ...(role === "super_admin"
+      ? [{ key: "registrations" as AdminTab, label: "등록", icon: <ClipboardList className="h-4 w-4" /> }]
+      : []),
   ];
 
   if (!isAuthorized) {
@@ -180,6 +185,7 @@ const SuperAdminDashboard = () => {
       {tab === "at_risk" && <AtRiskMembersPanel />}
       {tab === "transfers" && <TransferApprovalCenter />}
       {tab === "broadcast" && <BroadcastNotification />}
+      {tab === "registrations" && role === "super_admin" && <RegistrationReportPanel />}
     </div>
   );
 };

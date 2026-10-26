@@ -208,6 +208,12 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 앱으로는 기존 길 그대로: 153OS `members` 트리거 → `sync-members-to-app` → 앱 `profiles.membership_end`. 만료 90일 넘은 옛 회원은 새로 만들지 않는다. 다짐에 같은 전화번호로 두 사람이 있으면 앱 계정은 하나(알려진 1건).
 - 다짐에서 번호·이름을 고치면 153OS 회원도 따라간다(153OS 값이 지난번 다짐 값과 같을 때만). 앱 가입 번호가 CRM 번호와 다른 회원(보호자 번호로 등록된 아이 · 번호를 바꾼 회원)은 153OS `members.app_phone` 에 앱 번호를 넣는다 — `v_members_for_app_sync.phone` = coalesce(app_phone, phone) 로 앱 계정을 찾고, 만료일은 CRM 번호(phone)로 읽는다(모든 지점 공통, 비어 있으면 예전과 같음). 2026-10-26 칠금 4명을 이렇게 잇고, 8/03 에 CRM 번호로 자동으로 만들어진 안 쓰는 계정 4개는 승인만 껐다(지우지 않음).
 
+### 전체관리자 '등록' 칸 — 전 지점 수강권 등록 (2026-10-26 대표님 "일단 나만 볼 수 있게")
+
+- 전체관리자 대시보드(`/admin`) 탭 '등록' — `role === "super_admin"` 에게만 보인다([src/components/RegistrationReportPanel.tsx](src/components/RegistrationReportPanel.tsx)). 오늘·어제·이번 주·이번 달·지난달·최근 3개월 · 지점별 · 날짜별 목록(신규·재등록·일일권·환불).
+- Edge Function [registration-report](supabase/functions/registration-report/index.ts)(super_admin 만, verify_jwt) → 153OS `registration_report(p_from, p_to)`(anon·authenticated 막음): 브로제이 지점은 `sales_entries` '수강권'(신규/재등록은 같은 지점·같은 이름의 앞선 결제로 추정, 하루 한 지점씩 돌아가며 들어옴) · 칠금점은 다짐 매출 `dagym_sales`(다짐 '재등록 여부', 분할 결제는 한 건, 환불은 따로).
+- 칠금 다짐 매출은 매일 예약 작업이 회원 목록과 함께 `/sales/list` 를 읽어 `dagym_sales_put` → `dagym_apply_batch`(kind sales → `dagym_import_sales`)로 넣는다. 2025-01 ~ 2026-10 은 처음에 한 번에 받았다(1,755줄).
+
 ### 아이폰 앱 (App Store, 2026-10-19 대표님 "애플스토어에도 등록하자")
 
 - 아이폰 앱은 `ios-app/` (Capacitor 8 iOS, 번들 `kr.boxing153.myboxer`, 아이폰 전용, iOS 16+). **myboxer153.com 을 그대로 담는다** — 웹을 고치면 앱도 바로 바뀐다(재심사 없음). 안드로이드는 TWA(구글 플레이)라 별개, 루트 `capacitor.config.ts` 는 얼굴 출석 키오스크 APK.
