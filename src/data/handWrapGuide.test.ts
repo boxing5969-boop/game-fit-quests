@@ -45,10 +45,11 @@ describe("붕대 감기 — 대표님 영상 2각도 · 사진 10장 (2026-10-20
   it("단계 영상 10개 — 배경 지운 반복 영상 · 화살표 포스터가 public 에 있고 가볍다 (2026-10-20 애니메이션)", () => {
     HANDWRAP_STEPS.forEach((s, i) => {
       const id = `step${String(i + 1).padStart(2, "0")}`;
-      expect(s.clip).toBe(`/handwrap/steps/${id}.mp4`);
-      expect(s.image).toBe(`/handwrap/steps/${id}.webp`);
+      // 주소 끝 ?v= 는 다시 만든 판 표시(폰 캐시 넘기기) — 파일은 같은 자리
+      expect(s.clip.split("?")[0]).toBe(`/handwrap/steps/${id}.mp4`);
+      expect(s.image.split("?")[0]).toBe(`/handwrap/steps/${id}.webp`);
       for (const url of [s.clip, s.image]) {
-        const f = join(PUBLIC, url);
+        const f = join(PUBLIC, url.split("?")[0]);
         expect(existsSync(f), url).toBe(true);
         expect(statSync(f).size, url).toBeLessThan(400 * 1024);
       }

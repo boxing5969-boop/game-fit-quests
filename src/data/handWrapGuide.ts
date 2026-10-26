@@ -86,10 +86,14 @@ export interface HandWrapStep {
   video: { angle: HandWrapAngleKey; at: number };
 }
 
+/** 단계 영상 · 포스터 고친 판 — 영상을 다시 만들면 올린다. 폰이 4시간 동안 예전 파일을 그대로 쓰지 않게 (2026-10-26 손 테두리 · 이음새 다시) */
+const STEP_MEDIA_VERSION = "20261026";
+
 /** 단계 영상 · 포스터 주소 (public/handwrap/steps/stepNN.mp4 · .webp) */
 const stepMedia = (n: number, view: HandWrapStep["view"] = "mine"): Pick<HandWrapStep, "clip" | "image" | "view"> => {
   const id = `step${String(n).padStart(2, "0")}`;
-  return { clip: `/handwrap/steps/${id}.mp4`, image: `/handwrap/steps/${id}.webp`, view };
+  const v = `?v=${STEP_MEDIA_VERSION}`;
+  return { clip: `/handwrap/steps/${id}.mp4${v}`, image: `/handwrap/steps/${id}.webp${v}`, view };
 };
 
 /** 화살표 읽는 법 — 단계 영상 아래 한 줄 */
