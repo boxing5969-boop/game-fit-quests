@@ -24,6 +24,15 @@ export const membershipMonths = (days: number): number => (days >= 360 ? 12 : Ma
 export const rentalDays = (months: number, membership?: { months: number; days: number } | null): number =>
   membership && membership.months === months ? membership.days : months === 12 ? 365 : months * 30;
 
+/**
+ * 지난번에 고른 운동복 · 락카 기억 (2026-10-27 대표님: "링크를 한번 만들었다가 취소하고 다시 결제하려고 하니까 운동복 락카 선택이 꺼졌어")
+ *   0 = 안 씀 · -1 = 수강권과 같은 개월 · n = n개월. 다른 수강권을 열면 그 수강권 개월에 맞춰 줄인다.
+ */
+export const rememberRental = (months: number, maxMonths: number): number =>
+  months <= 0 ? 0 : months >= maxMonths ? -1 : Math.floor(months);
+export const recallRental = (memory: number | null | undefined, maxMonths: number): number =>
+  !memory ? 0 : memory < 0 ? maxMonths : Math.min(Math.floor(memory), maxMonths);
+
 /** 렌탈 상품 이름 → 종류 (운동복 (1개월) · 개인 락카 (1개월)) */
 export const rentalKindOf = (name: string): RentalKind | null =>
   /운동복/.test(name) ? "sportswear" : /락카|락커/.test(name) ? "locker" : null;

@@ -34,6 +34,8 @@ const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membership = null, today, mode, className }: Props) => {
   const kinds = (["sportswear", "locker"] as const).filter((k) => (unitPrice[k] ?? 0) > 0);
   if (kinds.length === 0) return null;
+  // 1개월 수강권이면 고를 개월이 없다 — 회색 −/+ 대신 '1개월'만 (꺼진 것처럼 보이지 않게, 2026-10-27)
+  const fixedMonths = mode === "addon" && maxMonths <= 1;
   const set = (k: RentalKind, months: number) => onChange({ ...value, [k]: Math.max(0, Math.min(maxMonths, months)) });
 
   return (
@@ -42,7 +44,12 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
         {mode === "addon" ? "운동복 · 락카도 같이 쓰실래요?" : "연장할 개월을 고르세요"}
       </p>
       <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
-        한 달 {won(unitPrice[kinds[0]] ?? 0)} · {mode === "addon" ? "수강권과 같은 개월로 담기고, 줄일 수 있어요" : "한 번에 결제하면 결제 링크도 하나예요"}
+        한 달 {won(unitPrice[kinds[0]] ?? 0)} ·{" "}
+        {mode === "standalone"
+          ? "한 번에 결제하면 결제 링크도 하나예요"
+          : fixedMonths
+            ? `수강권과 같은 ${maxMonths}개월로 담겨요`
+            : "수강권과 같은 개월로 담기고, 줄일 수 있어요"}
       </p>
 
       <div className="mt-2.5 space-y-2">
@@ -84,7 +91,13 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
                 )}
               </div>
 
-              {(on || mode === "standalone") && (
+              {on && fixedMonths && (
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <span className="text-[15px] font-black tabular-nums text-foreground">{months}개월</span>
+                  <span className="text-[14px] font-black tabular-nums text-foreground">{won(unit * months)}</span>
+                </div>
+              )}
+              {(on || mode === "standalone") && !fixedMonths && (
                 <div className="mt-2 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <button

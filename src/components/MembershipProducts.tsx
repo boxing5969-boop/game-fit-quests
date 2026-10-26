@@ -34,6 +34,8 @@ import {
   extendedEnd,
   membershipMonths,
   mileageBase,
+  recallRental,
+  rememberRental,
   rentalKindOf,
   type RentalKind,
 } from "@/lib/cartPricing";
@@ -65,6 +67,33 @@ const blankForm = { name: "", price: "", duration_days: "30" };
 type Checkout = { product: Product | null; rentals: Record<RentalKind, number> };
 const NO_RENTALS: Record<RentalKind, number> = { sportswear: 0, locker: 0 };
 
+// 고른 운동복 · 락카를 이 창(탭)에서 기억 — 결제창에서 취소하고 돌아와 다시 열어도 그대로 (2026-10-27 대표님:
+//   "링크를 한번 만들었다가 취소하고 다시 결제 하려고 하니까 운동복 락카 선택 기능이 꺼졌어")
+//   addon = 수강권 결제 창(0 안 씀 · -1 수강권과 같은 개월 · n개월) · standalone = 렌탈 탭에서 고른 개월
+const RENTAL_MEMORY_KEY = "mb153.cart.rentals.v1";
+type RentalMemoryStore = { addon: Record<RentalKind, number>; standalone: Record<RentalKind, number> };
+const readRentalMemory = (): RentalMemoryStore => {
+  const empty = { addon: { ...NO_RENTALS }, standalone: { ...NO_RENTALS } };
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(RENTAL_MEMORY_KEY) || "null") as Partial<RentalMemoryStore> | null;
+    const pick = (o: unknown): Record<RentalKind, number> => {
+      const r = (o && typeof o === "object" ? o : {}) as Record<string, unknown>;
+      const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? Math.max(-1, Math.min(12, Math.trunc(v))) : 0);
+      return { sportswear: n(r.sportswear), locker: n(r.locker) };
+    };
+    return raw ? { addon: pick(raw.addon), standalone: pick(raw.standalone) } : empty;
+  } catch {
+    return empty;
+  }
+};
+const writeRentalMemory = (m: RentalMemoryStore) => {
+  try {
+    sessionStorage.setItem(RENTAL_MEMORY_KEY, JSON.stringify(m));
+  } catch {
+    /* 저장 못 하는 브라우저(사생활 보호 모드)면 이 화면에서만 기억 */
+  }
+};
+
 // 회원 화면 카테고리 탭
 const CATS = [
   { key: "m5", label: "주5회", match: (p: Product) => p.category === "membership" && (p.pass_type === "주5회" || p.pass_type === "무제한") },
@@ -95,8 +124,25 @@ const MembershipProducts = () => {
   const [showProductAdmin, setShowProductAdmin] = useState(false); // 마스터 전용 상품 설정 패널 열림 여부
   const [checkout, setCheckout] = useState<Checkout | null>(null); // 결제 전 확인 창(환불 규정 · 운동복/락카 · 마일리지)
   const [confirmAgree, setConfirmAgree] = useState(false);
-  // 렌탈 탭 — 운동복 · 락카만 연장할 개월 (2026-10-27)
-  const [rentalPick, setRentalPick] = useState<Record<RentalKind, number>>(NO_RENTALS);
+  // 렌탈 탭 — 운동복 · 락카만 연장할 개월 (2026-10-27) · 고른 것은 이 창에서 기억(결제창에서 돌아와도 그대로)
+  const rentalMemory = useRef<RentalMemoryStore>(readRentalMemory());
+  const [rentalPick, setRentalPickState] = useState<Record<RentalKind, number>>(() => {
+    const s = rentalMemory.current.standalone;
+    return { sportswear: Math.max(0, s.sportswear), locker: Math.max(0, s.locker) };
+  });
+  const setRentalPick = (next: Record<RentalKind, number>) => {
+    setRentalPickState(next);
+    rentalMemory.current = { ...rentalMemory.current, standalone: next };
+    writeRentalMemory(rentalMemory.current);
+  };
+  /** 수강권 결제 창에서 고른 운동복 · 락카 기억 (그 수강권 개월 기준) */
+  const rememberAddons = (next: Record<RentalKind, number>, maxMonths: number) => {
+    rentalMemory.current = {
+      ...rentalMemory.current,
+      addon: { sportswear: rememberRental(next.sportswear, maxMonths), locker: rememberRental(next.locker, maxMonths) },
+    };
+    writeRentalMemory(rentalMemory.current);
+  };
   // 153 마일리지 쓰기 (2026-10-15) — 결제 확인 창에서 고른 점수. 결제선생 청구 금액에서 빠지고, 결제가 끝나야 차감된다.
   //   2026-10-21: 체크 하나(최대만) → 점수 입력칸. 지도진 계정도 읽는다 — 칸이 왜 비어 있는지(적립 제외) 보여 주려고.
   const [mileagePts, setMileagePts] = useState(0);
@@ -168,11 +214,29 @@ const MembershipProducts = () => {
   };
 
   // 결제 전 확인 창 — 수강권: '환불 규정 확인'(환불 억제) + 운동복 · 락카 담기 + 마일리지 / PT·용품·1일권: 마일리지만 (2026-10-21)
-  const askConfirm = (p: Product | null, rentals: Record<RentalKind, number> = NO_RENTALS) => {
+  //   수강권은 지난번에 고른 운동복 · 락카를 그대로 켜 둔다(이 수강권 개월에 맞춰) — 취소하고 다시 열어도 꺼지지 않게 (2026-10-27)
+  const askConfirm = (p: Product | null, rentals?: Record<RentalKind, number>) => {
     setConfirmAgree(false);
     setMileagePts(0);
-    setCheckout({ product: p, rentals });
+    let r = rentals ?? NO_RENTALS;
+    if (!rentals && p?.category === "membership") {
+      const m = membershipMonths(p.duration_days);
+      const mem = rentalMemory.current.addon;
+      r = { sportswear: recallRental(mem.sportswear, m), locker: recallRental(mem.locker, m) };
+    }
+    setCheckout({ product: p, rentals: r });
   };
+
+  // 결제창에서 '뒤로'로 돌아오면 브라우저가 떠나기 전 화면을 그대로 되살린다 — '이동 중...'으로 멈춘 버튼을 푼다 (2026-10-27)
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (!e.persisted) return;
+      setPaying(null);
+      pendingPay.current = null;
+    };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, []);
 
   const runBill = async () => {
     const pend = pendingPay.current;
@@ -544,7 +608,10 @@ const MembershipProducts = () => {
                     mode="addon"
                     maxMonths={memMonths}
                     value={c.rentals}
-                    onChange={(next) => setCheckout({ ...c, rentals: next })}
+                    onChange={(next) => {
+                      setCheckout({ ...c, rentals: next });
+                      rememberAddons(next, memMonths);
+                    }}
                     unitPrice={rentalUnit}
                     currentEnd={curEnd}
                     membership={{ months: memMonths, days: p.duration_days }}

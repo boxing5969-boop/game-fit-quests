@@ -8,6 +8,8 @@ import {
   extendedEnd,
   membershipMonths,
   mileageBase,
+  recallRental,
+  rememberRental,
   rentalDays,
   rentalKindOf,
 } from "./cartPricing";
@@ -58,6 +60,11 @@ describe("앱 결제 장바구니 — 수강권 + 운동복 + 락카 링크 1개
     expect(cartOrderName(short)).toBe("주5회 기간권 3개월 + 운동복 3개월");
     const long = cartLines({ membership: { name: "153 복싱짐 프리미엄 1년 무제한 회원권", price: 1580000, days: 365 }, sportswearMonths: 12, lockerMonths: 12, unitPrice });
     expect(cartOrderName(long)).toBe("153 복싱짐 프리미엄 1년 무제한 회원권 외 2건");
+  });
+
+  it("지난번 고른 것 기억 — 같은 개월(-1)은 다른 수강권에서도 그 개월, 줄인 개월은 그대로(넘치면 줄임)", () => {
+    expect([rememberRental(0, 3), rememberRental(3, 3), rememberRental(2, 3), rememberRental(5, 3)]).toEqual([0, -1, 2, -1]);
+    expect([recallRental(-1, 5), recallRental(-1, 1), recallRental(2, 5), recallRental(4, 1), recallRental(0, 3), recallRental(null, 3)]).toEqual([5, 1, 2, 1, 0, 0]);
   });
 
   it("렌탈 상품 이름 → 종류", () => {
