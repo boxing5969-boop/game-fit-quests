@@ -35,3 +35,7 @@ verify_jwt = false
 # 칠금 다짐 락카·운동복 기간 → 앱 (크론 전용, x-auto-key) — 2026-10-27
 [functions.sync-rental-ends]
 verify_jwt = false
+
+# 결제선생 관리자에서 취소한 결제 → 앱 · 153OS 되돌리기 (크론 전용, x-auto-key) — 2026-10-27
+[functions.payssam-sync-cancels]
+verify_jwt = false
