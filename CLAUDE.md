@@ -206,6 +206,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 칠금점은 브로제이가 아니라 **다짐매니저**(dagym-manager.com)를 쓴다. 대표님 노트북 크롬에 로그인해 둔 다짐매니저 회원 목록(파일 다운로드 없이 화면 데이터)을 예약 작업 「칠금점 다짐 회원 동기화」(클로드·은미 계정, 월~토 22:49 KST, 작업판 `ops:schedule:dagym-chilgeum-sync`)가 153OS 로 옮긴다. 지점장님 엑셀 올리기(BulkMemberImport)는 칠금점은 이제 안 해도 된다.
 - 153OS(`tbxdrfowanyksgdicryl`, 저장소 밖 — 고칠 때는 DB 의 지금 정의 위에): `dagym_members`(다짐 회원 1줄 · 153OS 회원 연결) · `dagym_open_batch` → 페이지 스크립트가 `dagym_inbox_put`(anon, 30분 열린 묶음만) → `dagym_apply_batch` → `dagym_import`(새 회원 · 이용 중/만료 · `member_snapshots` 만료일 — 수업 이용권만, 락커·운동복·용품 제외) · `dagym_flush_app_sync`(cron 1분 25명, 요청 번호로 앱 응답 확인 · 429 는 다시) · `dagym_sync_report()`(숫자만).
 - 앱으로는 기존 길 그대로: 153OS `members` 트리거 → `sync-members-to-app` → 앱 `profiles.membership_end`. 만료 90일 넘은 옛 회원은 새로 만들지 않는다. 다짐에 같은 전화번호로 두 사람이 있으면 앱 계정은 하나(알려진 1건).
+- 다짐에서 번호·이름을 고치면 153OS 회원도 따라간다(153OS 값이 지난번 다짐 값과 같을 때만). 앱 가입 번호가 CRM 번호와 다른 회원(보호자 번호로 등록된 아이 · 번호를 바꾼 회원)은 153OS `members.app_phone` 에 앱 번호를 넣는다 — `v_members_for_app_sync.phone` = coalesce(app_phone, phone) 로 앱 계정을 찾고, 만료일은 CRM 번호(phone)로 읽는다(모든 지점 공통, 비어 있으면 예전과 같음). 2026-10-26 칠금 4명을 이렇게 잇고, 8/03 에 CRM 번호로 자동으로 만들어진 안 쓰는 계정 4개는 승인만 껐다(지우지 않음).
 
 ### 아이폰 앱 (App Store, 2026-10-19 대표님 "애플스토어에도 등록하자")
 
