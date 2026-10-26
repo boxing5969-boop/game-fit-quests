@@ -95,9 +95,10 @@ const BranchManagerHome = () => {
         // 회원이 3,000명이어도 "전체 회원 1000" 으로 보였다 (2026-09-23 대표님 제보).
         const [profilesRes, unapprovedRes, pendingMissionsRes, pendingQuestsRes, xpRes, submissionsRes] = await Promise.all([
           // 지도진(is_staff)은 회원이 아니다 — "전체 회원" 에서 빼고, 목록도 지도진 필터로 분리한다.
-          supabase.from("profiles").select("user_id", { count: "exact", head: true }).not("is_staff", "is", true),
+          // 쓰지 않는 예전 계정(merged_into)은 회원 수 · 승인 대기에서 뺀다 (2026-10-26)
+          supabase.from("profiles").select("user_id", { count: "exact", head: true }).not("is_staff", "is", true).is("merged_into", null),
           // 가입 승인 대기는 지도진도 센다 — 새로 가입한 코치님도 승인해야 앱을 쓴다(승인함 목록과 같은 기준).
-          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false),
+          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false).is("merged_into", null),
           supabase.from("mission_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("quest_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
           // 이번 주(KST 월요일 0시부터) 레벨업 — 지점 통계(get_branch_stats)와 같은 기준
@@ -126,7 +127,8 @@ const BranchManagerHome = () => {
       // 정렬은 created_at 동률(일괄등록 2,000명)이 많아 user_id 를 2차 키로 고정한다.
       const profiles = await fetchAllRows((from, to) => {
         // 지도진은 회원 목록에서 분리 — "지도진" 필터(StaffRosterPanel)에서 따로 본다.
-        let q = supabase.from("profiles").select("*").not("is_staff", "is", true)
+        // 쓰지 않는 예전 계정(merged_into — 같은 회원이 다른 번호로 새로 가입)도 목록에서 뺀다 (2026-10-26)
+        let q = supabase.from("profiles").select("*").not("is_staff", "is", true).is("merged_into", null)
           .order("created_at", { ascending: false }).order("user_id", { ascending: true })
           .range(from, to);
         if (!isSuperAdmin) q = q.eq("branch_name", branchName);

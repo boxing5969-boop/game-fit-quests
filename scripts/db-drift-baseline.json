@@ -1,7 +1,7 @@
 {
   "note": "scripts/check-db-drift.mjs 기준선 — 여기 있는 어긋남은 알리지 않는다(이미 알던 것). 고치면 --write-baseline 으로 다시 저장.",
-  "generated_at": "2026-10-20T07:30:18.490Z",
-  "db_functions": 474,
+  "generated_at": "2026-10-26T14:15:42.596Z",
+  "db_functions": 500,
   "db_edited": [
     "approve_mission_submission:49484da8a9d269ed68f60ea3b83615ca",
     "confirm_diet_photo_calories:ee256747488e722185f66d7fb5052879",
@@ -45,7 +45,6 @@
     "get_division_ranking:a28b768ba4868db6aba126ef1cbc30e8",
     "get_gear_posts:0e6f71fa71d52e71ecdc199ed57a60d6",
     "get_hall_of_fame:9eb35235aaeb33c1da0d6bd54154a6f6",
-    "get_member_license:f502f3b6f7f2b871c8d386cbbf518b4d",
     "get_minigame_leaderboard:c24822fd5cccf9cd9abdb80323c797b2",
     "get_monthly_risers:850b05175b9b9b936ca84801dd230705",
     "get_partner_calls:12d7858685467ca729c81498174cee5e",
@@ -58,7 +57,6 @@
     "get_workout_time_ranking:fda76575d6c8645239f2cecaa231ab9e",
     "grant_manual_xp:c34f2b7cac4309d07900d2f041661d14",
     "list_community_view_staff:ba3e300c987be890b9a6f811061fcc57",
-    "refresh_153_records:96f23ae64f8db9aa5ebc69dadef294f5",
     "request_cornerman_pair:3311a685318c574021f0520f0842dc8a",
     "search_cornerman_candidates:82eac2a2089d9bd7881827033a7a8405",
     "search_cornerman_people:6ffaa449db3399a56c738e2cb9fcee75",

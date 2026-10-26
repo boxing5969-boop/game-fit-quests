@@ -34,9 +34,10 @@ const SuperAdminDashboard = () => {
       // 회원이 3,000명이어도 "1000" 으로 보인다 (2026-09-23 대표님 제보).
       const [membersRes, unapprovedRes, pendingMissionsRes, pendingQuestsRes, transferRes, branchesRes] = await Promise.all([
         // 지도진(is_staff)은 회원 수에서 뺀다 — 회원관리 목록·"전체 회원" 카드와 같은 기준.
-        supabase.from("profiles").select("user_id", { count: "exact", head: true }).not("is_staff", "is", true),
+        // 쓰지 않는 예전 계정(merged_into)은 회원 수 · 승인 대기에서 뺀다 (2026-10-26)
+        supabase.from("profiles").select("user_id", { count: "exact", head: true }).not("is_staff", "is", true).is("merged_into", null),
         // 가입 승인 대기는 지도진도 센다 — 새로 가입한 코치님도 승인해야 앱을 쓴다(승인함 목록과 같은 기준).
-        supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false),
+        supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false).is("merged_into", null),
         supabase.from("mission_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("quest_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("branch_transfer_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
@@ -57,7 +58,7 @@ const SuperAdminDashboard = () => {
     try {
       // 1,000행씩 끝까지 — 한 번에 받으면 1,000명에서 잘린 CSV 가 나간다.
       const profiles = await fetchAllRows((from, to) =>
-        supabase.from("profiles").select("*").not("is_staff", "is", true)   // 지도진 제외(회원 목록 기준)
+        supabase.from("profiles").select("*").not("is_staff", "is", true).is("merged_into", null)   // 지도진 · 쓰지 않는 예전 계정 제외(회원 목록 기준)
           .order("created_at", { ascending: false }).order("user_id", { ascending: true })
           .range(from, to),
       );
