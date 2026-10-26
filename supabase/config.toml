@@ -31,3 +31,7 @@ verify_jwt = false
 
 [functions.coach-collect]
 verify_jwt = false
+
+# 칠금 다짐 락카·운동복 기간 → 앱 (크론 전용, x-auto-key) — 2026-10-27
+[functions.sync-rental-ends]
+verify_jwt = false
