@@ -201,6 +201,22 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - PT 원본은 브로제이 PT 수업권 → 153OS 워커(매시 :40 UTC, 한 지점 18명씩 — 회원마다 24~48시간에 한 번 확인) → `sync-pt-members`(매시 40분)가 `profiles.pt_ticket · pt_remaining · pt_end_date · pt_checked_at` 에 옮긴다. 늦을 수 있어 카드에 "PT 횟수는 ○○ 기준"을 같이 적는다. `pt_until` 은 배지 유효일(확인일+7일)이라 기한으로 쓰지 않는다.
 - 락카는 153OS 도 브로제이에서 읽지 않는다(6월 엑셀 한 번뿐). 지금은 지도진이 회원 상세(`MemberDetailPage` '락카' 줄)에서 넣는다 → `set_member_locker`(관리자 = 전체, 지점장·코치 = 같은 지점). `profiles.locker_label` 은 회원이 직접 못 바꾼다(guard). 본인·지도진만 본다 — 20261019200000.
 
+### 앱 결제 장바구니 · 락카/운동복 남은 기간 (2026-10-27 대표님 보고서 「앱 결제 장바구니」 · "나머진 니추천대로")
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261027041609_cart_rentals.sql](supabase/migrations/20261027041609_cart_rentals.sql) | `payment_order_items`(수강권·운동복·락카 한 줄씩) · `payment_orders.cart_key` · `profiles.locker_end · sportswear_end`(guard) · `apply/revert_payment_order`(콜백이 서버 키로) · `set_member_rental_ends`(지도진) · 결제 알림 항목별 · `remind_pass_ends`(끝나기 7일·1일 전, 매일 10:05 KST) |
+| [payssam-create-bill](supabase/functions/payssam-create-bill/index.ts) | `body.cart {membership_product_id, sportswear_months, locker_months}` → 결제선생 링크 1개(50원) · 같은 장바구니 24시간 안이면 아까 링크 · 칠금점은 서버에서도 막음 · `body.product_id` 는 예전 그대로 |
+| [payssam-callback](supabase/functions/payssam-callback/index.ts) | 항목 있는 주문은 `apply/revert_payment_order` · 153OS(sync-paid/refunded)에는 수강권 항목만 |
+| [src/lib/cartPricing.ts](src/lib/cartPricing.ts) · [RentalAddOns](src/components/membership/RentalAddOns.tsx) | 화면 금액·날짜(서버와 같은 식) · 운동복·락카 담기(수강권 확인 창 `addon` · 렌탈 탭 `standalone`) |
+| [MembershipCard](src/components/MembershipCard.tsx) | 락카(번호·끝나는 날)·운동복 줄 'N일 남음' — 7일 이하 주황, 끝나면 '끝남 · 연장하기'(`/membership?cat=rental`, `?buy=1` 은 결제 칸으로) |
+| [MemberPassPanel](src/components/admin/MemberPassPanel.tsx) | 회원 상세 '수강' 탭(전체관리자만, `?tab=pass`) — 지금 이용 중 · 락카/운동복 고치기 · 앱 결제(항목) · 브로제이/다짐 매출(`member-pass-history` → 153OS `member_sales_history`, 브로제이는 같은 지점·같은 이름) · 출석 |
+
+- 가격 = 렌탈 상품 한 달 가격(지금 10,000원) × 개월, 무료 없음. 수강권과 같이 담으면 수강권 개월까지(같은 개월이면 수강권 일수 그대로 → 끝나는 날 같게, 1년 = 365일, 그 밖 개월×30일). 남은 기간 뒤로 이어 붙인다.
+- 마일리지 10% 기준 = 수강권 금액(렌탈만이면 합계). 누적 결제액·환불 예상에는 수강권 금액만. 락카 번호는 결제 후 지점장님 배정. 락카·운동복 환불은 남은 기간 일할.
+- 남은 일: 지금 쓰는 분들 락카·운동복 끝나는 날 채우기(브로제이 매출로 → 없으면 대표님 엑셀) · 칠금 다짐의 락카·운동복 기간 매일 옮기기 · 153OS 워커에 렌탈 따로 보내기.
+- 2026-10-27: Supabase MCP 의 SQL 쓰기(apply_migration · execute_sql DDL) 승인 창이 대표님 화면에 안 떠 계속 '취소'됨 → 대표님 허락("Db 항상 승인할게")으로 크롬 Supabase SQL 편집기에서 실행(파일을 GitHub raw 로 받아 sha256 확인 후 Monaco 에 넣고 Run). Edge Function 배포(MCP)는 됨. 크롬 번역이 켜져 있으면 실행 뒤 대시보드가 하얗게 멈출 수 있다 — 실행은 됐으니 DB 를 읽어 확인.
+
 ### 칠금점 회원 = 다짐매니저에서 매일 (2026-10-26 대표님 "다짐 매니저 크롬에 로그인 완료해놓았어")
 
 - 칠금점은 브로제이가 아니라 **다짐매니저**(dagym-manager.com)를 쓴다. 대표님 노트북 크롬에 로그인해 둔 다짐매니저 회원 목록(파일 다운로드 없이 화면 데이터)을 예약 작업 「칠금점 다짐 회원 동기화」(클로드·은미 계정, 월~토 22:49 KST, 작업판 `ops:schedule:dagym-chilgeum-sync`)가 153OS 로 옮긴다. 지점장님 엑셀 올리기(BulkMemberImport)는 칠금점은 이제 안 해도 된다.

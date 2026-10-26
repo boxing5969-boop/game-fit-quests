@@ -25,7 +25,15 @@
 //
 // 2026-09-28: 앱 가입 승인(is_approved)을 청구서 생성 시점에서 결제 완료(apprState=F) 시점으로 옮겼다.
 //   예전엔 '결제하기'만 눌러도(결제 전) 승인돼, 결제창을 닫아도 지점 승인 없이 앱을 쓸 수 있었다.
+//
+// 2026-10-27 장바구니 주문 (payssam-create-bill 의 body.cart): 주문에 항목(payment_order_items)이 있으면
+//   반영 · 되돌리기를 DB apply_payment_order / revert_payment_order 가 항목마다 한다
+//   (수강권 = membership_end · 운동복 = sportswear_end · 락카 = locker_end, 누적 결제액은 수강권 금액만).
+//   153OS(sync-paid · sync-refunded)에는 수강권 항목만 보낸다 — 운동복 · 락카가 수강권으로 잡히지 않게.
+//   항목이 없는 예전 주문은 아래 예전 그대로.
 import { createClient } from "npm:@supabase/supabase-js@2";
+
+type OrderItem = { kind: string; product_name: string; months: number; amount: number; duration_days: number };
 
 // 결제선생 발신 서버 IP — 2026-08 서버 이전 공지 기준.
 // 목록이 바뀌면 코드 수정 없이 PAYSSAM_ALLOWED_IPS 환경변수로 덮어쓴다(쉼표 구분).
@@ -123,6 +131,14 @@ Deno.serve(async (req) => {
     const { data: order } = await admin.from("payment_orders").select("*").eq("bill_id", billId).maybeSingle();
     if (!order) return json(OK); // 모르는 청구서(검수 테스트 등)는 멱등 무시 — 그래도 0000 정상응답
 
+    // 장바구니 주문이면 항목 (2026-10-27) — 없으면 예전 주문
+    const { data: itemRows } = await admin
+      .from("payment_order_items")
+      .select("kind, product_name, months, amount, duration_days")
+      .eq("order_id", order.id);
+    const items = (itemRows || []) as OrderItem[];
+    const memItem = items.find((i) => i.kind === "membership") || null;
+
     if (apprState === "F") {
       // 금액 검증
       if (apprPrice && Number(apprPrice) !== Number(order.amount)) {
@@ -141,34 +157,42 @@ Deno.serve(async (req) => {
           })
           .eq("id", order.id);
 
-        // 수강권 만료일 연장 + 누적 결제금액 가산
-        const days = Number(order.duration_days || 0);
         const { data: prof } = await admin
           .from("profiles")
           .select("membership_end, payment_total, name, phone_number")
           .eq("user_id", order.user_id)
           .maybeSingle();
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const cur = prof?.membership_end ? new Date(prof.membership_end + "T00:00:00") : null;
-        const base = cur && cur.getTime() > today.getTime() ? cur : today;
-        const updates: Record<string, unknown> = {
-          payment_total: Number(prof?.payment_total || 0) + Number(order.amount),
-          // 결제가 실제로 끝났을 때 가입을 승인한다. 이미 승인된 회원은 그대로다.
-          is_approved: true,
-        };
-        if (days > 0) {
-          updates.membership_end = new Date(base.getTime() + days * DAY).toISOString().slice(0, 10);
+        if (items.length > 0) {
+          // 장바구니 주문 — 항목마다 반영(수강권 · 운동복 · 락카) + 가입 승인
+          const { error: aErr } = await admin.rpc("apply_payment_order", { p_order_id: order.id });
+          if (aErr) console.error("[payssam-callback] ⚠️ 항목 반영 실패 — 손으로 반영 필요:", `order_id=${order.id}`, aErr.message);
+        } else {
+          // 수강권 만료일 연장 + 누적 결제금액 가산
+          const days = Number(order.duration_days || 0);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const cur = prof?.membership_end ? new Date(prof.membership_end + "T00:00:00") : null;
+          const base = cur && cur.getTime() > today.getTime() ? cur : today;
+          const updates: Record<string, unknown> = {
+            payment_total: Number(prof?.payment_total || 0) + Number(order.amount),
+            // 결제가 실제로 끝났을 때 가입을 승인한다. 이미 승인된 회원은 그대로다.
+            is_approved: true,
+          };
+          if (days > 0) {
+            updates.membership_end = new Date(base.getTime() + days * DAY).toISOString().slice(0, 10);
+          }
+          await admin.from("profiles").update(updates).eq("user_id", order.user_id);
         }
-        await admin.from("profiles").update(updates).eq("user_id", order.user_id);
 
         // 153OS(CRM 두뇌) 동기화 — 회원·이용권·출입권한 생성 + 브로제이 단말 동기화 큐잉.
         // 외부주문ID(order.id)로 멱등. 실패해도 결제 처리엔 영향 없게 비차단(try/catch).
+        // 장바구니 주문은 수강권 항목만 보낸다 — 운동복 · 락카만 산 주문은 보내지 않는다 (2026-10-27).
         try {
           const OS_API_URL = Deno.env.get("OS_API_URL") || "https://153-boxing-os-api.boxing5969.workers.dev";
           const OS_PARTNER_KEY = Deno.env.get("OS_PARTNER_KEY") || "";
-          if (OS_PARTNER_KEY) {
-            const months = Math.max(1, Math.round(Number(order.duration_days || 0) / 30));
+          if (OS_PARTNER_KEY && (items.length === 0 || memItem)) {
+            const osDays = memItem ? Number(memItem.duration_days || 0) : Number(order.duration_days || 0);
+            const months = memItem ? Math.max(1, Number(memItem.months || 0)) : Math.max(1, Math.round(osDays / 30));
             const ac = new AbortController();
             const timer = setTimeout(() => ac.abort(), 6000);
             const r = await fetch(`${OS_API_URL}/api/external/me/sync-paid`, {
@@ -180,8 +204,8 @@ Deno.serve(async (req) => {
               },
               body: JSON.stringify({
                 ext_order_id: String(order.id),
-                plan_name: String(order.product_name || "수강권"),
-                amount: Number(order.amount || 0),
+                plan_name: String((memItem ? memItem.product_name : order.product_name) || "수강권"),
+                amount: Number((memItem ? memItem.amount : order.amount) || 0),
                 months,
                 name: prof?.name || undefined,
                 phone: prof?.phone_number || undefined,
@@ -209,31 +233,38 @@ Deno.serve(async (req) => {
         .eq("id", order.id);
 
       if (wasPaid) {
-        // 1) 앱 프로필 되돌리기 — 연장했던 일수만큼 빼고, 누적결제액에서 차감.
-        const days = Number(order.duration_days || 0);
-        const { data: prof } = await admin
-          .from("profiles")
-          .select("membership_end, payment_total")
-          .eq("user_id", order.user_id)
-          .maybeSingle();
-        const updates: Record<string, unknown> = {
-          payment_total: Math.max(0, Number(prof?.payment_total || 0) - Number(order.amount)) || null,
-        };
-        if (days > 0 && prof?.membership_end) {
-          const back = new Date(new Date(prof.membership_end + "T00:00:00").getTime() - days * DAY);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          // 되돌린 날짜가 오늘보다 과거면 수강권이 없는 상태로 본다.
-          updates.membership_end = back.getTime() > today.getTime() ? back.toISOString().slice(0, 10) : null;
+        if (items.length > 0) {
+          // 1) 장바구니 주문 — 항목마다 되돌리기(수강권 · 운동복 · 락카, 누적결제액은 수강권 금액만)
+          const { error: rErr } = await admin.rpc("revert_payment_order", { p_order_id: order.id });
+          if (rErr) console.error("[payssam-callback] ⚠️ 항목 되돌리기 실패 — 손으로 되돌려야 합니다:", `order_id=${order.id}`, rErr.message);
+        } else {
+          // 1) 앱 프로필 되돌리기 — 연장했던 일수만큼 빼고, 누적결제액에서 차감.
+          const days = Number(order.duration_days || 0);
+          const { data: prof } = await admin
+            .from("profiles")
+            .select("membership_end, payment_total")
+            .eq("user_id", order.user_id)
+            .maybeSingle();
+          const updates: Record<string, unknown> = {
+            payment_total: Math.max(0, Number(prof?.payment_total || 0) - Number(order.amount)) || null,
+          };
+          if (days > 0 && prof?.membership_end) {
+            const back = new Date(new Date(prof.membership_end + "T00:00:00").getTime() - days * DAY);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            // 되돌린 날짜가 오늘보다 과거면 수강권이 없는 상태로 본다.
+            updates.membership_end = back.getTime() > today.getTime() ? back.toISOString().slice(0, 10) : null;
+          }
+          await admin.from("profiles").update(updates).eq("user_id", order.user_id);
         }
-        await admin.from("profiles").update(updates).eq("user_id", order.user_id);
 
         // 2) CRM 이용권·출입권한 해지 — 승인 때 만든 것을 같은 주문ID로 되돌린다.
         //    실패해도 취소 처리 자체는 막지 않는다(비차단). 실패 시 로그로 남겨 손으로 복구한다.
+        //    장바구니 주문은 수강권 항목이 있을 때만(153OS 에는 수강권만 보냈다).
         try {
           const OS_API_URL = Deno.env.get("OS_API_URL") || "https://153-boxing-os-api.boxing5969.workers.dev";
           const OS_PARTNER_KEY = Deno.env.get("OS_PARTNER_KEY") || "";
-          if (OS_PARTNER_KEY) {
+          if (OS_PARTNER_KEY && (items.length === 0 || memItem)) {
             const ac = new AbortController();
             const timer = setTimeout(() => ac.abort(), 6000);
             const r = await fetch(`${OS_API_URL}/api/external/me/sync-refunded`, {
@@ -245,7 +276,7 @@ Deno.serve(async (req) => {
               },
               body: JSON.stringify({
                 ext_order_id: String(order.id),
-                amount: Number(order.amount || 0),
+                amount: Number((memItem ? memItem.amount : order.amount) || 0),
                 reason: "결제선생 결제 취소",
               }),
               signal: ac.signal,

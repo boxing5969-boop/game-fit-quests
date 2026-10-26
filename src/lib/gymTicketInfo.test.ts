@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { asOfLabel, lockerNumberText, lockerView, ptTicketView, ymdText } from "./gymTicketInfo";
+import {
+  asOfLabel,
+  daysUntil,
+  leftText,
+  lockerNumberText,
+  lockerView,
+  ptTicketView,
+  rentalUseRows,
+  termStateOf,
+  ymdText,
+} from "./gymTicketInfo";
 
 const TODAY = "2026-10-19";
 
@@ -72,4 +82,37 @@ describe("확인 시각 글 (KST)", () => {
 
 it("날짜 모양은 수강권 카드와 같다", () => {
   expect(ymdText("2027-02-11")).toBe("2027. 2. 11.");
+});
+
+describe("락카 · 운동복 남은 기간 (2026-10-27)", () => {
+  const T = "2026-10-26";
+  it("남은 날 = 끝나는 날 − 오늘 (오늘 끝나면 0 '오늘까지')", () => {
+    expect(daysUntil("2027-01-25", T)).toBe(91);
+    expect(daysUntil("2026-10-26T15:00:00+09:00", T)).toBe(0);
+    expect(daysUntil(null, T)).toBeNull();
+    expect([leftText(91), leftText(0), leftText(-3), leftText(null)]).toEqual(["91일 남음", "오늘까지", "끝남", ""]);
+  });
+  it("7일 이하 주황(soon) · 지나면 끝남", () => {
+    expect([termStateOf(8), termStateOf(7), termStateOf(0), termStateOf(-1), termStateOf(null)]).toEqual([
+      "ok", "soon", "soon", "ended", "unknown",
+    ]);
+  });
+  it("보고서 예시: 락카 12번 · 1월 25일까지 · 운동복 11월 25일까지", () => {
+    const rows = rentalUseRows({ locker_label: "12", locker_end: "2027-01-25", sportswear_end: "2026-11-25" }, T);
+    expect(rows).toEqual([
+      { kind: "locker", label: "락카", sub: "12번", end: "2027-01-25", left: 91, state: "ok" },
+      { kind: "sportswear", label: "운동복", sub: null, end: "2026-11-25", left: 30, state: "ok" },
+    ]);
+  });
+  it("번호만 있는 락카(끝나는 날 모름)도 보이고, 끝난 지 30일 넘은 운동복은 뺀다", () => {
+    expect(rentalUseRows({ locker_label: "개인락카 / 11" }, T)).toEqual([
+      { kind: "locker", label: "락카", sub: "개인락카 11번", end: null, left: null, state: "unknown" },
+    ]);
+    expect(rentalUseRows({ sportswear_end: "2026-09-25" }, T)).toEqual([]);
+    expect(rentalUseRows({ sportswear_end: "2026-10-20" }, T)[0]).toMatchObject({ state: "ended", left: -6 });
+    // 번호가 남아 있으면 오래전에 끝난 락카도 '끝남 · 연장하기'로 보여 준다
+    expect(rentalUseRows({ locker_label: "7", locker_end: "2026-01-01" }, T)[0]).toMatchObject({ state: "ended" });
+    expect(rentalUseRows({ locker_end: "2026-01-01" }, T)).toEqual([]);
+    expect(rentalUseRows(null, T)).toEqual([]);
+  });
 });

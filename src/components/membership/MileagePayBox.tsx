@@ -17,8 +17,12 @@ import {
 import { cn } from "@/lib/utils";
 
 interface Props {
-  /** 이번 상품 결제 금액(원) */
+  /** 마일리지 10% 기준 금액(원) — 상품 하나면 그 상품 금액, 장바구니면 수강권 금액 (2026-10-27) */
   price: number;
+  /** 장바구니 합계(원) — 있으면 '합계 − 점수 = 결제 금액' 줄에 쓴다. 없으면 price */
+  payTotal?: number;
+  /** 10% 기준 이름 — 기본 '결제 금액', 장바구니(수강권 있음)는 '수강권 금액' */
+  baseLabel?: string;
   /** 내 마일리지 잔액 */
   balance: number;
   loading?: boolean;
@@ -33,8 +37,9 @@ interface Props {
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 
-const MileagePayBox = ({ price, balance, loading = false, failed = false, isStaff = false, value, onChange, className }: Props) => {
+const MileagePayBox = ({ price, payTotal, baseLabel = "결제 금액", balance, loading = false, failed = false, isStaff = false, value, onChange, className }: Props) => {
   const max = maxMileageUse(balance, price);
+  const total = payTotal ?? price;
   const used = clampMileageUse(value, max);
   const block = mileageBlockReason({ balance, price, isStaff });
 
@@ -106,14 +111,14 @@ const MileagePayBox = ({ price, balance, loading = false, failed = false, isStaf
 
           {used > 0 ? (
             <p className="mt-2 text-[13px] text-foreground">
-              {n(price)}원 − {n(used)}점 = <b className="tabular-nums">{n(price - used)}원</b> 결제
+              {n(total)}원 − {n(used)}점 = <b className="tabular-nums">{n(total - used)}원</b> 결제
             </p>
           ) : null}
           {value > 0 && value !== used ? (
             <p className="mt-1 text-[12px] font-bold text-amber-700">1,000점 단위로 맞춰서 {n(used)}점을 써요</p>
           ) : null}
           <p className="mt-1.5 text-[11.5px] leading-relaxed text-muted-foreground">
-            이번 결제는 최대 {n(max)}점 (1점 = 1원 · 결제 금액의 10%까지 · 1,000점 단위) · 결제가 끝나야 빠지고, 취소하면 돌아와요
+            이번 결제는 최대 {n(max)}점 (1점 = 1원 · {baseLabel}의 10%까지 · 1,000점 단위) · 결제가 끝나야 빠지고, 취소하면 돌아와요
           </p>
         </>
       )}

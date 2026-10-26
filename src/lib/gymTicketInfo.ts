@@ -114,3 +114,64 @@ export const ymdText = (d: string): string => {
   const [y, mo, da] = d.split("-").map((v) => parseInt(v, 10));
   return `${y}. ${mo}. ${da}.`;
 };
+
+// ── 락카 · 운동복 남은 기간 (2026-10-27 대표님: "수강권 탭에서 몇일 남았는지 락카와 운동복 사용은 얼마나 남았는지 모두 체크할수있게") ──
+//   끝나는 날은 profiles.locker_end · sportswear_end — 앱 결제(장바구니)가 늘리고, 지도진이 회원 상세 '수강' 탭에서 고친다.
+
+/** 이만큼 남으면 주황색 (수강권 카드 D-day 와 같은 기준) */
+export const SOON_DAYS = 7;
+/** 끝난 지 이만큼 지난 운동복은 카드에서 뺀다 (번호가 남아 있는 락카는 그대로 보여 준다) */
+export const HIDE_ENDED_AFTER_DAYS = 30;
+
+export type TermState = "ok" | "soon" | "ended" | "unknown";
+
+/** 남은 날 → 상태 (0 = 오늘까지 = 아직 이용 중) */
+export const termStateOf = (left: number | null): TermState =>
+  left == null ? "unknown" : left < 0 ? "ended" : left <= SOON_DAYS ? "soon" : "ok";
+
+/** 남은 날 (끝나는 날 − 오늘, KST 날짜 기준) — 오늘 끝나면 0, 지났으면 음수, 모르면 null */
+export function daysUntil(end: string | null | undefined, today: string = kstToday()): number | null {
+  const e = dateOnly(end);
+  if (!e) return null;
+  return Math.round((Date.parse(`${e}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86400000);
+}
+
+/** 남은 날 글자 — "91일 남음" · "오늘까지" · "끝남" */
+export const leftText = (left: number | null): string =>
+  left == null ? "" : left < 0 ? "끝남" : left === 0 ? "오늘까지" : `${left}일 남음`;
+
+export interface RentalUseRow {
+  kind: "locker" | "sportswear";
+  label: string;
+  /** 락카 번호 ("12번", 구역이 있으면 "개인락카 12번") */
+  sub: string | null;
+  end: string | null;
+  left: number | null;
+  state: TermState;
+}
+
+/** 수강권 카드 · 회원 상세의 락카 · 운동복 줄 */
+export function rentalUseRows(p: unknown, today: string = kstToday()): RentalUseRow[] {
+  if (!p || typeof p !== "object") return [];
+  const x = p as { locker_end?: string | null; sportswear_end?: string | null };
+  const rows: RentalUseRow[] = [];
+  const locker = lockerView(p);
+  const lockerEnd = dateOnly(x.locker_end);
+  const lockerLeft = daysUntil(lockerEnd, today);
+  if (locker || (lockerEnd && lockerLeft != null && lockerLeft >= -HIDE_ENDED_AFTER_DAYS)) {
+    rows.push({
+      kind: "locker",
+      label: "락카",
+      sub: locker ? `${locker.area ? `${locker.area} ` : ""}${lockerNumberText(locker)}` : null,
+      end: lockerEnd,
+      left: lockerLeft,
+      state: termStateOf(lockerLeft),
+    });
+  }
+  const swEnd = dateOnly(x.sportswear_end);
+  const swLeft = daysUntil(swEnd, today);
+  if (swEnd && swLeft != null && swLeft >= -HIDE_ENDED_AFTER_DAYS) {
+    rows.push({ kind: "sportswear", label: "운동복", sub: null, end: swEnd, left: swLeft, state: termStateOf(swLeft) });
+  }
+  return rows;
+}

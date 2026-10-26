@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Banknote, CalendarCheck, CircleUser } from "lucide-react";
+import { ArrowLeft, Check, X, Clock, Pencil, ChevronRight, MessageSquare, FileText, Map, Activity, User, Eye, Trash2, Shield, Crown, Banknote, CalendarCheck, CircleUser, Ticket } from "lucide-react";
 import { formatRank, RANK_LABELS, RANK_ICONS, RANK_ORDER, isManagerRole } from "@/lib/rankLabels";
 import { STAFF_CHAMPION_LABEL, STAFF_CHAMPION_LEVEL, isStaffProfile, staffChampionLine } from "@/lib/staffDisplay";
 import RankBadge from "@/components/RankBadge";
@@ -18,10 +18,11 @@ import LevelAdminPanel from "@/components/admin/LevelAdminPanel";
 import { useMemberHandWrapPractice } from "@/hooks/useHandWrap";
 import AttendanceHistoryPanel, { AttendanceSummaryCard } from "@/components/attendance/AttendanceHistoryPanel";
 import MemberMyInfoView from "@/components/admin/MemberMyInfoView";
+import MemberPassPanel from "@/components/admin/MemberPassPanel";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
 import { minutesToHours } from "@/lib/achievement153";
 
-type TabKey = "overview" | "myinfo" | "attendance" | "missions" | "levelmap" | "activity" | "notes";
+type TabKey = "overview" | "pass" | "myinfo" | "attendance" | "missions" | "levelmap" | "activity" | "notes";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   locked: { label: "잠금", color: "text-muted-foreground" },
@@ -40,7 +41,11 @@ const MemberDetailPage = () => {
   const qc = useQueryClient();
   // ?tab=myinfo — 회원 카드의 '회원 내정보 보기'에서 바로 (2026-10-21 대표님: "이름 클릭해서 들어가면 회원 내정보를")
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<TabKey>(() => (searchParams.get("tab") === "myinfo" ? "myinfo" : "overview"));
+  //   ?tab=pass — 앱 결제 알림에서 바로 '수강' 탭 (2026-10-27, 전체관리자만 — 아니면 아래에서 개요로)
+  const [activeTab, setActiveTab] = useState<TabKey>(() => {
+    const t = searchParams.get("tab");
+    return t === "myinfo" || t === "pass" ? t : "overview";
+  });
   const [noteContent, setNoteContent] = useState("");
   const [myId, setMyId] = useState<string | null>(null);
   useEffect(() => { void supabase.auth.getUser().then(({ data }) => setMyId(data.user?.id ?? null)); }, []);
@@ -209,9 +214,12 @@ const MemberDetailPage = () => {
   //   개요 요약 카드 · '출석' 탭 · 위 요약 숫자가 같은 캐시를 쓴다.
   const canAttendance = role === "super_admin" || role === "admin" || role === "branch_manager";
   // 볼 권한이 없는데 ?tab=myinfo 로 들어오면 개요로
+  // '수강' 탭(수강권 · 락카 · 운동복 · 결제 내역)은 처음엔 전체관리자만 (2026-10-27 대표님 보고서 10번)
+  const canPass = role === "super_admin";
   useEffect(() => {
     if (activeTab === "myinfo" && role && !canAttendance) setActiveTab("overview");
-  }, [activeTab, role, canAttendance]);
+    if (activeTab === "pass" && role && !canPass) setActiveTab("overview");
+  }, [activeTab, role, canAttendance, canPass]);
   const attHist = useAttendanceHistory(memberId, !!memberId && canAttendance);
 
   // Mutations
@@ -382,6 +390,7 @@ const MemberDetailPage = () => {
 
   const TABS: { key: TabKey; label: string; icon: any }[] = [
     { key: "overview", label: "개요", icon: User },
+    ...(canPass ? [{ key: "pass" as TabKey, label: "수강", icon: Ticket }] : []),
     // 회원이 내정보에서 보는 것 그대로 — 출석 요약 · 지금까지 이룬 것 (2026-10-21 대표님)
     ...(canAttendance ? [{ key: "myinfo" as TabKey, label: "내정보", icon: CircleUser }] : []),
     ...(canAttendance ? [{ key: "attendance" as TabKey, label: "출석", icon: CalendarCheck }] : []),
@@ -775,6 +784,8 @@ const MemberDetailPage = () => {
       )}
 
       {/* ── Attendance Tab — 출석 기록 전체 (관리자 · 지점장) ── */}
+      {activeTab === "pass" && canPass && <MemberPassPanel profile={p as Parameters<typeof MemberPassPanel>[0]["profile"]} />}
+
       {activeTab === "attendance" && canAttendance && <AttendanceHistoryPanel userId={memberId} audience="staff" />}
 
       {/* ── 내정보 Tab — 회원이 내정보 '내 기록'에서 보는 화면 (관리자 · 지점장) ── */}

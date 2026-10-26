@@ -6,7 +6,11 @@
 // 2026-10-21 대표님: "수강권 탭에서 결제하기 눌러도 마일리지 입력 탭이 없는데" → 모든 상품 결제 전에 확인 창을 띄우고
 //   '153 마일리지 쓰기' 칸(components/membership/MileagePayBox)을 항상 보여 준다. 수강권은 환불 규정 확인도 같이.
 //   점수 검사 · 청구 금액 계산은 그대로 서버(payssam-create-bill → DB mileage_max_use)가 한다.
-import { useState, useEffect, useCallback, useRef } from "react";
+// 2026-10-27 장바구니 (대표님 보고서 「앱 결제 장바구니」 · "나머진 니추천대로"): 수강권 결제 확인 창에서 운동복 · 락카도 같이 쓸지 묻고
+//   (수강권과 같은 개월, 줄일 수 있게) 결제선생 링크 1개로 결제한다(body.cart). 렌탈 탭은 운동복 · 락카만 연장하는 장바구니.
+//   운동복 · 락카를 안 담은 수강권 · PT · 용품 · 1일권은 예전처럼 상품 하나(body.product_id). 계산은 lib/cartPricing.
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { CreditCard, Plus, Pencil, Trash2, X, Settings, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
@@ -20,7 +24,20 @@ import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 import { isOfflinePayBranch } from "@/lib/branchPayment";
 import OfflinePayCard from "@/components/membership/OfflinePayCard";
 import MileagePayBox from "@/components/membership/MileagePayBox";
+import RentalAddOns from "@/components/membership/RentalAddOns";
 import { clampMileageUse, maxMileageUse } from "@/lib/mileagePay";
+import {
+  MAX_RENTAL_MONTHS,
+  cartLines,
+  cartTotal,
+  endText,
+  extendedEnd,
+  membershipMonths,
+  mileageBase,
+  rentalKindOf,
+  type RentalKind,
+} from "@/lib/cartPricing";
+import { kstToday } from "@/lib/levelPractice";
 
 interface Product {
   id: string;
@@ -43,6 +60,10 @@ const formatPhone = (v: string) => {
   return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
 };
 const blankForm = { name: "", price: "", duration_days: "30" };
+
+/** 결제 확인 창에 올린 것 — 상품 하나(PT · 용품 · 1일권), 수강권(+ 운동복 · 락카), 또는 운동복 · 락카만(product = null) */
+type Checkout = { product: Product | null; rentals: Record<RentalKind, number> };
+const NO_RENTALS: Record<RentalKind, number> = { sportswear: 0, locker: 0 };
 
 // 회원 화면 카테고리 탭
 const CATS = [
@@ -68,18 +89,23 @@ const MembershipProducts = () => {
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [form, setForm] = useState(blankForm);
   const [saving, setSaving] = useState(false);
-  const [phoneModal, setPhoneModal] = useState<Product | null>(null);
+  const [phoneModal, setPhoneModal] = useState<{ amount: number } | null>(null); // 번호 입력 창 — 결제할 금액
   const [phoneInput, setPhoneInput] = useState("");
   const [savingPhone, setSavingPhone] = useState(false);
   const [showProductAdmin, setShowProductAdmin] = useState(false); // 마스터 전용 상품 설정 패널 열림 여부
-  const [confirmProduct, setConfirmProduct] = useState<Product | null>(null); // 결제 전 환불규정 확인 대상
+  const [checkout, setCheckout] = useState<Checkout | null>(null); // 결제 전 확인 창(환불 규정 · 운동복/락카 · 마일리지)
   const [confirmAgree, setConfirmAgree] = useState(false);
+  // 렌탈 탭 — 운동복 · 락카만 연장할 개월 (2026-10-27)
+  const [rentalPick, setRentalPick] = useState<Record<RentalKind, number>>(NO_RENTALS);
   // 153 마일리지 쓰기 (2026-10-15) — 결제 확인 창에서 고른 점수. 결제선생 청구 금액에서 빠지고, 결제가 끝나야 차감된다.
   //   2026-10-21: 체크 하나(최대만) → 점수 입력칸. 지도진 계정도 읽는다 — 칸이 왜 비어 있는지(적립 제외) 보여 주려고.
   const [mileagePts, setMileagePts] = useState(0);
-  const pendingMileage = useRef(0); // 번호 입력 창을 거쳐도 고른 점수가 남게
+  // 번호 입력 창을 거쳐도 고른 것(장바구니 · 점수)이 남게
+  const pendingPay = useRef<{ checkout: Checkout; mileage: number } | null>(null);
   const mileage = useMyMileage();
   const mileageBalance = mileage.data?.balance ?? 0;
+  const today = kstToday();
+  const rentalEnds = profile as { locker_end?: string | null; sportswear_end?: string | null } | null;
 
   const load = useCallback(async () => {
     const { data } = await (supabase as any)
@@ -96,30 +122,77 @@ const MembershipProducts = () => {
     load();
   }, [load]);
 
+  // 수강권 카드의 '연장하기'(/membership?cat=rental · ?buy=1) → 그 탭을 열고 결제 칸으로 내려 준다 (2026-10-27)
+  const location = useLocation();
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    const cat = q.get("cat");
+    if (!cat && q.get("buy") !== "1") return;
+    if (cat && CATS.some((c) => c.key === cat)) setActiveCatKey(cat);
+    const t = setTimeout(() => rootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+    return () => clearTimeout(t);
+  }, [location.key, location.search]);
+
+  // ── 장바구니 계산 (2026-10-27) — 렌탈 한 달 가격은 상품표 '렌탈'의 운동복 · 개인 락카 (1개월)
+  const rentalUnit = useMemo(() => {
+    const u: Partial<Record<RentalKind, number>> = {};
+    for (const p of products) {
+      if (p.category !== "rental" || !p.is_active) continue;
+      const k = rentalKindOf(p.name);
+      if (k && u[k] == null) u[k] = p.price;
+    }
+    return u;
+  }, [products]);
+  const isCartCheckout = (c: Checkout) =>
+    !c.product || (c.product.category === "membership" && c.rentals.sportswear + c.rentals.locker > 0);
+  const linesFor = (c: Checkout) =>
+    cartLines({
+      membership: c.product?.category === "membership" ? { name: c.product.name, price: c.product.price, days: c.product.duration_days } : null,
+      sportswearMonths: c.rentals.sportswear,
+      lockerMonths: c.rentals.locker,
+      unitPrice: { sportswear: rentalUnit.sportswear ?? 0, locker: rentalUnit.locker ?? 0 },
+    });
+  const checkoutTotal = (c: Checkout) => (isCartCheckout(c) ? cartTotal(linesFor(c)) : c.product?.price ?? 0);
+  const checkoutMileageBase = (c: Checkout) => (isCartCheckout(c) ? mileageBase(linesFor(c)) : c.product?.price ?? 0);
+
   // ── 회원 결제 ── 전화번호 있으면 바로 결제, 없으면(카톡/구글 가입자) 번호 입력 모달 먼저.
-  const pay = (p: Product, mileagePts = 0) => {
-    pendingMileage.current = mileagePts;
+  const pay = (c: Checkout, mileagePts = 0) => {
+    pendingPay.current = { checkout: c, mileage: mileagePts };
     if (memberPhone.length < 10) {
       setPhoneInput("");
-      setPhoneModal(p);
+      setPhoneModal({ amount: checkoutTotal(c) - mileagePts });
       return;
     }
-    runBill(p);
+    void runBill();
   };
 
-  // 결제 전 확인 창 — 수강권: '환불 규정 확인'(환불 억제) + 마일리지 / PT·용품·렌탈·1일권: 마일리지만 (2026-10-21)
-  const askConfirm = (p: Product) => {
+  // 결제 전 확인 창 — 수강권: '환불 규정 확인'(환불 억제) + 운동복 · 락카 담기 + 마일리지 / PT·용품·1일권: 마일리지만 (2026-10-21)
+  const askConfirm = (p: Product | null, rentals: Record<RentalKind, number> = NO_RENTALS) => {
     setConfirmAgree(false);
     setMileagePts(0);
-    setConfirmProduct(p);
+    setCheckout({ product: p, rentals });
   };
 
-  const runBill = async (p: Product) => {
-    setPaying(p.id);
+  const runBill = async () => {
+    const pend = pendingPay.current;
+    pendingPay.current = null;
+    if (!pend) return;
+    const c = pend.checkout;
+    setPaying(c.product?.id ?? "rental-cart");
     try {
-      const use_mileage = pendingMileage.current;
-      pendingMileage.current = 0;
-      const { data, error } = await supabase.functions.invoke("payssam-create-bill", { body: { product_id: p.id, use_mileage } });
+      const use_mileage = pend.mileage;
+      const body = isCartCheckout(c)
+        ? {
+            cart: {
+              membership_product_id: c.product?.category === "membership" ? c.product.id : null,
+              sportswear_months: c.rentals.sportswear,
+              locker_months: c.rentals.locker,
+            },
+            use_mileage,
+          }
+        : { product_id: c.product!.id, use_mileage };
+      const { data, error } = await supabase.functions.invoke("payssam-create-bill", { body });
       if (error) throw error;
       if (data?.error) {
         toast.error(data.error);
@@ -168,9 +241,8 @@ const MembershipProducts = () => {
         return;
       }
       await refreshProfile?.();
-      const target = phoneModal;
       setPhoneModal(null);
-      if (target) runBill(target);
+      void runBill();
     } catch (e) {
       toast.error("처리 중 오류: " + ((e as Error)?.message || ""));
     } finally {
@@ -260,7 +332,7 @@ const MembershipProducts = () => {
           disabled={savingPhone}
           className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
         >
-          {savingPhone ? "처리 중..." : `${won(phoneModal.price - pendingMileage.current)} 결제하기`}
+          {savingPhone ? "처리 중..." : `${won(phoneModal.amount)} 결제하기`}
         </button>
       </div>
     </div>
@@ -273,15 +345,22 @@ const MembershipProducts = () => {
   // 데스크 결제 지점(칠금점) — 결제선생 결제를 열지 않는다
   const offlinePay = isOfflinePayBranch(branch);
   const memberView = (() => {
-    if (offlinePay && branch) return <OfflinePayCard branch={branch} />;
+    if (offlinePay && branch) return <div ref={rootRef} className="scroll-mt-4"><OfflinePayCard branch={branch} /></div>;
     if (memberBase.length === 0) return null;
     const activeCats = CATS.filter((c) => memberBase.some((p) => c.match(p)));
     const cat = activeCats.find((c) => c.key === activeCatKey) ?? activeCats[0];
-    const list = cat ? memberBase.filter(cat.match) : [];
     const isMembership = cat?.key === "m5" || cat?.key === "m3";
+    // 렌탈 탭: 운동복 · 락카는 장바구니(개월 고르기) 하나로, 그 밖의 렌탈 상품만 예전 카드로 (2026-10-27)
+    const isRentalTab = cat?.key === "rental";
+    const rentalCartKinds = (["sportswear", "locker"] as const).filter((k) => (rentalUnit[k] ?? 0) > 0);
+    const list = (cat ? memberBase.filter(cat.match) : []).filter((p) => {
+      const k = isRentalTab ? rentalKindOf(p.name) : null;
+      return !k || !rentalCartKinds.includes(k);
+    });
+    const rentalPickTotal = isRentalTab ? checkoutTotal({ product: null, rentals: rentalPick }) : 0;
 
     return (
-      <div className="rounded-2xl border border-border bg-card p-4">
+      <div ref={rootRef} className="scroll-mt-4 rounded-2xl border border-border bg-card p-4">
         <div className="mb-3 flex items-center gap-2">
           <CreditCard className="h-5 w-5 text-primary" />
           <h3 className="text-base font-bold text-foreground">153멤버십</h3>
@@ -326,6 +405,31 @@ const MembershipProducts = () => {
         </div>
 
         {isMembership && <p className="mb-2 px-0.5 text-base font-bold text-foreground">이용 기간</p>}
+
+        {/* 렌탈 탭 — 운동복 · 락카만 연장 (수강권 없이, 링크 1개) */}
+        {isRentalTab && rentalCartKinds.length > 0 && (
+          <div className="mb-2.5">
+            <RentalAddOns
+              mode="standalone"
+              maxMonths={MAX_RENTAL_MONTHS}
+              value={rentalPick}
+              onChange={setRentalPick}
+              unitPrice={rentalUnit}
+              currentEnd={{ sportswear: rentalEnds?.sportswear_end ?? null, locker: rentalEnds?.locker_end ?? null }}
+              today={today}
+            />
+            <button
+              onClick={() => askConfirm(null, rentalPick)}
+              disabled={rentalPickTotal <= 0 || paying === "rental-cart"}
+              className="mt-2.5 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-40"
+            >
+              {paying === "rental-cart" ? "이동 중..." : rentalPickTotal > 0 ? `${won(rentalPickTotal)} 결제하기` : "개월을 골라 주세요"}
+            </button>
+            <p className="mt-1.5 text-[11.5px] leading-relaxed text-muted-foreground">
+              수강권을 결제할 때 같이 담으면 수강권과 같은 개월로 한 번에 결제돼요.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-2.5">
           {list.map((p) => {
@@ -386,37 +490,90 @@ const MembershipProducts = () => {
           결제하기를 누르면 안전한 결제창으로 이동합니다. 수강권은 결제 완료 시 기간이 자동 반영됩니다.
         </p>
         {phoneModalJsx}
-        {confirmProduct && (() => {
-          const p = confirmProduct;
+        {checkout && (() => {
+          const c = checkout;
+          const p = c.product;
+          const close = () => setCheckout(null);
           // 수강권만 환불 규정 확인 — PT·용품·렌탈·1일권은 금액 · 마일리지만 보고 결제 (2026-10-21)
-          const isMem = p.category === "membership";
-          const nd = normalDailyRate(p.normal_price, p.duration_days);
-          const months = Math.max(1, Math.round(p.duration_days / 30));
-          const off = p.normal_price && p.normal_price > p.price ? Math.round((1 - p.price / p.normal_price) * 100) : 0;
-          const discountAmt = isMem && p.normal_price && p.normal_price > p.price ? p.normal_price - p.price : 0;
-          const rows = isMem
+          const isMem = p?.category === "membership";
+          // 장바구니(수강권 + 운동복 · 락카, 또는 운동복 · 락카만) — 담은 줄 · 합계 · 끝나는 날 (2026-10-27)
+          const lines = isCartCheckout(c) ? linesFor(c) : [];
+          const hasRentals = lines.some((l) => l.kind !== "membership");
+          const total = checkoutTotal(c);
+          const memMonths = isMem && p ? membershipMonths(p.duration_days) : 0;
+          const nd = isMem && p ? normalDailyRate(p.normal_price, p.duration_days) : 0;
+          const months = memMonths;
+          const off = p?.normal_price && p.normal_price > p.price ? Math.round((1 - p.price / p.normal_price) * 100) : 0;
+          const discountAmt = isMem && p?.normal_price && p.normal_price > p.price ? p.normal_price - p.price : 0;
+          const rows = isMem && p
             ? SIM_MONTHS.filter((m) => m * 30 < p.duration_days).map((m) => ({ m, ...calcRefund({ paid: p.price, normalDaily: nd, elapsedDays: m * 30 }) }))
             : [];
-          const maxUse = maxMileageUse(mileageBalance, p.price);
+          const maxUse = maxMileageUse(mileageBalance, checkoutMileageBase(c));
           const usePts = clampMileageUse(mileagePts, maxUse);
-          const payWon = won(p.price - usePts);
+          const payWon = won(total - usePts);
+          const curEnd: Record<"membership" | RentalKind, string | null> = {
+            membership: (profile as { membership_end?: string | null } | null)?.membership_end ?? null,
+            sportswear: rentalEnds?.sportswear_end ?? null,
+            locker: rentalEnds?.locker_end ?? null,
+          };
           return (
-            <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setConfirmProduct(null)}>
+            <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center" onClick={close}>
               <div
                 className="max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-2xl bg-card p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="mb-1 flex items-center justify-between">
-                  <h3 className="text-base font-black text-foreground">{isMem ? "환불 규정 확인" : "결제 확인"}</h3>
-                  <button onClick={() => setConfirmProduct(null)} aria-label="닫기" className="rounded-lg p-1 text-muted-foreground active:scale-95"><X className="h-5 w-5" /></button>
+                  <h3 className="text-base font-black text-foreground">결제 확인</h3>
+                  <button onClick={close} aria-label="닫기" className="rounded-lg p-1 text-muted-foreground active:scale-95"><X className="h-5 w-5" /></button>
                 </div>
-                {isMem ? (
-                  <p className="text-sm text-muted-foreground">{months}개월 약정 · <span className="font-bold text-foreground">{won(p.price)}</span> 결제{off > 0 ? ` · 정상가 ${won(p.normal_price ?? 0)} (${off}% 할인)` : ""}</p>
-                ) : (
+                {isMem && p ? (
+                  <p className="text-sm text-muted-foreground">{p.name} · {months}개월 약정 · <span className="font-bold text-foreground">{won(p.price)}</span>{off > 0 ? ` · 정상가 ${won(p.normal_price ?? 0)} (${off}% 할인)` : ""}</p>
+                ) : p ? (
                   <p className="text-sm text-muted-foreground">
                     {CAT_LABEL[p.category] ?? "상품"} · {p.name} · <span className="font-bold text-foreground">{won(p.price)}</span>
                     {p.duration_days > 0 ? ` · ${p.duration_days}일` : ""}
                   </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">운동복 · 락카 연장 · 결제 링크 하나로 한 번에</p>
+                )}
+
+                {/* 수강권과 같이 — 운동복 · 락카 담기 (수강권 개월만큼, 줄일 수 있게) */}
+                {isMem && p && (
+                  <RentalAddOns
+                    className="mt-3"
+                    mode="addon"
+                    maxMonths={memMonths}
+                    value={c.rentals}
+                    onChange={(next) => setCheckout({ ...c, rentals: next })}
+                    unitPrice={rentalUnit}
+                    currentEnd={curEnd}
+                    membership={{ months: memMonths, days: p.duration_days }}
+                    today={today}
+                  />
+                )}
+
+                {/* 장바구니 — 담은 것 · 끝나는 날 · 합계 (링크 1개) */}
+                {(hasRentals || !p) && lines.length > 0 && (
+                  <div className="mt-3 rounded-xl border border-border bg-muted/30 p-3" aria-label="결제할 것">
+                    <p className="text-sm font-black text-foreground">결제할 것</p>
+                    {lines.map((l) => (
+                      <div key={l.kind} className="mt-2 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[13.5px] font-bold text-foreground">{l.label}</p>
+                          <p className="text-[11.5px] text-muted-foreground">{endText(extendedEnd(curEnd[l.kind], l.days, today), today)}까지</p>
+                        </div>
+                        <span className="shrink-0 text-[13.5px] font-black tabular-nums text-foreground">{won(l.amount)}</span>
+                      </div>
+                    ))}
+                    <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2.5">
+                      <span className="text-[13px] font-bold text-foreground">합계</span>
+                      <span className="text-base font-black tabular-nums text-foreground">{won(total)}</span>
+                    </div>
+                  </div>
+                )}
+
+                {isMem && (rows.length > 0 || discountAmt > 0) && (
+                  <p className="mt-4 text-sm font-black text-foreground">환불 규정</p>
                 )}
 
                 {discountAmt > 0 && (
@@ -441,13 +598,21 @@ const MembershipProducts = () => {
                   </div>
                 )}
 
-                {isMem && (
+                {isMem && p && (
                   <p className="mt-3 text-xs leading-relaxed text-muted-foreground">끝까지 이용하시면 하루 {(p.duration_days > 0 ? Math.round(p.price / p.duration_days) : 0).toLocaleString("ko-KR")}원으로 가장 이득입니다. 위약금(10%)·개인 위생용품은 별도이며, 최종 환불액은 관장님이 확정합니다.</p>
+                )}
+                {hasRentals && (
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    운동복 · 락카는 환불할 때 남은 기간만큼 날짜로 나눠 돌려 드려요.
+                    {lines.some((l) => l.kind === "locker") && !(curEnd.locker && curEnd.locker >= today) ? " 락카 번호는 결제 후 데스크에서 정해 드려요." : ""}
+                  </p>
                 )}
 
                 <MileagePayBox
                   className="mt-3"
-                  price={p.price}
+                  price={checkoutMileageBase(c)}
+                  payTotal={total}
+                  baseLabel={isMem && hasRentals ? "수강권 금액" : undefined}
                   balance={mileageBalance}
                   loading={mileage.isLoading}
                   failed={mileage.isError}
@@ -465,16 +630,15 @@ const MembershipProducts = () => {
 
                 <button
                   onClick={() => {
-                    const t = confirmProduct;
-                    setConfirmProduct(null);
-                    if (t) pay(t, clampMileageUse(mileagePts, maxMileageUse(mileageBalance, t.price)));
+                    close();
+                    pay(c, clampMileageUse(mileagePts, maxMileageUse(mileageBalance, checkoutMileageBase(c))));
                   }}
-                  disabled={isMem && !confirmAgree}
+                  disabled={(isMem && !confirmAgree) || total <= 0}
                   className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-40"
                 >
                   {isMem ? `동의하고 ${payWon} 결제` : `${payWon} 결제하기`}
                 </button>
-                <button onClick={() => setConfirmProduct(null)} className="mt-2 w-full rounded-xl bg-muted py-2.5 text-sm font-bold text-muted-foreground active:scale-95">다시 볼게요</button>
+                <button onClick={close} className="mt-2 w-full rounded-xl bg-muted py-2.5 text-sm font-bold text-muted-foreground active:scale-95">다시 볼게요</button>
               </div>
             </div>
           );
