@@ -121,6 +121,20 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 입구: 메시지 탭 '전략' + 전체 메뉴 2번째 칸 '전략 회의실'(코치님·지점장·운영진만, 회원에게는 칸 없음 — `appMenu.ts` `requires: "staff"`, 확인 안 한 지시 수 배지, 2026-10-19).
 '오삼코치 정리'는 chat-assistant `action:"polish-directive"` (Haiku, 하루 30회, `ai_usage_log.feature='directive_polish'`, 입력 저장 안 함).
 
+### 지점 회의실 — 지도진 가상 사무실 · 회의 채팅 (2026-10-27 1단계 · 「마이복서153 지점 회의실 상세 보고서」 추천안)
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261027140013_branch_office_room.sql](supabase/migrations/20261027140013_branch_office_room.sql) | `office_branches`(켠 지점 · 채널 `office:<지점 코드>`, 지금 선릉역점만) · `office_seats`(mgr · c1~c8 · x1~x4 자동 배정) · `office_status`(on · class · away, 3시간 지나면 on) · `office_meetings`(지점당 열린 회의 하나) · `office_meeting_attendees` · `office_messages`(chat · decision · system) · RPC `office_*` · realtime.messages 정책 2개(비공개 채널) |
+| [src/services/officeService.ts](src/services/officeService.ts) | 훅 · 뮤테이션 (`["office", …]` 캐시) |
+| [src/components/office/OfficePresenceBridge.tsx](src/components/office/OfficePresenceBridge.tsx) | App 전체 — 앱을 열면 Presence 로 접속(자리에 앉음), 화면을 끄면 30초 뒤 거둠. 바뀜 신호(broadcast `changed`, payload `{t}`)로 캐시 새로 읽기 |
+| [src/lib/officePresence.ts](src/lib/officePresence.ts) · [src/lib/officeLayout.ts](src/lib/officeLayout.ts) | 접속 목록 보관함 · 그림 위 자리 좌표(%) — 그림 `public/assets/office/office-153.webp` 를 바꾸면 좌표도 다시 |
+| [src/pages/OfficePage.tsx](src/pages/OfficePage.tsx) · [src/components/office/](src/components/office/) | `/office` — 사무실 그림(OfficeScene) · 내 말풍선 · 회의(MeetingPanel · OpenMeetingSheet · MinutesSheet) · 홈 「회의실 참석」 카드(OfficeEntryCard) · 전체 메뉴 '지점 회의실'(`requires: "office"`) |
+
+- 들어오는 사람: 그 지점 지도진(`_strategy_branch_staff`) + 대표님(`_strategy_hq`). 회의 열기 · 끝내기 · 정한 것 = `_strategy_can_direct`(대표님 · 지점장). 회원 · 다른 지점은 서버(`_office_role`)와 채널 정책(`_office_can_topic`)이 막는다.
+- 회의를 열면 지점 지도진 + 대표님에게 알림(`notifications` → 휴대폰 푸시, 링크 `/office`). 신호에는 내용이 없고 화면이 함수로 다시 읽는다.
+- 다른 지점을 켜려면 `office_branches` 에 한 줄(채널 이름 = `'office:' || branches.code`). 2단계 음성 · 카메라(Cloudflare RealtimeKit) · 3단계 회의록 → 전략 회의실 지시는 아직.
+
 ### 이모지 → 153 입체 아이콘 (2026-10-16 대표님: "이모지는 모두 빼고 … 퀄리티있는 디자인")
 
 앱 화면에 시스템 이모지가 나오지 않는다. 글자 속 이모지는 그릴 때 자동으로 153 입체 아이콘(img.emo3d, 글자 크기 1.2em)이 된다 — 코드의 이모지 문자열을 고칠 필요가 없다.

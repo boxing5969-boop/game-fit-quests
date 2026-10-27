@@ -14,8 +14,9 @@ export interface AppMenuItem {
   path: string;
   label: string;
   glyph: MenuGlyphName;
-  /** 이 조건이 켜진 사람에게만 보인다 — diet: 다이어트 프로그램 회원 · staff: 코치님·지점장·운영진 */
-  requires?: "diet" | "staff";
+  /** 이 조건이 켜진 사람에게만 보인다 — diet: 다이어트 프로그램 회원 · staff: 코치님·지점장·운영진 ·
+   *  office: 지점 회의실이 켜진 지점의 지도진 · 대표님 (서버 office_me) */
+  requires?: "diet" | "staff" | "office";
 }
 
 /**
@@ -38,6 +39,8 @@ export const APP_MENU: readonly AppMenuEntry[] = [
   // 전략 회의실 — 코치님·지점장·운영진만 (2026-10-19 대표님: "전략회의실 코치님들에게는 메뉴에 보이게 해줘 회원님들에게는 안보이고").
   //   메시지 화면의 '전략' 칸으로 바로 간다. 회원에게는 칸 자체가 없다 (서버도 strategy_* 를 코치진만 받는다).
   { path: "/messages?tab=strategy", label: "전략 회의실", glyph: "clipboard", requires: "staff" },
+  // 지점 회의실 — 지도진 가상 사무실 · 회의 채팅 (2026-10-27 보고서 '입구': 전략 회의실 옆 같은 칸). 지금은 선릉역점만.
+  { path: "/office", label: "지점 회의실", glyph: "chat", requires: "office" },
   // 영상 미션 — 153플레이(레벨 미션 영상, 월드 탭은 관리자만) + 타이틀매치(레벨 10·20·30·40 심사 동작 영상, 2026-10-01)
   {
     folder: "videos",
@@ -106,9 +109,17 @@ export const APP_MENU: readonly AppMenuEntry[] = [
 ];
 
 /** 회원에게 보일 메뉴 — 조건에 안 맞는 메뉴를 빼고, 하나만 남은 묶음은 그 메뉴로 펼친다 */
-export const buildAppMenu = (opts: { diet: boolean; staff?: boolean; hide?: (path: string) => boolean }): AppMenuEntry[] => {
+export const buildAppMenu = (opts: {
+  diet: boolean;
+  staff?: boolean;
+  office?: boolean;
+  hide?: (path: string) => boolean;
+}): AppMenuEntry[] => {
   const visible = (m: AppMenuItem) =>
-    (m.requires !== "diet" || opts.diet) && (m.requires !== "staff" || opts.staff === true) && !opts.hide?.(m.path);
+    (m.requires !== "diet" || opts.diet) &&
+    (m.requires !== "staff" || opts.staff === true) &&
+    (m.requires !== "office" || opts.office === true) &&
+    !opts.hide?.(m.path);
   const out: AppMenuEntry[] = [];
   for (const e of APP_MENU) {
     if (!isMenuFolder(e)) {
@@ -123,5 +134,5 @@ export const buildAppMenu = (opts: { diet: boolean; staff?: boolean; hide?: (pat
 };
 
 /** 펼친 목록 — 묶음 안의 메뉴까지 한 줄로 (검색·테스트용) */
-export const flatAppMenu = (opts: { diet: boolean; staff?: boolean }): AppMenuItem[] =>
+export const flatAppMenu = (opts: { diet: boolean; staff?: boolean; office?: boolean }): AppMenuItem[] =>
   buildAppMenu(opts).flatMap((e) => (isMenuFolder(e) ? [...e.items] : [e]));

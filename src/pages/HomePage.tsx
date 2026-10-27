@@ -63,6 +63,7 @@ import PushOptInCard from "@/components/notifications/PushOptInCard";
 import SurveyNudgeCard from "@/components/survey/SurveyNudgeCard";
 import BirthdayCongratsCard from "@/components/home/BirthdayCongratsCard";
 import GrowthLessonCard from "@/components/home/GrowthLessonCard";
+import OfficeEntryCard from "@/components/office/OfficeEntryCard";
 import { useTodayBirthdays } from "@/services/birthdayService";
 import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
 import TitleMatchInvitePopup from "@/components/titlematch/TitleMatchInvitePopup";
@@ -632,6 +633,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
 
           {/* 이번 달 만족도 조사 — 설문이 열린 지점 · 아직 참여 전인 회원에게만 (2026-10-15 대표님) */}
           <SurveyNudgeCard />
+
+          {/* 🏢 회의실 참석 — 지점 회의실에 들어갈 수 있는 지도진 · 대표님에게만 (회원에게는 칸 자체가 없다, 2026-10-27) */}
+          <OfficeEntryCard />
 
           {/* ─── 전체 메뉴 (접기) — 하단 탭이 4개로 줄면서 전체 메뉴는 여기서 연다 ─── */}
           <section>

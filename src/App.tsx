@@ -28,6 +28,7 @@ import PostActionReflectionSheet from "@/components/home/PostActionReflectionShe
 import CredentialChangePrompt from "@/components/CredentialChangePrompt";
 import GlobalMemberCard from "@/components/license/GlobalMemberCard";
 import InviteRewardBridge from "@/components/InviteRewardBridge";
+import OfficePresenceBridge from "@/components/office/OfficePresenceBridge";
 import LinkAccountPrompt from "@/components/LinkAccountPrompt";
 import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
 import RouteLoader from "@/components/splash/RouteLoader";
@@ -134,6 +135,8 @@ const TitleMatchPage = lazyWithRetry(() => import("@/pages/TitleMatchPage"));
 const NotificationsPage = lazyWithRetry(() => import("@/pages/NotificationsPage"));
 // 붕대 감기 — 영상·집 연습 미션 (2026-10-13 대표님, 2026-10-17 그림 단계는 지움 — 대표님이 직접 찍은 영상으로)
 const HandWrapGuidePage = lazyWithRetry(() => import("@/pages/HandWrapGuidePage"));
+// 지점 회의실 — 지도진 가상 사무실 · 회의 채팅 (2026-10-27, 서버가 지점 지도진 + 대표님만 들인다)
+const OfficePage = lazyWithRetry(() => import("@/pages/OfficePage"));
 const MyAttendancePage = lazyWithRetry(() => import("@/pages/MyAttendancePage"));
 
 const queryClient = new QueryClient({
@@ -356,6 +359,7 @@ const AppRoutes = () => {
         <Route path="/title-match" element={<ProtectedRoute><TitleMatchPage /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
         <Route path="/handwrap" element={<ProtectedRoute><HandWrapGuidePage /></ProtectedRoute>} />
+        <Route path="/office" element={<ProtectedRoute><OfficePage /></ProtectedRoute>} />
         <Route path="/library" element={<ProtectedRoute><BoxingLibraryPage /></ProtectedRoute>} />
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         {/* 사이니지용 짧은 주소 — 리모컨으로 치기 쉽게. /tv/sunreung/1 처럼 화면 번호를 붙이면
@@ -409,6 +413,8 @@ const AppRoutes = () => {
       {user && !signage && <GlobalMemberCard />}
       {/* 초대받아 처음 들어온 회원이면 초대한 사람에게 챔피언 머니 1,000 (2026-10-18) */}
       {user && !signage && <InviteRewardBridge />}
+      {/* 지점 회의실 접속 신호 — 지도진이 앱을 열면 사무실 자기 자리에 앉고, 닫으면 30초 뒤 일어난다 (2026-10-27) */}
+      {user && !signage && <OfficePresenceBridge />}
       {/* 소셜 첫 로그인 전화번호 연동(권장·스킵) — phone 없는 소셜 회원 */}
       {user && splashDone && !signage && <LinkAccountPrompt />}
       {/* 쿨드 스타트 스플래시 (z-[80] · 포털). 세션 1회. */}

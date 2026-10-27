@@ -11,6 +11,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDmSummary } from "@/hooks/useDm";
 import { useStrategyBadge } from "@/services/strategyService";
+import { useOfficeMe } from "@/services/officeService";
 import { buildAppMenu, isMenuFolder, type AppMenuEntry, type AppMenuItem } from "@/lib/appMenu";
 import GlyphTile, { GlyphFolderTile } from "@/components/icons/GlyphTile";
 import { cn } from "@/lib/utils";
@@ -61,9 +62,13 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
   const staff =
     dm?.kind === "coach" || dm?.kind === "hq" || role === "branch_manager" || role === "super_admin" || role === "admin";
   const { data: strategyBadge = 0 } = useStrategyBadge(staff);
+  // 지점 회의실 칸 — 회의실이 켜진 지점의 지도진 · 대표님만 (서버 office_me 가 정한다, 2026-10-27)
+  const { data: officeMe } = useOfficeMe(staff);
+  const office = (officeMe?.offices.length ?? 0) > 0;
+  const officeLive = !!officeMe?.offices.some((o) => o.meeting);
   const entries = useMemo(
-    () => buildAppMenu({ diet, staff, hide: (path) => dmOff && path === "/messages" }),
-    [diet, staff, dmOff],
+    () => buildAppMenu({ diet, staff, office, hide: (path) => dmOff && path === "/messages" }),
+    [diet, staff, office, dmOff],
   );
   const [open, setOpen] = useState<string | null>(null);
 
@@ -74,7 +79,13 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
   };
   // 칸 오른쪽 위 숫자 — 메시지: 안 읽은 대화 · 전략 회의실: 아직 확인 안 한 지시·전략
   const badgeOf = (m: AppMenuItem) =>
-    m.path === "/messages" ? dmBadge : m.path.startsWith("/messages?tab=strategy") ? strategyBadge : 0;
+    m.path === "/messages"
+      ? dmBadge
+      : m.path.startsWith("/messages?tab=strategy")
+        ? strategyBadge
+        : m.path === "/office" && officeLive
+          ? 1 // 회의가 열려 있으면 빨간 점 1
+          : 0;
 
   const tile = (e: AppMenuEntry) => {
     if (!isMenuFolder(e)) {
