@@ -166,6 +166,19 @@ export const useOfficeMeetingsList = (branch: string | null, enabled = true) =>
     },
   });
 
+/** 음성 · 카메라 회의(2단계)를 켰나 — 영상 서비스 설정이 끝나야 회의 화면에 '음성 참여' 막대가 보인다 (실패하면 안 보임) */
+export const useOfficeCallReady = (enabled = true) =>
+  useQuery({
+    queryKey: [...OFFICE_KEY, "call-ready"],
+    enabled,
+    staleTime: 5 * 60_000,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await rpc("office_call_ready");
+      return !error && data === true;
+    },
+  });
+
 /* ───────────── 쓰기 ───────────── */
 
 const useInvalidate = () => {

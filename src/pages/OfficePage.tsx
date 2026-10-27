@@ -130,7 +130,7 @@ const OfficePage = () => {
             </div>
           )}
 
-          <OfficeScene state={state} online={online} className="rounded-3xl shadow-elev-1" />
+          <OfficeScene state={state} online={online} voice={{ calls: presence.calls }} className="rounded-3xl shadow-elev-1" />
 
           {/* 내 상태 말풍선 */}
           <div className="rounded-3xl bg-card p-3.5 shadow-elev-1">

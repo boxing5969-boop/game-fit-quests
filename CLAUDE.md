@@ -135,7 +135,22 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 
 - 들어오는 사람: 그 지점 지도진(`_strategy_branch_staff`) + 대표님(`_strategy_hq`). 회의 열기 · 끝내기 · 정한 것 = `_strategy_can_direct`(대표님 · 지점장). 회원 · 다른 지점은 서버(`_office_role`)와 채널 정책(`_office_can_topic`)이 막는다.
 - 회의를 열면 지점 지도진 + 대표님에게 알림(`notifications` → 휴대폰 푸시, 링크 `/office/room` — 누르면 바로 회의 화면, 20261027185918). 회의 화면은 이 기기에 고른 지점에 회의가 없으면 회의가 열린 지점으로 연다. 신호에는 내용이 없고 화면이 함수로 다시 읽는다.
-- 다른 지점을 켜려면 `office_branches` 에 한 줄(채널 이름 = `'office:' || branches.code`). 2단계 음성 · 카메라(Cloudflare RealtimeKit) · 3단계 회의록 → 전략 회의실 지시는 아직.
+- 다른 지점을 켜려면 `office_branches` 에 한 줄(채널 이름 = `'office:' || branches.code`). 3단계 회의록 → 전략 회의실 지시는 아직.
+
+#### 2단계 — 음성 · 카메라 회의 (2026-10-27 대표님 "다음 단계 작업하자" · Cloudflare RealtimeKit)
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261027191924_office_call.sql](supabase/migrations/20261027191924_office_call.sql) | `office_meetings.rtk_meeting_id`(회의마다 RealtimeKit 회의 하나) · `office_call_participants`(회의 · 사람마다 참가자 하나, 서버 키만) · `office_call_ticket`(권한 + 보일 이름 · 역할) · `office_call_end_check`(대표님 · 지점장) · `office_call_ready`(설정 끝났나) |
+| [supabase/functions/office-call/index.ts](supabase/functions/office-call/index.ts) | 입장권 — 부른 사람 토큰으로 `office_call_ticket` → RealtimeKit 회의 · 참가자(다시 들어오면 입장권만 새로) → `{token, host}`. `{action:'end'}` = 모두 내보내고 닫기. 녹음 · 녹화 없음 |
+| [src/lib/officeCall.ts](src/lib/officeCall.ts) | 음성 회의 보관함 — SDK(`@cloudflare/realtimekit`, 따로 내려받는 조각)는 '음성 참여'를 누를 때만. 다른 사람 소리는 `<audio>` 하나(누른 순간 켜 둬야 아이폰이 튼다 — `joinOfficeCall` 은 누를 때 바로) · 말하는 사람은 소리 크기(Web Audio) · 내 음성 회의 · 마이크 · 카메라는 Presence 표시에 싣는다(`setOfficeSelfMeta` → `calls`) |
+| [src/components/office/OfficeCallBar.tsx](src/components/office/OfficeCallBar.tsx) | 회의실 그림 아래 막대(음성 참여 · 말하기 · 카메라 · 모두 마이크 끄기(대표님 · 지점장) · 나가기 · 소리 켜기) + 카메라 작은 화면(그림 왼쪽 아래, 누르면 크게, 내 화면은 거울) |
+
+- 들어가면 마이크 · 카메라는 꺼진 채(체육관 음악 · 소음) — 본인이 '말하기' · 카메라를 눌러야 켜진다. 대표님 · 지점장은 다른 사람을 끌 수만 있다(`disableAllAudio(true)`, 켜는 건 본인).
+- 사무실 그림: 음성 회의 중인 사람은 회의실 발밑 이름표 안에 헤드폰(듣는 중) · 마이크(켬), 말하는 동안 이름표가 민트색 + 캐릭터가 들썩(말하는 중은 음성방에 들어간 사람만 안다). 책상 자리는 어깨에 작은 표시.
+- 회의 화면을 떠나거나 '나가기' · 회의가 끝나면 음성 회의에서도 나간다. '끝내기'는 음성방도 닫는다(kick-all → INACTIVE). 음성 회의 중이면 화면을 꺼도 자리를 지킨다.
+- 설정: API 토큰 = Edge Function 시크릿 `CF_REALTIME_TOKEN`(Cloudflare 계정 API 토큰 · Realtime Admin, 키 값은 채팅 · 코드 · 커밋 금지) · 계정 · 앱 번호(비밀 아님) = `internal_sync_config` `office_call` `{"account_id","app_id"}`(또는 시크릿 `CF_ACCOUNT_ID` · `CF_RTK_APP_ID`). 이 줄이 생겨야 `office_call_ready` 가 참 → 회의 화면에 음성 막대가 보인다. 프리셋은 대시보드에서 앱을 만들면 생기는 `group_call_host`(대표님 · 지점장) · `group_call_participant`(코치) — 이름이 다르면 함수가 앱 프리셋 목록에서 찾는다.
+- 비용: 영상 프리셋이라 카메라를 안 켜도 참가자 1분 $0.002 (보고서 추정 월 $4 안팎). 개인정보 처리방침 위탁 표 Cloudflare 줄에 회의 음성 · 영상 연결 추가(녹음 · 녹화 안 함).
 
 ### 이모지 → 153 입체 아이콘 (2026-10-16 대표님: "이모지는 모두 빼고 … 퀄리티있는 디자인")
 
