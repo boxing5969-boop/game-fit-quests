@@ -241,7 +241,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 스위치: `internal_sync_config` key `community_notify_since` = 켠 시각(ISO). 없거나 'off' 면 153 · 댓글 · 월요일 알림이 하나도 안 나간다(화면 기능은 그대로). 켠 뒤에 눌린 153 만 알림 대상.
 - 알림: 평일 08~22시만(쉬는 때 받은 153 은 다음 평일 아침 첫 알림으로 묶임) · 커뮤니티 휴대폰 알림은 하루 3번까지(넘으면 `pushed_at = now()` 로 알림함에만) · 회원 설정 `profiles.cheer_notify`('응원 · 153 · 댓글 알림 받기')를 같이 쓴다.
 - 핵심 숫자: 커뮤니티 활동 회원 비율 = 그 주 커뮤니티에서 누르거나 쓴 회원(글 · 153 · 댓글 · 응원 · 환영 · 하트) ÷ 그 주 출석 회원 — 선릉역점, 코치 · 운영진 · 체험 계정 제외. 목표 4주 15% · 8주 25% (시작점: 2026-10-19~25 주 4% — 출석 94명 중 4명).
-- 미리보기(`preview/community`) 확인 뒤 main 에 합칠 때: 스위치 켜기 + 출석 알림(`attendance_base_xp_trg` 의 오삼코치 칭찬이 없는 갈래)에 커뮤니티 링크 — 기존 함수 동작이 바뀌므로 합칠 때 따로.
+- 켬 (2026-10-27 자정 무렵 대표님 "올려" — 미리보기 `preview/community` 확인 뒤 main 에 합침 · [20261027235213_community_phase1_on.sql](supabase/migrations/20261027235213_community_phase1_on.sql)): 스위치 켬 + 출석 알림(`attendance_base_xp_trg` 의 오삼코치 칭찬이 없는 갈래)을 누르면 커뮤니티(`/myboxer/community` · '오늘 같이 운동한 동료에게 153을 보내 보세요'). 앱에서 숨겨 둔 지점(`branches.is_visible` false)은 예전 그대로(링크 없음 · 홈 안내). 끄기 = `community_notify_since` 를 'off'.
 
 ### 153마인드셋 — 시각화 훈련 (2026-10-19 전면 개편, 라우트 /myboxer/visualization)
 
