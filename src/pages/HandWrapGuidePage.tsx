@@ -11,13 +11,15 @@
  *   2026-10-27 대표님: "화질도 많이 깨지고 … 방향이랑 속도 조절 등을 통해 좀 더 잘 따라 할 수 있게 · 한눈에 처음부터 끝까지 설명서처럼"
  *     → 큰 영상에 '내 눈으로'(앞에서 찍은 영상을 180도 = 내 손을 내려다보는 방향) · 처음 속도 0.75배
  *     → '한 단계씩' = 실제로 감는 장면(선명하게) · 속도 · 왼손/오른손(거울) · '한눈에 설명서' (HandWrapStepViewer)
+ *   2026-10-27 10:01 대표님: "한눈에 9장 · 누르면 상세페이지처럼 · 사진에 방향과 어디서 시작해 어디로 · 움직이는 사진으로 · 한 단계씩"
+ *     → '9단계 설명서' = 한눈에 9칸(사진 + 방향 + 짧은 글) → 누르면 상세(/handwrap?step=N): 움직이는 사진 → 끝 장면에 시작 → 끝 방향 → 반복
  *
  *   신규 회원 첫날: 코치님은 한 손만 빠르게 감아 주고, 다른 손은 회원이 영상을 보며 직접 감는다.
  *   그리고 집에서 혼자 감아 보는 미션(HandWrapPracticeCard) — 다음 수업 때 코치님이 회원 상세에서 기록을 본다.
  *
  *   · 영상: data/handWrapGuide HANDWRAP_ANGLES (public/handwrap/) + 훈련 라이브러리 '복싱 붕대 감기'에 코치가 넣은
  *     영상이 있으면 '코치 영상' 칸으로 하나 더.
- *   · 글: data/handWrapGuide.ts — 사진 10장 · 흔한 실수 · 영상 핵심 포인트.
+ *   · 글: data/handWrapGuide.ts — 9단계(글 · 움직이는 사진 · 방향 좌표) · 흔한 실수 · 영상 핵심 포인트.
  */
 import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -82,7 +84,7 @@ const HandWrapGuidePage = () => {
       header={
         <PageHeader
           title="붕대 감기"
-          subtitle="영상 · 한 단계씩 천천히 · 한눈에 설명서 · 집 연습"
+          subtitle="영상 · 9단계 설명서 · 집 연습"
           sticky
           leftAction={
             <button
@@ -159,13 +161,13 @@ const HandWrapGuidePage = () => {
         </div>
       </section>
 
-      {/* ── 한 단계씩 — 배경 지운 짧은 영상 + 감는 방향 화살표 (2026-10-20 대표님) ── */}
+      {/* ── 9단계 설명서 — 한눈에 9칸 → 누르면 움직이는 사진 + 방향 + 자세한 설명 (2026-10-27 대표님) ── */}
       <section aria-labelledby="handwrap-steps-h" className="mt-7">
         <h2 id="handwrap-steps-h" className="px-1 text-[16px] font-black text-foreground">
-          한 단계씩 천천히 · 한눈에 설명서
+          9단계 설명서 · 한 단계씩 따라 하기
         </h2>
         <p className="mt-0.5 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
-          단계마다 실제로 감는 장면을 천천히 반복해요. 오른손을 감을 땐 &lsquo;오른손&rsquo;을 누르면 거울처럼 뒤집어 보여요 · 옆으로 밀어도 넘어가요
+          사진을 누르면 그 단계를 실제로 감는 움직이는 사진과 자세한 설명이 나와요. 초록 점에서 시작해 주황 점으로 감아요 · 오른손은 &lsquo;오른손&rsquo;을 누르면 거울처럼 보여요
         </p>
         <HandWrapStepViewer onWatch={watchStep} className="mt-2" />
       </section>
