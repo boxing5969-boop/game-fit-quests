@@ -5,7 +5,8 @@
  *   · 댓글(피드백) · 추천 수업(지시권자) · 지우기(글쓴이 · 지시권자)
  */
 import { useState } from "react";
-import { Check, ChevronDown, ChevronUp, MessageCircle, Play, Star, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Check, ChevronDown, ChevronUp, FileText, MessageCircle, Play, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -77,6 +78,9 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
   const applied = !!item.my_ack?.applied_at;
   const d = item.data ?? {};
   const canDelete = item.mine || canDirect;
+  const navigate = useNavigate();
+  // 지점 회의실 3단계 — 회의에서 정한 것으로 만든 지시는 그 회의록으로 (office_wrap_up 이 data.meeting_id 를 남긴다)
+  const meetingId = item.kind === "directive" && typeof d.meeting_id === "string" ? d.meeting_id : null;
 
   const doAck = (what: "ack" | "applied") =>
     ack.mutate(
@@ -271,6 +275,15 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
           >
             <Star className={cn("h-3.5 w-3.5", item.starred && "fill-current")} />
             {item.starred ? "추천됨" : "추천 수업"}
+          </button>
+        )}
+        {meetingId && (
+          <button
+            type="button"
+            onClick={() => navigate(`/office?minutes=${meetingId}`)}
+            className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[12px] font-bold text-muted-foreground active:scale-95"
+          >
+            <FileText className="h-3.5 w-3.5" /> 회의록 보기
           </button>
         )}
         {item.kind === "program" && canDirect && onReuse && (

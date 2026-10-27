@@ -34,6 +34,7 @@ const KEYS_FOR: Record<string, string[]> = {
   status: ["state"],
   attendees: ["state", "messages"],
   meeting: ["state", "me", "messages", "list"],
+  recap: ["recap", "list"], // 3단계 — 요약 · 전략 회의실 지시 · 못 오신 분 알림
 };
 
 const OfficePresenceBridge = () => {

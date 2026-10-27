@@ -7,10 +7,11 @@
  *   · 내 상태 말풍선: 자리에 있음 · 수업 중 · 자리 비움 (본인이 누르기)
  *   · 회의 열기(대표님 · 지점장) → 지도진 알림 → 회의실 화면(/office/room — 그림 + 채팅 한 화면, 말풍선) → 끝내면 회의록
  *   · 출입은 서버가 정한다(office_* 함수 · 비공개 실시간 채널) — 회원 화면에는 입구 자체가 없다.
- *   2단계 음성 · 카메라(Cloudflare RealtimeKit) · 3단계 회의록 → 전략 회의실 지시는 다음에.
+ *   2단계 음성 · 카메라(Cloudflare RealtimeKit — 회의 화면) · 3단계 회의록 → 전략 회의실 지시 · 못 오신 분 요약(끝내기 시트 · 회의록)
+ *   ?minutes=<회의> 로 오면 그 회의록을 바로 연다 (못 오신 회의 요약 알림 · 지시 카드 '회의록 보기')
  */
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,23 @@ const OfficePage = () => {
   const list = useOfficeMeetingsList(state?.branch ?? branch, !!state);
   const [openSheet, setOpenSheet] = useState(false);
   const [minutesId, setMinutesId] = useState<string | null>(null);
+  // 알림 '못 오신 회의 요약'(3단계) · 전략 회의실 지시의 '회의록 보기' — /office?minutes=<회의>
+  const [params, setParams] = useSearchParams();
+  const minutesParam = params.get("minutes");
+  useEffect(() => {
+    if (minutesParam && /^[0-9a-f-]{36}$/i.test(minutesParam)) setMinutesId(minutesParam);
+  }, [minutesParam]);
+  const closeMinutes = () => {
+    setMinutesId(null);
+    if (minutesParam)
+      setParams(
+        (p) => {
+          p.delete("minutes");
+          return p;
+        },
+        { replace: true },
+      );
+  };
 
   const setBranch = (b: string) => {
     setBranchState(b);
@@ -236,7 +254,7 @@ const OfficePage = () => {
           onOpened={() => navigate("/office/room")}
         />
       )}
-      <MinutesSheet meetingId={minutesId} onClose={() => setMinutesId(null)} />
+      <MinutesSheet meetingId={minutesId} onClose={closeMinutes} />
     </AppPage>
   );
 };

@@ -136,7 +136,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 
 - 들어오는 사람: 그 지점 지도진(`_strategy_branch_staff`) + 대표님(`_strategy_hq`). 회의 열기 · 끝내기 · 정한 것 = `_strategy_can_direct`(대표님 · 지점장). 회원 · 다른 지점은 서버(`_office_role`)와 채널 정책(`_office_can_topic`)이 막는다.
 - 회의를 열면 지점 지도진 + 대표님에게 알림(`notifications` → 휴대폰 푸시, 링크 `/office/room` — 누르면 바로 회의 화면, 20261027185918). 회의 화면은 이 기기에 고른 지점에 회의가 없으면 회의가 열린 지점으로 연다. 신호에는 내용이 없고 화면이 함수로 다시 읽는다.
-- 다른 지점을 켜려면 `office_branches` 에 한 줄(채널 이름 = `'office:' || branches.code`). 3단계 회의록 → 전략 회의실 지시는 아직.
+- 다른 지점을 켜려면 `office_branches` 에 한 줄(채널 이름 = `'office:' || branches.code`).
 - 줌 · 구글 미트 링크 (2026-10-27 대표님 "그렇게하자" — 지도진끼리는 앱 음성 회의, 바깥 분이 함께하는 회의는 기존 줌 · 미트 링크): `office_meetings.video_url` · `office_set_meeting_link`(대표님 · 지점장, 넣거나 빼면 채팅에 안내 한 줄) · `_office_video_url`(초대 글을 통째로 붙여 넣어도 첫 링크만, zoom.us · zoom.com · meet.google.com 만 — 화면 [src/lib/meetingLink.ts](src/lib/meetingLink.ts) 와 같은 규칙) · `office_state` 의 `meeting.video_url` · `last_video_url`(대표님 · 지점장에게만, 회의 열기 칸 '지난번 링크 쓰기') — 20261027204015. 회의 화면 그림 아래 '줌 회의 들어가기'(`MeetingLinkBar`, 아이폰 앱은 앱 안 사파리 창) · 넣기/바꾸기는 '바꾸기' 또는 안건 띠를 펼쳐서.
 
 #### 2단계 — 음성 · 카메라 회의 (2026-10-27 대표님 "다음 단계 작업하자" · Cloudflare RealtimeKit)
@@ -154,6 +154,18 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 설정: API 토큰 = Edge Function 시크릿 `CF_REALTIME_TOKEN`(Cloudflare 계정 API 토큰 · Realtime Admin, 키 값은 채팅 · 코드 · 커밋 금지) · 계정 · 앱 번호(비밀 아님) = `internal_sync_config` `office_call` `{"account_id","app_id"}`(또는 시크릿 `CF_ACCOUNT_ID` · `CF_RTK_APP_ID`). 이 줄이 생겨야 `office_call_ready` 가 참 → 회의 화면에 음성 막대가 보인다. 프리셋은 대시보드에서 앱을 만들면 생기는 `group_call_host`(대표님 · 지점장) · `group_call_participant`(코치) — 이름이 다르면 함수가 앱 프리셋 목록에서 찾는다.
 - 켬 (2026-10-27 21시): 토큰은 대표님이 Cloudflare 에서 만들어 Supabase 시크릿에 직접 넣음 · Cloudflare 대시보드 › RealtimeKit 앱 `myboxer153-office`(기본 프리셋 그대로, `group_call_participant` 는 대기실 없이 바로 입장) · `internal_sync_config.office_call` 넣음 → 대표님 계정으로 선릉역점 회의에 듣기만 들어가 확인(마이크 권한 창 안 뜸 · 나가면 헤드폰 표시 사라짐).
 - 비용: 영상 프리셋이라 카메라를 안 켜도 참가자 1분 $0.002 (보고서 추정 월 $4 안팎). 개인정보 처리방침 위탁 표 Cloudflare 줄에 회의 음성 · 영상 연결 추가(녹음 · 녹화 안 함).
+
+#### 3단계 — 회의록 → 전략 회의실 지시 · 못 오신 분 요약 (2026-10-27 대표님 "다음단계진행할까?")
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261027213757_office_minutes_strategy.sql](supabase/migrations/20261027213757_office_minutes_strategy.sql) | `office_meetings.summary · summary_by · summary_at · directive_id · recap_at · recap_to` · `office_recap`(요약 · 정한 것 수 · 지시 확인 n/n · `to_ack` · 못 온 분) · `office_save_summary`(대표님 · 지점장, 3줄까지) · `office_wrap_up`(끝난 회의, 회의마다 한 번 — 정한 것 → `strategy_items` 지시 한 건 + 못 온 분께 알림) · `_office_absent` |
+| [supabase/functions/office-summary/](supabase/functions/office-summary/index.ts) | 오삼코치 3줄 요약 — 부른 사람 토큰으로 `office_recap`(host) · `office_messages` → Haiku 5.5(JSON 3줄, [summary.ts](supabase/functions/office-summary/summary.ts) 검사) → `office_save_summary(…, 'ai')`. 사람마다 하루 20번 · `ai_usage_log.feature='meeting_summary'` · body `{preview:true}` 는 저장 없이 줄만 |
+| [src/components/office/OfficeMeeting.tsx](src/components/office/OfficeMeeting.tsx) | `EndMeetingSheet` — 끝내면서 함께 할 것(스위치 3개: 오삼코치 요약 · 정한 것 → 지시 · 못 오신 분 알림) → 요약(20초 넘으면 건너뜀) → 끝내기 → `office_wrap_up` · `MinutesSheet` — 요약(다시 정리) · 지시 '확인 n/n'(받는 사람은 '확인하러 가기') · 알림 현황, 끝낼 때 못 한 것은 여기서 보낸다 |
+
+- 지시 모양(`strategy_items` kind directive): 제목 '회의에서 정한 것 · <회의>' · 상황 = 날짜 · 참석 · 시간 + 요약 줄 · 요청 = 정한 것 번호 목록 · 대상 = '<지점> 지도진 모두' · `data.meeting_id` → 지시 카드 '회의록 보기'(`/office?minutes=<회의>`). 확인 · 다음 날 09:00 재알림은 전략 회의실 그대로.
+- 알림 하나씩: 못 온 분(지점 지도진 + 대표님 중 한 번도 안 들어온 분)은 '못 오신 회의 요약 · <회의>'(→ 회의록)만, 나머지 지점 지도진은 '📌 새 지시'만. 회의 화면 신호 `recap`.
+- 개인정보 처리방침: 선택 항목 · Anthropic 위탁 줄 · 국외 이전에 '지점 회의실 회의 요약' 추가 (요약을 고를 때만 채팅이 간다, 앱에는 세 줄만).
 
 ### 이모지 → 153 입체 아이콘 (2026-10-16 대표님: "이모지는 모두 빼고 … 퀄리티있는 디자인")
 

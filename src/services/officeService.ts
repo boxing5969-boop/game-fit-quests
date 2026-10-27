@@ -99,6 +99,36 @@ export interface OfficeMinutes {
   messages: OfficeMessage[];
 }
 
+/** 회의 정리 현황 (3단계 — 20261027213757 office_recap) */
+export interface OfficeRecap {
+  meeting_id: string;
+  closed: boolean;
+  /** 대표님 · 지점장 (요약 · 지시 · 알림을 보낼 수 있다) */
+  host: boolean;
+  /** 3줄 요약 (없으면 null) */
+  summary: string[] | null;
+  summary_by: "ai" | "host" | null;
+  summary_at: string | null;
+  /** 정한 것 수 */
+  decisions: number;
+  /** 시스템 줄을 뺀 말 수 */
+  talk: number;
+  /** 전략 회의실로 보낸 지시 — 확인 n/n, to_ack = 내가 아직 '확인했어요'를 안 누른 받는 사람 */
+  directive: { id: string; targets: number; acked: number; to_ack: boolean } | null;
+  /** 못 오신 분께 요약 알림을 보낸 때 · 몇 분께 */
+  recap_at: string | null;
+  recap_to: number | null;
+  /** 회의에 한 번도 안 들어온 지점 지도진 + 대표님 */
+  absent: OfficeDisplay[];
+}
+
+export interface OfficeWrapResult {
+  directive_id: string | null;
+  directive_new: boolean;
+  recap_new: boolean;
+  recap_to: number;
+}
+
 export interface OfficeMeetingSummary {
   id: string;
   title: string;
@@ -168,6 +198,15 @@ export const useOfficeMeetingsList = (branch: string | null, enabled = true) =>
       const d = await call<OfficeMeetingSummary[] | null>("office_meetings_list", { p_branch: branch, p_limit: 20 }, "회의록을 불러오지 못했어요");
       return Array.isArray(d) ? d : [];
     },
+  });
+
+/** 회의 정리 현황 — 3줄 요약 · 전략 회의실 지시(확인 n/n) · 못 오신 분 · 요약 알림 */
+export const useOfficeRecap = (meetingId: string | null | undefined, enabled = true) =>
+  useQuery({
+    queryKey: [...OFFICE_KEY, "recap", meetingId],
+    enabled: enabled && !!meetingId,
+    staleTime: 10_000,
+    queryFn: () => call<OfficeRecap>("office_recap", { p_meeting: meetingId }, "회의 정리를 불러오지 못했어요"),
   });
 
 /** 음성 · 카메라 회의(2단계)를 켰나 — 영상 서비스 설정이 끝나야 회의 화면에 '음성 참여' 막대가 보인다 (실패하면 안 보임) */
@@ -257,6 +296,49 @@ export const useSetMeetingLink = () => {
       call<string | null>("office_set_meeting_link", { p_meeting: v.meetingId, p_url: v.url }, "링크를 넣지 못했어요"),
     onSuccess: invalidate,
   });
+};
+
+/**
+ * 회의 마무리 — 끝난 회의에서 대표님 · 지점장 (회의마다 한 번씩)
+ *   directive: 정한 것 → 전략 회의실 '지시' · recap: 못 오신 분께 '못 오신 회의 요약' 알림(→ 회의록)
+ */
+export const useWrapUpMeeting = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { meetingId: string; directive: boolean; recap: boolean }) =>
+      call<OfficeWrapResult>(
+        "office_wrap_up",
+        { p_meeting: v.meetingId, p_directive: v.directive, p_recap: v.recap },
+        "보내지 못했어요",
+      ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: OFFICE_KEY });
+      void qc.invalidateQueries({ queryKey: ["strategy"] }); // 전략 회의실 지시 목록 · 탭 빨간 점
+    },
+  });
+};
+
+/** 오삼코치 3줄 요약 (Edge Function office-summary — 회의 채팅 → Haiku, 요약만 저장). 실패하면 한국어 안내로 throw */
+export async function summarizeMeeting(meetingId: string): Promise<string[]> {
+  const { data, error } = await supabase.functions.invoke("office-summary", { body: { meeting_id: meetingId } });
+  if (error) {
+    let message = "";
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ctx = (error as any)?.context;
+      if (ctx && typeof ctx.json === "function") message = (await ctx.json())?.message ?? "";
+    } catch {
+      /* 무시 */
+    }
+    throw new Error(message || "지금은 정리하지 못했어요 — 잠시 후 다시 눌러 주세요");
+  }
+  if (!data?.ok || !Array.isArray(data?.lines)) throw new Error(data?.message || "지금은 정리하지 못했어요");
+  return data.lines as string[];
+}
+
+export const useSummarizeMeeting = () => {
+  const invalidate = useInvalidate();
+  return useMutation({ mutationFn: summarizeMeeting, onSuccess: invalidate });
 };
 
 /* ───────────── 화면 도우미 ───────────── */
