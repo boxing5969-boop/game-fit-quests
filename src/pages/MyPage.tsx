@@ -499,11 +499,11 @@ const MyPage = () => {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
-            {/* 받은 응원함 — 누가 어떤 응원을 보냈는지 · 고마워요 153 (2026-10-16) */}
+            {/* 응원함 — 누가 어떤 응원을 보냈는지 · 고마워요 153 (2026-10-16) · 내가 보낸 응원 칸 (2026-10-28 회원 제안) */}
             <button onClick={() => setShowCheers(true)} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">📣</span>
-                <span className="text-sm text-foreground">받은 응원</span>
+                <span className="text-sm text-foreground">받은 · 보낸 응원</span>
               </div>
               <span className="flex items-center gap-1.5">
                 <span className="number-font text-[13px] font-bold text-muted-foreground">{receivedCheers?.total ?? 0}개</span>

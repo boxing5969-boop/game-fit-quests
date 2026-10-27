@@ -202,7 +202,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 | [supabase/migrations/20261016110000_cheer_upgrade.sql](supabase/migrations/20261016110000_cheer_upgrade.sql) | `send_boxing_cheer`(스티커·한마디 하루 10번·같은 동료 1번, 하루 첫 응원 챔피언 머니 +30, 받은 사람 알림 — 휴대폰은 하루 3번째까지, 같은 지점만, 금지어) · `get_cheer_candidates` · `get_my_received_cheers` · `thank_cheer` · `get_member_cheer_summary` · `set_cheer_notify` |
 | [src/components/engagement/SecondCheerSheet.tsx](src/components/engagement/SecondCheerSheet.tsx) | 보내기 시트 — 지금 운동 중 → 오늘 다녀간 동료 → 최근 출석, `initialTarget`(라이센스에서) · `stacked` |
 | [src/lib/cheerStickers.ts](src/lib/cheerStickers.ts) | 스티커 글자 ↔ 그림(`public/assets/cheer/*.webp`), 상황 추천(생일·승급·복귀) |
-| [src/components/engagement/ReceivedCheersSheet.tsx](src/components/engagement/ReceivedCheersSheet.tsx) | 받은 응원함 + 고마워요 153 — 내정보 '받은 응원' · 알림 링크 `/mypage?cheers=1` |
+| [src/components/engagement/ReceivedCheersSheet.tsx](src/components/engagement/ReceivedCheersSheet.tsx) | 응원함 — '받은 응원'(고마워요 153) · '보낸 응원'(누구에게 · 언제 · 스티커/한마디 · 고마워요 받음, `get_my_sent_cheers` — 20261028002152, 2026-10-28 회원 제안) 두 칸. 내정보 '받은 · 보낸 응원' · 알림 링크 `/mypage?cheers=1` · 응원 보내기 창 '보낸 응원 보기'(`initialTab="sent"` · `stacked`) |
 
 ### 커뮤니티 글 공개 범위 · 운영진 보기 권한 (2026-10-18)
 

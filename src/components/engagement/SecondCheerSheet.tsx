@@ -29,6 +29,7 @@ import type { CheerCandidate } from "@/services/cheerService";
 import type { SendCheerResult } from "@/services/boxingEngagementService";
 
 import CheerStickerPicker from "./CheerStickerPicker";
+import ReceivedCheersSheet from "./ReceivedCheersSheet";
 
 export interface CheerInitialTarget {
   user_id: string;
@@ -108,6 +109,11 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<SendCheerResult | null>(null);
+  // 보낸 응원 보기 (2026-10-28 회원 제안) — 이 창 위로 응원함 '보낸 응원' 칸
+  const [historyOpen, setHistoryOpen] = useState(false);
+  useEffect(() => {
+    if (!open) setHistoryOpen(false);
+  }, [open]);
   // 방금 보낸 동료 — 목록을 다시 받기 전에도 '보냄'으로
   const [sentIds, setSentIds] = useState<Set<string>>(() => new Set());
   // 보낸 시각 — 서버 목록(sent_today)이 아직 반영하지 못한 것만 더한다
@@ -319,9 +325,19 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
     return (
       <div className="space-y-4">
         <div className="rounded-card border border-primary/15 bg-primary/5 px-3.5 py-3">
-          <p className="text-[12.5px] font-bold text-foreground">
-            오늘 {Math.min(sentToday, dailyLimit)}/{dailyLimit}번 보냈어요
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[12.5px] font-bold text-foreground">
+              오늘 {Math.min(sentToday, dailyLimit)}/{dailyLimit}번 보냈어요
+            </p>
+            <button
+              type="button"
+              onClick={() => setHistoryOpen(true)}
+              className="-my-1 flex min-h-[36px] shrink-0 items-center gap-0.5 rounded-pill px-2 text-[12px] font-bold text-primary active:scale-95"
+            >
+              보낸 응원 보기
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
           <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
             {sentToday === 0 ? "오늘 첫 응원은 챔피언 머니 +30 · " : ""}같은 동료에게는 하루 한 번 · 받은 동료에게 알림이 가요
           </p>
@@ -464,7 +480,8 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
   };
 
   return (
-    <AnimatePresence>
+    <>
+      <AnimatePresence>
       {open && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -494,7 +511,9 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+      </AnimatePresence>
+      <ReceivedCheersSheet open={open && historyOpen} onClose={() => setHistoryOpen(false)} initialTab="sent" stacked />
+    </>
   );
 };
 

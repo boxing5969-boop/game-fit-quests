@@ -86,6 +86,36 @@ export async function getMyReceivedCheers(limit = 50): Promise<ReceivedCheers> {
 export const thankCheer = (cheerId: string) =>
   rpc<{ success: boolean; already?: boolean }>("thank_cheer", { p_cheer_id: cheerId });
 
+/* 보낸 응원 (2026-10-28 회원 제안 "응원보내기를 누구한테했는지도 볼수있었으면" — 20261028002152_my_sent_cheers.sql) */
+export interface SentCheer {
+  id: string;
+  type: "sticker" | "comment" | "clap";
+  receiver_id: string;
+  receiver: string;
+  receiver_avatar: string | null;
+  receiver_staff: boolean;
+  sticker: string;
+  note: string | null;
+  at: string;
+  /** 받은 동료가 '고마워요 153'을 눌렀는지 */
+  thanked: boolean;
+}
+
+export interface SentCheers {
+  total: number;
+  thanked: number;
+  items: SentCheer[];
+}
+
+export async function getMySentCheers(limit = 50): Promise<SentCheers> {
+  const d = await rpc<Partial<SentCheers> | null>("get_my_sent_cheers", { p_limit: limit });
+  return {
+    total: Number(d?.total ?? 0),
+    thanked: Number(d?.thanked ?? 0),
+    items: Array.isArray(d?.items) ? d!.items! : [],
+  };
+}
+
 export interface MemberCheerSummary {
   total: number;
   top: { sticker: string; count: number }[];

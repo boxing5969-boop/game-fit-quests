@@ -19,10 +19,12 @@ import {
   getCheerCandidates,
   getMemberCheerSummary,
   getMyReceivedCheers,
+  getMySentCheers,
   thankCheer,
   type CheerCandidates,
   type MemberCheerSummary,
   type ReceivedCheers,
+  type SentCheers,
 } from "@/services/cheerService";
 import { useHiddenMissionTrigger } from "@/hooks/useHiddenMissions";
 import { useGymRaidContributeTrigger } from "@/hooks/useGymRaid";
@@ -54,6 +56,7 @@ export function useSendBoxingCheer() {
       qc.invalidateQueries({ queryKey: ["boxing-engagement"] });
       qc.invalidateQueries({ queryKey: ["second-cheer"] });
       qc.invalidateQueries({ queryKey: CHEER_CANDIDATES_KEY });
+      qc.invalidateQueries({ queryKey: SENT_CHEERS_KEY });
       qc.invalidateQueries({ queryKey: ["wallet"] });
       // v1.5 16단계: 숨겨진 미션 평가 트리거 (디바운스)
       triggerCheck();
@@ -67,6 +70,7 @@ export function useSendBoxingCheer() {
 
 export const CHEER_CANDIDATES_KEY = ["cheer-candidates"] as const;
 export const RECEIVED_CHEERS_KEY = ["received-cheers"] as const;
+export const SENT_CHEERS_KEY = ["sent-cheers"] as const;
 
 /** 받을 사람 고르기 — 지금 운동 중 → 오늘 다녀간 동료 → 최근 출석 순 */
 export function useCheerCandidates(enabled: boolean, search = "") {
@@ -89,6 +93,17 @@ export function useMyReceivedCheers(enabled = true) {
     enabled: enabled && !!user?.id,
     staleTime: 30_000,
     queryFn: () => getMyReceivedCheers(80),
+  });
+}
+
+/** 보낸 응원 — 내가 누구에게 보냈는지 · 고마워요를 받았는지 (2026-10-28 회원 제안) */
+export function useMySentCheers(enabled = true) {
+  const { user } = useAuth();
+  return useQuery<SentCheers>({
+    queryKey: [...SENT_CHEERS_KEY, user?.id ?? "anon"],
+    enabled: enabled && !!user?.id,
+    staleTime: 30_000,
+    queryFn: () => getMySentCheers(80),
   });
 }
 

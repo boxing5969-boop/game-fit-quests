@@ -2,21 +2,42 @@
  * 받은 응원함 — 누가 · 어떤 스티커 · 한마디, 응원마다 '고마워요 153' (2026-10-16 응원 업그레이드)
  *   내정보 '받은 응원' 줄 · 응원 알림(/mypage?cheers=1)에서 열린다.
  *   '고마워요 153'을 누르면 보낸 동료에게 알림이 간다 (thank_cheer).
+ * 보낸 응원 칸 (2026-10-28 회원 제안 "응원보내기를 누구한테했는지도 볼수있었으면") — 내가 누구에게 · 언제 · 어떤 스티커와 한마디를
+ *   보냈는지, 받은 동료가 고마워요 153을 눌렀는지 (get_my_sent_cheers). 응원 보내기 창 '보낸 응원 보기'에서는 이 칸으로 열린다.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useModalDismiss } from "@/hooks/useModalDismiss";
-import { useMyReceivedCheers, useThankCheer } from "@/hooks/useSecondCheer";
+import { useMyReceivedCheers, useMySentCheers, useThankCheer } from "@/hooks/useSecondCheer";
 import { cn } from "@/lib/utils";
 import { CHEER_BUMP_ICON, cheerStickerImage } from "@/lib/cheerStickers";
+
+type CheerTab = "received" | "sent";
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** 처음 보일 칸 — 응원 보내기 창에서 열면 'sent' */
+  initialTab?: CheerTab;
+  /** 다른 시트(응원 보내기 z-[120]) 위로 띄운다 */
+  stacked?: boolean;
 }
+
+const StickerThumb = ({ sticker }: { sticker: string }) => {
+  const img = cheerStickerImage(sticker);
+  return (
+    <span className="flex h-12 w-12 shrink-0 items-center justify-center">
+      {img ? (
+        <img src={img} alt="" className="h-12 w-12 object-contain" loading="lazy" />
+      ) : (
+        <img src={CHEER_BUMP_ICON} alt="" className="h-10 w-10 object-contain opacity-80" loading="lazy" />
+      )}
+    </span>
+  );
+};
 
 const when = (iso: string) => {
   const d = new Date(iso);
@@ -27,11 +48,18 @@ const when = (iso: string) => {
   return d.toLocaleDateString("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" });
 };
 
-const ReceivedCheersSheet = ({ open, onClose }: Props) => {
+const ReceivedCheersSheet = ({ open, onClose, initialTab = "received", stacked = false }: Props) => {
   useModalDismiss(open, onClose);
   const { data, isLoading } = useMyReceivedCheers(open);
+  const { data: sent, isLoading: sentLoading } = useMySentCheers(open);
   const thank = useThankCheer();
   const [busy, setBusy] = useState<string | null>(null);
+  const [tab, setTab] = useState<CheerTab>(initialTab);
+
+  // 열 때마다 처음 칸으로 (내정보 = 받은 응원 · 응원 보내기 창 = 보낸 응원)
+  useEffect(() => {
+    if (open) setTab(initialTab);
+  }, [open, initialTab]);
 
   const onThank = async (id: string, sender: string) => {
     setBusy(id);
@@ -46,6 +74,8 @@ const ReceivedCheersSheet = ({ open, onClose }: Props) => {
   };
 
   const items = data?.items ?? [];
+  const sentItems = sent?.items ?? [];
+  const isSent = tab === "sent";
 
   return (
     <AnimatePresence>
@@ -55,7 +85,10 @@ const ReceivedCheersSheet = ({ open, onClose }: Props) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-background/85 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          className={cn(
+            "fixed inset-0 flex items-end justify-center bg-background/85 p-0 backdrop-blur-sm sm:items-center sm:p-4",
+            stacked ? "z-[130]" : "z-[100]",
+          )}
         >
           <motion.div
             initial={{ y: "100%", opacity: 0 }}
@@ -65,18 +98,33 @@ const ReceivedCheersSheet = ({ open, onClose }: Props) => {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="받은 응원"
+            aria-label={isSent ? "보낸 응원" : "받은 응원"}
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
-            <div className="flex items-start justify-between border-b border-border px-5 pb-3 pt-5">
+            <div className="flex items-start justify-between px-5 pb-3 pt-5">
               <div className="flex min-w-0 items-center gap-3">
                 <img src={CHEER_BUMP_ICON} alt="" className="h-12 w-12 shrink-0 object-contain" />
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">받은 응원</p>
-                  <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
-                    동료들이 보낸 응원 <span className="number-font text-primary">{data?.total ?? 0}</span>개
-                  </h2>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">고마워요 153을 누르면 보낸 동료에게 알림이 가요</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">응원함</p>
+                  {isSent ? (
+                    <>
+                      <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+                        내가 보낸 응원 <span className="number-font text-primary">{sent?.total ?? 0}</span>개
+                      </h2>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
+                        {(sent?.thanked ?? 0) > 0
+                          ? `동료에게서 고마워요 153을 ${sent!.thanked}번 받았어요`
+                          : "동료가 고마워요 153을 누르면 여기에 표시돼요"}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+                        동료들이 보낸 응원 <span className="number-font text-primary">{data?.total ?? 0}</span>개
+                      </h2>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">고마워요 153을 누르면 보낸 동료에게 알림이 가요</p>
+                    </>
+                  )}
                 </div>
               </div>
               <button
@@ -88,6 +136,67 @@ const ReceivedCheersSheet = ({ open, onClose }: Props) => {
               </button>
             </div>
 
+            {/* 받은 응원 · 보낸 응원 (2026-10-28) */}
+            <div role="tablist" aria-label="응원함" className="flex gap-1.5 border-b border-border px-5 pb-3">
+              {(
+                [
+                  ["received", "받은 응원", data?.total ?? 0],
+                  ["sent", "보낸 응원", sent?.total ?? 0],
+                ] as const
+              ).map(([key, label, count]) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === key}
+                  onClick={() => setTab(key)}
+                  className={cn(
+                    "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-pill text-[13px] font-bold transition-colors active:scale-[0.98]",
+                    tab === key ? "bg-foreground text-background" : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {label}
+                  <span className="number-font">{count}</span>
+                </button>
+              ))}
+            </div>
+
+            {isSent ? (
+              <div className="flex-1 space-y-2 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
+                {sentLoading && !sent ? (
+                  <p className="py-6 text-center text-[12px] text-muted-foreground">불러오는 중…</p>
+                ) : sentItems.length === 0 ? (
+                  <div className="rounded-card border border-border bg-muted/20 px-4 py-8 text-center">
+                    <p className="text-[13px] font-bold text-foreground">아직 보낸 응원이 없어요</p>
+                    <p className="mt-1 text-[11.5px] text-muted-foreground">동료에게 응원을 보내면 여기에 차곡차곡 남아요.</p>
+                  </div>
+                ) : (
+                  sentItems.map((c) => (
+                    <div key={c.id} className="flex items-start gap-3 rounded-card border border-border bg-card px-3 py-3">
+                      <StickerThumb sticker={c.sticker} />
+                      <div className="min-w-0 flex-1">
+                        <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                          <span className="min-w-0 truncate">
+                            <span className="font-bold text-foreground">{c.receiver}</span>님께
+                          </span>
+                          {c.receiver_staff && (
+                            <span className="shrink-0 rounded-pill bg-primary/10 px-1.5 text-[10px] font-bold text-primary">코치</span>
+                          )}
+                          <span className="shrink-0">· {when(c.at)}</span>
+                        </p>
+                        <p className="mt-0.5 text-[14px] font-black text-foreground">“{c.sticker}”</p>
+                        {c.note && <p className="mt-0.5 break-words text-[12.5px] text-muted-foreground">{c.note}</p>}
+                      </div>
+                      {c.thanked && (
+                        <span className="mt-1 shrink-0 rounded-pill bg-primary/10 px-2.5 py-1.5 text-[11px] font-bold text-primary">
+                          고마워요 받음
+                        </span>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : (
             <div className="flex-1 space-y-2 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
               {isLoading && !data ? (
                 <p className="py-6 text-center text-[12px] text-muted-foreground">불러오는 중…</p>
@@ -100,16 +209,9 @@ const ReceivedCheersSheet = ({ open, onClose }: Props) => {
                 </div>
               ) : (
                 items.map((c) => {
-                  const img = cheerStickerImage(c.sticker);
                   return (
                     <div key={c.id} className="flex items-start gap-3 rounded-card border border-border bg-card px-3 py-3">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center">
-                        {img ? (
-                          <img src={img} alt="" className="h-12 w-12 object-contain" loading="lazy" />
-                        ) : (
-                          <img src={CHEER_BUMP_ICON} alt="" className="h-10 w-10 object-contain opacity-80" loading="lazy" />
-                        )}
-                      </span>
+                      <StickerThumb sticker={c.sticker} />
                       <div className="min-w-0 flex-1">
                         <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
                           <span className="truncate font-bold text-foreground">{c.sender}</span>
@@ -137,6 +239,7 @@ const ReceivedCheersSheet = ({ open, onClose }: Props) => {
                 })
               )}
             </div>
+            )}
           </motion.div>
         </motion.div>
       )}
