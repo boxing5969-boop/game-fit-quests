@@ -12,6 +12,8 @@
  *   서로 짝꿍이 없을 때 · 받은 요청이면 바로 수락). 요청 규칙은 서버(request_cornerman_pair)가 다시 확인한다.
  * 2026-10-18: 코치·지점장·운영진 카드도 열린다(대표님: "강건형은 라이센스를 볼 수 없는 계정인가?") — 이름 옆 표시,
  *   하트·짝꿍은 없고(like_reason 'target_staff') 메시지·응원은 그대로.
+ * 2026-10-27 대표님 "코치님들도 하트 줄수있게": 코치·지점장도 같은 지점 회원에게 하트를 보낸다(본사 하트처럼 센다) —
+ *   서버(_is_heart_coach · toggle_nickname_like · get_member_license)가 판단하므로 화면은 can_like 그대로 쓴다.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";

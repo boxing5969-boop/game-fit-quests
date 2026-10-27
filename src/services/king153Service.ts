@@ -239,7 +239,7 @@ export async function getBranchNicknames(search: string | null, limit = 60): Pro
 }
 
 // ── 라이센스 카드 한 장 (2026-09-29) — 하트 = 닉네임 좋아요와 같은 하트 ──────────────
-/** 하트를 못 누르는 이유 — self: 내 카드, target_not_member: 이용 기록 없는 계정, not_member: 지점 회원 아님, change_credentials: 처음 받은 아이디 그대로.
+/** 하트를 못 누르는 이유 — self: 내 카드, target_not_member: 이용 기록 없는 계정, not_member: 지점 회원 아님(코치·지점장은 2026-10-27부터 같은 지점 회원에게 하트 가능), change_credentials: 처음 받은 아이디 그대로.
  *  target_no_nickname · admin_test 는 2026-09-30부터 오지 않는다(닉네임 조건 삭제 · 본사 하트도 점수) — 옛 응답 호환용 */
 export type LicenseLikeReason =
   | "self" | "target_no_nickname" | "target_not_member" | "target_staff" | "admin_test" | "not_member" | "change_credentials" | null;
