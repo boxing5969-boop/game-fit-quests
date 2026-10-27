@@ -26,9 +26,11 @@ import { OFFICE_VIEW_ALL, OFFICE_VIEW_MEETING, officeViewAspect } from "@/lib/of
 import {
   officeDuration,
   readOfficeBranch,
+  saveOfficeBranch,
   useJoinMeeting,
   useLeaveMeeting,
   useMarkDecision,
+  useOfficeMe,
   useOfficeMessages,
   useOfficeState,
   useSendOfficeMessage,
@@ -75,8 +77,19 @@ const useKeyboardViewport = () => {
 
 const OfficeRoomPage = () => {
   const navigate = useNavigate();
-  const [branch] = useState<string | null>(readOfficeBranch);
-  const stateQ = useOfficeState(branch);
+  // 지점: 이 기기에 고른 지점(대표님). 그 지점엔 회의가 없고 다른 지점에 회의가 열려 있으면 그 지점으로
+  // (회의 열림 알림 · 홈 카드에서 바로 들어온 경우 — 코치님은 지점이 하나라 고를 것이 없다)
+  const meQ = useOfficeMe();
+  const [saved] = useState<string | null>(readOfficeBranch);
+  const branch = useMemo(() => {
+    const offices = meQ.data?.offices ?? [];
+    if (offices.length < 2 || offices.find((o) => o.branch === saved)?.meeting) return saved;
+    return offices.find((o) => o.meeting)?.branch ?? saved;
+  }, [meQ.data, saved]);
+  useEffect(() => {
+    if (branch && branch !== saved) saveOfficeBranch(branch);
+  }, [branch, saved]);
+  const stateQ = useOfficeState(branch, !!meQ.data || meQ.isError);
   const state = stateQ.data;
   const presence = useOfficeOnline(state?.topic);
   const typing = useOfficeTyping(state?.topic);
