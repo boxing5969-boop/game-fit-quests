@@ -6,13 +6,16 @@
  *   · OpenMeetingSheet — 회의 열기: 안건 한 줄 + 항목 3~5개 → 지도진에게 알림
  *   · MinutesSheet     — 지난 회의록: 참석 · 정한 것 · 채팅 전부
  *   · MessageList · Decisions — 채팅 줄 · 정한 것 모음 (회의실 화면 · 회의록 공용)
+ *   · MeetingLinkBar · MeetingLinkSheet — 줌 · 구글 미트 링크로 들어가기 · 넣기/바꾸기(대표님 · 지점장) (2026-10-27 대표님 "그렇게하자")
  */
 import { useEffect, useMemo, useState } from "react";
-import { LogIn, Pin, Plus, X } from "lucide-react";
+import { LogIn, Pin, Plus, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DmSheet } from "@/components/dm/DmParts";
 import { Label, inputCls } from "@/components/strategy/StrategyComposers";
+import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
+import { MEETING_LINK_BAD, MEETING_LINK_LABEL, extractMeetingLink, meetingLinkKind } from "@/lib/meetingLink";
 import {
   officeDateTime,
   officeDuration,
@@ -21,6 +24,7 @@ import {
   useCloseMeeting,
   useOfficeMessages,
   useOpenMeeting,
+  useSetMeetingLink,
   type OfficeMessage,
   type OfficeState,
 } from "@/services/officeService";
@@ -232,6 +236,152 @@ export const EndMeetingSheet = ({
   );
 };
 
+/* ───────────── 줌 · 구글 미트 링크 ───────────── */
+
+/** 링크 열기 — 아이폰 앱은 앱 안 사파리 창(거기서 줌 · 미트 앱으로), 그 밖은 새 창 */
+const openMeetingLink = (url: string) => {
+  if (isIosApp()) void loadIosAppNative().then((n) => n.openInAppBrowser(url));
+  else window.open(url, "_blank", "noopener,noreferrer");
+};
+
+/** 회의 화면 — 링크가 있으면 '줌 회의 들어가기' (대표님 · 지점장은 '바꾸기') */
+export const MeetingLinkBar = ({ url, canEdit, onEdit }: { url: string; canEdit: boolean; onEdit: () => void }) => {
+  const kind = meetingLinkKind(url);
+  return (
+    <div className="mx-auto flex w-full max-w-lg items-center gap-2 px-3 py-2">
+      <button
+        type="button"
+        onClick={() => openMeetingLink(url)}
+        className={cn(
+          "flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-4 text-[13.5px] font-black text-white active:scale-[0.99]",
+          kind === "meet" ? "bg-[#00897B]" : "bg-[#2D8CFF]",
+        )}
+      >
+        <Video className="h-4 w-4 shrink-0" />
+        <span className="truncate">{MEETING_LINK_LABEL[kind]} 회의 들어가기</span>
+      </button>
+      {canEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="h-10 shrink-0 rounded-full bg-secondary px-3.5 text-[12.5px] font-black text-foreground active:scale-95"
+        >
+          바꾸기
+        </button>
+      )}
+    </div>
+  );
+};
+
+/** 링크 넣기 · 바꾸기 · 빼기 — 대표님 · 지점장 */
+export const MeetingLinkSheet = ({
+  open,
+  onClose,
+  meetingId,
+  current,
+  suggest,
+}: {
+  open: boolean;
+  onClose: () => void;
+  meetingId: string;
+  current: string | null;
+  /** 지난번 회의에 쓴 링크 (눌러서 넣기) */
+  suggest?: string | null;
+}) => {
+  const setLink = useSetMeetingLink();
+  const [text, setText] = useState("");
+  useEffect(() => {
+    if (open) setText(current ?? "");
+  }, [open, current]);
+  const parsed = extractMeetingLink(text);
+  const save = (url: string) =>
+    setLink.mutate(
+      { meetingId, url },
+      {
+        onSuccess: (v) => {
+          toast.success(v ? `${MEETING_LINK_LABEL[meetingLinkKind(v)]} 링크를 넣었어요` : "링크를 뺐어요");
+          onClose();
+        },
+        onError: (e) => toast.error((e as Error).message),
+      },
+    );
+  return (
+    <DmSheet
+      open={open}
+      onClose={onClose}
+      title="줌 · 구글 미트 링크"
+      subtitle="넣으면 회의 화면에 '회의 들어가기' 버튼이 생기고 채팅에 안내가 한 줄 남아요."
+      footer={
+        <div className="flex gap-2">
+          {current && (
+            <button
+              type="button"
+              disabled={setLink.isPending}
+              onClick={() => save("")}
+              className="h-12 shrink-0 rounded-2xl bg-secondary px-4 text-[14px] font-black text-foreground active:scale-[0.99] disabled:opacity-60"
+            >
+              링크 빼기
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={typeof parsed !== "string" || setLink.isPending}
+            onClick={() => typeof parsed === "string" && save(parsed)}
+            className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-primary text-[15px] font-black text-primary-foreground active:scale-[0.99] disabled:opacity-40"
+          >
+            {setLink.isPending ? "넣는 중…" : "넣기"}
+          </button>
+        </div>
+      }
+    >
+      <MeetingLinkField value={text} onChange={setText} parsed={parsed} suggest={current ? null : suggest} />
+    </DmSheet>
+  );
+};
+
+/** 링크 칸 — 줌 초대 글을 통째로 붙여 넣어도 링크만 골라 보여 준다. suggest = 지난번 링크(눌러야 들어간다) */
+const MeetingLinkField = ({
+  value,
+  onChange,
+  parsed,
+  hint,
+  suggest,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  parsed: string | null | "bad";
+  hint?: string;
+  suggest?: string | null;
+}) => (
+  <>
+    <Label hint={hint ?? "줌 초대 글을 통째로 붙여 넣어도 돼요"}>줌 · 구글 미트 링크</Label>
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      inputMode="url"
+      autoCapitalize="none"
+      autoCorrect="off"
+      spellCheck={false}
+      placeholder="https://zoom.us/j/… 또는 meet.google.com/…"
+      className={inputCls}
+    />
+    {parsed === "bad" ? (
+      <p className="mt-1.5 text-[12px] font-bold text-destructive">{MEETING_LINK_BAD}</p>
+    ) : parsed && parsed !== value.trim() ? (
+      <p className="mt-1.5 break-all text-[11.5px] font-semibold text-muted-foreground">넣을 링크: {parsed}</p>
+    ) : suggest && !value.trim() ? (
+      <button
+        type="button"
+        onClick={() => onChange(suggest)}
+        className="mt-2 flex max-w-full items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-[12.5px] font-bold text-foreground active:scale-95"
+      >
+        <Video className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <span className="truncate">지난번 {MEETING_LINK_LABEL[meetingLinkKind(suggest)]} 링크 쓰기</span>
+      </button>
+    ) : null}
+  </>
+);
+
 /* ───────────── 회의 열기 ───────────── */
 
 export const OpenMeetingSheet = ({
@@ -239,40 +389,54 @@ export const OpenMeetingSheet = ({
   onClose,
   branch,
   label,
+  lastLink,
   onOpened,
 }: {
   open: boolean;
   onClose: () => void;
   branch: string;
   label: string;
+  /** 지난번 회의에 쓴 줌 · 구글 미트 링크 — 미리 채운다 */
+  lastLink?: string | null;
   /** 열린 뒤 (회의실 화면으로 가기 등) */
   onOpened?: (meetingId: string) => void;
 }) => {
   const openMeeting = useOpenMeeting();
+  const setLink = useSetMeetingLink();
   const [title, setTitle] = useState("");
   const [items, setItems] = useState<string[]>(["", "", ""]);
+  const [link, setLinkText] = useState("");
 
   useEffect(() => {
     if (open) {
       setTitle("");
       setItems(["", "", ""]);
+      setLinkText("");
     }
   }, [open]);
 
-  const submit = () => {
+  const parsedLink = extractMeetingLink(link);
+  const busy = openMeeting.isPending || setLink.isPending;
+
+  const submit = async () => {
     const t = title.trim();
-    if (!t || openMeeting.isPending) return;
-    openMeeting.mutate(
-      { branch, title: t, agenda: items.map((s) => s.trim()).filter(Boolean).slice(0, 5) },
-      {
-        onSuccess: (id) => {
-          toast.success("회의를 열었어요 — 지도진에게 알림을 보냈어요");
-          onClose();
-          onOpened?.(id);
-        },
-        onError: (e) => toast.error((e as Error).message),
-      },
-    );
+    if (!t || busy || parsedLink === "bad") return;
+    let id: string;
+    try {
+      id = await openMeeting.mutateAsync({ branch, title: t, agenda: items.map((s) => s.trim()).filter(Boolean).slice(0, 5) });
+    } catch (e) {
+      toast.error((e as Error).message);
+      return;
+    }
+    // 링크는 회의가 열린 다음에 (안 들어가도 회의는 열려 있다 — 회의 화면에서 다시 넣을 수 있다)
+    if (parsedLink) {
+      await setLink
+        .mutateAsync({ meetingId: id, url: parsedLink })
+        .catch((e) => toast.error(`회의는 열었어요 — ${(e as Error).message}`));
+    }
+    toast.success("회의를 열었어요 — 지도진에게 알림을 보냈어요");
+    onClose();
+    onOpened?.(id);
   };
 
   return (
@@ -284,11 +448,11 @@ export const OpenMeetingSheet = ({
       footer={
         <button
           type="button"
-          onClick={submit}
-          disabled={!title.trim() || openMeeting.isPending}
+          onClick={() => void submit()}
+          disabled={!title.trim() || busy || parsedLink === "bad"}
           className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-[15px] font-black text-primary-foreground active:scale-[0.99] disabled:opacity-40"
         >
-          {openMeeting.isPending ? "여는 중…" : "회의 열기"}
+          {busy ? "여는 중…" : "회의 열기"}
         </button>
       }
     >
@@ -334,6 +498,13 @@ export const OpenMeetingSheet = ({
           </button>
         )}
       </div>
+      <MeetingLinkField
+        value={link}
+        onChange={setLinkText}
+        parsed={parsedLink}
+        hint="선택 · 바깥 분과 함께할 때만"
+        suggest={lastLink}
+      />
     </DmSheet>
   );
 };

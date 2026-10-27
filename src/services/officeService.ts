@@ -55,6 +55,8 @@ export interface OfficeMeeting {
   agenda: string[];
   opened_at: string;
   opened_by: OfficeDisplay;
+  /** 줌 · 구글 미트 링크 (없으면 null — 20261027204015) */
+  video_url?: string | null;
   attendees: OfficeAttendee[];
 }
 
@@ -67,6 +69,8 @@ export interface OfficeState {
   branches: string[];
   people: OfficePerson[];
   meeting: OfficeMeeting | null;
+  /** 그 지점이 마지막에 쓴 줌 · 구글 미트 링크 — 대표님 · 지점장에게만 (회의 열 때 미리 채움) */
+  last_video_url?: string | null;
 }
 
 export type OfficeMessageKind = "chat" | "decision" | "system";
@@ -241,6 +245,16 @@ export const useCloseMeeting = () => {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (meetingId: string) => call<void>("office_close_meeting", { p_meeting: meetingId }, "회의를 끝내지 못했어요"),
+    onSuccess: invalidate,
+  });
+};
+
+/** 줌 · 구글 미트 링크 넣기 · 바꾸기 · 빼기(빈 값) — 대표님 · 지점장 */
+export const useSetMeetingLink = () => {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (v: { meetingId: string; url: string }) =>
+      call<string | null>("office_set_meeting_link", { p_meeting: v.meetingId, p_url: v.url }, "링크를 넣지 못했어요"),
     onSuccess: invalidate,
   });
 };
