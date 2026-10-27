@@ -15,6 +15,9 @@
 //      Claude(Haiku 5.5)가 그 지점 안내 자료(153OS get_bot_config = bot_tenants.config 의 카테고리 답들) 안에서 짧게 답한다.
 //   3) AI 가 실패 · 시간 초과 · 한도 초과 · 꺼짐이면 봇 서버 답(메뉴)을 그대로 보낸다 — 손님은 늘 답을 받는다.
 //      봇 서버가 아예 응답하지 않으면(서버 중단) 손님 글에는 AI 답, 그 밖에는 기본 응답.
+//   4) 빠르게(5초 제한): 지점 단어에 안 걸릴 글이면 봇 서버로 넘기는 동안 AI 도 같이 시작한다 —
+//      봇이 단어 답을 하면 AI 는 취소, 메뉴를 보내면 AI 답. 손님이 드물어 거의 매번 새로 켜지므로(콜드 스타트)
+//      supabase-js 없이 REST 로 가볍게 두고, 새로 켜진 첫 요청은 시간 예산을 줄인다.
 //
 // 지키는 것(대표님 규칙): 자료에 없는 가격·시간·할인·이벤트·약속 지어내지 않기 · 코치 경력(국가대표 등) 말하지 않기(10/27) ·
 //   '잽부터, 끝까지'·'끝까지 붙는다' 쓰지 않기(10/16) · PT 먼저 권하지 않기(10/27) · 감량 수치 약속하지 않기.
@@ -23,7 +26,6 @@
 //   TALKTALK_AI_DAILY_MAX(기본 300) · TALKTALK_UPSTREAM(기본 위 봇 서버). ANTHROPIC_API_KEY 는 앱(chat-assistant)과 같이 쓴다.
 // 비용 기록: ai_usage_log feature `talktalk_ai` (meta: slug · kind · 손님 해시 · ms · ok). 손님 글은 남기지 않는다(153OS 기록은 봇 서버가 남김).
 
-import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   buildClaudeBody,
   CLAUDE_API_URL,
@@ -52,19 +54,42 @@ const AI_SLUGS = new Set(
 const DAILY_MAX = Math.max(0, Number(Deno.env.get("TALKTALK_AI_DAILY_MAX") ?? "") || 300);
 const USER_HOURLY_MAX = 12;
 const MODEL = CLAUDE_COACH_MODEL;
-// 톡톡·카카오는 5초 안에 답이 와야 한다 — 봇 서버를 기다린 시간까지 합쳐 이 안에 끝낸다
-const BUDGET_MS = 4000;
+// 톡톡·카카오는 5초 안에 답이 와야 한다 — 봇 서버를 기다린 시간까지 합쳐 이 안에 끝낸다.
+// 새로 켜진 첫 요청(콜드 스타트)은 켜지는 데 쓴 시간이 함수 안에서 안 보이므로 더 짧게.
+// 10/27 서울 잰 값: 보통 켜지는 데 0.1초 · 배포 직후 첫 요청 1초(supabase-js 를 쓸 때는 2.2초) · 일꾼은 켜지고 200초 뒤 꺼진다
+const BUDGET_MS = 4200;
+const BUDGET_COLD_MS = 3700;
 const UPSTREAM_TIMEOUT_MS = 3000;
 const MIN_AI_MS = 1500;
-const AI_TIMEOUT_MAX_MS = 3200;
 const AI_MAX_TOKENS = 450;
 const MAX_TEXT = 1000;
 const BUSY_TEXT = "잠시 후 다시 시도해 주세요 🙏";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/+$/, "");
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+/** 앱 DB REST — supabase-js 를 안 불러 켜지는 시간을 줄인다 (예전 JWT 키면 Authorization 도, sb_secret_ 키면 apikey 만) */
+function rest(path: string, init: { method?: string; headers?: Record<string, string>; body?: string } = {}): Promise<Response> {
+  const headers: Record<string, string> = { apikey: SERVICE_KEY, "content-type": "application/json", ...(init.headers ?? {}) };
+  if (SERVICE_KEY.startsWith("eyJ")) headers.Authorization = `Bearer ${SERVICE_KEY}`;
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: init.method ?? "GET",
+    headers,
+    body: init.body,
+    signal: AbortSignal.timeout(2500),
+  });
+}
+
+/** logAiUsage(_shared/claude.ts) 가 쓰는 만큼만: db.from(표).insert(줄) → { error } */
 const db = SUPABASE_URL && SERVICE_KEY
-  ? createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
+  ? {
+    from: (table: string) => ({
+      insert: async (row: Record<string, unknown>) => {
+        const r = await rest(table, { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify(row) });
+        return { error: r.ok ? null : { message: `${r.status} ${(await r.text()).slice(0, 200)}` } };
+      },
+    }),
+  }
   : null;
 
 type Kind = "n" | "k";
@@ -159,6 +184,32 @@ function isWelcomeMenu(text: string, welcome: string | undefined): boolean {
   return w.length > 950 && t.length >= 900 && t.slice(0, 300) === w.slice(0, 300);
 }
 
+/**
+ * 봇 서버가 단어 답을 할 글인가 — 지점 설정의 단어(글 안에 들어 있나) · "re:" 정규식으로 미리 본다.
+ * 아니라고 보면 봇 서버를 기다리지 않고 AI 를 같이 시작한다. 틀려도 괜찮다: 봇이 단어 답을 하면 AI 를 취소하고,
+ * 단어 답일 줄 알았는데 메뉴가 오면 그때 AI 를 시작한다(조금 늦을 뿐).
+ */
+function predictsKeyword(cfg: BotConfig, text: string): boolean {
+  const t = text.toLowerCase();
+  const tight = t.replace(/\s+/g, "");
+  for (const c of cfg.categories ?? []) {
+    for (const k of c?.keywords ?? []) {
+      if (typeof k !== "string" || !k.trim()) continue;
+      if (k.startsWith("re:")) {
+        try {
+          if (new RegExp(k.slice(3), "i").test(t)) return true;
+        } catch {
+          /* 못 읽는 정규식은 건너뛴다 */
+        }
+        continue;
+      }
+      const kk = k.toLowerCase().trim();
+      if (t.includes(kk) || tight.includes(kk.replace(/\s+/g, ""))) return true;
+    }
+  }
+  return false;
+}
+
 // ─── AI 지시문 · 안내 자료 ───────────────────────────────────────────────────────
 
 const RULES = `너는 '153복싱짐'(읽을 때 '일오삼 복싱짐') 지점의 네이버 톡톡·카카오톡 채널 상담 도우미 "오삼코치"야.
@@ -170,8 +221,8 @@ const RULES = `너는 '153복싱짐'(읽을 때 '일오삼 복싱짐') 지점의
 - 가격·시간·혜택·링크·전화번호는 자료에 적힌 것만 그대로 써. 자료에 없는 숫자·할인·이벤트·약속은 절대 지어내지 마.
 - 상식으로 분명한 것(실내 운동이라 날씨와 상관없이 시간표대로 운영한다 등)은 자료의 시간표·운영 안내와 함께 답해도 돼.
 - 맨 아래 [지금] 시각과 시간표를 비교해서 지금 열려 있는지, 몇 시 수업에 올 수 있는지도 답해도 돼.
-- 정말 답할 수 없는 것만 "그 부분은 코치님이 확인해서 정확히 알려 드릴게요"라고 하고, 바로 이야기하고 싶으면 '연결'이라고 보내 달라고 해. '자료', '정보가 없다' 같은 말은 쓰지 마.
-- 손님이 결제·입금·등록을 했다고 하면 감사 인사를 하고 "확인되는 대로 코치님이 안내해 드릴게요"라고 해. 결제가 됐다고 확정하지 마. 자료에 첫 방문 준비물·이용 방법이 있으면 한두 줄 덧붙여.
+- 자료에 없는 것은 짐작하지 말고 "그 부분은 코치님이 확인해서 정확히 알려 드릴게요"라고 한 뒤, 바로 이야기하고 싶으면 '연결'이라고 보내 달라고 해. 손님에게 '자료', '정보가 없다', '나와 있지 않다' 같은 말은 쓰지 마.
+- 손님이 결제·입금·등록을 했다고 하면 "감사합니다! 확인되는 대로 코치님이 안내해 드릴게요"라고 해. 결제가 됐다고 확정하지 마. 자료에 첫 방문 준비물·이용 방법이 있으면 한두 줄 덧붙여.
 - 감사·인사 같은 짧은 말에는 짧고 반갑게 답하고, 더 궁금한 게 있으면 편하게 물어보시라고 해.
 - 코치 경력(국가대표·선수 출신 등)은 말하지 마. 경력을 물으면 '네/아니요'로 시작하지 말고 "코치님 소개는 상담·체험 때 직접 인사드리며 알려 드릴게요"라고 한 뒤, 자료에 있는 수업 방식을 한 줄 덧붙여. '잽부터, 끝까지', '끝까지 붙는다' 같은 말도 쓰지 마.
 - 개인 PT는 손님이 먼저 물을 때만 안내해. 먼저 권하지 마.
@@ -188,12 +239,40 @@ function dropBanned(t: string): string {
   return t.split("\n").filter((l) => !BANNED_LINE.test(l)).join("\n").trim();
 }
 
+// 손님에게 안 보일 속사정 말 ("자료에는 … 나와 있지 않아요") — 그 문장을 빼고, 남는 글에 모른다는 안내가 없으면 그 자리에 넣는다
+const INTERNAL_TALK = /자료|정보가\s*없/;
+const UNKNOWN_SHORT = "그 부분은 코치님이 확인해서 정확히 알려 드릴게요.";
+const UNKNOWN_TEXT = `${UNKNOWN_SHORT} 바로 이야기 나누고 싶으시면 '연결'이라고 보내 주세요 😊`;
+
+function scrubInternal(t: string): string {
+  if (!INTERNAL_TALK.test(t)) return t;
+  const lines = t.split("\n").map((line) => line.split(/(?<=[.!?])\s+/));
+  const kept = lines.flat().filter((s) => !INTERNAL_TALK.test(s));
+  let placed = kept.some((s) => s.includes("코치님이 확인"));
+  const unknown = kept.some((s) => s.includes("연결")) ? UNKNOWN_SHORT : UNKNOWN_TEXT;
+  return lines
+    .map((ss) =>
+      ss.map((s) => {
+        if (!INTERNAL_TALK.test(s)) return s;
+        if (placed) return "";
+        placed = true;
+        return unknown;
+      }).filter(Boolean).join(" ")
+    )
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function knowledgeOf(slug: string, cfg: BotConfig): string {
   const parts: string[] = [];
   if (cfg.welcome) parts.push(`■ 첫 인사 · 메뉴\n${dropBanned(cfg.welcome)}`);
+  const seen = new Set<string>();
   for (const c of cfg.categories ?? []) {
     const reply = dropBanned(String(c?.reply ?? ""));
-    if (!reply) continue;
+    // 같은 답이 여러 카테고리에 있으면 한 번만 (글이 짧을수록 AI 가 빨리 읽는다)
+    if (!reply || seen.has(reply)) continue;
+    seen.add(reply);
     const kws = (Array.isArray(c.keywords) ? c.keywords : [])
       .filter((k) => typeof k === "string" && !k.startsWith("re:"))
       .slice(0, 10);
@@ -231,7 +310,7 @@ function tidy(s: string): string {
     .replace(/^\s*[-*]\s+/gm, "• ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-  t = dropBanned(t);
+  t = scrubInternal(dropBanned(t));
   return t;
 }
 
@@ -250,16 +329,25 @@ async function sha16(s: string): Promise<string> {
   return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
 }
 
+/** ai_usage_log 줄 수 — HEAD + Prefer: count=exact → Content-Range 의 '/' 뒤 숫자 */
+async function countUsage(filters: string): Promise<number> {
+  const r = await rest(`ai_usage_log?select=id&feature=eq.${FEATURE}&${filters}`, { method: "HEAD", headers: { Prefer: "count=exact" } });
+  const range = r.headers.get("content-range") ?? "";
+  const m = range.match(/\/(\d+)$/);
+  if (!r.ok || !m) throw new Error(`count ${r.status} ${range}`);
+  return Number(m[1]);
+}
+
 async function underLimits(uhash: string): Promise<boolean> {
   if (!db) return true;
   try {
+    const since = (iso: string) => `created_at=gte.${encodeURIComponent(iso)}`;
     const [day, mine] = await Promise.all([
-      db.from("ai_usage_log").select("id", { count: "exact", head: true }).eq("feature", FEATURE).gte("created_at", kstDayStartIso()),
-      db.from("ai_usage_log").select("id", { count: "exact", head: true }).eq("feature", FEATURE)
-        .gte("created_at", new Date(Date.now() - 3600_000).toISOString()).eq("meta->>u", uhash),
+      countUsage(since(kstDayStartIso())),
+      countUsage(`${since(new Date(Date.now() - 3600_000).toISOString())}&meta->>u=eq.${uhash}`),
     ]);
-    if ((day.count ?? 0) >= DAILY_MAX) return false;
-    if ((mine.count ?? 0) >= USER_HOURLY_MAX) return false;
+    if (day >= DAILY_MAX) return false;
+    if (mine >= USER_HOURLY_MAX) return false;
     return true;
   } catch (e) {
     console.warn("[talktalk-ai] limit check", e instanceof Error ? e.message : e);
@@ -271,13 +359,21 @@ function record(usage: ClaudeUsage, meta: Record<string, unknown>): void {
   keepAlive(logAiUsage(db, { feature: FEATURE, model: MODEL, usage, meta }));
 }
 
-async function askClaude(system: SystemPart[], text: string, timeoutMs: number): Promise<{ answer: string; msg: ClaudeMessage }> {
+function systemFor(slug: string, cfg: BotConfig): SystemPart[] {
+  return [
+    { text: RULES },
+    { text: knowledgeOf(slug, cfg), cache: true },
+    { text: `[지금] ${kstNow()} (한국 시간)` },
+  ];
+}
+
+async function askClaude(system: SystemPart[], text: string, signal: AbortSignal): Promise<{ answer: string; msg: ClaudeMessage }> {
   const body = buildClaudeBody({ model: MODEL, system, messages: [{ role: "user", content: text }], maxTokens: AI_MAX_TOKENS });
   const r = await fetch(CLAUDE_API_URL, {
     method: "POST",
     headers: claudeHeaders(),
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(timeoutMs),
+    signal,
   });
   const raw = await r.text();
   if (!r.ok) throw new Error(`claude ${r.status}: ${raw.slice(0, 200)}`);
@@ -310,8 +406,18 @@ function fallbackWhenDown(kind: Kind, body: any): Response {
 
 const asResponse = (up: Up) => new Response(up.text, { status: up.status, headers: { "content-type": up.contentType } });
 
+type AiResult = { answer: string; msg: ClaudeMessage };
+
+// 이 일꾼(워커)이 요청을 받은 적이 있나 — 처음이면 새로 켜진 것(콜드 스타트)
+let warm = false;
+
+// 새로 켜지자마자 Claude 서버와 연결(TLS)을 미리 맺어 둔다 — AI 를 부를 때 그 연결을 다시 써서 0.3~0.5초 아낀다
+fetch(CLAUDE_API_URL, { method: "HEAD", signal: AbortSignal.timeout(3000) }).then((r) => r.body?.cancel()).catch(() => {});
+
 Deno.serve(async (req: Request) => {
   const t0 = Date.now();
+  const cold = !warm;
+  warm = true;
   const path = new URL(req.url).pathname;
   const m = path.match(/\/(n|k)\/([A-Za-z0-9_-]{1,40})\/?$/);
   if (req.method !== "POST" || !m) {
@@ -328,37 +434,52 @@ Deno.serve(async (req: Request) => {
     /* 그대로 넘긴다 */
   }
 
+  // 봇 서버로는 늘 바로 넘긴다 (단어 답 · 첫 인사 · 153OS 기록은 봇 서버 몫)
+  const upP = forward(kind, slug, raw, req.headers.get("content-type"));
+  const passthrough = (up: Up | null) => (up ? asResponse(up) : fallbackWhenDown(kind, body));
+
   const text = customerText(kind, body);
   const wantAi = AI_ON && hasClaude() && AI_SLUGS.has(slug) && text !== null && !(text.length <= 15 && GREETING_ONLY.test(text));
-  const uhash = wantAi ? await sha16(`${kind}:${slug}:${customerId(kind, body)}`) : "";
+  if (!wantAi || !text) return passthrough(await upP);
 
-  const [up, cfg, allowed] = await Promise.all([
-    forward(kind, slug, raw, req.headers.get("content-type")),
-    wantAi ? getConfig(slug) : Promise.resolve(null),
-    wantAi ? underLimits(uhash) : Promise.resolve(false),
-  ]);
+  const uhash = await sha16(`${kind}:${slug}:${customerId(kind, body)}`);
+  const [cfg, allowed] = await Promise.all([getConfig(slug), underLimits(uhash)]);
+  if (!cfg || !allowed) return passthrough(await upP);
 
-  const passthrough = () => (up ? asResponse(up) : fallbackWhenDown(kind, body));
-  if (!wantAi || !cfg || !text) return passthrough();
+  const deadline = t0 + (cold ? BUDGET_COLD_MS : BUDGET_MS);
+  const meta: Record<string, unknown> = { slug, kind, u: uhash, q_len: text.length, cold };
 
+  // AI 는 한 번만 — 단어에 안 걸릴 글이면 봇 답을 기다리지 않고 먼저 시작한다(spec). 마감에 끊는다
+  const ctrl = new AbortController();
+  const ai: { p: Promise<AiResult> | null } = { p: null };
+  const startAi = (): Promise<AiResult> => {
+    if (!ai.p) {
+      const timer = setTimeout(() => ctrl.abort(new Error("timeout")), Math.max(0, deadline - Date.now()));
+      ai.p = askClaude(systemFor(slug, cfg), text, ctrl.signal).finally(() => clearTimeout(timer));
+      ai.p.catch(() => {}); // 취소·시간 초과는 아래에서 다룬다
+    }
+    return ai.p;
+  };
+  meta.spec = !predictsKeyword(cfg, text);
+  if (meta.spec) startAi();
+
+  const up = await upP;
+  meta.upstream = up ? "menu" : "down";
   // 봇 서버가 제 답(단어 답·카드·연결 등)을 했으면 그대로 — AI 는 메뉴 자리에만
   if (up) {
     const ut = upstreamText(kind, up);
-    if (ut === null || !isWelcomeMenu(ut, cfg.welcome)) return passthrough();
+    if (ut === null || !isWelcomeMenu(ut, cfg.welcome)) {
+      if (ai.p) {
+        ctrl.abort(new Error("cancelled"));
+        record(emptyUsage(), { ...meta, upstream: "answer", ok: false, ms: Date.now() - t0, err: "봇 단어 답 — AI 취소" });
+      }
+      return asResponse(up);
+    }
   }
-  if (!allowed) return passthrough();
+  if (!ai.p && deadline - Date.now() < MIN_AI_MS) return passthrough(up);
 
-  const left = BUDGET_MS - (Date.now() - t0);
-  if (left < MIN_AI_MS) return passthrough();
-
-  const meta = { slug, kind, u: uhash, q_len: text.length, upstream: up ? "menu" : "down" };
   try {
-    const system: SystemPart[] = [
-      { text: RULES },
-      { text: knowledgeOf(slug, cfg), cache: true },
-      { text: `[지금] ${kstNow()} (한국 시간)` },
-    ];
-    const { answer, msg } = await askClaude(system, text, Math.min(left, AI_TIMEOUT_MAX_MS));
+    const { answer, msg } = await startAi();
     const clean = tidy(answer);
     if (clean.length < 5 || /[\u4E00-\u9FFF]/.test(clean)) throw new Error("bad answer");
     const keys = shortcuts(cfg);
@@ -368,6 +489,6 @@ Deno.serve(async (req: Request) => {
     const err = e instanceof Error ? e.message.slice(0, 160) : String(e).slice(0, 160);
     console.warn("[talktalk-ai] ai fallback", slug, err);
     record(emptyUsage(), { ...meta, ok: false, ms: Date.now() - t0, err });
-    return passthrough();
+    return passthrough(up);
   }
 });
