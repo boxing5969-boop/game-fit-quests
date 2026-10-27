@@ -1,7 +1,7 @@
 {
   "note": "scripts/check-db-drift.mjs 기준선 — 여기 있는 어긋남은 알리지 않는다(이미 알던 것). 고치면 --write-baseline 으로 다시 저장.",
-  "generated_at": "2026-10-26T14:15:42.596Z",
-  "db_functions": 500,
+  "generated_at": "2026-10-27T03:45:53.285Z",
+  "db_functions": 506,
   "db_edited": [
     "approve_mission_submission:49484da8a9d269ed68f60ea3b83615ca",
     "confirm_diet_photo_calories:ee256747488e722185f66d7fb5052879",
@@ -36,7 +36,6 @@
     "get_153_king_board:c62da8be14968d3df0920b71f1c5c43b",
     "get_boss_conquerors:4f2d129d3fca4cbcb8cd094c47e19ac9",
     "get_branch_gym_raids:3f302d5b92340bbd2052089c96430ca6",
-    "get_branch_nicknames:3ae07de9357722dad533cf12dec7ee99",
     "get_branch_stats:dd62769c056e052ca262bbaaf57a19d6",
     "get_community_feed:b33a3359e3d06899e2b4cf4006672ae2",
     "get_community_welcomes:78e3c2f61d3e17b8dbb491ba644cb971",
