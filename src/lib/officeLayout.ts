@@ -31,6 +31,22 @@ export const OFFICE_ART = {
   ratio: 4 / 5,
 } as const;
 
+/** 그림에서 보이는 영역 (% — x · y 는 왼쪽 위, w · h 는 너비 · 높이). 작게 잡으면 그만큼 크게 보인다 */
+export interface OfficeView {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** 사무실 전체 */
+export const OFFICE_VIEW_ALL: OfficeView = { x: 0, y: 0, w: 100, h: 100 };
+/** 회의실만 크게 (회의 화면 — 2026-10-27 대표님 "회의실 화면을 보면서 채팅 · 말풍선으로 대화") — 1.25배, 앞줄 머리 위로 말풍선 두세 개 자리 */
+export const OFFICE_VIEW_MEETING: OfficeView = { x: 10, y: 52, w: 80, h: 42 };
+
+/** 보이는 영역의 가로:세로 (그림 1080×1350 기준) */
+export const officeViewAspect = (v: OfficeView) => (v.w * 1080) / (v.h * 1350);
+
 /** 문 (들어오고 나가는 곳 — 발판) */
 export const OFFICE_DOOR = { x: 6, y: 39.5 } as const;
 

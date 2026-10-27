@@ -4,6 +4,7 @@
  *   1. 지도진이 앱을 열면 회의실 화면을 안 열어도 '사무실 접속' 신호를 보낸다 → 사무실에서 내 캐릭터가 자리에 앉는다.
  *   2. 앱을 닫거나 폰 화면을 끄면 30초 뒤 신호를 거둔다 → 캐릭터가 일어나 문으로 나간다(잠깐 전화 받을 때 깜빡이지 않게).
  *   3. 같은 채널로 '바뀜 신호'(회의 열림 · 채팅 · 상태)를 받아 회의실 화면을 다시 읽는다.
+ *   4. 회의 채팅에 쓰는 중 신호(broadcast 'typing' {u, off?}, 내용 없음)를 주고받는다 → 캐릭터 옆 '…'.
  *
  *   채널: 비공개 'office:<지점 코드>' — 서버 정책(realtime.messages)이 그 지점 지도진 + 대표님만 들인다.
  *   회원 · 다른 지점 지도진은 office_me 가 빈 목록이라 아무것도 하지 않는다.
@@ -15,7 +16,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { isStaffProfile } from "@/lib/staffDisplay";
 import { OFFICE_KEY, useOfficeMe } from "@/services/officeService";
-import { OFFICE_LEAVE_DELAY_MS, clearOfficeTopic, setOfficeTopicState } from "@/lib/officePresence";
+import {
+  OFFICE_LEAVE_DELAY_MS,
+  clearOfficeTopic,
+  markOfficeTyping,
+  setOfficeSender,
+  setOfficeTopicState,
+} from "@/lib/officePresence";
 
 /** 바뀜 신호 → 다시 읽을 것 */
 const KEYS_FOR: Record<string, string[]> = {
@@ -83,6 +90,10 @@ const OfficePresenceBridge = () => {
             pending.add(what);
             if (!pingTimer) pingTimer = setTimeout(flush, 350);
           })
+          .on("broadcast", { event: "typing" }, (msg) => {
+            const p = (msg?.payload ?? {}) as { u?: unknown; off?: unknown };
+            if (typeof p.u === "string" && p.u !== uid) markOfficeTyping(topic, p.u, !p.off);
+          })
           .subscribe((status) => {
             setOfficeTopicState(topic, { connected: status === "SUBSCRIBED" });
             if (status === "SUBSCRIBED" && document.visibilityState !== "hidden") {
@@ -90,6 +101,9 @@ const OfficePresenceBridge = () => {
               void ch.track({ at: Date.now() }).catch(() => undefined);
             }
           });
+        setOfficeSender(topic, (event, payload) => {
+          if (ch.state === "joined") void ch.send({ type: "broadcast", event, payload }).catch(() => undefined);
+        });
         channels.push(ch);
       }
     })();

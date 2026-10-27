@@ -30,6 +30,8 @@ const isSetupPath = (pathname: string): boolean => {
   if (pathname.startsWith("/live-board")) return true;
   // 메시지 대화방 — 왼쪽 아래 오삼이가 입력창을 가린다 (2026-09-30)
   if (pathname.startsWith("/messages/")) return true;
+  // 지점 회의실 회의 화면 — 입력창을 가리지 않게 (2026-10-27)
+  if (pathname.startsWith("/office/")) return true;
   return false;
 };
 

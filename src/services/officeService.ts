@@ -257,3 +257,20 @@ export const officeDuration = (from: string, to: string | null) => {
   const min = Math.max(1, Math.round(((to ? new Date(to).getTime() : Date.now()) - new Date(from).getTime()) / 60_000));
   return min >= 60 ? `${Math.floor(min / 60)}시간${min % 60 ? ` ${min % 60}분` : ""}` : `${min}분`;
 };
+
+/** 대표님이 고른 지점 (이 기기) — 사무실 · 회의실 화면이 같이 쓴다 */
+const OFFICE_BRANCH_KEY = "153office:branch";
+export const readOfficeBranch = (): string | null => {
+  try {
+    return window.localStorage.getItem(OFFICE_BRANCH_KEY);
+  } catch {
+    return null;
+  }
+};
+export const saveOfficeBranch = (branch: string) => {
+  try {
+    window.localStorage.setItem(OFFICE_BRANCH_KEY, branch);
+  } catch {
+    /* 무시 */
+  }
+};

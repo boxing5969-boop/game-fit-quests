@@ -5,7 +5,7 @@
  *   · 위에서 내려다본 2D 블록 사무실 — 대표 책상 · 지점장 책상 · 코치 책상 8 · 회의실(10인 탁자)
  *   · 앱에 들어와 있는 지도진의 캐릭터가 자기 자리에 앉고(앱 전체 접속 신호 — OfficePresenceBridge), 나가면 30초 뒤 일어난다
  *   · 내 상태 말풍선: 자리에 있음 · 수업 중 · 자리 비움 (본인이 누르기)
- *   · 회의 열기(대표님 · 지점장) → 지도진 알림 → 채팅 회의 → 정한 것 · 참석 → 끝내면 회의록
+ *   · 회의 열기(대표님 · 지점장) → 지도진 알림 → 회의실 화면(/office/room — 그림 + 채팅 한 화면, 말풍선) → 끝내면 회의록
  *   · 출입은 서버가 정한다(office_* 함수 · 비공개 실시간 채널) — 회원 화면에는 입구 자체가 없다.
  *   2단계 음성 · 카메라(Cloudflare RealtimeKit) · 3단계 회의록 → 전략 회의실 지시는 다음에.
  */
@@ -16,33 +16,26 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import OfficeScene from "@/components/office/OfficeScene";
-import { MeetingPanel, MinutesSheet, OpenMeetingSheet } from "@/components/office/OfficeMeeting";
+import { MeetingSummaryCard, MinutesSheet, OpenMeetingSheet } from "@/components/office/OfficeMeeting";
 import { useOfficeOnline } from "@/lib/officePresence";
 import {
   OFFICE_STATUS_LABEL,
   officeDateTime,
   officeDuration,
   officeName,
+  readOfficeBranch,
+  saveOfficeBranch,
   useOfficeMeetingsList,
   useOfficeSetStatus,
   useOfficeState,
   type OfficeStatus,
 } from "@/services/officeService";
 
-const BRANCH_KEY = "153office:branch";
-const readBranch = () => {
-  try {
-    return window.localStorage.getItem(BRANCH_KEY);
-  } catch {
-    return null;
-  }
-};
-
 const STATUSES: OfficeStatus[] = ["on", "class", "away"];
 
 const OfficePage = () => {
   const navigate = useNavigate();
-  const [branch, setBranchState] = useState<string | null>(readBranch);
+  const [branch, setBranchState] = useState<string | null>(readOfficeBranch);
   const stateQ = useOfficeState(branch);
   const state = stateQ.data;
   const presence = useOfficeOnline(state?.topic);
@@ -53,11 +46,7 @@ const OfficePage = () => {
 
   const setBranch = (b: string) => {
     setBranchState(b);
-    try {
-      window.localStorage.setItem(BRANCH_KEY, b);
-    } catch {
-      /* 무시 */
-    }
+    saveOfficeBranch(b);
   };
 
   // 실시간 접속 목록이 아직 안 왔으면 나만이라도 앉혀 둔다 (화면을 연 사람은 지금 들어와 있다)
@@ -141,7 +130,7 @@ const OfficePage = () => {
             </div>
           )}
 
-          <OfficeScene state={state} online={online} />
+          <OfficeScene state={state} online={online} className="rounded-3xl shadow-elev-1" />
 
           {/* 내 상태 말풍선 */}
           <div className="rounded-3xl bg-card p-3.5 shadow-elev-1">
@@ -174,7 +163,7 @@ const OfficePage = () => {
 
           {/* 회의 */}
           {state.meeting ? (
-            <MeetingPanel state={state} online={online} />
+            <MeetingSummaryCard state={state} online={online} onEnter={() => navigate("/office/room")} />
           ) : (
             <div className="rounded-3xl bg-card p-4 shadow-elev-1">
               <div className="flex items-center gap-2">
@@ -238,7 +227,13 @@ const OfficePage = () => {
       )}
 
       {state && (
-        <OpenMeetingSheet open={openSheet} onClose={() => setOpenSheet(false)} branch={state.branch} label={state.label} />
+        <OpenMeetingSheet
+          open={openSheet}
+          onClose={() => setOpenSheet(false)}
+          branch={state.branch}
+          label={state.label}
+          onOpened={() => navigate("/office/room")}
+        />
       )}
       <MinutesSheet meetingId={minutesId} onClose={() => setMinutesId(null)} />
     </AppPage>

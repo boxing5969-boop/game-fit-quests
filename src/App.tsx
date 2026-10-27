@@ -137,6 +137,8 @@ const NotificationsPage = lazyWithRetry(() => import("@/pages/NotificationsPage"
 const HandWrapGuidePage = lazyWithRetry(() => import("@/pages/HandWrapGuidePage"));
 // 지점 회의실 — 지도진 가상 사무실 · 회의 채팅 (2026-10-27, 서버가 지점 지도진 + 대표님만 들인다)
 const OfficePage = lazyWithRetry(() => import("@/pages/OfficePage"));
+// 회의실 화면 — 그림 + 채팅 한 화면, 말풍선 (2026-10-27 대표님)
+const OfficeRoomPage = lazyWithRetry(() => import("@/pages/OfficeRoomPage"));
 const MyAttendancePage = lazyWithRetry(() => import("@/pages/MyAttendancePage"));
 
 const queryClient = new QueryClient({
@@ -360,6 +362,7 @@ const AppRoutes = () => {
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
         <Route path="/handwrap" element={<ProtectedRoute><HandWrapGuidePage /></ProtectedRoute>} />
         <Route path="/office" element={<ProtectedRoute><OfficePage /></ProtectedRoute>} />
+        <Route path="/office/room" element={<ProtectedRoute><OfficeRoomPage /></ProtectedRoute>} />
         <Route path="/library" element={<ProtectedRoute><BoxingLibraryPage /></ProtectedRoute>} />
         <Route path="/live-board/:branchCode" element={<LiveBoardPage />} />
         {/* 사이니지용 짧은 주소 — 리모컨으로 치기 쉽게. /tv/sunreung/1 처럼 화면 번호를 붙이면
