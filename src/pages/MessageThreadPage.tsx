@@ -4,10 +4,11 @@
  * · 4초마다 새 메시지를 읽는다(화면이 가려지면 멈춤). 최신 쪽을 읽으면 서버가 읽음 처리한다.
  * · 내 말풍선 = 먹색, 상대 = 흰 카드. 같은 사람 3분 안 메시지는 한 덩어리, 시각은 덩어리 끝에만.
  * · 이모지만 1~3개 → 말풍선 없이 크게. 링크는 누를 수 없는 글자로만 보인다(피싱 방지).
+ *   단 153 선물·체험권 주소(153-boxing-os.pages.dev)만 눌러서 열린다 — dmText.splitDmLinks (2026-10-27 VIP 선물 메시지)
  * · 받은 요청: 수락 · 삭제(상대에게 알리지 않음) · 차단. 보낸 요청: 수락 전까지 1개만.
  * · ⋯ : 라이센스 보기(회원) · 신고하기(본사만 확인) · 차단 · 대화 나가기(내 화면에서만)
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowUp, ChevronLeft, MoreHorizontal, Smile } from "lucide-react";
@@ -26,7 +27,8 @@ import {
 import { getDmThread, type DmMessage, type DmPerson } from "@/services/dmService";
 import { absorbDmPage, dmBubbleTime, dmUntilLabel, layoutDmBubbles, mergeDmMessages, type DmBubbleView } from "@/lib/dmTime";
 import { dmPersonLine } from "@/lib/dmPeople";
-import { isEmojiOnly } from "@/lib/dmText";
+import { isEmojiOnly, splitDmLinks } from "@/lib/dmText";
+import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 import { openCredentialChange } from "@/lib/appEvents";
 import { cn } from "@/lib/utils";
 import { DmAvatar, DmKindBadge, DmSheet } from "@/components/dm/DmParts";
@@ -56,6 +58,32 @@ const bubbleRadius = (mine: boolean, start: boolean, end: boolean) => {
   return start ? "rounded-[20px] rounded-bl-md" : end ? "rounded-[20px] rounded-tl-md" : "rounded-[20px] rounded-l-md";
 };
 
+/** 말풍선 글 — 153 선물·체험권 주소만 링크(아이폰 앱은 앱 안 사파리 창, 그 밖은 새 창), 나머지는 글자 그대로 */
+const DmBody = ({ body }: { body: string }) => (
+  <>
+    {splitDmLinks(body).map((p, i) => {
+      const href = p.href;
+      if (!href) return <Fragment key={i}>{p.text}</Fragment>;
+      return (
+        <a
+          key={i}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold underline underline-offset-2"
+          onClick={(e) => {
+            if (!isIosApp()) return;
+            e.preventDefault();
+            void loadIosAppNative().then((n) => n.openInAppBrowser(href));
+          }}
+        >
+          {p.text}
+        </a>
+      );
+    })}
+  </>
+);
+
 const Bubble = ({ v, peer, seen }: { v: DmBubbleView<DmMessage>; peer: DmPerson | null; seen: boolean }) => {
   const m = v.msg;
   const emoji = isEmojiOnly(m.body);
@@ -81,7 +109,7 @@ const Bubble = ({ v, peer, seen }: { v: DmBubbleView<DmMessage>; peer: DmPerson 
                 bubbleRadius(m.mine, v.groupStart, v.groupEnd),
               )}
             >
-              {m.body}
+              <DmBody body={m.body} />
             </span>
           )}
           {v.groupEnd && (
