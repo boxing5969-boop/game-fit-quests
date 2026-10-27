@@ -23,6 +23,8 @@ export interface MileageRules {
   attendance: number;
   level_up: number;
   title_match: number;
+  /** 153 레코드 최초 기록이 새겨질 때 (2026-10-16 대표님 10,000 · 2026-10-28 설정 화면에 칸 추가 — 예전 화면은 저장할 때 이 값을 지웠다) */
+  record: number;
   /** 적립 시작 시각(UTC ISO) — 관리자 설정 화면에서만 읽힌다. 서버가 정한다. */
   since?: string;
 }
@@ -40,7 +42,7 @@ export interface MyMileage {
   rules: MileageRules | null;
 }
 
-export const DEFAULT_MILEAGE_RULES: MileageRules = { enabled: true, attendance: 500, level_up: 500, title_match: 5000 };
+export const DEFAULT_MILEAGE_RULES: MileageRules = { enabled: true, attendance: 500, level_up: 500, title_match: 5000, record: 10000 };
 
 type SbResult<T> = { data: T | null; error: { message: string } | null };
 
@@ -63,6 +65,8 @@ export function normalizeRules(raw: unknown): MileageRules | null {
     attendance: toInt(r.attendance, DEFAULT_MILEAGE_RULES.attendance),
     level_up: toInt(r.level_up, DEFAULT_MILEAGE_RULES.level_up),
     title_match: toInt(r.title_match, DEFAULT_MILEAGE_RULES.title_match),
+    // 서버에 칸이 없으면 0 — 서버(records_153_reward_trg)도 없으면 주지 않는다
+    record: toInt(r.record, 0),
     since: typeof r.since === "string" ? r.since : undefined,
   };
 }
@@ -95,6 +99,7 @@ export async function setMileageRules(input: Omit<MileageRules, "since">): Promi
     attendance: input.attendance,
     level_up: input.level_up,
     title_match: input.title_match,
+    record: input.record,
   };
   const { error } = await sbRpc<unknown>("set_app_setting", { _key: "mileage_rules", _value: value });
   if (error) throw new Error(translateError(error));

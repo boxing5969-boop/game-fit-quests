@@ -15,12 +15,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
-type AmountField = "attendance" | "level_up" | "title_match";
+type AmountField = "attendance" | "level_up" | "title_match" | "record";
 
 const FIELDS: { key: AmountField; label: string; hint: string }[] = [
   { key: "attendance", label: "출석", hint: "하루 1번 · 문이 열린 얼굴 출입 또는 QR 출석" },
   { key: "level_up", label: "레벨업", hint: "레벨 승인 순간 · 같은 레벨은 한 번만" },
   { key: "title_match", label: "타이틀매치 승급", hint: "레벨 10 타이틀매치 통과 · 리그마다 한 번" },
+  // 2026-10-28: 예전엔 이 칸이 없어 저장하면 서버 값(10,000)이 지워졌다 — 이제 보이고 바꿀 수 있다
+  { key: "record", label: "153 레코드", hint: "최초 기록에 이름이 새겨질 때 · 기록마다 한 번" },
 ];
 
 const MAX_AMOUNT = 100000;
@@ -40,13 +42,14 @@ const toForm = (r: MileageRules): Record<AmountField, string> => ({
   attendance: String(r.attendance),
   level_up: String(r.level_up),
   title_match: String(r.title_match),
+  record: String(r.record),
 });
 
 const MileageSettingsCard = () => {
   const { data: rules, isLoading } = useMileageRules();
   const save = useSetMileageRules();
   const [enabled, setEnabled] = useState(true);
-  const [vals, setVals] = useState<Record<AmountField, string>>({ attendance: "", level_up: "", title_match: "" });
+  const [vals, setVals] = useState<Record<AmountField, string>>({ attendance: "", level_up: "", title_match: "", record: "" });
 
   // 서버 값은 처음 한 번만 폼에 채운다 — 입력 중에 다시 읽혀도 고치던 숫자가 되돌아가지 않게.
   const initialized = useRef(false);
@@ -61,6 +64,7 @@ const MileageSettingsCard = () => {
     attendance: Number(vals.attendance),
     level_up: Number(vals.level_up),
     title_match: Number(vals.title_match),
+    record: Number(vals.record),
   };
   const invalid = FIELDS.some(({ key }) => {
     const n = nums[key];

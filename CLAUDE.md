@@ -266,6 +266,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 공개 표(public_profiles · attendance_logs · activity_sessions · member_character_assignments · member_card_display)를 TV 에서 직접 읽지 않는다. 로그인 안 한 사람의 직접 읽기는 막혀 있다(20261019191000).
 - 실시간: DB 트리거 `_board_ping` 이 이름 없는 신호만 보낸다(`realtime.send` → 채널 `board-ping:<지점 이름>`, 이벤트 `changed`, payload `{t: 표 이름}`). TV 는 신호를 받으면 0.7초 모아 다시 읽는다. 환영 화면은 `age_sec ≤ 150` 인 새 출석에만(얼굴 출석은 찍은 뒤 평균 3분 늦게 들어온다), 첫 읽기는 조용히.
 - 153 레코드(2026-10-19 대표님 가·나·라): `board_record_holders`(TV 열쇠 길, 오늘 온 '최초' 기록 보유자만 · 대회 메달은 이미 이름 옆에 있어 제외) → 가: 들어오면 금색 '153 RECORD' 환영 10초(`RECORD_POPUP_MS`, 생일이면 생일 화면에 기록 한 줄) · 나: 카드 맨 위 금색 띠(`BoxerLicenseCard` `record`) · 라: 랭킹 띠 위 '오늘 온 최초 기록 보유자' 금색 띠(넘치면 흐름). 새 출석이 들어올 때 환영 화면보다 먼저 다시 읽는다. 테스트 판 '🏆 153 레코드 회원 입장'.
+- 153 레코드 최초 기록은 새겨질 때 마일리지(`app_settings.mileage_rules.record`, 10,000) + 알림(`records_153_reward_trg`, 금액 0 이면 둘 다 없음). 10/24 관리자 화면 저장이 record 를 지운 일이 있어 2026-10-28 고침 — 설정 화면에 '153 레코드' 칸 · `set_app_setting` 은 보내지 않은 칸을 앞 값 그대로(20261028004553). '최초 커뮤니티 사진'(`first_journal_photo`, 전체 공개 사진 글) 추가 — 20261028004226.
 - TV 열쇠: `_board_branch_ok` — 지점에 `internal_sync_config.board_key:<지점>` 이 있으면 열쇠가 맞는 TV 와 로그인한 그 지점 운영진만. 열쇠는 TV 를 `/tv/<지점>/<번호>?k=<열쇠>` 로 한 번 열면 그 기기에 남는다(`src/lib/boardKey.ts`). 대기 열쇠(`board_key_pending:`)로 처음 연 순간 잠긴다. 관리자 앱 › 라이브보드(`LiveBoardPickerPage`)가 그 지점 운영진에게만 열쇠 주소를 보여 준다(`get_board_tv_key`).
 
 ### 수강권 화면 — PT 남은 횟수 · 락카 번호 (2026-10-19 대표님)

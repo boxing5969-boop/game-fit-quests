@@ -96,6 +96,8 @@ export const RECORD_153_FIRSTS: ReadonlyArray<{
   { key: "first_checkin", section: "start", emoji: "🚪", title: "최초 출석", desc: "앱이 생기고 처음으로 앱 출석을 찍은 회원", empty: "" },
   { key: "first_100_checkins", section: "start", emoji: "💯", title: "최초 출석 100회", desc: "가장 먼저 100번 출석한 회원", empty: "100번째 출석을 가장 먼저 찍는 회원이 주인이 돼요" },
   { key: "first_journal", section: "start", emoji: "✍️", title: "최초 커뮤니티 글", desc: "153 커뮤니티에 처음 글을 남긴 회원", empty: "커뮤니티에 처음 글을 쓰는 회원이 주인이 돼요" },
+  // 2026-10-28 대표님: "처음으로 사진을 올렸는데 축하해드리자 153레코드에 넣을까?" (DB 20261028004226 — 전체 공개 사진 글만)
+  { key: "first_journal_photo", section: "start", emoji: "📸", title: "최초 커뮤니티 사진", desc: "153 커뮤니티에 처음 사진을 올린 회원", empty: "커뮤니티에 처음 사진을 올리는 회원이 주인이 돼요" },
   { key: "first_handwrap", section: "start", emoji: "🩹", title: "최초 붕대 감기 연습", desc: "집에서 붕대 감기를 처음 해 본 회원", empty: "붕대 감기 연습을 처음 하는 회원이 주인이 돼요" },
   { key: "first_lv10", section: "level", emoji: "🔟", title: "최초 레벨 10", desc: "화이트 리그 끝까지 가장 먼저 오른 회원", empty: "레벨 10에 가장 먼저 오르는 회원이 주인이 돼요" },
   { key: "first_lv11", section: "level", emoji: "🔵", title: "최초 블루리그 달성", desc: "레벨 11 — 블루 리그에 가장 먼저 오른 회원", empty: "블루 리그에 가장 먼저 오르는 회원이 주인이 돼요" },
