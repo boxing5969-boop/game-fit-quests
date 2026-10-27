@@ -158,9 +158,10 @@ export function officeCallIdleReason(
   return null;
 }
 
+/** 음성 막대 한 줄에 다 보이게 짧게 (막대 제목이 '음성 회의', 옆 단추가 '음성 참여') */
 export const OFFICE_CALL_IDLE_NOTICE = {
-  hidden: "화면이 10분 넘게 꺼져 있어 음성 회의에서 나왔어요 — 다시 들으려면 '음성 참여'",
-  alone: "음성방에 10분 동안 혼자 있어서 나왔어요 — 다른 분이 오면 다시 '음성 참여'",
+  hidden: "화면이 10분 꺼져 있어 나왔어요",
+  alone: "10분 동안 혼자 있어서 나왔어요",
 } as const;
 
 let hiddenSince = 0;
