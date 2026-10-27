@@ -8,7 +8,7 @@
  * 🔔 알림 켜기 보상 (2026-10-15) — 받을 수 있는 회원(시범 지점)에게만 '챔피언 머니 500' 문구를 보인다. 금액은 서버가 준 숫자.
  */
 import { useState } from "react";
-import { BellRing, Check, Share, Smartphone } from "lucide-react";
+import { BellRing, Check, Share, Smartphone, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deniedHelp, usePushNotifications } from "@/hooks/usePushNotifications";
 import type { PushBlock } from "@/lib/pushClient";
@@ -26,26 +26,27 @@ const readHidden = (key: string): boolean => {
   }
 };
 
+// 2026-10-28 리디자인: 제목 한 줄 + 할 일 순서 한 줄 (긴 설명 문장 대신 → 로 이은 단계)
 const BLOCK_TEXT: Record<PushBlock, { title: string; body: string }> = {
   "ios-install": {
     title: "아이폰은 홈 화면 앱에서 알림을 받아요",
-    body: "사파리 아래 공유 버튼 → '홈 화면에 추가' → 홈 화면의 마이복서153을 열고 여기서 '알림 켜기'를 눌러 주세요.",
+    body: "사파리 공유 버튼 → 홈 화면에 추가 → 그 앱에서 알림 켜기",
   },
   "ios-old": {
-    title: "iOS 16.4 이상에서 알림을 받을 수 있어요",
-    body: "아이폰 설정 → 일반 → 소프트웨어 업데이트 후 홈 화면의 마이복서153을 다시 열어 주세요.",
+    title: "iOS 16.4 이상에서 알림을 받아요",
+    body: "설정 → 일반 → 소프트웨어 업데이트 → 앱 다시 열기",
   },
   "in-app": {
-    title: "카카오톡 안에서 연 화면은 알림을 켤 수 없어요",
-    body: "오른쪽 ⋮(또는 ⋯) → '다른 브라우저로 열기'로 크롬·사파리에서 연 뒤 켜 주세요.",
+    title: "카카오톡 안에서는 알림을 켤 수 없어요",
+    body: "⋮ → 다른 브라우저로 열기 → 알림 켜기",
   },
   "no-sw": {
-    title: "이 브라우저에서는 휴대폰 알림을 쓸 수 없어요",
-    body: "안드로이드는 크롬, 아이폰은 홈 화면에 추가한 앱에서 켤 수 있어요.",
+    title: "이 브라우저는 휴대폰 알림이 안 돼요",
+    body: "안드로이드는 크롬, 아이폰은 홈 화면 앱에서 켜요",
   },
   "no-push": {
-    title: "이 브라우저에서는 휴대폰 알림을 쓸 수 없어요",
-    body: "안드로이드는 크롬, 아이폰은 홈 화면에 추가한 앱에서 켤 수 있어요.",
+    title: "이 브라우저는 휴대폰 알림이 안 돼요",
+    body: "안드로이드는 크롬, 아이폰은 홈 화면 앱에서 켜요",
   },
 };
 
@@ -138,24 +139,24 @@ const PushOptInCard = ({ variant, className }: Props) => {
             <Icon className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-label font-bold leading-snug text-foreground">{t.title}</p>
+            <p className="text-body font-bold leading-snug text-foreground">{t.title}</p>
             <p className="mt-1 text-label leading-relaxed text-muted-foreground">{t.body}</p>
             {showReward && state.kind === "unsupported" && state.why === "ios-install" && (
-              <p className="mt-1.5 text-label font-semibold text-primary">홈 화면 앱에서 알림을 켜면 {rewardText}를 드려요.</p>
+              <p className="mt-1.5 text-label font-semibold text-primary">켜면 {rewardText}</p>
             )}
           </div>
-        </div>
-        {inbox && (
-          <div className="mt-2 flex justify-end">
+          {/* 닫기 — 오른쪽 위 ✕ 하나 (2주 동안 접힘) */}
+          {inbox && (
             <button
               type="button"
               onClick={hideForNow}
-              className="h-9 rounded-full px-3 text-label font-semibold text-muted-foreground active:bg-secondary"
+              aria-label="닫기"
+              className="-mr-1 -mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-secondary"
             >
-              닫기
+              <X className="h-5 w-5" />
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </section>
     );
   }
@@ -169,19 +170,20 @@ const PushOptInCard = ({ variant, className }: Props) => {
           <BellRing className="h-5 w-5" strokeWidth={2.2} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-label font-bold leading-snug text-foreground">
+          <p className="text-body font-bold leading-snug text-foreground">
             {manager
               ? "💳 결제 알림을 휴대폰으로 받기"
               : showReward
               ? `알림 켜고 ${rewardText} 받기`
               : "휴대폰으로도 알림 받기"}
           </p>
+          {/* 설명은 한 줄 (2026-10-28 리디자인) */}
           <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             {manager
               ? "앱에서 결제·취소되면 1분 안에 이 기기가 울려요 — 브로제이 입력을 바로 하세요. 공지 소식도 함께 와요."
               : showReward
-              ? `켜 두면 체육관 출석할 때마다 XP +${reward?.dailyXp || 3}를 더 받아요 — 랭킹에 도움이 돼요. 공지 · 출석 소식도 휴대폰으로 와요.`
-              : "공지 · 출석 · 수업 소식이 오면 앱을 열지 않아도 바로 알려 드려요."}
+              ? `켜 두면 출석마다 XP +${reward?.dailyXp || 3} · 랭킹에 도움이 돼요`
+              : "앱을 열지 않아도 공지 · 출석 소식을 바로 알려 드려요"}
           </p>
         </div>
       </div>

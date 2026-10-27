@@ -30,6 +30,7 @@ const NotificationRow = ({
   onTap: () => void;
 }) => {
   const long = !n.link && n.body.length > LONG_BODY;
+  // 2026-10-28 리디자인: 줄마다 같던 종 그림 · '바로 가기' 줄을 빼고 — 새 알림 점 · 제목 16 · 내용 2줄 · 갈 곳이 있으면 오른쪽 ›
   return (
     <li>
       <button
@@ -37,44 +38,34 @@ const NotificationRow = ({
         onClick={onTap}
         aria-expanded={long ? expanded : undefined}
         className={cn(
-          "flex w-full gap-3 px-4 py-3.5 text-left transition-colors active:bg-secondary/70",
+          "flex w-full items-center gap-3 py-3.5 pl-3 pr-4 text-left transition-colors active:bg-secondary/70",
           fresh && "bg-primary/[0.06]",
         )}
       >
         <span
-          className={cn(
-            "relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-            fresh ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground",
-          )}
-        >
-          <Bell className="h-4 w-4" strokeWidth={2.2} />
-          {fresh && (
-            <span aria-label="새 알림" className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-card" />
-          )}
-        </span>
+          aria-label={fresh ? "새 알림" : undefined}
+          className={cn("mt-2 h-2 w-2 shrink-0 self-start rounded-full", fresh ? "bg-primary" : "bg-transparent")}
+        />
         <span className="min-w-0 flex-1">
-          <span className="flex items-start justify-between gap-2">
-            <span className="min-w-0 text-label font-bold leading-snug text-foreground">{n.title}</span>
-            <span className="shrink-0 pt-0.5 text-micro tabular-nums text-muted-foreground">{notificationTime(n.createdAt)}</span>
+          <span className="flex items-baseline justify-between gap-2">
+            <span className="min-w-0 text-body font-bold leading-snug text-foreground">{n.title}</span>
+            <span className="shrink-0 text-micro tabular-nums text-muted-foreground">{notificationTime(n.createdAt)}</span>
           </span>
           {n.body && (
             <span
               className={cn(
                 "mt-0.5 block whitespace-pre-line break-words text-label leading-relaxed text-muted-foreground",
-                long && !expanded && "line-clamp-3",
+                (n.link || (long && !expanded)) && "line-clamp-2",
               )}
             >
               {n.body}
             </span>
           )}
-          {n.link ? (
-            <span className="mt-1.5 inline-flex items-center gap-0.5 text-label font-bold text-primary">
-              바로 가기 <ChevronRight className="h-3.5 w-3.5" />
-            </span>
-          ) : long ? (
+          {!n.link && long && (
             <span className="mt-1 block text-label font-semibold text-muted-foreground/80">{expanded ? "접기" : "더 보기"}</span>
-          ) : null}
+          )}
         </span>
+        {n.link && <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-label="열기" />}
       </button>
     </li>
   );
