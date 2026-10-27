@@ -98,19 +98,17 @@ const HandWrapGuidePage = () => {
         />
       }
     >
-      <p className="px-1 text-label leading-relaxed text-muted-foreground">
-        첫날엔 코치님이 한 손을 빠르게 감아 드려요. 다른 손은 영상이나 사진을 보면서 직접 감아 보세요 — 주로 쓰는 손으로 감는
-        쪽이 쉬워요.
+      {/* 설명은 한 줄씩 (2026-10-28 리디자인 — 회색 설명 줄은 칸마다 한 줄) */}
+      <p className="px-1 text-label text-muted-foreground">
+        첫날엔 코치님이 한 손을 감아 드려요 · 다른 손은 보면서 직접 감아 봐요
       </p>
 
       {/* ── 영상 — 두 각도 ── */}
       <section aria-labelledby="handwrap-video-h" className="mt-4">
-        <h2 id="handwrap-video-h" className="px-1 text-body font-black text-foreground">
+        {/* '내 눈으로'가 가장 쉽다는 말은 영상 칸의 '추천' · 한 줄 설명이 한다 */}
+        <h2 id="handwrap-video-h" className="px-1 text-heading text-foreground">
           영상으로 보기
         </h2>
-        <p className="mt-0.5 px-1 text-label leading-relaxed text-muted-foreground">
-          같은 감기를 여러 방향에서 볼 수 있어요. &lsquo;내 눈으로&rsquo;는 내 손을 내려다보는 방향이라 따라 하기 가장 쉬워요
-        </p>
         <div className="mt-2 grid grid-cols-2 gap-2.5">
           {HANDWRAP_ANGLES.map((a, i) => (
             <button
@@ -162,29 +160,26 @@ const HandWrapGuidePage = () => {
 
       {/* ── 9단계 설명서 — 한눈에 9칸 → 누르면 움직이는 사진 + 방향 + 자세한 설명 (2026-10-27 대표님) ── */}
       <section aria-labelledby="handwrap-steps-h" className="mt-7">
-        <h2 id="handwrap-steps-h" className="px-1 text-body font-black text-foreground">
-          9단계 설명서 · 한 단계씩 따라 하기
+        {/* 점 색은 아래 표시(시작 · 끝 · 붕대 길)가, 오른손은 '오른손 (거울)' 단추가 말한다 */}
+        <h2 id="handwrap-steps-h" className="px-1 text-heading text-foreground">
+          9단계 설명서
         </h2>
-        <p className="mt-0.5 px-1 text-label leading-relaxed text-muted-foreground">
-          사진을 누르면 그 단계를 실제로 감는 움직이는 사진과 자세한 설명이 나와요. 초록 점에서 시작해 주황 점으로 감아요 · 오른손은 &lsquo;오른손&rsquo;을 누르면 거울처럼 보여요
-        </p>
+        <p className="mt-0.5 px-1 text-label text-muted-foreground">사진을 누르면 감는 모습이 움직여요</p>
         <HandWrapStepViewer onWatch={watchStep} className="mt-2" />
       </section>
 
       {/* ── 집 연습 미션 ── */}
       <section aria-labelledby="handwrap-home-h" className="mt-7">
-        <h2 id="handwrap-home-h" className="px-1 text-body font-black text-foreground">
+        <h2 id="handwrap-home-h" className="px-1 text-heading text-foreground">
           집에서 혼자 감아 보기
         </h2>
-        <p className="mt-0.5 px-1 text-label leading-relaxed text-muted-foreground">
-          집에서 붕대를 풀었다 다시 감아 보고, 감아 본 날 눌러 주세요. 다음 수업 때 코치님 앞에서 혼자 감아 보여 주면 끝!
-        </p>
+        <p className="mt-0.5 px-1 text-label text-muted-foreground">감아 본 날 눌러요 · 코치님 앞에서 혼자 감으면 끝!</p>
         <HandWrapPracticeCard variant="page" className="mt-2" />
       </section>
 
       {/* ── 흔한 실수 ── */}
       <section aria-labelledby="handwrap-mistakes-h" className="mt-7">
-        <h2 id="handwrap-mistakes-h" className="px-1 text-body font-black text-foreground">
+        <h2 id="handwrap-mistakes-h" className="px-1 text-heading text-foreground">
           이것만 조심해요
         </h2>
         <ul className="mt-2 space-y-2">

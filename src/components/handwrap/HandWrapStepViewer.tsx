@@ -190,7 +190,8 @@ const HandWrapStepViewer = ({ onWatch, className }: Props) => {
                 </span>
               </span>
               <span className="mt-1.5 block text-label font-black leading-snug text-foreground">{s.title}</span>
-              <span className="mt-0.5 block text-label leading-snug text-muted-foreground">{txt(s.short)}</span>
+              {/* 짧은 글은 두 줄까지 — 나머지는 누르면 상세에 (2026-10-28 리디자인) */}
+              <span className="mt-0.5 line-clamp-2 text-label leading-snug text-muted-foreground">{txt(s.short)}</span>
             </button>
           </li>
         ))}

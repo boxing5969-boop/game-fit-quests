@@ -46,7 +46,6 @@ const ChallengesPage = () => {
       header={
         <PageHeader
           title="21일 챌린지"
-          subtitle="시즌 · 더 다이어터"
           leftAction={
             <button
               type="button"
@@ -65,25 +64,13 @@ const ChallengesPage = () => {
         data-tour="challenge-arena-scroll"
         className="space-y-4 pt-2"
       >
-        {/* Hero — 더 다이어터 시즌 */}
-        <section className="rounded-2xl border border-yellow-500/40 bg-gradient-to-b from-yellow-500/10 via-emerald-400/5 to-transparent p-5">
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-micro font-black uppercase tracking-[0.2em] text-yellow-400">
-              SEASON
-            </span>
-            <p className="text-label font-bold text-emerald-500">
-              CHALLENGE · 같이 21일
-            </p>
-          </div>
-          <h2 className="mt-1.5 text-heading leading-tight text-foreground">
-            <span className="text-yellow-400">더 다이어터</span> 시즌
+        {/* Hero — 더 다이어터 시즌 (2026-10-28 리디자인: 제목 + 한 줄. 꾸밈 머리말 · 밝은 노랑 글씨 뺌) */}
+        <section className="rounded-2xl border border-reward/40 bg-gradient-to-b from-reward/10 to-transparent p-5">
+          <h2 className="text-title leading-tight text-foreground">
+            <span className="text-reward">더 다이어터</span> 시즌
           </h2>
-          <p className="mt-0.5 text-label font-bold text-muted-foreground">
-            혼자보다 함께
-          </p>
-          <p className="mt-2 text-label leading-relaxed text-muted-foreground">
-            체중을 경쟁하지 않습니다. 출석·기록·복귀 참여로 점수가 쌓여요.
-            꾸준함이 진짜 점수입니다.
+          <p className="mt-1 text-label text-muted-foreground">
+            몸무게는 공개하지 않아요 · 출석 · 기록 · 복귀로 점수가 쌓여요
           </p>
         </section>
 
@@ -118,14 +105,8 @@ const ChallengesPage = () => {
               <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-500">
                 <Users className="h-5 w-5" />
               </div>
-              <p className="mt-2 text-label font-bold text-foreground">
-                <span className="text-yellow-400">더 다이어터</span> 시즌 챌린지가 곧 열립니다
-              </p>
-              <p className="mt-1 text-label leading-relaxed text-muted-foreground">
-                지점 또는 목표별 챌린지가 열리면 여기에 표시돼요.
-                <br />
-                먼저 오늘의 습관 체크부터 챙겨볼까요?
-              </p>
+              <p className="mt-2 text-body font-bold text-foreground">시즌 챌린지가 곧 열려요</p>
+              <p className="mt-1 text-label text-muted-foreground">열리면 여기에 보여요</p>
               <Button
                 variant="outline"
                 onClick={() => navigate("/diet")}
@@ -149,9 +130,6 @@ const ChallengesPage = () => {
           </ul>
         </section>
 
-        <p className="pb-4 text-center text-label leading-relaxed text-muted-foreground">
-          응원과 꾸준함 중심 · 상위권만 보상받지 않아요 · 몸무게 공개 없음
-        </p>
       </div>
     </AppPage>
   );
@@ -216,15 +194,12 @@ const MyChallengeCard = ({
 
       {/* 진행률 링 + 일수 */}
       <div className="mt-3 flex items-center gap-3">
-        <ProgressRing pct={pctComplete} label={`${currentDay}`} />
+        {/* 날짜는 고리 안에 한 번만 (같은 숫자 두 번 X) */}
+        <ProgressRing pct={pctComplete} label={`${currentDay}일째`} />
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-bold text-foreground">
-            Day {currentDay} <span className="text-muted-foreground font-normal">/ {row.duration_days}</span>
-          </p>
-          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
-            {row.start_date} ~ {endDate}
-            <br />
-            참여 {row.participant_count}명 · 오늘도 체크인 한 번이면 충분해요
+          <p className="text-body font-bold text-foreground">{row.duration_days}일 중</p>
+          <p className="mt-0.5 text-label text-muted-foreground">
+            {row.start_date} ~ {endDate} · 함께 {row.participant_count}명
           </p>
         </div>
       </div>
@@ -251,7 +226,7 @@ const MyChallengeCard = ({
       </div>
 
       {status && (
-        <p className="mt-2 text-center text-micro font-bold text-emerald-500">
+        <p className="mt-2 text-center text-label font-bold text-status-complete">
           {status}
         </p>
       )}
@@ -263,7 +238,7 @@ const MyChallengeCard = ({
 const ProgressRing = ({
   pct,
   label,
-  size = 56,
+  size = 60,
   stroke = 5,
 }: {
   pct: number;

@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, X, Clock, CheckCircle2, TrendingUp } from "lucide-react";
+import { ArrowLeft, X, Clock, CheckCircle2 } from "lucide-react";
 import { PHASE_META, type RoutinePhases, emptyPhases } from "@/lib/routineComposer";
 import { useLessonDays, useLessonToday } from "@/hooks/useLessonDays";
 import { groupByLevel } from "@/lib/lessonDays";
@@ -28,21 +28,6 @@ interface Cycle {
   reqSessions: number; reqDays: number; reqMinutes: number; meets: boolean;
   reqMinDays?: number; elapsedDays?: number; rank?: string;
 }
-
-const CycleBar = ({ label, cur, req, unit }: { label: string; cur: number; req: number; unit: string }) => {
-  const done = cur >= req;
-  return (
-    <div className="flex-1">
-      <div className="mb-0.5 flex items-center justify-between text-micro">
-        <span className="text-muted-foreground">{label}</span>
-        <span className={done ? "font-bold text-status-complete" : "text-foreground"}>{cur}/{req}{unit}</span>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-        <div className={`h-full rounded-full ${done ? "bg-status-complete" : "bg-primary"}`} style={{ width: `${Math.min(100, (cur / Math.max(1, req)) * 100)}%` }} />
-      </div>
-    </div>
-  );
-};
 
 const RoutinesPage = () => {
   const navigate = useNavigate();
@@ -118,41 +103,14 @@ const RoutinesPage = () => {
         <h1 className="text-heading font-black">수업 루틴</h1>
       </div>
 
-      {/* 레벨업 연결 배너 */}
-      {cycle && (
-        <div className="mb-3 rounded-2xl border border-border bg-card p-3 shadow-elev-1">
-          <div className="mb-2 flex items-center gap-1.5">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <span className="text-label font-bold text-foreground">레벨업까지</span>
-            <span className="text-label text-muted-foreground">
-              출석 {cycle.reqSessions}회마다 {cycle.rank === "red" || cycle.rank === "black" ? "승급 심사" : "자동 승급"}
-            </span>
-          </div>
-          <div className="flex gap-2">
-            <CycleBar label="출석" cur={cycle.progressFloor ?? cycle.sessions} req={cycle.reqSessions} unit="회" />
-            {/* 블랙 리그는 출석 수와 별개로 최소 연한이 있다 */}
-            {(cycle.reqMinDays ?? 0) > 0 && (
-              <CycleBar label="연한" cur={cycle.elapsedDays ?? 0} req={cycle.reqMinDays ?? 0} unit="일" />
-            )}
-          </div>
-          {cycle.meets && (
-            <p className="mt-2 w-full rounded-lg bg-primary/10 py-2 text-center text-label font-bold text-primary">
-              {needsReview
-                ? "요건을 다 채웠어요 — 심사가 열리면 담당자 확인 후 승급돼요"
-                : "출석을 다 채웠어요 — 다음 출석 때 자동으로 승급돼요"}
-            </p>
-          )}
-        </div>
-      )}
+      {/* 레벨업 진행도는 훈련 탭 '레벨업까지' 카드 한 곳에서 (2026-10-28 리디자인 — 여기는 수업 매뉴얼이 주인공) */}
 
       {/* ── 📋 일차별 수업 매뉴얼 ── */}
       <LessonTodayCard onOpen={openLesson} showEmpty className="mb-4" />
 
       <div className="mb-2.5 px-1">
-        <h2 className="text-body font-black text-foreground">153 수업 매뉴얼</h2>
-        <p className="mt-0.5 text-label leading-snug text-muted-foreground">
-          레벨마다 3일 — 코치님과 이 순서대로 배워요. 누르면 그날 라운드·주의할 점이 나와요.
-        </p>
+        <h2 className="text-heading text-foreground">153 수업 매뉴얼</h2>
+        <p className="mt-0.5 text-label text-muted-foreground">레벨마다 3일 · 누르면 그날 순서가 나와요</p>
       </div>
       {lessonDays.isLoading ? (
         <div className="space-y-2" aria-hidden>
