@@ -1,10 +1,9 @@
-import { useState, useRef, useMemo } from "react";
+import { Fragment, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateMissionVideoQueries } from "@/lib/missionVideoQueries";
 import { toast } from "sonner";
 import {
-  User,
   Plus,
   Pencil,
   Trash2,
@@ -44,6 +43,7 @@ import {
 } from "@/lib/missionVideos";
 import { Input } from "@/components/ui/input";
 import { toGlobalLevel } from "@/lib/rankLabels";
+import { parseVideoTitle } from "@/hooks/useLevelVideos";
 
 import {
   AppPage,
@@ -477,29 +477,21 @@ const MissionsPage = () => {
       header={
         <PageHeader
           title="훈련 미션"
+          // 내 정보는 아래 탭에 있다 — 머리글 단추는 관리자 '추가'만 (2026-10-28 리디자인)
           rightAction={
-            <>
-              {isAdmin && (
-                <button
-                  onClick={() => {
-                    setEditingId(null);
-                    setForm(emptyMissionForm);
-                    setShowForm(true);
-                  }}
-                  aria-label="미션 추가"
-                  className="flex h-9 items-center gap-1 rounded-pill bg-primary px-3 text-label font-bold text-primary-foreground active:scale-95"
-                >
-                  <Plus className="h-3.5 w-3.5" /> 추가
-                </button>
-              )}
+            isAdmin ? (
               <button
-                onClick={() => navigate("/mypage")}
-                aria-label="내 정보"
-                className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"
+                onClick={() => {
+                  setEditingId(null);
+                  setForm(emptyMissionForm);
+                  setShowForm(true);
+                }}
+                aria-label="미션 추가"
+                className="flex h-9 items-center gap-1 rounded-pill bg-primary px-3 text-label font-bold text-primary-foreground active:scale-95"
               >
-                <User className="h-4 w-4 text-secondary-foreground" />
+                <Plus className="h-3.5 w-3.5" /> 추가
               </button>
-            </>
+            ) : undefined
           }
           sticky
         />
@@ -543,24 +535,19 @@ const MissionsPage = () => {
           <WhiteLeagueTab />
         ) : (
           <>
-            {/* ─── Global progress card ─── */}
+            {/* ─── Global progress card — 주인공 '몇 개 완료' 하나 (같은 숫자를 % 로 또 쓰지 않는다) ─── */}
             <section className="surface-card">
-              <div className="mb-2 flex items-center justify-between">
-                <div>
-                  <p className="text-label text-muted-foreground font-medium">
-                    전체 진행률
-                  </p>
-                  <p className="number-font text-title text-foreground">
-                    <span className="text-primary">{completedCount}</span>
-                    <span className="text-muted-foreground">
-                      {" / "}
-                      {totalMissions}
-                    </span>
-                  </p>
-                </div>
-                <div className="number-font rounded-pill bg-accent/15 px-3 py-1 text-label font-bold text-accent">
-                  {progressPct}%
-                </div>
+              <div className="mb-3">
+                <p className="text-label text-muted-foreground font-medium">
+                  레벨 미션 완료
+                </p>
+                <p className="number-font text-title text-foreground">
+                  <span className="text-primary">{completedCount}</span>
+                  <span className="text-muted-foreground">
+                    {" / "}
+                    {totalMissions}
+                  </span>
+                </p>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-pill bg-[hsl(var(--xp-bar-bg))]">
                 <div
@@ -574,9 +561,9 @@ const MissionsPage = () => {
             {warmupMissions.length > 0 && (
               <section className="overflow-hidden rounded-card border border-border bg-card shadow-elev-1">
                 <div className="px-5 py-4">
-                  <h3 className="text-body text-foreground font-medium">🔥 워밍업 영상</h3>
+                  <h3 className="text-heading text-foreground">🔥 워밍업 영상</h3>
                   <p className="text-label text-muted-foreground font-medium">
-                    운동 전 몸풀기 참고용 · 레벨 미션과 별개예요
+                    운동 전 몸풀기 · 레벨 미션과 별개예요
                   </p>
                 </div>
                 <ul className="divide-y divide-border border-t border-border">
@@ -607,6 +594,8 @@ const MissionsPage = () => {
               <div className="space-y-4" data-tutorial-target="first-mission-card">
                 {grouped.map(({ rank, rankMissions }) => {
                   if (rankMissions.length === 0) return null;
+                  // 미션이 있는 리그가 하나뿐이면 리그 머리글의 'n/m 완료'는 위 카드와 같은 숫자 — 한 번만 쓴다
+                  const showLeagueCount = grouped.filter((g) => g.rankMissions.length > 0).length > 1;
                   const completed = rankMissions.filter(
                     ({ mission }) =>
                       submissionMap.get(mission.id) === "approved",
@@ -646,24 +635,26 @@ const MissionsPage = () => {
                           aria-hidden
                         />
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-body text-foreground font-medium">
-                            {/* 64-M: 화이트 리그만 레벨 미션 영상 라벨로 노출.
-                                다른 리그는 기존 'X 리그' 표기 유지. */}
-                            {rank === "white"
-                              ? "화이트 리그 레벨 미션 영상"
-                              : `${RANK_LABELS[rank]} 리그`}
+                          <h3 className="text-heading text-foreground">
+                            {RANK_LABELS[rank]} 리그
                           </h3>
-                          <p className="text-label text-muted-foreground font-medium">
-                            <span className="number-font">
-                              {completed}/{total}
-                            </span>{" "}
-                            완료
-                            {leagueComplete && (
-                              <span className="ml-2 text-[#22C55E]">
-                                · 클리어
-                              </span>
-                            )}
-                          </p>
+                          {(showLeagueCount || leagueComplete) && (
+                            <p className="text-label text-muted-foreground font-medium">
+                              {showLeagueCount && (
+                                <>
+                                  <span className="number-font">
+                                    {completed}/{total}
+                                  </span>{" "}
+                                  완료
+                                </>
+                              )}
+                              {leagueComplete && (
+                                <span className="ml-2 text-[#22C55E]">
+                                  · 클리어
+                                </span>
+                              )}
+                            </p>
+                          )}
                         </div>
                         {/* Compact progress pill */}
                         <div className="hidden w-24 sm:block">
@@ -690,26 +681,33 @@ const MissionsPage = () => {
                       {/* Mission list */}
                       {isExpanded && (
                         <ul className="border-t border-border divide-y divide-border">
-                          {rankMissions.map(({ mission, level }) => (
-                            <MissionRow
-                              key={mission.id}
-                              mission={mission}
-                              level={level}
-                              status={getMissionStatus(mission)}
-                              onClick={() => openVideo(mission)}
-                              admin={
-                                isAdmin
-                                  ? {
-                                      onEdit: () => openEditMission(mission),
-                                      onDelete: () =>
-                                        handleDeleteMission(
-                                          mission.id,
-                                          mission.title,
-                                        ),
-                                    }
-                                  : undefined
-                              }
-                            />
+                          {rankMissions.map(({ mission, level }, i) => (
+                            <Fragment key={mission.id}>
+                              {/* 레벨이 바뀌는 곳에 '레벨 N' 머리글 하나 — 줄마다 LV 칸을 두지 않는다 (2026-10-28 리디자인) */}
+                              {(i === 0 || rankMissions[i - 1].level.id !== level.id) && (
+                                <li className="bg-muted/40 px-5 py-2 text-label font-bold text-muted-foreground">
+                                  레벨 {toGlobalLevel(level.rank_name, level.level_number)}
+                                </li>
+                              )}
+                              <MissionRow
+                                mission={mission}
+                                level={level}
+                                status={getMissionStatus(mission)}
+                                onClick={() => openVideo(mission)}
+                                admin={
+                                  isAdmin
+                                    ? {
+                                        onEdit: () => openEditMission(mission),
+                                        onDelete: () =>
+                                          handleDeleteMission(
+                                            mission.id,
+                                            mission.title,
+                                          ),
+                                      }
+                                    : undefined
+                                }
+                              />
+                            </Fragment>
                           ))}
                         </ul>
                       )}
@@ -1087,6 +1085,7 @@ const MissionRow = ({
   const video = primaryMissionVideo(mission.mission_videos as MissionVideoRow[] | null);
   const hasVideo = !!video?.video_url;
   const posterUrl = video?.poster_url ?? null;
+  const titleParts = parseVideoTitle(mission.title ?? "");
 
   return (
     <li
@@ -1105,21 +1104,12 @@ const MissionRow = ({
         // min-w-0: 긴 제목이 말줄임 없이 줄 밖으로 밀어내 오른쪽 상태 아이콘이 잘리던 문제 (360px 폰)
         className="flex min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
       >
-        {/* Level tile */}
-        <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-[hsl(var(--surface-2))] text-center">
-          <span className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
-            Lv
-          </span>
-          <span className="number-font text-label font-bold leading-none text-foreground">
-            {toGlobalLevel(level.rank_name, level.level_number)}
-          </span>
-        </div>
-
+        {/* 레벨은 목록의 '레벨 N' 머리글이 말한다 — 줄에는 영상 · 이름 · 상태만 (2026-10-28 리디자인) */}
         {/* 영상 썸네일 — 대표 영상 있을 때만 노출. ▶ 오버레이로 클릭 영역 시각화. */}
         {hasVideo && (
           <div
             className={cn(
-              "relative h-10 w-16 shrink-0 overflow-hidden rounded-lg",
+              "relative h-12 w-20 shrink-0 overflow-hidden rounded-lg",
               "border border-border bg-[hsl(var(--surface-2))]",
               isLocked && "grayscale",
             )}
@@ -1143,40 +1133,14 @@ const MissionRow = ({
           </div>
         )}
 
-        {/* Title + difficulty + reward */}
+        {/* 이름 한 줄 + 설명 한 줄 — 제목의 [복싱/스텝] 꼬리표 · ㅣ 뒤 설명은 나눠서 (영상 화면에는 전체 제목) */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            {/* 폰(360px)에선 LV·썸네일·상태 아이콘과 한 줄에 들어가야 해서 제목은 2줄까지 보여준다 */}
-            <h4 className="line-clamp-2 text-label font-bold leading-snug text-foreground">
-              {mission.title}
-            </h4>
-            {hasVideo && (
-              <span
-                className="hidden shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-micro font-black uppercase tracking-wide text-primary sm:inline-block"
-                aria-label="영상 있음"
-              >
-                ▶ 영상
-              </span>
-            )}
-          </div>
-          <div className="mt-1 flex items-center gap-2">
-            <div className="flex items-center gap-0.5">
-              {Array.from({ length: 5 }, (_, i) => (
-                <span
-                  key={i}
-                  className={cn(
-                    "h-1 w-3 rounded-pill",
-                    i < (mission.difficulty || 0)
-                      ? "bg-primary"
-                      : "bg-border",
-                  )}
-                />
-              ))}
-            </div>
-            <span className="number-font whitespace-nowrap text-label font-bold text-reward">
-              +{mission.xp_reward} XP
-            </span>
-          </div>
+          <h4 className="truncate text-body font-bold leading-snug text-foreground">
+            {titleParts.name || mission.title}
+          </h4>
+          {titleParts.sub && (
+            <p className="truncate text-label text-muted-foreground">{titleParts.sub}</p>
+          )}
         </div>
       </button>
 
@@ -1242,7 +1206,7 @@ const WarmupRow = ({
         className="flex min-w-0 flex-1 items-center gap-3 text-left"
       >
         <div
-          className="relative h-10 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-[hsl(var(--surface-2))]"
+          className="relative h-12 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-[hsl(var(--surface-2))]"
           aria-hidden
         >
           {posterUrl ? (
@@ -1261,13 +1225,11 @@ const WarmupRow = ({
             </span>
           </div>
         </div>
+        {/* 워밍업이라는 것은 칸 머리글이 말한다 — 줄에는 이름만 */}
         <div className="min-w-0 flex-1">
           <h4 className="truncate text-body font-bold leading-tight text-foreground">
-            {mission.title}
+            {parseVideoTitle(mission.title ?? "").name || mission.title}
           </h4>
-          <span className="mt-1 inline-block rounded-md bg-reward/15 px-1.5 py-0.5 text-micro font-black text-reward">
-            🔥 워밍업 · 참고용
-          </span>
         </div>
       </button>
       <div className="flex shrink-0 items-center gap-1.5">

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ScanFace, Play, Dumbbell, Trophy, Clock, ChevronRight, ChevronDown, CheckCircle2,
+  ScanFace, Play, Dumbbell, Trophy, ChevronRight, ChevronDown, CheckCircle2, CircleHelp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,6 +57,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
   const { user, profile } = useAuth();
   const [playing, setPlaying] = useState<{ id: string; url: string; title: string; variants: OverlayVariant[] } | null>(null);
   const [collapsed, setCollapsed] = useState(() => safeGet(COURSE_KEY) === "1");
+  // 레벨업 카드 ? — 세는 규칙 펼치기
+  const [ruleOpen, setRuleOpen] = useState(false);
   const { data: videos = [], isFetched: videosFetched } = useLevelVideos(league, levelNumber);
   const { watched, toggle, countFor } = useWatchedVideos();
 
@@ -147,10 +149,10 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
   const steps = [
     {
       n: 1,
-      title: "체육관 도착 (자동 출석)",
+      title: "체육관 도착",
       desc: checkedInToday
         ? (arrivalLabel ? `${arrivalLabel} 입장 · 출석 완료` : "출석 완료")
-        : "입구에서 얼굴 인식하면 자동으로 출석돼요",
+        : "입구 얼굴 인식으로 자동 출석돼요",
       icon: ScanFace,
       done: !!checkedInToday,
       action: null as null | (() => void),
@@ -259,6 +261,42 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
       : []),
   ];
 
+  // ── 레벨업 카드 주인공 한 줄 — '몇 번 더' (출석 횟수 · 다른 날 중 더 많이 남은 쪽) ──
+  const left = (label: string) => {
+    const m = metrics.find((x) => x.label === label);
+    return m ? Math.max(0, m.req - m.cur) : 0;
+  };
+  const visitsLeft = Math.max(left("출석"), left("다른 날"));
+  const nextRank = ["white", "blue", "red", "black"][["white", "blue", "red", "black"].indexOf(league) + 1];
+  const nextLabel =
+    levelNumber >= 10
+      ? nextRank
+        ? `${RANK_LABELS[nextRank]} 리그까지`
+        : "다음 단계까지"
+      : `레벨 ${toGlobalLevel(league, levelNumber) + 1}까지`;
+  const heroLine = isTitleFlow
+    ? "타이틀매치만 남았어요"
+    : isPending
+      ? "코치님 승인을 기다려요"
+      : canLevelUp
+        ? isApprovalOnly
+          ? "승급 심사가 열렸어요"
+          : "다음 출석 때 올라가요"
+        : visitsLeft > 0
+          ? isApprovalOnly
+            ? `${visitsLeft}번 더 오면 심사가 열려요`
+            : `${visitsLeft}번 더 오면 돼요`
+          : left("훈련") > 0
+            ? `훈련 ${left("훈련")}분 더`
+            : left("연한") > 0
+              ? `${left("연한")}일 더 지나면 돼요`
+              : "거의 다 왔어요";
+  const heroTone = canLevelUp || isTitleFlow ? "text-reward" : isPending ? "text-status-pending" : "text-foreground";
+  const overallPct = metrics.length
+    ? Math.min(...metrics.map((m) => bar(m.cur, m.req)))
+    : 0;
+  const overallDone = canLevelUp || overallPct >= 100;
+
   return (
     <div className="space-y-3">
       {/* ── 오삼 코치 헤더 (말풍선) ── */}
@@ -342,7 +380,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
                       {s.done ? <CheckCircle2 className="h-5 w-5" /> : s.n}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className={`flex items-center gap-1.5 text-label font-black ${s.done ? "text-status-complete" : "text-foreground"}`}>
+                      <p className={`flex items-center gap-1.5 text-body font-bold ${s.done ? "text-status-complete" : "text-foreground"}`}>
                         {s.title}
                         {/* 얼굴인식으로 이미 들어온 상태 — QR 만 남았다는 표시 */}
                         {s.n === 1 && !!arrivalLabel && !s.done && (
@@ -351,7 +389,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
                           </span>
                         )}
                       </p>
-                      <p className="mt-0.5 truncate text-micro text-muted-foreground">{s.desc}</p>
+                      {/* 설명은 지금 할 단계에만 (2026-10-28 리디자인 — 회색 설명 줄은 카드에 한 줄) */}
+                      {isCurrent && <p className="mt-0.5 truncate text-label text-muted-foreground">{s.desc}</p>}
                     </div>
                     {rowAction ? (
                       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -380,83 +419,65 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
               );
             })}
 
-            {/* 레벨업 신청 / 대기 — 화이트 타이틀매치는 타이틀미션 화면에서 신청 */}
-            {isTitleFlow ? (
+            {/* 화이트 타이틀매치 — 타이틀미션 화면에서 신청. 승인 대기 · 레벨업 직전은 아래 '레벨업까지' 카드가 말한다 (같은 말 두 번 X) */}
+            {isTitleFlow && (
               <button
                 type="button"
                 onClick={() => navigate(titleMatchLink(league))}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-reward/15 py-3.5 text-label font-black text-reward transition-all active:scale-[0.98]"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-reward/15 text-body font-bold text-reward transition-all active:scale-[0.98]"
               >
-                <Trophy className="h-4 w-4" /> 타이틀미션 보기 · 지점장님께 심사 신청
+                <Trophy className="h-4 w-4" /> 타이틀미션 · 심사 신청
               </button>
-            ) : isPending ? (
-              <div className="flex items-center justify-center gap-2 rounded-2xl bg-status-pending/10 py-3.5 text-label font-bold text-status-pending">
-                <Clock className="h-4 w-4" /> 코치님 승인 대기 중
-              </div>
-            ) : canLevelUp ? (
-              <div className="flex items-center justify-center gap-2 rounded-2xl bg-reward/10 py-3.5 text-label font-black text-reward">
-                <Trophy className="h-4 w-4" /> 출석 {c?.reqSessions ?? 3}회 달성 — 다음 출석 때 자동으로 승급돼요!
-              </div>
-            ) : null}
+            )}
           </div>
         )}
       </div>
 
       {extra}
 
-      {/* ── 레벨업까지 ── */}
-      {/* 요건이 0인 항목(훈련 분수)은 빼고, 블랙 리그는 '연한'을 대신 보여준다 */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-body font-black text-foreground">🏆 레벨업까지</p>
-          <span className="rounded-full bg-secondary px-2 py-0.5 text-micro font-bold text-secondary-foreground">
-            {RANK_LABELS[league] || league} Lv.{toGlobalLevel(league, levelNumber)}{levelTitle ? ` · ${levelTitle}` : ""}
-          </span>
+      {/* ── 레벨업까지 — 주인공은 '몇 번 더' 한 줄 (2026-10-28 리디자인: 출석 축하 카드와 같은 모양) ──
+          요건이 0인 항목(훈련 분수)은 빼고, 블랙 리그는 '연한'을 대신 센다. 세는 규칙은 ? 안에 */}
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-elev-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-label font-bold text-muted-foreground">{nextLabel}</p>
+          <button
+            type="button"
+            onClick={() => setRuleOpen((v) => !v)}
+            aria-expanded={ruleOpen}
+            aria-label="레벨업 규칙 보기"
+            className="-m-2 flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
+          >
+            <CircleHelp className="h-5 w-5" />
+          </button>
         </div>
-        <div
-          className="grid gap-2.5"
-          style={{ gridTemplateColumns: `repeat(${metrics.length}, minmax(0, 1fr))` }}
-        >
-          {metrics.map((m) => {
-            const done = m.cur >= m.req;
-            return (
-              <div key={m.label} className="rounded-xl bg-muted/30 p-2.5 text-center">
-                <p className={`number-font text-body font-black ${done ? "text-status-complete" : "text-foreground"}`}>
-                  {m.cur}
-                  <span className="text-micro text-muted-foreground">/{m.req}{m.unit}</span>
-                </p>
-                <p className="mt-0.5 text-micro text-muted-foreground">{m.label}</p>
-                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={`h-full rounded-full transition-all ${done ? "bg-status-complete" : "bg-primary"}`}
-                    style={{ width: `${bar(m.cur, m.req)}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+        <p className={`text-title ${heroTone}`}>{heroLine}</p>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+          <div
+            className={`h-full rounded-full transition-all ${overallDone ? "bg-status-complete" : "bg-primary"}`}
+            style={{ width: `${overallPct}%` }}
+          />
         </div>
-        <p className="mt-3 text-micro text-muted-foreground">
-          {isTitleFlow
-            ? "레벨 10은 타이틀매치 — 파트너와 연습하고 지점장님께 심사를 신청해요 (도전 3번)"
-            : isApprovalOnly
-            ? "이 리그부터는 조건을 채우면 승급 심사가 열리고, 코치님이 직접 보고 승급합니다"
-            : "조건을 채우면 코치님이 자세를 확인하고 승인해요"}
+        <p className="mt-2 text-label text-muted-foreground">
+          {metrics.map((m) => `${m.label} ${m.cur}/${m.req}${m.unit}`).join(" · ")}
         </p>
+        {ruleOpen && (
+          <p className="mt-3 rounded-xl bg-muted/50 px-3 py-2.5 text-label text-foreground">
+            {isTitleFlow
+              ? "레벨 10은 타이틀매치 — 파트너와 연습하고 지점장님께 심사를 신청해요 (도전 3번)"
+              : isApprovalOnly
+              ? "이 리그부터는 조건을 채우면 승급 심사가 열리고, 코치님이 직접 보고 승급해요"
+              : "조건을 채우면 코치님이 자세를 확인하고 승인해요"}
+          </p>
+        )}
       </div>
 
-      {/* ── 상세보기 ── */}
+      {/* ── 상세보기 — 한 줄 ── */}
       <button
         type="button"
         onClick={onOpenDetail}
-        className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-all active:scale-[0.99]"
+        className="flex h-14 w-full items-center justify-between rounded-2xl border border-border bg-card px-5 text-left transition-all active:scale-[0.99]"
       >
-        <span>
-          <span className="block text-body font-black text-foreground">📚 훈련 상세 보기</span>
-          <span className="mt-0.5 block text-micro text-muted-foreground">
-            영상 전체 · 교육 그림 · 수업 구성 · 심사 기준
-          </span>
-        </span>
+        <span className="text-body font-bold text-foreground">레벨 {toGlobalLevel(league, levelNumber)} 훈련 자세히 보기</span>
         <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
       </button>
 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { User, Settings2, X, Trophy, Crown } from "lucide-react";
+import { Settings2, X, Trophy, Crown } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -254,15 +254,7 @@ const HallOfFamePage = () => {
                 ? `${profile.branch_name} 리그`
                 : "복싱 리그"
           }
-          rightAction={
-            <button
-              onClick={() => navigate("/mypage")}
-              aria-label="내 정보"
-              className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"
-            >
-              <User className="h-4 w-4 text-secondary-foreground" />
-            </button>
-          }
+          // 내 정보는 아래 탭에 있다 — 머리글 단추를 겹쳐 두지 않는다 (2026-10-28 리디자인)
           sticky
         />
       }
@@ -314,38 +306,33 @@ const HallOfFamePage = () => {
 
         {topTab === "ranking" && (
           <>
-            {/* 지금 운동 중 — 체육관 TV 와 같은 기준 (2026-10-16 대표님) */}
+            {/* 지금 운동 중 — 체육관 TV 와 같은 기준 (2026-10-16 대표님). 아무도 없으면 그리지 않는다 (2026-10-28) */}
             <WorkingOutNowCard
               branch={branchFilter === undefined ? profile?.branch_name ?? null : branchFilter}
               onOpenMember={(m) => setLicenseMember(m)}
+              hideWhenEmpty
             />
 
-            {/* My position hero (when placed in the official ranking) */}
+            {/* 내 순위 — 숫자 하나. 누르면 목록의 내 줄로 (레벨은 목록 · 내 카드에 있다) */}
             {progress && myPosition && (
-              <section className="rounded-card border border-primary/40 bg-primary/5 p-4 shadow-glow-soft">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-label text-muted-foreground font-medium">
-                      내 공식 순위
-                    </p>
-                    <p className="number-font text-title text-primary">
-                      {myPosition}
-                      <span className="ml-1 text-heading">위</span>
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-label text-muted-foreground font-medium">
-                      {RANK_LABELS[progress.current_rank]} Lv.
-                      <span className="number-font">
-                        {toGlobalLevel(progress.current_rank, progress.current_level)}
-                      </span>
-                    </p>
-                    <p className="number-font text-label font-bold text-foreground">
-                      {progress.total_xp.toLocaleString()} XP
-                    </p>
-                  </div>
-                </div>
-              </section>
+              <button
+                type="button"
+                onClick={() =>
+                  document.getElementById("my-rank-row")?.scrollIntoView({ behavior: "smooth", block: "center" })
+                }
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/5 px-5 py-4 text-left active:scale-[0.99]"
+              >
+                <span>
+                  <span className="block text-label font-bold text-muted-foreground">내 순위</span>
+                  <span className="number-font text-title text-primary">
+                    {myPosition}
+                    <span className="ml-0.5 text-heading">위</span>
+                  </span>
+                </span>
+                <span className="number-font text-body font-bold text-foreground">
+                  {progress.total_xp.toLocaleString()} XP
+                </span>
+              </button>
             )}
 
             {/* Sub-filter chips */}
@@ -382,7 +369,8 @@ const HallOfFamePage = () => {
 
         {topTab === "halloffame" && (
           <>
-            <HallOfFameHero />
+            {/* 멤버가 있을 때만 머리 카드 — 비어 있으면 빈 칸 카드 하나가 같은 말을 한다 (2026-10-28 리디자인) */}
+            {hallOfFameMembers.length > 0 && <HallOfFameHero />}
 
             {officialLoading ? (
               <SkeletonList />
@@ -410,8 +398,8 @@ const HallOfFamePage = () => {
             ) : (
               <EmptyState
                 icon={<Crown className="h-8 w-8 text-reward" />}
-                title="아직 명예의 전당 멤버가 없습니다"
-                description="블랙 리그 Lv.10 달성 + 모든 타이틀매치 클리어 시 입성합니다."
+                title="첫 번째 주인공을 기다려요"
+                description="블랙 리그 레벨 10 · 모든 타이틀매치를 통과하면 이름이 새겨져요"
                 ctaText="로드맵 보기"
                 onCtaClick={() => navigate("/rank-up")}
               />
@@ -617,13 +605,13 @@ const PodiumCard = ({
         )}
       </div>
       <div className="flex w-full min-w-0 items-center justify-center gap-1">
-        <p className="min-w-0 truncate text-label font-bold text-foreground">
+        <p className="min-w-0 truncate text-body font-bold text-foreground">
           {member.r_nickname}
         </p>
         <NameBadge league={member.r_current_rank} className="h-4 w-4" />
         <MedalMark userId={member.r_user_id} className="text-body" />
       </div>
-      <p className="number-font text-micro font-bold text-muted-foreground">
+      <p className="number-font text-label font-bold text-muted-foreground">
         {score}
       </p>
       {isMe && (
@@ -715,12 +703,15 @@ const RankingList = ({
       {showPodium && (
         <Podium top3={top3} userId={userId} getScore={getScore} onOpen={onRowOpen} />
       )}
-      <div className="space-y-2">
+      {/* 4위부터는 카드 하나에 줄로 묶는다 (2026-10-28 리디자인 — 상자 20개 대신 목록 하나) */}
+      {rest.length > 0 && (
+      <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
         {rest.map((m) => {
           const isMe = m.r_user_id === userId;
           return (
-            <div key={m.r_user_id} className="relative">
+            <div key={m.r_user_id} id={isMe ? "my-rank-row" : undefined} className="relative scroll-mt-24">
               <RankingItem
+                flat
                 rank={Number(m.rank_position) || rest.indexOf(m) + (showPodium ? 4 : 1)}
                 name={m.r_nickname}
                 score={getScore(m)}
@@ -751,6 +742,7 @@ const RankingList = ({
           );
         })}
       </div>
+      )}
     </div>
   );
 };

@@ -169,40 +169,23 @@ const Test153Board = ({ onOpenMember }: Props) => {
   return (
     <div className="space-y-4">
       {/* 방향 — 153 PB (Personal Best)(내 최고 기록) · 상대는 지난번의 나 · 복싱은 먼저 나와의 싸움에서 이긴다 */}
-      <section className="rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-4 shadow-elev-1">
-        <div className="flex items-start gap-2">
-          <Timer className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-          <div className="min-w-0">
-            <p className="text-title font-black leading-none tracking-tight text-primary">{TEST153_NAME}</p>
-            <p className="mt-1 text-micro font-bold text-muted-foreground">
-              ({TEST153_NAME_EN}) ({TEST153_NAME_KO})
-            </p>
-          </div>
-        </div>
-        <h2 className="mt-3 text-heading font-black leading-tight text-foreground [text-wrap:balance]">상대는 지난번의 나</h2>
-        <p className="mt-2 border-l-[3px] border-primary pl-3 text-label font-bold leading-relaxed text-foreground">
+      {/* 2026-10-28 리디자인: 주인공은 '상대는 지난번의 나' 한 줄 + 대표 문장 하나. 마라토너 · 진행 · 평가는 맨 아래 안내에 */}
+      <section className="rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-5 shadow-elev-1">
+        <p className="flex items-center gap-1.5 text-label font-bold text-primary">
+          <Timer className="h-4 w-4 shrink-0" />
+          {TEST153_NAME} · {TEST153_NAME_KO}
+        </p>
+        <h2 className="mt-2 text-title text-foreground [text-wrap:balance]">상대는 지난번의 나</h2>
+        <p className="mt-2 text-body text-foreground">
           복싱은 상대를 이기기 위해, 먼저 나와의 싸움에서 이겨야 하는 운동이에요.
         </p>
-        <p className="mt-2 text-label leading-relaxed text-muted-foreground">
-          마라토너가 지난 기록에서 1초를 당기려고 달리듯, 내 체력을 정확히 재고 기록해서{" "}
-          <b className="text-foreground">지난번의 나를 이기는</b> 체력 평가예요.
-        </p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          {PILLARS.map((p) => (
-            <div key={p.title} className="min-w-0 rounded-2xl bg-background/70 px-2.5 py-2">
-              <p.icon className="h-4 w-4 text-primary" />
-              <p className="mt-1 text-label font-black text-foreground">{p.title}</p>
-              <p className="text-micro leading-snug text-muted-foreground">{p.desc}</p>
-            </div>
-          ))}
-        </div>
         <button
           type="button"
           onClick={() => openGuide("flow")}
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-card py-2 text-label font-bold text-foreground active:scale-[0.98]"
+          className="mt-4 flex h-11 w-full items-center justify-center gap-1 rounded-xl border border-border bg-card text-body font-bold text-foreground active:scale-[0.98]"
         >
-          어떻게 하고 어떻게 평가하는지 보기
-          <ChevronDown className="h-3.5 w-3.5" />
+          어떻게 하나요
+          <ChevronDown className="h-4 w-4" />
         </button>
       </section>
 
@@ -228,18 +211,17 @@ const Test153Board = ({ onOpenMember }: Props) => {
           <div className="mt-3 h-24 animate-pulse rounded-2xl bg-muted/40" />
         ) : !best ? (
           <div className="mt-3 rounded-2xl bg-muted/30 p-4 text-center">
-            <p className="text-body font-bold text-foreground">아직 {DIVISION_LABEL[division]} 공식 기록이 없어요</p>
-            <p className="mt-1 text-label leading-relaxed text-muted-foreground">
-              체육관에서 코치님께 “{TEST153_NAME} 도전할게요” 하면 코치님이 시간을 재서 기록해 줘요.
-              <br />
-              처음이면 스타터부터 추천해요. 첫 기록이 앞으로 이겨야 할 ‘지난번의 나’가 돼요.
+            <p className="text-body font-bold text-foreground">아직 {DIVISION_LABEL[division]} 기록이 없어요</p>
+            {/* 한 줄만 — 스타터 추천 · '지난번의 나' 설명은 맨 아래 안내에 있다 */}
+            <p className="mt-1 text-label text-muted-foreground">
+              코치님께 “{TEST153_NAME} 도전할게요” 하면 재 드려요
             </p>
             <button
               type="button"
               onClick={() => openGuide("moves")}
-              className="mt-3 rounded-xl border border-primary/40 bg-card px-3 py-1.5 text-label font-bold text-primary active:scale-[0.98]"
+              className="mt-3 h-10 rounded-xl border border-primary/40 bg-card px-4 text-label font-bold text-primary active:scale-[0.98]"
             >
-              동작별 하는 법 먼저 보기
+              동작 먼저 보기
             </button>
           </div>
         ) : (

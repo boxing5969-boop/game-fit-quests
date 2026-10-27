@@ -38,9 +38,9 @@ const Records153Strip = ({ onOpenAll, onOpenMember }: Props) => {
   return (
     <section className="rounded-card border border-[#F6C453]/40 bg-gradient-to-b from-[#F6C453]/10 to-card p-3.5">
       <button type="button" onClick={onOpenAll} className="flex w-full items-center gap-2 text-left active:opacity-80">
-        <span className="text-body font-black text-foreground">🏆 153 레코드 최초 기록자</span>
+        <span className="text-body font-bold text-foreground">🏆 153 레코드 최초 기록자</span>
         <span className="ml-auto flex items-center text-label font-bold text-muted-foreground">
-          전체 보기
+          전체
           <ChevronRight className="h-4 w-4" />
         </span>
       </button>
@@ -70,7 +70,7 @@ const Records153Strip = ({ onOpenAll, onOpenMember }: Props) => {
                   >
                     {t.title}
                   </span>
-                  <span className="block max-w-[10rem] truncate text-label font-black text-foreground">
+                  <span className="block max-w-[10rem] truncate text-body font-bold text-foreground">
                     {label}
                     {mine && <span className="ml-1 text-micro text-primary">나</span>}
                   </span>
@@ -92,7 +92,7 @@ const Records153Strip = ({ onOpenAll, onOpenMember }: Props) => {
                 <span className="flex h-8 w-8 items-center justify-center rounded-pill bg-reward/15 text-heading">{f.emoji}</span>
                 <span className="min-w-0">
                   <span className="block whitespace-nowrap text-micro font-black text-reward">{f.title}</span>
-                  <span className="block max-w-[8.5rem] truncate text-label font-black text-foreground">
+                  <span className="block max-w-[8.5rem] truncate text-body font-bold text-foreground">
                     {rec.nickname}
                     {rec.is_me && <span className="ml-1 text-micro text-primary">나</span>}
                   </span>
@@ -100,16 +100,32 @@ const Records153Strip = ({ onOpenAll, onOpenMember }: Props) => {
               </button>
             );
           })}
+          {/* 주인 없는 기록 — 줄 끝 칸 하나로 (2026-10-28 리디자인: 따로 띠를 두지 않는다) */}
+          {open > 0 && (
+            <button
+              type="button"
+              onClick={onOpenAll}
+              className="flex shrink-0 items-center gap-2 rounded-xl border border-dashed border-reward/50 bg-reward/10 px-3 py-2 text-left active:scale-[0.98]"
+            >
+              <span className="min-w-0">
+                <span className="block whitespace-nowrap text-micro font-black text-reward">주인 없는 기록 {open}개</span>
+                <span className="block whitespace-nowrap text-body font-bold text-foreground">
+                  마일리지 {RECORD_153_MILEAGE.toLocaleString()}
+                </span>
+              </span>
+            </button>
+          )}
         </div>
       )}
 
-      {open > 0 && (
+      {/* 새겨진 기록이 아직 하나도 없을 때만 — 주인 없는 기록 한 줄 */}
+      {filled.length === 0 && medals.length === 0 && open > 0 && (
         <button
           type="button"
           onClick={onOpenAll}
-          className="mt-2.5 w-full rounded-xl bg-reward/15 px-3 py-2 text-label font-black text-reward active:scale-[0.99]"
+          className="mt-2.5 w-full rounded-xl bg-reward/15 px-3 py-2 text-label font-bold text-reward active:scale-[0.99]"
         >
-          아직 주인 없는 기록 {open}개 — 최초가 되면 마일리지 {RECORD_153_MILEAGE.toLocaleString()} 🎁
+          주인 없는 기록 {open}개 · 최초가 되면 마일리지 {RECORD_153_MILEAGE.toLocaleString()}
         </button>
       )}
     </section>

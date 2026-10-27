@@ -114,12 +114,11 @@ const Record153Board = ({ onOpenMember }: Props) => {
           </div>
           <h2 className="text-heading text-foreground">153 레코드</h2>
           <p className="text-label text-muted-foreground font-medium">
-            세계로 갈 153복싱짐의 첫 역사.
-            <br />
-            한 번 새겨진 이름은 영원히 남아요.
+            한 번 새겨진 이름은 영원히 남아요
           </p>
-          <p className="text-label font-black text-reward">
-            🎁 최초 기록을 세우면 마일리지 {MILEAGE_LABEL} 적립
+          {/* 보상은 여기 한 번만 — 기록 칸마다 '+10,000'을 되풀이하지 않는다 (2026-10-28 리디자인) */}
+          <p className="text-body font-bold text-reward">
+            🎁 최초가 되면 마일리지 {MILEAGE_LABEL}
           </p>
           {data && (
             <span className="mt-1 rounded-pill bg-reward/15 px-3 py-1 text-label font-black text-reward">
@@ -270,9 +269,8 @@ const RecordCard = ({
           <p className="text-body font-black text-foreground">{title}</p>
           <p className="text-label font-semibold text-muted-foreground">{empty || desc}</p>
         </div>
-        <span className="flex shrink-0 flex-col items-center rounded-xl border border-dashed border-reward/50 px-2.5 py-1 leading-tight">
-          <span className="text-micro font-bold text-muted-foreground">주인 없음</span>
-          <span className="text-label font-black text-reward">🎁 +{MILEAGE_LABEL}</span>
+        <span className="shrink-0 rounded-pill border border-dashed border-reward/50 px-2.5 py-1 text-micro font-bold text-reward">
+          주인 없음
         </span>
       </div>
     );

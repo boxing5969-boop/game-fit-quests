@@ -114,6 +114,8 @@ interface CardProps {
   onOpenMember: (m: { id: string; nickname: string }) => void;
   title?: string;
   emptyText?: string;
+  /** 아무도 없으면 카드를 그리지 않는다 — 랭킹 탭 (2026-10-28 리디자인: 빈 것은 그리지 않기) */
+  hideWhenEmpty?: boolean;
 }
 
 const WorkingOutNowCard = ({
@@ -121,6 +123,7 @@ const WorkingOutNowCard = ({
   onOpenMember,
   title = "지금 운동 중",
   emptyText = "지금은 운동 중인 회원이 없어요. 출석하면 여기에 떠요",
+  hideWhenEmpty = false,
 }: CardProps) => {
   const { data } = useWorkingOutNow(branch);
   const now = useMinuteNow();
@@ -128,6 +131,7 @@ const WorkingOutNowCard = ({
 
   if (!data) return null;
   const list = data.members;
+  if (hideWhenEmpty && list.length === 0) return null;
   const scope = data.all_branches ? "전 지점" : data.branch ? shortBranchName(data.branch) : "";
 
   // 누구나 회원 카드(라이센스) — 2026-10-18 대표님: "회원 카드를 클릭해도 이름을 클릭하면 항상 그렇게".

@@ -16,6 +16,8 @@ interface RankingItemProps {
   meta?: string;
   /** 이름 옆 작은 뱃지 (리그 뱃지 등) — 2026-10-15 */
   badge?: ReactNode;
+  /** 묶은 목록 안의 한 줄 — 테두리 · 둥근 모서리 없이 (2026-10-28 리디자인: 랭킹 목록을 카드 하나로) */
+  flat?: boolean;
   onClick?: () => void;
   className?: string;
 }
@@ -38,6 +40,7 @@ export const RankingItem = ({
   isMe = false,
   meta,
   badge,
+  flat = false,
   onClick,
   className,
 }: RankingItemProps) => {
@@ -48,11 +51,14 @@ export const RankingItem = ({
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3 rounded-card border p-3 text-left transition-all",
-        isMe
-          ? "border-primary/50 bg-primary/5 shadow-glow-soft"
-          : "border-border bg-card",
-        onClick && "active:scale-[0.99]",
+        "flex w-full items-center gap-3 text-left transition-all",
+        flat
+          ? cn("px-4 py-3", isMe ? "bg-primary/5" : "bg-card", onClick && "active:bg-muted/60")
+          : cn(
+              "rounded-card border p-3",
+              isMe ? "border-primary/50 bg-primary/5 shadow-glow-soft" : "border-border bg-card",
+              onClick && "active:scale-[0.99]",
+            ),
         className,
       )}
     >
@@ -87,7 +93,7 @@ export const RankingItem = ({
       {/* Name + meta */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <p className="truncate text-label font-bold text-foreground">
+          <p className="truncate text-body font-bold text-foreground">
             {name}
           </p>
           {badge}

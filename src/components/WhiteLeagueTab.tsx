@@ -131,14 +131,11 @@ const WhiteLeagueTab = () => {
       <button
         type="button"
         onClick={() => setShowLeagueList((v) => !v)}
-        className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-all active:scale-[0.99]"
+        aria-expanded={showLeagueList}
+        className="flex h-14 w-full items-center justify-between rounded-2xl border border-border bg-card px-5 text-left transition-all active:scale-[0.99]"
       >
-        <span>
-          <span className="block text-body font-black text-foreground">🗺️ 전체 레벨 지도</span>
-          <span className="mt-0.5 block text-micro text-muted-foreground">
-            화이트 · 블루 · 레드 · 블랙 리그 40레벨 전체 보기
-          </span>
-        </span>
+        {/* 한 줄 (2026-10-28 리디자인) — 화이트 · 블루 · 레드 · 블랙 40레벨은 펼치면 보인다 */}
+        <span className="text-body font-bold text-foreground">전체 레벨 지도</span>
         <ChevronDown className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform ${showLeagueList ? "rotate-180" : ""}`} />
       </button>
 
