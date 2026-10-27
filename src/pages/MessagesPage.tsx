@@ -74,6 +74,9 @@ const ThreadRow = ({ r, onOpen }: { r: DmThreadRow; onOpen: () => void }) => {
             </span>
           ) : r.seen ? (
             <span className="text-[11px] font-medium text-muted-foreground">읽음</span>
+          ) : r.last_from_me && r.status === "active" ? (
+            // 내 마지막 메시지를 상대가 아직 안 읽음 (2026-10-28 대표님 "카톡처럼 읽었는지 안 읽었는지")
+            <span className="text-[11px] font-bold text-primary">안 읽음</span>
           ) : null}
         </span>
       </button>

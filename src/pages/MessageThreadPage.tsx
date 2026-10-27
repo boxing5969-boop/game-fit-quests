@@ -84,9 +84,30 @@ const DmBody = ({ body }: { body: string }) => (
   </>
 );
 
-const Bubble = ({ v, peer, seen }: { v: DmBubbleView<DmMessage>; peer: DmPerson | null; seen: boolean }) => {
+/**
+ * 읽음 표시 (2026-10-28 대표님 "카톡처럼 상대가 읽었는지 안 읽었는지") — 대화 중(active)일 때만
+ *   unread = 상대가 아직 안 읽은 내 메시지 → 말풍선 옆 민트 '1' (상대가 읽으면 사라진다, 4초마다 다시 읽음)
+ *   seen   = 상대가 읽은 내 메시지 중 가장 최근 것(그 뒤에 상대 말이 없을 때) → '읽음'
+ */
+const Bubble = ({
+  v,
+  peer,
+  seen,
+  unread,
+}: {
+  v: DmBubbleView<DmMessage>;
+  peer: DmPerson | null;
+  seen: boolean;
+  unread: boolean;
+}) => {
   const m = v.msg;
   const emoji = isEmojiOnly(m.body);
+  const one = m.mine && unread && (
+    <span className="mb-0.5 shrink-0 text-[11px] font-black leading-none text-primary">
+      <span aria-hidden>1</span>
+      <span className="sr-only">안 읽음</span>
+    </span>
+  );
   return (
     <>
       {v.dayLabel && (
@@ -97,27 +118,32 @@ const Bubble = ({ v, peer, seen }: { v: DmBubbleView<DmMessage>; peer: DmPerson 
       <div className={cn("flex items-end gap-2", m.mine ? "justify-end" : "justify-start", v.groupStart ? "mt-2.5" : "mt-[3px]")}>
         {!m.mine && (v.groupEnd ? <DmAvatar person={peer} size={28} /> : <span className="w-7 shrink-0" />)}
         <div className={cn("flex min-w-0 max-w-[76%] flex-col", m.mine ? "items-end" : "items-start")}>
-          {emoji ? (
-            <span className="px-0.5 text-[40px] leading-[1.15]">{m.body.trim()}</span>
-          ) : (
-            <span
-              className={cn(
-                "whitespace-pre-wrap px-3.5 py-2 text-[15px] leading-[1.42] [overflow-wrap:anywhere]",
-                m.mine
-                  ? "bg-foreground text-background"
-                  : "bg-card text-foreground ring-1 ring-black/[0.05] dark:bg-secondary dark:ring-white/[0.06]",
-                bubbleRadius(m.mine, v.groupStart, v.groupEnd),
-              )}
-            >
-              <DmBody body={m.body} />
-            </span>
-          )}
-          {v.groupEnd && (
+          <div className="flex min-w-0 max-w-full items-end gap-1.5">
+            {one}
+            {emoji ? (
+              <span className="px-0.5 text-[40px] leading-[1.15]">{m.body.trim()}</span>
+            ) : (
+              <span
+                className={cn(
+                  "min-w-0 whitespace-pre-wrap px-3.5 py-2 text-[15px] leading-[1.42] [overflow-wrap:anywhere]",
+                  m.mine
+                    ? "bg-foreground text-background"
+                    : "bg-card text-foreground ring-1 ring-black/[0.05] dark:bg-secondary dark:ring-white/[0.06]",
+                  bubbleRadius(m.mine, v.groupStart, v.groupEnd),
+                )}
+              >
+                <DmBody body={m.body} />
+              </span>
+            )}
+          </div>
+          {v.groupEnd ? (
             <span className="mt-1 px-1 text-[10.5px] text-muted-foreground">
               {dmBubbleTime(m.created_at)}
               {seen ? " · 읽음" : ""}
             </span>
-          )}
+          ) : seen ? (
+            <span className="mt-1 px-1 text-[10.5px] text-muted-foreground">읽음</span>
+          ) : null}
         </div>
       </div>
     </>
@@ -171,8 +197,22 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
   const views = useMemo(() => layoutDmBubbles(messages), [messages]);
   const hasMore = acc.more;
   const lastMsg = messages.length ? messages[messages.length - 1] : null;
-  const seenLast =
-    !!lastMsg?.mine && !!data?.other_read_at && Date.parse(data.other_read_at) >= Date.parse(lastMsg.created_at);
+  // 읽음 표시 (2026-10-28) — 상대가 마지막으로 읽은 시각(대화 중일 때만 서버가 준다)보다 늦은 내 메시지 = 안 읽음 '1'
+  const otherReadMs =
+    data?.thread.status === "active" && data.other_read_at ? Date.parse(data.other_read_at) : Number.NaN;
+  const readActive = data?.thread.status === "active";
+  const isUnreadByPeer = (m: DmMessage) =>
+    readActive && m.mine && (Number.isNaN(otherReadMs) || Date.parse(m.created_at) > otherReadMs);
+  // '읽음'은 상대가 읽은 내 메시지 중 가장 최근 것 하나에만 — 그 뒤에 상대가 말했으면(답장 = 읽음) 붙이지 않는다
+  const readMarkId = useMemo(() => {
+    if (Number.isNaN(otherReadMs)) return null;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (!m.mine) return null;
+      if (Date.parse(m.created_at) <= otherReadMs) return m.id;
+    }
+    return null;
+  }, [messages, otherReadMs]);
 
   // 보낼 수 있는지 — 대화가 있으면 대화 기준, 첫 메시지면 사람 기준
   const canSend = threadId ? !!data?.can_send : !!peerQ.data?.can_send;
@@ -470,7 +510,13 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
               )}
 
               {views.map((v) => (
-                <Bubble key={v.msg.id} v={v} peer={peer} seen={seenLast && v.msg.id === lastMsg?.id} />
+                <Bubble
+                  key={v.msg.id}
+                  v={v}
+                  peer={peer}
+                  seen={v.msg.id === readMarkId}
+                  unread={isUnreadByPeer(v.msg)}
+                />
               ))}
 
               {pending.map((p) => (
