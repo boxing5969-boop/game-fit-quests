@@ -477,7 +477,6 @@ const MissionsPage = () => {
       header={
         <PageHeader
           title="훈련 미션"
-          subtitle="리그를 완료하고 다음 단계로 승급하세요"
           rightAction={
             <>
               {isAdmin && (
@@ -488,7 +487,7 @@ const MissionsPage = () => {
                     setShowForm(true);
                   }}
                   aria-label="미션 추가"
-                  className="flex h-9 items-center gap-1 rounded-pill bg-primary px-3 text-caption font-bold text-primary-foreground active:scale-95"
+                  className="flex h-9 items-center gap-1 rounded-pill bg-primary px-3 text-label font-bold text-primary-foreground active:scale-95"
                 >
                   <Plus className="h-3.5 w-3.5" /> 추가
                 </button>
@@ -548,10 +547,10 @@ const MissionsPage = () => {
             <section className="surface-card">
               <div className="mb-2 flex items-center justify-between">
                 <div>
-                  <p className="text-caption text-muted-foreground">
+                  <p className="text-label text-muted-foreground font-medium">
                     전체 진행률
                   </p>
-                  <p className="number-font text-display-md text-foreground">
+                  <p className="number-font text-title text-foreground">
                     <span className="text-primary">{completedCount}</span>
                     <span className="text-muted-foreground">
                       {" / "}
@@ -559,7 +558,7 @@ const MissionsPage = () => {
                     </span>
                   </p>
                 </div>
-                <div className="number-font rounded-pill bg-accent/15 px-3 py-1 text-caption font-bold text-accent">
+                <div className="number-font rounded-pill bg-accent/15 px-3 py-1 text-label font-bold text-accent">
                   {progressPct}%
                 </div>
               </div>
@@ -575,8 +574,8 @@ const MissionsPage = () => {
             {warmupMissions.length > 0 && (
               <section className="overflow-hidden rounded-card border border-border bg-card shadow-elev-1">
                 <div className="px-5 py-4">
-                  <h3 className="text-body-lg text-foreground">🔥 워밍업 영상</h3>
-                  <p className="text-caption text-muted-foreground">
+                  <h3 className="text-body text-foreground font-medium">🔥 워밍업 영상</h3>
+                  <p className="text-label text-muted-foreground font-medium">
                     운동 전 몸풀기 참고용 · 레벨 미션과 별개예요
                   </p>
                 </div>
@@ -647,14 +646,14 @@ const MissionsPage = () => {
                           aria-hidden
                         />
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-body-lg text-foreground">
+                          <h3 className="text-body text-foreground font-medium">
                             {/* 64-M: 화이트 리그만 레벨 미션 영상 라벨로 노출.
                                 다른 리그는 기존 'X 리그' 표기 유지. */}
                             {rank === "white"
                               ? "화이트 리그 레벨 미션 영상"
                               : `${RANK_LABELS[rank]} 리그`}
                           </h3>
-                          <p className="text-caption text-muted-foreground">
+                          <p className="text-label text-muted-foreground font-medium">
                             <span className="number-font">
                               {completed}/{total}
                             </span>{" "}
@@ -759,7 +758,7 @@ const MissionsPage = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-display-sm text-foreground">
+              <h3 className="text-heading text-foreground">
                 {editingId ? "✏️ 미션 수정" : "➕ 새 미션 추가"}
               </h3>
               <button
@@ -771,7 +770,7 @@ const MissionsPage = () => {
             </div>
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-caption text-muted-foreground">
+                <label className="mb-1 block text-label text-muted-foreground font-medium">
                   레벨 *
                 </label>
                 <select
@@ -779,7 +778,7 @@ const MissionsPage = () => {
                   onChange={(e) =>
                     setForm((f) => ({ ...f, level_id: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body-sm text-foreground focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-label text-foreground focus:border-primary focus:outline-none font-medium"
                 >
                   <option value="">레벨 선택</option>
                   {sortedLevels.map((l) => (
@@ -807,16 +806,16 @@ const MissionsPage = () => {
                 )}
               >
                 <span className="min-w-0">
-                  <span className="block text-body-sm font-bold text-foreground">
+                  <span className="block text-label font-bold text-foreground">
                     🔥 워밍업 영상으로 분류
                   </span>
-                  <span className="block text-caption text-muted-foreground">
+                  <span className="block text-label text-muted-foreground font-medium">
                     켜면 레벨 미션·진행률에서 빠지고 워밍업 칸에만 보여요 (제출 없음)
                   </span>
                 </span>
                 <span
                   className={cn(
-                    "shrink-0 rounded-pill px-2.5 py-1 text-caption font-bold",
+                    "shrink-0 rounded-pill px-2.5 py-1 text-label font-bold",
                     form.category === "warmup"
                       ? "bg-reward text-reward-foreground"
                       : "bg-secondary text-secondary-foreground",
@@ -826,7 +825,7 @@ const MissionsPage = () => {
                 </span>
               </button>
               <div>
-                <label className="mb-1 block text-caption text-muted-foreground">
+                <label className="mb-1 block text-label text-muted-foreground font-medium">
                   미션 제목 *
                 </label>
                 <Input
@@ -839,7 +838,7 @@ const MissionsPage = () => {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-caption text-muted-foreground">
+                <label className="mb-1 block text-label text-muted-foreground font-medium">
                   설명
                 </label>
                 <textarea
@@ -849,12 +848,12 @@ const MissionsPage = () => {
                   }
                   placeholder="미션 설명"
                   rows={2}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-label text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none font-medium"
                 />
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="mb-1 block text-caption text-muted-foreground">
+                  <label className="mb-1 block text-label text-muted-foreground font-medium">
                     난이도 (1-5)
                   </label>
                   <div className="flex gap-1">
@@ -865,7 +864,7 @@ const MissionsPage = () => {
                           setForm((f) => ({ ...f, difficulty: d }))
                         }
                         className={cn(
-                          "flex-1 rounded-lg py-2 text-body-sm font-bold transition-all",
+                          "flex-1 rounded-lg py-2 text-label font-bold transition-all",
                           form.difficulty >= d
                             ? "bg-primary text-primary-foreground"
                             : "bg-secondary text-secondary-foreground",
@@ -877,7 +876,7 @@ const MissionsPage = () => {
                   </div>
                 </div>
                 <div className="w-24">
-                  <label className="mb-1 block text-caption text-muted-foreground">
+                  <label className="mb-1 block text-label text-muted-foreground font-medium">
                     XP
                   </label>
                   <Input
@@ -894,7 +893,7 @@ const MissionsPage = () => {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-caption text-muted-foreground">
+                <label className="mb-1 block text-label text-muted-foreground font-medium">
                   핵심 포인트
                 </label>
                 <div className="space-y-2">
@@ -925,7 +924,7 @@ const MissionsPage = () => {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-caption text-muted-foreground">
+                <label className="mb-1 block text-label text-muted-foreground font-medium">
                   🎬 영상
                 </label>
                 <input
@@ -951,7 +950,7 @@ const MissionsPage = () => {
                     type="button"
                     onClick={() => videoInputRef.current?.click()}
                     disabled={uploadingVideo}
-                    className="flex shrink-0 items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-caption font-bold text-secondary-foreground active:scale-95 disabled:opacity-50"
+                    className="flex shrink-0 items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-label font-bold text-secondary-foreground active:scale-95 disabled:opacity-50"
                   >
                     {uploadingVideo ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -961,13 +960,13 @@ const MissionsPage = () => {
                   </button>
                 </div>
                 {editingId && editingExtras.length > 0 && (
-                  <p className="mt-1 text-caption text-muted-foreground">
+                  <p className="mt-1 text-label text-muted-foreground font-medium">
                     🎨 {editingExtras.join(" · ")} 버전도 붙어 있어요 — 여기서 고치는 건 대표(실사) 영상이에요
                   </p>
                 )}
               </div>
               <div>
-                <label className="mb-1 block text-caption text-muted-foreground">
+                <label className="mb-1 block text-label text-muted-foreground font-medium">
                   🖼️ 포스터
                 </label>
                 <input
@@ -993,7 +992,7 @@ const MissionsPage = () => {
                     type="button"
                     onClick={() => posterInputRef.current?.click()}
                     disabled={uploadingPoster}
-                    className="flex shrink-0 items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-caption font-bold text-secondary-foreground active:scale-95 disabled:opacity-50"
+                    className="flex shrink-0 items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-label font-bold text-secondary-foreground active:scale-95 disabled:opacity-50"
                   >
                     {uploadingPoster ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -1108,10 +1107,10 @@ const MissionRow = ({
       >
         {/* Level tile */}
         <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-[hsl(var(--surface-2))] text-center">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
             Lv
           </span>
-          <span className="number-font text-[13px] font-bold leading-none text-foreground">
+          <span className="number-font text-label font-bold leading-none text-foreground">
             {toGlobalLevel(level.rank_name, level.level_number)}
           </span>
         </div>
@@ -1148,12 +1147,12 @@ const MissionRow = ({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             {/* 폰(360px)에선 LV·썸네일·상태 아이콘과 한 줄에 들어가야 해서 제목은 2줄까지 보여준다 */}
-            <h4 className="line-clamp-2 text-[14px] font-bold leading-snug text-foreground">
+            <h4 className="line-clamp-2 text-label font-bold leading-snug text-foreground">
               {mission.title}
             </h4>
             {hasVideo && (
               <span
-                className="hidden shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-primary sm:inline-block"
+                className="hidden shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-micro font-black uppercase tracking-wide text-primary sm:inline-block"
                 aria-label="영상 있음"
               >
                 ▶ 영상
@@ -1174,7 +1173,7 @@ const MissionRow = ({
                 />
               ))}
             </div>
-            <span className="number-font whitespace-nowrap text-caption font-bold text-reward">
+            <span className="number-font whitespace-nowrap text-label font-bold text-reward">
               +{mission.xp_reward} XP
             </span>
           </div>
@@ -1263,10 +1262,10 @@ const WarmupRow = ({
           </div>
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="truncate text-[15px] font-bold leading-tight text-foreground">
+          <h4 className="truncate text-body font-bold leading-tight text-foreground">
             {mission.title}
           </h4>
-          <span className="mt-1 inline-block rounded-md bg-reward/15 px-1.5 py-0.5 text-[10px] font-black text-reward">
+          <span className="mt-1 inline-block rounded-md bg-reward/15 px-1.5 py-0.5 text-micro font-black text-reward">
             🔥 워밍업 · 참고용
           </span>
         </div>

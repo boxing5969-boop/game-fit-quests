@@ -74,7 +74,6 @@ const RewardsPage = () => {
       header={
         <PageHeader
           title="보상"
-          subtitle="성취를 수집하고 다음 보상을 준비하세요"
           rightAction={
             <button
               onClick={() => navigate("/mypage")}
@@ -103,13 +102,13 @@ const RewardsPage = () => {
                 <div className="flex h-16 w-16 items-center justify-center rounded-pill bg-reward/20">
                   <Crown className="h-8 w-8 text-reward" />
                 </div>
-                <h2 className="text-[24px] font-extrabold leading-tight text-foreground">
+                <h2 className="text-title font-extrabold leading-tight text-foreground">
                   마스터 리그 달성
                 </h2>
-                <p className="text-body-sm text-muted-foreground">
+                <p className="text-label text-muted-foreground font-medium">
                   블랙 리그 Lv.10 + 모든 타이틀매치 클리어
                 </p>
-                <span className="mt-1 inline-flex items-center gap-1 rounded-pill border border-reward/50 bg-reward/10 px-3 py-0.5 text-caption font-bold text-reward">
+                <span className="mt-1 inline-flex items-center gap-1 rounded-pill border border-reward/50 bg-reward/10 px-3 py-0.5 text-label font-bold text-reward">
                   👑 153명예코치
                 </span>
               </div>
@@ -117,7 +116,7 @@ const RewardsPage = () => {
 
             {/* 최종 미션 */}
             <section className="surface-card">
-              <h3 className="mb-4 text-body-lg font-bold text-foreground">
+              <h3 className="mb-4 text-body font-bold text-foreground">
                 마스터 리그 최종 미션
               </h3>
               <div className="space-y-3">
@@ -148,10 +147,10 @@ const RewardsPage = () => {
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-caption text-muted-foreground">{isStaff ? "코치님" : "현재 리그"}</p>
+                <p className="text-label text-muted-foreground font-medium">{isStaff ? "코치님" : "현재 리그"}</p>
                 <div className="mt-1">
                   {isStaff ? (
-                    <span className="inline-flex rounded-full bg-yellow-500/15 px-3 py-1 text-sm font-black text-yellow-600 dark:text-yellow-400">
+                    <span className="inline-flex rounded-full bg-yellow-500/15 px-3 py-1 text-body font-black text-yellow-600 dark:text-yellow-400">
                       {staffChampionLine(profile ?? {})}
                     </span>
                   ) : (
@@ -165,8 +164,8 @@ const RewardsPage = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-caption text-muted-foreground">총 XP</p>
-                <p className="number-font text-display-md leading-none text-foreground">
+                <p className="text-label text-muted-foreground font-medium">총 XP</p>
+                <p className="number-font text-title leading-none text-foreground">
                   {progress.total_xp.toLocaleString()}
                 </p>
               </div>
@@ -188,7 +187,7 @@ const RewardsPage = () => {
                 />
                 <p
                   className={cn(
-                    "mt-2 text-caption font-bold",
+                    "mt-2 text-label font-bold",
                     nearPromotion ? "text-reward" : "text-muted-foreground",
                   )}
                 >
@@ -235,7 +234,7 @@ const RewardsPage = () => {
 
         {/* ─── Earned badges ─── */}
         <section className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          <h2 className="mb-3 text-body-lg font-bold text-foreground">
+          <h2 className="mb-3 text-body font-bold text-foreground">
             획득한 배지
           </h2>
           <EarnedBadgeGrid badges={earned} loading={badgesLoading} />
@@ -247,7 +246,7 @@ const RewardsPage = () => {
             className="animate-slide-up"
             style={{ animationDelay: "0.15s" }}
           >
-            <h2 className="mb-3 text-body-lg font-bold text-muted-foreground">
+            <h2 className="mb-3 text-body font-bold text-muted-foreground">
               미획득
             </h2>
             <LockedBadgeGrid badges={locked} />
@@ -260,7 +259,7 @@ const RewardsPage = () => {
             className="animate-slide-up"
             style={{ animationDelay: "0.2s" }}
           >
-            <h2 className="mb-3 text-body-lg font-bold text-foreground">
+            <h2 className="mb-3 text-body font-bold text-foreground">
               레벨업 기록
             </h2>
             <LevelUpHistory logs={levelUpLogs} />
@@ -273,7 +272,7 @@ const RewardsPage = () => {
             className="animate-slide-up"
             style={{ animationDelay: "0.25s" }}
           >
-            <h2 className="mb-3 text-body-lg font-bold text-foreground">
+            <h2 className="mb-3 text-body font-bold text-foreground">
               최근 XP 획득
             </h2>
             <RecentXpList logs={xpLogs} />
@@ -331,15 +330,15 @@ const FinalMissionRow = ({
     >
       <span
         className={cn(
-          "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-pill number-font text-caption font-bold",
+          "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-pill number-font text-label font-bold",
           t.number,
         )}
       >
         {number}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-body-sm font-bold text-foreground">{title}</p>
-        <p className="mt-1 text-caption text-muted-foreground">
+        <p className="text-label font-bold text-foreground">{title}</p>
+        <p className="mt-1 text-label text-muted-foreground font-medium">
           {description}
         </p>
       </div>

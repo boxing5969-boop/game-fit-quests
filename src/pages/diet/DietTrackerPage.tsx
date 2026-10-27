@@ -556,7 +556,7 @@ const DietTrackerPage = () => {
   if (progressQuery.isLoading) {
     return (
       <Shell>
-        <div className="rounded-2xl border border-border bg-card p-6 text-center text-[12px] text-muted-foreground">
+        <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
           불러오는 중...
         </div>
       </Shell>
@@ -567,7 +567,7 @@ const DietTrackerPage = () => {
     return (
       <Shell>
         <div className="rounded-2xl border border-border bg-card p-6 text-center">
-          <p className="text-[13px] text-foreground">
+          <p className="text-label text-foreground">
             아직 진행 중인 153 다이어트 프로그램이 없어요.
           </p>
           <Button
@@ -592,18 +592,18 @@ const DietTrackerPage = () => {
         <div className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+              <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                 {stageLabel}
               </p>
-              <h2 className="mt-0.5 text-display-sm text-foreground leading-tight">
+              <h2 className="mt-0.5 text-heading text-foreground leading-tight">
                 Day {currentDay} 체크인
               </h2>
-              <p className="mt-0.5 text-[12px] text-muted-foreground">
+              <p className="mt-0.5 text-label text-muted-foreground">
                 {logDate} · 하루 1~2분이면 충분해요.
               </p>
             </div>
             {hasRecord && (
-              <span className="rounded-full bg-reward/15 px-2.5 py-1 text-[10px] font-black uppercase text-reward">
+              <span className="rounded-full bg-reward/15 px-2.5 py-1 text-micro font-black uppercase text-reward">
                 기록 완료
               </span>
             )}
@@ -623,7 +623,7 @@ const DietTrackerPage = () => {
             <div className="flex items-center justify-between">
               <p
                 className={cn(
-                  "text-[10px] font-black uppercase tracking-[0.2em]",
+                  "text-micro font-black uppercase tracking-[0.2em]",
                   allDone ? "text-emerald-600" : "text-primary",
                 )}
               >
@@ -631,7 +631,7 @@ const DietTrackerPage = () => {
               </p>
               <span
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
+                  "rounded-full px-2 py-0.5 text-micro font-black uppercase tracking-wide",
                   allDone
                     ? "bg-emerald-400/20 text-emerald-700"
                     : "bg-primary/10 text-primary",
@@ -658,7 +658,7 @@ const DietTrackerPage = () => {
             <div className="mt-3 flex items-center justify-between gap-2">
               <p
                 className={cn(
-                  "text-[11.5px] leading-relaxed",
+                  "text-micro leading-relaxed",
                   allDone ? "text-emerald-700" : "text-foreground",
                 )}
               >
@@ -667,7 +667,7 @@ const DietTrackerPage = () => {
               </p>
               <span
                 className={cn(
-                  "shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold",
+                  "shrink-0 rounded-lg px-2 py-1 text-micro font-extrabold",
                   allDone
                     ? "bg-emerald-500/15 text-emerald-700"
                     : "bg-muted text-foreground",
@@ -740,23 +740,23 @@ const DietTrackerPage = () => {
         {/* 기분 + 한 줄 회고 */}
         <Section title="오늘의 마무리">
           <div className="space-y-2.5">
-            <p className="text-[11.5px] font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
               기분
             </p>
             <DietMoodPicker
               value={habits.mood ?? null}
               onChange={(v) => setHabits((h) => ({ ...h, mood: v }))}
             />
-            <p className="mt-2 text-[11.5px] font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="mt-2 text-micro font-bold uppercase tracking-wider text-muted-foreground">
               한 줄 회고
             </p>
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value.slice(0, 200))}
               placeholder="한 끼 놓쳤다면 다음 끼니부터 다시 시작 — 오늘 느낀 점 간단히"
-              className="min-h-[68px] rounded-xl text-[13px]"
+              className="min-h-[68px] rounded-xl text-label"
             />
-            <p className="text-right text-[10px] text-muted-foreground">
+            <p className="text-right text-micro text-muted-foreground">
               {note.length} / 200
             </p>
           </div>
@@ -832,7 +832,6 @@ const Shell = ({ children }: { children: React.ReactNode }) => {
       header={
         <PageHeader
           title="데일리 체크인"
-          subtitle="1~2분이면 충분해요"
           leftAction={
             <button
               type="button"
@@ -863,12 +862,12 @@ const Section = ({
 }) => (
   <section className="space-y-2">
     <div className="flex items-baseline justify-between">
-      <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
+      <h3 className="text-label font-bold text-foreground flex items-center gap-1.5">
         <Utensils className="h-3.5 w-3.5 text-primary" />
         {title}
       </h3>
       {subtitle && (
-        <span className="text-[11px] text-muted-foreground">{subtitle}</span>
+        <span className="text-micro text-muted-foreground">{subtitle}</span>
       )}
     </div>
     {children}
@@ -900,7 +899,7 @@ const NumberInput = ({
     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
       {icon}
     </span>
-    <span className="w-16 text-[12px] font-bold text-foreground">{label}</span>
+    <span className="w-16 text-label font-bold text-foreground">{label}</span>
     <Input
       type="number"
       inputMode={decimal ? "decimal" : "numeric"}
@@ -916,9 +915,9 @@ const NumberInput = ({
         onChange(Math.max(min, Math.min(max, n)));
       }}
       placeholder="—"
-      className="h-9 rounded-lg text-right text-[13px] font-bold"
+      className="h-9 rounded-lg text-right text-label font-bold"
     />
-    <span className="w-10 text-[11px] text-muted-foreground">{suffix}</span>
+    <span className="w-10 text-micro text-muted-foreground">{suffix}</span>
   </div>
 );
 

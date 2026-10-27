@@ -103,7 +103,7 @@ const DietHubPage = () => {
           <DietLoadingOverlay ready={false} onDone={handleOverlayDone} />
         )}
         <HubShell onBack={() => navigate(-1)}>
-          <div className="rounded-2xl border border-border bg-card p-6 text-center text-[12px] text-muted-foreground">
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
             불러오는 중...
           </div>
         </HubShell>
@@ -190,7 +190,6 @@ const HubShell = ({
       header={
         <PageHeader
           title="153다이어트"
-          subtitle="21일 습관 리셋 프로그램"
           leftAction={
             <button
               type="button"
@@ -206,7 +205,7 @@ const HubShell = ({
               type="button"
               onClick={() => navigate("/character-studio")}
               aria-label="챔피언 머니 — 캐릭터 스튜디오로 이동"
-              className="inline-flex items-center gap-1 rounded-pill bg-[rgba(246,196,83,0.12)] px-3 py-1.5 text-caption font-bold text-[#F6C453] transition-transform active:scale-95"
+              className="inline-flex items-center gap-1 rounded-pill bg-[rgba(246,196,83,0.12)] px-3 py-1.5 text-label font-bold text-[#F6C453] transition-transform active:scale-95"
             >
               <Banknote className="h-3.5 w-3.5" />
               <span className="number-font">{gemsDisplay}</span>
@@ -233,8 +232,8 @@ const ComingSoon = () => (
     )}
   >
     <Sparkles className="mx-auto h-6 w-6 text-primary" />
-    <p className="mt-2 text-[14px] font-bold text-foreground">곧 공개됩니다</p>
-    <p className="mt-1 text-[12px] text-muted-foreground leading-relaxed">
+    <p className="mt-2 text-label font-bold text-foreground">곧 공개됩니다</p>
+    <p className="mt-1 text-label text-muted-foreground leading-relaxed">
       153다이어트 프로그램이 지점별 순차 공개됩니다. 관장님 또는 담당 코치에게 문의해 주세요.
     </p>
   </div>
@@ -243,13 +242,13 @@ const ComingSoon = () => (
 const OnboardingCTA = ({ onStart }: { onStart: () => void }) => (
   <div data-tour="diet-onboarding-cta" className="space-y-4">
     <div className="rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/10 to-transparent p-5">
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+      <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
         153 DIET · 21 DAYS
       </p>
-      <h2 className="mt-1 text-display-sm text-foreground leading-tight">
+      <h2 className="mt-1 text-heading text-foreground leading-tight">
         체지방을 제거하는 몸 습관 만들기
       </h2>
-      <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+      <p className="mt-2 text-label leading-relaxed text-muted-foreground">
         체중 숫자가 아니라 식사 리듬·출석·회복 습관에 집중합니다. 복싱짐 출석과 오삼 코치님의 피드백이 함께 갑니다.
       </p>
     </div>
@@ -261,7 +260,7 @@ const OnboardingCTA = ({ onStart }: { onStart: () => void }) => (
       ].map((t) => (
         <li
           key={t}
-          className="flex items-start gap-2 rounded-xl border border-border bg-card px-3 py-2 text-[12.5px] text-foreground"
+          className="flex items-start gap-2 rounded-xl border border-border bg-card px-3 py-2 text-label text-foreground"
         >
           <span className="mt-0.5 text-primary">·</span>
           {t}
@@ -475,13 +474,13 @@ const ActiveHome = (p: ActiveHomeProps) => {
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
               {p.stageLabel}
             </p>
-            <h2 className="mt-0.5 text-display-sm text-foreground leading-tight">
-              Day {p.currentDay} <span className="text-muted-foreground text-[18px]">/ 21</span>
+            <h2 className="mt-0.5 text-heading text-foreground leading-tight">
+              Day {p.currentDay} <span className="text-muted-foreground text-heading">/ 21</span>
             </h2>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
+            <p className="mt-0.5 text-micro text-muted-foreground">
               {DIET_TRACK_LABEL[p.track]} · 시작 {p.startDate}
             </p>
           </div>
@@ -515,13 +514,13 @@ const ActiveHome = (p: ActiveHomeProps) => {
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
               TODAY · 오늘의 미션
             </p>
-            <p className="mt-0.5 text-[14px] font-extrabold leading-tight text-foreground">
+            <p className="mt-0.5 text-label font-extrabold leading-tight text-foreground">
               오늘의 미션을 클릭하세요
             </p>
-            <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
               5가지 습관 체크 + 식단 사진 · 자가 기록 시 챔피언 머니 지급
             </p>
           </div>
@@ -545,7 +544,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
           <div className="flex items-center justify-between">
             <p
               className={cn(
-                "text-[10px] font-black uppercase tracking-[0.2em]",
+                "text-micro font-black uppercase tracking-[0.2em]",
                 questCardSummary.allDone ? "text-emerald-600" : "text-primary",
               )}
             >
@@ -553,7 +552,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
             </p>
             <span
               className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
+                "rounded-full px-2 py-0.5 text-micro font-black uppercase tracking-wide",
                 questCardSummary.allDone
                   ? "bg-emerald-400/20 text-emerald-700"
                   : "bg-primary/10 text-primary",
@@ -571,12 +570,12 @@ const ActiveHome = (p: ActiveHomeProps) => {
                   : "border-border",
               )}
             >
-              <p className="text-[9.5px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
                 점수
               </p>
               <p
                 className={cn(
-                  "mt-0.5 text-[14px] font-extrabold",
+                  "mt-0.5 text-label font-extrabold",
                   questCardSummary.allDone
                     ? "text-emerald-600"
                     : "text-foreground",
@@ -586,25 +585,25 @@ const ActiveHome = (p: ActiveHomeProps) => {
               </p>
             </div>
             <div className="rounded-xl border border-border bg-background px-2 py-2 text-center">
-              <p className="text-[9.5px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
                 완료
               </p>
-              <p className="mt-0.5 text-[14px] font-extrabold text-foreground">
+              <p className="mt-0.5 text-label font-extrabold text-foreground">
                 {questCardSummary.completed}/{questCardSummary.total}
               </p>
             </div>
             <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-2 py-2 text-center">
-              <p className="text-[9.5px] font-bold uppercase tracking-wide text-emerald-600">
+              <p className="text-micro font-bold uppercase tracking-wide text-emerald-600">
                 Perfect
               </p>
-              <p className="mt-0.5 text-[14px] font-extrabold text-emerald-700">
+              <p className="mt-0.5 text-label font-extrabold text-emerald-700">
                 {questCardSummary.perfect}
               </p>
             </div>
           </div>
           <p
             className={cn(
-              "mt-3 text-[12px] leading-relaxed",
+              "mt-3 text-label leading-relaxed",
               questCardSummary.allDone ? "text-emerald-700" : "text-foreground",
             )}
           >
@@ -641,7 +640,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
 
       {/* 하위 페이지 네비게이션은 상단 DietSubNav 로 통합 — 기존 타일 그리드 제거 */}
 
-      <p className="text-center text-[11px] text-muted-foreground">
+      <p className="text-center text-micro text-muted-foreground">
         자가 기록 완료: <strong className="text-foreground">{p.approvedDays}</strong>일 / 21일
       </p>
 
@@ -683,10 +682,10 @@ const CheckinCta = ({
       )}
     >
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-widest opacity-80">
+        <p className="text-micro font-bold uppercase tracking-widest opacity-80">
           {tone}
         </p>
-        <p className="text-[15px] font-black">{label}</p>
+        <p className="text-body font-black">{label}</p>
       </div>
       <ArrowRight className="h-5 w-5" />
     </button>
@@ -784,7 +783,7 @@ const PostProgramEntryCard = ({
       <div className="flex items-center justify-between">
         <p
           className={cn(
-            "text-[10px] font-black uppercase tracking-[0.2em]",
+            "text-micro font-black uppercase tracking-[0.2em]",
             tone === "ready"
               ? "text-emerald-600"
               : tone === "soon"
@@ -795,26 +794,26 @@ const PostProgramEntryCard = ({
           POST · 21일 이후
         </p>
         {tone === "ready" && (
-          <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-700">
+          <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-micro font-black uppercase tracking-wide text-emerald-700">
             READY
           </span>
         )}
       </div>
       <p
         className={cn(
-          "mt-1 text-[13.5px] font-extrabold leading-tight",
+          "mt-1 text-label font-extrabold leading-tight",
           tone === "ready" ? "text-emerald-700" : "text-foreground",
         )}
       >
         {title}
       </p>
-      <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
         {subtitle}
       </p>
       <Button
         onClick={onEnter}
         className={cn(
-          "mt-3 h-10 w-full rounded-xl text-[12.5px] font-bold",
+          "mt-3 h-10 w-full rounded-xl text-label font-bold",
           tone === "ready"
             ? "bg-emerald-500 text-white hover:bg-emerald-500/90"
             : tone === "soon"

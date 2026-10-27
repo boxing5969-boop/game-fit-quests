@@ -50,7 +50,6 @@ const AboutOneFiveThreePage = () => {
       header={
         <PageHeader
           title="153이란?"
-          subtitle="다시 시작하는 사람에게 주어진 숫자"
           leftAction={
             <button
               type="button"
@@ -74,7 +73,7 @@ const AboutOneFiveThreePage = () => {
               "radial-gradient(ellipse at 50% 0%, rgba(217, 54, 32, 0.12) 0%, rgba(41, 195, 156, 0.06) 55%, transparent 100%)",
           }}
         >
-          <p className="text-[10px] font-black uppercase tracking-[0.28em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.28em] text-primary">
             WHAT IS 153?
           </p>
           <h2 className="mt-3 flex items-baseline gap-2 leading-none">
@@ -84,20 +83,20 @@ const AboutOneFiveThreePage = () => {
             >
               153
             </span>
-            <span className="text-[22px] font-black text-primary">.</span>
+            <span className="text-title font-black text-primary">.</span>
           </h2>
-          <p className="mt-4 text-[14px] font-bold leading-relaxed text-foreground">
+          <p className="mt-4 text-label font-bold leading-relaxed text-foreground">
             다시 시작하는 사람에게 주어진 숫자.
           </p>
         </section>
 
         {/* ══════════ 2. 서사 — 베드로의 밤 ══════════ */}
         <section className="space-y-4">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-accent">
             THE STORY
           </p>
 
-          <p className="text-[13.5px] leading-[1.85] text-foreground">
+          <p className="text-label leading-[1.85] text-foreground">
             밤새도록 애썼지만
             <br />
             아무것도 얻지 못한 베드로에게
@@ -106,12 +105,12 @@ const AboutOneFiveThreePage = () => {
           </p>
 
           <blockquote className="relative rounded-2xl border-l-[3px] border-primary bg-primary/5 px-4 py-3">
-            <p className="text-[15px] font-extrabold leading-snug text-foreground">
+            <p className="text-body font-extrabold leading-snug text-foreground">
               "그물을 던져라."
             </p>
           </blockquote>
 
-          <p className="text-[13.5px] leading-[1.85] text-foreground">
+          <p className="text-label leading-[1.85] text-foreground">
             순종 끝에 돌아온 것은
             <br />
             겨우 한 마리가 아니라{" "}
@@ -122,7 +121,7 @@ const AboutOneFiveThreePage = () => {
             <span className="font-black text-foreground">찢어지지 않았습니다.</span>
           </p>
 
-          <p className="text-[13.5px] leading-[1.85] text-foreground">
+          <p className="text-label leading-[1.85] text-foreground">
             그리고 예수님은 베드로에게
             <br />
             다시 사명을 맡기셨습니다.
@@ -135,10 +134,10 @@ const AboutOneFiveThreePage = () => {
         {/* ══════════ 3. 의미 3축 ══════════ */}
         <section className="space-y-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
               MEANING
             </p>
-            <h3 className="mt-1 text-[16px] font-extrabold leading-tight text-foreground">
+            <h3 className="mt-1 text-body font-extrabold leading-tight text-foreground">
               그래서 153은
               <br />
               우리에게 단순한 숫자가 아닙니다.
@@ -156,16 +155,16 @@ const AboutOneFiveThreePage = () => {
               >
                 <div className="flex items-center gap-2">
                   <span
-                    className="number-font text-[11px] font-black leading-none text-primary"
+                    className="number-font text-micro font-black leading-none text-primary"
                     style={{ letterSpacing: "-0.5px" }}
                   >
                     0{idx + 1}
                   </span>
-                  <span className="rounded-md bg-accent/12 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-accent">
+                  <span className="rounded-md bg-accent/12 px-1.5 py-0.5 text-micro font-black uppercase tracking-wider text-accent">
                     {p.keyword}
                   </span>
                 </div>
-                <p className="mt-2 text-[13.5px] leading-relaxed text-foreground">
+                <p className="mt-2 text-label leading-relaxed text-foreground">
                   {p.line1}
                   <br />
                   <span className="font-extrabold">{p.line2}</span>
@@ -183,20 +182,20 @@ const AboutOneFiveThreePage = () => {
               "linear-gradient(135deg, rgba(41, 195, 156, 0.10) 0%, rgba(217, 54, 32, 0.08) 100%)",
           }}
         >
-          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-accent">
+          <p className="text-micro font-black uppercase tracking-[0.24em] text-accent">
             OUR MISSION
           </p>
-          <p className="mt-2 text-[16px] font-extrabold leading-snug text-foreground">
+          <p className="mt-2 text-body font-extrabold leading-snug text-foreground">
             <span className="text-primary">153 BOXING GYM</span>은
           </p>
-          <p className="mt-2 text-[13.5px] leading-[1.9] text-foreground">
+          <p className="mt-2 text-label leading-[1.9] text-foreground">
             강한 몸을 만드는 곳이기 전에
             <br />
-            <span className="text-[15px] font-black text-foreground">
+            <span className="text-body font-black text-foreground">
               무너지지 않는 사람을
             </span>
             <br />
-            <span className="text-[15px] font-black text-accent">
+            <span className="text-body font-black text-accent">
               만드는 곳입니다.
             </span>
           </p>

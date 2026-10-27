@@ -100,7 +100,6 @@ const DietValuePage = () => {
       header={
         <PageHeader
           title="왜 153 다이어트?"
-          subtitle="안 먹어도 찌는 몸을, 안 찌는 체질로"
           leftAction={
             <button
               type="button"
@@ -123,7 +122,7 @@ const DietValuePage = () => {
               key={c.id}
               type="button"
               onClick={() => scrollTo(c.id)}
-              className="shrink-0 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-bold text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary active:scale-95"
+              className="shrink-0 rounded-full border border-border bg-card px-3 py-1 text-micro font-bold text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary active:scale-95"
             >
               {c.label}
             </button>
@@ -135,17 +134,17 @@ const DietValuePage = () => {
         {/* ══════════ 1. THE PARADOX ══════════ */}
         <section id="ch-paradox">
           <div className="rounded-2xl border border-destructive/30 bg-gradient-to-b from-destructive/10 to-transparent p-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-destructive">
+            <p className="text-micro font-black uppercase tracking-[0.2em] text-destructive">
               {PARADOX_HERO.tagline}
             </p>
-            <h2 className="mt-1 text-[22px] font-extrabold leading-tight text-foreground">
+            <h2 className="mt-1 text-title font-extrabold leading-tight text-foreground">
               {PARADOX_HERO.title}
             </h2>
-            <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-label leading-relaxed text-muted-foreground">
               {PARADOX_HERO.body}
             </p>
             <div className="mt-3 rounded-xl border-l-4 border-destructive bg-destructive/10 px-3 py-2.5">
-              <p className="text-[13px] font-extrabold leading-snug text-foreground">
+              <p className="text-label font-extrabold leading-snug text-foreground">
                 "{PARADOX_HERO.punchline}"
               </p>
             </div>
@@ -171,7 +170,7 @@ const DietValuePage = () => {
               />
             ))}
           </div>
-          <p className="rounded-xl border border-border bg-muted/30 p-3 text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="rounded-xl border border-border bg-muted/30 p-3 text-micro leading-relaxed text-muted-foreground">
             <strong className="text-foreground">기억할 한 줄 —</strong> 이 7개
             중 어느 하나라도 오래 부족하면 몸은 "살을 빼는" 방향이 아니라 "살을
             지키고 저장하는" 방향으로 기울어요.
@@ -198,7 +197,7 @@ const DietValuePage = () => {
             ))}
           </div>
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3">
-            <p className="text-[12px] leading-relaxed text-foreground">
+            <p className="text-label leading-relaxed text-foreground">
               <strong className="text-destructive">악순환의 고리 —</strong>{" "}
               피로 → 단 음식 갈망 → 폭식 → 죄책감 → 또 굶기 → 더 깊은 결핍.
               이걸 끊지 않으면 칼로리 계산은 아무 의미가 없어요.
@@ -221,14 +220,14 @@ const DietValuePage = () => {
                 className="rounded-2xl border border-primary/25 bg-primary/5 p-4"
               >
                 <div className="flex items-start gap-3">
-                  <span className="text-[22px] font-black tracking-tight text-primary">
+                  <span className="text-title font-black tracking-tight text-primary">
                     {r.num}
                   </span>
                   <div className="flex-1">
-                    <h4 className="text-[15px] font-extrabold leading-snug text-foreground">
+                    <h4 className="text-body font-extrabold leading-snug text-foreground">
                       {r.title}
                     </h4>
-                    <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+                    <p className="mt-1 text-label leading-relaxed text-muted-foreground">
                       {r.body}
                     </p>
                   </div>
@@ -239,7 +238,7 @@ const DietValuePage = () => {
 
           {/* 구체 실천 — 기존 HOW_TO_RESIST 재활용 */}
           <div className="mt-1 space-y-2">
-            <p className="text-[11px] font-black uppercase tracking-wider text-primary">
+            <p className="text-micro font-black uppercase tracking-wider text-primary">
               구체 실천 · 복구 세부 전술
             </p>
             {HOW_TO_RESIST.map((s) => (
@@ -299,7 +298,7 @@ const DietValuePage = () => {
                   >
                     <span
                       className={cn(
-                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 text-[11px] font-black transition-colors",
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 text-micro font-black transition-colors",
                         checked
                           ? "border-destructive bg-destructive text-destructive-foreground"
                           : "border-border bg-background text-transparent",
@@ -307,7 +306,7 @@ const DietValuePage = () => {
                     >
                       ✓
                     </span>
-                    <span className="flex-1 text-[12.5px] leading-relaxed text-foreground">
+                    <span className="flex-1 text-label leading-relaxed text-foreground">
                       {q.question}
                     </span>
                   </button>
@@ -326,7 +325,7 @@ const DietValuePage = () => {
         {/* ══════════ 7. 면책 + CTA ══════════ */}
         <section className="space-y-3">
           <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-            <p className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-destructive">
+            <p className="flex items-center gap-1.5 text-micro font-black uppercase tracking-wider text-destructive">
               <AlertTriangle className="h-3.5 w-3.5" />
               의학적 안내
             </p>
@@ -334,7 +333,7 @@ const DietValuePage = () => {
               {SCIENCE_DISCLAIMER.map((line) => (
                 <li
                   key={line}
-                  className="pl-3 -indent-3 text-[12px] leading-relaxed text-foreground"
+                  className="pl-3 -indent-3 text-label leading-relaxed text-foreground"
                 >
                   <span className="mr-1 text-destructive">·</span>
                   {line}
@@ -386,16 +385,16 @@ const ChapterHeader = ({
     <div>
       <p
         className={cn(
-          "text-[10px] font-black uppercase tracking-[0.2em]",
+          "text-micro font-black uppercase tracking-[0.2em]",
           taglineCls,
         )}
       >
         {tagline}
       </p>
-      <h3 className="mt-0.5 text-[16px] font-extrabold leading-tight text-foreground">
+      <h3 className="mt-0.5 text-body font-extrabold leading-tight text-foreground">
         {title}
       </h3>
-      <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+      <p className="mt-1 text-label leading-relaxed text-muted-foreground">
         {subtitle}
       </p>
     </div>
@@ -423,8 +422,8 @@ const PillarCard = ({
     )}
   >
     <div className="flex w-full items-center gap-2">
-      <span className="text-[22px] leading-none">{pillar.emoji}</span>
-      <span className="flex-1 text-[13px] font-extrabold text-foreground">
+      <span className="text-title leading-none">{pillar.emoji}</span>
+      <span className="flex-1 text-label font-extrabold text-foreground">
         {pillar.name}
       </span>
       <ChevronRight
@@ -434,20 +433,20 @@ const PillarCard = ({
         )}
       />
     </div>
-    <p className="text-[11.5px] leading-snug text-muted-foreground">
+    <p className="text-micro leading-snug text-muted-foreground">
       {pillar.role}
     </p>
     {open && (
       <div className="mt-1.5 w-full space-y-1.5 border-t border-border pt-2">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-wider text-destructive">
+          <p className="text-micro font-black uppercase tracking-wider text-destructive">
             결핍 신호
           </p>
           <ul className="mt-0.5 space-y-0.5">
             {pillar.deficiencySigns.map((s) => (
               <li
                 key={s}
-                className="pl-2.5 -indent-2.5 text-[11px] leading-relaxed text-foreground"
+                className="pl-2.5 -indent-2.5 text-micro leading-relaxed text-foreground"
               >
                 <span className="mr-1 text-destructive">·</span>
                 {s}
@@ -456,10 +455,10 @@ const PillarCard = ({
           </ul>
         </div>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+          <p className="text-micro font-black uppercase tracking-wider text-primary">
             153 답
           </p>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-foreground">
             {pillar.answer153}
           </p>
         </div>
@@ -475,14 +474,14 @@ const SpiralStepCard = ({
 }) => (
   <div className="flex items-start gap-3 rounded-xl border border-destructive/25 bg-card p-3">
     <div className="flex shrink-0 flex-col items-center">
-      <span className="text-[20px] leading-none">{step.emoji}</span>
-      <span className="mt-1 rounded-md bg-destructive/15 px-1.5 py-0.5 text-[9px] font-black uppercase text-destructive">
+      <span className="text-heading leading-none">{step.emoji}</span>
+      <span className="mt-1 rounded-md bg-destructive/15 px-1.5 py-0.5 text-micro font-black uppercase text-destructive">
         STEP {step.step}
       </span>
     </div>
     <div className="flex-1">
-      <p className="text-[13px] font-extrabold text-foreground">{step.title}</p>
-      <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+      <p className="text-label font-extrabold text-foreground">{step.title}</p>
+      <p className="mt-1 text-label leading-relaxed text-muted-foreground">
         {step.body}
       </p>
     </div>
@@ -521,16 +520,16 @@ const SectionCard = ({
         >
           <Icon className="h-3.5 w-3.5" />
         </span>
-        <p className="text-[13px] font-bold text-foreground">{data.title}</p>
+        <p className="text-label font-bold text-foreground">{data.title}</p>
       </div>
-      <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+      <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
         {data.summary}
       </p>
       <ul className="mt-2 space-y-1">
         {data.bullets.map((b) => (
           <li
             key={b}
-            className="pl-3 -indent-3 text-[11.5px] leading-relaxed text-foreground"
+            className="pl-3 -indent-3 text-micro leading-relaxed text-foreground"
           >
             <span className="mr-1 text-primary">·</span>
             {b}
@@ -559,18 +558,18 @@ const SelfCheckSummary = ({
   return (
     <div className={cn("rounded-2xl border p-4", toneCls)}>
       <div className="flex items-baseline justify-between">
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+        <span className="text-micro font-black uppercase tracking-[0.2em] text-muted-foreground">
           내 밸런스 점수
         </span>
-        <span className="number-font text-[20px] font-black leading-none text-foreground">
+        <span className="number-font text-heading font-black leading-none text-foreground">
           {count}
-          <span className="text-[12px] text-muted-foreground"> / {total}</span>
+          <span className="text-label text-muted-foreground"> / {total}</span>
         </span>
       </div>
-      <p className="mt-2 text-[13px] font-extrabold leading-snug text-foreground">
+      <p className="mt-2 text-label font-extrabold leading-snug text-foreground">
         {verdict.label}
       </p>
-      <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+      <p className="mt-1 text-label leading-relaxed text-muted-foreground">
         {verdict.body}
       </p>
     </div>

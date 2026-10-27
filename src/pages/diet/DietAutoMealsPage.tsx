@@ -48,7 +48,6 @@ const DietAutoMealsPage = () => {
       header={
         <PageHeader
           title="자동 식단"
-          subtitle="BMR·TDEE 기반 맞춤 하루 메뉴"
           leftAction={
             <button
               type="button"
@@ -69,21 +68,21 @@ const DietAutoMealsPage = () => {
             <span className="rounded-full bg-primary/15 p-1.5">
               <ChefHat className="h-4 w-4 text-primary" />
             </span>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
               {mode === "maintenance" ? "MAINTENANCE" : "FAT LOSS"} · MEAL PLAN
             </p>
           </div>
-          <h2 className="mt-1 text-display-sm leading-tight text-foreground">
+          <h2 className="mt-1 text-heading leading-tight text-foreground">
             오늘의 맞춤 식단
           </h2>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             신체 정보로 하루 칼로리·단백질을 계산하고, 30+ 메뉴에서 끼니별로
             자동 조합합니다. 외식 있는 날은 [교체] 로 다음 끼니를 가볍게.
           </p>
         </section>
 
         {!hasActive && (
-          <div className="rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4 text-[12px] leading-relaxed text-foreground">
+          <div className="rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4 text-label leading-relaxed text-foreground">
             <p className="font-bold">먼저 21일 프로그램을 시작해 주세요</p>
             <p className="mt-0.5 text-muted-foreground">
               자동 식단은 프로그램 등록 후 매일 새로 제안됩니다.

@@ -182,7 +182,6 @@ const DietPhotoGalleryPage = () => {
       header={
         <PageHeader
           title="내 식단 사진"
-          subtitle="지금까지 올린 모든 기록"
           leftAction={
             <button
               type="button"
@@ -202,13 +201,13 @@ const DietPhotoGalleryPage = () => {
         <div className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+              <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                 MY PHOTOS
               </p>
-              <p className="mt-0.5 text-[16px] font-extrabold text-foreground">
+              <p className="mt-0.5 text-body font-extrabold text-foreground">
                 총 {photos.length}장
               </p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
+              <p className="mt-0.5 text-micro text-muted-foreground">
                 {DELETE_DAYS}일이 지난 사진은 공간 확보를 위해 자동 삭제돼요.
               </p>
             </div>
@@ -236,7 +235,7 @@ const DietPhotoGalleryPage = () => {
         {warnCount > 0 && (
           <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-400/5 p-3">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-            <p className="text-[12px] leading-relaxed text-foreground">
+            <p className="text-label leading-relaxed text-foreground">
               <strong className="text-amber-700">{warnCount}장</strong>의 사진이
               저장 기한 {DELETE_DAYS}일에 가까워지고 있어요. 보관하고 싶다면
               상단 "전체 저장" 또는 개별 다운로드로 내려받아 두세요.
@@ -298,10 +297,10 @@ const DateGroup = ({
   return (
     <section>
       <header className="mb-2 flex items-baseline justify-between">
-        <h3 className="text-[12px] font-bold text-foreground">{group.date}</h3>
+        <h3 className="text-label font-bold text-foreground">{group.date}</h3>
         <span
           className={cn(
-            "text-[10.5px] font-bold",
+            "text-micro font-bold",
             isWarning ? "text-destructive" : "text-muted-foreground",
           )}
         >
@@ -333,11 +332,11 @@ const DateGroup = ({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                <div className="flex h-full w-full items-center justify-center text-micro text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
                 </div>
               )}
-              <span className="absolute bottom-1 left-1 rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-bold text-white">
+              <span className="absolute bottom-1 left-1 rounded bg-black/55 px-1.5 py-0.5 text-micro font-bold text-white">
                 {DIET_MEAL_SLOT_LABEL[p.meal_slot]}
               </span>
               {(p as unknown as { category?: MealCategory }).category && (
@@ -349,7 +348,7 @@ const DateGroup = ({
                 </span>
               )}
               {warn && (
-                <span className="absolute right-1 top-1 rounded bg-destructive px-1 py-0.5 text-[8.5px] font-black uppercase text-destructive-foreground">
+                <span className="absolute right-1 top-1 rounded bg-destructive px-1 py-0.5 text-micro font-black uppercase text-destructive-foreground">
                   D-{Math.max(0, DELETE_DAYS - days)}
                 </span>
               )}
@@ -378,7 +377,7 @@ const Lightbox = ({
   return (
     <div className="fixed inset-0 z-[80] flex flex-col bg-black/90 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] backdrop-blur-sm">
       <div className="flex items-center justify-between px-4 py-3 text-white">
-        <div className="text-[12px]">
+        <div className="text-label">
           <p className="font-bold">{photo.uploaded_at.slice(0, 10)}</p>
           <p className="text-white/70">
             {DIET_MEAL_SLOT_LABEL[photo.meal_slot]} · {photo.uploaded_at.slice(11, 16)}
@@ -410,7 +409,7 @@ const Lightbox = ({
           <a
             href={url}
             download={buildFileName(photo)}
-            className="flex-1 rounded-2xl bg-white/10 py-3 text-center text-[13px] font-bold text-white active:scale-[0.98]"
+            className="flex-1 rounded-2xl bg-white/10 py-3 text-center text-label font-bold text-white active:scale-[0.98]"
           >
             <Download className="mr-1 inline h-4 w-4" />
             저장
@@ -420,7 +419,7 @@ const Lightbox = ({
           type="button"
           disabled={deleting}
           onClick={onDelete}
-          className="rounded-2xl bg-destructive/85 px-4 py-3 text-[13px] font-bold text-destructive-foreground active:scale-[0.98] disabled:opacity-60"
+          className="rounded-2xl bg-destructive/85 px-4 py-3 text-label font-bold text-destructive-foreground active:scale-[0.98] disabled:opacity-60"
         >
           {deleting ? (
             <Loader2 className="inline h-4 w-4 animate-spin" />
@@ -437,7 +436,7 @@ const Lightbox = ({
 };
 
 const Placeholder = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-border bg-card p-8 text-center text-[13px] leading-relaxed text-muted-foreground">
+  <div className="rounded-2xl border border-border bg-card p-8 text-center text-label leading-relaxed text-muted-foreground">
     {children}
   </div>
 );
@@ -485,7 +484,7 @@ const LightboxAnalysis = ({ photo }: { photo: DietDailyLogPhotoRow }) => {
         aria-label={failed ? "AI 평가 다시 시도" : "AI 간편 평가 받기"}
         className={cn(
           "flex w-full items-center justify-center gap-2 rounded-2xl border py-3",
-          "text-[13px] font-bold transition-all active:scale-[0.99]",
+          "text-label font-bold transition-all active:scale-[0.99]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50",
           failed
             ? "border-amber-400/40 bg-amber-400/10 text-amber-500"
@@ -513,7 +512,7 @@ const LightboxAnalysis = ({ photo }: { photo: DietDailyLogPhotoRow }) => {
         </div>
       )}
       {failed && (
-        <p className="mt-2 text-center text-[11px] text-white/70">
+        <p className="mt-2 text-center text-micro text-white/70">
           잠깐 네트워크가 느렸어요 · 같은 버튼으로 바로 다시 시도할 수 있어요.
         </p>
       )}

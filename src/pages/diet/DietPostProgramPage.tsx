@@ -103,7 +103,6 @@ const DietPostProgramPage = () => {
       header={
         <PageHeader
           title="유지·연장 프로그램"
-          subtitle="21일 이후 두 갈래 경로"
           leftAction={
             <button
               type="button"
@@ -121,13 +120,13 @@ const DietPostProgramPage = () => {
       <div className="space-y-4 pt-2">
         {/* Hero */}
         <section className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-5">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             POST-21 · 유지 / 연장
           </p>
-          <h2 className="mt-1 text-display-sm leading-tight text-foreground">
+          <h2 className="mt-1 text-heading leading-tight text-foreground">
             21일 이후, 내 몸에 맞는 다음 단계
           </h2>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             완주 후 자동으로 활성화되는 두 갈래 — 유지 컨설팅 모드 또는 건강리셋 연장.
             진행 중이라면 미리보기만 가능합니다.
           </p>
@@ -210,8 +209,8 @@ const PathPreview = ({
     >
       {icon}
     </span>
-    <p className="mt-1.5 text-[12.5px] font-extrabold text-foreground">{title}</p>
-    <p className="mt-0.5 text-[10.5px] leading-relaxed text-muted-foreground">
+    <p className="mt-1.5 text-label font-extrabold text-foreground">{title}</p>
+    <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
       {subtitle}
     </p>
   </div>
@@ -230,15 +229,15 @@ const NotEnrolledCTA = ({
 }) => (
   <section className="rounded-2xl border border-border bg-card p-5 text-center">
     <Lock className="mx-auto h-6 w-6 text-muted-foreground" />
-    <p className="mt-2 text-[13px] font-bold text-foreground">
+    <p className="mt-2 text-label font-bold text-foreground">
       아직 21일 프로그램에 등록되지 않았어요
     </p>
-    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+    <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
       온보딩을 마쳤는데도 이 화면이 나오면 등록이 정상 완료되지 않았을 수 있어요.
       먼저 아래 새로고침을 눌러보고, 그래도 같은 화면이면 온보딩을 다시 끝까지 진행해 주세요.
     </p>
     {progressErrored && (
-      <p className="mt-2 text-[10.5px] leading-relaxed text-amber-600">
+      <p className="mt-2 text-micro leading-relaxed text-amber-600">
         ※ 진행도 조회가 일시적으로 실패했을 수 있어요. 새로고침으로 재시도해 보세요.
       </p>
     )}
@@ -273,11 +272,11 @@ const LockedLanding = ({
     <div className="rounded-2xl border border-border bg-card p-5">
       <div className="flex items-center gap-2">
         <Flag className="h-4 w-4 text-primary" />
-        <p className="text-[12px] font-extrabold text-foreground">
+        <p className="text-label font-extrabold text-foreground">
           Day {currentDay} / 21 진행 중
         </p>
       </div>
-      <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+      <p className="mt-2 text-label leading-relaxed text-muted-foreground">
         21일 자가 기록을 마치면 자동으로 활성화돼요. 다만 21일을 다 채우지 않고
         <strong className="text-foreground"> 유지·연장 프로그램부터 바로 시작</strong>
         하고 싶다면 아래 "지금 시작하기" 로 즉시 진입할 수 있어요.
@@ -288,7 +287,7 @@ const LockedLanding = ({
           style={{ width: `${Math.min(100, (currentDay / 21) * 100)}%` }}
         />
       </div>
-      <p className="mt-1 text-center text-[11px] font-bold text-muted-foreground">
+      <p className="mt-1 text-center text-micro font-bold text-muted-foreground">
         {Math.max(0, 21 - currentDay)}일 남음
       </p>
     </div>
@@ -297,11 +296,11 @@ const LockedLanding = ({
     <div className="rounded-2xl border border-emerald-400/40 bg-emerald-400/10 p-4">
       <div className="flex items-center gap-2">
         <Rocket className="h-4 w-4 text-emerald-600" />
-        <p className="text-[12px] font-extrabold text-emerald-700">
+        <p className="text-label font-extrabold text-emerald-700">
           지금 바로 21일 이후 프로그램 시작
         </p>
       </div>
-      <p className="mt-1 text-[11.5px] leading-relaxed text-foreground">
+      <p className="mt-1 text-micro leading-relaxed text-foreground">
         21일을 다 채우지 않고도 유지·연장 프로그램으로 즉시 진입할 수 있어요.
         지금까지의 기록은 그대로 유지되며, 다음 단계 두 갈래에서 한 가지를
         고르고 데드라인·목표를 설정합니다.
@@ -330,7 +329,7 @@ const LockedLanding = ({
 );
 
 const Placeholder = ({ children }: { children: React.ReactNode }) => (
-  <section className="rounded-2xl border border-border bg-card p-5 text-center text-[12px] text-muted-foreground">
+  <section className="rounded-2xl border border-border bg-card p-5 text-center text-label text-muted-foreground">
     {children}
   </section>
 );

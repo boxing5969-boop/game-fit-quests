@@ -54,13 +54,13 @@ const NotificationRow = ({
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-start justify-between gap-2">
-            <span className="min-w-0 text-[14.5px] font-bold leading-snug text-foreground">{n.title}</span>
-            <span className="shrink-0 pt-0.5 text-[11.5px] tabular-nums text-muted-foreground">{notificationTime(n.createdAt)}</span>
+            <span className="min-w-0 text-label font-bold leading-snug text-foreground">{n.title}</span>
+            <span className="shrink-0 pt-0.5 text-micro tabular-nums text-muted-foreground">{notificationTime(n.createdAt)}</span>
           </span>
           {n.body && (
             <span
               className={cn(
-                "mt-0.5 block whitespace-pre-line break-words text-[13px] leading-relaxed text-muted-foreground",
+                "mt-0.5 block whitespace-pre-line break-words text-label leading-relaxed text-muted-foreground",
                 long && !expanded && "line-clamp-3",
               )}
             >
@@ -68,11 +68,11 @@ const NotificationRow = ({
             </span>
           )}
           {n.link ? (
-            <span className="mt-1.5 inline-flex items-center gap-0.5 text-[12.5px] font-bold text-primary">
+            <span className="mt-1.5 inline-flex items-center gap-0.5 text-label font-bold text-primary">
               바로 가기 <ChevronRight className="h-3.5 w-3.5" />
             </span>
           ) : long ? (
-            <span className="mt-1 block text-[12px] font-semibold text-muted-foreground/80">{expanded ? "접기" : "더 보기"}</span>
+            <span className="mt-1 block text-label font-semibold text-muted-foreground/80">{expanded ? "접기" : "더 보기"}</span>
           ) : null}
         </span>
       </button>
@@ -123,7 +123,6 @@ const NotificationsPage = () => {
       header={
         <PageHeader
           title="알림"
-          subtitle="공지 · 출석 · 수업 소식"
           sticky
           leftAction={
             <button
@@ -153,12 +152,12 @@ const NotificationsPage = () => {
         </ul>
       ) : list.isError ? (
         <div className="rounded-2xl bg-card px-5 py-8 text-center shadow-elev-1">
-          <p className="text-[15px] font-bold text-foreground">알림을 불러오지 못했어요</p>
-          <p className="mt-1 text-[12.5px] text-muted-foreground">인터넷 연결을 확인하고 다시 시도해 주세요</p>
+          <p className="text-body font-bold text-foreground">알림을 불러오지 못했어요</p>
+          <p className="mt-1 text-label text-muted-foreground">인터넷 연결을 확인하고 다시 시도해 주세요</p>
           <button
             type="button"
             onClick={() => list.refetch()}
-            className="mt-4 inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary px-4 text-[13px] font-bold text-foreground active:scale-95"
+            className="mt-4 inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary px-4 text-label font-bold text-foreground active:scale-95"
           >
             <RotateCcw className="h-4 w-4" /> 다시 시도
           </button>
@@ -168,8 +167,8 @@ const NotificationsPage = () => {
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary">
             <Bell className="h-7 w-7 text-muted-foreground" />
           </span>
-          <p className="mt-4 text-[15px] font-bold text-foreground">아직 알림이 없어요</p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-4 text-body font-bold text-foreground">아직 알림이 없어요</p>
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             공지 · 출석 · 수업 소식이 오면 여기에 모여요
           </p>
         </div>
@@ -177,7 +176,7 @@ const NotificationsPage = () => {
         <div className="space-y-5">
           {days.map((d) => (
             <section key={d.key} aria-label={d.label}>
-              <h2 className="mb-2 px-1 text-[13px] font-bold text-muted-foreground">{d.label}</h2>
+              <h2 className="mb-2 px-1 text-label font-bold text-muted-foreground">{d.label}</h2>
               <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl bg-card shadow-elev-1">
                 {d.items.map((n) => (
                   <NotificationRow
@@ -196,7 +195,7 @@ const NotificationsPage = () => {
               type="button"
               onClick={() => list.fetchNextPage()}
               disabled={list.isFetchingNextPage}
-              className="flex h-11 w-full items-center justify-center rounded-2xl bg-card text-[13.5px] font-bold text-foreground shadow-elev-1 active:scale-[0.99] disabled:opacity-60"
+              className="flex h-11 w-full items-center justify-center rounded-2xl bg-card text-label font-bold text-foreground shadow-elev-1 active:scale-[0.99] disabled:opacity-60"
             >
               {list.isFetchingNextPage ? "불러오는 중…" : "이전 알림 더 보기"}
             </button>

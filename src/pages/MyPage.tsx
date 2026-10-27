@@ -8,7 +8,6 @@ import AvatarUpload from "@/components/AvatarUpload";
 import DisplayModeToggle from "@/components/profile/DisplayModeToggle";
 import TimeCrewCard from "@/components/engagement/TimeCrewCard";
 import AttendanceRecordCard from "@/components/profile/AttendanceRecordCard";
-import AchievementCard from "@/components/profile/AchievementCard";
 import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
 import MileageCard from "@/components/home/MileageCard";
 import MyPayHistorySheet from "@/components/membership/MyPayHistorySheet";
@@ -183,7 +182,7 @@ const MyPage = () => {
         <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
-        <h1 className="text-xl text-foreground">마이페이지</h1>
+        <h1 className="text-title text-foreground">내정보</h1>
       </div>
 
       <div className="space-y-7">
@@ -200,13 +199,13 @@ const MyPage = () => {
               <div className="min-w-0 flex-1 pt-1">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h2 className="truncate text-lg text-foreground">{isStaff ? staffDisplayName(profile) : (profile.nickname || profile.name)}</h2>
-                    {!isStaff && <p className="truncate text-sm text-muted-foreground">{profile.name}</p>}
+                    <h2 className="truncate text-heading text-foreground">{isStaff ? staffDisplayName(profile) : (profile.nickname || profile.name)}</h2>
+                    {!isStaff && <p className="truncate text-body text-muted-foreground">{profile.name}</p>}
                   </div>
                   {/* 보유 젬 (기존 중복 버튼에서 프로필로 통합) */}
                   <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-reward/20 px-2.5 py-1">
                     <Banknote className="h-3.5 w-3.5 text-reward" />
-                    <span className="text-xs font-bold text-reward-foreground">
+                    <span className="text-label font-bold text-reward-foreground">
                       {role === "admin" || role === "super_admin"
                         ? "∞"
                         : walletData?.gems_balance?.toLocaleString() || 0}
@@ -216,14 +215,14 @@ const MyPage = () => {
                 <div className="mt-1.5 flex items-center gap-2">
                   {isStaff ? (
                     // 대표님 지시(2026-09-23): 코치님은 모두 챔피언 · Lv.77 — 화면 전용 표기
-                    <span className="rounded-full bg-reward/30 px-2 py-0.5 text-xs font-bold text-reward-foreground">
+                    <span className="rounded-full bg-reward/30 px-2 py-0.5 text-label font-bold text-reward-foreground">
                       {staffChampionLine(profile)}
                     </span>
                   ) : (
                     <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} isMaster={isManagerRole(role)} />
                   )}
                   {role && role !== "member" && !isStaff && (
-                    <span className="rounded-full bg-reward/30 px-2 py-0.5 text-xs font-bold text-reward-foreground">
+                    <span className="rounded-full bg-reward/30 px-2 py-0.5 text-label font-bold text-reward-foreground">
                       {role === "branch_manager" || role === "coach" ? "관장님" : role === "super_admin" || role === "admin" ? "전체 관리자" : role}
                     </span>
                   )}
@@ -231,7 +230,7 @@ const MyPage = () => {
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => navigate("/character-studio")}
-                    className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary active:scale-95"
+                    className="rounded-full bg-primary/10 px-3 py-1 text-label font-bold text-primary active:scale-95"
                   >
                     캐릭터 스튜디오
                   </button>
@@ -252,16 +251,13 @@ const MyPage = () => {
                         className="!w-11 !h-11"
                       />
                     ) : (
-                      <span className="text-lg">🥊</span>
+                      <span className="text-heading">🥊</span>
                     )}
                   </button>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* 라이센스 카드 표시 모드 토글 */}
-          <DisplayModeToggle />
 
           {/* 수강권 — 멤버십 카드 (공용 컴포넌트, 수강권 없으면 자동 숨김) */}
           <MembershipCard />
@@ -275,14 +271,11 @@ const MyPage = () => {
             onClick={() => setShowPayHistory(true)}
             className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-left shadow-elev-1 transition-transform active:scale-[0.99]"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Receipt className="h-4 w-4" />
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Receipt className="h-5 w-5" />
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[14px] font-bold text-foreground">결제 · 마일리지 내역</span>
-              <span className="block truncate text-[11.5px] text-muted-foreground">결제한 것 · 취소한 것 · 마일리지 쓴 것까지 자세히</span>
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 flex-1 text-body font-bold text-foreground">결제 · 마일리지 내역</span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
           </button>
           <MyPayHistorySheet open={showPayHistory} onOpenChange={setShowPayHistory} initialTab="pay" />
 
@@ -297,8 +290,7 @@ const MyPage = () => {
           {/* 운동 기록 — 이번 달 · 지난달 운동 시간 (횟수 없음) · 누르면 그래프 · 날짜별 상세 (2026-10-22 대표님) */}
           <AttendanceRecordCard />
 
-          {/* 지금까지 이룬 것 — 펀치 · 스텝 · 스쿼트 · 칼로리 · 좋은 신호 · 신체 정보 (2026-10-21 대표님) */}
-          <AchievementCard />
+          {/* 지금까지 이룬 것은 '운동 기록 자세히 보기'(내 운동 기록)로 옮겼다 — 같은 숫자가 두 화면에 나오지 않게 (2026-10-28 리디자인) */}
 
           {/* 같은 시간대에 오는 사람 — 153 커뮤니티에서 옮겨 옴 (2026-10-15 커뮤니티 개편) */}
           <TimeCrewCard />
@@ -307,11 +299,11 @@ const MyPage = () => {
           <div className="rounded-2xl border border-border bg-card p-5 shadow-elev-1">
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-foreground">{progress.total_xp.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">총 XP</p>
+                <p className="text-title font-bold text-foreground">{progress.total_xp.toLocaleString()}</p>
+                <p className="text-label text-muted-foreground">총 XP</p>
               </div>
               {isStaff ? (
-                <span className="rounded-full bg-reward/30 px-3 py-1 text-sm font-bold text-reward-foreground">{staffChampionLine(profile)}</span>
+                <span className="rounded-full bg-reward/30 px-3 py-1 text-body font-bold text-reward-foreground">{staffChampionLine(profile)}</span>
               ) : (
                 <RankBadge rank={progress.current_rank as Enums<"rank_name">} level={progress.current_level} size="lg" isMaster={isManagerRole(role)} />
               )}
@@ -329,25 +321,27 @@ const MyPage = () => {
           {/* Master League */}
           {isMaster40 && (
             <div className="animate-bounce-in rounded-2xl border-2 border-reward bg-gradient-to-br from-reward/20 via-primary/10 to-reward/20 p-6 text-center shadow-glow-reward">
-              <span className="text-5xl">👑</span>
-              <h3 className="mt-2 text-xl font-bold text-foreground">마스터 리그 달성</h3>
-              <p className="text-sm text-muted-foreground">블랙 리그 레벨 10 달성 + 모든 타이틀매치 클리어</p>
+              <span className="text-display">👑</span>
+              <h3 className="mt-2 text-heading font-bold text-foreground">마스터 리그 달성</h3>
+              <p className="text-body text-muted-foreground">블랙 리그 레벨 10 달성 + 모든 타이틀매치 클리어</p>
             </div>
           )}
 
-          {/* 획득한 메달 (상위 3개만, 나머지는 접기) */}
+          {/* 획득한 메달 (상위 3개만, 나머지는 접기) — 아직 없으면 칸을 그리지 않는다 (위 '메달 0개'로 충분 · 2026-10-28 리디자인) */}
+          {(badgesLoading || earned.length > 0) && (
           <div>
-            <h3 className="mb-3 text-base font-bold text-foreground">획득한 메달</h3>
+            <h3 className="mb-3 text-body font-bold text-foreground">획득한 메달</h3>
             <EarnedBadgeGrid badges={showAllMedals ? earned : earned.slice(0, 3)} loading={badgesLoading} />
             {earned.length > 3 && (
               <button
                 onClick={() => setShowAllMedals((v) => !v)}
-                className="mt-2 w-full rounded-xl border border-border py-2 text-xs font-medium text-muted-foreground active:scale-[0.98]"
+                className="mt-2 h-11 w-full rounded-xl border border-border text-label font-bold text-muted-foreground active:scale-[0.98]"
               >
                 {showAllMedals ? "접기" : `더보기 (${earned.length - 3}개 더)`}
               </button>
             )}
           </div>
+          )}
 
           {locked.length > 0 && (
             <div>
@@ -355,7 +349,7 @@ const MyPage = () => {
                 onClick={() => setShowLocked((v) => !v)}
                 className="mb-3 flex w-full items-center justify-between"
               >
-                <h3 className="text-base font-bold text-muted-foreground">미획득 ({locked.length})</h3>
+                <h3 className="text-body font-bold text-muted-foreground">미획득 ({locked.length})</h3>
                 <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${showLocked ? "rotate-90" : ""}`} />
               </button>
               {showLocked && <LockedBadgeGrid badges={locked} />}
@@ -364,19 +358,19 @@ const MyPage = () => {
 
           {levelUpLogs.length > 0 && (
             <div>
-              <h3 className="mb-3 text-base font-bold text-foreground">레벨업 기록</h3>
+              <h3 className="mb-3 text-body font-bold text-foreground">레벨업 기록</h3>
               <LevelUpHistory logs={levelUpLogs} />
             </div>
           )}
 
           {xpLogs && xpLogs.length > 0 && (
             <div>
-              <h3 className="mb-3 text-base font-bold text-foreground">최근 XP 획득</h3>
+              <h3 className="mb-3 text-body font-bold text-foreground">최근 XP 획득</h3>
               <RecentXpList logs={showAllXp ? xpLogs : xpLogs.slice(0, 1)} />
               {xpLogs.length > 1 && (
                 <button
                   onClick={() => setShowAllXp((v) => !v)}
-                  className="mt-2 w-full rounded-xl border border-border py-2 text-xs font-medium text-muted-foreground active:scale-[0.98]"
+                  className="mt-2 h-11 w-full rounded-xl border border-border text-label font-bold text-muted-foreground active:scale-[0.98]"
                 >
                   {showAllXp ? "접기" : `더보기 (${xpLogs.length - 1}개 더)`}
                 </button>
@@ -391,11 +385,8 @@ const MyPage = () => {
             onClick={() => setShowGrowthTools((v) => !v)}
             className="flex w-full items-center justify-between px-1"
           >
-            <span className="flex items-center gap-2 text-[13px] font-bold text-muted-foreground">
-              <span className="h-3.5 w-1 rounded-full bg-primary/60" />
-              성장 도구
-            </span>
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <span className="text-heading text-foreground">성장 도구</span>
+            <span className="flex items-center gap-1 text-label font-bold text-muted-foreground">
               {showGrowthTools ? "접기" : "펼치기"}
               <ChevronRight className={`h-4 w-4 transition-transform ${showGrowthTools ? "rotate-90" : ""}`} />
             </span>
@@ -418,6 +409,9 @@ const MyPage = () => {
         <section className="animate-slide-up space-y-3">
           <SectionHeader>계정 · 정보</SectionHeader>
 
+          {/* 라이센스 카드 표시 — 설정이라 계정 · 정보로 옮겼다 (2026-10-28 리디자인) */}
+          <DisplayModeToggle />
+
           {/* Info */}
           <div className="rounded-2xl border border-border bg-card shadow-elev-1">
             <InfoRow icon={<MapPin className="h-4 w-4" />} label="소속 지점" value={profile.branch_name || "미설정"} />
@@ -429,21 +423,21 @@ const MyPage = () => {
             <button onClick={() => setShowPwChange(!showPwChange)} className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">
                 <KeyRound className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-foreground">비밀번호 변경</span>
+                <span className="text-body text-foreground">비밀번호 변경</span>
               </div>
               <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${showPwChange ? "rotate-90" : ""}`} />
             </button>
             {showPwChange && (
               <div className="space-y-3 border-t border-border px-4 py-4">
                 <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} placeholder="현재 비밀번호"
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
                 <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="새 비밀번호 (6자 이상)"
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
                 <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="새 비밀번호 확인"
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
-                {pwError && <p className="text-xs text-destructive">{pwError}</p>}
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                {pwError && <p className="text-label text-destructive">{pwError}</p>}
                 <button onClick={handlePasswordChange} disabled={pwLoading}
-                  className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
+                  className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                   {pwLoading ? "처리 중..." : "비밀번호 변경 🥊"}
                 </button>
               </div>
@@ -456,8 +450,8 @@ const MyPage = () => {
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <div className="flex flex-col items-start">
-                  <span className="text-sm text-foreground">생년월일 수정</span>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-body text-foreground">생년월일 수정</span>
+                  <span className="text-label text-muted-foreground">
                     {profile?.birth_date ? profile.birth_date : "등록되지 않음"}
                   </span>
                 </div>
@@ -471,16 +465,16 @@ const MyPage = () => {
                   value={birthInput}
                   max={new Date().toISOString().slice(0, 10)}
                   onChange={(e) => setBirthInput(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                 />
-                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                <p className="text-label leading-relaxed text-muted-foreground">
                   153 다이어트 트랙 자동 판정(성인·청소년), 프로그램 맞춤 카피에 사용됩니다. 비워두면 '등록되지 않음' 처리됩니다.
                 </p>
-                {birthError && <p className="text-xs text-destructive">{birthError}</p>}
+                {birthError && <p className="text-label text-destructive">{birthError}</p>}
                 <button
                   onClick={handleBirthSave}
                   disabled={birthLoading}
-                  className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
                 >
                   {birthLoading ? "처리 중..." : "생년월일 저장"}
                 </button>
@@ -495,7 +489,7 @@ const MyPage = () => {
             <button onClick={() => navigate("/membership")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">🎟️</span>
-                <span className="text-sm text-foreground">수강권</span>
+                <span className="text-body text-foreground">수강권</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -503,12 +497,12 @@ const MyPage = () => {
             <button onClick={() => setShowCheers(true)} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">📣</span>
-                <span className="text-sm text-foreground">받은 · 보낸 응원</span>
+                <span className="text-body text-foreground">받은 · 보낸 응원</span>
               </div>
               <span className="flex items-center gap-1.5">
-                <span className="number-font text-[13px] font-bold text-muted-foreground">{receivedCheers?.total ?? 0}개</span>
+                <span className="number-font text-label font-bold text-muted-foreground">{receivedCheers?.total ?? 0}개</span>
                 {(receivedCheers?.unthanked ?? 0) > 0 && (
-                  <span className="number-font min-w-[18px] rounded-full bg-destructive px-1 text-center text-[10px] font-black leading-[18px] text-white">
+                  <span className="number-font min-w-[18px] rounded-full bg-destructive px-1 text-center text-micro font-black leading-[18px] text-white">
                     {receivedCheers!.unthanked}
                   </span>
                 )}
@@ -520,8 +514,8 @@ const MyPage = () => {
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">🥊</span>
                 <span className="min-w-0">
-                  <span className="block text-sm text-foreground">출석하면 커뮤니티에 알리기</span>
-                  <span className="block text-[11px] text-muted-foreground">'오늘도 한 판' 카드와 랭킹 '지금 운동 중'에 내 이름이 올라가요</span>
+                  <span className="block text-body text-foreground">출석하면 커뮤니티에 알리기</span>
+                  <span className="block text-label text-muted-foreground">'오늘도 한 판'과 '지금 운동 중'에 내 이름이 올라가요</span>
                 </span>
               </div>
               <Switch
@@ -548,8 +542,8 @@ const MyPage = () => {
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">🔔</span>
                 <span className="min-w-0">
-                  <span className="block text-sm text-foreground">응원 · 153 · 댓글 알림 받기</span>
-                  <span className="block text-[11px] text-muted-foreground">동료가 응원 · 153 · 댓글을 보내면 알려 드려요 (휴대폰은 하루 3번까지 · 밤과 주말은 쉬어요)</span>
+                  <span className="block text-body text-foreground">응원 · 153 · 댓글 알림 받기</span>
+                  <span className="block text-label text-muted-foreground">휴대폰은 하루 3번까지 · 밤과 주말은 쉬어요</span>
                 </span>
               </div>
               <Switch
@@ -573,21 +567,21 @@ const MyPage = () => {
             <button onClick={() => navigate("/survey")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">⭐</span>
-                <span className="text-sm text-foreground">설문·고객의 소리</span>
+                <span className="text-body text-foreground">설문·고객의 소리</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
             <button onClick={() => navigate("/feedback")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">📮</span>
-                <span className="text-sm text-foreground">오류 신고</span>
+                <span className="text-body text-foreground">오류 신고</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
             <button onClick={() => navigate("/rewards")} className={`flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50 ${(tutorialDone || tutorialSkipped) ? "border-b border-border" : ""}`}>
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">🎁</span>
-                <span className="text-sm text-foreground">보상</span>
+                <span className="text-body text-foreground">보상</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -599,7 +593,7 @@ const MyPage = () => {
               >
                 <div className="flex items-center gap-3">
                   <span className="text-muted-foreground">🥊</span>
-                  <span className="text-sm text-foreground">
+                  <span className="text-body text-foreground">
                     {tutorialRestartBusy ? "준비 중…" : "튜토리얼 다시 시작"}
                   </span>
                 </div>
@@ -615,19 +609,16 @@ const MyPage = () => {
 };
 
 const SectionHeader =({ children }: { children: React.ReactNode }) => (
-  <h2 className="flex items-center gap-2 px-1 text-[13px] font-bold text-muted-foreground">
-    <span className="h-3.5 w-1 rounded-full bg-primary/60" />
-    {children}
-  </h2>
+  <h2 className="px-1 text-heading text-foreground">{children}</h2>
 );
 
 const InfoRow = ({ icon, label, value, last = false }: { icon: React.ReactNode; label: string; value: string; last?: boolean }) => (
   <div className={`flex items-center justify-between px-4 py-3.5 ${!last ? "border-b border-border" : ""}`}>
     <div className="flex items-center gap-2.5">
       <span className="text-muted-foreground">{icon}</span>
-      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-body text-muted-foreground">{label}</span>
     </div>
-    <span className="text-sm font-medium text-foreground">{value}</span>
+    <span className="text-body font-medium text-foreground">{value}</span>
   </div>
 );
 

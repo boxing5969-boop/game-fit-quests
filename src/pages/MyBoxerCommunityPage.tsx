@@ -14,6 +14,7 @@
  *   · 댓글 알림 링크 ?entry=<글> → 그 글의 댓글 창
  *   · 153 을 길게 누르면 한마디 응원(피드 안) · 글씨 · 단추 키우기
  *   · 들어올 때마다 '마지막으로 본 때'를 남긴다 — 홈 '오늘 우리 체육관' 띠의 새 소식 기준
+ * 2026-10-28 리디자인(글 줄이기 · 글씨 6단계): 머리는 이름 + 받은 153 만 · 바로가기 글씨 14 · 글쓰기 단추 부제는 보상 한 줄
  */
 
 import { useEffect, useState } from "react";
@@ -96,18 +97,13 @@ const MyBoxerCommunityPage = () => {
     >
       <div className="mx-auto w-full max-w-md md:max-w-xl space-y-4 px-4 py-5">
         {/* 헤더 */}
-        <header className="flex items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-300/80">MYBOXER 153</p>
-            <h1 className="text-2xl font-black leading-tight text-foreground">153 커뮤니티</h1>
-            <p className="text-[13px] leading-snug text-muted-foreground">
-              오늘 같이 운동한 사람들 · 153은 누르기, 길게 누르면 한마디 응원
-            </p>
-          </div>
+        {/* 2026-10-28 리디자인: 이름만 — 영문 머리말 · 사용법 줄은 뺐다 (153 길게 누르기 안내는 받은 153 시트 · 오삼코치 안내에) */}
+        <header className="flex items-center justify-between gap-3">
+          <h1 className="text-title leading-tight text-foreground">153 커뮤니티</h1>
           <button
             type="button"
             onClick={() => setReceivedOpen(true)}
-            className="mt-5 inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-pill border border-primary/50 bg-primary/10 px-3.5 text-[13.5px] font-black text-primary active:scale-95"
+            className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-pill border border-primary/50 bg-primary/10 px-4 text-label font-black text-primary active:scale-95"
           >
             받은 153
             {receivedTotal > 0 && <span className="number-font">{receivedTotal}</span>}
@@ -121,14 +117,14 @@ const MyBoxerCommunityPage = () => {
               key={key}
               type="button"
               onClick={() => setSheet(key)}
-              className="relative flex min-w-[4.6rem] flex-1 flex-col items-center gap-1 rounded-2xl border border-border bg-card px-1.5 py-2.5 active:scale-95"
+              className="relative flex min-w-[5.25rem] flex-1 flex-col items-center gap-1.5 rounded-2xl border border-border bg-card px-2 py-3 active:scale-95"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Icon className="h-[18px] w-[18px]" />
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Icon className="h-5 w-5" />
               </span>
-              <span className="whitespace-nowrap text-[12px] font-bold text-foreground">{label}</span>
+              <span className="whitespace-nowrap text-label font-bold text-foreground">{label}</span>
               {!!badge && badge > 0 && (
-                <span className="number-font absolute right-1.5 top-1.5 min-w-[18px] rounded-full bg-destructive px-1 text-center text-[10px] font-black leading-[18px] text-white">
+                <span className="number-font absolute right-1.5 top-1.5 min-w-[18px] rounded-full bg-destructive px-1 text-center text-micro font-black leading-[18px] text-white">
                   {badge}
                 </span>
               )}
@@ -141,16 +137,14 @@ const MyBoxerCommunityPage = () => {
           type="button"
           onClick={() => setSheet("journal")}
           data-tour="champion-journal-card"
-          className="flex w-full items-center gap-3 rounded-card border border-primary/30 bg-primary/5 px-3.5 py-3 text-left active:scale-[0.99]"
+          className="flex w-full items-center gap-3 rounded-card border border-primary/30 bg-primary/5 px-4 py-3.5 text-left active:scale-[0.99]"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <PenLine className="h-5 w-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-bold text-foreground">오늘 운동 한 줄 남기기</span>
-            <span className="block truncate text-[12.5px] text-muted-foreground">
-              사진 한 장 + 한 줄이면 끝 · 오늘 첫 글 챔피언 머니 +50
-            </span>
+            <span className="block text-body font-bold text-foreground">오늘 운동 한 줄 남기기</span>
+            <span className="block truncate text-label text-muted-foreground">오늘 첫 글 챔피언 머니 +50</span>
           </span>
         </button>
 
@@ -158,14 +152,14 @@ const MyBoxerCommunityPage = () => {
         <CommunityFeed openEntryId={entryParam} onEntryHandled={clearEntryParam} />
 
         {/* 153 커뮤니티 약속 3가지 */}
-        <section className="rounded-card border border-border bg-muted/30 px-3.5 py-3">
-          <p className="text-[12.5px] font-black tracking-wider text-foreground">153 커뮤니티 약속</p>
-          <ol className="mt-1.5 list-decimal space-y-0.5 pl-4 text-[13px] leading-relaxed text-muted-foreground">
+        <section className="rounded-card border border-border bg-muted/30 px-4 py-4">
+          <p className="text-label font-black text-foreground">153 커뮤니티 약속</p>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-label leading-relaxed text-foreground">
             <li>비교하지 않고 응원한다.</li>
             <li>몸 이야기는 내 것만 한다.</li>
             <li>어제의 나보다 한 판 더.</li>
           </ol>
-          <p className="mt-2 text-[12px] text-muted-foreground">커뮤니티 활동은 공식 레벨업과 무관해요.</p>
+          <p className="mt-2 text-label text-muted-foreground">커뮤니티 활동은 공식 레벨업과 무관해요.</p>
         </section>
       </div>
 

@@ -62,7 +62,6 @@ const DietFoodGuidePage = () => {
       header={
         <PageHeader
           title="음식 가이드"
-          subtitle="지속 가능한 선택을 모았어요"
           leftAction={
             <button
               type="button"
@@ -79,7 +78,7 @@ const DietFoodGuidePage = () => {
     >
       <div data-tour="diet-page-food" className="space-y-4 pt-2">
         {!featureEnabled ? (
-          <div className="rounded-2xl border border-border bg-card p-6 text-center text-[13px] text-muted-foreground">
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
             153 다이어트 프로그램이 아직 활성화되지 않았어요.
           </div>
         ) : (
@@ -87,7 +86,7 @@ const DietFoodGuidePage = () => {
             {/* 안내 */}
             <div
               className={cn(
-                "rounded-2xl border p-3 text-[12px] leading-relaxed",
+                "rounded-2xl border p-3 text-label leading-relaxed",
                 "border-primary/25 bg-primary/5 text-foreground",
               )}
             >
@@ -126,7 +125,7 @@ const DietFoodGuidePage = () => {
 
             {/* 상황 팁 */}
             <section className="space-y-2">
-              <h3 className="text-[13px] font-bold text-foreground">상황별 팁</h3>
+              <h3 className="text-label font-bold text-foreground">상황별 팁</h3>
               <ul className="space-y-2">
                 <TipCard
                   icon={<Soup className="h-4 w-4" />}
@@ -161,7 +160,7 @@ const DietFoodGuidePage = () => {
             </section>
 
             {isYouth && (
-              <div className="rounded-xl border border-border bg-muted/30 p-3 text-[11.5px] leading-relaxed text-muted-foreground">
+              <div className="rounded-xl border border-border bg-muted/30 p-3 text-micro leading-relaxed text-muted-foreground">
                 청소년 트랙은 단식·식사 거르기를 권하지 않습니다. 잘 먹고, 잘 자고, 잘 움직이는 쪽으로 무게중심.
               </div>
             )}
@@ -190,7 +189,7 @@ const StanceToggle = ({
     type="button"
     onClick={onClick}
     className={cn(
-      "flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-[13px] font-bold transition-colors",
+      "flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-label font-bold transition-colors",
       active
         ? "border-primary bg-primary/10 text-primary"
         : "border-border bg-card text-muted-foreground hover:border-primary/40",
@@ -214,18 +213,18 @@ const FoodCard = ({ card }: { card: FoodGuideCard }) => (
     <div className="flex items-center gap-2">
       <p
         className={cn(
-          "text-[13px] font-bold",
+          "text-label font-bold",
           card.stance === "encourage" ? "text-primary" : "text-destructive",
         )}
       >
         {card.title}
       </p>
-      <span className="rounded bg-background/60 px-1.5 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
+      <span className="rounded bg-background/60 px-1.5 py-0.5 text-micro font-bold uppercase text-muted-foreground">
         {card.category}
       </span>
     </div>
-    <p className="mt-1 text-[11.5px] text-muted-foreground">{card.examples}</p>
-    <p className="mt-1.5 text-[12.5px] leading-relaxed text-foreground">
+    <p className="mt-1 text-micro text-muted-foreground">{card.examples}</p>
+    <p className="mt-1.5 text-label leading-relaxed text-foreground">
       {card.coaching}
     </p>
   </li>
@@ -241,7 +240,7 @@ const TipCard = ({
   lines: string[];
 }) => (
   <li className="rounded-xl border border-border bg-card p-3">
-    <div className="flex items-center gap-1.5 text-[12.5px] font-bold text-foreground">
+    <div className="flex items-center gap-1.5 text-label font-bold text-foreground">
       <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary">
         {icon}
       </span>
@@ -251,7 +250,7 @@ const TipCard = ({
       {lines.map((ln) => (
         <li
           key={ln}
-          className="pl-3 -indent-3 text-[12px] leading-relaxed text-muted-foreground"
+          className="pl-3 -indent-3 text-label leading-relaxed text-muted-foreground"
         >
           <span className="mr-1 text-primary">·</span>
           {ln}

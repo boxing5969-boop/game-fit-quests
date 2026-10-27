@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef, Fragment } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { User, Ticket, Trophy, Settings, ChevronLeft, X } from "lucide-react";
+import { User, Ticket, Trophy, Settings, ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,7 +44,6 @@ import TodayActionCard, { type TodayActionState } from "@/components/home/TodayA
 import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
 import MileageCard from "@/components/home/MileageCard";
 import HomeWorkoutCard from "@/components/home/HomeWorkoutCard";
-import HealthGainsCard from "@/components/home/HealthGainsCard";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
 import {
   STAFF_CHAMPION_LABEL, STAFF_CHAMPION_LEVEL, STAFF_CHAMPION_LINE, isStaffProfile, staffChampionLine, staffDisplayName, staffTitleLabel,
@@ -87,7 +86,6 @@ import {
   PageHeader,
   XPBar,
   RankingItem,
-  EmptyState,
   NotificationBanner,
 } from "@/components/ui/rankingup";
 
@@ -311,7 +309,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
           className="fixed inset-0 z-[75] flex flex-col bg-background pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]"
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <h2 className="text-base font-bold text-foreground">🥊 오늘 도전</h2>
+            <h2 className="text-body font-bold text-foreground">🥊 오늘 도전</h2>
             <button
               type="button"
               onClick={() => setChallengeOpen(null)}
@@ -419,7 +417,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
             />
           ) : (
             <div
-              className="flex h-full w-full items-center justify-center text-5xl font-black text-white"
+              className="flex h-full w-full items-center justify-center text-display font-black text-white"
               style={{
                 background:
                   rank === "blue"
@@ -501,13 +499,13 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const renderRankingPreview = (force = false) =>
     force || homeWidgets.rankingPreview ? (
       <section>
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-[17px] font-black">이번 주 내 순위</h2>
+        <div className="mb-3 flex items-center justify-between px-1">
+          <h2 className="text-heading">이번 주 내 순위</h2>
           <button
             onClick={() => navigate("/halloffame")}
-            className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary active:scale-95"
+            className="flex items-center gap-0.5 text-label font-bold text-muted-foreground active:scale-95"
           >
-            전체 →
+            전체 <ChevronRight className="h-4 w-4" aria-hidden />
           </button>
         </div>
         {myPosition ? (
@@ -522,16 +520,26 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
             onClick={() => navigate("/halloffame")}
           />
         ) : (
-          <EmptyState
-            icon={<Trophy className="h-8 w-8 text-reward" />}
-            title="아직 순위에 없어요"
-            description="첫 도전을 완료하면 랭킹에 진입합니다."
-            ctaText={checkedInToday ? (activitySession.isActive ? "🥊 오늘 도전 이어하기" : "🥊 오늘 도전 시작") : "QR 로 출석하기"}
-            onCtaClick={() => {
+          // 순위가 아직 없으면 큰 빈 화면 대신 한 줄 (2026-10-28 리디자인 — 빈 것은 크게 그리지 않는다)
+          <button
+            type="button"
+            onClick={() => {
               if (checkedInToday) handleStartChallenge();
               else navigate("/qr-checkin");
             }}
-          />
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left shadow-elev-1 transition-transform active:scale-[0.99]"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-reward/15 text-reward">
+              <Trophy className="h-5 w-5" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-body font-bold text-foreground">아직 순위에 없어요</span>
+              <span className="block text-label text-muted-foreground">
+                {checkedInToday ? (activitySession.isActive ? "오늘 도전을 이어서 해요" : "오늘 도전을 끝내면 올라가요") : "출석하고 도전하면 올라가요"}
+              </span>
+            </span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          </button>
         )}
       </section>
     ) : null;
@@ -546,7 +554,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
             // 지도진은 리그 배지 대신 지도진 표식 (2026-09-23 챔피언 · Lv.77 → 2026-10-19 대표님: 블랙 · Lv.77)
             staffCard ? (
               <span
-                className="inline-flex shrink-0 items-center rounded-md bg-yellow-500 px-1.5 py-0.5 text-[10px] font-black leading-none text-gray-900"
+                className="inline-flex shrink-0 items-center rounded-md bg-yellow-500 px-1.5 py-0.5 text-micro font-black leading-none text-gray-900"
                 aria-label={STAFF_CHAMPION_LINE}
               >
                 {STAFF_CHAMPION_LABEL} {STAFF_CHAMPION_LEVEL}
@@ -567,7 +575,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
               type="button"
               onClick={() => navigate("/mypage")}
               aria-label="내 정보"
-              className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary text-[14px] font-bold text-secondary-foreground ring-1 ring-border/60 transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary text-label font-bold text-secondary-foreground ring-1 ring-border/60 transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             >
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -590,13 +598,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
               {/* 알림 — 공지·출석·수업 소식 (2026-10-01) · 메시지(DM) — 인스타그램처럼 오른쪽 위 종이비행기 (2026-09-30) */}
               <NotificationBellButton />
               <DmHeaderButton />
-              <button
-                onClick={() => navigate("/mypage")}
-                className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"
-                aria-label="내 정보"
-              >
-                <User className="h-4 w-4 text-secondary-foreground" />
-              </button>
+              {/* '내 정보' 단추는 뺐다 — 왼쪽 내 사진이 같은 곳으로 간다 (2026-10-28 리디자인: 같은 단추 두 번 X) */}
             </>
           }
           sticky
@@ -623,8 +625,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
               MY복서(/myboxer) 보기는 예전 '오늘의 시작' 카드 그대로 (renderTodayAction).
               2026-10-22 대표님 ②: 레벨 카드 바로 밑에 총 운동일 · 이번 달 · 지난달 시간 + 펀치 · 칼로리 · 심폐 · 근지구력 ·
               근력 · 체력 · 체지방률(% 막대) · 피드백 · 정확도(넣을수록 ↑, 없으면 출석 + 남녀 평균) — 두 카드 안에서. */}
+          {/* 2026-10-28 리디자인: 홈의 운동 카드는 '내 운동' 하나 — '153과 함께하며'는 '내 운동 기록'(자세히)으로 옮겼다 */}
           <HomeWorkoutCard />
-          <HealthGainsCard />
           {renderRankingPreview(true)}
 
           {/* 휴대폰 알림 켜기 — 아직 안 켠 회원에게만 보인다 ('나중에'는 2주 접힘).
@@ -646,15 +648,13 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
               type="button"
               onClick={() => setHomeMenuOpen((v) => !v)}
               aria-expanded={homeMenuOpen}
-              className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5 shadow-elev-1 transition-transform active:scale-[0.99]"
+              className="flex h-14 w-full items-center justify-between rounded-2xl border border-border bg-card px-5 shadow-elev-1 transition-transform active:scale-[0.99]"
             >
-              <span className="flex items-center gap-2.5">
+              <span className="flex items-center gap-3">
                 <TabIcon name="all" active={homeMenuOpen} className="h-5 w-5 text-primary" />
-                <span className="text-[15px] font-extrabold text-foreground">전체 메뉴</span>
+                <span className="text-body font-extrabold text-foreground">전체 메뉴</span>
               </span>
-              <span className="text-xs font-bold text-muted-foreground">
-                {homeMenuOpen ? "접기 ∧" : "펼치기 ∨"}
-              </span>
+              <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${homeMenuOpen ? "rotate-180" : ""}`} aria-label={homeMenuOpen ? "접기" : "펼치기"} />
             </button>
             {homeMenuOpen && (
               <div className="mt-3 space-y-4 animate-slide-up">
@@ -748,8 +748,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
           {homeWidgets.weeklyProgress && (
             <section className="surface-card">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-[17px] font-black">이번 주 진행도</h2>
-                <span className="text-[11px] text-muted-foreground">
+                <h2 className="text-body font-black">이번 주 진행도</h2>
+                <span className="text-label text-muted-foreground">
                   {weeklyEncouragement}
                 </span>
               </div>
@@ -781,18 +781,18 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
               onClick={() => navigate("/diet")}
               className="flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-reward/5 to-primary/10 p-3 text-left transition-all active:scale-[0.99] hover:border-primary/50"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-reward text-primary-foreground text-lg">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-reward text-primary-foreground text-heading">
                 🥗
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                <p className="text-label font-black uppercase tracking-[0.2em] text-primary">
                   153 DIET · 21 DAYS
                 </p>
-                <p className="mt-0.5 truncate text-sm font-bold text-foreground">
+                <p className="mt-0.5 truncate text-body font-bold text-foreground">
                   체지방 제거 21일 챌린지
                 </p>
               </div>
-              <span className="shrink-0 text-primary text-lg">→</span>
+              <span className="shrink-0 text-primary text-heading">→</span>
             </button>
           )}
 
@@ -803,7 +803,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
             <button
               type="button"
               onClick={() => setShowCustomize(true)}
-              className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-card px-3.5 py-1.5 text-[11px] font-bold text-muted-foreground transition-colors active:scale-95 hover:border-primary/40 hover:text-primary"
+              className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-card px-3.5 py-1.5 text-label font-bold text-muted-foreground transition-colors active:scale-95 hover:border-primary/40 hover:text-primary"
             >
               <Settings className="h-3.5 w-3.5" />
               홈 커스터마이즈
@@ -864,7 +864,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
 const LoadingState = () => (
   <div className="flex min-h-screen items-center justify-center bg-background">
     <div className="text-center">
-      <div className="mx-auto mb-4 flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-primary/20 text-3xl">
+      <div className="mx-auto mb-4 flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-primary/20 text-title">
         🥊
       </div>
       <p className="text-muted-foreground">로딩 중...</p>

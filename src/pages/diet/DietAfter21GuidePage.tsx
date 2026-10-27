@@ -32,7 +32,6 @@ const DietAfter21GuidePage = () => {
       header={
         <PageHeader
           title="21일 이후 가이드"
-          subtitle="21일이 끝나도 끝이 아닙니다"
           leftAction={
             <button
               type="button"
@@ -50,13 +49,13 @@ const DietAfter21GuidePage = () => {
       <div data-tour="diet-page-after-21" className="space-y-5 pt-2">
         {/* Hero */}
         <section className="rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/10 to-transparent p-5">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             NEXT STEP · 21일 이후
           </p>
-          <h2 className="mt-1 text-display-sm leading-tight text-foreground">
+          <h2 className="mt-1 text-heading leading-tight text-foreground">
             끝이 아니라 다음 단계로 갑니다
           </h2>
-          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-label leading-relaxed text-muted-foreground">
             21일은 체중의 레이스가 아니라 몸 습관의 리셋이에요. 그 다음에는 지금까지
             만든 리듬을 유지하거나, 한 사이클을 안정적으로 이어가 감량을 마무리합니다.
           </p>
@@ -238,7 +237,7 @@ const DietAfter21GuidePage = () => {
           >
             오늘의 체크인 하러 가기
           </button>
-          <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
+          <p className="text-center text-micro leading-relaxed text-muted-foreground">
             21일 동안 오늘 하루에만 집중하면 충분해요. 그 다음 단계는 때가 되면 자동으로 열립니다.
           </p>
         </div>
@@ -260,7 +259,7 @@ const Section = ({
   <section className="space-y-2.5">
     <div className="flex items-center gap-1.5">
       {icon}
-      <h3 className="text-[14px] font-extrabold text-foreground">{title}</h3>
+      <h3 className="text-label font-extrabold text-foreground">{title}</h3>
     </div>
     {children}
   </section>
@@ -297,11 +296,11 @@ const PathCard = ({
         {icon}
       </span>
       <div>
-        <p className="text-[14.5px] font-extrabold leading-tight text-foreground">{title}</p>
-        <p className="mt-0.5 text-[11.5px] text-muted-foreground">{subtitle}</p>
+        <p className="text-label font-extrabold leading-tight text-foreground">{title}</p>
+        <p className="mt-0.5 text-micro text-muted-foreground">{subtitle}</p>
       </div>
     </div>
-    <ul className="mt-3 space-y-1 text-[12.5px] text-foreground">
+    <ul className="mt-3 space-y-1 text-label text-foreground">
       {bullets.map((b) => (
         <li key={b} className="flex gap-1.5">
           <span className="mt-1 block h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
@@ -323,7 +322,7 @@ const CriteriaRow = ({
 }) => (
   <div
     className={cn(
-      "rounded-xl border p-3 text-[12px] leading-relaxed",
+      "rounded-xl border p-3 text-label leading-relaxed",
       tone === "good"
         ? "border-emerald-400/30 bg-emerald-400/5"
         : tone === "focus"
@@ -333,7 +332,7 @@ const CriteriaRow = ({
   >
     <p
       className={cn(
-        "text-[11.5px] font-extrabold",
+        "text-micro font-extrabold",
         tone === "good"
           ? "text-emerald-500"
           : tone === "focus"
@@ -349,8 +348,8 @@ const CriteriaRow = ({
 
 const DetailItem = ({ label, hint }: { label: string; hint: string }) => (
   <li className="rounded-xl border border-border bg-card px-3 py-2.5">
-    <p className="text-[12.5px] font-bold text-foreground">{label}</p>
-    <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">{hint}</p>
+    <p className="text-label font-bold text-foreground">{label}</p>
+    <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">{hint}</p>
   </li>
 );
 
@@ -367,13 +366,13 @@ const SubStep = ({
 }) => (
   <div className="rounded-xl border border-border bg-card p-3">
     <div className="flex items-center gap-2">
-      <span className="number-font flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-[12px] font-extrabold text-primary">
+      <span className="number-font flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-label font-extrabold text-primary">
         {step}
       </span>
       {icon}
-      <p className="text-[13px] font-extrabold text-foreground">{title}</p>
+      <p className="text-label font-extrabold text-foreground">{title}</p>
     </div>
-    <ul className="mt-2 space-y-0.5 text-[12px] text-foreground">
+    <ul className="mt-2 space-y-0.5 text-label text-foreground">
       {body.map((b) => (
         <li key={b} className="flex gap-1.5">
           <span className="mt-1 block h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
@@ -398,8 +397,8 @@ const BadgeRow = ({
       {icon}
     </span>
     <div>
-      <p className="text-[12.5px] font-extrabold text-foreground">{name}</p>
-      <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">{hint}</p>
+      <p className="text-label font-extrabold text-foreground">{name}</p>
+      <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">{hint}</p>
     </div>
   </div>
 );
@@ -413,7 +412,7 @@ const PrincipleItem = ({
 }) => (
   <li
     className={cn(
-      "flex items-center gap-2 rounded-lg border px-3 py-2 text-[12.5px]",
+      "flex items-center gap-2 rounded-lg border px-3 py-2 text-label",
       tone === "good"
         ? "border-emerald-400/25 bg-emerald-400/5 text-foreground"
         : "border-border bg-card text-foreground",
@@ -433,7 +432,7 @@ const Quote = ({
 }) => (
   <p
     className={cn(
-      "rounded-xl border px-3 py-2 text-[12px] leading-relaxed",
+      "rounded-xl border px-3 py-2 text-label leading-relaxed",
       tone === "good"
         ? "border-emerald-400/25 bg-emerald-400/5 text-foreground"
         : tone === "focus"

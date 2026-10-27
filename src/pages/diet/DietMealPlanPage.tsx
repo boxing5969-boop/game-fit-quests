@@ -148,7 +148,6 @@ const DietMealPlanPage = () => {
       header={
         <PageHeader
           title="21일 식단"
-          subtitle="음식 분류 · 3 패턴 · 내 식단 만들기"
           leftAction={
             <button
               type="button"
@@ -165,20 +164,20 @@ const DietMealPlanPage = () => {
     >
       <div data-tour="diet-page-meal-plan" className="space-y-5 pt-2">
         {!featureEnabled ? (
-          <div className="rounded-2xl border border-border bg-card p-6 text-center text-[13px] text-muted-foreground">
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
             153 다이어트 프로그램이 아직 활성화되지 않았어요.
           </div>
         ) : (
           <>
             {/* 안내 */}
             <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+              <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                 MEAL GUIDE · 21 DAYS
               </p>
-              <h2 className="mt-1 text-[17px] font-extrabold text-foreground leading-tight">
+              <h2 className="mt-1 text-body font-extrabold text-foreground leading-tight">
                 선택지가 많을수록 오래갑니다
               </h2>
-              <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+              <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
                 무제한·적정량·줄이기·피하기 4가지 분류. 3가지 대표 패턴 중 하나를 고르거나,
                 내 라이프스타일에 맞춰 직접 식단을 짜보세요.
               </p>
@@ -187,13 +186,13 @@ const DietMealPlanPage = () => {
             {/* ━━━━━━━━━━━━━━━━━━ 대표 식단 패턴 ━━━━━━━━━━━━━━━━━━ */}
             <section className="space-y-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                   3 PRESET PATTERNS
                 </p>
-                <h3 className="mt-0.5 text-[15px] font-extrabold text-foreground leading-tight">
+                <h3 className="mt-0.5 text-body font-extrabold text-foreground leading-tight">
                   심플 · 보통 · 정석
                 </h3>
-                <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+                <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                   라이프스타일에 맞는 패턴을 고르세요. '내 식단에 적용' 을 누르면 아래 빌더에 자동으로 채워집니다.
                 </p>
               </div>
@@ -212,13 +211,13 @@ const DietMealPlanPage = () => {
             {/* ━━━━━━━━━━━━━━━━━━ DIY 식단 빌더 ━━━━━━━━━━━━━━━━━━ */}
             <section className="space-y-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                   BUILD YOUR PLAN
                 </p>
-                <h3 className="mt-0.5 text-[15px] font-extrabold text-foreground leading-tight">
+                <h3 className="mt-0.5 text-body font-extrabold text-foreground leading-tight">
                   내 식단 만들기
                 </h3>
-                <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+                <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                   끼니별로 음식을 직접 골라 저장하면 설정에 남습니다. 언제든 수정 가능.
                 </p>
               </div>
@@ -262,7 +261,7 @@ const DietMealPlanPage = () => {
                 </Button>
               </div>
 
-              <p className="text-[11px] text-muted-foreground text-center">
+              <p className="text-micro text-muted-foreground text-center">
                 저장된 식단은 어떤 기기에서든 그대로 불러와져요.
               </p>
             </section>
@@ -270,13 +269,13 @@ const DietMealPlanPage = () => {
             {/* ━━━━━━━━━━━━━━━━━━ 음식 분류 4단계 ━━━━━━━━━━━━━━━━━━ */}
             <section className="space-y-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                   FOOD CATEGORIES
                 </p>
-                <h3 className="mt-0.5 text-[15px] font-extrabold text-foreground leading-tight">
+                <h3 className="mt-0.5 text-body font-extrabold text-foreground leading-tight">
                   음식 4단계 분류
                 </h3>
-                <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+                <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                   양보다 선택이 먼저. '손바닥·한 줌' 같은 직관 단위로 접근하세요.
                 </p>
               </div>
@@ -290,13 +289,13 @@ const DietMealPlanPage = () => {
             {/* ━━━━━━━━━━━━━━━━━━ 스테이지별 샘플 ━━━━━━━━━━━━━━━━━━ */}
             <section className="space-y-2">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                   STAGE SAMPLES
                 </p>
-                <h3 className="mt-0.5 text-[15px] font-extrabold text-foreground leading-tight">
+                <h3 className="mt-0.5 text-body font-extrabold text-foreground leading-tight">
                   스테이지별 하루 샘플
                 </h3>
-                <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+                <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                   정답 아니라 참고용. 본인 식사 패턴에 맞춰 가볍게 변형해 보세요.
                 </p>
               </div>
@@ -309,7 +308,7 @@ const DietMealPlanPage = () => {
 
             {/* 청소년 주의 */}
             {isYouth && (
-              <div className="rounded-xl border border-border bg-muted/30 p-3 text-[11.5px] leading-relaxed text-muted-foreground">
+              <div className="rounded-xl border border-border bg-muted/30 p-3 text-micro leading-relaxed text-muted-foreground">
                 청소년 트랙은 '단식·식사 거르기·쉐이크 대체' 를 권하지 않습니다.
                 잘 먹고, 잘 자고, 잘 움직이는 쪽으로 중심을 두세요.
               </div>
@@ -373,10 +372,10 @@ const PatternCard = ({
           <Icon className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-extrabold text-foreground">
+          <p className="text-label font-extrabold text-foreground">
             {pattern.title}
           </p>
-          <p className="text-[11.5px] text-muted-foreground leading-relaxed">
+          <p className="text-micro text-muted-foreground leading-relaxed">
             {pattern.subtitle}
           </p>
         </div>
@@ -385,7 +384,7 @@ const PatternCard = ({
         <SmallMeta label="준비" value={pattern.prepTime} />
         <SmallMeta label="추천" value={pattern.bestFor} />
       </div>
-      <p className="mt-2 flex items-start gap-1 rounded-lg bg-muted/40 px-2.5 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mt-2 flex items-start gap-1 rounded-lg bg-muted/40 px-2.5 py-1.5 text-micro leading-relaxed text-muted-foreground">
         <ShieldAlert className="mt-0.5 h-3 w-3 shrink-0 text-destructive" />
         <span>{pattern.caveat}</span>
       </p>
@@ -397,14 +396,14 @@ const PatternCard = ({
             key={m.slot}
             className="rounded-lg border border-border bg-background/60 px-2.5 py-1.5"
           >
-            <p className="text-[10.5px] font-black uppercase tracking-wider text-primary">
+            <p className="text-micro font-black uppercase tracking-wider text-primary">
               {m.label}
             </p>
-            <p className="mt-0.5 text-[11.5px] leading-relaxed text-foreground">
+            <p className="mt-0.5 text-micro leading-relaxed text-foreground">
               {m.items.join(" · ")}
             </p>
             {m.note && (
-              <p className="mt-0.5 text-[10.5px] text-muted-foreground">
+              <p className="mt-0.5 text-micro text-muted-foreground">
                 {m.note}
               </p>
             )}
@@ -417,7 +416,7 @@ const PatternCard = ({
         {pattern.tips.map((t) => (
           <li
             key={t}
-            className="pl-3 -indent-3 text-[10.5px] leading-relaxed text-muted-foreground"
+            className="pl-3 -indent-3 text-micro leading-relaxed text-muted-foreground"
           >
             <span className="mr-1 text-primary">·</span>
             {t}
@@ -442,10 +441,10 @@ const PatternCard = ({
 
 const SmallMeta = ({ label, value }: { label: string; value: string }) => (
   <div className="rounded-lg border border-border bg-background/60 px-2 py-1.5">
-    <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+    <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
       {label}
     </p>
-    <p className="text-[11px] font-bold text-foreground leading-tight">{value}</p>
+    <p className="text-micro font-bold text-foreground leading-tight">{value}</p>
   </div>
 );
 
@@ -469,17 +468,17 @@ const SlotCard = ({
         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
           <Utensils className="h-3.5 w-3.5" />
         </span>
-        <p className="text-[13px] font-extrabold text-foreground">
+        <p className="text-label font-extrabold text-foreground">
           {SLOT_LABEL[slot]}
         </p>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+        <span className="rounded-full bg-muted px-2 py-0.5 text-micro font-bold text-muted-foreground">
           {items.length}개
         </span>
       </div>
       <button
         type="button"
         onClick={onAdd}
-        className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary hover:bg-primary/15"
+        className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-micro font-bold text-primary hover:bg-primary/15"
       >
         <Plus className="h-3 w-3" />
         추가
@@ -487,7 +486,7 @@ const SlotCard = ({
     </div>
 
     {items.length === 0 ? (
-      <p className="mt-2 rounded-lg bg-muted/30 p-3 text-center text-[11.5px] text-muted-foreground">
+      <p className="mt-2 rounded-lg bg-muted/30 p-3 text-center text-micro text-muted-foreground">
         '추가' 를 눌러 음식을 선택하세요
       </p>
     ) : (
@@ -495,7 +494,7 @@ const SlotCard = ({
         {items.map((name) => (
           <li
             key={name}
-            className="flex items-center gap-1 rounded-full border border-primary/25 bg-primary/5 px-2.5 py-1 text-[11px] font-bold text-primary"
+            className="flex items-center gap-1 rounded-full border border-primary/25 bg-primary/5 px-2.5 py-1 text-micro font-bold text-primary"
           >
             {name}
             <button
@@ -546,10 +545,10 @@ const FoodPickerModal = ({
       >
         <div className="sticky top-0 -mx-4 -mt-4 mb-3 flex items-center justify-between border-b border-border bg-card px-4 py-3 backdrop-blur-md">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+            <p className="text-micro font-black uppercase tracking-widest text-primary">
               ADD TO
             </p>
-            <p className="text-[14px] font-extrabold text-foreground">
+            <p className="text-label font-extrabold text-foreground">
               {SLOT_LABEL[slot]}
             </p>
           </div>
@@ -594,7 +593,7 @@ const PickableBucket = ({
   onToggle: (name: string) => void;
 }) => (
   <div>
-    <p className="mb-1.5 text-[11px] font-black uppercase tracking-wider text-primary">
+    <p className="mb-1.5 text-micro font-black uppercase tracking-wider text-primary">
       {bucket.label}
     </p>
     <ul className="space-y-1">
@@ -618,13 +617,13 @@ const PickableBucket = ({
               <div className="min-w-0 flex-1">
                 <p
                   className={cn(
-                    "text-[12.5px] font-bold",
+                    "text-label font-bold",
                     isOn ? "text-primary" : "text-foreground",
                   )}
                 >
                   {f.name}
                 </p>
-                <p className="text-[10.5px] text-muted-foreground leading-relaxed">
+                <p className="text-micro text-muted-foreground leading-relaxed">
                   {f.hint}
                 </p>
               </div>
@@ -659,10 +658,10 @@ const BucketCard = ({
           <Icon className="h-4 w-4" />
         </span>
         <div>
-          <p className={cn("text-[13.5px] font-extrabold", tone.title)}>
+          <p className={cn("text-label font-extrabold", tone.title)}>
             {bucket.label}
           </p>
-          <p className="text-[11px] text-muted-foreground">{bucket.summary}</p>
+          <p className="text-micro text-muted-foreground">{bucket.summary}</p>
         </div>
       </div>
       <ul className="mt-3 grid grid-cols-1 gap-1">
@@ -671,10 +670,10 @@ const BucketCard = ({
             key={f.name}
             className="flex items-start justify-between gap-3 rounded-lg bg-background/60 px-2.5 py-1.5"
           >
-            <span className="text-[12.5px] font-bold text-foreground">
+            <span className="text-label font-bold text-foreground">
               {f.name}
             </span>
-            <span className="shrink-0 text-[11px] text-muted-foreground text-right">
+            <span className="shrink-0 text-micro text-muted-foreground text-right">
               {f.hint}
             </span>
           </li>
@@ -735,15 +734,15 @@ const SampleCard = ({ sample }: { sample: StageSample }) => (
         <Utensils className="h-4 w-4" />
       </span>
       <div>
-        <p className="text-[10.5px] font-black uppercase tracking-wider text-primary">
+        <p className="text-micro font-black uppercase tracking-wider text-primary">
           {sample.range}
         </p>
-        <p className="text-[13.5px] font-extrabold text-foreground leading-tight">
+        <p className="text-label font-extrabold text-foreground leading-tight">
           {sample.title}
         </p>
       </div>
     </div>
-    <p className="mt-2 flex items-start gap-1 rounded-lg bg-muted/40 px-2.5 py-1.5 text-[11.5px] leading-relaxed text-foreground">
+    <p className="mt-2 flex items-start gap-1 rounded-lg bg-muted/40 px-2.5 py-1.5 text-micro leading-relaxed text-foreground">
       <Clock className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
       <span>
         <b>포커스</b> — {sample.focus}
@@ -755,14 +754,14 @@ const SampleCard = ({ sample }: { sample: StageSample }) => (
           key={m.slot}
           className="rounded-xl border border-border bg-background/50 p-2.5"
         >
-          <p className="text-[11.5px] font-black uppercase tracking-wider text-primary">
+          <p className="text-micro font-black uppercase tracking-wider text-primary">
             {m.slot}
           </p>
           <ul className="mt-1 space-y-0.5">
             {m.items.map((it) => (
               <li
                 key={it}
-                className="pl-3 -indent-3 text-[12.5px] leading-relaxed text-foreground"
+                className="pl-3 -indent-3 text-label leading-relaxed text-foreground"
               >
                 <span className="mr-1 text-primary">·</span>
                 {it}
@@ -770,7 +769,7 @@ const SampleCard = ({ sample }: { sample: StageSample }) => (
             ))}
           </ul>
           {m.note && (
-            <p className="mt-1 text-[11px] text-muted-foreground">{m.note}</p>
+            <p className="mt-1 text-micro text-muted-foreground">{m.note}</p>
           )}
         </li>
       ))}

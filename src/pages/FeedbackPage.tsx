@@ -71,7 +71,6 @@ const FeedbackPage = () => {
         <PageHeader
           sticky
           title="오류 신고"
-          subtitle={isHq ? "회원님이 보낸 신고 보기 · 보내기" : "안 되는 부분을 알려주시면 바로 고칠게요"}
           leftAction={
             <button
               type="button"
@@ -100,13 +99,13 @@ const FeedbackPage = () => {
               aria-selected={tab === key}
               onClick={() => setTab(key)}
               className={cn(
-                "flex h-10 items-center justify-center gap-1.5 rounded-xl text-[14px] font-bold transition-colors",
+                "flex h-10 items-center justify-center gap-1.5 rounded-xl text-label font-bold transition-colors",
                 tab === key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
               )}
             >
               {label}
               {key === "inbox" && !!inboxCounts?.new && (
-                <span className="min-w-[20px] rounded-full bg-destructive px-1.5 text-[11px] font-bold leading-5 text-white tabular-nums">
+                <span className="min-w-[20px] rounded-full bg-destructive px-1.5 text-micro font-bold leading-5 text-white tabular-nums">
                   {inboxCounts.new}
                 </span>
               )}
@@ -119,9 +118,9 @@ const FeedbackPage = () => {
         <AppFeedbackInbox focusId={focusId} />
       ) : done ? (
         <div className="mt-10 flex flex-col items-center gap-3 text-center">
-          <span className="text-4xl">🥊</span>
-          <p className="text-lg font-bold text-foreground">접수됐습니다!</p>
-          <p className="text-sm text-muted-foreground">
+          <span className="text-display">🥊</span>
+          <p className="text-heading font-bold text-foreground">접수됐습니다!</p>
+          <p className="text-body text-muted-foreground">
             대표님에게 바로 전달됐어요.
             <br />
             소중한 의견 감사합니다.
@@ -129,7 +128,7 @@ const FeedbackPage = () => {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mt-4 rounded-pill bg-primary px-6 py-3 text-sm font-bold text-primary-foreground active:scale-95"
+            className="mt-4 rounded-pill bg-primary px-6 py-3 text-body font-bold text-primary-foreground active:scale-95"
           >
             돌아가기
           </button>
@@ -144,7 +143,7 @@ const FeedbackPage = () => {
                 type="button"
                 onClick={() => setCategory(c)}
                 className={cn(
-                  "flex-1 rounded-pill border py-2.5 text-sm font-bold transition-colors",
+                  "flex-1 rounded-pill border py-2.5 text-body font-bold transition-colors",
                   category === c
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border bg-card text-muted-foreground",
@@ -161,20 +160,20 @@ const FeedbackPage = () => {
             placeholder={PLACEHOLDER}
             rows={7}
             maxLength={2000}
-            className="w-full resize-none rounded-2xl border border-border bg-card p-4 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+            className="w-full resize-none rounded-2xl border border-border bg-card p-4 text-body text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
           />
 
           <button
             type="button"
             onClick={handleSubmit}
             disabled={sending || content.trim().length < 2}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-[15px] font-extrabold text-primary-foreground shadow-elev-1 transition-transform active:scale-[0.98] disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-body font-extrabold text-primary-foreground shadow-elev-1 transition-transform active:scale-[0.98] disabled:opacity-50"
           >
             <Send className="h-4 w-4" />
             {sending ? "보내는 중…" : "대표님에게 보내기"}
           </button>
 
-          <p className="px-1 text-center text-[12px] leading-relaxed text-muted-foreground">
+          <p className="px-1 text-center text-label leading-relaxed text-muted-foreground">
             보내주신 내용은 운영진만 볼 수 있어요.
           </p>
         </div>

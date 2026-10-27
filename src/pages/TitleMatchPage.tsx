@@ -102,7 +102,7 @@ const StageTile = ({
       )}
     >
       {state === "mine" && (
-        <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-1.5 text-[10px] font-black leading-4 text-primary-foreground">
+        <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-1.5 text-micro font-black leading-4 text-primary-foreground">
           내 리그
         </span>
       )}
@@ -111,15 +111,15 @@ const StageTile = ({
           <Check className="h-2.5 w-2.5 text-reward-foreground" strokeWidth={3.5} />
         </span>
       )}
-      <span className="text-[10.5px] font-bold text-muted-foreground">레벨</span>
-      <span className="text-[26px] font-black leading-none tabular-nums text-foreground">{stage.level}</span>
-      <span className="mt-1.5 flex items-center gap-1 text-[12px] font-bold text-foreground">
+      <span className="text-micro font-bold text-muted-foreground">레벨</span>
+      <span className="text-title font-black leading-none tabular-nums text-foreground">{stage.level}</span>
+      <span className="mt-1.5 flex items-center gap-1 text-label font-bold text-foreground">
         <span aria-hidden className={cn("h-2 w-2 shrink-0 rounded-full", LEAGUE_DOT[stage.league])} />
         {stage.name}
       </span>
       <span
         className={cn(
-          "mt-0.5 text-[10.5px] font-semibold",
+          "mt-0.5 text-micro font-semibold",
           !loading && count > 0 ? "text-reward" : "text-muted-foreground",
         )}
       >
@@ -156,11 +156,11 @@ const VideoCard = ({
         <span className="relative block aspect-video w-full overflow-hidden bg-muted">
           {thumb && <img src={thumb} alt="" loading="lazy" onError={hideImg} className="h-full w-full object-cover" />}
           <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/15" />
-          <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11.5px] font-black text-white backdrop-blur-sm">
+          <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-micro font-black text-white backdrop-blur-sm">
             동작 {index + 1}
           </span>
           {done && (
-            <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-status-complete px-2 py-1 text-[11px] font-black text-reward-foreground">
+            <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-status-complete px-2 py-1 text-micro font-black text-reward-foreground">
               <Check className="h-3 w-3" strokeWidth={3.5} /> 따라했어요
             </span>
           )}
@@ -172,17 +172,17 @@ const VideoCard = ({
         </span>
       </button>
       <div className="px-4 pb-4 pt-3">
-        {t.tag && <p className="text-[11.5px] font-bold text-primary">{t.tag}</p>}
-        <h3 className="text-[16px] font-black leading-snug text-foreground">{name}</h3>
-        {t.sub && <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">{t.sub}</p>}
+        {t.tag && <p className="text-micro font-bold text-primary">{t.tag}</p>}
+        <h3 className="text-body font-black leading-snug text-foreground">{name}</h3>
+        {t.sub && <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">{t.sub}</p>}
         {video.keyPoints.length > 0 && (
           <ol className="mt-3 space-y-1.5 rounded-xl bg-secondary/70 p-3" aria-label="동작 포인트">
             {video.keyPoints.map((p, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-reward/20 text-[10.5px] font-black text-reward">
+                <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-reward/20 text-micro font-black text-reward">
                   {i + 1}
                 </span>
-                <span className="min-w-0 text-[13px] leading-snug text-foreground">{p}</span>
+                <span className="min-w-0 text-label leading-snug text-foreground">{p}</span>
               </li>
             ))}
           </ol>
@@ -252,7 +252,6 @@ const TitleMatchPage = () => {
       header={
         <PageHeader
           title="타이틀매치"
-          subtitle="레벨 10 · 20 · 30 · 40 심사 동작 영상"
           sticky
           leftAction={
             <button
@@ -267,7 +266,7 @@ const TitleMatchPage = () => {
         />
       }
     >
-      <p className="px-1 text-[13px] leading-relaxed text-muted-foreground">
+      <p className="px-1 text-label leading-relaxed text-muted-foreground">
         리그마다 마지막 관문이에요. 그동안 배운 동작을 모아 심사를 받고, 통과하면 다음 리그로 올라가요.
       </p>
 
@@ -291,14 +290,14 @@ const TitleMatchPage = () => {
         <div className="flex items-stretch gap-3">
           <span aria-hidden className={cn("w-1 shrink-0 rounded-full", LEAGUE_DOT[stage.league])} />
           <div className="min-w-0 flex-1 py-0.5">
-            <p className="text-[12px] font-bold text-muted-foreground">{stage.name} 리그 마지막 관문</p>
-            <h2 id={HEADING_ID} className="text-[19px] font-black leading-tight text-foreground">
+            <p className="text-label font-bold text-muted-foreground">{stage.name} 리그 마지막 관문</p>
+            <h2 id={HEADING_ID} className="text-heading font-black leading-tight text-foreground">
               레벨 {stage.level} 타이틀매치
             </h2>
             {statusLine && (
               <p
                 className={cn(
-                  "mt-1 text-[12.5px] font-semibold leading-snug",
+                  "mt-1 text-label font-semibold leading-snug",
                   state === "mine" ? "text-primary" : "text-muted-foreground",
                 )}
               >
@@ -331,13 +330,13 @@ const TitleMatchPage = () => {
             </ul>
           ) : isError ? (
             <div className="rounded-2xl bg-card px-5 py-8 text-center shadow-elev-1">
-              <p className="text-[15px] font-bold text-foreground">영상을 불러오지 못했어요</p>
-              <p className="mt-1 text-[12.5px] text-muted-foreground">인터넷 연결을 확인하고 다시 시도해 주세요</p>
+              <p className="text-body font-bold text-foreground">영상을 불러오지 못했어요</p>
+              <p className="mt-1 text-label text-muted-foreground">인터넷 연결을 확인하고 다시 시도해 주세요</p>
               <button
                 type="button"
                 onClick={() => refetch()}
                 disabled={isRefetching}
-                className="mt-4 inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary px-4 text-[13px] font-bold text-foreground active:scale-95 disabled:opacity-50"
+                className="mt-4 inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary px-4 text-label font-bold text-foreground active:scale-95 disabled:opacity-50"
               >
                 <RotateCcw className={cn("h-4 w-4", isRefetching && "animate-spin")} /> 다시 시도
               </button>
@@ -353,8 +352,8 @@ const TitleMatchPage = () => {
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary">
                 <Clapperboard className="h-6 w-6 text-muted-foreground" />
               </span>
-              <p className="mt-3 text-[15px] font-bold text-foreground">영상 준비 중이에요</p>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-body font-bold text-foreground">영상 준비 중이에요</p>
+              <p className="mt-1 text-label leading-relaxed text-muted-foreground">
                 {stage.name} 타이틀매치 동작 영상이 올라오면
                 <br />
                 여기에서 바로 볼 수 있어요
@@ -363,13 +362,13 @@ const TitleMatchPage = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/missions?open=practice")}
-                  className="mt-4 inline-flex h-10 items-center gap-1 rounded-full bg-foreground px-4 text-[13px] font-bold text-background active:scale-95"
+                  className="mt-4 inline-flex h-10 items-center gap-1 rounded-full bg-foreground px-4 text-label font-bold text-background active:scale-95"
                 >
                   지금 레벨 동작 연습하기 <ChevronRight className="h-4 w-4" />
                 </button>
               )}
               {isHq && (
-                <p className="mt-4 rounded-xl bg-secondary px-3 py-2.5 text-left text-[11.5px] leading-relaxed text-muted-foreground">
+                <p className="mt-4 rounded-xl bg-secondary px-3 py-2.5 text-left text-micro leading-relaxed text-muted-foreground">
                   관리자 안내 · 코치 화면 → 🎯 미션 → 추가에서 레벨을 ‘{stage.name} Lv.{stage.level}’으로 고르고 영상 주소를
                   넣으면 여기에 바로 나와요
                 </p>
@@ -386,8 +385,8 @@ const TitleMatchPage = () => {
       >
         <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
         <span className="min-w-0 flex-1">
-          <span className="block text-[14px] font-bold text-foreground">심사 기준 · 관문 직행권 안내</span>
-          <span className="block truncate text-[12px] text-muted-foreground">레벨이 오르는 길과 타이틀매치를 한 장으로</span>
+          <span className="block text-label font-bold text-foreground">심사 기준 · 관문 직행권 안내</span>
+          <span className="block truncate text-label text-muted-foreground">레벨이 오르는 길과 타이틀매치를 한 장으로</span>
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/70" />
       </a>

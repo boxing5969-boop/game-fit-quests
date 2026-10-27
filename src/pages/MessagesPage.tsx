@@ -50,7 +50,7 @@ const ThreadRow = ({ r, onOpen }: { r: DmThreadRow; onOpen: () => void }) => {
         <DmAvatar person={r.peer} size={50} />
         <span className="min-w-0 flex-1">
           <span className="flex min-w-0 items-center gap-1.5">
-            <span className={cn("truncate text-[15px] text-foreground", unread ? "font-extrabold" : "font-bold")}>
+            <span className={cn("truncate text-body text-foreground", unread ? "font-extrabold" : "font-bold")}>
               {r.peer?.display ?? "알 수 없는 회원"}
             </span>
             {/* 리그 버튼 (2026-10-15) — 코치님(champion)은 직함 배지만 */}
@@ -59,7 +59,7 @@ const ThreadRow = ({ r, onOpen }: { r: DmThreadRow; onOpen: () => void }) => {
           </span>
           <span
             className={cn(
-              "mt-0.5 block truncate text-[13px]",
+              "mt-0.5 block truncate text-label",
               unread ? "font-semibold text-foreground" : "text-muted-foreground",
             )}
           >
@@ -67,16 +67,16 @@ const ThreadRow = ({ r, onOpen }: { r: DmThreadRow; onOpen: () => void }) => {
           </span>
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1.5 self-stretch pt-0.5">
-          <span className="text-[11.5px] text-muted-foreground">{dmListTime(r.last_message_at)}</span>
+          <span className="text-micro text-muted-foreground">{dmListTime(r.last_message_at)}</span>
           {unread ? (
-            <span className="flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-black leading-none text-primary-foreground">
+            <span className="flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-micro font-black leading-none text-primary-foreground">
               {r.unread > 99 ? "99+" : r.unread}
             </span>
           ) : r.seen ? (
-            <span className="text-[11px] font-medium text-muted-foreground">읽음</span>
+            <span className="text-micro font-medium text-muted-foreground">읽음</span>
           ) : r.last_from_me && r.status === "active" ? (
             // 내 마지막 메시지를 상대가 아직 안 읽음 (2026-10-28 대표님 "카톡처럼 읽었는지 안 읽었는지")
-            <span className="text-[11px] font-bold text-primary">안 읽음</span>
+            <span className="text-micro font-bold text-primary">안 읽음</span>
           ) : null}
         </span>
       </button>
@@ -157,7 +157,6 @@ const MessagesPage = () => {
       header={
         <PageHeader
           title="메시지"
-          subtitle={isHq ? "전 지점 회원·코치님과 1:1" : "같은 지점 회원 · 코치님과 1:1 대화"}
           leftAction={
             <button
               type="button"
@@ -196,16 +195,16 @@ const MessagesPage = () => {
     >
       {disabled ? (
         <div className="mt-6 rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-          <p className="text-[34px]" aria-hidden>
+          <p className="text-display" aria-hidden>
             ✉️
           </p>
-          <p className="mt-2 text-[15px] font-bold text-foreground">지점 회원·코치님만 메시지를 쓸 수 있어요</p>
-          <p className="mt-1 text-[12.5px] text-muted-foreground">지점 등록이 확인되면 바로 열려요</p>
+          <p className="mt-2 text-body font-bold text-foreground">지점 회원·코치님만 메시지를 쓸 수 있어요</p>
+          <p className="mt-1 text-label text-muted-foreground">지점 등록이 확인되면 바로 열려요</p>
         </div>
       ) : (
         <div className="space-y-3">
           {summary?.suspended_until && (
-            <p className="rounded-2xl bg-amber-500/10 px-4 py-3 text-[12.5px] leading-snug text-amber-800 dark:text-amber-300">
+            <p className="rounded-2xl bg-amber-500/10 px-4 py-3 text-label leading-snug text-amber-800 dark:text-amber-300">
               신고 처리로 {dmUntilLabel(summary.suspended_until)}까지 메시지를 보낼 수 없어요. 받은 메시지는 그대로 볼 수 있어요.
             </p>
           )}
@@ -213,7 +212,7 @@ const MessagesPage = () => {
             <button
               type="button"
               onClick={openCredentialChange}
-              className="w-full rounded-2xl bg-primary/10 px-4 py-3 text-left text-[12.5px] leading-snug text-foreground active:scale-[0.99]"
+              className="w-full rounded-2xl bg-primary/10 px-4 py-3 text-left text-label leading-snug text-foreground active:scale-[0.99]"
             >
               {settings.reason_text}
               <span className="font-bold text-primary"> 지금 바꾸기 →</span>
@@ -232,7 +231,7 @@ const MessagesPage = () => {
                   aria-selected={on}
                   onClick={() => !on && setTab(t.value)}
                   className={cn(
-                    "relative flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-[13.5px] font-bold transition-all active:scale-[0.98]",
+                    "relative flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-label font-bold transition-all active:scale-[0.98]",
                     on ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
                   )}
                 >
@@ -263,12 +262,12 @@ const MessagesPage = () => {
             <ListSkeleton />
           ) : active.isError && !active.data ? (
             <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-              <p className="text-[14px] font-bold text-foreground">메시지를 불러오지 못했어요</p>
-              <p className="mt-1 text-[12.5px] text-muted-foreground">인터넷 연결을 확인하고 다시 눌러 주세요</p>
+              <p className="text-label font-bold text-foreground">메시지를 불러오지 못했어요</p>
+              <p className="mt-1 text-label text-muted-foreground">인터넷 연결을 확인하고 다시 눌러 주세요</p>
               <button
                 type="button"
                 onClick={() => active.refetch()}
-                className="mt-4 rounded-full bg-secondary px-4 py-2 text-[13px] font-bold active:scale-95"
+                className="mt-4 rounded-full bg-secondary px-4 py-2 text-label font-bold active:scale-95"
               >
                 다시 불러오기
               </button>
@@ -276,8 +275,8 @@ const MessagesPage = () => {
           ) : rows.length === 0 ? (
             tab === "requests" ? (
               <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-                <p className="text-[15px] font-bold text-foreground">새 메시지 요청이 없어요</p>
-                <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+                <p className="text-body font-bold text-foreground">새 메시지 요청이 없어요</p>
+                <p className="mt-1 text-label leading-relaxed text-muted-foreground">
                   같은 지점 회원이 처음 보낸 메시지는 여기로 와요.
                   <br />
                   수락하면 대화가 시작되고, 삭제해도 상대에게 알리지 않아요.
@@ -285,11 +284,11 @@ const MessagesPage = () => {
               </div>
             ) : (
               <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-                <p className="text-[34px]" aria-hidden>
+                <p className="text-display" aria-hidden>
                   🥊
                 </p>
-                <p className="mt-2 text-[15px] font-bold text-foreground">아직 나눈 대화가 없어요</p>
-                <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+                <p className="mt-2 text-body font-bold text-foreground">아직 나눈 대화가 없어요</p>
+                <p className="mt-1 text-label leading-relaxed text-muted-foreground">
                   같은 지점 회원·코치님께 먼저 인사해 보세요.
                   <br />
                   랭킹에서 회원을 눌러도 메시지를 보낼 수 있어요.
@@ -297,7 +296,7 @@ const MessagesPage = () => {
                 <button
                   type="button"
                   onClick={() => setNewOpen(true)}
-                  className="mt-4 inline-flex h-11 items-center gap-1.5 rounded-full bg-foreground px-5 text-[14px] font-bold text-background active:scale-[0.98]"
+                  className="mt-4 inline-flex h-11 items-center gap-1.5 rounded-full bg-foreground px-5 text-label font-bold text-background active:scale-[0.98]"
                 >
                   <SquarePen className="h-4 w-4" /> 새 메시지
                 </button>
@@ -312,7 +311,7 @@ const MessagesPage = () => {
           )}
 
           {tab !== "reports" && tab !== "coach" && tab !== "broadcast" && tab !== "strategy" && (
-            <p className="px-1 pt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+            <p className="px-1 pt-1 text-micro leading-relaxed text-muted-foreground">
               {tab === "requests"
                 ? "처음 보낸 사람은 수락 전까지 메시지를 1개만 보낼 수 있어요."
                 : "글자·이모지로 대화해요 · 불편한 메시지는 대화방 ⋯ 에서 신고하면 운영진이 확인해요."}

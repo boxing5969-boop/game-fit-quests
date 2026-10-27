@@ -84,7 +84,6 @@ const HandWrapGuidePage = () => {
       header={
         <PageHeader
           title="붕대 감기"
-          subtitle="영상 · 9단계 설명서 · 집 연습"
           sticky
           leftAction={
             <button
@@ -99,17 +98,17 @@ const HandWrapGuidePage = () => {
         />
       }
     >
-      <p className="px-1 text-[13px] leading-relaxed text-muted-foreground">
+      <p className="px-1 text-label leading-relaxed text-muted-foreground">
         첫날엔 코치님이 한 손을 빠르게 감아 드려요. 다른 손은 영상이나 사진을 보면서 직접 감아 보세요 — 주로 쓰는 손으로 감는
         쪽이 쉬워요.
       </p>
 
       {/* ── 영상 — 두 각도 ── */}
       <section aria-labelledby="handwrap-video-h" className="mt-4">
-        <h2 id="handwrap-video-h" className="px-1 text-[16px] font-black text-foreground">
+        <h2 id="handwrap-video-h" className="px-1 text-body font-black text-foreground">
           영상으로 보기
         </h2>
-        <p className="mt-0.5 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 px-1 text-label leading-relaxed text-muted-foreground">
           같은 감기를 여러 방향에서 볼 수 있어요. &lsquo;내 눈으로&rsquo;는 내 손을 내려다보는 방향이라 따라 하기 가장 쉬워요
         </p>
         <div className="mt-2 grid grid-cols-2 gap-2.5">
@@ -137,25 +136,25 @@ const HandWrapGuidePage = () => {
                     <Play className="ml-0.5 h-5 w-5 fill-white text-white" />
                   </span>
                 </span>
-                <span className="absolute bottom-1.5 right-2 rounded bg-black/55 px-1.5 text-[10.5px] font-bold tabular-nums text-white">
+                <span className="absolute bottom-1.5 right-2 rounded bg-black/55 px-1.5 text-micro font-bold tabular-nums text-white">
                   0:{String(a.seconds).padStart(2, "0")}
                 </span>
               </span>
               <span className="block px-3 py-2.5">
-                <span className="block text-[14px] font-black text-foreground">
+                <span className="block text-label font-black text-foreground">
                   {a.label} 보기
-                  {i === 0 && <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-px text-[10.5px] font-black text-primary">추천</span>}
+                  {i === 0 && <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-px text-micro font-black text-primary">추천</span>}
                 </span>
-                <span className="block truncate text-[11.5px] text-muted-foreground">{a.hint}</span>
+                <span className="block truncate text-micro text-muted-foreground">{a.hint}</span>
               </span>
             </button>
           ))}
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5 px-1">
-          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[11.5px] font-bold text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-micro font-bold text-muted-foreground">
             <FlipHorizontal2 className="h-3.5 w-3.5" /> 거울 — 좌우를 뒤집어 거울 보듯
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[11.5px] font-bold text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-micro font-bold text-muted-foreground">
             <Gauge className="h-3.5 w-3.5" /> 처음엔 0.75배 · 0.5배까지 천천히
           </span>
         </div>
@@ -163,10 +162,10 @@ const HandWrapGuidePage = () => {
 
       {/* ── 9단계 설명서 — 한눈에 9칸 → 누르면 움직이는 사진 + 방향 + 자세한 설명 (2026-10-27 대표님) ── */}
       <section aria-labelledby="handwrap-steps-h" className="mt-7">
-        <h2 id="handwrap-steps-h" className="px-1 text-[16px] font-black text-foreground">
+        <h2 id="handwrap-steps-h" className="px-1 text-body font-black text-foreground">
           9단계 설명서 · 한 단계씩 따라 하기
         </h2>
-        <p className="mt-0.5 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 px-1 text-label leading-relaxed text-muted-foreground">
           사진을 누르면 그 단계를 실제로 감는 움직이는 사진과 자세한 설명이 나와요. 초록 점에서 시작해 주황 점으로 감아요 · 오른손은 &lsquo;오른손&rsquo;을 누르면 거울처럼 보여요
         </p>
         <HandWrapStepViewer onWatch={watchStep} className="mt-2" />
@@ -174,10 +173,10 @@ const HandWrapGuidePage = () => {
 
       {/* ── 집 연습 미션 ── */}
       <section aria-labelledby="handwrap-home-h" className="mt-7">
-        <h2 id="handwrap-home-h" className="px-1 text-[16px] font-black text-foreground">
+        <h2 id="handwrap-home-h" className="px-1 text-body font-black text-foreground">
           집에서 혼자 감아 보기
         </h2>
-        <p className="mt-0.5 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 px-1 text-label leading-relaxed text-muted-foreground">
           집에서 붕대를 풀었다 다시 감아 보고, 감아 본 날 눌러 주세요. 다음 수업 때 코치님 앞에서 혼자 감아 보여 주면 끝!
         </p>
         <HandWrapPracticeCard variant="page" className="mt-2" />
@@ -185,17 +184,17 @@ const HandWrapGuidePage = () => {
 
       {/* ── 흔한 실수 ── */}
       <section aria-labelledby="handwrap-mistakes-h" className="mt-7">
-        <h2 id="handwrap-mistakes-h" className="px-1 text-[16px] font-black text-foreground">
+        <h2 id="handwrap-mistakes-h" className="px-1 text-body font-black text-foreground">
           이것만 조심해요
         </h2>
         <ul className="mt-2 space-y-2">
           {HANDWRAP_MISTAKES.map((m) => (
             <li key={m.wrong} className="rounded-2xl bg-card px-4 py-3 shadow-elev-1 ring-1 ring-border/60">
-              <p className="flex items-start gap-2 text-[13.5px] font-bold leading-snug text-foreground">
+              <p className="flex items-start gap-2 text-label font-bold leading-snug text-foreground">
                 <X className="mt-0.5 h-4 w-4 shrink-0 text-destructive" strokeWidth={2.6} />
                 {m.wrong}
               </p>
-              <p className="mt-1 flex items-start gap-2 text-[13px] leading-relaxed text-muted-foreground">
+              <p className="mt-1 flex items-start gap-2 text-label leading-relaxed text-muted-foreground">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.6} />
                 {m.fix}
               </p>
@@ -204,7 +203,7 @@ const HandWrapGuidePage = () => {
         </ul>
       </section>
 
-      <p className="mt-6 px-1 text-[12px] leading-relaxed text-muted-foreground">
+      <p className="mt-6 px-1 text-label leading-relaxed text-muted-foreground">
         감은 뒤 손이 저리거나 손목·손가락이 계속 아프면 운동을 멈추고 코치님께 말해 주세요.
       </p>
 

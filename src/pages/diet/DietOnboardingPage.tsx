@@ -308,7 +308,6 @@ const DietOnboardingPage = () => {
       header={
         <PageHeader
           title="153 다이어트 온보딩"
-          subtitle="3분이면 시작 준비 완료"
           leftAction={
             <button
               type="button"
@@ -392,8 +391,8 @@ const StepIntro = ({ onNext }: { onNext: () => void }) => (
       <div className="flex items-start gap-2.5">
         <Target className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         <div>
-          <p className="text-[13px] font-bold text-foreground">단 하나의 목표</p>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
+          <p className="text-label font-bold text-foreground">단 하나의 목표</p>
+          <p className="mt-0.5 text-label text-muted-foreground">
             체중 숫자보다 식사 리듬·출석·회복 습관을 꾸준히 쌓기.
           </p>
         </div>
@@ -401,7 +400,7 @@ const StepIntro = ({ onNext }: { onNext: () => void }) => (
     </div>
 
     <div>
-      <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+      <p className="mb-2 text-label font-bold uppercase tracking-wide text-muted-foreground">
         매일 지킬 5 습관
       </p>
       <ul className="space-y-1.5">
@@ -410,12 +409,12 @@ const StepIntro = ({ onNext }: { onNext: () => void }) => (
             key={h.key}
             className="flex items-start gap-2 rounded-xl border border-border bg-card px-3 py-2"
           >
-            <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-black text-primary">
+            <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-micro font-black text-primary">
               {h.order}
             </span>
             <div>
-              <p className="text-[13px] font-bold text-foreground">{h.label}</p>
-              <p className="text-[11.5px] text-muted-foreground">{h.prompt}</p>
+              <p className="text-label font-bold text-foreground">{h.label}</p>
+              <p className="text-micro text-muted-foreground">{h.prompt}</p>
             </div>
           </li>
         ))}
@@ -423,7 +422,7 @@ const StepIntro = ({ onNext }: { onNext: () => void }) => (
     </div>
 
     <div>
-      <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+      <p className="mb-2 text-label font-bold uppercase tracking-wide text-muted-foreground">
         3단계 × 7일 = 21일
       </p>
       <div className="grid grid-cols-3 gap-2">
@@ -432,10 +431,10 @@ const StepIntro = ({ onNext }: { onNext: () => void }) => (
             key={s.id}
             className="rounded-xl border border-border bg-card p-2.5 text-center"
           >
-            <p className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            <p className="text-micro font-bold uppercase tracking-wide text-primary">
               {s.label}
             </p>
-            <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">
+            <p className="mt-0.5 text-micro text-muted-foreground leading-tight">
               Day {s.dayRange[0]}~{s.dayRange[1]}
             </p>
           </div>
@@ -470,17 +469,17 @@ const StepStages = ({
           className="rounded-2xl border border-border bg-card p-4"
         >
           <div className="flex items-center gap-2">
-            <span className="rounded-md bg-primary/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+            <span className="rounded-md bg-primary/15 px-2 py-0.5 text-micro font-black uppercase tracking-wider text-primary">
               {s.label}
             </span>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-micro text-muted-foreground">
               Day {s.dayRange[0]}~{s.dayRange[1]}
             </span>
           </div>
-          <p className="mt-1.5 text-[13px] font-bold text-foreground">
+          <p className="mt-1.5 text-label font-bold text-foreground">
             {s.tagline}
           </p>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
+          <p className="mt-0.5 text-label text-muted-foreground">
             {stageBody(s.id)}
           </p>
         </li>
@@ -488,8 +487,8 @@ const StepStages = ({
     </ul>
 
     <div className="rounded-2xl border border-accent/25 bg-accent/5 p-3">
-      <p className="text-[12px] font-bold text-accent">랭킹 철학</p>
-      <p className="mt-0.5 text-[12px] text-muted-foreground">
+      <p className="text-label font-bold text-accent">랭킹 철학</p>
+      <p className="mt-0.5 text-label text-muted-foreground">
         체중 숫자는 공개되지 않습니다. 코치 승인 기반 <b>습관 수행률</b>·연속일·최고 스트릭만 랭킹에 반영됩니다.
       </p>
     </div>
@@ -537,8 +536,8 @@ const StepScreening = ({
         <UserCheck className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] text-muted-foreground">자동 판정</p>
-        <p className="truncate text-[13px] font-bold text-foreground">
+        <p className="text-label text-muted-foreground">자동 판정</p>
+        <p className="truncate text-label font-bold text-foreground">
           {age === null ? "생년월일 미등록" : `만 ${age}세`}
           {isYouth && <span className="ml-1 text-primary">· 청소년 트랙</span>}
           {!isYouth && age !== null && <span className="ml-1 text-primary">· 성인 트랙</span>}
@@ -547,7 +546,7 @@ const StepScreening = ({
     </div>
 
     {age === null && (
-      <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-3 text-[12px] text-foreground">
+      <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-3 text-label text-foreground">
         생년월일이 프로필에 등록되어 있지 않습니다. 마이페이지 → 프로필 수정에서 먼저 입력해 주세요.
       </div>
     )}
@@ -632,12 +631,12 @@ const StepScreening = ({
         label="섭식장애 또는 식사 관련 치료 경험이 있음"
       />
       <div className="rounded-xl border border-border bg-card p-2.5">
-        <p className="text-[12px] text-muted-foreground mb-1.5">기타 건강상 주의</p>
+        <p className="text-label text-muted-foreground mb-1.5">기타 건강상 주의</p>
         <Input
           placeholder="예: 고혈압 관리 중 (없으면 비워두세요)"
           value={draft.otherConditionsText ?? ""}
           onChange={(e) => onChange({ otherConditionsText: e.target.value })}
-          className="rounded-xl text-[13px]"
+          className="rounded-xl text-label"
         />
       </div>
     </div>
@@ -722,21 +721,21 @@ const StepStart = ({
         {/* 트랙 표시 */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+            <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
               배정된 트랙
             </p>
-            <p className="mt-0.5 text-[13px] font-bold text-foreground">
+            <p className="mt-0.5 text-label font-bold text-foreground">
               {finalTrack ? DIET_TRACK_LABEL[finalTrack] : "결정 중"}
             </p>
           </div>
           <DietTrackBadge track={finalTrack} />
         </div>
         {finalTrack && (
-          <p className="text-[12px] leading-relaxed text-muted-foreground">
+          <p className="text-label leading-relaxed text-muted-foreground">
             {DIET_TRACK_HINT[finalTrack]}
           </p>
         )}
-        <div className="rounded-xl bg-muted/50 p-2.5 text-[11.5px] text-muted-foreground">
+        <div className="rounded-xl bg-muted/50 p-2.5 text-micro text-muted-foreground">
           코치는 지점 기준으로 자동 배정됩니다. 지점 변경 또는 수동 매칭이 필요하면 설정에서 요청해 주세요.
         </div>
       </div>
@@ -745,7 +744,7 @@ const StepStart = ({
       <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-primary" />
-          <p className="text-[13px] font-bold text-foreground">시작일</p>
+          <p className="text-label font-bold text-foreground">시작일</p>
         </div>
         <Input
           type="date"
@@ -754,7 +753,7 @@ const StepStart = ({
           onChange={(e) => onChange({ startDate: e.target.value })}
           className="rounded-xl"
         />
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-micro text-muted-foreground">
           선택한 날부터 Day 1 이 시작됩니다.
         </p>
       </div>
@@ -772,7 +771,7 @@ const FieldLabel = ({
   icon: React.ReactNode;
   label: string;
 }) => (
-  <Label className="mt-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+  <Label className="mt-2 flex items-center gap-1.5 text-micro font-bold uppercase tracking-wider text-muted-foreground">
     {icon}
     {label}
   </Label>
@@ -801,8 +800,8 @@ const PickCard = ({
     )}
   >
     {control}
-    <p className="text-[13px] font-bold text-foreground">{title}</p>
-    <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
+    <p className="text-label font-bold text-foreground">{title}</p>
+    <p className="mt-0.5 text-micro text-muted-foreground leading-relaxed">
       {hint}
     </p>
   </label>
@@ -832,9 +831,9 @@ const NumberPicker = ({
     >
       −
     </Button>
-    <div className="flex-1 text-center text-[15px] font-bold text-foreground">
+    <div className="flex-1 text-center text-body font-bold text-foreground">
       {value}
-      <span className="ml-0.5 text-[12px] text-muted-foreground">{suffix}</span>
+      <span className="ml-0.5 text-label text-muted-foreground">{suffix}</span>
     </div>
     <Button
       type="button"
@@ -863,7 +862,7 @@ const FrequencyRow = ({
         type="button"
         onClick={() => onChange(f.id)}
         className={cn(
-          "rounded-xl border px-2 py-2 text-[12px] font-bold transition-colors",
+          "rounded-xl border px-2 py-2 text-label font-bold transition-colors",
           value === f.id
             ? "border-primary bg-primary/10 text-primary"
             : "border-border bg-card text-foreground hover:border-primary/40",
@@ -895,7 +894,7 @@ const HealthCheckRow = ({
       onCheckedChange={(v) => onChange(v === true)}
       className="mt-0.5"
     />
-    <span className="text-[13px] text-foreground leading-relaxed">{label}</span>
+    <span className="text-label text-foreground leading-relaxed">{label}</span>
   </label>
 );
 

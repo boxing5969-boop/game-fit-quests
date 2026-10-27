@@ -150,7 +150,7 @@ const Btn153 = ({
         item.isMine ? `153 ${item.count153}개` : item.reacted ? "153 취소" : "153 보내기 (길게 누르면 한마디 응원)"
       }
       className={`relative inline-flex shrink-0 select-none items-center gap-1 rounded-pill border font-black transition-colors [-webkit-touch-callout:none] ${
-        compact ? "min-h-[32px] px-2.5 text-[12px]" : "min-h-[40px] px-3.5 text-[14px]"
+        compact ? "min-h-[32px] px-2.5 text-micro" : "min-h-[40px] px-3.5 text-label"
       } ${
         item.reacted
           ? "border-primary bg-primary text-primary-foreground"
@@ -169,7 +169,7 @@ const Btn153 = ({
             transition={{ duration: 0.6, ease: "easeOut" }}
             onAnimationComplete={() => setPop(0)}
             aria-hidden
-            className="number-font pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 text-[13px] font-black text-primary"
+            className="number-font pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 text-micro font-black text-primary"
           >
             +1
           </motion.span>
@@ -217,8 +217,8 @@ const CommunityMetricsCard = () => {
   ];
   return (
     <div className="mt-3 rounded-xl border border-border bg-card p-3">
-      <p className="text-[12.5px] font-black text-foreground">커뮤니티 숫자 · {shortBranchName(last.branch)}</p>
-      <div className="mt-2 grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-1.5 text-[12.5px]">
+      <p className="text-label font-black text-foreground">커뮤니티 숫자 · {shortBranchName(last.branch)}</p>
+      <div className="mt-2 grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-1.5 text-label">
         <span />
         <span className="text-right font-bold text-muted-foreground">지난주</span>
         <span className="text-right font-bold text-muted-foreground">이번 주</span>
@@ -230,7 +230,7 @@ const CommunityMetricsCard = () => {
           </Fragment>
         ))}
       </div>
-      <p className="mt-2 text-[11.5px] text-muted-foreground">
+      <p className="mt-2 text-label text-muted-foreground">
         목표 4주 15% · 8주 25% · 최근 30일 출석 회원 중 앱 로그인 {now.app_rate_30d}% · 코치·운영진 제외
       </p>
     </div>
@@ -239,7 +239,7 @@ const CommunityMetricsCard = () => {
 
 const Avatar = ({ item, size = 36 }: { item: FeedItem; size?: number }) => (
   <span
-    className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-[15px] font-black text-muted-foreground"
+    className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-body font-black text-muted-foreground"
     style={{ width: size, height: size }}
   >
     {item.avatarUrl ? (
@@ -432,7 +432,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
       <button
         type="button"
         onClick={() => openComments(i)}
-        className="inline-flex min-h-[40px] items-center gap-1.5 rounded-pill px-2.5 text-[13px] font-bold text-muted-foreground active:scale-95"
+        className="inline-flex min-h-[40px] items-center gap-1.5 rounded-pill px-2.5 text-label font-bold text-muted-foreground active:scale-95"
       >
         <MessageCircle className="h-4 w-4" />
         {i.comments > 0 ? `댓글 ${i.comments}` : "댓글"}
@@ -455,7 +455,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
             {/* 내 한 줄 — 공개 범위 바꾸기 (2026-10-18) */}
             {i.isMine && i.type === "journal" && !i.hidden && (
               <div role="group" aria-label="공개 범위" className="border-b border-border pb-1">
-                <p className="px-3 pb-1 pt-2.5 text-[12px] font-bold text-muted-foreground">공개 범위</p>
+                <p className="px-3 pb-1 pt-2.5 text-label font-bold text-muted-foreground">공개 범위</p>
                 {JOURNAL_VISIBILITIES.map((v) => {
                   const Icon = VIS_ICON[v];
                   const on = (i.visibility ?? "branch") === v;
@@ -469,7 +469,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
                         setMenuFor(null);
                         if (!on) changeVis.mutate({ item: i, v });
                       }}
-                      className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13.5px] font-bold hover:bg-muted ${
+                      className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-label font-bold hover:bg-muted ${
                         on ? "text-primary" : "text-foreground"
                       }`}
                     >
@@ -487,7 +487,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
                   setMenuFor(null);
                   hide.mutate(i);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-3 text-left text-[13.5px] font-bold text-foreground hover:bg-muted"
+                className="flex w-full items-center gap-2 px-3 py-3 text-left text-label font-bold text-foreground hover:bg-muted"
               >
                 <EyeOff className="h-3.5 w-3.5" /> 숨기기
               </button>
@@ -499,7 +499,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
                   setMenuFor(null);
                   report.mutate(i);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-3 text-left text-[13.5px] font-bold text-destructive hover:bg-muted"
+                className="flex w-full items-center gap-2 px-3 py-3 text-left text-label font-bold text-destructive hover:bg-muted"
               >
                 <Flag className="h-3.5 w-3.5" /> 신고하기
               </button>
@@ -525,7 +525,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
   /** 전 지점 보기 — 글마다 지점 이름 */
   const branchTag = (i: FeedItem) =>
     allBranches && i.branch ? (
-      <span className="shrink-0 text-[12px] font-bold text-muted-foreground">· {shortBranchName(i.branch)}</span>
+      <span className="shrink-0 text-label font-bold text-muted-foreground">· {shortBranchName(i.branch)}</span>
     ) : null;
 
   const nameLine = (i: FeedItem) => (
@@ -534,19 +534,19 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
       <button
         type="button"
         onClick={() => openMemberCard(i.userId)}
-        className="truncate text-left text-[15px] font-bold text-foreground active:opacity-70"
+        className="truncate text-left text-body font-bold text-foreground active:opacity-70"
         aria-label={`${i.nickname}님 회원 카드 보기`}
       >
         {i.nickname}
       </button>
       {i.isStaff ? (
-        <span className="shrink-0 rounded-pill bg-yellow-500/15 px-1.5 py-0.5 text-[11px] font-black text-yellow-600">
+        <span className="shrink-0 rounded-pill bg-yellow-500/15 px-1.5 py-0.5 text-micro font-black text-yellow-600">
           {i.staffTitle || "코치"}
         </span>
       ) : (
         <>
           <NameBadge league={i.league} className="h-4 w-4" glow={false} />
-          <span className="number-font shrink-0 text-[12px] font-bold text-muted-foreground">Lv.{i.level}</span>
+          <span className="number-font shrink-0 text-micro font-bold text-muted-foreground">Lv.{i.level}</span>
         </>
       )}
       {branchTag(i)}
@@ -554,13 +554,13 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
   );
 
   if (isLoading) {
-    return <p className="py-6 text-center text-[13.5px] text-muted-foreground">피드를 불러오는 중…</p>;
+    return <p className="py-6 text-center text-label text-muted-foreground">피드를 불러오는 중…</p>;
   }
   if (isError) {
     return (
       <div className="rounded-card border border-border bg-card px-4 py-5 text-center">
-        <p className="text-[14px] font-bold text-foreground">피드를 불러오지 못했어요</p>
-        <button type="button" onClick={() => refetch()} className="mt-2 text-[13px] font-bold text-primary underline">
+        <p className="text-label font-bold text-foreground">피드를 불러오지 못했어요</p>
+        <button type="button" onClick={() => refetch()} className="mt-2 text-label font-bold text-primary underline">
           다시 불러오기
         </button>
       </div>
@@ -568,7 +568,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
   }
   if (!data?.branch && !allBranches) {
     return (
-      <div className="rounded-card border border-dashed border-border bg-muted/30 px-4 py-5 text-center text-[12px] text-muted-foreground">
+      <div className="rounded-card border border-dashed border-border bg-muted/30 px-4 py-5 text-center text-label text-muted-foreground">
         지점이 정해지면 같은 지점 동료들의 피드가 보여요.
       </div>
     );
@@ -580,10 +580,10 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
           앱 전체 '회원으로 보기' 중엔 회원 화면 그대로라 이 안내도 숨긴다 (2026-10-21) */}
       {memberView && !forcedMemberView && (
         <div className="rounded-card border-2 border-primary/50 bg-card p-3">
-          <p className="flex items-center gap-1.5 text-[12.5px] font-black text-foreground">
+          <p className="flex items-center gap-1.5 text-label font-black text-foreground">
             <Eye className="h-4 w-4 text-primary" /> 회원 화면으로 보는 중 · {shortBranchName(memberView)}
           </p>
-          <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             이 지점 회원에게 보이는 그대로예요. 친구만 글은 그 친구에게만, 나만 보기 글은 쓴 사람에게만 보여서 여기선 빠져요.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -594,7 +594,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
                   type="button"
                   onClick={() => setMemberView(b)}
                   aria-pressed={memberView === b}
-                  className={`rounded-pill border px-2.5 py-1 text-[11.5px] font-bold ${
+                  className={`rounded-pill border px-2.5 py-1 text-label font-bold ${
                     memberView === b ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"
                   }`}
                 >
@@ -604,7 +604,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
             <button
               type="button"
               onClick={() => setMemberView(null)}
-              className="rounded-pill border border-primary/40 bg-primary/5 px-3 py-1 text-[11.5px] font-bold text-primary active:scale-95"
+              className="rounded-pill border border-primary/40 bg-primary/5 px-3 py-1 text-label font-bold text-primary active:scale-95"
             >
               전 지점 보기로 돌아가기
             </button>
@@ -615,10 +615,10 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
       {/* 전 지점 보기 — 모든 지점 · 모든 글 (친구만 · 나만 보기 · 숨긴 글 포함) */}
       {allBranches && (
         <div className="rounded-card border border-primary/30 bg-primary/5 p-3">
-          <p className="flex items-center gap-1.5 text-[12.5px] font-black text-foreground">
+          <p className="flex items-center gap-1.5 text-label font-black text-foreground">
             <Building2 className="h-4 w-4 text-primary" /> 전 지점 보기 — 모든 지점의 모든 글
           </p>
-          <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             친구만 · 나만 보기 · 숨긴 글까지 최근 30일이 보여요. 이름을 누르면 회원 카드가 열려요.
           </p>
           {branchChips.length > 0 && (
@@ -629,7 +629,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
                   type="button"
                   onClick={() => setBranchFilter(b)}
                   aria-pressed={branchFilter === b}
-                  className={`rounded-pill border px-2.5 py-1 text-[11.5px] font-bold ${
+                  className={`rounded-pill border px-2.5 py-1 text-label font-bold ${
                     branchFilter === b ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"
                   }`}
                 >
@@ -644,7 +644,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
               type="button"
               disabled={branchChips.length === 0}
               onClick={() => setMemberView(branchFilter ?? branchChips[0]?.[0] ?? null)}
-              className="inline-flex items-center gap-1.5 rounded-pill border border-primary/40 bg-card px-3 py-1.5 text-[12px] font-bold text-primary active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-pill border border-primary/40 bg-card px-3 py-1.5 text-label font-bold text-primary active:scale-95 disabled:opacity-50"
             >
               <Eye className="h-3.5 w-3.5" /> 회원 화면으로 보기
             </button>
@@ -654,7 +654,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
               onClick={() => setShowGrants((v) => !v)}
               aria-expanded={showGrants}
               aria-controls="community-view-grants"
-              className="inline-flex items-center gap-1.5 rounded-pill border border-primary/40 bg-card px-3 py-1.5 text-[12px] font-bold text-primary active:scale-95"
+              className="inline-flex items-center gap-1.5 rounded-pill border border-primary/40 bg-card px-3 py-1.5 text-label font-bold text-primary active:scale-95"
             >
               <KeyRound className="h-3.5 w-3.5" /> 지점장·코치 권한 {showGrants ? "접기" : "관리"}
             </button>
@@ -667,10 +667,10 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
       {/* 본사가 보기 권한을 준 지점장·코치 — 무엇이 보이는지 알린다 (2026-10-18) */}
       {data.granted && !allBranches && (
         <div className="rounded-card border border-primary/30 bg-primary/5 p-3">
-          <p className="flex items-center gap-1.5 text-[12.5px] font-black text-foreground">
+          <p className="flex items-center gap-1.5 text-label font-black text-foreground">
             <KeyRound className="h-4 w-4 text-primary" /> 운영진 보기 — 우리 지점의 모든 글
           </p>
-          <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             권한을 받아 친구만 · 나만 보기 · 숨긴 글까지 보여요. 회원 관리와 응원에만 써 주세요.
           </p>
         </div>
@@ -683,12 +683,12 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
             <button
               type="button"
               onClick={() => setGoalDraft("")}
-              className="flex w-full items-center gap-2 text-left text-[12.5px] font-bold text-foreground"
+              className="flex w-full items-center gap-2 text-left text-label font-bold text-foreground"
             >
               <Target className="h-4 w-4 text-yellow-600" />
               {hasGoal ? "이번 주 목표 다시 올리기 (코치님)" : "이번 주 목표 올리기 (코치님)"}
               {allBranches && data.branch && (
-                <span className="ml-auto shrink-0 text-[11px] font-semibold text-muted-foreground">
+                <span className="ml-auto shrink-0 text-label font-semibold text-muted-foreground">
                   {shortBranchName(data.branch)}에 올라가요
                 </span>
               )}
@@ -700,13 +700,13 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
                 onChange={(e) => setGoalDraft(e.target.value.slice(0, 300))}
                 rows={3}
                 placeholder="예: 이번 주는 가드 올리고 원투 100개! 매일 한 판 더."
-                className="w-full resize-none rounded-xl border border-border bg-card px-3 py-2 text-[13px] focus:border-primary focus:outline-none"
+                className="w-full resize-none rounded-xl border border-border bg-card px-3 py-2 text-label focus:border-primary focus:outline-none"
               />
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setGoalDraft(null)}
-                  className="flex-1 rounded-xl border border-border py-2 text-[12.5px] font-bold text-muted-foreground"
+                  className="flex-1 rounded-xl border border-border py-2 text-label font-bold text-muted-foreground"
                 >
                   취소
                 </button>
@@ -714,7 +714,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
                   type="button"
                   disabled={goal.isPending || goalDraft.trim().length < 2}
                   onClick={() => goal.mutate(goalDraft.trim())}
-                  className="flex-1 rounded-xl bg-primary py-2 text-[12.5px] font-bold text-primary-foreground disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-primary py-2 text-label font-bold text-primary-foreground disabled:opacity-50"
                 >
                   {goal.isPending ? "올리는 중…" : "올리기"}
                 </button>
@@ -727,31 +727,31 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
       {/* 고정 — 이번 주 목표 · 승급 축하 */}
       {pinned.map((i) =>
         i.type === "goal" ? (
-          <article key={`g-${i.id}`} className="rounded-card border-2 border-yellow-500/40 bg-yellow-500/5 p-3.5">
-            <p className="flex items-center gap-1.5 text-[12px] font-black tracking-wider text-yellow-600">
+          <article key={`g-${i.id}`} className="rounded-card border-2 border-yellow-500/40 bg-yellow-500/5 p-4">
+            <p className="flex items-center gap-1.5 text-label font-bold text-yellow-600">
               <Target className="h-3.5 w-3.5" /> 이번 주 목표 · {i.nickname} {i.staffTitle || "코치"}
               {allBranches && i.branch ? ` · ${shortBranchName(i.branch)}` : ""}
               {i.hidden && " · 숨긴 글"}
             </p>
-            <p className="mt-1.5 whitespace-pre-wrap text-[15px] font-bold leading-relaxed text-foreground">{i.content}</p>
+            <p className="mt-1.5 whitespace-pre-wrap text-body font-bold leading-relaxed text-foreground">{i.content}</p>
             {actions(i)}
           </article>
         ) : (
-          <article key={`p-${i.id}`} className="rounded-card border-2 border-primary/40 bg-primary/5 p-3.5">
+          <article key={`p-${i.id}`} className="rounded-card border-2 border-primary/40 bg-primary/5 p-4">
             <div className="flex items-center gap-2.5">
               {avatarBtn(i, 40)}
               <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1 text-[12px] font-black tracking-wider text-primary">
+                <p className="flex items-center gap-1 text-label font-bold text-primary">
                   <PartyPopper className="h-3.5 w-3.5" /> 승급 축하 · {timeAgo(i.at)}
                   {allBranches && i.branch ? ` · ${shortBranchName(i.branch)}` : ""}
                 </p>
-                <p className="mt-0.5 text-[15px] font-bold text-foreground">
+                <p className="mt-0.5 text-body font-bold text-foreground">
                   <button type="button" onClick={() => openMemberCard(i.userId)} className="text-left active:opacity-70">
                     {i.nickname}님
                   </button>{" "}
                   레벨 {i.promoLevel} 통과!
                 </p>
-                <p className="mt-0.5 flex items-center gap-1 text-[13px] text-muted-foreground">
+                <p className="mt-0.5 flex items-center gap-1 text-label text-muted-foreground">
                   {i.promoRank && NEXT_LEAGUE[i.promoRank] ? (
                     <>
                       <NameBadge league={NEXT_LEAGUE[i.promoRank]} className="h-3.5 w-3.5" glow={false} />
@@ -770,9 +770,9 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
 
       {/* 오늘도 한 판 — 오늘 출석한 동료 (한 장으로 묶음) */}
       {checkins.length > 0 && (
-        <article className="rounded-card border border-border bg-card p-3.5">
-          <p className="text-[12px] font-black tracking-wider text-primary">오늘도 한 판</p>
-          <p className="mt-0.5 text-[15px] font-bold text-foreground">
+        <article className="rounded-card border border-border bg-card p-4">
+          <p className="text-label font-bold text-primary">오늘도 한 판</p>
+          <p className="mt-0.5 text-body font-bold text-foreground">
             오늘 {checkins.length}명이 왔어요{allBranches ? (branchFilter ? ` · ${shortBranchName(branchFilter)}` : " · 전 지점") : ""}
           </p>
           <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -788,7 +788,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
                   className="inline-flex min-w-0 items-center gap-1.5 active:opacity-70"
                 >
                   <Avatar item={i} size={26} />
-                  <span className="max-w-[6rem] truncate text-[13px] font-bold text-foreground">{i.nickname}</span>
+                  <span className="max-w-[6rem] truncate text-label font-bold text-foreground">{i.nickname}</span>
                 </button>
                 <NameBadge league={i.league} className="h-3 w-3" glow={false} />
                 <Btn153 item={i} onToggle={onToggle} onLongPress={onLong153} compact />
@@ -799,7 +799,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
             <button
               type="button"
               onClick={() => setShowAllCheckins((v) => !v)}
-              className="mt-2 min-h-[40px] text-[13px] font-bold text-primary"
+              className="mt-2 min-h-[40px] text-label font-bold text-primary"
             >
               {showAllCheckins ? "접기" : `${checkins.length - 12}명 더 보기`}
             </button>
@@ -809,15 +809,15 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
 
       {/* 새 식구 — 첫 출석 */}
       {newbies.map((i) => (
-        <article key={`n-${i.id}`} className="rounded-card border border-emerald-500/30 bg-emerald-500/5 p-3.5">
+        <article key={`n-${i.id}`} className="rounded-card border border-emerald-500/30 bg-emerald-500/5 p-4">
           <div className="flex items-center gap-2.5">
             {avatarBtn(i, 40)}
             <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-1 text-[12px] font-black tracking-wider text-emerald-600">
+              <p className="flex items-center gap-1 text-label font-bold text-emerald-600">
                 <Sprout className="h-3.5 w-3.5" /> 새 식구
                 {allBranches && i.branch ? ` · ${shortBranchName(i.branch)}` : ""}
               </p>
-              <p className="mt-0.5 text-[15px] font-bold text-foreground">
+              <p className="mt-0.5 text-body font-bold text-foreground">
                 <button type="button" onClick={() => openMemberCard(i.userId)} className="text-left active:opacity-70">
                   {i.nickname}님
                 </button>{" "}
@@ -833,12 +833,12 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
 
       {/* 오늘 운동 한 줄 */}
       {posts.map((i) => (
-        <article key={`j-${i.id}`} className="rounded-card border border-border bg-card p-3.5">
+        <article key={`j-${i.id}`} className="rounded-card border border-border bg-card p-4">
           <div className="flex items-center gap-2.5">
             {avatarBtn(i)}
             <div className="min-w-0 flex-1">
               {nameLine(i)}
-              <p className="flex items-center gap-1 text-[12px] text-muted-foreground">
+              <p className="flex items-center gap-1 text-label text-muted-foreground">
                 {timeAgo(i.at)}
                 {i.mood ? ` · ${i.mood}` : ""}
                 {/* 공개 범위 — 내 글은 늘, 남의 글은 전체 공개가 아닐 때만 (2026-10-18) */}
@@ -860,14 +860,14 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
               </p>
             </div>
           </div>
-          {i.prompt && <p className="mt-2 text-[12.5px] font-bold text-primary">{i.prompt}</p>}
-          <p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">{i.content}</p>
+          {i.prompt && <p className="mt-3 text-label font-bold text-primary">{i.prompt}</p>}
+          <p className="mt-3 whitespace-pre-wrap text-body leading-relaxed text-foreground">{i.content}</p>
           {i.photoUrl && (
             <img
               src={i.photoUrl}
               alt={`${i.nickname}님이 올린 사진`}
               loading="lazy"
-              className="mt-2 max-h-80 w-full rounded-xl object-cover"
+              className="mt-3 max-h-[420px] w-full rounded-xl object-cover"
             />
           )}
           {actions(i)}
@@ -876,10 +876,10 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
 
       {posts.length === 0 && (
         <div className="rounded-card border border-dashed border-border bg-muted/30 px-4 py-5 text-center">
-          <p className="text-[14px] font-bold text-foreground">
+          <p className="text-label font-bold text-foreground">
             {allBranches ? "최근 30일 올라온 글이 없어요" : "아직 올라온 한 줄이 없어요"}
           </p>
-          {!allBranches && <p className="mt-1 text-[13px] text-muted-foreground">오늘 운동을 한 줄로 남기고 첫 153을 받아보세요.</p>}
+          {!allBranches && <p className="mt-1 text-label text-muted-foreground">오늘 운동을 한 줄로 남기고 첫 153을 받아보세요.</p>}
         </div>
       )}
 

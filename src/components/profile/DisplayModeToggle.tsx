@@ -9,6 +9,7 @@
  * localStorage 저장 (디바이스마다 다름) — 그래서 이 폰의 홈 카드에만 적용된다.
  * 체육관 TV(라이브보드)는 회원 폰 설정을 알 수 없어 늘 사진 > 캐릭터 > 이니셜 순서다 (2026-10-14 문구 정정).
  * 입장 환영·얼굴/QR 출석 카드의 사진은 시범 지점(선릉역점)부터 (lib/pilotBranches).
+ * 2026-10-28 리디자인: 세그먼트 한 줄(자동 · 사진 · 캐릭터) — 칸마다 붙던 설명 · 아래 안내 문장은 뺐다 (뜻은 aria-label 에).
  */
 
 import { Camera, User, Sparkles } from "lucide-react";
@@ -24,12 +25,9 @@ const DisplayModeToggle = () => {
   const { mode, setMode } = useDisplayMode();
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-bold text-foreground">라이센스 카드 표시</h3>
-        <span className="text-[10px] text-muted-foreground">이 폰의 홈 카드</span>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-elev-1">
+      <h3 className="text-body font-bold text-foreground">라이센스 카드 표시</h3>
+      <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-muted p-1" role="radiogroup" aria-label="라이센스 카드 표시">
         {OPTIONS.map((opt) => {
           const Icon = opt.icon;
           const active = mode === opt.value;
@@ -37,21 +35,20 @@ const DisplayModeToggle = () => {
             <button
               key={opt.value}
               type="button"
+              role="radio"
+              aria-checked={active}
+              aria-label={`${opt.label} — ${opt.hint}`}
               onClick={() => setMode(opt.value)}
-              className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 transition-all active:scale-95 ${
-                active
-                  ? "border-primary bg-primary/15 text-primary"
-                  : "border-border bg-background text-muted-foreground hover:border-primary/40"
+              className={`flex h-11 items-center justify-center gap-1.5 rounded-lg text-label font-bold transition-all active:scale-95 ${
+                active ? "bg-card text-primary shadow-elev-1" : "text-muted-foreground"
               }`}
             >
               <Icon className="h-4 w-4" />
-              <span className="text-[11px] font-bold">{opt.label}</span>
-              <span className="text-[9px] opacity-70 truncate w-full text-center">{opt.hint}</span>
+              {opt.label}
             </button>
           );
         })}
       </div>
-      <p className="mt-2 text-[10px] text-muted-foreground">선릉역점 라이브보드에는 올린 프로필 사진이 먼저 보여요 (다른 지점은 순서대로)</p>
     </div>
   );
 };

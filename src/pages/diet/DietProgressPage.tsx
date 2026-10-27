@@ -62,7 +62,6 @@ const DietProgressPage = () => {
       header={
         <PageHeader
           title="진행 현황"
-          subtitle="21일 타임라인과 주간 요약"
           leftAction={
             <button
               type="button"
@@ -79,7 +78,7 @@ const DietProgressPage = () => {
     >
       <div data-tour="diet-page-progress" className="space-y-4 pt-2">
         {!hasActive || !enrollment ? (
-          <div className="rounded-2xl border border-border bg-card p-6 text-center text-[13px] text-muted-foreground">
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
             아직 진행 중인 프로그램이 없어요.
           </div>
         ) : (
@@ -88,14 +87,14 @@ const DietProgressPage = () => {
             <div className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                  <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                     {DIET_STAGES.find((s) => s.id === enrollment.current_stage)
                       ?.label ?? ""}
                   </p>
-                  <h2 className="mt-0.5 text-display-sm text-foreground leading-tight">
+                  <h2 className="mt-0.5 text-heading text-foreground leading-tight">
                     Day {enrollment.current_day} / 21
                   </h2>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  <p className="mt-0.5 text-micro text-muted-foreground">
                     시작 {enrollment.start_date}
                   </p>
                 </div>
@@ -121,7 +120,7 @@ const DietProgressPage = () => {
 
             {/* 주간 체크인 요약 */}
             <section className="space-y-2">
-              <h3 className="text-[13px] font-bold text-foreground">주간 체크인</h3>
+              <h3 className="text-label font-bold text-foreground">주간 체크인</h3>
               <div className="grid grid-cols-1 gap-2">
                 {weekSummaries.map((w) => (
                   <WeekCard
@@ -145,7 +144,7 @@ const DietProgressPage = () => {
             />
 
             {/* 비공개 안내 */}
-            <div className="rounded-2xl border border-border bg-muted/30 p-3 text-[11.5px] leading-relaxed text-muted-foreground">
+            <div className="rounded-2xl border border-border bg-muted/30 p-3 text-micro leading-relaxed text-muted-foreground">
               체중 숫자는 저장하지 않고 랭킹에도 쓰지 않습니다. 개인 기록으로 남기고 싶다면 오삼 코치님의 한마디 또는 회고 메모를 활용하세요.
             </div>
           </>
@@ -156,7 +155,7 @@ const DietProgressPage = () => {
 };
 
 const Legend = () => (
-  <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+  <div className="mt-3 flex flex-wrap items-center gap-2 text-micro text-muted-foreground">
     <LegendDot tone="approved" label="기록" />
     <LegendDot tone="empty" label="미기록" />
   </div>
@@ -201,18 +200,18 @@ const WeekCard = ({
     <div className="rounded-xl border border-border bg-card p-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10.5px] font-black uppercase tracking-wider text-primary">
+          <p className="text-micro font-black uppercase tracking-wider text-primary">
             WEEK {weekIdx} · {stage?.label ?? ""}
           </p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-micro text-muted-foreground">
             Day {stage?.dayRange[0]}~{stage?.dayRange[1]} · {stage?.tagline}
           </p>
         </div>
-        <p className="number-font text-[14px] font-extrabold text-foreground">
-          {approved} <span className="text-[11px] text-muted-foreground">/ {total}</span>
+        <p className="number-font text-label font-extrabold text-foreground">
+          {approved} <span className="text-micro text-muted-foreground">/ {total}</span>
         </p>
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-1.5 text-[10.5px]">
+      <div className="mt-2 grid grid-cols-2 gap-1.5 text-micro">
         <StatPill label="기록" value={approved} tone="primary" />
         <StatPill label="미기록" value={Math.max(0, total - approved - pending - rejected)} tone="neutral" />
       </div>
