@@ -29,7 +29,14 @@ import { toast } from "sonner";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
 
-type FilterType = "all" | "staff" | "pending" | "active" | "boss_ready" | "unapproved";
+type FilterType = "all" | "staff" | "pending" | "active" | "boss_ready" | "unapproved" | "body_info";
+
+/** 신체 정보를 넣은 회원 — 마지막으로 넣은 때 · 키/몸무게 여부 (값은 받지 않는다) */
+type BodyEntered = { at: string; height: boolean; weight: boolean };
+const kstMonthDay = (iso: string) => {
+  const k = new Date(new Date(iso).getTime() + 9 * 3600 * 1000);
+  return `${k.getUTCMonth() + 1}/${k.getUTCDate()}`;
+};
 
 /** KST 오늘 0시 / 이번 주 월요일 0시 (ISO) — 기기 시간대와 무관 */
 const KST_MS = 9 * 3600 * 1000;
@@ -176,6 +183,26 @@ const BranchManagerHome = () => {
   });
 
 
+  // 신체 정보 넣은 회원 (2026-10-28 대표님 "회원님들이 신체정보 입력했는지 안했는지 내가 확인할수는 없나?")
+  //   서버 get_body_info_entered — 전체관리자 · 관리자 = 전 지점, 지점장 = 자기 지점 (회원 내정보와 같은 권한 · 같은 공개 기준)
+  const canSeeBody = isSuperAdmin || role === "branch_manager";
+  const { data: bodyEntered } = useQuery({
+    queryKey: ["body-info-entered", isSuperAdmin, branchName],
+    enabled: canSeeBody,
+    staleTime: 60_000,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("get_body_info_entered");
+      if (error) throw error;
+      const rows: { user_id: string; at: string; height: boolean; weight: boolean }[] = Array.isArray(data?.rows) ? data.rows : [];
+      return new Map<string, BodyEntered>(rows.map((r) => [r.user_id, { at: r.at, height: !!r.height, weight: !!r.weight }]));
+    },
+  });
+  const bodyCount = useMemo(
+    () => (bodyEntered ? members?.filter((m) => bodyEntered.has(m.user_id)).length ?? 0 : 0),
+    [members, bodyEntered],
+  );
+
   const filtered = useMemo(() => {
     if (!members) return [];
     let list = [...members];
@@ -193,12 +220,13 @@ const BranchManagerHome = () => {
     else if (filter === "unapproved") list = list.filter(m => !(m as any).is_approved);
     else if (filter === "boss_ready") list = list.filter(m => m.prog?.current_level === 10);
     else if (filter === "active") list = list.filter(m => m.prog && m.prog.streak_days > 0);
+    else if (filter === "body_info") list = list.filter(m => !!bodyEntered?.has(m.user_id));
 
     if (sort === "level_desc") list.sort((a, b) => b.globalLevel - a.globalLevel);
     else if (sort === "pending_count") list.sort((a, b) => b.pendingCount - a.pendingCount);
 
     return list;
-  }, [members, search, filter, sort]);
+  }, [members, search, filter, sort, bodyEntered]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -214,6 +242,7 @@ const BranchManagerHome = () => {
     { key: "pending", label: "미션대기" },
     { key: "boss_ready", label: "보스전 대기" },
     { key: "active", label: "최근 활동" },
+    ...(canSeeBody ? [{ key: "body_info" as FilterType, label: `신체 정보 넣음 (${bodyCount})` }] : []),
   ];
 
   const handleApproveMember = async (userId: string, e: React.MouseEvent) => {
@@ -351,7 +380,7 @@ const BranchManagerHome = () => {
           <div className="rounded-2xl border border-dashed border-border p-8 text-center">
             <span className="text-3xl">👥</span>
             <p className="mt-2 text-sm text-muted-foreground">
-              {search ? "검색 결과가 없습니다" : "회원이 없습니다"}
+              {search ? "검색 결과가 없습니다" : filter === "body_info" ? "아직 신체 정보를 넣은 회원이 없어요" : "회원이 없습니다"}
             </p>
           </div>
         ) : (
@@ -398,6 +427,16 @@ const BranchManagerHome = () => {
                           {m.pendingCount}건 대기
                         </span>
                       )}
+                      {/* 신체 정보 넣음 (2026-10-28) — 마지막으로 넣은 날, 값은 회원 상세 '내정보'에서 */}
+                      {(() => {
+                        const b = bodyEntered?.get(m.user_id);
+                        if (!b) return null;
+                        return (
+                          <span className="shrink-0 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:text-emerald-400">
+                            신체 정보 {kstMonthDay(b.at)}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                       {isSuperAdmin && m.branch_name && (
