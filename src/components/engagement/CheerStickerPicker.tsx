@@ -53,7 +53,7 @@ const CheerStickerPicker = ({ selected, onSelect, receiverId = "", situations = 
             {img && <img src={img} alt="" className="h-12 w-12 object-contain" loading="lazy" draggable={false} />}
             <span
               className={cn(
-                "line-clamp-2 min-h-[2.4em] text-center text-micro leading-tight",
+                "line-clamp-2 min-h-[2.4em] text-center text-label leading-tight",
                 active ? "font-black text-foreground" : "font-semibold text-muted-foreground",
               )}
             >

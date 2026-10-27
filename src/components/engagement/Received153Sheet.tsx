@@ -96,20 +96,21 @@ const Received153Sheet = ({ open, onClose, onCheer }: Props) => {
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             <div className="flex items-start justify-between border-b border-border px-5 pb-3 pt-5">
+              {/* 제목 + 한 줄 (2026-10-28 리디자인 — 꾸밈 머리말 뺌) */}
               <div className="min-w-0">
-                <p className="text-micro font-black tracking-[0.2em] text-primary">받은 153</p>
-                <h2 className="mt-1 text-body font-bold leading-snug text-foreground">
+                <h2 className="text-heading text-foreground">받은 153</h2>
+                <p className="mt-1 text-body text-foreground">
                   {people > 0 ? (
                     <>
-                      최근 7일 동안 동료 <span className="number-font text-primary">{people}</span>명이 153을 보냈어요
+                      최근 7일 동안 동료 <span className="number-font font-bold text-primary">{people}</span>명이 보냈어요
                     </>
                   ) : (
                     "최근 7일 동안 받은 153이 없어요"
                   )}
-                </h2>
-                <p className="mt-1 text-label text-muted-foreground">
-                  153을 돌려주면 그 동료의 가장 최근 카드에 153이 가요
                 </p>
+                {people > 0 && (
+                  <p className="mt-0.5 text-label text-muted-foreground">돌려주면 그 동료의 최근 카드에 153이 가요</p>
+                )}
               </div>
               <button
                 type="button"
@@ -132,10 +133,8 @@ const Received153Sheet = ({ open, onClose, onCheer }: Props) => {
                 </div>
               )}
               {!isLoading && !isError && people === 0 && (
-                <p className="py-8 text-center text-label leading-relaxed text-muted-foreground">
-                  출석하면 '오늘도 한 판'에 이름이 올라가요.
-                  <br />
-                  오늘 운동 한 줄을 남기면 동료들이 153을 보내요.
+                <p className="py-8 text-center text-label text-muted-foreground">
+                  오늘 운동 한 줄을 남기면 동료들이 153을 보내요
                 </p>
               )}
               <ul className="space-y-2">

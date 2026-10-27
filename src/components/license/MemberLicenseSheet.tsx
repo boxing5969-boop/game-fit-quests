@@ -202,7 +202,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
           >
             <div className="mb-3 flex items-center justify-between px-1">
               <div className="min-w-0">
-                <h2 className="flex min-w-0 items-center gap-1.5 text-body font-bold text-foreground">
+                <h2 className="flex min-w-0 items-center gap-1.5 text-heading text-foreground">
                   <span className="truncate">{data ? `${data.display}님의 라이센스` : "라이센스"}</span>
                   {data?.staff_role && (
                     <span className="shrink-0 rounded-pill bg-primary/15 px-2 py-0.5 text-micro font-black text-primary">
@@ -215,10 +215,10 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
               <button
                 type="button"
                 onClick={onClose}
-                className="ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground active:scale-95"
+                className="ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground active:scale-95"
                 aria-label="닫기"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
@@ -315,7 +315,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
 
                 {!!cheerSummary && cheerSummary.total > 0 && (
                   <div className="mt-3 rounded-xl bg-muted/40 px-3 py-2.5">
-                    <p className="text-label font-bold text-foreground">
+                    <p className="text-body font-bold text-foreground">
                       받은 응원 <span className="number-font text-primary">{cheerSummary.total}</span>개
                     </p>
                     {cheerSummary.top.length > 0 && (
@@ -325,7 +325,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                           return (
                             <span
                               key={t.sticker}
-                              className="flex items-center gap-1 rounded-pill bg-card px-2 py-1 text-micro font-semibold text-foreground"
+                              className="flex items-center gap-1 rounded-pill bg-card px-2.5 py-1 text-label font-semibold text-foreground"
                             >
                               {img && <img src={img} alt="" className="h-5 w-5 object-contain" />}
                               {t.sticker}
@@ -392,9 +392,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                 )}
 
                 {!staffTitle && (
-                  <p className="mt-3 px-1 text-micro leading-relaxed text-muted-foreground">
-                    회원마다 하트 1개씩 · 다시 누르면 취소 · 받은 하트 수가 닉네임 좋아요왕 점수예요
-                  </p>
+                  <p className="mt-3 px-1 text-label text-muted-foreground">받은 하트는 좋아요왕 점수가 돼요 · 한 사람에 1개</p>
                 )}
               </>
             )}

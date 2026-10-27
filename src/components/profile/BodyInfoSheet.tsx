@@ -90,10 +90,8 @@ const ProfileCard = ({ profile, loading, onGoTest }: { profile: FitnessProfile |
       >
         <Gauge className="h-5 w-5 shrink-0 text-primary" aria-hidden />
         <span className="min-w-0 flex-1">
-          <span className="block text-label font-black text-foreground">153 PB로 내 체력 재기</span>
-          <span className="block text-micro leading-snug text-muted-foreground">
-            코치님이 재 주시면 심폐지구력 · 근지구력 · 복싱 체력이 여기 실측으로 보여요
-          </span>
+          <span className="block text-body font-bold text-foreground">153 PB로 내 체력 재기</span>
+          <span className="block text-label text-muted-foreground">코치님이 재면 내 체력이 실측으로 보여요</span>
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
       </button>
@@ -105,14 +103,14 @@ const ProfileCard = ({ profile, loading, onGoTest }: { profile: FitnessProfile |
   return (
     <section aria-label="153 체력 프로필" className="rounded-2xl border border-primary/30 bg-primary/[0.04] p-3.5">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-label font-black text-foreground">153 체력 프로필</p>
+        <p className="text-body font-bold text-foreground">153 체력 프로필</p>
         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-micro font-black text-primary">실측</span>
       </div>
-      <p className="mt-0.5 text-micro text-muted-foreground">
+      <p className="mt-0.5 text-label text-muted-foreground">
         {kstMonthDay(div.latest.measuredAt)} 측정 · {DIVISION_LABEL[div.division]}
         {div.latest.coachName ? ` · 코치 ${div.latest.coachName}` : ""}
       </p>
-      <p className="mt-2.5 text-micro font-bold text-muted-foreground">개인 최고 기록 (PB)</p>
+      <p className="mt-2.5 text-label font-bold text-muted-foreground">개인 최고 기록 (PB)</p>
       <p className="text-title font-black leading-tight tabular-nums text-foreground">{recordTimeText(div.pb)}</p>
       <p className="mt-0.5 text-label font-bold leading-snug text-primary">{pbLine(div)}</p>
       <ul className="mt-3 space-y-2.5">
@@ -121,10 +119,10 @@ const ProfileCard = ({ profile, loading, onGoTest }: { profile: FitnessProfile |
             <div className="flex items-baseline justify-between gap-2">
               <span className="text-label font-bold text-foreground">{r.label}</span>
               {r.gainPct != null && (
-                <span className="shrink-0 text-micro font-black tabular-nums text-primary">처음보다 +{formatPct(r.gainPct)}%</span>
+                <span className="shrink-0 text-label font-bold tabular-nums text-primary">처음보다 +{formatPct(r.gainPct)}%</span>
               )}
             </div>
-            <p className="text-micro leading-snug text-muted-foreground">
+            <p className="text-label leading-snug text-muted-foreground">
               {r.value ?? "다음 측정에서 채워져요"}
               <span className="text-muted-foreground/70"> · {r.from}</span>
             </p>
@@ -396,10 +394,9 @@ const BodyInfoSheet = ({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92vh]">
         <DrawerHeader className="pb-2 text-left">
-          <DrawerTitle className="text-body font-black">내 신체 정보</DrawerTitle>
-          <DrawerDescription className="text-label">
-            넣을수록 홈 &lsquo;153과 함께하며&rsquo;가 내 몸에 맞게 정확해져요. 몸무게를 넣으면 칼로리를 내 몸 기준으로 계산해요.
-          </DrawerDescription>
+          <DrawerTitle className="text-heading">내 신체 정보</DrawerTitle>
+          {/* 한 줄 (2026-10-28 리디자인) */}
+          <DrawerDescription className="text-label">넣을수록 칼로리 · 건강 수명이 내 몸 기준으로 정확해져요</DrawerDescription>
         </DrawerHeader>
         <div className="space-y-3 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
           {/* 누가 볼 수 있나요? — 공개 · 비공개 (2026-10-28 대표님), 누르면 바로 저장 */}
@@ -494,7 +491,7 @@ const BodyInfoSheet = ({
           <div>
             <span className="flex flex-wrap items-baseline gap-x-1.5 text-label font-bold text-muted-foreground">
               하루 평균 운동 시간
-              <span className="text-micro font-normal">체육관 · 집 운동 모두 합쳐서</span>
+              <span className="text-label font-normal">체육관 · 집 합쳐서</span>
             </span>
             <div className="mt-1 grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="하루 평균 운동 시간">
               {DAILY_WORKOUT_CHOICES.map((m) => (
@@ -521,11 +518,11 @@ const BodyInfoSheet = ({
             <span className="text-label font-bold text-muted-foreground">더 넣어 두면 좋아요 (선택)</span>
             <label className="mt-1 block">
               <span className="flex items-baseline justify-between gap-2">
-                <span className="min-w-0 text-micro font-bold text-muted-foreground">
-                  악력 (kg) <span className="font-normal">좌우 각 2번 중 가장 높은 값</span>
+                <span className="min-w-0 text-label font-bold text-muted-foreground">
+                  악력 (kg) <span className="font-normal">좌우 2번씩 중 최고</span>
                 </span>
                 {gripRel != null && (
-                  <span className="shrink-0 text-micro font-black tabular-nums text-primary">몸무게의 {gripRel}%</span>
+                  <span className="shrink-0 text-label font-bold tabular-nums text-primary">몸무게의 {gripRel}%</span>
                 )}
               </span>
               <Input
@@ -543,7 +540,7 @@ const BodyInfoSheet = ({
             </label>
             <div className="mt-2.5 grid grid-cols-2 gap-2.5">
               <label className="block">
-                <span className="text-micro font-bold text-muted-foreground">허리둘레 (cm)</span>
+                <span className="text-label font-bold text-muted-foreground">허리둘레 (cm)</span>
                 <Input
                   value={waist}
                   onChange={(e) => {
@@ -558,7 +555,7 @@ const BodyInfoSheet = ({
                 />
               </label>
               <label className="block">
-                <span className="text-micro font-bold text-muted-foreground">안정시 심박 (회/분)</span>
+                <span className="text-label font-bold text-muted-foreground">안정시 심박 (회/분)</span>
                 <Input
                   value={restHr}
                   onChange={(e) => {
@@ -574,9 +571,7 @@ const BodyInfoSheet = ({
               </label>
             </div>
           </div>
-          <p className="text-micro leading-relaxed text-muted-foreground">
-            몸무게 · 키 · 체지방률 · 악력 · 허리둘레 · 안정시 심박은 오늘 날짜로 저장돼요. 하루 평균 운동 시간은 바뀌면 다시 골라 주세요. 다시 잴 때마다 넣으면 처음보다 좋아졌을 때 바로 보여 드려요.
-          </p>
+          <p className="text-label text-muted-foreground">오늘 날짜로 저장돼요 · 다시 잴 때마다 넣으면 좋아진 만큼 보여 드려요</p>
           {error && (
             <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-label font-bold text-destructive">
               {error}
@@ -586,7 +581,7 @@ const BodyInfoSheet = ({
             type="button"
             onClick={() => void onSave()}
             disabled={busy}
-            className="flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-foreground text-label font-bold text-background transition-transform active:scale-[0.98] disabled:opacity-60"
+            className="flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-foreground text-body font-bold text-background transition-transform active:scale-[0.98] disabled:opacity-60"
           >
             {busy && !clear.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             저장하기

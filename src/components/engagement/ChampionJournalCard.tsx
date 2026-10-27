@@ -20,7 +20,7 @@ const ChampionJournalCard = ({ entry }: ChampionJournalCardProps) => {
   return (
     <article data-tour="champion-journal-card" className="rounded-card border border-border bg-card px-3 py-2.5">
       <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-micro font-bold uppercase tracking-wider text-primary">
+        <p className="truncate text-label font-bold text-primary">
           {formatKstShort(entry.created_at)} · {entry.prompt}
         </p>
         {entry.mood && (
@@ -29,7 +29,7 @@ const ChampionJournalCard = ({ entry }: ChampionJournalCardProps) => {
           </span>
         )}
       </div>
-      <p className="mt-1 whitespace-pre-wrap text-label leading-relaxed text-foreground">
+      <p className="mt-1 whitespace-pre-wrap text-body leading-relaxed text-foreground">
         {entry.content}
       </p>
     </article>

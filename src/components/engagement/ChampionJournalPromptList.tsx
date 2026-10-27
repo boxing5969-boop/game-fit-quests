@@ -37,7 +37,7 @@ const ChampionJournalPromptList = ({
             type="button"
             data-tutorial-prompt="true"
             onClick={() => onSelect(p)}
-            className={`rounded-pill border px-2.5 py-1.5 text-micro transition-all active:scale-[0.98] ${
+            className={`min-h-9 rounded-pill border px-3 py-1.5 text-label transition-all active:scale-[0.98] ${
               active
                 ? "border-primary bg-primary/10 text-foreground font-bold"
                 : "border-border bg-card text-muted-foreground"
