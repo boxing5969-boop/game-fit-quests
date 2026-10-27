@@ -115,6 +115,15 @@ const OfficePresenceBridge = () => {
         // 음성 회의 들어감 · 마이크 · 카메라가 바뀌면 내 표시를 다시 싣는다
         setOfficeTracker(topic, (meta) => {
           if (tracked && ch.state === "joined") void ch.track({ at: Date.now(), ...meta }).catch(() => undefined);
+          // 화면이 꺼진 채 음성 회의에서 나왔으면(비용 지킴이 · 회의 끝) 그때부터 30초 뒤 자리에서 일어난다
+          if (
+            document.visibilityState === "hidden" &&
+            !meta.call &&
+            !hideTimer &&
+            !topics.some((t) => getOfficeSelfMeta(t).call)
+          ) {
+            hideTimer = setTimeout(() => void untrackAll(), OFFICE_LEAVE_DELAY_MS);
+          }
         });
         channels.push(ch);
       }

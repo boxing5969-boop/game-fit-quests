@@ -8,6 +8,8 @@
  *   · 말하는 사람: 소리 크기를 재서(Web Audio) speaking 에 담는다 — 나도 포함. 사무실 그림이 그 캐릭터를 빛낸다.
  *   · 내가 음성 회의 중인지 · 마이크 · 카메라는 Presence 표시에 같이 싣는다(officePresence setOfficeSelfMeta)
  *     → 음성방에 안 들어온 사람도 누가 음성 회의 중인지 본다.
+ *   · 비용 지킴이(2026-10-27 대표님 "음성 회의 마무리") — 들어가 있는 1분마다 요금이 들어서, 화면이 꺼진 채 10분 ·
+ *     음성방에 혼자 10분이면 저절로 나온다(안내는 화면에 돌아왔을 때 보인다). 다시 '음성 참여'를 누르면 바로 들어간다.
  *   녹음 · 녹화 없음.
  */
 import { useSyncExternalStore } from "react";
@@ -127,6 +129,72 @@ const notice = (text: string, ms = 4500) => {
   noticeTimer = setTimeout(() => set({ notice: null }), ms);
 };
 
+/** 화면이 꺼져 있으면 안내를 남겨 두었다가, 다시 보일 때부터 잠깐 보여 준다 */
+const noticeWhenSeen = (text: string, ms = 10_000) => {
+  if (typeof document === "undefined" || document.visibilityState !== "hidden") return notice(text, ms);
+  if (noticeTimer) clearTimeout(noticeTimer);
+  noticeTimer = null;
+  set({ notice: text });
+  const onShow = () => {
+    if (document.visibilityState === "hidden") return;
+    document.removeEventListener("visibilitychange", onShow);
+    if (state.notice === text) notice(text, ms);
+  };
+  document.addEventListener("visibilitychange", onShow);
+};
+
+/* ───────────── 비용 지킴이 — 화면이 꺼진 채 10분 · 음성방에 혼자 10분이면 나온다 ───────────── */
+
+/** 음성 회의는 들어가 있는 1분마다 요금이 든다(RealtimeKit 참가자 분) — 이만큼 지나면 저절로 나온다 */
+export const OFFICE_CALL_IDLE_MS = 10 * 60_000;
+
+/** 나올 때인가 — 화면이 꺼진 지(hiddenSince) · 혼자 된 지(aloneSince) 10분이 넘었나. 0 은 '아님' */
+export function officeCallIdleReason(
+  t: { now: number; hiddenSince: number; aloneSince: number },
+  limit = OFFICE_CALL_IDLE_MS,
+): "hidden" | "alone" | null {
+  if (t.hiddenSince && t.now - t.hiddenSince >= limit) return "hidden";
+  if (t.aloneSince && t.now - t.aloneSince >= limit) return "alone";
+  return null;
+}
+
+export const OFFICE_CALL_IDLE_NOTICE = {
+  hidden: "화면이 10분 넘게 꺼져 있어 음성 회의에서 나왔어요 — 다시 들으려면 '음성 참여'",
+  alone: "음성방에 10분 동안 혼자 있어서 나왔어요 — 다른 분이 오면 다시 '음성 참여'",
+} as const;
+
+let hiddenSince = 0;
+let aloneSince = 0;
+let guardTimer: ReturnType<typeof setInterval> | null = null;
+
+const onGuardVisibility = () => {
+  if (document.visibilityState === "hidden") hiddenSince ||= Date.now();
+  else hiddenSince = 0; // 돌아오면 다시 센다 (돌아온 사람을 내보내지 않는다)
+};
+
+const checkGuard = () => {
+  if (state.status !== "joined") return;
+  const why = officeCallIdleReason({ now: Date.now(), hiddenSince, aloneSince });
+  if (!why) return;
+  void leaveOfficeCall().then(() => noticeWhenSeen(OFFICE_CALL_IDLE_NOTICE[why]));
+};
+
+const startGuard = () => {
+  if (guardTimer || typeof document === "undefined") return;
+  hiddenSince = document.visibilityState === "hidden" ? Date.now() : 0;
+  document.addEventListener("visibilitychange", onGuardVisibility);
+  // 숨은 탭은 타이머가 1분에 한 번쯤으로 느려진다 — 그래도 10~11분 안에 나온다
+  guardTimer = setInterval(checkGuard, 20_000);
+};
+
+const stopGuard = () => {
+  if (guardTimer) clearInterval(guardTimer);
+  guardTimer = null;
+  hiddenSince = 0;
+  aloneSince = 0;
+  if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onGuardVisibility);
+};
+
 const uidOf = (p: Pick<RemotePeer, "customParticipantId" | "userId">) => p.customParticipantId || p.userId;
 
 const remotePeers = (m: Meeting): RemotePeer[] =>
@@ -222,11 +290,14 @@ const syncPeers = () => {
   const me = state.me;
   // 같은 사람이 기기 둘로 들어와도 화면은 하나
   const videos = [...new Set([...(m.self.videoEnabled && me ? [me] : []), ...peers.filter((p) => p.cam).map((p) => p.uid)])];
+  // 비용 지킴이 — 다른 사람이 없으면 그때부터 센다
+  aloneSince = peers.length === 0 ? aloneSince || Date.now() : 0;
   set({ peers, videos });
 };
 
 const cleanup = () => {
   attempt++;
+  stopGuard();
   if (meterTimer) clearInterval(meterTimer);
   meterTimer = null;
   meters.forEach((m) => {
@@ -353,6 +424,7 @@ const connect = async (meetingId: string, my: number) => {
     set({ status: "joined", mic: !!m.self.audioEnabled, cam: !!m.self.videoEnabled });
     syncPeers();
     startMeters();
+    startGuard();
     publish();
   } catch (e) {
     if (my !== attempt) return;

@@ -151,6 +151,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 들어가면 마이크 · 카메라는 꺼진 채(체육관 음악 · 소음) — 본인이 '말하기' · 카메라를 눌러야 켜진다. 대표님 · 지점장은 다른 사람을 끌 수만 있다(`disableAllAudio(true)`, 켜는 건 본인).
 - 사무실 그림: 음성 회의 중인 사람은 회의실 발밑 이름표 안에 헤드폰(듣는 중) · 마이크(켬), 말하는 동안 이름표가 민트색 + 캐릭터가 들썩(말하는 중은 음성방에 들어간 사람만 안다). 책상 자리는 어깨에 작은 표시.
 - 회의 화면을 떠나거나 '나가기' · 회의가 끝나면 음성 회의에서도 나간다. '끝내기'는 음성방도 닫는다(kick-all → INACTIVE). 음성 회의 중이면 화면을 꺼도 자리를 지킨다.
+- 비용 지킴이 (2026-10-27 대표님 "음성 회의 마무리"): 화면이 꺼진 채 10분 · 음성방에 혼자 10분이면 저절로 나온다(`OFFICE_CALL_IDLE_MS`, `officeCallIdleReason`, 20초마다 확인 — 숨은 탭은 1분쯤으로 느려져 10~11분). 화면에 돌아오면 다시 세고(돌아온 사람은 안 내보냄), 안내는 돌아왔을 때 10초 보인다. 화면이 꺼진 채 나왔으면 30초 뒤 사무실 자리에서도 일어난다(OfficePresenceBridge).
 - 설정: API 토큰 = Edge Function 시크릿 `CF_REALTIME_TOKEN`(Cloudflare 계정 API 토큰 · Realtime Admin, 키 값은 채팅 · 코드 · 커밋 금지) · 계정 · 앱 번호(비밀 아님) = `internal_sync_config` `office_call` `{"account_id","app_id"}`(또는 시크릿 `CF_ACCOUNT_ID` · `CF_RTK_APP_ID`). 이 줄이 생겨야 `office_call_ready` 가 참 → 회의 화면에 음성 막대가 보인다. 프리셋은 대시보드에서 앱을 만들면 생기는 `group_call_host`(대표님 · 지점장) · `group_call_participant`(코치) — 이름이 다르면 함수가 앱 프리셋 목록에서 찾는다.
 - 켬 (2026-10-27 21시): 토큰은 대표님이 Cloudflare 에서 만들어 Supabase 시크릿에 직접 넣음 · Cloudflare 대시보드 › RealtimeKit 앱 `myboxer153-office`(기본 프리셋 그대로, `group_call_participant` 는 대기실 없이 바로 입장) · `internal_sync_config.office_call` 넣음 → 대표님 계정으로 선릉역점 회의에 듣기만 들어가 확인(마이크 권한 창 안 뜸 · 나가면 헤드폰 표시 사라짐).
 - 비용: 영상 프리셋이라 카메라를 안 켜도 참가자 1분 $0.002 (보고서 추정 월 $4 안팎). 개인정보 처리방침 위탁 표 Cloudflare 줄에 회의 음성 · 영상 연결 추가(녹음 · 녹화 안 함).
