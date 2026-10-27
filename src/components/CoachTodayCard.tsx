@@ -5,15 +5,15 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ScanFace, Play, Dumbbell, Trophy, ChevronRight, ChevronDown, CheckCircle2, CircleHelp,
+  ScanFace, Play, Dumbbell, Trophy, ChevronRight, ChevronDown, CheckCircle2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLevelVideos, useWatchedVideos, parseVideoTitle } from "@/hooks/useLevelVideos";
 import { OverlayMedia, type OverlayVariant } from "@/components/common/VideoOverlay";
 import { overlayVariants } from "@/lib/missionVideos";
-import { RANK_LABELS } from "@/data/sharedConstants";
 import { hasPracticedToday } from "@/lib/levelPractice";
+import LevelUpRequestCard from "@/components/LevelUpRequestCard";
 import { isTitleFlowFor, titleMatchLink } from "@/lib/titleMatchChallenge";
 import { useNavigate } from "react-router-dom";
 import { toGlobalLevel } from "@/lib/rankLabels";
@@ -57,8 +57,6 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
   const { user, profile } = useAuth();
   const [playing, setPlaying] = useState<{ id: string; url: string; title: string; variants: OverlayVariant[] } | null>(null);
   const [collapsed, setCollapsed] = useState(() => safeGet(COURSE_KEY) === "1");
-  // 레벨업 카드 ? — 세는 규칙 펼치기
-  const [ruleOpen, setRuleOpen] = useState(false);
   const { data: videos = [], isFetched: videosFetched } = useLevelVideos(league, levelNumber);
   const { watched, toggle, countFor } = useWatchedVideos();
 
@@ -246,57 +244,6 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
       ? "animate-coach-hop"
       : "animate-emote-enter";
 
-  const bar = (cur: number, req: number) => Math.min(100, Math.round((cur / Math.max(1, req)) * 100));
-  const c = cycle;
-  // 레드·블랙은 출석을 채워도 코치 승인이 있어야 올라간다
-  const isApprovalOnly = c?.rank === "red" || c?.rank === "black";
-  // 지표 타일 — 요건이 0인 항목은 빼고, 블랙 리그는 '연한'(최소 체류일)을 보여준다
-  const metrics = [
-    { label: "출석", cur: c?.progressFloor ?? c?.sessions ?? 0, req: c?.reqSessions ?? 3, unit: "회" },
-    ...((c?.reqMinDays ?? 0) > 0
-      ? [{ label: "연한", cur: c?.elapsedDays ?? 0, req: c?.reqMinDays ?? 0, unit: "일" }]
-      : [{ label: "다른 날", cur: c?.days ?? 0, req: c?.reqDays ?? 3, unit: "일" }]),
-    ...((c?.reqMinutes ?? 0) > 0
-      ? [{ label: "훈련", cur: c?.minutes ?? 0, req: c?.reqMinutes ?? 0, unit: "분" }]
-      : []),
-  ];
-
-  // ── 레벨업 카드 주인공 한 줄 — '몇 번 더' (출석 횟수 · 다른 날 중 더 많이 남은 쪽) ──
-  const left = (label: string) => {
-    const m = metrics.find((x) => x.label === label);
-    return m ? Math.max(0, m.req - m.cur) : 0;
-  };
-  const visitsLeft = Math.max(left("출석"), left("다른 날"));
-  const nextRank = ["white", "blue", "red", "black"][["white", "blue", "red", "black"].indexOf(league) + 1];
-  const nextLabel =
-    levelNumber >= 10
-      ? nextRank
-        ? `${RANK_LABELS[nextRank]} 리그까지`
-        : "다음 단계까지"
-      : `레벨 ${toGlobalLevel(league, levelNumber) + 1}까지`;
-  const heroLine = isTitleFlow
-    ? "타이틀매치만 남았어요"
-    : isPending
-      ? "코치님 승인을 기다려요"
-      : canLevelUp
-        ? isApprovalOnly
-          ? "승급 심사가 열렸어요"
-          : "다음 출석 때 올라가요"
-        : visitsLeft > 0
-          ? isApprovalOnly
-            ? `${visitsLeft}번 더 오면 심사가 열려요`
-            : `${visitsLeft}번 더 오면 돼요`
-          : left("훈련") > 0
-            ? `훈련 ${left("훈련")}분 더`
-            : left("연한") > 0
-              ? `${left("연한")}일 더 지나면 돼요`
-              : "거의 다 왔어요";
-  const heroTone = canLevelUp || isTitleFlow ? "text-reward" : isPending ? "text-status-pending" : "text-foreground";
-  const overallPct = metrics.length
-    ? Math.min(...metrics.map((m) => bar(m.cur, m.req)))
-    : 0;
-  const overallDone = canLevelUp || overallPct >= 100;
-
   return (
     <div className="space-y-3">
       {/* ── 오삼 코치 헤더 (말풍선) ── */}
@@ -435,41 +382,9 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
 
       {extra}
 
-      {/* ── 레벨업까지 — 주인공은 '몇 번 더' 한 줄 (2026-10-28 리디자인: 출석 축하 카드와 같은 모양) ──
-          요건이 0인 항목(훈련 분수)은 빼고, 블랙 리그는 '연한'을 대신 센다. 세는 규칙은 ? 안에 */}
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-elev-1">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-label font-bold text-muted-foreground">{nextLabel}</p>
-          <button
-            type="button"
-            onClick={() => setRuleOpen((v) => !v)}
-            aria-expanded={ruleOpen}
-            aria-label="레벨업 규칙 보기"
-            className="-m-2 flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
-          >
-            <CircleHelp className="h-5 w-5" />
-          </button>
-        </div>
-        <p className={`text-title ${heroTone}`}>{heroLine}</p>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
-          <div
-            className={`h-full rounded-full transition-all ${overallDone ? "bg-status-complete" : "bg-primary"}`}
-            style={{ width: `${overallPct}%` }}
-          />
-        </div>
-        <p className="mt-2 text-label text-muted-foreground">
-          {metrics.map((m) => `${m.label} ${m.cur}/${m.req}${m.unit}`).join(" · ")}
-        </p>
-        {ruleOpen && (
-          <p className="mt-3 rounded-xl bg-muted/50 px-3 py-2.5 text-label text-foreground">
-            {isTitleFlow
-              ? "레벨 10은 타이틀매치 — 파트너와 연습하고 지점장님께 심사를 신청해요 (도전 3번)"
-              : isApprovalOnly
-              ? "이 리그부터는 조건을 채우면 승급 심사가 열리고, 코치님이 직접 보고 승급해요"
-              : "조건을 채우면 코치님이 자세를 확인하고 승인해요"}
-          </p>
-        )}
-      </div>
+      {/* ── 레벨업까지 — 주인공은 '몇 번 더' 한 줄 (2026-10-28 리디자인). 레벨 자세히 보기 '심사' 탭과 같은 카드 ──
+          타이틀매치 단추는 위 오늘의 코스에 있어 여기서는 끈다 */}
+      <LevelUpRequestCard titleButton={false} />
 
       {/* ── 상세보기 — 한 줄 ── */}
       <button

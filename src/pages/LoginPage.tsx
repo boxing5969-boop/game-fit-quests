@@ -589,8 +589,9 @@ const LoginPage = () => {
             >
               🥊 처음 오셨나요? 신규 회원 가입 신청
             </button>
-            <p className="text-center text-label leading-relaxed text-muted-foreground">
-              체육관 회원님은 위의 <b className="text-foreground">카카오로 시작하기</b>가 가장 쉬워요 · 카카오가 없으면 여기서 등록된 전화번호·이름으로 가입하면 결제 없이 끝나요
+            {/* 한 줄 — '카카오로 시작하기가 가장 쉬워요'는 위 카드가 이미 말한다 (2026-10-28 리디자인) */}
+            <p className="text-center text-label text-muted-foreground">
+              카카오가 없으면 등록된 전화번호로 가입 · 결제 없이 끝나요
             </p>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">

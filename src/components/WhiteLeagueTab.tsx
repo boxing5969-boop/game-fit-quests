@@ -37,8 +37,12 @@ import SessionTemplateEditor from "@/components/SessionTemplateEditor";
 import { useSessionTemplate } from "@/hooks/useSessionTemplate";
 import {
   CheckCircle2, Lock, ChevronRight, ChevronDown, Clock, Zap, Target,
-  ArrowLeft, Star, Shield, Info, Dumbbell, Eye, Award, Play, Pencil,
+  ArrowLeft, Star, Shield, Info, Dumbbell, Eye, Award, Play, Pencil, ScanFace,
 } from "lucide-react";
+import { useLevelupRules } from "@/hooks/useLevelupRules";
+import { isTitleFlowFor } from "@/lib/titleMatchChallenge";
+import { authorityLabel } from "@/lib/levelAuthority";
+import { RANK_LABELS } from "@/data/sharedConstants";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import CharacterSprite from "@/components/CharacterSprite";
@@ -48,7 +52,8 @@ import SparringConsentModal from "@/components/SparringConsentModal";
 import { toGlobalLevel } from "@/lib/rankLabels";
 
 type LevelState = "complete" | "active" | "locked";
-type DetailView = null | { league: string; level: number };
+// detail: 훈련 탭 첫 화면의 '자세히 보기'로 열면 바로 자세히 (같은 코치 카드를 한 번 더 보여 주지 않는다 — 2026-10-28)
+type DetailView = null | { league: string; level: number; detail?: boolean };
 type PracticeView = null | { league: string; level: number };
 
 const INTENSITY_STYLE: Record<string, string> = {
@@ -110,7 +115,7 @@ const WhiteLeagueTab = () => {
   }
 
   if (detailView) {
-    return <UnifiedLevelDetailView key={`${detailView.league}-${detailView.level}`} league={detailView.league} levelNum={detailView.level} onBack={() => setDetailView(null)} />;
+    return <UnifiedLevelDetailView key={`${detailView.league}-${detailView.level}`} league={detailView.league} levelNum={detailView.level} initialDetail={!!detailView.detail} onBack={() => setDetailView(null)} />;
   }
 
   return (
@@ -121,8 +126,8 @@ const WhiteLeagueTab = () => {
         levelNumber={currentLevel}
         levelTitle={getLevelById(currentRank, currentLevel)?.title ?? ""}
         onOpenPractice={() => setPracticeView({ league: currentRank, level: currentLevel })}
-        onOpenDetail={() => setDetailView({ league: currentRank, level: currentLevel })}
-        onOpenVideos={() => setDetailView({ league: currentRank, level: currentLevel })}
+        onOpenDetail={() => setDetailView({ league: currentRank, level: currentLevel, detail: true })}
+        onOpenVideos={() => setDetailView({ league: currentRank, level: currentLevel, detail: true })}
         // 📋 오늘(다음) 수업 — 대표님 일차별 매뉴얼 (2026-09-30). 수업이 없는 레벨이면 저절로 숨는다
         extra={<LessonTodayCard />}
       />
@@ -192,7 +197,8 @@ const WhiteLeagueTab = () => {
                           ? "white-level-1-card"
                           : undefined
                       }
-                      onClick={() => !isLocked && setDetailView({ league: lc.id, level: ul.levelInLeague })}
+                      // 지도에서 고른 레벨은 바로 자세히 보기 — 간단히 보기(오늘의 코스)는 지금 레벨 것이라 다른 레벨에 맞지 않는다 (2026-10-28)
+                      onClick={() => !isLocked && setDetailView({ league: lc.id, level: ul.levelInLeague, detail: true })}
                       disabled={isLocked}
                       className={`group relative w-full rounded-xl border p-3 text-left transition-all active:scale-[0.98] ${
                         state === "complete" ? "border-primary/20 bg-card"
@@ -214,20 +220,17 @@ const WhiteLeagueTab = () => {
                             : state === "locked" ? <Lock className="h-3.5 w-3.5" />
                             : ul.levelInLeague}
                         </div>
+                        {/* 레벨 이름이 주인공 — 줄마다 같던 '50분 +100XP'는 뺐다 (2026-10-28 리디자인) */}
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-label font-bold text-muted-foreground">Lv.{ul.globalLevel}</span>
-                            {isBoss && <span className="rounded-full bg-reward px-1.5 py-0.5 text-micro font-bold text-reward-foreground">리그 승격</span>}
-                          </div>
-                          <p className={`text-label font-bold leading-tight ${isLocked ? "text-muted-foreground" : "text-foreground"}`}>
+                          <p className={`truncate text-body font-bold leading-tight ${isLocked ? "text-muted-foreground" : "text-foreground"}`}>
                             {ul.title}
                           </p>
+                          <div className="mt-0.5 flex items-center gap-1.5">
+                            <span className="text-label text-muted-foreground">레벨 {ul.globalLevel}</span>
+                            {isBoss && <span className="rounded-full bg-reward px-1.5 py-0.5 text-micro font-bold text-reward-foreground">리그 승격</span>}
+                          </div>
                         </div>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          <span className="text-label text-muted-foreground">50분</span>
-                          <span className="text-micro font-bold text-primary">+100XP</span>
-                        </div>
-                        {!isLocked && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+                        {!isLocked && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
                       </div>
                       {isTutorialTargetCard && (
                         <span className="absolute -top-2 right-3 rounded-full bg-amber-500 px-2 py-0.5 text-micro font-black text-amber-950 shadow-md">
@@ -251,14 +254,14 @@ const WhiteLeagueTab = () => {
    Unified Level Detail View — 40레벨 3탭 구조
    배우기 / 수업실행 / 심사
    ═══════════════════════════════════════════════════════ */
-const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; levelNum: number; onBack: () => void }) => {
+const UnifiedLevelDetailView = ({ league, levelNum, onBack, initialDetail = false }: { league: string; levelNum: number; onBack: () => void; initialDetail?: boolean }) => {
   const ul = getLevelById(league, levelNum);
   const { user, progress, role, profile } = useAuth();
   const { data: myCharacter } = useMemberCharacterAssignment(user?.id);
   const { metrics, status, canAttemptChecklist, submitChecklist } = useLocalProgress();
   const [activeSection, setActiveSection] = useState<"video" | "learn" | "session" | "check">("video");
   // 심플 모드(기본) — 오삼 코치 지시 카드 하나만. "상세 보기"를 누르면 기존 전체 화면.
-  const [detailMode, setDetailMode] = useState(false);
+  const [detailMode, setDetailMode] = useState(initialDetail);
   const [showChecklist, setShowChecklist] = useState(false);
   const [showCurriculumReview, setShowCurriculumReview] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
@@ -294,7 +297,11 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
     sessionLevelKey === "white-1" ? WHITE_LV1_SESSION : sessionLevelKey === "white-2" ? WHITE_LV2_SESSION : null;
   const { blocks: sessionBlocks, refetch: refetchSession } = useSessionTemplate(sessionLevelKey, sessionFallback);
   const isMaster = role === "admin" || role === "super_admin";
+  // 코치 · 지점장 · 운영진 — 회원에게 안 보이는 심사 기준(커리큘럼)용 ('회원으로 보기'면 회원)
+  const isStaffView = !!role && role !== "member";
   const [showSessionEditor, setShowSessionEditor] = useState(false);
+  // 이 레벨을 넘는 법 — 리그별 출석 횟수 · 연한 · 자동/심사 (DB get_levelup_rules 정본)
+  const { data: levelupRules } = useLevelupRules();
 
   // 📋 이 레벨의 일차별 수업 매뉴얼 (2026-09-30 대표님) — 수업실행 탭 맨 위. 누르면 이 화면 위에 그날 수업 시트
   const lessonDays = useLessonDays();
@@ -357,6 +364,31 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   const beginnerAlts = isWhiteLv1 ? BEGINNER_ALTERNATIVES : isWhiteLv2 ? WHITE_LV2_BEGINNER_ALTS : null;
   const recPaths = isWhiteLv1 ? RECOMMENDED_PATHS : isWhiteLv2 ? WHITE_LV2_RECOMMENDED_PATHS : null;
 
+  // ── 지금 레벨인지 · 통과한 레벨인지 (지도에서는 지난 레벨도 연다) ──
+  const RANK_SEQ = ["white", "blue", "red", "black"];
+  const viewGlobal = RANK_SEQ.indexOf(league) * 10 + levelNum;
+  const curGlobal = RANK_SEQ.indexOf(progress?.current_rank ?? "white") * 10 + (progress?.current_level ?? 1);
+  const isCurrentLevel = viewGlobal === curGlobal;
+  const isPassedLevel = viewGlobal < curGlobal;
+
+  // ── 이 레벨을 넘는 법 한 줄 — 규칙을 읽는 동안만 기본값(화이트3·블루5·레드8·블랙20, 블랙 45일) ──
+  const leagueRule = levelupRules?.find((r) => r.rank === league);
+  const visitsReq = leagueRule?.visitsPerLevel ?? ({ white: 3, blue: 5, red: 8, black: 20 } as Record<string, number>)[league] ?? 3;
+  const minDaysReq = leagueRule?.minDaysPerLevel ?? (league === "black" ? 45 : 0);
+  const autoAdvance = leagueRule?.autoAdvance ?? (league === "white" || league === "blue");
+  const nextLeague = RANK_SEQ[RANK_SEQ.indexOf(league) + 1];
+  const nextLeagueName = nextLeague ? `${RANK_LABELS[nextLeague]} 리그` : "마스터 로드";
+  const passRule =
+    levelNum >= 10
+      ? isTitleFlowFor(league, profile?.branch_name)
+        ? { title: true, line: `타이틀매치를 통과하면 ${nextLeagueName}` }
+        : autoAdvance
+          ? { title: true, line: `승급 심사를 통과하면 ${nextLeagueName}` }
+          : { title: true, line: `출석 ${visitsReq}번${minDaysReq > 0 ? ` · ${minDaysReq}일` : ""} 채우면 승급 심사` }
+      : autoAdvance
+        ? { title: false, line: `출석 ${visitsReq}번이면 자동으로 레벨 ${ul.globalLevel + 1}` }
+        : { title: false, line: `출석 ${visitsReq}번${minDaysReq > 0 ? ` · ${minDaysReq}일` : ""} 채우면 ${authorityLabel(levelupRules, league, levelNum)} 심사` };
+
   const handleChecklistSubmit = () => {
     const passed = submitChecklist(checkResults);
     if (passed) {
@@ -382,7 +414,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
     <div className="animate-slide-up space-y-4">
       {/* Back */}
       <button onClick={onBack} className="flex items-center gap-1.5 text-body font-bold text-primary active:scale-95">
-        <ArrowLeft className="h-4 w-4" /> 목록으로
+        <ArrowLeft className="h-4 w-4" /> 뒤로
       </button>
 
       {/* ═══ 심플 모드 — 오삼 코치가 오늘 할 일 하나만 알려준다 ═══ */}
@@ -397,7 +429,8 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         />
       )}
 
-      {detailMode && (
+      {/* 첫 화면에서 바로 자세히 열었으면 '간단히 보기'는 위 '목록으로'와 같은 곳 — 두지 않는다 */}
+      {detailMode && !initialDetail && (
         <button
           onClick={() => setDetailMode(false)}
           className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-border bg-card py-2.5 text-label font-bold text-muted-foreground active:scale-[0.99]"
@@ -466,7 +499,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           {/* 레벨 라벨 + 제목 — 뱃지 톤을 황금으로 */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <span className="mb-1 inline-block rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 px-2.5 py-0.5 text-micro font-black text-black backdrop-blur-sm">
-              Lv.{ul.globalLevel}
+              레벨 {ul.globalLevel}
             </span>
             <h2 className="text-heading font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{ul.title}</h2>
             <p className="text-label text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)]">{ul.shortGoal}</p>
@@ -474,22 +507,19 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         </div>
       </div>
 
-      {/* Quick stats */}
-      <div data-tour="white-detail-stats" className="flex gap-2">
-        <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-card p-3">
-          <Clock className="h-4 w-4 text-primary" />
-          <div>
-            <p className="text-label text-muted-foreground">소요 시간</p>
-            <p className="text-body font-bold text-foreground">50분</p>
-          </div>
-        </div>
-        <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-card p-3">
-          <Zap className="h-4 w-4 text-primary" />
-          <div>
-            <p className="text-label text-muted-foreground">보상</p>
-            <p className="text-body font-bold text-primary">+100 XP</p>
-          </div>
-        </div>
+      {/* 이 레벨을 넘는 법 한 줄 — 예전 '소요 시간 50분 · 보상 +100 XP'는 서버 규칙과 달라 뺐다 (2026-10-28 리디자인).
+          숫자는 DB 규칙(get_levelup_rules)이 정본. 지금 레벨의 진행도는 '심사' 탭에 */}
+      <div
+        data-tour="white-detail-stats"
+        className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5"
+      >
+        {passRule.title ? (
+          <Award className="h-5 w-5 shrink-0 text-reward" />
+        ) : (
+          <ScanFace className="h-5 w-5 shrink-0 text-primary" />
+        )}
+        <p className="min-w-0 flex-1 break-keep text-body font-bold text-foreground">{passRule.line}</p>
+        {isPassedLevel && <CheckCircle2 className="h-5 w-5 shrink-0 text-status-complete" aria-label="통과" />}
       </div>
 
       {/* 64-O: step 3 detail cascade 안내 카드 */}
@@ -912,17 +942,31 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {/* ═══ 심사 Section ═══ */}
       {activeSection === "check" && (
         <>
-          {/* 서버 3·3·3 집계 + 레벨업 신청 (실제 레벨업 경로) */}
-          <LevelUpRequestCard />
-          {/* 레벨업 조건 */}
-          <div
-            data-tour="white-check-conditions"
-            className="rounded-2xl border border-border bg-card p-4 shadow-elev-1"
-          >
+          {/* 레벨업까지 — 서버 판정(get_level_cycle_progress) 그대로, 지금 레벨에서만. 지난 레벨은 '통과' 한 줄 (2026-10-28 리디자인) */}
+          <div data-tour="white-check-conditions" className="space-y-4">
+            {isCurrentLevel ? (
+              <LevelUpRequestCard preview />
+            ) : (
+              <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-5">
+                {isPassedLevel ? (
+                  <CheckCircle2 className="h-6 w-6 shrink-0 text-status-complete" />
+                ) : (
+                  <Lock className="h-6 w-6 shrink-0 text-muted-foreground" />
+                )}
+                <p className="text-heading text-foreground">
+                  {isPassedLevel ? "통과한 레벨이에요" : "아직 열리지 않은 레벨이에요"}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* 예전 '이 기기' 기록(XP · 인정 세션 · 출석일 · 훈련 시간) — 서버 판정과 숫자가 달라 회원에게는 숨긴다 (2026-10-28). 운영진 참고용 */}
+          {isMaster && (
+          <div className="rounded-2xl border border-dashed border-border bg-card p-4">
             <div className="mb-3 flex items-center gap-2">
-              <Award className="h-4 w-4 text-primary" />
+              <Award className="h-4 w-4 text-muted-foreground" />
               <span className="text-body font-bold text-foreground">
-                {ul.levelInLeague === 10 ? "리그 승격 심사" : `레벨업 조건 (Lv.${ul.globalLevel} → Lv.${ul.globalLevel + 1})`}
+                이 기기 기록 · {ul.levelInLeague === 10 ? "리그 승격 심사" : `레벨 ${ul.globalLevel} → ${ul.globalLevel + 1}`}
               </span>
             </div>
             <div className="space-y-2">
@@ -968,8 +1012,9 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
               </div>
             )}
           </div>
+          )}
 
-          {/* Checklist */}
+          {/* Checklist — 배운 동작을 스스로 점검하는 목록 (레벨업 판정은 위 카드 = 출석) */}
           <div
             data-tour="white-check-checklist"
             className="rounded-2xl border border-border bg-card p-4 shadow-elev-1"
@@ -977,9 +1022,9 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-primary" />
-                <span className="text-body font-bold text-foreground">체크테스트</span>
+                <span className="text-heading text-foreground">체크테스트</span>
               </div>
-              <span className="text-label text-muted-foreground">{checklist.length}개 중 {ul.progressionConfig.checklistPassCount}개 이상 통과</span>
+              <span className="text-label text-muted-foreground">스스로 점검해요</span>
             </div>
             <div className="space-y-2">
               {checklist.map(item => (
@@ -1012,8 +1057,9 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             )}
           </div>
 
-          {/* 판매급 심사 기준(커리큘럼) — 기존 체크리스트와 별개인 추가 참고 카드, 있을 때만 렌더 */}
-          {(() => {
+          {/* 판매급 심사 기준(커리큘럼) — 기존 체크리스트와 별개인 추가 참고 카드, 있을 때만 렌더.
+              코치 · 지점장 · 운영진만 (회원 화면에 '판매급 · 루브릭' 같은 안쪽 말을 두지 않는다, 2026-10-28) */}
+          {isStaffView && (() => {
             const curriculumReview = getCurriculumReview(ul.globalLevel);
             if (!curriculumReview) return null;
             return (
@@ -1071,7 +1117,8 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             );
           })()}
 
-          {/* Status */}
+          {/* Status — '이 기기' 기록 기준이라 서버 판정과 다를 수 있다 → 운영진 참고용만 (2026-10-28) */}
+          {isMaster && (
           <div className={`rounded-xl p-3 text-center text-body font-bold ${
             status === "레벨업 완료" ? "bg-status-complete/10 text-status-complete"
             : status === "레벨업 심사 가능" ? "bg-primary text-primary-foreground"
@@ -1081,6 +1128,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           }`}>
             {status === "진행중" ? "🥊 현재 진행 중" : status}
           </div>
+          )}
         </>
       )}
 

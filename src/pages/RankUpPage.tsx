@@ -14,8 +14,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { isManagerRole, toGlobalLevel } from "@/lib/rankLabels";
 import type { Tables, Enums } from "@/integrations/supabase/types";
-import { useLocalProgress } from "@/hooks/useLocalProgress";
-import { PROMOTION_METRICS, RECOMMENDED_PATHS } from "@/data/whiteLevel1Data";
+import LevelUpRequestCard from "@/components/LevelUpRequestCard";
 import { RANK_ORDER, RANK_LABELS, RANK_ICONS, SECRET_MISSIONS, DAN_CHALLENGES, FINAL_REWARDS } from "@/data/sharedConstants";
 const RANK_BG: Record<string, string> = {
   white: "from-muted/50 to-muted/20",
@@ -120,9 +119,12 @@ const RankUpPage = () => {
         </div>
       </div>
 
-      {/* White Lv.1 → Lv.2 Progression Card */}
-      {currentRank === "white" && currentLevel === 1 && !isManager && (
-        <WhiteLv1ProgressionCard />
+      {/* 레벨업까지 — 훈련 탭과 같은 카드(서버 판정). 예전 '화이트 Lv.1 → Lv.2' 카드는 이 기기 기록(XP 0/300 · 인정 세션 …)이라
+          서버 출석 숫자와 달랐다 (2026-10-28 리디자인) */}
+      {!isManager && (
+        <div className="mb-6 space-y-4">
+          <LevelUpRequestCard />
+        </div>
       )}
 
       {activeTab === "valuemap" ? (
@@ -495,66 +497,6 @@ const RankUpPage = () => {
           </div>
         </div>
       )}
-    </div>
-  );
-};
-
-/* ═══ White Lv.1 → Lv.2 Progression Card ═══ */
-const WhiteLv1ProgressionCard = () => {
-  const { metrics, status, totalXp } = useLocalProgress();
-
-  const STATUS_STYLE: Record<string, string> = {
-    "진행중": "bg-primary/10 text-primary",
-    "레벨업 심사 가능": "bg-status-complete/15 text-amber-700 dark:bg-status-complete/10 dark:text-status-complete",
-    "보완 필요": "bg-status-pending/10 text-status-pending",
-    "레벨업 완료": "bg-reward/10 text-reward-foreground",
-    "코치 확인 필요": "bg-destructive/10 text-destructive",
-  };
-
-  return (
-    <div className="mb-6 space-y-4 animate-slide-up">
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-body font-bold text-foreground">⚪ White Lv.1 → Lv.2</h3>
-          <span className={`rounded-full px-2.5 py-1 text-micro font-bold ${STATUS_STYLE[status] || "bg-muted text-muted-foreground"}`}>{status}</span>
-        </div>
-
-        {/* Path chips */}
-        <div className="mb-3 flex gap-2">
-          {RECOMMENDED_PATHS.map(path => (
-            <div key={path.label} className="flex-1 rounded-xl bg-muted/30 p-2 text-center">
-              <p className="text-label font-bold text-muted-foreground">{path.label}</p>
-              <p className="text-label font-bold text-foreground">{path.duration} · {path.sessions}</p>
-              <p className="text-label text-muted-foreground">{path.frequency}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* 4 metrics */}
-        <div className="grid grid-cols-2 gap-2">
-          {PROMOTION_METRICS.map(m => {
-            const met = metrics[m.id as keyof typeof metrics];
-            const pct = met ? Math.min(100, Math.round((met.current / met.target) * 100)) : 0;
-            const done = met && met.current >= met.target;
-            return (
-              <div key={m.id} className="rounded-xl border border-border p-2.5">
-                <div className="mb-0.5 flex items-center justify-between">
-                  <span className="text-label text-muted-foreground">{m.emoji} {m.label}</span>
-                  {done && <CheckCircle2 className="h-3 w-3 text-amber-500 dark:text-status-complete" />}
-                </div>
-                <p className="text-body font-bold text-foreground">{met?.current ?? 0}<span className="text-label text-muted-foreground">/{m.target}{m.unit}</span></p>
-                <div className="mt-1 h-1 overflow-hidden rounded-full bg-muted">
-                  <div className={`h-full rounded-full ${done ? "bg-status-complete" : "bg-primary"}`} style={{ width: `${pct}%` }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <p className="mt-3 text-label text-muted-foreground leading-relaxed">
-          화이트는 쉽지만 의미 없이 쉬운 단계가 아니라, 습관·기초체력·자세 유지력을 만드는 단계입니다
-        </p>
-      </div>
     </div>
   );
 };
