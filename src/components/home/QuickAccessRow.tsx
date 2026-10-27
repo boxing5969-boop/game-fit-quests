@@ -54,13 +54,13 @@ const QuickAccessRow = ({
       >
         <div className="flex items-center gap-1.5">
           <Zap className="h-3.5 w-3.5 text-primary" />
-          <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground dark:text-gray-500">
+          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground dark:text-gray-500">
             미션
           </p>
         </div>
-        <p className="mt-1.5 text-sm font-black text-foreground dark:text-white">오늘 도전</p>
+        <p className="mt-1.5 text-body font-black text-foreground dark:text-white">오늘 도전</p>
         <span
-          className={`mt-1.5 inline-block rounded-pill px-1.5 py-0.5 text-[9px] font-black ${missionMeta.color}`}
+          className={`mt-1.5 inline-block rounded-pill px-1.5 py-0.5 text-micro font-black ${missionMeta.color}`}
         >
           {missionMeta.label}
         </span>
@@ -74,13 +74,13 @@ const QuickAccessRow = ({
       >
         <div className="flex items-center gap-1.5">
           <Users className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
-          <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground dark:text-gray-500">
+          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground dark:text-gray-500">
             챌린지
           </p>
         </div>
-        <p className="mt-1.5 text-sm font-black text-foreground dark:text-white">더 다이어터</p>
+        <p className="mt-1.5 text-body font-black text-foreground dark:text-white">더 다이어터</p>
         <span
-          className={`mt-1.5 inline-block rounded-pill px-1.5 py-0.5 text-[9px] font-black ${challengeMeta.color}`}
+          className={`mt-1.5 inline-block rounded-pill px-1.5 py-0.5 text-micro font-black ${challengeMeta.color}`}
         >
           {challengeMeta.label}
         </span>
@@ -94,11 +94,11 @@ const QuickAccessRow = ({
       >
         <div className="flex items-center gap-1.5">
           <TrendingUp className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400" />
-          <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground dark:text-gray-500">
+          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground dark:text-gray-500">
             진행도
           </p>
         </div>
-        <p className="mt-1.5 text-sm font-black text-foreground tabular-nums dark:text-white">
+        <p className="mt-1.5 text-body font-black text-foreground tabular-nums dark:text-white">
           {weeklyPercent}%
         </p>
         {/* 미니 바 */}

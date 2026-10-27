@@ -64,11 +64,11 @@ export const MissionCard = ({
         <div className="flex flex-1 items-start gap-3 min-w-0">
           {media && <div className="flex shrink-0 items-center">{media}</div>}
           <div className="min-w-0 flex-1">
-            <h3 className="text-body-lg truncate font-bold text-foreground">
+            <h3 className="text-body truncate font-bold text-foreground">
               {title}
             </h3>
             {subtitle && (
-              <p className="text-caption mt-0.5 text-muted-foreground">
+              <p className="text-label mt-0.5 text-muted-foreground font-medium">
                 {subtitle}
               </p>
             )}
@@ -87,13 +87,13 @@ export const MissionCard = ({
 
       {/* Locked hint — motivational instead of "unavailable" */}
       {isLocked && lockedHint && (
-        <p className="mb-3 text-caption text-muted-foreground">{lockedHint}</p>
+        <p className="mb-3 text-label text-muted-foreground font-medium">{lockedHint}</p>
       )}
 
       {/* Reward + CTA row */}
       <div className="flex items-center justify-between gap-3">
         {reward ? (
-          <span className="text-caption font-bold text-reward">{reward}</span>
+          <span className="text-label font-bold text-reward">{reward}</span>
         ) : (
           <span />
         )}
@@ -103,7 +103,7 @@ export const MissionCard = ({
             onClick={onClick}
             disabled={isLocked}
             className={cn(
-              "rounded-xl px-4 py-2 text-caption font-bold transition-all active:scale-[0.97]",
+              "rounded-xl px-4 py-2 text-label font-bold transition-all active:scale-[0.97]",
               isLocked
                 ? "cursor-not-allowed bg-muted text-muted-foreground"
                 : isCompleted

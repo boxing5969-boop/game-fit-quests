@@ -22,26 +22,26 @@ const QuestCommunityPanel = ({ community }: Props) => {
 
   return (
     <div>
-      <p className="mb-2 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-2 text-micro font-bold uppercase tracking-wider text-muted-foreground">
         커뮤니티 활동
       </p>
 
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-          <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
             <Users className="h-3 w-3" />
             운동 짝꿍
           </p>
-          <p className="number-font mt-0.5 text-[14px] font-black text-foreground">
+          <p className="number-font mt-0.5 text-label font-black text-foreground">
             {community.active_cornerman_pairs ?? 0}쌍
           </p>
         </div>
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-          <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
             <Megaphone className="h-3 w-3" />
             응원 7일
           </p>
-          <p className="number-font mt-0.5 text-[14px] font-black text-foreground">
+          <p className="number-font mt-0.5 text-label font-black text-foreground">
             {community.cheers_sent_7d ?? 0}회
           </p>
         </div>
@@ -50,7 +50,7 @@ const QuestCommunityPanel = ({ community }: Props) => {
       {/* 짐 레이드 진척 */}
       {raids.length > 0 && (
         <div className="mt-3">
-          <p className="mb-1.5 flex items-center gap-1 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="mb-1.5 flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
             <Flag className="h-3 w-3 text-primary" />
             우리 지점 목표
           </p>
@@ -61,11 +61,11 @@ const QuestCommunityPanel = ({ community }: Props) => {
                 className="rounded-card border border-border bg-card px-3 py-2"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="flex items-center gap-1 truncate text-[11.5px] font-bold text-foreground">
+                  <p className="flex items-center gap-1 truncate text-micro font-bold text-foreground">
                     <span>{getRaidTypeEmoji(r.raid_type)}</span>
                     {r.title}
                   </p>
-                  <p className="shrink-0 text-[11px] font-bold text-foreground">
+                  <p className="shrink-0 text-micro font-bold text-foreground">
                     {r.percentage}%
                   </p>
                 </div>
@@ -77,7 +77,7 @@ const QuestCommunityPanel = ({ community }: Props) => {
                     style={{ width: `${Math.min(100, r.percentage)}%` }}
                   />
                 </div>
-                <p className="mt-1 text-[10px] text-muted-foreground">
+                <p className="mt-1 text-micro text-muted-foreground">
                   {Math.round(r.current_value).toLocaleString()} /{" "}
                   {Math.round(r.target_value).toLocaleString()} ·{" "}
                   {new Date(r.end_date).toLocaleDateString("ko-KR")} 까지
@@ -92,11 +92,11 @@ const QuestCommunityPanel = ({ community }: Props) => {
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {topRespect.length > 0 && (
           <div className="rounded-card border border-border bg-background/40 p-3">
-            <p className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1 flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
               <Trophy className="h-3 w-3" />
               상위 RP
             </p>
-            <ul className="space-y-0.5 text-[11.5px]">
+            <ul className="space-y-0.5 text-micro">
               {topRespect.slice(0, 5).map((m, i) => (
                 <li key={m.user_id} className="flex justify-between">
                   <span className="truncate text-foreground">
@@ -112,11 +112,11 @@ const QuestCommunityPanel = ({ community }: Props) => {
         )}
         {topContrib.length > 0 && (
           <div className="rounded-card border border-border bg-background/40 p-3">
-            <p className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1 flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
               <Flag className="h-3 w-3" />
               레이드 기여자
             </p>
-            <ul className="space-y-0.5 text-[11.5px]">
+            <ul className="space-y-0.5 text-micro">
               {topContrib.slice(0, 5).map((m, i) => (
                 <li key={m.user_id} className="flex justify-between">
                   <span className="truncate text-foreground">

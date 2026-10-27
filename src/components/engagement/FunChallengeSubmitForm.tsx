@@ -181,29 +181,29 @@ const FunChallengeSubmitForm = ({
         <div className={`rounded-card border p-3.5 ${banner.tone}`}>
           <div className="flex items-center gap-2">
             {banner.icon}
-            <p className="text-[13.5px] font-bold text-foreground">
+            <p className="text-label font-bold text-foreground">
               {banner.title}
             </p>
           </div>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
             {result.message}
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
               내 기록
             </p>
-            <p className="number-font mt-0.5 text-[18px] font-black text-foreground">
+            <p className="number-font mt-0.5 text-heading font-black text-foreground">
               {result.submitted_value} {unit}
             </p>
           </div>
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
               목표
             </p>
-            <p className="number-font mt-0.5 text-[18px] font-black text-foreground">
+            <p className="number-font mt-0.5 text-heading font-black text-foreground">
               {result.target_value} {unit}
             </p>
           </div>
@@ -211,30 +211,30 @@ const FunChallengeSubmitForm = ({
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+            <p className="text-micro font-black uppercase tracking-wider text-primary">
               QUEST XP
             </p>
-            <p className="number-font mt-0.5 text-[18px] font-black text-foreground">
+            <p className="number-font mt-0.5 text-heading font-black text-foreground">
               +{result.quest_xp_granted}
             </p>
           </div>
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-reward">
+            <p className="text-micro font-black uppercase tracking-wider text-reward">
               챔피언 머니
             </p>
-            <p className="number-font mt-0.5 text-[18px] font-black text-reward">
+            <p className="number-font mt-0.5 text-heading font-black text-reward">
               +{result.gems_granted.toLocaleString()}
             </p>
           </div>
         </div>
 
         {challenge.high_intensity && (
-          <p className="text-[10.5px] leading-relaxed text-amber-600">
+          <p className="text-micro leading-relaxed text-amber-600">
             ※ 고강도 챌린지는 하루 1회만 보상이 지급됩니다.
           </p>
         )}
 
-        <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="text-micro leading-relaxed text-muted-foreground">
           ※ QUEST XP 는 보조 경험치로, 공식 1~40 레벨업과 무관합니다. 챔피언
           머니는 기존 지갑에 합산됩니다.
         </p>
@@ -243,14 +243,14 @@ const FunChallengeSubmitForm = ({
           <button
             type="button"
             onClick={handleRetry}
-            className="flex items-center justify-center gap-1.5 rounded-card bg-secondary py-3 text-[13px] font-bold text-secondary-foreground active:scale-[0.98]"
+            className="flex items-center justify-center gap-1.5 rounded-card bg-secondary py-3 text-label font-bold text-secondary-foreground active:scale-[0.98]"
           >
             <RefreshCw className="h-4 w-4" /> 한 번 더 도전
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-card bg-primary py-3 text-[13px] font-bold text-primary-foreground active:scale-[0.98]"
+            className="rounded-card bg-primary py-3 text-label font-bold text-primary-foreground active:scale-[0.98]"
           >
             {isCompleted ? "닫기" : "닫기"}
           </button>
@@ -264,28 +264,28 @@ const FunChallengeSubmitForm = ({
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-1 text-[12px] text-muted-foreground active:scale-95"
+        className="flex items-center gap-1 text-label text-muted-foreground active:scale-95"
       >
         <ArrowLeft className="h-3.5 w-3.5" /> 챌린지 목록
       </button>
 
       <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-        <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+        <p className="text-micro font-black uppercase tracking-wider text-primary">
           오늘의 라운드
         </p>
-        <p className="mt-1 text-[13.5px] font-bold text-foreground">
+        <p className="mt-1 text-label font-bold text-foreground">
           {challenge.title}
         </p>
-        <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
           {challenge.description}
         </p>
-        <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
           정확한 자세가 빠른 기록보다 먼저입니다.
         </p>
       </div>
 
       <div>
-        <p className="mb-1.5 text-[11.5px] font-bold text-foreground">난이도</p>
+        <p className="mb-1.5 text-micro font-bold text-foreground">난이도</p>
         <div className="grid grid-cols-3 gap-1.5">
           {(["beginner", "normal", "advanced"] as QuizDifficulty[]).map((d) => {
             const active = difficulty === d;
@@ -295,14 +295,14 @@ const FunChallengeSubmitForm = ({
                 key={d}
                 type="button"
                 onClick={() => setDifficulty(d)}
-                className={`rounded-card border px-2 py-2 text-center text-[11.5px] transition-all active:scale-[0.99] ${
+                className={`rounded-card border px-2 py-2 text-center text-micro transition-all active:scale-[0.99] ${
                   active
                     ? "border-primary bg-primary/10 text-foreground font-bold"
                     : "border-border bg-card text-muted-foreground"
                 }`}
               >
                 <p>{DIFFICULTY_LABEL[d]}</p>
-                <p className="number-font mt-0.5 text-[10.5px]">
+                <p className="number-font mt-0.5 text-micro">
                   {t ?? "-"} {unit}
                 </p>
               </button>
@@ -312,9 +312,9 @@ const FunChallengeSubmitForm = ({
       </div>
 
       <div>
-        <p className="mb-1.5 flex items-center justify-between text-[11.5px] font-bold text-foreground">
+        <p className="mb-1.5 flex items-center justify-between text-micro font-bold text-foreground">
           내 기록
-          <span className="text-[10px] font-medium text-muted-foreground">
+          <span className="text-micro font-medium text-muted-foreground">
             목표 {targetValue} {unit}
             {rewardPreview &&
               ` · 보상 +${rewardPreview.quest_xp} XP / +${rewardPreview.gems}`}
@@ -330,9 +330,9 @@ const FunChallengeSubmitForm = ({
           onChange={(e) => setSubmittedValue(e.target.value)}
           placeholder={`예: ${targetValue} ${unit}`}
           aria-invalid={!!valueHint}
-          className="w-full rounded-card border border-border bg-card px-3 py-2.5 text-[14px] text-foreground focus:border-primary focus:outline-none"
+          className="w-full rounded-card border border-border bg-card px-3 py-2.5 text-label text-foreground focus:border-primary focus:outline-none"
         />
-        {valueHint && <p className="mt-1 text-[10.5px] font-medium text-destructive">{valueHint}</p>}
+        {valueHint && <p className="mt-1 text-micro font-medium text-destructive">{valueHint}</p>}
       </div>
 
       <SafetyCheckPanel
@@ -342,7 +342,7 @@ const FunChallengeSubmitForm = ({
       />
 
       <div>
-        <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+        <p className="mb-1.5 text-micro font-bold text-foreground">
           메모 <span className="text-muted-foreground font-normal">(선택)</span>
         </p>
         <textarea
@@ -350,12 +350,12 @@ const FunChallengeSubmitForm = ({
           onChange={(e) => setNote(e.target.value)}
           placeholder="오늘의 라운드 한 줄 메모"
           rows={2}
-          className="w-full resize-none rounded-card border border-border bg-card px-3 py-2 text-[12.5px] text-foreground focus:border-primary focus:outline-none"
+          className="w-full resize-none rounded-card border border-border bg-card px-3 py-2 text-label text-foreground focus:border-primary focus:outline-none"
         />
       </div>
 
       {requiredPainAreas.length > 0 && !allPainChecked && !hasPain && (
-        <p className="text-[11px] text-amber-600">
+        <p className="text-micro text-amber-600">
           보상 지급을 위해 {missingPainLabel} 통증 없음 확인이 필요합니다.
         </p>
       )}
@@ -364,7 +364,7 @@ const FunChallengeSubmitForm = ({
         type="button"
         onClick={handleSubmit}
         disabled={!canSubmit}
-        className={`w-full rounded-card py-3 text-[14px] font-bold transition-all ${
+        className={`w-full rounded-card py-3 text-label font-bold transition-all ${
           canSubmit
             ? "bg-primary text-primary-foreground active:scale-[0.98]"
             : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60"

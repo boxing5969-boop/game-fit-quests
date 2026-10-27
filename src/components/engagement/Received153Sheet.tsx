@@ -97,8 +97,8 @@ const Received153Sheet = ({ open, onClose, onCheer }: Props) => {
           >
             <div className="flex items-start justify-between border-b border-border px-5 pb-3 pt-5">
               <div className="min-w-0">
-                <p className="text-[11px] font-black tracking-[0.2em] text-primary">받은 153</p>
-                <h2 className="mt-1 text-[17px] font-bold leading-snug text-foreground">
+                <p className="text-micro font-black tracking-[0.2em] text-primary">받은 153</p>
+                <h2 className="mt-1 text-body font-bold leading-snug text-foreground">
                   {people > 0 ? (
                     <>
                       최근 7일 동안 동료 <span className="number-font text-primary">{people}</span>명이 153을 보냈어요
@@ -107,7 +107,7 @@ const Received153Sheet = ({ open, onClose, onCheer }: Props) => {
                     "최근 7일 동안 받은 153이 없어요"
                   )}
                 </h2>
-                <p className="mt-1 text-[12.5px] text-muted-foreground">
+                <p className="mt-1 text-label text-muted-foreground">
                   153을 돌려주면 그 동료의 가장 최근 카드에 153이 가요
                 </p>
               </div>
@@ -122,17 +122,17 @@ const Received153Sheet = ({ open, onClose, onCheer }: Props) => {
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-3">
-              {isLoading && <p className="py-8 text-center text-[13px] text-muted-foreground">불러오는 중…</p>}
+              {isLoading && <p className="py-8 text-center text-label text-muted-foreground">불러오는 중…</p>}
               {isError && (
                 <div className="py-8 text-center">
-                  <p className="text-[13.5px] font-bold text-foreground">불러오지 못했어요</p>
-                  <button type="button" onClick={() => refetch()} className="mt-2 text-[13px] font-bold text-primary underline">
+                  <p className="text-label font-bold text-foreground">불러오지 못했어요</p>
+                  <button type="button" onClick={() => refetch()} className="mt-2 text-label font-bold text-primary underline">
                     다시 불러오기
                   </button>
                 </div>
               )}
               {!isLoading && !isError && people === 0 && (
-                <p className="py-8 text-center text-[13.5px] leading-relaxed text-muted-foreground">
+                <p className="py-8 text-center text-label leading-relaxed text-muted-foreground">
                   출석하면 '오늘도 한 판'에 이름이 올라가요.
                   <br />
                   오늘 운동 한 줄을 남기면 동료들이 153을 보내요.
@@ -148,7 +148,7 @@ const Received153Sheet = ({ open, onClose, onCheer }: Props) => {
                         type="button"
                         onClick={() => openMemberCard(s.userId)}
                         aria-label={`${s.nickname}님 회원 카드 보기`}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-[15px] font-black text-muted-foreground active:scale-95"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-body font-black text-muted-foreground active:scale-95"
                       >
                         {s.avatarUrl ? (
                           <img src={s.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
@@ -158,19 +158,19 @@ const Received153Sheet = ({ open, onClose, onCheer }: Props) => {
                       </button>
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 items-center gap-1">
-                          <span className="truncate text-[15px] font-bold text-foreground">{s.nickname}</span>
+                          <span className="truncate text-body font-bold text-foreground">{s.nickname}</span>
                           {s.isStaff ? (
-                            <span className="shrink-0 rounded-pill bg-yellow-500/15 px-1.5 py-0.5 text-[11px] font-black text-yellow-600">
+                            <span className="shrink-0 rounded-pill bg-yellow-500/15 px-1.5 py-0.5 text-micro font-black text-yellow-600">
                               {s.staffTitle || "코치"}
                             </span>
                           ) : (
                             <>
                               <NameBadge league={s.league} className="h-4 w-4" glow={false} />
-                              <span className="number-font shrink-0 text-[12px] font-bold text-muted-foreground">Lv.{s.level}</span>
+                              <span className="number-font shrink-0 text-label font-bold text-muted-foreground">Lv.{s.level}</span>
                             </>
                           )}
                         </div>
-                        <p className="mt-0.5 text-[12.5px] text-muted-foreground">
+                        <p className="mt-0.5 text-label text-muted-foreground">
                           153 <span className="number-font font-bold text-foreground">×{s.count}</span> · {when(s.lastAt)}
                         </p>
                       </div>
@@ -180,7 +180,7 @@ const Received153Sheet = ({ open, onClose, onCheer }: Props) => {
                           disabled={done || busy}
                           onClick={() => giveBack.mutate(s)}
                           className={cn(
-                            "inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-pill px-3.5 text-[13.5px] font-black transition-transform active:scale-95 disabled:active:scale-100",
+                            "inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-pill px-3.5 text-label font-black transition-transform active:scale-95 disabled:active:scale-100",
                             done
                               ? "border border-primary/40 bg-primary/10 text-primary"
                               : "bg-primary text-primary-foreground disabled:opacity-60",
@@ -208,7 +208,7 @@ const Received153Sheet = ({ open, onClose, onCheer }: Props) => {
                               branch: s.branch,
                             })
                           }
-                          className="inline-flex min-h-[44px] shrink-0 items-center rounded-pill border border-primary/50 px-3.5 text-[13.5px] font-black text-primary active:scale-95"
+                          className="inline-flex min-h-[44px] shrink-0 items-center rounded-pill border border-primary/50 px-3.5 text-label font-black text-primary active:scale-95"
                         >
                           응원 보내기
                         </button>

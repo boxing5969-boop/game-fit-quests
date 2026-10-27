@@ -24,7 +24,7 @@ const NotificationBellButton = ({ className, iconClassName }: { className?: stri
     >
       <Bell className={cn("h-[17px] w-[17px] text-secondary-foreground", iconClassName)} strokeWidth={2.1} />
       {unread > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10.5px] font-bold leading-none text-white ring-2 ring-background">
+        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-micro font-bold leading-none text-white ring-2 ring-background">
           {badgeText(unread)}
         </span>
       )}

@@ -71,9 +71,9 @@ const LinkAccountPrompt = () => {
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Link2 className="h-4 w-4" />
           </span>
-          <h2 className="text-base font-bold text-foreground">회원 등록 확인</h2>
+          <h2 className="text-body font-bold text-foreground">회원 등록 확인</h2>
         </div>
-        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+        <p className="mb-3 text-label leading-relaxed text-muted-foreground">
           <b className="text-foreground">153복싱짐 회원</b>이시면 <b className="text-foreground">체육관에 등록된 전화번호</b>를 넣어 주세요 — 레벨·출석 기록이 그대로 이어져요. 체육관에 처음 오셨다면 아래에서 <b className="text-foreground">가입 신청</b>을 진행해주세요.
         </p>
         <input
@@ -81,18 +81,18 @@ const LinkAccountPrompt = () => {
           value={phone}
           onChange={(e) => setPhone(formatPhone(e.target.value))}
           placeholder="010-0000-0000"
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
         />
-        {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+        {error && <p className="mt-2 text-label text-destructive">{error}</p>}
         <button
           type="button"
           onClick={submit}
           disabled={loading}
-          className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft transition-all hover:shadow-glow-primary active:scale-[0.98] disabled:opacity-50"
+          className="mt-4 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft transition-all hover:shadow-glow-primary active:scale-[0.98] disabled:opacity-50"
         >
           {loading ? "연동 중..." : "기존 회원 연동하기"}
         </button>
-        <div className="my-3 flex items-center gap-2 text-[11px] text-muted-foreground">
+        <div className="my-3 flex items-center gap-2 text-micro text-muted-foreground">
           <div className="h-px flex-1 bg-border" /> 또는 <div className="h-px flex-1 bg-border" />
         </div>
         <button
@@ -101,14 +101,14 @@ const LinkAccountPrompt = () => {
             setDismissed(true);
             navigate("/signup");
           }}
-          className="w-full rounded-xl border border-primary/40 bg-primary/5 py-3 text-sm font-bold text-primary transition-all active:scale-[0.98]"
+          className="w-full rounded-xl border border-primary/40 bg-primary/5 py-3 text-body font-bold text-primary transition-all active:scale-[0.98]"
         >
           신규 회원이에요 · 가입 신청하기
         </button>
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="mt-3 w-full text-center text-[11px] text-muted-foreground underline"
+          className="mt-3 w-full text-center text-micro text-muted-foreground underline"
         >
           나중에 할게요 · 수강권 결제 시 번호를 입력하면 자동 등록돼요
         </button>

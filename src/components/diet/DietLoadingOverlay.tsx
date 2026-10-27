@@ -103,21 +103,21 @@ export const DietLoadingOverlay = ({
       <div className="relative mb-7 flex h-16 w-40 items-center justify-center">
         <span
           aria-hidden
-          className="absolute left-1 animate-[dietBob_1.4s_ease-in-out_infinite] text-[34px]"
+          className="absolute left-1 animate-[dietBob_1.4s_ease-in-out_infinite] text-display"
           style={{ filter: "drop-shadow(0 6px 14px rgba(16,185,129,0.45))" }}
         >
           🥗
         </span>
         <span
           aria-hidden
-          className="absolute left-1/2 -translate-x-1/2 animate-[dietBob_1.4s_ease-in-out_infinite_0.2s] text-[38px]"
+          className="absolute left-1/2 -translate-x-1/2 animate-[dietBob_1.4s_ease-in-out_infinite_0.2s] text-display"
           style={{ filter: "drop-shadow(0 6px 14px rgba(16,185,129,0.5))" }}
         >
           🍎
         </span>
         <span
           aria-hidden
-          className="absolute right-1 animate-[dietBob_1.4s_ease-in-out_infinite_0.4s] text-[34px]"
+          className="absolute right-1 animate-[dietBob_1.4s_ease-in-out_infinite_0.4s] text-display"
           style={{ filter: "drop-shadow(0 6px 14px rgba(16,185,129,0.45))" }}
         >
           🥑
@@ -129,7 +129,7 @@ export const DietLoadingOverlay = ({
         <span
           key={`tone-${quoteIdx}`}
           className={cn(
-            "animate-[quoteIn_520ms_ease-out] rounded-full px-2 py-0.5 text-[9.5px] font-black uppercase tracking-[0.2em]",
+            "animate-[quoteIn_520ms_ease-out] rounded-full px-2 py-0.5 text-micro font-black uppercase tracking-[0.2em]",
             line.tone === "quote"
               ? "bg-emerald-400/15 text-emerald-500"
               : "bg-amber-400/15 text-amber-600",
@@ -139,20 +139,20 @@ export const DietLoadingOverlay = ({
         </span>
         <p
           key={`line-${quoteIdx}`}
-          className="mt-2 animate-[quoteIn_520ms_ease-out] text-[16px] font-extrabold leading-snug text-foreground"
+          className="mt-2 animate-[quoteIn_520ms_ease-out] text-body font-extrabold leading-snug text-foreground"
         >
           "{line.line}"
         </p>
         <p
           key={`by-${quoteIdx}`}
-          className="mt-2 animate-[quoteIn_620ms_ease-out] text-[11px] font-semibold tracking-wide text-muted-foreground"
+          className="mt-2 animate-[quoteIn_620ms_ease-out] text-micro font-semibold tracking-wide text-muted-foreground"
         >
           — {line.by}
         </p>
       </div>
 
       {/* 진행 라인 — 리듬용 */}
-      <div className="mt-7 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-emerald-500">
+      <div className="mt-7 flex items-center gap-2 text-micro font-black uppercase tracking-[0.25em] text-emerald-500">
         <span className="inline-block h-1 w-8 animate-pulse rounded-full bg-emerald-400/60" />
         DIET · 21 DAYS
         <span className="inline-block h-1 w-8 animate-pulse rounded-full bg-emerald-400/60" />

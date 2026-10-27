@@ -27,7 +27,7 @@ export const DietTimelineStrip = ({
 }: DietTimelineStripProps) => {
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="flex items-center justify-between text-micro font-bold uppercase tracking-wider text-muted-foreground">
         <span>21일 타임라인</span>
         <span className="number-font text-foreground">DAY {currentDay} / 21</span>
       </div>
@@ -37,7 +37,7 @@ export const DietTimelineStrip = ({
           for (let d = stage.dayRange[0]; d <= stage.dayRange[1]; d++) days.push(d);
           return (
             <div key={stage.id} className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wide">
+              <div className="flex items-center gap-1.5 text-micro font-black uppercase tracking-wide">
                 <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-primary">
                   {stage.label}
                 </span>
@@ -77,7 +77,7 @@ const DayDot = ({
   isCurrent: boolean;
 }) => {
   const base =
-    "flex h-7 flex-1 items-center justify-center rounded-md text-[10px] font-bold";
+    "flex h-7 flex-1 items-center justify-center rounded-md text-micro font-bold";
   if (status === "approved") {
     return (
       <span

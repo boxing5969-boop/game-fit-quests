@@ -33,8 +33,8 @@ const LessonDayList = ({ groups, today, onOpen }: Props) => (
     {groups.map((g) => (
       <section key={g.level} aria-label={levelLong(g.level)}>
         <div className="mb-2 flex items-baseline justify-between px-1">
-          <h3 className="text-[15px] font-black text-foreground">{levelLong(g.level)}</h3>
-          <span className="text-[11.5px] font-bold text-muted-foreground">{g.days.length}일 수업</span>
+          <h3 className="text-body font-black text-foreground">{levelLong(g.level)}</h3>
+          <span className="text-micro font-bold text-muted-foreground">{g.days.length}일 수업</span>
         </div>
         <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl bg-card shadow-elev-1">
           {g.days.map((d) => {
@@ -51,18 +51,18 @@ const LessonDayList = ({ groups, today, onOpen }: Props) => (
                 >
                   <span
                     className={cn(
-                      "w-[52px] shrink-0 text-[15px] font-black tabular-nums",
+                      "w-[52px] shrink-0 text-body font-black tabular-nums",
                       st === "done" ? "text-muted-foreground" : "text-foreground",
                     )}
                   >
                     {d.dayNo}일차
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-bold text-foreground">{d.title}</span>
-                    <span className="block truncate text-[12px] text-muted-foreground">{summaryOf(d)}</span>
+                    <span className="block truncate text-label font-bold text-foreground">{d.title}</span>
+                    <span className="block truncate text-label text-muted-foreground">{summaryOf(d)}</span>
                   </span>
                   {st === "current" && today && (
-                    <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-[11px] font-black text-primary-foreground">
+                    <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-micro font-black text-primary-foreground">
                       {today.attendedToday ? "오늘" : "다음"}
                     </span>
                   )}

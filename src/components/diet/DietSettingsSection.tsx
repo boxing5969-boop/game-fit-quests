@@ -68,10 +68,10 @@ export const DietSettingsSection = () => {
       className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1"
       style={{ animationDelay: "0.02s" }}
     >
-      <h2 className="mb-1 text-base font-bold text-foreground">
+      <h2 className="mb-1 text-body font-bold text-foreground">
         153 다이어트
       </h2>
-      <p className="mb-4 text-xs text-muted-foreground">
+      <p className="mb-4 text-label text-muted-foreground">
         체크인 리마인더, 코치 알림, 리더보드 노출을 설정할 수 있어요.
       </p>
 
@@ -141,7 +141,7 @@ export const DietSettingsSection = () => {
           icon={<Sunrise className="h-3.5 w-3.5" />}
           className="mt-3"
         >
-          <p className="mb-1.5 text-[11px] text-muted-foreground">
+          <p className="mb-1.5 text-micro text-muted-foreground">
             내 라이프스타일에 가까운 한 가지를 고르면 홈 팁이 그에 맞춰 갱신돼요.
           </p>
           <div className="grid grid-cols-1 gap-1.5">
@@ -164,13 +164,13 @@ export const DietSettingsSection = () => {
                 >
                   <p
                     className={cn(
-                      "text-[13px] font-bold",
+                      "text-label font-bold",
                       active ? "text-primary" : "text-foreground",
                     )}
                   >
                     {v.title}
                   </p>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                     {v.summary}
                   </p>
                 </button>
@@ -180,7 +180,7 @@ export const DietSettingsSection = () => {
         </Group>
       )}
 
-      <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mt-3 flex items-start gap-1.5 text-micro leading-relaxed text-muted-foreground">
         <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
         체중·감량 수치는 절대 공개되지 않습니다. 랭킹은 습관 수행률·승인 일수·연속일만 사용해요.
       </p>
@@ -203,7 +203,7 @@ const Group = ({
   children: React.ReactNode;
 }) => (
   <div className={className}>
-    <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+    <p className="mb-1.5 flex items-center gap-1.5 text-micro font-bold uppercase tracking-wider text-muted-foreground">
       {icon}
       {title}
     </p>
@@ -232,11 +232,11 @@ const Row = ({
     )}
   >
     <div className="min-w-0 flex-1 pr-3">
-      <p className="flex items-center gap-1 text-[13px] font-bold text-foreground">
+      <p className="flex items-center gap-1 text-label font-bold text-foreground">
         {label}
         {rightIcon}
       </p>
-      <p className="text-[11px] text-muted-foreground">{hint}</p>
+      <p className="text-micro text-muted-foreground">{hint}</p>
     </div>
     <Switch
       checked={value}

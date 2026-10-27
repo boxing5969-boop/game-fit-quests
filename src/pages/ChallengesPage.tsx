@@ -68,20 +68,20 @@ const ChallengesPage = () => {
         {/* Hero — 더 다이어터 시즌 */}
         <section className="rounded-2xl border border-yellow-500/40 bg-gradient-to-b from-yellow-500/10 via-emerald-400/5 to-transparent p-5">
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.2em] text-yellow-400">
+            <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-micro font-black uppercase tracking-[0.2em] text-yellow-400">
               SEASON
             </span>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">
+            <p className="text-micro font-black uppercase tracking-[0.2em] text-emerald-500">
               CHALLENGE · 같이 21일
             </p>
           </div>
-          <h2 className="mt-1.5 text-display-sm leading-tight text-foreground">
+          <h2 className="mt-1.5 text-heading leading-tight text-foreground">
             <span className="text-yellow-400">더 다이어터</span> 시즌
           </h2>
-          <p className="mt-0.5 text-[13px] font-bold text-muted-foreground">
+          <p className="mt-0.5 text-label font-bold text-muted-foreground">
             혼자보다 함께
           </p>
-          <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-label leading-relaxed text-muted-foreground">
             체중을 경쟁하지 않습니다. 출석·기록·복귀 참여로 점수가 쌓여요.
             꾸준함이 진짜 점수입니다.
           </p>
@@ -90,7 +90,7 @@ const ChallengesPage = () => {
         {/* 내 참여 챌린지 */}
         {mine && (
           <section>
-            <p className="mb-2 text-[11px] font-bold text-muted-foreground uppercase tracking-wide">
+            <p className="mb-2 text-micro font-bold text-muted-foreground uppercase tracking-wide">
               내 챌린지
             </p>
             <MyChallengeCard
@@ -105,11 +105,11 @@ const ChallengesPage = () => {
 
         {/* 공개 리스트 */}
         <section>
-          <p className="mb-2 text-[11px] font-bold text-muted-foreground uppercase tracking-wide">
+          <p className="mb-2 text-micro font-bold text-muted-foreground uppercase tracking-wide">
             진행 중인 챌린지
           </p>
           {listQ.isLoading && (
-            <p className="text-center text-[12px] text-muted-foreground py-6">
+            <p className="text-center text-label text-muted-foreground py-6">
               불러오는 중...
             </p>
           )}
@@ -118,10 +118,10 @@ const ChallengesPage = () => {
               <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-500">
                 <Users className="h-5 w-5" />
               </div>
-              <p className="mt-2 text-[13px] font-bold text-foreground">
+              <p className="mt-2 text-label font-bold text-foreground">
                 <span className="text-yellow-400">더 다이어터</span> 시즌 챌린지가 곧 열립니다
               </p>
-              <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+              <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
                 지점 또는 목표별 챌린지가 열리면 여기에 표시돼요.
                 <br />
                 먼저 오늘의 습관 체크부터 챙겨볼까요?
@@ -129,7 +129,7 @@ const ChallengesPage = () => {
               <Button
                 variant="outline"
                 onClick={() => navigate("/diet")}
-                className="mt-3 h-9 rounded-xl text-[12px]"
+                className="mt-3 h-9 rounded-xl text-label"
               >
                 오늘 미션 먼저 하기
               </Button>
@@ -149,7 +149,7 @@ const ChallengesPage = () => {
           </ul>
         </section>
 
-        <p className="pb-4 text-center text-[11px] leading-relaxed text-muted-foreground">
+        <p className="pb-4 text-center text-micro leading-relaxed text-muted-foreground">
           응원과 꾸준함 중심 · 상위권만 보상받지 않아요 · 몸무게 공개 없음
         </p>
       </div>
@@ -206,11 +206,11 @@ const MyChallengeCard = ({
     <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
       <div className="flex items-center gap-2">
         <Target className="h-4 w-4 text-primary" />
-        <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+        <p className="text-micro font-black uppercase tracking-widest text-primary">
           참여 중 · {CHALLENGE_GOAL_LABEL[row.goal]}
         </p>
       </div>
-      <h3 className="mt-1 text-[16px] font-extrabold leading-tight text-foreground">
+      <h3 className="mt-1 text-body font-extrabold leading-tight text-foreground">
         {row.title}
       </h3>
 
@@ -218,10 +218,10 @@ const MyChallengeCard = ({
       <div className="mt-3 flex items-center gap-3">
         <ProgressRing pct={pctComplete} label={`${currentDay}`} />
         <div className="min-w-0 flex-1">
-          <p className="text-[11.5px] font-bold text-foreground">
+          <p className="text-micro font-bold text-foreground">
             Day {currentDay} <span className="text-muted-foreground font-normal">/ {row.duration_days}</span>
           </p>
-          <p className="mt-0.5 text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             {row.start_date} ~ {endDate}
             <br />
             참여 {row.participant_count}명 · 오늘도 체크인 한 번이면 충분해요
@@ -251,7 +251,7 @@ const MyChallengeCard = ({
       </div>
 
       {status && (
-        <p className="mt-2 text-center text-[11.5px] font-bold text-emerald-500">
+        <p className="mt-2 text-center text-micro font-bold text-emerald-500">
           {status}
         </p>
       )}
@@ -304,7 +304,7 @@ const ProgressRing = ({
         />
       </svg>
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <span className="number-font text-[13px] font-extrabold text-foreground">
+        <span className="number-font text-label font-extrabold text-foreground">
           {label}
         </span>
       </div>
@@ -347,12 +347,12 @@ const ChallengeCard = ({
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center gap-2">
         <Flame className="h-4 w-4 text-primary" />
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-micro font-bold text-primary">
           {CHALLENGE_GOAL_LABEL[row.goal]}
         </span>
         <span
           className={cn(
-            "ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold",
+            "ml-auto rounded-full px-2 py-0.5 text-micro font-bold",
             row.status === "active"
               ? "bg-emerald-400/15 text-emerald-500"
               : row.status === "upcoming"
@@ -367,10 +367,10 @@ const ChallengeCard = ({
               : "종료"}
         </span>
       </div>
-      <h3 className="mt-1.5 text-[14.5px] font-extrabold leading-tight text-foreground">
+      <h3 className="mt-1.5 text-label font-extrabold leading-tight text-foreground">
         {row.title}
       </h3>
-      <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+      <p className="mt-0.5 text-micro text-muted-foreground">
         {row.start_date} · {row.duration_days}일
         {row.branch_name ? ` · ${row.branch_name}` : " · 전체 공개"}
         <span className="ml-1 inline-flex items-center gap-0.5">
@@ -379,7 +379,7 @@ const ChallengeCard = ({
       </p>
 
       {row.is_joined && row.status === "ended" ? (
-        <p className="mt-2 text-[11px] font-bold text-muted-foreground">
+        <p className="mt-2 text-micro font-bold text-muted-foreground">
           완주 기록 남음 — 수고하셨어요.
         </p>
       ) : !open ? (
@@ -387,14 +387,14 @@ const ChallengeCard = ({
           <Button
             onClick={() => setOpen(true)}
             disabled={row.status === "ended"}
-            className="h-9 flex-1 rounded-xl text-[12.5px]"
+            className="h-9 flex-1 rounded-xl text-label"
           >
             참여하기
           </Button>
           <Button
             variant="outline"
             onClick={onOpenLeaderboard}
-            className="h-9 rounded-xl text-[12.5px]"
+            className="h-9 rounded-xl text-label"
           >
             순위
           </Button>
@@ -408,7 +408,7 @@ const ChallengeCard = ({
                 type="button"
                 onClick={() => setTeam(t)}
                 className={cn(
-                  "flex-1 rounded-lg border px-2 py-1.5 text-[11.5px] font-bold transition-all",
+                  "flex-1 rounded-lg border px-2 py-1.5 text-micro font-bold transition-all",
                   t === team
                     ? t === "red"
                       ? "border-primary bg-primary/10 text-primary"
@@ -427,27 +427,27 @@ const ChallengeCard = ({
               value={invite}
               onChange={(e) => setInvite(e.target.value)}
               placeholder="초대 코드 입력"
-              className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-[12.5px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-label text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           )}
           <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={() => setOpen(false)}
-              className="h-9 rounded-xl text-[11.5px]"
+              className="h-9 rounded-xl text-micro"
             >
               취소
             </Button>
             <Button
               onClick={handleJoin}
               disabled={join.isPending}
-              className="h-9 flex-1 rounded-xl text-[11.5px] font-bold"
+              className="h-9 flex-1 rounded-xl text-micro font-bold"
             >
               확인
             </Button>
           </div>
           {msg && (
-            <p className="text-center text-[11px] text-muted-foreground">{msg}</p>
+            <p className="text-center text-micro text-muted-foreground">{msg}</p>
           )}
         </div>
       )}
@@ -462,7 +462,7 @@ const LeaderboardSection = ({ challengeId }: { challengeId: string }) => {
 
   return (
     <section className="rounded-2xl border border-border bg-card p-4">
-      <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+      <p className="mb-2 text-micro font-bold uppercase tracking-wide text-muted-foreground">
         리더보드 · 출석·연속·복귀 기반
       </p>
 
@@ -475,7 +475,7 @@ const LeaderboardSection = ({ challengeId }: { challengeId: string }) => {
         {data.rows.slice(0, 20).map((r, i) => (
           <li
             key={r.user_id}
-            className="flex items-center justify-between rounded-lg border border-border bg-background px-2.5 py-1.5 text-[12px]"
+            className="flex items-center justify-between rounded-lg border border-border bg-background px-2.5 py-1.5 text-label"
           >
             <div className="flex min-w-0 items-center gap-2">
               <span className="number-font w-5 text-right font-extrabold text-muted-foreground">
@@ -487,7 +487,7 @@ const LeaderboardSection = ({ challengeId }: { challengeId: string }) => {
               {r.team_side !== "none" && (
                 <span
                   className={cn(
-                    "rounded px-1 text-[9px] font-black",
+                    "rounded px-1 text-micro font-black",
                     r.team_side === "red"
                       ? "bg-primary/15 text-primary"
                       : "bg-sky-400/15 text-sky-500",
@@ -497,7 +497,7 @@ const LeaderboardSection = ({ challengeId }: { challengeId: string }) => {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-[11.5px]">
+            <div className="flex items-center gap-2 text-micro">
               <span className="number-font font-bold text-foreground">{r.total_points}점</span>
               {r.current_streak > 0 && (
                 <span className="inline-flex items-center gap-0.5 text-primary">
@@ -509,7 +509,7 @@ const LeaderboardSection = ({ challengeId }: { challengeId: string }) => {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-center text-[10.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-2 text-center text-micro leading-relaxed text-muted-foreground">
         상위 20명만 표시. 꾸준히 참여한 모두가 완주자입니다.
       </p>
     </section>
@@ -535,15 +535,15 @@ const TeamBar = ({
   >
     <p
       className={cn(
-        "text-[10px] font-black uppercase tracking-[0.2em]",
+        "text-micro font-black uppercase tracking-[0.2em]",
         tone === "red" ? "text-primary" : "text-sky-500",
       )}
     >
       TEAM {label}
     </p>
-    <p className="mt-0.5 number-font text-[18px] font-extrabold text-foreground">
+    <p className="mt-0.5 number-font text-heading font-extrabold text-foreground">
       {points.toLocaleString()}
-      <span className="ml-1 text-[11px] font-bold text-muted-foreground">점</span>
+      <span className="ml-1 text-micro font-bold text-muted-foreground">점</span>
     </p>
   </div>
 );

@@ -38,8 +38,8 @@ const Records153Strip = ({ onOpenAll, onOpenMember }: Props) => {
   return (
     <section className="rounded-card border border-[#F6C453]/40 bg-gradient-to-b from-[#F6C453]/10 to-card p-3.5">
       <button type="button" onClick={onOpenAll} className="flex w-full items-center gap-2 text-left active:opacity-80">
-        <span className="text-[15px] font-black text-foreground">🏆 153 레코드 최초 기록자</span>
-        <span className="ml-auto flex items-center text-[12px] font-bold text-muted-foreground">
+        <span className="text-body font-black text-foreground">🏆 153 레코드 최초 기록자</span>
+        <span className="ml-auto flex items-center text-label font-bold text-muted-foreground">
           전체 보기
           <ChevronRight className="h-4 w-4" />
         </span>
@@ -64,15 +64,15 @@ const Records153Strip = ({ onOpenAll, onOpenMember }: Props) => {
                 <MedalBadge kind={t.medal} className="h-8 w-8" title={t.title} />
                 <span className="min-w-0">
                   <span
-                    className={`block whitespace-nowrap text-[10.5px] font-black ${
+                    className={`block whitespace-nowrap text-micro font-black ${
                       t.medal === "gold" ? "text-reward" : "text-slate-500 dark:text-slate-300"
                     }`}
                   >
                     {t.title}
                   </span>
-                  <span className="block max-w-[10rem] truncate text-[13.5px] font-black text-foreground">
+                  <span className="block max-w-[10rem] truncate text-label font-black text-foreground">
                     {label}
-                    {mine && <span className="ml-1 text-[11px] text-primary">나</span>}
+                    {mine && <span className="ml-1 text-micro text-primary">나</span>}
                   </span>
                 </span>
               </button>
@@ -89,12 +89,12 @@ const Records153Strip = ({ onOpenAll, onOpenMember }: Props) => {
                   rec.is_me ? "border-primary/60" : "border-border"
                 }`}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-pill bg-reward/15 text-[19px]">{f.emoji}</span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-pill bg-reward/15 text-heading">{f.emoji}</span>
                 <span className="min-w-0">
-                  <span className="block whitespace-nowrap text-[10.5px] font-black text-reward">{f.title}</span>
-                  <span className="block max-w-[8.5rem] truncate text-[13.5px] font-black text-foreground">
+                  <span className="block whitespace-nowrap text-micro font-black text-reward">{f.title}</span>
+                  <span className="block max-w-[8.5rem] truncate text-label font-black text-foreground">
                     {rec.nickname}
-                    {rec.is_me && <span className="ml-1 text-[11px] text-primary">나</span>}
+                    {rec.is_me && <span className="ml-1 text-micro text-primary">나</span>}
                   </span>
                 </span>
               </button>
@@ -107,7 +107,7 @@ const Records153Strip = ({ onOpenAll, onOpenMember }: Props) => {
         <button
           type="button"
           onClick={onOpenAll}
-          className="mt-2.5 w-full rounded-xl bg-reward/15 px-3 py-2 text-[12.5px] font-black text-reward active:scale-[0.99]"
+          className="mt-2.5 w-full rounded-xl bg-reward/15 px-3 py-2 text-label font-black text-reward active:scale-[0.99]"
         >
           아직 주인 없는 기록 {open}개 — 최초가 되면 마일리지 {RECORD_153_MILEAGE.toLocaleString()} 🎁
         </button>

@@ -122,13 +122,13 @@ const TitleMatchInvitePopup = () => {
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-reward/15 ring-4 ring-reward/10">
             <Trophy className="h-8 w-8 text-reward" strokeWidth={2.4} />
           </span>
-          <p className="mt-4 text-[12.5px] font-bold text-reward">{league} 리그 · 레벨 10 달성</p>
-          <h2 id="title-invite-heading" className="mt-1 text-[21px] font-black leading-snug text-foreground">
+          <p className="mt-4 text-label font-bold text-reward">{league} 리그 · 레벨 10 달성</p>
+          <h2 id="title-invite-heading" className="mt-1 text-heading font-black leading-snug text-foreground">
             {league} 타이틀매치로
             <br />
             {next} 리그에 올라가요
           </h2>
-          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-label leading-relaxed text-muted-foreground">
             타이틀미션을 확인하고, 준비되면 {who}께 심사를 신청하세요.
           </p>
         </div>
@@ -136,10 +136,10 @@ const TitleMatchInvitePopup = () => {
         <ol className="mx-5 space-y-2 rounded-2xl bg-secondary/70 px-4 py-3.5" aria-label="타이틀미션 도전 순서">
           {TITLE_MISSION_STEPS.map((s) => (
             <li key={s.n} className="flex items-center gap-2.5">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[12px] font-black text-primary-foreground">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-label font-black text-primary-foreground">
                 {s.n}
               </span>
-              <span className="min-w-0 text-[13.5px] font-bold text-foreground">
+              <span className="min-w-0 text-label font-bold text-foreground">
                 {s.n === 3 ? `${who}께 심사를 신청해요` : s.title}
               </span>
             </li>
@@ -153,14 +153,14 @@ const TitleMatchInvitePopup = () => {
               close();
               navigate(titleMatchLink(state.rank));
             }}
-            className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-[15px] font-black text-primary-foreground transition-transform active:scale-[0.98]"
+            className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-body font-black text-primary-foreground transition-transform active:scale-[0.98]"
           >
             타이틀미션 보기
           </button>
           <button
             type="button"
             onClick={close}
-            className="flex h-11 w-full items-center justify-center rounded-2xl text-[13.5px] font-bold text-muted-foreground transition-transform active:scale-[0.98]"
+            className="flex h-11 w-full items-center justify-center rounded-2xl text-label font-bold text-muted-foreground transition-transform active:scale-[0.98]"
           >
             나중에 할게요
           </button>

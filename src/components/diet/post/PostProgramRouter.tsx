@@ -44,7 +44,7 @@ export const PostProgramRouter = ({
 
   if (planQuery.isLoading || ensure.isPending) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-6 text-center text-[12px] text-muted-foreground">
+      <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
         21일 리포트 불러오는 중...
       </div>
     );
@@ -56,7 +56,7 @@ export const PostProgramRouter = ({
   if (!payload?.has_plan || !payload.plan) {
     // ensure 실패 혹은 마이그레이션 미반영 — graceful 폴백
     return (
-      <div className="space-y-3 rounded-2xl border border-border bg-card p-5 text-[12.5px] leading-relaxed text-muted-foreground">
+      <div className="space-y-3 rounded-2xl border border-border bg-card p-5 text-label leading-relaxed text-muted-foreground">
         <p className="font-bold text-foreground">
           21일 리포트를 준비 중입니다
         </p>
@@ -67,7 +67,7 @@ export const PostProgramRouter = ({
         <Button
           variant="outline"
           onClick={() => planQuery.refetch()}
-          className="h-9 rounded-xl text-[12px]"
+          className="h-9 rounded-xl text-label"
         >
           <RefreshCw className="mr-1 h-3.5 w-3.5" />
           다시 확인
@@ -83,7 +83,7 @@ export const PostProgramRouter = ({
     return (
       <div className="space-y-4">
         <CompletionReportCard summary={plan.completion_summary} />
-        <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+        <div className="flex items-center justify-center gap-1.5 text-micro font-bold uppercase tracking-widest text-muted-foreground">
           <ChevronDown className="h-3.5 w-3.5" />
           NEXT STEP
           <ChevronDown className="h-3.5 w-3.5" />

@@ -23,7 +23,7 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
   if (isLoading) {
     return (
       <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-        <p className="text-sm text-muted-foreground">영상 불러오는 중...</p>
+        <p className="text-body text-muted-foreground">영상 불러오는 중...</p>
       </div>
     );
   }
@@ -31,8 +31,8 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
   if (videos.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-        <span className="text-3xl">🎬</span>
-        <p className="mt-2 text-sm text-muted-foreground">이 레벨의 훈련 영상은 준비 중이에요</p>
+        <span className="text-title">🎬</span>
+        <p className="mt-2 text-body text-muted-foreground">이 레벨의 훈련 영상은 준비 중이에요</p>
       </div>
     );
   }
@@ -46,14 +46,14 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
       <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-black text-foreground">🎬 이번 레벨 영상 마스터</p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
+            <p className="text-body font-black text-foreground">🎬 이번 레벨 영상 마스터</p>
+            <p className="mt-0.5 text-micro text-muted-foreground">
               집에서 먼저 보고 오면 수업이 훨씬 쉬워져요
             </p>
           </div>
           <div className="text-right">
-            <p className="number-font text-xl font-black text-primary">{done}/{videos.length}</p>
-            <p className="text-[10px] text-muted-foreground">시청 완료</p>
+            <p className="number-font text-heading font-black text-primary">{done}/{videos.length}</p>
+            <p className="text-micro text-muted-foreground">시청 완료</p>
           </div>
         </div>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
@@ -87,37 +87,37 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
                   className="aspect-video w-full object-cover"
                 />
               ) : (
-                <div className="flex aspect-video w-full items-center justify-center bg-muted text-3xl">🥊</div>
+                <div className="flex aspect-video w-full items-center justify-center bg-muted text-title">🥊</div>
               )}
               <span className="absolute inset-0 flex items-center justify-center">
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/55 backdrop-blur">
                   <Play className="ml-0.5 h-6 w-6 fill-white text-white" />
                 </span>
               </span>
-              <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-black text-white backdrop-blur">
+              <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-micro font-black text-white backdrop-blur">
                 {i + 1} · {t.tag || "훈련"}
               </span>
               {isDone && (
-                <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-status-complete px-2 py-0.5 text-[10px] font-black text-white">
+                <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-status-complete px-2 py-0.5 text-micro font-black text-white">
                   <CheckCircle2 className="h-3 w-3" /> 완료
                 </span>
               )}
             </button>
 
             <div className="p-3.5">
-              <p className="text-sm font-black text-foreground">{t.name}</p>
-              {t.sub && <p className="mt-0.5 text-[11px] text-muted-foreground">{t.sub}</p>}
+              <p className="text-body font-black text-foreground">{t.name}</p>
+              {t.sub && <p className="mt-0.5 text-micro text-muted-foreground">{t.sub}</p>}
               {v.keyPoints.length > 0 && (
                 <ul className="mt-2 space-y-0.5">
                   {v.keyPoints.slice(0, 3).map((kp, j) => (
-                    <li key={j} className="text-[11px] text-muted-foreground">· {kp}</li>
+                    <li key={j} className="text-micro text-muted-foreground">· {kp}</li>
                   ))}
                 </ul>
               )}
               <button
                 type="button"
                 onClick={() => toggle(v.id)}
-                className={`mt-3 w-full rounded-xl py-2.5 text-xs font-bold transition-all active:scale-95 ${
+                className={`mt-3 w-full rounded-xl py-2.5 text-label font-bold transition-all active:scale-95 ${
                   isDone
                     ? "bg-status-complete/10 text-status-complete"
                     : "bg-primary text-primary-foreground"
@@ -140,7 +140,7 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
         >
           <div className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-sm font-bold text-white">{parseVideoTitle(playing.title).name}</p>
+              <p className="text-body font-bold text-white">{parseVideoTitle(playing.title).name}</p>
               <button
                 onClick={() => setPlaying(null)}
                 aria-label="닫기"
@@ -159,7 +159,7 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
             <button
               type="button"
               onClick={() => { toggle(playing.id); setPlaying(null); }}
-              className="mt-3 w-full rounded-2xl bg-primary py-3.5 text-sm font-bold text-primary-foreground active:scale-[0.98]"
+              className="mt-3 w-full rounded-2xl bg-primary py-3.5 text-body font-bold text-primary-foreground active:scale-[0.98]"
             >
               따라했어요 ✓
             </button>

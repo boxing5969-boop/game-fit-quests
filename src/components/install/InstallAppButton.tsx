@@ -66,8 +66,8 @@ const InstallAppButton = ({ inline = false, label = "앱으로 설치하기" }: 
   }
 
   const btnClass = inline
-    ? "inline-flex items-center justify-center gap-2 rounded-pill border border-primary/50 bg-primary/10 px-4 py-2 text-[12.5px] font-bold text-primary transition-all active:scale-95 hover:bg-primary/20"
-    : "flex w-full items-center justify-center gap-2 rounded-card bg-gradient-to-r from-primary to-primary/85 px-4 py-3 text-[13.5px] font-bold text-primary-foreground shadow-[0_4px_14px_-4px_rgba(11,15,23,0.6)] transition-all active:scale-[0.98] hover:brightness-110";
+    ? "inline-flex items-center justify-center gap-2 rounded-pill border border-primary/50 bg-primary/10 px-4 py-2 text-label font-bold text-primary transition-all active:scale-95 hover:bg-primary/20"
+    : "flex w-full items-center justify-center gap-2 rounded-card bg-gradient-to-r from-primary to-primary/85 px-4 py-3 text-label font-bold text-primary-foreground shadow-[0_4px_14px_-4px_rgba(11,15,23,0.6)] transition-all active:scale-[0.98] hover:brightness-110";
 
   // 안드로이드 — 구글 플레이로 (2026-10-20 대표님: 구글 스토어 출시)
   if (status === "android-store") {
@@ -97,8 +97,8 @@ const InstallAppButton = ({ inline = false, label = "앱으로 설치하기" }: 
         aria-label="앱으로 설치하기"
         className={
           inline
-            ? "inline-flex items-center justify-center gap-2 rounded-pill border border-primary/50 bg-primary/10 px-4 py-2 text-[12.5px] font-bold text-primary transition-all active:scale-95 hover:bg-primary/20"
-            : "flex w-full items-center justify-center gap-2 rounded-card bg-gradient-to-r from-primary to-primary/85 px-4 py-3 text-[13.5px] font-bold text-primary-foreground shadow-[0_4px_14px_-4px_rgba(11,15,23,0.6)] transition-all active:scale-[0.98] hover:brightness-110"
+            ? "inline-flex items-center justify-center gap-2 rounded-pill border border-primary/50 bg-primary/10 px-4 py-2 text-label font-bold text-primary transition-all active:scale-95 hover:bg-primary/20"
+            : "flex w-full items-center justify-center gap-2 rounded-card bg-gradient-to-r from-primary to-primary/85 px-4 py-3 text-label font-bold text-primary-foreground shadow-[0_4px_14px_-4px_rgba(11,15,23,0.6)] transition-all active:scale-[0.98] hover:brightness-110"
         }
       >
         <Download className="h-4 w-4" />
@@ -125,13 +125,13 @@ const InstallAppButton = ({ inline = false, label = "앱으로 설치하기" }: 
                   <Smartphone className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                  <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                     iPhone · iPad
                   </p>
-                  <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+                  <h2 className="mt-0.5 text-body font-bold text-foreground">
                     홈 화면에 마이복서153 추가
                   </h2>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                     Safari 의 공유 메뉴에서 두 번만 누르면 앱처럼 사용할 수 있어요.
                   </p>
                 </div>
@@ -149,45 +149,45 @@ const InstallAppButton = ({ inline = false, label = "앱으로 설치하기" }: 
             {/* 본문 — 3 단계 */}
             <ol className="space-y-3 px-5 py-4">
               <li className="flex items-start gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[12px] font-black text-primary">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-label font-black text-primary">
                   1
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-bold text-foreground">
+                  <p className="text-label font-bold text-foreground">
                     Safari 하단의 <span className="inline-flex items-center"><Share className="mx-1 h-3.5 w-3.5 text-primary" /></span> 공유 아이콘 누르기
                   </p>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                     Chrome / Firefox / 카카오톡 안의 브라우저로 보고 있다면, 먼저 화면 상단 메뉴에서 <strong>"Safari로 열기"</strong> 를 눌러주세요.
                   </p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[12px] font-black text-primary">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-label font-black text-primary">
                   2
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="flex flex-wrap items-center gap-1 text-[13px] font-bold text-foreground">
+                  <p className="flex flex-wrap items-center gap-1 text-label font-bold text-foreground">
                     공유 메뉴에서
-                    <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[12px]">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-label">
                       <Plus className="h-3.5 w-3.5" />
                       홈 화면에 추가
                     </span>
                     선택
                   </p>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                     목록을 아래로 내리면 보여요.
                   </p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[12px] font-black text-primary">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-label font-black text-primary">
                   3
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-bold text-foreground">
-                    우측 상단의 <span className="rounded-md bg-muted px-1.5 py-0.5 text-[12px]">추가</span> 누르기
+                  <p className="text-label font-bold text-foreground">
+                    우측 상단의 <span className="rounded-md bg-muted px-1.5 py-0.5 text-label">추가</span> 누르기
                   </p>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                     홈 화면에 마이복서153 아이콘이 생기고, 풀스크린 앱처럼 열려요.
                   </p>
                 </div>
@@ -198,7 +198,7 @@ const InstallAppButton = ({ inline = false, label = "앱으로 설치하기" }: 
               <button
                 type="button"
                 onClick={dismissIos}
-                className="w-full rounded-card bg-primary py-3 text-[13px] font-bold text-primary-foreground active:scale-[0.98]"
+                className="w-full rounded-card bg-primary py-3 text-label font-bold text-primary-foreground active:scale-[0.98]"
               >
                 알겠어요
               </button>

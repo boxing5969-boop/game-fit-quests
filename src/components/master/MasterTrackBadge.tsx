@@ -27,8 +27,8 @@ export const MasterTrackBadge = ({
   const isGrand = displayLevel >= 99;
   const sizeCls =
     size === "sm"
-      ? "h-6 px-2 text-[10px] gap-1"
-      : "h-7 px-2.5 text-[11px] gap-1.5";
+      ? "h-6 px-2 text-micro gap-1"
+      : "h-7 px-2.5 text-micro gap-1.5";
 
   return (
     <span

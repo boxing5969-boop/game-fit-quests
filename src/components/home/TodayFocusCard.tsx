@@ -143,10 +143,10 @@ const TodayFocusCard = () => {
           <Sparkles className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.3em] text-primary">
             오늘의 한 가지
           </p>
-          <p className="mt-0.5 text-[14px] font-bold text-foreground">
+          <p className="mt-0.5 text-label font-bold text-foreground">
             오늘은 하나만 해도 충분합니다.
           </p>
         </div>
@@ -179,13 +179,13 @@ const TodayFocusCard = () => {
             <div className="min-w-0 flex-1">
               <p
                 className={cn(
-                  "text-[12px] font-bold leading-tight",
+                  "text-label font-bold leading-tight",
                   i === 0 ? "text-foreground" : "text-foreground/85",
                 )}
               >
                 {item.label}
               </p>
-              <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+              <p className="mt-0.5 truncate text-micro text-muted-foreground">
                 {item.detail}
               </p>
             </div>
@@ -194,7 +194,7 @@ const TodayFocusCard = () => {
         ))}
       </div>
 
-      <p className="mt-3 border-t border-border pt-2.5 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mt-3 border-t border-border pt-2.5 text-micro leading-relaxed text-muted-foreground">
         <span className="font-bold text-foreground/80">최근 변화 — </span>
         {recentLine}
       </p>

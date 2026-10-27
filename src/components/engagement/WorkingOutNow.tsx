@@ -89,7 +89,7 @@ const Avatar = ({ m, size }: { m: WorkingOutMember; size: "md" | "lg" }) => (
     <span
       className={cn(
         "flex items-center justify-center overflow-hidden rounded-pill bg-secondary font-black text-secondary-foreground",
-        size === "lg" ? "h-16 w-16 text-[22px]" : "h-11 w-11 text-[16px]",
+        size === "lg" ? "h-16 w-16 text-title" : "h-11 w-11 text-body",
       )}
     >
       {m.avatar_url ? (
@@ -152,13 +152,13 @@ const WorkingOutNowCard = ({
           aria-label={`${title} 크게 보기`}
         >
           <LiveDot on={list.length > 0} />
-          <span className="text-[15px] font-black text-foreground">{title}</span>
-          <span className="number-font text-[15px] font-black text-emerald-600 dark:text-emerald-400">
+          <span className="text-body font-black text-foreground">{title}</span>
+          <span className="number-font text-body font-black text-emerald-600 dark:text-emerald-400">
             {list.length}
-            <span className="ml-0.5 text-[12px]">명</span>
+            <span className="ml-0.5 text-label">명</span>
           </span>
-          {scope && <span className="truncate text-[12px] font-bold text-muted-foreground">· {scope}</span>}
-          <span className="ml-auto flex shrink-0 items-center gap-1 text-[12px] font-bold text-muted-foreground">
+          {scope && <span className="truncate text-label font-bold text-muted-foreground">· {scope}</span>}
+          <span className="ml-auto flex shrink-0 items-center gap-1 text-label font-bold text-muted-foreground">
             크게 보기
             <Maximize2 className="h-3.5 w-3.5" />
           </span>
@@ -182,14 +182,14 @@ const WorkingOutNowCard = ({
                 <Avatar m={m} size="md" />
                 <span className="flex w-full min-w-0 items-center justify-center gap-0.5">
                   <NameBadge league={m.league} className="h-3.5 w-3.5 shrink-0" glow={false} />
-                  <span className="truncate text-[12px] font-black text-foreground">{m.nickname}</span>
+                  <span className="truncate text-label font-black text-foreground">{m.nickname}</span>
                 </span>
-                <span className="whitespace-nowrap text-[10.5px] font-bold text-muted-foreground">
+                <span className="whitespace-nowrap text-micro font-bold text-muted-foreground">
                   {m.is_me && <span className="text-primary">나 · </span>}
                   {minutesLabel(m.since, now)}
                 </span>
                 {data.all_branches && m.branch && (
-                  <span className="max-w-full truncate text-[10px] font-bold text-muted-foreground/80">
+                  <span className="max-w-full truncate text-micro font-bold text-muted-foreground/80">
                     {shortBranchName(m.branch)}
                   </span>
                 )}
@@ -197,7 +197,7 @@ const WorkingOutNowCard = ({
             ))}
           </div>
         ) : (
-          <p className="mt-2 text-[12.5px] font-semibold text-muted-foreground">{emptyText}</p>
+          <p className="mt-2 text-label font-semibold text-muted-foreground">{emptyText}</p>
         )}
       </section>
 
@@ -255,12 +255,12 @@ const WorkingOutNowFullscreen = ({
         >
           <div className="flex items-center gap-2 border-b border-border px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.875rem)]">
             <LiveDot on={members.length > 0} size="h-3 w-3" />
-            <h2 className="text-[18px] font-black text-foreground">{title}</h2>
-            <span className="number-font text-[18px] font-black text-emerald-600 dark:text-emerald-400">
+            <h2 className="text-heading font-black text-foreground">{title}</h2>
+            <span className="number-font text-heading font-black text-emerald-600 dark:text-emerald-400">
               {members.length}
-              <span className="ml-0.5 text-[13px]">명</span>
+              <span className="ml-0.5 text-label">명</span>
             </span>
-            {scope && <span className="truncate text-[13px] font-bold text-muted-foreground">· {scope}</span>}
+            {scope && <span className="truncate text-label font-bold text-muted-foreground">· {scope}</span>}
             <button
               type="button"
               onClick={onClose}
@@ -272,7 +272,7 @@ const WorkingOutNowFullscreen = ({
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-3">
-            <p className="mb-3 text-[12px] font-semibold leading-relaxed text-muted-foreground">
+            <p className="mb-3 text-label font-semibold leading-relaxed text-muted-foreground">
               체육관 TV와 같은 기준이에요 · 앱에서 운동 시작 또는 출석 후 2시간 · 1분마다 새로고침
               <br />
               이름을 누르면 회원 카드가 열려요 — 하트 · 메시지 · 응원 · 짝꿍 신청
@@ -292,14 +292,14 @@ const WorkingOutNowFullscreen = ({
                     <Avatar m={m} size="lg" />
                     <span className="flex w-full min-w-0 items-center justify-center gap-0.5">
                       <NameBadge league={m.league} className="h-4 w-4 shrink-0" glow={false} />
-                      <span className="truncate text-[13.5px] font-black text-foreground">{m.nickname}</span>
+                      <span className="truncate text-label font-black text-foreground">{m.nickname}</span>
                     </span>
-                    <span className="whitespace-nowrap text-[11px] font-bold text-muted-foreground">
+                    <span className="whitespace-nowrap text-micro font-bold text-muted-foreground">
                       {m.is_me ? <span className="text-primary">나 · </span> : null}
                       Lv.{m.level} · {minutesLabel(m.since, now)}
                     </span>
                     {allBranches && m.branch && (
-                      <span className="max-w-full truncate text-[10.5px] font-bold text-muted-foreground/80">
+                      <span className="max-w-full truncate text-micro font-bold text-muted-foreground/80">
                         {shortBranchName(m.branch)}
                       </span>
                     )}
@@ -307,7 +307,7 @@ const WorkingOutNowFullscreen = ({
                 ))}
               </div>
             ) : (
-              <p className="rounded-card border border-border bg-muted/30 px-4 py-8 text-center text-[13px] font-semibold text-muted-foreground">
+              <p className="rounded-card border border-border bg-muted/30 px-4 py-8 text-center text-label font-semibold text-muted-foreground">
                 {emptyText}
               </p>
             )}

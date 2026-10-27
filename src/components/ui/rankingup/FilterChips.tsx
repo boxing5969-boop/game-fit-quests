@@ -58,7 +58,7 @@ export const FilterChips = <T extends string>({
             type="button"
             onClick={() => handleClick(c.value)}
             className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 rounded-pill border px-3 py-1.5 text-caption font-bold transition-all active:scale-[0.97]",
+              "inline-flex shrink-0 items-center gap-1.5 rounded-pill border px-3 py-1.5 text-label font-bold transition-all active:scale-[0.97]",
               active
                 ? "border-accent bg-accent/10 text-accent"
                 : "border-border bg-card text-muted-foreground hover:text-foreground",
@@ -69,7 +69,7 @@ export const FilterChips = <T extends string>({
             {typeof c.count === "number" && (
               <span
                 className={cn(
-                  "number-font rounded-pill px-1.5 py-0.5 text-[10px]",
+                  "number-font rounded-pill px-1.5 py-0.5 text-micro",
                   active ? "bg-accent/20" : "bg-muted",
                 )}
               >

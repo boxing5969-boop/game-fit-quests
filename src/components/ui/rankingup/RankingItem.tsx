@@ -63,7 +63,7 @@ export const RankingItem = ({
           rankAccent(rank),
         )}
       >
-        <span className="number-font text-body-lg font-bold">{rank}</span>
+        <span className="number-font text-body font-bold">{rank}</span>
       </div>
 
       {/* Avatar */}
@@ -77,7 +77,7 @@ export const RankingItem = ({
               loading="lazy"
             />
           ) : typeof avatar === "string" ? (
-            <span className="text-lg">{avatar}</span>
+            <span className="text-heading">{avatar}</span>
           ) : (
             avatar
           )}
@@ -87,7 +87,7 @@ export const RankingItem = ({
       {/* Name + meta */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <p className="truncate text-body-sm font-bold text-foreground">
+          <p className="truncate text-label font-bold text-foreground">
             {name}
           </p>
           {badge}
@@ -96,19 +96,19 @@ export const RankingItem = ({
           )}
         </div>
         {meta && (
-          <p className="text-caption truncate text-muted-foreground">{meta}</p>
+          <p className="text-label truncate text-muted-foreground font-medium">{meta}</p>
         )}
       </div>
 
       {/* Score + delta */}
       <div className="flex flex-col items-end">
-        <span className="number-font text-body-lg font-bold text-foreground">
+        <span className="number-font text-body font-bold text-foreground">
           {typeof score === "number" ? score.toLocaleString() : score}
         </span>
         {delta !== undefined && (
           <span
             className={cn(
-              "mt-0.5 inline-flex items-center gap-0.5 text-[10px] font-bold",
+              "mt-0.5 inline-flex items-center gap-0.5 text-micro font-bold",
               // Spec: 상승 #22C55E / 하락 #EF4444 / 유지 #697386
               delta > 0
                 ? "text-[#22C55E]"

@@ -83,48 +83,48 @@ const CommunityViewGrants = () => {
 
   return (
     <div id="community-view-grants" className="mt-2.5 rounded-xl border border-border bg-card p-3">
-      <p className="text-[13px] font-black text-foreground">지점장·코치 권한</p>
-      <ul className="mt-1 space-y-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="text-label font-black text-foreground">지점장·코치 권한</p>
+      <ul className="mt-1 space-y-0.5 text-micro leading-relaxed text-muted-foreground">
         <li>· 커뮤니티 모든 글 보기 — 친구만 · 나만 보기 · 숨긴 글까지 봐요</li>
         <li>· 우리 지점 목표 만들기 — 지점 목표를 열고 끝내요</li>
       </ul>
-      <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
         자기 지점에서만 쓰고, 켜면 받은 사람에게 알림이 가요.
       </p>
 
       {isLoading ? (
-        <p className="flex items-center justify-center gap-1.5 py-5 text-[12px] text-muted-foreground">
+        <p className="flex items-center justify-center gap-1.5 py-5 text-label text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> 불러오는 중…
         </p>
       ) : isError ? (
         <div className="py-4 text-center">
-          <p className="text-[12.5px] font-bold text-foreground">목록을 불러오지 못했어요</p>
-          <button type="button" onClick={() => refetch()} className="mt-1.5 text-[12px] font-bold text-primary underline">
+          <p className="text-label font-bold text-foreground">목록을 불러오지 못했어요</p>
+          <button type="button" onClick={() => refetch()} className="mt-1.5 text-label font-bold text-primary underline">
             다시 불러오기
           </button>
         </div>
       ) : staff.length === 0 ? (
-        <p className="py-4 text-center text-[12px] text-muted-foreground">등록된 지점장·코치가 없어요</p>
+        <p className="py-4 text-center text-label text-muted-foreground">등록된 지점장·코치가 없어요</p>
       ) : (
         <div className="mt-2.5 space-y-3">
           {groups.map(([branch, list]) => (
             <div key={branch || "none"}>
-              <p className="mb-1 px-0.5 text-[11px] font-bold text-muted-foreground">
+              <p className="mb-1 px-0.5 text-micro font-bold text-muted-foreground">
                 {branch ? shortBranchName(branch) : "지점 없음"} · {list.length}명
               </p>
               <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
                 {list.map((s) => (
                   <li key={s.user_id} className="px-2.5 py-2.5">
                     <div className="flex items-center gap-2.5">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-[12px] font-black text-muted-foreground">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-label font-black text-muted-foreground">
                         {s.avatar_url ? (
                           <img src={s.avatar_url} alt="" className="h-full w-full object-cover" loading="lazy" />
                         ) : (
                           s.name.slice(0, 1)
                         )}
                       </span>
-                      <p className="min-w-0 truncate text-[13px] font-bold text-foreground">
-                        {s.name} <span className="text-[11.5px] font-semibold text-muted-foreground">{s.title}</span>
+                      <p className="min-w-0 truncate text-label font-bold text-foreground">
+                        {s.name} <span className="text-micro font-semibold text-muted-foreground">{s.title}</span>
                       </p>
                     </div>
                     <div className="mt-2 space-y-1.5 pl-[42px]">
@@ -135,10 +135,10 @@ const CommunityViewGrants = () => {
                           toggle.isPending && toggle.variables?.s.user_id === s.user_id && toggle.variables?.perm === perm;
                         return (
                           <div key={perm} className="flex items-center justify-between gap-2">
-                            <span className="min-w-0 text-[12px] font-semibold leading-snug text-foreground">
+                            <span className="min-w-0 text-label font-semibold leading-snug text-foreground">
                               {STAFF_PERM_LABEL[perm]}
                               {on && since && (
-                                <span className="ml-1 text-[10.5px] font-normal text-muted-foreground">· {sinceText(since)}부터</span>
+                                <span className="ml-1 text-micro font-normal text-muted-foreground">· {sinceText(since)}부터</span>
                               )}
                             </span>
                             <Switch
@@ -156,7 +156,7 @@ const CommunityViewGrants = () => {
               </ul>
             </div>
           ))}
-          <p className="px-0.5 text-[11px] text-muted-foreground">
+          <p className="px-0.5 text-micro text-muted-foreground">
             지금 켜진 권한 — 글 보기 {counts.community_view}명 · 목표 만들기 {counts.branch_goal}명
           </p>
         </div>

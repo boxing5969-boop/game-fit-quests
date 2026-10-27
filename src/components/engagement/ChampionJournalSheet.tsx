@@ -209,13 +209,13 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
           <BookOpen className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             오늘 운동 한 줄
           </p>
-          <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+          <h2 className="mt-0.5 text-body font-bold text-foreground">
             오늘 컨디션 · 한 줄 · 사진
           </h2>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             남긴 한 줄은 커뮤니티에 올라가요. 누가 볼지는 아래에서 골라요.
           </p>
         </div>
@@ -248,7 +248,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             ) : (
               <AlertTriangle className="h-5 w-5 text-amber-500" />
             )}
-            <p className="text-[13.5px] font-bold text-foreground">
+            <p className="text-label font-bold text-foreground">
               {isReward
                 ? visibility === "branch"
                   ? "올렸어요! 지점 동료들이 153으로 응원할 거예요."
@@ -261,41 +261,41 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         </div>
 
         <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+          <p className="text-micro font-black uppercase tracking-wider text-primary">
             오삼 코치
           </p>
-          <p className="mt-1 text-[12px] leading-relaxed text-foreground">
+          <p className="mt-1 text-label leading-relaxed text-foreground">
             오늘의 한 줄은 사라지지 않습니다. 나중에 당신의 성장 증거가 됩니다.
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+            <p className="text-micro font-black uppercase tracking-wider text-primary">
               경험치
             </p>
-            <p className="number-font mt-0.5 text-[18px] font-black text-foreground">
+            <p className="number-font mt-0.5 text-heading font-black text-foreground">
               +{result.quest_xp_granted}
             </p>
           </div>
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-reward">
+            <p className="text-micro font-black uppercase tracking-wider text-reward">
               챔피언 머니
             </p>
-            <p className="number-font mt-0.5 text-[18px] font-black text-reward">
+            <p className="number-font mt-0.5 text-heading font-black text-reward">
               +{result.gems_granted.toLocaleString()}
             </p>
           </div>
         </div>
 
-        <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="text-micro leading-relaxed text-muted-foreground">
           ※ 커뮤니티 활동은 공식 레벨업과 무관해요.
         </p>
 
         <button
           type="button"
           onClick={onClose}
-          className="w-full rounded-card bg-primary py-3 text-[13px] font-bold text-primary-foreground active:scale-[0.98]"
+          className="w-full rounded-card bg-primary py-3 text-label font-bold text-primary-foreground active:scale-[0.98]"
         >
           닫기
         </button>
@@ -316,7 +316,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span
-              className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
+              className={`flex h-5 w-5 items-center justify-center rounded-full text-micro font-black ${
                 condition
                   ? "bg-emerald-500 text-white"
                   : "bg-primary text-primary-foreground"
@@ -324,12 +324,12 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             >
               {condition ? "✓" : "1"}
             </span>
-            <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+            <p className="text-micro font-black uppercase tracking-wider text-primary">
               먼저, 오늘의 컨디션
             </p>
           </div>
           {alreadyHasTodayCondition && (
-            <span className="text-[10px] font-medium text-emerald-600">
+            <span className="text-micro font-medium text-emerald-600">
               오늘 기록됨
             </span>
           )}
@@ -346,7 +346,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
                 type="button"
                 data-tutorial-condition="true"
                 onClick={() => setCondition(active ? null : o.type)}
-                className={`rounded-pill border px-2.5 py-1.5 text-[11px] transition-all active:scale-[0.98] ${
+                className={`rounded-pill border px-2.5 py-1.5 text-micro transition-all active:scale-[0.98] ${
                   active
                     ? "border-primary bg-primary/10 text-foreground font-bold"
                     : "border-border bg-card text-muted-foreground"
@@ -360,7 +360,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
 
         {showPainArea && (
           <div className="mt-2.5">
-            <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+            <p className="mb-1.5 text-micro font-bold text-foreground">
               통증 부위{" "}
               <span className="font-normal text-muted-foreground">(선택)</span>
             </p>
@@ -372,7 +372,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
                     key={p.value}
                     type="button"
                     onClick={() => togglePainArea(p.value)}
-                    className={`rounded-pill border px-2.5 py-1.5 text-[11px] transition-all active:scale-[0.98] ${
+                    className={`rounded-pill border px-2.5 py-1.5 text-micro transition-all active:scale-[0.98] ${
                       active
                         ? "border-primary bg-primary/10 text-foreground font-bold"
                         : "border-border bg-card text-muted-foreground"
@@ -383,14 +383,14 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
                 );
               })}
             </div>
-            <p className="mt-1.5 text-[10.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
               ※ 통증이 있으면 무리하지 마세요. 코치와 상담을 권장합니다.
             </p>
           </div>
         )}
 
         {!condition && (
-          <p className="mt-2 text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-micro leading-relaxed text-muted-foreground">
             컨디션을 먼저 골라야 일기 작성이 시작됩니다.
           </p>
         )}
@@ -407,7 +407,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
       >
         <div className="flex items-center gap-2">
           <span
-            className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
+            className={`flex h-5 w-5 items-center justify-center rounded-full text-micro font-black ${
               condition
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground"
@@ -415,14 +415,14 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
           >
             2
           </span>
-          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+          <p className="text-micro font-black uppercase tracking-wider text-primary">
             오늘 운동 한 줄
           </p>
         </div>
 
         <div>
-          <p className="text-[13.5px] font-bold text-foreground">{prompt}</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="text-label font-bold text-foreground">{prompt}</p>
+          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
             완벽한 문장이 아니라 솔직한 기록이면 충분합니다.
           </p>
           <div className="mt-2 flex items-center justify-between gap-2">
@@ -433,17 +433,17 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         </div>
 
         <div>
-          <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+          <p className="mb-1.5 text-micro font-bold text-foreground">
             질문 바꾸기
           </p>
           <ChampionJournalPromptList selected={prompt} onSelect={setPrompt} />
         </div>
 
         <div>
-          <p className="mb-1.5 flex items-center justify-between text-[11.5px] font-bold text-foreground">
+          <p className="mb-1.5 flex items-center justify-between text-micro font-bold text-foreground">
             한 줄
             <span
-              className={`text-[10.5px] font-medium ${
+              className={`text-micro font-medium ${
                 tooLong
                   ? "text-destructive"
                   : tooShort
@@ -465,7 +465,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             rows={4}
             disabled={!condition}
             data-tour="journal-reflection-input"
-            className="w-full resize-none rounded-card border border-border bg-card px-3 py-2 text-[13px] text-foreground focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full resize-none rounded-card border border-border bg-card px-3 py-2 text-label text-foreground focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
       </div>
@@ -473,7 +473,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
       {/* 사진 한 장 + 공개 범위 (153 커뮤니티 개편 2026-10-15) */}
       <div className="space-y-2 rounded-card border border-border bg-card p-3">
         <div className="flex items-center gap-2">
-          <label className="flex cursor-pointer items-center gap-1.5 rounded-pill border border-border px-3 py-1.5 text-[12px] font-bold text-foreground active:scale-[0.98]">
+          <label className="flex cursor-pointer items-center gap-1.5 rounded-pill border border-border px-3 py-1.5 text-label font-bold text-foreground active:scale-[0.98]">
             <ImagePlus className="h-4 w-4 text-primary" />
             {photo ? "사진 바꾸기" : "사진 한 장 (선택)"}
             <input
@@ -484,7 +484,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
             />
           </label>
           {photo && (
-            <button type="button" onClick={() => setPhoto(null)} className="text-[11px] font-bold text-muted-foreground underline">
+            <button type="button" onClick={() => setPhoto(null)} className="text-micro font-bold text-muted-foreground underline">
               빼기
             </button>
           )}
@@ -494,7 +494,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         )}
         {/* 공개 범위 3가지 (2026-10-18) — 누가 보는지 한 줄로 바로 보여 준다 */}
         <div>
-          <p className="mb-1.5 text-[11.5px] font-bold text-foreground">누가 볼 수 있나요?</p>
+          <p className="mb-1.5 text-micro font-bold text-foreground">누가 볼 수 있나요?</p>
           <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="누가 볼 수 있나요">
             {JOURNAL_VISIBILITIES.map((v) => {
               const Icon = VIS_ICON[v];
@@ -506,7 +506,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
                   role="radio"
                   aria-checked={on}
                   onClick={() => setVisibility(v)}
-                  className={`flex min-w-0 items-center justify-center gap-1 rounded-pill border px-1.5 py-1.5 text-[11.5px] font-bold ${
+                  className={`flex min-w-0 items-center justify-center gap-1 rounded-pill border px-1.5 py-1.5 text-micro font-bold ${
                     on ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"
                   }`}
                 >
@@ -516,10 +516,10 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
               );
             })}
           </div>
-          <p className="mt-1.5 text-[11px] font-semibold text-foreground">{VISIBILITY_HINT[visibility]}</p>
+          <p className="mt-1.5 text-micro font-semibold text-foreground">{VISIBILITY_HINT[visibility]}</p>
         </div>
         {/* 2026-10-16: 본사가 모든 글을 본다 · 2026-10-18: 본사가 허락한 지점장·코치도 */}
-        <p className="text-[10.5px] leading-relaxed text-muted-foreground">{VISIBILITY_STAFF_NOTE}</p>
+        <p className="text-micro leading-relaxed text-muted-foreground">{VISIBILITY_STAFF_NOTE}</p>
       </div>
 
       <button
@@ -527,7 +527,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         data-tour="journal-submit"
         onClick={handleSubmit}
         disabled={!canSubmit}
-        className={`w-full rounded-card py-3 text-[14px] font-bold transition-all ${
+        className={`w-full rounded-card py-3 text-label font-bold transition-all ${
           canSubmit
             ? "bg-primary text-primary-foreground active:scale-[0.98]"
             : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60"
@@ -548,13 +548,13 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
 
       {/* 최근 일기 3개 */}
       <div>
-        <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+        <p className="mb-1.5 text-micro font-bold text-foreground">
           최근 기록
         </p>
         {recentLoading ? (
-          <p className="text-[11px] text-muted-foreground">불러오는 중…</p>
+          <p className="text-micro text-muted-foreground">불러오는 중…</p>
         ) : (recent ?? []).length === 0 ? (
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-micro text-muted-foreground">
             아직 기록이 없습니다. 첫 한 줄을 남겨보세요.
           </p>
         ) : (

@@ -48,14 +48,14 @@ export const ExtendCycleResult = ({
       <div className="rounded-2xl border border-reward/30 bg-gradient-to-b from-reward/10 to-transparent p-5">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-[#F6C453]" />
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#F6C453]">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-[#F6C453]">
             EXTEND CYCLE DONE
           </p>
         </div>
-        <h2 className="mt-1 text-[20px] font-extrabold leading-tight text-foreground">
+        <h2 className="mt-1 text-heading font-extrabold leading-tight text-foreground">
           {plan.extension_cycle_length}일 연장 {totalWeeks}주 완주
         </h2>
-        <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-label leading-relaxed text-muted-foreground">
           사이클을 이어갔다는 것이 이미 큰 변화입니다.
           <br />
           지금 몸에 맞는 다음 단계를 골라요.
@@ -121,12 +121,12 @@ export const ExtendCycleResult = ({
       </Button>
 
       {end.isError && (
-        <p className="text-center text-[11px] text-destructive">
+        <p className="text-center text-micro text-destructive">
           저장에 실패했어요. 잠시 후 다시 시도해 주세요.
         </p>
       )}
 
-      <p className="pt-1 text-center text-[11px] leading-relaxed text-muted-foreground">
+      <p className="pt-1 text-center text-micro leading-relaxed text-muted-foreground">
         언제든 코치와 상담 후 경로를 바꿀 수 있어요.
       </p>
     </section>
@@ -178,16 +178,16 @@ const ChoiceCard = ({
         {icon}
       </span>
       <div>
-        <h3 className="text-[15px] font-extrabold leading-tight text-foreground">
+        <h3 className="text-body font-extrabold leading-tight text-foreground">
           {title}
         </h3>
-        <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>
+        <p className="mt-0.5 text-micro text-muted-foreground">{subtitle}</p>
       </div>
       {tone === "good" && (
         <HeartHandshake className="ml-auto h-3 w-3 text-emerald-500 opacity-0" />
       )}
     </div>
-    <ul className="mt-2 space-y-0.5 text-[12px] text-foreground">
+    <ul className="mt-2 space-y-0.5 text-label text-foreground">
       {bullets.map((b) => (
         <li key={b} className="flex gap-1.5">
           <span className="mt-1 block h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />

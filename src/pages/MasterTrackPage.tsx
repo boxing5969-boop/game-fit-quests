@@ -117,17 +117,17 @@ const MasterTrackPage = () => {
           <div className="relative">
             <div className="flex items-center gap-2">
               <Crown className="h-5 w-5 text-reward" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-reward">
+              <span className="text-micro font-bold uppercase tracking-wider text-reward">
                 MASTER TRACK
               </span>
             </div>
-            <h1 className="mt-1 text-2xl font-bold text-foreground">
+            <h1 className="mt-1 text-title font-bold text-foreground">
               Lv.{overall}{" "}
-              <span className="text-base font-semibold text-muted-foreground">
+              <span className="text-body font-semibold text-muted-foreground">
                 · 마스터 {masterLevel}단계
               </span>
             </h1>
-            <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+            <p className="mt-2 text-label leading-relaxed text-muted-foreground">
               보스 레벨 (50/60/70/80/90/99) 에서는 코치 승인 심사가 필요합니다.
               실패하더라도 경험치의 50% 가 보존됩니다.
             </p>
@@ -136,14 +136,14 @@ const MasterTrackPage = () => {
           <div className="relative">
             <div className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-muted-foreground" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <span className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
                 MASTER TRACK · 잠김
               </span>
             </div>
-            <h1 className="mt-1 text-xl font-bold text-foreground">
+            <h1 className="mt-1 text-heading font-bold text-foreground">
               블랙리그 마스터 이후 공개
             </h1>
-            <p className="mt-2 flex items-start gap-2 text-[12px] leading-relaxed text-muted-foreground">
+            <p className="mt-2 flex items-start gap-2 text-label leading-relaxed text-muted-foreground">
               <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               {eligible
                 ? "조건을 충족했어요. 지금 입장하면 Lv.41 부터 진행이 시작됩니다."
@@ -172,7 +172,7 @@ const MasterTrackPage = () => {
                     },
                   });
                 }}
-                className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[hsl(42_92%_52%)] via-[hsl(36_96%_58%)] to-[hsl(24_94%_52%)] px-4 text-sm font-bold text-[hsl(30_60%_12%)] shadow-[0_0_20px_rgba(246,196,83,0.35)] transition-all active:scale-[0.98] disabled:opacity-60"
+                className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[hsl(42_92%_52%)] via-[hsl(36_96%_58%)] to-[hsl(24_94%_52%)] px-4 text-body font-bold text-[hsl(30_60%_12%)] shadow-[0_0_20px_rgba(246,196,83,0.35)] transition-all active:scale-[0.98] disabled:opacity-60"
               >
                 <Sparkles className="h-4 w-4" />
                 {enterMutation.isPending ? "입장 중…" : "마스터 로드 입장"}
@@ -205,7 +205,7 @@ const MasterTrackPage = () => {
               ) : (
                 <Swords className="h-3 w-3 text-primary" />
               )}
-              <span className="number-font mt-0.5 text-[11px] font-bold leading-none text-foreground">
+              <span className="number-font mt-0.5 text-micro font-bold leading-none text-foreground">
                 {lv}
               </span>
             </div>
@@ -227,10 +227,10 @@ const MasterTrackPage = () => {
           return (
             <section key={section.title} className="space-y-2">
               <header className="flex items-center justify-between px-0.5">
-                <h2 className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
+                <h2 className="text-label font-bold uppercase tracking-wider text-muted-foreground">
                   {section.title}
                 </h2>
-                <span className="number-font text-[11px] font-semibold text-muted-foreground">
+                <span className="number-font text-micro font-semibold text-muted-foreground">
                   {completed}/{levels.length}
                 </span>
               </header>

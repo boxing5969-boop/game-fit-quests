@@ -125,18 +125,18 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
   return (
     <div className="mb-3 rounded-xl border border-reward/30 bg-reward/5 p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-[11.5px] font-black text-foreground">🏆 타이틀매치 심사 · 영상</p>
+        <p className="text-micro font-black text-foreground">🏆 타이틀매치 심사 · 영상</p>
         <AttemptDots attempts={shownAttempts} max={max} />
       </div>
 
-      <p className="text-[11px] leading-relaxed text-foreground">
+      <p className="text-micro leading-relaxed text-foreground">
         아래 동작을 <b>완벽한 자세로 3번 연속 성공</b> → 똑같은 동작을 <b>파트너에게 미트로 3번 받아주기</b>.
         한 번에 찍어 올려요 · 도전 {max}번까지
       </p>
       {moves.length > 0 && (
         <ol className="mt-1.5 space-y-0.5">
           {moves.map((m, i) => (
-            <li key={i} className="truncate text-[10.5px] text-muted-foreground">
+            <li key={i} className="truncate text-micro text-muted-foreground">
               {i + 1}. {m}
             </li>
           ))}
@@ -144,7 +144,7 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
       )}
 
       {/* 지금 상태 */}
-      <div className="mt-2.5 text-[11px] font-semibold">
+      <div className="mt-2.5 text-micro font-semibold">
         {isLoading ? (
           <span className="text-muted-foreground">불러오는 중…</span>
         ) : isError ? (
@@ -169,14 +169,14 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
       <TitleAttemptList attempts={shownAttempts} max={max} className="mt-2" />
 
       {!canJudge ? (
-        <p className="mt-2.5 rounded-lg bg-muted/50 px-2.5 py-2 text-[10.5px] font-semibold text-muted-foreground">
+        <p className="mt-2.5 rounded-lg bg-muted/50 px-2.5 py-2 text-micro font-semibold text-muted-foreground">
           이 타이틀매치는 지점장·관장님이 영상으로 심사해요
         </p>
       ) : !isLoading && !isError && !cleared && !locked ? (
         clip ? (
           <div className="mt-3 space-y-2.5">
             <video src={clip.url} controls playsInline className="max-h-64 w-full rounded-xl bg-black" />
-            <div className="flex items-center justify-between text-[10.5px] text-muted-foreground">
+            <div className="flex items-center justify-between text-micro text-muted-foreground">
               <span>
                 도전 {nextNo}/{max} 영상 · {formatMb(clip.blob.size)}
               </span>
@@ -198,7 +198,7 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
                 onClick={() => setVerdict(true)}
                 disabled={record.isPending}
                 className={cn(
-                  "h-11 rounded-xl text-[13px] font-black transition-all active:scale-95",
+                  "h-11 rounded-xl text-label font-black transition-all active:scale-95",
                   verdict === true ? "bg-status-complete text-white" : "bg-card text-foreground ring-1 ring-border",
                 )}
               >
@@ -211,7 +211,7 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
                 onClick={() => setVerdict(false)}
                 disabled={record.isPending}
                 className={cn(
-                  "h-11 rounded-xl text-[13px] font-black transition-all active:scale-95",
+                  "h-11 rounded-xl text-label font-black transition-all active:scale-95",
                   verdict === false ? "bg-foreground text-background" : "bg-card text-foreground ring-1 ring-border",
                 )}
               >
@@ -228,7 +228,7 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
                       type="button"
                       onClick={() => setNote(n)}
                       className={cn(
-                        "rounded-full border px-2.5 py-1 text-[10.5px] transition-all active:scale-95",
+                        "rounded-full border px-2.5 py-1 text-micro transition-all active:scale-95",
                         note === n ? "border-primary bg-primary/10 font-bold text-primary" : "border-border text-muted-foreground",
                       )}
                     >
@@ -240,7 +240,7 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
                   value={note}
                   onChange={(e) => setNote(e.target.value.slice(0, 120))}
                   placeholder="한마디 (선택) — 회원 알림에 같이 가요"
-                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-[12px] text-foreground placeholder:text-muted-foreground"
+                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-label text-foreground placeholder:text-muted-foreground"
                 />
               </div>
             )}
@@ -250,7 +250,7 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
               onClick={submit}
               disabled={verdict === null || record.isPending}
               className={cn(
-                "flex h-12 w-full items-center justify-center gap-1.5 rounded-xl text-[13px] font-black transition-all active:scale-[0.98] disabled:opacity-40",
+                "flex h-12 w-full items-center justify-center gap-1.5 rounded-xl text-label font-black transition-all active:scale-[0.98] disabled:opacity-40",
                 verdict === true ? "bg-status-complete text-white" : "bg-primary text-primary-foreground",
               )}
             >
@@ -273,19 +273,19 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
               <button
                 type="button"
                 onClick={() => setRecorderOpen(true)}
-                className="flex h-12 items-center justify-center gap-1.5 rounded-xl bg-primary text-[13px] font-black text-primary-foreground transition-all active:scale-95"
+                className="flex h-12 items-center justify-center gap-1.5 rounded-xl bg-primary text-label font-black text-primary-foreground transition-all active:scale-95"
               >
                 <Video className="h-4 w-4" /> 앱으로 촬영
               </button>
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="flex h-12 items-center justify-center gap-1.5 rounded-xl bg-card text-[13px] font-black text-foreground ring-1 ring-border transition-all active:scale-95"
+                className="flex h-12 items-center justify-center gap-1.5 rounded-xl bg-card text-label font-black text-foreground ring-1 ring-border transition-all active:scale-95"
               >
                 <FolderOpen className="h-4 w-4" /> 찍어 둔 영상
               </button>
             </div>
-            <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
+            <p className="mt-1.5 text-center text-micro text-muted-foreground">
               도전 {nextNo}/{max} · 앱 촬영은 작게 저장돼요 (찍어 둔 영상은 50MB까지)
             </p>
           </div>

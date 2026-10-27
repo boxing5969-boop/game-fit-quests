@@ -64,15 +64,15 @@ const AndroidAppGate = ({ children }: { children: ReactNode }) => {
             height={84}
             className="mx-auto h-[84px] w-[84px] rounded-[24px] shadow-[0_12px_24px_-8px_rgba(0,0,0,0.45)] ring-4 ring-white"
           />
-          <span className="mt-5 inline-flex items-center rounded-full bg-white px-3 py-1 text-[12.5px] font-black text-[#07784F] shadow-sm">
+          <span className="mt-5 inline-flex items-center rounded-full bg-white px-3 py-1 text-label font-black text-[#07784F] shadow-sm">
             NEW · 구글 플레이 출시
           </span>
-          <h1 className="mt-3 text-[27px] font-black leading-[1.25] tracking-[-0.01em]">
+          <h1 className="mt-3 text-title font-black leading-[1.25] tracking-[-0.01em]">
             마이복서153
             <br />
             이제 앱으로 만나요
           </h1>
-          <p className="mt-2 text-[14.5px] font-bold text-white">안드로이드 회원님은 구글 플레이에서 받으세요</p>
+          <p className="mt-2 text-label font-bold text-white">안드로이드 회원님은 구글 플레이에서 받으세요</p>
         </div>
       </header>
 
@@ -85,8 +85,8 @@ const AndroidAppGate = ({ children }: { children: ReactNode }) => {
                 <Icon className="h-5 w-5" strokeWidth={2.4} />
               </span>
               <span className="min-w-0">
-                <span className="block text-[15px] font-black leading-snug text-[#11161A]">{title}</span>
-                <span className="block text-[12.5px] font-semibold leading-snug text-[#5A666C]">{sub}</span>
+                <span className="block text-body font-black leading-snug text-[#11161A]">{title}</span>
+                <span className="block text-label font-semibold leading-snug text-[#5A666C]">{sub}</span>
               </span>
             </li>
           ))}
@@ -96,14 +96,14 @@ const AndroidAppGate = ({ children }: { children: ReactNode }) => {
         <div className="mt-5 space-y-2.5">
           <a
             href={PLAY_STORE_URL}
-            className="flex h-[58px] w-full items-center justify-center gap-2.5 rounded-2xl bg-[#11161A] text-[17px] font-black text-white shadow-[0_10px_20px_-10px_rgba(17,22,26,0.7)] transition-transform active:scale-[0.98]"
+            className="flex h-[58px] w-full items-center justify-center gap-2.5 rounded-2xl bg-[#11161A] text-body font-black text-white shadow-[0_10px_20px_-10px_rgba(17,22,26,0.7)] transition-transform active:scale-[0.98]"
           >
             <Play className="h-5 w-5 fill-[#14C99A] text-[#14C99A]" />
             구글 플레이에서 앱 받기
           </a>
           <a
             href={appIntentUrl(here)}
-            className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#10B981] bg-white text-[15px] font-black text-[#07784F] transition-transform active:scale-[0.98]"
+            className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#10B981] bg-white text-body font-black text-[#07784F] transition-transform active:scale-[0.98]"
           >
             <ExternalLink className="h-[18px] w-[18px]" strokeWidth={2.5} />
             앱이 이미 있어요 · 앱으로 열기
@@ -111,13 +111,13 @@ const AndroidAppGate = ({ children }: { children: ReactNode }) => {
           <button
             type="button"
             onClick={continueWeb}
-            className="flex h-11 w-full items-center justify-center gap-0.5 text-[14px] font-bold text-[#5A666C]"
+            className="flex h-11 w-full items-center justify-center gap-0.5 text-label font-bold text-[#5A666C]"
           >
             지금은 웹에서 계속하기 <ChevronRight className="h-4 w-4" />
           </button>
         </div>
 
-        <p className="mt-3 rounded-2xl bg-[#E9EEEC] px-4 py-3 text-center text-[12.5px] font-semibold leading-relaxed text-[#3F4A50]">
+        <p className="mt-3 rounded-2xl bg-[#E9EEEC] px-4 py-3 text-center text-label font-semibold leading-relaxed text-[#3F4A50]">
           앱을 받은 뒤 라이브보드 QR 을 다시 찍으면 앱에서 바로 출석돼요
           <br />첫 로그인은 데스크에서 안내해 드려요
         </p>

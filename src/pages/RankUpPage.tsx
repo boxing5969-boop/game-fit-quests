@@ -72,7 +72,7 @@ const RankUpPage = () => {
     // 라이트에서 빛바래던 금색 글자·잠긴 칸·마스터 카드는 라이트 전용 색(amber)으로 보정하고, 다크는 dark: 로 기존 그대로.
     <div className="mx-auto min-h-screen max-w-lg bg-background px-4 pb-24 pt-4 text-foreground">
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-[22px] font-extrabold tracking-tight text-foreground">랭크업</h1>
+        <h1 className="text-title font-extrabold tracking-tight text-foreground">랭크업</h1>
         <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
           <User className="h-5 w-5 text-secondary-foreground" />
         </button>
@@ -85,13 +85,13 @@ const RankUpPage = () => {
       >
         <button
           onClick={() => setActiveTab("levelmap")}
-          className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${activeTab === "levelmap" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"}`}
+          className={`flex-1 rounded-xl py-2.5 text-body font-bold transition-all ${activeTab === "levelmap" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"}`}
         >
           🗺️ 로드맵
         </button>
         <button
           onClick={() => setActiveTab("valuemap")}
-          className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${activeTab === "valuemap" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"}`}
+          className={`flex-1 rounded-xl py-2.5 text-body font-bold transition-all ${activeTab === "valuemap" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"}`}
         >
           📋 가치맵
         </button>
@@ -102,8 +102,8 @@ const RankUpPage = () => {
         data-tour="rankup-progress"
         className="mb-6 rounded-2xl bg-gradient-to-br from-primary/10 to-reward/10 p-5 border border-primary/20 shadow-glow-soft text-center"
       >
-        <p className="text-sm text-muted-foreground">현재 진행</p>
-        <p className="text-3xl font-bold text-foreground">
+        <p className="text-body text-muted-foreground">현재 진행</p>
+        <p className="text-title font-bold text-foreground">
           {isManager ? "👑 마스터" : `Lv ${globalLevel} / 40`}
         </p>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">
@@ -130,47 +130,47 @@ const RankUpPage = () => {
               <div key={league.rank} className="overflow-hidden rounded-2xl border border-border bg-card shadow-elev-1">
                 <button onClick={() => setExpandedRank(isExpanded ? null : league.rank)} className="flex w-full items-center justify-between p-4 transition-all active:bg-secondary/30">
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${RANK_BG[league.rank]} text-2xl`}>{league.emoji}</div>
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${RANK_BG[league.rank]} text-title`}>{league.emoji}</div>
                     <div className="text-left">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-foreground">{league.label}</p>
-                        {isCompleted && <span className="text-xs text-amber-700 dark:text-status-complete">✓ 완료</span>}
-                        {isCurrentLeague && <span className="text-xs font-bold text-emerald-700 dark:text-primary">진행 중</span>}
+                        <p className="text-body font-bold text-foreground">{league.label}</p>
+                        {isCompleted && <span className="text-label text-amber-700 dark:text-status-complete">✓ 완료</span>}
+                        {isCurrentLeague && <span className="text-label font-bold text-emerald-700 dark:text-primary">진행 중</span>}
                       </div>
-                      <p className="text-xs text-muted-foreground">{league.theme}</p>
+                      <p className="text-label text-muted-foreground">{league.theme}</p>
                     </div>
                   </div>
                   <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                 </button>
                 {isExpanded && (
                   <div className="border-t border-border p-4 space-y-3">
-                    <p className="text-sm text-muted-foreground">{league.description}</p>
+                    <p className="text-body text-muted-foreground">{league.description}</p>
                     <div className="space-y-1.5">
                       {lvls.map(lv => {
                         const isReached = lv.level <= globalLevel;
                         return (
                            <div key={lv.level} className={`flex items-start gap-3 rounded-xl p-2.5 ${isReached ? "bg-primary/5" : "bg-muted/30"}`}>
-                            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${isReached ? "bg-primary text-primary-foreground" : "bg-border text-muted-foreground"}`}>{lv.level}</div>
+                            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-label font-bold ${isReached ? "bg-primary text-primary-foreground" : "bg-border text-muted-foreground"}`}>{lv.level}</div>
                             <div>
-                              <p className={`text-sm ${isReached ? "text-foreground font-bold" : "text-muted-foreground"}`}>{lv.shortValueTitle}</p>
-                              <p className="text-[11px] text-muted-foreground">{lv.valueDescription}</p>
+                              <p className={`text-body ${isReached ? "text-foreground font-bold" : "text-muted-foreground"}`}>{lv.shortValueTitle}</p>
+                              <p className="text-micro text-muted-foreground">{lv.valueDescription}</p>
                             </div>
                           </div>
                         );
                       })}
                     </div>
                     <div className="rounded-xl border border-status-complete/20 bg-status-complete/5 p-3">
-                      <p className="mb-1.5 text-xs font-bold text-foreground">{league.label} 완료 가치</p>
-                      {league.completionValues.map(v => <p key={v} className="text-xs text-muted-foreground">✓ {v}</p>)}
+                      <p className="mb-1.5 text-label font-bold text-foreground">{league.label} 완료 가치</p>
+                      {league.completionValues.map(v => <p key={v} className="text-label text-muted-foreground">✓ {v}</p>)}
                     </div>
                     {/* Boss level unlock benefit */}
                     {lvls.length > 0 && (
                       <div className="rounded-xl border border-reward/20 bg-reward/5 p-3">
                         <div className="mb-1.5 flex items-center gap-1.5">
                           <Gift className="h-3.5 w-3.5 text-amber-500 dark:text-reward" />
-                          <p className="text-xs font-bold text-foreground">Lv {lvls[lvls.length - 1].level} 해금 보상</p>
+                          <p className="text-label font-bold text-foreground">Lv {lvls[lvls.length - 1].level} 해금 보상</p>
                         </div>
-                        <p className="text-xs text-muted-foreground">🎁 {lvls[lvls.length - 1].unlockedBenefit}</p>
+                        <p className="text-label text-muted-foreground">🎁 {lvls[lvls.length - 1].unlockedBenefit}</p>
                       </div>
                     )}
                   </div>
@@ -198,8 +198,8 @@ const RankUpPage = () => {
                 return (
                   <div key={rank} className="animate-slide-up" style={{ animationDelay: `${sectionIdx * 0.1}s` }}>
                     <div className="mb-3 flex items-center gap-2">
-                      <span className="text-lg">{RANK_ICONS[rank]}</span>
-                      <h2 className="text-lg text-foreground">{RANK_LABELS[rank]} 리그</h2>
+                      <span className="text-heading">{RANK_ICONS[rank]}</span>
+                      <h2 className="text-heading text-foreground">{RANK_LABELS[rank]} 리그</h2>
                     </div>
                     <div className="grid grid-cols-5 gap-2">
                       {nodes.map(node => {
@@ -223,10 +223,10 @@ const RankUpPage = () => {
                               : allDone && unlocked ? <CheckCircle2 className="h-4 w-4 text-amber-500 dark:text-status-complete" />
                               : unlocked ? <Star className={`h-4 w-4 ${isCurrent ? "text-emerald-600 dark:text-primary" : "text-muted-foreground"}`} />
                               : <Lock className="h-4 w-4 text-muted-foreground" />}
-                            <span className={`mt-0.5 text-[10px] font-bold ${isCurrent ? "text-emerald-700 dark:text-primary" : allDone ? "text-amber-700 dark:text-status-complete" : "text-muted-foreground"}`}>
+                            <span className={`mt-0.5 text-micro font-bold ${isCurrent ? "text-emerald-700 dark:text-primary" : allDone ? "text-amber-700 dark:text-status-complete" : "text-muted-foreground"}`}>
                               {node.is_boss ? "BOSS" : `Lv.${toGlobalLevel(node.rank_name, node.level_number)}`}
                             </span>
-                            {total > 0 && unlocked && <span className="text-[8px] text-muted-foreground">{completed}/{total}</span>}
+                            {total > 0 && unlocked && <span className="text-micro text-muted-foreground">{completed}/{total}</span>}
                           </button>
                         );
                       })}
@@ -240,10 +240,10 @@ const RankUpPage = () => {
                         <button onClick={() => setDanChallengeOpen(challenge)}
                           className="mt-3 w-full rounded-2xl border-2 border-reward/40 bg-gradient-to-r from-reward/10 via-primary/10 to-reward/10 p-4 text-left transition-all active:scale-[0.98] hover:border-reward/60">
                           <div className="flex items-center gap-3">
-                            <span className="text-2xl">{challenge.emoji}</span>
+                            <span className="text-title">{challenge.emoji}</span>
                             <div className="flex-1">
-                              <p className="text-sm font-black text-foreground">{challenge.dan} 단증 도전 가능! 🔥</p>
-                              <p className="text-xs text-muted-foreground">{RANK_LABELS[rank]} 마스터 완료 — 탭하여 도전하기</p>
+                              <p className="text-body font-black text-foreground">{challenge.dan} 단증 도전 가능! 🔥</p>
+                              <p className="text-label text-muted-foreground">{RANK_LABELS[rank]} 마스터 완료 — 탭하여 도전하기</p>
                             </div>
                             <ExternalLink className="h-5 w-5 text-amber-500 dark:text-reward" />
                           </div>
@@ -261,8 +261,8 @@ const RankUpPage = () => {
                 style={{ animationDelay: "0.5s" }}
               >
                 <div className="mb-3 flex items-center gap-2">
-                  <span className="text-lg">👑</span>
-                  <h2 className="text-lg text-foreground">마스터 리그</h2>
+                  <span className="text-heading">👑</span>
+                  <h2 className="text-heading text-foreground">마스터 리그</h2>
                 </div>
                 <div className="relative overflow-hidden rounded-3xl border-2 border-reward/40 bg-gradient-to-br from-amber-50 via-card to-card p-5 shadow-elev-2 dark:from-[hsl(42_92%_10%)] dark:shadow-2xl">
                   <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -272,11 +272,11 @@ const RankUpPage = () => {
                   <div className="relative mb-4 text-center">
                     <div className="mb-2 flex items-center justify-center gap-2">
                       <Sparkles className="h-5 w-5 text-amber-500 dark:text-reward" style={{ animation: "pulse 2s ease-in-out infinite" }} />
-                      <span className="text-xs font-bold uppercase tracking-[0.2em] text-amber-700 dark:text-reward">Secret Mission</span>
+                      <span className="text-label font-bold uppercase tracking-[0.2em] text-amber-700 dark:text-reward">Secret Mission</span>
                       <Sparkles className="h-5 w-5 text-amber-500 dark:text-reward" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
                     </div>
-                    <h3 className="text-xl font-black text-amber-600 dark:text-reward">🏆 마스터 리그 최종 미션</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">블랙 리그 레벨 10 달성 후 도전할 수 있는 시크릿 미션</p>
+                    <h3 className="text-heading font-black text-amber-600 dark:text-reward">🏆 마스터 리그 최종 미션</h3>
+                    <p className="mt-1 text-label text-muted-foreground">블랙 리그 레벨 10 달성 후 도전할 수 있는 시크릿 미션</p>
                   </div>
                   <div className="relative space-y-3">
                     {SECRET_MISSIONS.map(mission => {
@@ -290,9 +290,9 @@ const RankUpPage = () => {
                               {isMaxLevel ? <MIcon className="h-6 w-6 text-amber-500 dark:text-reward" /> : <Lock className="h-6 w-6 text-muted-foreground" />}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <span className="text-sm font-black text-foreground">{mission.emoji} {mission.title}</span>
-                              <p className="mt-0.5 text-xs text-muted-foreground">{mission.subtitle}</p>
-                              {isMaxLevel && <p className="mt-0.5 text-[10px] font-semibold text-amber-700 dark:text-reward">탭하여 도전하기 →</p>}
+                              <span className="text-body font-black text-foreground">{mission.emoji} {mission.title}</span>
+                              <p className="mt-0.5 text-label text-muted-foreground">{mission.subtitle}</p>
+                              {isMaxLevel && <p className="mt-0.5 text-micro font-semibold text-amber-700 dark:text-reward">탭하여 도전하기 →</p>}
                             </div>
                             {isMaxLevel && <Crown className="h-5 w-5 text-amber-500 dark:text-reward" style={{ animation: "pulse 2s ease-in-out infinite" }} />}
                           </div>
@@ -301,12 +301,12 @@ const RankUpPage = () => {
                     })}
                   </div>
                   <div className="relative mt-4 rounded-2xl border border-reward/30 bg-reward/5 p-4">
-                    <p className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-reward">✨ 마스터 리그 달성 보상 ✨</p>
+                    <p className="mb-3 text-center text-label font-bold uppercase tracking-wider text-amber-700 dark:text-reward">✨ 마스터 리그 달성 보상 ✨</p>
                     <div className="space-y-2">
                       {FINAL_REWARDS.map((r, i) => (
                         <div key={i} className="flex items-center gap-2.5 rounded-xl bg-card/60 border border-border px-3 py-2">
-                          <span className="text-base">{r.emoji}</span>
-                          <span className="text-xs font-bold text-foreground">{r.label}</span>
+                          <span className="text-body">{r.emoji}</span>
+                          <span className="text-label font-bold text-foreground">{r.label}</span>
                         </div>
                       ))}
                     </div>
@@ -314,7 +314,7 @@ const RankUpPage = () => {
                   {!isMaxLevel && (
                     <div className="relative mt-4 flex items-center justify-center gap-2 rounded-xl bg-muted/50 py-2.5">
                       <Lock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs font-bold text-muted-foreground">블랙 리그 레벨 10 달성 시 해금</span>
+                      <span className="text-label font-bold text-muted-foreground">블랙 리그 레벨 10 달성 시 해금</span>
                     </div>
                   )}
                 </div>
@@ -329,9 +329,9 @@ const RankUpPage = () => {
         <DrawerContent className="mx-auto max-w-lg pb-safe">
           <DrawerHeader className="pb-2">
             <div className="flex items-center gap-2">
-              <span className="text-lg">{selectedNode ? RANK_ICONS[selectedNode.rank_name] : ""}</span>
+              <span className="text-heading">{selectedNode ? RANK_ICONS[selectedNode.rank_name] : ""}</span>
               <DrawerTitle>{selectedNode ? `${RANK_LABELS[selectedNode.rank_name]} Lv.${toGlobalLevel(selectedNode.rank_name, selectedNode.level_number)}` : ""}</DrawerTitle>
-              {selectedNode?.is_boss && <span className="rounded-full bg-reward/20 px-2 py-0.5 text-xs font-bold text-reward-foreground">🏆 타이틀매치</span>}
+              {selectedNode?.is_boss && <span className="rounded-full bg-reward/20 px-2 py-0.5 text-label font-bold text-reward-foreground">🏆 타이틀매치</span>}
             </div>
           </DrawerHeader>
           {selectedNode && (
@@ -339,8 +339,8 @@ const RankUpPage = () => {
               <div className="rounded-xl bg-secondary p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-bold text-foreground">{selectedNode.title}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">필요 XP: {selectedNode.xp_required}</p>
+                    <p className="text-body font-bold text-foreground">{selectedNode.title}</p>
+                    <p className="mt-1 text-label text-muted-foreground">필요 XP: {selectedNode.xp_required}</p>
                   </div>
                   {isAdmin && (
                     <div className="flex gap-1">
@@ -363,23 +363,23 @@ const RankUpPage = () => {
               </div>
               {selectedNode.reward_name && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">보상:</span>
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{selectedNode.reward_name}</span>
+                  <span className="text-label text-muted-foreground">보상:</span>
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-label font-bold text-primary">{selectedNode.reward_name}</span>
                 </div>
               )}
               {selectedMissions.length > 0 && (
                 <div>
-                  <p className="mb-2 text-xs font-bold text-muted-foreground">미션 목록</p>
+                  <p className="mb-2 text-label font-bold text-muted-foreground">미션 목록</p>
                   <div className="space-y-2">
                     {selectedMissions.map(m => {
                       const status = subMap.get(m.id);
                       return (
                         <div key={m.id} className="flex items-center justify-between rounded-xl bg-background p-3">
                           <div className="flex items-center gap-2">
-                            {status === "approved" ? <CheckCircle2 className="h-4 w-4 text-amber-500 dark:text-status-complete" /> : status === "pending" ? <span className="text-xs text-status-pending">⏳</span> : <Play className="h-4 w-4 text-muted-foreground" />}
-                            <span className="text-sm text-foreground">{m.title}</span>
+                            {status === "approved" ? <CheckCircle2 className="h-4 w-4 text-amber-500 dark:text-status-complete" /> : status === "pending" ? <span className="text-label text-status-pending">⏳</span> : <Play className="h-4 w-4 text-muted-foreground" />}
+                            <span className="text-body text-foreground">{m.title}</span>
                           </div>
-                          <span className="text-xs font-bold text-primary">+{m.xp_reward} XP</span>
+                          <span className="text-label font-bold text-primary">+{m.xp_reward} XP</span>
                         </div>
                       );
                     })}
@@ -389,14 +389,14 @@ const RankUpPage = () => {
               {isAdmin && user && !selectedNode.is_boss && (
                 <button onClick={async () => {
                   try { const result = await levelUpMutation.mutateAsync(user.id); toast.success(`Lv.${toGlobalLevel(result.current_rank, result.new_level)}로 레벨업! 🥊`); refreshProgress(); setSelectedNode(null); } catch (e: any) { toast.error(e?.message || "레벨업 실패"); }
-                }} disabled={levelUpMutation.isPending} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
+                }} disabled={levelUpMutation.isPending} className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                   <ArrowUp className="mr-1 inline h-4 w-4" />{levelUpMutation.isPending ? "레벨업 중..." : "⚡ 즉시 레벨업 (관리자)"}
                 </button>
               )}
               {isAdmin && user && selectedNode.is_boss && (
                 <button onClick={async () => {
                   try { const result = await bossBattleMutation.mutateAsync({ memberId: user.id }); if (result?.ranked_up) { toast.success(`${RANK_LABELS[result.new_rank] || result.new_rank} 리그로 승격! 🏆`); } else { toast.success("타이틀매치 클리어! 🏆"); } refreshProgress(); setSelectedNode(null); } catch (e: any) { toast.error(e?.message || "타이틀매치 처리 실패"); }
-                }} disabled={bossBattleMutation.isPending} className="w-full rounded-xl bg-reward py-3 text-sm font-bold text-reward-foreground shadow-glow-reward transition-all active:scale-[0.98] disabled:opacity-50">
+                }} disabled={bossBattleMutation.isPending} className="w-full rounded-xl bg-reward py-3 text-body font-bold text-reward-foreground shadow-glow-reward transition-all active:scale-[0.98] disabled:opacity-50">
                   <Trophy className="mr-1 inline h-4 w-4" />{bossBattleMutation.isPending ? "처리 중..." : "🏆 즉시 타이틀매치 클리어 (관리자)"}
                 </button>
               )}
@@ -406,7 +406,7 @@ const RankUpPage = () => {
                   setSelectedNode(null);
                   navigate(to);
                 }}
-                className={`w-full rounded-xl ${isAdmin ? "bg-secondary text-secondary-foreground shadow-elev-1" : "bg-primary text-primary-foreground shadow-glow-soft hover:shadow-glow-primary"} py-3 text-sm font-bold transition-all active:scale-[0.98]`}>
+                className={`w-full rounded-xl ${isAdmin ? "bg-secondary text-secondary-foreground shadow-elev-1" : "bg-primary text-primary-foreground shadow-glow-soft hover:shadow-glow-primary"} py-3 text-body font-bold transition-all active:scale-[0.98]`}>
                 {selectedNode.is_boss ? "🏆 타이틀매치 영상 보기" : "미션 보러가기"}
               </button>
             </div>
@@ -422,13 +422,13 @@ const RankUpPage = () => {
               <div className="absolute -left-4 -top-4 h-24 w-24 rounded-full bg-reward/20 blur-3xl" />
               <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-primary/20 blur-3xl" />
             </div>
-            <span className="relative text-5xl">{danChallengeOpen?.emoji}</span>
-            <h3 className="relative mt-3 whitespace-pre-line text-xl font-black text-foreground">{danChallengeOpen?.message}</h3>
-            <p className="relative mt-2 text-xs text-muted-foreground">승단 심사 신청서를 작성하고 공식 {danChallengeOpen?.dan}에 도전하세요</p>
+            <span className="relative text-display">{danChallengeOpen?.emoji}</span>
+            <h3 className="relative mt-3 whitespace-pre-line text-heading font-black text-foreground">{danChallengeOpen?.message}</h3>
+            <p className="relative mt-2 text-label text-muted-foreground">승단 심사 신청서를 작성하고 공식 {danChallengeOpen?.dan}에 도전하세요</p>
           </div>
           <div className="flex gap-3 p-5">
-            <button onClick={() => setDanChallengeOpen(null)} className="flex-1 rounded-xl border border-border bg-secondary py-3 text-sm font-bold text-secondary-foreground transition-all active:scale-95">다음에 할게요</button>
-            <button onClick={() => { window.open("https://korea-boxing.lovable.app", "_blank"); setDanChallengeOpen(null); }} className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-95">🥊 도전하기!</button>
+            <button onClick={() => setDanChallengeOpen(null)} className="flex-1 rounded-xl border border-border bg-secondary py-3 text-body font-bold text-secondary-foreground transition-all active:scale-95">다음에 할게요</button>
+            <button onClick={() => { window.open("https://korea-boxing.lovable.app", "_blank"); setDanChallengeOpen(null); }} className="flex-1 rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-95">🥊 도전하기!</button>
           </div>
         </DialogContent>
       </Dialog>
@@ -438,23 +438,23 @@ const RankUpPage = () => {
         <DrawerContent className="mx-auto max-w-lg pb-safe">
           <DrawerHeader className="pb-2">
             <div className="flex items-center gap-2">
-              <span className="text-lg">{showSecretDetail?.emoji}</span>
+              <span className="text-heading">{showSecretDetail?.emoji}</span>
               <DrawerTitle>{showSecretDetail?.title}</DrawerTitle>
             </div>
           </DrawerHeader>
           {showSecretDetail && (
             <div className="space-y-4 px-4 pb-6">
               <div className="rounded-xl bg-gradient-to-br from-reward/10 to-primary/10 p-4">
-                <p className="text-sm font-bold text-foreground">{showSecretDetail.description}</p>
+                <p className="text-body font-bold text-foreground">{showSecretDetail.description}</p>
               </div>
               <div className="rounded-xl bg-secondary p-4">
-                <p className="mb-2 text-xs font-bold text-muted-foreground">🎁 달성 보상</p>
+                <p className="mb-2 text-label font-bold text-muted-foreground">🎁 달성 보상</p>
                 <div className="space-y-1.5">
-                  {FINAL_REWARDS.map((r, i) => <div key={i} className="flex items-center gap-2 text-xs text-foreground"><span>{r.emoji}</span><span>{r.label}</span></div>)}
+                  {FINAL_REWARDS.map((r, i) => <div key={i} className="flex items-center gap-2 text-label text-foreground"><span>{r.emoji}</span><span>{r.label}</span></div>)}
                 </div>
               </div>
               <button onClick={() => { if (showSecretDetail.isExternal) window.open(showSecretDetail.linkTo, "_blank"); else navigate(showSecretDetail.linkTo); setShowSecretDetail(null); }}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]">{showSecretDetail.cta}</button>
+                className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]">{showSecretDetail.cta}</button>
             </div>
           )}
         </DrawerContent>
@@ -465,13 +465,13 @@ const RankUpPage = () => {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setEditLevelModal(false)}>
           <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg text-foreground">✏️ 레벨 수정</h3>
+              <h3 className="text-heading text-foreground">✏️ 레벨 수정</h3>
               <button onClick={() => setEditLevelModal(false)} className="rounded-full bg-secondary p-2 active:scale-95"><X className="h-4 w-4 text-secondary-foreground" /></button>
             </div>
             <div className="space-y-3">
-              <div><label className="mb-1 block text-xs text-muted-foreground">제목</label><Input value={editLevelForm.title} onChange={e => setEditLevelForm(f => ({ ...f, title: e.target.value }))} className="rounded-xl" /></div>
-              <div><label className="mb-1 block text-xs text-muted-foreground">필요 XP</label><Input type="number" value={editLevelForm.xp_required} onChange={e => setEditLevelForm(f => ({ ...f, xp_required: Number(e.target.value) }))} className="rounded-xl" /></div>
-              <div><label className="mb-1 block text-xs text-muted-foreground">보상</label><Input value={editLevelForm.reward_name} onChange={e => setEditLevelForm(f => ({ ...f, reward_name: e.target.value }))} placeholder="보상명 (선택)" className="rounded-xl" /></div>
+              <div><label className="mb-1 block text-label text-muted-foreground">제목</label><Input value={editLevelForm.title} onChange={e => setEditLevelForm(f => ({ ...f, title: e.target.value }))} className="rounded-xl" /></div>
+              <div><label className="mb-1 block text-label text-muted-foreground">필요 XP</label><Input type="number" value={editLevelForm.xp_required} onChange={e => setEditLevelForm(f => ({ ...f, xp_required: Number(e.target.value) }))} className="rounded-xl" /></div>
+              <div><label className="mb-1 block text-label text-muted-foreground">보상</label><Input value={editLevelForm.reward_name} onChange={e => setEditLevelForm(f => ({ ...f, reward_name: e.target.value }))} placeholder="보상명 (선택)" className="rounded-xl" /></div>
               <button onClick={async () => {
                 setEditLevelSaving(true);
                 try {
@@ -479,7 +479,7 @@ const RankUpPage = () => {
                   if (error) throw error;
                   toast.success("레벨 수정 완료 ✅"); qc.invalidateQueries({ queryKey: ["levels"] }); setEditLevelModal(false); setSelectedNode(null);
                 } catch { toast.error("수정 실패"); } finally { setEditLevelSaving(false); }
-              }} disabled={editLevelSaving} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
+              }} disabled={editLevelSaving} className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                 {editLevelSaving ? "저장 중..." : "수정 완료"}
               </button>
             </div>
@@ -506,17 +506,17 @@ const WhiteLv1ProgressionCard = () => {
     <div className="mb-6 space-y-4 animate-slide-up">
       <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-foreground">⚪ White Lv.1 → Lv.2</h3>
-          <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${STATUS_STYLE[status] || "bg-muted text-muted-foreground"}`}>{status}</span>
+          <h3 className="text-body font-bold text-foreground">⚪ White Lv.1 → Lv.2</h3>
+          <span className={`rounded-full px-2.5 py-1 text-micro font-bold ${STATUS_STYLE[status] || "bg-muted text-muted-foreground"}`}>{status}</span>
         </div>
 
         {/* Path chips */}
         <div className="mb-3 flex gap-2">
           {RECOMMENDED_PATHS.map(path => (
             <div key={path.label} className="flex-1 rounded-xl bg-muted/30 p-2 text-center">
-              <p className="text-[9px] font-bold text-muted-foreground">{path.label}</p>
-              <p className="text-xs font-bold text-foreground">{path.duration} · {path.sessions}</p>
-              <p className="text-[9px] text-muted-foreground">{path.frequency}</p>
+              <p className="text-micro font-bold text-muted-foreground">{path.label}</p>
+              <p className="text-label font-bold text-foreground">{path.duration} · {path.sessions}</p>
+              <p className="text-micro text-muted-foreground">{path.frequency}</p>
             </div>
           ))}
         </div>
@@ -530,10 +530,10 @@ const WhiteLv1ProgressionCard = () => {
             return (
               <div key={m.id} className="rounded-xl border border-border p-2.5">
                 <div className="mb-0.5 flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground">{m.emoji} {m.label}</span>
+                  <span className="text-micro text-muted-foreground">{m.emoji} {m.label}</span>
                   {done && <CheckCircle2 className="h-3 w-3 text-amber-500 dark:text-status-complete" />}
                 </div>
-                <p className="text-sm font-bold text-foreground">{met?.current ?? 0}<span className="text-xs text-muted-foreground">/{m.target}{m.unit}</span></p>
+                <p className="text-body font-bold text-foreground">{met?.current ?? 0}<span className="text-label text-muted-foreground">/{m.target}{m.unit}</span></p>
                 <div className="mt-1 h-1 overflow-hidden rounded-full bg-muted">
                   <div className={`h-full rounded-full ${done ? "bg-status-complete" : "bg-primary"}`} style={{ width: `${pct}%` }} />
                 </div>
@@ -542,7 +542,7 @@ const WhiteLv1ProgressionCard = () => {
           })}
         </div>
 
-        <p className="mt-3 text-[11px] text-muted-foreground leading-relaxed">
+        <p className="mt-3 text-micro text-muted-foreground leading-relaxed">
           화이트는 쉽지만 의미 없이 쉬운 단계가 아니라, 습관·기초체력·자세 유지력을 만드는 단계입니다
         </p>
       </div>

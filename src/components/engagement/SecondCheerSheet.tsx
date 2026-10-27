@@ -71,7 +71,7 @@ const Avatar = ({ url, name, size = "md" }: { url?: string | null; name: string;
   <span
     className={cn(
       "flex shrink-0 items-center justify-center overflow-hidden rounded-pill bg-secondary font-black text-secondary-foreground",
-      size === "lg" ? "h-12 w-12 text-[18px]" : "h-10 w-10 text-[15px]",
+      size === "lg" ? "h-12 w-12 text-heading" : "h-10 w-10 text-body",
     )}
   >
     {url ? <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" /> : name.slice(0, 1)}
@@ -81,13 +81,13 @@ const Avatar = ({ url, name, size = "md" }: { url?: string | null; name: string;
 const SituationTags = ({ m }: { m: Pick<CheerCandidate, "birthday" | "promoted" | "returning"> }) => (
   <>
     {m.birthday && (
-      <span className="shrink-0 rounded-pill bg-pink-500/15 px-1.5 py-[1px] text-[10px] font-black text-pink-600 dark:text-pink-300">생일</span>
+      <span className="shrink-0 rounded-pill bg-pink-500/15 px-1.5 py-[1px] text-micro font-black text-pink-600 dark:text-pink-300">생일</span>
     )}
     {m.promoted && (
-      <span className="shrink-0 rounded-pill bg-reward/20 px-1.5 py-[1px] text-[10px] font-black text-reward-foreground">승급</span>
+      <span className="shrink-0 rounded-pill bg-reward/20 px-1.5 py-[1px] text-micro font-black text-reward-foreground">승급</span>
     )}
     {m.returning && (
-      <span className="shrink-0 rounded-pill bg-emerald-500/15 px-1.5 py-[1px] text-[10px] font-black text-emerald-700 dark:text-emerald-300">복귀</span>
+      <span className="shrink-0 rounded-pill bg-emerald-500/15 px-1.5 py-[1px] text-micro font-black text-emerald-700 dark:text-emerald-300">복귀</span>
     )}
   </>
 );
@@ -190,9 +190,9 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
           <Megaphone className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">응원 보내기</p>
-          <h2 className="mt-0.5 text-[15px] font-bold text-foreground">동료에게 응원 한마디</h2>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">응원 보내기</p>
+          <h2 className="mt-0.5 text-body font-bold text-foreground">동료에게 응원 한마디</h2>
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             오늘 같이 땀 흘린 동료에게 스티커 하나면 충분해요.
           </p>
         </div>
@@ -215,23 +215,23 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
       <div className="space-y-3">
         <div className="flex flex-col items-center rounded-card border border-emerald-400/40 bg-emerald-400/10 px-4 pb-4 pt-5 text-center">
           {img && <img src={img} alt="" className="h-20 w-20 object-contain" />}
-          <p className="mt-2 text-[16px] font-black text-foreground">응원 완료!</p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-body font-black text-foreground">응원 완료!</p>
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             <b className="text-foreground">{targetInfo.nickname}</b>님에게 “{sticker}”
             {trimmedMessage && <> — {trimmedMessage}</>}
           </p>
-          <p className="mt-1 text-[11.5px] text-muted-foreground">받은 동료에게 알림이 갔어요</p>
+          <p className="mt-1 text-micro text-muted-foreground">받은 동료에게 알림이 갔어요</p>
         </div>
 
         {!!result.sender_gems_granted && result.sender_gems_granted > 0 && (
           <div className="rounded-card border border-reward/40 bg-reward/10 px-3.5 py-3 text-center">
-            <p className="text-[13.5px] font-black text-foreground">
+            <p className="text-label font-black text-foreground">
               오늘 첫 응원 · 챔피언 머니 +{result.sender_gems_granted.toLocaleString()}
             </p>
           </div>
         )}
 
-        <p className="text-center text-[11.5px] font-semibold text-muted-foreground">
+        <p className="text-center text-micro font-semibold text-muted-foreground">
           {remaining > 0 ? `오늘 ${remaining}번 더 보낼 수 있어요` : "오늘 보낼 수 있는 응원을 모두 보냈어요. 내일 또 만나요"}
         </p>
 
@@ -240,7 +240,7 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
             <button
               type="button"
               onClick={nextTarget}
-              className="rounded-card bg-primary py-3 text-[13px] font-bold text-primary-foreground active:scale-[0.98]"
+              className="rounded-card bg-primary py-3 text-label font-bold text-primary-foreground active:scale-[0.98]"
             >
               다음 동료에게
             </button>
@@ -249,14 +249,14 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
             type="button"
             onClick={onClose}
             className={cn(
-              "rounded-card py-3 text-[13px] font-bold active:scale-[0.98]",
+              "rounded-card py-3 text-label font-bold active:scale-[0.98]",
               remaining > 0 && !initialTarget ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground",
             )}
           >
             닫기
           </button>
         </div>
-        <p className="text-[10.5px] leading-relaxed text-muted-foreground">※ 커뮤니티 활동은 공식 레벨업과 무관해요.</p>
+        <p className="text-micro leading-relaxed text-muted-foreground">※ 커뮤니티 활동은 공식 레벨업과 무관해요.</p>
       </div>
     );
   };
@@ -290,16 +290,16 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1">
             <NameBadge league={m.league} className="h-3.5 w-3.5 shrink-0" glow={false} />
-            <span className="truncate text-[13.5px] font-bold text-foreground">{m.nickname}</span>
+            <span className="truncate text-label font-bold text-foreground">{m.nickname}</span>
             <SituationTags m={m} />
           </span>
-          <span className="block truncate text-[11px] text-muted-foreground">
+          <span className="block truncate text-micro text-muted-foreground">
             Lv.{m.level} · {sub}
             {data?.all_branches && m.branch ? ` · ${shortBranchName(m.branch)}` : ""}
           </span>
         </span>
         {m.cheered_today ? (
-          <span className="shrink-0 rounded-pill bg-secondary px-2 py-0.5 text-[10.5px] font-bold text-muted-foreground">보냄</span>
+          <span className="shrink-0 rounded-pill bg-secondary px-2 py-0.5 text-micro font-bold text-muted-foreground">보냄</span>
         ) : (
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         )}
@@ -314,7 +314,7 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
     const section = (title: string, list: CheerCandidate[], live = false) =>
       list.length > 0 && (
         <div className="space-y-2">
-          <p className="flex items-center gap-1.5 px-0.5 text-[12px] font-black text-foreground">
+          <p className="flex items-center gap-1.5 px-0.5 text-label font-black text-foreground">
             {live && <span className="h-2 w-2 rounded-full bg-emerald-500" />}
             {title}
             <span className="font-bold text-muted-foreground">{list.length}명</span>
@@ -326,19 +326,19 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
       <div className="space-y-4">
         <div className="rounded-card border border-primary/15 bg-primary/5 px-3.5 py-3">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[12.5px] font-bold text-foreground">
+            <p className="text-label font-bold text-foreground">
               오늘 {Math.min(sentToday, dailyLimit)}/{dailyLimit}번 보냈어요
             </p>
             <button
               type="button"
               onClick={() => setHistoryOpen(true)}
-              className="-my-1 flex min-h-[36px] shrink-0 items-center gap-0.5 rounded-pill px-2 text-[12px] font-bold text-primary active:scale-95"
+              className="-my-1 flex min-h-[36px] shrink-0 items-center gap-0.5 rounded-pill px-2 text-label font-bold text-primary active:scale-95"
             >
               보낸 응원 보기
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             {sentToday === 0 ? "오늘 첫 응원은 챔피언 머니 +30 · " : ""}같은 동료에게는 하루 한 번 · 받은 동료에게 알림이 가요
           </p>
         </div>
@@ -350,18 +350,18 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="이름으로 찾기"
-            className="w-full rounded-card border border-border bg-card px-3 py-2 pl-8 text-[12.5px] text-foreground focus:border-primary focus:outline-none"
+            className="w-full rounded-card border border-border bg-card px-3 py-2 pl-8 text-label text-foreground focus:border-primary focus:outline-none"
           />
         </div>
 
         {isLoading && !data ? (
-          <p className="px-1 py-3 text-[12px] text-muted-foreground">동료 목록을 불러오고 있어요…</p>
+          <p className="px-1 py-3 text-label text-muted-foreground">동료 목록을 불러오고 있어요…</p>
         ) : members.length === 0 ? (
           <div className="flex flex-col items-center px-1 py-6 text-center">
-            <p className="text-[12.5px] font-bold text-foreground">
+            <p className="text-label font-bold text-foreground">
               {search.trim() ? "이 이름의 동료를 찾지 못했어요" : "응원할 동료가 아직 없어요"}
             </p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-micro text-muted-foreground">
               {search.trim() ? "보이는 이름(닉네임) 그대로 다시 찾아보세요." : "같은 지점 동료가 가입하면 여기에 표시됩니다."}
             </p>
           </div>
@@ -372,7 +372,7 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
             {section(search.trim() ? "찾은 동료" : "최근 출석한 동료", recent)}
           </>
         )}
-        <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="text-micro leading-relaxed text-muted-foreground">
           같은 지점 동료만 보여요 (코치님 제외). '출석하면 커뮤니티에 알리기'를 끈 동료는 지금·오늘 표시 없이 최근 목록에만 있어요.
         </p>
       </div>
@@ -387,7 +387,7 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
         <button
           type="button"
           onClick={() => setTarget(null)}
-          className="flex items-center gap-1 text-[12px] text-muted-foreground active:scale-95"
+          className="flex items-center gap-1 text-label text-muted-foreground active:scale-95"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> 동료 다시 고르기
         </button>
@@ -395,26 +395,26 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
         <div className="flex items-center gap-3 rounded-card border border-primary/15 bg-primary/5 p-3">
           <Avatar url={targetInfo.avatar_url} name={targetInfo.nickname} size="lg" />
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black uppercase tracking-wider text-primary">응원 받을 동료</p>
-            <p className="mt-0.5 flex items-center gap-1 text-[14px] font-bold text-foreground">
+            <p className="text-micro font-black uppercase tracking-wider text-primary">응원 받을 동료</p>
+            <p className="mt-0.5 flex items-center gap-1 text-label font-bold text-foreground">
               {targetInfo.league && <NameBadge league={targetInfo.league} className="h-4 w-4 shrink-0" glow={false} />}
               <span className="truncate">{targetInfo.nickname}</span>
               <SituationTags m={{ birthday: !!targetInfo.birthday, promoted: !!targetInfo.promoted, returning: !!targetInfo.returning }} />
             </p>
-            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+            <p className="mt-0.5 truncate text-micro text-muted-foreground">
               {line ?? (targetInfo.branch ? shortBranchName(targetInfo.branch) : "")}
             </p>
           </div>
         </div>
 
         {alreadySent && (
-          <p className="rounded-card bg-muted/60 px-3 py-2.5 text-[12px] font-semibold text-muted-foreground">
+          <p className="rounded-card bg-muted/60 px-3 py-2.5 text-label font-semibold text-muted-foreground">
             오늘은 이 동료에게 이미 응원을 보냈어요. 내일 또 보내 주세요.
           </p>
         )}
 
         <div>
-          <p className="mb-1.5 text-[11.5px] font-bold text-foreground">응원 스티커</p>
+          <p className="mb-1.5 text-micro font-bold text-foreground">응원 스티커</p>
           <CheerStickerPicker
             selected={sticker}
             onSelect={setSticker}
@@ -424,11 +424,11 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
         </div>
 
         <div>
-          <p className="mb-1.5 flex items-center justify-between text-[11.5px] font-bold text-foreground">
+          <p className="mb-1.5 flex items-center justify-between text-micro font-bold text-foreground">
             <span>
               한마디 <span className="font-normal text-muted-foreground">(선택)</span>
             </span>
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-micro text-muted-foreground">
               {trimmedMessage.length} / {MAX_MESSAGE}
             </span>
           </p>
@@ -438,7 +438,7 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
                 key={s}
                 type="button"
                 onClick={() => setMessage(s)}
-                className="rounded-pill border border-border bg-card px-2.5 py-1 text-[11px] font-semibold text-muted-foreground active:scale-95"
+                className="rounded-pill border border-border bg-card px-2.5 py-1 text-micro font-semibold text-muted-foreground active:scale-95"
               >
                 {s}
               </button>
@@ -449,7 +449,7 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
             onChange={(e) => setMessage(e.target.value.slice(0, MAX_MESSAGE + 30))}
             placeholder="짧은 한마디를 더할 수 있어요"
             rows={2}
-            className="w-full resize-none rounded-card border border-border bg-card px-3 py-2 text-[12.5px] text-foreground focus:border-primary focus:outline-none"
+            className="w-full resize-none rounded-card border border-border bg-card px-3 py-2 text-label text-foreground focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -458,7 +458,7 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
           onClick={handleSend}
           disabled={!canSend}
           className={cn(
-            "w-full rounded-card py-3 text-[14px] font-bold transition-all",
+            "w-full rounded-card py-3 text-label font-bold transition-all",
             canSend ? "bg-primary text-primary-foreground active:scale-[0.98]" : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60",
           )}
         >
@@ -472,7 +472,7 @@ const SecondCheerSheet = ({ open, onClose, initialTarget = null, stacked = false
                   ? "스티커를 골라 주세요"
                   : "응원 보내기"}
         </button>
-        <p className="text-center text-[10.5px] text-muted-foreground">
+        <p className="text-center text-micro text-muted-foreground">
           받은 동료에게 알림이 가요 · 같은 동료에게는 하루 한 번
         </p>
       </div>

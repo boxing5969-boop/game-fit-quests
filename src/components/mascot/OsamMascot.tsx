@@ -155,7 +155,7 @@ const OsamMascot = ({
       {isCelebrating && (
         <div className="pointer-events-none absolute inset-0">
           <motion.span
-            className="absolute text-2xl"
+            className="absolute text-title"
             style={{ left: "8%", top: "10%" }}
             animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5], rotate: [0, 20, 0] }}
             transition={{ duration: 1.2, repeat: Infinity }}
@@ -163,7 +163,7 @@ const OsamMascot = ({
             ✨
           </motion.span>
           <motion.span
-            className="absolute text-xl"
+            className="absolute text-heading"
             style={{ right: "5%", top: "12%" }}
             animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5], rotate: [0, -20, 0] }}
             transition={{ duration: 1.2, repeat: Infinity, delay: 0.3 }}
@@ -171,7 +171,7 @@ const OsamMascot = ({
             ⭐
           </motion.span>
           <motion.span
-            className="absolute text-lg"
+            className="absolute text-heading"
             style={{ left: "5%", bottom: "15%" }}
             animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
             transition={{ duration: 1.2, repeat: Infinity, delay: 0.6 }}

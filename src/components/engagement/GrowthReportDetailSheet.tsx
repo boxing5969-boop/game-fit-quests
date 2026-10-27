@@ -58,10 +58,10 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
                   <ClipboardList className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                  <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                     성장 리포트 상세
                   </p>
-                  <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+                  <h2 className="mt-0.5 text-body font-bold text-foreground">
                     공식 + QUEST 성장 분리 요약
                   </h2>
                 </div>
@@ -77,17 +77,17 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
 
             <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
               {!report ? (
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-label text-muted-foreground">
                   리포트를 만드는 중…
                 </p>
               ) : (
                 <>
                   {/* 공식 */}
                   <div className="rounded-card border border-border bg-background/40 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                    <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
                       공식 성장 (읽기 전용)
                     </p>
-                    <ul className="mt-1.5 space-y-1 text-[12.5px] text-foreground">
+                    <ul className="mt-1.5 space-y-1 text-label text-foreground">
                       <li>
                         리그 / 레벨: <strong>{RANK_LABELS[rank]} Lv.{toGlobalLevel(rank, report.official.currentLevel)}</strong>
                       </li>
@@ -106,10 +106,10 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
 
                   {/* QUEST */}
                   <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+                    <p className="text-micro font-black uppercase tracking-wider text-primary">
                       QUEST 성장 (보조)
                     </p>
-                    <ul className="mt-1.5 space-y-1 text-[12.5px] text-foreground">
+                    <ul className="mt-1.5 space-y-1 text-label text-foreground">
                       <li>QUEST XP: <strong>{report.quest.questXp.toLocaleString()}</strong></li>
                       <li>RP: <strong>{report.quest.respect.toLocaleString()}</strong></li>
                       <li>
@@ -146,25 +146,25 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
 
                   {/* 코멘트 + 학부모 */}
                   <div className="rounded-card border border-border bg-card p-3">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+                    <p className="text-micro font-black uppercase tracking-wider text-primary">
                       오삼 코치
                     </p>
-                    <p className="mt-1 text-[12.5px] leading-relaxed text-foreground">
+                    <p className="mt-1 text-label leading-relaxed text-foreground">
                       {report.osamiComment}
                     </p>
                   </div>
                   <div className="rounded-card border border-border bg-card p-3">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                    <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
                       학부모 / 코치 한 줄
                     </p>
-                    <p className="mt-1 text-[12.5px] leading-relaxed text-foreground">
+                    <p className="mt-1 text-label leading-relaxed text-foreground">
                       {report.parentCoachOneLiner}
                     </p>
                   </div>
 
                   {/* 면책 */}
                   <div className="rounded-card border border-amber-400/30 bg-amber-400/5 p-3">
-                    <ul className="space-y-1 text-[10.5px] leading-relaxed text-muted-foreground">
+                    <ul className="space-y-1 text-micro leading-relaxed text-muted-foreground">
                       {GROWTH_REPORT_DISCLAIMERS.map((d) => (
                         <li key={d}>※ {d}</li>
                       ))}
@@ -176,7 +176,7 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full rounded-card bg-primary py-3 text-[13px] font-bold text-primary-foreground active:scale-[0.98]"
+                className="w-full rounded-card bg-primary py-3 text-label font-bold text-primary-foreground active:scale-[0.98]"
               >
                 닫기
               </button>

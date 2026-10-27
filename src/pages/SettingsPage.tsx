@@ -343,7 +343,7 @@ const SettingsPage = () => {
         <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
-        <h1 className="text-xl text-foreground">설정</h1>
+        <h1 className="text-heading text-foreground">설정</h1>
       </div>
 
       <div className="space-y-5">
@@ -355,8 +355,8 @@ const SettingsPage = () => {
             {/* 👀 회원으로 보기 (2026-10-21 대표님: "내 계정은 모든 기능에 회원으로 보기 기능을 넣어 줘") — lib/viewAsMember */}
             <div className="mb-4 flex items-start justify-between gap-3 rounded-xl bg-card p-3.5 ring-1 ring-border">
               <div className="min-w-0">
-                <p className="text-[14px] font-black text-foreground">👀 회원으로 보기</p>
-                <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+                <p className="text-label font-black text-foreground">👀 회원으로 보기</p>
+                <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                   켜면 앱 전체(홈 · 하단 탭 · 메뉴 · 랭킹 · 커뮤니티 · 내정보)가 아래 지점의 <b className="text-foreground">일반 회원 화면</b>으로 보여요.
                   관리자 버튼과 관리자 화면은 숨고, 화면 아래 띠를 누르면 바로 돌아와요. 이 폰에서만 켜져요.
                 </p>
@@ -371,8 +371,8 @@ const SettingsPage = () => {
                 }}
               />
             </div>
-            <h2 className="mb-1 text-base font-bold text-foreground">🧪 테스트 지점 바꾸기</h2>
-            <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
+            <h2 className="mb-1 text-body font-bold text-foreground">🧪 테스트 지점 바꾸기</h2>
+            <p className="mb-3 text-micro leading-relaxed text-muted-foreground">
               지금 <b className="text-foreground">{profile.branch_name || "미지정"}</b> 소속으로 보고 있어요. 지점을 누르면 그 지점 회원 화면으로 바로 바뀌어요.
             </p>
             <div className="flex flex-wrap gap-2">
@@ -385,20 +385,20 @@ const SettingsPage = () => {
                     type="button"
                     disabled={switchingBranch || active}
                     onClick={() => handleAdminSwitchBranch(b.name)}
-                    className={`rounded-pill border px-3.5 py-2 text-[12.5px] font-bold transition-all active:scale-95 disabled:cursor-default ${
+                    className={`rounded-pill border px-3.5 py-2 text-label font-bold transition-all active:scale-95 disabled:cursor-default ${
                       active
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-card text-foreground hover:border-primary/50"
                     }`}
                   >
                     {b.name.replace("153복싱짐 ", "")}
-                    {hidden && !active && <span className="ml-1 text-[10px] font-medium opacity-60">(숨김)</span>}
+                    {hidden && !active && <span className="ml-1 text-micro font-medium opacity-60">(숨김)</span>}
                   </button>
                 );
               })}
             </div>
-            {switchingBranch && <p className="mt-2 text-[11px] text-muted-foreground">바꾸는 중…</p>}
-            <p className="mt-2 text-[10.5px] text-muted-foreground">
+            {switchingBranch && <p className="mt-2 text-micro text-muted-foreground">바꾸는 중…</p>}
+            <p className="mt-2 text-micro text-muted-foreground">
               테스트가 끝나면 '153본사'를 눌러 원래대로 돌려 주세요. 전체관리자 계정은 회원 랭킹에 들어가지 않아요.
             </p>
           </div>
@@ -409,8 +409,8 @@ const SettingsPage = () => {
 
         {/* 65-O: 화면 모드 (다크/라이트) — next-themes 기반 */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1">
-          <h2 className="mb-1 text-base font-bold text-foreground">화면 모드</h2>
-          <p className="mb-3 text-[11px] text-muted-foreground">
+          <h2 className="mb-1 text-body font-bold text-foreground">화면 모드</h2>
+          <p className="mb-3 text-micro text-muted-foreground">
             다크는 밤·실내, 라이트는 낮·야외에서 보기 편해요.
           </p>
           <ThemeToggle variant="segment" />
@@ -421,19 +421,19 @@ const SettingsPage = () => {
 
         {/* Home Widget Toggles */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1">
-          <h2 className="mb-4 text-base font-bold text-foreground">홈 화면 설정</h2>
+          <h2 className="mb-4 text-body font-bold text-foreground">홈 화면 설정</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-foreground">리스타트 루틴</p>
-                <p className="text-[11px] text-muted-foreground">복귀 배너 표시 (5일+ 미활동 시)</p>
+                <p className="text-body font-medium text-foreground">리스타트 루틴</p>
+                <p className="text-micro text-muted-foreground">복귀 배너 표시 (5일+ 미활동 시)</p>
               </div>
               <Switch checked={widgetPrefs.showRestartRoutine} onCheckedChange={() => toggleWidget("showRestartRoutine")} />
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-foreground">이번 주 추천</p>
-                <p className="text-[11px] text-muted-foreground">주간 처방 카드 표시</p>
+                <p className="text-body font-medium text-foreground">이번 주 추천</p>
+                <p className="text-micro text-muted-foreground">주간 처방 카드 표시</p>
               </div>
               <Switch checked={widgetPrefs.showWeeklyPrescription} onCheckedChange={() => toggleWidget("showWeeklyPrescription")} />
             </div>
@@ -442,11 +442,11 @@ const SettingsPage = () => {
 
         {/* Onboarding replay — 저빈도라 기본 접힘(더보기) */}
         <details className="group animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.01s" }}>
-          <summary className="flex cursor-pointer list-none items-center justify-between text-base font-bold text-foreground [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between text-body font-bold text-foreground [&::-webkit-details-marker]:hidden">
             <span>온보딩 / 오삼 가이드 다시 보기</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
           </summary>
-          <p className="mb-3 mt-3 text-xs leading-relaxed text-muted-foreground">
+          <p className="mb-3 mt-3 text-label leading-relaxed text-muted-foreground">
             · <strong>온보딩</strong> — 마이복서153 소개 8 슬라이드<br />
             · <strong>오삼 환영 인사</strong> — 가운데 큰 모달 (안녕하세요! 오삼이에요)<br />
             · <strong>오삼 가이드 5단계</strong> — 왼쪽 하단 작은 오삼이가 1단계부터 안내
@@ -457,7 +457,7 @@ const SettingsPage = () => {
                 resetOnboarding();
                 navigate("/onboarding");
               }}
-              className="rounded-xl bg-primary/10 px-4 py-2.5 text-sm font-bold text-primary transition-all active:scale-95"
+              className="rounded-xl bg-primary/10 px-4 py-2.5 text-body font-bold text-primary transition-all active:scale-95"
             >
               온보딩 다시 보기
             </button>
@@ -474,15 +474,15 @@ const SettingsPage = () => {
                     toast.success("7일 스타터 캠프 — Day 1 부터 다시 시작 🥊");
                     navigate("/home");
                   }}
-                  className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm font-bold text-amber-700 transition-all active:scale-95 dark:text-amber-400"
+                  className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-body font-bold text-amber-700 transition-all active:scale-95 dark:text-amber-400"
                 >
-                  🥊 7일 스타터 캠프 처음부터 시작 <span className="ml-1 text-[10px] font-normal opacity-70">(admin)</span>
+                  🥊 7일 스타터 캠프 처음부터 시작 <span className="ml-1 text-micro font-normal opacity-70">(admin)</span>
                 </button>
               </>
             )}
           </div>
           {isAdmin && (
-            <p className="mt-2 text-[11px] text-amber-700/80 dark:text-amber-400/80">
+            <p className="mt-2 text-micro text-amber-700/80 dark:text-amber-400/80">
               ※ 운영 테스트용. 회원에게는 아직 노출되지 않습니다.
             </p>
           )}
@@ -493,21 +493,21 @@ const SettingsPage = () => {
 
         {/* Profile Edit */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.03s" }}>
-          <h2 className="mb-4 text-base font-bold text-foreground">프로필 수정</h2>
+          <h2 className="mb-4 text-body font-bold text-foreground">프로필 수정</h2>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm text-muted-foreground">이름</Label>
+              <Label htmlFor="name" className="text-body text-muted-foreground">이름</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="이름을 입력하세요" className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nickname" className="text-sm text-muted-foreground">닉네임</Label>
+              <Label htmlFor="nickname" className="text-body text-muted-foreground">닉네임</Label>
               <Input id="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="닉네임을 입력하세요" maxLength={12} className="rounded-xl" />
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-micro text-muted-foreground">
                 12자 이내 · 순위·라이센스·사이니지 TV에 이 이름이 보여요. 닉네임을 정하면 실명 대신 닉네임으로 보여요.
               </p>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">소속 지점</Label>
+              <Label className="text-body text-muted-foreground">소속 지점</Label>
               {isAdmin ? (
                 <>
                   <Select value={profile.branch_name || ""} onValueChange={handleAdminSwitchBranch} disabled={switchingBranch}>
@@ -520,16 +520,16 @@ const SettingsPage = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-micro text-muted-foreground">
                     전체관리자는 바로 전환돼요 — 고른 지점의 회원 화면(커뮤니티·챌린지·라이브보드)을 그대로 체험할 수 있습니다.
                   </p>
                 </>
               ) : (
                 <>
-                  <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-foreground">
+                  <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-body text-foreground">
                     {profile.branch_name || "미지정"}
                   </div>
-                  <p className="text-[10px] text-muted-foreground">지점 변경은 아래 '지점 이전 요청'을 이용해주세요</p>
+                  <p className="text-micro text-muted-foreground">지점 변경은 아래 '지점 이전 요청'을 이용해주세요</p>
                 </>
               )}
             </div>
@@ -539,7 +539,7 @@ const SettingsPage = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
         >
           <Save className="h-4 w-4" />
           {saving ? "저장 중..." : "저장하기"}
@@ -548,22 +548,22 @@ const SettingsPage = () => {
         {/* 지문·얼굴 로그인 — 지원하는 기기·주소에서만 보인다 */}
         {passkeyReady && (
           <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.03s" }}>
-            <h2 className="mb-1 text-base font-bold text-foreground">지문·얼굴 로그인</h2>
-            <p className="mb-3 text-[11px] text-muted-foreground">
+            <h2 className="mb-1 text-body font-bold text-foreground">지문·얼굴 로그인</h2>
+            <p className="mb-3 text-micro text-muted-foreground">
               이 기기를 등록해두면 다음부터 비밀번호나 카카오 없이 지문·얼굴만으로 바로 들어올 수 있어요.
               지문 정보는 기기 안에만 저장되고 서버로 전송되지 않습니다.
             </p>
             {passkeyDone ? (
               <div className="flex items-center gap-2 rounded-xl border border-status-complete/30 bg-status-complete/5 px-4 py-3">
                 <Check className="h-4 w-4 text-status-complete" />
-                <span className="text-sm font-medium text-foreground">이 기기 등록됨</span>
+                <span className="text-body font-medium text-foreground">이 기기 등록됨</span>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={handleRegisterPasskey}
                 disabled={passkeyBusy}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-medium text-foreground transition-all hover:bg-muted active:scale-[0.98] disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-body font-medium text-foreground transition-all hover:bg-muted active:scale-[0.98] disabled:opacity-50"
               >
                 <Fingerprint className="h-5 w-5" />
                 {passkeyBusy ? "기기 확인 중…" : "이 기기 등록하기"}
@@ -574,21 +574,21 @@ const SettingsPage = () => {
 
         {/* 계정 연결 — 구글 로그인을 기존 아이디 계정에 연결 (Supabase identity linking) */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.04s" }}>
-          <h2 className="mb-1 text-base font-bold text-foreground">계정 연결</h2>
-          <p className="mb-3 text-[11px] text-muted-foreground">
+          <h2 className="mb-1 text-body font-bold text-foreground">계정 연결</h2>
+          <p className="mb-3 text-micro text-muted-foreground">
             구글 계정을 연결하면, 다음부터 로그인 화면의 구글 버튼으로도 지금 이 계정에 그대로 로그인할 수 있어요.
           </p>
           {googleLinked ? (
             <div className="flex items-center gap-2 rounded-xl border border-status-complete/30 bg-status-complete/5 px-4 py-3">
               <Check className="h-4 w-4 text-status-complete" />
-              <span className="text-sm font-medium text-foreground">구글 계정 연결됨</span>
+              <span className="text-body font-medium text-foreground">구글 계정 연결됨</span>
             </div>
           ) : (
             <button
               type="button"
               onClick={handleLinkGoogle}
               disabled={linkingGoogle}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-medium text-foreground transition-all hover:bg-muted active:scale-[0.98] disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-body font-medium text-foreground transition-all hover:bg-muted active:scale-[0.98] disabled:opacity-50"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -603,14 +603,14 @@ const SettingsPage = () => {
 
         {/* Branch Transfer Request */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.05s" }}>
-          <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-foreground">
+          <h2 className="mb-4 flex items-center gap-2 text-body font-bold text-foreground">
             <ArrowRightLeft className="h-4 w-4" /> 지점 이전 요청
           </h2>
 
           {hasPendingTransfer ? (
             <div className="rounded-xl border border-status-pending/30 bg-status-pending/5 p-4">
-              <p className="text-sm font-bold text-status-pending">⏳ 이전 요청 대기 중</p>
-              <p className="mt-1 text-xs text-muted-foreground">관장님 승인 후 지점이 변경됩니다</p>
+              <p className="text-body font-bold text-status-pending">⏳ 이전 요청 대기 중</p>
+              <p className="mt-1 text-label text-muted-foreground">관장님 승인 후 지점이 변경됩니다</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -629,13 +629,13 @@ const SettingsPage = () => {
                   <button
                     onClick={() => transferBranch && requestTransferMut.mutate()}
                     disabled={!transferBranch || requestTransferMut.isPending}
-                    className="w-full rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+                    className="w-full rounded-xl bg-primary py-2.5 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
                   >
                     {requestTransferMut.isPending ? "요청 중..." : "이전 요청하기"}
                   </button>
                 </>
               ) : (
-                <p className="text-center text-sm text-muted-foreground">이전 가능한 지점이 없습니다</p>
+                <p className="text-center text-body text-muted-foreground">이전 가능한 지점이 없습니다</p>
               )}
             </div>
           )}
@@ -643,16 +643,16 @@ const SettingsPage = () => {
           {/* Transfer history */}
           {transferRequests && transferRequests.length > 0 && (
             <div className="mt-4 space-y-2">
-              <p className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+              <p className="text-label font-bold text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" /> 이전 이력
               </p>
               {transferRequests.map((req: any) => (
                 <div key={req.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
                   <div>
-                    <p className="text-xs text-foreground">{req.from_branch} → {req.to_branch}</p>
-                    <p className="text-[10px] text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ko-KR")}</p>
+                    <p className="text-label text-foreground">{req.from_branch} → {req.to_branch}</p>
+                    <p className="text-micro text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ko-KR")}</p>
                   </div>
-                  <span className={`text-[10px] font-bold ${
+                  <span className={`text-micro font-bold ${
                     req.status === "approved" ? "text-status-complete" :
                     req.status === "rejected" ? "text-destructive" :
                     "text-status-pending"
@@ -668,24 +668,24 @@ const SettingsPage = () => {
         {/* Manager: Pending Branch Transfers */}
         {isManager && branchTransfers && branchTransfers.length > 0 && (
           <div className="animate-slide-up rounded-2xl border border-status-pending/20 bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.1s" }}>
-            <h2 className="mb-4 text-base font-bold text-foreground">지점 이전 승인 대기</h2>
+            <h2 className="mb-4 text-body font-bold text-foreground">지점 이전 승인 대기</h2>
             <div className="space-y-3">
               {branchTransfers.map((req: any) => (
                 <div key={req.id} className="rounded-xl border border-border bg-background p-3">
-                  <p className="text-sm font-medium text-foreground">{req.from_branch} → {req.to_branch}</p>
-                  <p className="text-[10px] text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ko-KR")}</p>
+                  <p className="text-body font-medium text-foreground">{req.from_branch} → {req.to_branch}</p>
+                  <p className="text-micro text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ko-KR")}</p>
                   <div className="mt-2 flex gap-2">
                     <button
                       onClick={() => approveTransferMut.mutate(req.id)}
                       disabled={approveTransferMut.isPending}
-                      className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-status-complete py-2 text-xs font-bold text-primary-foreground active:scale-95 disabled:opacity-50"
+                      className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-status-complete py-2 text-label font-bold text-primary-foreground active:scale-95 disabled:opacity-50"
                     >
                       <Check className="h-3 w-3" /> 승인
                     </button>
                     <button
                       onClick={() => rejectTransferMut.mutate(req.id)}
                       disabled={rejectTransferMut.isPending}
-                      className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-destructive py-2 text-xs font-bold text-destructive-foreground active:scale-95 disabled:opacity-50"
+                      className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-destructive py-2 text-label font-bold text-destructive-foreground active:scale-95 disabled:opacity-50"
                     >
                       <X className="h-3 w-3" /> 반려
                     </button>
@@ -708,8 +708,8 @@ const SettingsPage = () => {
         {/* Admin: Branch Management */}
         {isAdmin && (
           <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.15s" }}>
-            <h2 className="mb-1 text-base font-bold text-foreground">지점 관리</h2>
-            <p className="mb-4 text-[11.5px] leading-relaxed text-muted-foreground">
+            <h2 className="mb-1 text-body font-bold text-foreground">지점 관리</h2>
+            <p className="mb-4 text-micro leading-relaxed text-muted-foreground">
               스위치를 끈 지점은 랭킹 · 명예의 전당 · 지점 선택에서 안 보여요. 회원·출석 기록은 지워지지 않고, 켜면 바로 돌아와요.
             </p>
             <div className="mb-4 flex gap-2">
@@ -723,7 +723,7 @@ const SettingsPage = () => {
               <button
                 onClick={handleAddBranch}
                 disabled={addingBranch || !newBranch.trim()}
-                className="flex shrink-0 items-center gap-1 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
+                className="flex shrink-0 items-center gap-1 rounded-xl bg-primary px-4 py-2 text-body font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
               >
                 <Plus className="h-4 w-4" /> 추가
               </button>
@@ -734,7 +734,7 @@ const SettingsPage = () => {
                   {editingId === b.id ? (
                     <>
                       <Input value={editingName} onChange={(e) => setEditingName(e.target.value)}
-                        className="h-8 flex-1 rounded-lg text-sm" onKeyDown={(e) => e.key === "Enter" && handleEditBranch(b.id)} autoFocus />
+                        className="h-8 flex-1 rounded-lg text-body" onKeyDown={(e) => e.key === "Enter" && handleEditBranch(b.id)} autoFocus />
                       <button onClick={() => handleEditBranch(b.id)} className="rounded-lg bg-status-complete/20 p-1.5 text-status-complete active:scale-95">
                         <Check className="h-4 w-4" />
                       </button>
@@ -744,7 +744,7 @@ const SettingsPage = () => {
                     </>
                   ) : (
                     <>
-                      <span className={`flex-1 text-sm ${(b as { is_visible?: boolean }).is_visible === false ? "text-muted-foreground line-through" : "text-foreground"}`}>{b.name}</span>
+                      <span className={`flex-1 text-body ${(b as { is_visible?: boolean }).is_visible === false ? "text-muted-foreground line-through" : "text-foreground"}`}>{b.name}</span>
                       <Switch
                         checked={(b as { is_visible?: boolean }).is_visible !== false}
                         onCheckedChange={(on) => toggleBranchVisible(b.id, on)}
@@ -763,7 +763,7 @@ const SettingsPage = () => {
                 </div>
               ))}
               {(!branches || branches.length === 0) && (
-                <p className="py-3 text-center text-sm text-muted-foreground">등록된 지점이 없습니다</p>
+                <p className="py-3 text-center text-body text-muted-foreground">등록된 지점이 없습니다</p>
               )}
             </div>
           </div>
@@ -771,7 +771,7 @@ const SettingsPage = () => {
 
         {/* 65-S: 마이페이지에서 이관 — 회원관리/가이드/153다이어트/로그아웃 */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.18s" }}>
-          <h2 className="border-b border-border px-5 py-4 text-base font-bold text-foreground">메뉴</h2>
+          <h2 className="border-b border-border px-5 py-4 text-body font-bold text-foreground">메뉴</h2>
           {/* 화면 커스텀 도구 — 전체관리자 계정 전용 (2026-10-15 대표님: 떠 있는 '커스텀' 버튼을 설정 메뉴로, 내 계정만) */}
           {isSuperAdmin && (
             <button
@@ -784,8 +784,8 @@ const SettingsPage = () => {
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">🛠️</span>
                 <span className="min-w-0 text-left">
-                  <span className="block text-sm text-foreground">화면 커스텀 도구</span>
-                  <span className="block text-[11px] text-muted-foreground">튜토리얼 강조 위치 · 순서 편집 (내 계정 전용)</span>
+                  <span className="block text-body text-foreground">화면 커스텀 도구</span>
+                  <span className="block text-micro text-muted-foreground">튜토리얼 강조 위치 · 순서 편집 (내 계정 전용)</span>
                 </span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -795,7 +795,7 @@ const SettingsPage = () => {
             <button onClick={() => navigate("/manager")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">📋</span>
-                <span className="text-sm text-foreground">회원 관리</span>
+                <span className="text-body text-foreground">회원 관리</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -803,14 +803,14 @@ const SettingsPage = () => {
           <button onClick={() => navigate("/guide")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
             <div className="flex items-center gap-3">
               <span className="text-muted-foreground">📖</span>
-              <span className="text-sm text-foreground">가이드</span>
+              <span className="text-body text-foreground">가이드</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
           <button onClick={() => navigate("/diet")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
             <div className="flex items-center gap-3">
               <span className="text-muted-foreground">🥗</span>
-              <span className="text-sm text-foreground">153 다이어트</span>
+              <span className="text-body text-foreground">153 다이어트</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -818,7 +818,7 @@ const SettingsPage = () => {
           <a href="/privacy" className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
             <div className="flex items-center gap-3">
               <span className="text-muted-foreground">📄</span>
-              <span className="text-sm text-foreground">개인정보처리방침</span>
+              <span className="text-body text-foreground">개인정보처리방침</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </a>
@@ -830,7 +830,7 @@ const SettingsPage = () => {
           >
             <div className="flex items-center gap-3">
               <span className="text-muted-foreground">🗑️</span>
-              <span className="text-sm text-foreground">계정 삭제</span>
+              <span className="text-body text-foreground">계정 삭제</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -850,7 +850,7 @@ const SettingsPage = () => {
             className="flex w-full items-center gap-3 px-4 py-4 active:bg-secondary/50"
           >
             <LogOut className="h-4 w-4 text-destructive" />
-            <span className="text-sm text-destructive">로그아웃</span>
+            <span className="text-body text-destructive">로그아웃</span>
           </button>
         </div>
       </div>
@@ -880,7 +880,7 @@ const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
           setBusy(false);
         }
       }}
-      className="rounded-xl bg-reward/15 px-4 py-2.5 text-sm font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
+      className="rounded-xl bg-reward/15 px-4 py-2.5 text-body font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
     >
       {busy ? "준비 중…" : "🥊 오삼 환영 인사"}
     </button>
@@ -923,7 +923,7 @@ const RestartGuideOnlyButton = ({ onDone }: { onDone: () => void }) => {
           setBusy(false);
         }
       }}
-      className="rounded-xl border border-reward/30 bg-reward/5 px-4 py-2.5 text-sm font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
+      className="rounded-xl border border-reward/30 bg-reward/5 px-4 py-2.5 text-body font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
     >
       {busy ? "준비 중…" : "🥊 오삼 5단계 가이드"}
     </button>

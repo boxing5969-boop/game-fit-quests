@@ -34,13 +34,13 @@ const MyBoxerQuestPage = () => {
       >
         {/* 헤더 — 메뉴 제목 + 부제 */}
         <header data-tour="challenge153-header" className="space-y-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-300/80">
+          <p className="text-micro font-black uppercase tracking-[0.4em] text-amber-300/80">
             MYBOXER 153
           </p>
-          <h1 className="text-2xl font-black leading-tight text-foreground">
+          <h1 className="text-title font-black leading-tight text-foreground">
             153 챌린지
           </h1>
-          <p className="text-[12px] text-muted-foreground">
+          <p className="text-label text-muted-foreground">
             이번 주 왕좌는 누구? 버튼을 눌러 확인하세요
           </p>
         </header>
@@ -51,7 +51,7 @@ const MyBoxerQuestPage = () => {
         {/* 안내 — 공식 레벨업과 무관 (한 줄) */}
         <p
           data-tour="challenge153-intro"
-          className="rounded-xl border-l-2 border-primary/40 bg-primary/5 px-3.5 py-2 text-[10.5px] leading-relaxed text-muted-foreground"
+          className="rounded-xl border-l-2 border-primary/40 bg-primary/5 px-3.5 py-2 text-micro leading-relaxed text-muted-foreground"
         >
           153 챌린지 왕좌는 재미와 습관을 위한 순위예요. 공식 1~40 레벨업·명예의 전당 랭킹과는 별개입니다.
         </p>

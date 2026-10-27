@@ -38,13 +38,13 @@ const ReturnRoundMissionCard = ({
       )}
     </span>
     <div className="min-w-0 flex-1">
-      <p className="text-[13px] font-bold text-foreground">{mission.title}</p>
-      <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="text-label font-bold text-foreground">{mission.title}</p>
+      <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
         {mission.description}
       </p>
     </div>
     {selected && (
-      <span className="shrink-0 text-[11px] font-bold text-primary">
+      <span className="shrink-0 text-micro font-bold text-primary">
         선택됨
       </span>
     )}

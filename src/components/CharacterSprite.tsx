@@ -138,7 +138,7 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({
     size === "sm"
       ? "absolute -bottom-4 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap"
       : "absolute -bottom-5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap";
-  const labelTextClass = size === "sm" ? "text-[9px]" : "text-[10px]";
+  const labelTextClass = size === "sm" ? "text-micro" : "text-micro";
 
   const auraKey = customization?.aura;
   const isMasterAura = !!auraKey && MASTER_AURA_KEYS.includes(auraKey);
@@ -376,7 +376,7 @@ const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, siz
 
   if (size === "sm" || size === "xs") {
     return (
-      <span className="absolute -top-1 -right-1 text-xs animate-pulse">
+      <span className="absolute -top-1 -right-1 text-label animate-pulse">
         {emoji}
       </span>
     );
@@ -385,7 +385,7 @@ const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, siz
   // 프리미엄 이펙트: 8개, 2종 이모지 교차, 더 넓게
   if (premium) {
     const [e1, e2] = premium;
-    const emojiSize = size === "lg" ? "text-xl" : "text-base";
+    const emojiSize = size === "lg" ? "text-heading" : "text-body";
     return (
       <div className="absolute inset-0 overflow-visible">
         <span className={`absolute ${emojiSize} animate-bounce`} style={{ top: "-18%", left: "50%", transform: "translateX(-50%)", animationDelay: "0s", animationDuration: "1.3s" }}>{e1}</span>
@@ -401,7 +401,7 @@ const EffectOverlay: React.FC<{ effect: string; size: string }> = ({ effect, siz
   }
 
   // 일반 이펙트: 6개
-  const emojiSize = size === "lg" ? "text-lg" : "text-sm";
+  const emojiSize = size === "lg" ? "text-heading" : "text-body";
 
   return (
     <div className="absolute inset-0 overflow-visible">

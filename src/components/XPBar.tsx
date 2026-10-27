@@ -24,7 +24,7 @@ const XPBar = ({ current, max, showLabel = true, size = "md" }: XPBarProps) => {
   return (
     <div className="w-full">
       {showLabel && (
-        <div className="mb-1 flex items-center justify-between text-xs">
+        <div className="mb-1 flex items-center justify-between text-label">
           <span className="text-muted-foreground">XP</span>
           <span className="number-font font-semibold text-foreground">
             {current.toLocaleString()}

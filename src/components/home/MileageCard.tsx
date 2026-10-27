@@ -65,17 +65,17 @@ const MileageCard = () => {
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-700 dark:text-reward">153 마일리지 · 1점 = 1원</p>
-          <p className="flex items-center gap-1.5 truncate text-sm font-bold text-foreground">
+          <p className="text-micro font-black uppercase tracking-[0.18em] text-amber-700 dark:text-reward">153 마일리지 · 1점 = 1원</p>
+          <p className="flex items-center gap-1.5 truncate text-body font-bold text-foreground">
             <span className="tabular-nums">{formatMileage(data.balance)}</span>
-            <span className="text-[12px] font-bold text-muted-foreground">점 · 결제 할인에 사용</span>
+            <span className="text-label font-bold text-muted-foreground">점 · 결제 할인에 사용</span>
             {todayGain > 0 && (
-              <span className="rounded-full bg-reward/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-amber-700 dark:text-reward">
+              <span className="rounded-full bg-reward/15 px-1.5 py-0.5 text-micro font-black tabular-nums text-amber-700 dark:text-reward">
                 오늘 +{formatMileage(todayGain)}
               </span>
             )}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+          <p className="mt-0.5 truncate text-micro text-muted-foreground">
             {rulesLine || "지금은 마일리지 적립을 쉬고 있어요"}
           </p>
         </div>
@@ -98,7 +98,7 @@ const MileageCard = () => {
           >
             <div className="border-t border-border px-3.5 pb-3 pt-2">
               {recent.length === 0 ? (
-                <p className="py-1.5 text-[12px] text-muted-foreground">
+                <p className="py-1.5 text-label text-muted-foreground">
                   아직 쌓인 마일리지가 없어요.
                   {attendanceAmount > 0 ? ` 출석하면 +${formatMileage(attendanceAmount)}이 쌓여요.` : ""}
                 </p>
@@ -106,10 +106,10 @@ const MileageCard = () => {
                 <ul className="divide-y divide-border/60">
                   {recent.map((it, i) => (
                     <li key={`${it.at}-${i}`} className="flex items-center gap-2 py-1.5">
-                      <span className="w-10 shrink-0 text-[11px] tabular-nums text-muted-foreground">{kstShortDate(it.at)}</span>
-                      <span className="min-w-0 flex-1 truncate text-[12px] text-foreground">{itemLabel(it)}</span>
+                      <span className="w-10 shrink-0 text-micro tabular-nums text-muted-foreground">{kstShortDate(it.at)}</span>
+                      <span className="min-w-0 flex-1 truncate text-label text-foreground">{itemLabel(it)}</span>
                       <span
-                        className={`shrink-0 text-[12px] font-black tabular-nums ${it.amount >= 0 ? "text-amber-700 dark:text-reward" : "text-muted-foreground"}`}
+                        className={`shrink-0 text-label font-black tabular-nums ${it.amount >= 0 ? "text-amber-700 dark:text-reward" : "text-muted-foreground"}`}
                       >
                         {it.amount > 0 ? "+" : ""}
                         {formatMileage(it.amount)}
@@ -121,11 +121,11 @@ const MileageCard = () => {
               <button
                 type="button"
                 onClick={() => setHistoryOpen(true)}
-                className="mt-2 flex h-10 w-full items-center justify-center rounded-xl bg-reward/10 text-[12.5px] font-bold text-amber-700 active:scale-[0.98] dark:text-reward"
+                className="mt-2 flex h-10 w-full items-center justify-center rounded-xl bg-reward/10 text-label font-bold text-amber-700 active:scale-[0.98] dark:text-reward"
               >
                 마일리지 · 결제 전체 내역 보기
               </button>
-              <p className="mt-2 text-[10.5px] leading-relaxed text-muted-foreground">
+              <p className="mt-2 text-micro leading-relaxed text-muted-foreground">
                 출석은 하루 1번, 레벨업·타이틀매치 승급은 승인되는 순간 쌓여요. 수강권 · PT · 용품을 결제할 때 1점 = 1원으로
                 할인받아요 — 앱 결제는 결제 확인 창의 ‘153 마일리지 쓰기’ 칸, 데스크 결제는 지점장님께 말씀해 주세요. 한 번에 결제 금액의 10%까지,
                 1,000점 단위로 쓸 수 있고, 쌓인 날부터 1년이 지나면 사라져요.

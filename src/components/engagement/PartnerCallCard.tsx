@@ -51,20 +51,20 @@ const PartnerCallCard = () => {
           <Handshake className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
             오늘 같이 해요 · 같은 지점
           </p>
-          <p className="mt-0.5 truncate text-[13.5px] font-bold text-foreground">{title}</p>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{subtitle}</p>
+          <p className="mt-0.5 truncate text-label font-bold text-foreground">{title}</p>
+          <p className="mt-0.5 truncate text-micro text-muted-foreground">{subtitle}</p>
         </div>
         {others > 0 && (
           <div className="shrink-0 text-right">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-reward">
+            <p className="text-micro font-bold uppercase tracking-wider text-reward">
               {others}건
             </p>
           </div>
         )}
-        <span className="ml-1 shrink-0 text-[11px] font-bold text-primary">열기 →</span>
+        <span className="ml-1 shrink-0 text-micro font-bold text-primary">열기 →</span>
       </button>
 
       <PartnerCallSheet open={open} onClose={() => setOpen(false)} />

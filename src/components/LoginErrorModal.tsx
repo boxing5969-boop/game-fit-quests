@@ -71,10 +71,10 @@ const LoginErrorModal = ({ type, onClose, onRetry }: LoginErrorModalProps) => {
         </div>
 
         {/* Title */}
-        <h2 className="mb-3 text-center text-xl font-bold text-foreground">{config.title}</h2>
+        <h2 className="mb-3 text-center text-heading font-bold text-foreground">{config.title}</h2>
 
         {/* Body */}
-        <div className="mb-6 text-center text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
+        <div className="mb-6 text-center text-body leading-relaxed text-muted-foreground whitespace-pre-line">
           {config.body}
         </div>
 
@@ -83,14 +83,14 @@ const LoginErrorModal = ({ type, onClose, onRetry }: LoginErrorModalProps) => {
           {onRetry && (
             <button
               onClick={onRetry}
-              className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98]"
+              className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98]"
             >
               다시 시도
             </button>
           )}
           <button
             onClick={onClose}
-            className={`w-full rounded-xl py-3 text-sm font-medium transition-all active:scale-[0.98] ${
+            className={`w-full rounded-xl py-3 text-body font-medium transition-all active:scale-[0.98] ${
               onRetry
                 ? "border border-border text-muted-foreground"
                 : "bg-primary text-primary-foreground shadow-md font-bold"

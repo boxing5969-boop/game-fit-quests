@@ -113,7 +113,7 @@ const SignaturePad = ({ onSignatureChange }: { onSignatureChange: (data: string 
         onTouchEnd={endDraw}
       />
       {hasDrawn && (
-        <button type="button" onClick={clear} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <button type="button" onClick={clear} className="text-label text-muted-foreground hover:text-foreground transition-colors">
           서명 지우기
         </button>
       )}
@@ -128,8 +128,8 @@ const PrivacyConsentModal = ({ onAccept, onClose }: { onAccept: (sig: string) =>
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-elev-3">
-        <h2 className="mb-4 text-lg font-bold text-foreground">📋 개인정보 수집·이용 동의</h2>
-        <div className="mb-4 max-h-48 overflow-y-auto rounded-xl bg-muted/50 p-4 text-sm leading-relaxed text-muted-foreground">
+        <h2 className="mb-4 text-heading font-bold text-foreground">📋 개인정보 수집·이용 동의</h2>
+        <div className="mb-4 max-h-48 overflow-y-auto rounded-xl bg-muted/50 p-4 text-body leading-relaxed text-muted-foreground">
           <p className="mb-2 font-semibold text-foreground">1. 수집 항목</p>
           <p className="mb-3">이름, 닉네임, 아이디, 전화번호, 소속 지점</p>
           <p className="mb-2 font-semibold text-foreground">2. 수집 목적</p>
@@ -140,18 +140,18 @@ const PrivacyConsentModal = ({ onAccept, onClose }: { onAccept: (sig: string) =>
           <p>동의를 거부할 수 있으나, 이 경우 회원가입이 제한됩니다.</p>
         </div>
 
-        <p className="mb-2 text-sm font-medium text-foreground">아래에 서명해주세요</p>
+        <p className="mb-2 text-body font-medium text-foreground">아래에 서명해주세요</p>
         <SignaturePad onSignatureChange={setSignature} />
 
         <div className="mt-4 flex gap-3">
-          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground transition-all active:scale-[0.98]">
+          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-border py-3 text-body font-medium text-muted-foreground transition-all active:scale-[0.98]">
             취소
           </button>
           <button
             type="button"
             onClick={() => signature && onAccept(signature)}
             disabled={!signature}
-            className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
+            className="flex-1 rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
           >
             동의 및 서명 완료
           </button>
@@ -345,8 +345,8 @@ const LoginPage = () => {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-6">
         <div className="animate-bounce-in text-center">
-          <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-3xl bg-primary/20 text-5xl">✅</div>
-          <h1 className="mb-2 text-2xl text-foreground">가입이 완료되었습니다!</h1>
+          <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-3xl bg-primary/20 text-display">✅</div>
+          <h1 className="mb-2 text-title text-foreground">가입이 완료되었습니다!</h1>
           <p className="mb-6 text-muted-foreground">
             {tab === "coach" ? (
               <>관리자 승인 후 로그인할 수 있습니다.<br />승인 완료 시 알림을 받으실 수 있습니다.</>
@@ -355,13 +355,13 @@ const LoginPage = () => {
             )}
           </p>
           {tab === "coach" && (
-            <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-700">
+            <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-body text-amber-700">
               관장님 권한은 관리자 승인 후 부여됩니다.
             </div>
           )}
           <button
             onClick={() => { setTab("login"); resetForm(); }}
-            className="rounded-xl bg-primary px-8 py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]"
+            className="rounded-xl bg-primary px-8 py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98]"
           >
             로그인으로 돌아가기
           </button>
@@ -370,14 +370,14 @@ const LoginPage = () => {
     );
   }
 
-  const inputClass = "w-full rounded-xl border border-border bg-card px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all";
+  const inputClass = "w-full rounded-xl border border-border bg-card px-4 py-3.5 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all";
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
       {/* Logo — CSS 워드마크 (PNG 의존 0). 밝은 바탕이라 빛 번짐 없는 light (2026-10-20 대표님: QR 찍었을 때 또렷하지 않다) */}
       <div className="mb-5 animate-bounce-in text-center">
         <MyBoxerWordmark size="md" align="center" tone="light" className="mx-auto" />
-        <p className="mt-3 text-xs text-muted-foreground">
+        <p className="mt-3 text-label text-muted-foreground">
           153복싱짐 회원을 위한 복싱 성장 퀘스트 앱
         </p>
       </div>
@@ -395,7 +395,7 @@ const LoginPage = () => {
             key={key}
             type="button"
             onClick={() => { setTab(key); setError(""); }}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${
+            className={`flex-1 rounded-lg py-2.5 text-body font-medium transition-all ${
               tab === key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
@@ -409,20 +409,20 @@ const LoginPage = () => {
         {isSignUp && (
           <>
             <div>
-              <label className="mb-1 block text-sm font-medium text-muted-foreground">이름</label>
+              <label className="mb-1 block text-body font-medium text-muted-foreground">이름</label>
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="실명을 입력하세요" required className={inputClass} />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-muted-foreground">닉네임</label>
+              <label className="mb-1 block text-body font-medium text-muted-foreground">닉네임</label>
               <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="링 위의 이름을 정하세요" required className={inputClass} />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-muted-foreground">전화번호</label>
+              <label className="mb-1 block text-body font-medium text-muted-foreground">전화번호</label>
               <input type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" required className={inputClass} />
-              <p className="mt-0.5 text-xs text-muted-foreground">한 번호당 하나의 계정만 가능합니다</p>
+              <p className="mt-0.5 text-label text-muted-foreground">한 번호당 하나의 계정만 가능합니다</p>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-muted-foreground">소속 체육관</label>
+              <label className="mb-1 block text-body font-medium text-muted-foreground">소속 체육관</label>
               {branches && branches.length > 0 ? (
                 <Select value={branch} onValueChange={setBranch}>
                   <SelectTrigger className="rounded-xl">
@@ -435,13 +435,13 @@ const LoginPage = () => {
                   </SelectContent>
                 </Select>
               ) : (
-                <p className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-muted-foreground">등록된 체육관이 없습니다</p>
+                <p className="rounded-xl border border-dashed border-border p-3 text-center text-body text-muted-foreground">등록된 체육관이 없습니다</p>
               )}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-muted-foreground">생년월일</label>
+              <label className="mb-1 block text-body font-medium text-muted-foreground">생년월일</label>
               <input type="text" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} placeholder="예: 19990315" required className={inputClass} maxLength={8} inputMode="numeric" />
-              <p className="mt-0.5 text-xs text-muted-foreground">비밀번호 분실 시 본인확인에 사용됩니다</p>
+              <p className="mt-0.5 text-label text-muted-foreground">비밀번호 분실 시 본인확인에 사용됩니다</p>
             </div>
           </>
         )}
@@ -457,23 +457,23 @@ const LoginPage = () => {
               aria-labelledby="gym-member-kakao-guide"
               className="rounded-2xl border border-primary/30 bg-card p-4 shadow-elev-1"
             >
-              <p id="gym-member-kakao-guide" className="text-[15px] font-black text-foreground">
+              <p id="gym-member-kakao-guide" className="text-body font-black text-foreground">
                 🥊 153복싱짐 회원님이세요?
               </p>
-              <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
+              <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                 따로 가입하지 마시고 <b className="text-foreground">카카오로 시작하기</b>만 누르세요
               </p>
               <ol className="mt-3 space-y-1.5">
                 {["아래 노란 '카카오로 시작하기' 누르기", "체육관에 등록된 전화번호 입력", "끝! 레벨·출석 기록이 그대로 이어져요"].map((step, i) => (
-                  <li key={step} className="flex items-center gap-2.5 text-[12.5px] font-semibold text-foreground">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-black text-primary-foreground">
+                  <li key={step} className="flex items-center gap-2.5 text-label font-semibold text-foreground">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-micro font-black text-primary-foreground">
                       {i + 1}
                     </span>
                     {step}
                   </li>
                 ))}
               </ol>
-              <p className="mt-2.5 text-[11px] leading-relaxed text-muted-foreground">
+              <p className="mt-2.5 text-micro leading-relaxed text-muted-foreground">
                 이미 아이디로 쓰고 계시면 아래 아이디 로그인을 그대로 쓰세요
               </p>
             </section>
@@ -503,7 +503,7 @@ const LoginPage = () => {
                   setIsLoading(false);
                 }
               }}
-              className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#FEE500] py-4 text-[16px] font-bold text-black shadow-elev-1 transition-all hover:brightness-95 active:scale-[0.98] disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#FEE500] py-4 text-body font-bold text-black shadow-elev-1 transition-all hover:brightness-95 active:scale-[0.98] disabled:opacity-50"
             >
               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="#000000">
                 <path d="M12 3C6.48 3 2 6.58 2 11c0 2.85 1.86 5.35 4.66 6.77-.2.74-.74 2.7-.85 3.12-.13.52.19.51.4.37.16-.11 2.6-1.77 3.66-2.49.69.1 1.4.15 2.13.15 5.52 0 10-3.58 10-8S17.52 3 12 3z"/>
@@ -514,7 +514,7 @@ const LoginPage = () => {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border" />
               </div>
-              <div className="relative flex justify-center text-xs">
+              <div className="relative flex justify-center text-label">
                 <span className="bg-background px-3 text-muted-foreground">또는 아이디로 로그인</span>
               </div>
             </div>
@@ -522,16 +522,16 @@ const LoginPage = () => {
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-muted-foreground">아이디</label>
+          <label className="mb-1 block text-body font-medium text-muted-foreground">아이디</label>
           <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={isSignUp ? "영문, 숫자 4자 이상" : "아이디 입력"} required className={inputClass} autoCapitalize="none" autoCorrect="off" />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-muted-foreground">비밀번호</label>
+          <label className="mb-1 block text-body font-medium text-muted-foreground">비밀번호</label>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호 입력" required minLength={6} className={inputClass} />
         </div>
         {isSignUp && (
           <div>
-            <label className="mb-1 block text-sm font-medium text-muted-foreground">비밀번호 확인</label>
+            <label className="mb-1 block text-body font-medium text-muted-foreground">비밀번호 확인</label>
             <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="비밀번호를 다시 입력하세요" required className={inputClass} />
           </div>
         )}
@@ -546,10 +546,10 @@ const LoginPage = () => {
                 : "border-border bg-card hover:border-primary/30"
             }`}
           >
-            <span className="text-lg">{signatureData ? "✅" : "📋"}</span>
+            <span className="text-heading">{signatureData ? "✅" : "📋"}</span>
             <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">개인정보 수집·이용 동의</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-body font-medium text-foreground">개인정보 수집·이용 동의</p>
+              <p className="text-label text-muted-foreground">
                 {signatureData ? "동의 및 서명 완료" : "터치하여 동의서 확인 및 서명"}
               </p>
             </div>
@@ -557,19 +557,19 @@ const LoginPage = () => {
         )}
 
         {tab === "coach" && (
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-700">
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-body text-amber-700">
             ⚠️ 관장님 가입은 관리자 승인 후 코치 권한이 부여됩니다.
           </div>
         )}
 
         {error && (
-          <div className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
+          <div className="rounded-xl bg-destructive/10 px-4 py-3 text-body text-destructive">{error}</div>
         )}
 
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-xl bg-primary py-4 text-lg font-bold text-primary-foreground shadow-glow-primary transition-all active:scale-[0.98] hover:shadow-glow-primary disabled:opacity-50"
+          className="w-full rounded-xl bg-primary py-4 text-heading font-bold text-primary-foreground shadow-glow-primary transition-all active:scale-[0.98] hover:shadow-glow-primary disabled:opacity-50"
         >
           {isLoading
             ? "처리 중..."
@@ -585,18 +585,18 @@ const LoginPage = () => {
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="w-full rounded-xl border border-primary/40 bg-primary/5 py-3.5 text-sm font-bold text-primary transition-all active:scale-[0.98]"
+              className="w-full rounded-xl border border-primary/40 bg-primary/5 py-3.5 text-body font-bold text-primary transition-all active:scale-[0.98]"
             >
               🥊 처음 오셨나요? 신규 회원 가입 신청
             </button>
-            <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
+            <p className="text-center text-micro leading-relaxed text-muted-foreground">
               체육관 회원님은 위의 <b className="text-foreground">카카오로 시작하기</b>가 가장 쉬워요 · 카카오가 없으면 여기서 등록된 전화번호·이름으로 가입하면 결제 없이 끝나요
             </p>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border" />
               </div>
-              <div className="relative flex justify-center text-xs">
+              <div className="relative flex justify-center text-label">
                 <span className="bg-background px-3 text-muted-foreground">또는</span>
               </div>
             </div>
@@ -613,7 +613,7 @@ const LoginPage = () => {
                   if (err) { setError(err); return; }
                   navigate(peekPostLoginPath() ?? "/home");
                 }}
-                className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-foreground transition-all hover:bg-primary/15 active:scale-[0.98] disabled:opacity-50"
+                className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 py-3 text-body font-bold text-foreground transition-all hover:bg-primary/15 active:scale-[0.98] disabled:opacity-50"
               >
                 <Fingerprint className="h-5 w-5 text-primary" />
                 {passkeyBusy ? "확인 중…" : "지문 · 얼굴로 로그인"}
@@ -649,7 +649,7 @@ const LoginPage = () => {
                     setIsLoading(false);
                   }
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-3.5 text-sm font-medium text-foreground transition-all hover:bg-muted active:scale-[0.98]"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-3.5 text-body font-medium text-foreground transition-all hover:bg-muted active:scale-[0.98]"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -678,7 +678,7 @@ const LoginPage = () => {
                       setIsLoading(false);
                     }
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-black py-3.5 text-sm font-medium text-white transition-all hover:bg-black/85 active:scale-[0.98] disabled:opacity-50 dark:bg-white dark:text-black"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-black py-3.5 text-body font-medium text-white transition-all hover:bg-black/85 active:scale-[0.98] disabled:opacity-50 dark:bg-white dark:text-black"
                 >
                   <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.53 2.66-.39 6.59 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.04 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.32-3.5zM14.2 6.13c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.64-1.05 1.67-.92 2.66.97.07 1.96-.49 2.56-1.21z" />
@@ -693,7 +693,7 @@ const LoginPage = () => {
                 type="button"
                 onClick={() => setShowFindId(true)}
                 disabled={isLoading}
-                className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="py-2 text-body text-muted-foreground hover:text-foreground transition-colors"
               >
                 아이디 찾기
               </button>
@@ -702,7 +702,7 @@ const LoginPage = () => {
                 type="button"
                 onClick={() => setShowForgotPassword(true)}
                 disabled={isLoading}
-                className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="py-2 text-body text-muted-foreground hover:text-foreground transition-colors"
               >
                 비밀번호 찾기
               </button>
@@ -734,37 +734,37 @@ const LoginPage = () => {
           <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-elev-3">
             {forgotStep === "success" ? (
               <div className="text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500/20 text-3xl">✅</div>
-                <h2 className="mb-2 text-lg font-bold text-foreground">비밀번호 변경 완료!</h2>
-                <p className="mb-4 text-sm text-muted-foreground">새 비밀번호로 로그인해주세요.</p>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500/20 text-title">✅</div>
+                <h2 className="mb-2 text-heading font-bold text-foreground">비밀번호 변경 완료!</h2>
+                <p className="mb-4 text-body text-muted-foreground">새 비밀번호로 로그인해주세요.</p>
                 <button type="button" onClick={() => { setShowForgotPassword(false); setForgotStep("verify"); setForgotUsername(""); setForgotName(""); setForgotPhone(""); setForgotBirthDate(""); setForgotNewPassword(""); setForgotConfirmPassword(""); setForgotError(""); }}
-                  className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary active:scale-[0.98]">
+                  className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary active:scale-[0.98]">
                   확인
                 </button>
               </div>
             ) : (
               <>
-                <h2 className="mb-2 text-lg font-bold text-foreground">🔑 비밀번호 찾기</h2>
-                <p className="mb-4 text-sm text-muted-foreground">가입 시 등록한 아이디, 이름, 전화번호를 입력하세요.</p>
+                <h2 className="mb-2 text-heading font-bold text-foreground">🔑 비밀번호 찾기</h2>
+                <p className="mb-4 text-body text-muted-foreground">가입 시 등록한 아이디, 이름, 전화번호를 입력하세요.</p>
                 <div className="space-y-3">
                   <input type="text" value={forgotUsername} onChange={(e) => setForgotUsername(e.target.value)} placeholder="아이디" className={inputClass} autoCapitalize="none" autoCorrect="off" />
                   <input type="text" value={forgotName} onChange={(e) => setForgotName(e.target.value)} placeholder="이름" className={inputClass} />
                   <input type="tel" value={forgotPhone} onChange={(e) => setForgotPhone(formatPhone(e.target.value))} placeholder="전화번호 (010-0000-0000)" className={inputClass} />
                   <input type="text" value={forgotBirthDate} onChange={(e) => setForgotBirthDate(e.target.value)} placeholder="생년월일 (선택, 예: 19990315)" className={inputClass} maxLength={8} inputMode="numeric" />
                   <div className="border-t border-border pt-3">
-                    <p className="mb-2 text-sm font-medium text-foreground">새 비밀번호 설정</p>
+                    <p className="mb-2 text-body font-medium text-foreground">새 비밀번호 설정</p>
                     <input type="password" value={forgotNewPassword} onChange={(e) => setForgotNewPassword(e.target.value)} placeholder="새 비밀번호 (6자 이상)" className={inputClass} />
                   </div>
                   <input type="password" value={forgotConfirmPassword} onChange={(e) => setForgotConfirmPassword(e.target.value)} placeholder="새 비밀번호 확인" className={inputClass} />
                 </div>
-                {forgotError && <p className="mt-2 text-sm text-destructive">{forgotError}</p>}
+                {forgotError && <p className="mt-2 text-body text-destructive">{forgotError}</p>}
                 <div className="mt-4 flex gap-3">
                   <button type="button" onClick={() => { setShowForgotPassword(false); setForgotError(""); setForgotUsername(""); setForgotName(""); setForgotPhone(""); setForgotBirthDate(""); setForgotNewPassword(""); setForgotConfirmPassword(""); }}
-                    className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground transition-all active:scale-[0.98]">
+                    className="flex-1 rounded-xl border border-border py-3 text-body font-medium text-muted-foreground transition-all active:scale-[0.98]">
                     취소
                   </button>
                   <button type="button" onClick={handleForgotPassword} disabled={forgotLoading}
-                    className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
+                    className="flex-1 rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">
                     {forgotLoading ? "확인 중..." : "비밀번호 변경"}
                   </button>
                 </div>
@@ -779,14 +779,14 @@ const LoginPage = () => {
           <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-elev-3">
             {findResults ? (
               <div>
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-3xl">🪪</div>
-                <h2 className="mb-3 text-center text-lg font-bold text-foreground">가입 정보 확인</h2>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-title">🪪</div>
+                <h2 className="mb-3 text-center text-heading font-bold text-foreground">가입 정보 확인</h2>
                 {findResults.length === 0 ? (
-                  <p className="mb-4 text-center text-sm text-muted-foreground">일치하는 계정을 찾을 수 없습니다.</p>
+                  <p className="mb-4 text-center text-body text-muted-foreground">일치하는 계정을 찾을 수 없습니다.</p>
                 ) : (
                   <div className="mb-4 space-y-2">
                     {findResults.map((r, i) => (
-                      <div key={i} className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm">
+                      <div key={i} className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-body">
                         {r.type === "username" ? (
                           <p className="text-foreground">아이디: <span className="font-bold text-primary">{r.username}</span></p>
                         ) : r.type === "social" ? (
@@ -796,24 +796,24 @@ const LoginPage = () => {
                         )}
                       </div>
                     ))}
-                    <p className="text-xs text-muted-foreground">보안을 위해 일부만 표시됩니다. 비밀번호를 모르면 '비밀번호 찾기'로 재설정하세요.</p>
+                    <p className="text-label text-muted-foreground">보안을 위해 일부만 표시됩니다. 비밀번호를 모르면 '비밀번호 찾기'로 재설정하세요.</p>
                   </div>
                 )}
-                <button type="button" onClick={closeFindId} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary active:scale-[0.98]">확인</button>
+                <button type="button" onClick={closeFindId} className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary active:scale-[0.98]">확인</button>
               </div>
             ) : (
               <>
-                <h2 className="mb-2 text-lg font-bold text-foreground">🪪 아이디 찾기</h2>
-                <p className="mb-4 text-sm text-muted-foreground">가입 시 등록한 이름과 전화번호를 입력하세요.</p>
+                <h2 className="mb-2 text-heading font-bold text-foreground">🪪 아이디 찾기</h2>
+                <p className="mb-4 text-body text-muted-foreground">가입 시 등록한 이름과 전화번호를 입력하세요.</p>
                 <div className="space-y-3">
                   <input type="text" value={findName} onChange={(e) => setFindName(e.target.value)} placeholder="이름" className={inputClass} />
                   <input type="tel" value={findPhone} onChange={(e) => setFindPhone(formatPhone(e.target.value))} placeholder="전화번호 (010-0000-0000)" className={inputClass} />
                   <input type="text" value={findBirth} onChange={(e) => setFindBirth(e.target.value)} placeholder="생년월일 (선택, 예: 19990315)" className={inputClass} maxLength={8} inputMode="numeric" />
                 </div>
-                {findError && <p className="mt-2 text-sm text-destructive">{findError}</p>}
+                {findError && <p className="mt-2 text-body text-destructive">{findError}</p>}
                 <div className="mt-4 flex gap-3">
-                  <button type="button" onClick={closeFindId} className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground transition-all active:scale-[0.98]">취소</button>
-                  <button type="button" onClick={handleFindId} disabled={findLoading} className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">{findLoading ? "확인 중..." : "아이디 찾기"}</button>
+                  <button type="button" onClick={closeFindId} className="flex-1 rounded-xl border border-border py-3 text-body font-medium text-muted-foreground transition-all active:scale-[0.98]">취소</button>
+                  <button type="button" onClick={handleFindId} disabled={findLoading} className="flex-1 rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50">{findLoading ? "확인 중..." : "아이디 찾기"}</button>
                 </div>
               </>
             )}

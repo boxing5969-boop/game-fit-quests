@@ -33,7 +33,7 @@ const CycleBar = ({ label, cur, req, unit }: { label: string; cur: number; req: 
   const done = cur >= req;
   return (
     <div className="flex-1">
-      <div className="mb-0.5 flex items-center justify-between text-[10px]">
+      <div className="mb-0.5 flex items-center justify-between text-micro">
         <span className="text-muted-foreground">{label}</span>
         <span className={done ? "font-bold text-status-complete" : "text-foreground"}>{cur}/{req}{unit}</span>
       </div>
@@ -115,7 +115,7 @@ const RoutinesPage = () => {
     <div className="mx-auto min-h-screen max-w-lg bg-background px-4 pb-24 pt-4 text-foreground">
       <div className="mb-2 flex items-center gap-2">
         <button onClick={() => navigate(-1)} className="rounded-lg p-1.5 active:scale-95"><ArrowLeft className="h-5 w-5" /></button>
-        <h1 className="text-lg font-black">수업 루틴</h1>
+        <h1 className="text-heading font-black">수업 루틴</h1>
       </div>
 
       {/* 레벨업 연결 배너 */}
@@ -123,8 +123,8 @@ const RoutinesPage = () => {
         <div className="mb-3 rounded-2xl border border-border bg-card p-3 shadow-elev-1">
           <div className="mb-2 flex items-center gap-1.5">
             <TrendingUp className="h-4 w-4 text-primary" />
-            <span className="text-xs font-bold text-foreground">레벨업까지</span>
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-label font-bold text-foreground">레벨업까지</span>
+            <span className="text-micro text-muted-foreground">
               출석 {cycle.reqSessions}회마다 {cycle.rank === "red" || cycle.rank === "black" ? "승급 심사" : "자동 승급"}
             </span>
           </div>
@@ -136,7 +136,7 @@ const RoutinesPage = () => {
             )}
           </div>
           {cycle.meets && (
-            <p className="mt-2 w-full rounded-lg bg-primary/10 py-2 text-center text-xs font-bold text-primary">
+            <p className="mt-2 w-full rounded-lg bg-primary/10 py-2 text-center text-label font-bold text-primary">
               {needsReview
                 ? "요건을 다 채웠어요 — 심사가 열리면 담당자 확인 후 승급돼요"
                 : "출석을 다 채웠어요 — 다음 출석 때 자동으로 승급돼요"}
@@ -149,8 +149,8 @@ const RoutinesPage = () => {
       <LessonTodayCard onOpen={openLesson} showEmpty className="mb-4" />
 
       <div className="mb-2.5 px-1">
-        <h2 className="text-[17px] font-black text-foreground">153 수업 매뉴얼</h2>
-        <p className="mt-0.5 text-[12.5px] leading-snug text-muted-foreground">
+        <h2 className="text-body font-black text-foreground">153 수업 매뉴얼</h2>
+        <p className="mt-0.5 text-label leading-snug text-muted-foreground">
           레벨마다 3일 — 코치님과 이 순서대로 배워요. 누르면 그날 라운드·주의할 점이 나와요.
         </p>
       </div>
@@ -162,17 +162,17 @@ const RoutinesPage = () => {
         </div>
       ) : lessonDays.isError ? (
         <div className="rounded-2xl bg-card px-4 py-8 text-center shadow-elev-1">
-          <p className="text-[14px] font-bold text-foreground">수업 매뉴얼을 불러오지 못했어요</p>
+          <p className="text-label font-bold text-foreground">수업 매뉴얼을 불러오지 못했어요</p>
           <button
             type="button"
             onClick={() => lessonDays.refetch()}
-            className="mt-3 rounded-full bg-secondary px-4 py-2 text-[13px] font-bold active:scale-95"
+            className="mt-3 rounded-full bg-secondary px-4 py-2 text-label font-bold active:scale-95"
           >
             다시 불러오기
           </button>
         </div>
       ) : lessonGroups.length === 0 ? (
-        <p className="rounded-2xl bg-muted/50 px-4 py-8 text-center text-[13px] text-muted-foreground">
+        <p className="rounded-2xl bg-muted/50 px-4 py-8 text-center text-label text-muted-foreground">
           수업 매뉴얼을 준비하고 있어요
         </p>
       ) : (
@@ -182,8 +182,8 @@ const RoutinesPage = () => {
       {/* ── 코치님이 만든 루틴 — 있을 때만 ── */}
       {!isLoading && routines.length > 0 && (
         <div className="mb-2.5 mt-6 px-1">
-          <h2 className="text-[17px] font-black text-foreground">코치님 루틴</h2>
-          <p className="mt-0.5 text-[12.5px] leading-snug text-muted-foreground">
+          <h2 className="text-body font-black text-foreground">코치님 루틴</h2>
+          <p className="mt-0.5 text-label leading-snug text-muted-foreground">
             코치가 준비한 수업 루틴이에요. 오늘 수업을 마치면 '수업 완료'를 눌러 기록하세요.
           </p>
         </div>
@@ -193,15 +193,15 @@ const RoutinesPage = () => {
           {routines.map((r) => (
             <button key={r.id} onClick={() => setSel(r)} className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-elev-1 transition-all active:scale-[0.99]">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-base font-bold text-foreground">{r.name}</span>
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground"><Clock className="h-3 w-3" />{r.total_min}분</span>
+                <span className="text-body font-bold text-foreground">{r.name}</span>
+                <span className="flex items-center gap-1 text-micro text-muted-foreground"><Clock className="h-3 w-3" />{r.total_min}분</span>
               </div>
-              {r.description && <p className="mt-0.5 text-xs text-muted-foreground">{r.description}</p>}
+              {r.description && <p className="mt-0.5 text-label text-muted-foreground">{r.description}</p>}
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {PHASE_META.map((m) => (
-                  <span key={m.key} className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-foreground">{m.emoji} {r.phases[m.key]?.length || 0}</span>
+                  <span key={m.key} className="rounded-full bg-muted px-2 py-0.5 text-micro text-foreground">{m.emoji} {r.phases[m.key]?.length || 0}</span>
                 ))}
-                {r.target_level && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">Lv.{r.target_level}</span>}
+                {r.target_level && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-micro font-bold text-primary">Lv.{r.target_level}</span>}
               </div>
             </button>
           ))}
@@ -213,25 +213,25 @@ const RoutinesPage = () => {
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setSel(null)}>
           <div className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-lg font-black text-foreground">{sel.name}</h2>
+              <h2 className="text-heading font-black text-foreground">{sel.name}</h2>
               <button onClick={() => setSel(null)} className="rounded-lg p-1 active:scale-95"><X className="h-5 w-5" /></button>
             </div>
-            <p className="mb-3 flex items-center gap-1 text-[11px] text-muted-foreground"><Clock className="h-3 w-3" />총 {sel.total_min}분{sel.target_level ? ` · Lv.${sel.target_level} 권장` : ""}</p>
+            <p className="mb-3 flex items-center gap-1 text-micro text-muted-foreground"><Clock className="h-3 w-3" />총 {sel.total_min}분{sel.target_level ? ` · Lv.${sel.target_level} 권장` : ""}</p>
 
             {PHASE_META.map((m) => {
               const items = sel.phases[m.key] || [];
               if (items.length === 0) return null;
               return (
                 <div key={m.key} className="mb-3">
-                  <p className="mb-1.5 text-sm font-bold text-foreground">{m.emoji} {m.label}</p>
+                  <p className="mb-1.5 text-body font-bold text-foreground">{m.emoji} {m.label}</p>
                   <div className="space-y-1.5">
                     {items.map((it, i) => (
                       <div key={i} className="flex items-center justify-between gap-2 rounded-xl bg-background px-3 py-2">
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-foreground">{it.name}</p>
-                          {it.note && <p className="text-[11px] text-muted-foreground">{it.note}</p>}
+                          <p className="truncate text-body font-semibold text-foreground">{it.name}</p>
+                          {it.note && <p className="text-micro text-muted-foreground">{it.note}</p>}
                         </div>
-                        <span className="shrink-0 text-xs font-bold text-muted-foreground">{it.minutes}분</span>
+                        <span className="shrink-0 text-label font-bold text-muted-foreground">{it.minutes}분</span>
                       </div>
                     ))}
                   </div>
@@ -242,11 +242,11 @@ const RoutinesPage = () => {
             <button
               onClick={() => record.mutate(sel)}
               disabled={record.isPending}
-              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
             >
               <CheckCircle2 className="h-4 w-4" /> 이 수업 완료로 기록
             </button>
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">
+            <p className="mt-2 text-center text-micro text-muted-foreground">
               출석은 입구 얼굴 인식으로 자동으로 쌓여요.
               {cycle ? ` 레벨당 ${cycle.reqSessions}회${needsReview ? " + 코치님 승급 심사" : "면 자동 승급"}!` : ""}
             </p>

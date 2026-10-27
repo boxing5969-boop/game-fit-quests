@@ -28,11 +28,11 @@ const QuestPraiseTargetsPanel = ({ targets }: Props) => {
   if (targets.length === 0) {
     return (
       <div>
-        <p className="mb-2 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="mb-2 text-micro font-bold uppercase tracking-wider text-muted-foreground">
           칭찬 대상 회원
         </p>
         <div className="rounded-card border border-border bg-background/40 p-3">
-          <p className="text-[12px] leading-relaxed text-muted-foreground">
+          <p className="text-label leading-relaxed text-muted-foreground">
             이번 주 활동 데이터가 누적되면 칭찬 대상이 표시됩니다.
           </p>
         </div>
@@ -42,7 +42,7 @@ const QuestPraiseTargetsPanel = ({ targets }: Props) => {
 
   return (
     <div>
-      <p className="mb-2 flex items-center gap-1 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-2 flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
         <Sparkles className="h-3 w-3 text-primary" />
         칭찬 대상 — 오늘 한마디 보내기
       </p>
@@ -55,15 +55,15 @@ const QuestPraiseTargetsPanel = ({ targets }: Props) => {
               className="flex w-full items-center gap-3 rounded-card border border-primary/20 bg-primary/5 px-3 py-2.5 text-left transition-all active:scale-[0.99] hover:border-primary/40"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[12.5px] font-bold text-foreground">
+                <p className="truncate text-label font-bold text-foreground">
                   {t.display_name}
                 </p>
-                <p className="mt-0.5 text-[10.5px] text-muted-foreground">
+                <p className="mt-0.5 text-micro text-muted-foreground">
                   {RANK_LABELS[t.current_rank] ?? t.current_rank} Lv.
                   {toGlobalLevel(t.current_rank, t.current_level)}
                 </p>
-                <p className="mt-0.5 text-[10.5px] text-primary">{t.reason}</p>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                <p className="mt-0.5 text-micro text-primary">{t.reason}</p>
+                <p className="mt-0.5 text-micro text-muted-foreground">
                   {t.metric}
                 </p>
               </div>

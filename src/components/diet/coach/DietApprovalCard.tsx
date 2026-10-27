@@ -104,7 +104,7 @@ export const DietApprovalCard = ({
           onClick={() => onOpenMember?.(log.user_id)}
           className="flex items-center gap-2.5 flex-1 min-w-0 text-left active:opacity-80"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-[14px] font-bold text-muted-foreground">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-label font-bold text-muted-foreground">
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -112,21 +112,21 @@ export const DietApprovalCard = ({
             )}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-bold text-foreground">
+            <p className="truncate text-label font-bold text-foreground">
               {nickname ?? "회원"}
             </p>
-            <p className="truncate text-[11px] text-muted-foreground">
+            <p className="truncate text-micro text-muted-foreground">
               Day {log.day_number} · {stageLabel} · {log.log_date}
             </p>
           </div>
         </button>
-        <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-black text-primary">
+        <span className="rounded-md bg-primary/10 px-2 py-0.5 text-micro font-black text-primary">
           {score}점
         </span>
       </div>
 
       {/* 체크 summary + 사진 count */}
-      <div className="grid grid-cols-2 gap-1.5 text-[11.5px]">
+      <div className="grid grid-cols-2 gap-1.5 text-micro">
         <SmallStat
           label="단백질"
           value={log.protein_first === true ? "O" : log.protein_first === false ? "X" : "—"}
@@ -181,9 +181,9 @@ export const DietApprovalCard = ({
 
       {/* 회원 회고 + 기분 */}
       {(log.memo || log.mood) && (
-        <div className="rounded-xl border border-border bg-muted/30 p-2.5 text-[12px]">
+        <div className="rounded-xl border border-border bg-muted/30 p-2.5 text-label">
           {log.mood && (
-            <p className="text-[11px] font-bold uppercase text-primary mb-0.5">
+            <p className="text-micro font-bold uppercase text-primary mb-0.5">
               기분: {log.mood}
             </p>
           )}
@@ -206,7 +206,7 @@ export const DietApprovalCard = ({
           setTplId(null);
         }}
         placeholder="회원에게 보낼 한마디 (템플릿 선택 또는 직접 입력)"
-        className="min-h-[72px] rounded-xl text-[13px]"
+        className="min-h-[72px] rounded-xl text-label"
       />
 
       {/* 액션 — 단일 "피드백 보내기" */}
@@ -226,7 +226,7 @@ export const DietApprovalCard = ({
         </Button>
       </div>
 
-      <p className="text-[10.5px] text-muted-foreground">
+      <p className="text-micro text-muted-foreground">
         <Flame className="inline h-3 w-3 text-primary" /> 회원은 자가 기록 + 즉시 보상 모드입니다. 코치는 응원·코칭 메시지만 보냅니다.
       </p>
     </div>
@@ -272,7 +272,7 @@ const MetricPill = ({
   label: string;
   value: string;
 }) => (
-  <div className="flex items-center justify-between rounded-lg border border-border bg-card px-2 py-1.5 text-[11.5px]">
+  <div className="flex items-center justify-between rounded-lg border border-border bg-card px-2 py-1.5 text-micro">
     <span className="flex items-center gap-1 text-muted-foreground">
       {icon}
       {label}

@@ -81,7 +81,7 @@ const BottomNav = () => {
           />
           <div className="relative z-[61] max-h-[85vh] overflow-y-auto rounded-t-hero border-t border-border bg-card px-4 pb-8 pt-5 shadow-elev-3 safe-area-bottom animate-slide-up">
             <div className="mb-4 flex items-center justify-between px-1">
-              <span className="text-[17px] font-extrabold text-foreground">
+              <span className="text-body font-extrabold text-foreground">
                 전체 메뉴
               </span>
               <div className="flex items-center gap-2">
@@ -143,7 +143,7 @@ const BottomNav = () => {
                 </span>
                 <span
                   className={cn(
-                    "text-[11px] leading-none tracking-[-0.01em]",
+                    "text-micro leading-none tracking-[-0.01em]",
                     active ? "font-bold" : "font-medium",
                   )}
                 >
@@ -169,7 +169,7 @@ const BottomNav = () => {
             </span>
             <span
               className={cn(
-                "text-[11px] leading-none tracking-[-0.01em]",
+                "text-micro leading-none tracking-[-0.01em]",
                 menuOpen ? "font-bold" : "font-medium",
               )}
             >

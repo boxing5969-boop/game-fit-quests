@@ -71,7 +71,7 @@ export const CustomMealDialog = ({ slot, onClose, onSave }: CustomMealDialogProp
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <div className="flex items-center gap-1.5">
             <Pencil className="h-4 w-4 text-primary" />
-            <p className="text-[13px] font-extrabold text-foreground">
+            <p className="text-label font-extrabold text-foreground">
               {MEAL_SLOT_LABEL_KO[slot]} 직접 입력
             </p>
           </div>
@@ -86,14 +86,14 @@ export const CustomMealDialog = ({ slot, onClose, onSave }: CustomMealDialogProp
 
         <div className="max-h-[70vh] space-y-3 overflow-y-auto px-5 py-4">
           <label className="block">
-            <span className="text-[11px] font-bold text-muted-foreground">
+            <span className="text-micro font-bold text-muted-foreground">
               메뉴 이름
             </span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="예: 엄마표 잡채밥 + 김치"
-              className="mt-0.5 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="mt-0.5 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-label text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           </label>
 
@@ -112,7 +112,7 @@ export const CustomMealDialog = ({ slot, onClose, onSave }: CustomMealDialogProp
             placeholder="예: 4"
           />
 
-          <label className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-[12px] text-foreground">
+          <label className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-label text-foreground">
             <input
               type="checkbox"
               checked={probiotic}
@@ -122,7 +122,7 @@ export const CustomMealDialog = ({ slot, onClose, onSave }: CustomMealDialogProp
             <span className="font-bold">발효식품 포함 (김치·요거트·된장 등)</span>
           </label>
 
-          <p className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-micro leading-relaxed text-muted-foreground">
             비타민·무기질은 다른 끼니에서 자동 보강됩니다. 정확한 수치를 모르면 대략적인 숫자로 입력해도 OK.
           </p>
         </div>
@@ -160,13 +160,13 @@ const Num = ({
   placeholder?: string;
 }) => (
   <label className="block">
-    <span className="text-[11px] font-bold text-muted-foreground">{label}</span>
+    <span className="text-micro font-bold text-muted-foreground">{label}</span>
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
       inputMode="decimal"
       placeholder={placeholder}
-      className="number-font mt-0.5 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
+      className="number-font mt-0.5 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-label text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
     />
   </label>
 );

@@ -126,13 +126,13 @@ const MyBoxerVisualizationPage = () => {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.45em] text-amber-300/70">MYBOXER 153</p>
-            <h1 className="text-[26px] font-black leading-tight">153마인드셋</h1>
+            <p className="text-micro font-black uppercase tracking-[0.45em] text-amber-300/70">MYBOXER 153</p>
+            <h1 className="text-title font-black leading-tight">153마인드셋</h1>
           </div>
         </div>
 
         <div data-tour="mindset-intro" className="rounded-2xl border-l-2 border-amber-400/70 bg-amber-500/5 px-4 py-3">
-          <p className="text-[13px] font-bold leading-relaxed text-amber-50/90">
+          <p className="text-label font-bold leading-relaxed text-amber-50/90">
             눈을 감고 귀로 듣는 복서의 시각화 훈련.
             <br />
             머릿속에서 먼저 한 라운드 — 몸은 그 길을 기억합니다.
@@ -158,18 +158,18 @@ const MyBoxerVisualizationPage = () => {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[20px] font-black tabular-nums leading-none">
+              <span className="text-heading font-black tabular-nums leading-none">
                 {week}
-                <span className="text-[11px] text-amber-200/50">/{WEEK_GOAL}</span>
+                <span className="text-micro text-amber-200/50">/{WEEK_GOAL}</span>
               </span>
-              <span className="text-[9px] font-bold text-amber-200/55">이번 주</span>
+              <span className="text-micro font-bold text-amber-200/55">이번 주</span>
             </div>
           </div>
           <div className="min-w-0 flex-1 space-y-1.5">
-            <p className="text-[13.5px] font-bold">
+            <p className="text-label font-bold">
               {week >= WEEK_GOAL ? "이번 주 목표 달성! 잘하고 있어요" : `일주일에 ${WEEK_GOAL}번이면 충분해요`}
             </p>
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-amber-200/65">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-micro text-amber-200/65">
               {(stats?.streak ?? 0) >= 2 && (
                 <span className="inline-flex items-center gap-1">
                   <Flame className="h-3.5 w-3.5 text-orange-400" />
@@ -200,11 +200,11 @@ const MyBoxerVisualizationPage = () => {
             style={{ background: `radial-gradient(circle, ${pick.tint[0]} 0%, transparent 70%)` }}
             aria-hidden
           />
-          <p className="relative text-[11.5px] font-black tracking-wide text-amber-200/85">오늘의 추천</p>
-          <h2 className="relative mt-1.5 text-[22px] font-black leading-tight">{pick.title}</h2>
-          <p className="relative mt-1 text-[12.5px] leading-relaxed text-amber-50/80">{pick.tagline}</p>
+          <p className="relative text-micro font-black tracking-wide text-amber-200/85">오늘의 추천</p>
+          <h2 className="relative mt-1.5 text-title font-black leading-tight">{pick.title}</h2>
+          <p className="relative mt-1 text-label leading-relaxed text-amber-50/80">{pick.tagline}</p>
           <div className="relative mt-4 flex items-center justify-between">
-            <span className="text-[11.5px] text-amber-200/65">
+            <span className="text-micro text-amber-200/65">
               약 {estimateMinutes(pick.variants?.[0]?.cues ?? pick.cues, vars)}분 · {CATEGORY_LABEL[pick.category]}
             </span>
             <span
@@ -223,7 +223,7 @@ const MyBoxerVisualizationPage = () => {
             if (!list.length) return null;
             return (
               <div key={cat} className="space-y-2">
-                <p className="px-1 text-[12px] font-black text-amber-200/60">{CATEGORY_LABEL[cat]}</p>
+                <p className="px-1 text-label font-black text-amber-200/60">{CATEGORY_LABEL[cat]}</p>
                 {list.map((m) => (
                   <SessionCard
                     key={m.id}
@@ -242,7 +242,7 @@ const MyBoxerVisualizationPage = () => {
         {/* 기록을 불러온 뒤에 그린다 — 빈 칸으로 먼저 열려서 저장된 목표를 지우지 않게 (2026-10-19 검수) */}
         {stats && <GoalCard key={`${stats.goal ?? ""}|${stats.cue ?? ""}`} goal={stats.goal ?? null} cue={stats.cue ?? null} />}
 
-        <p className="pb-2 text-center text-[11px] leading-relaxed text-amber-200/45">
+        <p className="pb-2 text-center text-micro leading-relaxed text-amber-200/45">
           이어폰을 끼고, 눈을 감고 들으면 가장 좋아요.
           <br />
           기록은 내 계정에 남고 나만 볼 수 있어요.
@@ -284,9 +284,9 @@ function SessionCard({
         aria-hidden
       />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-black">{session.title}</span>
-        <span className="mt-0.5 block text-[11.5px] leading-snug text-amber-100/60">{session.tagline}</span>
-        <span className="mt-1 block text-[11px] text-amber-200/50">
+        <span className="block truncate text-body font-black">{session.title}</span>
+        <span className="mt-0.5 block text-micro leading-snug text-amber-100/60">{session.tagline}</span>
+        <span className="mt-1 block text-micro text-amber-200/50">
           {lengths}
           {count > 0 ? ` · ${count}번 했어요` : ""}
         </span>
@@ -321,10 +321,10 @@ function GoalCard({ goal, cue }: { goal: string | null; cue: string | null }) {
         }}
         className="w-full rounded-3xl border border-amber-200/10 bg-black/30 p-4 text-left active:scale-[0.99]"
       >
-        <p className="text-[12px] font-black text-amber-200/60">내 목표 · 나의 한마디</p>
-        <p className="mt-1.5 text-[15px] font-black leading-snug">{goal || "목표를 적어 주세요"}</p>
-        {cue && <p className="mt-1 text-[12.5px] font-bold text-amber-300">“{cue}”</p>}
-        <p className="mt-2 text-[11px] text-amber-200/45">눌러서 바꾸기 · 세션 대본에 이 말이 들어가요</p>
+        <p className="text-label font-black text-amber-200/60">내 목표 · 나의 한마디</p>
+        <p className="mt-1.5 text-body font-black leading-snug">{goal || "목표를 적어 주세요"}</p>
+        {cue && <p className="mt-1 text-label font-bold text-amber-300">“{cue}”</p>}
+        <p className="mt-2 text-micro text-amber-200/45">눌러서 바꾸기 · 세션 대본에 이 말이 들어가요</p>
       </button>
     );
   }
@@ -332,18 +332,18 @@ function GoalCard({ goal, cue }: { goal: string | null; cue: string | null }) {
   return (
     <div className="space-y-4 rounded-3xl border border-amber-200/15 bg-black/35 p-4">
       <div>
-        <p className="text-[13px] font-bold">내 목표 한 문장</p>
-        <p className="text-[11px] text-amber-200/55">세션 중에 이 문장을 읽어 줘요</p>
+        <p className="text-label font-bold">내 목표 한 문장</p>
+        <p className="text-micro text-amber-200/55">세션 중에 이 문장을 읽어 줘요</p>
         <input
           value={g}
           onChange={(e) => setG(e.target.value.slice(0, 60))}
           placeholder="예) 올해 안에 블루리그 가기"
-          className="mt-2 h-11 w-full rounded-xl border border-amber-200/15 bg-black/40 px-3 text-[14px] text-amber-50 placeholder:text-amber-200/30 focus:border-amber-300/60 focus:outline-none"
+          className="mt-2 h-11 w-full rounded-xl border border-amber-200/15 bg-black/40 px-3 text-label text-amber-50 placeholder:text-amber-200/30 focus:border-amber-300/60 focus:outline-none"
         />
       </div>
       <div>
-        <p className="text-[13px] font-bold">나의 한마디</p>
-        <p className="text-[11px] text-amber-200/55">힘들 때 꺼내는 짧은 말 — 세션 끝에 마음에 새겨요</p>
+        <p className="text-label font-bold">나의 한마디</p>
+        <p className="text-micro text-amber-200/55">힘들 때 꺼내는 짧은 말 — 세션 끝에 마음에 새겨요</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {CUE_PRESETS.map((p) => (
             <button
@@ -351,7 +351,7 @@ function GoalCard({ goal, cue }: { goal: string | null; cue: string | null }) {
               type="button"
               onClick={() => setC(p)}
               className={cn(
-                "rounded-full border px-3 py-1.5 text-[12px] font-bold",
+                "rounded-full border px-3 py-1.5 text-label font-bold",
                 c === p ? "border-amber-300/70 bg-amber-400/15 text-amber-50" : "border-amber-200/10 text-amber-100/60",
               )}
             >
@@ -363,7 +363,7 @@ function GoalCard({ goal, cue }: { goal: string | null; cue: string | null }) {
           value={c}
           onChange={(e) => setC(e.target.value.slice(0, 20))}
           placeholder="직접 적어도 돼요 (20자)"
-          className="mt-2 h-10 w-full rounded-xl border border-amber-200/15 bg-black/40 px-3 text-[13px] text-amber-50 placeholder:text-amber-200/30 focus:border-amber-300/60 focus:outline-none"
+          className="mt-2 h-10 w-full rounded-xl border border-amber-200/15 bg-black/40 px-3 text-label text-amber-50 placeholder:text-amber-200/30 focus:border-amber-300/60 focus:outline-none"
         />
       </div>
       <div className="flex gap-2">
@@ -371,7 +371,7 @@ function GoalCard({ goal, cue }: { goal: string | null; cue: string | null }) {
           <button
             type="button"
             onClick={() => setEditing(false)}
-            className="h-11 flex-1 rounded-xl border border-amber-200/15 text-[13px] font-bold text-amber-100/70"
+            className="h-11 flex-1 rounded-xl border border-amber-200/15 text-label font-bold text-amber-100/70"
           >
             취소
           </button>
@@ -380,7 +380,7 @@ function GoalCard({ goal, cue }: { goal: string | null; cue: string | null }) {
           type="button"
           onClick={onSave}
           disabled={save.isPending || (!dirty && !!(goal || cue))}
-          className="flex h-11 flex-[2] items-center justify-center gap-1.5 rounded-xl text-[14px] font-black text-[#1a1206] disabled:opacity-50"
+          className="flex h-11 flex-[2] items-center justify-center gap-1.5 rounded-xl text-label font-black text-[#1a1206] disabled:opacity-50"
           style={{ background: "linear-gradient(90deg, #fbbf24, #f59e0b)" }}
         >
           <Check className="h-4 w-4" />

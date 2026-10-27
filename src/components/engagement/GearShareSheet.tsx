@@ -95,20 +95,20 @@ const GearShareSheet = ({ open, onClose }: Props) => {
   };
 
   const chip = (active: boolean) =>
-    `rounded-pill border px-2.5 py-1.5 text-[11.5px] font-bold transition-colors ${
+    `rounded-pill border px-2.5 py-1.5 text-micro font-bold transition-colors ${
       active ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
     }`;
 
   const renderList = () => {
     if (isLoading) {
-      return <p className="py-6 text-center text-[12px] text-muted-foreground">불러오는 중…</p>;
+      return <p className="py-6 text-center text-label text-muted-foreground">불러오는 중…</p>;
     }
     if (posts.length === 0) {
       return (
         <div className="rounded-card border border-border bg-muted/20 px-4 py-6 text-center">
-          <p className="text-2xl">🧤</p>
-          <p className="mt-2 text-[13px] font-bold text-foreground">아직 올라온 장비가 없습니다</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="text-title">🧤</p>
+          <p className="mt-2 text-label font-bold text-foreground">아직 올라온 장비가 없습니다</p>
+          <p className="mt-1 text-micro text-muted-foreground">
             사이즈가 안 맞아 넣어둔 장비가 있으면 첫 글을 올려보세요.
           </p>
         </div>
@@ -123,12 +123,12 @@ const GearShareSheet = ({ open, onClose }: Props) => {
           >
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[13px] font-bold text-foreground">
+                <span className="text-label font-bold text-foreground">
                   {GEAR_LABEL[p.kind]}
                   {p.size && ` ${p.size}`}
                 </span>
                 <span
-                  className={`rounded-pill px-2 py-0.5 text-[10px] font-bold ${
+                  className={`rounded-pill px-2 py-0.5 text-micro font-bold ${
                     p.deal === "free"
                       ? "bg-primary/10 text-primary"
                       : "bg-reward/15 text-reward"
@@ -136,15 +136,15 @@ const GearShareSheet = ({ open, onClose }: Props) => {
                 >
                   {DEAL_LABEL[p.deal]}
                 </span>
-                <span className="text-[10.5px] font-semibold text-muted-foreground">
+                <span className="text-micro font-semibold text-muted-foreground">
                   {CONDITION_LABEL[p.condition]}
                 </span>
               </div>
               {/* 양도 금액 — 사려는 사람이 바로 정할 수 있게 크게 (2026-10-18) */}
               {p.deal === "transfer" && p.price != null && (
-                <p className="number-font mt-0.5 text-[14px] font-black text-foreground">{won(p.price)}</p>
+                <p className="number-font mt-0.5 text-label font-black text-foreground">{won(p.price)}</p>
               )}
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
+              <p className="mt-0.5 text-micro text-muted-foreground">
                 {p.isMine ? "내 글" : p.nickname}
                 {allBranches && p.branch && ` · ${shortBranchName(p.branch)}`}
                 {p.note && ` · ${p.note}`}
@@ -155,7 +155,7 @@ const GearShareSheet = ({ open, onClose }: Props) => {
                 type="button"
                 disabled={busyId === p.id}
                 onClick={() => handleClose(p.id)}
-                className="shrink-0 rounded-pill border border-border px-3 py-1.5 text-[11.5px] font-bold text-muted-foreground active:scale-95 disabled:opacity-60"
+                className="shrink-0 rounded-pill border border-border px-3 py-1.5 text-micro font-bold text-muted-foreground active:scale-95 disabled:opacity-60"
               >
                 완료
               </button>
@@ -172,7 +172,7 @@ const GearShareSheet = ({ open, onClose }: Props) => {
         <button
           type="button"
           onClick={() => setFormOpen(true)}
-          className="mt-4 w-full rounded-xl border border-border bg-muted/20 py-3 text-[13px] font-black text-primary active:scale-[0.99]"
+          className="mt-4 w-full rounded-xl border border-border bg-muted/20 py-3 text-label font-black text-primary active:scale-[0.99]"
         >
           + 내 장비 올리기
         </button>
@@ -180,9 +180,9 @@ const GearShareSheet = ({ open, onClose }: Props) => {
     }
     return (
       <div className="mt-4 rounded-card border border-border bg-muted/20 p-4">
-        <p className="text-[12px] font-black text-foreground">장비 올리기</p>
+        <p className="text-label font-black text-foreground">장비 올리기</p>
 
-        <p className="mt-3 text-[11px] font-bold text-muted-foreground">종류</p>
+        <p className="mt-3 text-micro font-bold text-muted-foreground">종류</p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {KINDS.map((k) => (
             <button key={k} type="button" onClick={() => setKind(k)} className={chip(kind === k)}>
@@ -191,7 +191,7 @@ const GearShareSheet = ({ open, onClose }: Props) => {
           ))}
         </div>
 
-        <p className="mt-3 text-[11px] font-bold text-muted-foreground">상태</p>
+        <p className="mt-3 text-micro font-bold text-muted-foreground">상태</p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {CONDITIONS.map((c) => (
             <button
@@ -205,7 +205,7 @@ const GearShareSheet = ({ open, onClose }: Props) => {
           ))}
         </div>
 
-        <p className="mt-3 text-[11px] font-bold text-muted-foreground">나눔 / 양도</p>
+        <p className="mt-3 text-micro font-bold text-muted-foreground">나눔 / 양도</p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {DEALS.map((d) => (
             <button key={d} type="button" onClick={() => setDeal(d)} className={chip(deal === d)}>
@@ -217,20 +217,20 @@ const GearShareSheet = ({ open, onClose }: Props) => {
         {/* 양도 금액 (선택) — 2026-10-18 */}
         {deal === "transfer" && (
           <div className="mt-3">
-            <p className="text-[11px] font-bold text-muted-foreground">금액 (선택)</p>
+            <p className="text-micro font-bold text-muted-foreground">금액 (선택)</p>
             <div className="mt-1.5 flex items-center gap-2">
               <input
                 value={price}
                 onChange={(e) => setPrice(e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 8))}
                 inputMode="numeric"
                 placeholder="예: 30000"
-                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground"
+                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-label text-foreground placeholder:text-muted-foreground"
                 aria-label="금액(원)"
               />
-              <span className="shrink-0 text-[13px] font-bold text-foreground">원</span>
+              <span className="shrink-0 text-label font-bold text-foreground">원</span>
             </div>
             {priceNum != null && (
-              <p className={`mt-1 text-[11px] ${priceTooBig ? "font-bold text-destructive" : "text-muted-foreground"}`}>
+              <p className={`mt-1 text-micro ${priceTooBig ? "font-bold text-destructive" : "text-muted-foreground"}`}>
                 {priceTooBig ? "1,000만 원까지 적을 수 있어요" : `${won(priceNum)}으로 올라가요`}
               </p>
             )}
@@ -241,14 +241,14 @@ const GearShareSheet = ({ open, onClose }: Props) => {
           value={size}
           onChange={(e) => setSize(e.target.value.slice(0, 30))}
           placeholder="사이즈 (예: 12oz / 270mm)"
-          className="mt-3 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground"
+          className="mt-3 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-label text-foreground placeholder:text-muted-foreground"
           aria-label="사이즈"
         />
         <input
           value={note}
           onChange={(e) => setNote(e.target.value.slice(0, 200))}
           placeholder="한 줄 (예: 두 번 썼습니다)"
-          className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground"
+          className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-label text-foreground placeholder:text-muted-foreground"
           aria-label="한 줄 메모"
         />
 
@@ -256,7 +256,7 @@ const GearShareSheet = ({ open, onClose }: Props) => {
           type="button"
           onClick={handleCreate}
           disabled={create.isPending || priceTooBig}
-          className="mt-3 w-full rounded-xl bg-primary py-3 text-[13px] font-black text-primary-foreground active:scale-[0.99] disabled:opacity-60"
+          className="mt-3 w-full rounded-xl bg-primary py-3 text-label font-black text-primary-foreground active:scale-[0.99] disabled:opacity-60"
         >
           {create.isPending ? "올리는 중…" : "올리기"}
         </button>
@@ -291,13 +291,13 @@ const GearShareSheet = ({ open, onClose }: Props) => {
                   <PackageOpen className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                  <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                     중고 장비 나눔
                   </p>
-                  <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+                  <h2 className="mt-0.5 text-body font-bold text-foreground">
                     안 쓰는 장비, 필요한 사람에게
                   </h2>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                     {allBranches ? "전 지점 글이 보여요." : "같은 지점 회원에게만 보입니다."}
                   </p>
                 </div>
@@ -312,7 +312,7 @@ const GearShareSheet = ({ open, onClose }: Props) => {
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
               <div className="mb-3 rounded-xl border-l-2 border-primary/40 bg-primary/5 px-3.5 py-2.5">
-                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                <p className="text-micro leading-relaxed text-muted-foreground">
                   <b className="text-foreground">주고받는 것은 데스크를 통해 주세요.</b>
                   <br />
                   금액을 적어 두면 사려는 분이 바로 정할 수 있어요.

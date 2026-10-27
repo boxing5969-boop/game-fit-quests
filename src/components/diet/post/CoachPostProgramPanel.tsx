@@ -38,10 +38,10 @@ export const CoachPostProgramPanel = () => {
     <section className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+          <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
             POST-21 · 완주 후속
           </p>
-          <p className="mt-0.5 text-[13px] font-extrabold text-foreground">
+          <p className="mt-0.5 text-label font-extrabold text-foreground">
             21일 완주 회원 경로
           </p>
         </div>
@@ -56,11 +56,11 @@ export const CoachPostProgramPanel = () => {
       </div>
 
       {listQuery.isLoading ? (
-        <p className="mt-3 text-center text-[12px] text-muted-foreground">
+        <p className="mt-3 text-center text-label text-muted-foreground">
           불러오는 중...
         </p>
       ) : rows.length === 0 ? (
-        <p className="mt-3 text-center text-[12px] text-muted-foreground">
+        <p className="mt-3 text-center text-label text-muted-foreground">
           해당 조건의 완주 회원이 없어요
         </p>
       ) : (
@@ -74,13 +74,13 @@ export const CoachPostProgramPanel = () => {
               >
                 <PathIcon path={r.selected_path} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[12.5px] font-bold text-foreground">
+                  <p className="truncate text-label font-bold text-foreground">
                     {r.member_name}
-                    <span className="ml-1 text-[11px] font-normal text-muted-foreground">
+                    <span className="ml-1 text-micro font-normal text-muted-foreground">
                       {r.branch_name}
                     </span>
                   </p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  <p className="mt-0.5 text-micro text-muted-foreground">
                     {pathLabel(r.selected_path)}
                     {r.coach_recommended_path
                       ? ` · 코치 권장: ${shortReco(r.coach_recommended_path)}`
@@ -97,13 +97,13 @@ export const CoachPostProgramPanel = () => {
                       {r.pattern_tags.slice(0, 3).map((t) => (
                         <span
                           key={t}
-                          className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary"
+                          className="rounded-full bg-primary/10 px-1.5 py-0.5 text-micro font-bold text-primary"
                         >
                           {PATTERN_LABEL_KO[t as ExtendPatternTag] ?? t}
                         </span>
                       ))}
                       {r.pattern_tags.length > 3 && (
-                        <span className="text-[10px] font-bold text-muted-foreground">
+                        <span className="text-micro font-bold text-muted-foreground">
                           +{r.pattern_tags.length - 3}
                         </span>
                       )}
@@ -111,7 +111,7 @@ export const CoachPostProgramPanel = () => {
                   )}
 
                   {r.selected_path === "extend" && !r.extend_started_at && (
-                    <p className="mt-1 text-[10.5px] font-bold text-[#F6C453]">
+                    <p className="mt-1 text-micro font-bold text-[#F6C453]">
                       재평가 미완료 — 이탈 리스크
                     </p>
                   )}
@@ -139,7 +139,7 @@ const Chip = ({
     type="button"
     onClick={onClick}
     className={cn(
-      "rounded-full px-2.5 py-1 text-[11px] font-bold transition-all active:scale-95",
+      "rounded-full px-2.5 py-1 text-micro font-bold transition-all active:scale-95",
       active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
     )}
   >

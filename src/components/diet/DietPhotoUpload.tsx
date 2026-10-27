@@ -73,7 +73,7 @@ export const DietPhotoUpload = ({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
         식단 사진 (선택)
       </p>
       <div className="grid grid-cols-2 gap-2">
@@ -97,7 +97,7 @@ export const DietPhotoUpload = ({
         })}
       </div>
       {disabled && (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-micro text-muted-foreground">
           체크인을 먼저 저장하면 사진 업로드가 열립니다.
         </p>
       )}
@@ -138,7 +138,7 @@ const SlotTile = ({
         onClick={() => inputRef.current?.click()}
         className={cn(
           "flex h-24 w-full items-center justify-center gap-1.5",
-          "text-[12px] font-bold text-muted-foreground",
+          "text-label font-bold text-muted-foreground",
           "hover:bg-muted active:scale-[0.98] transition-transform",
           disabled && "opacity-50",
         )}
@@ -152,7 +152,7 @@ const SlotTile = ({
         )}
         <span className="text-foreground">{label}</span>
         {existing && (
-          <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[9px] font-black uppercase text-primary">
+          <span className="rounded bg-primary/15 px-1.5 py-0.5 text-micro font-black uppercase text-primary">
             완료
           </span>
         )}
@@ -171,11 +171,11 @@ const SlotTile = ({
       />
       {error && (
         <div className="flex items-center justify-between border-t border-destructive/40 bg-destructive/10 px-2 py-1">
-          <span className="truncate text-[10px] text-destructive">{error}</span>
+          <span className="truncate text-micro text-destructive">{error}</span>
           <button
             type="button"
             onClick={onRetry}
-            className="ml-1 flex items-center gap-0.5 rounded-md px-1 py-0.5 text-[10px] font-bold text-destructive hover:bg-destructive/20"
+            className="ml-1 flex items-center gap-0.5 rounded-md px-1 py-0.5 text-micro font-bold text-destructive hover:bg-destructive/20"
           >
             <RefreshCcw className="h-2.5 w-2.5" />
             재시도

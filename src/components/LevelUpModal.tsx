@@ -86,7 +86,7 @@ const LevelUpModal = ({
               damping: 16,
             }}
             onClick={onClose}
-            className="mx-auto mt-8 block w-full max-w-xs rounded-2xl bg-gradient-to-r from-primary via-reward to-primary bg-[length:200%_100%] py-4 text-[15px] font-black uppercase tracking-wider text-primary-foreground shadow-[0_8px_32px_rgba(232,85,58,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] transition-all active:scale-[0.97]"
+            className="mx-auto mt-8 block w-full max-w-xs rounded-2xl bg-gradient-to-r from-primary via-reward to-primary bg-[length:200%_100%] py-4 text-body font-black uppercase tracking-wider text-primary-foreground shadow-[0_8px_32px_rgba(232,85,58,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] transition-all active:scale-[0.97]"
             style={{
               animation: "level-up-cta-shimmer 3s ease-in-out infinite",
             }}
@@ -99,7 +99,7 @@ const LevelUpModal = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.7 }}
             transition={{ duration: 0.6, delay: 3.0 }}
-            className="mt-3 text-center text-[11px] font-medium text-white/70"
+            className="mt-3 text-center text-micro font-medium text-white/70"
           >
             화면 아무 곳이나 탭하면 닫힙니다
           </motion.p>

@@ -69,19 +69,19 @@ const WorkoutFinishCard = () => {
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+        <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
           오늘 운동
         </p>
         {done ? (
-          <p className="truncate text-sm font-bold text-foreground">
+          <p className="truncate text-body font-bold text-foreground">
             {formatMinutes(data.elapsed_minutes)} 기록 완료
           </p>
         ) : (
-          <p className="truncate text-sm font-bold text-foreground">
+          <p className="truncate text-body font-bold text-foreground">
             {formatMinutes(data.elapsed_minutes)}째 운동 중
           </p>
         )}
-        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+        <p className="mt-0.5 truncate text-micro text-muted-foreground">
           {done
             ? `이번 달 ${formatMinutes(data.month_minutes)} · ${data.month_days}일`
             : `끝나면 종료 버튼이나 얼굴 인식 한 번 더 · 안 하면 ${data.default_minutes}분`}
@@ -93,7 +93,7 @@ const WorkoutFinishCard = () => {
           type="button"
           onClick={handleFinish}
           disabled={finish.isPending}
-          className="shrink-0 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-60"
+          className="shrink-0 rounded-xl bg-primary px-3.5 py-2 text-label font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-60"
           aria-label="오늘 운동 종료하기"
         >
           {finish.isPending ? "처리 중" : "운동 종료"}

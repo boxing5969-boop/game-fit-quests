@@ -168,7 +168,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
     />
   ) : (
     <div
-      className="flex h-full w-full items-center justify-center text-5xl font-black text-white"
+      className="flex h-full w-full items-center justify-center text-display font-black text-white"
       style={{ background: RANK_BG[rank] ?? RANK_BG.white }}
     >
       {(data?.display ?? "🥊").charAt(0)}
@@ -202,15 +202,15 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
           >
             <div className="mb-3 flex items-center justify-between px-1">
               <div className="min-w-0">
-                <h2 className="flex min-w-0 items-center gap-1.5 text-[17px] font-bold text-foreground">
+                <h2 className="flex min-w-0 items-center gap-1.5 text-body font-bold text-foreground">
                   <span className="truncate">{data ? `${data.display}님의 라이센스` : "라이센스"}</span>
                   {data?.staff_role && (
-                    <span className="shrink-0 rounded-pill bg-primary/15 px-2 py-0.5 text-[11.5px] font-black text-primary">
+                    <span className="shrink-0 rounded-pill bg-primary/15 px-2 py-0.5 text-micro font-black text-primary">
                       {staffTitleRaw || LICENSE_STAFF_LABEL[data.staff_role]}
                     </span>
                   )}
                 </h2>
-                {data?.branch && <p className="text-[12.5px] text-muted-foreground">{shortBranch(data.branch)}</p>}
+                {data?.branch && <p className="text-label text-muted-foreground">{shortBranch(data.branch)}</p>}
               </div>
               <button
                 type="button"
@@ -226,8 +226,8 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
               <div className="h-[252px] animate-pulse rounded-2xl bg-muted" />
             ) : isError || !data ? (
               <div className="rounded-2xl bg-muted/50 px-4 py-10 text-center">
-                <p className="text-[14px] font-bold text-foreground">라이센스를 열 수 없어요</p>
-                <p className="mt-1 text-[12.5px] text-muted-foreground">
+                <p className="text-label font-bold text-foreground">라이센스를 열 수 없어요</p>
+                <p className="mt-1 text-label text-muted-foreground">
                   {error instanceof Error ? error.message : "잠시 후 다시 눌러 주세요"}
                 </p>
               </div>
@@ -262,7 +262,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                         onClick={onHeart}
                         disabled={!canPress}
                         aria-pressed={data.liked_by_me}
-                        className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-bold transition-transform active:scale-[0.98] disabled:opacity-45 ${
+                        className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl text-body font-bold transition-transform active:scale-[0.98] disabled:opacity-45 ${
                           data.liked_by_me
                             ? "bg-secondary text-foreground"
                             : "bg-[#F5C542] text-[#1A1206]"
@@ -276,7 +276,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                       <button
                         type="button"
                         onClick={openDm}
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-foreground text-[15px] font-bold text-background transition-transform active:scale-[0.98]"
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-foreground text-body font-bold text-background transition-transform active:scale-[0.98]"
                       >
                         <Send className="h-[18px] w-[18px]" />
                         메시지
@@ -289,7 +289,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                   <button
                     type="button"
                     onClick={() => setCheerOpen(true)}
-                    className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-[15px] font-bold text-emerald-700 transition-transform active:scale-[0.98] dark:text-emerald-300"
+                    className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-body font-bold text-emerald-700 transition-transform active:scale-[0.98] dark:text-emerald-300"
                   >
                     <img src={CHEER_BUMP_ICON} alt="" className="h-7 w-7 object-contain" />
                     응원 보내기
@@ -298,7 +298,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
 
                 {showPair &&
                   (isMyPartner ? (
-                    <p className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary/10 text-[15px] font-bold text-primary">
+                    <p className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary/10 text-body font-bold text-primary">
                       <Handshake className="h-5 w-5" /> 내 운동 짝꿍이에요
                     </p>
                   ) : (
@@ -306,7 +306,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                       type="button"
                       onClick={onPair}
                       disabled={sentPending || pairBusy}
-                      className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-card text-[15px] font-bold text-primary transition-transform active:scale-[0.98] disabled:opacity-60"
+                      className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-card text-body font-bold text-primary transition-transform active:scale-[0.98] disabled:opacity-60"
                     >
                       <Handshake className={`h-5 w-5 ${pairBusy ? "animate-pulse" : ""}`} />
                       {sentPending ? "짝꿍 요청 보냄 · 대기 중" : receivedPending ? "짝꿍 요청 왔어요 — 수락하기" : "운동 짝꿍 신청"}
@@ -315,7 +315,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
 
                 {!!cheerSummary && cheerSummary.total > 0 && (
                   <div className="mt-3 rounded-xl bg-muted/40 px-3 py-2.5">
-                    <p className="text-[12px] font-bold text-foreground">
+                    <p className="text-label font-bold text-foreground">
                       받은 응원 <span className="number-font text-primary">{cheerSummary.total}</span>개
                     </p>
                     {cheerSummary.top.length > 0 && (
@@ -325,7 +325,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                           return (
                             <span
                               key={t.sticker}
-                              className="flex items-center gap-1 rounded-pill bg-card px-2 py-1 text-[11px] font-semibold text-foreground"
+                              className="flex items-center gap-1 rounded-pill bg-card px-2 py-1 text-micro font-semibold text-foreground"
                             >
                               {img && <img src={img} alt="" className="h-5 w-5 object-contain" />}
                               {t.sticker}
@@ -346,13 +346,13 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                         onClose();
                         openCredentialChange();
                       }}
-                      className="mt-3 w-full rounded-xl bg-primary/10 px-3 py-2.5 text-left text-[12.5px] leading-snug text-foreground active:scale-[0.99]"
+                      className="mt-3 w-full rounded-xl bg-primary/10 px-3 py-2.5 text-left text-label leading-snug text-foreground active:scale-[0.99]"
                     >
                       {REASON_TEXT.change_credentials}
                       <span className="font-bold text-primary"> 지금 바꾸기 →</span>
                     </button>
                   ) : (
-                    <p className="mt-3 rounded-xl bg-muted/50 px-3 py-2.5 text-[12.5px] leading-snug text-muted-foreground">
+                    <p className="mt-3 rounded-xl bg-muted/50 px-3 py-2.5 text-label leading-snug text-muted-foreground">
                       {REASON_TEXT[data.like_reason]}
                     </p>
                   )
@@ -366,7 +366,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                       onClose();
                       navigate(`/manager/member/${id}`);
                     }}
-                    className="mt-3 h-11 w-full rounded-xl border border-primary/40 bg-primary/10 text-[14px] font-bold text-primary transition-transform active:scale-[0.98]"
+                    className="mt-3 h-11 w-full rounded-xl border border-primary/40 bg-primary/10 text-label font-bold text-primary transition-transform active:scale-[0.98]"
                   >
                     🗂 회원 상세 · 출석 · 메모 (관리자)
                   </button>
@@ -380,7 +380,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                       onClose();
                       navigate(`/manager/member/${id}?tab=myinfo`);
                     }}
-                    className="mt-2 h-11 w-full rounded-xl bg-muted text-[14px] font-bold text-foreground transition-transform active:scale-[0.98]"
+                    className="mt-2 h-11 w-full rounded-xl bg-muted text-label font-bold text-foreground transition-transform active:scale-[0.98]"
                   >
                     👤 회원 내정보 보기 (출석 · 이룬 것)
                   </button>
@@ -392,7 +392,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                 )}
 
                 {!staffTitle && (
-                  <p className="mt-3 px-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                  <p className="mt-3 px-1 text-micro leading-relaxed text-muted-foreground">
                     회원마다 하트 1개씩 · 다시 누르면 취소 · 받은 하트 수가 닉네임 좋아요왕 점수예요
                   </p>
                 )}

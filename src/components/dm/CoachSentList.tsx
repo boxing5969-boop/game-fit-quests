@@ -126,12 +126,12 @@ const CoachSentList = () => {
   if (q.isError && !q.data) {
     return (
       <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-        <p className="text-[14px] font-bold text-foreground">보낸 메시지를 불러오지 못했어요</p>
-        <p className="mt-1 text-[12.5px] text-muted-foreground">지점장·운영진 계정만 볼 수 있어요. 인터넷 연결도 확인해 주세요.</p>
+        <p className="text-label font-bold text-foreground">보낸 메시지를 불러오지 못했어요</p>
+        <p className="mt-1 text-label text-muted-foreground">지점장·운영진 계정만 볼 수 있어요. 인터넷 연결도 확인해 주세요.</p>
         <button
           type="button"
           onClick={() => q.refetch()}
-          className="mt-4 rounded-full bg-secondary px-4 py-2 text-[13px] font-bold active:scale-95"
+          className="mt-4 rounded-full bg-secondary px-4 py-2 text-label font-bold active:scale-95"
         >
           다시 불러오기
         </button>
@@ -142,8 +142,8 @@ const CoachSentList = () => {
   return (
     <section aria-label="오삼코치가 보낸 메시지" className="space-y-3">
       <div className="rounded-2xl border border-primary/25 bg-primary/[0.04] px-4 py-3">
-        <p className="text-[14px] font-bold text-foreground">🥊 오삼코치가 회원에게 보낸 메시지</p>
-        <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="text-label font-bold text-foreground">🥊 오삼코치가 회원에게 보낸 메시지</p>
+        <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
           {allBranches ? "전 지점" : shortBranch(first?.scope) || "우리 지점"} · 회원이 받은 알림 그대로예요.
           {first?.today ? ` 오늘 ${first.today.sent}건 보냄 · 알림 눌러 본 회원 ${first.today.opened}명.` : ""}
         </p>
@@ -151,11 +151,11 @@ const CoachSentList = () => {
 
       {groups.length === 0 ? (
         <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-          <p className="text-[34px]" aria-hidden>
+          <p className="text-display" aria-hidden>
             🥊
           </p>
-          <p className="mt-2 text-[15px] font-bold text-foreground">아직 보낸 메시지가 없어요</p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-body font-bold text-foreground">아직 보낸 메시지가 없어요</p>
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             오삼코치는 밤 2시에 문구를 만들고,
             <br />
             승인한 것만 아침 8시에 회원에게 보내요.
@@ -164,7 +164,7 @@ const CoachSentList = () => {
       ) : (
         groups.map((g) => (
           <div key={g.key}>
-            <h3 className="mb-1.5 px-1 text-[12.5px] font-bold text-muted-foreground">
+            <h3 className="mb-1.5 px-1 text-label font-bold text-muted-foreground">
               {g.title} · {g.items.length}건
             </h3>
             <ul className="space-y-2">
@@ -172,26 +172,26 @@ const CoachSentList = () => {
                 const src = SOURCE[it.source] ?? SOURCE.fallback;
                 return (
                   <li key={it.id} className="rounded-2xl bg-card px-4 py-3 shadow-elev-1">
-                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px]">
+                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-micro">
                       <span className="rounded-full bg-secondary px-2 py-0.5 font-semibold text-foreground">
                         {KIND[it.kind] ?? "메시지"}
                       </span>
-                      <span className="text-[12.5px] font-bold text-foreground">{it.member}</span>
+                      <span className="text-label font-bold text-foreground">{it.member}</span>
                       {it.member_name && it.member_name !== it.member && (
                         <span className="text-muted-foreground">({it.member_name})</span>
                       )}
                       {it.level_label && <span className="text-muted-foreground">{it.level_label}</span>}
                       {allBranches && it.branch && <span className="text-muted-foreground">· {shortBranch(it.branch)}</span>}
-                      <span className={cn("ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold", src.cls)}>{src.label}</span>
+                      <span className={cn("ml-auto rounded-full px-1.5 py-0.5 text-micro font-bold", src.cls)}>{src.label}</span>
                     </div>
-                    <p className="mt-1.5 text-[13.5px] font-bold leading-snug text-foreground">{it.title}</p>
-                    <p className="text-[13px] leading-snug text-foreground">{it.body}</p>
+                    <p className="mt-1.5 text-label font-bold leading-snug text-foreground">{it.title}</p>
+                    <p className="text-label leading-snug text-foreground">{it.body}</p>
                     {it.card && (
-                      <p className="mt-1.5 rounded-xl bg-secondary/50 px-2.5 py-1.5 text-[12px] leading-relaxed text-muted-foreground">
+                      <p className="mt-1.5 rounded-xl bg-secondary/50 px-2.5 py-1.5 text-label leading-relaxed text-muted-foreground">
                         <span className="font-semibold text-foreground/80">내 카드</span> · {it.card}
                       </p>
                     )}
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">
+                    <p className="mt-1.5 text-micro text-muted-foreground">
                       {dmBubbleTime(it.sent_at)} 보냄
                       {it.opened_at && <span className="font-semibold text-primary"> · 알림 눌러 봄</span>}
                       {it.reviewer && ` · ${it.reviewer} 승인`}
@@ -209,13 +209,13 @@ const CoachSentList = () => {
           type="button"
           onClick={() => q.fetchNextPage()}
           disabled={q.isFetchingNextPage}
-          className="h-10 w-full rounded-full bg-secondary text-[13px] font-bold text-muted-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
+          className="h-10 w-full rounded-full bg-secondary text-label font-bold text-muted-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
         >
           {q.isFetchingNextPage ? "불러오는 중…" : "이전 메시지 더 보기"}
         </button>
       )}
 
-      <p className="px-1 pt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="px-1 pt-1 text-micro leading-relaxed text-muted-foreground">
         AI = 오삼코치가 쓴 문구 · 기본 문구 = 미리 정해 둔 문구 · 수정함 = 검수에서 고친 문구. 승인·고치기는 지점장 홈의 ‘오삼코치
         오늘 메시지’ 카드에서 해요.
       </p>

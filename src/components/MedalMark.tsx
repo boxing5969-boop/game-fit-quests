@@ -7,7 +7,7 @@
  *   · 동그란 금·은·동 메달 + 빨강·남색 V 리본, 별 · 월계수 · 153 각인. Higgsfield 로 그린 실사 이미지(아래 메달 그림).
  *   · 한 사람이 여러 개면 가장 좋은 메달 하나 + 그 메달을 받은 횟수(×2). 받은 대회는 눌러 보면(title) 다 나온다.
  *   · TV(animated) = 메달 위로 빛이 지나가고 금메달은 반짝임. 기기에서 '동작 줄이기'를 켰으면 멈춘 그림.
- *   · 크기는 글자 크기를 따른다(1.2em) — 쓰는 곳의 text-sm·text-2xl 등이 그대로 크기가 된다.
+ *   · 크기는 글자 크기를 따른다(1.2em) — 쓰는 곳의 text-body·text-title 등이 그대로 크기가 된다.
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

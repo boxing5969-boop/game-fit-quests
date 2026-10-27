@@ -38,11 +38,11 @@ const HomeMoreSection = ({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-center gap-2 rounded-pill border border-border bg-card px-4 py-2.5 text-sm font-bold text-muted-foreground shadow-elev-1 transition-colors active:scale-[0.98] hover:text-foreground dark:border-white/10 dark:bg-gray-900/40 dark:text-gray-300 dark:shadow-none dark:hover:border-white/20 dark:hover:bg-gray-900/60"
+        className="flex w-full items-center justify-center gap-2 rounded-pill border border-border bg-card px-4 py-2.5 text-body font-bold text-muted-foreground shadow-elev-1 transition-colors active:scale-[0.98] hover:text-foreground dark:border-white/10 dark:bg-gray-900/40 dark:text-gray-300 dark:shadow-none dark:hover:border-white/20 dark:hover:bg-gray-900/60"
       >
         <span>{open ? "접기" : "더 보기"}</span>
         {!open && typeof count === "number" && count > 0 && (
-          <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-black text-primary tabular-nums">
+          <span className="rounded-full bg-primary/20 px-2 py-0.5 text-micro font-black text-primary tabular-nums">
             {count}
           </span>
         )}

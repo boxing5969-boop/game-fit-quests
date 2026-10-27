@@ -162,7 +162,7 @@ export const MyMealPlan = ({
     <section className="space-y-3">
       {/* 식단 모드 탭 — 3가지 랜덤 식단 스타일 선택 */}
       <div className="rounded-2xl border border-border bg-card p-2">
-        <p className="px-1 pb-1 text-[10px] font-black uppercase tracking-wide text-muted-foreground">
+        <p className="px-1 pb-1 text-micro font-black uppercase tracking-wide text-muted-foreground">
           식단 스타일
         </p>
         <div className="grid grid-cols-3 gap-1.5">
@@ -185,7 +185,7 @@ export const MyMealPlan = ({
             onClick={() => handleModeChange("office_quick")}
           />
         </div>
-        <p className="mt-2 px-1 text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="mt-2 px-1 text-micro leading-relaxed text-muted-foreground">
           {planMode === "home_korean"
             ? "가정에서 한식 위주로. 단백질 부족 시 식전 쉐이크로 보강합니다."
             : planMode === "office_quick"
@@ -198,15 +198,15 @@ export const MyMealPlan = ({
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+            <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
               {mode === "maintenance" ? "MAINTENANCE MEAL PLAN" : "FAT LOSS MEAL PLAN"}
             </p>
-            <p className="mt-0.5 text-[14px] font-extrabold text-foreground">오늘의 식단</p>
+            <p className="mt-0.5 text-label font-extrabold text-foreground">오늘의 식단</p>
           </div>
           <Button
             variant="outline"
             onClick={handleReroll}
-            className="h-8 rounded-lg px-3 text-[11.5px]"
+            className="h-8 rounded-lg px-3 text-micro"
           >
             <RefreshCw className="mr-1 h-3 w-3" />
             다시 뽑기
@@ -218,7 +218,7 @@ export const MyMealPlan = ({
           <Stat label="단백질" value={`${plan.totals.proteinG}/${target.proteinG}g`} tone="neutral" />
           <Stat label="커버리지" value={`${kcalPct}%`} tone="neutral" />
         </div>
-        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-2 text-micro leading-relaxed text-muted-foreground">
           {proteinPct >= 85
             ? `단백질 ${proteinPct}% 확보. 감량기 근보존·포만감 OK.`
             : `단백질 ${proteinPct}% — 간식을 그릭요거트·삶은 달걀로 보강하면 좋아요.`}
@@ -229,16 +229,16 @@ export const MyMealPlan = ({
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+            <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
               5대 영양소 + 프로바이오틱
             </p>
-            <p className="mt-0.5 text-[13px] font-extrabold text-foreground">
+            <p className="mt-0.5 text-label font-extrabold text-foreground">
               하루 영양소 커버
             </p>
           </div>
           <span
             className={cn(
-              "rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest",
+              "rounded-full px-2 py-0.5 text-micro font-black uppercase tracking-widest",
               fiveNutrients.allGreen
                 ? "bg-emerald-400/15 text-emerald-500"
                 : "bg-amber-400/15 text-amber-600",
@@ -305,14 +305,14 @@ export const MyMealPlan = ({
       {/* 오삼 코치 식단 도우미 — 부족한 영양소를 구체 음식·분량·시점으로 안내 */}
       <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-base">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-body">
             🥊
           </span>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-wide text-primary">
+            <p className="text-micro font-black uppercase tracking-wide text-primary">
               오삼 코치 식단 도우미
             </p>
-            <p className="text-[12.5px] font-extrabold text-foreground">
+            <p className="text-label font-extrabold text-foreground">
               {coachAdvice[0]?.tone === "success"
                 ? "오늘 식단, 합격이에요"
                 : "오늘 식단, 이렇게 보강해주세요"}
@@ -324,7 +324,7 @@ export const MyMealPlan = ({
             <li
               key={`${a.type}-${i}`}
               className={cn(
-                "rounded-lg border px-3 py-2 text-[11.5px] leading-relaxed",
+                "rounded-lg border px-3 py-2 text-micro leading-relaxed",
                 a.tone === "warning" &&
                   "border-amber-400/30 bg-amber-400/5 text-foreground",
                 a.tone === "info" &&
@@ -365,22 +365,22 @@ export const MyMealPlan = ({
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">
+                    <p className="text-micro font-black uppercase tracking-wide text-muted-foreground">
                       {slotLabel}
                     </p>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-micro text-muted-foreground">
                       · 목표 {p.target.kcal} kcal
                     </span>
                   </div>
-                  <p className="mt-0.5 text-[13px] font-extrabold leading-snug text-foreground">
+                  <p className="mt-0.5 text-label font-extrabold leading-snug text-foreground">
                     {p.item?.name ?? "조건에 맞는 메뉴를 찾지 못했어요"}
                   </p>
                   {p.item && (
                     <>
-                      <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+                      <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                         {p.item.note}
                       </p>
-                      <div className="mt-1.5 flex flex-wrap gap-1.5 text-[10.5px]">
+                      <div className="mt-1.5 flex flex-wrap gap-1.5 text-micro">
                         <Chip icon={<Flame className="h-3 w-3" />} label={`${p.item.kcal} kcal`} />
                         <Chip label={`단백질 ${p.item.proteinG}g`} />
                         <Chip label={`탄수 ${p.item.carbsG}g`} />
@@ -395,7 +395,7 @@ export const MyMealPlan = ({
                       type="button"
                       onClick={() => setSwapSlot(p.slot)}
                       aria-label={`${MEAL_SLOT_LABEL_KO[p.slot]} 교체`}
-                      className="rounded-lg border border-border bg-background px-2 py-1 text-[11px] font-bold text-foreground active:scale-95"
+                      className="rounded-lg border border-border bg-background px-2 py-1 text-micro font-bold text-foreground active:scale-95"
                     >
                       <Replace className="inline h-3 w-3" /> 교체
                     </button>
@@ -403,7 +403,7 @@ export const MyMealPlan = ({
                       type="button"
                       onClick={() => setCustomSlot(p.slot)}
                       aria-label={`${MEAL_SLOT_LABEL_KO[p.slot]} 직접 입력`}
-                      className="rounded-lg border border-border bg-background px-2 py-1 text-[11px] font-bold text-foreground active:scale-95"
+                      className="rounded-lg border border-border bg-background px-2 py-1 text-micro font-bold text-foreground active:scale-95"
                     >
                       <Pencil className="inline h-3 w-3" /> 직접 입력
                     </button>
@@ -415,7 +415,7 @@ export const MyMealPlan = ({
         })}
       </div>
 
-      <p className="text-center text-[10.5px] leading-relaxed text-muted-foreground">
+      <p className="text-center text-micro leading-relaxed text-muted-foreground">
         외식/자유식 끼니는 "교체"로 바꾸면 다음 끼니가 자동으로 가벼운 복귀 메뉴로 재선택됩니다.
       </p>
 
@@ -462,8 +462,8 @@ const ModeTab = ({
         : "border-border bg-background text-muted-foreground hover:text-foreground",
     )}
   >
-    <p className="text-[11.5px] font-extrabold leading-tight">{label}</p>
-    <p className="mt-0.5 text-[10px] leading-tight">{sub}</p>
+    <p className="text-micro font-extrabold leading-tight">{label}</p>
+    <p className="mt-0.5 text-micro leading-tight">{sub}</p>
   </button>
 );
 
@@ -486,13 +486,13 @@ const Stat = ({
           : "border-border bg-background",
     )}
   >
-    <p className="text-[9.5px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
-    <p className="mt-0.5 number-font text-[12.5px] font-extrabold text-foreground">{value}</p>
+    <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+    <p className="mt-0.5 number-font text-label font-extrabold text-foreground">{value}</p>
   </div>
 );
 
 const Chip = ({ icon, label }: { icon?: React.ReactNode; label: string }) => (
-  <span className="inline-flex items-center gap-0.5 rounded-full border border-border bg-background px-2 py-0.5 text-[10.5px] font-bold text-muted-foreground">
+  <span className="inline-flex items-center gap-0.5 rounded-full border border-border bg-background px-2 py-0.5 text-micro font-bold text-muted-foreground">
     {icon}
     {label}
   </span>
@@ -509,7 +509,7 @@ const NutRow = ({
 }) => (
   <li
     className={cn(
-      "flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-[11.5px]",
+      "flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-micro",
       status === "ok"
         ? "border-emerald-400/25 bg-emerald-400/5"
         : "border-amber-400/25 bg-amber-400/5",
@@ -523,7 +523,7 @@ const NutRow = ({
       )}
       <span className="font-bold text-foreground">{label}</span>
     </div>
-    <span className="text-[10.5px] text-muted-foreground">{detail}</span>
+    <span className="text-micro text-muted-foreground">{detail}</span>
   </li>
 );
 

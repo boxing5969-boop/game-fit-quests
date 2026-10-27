@@ -24,7 +24,7 @@ const DmHeaderButton = ({ className }: { className?: string }) => {
     >
       <Send className="h-[17px] w-[17px] -translate-x-[1px] translate-y-[1px] text-secondary-foreground" strokeWidth={2.1} />
       {badge > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10.5px] font-bold leading-none text-white ring-2 ring-background">
+        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-micro font-bold leading-none text-white ring-2 ring-background">
           {badge > 99 ? "99+" : badge}
         </span>
       )}

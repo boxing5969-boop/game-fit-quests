@@ -65,7 +65,7 @@ export const WeeklyCheckinDialog = ({
     <div className="fixed inset-0 z-[72] flex items-end justify-center bg-background/80 p-4 backdrop-blur-sm animate-fade-in sm:items-center">
       <div className="relative w-full max-w-[420px] overflow-hidden rounded-3xl border border-border bg-card shadow-elev-3">
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="text-[13px] font-extrabold text-foreground">
+          <p className="text-label font-extrabold text-foreground">
             {mode === "maintenance" ? "유지" : "연장"} · {weekIndex}주차 체크인
           </p>
           <button
@@ -125,7 +125,7 @@ export const WeeklyCheckinDialog = ({
           </div>
 
           <label className="block space-y-1">
-            <span className="text-[11px] font-bold text-muted-foreground">
+            <span className="text-micro font-bold text-muted-foreground">
               이번 주 메모 (선택)
             </span>
             <textarea
@@ -134,7 +134,7 @@ export const WeeklyCheckinDialog = ({
               rows={3}
               maxLength={400}
               placeholder="이번 주에 잘한 점, 다음 주 집중할 점"
-              className="w-full resize-none rounded-lg border border-border bg-background p-2.5 text-[12.5px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full resize-none rounded-lg border border-border bg-background p-2.5 text-label leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           </label>
         </div>
@@ -176,13 +176,13 @@ const Row = ({
   placeholder?: string;
 }) => (
   <label className="block">
-    <span className="text-[11px] font-bold text-muted-foreground">{label}</span>
+    <span className="text-micro font-bold text-muted-foreground">{label}</span>
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
       inputMode="decimal"
       placeholder={placeholder}
-      className="number-font mt-0.5 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
+      className="number-font mt-0.5 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-label text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
     />
   </label>
 );
@@ -199,22 +199,22 @@ const CounterRow = ({
   max: number;
 }) => (
   <div>
-    <span className="text-[11px] font-bold text-muted-foreground">{label}</span>
+    <span className="text-micro font-bold text-muted-foreground">{label}</span>
     <div className="mt-0.5 flex items-center overflow-hidden rounded-lg border border-border bg-background">
       <button
         type="button"
         onClick={() => onChange(Math.max(0, value - 1))}
-        className="flex-1 py-1.5 text-[14px] font-bold text-muted-foreground active:bg-muted"
+        className="flex-1 py-1.5 text-label font-bold text-muted-foreground active:bg-muted"
       >
         -
       </button>
-      <span className="number-font px-2 text-[14px] font-extrabold text-foreground">
+      <span className="number-font px-2 text-label font-extrabold text-foreground">
         {value}
       </span>
       <button
         type="button"
         onClick={() => onChange(Math.min(max, value + 1))}
-        className="flex-1 py-1.5 text-[14px] font-bold text-primary active:bg-muted"
+        className="flex-1 py-1.5 text-label font-bold text-primary active:bg-muted"
       >
         +
       </button>

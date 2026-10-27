@@ -116,7 +116,7 @@ const VideoPlayer = ({
     <div className="fixed inset-0 z-[70] flex flex-col bg-background pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="truncate text-base font-bold text-foreground">{title}</h2>
+        <h2 className="truncate text-body font-bold text-foreground">{title}</h2>
         <button onClick={onClose} className="rounded-full bg-secondary p-2 active:scale-95">
           <X className="h-5 w-5 text-secondary-foreground" />
         </button>
@@ -126,11 +126,11 @@ const VideoPlayer = ({
       <div className="relative w-full bg-foreground/5" style={{ aspectRatio: "16/9" }}>
         {error ? (
           <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-muted">
-            <span className="text-4xl">📹</span>
-            <p className="text-sm text-muted-foreground">영상을 불러올 수 없습니다</p>
+            <span className="text-display">📹</span>
+            <p className="text-body text-muted-foreground">영상을 불러올 수 없습니다</p>
             <button
               onClick={() => { setError(false); videoRef.current?.load(); }}
-              className="flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2 text-sm text-secondary-foreground active:scale-95"
+              className="flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2 text-body text-secondary-foreground active:scale-95"
             >
               <RotateCcw className="h-4 w-4" /> 다시 시도
             </button>
@@ -196,7 +196,7 @@ const VideoPlayer = ({
           </button>
           <button
             onClick={cycleSpeed}
-            className="rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground active:scale-95"
+            className="rounded-full bg-secondary px-3 py-1.5 text-label font-bold text-secondary-foreground active:scale-95"
           >
             {speed}x
           </button>
@@ -205,7 +205,7 @@ const VideoPlayer = ({
               type="button"
               onClick={() => setMirrored((m) => !m)}
               aria-pressed={mirrored}
-              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold active:scale-95 ${
+              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-label font-bold active:scale-95 ${
                 mirrored ? "bg-foreground text-background" : "bg-secondary text-secondary-foreground"
               }`}
             >
@@ -223,14 +223,14 @@ const VideoPlayer = ({
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {keyPoints.filter(Boolean).length > 0 && (
           <div className="mb-4">
-            <h3 className="mb-2 text-sm font-bold text-foreground">💡 핵심 포인트</h3>
+            <h3 className="mb-2 text-body font-bold text-foreground">💡 핵심 포인트</h3>
             <div className="space-y-2">
               {keyPoints.filter(Boolean).map((point, i) => (
                 <div key={i} className="flex items-start gap-2 rounded-xl bg-primary/5 p-3">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-micro font-bold text-primary-foreground">
                     {i + 1}
                   </span>
-                  <p className="text-sm text-foreground">{point}</p>
+                  <p className="text-body text-foreground">{point}</p>
                 </div>
               ))}
             </div>
@@ -241,7 +241,7 @@ const VideoPlayer = ({
           <button
             onClick={onStartChallenge}
             disabled={challengeDisabled}
-            className="w-full rounded-2xl bg-primary py-4 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
+            className="w-full rounded-2xl bg-primary py-4 text-center text-heading font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
           >
             {challengeLabel}
           </button>

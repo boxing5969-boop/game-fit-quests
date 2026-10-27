@@ -78,12 +78,12 @@ const HandWrapPracticeCard = ({ variant, className }: Props) => {
   if (isError || !data) {
     return home ? null : (
       <div className={cn(shell, "text-center")}>
-        <p className="text-[14px] font-bold text-foreground">집 연습 기록을 불러오지 못했어요</p>
+        <p className="text-label font-bold text-foreground">집 연습 기록을 불러오지 못했어요</p>
         <button
           type="button"
           onClick={() => refetch()}
           disabled={isRefetching}
-          className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary px-4 text-[13px] font-bold text-foreground active:scale-95 disabled:opacity-50"
+          className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary px-4 text-label font-bold text-foreground active:scale-95 disabled:opacity-50"
         >
           <RotateCcw className={cn("h-4 w-4", isRefetching && "animate-spin")} /> 다시 시도
         </button>
@@ -141,10 +141,10 @@ const HandWrapPracticeCard = ({ variant, className }: Props) => {
       <div className="flex items-start gap-3">
         <GlyphTile name="handwrap" size={44} />
         <div className="min-w-0 flex-1">
-          <p className="text-[14.5px] font-bold leading-snug text-foreground">
+          <p className="text-label font-bold leading-snug text-foreground">
             {complete ? "🎉 붕대 감기 집 연습 완료" : "붕대 감기 집 연습"}
           </p>
-          <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">{message}</p>
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">{message}</p>
         </div>
       </div>
 
@@ -159,7 +159,7 @@ const HandWrapPracticeCard = ({ variant, className }: Props) => {
             <span className="block h-full rounded-full bg-primary" style={{ width: `${(filled / goal) * 100}%` }} />
           </span>
         )}
-        <span className="ml-1.5 shrink-0 text-[12.5px] font-black tabular-nums text-foreground">
+        <span className="ml-1.5 shrink-0 text-label font-black tabular-nums text-foreground">
           {filled}/{goal}일
         </span>
       </div>
@@ -171,7 +171,7 @@ const HandWrapPracticeCard = ({ variant, className }: Props) => {
             onClick={press}
             disabled={(today && !claimable) || log.isPending}
             className={cn(
-              "flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl text-[14px] font-bold transition-transform active:scale-[0.98] disabled:active:scale-100",
+              "flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl text-label font-bold transition-transform active:scale-[0.98] disabled:active:scale-100",
               today && !claimable ? "bg-secondary text-muted-foreground" : "bg-primary text-primary-foreground disabled:opacity-60",
             )}
           >
@@ -192,14 +192,14 @@ const HandWrapPracticeCard = ({ variant, className }: Props) => {
               <button
                 type="button"
                 onClick={() => navigate("/handwrap")}
-                className="h-11 shrink-0 rounded-xl bg-secondary px-3 text-[13px] font-bold text-foreground transition-transform active:scale-[0.98]"
+                className="h-11 shrink-0 rounded-xl bg-secondary px-3 text-label font-bold text-foreground transition-transform active:scale-[0.98]"
               >
                 감는 법
               </button>
               <button
                 type="button"
                 onClick={hideForNow}
-                className="h-11 shrink-0 rounded-xl px-2 text-[12.5px] font-semibold text-muted-foreground active:bg-secondary"
+                className="h-11 shrink-0 rounded-xl px-2 text-label font-semibold text-muted-foreground active:bg-secondary"
               >
                 나중에
               </button>
@@ -213,7 +213,7 @@ const HandWrapPracticeCard = ({ variant, className }: Props) => {
           <button
             type="button"
             onClick={hideForNow}
-            className="h-9 rounded-full px-3 text-[12.5px] font-semibold text-muted-foreground active:bg-secondary"
+            className="h-9 rounded-full px-3 text-label font-semibold text-muted-foreground active:bg-secondary"
           >
             닫기
           </button>

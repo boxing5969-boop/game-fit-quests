@@ -84,10 +84,10 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
               <Settings className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-[15px] font-extrabold text-foreground leading-tight">
+              <h2 className="text-body font-extrabold text-foreground leading-tight">
                 홈 커스터마이즈
               </h2>
-              <p className="text-[11px] text-muted-foreground leading-tight">
+              <p className="text-micro text-muted-foreground leading-tight">
                 표시 중:{" "}
                 <span className="number-font font-bold text-foreground">
                   {visibleCount}
@@ -110,9 +110,9 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
         <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
           {/* Primary 슬롯 — 상단 노출 */}
           <section>
-            <h3 className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+            <h3 className="mb-1.5 flex items-center gap-1.5 text-micro font-black uppercase tracking-[0.18em] text-primary">
               상단에 노출
-              <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+              <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-micro font-bold text-primary">
                 위 {primaryOrdered.length}
               </span>
             </h3>
@@ -141,9 +141,9 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
 
           {/* 더보기 안 — 토글로 노출, 같은 그룹 내에서만 순서 변경 */}
           <section>
-            <h3 className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">
+            <h3 className="mb-1.5 flex items-center gap-1.5 text-micro font-black uppercase tracking-[0.18em] text-muted-foreground">
               더보기 안에 노출
-              <span className="rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-micro font-bold text-muted-foreground">
                 {moreOrdered.length}
               </span>
             </h3>
@@ -173,10 +173,10 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
 
         {/* 고정 영역 안내 */}
         <div className="mt-4 rounded-xl border border-border bg-muted/40 p-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
             항상 표시 (고정)
           </p>
-          <ul className="mt-1.5 space-y-0.5 text-[11.5px] text-foreground/85">
+          <ul className="mt-1.5 space-y-0.5 text-micro text-foreground/85">
             <li>· 상단 💵 챔피언 머니 뱃지</li>
             <li>· 오늘 한 줄 포커스 카드</li>
             <li>· 마스터 리그 달성 축하 배너 (자격 달성 시)</li>
@@ -188,7 +188,7 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
           <button
             type="button"
             onClick={reset}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-secondary px-4 py-2.5 text-[12px] font-bold text-secondary-foreground active:scale-95"
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-secondary px-4 py-2.5 text-label font-bold text-secondary-foreground active:scale-95"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             기본값으로
@@ -197,7 +197,7 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
             type="button"
             onClick={onClose}
             className={cn(
-              "ml-auto flex-1 rounded-xl py-2.5 text-[13px] font-bold",
+              "ml-auto flex-1 rounded-xl py-2.5 text-label font-bold",
               "bg-gradient-to-r from-primary to-primary/85 text-primary-foreground",
               "shadow-[0_4px_14px_-4px_rgba(217,54,32,0.6)] active:scale-95",
             )}
@@ -283,15 +283,15 @@ const WidgetRow = ({
       className="flex flex-1 items-center gap-2 text-left active:scale-[0.99]"
     >
       <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 text-[13px] font-extrabold text-foreground">
+        <p className="flex items-center gap-1.5 text-label font-extrabold text-foreground">
           {label}
           {conditional && (
-            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-micro font-bold uppercase tracking-wider text-muted-foreground">
               조건부
             </span>
           )}
         </p>
-        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+        <p className="mt-0.5 text-micro leading-snug text-muted-foreground">
           {description}
         </p>
       </div>

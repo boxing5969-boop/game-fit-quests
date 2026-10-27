@@ -115,13 +115,13 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                   <MessageCircle className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                  <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                     {relationLabel(entry.relation) ? `${relationLabel(entry.relation)} · ` : ""}{entry.display_name}
                   </p>
-                  <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+                  <h2 className="mt-0.5 text-body font-bold text-foreground">
                     오늘 운동 한 줄
                   </h2>
-                  <p className="mt-0.5 text-[10.5px] text-muted-foreground">
+                  <p className="mt-0.5 text-micro text-muted-foreground">
                     {formatTime(entry.created_at)}
                   </p>
                 </div>
@@ -138,14 +138,14 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
             {/* 일기 본문 */}
             <div className="flex-1 overflow-y-auto px-5 py-4">
               <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-                <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+                <p className="text-micro font-black uppercase tracking-wider text-primary">
                   {entry.prompt}
                 </p>
-                <p className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-foreground">
+                <p className="mt-1.5 whitespace-pre-wrap text-label leading-relaxed text-foreground">
                   {entry.content}
                 </p>
                 {entry.mood && (
-                  <p className="mt-2 inline-block rounded-pill bg-muted px-2 py-0.5 text-[10.5px] font-medium text-muted-foreground">
+                  <p className="mt-2 inline-block rounded-pill bg-muted px-2 py-0.5 text-micro font-medium text-muted-foreground">
                     {entry.mood}
                   </p>
                 )}
@@ -153,13 +153,13 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
 
               {/* 댓글 목록 */}
               <div className="mt-4">
-                <p className="mb-2 text-[11.5px] font-bold text-foreground">
+                <p className="mb-2 text-micro font-bold text-foreground">
                   댓글 {comments?.length ?? 0}
                 </p>
                 {isLoading ? (
-                  <p className="text-[11px] text-muted-foreground">불러오는 중…</p>
+                  <p className="text-micro text-muted-foreground">불러오는 중…</p>
                 ) : (comments ?? []).length === 0 ? (
-                  <p className="rounded-card border border-dashed border-border bg-muted/30 px-3 py-3 text-center text-[11px] text-muted-foreground">
+                  <p className="rounded-card border border-dashed border-border bg-muted/30 px-3 py-3 text-center text-micro text-muted-foreground">
                     아직 댓글이 없습니다. 첫 응원의 한마디를 남겨보세요.
                   </p>
                 ) : (
@@ -170,11 +170,11 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                         className="rounded-card border border-border bg-card px-3 py-2.5"
                       >
                         <div className="mb-1 flex items-center justify-between">
-                          <p className="text-[10.5px] font-bold text-foreground">
+                          <p className="text-micro font-bold text-foreground">
                             {c.is_mine ? "나" : c.commenter_name}
                           </p>
                           <div className="flex items-center gap-2">
-                            <p className="text-[10px] text-muted-foreground">
+                            <p className="text-micro text-muted-foreground">
                               {formatTime(c.created_at)}
                             </p>
                             {c.is_mine && (
@@ -189,7 +189,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                             )}
                           </div>
                         </div>
-                        <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground">
+                        <p className="whitespace-pre-wrap text-label leading-relaxed text-foreground">
                           {c.content}
                         </p>
                       </div>
@@ -198,7 +198,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                 )}
               </div>
 
-              <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
                 ※ 댓글은 보상이 없어요. 공식 레벨업과 무관해요.
               </p>
             </div>
@@ -213,7 +213,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                   }
                   placeholder="응원의 한마디…"
                   rows={1}
-                  className="flex-1 resize-none rounded-card border border-border bg-card px-3 py-2 text-[13px] text-foreground focus:border-primary focus:outline-none"
+                  className="flex-1 resize-none rounded-card border border-border bg-card px-3 py-2 text-label text-foreground focus:border-primary focus:outline-none"
                 />
                 <button
                   type="button"
@@ -229,7 +229,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                   <Send className="h-4 w-4" />
                 </button>
               </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">
+              <p className="mt-1 text-micro text-muted-foreground">
                 {trimmed.length} / {MAX_LEN}자
               </p>
             </div>

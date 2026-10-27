@@ -360,7 +360,7 @@ const ChatAssistant = () => {
         >
           <div className="flex flex-col items-center gap-0.5 rounded-l-2xl bg-gradient-to-b from-red-600 to-orange-500 px-1.5 py-2 shadow-[0_3px_14px_rgba(232,85,58,0.4)] transition-transform active:scale-95 group-hover:-translate-x-0.5">
             <img src="/assets/mascot/osami_wink.png" alt="오삼 코치" className="h-8 w-8 object-contain drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]" draggable={false} />
-            <span className="rounded-full bg-white px-1 text-[9px] font-black leading-[14px] text-red-600">AI</span>
+            <span className="rounded-full bg-white px-1 text-micro font-black leading-[14px] text-red-600">AI</span>
           </div>
         </button>
       )}
@@ -374,8 +374,8 @@ const ChatAssistant = () => {
           <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black px-5 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)] sm:pt-4">
             {/* 배경 워터마크 — 브랜드 "153" 을 연하게 배치. */}
             <div className="absolute inset-0 opacity-10 pointer-events-none">
-              <div className="absolute top-2 right-4 text-5xl font-black tracking-tighter text-white">153</div>
-              <div className="absolute bottom-0 left-3 text-3xl font-black tracking-tighter text-white">GYM</div>
+              <div className="absolute top-2 right-4 text-display font-black tracking-tighter text-white">153</div>
+              <div className="absolute bottom-0 left-3 text-title font-black tracking-tighter text-white">GYM</div>
             </div>
 
             <div className="relative flex items-center justify-between">
@@ -385,13 +385,13 @@ const ChatAssistant = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <h3 className="font-black text-white text-[15px] tracking-tight">오삼 코치</h3>
-                    <span className="flex items-center gap-0.5 rounded-full bg-green-500/20 px-2 py-0.5 text-[10px] font-bold text-green-400">
+                    <h3 className="font-black text-white text-body tracking-tight">오삼 코치</h3>
+                    <span className="flex items-center gap-0.5 rounded-full bg-green-500/20 px-2 py-0.5 text-micro font-bold text-green-400">
                       <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
                       온라인
                     </span>
                   </div>
-                  <p className="text-[11px] text-gray-400 font-medium">앱 사용법은 바로 · 복싱·식단은 AI 코치가</p>
+                  <p className="text-micro text-gray-400 font-medium">앱 사용법은 바로 · 복싱·식단은 AI 코치가</p>
                 </div>
               </div>
               <button
@@ -409,7 +409,7 @@ const ChatAssistant = () => {
                   key={chip}
                   type="button"
                   onClick={() => { if (!isLoading) void handleQuestion(chip); }}
-                  className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/80 backdrop-blur transition hover:bg-white/20 hover:text-white active:scale-95"
+                  className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-micro font-semibold text-white/80 backdrop-blur transition hover:bg-white/20 hover:text-white active:scale-95"
                 >
                   {chip}
                 </button>
@@ -428,7 +428,7 @@ const ChatAssistant = () => {
                 )}
 
                 <div
-                  className={`max-w-[82%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed whitespace-pre-wrap shadow-elev-1 ${
+                  className={`max-w-[82%] rounded-2xl px-4 py-3 text-label leading-relaxed whitespace-pre-wrap shadow-elev-1 ${
                     m.role === "user"
                       ? "rounded-tr-md bg-gradient-to-br from-red-500 to-red-600 text-white"
                       : m.isError
@@ -439,14 +439,14 @@ const ChatAssistant = () => {
                   {m.isError && (
                     <div className="mb-1.5 flex items-center gap-1 text-red-500">
                       <AlertTriangle size={14} />
-                      <span className="text-[11px] font-bold">연결 오류</span>
+                      <span className="text-micro font-bold">연결 오류</span>
                     </div>
                   )}
                   {m.role === "assistant" && !m.isError && m.source === "faq" && (
-                    <div className="mb-1 text-[10px] font-bold tracking-wide text-emerald-600">앱 안내</div>
+                    <div className="mb-1 text-micro font-bold tracking-wide text-emerald-600">앱 안내</div>
                   )}
                   {m.role === "assistant" && !m.isError && m.source === "ai" && (
-                    <div className="mb-1 flex items-center gap-1 text-[10px] font-bold tracking-wide text-orange-500"><Bot size={11} /> AI 코치</div>
+                    <div className="mb-1 flex items-center gap-1 text-micro font-bold tracking-wide text-orange-500"><Bot size={11} /> AI 코치</div>
                   )}
                   {/* AI 답변: 153 아이콘이 없는 이모지는 지운다 (있는 것은 입체 아이콘으로 보인다, 2026-10-16) */}
                   {m.source === "ai" ? dropUnknownEmoji(stripMarkdown(m.content)) : m.content}
@@ -459,7 +459,7 @@ const ChatAssistant = () => {
                           key={l.to + l.label}
                           type="button"
                           onClick={() => goLink(l)}
-                          className="flex items-center gap-0.5 rounded-full bg-emerald-50 px-3 py-1 text-[11.5px] font-bold text-emerald-700 ring-1 ring-emerald-200 active:scale-95"
+                          className="flex items-center gap-0.5 rounded-full bg-emerald-50 px-3 py-1 text-micro font-bold text-emerald-700 ring-1 ring-emerald-200 active:scale-95"
                         >
                           {l.label} <ChevronRight size={12} />
                         </button>
@@ -472,7 +472,7 @@ const ChatAssistant = () => {
                     <div className="mt-2.5 border-t border-gray-100 pt-2">
                       {m.suggestions && m.suggestions.length > 0 && (
                         <>
-                          <div className="mb-1 text-[10.5px] font-semibold text-gray-400">
+                          <div className="mb-1 text-micro font-semibold text-gray-400">
                             {m.source === "faq" ? "다른 질문이었나요?" : m.source === "ai" ? "관련 앱 안내" : "혹시 이 질문?"}
                           </div>
                           <div className="flex flex-wrap gap-1.5">
@@ -485,7 +485,7 @@ const ChatAssistant = () => {
                                   push({ role: "user", content: s.q });
                                   showFaq(s.id);
                                 }}
-                                className="rounded-full bg-gray-100 px-3 py-1 text-[11.5px] font-semibold text-gray-700 ring-1 ring-gray-200 active:scale-95 disabled:opacity-40"
+                                className="rounded-full bg-gray-100 px-3 py-1 text-micro font-semibold text-gray-700 ring-1 ring-gray-200 active:scale-95 disabled:opacity-40"
                               >
                                 {s.q}
                               </button>
@@ -498,7 +498,7 @@ const ChatAssistant = () => {
                           type="button"
                           disabled={isLoading || isApiLimitReached}
                           onClick={() => void handleQuestion(m.askAi!, { forceAi: true })}
-                          className="mt-1.5 flex items-center gap-1 rounded-full bg-gradient-to-r from-red-500 to-orange-500 px-3 py-1 text-[11.5px] font-bold text-white shadow active:scale-95 disabled:opacity-40"
+                          className="mt-1.5 flex items-center gap-1 rounded-full bg-gradient-to-r from-red-500 to-orange-500 px-3 py-1 text-micro font-bold text-white shadow active:scale-95 disabled:opacity-40"
                         >
                           <Bot size={12} /> AI 코치에게 더 자세히 묻기
                         </button>
@@ -517,7 +517,7 @@ const ChatAssistant = () => {
                 <div className="rounded-2xl rounded-tl-md border border-gray-100 bg-white px-4 py-3 shadow-elev-1">
                   <div className="flex items-center gap-1.5">
                     <Sparkles size={14} className="text-orange-400 animate-spin" style={{ animationDuration: "2s" }} />
-                    <span className="text-[12px] text-gray-500 font-medium">AI 코치가 생각 중...</span>
+                    <span className="text-label text-gray-500 font-medium">AI 코치가 생각 중...</span>
                   </div>
                   <div className="mt-1.5 flex gap-1">
                     <span className="h-2 w-2 rounded-full bg-gray-300 animate-bounce" />
@@ -534,8 +534,8 @@ const ChatAssistant = () => {
           <div className="border-t border-gray-100 bg-white p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:pb-3">
             {isApiLimitReached && (
               <div className="mb-2 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
-                <span className="text-lg">💤</span>
-                <p className="text-[11px] text-amber-700 font-medium">AI 코치가 잠시 쉬는 중이에요. 앱 사용법 질문은 지금도 바로 답해 드려요.</p>
+                <span className="text-heading">💤</span>
+                <p className="text-micro text-amber-700 font-medium">AI 코치가 잠시 쉬는 중이에요. 앱 사용법 질문은 지금도 바로 답해 드려요.</p>
               </div>
             )}
             <form onSubmit={send} className="flex items-center gap-2">
@@ -547,7 +547,7 @@ const ChatAssistant = () => {
                   placeholder="무엇이든 물어보세요..."
                   maxLength={500}
                   disabled={isLoading}
-                  className="flex-1 bg-transparent text-sm text-gray-800 outline-none placeholder:text-gray-400 disabled:opacity-40"
+                  className="flex-1 bg-transparent text-body text-gray-800 outline-none placeholder:text-gray-400 disabled:opacity-40"
                 />
               </div>
               <button
@@ -559,7 +559,7 @@ const ChatAssistant = () => {
                 <Send size={18} />
               </button>
             </form>
-            <p className="mt-1.5 text-center text-[10px] text-gray-300">Powered by 153 AI Coach</p>
+            <p className="mt-1.5 text-center text-micro text-gray-300">Powered by 153 AI Coach</p>
           </div>
         </div>
       )}

@@ -123,7 +123,7 @@ function FloatingButton({
         isAdmin ? "관리자 — Day 미리보기 열기" : "튜토리얼 검수 모드 열기"
       }
       className={cn(
-        "fixed bottom-20 right-3 z-[140] inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-[10px] font-black tracking-widest text-white shadow-[0_4px_14px_rgba(0,0,0,0.45)] backdrop-blur-sm",
+        "fixed bottom-20 right-3 z-[140] inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-micro font-black tracking-widest text-white shadow-[0_4px_14px_rgba(0,0,0,0.45)] backdrop-blur-sm",
         isAdmin
           ? "border border-amber-300/60 bg-amber-600/90 hover:bg-amber-500"
           : "border border-rose-400/40 bg-rose-600/90 hover:bg-rose-500",
@@ -287,7 +287,7 @@ function DevModal({
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                "inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black",
+                "inline-flex h-6 w-6 items-center justify-center rounded-full text-micro font-black",
                 isAdmin ? "bg-amber-600" : "bg-rose-600",
               )}
               aria-hidden
@@ -297,13 +297,13 @@ function DevModal({
             <div>
               <p
                 className={cn(
-                  "text-[10px] font-black uppercase tracking-[0.3em]",
+                  "text-micro font-black uppercase tracking-[0.3em]",
                   isAdmin ? "text-amber-300" : "text-rose-300",
                 )}
               >
                 {isAdmin ? "관리자 모드" : "DEV PREVIEW"}
               </p>
-              <p className="text-[13px] font-bold text-amber-50">
+              <p className="text-label font-bold text-amber-50">
                 {isAdmin
                   ? "7일 캠프 미리보기 / 단계 고치기"
                   : "개발자 검수 모드"}
@@ -322,7 +322,7 @@ function DevModal({
 
         {/* 경고 박스 */}
         <div className="border-b border-rose-400/20 bg-rose-950/30 px-4 py-3">
-          <p className="text-[11px] leading-relaxed text-rose-100/85">
+          <p className="text-micro leading-relaxed text-rose-100/85">
             이 기능은 로컬 브라우저 검수용이며,
             <br />
             <strong className="text-rose-200">
@@ -351,7 +351,7 @@ function DevModal({
                       flash(`Day ${d} 시작 위치로 이동`);
                     }}
                     className={cn(
-                      "rounded-lg border px-2 py-2 text-[11px] font-black active:scale-[0.97]",
+                      "rounded-lg border px-2 py-2 text-micro font-black active:scale-[0.97]",
                       active
                         ? "border-amber-300 bg-amber-500/30 text-amber-100"
                         : "border-amber-400/30 bg-black/30 text-amber-200/80 hover:bg-black/50",
@@ -363,7 +363,7 @@ function DevModal({
                 );
               })}
             </div>
-            <p className="mt-2 text-[10.5px] leading-relaxed text-amber-200/65">
+            <p className="mt-2 text-micro leading-relaxed text-amber-200/65">
               각 Day 의 step 0 부터 진행. 아래 'Day · Step 직접 이동' 으로
               세부 step 까지 점프 가능.
             </p>
@@ -407,7 +407,7 @@ function DevModal({
           <Section title="Day / Step 이동">
             <div className="space-y-2.5">
               <div>
-                <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-amber-200/70">
+                <label className="mb-1.5 block text-micro font-bold uppercase tracking-widest text-amber-200/70">
                   Day (1~7)
                 </label>
                 <div className="grid grid-cols-7 gap-1">
@@ -420,7 +420,7 @@ function DevModal({
                         setStep(0);
                       }}
                       className={cn(
-                        "h-9 rounded-md border text-[12px] font-bold tabular-nums",
+                        "h-9 rounded-md border text-label font-bold tabular-nums",
                         day === d
                           ? "border-amber-400 bg-amber-500/20 text-amber-100"
                           : "border-white/10 bg-black/30 text-amber-200/60 hover:bg-black/50",
@@ -432,7 +432,7 @@ function DevModal({
                 </div>
               </div>
               <div>
-                <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-amber-200/70">
+                <label className="mb-1.5 block text-micro font-bold uppercase tracking-widest text-amber-200/70">
                   Step (0~{Math.max(0, stepsInDay - 1)})
                 </label>
                 <div className="grid grid-cols-5 gap-1">
@@ -442,7 +442,7 @@ function DevModal({
                       type="button"
                       onClick={() => setStep(i)}
                       className={cn(
-                        "h-9 rounded-md border text-[12px] font-bold tabular-nums",
+                        "h-9 rounded-md border text-label font-bold tabular-nums",
                         step === i
                           ? "border-amber-400 bg-amber-500/20 text-amber-100"
                           : "border-white/10 bg-black/30 text-amber-200/60 hover:bg-black/50",
@@ -455,7 +455,7 @@ function DevModal({
               </div>
               <Button
                 onClick={goToPosition}
-                className="h-10 w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-[12px] font-black text-amber-950 hover:from-amber-400 hover:to-amber-300"
+                className="h-10 w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-label font-black text-amber-950 hover:from-amber-400 hover:to-amber-300"
               >
                 이 위치로 이동 (Day {day} · Step {step})
               </Button>
@@ -471,7 +471,7 @@ function DevModal({
                   type="button"
                   onClick={() => setStatus(s.value)}
                   className={cn(
-                    "h-10 rounded-md border text-[12px] font-bold transition-colors",
+                    "h-10 rounded-md border text-label font-bold transition-colors",
                     statusValue === s.value
                       ? "border-emerald-400 bg-emerald-500/15 text-emerald-100"
                       : "border-white/10 bg-black/30 text-amber-200/70 hover:bg-black/50",
@@ -489,7 +489,7 @@ function DevModal({
               <Button
                 variant="outline"
                 onClick={onMarkAllDone}
-                className="h-10 w-full rounded-xl border-amber-400/40 bg-amber-500/10 text-[12px] font-bold text-amber-100 hover:bg-amber-500/20"
+                className="h-10 w-full rounded-xl border-amber-400/40 bg-amber-500/10 text-label font-bold text-amber-100 hover:bg-amber-500/20"
               >
                 <Trophy className="mr-1 h-3.5 w-3.5" />
                 7일 완료 상태로 설정
@@ -497,14 +497,14 @@ function DevModal({
               <Button
                 variant="outline"
                 onClick={onResetCamp}
-                className="h-10 w-full rounded-xl border-white/15 bg-black/30 text-[12px] font-bold text-amber-200 hover:bg-black/50"
+                className="h-10 w-full rounded-xl border-white/15 bg-black/30 text-label font-bold text-amber-200 hover:bg-black/50"
               >
                 <RotateCcw className="mr-1 h-3.5 w-3.5" />내 튜토리얼 리셋
               </Button>
               <Button
                 variant="outline"
                 onClick={onCopyEvents}
-                className="h-10 w-full rounded-xl border-white/15 bg-black/30 text-[12px] font-bold text-amber-200 hover:bg-black/50"
+                className="h-10 w-full rounded-xl border-white/15 bg-black/30 text-label font-bold text-amber-200 hover:bg-black/50"
               >
                 <ClipboardCopy className="mr-1 h-3.5 w-3.5" />
                 이벤트 로그 복사
@@ -519,10 +519,10 @@ function DevModal({
               value={previewId}
               onChange={(e) => onPreviewIdChange(e.target.value)}
               placeholder="라벨용 메모 — 실제 user_id 와 무관"
-              className="w-full rounded-md border border-white/15 bg-black/40 px-3 py-2 text-[12px] text-amber-50 placeholder:text-amber-200/30 focus:border-amber-400/50 focus:outline-none"
+              className="w-full rounded-md border border-white/15 bg-black/40 px-3 py-2 text-label text-amber-50 placeholder:text-amber-200/30 focus:border-amber-400/50 focus:outline-none"
               spellCheck={false}
             />
-            <p className="mt-1 text-[10px] text-amber-200/50">
+            <p className="mt-1 text-micro text-amber-200/50">
               로컬 메모만 저장됩니다. 서버 사용자 데이터를 조회·변경하지 않습니다.
             </p>
           </Section>
@@ -532,18 +532,18 @@ function DevModal({
             <Button
               variant="outline"
               onClick={onExitDevMode}
-              className="h-10 w-full rounded-xl border-rose-400/40 bg-rose-500/10 text-[12px] font-bold text-rose-100 hover:bg-rose-500/20"
+              className="h-10 w-full rounded-xl border-rose-400/40 bg-rose-500/10 text-label font-bold text-rose-100 hover:bg-rose-500/20"
             >
               개발자 preview 종료 (페이지 새로고침)
             </Button>
-            <p className="mt-1 text-[10px] text-amber-200/50">
+            <p className="mt-1 text-micro text-amber-200/50">
               localStorage 토글이 OFF 되며 floating 버튼이 사라집니다.
               <br />
               ?tutorialDev=1 로 다시 활성 가능.
             </p>
           </Section>
 
-          <p className="text-center text-[9px] text-amber-200/40">
+          <p className="text-center text-micro text-amber-200/40">
             모든 변경은 이 브라우저의 localStorage 에만 적용됩니다.
           </p>
         </div>
@@ -555,7 +555,7 @@ function DevModal({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="pointer-events-none fixed bottom-6 left-1/2 z-[142] -translate-x-1/2 rounded-full border border-amber-400/40 bg-black/85 px-4 py-2 text-[11px] font-bold text-amber-200 shadow-lg"
+              className="pointer-events-none fixed bottom-6 left-1/2 z-[142] -translate-x-1/2 rounded-full border border-amber-400/40 bg-black/85 px-4 py-2 text-micro font-bold text-amber-200 shadow-lg"
             >
               {toast}
             </motion.div>
@@ -579,7 +579,7 @@ function Section({
 }) {
   return (
     <section className="rounded-xl border border-white/10 bg-black/20 p-3">
-      <h3 className="mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-amber-300/80">
+      <h3 className="mb-2 text-micro font-black uppercase tracking-[0.3em] text-amber-300/80">
         {title}
       </h3>
       {children}
@@ -830,7 +830,7 @@ function StepEditorSection({
   if (!baseStep) {
     return (
       <Section title="현재 step 편집 (admin)">
-        <p className="text-[11px] text-amber-200/60">
+        <p className="text-micro text-amber-200/60">
           Day {day} · Step {step} — 정의된 step 없음
         </p>
       </Section>
@@ -838,7 +838,7 @@ function StepEditorSection({
   }
 
   const inputCls =
-    "w-full rounded-lg border border-amber-400/20 bg-black/30 px-2 py-1 text-[11px] font-mono text-amber-100 focus:outline-none focus:border-amber-400/60";
+    "w-full rounded-lg border border-amber-400/20 bg-black/30 px-2 py-1 text-micro font-mono text-amber-100 focus:outline-none focus:border-amber-400/60";
 
   const update = (patch: TutorialStepOverridePartial) =>
     setDraft((prev) => ({ ...prev, ...patch }));
@@ -871,17 +871,17 @@ function StepEditorSection({
       title={`이번 단계 고치기 (${day}일차 · ${step + 1}번째${existing ? " · 수정됨" : ""})`}
     >
       <div className="space-y-3">
-        <p className="rounded-lg border border-amber-400/20 bg-amber-500/5 px-2.5 py-1.5 text-[11px] leading-relaxed text-amber-100">
+        <p className="rounded-lg border border-amber-400/20 bg-amber-500/5 px-2.5 py-1.5 text-micro leading-relaxed text-amber-100">
           💡 여기서 바꾸면 <strong>관리자 본인 화면</strong>에서만 보여요.
           다른 회원에게는 영향 없어요. 마음에 들면 코드에 적어달라고 알려주세요.
           <br />저장 후 화면을 새로고침해야 적용돼요.
         </p>
 
         <div className="block">
-          <span className="text-[11px] font-bold text-amber-100">
+          <span className="text-micro font-bold text-amber-100">
             👉 어디를 가리킬까요?
           </span>
-          <p className="mb-1 text-[10px] text-amber-200/60">
+          <p className="mb-1 text-micro text-amber-200/60">
             화면에서 강조할 버튼/카드의 표식. 예: [data-tour="quest-mini-academy"]
           </p>
           <input
@@ -892,7 +892,7 @@ function StepEditorSection({
             className={inputCls}
           />
           {/* 한글 라벨 — 어떤 메뉴인지 자동 표시 */}
-          <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10.5px] font-bold text-amber-200">
+          <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-micro font-bold text-amber-200">
             🏷️ {describeSelector(draft.targetSelector ?? "")}
           </p>
           {/* 화면에서 보기 버튼 */}
@@ -913,11 +913,11 @@ function StepEditorSection({
                 window.alert(`📍 ${result.message}\n(modal 닫고 보면 강조선이 보여요)`);
               }
             }}
-            className="mt-1.5 inline-flex w-full items-center justify-center gap-1 rounded-lg border border-amber-400/40 bg-black/30 px-3 py-1.5 text-[11px] font-bold text-amber-200 hover:bg-black/50 active:scale-[0.98]"
+            className="mt-1.5 inline-flex w-full items-center justify-center gap-1 rounded-lg border border-amber-400/40 bg-black/30 px-3 py-1.5 text-micro font-bold text-amber-200 hover:bg-black/50 active:scale-[0.98]"
           >
             📍 화면에서 위치 보기 (강조 표시)
           </button>
-          <p className="mt-0.5 text-[9.5px] text-amber-200/55">
+          <p className="mt-0.5 text-micro text-amber-200/55">
             ※ 누르면 1.5초 동안 노란 외곽선 + 자동 스크롤. 해당 페이지에 있어야
             보여요. modal 을 닫고 봐주세요.
           </p>
@@ -926,10 +926,10 @@ function StepEditorSection({
         {/* 65-D: 어느 페이지(route) 에서 강조할지 — 메뉴 이동/통합 시 필수.
             '시작 시 페이지 자동 이동' 토글이 이 경로로 navigate 한다. */}
         <div className="block">
-          <span className="text-[11px] font-bold text-amber-100">
+          <span className="text-micro font-bold text-amber-100">
             📍 어느 페이지에서 강조하나요?
           </span>
-          <p className="mb-1 text-[10px] text-amber-200/60">
+          <p className="mb-1 text-micro text-amber-200/60">
             메뉴를 옮겼다면 여기를 새 페이지로 바꾸세요. 아래 '시작 시 페이지
             자동 이동'을 켜면 이 페이지로 자동 이동해요.
           </p>
@@ -948,16 +948,16 @@ function StepEditorSection({
               </option>
             ))}
           </datalist>
-          <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10.5px] font-bold text-amber-200">
+          <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-micro font-bold text-amber-200">
             🏷️ {describeRoute(draft.route ?? "")}
           </p>
         </div>
 
         <label className="block">
-          <span className="text-[11px] font-bold text-amber-100">
+          <span className="text-micro font-bold text-amber-100">
             💬 안내 카드 위치
           </span>
-          <p className="mb-1 text-[10px] text-amber-200/60">
+          <p className="mb-1 text-micro text-amber-200/60">
             오삼이 카드가 화면 어디에 보일지
           </p>
           <select
@@ -978,10 +978,10 @@ function StepEditorSection({
         </label>
 
         <label className="block">
-          <span className="text-[11px] font-bold text-amber-100">
+          <span className="text-micro font-bold text-amber-100">
             ✅ 어떻게 완료되나요?
           </span>
-          <p className="mb-1 text-[10px] text-amber-200/60">
+          <p className="mb-1 text-micro text-amber-200/60">
             회원이 무엇을 해야 이 단계가 끝나는지
           </p>
           <select
@@ -1010,7 +1010,7 @@ function StepEditorSection({
         </label>
 
         <div>
-          <p className="mb-1.5 text-[11px] font-bold text-amber-100">
+          <p className="mb-1.5 text-micro font-bold text-amber-100">
             ⚙️ 자동 진행 설정
           </p>
           <div className="grid grid-cols-1 gap-2">
@@ -1042,10 +1042,10 @@ function StepEditorSection({
         </div>
 
         <label className="block">
-          <span className="text-[11px] font-bold text-amber-100">
+          <span className="text-micro font-bold text-amber-100">
             🗨️ 안내 한 줄 (회원이 행동하기 전)
           </span>
-          <p className="mb-1 text-[10px] text-amber-200/60">
+          <p className="mb-1 text-micro text-amber-200/60">
             예: "👆 여기를 눌러보세요"
           </p>
           <input
@@ -1057,10 +1057,10 @@ function StepEditorSection({
         </label>
 
         <label className="block">
-          <span className="text-[11px] font-bold text-amber-100">
+          <span className="text-micro font-bold text-amber-100">
             🎉 칭찬 한 줄 (회원이 행동한 후)
           </span>
-          <p className="mb-1 text-[10px] text-amber-200/60">
+          <p className="mb-1 text-micro text-amber-200/60">
             예: "잘했어요! 다음으로 갈게요"
           </p>
           <input
@@ -1075,14 +1075,14 @@ function StepEditorSection({
           <Button
             type="button"
             onClick={onSave}
-            className="h-9 flex-1 rounded-lg bg-amber-500 px-3 text-[12px] font-black text-amber-950 hover:bg-amber-400"
+            className="h-9 flex-1 rounded-lg bg-amber-500 px-3 text-label font-black text-amber-950 hover:bg-amber-400"
           >
             💾 저장하기 (새로고침 후 적용)
           </Button>
           <button
             type="button"
             onClick={onResetThisStep}
-            className="rounded-lg border border-amber-400/30 bg-black/30 px-3 text-[11px] font-bold text-amber-200/85 hover:bg-black/50"
+            className="rounded-lg border border-amber-400/30 bg-black/30 px-3 text-micro font-bold text-amber-200/85 hover:bg-black/50"
           >
             ↩️ 원래대로
           </button>
@@ -1094,7 +1094,7 @@ function StepEditorSection({
             clearAllStepOverrides();
             onSaved();
           }}
-          className="w-full rounded-lg border border-rose-400/30 bg-rose-950/15 px-3 py-1.5 text-[10px] font-bold text-rose-200/85 hover:bg-rose-950/30"
+          className="w-full rounded-lg border border-rose-400/30 bg-rose-950/15 px-3 py-1.5 text-micro font-bold text-rose-200/85 hover:bg-rose-950/30"
         >
           🗑️ 내가 바꾼 모든 단계 한꺼번에 원래대로
         </button>
@@ -1115,11 +1115,11 @@ function ToggleRow({
   onChange: (next: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-2 rounded-lg border border-amber-400/15 bg-black/30 px-2.5 py-2 text-[11px] font-bold text-amber-100 active:scale-[0.99]">
+    <label className="flex cursor-pointer items-start justify-between gap-2 rounded-lg border border-amber-400/15 bg-black/30 px-2.5 py-2 text-micro font-bold text-amber-100 active:scale-[0.99]">
       <div className="flex-1 min-w-0">
         <span className="block text-amber-100">{label}</span>
         {hint && (
-          <span className="block text-[10px] font-normal text-amber-200/60">
+          <span className="block text-micro font-normal text-amber-200/60">
             {hint}
           </span>
         )}
@@ -1136,7 +1136,7 @@ function ToggleRow({
 
 function KeyValue({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-1 text-[11px]">
+    <div className="flex items-center justify-between gap-3 py-1 text-micro">
       <span className="font-mono text-amber-200/60">{label}</span>
       <span className="max-w-[60%] truncate text-right font-mono text-amber-100">
         {value}

@@ -60,23 +60,23 @@ const MiniCard = ({
       {icon}
     </span>
     <div className="min-w-0 flex-1">
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+      <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
         {badge}
       </p>
-      <p className="mt-0.5 truncate text-[13.5px] font-bold text-foreground">
+      <p className="mt-0.5 truncate text-label font-bold text-foreground">
         {title}
       </p>
-      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+      <p className="mt-0.5 truncate text-micro text-muted-foreground">
         {subtitle}
       </p>
     </div>
     <div className="shrink-0 text-right">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-reward">
+      <p className="text-micro font-bold uppercase tracking-wider text-reward">
         보상
       </p>
-      <p className="mt-0.5 text-[11px] font-bold text-reward">{rewardPreview}</p>
+      <p className="mt-0.5 text-micro font-bold text-reward">{rewardPreview}</p>
     </div>
-    <span className="ml-1 shrink-0 text-[11px] font-bold text-primary">
+    <span className="ml-1 shrink-0 text-micro font-bold text-primary">
       열기 →
     </span>
   </button>
@@ -148,10 +148,10 @@ const TodayQuestMiniPanel = ({
     >
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             오늘의 라운드
           </p>
-          <h3 className="mt-0.5 text-display-sm">보조 퀘스트</h3>
+          <h3 className="mt-0.5 text-heading">보조 퀘스트</h3>
         </div>
         <span className="badge-pill bg-reward/15 text-reward">
           QUEST XP · 챔피언 머니
@@ -160,7 +160,7 @@ const TodayQuestMiniPanel = ({
 
       <div className="space-y-2">{visible.map((k) => cardDefs[k])}</div>
 
-      <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
         ※ 보조 퀘스트는 공식 1~40 레벨업과 무관합니다. 공식 레벨업은 기존
         코치 승인 기준으로 진행됩니다.
       </p>

@@ -325,22 +325,22 @@ const HallOfFamePage = () => {
               <section className="rounded-card border border-primary/40 bg-primary/5 p-4 shadow-glow-soft">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-caption text-muted-foreground">
+                    <p className="text-label text-muted-foreground font-medium">
                       내 공식 순위
                     </p>
-                    <p className="number-font text-display-lg text-primary">
+                    <p className="number-font text-title text-primary">
                       {myPosition}
-                      <span className="ml-1 text-display-sm">위</span>
+                      <span className="ml-1 text-heading">위</span>
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-caption text-muted-foreground">
+                    <p className="text-label text-muted-foreground font-medium">
                       {RANK_LABELS[progress.current_rank]} Lv.
                       <span className="number-font">
                         {toGlobalLevel(progress.current_rank, progress.current_level)}
                       </span>
                     </p>
-                    <p className="number-font text-body-sm font-bold text-foreground">
+                    <p className="number-font text-label font-bold text-foreground">
                       {progress.total_xp.toLocaleString()} XP
                     </p>
                   </div>
@@ -438,12 +438,12 @@ const HallOfFamePage = () => {
                 handleSetRival({ r_user_id: licenseMember.id, r_nickname: licenseMember.nickname });
                 setLicenseMember(null);
               }}
-              className="h-11 w-full rounded-xl border border-border bg-card text-[14px] font-bold text-foreground transition-transform active:scale-[0.98]"
+              className="h-11 w-full rounded-xl border border-border bg-card text-label font-bold text-foreground transition-transform active:scale-[0.98]"
             >
               🎯 추격 목표로 정하기
             </button>
           ) : licenseMember && progress?.rival_id === licenseMember.id ? (
-            <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-center text-[12.5px] font-semibold text-muted-foreground">
+            <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-center text-label font-semibold text-muted-foreground">
               🎯 지금 추격 중인 회원이에요
             </p>
           ) : null
@@ -461,7 +461,7 @@ const HallOfFamePage = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-display-sm text-foreground">
+              <h3 className="text-heading text-foreground">
                 ⚙️ 레벨 설정
               </h3>
               <button
@@ -471,13 +471,13 @@ const HallOfFamePage = () => {
                 <X className="h-4 w-4 text-secondary-foreground" />
               </button>
             </div>
-            <p className="mb-3 text-body-sm text-muted-foreground">
+            <p className="mb-3 text-label text-muted-foreground font-medium">
               대상:{" "}
               <strong className="text-foreground">
                 {levelSetModal.nickname}
               </strong>
             </p>
-            <p className="mb-3 text-caption text-muted-foreground">
+            <p className="mb-3 text-label text-muted-foreground font-medium">
               현재:{" "}
               {RANK_LABELS[levelSetModal.currentRank] ||
                 levelSetModal.currentRank}{" "}
@@ -488,7 +488,7 @@ const HallOfFamePage = () => {
             </p>
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-caption text-muted-foreground">
+                <label className="mb-1 block text-label text-muted-foreground font-medium">
                   랭크
                 </label>
                 <div className="flex gap-2">
@@ -497,7 +497,7 @@ const HallOfFamePage = () => {
                       key={r}
                       onClick={() => setSetRank(r)}
                       className={cn(
-                        "flex-1 rounded-xl py-2 text-body-sm font-bold transition-all",
+                        "flex-1 rounded-xl py-2 text-label font-bold transition-all",
                         setRank === r
                           ? "bg-primary text-primary-foreground"
                           : "bg-secondary text-secondary-foreground",
@@ -509,7 +509,7 @@ const HallOfFamePage = () => {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-caption text-muted-foreground">
+                <label className="mb-1 block text-label text-muted-foreground font-medium">
                   레벨 ({toGlobalLevel(setRank, 1)}~{toGlobalLevel(setRank, 10)})
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -518,7 +518,7 @@ const HallOfFamePage = () => {
                       key={l}
                       onClick={() => setSetLevel(l)}
                       className={cn(
-                        "h-9 w-9 rounded-lg text-body-sm font-bold transition-all number-font",
+                        "h-9 w-9 rounded-lg text-label font-bold transition-all number-font",
                         setLevel === l
                           ? "bg-primary text-primary-foreground"
                           : "bg-secondary text-secondary-foreground",
@@ -601,7 +601,7 @@ const PodiumCard = ({
         isMe && t.ring,
       )}
     >
-      <span className={cn("number-font text-display-md leading-none", t.rankClass)}>
+      <span className={cn("number-font text-title leading-none", t.rankClass)}>
         {rank}
       </span>
       <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-pill bg-background/50">
@@ -613,17 +613,17 @@ const PodiumCard = ({
             loading="lazy"
           />
         ) : (
-          <span className="text-xl">🥊</span>
+          <span className="text-heading">🥊</span>
         )}
       </div>
       <div className="flex w-full min-w-0 items-center justify-center gap-1">
-        <p className="min-w-0 truncate text-caption font-bold text-foreground">
+        <p className="min-w-0 truncate text-label font-bold text-foreground">
           {member.r_nickname}
         </p>
         <NameBadge league={member.r_current_rank} className="h-4 w-4" />
-        <MedalMark userId={member.r_user_id} className="text-sm" />
+        <MedalMark userId={member.r_user_id} className="text-body" />
       </div>
-      <p className="number-font text-[11px] font-bold text-muted-foreground">
+      <p className="number-font text-micro font-bold text-muted-foreground">
         {score}
       </p>
       {isMe && (
@@ -728,7 +728,7 @@ const RankingList = ({
                 badge={
                   <>
                     <NameBadge league={m.r_current_rank} className="h-[18px] w-[18px]" glow={false} />
-                    <MedalMark userId={m.r_user_id} className="text-base" />
+                    <MedalMark userId={m.r_user_id} className="text-body" />
                   </>
                 }
                 isMe={isMe}
@@ -838,8 +838,8 @@ const HallOfFameHero = () => (
       <div className="flex h-14 w-14 items-center justify-center rounded-pill bg-reward/15">
         <Crown className="h-7 w-7 text-reward" />
       </div>
-      <h2 className="text-display-sm text-foreground">명예의 전당</h2>
-      <p className="text-body-sm text-muted-foreground">
+      <h2 className="text-heading text-foreground">명예의 전당</h2>
+      <p className="text-label text-muted-foreground font-medium">
         {HALL_OF_FAME_DESCRIPTION}
       </p>
     </div>
@@ -876,7 +876,7 @@ const HoFMemberCard = ({
   >
     {/* Rank pill */}
     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-reward/15">
-      <span className="number-font text-body-lg font-bold text-reward">
+      <span className="number-font text-body font-bold text-reward">
         {rank}
       </span>
     </div>
@@ -892,14 +892,14 @@ const HoFMemberCard = ({
           loading="lazy"
         />
       ) : (
-        <span className="text-xl">🥊</span>
+        <span className="text-heading">🥊</span>
       )}
     </div>
 
     {/* Name + title pill */}
     <div className="min-w-0 flex-1">
       <div className="flex items-center gap-1.5">
-        <p className="truncate text-body-sm font-bold text-foreground">
+        <p className="truncate text-label font-bold text-foreground">
           {nickname}
         </p>
         <NameBadge league={rankName} className="h-[18px] w-[18px]" />
@@ -907,20 +907,20 @@ const HoFMemberCard = ({
           <span className="badge-pill bg-primary/20 text-primary">나</span>
         )}
       </div>
-      <p className="text-caption flex items-center gap-1 truncate text-muted-foreground">
+      <p className="text-label flex items-center gap-1 truncate text-muted-foreground font-medium">
         <LeagueBadge league={rankName} className="h-3.5 w-3.5" animated={false} />
         {RANK_LABELS[rankName] || rankName} · Lv.
         <span className="number-font">{toGlobalLevel(rankName, level)}</span>
         {branch && ` · ${branch}`}
       </p>
-      <span className="mt-1 inline-flex items-center gap-1 rounded-pill border border-reward/50 bg-reward/10 px-2 py-0.5 text-[10px] font-bold text-reward">
+      <span className="mt-1 inline-flex items-center gap-1 rounded-pill border border-reward/50 bg-reward/10 px-2 py-0.5 text-micro font-bold text-reward">
         👑 153명예코치
       </span>
     </div>
 
     {/* XP / admin */}
     <div className="flex flex-col items-end gap-1">
-      <span className="number-font text-body-sm font-bold text-foreground">
+      <span className="number-font text-label font-bold text-foreground">
         {totalXp.toLocaleString()} XP
       </span>
       {admin && (

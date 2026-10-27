@@ -206,7 +206,7 @@ export const PostProgramDailyCheckCard = ({
       <div className="flex items-center justify-between">
         <p
           className={cn(
-            "text-[10px] font-black uppercase tracking-[0.2em]",
+            "text-micro font-black uppercase tracking-[0.2em]",
             summary.allDone ? "text-emerald-600" : accentClass,
           )}
         >
@@ -214,7 +214,7 @@ export const PostProgramDailyCheckCard = ({
         </p>
         <span
           className={cn(
-            "rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
+            "rounded-full px-2 py-0.5 text-micro font-black uppercase tracking-wide",
             summary.allDone
               ? "bg-emerald-400/20 text-emerald-700"
               : mode === "maintenance"
@@ -277,7 +277,7 @@ export const PostProgramDailyCheckCard = ({
                 <div className="min-w-0 flex-1">
                   <p
                     className={cn(
-                      "truncate text-[13px] font-bold",
+                      "truncate text-label font-bold",
                       isPerfect && "text-emerald-600",
                       !isPerfect && checked && "text-primary",
                       !checked && "text-foreground",
@@ -285,18 +285,18 @@ export const PostProgramDailyCheckCard = ({
                   >
                     {m.label}
                   </p>
-                  <p className="truncate text-[11.5px] text-muted-foreground">
+                  <p className="truncate text-micro text-muted-foreground">
                     {m.hint}
                   </p>
                 </div>
                 {isPerfect && (
-                  <span className="shrink-0 inline-flex items-center gap-0.5 rounded-md bg-emerald-400/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-emerald-600">
+                  <span className="shrink-0 inline-flex items-center gap-0.5 rounded-md bg-emerald-400/15 px-1.5 py-0.5 text-micro font-black uppercase tracking-wide text-emerald-600">
                     <Sparkles className="h-2.5 w-2.5" />
                     Perfect
                   </span>
                 )}
                 {m.severity === "core" && (
-                  <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-primary">
+                  <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-micro font-black uppercase tracking-wide text-primary">
                     CORE
                   </span>
                 )}
@@ -309,7 +309,7 @@ export const PostProgramDailyCheckCard = ({
       <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2">
         <p
           className={cn(
-            "text-[12px] leading-relaxed",
+            "text-label leading-relaxed",
             summary.allDone ? "text-emerald-700 font-bold" : "text-foreground",
           )}
         >
@@ -318,7 +318,7 @@ export const PostProgramDailyCheckCard = ({
         </p>
         <span
           className={cn(
-            "shrink-0 rounded-lg px-2 py-1 text-[12px] font-extrabold",
+            "shrink-0 rounded-lg px-2 py-1 text-label font-extrabold",
             summary.allDone
               ? "bg-emerald-500/15 text-emerald-700"
               : "bg-card text-foreground",

@@ -71,7 +71,7 @@ export const MasterLevelCard = ({
         <div
           className={cn(
             "flex shrink-0 items-center justify-center rounded-xl font-bold",
-            isBoss ? "h-12 w-12 text-sm" : "h-10 w-10 text-[13px]",
+            isBoss ? "h-12 w-12 text-body" : "h-10 w-10 text-label",
             isGrand &&
               "bg-gradient-to-br from-[hsl(42_100%_58%)] to-[hsl(24_100%_48%)] text-[hsl(30_60%_12%)]",
             isBoss && !isGrand && "bg-primary/15 text-primary",
@@ -95,9 +95,9 @@ export const MasterLevelCard = ({
             <h3
               className={cn(
                 "truncate font-bold",
-                isGrand ? "text-[15px] text-reward" :
-                isBoss ? "text-sm text-foreground" :
-                "text-[13px] text-foreground/85",
+                isGrand ? "text-body text-reward" :
+                isBoss ? "text-body text-foreground" :
+                "text-label text-foreground/85",
               )}
             >
               {def.title}
@@ -105,7 +105,7 @@ export const MasterLevelCard = ({
             {isBoss && (
               <span
                 className={cn(
-                  "ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none",
+                  "ml-1 rounded-full px-1.5 py-0.5 text-micro font-bold leading-none",
                   isGrand ? "bg-reward text-[hsl(30_60%_12%)]" : "bg-primary text-primary-foreground",
                 )}
               >
@@ -114,7 +114,7 @@ export const MasterLevelCard = ({
             )}
           </div>
           {isBoss && (
-            <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+            <p className="mt-1 line-clamp-2 text-micro leading-snug text-muted-foreground">
               {def.description}
             </p>
           )}
@@ -134,7 +134,7 @@ export const MasterLevelCard = ({
               <Lock className="h-3 w-3" />
             </span>
           ) : isCurrent ? (
-            <span className="rounded-full bg-primary px-2 py-1 text-[10px] font-bold leading-none text-primary-foreground">
+            <span className="rounded-full bg-primary px-2 py-1 text-micro font-bold leading-none text-primary-foreground">
               NOW
             </span>
           ) : null}

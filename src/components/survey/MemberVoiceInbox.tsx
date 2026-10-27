@@ -91,19 +91,19 @@ const AnswerValue = ({ a }: { a: SurveyInboxAnswer }) => {
     return max <= 5 ? (
       <span className="flex items-center gap-1.5">
         <Stars value={a.score} max={max} />
-        <span className="text-[12.5px] font-bold tabular-nums text-foreground">{a.score}</span>
+        <span className="text-label font-bold tabular-nums text-foreground">{a.score}</span>
       </span>
     ) : (
-      <span className="text-[13.5px] font-bold tabular-nums text-foreground">
+      <span className="text-label font-bold tabular-nums text-foreground">
         {a.score} / {max}
       </span>
     );
   }
   const t = (a.text ?? "").trim();
   return t ? (
-    <span className="whitespace-pre-line break-words text-[13.5px] leading-relaxed text-foreground">{t}</span>
+    <span className="whitespace-pre-line break-words text-label leading-relaxed text-foreground">{t}</span>
   ) : (
-    <span className="text-[12.5px] text-muted-foreground">답 없음</span>
+    <span className="text-label text-muted-foreground">답 없음</span>
   );
 };
 
@@ -121,19 +121,19 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
 
   if (inbox.isLoading)
     return (
-      <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+      <div className="flex items-center justify-center gap-2 py-16 text-body text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" /> 경영리포트에서 불러오는 중…
       </div>
     );
   if (inbox.isError)
     return (
       <div className="rounded-2xl bg-card px-5 py-8 text-center shadow-elev-1">
-        <p className="text-[14px] font-bold text-foreground">받은 응답을 불러오지 못했어요</p>
-        <p className="mt-1 text-[12.5px] text-muted-foreground">경영리포트 연결이 잠시 안 될 수 있어요</p>
+        <p className="text-label font-bold text-foreground">받은 응답을 불러오지 못했어요</p>
+        <p className="mt-1 text-label text-muted-foreground">경영리포트 연결이 잠시 안 될 수 있어요</p>
         <button
           type="button"
           onClick={() => inbox.refetch()}
-          className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary px-4 text-[13px] font-bold text-foreground active:scale-95"
+          className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary px-4 text-label font-bold text-foreground active:scale-95"
         >
           <RotateCcw className="h-4 w-4" /> 다시 시도
         </button>
@@ -156,7 +156,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
             aria-selected={tab === key}
             onClick={() => setTab(key)}
             className={cn(
-              "flex h-10 items-center justify-center gap-1.5 rounded-xl text-[14px] font-bold transition-colors",
+              "flex h-10 items-center justify-center gap-1.5 rounded-xl text-label font-bold transition-colors",
               tab === key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
             )}
           >
@@ -171,7 +171,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
         ) : (
           <>
             {avgAll != null && (
-              <p className="px-1 text-[12.5px] text-muted-foreground">
+              <p className="px-1 text-label text-muted-foreground">
                 최근 {surveys.length}건 평균 <span className="font-bold text-foreground tabular-nums">{avgAll}</span>점
               </p>
             )}
@@ -180,15 +180,15 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
                 <li key={s.id} className="rounded-2xl bg-card p-4 shadow-elev-1 ring-1 ring-border/60">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate text-[14.5px] font-bold text-foreground">{s.title}</p>
-                      <p className="mt-0.5 text-[12px] text-muted-foreground">
+                      <p className="truncate text-label font-bold text-foreground">{s.title}</p>
+                      <p className="mt-0.5 text-label text-muted-foreground">
                         {[shortBranch(s.branch), s.anonymous ? "익명" : s.who ?? "이름 없음"].filter(Boolean).join(" · ")}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-[11.5px] tabular-nums text-muted-foreground">{whenText(s.at)}</p>
+                      <p className="text-micro tabular-nums text-muted-foreground">{whenText(s.at)}</p>
                       {s.avg != null && (
-                        <p className="mt-0.5 inline-flex items-center gap-0.5 text-[13px] font-bold tabular-nums text-foreground">
+                        <p className="mt-0.5 inline-flex items-center gap-0.5 text-label font-bold tabular-nums text-foreground">
                           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" strokeWidth={1.8} /> {s.avg}
                         </p>
                       )}
@@ -197,7 +197,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
                   <ol className="mt-3 space-y-2.5 border-t border-border/60 pt-3">
                     {s.answers.map((a, i) => (
                       <li key={i}>
-                        <p className="text-[12px] font-semibold leading-snug text-muted-foreground">
+                        <p className="text-label font-semibold leading-snug text-muted-foreground">
                           {i + 1}. {a.q}
                         </p>
                         <div className="mt-0.5">
@@ -220,20 +220,20 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
             return (
               <li key={v.id} className="rounded-2xl bg-card p-4 shadow-elev-1 ring-1 ring-border/60">
                 <div className="flex items-center gap-1.5">
-                  <span className={cn("rounded-full px-2 py-0.5 text-[11.5px] font-bold", cat.cls)}>{cat.label}</span>
-                  <span className="rounded-full bg-secondary px-2 py-0.5 text-[11.5px] font-bold text-muted-foreground">
+                  <span className={cn("rounded-full px-2 py-0.5 text-micro font-bold", cat.cls)}>{cat.label}</span>
+                  <span className="rounded-full bg-secondary px-2 py-0.5 text-micro font-bold text-muted-foreground">
                     {VOICE_STATUS[v.status] ?? v.status}
                   </span>
-                  <span className="ml-auto shrink-0 text-[11.5px] tabular-nums text-muted-foreground">{whenText(v.at)}</span>
+                  <span className="ml-auto shrink-0 text-micro tabular-nums text-muted-foreground">{whenText(v.at)}</span>
                 </div>
                 {v.rating != null && (
                   <div className="mt-2">
                     <Stars value={v.rating} />
                   </div>
                 )}
-                <p className="mt-2 whitespace-pre-line break-words text-[14px] leading-relaxed text-foreground">{v.content}</p>
-                {v.coach && <p className="mt-2 text-[12.5px] font-semibold text-emerald-600 dark:text-emerald-400">칭찬한 코치 · {v.coach}</p>}
-                <p className="mt-2 text-[12px] text-muted-foreground">
+                <p className="mt-2 whitespace-pre-line break-words text-label leading-relaxed text-foreground">{v.content}</p>
+                {v.coach && <p className="mt-2 text-label font-semibold text-emerald-600 dark:text-emerald-400">칭찬한 코치 · {v.coach}</p>}
+                <p className="mt-2 text-label text-muted-foreground">
                   {[shortBranch(v.branch), v.who, v.phone].filter(Boolean).join(" · ") || "익명"}
                   {v.draw && (
                     <span className="ml-1.5 inline-flex items-center gap-0.5 font-semibold text-reward">
@@ -247,7 +247,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
         </ul>
       )}
 
-      <p className="px-1 pt-1 text-center text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="px-1 pt-1 text-center text-micro leading-relaxed text-muted-foreground">
         일일경영리포트에 저장된 최근 6개월 응답이에요 (전체관리자만 볼 수 있어요). 처리 상태 바꾸기와 경품 추첨은 경영리포트에서 해요.
       </p>
     </div>
@@ -256,7 +256,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
 
 const Empty = ({ text }: { text: string }) => (
   <div className="rounded-2xl border border-dashed border-border bg-card/60 px-5 py-10 text-center">
-    <p className="text-[14px] font-bold text-foreground">{text}</p>
+    <p className="text-label font-bold text-foreground">{text}</p>
   </div>
 );
 

@@ -46,14 +46,14 @@ const CheerStickerPicker = ({ selected, onSelect, receiverId = "", situations = 
             )}
           >
             {s.text === recommended && (
-              <span className="absolute left-1.5 top-1.5 rounded-pill bg-reward px-1.5 py-[1px] text-[9.5px] font-black text-reward-foreground">
+              <span className="absolute left-1.5 top-1.5 rounded-pill bg-reward px-1.5 py-[1px] text-micro font-black text-reward-foreground">
                 추천
               </span>
             )}
             {img && <img src={img} alt="" className="h-12 w-12 object-contain" loading="lazy" draggable={false} />}
             <span
               className={cn(
-                "line-clamp-2 min-h-[2.4em] text-center text-[11px] leading-tight",
+                "line-clamp-2 min-h-[2.4em] text-center text-micro leading-tight",
                 active ? "font-black text-foreground" : "font-semibold text-muted-foreground",
               )}
             >

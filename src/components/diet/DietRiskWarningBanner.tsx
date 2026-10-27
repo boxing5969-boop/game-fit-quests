@@ -40,7 +40,7 @@ export const DietRiskWarningBanner = ({
       role="note"
     >
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-      <div className="text-[12px] leading-relaxed text-foreground">
+      <div className="text-label leading-relaxed text-foreground">
         <p className="font-bold text-destructive">맞춤 안전 모드로 진행합니다</p>
         {reasons.length > 0 && (
           <p className="mt-0.5 text-muted-foreground">

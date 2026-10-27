@@ -58,12 +58,12 @@ const OnboardingPage = () => {
     <div className="fixed inset-0 z-[100] flex flex-col bg-[#0C0C0E] text-white overflow-hidden">
       {/* Top bar: progress + skip */}
       <div className="flex items-center justify-between px-5 pb-2 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
-        <span className="text-xs font-medium text-white/40 tracking-wider">
+        <span className="text-label font-medium text-white/40 tracking-wider">
           {current + 1} / {total}
         </span>
         <button
           onClick={finish}
-          className="text-xs font-medium text-white/40 hover:text-white/60 transition-colors active:scale-95"
+          className="text-label font-medium text-white/40 hover:text-white/60 transition-colors active:scale-95"
         >
           건너뛰기
         </button>
@@ -102,7 +102,7 @@ const OnboardingPage = () => {
         </div>
 
         {/* 슬라이드 아이콘 — 작게 보조 표시 */}
-        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-xl backdrop-blur-sm border border-white/10">
+        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-heading backdrop-blur-sm border border-white/10">
           {slide.icon}
         </div>
 
@@ -118,7 +118,7 @@ const OnboardingPage = () => {
 
         {/* Sub body */}
         {slide.subBody && (
-          <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/40 whitespace-pre-line">
+          <p className="mt-3 max-w-sm text-body leading-relaxed text-white/40 whitespace-pre-line">
             {slide.subBody}
           </p>
         )}
@@ -129,7 +129,7 @@ const OnboardingPage = () => {
             {slide.keywords.map((kw) => (
               <span
                 key={kw}
-                className="rounded-full bg-primary/15 border border-primary/25 px-4 py-1.5 text-xs font-bold text-primary tracking-wide"
+                className="rounded-full bg-primary/15 border border-primary/25 px-4 py-1.5 text-label font-bold text-primary tracking-wide"
               >
                 {kw}
               </span>
@@ -140,7 +140,7 @@ const OnboardingPage = () => {
         {/* Trust note */}
         {slide.trustNote && (
           <div className="mt-6 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-2.5">
-            <p className="text-[10px] text-white/30 leading-relaxed">
+            <p className="text-micro text-white/30 leading-relaxed">
               📋 {slide.trustNote}
             </p>
           </div>
@@ -152,7 +152,7 @@ const OnboardingPage = () => {
             {["화이트", "블루", "레드", "블랙"].map((name, i) => (
               <div
                 key={name}
-                className={`rounded-xl bg-gradient-to-br ${RANK_COLORS[i]} px-3 py-2 text-xs font-bold text-white shadow-lg`}
+                className={`rounded-xl bg-gradient-to-br ${RANK_COLORS[i]} px-3 py-2 text-label font-bold text-white shadow-lg`}
               >
                 {name}
               </div>
@@ -167,7 +167,7 @@ const OnboardingPage = () => {
           <div className="space-y-3">
             <button
               onClick={finish}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-base font-bold text-white shadow-glow-primary transition-all active:scale-[0.98]"
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-body font-bold text-white shadow-glow-primary transition-all active:scale-[0.98]"
             >
               {slide.cta || "🥊 시작하기"}
             </button>
@@ -184,7 +184,7 @@ const OnboardingPage = () => {
             )}
             <button
               onClick={next}
-              className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-white/10 text-base font-bold text-white backdrop-blur-sm transition-all active:scale-[0.98] hover:bg-white/15"
+              className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-white/10 text-body font-bold text-white backdrop-blur-sm transition-all active:scale-[0.98] hover:bg-white/15"
             >
               다음
               <ChevronRight className="h-5 w-5" />
@@ -193,7 +193,7 @@ const OnboardingPage = () => {
         )}
 
         {/* Bottom trust badge */}
-        <p className="mt-4 text-center text-[10px] text-white/20">
+        <p className="mt-4 text-center text-micro text-white/20">
           과학적 운동 원리와 단계적 성장 설계 반영
         </p>
       </div>

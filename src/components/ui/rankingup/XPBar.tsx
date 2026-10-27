@@ -50,7 +50,7 @@ export const XPBar = ({
   return (
     <div className={cn("w-full", className)} {...rest}>
       {(label || showNumbers) && (
-        <div className="mb-1 flex items-center justify-between text-caption">
+        <div className="mb-1 flex items-center justify-between text-label font-medium">
           {label && <span className="text-muted-foreground">{label}</span>}
           {showNumbers && (
             <span className="number-font font-bold text-foreground">

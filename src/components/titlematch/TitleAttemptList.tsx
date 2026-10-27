@@ -19,7 +19,7 @@ export const AttemptDots = ({ attempts, max, className }: { attempts: TitleAttem
         <span
           key={i}
           className={cn(
-            "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black",
+            "flex h-5 w-5 items-center justify-center rounded-full text-micro font-black",
             !a && "ring-2 ring-inset ring-border",
             a?.passed && "bg-status-complete text-white",
             a && !a.passed && "bg-muted text-muted-foreground",
@@ -65,11 +65,11 @@ const TitleAttemptList = ({ attempts, max, className }: { attempts: TitleAttempt
               {a.passed ? <Check className="h-3 w-3" strokeWidth={3.5} /> : <X className="h-3 w-3" strokeWidth={3.5} />}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[12.5px] font-bold text-foreground">
+              <span className="block text-label font-bold text-foreground">
                 도전 {a.no}/{max} · {a.passed ? "합격" : "아쉽게 불합격"}
               </span>
-              <span className="mt-0.5 block text-[11px] font-semibold text-muted-foreground">{formatKoShortDateTime(a.recordedAt)}</span>
-              {a.note && <span className="mt-0.5 block break-words text-[12px] leading-snug text-muted-foreground">“{a.note}”</span>}
+              <span className="mt-0.5 block text-micro font-semibold text-muted-foreground">{formatKoShortDateTime(a.recordedAt)}</span>
+              {a.note && <span className="mt-0.5 block break-words text-label leading-snug text-muted-foreground">“{a.note}”</span>}
             </span>
             {a.videoPath && (
               <button
@@ -77,7 +77,7 @@ const TitleAttemptList = ({ attempts, max, className }: { attempts: TitleAttempt
                 onClick={() => open(a)}
                 disabled={opening !== null}
                 aria-label={`도전 ${a.no} 영상 보기`}
-                className="flex h-8 shrink-0 items-center gap-1 rounded-full bg-card px-2.5 text-[11.5px] font-bold text-foreground ring-1 ring-border transition-transform active:scale-95 disabled:opacity-60"
+                className="flex h-8 shrink-0 items-center gap-1 rounded-full bg-card px-2.5 text-micro font-bold text-foreground ring-1 ring-border transition-transform active:scale-95 disabled:opacity-60"
               >
                 {opening === a.no ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5 fill-current" />}
                 영상

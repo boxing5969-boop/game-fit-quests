@@ -31,7 +31,7 @@ export const MealAnalysisBadge = ({
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-0.5 rounded-full border px-2 py-0.5 text-[10px] font-extrabold",
+          "inline-flex items-center gap-0.5 rounded-full border px-2 py-0.5 text-micro font-extrabold",
           tone,
           className,
         )}
@@ -52,12 +52,12 @@ export const MealAnalysisBadge = ({
     >
       <div className="flex items-center gap-1.5">
         <Sparkles className="h-3.5 w-3.5" />
-        <p className="text-[10px] font-black uppercase tracking-[0.2em]">
+        <p className="text-micro font-black uppercase tracking-[0.2em]">
           MEAL · {CATEGORY_LABEL_KO[category]}
         </p>
       </div>
       {feedback && (
-        <p className="mt-1 text-[12.5px] font-bold leading-snug">
+        <p className="mt-1 text-label font-bold leading-snug">
           {feedback}
         </p>
       )}

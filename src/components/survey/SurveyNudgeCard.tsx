@@ -33,10 +33,10 @@ const SurveyNudgeCard = () => {
       onClick={() => navigate("/survey")}
       className="flex w-full items-center gap-3 rounded-2xl border border-amber-400/40 bg-amber-400/[0.07] px-4 py-3.5 text-left transition-transform active:scale-[0.99]"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/20 text-xl">⭐</span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/20 text-heading">⭐</span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[14.5px] font-extrabold text-foreground">이번 달 만족도 조사 (1분)</span>
-        <span className="mt-0.5 block text-[12px] text-muted-foreground">
+        <span className="block text-label font-extrabold text-foreground">이번 달 만족도 조사 (1분)</span>
+        <span className="mt-0.5 block text-label text-muted-foreground">
           익명으로 전달돼요 · 참여하면 💵 +{SURVEY_REWARD.satisfaction.toLocaleString()} 챔피언 머니
         </span>
       </span>

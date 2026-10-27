@@ -34,7 +34,7 @@ const LessonTodayCard = ({ onOpen, showEmpty = false, className }: Props) => {
   if (!today || !day) {
     if (!showEmpty || !today) return null;
     return (
-      <p className={cn("rounded-2xl bg-muted/50 px-4 py-3 text-[12.5px] leading-snug text-muted-foreground", className)}>
+      <p className={cn("rounded-2xl bg-muted/50 px-4 py-3 text-label leading-snug text-muted-foreground", className)}>
         {levelShort(today.currentLevel)} 수업 매뉴얼은 준비 중이에요 · 아래에서 지난 수업을 복습할 수 있어요
       </p>
     );
@@ -57,25 +57,25 @@ const LessonTodayCard = ({ onOpen, showEmpty = false, className }: Props) => {
       aria-label={`${todayHeadline(today)} ${day.dayNo}일차 — ${day.title}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[12px] font-black text-primary">
+        <span className="text-label font-black text-primary">
           📋 {todayHeadline(today)} · {levelShort(day.level)}
         </span>
-        <span className="flex shrink-0 items-center text-[11.5px] font-bold text-muted-foreground">
+        <span className="flex shrink-0 items-center text-micro font-bold text-muted-foreground">
           수업 보기 <ChevronRight className="h-3.5 w-3.5" />
         </span>
       </div>
       <p className="mt-1.5 flex items-baseline gap-2">
-        <span className="text-[24px] font-black leading-none tabular-nums text-foreground">{day.dayNo}일차</span>
-        <span className="min-w-0 truncate text-[14px] font-bold text-foreground">{day.title}</span>
+        <span className="text-title font-black leading-none tabular-nums text-foreground">{day.dayNo}일차</span>
+        <span className="min-w-0 truncate text-label font-bold text-foreground">{day.title}</span>
       </p>
       {today.promotedToday && (
-        <p className="mt-1.5 text-[12px] font-bold text-reward">
+        <p className="mt-1.5 text-label font-bold text-reward">
           🎉 오늘 {levelShort(today.currentLevel)} 달성!{nextDay ? ` 다음 수업은 ${nextDay.dayNo}일차` : ""}
         </p>
       )}
       <div className="mt-2.5 flex flex-wrap gap-1.5">
         {repeatOf && (
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11.5px] font-bold text-primary">
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-micro font-bold text-primary">
             {repeatOf.dayNo}일차 반복
           </span>
         )}
@@ -83,7 +83,7 @@ const LessonTodayCard = ({ onOpen, showEmpty = false, className }: Props) => {
           <span
             key={i}
             className={cn(
-              "rounded-full px-2 py-0.5 text-[11.5px] font-bold",
+              "rounded-full px-2 py-0.5 text-micro font-bold",
               s.isNew && !repeatOf ? "bg-reward/20 text-reward" : "bg-secondary text-muted-foreground",
             )}
           >
@@ -92,7 +92,7 @@ const LessonTodayCard = ({ onOpen, showEmpty = false, className }: Props) => {
           </span>
         ))}
         {more > 0 && (
-          <span className="rounded-full bg-secondary px-2 py-0.5 text-[11.5px] font-bold text-muted-foreground">+{more}</span>
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-micro font-bold text-muted-foreground">+{more}</span>
         )}
       </div>
     </button>

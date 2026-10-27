@@ -242,8 +242,8 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
         {/* Header */}
         <div className="mb-6 text-center">
           <Camera className="mx-auto mb-2 h-8 w-8 text-white/80" />
-          <h2 className="text-xl font-bold text-white">체육관 QR 스캔</h2>
-          <p className="mt-1 text-sm text-white/60">지점에 설치된 QR 코드를 스캔하세요</p>
+          <h2 className="text-heading font-bold text-white">체육관 QR 스캔</h2>
+          <p className="mt-1 text-body text-white/60">지점에 설치된 QR 코드를 스캔하세요</p>
         </div>
 
         {/* Scanner area */}
@@ -262,10 +262,10 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
             <div className="flex items-start gap-3">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
               <div>
-                <p className="text-sm font-medium text-white">{error}</p>
+                <p className="text-body font-medium text-white">{error}</p>
                 <button
                   onClick={retryScanner}
-                  className="mt-2 rounded-lg bg-white/20 px-4 py-2 text-sm font-bold text-white transition-all active:scale-95"
+                  className="mt-2 rounded-lg bg-white/20 px-4 py-2 text-body font-bold text-white transition-all active:scale-95"
                 >
                   다시 시도
                 </button>
@@ -278,7 +278,7 @@ const QRScannerModal = ({ open, onClose, onSuccess }: QRScannerModalProps) => {
         {processing && (
           <div className="mt-4 flex items-center justify-center gap-2 text-white">
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-            <span className="text-sm">체크인 처리 중...</span>
+            <span className="text-body">체크인 처리 중...</span>
           </div>
         )}
       </div>

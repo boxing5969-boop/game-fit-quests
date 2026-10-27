@@ -134,7 +134,7 @@ const LevelUpTrophy = ({ rank, isMaster }: LevelUpTrophyProps) => {
           },
           opacity: { duration: 0.4, delay: 0.4 },
         }}
-        className="relative z-10 select-none text-7xl drop-shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
+        className="relative z-10 select-none text-display drop-shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
         aria-hidden="true"
       >
         {emoji}
@@ -157,7 +157,7 @@ const LevelUpTrophy = ({ rank, isMaster }: LevelUpTrophyProps) => {
                 repeat: Infinity,
                 repeatDelay: 0.8,
               }}
-              className="absolute select-none text-2xl"
+              className="absolute select-none text-title"
               style={{
                 left: `${50 + 50 * Math.cos((i / 6) * Math.PI * 2)}%`,
                 top: `${50 + 50 * Math.sin((i / 6) * Math.PI * 2)}%`,

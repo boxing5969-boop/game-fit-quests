@@ -56,13 +56,13 @@ const FunChallengeArenaSheet = ({ open, onClose, initialCode = null }: Props) =>
           <Swords className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             오늘의 라운드
           </p>
-          <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+          <h2 className="mt-0.5 text-body font-bold text-foreground">
             챌린지 아레나
           </h2>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             공식 훈련은 그대로, 오늘은 재미 챌린지로 한 라운드 더.
           </p>
         </div>
@@ -80,7 +80,7 @@ const FunChallengeArenaSheet = ({ open, onClose, initialCode = null }: Props) =>
   const renderList = () => {
     if (isLoading) {
       return (
-        <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+        <div className="px-5 py-8 text-center text-body text-muted-foreground">
           챌린지 목록을 불러오고 있어요…
         </div>
       );
@@ -89,11 +89,11 @@ const FunChallengeArenaSheet = ({ open, onClose, initialCode = null }: Props) =>
     if (list.length === 0) {
       return (
         <div className="flex flex-col items-center px-5 py-10 text-center">
-          <p className="text-3xl">🥊</p>
-          <p className="mt-2 text-sm font-bold text-foreground">
+          <p className="text-title">🥊</p>
+          <p className="mt-2 text-body font-bold text-foreground">
             지금 도전 가능한 챌린지가 없습니다
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-label text-muted-foreground">
             준비되는 대로 새 라운드를 올려두겠습니다.
           </p>
         </div>
@@ -103,10 +103,10 @@ const FunChallengeArenaSheet = ({ open, onClose, initialCode = null }: Props) =>
     return (
       <div className="space-y-3">
         <div className="rounded-card border border-primary/15 bg-primary/5 px-3 py-2">
-          <p className="text-[11px] leading-relaxed text-foreground">
+          <p className="text-micro leading-relaxed text-foreground">
             기록을 깨는 상대는 남이 아니라 어제의 나입니다.
           </p>
-          <p className="mt-1 text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
             ※ 본 챌린지는 재미와 습관을 위한 보조 챌린지입니다. 공식 1~40
             레벨업·승급 조건과는 무관합니다.
           </p>

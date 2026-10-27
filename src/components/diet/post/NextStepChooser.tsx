@@ -146,23 +146,23 @@ export const NextStepChooser = ({
       aria-labelledby="next-step-title"
     >
       <div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+        <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
           NEXT STEP · 21일 이후
         </p>
         <h2
           id="next-step-title"
-          className="mt-1 text-[20px] font-extrabold leading-tight text-foreground"
+          className="mt-1 text-heading font-extrabold leading-tight text-foreground"
         >
           이제 내 몸에 맞는 다음 단계를 골라요
         </h2>
-        <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-label leading-relaxed text-muted-foreground">
           둘 중 어느 쪽이든 21일 동안 만든 리듬을 이어가는 길입니다.
         </p>
       </div>
 
       {/* 자기보고: 목표 체중 달성 여부 */}
       <div className="rounded-xl border border-border bg-muted/30 p-3">
-        <p className="text-[12px] font-bold text-foreground">
+        <p className="text-label font-bold text-foreground">
           내가 세운 목표 체중에 도달했나요?
         </p>
         <div className="mt-2 flex gap-2">
@@ -182,7 +182,7 @@ export const NextStepChooser = ({
       {/* 추천 박스 */}
       <div
         className={cn(
-          "rounded-xl border px-3 py-2.5 text-[12px]",
+          "rounded-xl border px-3 py-2.5 text-label",
           reco.path === "maintenance"
             ? "border-emerald-400/40 bg-emerald-400/10"
             : reco.path === "extend"
@@ -190,14 +190,14 @@ export const NextStepChooser = ({
               : "border-border bg-muted/40",
         )}
       >
-        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+        <p className="text-micro font-black uppercase tracking-widest text-muted-foreground">
           추천
         </p>
         <p className="mt-0.5 font-extrabold text-foreground">
           {recommendationLabel(reco.path)}
         </p>
         {reco.reasons.length > 0 && (
-          <ul className="mt-1 space-y-0.5 text-[11.5px] text-muted-foreground">
+          <ul className="mt-1 space-y-0.5 text-micro text-muted-foreground">
             {reco.reasons.map((r) => (
               <li key={r}>· {r}</li>
             ))}
@@ -206,8 +206,8 @@ export const NextStepChooser = ({
       </div>
 
       {plan.coach_recommendation_note && (
-        <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5 text-[12px] leading-relaxed text-foreground">
-          <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+        <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5 text-label leading-relaxed text-foreground">
+          <p className="text-micro font-black uppercase tracking-widest text-primary">
             코치 한마디
           </p>
           <p className="mt-0.5">{plan.coach_recommendation_note}</p>
@@ -255,10 +255,10 @@ export const NextStepChooser = ({
           </div>
           {/* 오삼 코치 동적 피드백 — 입력값 기반 */}
           <div className="mt-2 rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-3 py-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+            <p className="text-micro font-black uppercase tracking-widest text-emerald-600">
               오삼 코치 한마디
             </p>
-            <p className="mt-0.5 text-[12px] leading-relaxed text-foreground">
+            <p className="mt-0.5 text-label leading-relaxed text-foreground">
               {previewMaintenance}
             </p>
           </div>
@@ -300,7 +300,7 @@ export const NextStepChooser = ({
             />
           </div>
           {/* 데드라인 미리보기 — 오늘 + cycleLength */}
-          <div className="mt-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-[11.5px] text-foreground">
+          <div className="mt-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-micro text-foreground">
             <span className="font-bold">데드라인:</span>{" "}
             <span className="number-font">{extendDeadlinePreview.iso}</span>
             <span className="ml-1 text-muted-foreground">
@@ -326,10 +326,10 @@ export const NextStepChooser = ({
           </div>
           {/* 오삼 코치 동적 피드백 — 사이클·목표·현재 체중 기반 */}
           <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+            <p className="text-micro font-black uppercase tracking-widest text-primary">
               오삼 코치 한마디
             </p>
-            <p className="mt-0.5 text-[12px] leading-relaxed text-foreground">
+            <p className="mt-0.5 text-label leading-relaxed text-foreground">
               {previewExtend}
             </p>
           </div>
@@ -348,18 +348,18 @@ export const NextStepChooser = ({
       </div>
 
       {selectMut.isError && (
-        <p className="text-center text-[11px] text-destructive">
+        <p className="text-center text-micro text-destructive">
           서버에 저장하지 못했어요. 인터넷을 확인하거나 잠시 후 다시 시도해 주세요.
           (반복되면 관리자에게 select_post_program_path RPC 적용 여부 확인)
         </p>
       )}
       {selectMut.isPending && (
-        <p className="text-center text-[11px] text-muted-foreground">
+        <p className="text-center text-micro text-muted-foreground">
           저장 중입니다...
         </p>
       )}
 
-      <p className="pt-1 text-center text-[10.5px] leading-relaxed text-muted-foreground">
+      <p className="pt-1 text-center text-micro leading-relaxed text-muted-foreground">
         어느 쪽을 골라도 언제든 코치와 상담 후 경로를 바꿀 수 있습니다.
       </p>
     </section>
@@ -397,7 +397,7 @@ const PathCard = ({
     {recommended && (
       <span
         className={cn(
-          "absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest",
+          "absolute right-3 top-3 rounded-full px-2 py-0.5 text-micro font-black uppercase tracking-widest",
           tone === "good"
             ? "bg-emerald-400/20 text-emerald-500"
             : "bg-primary/15 text-primary",
@@ -419,13 +419,13 @@ const PathCard = ({
         {icon}
       </span>
       <div>
-        <h3 className="text-[15px] font-extrabold leading-tight text-foreground">
+        <h3 className="text-body font-extrabold leading-tight text-foreground">
           {title}
         </h3>
-        <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>
+        <p className="mt-0.5 text-micro text-muted-foreground">{subtitle}</p>
       </div>
     </div>
-    <ul className="mt-3 space-y-1 text-[12px] text-foreground">
+    <ul className="mt-3 space-y-1 text-label text-foreground">
       {bullets.map((b) => (
         <li key={b} className="flex gap-1.5">
           <span className="mt-1 block h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
@@ -450,7 +450,7 @@ const YesNoPill = ({
     type="button"
     onClick={onClick}
     className={cn(
-      "rounded-full px-3 py-1.5 text-[12px] font-bold transition-all active:scale-95",
+      "rounded-full px-3 py-1.5 text-label font-bold transition-all active:scale-95",
       selected
         ? "bg-primary text-primary-foreground"
         : "bg-muted text-muted-foreground",
@@ -473,7 +473,7 @@ const CyclePill = ({
     type="button"
     onClick={onClick}
     className={cn(
-      "flex-1 rounded-xl border px-3 py-2 text-[12px] font-bold transition-all active:scale-95",
+      "flex-1 rounded-xl border px-3 py-2 text-label font-bold transition-all active:scale-95",
       selected
         ? "border-primary bg-primary/10 text-primary"
         : "border-border bg-muted/30 text-muted-foreground",
@@ -496,14 +496,14 @@ const LabeledInput = ({
   placeholder?: string;
   type?: "decimal" | "text";
 }) => (
-  <label className="flex flex-col gap-1 text-[11px] font-bold text-muted-foreground">
+  <label className="flex flex-col gap-1 text-micro font-bold text-muted-foreground">
     {label}
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       inputMode={type === "decimal" ? "decimal" : "text"}
-      className="number-font rounded-lg border border-border bg-card px-2 py-1.5 text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
+      className="number-font rounded-lg border border-border bg-card px-2 py-1.5 text-label text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
     />
   </label>
 );

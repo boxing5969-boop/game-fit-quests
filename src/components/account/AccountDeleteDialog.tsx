@@ -71,7 +71,7 @@ const AccountDeleteDialog = ({ open, onOpenChange, onDone }: Props) => {
         <AlertDialogHeader>
           <AlertDialogTitle>계정을 삭제할까요?</AlertDialogTitle>
           <AlertDialogDescription asChild>
-            <div className="space-y-2 text-left text-[13px] leading-relaxed text-muted-foreground">
+            <div className="space-y-2 text-left text-label leading-relaxed text-muted-foreground">
               <p>요청하면 바로 로그아웃되고, 이 계정으로 다시 로그인할 수 없어요.</p>
               <p>
                 7일 안에 프로필·레벨·기록·사진·글·AI 코치 대화를 모두 지워요. 계약·결제 기록은 법에 따라 따로 보관한 뒤
@@ -87,7 +87,7 @@ const AccountDeleteDialog = ({ open, onOpenChange, onDone }: Props) => {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="space-y-1.5">
-          <label htmlFor="account-delete-confirm" className="text-[13px] font-bold text-foreground">
+          <label htmlFor="account-delete-confirm" className="text-label font-bold text-foreground">
             확인을 위해 &lsquo;{CONFIRM_WORD}&rsquo;를 입력해 주세요
           </label>
           <Input
@@ -95,7 +95,7 @@ const AccountDeleteDialog = ({ open, onOpenChange, onDone }: Props) => {
             value={word}
             onChange={(e) => setWord(e.target.value)}
             autoComplete="off"
-            className="text-base"
+            className="text-body"
           />
         </div>
         <AlertDialogFooter className="gap-2">
@@ -104,7 +104,7 @@ const AccountDeleteDialog = ({ open, onOpenChange, onDone }: Props) => {
             type="button"
             onClick={submit}
             disabled={!ready}
-            className="inline-flex h-10 items-center justify-center rounded-md bg-destructive px-4 text-sm font-bold text-destructive-foreground transition-opacity disabled:opacity-40"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-destructive px-4 text-body font-bold text-destructive-foreground transition-opacity disabled:opacity-40"
           >
             {busy ? "요청 중…" : "계정 삭제"}
           </button>

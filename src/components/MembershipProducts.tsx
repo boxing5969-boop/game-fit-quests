@@ -383,12 +383,12 @@ const MembershipProducts = () => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setPhoneModal(null)}>
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-elev-3" onClick={(e) => e.stopPropagation()}>
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-base font-bold text-foreground">전화번호 확인</h2>
+          <h2 className="text-body font-bold text-foreground">전화번호 확인</h2>
           <button onClick={() => setPhoneModal(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:scale-95">
             <X className="h-4 w-4" />
           </button>
         </div>
-        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+        <p className="mb-3 text-label leading-relaxed text-muted-foreground">
           결제·회원 관리를 위해 전화번호가 필요합니다. 번호를 입력하면 <b className="text-foreground">153복싱짐 선릉역점</b> 회원으로 등록되고 바로 결제가 진행됩니다.
         </p>
         <input
@@ -397,12 +397,12 @@ const MembershipProducts = () => {
           value={phoneInput}
           onChange={(e) => setPhoneInput(formatPhone(e.target.value))}
           placeholder="010-0000-0000"
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
         />
         <button
           onClick={savePhoneAndPay}
           disabled={savingPhone}
-          className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+          className="mt-4 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
         >
           {savingPhone ? "처리 중..." : `${won(phoneModal.amount)} 결제하기`}
         </button>
@@ -435,7 +435,7 @@ const MembershipProducts = () => {
       <div ref={rootRef} className="scroll-mt-4 rounded-2xl border border-border bg-card p-4">
         <div className="mb-3 flex items-center gap-2">
           <CreditCard className="h-5 w-5 text-primary" />
-          <h3 className="text-base font-bold text-foreground">153멤버십</h3>
+          <h3 className="text-body font-bold text-foreground">153멤버십</h3>
         </div>
 
         {/* 카테고리 탭 */}
@@ -444,7 +444,7 @@ const MembershipProducts = () => {
             <button
               key={c.key}
               onClick={() => setActiveCatKey(c.key)}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-all active:scale-95 ${
+              className={`shrink-0 rounded-full px-4 py-2 text-body font-bold transition-all active:scale-95 ${
                 cat?.key === c.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
               }`}
             >
@@ -456,15 +456,15 @@ const MembershipProducts = () => {
         {/* 이용 안내 (수강권 탭) */}
         {isMembership && (
           <div className="mb-3 rounded-2xl bg-muted/40 px-4 py-2">
-            <div className="flex items-center justify-between py-1.5 text-sm">
+            <div className="flex items-center justify-between py-1.5 text-body">
               <span className="text-muted-foreground">이용 시간</span>
               <span className="font-semibold text-foreground">매일 00:00 – 23:59</span>
             </div>
-            <div className="flex items-center justify-between border-t border-border/60 py-1.5 text-sm">
+            <div className="flex items-center justify-between border-t border-border/60 py-1.5 text-body">
               <span className="text-muted-foreground">이용 지점</span>
               <span className="font-semibold text-foreground">153복싱짐 선릉역점</span>
             </div>
-            <div className="flex items-center justify-between border-t border-border/60 py-1.5 text-sm">
+            <div className="flex items-center justify-between border-t border-border/60 py-1.5 text-body">
               <span className="text-muted-foreground">멤버십 종류</span>
               <span className="font-semibold text-foreground">{cat?.key === "m5" ? "주5회 기간권" : "주3회 기간권"}</span>
             </div>
@@ -476,7 +476,7 @@ const MembershipProducts = () => {
           <PromoBanner />
         </div>
 
-        {isMembership && <p className="mb-2 px-0.5 text-base font-bold text-foreground">이용 기간</p>}
+        {isMembership && <p className="mb-2 px-0.5 text-body font-bold text-foreground">이용 기간</p>}
 
         {/* 렌탈 탭 — 운동복 · 락카만 연장 (수강권 없이, 링크 1개) */}
         {isRentalTab && rentalCartKinds.length > 0 && (
@@ -493,11 +493,11 @@ const MembershipProducts = () => {
             <button
               onClick={() => askConfirm(null, rentalPick)}
               disabled={rentalPickTotal <= 0 || paying === "rental-cart"}
-              className="mt-2.5 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-40"
+              className="mt-2.5 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-40"
             >
               {paying === "rental-cart" ? "이동 중..." : rentalPickTotal > 0 ? `${won(rentalPickTotal)} 결제하기` : "개월을 골라 주세요"}
             </button>
-            <p className="mt-1.5 text-[11.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
               수강권을 결제할 때 같이 담으면 수강권과 같은 개월로 한 번에 결제돼요.
             </p>
           </div>
@@ -514,23 +514,23 @@ const MembershipProducts = () => {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-lg font-black text-foreground">{months}개월</span>
-                        {off > 0 && <span className="text-sm font-bold text-[#f97316]">{off}% OFF</span>}
+                        <span className="text-heading font-black text-foreground">{months}개월</span>
+                        {off > 0 && <span className="text-body font-bold text-[#f97316]">{off}% OFF</span>}
                       </div>
                       <p className="mt-1">
-                        {p.normal_price ? <span className="text-sm text-muted-foreground line-through">{won(p.normal_price)}</span> : null}
-                        <span className="ml-1.5 text-base font-bold text-foreground">{won(p.price)}</span>
+                        {p.normal_price ? <span className="text-body text-muted-foreground line-through">{won(p.normal_price)}</span> : null}
+                        <span className="ml-1.5 text-body font-bold text-foreground">{won(p.price)}</span>
                       </p>
                     </div>
                     <div className="shrink-0 whitespace-nowrap text-right leading-none">
-                      <span className="text-[28px] font-black text-foreground">{perDay.toLocaleString("ko-KR")}</span>
-                      <span className="ml-0.5 text-sm font-bold text-muted-foreground">원/일</span>
+                      <span className="text-title font-black text-foreground">{perDay.toLocaleString("ko-KR")}</span>
+                      <span className="ml-0.5 text-body font-bold text-muted-foreground">원/일</span>
                     </div>
                   </div>
                   <button
                     onClick={() => askConfirm(p)}
                     disabled={paying === p.id}
-                    className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+                    className="mt-3 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
                   >
                     {paying === p.id ? "이동 중..." : "결제하기"}
                   </button>
@@ -540,8 +540,8 @@ const MembershipProducts = () => {
             return (
               <div key={p.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background px-4 py-3.5">
                 <div className="min-w-0">
-                  <p className="truncate text-base font-bold text-foreground">{p.name}</p>
-                  <p className="mt-0.5 text-sm font-semibold text-foreground">
+                  <p className="truncate text-body font-bold text-foreground">{p.name}</p>
+                  <p className="mt-0.5 text-body font-semibold text-foreground">
                     {won(p.price)}
                     {p.duration_days > 0 ? <span className="font-normal text-muted-foreground"> · {p.duration_days}일</span> : null}
                   </p>
@@ -549,7 +549,7 @@ const MembershipProducts = () => {
                 <button
                   onClick={() => askConfirm(p)}
                   disabled={paying === p.id}
-                  className="shrink-0 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
+                  className="shrink-0 rounded-xl bg-primary px-5 py-2.5 text-body font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
                 >
                   {paying === p.id ? "이동 중..." : "결제하기"}
                 </button>
@@ -558,7 +558,7 @@ const MembershipProducts = () => {
           })}
         </div>
 
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-label leading-relaxed text-muted-foreground">
           결제하기를 누르면 안전한 결제창으로 이동합니다. 수강권은 결제 완료 시 기간이 자동 반영됩니다.
         </p>
         {phoneModalJsx}
@@ -595,18 +595,18 @@ const MembershipProducts = () => {
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="mb-1 flex items-center justify-between">
-                  <h3 className="text-base font-black text-foreground">결제 확인</h3>
+                  <h3 className="text-body font-black text-foreground">결제 확인</h3>
                   <button onClick={close} aria-label="닫기" className="rounded-lg p-1 text-muted-foreground active:scale-95"><X className="h-5 w-5" /></button>
                 </div>
                 {isMem && p ? (
-                  <p className="text-sm text-muted-foreground">{p.name} · {months}개월 약정 · <span className="font-bold text-foreground">{won(p.price)}</span>{off > 0 ? ` · 정상가 ${won(p.normal_price ?? 0)} (${off}% 할인)` : ""}</p>
+                  <p className="text-body text-muted-foreground">{p.name} · {months}개월 약정 · <span className="font-bold text-foreground">{won(p.price)}</span>{off > 0 ? ` · 정상가 ${won(p.normal_price ?? 0)} (${off}% 할인)` : ""}</p>
                 ) : p ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-body text-muted-foreground">
                     {CAT_LABEL[p.category] ?? "상품"} · {p.name} · <span className="font-bold text-foreground">{won(p.price)}</span>
                     {p.duration_days > 0 ? ` · ${p.duration_days}일` : ""}
                   </p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">운동복 · 락카 연장 · 결제 링크 하나로 한 번에</p>
+                  <p className="text-body text-muted-foreground">운동복 · 락카 연장 · 결제 링크 하나로 한 번에</p>
                 )}
 
                 {/* 수강권과 같이 — 운동복 · 락카 담기 (수강권 개월만큼, 줄일 수 있게) */}
@@ -630,41 +630,41 @@ const MembershipProducts = () => {
                 {/* 장바구니 — 담은 것 · 끝나는 날 · 합계 (링크 1개) */}
                 {(hasRentals || !p) && lines.length > 0 && (
                   <div className="mt-3 rounded-xl border border-border bg-muted/30 p-3" aria-label="결제할 것">
-                    <p className="text-sm font-black text-foreground">결제할 것</p>
+                    <p className="text-body font-black text-foreground">결제할 것</p>
                     {lines.map((l) => (
                       <div key={l.kind} className="mt-2 flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-[13.5px] font-bold text-foreground">{l.label}</p>
-                          <p className="text-[11.5px] text-muted-foreground">{endText(extendedEnd(curEnd[l.kind], l.days, today), today)}까지</p>
+                          <p className="text-label font-bold text-foreground">{l.label}</p>
+                          <p className="text-micro text-muted-foreground">{endText(extendedEnd(curEnd[l.kind], l.days, today), today)}까지</p>
                         </div>
-                        <span className="shrink-0 text-[13.5px] font-black tabular-nums text-foreground">{won(l.amount)}</span>
+                        <span className="shrink-0 text-label font-black tabular-nums text-foreground">{won(l.amount)}</span>
                       </div>
                     ))}
                     <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2.5">
-                      <span className="text-[13px] font-bold text-foreground">합계</span>
-                      <span className="text-base font-black tabular-nums text-foreground">{won(total)}</span>
+                      <span className="text-label font-bold text-foreground">합계</span>
+                      <span className="text-body font-black tabular-nums text-foreground">{won(total)}</span>
                     </div>
                   </div>
                 )}
 
                 {isMem && (rows.length > 0 || discountAmt > 0) && (
-                  <p className="mt-4 text-sm font-black text-foreground">환불 규정</p>
+                  <p className="mt-4 text-body font-black text-foreground">환불 규정</p>
                 )}
 
                 {discountAmt > 0 && (
                   <div className="mt-3 rounded-xl border border-[#f97316]/40 bg-[#f97316]/10 p-3">
-                    <p className="text-sm font-bold text-[#f97316]">⚠️ 중도 해지 시 손해가 발생합니다</p>
-                    <p className="mt-1 text-xs leading-relaxed text-foreground">이용하신 기간은 <b>할인 전 정상가</b>로 재산정됩니다. 지금 받으신 할인 혜택 <b>{won(discountAmt)}</b>이 사라져, 조기 환불 시 돌려받는 금액이 크게 줄어듭니다.</p>
+                    <p className="text-body font-bold text-[#f97316]">⚠️ 중도 해지 시 손해가 발생합니다</p>
+                    <p className="mt-1 text-label leading-relaxed text-foreground">이용하신 기간은 <b>할인 전 정상가</b>로 재산정됩니다. 지금 받으신 할인 혜택 <b>{won(discountAmt)}</b>이 사라져, 조기 환불 시 돌려받는 금액이 크게 줄어듭니다.</p>
                   </div>
                 )}
 
                 {rows.length > 0 && (
                   <div className="mt-3 overflow-hidden rounded-xl border border-border">
-                    <div className="grid grid-cols-3 bg-muted/50 px-3 py-2 text-[11px] font-bold text-muted-foreground">
+                    <div className="grid grid-cols-3 bg-muted/50 px-3 py-2 text-micro font-bold text-muted-foreground">
                       <span>환불 시점</span><span className="text-right">돌려받는 금액</span><span className="text-right">손해</span>
                     </div>
                     {rows.map((r) => (
-                      <div key={r.m} className="grid grid-cols-3 border-t border-border px-3 py-2 text-sm">
+                      <div key={r.m} className="grid grid-cols-3 border-t border-border px-3 py-2 text-body">
                         <span className="text-foreground">{r.m}개월 사용 후</span>
                         <span className="text-right font-bold text-foreground">{won(r.refund)}</span>
                         <span className="text-right font-bold text-destructive">-{won(r.loss)}</span>
@@ -674,10 +674,10 @@ const MembershipProducts = () => {
                 )}
 
                 {isMem && p && (
-                  <p className="mt-3 text-xs leading-relaxed text-muted-foreground">끝까지 이용하시면 하루 {(p.duration_days > 0 ? Math.round(p.price / p.duration_days) : 0).toLocaleString("ko-KR")}원으로 가장 이득입니다. 위약금(10%)·개인 위생용품은 별도이며, 최종 환불액은 관장님이 확정합니다.</p>
+                  <p className="mt-3 text-label leading-relaxed text-muted-foreground">끝까지 이용하시면 하루 {(p.duration_days > 0 ? Math.round(p.price / p.duration_days) : 0).toLocaleString("ko-KR")}원으로 가장 이득입니다. 위약금(10%)·개인 위생용품은 별도이며, 최종 환불액은 관장님이 확정합니다.</p>
                 )}
                 {hasRentals && (
-                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  <p className="mt-2 text-label leading-relaxed text-muted-foreground">
                     운동복 · 락카는 환불할 때 남은 기간만큼 날짜로 나눠 돌려 드려요.
                     {lines.some((l) => l.kind === "locker") && !(curEnd.locker && curEnd.locker >= today) ? " 락카 번호는 결제 후 데스크에서 정해 드려요." : ""}
                   </p>
@@ -697,7 +697,7 @@ const MembershipProducts = () => {
                 />
 
                 {isMem && (
-                  <label className="mt-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <label className="mt-4 flex items-center gap-2 text-body font-semibold text-foreground">
                     <input type="checkbox" checked={confirmAgree} onChange={(e) => setConfirmAgree(e.target.checked)} className="h-4 w-4 accent-primary" />
                     위 환불 규정을 확인했으며 이에 동의합니다.
                   </label>
@@ -709,11 +709,11 @@ const MembershipProducts = () => {
                     pay(c, clampMileageUse(mileagePts, maxMileageUse(mileageBalance, checkoutMileageBase(c))));
                   }}
                   disabled={(isMem && !confirmAgree) || total <= 0}
-                  className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-40"
+                  className="mt-3 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-40"
                 >
                   {isMem ? `동의하고 ${payWon} 결제` : `${payWon} 결제하기`}
                 </button>
-                <button onClick={close} className="mt-2 w-full rounded-xl bg-muted py-2.5 text-sm font-bold text-muted-foreground active:scale-95">다시 볼게요</button>
+                <button onClick={close} className="mt-2 w-full rounded-xl bg-muted py-2.5 text-body font-bold text-muted-foreground active:scale-95">다시 볼게요</button>
               </div>
             </div>
           );
@@ -737,8 +737,8 @@ const MembershipProducts = () => {
         >
           <span className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-primary" />
-            <span className="text-sm font-bold text-foreground">수강권·상품 설정</span>
-            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">마스터</span>
+            <span className="text-body font-bold text-foreground">수강권·상품 설정</span>
+            <span className="rounded-full bg-muted px-1.5 py-0.5 text-micro font-bold text-muted-foreground">마스터</span>
           </span>
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showProductAdmin ? "rotate-180" : ""}`} />
         </button>
@@ -748,25 +748,25 @@ const MembershipProducts = () => {
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CreditCard className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground">수강권·상품 관리</h3>
+          <h3 className="text-body font-bold text-foreground">수강권·상품 관리</h3>
         </div>
-        <button onClick={() => openEdit("new")} className="flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-bold text-primary-foreground active:scale-95">
+        <button onClick={() => openEdit("new")} className="flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-label font-bold text-primary-foreground active:scale-95">
           <Plus className="h-3.5 w-3.5" /> 추가
         </button>
       </div>
 
       {products.length === 0 ? (
-        <p className="py-4 text-center text-xs text-muted-foreground">등록된 상품이 없습니다. '추가'로 상품을 만들어주세요.</p>
+        <p className="py-4 text-center text-label text-muted-foreground">등록된 상품이 없습니다. '추가'로 상품을 만들어주세요.</p>
       ) : (
         <div className="space-y-2">
           {products.map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background px-3 py-2.5">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">
+                <p className="truncate text-body font-semibold text-foreground">
                   {p.name}
-                  {!p.is_active && <span className="ml-1.5 text-[10px] font-bold text-muted-foreground">(비활성)</span>}
+                  {!p.is_active && <span className="ml-1.5 text-micro font-bold text-muted-foreground">(비활성)</span>}
                 </p>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-micro text-muted-foreground">
                   {CAT_LABEL[p.category] || p.category}
                   {p.pass_type ? ` ${p.pass_type}` : ""} · {won(p.price)}
                   {p.normal_price ? ` (정상 ${won(p.normal_price)})` : ""}
@@ -774,7 +774,7 @@ const MembershipProducts = () => {
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
-                <button onClick={() => toggleActive(p)} className="rounded-lg bg-muted px-2 py-1 text-[11px] font-bold text-foreground active:scale-95">
+                <button onClick={() => toggleActive(p)} className="rounded-lg bg-muted px-2 py-1 text-micro font-bold text-foreground active:scale-95">
                   {p.is_active ? "숨김" : "노출"}
                 </button>
                 <button onClick={() => openEdit(p)} className="rounded-lg bg-muted p-1.5 text-muted-foreground active:scale-95">
@@ -794,31 +794,31 @@ const MembershipProducts = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setEditing(null)}>
           <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-elev-3" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-bold text-foreground">{editing === "new" ? "상품 추가" : "상품 수정"}</h2>
+              <h2 className="text-body font-bold text-foreground">{editing === "new" ? "상품 추가" : "상품 수정"}</h2>
               <button onClick={() => setEditing(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:scale-95">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="space-y-2.5">
               <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">상품명</label>
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground" placeholder="예: 주5회 기간권 1개월" />
+                <label className="mb-1 block text-label font-medium text-muted-foreground">상품명</label>
+                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground" placeholder="예: 주5회 기간권 1개월" />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">금액(원)</label>
-                  <input type="number" inputMode="numeric" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground" placeholder="220000" />
+                  <label className="mb-1 block text-label font-medium text-muted-foreground">금액(원)</label>
+                  <input type="number" inputMode="numeric" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground" placeholder="220000" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">기간(일)</label>
-                  <input type="number" inputMode="numeric" value={form.duration_days} onChange={(e) => setForm({ ...form, duration_days: e.target.value })} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground" placeholder="30" />
+                  <label className="mb-1 block text-label font-medium text-muted-foreground">기간(일)</label>
+                  <input type="number" inputMode="numeric" value={form.duration_days} onChange={(e) => setForm({ ...form, duration_days: e.target.value })} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground" placeholder="30" />
                 </div>
               </div>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-micro text-muted-foreground">
                 기간(일)이 있으면 결제 시 수강권 만료일이 그만큼 연장됩니다(용품·PT는 0). 카테고리·정상가는 문의 시 일괄 설정해 드립니다.
               </p>
             </div>
-            <button onClick={save} disabled={saving} className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+            <button onClick={save} disabled={saving} className="mt-4 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
               {saving ? "저장 중..." : "저장"}
             </button>
           </div>

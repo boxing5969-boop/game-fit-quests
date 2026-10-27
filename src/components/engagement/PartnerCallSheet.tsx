@@ -92,13 +92,13 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
           <Handshake className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             오늘 같이 해요
           </p>
-          <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+          <h2 className="mt-0.5 text-body font-bold text-foreground">
             {allBranches ? "전 지점 모집" : "같은 지점, 오늘만 보입니다"}
           </h2>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             {allBranches
               ? "오늘 올라온 모집만 보여요. 참여는 같은 지점 회원끼리 해요."
               : "하루가 지나면 저절로 사라집니다. 부담 없이 올려주세요."}
@@ -117,14 +117,14 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
 
   const renderList = () => {
     if (isLoading) {
-      return <p className="py-6 text-center text-[12px] text-muted-foreground">불러오는 중…</p>;
+      return <p className="py-6 text-center text-label text-muted-foreground">불러오는 중…</p>;
     }
     if (calls.length === 0) {
       return (
         <div className="rounded-card border border-border bg-muted/20 px-4 py-6 text-center">
-          <p className="text-2xl">🥊</p>
-          <p className="mt-2 text-[13px] font-bold text-foreground">아직 오늘 모집이 없습니다</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="text-title">🥊</p>
+          <p className="mt-2 text-label font-bold text-foreground">아직 오늘 모집이 없습니다</p>
+          <p className="mt-1 text-micro text-muted-foreground">
             {allBranches
               ? "오늘 올라온 모집이 전 지점에 아직 없어요."
               : "아래에서 첫 모집을 올려보세요. 같은 지점 회원에게만 보입니다."}
@@ -141,24 +141,24 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="truncate text-[13px] font-bold text-foreground">
+                <span className="truncate text-label font-bold text-foreground">
                   {c.isMine ? "내 모집" : c.nickname}
                 </span>
                 {allBranches && c.branch && (
-                  <span className="shrink-0 text-[10.5px] font-semibold text-muted-foreground">
+                  <span className="shrink-0 text-micro font-semibold text-muted-foreground">
                     {shortBranchName(c.branch)}
                   </span>
                 )}
-                <span className="rounded-pill bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                <span className="rounded-pill bg-primary/10 px-2 py-0.5 text-micro font-bold text-primary">
                   {PURPOSE_LABEL[c.purpose]}
                 </span>
               </div>
-              <p className="mt-0.5 text-[11.5px] font-semibold text-muted-foreground">
+              <p className="mt-0.5 text-micro font-semibold text-muted-foreground">
                 {formatHour(c.slotHour)}
                 {c.joinCount > 0 && ` · 참여 ${c.joinCount}명`}
               </p>
               {c.note && (
-                <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{c.note}</p>
+                <p className="mt-0.5 truncate text-micro text-muted-foreground">{c.note}</p>
               )}
             </div>
             {c.isMine ? (
@@ -168,7 +168,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
                 onClick={() =>
                   run(() => close.mutateAsync(c.id), c.id, "모집을 내리지 못했습니다")
                 }
-                className="shrink-0 rounded-pill border border-border px-3 py-1.5 text-[11.5px] font-bold text-muted-foreground active:scale-95 disabled:opacity-60"
+                className="shrink-0 rounded-pill border border-border px-3 py-1.5 text-micro font-bold text-muted-foreground active:scale-95 disabled:opacity-60"
               >
                 내리기
               </button>
@@ -179,7 +179,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
                 onClick={() =>
                   run(() => leave.mutateAsync(c.id), c.id, "취소하지 못했습니다")
                 }
-                className="shrink-0 rounded-pill border border-border px-3 py-1.5 text-[11.5px] font-bold text-muted-foreground active:scale-95 disabled:opacity-60"
+                className="shrink-0 rounded-pill border border-border px-3 py-1.5 text-micro font-bold text-muted-foreground active:scale-95 disabled:opacity-60"
               >
                 참여 취소
               </button>
@@ -188,7 +188,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
                 type="button"
                 disabled={busyId === c.id}
                 onClick={() => run(() => join.mutateAsync(c.id), c.id, "참여하지 못했습니다")}
-                className="shrink-0 rounded-pill bg-primary px-3.5 py-1.5 text-[11.5px] font-bold text-primary-foreground active:scale-95 disabled:opacity-60"
+                className="shrink-0 rounded-pill bg-primary px-3.5 py-1.5 text-micro font-bold text-primary-foreground active:scale-95 disabled:opacity-60"
               >
                 저요
               </button>
@@ -201,11 +201,11 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
 
   const renderForm = () => (
     <div className="mt-5 rounded-card border border-border bg-muted/20 p-4">
-      <p className="text-[12px] font-black text-foreground">
+      <p className="text-label font-black text-foreground">
         {mine ? "내 모집 바꾸기" : "모집 올리기"}
       </p>
 
-      <p className="mt-3 text-[11px] font-bold text-muted-foreground">무엇을 함께 하나요</p>
+      <p className="mt-3 text-micro font-bold text-muted-foreground">무엇을 함께 하나요</p>
       <div className="mt-1.5 flex flex-wrap gap-1.5">
         {PURPOSES.map((p) => {
           const locked = p === "sparring" && !canSpar;
@@ -215,7 +215,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
               type="button"
               disabled={locked}
               onClick={() => setPurpose(p)}
-              className={`rounded-pill border px-2.5 py-1.5 text-[11.5px] font-bold transition-colors disabled:opacity-40 ${
+              className={`rounded-pill border px-2.5 py-1.5 text-micro font-bold transition-colors disabled:opacity-40 ${
                 purpose === p
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border text-muted-foreground"
@@ -228,17 +228,17 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         })}
       </div>
       {!canSpar && (
-        <p className="mt-1.5 text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
           스파링 모집은 맞대는 구간이 열리는 <b className="text-foreground">레드 리그(레벨 21)</b>부터
           가능합니다. 미트·줄넘기·같이 운동은 지금도 올릴 수 있습니다.
         </p>
       )}
 
-      <p className="mt-3 text-[11px] font-bold text-muted-foreground">몇 시에 오시나요</p>
+      <p className="mt-3 text-micro font-bold text-muted-foreground">몇 시에 오시나요</p>
       <select
         value={hour}
         onChange={(e) => setHour(Number(e.target.value))}
-        className="mt-1.5 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-[13px] font-bold text-foreground"
+        className="mt-1.5 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-label font-bold text-foreground"
         aria-label="시간 선택"
       >
         {HOURS.map((h) => (
@@ -252,7 +252,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         value={note}
         onChange={(e) => setNote(e.target.value.slice(0, 120))}
         placeholder="한 줄 (예: 3라운드만 미트 부탁드려요)"
-        className="mt-2.5 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground"
+        className="mt-2.5 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-label text-foreground placeholder:text-muted-foreground"
         aria-label="한 줄 메모"
       />
 
@@ -260,11 +260,11 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         type="button"
         onClick={handleCreate}
         disabled={create.isPending}
-        className="mt-3 w-full rounded-xl bg-primary py-3 text-[13px] font-black text-primary-foreground active:scale-[0.99] disabled:opacity-60"
+        className="mt-3 w-full rounded-xl bg-primary py-3 text-label font-black text-primary-foreground active:scale-[0.99] disabled:opacity-60"
       >
         {create.isPending ? "올리는 중…" : mine ? "모집 바꾸기" : "모집 올리기"}
       </button>
-      <p className="mt-2 text-[10.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-2 text-micro leading-relaxed text-muted-foreground">
         하루에 한 건만 올라갑니다. 다시 올리면 기존 모집이 바뀝니다.
       </p>
     </div>
@@ -303,7 +303,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
                   onOpenMember={setLicenseMember}
                 />
               </div>
-              <p className="mb-2 text-[12px] font-black text-foreground">오늘 올라온 모집</p>
+              <p className="mb-2 text-label font-black text-foreground">오늘 올라온 모집</p>
               {renderList()}
               {/* 전체관리자도 회원처럼 올려 볼 수 있다 (2026-10-18) */}
               {renderForm()}

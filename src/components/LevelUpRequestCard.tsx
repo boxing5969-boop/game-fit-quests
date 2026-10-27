@@ -35,7 +35,7 @@ const Bar = ({ label, cur, req, unit }: { label: string; cur: number; req: numbe
   const done = cur >= req;
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between text-xs">
+      <div className="mb-1 flex items-center justify-between text-label">
         <span className="font-semibold text-foreground">{label}</span>
         <span className={done ? "font-bold text-status-complete" : "text-muted-foreground"}>
           {cur}/{req}{unit}{done ? " ✓" : ""}
@@ -110,8 +110,8 @@ const LevelUpRequestCard = () => {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-      <p className="mb-1 text-sm font-black text-foreground">레벨업까지</p>
-      <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mb-1 text-body font-black text-foreground">레벨업까지</p>
+      <p className="mb-3 text-micro leading-relaxed text-muted-foreground">
         {isTitleFlow
           ? "타이틀매치예요! 파트너와 타이틀미션을 연습하고 지점장님께 심사를 신청하세요. 지점장님이 영상으로 심사해요 (도전 3번)."
           : isFastTrack && isBossLevel
@@ -127,7 +127,7 @@ const LevelUpRequestCard = () => {
       {isTitleFlow ? (
         <button
           onClick={() => navigate(titleMatchLink(league))}
-          className="w-full rounded-xl bg-primary py-3 text-center text-[13px] font-black text-primary-foreground active:scale-[0.98]"
+          className="w-full rounded-xl bg-primary py-3 text-center text-label font-black text-primary-foreground active:scale-[0.98]"
         >
           🏆 타이틀미션 보기 · 심사 신청
         </button>
@@ -137,7 +137,7 @@ const LevelUpRequestCard = () => {
       {(cycle.reqMinDays ?? 0) > 0 && (
         <div className="mt-2">
           <Bar label="연한 (이 레벨에 머문 기간)" cur={cycle.elapsedDays ?? 0} req={cycle.reqMinDays ?? 0} unit="일" />
-          <p className="mt-1 text-[10px] text-muted-foreground">
+          <p className="mt-1 text-micro text-muted-foreground">
             블랙 리그는 출석을 몰아쳐도 건너뛸 수 없어요 — 레벨마다 최소 {cycle.reqMinDays}일이 필요합니다.
           </p>
         </div>
@@ -145,10 +145,10 @@ const LevelUpRequestCard = () => {
 
       {isFastTrack && (
         <div className="mt-3 rounded-xl border border-reward/30 bg-reward/5 px-3 py-2.5">
-          <p className="text-[11.5px] font-black text-reward-foreground">
+          <p className="text-micro font-black text-reward-foreground">
             ⚡ 패스트 트랙 — 남은 직행권 {gates}장
           </p>
-          <p className="mt-1 text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
             오래 다니신 만큼 앞 레벨은 건너뜁니다. 타이틀매치를 통과하면 다음 리그의 1레벨이 아니라{" "}
             <b className="text-foreground">그 리그의 타이틀매치로 바로</b> 갑니다.
             다만 심사가 면제되는 것은 아닙니다 — 항목을 전부 보여주셔야 넘어갑니다.
@@ -157,17 +157,17 @@ const LevelUpRequestCard = () => {
       )}
 
       {isRevision && !isTitleFlow && (
-        <p className="mt-3 rounded-lg bg-status-pending/10 px-3 py-2 text-[11px] font-semibold text-status-pending">
+        <p className="mt-3 rounded-lg bg-status-pending/10 px-3 py-2 text-micro font-semibold text-status-pending">
           ✏️ 코치님이 보완을 요청했어요. 더 연습하고 출석하면 자동으로 다시 심사에 올라갑니다.
         </p>
       )}
 
       {isTitleFlow ? null : isPending ? (
-        <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-status-pending/10 py-3 text-sm font-bold text-status-pending">
+        <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-status-pending/10 py-3 text-body font-bold text-status-pending">
           ⏳ 승급 심사 대기중 — 코치님 승인만 남았어요
         </div>
       ) : cycle.meets ? (
-        <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary/10 py-3 text-sm font-bold text-primary">
+        <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary/10 py-3 text-body font-bold text-primary">
           🥊 출석 {cycle.reqSessions}회 달성 — 다음 출석 때 자동으로 승급돼요!
         </div>
       ) : null}
@@ -175,7 +175,7 @@ const LevelUpRequestCard = () => {
       {/* 다음 레벨 미리보기 — 영상으로 다음에 배울 동작을 미리 본다 */}
       {!isBossLevel && (
         <div className="mt-3 border-t border-border pt-3">
-          <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-muted-foreground">
+          <p className="mb-2 text-micro font-black uppercase tracking-wider text-muted-foreground">
             다음 레벨({toGlobalLevel(league, nextLevel)})에서 배울 동작
           </p>
           {previews.length > 0 ? (
@@ -191,27 +191,27 @@ const LevelUpRequestCard = () => {
                   <div className="bg-black" style={{ aspectRatio: "16/9" }}>
                     <img src={youtubeThumb(v.videoUrl) ?? ""} alt="" loading="lazy" className="h-full w-full object-cover" />
                   </div>
-                  <p className="truncate px-2 py-1.5 text-[11px] font-bold text-foreground">
+                  <p className="truncate px-2 py-1.5 text-micro font-bold text-foreground">
                     {parseVideoTitle(v.title).name}
                   </p>
                 </a>
               ))}
             </div>
           ) : (
-            <p className="text-[11.5px] text-muted-foreground">
+            <p className="text-micro text-muted-foreground">
               이 레벨의 미션 영상이 준비 중이에요 — 레벨 미션 영상에서 다른 레벨을 미리 봐도 좋아요.
             </p>
           )}
           <button
             onClick={() => navigate("/missions")}
-            className="mt-2 w-full rounded-xl bg-primary/10 py-2.5 text-center text-[12px] font-black text-primary active:opacity-80"
+            className="mt-2 w-full rounded-xl bg-primary/10 py-2.5 text-center text-label font-black text-primary active:opacity-80"
           >
             🥊 레벨 미션 영상 보러 가기 →
           </button>
         </div>
       )}
 
-      <button onClick={() => navigate("/routines")} className="mt-2 w-full text-center text-[11px] font-semibold text-primary active:opacity-70">
+      <button onClick={() => navigate("/routines")} className="mt-2 w-full text-center text-micro font-semibold text-primary active:opacity-70">
         추천 수업 루틴 보기 →
       </button>
     </div>

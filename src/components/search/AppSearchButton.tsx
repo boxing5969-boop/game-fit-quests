@@ -31,7 +31,7 @@ const AppSearchButton = ({ variant = "card", onNavigate, className }: Props) => 
       )}
     >
       <Search className="h-[18px] w-[18px] shrink-0 text-muted-foreground" strokeWidth={2.4} />
-      <span className="min-w-0 flex-1 truncate text-[15px] text-muted-foreground">
+      <span className="min-w-0 flex-1 truncate text-body text-muted-foreground">
         기능·영상 찾기 <span className="text-muted-foreground/70">· 예) 타이틀매치</span>
       </span>
     </button>

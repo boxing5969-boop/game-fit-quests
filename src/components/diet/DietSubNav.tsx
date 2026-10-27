@@ -64,7 +64,7 @@ export const DietSubNav = () => {
                 data-tour={`diet-nav-${slug}`}
                 className={cn(
                   "flex min-w-[64px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1.5",
-                  "text-[10.5px] font-bold transition-all active:scale-95",
+                  "text-micro font-bold transition-all active:scale-95",
                   active
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted/60",

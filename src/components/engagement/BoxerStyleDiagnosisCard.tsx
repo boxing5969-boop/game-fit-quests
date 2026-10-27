@@ -42,24 +42,24 @@ const BoxerStyleDiagnosisCard = () => {
           <Compass className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             나는 어떤 복서?
           </p>
-          <h3 className="mt-0.5 text-[15px] font-bold text-foreground">
+          <h3 className="mt-0.5 text-body font-bold text-foreground">
             {meta.emoji} {meta.label}
           </h3>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             {meta.shortDescription}
           </p>
         </div>
       </div>
 
       <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-        <p className="text-[12.5px] leading-relaxed text-foreground">
+        <p className="text-label leading-relaxed text-foreground">
           {isLoading ? "분석 중…" : diagnosis?.reason ?? "데이터를 모으고 있습니다."}
         </p>
         {diagnosis && diagnosis.confidence > 0 && (
-          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
             확신도 {diagnosis.confidence}%
             {secondaryMeta &&
               ` · 서브 스타일 ${secondaryMeta.emoji} ${secondaryMeta.label}`}
@@ -69,16 +69,16 @@ const BoxerStyleDiagnosisCard = () => {
 
       {diagnosis?.nextSuggestion && (
         <div className="mt-2 rounded-card border border-border bg-background/40 p-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
             다음 한 걸음
           </p>
-          <p className="mt-0.5 text-[12px] leading-relaxed text-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-foreground">
             {diagnosis.nextSuggestion}
           </p>
         </div>
       )}
 
-      <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
         ※ 복서 스타일은 QUEST 활동 데이터로 분석한 보조 표시입니다. 공식 리그
         / 공식 레벨 ({RANK_LABELS[rank]} Lv.{toGlobalLevel(rank, level)}) 와는 분리됩니다.
       </p>

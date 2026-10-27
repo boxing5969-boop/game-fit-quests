@@ -49,12 +49,12 @@ const OsamiHallComment = ({ summary }: OsamiHallCommentProps) => {
   return (
     <div className="rounded-card border border-border bg-card px-3 py-2.5">
       <div className="flex items-start gap-2">
-        <span className="text-base">🥊</span>
+        <span className="text-body">🥊</span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+          <p className="text-micro font-black uppercase tracking-wider text-primary">
             오삼 코치
           </p>
-          <p className="mt-0.5 text-[12px] leading-relaxed text-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-foreground">
             {message}
           </p>
         </div>

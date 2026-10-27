@@ -60,7 +60,7 @@ export const MasterRewardStack = ({
         <span
           key={i}
           className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none",
+            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-micro font-semibold leading-none",
             c.tone,
             dim && "opacity-60",
           )}

@@ -97,10 +97,10 @@ export const OsamCoachPopup = ({
             <Heart className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">
+            <p className="text-micro font-black uppercase tracking-[0.2em] text-emerald-500">
               오삼 코치님의 한마디
             </p>
-            <p className="mt-1 text-[13px] font-extrabold leading-snug text-foreground">
+            <p className="mt-1 text-label font-extrabold leading-snug text-foreground">
               {warm.text}
             </p>
           </div>
@@ -118,7 +118,7 @@ export const OsamCoachPopup = ({
           type="button"
           onClick={handleClose}
           className={cn(
-            "mt-3 h-9 w-full rounded-xl text-[12.5px] font-bold",
+            "mt-3 h-9 w-full rounded-xl text-label font-bold",
             "bg-emerald-500/90 text-white active:scale-[0.99] hover:bg-emerald-500",
           )}
         >

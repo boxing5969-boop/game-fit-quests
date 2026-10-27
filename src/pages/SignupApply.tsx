@@ -52,7 +52,7 @@ interface ClaimResponse {
 type MemberMode = "new" | "existing";
 
 const inputClass =
-  "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground";
+  "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-body text-foreground placeholder:text-muted-foreground";
 const STEPS_NEW = ["계정 정보", "추가 정보", "규정 동의", "수강권 선택"];
 /** 데스크 결제 지점(칠금점) 신규 회원 — 결제 대신 결제 안내 */
 const STEPS_NEW_OFFLINE = ["계정 정보", "추가 정보", "규정 동의", "결제 안내"];
@@ -422,8 +422,8 @@ const SignupApply = () => {
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-foreground">{existing ? "기존 회원 앱 가입" : "신규 회원 가입 신청"}</h1>
-          <p className="text-[11px] text-muted-foreground">{branch ? branch : "다니실 지점을 골라 주세요"}</p>
+          <h1 className="text-heading font-bold text-foreground">{existing ? "기존 회원 앱 가입" : "신규 회원 가입 신청"}</h1>
+          <p className="text-micro text-muted-foreground">{branch ? branch : "다니실 지점을 골라 주세요"}</p>
         </div>
       </div>
 
@@ -432,7 +432,7 @@ const SignupApply = () => {
         {steps.map((label, i) => (
           <div key={label} className="flex-1">
             <div className={`h-1.5 rounded-full ${i + 1 <= step ? "bg-primary" : "bg-muted"}`} />
-            <p className={`mt-1 text-center text-[10px] ${i + 1 === step ? "font-bold text-primary" : "text-muted-foreground"}`}>{label}</p>
+            <p className={`mt-1 text-center text-micro ${i + 1 === step ? "font-bold text-primary" : "text-muted-foreground"}`}>{label}</p>
           </div>
         ))}
       </div>
@@ -443,7 +443,7 @@ const SignupApply = () => {
           <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <Check className="h-3.5 w-3.5" />
           </span>
-          <p className="text-xs leading-relaxed text-foreground">
+          <p className="text-label leading-relaxed text-foreground">
             <b className="text-primary">기존 회원으로 확인됐어요.</b> 수강권 결제 없이 가입이 끝나요. 레벨·출석·수강권 기록도 그대로 이어져요.
           </p>
         </div>
@@ -461,18 +461,18 @@ const SignupApply = () => {
                   type="button"
                   onClick={() => { setBranch(b.name); setProductId(""); }}
                   aria-pressed={branch === b.name}
-                  className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${branch === b.name ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                  className={`flex-1 rounded-xl py-2.5 text-body font-bold transition-all active:scale-95 ${branch === b.name ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
                 >
                   {b.label}
                 </button>
               ))}
             </div>
             {offline && (
-              <p className="mt-1 px-1 text-[11px] leading-relaxed text-muted-foreground">{branchShortName(branch)}은 앱 결제 대신 계좌이체 · 현장 결제로 받아요. 가입 신청 뒤 데스크에서 승인해 드려요.</p>
+              <p className="mt-1 px-1 text-micro leading-relaxed text-muted-foreground">{branchShortName(branch)}은 앱 결제 대신 계좌이체 · 현장 결제로 받아요. 가입 신청 뒤 데스크에서 승인해 드려요.</p>
             )}
           </Field>
           {loggedIn ? (
-            <div className="rounded-xl bg-primary/5 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">소셜 계정으로 로그인됨 — 아래 가입 정보만 작성하면 됩니다.</div>
+            <div className="rounded-xl bg-primary/5 px-3 py-2.5 text-micro leading-relaxed text-muted-foreground">소셜 계정으로 로그인됨 — 아래 가입 정보만 작성하면 됩니다.</div>
           ) : (
             <>
               <Field label="아이디"><input className={inputClass} value={username} onChange={(e) => setUsername(e.target.value)} placeholder="영문·숫자 4~20자" autoCapitalize="none" autoCorrect="off" maxLength={20} /></Field>
@@ -486,14 +486,14 @@ const SignupApply = () => {
           <Field label="닉네임"><input className={inputClass} value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="링 위의 이름 (12자 이내)" maxLength={12} /></Field>
           <Field label="전화번호">
             <input type="tel" className={inputClass} value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" />
-            <p className="mt-1 px-1 text-[11px] leading-relaxed text-muted-foreground">이미 체육관에 다니고 계신가요? 등록된 번호를 입력하면 결제 없이 가입돼요.</p>
+            <p className="mt-1 px-1 text-micro leading-relaxed text-muted-foreground">이미 체육관에 다니고 계신가요? 등록된 번호를 입력하면 결제 없이 가입돼요.</p>
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="생년월일"><input className={inputClass} value={birth} onChange={(e) => setBirth(rawDigits(e.target.value).slice(0, 8))} placeholder="19990315" inputMode="numeric" maxLength={8} /></Field>
             <Field label="성별">
               <div className="flex gap-2">
                 {["남", "여"].map((g) => (
-                  <button key={g} onClick={() => setGender(g)} className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${gender === g ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{g}</button>
+                  <button key={g} onClick={() => setGender(g)} className={`flex-1 rounded-xl py-2.5 text-body font-bold transition-all active:scale-95 ${gender === g ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{g}</button>
                 ))}
               </div>
             </Field>
@@ -510,14 +510,14 @@ const SignupApply = () => {
           <Field label="건강 특이사항 (선택)">
             <textarea rows={4} className={`${inputClass} resize-none`} value={health} onChange={(e) => setHealth(e.target.value)} placeholder="부상·질환·수술 이력 등 운동 전 알아야 할 내용이 있으면 적어주세요. 없으면 비워두셔도 됩니다." />
           </Field>
-          <p className="px-1 text-[11px] leading-relaxed text-muted-foreground">건강 특이사항은 안전한 지도를 위해서만 사용되며, 본인·관장·지도자만 확인합니다.</p>
+          <p className="px-1 text-micro leading-relaxed text-muted-foreground">건강 특이사항은 안전한 지도를 위해서만 사용되며, 본인·관장·지도자만 확인합니다.</p>
         </div>
       )}
 
       {/* STEP 3 — 규정 동의 */}
       {step === 3 && (
         <div className="space-y-2.5">
-          <button onClick={() => setAllAgree(!allAgreed)} className={`flex w-full items-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold transition-all active:scale-[0.99] ${allAgreed ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground"}`}>
+          <button onClick={() => setAllAgree(!allAgreed)} className={`flex w-full items-center gap-2 rounded-xl border px-3 py-3 text-body font-bold transition-all active:scale-[0.99] ${allAgreed ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground"}`}>
             <span className={`flex h-5 w-5 items-center justify-center rounded-md ${allAgreed ? "bg-primary text-primary-foreground" : "bg-muted"}`}>{allAgreed && <Check className="h-3.5 w-3.5" />}</span>
             전체 동의
           </button>
@@ -529,11 +529,11 @@ const SignupApply = () => {
                 <div className="flex items-center gap-2 px-3 py-2.5">
                   <button onClick={() => setAgree((a) => ({ ...a, [p.key]: !on }))} className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${on ? "bg-primary text-primary-foreground" : "bg-muted"}`}>{on && <Check className="h-3.5 w-3.5" />}</button>
                   <button onClick={() => setOpenPolicy(open ? null : p.key)} className="flex flex-1 items-center justify-between text-left">
-                    <span className="text-sm font-semibold text-foreground">{p.title}</span>
+                    <span className="text-body font-semibold text-foreground">{p.title}</span>
                     <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
                   </button>
                 </div>
-                {open && <p className="whitespace-pre-line border-t border-border px-3 py-3 text-xs leading-relaxed text-muted-foreground">{p.body}</p>}
+                {open && <p className="whitespace-pre-line border-t border-border px-3 py-3 text-label leading-relaxed text-muted-foreground">{p.body}</p>}
               </div>
             );
           })}
@@ -546,24 +546,24 @@ const SignupApply = () => {
       {/* STEP 4 — 수강권 선택 (신규 회원 · 앱 결제 지점) */}
       {step === 4 && !existing && !offline && (
         <div className="space-y-2.5">
-          <p className="px-1 text-xs text-muted-foreground">등록하실 수강권을 선택하세요. 다음 단계에서 안전한 결제창으로 이동합니다.</p>
+          <p className="px-1 text-label text-muted-foreground">등록하실 수강권을 선택하세요. 다음 단계에서 안전한 결제창으로 이동합니다.</p>
           {products.map((p) => (
             <button key={p.id} onClick={() => setProductId(p.id)} className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-all active:scale-[0.99] ${productId === p.id ? "border-primary bg-primary/10" : "border-border bg-card"}`}>
               <div>
-                <p className="text-sm font-bold text-foreground">{p.name}</p>
-                <p className="text-[11px] text-muted-foreground">{p.duration_days}일 이용</p>
+                <p className="text-body font-bold text-foreground">{p.name}</p>
+                <p className="text-micro text-muted-foreground">{p.duration_days}일 이용</p>
               </div>
-              <span className="text-sm font-black text-primary">{won(p.price)}</span>
+              <span className="text-body font-black text-primary">{won(p.price)}</span>
             </button>
           ))}
-          {products.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">등록 가능한 수강권이 없습니다. 관장님께 문의해주세요.</p>}
-          <p className="px-1 pt-1 text-[11px] leading-relaxed text-muted-foreground">이미 체육관에 등록된 회원인데 이 화면이 보이면 등록된 전화번호가 다를 수 있어요. 결제하지 말고 지점 데스크에 문의해 주세요.</p>
+          {products.length === 0 && <p className="py-6 text-center text-body text-muted-foreground">등록 가능한 수강권이 없습니다. 관장님께 문의해주세요.</p>}
+          <p className="px-1 pt-1 text-micro leading-relaxed text-muted-foreground">이미 체육관에 등록된 회원인데 이 화면이 보이면 등록된 전화번호가 다를 수 있어요. 결제하지 말고 지점 데스크에 문의해 주세요.</p>
         </div>
       )}
 
-      {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">{err}</p>}
+      {err && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-label font-medium text-destructive">{err}</p>}
       {registeredPhone && !loggedIn && (
-        <button onClick={() => navigate("/", { replace: true })} className="mt-2 w-full rounded-xl border border-border bg-card py-2.5 text-sm font-bold text-foreground transition-all active:scale-[0.98]">
+        <button onClick={() => navigate("/", { replace: true })} className="mt-2 w-full rounded-xl border border-border bg-card py-2.5 text-body font-bold text-foreground transition-all active:scale-[0.98]">
           로그인 화면으로 가기 (아이디·비밀번호 찾기)
         </button>
       )}
@@ -571,19 +571,19 @@ const SignupApply = () => {
       {/* 하단 버튼 */}
       <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg border-t border-border bg-card p-4 safe-area-bottom">
         {step < lastStep ? (
-          <button onClick={next} disabled={checking} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+          <button onClick={next} disabled={checking} className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
             {checking ? "회원 정보 확인 중..." : "다음"}
           </button>
         ) : existing ? (
-          <button onClick={submitExisting} disabled={submitting} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+          <button onClick={submitExisting} disabled={submitting} className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
             {submitting ? "처리 중..." : "가입 완료 (결제 없음)"}
           </button>
         ) : offline ? (
-          <button onClick={submit} disabled={submitting} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+          <button onClick={submit} disabled={submitting} className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
             {submitting ? "처리 중..." : "가입 신청하기 (결제는 데스크에서)"}
           </button>
         ) : (
-          <button onClick={submit} disabled={submitting || !productId} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+          <button onClick={submit} disabled={submitting || !productId} className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
             {submitting ? "처리 중..." : selectedProduct ? `${won(selectedProduct.price)} 결제하고 가입` : "수강권을 선택하세요"}
           </button>
         )}
@@ -594,7 +594,7 @@ const SignupApply = () => {
 
 const Field = ({ label, children }: { label: string; children: ReactNode }) => (
   <div>
-    <label className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
+    <label className="mb-1 block text-label font-medium text-muted-foreground">{label}</label>
     {children}
   </div>
 );

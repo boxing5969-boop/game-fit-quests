@@ -111,10 +111,10 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
           <Brain className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             오삼이 복싱 아카데미
           </p>
-          <h2 className="mt-0.5 truncate text-[15px] font-bold text-foreground">
+          <h2 className="mt-0.5 truncate text-body font-bold text-foreground">
             복싱 IQ 퀴즈
           </h2>
           {current && (
@@ -145,7 +145,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
   const renderBody = () => {
     if (isLoading) {
       return (
-        <div className="flex flex-1 items-center justify-center px-5 py-10 text-sm text-muted-foreground">
+        <div className="flex flex-1 items-center justify-center px-5 py-10 text-body text-muted-foreground">
           퀴즈를 불러오고 있어요…
         </div>
       );
@@ -153,11 +153,11 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
     if (playable.length === 0) {
       return (
         <div className="flex flex-1 flex-col items-center justify-center px-5 py-10 text-center">
-          <p className="text-3xl">📭</p>
-          <p className="mt-2 text-sm font-bold text-foreground">
+          <p className="text-title">📭</p>
+          <p className="mt-2 text-body font-bold text-foreground">
             지금 풀 수 있는 퀴즈가 없습니다
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-label text-muted-foreground">
             준비되는 대로 새 문제를 올려두겠습니다.
           </p>
         </div>
@@ -173,19 +173,19 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
       return (
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+            <p className="text-micro font-black uppercase tracking-wider text-primary">
               오늘의 복싱 카드
             </p>
-            <p className="mt-1 text-[12.5px] font-bold text-foreground">
+            <p className="mt-1 text-label font-bold text-foreground">
               {current.title}
             </p>
-            <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+            <p className="mt-1 text-label leading-relaxed text-muted-foreground">
               {current.lesson_text}
             </p>
           </div>
 
           <div data-tour="boxing-iq-question">
-            <p className="text-[13px] font-bold leading-relaxed text-foreground">
+            <p className="text-label font-bold leading-relaxed text-foreground">
               {current.question}
             </p>
           </div>
@@ -203,7 +203,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
                   // 좁아짐 (정답 정보는 서버 결정이라 클라이언트 노출 0).
                   data-tour={active ? "boxing-iq-selected-option" : undefined}
                   onClick={() => setSelected(opt)}
-                  className={`w-full rounded-card border px-3.5 py-3 text-left text-[13px] transition-all active:scale-[0.99] ${
+                  className={`w-full rounded-card border px-3.5 py-3 text-left text-label transition-all active:scale-[0.99] ${
                     active
                       ? "border-primary bg-primary/10 text-foreground font-bold"
                       : "border-border bg-card text-foreground/90 hover:border-primary/40"
@@ -215,7 +215,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
             })}
           </div>
 
-          <p className="pt-1 text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="pt-1 text-micro leading-relaxed text-muted-foreground">
             ※ 본 퀴즈 보상은 보조 경험치(QUEST XP)와 챔피언 머니입니다. 공식
             레벨 XP가 아니며, 1~40 레벨업과 무관합니다.
           </p>
@@ -245,7 +245,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
             ) : (
               <XCircle className="h-5 w-5 text-destructive" />
             )}
-            <p className="text-[14px] font-bold text-foreground">
+            <p className="text-label font-bold text-foreground">
               {isCorrect
                 ? isAlreadyRewarded
                   ? "이미 클리어한 퀴즈입니다. 복습으로 기록됩니다."
@@ -253,20 +253,20 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
                 : "아쉽지만 괜찮아요. 복싱은 틀리면서 몸에 들어오는 운동입니다."}
             </p>
           </div>
-          <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-label leading-relaxed text-muted-foreground">
             {result.message}
           </p>
         </div>
 
         <div className="rounded-card border border-border bg-background/40 p-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
             정답
           </p>
-          <p className="mt-1 text-[13px] font-bold text-foreground">
+          <p className="mt-1 text-label font-bold text-foreground">
             {result.correct_answer}
           </p>
           {result.explanation && (
-            <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+            <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
               {result.explanation}
             </p>
           )}
@@ -274,18 +274,18 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+            <p className="text-micro font-black uppercase tracking-wider text-primary">
               QUEST XP
             </p>
-            <p className="number-font mt-0.5 text-[18px] font-black text-foreground">
+            <p className="number-font mt-0.5 text-heading font-black text-foreground">
               +{result.quest_xp_granted}
             </p>
           </div>
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-reward">
+            <p className="text-micro font-black uppercase tracking-wider text-reward">
               챔피언 머니
             </p>
-            <p className="number-font mt-0.5 text-[18px] font-black text-reward">
+            <p className="number-font mt-0.5 text-heading font-black text-reward">
               +{result.gems_granted.toLocaleString()}
             </p>
           </div>
@@ -293,7 +293,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
 
         {!isCorrect && (
           <div className="rounded-card border border-border bg-muted/40 p-3">
-            <p className="text-[12px] leading-relaxed text-muted-foreground">
+            <p className="text-label leading-relaxed text-muted-foreground">
               한 번 더 가볍게 풀어볼까요? 정답을 안 다음 다시 풀면 진짜 내
               것이 됩니다. (재도전 정답 시 +{current.retry_reward_quest_xp} XP
               · +{current.retry_reward_gems})
@@ -301,7 +301,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
           </div>
         )}
 
-        <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="text-micro leading-relaxed text-muted-foreground">
           ※ QUEST XP 는 보조 경험치이며, 공식 1~40 레벨업과 무관합니다.
           챔피언 머니는 기존 지갑에 합산됩니다.
         </p>
@@ -315,7 +315,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
         <div className="border-t border-border px-5 py-3">
           <button
             onClick={onClose}
-            className="w-full rounded-card bg-secondary py-3 text-sm font-bold text-secondary-foreground active:scale-[0.98]"
+            className="w-full rounded-card bg-secondary py-3 text-body font-bold text-secondary-foreground active:scale-[0.98]"
           >
             닫기
           </button>
@@ -330,7 +330,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
           <button
             onClick={handleSubmit}
             disabled={!submitEnabled}
-            className={`w-full rounded-card py-3 text-sm font-bold transition-all ${
+            className={`w-full rounded-card py-3 text-body font-bold transition-all ${
               submitEnabled
                 ? "bg-primary text-primary-foreground active:scale-[0.98]"
                 : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60"
@@ -355,21 +355,21 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
               setSelected(null);
               setResult(null);
             }}
-            className="flex items-center justify-center gap-1.5 rounded-card bg-secondary py-3 text-sm font-bold text-secondary-foreground active:scale-[0.98]"
+            className="flex items-center justify-center gap-1.5 rounded-card bg-secondary py-3 text-body font-bold text-secondary-foreground active:scale-[0.98]"
           >
             <RefreshCw className="h-4 w-4" /> 재도전
           </button>
         ) : (
           <button
             onClick={onClose}
-            className="rounded-card bg-secondary py-3 text-sm font-bold text-secondary-foreground active:scale-[0.98]"
+            className="rounded-card bg-secondary py-3 text-body font-bold text-secondary-foreground active:scale-[0.98]"
           >
             닫기
           </button>
         )}
         <button
           onClick={handleNext}
-          className="rounded-card bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-[0.98]"
+          className="rounded-card bg-primary py-3 text-body font-bold text-primary-foreground active:scale-[0.98]"
         >
           다음 문제 →
         </button>

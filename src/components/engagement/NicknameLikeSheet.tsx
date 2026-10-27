@@ -127,9 +127,9 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   <Heart className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-reward">153 BOXER LICENSE</p>
-                  <h2 className="mt-0.5 text-[15px] font-bold text-foreground">추천 복서</h2>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">153 BOXER LICENSE</p>
+                  <h2 className="mt-0.5 text-body font-bold text-foreground">추천 복서</h2>
+                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                     {allBranches
                       ? "전 지점 회원 · "
                       : data?.branch ? `${shortBranch(data.branch)} 회원끼리 · ` : ""}
@@ -157,14 +157,14 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   className="flex w-full items-center gap-2.5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2.5 text-left active:scale-[0.99]"
                 >
                   <KeyRound className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="min-w-0 flex-1 text-[11.5px] leading-snug text-foreground">
+                  <span className="min-w-0 flex-1 text-micro leading-snug text-foreground">
                     처음 받은 아이디·비밀번호(전화번호)를 바꾸면 하트를 보낼 수 있어요.
                     <span className="font-bold text-primary"> 지금 바꾸기 →</span>
                   </span>
                 </button>
               )}
               {data?.reason === "not_member" && (
-                <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-[11.5px] leading-snug text-muted-foreground">
+                <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-micro leading-snug text-muted-foreground">
                   지점 회원만 하트를 보낼 수 있어요. (코치님 계정, 이용 기록이 없는 계정은 참여하지 않아요)
                 </p>
               )}
@@ -175,7 +175,7 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   className="flex w-full items-center gap-2.5 rounded-xl border border-reward/30 bg-reward/10 px-3 py-2.5 text-left active:scale-[0.99]"
                 >
                   <PenLine className="h-4 w-4 shrink-0 text-reward" />
-                  <span className="min-w-0 flex-1 text-[11.5px] leading-snug text-foreground">
+                  <span className="min-w-0 flex-1 text-micro leading-snug text-foreground">
                     지금은 실명으로 보여요. 닉네임을 정하면 목록·랭킹에 닉네임으로 보여요.
                     <span className="font-bold text-reward"> 닉네임 정하기 →</span>
                   </span>
@@ -204,16 +204,16 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   {Array(6).fill(0).map((_, i) => <div key={i} className="h-14 animate-pulse rounded-xl bg-muted" />)}
                 </div>
               ) : isError ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">목록을 불러오지 못했어요. 잠시 후 다시 열어 주세요.</p>
+                <p className="py-8 text-center text-body text-muted-foreground">목록을 불러오지 못했어요. 잠시 후 다시 열어 주세요.</p>
               ) : !data?.branch && !allBranches ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">소속 지점이 있어야 하트를 보낼 수 있어요.</p>
+                <p className="py-8 text-center text-body text-muted-foreground">소속 지점이 있어야 하트를 보낼 수 있어요.</p>
               ) : rows.length === 0 ? (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-body text-muted-foreground">
                     {debounced ? "일치하는 회원이 없어요" : "아직 하트를 보낼 수 있는 회원이 없어요"}
                   </p>
                   {!debounced && (
-                    <p className="mt-1 text-[11px] text-muted-foreground">지점에서 운동을 시작한 회원이 이 목록에 올라와요.</p>
+                    <p className="mt-1 text-micro text-muted-foreground">지점에서 운동을 시작한 회원이 이 목록에 올라와요.</p>
                   )}
                 </div>
               ) : (
@@ -239,12 +239,12 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                           aria-label={`${r.display} 라이센스 보기`}
                           className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-0.5 text-left transition-opacity active:opacity-60"
                         >
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-[15px] font-black text-foreground">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-body font-black text-foreground">
                             {r.display.charAt(0)}
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[14px] font-bold text-foreground">{r.display}</span>
-                            <span className="block truncate text-[11.5px] text-muted-foreground">
+                            <span className="block truncate text-label font-bold text-foreground">{r.display}</span>
+                            <span className="block truncate text-micro text-muted-foreground">
                               {meta ? `${meta} · ` : ""}하트 <span className="font-bold text-reward tabular-nums">{r.likes.toLocaleString("ko-KR")}</span>
                             </span>
                           </span>
@@ -266,7 +266,7 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   })}
                 </ul>
               )}
-              <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
                 이름을 누르면 그 회원의 라이센스를 볼 수 있어요. 회원마다 하트를 1개씩 보낼 수 있고, 다시 누르면 취소돼요.
                 하트 많은 순으로 60명까지 보이고, 안 보이면 검색하세요. 받은 하트 수가 닉네임 좋아요왕 점수예요.
               </p>

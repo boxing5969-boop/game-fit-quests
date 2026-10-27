@@ -82,28 +82,28 @@ const TutorialCelebration = ({ step, onContinue }: TutorialCelebrationProps) => 
           <OsamMascot size={grand ? "xl" : "lg"} state="victory" />
         </div>
         <p
-          className="text-[10px] font-black uppercase tracking-[0.5em]"
+          className="text-micro font-black uppercase tracking-[0.5em]"
           style={{ color: COLOR_AMBER }}
         >
           {grand ? "GRADUATION" : `DAY ${step.day} CLEAR`}
         </p>
-        <h2 className="mt-3 text-2xl font-black leading-tight">{step.title}</h2>
-        <p className="mt-3 whitespace-pre-line text-[12px] leading-relaxed text-amber-100/85">
+        <h2 className="mt-3 text-title font-black leading-tight">{step.title}</h2>
+        <p className="mt-3 whitespace-pre-line text-label leading-relaxed text-amber-100/85">
           {step.body}
         </p>
 
         {grand && (
           <div className="mt-4 rounded-xl border-l-2 border-rose-500/60 bg-rose-950/15 px-4 py-3 text-left">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-rose-300/80">
+            <p className="text-micro font-bold uppercase tracking-widest text-rose-300/80">
               칭호
             </p>
-            <p className="mt-0.5 text-[13px] font-black text-rose-100">
+            <p className="mt-0.5 text-label font-black text-rose-100">
               {STARTER_TITLE_TEXT}
             </p>
           </div>
         )}
 
-        <p className="mt-4 text-[11px] italic text-amber-200/70">
+        <p className="mt-4 text-micro italic text-amber-200/70">
           {step.osamiMessage}
         </p>
 

@@ -51,16 +51,16 @@ const TitleMatchFeedSheet = ({ open, onClose }: Props) => {
 
   const renderBody = () => {
     if (isLoading) {
-      return <p className="py-6 text-center text-[12px] text-muted-foreground">불러오는 중…</p>;
+      return <p className="py-6 text-center text-label text-muted-foreground">불러오는 중…</p>;
     }
     if (items.length === 0) {
       return (
         <div className="rounded-card border border-border bg-muted/20 px-4 py-7 text-center">
-          <p className="text-2xl">🥇</p>
-          <p className="mt-2 text-[13px] font-bold text-foreground">
+          <p className="text-title">🥇</p>
+          <p className="mt-2 text-label font-bold text-foreground">
             아직 통과한 동료가 없습니다
           </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
             레벨 10 · 20 · 30 · 40은 코치님이 직접 보고 승인하는 관문입니다.
             통과하면 이 자리에 올라오고, 동료들이 박수를 보낼 수 있습니다.
           </p>
@@ -74,26 +74,26 @@ const TitleMatchFeedSheet = ({ open, onClose }: Props) => {
             key={it.id}
             className="flex items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-reward/15 text-[13px] font-black text-reward">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-reward/15 text-label font-black text-reward">
               {it.globalLevel}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-bold text-foreground">
+              <p className="truncate text-label font-bold text-foreground">
                 {it.isMine ? "나" : it.nickname}
-                <span className="ml-1.5 text-[11px] font-semibold text-muted-foreground">
+                <span className="ml-1.5 text-micro font-semibold text-muted-foreground">
                   {RANK_LABELS[it.rank] || it.rank} 타이틀매치 통과
                 </span>
               </p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
+              <p className="mt-0.5 text-micro text-muted-foreground">
                 {formatDay(it.at)}
                 {allBranches && it.branch && ` · ${shortBranchName(it.branch)}`}
                 {it.claps > 0 && ` · 👏 ${it.claps}`}
               </p>
             </div>
             {it.isMine ? (
-              <span className="shrink-0 text-[11px] font-bold text-reward">축하합니다</span>
+              <span className="shrink-0 text-micro font-bold text-reward">축하합니다</span>
             ) : it.clapped ? (
-              <span className="shrink-0 text-[11px] font-bold text-muted-foreground">
+              <span className="shrink-0 text-micro font-bold text-muted-foreground">
                 박수 보냄
               </span>
             ) : (
@@ -101,14 +101,14 @@ const TitleMatchFeedSheet = ({ open, onClose }: Props) => {
                 type="button"
                 disabled={busyId === it.id}
                 onClick={() => handleClap(it.id, it.userId)}
-                className="shrink-0 rounded-pill bg-primary px-3.5 py-1.5 text-[11.5px] font-bold text-primary-foreground active:scale-95 disabled:opacity-60"
+                className="shrink-0 rounded-pill bg-primary px-3.5 py-1.5 text-micro font-bold text-primary-foreground active:scale-95 disabled:opacity-60"
               >
                 👏 박수
               </button>
             )}
           </div>
         ))}
-        <p className="pt-1 text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="pt-1 text-micro leading-relaxed text-muted-foreground">
           {allBranches
             ? "전 지점에서 최근 30일 통과한 회원이 보여요. 박수는 기존 응원과 같은 일일 한도를 씁니다."
             : "같은 지점, 최근 30일 통과한 동료만 표시됩니다. 박수는 기존 응원과 같은 일일 한도를 씁니다."}
@@ -144,13 +144,13 @@ const TitleMatchFeedSheet = ({ open, onClose }: Props) => {
                   <Trophy className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-reward">
+                  <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">
                     타이틀매치 축하
                   </p>
-                  <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+                  <h2 className="mt-0.5 text-body font-bold text-foreground">
                     관문을 넘은 동료들
                   </h2>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                     레벨 10 · 20 · 30 · 40을 통과하면 자동으로 올라옵니다.
                   </p>
                 </div>

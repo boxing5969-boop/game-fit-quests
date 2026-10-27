@@ -160,12 +160,12 @@ const TodayActionCard = ({
         {/* Top row — badge + CTA pill */}
         <div className="flex items-center justify-between">
           <span
-            className={`rounded-pill px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${config.badgeColor}`}
+            className={`rounded-pill px-2.5 py-1 text-micro font-black uppercase tracking-wider ${config.badgeColor}`}
           >
             {config.badge}
           </span>
           <span
-            className={`rounded-pill ${config.ctaBg} ${config.ctaText} px-3 py-1 text-[11px] font-black shadow-sm dark:shadow-lg`}
+            className={`rounded-pill ${config.ctaBg} ${config.ctaText} px-3 py-1 text-micro font-black shadow-sm dark:shadow-lg`}
           >
             {config.cta}
           </span>
@@ -179,8 +179,8 @@ const TodayActionCard = ({
             {config.icon}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xl font-black text-foreground dark:text-white">{config.title}</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground dark:text-gray-400">
+            <p className="text-heading font-black text-foreground dark:text-white">{config.title}</p>
+            <p className="mt-0.5 text-label leading-relaxed text-muted-foreground dark:text-gray-400">
               {config.subtitle}
             </p>
           </div>

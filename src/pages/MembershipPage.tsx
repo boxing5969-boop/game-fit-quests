@@ -71,6 +71,8 @@ const MembershipPage = () => {
   const [tName, setTName] = useState("");
   const [tPhone, setTPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // 양도 · 환불 · 부상 홀딩 규정 — 접어 두고 필요할 때 (2026-10-28 리디자인 — 설명은 접기)
+  const [rulesOpen, setRulesOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -261,8 +263,8 @@ const MembershipPage = () => {
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
         <div className="min-w-0">
-          <h1 className="text-xl text-foreground">수강권</h1>
-          <p className="text-[12px] text-muted-foreground">결제 · 양도 · 환불 · 홀딩</p>
+          <h1 className="text-heading text-foreground">수강권</h1>
+          <p className="text-label text-muted-foreground">결제 · 양도 · 환불 · 홀딩</p>
         </div>
       </div>
 
@@ -275,9 +277,9 @@ const MembershipPage = () => {
           </>
         ) : (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center">
-            <span className="text-3xl">🎫</span>
-            <p className="mt-2 text-sm font-medium text-foreground">아직 등록된 수강권이 없습니다</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">아래에서 수강권을 결제하면 바로 이용이 시작됩니다.</p>
+            <span className="text-title">🎫</span>
+            <p className="mt-2 text-body font-medium text-foreground">아직 등록된 수강권이 없습니다</p>
+            <p className="mt-1 text-label leading-relaxed text-muted-foreground">아래에서 수강권을 결제하면 바로 이용이 시작됩니다.</p>
           </div>
         )}
 
@@ -288,7 +290,7 @@ const MembershipPage = () => {
           {(memEnd || isManager) && (
             <>
               {isManager && (
-                <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
+                <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5 text-micro leading-relaxed text-muted-foreground">
                   <span className="font-bold text-primary">관리자 테스트 모드</span> — 무제한 계정이라 실제 회원에겐 없는 신청 버튼이 테스트용으로 표시됩니다. 신청하면 아래 내역과 홈 화면 관리 메뉴에서 승인/반려를 확인할 수 있습니다.
                 </div>
               )}
@@ -296,7 +298,7 @@ const MembershipPage = () => {
                 <button
                   onClick={() => openModal("hold")}
                   disabled={!holdEligible}
-                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card py-4 text-sm font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
+                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card py-4 text-body font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
                 >
                   <Pause className="h-5 w-5 text-status-pending" />
                   {pendingHold ? "신청 중" : "홀딩"}
@@ -304,7 +306,7 @@ const MembershipPage = () => {
                 <button
                   onClick={() => openModal("transfer")}
                   disabled={transferUsed}
-                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card py-4 text-sm font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
+                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card py-4 text-body font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
                 >
                   <ArrowLeftRight className="h-5 w-5 text-primary" />
                   {transferUsed ? "신청 중" : "양도"}
@@ -312,7 +314,7 @@ const MembershipPage = () => {
                 <button
                   onClick={() => openModal("refund")}
                   disabled={pendingRefund}
-                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card py-4 text-sm font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
+                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card py-4 text-body font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
                 >
                   <RotateCcw className="h-5 w-5 text-destructive" />
                   {pendingRefund ? "신청 중" : "환불"}
@@ -320,41 +322,55 @@ const MembershipPage = () => {
               </div>
 
               {/* 자격 안내 (약관 기준) */}
-              <div className="rounded-xl bg-muted/30 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
-                {expired && !isManager ? (
-                  <p>이용권이 만료되어 일반 홀딩은 신청할 수 없어요.</p>
-                ) : holdTier && holdTier.maxCount > 0 ? (
-                  <p>홀딩 가능: 남은 {remainCount}회 · 남은 {remainDays}일 · 한 번에 최대 {holdTier.perHold}일{isManager ? " (관리자 테스트)" : ` (약정 ${Math.round(contractMonths ?? 0)}개월 기준)`}</p>
-                ) : holdTier ? (
-                  <p>일반 홀딩 불가: 1~2개월 이용권은 일반 홀딩이 없습니다.</p>
-                ) : (
-                  <p>일반 홀딩 가능 여부는 데스크에서 확인해 드려요.</p>
+              <div className="rounded-xl bg-muted/40 px-4 py-3">
+                <p className="text-label leading-relaxed text-foreground">
+                  {expired && !isManager
+                    ? "이용권이 만료되어 일반 홀딩은 신청할 수 없어요."
+                    : holdTier && holdTier.maxCount > 0
+                      ? `홀딩 남은 ${remainCount}회 · ${remainDays}일 · 한 번에 최대 ${holdTier.perHold}일${isManager ? " (관리자 테스트)" : ` (약정 ${Math.round(contractMonths ?? 0)}개월 기준)`}`
+                      : holdTier
+                        ? "1~2개월 이용권은 일반 홀딩이 없어요."
+                        : "일반 홀딩 가능 여부는 데스크에서 확인해 드려요."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setRulesOpen((v) => !v)}
+                  aria-expanded={rulesOpen}
+                  className="mt-1.5 text-label font-bold text-muted-foreground underline-offset-2 active:underline"
+                >
+                  부상 홀딩 · 양도 · 환불 규정 {rulesOpen ? "접기" : "보기"}
+                </button>
+                {rulesOpen && (
+                  <ul className="mt-2 space-y-1.5 text-label leading-relaxed text-muted-foreground">
+                    <li>부상·질병은 병원 서류를 첨부하면 위 횟수·일수와 별도로 추가 홀딩을 신청할 수 있어요 (관장님 확인 후 승인).</li>
+                    <li>양도 1회 가능 · 수수료 {won(TRANSFER_FEE)} (관장 승인 후 처리, 재양도 불가).</li>
+                    <li>
+                      환불은 결제금액에서 이용하신 기간(홀딩 기간 제외)과 위약금(결제금액의 10%)을 빼서 산정하며, 지급 장비(글러브 50,000원·붕대 10,000원)·부대서비스는 별도 반영될 수 있습니다. 카드 수수료 등 다른 비용은 받지 않으며, 최종 금액은 관장님이 확정합니다.
+                    </li>
+                  </ul>
                 )}
-                <p className="mt-0.5">부상·질병은 병원 서류를 첨부하면 위 횟수·일수와 별도로 추가 홀딩을 신청할 수 있어요 (관장님 확인 후 승인).</p>
-                <p className="mt-0.5">양도 1회 가능 · 수수료 {won(TRANSFER_FEE)} (관장 승인 후 처리, 재양도 불가).</p>
-                <p className="mt-0.5">환불은 결제금액에서 이용하신 기간(홀딩 기간 제외)과 위약금(결제금액의 10%)을 빼서 산정하며, 지급 장비(글러브 50,000원·붕대 10,000원)·부대서비스는 별도 반영될 수 있습니다. 카드 수수료 등 다른 비용은 받지 않으며, 최종 금액은 관장님이 확정합니다.</p>
               </div>
 
               {/* 내 신청 내역 */}
               {requests.length > 0 && (
                 <div className="rounded-2xl border border-border bg-card">
-                  <div className="border-b border-border px-4 py-2.5 text-xs font-bold text-foreground">내 신청 내역</div>
+                  <div className="border-b border-border px-4 py-2.5 text-label font-bold text-foreground">내 신청 내역</div>
                   <div className="divide-y divide-border">
                     {requests.map((r) => {
                       const m = statusMeta(r.status);
                       return (
                         <div key={r.id} className="flex items-start justify-between gap-3 px-4 py-3">
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-foreground">
+                            <p className="text-body font-semibold text-foreground">
                               {r.type === "hold" && r.hold_kind === "medical" ? "부상·질병 홀딩" : typeLabel(r.type)}
                               {r.type === "hold" && r.hold_days ? ` ${r.hold_days}일` : ""}
                               {r.type === "transfer" && r.transferee_name ? ` → ${r.transferee_name}` : ""}
                               {r.type === "refund" && r.est_refund != null ? ` (예상 ${won(r.est_refund)})` : ""}
                             </p>
-                            {r.reason && <p className="mt-0.5 truncate text-xs text-muted-foreground">{r.reason}</p>}
-                            <p className="mt-0.5 text-[11px] text-muted-foreground">{fmt(r.created_at)} 신청</p>
+                            {r.reason && <p className="mt-0.5 truncate text-label text-muted-foreground">{r.reason}</p>}
+                            <p className="mt-0.5 text-label text-muted-foreground">{fmt(r.created_at)} 신청</p>
                           </div>
-                          <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${m.cls}`}>
+                          <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-micro font-bold ${m.cls}`}>
                             <m.Icon className="h-3 w-3" />
                             {m.label}
                           </span>
@@ -373,7 +389,7 @@ const MembershipPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setModal(null)}>
           <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-elev-3" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-bold text-foreground">
+              <h2 className="text-body font-bold text-foreground">
                 {modal === "hold" ? "수강권 홀딩 신청" : modal === "transfer" ? "수강권 양도 신청" : "수강권 환불 신청"}
               </h2>
               <button onClick={() => setModal(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:scale-95">
@@ -389,7 +405,7 @@ const MembershipPage = () => {
                     type="button"
                     onClick={() => pickHoldKind("regular")}
                     disabled={!regularEligible}
-                    className={`flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-bold transition-all active:scale-95 disabled:opacity-40 ${
+                    className={`flex items-center justify-center gap-1 rounded-lg py-2 text-label font-bold transition-all active:scale-95 disabled:opacity-40 ${
                       holdKind === "regular" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                     }`}
                   >
@@ -398,7 +414,7 @@ const MembershipPage = () => {
                   <button
                     type="button"
                     onClick={() => pickHoldKind("medical")}
-                    className={`flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-bold transition-all active:scale-95 ${
+                    className={`flex items-center justify-center gap-1 rounded-lg py-2 text-label font-bold transition-all active:scale-95 ${
                       holdKind === "medical" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                     }`}
                   >
@@ -408,7 +424,7 @@ const MembershipPage = () => {
 
                 {holdKind === "regular" ? (
                   <>
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    <label className="mb-1.5 block text-label font-medium text-muted-foreground">
                       홀딩 일수 (남은 {remainCount}회 · 이번에 최대 {perRequestMax}일)
                     </label>
                     {holdPresets.length > 0 && (
@@ -418,7 +434,7 @@ const MembershipPage = () => {
                             key={d}
                             type="button"
                             onClick={() => setHoldDaysStr(String(d))}
-                            className={`flex-1 rounded-xl py-2 text-sm font-bold transition-all active:scale-95 ${
+                            className={`flex-1 rounded-xl py-2 text-body font-bold transition-all active:scale-95 ${
                               holdDaysStr === String(d) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                             }`}
                           >
@@ -433,13 +449,13 @@ const MembershipPage = () => {
                       value={holdDaysStr}
                       onChange={(e) => setHoldDaysStr(e.target.value.replace(/\D/g, "").slice(0, 3))}
                       onBlur={() => setHoldDaysStr(String(holdDays))}
-                      className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
+                      className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground"
                       placeholder="직접 입력 (일)"
                     />
                   </>
                 ) : (
                   <>
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    <label className="mb-1.5 block text-label font-medium text-muted-foreground">
                       홀딩 일수 (서류의 치료·안정 기간 안에서 · 최대 {MEDICAL_HOLD_MAX_DAYS}일)
                     </label>
                     <div className="mb-2 flex gap-2">
@@ -448,7 +464,7 @@ const MembershipPage = () => {
                           key={d}
                           type="button"
                           onClick={() => setHoldDaysStr(String(d))}
-                          className={`flex-1 rounded-xl py-2 text-sm font-bold transition-all active:scale-95 ${
+                          className={`flex-1 rounded-xl py-2 text-body font-bold transition-all active:scale-95 ${
                             holdDaysStr === String(d) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                           }`}
                         >
@@ -462,12 +478,12 @@ const MembershipPage = () => {
                       value={holdDaysStr}
                       onChange={(e) => setHoldDaysStr(e.target.value.replace(/\D/g, "").slice(0, 3))}
                       onBlur={() => setHoldDaysStr(String(holdDays))}
-                      className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
+                      className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground"
                       placeholder="직접 입력 (일)"
                     />
 
-                    <p className="mb-1.5 mt-3 text-xs font-medium text-muted-foreground">병원 서류 (진단서·소견서·입퇴원 확인서 등)</p>
-                    <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border bg-background px-3 py-3 text-sm text-foreground transition-all active:scale-[0.99]">
+                    <p className="mb-1.5 mt-3 text-label font-medium text-muted-foreground">병원 서류 (진단서·소견서·입퇴원 확인서 등)</p>
+                    <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border bg-background px-3 py-3 text-body text-foreground transition-all active:scale-[0.99]">
                       <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span className="min-w-0 truncate">{docFile ? docFile.name : "사진 찍기 또는 파일 선택 (사진·PDF)"}</span>
                       <input
@@ -477,11 +493,11 @@ const MembershipPage = () => {
                         onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
                       />
                     </label>
-                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                    <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
                       주민등록번호(특히 뒷자리)는 가리고 올려 주세요. 진단명과 치료·안정 기간만 보이면 됩니다.
                     </p>
 
-                    <label className="mt-3 flex items-start gap-2 rounded-xl bg-muted/40 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
+                    <label className="mt-3 flex items-start gap-2 rounded-xl bg-muted/40 px-3 py-2.5 text-micro leading-relaxed text-muted-foreground">
                       <input
                         type="checkbox"
                         checked={medConsent}
@@ -500,20 +516,20 @@ const MembershipPage = () => {
             {/* 양도 — 양수인 정보 */}
             {modal === "transfer" && (
               <div className="mb-4 space-y-2">
-                <div className="rounded-xl bg-muted/40 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+                <div className="rounded-xl bg-muted/40 px-3 py-2 text-micro leading-relaxed text-muted-foreground">
                   양도 수수료 {won(TRANSFER_FEE)} · 1회만 가능 · 재양도 불가. 관장님 승인 후 처리됩니다.
                 </div>
                 <input
                   value={tName}
                   onChange={(e) => setTName(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground"
                   placeholder="양수인 이름"
                 />
                 <input
                   value={tPhone}
                   onChange={(e) => setTPhone(e.target.value)}
                   inputMode="tel"
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground"
                   placeholder="양수인 연락처"
                 />
               </div>
@@ -521,7 +537,7 @@ const MembershipPage = () => {
 
             {/* 환불 — 예상액 */}
             {modal === "refund" && (
-              <div className="mb-4 rounded-xl border border-border bg-muted/30 p-3 text-xs leading-relaxed">
+              <div className="mb-4 rounded-xl border border-border bg-muted/30 p-3 text-label leading-relaxed">
                 {payment != null ? (
                   <>
                     <div className="flex items-center justify-between">
@@ -548,14 +564,14 @@ const MembershipPage = () => {
                     )}
                     <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
                       <span className="font-bold text-foreground">예상 환불액</span>
-                      <span className="text-base font-black text-primary">{won(estRefund ?? 0)}</span>
+                      <span className="text-body font-black text-primary">{won(estRefund ?? 0)}</span>
                     </div>
                     {estBreak && estBreak.loss > 0 && (
                       <div className="mt-2 rounded-lg bg-destructive/10 px-2.5 py-2 text-center">
-                        <span className="text-[11px] font-bold text-destructive">지금 환불하면 약 {won(estBreak.loss)} 손해예요</span>
+                        <span className="text-micro font-bold text-destructive">지금 환불하면 약 {won(estBreak.loss)} 손해예요</span>
                       </div>
                     )}
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">할인 상품은 중도 해지 시 이용기간이 정상가로 재산정됩니다. 예상액은 1개월 정상가 22만원 ÷ 30일 기준이며, 주3회권은 확정할 때 18만원 기준으로 다시 계산합니다. 홀딩 기간은 빼고 계산하며, 지급 장비·부대서비스는 별도이고 최종 금액은 관장님이 확정합니다.</p>
+                    <p className="mt-1.5 text-micro text-muted-foreground">할인 상품은 중도 해지 시 이용기간이 정상가로 재산정됩니다. 예상액은 1개월 정상가 22만원 ÷ 30일 기준이며, 주3회권은 확정할 때 18만원 기준으로 다시 계산합니다. 홀딩 기간은 빼고 계산하며, 지급 장비·부대서비스는 별도이고 최종 금액은 관장님이 확정합니다.</p>
                   </>
                 ) : (
                   <p className="text-muted-foreground">결제 금액 정보가 없어 예상액을 계산할 수 없습니다. 신청 후 관장님이 금액을 확정합니다.</p>
@@ -565,12 +581,12 @@ const MembershipPage = () => {
 
             {/* 사유 */}
             <div className="mb-4">
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">사유 {modal === "refund" ? "" : "(선택)"}</label>
+              <label className="mb-1.5 block text-label font-medium text-muted-foreground">사유 {modal === "refund" ? "" : "(선택)"}</label>
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
-                className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
+                className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground"
                 placeholder={
                   modal === "hold"
                     ? holdKind === "medical"
@@ -593,7 +609,7 @@ const MembershipPage = () => {
                 (modal === "hold" && holdKind === "medical" && (!docFile || !medConsent)) ||
                 (modal === "hold" && !holdDaysValid)
               }
-              className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {submitting
                 ? "신청 중..."

@@ -43,7 +43,7 @@ export const MilestoneProgressStrip = ({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="flex items-center justify-between text-micro font-bold uppercase tracking-wider text-muted-foreground">
         <span>배지 진행</span>
         <span className="number-font text-foreground">
           {Math.min(approvedDays, 21)} / 21
@@ -70,7 +70,7 @@ export const MilestoneProgressStrip = ({
               <div className="flex items-center justify-between">
                 <p
                   className={cn(
-                    "text-[10.5px] font-black uppercase tracking-wide",
+                    "text-micro font-black uppercase tracking-wide",
                     s.reached ? "text-reward-foreground" : "text-muted-foreground",
                   )}
                 >

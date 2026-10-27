@@ -259,23 +259,23 @@ export const LetterModal = ({ open, letter, onClose }: { open: boolean; letter: 
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-500/10 shadow-[0_0_24px_rgba(246,196,83,0.25)]">
                   <Mail className="h-5 w-5 text-amber-300" />
                 </div>
-                <p className="mt-3 text-[10px] font-black uppercase tracking-[0.4em] text-amber-300">
+                <p className="mt-3 text-micro font-black uppercase tracking-[0.4em] text-amber-300">
                   {letter.eyebrow}
                 </p>
               </div>
 
               {/* 제목 */}
-              <h2 className="mt-4 whitespace-pre-line text-center text-[22px] font-black leading-[1.3] text-amber-50">
+              <h2 className="mt-4 whitespace-pre-line text-center text-title font-black leading-[1.3] text-amber-50">
                 {letter.title}
               </h2>
 
               {/* 본문 */}
-              <p className="mt-5 whitespace-pre-line text-center text-[13.5px] leading-[1.85] text-amber-100/80">
+              <p className="mt-5 whitespace-pre-line text-center text-label leading-[1.85] text-amber-100/80">
                 {letter.body}
               </p>
 
               {/* 서명 */}
-              <p className="mt-6 text-right text-[13px] font-bold tracking-wide text-amber-300/90">
+              <p className="mt-6 text-right text-label font-bold tracking-wide text-amber-300/90">
                 {letter.sign}
               </p>
 
@@ -285,7 +285,7 @@ export const LetterModal = ({ open, letter, onClose }: { open: boolean; letter: 
               {/* CTA */}
               <button
                 onClick={onClose}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 px-5 py-3.5 text-[14px] font-black tracking-wide text-amber-950 transition hover:from-amber-400 hover:to-amber-300 active:scale-[0.98]"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 px-5 py-3.5 text-label font-black tracking-wide text-amber-950 transition hover:from-amber-400 hover:to-amber-300 active:scale-[0.98]"
               >
                 {letter.cta}
               </button>

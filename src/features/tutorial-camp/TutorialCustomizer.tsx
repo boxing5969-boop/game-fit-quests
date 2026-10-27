@@ -274,7 +274,7 @@ function usePicker(onCapture: (selector: string) => void): {
           />
           {hoverLabel && (
             <div
-              className="pointer-events-none fixed rounded-md bg-amber-500 px-2 py-1 text-[11px] font-black text-amber-950 shadow-lg"
+              className="pointer-events-none fixed rounded-md bg-amber-500 px-2 py-1 text-micro font-black text-amber-950 shadow-lg"
               style={{
                 left: Math.max(8, hoverRect.left),
                 top: Math.max(8, hoverRect.top - 28),
@@ -286,7 +286,7 @@ function usePicker(onCapture: (selector: string) => void): {
         </>
       )}
       {/* 상단 안내 */}
-      <div className="pointer-events-none fixed left-1/2 top-3 -translate-x-1/2 rounded-full border border-amber-300/60 bg-amber-500/95 px-4 py-2 text-[12px] font-black text-amber-950 shadow-2xl">
+      <div className="pointer-events-none fixed left-1/2 top-3 -translate-x-1/2 rounded-full border border-amber-300/60 bg-amber-500/95 px-4 py-2 text-label font-black text-amber-950 shadow-2xl">
         🎯 원하는 부분 위를 클릭하세요 (ESC: 취소)
       </div>
     </div>
@@ -752,7 +752,7 @@ const TutorialCustomizer = () => {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="fixed left-1/2 top-3 z-[120] -translate-x-1/2 rounded-full border border-amber-300/60 bg-amber-500/95 px-4 py-2 text-[12px] font-black text-amber-950 shadow-2xl"
+            className="fixed left-1/2 top-3 z-[120] -translate-x-1/2 rounded-full border border-amber-300/60 bg-amber-500/95 px-4 py-2 text-label font-black text-amber-950 shadow-2xl"
           >
             🎯 화면에서 강조할 곳을 클릭하세요 (ESC: 취소)
           </motion.div>
@@ -770,7 +770,7 @@ const TutorialCustomizer = () => {
             setMinimized(false);
           }}
           aria-label="듀토리얼 커스텀 도구 열기"
-          className="fixed right-3 top-1/2 z-[96] -translate-y-1/2 inline-flex flex-col items-center gap-1 rounded-l-2xl border border-amber-400/40 bg-amber-600/95 px-2 py-3 text-[10px] font-black tracking-wider text-amber-50 shadow-2xl backdrop-blur-sm hover:bg-amber-500"
+          className="fixed right-3 top-1/2 z-[96] -translate-y-1/2 inline-flex flex-col items-center gap-1 rounded-l-2xl border border-amber-400/40 bg-amber-600/95 px-2 py-3 text-micro font-black tracking-wider text-amber-50 shadow-2xl backdrop-blur-sm hover:bg-amber-500"
         >
           <Wrench className="h-4 w-4" />
           <span style={{ writingMode: "vertical-rl" }}>커스텀</span>
@@ -785,7 +785,7 @@ const TutorialCustomizer = () => {
           animate={{ opacity: 1, x: 0 }}
           onClick={() => setMinimized(false)}
           aria-label="커스텀 도구 펼치기"
-          className="fixed right-0 top-16 z-[96] inline-flex items-center gap-1 rounded-l-lg border border-amber-400/40 bg-amber-600/95 px-2 py-2 text-[10px] font-black text-amber-50 shadow-2xl backdrop-blur-sm hover:bg-amber-500"
+          className="fixed right-0 top-16 z-[96] inline-flex items-center gap-1 rounded-l-lg border border-amber-400/40 bg-amber-600/95 px-2 py-2 text-micro font-black text-amber-50 shadow-2xl backdrop-blur-sm hover:bg-amber-500"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           <span>{previewDay}일차 펼치기</span>
@@ -814,10 +814,10 @@ const TutorialCustomizer = () => {
             {/* 헤더 */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-amber-400/20 bg-[#0a1024]/98 px-3 py-2.5 backdrop-blur-md">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-amber-300">
+                <p className="text-micro font-black uppercase tracking-[0.3em] text-amber-300">
                   관리자 커스텀 도구
                 </p>
-                <p className="text-[12px] font-bold text-amber-50">
+                <p className="text-label font-bold text-amber-50">
                   {day}일차 · {step + 1}번째 단계
                 </p>
               </div>
@@ -852,7 +852,7 @@ const TutorialCustomizer = () => {
 
             <div className="space-y-3 p-3">
               {/* 안내 */}
-              <p className="rounded-lg border border-amber-400/20 bg-amber-500/5 px-2.5 py-1.5 text-[10.5px] leading-relaxed text-amber-100">
+              <p className="rounded-lg border border-amber-400/20 bg-amber-500/5 px-2.5 py-1.5 text-micro leading-relaxed text-amber-100">
                 💡 화면을 보면서 빠르게 단계를 고치는 도구예요.
                 바꾼 내용은 <strong>관리자 본인 화면</strong>에만 적용돼요.
                 <br />
@@ -864,7 +864,7 @@ const TutorialCustomizer = () => {
                 type="button"
                 onClick={handlePublishToAll}
                 disabled={publishing}
-                className={`w-full rounded-lg border px-3 py-2.5 text-[12px] font-black tracking-wide transition-all ${
+                className={`w-full rounded-lg border px-3 py-2.5 text-label font-black tracking-wide transition-all ${
                   publishing
                     ? "cursor-not-allowed border-emerald-500/30 bg-emerald-500/10 text-emerald-200 opacity-60"
                     : "border-emerald-400/60 bg-emerald-600/30 text-emerald-50 hover:bg-emerald-500/40 active:scale-[0.98]"
@@ -874,7 +874,7 @@ const TutorialCustomizer = () => {
                   ? "반영 중…"
                   : "🚀 전체 회원에게 반영 (publish)"}
               </button>
-              <p className="text-[10px] leading-relaxed text-amber-200/70">
+              <p className="text-micro leading-relaxed text-amber-200/70">
                 ※ publish 후 모든 회원이 다음 앱 로드부터 같은 튜토리얼을 보게 됩니다.
                 실수 시 다시 편집 → 같은 버튼으로 재반영하면 즉시 갱신됩니다.
               </p>
@@ -893,10 +893,10 @@ const TutorialCustomizer = () => {
 
               {/* 미리보기 — 1~7 일차 선택 (커스텀만) + 별도 시작 버튼 */}
               <div className="space-y-1.5">
-                <p className="text-[11px] font-bold text-amber-100">
+                <p className="text-micro font-bold text-amber-100">
                   📅 어느 일차를 편집할까요?
                 </p>
-                <p className="text-[10px] text-amber-200/65">
+                <p className="text-micro text-amber-200/65">
                   버튼을 누르면 그 일차의 단계 순서 / 설정이 아래에 표시돼요.
                   <br />
                   실제 화면 미리보기는 ▶ '시작' 버튼 누른 뒤 진행됩니다.
@@ -919,13 +919,13 @@ const TutorialCustomizer = () => {
                             id: `preview-day-${d}`,
                           });
                         }}
-                        className={`relative flex flex-col items-center justify-center rounded-lg border px-1 py-1.5 text-[10px] font-black transition-all active:scale-95 ${
+                        className={`relative flex flex-col items-center justify-center rounded-lg border px-1 py-1.5 text-micro font-black transition-all active:scale-95 ${
                           isPreview
                             ? "border-amber-300 bg-amber-500/30 text-amber-50"
                             : "border-amber-400/30 bg-black/30 text-amber-100/80 hover:bg-black/50"
                         }`}
                       >
-                        <span className="text-[8px] font-bold opacity-70">
+                        <span className="text-micro font-bold opacity-70">
                           DAY
                         </span>
                         <span>{d}</span>
@@ -951,12 +951,12 @@ const TutorialCustomizer = () => {
                       },
                     );
                   }}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2.5 text-[12px] font-black text-emerald-950 shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 active:scale-[0.98]"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2.5 text-label font-black text-emerald-950 shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 active:scale-[0.98]"
                 >
                   <Play className="h-4 w-4 fill-emerald-950" />▶ {previewDay}
                   일차 처음부터 시작
                 </button>
-                <p className="text-[9.5px] text-amber-200/55">
+                <p className="text-micro text-amber-200/55">
                   ※ 1~7 일차 버튼은 편집/설정만 전환. 실제 진행은 위 ▶ 버튼.
                   회원에게는 영향 없어요.
                 </p>
@@ -973,7 +973,7 @@ const TutorialCustomizer = () => {
                     if (typeof window !== "undefined") window.location.reload();
                   }, 800);
                 }}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2.5 text-[12px] font-black text-amber-50 hover:bg-amber-500"
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2.5 text-label font-black text-amber-50 hover:bg-amber-500"
               >
                 <Save className="h-4 w-4" />
                 💾 최종 저장 + 새로고침 (바로 반영)
@@ -983,13 +983,13 @@ const TutorialCustomizer = () => {
               <button
                 type="button"
                 onClick={handleOpenFullEditor}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-[11px] font-bold text-amber-200 hover:bg-amber-500/20"
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-micro font-bold text-amber-200 hover:bg-amber-500/20"
               >
                 <Settings2 className="h-3.5 w-3.5" />
                 전체 편집기 열기 (모든 필드)
               </button>
 
-              <p className="text-[9px] leading-relaxed text-amber-200/55">
+              <p className="text-micro leading-relaxed text-amber-200/55">
                 ※ 더 자세한 편집 (helper / success 메시지, completionRule 등)은
                 전체 편집기에서.
               </p>
@@ -1079,13 +1079,13 @@ function StepOrderPanel({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-bold text-amber-100">
+        <p className="text-micro font-bold text-amber-100">
           📋 단계 순서 / 추가·빼기 ({day}일차)
         </p>
         <button
           type="button"
           onClick={reset}
-          className="inline-flex items-center gap-0.5 rounded-md border border-amber-400/30 bg-black/30 px-1.5 py-0.5 text-[9px] font-bold text-amber-200 hover:bg-black/50"
+          className="inline-flex items-center gap-0.5 rounded-md border border-amber-400/30 bg-black/30 px-1.5 py-0.5 text-micro font-bold text-amber-200 hover:bg-black/50"
           title="원래대로"
         >
           <RotateCcw className="h-2.5 w-2.5" />
@@ -1095,7 +1095,7 @@ function StepOrderPanel({
 
       {/* 보이는 단계 (회원이 진행) */}
       <div>
-        <p className="mb-1 text-[9.5px] font-bold uppercase tracking-wider text-emerald-300/80">
+        <p className="mb-1 text-micro font-bold uppercase tracking-wider text-emerald-300/80">
           ✓ 보이는 단계 ({list.length}개)
         </p>
         <div className="space-y-1.5 rounded-lg border border-amber-400/15 bg-black/20 p-1.5">
@@ -1105,7 +1105,7 @@ function StepOrderPanel({
             return (
               <div
                 key={`v-${day}-${idx}-${s.title}`}
-                className="rounded-md bg-black/30 px-2 py-1.5 text-[10.5px]"
+                className="rounded-md bg-black/30 px-2 py-1.5 text-micro"
               >
                 {/* 1행: 번호 + 제목 + 버튼 */}
                 <div className="flex items-center gap-1">
@@ -1177,7 +1177,7 @@ function StepOrderPanel({
             );
           })}
           {list.length === 0 && (
-            <p className="px-2 py-3 text-center text-[10px] text-amber-200/50">
+            <p className="px-2 py-3 text-center text-micro text-amber-200/50">
               보이는 단계가 없어요. 아래에서 다시 넣어보세요.
             </p>
           )}
@@ -1186,12 +1186,12 @@ function StepOrderPanel({
 
       {/* 빠진 단계 (hidden) — 항상 표시. 0개일 때 안내. */}
       <div>
-        <p className="mb-1 text-[9.5px] font-bold uppercase tracking-wider text-rose-300/80">
+        <p className="mb-1 text-micro font-bold uppercase tracking-wider text-rose-300/80">
           ✗ 빠진 단계 ({hiddenList.length}개)
         </p>
         <div className="space-y-1 rounded-lg border border-rose-400/15 bg-rose-950/10 p-1.5">
           {hiddenList.length === 0 ? (
-            <p className="px-2 py-2.5 text-center text-[10px] leading-relaxed text-rose-200/55">
+            <p className="px-2 py-2.5 text-center text-micro leading-relaxed text-rose-200/55">
               빠진 단계가 없어요.
               <br />
               <span className="text-amber-200/65">위에서 🗑️ 빼기</span> 누르면
@@ -1204,7 +1204,7 @@ function StepOrderPanel({
             hiddenList.map((s) => (
               <div
                 key={`h-${day}-${s.step}-${s.title}`}
-                className="flex items-center gap-1 rounded-md bg-black/30 px-2 py-1.5 text-[10.5px] opacity-80"
+                className="flex items-center gap-1 rounded-md bg-black/30 px-2 py-1.5 text-micro opacity-80"
               >
                 <p className="flex-1 truncate text-rose-100/85 line-through">
                   {s.title || "(제목 없음)"}
@@ -1212,7 +1212,7 @@ function StepOrderPanel({
                 <button
                   type="button"
                   onClick={() => addStep(s.step)}
-                  className="inline-flex items-center gap-0.5 rounded border border-emerald-400/40 bg-emerald-500/15 px-1.5 py-0.5 text-[9.5px] font-bold text-emerald-200 hover:bg-emerald-500/25"
+                  className="inline-flex items-center gap-0.5 rounded border border-emerald-400/40 bg-emerald-500/15 px-1.5 py-0.5 text-micro font-bold text-emerald-200 hover:bg-emerald-500/25"
                   title="다시 넣기"
                 >
                   <Plus className="h-2.5 w-2.5" />
@@ -1233,7 +1233,7 @@ function StepOrderPanel({
         }}
       />
 
-      <p className="text-[9.5px] text-amber-200/55">
+      <p className="text-micro text-amber-200/55">
         ↑↓ 순서 변경 · 🗑️ 빼기 · ➕ 다시 넣기 · ✨ 새 단계 만들기. '미리보기' /
         '최종 저장' 으로 적용.
       </p>
@@ -1327,7 +1327,7 @@ function NewStepForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-amber-400/40 bg-amber-500/5 px-3 py-2 text-[11px] font-bold text-amber-200 hover:bg-amber-500/15 active:scale-[0.98]"
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-amber-400/40 bg-amber-500/5 px-3 py-2 text-micro font-bold text-amber-200 hover:bg-amber-500/15 active:scale-[0.98]"
       >
         <Plus className="h-3.5 w-3.5" />✨ 새 단계 만들기
       </button>
@@ -1335,15 +1335,15 @@ function NewStepForm({
   }
 
   const inputCls =
-    "w-full rounded-md border border-amber-400/20 bg-black/30 px-2 py-1 text-[10.5px] font-mono text-amber-100 focus:outline-none focus:border-amber-400/60";
+    "w-full rounded-md border border-amber-400/20 bg-black/30 px-2 py-1 text-micro font-mono text-amber-100 focus:outline-none focus:border-amber-400/60";
 
   return (
     <div className="space-y-2 rounded-lg border border-amber-400/30 bg-amber-500/5 p-2.5">
       {picker.overlay}
-      <p className="text-[11px] font-bold text-amber-100">✨ 새 단계 만들기</p>
+      <p className="text-micro font-bold text-amber-100">✨ 새 단계 만들기</p>
 
       <label className="block">
-        <span className="text-[10px] font-bold text-amber-200/85">제목 *</span>
+        <span className="text-micro font-bold text-amber-200/85">제목 *</span>
         <input
           type="text"
           value={title}
@@ -1354,7 +1354,7 @@ function NewStepForm({
       </label>
 
       <label className="block">
-        <span className="text-[10px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           📝 안내 본문 (선택)
         </span>
         <input
@@ -1367,7 +1367,7 @@ function NewStepForm({
       </label>
 
       <label className="block">
-        <span className="text-[10px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           📍 어느 페이지에서? (route)
         </span>
         <input
@@ -1381,13 +1381,13 @@ function NewStepForm({
 
       {/* selector + picker + 한글 라벨 + 위치 보기 */}
       <div className="block">
-        <span className="text-[10px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           🎯 가리킬 element (선택)
         </span>
         <button
           type="button"
           onClick={() => (picker.picking ? picker.stop() : picker.start())}
-          className={`mb-1 inline-flex w-full items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-black transition-all ${
+          className={`mb-1 inline-flex w-full items-center justify-center gap-1 rounded-md px-2 py-1.5 text-micro font-black transition-all ${
             picker.picking
               ? "bg-rose-500 text-white animate-pulse"
               : "bg-amber-500 text-amber-950 hover:bg-amber-400"
@@ -1403,7 +1403,7 @@ function NewStepForm({
           placeholder='[data-tour="..."] 또는 비워두면 가운데 카드'
           className={inputCls}
         />
-        <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-200">
+        <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-micro font-bold text-amber-200">
           🏷️ {describeSelector(targetSelector)}
         </p>
         <PreviewLocationButton
@@ -1414,7 +1414,7 @@ function NewStepForm({
 
       {/* placement */}
       <label className="block">
-        <span className="text-[10px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           💬 카드 위치
         </span>
         <select
@@ -1436,7 +1436,7 @@ function NewStepForm({
 
       {/* completion rule */}
       <label className="block">
-        <span className="text-[10px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           ✅ 어떻게 완료되나요?
         </span>
         <select
@@ -1465,7 +1465,7 @@ function NewStepForm({
       </label>
 
       <label className="block">
-        <span className="text-[10px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           🗨️ 안내 한 줄 (행동 전)
         </span>
         <input
@@ -1478,7 +1478,7 @@ function NewStepForm({
       </label>
 
       <label className="block">
-        <span className="text-[10px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           🎉 칭찬 한 줄 (행동 후)
         </span>
         <input
@@ -1522,7 +1522,7 @@ function NewStepForm({
         <button
           type="button"
           onClick={onSave}
-          className="inline-flex flex-1 items-center justify-center gap-1 rounded-md bg-amber-500 px-2 py-1.5 text-[11px] font-black text-amber-950 hover:bg-amber-400"
+          className="inline-flex flex-1 items-center justify-center gap-1 rounded-md bg-amber-500 px-2 py-1.5 text-micro font-black text-amber-950 hover:bg-amber-400"
         >
           ✨ 추가하기
         </button>
@@ -1532,13 +1532,13 @@ function NewStepForm({
             reset();
             setOpen(false);
           }}
-          className="rounded-md border border-amber-400/30 bg-black/30 px-2 py-1.5 text-[11px] font-bold text-amber-200 hover:bg-black/50"
+          className="rounded-md border border-amber-400/30 bg-black/30 px-2 py-1.5 text-micro font-bold text-amber-200 hover:bg-black/50"
         >
           취소
         </button>
       </div>
 
-      <p className="text-[9px] leading-relaxed text-amber-200/55">
+      <p className="text-micro leading-relaxed text-amber-200/55">
         ※ 만든 단계는 {day}일차 끝에 추가돼요. ↑↓ 로 원하는 위치로 옮길 수 있어요.
       </p>
     </div>
@@ -1664,7 +1664,7 @@ function PreviewLocationButton({
     <button
       type="button"
       onClick={onClick}
-      className="mt-1 inline-flex w-full items-center justify-center gap-1 rounded-md border border-amber-400/40 bg-black/30 px-2 py-1 text-[10px] font-bold text-amber-200 hover:bg-black/50"
+      className="mt-1 inline-flex w-full items-center justify-center gap-1 rounded-md border border-amber-400/40 bg-black/30 px-2 py-1 text-micro font-bold text-amber-200 hover:bg-black/50"
     >
       📍 화면에서 위치 보기 (페이지 자동 이동)
     </button>
@@ -1732,19 +1732,19 @@ function InlineRowEditor({
   };
 
   const inputCls =
-    "w-full rounded-md border border-amber-400/20 bg-black/40 px-2 py-1 text-[10.5px] font-mono text-amber-100 focus:outline-none focus:border-amber-400/60";
+    "w-full rounded-md border border-amber-400/20 bg-black/40 px-2 py-1 text-micro font-mono text-amber-100 focus:outline-none focus:border-amber-400/60";
 
   return (
     <div className="mt-2 space-y-2 rounded-md border border-amber-400/30 bg-amber-500/5 p-2">
       {/* 64-AM: picker 활성 시 invisible overlay 가 화면 전체를 덮어 click intercept */}
       {picker.overlay}
-      <p className="text-[10px] font-bold text-amber-200">
+      <p className="text-micro font-bold text-amber-200">
         ✏️ 이 단계 기능 수정
       </p>
 
       {/* title */}
       <label className="block">
-        <span className="text-[9.5px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           📌 단계 제목
         </span>
         <input
@@ -1758,7 +1758,7 @@ function InlineRowEditor({
 
       {/* body */}
       <label className="block">
-        <span className="text-[9.5px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           📝 안내 본문 (회원이 카드에서 보는 설명)
         </span>
         <input
@@ -1772,14 +1772,14 @@ function InlineRowEditor({
 
       {/* selector */}
       <div className="block">
-        <span className="text-[9.5px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           🎯 가리킬 element
         </span>
         {/* picker 버튼 — 화면 element click 으로 자동 캡처 */}
         <button
           type="button"
           onClick={() => (picker.picking ? picker.stop() : picker.start())}
-          className={`mb-1 inline-flex w-full items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-black transition-all ${
+          className={`mb-1 inline-flex w-full items-center justify-center gap-1 rounded-md px-2 py-1.5 text-micro font-black transition-all ${
             picker.picking
               ? "bg-rose-500 text-white animate-pulse"
               : "bg-amber-500 text-amber-950 hover:bg-amber-400"
@@ -1798,7 +1798,7 @@ function InlineRowEditor({
           className={inputCls}
         />
         {/* 한글 라벨 — 어디인지 자동 표시 */}
-        <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-200">
+        <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-micro font-bold text-amber-200">
           🏷️ {describeSelector(draft.targetSelector ?? "")}
         </p>
         {/* 화면에서 위치 보기 버튼 — 다른 페이지면 자동 navigate 후 강조 */}
@@ -1808,7 +1808,7 @@ function InlineRowEditor({
           day={day}
           listIdx={listIdx}
         />
-        <p className="mt-0.5 text-[9px] text-amber-200/55">
+        <p className="mt-0.5 text-micro text-amber-200/55">
           ※ 다른 페이지에 있으면 자동으로 이동 + customizer 닫음 → 강조 표시
         </p>
       </div>
@@ -1816,7 +1816,7 @@ function InlineRowEditor({
       {/* 65-D: route — 어느 페이지에서 강조할지. 메뉴 이동/통합 시 필수.
           '시작 시 페이지 자동 이동' 토글이 이 경로로 navigate 한다. */}
       <div className="block">
-        <span className="text-[9.5px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           📍 어느 페이지에서? (route)
         </span>
         <input
@@ -1834,14 +1834,14 @@ function InlineRowEditor({
             </option>
           ))}
         </datalist>
-        <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-200">
+        <p className="mt-1 rounded-md bg-amber-500/10 px-2 py-1 text-micro font-bold text-amber-200">
           🏷️ {describeRoute(draft.route ?? "")}
         </p>
       </div>
 
       {/* placement */}
       <label className="block">
-        <span className="text-[9.5px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           💬 카드 위치
         </span>
         <select
@@ -1864,7 +1864,7 @@ function InlineRowEditor({
 
       {/* completion rule */}
       <label className="block">
-        <span className="text-[9.5px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           ✅ 어떻게 완료되나요?
         </span>
         <select
@@ -1924,7 +1924,7 @@ function InlineRowEditor({
 
       {/* helper / success */}
       <label className="block">
-        <span className="text-[9.5px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           🗨️ 안내 한 줄 (행동 전)
         </span>
         <input
@@ -1937,7 +1937,7 @@ function InlineRowEditor({
       </label>
 
       <label className="block">
-        <span className="text-[9.5px] font-bold text-amber-200/85">
+        <span className="text-micro font-bold text-amber-200/85">
           🎉 칭찬 한 줄 (행동 후)
         </span>
         <input
@@ -1954,14 +1954,14 @@ function InlineRowEditor({
         <button
           type="button"
           onClick={onSave}
-          className="inline-flex flex-1 items-center justify-center gap-1 rounded-md bg-amber-500 px-2 py-1.5 text-[10.5px] font-black text-amber-950 hover:bg-amber-400"
+          className="inline-flex flex-1 items-center justify-center gap-1 rounded-md bg-amber-500 px-2 py-1.5 text-micro font-black text-amber-950 hover:bg-amber-400"
         >
           💾 저장
         </button>
         <button
           type="button"
           onClick={onResetThis}
-          className="rounded-md border border-amber-400/30 bg-black/30 px-2 py-1.5 text-[10.5px] font-bold text-amber-200 hover:bg-black/50"
+          className="rounded-md border border-amber-400/30 bg-black/30 px-2 py-1.5 text-micro font-bold text-amber-200 hover:bg-black/50"
           title="이 단계 원래 설정으로"
         >
           ↩️
@@ -1969,7 +1969,7 @@ function InlineRowEditor({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-amber-400/30 bg-black/30 px-2 py-1.5 text-[10.5px] font-bold text-amber-200 hover:bg-black/50"
+          className="rounded-md border border-amber-400/30 bg-black/30 px-2 py-1.5 text-micro font-bold text-amber-200 hover:bg-black/50"
         >
           닫기
         </button>
@@ -2029,47 +2029,47 @@ function StepBadges({ step }: { step: BadgeStep }) {
   return (
     <div className="mt-1 flex flex-wrap gap-1 pl-6">
       {isCustom && (
-        <span className="rounded-full bg-purple-500/25 px-1.5 py-0.5 text-[9px] font-bold text-purple-200">
+        <span className="rounded-full bg-purple-500/25 px-1.5 py-0.5 text-micro font-bold text-purple-200">
           ✨ 새 단계
         </span>
       )}
       <span
-        className="max-w-[180px] truncate rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-200"
+        className="max-w-[180px] truncate rounded-full bg-amber-500/15 px-1.5 py-0.5 text-micro font-bold text-amber-200"
         title={sel || "selector 비어있음"}
       >
         🎯 {targetLabel}
       </span>
-      <span className="rounded-full bg-cyan-500/15 px-1.5 py-0.5 text-[9px] font-bold text-cyan-200">
+      <span className="rounded-full bg-cyan-500/15 px-1.5 py-0.5 text-micro font-bold text-cyan-200">
         {placement}
       </span>
       {rule && (
-        <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold text-emerald-200">
+        <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-micro font-bold text-emerald-200">
           {rule}
         </span>
       )}
       {step.autoAdvance && (
-        <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-bold text-blue-200">
+        <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-micro font-bold text-blue-200">
           ⏩ 자동 다음
         </span>
       )}
       {step.autoNavigate && (
-        <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-bold text-blue-200">
+        <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-micro font-bold text-blue-200">
           🚀 페이지 자동
         </span>
       )}
       {step.requireTargetClick && (
-        <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-[9px] font-bold text-rose-200">
+        <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-micro font-bold text-rose-200">
           🔒 클릭 필수
         </span>
       )}
       {step.blockNextUntilComplete && (
-        <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-[9px] font-bold text-rose-200">
+        <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-micro font-bold text-rose-200">
           🔐 다음 잠금
         </span>
       )}
       {step.helperMessage && (
         <span
-          className="max-w-[200px] truncate rounded-full bg-amber-300/10 px-1.5 py-0.5 text-[9px] italic text-amber-200/80"
+          className="max-w-[200px] truncate rounded-full bg-amber-300/10 px-1.5 py-0.5 text-micro italic text-amber-200/80"
           title={step.helperMessage}
         >
           🗨️ {step.helperMessage}
@@ -2089,7 +2089,7 @@ function CompactToggle({
   onChange: (next: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-amber-400/15 bg-black/30 px-2.5 py-1.5 text-[10.5px] font-bold text-amber-100">
+    <label className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-amber-400/15 bg-black/30 px-2.5 py-1.5 text-micro font-bold text-amber-100">
       <span>{label}</span>
       <input
         type="checkbox"

@@ -29,10 +29,10 @@ const GymRaidContributionList = ({
   return (
     <div className="rounded-card border border-border bg-card p-3.5">
       <div className="flex items-start gap-3">
-        <span className="text-[20px]">{getRaidTypeEmoji(raid.raid_type)}</span>
+        <span className="text-heading">{getRaidTypeEmoji(raid.raid_type)}</span>
         <div className="min-w-0 flex-1">
-          <p className="text-[13.5px] font-bold text-foreground">{raid.title}</p>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="text-label font-bold text-foreground">{raid.title}</p>
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             {raid.description}
           </p>
         </div>
@@ -45,7 +45,7 @@ const GymRaidContributionList = ({
       </div>
 
       <div className="mt-3">
-        <div className="flex items-center justify-between text-[10.5px] text-muted-foreground">
+        <div className="flex items-center justify-between text-micro text-muted-foreground">
           <span>{getRaidTypeLabel(raid.raid_type)}</span>
           <span>
             {Math.round(raid.current_value).toLocaleString()} /{" "}
@@ -65,23 +65,23 @@ const GymRaidContributionList = ({
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-          <p className="text-[9.5px] uppercase text-muted-foreground">
+          <p className="text-micro uppercase text-muted-foreground">
             내 기여
           </p>
-          <p className="number-font mt-0.5 text-[14px] font-black text-foreground">
+          <p className="number-font mt-0.5 text-label font-black text-foreground">
             {raid.my_contribution}회
           </p>
         </div>
         <div className="rounded-card border border-reward/15 bg-reward/5 px-3 py-2">
-          <p className="text-[9.5px] uppercase text-reward">보상</p>
-          <p className="mt-0.5 text-[11.5px] font-bold text-reward">
+          <p className="text-micro uppercase text-reward">보상</p>
+          <p className="mt-0.5 text-micro font-bold text-reward">
             {raid.reward_quest_xp > 0 && `+${raid.reward_quest_xp} XP `}
             {raid.reward_gems > 0 && `· 챔피언 머니 +${raid.reward_gems} `}
           </p>
         </div>
       </div>
 
-      <p className="mt-2 text-[10.5px] text-muted-foreground">
+      <p className="mt-2 text-micro text-muted-foreground">
         {new Date(raid.start_date).toLocaleDateString("ko-KR")} ~{" "}
         {new Date(raid.end_date).toLocaleDateString("ko-KR")}
       </p>
@@ -91,7 +91,7 @@ const GymRaidContributionList = ({
           type="button"
           onClick={() => onClaim(raid.id)}
           disabled={!canClaim || claimPending}
-          className={`mt-3 w-full rounded-card py-2.5 text-[12.5px] font-bold transition-all ${
+          className={`mt-3 w-full rounded-card py-2.5 text-label font-bold transition-all ${
             canClaim && !claimPending
               ? "bg-primary text-primary-foreground active:scale-[0.98]"
               : "cursor-not-allowed bg-primary/40 text-primary-foreground opacity-60"
@@ -108,7 +108,7 @@ const GymRaidContributionList = ({
       )}
 
       {raid.reward_claimed && (
-        <p className="mt-2 flex items-center gap-1 text-[11px] text-emerald-700">
+        <p className="mt-2 flex items-center gap-1 text-micro text-emerald-700">
           <CheckCircle2 className="h-3.5 w-3.5" />
           보상 받음
         </p>

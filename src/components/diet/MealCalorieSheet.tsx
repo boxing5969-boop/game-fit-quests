@@ -120,11 +120,11 @@ export const MealCalorieSheet = ({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92vh]">
         <DrawerHeader className="pb-2 text-left">
-          <DrawerTitle className="flex items-center gap-1.5 text-[15px] font-black">
+          <DrawerTitle className="flex items-center gap-1.5 text-body font-black">
             <Sparkles className="h-4 w-4 text-primary" />
             {slotLabel} · 사진으로 본 칼로리
           </DrawerTitle>
-          <DrawerDescription className="text-[12px]">
+          <DrawerDescription className="text-label">
             AI 가 먼저 읽고, 회원님이 고치면 그 값으로 기록됩니다.
           </DrawerDescription>
         </DrawerHeader>
@@ -133,17 +133,17 @@ export const MealCalorieSheet = ({
           {loading && (
             <div className="flex flex-col items-center gap-2 py-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <p className="text-[13px] font-bold text-foreground">
+              <p className="text-label font-bold text-foreground">
                 사진을 읽고 있어요
               </p>
-              <p className="text-[11px] text-muted-foreground">보통 3~6초 걸립니다</p>
+              <p className="text-micro text-muted-foreground">보통 3~6초 걸립니다</p>
             </div>
           )}
 
           {!loading && errorMessage && (
             <div className="rounded-2xl border border-border bg-card p-5 text-center">
-              <p className="text-[13px] font-bold text-foreground">{errorMessage}</p>
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="text-label font-bold text-foreground">{errorMessage}</p>
+              <p className="mt-1 text-micro text-muted-foreground">
                 사진은 저장됐어요. 잠시 뒤 다시 찍으면 칼로리도 같이 읽어드릴게요.
               </p>
             </div>
@@ -151,10 +151,10 @@ export const MealCalorieSheet = ({
 
           {!loading && !errorMessage && vision?.notFood && (
             <div className="rounded-2xl border border-border bg-card p-5 text-center">
-              <p className="text-[13px] font-bold text-foreground">
+              <p className="text-label font-bold text-foreground">
                 음식이 잘 안 보여요
               </p>
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-1 text-micro text-muted-foreground">
                 접시가 화면에 다 들어오게 한 번만 다시 찍어주세요.
               </p>
             </div>
@@ -164,26 +164,26 @@ export const MealCalorieSheet = ({
             <>
               {/* 합계 — 이 화면의 주인공 숫자 하나 */}
               <div className="rounded-2xl border border-border bg-card px-4 py-4 text-center">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
                   이 끼니 추정
                 </p>
-                <p className="mt-0.5 text-[34px] font-black leading-none tracking-tight text-primary">
+                <p className="mt-0.5 text-display font-black leading-none tracking-tight text-primary">
                   ≈ {kcal.toLocaleString()}
-                  <span className="ml-1 text-[15px] font-bold">kcal</span>
+                  <span className="ml-1 text-body font-bold">kcal</span>
                 </p>
-                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                <p className="mt-1.5 text-micro text-muted-foreground">
                   {range.low.toLocaleString()}~{range.high.toLocaleString()} kcal 사이 ·{" "}
                   {CONFIDENCE_LABEL[vision.confidence]}
                 </p>
                 {protein > 0 && (
-                  <p className="mt-1 text-[12px] font-bold text-foreground">
+                  <p className="mt-1 text-label font-bold text-foreground">
                     단백질 약 {protein}g
                   </p>
                 )}
               </div>
 
               {/* 항목별 양 조절 */}
-              <p className="mb-1.5 mt-4 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <p className="mb-1.5 mt-4 text-micro font-bold uppercase tracking-wider text-muted-foreground">
                 먹은 만큼 고쳐주세요
               </p>
               <div className="space-y-2">
@@ -194,16 +194,16 @@ export const MealCalorieSheet = ({
                   >
                     <div className="flex items-start gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-bold text-foreground">
+                        <p className="truncate text-label font-bold text-foreground">
                           {d.name}
                         </p>
-                        <p className="truncate text-[11px] text-muted-foreground">
+                        <p className="truncate text-micro text-muted-foreground">
                           {portionLabel(d)}
                         </p>
                       </div>
-                      <p className="shrink-0 text-[13px] font-black text-foreground">
+                      <p className="shrink-0 text-label font-black text-foreground">
                         {itemKcal(d).toLocaleString()}
-                        <span className="ml-0.5 text-[10px] font-bold text-muted-foreground">
+                        <span className="ml-0.5 text-micro font-bold text-muted-foreground">
                           kcal
                         </span>
                       </p>
@@ -223,7 +223,7 @@ export const MealCalorieSheet = ({
                           type="button"
                           onClick={() => setFactor(d.key, f)}
                           className={cn(
-                            "flex-1 rounded-lg border py-1 text-[11px] font-bold transition-colors",
+                            "flex-1 rounded-lg border py-1 text-micro font-bold transition-colors",
                             d.factor === f
                               ? "border-primary/45 bg-primary/15 text-primary"
                               : "border-border text-muted-foreground hover:bg-muted",
@@ -234,7 +234,7 @@ export const MealCalorieSheet = ({
                       ))}
                     </div>
                     {itemProtein(d) > 0 && (
-                      <p className="mt-1.5 text-[10px] text-muted-foreground">
+                      <p className="mt-1.5 text-micro text-muted-foreground">
                         단백질 {itemProtein(d)}g
                       </p>
                     )}
@@ -242,7 +242,7 @@ export const MealCalorieSheet = ({
                 ))}
 
                 {drafts.length === 0 && (
-                  <p className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-[12px] text-muted-foreground">
+                  <p className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-label text-muted-foreground">
                     항목이 비었어요. 아래에서 직접 적어주세요.
                   </p>
                 )}
@@ -254,14 +254,14 @@ export const MealCalorieSheet = ({
                   value={manualName}
                   onChange={(e) => setManualName(e.target.value.slice(0, 40))}
                   placeholder="빠진 음식"
-                  className="h-9 flex-1 rounded-xl text-[12px]"
+                  className="h-9 flex-1 rounded-xl text-label"
                 />
                 <Input
                   value={manualKcal}
                   onChange={(e) => setManualKcal(e.target.value.replace(/\D/g, "").slice(0, 4))}
                   inputMode="numeric"
                   placeholder="kcal"
-                  className="h-9 w-[74px] rounded-xl text-[12px]"
+                  className="h-9 w-[74px] rounded-xl text-label"
                 />
                 <Button
                   type="button"
@@ -276,12 +276,12 @@ export const MealCalorieSheet = ({
 
               {/* 코치 한 줄 */}
               {vision.feedback && (
-                <p className="mt-3 rounded-xl border border-border bg-muted/40 px-3 py-2.5 text-[12px] leading-relaxed text-foreground">
+                <p className="mt-3 rounded-xl border border-border bg-muted/40 px-3 py-2.5 text-label leading-relaxed text-foreground">
                   {vision.feedback}
                 </p>
               )}
 
-              <p className="mt-2 text-center text-[10px] leading-relaxed text-muted-foreground">
+              <p className="mt-2 text-center text-micro leading-relaxed text-muted-foreground">
                 사진으로 잰 칼로리는 참고용 추정치예요. 매일 같은 방식으로 기록하면
                 숫자보다 흐름이 더 정확해집니다.
               </p>
@@ -294,7 +294,7 @@ export const MealCalorieSheet = ({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="h-11 rounded-2xl px-4 text-[13px] font-bold"
+            className="h-11 rounded-2xl px-4 text-label font-bold"
           >
             나중에
           </Button>
@@ -302,7 +302,7 @@ export const MealCalorieSheet = ({
             type="button"
             onClick={handleConfirm}
             disabled={!canConfirm}
-            className="ml-auto h-11 flex-1 rounded-2xl text-[13px] font-black tracking-wide"
+            className="ml-auto h-11 flex-1 rounded-2xl text-label font-black tracking-wide"
           >
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin" />

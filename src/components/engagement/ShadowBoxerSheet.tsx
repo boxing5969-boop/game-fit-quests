@@ -61,13 +61,13 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             그림자 복서
           </p>
-          <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+          <h2 className="mt-0.5 text-body font-bold text-foreground">
             오늘의 상대는 30일 전의 나
           </h2>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             남과 비교 부담 없이 어제의 나와 라운드 합니다.
           </p>
         </div>
@@ -87,26 +87,26 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
       <div className="rounded-card border border-amber-400/30 bg-amber-400/5 p-3.5">
         <div className="flex items-center gap-2">
           <Hourglass className="h-5 w-5 text-amber-500" />
-          <p className="text-[13.5px] font-bold text-foreground">
+          <p className="text-label font-bold text-foreground">
             분석 준비 중입니다
           </p>
         </div>
-        <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
           {snapshot?.reason ?? "30일이 지나면 과거의 당신과 마주합니다."}
         </p>
       </div>
       <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-        <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+        <p className="text-micro font-black uppercase tracking-wider text-primary">
           오삼 코치
         </p>
-        <p className="mt-0.5 text-[12.5px] leading-relaxed text-foreground">
+        <p className="mt-0.5 text-label leading-relaxed text-foreground">
           {pickShadowBoxerOsamiLine("not_ready", osamiSeed)}
         </p>
       </div>
       <button
         type="button"
         onClick={onClose}
-        className="w-full rounded-card bg-primary py-3 text-[13px] font-bold text-primary-foreground active:scale-[0.98]"
+        className="w-full rounded-card bg-primary py-3 text-label font-bold text-primary-foreground active:scale-[0.98]"
       >
         닫기
       </button>
@@ -125,30 +125,30 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
               : "border-amber-400/30 bg-amber-400/5"
           }`}
         >
-          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+          <p className="text-micro font-black uppercase tracking-wider text-primary">
             {snapshot.shadow_period} → {snapshot.current_period}
           </p>
-          <p className="mt-1 text-[14px] font-bold text-foreground">
+          <p className="mt-1 text-label font-bold text-foreground">
             {snapshot.message}
           </p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <div className="rounded-card border border-border bg-card p-2.5">
-              <p className="text-[9.5px] uppercase text-muted-foreground">
+              <p className="text-micro uppercase text-muted-foreground">
                 그림자 점수
               </p>
-              <p className="number-font mt-0.5 text-[18px] font-black text-muted-foreground">
+              <p className="number-font mt-0.5 text-heading font-black text-muted-foreground">
                 {snapshot.shadow_score}
               </p>
             </div>
             <div className="rounded-card border border-primary/30 bg-primary/5 p-2.5">
-              <p className="text-[9.5px] uppercase text-primary">현재 점수</p>
-              <p className="number-font mt-0.5 text-[18px] font-black text-foreground">
+              <p className="text-micro uppercase text-primary">현재 점수</p>
+              <p className="number-font mt-0.5 text-heading font-black text-foreground">
                 {snapshot.current_score}
               </p>
             </div>
           </div>
           {improved && snapshot.growth_rate !== undefined && (
-            <p className="mt-2 text-[12px] font-bold text-emerald-700">
+            <p className="mt-2 text-label font-bold text-emerald-700">
               성장률 +{snapshot.growth_rate}%
             </p>
           )}
@@ -156,7 +156,7 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
 
         {/* 지표별 비교 */}
         <div>
-          <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+          <p className="mb-1.5 text-micro font-bold text-foreground">
             지표별 비교
           </p>
           <div className="space-y-1.5">
@@ -168,10 +168,10 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
 
         {/* 오삼 코멘트 */}
         <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+          <p className="text-micro font-black uppercase tracking-wider text-primary">
             오삼 코치
           </p>
-          <p className="mt-0.5 text-[12.5px] leading-relaxed text-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-foreground">
             {pickShadowBoxerOsamiLine(osamiState, osamiSeed)}
           </p>
         </div>
@@ -182,7 +182,7 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
             type="button"
             onClick={handleClaim}
             disabled={claim.isPending}
-            className="w-full rounded-card bg-primary py-3 text-[14px] font-bold text-primary-foreground active:scale-[0.98] disabled:opacity-60"
+            className="w-full rounded-card bg-primary py-3 text-label font-bold text-primary-foreground active:scale-[0.98] disabled:opacity-60"
           >
             {claim.isPending
               ? "보상 처리 중…"
@@ -190,7 +190,7 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
           </button>
         )}
 
-        <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="text-micro leading-relaxed text-muted-foreground">
           ※ {SHADOW_BOXER_DISCLAIMER}
         </p>
       </div>
@@ -221,7 +221,7 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
             {renderHeader()}
             <div className="flex-1 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
               {isLoading ? (
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-label text-muted-foreground">
                   과거의 라운드를 불러오는 중…
                 </p>
               ) : ready ? (

@@ -121,7 +121,7 @@ const Avatar = ({ src, name }: { src: string | null; name: string }) => {
   if (src && !broken)
     return <img src={src} alt="" onError={() => setBroken(true)} className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-border/60" />;
   return (
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-bold text-secondary-foreground">
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-label font-bold text-secondary-foreground">
       {name.slice(0, 1)}
     </span>
   );
@@ -181,18 +181,18 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
 
   if (inbox.isLoading)
     return (
-      <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+      <div className="flex items-center justify-center gap-2 py-16 text-body text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" /> 받은 신고를 불러오는 중…
       </div>
     );
   if (inbox.isError)
     return (
       <div className="rounded-2xl bg-card px-5 py-8 text-center shadow-elev-1">
-        <p className="text-[14px] font-bold text-foreground">받은 신고를 불러오지 못했어요</p>
+        <p className="text-label font-bold text-foreground">받은 신고를 불러오지 못했어요</p>
         <button
           type="button"
           onClick={() => inbox.refetch()}
-          className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary px-4 text-[13px] font-bold text-foreground active:scale-95"
+          className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary px-4 text-label font-bold text-foreground active:scale-95"
         >
           <RotateCcw className="h-4 w-4" /> 다시 시도
         </button>
@@ -212,7 +212,7 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
               aria-selected={active === f.key}
               onClick={() => setFilter(f.key)}
               className={cn(
-                "shrink-0 rounded-full px-3.5 py-1.5 text-[12.5px] font-bold transition-colors",
+                "shrink-0 rounded-full px-3.5 py-1.5 text-label font-bold transition-colors",
                 active === f.key ? "bg-foreground text-background" : "bg-secondary text-muted-foreground",
               )}
             >
@@ -224,10 +224,10 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
 
       {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/60 px-5 py-10 text-center">
-          <p className="text-[14px] font-bold text-foreground">
+          <p className="text-label font-bold text-foreground">
             {active === "new" ? "새로 들어온 신고가 없어요" : "여기에 해당하는 신고가 없어요"}
           </p>
-          <p className="mt-1 text-[12.5px] text-muted-foreground">회원님이 신고를 보내면 알림이 오고 여기에 쌓여요</p>
+          <p className="mt-1 text-label text-muted-foreground">회원님이 신고를 보내면 알림이 오고 여기에 쌓여요</p>
         </div>
       ) : (
         <ul className="space-y-2.5">
@@ -246,36 +246,36 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
                 )}
               >
                 <div className="flex items-center gap-1.5">
-                  <span className={cn("rounded-full px-2 py-0.5 text-[11.5px] font-bold", CATEGORY_CLS[it.category] ?? "bg-secondary text-foreground")}>
+                  <span className={cn("rounded-full px-2 py-0.5 text-micro font-bold", CATEGORY_CLS[it.category] ?? "bg-secondary text-foreground")}>
                     {it.category}
                   </span>
-                  <span className={cn("rounded-full px-2 py-0.5 text-[11.5px] font-bold", st.cls)}>{st.label}</span>
-                  <span className="ml-auto shrink-0 text-[11.5px] tabular-nums text-muted-foreground">{whenText(it.created_at)}</span>
+                  <span className={cn("rounded-full px-2 py-0.5 text-micro font-bold", st.cls)}>{st.label}</span>
+                  <span className="ml-auto shrink-0 text-micro tabular-nums text-muted-foreground">{whenText(it.created_at)}</span>
                 </div>
 
                 <div className="mt-3 flex items-center gap-2.5">
                   <Avatar src={it.member_avatar} name={it.member_name} />
                   <div className="min-w-0">
-                    <p className="truncate text-[14px] font-bold text-foreground">
+                    <p className="truncate text-label font-bold text-foreground">
                       {it.member_name}
                       {it.member_nickname && it.member_nickname !== it.member_name && (
                         <span className="ml-1 font-semibold text-muted-foreground">({it.member_nickname})</span>
                       )}
                     </p>
-                    {it.member_branch && <p className="truncate text-[12px] text-muted-foreground">{shortBranch(it.member_branch)}</p>}
+                    {it.member_branch && <p className="truncate text-label text-muted-foreground">{shortBranch(it.member_branch)}</p>}
                   </div>
                 </div>
 
-                <p className="mt-3 whitespace-pre-line break-words text-[14px] leading-relaxed text-foreground">{it.content}</p>
+                <p className="mt-3 whitespace-pre-line break-words text-label leading-relaxed text-foreground">{it.content}</p>
 
                 {(device || it.page_path) && (
-                  <p className="mt-2.5 flex items-start gap-1.5 text-[11.5px] leading-snug text-muted-foreground">
+                  <p className="mt-2.5 flex items-start gap-1.5 text-micro leading-snug text-muted-foreground">
                     <MonitorSmartphone className="mt-px h-3.5 w-3.5 shrink-0" />
                     <span className="min-w-0 break-words">{[device, it.page_path].filter(Boolean).join(" · ")}</span>
                   </p>
                 )}
                 {it.status !== "new" && (it.handled_by_name || it.handled_at) && (
-                  <p className="mt-1 text-[11.5px] text-muted-foreground">
+                  <p className="mt-1 text-micro text-muted-foreground">
                     {st.label}
                     {it.handled_by_name ? ` · ${it.handled_by_name}` : ""}
                     {it.handled_at ? ` · ${whenText(it.handled_at)}` : ""}
@@ -288,7 +288,7 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
                       type="button"
                       disabled={busy}
                       onClick={() => setStatus.mutate({ id: it.id, status: "seen" })}
-                      className="inline-flex h-9 items-center gap-1 rounded-full bg-secondary px-3.5 text-[12.5px] font-bold text-foreground active:scale-95 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1 rounded-full bg-secondary px-3.5 text-label font-bold text-foreground active:scale-95 disabled:opacity-50"
                     >
                       <Check className="h-3.5 w-3.5" /> 확인함
                     </button>
@@ -298,7 +298,7 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
                       type="button"
                       disabled={busy}
                       onClick={() => setStatus.mutate({ id: it.id, status: "fixed" })}
-                      className="inline-flex h-9 items-center gap-1 rounded-full bg-primary px-3.5 text-[12.5px] font-bold text-primary-foreground active:scale-95 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1 rounded-full bg-primary px-3.5 text-label font-bold text-primary-foreground active:scale-95 disabled:opacity-50"
                     >
                       <Wrench className="h-3.5 w-3.5" /> 고쳤어요
                     </button>
@@ -308,7 +308,7 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
                       type="button"
                       disabled={busy}
                       onClick={() => setStatus.mutate({ id: it.id, status: "new" })}
-                      className="inline-flex h-9 items-center gap-1 rounded-full bg-secondary px-3.5 text-[12.5px] font-bold text-muted-foreground active:scale-95 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1 rounded-full bg-secondary px-3.5 text-label font-bold text-muted-foreground active:scale-95 disabled:opacity-50"
                     >
                       <RotateCcw className="h-3.5 w-3.5" /> 새 신고로
                     </button>
@@ -319,7 +319,7 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
           })}
         </ul>
       )}
-      <p className="px-1 pt-1 text-center text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="px-1 pt-1 text-center text-micro leading-relaxed text-muted-foreground">
         회원님이 보낸 신고는 운영진만 볼 수 있어요. 고친 뒤 '고쳤어요'를 눌러 두면 나중에 다시 찾기 쉬워요.
       </p>
     </div>

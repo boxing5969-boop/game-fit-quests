@@ -34,11 +34,11 @@ const BoxingHallStatTile = ({
     <div className="rounded-card border border-border bg-background/40 px-3 py-2.5">
       <div className="flex items-center gap-1.5">
         {icon && (
-          <span className={`text-[12px] ${TONE[tone]}`}>
+          <span className={`text-label ${TONE[tone]}`}>
             {icon as React.ReactNode}
           </span>
         )}
-        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
           {label}
         </p>
       </div>
@@ -49,13 +49,13 @@ const BoxingHallStatTile = ({
         />
       ) : (
         <p
-          className={`number-font mt-0.5 text-[15px] font-black ${TONE[tone]}`}
+          className={`number-font mt-0.5 text-body font-black ${TONE[tone]}`}
         >
           {display}
         </p>
       )}
       {hint && !loading && (
-        <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
+        <p className="mt-0.5 text-micro leading-tight text-muted-foreground">
           {hint}
         </p>
       )}

@@ -42,17 +42,17 @@ export const CompletionReportCard = ({
         <span className="rounded-full bg-reward/20 p-1.5 text-reward-foreground">
           <Award className="h-4 w-4 text-[#F6C453]" />
         </span>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#F6C453]">
+        <p className="text-micro font-black uppercase tracking-[0.2em] text-[#F6C453]">
           21-DAY REPORT
         </p>
       </div>
       <h2
         id="diet-completion-report-title"
-        className="mt-2 text-display-sm font-extrabold leading-tight text-foreground"
+        className="mt-2 text-heading font-extrabold leading-tight text-foreground"
       >
         21일의 기록
       </h2>
-      <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-1 text-label leading-relaxed text-muted-foreground">
         체중보다 먼저 바뀐 건 리듬입니다. 아래는 지난 21일 자기 점검 결과입니다.
       </p>
 
@@ -62,7 +62,7 @@ export const CompletionReportCard = ({
           icon={<Calendar className="h-3.5 w-3.5" />}
           label="기간"
           value={`${summary.start_date.slice(5)} → ${summary.end_date.slice(5)}`}
-          valueClass="text-[13px]"
+          valueClass="text-label"
         />
         <StatTile
           icon={<TrendingUp className="h-3.5 w-3.5" />}
@@ -93,7 +93,7 @@ export const CompletionReportCard = ({
 
       {/* 선택적 체중/허리 변화 — 본인 자기보고. 공개 랭킹과 분리. */}
       {(weightChangeKg != null || waistChangeCm != null) && (
-        <div className="mt-3 rounded-xl border border-border bg-card px-3 py-2.5 text-[12px]">
+        <div className="mt-3 rounded-xl border border-border bg-card px-3 py-2.5 text-label">
           <p className="font-bold text-foreground">신체 변화 (비공개)</p>
           <p className="mt-1 text-muted-foreground leading-relaxed">
             {weightChangeKg != null && (
@@ -134,11 +134,11 @@ const StatTile = ({
   valueClass?: string;
 }) => (
   <div className="rounded-xl border border-border bg-card p-3">
-    <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+    <div className="flex items-center gap-1 text-micro font-bold uppercase tracking-wide text-muted-foreground">
       {icon}
       {label}
     </div>
-    <p className={cn("mt-1 number-font font-extrabold text-foreground text-[15px]", valueClass)}>
+    <p className={cn("mt-1 number-font font-extrabold text-foreground text-body", valueClass)}>
       {value}
     </p>
   </div>
@@ -155,13 +155,13 @@ const HabitRow = ({
 }) => (
   <div
     className={cn(
-      "rounded-xl border px-3 py-2 text-[12px] leading-relaxed",
+      "rounded-xl border px-3 py-2 text-label leading-relaxed",
       tone === "good"
         ? "border-emerald-400/30 bg-emerald-400/10 text-foreground"
         : "border-primary/30 bg-primary/5 text-foreground",
     )}
   >
-    <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+    <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
       {label}
     </p>
     <p className="mt-0.5 font-bold">{habit}</p>

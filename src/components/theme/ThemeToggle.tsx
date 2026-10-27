@@ -91,7 +91,7 @@ export const ThemeToggle = ({
         aria-checked={current === "light"}
         onClick={() => setTheme("light")}
         className={cn(
-          "flex flex-1 items-center justify-center gap-1.5 rounded-pill px-3 py-1.5 text-[12px] font-bold transition-all active:scale-[0.98]",
+          "flex flex-1 items-center justify-center gap-1.5 rounded-pill px-3 py-1.5 text-label font-bold transition-all active:scale-[0.98]",
           current === "light"
             ? "bg-card text-foreground shadow-elev-1"
             : "text-muted-foreground hover:text-foreground",
@@ -106,7 +106,7 @@ export const ThemeToggle = ({
         aria-checked={current === "dark"}
         onClick={() => setTheme("dark")}
         className={cn(
-          "flex flex-1 items-center justify-center gap-1.5 rounded-pill px-3 py-1.5 text-[12px] font-bold transition-all active:scale-[0.98]",
+          "flex flex-1 items-center justify-center gap-1.5 rounded-pill px-3 py-1.5 text-label font-bold transition-all active:scale-[0.98]",
           current === "dark"
             ? "bg-card text-foreground shadow-elev-1"
             : "text-muted-foreground hover:text-foreground",

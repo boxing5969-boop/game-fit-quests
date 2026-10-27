@@ -30,7 +30,7 @@ export const AutoMealPlanSection = ({ mode, preferPatterns }: AutoMealPlanSectio
 
   if (query.isLoading) {
     return (
-      <section className="rounded-2xl border border-border bg-card p-5 text-center text-[12px] text-muted-foreground">
+      <section className="rounded-2xl border border-border bg-card p-5 text-center text-label text-muted-foreground">
         영양 프로필 불러오는 중...
       </section>
     );
@@ -48,13 +48,13 @@ export const AutoMealPlanSection = ({ mode, preferPatterns }: AutoMealPlanSectio
   if (!profile.sex || !profile.height_cm || !profile.weight_kg || !age) {
     return (
       <div className="space-y-3">
-        <div className="rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4 text-[12px] leading-relaxed text-foreground">
+        <div className="rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4 text-label leading-relaxed text-foreground">
           <p className="font-bold">프로필 정보가 부족해요</p>
           <p className="mt-0.5 text-muted-foreground">
             키·체중·성별·생년월일 중 하나가 비어 있어 칼로리를 계산할 수 없어요. 아래에서 채워주세요.
           </p>
           {!age && (
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-micro text-muted-foreground">
               생년월일은 내정보 페이지에서 수정할 수 있어요.
             </p>
           )}
@@ -141,7 +141,7 @@ const ActiveBody = ({ profile, age, mode, preferPatterns, onRefresh }: ActiveBod
       <Button
         variant="outline"
         onClick={() => setEditMode(true)}
-        className="h-9 w-full rounded-xl text-[12px]"
+        className="h-9 w-full rounded-xl text-label"
       >
         <Pencil className="mr-1 h-3 w-3" />
         프로필 수정 (키·체중·활동수준 등)

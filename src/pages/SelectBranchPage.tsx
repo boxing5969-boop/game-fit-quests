@@ -94,42 +94,42 @@ const SelectBranchPage = () => {
     }
   };
 
-  const inputClass = "w-full rounded-xl border border-border bg-card px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all";
+  const inputClass = "w-full rounded-xl border border-border bg-card px-4 py-3.5 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all";
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-8">
       <button
         type="button"
         onClick={async () => { await supabase.auth.signOut(); navigate("/", { replace: true }); }}
-        className="absolute left-4 top-4 flex items-center gap-1 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className="absolute left-4 top-4 flex items-center gap-1 rounded-xl px-3 py-2 text-body font-medium text-muted-foreground transition-colors hover:text-foreground"
         aria-label="뒤로가기"
       >
         <ArrowLeft className="h-5 w-5" /> 뒤로
       </button>
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-4xl shadow-glow-primary">🥊</div>
-        <h1 className="text-2xl font-bold text-foreground">체육관 등록</h1>
-        <p className="mt-1 text-sm text-muted-foreground">소셜 로그인 후 추가 정보를 입력해주세요</p>
+        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-display shadow-glow-primary">🥊</div>
+        <h1 className="text-title font-bold text-foreground">체육관 등록</h1>
+        <p className="mt-1 text-body text-muted-foreground">소셜 로그인 후 추가 정보를 입력해주세요</p>
       </div>
 
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-muted-foreground">이름</label>
+          <label className="mb-1 block text-body font-medium text-muted-foreground">이름</label>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="실명을 입력하세요" required className={inputClass} />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-muted-foreground">닉네임</label>
+          <label className="mb-1 block text-body font-medium text-muted-foreground">닉네임</label>
           <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="링 위의 이름을 정하세요" required className={inputClass} />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-muted-foreground">전화번호</label>
+          <label className="mb-1 block text-body font-medium text-muted-foreground">전화번호</label>
           <input type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" className={inputClass} />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-muted-foreground">소속 체육관</label>
+          <label className="mb-1 block text-body font-medium text-muted-foreground">소속 체육관</label>
           {branches && branches.length > 0 ? (
             <Select value={branch} onValueChange={setBranch}>
               <SelectTrigger className="rounded-xl">
@@ -142,7 +142,7 @@ const SelectBranchPage = () => {
               </SelectContent>
             </Select>
           ) : (
-            <p className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-muted-foreground">등록된 체육관이 없습니다</p>
+            <p className="rounded-xl border border-dashed border-border p-3 text-center text-body text-muted-foreground">등록된 체육관이 없습니다</p>
           )}
         </div>
 
@@ -153,15 +153,15 @@ const SelectBranchPage = () => {
             isCoach ? "border-primary/30 bg-primary/10" : "border-border bg-card"
           }`}
         >
-          <span className="text-lg">{isCoach ? "✅" : "👤"}</span>
+          <span className="text-heading">{isCoach ? "✅" : "👤"}</span>
           <div className="flex-1">
-            <p className="text-sm font-medium text-foreground">관장님으로 가입</p>
-            <p className="text-xs text-muted-foreground">관리자 승인 후 관장 권한이 부여됩니다</p>
+            <p className="text-body font-medium text-foreground">관장님으로 가입</p>
+            <p className="text-label text-muted-foreground">관리자 승인 후 관장 권한이 부여됩니다</p>
           </div>
         </div>
 
         {isCoach && (
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-700">
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-body text-amber-700">
             ⚠️ 관장님 가입은 관리자 승인 후 코치 권한이 부여됩니다.
           </div>
         )}
@@ -169,7 +169,7 @@ const SelectBranchPage = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-xl bg-primary py-4 text-lg font-bold text-primary-foreground shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
+          className="w-full rounded-xl bg-primary py-4 text-heading font-bold text-primary-foreground shadow-glow-primary transition-all active:scale-[0.98] disabled:opacity-50"
         >
           {isLoading ? "등록 중..." : "등록 완료 🥊"}
         </button>

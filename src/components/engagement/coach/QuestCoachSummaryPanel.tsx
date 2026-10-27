@@ -104,10 +104,10 @@ const QuestCoachSummaryPanel = () => {
             <ClipboardList className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
               153 QUEST 몰입 관리
             </p>
-            <h3 className="mt-0.5 text-[14px] font-bold text-foreground">
+            <h3 className="mt-0.5 text-label font-bold text-foreground">
               {data?.branch ? `${data.branch} 회원 QUEST 활동` : "QUEST 몰입 데이터"}
             </h3>
           </div>
@@ -122,14 +122,14 @@ const QuestCoachSummaryPanel = () => {
       {expanded && (
         <div className="space-y-4 border-t border-border px-5 pt-4 pb-5">
           {isLoading ? (
-            <p className="text-[12px] text-muted-foreground">
+            <p className="text-label text-muted-foreground">
               QUEST 몰입 데이터를 불러오는 중…
             </p>
           ) : (
             <>
               {/* Summary tiles */}
               <div>
-                <p className="mb-2 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+                <p className="mb-2 text-micro font-bold uppercase tracking-wider text-muted-foreground">
                   이번 주 요약 (최근 7일)
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -138,11 +138,11 @@ const QuestCoachSummaryPanel = () => {
                       key={t.label}
                       className="rounded-card border border-border bg-background/40 px-3 py-2"
                     >
-                      <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <p className="flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
                         {t.icon}
                         {t.label}
                       </p>
-                      <p className="number-font mt-0.5 text-[14px] font-black text-foreground">
+                      <p className="number-font mt-0.5 text-label font-black text-foreground">
                         {t.value}
                       </p>
                     </div>
@@ -169,7 +169,7 @@ const QuestCoachSummaryPanel = () => {
 
               {/* 안내 문구 */}
               <div className="rounded-card border border-amber-400/30 bg-amber-400/5 p-3">
-                <ul className="space-y-1 text-[10.5px] leading-relaxed text-muted-foreground">
+                <ul className="space-y-1 text-micro leading-relaxed text-muted-foreground">
                   <li>※ 이 데이터는 공식 승급 심사가 아니라 몰입/복귀 관리용입니다.</li>
                   <li>※ 공식 레벨업은 기존 훈련 미션과 코치 승인 기준으로 진행됩니다.</li>
                   <li>※ 칭찬 대상은 오늘 코치님의 한마디가 필요한 회원입니다.</li>

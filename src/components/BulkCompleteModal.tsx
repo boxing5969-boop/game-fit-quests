@@ -98,7 +98,7 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-destructive" />
-            <h2 className="text-base font-bold text-foreground">회원 전체 완료 처리</h2>
+            <h2 className="text-body font-bold text-foreground">회원 전체 완료 처리</h2>
           </div>
           <button onClick={handleClose} className="rounded-full p-1.5 hover:bg-muted transition-colors">
             <X className="h-4 w-4 text-muted-foreground" />
@@ -108,9 +108,9 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
         <div className="max-h-[70vh] overflow-y-auto px-5 py-4">
           {/* Target member */}
           <div className="mb-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-            <p className="text-xs text-muted-foreground">대상 회원</p>
-            <p className="text-lg font-bold text-foreground">{memberName}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-label text-muted-foreground">대상 회원</p>
+            <p className="text-heading font-bold text-foreground">{memberName}</p>
+            <p className="text-label text-muted-foreground">
               현재: {RANK_LABELS[currentRank] || currentRank} 리그 · 레벨 {toGlobalLevel(currentRank, currentLevel)} · {currentXp} XP · 보스전 {bossesCleard}회
             </p>
           </div>
@@ -121,13 +121,13 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
               {/* Already master warning */}
               {isMaster40 && (
                 <div className="rounded-xl border border-reward/30 bg-reward/10 p-3">
-                  <p className="text-xs font-bold text-reward-foreground">⚠️ 이 회원은 이미 MASTER 40입니다</p>
+                  <p className="text-label font-bold text-reward-foreground">⚠️ 이 회원은 이미 MASTER 40입니다</p>
                 </div>
               )}
 
               {/* Checkboxes */}
               <div className="space-y-2.5">
-                <p className="text-sm font-bold text-foreground">완료 항목 선택</p>
+                <p className="text-body font-bold text-foreground">완료 항목 선택</p>
                 <CheckOption checked={doLevels} onChange={setDoLevels} icon={<Star className="h-4 w-4 text-primary" />} label="모든 레벨 완료 (40레벨)" desc="화이트~블랙 리그 전체" />
                 <CheckOption checked={doBosses} onChange={setDoBosses} icon={<Trophy className="h-4 w-4 text-reward-foreground" />} label="모든 보스전 합격 (4회)" desc="각 리그 타이틀매치 합격" />
                 <CheckOption checked={doBadges} onChange={setDoBadges} icon={<Award className="h-4 w-4 text-status-pending" />} label="모든 배지 지급" desc="전체 배지 자동 부여" />
@@ -137,24 +137,24 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
 
               {/* Reason */}
               <div>
-                <p className="text-sm font-bold text-foreground mb-2">실행 사유</p>
+                <p className="text-body font-bold text-foreground mb-2">실행 사유</p>
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {REASON_OPTIONS.map(r => (
                     <button key={r} onClick={() => { setReason(r); setCustomReason(""); }}
-                      className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${reason === r && !customReason ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+                      className={`rounded-full px-3 py-1 text-label font-bold transition-all ${reason === r && !customReason ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
                       {r}
                     </button>
                   ))}
                 </div>
                 <input value={customReason} onChange={e => setCustomReason(e.target.value)}
                   placeholder="직접 입력..."
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
               </div>
 
               {/* Preview */}
               <div className="rounded-xl border border-border bg-muted/50 p-3">
-                <p className="text-xs font-bold text-muted-foreground mb-2">📋 실행 미리보기</p>
-                <div className="space-y-1 text-xs text-foreground">
+                <p className="text-label font-bold text-muted-foreground mb-2">📋 실행 미리보기</p>
+                <div className="space-y-1 text-label text-foreground">
                   {doLevels && <p>✅ {levelsToComplete}개 레벨 완료 처리</p>}
                   {doBosses && <p>✅ 보스전 {Math.max(0, 4 - bossesCleard)}회 추가 합격</p>}
                   {doBadges && <p>✅ 전체 배지 지급</p>}
@@ -167,7 +167,7 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
 
               <button onClick={() => setStep("confirm")}
                 disabled={!doLevels && !doBosses && !doBadges && !doMaster}
-                className="w-full rounded-xl bg-destructive py-3 text-sm font-bold text-destructive-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+                className="w-full rounded-xl bg-destructive py-3 text-body font-bold text-destructive-foreground transition-all active:scale-[0.98] disabled:opacity-50">
                 다음: 최종 확인
               </button>
             </div>
@@ -180,8 +180,8 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="h-6 w-6 text-destructive flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-bold text-destructive">⚠️ 이 작업은 되돌리기 전까지 매우 큰 영향을 줍니다</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-body font-bold text-destructive">⚠️ 이 작업은 되돌리기 전까지 매우 큰 영향을 줍니다</p>
+                    <p className="text-label text-muted-foreground mt-1">
                       "{memberName}" 회원의 모든 리그/레벨/배지/보스전이 일괄 완료 처리됩니다.
                     </p>
                   </div>
@@ -189,22 +189,22 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
               </div>
 
               <div>
-                <p className="text-sm font-bold text-foreground mb-1">
+                <p className="text-body font-bold text-foreground mb-1">
                   확인을 위해 <span className="text-destructive">"{confirmRequired}"</span> 을 입력하세요
                 </p>
                 <input value={confirmText} onChange={e => setConfirmText(e.target.value)}
                   placeholder={confirmRequired}
-                  className="w-full rounded-lg border border-destructive/30 bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-destructive focus:outline-none" />
+                  className="w-full rounded-lg border border-destructive/30 bg-background px-3 py-2.5 text-body text-foreground placeholder:text-muted-foreground focus:border-destructive focus:outline-none" />
               </div>
 
               <div className="flex gap-2">
                 <button onClick={() => setStep("options")}
-                  className="flex-1 rounded-xl bg-secondary py-3 text-sm font-bold text-secondary-foreground active:scale-[0.98]">
+                  className="flex-1 rounded-xl bg-secondary py-3 text-body font-bold text-secondary-foreground active:scale-[0.98]">
                   뒤로
                 </button>
                 <button onClick={handleExecute}
                   disabled={confirmText !== confirmRequired}
-                  className="flex-1 rounded-xl bg-destructive py-3 text-sm font-bold text-destructive-foreground transition-all active:scale-[0.98] disabled:opacity-30">
+                  className="flex-1 rounded-xl bg-destructive py-3 text-body font-bold text-destructive-foreground transition-all active:scale-[0.98] disabled:opacity-30">
                   🔥 실행
                 </button>
               </div>
@@ -214,9 +214,9 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
           {/* Step 3: Executing */}
           {step === "executing" && (
             <div className="py-12 text-center">
-              <div className="mx-auto mb-4 h-16 w-16 animate-pulse rounded-2xl bg-primary/20 flex items-center justify-center text-3xl">⚙️</div>
+              <div className="mx-auto mb-4 h-16 w-16 animate-pulse rounded-2xl bg-primary/20 flex items-center justify-center text-title">⚙️</div>
               <p className="text-foreground font-bold">처리 중...</p>
-              <p className="text-xs text-muted-foreground mt-1">잠시만 기다려주세요</p>
+              <p className="text-label text-muted-foreground mt-1">잠시만 기다려주세요</p>
             </div>
           )}
 
@@ -224,13 +224,13 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
           {step === "done" && result && (
             <div className="space-y-4">
               <div className="text-center py-4">
-                <span className="text-5xl">🏆</span>
-                <p className="mt-3 text-lg font-bold text-foreground">완료!</p>
-                <p className="text-sm text-muted-foreground">{memberName} 회원의 전체 완료 처리가 실행되었습니다</p>
+                <span className="text-display">🏆</span>
+                <p className="mt-3 text-heading font-bold text-foreground">완료!</p>
+                <p className="text-body text-muted-foreground">{memberName} 회원의 전체 완료 처리가 실행되었습니다</p>
               </div>
 
               <div className="rounded-xl border border-status-complete/30 bg-status-complete/5 p-4 space-y-1.5">
-                <p className="text-xs font-bold text-status-complete mb-2">📋 실행 결과</p>
+                <p className="text-label font-bold text-status-complete mb-2">📋 실행 결과</p>
                 <ResultRow label="레벨 완료" value={`${result.levels_completed}개`} />
                 <ResultRow label="보스전 클리어" value={`${result.bosses_cleared}회`} />
                 <ResultRow label="배지 지급" value={`${result.badges_granted}개`} />
@@ -240,7 +240,7 @@ const BulkCompleteModal = ({ open, onClose, memberId, memberName, currentRank, c
               </div>
 
               <button onClick={handleClose}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-[0.98]">
+                className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground active:scale-[0.98]">
                 확인
               </button>
             </div>
@@ -265,14 +265,14 @@ const CheckOption = ({ checked, onChange, icon, label, desc }: {
     </div>
     {icon}
     <div className="flex-1">
-      <p className="text-sm font-bold text-foreground">{label}</p>
-      <p className="text-[10px] text-muted-foreground">{desc}</p>
+      <p className="text-body font-bold text-foreground">{label}</p>
+      <p className="text-micro text-muted-foreground">{desc}</p>
     </div>
   </button>
 );
 
 const ResultRow = ({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) => (
-  <div className="flex justify-between text-xs">
+  <div className="flex justify-between text-label">
     <span className="text-muted-foreground">{label}</span>
     <span className={highlight ? "font-bold text-primary" : "font-medium text-foreground"}>{value}</span>
   </div>

@@ -39,13 +39,13 @@ const ReturnRoundBanner = ({ onOpen }: Props) => {
         <Sparkles className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+        <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
           리턴 라운드 · {status.inactive_days}일 만의 복귀
         </p>
-        <p className="mt-0.5 truncate text-[13.5px] font-bold text-foreground">
+        <p className="mt-0.5 truncate text-label font-bold text-foreground">
           {copy.bannerHeadline}
         </p>
-        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+        <p className="mt-0.5 truncate text-micro text-muted-foreground">
           {claimed
             ? "오늘 보상은 이미 받았습니다. 기록은 계속 쌓입니다."
             : cooldown
@@ -54,14 +54,14 @@ const ReturnRoundBanner = ({ onOpen }: Props) => {
         </p>
       </div>
       <div className="shrink-0 text-right">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-reward">
+        <p className="text-micro font-bold uppercase tracking-wider text-reward">
           보상
         </p>
-        <p className="mt-0.5 text-[10px] font-bold text-reward">
+        <p className="mt-0.5 text-micro font-bold text-reward">
           {claimed || cooldown ? "—" : copy.rewardLine.replace(/QUEST XP /, "")}
         </p>
       </div>
-      <span className="ml-1 shrink-0 text-[11px] font-bold text-primary">
+      <span className="ml-1 shrink-0 text-micro font-bold text-primary">
         열기 →
       </span>
     </button>

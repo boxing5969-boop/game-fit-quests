@@ -424,7 +424,7 @@ const CharacterStudioPage = () => {
               <>
                 {/* Reward-tinted gem pill per spec
                     — rgba(246, 196, 83, 0.12) bg, #F6C453 text */}
-                <span className="inline-flex items-center gap-1 rounded-pill bg-[rgba(246,196,83,0.12)] px-3 py-1.5 text-caption font-bold text-[#F6C453]">
+                <span className="inline-flex items-center gap-1 rounded-pill bg-[rgba(246,196,83,0.12)] px-3 py-1.5 text-label font-bold text-[#F6C453]">
                   <Banknote className="h-3.5 w-3.5" />
                   <span className="number-font">{gemsDisplay}</span>
                 </span>
@@ -476,7 +476,7 @@ const CharacterStudioPage = () => {
               <button
                 onClick={handleSavePreset}
                 disabled={isSaving || isCurrentPreset}
-                className={`absolute top-4 right-4 z-10 inline-flex items-center gap-1 rounded-pill px-3 py-1.5 text-caption font-bold transition-all active:scale-95 disabled:opacity-50 ${
+                className={`absolute top-4 right-4 z-10 inline-flex items-center gap-1 rounded-pill px-3 py-1.5 text-label font-bold transition-all active:scale-95 disabled:opacity-50 ${
                   isCurrentPreset
                     ? "bg-[#22C55E]/15 text-[#22C55E]"
                     : "bg-primary text-primary-foreground shadow-glow-soft hover:shadow-glow-primary"
@@ -499,7 +499,7 @@ const CharacterStudioPage = () => {
               <button
                 onClick={handleSaveCustomization}
                 disabled={isSaving}
-                className="absolute top-4 right-4 z-10 inline-flex items-center gap-1 rounded-pill bg-primary px-3 py-1.5 text-caption font-bold text-primary-foreground shadow-glow-soft transition-all hover:shadow-glow-primary active:scale-95 disabled:opacity-50"
+                className="absolute top-4 right-4 z-10 inline-flex items-center gap-1 rounded-pill bg-primary px-3 py-1.5 text-label font-bold text-primary-foreground shadow-glow-soft transition-all hover:shadow-glow-primary active:scale-95 disabled:opacity-50"
               >
                 {isSaving ? "..." : (<><Save className="h-3 w-3" /> 저장</>)}
               </button>
@@ -522,7 +522,7 @@ const CharacterStudioPage = () => {
               </div>
 
               {/* Name */}
-              <h2 className="text-[24px] font-extrabold leading-tight text-foreground">
+              <h2 className="text-title font-extrabold leading-tight text-foreground">
                 {selectedChar.label}
               </h2>
 
@@ -536,7 +536,7 @@ const CharacterStudioPage = () => {
 
               {/* Milestone / current grade */}
               {currentMilestone && (
-                <p className="mt-1.5 text-caption text-muted-foreground">
+                <p className="mt-1.5 text-label text-muted-foreground font-medium">
                   {currentMilestone.icon} {currentMilestone.label}
                 </p>
               )}
@@ -562,7 +562,7 @@ const CharacterStudioPage = () => {
                   aria-selected={active}
                   onClick={() => setActiveTab(t.key)}
                   className={cn(
-                    "shrink-0 whitespace-nowrap rounded-pill px-4 py-1.5 text-body-sm font-bold transition-all active:scale-[0.98]",
+                    "shrink-0 whitespace-nowrap rounded-pill px-4 py-1.5 text-label font-bold transition-all active:scale-[0.98]",
                     active
                       ? "bg-card text-foreground shadow-elev-1"
                       : "text-muted-foreground hover:text-foreground",
@@ -688,11 +688,11 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
     <div className="space-y-4 animate-slide-up">
       {!hasCharacter && (
         <div className="rounded-card border border-dashed border-primary/40 bg-primary/5 p-6 text-center">
-          <span className="text-4xl">🥊</span>
-          <p className="mt-2 text-body-sm font-bold text-foreground">
+          <span className="text-display">🥊</span>
+          <p className="mt-2 text-label font-bold text-foreground">
             아직 캐릭터를 선택하지 않았어요
           </p>
-          <p className="text-caption text-muted-foreground mt-1">
+          <p className="text-label text-muted-foreground mt-1 font-medium">
             "복서" 탭에서 마음에 드는 복서를 골라보세요.
           </p>
         </div>
@@ -703,19 +703,19 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
       <div className="rounded-card border border-border bg-card p-4 shadow-elev-1 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(246,196,83,0.12)] text-xl">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(246,196,83,0.12)] text-heading">
               🏆
             </div>
             <div className="min-w-0">
-              <p className="text-caption text-muted-foreground">내 챔피언 머니</p>
-              <p className="text-[20px] font-extrabold leading-tight text-foreground number-font">
+              <p className="text-label text-muted-foreground font-medium">내 챔피언 머니</p>
+              <p className="text-heading font-extrabold leading-tight text-foreground number-font">
                 {isAdminWallet ? "∞" : walletBalance.toLocaleString()}
               </p>
             </div>
           </div>
           <button
             onClick={onGoCustomize}
-            className="shrink-0 rounded-pill bg-primary px-3.5 py-2 text-caption font-bold text-primary-foreground active:scale-95"
+            className="shrink-0 rounded-pill bg-primary px-3.5 py-2 text-label font-bold text-primary-foreground active:scale-95"
           >
             꾸미기 하러가기
           </button>
@@ -723,11 +723,11 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
         {promotion && promotion.target > 0 && (
           <div className="space-y-1.5">
             <div className="flex items-baseline justify-between">
-              <span className="text-body-sm font-bold text-foreground">
+              <span className="text-label font-bold text-foreground">
                 다음 레벨까지 출석{" "}
                 <span className="number-font">{Math.max(0, Math.ceil(promotion.target - promotion.current))}</span>회
               </span>
-              <span className="text-caption text-muted-foreground number-font">
+              <span className="text-label text-muted-foreground number-font font-medium">
                 {Math.floor(promotion.current)} / {promotion.target}회
               </span>
             </div>
@@ -737,7 +737,7 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
                 style={{ width: `${Math.min(100, (promotion.current / promotion.target) * 100)}%` }}
               />
             </div>
-            <p className="text-caption text-muted-foreground">
+            <p className="text-label text-muted-foreground font-medium">
               {streakDays > 0 ? `연속 출석 ${streakDays}일 🔥` : ""}
               {streakDays > 0 && promotion.hint ? " · " : ""}
               {promotion.hint || ""}
@@ -747,12 +747,12 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
         {/* 🥊 오삼코치 오늘의 목표 — 오늘 받은 메시지가 있을 때만 (2026-10-15) */}
         {coachToday && (
           <div className="rounded-xl border border-primary/20 bg-primary/[0.06] px-3.5 py-3">
-            <p className="text-caption font-bold text-primary">
+            <p className="text-label font-bold text-primary">
               {coachToday.kind === "comeback" ? "오삼코치 한마디" : "오늘의 목표"} · 오삼코치
             </p>
-            <p className="mt-0.5 text-body-sm font-bold leading-snug text-foreground">{coachToday.body}</p>
+            <p className="mt-0.5 text-label font-bold leading-snug text-foreground">{coachToday.body}</p>
             {coachToday.detail && (
-              <p className="mt-0.5 text-caption leading-relaxed text-muted-foreground">{coachToday.detail}</p>
+              <p className="mt-0.5 text-label leading-relaxed text-muted-foreground font-medium">{coachToday.detail}</p>
             )}
           </div>
         )}
@@ -778,7 +778,7 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
           accent="primary"
           icon={
             currentMilestone?.icon ? (
-              <span className="text-lg">{currentMilestone.icon}</span>
+              <span className="text-heading">{currentMilestone.icon}</span>
             ) : (
               <Crown className="h-5 w-5" />
             )
@@ -790,17 +790,17 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
       {nextMilestone && (
         <div className="rounded-card border border-primary/25 bg-gradient-to-r from-primary/5 to-reward/5 p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-heading">
               {nextMilestone.icon}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-body-sm font-bold text-foreground">
+              <p className="text-label font-bold text-foreground">
                 다음 해금: {nextMilestone.label}
               </p>
-              <p className="text-caption text-muted-foreground">
+              <p className="text-label text-muted-foreground font-medium">
                 {nextMilestone.description}
               </p>
-              <p className="text-[10px] text-primary mt-0.5">
+              <p className="text-micro text-primary mt-0.5">
                 {LEAGUE_LABELS[nextMilestone.league]} 리그 Lv.
                 <span className="number-font">
                   {toGlobalLevel(nextMilestone.league, nextMilestone.levelRange[0])}
@@ -829,10 +829,10 @@ function MyCharacterTab({ currentStyle, league, level, navigate, currentMileston
           <Crown className="h-5 w-5 text-[#F6C453]" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-body-sm font-bold text-foreground">
+          <p className="text-label font-bold text-foreground">
             명예의 전당
           </p>
-          <p className="text-caption text-muted-foreground">
+          <p className="text-label text-muted-foreground font-medium">
             내 캐릭터가 전시됩니다
           </p>
         </div>
@@ -911,8 +911,8 @@ function InventorySection({
           <Banknote className="h-5 w-5 text-[#F6C453]" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-body-sm font-bold text-foreground">인벤토리</p>
-          <p className="text-caption text-muted-foreground">
+          <p className="text-label font-bold text-foreground">인벤토리</p>
+          <p className="text-label text-muted-foreground font-medium">
             보유 <span className="number-font font-bold text-foreground">{totalOwned}</span>개 · 장착{" "}
             <span className="number-font font-bold text-primary">{equippedCount}</span>/4
           </p>
@@ -922,11 +922,11 @@ function InventorySection({
       {/* 전체 인벤토리 비어있을 때 */}
       {totalOwned === 0 && (
         <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5 text-center">
-          <span className="text-3xl">📦</span>
-          <p className="mt-2 text-[12px] font-bold text-foreground">
+          <span className="text-title">📦</span>
+          <p className="mt-2 text-label font-bold text-foreground">
             아직 구매한 아이템이 없어요
           </p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
+          <p className="mt-0.5 text-micro text-muted-foreground">
             꾸미기 탭에서 💵 챔피언 머니로 이펙트·프레임·칭호를 구매하면 여기에 쌓입니다.
           </p>
         </div>
@@ -936,8 +936,8 @@ function InventorySection({
       {ownedPresets.length > 0 && (
         <div className="rounded-xl border border-border bg-card/50 p-3">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-foreground">🥊 보유 복서</span>
-            <span className="number-font text-[11px] font-bold text-muted-foreground">
+            <span className="text-micro font-bold text-foreground">🥊 보유 복서</span>
+            <span className="number-font text-micro font-bold text-muted-foreground">
               {ownedPresets.length}
             </span>
           </div>
@@ -945,7 +945,7 @@ function InventorySection({
             {ownedPresets.slice(0, 12).map((c) => (
               <span
                 key={c.style}
-                className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-foreground/85"
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-micro font-medium text-foreground/85"
                 title={c.label}
               >
                 {c.requirement === "hall_of_fame" && <Crown className="h-2.5 w-2.5 text-reward" />}
@@ -953,10 +953,10 @@ function InventorySection({
               </span>
             ))}
             {ownedPresets.length > 12 && (
-              <span className="text-[10px] text-muted-foreground">+{ownedPresets.length - 12}</span>
+              <span className="text-micro text-muted-foreground">+{ownedPresets.length - 12}</span>
             )}
           </div>
-          <p className="mt-2 text-[10px] text-muted-foreground">
+          <p className="mt-2 text-micro text-muted-foreground">
             교체하려면 "복서" 탭에서 선택해주세요.
           </p>
         </div>
@@ -971,10 +971,10 @@ function InventorySection({
         return (
           <div key={cat} className="rounded-xl border border-border bg-card/50 p-3">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-[11px] font-bold text-foreground">
+              <span className="text-micro font-bold text-foreground">
                 {meta.icon} {meta.label}
               </span>
-              <span className="number-font text-[10px] text-muted-foreground">
+              <span className="number-font text-micro text-muted-foreground">
                 {items.length}개 보유
               </span>
             </div>
@@ -1029,7 +1029,7 @@ function InventorySection({
                     <OptionPreview category={cat} optionKey={key} />
                     <span
                       className={cn(
-                        "w-full truncate text-center text-[9px] font-bold leading-tight",
+                        "w-full truncate text-center text-micro font-bold leading-tight",
                         isEquipped
                           ? isHof
                             ? "text-reward"
@@ -1042,7 +1042,7 @@ function InventorySection({
                       {label}
                     </span>
                     {isEquipped && (
-                      <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-primary-foreground">
+                      <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-micro font-black uppercase tracking-wider text-primary-foreground">
                         장착 중
                       </span>
                     )}
@@ -1161,13 +1161,13 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
             <button
               key={cat.code}
               onClick={() => setActiveCat(cat.code)}
-              className={`relative flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all active:scale-[0.97] ${
+              className={`relative flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-label font-bold transition-all active:scale-[0.97] ${
                 isActive
                   ? "bg-background text-primary shadow-elev-1"
                   : "bg-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span className="text-sm">{cat.icon}</span>
+              <span className="text-body">{cat.icon}</span>
               <span>{cat.label}</span>
               {hasSelection && (
                 <span className={`ml-0.5 h-1.5 w-1.5 rounded-full ${isActive ? "bg-primary" : "bg-primary/60"}`} />
@@ -1244,7 +1244,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
                 <OptionPreview category={activeCat} optionKey={opt.key} />
               </div>
               <span
-                className={`text-[10px] font-bold truncate w-full text-center leading-tight ${
+                className={`text-micro font-bold truncate w-full text-center leading-tight ${
                   visuallyLocked ? "text-muted-foreground" : isHof ? "text-reward" : "text-foreground/80"
                 }`}
               >
@@ -1252,32 +1252,32 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
               </span>
               {/* 가격/상태 — 아이템 상점 톤. 소유자는 "보유", 미소유 유료는 가격, 0원은 FREE. */}
               {opt.price > 0 && owned ? (
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold leading-none text-success">
+                <span className="inline-flex items-center gap-0.5 text-micro font-bold leading-none text-success">
                   <Check className="h-2.5 w-2.5" />
                   보유
                 </span>
               ) : opt.price > 0 ? (
-                <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold leading-none ${isHof ? (visuallyLocked ? "text-muted-foreground" : "text-reward") : visuallyLocked ? "text-muted-foreground" : "text-foreground/70"}`}>
+                <span className={`inline-flex items-center gap-0.5 text-micro font-bold leading-none ${isHof ? (visuallyLocked ? "text-muted-foreground" : "text-reward") : visuallyLocked ? "text-muted-foreground" : "text-foreground/70"}`}>
                   <Banknote className="h-2.5 w-2.5" />
                   <span className="number-font">{opt.price.toLocaleString()}</span>
                 </span>
               ) : (
-                <span className="text-[9px] font-bold leading-none text-success">FREE</span>
+                <span className="text-micro font-bold leading-none text-success">FREE</span>
               )}
               {/* 해금 조건 하단 pill — 우선순위: HoF > Black > Level
                   admin 에게도 정보 제공을 위해 visuallyLocked 와 무관하게 표시 */}
               {requiresHof ? (
-                <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-reward/90 px-1.5 py-0.5 text-[9px] font-bold leading-none text-[hsl(30_60%_12%)]">
+                <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-reward/90 px-1.5 py-0.5 text-micro font-bold leading-none text-[hsl(30_60%_12%)]">
                   <Crown className="h-2 w-2" />
                   명예의 전당 전용
                 </span>
               ) : requiresBlack ? (
-                <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-foreground/85 px-1.5 py-0.5 text-[9px] font-bold leading-none text-background">
+                <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-foreground/85 px-1.5 py-0.5 text-micro font-bold leading-none text-background">
                   <Lock className="h-2 w-2" />
                   블랙리그 전용
                 </span>
               ) : requiresLevel && unlock.requiredLevel !== null ? (
-                <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-foreground/85 px-1.5 py-0.5 text-[9px] font-bold leading-none text-background">
+                <span className="absolute bottom-1 left-1 right-1 mx-auto inline-flex items-center justify-center gap-0.5 rounded-full bg-foreground/85 px-1.5 py-0.5 text-micro font-bold leading-none text-background">
                   <Lock className="h-2 w-2" />
                   Lv.{unlock.requiredLevel} 해금
                 </span>
@@ -1290,19 +1290,19 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
       {/* ── 후광 섹션 (마스터 전용) ── */}
       <div className={`rounded-xl border-2 p-3 space-y-3 ${isMaster ? "border-amber-500/40 bg-amber-500/5" : "border-border bg-muted/20 opacity-50"}`}>
         <div className="flex items-center gap-2">
-          <span className="text-base">👑</span>
-          <span className="text-xs font-bold text-foreground">마스터 후광</span>
+          <span className="text-body">👑</span>
+          <span className="text-label font-bold text-foreground">마스터 후광</span>
           {!isMaster && (
-            <span className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="ml-auto flex items-center gap-1 text-micro text-muted-foreground">
               <Lock className="h-3 w-3" />
               블랙 마스터 달성 시 해금
             </span>
           )}
           {isMaster && customization.halo && customization.halo !== "none" && (
-            <span className="ml-auto text-[10px] text-amber-500 font-bold">적용 중</span>
+            <span className="ml-auto text-micro text-amber-500 font-bold">적용 중</span>
           )}
         </div>
-        <p className="text-[10px] leading-snug text-muted-foreground">
+        <p className="text-micro leading-snug text-muted-foreground">
           ※ 오라 탭의 <b className="text-reward">명예의 전당 전용</b> 오라와는 별개 카테고리입니다.
         </p>
         <div className="grid grid-cols-5 gap-2">
@@ -1336,7 +1336,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
                   </span>
                 )}
                 <OptionPreview category="halo" optionKey={opt.key} />
-                <span className="text-[8px] font-bold text-foreground/70 truncate w-full text-center">{opt.label}</span>
+                <span className="text-micro font-bold text-foreground/70 truncate w-full text-center">{opt.label}</span>
               </button>
             );
           })}
@@ -1346,7 +1346,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
       {activeCount > 0 && (
         <button
           onClick={() => onChange({})}
-          className="w-full rounded-xl border border-border bg-secondary/50 py-2.5 text-xs font-medium text-muted-foreground active:scale-[0.98] transition-all"
+          className="w-full rounded-xl border border-border bg-secondary/50 py-2.5 text-label font-medium text-muted-foreground active:scale-[0.98] transition-all"
         >
           전체 초기화 ({activeCount}개 적용 중)
         </button>
@@ -1422,8 +1422,8 @@ function CustomizationPurchaseModal({
 
         {/* 이름 + 카테고리 */}
         <div className="mb-4 text-center">
-          <h2 className="text-xl font-black text-foreground">{displayLabel}</h2>
-          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-muted/70 px-3 py-0.5 text-xs font-bold text-muted-foreground">
+          <h2 className="text-heading font-black text-foreground">{displayLabel}</h2>
+          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-muted/70 px-3 py-0.5 text-label font-bold text-muted-foreground">
             {catMeta?.icon}
             <span>{catMeta?.label}</span>
             {isHof && (
@@ -1438,20 +1438,20 @@ function CustomizationPurchaseModal({
 
         {/* 가격 내역 — admin 은 ∞ / 지갑 무차감 표시 */}
         <div className="mb-5 space-y-2 rounded-2xl bg-muted/50 p-3.5">
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-body">
             <span className="text-muted-foreground">가격</span>
             <span className="font-black text-foreground">
               💵 {option.price.toLocaleString()}
             </span>
           </div>
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-body">
             <span className="text-muted-foreground">현재 잔액</span>
             <span className="font-bold">
               {isAdmin ? "∞" : walletBalance.toLocaleString()}
             </span>
           </div>
           {!isAdmin && (
-            <div className="flex justify-between border-t border-border/50 pt-2 text-sm">
+            <div className="flex justify-between border-t border-border/50 pt-2 text-body">
               <span className="text-muted-foreground">구매 후 잔액</span>
               <span
                 className={`font-bold ${
@@ -1465,7 +1465,7 @@ function CustomizationPurchaseModal({
         </div>
 
         {!canAfford && !isAdmin && (
-          <div className="mb-3 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-center text-[12px] font-bold text-destructive">
+          <div className="mb-3 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-center text-label font-bold text-destructive">
             챔피언 머니가 {(option.price - walletBalance).toLocaleString()}원 부족합니다
           </div>
         )}
@@ -1475,7 +1475,7 @@ function CustomizationPurchaseModal({
           <button
             onClick={onCancel}
             disabled={isPurchasing}
-            className="flex-1 rounded-2xl border border-border bg-secondary py-3.5 text-sm font-bold text-secondary-foreground transition-all active:scale-95 disabled:opacity-50"
+            className="flex-1 rounded-2xl border border-border bg-secondary py-3.5 text-body font-bold text-secondary-foreground transition-all active:scale-95 disabled:opacity-50"
           >
             취소
           </button>
@@ -1483,7 +1483,7 @@ function CustomizationPurchaseModal({
             onClick={onConfirm}
             disabled={isPurchasing || !canAfford}
             className={cn(
-              "flex-[2] rounded-2xl py-3.5 text-sm font-bold transition-all active:scale-95 disabled:opacity-50",
+              "flex-[2] rounded-2xl py-3.5 text-body font-bold transition-all active:scale-95 disabled:opacity-50",
               canAfford
                 ? "bg-gradient-to-r from-primary to-primary/85 text-primary-foreground shadow-[0_4px_14px_-4px_rgba(217,54,32,0.6)]"
                 : "bg-muted text-muted-foreground",
@@ -1519,7 +1519,7 @@ function OptionPreview({ category, optionKey }: { category: string; optionKey: s
       );
     }
     const emoji = EFFECT_EMOJIS[optionKey] || "✨";
-    return <span className="text-2xl">{emoji}</span>;
+    return <span className="text-title">{emoji}</span>;
   }
   if (category === "frame") {
     const colors: Record<string, string> = {
@@ -1557,7 +1557,7 @@ function OptionPreview({ category, optionKey }: { category: string; optionKey: s
   }
   if (category === "title") {
     const info = TITLE_LABELS[optionKey];
-    return <span className={`text-sm font-bold ${info?.color || "text-foreground"}`}>{info?.text || optionKey}</span>;
+    return <span className={`text-body font-bold ${info?.color || "text-foreground"}`}>{info?.text || optionKey}</span>;
   }
   if (category === "aura") {
     const tier = AURA_CONFIG[optionKey];
@@ -1585,7 +1585,7 @@ function OptionPreview({ category, optionKey }: { category: string; optionKey: s
       />
     );
   }
-  return <span className="text-lg">❓</span>;
+  return <span className="text-heading">❓</span>;
 }
 
 // ========== PRESET TAB ==========
@@ -1647,7 +1647,7 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
           <button
             key={tab.key}
             onClick={() => setActiveFilter(tab.key)}
-            className={`flex-shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all whitespace-nowrap ${
+            className={`flex-shrink-0 rounded-lg px-2.5 py-1.5 text-micro font-bold transition-all whitespace-nowrap ${
               activeFilter === tab.key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
@@ -1684,15 +1684,15 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
           let actionEl: React.ReactNode;
           if (isLocked) {
             actionEl = char.requirement === "hall_of_fame"
-              ? <div className="w-full text-center py-2 rounded-xl bg-yellow-500/10 text-yellow-500 text-xs font-bold">👑 헌액자 전용</div>
-              : <div className="w-full text-center py-2 rounded-xl bg-muted text-muted-foreground text-xs font-bold">🔒 리그 미달성</div>;
+              ? <div className="w-full text-center py-2 rounded-xl bg-yellow-500/10 text-yellow-500 text-label font-bold">👑 헌액자 전용</div>
+              : <div className="w-full text-center py-2 rounded-xl bg-muted text-muted-foreground text-label font-bold">🔒 리그 미달성</div>;
           } else if (isApplied) {
-            actionEl = <div className="w-full text-center py-2 rounded-xl bg-primary/20 text-primary text-xs font-bold">✅ 적용됨</div>;
+            actionEl = <div className="w-full text-center py-2 rounded-xl bg-primary/20 text-primary text-label font-bold">✅ 적용됨</div>;
           } else if (isOwned) {
             actionEl = (
               <button
                 onClick={(e) => { e.stopPropagation(); onApply(char); }}
-                className="w-full rounded-xl bg-secondary border border-primary/20 text-foreground py-2 text-xs font-bold active:scale-95 transition-all hover:bg-primary/10"
+                className="w-full rounded-xl bg-secondary border border-primary/20 text-foreground py-2 text-label font-bold active:scale-95 transition-all hover:bg-primary/10"
               >
                 ⚡ 적용하기
               </button>
@@ -1701,7 +1701,7 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
             actionEl = (
               <button
                 onClick={(e) => { e.stopPropagation(); onApply(char); }}
-                className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2 text-xs font-bold active:scale-95 transition-all"
+                className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2 text-label font-bold active:scale-95 transition-all"
               >
                 🎁 무료 획득
               </button>
@@ -1712,7 +1712,7 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
               <button
                 onClick={(e) => { e.stopPropagation(); onPurchaseClick(char); }}
                 disabled={!canAfford && !isAdmin}
-                className={`w-full rounded-xl py-2 text-xs font-bold active:scale-95 transition-all disabled:opacity-40 ${
+                className={`w-full rounded-xl py-2 text-label font-bold active:scale-95 transition-all disabled:opacity-40 ${
                   isHof
                     ? "bg-gradient-to-r from-yellow-500 to-amber-500 text-black"
                     : (leagueBtnGradient[char.league] ?? "bg-gradient-to-r from-gray-400 to-gray-500 text-white")
@@ -1738,11 +1738,11 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
               {/* Top row: league badge + status icon */}
               <div className="flex items-start justify-between p-2.5 pb-0 z-10">
                 {isHof ? (
-                  <span className="bg-gradient-to-r from-yellow-500 to-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full shadow-elev-1 leading-none whitespace-nowrap">
+                  <span className="bg-gradient-to-r from-yellow-500 to-amber-500 text-black text-micro font-black px-2 py-0.5 rounded-full shadow-elev-1 leading-none whitespace-nowrap">
                     👑 ETERNAL
                   </span>
                 ) : (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full leading-none ${
+                  <span className={`text-micro font-bold px-2 py-0.5 rounded-full leading-none ${
                     char.league === "black" ? "bg-gray-900/80 text-amber-400" :
                     char.league === "red"   ? "bg-red-100 text-red-600" :
                     char.league === "blue"  ? "bg-blue-100 text-blue-600" :
@@ -1771,12 +1771,12 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
               {/* HOF particles */}
               {isHof && !isLocked && (
                 <>
-                  <span className="absolute top-8 left-2 text-xs animate-bounce pointer-events-none z-10" style={{ animationDelay: "0ms" }}>✨</span>
-                  <span className="absolute top-8 right-2 text-xs animate-bounce pointer-events-none z-10" style={{ animationDelay: "200ms" }}>⭐</span>
+                  <span className="absolute top-8 left-2 text-label animate-bounce pointer-events-none z-10" style={{ animationDelay: "0ms" }}>✨</span>
+                  <span className="absolute top-8 right-2 text-label animate-bounce pointer-events-none z-10" style={{ animationDelay: "200ms" }}>⭐</span>
                 </>
               )}
               {isBlackNonHof && !isLocked && (
-                <span className="absolute top-8 right-2 text-xs animate-bounce pointer-events-none z-10" style={{ animationDelay: "0ms", animationDuration: "1.4s" }}>✨</span>
+                <span className="absolute top-8 right-2 text-label animate-bounce pointer-events-none z-10" style={{ animationDelay: "0ms", animationDuration: "1.4s" }}>✨</span>
               )}
 
               {/* Character image */}
@@ -1786,12 +1786,12 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
 
               {/* Name + price label + action button */}
               <div className="p-2.5 pt-1 space-y-1.5">
-                <p className={`text-sm font-bold text-center leading-tight line-clamp-2 ${labelColor}`}>
+                <p className={`text-body font-bold text-center leading-tight line-clamp-2 ${labelColor}`}>
                   {char.label}
                 </p>
                 {/* 가격 라벨 — 상태(잠김/적용중/보유/구매가능) 무관하게 항상 노출.
                     FREE 는 녹색, 유료는 💵 {가격}, 보유한 유료는 "· 보유" 꼬리표 추가. */}
-                <div className="flex items-center justify-center gap-1 text-[10px] font-bold leading-none">
+                <div className="flex items-center justify-center gap-1 text-micro font-bold leading-none">
                   {char.price === 0 ? (
                     <span className="text-emerald-500">🎁 FREE</span>
                   ) : (
@@ -1812,7 +1812,7 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
         })}
       </div>
 
-      <p className="text-[10px] text-center text-muted-foreground pb-2">
+      <p className="text-micro text-center text-muted-foreground pb-2">
         카드를 눌러 미리보기 · 버튼으로 적용/구매
       </p>
     </div>
@@ -1863,25 +1863,25 @@ function PurchaseConfirmModal({ char, walletBalance, isAdmin, isPurchasing, onCo
 
         {/* Name + league */}
         <div className="text-center mb-4">
-          <h2 className="text-xl font-black text-foreground">{char.label}</h2>
-          <span className={`inline-block mt-1.5 rounded-full px-3 py-0.5 text-xs font-bold ${LEAGUE_COLORS[char.league]}`}>
+          <h2 className="text-heading font-black text-foreground">{char.label}</h2>
+          <span className={`inline-block mt-1.5 rounded-full px-3 py-0.5 text-label font-bold ${LEAGUE_COLORS[char.league]}`}>
             {isHof ? "👑 명예의 전당" : LEAGUE_LABELS[char.league] + " 리그"}
           </span>
         </div>
 
         {/* Price breakdown */}
         <div className="rounded-2xl bg-muted/50 p-3.5 mb-5 space-y-2">
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-body">
             <span className="text-muted-foreground">가격</span>
             <span className="font-black text-foreground">💵 {char.price.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-body">
             <span className="text-muted-foreground">현재 잔액</span>
             <span className="font-bold">{isAdmin ? "∞" : walletBalance.toLocaleString()}</span>
           </div>
           {!isAdmin && (
             <>
-              <div className="border-t border-border/50 pt-2 flex justify-between text-sm">
+              <div className="border-t border-border/50 pt-2 flex justify-between text-body">
                 <span className="text-muted-foreground">구매 후 잔액</span>
                 <span className={`font-bold ${afterBalance < 0 ? "text-destructive" : "text-foreground"}`}>
                   {afterBalance.toLocaleString()}
@@ -1896,14 +1896,14 @@ function PurchaseConfirmModal({ char, walletBalance, isAdmin, isPurchasing, onCo
           <button
             onClick={onCancel}
             disabled={isPurchasing}
-            className="flex-1 rounded-2xl border border-border bg-secondary py-3.5 text-sm font-bold text-secondary-foreground active:scale-95 transition-all disabled:opacity-50"
+            className="flex-1 rounded-2xl border border-border bg-secondary py-3.5 text-body font-bold text-secondary-foreground active:scale-95 transition-all disabled:opacity-50"
           >
             취소
           </button>
           <button
             onClick={onConfirm}
             disabled={isPurchasing || (!isAdmin && !canAfford)}
-            className={`flex-[2] rounded-2xl py-3.5 text-sm font-bold active:scale-95 transition-all disabled:opacity-50 ${confirmBtnClass}`}
+            className={`flex-[2] rounded-2xl py-3.5 text-body font-bold active:scale-95 transition-all disabled:opacity-50 ${confirmBtnClass}`}
           >
             {isPurchasing ? (
               <span className="flex items-center justify-center gap-2">
@@ -1928,7 +1928,7 @@ function GrowthTab({ league, level }: { league: string; level: number }) {
 
   return (
     <div className="space-y-3 animate-slide-up">
-      <p className="text-xs text-muted-foreground">레벨을 올리고 새로운 캐릭터 보상을 해금하세요!</p>
+      <p className="text-label text-muted-foreground">레벨을 올리고 새로운 캐릭터 보상을 해금하세요!</p>
 
       {UNLOCK_MILESTONES.map((m, idx) => {
         const mIdx = { white: 0, blue: 1, red: 2, black: 3 }[m.league] ?? 0;
@@ -1948,17 +1948,17 @@ function GrowthTab({ league, level }: { league: string; level: number }) {
             }`}
           >
             <div className="flex items-center gap-3">
-              <span className="text-xl">{m.icon}</span>
+              <span className="text-heading">{m.icon}</span>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-foreground">{m.label}</span>
-                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${LEAGUE_COLORS[m.league]}`}>
+                  <span className="text-body font-bold text-foreground">{m.label}</span>
+                  <span className={`rounded-full px-1.5 py-0.5 text-micro font-bold ${LEAGUE_COLORS[m.league]}`}>
                     {LEAGUE_LABELS[m.league]} Lv.{toGlobalLevel(m.league, m.levelRange[0])}-{toGlobalLevel(m.league, m.levelRange[1])}
                   </span>
                 </div>
-                <p className="text-[11px] text-muted-foreground mt-0.5">{m.description}</p>
+                <p className="text-micro text-muted-foreground mt-0.5">{m.description}</p>
                 {m.unlockedPartKeys.length > 0 && (
-                  <p className="text-[10px] text-primary mt-0.5">
+                  <p className="text-micro text-primary mt-0.5">
                     {isCompleted ? "✅" : isCurrent ? "🔓" : "🔒"} 보상 {m.unlockedPartKeys.length}개
                   </p>
                 )}
@@ -1988,12 +1988,12 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
           : "border-border bg-muted/20"
       }`}>
         <div className="flex items-center gap-3">
-          <span className="text-3xl">{isBlack ? "🌈" : "💫"}</span>
+          <span className="text-title">{isBlack ? "🌈" : "💫"}</span>
           <div>
-            <p className="text-sm font-bold text-foreground">
+            <p className="text-body font-bold text-foreground">
               {isMaster ? "마스터 후광" : isBlack ? "블랙 리그 후광" : "오라 미해금"}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-label text-muted-foreground">
               {isBlack
                 ? isMaster ? "최고 등급 프레스티지 효과가 적용됩니다" : "블랙 리그 전용 후광이 활성화됩니다"
                 : "블랙 리그 도달 시 자동으로 레인보우 후광이 활성화됩니다"
@@ -2009,13 +2009,13 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
                 style={{ width: `${(leagueIdx / 3) * 100}%` }}
               />
             </div>
-            <span className="text-[10px] text-muted-foreground">{LEAGUE_LABELS[league]} → 블랙</span>
+            <span className="text-micro text-muted-foreground">{LEAGUE_LABELS[league]} → 블랙</span>
           </div>
         )}
       </div>
 
       <div>
-        <h3 className="text-sm font-bold text-foreground mb-2">리그별 프레스티지</h3>
+        <h3 className="text-body font-bold text-foreground mb-2">리그별 프레스티지</h3>
         <div className="space-y-2">
           {[
             { l: "white", label: "화이트", desc: "기본 캐릭터", icon: "⬜", active: true },
@@ -2026,10 +2026,10 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
             <div key={tier.l} className={`flex items-center gap-3 rounded-xl p-3 transition-all ${
               tier.active ? "bg-card border border-border" : "bg-muted/20 opacity-50"
             }`}>
-              <span className="text-lg">{tier.icon}</span>
+              <span className="text-heading">{tier.icon}</span>
               <div className="flex-1">
-                <p className="text-xs font-bold text-foreground">{tier.label} 리그</p>
-                <p className="text-[10px] text-muted-foreground">{tier.desc}</p>
+                <p className="text-label font-bold text-foreground">{tier.label} 리그</p>
+                <p className="text-micro text-muted-foreground">{tier.desc}</p>
               </div>
               {tier.active ? <Check className="h-3.5 w-3.5 text-status-complete" /> : <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
             </div>

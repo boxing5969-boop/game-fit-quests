@@ -103,7 +103,7 @@ const Bubble = ({
   const m = v.msg;
   const emoji = isEmojiOnly(m.body);
   const one = m.mine && unread && (
-    <span className="mb-0.5 shrink-0 text-[11px] font-black leading-none text-primary">
+    <span className="mb-0.5 shrink-0 text-micro font-black leading-none text-primary">
       <span aria-hidden>1</span>
       <span className="sr-only">안 읽음</span>
     </span>
@@ -112,7 +112,7 @@ const Bubble = ({
     <>
       {v.dayLabel && (
         <div className="my-3 flex justify-center">
-          <span className="rounded-full bg-secondary px-3 py-1 text-[11.5px] font-semibold text-muted-foreground">{v.dayLabel}</span>
+          <span className="rounded-full bg-secondary px-3 py-1 text-micro font-semibold text-muted-foreground">{v.dayLabel}</span>
         </div>
       )}
       <div className={cn("flex items-end gap-2", m.mine ? "justify-end" : "justify-start", v.groupStart ? "mt-2.5" : "mt-[3px]")}>
@@ -121,11 +121,11 @@ const Bubble = ({
           <div className="flex min-w-0 max-w-full items-end gap-1.5">
             {one}
             {emoji ? (
-              <span className="px-0.5 text-[40px] leading-[1.15]">{m.body.trim()}</span>
+              <span className="px-0.5 text-display leading-[1.15]">{m.body.trim()}</span>
             ) : (
               <span
                 className={cn(
-                  "min-w-0 whitespace-pre-wrap px-3.5 py-2 text-[15px] leading-[1.42] [overflow-wrap:anywhere]",
+                  "min-w-0 whitespace-pre-wrap px-3.5 py-2 text-body leading-[1.42] [overflow-wrap:anywhere]",
                   m.mine
                     ? "bg-foreground text-background"
                     : "bg-card text-foreground ring-1 ring-black/[0.05] dark:bg-secondary dark:ring-white/[0.06]",
@@ -137,12 +137,12 @@ const Bubble = ({
             )}
           </div>
           {v.groupEnd ? (
-            <span className="mt-1 px-1 text-[10.5px] text-muted-foreground">
+            <span className="mt-1 px-1 text-micro text-muted-foreground">
               {dmBubbleTime(m.created_at)}
               {seen ? " · 읽음" : ""}
             </span>
           ) : seen ? (
-            <span className="mt-1 px-1 text-[10.5px] text-muted-foreground">읽음</span>
+            <span className="mt-1 px-1 text-micro text-muted-foreground">읽음</span>
           ) : null}
         </div>
       </div>
@@ -438,11 +438,11 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
             <DmAvatar person={peer} size={38} />
             <span className="min-w-0">
               <span className="flex min-w-0 items-center gap-1.5">
-                <span className="truncate text-[16px] font-bold text-foreground">{peer ? name : " "}</span>
+                <span className="truncate text-body font-bold text-foreground">{peer ? name : " "}</span>
                 {peer && peer.rank !== "champion" && <NameBadge league={peer.rank} className="h-[18px] w-[18px]" />}
                 <DmKindBadge kind={peer?.kind} />
               </span>
-              <span className="block truncate text-[12px] text-muted-foreground">{dmPersonLine(peer)}</span>
+              <span className="block truncate text-label text-muted-foreground">{dmPersonLine(peer)}</span>
             </span>
           </button>
           {threadId && data && (
@@ -458,7 +458,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
         </div>
       </header>
       {reconnecting && (
-        <div className="shrink-0 bg-amber-500/10 py-1 text-center text-[11.5px] font-semibold text-amber-700 dark:text-amber-300" role="status">
+        <div className="shrink-0 bg-amber-500/10 py-1 text-center text-micro font-semibold text-amber-700 dark:text-amber-300" role="status">
           연결이 잠시 끊겼어요 · 다시 연결하는 중
         </div>
       )}
@@ -474,11 +474,11 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
             </div>
           ) : loadError ? (
             <div className="mt-10 rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-              <p className="text-[15px] font-bold text-foreground">{errorText}</p>
+              <p className="text-body font-bold text-foreground">{errorText}</p>
               <button
                 type="button"
                 onClick={() => navigate("/messages", { replace: true })}
-                className="mt-4 rounded-full bg-secondary px-4 py-2 text-[13px] font-bold active:scale-95"
+                className="mt-4 rounded-full bg-secondary px-4 py-2 text-label font-bold active:scale-95"
               >
                 메시지 목록으로
               </button>
@@ -491,7 +491,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                     type="button"
                     onClick={loadOlder}
                     disabled={loadingOlder}
-                    className="rounded-full bg-secondary px-3.5 py-1.5 text-[12px] font-bold text-muted-foreground active:scale-95 disabled:opacity-60"
+                    className="rounded-full bg-secondary px-3.5 py-1.5 text-label font-bold text-muted-foreground active:scale-95 disabled:opacity-60"
                   >
                     {loadingOlder ? "불러오는 중…" : "이전 메시지 더 보기"}
                   </button>
@@ -499,10 +499,10 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
               ) : (
                 <div className={cn("flex flex-col items-center px-6 text-center", messages.length ? "pb-2 pt-4" : "pb-4 pt-10")}>
                   <DmAvatar person={peer} size={messages.length ? 64 : 84} />
-                  <p className="mt-3 text-[17px] font-extrabold text-foreground">{name}</p>
-                  <p className="text-[12.5px] text-muted-foreground">{dmPersonLine(peer)}</p>
+                  <p className="mt-3 text-body font-extrabold text-foreground">{name}</p>
+                  <p className="text-label text-muted-foreground">{dmPersonLine(peer)}</p>
                   {!messages.length && introText && (
-                    <p className="mt-4 rounded-2xl bg-card px-4 py-3 text-[12.5px] leading-relaxed text-muted-foreground shadow-elev-1">
+                    <p className="mt-4 rounded-2xl bg-card px-4 py-3 text-label leading-relaxed text-muted-foreground shadow-elev-1">
                       {introText}
                     </p>
                   )}
@@ -523,14 +523,14 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                 <div key={p.tempId} className="mt-[3px] flex flex-col items-end">
                   <span
                     className={cn(
-                      "max-w-[76%] whitespace-pre-wrap rounded-[20px] bg-foreground px-3.5 py-2 text-[15px] leading-[1.42] text-background [overflow-wrap:anywhere]",
+                      "max-w-[76%] whitespace-pre-wrap rounded-[20px] bg-foreground px-3.5 py-2 text-body leading-[1.42] text-background [overflow-wrap:anywhere]",
                       p.failed ? "opacity-40" : "opacity-60",
                     )}
                   >
                     {p.body}
                   </span>
                   {p.failed ? (
-                    <span className="mt-1 flex items-center gap-2 px-1 text-[11px]">
+                    <span className="mt-1 flex items-center gap-2 px-1 text-micro">
                       <span className="font-bold text-destructive">보내지 못했어요</span>
                       <button type="button" onClick={() => deliver(p.body, p.tempId)} className="font-bold text-foreground underline underline-offset-2">
                         다시 보내기
@@ -544,14 +544,14 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                       </button>
                     </span>
                   ) : (
-                    <span className="mt-1 px-1 text-[10.5px] text-muted-foreground">보내는 중…</span>
+                    <span className="mt-1 px-1 text-micro text-muted-foreground">보내는 중…</span>
                   )}
                 </div>
               ))}
 
               {reason === "awaiting_accept" && (
                 <div className="mt-4 flex justify-center">
-                  <span className="rounded-full bg-secondary px-3.5 py-1.5 text-center text-[11.5px] font-semibold text-muted-foreground">
+                  <span className="rounded-full bg-secondary px-3.5 py-1.5 text-center text-micro font-semibold text-muted-foreground">
                     {name}님이 수락하면 대화를 이어 갈 수 있어요
                   </span>
                 </div>
@@ -566,8 +566,8 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
         data?.needs_response ? (
           <div className="shrink-0 border-t-[0.5px] border-black/[0.1] bg-card px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3.5 dark:border-white/[0.08]">
             <div className="mx-auto max-w-lg">
-              <p className="text-[14px] font-bold text-foreground">{name}님이 메시지를 보냈어요</p>
-              <p className="mt-0.5 text-[12.5px] leading-snug text-muted-foreground">
+              <p className="text-label font-bold text-foreground">{name}님이 메시지를 보냈어요</p>
+              <p className="mt-0.5 text-label leading-snug text-muted-foreground">
                 수락하면 대화가 시작되고 답장할 수 있어요. 삭제해도 상대에게 알리지 않아요.
               </p>
               <div className="mt-3 grid grid-cols-[1fr_1fr_1.4fr] gap-2">
@@ -575,7 +575,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                   type="button"
                   onClick={() => onBlock(true)}
                   disabled={block.isPending || respond.isPending}
-                  className="h-11 rounded-xl bg-secondary text-[13.5px] font-bold text-destructive active:scale-[0.98] disabled:opacity-50"
+                  className="h-11 rounded-xl bg-secondary text-label font-bold text-destructive active:scale-[0.98] disabled:opacity-50"
                 >
                   차단
                 </button>
@@ -583,7 +583,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                   type="button"
                   onClick={onDecline}
                   disabled={respond.isPending}
-                  className="h-11 rounded-xl bg-secondary text-[13.5px] font-bold text-foreground active:scale-[0.98] disabled:opacity-50"
+                  className="h-11 rounded-xl bg-secondary text-label font-bold text-foreground active:scale-[0.98] disabled:opacity-50"
                 >
                   삭제
                 </button>
@@ -591,7 +591,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                   type="button"
                   onClick={onAccept}
                   disabled={respond.isPending}
-                  className="h-11 rounded-xl bg-primary text-[14px] font-extrabold text-primary-foreground active:scale-[0.98] disabled:opacity-50"
+                  className="h-11 rounded-xl bg-primary text-label font-extrabold text-primary-foreground active:scale-[0.98] disabled:opacity-50"
                 >
                   수락
                 </button>
@@ -601,7 +601,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
         ) : !canSend ? (
           <div className="shrink-0 border-t-[0.5px] border-black/[0.1] bg-card px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 dark:border-white/[0.08]">
             <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
-              <p className="text-[12.5px] leading-snug text-muted-foreground">
+              <p className="text-label leading-snug text-muted-foreground">
                 {reason === "suspended" && suspendedUntil
                   ? `신고 처리로 ${dmUntilLabel(suspendedUntil)}까지 메시지를 보낼 수 없어요`
                   : reason === "awaiting_accept"
@@ -612,7 +612,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                 <button
                   type="button"
                   onClick={openCredentialChange}
-                  className="shrink-0 rounded-full bg-primary px-3.5 py-2 text-[12.5px] font-bold text-primary-foreground active:scale-95"
+                  className="shrink-0 rounded-full bg-primary px-3.5 py-2 text-label font-bold text-primary-foreground active:scale-95"
                 >
                   지금 바꾸기
                 </button>
@@ -622,7 +622,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                   type="button"
                   onClick={() => onBlock(false)}
                   disabled={block.isPending}
-                  className="shrink-0 rounded-full bg-secondary px-3.5 py-2 text-[12.5px] font-bold text-foreground active:scale-95 disabled:opacity-50"
+                  className="shrink-0 rounded-full bg-secondary px-3.5 py-2 text-label font-bold text-foreground active:scale-95 disabled:opacity-50"
                 >
                   차단 풀기
                 </button>
@@ -642,7 +642,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                       key={em}
                       type="button"
                       onClick={() => insertEmoji(em)}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[22px] transition-transform active:scale-90"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-title transition-transform active:scale-90"
                       aria-label={`${em} 넣기`}
                     >
                       {em}
@@ -677,7 +677,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                   rows={1}
                   placeholder={messages.length ? "메시지 보내기…" : `${name}님께 첫 메시지…`}
                   aria-label="메시지 입력"
-                  className="max-h-[120px] min-h-[40px] flex-1 resize-none rounded-[20px] bg-secondary px-4 py-[9px] text-[16px] leading-[1.35] text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/35"
+                  className="max-h-[120px] min-h-[40px] flex-1 resize-none rounded-[20px] bg-secondary px-4 py-[9px] text-body leading-[1.35] text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/35"
                 />
                 <button
                   type="submit"
@@ -689,7 +689,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                 </button>
               </div>
               {text.length > MAX_LEN - 100 && (
-                <p className="mt-1 text-right text-[11px] text-muted-foreground">
+                <p className="mt-1 text-right text-micro text-muted-foreground">
                   {text.length}/{MAX_LEN}
                 </p>
               )}
@@ -709,7 +709,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                   setMenuOpen(false);
                   setLicenseOpen(true);
                 }}
-                className="w-full rounded-2xl bg-secondary/60 px-4 py-3.5 text-left text-[14.5px] font-bold text-foreground active:scale-[0.99]"
+                className="w-full rounded-2xl bg-secondary/60 px-4 py-3.5 text-left text-label font-bold text-foreground active:scale-[0.99]"
               >
                 라이센스 보기
               </button>
@@ -724,8 +724,8 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
               }}
               className="w-full rounded-2xl bg-secondary/60 px-4 py-3.5 text-left active:scale-[0.99]"
             >
-              <span className="block text-[14.5px] font-bold text-destructive">신고하기</span>
-              <span className="block text-[12px] text-muted-foreground">운영진만 확인하고, 상대에게는 알리지 않아요</span>
+              <span className="block text-label font-bold text-destructive">신고하기</span>
+              <span className="block text-label text-muted-foreground">운영진만 확인하고, 상대에게는 알리지 않아요</span>
             </button>
           </li>
           <li>
@@ -735,8 +735,8 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
               disabled={block.isPending}
               className="w-full rounded-2xl bg-secondary/60 px-4 py-3.5 text-left active:scale-[0.99] disabled:opacity-50"
             >
-              <span className="block text-[14.5px] font-bold text-foreground">{data?.i_blocked ? "차단 풀기" : "차단하기"}</span>
-              <span className="block text-[12px] text-muted-foreground">
+              <span className="block text-label font-bold text-foreground">{data?.i_blocked ? "차단 풀기" : "차단하기"}</span>
+              <span className="block text-label text-muted-foreground">
                 {data?.i_blocked ? "다시 메시지를 주고받을 수 있어요" : "서로 메시지를 보낼 수 없어요 · 상대에게 알리지 않아요"}
               </span>
             </button>
@@ -748,8 +748,8 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
               disabled={hide.isPending}
               className="w-full rounded-2xl bg-secondary/60 px-4 py-3.5 text-left active:scale-[0.99] disabled:opacity-50"
             >
-              <span className="block text-[14.5px] font-bold text-foreground">대화 나가기</span>
-              <span className="block text-[12px] text-muted-foreground">내 화면에서만 지워져요 · 새 메시지가 오면 다시 보여요</span>
+              <span className="block text-label font-bold text-foreground">대화 나가기</span>
+              <span className="block text-label text-muted-foreground">내 화면에서만 지워져요 · 새 메시지가 오면 다시 보여요</span>
             </button>
           </li>
         </ul>

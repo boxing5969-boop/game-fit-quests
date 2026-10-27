@@ -89,7 +89,7 @@ export const ComebackMissionDialog = ({ open, onClose }: ComebackMissionDialogPr
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <div className="flex items-center gap-1.5">
             <Heart className="h-4 w-4 text-emerald-500" />
-            <p className="text-[13px] font-extrabold text-foreground">오삼 코치의 복귀 루틴</p>
+            <p className="text-label font-extrabold text-foreground">오삼 코치의 복귀 루틴</p>
           </div>
           <button
             onClick={onClose}
@@ -103,16 +103,16 @@ export const ComebackMissionDialog = ({ open, onClose }: ComebackMissionDialogPr
         <div className="max-h-[70vh] overflow-y-auto px-5 py-4">
           {/* 오삼 코치 따뜻한 말 */}
           <div className="rounded-2xl border border-emerald-400/25 bg-emerald-400/5 p-3">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">
+            <p className="text-micro font-black uppercase tracking-[0.2em] text-emerald-500">
               COMEBACK · 끝이 아니라 쉼표
             </p>
-            <p className="mt-1 text-[13px] font-extrabold leading-snug text-foreground">
+            <p className="mt-1 text-label font-extrabold leading-snug text-foreground">
               {warmLine}
             </p>
           </div>
 
           {/* 진행 요약 */}
-          <p className="mt-3 text-center text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-center text-micro leading-relaxed text-muted-foreground">
             <strong className="text-foreground">{completedCount}</strong>개 완료 · 1개만 해도
             오늘은 복구 성공이에요.
           </p>
@@ -133,10 +133,10 @@ export const ComebackMissionDialog = ({ open, onClose }: ComebackMissionDialogPr
           {isSuccess && (
             <div className="mt-3 rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-3 py-2.5 text-center">
               <Sparkles className="mx-auto h-4 w-4 text-emerald-500" />
-              <p className="mt-0.5 text-[12px] font-extrabold text-emerald-600">
+              <p className="mt-0.5 text-label font-extrabold text-emerald-600">
                 오늘, 다시 돌아왔어요
               </p>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+              <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                 복귀 속도가 진짜 힘입니다. 그걸 오늘 증명했어요.
               </p>
             </div>
@@ -185,20 +185,20 @@ const MissionRow = ({
     >
       <span
         aria-hidden
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-[18px]"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-heading"
       >
         {mission.emoji}
       </span>
       <div className="min-w-0 flex-1">
         <p
           className={cn(
-            "text-[12.5px] font-extrabold",
+            "text-label font-extrabold",
             checked ? "text-emerald-500" : "text-foreground",
           )}
         >
           {mission.label}
         </p>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
           {mission.hint}
         </p>
       </div>

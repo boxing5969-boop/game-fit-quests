@@ -114,8 +114,8 @@ const LevelStatusActionSheet = ({ open, onOpenChange, memberId, rank, level, cur
         <div className="space-y-4 px-4 pb-6">
           {/* Current status */}
           <div className="rounded-xl border border-border bg-card p-3">
-            <p className="text-xs text-muted-foreground mb-1">현재 상태</p>
-            <p className="text-sm font-bold text-foreground">
+            <p className="text-label text-muted-foreground mb-1">현재 상태</p>
+            <p className="text-body font-bold text-foreground">
               {STATUS_OPTIONS.find(s => s.value === currentStatus)?.emoji}{" "}
               {STATUS_OPTIONS.find(s => s.value === currentStatus)?.label || currentStatus}
             </p>
@@ -123,7 +123,7 @@ const LevelStatusActionSheet = ({ open, onOpenChange, memberId, rank, level, cur
 
           {/* Status options */}
           <div>
-            <p className="text-xs font-bold text-muted-foreground mb-2">상태 변경</p>
+            <p className="text-label font-bold text-muted-foreground mb-2">상태 변경</p>
             <div className="grid grid-cols-2 gap-2">
               {STATUS_OPTIONS.map(opt => (
                 <button
@@ -134,8 +134,8 @@ const LevelStatusActionSheet = ({ open, onOpenChange, memberId, rank, level, cur
                     opt.value === currentStatus ? "ring-2 ring-primary" : ""
                   }`}
                 >
-                  <span className="text-base">{opt.emoji}</span>
-                  <span className="text-xs font-bold">{opt.label}</span>
+                  <span className="text-body">{opt.emoji}</span>
+                  <span className="text-label font-bold">{opt.label}</span>
                 </button>
               ))}
             </div>
@@ -143,12 +143,12 @@ const LevelStatusActionSheet = ({ open, onOpenChange, memberId, rank, level, cur
 
           {/* Reason input */}
           <div>
-            <p className="text-xs font-bold text-muted-foreground mb-1">변경 사유 (선택)</p>
+            <p className="text-label font-bold text-muted-foreground mb-1">변경 사유 (선택)</p>
             <input
               value={reason}
               onChange={e => setReason(e.target.value)}
               placeholder="변경 사유를 입력하세요"
-              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
@@ -157,7 +157,7 @@ const LevelStatusActionSheet = ({ open, onOpenChange, memberId, rank, level, cur
             <button
               onClick={handleUndo}
               disabled={setStatusMut.isPending}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-2.5 text-sm font-bold text-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-2.5 text-body font-bold text-foreground transition-all active:scale-[0.98] disabled:opacity-50"
             >
               <Undo2 className="h-4 w-4" /> 되돌리기 ({STATUS_OPTIONS.find(s => s.value === history[0].previous_status)?.label})
             </button>
@@ -166,14 +166,14 @@ const LevelStatusActionSheet = ({ open, onOpenChange, memberId, rank, level, cur
           {/* History timeline */}
           {history && history.length > 0 && (
             <div>
-              <p className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1">
+              <p className="text-label font-bold text-muted-foreground mb-2 flex items-center gap-1">
                 <Clock className="h-3 w-3" /> 변경 이력
               </p>
               <div className="space-y-1 max-h-40 overflow-y-auto">
                 {history.map((h: any, i: number) => (
                   <div key={h.id || i} className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2">
                     <div className="flex-1">
-                      <p className="text-[11px] text-foreground">
+                      <p className="text-micro text-foreground">
                         {STATUS_OPTIONS.find(s => s.value === h.previous_status)?.emoji}{" "}
                         {STATUS_OPTIONS.find(s => s.value === h.previous_status)?.label}
                         {" → "}
@@ -181,10 +181,10 @@ const LevelStatusActionSheet = ({ open, onOpenChange, memberId, rank, level, cur
                         {STATUS_OPTIONS.find(s => s.value === h.new_status)?.label}
                       </p>
                       {h.change_reason && (
-                        <p className="text-[10px] text-muted-foreground italic">💬 {h.change_reason}</p>
+                        <p className="text-micro text-muted-foreground italic">💬 {h.change_reason}</p>
                       )}
                     </div>
-                    <span className="text-[9px] text-muted-foreground shrink-0">
+                    <span className="text-micro text-muted-foreground shrink-0">
                       {new Date(h.created_at).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
                     </span>
                   </div>

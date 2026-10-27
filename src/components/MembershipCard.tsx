@@ -48,33 +48,33 @@ const MembershipCard = () => {
         className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full opacity-30 blur-2xl"
         style={{ background: isStaff ? "radial-gradient(circle, hsl(var(--reward)) 0%, transparent 70%)" : "radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)" }}
       />
-      <span className="pointer-events-none absolute -bottom-5 right-2 select-none text-7xl font-black tracking-tighter text-white/[0.04]">153</span>
+      <span className="pointer-events-none absolute -bottom-5 right-2 select-none text-display font-black tracking-tighter text-white/[0.04]">153</span>
 
       <div className="relative flex items-center justify-between">
-        <span className="text-[11px] font-bold tracking-[0.2em] text-white/55">153 MEMBERSHIP</span>
-        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${isStaff ? "bg-reward/20 text-reward" : "bg-primary/20 text-primary"}`}>
+        <span className="text-micro font-bold tracking-[0.2em] text-white/55">153 MEMBERSHIP</span>
+        <span className={`rounded-full px-2.5 py-0.5 text-micro font-bold ${isStaff ? "bg-reward/20 text-reward" : "bg-primary/20 text-primary"}`}>
           {isStaff ? "STAFF" : memEnd ? "정회원" : "PT 회원"}
         </span>
       </div>
 
       <div className="relative mt-5">
-        <p className="text-lg font-bold text-white">{profile.nickname || profile.name}</p>
-        <p className="mt-0.5 text-xs text-white/45">{profile.branch_name || "153복싱짐"}</p>
+        <p className="text-heading font-bold text-white">{profile.nickname || profile.name}</p>
+        <p className="mt-0.5 text-label text-white/45">{profile.branch_name || "153복싱짐"}</p>
       </div>
 
       {/* PT 남은 횟수 */}
       {pt && (
         <div className="relative mt-5 min-w-0 rounded-2xl bg-white/[0.06] px-3.5 py-3 ring-1 ring-inset ring-white/10">
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="shrink-0 rounded-md bg-primary/20 px-1.5 py-0.5 text-[10px] font-black tracking-wider text-primary">PT</span>
-            <span className="min-w-0 truncate text-[11px] font-semibold text-white/60">{pt.ticket ?? "퍼스널 트레이닝"}</span>
+            <span className="shrink-0 rounded-md bg-primary/20 px-1.5 py-0.5 text-micro font-black tracking-wider text-primary">PT</span>
+            <span className="min-w-0 truncate text-micro font-semibold text-white/60">{pt.ticket ?? "퍼스널 트레이닝"}</span>
           </div>
           <p className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-[11px] font-medium text-white/50">남은 횟수</span>
-            <span className="text-3xl font-black leading-none tabular-nums text-white">{pt.remaining ?? "–"}</span>
-            {pt.remaining != null && <span className="text-sm font-bold text-white/70">회</span>}
+            <span className="text-micro font-medium text-white/50">남은 횟수</span>
+            <span className="text-title font-black leading-none tabular-nums text-white">{pt.remaining ?? "–"}</span>
+            {pt.remaining != null && <span className="text-body font-bold text-white/70">회</span>}
           </p>
-          {pt.endDate && <p className="mt-1.5 text-[11px] text-white/45">기한 {ymdText(pt.endDate)}</p>}
+          {pt.endDate && <p className="mt-1.5 text-micro text-white/45">기한 {ymdText(pt.endDate)}</p>}
         </div>
       )}
 
@@ -85,23 +85,23 @@ const MembershipCard = () => {
             <div key={r.kind} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
               <div className="min-w-0">
                 <p className="flex min-w-0 items-baseline gap-1.5">
-                  <span className="shrink-0 text-[11px] font-medium text-white/50">{r.label}</span>
-                  {r.sub && <span className="min-w-0 truncate text-lg font-black leading-tight text-white">{r.sub}</span>}
+                  <span className="shrink-0 text-micro font-medium text-white/50">{r.label}</span>
+                  {r.sub && <span className="min-w-0 truncate text-heading font-black leading-tight text-white">{r.sub}</span>}
                 </p>
                 {r.end && (
-                  <p className={`${r.sub ? "mt-0.5" : "mt-1"} text-[12px] font-semibold text-white/75`}>{endText(r.end, today)}까지</p>
+                  <p className={`${r.sub ? "mt-0.5" : "mt-1"} text-label font-semibold text-white/75`}>{endText(r.end, today)}까지</p>
                 )}
               </div>
               {r.state === "ended" ? (
                 <Link
                   to="/membership?cat=rental"
-                  className="shrink-0 rounded-full bg-destructive/20 px-2.5 py-1 text-[11.5px] font-bold text-destructive active:scale-95"
+                  className="shrink-0 rounded-full bg-destructive/20 px-2.5 py-1 text-micro font-bold text-destructive active:scale-95"
                 >
                   끝남 · 연장하기
                 </Link>
               ) : r.left != null ? (
                 <span
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-[12px] font-black tabular-nums ${
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-label font-black tabular-nums ${
                     r.state === "soon" ? "bg-status-pending/20 text-status-pending" : "bg-primary/15 text-primary"
                   }`}
                 >
@@ -114,7 +114,7 @@ const MembershipCard = () => {
       )}
 
       {(pt || rentals.length > 0) && (
-        <p className="relative mt-1.5 text-[10px] leading-relaxed text-white/35">
+        <p className="relative mt-1.5 text-micro leading-relaxed text-white/35">
           {pt && ptAsOf ? `PT 횟수는 ${ptAsOf} · ` : ""}
           {pt ? "다르면 데스크에 말씀해 주세요" : "락카 · 운동복이 다르면 데스크에 말씀해 주세요"}
         </p>
@@ -122,7 +122,7 @@ const MembershipCard = () => {
 
       {(isStaff || memEnd) && (
         <div className="relative mt-6 flex items-end justify-between">
-          <div className="space-y-0.5 text-[11px] leading-relaxed text-white/55">
+          <div className="space-y-0.5 text-micro leading-relaxed text-white/55">
             <p>등록 {regDate ? fmt(regDate) : fmt(profile.created_at)}</p>
             <p>만료 {isStaff ? "무제한" : fmt(memEnd!)}</p>
             {!isStaff && payment != null && payment > 0 && (
@@ -130,14 +130,14 @@ const MembershipCard = () => {
             )}
           </div>
           <div className="text-right">
-            <p className="text-[9px] font-medium uppercase tracking-wider text-white/40">
+            <p className="text-micro font-medium uppercase tracking-wider text-white/40">
               {isStaff ? "PERIOD" : expired ? "EXPIRED" : "남은 기간"}
             </p>
-            <p className={`text-2xl font-black leading-none ${isStaff ? "text-reward" : expired ? "text-destructive" : soon ? "text-status-pending" : "text-primary"}`}>
+            <p className={`text-title font-black leading-none ${isStaff ? "text-reward" : expired ? "text-destructive" : soon ? "text-status-pending" : "text-primary"}`}>
               {isStaff ? "무제한" : ddays == null ? "–" : expired ? `D+${-ddays}` : ddays === 0 ? "D-DAY" : `D-${ddays}`}
             </p>
             {!isStaff && (expired || soon) && (
-              <Link to="/membership?buy=1" className="mt-1.5 inline-block rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-white active:scale-95">
+              <Link to="/membership?buy=1" className="mt-1.5 inline-block rounded-full bg-white/10 px-2.5 py-1 text-micro font-bold text-white active:scale-95">
                 연장하기
               </Link>
             )}

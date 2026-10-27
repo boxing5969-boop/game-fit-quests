@@ -285,8 +285,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
             className="animate-coach-bubble relative min-w-0 flex-1 rounded-2xl border border-border bg-muted/40 px-3 py-2.5"
           >
             <span className="absolute -left-[5px] top-5 h-2.5 w-2.5 rotate-45 border-b border-l border-border bg-muted/40" />
-            <p className="text-[11px] font-black tracking-wide text-primary">오삼 코치</p>
-            <p className="mt-0.5 text-[15px] font-black leading-snug text-foreground">{coach.line}</p>
+            <p className="text-micro font-black tracking-wide text-primary">오삼 코치</p>
+            <p className="mt-0.5 text-body font-black leading-snug text-foreground">{coach.line}</p>
           </div>
           <ChevronDown
             className={`mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform ${collapsed ? "" : "rotate-180"}`}
@@ -304,7 +304,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
                   style={{ width: `${(doneSteps / steps.length) * 100}%` }}
                 />
               </div>
-              <span className="text-[11px] font-black text-muted-foreground">{doneSteps}/{steps.length}</span>
+              <span className="text-micro font-black text-muted-foreground">{doneSteps}/{steps.length}</span>
             </div>
             {steps.map((s) => {
               const isCurrent = currentStep?.n === s.n; // 심사 대기·레벨업 가능 중에도 일일 코스 버튼은 유지
@@ -331,7 +331,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
                     onKeyDown={rowAction ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rowAction(); } } : undefined}
                   >
                     <span
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black ${
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-body font-black ${
                         s.done
                           ? "bg-status-complete text-white"
                           : isCurrent
@@ -342,16 +342,16 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
                       {s.done ? <CheckCircle2 className="h-5 w-5" /> : s.n}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className={`flex items-center gap-1.5 text-[13px] font-black ${s.done ? "text-status-complete" : "text-foreground"}`}>
+                      <p className={`flex items-center gap-1.5 text-label font-black ${s.done ? "text-status-complete" : "text-foreground"}`}>
                         {s.title}
                         {/* 얼굴인식으로 이미 들어온 상태 — QR 만 남았다는 표시 */}
                         {s.n === 1 && !!arrivalLabel && !s.done && (
-                          <span className="rounded-full bg-status-complete/15 px-1.5 py-0.5 text-[10px] font-black text-status-complete">
+                          <span className="rounded-full bg-status-complete/15 px-1.5 py-0.5 text-micro font-black text-status-complete">
                             도착 확인
                           </span>
                         )}
                       </p>
-                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{s.desc}</p>
+                      <p className="mt-0.5 truncate text-micro text-muted-foreground">{s.desc}</p>
                     </div>
                     {rowAction ? (
                       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -366,12 +366,12 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
                     s.action ? (
                       <button
                         onClick={s.action}
-                        className="mt-2.5 w-full rounded-xl bg-primary py-3 text-[13px] font-black text-primary-foreground transition-all active:scale-[0.98]"
+                        className="mt-2.5 w-full rounded-xl bg-primary py-3 text-label font-black text-primary-foreground transition-all active:scale-[0.98]"
                       >
                         {s.actionLabel}
                       </button>
                     ) : s.actionLabel ? (
-                      <p className="mt-2.5 rounded-xl bg-primary/10 py-2.5 text-center text-[12px] font-bold text-primary">
+                      <p className="mt-2.5 rounded-xl bg-primary/10 py-2.5 text-center text-label font-bold text-primary">
                         {s.actionLabel}
                       </p>
                     ) : null
@@ -385,16 +385,16 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
               <button
                 type="button"
                 onClick={() => navigate(titleMatchLink(league))}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-reward/15 py-3.5 text-[13px] font-black text-reward transition-all active:scale-[0.98]"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-reward/15 py-3.5 text-label font-black text-reward transition-all active:scale-[0.98]"
               >
                 <Trophy className="h-4 w-4" /> 타이틀미션 보기 · 지점장님께 심사 신청
               </button>
             ) : isPending ? (
-              <div className="flex items-center justify-center gap-2 rounded-2xl bg-status-pending/10 py-3.5 text-[13px] font-bold text-status-pending">
+              <div className="flex items-center justify-center gap-2 rounded-2xl bg-status-pending/10 py-3.5 text-label font-bold text-status-pending">
                 <Clock className="h-4 w-4" /> 코치님 승인 대기 중
               </div>
             ) : canLevelUp ? (
-              <div className="flex items-center justify-center gap-2 rounded-2xl bg-reward/10 py-3.5 text-[13px] font-black text-reward">
+              <div className="flex items-center justify-center gap-2 rounded-2xl bg-reward/10 py-3.5 text-label font-black text-reward">
                 <Trophy className="h-4 w-4" /> 출석 {c?.reqSessions ?? 3}회 달성 — 다음 출석 때 자동으로 승급돼요!
               </div>
             ) : null}
@@ -408,8 +408,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
       {/* 요건이 0인 항목(훈련 분수)은 빼고, 블랙 리그는 '연한'을 대신 보여준다 */}
       <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-black text-foreground">🏆 레벨업까지</p>
-          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">
+          <p className="text-body font-black text-foreground">🏆 레벨업까지</p>
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-micro font-bold text-secondary-foreground">
             {RANK_LABELS[league] || league} Lv.{toGlobalLevel(league, levelNumber)}{levelTitle ? ` · ${levelTitle}` : ""}
           </span>
         </div>
@@ -421,11 +421,11 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
             const done = m.cur >= m.req;
             return (
               <div key={m.label} className="rounded-xl bg-muted/30 p-2.5 text-center">
-                <p className={`number-font text-base font-black ${done ? "text-status-complete" : "text-foreground"}`}>
+                <p className={`number-font text-body font-black ${done ? "text-status-complete" : "text-foreground"}`}>
                   {m.cur}
-                  <span className="text-[10px] text-muted-foreground">/{m.req}{m.unit}</span>
+                  <span className="text-micro text-muted-foreground">/{m.req}{m.unit}</span>
                 </p>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">{m.label}</p>
+                <p className="mt-0.5 text-micro text-muted-foreground">{m.label}</p>
                 <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
                   <div
                     className={`h-full rounded-full transition-all ${done ? "bg-status-complete" : "bg-primary"}`}
@@ -436,7 +436,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
             );
           })}
         </div>
-        <p className="mt-3 text-[11px] text-muted-foreground">
+        <p className="mt-3 text-micro text-muted-foreground">
           {isTitleFlow
             ? "레벨 10은 타이틀매치 — 파트너와 연습하고 지점장님께 심사를 신청해요 (도전 3번)"
             : isApprovalOnly
@@ -452,8 +452,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
         className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-all active:scale-[0.99]"
       >
         <span>
-          <span className="block text-sm font-black text-foreground">📚 훈련 상세 보기</span>
-          <span className="mt-0.5 block text-[11px] text-muted-foreground">
+          <span className="block text-body font-black text-foreground">📚 훈련 상세 보기</span>
+          <span className="mt-0.5 block text-micro text-muted-foreground">
             영상 전체 · 교육 그림 · 수업 구성 · 심사 기준
           </span>
         </span>
@@ -469,7 +469,7 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
             <button
               type="button"
               onClick={() => { toggle(playing.id); setPlaying(null); }}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-bold text-primary-foreground active:scale-[0.98]"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-body font-bold text-primary-foreground active:scale-[0.98]"
             >
               <CheckCircle2 className="h-4 w-4" /> 따라했어요
             </button>

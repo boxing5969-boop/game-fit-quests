@@ -59,16 +59,16 @@ const OsamiDailyBriefingCard = () => {
       aria-label="오삼이 오늘의 브리핑"
     >
       <div className="mb-3 flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-primary/15 text-2xl">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-primary/15 text-title">
           🥊
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             오삼 코치 · 오늘의 브리핑
           </p>
-          <p className="mt-0.5 truncate text-[14px] font-bold text-foreground">
+          <p className="mt-0.5 truncate text-label font-bold text-foreground">
             {RANK_LABELS[rank]} 리그 · Lv.{toGlobalLevel(rank, progress?.current_level ?? 1)}
-            <span className="ml-2 text-[11px] font-medium text-muted-foreground">
+            <span className="ml-2 text-micro font-medium text-muted-foreground">
               {PERSONA_LABEL[persona]}
             </span>
           </p>
@@ -76,34 +76,34 @@ const OsamiDailyBriefingCard = () => {
       </div>
 
       <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-        <p className="text-[13px] font-medium leading-relaxed text-foreground">
+        <p className="text-label font-medium leading-relaxed text-foreground">
           {openMessage}
         </p>
-        <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
           {briefingMessage}
         </p>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
             QUEST XP
           </p>
-          <p className="number-font mt-0.5 text-[16px] font-black text-foreground">
+          <p className="number-font mt-0.5 text-body font-black text-foreground">
             {questXp.toLocaleString()}
           </p>
         </div>
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
             RP
           </p>
-          <p className="number-font mt-0.5 text-[16px] font-black text-foreground">
+          <p className="number-font mt-0.5 text-body font-black text-foreground">
             {respect.toLocaleString()}
           </p>
         </div>
       </div>
 
-      <div className="mt-3 space-y-1 text-[11px] leading-relaxed text-muted-foreground">
+      <div className="mt-3 space-y-1 text-micro leading-relaxed text-muted-foreground">
         <p>· 공식 훈련 리스트는 그대로 유지됩니다.</p>
         <p>· 보조 퀘스트는 재미와 습관을 위한 추가 미션입니다.</p>
         <p>· 공식 레벨업은 기존 코치 승인 기준으로 진행됩니다.</p>

@@ -134,8 +134,8 @@ const WhiteLeagueTab = () => {
         className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-all active:scale-[0.99]"
       >
         <span>
-          <span className="block text-sm font-black text-foreground">🗺️ 전체 레벨 지도</span>
-          <span className="mt-0.5 block text-[11px] text-muted-foreground">
+          <span className="block text-body font-black text-foreground">🗺️ 전체 레벨 지도</span>
+          <span className="mt-0.5 block text-micro text-muted-foreground">
             화이트 · 블루 · 레드 · 블랙 리그 40레벨 전체 보기
           </span>
         </span>
@@ -160,10 +160,10 @@ const WhiteLeagueTab = () => {
               className="flex w-full items-center justify-between p-4 text-left active:bg-muted/50"
             >
               <div className="flex items-center gap-3">
-                <span className="text-xl">{lc.emoji}</span>
+                <span className="text-heading">{lc.emoji}</span>
                 <div>
-                  <p className="text-sm font-bold text-foreground">{lc.label}</p>
-                  <p className="text-[10px] text-muted-foreground">{completedInLeague}/{lc.levels} 완료</p>
+                  <p className="text-body font-bold text-foreground">{lc.label}</p>
+                  <p className="text-micro text-muted-foreground">{completedInLeague}/{lc.levels} 완료</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -208,7 +208,7 @@ const WhiteLeagueTab = () => {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-label font-bold ${
                           state === "complete" ? "bg-primary/10 text-primary"
                           : state === "active" ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground"
@@ -219,21 +219,21 @@ const WhiteLeagueTab = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-bold text-muted-foreground">Lv.{ul.globalLevel}</span>
-                            {isBoss && <span className="rounded-full bg-reward px-1.5 py-0.5 text-[8px] font-bold text-reward-foreground">리그 승격</span>}
+                            <span className="text-micro font-bold text-muted-foreground">Lv.{ul.globalLevel}</span>
+                            {isBoss && <span className="rounded-full bg-reward px-1.5 py-0.5 text-micro font-bold text-reward-foreground">리그 승격</span>}
                           </div>
-                          <p className={`text-xs font-bold leading-tight ${isLocked ? "text-muted-foreground" : "text-foreground"}`}>
+                          <p className={`text-label font-bold leading-tight ${isLocked ? "text-muted-foreground" : "text-foreground"}`}>
                             {ul.title}
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-1.5">
-                          <span className="text-[10px] text-muted-foreground">50분</span>
-                          <span className="text-[10px] font-bold text-primary">+100XP</span>
+                          <span className="text-micro text-muted-foreground">50분</span>
+                          <span className="text-micro font-bold text-primary">+100XP</span>
                         </div>
                         {!isLocked && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
                       </div>
                       {isTutorialTargetCard && (
-                        <span className="absolute -top-2 right-3 rounded-full bg-amber-500 px-2 py-0.5 text-[9px] font-black text-amber-950 shadow-md">
+                        <span className="absolute -top-2 right-3 rounded-full bg-amber-500 px-2 py-0.5 text-micro font-black text-amber-950 shadow-md">
                           👆 클릭
                         </span>
                       )}
@@ -373,7 +373,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   if (showSession && sessionBlocks) {
     return (
       <div className="animate-slide-up space-y-4">
-        <button onClick={() => setShowSession(false)} className="flex items-center gap-1.5 text-sm font-bold text-primary active:scale-95">
+        <button onClick={() => setShowSession(false)} className="flex items-center gap-1.5 text-body font-bold text-primary active:scale-95">
           <ArrowLeft className="h-4 w-4" /> 돌아가기
         </button>
         <SessionRunner blocks={composedBlocks ?? sessionBlocks} levelLabel={`${league.charAt(0).toUpperCase()}${league.slice(1)} Lv.${toGlobalLevel(league, levelNum)}`} onComplete={() => setShowSession(false)} />
@@ -384,7 +384,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
   return (
     <div className="animate-slide-up space-y-4">
       {/* Back */}
-      <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-bold text-primary active:scale-95">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-body font-bold text-primary active:scale-95">
         <ArrowLeft className="h-4 w-4" /> 목록으로
       </button>
 
@@ -403,7 +403,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {detailMode && (
         <button
           onClick={() => setDetailMode(false)}
-          className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-border bg-card py-2.5 text-xs font-bold text-muted-foreground active:scale-[0.99]"
+          className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-border bg-card py-2.5 text-label font-bold text-muted-foreground active:scale-[0.99]"
         >
           간단히 보기로 돌아가기
         </button>
@@ -438,10 +438,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           />
 
           {/* 스파클 파티클 — 황금 톤에 맞춰 3개 */}
-          <span aria-hidden className="pointer-events-none absolute left-4 top-5 text-lg opacity-70 drop-shadow-[0_0_6px_rgba(251,191,36,0.8)]">✨</span>
-          <span aria-hidden className="pointer-events-none absolute right-6 top-8 text-base opacity-60 drop-shadow-[0_0_6px_rgba(251,191,36,0.8)]">⭐</span>
-          <span aria-hidden className="pointer-events-none absolute left-8 bottom-16 text-sm opacity-55 drop-shadow-[0_0_5px_rgba(251,191,36,0.7)]">✨</span>
-          <span aria-hidden className="pointer-events-none absolute right-4 bottom-20 text-[10px] opacity-50 drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]">⭐</span>
+          <span aria-hidden className="pointer-events-none absolute left-4 top-5 text-heading opacity-70 drop-shadow-[0_0_6px_rgba(251,191,36,0.8)]">✨</span>
+          <span aria-hidden className="pointer-events-none absolute right-6 top-8 text-body opacity-60 drop-shadow-[0_0_6px_rgba(251,191,36,0.8)]">⭐</span>
+          <span aria-hidden className="pointer-events-none absolute left-8 bottom-16 text-body opacity-55 drop-shadow-[0_0_5px_rgba(251,191,36,0.7)]">✨</span>
+          <span aria-hidden className="pointer-events-none absolute right-4 bottom-20 text-micro opacity-50 drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]">⭐</span>
 
           {/* 캐릭터 — 중앙. 황금 drop-shadow 로 묶음. */}
           <div className="absolute inset-0 flex items-center justify-center pt-2">
@@ -459,7 +459,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
                 />
               </div>
             ) : (
-              <span className="text-6xl drop-shadow-[0_4px_14px_rgba(251,191,36,0.6)]">🥊</span>
+              <span className="text-display drop-shadow-[0_4px_14px_rgba(251,191,36,0.6)]">🥊</span>
             )}
           </div>
 
@@ -468,11 +468,11 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
 
           {/* 레벨 라벨 + 제목 — 뱃지 톤을 황금으로 */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <span className="mb-1 inline-block rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 px-2.5 py-0.5 text-[10px] font-black text-black backdrop-blur-sm">
+            <span className="mb-1 inline-block rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 px-2.5 py-0.5 text-micro font-black text-black backdrop-blur-sm">
               Lv.{ul.globalLevel}
             </span>
-            <h2 className="text-xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{ul.title}</h2>
-            <p className="text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)]">{ul.shortGoal}</p>
+            <h2 className="text-heading font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{ul.title}</h2>
+            <p className="text-label text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)]">{ul.shortGoal}</p>
           </div>
         </div>
       </div>
@@ -482,23 +482,23 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-card p-3">
           <Clock className="h-4 w-4 text-primary" />
           <div>
-            <p className="text-[10px] text-muted-foreground">소요 시간</p>
-            <p className="text-sm font-bold text-foreground">50분</p>
+            <p className="text-micro text-muted-foreground">소요 시간</p>
+            <p className="text-body font-bold text-foreground">50분</p>
           </div>
         </div>
         <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-card p-3">
           <Zap className="h-4 w-4 text-primary" />
           <div>
-            <p className="text-[10px] text-muted-foreground">보상</p>
-            <p className="text-sm font-bold text-primary">+100 XP</p>
+            <p className="text-micro text-muted-foreground">보상</p>
+            <p className="text-body font-bold text-primary">+100 XP</p>
           </div>
         </div>
       </div>
 
       {/* 64-O: step 3 detail cascade 안내 카드 */}
       {isStep3DetailCascade && (
-        <div className="flex items-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
-          <span className="text-base">👆</span>
+        <div className="flex items-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-50 px-3 py-2 text-micro font-bold text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
+          <span className="text-body">👆</span>
           <span className="flex-1">
             세 개 탭(배우기 / 수업실행 / 심사)을 한 번씩 눌러 둘러보세요.
             클릭 <span className="number-font">{clickedSections.size}</span> /{" "}
@@ -532,7 +532,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
                   });
                 }
               }}
-              className={`relative flex-1 rounded-xl py-2 text-xs font-bold transition-all ${
+              className={`relative flex-1 rounded-xl py-2 text-label font-bold transition-all ${
                 activeSection === tab.key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
               } ${
                 isNextHint
@@ -542,7 +542,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             >
               {tab.label}
               {isNextHint && (
-                <span className="absolute -top-1 -right-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] font-black text-amber-950 shadow-md">
+                <span className="absolute -top-1 -right-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-micro font-black text-amber-950 shadow-md">
                   👆 클릭
                 </span>
               )}
@@ -569,10 +569,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {priorityDrills.length > 0 && (
         <section className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
           <div className="mb-1 flex items-center justify-between">
-            <h3 className="text-sm font-black text-foreground">🎯 레벨업 필수 훈련</h3>
-            <span className="text-[10px] font-bold text-primary">탭하면 그림 설명</span>
+            <h3 className="text-body font-black text-foreground">🎯 레벨업 필수 훈련</h3>
+            <span className="text-micro font-bold text-primary">탭하면 그림 설명</span>
           </div>
-          <p className="mb-2.5 text-[11px] text-muted-foreground">
+          <p className="mb-2.5 text-micro text-muted-foreground">
             이번 레벨 심사에 나오는 핵심 동작이에요 · 50분 수업의 워밍업·체력 블록은 매일 새롭게 바뀝니다 ✨
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -583,9 +583,9 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
                 onClick={() => setDrillSheet(d)}
                 className="rounded-xl border border-border bg-card p-3 text-left transition-all active:scale-[0.97]"
               >
-                <p className="text-xs font-black text-foreground">{d.name}</p>
-                <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground">{d.summary}</p>
-                <span className="mt-1 inline-block rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+                <p className="text-label font-black text-foreground">{d.name}</p>
+                <p className="mt-0.5 line-clamp-2 text-micro text-muted-foreground">{d.summary}</p>
+                <span className="mt-1 inline-block rounded-full bg-primary/10 px-1.5 py-0.5 text-micro font-bold text-primary">
                   {d.category} · L{d.level_min}+
                 </span>
               </button>
@@ -653,15 +653,15 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           >
             <div className="mb-3 flex items-center gap-2">
               <Target className="h-4 w-4 text-primary" />
-              <span className="text-sm font-bold text-foreground">학습 모듈</span>
+              <span className="text-body font-bold text-foreground">학습 모듈</span>
             </div>
             <div className="space-y-3">
               {(learning || ul.learningModules).map((mod, i) => (
                 <div key={i} className="rounded-xl border border-border p-3">
-                  <p className="mb-1 text-xs font-bold text-foreground">{mod.title}</p>
+                  <p className="mb-1 text-label font-bold text-foreground">{mod.title}</p>
                   <div className="space-y-0.5">
                     {mod.keyPoints.map((kp, j) => (
-                      <p key={j} className="text-[10px] text-muted-foreground">· {kp}</p>
+                      <p key={j} className="text-micro text-muted-foreground">· {kp}</p>
                     ))}
                   </div>
                 </div>
@@ -676,7 +676,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
               onClick={() => setOpenLearnMore((v) => !v)}
               className="flex w-full items-center justify-between p-4"
             >
-              <span className="text-sm font-bold text-foreground">📚 더 알아보기</span>
+              <span className="text-body font-bold text-foreground">📚 더 알아보기</span>
               <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${openLearnMore ? "rotate-180" : ""}`} />
             </button>
             {openLearnMore && (
@@ -688,13 +688,13 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           >
             <div className="mb-3 flex items-center gap-2">
               <Target className="h-4 w-4 text-primary" />
-              <span className="text-sm font-bold text-foreground">오늘의 목적</span>
+              <span className="text-body font-bold text-foreground">오늘의 목적</span>
             </div>
             <div className="space-y-2">
               {(purpose || [ul.shortGoal]).map((p, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">{i + 1}</div>
-                  <p className="text-sm text-foreground">{p}</p>
+                  <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-micro font-bold text-primary">{i + 1}</div>
+                  <p className="text-body text-foreground">{p}</p>
                 </div>
               ))}
             </div>
@@ -705,16 +705,16 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
               <div className="mb-3 flex items-center gap-2">
                 <Info className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold text-foreground">초보자 대체 동작</span>
+                <span className="text-body font-bold text-foreground">초보자 대체 동작</span>
               </div>
               <div className="space-y-2">
                 {beginnerAlts.map((alt, i) => (
                   <div key={i} className="flex items-start gap-2 rounded-lg bg-muted/30 p-2.5">
-                    <span className="text-xs font-bold text-primary">{alt.original}</span>
-                    <span className="text-xs text-muted-foreground">→</span>
+                    <span className="text-label font-bold text-primary">{alt.original}</span>
+                    <span className="text-label text-muted-foreground">→</span>
                     <div>
-                      <p className="text-xs font-bold text-foreground">{alt.alt}</p>
-                      <p className="text-[10px] text-muted-foreground">{alt.note}</p>
+                      <p className="text-label font-bold text-foreground">{alt.alt}</p>
+                      <p className="text-micro text-muted-foreground">{alt.note}</p>
                     </div>
                   </div>
                 ))}
@@ -730,10 +730,10 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             >
               <div className="mb-3 flex items-center gap-2">
                 <Eye className="h-4 w-4 text-reward-foreground" />
-                <span className="text-sm font-bold text-reward-foreground">코치 포인트</span>
+                <span className="text-body font-bold text-reward-foreground">코치 포인트</span>
               </div>
               <div className="space-y-1.5">
-                {(coachPoints || ul.coachTags).map((point, i) => <p key={i} className="text-xs text-foreground">👁️ {point}</p>)}
+                {(coachPoints || ul.coachTags).map((point, i) => <p key={i} className="text-label text-foreground">👁️ {point}</p>)}
               </div>
             </div>
           )}
@@ -749,8 +749,8 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
         <>
           {levelLessonGroups.length > 0 && (
             <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
-              <p className="text-sm font-black text-foreground">📋 일차별 수업 매뉴얼</p>
-              <p className="mb-3 mt-0.5 text-[11px] text-muted-foreground">
+              <p className="text-body font-black text-foreground">📋 일차별 수업 매뉴얼</p>
+              <p className="mb-3 mt-0.5 text-micro text-muted-foreground">
                 코치님과 이 순서대로 배워요 · 누르면 라운드와 주의할 점이 나와요
               </p>
               <LessonDayList groups={levelLessonGroups} today={lessonToday} onOpen={setLessonDayNo} />
@@ -783,13 +783,13 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold text-foreground">50분 수업 구성</span>
+                <span className="text-body font-bold text-foreground">50분 수업 구성</span>
               </div>
               <div className="flex items-center gap-1.5">
                 {isMaster && sessionLevelKey && (
                   <button
                     onClick={() => setShowSessionEditor(true)}
-                    className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold text-foreground transition-all active:scale-95"
+                    className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-label font-bold text-foreground transition-all active:scale-95"
                   >
                     <Pencil className="h-3 w-3" /> 편집
                   </button>
@@ -798,7 +798,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
                   <button
                     data-tour="white-session-start"
                     onClick={() => setShowSession(true)}
-                    className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition-all active:scale-95"
+                    className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-label font-bold text-primary-foreground transition-all active:scale-95"
                   >
                     <Play className="h-3 w-3" /> 수업 시작
                   </button>
@@ -817,27 +817,27 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
                         onClick={() => setExpandedBlock(isExpanded ? null : block.id)}
                         className="flex w-full items-center gap-3 p-3 text-left transition-all active:bg-muted/50"
                       >
-                        <span className="text-lg">{block.emoji}</span>
+                        <span className="text-heading">{block.emoji}</span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono text-muted-foreground">{block.timeRange}</span>
-                            <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${INTENSITY_STYLE[block.intensity]}`}>
+                            <span className="text-micro font-mono text-muted-foreground">{block.timeRange}</span>
+                            <span className={`rounded-full px-1.5 py-0.5 text-micro font-bold ${INTENSITY_STYLE[block.intensity]}`}>
                               {block.intensity}
                             </span>
                           </div>
-                          <p className="text-xs font-bold text-foreground">{block.title}</p>
+                          <p className="text-label font-bold text-foreground">{block.title}</p>
                         </div>
-                        <span className="text-[10px] text-muted-foreground">{block.durationMin}분</span>
+                        <span className="text-micro text-muted-foreground">{block.durationMin}분</span>
                         <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                       </button>
                       {isExpanded && (
                         <div className="border-t border-border bg-muted/20 px-3 pb-3 pt-2">
-                          <p className="mb-2 text-xs text-muted-foreground">{block.description}</p>
+                          <p className="mb-2 text-label text-muted-foreground">{block.description}</p>
                           <div className="space-y-1">
                             {block.drills.map((drill, di) => (
                               <div key={di} className="flex items-start gap-2">
                                 <div className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/40" />
-                                <p className="text-xs text-foreground">
+                                <p className="text-label text-foreground">
                                   {drill.name}{drill.detail ? <span className="text-muted-foreground"> · {drill.detail}</span> : ""}
                                 </p>
                               </div>
@@ -845,7 +845,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
                           </div>
                           {block.beginnerAlt && (
                             <div className="mt-2 rounded-lg bg-primary/5 px-2.5 py-1.5">
-                              <p className="text-[10px] text-primary">💡 초보자: {block.beginnerAlt}</p>
+                              <p className="text-micro text-primary">💡 초보자: {block.beginnerAlt}</p>
                             </div>
                           )}
                         </div>
@@ -856,25 +856,25 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground mb-2">루틴 A</p>
+                <p className="text-label text-muted-foreground mb-2">루틴 A</p>
                 {ul.routineA.map((block, i) => (
                   <div key={i} className="flex items-center gap-3 rounded-xl bg-muted/30 p-2.5">
-                    <span className="text-lg">{block.emoji}</span>
+                    <span className="text-heading">{block.emoji}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-foreground">{block.title}</p>
-                      <p className="text-[10px] text-muted-foreground">{block.durationMin}분 · {block.drills.slice(0, 2).join(", ")}</p>
+                      <p className="text-label font-bold text-foreground">{block.title}</p>
+                      <p className="text-micro text-muted-foreground">{block.durationMin}분 · {block.drills.slice(0, 2).join(", ")}</p>
                     </div>
                   </div>
                 ))}
                 {ul.routineB.length > 0 && (
                   <>
-                    <p className="text-xs text-muted-foreground mt-3 mb-2">루틴 B</p>
+                    <p className="text-label text-muted-foreground mt-3 mb-2">루틴 B</p>
                     {ul.routineB.map((block, i) => (
                       <div key={i} className="flex items-center gap-3 rounded-xl bg-muted/30 p-2.5">
-                        <span className="text-lg">{block.emoji}</span>
+                        <span className="text-heading">{block.emoji}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-foreground">{block.title}</p>
-                          <p className="text-[10px] text-muted-foreground">{block.durationMin}분 · {block.drills.slice(0, 2).join(", ")}</p>
+                          <p className="text-label font-bold text-foreground">{block.title}</p>
+                          <p className="text-micro text-muted-foreground">{block.durationMin}분 · {block.drills.slice(0, 2).join(", ")}</p>
                         </div>
                       </div>
                     ))}
@@ -892,16 +892,16 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             >
               <div className="mb-3 flex items-center gap-2">
                 <Zap className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold text-foreground">XP 규칙</span>
+                <span className="text-body font-bold text-foreground">XP 규칙</span>
               </div>
               <div className="space-y-1.5">
                 {xpRules.map(rule => (
                   <div key={rule.label} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
                     <div>
-                      <p className="text-xs font-bold text-foreground">{rule.label}</p>
-                      {rule.note && <p className="text-[10px] text-muted-foreground">{rule.note}</p>}
+                      <p className="text-label font-bold text-foreground">{rule.label}</p>
+                      {rule.note && <p className="text-micro text-muted-foreground">{rule.note}</p>}
                     </div>
-                    <span className={`text-sm font-bold ${rule.xp > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                    <span className={`text-body font-bold ${rule.xp > 0 ? "text-primary" : "text-muted-foreground"}`}>
                       {rule.xp > 0 ? `+${rule.xp}` : "0"} XP
                     </span>
                   </div>
@@ -924,7 +924,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           >
             <div className="mb-3 flex items-center gap-2">
               <Award className="h-4 w-4 text-primary" />
-              <span className="text-sm font-bold text-foreground">
+              <span className="text-body font-bold text-foreground">
                 {ul.levelInLeague === 10 ? "리그 승격 심사" : `레벨업 조건 (Lv.${ul.globalLevel} → Lv.${ul.globalLevel + 1})`}
               </span>
             </div>
@@ -939,11 +939,11 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
                 return (
                   <div key={m.label} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm">{m.emoji}</span>
-                      <span className="text-xs text-foreground">{m.label}</span>
+                      <span className="text-body">{m.emoji}</span>
+                      <span className="text-label text-foreground">{m.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold ${done ? "text-status-complete" : "text-muted-foreground"}`}>
+                      <span className={`text-label font-bold ${done ? "text-status-complete" : "text-muted-foreground"}`}>
                         {m.met?.current ?? 0}/{m.met?.target ?? 0}
                       </span>
                       {done && <CheckCircle2 className="h-3.5 w-3.5 text-status-complete" />}
@@ -953,19 +953,19 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
               })}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">✅</span>
-                  <span className="text-xs text-foreground">체크테스트 통과</span>
+                  <span className="text-body">✅</span>
+                  <span className="text-label text-foreground">체크테스트 통과</span>
                 </div>
-                <span className="text-xs font-bold text-muted-foreground">{checklist.length}개 중 {ul.progressionConfig.checklistPassCount}개 이상</span>
+                <span className="text-label font-bold text-muted-foreground">{checklist.length}개 중 {ul.progressionConfig.checklistPassCount}개 이상</span>
               </div>
             </div>
             {recPaths && (
               <div className="mt-3 flex gap-2">
                 {recPaths.map(path => (
                   <div key={path.label} className="flex-1 rounded-xl bg-muted/30 p-2.5 text-center">
-                    <p className="text-[10px] font-bold text-muted-foreground">{path.label}</p>
-                    <p className="text-xs font-bold text-foreground">{path.frequency}</p>
-                    <p className="text-[10px] text-muted-foreground">{path.duration} · {path.sessions}</p>
+                    <p className="text-micro font-bold text-muted-foreground">{path.label}</p>
+                    <p className="text-label font-bold text-foreground">{path.frequency}</p>
+                    <p className="text-micro text-muted-foreground">{path.duration} · {path.sessions}</p>
                   </div>
                 ))}
               </div>
@@ -980,25 +980,25 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold text-foreground">체크테스트</span>
+                <span className="text-body font-bold text-foreground">체크테스트</span>
               </div>
-              <span className="text-[10px] text-muted-foreground">{checklist.length}개 중 {ul.progressionConfig.checklistPassCount}개 이상 통과</span>
+              <span className="text-micro text-muted-foreground">{checklist.length}개 중 {ul.progressionConfig.checklistPassCount}개 이상 통과</span>
             </div>
             <div className="space-y-2">
               {checklist.map(item => (
                 <div key={item.id} className="rounded-xl border border-border p-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-muted-foreground">{item.id}.</span>
-                      <span className="text-xs font-bold text-foreground">{item.title}</span>
+                      <span className="text-label font-bold text-muted-foreground">{item.id}.</span>
+                      <span className="text-label font-bold text-foreground">{item.title}</span>
                     </div>
                     {item.mandatory && (
-                      <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[9px] font-bold text-destructive">필수</span>
+                      <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-micro font-bold text-destructive">필수</span>
                     )}
                   </div>
                   {item.details.length > 0 && (
                     <div className="mt-1 ml-5 space-y-0.5">
-                      {item.details.map((d, di) => <p key={di} className="text-[10px] text-muted-foreground">· {d}</p>)}
+                      {item.details.map((d, di) => <p key={di} className="text-micro text-muted-foreground">· {d}</p>)}
                     </div>
                   )}
                 </div>
@@ -1008,7 +1008,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
             {canAttemptChecklist && (
               <button
                 onClick={() => setShowChecklist(true)}
-                className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]"
+                className="mt-3 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98]"
               >
                 ✅ 체크테스트 시작
               </button>
@@ -1027,7 +1027,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
                 >
                   <div className="flex items-center gap-2">
                     <Info className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-bold text-foreground">판매급 심사 기준(커리큘럼)</span>
+                    <span className="text-body font-bold text-foreground">판매급 심사 기준(커리큘럼)</span>
                   </div>
                   <ChevronDown
                     className={`h-4 w-4 text-muted-foreground transition-transform ${showCurriculumReview ? "rotate-180" : ""}`}
@@ -1036,34 +1036,34 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
                 {showCurriculumReview && (
                   <div className="mt-3 space-y-3">
                     {curriculumReview.mission && (
-                      <p className="text-[11px] leading-relaxed text-muted-foreground">{curriculumReview.mission}</p>
+                      <p className="text-micro leading-relaxed text-muted-foreground">{curriculumReview.mission}</p>
                     )}
                     {curriculumReview.quantitative.length > 0 && (
                       <div>
-                        <p className="mb-1 text-[10px] font-bold text-primary">정량 기준</p>
+                        <p className="mb-1 text-micro font-bold text-primary">정량 기준</p>
                         <div className="space-y-0.5">
                           {curriculumReview.quantitative.map((q, i) => (
-                            <p key={i} className="text-[10px] text-foreground">· {q}</p>
+                            <p key={i} className="text-micro text-foreground">· {q}</p>
                           ))}
                         </div>
                       </div>
                     )}
                     {curriculumReview.qualitative.length > 0 && (
                       <div>
-                        <p className="mb-1 text-[10px] font-bold text-primary">정성 루브릭</p>
+                        <p className="mb-1 text-micro font-bold text-primary">정성 루브릭</p>
                         <div className="space-y-0.5">
                           {curriculumReview.qualitative.map((q, i) => (
-                            <p key={i} className="text-[10px] text-foreground">· {q}</p>
+                            <p key={i} className="text-micro text-foreground">· {q}</p>
                           ))}
                         </div>
                       </div>
                     )}
                     {curriculumReview.instantFail.length > 0 && (
                       <div>
-                        <p className="mb-1 text-[10px] font-bold text-destructive">즉시실패 조건</p>
+                        <p className="mb-1 text-micro font-bold text-destructive">즉시실패 조건</p>
                         <div className="space-y-0.5">
                           {curriculumReview.instantFail.map((q, i) => (
-                            <p key={i} className="text-[10px] text-foreground">· {q}</p>
+                            <p key={i} className="text-micro text-foreground">· {q}</p>
                           ))}
                         </div>
                       </div>
@@ -1075,7 +1075,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
           })()}
 
           {/* Status */}
-          <div className={`rounded-xl p-3 text-center text-sm font-bold ${
+          <div className={`rounded-xl p-3 text-center text-body font-bold ${
             status === "레벨업 완료" ? "bg-status-complete/10 text-status-complete"
             : status === "레벨업 심사 가능" ? "bg-primary text-primary-foreground"
             : status === "보완 필요" ? "bg-status-pending/10 text-status-pending"
@@ -1091,21 +1091,21 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {ul.globalLevel >= 26 && (
         <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🥊</span>
-            <h3 className="text-sm font-bold text-foreground">스파링 참가</h3>
+            <span className="text-heading">🥊</span>
+            <h3 className="text-body font-bold text-foreground">스파링 참가</h3>
           </div>
-          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
             접촉 훈련(라이트 스파링)은 부상 위험이 있어, 참가 전 안전 동의서 서명이 필요합니다.
           </p>
           {sparringConsent ? (
-            <div className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-status-complete/10 py-3 text-sm font-bold text-status-complete">
+            <div className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-status-complete/10 py-3 text-body font-bold text-status-complete">
               <CheckCircle2 className="h-4 w-4" />
               스파링 동의 완료{sparringConsent.status === "coach_confirmed" ? " · 코치 확인됨" : ""}
             </div>
           ) : (
             <button
               onClick={() => setShowSparring(true)}
-              className="mt-3 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]"
+              className="mt-3 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98]"
             >
               🥊 스파링 신청
             </button>
@@ -1119,7 +1119,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
       {showChecklist && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setShowChecklist(false)}>
           <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h3 className="mb-4 text-lg font-bold text-foreground">✅ 체크테스트 — Lv.{ul.globalLevel}</h3>
+            <h3 className="mb-4 text-heading font-bold text-foreground">✅ 체크테스트 — Lv.{ul.globalLevel}</h3>
             <div className="space-y-3">
               {checklist.map((item, idx) => (
                 <button
@@ -1137,13 +1137,13 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack }: { league: string; 
                     {checkResults[idx] && <CheckCircle2 className="h-4 w-4" />}
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-foreground">{item.title}</p>
-                    {item.mandatory && <span className="text-[9px] text-destructive">필수 항목</span>}
+                    <p className="text-label font-bold text-foreground">{item.title}</p>
+                    {item.mandatory && <span className="text-micro text-destructive">필수 항목</span>}
                   </div>
                 </button>
               ))}
             </div>
-            <button onClick={handleChecklistSubmit} className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-[0.98]">
+            <button onClick={handleChecklistSubmit} className="mt-4 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground active:scale-[0.98]">
               결과 확인
             </button>
           </div>

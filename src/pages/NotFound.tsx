@@ -52,7 +52,7 @@ const NotFound = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted">
-      <p className="text-sm text-muted-foreground">이동 중…</p>
+      <p className="text-body text-muted-foreground">이동 중…</p>
     </div>
   );
 };

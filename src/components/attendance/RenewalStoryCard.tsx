@@ -43,26 +43,26 @@ const RenewalStoryCard = ({ showCta = true, className }: { showCta?: boolean; cl
       className={cn("rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-amber-500/10 p-4 shadow-elev-1", className)}
     >
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-primary">My 153 Record</p>
-        <span className="shrink-0 rounded-full bg-background/80 px-2.5 py-0.5 text-[11.5px] font-bold text-foreground ring-1 ring-border">
+        <p className="text-micro font-black uppercase tracking-[0.16em] text-primary">My 153 Record</p>
+        <span className="shrink-0 rounded-full bg-background/80 px-2.5 py-0.5 text-micro font-bold text-foreground ring-1 ring-border">
           수강권 {renewalBadge(win)}
         </span>
       </div>
-      <h3 className="mt-1.5 text-[17px] font-black leading-snug text-foreground">
+      <h3 className="mt-1.5 text-body font-black leading-snug text-foreground">
         {name}님이 153에서 운동한 시간
         <br />
-        <span className="text-[26px] tabular-nums">{minutesToHours(data.totalMinutes)}시간</span>
+        <span className="text-title tabular-nums">{minutesToHours(data.totalMinutes)}시간</span>
       </h3>
       {chips.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           {chips.map((c) => (
-            <span key={c} className="rounded-full bg-background/80 px-2.5 py-1 text-[12px] font-bold text-foreground ring-1 ring-border">
+            <span key={c} className="rounded-full bg-background/80 px-2.5 py-1 text-label font-bold text-foreground ring-1 ring-border">
               {c}
             </span>
           ))}
         </div>
       )}
-      <p className="mt-2.5 text-[12.5px] leading-relaxed text-foreground">
+      <p className="mt-2.5 text-label leading-relaxed text-foreground">
         {win.ended
           ? `기록은 그대로 있어요. 다시 시작하면 지금까지 쌓은 ${minutesToHours(data.totalMinutes)}시간에 이어서 쌓여요.`
           : "지금까지 쌓은 기록은 다음 수강권에서도 그대로 이어져요."}
@@ -71,7 +71,7 @@ const RenewalStoryCard = ({ showCta = true, className }: { showCta?: boolean; cl
         <button
           type="button"
           onClick={() => navigate("/membership")}
-          className="mt-3 flex h-11 w-full items-center justify-center gap-1 rounded-xl bg-foreground text-[13.5px] font-bold text-background transition-transform active:scale-[0.98]"
+          className="mt-3 flex h-11 w-full items-center justify-center gap-1 rounded-xl bg-foreground text-label font-bold text-background transition-transform active:scale-[0.98]"
         >
           {win.ended ? "다시 시작하기" : "수강권 이어가기"} <ChevronRight className="h-4 w-4" />
         </button>

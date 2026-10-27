@@ -25,17 +25,17 @@ const SIZE_MAP: Record<NonNullable<SegmentedControlProps<string>["size"]>, {
   sm: {
     track: "p-0.5",
     item: "px-3 py-1.5",
-    text: "text-caption",
+    text: "text-label font-medium",
   },
   md: {
     track: "p-1",
     item: "px-4 py-2",
-    text: "text-body-sm",
+    text: "text-label font-medium",
   },
   lg: {
     track: "p-1",
     item: "px-4 py-2.5",
-    text: "text-body-lg",
+    text: "text-body font-medium",
   },
 };
 

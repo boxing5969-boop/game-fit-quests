@@ -45,10 +45,10 @@ const AvatarUpload = ({ size = "md", editable = true }: AvatarUploadProps) => {
         {displayUrl ? (
           <AvatarImage src={displayUrl} alt={profile?.nickname || "프로필"} />
         ) : null}
-        <AvatarFallback className="bg-primary/10 text-lg">🥊</AvatarFallback>
+        <AvatarFallback className="bg-primary/10 text-heading">🥊</AvatarFallback>
       </Avatar>
       {badge && !uploading && (
-        <span className="pointer-events-none absolute -top-2 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-reward px-2 py-0.5 text-[10px] font-black text-reward-foreground shadow-md">
+        <span className="pointer-events-none absolute -top-2 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-reward px-2 py-0.5 text-micro font-black text-reward-foreground shadow-md">
           🎁 {badge}
         </span>
       )}

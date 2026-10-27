@@ -136,7 +136,7 @@ function SheetCard({
               >
                 <Sparkles className="h-3.5 w-3.5 text-amber-300" />
               </span>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-300/80">
+              <p className="text-micro font-black uppercase tracking-[0.4em] text-amber-300/80">
                 30초 마무리
               </p>
             </div>
@@ -150,40 +150,40 @@ function SheetCard({
             </button>
           </div>
 
-          <h3 className="text-lg font-black leading-tight text-amber-50">
+          <h3 className="text-heading font-black leading-tight text-amber-50">
             {msg.title}
           </h3>
 
           {/* 오삼이 한마디 */}
           <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-400/20 bg-amber-500/8 px-3 py-2.5">
             <span
-              className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black"
+              className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-micro font-black"
               style={{ background: "#fdb85c", color: "#3a1a00" }}
               aria-hidden
             >
               오
             </span>
-            <p className="text-[12px] leading-relaxed text-amber-100/90">
+            <p className="text-label leading-relaxed text-amber-100/90">
               {msg.osamiMessage}
             </p>
           </div>
 
           {/* 오늘 남은 느낌 */}
           <div className="mt-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-200/60">
+            <p className="text-micro font-bold uppercase tracking-widest text-amber-200/60">
               오늘 남은 느낌
             </p>
-            <p className="mt-1 text-[13px] leading-relaxed text-amber-50">
+            <p className="mt-1 text-label leading-relaxed text-amber-50">
               {msg.feeling}
             </p>
           </div>
 
           {/* 다음 추천 행동 */}
           <div className="mt-3 rounded-xl border-l-2 border-rose-500/55 bg-rose-950/15 px-3 py-2.5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-rose-200/80">
+            <p className="text-micro font-bold uppercase tracking-widest text-rose-200/80">
               다음 추천
             </p>
-            <p className="mt-1 text-[12px] leading-relaxed text-rose-100/85">
+            <p className="mt-1 text-label leading-relaxed text-rose-100/85">
               {msg.nextAction}
             </p>
           </div>
@@ -192,11 +192,11 @@ function SheetCard({
         <div className="border-t border-amber-400/15 bg-black/25 px-4 py-3">
           <Button
             onClick={onClose}
-            className="h-10 w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-[12px] font-black tracking-wider text-amber-950 hover:from-amber-400 hover:to-amber-300 active:scale-[0.98]"
+            className="h-10 w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-label font-black tracking-wider text-amber-950 hover:from-amber-400 hover:to-amber-300 active:scale-[0.98]"
           >
             오늘은 여기까지
           </Button>
-          <p className="mt-1.5 text-center text-[9px] text-amber-200/45">
+          <p className="mt-1.5 text-center text-micro text-amber-200/45">
             30초 후 자동으로 닫힙니다.
           </p>
         </div>

@@ -64,10 +64,10 @@ const PartnerJournalFeedCard = () => {
               <BookOpen className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+              <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
                 파트너 일기
               </p>
-              <h3 className="mt-0.5 text-display-sm">
+              <h3 className="mt-0.5 text-heading">
                 코너맨 · 세컨드의 한 줄
               </h3>
             </div>
@@ -78,13 +78,13 @@ const PartnerJournalFeedCard = () => {
         </div>
 
         {isLoading ? (
-          <p className="text-[11.5px] text-muted-foreground">불러오는 중…</p>
+          <p className="text-micro text-muted-foreground">불러오는 중…</p>
         ) : rows.length === 0 ? (
           <div className="rounded-card border border-dashed border-border bg-muted/30 px-3.5 py-4 text-center">
-            <p className="text-[12px] font-bold text-foreground">
+            <p className="text-label font-bold text-foreground">
               아직 볼 수 있는 파트너의 일기가 없습니다
             </p>
-            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+            <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
               코너맨을 맺거나 세컨드 응원을 주고받으면
               <br />
               서로의 챔피언 일기를 열람하고 댓글로 응원할 수 있어요.
@@ -102,26 +102,26 @@ const PartnerJournalFeedCard = () => {
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-1.5">
                     <span
-                      className={`shrink-0 rounded-pill px-1.5 py-0.5 text-[9.5px] font-black ${relationStyle(e.relation)}`}
+                      className={`shrink-0 rounded-pill px-1.5 py-0.5 text-micro font-black ${relationStyle(e.relation)}`}
                     >
                       {relationLabel(e.relation)}
                     </span>
-                    <p className="truncate text-[12px] font-bold text-foreground">
+                    <p className="truncate text-label font-bold text-foreground">
                       {e.display_name}
                     </p>
                     <UserLeagueBadge userId={e.user_id} className="h-3.5 w-3.5" animated={false} />
                   </div>
-                  <p className="shrink-0 text-[10px] text-muted-foreground">
+                  <p className="shrink-0 text-micro text-muted-foreground">
                     {formatTime(e.created_at)}
                   </p>
                 </div>
-                <p className="line-clamp-1 text-[11px] font-bold text-primary">
+                <p className="line-clamp-1 text-micro font-bold text-primary">
                   {e.prompt}
                 </p>
-                <p className="line-clamp-2 text-[12px] leading-relaxed text-foreground">
+                <p className="line-clamp-2 text-label leading-relaxed text-foreground">
                   {e.content}
                 </p>
-                <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-muted-foreground">
+                <div className="mt-0.5 flex items-center gap-3 text-micro text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
                     <MessageCircle className="h-3 w-3" />
                     {e.comment_count}
@@ -133,7 +133,7 @@ const PartnerJournalFeedCard = () => {
           </div>
         )}
 
-        <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
           ※ 파트너 = 코너맨 active 페어 또는 최근 30일 양방향 세컨드 응원.
           공식 1~40 레벨업과 무관합니다.
         </p>

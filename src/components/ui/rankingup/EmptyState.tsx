@@ -34,13 +34,13 @@ export const EmptyState = ({
       className,
     )}
   >
-    <div className="flex h-16 w-16 items-center justify-center rounded-pill bg-primary/10 text-3xl">
+    <div className="flex h-16 w-16 items-center justify-center rounded-pill bg-primary/10 text-title">
       {icon}
     </div>
     <div className="space-y-1">
-      <h3 className="text-display-sm text-foreground">{title}</h3>
+      <h3 className="text-heading text-foreground">{title}</h3>
       {description && (
-        <p className="text-body-sm text-muted-foreground">{description}</p>
+        <p className="text-label text-muted-foreground font-medium">{description}</p>
       )}
     </div>
     {(ctaText || secondaryText) && (
@@ -52,7 +52,7 @@ export const EmptyState = ({
           <button
             type="button"
             onClick={onSecondaryClick}
-            className="text-caption font-medium text-muted-foreground active:scale-[0.98]"
+            className="text-label font-medium text-muted-foreground active:scale-[0.98]"
           >
             {secondaryText}
           </button>

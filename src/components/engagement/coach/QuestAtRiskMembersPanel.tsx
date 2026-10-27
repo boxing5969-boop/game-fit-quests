@@ -28,11 +28,11 @@ const QuestAtRiskMembersPanel = ({ members }: Props) => {
   if (members.length === 0) {
     return (
       <div>
-        <p className="mb-2 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="mb-2 text-micro font-bold uppercase tracking-wider text-muted-foreground">
           복귀 필요 회원
         </p>
         <div className="rounded-card border border-emerald-400/30 bg-emerald-400/5 p-3">
-          <p className="text-[12px] leading-relaxed text-foreground">
+          <p className="text-label leading-relaxed text-foreground">
             🎉 7일 이상 비활동 회원이 없습니다. 모두 꾸준히 활동 중!
           </p>
         </div>
@@ -42,7 +42,7 @@ const QuestAtRiskMembersPanel = ({ members }: Props) => {
 
   return (
     <div>
-      <p className="mb-2 flex items-center gap-1 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-2 flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
         <AlertTriangle className="h-3 w-3 text-amber-500" />
         복귀 필요 회원 ({members.length}명)
       </p>
@@ -55,14 +55,14 @@ const QuestAtRiskMembersPanel = ({ members }: Props) => {
               className="flex w-full items-center gap-3 rounded-card border border-border bg-card px-3 py-2.5 text-left transition-all active:scale-[0.99] hover:border-amber-400/40"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[12.5px] font-bold text-foreground">
+                <p className="truncate text-label font-bold text-foreground">
                   {m.display_name}
                 </p>
-                <p className="mt-0.5 text-[10.5px] text-muted-foreground">
+                <p className="mt-0.5 text-micro text-muted-foreground">
                   {RANK_LABELS[m.current_rank] ?? m.current_rank} Lv.
                   {toGlobalLevel(m.current_rank, m.current_level)} · 비활동 {m.inactive_days}일
                 </p>
-                <p className="mt-0.5 text-[10.5px] text-amber-700">
+                <p className="mt-0.5 text-micro text-amber-700">
                   {m.suggested_action}
                 </p>
               </div>
@@ -72,7 +72,7 @@ const QuestAtRiskMembersPanel = ({ members }: Props) => {
         ))}
       </ul>
       {members.length > 10 && (
-        <p className="mt-1 text-[10px] text-muted-foreground">
+        <p className="mt-1 text-micro text-muted-foreground">
           ... 외 {members.length - 10}명
         </p>
       )}

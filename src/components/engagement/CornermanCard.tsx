@@ -77,20 +77,20 @@ const CornermanCard = ({ onOpen }: Props) => {
         <Users className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+        <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
           운동 짝꿍 · 같이 하면 보너스
         </p>
-        <p className="mt-0.5 truncate text-[13.5px] font-bold text-foreground">
+        <p className="mt-0.5 truncate text-label font-bold text-foreground">
           {title}
         </p>
-        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+        <p className="mt-0.5 truncate text-micro text-muted-foreground">
           {subtitle}
         </p>
       </div>
       {badgeText && (
         <div className="shrink-0 text-right">
           <p
-            className={`text-[10px] font-bold uppercase tracking-wider ${
+            className={`text-micro font-bold uppercase tracking-wider ${
               badgeTone === "warn" ? "text-amber-600" : "text-reward"
             }`}
           >
@@ -98,7 +98,7 @@ const CornermanCard = ({ onOpen }: Props) => {
           </p>
         </div>
       )}
-      <span className="ml-1 shrink-0 text-[11px] font-bold text-primary">
+      <span className="ml-1 shrink-0 text-micro font-bold text-primary">
         열기 →
       </span>
     </button>

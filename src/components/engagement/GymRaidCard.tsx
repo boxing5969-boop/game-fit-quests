@@ -47,16 +47,16 @@ const GymRaidCard = () => {
           <Flag className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
             우리 지점 목표 · 함께 채워요
           </p>
           {isLoading ? (
-            <p className="mt-0.5 text-[13px] font-bold text-foreground">
+            <p className="mt-0.5 text-label font-bold text-foreground">
               불러오는 중…
             </p>
           ) : featured ? (
             <>
-              <p className="mt-0.5 truncate text-[13.5px] font-bold text-foreground">
+              <p className="mt-0.5 truncate text-label font-bold text-foreground">
                 {getRaidTypeEmoji(featured.raid_type)} {featured.title}
               </p>
               <div className="mt-1 flex items-center gap-2">
@@ -70,11 +70,11 @@ const GymRaidCard = () => {
                     style={{ width: `${Math.min(100, featured.percentage)}%` }}
                   />
                 </div>
-                <span className="text-[10px] font-bold text-foreground">
+                <span className="text-micro font-bold text-foreground">
                   {featured.percentage}%
                 </span>
               </div>
-              <p className="mt-1 text-[10.5px] text-muted-foreground">
+              <p className="mt-1 text-micro text-muted-foreground">
                 {getRaidTypeLabel(featured.raid_type)} · 내 기여 {featured.my_contribution}회
               </p>
             </>
@@ -82,16 +82,16 @@ const GymRaidCard = () => {
         </div>
         <div className="shrink-0 text-right">
           {claimableCount > 0 ? (
-            <p className="text-[10px] font-bold uppercase tracking-wider text-reward">
+            <p className="text-micro font-bold uppercase tracking-wider text-reward">
               보상 {claimableCount}건
             </p>
           ) : raids.length > 1 ? (
-            <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
+            <p className="text-micro font-bold uppercase tracking-wider text-primary">
               총 {raids.length}건
             </p>
           ) : null}
         </div>
-        <span className="ml-1 shrink-0 text-[11px] font-bold text-primary">
+        <span className="ml-1 shrink-0 text-micro font-bold text-primary">
           열기 →
         </span>
       </button>

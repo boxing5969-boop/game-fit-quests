@@ -105,13 +105,13 @@ const ReceivedCheersSheet = ({ open, onClose, initialTab = "received", stacked =
               <div className="flex min-w-0 items-center gap-3">
                 <img src={CHEER_BUMP_ICON} alt="" className="h-12 w-12 shrink-0 object-contain" />
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">응원함</p>
+                  <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">응원함</p>
                   {isSent ? (
                     <>
-                      <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+                      <h2 className="mt-0.5 text-body font-bold text-foreground">
                         내가 보낸 응원 <span className="number-font text-primary">{sent?.total ?? 0}</span>개
                       </h2>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      <p className="mt-0.5 text-micro text-muted-foreground">
                         {(sent?.thanked ?? 0) > 0
                           ? `동료에게서 고마워요 153을 ${sent!.thanked}번 받았어요`
                           : "동료가 고마워요 153을 누르면 여기에 표시돼요"}
@@ -119,10 +119,10 @@ const ReceivedCheersSheet = ({ open, onClose, initialTab = "received", stacked =
                     </>
                   ) : (
                     <>
-                      <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+                      <h2 className="mt-0.5 text-body font-bold text-foreground">
                         동료들이 보낸 응원 <span className="number-font text-primary">{data?.total ?? 0}</span>개
                       </h2>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">고마워요 153을 누르면 보낸 동료에게 알림이 가요</p>
+                      <p className="mt-0.5 text-micro text-muted-foreground">고마워요 153을 누르면 보낸 동료에게 알림이 가요</p>
                     </>
                   )}
                 </div>
@@ -151,7 +151,7 @@ const ReceivedCheersSheet = ({ open, onClose, initialTab = "received", stacked =
                   aria-selected={tab === key}
                   onClick={() => setTab(key)}
                   className={cn(
-                    "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-pill text-[13px] font-bold transition-colors active:scale-[0.98]",
+                    "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-pill text-label font-bold transition-colors active:scale-[0.98]",
                     tab === key ? "bg-foreground text-background" : "bg-muted text-muted-foreground",
                   )}
                 >
@@ -164,31 +164,31 @@ const ReceivedCheersSheet = ({ open, onClose, initialTab = "received", stacked =
             {isSent ? (
               <div className="flex-1 space-y-2 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
                 {sentLoading && !sent ? (
-                  <p className="py-6 text-center text-[12px] text-muted-foreground">불러오는 중…</p>
+                  <p className="py-6 text-center text-label text-muted-foreground">불러오는 중…</p>
                 ) : sentItems.length === 0 ? (
                   <div className="rounded-card border border-border bg-muted/20 px-4 py-8 text-center">
-                    <p className="text-[13px] font-bold text-foreground">아직 보낸 응원이 없어요</p>
-                    <p className="mt-1 text-[11.5px] text-muted-foreground">동료에게 응원을 보내면 여기에 차곡차곡 남아요.</p>
+                    <p className="text-label font-bold text-foreground">아직 보낸 응원이 없어요</p>
+                    <p className="mt-1 text-micro text-muted-foreground">동료에게 응원을 보내면 여기에 차곡차곡 남아요.</p>
                   </div>
                 ) : (
                   sentItems.map((c) => (
                     <div key={c.id} className="flex items-start gap-3 rounded-card border border-border bg-card px-3 py-3">
                       <StickerThumb sticker={c.sticker} />
                       <div className="min-w-0 flex-1">
-                        <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                        <p className="flex items-center gap-1.5 text-label text-muted-foreground">
                           <span className="min-w-0 truncate">
                             <span className="font-bold text-foreground">{c.receiver}</span>님께
                           </span>
                           {c.receiver_staff && (
-                            <span className="shrink-0 rounded-pill bg-primary/10 px-1.5 text-[10px] font-bold text-primary">코치</span>
+                            <span className="shrink-0 rounded-pill bg-primary/10 px-1.5 text-micro font-bold text-primary">코치</span>
                           )}
                           <span className="shrink-0">· {when(c.at)}</span>
                         </p>
-                        <p className="mt-0.5 text-[14px] font-black text-foreground">“{c.sticker}”</p>
-                        {c.note && <p className="mt-0.5 break-words text-[12.5px] text-muted-foreground">{c.note}</p>}
+                        <p className="mt-0.5 text-label font-black text-foreground">“{c.sticker}”</p>
+                        {c.note && <p className="mt-0.5 break-words text-label text-muted-foreground">{c.note}</p>}
                       </div>
                       {c.thanked && (
-                        <span className="mt-1 shrink-0 rounded-pill bg-primary/10 px-2.5 py-1.5 text-[11px] font-bold text-primary">
+                        <span className="mt-1 shrink-0 rounded-pill bg-primary/10 px-2.5 py-1.5 text-micro font-bold text-primary">
                           고마워요 받음
                         </span>
                       )}
@@ -199,11 +199,11 @@ const ReceivedCheersSheet = ({ open, onClose, initialTab = "received", stacked =
             ) : (
             <div className="flex-1 space-y-2 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
               {isLoading && !data ? (
-                <p className="py-6 text-center text-[12px] text-muted-foreground">불러오는 중…</p>
+                <p className="py-6 text-center text-label text-muted-foreground">불러오는 중…</p>
               ) : items.length === 0 ? (
                 <div className="rounded-card border border-border bg-muted/20 px-4 py-8 text-center">
-                  <p className="text-[13px] font-bold text-foreground">아직 받은 응원이 없어요</p>
-                  <p className="mt-1 text-[11.5px] text-muted-foreground">
+                  <p className="text-label font-bold text-foreground">아직 받은 응원이 없어요</p>
+                  <p className="mt-1 text-micro text-muted-foreground">
                     먼저 동료에게 응원을 보내 보세요. 응원은 돌아와요.
                   </p>
                 </div>
@@ -213,22 +213,22 @@ const ReceivedCheersSheet = ({ open, onClose, initialTab = "received", stacked =
                     <div key={c.id} className="flex items-start gap-3 rounded-card border border-border bg-card px-3 py-3">
                       <StickerThumb sticker={c.sticker} />
                       <div className="min-w-0 flex-1">
-                        <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                        <p className="flex items-center gap-1.5 text-label text-muted-foreground">
                           <span className="truncate font-bold text-foreground">{c.sender}</span>
                           {c.sender_staff && (
-                            <span className="shrink-0 rounded-pill bg-primary/10 px-1.5 text-[10px] font-bold text-primary">코치</span>
+                            <span className="shrink-0 rounded-pill bg-primary/10 px-1.5 text-micro font-bold text-primary">코치</span>
                           )}
                           <span className="shrink-0">· {when(c.at)}</span>
                         </p>
-                        <p className="mt-0.5 text-[14px] font-black text-foreground">“{c.sticker}”</p>
-                        {c.note && <p className="mt-0.5 break-words text-[12.5px] text-muted-foreground">{c.note}</p>}
+                        <p className="mt-0.5 text-label font-black text-foreground">“{c.sticker}”</p>
+                        {c.note && <p className="mt-0.5 break-words text-label text-muted-foreground">{c.note}</p>}
                       </div>
                       <button
                         type="button"
                         disabled={c.thanked || busy === c.id}
                         onClick={() => onThank(c.id, c.sender)}
                         className={cn(
-                          "mt-1 shrink-0 rounded-pill px-2.5 py-1.5 text-[11px] font-bold active:scale-95",
+                          "mt-1 shrink-0 rounded-pill px-2.5 py-1.5 text-micro font-bold active:scale-95",
                           c.thanked ? "bg-secondary text-muted-foreground" : "bg-primary text-primary-foreground",
                         )}
                       >

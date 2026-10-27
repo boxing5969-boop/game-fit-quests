@@ -54,7 +54,7 @@ export const MealSwapDialog = ({
     <div className="fixed inset-0 z-[72] flex items-end justify-center bg-background/80 p-4 backdrop-blur-sm animate-fade-in sm:items-center">
       <div className="relative w-full max-w-[460px] overflow-hidden rounded-3xl border border-border bg-card shadow-elev-3">
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="text-[13px] font-extrabold text-foreground">
+          <p className="text-label font-extrabold text-foreground">
             {MEAL_SLOT_LABEL_KO[slot]} 교체
           </p>
           <button
@@ -68,7 +68,7 @@ export const MealSwapDialog = ({
 
         <div className="max-h-[70vh] overflow-y-auto px-5 py-3">
           {current && (
-            <p className="mb-2 text-[11px] text-muted-foreground">
+            <p className="mb-2 text-micro text-muted-foreground">
               현재: <span className="font-bold text-foreground">{current.name}</span>
             </p>
           )}
@@ -85,18 +85,18 @@ export const MealSwapDialog = ({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-[12.5px] font-extrabold leading-snug text-foreground">
+                      <p className="text-label font-extrabold leading-snug text-foreground">
                         {m.name}
                       </p>
-                      <p className="mt-0.5 text-[10.5px] leading-relaxed text-muted-foreground">
+                      <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                         {m.note}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="number-font text-[12px] font-extrabold text-foreground">
+                      <p className="number-font text-label font-extrabold text-foreground">
                         {m.kcal}
                       </p>
-                      <p className="text-[9.5px] text-muted-foreground">kcal</p>
+                      <p className="text-micro text-muted-foreground">kcal</p>
                     </div>
                   </div>
                   <div className="mt-1.5 flex flex-wrap gap-1">
@@ -104,7 +104,7 @@ export const MealSwapDialog = ({
                       <span
                         key={t}
                         className={cn(
-                          "rounded-full px-1.5 py-0.5 text-[9.5px] font-bold",
+                          "rounded-full px-1.5 py-0.5 text-micro font-bold",
                           t === "외식OK"
                             ? "bg-amber-400/15 text-amber-600"
                             : "bg-muted text-muted-foreground",
@@ -113,7 +113,7 @@ export const MealSwapDialog = ({
                         {t}
                       </span>
                     ))}
-                    <span className="ml-auto text-[10px] text-muted-foreground">
+                    <span className="ml-auto text-micro text-muted-foreground">
                       P {m.proteinG}g · C {m.carbsG}g · F {m.fatG}g
                     </span>
                   </div>
@@ -123,7 +123,7 @@ export const MealSwapDialog = ({
           </ul>
         </div>
 
-        <p className="border-t border-border px-5 py-2 text-center text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="border-t border-border px-5 py-2 text-center text-micro leading-relaxed text-muted-foreground">
           선택하면 다음 끼니가 자동으로 "복귀 톤(저탄수·고단백)" 메뉴로 재선택됩니다.
         </p>
       </div>

@@ -199,14 +199,14 @@ const Banner = ({
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[12.5px] font-bold text-foreground">{title}</p>
-        <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+        <p className="text-label font-bold text-foreground">{title}</p>
+        <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
           {body}
         </p>
       </div>
       <div
         className={cn(
-          "mt-1 flex shrink-0 items-center gap-1 text-[11px] font-bold",
+          "mt-1 flex shrink-0 items-center gap-1 text-micro font-bold",
           toneAccent(tone),
         )}
       >

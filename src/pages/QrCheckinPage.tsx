@@ -305,8 +305,8 @@ const QrCheckinPage = () => {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div>
-          <h1 className="text-lg font-black leading-tight">QR 출석</h1>
-          <p className="text-[11px] text-muted-foreground">라이브보드 화면의 QR 을 찍으면 바로 반영돼요</p>
+          <h1 className="text-heading font-black leading-tight">QR 출석</h1>
+          <p className="text-micro text-muted-foreground">라이브보드 화면의 QR 을 찍으면 바로 반영돼요</p>
         </div>
       </div>
 
@@ -318,7 +318,7 @@ const QrCheckinPage = () => {
               <button
                 type="button"
                 onClick={toggleZoom}
-                className={`absolute bottom-3 right-3 flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-black shadow-lg transition-all active:scale-95 ${
+                className={`absolute bottom-3 right-3 flex items-center gap-1 rounded-full px-3 py-1.5 text-label font-black shadow-lg transition-all active:scale-95 ${
                   zoom.on ? "bg-primary text-primary-foreground" : "bg-black/60 text-white"
                 }`}
               >
@@ -327,26 +327,26 @@ const QrCheckinPage = () => {
             )}
           </div>
           {/* 사진으로 인식 — 라이브 인식이 잘 안 될 때 */}
-          <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-bold text-foreground transition-all active:scale-[0.99]">
+          <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-body font-bold text-foreground transition-all active:scale-[0.99]">
             <Camera className="h-4 w-4 text-primary" />
             {fileBusy ? "사진에서 찾는 중..." : "인식이 안 되면 — 사진으로 찍어서 인식"}
             <input type="file" accept="image/*" capture="environment" className="hidden" onChange={onPickPhoto} disabled={fileBusy} />
           </label>
           <div className="rounded-card border border-border bg-card px-3.5 py-3">
-            <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+            <p className="flex items-center gap-1.5 text-body font-bold text-foreground">
               <QrCode className="h-4 w-4 text-primary" /> 보드의 QR 을 네모 안에 맞춰 주세요
             </p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-micro text-muted-foreground">
               TV 에서 50cm~1m 거리가 가장 잘 잡혀요. 화면 반사가 심하면 비스듬히 찍어 보세요.
             </p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-micro text-muted-foreground">
               입구 얼굴 인식은 그대로 하셔야 문이 열려요. QR 은 보드에 이름이 안 뜰 때 쓰는 보조 출석이에요.
             </p>
           </div>
           {cameraMsg && (
             <div className="flex items-start gap-2 rounded-card border border-destructive/30 bg-destructive/10 px-3.5 py-3">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-              <p className="text-sm font-bold text-foreground">{cameraMsg}</p>
+              <p className="text-body font-bold text-foreground">{cameraMsg}</p>
             </div>
           )}
         </div>
@@ -358,7 +358,7 @@ const QrCheckinPage = () => {
       {phase === "submitting" && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
-          <p className="text-sm font-bold text-muted-foreground">출석 처리 중...</p>
+          <p className="text-body font-bold text-muted-foreground">출석 처리 중...</p>
         </div>
       )}
 
@@ -366,17 +366,17 @@ const QrCheckinPage = () => {
         <div className="space-y-3">
           <div className="rounded-card border border-border bg-card px-4 py-6 text-center">
             <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
-            <p className="mt-3 text-xl font-black">
+            <p className="mt-3 text-heading font-black">
               {result.already ? "이미 출석되어 있어요" : "출석 완료 🥊"}
             </p>
-            <p className="mt-1 text-sm font-bold text-muted-foreground">
+            <p className="mt-1 text-body font-bold text-muted-foreground">
               {result.branch}
               {result.checked_in_at ? ` · ${fmtTime(result.checked_in_at)}` : ""}
             </p>
             {!result.already && (result.xp_granted ?? 0) > 0 && (
-              <p className="mt-2 text-sm font-black text-primary">XP +{result.xp_granted}</p>
+              <p className="mt-2 text-body font-black text-primary">XP +{result.xp_granted}</p>
             )}
-            <p className="mt-3 text-[12px] text-muted-foreground">
+            <p className="mt-3 text-label text-muted-foreground">
               {result.already
                 ? result.method === "qr_manual"
                   ? "오늘 QR 출석이 이미 기록되어 있어요"
@@ -384,12 +384,12 @@ const QrCheckinPage = () => {
                 : "라이브보드에 곧 이름이 올라가요"}
             </p>
             {result.staff && (
-              <p className="mt-1 text-[12px] text-muted-foreground">직원 계정은 라이브보드 회원 목록에는 표시되지 않아요</p>
+              <p className="mt-1 text-label text-muted-foreground">직원 계정은 라이브보드 회원 목록에는 표시되지 않아요</p>
             )}
           </div>
           <button
             onClick={goHome}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition-all active:scale-95"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-body font-bold text-primary-foreground transition-all active:scale-95"
           >
             <Home className="h-4 w-4" /> 홈으로
           </button>
@@ -400,20 +400,20 @@ const QrCheckinPage = () => {
         <div className="space-y-3">
           <div className="flex items-start gap-3 rounded-card border border-destructive/30 bg-destructive/10 px-4 py-4">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-            <p className="text-sm font-bold text-foreground">{errorMsg}</p>
+            <p className="text-body font-bold text-foreground">{errorMsg}</p>
           </div>
           <button
             onClick={() => {
               setErrorMsg(null);
               setPhase("scan");
             }}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition-all active:scale-95"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-body font-bold text-primary-foreground transition-all active:scale-95"
           >
             <RotateCcw className="h-4 w-4" /> 다시 스캔
           </button>
           <button
             onClick={goHome}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-muted px-4 py-3 text-sm font-bold text-foreground transition-all active:scale-95"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-muted px-4 py-3 text-body font-bold text-foreground transition-all active:scale-95"
           >
             <Home className="h-4 w-4" /> 홈으로
           </button>

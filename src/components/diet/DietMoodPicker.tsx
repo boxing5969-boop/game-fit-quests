@@ -31,7 +31,7 @@ export const DietMoodPicker = ({
           type="button"
           onClick={() => onChange(active ? null : o.id)}
           className={cn(
-            "rounded-xl border px-2 py-2 text-[12px] font-bold transition-colors",
+            "rounded-xl border px-2 py-2 text-label font-bold transition-colors",
             active
               ? "border-primary bg-primary/10 text-primary"
               : "border-border bg-card text-foreground hover:border-primary/40",

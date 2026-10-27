@@ -78,16 +78,16 @@ export const DietCompletionModal = ({
 
           {/* 타이틀 + 서브 */}
           <div className="text-center">
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-reward">
+            <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">
               21-DAY CHALLENGE COMPLETE
             </p>
             <h2
               id="diet-completion-title"
-              className="mt-1 text-2xl font-extrabold text-foreground"
+              className="mt-1 text-title font-extrabold text-foreground"
             >
               21일 습관 리셋, 완주했어요!
             </h2>
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
               체중보다 먼저 바뀐 건 리듬입니다. 이 페이스를 유지해 볼까요?
             </p>
           </div>
@@ -99,7 +99,7 @@ export const DietCompletionModal = ({
           </div>
 
           {/* 보상 안내 */}
-          <div className="rounded-xl border border-reward/30 bg-reward/10 px-3 py-2.5 text-[12px] leading-relaxed text-foreground">
+          <div className="rounded-xl border border-reward/30 bg-reward/10 px-3 py-2.5 text-label leading-relaxed text-foreground">
             <p className="font-bold text-reward-foreground">
               🏅 21일 완주 배지 + 보너스 50젬
             </p>
@@ -153,10 +153,10 @@ const StatTile = ({
     <span className="mx-auto flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
       {icon}
     </span>
-    <p className="mt-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+    <p className="mt-1.5 text-micro font-bold uppercase tracking-wide text-muted-foreground">
       {label}
     </p>
-    <p className="mt-0.5 number-font text-[15px] font-extrabold text-foreground">
+    <p className="mt-0.5 number-font text-body font-extrabold text-foreground">
       {value}
     </p>
   </div>

@@ -115,13 +115,13 @@ const TutorialFloatingMascot = () => {
               >
                 <X className="mx-auto h-3 w-3" />
               </button>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-yellow-300">
+              <p className="text-micro font-bold uppercase tracking-wider text-yellow-300">
                 오삼이 가이드
               </p>
-              <p className="mt-0.5 text-xs font-bold text-white">
+              <p className="mt-0.5 text-label font-bold text-white">
                 다음: {currentStep.label}
               </p>
-              <p className="mt-0.5 text-[10px] text-gray-400">탭해서 시작하기 →</p>
+              <p className="mt-0.5 text-micro text-gray-400">탭해서 시작하기 →</p>
               {/* 꼬리 */}
               <div
                 className="absolute -bottom-1 left-6 h-3 w-3 rotate-45 bg-gray-900/95 ring-1 ring-yellow-400/40"
@@ -146,7 +146,7 @@ const TutorialFloatingMascot = () => {
         >
           <OsamMascot size="xs" state={isFinished ? "victory" : "wink"} />
           {/* 미션 진행 뱃지 */}
-          <span className="absolute -left-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-black text-white ring-2 ring-gray-900">
+          <span className="absolute -left-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-micro font-black text-white ring-2 ring-gray-900">
             {stepsCompleted}/{TUTORIAL_STEPS.length}
           </span>
         </motion.button>
@@ -182,13 +182,13 @@ const TutorialFloatingMascot = () => {
                   <div className="flex items-center gap-3">
                     <OsamMascot size="md" state={isFinished ? "victory" : "determined"} />
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-300">
+                      <p className="text-micro font-black uppercase tracking-[0.2em] text-yellow-300">
                         OSAM · 시작하기
                       </p>
-                      <h2 className="text-xl font-black text-white">
+                      <h2 className="text-heading font-black text-white">
                         {isFinished ? "모든 미션 완료! 🎉" : `${currentStep.label}`}
                       </h2>
-                      <p className="mt-1 text-xs leading-relaxed text-gray-400">
+                      <p className="mt-1 text-label leading-relaxed text-gray-400">
                         {isFinished
                           ? `${rewardGems} GEMS 보상을 받아가세요.`
                           : currentStep.description}
@@ -216,7 +216,7 @@ const TutorialFloatingMascot = () => {
                   className="h-full bg-gradient-to-r from-yellow-400 to-orange-400"
                 />
               </div>
-              <p className="mt-1 px-5 text-right text-[10px] font-bold tabular-nums text-yellow-300">
+              <p className="mt-1 px-5 text-right text-micro font-bold tabular-nums text-yellow-300">
                 {stepsCompleted} / {TUTORIAL_STEPS.length} ·{" "}
                 {Math.round((stepsCompleted / TUTORIAL_STEPS.length) * 100)}%
               </p>
@@ -244,7 +244,7 @@ const TutorialFloatingMascot = () => {
                     >
                       <div className="flex items-start gap-3">
                         <div
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl ${
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-heading ${
                             isDone
                               ? "bg-emerald-500 text-white"
                               : isCurrent
@@ -257,7 +257,7 @@ const TutorialFloatingMascot = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p
-                              className={`text-sm font-black ${
+                              className={`text-body font-black ${
                                 isDone
                                   ? "text-emerald-300 line-through"
                                   : isCurrent
@@ -268,7 +268,7 @@ const TutorialFloatingMascot = () => {
                               {step.label}
                             </p>
                             <span
-                              className={`rounded-full px-1.5 py-0.5 text-[9px] font-black tabular-nums ${
+                              className={`rounded-full px-1.5 py-0.5 text-micro font-black tabular-nums ${
                                 isDone
                                   ? "bg-emerald-500/20 text-emerald-300"
                                   : isCurrent
@@ -280,7 +280,7 @@ const TutorialFloatingMascot = () => {
                             </span>
                           </div>
                           <p
-                            className={`mt-0.5 text-[11px] leading-relaxed ${
+                            className={`mt-0.5 text-micro leading-relaxed ${
                               isCurrent ? "text-gray-300" : "text-gray-500"
                             }`}
                           >
@@ -292,13 +292,13 @@ const TutorialFloatingMascot = () => {
                             <div className="mt-2 flex flex-wrap items-center gap-2">
                               <button
                                 onClick={() => handleStartMission(step)}
-                                className="inline-flex items-center gap-1 rounded-pill bg-yellow-400 px-3 py-1.5 text-xs font-black text-gray-900 hover:bg-yellow-300 active:scale-95"
+                                className="inline-flex items-center gap-1 rounded-pill bg-yellow-400 px-3 py-1.5 text-label font-black text-gray-900 hover:bg-yellow-300 active:scale-95"
                               >
                                 {step.ctaLabel}
                                 <ChevronRight className="h-3 w-3" />
                               </button>
                               {/* 안내 — 출석 체크는 클릭만으로 OK, 나머지는 실제 행동 필요 */}
-                              <span className="text-[10px] text-gray-500">
+                              <span className="text-micro text-gray-500">
                                 {step.key === "first_checkin"
                                   ? "버튼 누르면 완료"
                                   : "실제 행동 후 자동 완료"}
@@ -318,7 +318,7 @@ const TutorialFloatingMascot = () => {
                   <button
                     onClick={handleClaimFinal}
                     disabled={completeReward.isPending}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 px-5 py-3.5 text-base font-black text-gray-900 shadow-lg active:scale-95 disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 px-5 py-3.5 text-body font-black text-gray-900 shadow-lg active:scale-95 disabled:opacity-60"
                     style={{
                       boxShadow: "0 0 30px rgba(246,196,83,0.5)",
                     }}
@@ -334,7 +334,7 @@ const TutorialFloatingMascot = () => {
                 <div className="mt-4 text-center">
                   <button
                     onClick={handleSkipAll}
-                    className="text-[11px] text-gray-500 underline-offset-2 hover:text-gray-400 hover:underline"
+                    className="text-micro text-gray-500 underline-offset-2 hover:text-gray-400 hover:underline"
                   >
                     튜토리얼 건너뛰기 (보상 없음)
                   </button>

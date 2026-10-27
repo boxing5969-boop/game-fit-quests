@@ -68,20 +68,20 @@ const MoveCard = ({
 }) => (
   <li className="rounded-xl border border-border bg-background/60 p-3">
     <div className="flex items-baseline justify-between gap-2">
-      <p className="min-w-0 text-sm font-black text-foreground">
+      <p className="min-w-0 text-body font-black text-foreground">
         {no && <span className="mr-1 text-primary">{no}</span>}
         {name}
         {boxing && " 🥊"}
       </p>
-      <p className="shrink-0 text-right text-xs font-bold tabular-nums text-foreground">{reps}</p>
+      <p className="shrink-0 text-right text-label font-bold tabular-nums text-foreground">{reps}</p>
     </div>
-    <p className="mt-1 text-[12.5px] leading-relaxed text-foreground/90">{howTo}</p>
-    <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
-      <span className="mr-1.5 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10.5px] font-black text-primary">인정</span>
+    <p className="mt-1 text-label leading-relaxed text-foreground/90">{howTo}</p>
+    <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
+      <span className="mr-1.5 rounded-md bg-primary/10 px-1.5 py-0.5 text-micro font-black text-primary">인정</span>
       {standard}
     </p>
-    <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
-      <span className="mr-1.5 rounded-md bg-amber-400/15 px-1.5 py-0.5 text-[10.5px] font-black text-amber-700 dark:text-amber-300">
+    <p className="mt-1 text-label leading-relaxed text-muted-foreground">
+      <span className="mr-1.5 rounded-md bg-amber-400/15 px-1.5 py-0.5 text-micro font-black text-amber-700 dark:text-amber-300">
         요령
       </span>
       {tip}
@@ -102,7 +102,7 @@ const Chip = ({ active, onClick, children }: { active: boolean; onClick: () => v
     type="button"
     onClick={onClick}
     className={cn(
-      "shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors active:scale-95",
+      "shrink-0 rounded-full border px-3 py-1.5 text-label font-bold transition-colors active:scale-95",
       active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground",
     )}
   >
@@ -173,17 +173,17 @@ const Test153Board = ({ onOpenMember }: Props) => {
         <div className="flex items-start gap-2">
           <Timer className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div className="min-w-0">
-            <p className="text-2xl font-black leading-none tracking-tight text-primary">{TEST153_NAME}</p>
-            <p className="mt-1 text-[11.5px] font-bold text-muted-foreground">
+            <p className="text-title font-black leading-none tracking-tight text-primary">{TEST153_NAME}</p>
+            <p className="mt-1 text-micro font-bold text-muted-foreground">
               ({TEST153_NAME_EN}) ({TEST153_NAME_KO})
             </p>
           </div>
         </div>
-        <h2 className="mt-3 text-xl font-black leading-tight text-foreground [text-wrap:balance]">상대는 지난번의 나</h2>
-        <p className="mt-2 border-l-[3px] border-primary pl-3 text-[13.5px] font-bold leading-relaxed text-foreground">
+        <h2 className="mt-3 text-heading font-black leading-tight text-foreground [text-wrap:balance]">상대는 지난번의 나</h2>
+        <p className="mt-2 border-l-[3px] border-primary pl-3 text-label font-bold leading-relaxed text-foreground">
           복싱은 상대를 이기기 위해, 먼저 나와의 싸움에서 이겨야 하는 운동이에요.
         </p>
-        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+        <p className="mt-2 text-label leading-relaxed text-muted-foreground">
           마라토너가 지난 기록에서 1초를 당기려고 달리듯, 내 체력을 정확히 재고 기록해서{" "}
           <b className="text-foreground">지난번의 나를 이기는</b> 체력 평가예요.
         </p>
@@ -191,15 +191,15 @@ const Test153Board = ({ onOpenMember }: Props) => {
           {PILLARS.map((p) => (
             <div key={p.title} className="min-w-0 rounded-2xl bg-background/70 px-2.5 py-2">
               <p.icon className="h-4 w-4 text-primary" />
-              <p className="mt-1 text-xs font-black text-foreground">{p.title}</p>
-              <p className="text-[11px] leading-snug text-muted-foreground">{p.desc}</p>
+              <p className="mt-1 text-label font-black text-foreground">{p.title}</p>
+              <p className="text-micro leading-snug text-muted-foreground">{p.desc}</p>
             </div>
           ))}
         </div>
         <button
           type="button"
           onClick={() => openGuide("flow")}
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-card py-2 text-xs font-bold text-foreground active:scale-[0.98]"
+          className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-card py-2 text-label font-bold text-foreground active:scale-[0.98]"
         >
           어떻게 하고 어떻게 평가하는지 보기
           <ChevronDown className="h-3.5 w-3.5" />
@@ -219,7 +219,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
       <section className="rounded-3xl border border-border bg-card p-4 shadow-elev-1">
         <div className="flex items-center gap-2">
           <Timer className="h-4 w-4 text-primary" />
-          <p className="text-sm font-black text-foreground">
+          <p className="text-body font-black text-foreground">
             내 {TEST153_NAME} · {DIVISION_LABEL[division]}
           </p>
         </div>
@@ -228,8 +228,8 @@ const Test153Board = ({ onOpenMember }: Props) => {
           <div className="mt-3 h-24 animate-pulse rounded-2xl bg-muted/40" />
         ) : !best ? (
           <div className="mt-3 rounded-2xl bg-muted/30 p-4 text-center">
-            <p className="text-sm font-bold text-foreground">아직 {DIVISION_LABEL[division]} 공식 기록이 없어요</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            <p className="text-body font-bold text-foreground">아직 {DIVISION_LABEL[division]} 공식 기록이 없어요</p>
+            <p className="mt-1 text-label leading-relaxed text-muted-foreground">
               체육관에서 코치님께 “{TEST153_NAME} 도전할게요” 하면 코치님이 시간을 재서 기록해 줘요.
               <br />
               처음이면 스타터부터 추천해요. 첫 기록이 앞으로 이겨야 할 ‘지난번의 나’가 돼요.
@@ -237,7 +237,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
             <button
               type="button"
               onClick={() => openGuide("moves")}
-              className="mt-3 rounded-xl border border-primary/40 bg-card px-3 py-1.5 text-xs font-bold text-primary active:scale-[0.98]"
+              className="mt-3 rounded-xl border border-primary/40 bg-card px-3 py-1.5 text-label font-bold text-primary active:scale-[0.98]"
             >
               동작별 하는 법 먼저 보기
             </button>
@@ -246,19 +246,19 @@ const Test153Board = ({ onOpenMember }: Props) => {
           <>
             <div className="mt-3 flex items-end justify-between gap-3">
               <div>
-                <p className="text-xs text-muted-foreground">{TEST153_NAME_KO} (PB)</p>
-                <p className="text-4xl font-black tabular-nums text-foreground">{fmtScore(best)}</p>
-                <p className="text-xs text-muted-foreground">{fmtDate(best.measured_at)}</p>
+                <p className="text-label text-muted-foreground">{TEST153_NAME_KO} (PB)</p>
+                <p className="text-display font-black tabular-nums text-foreground">{fmtScore(best)}</p>
+                <p className="text-label text-muted-foreground">{fmtDate(best.measured_at)}</p>
               </div>
               {rank && (
                 <div className="text-right">
                   {rank.branch != null && (
-                    <p className="text-sm font-black text-primary">
+                    <p className="text-body font-black text-primary">
                       우리 지점 {rank.branch}위 <span className="font-medium text-muted-foreground">/ {rank.branch_total}명</span>
                     </p>
                   )}
                   {rank.all != null && (
-                    <p className="text-xs font-bold text-foreground">
+                    <p className="text-label font-bold text-foreground">
                       전체 {rank.all}위 <span className="font-medium text-muted-foreground">/ {rank.all_total}명</span>
                     </p>
                   )}
@@ -267,7 +267,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
             </div>
 
             {improvedMs > 0 && first && (
-              <p className="mt-3 rounded-xl bg-primary/10 px-3 py-2 text-sm font-bold text-primary">
+              <p className="mt-3 rounded-xl bg-primary/10 px-3 py-2 text-body font-bold text-primary">
                 📈 첫 기록({fmtMs(first.score_ms)})보다 {(improvedMs / 1000).toFixed(1)}초 빨라졌어요 (
                 {((improvedMs / first.score_ms) * 100).toFixed(1)}%)
               </p>
@@ -277,19 +277,19 @@ const Test153Board = ({ onOpenMember }: Props) => {
             {nextGoal && (
               <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-primary/40 px-3 py-2">
                 <span className="min-w-0">
-                  <span className="block text-xs font-bold text-foreground">다음 목표</span>
-                  <span className="block text-[11px] text-muted-foreground">{nextGoal.hint}</span>
+                  <span className="block text-label font-bold text-foreground">다음 목표</span>
+                  <span className="block text-micro text-muted-foreground">{nextGoal.hint}</span>
                 </span>
-                <span className="shrink-0 text-lg font-black tabular-nums text-primary">{nextGoal.value}</span>
+                <span className="shrink-0 text-heading font-black tabular-nums text-primary">{nextGoal.value}</span>
               </div>
             )}
 
             {/* 구간별 최고 vs 최근 */}
             <div className="mt-4">
-              <p className="mb-1.5 text-xs font-bold text-muted-foreground">
+              <p className="mb-1.5 text-label font-bold text-muted-foreground">
                 구간 기록 · 최고{latest && latest.id !== best.id ? " vs 최근" : ""}
               </p>
-              <ul className="divide-y divide-border rounded-xl border border-border text-[13px]">
+              <ul className="divide-y divide-border rounded-xl border border-border text-label">
                 {segments.map((s, i) => {
                   const b = best.splits_ms[i];
                   const l = latest && latest.id !== best.id ? latest.splits_ms[i] : undefined;
@@ -304,7 +304,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
                       {l != null && (
                         <span
                           className={cn(
-                            "w-16 text-right tabular-nums text-xs",
+                            "w-16 text-right tabular-nums text-label",
                             diff != null && diff > 0 ? "text-destructive" : "text-primary",
                           )}
                         >
@@ -320,8 +320,8 @@ const Test153Board = ({ onOpenMember }: Props) => {
             {/* 지난 기록 */}
             {divRecords.length > 1 && (
               <div className="mt-4">
-                <p className="mb-1.5 text-xs font-bold text-muted-foreground">지난 기록 {divRecords.length}번</p>
-                <ul className="space-y-1 text-[13px]">
+                <p className="mb-1.5 text-label font-bold text-muted-foreground">지난 기록 {divRecords.length}번</p>
+                <ul className="space-y-1 text-label">
                   {divRecords.slice(0, 8).map((r) => (
                     <li key={r.id} className="flex items-center justify-between">
                       <span className="text-muted-foreground">
@@ -342,7 +342,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
       {/* 순위 */}
       <section className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-black text-foreground">{DIVISION_LABEL[division]} 순위</h3>
+          <h3 className="text-body font-black text-foreground">{DIVISION_LABEL[division]} 순위</h3>
           <div className="flex gap-1.5">
             <Chip active={scope === "branch"} onClick={() => setScope("branch")}>
               우리 지점
@@ -380,7 +380,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
             ))}
           </div>
         ) : ranking.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-border p-6 text-center text-body text-muted-foreground">
             아직 기록이 없어요. 첫 기록의 주인공이 되어 보세요!
           </div>
         ) : (
@@ -396,25 +396,25 @@ const Test153Board = ({ onOpenMember }: Props) => {
                   >
                     <span
                       className={cn(
-                        "w-7 text-center text-sm font-black tabular-nums",
+                        "w-7 text-center text-body font-black tabular-nums",
                         r.r_position === 1 ? "text-amber-500" : r.r_position <= 3 ? "text-foreground" : "text-muted-foreground",
                       )}
                     >
                       {r.r_position <= 3 ? ["🥇", "🥈", "🥉"][r.r_position - 1] : r.r_position}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-bold text-foreground">
+                      <span className="block truncate text-body font-bold text-foreground">
                         {r.r_nickname}
-                        <MedalMark userId={r.r_user_id} className="ml-1 text-sm" />
-                        {me && <span className="ml-1 text-xs text-primary">나</span>}
+                        <MedalMark userId={r.r_user_id} className="ml-1 text-body" />
+                        {me && <span className="ml-1 text-label text-primary">나</span>}
                       </span>
-                      <span className="block truncate text-[11px] text-muted-foreground">
+                      <span className="block truncate text-micro text-muted-foreground">
                         {[scope === "all" ? shortBranch(r.r_branch_name) : null, r.r_gender, r.r_age_group, fmtDate(r.r_measured_at)]
                           .filter(Boolean)
                           .join(" · ")}
                       </span>
                     </span>
-                    <span className="tabular-nums text-sm font-black text-foreground">
+                    <span className="tabular-nums text-body font-black text-foreground">
                       {fmtScore({ finished: r.r_finished, score_ms: r.r_score_ms, remaining_reps: r.r_remaining_reps })}
                     </span>
                   </button>
@@ -427,7 +427,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
 
       {/* 안내 — 왜 하나요 · 진행 · 동작별 하는 법 · 평가 · 1초 당기는 법 */}
       <section ref={guideRef} className="scroll-mt-20 space-y-2">
-        <h3 className="text-base font-black text-foreground">{TEST153_NAME} 안내</h3>
+        <h3 className="text-body font-black text-foreground">{TEST153_NAME} 안내</h3>
         <Accordion
           type="multiple"
           value={guideOpen}
@@ -435,10 +435,10 @@ const Test153Board = ({ onOpenMember }: Props) => {
           className="overflow-hidden rounded-2xl border border-border bg-card"
         >
           <AccordionItem value="why" className="border-border px-4 last:border-b-0">
-            <AccordionTrigger className="py-3 text-left text-sm font-bold text-foreground hover:no-underline">
+            <AccordionTrigger className="py-3 text-left text-body font-bold text-foreground hover:no-underline">
               왜 하나요? — 나와의 싸움
             </AccordionTrigger>
-            <AccordionContent className="space-y-3 text-[13px] leading-relaxed text-muted-foreground">
+            <AccordionContent className="space-y-3 text-label leading-relaxed text-muted-foreground">
               <p>
                 복싱은 상대를 이기기 위해, 먼저 <b className="text-foreground">나와의 싸움</b>에서 이겨야 하는 운동이에요. 숨이 턱까지
                 차도 가드를 올리고, 다리가 무거워도 한 발 더 나가는 힘 — 링 위에서 상대를 이기는 힘은 거기서 나와요.
@@ -465,23 +465,23 @@ const Test153Board = ({ onOpenMember }: Props) => {
           </AccordionItem>
 
           <AccordionItem value="flow" className="border-border px-4 last:border-b-0">
-            <AccordionTrigger className="py-3 text-left text-sm font-bold text-foreground hover:no-underline">
+            <AccordionTrigger className="py-3 text-left text-body font-bold text-foreground hover:no-underline">
               어떻게 진행되나요?
             </AccordionTrigger>
-            <AccordionContent className="space-y-3 text-[13px] leading-relaxed text-muted-foreground">
+            <AccordionContent className="space-y-3 text-label leading-relaxed text-muted-foreground">
               <p>
                 모두 같은 운동을 같은 순서로 해요. <b className="text-foreground">8라운드</b> — 매 라운드{" "}
                 <b className="text-foreground">셀트런 100m</b>를 달리고 바로 <b className="text-foreground">종목 하나</b>를 해요.
               </p>
               <ol className="grid grid-cols-2 gap-1.5">
                 {TEST153_STATIONS.map((s, i) => (
-                  <li key={s.name} className="flex min-w-0 items-center gap-1.5 rounded-lg bg-muted/40 px-2 py-1.5 text-xs">
+                  <li key={s.name} className="flex min-w-0 items-center gap-1.5 rounded-lg bg-muted/40 px-2 py-1.5 text-label">
                     <span className="shrink-0 font-black tabular-nums text-primary">{i + 1}R</span>
                     <span className="truncate font-bold text-foreground">{s.name}</span>
                   </li>
                 ))}
               </ol>
-              <p className="text-xs">각 라운드 = 셀트런 100m → 위 종목. 8라운드 줄넘기까지 끝내면 완주예요.</p>
+              <p className="text-label">각 라운드 = 셀트런 100m → 위 종목. 8라운드 줄넘기까지 끝내면 완주예요.</p>
               <ul className="space-y-2">
                 <Point title="시계는 멈추지 않아요">
                   첫 셀트런 출발부터 마지막 줄넘기까지 한 번에 재요. 숨 고르는 시간도 기록에 들어가요.
@@ -503,10 +503,10 @@ const Test153Board = ({ onOpenMember }: Props) => {
           </AccordionItem>
 
           <AccordionItem value="moves" className="border-border px-4 last:border-b-0">
-            <AccordionTrigger className="py-3 text-left text-sm font-bold text-foreground hover:no-underline">
+            <AccordionTrigger className="py-3 text-left text-body font-bold text-foreground hover:no-underline">
               동작별 하는 법 · 인정 기준
             </AccordionTrigger>
-            <AccordionContent className="space-y-3 text-[13px] leading-relaxed text-muted-foreground">
+            <AccordionContent className="space-y-3 text-label leading-relaxed text-muted-foreground">
               <p>
                 기준을 안 지키면 코치님이 <b className="text-foreground">“노렙(No rep)”</b> — 그 한 번은 개수에 안 들어가요. 오른쪽
                 숫자는 오픈 개수, 아래는 스타터 개수예요.
@@ -522,7 +522,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
                   reps={
                     <>
                       매 라운드 1번
-                      <span className="block text-[11px] font-medium text-muted-foreground">모두 8번 · 스타터도 같아요</span>
+                      <span className="block text-micro font-medium text-muted-foreground">모두 8번 · 스타터도 같아요</span>
                     </>
                   }
                   howTo={TEST153_RUN_GUIDE.howTo}
@@ -538,7 +538,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
                       <>
                         {s.open}
                         {s.unit}
-                        <span className="block text-[11px] font-medium text-muted-foreground">
+                        <span className="block text-micro font-medium text-muted-foreground">
                           스타터 {stationReps(s, "starter")}
                           {s.unit}
                         </span>
@@ -555,10 +555,10 @@ const Test153Board = ({ onOpenMember }: Props) => {
           </AccordionItem>
 
           <AccordionItem value="score" className="border-border px-4 last:border-b-0">
-            <AccordionTrigger className="py-3 text-left text-sm font-bold text-foreground hover:no-underline">
+            <AccordionTrigger className="py-3 text-left text-body font-bold text-foreground hover:no-underline">
               어떻게 평가하나요?
             </AccordionTrigger>
-            <AccordionContent className="space-y-3 text-[13px] leading-relaxed text-muted-foreground">
+            <AccordionContent className="space-y-3 text-label leading-relaxed text-muted-foreground">
               <ul className="space-y-2">
                 <Point title="기록 = 걸린 시간">첫 셀트런 출발부터 마지막 줄넘기까지 걸린 시간이에요. 짧을수록 좋은 기록이에요.</Point>
                 <Point title="구간 기록 16개">
@@ -569,7 +569,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
                   25:00까지 못 끝내면 남은 개수로 기록해요. 남은 개수 = 하던 구간에서 남은 개수 + 그 뒤 구간 전부(셀트런 1번은
                   10개로 세요).
                 </Point>
-                <li className="rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                <li className="rounded-xl bg-muted/40 px-3 py-2 text-label">
                   예) 오픈에서 25:00에 7라운드 런지가 10걸음 남았다면 → 10 + 셀트런 10 + 줄넘기 200 ={" "}
                   <b className="whitespace-nowrap text-foreground">캡 + 220개</b>
                 </li>
@@ -594,10 +594,10 @@ const Test153Board = ({ onOpenMember }: Props) => {
           </AccordionItem>
 
           <AccordionItem value="tips" className="border-border px-4 last:border-b-0">
-            <AccordionTrigger className="py-3 text-left text-sm font-bold text-foreground hover:no-underline">
+            <AccordionTrigger className="py-3 text-left text-body font-bold text-foreground hover:no-underline">
               1초 당기는 법
             </AccordionTrigger>
-            <AccordionContent className="space-y-3 text-[13px] leading-relaxed text-muted-foreground">
+            <AccordionContent className="space-y-3 text-label leading-relaxed text-muted-foreground">
               <ol className="space-y-2">
                 <Point title="1. 페이스를 나눠요">
                   처음부터 전력은 금물이에요. 첫 셀트런과 마지막 셀트런 시간이 비슷하면 잘 나눈 거예요.
@@ -616,7 +616,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
                 </Point>
                 <Point title="6. 컨디션을 맞춰요">잘 자고, 식사는 2시간쯤 전에 하고, 몸을 충분히 풀고 시작해요.</Point>
               </ol>
-              <p className="rounded-xl bg-primary/10 px-3 py-2 text-[13px] font-bold text-primary">
+              <p className="rounded-xl bg-primary/10 px-3 py-2 text-label font-bold text-primary">
                 순위가 내려가도 PB가 1초 줄었다면, 오늘은 이긴 날이에요. 나를 이긴 만큼 링 위에서도 강해져요. 🏆
               </p>
             </AccordionContent>

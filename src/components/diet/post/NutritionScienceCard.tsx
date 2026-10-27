@@ -35,14 +35,14 @@ export const NutritionScienceCard = ({
       >
         <div className="flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-primary" />
-          <p className="text-[13px] font-extrabold text-foreground">왜 이 숫자인가요?</p>
+          <p className="text-label font-extrabold text-foreground">왜 이 숫자인가요?</p>
         </div>
         <ChevronDown
           className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")}
         />
       </button>
       {open && (
-        <div className="border-t border-border px-4 py-3 space-y-3 text-[12px] leading-relaxed text-foreground">
+        <div className="border-t border-border px-4 py-3 space-y-3 text-label leading-relaxed text-foreground">
           <Row
             label={`기초 대사량 ${target.bmr} kcal`}
             body="숨만 쉬고 체온을 유지하는 데 쓰는 에너지예요. Mifflin-St Jeor 공식 (성별·키·몸무게·나이) 을 사용합니다."
@@ -73,10 +73,10 @@ export const NutritionScienceCard = ({
           />
 
           <div className="rounded-xl border border-border bg-muted/30 p-3">
-            <p className="text-[11.5px] font-extrabold text-foreground">
+            <p className="text-micro font-extrabold text-foreground">
               5대 영양소 + 프로바이오틱스
             </p>
-            <ul className="mt-1.5 space-y-1.5 text-[11.5px] leading-relaxed text-muted-foreground">
+            <ul className="mt-1.5 space-y-1.5 text-micro leading-relaxed text-muted-foreground">
               <li><strong className="text-foreground">단백질</strong> — 근육·효소·면역세포 재료. 감량기 근손실을 막는 1순위.</li>
               <li><strong className="text-foreground">지방</strong> — 호르몬 전구체, 지용성 비타민(A·D·E·K) 흡수 매개.</li>
               <li><strong className="text-foreground">탄수화물</strong> — 뇌·근육의 주 연료. 섬유질은 장 건강·혈당 안정.</li>
@@ -86,7 +86,7 @@ export const NutritionScienceCard = ({
             </ul>
           </div>
 
-          <p className="text-[11px] italic text-muted-foreground">
+          <p className="text-micro italic text-muted-foreground">
             * 값은 계산 기반 가이드입니다. 임신·수유·질환 시 담당의와 상담하세요.
           </p>
         </div>
@@ -97,8 +97,8 @@ export const NutritionScienceCard = ({
 
 const Row = ({ label, body }: { label: string; body: string }) => (
   <div>
-    <p className="text-[12px] font-extrabold text-foreground">{label}</p>
-    <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">{body}</p>
+    <p className="text-label font-extrabold text-foreground">{label}</p>
+    <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">{body}</p>
   </div>
 );
 

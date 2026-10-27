@@ -119,15 +119,15 @@ export const ExtendReassessmentWizard = ({
     <section className="space-y-4 rounded-2xl border border-primary/25 bg-card p-5">
       {/* 헤더 */}
       <div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+        <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
           EXTEND · 재평가 {step} / 3
         </p>
-        <h2 className="mt-1 text-[18px] font-extrabold leading-tight text-foreground">
+        <h2 className="mt-1 text-heading font-extrabold leading-tight text-foreground">
           {step === 1 && "지난 21일 어떤 흐름이었나요?"}
           {step === 2 && "가장 큰 장애물은 무엇인가요?"}
           {step === 3 && "이번 연장 목표를 정리해요"}
         </h2>
-        <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-label leading-relaxed text-muted-foreground">
           아직 끝난 것이 아니라 다음 단계입니다. 더 독하게가 아니라 더 안정적으로.
         </p>
       </div>
@@ -194,7 +194,7 @@ export const ExtendReassessmentWizard = ({
       {step === 2 && (
         <div className="space-y-3">
           <div>
-            <p className="text-[12px] font-bold text-foreground">
+            <p className="text-label font-bold text-foreground">
               지금 가장 큰 장애물 하나를 골라주세요
             </p>
             <div className="mt-2 grid grid-cols-2 gap-1.5">
@@ -219,8 +219,8 @@ export const ExtendReassessmentWizard = ({
           </div>
 
           {/* 자동 패턴 프리뷰 */}
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-[12px] leading-relaxed">
-            <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-label leading-relaxed">
+            <p className="text-micro font-black uppercase tracking-widest text-primary">
               예상 패턴
             </p>
             <p className="mt-1 font-bold text-foreground">{reasonLine}</p>
@@ -229,7 +229,7 @@ export const ExtendReassessmentWizard = ({
                 {mergedTags.map((t) => (
                   <span
                     key={t}
-                    className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary"
+                    className="rounded-full bg-primary/15 px-2 py-0.5 text-micro font-bold text-primary"
                   >
                     {PATTERN_LABEL_KO[t]}
                   </span>
@@ -240,7 +240,7 @@ export const ExtendReassessmentWizard = ({
 
           {/* 사용자 override — 추가 체감 */}
           <div>
-            <p className="text-[11px] font-bold text-muted-foreground">
+            <p className="text-micro font-bold text-muted-foreground">
               추가로 체감하는 패턴 (선택)
             </p>
             <div className="mt-1.5 grid grid-cols-2 gap-1.5">
@@ -258,7 +258,7 @@ export const ExtendReassessmentWizard = ({
                     }}
                     disabled={autoIncluded}
                     className={cn(
-                      "rounded-lg border px-2 py-1.5 text-left text-[11.5px] font-bold transition-all",
+                      "rounded-lg border px-2 py-1.5 text-left text-micro font-bold transition-all",
                       autoIncluded
                         ? "border-primary/20 bg-primary/5 text-primary opacity-70"
                         : selected
@@ -268,7 +268,7 @@ export const ExtendReassessmentWizard = ({
                   >
                     {PATTERN_LABEL_KO[t]}
                     {autoIncluded && (
-                      <span className="ml-1 text-[9px] font-bold opacity-80">
+                      <span className="ml-1 text-micro font-bold opacity-80">
                         자동
                       </span>
                     )}
@@ -276,7 +276,7 @@ export const ExtendReassessmentWizard = ({
                 );
               })}
             </div>
-            <p className="mt-1 text-[10.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
               {PATTERN_HINT_KO[
                 (mergedTags[0] as ExtendPatternTag) ?? "weekend_crash"
               ]}
@@ -330,7 +330,7 @@ export const ExtendReassessmentWizard = ({
             onChange={setSleepTarget}
             placeholder="예: 7"
           />
-          <p className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-micro leading-relaxed text-muted-foreground">
             극단적 제한 대신 습관 목표 중심. 주말 방어·수면 안정화만 잡아도 체지방이 풀립니다.
           </p>
         </div>
@@ -375,7 +375,7 @@ export const ExtendReassessmentWizard = ({
       </div>
 
       {submit.isError && (
-        <p className="text-center text-[11px] text-destructive">
+        <p className="text-center text-micro text-destructive">
           저장에 실패했어요. 잠시 후 다시 시도해 주세요.
         </p>
       )}
@@ -396,13 +396,13 @@ const Row = ({
   placeholder?: string;
 }) => (
   <label className="block">
-    <span className="text-[11px] font-bold text-muted-foreground">{label}</span>
+    <span className="text-micro font-bold text-muted-foreground">{label}</span>
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
       inputMode="decimal"
       placeholder={placeholder}
-      className="number-font mt-0.5 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
+      className="number-font mt-0.5 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-label text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
     />
   </label>
 );
@@ -421,25 +421,25 @@ const CounterRow = ({
   suffix?: string;
 }) => (
   <div>
-    <span className="text-[11px] font-bold text-muted-foreground">{label}</span>
+    <span className="text-micro font-bold text-muted-foreground">{label}</span>
     <div className="mt-0.5 flex items-center overflow-hidden rounded-lg border border-border bg-background">
       <button
         type="button"
         onClick={() => onChange(Math.max(0, value - 1))}
-        className="flex-1 py-1.5 text-[14px] font-bold text-muted-foreground active:bg-muted"
+        className="flex-1 py-1.5 text-label font-bold text-muted-foreground active:bg-muted"
       >
         -
       </button>
-      <span className="number-font px-2 text-[14px] font-extrabold text-foreground">
+      <span className="number-font px-2 text-label font-extrabold text-foreground">
         {value}
         {suffix && (
-          <span className="ml-0.5 text-[10px] text-muted-foreground">{suffix}</span>
+          <span className="ml-0.5 text-micro text-muted-foreground">{suffix}</span>
         )}
       </span>
       <button
         type="button"
         onClick={() => onChange(Math.min(max, value + 1))}
-        className="flex-1 py-1.5 text-[14px] font-bold text-primary active:bg-muted"
+        className="flex-1 py-1.5 text-label font-bold text-primary active:bg-muted"
       >
         +
       </button>
@@ -459,11 +459,11 @@ const SelectRow = ({
   options: { value: string; label: string }[];
 }) => (
   <label className="block">
-    <span className="text-[11px] font-bold text-muted-foreground">{label}</span>
+    <span className="text-micro font-bold text-muted-foreground">{label}</span>
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="mt-0.5 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+      className="mt-0.5 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-label text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>
@@ -487,7 +487,7 @@ const ObstaclePill = ({
     type="button"
     onClick={onClick}
     className={cn(
-      "rounded-lg border px-2.5 py-2 text-left text-[12px] font-bold transition-all active:scale-95",
+      "rounded-lg border px-2.5 py-2 text-left text-label font-bold transition-all active:scale-95",
       selected
         ? "border-primary bg-primary/10 text-primary"
         : "border-border bg-muted/30 text-muted-foreground",

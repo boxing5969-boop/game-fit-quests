@@ -59,10 +59,10 @@ const NewMessageSheet = ({ open, onClose }: Props) => {
           onChange={(e) => setText(e.target.value)}
           placeholder="이름(닉네임) 검색"
           enterKeyHint="search"
-          className="min-w-0 flex-1 bg-transparent text-[16px] text-foreground outline-none placeholder:text-muted-foreground"
+          className="min-w-0 flex-1 bg-transparent text-body text-foreground outline-none placeholder:text-muted-foreground"
           aria-label="보낼 사람 검색"
         />
-        {isFetching && !isLoading && <span className="text-[11px] text-muted-foreground">찾는 중…</span>}
+        {isFetching && !isLoading && <span className="text-micro text-muted-foreground">찾는 중…</span>}
       </label>
 
       {blocked && data?.reason_text && (
@@ -73,13 +73,13 @@ const NewMessageSheet = ({ open, onClose }: Props) => {
               onClose();
               openCredentialChange();
             }}
-            className="mb-3 w-full rounded-xl bg-primary/10 px-3.5 py-3 text-left text-[12.5px] leading-snug text-foreground active:scale-[0.99]"
+            className="mb-3 w-full rounded-xl bg-primary/10 px-3.5 py-3 text-left text-label leading-snug text-foreground active:scale-[0.99]"
           >
             {data.reason_text}
             <span className="font-bold text-primary"> 지금 바꾸기 →</span>
           </button>
         ) : (
-          <p className="mb-3 rounded-xl bg-muted/60 px-3.5 py-3 text-[12.5px] leading-snug text-muted-foreground">{data.reason_text}</p>
+          <p className="mb-3 rounded-xl bg-muted/60 px-3.5 py-3 text-label leading-snug text-muted-foreground">{data.reason_text}</p>
         )
       )}
 
@@ -94,15 +94,15 @@ const NewMessageSheet = ({ open, onClose }: Props) => {
         </ul>
       ) : isError ? (
         <div className="rounded-2xl bg-muted/50 px-4 py-8 text-center">
-          <p className="text-[14px] font-bold text-foreground">목록을 불러오지 못했어요</p>
-          <button type="button" onClick={() => refetch()} className="mt-3 rounded-full bg-secondary px-4 py-2 text-[13px] font-bold active:scale-95">
+          <p className="text-label font-bold text-foreground">목록을 불러오지 못했어요</p>
+          <button type="button" onClick={() => refetch()} className="mt-3 rounded-full bg-secondary px-4 py-2 text-label font-bold active:scale-95">
             다시 불러오기
           </button>
         </div>
       ) : rows.length === 0 ? (
         <div className="rounded-2xl bg-muted/40 px-4 py-10 text-center">
-          <p className="text-[14px] font-bold text-foreground">{q ? `'${q}' 이름을 찾지 못했어요` : "보낼 수 있는 사람이 아직 없어요"}</p>
-          <p className="mt-1 text-[12.5px] text-muted-foreground">
+          <p className="text-label font-bold text-foreground">{q ? `'${q}' 이름을 찾지 못했어요` : "보낼 수 있는 사람이 아직 없어요"}</p>
+          <p className="mt-1 text-label text-muted-foreground">
             {q ? "닉네임이나 이름 일부로 다시 찾아보세요" : "같은 지점 회원·코치님이 여기에 보여요"}
           </p>
         </div>
@@ -119,10 +119,10 @@ const NewMessageSheet = ({ open, onClose }: Props) => {
                 <DmAvatar person={r} size={44} />
                 <span className="min-w-0 flex-1">
                   <span className="flex min-w-0 items-center gap-1.5">
-                    <span className="truncate text-[15px] font-bold text-foreground">{r.display}</span>
+                    <span className="truncate text-body font-bold text-foreground">{r.display}</span>
                     <DmKindBadge kind={r.kind} />
                   </span>
-                  <span className="block truncate text-[12.5px] text-muted-foreground">
+                  <span className="block truncate text-label text-muted-foreground">
                     {r.closed ? "메시지 요청을 받지 않아요" : dmPersonLine(r, !!data?.all_branches)}
                     {r.thread_id ? " · 대화 중" : ""}
                   </span>
@@ -134,7 +134,7 @@ const NewMessageSheet = ({ open, onClose }: Props) => {
         </ul>
       )}
       {rows.length >= 40 && !q && (
-        <p className="mt-3 text-center text-[11.5px] text-muted-foreground">더 많은 사람은 이름으로 찾아 주세요</p>
+        <p className="mt-3 text-center text-micro text-muted-foreground">더 많은 사람은 이름으로 찾아 주세요</p>
       )}
     </DmSheet>
   );

@@ -71,12 +71,12 @@ const GuidePage = () => {
 
   return (
     <div className="light-surface min-h-screen mx-auto max-w-lg px-4 pb-24 pt-4">
-      <h1 className="mb-4 text-2xl text-foreground">📖 가이드</h1>
+      <h1 className="mb-4 text-title text-foreground">📖 가이드</h1>
 
       {/* 64-L: 튜토리얼 안내 카드 — step 2 진행 중일 때만 */}
       {isTutorialStep2 && (
-        <div className="mb-3 flex items-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
-          <span className="text-base">👆</span>
+        <div className="mb-3 flex items-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-50 px-3 py-2 text-micro font-bold text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
+          <span className="text-body">👆</span>
           <span className="flex-1">
             아래 <span className="number-font">{TABS.length}</span>개 탭을 한 번씩 눌러보세요. 클릭{" "}
             <span className="number-font">{clickedTabs.size}</span> /{" "}
@@ -99,7 +99,7 @@ const GuidePage = () => {
               key={tab.id}
               data-tour={`guide-tab-${tab.id}`}
               onClick={() => handleTabClick(tab.id)}
-              className={`relative flex shrink-0 flex-1 items-center justify-center gap-1 rounded-xl px-2 py-2.5 text-xs font-bold transition-all ${
+              className={`relative flex shrink-0 flex-1 items-center justify-center gap-1 rounded-xl px-2 py-2.5 text-label font-bold transition-all ${
                 activeTab === tab.id ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
               } ${
                 isNextHint
@@ -110,7 +110,7 @@ const GuidePage = () => {
               <Icon className="h-3.5 w-3.5" />
               <span className="hidden min-[400px]:inline">{tab.label}</span>
               {isNextHint && (
-                <span className="absolute -top-1 -right-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] font-black text-amber-950 shadow-md">
+                <span className="absolute -top-1 -right-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-micro font-black text-amber-950 shadow-md">
                   👆 클릭
                 </span>
               )}
@@ -129,14 +129,14 @@ const GuidePage = () => {
       {activeTab === "whitefaq" && (
         <div className="space-y-3 animate-slide-up">
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
-            <p className="text-xs text-foreground leading-relaxed">
+            <p className="text-label text-foreground leading-relaxed">
               프로그램에 대해 자주 묻는 질문을 모았습니다. 오늘 도전, 코치 백업, 1~40 전체 경로에 대한 설명을 확인하세요.
             </p>
           </div>
           {WHITE_FAQ.map((item, i) => (
             <div key={i} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-              <p className="mb-2 text-sm font-bold text-foreground">❓ {item.q}</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">{item.a}</p>
+              <p className="mb-2 text-body font-bold text-foreground">❓ {item.q}</p>
+              <p className="text-label text-muted-foreground leading-relaxed">{item.a}</p>
             </div>
           ))}
         </div>
@@ -149,7 +149,7 @@ const GuidePage = () => {
       <button
         onClick={() => navigate("/onboarding")}
         data-tour="guide-onboarding-replay"
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/5 py-4 text-sm font-bold text-primary transition-all active:scale-[0.98]"
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/5 py-4 text-body font-bold text-primary transition-all active:scale-[0.98]"
       >
         <Play className="h-4 w-4" /> 온보딩 다시 보기
       </button>
@@ -161,10 +161,10 @@ const GuidePage = () => {
 const ProgramTab = () => (
   <div className="space-y-4 animate-slide-up">
     <div data-tutorial-target="guide-first-card" className="rounded-2xl bg-gradient-to-br from-primary/10 to-reward/10 p-5 border border-primary/20">
-      <h2 className="mb-2 text-lg font-bold text-foreground">
+      <h2 className="mb-2 text-heading font-bold text-foreground">
         마이복서153
       </h2>
-      <p className="text-sm text-muted-foreground leading-relaxed">
+      <p className="text-body text-muted-foreground leading-relaxed">
         1~40레벨로 구성된 복싱 성장 시스템입니다.
         <br />4개 리그를 통과하며 습관, 기본기, 실전, 코칭 역량까지 단계적으로 성장합니다.
       </p>
@@ -176,10 +176,10 @@ const ProgramTab = () => (
         card.accent ? "border-primary/30 bg-primary/5" : "border-border bg-card"
       }`}>
         <div className="mb-2 flex items-center gap-2">
-          <span className="text-lg">{card.emoji}</span>
-          <h3 className="text-sm font-bold text-foreground">{card.title}</h3>
+          <span className="text-heading">{card.emoji}</span>
+          <h3 className="text-body font-bold text-foreground">{card.title}</h3>
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">{card.body}</p>
+        <p className="text-label text-muted-foreground leading-relaxed">{card.body}</p>
       </div>
     ))}
 
@@ -187,17 +187,17 @@ const ProgramTab = () => (
     {LEAGUE_SUMMARIES.map(league => (
       <div key={league.rank} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="mb-2 flex items-center gap-2">
-          <span className="text-lg">{league.emoji}</span>
+          <span className="text-heading">{league.emoji}</span>
           <div>
-            <p className="text-sm font-bold text-foreground">{league.label}</p>
-            <p className="text-[10px] text-muted-foreground">{league.levels}</p>
+            <p className="text-body font-bold text-foreground">{league.label}</p>
+            <p className="text-micro text-muted-foreground">{league.levels}</p>
           </div>
         </div>
-        <p className="mb-2 text-xs font-bold text-primary">{league.theme}</p>
-        <p className="mb-3 text-xs text-muted-foreground leading-relaxed">{league.description}</p>
+        <p className="mb-2 text-label font-bold text-primary">{league.theme}</p>
+        <p className="mb-3 text-label text-muted-foreground leading-relaxed">{league.description}</p>
         <div className="flex flex-wrap gap-1">
           {league.completionValues.map(v => (
-            <span key={v} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{v}</span>
+            <span key={v} className="rounded-full bg-primary/10 px-2 py-0.5 text-micro font-medium text-primary">{v}</span>
           ))}
         </div>
       </div>
@@ -269,8 +269,8 @@ const LevelUpTab = () => {
     <div className="space-y-4 animate-slide-up">
       {/* 두 가지 길 */}
       <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-        <h2 className="mb-2 text-sm font-bold text-foreground">레벨이 오르는 길은 두 개입니다</h2>
-        <p className="text-xs leading-relaxed text-muted-foreground">
+        <h2 className="mb-2 text-body font-bold text-foreground">레벨이 오르는 길은 두 개입니다</h2>
+        <p className="text-label leading-relaxed text-muted-foreground">
           하나는 <b className="text-foreground">출석</b>으로 저절로 오르는 길, 하나는
           <b className="text-foreground"> 코치님이 직접 보고</b> 올려주는 길입니다.
           어느 쪽이든 레벨업 조건은 모두에게 같습니다.
@@ -282,25 +282,25 @@ const LevelUpTab = () => {
         onClick={() => navigate("/guide/journey")}
         className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-elev-1 transition-all active:scale-[0.99]"
       >
-        <span className="text-xl">⏱</span>
+        <span className="text-heading">⏱</span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-bold text-foreground">레벨 40까지 얼마나 걸릴까요?</span>
-          <span className="block text-[11px] text-muted-foreground">내 출석 페이스로 계산한 예상 기간 · 리그별 필요 출석</span>
+          <span className="block text-body font-bold text-foreground">레벨 40까지 얼마나 걸릴까요?</span>
+          <span className="block text-micro text-muted-foreground">내 출석 페이스로 계산한 예상 기간 · 리그별 필요 출석</span>
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </button>
 
       <div className="grid grid-cols-2 gap-2.5">
         <div className="rounded-2xl border border-border bg-card p-3.5 shadow-elev-1">
-          <p className="mb-1.5 text-xs font-bold text-primary">🚪 출석으로 저절로</p>
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mb-1.5 text-label font-bold text-primary">🚪 출석으로 저절로</p>
+          <p className="text-micro leading-relaxed text-muted-foreground">
             입구에서 얼굴 인식만 하면 출석이 쌓입니다. 리그 요건만큼 모이면 다음 레벨로
             자동 승급됩니다. 누를 버튼도 없습니다.
           </p>
         </div>
         <div className="rounded-2xl border border-reward/30 bg-reward/5 p-3.5 shadow-elev-1">
-          <p className="mb-1.5 text-xs font-bold text-reward-foreground">🥇 코치님 심사로</p>
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mb-1.5 text-label font-bold text-reward-foreground">🥇 코치님 심사로</p>
+          <p className="text-micro leading-relaxed text-muted-foreground">
             <b className="text-foreground">레벨 10·20·30·40</b>은 출석을 다 채워도 자동으로
             오르지 않습니다. 코치님이 직접 보고 승인해야 넘어갑니다.
           </p>
@@ -310,13 +310,13 @@ const LevelUpTab = () => {
       {/* 내 기준 */}
       {cycle && mine && (
         <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-          <p className="mb-2 text-xs font-bold text-foreground">
+          <p className="mb-2 text-label font-bold text-foreground">
             지금 회원님 기준 — {RANK_LABELS[mine.rank] || mine.rank} 리그
           </p>
           <div className="mb-2 flex items-end gap-1.5">
-            <span className="number-font text-2xl font-bold text-primary">{cur.toLocaleString()}</span>
-            <span className="number-font text-sm text-muted-foreground">/ {cycle.reqSessions}회</span>
-            <span className="ml-1 pb-0.5 text-[11px] text-muted-foreground">이번 레벨 진행도</span>
+            <span className="number-font text-title font-bold text-primary">{cur.toLocaleString()}</span>
+            <span className="number-font text-body text-muted-foreground">/ {cycle.reqSessions}회</span>
+            <span className="ml-1 pb-0.5 text-micro text-muted-foreground">이번 레벨 진행도</span>
           </div>
           <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-muted">
             <div
@@ -324,7 +324,7 @@ const LevelUpTab = () => {
               style={{ width: `${Math.min(100, (cur / Math.max(1, cycle.reqSessions)) * 100)}%` }}
             />
           </div>
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
+          <p className="text-micro leading-relaxed text-muted-foreground">
             {mine.autoAdvance
               ? `이 리그는 출석 ${mine.visitsPerLevel}회를 채우면 자동으로 다음 레벨로 갑니다. 단, 레벨 ${mine.lastLevel}은 심사를 거칩니다.`
               : `이 리그는 출석을 채워도 자동으로 오르지 않습니다. ${mine.visitsPerLevel}회를 채우면 심사가 열리고, ${WHO[mine.levelAuthority]}이 보고 승급합니다.`}
@@ -332,7 +332,7 @@ const LevelUpTab = () => {
               ` 그리고 레벨마다 최소 ${mine.minDaysPerLevel}일을 머물러야 합니다 — 출석을 몰아쳐도 건너뛸 수 없습니다.`}
           </p>
           {(cycle.fastTrackGates ?? 0) > 0 && (
-            <p className="mt-2 rounded-lg border border-reward/30 bg-reward/5 px-2.5 py-2 text-[11px] font-semibold leading-relaxed text-reward-foreground">
+            <p className="mt-2 rounded-lg border border-reward/30 bg-reward/5 px-2.5 py-2 text-micro font-semibold leading-relaxed text-reward-foreground">
               ⚡ 회원님은 패스트 트랙입니다 — 남은 직행권 {cycle.fastTrackGates}장.
               타이틀매치를 통과하면 다음 리그의 타이틀매치로 바로 넘어갑니다.
             </p>
@@ -343,18 +343,18 @@ const LevelUpTab = () => {
       {/* 리그별 요건 */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-elev-1">
         <div className="border-b border-border px-4 py-2.5">
-          <p className="text-xs font-bold text-foreground">리그별 승급 요건</p>
+          <p className="text-label font-bold text-foreground">리그별 승급 요건</p>
         </div>
         {rules.map((r) => (
           <div key={r.rank} className="flex items-start gap-3 border-b border-border px-4 py-3 last:border-b-0">
             <div className="w-[68px] shrink-0">
-              <p className="text-xs font-bold text-foreground">{RANK_LABELS[r.rank] || r.rank}</p>
-              <p className="number-font text-[10px] text-muted-foreground">
+              <p className="text-label font-bold text-foreground">{RANK_LABELS[r.rank] || r.rank}</p>
+              <p className="number-font text-micro text-muted-foreground">
                 Lv {r.firstLevel}~{r.lastLevel}
               </p>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-foreground">
+              <p className="text-label text-foreground">
                 한 레벨에 출석{" "}
                 <b className="number-font text-primary">{r.visitsPerLevel}회</b>
                 {(r.minDaysPerLevel ?? 0) > 0 && (
@@ -364,7 +364,7 @@ const LevelUpTab = () => {
                   </>
                 )}
               </p>
-              <p className="mt-0.5 text-[10.5px] leading-relaxed text-muted-foreground">
+              <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                 {r.autoAdvance
                   ? `출석만 채우면 자동 승급 · 레벨 ${r.lastLevel}만 심사`
                   : "출석을 채우면 심사가 열립니다 · 전 레벨 심사"}
@@ -377,27 +377,27 @@ const LevelUpTab = () => {
       {/* 타이틀매치 */}
       <div className="overflow-hidden rounded-2xl border border-reward/30 bg-card shadow-elev-1">
         <div className="border-b border-border bg-reward/5 px-4 py-2.5">
-          <p className="text-xs font-bold text-reward-foreground">🥇 타이틀매치 — 리그를 넘는 네 개의 문</p>
+          <p className="text-label font-bold text-reward-foreground">🥇 타이틀매치 — 리그를 넘는 네 개의 문</p>
         </div>
         <div className="px-4 py-3">
-          <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mb-3 text-micro leading-relaxed text-muted-foreground">
             레벨 10·20·30·40은 다음 리그로 넘어가는 문입니다. 출석을 다 채워도 자동으로
             열리지 않고, <b className="text-foreground">직접 보여드리고 승인을 받아야</b> 넘어갑니다.
           </p>
           <div className="space-y-1.5">
             {rules.map((r) => (
               <div key={r.rank} className="flex items-center gap-2.5 rounded-lg bg-muted/30 px-3 py-2">
-                <span className="number-font w-[52px] shrink-0 text-xs font-bold text-foreground">
+                <span className="number-font w-[52px] shrink-0 text-label font-bold text-foreground">
                   레벨 {r.lastLevel}
                 </span>
-                <span className="min-w-0 flex-1 text-[11px] text-muted-foreground">
+                <span className="min-w-0 flex-1 text-micro text-muted-foreground">
                   {RANK_LABELS[r.rank] || r.rank} 마지막 관문
                 </span>
-                <span className="shrink-0 text-[11px] font-bold text-primary">{WHO[r.titleAuthority]}</span>
+                <span className="shrink-0 text-micro font-bold text-primary">{WHO[r.titleAuthority]}</span>
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
             위로 갈수록 승인하는 분이 달라집니다. 레벨 20을 넘으면 실제로 맞대는 스파링 구간이
             열리고, 레벨 30을 넘으면 다른 회원을 지도하는 리그에 들어가기 때문입니다.
           </p>
@@ -407,10 +407,10 @@ const LevelUpTab = () => {
       {/* 패스트 트랙 — 오래 다니신 회원 */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-elev-1">
         <div className="border-b border-border px-4 py-2.5">
-          <p className="text-xs font-bold text-foreground">⚡ 패스트 트랙 — 오래 다니신 회원</p>
+          <p className="text-label font-bold text-foreground">⚡ 패스트 트랙 — 오래 다니신 회원</p>
         </div>
         <div className="px-4 py-3">
-          <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mb-3 text-micro leading-relaxed text-muted-foreground">
             이미 오래 다니신 분께 1레벨부터 다시 밟게 하는 것은 맞지 않습니다. 그래서
             <b className="text-foreground"> 관문 직행권</b>을 드립니다. 타이틀매치를 통과하면
             다음 리그의 1레벨이 아니라 <b className="text-foreground">그 리그의 타이틀매치로 바로</b> 넘어갑니다.
@@ -421,20 +421,20 @@ const LevelUpTab = () => {
               { n: "직행권 1장", who: "재적 1년 이상 + 누적 출석 30회 이상", what: "레벨 10 · 20 — 두 번의 도전" },
             ].map((r) => (
               <div key={r.n} className="rounded-lg bg-muted/30 px-3 py-2">
-                <p className="text-[11px] font-bold text-foreground">
+                <p className="text-micro font-bold text-foreground">
                   {r.n} <span className="font-normal text-muted-foreground">— {r.who}</span>
                 </p>
-                <p className="mt-0.5 text-[10.5px] text-primary">{r.what}</p>
+                <p className="mt-0.5 text-micro text-primary">{r.what}</p>
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
             기준을 <b className="text-foreground">기간이 아니라 출석</b>으로 잡은 이유가 있습니다.
             출석 80회는 정상 경로로 화이트(30회)와 블루(50회)를 통과하는 분량이라 그 자체가
             증명이 됩니다. 기간만 보면 129회 나오신 분이 82회 나오신 분보다 불리해지는
             역전이 생깁니다.
           </p>
-          <p className="mt-2 rounded-lg bg-muted/40 px-2.5 py-2 text-[10.5px] font-semibold leading-relaxed text-foreground">
+          <p className="mt-2 rounded-lg bg-muted/40 px-2.5 py-2 text-micro font-semibold leading-relaxed text-foreground">
             직행권이 있어도 심사는 면제되지 않습니다. 타이틀매치 항목을 전부 보여주셔야 넘어가고,
             기준은 다른 회원과 완전히 같습니다.
           </p>
@@ -443,7 +443,7 @@ const LevelUpTab = () => {
 
       {/* 심사에서 보는 것 */}
       <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-        <p className="mb-2 text-xs font-bold text-foreground">심사에서는 무엇을 보나요</p>
+        <p className="mb-2 text-label font-bold text-foreground">심사에서는 무엇을 보나요</p>
         <ul className="space-y-1.5">
           {[
             "그 레벨의 미션 동작을 하나씩 보여드립니다. 앱에서 미리 영상으로 볼 수 있습니다.",
@@ -451,7 +451,7 @@ const LevelUpTab = () => {
             "부족한 항목이 있으면 '보완 요청'을 드립니다. 레벨이 내려가지는 않습니다.",
             "누가 어느 항목을 통과시켰는지 기록에 남습니다.",
           ].map((t, i) => (
-            <li key={i} className="relative pl-3.5 text-[11px] leading-relaxed text-muted-foreground">
+            <li key={i} className="relative pl-3.5 text-micro leading-relaxed text-muted-foreground">
               <span className="absolute left-0 top-[7px] h-[3px] w-[3px] rounded-full bg-primary" />
               {t}
             </li>
@@ -463,8 +463,8 @@ const LevelUpTab = () => {
       <div className="space-y-2.5">
         {LEVELUP_FAQ.map((item, i) => (
           <div key={i} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-            <p className="mb-1.5 text-xs font-bold text-foreground">❓ {item.q}</p>
-            <p className="text-[11px] leading-relaxed text-muted-foreground">{item.a}</p>
+            <p className="mb-1.5 text-label font-bold text-foreground">❓ {item.q}</p>
+            <p className="text-micro leading-relaxed text-muted-foreground">{item.a}</p>
           </div>
         ))}
       </div>
@@ -541,7 +541,7 @@ const SCIENCE_CARDS = [
 const ScienceTab = () => (
   <div className="space-y-3 animate-slide-up">
     <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
-      <p className="text-xs text-foreground leading-relaxed">
+      <p className="text-label text-foreground leading-relaxed">
         이 앱은 WHO·CDC·ACSM 권고를 참고해 활동량, 강도, 근력, 회복 균형을 설명합니다.
         공식 인증 또는 의료 서비스가 아닙니다. 꾸준한 반복과 여러 날에 걸친 훈련을 중요하게 봅니다.
       </p>
@@ -549,15 +549,15 @@ const ScienceTab = () => (
     {SCIENCE_CARDS.map(card => (
       <div key={card.title} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="mb-2 flex items-center gap-2">
-          <span className="text-xl">{card.emoji}</span>
+          <span className="text-heading">{card.emoji}</span>
           <div>
-            <p className="text-sm font-bold text-foreground">{card.title}</p>
-            <p className="text-xs font-bold text-primary">{card.stat}</p>
+            <p className="text-body font-bold text-foreground">{card.title}</p>
+            <p className="text-label font-bold text-primary">{card.stat}</p>
           </div>
         </div>
-        <p className="mb-2 text-xs text-muted-foreground leading-relaxed">{card.description}</p>
+        <p className="mb-2 text-label text-muted-foreground leading-relaxed">{card.description}</p>
         <div className="rounded-xl bg-primary/5 px-3 py-2">
-          <p className="text-[11px] text-primary">💡 {card.tip}</p>
+          <p className="text-micro text-primary">💡 {card.tip}</p>
         </div>
       </div>
     ))}
@@ -586,10 +586,10 @@ const ValueMapTab = () => {
           <div key={league} className="rounded-2xl border border-border bg-card shadow-elev-1 overflow-hidden">
             <button onClick={() => setExpandedLeague(isExpanded ? null : league)} className="flex w-full items-center justify-between p-4 text-left active:bg-muted/50">
               <div className="flex items-center gap-2">
-                <span className="text-lg">{RANK_EMOJI[league]}</span>
+                <span className="text-heading">{RANK_EMOJI[league]}</span>
                 <div>
-                  <p className="text-sm font-bold text-foreground">{RANK_LABEL[league]} 리그</p>
-                  <p className="text-[10px] text-muted-foreground">Lv {levels[0].level}~{levels[levels.length - 1].level}</p>
+                  <p className="text-body font-bold text-foreground">{RANK_LABEL[league]} 리그</p>
+                  <p className="text-micro text-muted-foreground">Lv {levels[0].level}~{levels[levels.length - 1].level}</p>
                 </div>
               </div>
               <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
@@ -605,12 +605,12 @@ const ValueMapTab = () => {
                       <div className="mb-1 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           {isComplete ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : isLocked ? <Lock className="h-3.5 w-3.5 text-muted-foreground" /> : <div className="h-3.5 w-3.5 rounded-full bg-primary animate-pulse" />}
-                          <span className="text-[10px] font-bold text-muted-foreground">Lv.{lv.level}</span>
+                          <span className="text-micro font-bold text-muted-foreground">Lv.{lv.level}</span>
                         </div>
-                        <span className="rounded-full bg-reward/10 px-2 py-0.5 text-[9px] font-bold text-reward-foreground">🔓 {lv.unlockedBenefit}</span>
+                        <span className="rounded-full bg-reward/10 px-2 py-0.5 text-micro font-bold text-reward-foreground">🔓 {lv.unlockedBenefit}</span>
                       </div>
-                      <p className="text-xs font-bold text-foreground">{lv.shortValueTitle}</p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">{lv.valueDescription}</p>
+                      <p className="text-label font-bold text-foreground">{lv.shortValueTitle}</p>
+                      <p className="mt-0.5 text-micro text-muted-foreground">{lv.valueDescription}</p>
                     </div>
                   );
                 })}
@@ -629,24 +629,24 @@ const ExerciseTab = () => (
     {EXERCISE_REASONS.map(ex => (
       <div key={ex.id} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <div className="mb-2 flex items-center gap-2">
-          <span className="text-2xl">{ex.emoji}</span>
-          <h3 className="text-sm font-bold text-foreground">{ex.name}</h3>
+          <span className="text-title">{ex.emoji}</span>
+          <h3 className="text-body font-bold text-foreground">{ex.name}</h3>
         </div>
         <div className="mb-3">
-          <p className="mb-1 text-[10px] font-bold text-primary">왜 하나요?</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">{ex.whyDoIt}</p>
+          <p className="mb-1 text-micro font-bold text-primary">왜 하나요?</p>
+          <p className="text-label text-muted-foreground leading-relaxed">{ex.whyDoIt}</p>
         </div>
         <div className="mb-3">
-          <p className="mb-1 text-[10px] font-bold text-primary">무엇이 좋아지나요?</p>
+          <p className="mb-1 text-micro font-bold text-primary">무엇이 좋아지나요?</p>
           <div className="flex flex-wrap gap-1">
             {ex.whatImproves.map(tag => (
-              <span key={tag} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{tag}</span>
+              <span key={tag} className="rounded-full bg-primary/10 px-2 py-0.5 text-micro font-medium text-primary">{tag}</span>
             ))}
           </div>
         </div>
         <div className="rounded-xl bg-reward/5 border border-reward/10 px-3 py-2">
-          <p className="text-[10px] font-bold text-reward-foreground mb-0.5">✅ 초보자 체크포인트</p>
-          <p className="text-[11px] text-muted-foreground">{ex.beginnerCheckpoint}</p>
+          <p className="text-micro font-bold text-reward-foreground mb-0.5">✅ 초보자 체크포인트</p>
+          <p className="text-micro text-muted-foreground">{ex.beginnerCheckpoint}</p>
         </div>
       </div>
     ))}
@@ -662,14 +662,14 @@ const severityStyles = {
 
 const SafetyTab = () => (
   <div className="space-y-3 animate-slide-up">
-    <p className="text-xs text-muted-foreground mb-1">안전하게 시작하고 오래 운동하기 위한 가이드입니다.</p>
+    <p className="text-label text-muted-foreground mb-1">안전하게 시작하고 오래 운동하기 위한 가이드입니다.</p>
     {SAFETY_BLOCKS.map(block => (
       <div key={block.id} className={`rounded-2xl border p-4 ${severityStyles[block.severity]}`}>
         <div className="mb-1 flex items-center gap-2">
-          <span className="text-lg">{block.emoji}</span>
-          <h3 className="text-sm font-bold text-foreground">{block.title}</h3>
+          <span className="text-heading">{block.emoji}</span>
+          <h3 className="text-body font-bold text-foreground">{block.title}</h3>
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">{block.description}</p>
+        <p className="text-label text-muted-foreground leading-relaxed">{block.description}</p>
       </div>
     ))}
   </div>

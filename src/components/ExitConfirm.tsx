@@ -24,21 +24,21 @@ export default function ExitConfirm({ open, onClose }: { open: boolean; onClose:
         className="w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-900 p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-white/10 text-2xl">🥊</div>
-        <p className="text-center text-[16px] font-bold text-white">앱을 종료할까요?</p>
-        <p className="mt-1.5 text-center text-[12.5px] leading-relaxed text-white/60">
+        <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-white/10 text-title">🥊</div>
+        <p className="text-center text-body font-bold text-white">앱을 종료할까요?</p>
+        <p className="mt-1.5 text-center text-label leading-relaxed text-white/60">
           오늘 훈련 기록이 남아 있으면 저장했는지 확인해 주세요.
         </p>
         <div className="mt-4 flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 rounded-xl bg-white/10 py-3 text-[14px] font-bold text-white transition active:scale-[0.98]"
+            className="flex-1 rounded-xl bg-white/10 py-3 text-label font-bold text-white transition active:scale-[0.98]"
           >
             아니오
           </button>
           <button
             onClick={() => { onClose(); exitApp(); }}
-            className="flex-1 rounded-xl bg-white py-3 text-[14px] font-bold text-zinc-900 transition active:scale-[0.98]"
+            className="flex-1 rounded-xl bg-white py-3 text-label font-bold text-zinc-900 transition active:scale-[0.98]"
           >
             예, 종료
           </button>

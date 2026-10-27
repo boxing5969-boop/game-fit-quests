@@ -18,9 +18,9 @@ export function EarnedBadgeGrid({ badges, loading }: { badges: Badge[]; loading?
   if (badges.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-        <span className="text-3xl">🥊</span>
-        <p className="mt-2 text-sm text-muted-foreground">아직 획득한 배지가 없습니다</p>
-        <p className="text-xs text-muted-foreground">미션을 완료하고 배지를 모아보세요!</p>
+        <span className="text-title">🥊</span>
+        <p className="mt-2 text-body text-muted-foreground">아직 획득한 배지가 없습니다</p>
+        <p className="text-label text-muted-foreground">미션을 완료하고 배지를 모아보세요!</p>
       </div>
     );
   }
@@ -29,8 +29,8 @@ export function EarnedBadgeGrid({ badges, loading }: { badges: Badge[]; loading?
     <div className="grid grid-cols-3 gap-3">
       {badges.map(b => (
         <div key={b.id} className="flex flex-col items-center gap-1.5 rounded-2xl border border-primary/20 bg-card p-3 shadow-elev-1 text-center">
-          <span className="text-3xl">{b.image_url || "🏅"}</span>
-          <span className="text-xs font-bold text-foreground">{b.name}</span>
+          <span className="text-title">{b.image_url || "🏅"}</span>
+          <span className="text-label font-bold text-foreground">{b.name}</span>
         </div>
       ))}
     </div>
@@ -44,8 +44,8 @@ export function LockedBadgeGrid({ badges }: { badges: Badge[] }) {
     <div className="grid grid-cols-3 gap-3">
       {badges.map(b => (
         <div key={b.id} className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-muted/30 p-3 text-center opacity-50">
-          <span className="text-3xl grayscale">{b.image_url || "🏅"}</span>
-          <span className="text-xs font-bold text-foreground">{b.name}</span>
+          <span className="text-title grayscale">{b.image_url || "🏅"}</span>
+          <span className="text-label font-bold text-foreground">{b.name}</span>
         </div>
       ))}
     </div>
@@ -62,11 +62,11 @@ export function LevelUpHistory({ logs }: { logs: { id: string; reason: string; c
           <div className="flex items-center gap-2">
             <Award className="h-4 w-4 text-primary" />
             <div>
-              <p className="text-sm text-foreground">{log.reason}</p>
-              <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")}</p>
+              <p className="text-body text-foreground">{log.reason}</p>
+              <p className="text-label text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")}</p>
             </div>
           </div>
-          <span className="text-sm font-bold text-primary">+{log.amount} XP</span>
+          <span className="text-body font-bold text-primary">+{log.amount} XP</span>
         </div>
       ))}
     </div>
@@ -81,10 +81,10 @@ export function RecentXpList({ logs }: { logs: { id: string; reason: string; cre
       {logs.slice(0, 5).map((log, idx) => (
         <div key={log.id} className={`flex items-center justify-between px-4 py-3 ${idx < Math.min(logs.length, 5) - 1 ? "border-b border-border" : ""}`}>
           <div>
-            <p className="text-sm text-foreground">{log.reason}</p>
-            <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")}</p>
+            <p className="text-body text-foreground">{log.reason}</p>
+            <p className="text-label text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")}</p>
           </div>
-          <span className="text-sm font-bold text-primary">+{log.amount} XP</span>
+          <span className="text-body font-bold text-primary">+{log.amount} XP</span>
         </div>
       ))}
     </div>
@@ -94,9 +94,9 @@ export function RecentXpList({ logs }: { logs: { id: string; reason: string; cre
 export function StatCard({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
     <div className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card p-3 shadow-elev-1 text-center">
-      <span className="text-xl">{icon}</span>
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-base font-bold text-foreground">{value}</span>
+      <span className="text-heading">{icon}</span>
+      <span className="text-label text-muted-foreground">{label}</span>
+      <span className="text-body font-bold text-foreground">{value}</span>
     </div>
   );
 }

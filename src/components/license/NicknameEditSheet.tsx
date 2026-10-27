@@ -118,8 +118,8 @@ const NicknameEditSheet = ({ open, onClose }: Props) => {
                   <PenLine className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
-                  <h2 className="text-[17px] font-bold text-foreground">닉네임 바꾸기</h2>
-                  <p className="mt-0.5 text-[12.5px] text-muted-foreground">라이센스·랭킹·추천 복서에 보이는 이름이에요</p>
+                  <h2 className="text-body font-bold text-foreground">닉네임 바꾸기</h2>
+                  <p className="mt-0.5 text-label text-muted-foreground">라이센스·랭킹·추천 복서에 보이는 이름이에요</p>
                 </div>
               </div>
               <button
@@ -148,17 +148,17 @@ const NicknameEditSheet = ({ open, onClose }: Props) => {
                   maxLength={24}
                   enterKeyHint="done"
                   aria-invalid={tooLong}
-                  className="h-12 rounded-xl pr-14 text-[16px] font-semibold"
+                  className="h-12 rounded-xl pr-14 text-body font-semibold"
                 />
                 <span
-                  className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold tabular-nums ${
+                  className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-label font-bold tabular-nums ${
                     tooLong ? "text-destructive" : "text-muted-foreground"
                   }`}
                 >
                   {len}/{MAX}
                 </span>
               </div>
-              <p className={`mt-2 min-h-[18px] text-[12px] leading-snug ${tooLong || sameAsName ? "text-destructive" : "text-muted-foreground"}`}>
+              <p className={`mt-2 min-h-[18px] text-label leading-snug ${tooLong || sameAsName ? "text-destructive" : "text-muted-foreground"}`}>
                 {tooLong
                   ? `${MAX}자까지 정할 수 있어요`
                   : sameAsName
@@ -168,7 +168,7 @@ const NicknameEditSheet = ({ open, onClose }: Props) => {
               <button
                 type="submit"
                 disabled={!canSave}
-                className="mt-4 h-12 w-full rounded-xl bg-primary text-[15px] font-bold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-40"
+                className="mt-4 h-12 w-full rounded-xl bg-primary text-body font-bold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-40"
               >
                 {saving ? "저장 중…" : "저장"}
               </button>

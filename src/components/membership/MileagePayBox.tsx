@@ -49,23 +49,23 @@ const MileagePayBox = ({ price, payTotal, baseLabel = "결제 금액", balance, 
       aria-label="153 마일리지 쓰기"
     >
       <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-sm font-black text-foreground">
+        <p className="flex items-center gap-1.5 text-body font-black text-foreground">
           <Coins className="h-4 w-4 text-amber-600" aria-hidden />
           153 마일리지 쓰기
         </p>
         {!loading && !failed && (
-          <span className="shrink-0 text-[12.5px] font-bold tabular-nums text-muted-foreground">보유 {n(balance)}점</span>
+          <span className="shrink-0 text-label font-bold tabular-nums text-muted-foreground">보유 {n(balance)}점</span>
         )}
       </div>
 
       {loading ? (
-        <p className="mt-1.5 text-[12.5px] text-muted-foreground">마일리지를 확인하고 있어요…</p>
+        <p className="mt-1.5 text-label text-muted-foreground">마일리지를 확인하고 있어요…</p>
       ) : failed ? (
-        <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
           마일리지를 불러오지 못했어요. 결제는 그대로 할 수 있고, 마일리지는 데스크에서 차감해 드려요.
         </p>
       ) : block ? (
-        <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">{MILEAGE_BLOCK_TEXT[block]}</p>
+        <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">{MILEAGE_BLOCK_TEXT[block]}</p>
       ) : (
         <>
           <div className="mt-2.5 flex items-center gap-1.5">
@@ -87,9 +87,9 @@ const MileagePayBox = ({ price, payTotal, baseLabel = "결제 금액", balance, 
                 onChange={(e) => onChange(parseMileageInput(e.target.value, max))}
                 onBlur={() => onChange(used)}
                 placeholder="0"
-                className="h-11 w-full rounded-xl border border-border bg-background pl-3 pr-8 text-right text-base font-black tabular-nums text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                className="h-11 w-full rounded-xl border border-border bg-background pl-3 pr-8 text-right text-body font-black tabular-nums text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">점</span>
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-body font-bold text-muted-foreground">점</span>
             </label>
             <button
               type="button"
@@ -103,21 +103,21 @@ const MileagePayBox = ({ price, payTotal, baseLabel = "결제 금액", balance, 
             <button
               type="button"
               onClick={() => onChange(used >= max ? 0 : max)}
-              className="h-11 shrink-0 rounded-xl bg-foreground px-3 text-[12.5px] font-bold text-background transition-transform active:scale-95"
+              className="h-11 shrink-0 rounded-xl bg-foreground px-3 text-label font-bold text-background transition-transform active:scale-95"
             >
               {used >= max ? "안 쓰기" : "최대"}
             </button>
           </div>
 
           {used > 0 ? (
-            <p className="mt-2 text-[13px] text-foreground">
+            <p className="mt-2 text-label text-foreground">
               {n(total)}원 − {n(used)}점 = <b className="tabular-nums">{n(total - used)}원</b> 결제
             </p>
           ) : null}
           {value > 0 && value !== used ? (
-            <p className="mt-1 text-[12px] font-bold text-amber-700">1,000점 단위로 맞춰서 {n(used)}점을 써요</p>
+            <p className="mt-1 text-label font-bold text-amber-700">1,000점 단위로 맞춰서 {n(used)}점을 써요</p>
           ) : null}
-          <p className="mt-1.5 text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
             이번 결제는 최대 {n(max)}점 (1점 = 1원 · {baseLabel}의 10%까지 · 1,000점 단위) · 결제가 끝나야 빠지고, 취소하면 돌아와요
           </p>
         </>

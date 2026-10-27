@@ -87,13 +87,13 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
           <Activity className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             오늘의 라운드 점검
           </p>
-          <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+          <h2 className="mt-0.5 text-body font-bold text-foreground">
             컨디션 게이지
           </h2>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             오늘 상태에 맞춰 보조 퀘스트 추천만 조정됩니다.
           </p>
         </div>
@@ -111,24 +111,24 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
   const renderResult = () => (
     <div className="space-y-3">
       <div className="rounded-card border border-emerald-400/40 bg-emerald-400/10 p-3.5">
-        <p className="text-[13.5px] font-bold text-foreground">
+        <p className="text-label font-bold text-foreground">
           기록 완료. 오늘은 {recommendation?.osamiMessage}
         </p>
-        <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
           {recommendation?.hint}
         </p>
       </div>
 
       <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-        <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+        <p className="text-micro font-black uppercase tracking-wider text-primary">
           오삼 코치
         </p>
-        <p className="mt-1 text-[12px] leading-relaxed text-foreground">
+        <p className="mt-1 text-label leading-relaxed text-foreground">
           몸을 읽는 복서가 오래 갑니다. 오늘 컨디션은 기록되었습니다.
         </p>
       </div>
 
-      <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+      <p className="text-micro leading-relaxed text-muted-foreground">
         ※ 컨디션 선택 자체에는 보상이 없습니다. 공식 훈련 리스트 / 공식 XP /
         공식 레벨업과 무관합니다.
       </p>
@@ -136,7 +136,7 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
       <button
         type="button"
         onClick={onClose}
-        className="w-full rounded-card bg-primary py-3 text-[13px] font-bold text-primary-foreground active:scale-[0.98]"
+        className="w-full rounded-card bg-primary py-3 text-label font-bold text-primary-foreground active:scale-[0.98]"
       >
         닫기
       </button>
@@ -146,13 +146,13 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
   const renderForm = () => (
     <div className="space-y-3">
       <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-        <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+        <p className="text-micro font-black uppercase tracking-wider text-primary">
           오늘의 질문
         </p>
-        <p className="mt-1 text-[13.5px] font-bold text-foreground">
+        <p className="mt-1 text-label font-bold text-foreground">
           오늘 컨디션은 어때요?
         </p>
-        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
           정직하게 골라주세요. 무리하지 않을 권리는 복서의 기본기입니다.
         </p>
       </div>
@@ -171,17 +171,17 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
                   : "border-border bg-card hover:border-primary/40"
               }`}
             >
-              <span className="text-2xl">{o.emoji}</span>
+              <span className="text-title">{o.emoji}</span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13.5px] font-bold text-foreground">
+                <p className="truncate text-label font-bold text-foreground">
                   {o.label}
                 </p>
-                <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                <p className="mt-0.5 truncate text-micro text-muted-foreground">
                   {o.desc}
                 </p>
               </div>
               {active && (
-                <span className="text-[11px] font-bold text-primary">
+                <span className="text-micro font-bold text-primary">
                   선택됨
                 </span>
               )}
@@ -192,7 +192,7 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
 
       {showPainArea && (
         <div>
-          <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+          <p className="mb-1.5 text-micro font-bold text-foreground">
             통증 부위{" "}
             <span className="font-normal text-muted-foreground">(선택)</span>
           </p>
@@ -204,7 +204,7 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
                   key={p.value}
                   type="button"
                   onClick={() => togglePainArea(p.value)}
-                  className={`rounded-pill border px-2.5 py-1.5 text-[11px] transition-all active:scale-[0.98] ${
+                  className={`rounded-pill border px-2.5 py-1.5 text-micro transition-all active:scale-[0.98] ${
                     active
                       ? "border-primary bg-primary/10 text-foreground font-bold"
                       : "border-border bg-card text-muted-foreground"
@@ -215,14 +215,14 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
               );
             })}
           </div>
-          <p className="mt-1.5 text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
             ※ 통증이 있으면 무리하지 마세요. 코치와 상담을 권장합니다.
           </p>
         </div>
       )}
 
       <div>
-        <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+        <p className="mb-1.5 text-micro font-bold text-foreground">
           한 줄 메모{" "}
           <span className="font-normal text-muted-foreground">(선택)</span>
         </p>
@@ -231,19 +231,19 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
           value={note}
           onChange={(e) => setNote(e.target.value.slice(0, 120))}
           placeholder="오늘의 컨디션을 간단히…"
-          className="w-full rounded-card border border-border bg-card px-3 py-2 text-[13px] text-foreground focus:border-primary focus:outline-none"
+          className="w-full rounded-card border border-border bg-card px-3 py-2 text-label text-foreground focus:border-primary focus:outline-none"
         />
       </div>
 
       {recommendation && (
         <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+          <p className="text-micro font-black uppercase tracking-wider text-primary">
             오삼 코치 미리보기
           </p>
-          <p className="mt-1 text-[12px] leading-relaxed text-foreground">
+          <p className="mt-1 text-label leading-relaxed text-foreground">
             {recommendation.osamiMessage}
           </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
             {recommendation.hint}
           </p>
         </div>
@@ -253,7 +253,7 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
         type="button"
         onClick={handleSubmit}
         disabled={!canSubmit}
-        className={`w-full rounded-card py-3 text-[14px] font-bold transition-all ${
+        className={`w-full rounded-card py-3 text-label font-bold transition-all ${
           canSubmit
             ? "bg-primary text-primary-foreground active:scale-[0.98]"
             : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60"
@@ -266,7 +266,7 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
             : "오늘 컨디션 기록"}
       </button>
 
-      <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+      <p className="text-micro leading-relaxed text-muted-foreground">
         ※ 컨디션 선택 자체에는 QUEST XP / 챔피언 머니 / RP 보상이 없습니다.
         공식 1~40 레벨업과 무관합니다.
       </p>

@@ -56,17 +56,17 @@ const ShadowBoxerCard = () => {
             <Sparkles className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
               그림자 복서 · 어제의 나
             </p>
-            <h3 className="mt-0.5 text-[14.5px] font-bold text-foreground">
+            <h3 className="mt-0.5 text-label font-bold text-foreground">
               {title}
             </h3>
-            <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
               {subtitle}
             </p>
             {badge && (
-              <p className="mt-1.5 text-[10.5px] font-bold text-reward">
+              <p className="mt-1.5 text-micro font-bold text-reward">
                 {badge}
               </p>
             )}
@@ -76,7 +76,7 @@ const ShadowBoxerCard = () => {
         <button
           type="button"
           onClick={() => setShowSheet(true)}
-          className="mt-3 w-full rounded-card border border-border bg-card py-2.5 text-[12.5px] font-bold text-primary transition-all active:scale-[0.99] hover:border-primary/40"
+          className="mt-3 w-full rounded-card border border-border bg-card py-2.5 text-label font-bold text-primary transition-all active:scale-[0.99] hover:border-primary/40"
         >
           {ready
             ? improved
@@ -85,7 +85,7 @@ const ShadowBoxerCard = () => {
             : "그림자 복서 열기 →"}
         </button>
 
-        <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
           ※ 그림자 복서는 공식 승급 조건이 아닙니다. 어제의 나와 비교하는
           보조 성장 지표입니다.
         </p>

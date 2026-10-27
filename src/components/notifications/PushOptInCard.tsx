@@ -94,18 +94,18 @@ const PushOptInCard = ({ variant, className }: Props) => {
   if (state.kind === "on") {
     return (
       <section aria-label="휴대폰 알림" className={cn(shell, className)}>
-        <h2 className="mb-1 text-base font-bold text-foreground">휴대폰 알림</h2>
-        <p className="mb-3 text-[11px] text-muted-foreground">공지 · 출석 · 수업 소식이 오면 이 휴대폰으로 바로 알려 드려요.</p>
+        <h2 className="mb-1 text-body font-bold text-foreground">휴대폰 알림</h2>
+        <p className="mb-3 text-micro text-muted-foreground">공지 · 출석 · 수업 소식이 오면 이 휴대폰으로 바로 알려 드려요.</p>
         <div className="flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/[0.06] px-4 py-3">
           <Check className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.6} />
-          <span className="text-sm font-semibold text-foreground">이 기기 알림 켜짐</span>
+          <span className="text-body font-semibold text-foreground">이 기기 알림 켜짐</span>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={test}
             disabled={!!busy}
-            className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-secondary text-[13.5px] font-bold text-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
+            className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-secondary text-label font-bold text-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
           >
             <BellRing className="h-4 w-4" />
             {busy === "test" ? "보내는 중…" : "테스트 알림"}
@@ -114,7 +114,7 @@ const PushOptInCard = ({ variant, className }: Props) => {
             type="button"
             onClick={disable}
             disabled={!!busy}
-            className="flex h-11 items-center justify-center rounded-xl border border-border bg-card text-[13.5px] font-semibold text-muted-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
+            className="flex h-11 items-center justify-center rounded-xl border border-border bg-card text-label font-semibold text-muted-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
           >
             {busy === "disable" ? "끄는 중…" : "이 기기 알림 끄기"}
           </button>
@@ -132,16 +132,16 @@ const PushOptInCard = ({ variant, className }: Props) => {
     const Icon = state.kind === "unsupported" && state.why === "ios-install" ? Share : Smartphone;
     return (
       <section aria-label="휴대폰 알림" className={cn(shell, className)}>
-        {!inbox && <h2 className="mb-3 text-base font-bold text-foreground">휴대폰 알림</h2>}
+        {!inbox && <h2 className="mb-3 text-body font-bold text-foreground">휴대폰 알림</h2>}
         <div className="flex gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground">
             <Icon className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[14px] font-bold leading-snug text-foreground">{t.title}</p>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{t.body}</p>
+            <p className="text-label font-bold leading-snug text-foreground">{t.title}</p>
+            <p className="mt-1 text-label leading-relaxed text-muted-foreground">{t.body}</p>
             {showReward && state.kind === "unsupported" && state.why === "ios-install" && (
-              <p className="mt-1.5 text-[12.5px] font-semibold text-primary">홈 화면 앱에서 알림을 켜면 {rewardText}를 드려요.</p>
+              <p className="mt-1.5 text-label font-semibold text-primary">홈 화면 앱에서 알림을 켜면 {rewardText}를 드려요.</p>
             )}
           </div>
         </div>
@@ -150,7 +150,7 @@ const PushOptInCard = ({ variant, className }: Props) => {
             <button
               type="button"
               onClick={hideForNow}
-              className="h-9 rounded-full px-3 text-[12.5px] font-semibold text-muted-foreground active:bg-secondary"
+              className="h-9 rounded-full px-3 text-label font-semibold text-muted-foreground active:bg-secondary"
             >
               닫기
             </button>
@@ -163,20 +163,20 @@ const PushOptInCard = ({ variant, className }: Props) => {
   // ── 꺼짐 — 켜기 ──
   return (
     <section aria-label="휴대폰 알림 켜기" className={cn(shell, className)}>
-      {!inbox && <h2 className="mb-3 text-base font-bold text-foreground">휴대폰 알림</h2>}
+      {!inbox && <h2 className="mb-3 text-body font-bold text-foreground">휴대폰 알림</h2>}
       <div className="flex gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
           <BellRing className="h-5 w-5" strokeWidth={2.2} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[14.5px] font-bold leading-snug text-foreground">
+          <p className="text-label font-bold leading-snug text-foreground">
             {manager
               ? "💳 결제 알림을 휴대폰으로 받기"
               : showReward
               ? `알림 켜고 ${rewardText} 받기`
               : "휴대폰으로도 알림 받기"}
           </p>
-          <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             {manager
               ? "앱에서 결제·취소되면 1분 안에 이 기기가 울려요 — 브로제이 입력을 바로 하세요. 공지 소식도 함께 와요."
               : showReward
@@ -190,7 +190,7 @@ const PushOptInCard = ({ variant, className }: Props) => {
           type="button"
           onClick={enable}
           disabled={!!busy}
-          className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary text-[14px] font-bold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
+          className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary text-label font-bold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
         >
           <BellRing className="h-4 w-4" />
           {busy === "enable" ? "켜는 중…" : "알림 켜기"}
@@ -199,7 +199,7 @@ const PushOptInCard = ({ variant, className }: Props) => {
           <button
             type="button"
             onClick={hideForNow}
-            className="h-11 shrink-0 rounded-xl px-3 text-[13px] font-semibold text-muted-foreground active:bg-secondary"
+            className="h-11 shrink-0 rounded-xl px-3 text-label font-semibold text-muted-foreground active:bg-secondary"
           >
             나중에
           </button>

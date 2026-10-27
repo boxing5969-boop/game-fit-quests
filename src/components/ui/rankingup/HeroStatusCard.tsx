@@ -158,9 +158,9 @@ export const HeroStatusCard = ({
         {/* League + level badge */}
         <div className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-background/60 px-3.5 py-1 backdrop-blur">
           {leagueIcon && (
-            <span className="flex items-center text-base">{leagueIcon}</span>
+            <span className="flex items-center text-body">{leagueIcon}</span>
           )}
-          <span className="text-body-sm font-bold text-foreground">
+          <span className="text-label font-bold text-foreground">
             {leagueName} · Lv.
             <span className="number-font">{level}</span>
           </span>
@@ -170,7 +170,7 @@ export const HeroStatusCard = ({
         {streakText && (
           <div className="mt-2 inline-flex items-center gap-1.5 rounded-pill bg-reward/15 px-3 py-1">
             <Flame className="h-3.5 w-3.5 text-reward" />
-            <span className="text-caption font-bold text-reward">
+            <span className="text-label font-bold text-reward">
               {streakText}
             </span>
           </div>

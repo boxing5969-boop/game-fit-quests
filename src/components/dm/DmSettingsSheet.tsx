@@ -46,8 +46,8 @@ const DmSettingsSheet = ({ open, onClose }: Props) => {
     return (
       <DmSheet open={open} onClose={onClose} title="메시지 설정">
         <div className="rounded-2xl bg-muted/50 px-4 py-8 text-center">
-          <p className="text-[14px] font-bold text-foreground">설정을 불러오지 못했어요</p>
-          <button type="button" onClick={() => refetch()} className="mt-3 rounded-full bg-secondary px-4 py-2 text-[13px] font-bold active:scale-95">
+          <p className="text-label font-bold text-foreground">설정을 불러오지 못했어요</p>
+          <button type="button" onClick={() => refetch()} className="mt-3 rounded-full bg-secondary px-4 py-2 text-label font-bold active:scale-95">
             다시 불러오기
           </button>
         </div>
@@ -58,7 +58,7 @@ const DmSettingsSheet = ({ open, onClose }: Props) => {
   return (
     <DmSheet open={open} onClose={onClose} title="메시지 설정">
       {data?.suspended_until && (
-        <p className="mb-3 rounded-xl bg-amber-500/10 px-3.5 py-3 text-[12.5px] leading-snug text-amber-800 dark:text-amber-300">
+        <p className="mb-3 rounded-xl bg-amber-500/10 px-3.5 py-3 text-label leading-snug text-amber-800 dark:text-amber-300">
           신고 처리로 {dmUntilLabel(data.suspended_until)}까지 메시지를 보낼 수 없어요. 받은 메시지는 그대로 볼 수 있어요.
         </p>
       )}
@@ -67,8 +67,8 @@ const DmSettingsSheet = ({ open, onClose }: Props) => {
         <section className="rounded-2xl bg-secondary/60 px-4 py-3.5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[15px] font-bold text-foreground">메시지 요청 받기</p>
-              <p className="mt-0.5 text-[12.5px] leading-snug text-muted-foreground">
+              <p className="text-body font-bold text-foreground">메시지 요청 받기</p>
+              <p className="mt-0.5 text-label leading-snug text-muted-foreground">
                 끄면 다른 회원이 새 대화를 시작할 수 없어요. 이미 나눈 대화와 코치님·운영진 메시지는 그대로 와요.
               </p>
             </div>
@@ -83,11 +83,11 @@ const DmSettingsSheet = ({ open, onClose }: Props) => {
       )}
 
       <section className={isMember ? "mt-5" : undefined}>
-        <h3 className="mb-2 px-1 text-[13px] font-bold text-foreground">
+        <h3 className="mb-2 px-1 text-label font-bold text-foreground">
           차단한 사람 <span className="font-medium text-muted-foreground">{blocks.length}</span>
         </h3>
         {blocks.length === 0 ? (
-          <p className="rounded-2xl bg-muted/40 px-4 py-5 text-center text-[12.5px] text-muted-foreground">
+          <p className="rounded-2xl bg-muted/40 px-4 py-5 text-center text-label text-muted-foreground">
             차단한 사람이 없어요 · 대화방 ⋯ 에서 차단할 수 있어요
           </p>
         ) : (
@@ -95,14 +95,14 @@ const DmSettingsSheet = ({ open, onClose }: Props) => {
             {blocks.map((b) => (
               <li key={b.user_id} className="flex items-center gap-3 px-4 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14px] font-bold text-foreground">{b.display}</p>
-                  {b.branch && <p className="truncate text-[12px] text-muted-foreground">{shortBranch(b.branch)}</p>}
+                  <p className="truncate text-label font-bold text-foreground">{b.display}</p>
+                  {b.branch && <p className="truncate text-label text-muted-foreground">{shortBranch(b.branch)}</p>}
                 </div>
                 <button
                   type="button"
                   onClick={() => onUnblock(b.user_id, b.display)}
                   disabled={block.isPending}
-                  className="shrink-0 rounded-full bg-card px-3.5 py-2 text-[12.5px] font-bold text-foreground shadow-elev-1 active:scale-95 disabled:opacity-50"
+                  className="shrink-0 rounded-full bg-card px-3.5 py-2 text-label font-bold text-foreground shadow-elev-1 active:scale-95 disabled:opacity-50"
                 >
                   차단 풀기
                 </button>
@@ -112,7 +112,7 @@ const DmSettingsSheet = ({ open, onClose }: Props) => {
         )}
       </section>
 
-      <p className="mt-5 px-1 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-5 px-1 text-micro leading-relaxed text-muted-foreground">
         차단하면 서로 메시지를 보낼 수 없고, 상대에게는 알리지 않아요. 불편한 메시지는 대화방 ⋯ 에서 신고하면 운영진이 확인해요.
       </p>
     </DmSheet>

@@ -112,23 +112,23 @@ const HomeEngagementSection = ({
           <BookOpen className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
             오늘 운동 한 줄
           </p>
-          <p className="mt-0.5 truncate text-[13.5px] font-bold text-foreground">
+          <p className="mt-0.5 truncate text-label font-bold text-foreground">
             오늘 컨디션 + 한 줄 + 사진
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+          <p className="mt-0.5 truncate text-micro text-muted-foreground">
             커뮤니티에 올라가고 동료들이 153으로 응원해요.
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-reward">
+          <p className="text-micro font-bold uppercase tracking-wider text-reward">
             보상
           </p>
-          <p className="mt-0.5 text-[11px] font-bold text-reward">머니 +50</p>
+          <p className="mt-0.5 text-micro font-bold text-reward">머니 +50</p>
         </div>
-        <span className="ml-1 shrink-0 text-[11px] font-bold text-primary">
+        <span className="ml-1 shrink-0 text-micro font-bold text-primary">
           열기 →
         </span>
       </button>
@@ -143,17 +143,17 @@ const HomeEngagementSection = ({
           <Megaphone className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
             응원 보내기
           </p>
-          <p className="mt-0.5 truncate text-[13.5px] font-bold text-foreground">
+          <p className="mt-0.5 truncate text-label font-bold text-foreground">
             오늘 운동한 동료에게 응원을 보내요
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+          <p className="mt-0.5 truncate text-micro text-muted-foreground">
             받은 사람에게 응원 알림이 바로 가요.
           </p>
         </div>
-        <span className="ml-1 shrink-0 text-[11px] font-bold text-primary">
+        <span className="ml-1 shrink-0 text-micro font-bold text-primary">
           열기 →
         </span>
       </button>

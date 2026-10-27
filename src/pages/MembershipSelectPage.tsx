@@ -13,8 +13,8 @@ const MembershipSelectPage = () => {
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
         <div>
-          <h1 className="text-xl text-foreground">153멤버십</h1>
-          <p className="text-[11px] text-muted-foreground">153복싱짐 선릉역점</p>
+          <h1 className="text-heading text-foreground">153멤버십</h1>
+          <p className="text-micro text-muted-foreground">153복싱짐 선릉역점</p>
         </div>
       </div>
       <MembershipProducts />

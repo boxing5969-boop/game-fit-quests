@@ -29,7 +29,7 @@ const Chip = ({ label, onClick }: { label: string; onClick: () => void }) => (
   <button
     type="button"
     onClick={onClick}
-    className="rounded-full bg-card px-3.5 py-2 text-[13.5px] font-semibold text-foreground shadow-elev-1 ring-1 ring-border/60 active:scale-95"
+    className="rounded-full bg-card px-3.5 py-2 text-label font-semibold text-foreground shadow-elev-1 ring-1 ring-border/60 active:scale-95"
   >
     {label}
   </button>
@@ -39,8 +39,8 @@ const FeatureRow = ({ e, onOpen }: { e: SearchEntry; onOpen: () => void }) => (
   <button type="button" onClick={onOpen} className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-secondary/70">
     {e.glyph ? <GlyphTile name={e.glyph} size={40} /> : <span className="h-10 w-10 shrink-0 rounded-xl bg-secondary" />}
     <span className="min-w-0 flex-1">
-      <span className="block truncate text-[15px] font-bold text-foreground">{e.title}</span>
-      {e.subtitle && <span className="block truncate text-[12.5px] text-muted-foreground">{e.subtitle}</span>}
+      <span className="block truncate text-body font-bold text-foreground">{e.title}</span>
+      {e.subtitle && <span className="block truncate text-label text-muted-foreground">{e.subtitle}</span>}
     </span>
     {e.action.kind === "href" ? (
       <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground/70" />
@@ -62,10 +62,10 @@ const VideoRow = ({ e, onOpen }: { e: SearchEntry; onOpen: () => void }) => (
     </span>
     <span className="min-w-0 flex-1">
       {e.badge && (
-        <span className="mb-0.5 inline-flex rounded-md bg-reward/20 px-1.5 py-[1px] text-[10.5px] font-black text-reward">{e.badge}</span>
+        <span className="mb-0.5 inline-flex rounded-md bg-reward/20 px-1.5 py-[1px] text-micro font-black text-reward">{e.badge}</span>
       )}
-      <span className="line-clamp-2 block text-[14.5px] font-bold leading-snug text-foreground">{e.title}</span>
-      {e.subtitle && <span className="block truncate text-[12px] text-muted-foreground">{e.subtitle}</span>}
+      <span className="line-clamp-2 block text-label font-bold leading-snug text-foreground">{e.title}</span>
+      {e.subtitle && <span className="block truncate text-label text-muted-foreground">{e.subtitle}</span>}
     </span>
   </button>
 );
@@ -74,12 +74,12 @@ const LessonRow = ({ e, onOpen }: { e: SearchEntry; onOpen: () => void }) => {
   const [dayPart, ...rest] = e.title.split(" · ");
   return (
     <button type="button" onClick={onOpen} className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-secondary/70">
-      <span className="flex h-10 w-[52px] shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[14px] font-black tabular-nums text-primary">
+      <span className="flex h-10 w-[52px] shrink-0 items-center justify-center rounded-xl bg-primary/10 text-label font-black tabular-nums text-primary">
         {dayPart}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-bold text-foreground">{rest.join(" · ") || e.title}</span>
-        {e.subtitle && <span className="block truncate text-[12.5px] text-muted-foreground">{e.subtitle}</span>}
+        <span className="block truncate text-body font-bold text-foreground">{rest.join(" · ") || e.title}</span>
+        {e.subtitle && <span className="block truncate text-label text-muted-foreground">{e.subtitle}</span>}
       </span>
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
     </button>
@@ -163,7 +163,7 @@ const SearchPage = () => {
               placeholder="기능·영상 찾기 (예: 타이틀매치)"
               enterKeyHint="search"
               autoComplete="off"
-              className="min-w-0 flex-1 bg-transparent text-[16px] text-foreground outline-none placeholder:text-muted-foreground"
+              className="min-w-0 flex-1 bg-transparent text-body text-foreground outline-none placeholder:text-muted-foreground"
               aria-label="기능·영상 검색"
             />
             {text && (
@@ -187,7 +187,7 @@ const SearchPage = () => {
         {!hasQuery ? (
           <>
             <section aria-label="이렇게 찾아보세요" className="pt-2">
-              <h2 className="mb-2.5 px-1 text-[13px] font-bold text-muted-foreground">이렇게 찾아보세요</h2>
+              <h2 className="mb-2.5 px-1 text-label font-bold text-muted-foreground">이렇게 찾아보세요</h2>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTED_QUERIES.map((s) => (
                   <Chip key={s} label={s} onClick={() => setText(s)} />
@@ -197,14 +197,14 @@ const SearchPage = () => {
             {recent.length > 0 && (
               <section aria-label="최근 검색" className="mt-6">
                 <div className="mb-2.5 flex items-center justify-between px-1">
-                  <h2 className="text-[13px] font-bold text-muted-foreground">최근 검색</h2>
+                  <h2 className="text-label font-bold text-muted-foreground">최근 검색</h2>
                   <button
                     type="button"
                     onClick={() => {
                       clearRecent();
                       setRecent([]);
                     }}
-                    className="text-[12.5px] font-semibold text-muted-foreground active:opacity-60"
+                    className="text-label font-semibold text-muted-foreground active:opacity-60"
                   >
                     모두 지우기
                   </button>
@@ -216,14 +216,14 @@ const SearchPage = () => {
                 </div>
               </section>
             )}
-            <p className="mt-8 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-8 px-1 text-label leading-relaxed text-muted-foreground">
               띄어쓰기 없이 쳐도, 초성(ㅌㅇㅌ)만 쳐도 찾아요. 영상은 누르면 바로 재생돼요.
             </p>
           </>
         ) : groups.length === 0 ? (
           <div className="pt-10 text-center">
-            <p className="text-[15px] font-bold text-foreground">‘{text.trim()}’ 결과가 없어요</p>
-            <p className="mt-1 text-[12.5px] text-muted-foreground">
+            <p className="text-body font-bold text-foreground">‘{text.trim()}’ 결과가 없어요</p>
+            <p className="mt-1 text-label text-muted-foreground">
               {loadingContent ? "영상·수업을 불러오는 중이에요. 잠시 후 다시 보여 드릴게요." : "다른 말로 찾아보세요"}
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
@@ -236,7 +236,7 @@ const SearchPage = () => {
           <div className="space-y-5 pt-1">
             {groups.map(({ group, hits: gh }) => (
               <section key={group} aria-label={GROUP_LABEL[group]}>
-                <h2 className="mb-2 px-1 text-[13px] font-bold text-muted-foreground">
+                <h2 className="mb-2 px-1 text-label font-bold text-muted-foreground">
                   {GROUP_LABEL[group]} <span className="font-semibold">{gh.length}</span>
                 </h2>
                 <ul className={cn("divide-y divide-border/70 overflow-hidden rounded-2xl bg-card shadow-elev-1")}>
@@ -254,7 +254,7 @@ const SearchPage = () => {
                 </ul>
               </section>
             ))}
-            {loadingContent && <p className="px-1 text-[12px] text-muted-foreground">영상·수업을 불러오는 중이에요…</p>}
+            {loadingContent && <p className="px-1 text-label text-muted-foreground">영상·수업을 불러오는 중이에요…</p>}
           </div>
         )}
       </div>

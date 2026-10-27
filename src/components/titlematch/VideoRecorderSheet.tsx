@@ -175,7 +175,7 @@ const VideoRecorderSheet = ({ open, title, onClose, onRecorded }: Props) => {
       className="fixed inset-0 z-[110] flex flex-col bg-black pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white"
     >
       <div className="flex items-center justify-between gap-3 px-4 py-3">
-        <p className="min-w-0 truncate text-[14px] font-bold">{title}</p>
+        <p className="min-w-0 truncate text-label font-bold">{title}</p>
         <button
           type="button"
           onClick={onClose}
@@ -195,18 +195,18 @@ const VideoRecorderSheet = ({ open, title, onClose, onRecorded }: Props) => {
         )}
         {phase === "error" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
-            <p className="text-[14.5px] font-bold leading-relaxed">{error}</p>
+            <p className="text-label font-bold leading-relaxed">{error}</p>
             <button
               type="button"
               onClick={onClose}
-              className="h-11 rounded-full bg-white px-5 text-[14px] font-black text-black active:scale-95"
+              className="h-11 rounded-full bg-white px-5 text-label font-black text-black active:scale-95"
             >
               닫기
             </button>
           </div>
         )}
         {phase === "recording" && (
-          <span className="absolute left-1/2 top-3 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-[13px] font-black tabular-nums">
+          <span className="absolute left-1/2 top-3 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-label font-black tabular-nums">
             <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
             {formatClock(elapsed)} / {formatClock(RECORDER_MAX_SECONDS)}
           </span>
@@ -247,7 +247,7 @@ const VideoRecorderSheet = ({ open, title, onClose, onRecorded }: Props) => {
           <RefreshCw className="h-5 w-5" />
         </button>
       </div>
-      <p className="px-6 pb-4 text-center text-[12px] text-white/60">
+      <p className="px-6 pb-4 text-center text-label text-white/60">
         3번 연속 성공 → 미트 3번 받아주기까지 한 번에 찍어요 · {formatClock(RECORDER_MAX_SECONDS)}에서 자동으로 멈춰요
       </p>
     </div>,

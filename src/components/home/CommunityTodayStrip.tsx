@@ -56,11 +56,11 @@ const CommunityTodayStrip = () => {
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-extrabold text-foreground">오늘 우리 체육관</span>
-        <span className="mt-0.5 block text-[13px] leading-snug text-muted-foreground">{line}</span>
+        <span className="block text-body font-extrabold text-foreground">오늘 우리 체육관</span>
+        <span className="mt-0.5 block text-label leading-snug text-muted-foreground">{line}</span>
       </span>
       {received > 0 && (
-        <span className="number-font shrink-0 rounded-pill border border-primary/50 bg-primary/10 px-2.5 py-1 text-[12.5px] font-black text-primary">
+        <span className="number-font shrink-0 rounded-pill border border-primary/50 bg-primary/10 px-2.5 py-1 text-label font-black text-primary">
           받은 153 {received}
         </span>
       )}

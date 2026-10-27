@@ -65,7 +65,7 @@ export const MasterProgressCard = ({
       <div className="relative flex items-start justify-between gap-2">
         <div className="min-w-0">
           <MasterTrackBadge overallLevel={overall} />
-          <h2 className="mt-2 truncate text-[15px] font-bold text-foreground">
+          <h2 className="mt-2 truncate text-body font-bold text-foreground">
             {currentDef?.title ?? `마스터 Lv.${masterLevel}`}
           </h2>
         </div>
@@ -73,7 +73,7 @@ export const MasterProgressCard = ({
           type="button"
           onClick={() => navigate("/master-track")}
           aria-label="마스터 맵 열기"
-          className="flex h-9 items-center gap-1 rounded-full bg-reward/15 px-3 text-[11px] font-bold text-reward transition-colors hover:bg-reward/25"
+          className="flex h-9 items-center gap-1 rounded-full bg-reward/15 px-3 text-micro font-bold text-reward transition-colors hover:bg-reward/25"
         >
           맵 보기
           <ArrowRight className="h-3.5 w-3.5" />
@@ -93,7 +93,7 @@ export const MasterProgressCard = ({
         />
       </div>
 
-      <div className="relative mt-2.5 flex items-center justify-between text-[11px]">
+      <div className="relative mt-2.5 flex items-center justify-between text-micro">
         <span className="text-muted-foreground">
           {isGrand ? (
             <span className="inline-flex items-center gap-1 text-reward">
@@ -116,7 +116,7 @@ export const MasterProgressCard = ({
       {/* Upcoming reward preview */}
       {nextBossDef && !isGrand && (
         <div className="relative mt-3 border-t border-reward/20 pt-2.5">
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="mb-1.5 text-micro font-semibold uppercase tracking-wider text-muted-foreground">
             다음 보스 보상
           </p>
           <MasterRewardStack def={nextBossDef} />

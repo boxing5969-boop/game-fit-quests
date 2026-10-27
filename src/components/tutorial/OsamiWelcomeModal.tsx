@@ -140,7 +140,7 @@ const OsamiWelcomeModal = () => {
                 />
               </div>
 
-              <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.4em] text-amber-300">
+              <p className="mt-2 text-center text-micro font-black uppercase tracking-[0.4em] text-amber-300">
                 OSAM · 153복싱짐 코치
               </p>
 
@@ -154,12 +154,12 @@ const OsamiWelcomeModal = () => {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <h2 className="mt-3 text-center text-2xl font-black leading-tight text-amber-50">
+                    <h2 className="mt-3 text-center text-title font-black leading-tight text-amber-50">
                       안녕하세요!
                       <br />
                       오삼이에요 🥊
                     </h2>
-                    <p className="mt-3 text-center text-[13px] leading-relaxed text-amber-100/85">
+                    <p className="mt-3 text-center text-label leading-relaxed text-amber-100/85">
                       마이복서153 에 오신 것을 환영해요.
                       <br />
                       앞으로 매일 오삼이가 같이 갈게요.
@@ -175,7 +175,7 @@ const OsamiWelcomeModal = () => {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <h2 className="mt-3 text-center text-xl font-black leading-tight text-amber-50">
+                    <h2 className="mt-3 text-center text-heading font-black leading-tight text-amber-50">
                       이 앱은 이렇게 써요
                     </h2>
                     <div className="mt-4 space-y-2.5">
@@ -206,17 +206,17 @@ const OsamiWelcomeModal = () => {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <h2 className="mt-3 text-center text-xl font-black leading-tight text-amber-50">
+                    <h2 className="mt-3 text-center text-heading font-black leading-tight text-amber-50">
                       준비됐어요?
                     </h2>
-                    <p className="mt-3 text-center text-[13px] leading-relaxed text-amber-100/85">
+                    <p className="mt-3 text-center text-label leading-relaxed text-amber-100/85">
                       처음부터 잘하지 않아도 돼요.
                       <br />
                       오늘 한 번만 해도 충분합니다.
                       <br />
                       <span className="text-amber-300">함께 시작해봐요!</span>
                     </p>
-                    <p className="mt-3 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-center text-[11px] leading-relaxed text-amber-100/90">
+                    <p className="mt-3 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-center text-micro leading-relaxed text-amber-100/90">
                       좌측 하단 오삼이를 누르면
                       <br />
                       5개 미션을 시작할 수 있어요.
@@ -244,7 +244,7 @@ const OsamiWelcomeModal = () => {
               {/* CTA */}
               <button
                 onClick={handleNext}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 px-5 py-3 text-sm font-black tracking-wider text-amber-950 hover:from-amber-400 hover:to-amber-300 active:scale-[0.98]"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 px-5 py-3 text-body font-black tracking-wider text-amber-950 hover:from-amber-400 hover:to-amber-300 active:scale-[0.98]"
               >
                 {stage === 2 ? (
                   <>
@@ -262,7 +262,7 @@ const OsamiWelcomeModal = () => {
               {stage < 2 && (
                 <button
                   onClick={handleClose}
-                  className="mt-2 w-full text-[11px] text-amber-200/55 hover:text-amber-200/85"
+                  className="mt-2 w-full text-micro text-amber-200/55 hover:text-amber-200/85"
                 >
                   나중에 보기
                 </button>
@@ -288,8 +288,8 @@ const FeatureRow = ({ icon, title, desc }: FeatureRowProps) => (
       {icon}
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-[12px] font-black text-amber-50">{title}</p>
-      <p className="mt-0.5 text-[10px] leading-relaxed text-amber-100/65">{desc}</p>
+      <p className="text-label font-black text-amber-50">{title}</p>
+      <p className="mt-0.5 text-micro leading-relaxed text-amber-100/65">{desc}</p>
     </div>
   </div>
 );

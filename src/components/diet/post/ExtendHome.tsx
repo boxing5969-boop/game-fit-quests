@@ -93,15 +93,15 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
           <span className="rounded-full bg-primary/15 p-1.5">
             <HeartHandshake className="h-4 w-4 text-primary" />
           </span>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             RESET · 건강리셋 연장 프로그램
           </p>
         </div>
-        <h2 className="mt-1 text-[20px] font-extrabold leading-tight text-foreground">
+        <h2 className="mt-1 text-heading font-extrabold leading-tight text-foreground">
           {plan.extension_cycle_length}일 연장 · {Math.min(currentWeek, totalWeeks)} /{" "}
           {totalWeeks}주 · {currentWeek === 1 ? "리듬 재정렬" : "감량 지속 / 정체기 대응"}
         </h2>
-        <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-label leading-relaxed text-muted-foreground">
           지금 필요한 것은 더 극단적인 제한이 아니라
           <br />더 안정적인 감량 루틴입니다.
         </p>
@@ -127,7 +127,7 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
       {/* 패턴 태그 */}
       {tags.length > 0 && (
         <section className="rounded-2xl border border-border bg-card p-4">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+          <div className="flex items-center gap-2 text-micro font-bold uppercase tracking-wide text-muted-foreground">
             <Tags className="h-3.5 w-3.5" />
             내 약점 패턴
           </div>
@@ -135,13 +135,13 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
             {tags.map((t) => (
               <span
                 key={t}
-                className="rounded-full bg-primary/10 px-2.5 py-1 text-[11.5px] font-bold text-primary"
+                className="rounded-full bg-primary/10 px-2.5 py-1 text-micro font-bold text-primary"
               >
                 {PATTERN_LABEL_KO[t] ?? t}
               </span>
             ))}
           </div>
-          <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-micro leading-relaxed text-muted-foreground">
             이번 주 미션은 이 패턴에 맞춰 구성됩니다. 코치가 태그를 조정할 수 있어요.
           </p>
         </section>
@@ -152,7 +152,7 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
         <section>
           <div className="mb-2 flex items-center gap-1.5">
             <Target className="h-3.5 w-3.5 text-primary" />
-            <p className="text-[12px] font-extrabold text-foreground">연장 목표</p>
+            <p className="text-label font-extrabold text-foreground">연장 목표</p>
           </div>
           <div className="grid grid-cols-3 gap-2">
             <GoalTile
@@ -215,8 +215,8 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
 
       {/* 코치 한마디 (이탈 방지 메시지 포함) */}
       {plan.coach_recommendation_note && (
-        <section className="rounded-2xl border border-primary/30 bg-primary/5 p-3 text-[12px] leading-relaxed text-foreground">
-          <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+        <section className="rounded-2xl border border-primary/30 bg-primary/5 p-3 text-label leading-relaxed text-foreground">
+          <p className="text-micro font-black uppercase tracking-widest text-primary">
             코치 한마디
           </p>
           <p className="mt-0.5">{plan.coach_recommendation_note}</p>
@@ -235,7 +235,7 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
 
       {/* 주차별 미션 */}
       <section>
-        <p className="mb-2 text-[12px] font-extrabold text-foreground">
+        <p className="mb-2 text-label font-extrabold text-foreground">
           이번 주 미션 · {currentWeek === 1 ? "리듬 재정렬" : "감량 지속 / 정체기 대응"}
         </p>
         <ul className="space-y-1.5">
@@ -247,8 +247,8 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <div>
-                  <p className="text-[12.5px] font-bold text-foreground">{m.label}</p>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="text-label font-bold text-foreground">{m.label}</p>
+                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
                     {m.hint}
                   </p>
                 </div>
@@ -259,8 +259,8 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
       </section>
 
       {/* 정체기 안내 */}
-      <section className="rounded-2xl border border-border bg-muted/30 p-3 text-[12px] leading-relaxed text-muted-foreground">
-        <p className="text-[11px] font-bold text-foreground">정체기가 오면</p>
+      <section className="rounded-2xl border border-border bg-muted/30 p-3 text-label leading-relaxed text-muted-foreground">
+        <p className="text-micro font-bold text-foreground">정체기가 오면</p>
         <p className="mt-0.5">
           식사량 추가 제한보다 수면 · 단백질 · 걸음 수를 먼저 안정화하세요.
           일주일 이상 정체 시 코치와 개별 상담을 권합니다.
@@ -283,22 +283,22 @@ export const ExtendHome = ({ plan, checkins }: ExtendHomeProps) => {
       {/* 체크인 히스토리 */}
       {checkins.length > 0 && (
         <section className="space-y-2">
-          <p className="text-[12px] font-extrabold text-foreground">체크인 히스토리</p>
+          <p className="text-label font-extrabold text-foreground">체크인 히스토리</p>
           <ul className="space-y-1.5">
             {checkins.slice(0, 6).map((c) => (
               <li
                 key={c.id}
-                className="flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-[12px]"
+                className="flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-label"
               >
                 <div>
                   <p className="font-bold text-foreground">{c.week_index}주차</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  <p className="mt-0.5 text-micro text-muted-foreground">
                     {c.checkin_date} · 운동 {c.attended_workouts}회
                     {c.waist_cm != null && ` · ${c.waist_cm.toFixed(1)} cm`}
                   </p>
                 </div>
                 {c.adherence_score != null && (
-                  <span className="number-font rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">
+                  <span className="number-font rounded-full bg-primary/15 px-2 py-0.5 text-micro font-bold text-primary">
                     {c.adherence_score}
                   </span>
                 )}
@@ -330,11 +330,11 @@ const MiniStat = ({
   value: string;
 }) => (
   <div className="rounded-xl border border-border bg-card p-2.5 text-center">
-    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+    <span className="inline-flex items-center gap-0.5 text-micro font-bold uppercase tracking-wide text-muted-foreground">
       {icon}
       {label}
     </span>
-    <p className="mt-0.5 number-font text-[14px] font-extrabold text-foreground">
+    <p className="mt-0.5 number-font text-label font-extrabold text-foreground">
       {value}
     </p>
   </div>
@@ -342,10 +342,10 @@ const MiniStat = ({
 
 const GoalTile = ({ label, value }: { label: string; value: string }) => (
   <div className="rounded-xl border border-primary/15 bg-primary/5 p-2.5 text-center">
-    <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+    <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
       {label}
     </p>
-    <p className="mt-0.5 number-font text-[13px] font-extrabold text-foreground">
+    <p className="mt-0.5 number-font text-label font-extrabold text-foreground">
       {value}
     </p>
   </div>
@@ -383,12 +383,12 @@ const ExtendDeadlineFeedbackCard = ({
       )}
     >
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+        <p className="text-micro font-black uppercase tracking-widest text-primary">
           데드라인
         </p>
         <span
           className={cn(
-            "rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
+            "rounded-full px-2 py-0.5 text-micro font-black uppercase tracking-wide",
             tone === "ended"
               ? "bg-amber-400/20 text-amber-700"
               : tone === "soon"
@@ -400,16 +400,16 @@ const ExtendDeadlineFeedbackCard = ({
         </span>
       </div>
       {dl.endsAtIso && (
-        <p className="mt-1 text-[12px] text-foreground">
+        <p className="mt-1 text-label text-foreground">
           마감일:{" "}
           <span className="number-font font-extrabold">{dl.endsAtIso}</span>
         </p>
       )}
       <div className="mt-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
-        <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+        <p className="text-micro font-black uppercase tracking-widest text-primary">
           오삼 코치 한마디
         </p>
-        <p className="mt-0.5 text-[12px] leading-relaxed text-foreground">
+        <p className="mt-0.5 text-label leading-relaxed text-foreground">
           {feedback}
         </p>
       </div>

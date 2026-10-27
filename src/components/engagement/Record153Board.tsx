@@ -77,7 +77,7 @@ const Record153Board = ({ onOpenMember }: Props) => {
     const items = FIRSTS.map((f, idx) => ({ ...f, no: idx + 1 })).filter((f) => f.section === section);
     return (
       <section className="space-y-2.5">
-        <h3 className="px-1 text-[13px] font-black tracking-wide text-muted-foreground">{SECTION_TITLE[section]}</h3>
+        <h3 className="px-1 text-label font-black tracking-wide text-muted-foreground">{SECTION_TITLE[section]}</h3>
         {items.map((f) => {
           const pbTop = RECORD_153_PB_TOP[f.key];
           const rec = byKey.get(f.key) ?? null;
@@ -112,17 +112,17 @@ const Record153Board = ({ onOpenMember }: Props) => {
           <div className="flex h-14 w-14 items-center justify-center rounded-pill bg-reward/15">
             <ScrollText className="h-7 w-7 text-reward" />
           </div>
-          <h2 className="text-display-sm text-foreground">153 레코드</h2>
-          <p className="text-body-sm text-muted-foreground">
+          <h2 className="text-heading text-foreground">153 레코드</h2>
+          <p className="text-label text-muted-foreground font-medium">
             세계로 갈 153복싱짐의 첫 역사.
             <br />
             한 번 새겨진 이름은 영원히 남아요.
           </p>
-          <p className="text-[13px] font-black text-reward">
+          <p className="text-label font-black text-reward">
             🎁 최초 기록을 세우면 마일리지 {MILEAGE_LABEL} 적립
           </p>
           {data && (
-            <span className="mt-1 rounded-pill bg-reward/15 px-3 py-1 text-[12.5px] font-black text-reward">
+            <span className="mt-1 rounded-pill bg-reward/15 px-3 py-1 text-label font-black text-reward">
               새겨진 기록 {filled} / {FIRSTS.length}
             </span>
           )}
@@ -137,11 +137,11 @@ const Record153Board = ({ onOpenMember }: Props) => {
         </div>
       ) : isError ? (
         <div className="rounded-card border border-border bg-card p-5 text-center">
-          <p className="text-[14px] font-semibold text-muted-foreground">기록을 불러오지 못했어요</p>
+          <p className="text-label font-semibold text-muted-foreground">기록을 불러오지 못했어요</p>
           <button
             type="button"
             onClick={() => refetch()}
-            className="mt-3 h-10 rounded-xl border border-border px-4 text-[13.5px] font-bold text-foreground active:scale-[0.98]"
+            className="mt-3 h-10 rounded-xl border border-border px-4 text-label font-bold text-foreground active:scale-[0.98]"
           >
             다시 불러오기
           </button>
@@ -153,7 +153,7 @@ const Record153Board = ({ onOpenMember }: Props) => {
           {/* 대회의 역사 — 153복싱짐 첫 대회 우승·준우승 (2026-10-16 대표님) */}
           {data?.tournament && (
             <section className="space-y-2.5">
-              <h3 className="px-1 text-[13px] font-black tracking-wide text-muted-foreground">대회의 역사</h3>
+              <h3 className="px-1 text-label font-black tracking-wide text-muted-foreground">대회의 역사</h3>
               {RECORD_153_TOURNAMENT.map((t) => {
                 const holders = sortTournamentHolders(data.tournament!.holders.filter((h) => h.medal === t.medal));
                 if (holders.length === 0) return null;
@@ -180,8 +180,8 @@ const Record153Board = ({ onOpenMember }: Props) => {
           {SHOW_BESTS && (
           <section className="space-y-2.5">
             <div className="flex items-end justify-between px-1">
-              <h3 className="text-[13px] font-black tracking-wide text-muted-foreground">종목별 신기록</h3>
-              <span className="text-[11.5px] font-semibold text-muted-foreground">더 높은 기록이 나오면 바뀌어요</span>
+              <h3 className="text-label font-black tracking-wide text-muted-foreground">종목별 신기록</h3>
+              <span className="text-micro font-semibold text-muted-foreground">더 높은 기록이 나오면 바뀌어요</span>
             </div>
             <div className="overflow-hidden rounded-card border border-border bg-card">
               {(data?.bests ?? []).map((b, i) => (
@@ -190,30 +190,30 @@ const Record153Board = ({ onOpenMember }: Props) => {
                   className={cn("flex min-h-[56px] items-center gap-3 px-4 py-2.5", i > 0 && "border-t border-border")}
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-bold text-foreground">{b.title.replace(/\s*챌린지$/, "")}</p>
+                    <p className="truncate text-label font-bold text-foreground">{b.title.replace(/\s*챌린지$/, "")}</p>
                     {b.user_id ? (
                       <button
                         type="button"
                         onClick={() => onOpenMember?.({ id: b.user_id!, nickname: b.nickname ?? "" })}
-                        className="truncate text-left text-[12.5px] font-semibold text-muted-foreground"
+                        className="truncate text-left text-label font-semibold text-muted-foreground"
                       >
                         {b.nickname}
                         {b.is_me && <span className="ml-1 font-black text-primary">· 내 기록</span>}
                       </button>
                     ) : (
-                      <p className="text-[12.5px] font-semibold text-muted-foreground">첫 기록의 주인이 되세요</p>
+                      <p className="text-label font-semibold text-muted-foreground">첫 기록의 주인이 되세요</p>
                     )}
                   </div>
                   {b.value != null ? (
-                    <span className="shrink-0 text-[17px] font-black tabular-nums text-reward">
+                    <span className="shrink-0 text-body font-black tabular-nums text-reward">
                       {fmtNum(Number(b.value))}
-                      <span className="ml-0.5 text-[12px] font-bold text-muted-foreground">{UNIT[b.metric ?? ""] ?? ""}</span>
+                      <span className="ml-0.5 text-label font-bold text-muted-foreground">{UNIT[b.metric ?? ""] ?? ""}</span>
                     </span>
                   ) : (
                     <button
                       type="button"
                       onClick={() => setArena({ open: true, code: b.code })}
-                      className="h-9 shrink-0 rounded-pill bg-primary px-3.5 text-[12.5px] font-black text-primary-foreground active:scale-95"
+                      className="h-9 shrink-0 rounded-pill bg-primary px-3.5 text-label font-black text-primary-foreground active:scale-95"
                     >
                       도전
                     </button>
@@ -224,7 +224,7 @@ const Record153Board = ({ onOpenMember }: Props) => {
             <button
               type="button"
               onClick={() => setArena({ open: true, code: null })}
-              className="h-12 w-full rounded-xl border border-border bg-card text-[14px] font-bold text-foreground active:scale-[0.98]"
+              className="h-12 w-full rounded-xl border border-border bg-card text-label font-bold text-foreground active:scale-[0.98]"
             >
               💪 153 체력테스트 하러 가기
             </button>
@@ -262,17 +262,17 @@ const RecordCard = ({
   if (!rec) {
     return (
       <div className="flex items-center gap-3 rounded-card border border-dashed border-border bg-card/50 p-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-pill bg-muted text-[28px] opacity-50 grayscale">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-pill bg-muted text-title opacity-50 grayscale">
           {emoji}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-black tracking-wider text-muted-foreground">{numberLabel}</p>
-          <p className="text-[15px] font-black text-foreground">{title}</p>
-          <p className="text-[12.5px] font-semibold text-muted-foreground">{empty || desc}</p>
+          <p className="text-micro font-black tracking-wider text-muted-foreground">{numberLabel}</p>
+          <p className="text-body font-black text-foreground">{title}</p>
+          <p className="text-label font-semibold text-muted-foreground">{empty || desc}</p>
         </div>
         <span className="flex shrink-0 flex-col items-center rounded-xl border border-dashed border-reward/50 px-2.5 py-1 leading-tight">
-          <span className="text-[10.5px] font-bold text-muted-foreground">주인 없음</span>
-          <span className="text-[12px] font-black text-reward">🎁 +{MILEAGE_LABEL}</span>
+          <span className="text-micro font-bold text-muted-foreground">주인 없음</span>
+          <span className="text-label font-black text-reward">🎁 +{MILEAGE_LABEL}</span>
         </span>
       </div>
     );
@@ -284,32 +284,32 @@ const RecordCard = ({
         rec.is_me ? "border-primary/60 shadow-glow-soft" : "border-[#F6C453]/40",
       )}
     >
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-pill bg-reward/15 text-[28px] ring-1 ring-[#F6C453]/40">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-pill bg-reward/15 text-title ring-1 ring-[#F6C453]/40">
         {emoji}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-black tracking-wider text-reward">
+        <p className="text-micro font-black tracking-wider text-reward">
           {numberLabel} · {title}
         </p>
         <button
           type="button"
           onClick={() => onOpenMember?.({ id: rec.user_id, nickname: rec.nickname })}
-          className="block max-w-full truncate text-left text-[17px] font-black text-foreground"
+          className="block max-w-full truncate text-left text-body font-black text-foreground"
         >
           {rec.nickname}
         </button>
-        <p className="text-[12px] font-semibold text-muted-foreground">
+        <p className="text-label font-semibold text-muted-foreground">
           {fmtDate(rec.achieved_at)} · {desc}
         </p>
       </div>
       {valueLabel && (
         <span className="shrink-0 text-right leading-tight">
-          <span className="block text-[10.5px] font-bold text-muted-foreground">1위 기록</span>
-          <span className="block text-[16px] font-black tabular-nums text-reward">{valueLabel}</span>
+          <span className="block text-micro font-bold text-muted-foreground">1위 기록</span>
+          <span className="block text-body font-black tabular-nums text-reward">{valueLabel}</span>
         </span>
       )}
       {rec.is_me && (
-        <span className="shrink-0 rounded-pill bg-primary/15 px-2.5 py-1 text-[11.5px] font-black text-primary">내 기록</span>
+        <span className="shrink-0 rounded-pill bg-primary/15 px-2.5 py-1 text-micro font-black text-primary">내 기록</span>
       )}
     </div>
   );
@@ -350,21 +350,21 @@ const TournamentCard = ({
         <div className="min-w-0 flex-1">
           <p
             className={cn(
-              "truncate text-[11px] font-black tracking-wider",
+              "truncate text-micro font-black tracking-wider",
               gold ? "text-reward" : "text-slate-500 dark:text-slate-300",
             )}
           >
             {event}
             {eventDate && ` · ${fmtDate(eventDate)}`}
           </p>
-          <p className="text-[17px] font-black text-foreground">
+          <p className="text-body font-black text-foreground">
             {title}
-            <span className="ml-1.5 text-[13px] font-bold text-muted-foreground">{holders.length}명</span>
+            <span className="ml-1.5 text-label font-bold text-muted-foreground">{holders.length}명</span>
           </p>
-          <p className="text-[12px] font-semibold text-muted-foreground">{desc}</p>
+          <p className="text-label font-semibold text-muted-foreground">{desc}</p>
         </div>
         {mine && (
-          <span className="shrink-0 rounded-pill bg-primary/15 px-2.5 py-1 text-[11.5px] font-black text-primary">내 기록</span>
+          <span className="shrink-0 rounded-pill bg-primary/15 px-2.5 py-1 text-micro font-black text-primary">내 기록</span>
         )}
       </div>
 
@@ -374,17 +374,17 @@ const TournamentCard = ({
             <>
               <Avatar className="h-6 w-6 shrink-0">
                 {h.avatar_url && <AvatarImage src={h.avatar_url} alt={h.name} className="object-cover" />}
-                <AvatarFallback className="text-[11px] font-black">{h.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="text-micro font-black">{h.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <span className="truncate">{h.name}</span>
               {h.staff && (
-                <span className="rounded-pill bg-muted px-1.5 py-px text-[10.5px] font-bold text-muted-foreground">코치</span>
+                <span className="rounded-pill bg-muted px-1.5 py-px text-micro font-bold text-muted-foreground">코치</span>
               )}
-              {h.is_me && <span className="text-[11px] font-black text-primary">나</span>}
+              {h.is_me && <span className="text-micro font-black text-primary">나</span>}
             </>
           );
           const cls = cn(
-            "flex max-w-full items-center gap-1.5 rounded-pill border bg-card py-1 pl-1 pr-2.5 text-[13.5px] font-black text-foreground",
+            "flex max-w-full items-center gap-1.5 rounded-pill border bg-card py-1 pl-1 pr-2.5 text-label font-black text-foreground",
             h.is_me ? "border-primary/60" : "border-border",
           );
           return (

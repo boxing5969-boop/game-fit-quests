@@ -62,7 +62,7 @@ export const PrimaryCTAButton = forwardRef<
       {rewardText && (
         <span
           className={cn(
-            "text-caption font-medium",
+            "text-label font-medium",
             variant === "reward"
               ? "text-reward-foreground/80"
               : "text-primary-foreground/80",

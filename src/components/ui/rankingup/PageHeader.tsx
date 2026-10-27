@@ -39,12 +39,12 @@ export const PageHeader = ({
     <div className="mx-auto flex max-w-lg items-center gap-3 px-5 py-3">
       {leftAction && <div className="flex shrink-0 items-center">{leftAction}</div>}
       <div className="flex-1 min-w-0">
-        <h1 className="text-display-sm flex min-w-0 items-center gap-1.5">
+        <h1 className="text-heading flex min-w-0 items-center gap-1.5">
           {titlePrefix}
           <span className="truncate">{title}</span>
         </h1>
         {subtitle && (
-          <p className="text-caption truncate text-muted-foreground">{subtitle}</p>
+          <p className="text-label truncate text-muted-foreground font-medium">{subtitle}</p>
         )}
       </div>
       {rightAction && <div className="flex shrink-0 items-center gap-2">{rightAction}</div>}

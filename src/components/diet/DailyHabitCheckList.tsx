@@ -54,13 +54,13 @@ export const DailyHabitCheckList = ({
               <div className="min-w-0 flex-1">
                 <p
                   className={cn(
-                    "text-[13.5px] font-bold",
+                    "text-label font-bold",
                     on ? "text-primary" : "text-foreground",
                   )}
                 >
                   {h.label}
                 </p>
-                <p className="text-[11.5px] text-muted-foreground leading-relaxed">
+                <p className="text-micro text-muted-foreground leading-relaxed">
                   {isYouth && h.key === "late_night_snack_avoided"
                     ? "밤 간식은 조금만, 식사는 거르지 않기"
                     : h.prompt}

@@ -46,16 +46,16 @@ export default class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-foreground">
           <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-elev-3">
-            <div className="mb-3 text-4xl">🔄</div>
-            <h1 className="mb-2 text-lg font-bold">잠깐 연결이 끊겼어요</h1>
-            <p className="mb-5 text-sm text-muted-foreground">
+            <div className="mb-3 text-display">🔄</div>
+            <h1 className="mb-2 text-heading font-bold">잠깐 연결이 끊겼어요</h1>
+            <p className="mb-5 text-body text-muted-foreground">
               새로고침을 누르면 바로 이어서 사용할 수 있어요.
               <br />
               계속 이러면 데스크에 말씀해주세요.
             </p>
             <button
               onClick={this.handleReload}
-              className="w-full rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]"
+              className="w-full rounded-2xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98]"
             >
               새로고침
             </button>
@@ -68,19 +68,19 @@ export default class ErrorBoundary extends Component<Props, State> {
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-foreground">
         <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-5 shadow-elev-3">
           <div className="mb-3 flex items-center gap-2">
-            <span className="text-2xl">⚠️</span>
-            <h1 className="text-lg font-bold">앱을 불러오는 중 문제가 발생했습니다</h1>
+            <span className="text-title">⚠️</span>
+            <h1 className="text-heading font-bold">앱을 불러오는 중 문제가 발생했습니다</h1>
           </div>
-          <p className="mb-4 text-sm text-muted-foreground">
+          <p className="mb-4 text-body text-muted-foreground">
             새로고침으로 해결되지 않으면 아래 내용을 개발자에게 공유해주세요.
           </p>
-          <div className="mb-4 max-h-60 overflow-auto rounded-xl border border-border bg-muted/30 p-3 text-left font-mono text-[11px] leading-relaxed text-muted-foreground">
+          <div className="mb-4 max-h-60 overflow-auto rounded-xl border border-border bg-muted/30 p-3 text-left font-mono text-micro leading-relaxed text-muted-foreground">
             <p className="mb-2 font-bold text-destructive">{message}</p>
             {stack && <pre className="whitespace-pre-wrap">{stack}</pre>}
           </div>
           <button
             onClick={this.handleReload}
-            className="w-full rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]"
+            className="w-full rounded-2xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98]"
           >
             새로고침
           </button>

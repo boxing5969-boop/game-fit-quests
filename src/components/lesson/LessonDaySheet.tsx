@@ -50,25 +50,25 @@ const StepCard = ({
 }) => (
   <li className="rounded-2xl bg-secondary/55 p-3.5">
     <div className="flex items-start gap-3">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground text-[13px] font-black tabular-nums text-background">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground text-label font-black tabular-nums text-background">
         {index + 1}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-          <h4 className="text-[15px] font-bold leading-snug text-foreground">{step.name}</h4>
+          <h4 className="text-body font-bold leading-snug text-foreground">{step.name}</h4>
           {step.isNew && showNew && (
-            <span className="rounded-md bg-reward/20 px-1.5 py-[1px] text-[10.5px] font-black text-reward">새로 배워요</span>
+            <span className="rounded-md bg-reward/20 px-1.5 py-[1px] text-micro font-black text-reward">새로 배워요</span>
           )}
         </div>
         {step.amount && (
-          <span className="mt-1 inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-[12.5px] font-bold text-primary">
+          <span className="mt-1 inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-label font-bold text-primary">
             {step.amount}
           </span>
         )}
         {step.how.length > 0 && (
           <ul className="mt-2 space-y-1">
             {step.how.map((line, i) => (
-              <li key={i} className="flex gap-1.5 text-[13px] leading-relaxed text-foreground/85">
+              <li key={i} className="flex gap-1.5 text-label leading-relaxed text-foreground/85">
                 <span aria-hidden className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-foreground/40" />
                 <span className="min-w-0">{line}</span>
               </li>
@@ -77,22 +77,22 @@ const StepCard = ({
         )}
         {step.watch.length > 0 && (
           <div className="mt-2 rounded-xl bg-amber-500/10 px-3 py-2">
-            <p className="text-[11.5px] font-black text-amber-700 dark:text-amber-300">주의할 점</p>
+            <p className="text-micro font-black text-amber-700 dark:text-amber-300">주의할 점</p>
             <ul className="mt-0.5 space-y-0.5">
               {step.watch.map((line, i) => (
-                <li key={i} className="text-[12.5px] leading-relaxed text-amber-900 dark:text-amber-100/90">
+                <li key={i} className="text-label leading-relaxed text-amber-900 dark:text-amber-100/90">
                   {line}
                 </li>
               ))}
             </ul>
           </div>
         )}
-        {step.tip && <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">💡 {step.tip}</p>}
+        {step.tip && <p className="mt-2 text-label leading-relaxed text-muted-foreground">💡 {step.tip}</p>}
         {onPlay && (
           <button
             type="button"
             onClick={onPlay}
-            className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-full bg-card px-3.5 text-[12.5px] font-bold text-foreground shadow-elev-1 active:scale-95"
+            className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-full bg-card px-3.5 text-label font-bold text-foreground shadow-elev-1 active:scale-95"
           >
             <Play className="h-3.5 w-3.5 fill-current" /> 153 영상 보기
             {versions.length > 1 && (
@@ -158,11 +158,11 @@ const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
               <div className="shrink-0 px-5 pb-2 pt-4">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[11.5px] font-bold text-muted-foreground">
+                    <span className="rounded-full bg-secondary px-2.5 py-0.5 text-micro font-bold text-muted-foreground">
                       {levelShort(day.level)} · {daysInLevel}일 중 {day.dayInLevel}일째
                     </span>
                     {isToday && today && (
-                      <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11.5px] font-black text-primary-foreground">
+                      <span className="rounded-full bg-primary px-2.5 py-0.5 text-micro font-black text-primary-foreground">
                         {todayHeadline(today)}
                       </span>
                     )}
@@ -179,14 +179,14 @@ const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
               </div>
 
               <div key={day.dayNo} className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
-                <p className="text-[30px] font-black leading-none tabular-nums text-foreground">{day.dayNo}일차</p>
-                <h2 className="mt-1.5 text-[16px] font-bold leading-snug text-foreground">{day.title}</h2>
-                {day.goal && <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{day.goal}</p>}
+                <p className="text-title font-black leading-none tabular-nums text-foreground">{day.dayNo}일차</p>
+                <h2 className="mt-1.5 text-body font-bold leading-snug text-foreground">{day.title}</h2>
+                {day.goal && <p className="mt-1 text-label leading-relaxed text-muted-foreground">{day.goal}</p>}
 
                 {resolved?.repeatOf && (
                   <div className="mt-3 flex items-center gap-2 rounded-2xl bg-primary/10 px-3.5 py-2.5">
                     <Repeat2 className="h-4 w-4 shrink-0 text-primary" />
-                    <p className="text-[13px] leading-snug text-foreground">
+                    <p className="text-label leading-snug text-foreground">
                       <b>{resolved.repeatOf.dayNo}일차와 같은 수업</b> — 아래 순서 그대로 해요
                     </p>
                   </div>
@@ -194,7 +194,7 @@ const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
                 <div className="h-3" />
 
                 {steps.length === 0 ? (
-                  <p className="rounded-2xl bg-muted/50 px-4 py-8 text-center text-[13px] text-muted-foreground">
+                  <p className="rounded-2xl bg-muted/50 px-4 py-8 text-center text-label text-muted-foreground">
                     이 날 수업 내용이 아직 없어요
                   </p>
                 ) : (
@@ -222,10 +222,10 @@ const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
                 {day.note && (
                   <div className="mt-3 flex items-start gap-2 rounded-2xl bg-reward/15 px-3.5 py-3">
                     <Trophy className="mt-0.5 h-4 w-4 shrink-0 text-reward" />
-                    <p className="text-[13px] font-bold leading-snug text-foreground">{day.note}</p>
+                    <p className="text-label font-bold leading-snug text-foreground">{day.note}</p>
                   </div>
                 )}
-                <p className="mt-3 px-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                <p className="mt-3 px-1 text-micro leading-relaxed text-muted-foreground">
                   라운드 수는 코치님이 그날 컨디션에 맞춰 조절할 수 있어요. 아프거나 불편하면 바로 코치님께 말해 주세요.
                 </p>
               </div>
@@ -235,7 +235,7 @@ const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
                   type="button"
                   disabled={!prev}
                   onClick={() => prev && onOpenDay(prev.dayNo)}
-                  className="flex h-11 items-center justify-center gap-1 rounded-xl bg-secondary text-[13px] font-bold text-foreground active:scale-[0.98] disabled:opacity-35"
+                  className="flex h-11 items-center justify-center gap-1 rounded-xl bg-secondary text-label font-bold text-foreground active:scale-[0.98] disabled:opacity-35"
                 >
                   <ChevronLeft className="h-4 w-4" /> {prev ? `${prev.dayNo}일차` : "처음"}
                 </button>
@@ -244,7 +244,7 @@ const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
                   disabled={!next}
                   onClick={() => next && onOpenDay(next.dayNo)}
                   className={cn(
-                    "flex h-11 items-center justify-center gap-1 rounded-xl text-[13px] font-bold active:scale-[0.98] disabled:opacity-35",
+                    "flex h-11 items-center justify-center gap-1 rounded-xl text-label font-bold active:scale-[0.98] disabled:opacity-35",
                     next ? "bg-foreground text-background" : "bg-secondary text-foreground",
                   )}
                 >

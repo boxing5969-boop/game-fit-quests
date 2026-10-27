@@ -89,7 +89,7 @@ const RankUpCeremony = ({
             }}
           >
             <p
-              className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em]"
+              className="mb-2 text-micro font-bold uppercase tracking-[0.2em]"
               style={{
                 color:
                   newRankKey === "white"
@@ -100,7 +100,7 @@ const RankUpCeremony = ({
               153 QUEST 인증서
             </p>
             <p
-              className="text-[20px] font-black"
+              className="text-heading font-black"
               style={{
                 color: newRankKey === "white" ? "#1a1a1a" : "#FFFFFF",
                 textShadow:
@@ -112,7 +112,7 @@ const RankUpCeremony = ({
               {memberName}
             </p>
             <p
-              className="mt-1 text-[14px] font-bold"
+              className="mt-1 text-label font-bold"
               style={{
                 color:
                   newRankKey === "white"
@@ -123,7 +123,7 @@ const RankUpCeremony = ({
               {RANK_LABELS[newRankKey] ?? newRankKey} 리그 입성
             </p>
             <p
-              className="mt-3 text-[10.5px]"
+              className="mt-3 text-micro"
               style={{
                 color:
                   newRankKey === "white"
@@ -151,7 +151,7 @@ const RankUpCeremony = ({
               damping: 16,
             }}
             onClick={onClose}
-            className="mx-auto mt-6 block w-full max-w-xs rounded-2xl bg-gradient-to-r from-primary via-reward to-primary bg-[length:200%_100%] py-4 text-[15px] font-black uppercase tracking-wider text-primary-foreground shadow-[0_8px_32px_rgba(232,85,58,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] transition-all active:scale-[0.97]"
+            className="mx-auto mt-6 block w-full max-w-xs rounded-2xl bg-gradient-to-r from-primary via-reward to-primary bg-[length:200%_100%] py-4 text-body font-black uppercase tracking-wider text-primary-foreground shadow-[0_8px_32px_rgba(232,85,58,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] transition-all active:scale-[0.97]"
             style={{
               animation: "rank-up-cta-shimmer 3s ease-in-out infinite",
             }}
@@ -163,7 +163,7 @@ const RankUpCeremony = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.7 }}
             transition={{ duration: 0.6, delay: 3.4 }}
-            className="mt-3 text-center text-[11px] font-medium text-white/70"
+            className="mt-3 text-center text-micro font-medium text-white/70"
           >
             화면 아무 곳이나 탭하면 닫힙니다
           </motion.p>

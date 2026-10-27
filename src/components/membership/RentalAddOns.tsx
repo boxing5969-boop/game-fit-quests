@@ -40,10 +40,10 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
 
   return (
     <section className={cn("rounded-xl border border-border bg-background p-3", className)} aria-label="운동복 · 락카 담기">
-      <p className="text-sm font-black text-foreground">
+      <p className="text-body font-black text-foreground">
         {mode === "addon" ? "운동복 · 락카도 같이 쓰실래요?" : "연장할 개월을 고르세요"}
       </p>
-      <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+      <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
         한 달 {won(unitPrice[kinds[0]] ?? 0)} ·{" "}
         {mode === "standalone"
           ? "한 번에 결제하면 결제 링크도 하나예요"
@@ -64,8 +64,8 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
             <div key={k} className={cn("rounded-xl px-3 py-2.5 ring-1 ring-inset", on ? "bg-primary/5 ring-primary/40" : "bg-muted/40 ring-border")}>
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-[14px] font-black text-foreground">{RENTAL_LABEL[k]}</p>
-                  <p className="text-[11.5px] text-muted-foreground">
+                  <p className="text-label font-black text-foreground">{RENTAL_LABEL[k]}</p>
+                  <p className="text-micro text-muted-foreground">
                     {curActive ? `지금 ${endText(cur!, today)}까지` : "지금 안 쓰고 있어요"}
                   </p>
                 </div>
@@ -75,7 +75,7 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
                       type="button"
                       onClick={() => set(k, 0)}
                       aria-pressed={!on}
-                      className={cn("rounded-md px-2.5 py-1.5 text-[12.5px] font-bold", !on ? "bg-foreground text-background" : "text-muted-foreground")}
+                      className={cn("rounded-md px-2.5 py-1.5 text-label font-bold", !on ? "bg-foreground text-background" : "text-muted-foreground")}
                     >
                       안 써요
                     </button>
@@ -83,7 +83,7 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
                       type="button"
                       onClick={() => set(k, maxMonths)}
                       aria-pressed={on}
-                      className={cn("rounded-md px-2.5 py-1.5 text-[12.5px] font-bold", on ? "bg-primary text-primary-foreground" : "text-muted-foreground")}
+                      className={cn("rounded-md px-2.5 py-1.5 text-label font-bold", on ? "bg-primary text-primary-foreground" : "text-muted-foreground")}
                     >
                       쓸게요
                     </button>
@@ -93,8 +93,8 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
 
               {on && fixedMonths && (
                 <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="text-[15px] font-black tabular-nums text-foreground">{months}개월</span>
-                  <span className="text-[14px] font-black tabular-nums text-foreground">{won(unit * months)}</span>
+                  <span className="text-body font-black tabular-nums text-foreground">{months}개월</span>
+                  <span className="text-label font-black tabular-nums text-foreground">{won(unit * months)}</span>
                 </div>
               )}
               {(on || mode === "standalone") && !fixedMonths && (
@@ -109,7 +109,7 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
                     >
                       <Minus className="h-4 w-4" />
                     </button>
-                    <span className="min-w-[3.5rem] text-center text-[15px] font-black tabular-nums text-foreground">{months}개월</span>
+                    <span className="min-w-[3.5rem] text-center text-body font-black tabular-nums text-foreground">{months}개월</span>
                     <button
                       type="button"
                       onClick={() => set(k, months + 1)}
@@ -120,11 +120,11 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
                       <Plus className="h-4 w-4" />
                     </button>
                   </div>
-                  <span className="text-[14px] font-black tabular-nums text-foreground">{won(unit * months)}</span>
+                  <span className="text-label font-black tabular-nums text-foreground">{won(unit * months)}</span>
                 </div>
               )}
               {on && nextEnd && (
-                <p className="mt-1.5 text-[11.5px] text-muted-foreground">
+                <p className="mt-1.5 text-micro text-muted-foreground">
                   결제하면 <b className="text-foreground">{endText(nextEnd, today)}까지</b>
                   {curActive ? " (남은 기간 뒤로 이어 붙여요)" : ""}
                   {k === "locker" && !curActive ? " · 락카 번호는 결제 후 데스크에서 정해 드려요" : ""}

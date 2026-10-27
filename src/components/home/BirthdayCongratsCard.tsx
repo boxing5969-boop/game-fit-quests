@@ -49,9 +49,9 @@ const BirthdayCongratsCard = () => {
           <div className="flex items-center gap-3">
             <img src={birthdayCake} alt="" aria-hidden draggable={false} className="bday-bob h-14 w-14 shrink-0 select-none" />
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-300">Happy Birthday</p>
-              <p className="mt-0.5 text-[15.5px] font-extrabold leading-snug text-foreground">{myName}님, 생일 축하해요! 🎂</p>
-              <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
+              <p className="text-micro font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-300">Happy Birthday</p>
+              <p className="mt-0.5 text-body font-extrabold leading-snug text-foreground">{myName}님, 생일 축하해요! 🎂</p>
+              <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                 {data.me.congrats > 0 ? (
                   <>
                     오늘 받은 축하 <b className="font-black text-foreground">{data.me.congrats.toLocaleString("ko-KR")}개</b>
@@ -73,8 +73,8 @@ const BirthdayCongratsCard = () => {
                 <img src={birthdayCake} alt="" aria-hidden draggable={false} className="bday-bob h-11 w-11 shrink-0 select-none" />
               )}
               <div className="min-w-0">
-                <p className="text-[14.5px] font-extrabold leading-snug text-foreground">오늘 생일인 동료가 운동하러 왔어요</p>
-                <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+                <p className="text-label font-extrabold leading-snug text-foreground">오늘 생일인 동료가 운동하러 왔어요</p>
+                <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                   {staff
                     ? "한 번 누르면 축하가 가고, 체육관 TV 생일 카드에 🎉 숫자가 올라가요"
                     : `축하를 보내면 💵 +${BIRTHDAY_CONGRATS_REWARD} 챔피언 머니 · 체육관 TV 생일 카드에 🎉 숫자가 올라가요`}
@@ -88,14 +88,14 @@ const BirthdayCongratsCard = () => {
                   <li key={m.user_id} className="flex items-center gap-3 rounded-xl bg-background/70 px-3 py-2.5 ring-1 ring-inset ring-border">
                     <Avatar className="h-10 w-10 shrink-0">
                       {m.avatar_url && <AvatarImage src={m.avatar_url} alt={m.name} className="object-cover" />}
-                      <AvatarFallback className="text-[15px] font-black">{m.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className="text-body font-black">{m.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="flex min-w-0 items-center gap-1 text-[14px] font-bold text-foreground">
+                      <p className="flex min-w-0 items-center gap-1 text-label font-bold text-foreground">
                         <span className="truncate">{m.name}</span>
                         <NameBadge league={m.league} birthday className="h-4 w-4" />
                       </p>
-                      <p className="mt-0.5 text-[11.5px] font-bold text-muted-foreground">
+                      <p className="mt-0.5 text-micro font-bold text-muted-foreground">
                         {m.congrats > 0 ? `🎉 축하 ${m.congrats.toLocaleString("ko-KR")}개` : "첫 축하를 보내 주세요"}
                       </p>
                     </div>
@@ -120,8 +120,8 @@ const BirthdayCongratsCard = () => {
                       }
                       className={
                         m.sent
-                          ? "shrink-0 rounded-full bg-secondary px-3.5 py-2 text-[13px] font-bold text-muted-foreground"
-                          : "shrink-0 rounded-full bg-gradient-to-r from-amber-300 to-amber-500 px-3.5 py-2 text-[13px] font-black text-amber-950 shadow-sm active:scale-95 disabled:opacity-60"
+                          ? "shrink-0 rounded-full bg-secondary px-3.5 py-2 text-label font-bold text-muted-foreground"
+                          : "shrink-0 rounded-full bg-gradient-to-r from-amber-300 to-amber-500 px-3.5 py-2 text-label font-black text-amber-950 shadow-sm active:scale-95 disabled:opacity-60"
                       }
                     >
                       {m.sent ? "축하했어요 ✓" : busy ? "보내는 중…" : "🎂 축하하기"}

@@ -126,7 +126,7 @@ export const DailyMissionList = ({
     <div className={cn("space-y-2", className)}>
       {showProgress && totalCount > 0 && (
         <div>
-          <div className="flex items-center justify-between text-[11px] font-bold">
+          <div className="flex items-center justify-between text-micro font-bold">
             <span className="text-muted-foreground">오늘 진행률</span>
             <span className="text-foreground">
               {completedCount}/{totalCount} 완료
@@ -176,7 +176,7 @@ export const DailyMissionList = ({
               <div className="min-w-0 flex-1">
                 <p
                   className={cn(
-                    "truncate text-[13px] font-bold",
+                    "truncate text-label font-bold",
                     isPerfect && "text-emerald-600",
                     !isPerfect && isCompleted && "text-primary",
                     !isCompleted && "text-foreground",
@@ -184,7 +184,7 @@ export const DailyMissionList = ({
                 >
                   {m.label}
                 </p>
-                <p className="truncate text-[11.5px] text-muted-foreground">
+                <p className="truncate text-micro text-muted-foreground">
                   {m.hint}
                 </p>
               </div>
@@ -192,7 +192,7 @@ export const DailyMissionList = ({
                 <span
                   className={cn(
                     "shrink-0 inline-flex items-center gap-0.5 rounded-md",
-                    "bg-emerald-400/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-emerald-600",
+                    "bg-emerald-400/15 px-1.5 py-0.5 text-micro font-black uppercase tracking-wide text-emerald-600",
                   )}
                   aria-label="perfect timing"
                 >
@@ -201,7 +201,7 @@ export const DailyMissionList = ({
                 </span>
               )}
               {m.severity === "core" && (
-                <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-primary">
+                <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-micro font-black uppercase tracking-wide text-primary">
                   CORE
                 </span>
               )}

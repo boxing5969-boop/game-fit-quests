@@ -72,7 +72,7 @@ const Chip = ({ active, children, onClick }: { active: boolean; children: React.
     type="button"
     onClick={onClick}
     className={cn(
-      "rounded-2xl border px-3.5 py-3 text-left text-[14px] font-semibold transition-colors",
+      "rounded-2xl border px-3.5 py-3 text-left text-label font-semibold transition-colors",
       active ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground",
     )}
   >
@@ -85,16 +85,16 @@ function QuestionBlock({ q, idx, value, onChange }: { q: SurveyQuestion; idx: nu
   const labels = q.options?.labels ?? {};
   return (
     <div className="space-y-3 rounded-2xl border border-border bg-card p-4">
-      <p className="text-[15px] font-bold leading-snug text-foreground">
+      <p className="text-body font-bold leading-snug text-foreground">
         <span className="mr-1.5 text-primary">Q{idx + 1}.</span>
         {q.question_text}
-        {!q.is_required && <span className="ml-1 text-[12px] font-medium text-muted-foreground">(선택)</span>}
+        {!q.is_required && <span className="ml-1 text-label font-medium text-muted-foreground">(선택)</span>}
       </p>
       {q.question_type === "rating" && (
         <>
           <StarRow value={value.answer_score ?? null} max={max} onChange={(v) => onChange({ answer_score: v })} />
           {(labels["1"] || labels[String(max)]) && (
-            <div className="flex justify-between text-[11px] text-muted-foreground">
+            <div className="flex justify-between text-micro text-muted-foreground">
               <span>{labels["1"]}</span>
               <span>{labels[String(max)]}</span>
             </div>
@@ -121,7 +121,7 @@ function QuestionBlock({ q, idx, value, onChange }: { q: SurveyQuestion; idx: nu
               type="button"
               onClick={() => onChange({ answer_text: o.label })}
               className={cn(
-                "rounded-2xl border py-4 text-[15px] font-bold transition-all active:scale-95",
+                "rounded-2xl border py-4 text-body font-bold transition-all active:scale-95",
                 value.answer_text === o.label ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground",
               )}
             >
@@ -138,7 +138,7 @@ function QuestionBlock({ q, idx, value, onChange }: { q: SurveyQuestion; idx: nu
           rows={4}
           maxLength={1000}
           placeholder="편하게 적어주세요"
-          className="w-full resize-none rounded-xl border border-border bg-background p-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+          className="w-full resize-none rounded-xl border border-border bg-background p-3 text-body text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
         />
       )}
     </div>
@@ -266,26 +266,26 @@ const SurveyPage = () => {
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/15">
             <Check className="h-8 w-8 text-primary" strokeWidth={3} />
           </span>
-          <p className="text-lg font-extrabold text-foreground">접수됐습니다!</p>
-          <p className="text-sm leading-relaxed text-muted-foreground">
+          <p className="text-heading font-extrabold text-foreground">접수됐습니다!</p>
+          <p className="text-body leading-relaxed text-muted-foreground">
             보내주신 내용은 지점장님과 운영진이 직접 확인하고
             <br />
             체육관을 더 좋게 만드는 데 쓰입니다.
           </p>
           {doneInfo.reward > 0 && (
-            <p className="mt-1 rounded-pill bg-amber-400/15 px-4 py-2 text-sm font-bold text-amber-600 dark:text-amber-300">
+            <p className="mt-1 rounded-pill bg-amber-400/15 px-4 py-2 text-body font-bold text-amber-600 dark:text-amber-300">
               💵 챔피언 머니 +{doneInfo.reward.toLocaleString()} 지급
             </p>
           )}
           {doneInfo.kind === "feedback" && (doneInfo.drawEntered || doneInfo.drawNote) && (
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-label text-muted-foreground">
               {doneInfo.drawEntered ? "🎁 이번 달 경품 추첨에 응모됐어요" : doneInfo.drawNote}
             </p>
           )}
           <button
             type="button"
             onClick={() => setView("hub")}
-            className="mt-4 rounded-pill bg-primary px-6 py-3 text-sm font-bold text-primary-foreground active:scale-95"
+            className="mt-4 rounded-pill bg-primary px-6 py-3 text-body font-bold text-primary-foreground active:scale-95"
           >
             처음으로
           </button>
@@ -299,12 +299,12 @@ const SurveyPage = () => {
     return (
       <AppPage header={header(survey.data?.template.title ?? "만족도 조사", survey.data?.template.description ?? "1분이면 끝나요", () => setView("hub"))}>
         {survey.isLoading ? (
-          <p className="mt-10 text-center text-sm text-muted-foreground">불러오는 중…</p>
+          <p className="mt-10 text-center text-body text-muted-foreground">불러오는 중…</p>
         ) : survey.error ? (
-          <p className="mt-10 text-center text-sm text-muted-foreground">{(survey.error as Error).message}</p>
+          <p className="mt-10 text-center text-body text-muted-foreground">{(survey.error as Error).message}</p>
         ) : (
           <div className="space-y-3 pb-6">
-            <p className="px-1 text-[12px] text-muted-foreground">🔒 익명으로 전달돼요. 이름·연락처는 함께 보내지 않습니다.</p>
+            <p className="px-1 text-label text-muted-foreground">🔒 익명으로 전달돼요. 이름·연락처는 함께 보내지 않습니다.</p>
             {survey.data!.questions.map((q, i) => (
               <QuestionBlock
                 key={q.id}
@@ -318,7 +318,7 @@ const SurveyPage = () => {
               type="button"
               onClick={sendSurvey}
               disabled={busy || missing > 0}
-              className="mt-2 w-full rounded-2xl bg-primary py-4 text-[15px] font-extrabold text-primary-foreground shadow-elev-1 transition-transform active:scale-[0.98] disabled:opacity-50"
+              className="mt-2 w-full rounded-2xl bg-primary py-4 text-body font-extrabold text-primary-foreground shadow-elev-1 transition-transform active:scale-[0.98] disabled:opacity-50"
             >
               {busy ? "보내는 중…" : missing > 0 ? `필수 질문 ${missing}개 남았어요` : "제출하기"}
             </button>
@@ -347,8 +347,8 @@ const SurveyPage = () => {
                 <span className={cn("flex h-8 w-8 items-center justify-center rounded-xl", c.tone)}>
                   <c.Icon className="h-4 w-4" />
                 </span>
-                <span className="text-[14px] font-bold text-foreground">{c.label}</span>
-                <span className="text-[11px] leading-snug text-muted-foreground">{c.hint}</span>
+                <span className="text-label font-bold text-foreground">{c.label}</span>
+                <span className="text-micro leading-snug text-muted-foreground">{c.hint}</span>
               </button>
             ))}
           </div>
@@ -361,7 +361,7 @@ const SurveyPage = () => {
                   onChange={(e) => setCoachName(e.target.value)}
                   maxLength={40}
                   placeholder="어느 코치님인가요? (선택)"
-                  className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+                  className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-body text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
                 />
               )}
               <textarea
@@ -378,10 +378,10 @@ const SurveyPage = () => {
                         ? "이렇게 바뀌면 더 좋겠다 싶은 점을 알려주세요"
                         : "자유롭게 적어주세요"
                 }
-                className="w-full resize-none rounded-2xl border border-border bg-card p-4 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+                className="w-full resize-none rounded-2xl border border-border bg-card p-4 text-body text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
               />
               <div className="space-y-2">
-                <p className="px-1 text-[13px] font-bold text-foreground">
+                <p className="px-1 text-label font-bold text-foreground">
                   전반적인 만족도 <span className="font-medium text-muted-foreground">(선택)</span>
                 </p>
                 <StarRow value={rating} onChange={setRating} />
@@ -397,10 +397,10 @@ const SurveyPage = () => {
                       className="mt-0.5 h-5 w-5 accent-primary"
                     />
                     <span>
-                      <span className="flex items-center gap-1 text-[14px] font-bold text-foreground">
+                      <span className="flex items-center gap-1 text-label font-bold text-foreground">
                         <Gift className="h-4 w-4 text-amber-500" /> 이달의 경품 추첨 응모
                       </span>
-                      <span className="mt-0.5 block text-[12px] text-muted-foreground">{channel.data.prize_text}</span>
+                      <span className="mt-0.5 block text-label text-muted-foreground">{channel.data.prize_text}</span>
                     </span>
                   </label>
                   {drawOptIn && (
@@ -410,7 +410,7 @@ const SurveyPage = () => {
                         onChange={(e) => setContactName(e.target.value)}
                         maxLength={40}
                         placeholder="이름"
-                        className="w-full rounded-xl border border-border bg-background px-3.5 py-3 text-sm focus:border-primary focus:outline-none"
+                        className="w-full rounded-xl border border-border bg-background px-3.5 py-3 text-body focus:border-primary focus:outline-none"
                       />
                       <input
                         value={contactPhone}
@@ -418,9 +418,9 @@ const SurveyPage = () => {
                         inputMode="tel"
                         maxLength={20}
                         placeholder="연락처 (당첨 안내용)"
-                        className="w-full rounded-xl border border-border bg-background px-3.5 py-3 text-sm focus:border-primary focus:outline-none"
+                        className="w-full rounded-xl border border-border bg-background px-3.5 py-3 text-body focus:border-primary focus:outline-none"
                       />
-                      <label className="flex items-start gap-2 text-[12px] leading-relaxed text-muted-foreground">
+                      <label className="flex items-start gap-2 text-label leading-relaxed text-muted-foreground">
                         <input
                           type="checkbox"
                           checked={agreed}
@@ -441,7 +441,7 @@ const SurveyPage = () => {
                 type="button"
                 onClick={sendFeedback}
                 disabled={!canSendFeedback}
-                className="w-full rounded-2xl bg-primary py-4 text-[15px] font-extrabold text-primary-foreground shadow-elev-1 transition-transform active:scale-[0.98] disabled:opacity-50"
+                className="w-full rounded-2xl bg-primary py-4 text-body font-extrabold text-primary-foreground shadow-elev-1 transition-transform active:scale-[0.98] disabled:opacity-50"
               >
                 {busy ? "보내는 중…" : "보내기"}
               </button>
@@ -456,9 +456,9 @@ const SurveyPage = () => {
   const hasAny = !!links.data?.survey_slug || !!links.data?.feedback_slug;
   const RewardTag = ({ kind }: { kind: SurveyRewardKind }) =>
     rewards.data?.[kind] ? (
-      <span className="rounded-pill bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">이번 달 참여 완료 ✓</span>
+      <span className="rounded-pill bg-primary/10 px-2 py-0.5 text-micro font-bold text-primary">이번 달 참여 완료 ✓</span>
     ) : (
-      <span className="rounded-pill bg-amber-400/15 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-300">
+      <span className="rounded-pill bg-amber-400/15 px-2 py-0.5 text-micro font-bold text-amber-600 dark:text-amber-300">
         💵 +{SURVEY_REWARD[kind].toLocaleString()}
       </span>
     );
@@ -475,19 +475,19 @@ const SurveyPage = () => {
             <Inbox className="h-6 w-6" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[16px] font-extrabold text-foreground">받은 설문·고객의 소리</span>
-            <span className="mt-0.5 block text-[12.5px] text-muted-foreground">전 지점 보기 · 회원님이 보낸 응답을 자세히 봐요</span>
+            <span className="block text-body font-extrabold text-foreground">받은 설문·고객의 소리</span>
+            <span className="mt-0.5 block text-label text-muted-foreground">전 지점 보기 · 회원님이 보낸 응답을 자세히 봐요</span>
           </span>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </button>
       )}
       {links.isLoading ? (
-        <p className="mt-10 text-center text-sm text-muted-foreground">불러오는 중…</p>
+        <p className="mt-10 text-center text-body text-muted-foreground">불러오는 중…</p>
       ) : !hasAny ? (
         <div className="mt-12 flex flex-col items-center gap-2 text-center">
-          <span className="text-4xl">📋</span>
-          <p className="text-base font-bold text-foreground">우리 지점 설문은 곧 열려요</p>
-          <p className="text-sm text-muted-foreground">
+          <span className="text-display">📋</span>
+          <p className="text-body font-bold text-foreground">우리 지점 설문은 곧 열려요</p>
+          <p className="text-body text-muted-foreground">
             앱에 문제가 있다면 <button type="button" className="font-bold text-primary underline" onClick={() => navigate("/feedback")}>오류 신고</button>로 알려주세요.
           </p>
         </div>
@@ -499,13 +499,13 @@ const SurveyPage = () => {
               onClick={() => setView("satisfaction")}
               className="flex w-full items-center gap-3.5 rounded-2xl border border-border bg-card p-4 text-left shadow-elev-1 transition-transform active:scale-[0.99]"
             >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400/15 text-2xl">⭐</span>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400/15 text-title">⭐</span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5">
-                  <span className="text-[16px] font-extrabold text-foreground">만족도 조사</span>
+                  <span className="text-body font-extrabold text-foreground">만족도 조사</span>
                   <RewardTag kind="satisfaction" />
                 </span>
-                <span className="mt-0.5 block text-[12.5px] text-muted-foreground">1분이면 끝나요 · 익명으로 전달</span>
+                <span className="mt-0.5 block text-label text-muted-foreground">1분이면 끝나요 · 익명으로 전달</span>
               </span>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
@@ -516,20 +516,20 @@ const SurveyPage = () => {
               onClick={() => setView("feedback")}
               className="flex w-full items-center gap-3.5 rounded-2xl border border-border bg-card p-4 text-left shadow-elev-1 transition-transform active:scale-[0.99]"
             >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-2xl">💬</span>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-title">💬</span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5">
-                  <span className="text-[16px] font-extrabold text-foreground">고객의 소리</span>
+                  <span className="text-body font-extrabold text-foreground">고객의 소리</span>
                   <RewardTag kind="feedback" />
                 </span>
-                <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
+                <span className="mt-0.5 block text-label text-muted-foreground">
                   코치 칭찬·개선 제안·건의{channel.data?.prize_text ? " · 🎁 이달의 경품 추첨" : ""}
                 </span>
               </span>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
           )}
-          <p className="px-1 pt-2 text-center text-[12px] leading-relaxed text-muted-foreground">
+          <p className="px-1 pt-2 text-center text-label leading-relaxed text-muted-foreground">
             보내주신 내용은 지점장님과 운영진이 직접 확인합니다.
             <br />
             참여 보상은 종류별로 한 달에 한 번 지급돼요.

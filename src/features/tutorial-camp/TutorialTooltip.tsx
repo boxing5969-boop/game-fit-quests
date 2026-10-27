@@ -185,10 +185,10 @@ const TutorialTooltip = ({
           {/* 64-S: 카드 제목 표시 — compact 모드에서도 회원이 무엇을 보고
               있는지 명확히. helper / success 는 그 옆에 한 줄로. */}
           <div className="flex min-w-0 flex-1 flex-col leading-tight">
-            <p className="truncate text-[11px] font-black text-amber-100">
+            <p className="truncate text-micro font-black text-amber-100">
               {step.title}
             </p>
-            <p className="truncate text-[10px] font-bold text-amber-200/85">
+            <p className="truncate text-micro font-bold text-amber-200/85">
               {showSuccess
                 ? modalActionDone
                   ? "다 푸셨어요! 다음으로 →"
@@ -201,7 +201,7 @@ const TutorialTooltip = ({
             <motion.button
               type="button"
               onClick={onNext}
-              className="pointer-events-auto ml-1 inline-flex h-7 items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 px-3 text-[11px] font-black text-amber-950 active:scale-[0.97]"
+              className="pointer-events-auto ml-1 inline-flex h-7 items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 px-3 text-micro font-black text-amber-950 active:scale-[0.97]"
               animate={
                 modalActionDone
                   ? {
@@ -268,22 +268,22 @@ const TutorialTooltip = ({
               state={DAY_TO_OSAMI_STATE[step.day] ?? "wink"}
             />
           </div>
-          <p className="pt-1 text-[11px] leading-relaxed text-amber-200/90">
+          <p className="pt-1 text-micro leading-relaxed text-amber-200/90">
             {step.osamiMessage}
           </p>
         </div>
 
         {/* 제목 + 본문 */}
-        <h3 className="text-[15px] font-black leading-tight text-amber-50">
+        <h3 className="text-body font-black leading-tight text-amber-50">
           {step.title}
         </h3>
-        <p className="mt-1.5 whitespace-pre-line text-[12px] leading-relaxed text-amber-100/85">
+        <p className="mt-1.5 whitespace-pre-line text-label leading-relaxed text-amber-100/85">
           {step.body}
         </p>
 
         {/* fallback 안내 */}
         {fallbackMode && (
-          <p className="mt-3 rounded-lg border border-amber-400/20 bg-black/30 px-3 py-2 text-[11px] leading-relaxed text-amber-200/70">
+          <p className="mt-3 rounded-lg border border-amber-400/20 bg-black/30 px-3 py-2 text-micro leading-relaxed text-amber-200/70">
             {step.fallbackText || FALLBACK_GENERIC}
           </p>
         )}
@@ -293,7 +293,7 @@ const TutorialTooltip = ({
           <button
             type="button"
             onClick={onGoToRoute}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-pill border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-[12px] font-bold text-amber-100 active:scale-[0.98]"
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-pill border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-label font-bold text-amber-100 active:scale-[0.98]"
           >
             {COMMON_LABELS.goToTarget}
             <ChevronRight className="h-3.5 w-3.5" />
@@ -302,7 +302,7 @@ const TutorialTooltip = ({
 
         {/* requireTargetClick && targetClicked 표시 */}
         {step.requireTargetClick && targetClicked && (
-          <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300">
+          <p className="mt-2 inline-flex items-center gap-1 text-micro font-bold text-emerald-300">
             <Check className="h-3 w-3" /> 잘하셨어요! 다 보셨으면 "다음으로" 눌러주세요
           </p>
         )}
@@ -310,7 +310,7 @@ const TutorialTooltip = ({
         {/* 50-A: helper / success 메시지 — completionRule 기반 */}
         {helperToShow && (
           <p
-            className={`mt-2 inline-flex items-center gap-1 text-[10px] font-bold ${
+            className={`mt-2 inline-flex items-center gap-1 text-micro font-bold ${
               showSuccess ? "text-emerald-300" : "text-amber-300/80"
             }`}
           >
@@ -328,7 +328,7 @@ const TutorialTooltip = ({
               type="button"
               onClick={onPrev}
               aria-label="이전 단계"
-              className="inline-flex h-10 items-center gap-1 rounded-xl border border-amber-400/30 bg-black/40 px-3 text-[11px] font-bold text-amber-200/85 hover:bg-black/60 active:scale-[0.98]"
+              className="inline-flex h-10 items-center gap-1 rounded-xl border border-amber-400/30 bg-black/40 px-3 text-micro font-bold text-amber-200/85 hover:bg-black/60 active:scale-[0.98]"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
               이전
@@ -337,13 +337,13 @@ const TutorialTooltip = ({
           <Button
             onClick={onNext}
             disabled={nextDisabled}
-            className="h-10 flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-[12px] font-black tracking-wider text-amber-950 hover:from-amber-400 hover:to-amber-300 active:scale-[0.98] disabled:opacity-40"
+            className="h-10 flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-label font-black tracking-wider text-amber-950 hover:from-amber-400 hover:to-amber-300 active:scale-[0.98] disabled:opacity-40"
           >
             {COMMON_LABELS.next}
             <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
           </Button>
         </div>
-        <div className="mt-2 flex items-center justify-between text-[10px] text-amber-200/55">
+        <div className="mt-2 flex items-center justify-between text-micro text-amber-200/55">
           <button
             type="button"
             onClick={onSkipDay}
@@ -364,7 +364,7 @@ const TutorialTooltip = ({
         <button
           type="button"
           onClick={onSkipCamp}
-          className="mt-2 w-full text-center text-[10px] text-amber-200/40 hover:text-amber-200/70"
+          className="mt-2 w-full text-center text-micro text-amber-200/40 hover:text-amber-200/70"
         >
           {COMMON_LABELS.endCamp}
         </button>

@@ -40,7 +40,7 @@ export const DietOnboardingStep = ({
     <section className={cn("flex flex-col gap-5", className)}>
       {/* Progress */}
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        <div className="flex items-center justify-between text-micro font-bold uppercase tracking-wider text-muted-foreground">
           <span>STEP {stepIndex + 1}</span>
           <span className="number-font text-foreground">
             {stepIndex + 1} / {totalSteps}
@@ -57,9 +57,9 @@ export const DietOnboardingStep = ({
 
       {/* Heading */}
       <div className="space-y-1">
-        <h2 className="text-display-sm leading-tight text-foreground">{title}</h2>
+        <h2 className="text-heading leading-tight text-foreground">{title}</h2>
         {subtitle && (
-          <p className="text-[13px] leading-relaxed text-muted-foreground">
+          <p className="text-label leading-relaxed text-muted-foreground">
             {subtitle}
           </p>
         )}

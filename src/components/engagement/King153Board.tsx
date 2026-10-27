@@ -67,7 +67,7 @@ const Segmented = <K extends string>({ value, options, onChange, ariaLabel }: {
           role="tab"
           aria-selected={on}
           onClick={() => onChange(o.key)}
-          className={`whitespace-nowrap rounded-pill px-3 py-1 text-[11px] font-bold transition-all active:scale-95 ${
+          className={`whitespace-nowrap rounded-pill px-3 py-1 text-micro font-bold transition-all active:scale-95 ${
             on ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
           }`}
         >
@@ -161,8 +161,8 @@ const King153Board = () => {
         <div className="flex items-center gap-2 rounded-xl border border-reward/30 bg-reward/10 px-3 py-2">
           <PartyPopper className="h-4 w-4 shrink-0 text-reward" />
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-black text-foreground">153 마이복서 런칭 이벤트</p>
-            <p className="truncate text-[10.5px] text-muted-foreground">
+            <p className="text-label font-black text-foreground">153 마이복서 런칭 이벤트</p>
+            <p className="truncate text-micro text-muted-foreground">
               {eventQ.data ? launchEventLine(eventQ.data) : "기간 확인 중…"} · 사이니지 TV에 ①출석왕 ②앱활동왕 ③닉네임왕이 걸려요
             </p>
           </div>
@@ -185,27 +185,27 @@ const King153Board = () => {
               }`}
             >
               {LAUNCH_EVENT_CATEGORIES.includes(m.key) && (
-                <span className="absolute right-1.5 top-1.5 rounded-full bg-reward/20 px-1.5 py-0.5 text-[8px] font-black text-reward">
+                <span className="absolute right-1.5 top-1.5 rounded-full bg-reward/20 px-1.5 py-0.5 text-micro font-black text-reward">
                   이벤트 {LAUNCH_EVENT_CATEGORIES.indexOf(m.key) + 1}
                 </span>
               )}
-              <span className="text-xl leading-none" aria-hidden>{m.emoji}</span>
-              <p className="mt-1.5 truncate text-[12px] font-black text-foreground">{m.title}</p>
+              <span className="text-heading leading-none" aria-hidden>{m.emoji}</span>
+              <p className="mt-1.5 truncate text-label font-black text-foreground">{m.title}</p>
               {summaryQ.isLoading ? (
                 <div className="mt-1 h-3 w-14 animate-pulse rounded bg-muted" />
               ) : summaryQ.isError ? (
-                <p className="mt-1 truncate text-[10.5px] text-muted-foreground">불러오기 실패</p>
+                <p className="mt-1 truncate text-micro text-muted-foreground">불러오기 실패</p>
               ) : kingName ? (
-                <p className="mt-1 flex items-center gap-1 truncate text-[10.5px] font-bold text-reward">
+                <p className="mt-1 flex items-center gap-1 truncate text-micro font-bold text-reward">
                   <Crown className="h-3 w-3 shrink-0" /> <span className="truncate">{kingName}</span>
                 </p>
               ) : (
-                <p className="mt-1 truncate text-[10.5px] text-muted-foreground">
+                <p className="mt-1 truncate text-micro text-muted-foreground">
                   {period === "event" && eventQ.data?.status === "upcoming" ? "시작 전" : "왕좌 비어 있음"}
                 </p>
               )}
               {item?.me && (
-                <p className="mt-0.5 truncate text-[10px] font-bold text-primary">나 {item.me.rank}위</p>
+                <p className="mt-0.5 truncate text-micro font-bold text-primary">나 {item.me.rank}위</p>
               )}
             </button>
           );
@@ -216,7 +216,7 @@ const King153Board = () => {
         <button
           type="button"
           onClick={() => chooseScope("all")}
-          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-2 text-[11px] font-bold text-muted-foreground active:scale-[0.99]"
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-2 text-micro font-bold text-muted-foreground active:scale-[0.99]"
         >
           <Info className="h-3.5 w-3.5" /> 우리 지점엔 {KING_PERIOD_LABEL[period]} 기록이 아직 없어요 · 전체 지점 보기
         </button>
@@ -224,21 +224,21 @@ const King153Board = () => {
 
       {/* 상세 — 왕좌를 눌렀을 때만 */}
       {!meta ? (
-        <p className="px-1 text-center text-[11px] text-muted-foreground">왕좌를 누르면 규칙과 순위가 보여요</p>
+        <p className="px-1 text-center text-micro text-muted-foreground">왕좌를 누르면 규칙과 순위가 보여요</p>
       ) : (
         <div className="surface-card space-y-3 !p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-xl leading-none" aria-hidden>{meta.emoji}</span>
-                <h3 className="text-[15px] font-black text-foreground">{meta.title}</h3>
-                <span className="badge-pill bg-secondary text-secondary-foreground text-[10px]">
+                <span className="text-heading leading-none" aria-hidden>{meta.emoji}</span>
+                <h3 className="text-body font-black text-foreground">{meta.title}</h3>
+                <span className="badge-pill bg-secondary text-secondary-foreground text-micro">
                   {periodBadge(meta, period)}
                   {board && board.scope === "all" ? " · 전체" : ""}
                 </span>
               </div>
-              <p className="mt-1.5 text-[11.5px] leading-relaxed text-foreground">{meta.what}</p>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">{meta.how}</p>
+              <p className="mt-1.5 text-micro leading-relaxed text-foreground">{meta.what}</p>
+              <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">{meta.how}</p>
             </div>
             <button
               type="button"
@@ -256,34 +256,34 @@ const King153Board = () => {
               <div className="h-7 w-40 animate-pulse rounded bg-reward/20" />
             ) : boardQ.isError ? (
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-reward">순위를 불러오지 못했어요</p>
-                <p className="mt-0.5 text-[13px] font-bold text-foreground">잠시 후 다시 눌러 주세요</p>
+                <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">순위를 불러오지 못했어요</p>
+                <p className="mt-0.5 text-label font-bold text-foreground">잠시 후 다시 눌러 주세요</p>
               </div>
             ) : eventUpcoming ? (
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-reward">런칭 이벤트 시작 전</p>
-                <p className="mt-0.5 text-[13px] font-bold text-foreground">
+                <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">런칭 이벤트 시작 전</p>
+                <p className="mt-0.5 text-label font-bold text-foreground">
                   {eventQ.data ? launchEventLine(eventQ.data) : ""} — 그날부터 기록이 쌓여요
                 </p>
               </div>
             ) : king ? (
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-reward">{eventEnded ? "최종" : "현재"} {meta.title}</p>
-                  <p className="mt-0.5 flex items-center gap-1.5 truncate text-[17px] font-black text-foreground">
+                  <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">{eventEnded ? "최종" : "현재"} {meta.title}</p>
+                  <p className="mt-0.5 flex items-center gap-1.5 truncate text-body font-black text-foreground">
                     <Crown className="h-4 w-4 shrink-0 text-reward" />
                     <span className="truncate">{king.display_name}</span>
                   </p>
                   {board?.scope === "all" && (
-                    <p className="truncate text-[10.5px] text-muted-foreground">{shortBranch(king.branch_name)}</p>
+                    <p className="truncate text-micro text-muted-foreground">{shortBranch(king.branch_name)}</p>
                   )}
                 </div>
-                <p className="shrink-0 text-2xl font-black tabular-nums text-reward">{formatKingScore(king.score, meta.key)}</p>
+                <p className="shrink-0 text-title font-black tabular-nums text-reward">{formatKingScore(king.score, meta.key)}</p>
               </div>
             ) : (
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-reward">왕좌 비어 있음</p>
-                <p className="mt-0.5 text-[13px] font-bold text-foreground">첫 기록이 곧 왕이 됩니다</p>
+                <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">왕좌 비어 있음</p>
+                <p className="mt-0.5 text-label font-bold text-foreground">첫 기록이 곧 왕이 됩니다</p>
               </div>
             )}
           </div>
@@ -291,10 +291,10 @@ const King153Board = () => {
           {/* 나 */}
           {!boardQ.isLoading && !boardQ.isError && !eventUpcoming && (
             <div className="flex items-center justify-between rounded-card border border-primary/20 bg-primary/5 px-4 py-2.5">
-              <p className="text-[12px] font-bold text-foreground">
+              <p className="text-label font-bold text-foreground">
                 나 · {me ? `${me.rank}위` : "기록 없음"}
               </p>
-              <p className="text-[12px] tabular-nums text-muted-foreground">
+              <p className="text-label tabular-nums text-muted-foreground">
                 {me ? (
                   <>
                     <span className="font-black text-primary">{formatKingScore(me.score, meta.key)}</span>
@@ -322,25 +322,25 @@ const King153Board = () => {
                     r.is_me ? "border border-primary/40 bg-primary/10" : "bg-muted/30"
                   }`}
                 >
-                  <span className="w-7 shrink-0 text-center text-[13px] font-black tabular-nums">{medal(r.rank)}</span>
+                  <span className="w-7 shrink-0 text-center text-label font-black tabular-nums">{medal(r.rank)}</span>
                   <span className="flex min-w-0 flex-1 items-center gap-1">
-                    <span className="truncate text-[13px] font-bold text-foreground">{r.display_name}</span>
+                    <span className="truncate text-label font-bold text-foreground">{r.display_name}</span>
                     <UserLeagueBadge userId={r.user_id} className="h-3.5 w-3.5" animated={false} />
-                    {r.is_me && <span className="shrink-0 text-[10px] font-black text-primary">나</span>}
+                    {r.is_me && <span className="shrink-0 text-micro font-black text-primary">나</span>}
                   </span>
                   {board.scope === "all" && (
-                    <span className="shrink-0 text-[10px] text-muted-foreground">{shortBranch(r.branch_name)}</span>
+                    <span className="shrink-0 text-micro text-muted-foreground">{shortBranch(r.branch_name)}</span>
                   )}
-                  <span className="shrink-0 text-[13px] font-black tabular-nums text-foreground">{formatKingScore(r.score, meta.key)}</span>
+                  <span className="shrink-0 text-label font-black tabular-nums text-foreground">{formatKingScore(r.score, meta.key)}</span>
                 </li>
               ))}
               {me && !meInList && (
                 <li className="flex items-center gap-2.5 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2">
-                  <span className="w-7 shrink-0 text-center text-[13px] font-black tabular-nums">{me.rank}</span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-foreground">
-                    나 <span className="text-[10px] text-muted-foreground">(10위 밖)</span>
+                  <span className="w-7 shrink-0 text-center text-label font-black tabular-nums">{me.rank}</span>
+                  <span className="min-w-0 flex-1 truncate text-label font-bold text-foreground">
+                    나 <span className="text-micro text-muted-foreground">(10위 밖)</span>
                   </span>
-                  <span className="shrink-0 text-[13px] font-black tabular-nums text-foreground">{formatKingScore(me.score, meta.key)}</span>
+                  <span className="shrink-0 text-label font-black tabular-nums text-foreground">{formatKingScore(me.score, meta.key)}</span>
                 </li>
               )}
             </ol>
@@ -351,13 +351,13 @@ const King153Board = () => {
             <button
               type="button"
               onClick={() => runAction(meta.action!)}
-              className="w-full rounded-xl bg-primary py-3 text-[13px] font-black text-primary-foreground transition-all active:scale-[0.98]"
+              className="w-full rounded-xl bg-primary py-3 text-label font-black text-primary-foreground transition-all active:scale-[0.98]"
             >
               {meta.actionLabel}
             </button>
           )}
 
-          <p className="text-[10px] leading-relaxed text-muted-foreground">
+          <p className="text-micro leading-relaxed text-muted-foreground">
             {meta.key === "nickname" ? "하트는 취소하기 전까지 계속 쌓여 있어요."
               : period === "event" ? (eventQ.data ? launchEventLine(eventQ.data) : KING_PERIOD_RESET.event)
               : meta.periodless ? "하루라도 빠지면 연속이 끊어져요." : KING_PERIOD_RESET[period]}

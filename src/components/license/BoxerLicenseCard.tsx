@@ -286,14 +286,14 @@ const BoxerLicenseCard = ({
       case "hero":
         return {
           padding: "p-4",
-          headerText: "text-[9px]",
+          headerText: "text-micro",
           photoBox: "h-28 w-28",
-          nameText: "text-2xl",
+          nameText: "text-title",
           ptBadge: "h-5 w-5",
-          metaText: "text-xs",
-          rankBadge: "text-sm px-2.5 py-1",
-          levelText: "text-xl",
-          licText: "text-[10px]",
+          metaText: "text-label",
+          rankBadge: "text-body px-2.5 py-1",
+          levelText: "text-heading",
+          licText: "text-micro",
           xpHeight: "h-2",
           showXp: true,
           showFooter: true,
@@ -303,14 +303,14 @@ const BoxerLicenseCard = ({
       case "spotlight":
         return {
           padding: "p-3",
-          headerText: "text-[8px]",
+          headerText: "text-micro",
           photoBox: "h-20 w-20",
-          nameText: "text-lg",
+          nameText: "text-heading",
           ptBadge: "h-4 w-4",
-          metaText: "text-[10px]",
-          rankBadge: "text-[10px] px-2 py-0.5",
-          levelText: "text-base",
-          licText: "text-[9px]",
+          metaText: "text-micro",
+          rankBadge: "text-micro px-2 py-0.5",
+          levelText: "text-body",
+          licText: "text-micro",
           xpHeight: "h-1.5",
           showXp: false,
           showFooter: true,
@@ -320,14 +320,14 @@ const BoxerLicenseCard = ({
       case "compact":
         return {
           padding: "p-2",
-          headerText: "text-[7px]",
+          headerText: "text-micro",
           photoBox: "h-14 w-14",
-          nameText: "text-xs",
+          nameText: "text-label",
           ptBadge: "h-3 w-3",
-          metaText: "text-[9px]",
-          rankBadge: "text-[8px] px-1 py-0",
-          levelText: "text-[11px]",
-          licText: "text-[7px]",
+          metaText: "text-micro",
+          rankBadge: "text-micro px-1 py-0",
+          levelText: "text-micro",
+          licText: "text-micro",
           xpHeight: "h-1",
           showXp: false,
           showFooter: false,
@@ -626,7 +626,7 @@ const BoxerLicenseCard = ({
             {/* 처음 올리면 받는 보상 — 금색 알약 (보상은 금색 · 브랜드 규칙) */}
             {onPhotoClick && !photoBusy && photoBadge && (
               <span
-                className="pointer-events-none absolute -top-2 left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-reward px-2 py-0.5 text-[10px] font-black text-reward-foreground shadow-md ring-2 ring-black/60"
+                className="pointer-events-none absolute -top-2 left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-reward px-2 py-0.5 text-micro font-black text-reward-foreground shadow-md ring-2 ring-black/60"
                 aria-hidden="true"
               >
                 🎁 {photoBadge}
@@ -646,13 +646,13 @@ const BoxerLicenseCard = ({
 
             {/* LIVE 인디케이터 (라이브보드 활동중) */}
             {isLive && (
-              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-2 py-0.5 text-[8px] font-black text-white shadow-lg whitespace-nowrap">
+              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-2 py-0.5 text-micro font-black text-white shadow-lg whitespace-nowrap">
                 ● LIVE
               </span>
             )}
             {/* NEW 인디케이터 */}
             {isFresh && !isLive && (
-              <span className="absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-2 py-0.5 text-[8px] font-black text-white shadow-lg whitespace-nowrap">
+              <span className="absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-2 py-0.5 text-micro font-black text-white shadow-lg whitespace-nowrap">
                 ✨ NEW
               </span>
             )}
@@ -776,7 +776,7 @@ const BoxerLicenseCard = ({
                 : undefined
             }
           >
-            <div className={`flex items-center justify-between text-[10px] ${accentText} mb-1`}>
+            <div className={`flex items-center justify-between text-micro ${accentText} mb-1`}>
               <span className="font-black uppercase tracking-wider">
                 {bar.label}
                 {onPromotionClick && <span className="ml-1.5 font-bold normal-case opacity-80">랭크업 →</span>}
@@ -802,7 +802,7 @@ const BoxerLicenseCard = ({
               />
             </div>
             {promotion?.hint && (
-              <div className={`mt-1 flex items-center justify-between gap-2 text-[10px] ${accentText} opacity-80`}>
+              <div className={`mt-1 flex items-center justify-between gap-2 text-micro ${accentText} opacity-80`}>
                 <span className="min-w-0 flex-1 truncate">{promotion.hint}</span>
                 {totalXp !== undefined && (
                   <span className="shrink-0 font-mono tabular-nums">XP {totalXp.toLocaleString()}</span>
@@ -816,14 +816,14 @@ const BoxerLicenseCard = ({
         {cfg.showFooter && (
           <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2">
             {birthday ? (
-              // 생일 — 다른 회원님들께 축하를 부탁하는 한 줄 (같은 높이: 이모지 text-base 한 칸)
+              // 생일 — 다른 회원님들께 축하를 부탁하는 한 줄 (같은 높이: 이모지 text-body 한 칸)
               <div className="flex min-w-0 items-center gap-1">
-                <span className="text-base">🎉</span>
+                <span className="text-body">🎉</span>
                 <span className={`truncate font-black text-amber-200 ${cfg.metaText}`}>{bdayFooter}</span>
               </div>
             ) : (
               <div className="flex items-center gap-1">
-                <span className="text-base">🥊</span>
+                <span className="text-body">🥊</span>
                 <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>
                   MY BOXER 153
                 </span>
@@ -849,7 +849,7 @@ const BoxerLicenseCard = ({
                   className={`h-3.5 w-3.5 ${liked ? "fill-current" : "fill-[#F5C542]/25 text-[#F5C542]"} ${likeBusy ? "animate-pulse" : ""}`}
                   aria-hidden="true"
                 />
-                <span className="text-[12px] font-black tabular-nums">{likes.toLocaleString("ko-KR")}</span>
+                <span className="text-label font-black tabular-nums">{likes.toLocaleString("ko-KR")}</span>
               </button>
             ) : birthday ? null : (
               // 생일이면 축하 문구가 길어 이 자리를 비워 준다

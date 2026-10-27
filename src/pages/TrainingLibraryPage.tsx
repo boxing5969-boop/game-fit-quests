@@ -112,41 +112,41 @@ const TrainingLibraryPage = () => {
     <div className="mx-auto min-h-screen max-w-lg bg-background px-4 pb-24 pt-4 text-foreground">
       <div className="mb-2 flex items-center gap-2">
         <button onClick={() => navigate(-1)} className="rounded-lg p-1.5 active:scale-95"><ArrowLeft className="h-5 w-5" /></button>
-        <h1 className="text-lg font-black">훈련 라이브러리</h1>
+        <h1 className="text-heading font-black">훈련 라이브러리</h1>
         {isStaff && (
           <div className="ml-auto flex items-center gap-1.5">
-            <button onClick={() => navigate("/routine-builder")} className="rounded-lg bg-muted px-2.5 py-1.5 text-xs font-bold text-foreground active:scale-95">
+            <button onClick={() => navigate("/routine-builder")} className="rounded-lg bg-muted px-2.5 py-1.5 text-label font-bold text-foreground active:scale-95">
               🥊 루틴 빌더
             </button>
-            <button onClick={() => openEdit("new")} className="flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-bold text-primary-foreground active:scale-95">
+            <button onClick={() => openEdit("new")} className="flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-label font-bold text-primary-foreground active:scale-95">
               <Plus className="h-3.5 w-3.5" /> 추가
             </button>
           </div>
         )}
       </div>
-      <p className="mb-3 text-xs leading-relaxed text-muted-foreground">복싱 훈련을 카테고리별로 모았어요. 각 훈련의 방법과 무엇이 좋아지는지 확인하고 수업에 활용하세요.</p>
+      <p className="mb-3 text-label leading-relaxed text-muted-foreground">복싱 훈련을 카테고리별로 모았어요. 각 훈련의 방법과 무엇이 좋아지는지 확인하고 수업에 활용하세요.</p>
 
       <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
         {cats.map((c) => (
-          <button key={c} onClick={() => setCat(c)} className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all active:scale-95 ${cat === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{c}</button>
+          <button key={c} onClick={() => setCat(c)} className={`shrink-0 rounded-full px-3.5 py-1.5 text-label font-bold transition-all active:scale-95 ${cat === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{c}</button>
         ))}
       </div>
 
       {isLoading ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">불러오는 중...</p>
+        <p className="py-10 text-center text-body text-muted-foreground">불러오는 중...</p>
       ) : list.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">등록된 훈련이 없습니다.</p>
+        <p className="py-10 text-center text-body text-muted-foreground">등록된 훈련이 없습니다.</p>
       ) : (
         <div className="space-y-2.5">
           {list.map((ex) => (
             <div key={ex.id} className={`rounded-2xl border border-border bg-card p-4 shadow-elev-1 ${!ex.is_active ? "opacity-50" : ""}`}>
               <button onClick={() => setSel(ex)} className="w-full text-left transition-all active:scale-[0.99]">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-base font-bold text-foreground">{ex.name}{!ex.is_active && <span className="ml-1 text-[10px] text-muted-foreground">(비활성)</span>}</span>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${DIFF_COLOR[ex.difficulty] || "bg-muted text-muted-foreground"}`}>{ex.difficulty}</span>
+                  <span className="text-body font-bold text-foreground">{ex.name}{!ex.is_active && <span className="ml-1 text-micro text-muted-foreground">(비활성)</span>}</span>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-micro font-bold ${DIFF_COLOR[ex.difficulty] || "bg-muted text-muted-foreground"}`}>{ex.difficulty}</span>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">{ex.summary}</p>
-                <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
+                <p className="mt-1 text-label text-muted-foreground">{ex.summary}</p>
+                <div className="mt-2 flex items-center gap-2 text-micro text-muted-foreground">
                   <span className="rounded bg-muted px-1.5 py-0.5">{ex.category}</span>
                   {ex.target && <span className="flex items-center gap-0.5"><Target className="h-3 w-3" />{ex.target}</span>}
                   {ex.video_url && <span className="flex items-center gap-0.5 text-primary"><PlayCircle className="h-3 w-3" />영상</span>}
@@ -154,8 +154,8 @@ const TrainingLibraryPage = () => {
               </button>
               {isStaff && (
                 <div className="mt-2 flex gap-1.5 border-t border-border pt-2">
-                  <button onClick={() => openEdit(ex)} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[11px] font-bold text-foreground active:scale-95"><Pencil className="h-3 w-3" />수정</button>
-                  <button onClick={() => remove(ex)} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[11px] font-bold text-destructive active:scale-95"><Trash2 className="h-3 w-3" />삭제</button>
+                  <button onClick={() => openEdit(ex)} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-micro font-bold text-foreground active:scale-95"><Pencil className="h-3 w-3" />수정</button>
+                  <button onClick={() => remove(ex)} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-micro font-bold text-destructive active:scale-95"><Trash2 className="h-3 w-3" />삭제</button>
                 </div>
               )}
             </div>
@@ -168,10 +168,10 @@ const TrainingLibraryPage = () => {
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setSel(null)}>
           <div className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-lg font-black text-foreground">{sel.name}</h2>
+              <h2 className="text-heading font-black text-foreground">{sel.name}</h2>
               <button onClick={() => setSel(null)} className="rounded-lg p-1 active:scale-95"><X className="h-5 w-5" /></button>
             </div>
-            <div className="mb-3 flex items-center gap-2 text-[11px]">
+            <div className="mb-3 flex items-center gap-2 text-micro">
               <span className="rounded bg-muted px-2 py-0.5 font-semibold text-foreground">{sel.category}</span>
               <span className={`rounded-full px-2 py-0.5 font-bold ${DIFF_COLOR[sel.difficulty] || "bg-muted text-muted-foreground"}`}>{sel.difficulty}</span>
               {sel.target && <span className="text-muted-foreground">{sel.target}</span>}
@@ -197,29 +197,29 @@ const TrainingLibraryPage = () => {
             {sel.name === HANDWRAP_EXERCISE_NAME && (
               <button
                 onClick={() => navigate("/handwrap")}
-                className="mb-3 flex w-full items-center justify-between rounded-xl bg-primary/10 px-3.5 py-3 text-left text-sm font-bold text-primary transition-all active:scale-[0.99]"
+                className="mb-3 flex w-full items-center justify-between rounded-xl bg-primary/10 px-3.5 py-3 text-left text-body font-bold text-primary transition-all active:scale-[0.99]"
               >
                 붕대 감기 영상 · 사진 · 집 연습 미션
                 <ChevronRight className="h-4 w-4 shrink-0" />
               </button>
             )}
-            <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{sel.description}</p>
+            <p className="whitespace-pre-line text-body leading-relaxed text-foreground">{sel.description}</p>
             {sel.benefits && (
               <div className="mt-3 rounded-xl bg-status-complete/10 p-3">
-                <p className="text-xs font-bold text-status-complete">이런 게 좋아져요</p>
-                <p className="mt-1 text-sm text-foreground">{sel.benefits}</p>
+                <p className="text-label font-bold text-status-complete">이런 게 좋아져요</p>
+                <p className="mt-1 text-body text-foreground">{sel.benefits}</p>
               </div>
             )}
             {sel.cues.length > 0 && (
               <div className="mt-3">
-                <p className="mb-1 flex items-center gap-1 text-xs font-bold text-foreground"><CheckCircle2 className="h-3.5 w-3.5 text-primary" />코치 포인트</p>
-                <ul className="space-y-1">{sel.cues.map((c, i) => <li key={i} className="flex gap-1.5 text-sm text-foreground"><span className="text-primary">·</span>{c}</li>)}</ul>
+                <p className="mb-1 flex items-center gap-1 text-label font-bold text-foreground"><CheckCircle2 className="h-3.5 w-3.5 text-primary" />코치 포인트</p>
+                <ul className="space-y-1">{sel.cues.map((c, i) => <li key={i} className="flex gap-1.5 text-body text-foreground"><span className="text-primary">·</span>{c}</li>)}</ul>
               </div>
             )}
             {sel.mistakes.length > 0 && (
               <div className="mt-3">
-                <p className="mb-1 flex items-center gap-1 text-xs font-bold text-foreground"><AlertTriangle className="h-3.5 w-3.5 text-status-pending" />흔한 실수</p>
-                <ul className="space-y-1">{sel.mistakes.map((c, i) => <li key={i} className="flex gap-1.5 text-sm text-muted-foreground"><span className="text-status-pending">·</span>{c}</li>)}</ul>
+                <p className="mb-1 flex items-center gap-1 text-label font-bold text-foreground"><AlertTriangle className="h-3.5 w-3.5 text-status-pending" />흔한 실수</p>
+                <ul className="space-y-1">{sel.mistakes.map((c, i) => <li key={i} className="flex gap-1.5 text-body text-muted-foreground"><span className="text-status-pending">·</span>{c}</li>)}</ul>
               </div>
             )}
           </div>
@@ -231,7 +231,7 @@ const TrainingLibraryPage = () => {
         <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setEditing(null)}>
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-black text-foreground">{editing === "new" ? "훈련 추가" : "훈련 수정"}</h2>
+              <h2 className="text-body font-black text-foreground">{editing === "new" ? "훈련 추가" : "훈련 수정"}</h2>
               <button onClick={() => setEditing(null)} className="rounded-lg p-1 active:scale-95"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-2.5">
@@ -244,24 +244,24 @@ const TrainingLibraryPage = () => {
                 ["image_url", "이미지 URL (선택)"],
               ] as const).map(([k, ph]) => (
                 <input key={k} value={(form as any)[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} placeholder={ph}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
               ))}
               <select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground">
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground">
                 <option value="초급">초급</option><option value="중급">중급</option><option value="고급">고급</option>
               </select>
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="방법 설명 (자세히)" rows={4}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
               <textarea value={form.benefits} onChange={(e) => setForm({ ...form, benefits: e.target.value })} placeholder="무엇이 좋아지는지" rows={2}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
               <textarea value={form.cues} onChange={(e) => setForm({ ...form, cues: e.target.value })} placeholder="코치 포인트 (한 줄에 하나씩)" rows={3}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
               <textarea value={form.mistakes} onChange={(e) => setForm({ ...form, mistakes: e.target.value })} placeholder="흔한 실수 (한 줄에 하나씩)" rows={3}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
               <input value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} placeholder="정렬 순서 (숫자)" type="number"
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
             </div>
-            <button onClick={save} disabled={saving} className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+            <button onClick={save} disabled={saving} className="mt-4 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
               {saving ? "저장 중..." : "저장"}
             </button>
           </div>

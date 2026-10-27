@@ -144,7 +144,7 @@ const TutorialOverlay = ({
               total={totalStepsInDay}
               current={step.step}
             />
-            <p className="mt-0.5 text-center text-[9px] font-bold uppercase tracking-widest text-amber-200/80">
+            <p className="mt-0.5 text-center text-micro font-bold uppercase tracking-widest text-amber-200/80">
               Day {step.day} · {step.step + 1} / {totalStepsInDay}
             </p>
           </div>
@@ -229,7 +229,7 @@ function TapHere({
     <motion.button
       type="button"
       onClick={handleChipClick}
-      className="pointer-events-auto fixed z-[113] -translate-x-1/2 cursor-pointer whitespace-nowrap rounded-pill border-2 border-amber-300 bg-amber-500 px-4 py-1.5 text-[11px] font-black tracking-wider text-amber-950 shadow-[0_6px_20px_rgba(253,184,92,0.65)] hover:bg-amber-400 active:scale-95"
+      className="pointer-events-auto fixed z-[113] -translate-x-1/2 cursor-pointer whitespace-nowrap rounded-pill border-2 border-amber-300 bg-amber-500 px-4 py-1.5 text-micro font-black tracking-wider text-amber-950 shadow-[0_6px_20px_rgba(253,184,92,0.65)] hover:bg-amber-400 active:scale-95"
       style={{ top, left }}
       animate={{
         y: [0, -4, 0],

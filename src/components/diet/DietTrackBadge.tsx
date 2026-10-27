@@ -28,7 +28,7 @@ export const DietTrackBadge = ({ track, className }: DietTrackBadgeProps) => {
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold",
+          "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-micro font-bold",
           "border-muted bg-muted text-muted-foreground",
           className,
         )}
@@ -41,7 +41,7 @@ export const DietTrackBadge = ({ track, className }: DietTrackBadgeProps) => {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold",
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-micro font-bold",
         TRACK_TONE[track],
         className,
       )}

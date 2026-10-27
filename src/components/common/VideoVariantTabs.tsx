@@ -34,7 +34,7 @@ const VideoVariantTabs = ({ labels, value, onChange, tone = "light", className }
             aria-selected={on}
             onClick={() => onChange(i)}
             className={cn(
-              "h-10 min-w-0 flex-1 truncate rounded-full px-3 text-[13.5px] font-bold transition-colors active:scale-[0.97]",
+              "h-10 min-w-0 flex-1 truncate rounded-full px-3 text-label font-bold transition-colors active:scale-[0.97]",
               on
                 ? dark
                   ? "bg-white text-black"

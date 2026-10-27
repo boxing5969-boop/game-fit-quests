@@ -36,13 +36,13 @@ const ConditionGaugeCard = ({ onOpen }: Props) => {
           <Activity className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             오늘의 컨디션
           </p>
-          <h3 className="mt-0.5 text-[15px] font-bold text-foreground">
+          <h3 className="mt-0.5 text-body font-bold text-foreground">
             {option ? `${option.emoji} ${option.label}` : "컨디션 선택"}
           </h3>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             {isLoading
               ? "불러오는 중…"
               : rec
@@ -60,7 +60,7 @@ const ConditionGaugeCard = ({ onOpen }: Props) => {
               key={o.type}
               type="button"
               onClick={onOpen}
-              className="rounded-pill border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-all active:scale-[0.98] hover:border-primary/40"
+              className="rounded-pill border border-border bg-background px-2.5 py-1.5 text-micro font-medium text-foreground transition-all active:scale-[0.98] hover:border-primary/40"
             >
               {o.emoji} {o.shortLabel}
             </button>
@@ -71,10 +71,10 @@ const ConditionGaugeCard = ({ onOpen }: Props) => {
       {/* 선택 후 추천 안내 */}
       {selected && rec && (
         <div className="mb-2 rounded-card border border-primary/15 bg-primary/5 p-3">
-          <p className="text-[12px] leading-relaxed text-foreground">
+          <p className="text-label leading-relaxed text-foreground">
             {rec.hint}
           </p>
-          <p className="mt-1 text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
             ※ 공식 훈련은 그대로 유지됩니다. 보조 퀘스트 추천만 조정됩니다.
           </p>
         </div>
@@ -83,7 +83,7 @@ const ConditionGaugeCard = ({ onOpen }: Props) => {
       <button
         type="button"
         onClick={onOpen}
-        className="w-full rounded-card border border-border bg-card py-2.5 text-[12.5px] font-bold text-primary transition-all active:scale-[0.99] hover:border-primary/40"
+        className="w-full rounded-card border border-border bg-card py-2.5 text-label font-bold text-primary transition-all active:scale-[0.99] hover:border-primary/40"
       >
         {selected ? "컨디션 다시 선택" : "오늘 컨디션 선택"} →
       </button>

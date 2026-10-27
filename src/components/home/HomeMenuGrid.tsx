@@ -34,7 +34,7 @@ const COLS = 4;
 const Badge = ({ n }: { n: number }) =>
   n > 0 ? (
     <span
-      className="absolute -right-1.5 -top-1.5 flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-bold leading-none text-white ring-2 ring-card"
+      className="absolute -right-1.5 -top-1.5 flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-destructive px-1 text-micro font-bold leading-none text-white ring-2 ring-card"
       aria-label={`새 메시지 ${n}개`}
     >
       {n > 99 ? "99+" : n}
@@ -104,7 +104,7 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
           </span>
           <span
             className={cn(
-              "line-clamp-2 w-full text-center text-[12.5px] leading-[1.25] tracking-[-0.02em]",
+              "line-clamp-2 w-full text-center text-label leading-[1.25] tracking-[-0.02em]",
               active ? "font-bold text-primary" : "font-semibold text-foreground",
             )}
           >
@@ -137,7 +137,7 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
         </span>
         <span
           className={cn(
-            "line-clamp-2 w-full text-center text-[12.5px] leading-[1.25] tracking-[-0.02em]",
+            "line-clamp-2 w-full text-center text-label leading-[1.25] tracking-[-0.02em]",
             inside || isOpen ? "font-bold text-primary" : "font-semibold text-foreground",
           )}
         >
@@ -171,7 +171,7 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
                   transition={{ duration: 0.18, ease: "easeOut" }}
                   className="col-span-4 rounded-2xl bg-secondary/70 px-2 pb-3 pt-2.5 ring-1 ring-border/60"
                 >
-                  <p className="mb-2.5 px-1.5 text-[12px] font-bold text-muted-foreground">{folder.label}</p>
+                  <p className="mb-2.5 px-1.5 text-label font-bold text-muted-foreground">{folder.label}</p>
                   <div className="grid grid-cols-4 gap-x-1 gap-y-3">
                     {folder.items.map((m) => {
                       const active = pathname === m.path;
@@ -189,7 +189,7 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
                           </span>
                           <span
                             className={cn(
-                              "line-clamp-2 w-full text-center text-[12px] leading-[1.25] tracking-[-0.02em]",
+                              "line-clamp-2 w-full text-center text-label leading-[1.25] tracking-[-0.02em]",
                               active ? "font-bold text-primary" : "font-semibold text-foreground",
                             )}
                           >
@@ -217,8 +217,8 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
       className="rounded-3xl bg-card px-3 pb-[18px] pt-[18px] shadow-elev-1"
     >
       <div className="mb-4 flex items-baseline justify-between px-2">
-        <h2 className="text-[17px] font-extrabold text-foreground">전체 메뉴</h2>
-        <span className="text-[12px] font-medium text-muted-foreground">눌러서 바로 가요</span>
+        <h2 className="text-body font-extrabold text-foreground">전체 메뉴</h2>
+        <span className="text-label font-medium text-muted-foreground">눌러서 바로 가요</span>
       </div>
       {grid}
     </section>

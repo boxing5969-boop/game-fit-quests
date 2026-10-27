@@ -80,13 +80,13 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             리턴 라운드
           </p>
-          <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+          <h2 className="mt-0.5 text-body font-bold text-foreground">
             {copy?.sheetTitle ?? "복귀 라운드"}
           </h2>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             {status?.inactive_days != null
               ? `${status.inactive_days}일 만의 복귀입니다.`
               : "돌아온 것 자체가 오늘의 승리입니다."}
@@ -110,35 +110,35 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
         <div className="rounded-card border border-emerald-400/40 bg-emerald-400/10 p-3.5">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-            <p className="text-[13.5px] font-bold text-foreground">
+            <p className="text-label font-bold text-foreground">
               복귀 완료. {result.message}
             </p>
           </div>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
             {copy?.closingMessage}
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+            <p className="text-micro font-black uppercase tracking-wider text-primary">
               QUEST XP
             </p>
-            <p className="number-font mt-0.5 text-[18px] font-black text-foreground">
+            <p className="number-font mt-0.5 text-heading font-black text-foreground">
               +{result.quest_xp_granted}
             </p>
           </div>
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-reward">
+            <p className="text-micro font-black uppercase tracking-wider text-reward">
               챔피언 머니
             </p>
-            <p className="number-font mt-0.5 text-[18px] font-black text-reward">
+            <p className="number-font mt-0.5 text-heading font-black text-reward">
               +{result.gems_granted.toLocaleString()}
             </p>
           </div>
         </div>
 
-        <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="text-micro leading-relaxed text-muted-foreground">
           ※ 리턴 라운드는 보조 시스템입니다. 공식 1~40 레벨업 / 공식 XP /
           승급과 무관합니다.
         </p>
@@ -146,7 +146,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
         <button
           type="button"
           onClick={onClose}
-          className="w-full rounded-card bg-primary py-3 text-[13px] font-bold text-primary-foreground active:scale-[0.98]"
+          className="w-full rounded-card bg-primary py-3 text-label font-bold text-primary-foreground active:scale-[0.98]"
         >
           닫기
         </button>
@@ -159,13 +159,13 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
       <div className="rounded-card border border-amber-400/40 bg-amber-400/10 p-3.5">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-amber-500" />
-          <p className="text-[13.5px] font-bold text-foreground">
+          <p className="text-label font-bold text-foreground">
             {claimed
               ? "오늘은 이미 복귀 보상을 받았습니다."
               : "이번 주기의 복귀 보상은 이미 받았습니다."}
           </p>
         </div>
-        <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
           기록은 계속 쌓이지만, 보상은 다음 주기에 다시 열립니다. 오늘은 다른
           보조 퀘스트로 천천히 돌아오세요.
         </p>
@@ -173,7 +173,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
       <button
         type="button"
         onClick={onClose}
-        className="w-full rounded-card bg-primary py-3 text-[13px] font-bold text-primary-foreground active:scale-[0.98]"
+        className="w-full rounded-card bg-primary py-3 text-label font-bold text-primary-foreground active:scale-[0.98]"
       >
         닫기
       </button>
@@ -184,17 +184,17 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
     <div className="space-y-3">
       {copy && (
         <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+          <p className="text-micro font-black uppercase tracking-wider text-primary">
             오삼 코치
           </p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-foreground">
+          <p className="mt-1 text-label leading-relaxed text-foreground">
             {copy.sheetIntro}
           </p>
         </div>
       )}
 
       <div>
-        <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+        <p className="mb-1.5 text-micro font-bold text-foreground">
           오늘 할 한 가지를 골라주세요
         </p>
         <div className="space-y-2">
@@ -211,13 +211,13 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
 
       {copy && (
         <div className="rounded-card border border-border bg-card p-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-reward">
+          <p className="text-micro font-black uppercase tracking-wider text-reward">
             오늘의 보상
           </p>
-          <p className="mt-0.5 text-[13px] font-bold text-reward">
+          <p className="mt-0.5 text-label font-bold text-reward">
             {copy.rewardLine}
           </p>
-          <p className="mt-1 text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
             ※ 보상은 QUEST XP / 챔피언 머니로만 지급됩니다. 공식 XP는
             지급되지 않습니다.
           </p>
@@ -228,7 +228,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
         type="button"
         onClick={handleClaim}
         disabled={!canSubmit}
-        className={`w-full rounded-card py-3 text-[14px] font-bold transition-all ${
+        className={`w-full rounded-card py-3 text-label font-bold transition-all ${
           canSubmit
             ? "bg-primary text-primary-foreground active:scale-[0.98]"
             : "cursor-not-allowed bg-primary/50 text-primary-foreground opacity-60"
@@ -241,7 +241,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
             : "복귀 보상 받기"}
       </button>
 
-      <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+      <p className="text-micro leading-relaxed text-muted-foreground">
         ※ 리턴 라운드는 공식 출석 / 공식 미션과 무관한 보조 시스템입니다.
       </p>
     </div>
@@ -271,7 +271,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
             {renderHeader()}
             <div className="flex-1 overflow-y-auto px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
               {isLoading ? (
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-label text-muted-foreground">
                   복귀 라운드 정보를 불러오는 중…
                 </p>
               ) : result ? (
@@ -279,7 +279,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
               ) : blocked ? (
                 renderBlocked()
               ) : !status?.active ? (
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-label text-muted-foreground">
                   꾸준히 오고 계시네요. 리턴 라운드는 3일 이상 비활동 시
                   열립니다.
                 </p>

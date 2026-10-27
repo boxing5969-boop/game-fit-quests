@@ -19,13 +19,13 @@ const GuideFaqPage = () => {
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-[22px] font-extrabold tracking-tight text-foreground">
+        <h1 className="text-title font-extrabold tracking-tight text-foreground">
           자주 묻는 질문
         </h1>
       </header>
 
       <main className="mx-auto max-w-lg px-5 pb-24 pt-5">
-        <p className="mb-4 text-[14px] leading-6 text-muted-foreground">
+        <p className="mb-4 text-label leading-6 text-muted-foreground">
           마이복서153에 대해 가장 자주 묻는 질문을 모았습니다.
         </p>
 
@@ -46,7 +46,7 @@ const GuideFaqPage = () => {
                   aria-expanded={open}
                   className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left"
                 >
-                  <span className="text-[15px] font-semibold leading-6 text-foreground">
+                  <span className="text-body font-semibold leading-6 text-foreground">
                     {item.q}
                   </span>
                   <ChevronDown
@@ -58,7 +58,7 @@ const GuideFaqPage = () => {
                 </button>
                 {open && (
                   <div className="border-t border-border px-4 pb-4 pt-3">
-                    <p className="whitespace-pre-line text-[14px] leading-6 text-muted-foreground">
+                    <p className="whitespace-pre-line text-label leading-6 text-muted-foreground">
                       {item.a}
                     </p>
                   </div>

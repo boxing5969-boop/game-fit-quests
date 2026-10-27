@@ -55,11 +55,11 @@ export const NotificationBanner = ({
     </span>
     <div className="flex-1 min-w-0">
       {title && (
-        <p className="text-caption font-bold leading-tight">{title}</p>
+        <p className="text-label font-bold leading-tight">{title}</p>
       )}
       <div
         className={cn(
-          "text-body-sm text-foreground",
+          "text-label text-foreground font-medium",
           title ? "mt-0.5" : undefined,
         )}
       >
@@ -70,7 +70,7 @@ export const NotificationBanner = ({
           type="button"
           onClick={action.onClick}
           className={cn(
-            "mt-2 rounded-pill border border-current/30 bg-current/10 px-3 py-1 text-caption font-bold transition-all active:scale-[0.97]",
+            "mt-2 rounded-pill border border-current/30 bg-current/10 px-3 py-1 text-label font-bold transition-all active:scale-[0.97]",
           )}
         >
           {action.label}

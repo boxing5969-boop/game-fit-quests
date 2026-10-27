@@ -58,12 +58,12 @@ export const StatCard = ({
       </div>
     )}
     <div className="min-w-0">
-      <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
-      <p className="number-font mt-0.5 text-[15px] font-bold leading-tight text-foreground break-keep">
+      <p className="text-micro font-medium text-muted-foreground">{label}</p>
+      <p className="number-font mt-0.5 text-body font-bold leading-tight text-foreground break-keep">
         {typeof value === "number" ? value.toLocaleString() : value}
       </p>
       {helper && (
-        <p className={cn("text-[10px] mt-0.5 leading-tight", ACCENT_HELPER[accent])}>
+        <p className={cn("text-micro mt-0.5 leading-tight", ACCENT_HELPER[accent])}>
           {helper}
         </p>
       )}

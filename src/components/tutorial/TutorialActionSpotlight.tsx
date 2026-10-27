@@ -358,13 +358,13 @@ const TutorialActionSpotlight = () => {
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-wider text-amber-300">
+                <p className="text-micro font-black uppercase tracking-wider text-amber-300">
                   오삼이 가이드
                 </p>
-                <p className="mt-0.5 text-sm font-bold text-white">
+                <p className="mt-0.5 text-body font-bold text-white">
                   {currentStep.label}
                 </p>
-                <p className="mt-1 text-[12px] leading-relaxed text-gray-200">
+                <p className="mt-1 text-label leading-relaxed text-gray-200">
                   {currentStep.spotlightHint ?? currentStep.hint}
                 </p>
               </div>
@@ -376,7 +376,7 @@ const TutorialActionSpotlight = () => {
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
-            <p className="mt-2 text-[10px] text-gray-500">
+            <p className="mt-2 text-micro text-gray-500">
               완료하면 다음 미션이 자동으로 열려요.
             </p>
           </div>

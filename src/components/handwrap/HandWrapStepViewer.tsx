@@ -73,7 +73,7 @@ const Chip = ({ on, onClick, children, label }: { on: boolean; onClick: () => vo
     aria-pressed={on}
     aria-label={label}
     className={cn(
-      "h-8 shrink-0 rounded-full px-3 text-[12.5px] font-bold transition-colors active:scale-95",
+      "h-8 shrink-0 rounded-full px-3 text-label font-bold transition-colors active:scale-95",
       on ? "bg-foreground text-background" : "bg-secondary text-secondary-foreground",
     )}
   >
@@ -83,7 +83,7 @@ const Chip = ({ on, onClick, children, label }: { on: boolean; onClick: () => vo
 
 const HandChips = ({ hand, setHand }: { hand: HandSide; setHand: (h: HandSide) => void }) => (
   <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-    <span className="flex items-center gap-1 text-[11.5px] font-bold text-muted-foreground">
+    <span className="flex items-center gap-1 text-micro font-bold text-muted-foreground">
       <Hand className="h-3.5 w-3.5" aria-hidden /> 감는 손
     </span>
     <Chip on={hand === "left"} onClick={() => setHand("left")}>
@@ -182,15 +182,15 @@ const HandWrapStepViewer = ({ onWatch, className }: Props) => {
                   className={cn("h-full w-full object-cover", mirrored && "-scale-x-100")}
                 />
                 <HandWrapGuideDraw guide={s.guide} mirrored={mirrored} mode="thumb" />
-                <span className="absolute left-1 top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-[12.5px] font-black tabular-nums text-primary-foreground shadow">
+                <span className="absolute left-1 top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-label font-black tabular-nums text-primary-foreground shadow">
                   {i + 1}
                 </span>
                 <span className="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/55">
                   <Play className="ml-px h-2.5 w-2.5 fill-white text-white" aria-hidden />
                 </span>
               </span>
-              <span className="mt-1.5 block text-[12.5px] font-black leading-snug text-foreground">{s.title}</span>
-              <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">{txt(s.short)}</span>
+              <span className="mt-1.5 block text-label font-black leading-snug text-foreground">{s.title}</span>
+              <span className="mt-0.5 block text-micro leading-snug text-muted-foreground">{txt(s.short)}</span>
             </button>
           </li>
         ))}
@@ -200,11 +200,11 @@ const HandWrapStepViewer = ({ onWatch, className }: Props) => {
         <button
           type="button"
           onClick={() => openStep(0)}
-          className="flex h-12 w-full items-center justify-center gap-1.5 rounded-full bg-foreground text-[14.5px] font-black text-background transition-transform active:scale-[0.98]"
+          className="flex h-12 w-full items-center justify-center gap-1.5 rounded-full bg-foreground text-label font-black text-background transition-transform active:scale-[0.98]"
         >
           <Play className="h-4 w-4 fill-current" aria-hidden /> 1단계부터 한 단계씩 따라 하기
         </button>
-        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-[11.5px] font-semibold text-muted-foreground">
+        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-micro font-semibold text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-[#10B981] ring-2 ring-white" /> 시작
           </span>
@@ -392,10 +392,10 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
             <X className="h-5 w-5 text-secondary-foreground" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[15.5px] font-black leading-tight text-foreground">붕대 감기 9단계</p>
-            <p className="truncate text-[11.5px] text-muted-foreground">한 단계씩 보고 따라 감아 보세요</p>
+            <p className="truncate text-body font-black leading-tight text-foreground">붕대 감기 9단계</p>
+            <p className="truncate text-micro text-muted-foreground">한 단계씩 보고 따라 감아 보세요</p>
           </div>
-          <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[13px] font-black tabular-nums text-primary">
+          <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-label font-black tabular-nums text-primary">
             {idx + 1} / {total}
           </span>
         </div>
@@ -462,15 +462,15 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
           />
 
           {/* 몇 단계 · 지금 보는 것 — 방향 글과 겹치지 않게 왼쪽 위 한 곳에 */}
-          <span className="pointer-events-none absolute left-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-full bg-black/60 py-1 pl-2.5 pr-3 text-[12px] font-black text-white backdrop-blur-sm">
+          <span className="pointer-events-none absolute left-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-full bg-black/60 py-1 pl-2.5 pr-3 text-label font-black text-white backdrop-blur-sm">
             <span className="tabular-nums">{idx + 1}단계</span>
             <span aria-hidden className="h-3 w-px bg-white/40" />
             {phase === "play" ? (
-              <span className="inline-flex items-center gap-1 text-[11.5px] font-bold">
+              <span className="inline-flex items-center gap-1 text-micro font-bold">
                 <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-red-500" /> 움직이는 모습
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-[11.5px] font-bold">
+              <span className="inline-flex items-center gap-1 text-micro font-bold">
                 <span aria-hidden className="h-2 w-2 rounded-full bg-[#10B981]" /> 시작
                 <ArrowRight className="h-3 w-3" aria-hidden />
                 <span aria-hidden className="h-2 w-2 rounded-full bg-[#F97316]" /> 끝
@@ -478,7 +478,7 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
             )}
           </span>
           {(paused || blocked || (still && phase === "guide")) && (
-            <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-[12px] font-black text-black shadow">
+            <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-label font-black text-black shadow">
               <Play className="h-3.5 w-3.5 fill-current" aria-hidden /> 눌러서 움직이는 모습
             </span>
           )}
@@ -494,7 +494,7 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
           <HandChips hand={hand} setHand={setHand} />
           {!still && (
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-              <span className="text-[11.5px] font-bold text-muted-foreground">속도</span>
+              <span className="text-micro font-bold text-muted-foreground">속도</span>
               {HANDWRAP_STEP_SPEEDS.map((s) => (
                 <Chip key={s.rate} on={rate === s.rate} onClick={() => setRate(s.rate)}>
                   {s.label}
@@ -502,7 +502,7 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
               ))}
             </div>
           )}
-          <p className="flex items-center gap-1.5 text-[11.5px] font-semibold text-muted-foreground">
+          <p className="flex items-center gap-1.5 text-micro font-semibold text-muted-foreground">
             <Eye aria-hidden className="h-3.5 w-3.5 shrink-0" />
             {HANDWRAP_VIEW_NOTE[step.view][hand]}
           </p>
@@ -510,42 +510,42 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
 
         {/* 글 — 시작 → 끝 · 자세한 설명 · 팁 */}
         <div className="px-4 pb-6 pt-3.5" aria-live="polite">
-          <p className="text-[12.5px] font-black text-primary">{idx + 1}단계</p>
-          <h3 className="mt-0.5 text-[19px] font-black leading-snug text-foreground">{step.title}</h3>
+          <p className="text-label font-black text-primary">{idx + 1}단계</p>
+          <h3 className="mt-0.5 text-heading font-black leading-snug text-foreground">{step.title}</h3>
 
           <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-1.5">
             <div className="rounded-xl bg-[#10B981]/10 px-3 py-2 ring-1 ring-[#10B981]/35">
-              <p className="text-[10.5px] font-black text-[#059669]">시작</p>
-              <p className="mt-0.5 text-[13px] font-bold leading-snug text-foreground">{step.from}</p>
+              <p className="text-micro font-black text-[#059669]">시작</p>
+              <p className="mt-0.5 text-label font-bold leading-snug text-foreground">{step.from}</p>
             </div>
             <div className="flex items-center">
               <ArrowRight className="h-4 w-4 text-muted-foreground" aria-hidden />
             </div>
             <div className="rounded-xl bg-[#F97316]/10 px-3 py-2 ring-1 ring-[#F97316]/35">
-              <p className="text-[10.5px] font-black text-[#EA580C]">끝</p>
-              <p className="mt-0.5 text-[13px] font-bold leading-snug text-foreground">{step.to}</p>
+              <p className="text-micro font-black text-[#EA580C]">끝</p>
+              <p className="mt-0.5 text-label font-bold leading-snug text-foreground">{step.to}</p>
             </div>
           </div>
 
           <ol className="mt-3.5 space-y-2.5">
             {step.how.map((h, i) => (
               <li key={h} className="flex gap-2.5">
-                <span className="mt-[3px] flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-black text-background">
+                <span className="mt-[3px] flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground text-micro font-black text-background">
                   {i + 1}
                 </span>
-                <span className="min-w-0 text-[14.5px] leading-relaxed text-foreground">{txt(h)}</span>
+                <span className="min-w-0 text-label leading-relaxed text-foreground">{txt(h)}</span>
               </li>
             ))}
           </ol>
 
           {step.tip && (
-            <p className="mt-3.5 flex items-start gap-2 rounded-xl bg-secondary/70 px-3 py-2.5 text-[13px] font-semibold leading-relaxed text-foreground">
+            <p className="mt-3.5 flex items-start gap-2 rounded-xl bg-secondary/70 px-3 py-2.5 text-label font-semibold leading-relaxed text-foreground">
               <span aria-hidden className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
               <span className="min-w-0">{txt(step.tip)}</span>
             </p>
           )}
 
-          <p className="mt-3 flex items-start gap-1.5 text-[12px] leading-relaxed text-muted-foreground">
+          <p className="mt-3 flex items-start gap-1.5 text-label leading-relaxed text-muted-foreground">
             <span aria-hidden className="mt-[5px] h-1 w-4 shrink-0 rounded-full bg-[#FACC15]" />
             <span className="min-w-0">
               노란 길이 붕대가 지나가는 길이에요. 흰 점선은 손바닥 쪽(안 보이는 쪽)으로 지나가요.
@@ -555,7 +555,7 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
           <button
             type="button"
             onClick={() => onWatch(step)}
-            className="mt-3.5 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-bold text-primary ring-1 ring-primary/40 transition-transform active:scale-[0.98]"
+            className="mt-3.5 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full text-label font-bold text-primary ring-1 ring-primary/40 transition-transform active:scale-[0.98]"
           >
             <Play className="h-3.5 w-3.5 fill-current" aria-hidden /> 이 장면 큰 영상으로 보기
           </button>
@@ -568,7 +568,7 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
           type="button"
           onClick={() => onGo(idx - 1)}
           disabled={idx === 0}
-          className="inline-flex h-12 w-[34%] items-center justify-center gap-1 rounded-full bg-secondary text-[14px] font-bold text-foreground transition-transform active:scale-[0.98] disabled:opacity-40"
+          className="inline-flex h-12 w-[34%] items-center justify-center gap-1 rounded-full bg-secondary text-label font-bold text-foreground transition-transform active:scale-[0.98] disabled:opacity-40"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden /> 이전
         </button>
@@ -576,7 +576,7 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
           <button
             type="button"
             onClick={() => onGo(0)}
-            className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-full bg-foreground text-[14.5px] font-black text-background transition-transform active:scale-[0.98]"
+            className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-full bg-foreground text-label font-black text-background transition-transform active:scale-[0.98]"
           >
             <RotateCcw className="h-4 w-4" aria-hidden /> 처음부터 다시
           </button>
@@ -584,7 +584,7 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
           <button
             type="button"
             onClick={() => onGo(idx + 1)}
-            className="inline-flex h-12 flex-1 items-center justify-center gap-1 rounded-full bg-foreground text-[14.5px] font-black text-background transition-transform active:scale-[0.98]"
+            className="inline-flex h-12 flex-1 items-center justify-center gap-1 rounded-full bg-foreground text-label font-black text-background transition-transform active:scale-[0.98]"
           >
             다음 {idx + 2}단계 <ChevronRight className="h-4 w-4" aria-hidden />
           </button>

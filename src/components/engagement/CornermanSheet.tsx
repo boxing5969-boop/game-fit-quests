@@ -166,13 +166,13 @@ const CornermanSheet = ({ open, onClose }: Props) => {
           <Users className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
             운동 짝꿍
           </p>
-          <h2 className="mt-0.5 text-[15px] font-bold text-foreground">
+          <h2 className="mt-0.5 text-body font-bold text-foreground">
             {CORNERMAN_COPY.cardHeadline}
           </h2>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
             {CORNERMAN_COPY.cardSub}
           </p>
         </div>
@@ -191,7 +191,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
     if (!status || status.pending_received.length === 0) return null;
     return (
       <div>
-        <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+        <p className="mb-1.5 text-micro font-bold text-foreground">
           {CORNERMAN_COPY.pendingReceivedHint}
         </p>
         <div className="space-y-2">
@@ -205,11 +205,11 @@ const CornermanSheet = ({ open, onClose }: Props) => {
                 <button
                   type="button"
                   onClick={() => openMemberCard(p.requester_user_id)}
-                  className="text-left text-[13px] font-bold text-foreground underline decoration-border underline-offset-2 active:opacity-70"
+                  className="text-left text-label font-bold text-foreground underline decoration-border underline-offset-2 active:opacity-70"
                 >
                   🥊 {p.requester_name}
                 </button>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <p className="mt-0.5 text-micro text-muted-foreground">
                   {RANK_KOREAN_LABEL[p.requester_rank] ?? p.requester_rank} 리그
                   · Lv.{toGlobalLevel(p.requester_rank, p.requester_level)}
                 </p>
@@ -218,7 +218,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
                     type="button"
                     onClick={() => handleRespond(p.pair_id, "accept")}
                     disabled={pending}
-                    className="flex items-center justify-center gap-1 rounded-card bg-primary py-2 text-[12px] font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-60"
+                    className="flex items-center justify-center gap-1 rounded-card bg-primary py-2 text-label font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-60"
                   >
                     <Check className="h-3.5 w-3.5" />
                     수락
@@ -227,7 +227,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
                     type="button"
                     onClick={() => handleRespond(p.pair_id, "decline")}
                     disabled={pending}
-                    className="flex items-center justify-center gap-1 rounded-card border border-border bg-card py-2 text-[12px] font-bold text-muted-foreground transition-all active:scale-[0.98] disabled:opacity-60"
+                    className="flex items-center justify-center gap-1 rounded-card border border-border bg-card py-2 text-label font-bold text-muted-foreground transition-all active:scale-[0.98] disabled:opacity-60"
                   >
                     <X className="h-3.5 w-3.5" />
                     거절
@@ -245,7 +245,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
     if (!status || status.pending_sent.length === 0) return null;
     return (
       <div>
-        <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+        <p className="mb-1.5 text-micro font-bold text-foreground">
           {CORNERMAN_COPY.pendingSentHint}
         </p>
         <div className="space-y-2">
@@ -254,7 +254,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
               key={p.pair_id}
               className="rounded-card border border-border bg-background/40 p-3"
             >
-              <p className="text-[12.5px] font-medium text-foreground">
+              <p className="text-label font-medium text-foreground">
                 <button
                   type="button"
                   onClick={() => openMemberCard(p.receiver_user_id)}
@@ -276,10 +276,10 @@ const CornermanSheet = ({ open, onClose }: Props) => {
   /** 앱에 아직 없는 우리 지점 회원 — 초대하기 */
   const renderInvite = () => (
     <div>
-      <p className="mb-1 flex items-center gap-1.5 text-[11.5px] font-bold text-foreground">
+      <p className="mb-1 flex items-center gap-1.5 text-micro font-bold text-foreground">
         <Gift className="h-3.5 w-3.5 text-amber-600" /> 아직 앱에 없는 우리 지점 회원
       </p>
-      <p className="mb-2 text-[10.5px] leading-relaxed text-muted-foreground">
+      <p className="mb-2 text-micro leading-relaxed text-muted-foreground">
         초대 링크를 보내 보세요. 초대한 회원이 그 링크로 앱에 처음 들어오면 챔피언 머니 1,000을 드려요 (링크를 누른 초대 1명에게).
         {inviteStats && inviteStats.invited > 0
           ? ` 내 초대 ${inviteStats.invited}명 · 들어온 ${inviteStats.joined}명${inviteStats.reward > 0 ? ` · 받은 보상 ${inviteStats.reward.toLocaleString()}` : ""}`
@@ -311,7 +311,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
         placeholder={isHq ? "회원 이름으로 찾기" : "같은 지점 회원 이름으로 찾기"}
         aria-label="회원 이름으로 찾기"
         enterKeyHint="search"
-        className="min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
+        className="min-w-0 flex-1 bg-transparent text-label text-foreground outline-none placeholder:text-muted-foreground"
       />
       {query && (
         <button
@@ -343,7 +343,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
   const renderBody = () => {
     if (statusLoading) {
       return (
-        <p className="text-[12px] text-muted-foreground">
+        <p className="text-label text-muted-foreground">
           짝꿍 정보를 불러오는 중…
         </p>
       );
@@ -365,7 +365,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
             {renderSearchBox()}
             {searching ? renderSearchResults() : renderInvite()}
           </div>
-          <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="text-micro leading-relaxed text-muted-foreground">
             ※ {CORNERMAN_DISCLAIMER}
           </p>
         </div>
@@ -379,10 +379,10 @@ const CornermanSheet = ({ open, onClose }: Props) => {
         {renderPendingSent()}
 
         <div>
-          <p className="mb-1.5 text-[11.5px] font-bold text-foreground">
+          <p className="mb-1.5 text-micro font-bold text-foreground">
             {isHq ? "전 지점 회원" : "같은 지점 회원 후보"}
           </p>
-          <p className="mb-2 text-[10.5px] leading-relaxed text-muted-foreground">
+          <p className="mb-2 text-micro leading-relaxed text-muted-foreground">
             {isHq
               ? "최근 출석한 회원부터 보여요. 짝꿍은 같은 지점 회원끼리 맺어요."
               : CORNERMAN_COPY.emptyHint}
@@ -404,7 +404,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
 
         {!searching && renderInvite()}
 
-        <p className="text-[10.5px] leading-relaxed text-muted-foreground">
+        <p className="text-micro leading-relaxed text-muted-foreground">
           ※ {CORNERMAN_DISCLAIMER}
         </p>
       </div>

@@ -36,15 +36,15 @@ export const ComebackButton = ({ className }: ComebackButtonProps) => {
             <Heart className="h-3.5 w-3.5" />
           </span>
           <div>
-            <p className="text-[12.5px] font-bold text-foreground">
+            <p className="text-label font-bold text-foreground">
               오늘 조금 무너졌어요
             </p>
-            <p className="mt-0.5 text-[10.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
               괜찮아요 · 1개만 해도 오늘은 복구 성공
             </p>
           </div>
         </div>
-        <span className="shrink-0 text-[10.5px] font-bold text-emerald-500 group-hover:translate-x-0.5 transition-transform">
+        <span className="shrink-0 text-micro font-bold text-emerald-500 group-hover:translate-x-0.5 transition-transform">
           복귀 루틴 →
         </span>
       </button>

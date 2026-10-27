@@ -30,12 +30,12 @@ export const DietConsentGate = ({
         className,
       )}
     >
-      <div className="flex items-center gap-2 text-[13px] font-bold text-foreground">
+      <div className="flex items-center gap-2 text-label font-bold text-foreground">
         <ShieldCheck className="h-4 w-4 text-primary" />
         <span>건강 및 안내사항</span>
       </div>
 
-      <ul className="space-y-1.5 text-[12px] leading-relaxed text-muted-foreground">
+      <ul className="space-y-1.5 text-label leading-relaxed text-muted-foreground">
         {DIET_HEALTH_DISCLAIMER.map((line) => (
           <li key={line} className="pl-3 -indent-3">
             <span className="mr-1 text-primary">·</span>
@@ -56,7 +56,7 @@ export const DietConsentGate = ({
           onCheckedChange={(v) => onChange(v === true)}
           className="mt-0.5"
         />
-        <span className="text-[12.5px] leading-relaxed text-foreground">
+        <span className="text-label leading-relaxed text-foreground">
           위 안내 내용을 이해했으며, 일반 건강관리용 습관 프로그램으로 참여함에
           동의합니다.
         </span>

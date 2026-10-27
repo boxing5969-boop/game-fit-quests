@@ -47,41 +47,41 @@ const DietRankingPage = () => {
     >
       <div data-tour="diet-page-ranking" className="space-y-4 pt-2">
         {!featureEnabled ? (
-          <div className="rounded-2xl border border-border bg-card p-6 text-center text-[13px] text-muted-foreground">
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
             153 다이어트 프로그램이 아직 활성화되지 않았어요.
           </div>
         ) : !branchName ? (
-          <div className="rounded-2xl border border-border bg-card p-6 text-center text-[13px] text-muted-foreground">
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
             지점을 먼저 설정해 주세요.
           </div>
         ) : (
           <>
             <div className="rounded-2xl border border-primary/25 bg-primary/5 p-3">
-              <div className="flex items-center gap-1.5 text-[12px] font-bold text-primary">
+              <div className="flex items-center gap-1.5 text-label font-bold text-primary">
                 <Info className="h-3.5 w-3.5" />
                 <span>정렬 기준</span>
               </div>
-              <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+              <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
                 코치가 승인한 체크인 일수 → 최고 스트릭 → 닉네임 순.
                 체중·감량 수치는 사용하지 않아요. 개인 사진·메모는 비공개입니다.
               </p>
             </div>
 
             {rankingQuery.isLoading ? (
-              <div className="rounded-2xl border border-border bg-card p-6 text-center text-[12px] text-muted-foreground">
+              <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
                 불러오는 중...
               </div>
             ) : !rankingQuery.data?.success ? (
-              <div className="rounded-2xl border border-border bg-card p-6 text-center text-[12px] text-muted-foreground">
+              <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
                 랭킹을 불러오지 못했어요.
               </div>
             ) : rankingQuery.data.rows.length === 0 ? (
               <div className="rounded-2xl border border-border bg-card p-6 text-center">
                 <Sparkles className="mx-auto h-5 w-5 text-primary" />
-                <p className="mt-1.5 text-[13px] font-bold text-foreground">
+                <p className="mt-1.5 text-label font-bold text-foreground">
                   아직 기록이 쌓이지 않았어요
                 </p>
-                <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+                <p className="mt-0.5 text-micro text-muted-foreground">
                   첫 승인된 체크인이 있으면 바로 표시돼요.
                 </p>
               </div>
@@ -102,7 +102,7 @@ const DietRankingPage = () => {
               </ul>
             )}
 
-            <p className="text-center text-[11px] text-muted-foreground">
+            <p className="text-center text-micro text-muted-foreground">
               리더보드 노출이 부담스럽다면 설정에서 코치에게 비공개 요청을 남겨 주세요.
             </p>
           </>
@@ -141,7 +141,7 @@ const RankingRow = ({
     >
       <span
         className={cn(
-          "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black",
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-micro font-black",
           medal === "gold" && "bg-reward/25 text-reward-foreground",
           medal === "silver" && "bg-muted text-foreground",
           medal === "bronze" && "bg-primary/15 text-primary",
@@ -150,7 +150,7 @@ const RankingRow = ({
       >
         {medal ? <Medal className="h-3.5 w-3.5" /> : rank}
       </span>
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-[13px] font-bold text-muted-foreground">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-label font-bold text-muted-foreground">
         {avatarUrl ? (
           <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
         ) : (
@@ -158,23 +158,23 @@ const RankingRow = ({
         )}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-bold text-foreground">
+        <p className="truncate text-label font-bold text-foreground">
           {nickname}
           {highlight && (
-            <span className="ml-1.5 rounded bg-primary/15 px-1 py-0.5 text-[9px] font-black uppercase text-primary">
+            <span className="ml-1.5 rounded bg-primary/15 px-1 py-0.5 text-micro font-black uppercase text-primary">
               나
             </span>
           )}
         </p>
-        <p className="text-[10.5px] text-muted-foreground">
+        <p className="text-micro text-muted-foreground">
           승인 {approvedDays}일 · 최고 {bestStreak}일 연속
         </p>
       </div>
       <div className="text-right">
-        <p className="number-font text-[14px] font-extrabold text-primary">
+        <p className="number-font text-label font-extrabold text-primary">
           {completionRate}%
         </p>
-        <p className="text-[10px] text-muted-foreground">완주율</p>
+        <p className="text-micro text-muted-foreground">완주율</p>
       </div>
     </li>
   );

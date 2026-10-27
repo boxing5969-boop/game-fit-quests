@@ -75,7 +75,7 @@ export const BadgeCard = ({
             loading="lazy"
           />
         ) : (
-          <span className="text-2xl leading-none">{icon ?? "🏅"}</span>
+          <span className="text-title leading-none">{icon ?? "🏅"}</span>
         )}
         {locked && (
           <span className="absolute inset-0 flex items-center justify-center rounded-pill bg-background/60 backdrop-blur-sm">
@@ -83,10 +83,10 @@ export const BadgeCard = ({
           </span>
         )}
       </div>
-      <p className="text-caption line-clamp-1 font-bold text-foreground">
+      <p className="text-label line-clamp-1 font-bold text-foreground">
         {title}
       </p>
-      <p className={cn("text-[10px] font-bold", RARITY_LABEL_TONE[rarity])}>
+      <p className={cn("text-micro font-bold", RARITY_LABEL_TONE[rarity])}>
         {subtitle ?? RARITY_LABEL[rarity]}
       </p>
     </Root>

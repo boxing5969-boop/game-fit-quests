@@ -34,20 +34,20 @@ const SecondCheerCard = ({ candidate, onSelect }: SecondCheerCardProps) => {
       onClick={() => onSelect(candidate)}
       className="flex w-full items-center gap-3 rounded-card border border-border bg-card px-3 py-2.5 text-left transition-all active:scale-[0.99] hover:border-primary/40"
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-muted text-base">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-muted text-body">
         🥊
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-bold text-foreground">
+        <p className="truncate text-label font-bold text-foreground">
           {candidate.display_name}
         </p>
         <div className="mt-0.5 flex items-center gap-1.5">
           {rankLabel && candidate.current_level != null ? (
-            <span className={`badge-pill text-[9.5px] ${tone}`}>
+            <span className={`badge-pill text-micro ${tone}`}>
               {rankLabel} · Lv.{toGlobalLevel(rank, candidate.current_level)}
             </span>
           ) : null}
-          <span className="truncate text-[10.5px] text-muted-foreground">
+          <span className="truncate text-micro text-muted-foreground">
             {candidate.branch_name}
           </span>
         </div>

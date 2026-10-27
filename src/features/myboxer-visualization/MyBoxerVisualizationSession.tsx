@@ -343,7 +343,7 @@ function IntroStep({
       className="space-y-6"
     >
       <div className="flex items-center justify-between">
-        <span className="rounded-full border border-amber-200/20 bg-black/30 px-3 py-1 text-[11px] font-bold tracking-wide text-amber-200/80">
+        <span className="rounded-full border border-amber-200/20 bg-black/30 px-3 py-1 text-micro font-bold tracking-wide text-amber-200/80">
           {CATEGORY_LABEL[session.category]}
         </span>
         <button
@@ -358,20 +358,20 @@ function IntroStep({
 
       <header className="space-y-2 text-center">
         <OrbPreview tint={session.tint} />
-        <h1 className="text-[28px] font-black leading-tight [text-wrap:balance]">{session.title}</h1>
-        <p className="text-[13px] text-amber-100/70">{session.tagline}</p>
-        <p className="text-[11.5px] text-amber-200/55">
+        <h1 className="text-title font-black leading-tight [text-wrap:balance]">{session.title}</h1>
+        <p className="text-label text-amber-100/70">{session.tagline}</p>
+        <p className="text-micro text-amber-200/55">
           약 {minutes}분 · {session.when}
         </p>
       </header>
 
-      <p className="whitespace-pre-line rounded-2xl border border-amber-200/10 bg-black/25 p-4 text-[13.5px] leading-relaxed text-amber-50/90">
+      <p className="whitespace-pre-line rounded-2xl border border-amber-200/10 bg-black/25 p-4 text-label leading-relaxed text-amber-50/90">
         {session.intro}
       </p>
 
       {session.variants && (
         <div>
-          <p className="mb-2 text-[11px] font-bold tracking-wide text-amber-200/60">길이</p>
+          <p className="mb-2 text-micro font-bold tracking-wide text-amber-200/60">길이</p>
           <div className="flex gap-2">
             {session.variants.map((v) => (
               <button
@@ -379,7 +379,7 @@ function IntroStep({
                 type="button"
                 onClick={() => onVariant(v.key)}
                 className={cn(
-                  "flex-1 rounded-xl border px-3 py-2.5 text-[12.5px] font-bold transition-colors active:scale-[0.98]",
+                  "flex-1 rounded-xl border px-3 py-2.5 text-label font-bold transition-colors active:scale-[0.98]",
                   v.key === variantKey
                     ? "border-amber-300/70 bg-amber-400/15 text-amber-50"
                     : "border-amber-200/10 bg-black/25 text-amber-100/60",
@@ -395,10 +395,10 @@ function IntroStep({
       <div className="grid grid-cols-3 gap-2">
         {session.tips.slice(0, 3).map((text, i) => (
           <div key={i} className="min-w-0 rounded-2xl border border-amber-200/10 bg-black/25 p-3">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/20 text-[11px] font-black text-amber-300">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/20 text-micro font-black text-amber-300">
               {i + 1}
             </span>
-            <p className="mt-1.5 text-[11.5px] leading-snug text-amber-100/80">{text}</p>
+            <p className="mt-1.5 text-micro leading-snug text-amber-100/80">{text}</p>
           </div>
         ))}
       </div>
@@ -407,8 +407,8 @@ function IntroStep({
       <div className="space-y-3 rounded-2xl border border-amber-200/10 bg-black/25 p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[13px] font-bold">목소리 안내</p>
-            <p className="text-[11px] text-amber-200/55">
+            <p className="text-label font-bold">목소리 안내</p>
+            <p className="text-micro text-amber-200/55">
               {hasVoice === false ? "한국어 음성을 찾지 못했어요 · 소리가 안 나면 자막을 보고 따라가요" : "끄면 자막만 보고 따라가요"}
             </p>
           </div>
@@ -422,7 +422,7 @@ function IntroStep({
                 type="button"
                 onClick={() => onPrefs({ rate: r.v })}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-[11.5px] font-bold",
+                  "rounded-full border px-3 py-1 text-micro font-bold",
                   prefs.rate === r.v ? "border-amber-300/60 bg-amber-400/15 text-amber-50" : "border-amber-200/10 text-amber-100/55",
                 )}
               >
@@ -432,7 +432,7 @@ function IntroStep({
             <button
               type="button"
               onClick={tryVoice}
-              className="ml-auto inline-flex items-center gap-1 rounded-full border border-amber-200/20 px-3 py-1 text-[11.5px] font-bold text-amber-100/80 active:scale-95"
+              className="ml-auto inline-flex items-center gap-1 rounded-full border border-amber-200/20 px-3 py-1 text-micro font-bold text-amber-100/80 active:scale-95"
             >
               <Volume2 className="h-3.5 w-3.5" />
               들어보기
@@ -440,13 +440,13 @@ function IntroStep({
           </div>
         )}
         {hasVoice === false && prefs.voiceOn && (
-          <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-[11px] leading-relaxed text-amber-100/75">
+          <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-micro leading-relaxed text-amber-100/75">
             휴대폰 설정 → 텍스트 음성 변환(TTS)에서 한국어 음성을 받으면 목소리로 들을 수 있어요.
           </p>
         )}
         <div className="h-px bg-amber-200/10" />
         <div>
-          <p className="text-[13px] font-bold">배경 소리</p>
+          <p className="text-label font-bold">배경 소리</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {/* '세션 기본' = 세션마다 어울리는 소리 (고르면 모든 세션에 같은 소리로 고정) */}
             {([null, ...SCAPES] as Array<Soundscape | null>).map((k) => (
@@ -455,7 +455,7 @@ function IntroStep({
                 type="button"
                 onClick={() => onPrefs({ scape: k })}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-[11.5px] font-bold",
+                  "rounded-full border px-3 py-1 text-micro font-bold",
                   prefs.scape === k ? "border-amber-300/60 bg-amber-400/15 text-amber-50" : "border-amber-200/10 text-amber-100/55",
                 )}
               >
@@ -464,7 +464,7 @@ function IntroStep({
             ))}
           </div>
           {scape !== "off" && (
-            <label className="mt-3 flex items-center gap-3 text-[11px] text-amber-200/60">
+            <label className="mt-3 flex items-center gap-3 text-micro text-amber-200/60">
               <Waves className="h-3.5 w-3.5 shrink-0" />
               <input
                 type="range"
@@ -482,15 +482,15 @@ function IntroStep({
       </div>
 
       <div className="rounded-2xl border-l-2 border-amber-400/60 bg-amber-500/5 px-4 py-3">
-        <p className="text-[11px] font-bold tracking-wide text-amber-300/80">왜 효과가 있나요</p>
-        <p className="mt-1 text-[12px] leading-relaxed text-amber-100/80">{session.why}</p>
+        <p className="text-micro font-bold tracking-wide text-amber-300/80">왜 효과가 있나요</p>
+        <p className="mt-1 text-label leading-relaxed text-amber-100/80">{session.why}</p>
       </div>
 
       <button
         type="button"
         data-tour="mindset-start-button"
         onClick={onStart}
-        className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-[16px] font-black tracking-wide text-[#1a1206] shadow-[0_0_30px_rgba(253,184,92,0.35)] active:scale-[0.98]"
+        className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-body font-black tracking-wide text-[#1a1206] shadow-[0_0_30px_rgba(253,184,92,0.35)] active:scale-[0.98]"
         style={{ background: "linear-gradient(90deg, #fbbf24, #f59e0b)" }}
       >
         시작하기
@@ -548,9 +548,9 @@ function CheckinStep({ onPick, onSkip, onBack }: { onPick: (v: number) => void; 
       className="flex min-h-[70dvh] flex-col justify-center space-y-6 text-center"
     >
       <div className="space-y-2">
-        <p className="text-[11px] font-bold tracking-[0.3em] text-amber-300/70">CHECK-IN</p>
-        <h2 className="text-2xl font-black">지금 기분은 어때요?</h2>
-        <p className="text-[12px] text-amber-200/60">누르면 바로 시작해요. 이어폰을 끼고 눈을 감을 준비를 해요.</p>
+        <p className="text-micro font-bold tracking-[0.3em] text-amber-300/70">CHECK-IN</p>
+        <h2 className="text-title font-black">지금 기분은 어때요?</h2>
+        <p className="text-label text-amber-200/60">누르면 바로 시작해요. 이어폰을 끼고 눈을 감을 준비를 해요.</p>
       </div>
       <div className="grid grid-cols-5 gap-2">
         {MOOD_SCALE.map((m) => (
@@ -561,11 +561,11 @@ function CheckinStep({ onPick, onSkip, onBack }: { onPick: (v: number) => void; 
             className="flex flex-col items-center gap-2 rounded-2xl border border-amber-200/10 bg-black/30 px-1 py-4 active:scale-95"
           >
             <MoodDot v={m.v} />
-            <span className="text-[11px] font-bold leading-tight text-amber-100/85">{m.label}</span>
+            <span className="text-micro font-bold leading-tight text-amber-100/85">{m.label}</span>
           </button>
         ))}
       </div>
-      <div className="flex justify-center gap-4 text-[12px] font-bold text-amber-200/55">
+      <div className="flex justify-center gap-4 text-label font-bold text-amber-200/55">
         <button type="button" onClick={onBack} className="active:opacity-60">
           이전
         </button>
@@ -643,11 +643,11 @@ function PlayerOverlay({
       {/* 위 — 장면 · 남은 시간 · 끝내기 */}
       <div className="flex items-center justify-between px-5 pt-4">
         <div className="min-w-0">
-          <p className="truncate text-[11px] font-bold text-amber-300/75">{session.title}</p>
-          <p className="truncate text-[13px] font-bold text-amber-50/85">{state.chapter || " "}</p>
+          <p className="truncate text-micro font-bold text-amber-300/75">{session.title}</p>
+          <p className="truncate text-label font-bold text-amber-50/85">{state.chapter || " "}</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="font-mono text-[12px] tabular-nums text-amber-200/60">-{fmtClock(remaining)}</span>
+          <span className="font-mono text-label tabular-nums text-amber-200/60">-{fmtClock(remaining)}</span>
           <button
             type="button"
             onClick={onFinish}
@@ -677,11 +677,11 @@ function PlayerOverlay({
               transition={{ duration: 0.45 }}
               className={cn(
                 "max-w-[22rem] text-center leading-relaxed [text-wrap:balance]",
-                state.captionKind === "call" && "text-[44px] font-black tracking-tight text-white",
-                state.captionKind === "breath" && "text-[26px] font-black text-white",
-                state.captionKind === "say" && "text-[18px] font-bold text-amber-50/95",
-                state.captionKind === "quiet" && "text-[15px] font-semibold italic text-amber-200/60",
-                state.captionKind === "bell" && "text-[20px] font-black tracking-[0.2em] text-amber-300",
+                state.captionKind === "call" && "text-display font-black tracking-tight text-white",
+                state.captionKind === "breath" && "text-title font-black text-white",
+                state.captionKind === "say" && "text-heading font-bold text-amber-50/95",
+                state.captionKind === "quiet" && "text-body font-semibold italic text-amber-200/60",
+                state.captionKind === "bell" && "text-heading font-black tracking-[0.2em] text-amber-300",
               )}
             >
               {state.caption}
@@ -694,7 +694,7 @@ function PlayerOverlay({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute bottom-4 text-[11.5px] font-semibold text-amber-200/45"
+              className="absolute bottom-4 text-micro font-semibold text-amber-200/45"
             >
               눈을 감고 소리를 따라가요
             </motion.p>
@@ -727,7 +727,7 @@ function PlayerOverlay({
           <Check className="h-5 w-5" />
         </RoundIcon>
       </div>
-      <p className="pb-4 text-center text-[11px] text-amber-200/40">{SOUNDSCAPE_LABEL[scape]}</p>
+      <p className="pb-4 text-center text-micro text-amber-200/40">{SOUNDSCAPE_LABEL[scape]}</p>
 
       {/* 화면 어둡게 — 눌러서 다시 밝게 */}
       <AnimatePresence>
@@ -741,7 +741,7 @@ function PlayerOverlay({
             aria-label="화면 다시 밝게"
             className="absolute inset-0 z-10 flex items-end justify-center bg-black/95 pb-16"
           >
-            <span className="text-[11px] font-semibold text-white/25">눌러서 다시 밝게</span>
+            <span className="text-micro font-semibold text-white/25">눌러서 다시 밝게</span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -812,7 +812,7 @@ function Orb({ state, tint, pct }: { state: ReturnType<typeof useMindPlayer>["st
         />
       )}
       {b && (
-        <span className="absolute inset-0 flex items-center justify-center font-mono text-[13px] font-bold tabular-nums text-[#1a1206]/70">
+        <span className="absolute inset-0 flex items-center justify-center font-mono text-label font-bold tabular-nums text-[#1a1206]/70">
           <BreathCount key={b.key} sec={b.sec} />
         </span>
       )}
@@ -875,9 +875,9 @@ function PostStep({
       className="space-y-6"
     >
       <header className="space-y-1 pt-4">
-        <p className="text-[11px] font-bold tracking-[0.3em] text-amber-300/70">AFTER</p>
-        <h2 className="text-2xl font-black leading-tight">수고했어요. 어땠나요?</h2>
-        <p className="text-[12px] text-amber-200/60">
+        <p className="text-micro font-bold tracking-[0.3em] text-amber-300/70">AFTER</p>
+        <h2 className="text-title font-black leading-tight">수고했어요. 어땠나요?</h2>
+        <p className="text-label text-amber-200/60">
           {early ? "끝까지 못 해도 괜찮아요. 오늘 한 만큼이 기록이에요." : "10초면 끝나요. 쌓이면 내 마음 근육이 보여요."}
         </p>
       </header>
@@ -886,9 +886,9 @@ function PostStep({
       <Scale title="원하는 대로 그려졌나요?" labels={CONTROL} value={control} onChange={onControl} />
 
       <div>
-        <p className="text-[13px] font-bold">지금 기분은요?</p>
+        <p className="text-label font-bold">지금 기분은요?</p>
         {moodBefore && (
-          <p className="mt-0.5 text-[11px] text-amber-200/55">시작할 때: {MOOD_SCALE[moodBefore - 1].label}</p>
+          <p className="mt-0.5 text-micro text-amber-200/55">시작할 때: {MOOD_SCALE[moodBefore - 1].label}</p>
         )}
         <div className="mt-2 grid grid-cols-5 gap-2">
           {MOOD_SCALE.map((m) => (
@@ -902,21 +902,21 @@ function PostStep({
               )}
             >
               <MoodDot v={m.v} size={20} />
-              <span className="text-[10.5px] font-bold leading-tight text-amber-100/85">{m.label}</span>
+              <span className="text-micro font-bold leading-tight text-amber-100/85">{m.label}</span>
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <p className="text-[13px] font-bold">한 줄 남기기 <span className="font-normal text-amber-200/50">(나만 봐요 · 비워도 돼요)</span></p>
+        <p className="text-label font-bold">한 줄 남기기 <span className="font-normal text-amber-200/50">(나만 봐요 · 비워도 돼요)</span></p>
         <div className="mt-2 rounded-2xl border border-amber-200/10 bg-black/30 p-2">
           <Textarea
             value={note}
             onChange={(e) => onNote(e.target.value)}
             placeholder={NOTE_HINT[session.category] ?? "오늘 떠올린 장면 한 줄"}
             maxLength={300}
-            className="min-h-[88px] resize-none border-0 bg-transparent text-[13px] leading-relaxed text-amber-50 placeholder:text-amber-200/30 focus-visible:ring-0"
+            className="min-h-[88px] resize-none border-0 bg-transparent text-label leading-relaxed text-amber-50 placeholder:text-amber-200/30 focus-visible:ring-0"
           />
         </div>
       </div>
@@ -925,7 +925,7 @@ function PostStep({
         type="button"
         onClick={onSave}
         disabled={saving}
-        className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-[16px] font-black text-[#1a1206] active:scale-[0.98] disabled:opacity-60"
+        className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-body font-black text-[#1a1206] active:scale-[0.98] disabled:opacity-60"
         style={{ background: "linear-gradient(90deg, #fbbf24, #f59e0b)" }}
       >
         <Check className="h-5 w-5" />
@@ -936,7 +936,7 @@ function PostStep({
           type="button"
           onClick={onSkip}
           disabled={saving}
-          className="mx-auto block text-[12px] font-semibold text-amber-200/50 underline-offset-4 active:underline"
+          className="mx-auto block text-label font-semibold text-amber-200/50 underline-offset-4 active:underline"
         >
           기록 없이 닫기
         </button>
@@ -959,8 +959,8 @@ function Scale({
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-[13px] font-bold">{title}</p>
-        <p className="text-[11px] font-bold text-amber-300/80">{value ? labels[value - 1] : ""}</p>
+        <p className="text-label font-bold">{title}</p>
+        <p className="text-micro font-bold text-amber-300/80">{value ? labels[value - 1] : ""}</p>
       </div>
       <div className="mt-2 grid grid-cols-5 gap-2">
         {[1, 2, 3, 4, 5].map((v) => (
@@ -970,7 +970,7 @@ function Scale({
             onClick={() => onChange(v)}
             aria-label={`${title} ${v}점 — ${labels[v - 1]}`}
             className={cn(
-              "h-11 rounded-xl border text-[15px] font-black tabular-nums transition-colors active:scale-95",
+              "h-11 rounded-xl border text-body font-black tabular-nums transition-colors active:scale-95",
               value != null && v <= value
                 ? "border-amber-300/60 bg-gradient-to-b from-amber-300/30 to-amber-500/10 text-amber-50"
                 : "border-amber-200/10 bg-black/25 text-amber-100/45",
@@ -980,7 +980,7 @@ function Scale({
           </button>
         ))}
       </div>
-      <div className="mt-1 flex justify-between text-[10px] text-amber-200/40">
+      <div className="mt-1 flex justify-between text-micro text-amber-200/40">
         <span>{labels[0]}</span>
         <span>{labels[4]}</span>
       </div>
@@ -1052,22 +1052,22 @@ function DoneStep({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[34px] font-black tabular-nums leading-none">
+          <span className="text-display font-black tabular-nums leading-none">
             {Math.min(week, 99)}
-            <span className="text-[16px] text-amber-200/50">/{WEEK_GOAL}</span>
+            <span className="text-body text-amber-200/50">/{WEEK_GOAL}</span>
           </span>
-          <span className="mt-1 text-[10px] font-bold tracking-widest text-amber-200/60">이번 주</span>
+          <span className="mt-1 text-micro font-bold tracking-widest text-amber-200/60">이번 주</span>
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <h2 className="text-2xl font-black">{headline}</h2>
-        <p className="text-[12.5px] text-amber-200/65">
+        <h2 className="text-title font-black">{headline}</h2>
+        <p className="text-label text-amber-200/65">
           {Math.max(1, Math.round(playedSec / 60))}분 · {session.title}
           {stats && stats.streak >= 2 ? ` · ${stats.streak}일 연속` : ""}
         </p>
         {!counted && (
-          <p className="text-[12px] text-amber-200/55">끝까지 듣거나 3분 넘게 하면 이번 주 횟수에 들어가요</p>
+          <p className="text-label text-amber-200/55">끝까지 듣거나 3분 넘게 하면 이번 주 횟수에 들어가요</p>
         )}
       </div>
 
@@ -1075,12 +1075,12 @@ function DoneStep({
         <div className="grid grid-cols-2 gap-2 text-left">
           {moodBefore && moodAfter ? (
             <div className="rounded-2xl border border-amber-200/10 bg-black/25 p-3">
-              <p className="text-[10.5px] font-bold text-amber-200/55">기분</p>
-              <p className="mt-1 flex items-center gap-1.5 text-[13px] font-bold">
+              <p className="text-micro font-bold text-amber-200/55">기분</p>
+              <p className="mt-1 flex items-center gap-1.5 text-label font-bold">
                 <MoodDot v={moodBefore} size={14} />
                 {MOOD_SCALE[moodBefore - 1].label}
               </p>
-              <p className="mt-0.5 flex items-center gap-1.5 text-[13px] font-bold text-amber-50">
+              <p className="mt-0.5 flex items-center gap-1.5 text-label font-bold text-amber-50">
                 <ArrowRight className="h-3 w-3 text-amber-300" />
                 <MoodDot v={moodAfter} size={14} />
                 {MOOD_SCALE[moodAfter - 1].label}
@@ -1091,10 +1091,10 @@ function DoneStep({
           )}
           {trend ? (
             <div className="rounded-2xl border border-amber-200/10 bg-black/25 p-3">
-              <p className="text-[10.5px] font-bold text-amber-200/55">또렷함 (처음 → 요즘)</p>
-              <p className="mt-1 text-[22px] font-black tabular-nums">
+              <p className="text-micro font-bold text-amber-200/55">또렷함 (처음 → 요즘)</p>
+              <p className="mt-1 text-title font-black tabular-nums">
                 {trend.from.toFixed(1)}
-                <span className="mx-1 text-[14px] text-amber-300">→</span>
+                <span className="mx-1 text-label text-amber-300">→</span>
                 {trend.to.toFixed(1)}
               </p>
             </div>
@@ -1106,17 +1106,17 @@ function DoneStep({
 
       <div className="rounded-2xl border-l-2 px-4 py-3 text-left" style={{ borderColor: session.tint[0], background: "rgba(0,0,0,0.25)" }}>
         <Sparkles className="mb-1 h-4 w-4 text-amber-300" />
-        <p className="whitespace-pre-line text-[13px] font-bold leading-relaxed text-amber-50/90">{session.closing}</p>
+        <p className="whitespace-pre-line text-label font-bold leading-relaxed text-amber-50/90">{session.closing}</p>
       </div>
 
       {stats?.local && (
-        <p className="text-[11px] text-amber-200/45">인터넷이 불안해서 이 기기에 먼저 남겼어요. 다음에 앱을 열면 계정에 올라가요.</p>
+        <p className="text-micro text-amber-200/45">인터넷이 불안해서 이 기기에 먼저 남겼어요. 다음에 앱을 열면 계정에 올라가요.</p>
       )}
 
       <button
         type="button"
         onClick={onClose}
-        className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-[16px] font-black text-[#1a1206] active:scale-[0.98]"
+        className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-body font-black text-[#1a1206] active:scale-[0.98]"
         style={{ background: "linear-gradient(90deg, #fbbf24, #f59e0b)" }}
       >
         다른 세션 보기

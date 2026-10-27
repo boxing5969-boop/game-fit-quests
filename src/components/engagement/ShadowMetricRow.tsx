@@ -17,15 +17,15 @@ const ShadowMetricRow = ({ metric }: ShadowMetricRowProps) => {
   const diff = metric.current - metric.shadow;
   return (
     <div className="flex items-center gap-3 rounded-card border border-border bg-card px-3 py-2.5">
-      <span className="text-[16px]">{getShadowMetricEmoji(metric.key)}</span>
+      <span className="text-body">{getShadowMetricEmoji(metric.key)}</span>
       <div className="min-w-0 flex-1">
-        <p className="text-[12.5px] font-bold text-foreground">{metric.label}</p>
-        <p className="mt-0.5 text-[10.5px] text-muted-foreground">
+        <p className="text-label font-bold text-foreground">{metric.label}</p>
+        <p className="mt-0.5 text-micro text-muted-foreground">
           그림자 {metric.shadow} → 지금 {metric.current}
         </p>
       </div>
       <div
-        className={`shrink-0 flex items-center gap-1 rounded-pill px-2 py-1 text-[10.5px] font-bold ${
+        className={`shrink-0 flex items-center gap-1 rounded-pill px-2 py-1 text-micro font-bold ${
           metric.improved
             ? "bg-emerald-400/15 text-emerald-700"
             : "bg-muted text-muted-foreground"

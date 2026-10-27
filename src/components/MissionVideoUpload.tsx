@@ -141,13 +141,13 @@ const MissionVideoUpload = ({ submissionId, videoUrl, timestampComments = [], is
             {uploading ? (
               <>
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="text-sm text-muted-foreground">업로드 중...</span>
+                <span className="text-body text-muted-foreground">업로드 중...</span>
               </>
             ) : (
               <>
                 <Video className="h-8 w-8 text-muted-foreground" />
-                <span className="text-sm font-bold text-foreground">영상 증빙 업로드</span>
-                <span className="text-xs text-muted-foreground">탭하여 영상 선택 (최대 100MB)</span>
+                <span className="text-body font-bold text-foreground">영상 증빙 업로드</span>
+                <span className="text-label text-muted-foreground">탭하여 영상 선택 (최대 100MB)</span>
               </>
             )}
           </button>
@@ -157,7 +157,7 @@ const MissionVideoUpload = ({ submissionId, videoUrl, timestampComments = [], is
       {/* Timestamp comments (visible to both) */}
       {timestampComments.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+          <p className="text-label font-bold text-muted-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" /> 타임스탬프 코멘트
           </p>
           {timestampComments.map((c, i) => (
@@ -171,10 +171,10 @@ const MissionVideoUpload = ({ submissionId, videoUrl, timestampComments = [], is
               }}
               className="flex w-full items-start gap-2 rounded-lg bg-muted/30 px-3 py-2 text-left transition-all active:scale-[0.98]"
             >
-              <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+              <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-micro font-bold text-primary">
                 {formatTime(c.time)}
               </span>
-              <span className="text-xs text-foreground">{c.text}</span>
+              <span className="text-label text-foreground">{c.text}</span>
             </button>
           ))}
         </div>
@@ -184,20 +184,20 @@ const MissionVideoUpload = ({ submissionId, videoUrl, timestampComments = [], is
       {isManager && previewUrl && (
         <div className="space-y-2">
           <div className="flex gap-2">
-            <div className="shrink-0 rounded-lg bg-primary/10 px-2 py-1.5 text-xs font-bold text-primary">
+            <div className="shrink-0 rounded-lg bg-primary/10 px-2 py-1.5 text-label font-bold text-primary">
               {formatTime(currentTime)}
             </div>
             <input
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
               placeholder="이 시점에 대한 코멘트..."
-              className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground"
+              className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-label text-foreground placeholder:text-muted-foreground"
               onKeyDown={e => e.key === "Enter" && newComment.trim() && addTimestampComment.mutate()}
             />
             <button
               onClick={() => newComment.trim() && addTimestampComment.mutate()}
               disabled={!newComment.trim() || addTimestampComment.isPending}
-              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground active:scale-95 disabled:opacity-50"
+              className="rounded-lg bg-primary px-3 py-1.5 text-label font-bold text-primary-foreground active:scale-95 disabled:opacity-50"
             >
               <Send className="h-3 w-3" />
             </button>
@@ -207,7 +207,7 @@ const MissionVideoUpload = ({ submissionId, videoUrl, timestampComments = [], is
           <button
             onClick={() => requestReshoot.mutate()}
             disabled={requestReshoot.isPending}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/5 py-2 text-xs font-bold text-amber-600 transition-all active:scale-[0.98] disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/5 py-2 text-label font-bold text-amber-600 transition-all active:scale-[0.98] disabled:opacity-50"
           >
             <RotateCcw className="h-3.5 w-3.5" /> 재촬영 요청
           </button>

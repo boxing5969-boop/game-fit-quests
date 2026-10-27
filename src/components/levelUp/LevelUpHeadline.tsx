@@ -73,7 +73,7 @@ const LevelUpHeadline = ({
     <div className="text-center">
       {/* 메인 헤드라인 — 한 글자씩 spring 등장 */}
       <motion.h2
-        className="mb-2 select-none text-[42px] font-black leading-[1.1] tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)]"
+        className="mb-2 select-none text-display font-black leading-[1.1] tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)]"
         style={{ fontFamily: TITLE_FONT }}
       >
         {headlineLetters.map((char, i) => (
@@ -115,7 +115,7 @@ const LevelUpHeadline = ({
             type: "spring",
             damping: 16,
           }}
-          className="mb-2 flex items-center justify-center gap-3 text-[18px] font-bold text-white/90"
+          className="mb-2 flex items-center justify-center gap-3 text-heading font-bold text-white/90"
         >
           <span className="opacity-60">{oldRankLabel}</span>
           <motion.span
@@ -134,7 +134,7 @@ const LevelUpHeadline = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 1.5 }}
-        className="mb-6 text-[20px] font-bold tracking-wide text-white"
+        className="mb-6 text-heading font-bold tracking-wide text-white"
       >
         {!isRankUp && (
           <span>
@@ -155,12 +155,12 @@ const LevelUpHeadline = ({
           className="mb-2"
         >
           <div className="mx-auto inline-flex items-baseline gap-2 rounded-pill border border-reward/40 bg-foreground/40 px-5 py-2 backdrop-blur-sm">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-reward">
+            <span className="text-label font-bold uppercase tracking-wider text-reward">
               XP
             </span>
             <motion.span
               key={xpDisplay}
-              className="number-font text-[24px] font-black text-white drop-shadow-[0_2px_12px_rgba(246,196,83,0.8)]"
+              className="number-font text-title font-black text-white drop-shadow-[0_2px_12px_rgba(246,196,83,0.8)]"
             >
               +{xpDisplay.toLocaleString()}
             </motion.span>
@@ -174,7 +174,7 @@ const LevelUpHeadline = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 2.4 }}
-          className="mt-3 text-[14px] font-medium text-reward/90"
+          className="mt-3 text-label font-medium text-reward/90"
         >
           최고의 자리에 도달했습니다 🥊
         </motion.p>

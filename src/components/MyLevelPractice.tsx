@@ -55,10 +55,10 @@ const PointList = ({ points }: { points: string[] }) =>
     <ol className="mt-2.5 space-y-1.5">
       {points.map((p, i) => (
         <li key={i} className="flex items-start gap-2">
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-black text-primary">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-micro font-black text-primary">
             {i + 1}
           </span>
-          <span className="pt-0.5 text-[12px] leading-snug text-foreground">{p}</span>
+          <span className="pt-0.5 text-label leading-snug text-foreground">{p}</span>
         </li>
       ))}
     </ol>
@@ -139,21 +139,21 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
 
   return (
     <div className="animate-slide-up space-y-4">
-      <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-bold text-primary active:scale-95">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-body font-bold text-primary active:scale-95">
         <ArrowLeft className="h-4 w-4" /> 오늘의 코스로
       </button>
 
       <div>
-        <h2 className="text-lg font-black text-foreground">🥊 내 레벨 연습하기</h2>
-        <p className="mt-0.5 text-[12px] text-muted-foreground">{formatRank(league, levelNumber)}</p>
+        <h2 className="text-heading font-black text-foreground">🥊 내 레벨 연습하기</h2>
+        <p className="mt-0.5 text-label text-muted-foreground">{formatRank(league, levelNumber)}</p>
       </div>
 
       {/* ── 🔥 워밍업 — 연습 전 몸풀기 참고 영상 (레벨과 상관없음) ── */}
       {warmupVideos.length > 0 && (
         <section className="rounded-2xl border border-border bg-card p-3.5 shadow-elev-1">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[13px] font-black text-foreground">🔥 워밍업</p>
-            <span className="text-[10px] font-bold text-muted-foreground">연습 전 몸풀기 · 참고용</span>
+            <p className="text-label font-black text-foreground">🔥 워밍업</p>
+            <span className="text-micro font-bold text-muted-foreground">연습 전 몸풀기 · 참고용</span>
           </div>
           <div className="mt-2.5 grid grid-cols-3 gap-2">
             {warmupVideos.map((v) => {
@@ -177,7 +177,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
                       </span>
                     </span>
                   </span>
-                  <span className="mt-1 line-clamp-2 block text-[11px] font-bold leading-tight text-foreground">{t.name}</span>
+                  <span className="mt-1 line-clamp-2 block text-micro font-bold leading-tight text-foreground">{t.name}</span>
                 </button>
               );
             })}
@@ -192,18 +192,18 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
             <Trophy className="h-5 w-5 text-reward" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-black tracking-wide text-reward">최종 목표 · 레벨 {toGlobalLevel(league, TITLE_LEVEL)}</p>
-            <p className="text-base font-black leading-snug text-foreground">{leagueLabel} 타이틀매치</p>
+            <p className="text-micro font-black tracking-wide text-reward">최종 목표 · 레벨 {toGlobalLevel(league, TITLE_LEVEL)}</p>
+            <p className="text-body font-black leading-snug text-foreground">{leagueLabel} 타이틀매치</p>
           </div>
         </div>
 
         {/* 타이틀매치 영상 — 지금 보는 게 레벨 10 이면 아래 목록과 겹치므로 여기선 생략 */}
         {isTitleView ? (
-          <p className="mt-3 rounded-2xl bg-reward/10 py-2.5 text-center text-[12px] font-bold text-reward">
+          <p className="mt-3 rounded-2xl bg-reward/10 py-2.5 text-center text-label font-bold text-reward">
             아래가 바로 타이틀매치 동작이에요 👇
           </p>
         ) : titleLoading ? (
-          <p className="mt-3 text-center text-[11px] text-muted-foreground">타이틀매치 영상 불러오는 중...</p>
+          <p className="mt-3 text-center text-micro text-muted-foreground">타이틀매치 영상 불러오는 중...</p>
         ) : titleVideos.length > 0 ? (
           <div className="mt-3 grid grid-cols-3 gap-2">
             {titleVideos.map((v, i) => {
@@ -232,24 +232,24 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
                       </span>
                     )}
                   </span>
-                  <span className="mt-1 block text-[10px] font-black text-reward">동작 {i + 1}</span>
-                  <span className="line-clamp-2 block text-[11px] font-bold leading-tight text-foreground">{t.name}</span>
+                  <span className="mt-1 block text-micro font-black text-reward">동작 {i + 1}</span>
+                  <span className="line-clamp-2 block text-micro font-bold leading-tight text-foreground">{t.name}</span>
                 </button>
               );
             })}
           </div>
         ) : (
           <div className="mt-3 rounded-2xl bg-reward/5 p-3">
-            <p className="text-[11px] font-black text-foreground">타이틀매치에서 보여줄 것</p>
+            <p className="text-micro font-black text-foreground">타이틀매치에서 보여줄 것</p>
             <PointList points={goalPoints} />
-            <p className="mt-2 text-[10px] text-muted-foreground">🎬 타이틀매치 영상은 준비 중이에요</p>
+            <p className="mt-2 text-micro text-muted-foreground">🎬 타이틀매치 영상은 준비 중이에요</p>
           </div>
         )}
 
-        <p className="mt-3.5 text-[13px] font-black leading-snug text-foreground">
+        <p className="mt-3.5 text-label font-black leading-snug text-foreground">
           레벨 1~10은 이 동작을 완벽하게 만드는 과정이에요
         </p>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
           레벨마다 익힌 동작이 모여 타이틀매치에서 하나로 완성돼요
         </p>
 
@@ -258,7 +258,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
           <button
             type="button"
             onClick={() => navigate(titleMatchLink(league))}
-            className="mt-3 flex h-11 w-full items-center justify-center rounded-2xl bg-reward/15 text-[13px] font-black text-reward transition-transform active:scale-[0.98]"
+            className="mt-3 flex h-11 w-full items-center justify-center rounded-2xl bg-reward/15 text-label font-black text-reward transition-transform active:scale-[0.98]"
           >
             🏆 타이틀미션 보기 · 지점장님께 심사 신청 →
           </button>
@@ -287,7 +287,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
                 onClick={() => setViewLevel(n)}
                 aria-pressed={isView}
                 aria-label={`레벨 ${toGlobalLevel(league, n)}${isGoal ? " 타이틀매치" : ""}${st === "current" ? " (지금 레벨)" : st === "locked" ? " (잠김)" : ""}`}
-                className={`number-font flex aspect-square w-full items-center justify-center rounded-full text-[11px] font-black transition-all active:scale-90 disabled:active:scale-100 ${tone} ${
+                className={`number-font flex aspect-square w-full items-center justify-center rounded-full text-micro font-black transition-all active:scale-90 disabled:active:scale-100 ${tone} ${
                   isView ? "ring-2 ring-foreground/60 ring-offset-1 ring-offset-card" : ""
                 }`}
               >
@@ -296,9 +296,9 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
             );
           })}
         </div>
-        <p className="mt-2.5 text-center text-[12px] font-bold text-foreground">{journeyLine}</p>
+        <p className="mt-2.5 text-center text-label font-bold text-foreground">{journeyLine}</p>
         {hereLevel > 1 && hereLevel <= TITLE_LEVEL && (
-          <p className="mt-0.5 text-center text-[10px] text-muted-foreground">지나온 레벨을 누르면 복습할 수 있어요</p>
+          <p className="mt-0.5 text-center text-micro text-muted-foreground">지나온 레벨을 누르면 복습할 수 있어요</p>
         )}
       </section>
 
@@ -306,20 +306,20 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
       <section className="space-y-2.5">
         <div className="flex items-end justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="text-sm font-black text-foreground">
+            <h3 className="text-body font-black text-foreground">
               {isTitleView ? `🏆 ${leagueLabel} 타이틀매치 동작` : `🥊 레벨 ${toGlobalLevel(league, viewLevel)} 동작`}
               {isReview && (
-                <span className="ml-1.5 rounded-full bg-secondary px-1.5 py-0.5 align-middle text-[10px] font-bold text-secondary-foreground">
+                <span className="ml-1.5 rounded-full bg-secondary px-1.5 py-0.5 align-middle text-micro font-bold text-secondary-foreground">
                   복습
                 </span>
               )}
             </h3>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
+            <p className="mt-0.5 text-micro text-muted-foreground">
               {levelLoading || levelVideos.length > 0 ? "영상을 보고 동작 포인트대로 따라해요" : "동작 포인트대로 따라해요"}
             </p>
           </div>
           {levelVideos.length > 0 && (
-            <span className="number-font shrink-0 rounded-full bg-status-complete/10 px-2 py-0.5 text-[11px] font-black text-status-complete">
+            <span className="number-font shrink-0 rounded-full bg-status-complete/10 px-2 py-0.5 text-micro font-black text-status-complete">
               {doneCount}/{levelVideos.length} 따라함
             </span>
           )}
@@ -328,7 +328,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
           <button
             type="button"
             onClick={() => setViewLevel(levelNumber)}
-            className="text-[12px] font-bold text-primary active:scale-95"
+            className="text-label font-bold text-primary active:scale-95"
           >
             ← 레벨 {toGlobalLevel(league, levelNumber)} 동작으로 돌아가기
           </button>
@@ -336,7 +336,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
 
         {levelLoading ? (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center">
-            <p className="text-sm text-muted-foreground">동작 불러오는 중...</p>
+            <p className="text-body text-muted-foreground">동작 불러오는 중...</p>
           </div>
         ) : levelVideos.length > 0 ? (
           levelVideos.map((v, i) => {
@@ -366,13 +366,13 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
                     </span>
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[10px] font-black text-primary">
+                    <span className="block text-micro font-black text-primary">
                       동작 {i + 1}{t.tag ? ` · ${t.tag}` : ""}
                     </span>
-                    <span className="line-clamp-2 block text-[13px] font-black leading-snug text-foreground">{t.name}</span>
-                    {t.sub && <span className="mt-0.5 line-clamp-1 block text-[11px] text-muted-foreground">{t.sub}</span>}
+                    <span className="line-clamp-2 block text-label font-black leading-snug text-foreground">{t.name}</span>
+                    {t.sub && <span className="mt-0.5 line-clamp-1 block text-micro text-muted-foreground">{t.sub}</span>}
                     {v.variants.length > 1 && (
-                      <span className="mt-1 inline-flex rounded-full bg-secondary px-2 py-0.5 text-[10.5px] font-bold text-secondary-foreground">
+                      <span className="mt-1 inline-flex rounded-full bg-secondary px-2 py-0.5 text-micro font-bold text-secondary-foreground">
                         🎬 {v.variants.map((x) => x.label).join(" · ")}
                       </span>
                     )}
@@ -382,7 +382,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
                 <button
                   type="button"
                   onClick={() => toggle(v.id)}
-                  className={`mt-2.5 w-full rounded-xl py-2.5 text-xs font-bold transition-all active:scale-95 ${
+                  className={`mt-2.5 w-full rounded-xl py-2.5 text-label font-bold transition-all active:scale-95 ${
                     isDone
                       ? "bg-status-complete/10 text-status-complete"
                       : "border border-primary/40 text-primary"
@@ -396,26 +396,26 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
         ) : (
           <>
             <div className="rounded-2xl border border-dashed border-border bg-card p-3.5">
-              <p className="text-[12px] font-black text-foreground">🎬 이 레벨 영상은 준비 중이에요</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
+              <p className="text-label font-black text-foreground">🎬 이 레벨 영상은 준비 중이에요</p>
+              <p className="mt-0.5 text-micro text-muted-foreground">
                 아래 동작 포인트로 먼저 연습해요{viewUl ? ` · ${viewUl.title}` : ""}
               </p>
             </div>
             {(viewUl?.learningModules ?? []).map((mod) => (
               <div key={mod.id} className="rounded-2xl border border-border bg-card p-3.5 shadow-elev-1">
-                <p className="text-[13px] font-black text-foreground">{mod.title}</p>
+                <p className="text-label font-black text-foreground">{mod.title}</p>
                 <PointList points={mod.keyPoints} />
                 {mod.coachCues && mod.coachCues.length > 0 && (
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {mod.coachCues.map((c, i) => (
-                      <span key={i} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                      <span key={i} className="rounded-full bg-primary/10 px-2 py-0.5 text-micro font-bold text-primary">
                         🗣 {c}
                       </span>
                     ))}
                   </div>
                 )}
                 {mod.commonMistakes && mod.commonMistakes.length > 0 && (
-                  <p className="mt-2 text-[11px] leading-snug text-status-pending">
+                  <p className="mt-2 text-micro leading-snug text-status-pending">
                     ⚠️ 조심: {mod.commonMistakes.join(" · ")}
                   </p>
                 )}
@@ -430,7 +430,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
         <button
           type="button"
           onClick={finish}
-          className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-sm font-black transition-all active:scale-[0.98] ${
+          className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-body font-black transition-all active:scale-[0.98] ${
             doneToday
               ? "bg-status-complete/10 text-status-complete"
               : "bg-primary text-primary-foreground shadow-elev-1"
@@ -440,7 +440,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
           {doneToday ? "오늘 연습 완료 · 코스로 돌아가기" : "오늘 연습 완료"}
         </button>
         {!doneToday && (
-          <p className="text-center text-[11px] text-muted-foreground">연습을 마치면 눌러주세요 — 오늘의 코스 3번이 완료돼요</p>
+          <p className="text-center text-micro text-muted-foreground">연습을 마치면 눌러주세요 — 오늘의 코스 3번이 완료돼요</p>
         )}
       </div>
 

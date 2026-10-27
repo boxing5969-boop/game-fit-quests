@@ -30,7 +30,7 @@ const RankBadge = ({ rank, level, size = "sm", isMaster }: RankBadgeProps) => {
         <span
           title={title}
           aria-label={title}
-          className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-reward bg-reward/20 align-middle text-[9px] leading-none"
+          className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-reward bg-reward/20 align-middle text-micro leading-none"
         >
           👑
         </span>
@@ -44,8 +44,8 @@ const RankBadge = ({ rank, level, size = "sm", isMaster }: RankBadgeProps) => {
   if (isMaster) {
     return (
       <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 border-reward bg-gradient-to-r from-reward/20 to-primary/20 shadow-elev-1 ${isLg ? "px-4 py-1.5" : ""}`}>
-        <span className={isLg ? "text-lg" : "text-sm"}>👑</span>
-        <span className={`font-bold bg-gradient-to-r from-reward to-primary bg-clip-text text-transparent ${isLg ? "text-base" : "text-xs"}`}>
+        <span className={isLg ? "text-heading" : "text-body"}>👑</span>
+        <span className={`font-bold bg-gradient-to-r from-reward to-primary bg-clip-text text-transparent ${isLg ? "text-body" : "text-label"}`}>
           마스터
         </span>
       </div>
@@ -55,7 +55,7 @@ const RankBadge = ({ rank, level, size = "sm", isMaster }: RankBadgeProps) => {
   return (
     <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 ${rankColors[rank]}`}>
       <LeagueBadge league={rank} className={isLg ? "h-6 w-6" : "h-4 w-4"} />
-      <span className={`font-bold ${isLg ? "text-base" : "text-xs"}`}>
+      <span className={`font-bold ${isLg ? "text-body" : "text-label"}`}>
         {formatRank(rank, level)}
       </span>
     </div>

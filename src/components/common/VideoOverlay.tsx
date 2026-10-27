@@ -95,7 +95,7 @@ const VideoOverlay = ({ video, onClose }: Props) => {
         <button
           type="button"
           onClick={onClose}
-          className="mt-3 flex h-12 w-full items-center justify-center rounded-2xl bg-neutral-800 text-sm font-bold text-white ring-1 ring-white/10 active:scale-[0.98]"
+          className="mt-3 flex h-12 w-full items-center justify-center rounded-2xl bg-neutral-800 text-body font-bold text-white ring-1 ring-white/10 active:scale-[0.98]"
         >
           닫기
         </button>

@@ -55,17 +55,17 @@ const CornermanCandidateList = ({
 }: CornermanCandidateListProps) => {
   if (isLoading) {
     return (
-      <p className="text-[12px] text-muted-foreground">후보를 불러오는 중…</p>
+      <p className="text-label text-muted-foreground">후보를 불러오는 중…</p>
     );
   }
 
   if (candidates.length === 0) {
     return (
       <div className="rounded-card border border-border bg-background/40 p-3.5">
-        <p className="text-[12.5px] leading-relaxed text-foreground">
+        <p className="text-label leading-relaxed text-foreground">
           {emptyText ?? "지금 매칭 가능한 같은 지점 회원이 없습니다."}
         </p>
-        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
           {emptyHint ?? "신규 회원이 가입하거나 다른 회원의 짝꿍 관계가 끝나면 후보로 표시됩니다."}
         </p>
       </div>
@@ -94,10 +94,10 @@ const CornermanCandidateList = ({
                 <UserPlus className="h-4 w-4" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-bold text-foreground">
+                <span className="block truncate text-label font-bold text-foreground">
                   {c.display_name}
                 </span>
-                <span className="mt-0.5 block text-[11px] leading-relaxed text-muted-foreground">
+                <span className="mt-0.5 block text-micro leading-relaxed text-muted-foreground">
                   {notJoined ? (
                     <span className="font-semibold text-amber-700 dark:text-amber-300">아직 앱을 안 써요</span>
                   ) : (
@@ -115,7 +115,7 @@ const CornermanCandidateList = ({
                 type="button"
                 onClick={() => onInvite?.(c)}
                 disabled={!onInvite || invitingUserId === c.user_id}
-                className={`flex shrink-0 items-center gap-1 rounded-card border px-3 py-1.5 text-[11.5px] font-bold transition-all active:scale-[0.98] disabled:opacity-60 ${
+                className={`flex shrink-0 items-center gap-1 rounded-card border px-3 py-1.5 text-micro font-bold transition-all active:scale-[0.98] disabled:opacity-60 ${
                   c.invited_by_me
                     ? "border-amber-400/50 bg-amber-400/10 text-amber-700 dark:text-amber-300"
                     : "border-amber-500 bg-amber-500 text-white"
@@ -131,11 +131,11 @@ const CornermanCandidateList = ({
                 {c.invited_by_me ? "다시 초대" : "초대하기"}
               </button>
             ) : state === "paired" ? (
-              <span className="shrink-0 rounded-pill bg-muted px-2.5 py-1 text-[11px] font-bold text-muted-foreground">
+              <span className="shrink-0 rounded-pill bg-muted px-2.5 py-1 text-micro font-bold text-muted-foreground">
                 짝꿍 있음
               </span>
             ) : state === "pending" ? (
-              <span className="shrink-0 rounded-pill bg-amber-400/15 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300">
+              <span className="shrink-0 rounded-pill bg-amber-400/15 px-2.5 py-1 text-micro font-bold text-amber-700 dark:text-amber-300">
                 요청 대기 중
               </span>
             ) : (
@@ -143,7 +143,7 @@ const CornermanCandidateList = ({
                 type="button"
                 onClick={() => onRequest(c.user_id)}
                 disabled={isPending}
-                className={`shrink-0 rounded-card border px-3 py-1.5 text-[11.5px] font-bold transition-all ${
+                className={`shrink-0 rounded-card border px-3 py-1.5 text-micro font-bold transition-all ${
                   isPending
                     ? "cursor-not-allowed border-border bg-muted text-muted-foreground"
                     : "border-primary bg-primary text-primary-foreground active:scale-[0.98]"
