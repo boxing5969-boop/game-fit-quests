@@ -166,13 +166,13 @@ const CornermanSheet = ({ open, onClose }: Props) => {
           <Users className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             운동 짝꿍
           </p>
           <h2 className="mt-0.5 text-body font-bold text-foreground">
             {CORNERMAN_COPY.cardHeadline}
           </h2>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             {CORNERMAN_COPY.cardSub}
           </p>
         </div>
@@ -209,7 +209,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
                 >
                   🥊 {p.requester_name}
                 </button>
-                <p className="mt-0.5 text-micro text-muted-foreground">
+                <p className="mt-0.5 text-label text-muted-foreground">
                   {RANK_KOREAN_LABEL[p.requester_rank] ?? p.requester_rank} 리그
                   · Lv.{toGlobalLevel(p.requester_rank, p.requester_level)}
                 </p>
@@ -279,7 +279,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
       <p className="mb-1 flex items-center gap-1.5 text-micro font-bold text-foreground">
         <Gift className="h-3.5 w-3.5 text-amber-600" /> 아직 앱에 없는 우리 지점 회원
       </p>
-      <p className="mb-2 text-micro leading-relaxed text-muted-foreground">
+      <p className="mb-2 text-label leading-relaxed text-muted-foreground">
         초대 링크를 보내 보세요. 초대한 회원이 그 링크로 앱에 처음 들어오면 챔피언 머니 1,000을 드려요 (링크를 누른 초대 1명에게).
         {inviteStats && inviteStats.invited > 0
           ? ` 내 초대 ${inviteStats.invited}명 · 들어온 ${inviteStats.joined}명${inviteStats.reward > 0 ? ` · 받은 보상 ${inviteStats.reward.toLocaleString()}` : ""}`
@@ -365,7 +365,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
             {renderSearchBox()}
             {searching ? renderSearchResults() : renderInvite()}
           </div>
-          <p className="text-micro leading-relaxed text-muted-foreground">
+          <p className="text-label leading-relaxed text-muted-foreground">
             ※ {CORNERMAN_DISCLAIMER}
           </p>
         </div>
@@ -382,7 +382,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
           <p className="mb-1.5 text-micro font-bold text-foreground">
             {isHq ? "전 지점 회원" : "같은 지점 회원 후보"}
           </p>
-          <p className="mb-2 text-micro leading-relaxed text-muted-foreground">
+          <p className="mb-2 text-label leading-relaxed text-muted-foreground">
             {isHq
               ? "최근 출석한 회원부터 보여요. 짝꿍은 같은 지점 회원끼리 맺어요."
               : CORNERMAN_COPY.emptyHint}
@@ -404,7 +404,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
 
         {!searching && renderInvite()}
 
-        <p className="text-micro leading-relaxed text-muted-foreground">
+        <p className="text-label leading-relaxed text-muted-foreground">
           ※ {CORNERMAN_DISCLAIMER}
         </p>
       </div>

@@ -51,7 +51,7 @@ const OsamiHallComment = ({ summary }: OsamiHallCommentProps) => {
       <div className="flex items-start gap-2">
         <span className="text-body">🥊</span>
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-black uppercase tracking-wider text-primary">
+          <p className="text-label font-bold text-primary">
             오삼 코치
           </p>
           <p className="mt-0.5 text-label leading-relaxed text-foreground">

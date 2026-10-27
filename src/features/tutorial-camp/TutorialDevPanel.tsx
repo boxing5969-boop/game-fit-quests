@@ -297,7 +297,7 @@ function DevModal({
             <div>
               <p
                 className={cn(
-                  "text-micro font-black uppercase tracking-[0.3em]",
+                  "text-label font-bold",
                   isAdmin ? "text-amber-300" : "text-rose-300",
                 )}
               >
@@ -322,7 +322,7 @@ function DevModal({
 
         {/* 경고 박스 */}
         <div className="border-b border-rose-400/20 bg-rose-950/30 px-4 py-3">
-          <p className="text-micro leading-relaxed text-rose-100/85">
+          <p className="text-label leading-relaxed text-rose-100/85">
             이 기능은 로컬 브라우저 검수용이며,
             <br />
             <strong className="text-rose-200">
@@ -363,7 +363,7 @@ function DevModal({
                 );
               })}
             </div>
-            <p className="mt-2 text-micro leading-relaxed text-amber-200/65">
+            <p className="mt-2 text-label leading-relaxed text-amber-200/65">
               각 Day 의 step 0 부터 진행. 아래 'Day · Step 직접 이동' 으로
               세부 step 까지 점프 가능.
             </p>
@@ -407,7 +407,7 @@ function DevModal({
           <Section title="Day / Step 이동">
             <div className="space-y-2.5">
               <div>
-                <label className="mb-1.5 block text-micro font-bold uppercase tracking-widest text-amber-200/70">
+                <label className="mb-1.5 block text-label font-bold text-amber-200/70">
                   Day (1~7)
                 </label>
                 <div className="grid grid-cols-7 gap-1">
@@ -432,7 +432,7 @@ function DevModal({
                 </div>
               </div>
               <div>
-                <label className="mb-1.5 block text-micro font-bold uppercase tracking-widest text-amber-200/70">
+                <label className="mb-1.5 block text-label font-bold text-amber-200/70">
                   Step (0~{Math.max(0, stepsInDay - 1)})
                 </label>
                 <div className="grid grid-cols-5 gap-1">
@@ -579,7 +579,7 @@ function Section({
 }) {
   return (
     <section className="rounded-xl border border-white/10 bg-black/20 p-3">
-      <h3 className="mb-2 text-micro font-black uppercase tracking-[0.3em] text-amber-300/80">
+      <h3 className="mb-2 text-label font-bold text-amber-300/80">
         {title}
       </h3>
       {children}

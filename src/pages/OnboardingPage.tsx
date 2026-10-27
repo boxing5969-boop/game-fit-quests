@@ -140,7 +140,7 @@ const OnboardingPage = () => {
         {/* Trust note */}
         {slide.trustNote && (
           <div className="mt-6 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-2.5">
-            <p className="text-micro text-white/30 leading-relaxed">
+            <p className="text-label text-white/30 leading-relaxed">
               📋 {slide.trustNote}
             </p>
           </div>

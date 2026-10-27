@@ -51,20 +51,20 @@ const CornermanStatusPanel = ({
   return (
     <div className="space-y-3">
       <div className="rounded-card border border-primary/20 bg-primary/5 p-3.5">
-        <p className="text-micro font-black uppercase tracking-wider text-primary">
+        <p className="text-label font-bold text-primary">
           {CORNERMAN_COPY.activeHeadline}
         </p>
         <p className="mt-1 text-label font-bold text-foreground">
           🥊 {status.partner_name}
         </p>
-        <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
           {RANK_KOREAN_LABEL[status.partner_rank ?? "white"]} 리그 · Lv.
           {toGlobalLevel(status.partner_rank ?? "white", status.partner_level ?? 1)}
         </p>
       </div>
 
       <div className="rounded-card border border-border bg-card p-3.5">
-        <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
+        <p className="text-label font-bold text-muted-foreground">
           오늘 운동
         </p>
         <ul className="mt-2 space-y-1.5">
@@ -97,7 +97,7 @@ const CornermanStatusPanel = ({
             </span>
           </li>
         </ul>
-        <p className="mt-2 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-2 text-label leading-relaxed text-muted-foreground">
           {statusHint}
         </p>
       </div>

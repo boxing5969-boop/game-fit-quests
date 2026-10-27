@@ -223,7 +223,7 @@ const FoodCard = ({ card }: { card: FoodGuideCard }) => (
         {card.category}
       </span>
     </div>
-    <p className="mt-1 text-micro text-muted-foreground">{card.examples}</p>
+    <p className="mt-1 text-label text-muted-foreground">{card.examples}</p>
     <p className="mt-1.5 text-label leading-relaxed text-foreground">
       {card.coaching}
     </p>

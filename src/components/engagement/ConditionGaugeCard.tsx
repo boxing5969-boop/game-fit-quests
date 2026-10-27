@@ -36,13 +36,13 @@ const ConditionGaugeCard = ({ onOpen }: Props) => {
           <Activity className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             오늘의 컨디션
           </p>
           <h3 className="mt-0.5 text-body font-bold text-foreground">
             {option ? `${option.emoji} ${option.label}` : "컨디션 선택"}
           </h3>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             {isLoading
               ? "불러오는 중…"
               : rec
@@ -74,7 +74,7 @@ const ConditionGaugeCard = ({ onOpen }: Props) => {
           <p className="text-label leading-relaxed text-foreground">
             {rec.hint}
           </p>
-          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             ※ 공식 훈련은 그대로 유지됩니다. 보조 퀘스트 추천만 조정됩니다.
           </p>
         </div>

@@ -47,13 +47,13 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-body font-black text-foreground">🎬 이번 레벨 영상 마스터</p>
-            <p className="mt-0.5 text-micro text-muted-foreground">
+            <p className="mt-0.5 text-label text-muted-foreground">
               집에서 먼저 보고 오면 수업이 훨씬 쉬워져요
             </p>
           </div>
           <div className="text-right">
             <p className="number-font text-heading font-black text-primary">{done}/{videos.length}</p>
-            <p className="text-micro text-muted-foreground">시청 완료</p>
+            <p className="text-label text-muted-foreground">시청 완료</p>
           </div>
         </div>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
@@ -106,11 +106,11 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
 
             <div className="p-3.5">
               <p className="text-body font-black text-foreground">{t.name}</p>
-              {t.sub && <p className="mt-0.5 text-micro text-muted-foreground">{t.sub}</p>}
+              {t.sub && <p className="mt-0.5 text-label text-muted-foreground">{t.sub}</p>}
               {v.keyPoints.length > 0 && (
                 <ul className="mt-2 space-y-0.5">
                   {v.keyPoints.slice(0, 3).map((kp, j) => (
-                    <li key={j} className="text-micro text-muted-foreground">· {kp}</li>
+                    <li key={j} className="text-label text-muted-foreground">· {kp}</li>
                   ))}
                 </ul>
               )}

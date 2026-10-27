@@ -45,7 +45,7 @@ const GuideValueMapPage = () => {
           >
             <span className="text-heading">{league.emoji}</span>
             <p className="mt-1 text-body font-bold text-foreground">{league.label}</p>
-            <p className="text-micro text-muted-foreground">{league.levels}</p>
+            <p className="text-label text-muted-foreground">{league.levels}</p>
             <p className="mt-1 text-micro text-primary">{league.theme}</p>
           </button>
         ))}
@@ -73,7 +73,7 @@ const GuideValueMapPage = () => {
                     </div>
                     <div className="flex-1">
                       <p className={`text-body font-bold ${isComplete || isCurrent ? "text-foreground" : "text-muted-foreground"}`}>{lv.shortValueTitle}</p>
-                      <p className="text-micro text-muted-foreground">{lv.valueDescription}</p>
+                      <p className="text-label text-muted-foreground">{lv.valueDescription}</p>
                       <span className="mt-1 inline-block rounded-full bg-reward/10 px-2 py-0.5 text-micro font-bold text-reward-foreground">
                         🔓 {lv.unlockedBenefit}
                       </span>

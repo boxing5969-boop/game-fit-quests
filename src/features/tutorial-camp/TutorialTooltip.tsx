@@ -268,7 +268,7 @@ const TutorialTooltip = ({
               state={DAY_TO_OSAMI_STATE[step.day] ?? "wink"}
             />
           </div>
-          <p className="pt-1 text-micro leading-relaxed text-amber-200/90">
+          <p className="pt-1 text-label leading-relaxed text-amber-200/90">
             {step.osamiMessage}
           </p>
         </div>

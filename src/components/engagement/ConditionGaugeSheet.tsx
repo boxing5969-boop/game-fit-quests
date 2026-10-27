@@ -87,13 +87,13 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
           <Activity className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             오늘의 라운드 점검
           </p>
           <h2 className="mt-0.5 text-body font-bold text-foreground">
             컨디션 게이지
           </h2>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             오늘 상태에 맞춰 보조 퀘스트 추천만 조정됩니다.
           </p>
         </div>
@@ -120,7 +120,7 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
       </div>
 
       <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-        <p className="text-micro font-black uppercase tracking-wider text-primary">
+        <p className="text-label font-bold text-primary">
           오삼 코치
         </p>
         <p className="mt-1 text-label leading-relaxed text-foreground">
@@ -128,7 +128,7 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
         </p>
       </div>
 
-      <p className="text-micro leading-relaxed text-muted-foreground">
+      <p className="text-label leading-relaxed text-muted-foreground">
         ※ 컨디션 선택 자체에는 보상이 없습니다. 공식 훈련 리스트 / 공식 XP /
         공식 레벨업과 무관합니다.
       </p>
@@ -146,13 +146,13 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
   const renderForm = () => (
     <div className="space-y-3">
       <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-        <p className="text-micro font-black uppercase tracking-wider text-primary">
+        <p className="text-label font-bold text-primary">
           오늘의 질문
         </p>
         <p className="mt-1 text-label font-bold text-foreground">
           오늘 컨디션은 어때요?
         </p>
-        <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-label leading-relaxed text-muted-foreground">
           정직하게 골라주세요. 무리하지 않을 권리는 복서의 기본기입니다.
         </p>
       </div>
@@ -176,7 +176,7 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
                 <p className="truncate text-label font-bold text-foreground">
                   {o.label}
                 </p>
-                <p className="mt-0.5 truncate text-micro text-muted-foreground">
+                <p className="mt-0.5 truncate text-label text-muted-foreground">
                   {o.desc}
                 </p>
               </div>
@@ -215,7 +215,7 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
               );
             })}
           </div>
-          <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
             ※ 통증이 있으면 무리하지 마세요. 코치와 상담을 권장합니다.
           </p>
         </div>
@@ -237,13 +237,13 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
 
       {recommendation && (
         <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-          <p className="text-micro font-black uppercase tracking-wider text-primary">
+          <p className="text-label font-bold text-primary">
             오삼 코치 미리보기
           </p>
           <p className="mt-1 text-label leading-relaxed text-foreground">
             {recommendation.osamiMessage}
           </p>
-          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             {recommendation.hint}
           </p>
         </div>
@@ -266,7 +266,7 @@ const ConditionGaugeSheet = ({ open, onClose }: Props) => {
             : "오늘 컨디션 기록"}
       </button>
 
-      <p className="text-micro leading-relaxed text-muted-foreground">
+      <p className="text-label leading-relaxed text-muted-foreground">
         ※ 컨디션 선택 자체에는 QUEST XP / 챔피언 머니 / RP 보상이 없습니다.
         공식 1~40 레벨업과 무관합니다.
       </p>

@@ -111,7 +111,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
           <Brain className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             오삼이 복싱 아카데미
           </p>
           <h2 className="mt-0.5 truncate text-body font-bold text-foreground">
@@ -173,7 +173,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
       return (
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-            <p className="text-micro font-black uppercase tracking-wider text-primary">
+            <p className="text-label font-bold text-primary">
               오늘의 복싱 카드
             </p>
             <p className="mt-1 text-label font-bold text-foreground">
@@ -215,7 +215,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
             })}
           </div>
 
-          <p className="pt-1 text-micro leading-relaxed text-muted-foreground">
+          <p className="pt-1 text-label leading-relaxed text-muted-foreground">
             ※ 본 퀴즈 보상은 보조 경험치(QUEST XP)와 챔피언 머니입니다. 공식
             레벨 XP가 아니며, 1~40 레벨업과 무관합니다.
           </p>
@@ -259,7 +259,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
         </div>
 
         <div className="rounded-card border border-border bg-background/40 p-3">
-          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
+          <p className="text-label font-bold text-muted-foreground">
             정답
           </p>
           <p className="mt-1 text-label font-bold text-foreground">
@@ -274,7 +274,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-micro font-black uppercase tracking-wider text-primary">
+            <p className="text-label font-bold text-primary">
               QUEST XP
             </p>
             <p className="number-font mt-0.5 text-heading font-black text-foreground">
@@ -282,7 +282,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
             </p>
           </div>
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-micro font-black uppercase tracking-wider text-reward">
+            <p className="text-label font-bold text-reward">
               챔피언 머니
             </p>
             <p className="number-font mt-0.5 text-heading font-black text-reward">
@@ -301,7 +301,7 @@ const BoxingAcademyQuizModal = ({ open, onClose }: Props) => {
           </div>
         )}
 
-        <p className="text-micro leading-relaxed text-muted-foreground">
+        <p className="text-label leading-relaxed text-muted-foreground">
           ※ QUEST XP 는 보조 경험치이며, 공식 1~40 레벨업과 무관합니다.
           챔피언 머니는 기존 지갑에 합산됩니다.
         </p>

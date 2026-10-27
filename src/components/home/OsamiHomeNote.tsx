@@ -51,7 +51,7 @@ const OsamiHomeNote = () => {
           <OsamMascot size="xs" state={note.state} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-black uppercase tracking-[0.3em] text-primary">
+          <p className="text-label font-bold text-primary">
             오삼이 한마디
           </p>
           <p className="mt-1 text-label leading-relaxed text-foreground/85">

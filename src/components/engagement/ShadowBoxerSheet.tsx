@@ -61,13 +61,13 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             그림자 복서
           </p>
           <h2 className="mt-0.5 text-body font-bold text-foreground">
             오늘의 상대는 30일 전의 나
           </h2>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             남과 비교 부담 없이 어제의 나와 라운드 합니다.
           </p>
         </div>
@@ -96,7 +96,7 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
         </p>
       </div>
       <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-        <p className="text-micro font-black uppercase tracking-wider text-primary">
+        <p className="text-label font-bold text-primary">
           오삼 코치
         </p>
         <p className="mt-0.5 text-label leading-relaxed text-foreground">
@@ -125,7 +125,7 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
               : "border-amber-400/30 bg-amber-400/5"
           }`}
         >
-          <p className="text-micro font-black uppercase tracking-wider text-primary">
+          <p className="text-label font-bold text-primary">
             {snapshot.shadow_period} → {snapshot.current_period}
           </p>
           <p className="mt-1 text-label font-bold text-foreground">
@@ -133,7 +133,7 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
           </p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <div className="rounded-card border border-border bg-card p-2.5">
-              <p className="text-micro uppercase text-muted-foreground">
+              <p className="text-label uppercase text-muted-foreground">
                 그림자 점수
               </p>
               <p className="number-font mt-0.5 text-heading font-black text-muted-foreground">
@@ -168,7 +168,7 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
 
         {/* 오삼 코멘트 */}
         <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-          <p className="text-micro font-black uppercase tracking-wider text-primary">
+          <p className="text-label font-bold text-primary">
             오삼 코치
           </p>
           <p className="mt-0.5 text-label leading-relaxed text-foreground">
@@ -190,7 +190,7 @@ const ShadowBoxerSheet = ({ open, onClose }: Props) => {
           </button>
         )}
 
-        <p className="text-micro leading-relaxed text-muted-foreground">
+        <p className="text-label leading-relaxed text-muted-foreground">
           ※ {SHADOW_BOXER_DISCLAIMER}
         </p>
       </div>

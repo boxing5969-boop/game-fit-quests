@@ -62,7 +62,7 @@ const NewMessageSheet = ({ open, onClose }: Props) => {
           className="min-w-0 flex-1 bg-transparent text-body text-foreground outline-none placeholder:text-muted-foreground"
           aria-label="보낼 사람 검색"
         />
-        {isFetching && !isLoading && <span className="text-micro text-muted-foreground">찾는 중…</span>}
+        {isFetching && !isLoading && <span className="text-label text-muted-foreground">찾는 중…</span>}
       </label>
 
       {blocked && data?.reason_text && (
@@ -134,7 +134,7 @@ const NewMessageSheet = ({ open, onClose }: Props) => {
         </ul>
       )}
       {rows.length >= 40 && !q && (
-        <p className="mt-3 text-center text-micro text-muted-foreground">더 많은 사람은 이름으로 찾아 주세요</p>
+        <p className="mt-3 text-center text-label text-muted-foreground">더 많은 사람은 이름으로 찾아 주세요</p>
       )}
     </DmSheet>
   );

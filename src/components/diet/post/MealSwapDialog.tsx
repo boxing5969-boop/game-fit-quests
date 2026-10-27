@@ -68,7 +68,7 @@ export const MealSwapDialog = ({
 
         <div className="max-h-[70vh] overflow-y-auto px-5 py-3">
           {current && (
-            <p className="mb-2 text-micro text-muted-foreground">
+            <p className="mb-2 text-label text-muted-foreground">
               현재: <span className="font-bold text-foreground">{current.name}</span>
             </p>
           )}
@@ -88,7 +88,7 @@ export const MealSwapDialog = ({
                       <p className="text-label font-extrabold leading-snug text-foreground">
                         {m.name}
                       </p>
-                      <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                      <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                         {m.note}
                       </p>
                     </div>
@@ -96,7 +96,7 @@ export const MealSwapDialog = ({
                       <p className="number-font text-label font-extrabold text-foreground">
                         {m.kcal}
                       </p>
-                      <p className="text-micro text-muted-foreground">kcal</p>
+                      <p className="text-label text-muted-foreground">kcal</p>
                     </div>
                   </div>
                   <div className="mt-1.5 flex flex-wrap gap-1">
@@ -113,7 +113,7 @@ export const MealSwapDialog = ({
                         {t}
                       </span>
                     ))}
-                    <span className="ml-auto text-micro text-muted-foreground">
+                    <span className="ml-auto text-label text-muted-foreground">
                       P {m.proteinG}g · C {m.carbsG}g · F {m.fatG}g
                     </span>
                   </div>

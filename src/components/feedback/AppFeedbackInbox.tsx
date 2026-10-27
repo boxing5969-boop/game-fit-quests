@@ -250,7 +250,7 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
                     {it.category}
                   </span>
                   <span className={cn("rounded-full px-2 py-0.5 text-micro font-bold", st.cls)}>{st.label}</span>
-                  <span className="ml-auto shrink-0 text-micro tabular-nums text-muted-foreground">{whenText(it.created_at)}</span>
+                  <span className="ml-auto shrink-0 text-label tabular-nums text-muted-foreground">{whenText(it.created_at)}</span>
                 </div>
 
                 <div className="mt-3 flex items-center gap-2.5">
@@ -269,13 +269,13 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
                 <p className="mt-3 whitespace-pre-line break-words text-label leading-relaxed text-foreground">{it.content}</p>
 
                 {(device || it.page_path) && (
-                  <p className="mt-2.5 flex items-start gap-1.5 text-micro leading-snug text-muted-foreground">
+                  <p className="mt-2.5 flex items-start gap-1.5 text-label leading-snug text-muted-foreground">
                     <MonitorSmartphone className="mt-px h-3.5 w-3.5 shrink-0" />
                     <span className="min-w-0 break-words">{[device, it.page_path].filter(Boolean).join(" · ")}</span>
                   </p>
                 )}
                 {it.status !== "new" && (it.handled_by_name || it.handled_at) && (
-                  <p className="mt-1 text-micro text-muted-foreground">
+                  <p className="mt-1 text-label text-muted-foreground">
                     {st.label}
                     {it.handled_by_name ? ` · ${it.handled_by_name}` : ""}
                     {it.handled_at ? ` · ${whenText(it.handled_at)}` : ""}
@@ -319,7 +319,7 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
           })}
         </ul>
       )}
-      <p className="px-1 pt-1 text-center text-micro leading-relaxed text-muted-foreground">
+      <p className="px-1 pt-1 text-center text-label leading-relaxed text-muted-foreground">
         회원님이 보낸 신고는 운영진만 볼 수 있어요. 고친 뒤 '고쳤어요'를 눌러 두면 나중에 다시 찾기 쉬워요.
       </p>
     </div>

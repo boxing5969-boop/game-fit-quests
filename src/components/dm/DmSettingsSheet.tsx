@@ -112,7 +112,7 @@ const DmSettingsSheet = ({ open, onClose }: Props) => {
         )}
       </section>
 
-      <p className="mt-5 px-1 text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-5 px-1 text-label leading-relaxed text-muted-foreground">
         차단하면 서로 메시지를 보낼 수 없고, 상대에게는 알리지 않아요. 불편한 메시지는 대화방 ⋯ 에서 신고하면 운영진이 확인해요.
       </p>
     </DmSheet>

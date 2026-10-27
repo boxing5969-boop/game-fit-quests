@@ -191,7 +191,7 @@ const CoachSentList = () => {
                         <span className="font-semibold text-foreground/80">내 카드</span> · {it.card}
                       </p>
                     )}
-                    <p className="mt-1.5 text-micro text-muted-foreground">
+                    <p className="mt-1.5 text-label text-muted-foreground">
                       {dmBubbleTime(it.sent_at)} 보냄
                       {it.opened_at && <span className="font-semibold text-primary"> · 알림 눌러 봄</span>}
                       {it.reviewer && ` · ${it.reviewer} 승인`}
@@ -215,7 +215,7 @@ const CoachSentList = () => {
         </button>
       )}
 
-      <p className="px-1 pt-1 text-micro leading-relaxed text-muted-foreground">
+      <p className="px-1 pt-1 text-label leading-relaxed text-muted-foreground">
         AI = 오삼코치가 쓴 문구 · 기본 문구 = 미리 정해 둔 문구 · 수정함 = 검수에서 고친 문구. 승인·고치기는 지점장 홈의 ‘오삼코치
         오늘 메시지’ 카드에서 해요.
       </p>

@@ -71,7 +71,7 @@ const ChallengesPage = () => {
             <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-micro font-black uppercase tracking-[0.2em] text-yellow-400">
               SEASON
             </span>
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-emerald-500">
+            <p className="text-label font-bold text-emerald-500">
               CHALLENGE · 같이 21일
             </p>
           </div>
@@ -90,7 +90,7 @@ const ChallengesPage = () => {
         {/* 내 참여 챌린지 */}
         {mine && (
           <section>
-            <p className="mb-2 text-micro font-bold text-muted-foreground uppercase tracking-wide">
+            <p className="mb-2 text-label font-bold text-muted-foreground">
               내 챌린지
             </p>
             <MyChallengeCard
@@ -105,7 +105,7 @@ const ChallengesPage = () => {
 
         {/* 공개 리스트 */}
         <section>
-          <p className="mb-2 text-micro font-bold text-muted-foreground uppercase tracking-wide">
+          <p className="mb-2 text-label font-bold text-muted-foreground">
             진행 중인 챌린지
           </p>
           {listQ.isLoading && (
@@ -121,7 +121,7 @@ const ChallengesPage = () => {
               <p className="mt-2 text-label font-bold text-foreground">
                 <span className="text-yellow-400">더 다이어터</span> 시즌 챌린지가 곧 열립니다
               </p>
-              <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+              <p className="mt-1 text-label leading-relaxed text-muted-foreground">
                 지점 또는 목표별 챌린지가 열리면 여기에 표시돼요.
                 <br />
                 먼저 오늘의 습관 체크부터 챙겨볼까요?
@@ -149,7 +149,7 @@ const ChallengesPage = () => {
           </ul>
         </section>
 
-        <p className="pb-4 text-center text-micro leading-relaxed text-muted-foreground">
+        <p className="pb-4 text-center text-label leading-relaxed text-muted-foreground">
           응원과 꾸준함 중심 · 상위권만 보상받지 않아요 · 몸무게 공개 없음
         </p>
       </div>
@@ -206,7 +206,7 @@ const MyChallengeCard = ({
     <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
       <div className="flex items-center gap-2">
         <Target className="h-4 w-4 text-primary" />
-        <p className="text-micro font-black uppercase tracking-widest text-primary">
+        <p className="text-label font-bold text-primary">
           참여 중 · {CHALLENGE_GOAL_LABEL[row.goal]}
         </p>
       </div>
@@ -221,7 +221,7 @@ const MyChallengeCard = ({
           <p className="text-micro font-bold text-foreground">
             Day {currentDay} <span className="text-muted-foreground font-normal">/ {row.duration_days}</span>
           </p>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             {row.start_date} ~ {endDate}
             <br />
             참여 {row.participant_count}명 · 오늘도 체크인 한 번이면 충분해요
@@ -370,7 +370,7 @@ const ChallengeCard = ({
       <h3 className="mt-1.5 text-label font-extrabold leading-tight text-foreground">
         {row.title}
       </h3>
-      <p className="mt-0.5 text-micro text-muted-foreground">
+      <p className="mt-0.5 text-label text-muted-foreground">
         {row.start_date} · {row.duration_days}일
         {row.branch_name ? ` · ${row.branch_name}` : " · 전체 공개"}
         <span className="ml-1 inline-flex items-center gap-0.5">
@@ -379,7 +379,7 @@ const ChallengeCard = ({
       </p>
 
       {row.is_joined && row.status === "ended" ? (
-        <p className="mt-2 text-micro font-bold text-muted-foreground">
+        <p className="mt-2 text-label font-bold text-muted-foreground">
           완주 기록 남음 — 수고하셨어요.
         </p>
       ) : !open ? (
@@ -447,7 +447,7 @@ const ChallengeCard = ({
             </Button>
           </div>
           {msg && (
-            <p className="text-center text-micro text-muted-foreground">{msg}</p>
+            <p className="text-center text-label text-muted-foreground">{msg}</p>
           )}
         </div>
       )}
@@ -462,7 +462,7 @@ const LeaderboardSection = ({ challengeId }: { challengeId: string }) => {
 
   return (
     <section className="rounded-2xl border border-border bg-card p-4">
-      <p className="mb-2 text-micro font-bold uppercase tracking-wide text-muted-foreground">
+      <p className="mb-2 text-label font-bold text-muted-foreground">
         리더보드 · 출석·연속·복귀 기반
       </p>
 
@@ -509,7 +509,7 @@ const LeaderboardSection = ({ challengeId }: { challengeId: string }) => {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-center text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-2 text-center text-label leading-relaxed text-muted-foreground">
         상위 20명만 표시. 꾸준히 참여한 모두가 완주자입니다.
       </p>
     </section>
@@ -535,7 +535,7 @@ const TeamBar = ({
   >
     <p
       className={cn(
-        "text-micro font-black uppercase tracking-[0.2em]",
+        "text-label font-bold",
         tone === "red" ? "text-primary" : "text-sky-500",
       )}
     >
@@ -543,7 +543,7 @@ const TeamBar = ({
     </p>
     <p className="mt-0.5 number-font text-heading font-extrabold text-foreground">
       {points.toLocaleString()}
-      <span className="ml-1 text-micro font-bold text-muted-foreground">점</span>
+      <span className="ml-1 text-label font-bold text-muted-foreground">점</span>
     </p>
   </div>
 );

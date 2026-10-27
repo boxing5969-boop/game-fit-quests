@@ -23,7 +23,7 @@ export const DietCoachTemplatePicker = ({
   className,
 }: DietCoachTemplatePickerProps) => (
   <div className={cn("space-y-1.5", className)}>
-    <p className="flex items-center gap-1.5 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+    <p className="flex items-center gap-1.5 text-label font-bold text-muted-foreground">
       <MessageSquare className="h-3.5 w-3.5" />
       템플릿
     </p>
@@ -50,7 +50,7 @@ export const DietCoachTemplatePicker = ({
             >
               {t.label}
             </p>
-            <p className="mt-0.5 text-micro text-muted-foreground leading-relaxed">
+            <p className="mt-0.5 text-label text-muted-foreground leading-relaxed">
               {t.body}
             </p>
           </button>

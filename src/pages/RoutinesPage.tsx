@@ -124,7 +124,7 @@ const RoutinesPage = () => {
           <div className="mb-2 flex items-center gap-1.5">
             <TrendingUp className="h-4 w-4 text-primary" />
             <span className="text-label font-bold text-foreground">레벨업까지</span>
-            <span className="text-micro text-muted-foreground">
+            <span className="text-label text-muted-foreground">
               출석 {cycle.reqSessions}회마다 {cycle.rank === "red" || cycle.rank === "black" ? "승급 심사" : "자동 승급"}
             </span>
           </div>
@@ -194,7 +194,7 @@ const RoutinesPage = () => {
             <button key={r.id} onClick={() => setSel(r)} className="w-full rounded-2xl border border-border bg-card p-4 text-left shadow-elev-1 transition-all active:scale-[0.99]">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-body font-bold text-foreground">{r.name}</span>
-                <span className="flex items-center gap-1 text-micro text-muted-foreground"><Clock className="h-3 w-3" />{r.total_min}분</span>
+                <span className="flex items-center gap-1 text-label text-muted-foreground"><Clock className="h-3 w-3" />{r.total_min}분</span>
               </div>
               {r.description && <p className="mt-0.5 text-label text-muted-foreground">{r.description}</p>}
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -216,7 +216,7 @@ const RoutinesPage = () => {
               <h2 className="text-heading font-black text-foreground">{sel.name}</h2>
               <button onClick={() => setSel(null)} className="rounded-lg p-1 active:scale-95"><X className="h-5 w-5" /></button>
             </div>
-            <p className="mb-3 flex items-center gap-1 text-micro text-muted-foreground"><Clock className="h-3 w-3" />총 {sel.total_min}분{sel.target_level ? ` · Lv.${sel.target_level} 권장` : ""}</p>
+            <p className="mb-3 flex items-center gap-1 text-label text-muted-foreground"><Clock className="h-3 w-3" />총 {sel.total_min}분{sel.target_level ? ` · Lv.${sel.target_level} 권장` : ""}</p>
 
             {PHASE_META.map((m) => {
               const items = sel.phases[m.key] || [];
@@ -229,7 +229,7 @@ const RoutinesPage = () => {
                       <div key={i} className="flex items-center justify-between gap-2 rounded-xl bg-background px-3 py-2">
                         <div className="min-w-0">
                           <p className="truncate text-body font-semibold text-foreground">{it.name}</p>
-                          {it.note && <p className="text-micro text-muted-foreground">{it.note}</p>}
+                          {it.note && <p className="text-label text-muted-foreground">{it.note}</p>}
                         </div>
                         <span className="shrink-0 text-label font-bold text-muted-foreground">{it.minutes}분</span>
                       </div>
@@ -246,7 +246,7 @@ const RoutinesPage = () => {
             >
               <CheckCircle2 className="h-4 w-4" /> 이 수업 완료로 기록
             </button>
-            <p className="mt-2 text-center text-micro text-muted-foreground">
+            <p className="mt-2 text-center text-label text-muted-foreground">
               출석은 입구 얼굴 인식으로 자동으로 쌓여요.
               {cycle ? ` 레벨당 ${cycle.reqSessions}회${needsReview ? " + 코치님 승급 심사" : "면 자동 승급"}!` : ""}
             </p>

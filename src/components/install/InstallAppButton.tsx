@@ -125,13 +125,13 @@ const InstallAppButton = ({ inline = false, label = "앱으로 설치하기" }: 
                   <Smartphone className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+                  <p className="text-label font-bold text-primary">
                     iPhone · iPad
                   </p>
                   <h2 className="mt-0.5 text-body font-bold text-foreground">
                     홈 화면에 마이복서153 추가
                   </h2>
-                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                     Safari 의 공유 메뉴에서 두 번만 누르면 앱처럼 사용할 수 있어요.
                   </p>
                 </div>
@@ -156,7 +156,7 @@ const InstallAppButton = ({ inline = false, label = "앱으로 설치하기" }: 
                   <p className="text-label font-bold text-foreground">
                     Safari 하단의 <span className="inline-flex items-center"><Share className="mx-1 h-3.5 w-3.5 text-primary" /></span> 공유 아이콘 누르기
                   </p>
-                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                     Chrome / Firefox / 카카오톡 안의 브라우저로 보고 있다면, 먼저 화면 상단 메뉴에서 <strong>"Safari로 열기"</strong> 를 눌러주세요.
                   </p>
                 </div>
@@ -174,7 +174,7 @@ const InstallAppButton = ({ inline = false, label = "앱으로 설치하기" }: 
                     </span>
                     선택
                   </p>
-                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                     목록을 아래로 내리면 보여요.
                   </p>
                 </div>
@@ -187,7 +187,7 @@ const InstallAppButton = ({ inline = false, label = "앱으로 설치하기" }: 
                   <p className="text-label font-bold text-foreground">
                     우측 상단의 <span className="rounded-md bg-muted px-1.5 py-0.5 text-label">추가</span> 누르기
                   </p>
-                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                     홈 화면에 마이복서153 아이콘이 생기고, 풀스크린 앱처럼 열려요.
                   </p>
                 </div>

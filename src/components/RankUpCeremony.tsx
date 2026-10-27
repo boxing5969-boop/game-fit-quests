@@ -89,7 +89,7 @@ const RankUpCeremony = ({
             }}
           >
             <p
-              className="mb-2 text-micro font-bold uppercase tracking-[0.2em]"
+              className="mb-2 text-label font-bold"
               style={{
                 color:
                   newRankKey === "white"

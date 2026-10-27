@@ -136,7 +136,7 @@ function SheetCard({
               >
                 <Sparkles className="h-3.5 w-3.5 text-amber-300" />
               </span>
-              <p className="text-micro font-black uppercase tracking-[0.4em] text-amber-300/80">
+              <p className="text-label font-bold text-amber-300/80">
                 30초 마무리
               </p>
             </div>
@@ -170,7 +170,7 @@ function SheetCard({
 
           {/* 오늘 남은 느낌 */}
           <div className="mt-3">
-            <p className="text-micro font-bold uppercase tracking-widest text-amber-200/60">
+            <p className="text-label font-bold text-amber-200/60">
               오늘 남은 느낌
             </p>
             <p className="mt-1 text-label leading-relaxed text-amber-50">
@@ -180,7 +180,7 @@ function SheetCard({
 
           {/* 다음 추천 행동 */}
           <div className="mt-3 rounded-xl border-l-2 border-rose-500/55 bg-rose-950/15 px-3 py-2.5">
-            <p className="text-micro font-bold uppercase tracking-widest text-rose-200/80">
+            <p className="text-label font-bold text-rose-200/80">
               다음 추천
             </p>
             <p className="mt-1 text-label leading-relaxed text-rose-100/85">

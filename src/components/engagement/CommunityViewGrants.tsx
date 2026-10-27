@@ -84,11 +84,11 @@ const CommunityViewGrants = () => {
   return (
     <div id="community-view-grants" className="mt-2.5 rounded-xl border border-border bg-card p-3">
       <p className="text-label font-black text-foreground">지점장·코치 권한</p>
-      <ul className="mt-1 space-y-0.5 text-micro leading-relaxed text-muted-foreground">
+      <ul className="mt-1 space-y-0.5 text-label leading-relaxed text-muted-foreground">
         <li>· 커뮤니티 모든 글 보기 — 친구만 · 나만 보기 · 숨긴 글까지 봐요</li>
         <li>· 우리 지점 목표 만들기 — 지점 목표를 열고 끝내요</li>
       </ul>
-      <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-1 text-label leading-relaxed text-muted-foreground">
         자기 지점에서만 쓰고, 켜면 받은 사람에게 알림이 가요.
       </p>
 
@@ -109,7 +109,7 @@ const CommunityViewGrants = () => {
         <div className="mt-2.5 space-y-3">
           {groups.map(([branch, list]) => (
             <div key={branch || "none"}>
-              <p className="mb-1 px-0.5 text-micro font-bold text-muted-foreground">
+              <p className="mb-1 px-0.5 text-label font-bold text-muted-foreground">
                 {branch ? shortBranchName(branch) : "지점 없음"} · {list.length}명
               </p>
               <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
@@ -124,7 +124,7 @@ const CommunityViewGrants = () => {
                         )}
                       </span>
                       <p className="min-w-0 truncate text-label font-bold text-foreground">
-                        {s.name} <span className="text-micro font-semibold text-muted-foreground">{s.title}</span>
+                        {s.name} <span className="text-label font-semibold text-muted-foreground">{s.title}</span>
                       </p>
                     </div>
                     <div className="mt-2 space-y-1.5 pl-[42px]">
@@ -138,7 +138,7 @@ const CommunityViewGrants = () => {
                             <span className="min-w-0 text-label font-semibold leading-snug text-foreground">
                               {STAFF_PERM_LABEL[perm]}
                               {on && since && (
-                                <span className="ml-1 text-micro font-normal text-muted-foreground">· {sinceText(since)}부터</span>
+                                <span className="ml-1 text-label font-normal text-muted-foreground">· {sinceText(since)}부터</span>
                               )}
                             </span>
                             <Switch
@@ -156,7 +156,7 @@ const CommunityViewGrants = () => {
               </ul>
             </div>
           ))}
-          <p className="px-0.5 text-micro text-muted-foreground">
+          <p className="px-0.5 text-label text-muted-foreground">
             지금 켜진 권한 — 글 보기 {counts.community_view}명 · 목표 만들기 {counts.branch_goal}명
           </p>
         </div>

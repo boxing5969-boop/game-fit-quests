@@ -126,7 +126,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
                 <span className="text-heading">{block.emoji}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-label font-bold text-foreground">{block.title}</p>
-                  <p className="text-micro text-muted-foreground">{block.durationMin}분 · {block.drills.slice(0, 2).join(", ")}</p>
+                  <p className="text-label text-muted-foreground">{block.durationMin}분 · {block.drills.slice(0, 2).join(", ")}</p>
                 </div>
               </div>
             ))}
@@ -155,7 +155,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
         {/* Self-challenge bonus explainer */}
         <div className="rounded-xl bg-status-complete/5 border border-status-complete/20 px-4 py-3">
           <p className="text-label font-bold text-status-complete mb-1">🏆 오늘 도전 보너스</p>
-          <p className="text-micro text-muted-foreground leading-relaxed">
+          <p className="text-label text-muted-foreground leading-relaxed">
             오늘 도전으로 완료하면 추가 {SELF_CHALLENGE_BONUS_XP}XP와 연속 기록을 얻을 수 있어요.
             레벨업 진행은 동일하지만, 적극적인 참여에 보너스 보상이 주어집니다.
           </p>
@@ -200,7 +200,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
 
         {/* Minimal info */}
         <div className="rounded-xl bg-muted/30 px-4 py-3">
-          <p className="text-micro text-muted-foreground text-center leading-relaxed">
+          <p className="text-label text-muted-foreground text-center leading-relaxed">
             🥊 운동에 집중하세요. 끝나면 아래 버튼을 눌러주세요.
           </p>
         </div>
@@ -249,7 +249,7 @@ const SelfChallengeFlow = ({ league, levelInLeague, onComplete, onClose, onLeave
         {result.qualifies ? (
           <div className="rounded-xl bg-status-complete/10 border border-status-complete/20 px-4 py-3">
             <p className="text-label font-bold text-status-complete">✅ 레벨업용 인정 세션</p>
-            <p className="text-micro text-muted-foreground">이 세션은 레벨업 진행에 인정됩니다</p>
+            <p className="text-label text-muted-foreground">이 세션은 레벨업 진행에 인정됩니다</p>
           </div>
         ) : result.minutes > 0 ? (
           <div className="rounded-xl bg-status-pending/10 border border-status-pending/20 px-4 py-3">
@@ -282,7 +282,7 @@ const ResultCard = ({ icon, value, label, highlight }: { icon: React.ReactNode; 
   <div className={`rounded-2xl border p-3 text-center ${highlight ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
     <div className="mx-auto mb-1">{icon}</div>
     <p className={`text-heading font-bold ${highlight ? "text-primary" : "text-foreground"}`}>{value}</p>
-    <p className="text-micro text-muted-foreground">{label}</p>
+    <p className="text-label text-muted-foreground">{label}</p>
   </div>
 );
 

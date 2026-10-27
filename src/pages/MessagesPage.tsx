@@ -67,13 +67,13 @@ const ThreadRow = ({ r, onOpen }: { r: DmThreadRow; onOpen: () => void }) => {
           </span>
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1.5 self-stretch pt-0.5">
-          <span className="text-micro text-muted-foreground">{dmListTime(r.last_message_at)}</span>
+          <span className="text-label text-muted-foreground">{dmListTime(r.last_message_at)}</span>
           {unread ? (
             <span className="flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-micro font-black leading-none text-primary-foreground">
               {r.unread > 99 ? "99+" : r.unread}
             </span>
           ) : r.seen ? (
-            <span className="text-micro font-medium text-muted-foreground">읽음</span>
+            <span className="text-label font-medium text-muted-foreground">읽음</span>
           ) : r.last_from_me && r.status === "active" ? (
             // 내 마지막 메시지를 상대가 아직 안 읽음 (2026-10-28 대표님 "카톡처럼 읽었는지 안 읽었는지")
             <span className="text-micro font-bold text-primary">안 읽음</span>
@@ -311,7 +311,7 @@ const MessagesPage = () => {
           )}
 
           {tab !== "reports" && tab !== "coach" && tab !== "broadcast" && tab !== "strategy" && (
-            <p className="px-1 pt-1 text-micro leading-relaxed text-muted-foreground">
+            <p className="px-1 pt-1 text-label leading-relaxed text-muted-foreground">
               {tab === "requests"
                 ? "처음 보낸 사람은 수락 전까지 메시지를 1개만 보낼 수 있어요."
                 : "글자·이모지로 대화해요 · 불편한 메시지는 대화방 ⋯ 에서 신고하면 운영진이 확인해요."}

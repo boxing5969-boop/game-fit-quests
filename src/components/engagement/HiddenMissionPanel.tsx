@@ -26,7 +26,7 @@ const HiddenMissionPanel = () => {
     >
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             숨겨진 미션
           </p>
           <h3 className="mt-0.5 text-label font-bold text-foreground">
@@ -39,9 +39,9 @@ const HiddenMissionPanel = () => {
       </div>
 
       {isLoading ? (
-        <p className="text-micro text-muted-foreground">불러오는 중…</p>
+        <p className="text-label text-muted-foreground">불러오는 중…</p>
       ) : missions.length === 0 ? (
-        <p className="text-micro text-muted-foreground">
+        <p className="text-label text-muted-foreground">
           아직 표시할 숨겨진 미션이 없습니다.
         </p>
       ) : (
@@ -67,7 +67,7 @@ const HiddenMissionPanel = () => {
                   >
                     {isClaimed ? m.title : "???"}
                   </p>
-                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                     {isClaimed ? m.description : "조건을 만족하면 공개됩니다."}
                   </p>
                 </div>
@@ -86,7 +86,7 @@ const HiddenMissionPanel = () => {
         </ul>
       )}
 
-      <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-3 text-label leading-relaxed text-muted-foreground">
         ※ 숨겨진 미션 보상은 QUEST XP / 챔피언 머니 / RP 입니다. 공식 1~40
         레벨업과 무관합니다.
       </p>

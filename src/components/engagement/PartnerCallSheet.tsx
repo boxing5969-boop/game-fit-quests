@@ -92,13 +92,13 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
           <Handshake className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             오늘 같이 해요
           </p>
           <h2 className="mt-0.5 text-body font-bold text-foreground">
             {allBranches ? "전 지점 모집" : "같은 지점, 오늘만 보입니다"}
           </h2>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             {allBranches
               ? "오늘 올라온 모집만 보여요. 참여는 같은 지점 회원끼리 해요."
               : "하루가 지나면 저절로 사라집니다. 부담 없이 올려주세요."}
@@ -124,7 +124,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         <div className="rounded-card border border-border bg-muted/20 px-4 py-6 text-center">
           <p className="text-title">🥊</p>
           <p className="mt-2 text-label font-bold text-foreground">아직 오늘 모집이 없습니다</p>
-          <p className="mt-1 text-micro text-muted-foreground">
+          <p className="mt-1 text-label text-muted-foreground">
             {allBranches
               ? "오늘 올라온 모집이 전 지점에 아직 없어요."
               : "아래에서 첫 모집을 올려보세요. 같은 지점 회원에게만 보입니다."}
@@ -145,7 +145,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
                   {c.isMine ? "내 모집" : c.nickname}
                 </span>
                 {allBranches && c.branch && (
-                  <span className="shrink-0 text-micro font-semibold text-muted-foreground">
+                  <span className="shrink-0 text-label font-semibold text-muted-foreground">
                     {shortBranchName(c.branch)}
                   </span>
                 )}
@@ -153,12 +153,12 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
                   {PURPOSE_LABEL[c.purpose]}
                 </span>
               </div>
-              <p className="mt-0.5 text-micro font-semibold text-muted-foreground">
+              <p className="mt-0.5 text-label font-semibold text-muted-foreground">
                 {formatHour(c.slotHour)}
                 {c.joinCount > 0 && ` · 참여 ${c.joinCount}명`}
               </p>
               {c.note && (
-                <p className="mt-0.5 truncate text-micro text-muted-foreground">{c.note}</p>
+                <p className="mt-0.5 truncate text-label text-muted-foreground">{c.note}</p>
               )}
             </div>
             {c.isMine ? (
@@ -205,7 +205,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         {mine ? "내 모집 바꾸기" : "모집 올리기"}
       </p>
 
-      <p className="mt-3 text-micro font-bold text-muted-foreground">무엇을 함께 하나요</p>
+      <p className="mt-3 text-label font-bold text-muted-foreground">무엇을 함께 하나요</p>
       <div className="mt-1.5 flex flex-wrap gap-1.5">
         {PURPOSES.map((p) => {
           const locked = p === "sparring" && !canSpar;
@@ -228,13 +228,13 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         })}
       </div>
       {!canSpar && (
-        <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
           스파링 모집은 맞대는 구간이 열리는 <b className="text-foreground">레드 리그(레벨 21)</b>부터
           가능합니다. 미트·줄넘기·같이 운동은 지금도 올릴 수 있습니다.
         </p>
       )}
 
-      <p className="mt-3 text-micro font-bold text-muted-foreground">몇 시에 오시나요</p>
+      <p className="mt-3 text-label font-bold text-muted-foreground">몇 시에 오시나요</p>
       <select
         value={hour}
         onChange={(e) => setHour(Number(e.target.value))}
@@ -264,7 +264,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
       >
         {create.isPending ? "올리는 중…" : mine ? "모집 바꾸기" : "모집 올리기"}
       </button>
-      <p className="mt-2 text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-2 text-label leading-relaxed text-muted-foreground">
         하루에 한 건만 올라갑니다. 다시 올리면 기존 모집이 바뀝니다.
       </p>
     </div>

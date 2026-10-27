@@ -68,7 +68,7 @@ const TitleAttemptList = ({ attempts, max, className }: { attempts: TitleAttempt
               <span className="block text-label font-bold text-foreground">
                 도전 {a.no}/{max} · {a.passed ? "합격" : "아쉽게 불합격"}
               </span>
-              <span className="mt-0.5 block text-micro font-semibold text-muted-foreground">{formatKoShortDateTime(a.recordedAt)}</span>
+              <span className="mt-0.5 block text-label font-semibold text-muted-foreground">{formatKoShortDateTime(a.recordedAt)}</span>
               {a.note && <span className="mt-0.5 block break-words text-label leading-snug text-muted-foreground">“{a.note}”</span>}
             </span>
             {a.videoPath && (

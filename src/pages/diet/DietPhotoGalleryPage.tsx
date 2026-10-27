@@ -201,13 +201,13 @@ const DietPhotoGalleryPage = () => {
         <div className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+              <p className="text-label font-bold text-primary">
                 MY PHOTOS
               </p>
               <p className="mt-0.5 text-body font-extrabold text-foreground">
                 총 {photos.length}장
               </p>
-              <p className="mt-0.5 text-micro text-muted-foreground">
+              <p className="mt-0.5 text-label text-muted-foreground">
                 {DELETE_DAYS}일이 지난 사진은 공간 확보를 위해 자동 삭제돼요.
               </p>
             </div>
@@ -332,7 +332,7 @@ const DateGroup = ({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-micro text-muted-foreground">
+                <div className="flex h-full w-full items-center justify-center text-label text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
                 </div>
               )}

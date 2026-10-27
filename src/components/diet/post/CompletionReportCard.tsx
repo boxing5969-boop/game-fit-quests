@@ -42,7 +42,7 @@ export const CompletionReportCard = ({
         <span className="rounded-full bg-reward/20 p-1.5 text-reward-foreground">
           <Award className="h-4 w-4 text-[#F6C453]" />
         </span>
-        <p className="text-micro font-black uppercase tracking-[0.2em] text-[#F6C453]">
+        <p className="text-label font-bold text-[#F6C453]">
           21-DAY REPORT
         </p>
       </div>
@@ -134,7 +134,7 @@ const StatTile = ({
   valueClass?: string;
 }) => (
   <div className="rounded-xl border border-border bg-card p-3">
-    <div className="flex items-center gap-1 text-micro font-bold uppercase tracking-wide text-muted-foreground">
+    <div className="flex items-center gap-1 text-label font-bold text-muted-foreground">
       {icon}
       {label}
     </div>
@@ -161,7 +161,7 @@ const HabitRow = ({
         : "border-primary/30 bg-primary/5 text-foreground",
     )}
   >
-    <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
+    <p className="text-label font-bold text-muted-foreground">
       {label}
     </p>
     <p className="mt-0.5 font-bold">{habit}</p>

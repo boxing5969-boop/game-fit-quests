@@ -134,7 +134,7 @@ const DietValuePage = () => {
         {/* ══════════ 1. THE PARADOX ══════════ */}
         <section id="ch-paradox">
           <div className="rounded-2xl border border-destructive/30 bg-gradient-to-b from-destructive/10 to-transparent p-5">
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-destructive">
+            <p className="text-label font-bold text-destructive">
               {PARADOX_HERO.tagline}
             </p>
             <h2 className="mt-1 text-title font-extrabold leading-tight text-foreground">
@@ -238,7 +238,7 @@ const DietValuePage = () => {
 
           {/* 구체 실천 — 기존 HOW_TO_RESIST 재활용 */}
           <div className="mt-1 space-y-2">
-            <p className="text-micro font-black uppercase tracking-wider text-primary">
+            <p className="text-label font-bold text-primary">
               구체 실천 · 복구 세부 전술
             </p>
             {HOW_TO_RESIST.map((s) => (
@@ -325,7 +325,7 @@ const DietValuePage = () => {
         {/* ══════════ 7. 면책 + CTA ══════════ */}
         <section className="space-y-3">
           <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-            <p className="flex items-center gap-1.5 text-micro font-black uppercase tracking-wider text-destructive">
+            <p className="flex items-center gap-1.5 text-label font-bold text-destructive">
               <AlertTriangle className="h-3.5 w-3.5" />
               의학적 안내
             </p>
@@ -385,7 +385,7 @@ const ChapterHeader = ({
     <div>
       <p
         className={cn(
-          "text-micro font-black uppercase tracking-[0.2em]",
+          "text-label font-bold",
           taglineCls,
         )}
       >
@@ -433,20 +433,20 @@ const PillarCard = ({
         )}
       />
     </div>
-    <p className="text-micro leading-snug text-muted-foreground">
+    <p className="text-label leading-snug text-muted-foreground">
       {pillar.role}
     </p>
     {open && (
       <div className="mt-1.5 w-full space-y-1.5 border-t border-border pt-2">
         <div>
-          <p className="text-micro font-black uppercase tracking-wider text-destructive">
+          <p className="text-label font-bold text-destructive">
             결핍 신호
           </p>
           <ul className="mt-0.5 space-y-0.5">
             {pillar.deficiencySigns.map((s) => (
               <li
                 key={s}
-                className="pl-2.5 -indent-2.5 text-micro leading-relaxed text-foreground"
+                className="pl-2.5 -indent-2.5 text-label leading-relaxed text-foreground"
               >
                 <span className="mr-1 text-destructive">·</span>
                 {s}
@@ -455,10 +455,10 @@ const PillarCard = ({
           </ul>
         </div>
         <div>
-          <p className="text-micro font-black uppercase tracking-wider text-primary">
+          <p className="text-label font-bold text-primary">
             153 답
           </p>
-          <p className="mt-0.5 text-micro leading-relaxed text-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-foreground">
             {pillar.answer153}
           </p>
         </div>
@@ -529,7 +529,7 @@ const SectionCard = ({
         {data.bullets.map((b) => (
           <li
             key={b}
-            className="pl-3 -indent-3 text-micro leading-relaxed text-foreground"
+            className="pl-3 -indent-3 text-label leading-relaxed text-foreground"
           >
             <span className="mr-1 text-primary">·</span>
             {b}
@@ -558,7 +558,7 @@ const SelfCheckSummary = ({
   return (
     <div className={cn("rounded-2xl border p-4", toneCls)}>
       <div className="flex items-baseline justify-between">
-        <span className="text-micro font-black uppercase tracking-[0.2em] text-muted-foreground">
+        <span className="text-label font-bold text-muted-foreground">
           내 밸런스 점수
         </span>
         <span className="number-font text-heading font-black leading-none text-foreground">

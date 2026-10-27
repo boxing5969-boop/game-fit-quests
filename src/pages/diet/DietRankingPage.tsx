@@ -61,7 +61,7 @@ const DietRankingPage = () => {
                 <Info className="h-3.5 w-3.5" />
                 <span>정렬 기준</span>
               </div>
-              <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+              <p className="mt-1 text-label leading-relaxed text-muted-foreground">
                 코치가 승인한 체크인 일수 → 최고 스트릭 → 닉네임 순.
                 체중·감량 수치는 사용하지 않아요. 개인 사진·메모는 비공개입니다.
               </p>
@@ -81,7 +81,7 @@ const DietRankingPage = () => {
                 <p className="mt-1.5 text-label font-bold text-foreground">
                   아직 기록이 쌓이지 않았어요
                 </p>
-                <p className="mt-0.5 text-micro text-muted-foreground">
+                <p className="mt-0.5 text-label text-muted-foreground">
                   첫 승인된 체크인이 있으면 바로 표시돼요.
                 </p>
               </div>
@@ -102,7 +102,7 @@ const DietRankingPage = () => {
               </ul>
             )}
 
-            <p className="text-center text-micro text-muted-foreground">
+            <p className="text-center text-label text-muted-foreground">
               리더보드 노출이 부담스럽다면 설정에서 코치에게 비공개 요청을 남겨 주세요.
             </p>
           </>
@@ -166,7 +166,7 @@ const RankingRow = ({
             </span>
           )}
         </p>
-        <p className="text-micro text-muted-foreground">
+        <p className="text-label text-muted-foreground">
           승인 {approvedDays}일 · 최고 {bestStreak}일 연속
         </p>
       </div>
@@ -174,7 +174,7 @@ const RankingRow = ({
         <p className="number-font text-label font-extrabold text-primary">
           {completionRate}%
         </p>
-        <p className="text-micro text-muted-foreground">완주율</p>
+        <p className="text-label text-muted-foreground">완주율</p>
       </div>
     </li>
   );

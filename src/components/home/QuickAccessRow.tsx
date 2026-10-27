@@ -54,7 +54,7 @@ const QuickAccessRow = ({
       >
         <div className="flex items-center gap-1.5">
           <Zap className="h-3.5 w-3.5 text-primary" />
-          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground dark:text-gray-500">
+          <p className="text-label font-bold text-muted-foreground dark:text-gray-500">
             미션
           </p>
         </div>
@@ -74,7 +74,7 @@ const QuickAccessRow = ({
       >
         <div className="flex items-center gap-1.5">
           <Users className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
-          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground dark:text-gray-500">
+          <p className="text-label font-bold text-muted-foreground dark:text-gray-500">
             챌린지
           </p>
         </div>
@@ -94,7 +94,7 @@ const QuickAccessRow = ({
       >
         <div className="flex items-center gap-1.5">
           <TrendingUp className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400" />
-          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground dark:text-gray-500">
+          <p className="text-label font-bold text-muted-foreground dark:text-gray-500">
             진행도
           </p>
         </div>

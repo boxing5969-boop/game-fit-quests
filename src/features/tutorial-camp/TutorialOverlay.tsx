@@ -144,7 +144,7 @@ const TutorialOverlay = ({
               total={totalStepsInDay}
               current={step.step}
             />
-            <p className="mt-0.5 text-center text-micro font-bold uppercase tracking-widest text-amber-200/80">
+            <p className="mt-0.5 text-center text-label font-bold text-amber-200/80">
               Day {step.day} · {step.step + 1} / {totalStepsInDay}
             </p>
           </div>

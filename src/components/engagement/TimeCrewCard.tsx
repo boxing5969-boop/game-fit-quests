@@ -36,7 +36,7 @@ const TimeCrewCard = () => {
           <Clock className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
+          <p className="text-label font-bold text-primary">
             같은 시간대 · 자동 계산
           </p>
           <p className="mt-0.5 truncate text-label font-bold text-foreground">
@@ -46,7 +46,7 @@ const TimeCrewCard = () => {
                 ? `회원님은 ${SLOT_SHORT[slot]} 팀이에요`
                 : "시간대"}
           </p>
-          <p className="mt-0.5 truncate text-micro text-muted-foreground">
+          <p className="mt-0.5 truncate text-label text-muted-foreground">
             {isLoading
               ? " "
               : crew > 0
@@ -57,7 +57,7 @@ const TimeCrewCard = () => {
       </div>
 
       {!isLoading && names.length > 0 && (
-        <p className="mt-2.5 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-2.5 text-label leading-relaxed text-muted-foreground">
           자주 마주치는 분{" "}
           <b className="font-bold text-foreground">{names.join(" · ")}</b>
           {rest > 0 && ` 그 밖에 ${rest}명`}
@@ -91,7 +91,7 @@ const TimeCrewCard = () => {
         </div>
       )}
       {!isLoading && slots.length > 0 && (
-        <p className="mt-1.5 text-micro text-muted-foreground">
+        <p className="mt-1.5 text-label text-muted-foreground">
           최근 60일 출석 기준 · 같은 지점 회원 분포
         </p>
       )}

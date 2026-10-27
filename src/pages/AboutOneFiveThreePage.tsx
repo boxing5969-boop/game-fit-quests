@@ -73,7 +73,7 @@ const AboutOneFiveThreePage = () => {
               "radial-gradient(ellipse at 50% 0%, rgba(217, 54, 32, 0.12) 0%, rgba(41, 195, 156, 0.06) 55%, transparent 100%)",
           }}
         >
-          <p className="text-micro font-black uppercase tracking-[0.28em] text-primary">
+          <p className="text-label font-bold text-primary">
             WHAT IS 153?
           </p>
           <h2 className="mt-3 flex items-baseline gap-2 leading-none">
@@ -92,7 +92,7 @@ const AboutOneFiveThreePage = () => {
 
         {/* ══════════ 2. 서사 — 베드로의 밤 ══════════ */}
         <section className="space-y-4">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-accent">
+          <p className="text-label font-bold text-accent">
             THE STORY
           </p>
 
@@ -134,7 +134,7 @@ const AboutOneFiveThreePage = () => {
         {/* ══════════ 3. 의미 3축 ══════════ */}
         <section className="space-y-3">
           <div>
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-label font-bold text-primary">
               MEANING
             </p>
             <h3 className="mt-1 text-body font-extrabold leading-tight text-foreground">
@@ -182,7 +182,7 @@ const AboutOneFiveThreePage = () => {
               "linear-gradient(135deg, rgba(41, 195, 156, 0.10) 0%, rgba(217, 54, 32, 0.08) 100%)",
           }}
         >
-          <p className="text-micro font-black uppercase tracking-[0.24em] text-accent">
+          <p className="text-label font-bold text-accent">
             OUR MISSION
           </p>
           <p className="mt-2 text-body font-extrabold leading-snug text-foreground">

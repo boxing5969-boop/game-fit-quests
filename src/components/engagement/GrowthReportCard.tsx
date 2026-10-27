@@ -39,32 +39,32 @@ const GrowthReportCard = () => {
             <ClipboardList className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-label font-bold text-primary">
               성장 리포트
             </p>
             <h3 className="mt-0.5 text-body font-bold text-foreground">
               공식 성장 + QUEST 성장 분리 요약
             </h3>
-            <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+            <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
               회원 / 학부모 / 코치 모두 보기 좋은 성장 한 페이지.
             </p>
           </div>
         </div>
 
         {isLoading || !report ? (
-          <p className="text-micro text-muted-foreground">
+          <p className="text-label text-muted-foreground">
             리포트를 만드는 중…
           </p>
         ) : (
           <>
             {/* 공식 성장 */}
             <div className="mb-2">
-              <p className="mb-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+              <p className="mb-1 text-label font-bold text-muted-foreground">
                 공식 성장 · 읽기 전용
               </p>
               <div className="grid grid-cols-3 gap-2">
                 <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-                  <p className="text-micro uppercase text-muted-foreground">
+                  <p className="text-label uppercase text-muted-foreground">
                     리그·레벨
                   </p>
                   <p className="number-font mt-0.5 text-label font-black text-foreground">
@@ -72,7 +72,7 @@ const GrowthReportCard = () => {
                   </p>
                 </div>
                 <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-                  <p className="text-micro uppercase text-muted-foreground">
+                  <p className="text-label uppercase text-muted-foreground">
                     공식 XP
                   </p>
                   <p className="number-font mt-0.5 text-label font-black text-foreground">
@@ -80,7 +80,7 @@ const GrowthReportCard = () => {
                   </p>
                 </div>
                 <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-                  <p className="text-micro uppercase text-muted-foreground">
+                  <p className="text-label uppercase text-muted-foreground">
                     출석/보스
                   </p>
                   <p className="number-font mt-0.5 text-label font-black text-foreground">
@@ -93,12 +93,12 @@ const GrowthReportCard = () => {
 
             {/* QUEST 성장 */}
             <div className="mb-2">
-              <p className="mb-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+              <p className="mb-1 text-label font-bold text-muted-foreground">
                 QUEST 성장 · 보조 경험치
               </p>
               <div className="grid grid-cols-3 gap-2">
                 <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-                  <p className="text-micro uppercase text-muted-foreground">
+                  <p className="text-label uppercase text-muted-foreground">
                     QUEST XP
                   </p>
                   <p className="number-font mt-0.5 text-label font-black text-foreground">
@@ -106,7 +106,7 @@ const GrowthReportCard = () => {
                   </p>
                 </div>
                 <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-                  <p className="text-micro uppercase text-muted-foreground">
+                  <p className="text-label uppercase text-muted-foreground">
                     퀴즈 정답
                   </p>
                   <p className="number-font mt-0.5 text-label font-black text-foreground">
@@ -114,7 +114,7 @@ const GrowthReportCard = () => {
                   </p>
                 </div>
                 <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-                  <p className="text-micro uppercase text-muted-foreground">
+                  <p className="text-label uppercase text-muted-foreground">
                     챌린지·일기
                   </p>
                   <p className="number-font mt-0.5 text-label font-black text-foreground">
@@ -126,7 +126,7 @@ const GrowthReportCard = () => {
 
             {/* 오삼 코멘트 */}
             <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-              <p className="text-micro font-black uppercase tracking-wider text-primary">
+              <p className="text-label font-bold text-primary">
                 오삼 코치
               </p>
               <p className="mt-0.5 text-label leading-relaxed text-foreground">
@@ -136,7 +136,7 @@ const GrowthReportCard = () => {
 
             {/* 학부모/코치 한 줄 */}
             <div className="mt-2 rounded-card border border-border bg-background/40 p-3">
-              <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
+              <p className="text-label font-bold text-muted-foreground">
                 학부모 / 코치 한 줄
               </p>
               <p className="mt-0.5 text-label leading-relaxed text-foreground">
@@ -155,7 +155,7 @@ const GrowthReportCard = () => {
           </>
         )}
 
-        <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-label leading-relaxed text-muted-foreground">
           {GROWTH_REPORT_DISCLAIMERS[0]}
         </p>
       </section>

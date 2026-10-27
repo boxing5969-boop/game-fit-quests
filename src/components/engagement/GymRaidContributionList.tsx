@@ -32,7 +32,7 @@ const GymRaidContributionList = ({
         <span className="text-heading">{getRaidTypeEmoji(raid.raid_type)}</span>
         <div className="min-w-0 flex-1">
           <p className="text-label font-bold text-foreground">{raid.title}</p>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             {raid.description}
           </p>
         </div>
@@ -45,7 +45,7 @@ const GymRaidContributionList = ({
       </div>
 
       <div className="mt-3">
-        <div className="flex items-center justify-between text-micro text-muted-foreground">
+        <div className="flex items-center justify-between text-label text-muted-foreground">
           <span>{getRaidTypeLabel(raid.raid_type)}</span>
           <span>
             {Math.round(raid.current_value).toLocaleString()} /{" "}
@@ -65,7 +65,7 @@ const GymRaidContributionList = ({
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-          <p className="text-micro uppercase text-muted-foreground">
+          <p className="text-label uppercase text-muted-foreground">
             내 기여
           </p>
           <p className="number-font mt-0.5 text-label font-black text-foreground">
@@ -81,7 +81,7 @@ const GymRaidContributionList = ({
         </div>
       </div>
 
-      <p className="mt-2 text-micro text-muted-foreground">
+      <p className="mt-2 text-label text-muted-foreground">
         {new Date(raid.start_date).toLocaleDateString("ko-KR")} ~{" "}
         {new Date(raid.end_date).toLocaleDateString("ko-KR")}
       </p>

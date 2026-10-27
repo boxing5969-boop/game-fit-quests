@@ -112,18 +112,18 @@ const HomeEngagementSection = ({
           <BookOpen className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
+          <p className="text-label font-bold text-primary">
             오늘 운동 한 줄
           </p>
           <p className="mt-0.5 truncate text-label font-bold text-foreground">
             오늘 컨디션 + 한 줄 + 사진
           </p>
-          <p className="mt-0.5 truncate text-micro text-muted-foreground">
+          <p className="mt-0.5 truncate text-label text-muted-foreground">
             커뮤니티에 올라가고 동료들이 153으로 응원해요.
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-micro font-bold uppercase tracking-wider text-reward">
+          <p className="text-label font-bold text-reward">
             보상
           </p>
           <p className="mt-0.5 text-micro font-bold text-reward">머니 +50</p>
@@ -143,13 +143,13 @@ const HomeEngagementSection = ({
           <Megaphone className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
+          <p className="text-label font-bold text-primary">
             응원 보내기
           </p>
           <p className="mt-0.5 truncate text-label font-bold text-foreground">
             오늘 운동한 동료에게 응원을 보내요
           </p>
-          <p className="mt-0.5 truncate text-micro text-muted-foreground">
+          <p className="mt-0.5 truncate text-label text-muted-foreground">
             받은 사람에게 응원 알림이 바로 가요.
           </p>
         </div>

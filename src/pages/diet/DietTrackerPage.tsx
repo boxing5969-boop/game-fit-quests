@@ -592,7 +592,7 @@ const DietTrackerPage = () => {
         <div className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+              <p className="text-label font-bold text-primary">
                 {stageLabel}
               </p>
               <h2 className="mt-0.5 text-heading text-foreground leading-tight">
@@ -623,7 +623,7 @@ const DietTrackerPage = () => {
             <div className="flex items-center justify-between">
               <p
                 className={cn(
-                  "text-micro font-black uppercase tracking-[0.2em]",
+                  "text-label font-bold",
                   allDone ? "text-emerald-600" : "text-primary",
                 )}
               >
@@ -658,7 +658,7 @@ const DietTrackerPage = () => {
             <div className="mt-3 flex items-center justify-between gap-2">
               <p
                 className={cn(
-                  "text-micro leading-relaxed",
+                  "text-label leading-relaxed",
                   allDone ? "text-emerald-700" : "text-foreground",
                 )}
               >
@@ -740,14 +740,14 @@ const DietTrackerPage = () => {
         {/* 기분 + 한 줄 회고 */}
         <Section title="오늘의 마무리">
           <div className="space-y-2.5">
-            <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="text-label font-bold text-muted-foreground">
               기분
             </p>
             <DietMoodPicker
               value={habits.mood ?? null}
               onChange={(v) => setHabits((h) => ({ ...h, mood: v }))}
             />
-            <p className="mt-2 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="mt-2 text-label font-bold text-muted-foreground">
               한 줄 회고
             </p>
             <Textarea
@@ -756,7 +756,7 @@ const DietTrackerPage = () => {
               placeholder="한 끼 놓쳤다면 다음 끼니부터 다시 시작 — 오늘 느낀 점 간단히"
               className="min-h-[68px] rounded-xl text-label"
             />
-            <p className="text-right text-micro text-muted-foreground">
+            <p className="text-right text-label text-muted-foreground">
               {note.length} / 200
             </p>
           </div>
@@ -867,7 +867,7 @@ const Section = ({
         {title}
       </h3>
       {subtitle && (
-        <span className="text-micro text-muted-foreground">{subtitle}</span>
+        <span className="text-label text-muted-foreground">{subtitle}</span>
       )}
     </div>
     {children}
@@ -917,7 +917,7 @@ const NumberInput = ({
       placeholder="—"
       className="h-9 rounded-lg text-right text-label font-bold"
     />
-    <span className="w-10 text-micro text-muted-foreground">{suffix}</span>
+    <span className="w-10 text-label text-muted-foreground">{suffix}</span>
   </div>
 );
 

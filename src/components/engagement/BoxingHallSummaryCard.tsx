@@ -65,13 +65,13 @@ const BoxingHallSummaryCard = () => {
     >
       {/* Header */}
       <div className="mb-3">
-        <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+        <p className="text-label font-bold text-primary">
           나의 트로피 룸
         </p>
         <h2 className="mt-0.5 text-body font-bold text-foreground">
           나만의 복싱 전당
         </h2>
-        <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
           공식 성장은 코치 기준으로, QUEST 기록은 습관과 몰입으로 쌓입니다.
         </p>
       </div>
@@ -81,7 +81,7 @@ const BoxingHallSummaryCard = () => {
 
       {/* A. 공식 성장 (읽기만) */}
       <div className="mt-3">
-        <p className="mb-1.5 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="mb-1.5 text-label font-bold text-muted-foreground">
           공식 성장 · 읽기 전용
         </p>
         <div className="grid grid-cols-3 gap-2">
@@ -105,7 +105,7 @@ const BoxingHallSummaryCard = () => {
 
       {/* B. QUEST 성장 (보조) — 초기 로드 시 skeleton */}
       <div className="mt-3">
-        <p className="mb-1.5 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="mb-1.5 text-label font-bold text-muted-foreground">
           QUEST 성장 · 보조 경험치
         </p>
         <div className="grid grid-cols-3 gap-2">
@@ -160,7 +160,7 @@ const BoxingHallSummaryCard = () => {
           <Banknote className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-black uppercase tracking-wider text-reward">
+          <p className="text-label font-bold text-reward">
             챔피언 머니
           </p>
           <p className="number-font mt-0.5 text-body font-black text-foreground">
@@ -186,7 +186,7 @@ const BoxingHallSummaryCard = () => {
       </div>
 
       {/* 안내 문구 */}
-      <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-3 text-label leading-relaxed text-muted-foreground">
         ※ QUEST XP 는 공식 레벨 XP 와 분리된 보조 경험치입니다. 공식 레벨업은
         기존 훈련 미션과 코치 승인 기준으로 진행됩니다.
       </p>

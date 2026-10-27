@@ -27,7 +27,7 @@ export const DietTimelineStrip = ({
 }: DietTimelineStripProps) => {
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex items-center justify-between text-micro font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="flex items-center justify-between text-label font-bold text-muted-foreground">
         <span>21일 타임라인</span>
         <span className="number-font text-foreground">DAY {currentDay} / 21</span>
       </div>
@@ -37,7 +37,7 @@ export const DietTimelineStrip = ({
           for (let d = stage.dayRange[0]; d <= stage.dayRange[1]; d++) days.push(d);
           return (
             <div key={stage.id} className="space-y-1">
-              <div className="flex items-center gap-1.5 text-micro font-black uppercase tracking-wide">
+              <div className="flex items-center gap-1.5 text-label font-bold">
                 <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-primary">
                   {stage.label}
                 </span>

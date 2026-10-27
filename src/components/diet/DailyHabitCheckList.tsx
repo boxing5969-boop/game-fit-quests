@@ -60,7 +60,7 @@ export const DailyHabitCheckList = ({
                 >
                   {h.label}
                 </p>
-                <p className="text-micro text-muted-foreground leading-relaxed">
+                <p className="text-label text-muted-foreground leading-relaxed">
                   {isYouth && h.key === "late_night_snack_avoided"
                     ? "밤 간식은 조금만, 식사는 거르지 않기"
                     : h.prompt}

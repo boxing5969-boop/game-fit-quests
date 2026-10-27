@@ -14,7 +14,7 @@ const MembershipSelectPage = () => {
         </button>
         <div>
           <h1 className="text-heading text-foreground">153멤버십</h1>
-          <p className="text-micro text-muted-foreground">153복싱짐 선릉역점</p>
+          <p className="text-label text-muted-foreground">153복싱짐 선릉역점</p>
         </div>
       </div>
       <MembershipProducts />

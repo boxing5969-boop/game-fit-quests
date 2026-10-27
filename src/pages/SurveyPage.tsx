@@ -94,7 +94,7 @@ function QuestionBlock({ q, idx, value, onChange }: { q: SurveyQuestion; idx: nu
         <>
           <StarRow value={value.answer_score ?? null} max={max} onChange={(v) => onChange({ answer_score: v })} />
           {(labels["1"] || labels[String(max)]) && (
-            <div className="flex justify-between text-micro text-muted-foreground">
+            <div className="flex justify-between text-label text-muted-foreground">
               <span>{labels["1"]}</span>
               <span>{labels[String(max)]}</span>
             </div>
@@ -348,7 +348,7 @@ const SurveyPage = () => {
                   <c.Icon className="h-4 w-4" />
                 </span>
                 <span className="text-label font-bold text-foreground">{c.label}</span>
-                <span className="text-micro leading-snug text-muted-foreground">{c.hint}</span>
+                <span className="text-label leading-snug text-muted-foreground">{c.hint}</span>
               </button>
             ))}
           </div>

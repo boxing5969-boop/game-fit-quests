@@ -188,12 +188,12 @@ const WorkingOutNowCard = ({
                   <NameBadge league={m.league} className="h-3.5 w-3.5 shrink-0" glow={false} />
                   <span className="truncate text-label font-black text-foreground">{m.nickname}</span>
                 </span>
-                <span className="whitespace-nowrap text-micro font-bold text-muted-foreground">
+                <span className="whitespace-nowrap text-label font-bold text-muted-foreground">
                   {m.is_me && <span className="text-primary">나 · </span>}
                   {minutesLabel(m.since, now)}
                 </span>
                 {data.all_branches && m.branch && (
-                  <span className="max-w-full truncate text-micro font-bold text-muted-foreground/80">
+                  <span className="max-w-full truncate text-label font-bold text-muted-foreground/80">
                     {shortBranchName(m.branch)}
                   </span>
                 )}
@@ -298,12 +298,12 @@ const WorkingOutNowFullscreen = ({
                       <NameBadge league={m.league} className="h-4 w-4 shrink-0" glow={false} />
                       <span className="truncate text-label font-black text-foreground">{m.nickname}</span>
                     </span>
-                    <span className="whitespace-nowrap text-micro font-bold text-muted-foreground">
+                    <span className="whitespace-nowrap text-label font-bold text-muted-foreground">
                       {m.is_me ? <span className="text-primary">나 · </span> : null}
                       Lv.{m.level} · {minutesLabel(m.since, now)}
                     </span>
                     {allBranches && m.branch && (
-                      <span className="max-w-full truncate text-micro font-bold text-muted-foreground/80">
+                      <span className="max-w-full truncate text-label font-bold text-muted-foreground/80">
                         {shortBranchName(m.branch)}
                       </span>
                     )}

@@ -83,7 +83,7 @@ const Chip = ({ on, onClick, children, label }: { on: boolean; onClick: () => vo
 
 const HandChips = ({ hand, setHand }: { hand: HandSide; setHand: (h: HandSide) => void }) => (
   <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-    <span className="flex items-center gap-1 text-micro font-bold text-muted-foreground">
+    <span className="flex items-center gap-1 text-label font-bold text-muted-foreground">
       <Hand className="h-3.5 w-3.5" aria-hidden /> 감는 손
     </span>
     <Chip on={hand === "left"} onClick={() => setHand("left")}>
@@ -190,7 +190,7 @@ const HandWrapStepViewer = ({ onWatch, className }: Props) => {
                 </span>
               </span>
               <span className="mt-1.5 block text-label font-black leading-snug text-foreground">{s.title}</span>
-              <span className="mt-0.5 block text-micro leading-snug text-muted-foreground">{txt(s.short)}</span>
+              <span className="mt-0.5 block text-label leading-snug text-muted-foreground">{txt(s.short)}</span>
             </button>
           </li>
         ))}
@@ -204,7 +204,7 @@ const HandWrapStepViewer = ({ onWatch, className }: Props) => {
         >
           <Play className="h-4 w-4 fill-current" aria-hidden /> 1단계부터 한 단계씩 따라 하기
         </button>
-        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-micro font-semibold text-muted-foreground">
+        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-label font-semibold text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-[#10B981] ring-2 ring-white" /> 시작
           </span>
@@ -393,7 +393,7 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
           </button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-body font-black leading-tight text-foreground">붕대 감기 9단계</p>
-            <p className="truncate text-micro text-muted-foreground">한 단계씩 보고 따라 감아 보세요</p>
+            <p className="truncate text-label text-muted-foreground">한 단계씩 보고 따라 감아 보세요</p>
           </div>
           <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-label font-black tabular-nums text-primary">
             {idx + 1} / {total}
@@ -494,7 +494,7 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
           <HandChips hand={hand} setHand={setHand} />
           {!still && (
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-              <span className="text-micro font-bold text-muted-foreground">속도</span>
+              <span className="text-label font-bold text-muted-foreground">속도</span>
               {HANDWRAP_STEP_SPEEDS.map((s) => (
                 <Chip key={s.rate} on={rate === s.rate} onClick={() => setRate(s.rate)}>
                   {s.label}
@@ -502,7 +502,7 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose, onWatch 
               ))}
             </div>
           )}
-          <p className="flex items-center gap-1.5 text-micro font-semibold text-muted-foreground">
+          <p className="flex items-center gap-1.5 text-label font-semibold text-muted-foreground">
             <Eye aria-hidden className="h-3.5 w-3.5 shrink-0" />
             {HANDWRAP_VIEW_NOTE[step.view][hand]}
           </p>

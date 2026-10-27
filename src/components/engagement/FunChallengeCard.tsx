@@ -53,7 +53,7 @@ const FunChallengeCard = ({ challenge, onChallenge }: FunChallengeCardProps) => 
           <h3 className="mt-1.5 text-label font-bold text-foreground">
             {challenge.title}
           </h3>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             {challenge.description}
           </p>
         </div>
@@ -65,7 +65,7 @@ const FunChallengeCard = ({ challenge, onChallenge }: FunChallengeCardProps) => 
           const r = rewards?.[d];
           return (
             <div key={d} className="text-center">
-              <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+              <p className="text-label font-bold text-muted-foreground">
                 {DIFFICULTY_LABEL[d]}
               </p>
               <p className="number-font mt-0.5 text-label font-black text-foreground">
@@ -80,7 +80,7 @@ const FunChallengeCard = ({ challenge, onChallenge }: FunChallengeCardProps) => 
       </div>
 
       {challenge.safety_note && (
-        <p className="mt-2 flex items-start gap-1.5 text-micro leading-relaxed text-amber-600">
+        <p className="mt-2 flex items-start gap-1.5 text-label leading-relaxed text-amber-600">
           <ShieldAlert className="mt-0.5 h-3 w-3 shrink-0" />
           {challenge.safety_note}
         </p>

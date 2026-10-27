@@ -80,13 +80,13 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             리턴 라운드
           </p>
           <h2 className="mt-0.5 text-body font-bold text-foreground">
             {copy?.sheetTitle ?? "복귀 라운드"}
           </h2>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             {status?.inactive_days != null
               ? `${status.inactive_days}일 만의 복귀입니다.`
               : "돌아온 것 자체가 오늘의 승리입니다."}
@@ -121,7 +121,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-micro font-black uppercase tracking-wider text-primary">
+            <p className="text-label font-bold text-primary">
               QUEST XP
             </p>
             <p className="number-font mt-0.5 text-heading font-black text-foreground">
@@ -129,7 +129,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
             </p>
           </div>
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-micro font-black uppercase tracking-wider text-reward">
+            <p className="text-label font-bold text-reward">
               챔피언 머니
             </p>
             <p className="number-font mt-0.5 text-heading font-black text-reward">
@@ -138,7 +138,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
           </div>
         </div>
 
-        <p className="text-micro leading-relaxed text-muted-foreground">
+        <p className="text-label leading-relaxed text-muted-foreground">
           ※ 리턴 라운드는 보조 시스템입니다. 공식 1~40 레벨업 / 공식 XP /
           승급과 무관합니다.
         </p>
@@ -184,7 +184,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
     <div className="space-y-3">
       {copy && (
         <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-          <p className="text-micro font-black uppercase tracking-wider text-primary">
+          <p className="text-label font-bold text-primary">
             오삼 코치
           </p>
           <p className="mt-1 text-label leading-relaxed text-foreground">
@@ -211,13 +211,13 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
 
       {copy && (
         <div className="rounded-card border border-border bg-card p-3">
-          <p className="text-micro font-black uppercase tracking-wider text-reward">
+          <p className="text-label font-bold text-reward">
             오늘의 보상
           </p>
           <p className="mt-0.5 text-label font-bold text-reward">
             {copy.rewardLine}
           </p>
-          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             ※ 보상은 QUEST XP / 챔피언 머니로만 지급됩니다. 공식 XP는
             지급되지 않습니다.
           </p>
@@ -241,7 +241,7 @@ const ReturnRoundSheet = ({ open, onClose }: Props) => {
             : "복귀 보상 받기"}
       </button>
 
-      <p className="text-micro leading-relaxed text-muted-foreground">
+      <p className="text-label leading-relaxed text-muted-foreground">
         ※ 리턴 라운드는 공식 출석 / 공식 미션과 무관한 보조 시스템입니다.
       </p>
     </div>

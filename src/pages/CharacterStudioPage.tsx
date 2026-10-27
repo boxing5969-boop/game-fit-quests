@@ -926,7 +926,7 @@ function InventorySection({
           <p className="mt-2 text-label font-bold text-foreground">
             아직 구매한 아이템이 없어요
           </p>
-          <p className="mt-0.5 text-micro text-muted-foreground">
+          <p className="mt-0.5 text-label text-muted-foreground">
             꾸미기 탭에서 💵 챔피언 머니로 이펙트·프레임·칭호를 구매하면 여기에 쌓입니다.
           </p>
         </div>
@@ -937,7 +937,7 @@ function InventorySection({
         <div className="rounded-xl border border-border bg-card/50 p-3">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-micro font-bold text-foreground">🥊 보유 복서</span>
-            <span className="number-font text-micro font-bold text-muted-foreground">
+            <span className="number-font text-label font-bold text-muted-foreground">
               {ownedPresets.length}
             </span>
           </div>
@@ -953,10 +953,10 @@ function InventorySection({
               </span>
             ))}
             {ownedPresets.length > 12 && (
-              <span className="text-micro text-muted-foreground">+{ownedPresets.length - 12}</span>
+              <span className="text-label text-muted-foreground">+{ownedPresets.length - 12}</span>
             )}
           </div>
-          <p className="mt-2 text-micro text-muted-foreground">
+          <p className="mt-2 text-label text-muted-foreground">
             교체하려면 "복서" 탭에서 선택해주세요.
           </p>
         </div>
@@ -974,7 +974,7 @@ function InventorySection({
               <span className="text-micro font-bold text-foreground">
                 {meta.icon} {meta.label}
               </span>
-              <span className="number-font text-micro text-muted-foreground">
+              <span className="number-font text-label text-muted-foreground">
                 {items.length}개 보유
               </span>
             </div>
@@ -1257,7 +1257,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
                   보유
                 </span>
               ) : opt.price > 0 ? (
-                <span className={`inline-flex items-center gap-0.5 text-micro font-bold leading-none ${isHof ? (visuallyLocked ? "text-muted-foreground" : "text-reward") : visuallyLocked ? "text-muted-foreground" : "text-foreground/70"}`}>
+                <span className={`inline-flex items-center gap-0.5 text-label font-bold leading-none ${isHof ? (visuallyLocked ? "text-muted-foreground" : "text-reward") : visuallyLocked ? "text-muted-foreground" : "text-foreground/70"}`}>
                   <Banknote className="h-2.5 w-2.5" />
                   <span className="number-font">{opt.price.toLocaleString()}</span>
                 </span>
@@ -1293,7 +1293,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
           <span className="text-body">👑</span>
           <span className="text-label font-bold text-foreground">마스터 후광</span>
           {!isMaster && (
-            <span className="ml-auto flex items-center gap-1 text-micro text-muted-foreground">
+            <span className="ml-auto flex items-center gap-1 text-label text-muted-foreground">
               <Lock className="h-3 w-3" />
               블랙 마스터 달성 시 해금
             </span>
@@ -1302,7 +1302,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
             <span className="ml-auto text-micro text-amber-500 font-bold">적용 중</span>
           )}
         </div>
-        <p className="text-micro leading-snug text-muted-foreground">
+        <p className="text-label leading-snug text-muted-foreground">
           ※ 오라 탭의 <b className="text-reward">명예의 전당 전용</b> 오라와는 별개 카테고리입니다.
         </p>
         <div className="grid grid-cols-5 gap-2">
@@ -1812,7 +1812,7 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
         })}
       </div>
 
-      <p className="text-micro text-center text-muted-foreground pb-2">
+      <p className="text-label text-center text-muted-foreground pb-2">
         카드를 눌러 미리보기 · 버튼으로 적용/구매
       </p>
     </div>
@@ -1956,7 +1956,7 @@ function GrowthTab({ league, level }: { league: string; level: number }) {
                     {LEAGUE_LABELS[m.league]} Lv.{toGlobalLevel(m.league, m.levelRange[0])}-{toGlobalLevel(m.league, m.levelRange[1])}
                   </span>
                 </div>
-                <p className="text-micro text-muted-foreground mt-0.5">{m.description}</p>
+                <p className="text-label text-muted-foreground mt-0.5">{m.description}</p>
                 {m.unlockedPartKeys.length > 0 && (
                   <p className="text-micro text-primary mt-0.5">
                     {isCompleted ? "✅" : isCurrent ? "🔓" : "🔒"} 보상 {m.unlockedPartKeys.length}개
@@ -2009,7 +2009,7 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
                 style={{ width: `${(leagueIdx / 3) * 100}%` }}
               />
             </div>
-            <span className="text-micro text-muted-foreground">{LEAGUE_LABELS[league]} → 블랙</span>
+            <span className="text-label text-muted-foreground">{LEAGUE_LABELS[league]} → 블랙</span>
           </div>
         )}
       </div>
@@ -2029,7 +2029,7 @@ function EffectsTab({ league, level }: { league: string; level: number }) {
               <span className="text-heading">{tier.icon}</span>
               <div className="flex-1">
                 <p className="text-label font-bold text-foreground">{tier.label} 리그</p>
-                <p className="text-micro text-muted-foreground">{tier.desc}</p>
+                <p className="text-label text-muted-foreground">{tier.desc}</p>
               </div>
               {tier.active ? <Check className="h-3.5 w-3.5 text-status-complete" /> : <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
             </div>

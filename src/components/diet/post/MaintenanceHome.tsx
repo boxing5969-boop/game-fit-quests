@@ -69,7 +69,7 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
           <span className="rounded-full bg-emerald-400/20 p-1.5">
             <Salad className="h-4 w-4 text-emerald-500" />
           </span>
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-emerald-500">
+          <p className="text-label font-bold text-emerald-500">
             MAINTENANCE · 유지 컨설팅 모드
           </p>
         </div>
@@ -105,7 +105,7 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
       <section className="rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
+            <p className="text-label font-bold text-muted-foreground">
               유지 점수 (최근 4주 평균)
             </p>
             <p className="mt-0.5 number-font text-title font-extrabold text-foreground">
@@ -115,7 +115,7 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
           </div>
           <Sparkles className="h-5 w-5 text-reward" />
         </div>
-        <p className="mt-2 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-2 text-label leading-relaxed text-muted-foreground">
           공개 랭킹에 쓰이지 않습니다. 자기 점검 용도입니다.
         </p>
       </section>
@@ -142,7 +142,7 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
               3일 복귀 미션
             </p>
           </div>
-          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             {autoRecovery
               ? "최근 체크인에서 유지 범위를 넘어섰어요. 3일만 아래 루틴으로 재정렬해요."
               : "최근 일탈이 있었다면 3일만 아래 루틴으로 리셋."}
@@ -154,7 +154,7 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
                 className="rounded-xl border border-border bg-card px-3 py-2 text-label"
               >
                 <p className="font-bold text-foreground">{m.label}</p>
-                <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                   {m.hint}
                 </p>
               </li>
@@ -182,7 +182,7 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
             <button
               type="button"
               onClick={() => setShowRecovery(true)}
-              className="text-micro font-bold text-muted-foreground underline decoration-dotted"
+              className="text-label font-bold text-muted-foreground underline decoration-dotted"
             >
               복귀 미션 열기
             </button>
@@ -198,7 +198,7 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <div>
                   <p className="text-label font-bold text-foreground">{m.label}</p>
-                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                     {m.hint}
                   </p>
                 </div>
@@ -232,7 +232,7 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
               >
                 <div>
                   <p className="font-bold text-foreground">{c.week_index}주차</p>
-                  <p className="mt-0.5 text-micro text-muted-foreground">
+                  <p className="mt-0.5 text-label text-muted-foreground">
                     {c.checkin_date}
                     {c.weight_kg != null && ` · ${c.weight_kg.toFixed(1)} kg`}
                     {c.waist_cm != null && ` · ${c.waist_cm.toFixed(1)} cm`}
@@ -263,7 +263,7 @@ export const MaintenanceHome = ({ plan, checkins }: MaintenanceHomeProps) => {
 
 const InfoTile = ({ label, value }: { label: string; value: string }) => (
   <div className="rounded-xl border border-border bg-card px-3 py-2">
-    <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
+    <p className="text-label font-bold text-muted-foreground">
       {label}
     </p>
     <p className="mt-0.5 text-label font-extrabold text-foreground">{value}</p>
@@ -286,7 +286,7 @@ const MaintenanceCheckFeedbackCard = ({
   return (
     <section className="rounded-2xl border border-emerald-400/30 bg-emerald-400/5 p-3">
       <div className="flex items-center justify-between">
-        <p className="text-micro font-black uppercase tracking-widest text-emerald-600">
+        <p className="text-label font-bold text-emerald-600">
           이번 주 체크 마감
         </p>
         <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-micro font-black uppercase tracking-wide text-emerald-700">
@@ -301,7 +301,7 @@ const MaintenanceCheckFeedbackCard = ({
         </p>
       )}
       <div className="mt-2 rounded-xl border border-emerald-400/30 bg-card px-3 py-2">
-        <p className="text-micro font-black uppercase tracking-widest text-emerald-600">
+        <p className="text-label font-bold text-emerald-600">
           오삼 코치 한마디
         </p>
         <p className="mt-0.5 text-label leading-relaxed text-foreground">

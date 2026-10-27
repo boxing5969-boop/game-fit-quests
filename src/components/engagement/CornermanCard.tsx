@@ -77,13 +77,13 @@ const CornermanCard = ({ onOpen }: Props) => {
         <Users className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
+        <p className="text-label font-bold text-primary">
           운동 짝꿍 · 같이 하면 보너스
         </p>
         <p className="mt-0.5 truncate text-label font-bold text-foreground">
           {title}
         </p>
-        <p className="mt-0.5 truncate text-micro text-muted-foreground">
+        <p className="mt-0.5 truncate text-label text-muted-foreground">
           {subtitle}
         </p>
       </div>

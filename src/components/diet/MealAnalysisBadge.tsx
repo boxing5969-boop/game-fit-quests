@@ -52,7 +52,7 @@ export const MealAnalysisBadge = ({
     >
       <div className="flex items-center gap-1.5">
         <Sparkles className="h-3.5 w-3.5" />
-        <p className="text-micro font-black uppercase tracking-[0.2em]">
+        <p className="text-label font-bold">
           MEAL · {CATEGORY_LABEL_KO[category]}
         </p>
       </div>

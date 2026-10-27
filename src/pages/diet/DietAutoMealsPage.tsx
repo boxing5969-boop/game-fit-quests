@@ -68,7 +68,7 @@ const DietAutoMealsPage = () => {
             <span className="rounded-full bg-primary/15 p-1.5">
               <ChefHat className="h-4 w-4 text-primary" />
             </span>
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-label font-bold text-primary">
               {mode === "maintenance" ? "MAINTENANCE" : "FAT LOSS"} · MEAL PLAN
             </p>
           </div>

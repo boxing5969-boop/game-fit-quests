@@ -171,7 +171,7 @@ const DietMealPlanPage = () => {
           <>
             {/* 안내 */}
             <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
-              <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+              <p className="text-label font-bold text-primary">
                 MEAL GUIDE · 21 DAYS
               </p>
               <h2 className="mt-1 text-body font-extrabold text-foreground leading-tight">
@@ -186,7 +186,7 @@ const DietMealPlanPage = () => {
             {/* ━━━━━━━━━━━━━━━━━━ 대표 식단 패턴 ━━━━━━━━━━━━━━━━━━ */}
             <section className="space-y-3">
               <div>
-                <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+                <p className="text-label font-bold text-primary">
                   3 PRESET PATTERNS
                 </p>
                 <h3 className="mt-0.5 text-body font-extrabold text-foreground leading-tight">
@@ -211,7 +211,7 @@ const DietMealPlanPage = () => {
             {/* ━━━━━━━━━━━━━━━━━━ DIY 식단 빌더 ━━━━━━━━━━━━━━━━━━ */}
             <section className="space-y-3">
               <div>
-                <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+                <p className="text-label font-bold text-primary">
                   BUILD YOUR PLAN
                 </p>
                 <h3 className="mt-0.5 text-body font-extrabold text-foreground leading-tight">
@@ -261,7 +261,7 @@ const DietMealPlanPage = () => {
                 </Button>
               </div>
 
-              <p className="text-micro text-muted-foreground text-center">
+              <p className="text-label text-muted-foreground text-center">
                 저장된 식단은 어떤 기기에서든 그대로 불러와져요.
               </p>
             </section>
@@ -269,7 +269,7 @@ const DietMealPlanPage = () => {
             {/* ━━━━━━━━━━━━━━━━━━ 음식 분류 4단계 ━━━━━━━━━━━━━━━━━━ */}
             <section className="space-y-3">
               <div>
-                <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+                <p className="text-label font-bold text-primary">
                   FOOD CATEGORIES
                 </p>
                 <h3 className="mt-0.5 text-body font-extrabold text-foreground leading-tight">
@@ -289,7 +289,7 @@ const DietMealPlanPage = () => {
             {/* ━━━━━━━━━━━━━━━━━━ 스테이지별 샘플 ━━━━━━━━━━━━━━━━━━ */}
             <section className="space-y-2">
               <div>
-                <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+                <p className="text-label font-bold text-primary">
                   STAGE SAMPLES
                 </p>
                 <h3 className="mt-0.5 text-body font-extrabold text-foreground leading-tight">
@@ -375,7 +375,7 @@ const PatternCard = ({
           <p className="text-label font-extrabold text-foreground">
             {pattern.title}
           </p>
-          <p className="text-micro text-muted-foreground leading-relaxed">
+          <p className="text-label text-muted-foreground leading-relaxed">
             {pattern.subtitle}
           </p>
         </div>
@@ -396,14 +396,14 @@ const PatternCard = ({
             key={m.slot}
             className="rounded-lg border border-border bg-background/60 px-2.5 py-1.5"
           >
-            <p className="text-micro font-black uppercase tracking-wider text-primary">
+            <p className="text-label font-bold text-primary">
               {m.label}
             </p>
-            <p className="mt-0.5 text-micro leading-relaxed text-foreground">
+            <p className="mt-0.5 text-label leading-relaxed text-foreground">
               {m.items.join(" · ")}
             </p>
             {m.note && (
-              <p className="mt-0.5 text-micro text-muted-foreground">
+              <p className="mt-0.5 text-label text-muted-foreground">
                 {m.note}
               </p>
             )}
@@ -416,7 +416,7 @@ const PatternCard = ({
         {pattern.tips.map((t) => (
           <li
             key={t}
-            className="pl-3 -indent-3 text-micro leading-relaxed text-muted-foreground"
+            className="pl-3 -indent-3 text-label leading-relaxed text-muted-foreground"
           >
             <span className="mr-1 text-primary">·</span>
             {t}
@@ -441,7 +441,7 @@ const PatternCard = ({
 
 const SmallMeta = ({ label, value }: { label: string; value: string }) => (
   <div className="rounded-lg border border-border bg-background/60 px-2 py-1.5">
-    <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+    <p className="text-label font-bold text-muted-foreground">
       {label}
     </p>
     <p className="text-micro font-bold text-foreground leading-tight">{value}</p>
@@ -545,7 +545,7 @@ const FoodPickerModal = ({
       >
         <div className="sticky top-0 -mx-4 -mt-4 mb-3 flex items-center justify-between border-b border-border bg-card px-4 py-3 backdrop-blur-md">
           <div>
-            <p className="text-micro font-black uppercase tracking-widest text-primary">
+            <p className="text-label font-bold text-primary">
               ADD TO
             </p>
             <p className="text-label font-extrabold text-foreground">
@@ -593,7 +593,7 @@ const PickableBucket = ({
   onToggle: (name: string) => void;
 }) => (
   <div>
-    <p className="mb-1.5 text-micro font-black uppercase tracking-wider text-primary">
+    <p className="mb-1.5 text-label font-bold text-primary">
       {bucket.label}
     </p>
     <ul className="space-y-1">
@@ -623,7 +623,7 @@ const PickableBucket = ({
                 >
                   {f.name}
                 </p>
-                <p className="text-micro text-muted-foreground leading-relaxed">
+                <p className="text-label text-muted-foreground leading-relaxed">
                   {f.hint}
                 </p>
               </div>
@@ -661,7 +661,7 @@ const BucketCard = ({
           <p className={cn("text-label font-extrabold", tone.title)}>
             {bucket.label}
           </p>
-          <p className="text-micro text-muted-foreground">{bucket.summary}</p>
+          <p className="text-label text-muted-foreground">{bucket.summary}</p>
         </div>
       </div>
       <ul className="mt-3 grid grid-cols-1 gap-1">
@@ -673,7 +673,7 @@ const BucketCard = ({
             <span className="text-label font-bold text-foreground">
               {f.name}
             </span>
-            <span className="shrink-0 text-micro text-muted-foreground text-right">
+            <span className="shrink-0 text-label text-muted-foreground text-right">
               {f.hint}
             </span>
           </li>
@@ -734,7 +734,7 @@ const SampleCard = ({ sample }: { sample: StageSample }) => (
         <Utensils className="h-4 w-4" />
       </span>
       <div>
-        <p className="text-micro font-black uppercase tracking-wider text-primary">
+        <p className="text-label font-bold text-primary">
           {sample.range}
         </p>
         <p className="text-label font-extrabold text-foreground leading-tight">
@@ -754,7 +754,7 @@ const SampleCard = ({ sample }: { sample: StageSample }) => (
           key={m.slot}
           className="rounded-xl border border-border bg-background/50 p-2.5"
         >
-          <p className="text-micro font-black uppercase tracking-wider text-primary">
+          <p className="text-label font-bold text-primary">
             {m.slot}
           </p>
           <ul className="mt-1 space-y-0.5">
@@ -769,7 +769,7 @@ const SampleCard = ({ sample }: { sample: StageSample }) => (
             ))}
           </ul>
           {m.note && (
-            <p className="mt-1 text-micro text-muted-foreground">{m.note}</p>
+            <p className="mt-1 text-label text-muted-foreground">{m.note}</p>
           )}
         </li>
       ))}

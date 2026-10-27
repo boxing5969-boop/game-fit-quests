@@ -37,13 +37,13 @@ const LeagueStoryBadge = ({ rank, level }: LeagueStoryBadgeProps) => {
 
   return (
     <div className="rounded-card border border-primary/15 bg-primary/5 px-3 py-2.5">
-      <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
+      <p className="text-label font-bold text-primary">
         {rankLabel} 리그{level != null ? ` · Lv.${toGlobalLevel(rank, level)}` : ""}
       </p>
       <p className="mt-1 text-label font-bold text-foreground">
         {s.archetype}
       </p>
-      <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
         {s.tagline}
       </p>
     </div>

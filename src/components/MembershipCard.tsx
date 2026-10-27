@@ -114,7 +114,7 @@ const MembershipCard = () => {
       )}
 
       {(pt || rentals.length > 0) && (
-        <p className="relative mt-1.5 text-micro leading-relaxed text-white/35">
+        <p className="relative mt-1.5 text-label leading-relaxed text-white/35">
           {pt && ptAsOf ? `PT 횟수는 ${ptAsOf} · ` : ""}
           {pt ? "다르면 데스크에 말씀해 주세요" : "락카 · 운동복이 다르면 데스크에 말씀해 주세요"}
         </p>
@@ -122,7 +122,7 @@ const MembershipCard = () => {
 
       {(isStaff || memEnd) && (
         <div className="relative mt-6 flex items-end justify-between">
-          <div className="space-y-0.5 text-micro leading-relaxed text-white/55">
+          <div className="space-y-0.5 text-label leading-relaxed text-white/55">
             <p>등록 {regDate ? fmt(regDate) : fmt(profile.created_at)}</p>
             <p>만료 {isStaff ? "무제한" : fmt(memEnd!)}</p>
             {!isStaff && payment != null && payment > 0 && (
@@ -130,7 +130,7 @@ const MembershipCard = () => {
             )}
           </div>
           <div className="text-right">
-            <p className="text-micro font-medium uppercase tracking-wider text-white/40">
+            <p className="text-label font-medium text-white/40">
               {isStaff ? "PERIOD" : expired ? "EXPIRED" : "남은 기간"}
             </p>
             <p className={`text-title font-black leading-none ${isStaff ? "text-reward" : expired ? "text-destructive" : soon ? "text-status-pending" : "text-primary"}`}>

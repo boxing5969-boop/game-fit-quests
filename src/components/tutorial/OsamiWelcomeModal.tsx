@@ -140,7 +140,7 @@ const OsamiWelcomeModal = () => {
                 />
               </div>
 
-              <p className="mt-2 text-center text-micro font-black uppercase tracking-[0.4em] text-amber-300">
+              <p className="mt-2 text-center text-label font-bold text-amber-300">
                 OSAM · 153복싱짐 코치
               </p>
 
@@ -289,7 +289,7 @@ const FeatureRow = ({ icon, title, desc }: FeatureRowProps) => (
     </div>
     <div className="flex-1 min-w-0">
       <p className="text-label font-black text-amber-50">{title}</p>
-      <p className="mt-0.5 text-micro leading-relaxed text-amber-100/65">{desc}</p>
+      <p className="mt-0.5 text-label leading-relaxed text-amber-100/65">{desc}</p>
     </div>
   </div>
 );

@@ -44,7 +44,7 @@ const SafetyCheckPanel = ({ required, values, onChange }: SafetyCheckPanelProps)
         <ShieldAlert className="h-4 w-4 text-amber-500" />
         <p className="text-label font-bold text-foreground">통증 체크</p>
       </div>
-      <p className="mb-3 text-micro leading-relaxed text-muted-foreground">
+      <p className="mb-3 text-label leading-relaxed text-muted-foreground">
         통증이 있으면 즉시 중단하세요. 이 챌린지는 공식 승급 조건이 아닌 보조
         챌린지입니다. 무리하지 않고 정확한 자세를 우선합니다.
       </p>

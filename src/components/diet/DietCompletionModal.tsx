@@ -78,7 +78,7 @@ export const DietCompletionModal = ({
 
           {/* 타이틀 + 서브 */}
           <div className="text-center">
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">
+            <p className="text-label font-bold text-reward">
               21-DAY CHALLENGE COMPLETE
             </p>
             <h2
@@ -153,7 +153,7 @@ const StatTile = ({
     <span className="mx-auto flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
       {icon}
     </span>
-    <p className="mt-1.5 text-micro font-bold uppercase tracking-wide text-muted-foreground">
+    <p className="mt-1.5 text-label font-bold text-muted-foreground">
       {label}
     </p>
     <p className="mt-0.5 number-font text-body font-extrabold text-foreground">

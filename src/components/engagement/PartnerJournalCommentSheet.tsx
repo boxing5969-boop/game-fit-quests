@@ -115,13 +115,13 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                   <MessageCircle className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+                  <p className="text-label font-bold text-primary">
                     {relationLabel(entry.relation) ? `${relationLabel(entry.relation)} · ` : ""}{entry.display_name}
                   </p>
                   <h2 className="mt-0.5 text-body font-bold text-foreground">
                     오늘 운동 한 줄
                   </h2>
-                  <p className="mt-0.5 text-micro text-muted-foreground">
+                  <p className="mt-0.5 text-label text-muted-foreground">
                     {formatTime(entry.created_at)}
                   </p>
                 </div>
@@ -138,7 +138,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
             {/* 일기 본문 */}
             <div className="flex-1 overflow-y-auto px-5 py-4">
               <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-                <p className="text-micro font-black uppercase tracking-wider text-primary">
+                <p className="text-label font-bold text-primary">
                   {entry.prompt}
                 </p>
                 <p className="mt-1.5 whitespace-pre-wrap text-label leading-relaxed text-foreground">
@@ -157,7 +157,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                   댓글 {comments?.length ?? 0}
                 </p>
                 {isLoading ? (
-                  <p className="text-micro text-muted-foreground">불러오는 중…</p>
+                  <p className="text-label text-muted-foreground">불러오는 중…</p>
                 ) : (comments ?? []).length === 0 ? (
                   <p className="rounded-card border border-dashed border-border bg-muted/30 px-3 py-3 text-center text-micro text-muted-foreground">
                     아직 댓글이 없습니다. 첫 응원의 한마디를 남겨보세요.
@@ -174,7 +174,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                             {c.is_mine ? "나" : c.commenter_name}
                           </p>
                           <div className="flex items-center gap-2">
-                            <p className="text-micro text-muted-foreground">
+                            <p className="text-label text-muted-foreground">
                               {formatTime(c.created_at)}
                             </p>
                             {c.is_mine && (
@@ -198,7 +198,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                 )}
               </div>
 
-              <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-label leading-relaxed text-muted-foreground">
                 ※ 댓글은 보상이 없어요. 공식 레벨업과 무관해요.
               </p>
             </div>
@@ -229,7 +229,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                   <Send className="h-4 w-4" />
                 </button>
               </div>
-              <p className="mt-1 text-micro text-muted-foreground">
+              <p className="mt-1 text-label text-muted-foreground">
                 {trimmed.length} / {MAX_LEN}자
               </p>
             </div>

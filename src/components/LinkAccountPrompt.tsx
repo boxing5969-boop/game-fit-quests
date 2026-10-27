@@ -92,7 +92,7 @@ const LinkAccountPrompt = () => {
         >
           {loading ? "연동 중..." : "기존 회원 연동하기"}
         </button>
-        <div className="my-3 flex items-center gap-2 text-micro text-muted-foreground">
+        <div className="my-3 flex items-center gap-2 text-label text-muted-foreground">
           <div className="h-px flex-1 bg-border" /> 또는 <div className="h-px flex-1 bg-border" />
         </div>
         <button
@@ -108,7 +108,7 @@ const LinkAccountPrompt = () => {
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="mt-3 w-full text-center text-micro text-muted-foreground underline"
+          className="mt-3 w-full text-center text-label text-muted-foreground underline"
         >
           나중에 할게요 · 수강권 결제 시 번호를 입력하면 자동 등록돼요
         </button>

@@ -76,7 +76,7 @@ export const NutritionScienceCard = ({
             <p className="text-micro font-extrabold text-foreground">
               5대 영양소 + 프로바이오틱스
             </p>
-            <ul className="mt-1.5 space-y-1.5 text-micro leading-relaxed text-muted-foreground">
+            <ul className="mt-1.5 space-y-1.5 text-label leading-relaxed text-muted-foreground">
               <li><strong className="text-foreground">단백질</strong> — 근육·효소·면역세포 재료. 감량기 근손실을 막는 1순위.</li>
               <li><strong className="text-foreground">지방</strong> — 호르몬 전구체, 지용성 비타민(A·D·E·K) 흡수 매개.</li>
               <li><strong className="text-foreground">탄수화물</strong> — 뇌·근육의 주 연료. 섬유질은 장 건강·혈당 안정.</li>
@@ -86,7 +86,7 @@ export const NutritionScienceCard = ({
             </ul>
           </div>
 
-          <p className="text-micro italic text-muted-foreground">
+          <p className="text-label italic text-muted-foreground">
             * 값은 계산 기반 가이드입니다. 임신·수유·질환 시 담당의와 상담하세요.
           </p>
         </div>
@@ -98,7 +98,7 @@ export const NutritionScienceCard = ({
 const Row = ({ label, body }: { label: string; body: string }) => (
   <div>
     <p className="text-label font-extrabold text-foreground">{label}</p>
-    <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">{body}</p>
+    <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">{body}</p>
   </div>
 );
 

@@ -56,13 +56,13 @@ const FunChallengeArenaSheet = ({ open, onClose, initialCode = null }: Props) =>
           <Swords className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             오늘의 라운드
           </p>
           <h2 className="mt-0.5 text-body font-bold text-foreground">
             챌린지 아레나
           </h2>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             공식 훈련은 그대로, 오늘은 재미 챌린지로 한 라운드 더.
           </p>
         </div>
@@ -103,10 +103,10 @@ const FunChallengeArenaSheet = ({ open, onClose, initialCode = null }: Props) =>
     return (
       <div className="space-y-3">
         <div className="rounded-card border border-primary/15 bg-primary/5 px-3 py-2">
-          <p className="text-micro leading-relaxed text-foreground">
+          <p className="text-label leading-relaxed text-foreground">
             기록을 깨는 상대는 남이 아니라 어제의 나입니다.
           </p>
-          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             ※ 본 챌린지는 재미와 습관을 위한 보조 챌린지입니다. 공식 1~40
             레벨업·승급 조건과는 무관합니다.
           </p>

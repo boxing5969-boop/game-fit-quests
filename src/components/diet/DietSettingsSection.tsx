@@ -141,7 +141,7 @@ export const DietSettingsSection = () => {
           icon={<Sunrise className="h-3.5 w-3.5" />}
           className="mt-3"
         >
-          <p className="mb-1.5 text-micro text-muted-foreground">
+          <p className="mb-1.5 text-label text-muted-foreground">
             내 라이프스타일에 가까운 한 가지를 고르면 홈 팁이 그에 맞춰 갱신돼요.
           </p>
           <div className="grid grid-cols-1 gap-1.5">
@@ -170,7 +170,7 @@ export const DietSettingsSection = () => {
                   >
                     {v.title}
                   </p>
-                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                     {v.summary}
                   </p>
                 </button>
@@ -180,7 +180,7 @@ export const DietSettingsSection = () => {
         </Group>
       )}
 
-      <p className="mt-3 flex items-start gap-1.5 text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-3 flex items-start gap-1.5 text-label leading-relaxed text-muted-foreground">
         <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
         체중·감량 수치는 절대 공개되지 않습니다. 랭킹은 습관 수행률·승인 일수·연속일만 사용해요.
       </p>
@@ -203,7 +203,7 @@ const Group = ({
   children: React.ReactNode;
 }) => (
   <div className={className}>
-    <p className="mb-1.5 flex items-center gap-1.5 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+    <p className="mb-1.5 flex items-center gap-1.5 text-label font-bold text-muted-foreground">
       {icon}
       {title}
     </p>
@@ -236,7 +236,7 @@ const Row = ({
         {label}
         {rightIcon}
       </p>
-      <p className="text-micro text-muted-foreground">{hint}</p>
+      <p className="text-label text-muted-foreground">{hint}</p>
     </div>
     <Switch
       checked={value}

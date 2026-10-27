@@ -153,7 +153,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
         <section className="rounded-2xl border border-border bg-card p-3.5 shadow-elev-1">
           <div className="flex items-center justify-between gap-2">
             <p className="text-label font-black text-foreground">🔥 워밍업</p>
-            <span className="text-micro font-bold text-muted-foreground">연습 전 몸풀기 · 참고용</span>
+            <span className="text-label font-bold text-muted-foreground">연습 전 몸풀기 · 참고용</span>
           </div>
           <div className="mt-2.5 grid grid-cols-3 gap-2">
             {warmupVideos.map((v) => {
@@ -203,7 +203,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
             아래가 바로 타이틀매치 동작이에요 👇
           </p>
         ) : titleLoading ? (
-          <p className="mt-3 text-center text-micro text-muted-foreground">타이틀매치 영상 불러오는 중...</p>
+          <p className="mt-3 text-center text-label text-muted-foreground">타이틀매치 영상 불러오는 중...</p>
         ) : titleVideos.length > 0 ? (
           <div className="mt-3 grid grid-cols-3 gap-2">
             {titleVideos.map((v, i) => {
@@ -242,14 +242,14 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
           <div className="mt-3 rounded-2xl bg-reward/5 p-3">
             <p className="text-micro font-black text-foreground">타이틀매치에서 보여줄 것</p>
             <PointList points={goalPoints} />
-            <p className="mt-2 text-micro text-muted-foreground">🎬 타이틀매치 영상은 준비 중이에요</p>
+            <p className="mt-2 text-label text-muted-foreground">🎬 타이틀매치 영상은 준비 중이에요</p>
           </div>
         )}
 
         <p className="mt-3.5 text-label font-black leading-snug text-foreground">
           레벨 1~10은 이 동작을 완벽하게 만드는 과정이에요
         </p>
-        <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
           레벨마다 익힌 동작이 모여 타이틀매치에서 하나로 완성돼요
         </p>
 
@@ -298,7 +298,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
         </div>
         <p className="mt-2.5 text-center text-label font-bold text-foreground">{journeyLine}</p>
         {hereLevel > 1 && hereLevel <= TITLE_LEVEL && (
-          <p className="mt-0.5 text-center text-micro text-muted-foreground">지나온 레벨을 누르면 복습할 수 있어요</p>
+          <p className="mt-0.5 text-center text-label text-muted-foreground">지나온 레벨을 누르면 복습할 수 있어요</p>
         )}
       </section>
 
@@ -314,7 +314,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
                 </span>
               )}
             </h3>
-            <p className="mt-0.5 text-micro text-muted-foreground">
+            <p className="mt-0.5 text-label text-muted-foreground">
               {levelLoading || levelVideos.length > 0 ? "영상을 보고 동작 포인트대로 따라해요" : "동작 포인트대로 따라해요"}
             </p>
           </div>
@@ -370,7 +370,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
                       동작 {i + 1}{t.tag ? ` · ${t.tag}` : ""}
                     </span>
                     <span className="line-clamp-2 block text-label font-black leading-snug text-foreground">{t.name}</span>
-                    {t.sub && <span className="mt-0.5 line-clamp-1 block text-micro text-muted-foreground">{t.sub}</span>}
+                    {t.sub && <span className="mt-0.5 line-clamp-1 block text-label text-muted-foreground">{t.sub}</span>}
                     {v.variants.length > 1 && (
                       <span className="mt-1 inline-flex rounded-full bg-secondary px-2 py-0.5 text-micro font-bold text-secondary-foreground">
                         🎬 {v.variants.map((x) => x.label).join(" · ")}
@@ -397,7 +397,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
           <>
             <div className="rounded-2xl border border-dashed border-border bg-card p-3.5">
               <p className="text-label font-black text-foreground">🎬 이 레벨 영상은 준비 중이에요</p>
-              <p className="mt-0.5 text-micro text-muted-foreground">
+              <p className="mt-0.5 text-label text-muted-foreground">
                 아래 동작 포인트로 먼저 연습해요{viewUl ? ` · ${viewUl.title}` : ""}
               </p>
             </div>
@@ -440,7 +440,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
           {doneToday ? "오늘 연습 완료 · 코스로 돌아가기" : "오늘 연습 완료"}
         </button>
         {!doneToday && (
-          <p className="text-center text-micro text-muted-foreground">연습을 마치면 눌러주세요 — 오늘의 코스 3번이 완료돼요</p>
+          <p className="text-center text-label text-muted-foreground">연습을 마치면 눌러주세요 — 오늘의 코스 3번이 완료돼요</p>
         )}
       </div>
 

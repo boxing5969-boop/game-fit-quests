@@ -145,7 +145,7 @@ const HandWrapGuidePage = () => {
                   {a.label} 보기
                   {i === 0 && <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-px text-micro font-black text-primary">추천</span>}
                 </span>
-                <span className="block truncate text-micro text-muted-foreground">{a.hint}</span>
+                <span className="block truncate text-label text-muted-foreground">{a.hint}</span>
               </span>
             </button>
           ))}

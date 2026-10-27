@@ -56,13 +56,13 @@ const ShadowBoxerCard = () => {
             <Sparkles className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-label font-bold text-primary">
               그림자 복서 · 어제의 나
             </p>
             <h3 className="mt-0.5 text-label font-bold text-foreground">
               {title}
             </h3>
-            <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+            <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
               {subtitle}
             </p>
             {badge && (
@@ -85,7 +85,7 @@ const ShadowBoxerCard = () => {
             : "그림자 복서 열기 →"}
         </button>
 
-        <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-label leading-relaxed text-muted-foreground">
           ※ 그림자 복서는 공식 승급 조건이 아닙니다. 어제의 나와 비교하는
           보조 성장 지표입니다.
         </p>

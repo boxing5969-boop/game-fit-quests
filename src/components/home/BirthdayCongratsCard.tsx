@@ -49,7 +49,7 @@ const BirthdayCongratsCard = () => {
           <div className="flex items-center gap-3">
             <img src={birthdayCake} alt="" aria-hidden draggable={false} className="bday-bob h-14 w-14 shrink-0 select-none" />
             <div className="min-w-0 flex-1">
-              <p className="text-micro font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-300">Happy Birthday</p>
+              <p className="text-label font-bold text-amber-600 dark:text-amber-300">Happy Birthday</p>
               <p className="mt-0.5 text-body font-extrabold leading-snug text-foreground">{myName}님, 생일 축하해요! 🎂</p>
               <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                 {data.me.congrats > 0 ? (
@@ -95,7 +95,7 @@ const BirthdayCongratsCard = () => {
                         <span className="truncate">{m.name}</span>
                         <NameBadge league={m.league} birthday className="h-4 w-4" />
                       </p>
-                      <p className="mt-0.5 text-micro font-bold text-muted-foreground">
+                      <p className="mt-0.5 text-label font-bold text-muted-foreground">
                         {m.congrats > 0 ? `🎉 축하 ${m.congrats.toLocaleString("ko-KR")}개` : "첫 축하를 보내 주세요"}
                       </p>
                     </div>

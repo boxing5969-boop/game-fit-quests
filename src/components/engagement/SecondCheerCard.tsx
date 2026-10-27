@@ -47,7 +47,7 @@ const SecondCheerCard = ({ candidate, onSelect }: SecondCheerCardProps) => {
               {rankLabel} · Lv.{toGlobalLevel(rank, candidate.current_level)}
             </span>
           ) : null}
-          <span className="truncate text-micro text-muted-foreground">
+          <span className="truncate text-label text-muted-foreground">
             {candidate.branch_name}
           </span>
         </div>

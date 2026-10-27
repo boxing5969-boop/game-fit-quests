@@ -60,7 +60,7 @@ const LessonTodayCard = ({ onOpen, showEmpty = false, className }: Props) => {
         <span className="text-label font-black text-primary">
           📋 {todayHeadline(today)} · {levelShort(day.level)}
         </span>
-        <span className="flex shrink-0 items-center text-micro font-bold text-muted-foreground">
+        <span className="flex shrink-0 items-center text-label font-bold text-muted-foreground">
           수업 보기 <ChevronRight className="h-3.5 w-3.5" />
         </span>
       </div>

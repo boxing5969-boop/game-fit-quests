@@ -225,7 +225,7 @@ const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
                     <p className="text-label font-bold leading-snug text-foreground">{day.note}</p>
                   </div>
                 )}
-                <p className="mt-3 px-1 text-micro leading-relaxed text-muted-foreground">
+                <p className="mt-3 px-1 text-label leading-relaxed text-muted-foreground">
                   라운드 수는 코치님이 그날 컨디션에 맞춰 조절할 수 있어요. 아프거나 불편하면 바로 코치님께 말해 주세요.
                 </p>
               </div>

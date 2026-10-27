@@ -69,7 +69,7 @@ const WorkoutFinishCard = () => {
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
+        <p className="text-label font-bold text-primary">
           오늘 운동
         </p>
         {done ? (
@@ -81,7 +81,7 @@ const WorkoutFinishCard = () => {
             {formatMinutes(data.elapsed_minutes)}째 운동 중
           </p>
         )}
-        <p className="mt-0.5 truncate text-micro text-muted-foreground">
+        <p className="mt-0.5 truncate text-label text-muted-foreground">
           {done
             ? `이번 달 ${formatMinutes(data.month_minutes)} · ${data.month_days}일`
             : `끝나면 종료 버튼이나 얼굴 인식 한 번 더 · 안 하면 ${data.default_minutes}분`}

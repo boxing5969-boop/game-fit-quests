@@ -105,7 +105,7 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
           <div className="mb-1 flex items-center gap-1.5 text-label font-bold text-destructive">
             <ShieldAlert className="h-4 w-4" /> 위험 고지 — 반드시 읽어주세요
           </div>
-          <p className="text-micro leading-relaxed text-muted-foreground">
+          <p className="text-label leading-relaxed text-muted-foreground">
             통제된 라이트 스파링은 실제로 타격을 주고받는 접촉 훈련입니다. 코치 감독과 규칙에도 불구하고
             타박상 · 코피 · 입술/치아 손상 · 염좌, 드물게 뇌진탕 등 부상 위험이 존재함을 이해합니다.
           </p>
@@ -116,7 +116,7 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
           <p className="mb-2 text-label font-bold text-foreground">참가 조건 (모두 준수하는 조건으로 참가)</p>
           <ul className="space-y-1.5">
             {CONDITIONS.map((c, i) => (
-              <li key={i} className="flex gap-2 text-micro leading-relaxed text-muted-foreground">
+              <li key={i} className="flex gap-2 text-label leading-relaxed text-muted-foreground">
                 <span className="mt-0.5 text-primary">·</span>
                 <span>{c}</span>
               </li>
@@ -127,7 +127,7 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
         {/* 건강 상태 확인 */}
         <div className="mb-4">
           <p className="mb-2 text-label font-bold text-foreground">건강 상태 확인</p>
-          <p className="mb-2 text-micro leading-relaxed text-muted-foreground">
+          <p className="mb-2 text-label leading-relaxed text-muted-foreground">
             심혈관 · 뇌 질환, 최근 뇌진탕, 고혈압, 임신, 수술 회복 중 등 격렬한 운동이 부적절한 상태는
             사전에 코치에게 고지해야 하며, 필요 시 참가가 제한됩니다. 음주 · 수면부족 등 컨디션 난조 시 당일 불참합니다.
           </p>
@@ -191,7 +191,7 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
           >
             {agreedRules && <CheckCircle2 className="h-3.5 w-3.5" />}
           </span>
-          <span className="text-micro leading-relaxed text-foreground">
+          <span className="text-label leading-relaxed text-foreground">
             본인은 자발적으로 참가하며, 위 조건과 코치의 지시를 따릅니다. 규칙 위반(강타 · 중단신호 불이행 등)으로
             발생한 결과에 대한 책임을 인지하고, 통증 · 어지럼 등 이상 증상이 있으면 즉시 알리고 중단하겠습니다.
           </span>
@@ -261,7 +261,7 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
         )}
 
         {/* 법적 안내 */}
-        <p className="mb-4 text-micro leading-relaxed text-muted-foreground">
+        <p className="mb-4 text-label leading-relaxed text-muted-foreground">
           ※ 본 동의서는 안전 위험 고지와 자발적 참가 확인을 위한 것입니다. 대한민국 법상 사업자의 고의 또는
           중대한 과실로 인한 손해에 대한 책임까지 면제되지는 않습니다.
         </p>

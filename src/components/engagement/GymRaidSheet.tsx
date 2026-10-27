@@ -180,7 +180,7 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
           {shortBranch(branch) ? `${shortBranch(branch)} 목표 만들기` : "목표 만들기"}
         </p>
 
-        <p className="mt-3 text-micro font-bold text-muted-foreground">무엇으로 점수를 쌓을까요?</p>
+        <p className="mt-3 text-label font-bold text-muted-foreground">무엇으로 점수를 쌓을까요?</p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {GOAL_TYPES.map((k) => (
             <button key={k} type="button" onClick={() => setGoalType(k)} className={chip(goalType === k)} aria-pressed={goalType === k}>
@@ -188,9 +188,9 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
             </button>
           ))}
         </div>
-        <p className="mt-1.5 text-micro text-muted-foreground">{GOAL_TYPE_LABEL[goalType]} 한 번에 1점이에요.</p>
+        <p className="mt-1.5 text-label text-muted-foreground">{GOAL_TYPE_LABEL[goalType]} 한 번에 1점이에요.</p>
 
-        <p className="mt-3 text-micro font-bold text-muted-foreground">목표 이름</p>
+        <p className="mt-3 text-label font-bold text-muted-foreground">목표 이름</p>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value.slice(0, 40))}
@@ -199,7 +199,7 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
           aria-label="목표 이름"
         />
 
-        <p className="mt-3 text-micro font-bold text-muted-foreground">지점이 함께 채울 점수</p>
+        <p className="mt-3 text-label font-bold text-muted-foreground">지점이 함께 채울 점수</p>
         <div className="mt-1.5 flex items-center gap-2">
           <input
             value={target}
@@ -211,7 +211,7 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
           <span className="text-label font-bold text-foreground">점</span>
         </div>
 
-        <p className="mt-3 text-micro font-bold text-muted-foreground">기간</p>
+        <p className="mt-3 text-label font-bold text-muted-foreground">기간</p>
         <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
           <input
             type="date"
@@ -232,7 +232,7 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
           />
         </div>
 
-        <p className="mt-3 text-micro font-bold text-muted-foreground">보상 — 목표를 채우면 참여한 회원 모두</p>
+        <p className="mt-3 text-label font-bold text-muted-foreground">보상 — 목표를 채우면 참여한 회원 모두</p>
         <div className="mt-1.5 grid grid-cols-3 gap-1.5">
           {(
             [
@@ -242,7 +242,7 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
             ] as const
           ).map(([label, value, set, max]) => (
             <label key={label} className="min-w-0">
-              <span className="block truncate text-micro font-semibold text-muted-foreground">{label}</span>
+              <span className="block truncate text-label font-semibold text-muted-foreground">{label}</span>
               <input
                 value={value}
                 onChange={(e) => set(digits(e.target.value, max))}
@@ -254,7 +254,7 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
           ))}
         </div>
 
-        <p className="mt-3 text-micro font-bold text-muted-foreground">설명 (선택)</p>
+        <p className="mt-3 text-label font-bold text-muted-foreground">설명 (선택)</p>
         <textarea
           value={desc}
           onChange={(e) => setDesc(e.target.value.slice(0, 300))}
@@ -312,13 +312,13 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
                   <Flag className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+                  <p className="text-label font-bold text-primary">
                     우리 지점 목표
                   </p>
                   <h2 className="mt-0.5 text-body font-bold text-foreground">
                     {branch ? `${branch} 함께 깨는 목표` : "지점이 함께 깨는 목표"}
                   </h2>
-                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                     내 오늘 운동이 우리 지점 목표에 더해져요.
                   </p>
                 </div>
@@ -373,7 +373,7 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
                   <p className="text-label leading-relaxed text-foreground">
                     지금 진행 중인 지점 목표가 없어요.
                   </p>
-                  <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+                  <p className="mt-1 text-label leading-relaxed text-muted-foreground">
                     {canManage
                       ? "아래에서 회원들과 함께 깰 목표를 열어 보세요."
                       : "코치님이 새 목표를 열면 여기에 보여요."}
@@ -398,7 +398,7 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
                       />
                       {(meta || manageable) && (
                         <div className="flex min-h-[28px] items-center justify-between gap-2 px-1">
-                          <span className="min-w-0 truncate text-micro text-muted-foreground">{meta}</span>
+                          <span className="min-w-0 truncate text-label text-muted-foreground">{meta}</span>
                           {manageable &&
                             (confirmEnd === raid.id ? (
                               <span className="flex shrink-0 items-center gap-1.5">
@@ -437,7 +437,7 @@ const GymRaidSheet = ({ open, onClose }: Props) => {
 
               {!isLoading && !isError && renderForm()}
 
-              <p className="text-micro leading-relaxed text-muted-foreground">
+              <p className="text-label leading-relaxed text-muted-foreground">
                 ※ {GYM_RAID_DISCLAIMER}
               </p>
             </div>

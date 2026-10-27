@@ -357,7 +357,6 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const myBoxerHeader = (
     <PageHeader
       title="MY복서"
-      subtitle={profile.branch_name ? `${displayName} · ${profile.branch_name}` : displayName}
       leftAction={
         <button
           type="button"
@@ -368,15 +367,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
           <ChevronLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
       }
-      rightAction={
-        <button
-          onClick={() => navigate("/mypage")}
-          className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"
-          aria-label="내 정보"
-        >
-          <User className="h-4 w-4 text-secondary-foreground" />
-        </button>
-      }
+      // 이름 · 지점은 바로 아래 라이센스 카드에, 내 정보는 아래 탭에 있다 — 머리글에 되풀이하지 않는다 (2026-10-28 리디자인)
       sticky
     />
   );

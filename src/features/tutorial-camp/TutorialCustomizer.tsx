@@ -814,7 +814,7 @@ const TutorialCustomizer = () => {
             {/* 헤더 */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-amber-400/20 bg-[#0a1024]/98 px-3 py-2.5 backdrop-blur-md">
               <div>
-                <p className="text-micro font-black uppercase tracking-[0.3em] text-amber-300">
+                <p className="text-label font-bold text-amber-300">
                   관리자 커스텀 도구
                 </p>
                 <p className="text-label font-bold text-amber-50">
@@ -874,7 +874,7 @@ const TutorialCustomizer = () => {
                   ? "반영 중…"
                   : "🚀 전체 회원에게 반영 (publish)"}
               </button>
-              <p className="text-micro leading-relaxed text-amber-200/70">
+              <p className="text-label leading-relaxed text-amber-200/70">
                 ※ publish 후 모든 회원이 다음 앱 로드부터 같은 튜토리얼을 보게 됩니다.
                 실수 시 다시 편집 → 같은 버튼으로 재반영하면 즉시 갱신됩니다.
               </p>
@@ -989,7 +989,7 @@ const TutorialCustomizer = () => {
                 전체 편집기 열기 (모든 필드)
               </button>
 
-              <p className="text-micro leading-relaxed text-amber-200/55">
+              <p className="text-label leading-relaxed text-amber-200/55">
                 ※ 더 자세한 편집 (helper / success 메시지, completionRule 등)은
                 전체 편집기에서.
               </p>
@@ -1095,7 +1095,7 @@ function StepOrderPanel({
 
       {/* 보이는 단계 (회원이 진행) */}
       <div>
-        <p className="mb-1 text-micro font-bold uppercase tracking-wider text-emerald-300/80">
+        <p className="mb-1 text-label font-bold text-emerald-300/80">
           ✓ 보이는 단계 ({list.length}개)
         </p>
         <div className="space-y-1.5 rounded-lg border border-amber-400/15 bg-black/20 p-1.5">
@@ -1186,12 +1186,12 @@ function StepOrderPanel({
 
       {/* 빠진 단계 (hidden) — 항상 표시. 0개일 때 안내. */}
       <div>
-        <p className="mb-1 text-micro font-bold uppercase tracking-wider text-rose-300/80">
+        <p className="mb-1 text-label font-bold text-rose-300/80">
           ✗ 빠진 단계 ({hiddenList.length}개)
         </p>
         <div className="space-y-1 rounded-lg border border-rose-400/15 bg-rose-950/10 p-1.5">
           {hiddenList.length === 0 ? (
-            <p className="px-2 py-2.5 text-center text-micro leading-relaxed text-rose-200/55">
+            <p className="px-2 py-2.5 text-center text-label leading-relaxed text-rose-200/55">
               빠진 단계가 없어요.
               <br />
               <span className="text-amber-200/65">위에서 🗑️ 빼기</span> 누르면
@@ -1538,7 +1538,7 @@ function NewStepForm({
         </button>
       </div>
 
-      <p className="text-micro leading-relaxed text-amber-200/55">
+      <p className="text-label leading-relaxed text-amber-200/55">
         ※ 만든 단계는 {day}일차 끝에 추가돼요. ↑↓ 로 원하는 위치로 옮길 수 있어요.
       </p>
     </div>

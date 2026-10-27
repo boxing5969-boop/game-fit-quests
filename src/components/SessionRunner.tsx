@@ -96,17 +96,17 @@ const SessionRunner = ({ blocks, levelLabel, onComplete }: SessionRunnerProps) =
           <div className="rounded-2xl border border-border bg-card p-3 text-center">
             <Clock className="mx-auto h-5 w-5 text-primary" />
             <p className="mt-1 text-heading font-bold text-foreground">{showResult.minutes}분</p>
-            <p className="text-micro text-muted-foreground">실제 훈련</p>
+            <p className="text-label text-muted-foreground">실제 훈련</p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-3 text-center">
             <Zap className="mx-auto h-5 w-5 text-primary" />
             <p className="mt-1 text-heading font-bold text-primary">+{showResult.xp}</p>
-            <p className="text-micro text-muted-foreground">XP 획득</p>
+            <p className="text-label text-muted-foreground">XP 획득</p>
           </div>
           <div className={`rounded-2xl border p-3 text-center ${showResult.qualifies ? "border-status-complete/30 bg-status-complete/5" : "border-border bg-card"}`}>
             <CheckCircle2 className={`mx-auto h-5 w-5 ${showResult.qualifies ? "text-status-complete" : "text-muted-foreground"}`} />
             <p className="mt-1 text-body font-bold text-foreground">{showResult.qualifies ? "인정" : "미인정"}</p>
-            <p className="text-micro text-muted-foreground">레벨업 세션</p>
+            <p className="text-label text-muted-foreground">레벨업 세션</p>
           </div>
         </div>
 
@@ -174,7 +174,7 @@ const SessionRunner = ({ blocks, levelLabel, onComplete }: SessionRunnerProps) =
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
           <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${tracker.progressPct}%` }} />
         </div>
-        <p className="mt-1 text-micro text-muted-foreground">
+        <p className="mt-1 text-label text-muted-foreground">
           {tracker.elapsedMinutes}/{tracker.totalPlannedMinutes}분 · 완료 블록 {tracker.completedBlocks.length}/{blocks.length}
         </p>
 
@@ -226,7 +226,7 @@ const SessionRunner = ({ blocks, levelLabel, onComplete }: SessionRunnerProps) =
               </div>
               <div className="min-w-0 flex-1">
                 <p className={`text-label font-bold ${done ? "text-status-complete" : "text-foreground"}`}>{block.title}</p>
-                <p className="text-micro text-muted-foreground">{block.timeRange} · {block.durationMin}분</p>
+                <p className="text-label text-muted-foreground">{block.timeRange} · {block.durationMin}분</p>
                 {block.drills.length > 0 && (
                   <span className="mt-1.5 flex flex-wrap gap-1">
                     {block.drills.slice(0, 3).map((d, di) => (

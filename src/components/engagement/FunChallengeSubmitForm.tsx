@@ -192,7 +192,7 @@ const FunChallengeSubmitForm = ({
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="text-label font-bold text-muted-foreground">
               내 기록
             </p>
             <p className="number-font mt-0.5 text-heading font-black text-foreground">
@@ -200,7 +200,7 @@ const FunChallengeSubmitForm = ({
             </p>
           </div>
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="text-label font-bold text-muted-foreground">
               목표
             </p>
             <p className="number-font mt-0.5 text-heading font-black text-foreground">
@@ -211,7 +211,7 @@ const FunChallengeSubmitForm = ({
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-micro font-black uppercase tracking-wider text-primary">
+            <p className="text-label font-bold text-primary">
               QUEST XP
             </p>
             <p className="number-font mt-0.5 text-heading font-black text-foreground">
@@ -219,7 +219,7 @@ const FunChallengeSubmitForm = ({
             </p>
           </div>
           <div className="rounded-card border border-border bg-card p-3">
-            <p className="text-micro font-black uppercase tracking-wider text-reward">
+            <p className="text-label font-bold text-reward">
               챔피언 머니
             </p>
             <p className="number-font mt-0.5 text-heading font-black text-reward">
@@ -229,12 +229,12 @@ const FunChallengeSubmitForm = ({
         </div>
 
         {challenge.high_intensity && (
-          <p className="text-micro leading-relaxed text-amber-600">
+          <p className="text-label leading-relaxed text-amber-600">
             ※ 고강도 챌린지는 하루 1회만 보상이 지급됩니다.
           </p>
         )}
 
-        <p className="text-micro leading-relaxed text-muted-foreground">
+        <p className="text-label leading-relaxed text-muted-foreground">
           ※ QUEST XP 는 보조 경험치로, 공식 1~40 레벨업과 무관합니다. 챔피언
           머니는 기존 지갑에 합산됩니다.
         </p>
@@ -270,16 +270,16 @@ const FunChallengeSubmitForm = ({
       </button>
 
       <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-        <p className="text-micro font-black uppercase tracking-wider text-primary">
+        <p className="text-label font-bold text-primary">
           오늘의 라운드
         </p>
         <p className="mt-1 text-label font-bold text-foreground">
           {challenge.title}
         </p>
-        <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
           {challenge.description}
         </p>
-        <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
           정확한 자세가 빠른 기록보다 먼저입니다.
         </p>
       </div>
@@ -314,7 +314,7 @@ const FunChallengeSubmitForm = ({
       <div>
         <p className="mb-1.5 flex items-center justify-between text-micro font-bold text-foreground">
           내 기록
-          <span className="text-micro font-medium text-muted-foreground">
+          <span className="text-label font-medium text-muted-foreground">
             목표 {targetValue} {unit}
             {rewardPreview &&
               ` · 보상 +${rewardPreview.quest_xp} XP / +${rewardPreview.gems}`}

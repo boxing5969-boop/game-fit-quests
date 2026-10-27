@@ -115,7 +115,7 @@ const TutorialFloatingMascot = () => {
               >
                 <X className="mx-auto h-3 w-3" />
               </button>
-              <p className="text-micro font-bold uppercase tracking-wider text-yellow-300">
+              <p className="text-label font-bold text-yellow-300">
                 오삼이 가이드
               </p>
               <p className="mt-0.5 text-label font-bold text-white">
@@ -182,7 +182,7 @@ const TutorialFloatingMascot = () => {
                   <div className="flex items-center gap-3">
                     <OsamMascot size="md" state={isFinished ? "victory" : "determined"} />
                     <div>
-                      <p className="text-micro font-black uppercase tracking-[0.2em] text-yellow-300">
+                      <p className="text-label font-bold text-yellow-300">
                         OSAM · 시작하기
                       </p>
                       <h2 className="text-heading font-black text-white">

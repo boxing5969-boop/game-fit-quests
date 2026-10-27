@@ -266,7 +266,7 @@ const CheckOption = ({ checked, onChange, icon, label, desc }: {
     {icon}
     <div className="flex-1">
       <p className="text-body font-bold text-foreground">{label}</p>
-      <p className="text-micro text-muted-foreground">{desc}</p>
+      <p className="text-label text-muted-foreground">{desc}</p>
     </div>
   </button>
 );

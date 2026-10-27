@@ -97,7 +97,7 @@ export const OsamCoachPopup = ({
             <Heart className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-emerald-500">
+            <p className="text-label font-bold text-emerald-500">
               오삼 코치님의 한마디
             </p>
             <p className="mt-1 text-label font-extrabold leading-snug text-foreground">

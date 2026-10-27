@@ -206,7 +206,7 @@ export const PostProgramDailyCheckCard = ({
       <div className="flex items-center justify-between">
         <p
           className={cn(
-            "text-micro font-black uppercase tracking-[0.2em]",
+            "text-label font-bold",
             summary.allDone ? "text-emerald-600" : accentClass,
           )}
         >
@@ -285,7 +285,7 @@ export const PostProgramDailyCheckCard = ({
                   >
                     {m.label}
                   </p>
-                  <p className="truncate text-micro text-muted-foreground">
+                  <p className="truncate text-label text-muted-foreground">
                     {m.hint}
                   </p>
                 </div>

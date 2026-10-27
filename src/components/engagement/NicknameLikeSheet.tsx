@@ -127,9 +127,9 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   <Heart className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">153 BOXER LICENSE</p>
+                  <p className="text-label font-bold text-reward">153 BOXER LICENSE</p>
                   <h2 className="mt-0.5 text-body font-bold text-foreground">추천 복서</h2>
-                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                     {allBranches
                       ? "전 지점 회원 · "
                       : data?.branch ? `${shortBranch(data.branch)} 회원끼리 · ` : ""}
@@ -213,7 +213,7 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                     {debounced ? "일치하는 회원이 없어요" : "아직 하트를 보낼 수 있는 회원이 없어요"}
                   </p>
                   {!debounced && (
-                    <p className="mt-1 text-micro text-muted-foreground">지점에서 운동을 시작한 회원이 이 목록에 올라와요.</p>
+                    <p className="mt-1 text-label text-muted-foreground">지점에서 운동을 시작한 회원이 이 목록에 올라와요.</p>
                   )}
                 </div>
               ) : (
@@ -244,7 +244,7 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-label font-bold text-foreground">{r.display}</span>
-                            <span className="block truncate text-micro text-muted-foreground">
+                            <span className="block truncate text-label text-muted-foreground">
                               {meta ? `${meta} · ` : ""}하트 <span className="font-bold text-reward tabular-nums">{r.likes.toLocaleString("ko-KR")}</span>
                             </span>
                           </span>
@@ -266,7 +266,7 @@ const NicknameLikeSheet = ({ open, onClose }: Props) => {
                   })}
                 </ul>
               )}
-              <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-label leading-relaxed text-muted-foreground">
                 이름을 누르면 그 회원의 라이센스를 볼 수 있어요. 회원마다 하트를 1개씩 보낼 수 있고, 다시 누르면 취소돼요.
                 하트 많은 순으로 60명까지 보이고, 안 보이면 검색하세요. 받은 하트 수가 닉네임 좋아요왕 점수예요.
               </p>

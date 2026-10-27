@@ -34,7 +34,7 @@ const LessonDayList = ({ groups, today, onOpen }: Props) => (
       <section key={g.level} aria-label={levelLong(g.level)}>
         <div className="mb-2 flex items-baseline justify-between px-1">
           <h3 className="text-body font-black text-foreground">{levelLong(g.level)}</h3>
-          <span className="text-micro font-bold text-muted-foreground">{g.days.length}일 수업</span>
+          <span className="text-label font-bold text-muted-foreground">{g.days.length}일 수업</span>
         </div>
         <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl bg-card shadow-elev-1">
           {g.days.map((d) => {

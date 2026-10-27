@@ -141,7 +141,7 @@ const GuideJourneyPage = () => {
         </button>
         <div>
           <h1 className="text-heading font-bold text-foreground">레벨 40까지 가는 길</h1>
-          <p className="text-micro text-muted-foreground">얼마나 걸릴까요? 규칙 그대로 계산했습니다</p>
+          <p className="text-label text-muted-foreground">얼마나 걸릴까요? 규칙 그대로 계산했습니다</p>
         </div>
       </div>
 
@@ -177,7 +177,7 @@ const GuideJourneyPage = () => {
               <b className="text-foreground">{rules.length ? formatDuration(daysToLevel40(rules, 3)) : "-"}</b> 걸립니다.
             </p>
           )}
-          <p className="mt-2 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-label leading-relaxed text-muted-foreground">
             최근 {paceWeeks}주 출석으로 계산한 예상치예요. 승인 대기 시간(타이틀매치, 레드·블랙 전 레벨)은 포함되지 않습니다.
           </p>
         </div>
@@ -186,7 +186,7 @@ const GuideJourneyPage = () => {
       {/* ── 총 필요 출석 ── (규칙을 아직 못 받았으면 0 이 잠깐 보이지 않게 숨긴다) */}
       {rules.length > 0 && (
       <div className="mb-4 rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-        <p className="text-micro font-bold text-muted-foreground">화이트 L1에서 레벨 40까지, 필요한 출석</p>
+        <p className="text-label font-bold text-muted-foreground">화이트 L1에서 레벨 40까지, 필요한 출석</p>
         <p className="number-font mt-1 text-title font-black text-foreground">
           {total}
           <span className="ml-0.5 text-body font-bold text-muted-foreground">회</span>
@@ -235,7 +235,7 @@ const GuideJourneyPage = () => {
               </div>
             );
           })}
-        <p className="px-4 py-2.5 text-micro leading-relaxed text-muted-foreground">
+        <p className="px-4 py-2.5 text-label leading-relaxed text-muted-foreground">
           주 4회 이상은 거의 차이가 없어요 — 블랙 리그의 "레벨마다 최소 일수"가 속도의 바닥이 됩니다.
         </p>
       </div>
@@ -258,7 +258,7 @@ const GuideJourneyPage = () => {
                 <div className="min-w-0 flex-1">
                   <p className="text-label font-bold text-foreground">
                     {RANK_LABELS[r.rank] || r.rank} 리그{" "}
-                    <span className="number-font text-micro font-semibold text-muted-foreground">
+                    <span className="number-font text-label font-semibold text-muted-foreground">
                       Lv {r.firstLevel}~{r.lastLevel}
                     </span>
                   </p>
@@ -266,7 +266,7 @@ const GuideJourneyPage = () => {
                     {p.passes}번 승급 × {p.visitsPerPass}회 = <b className="text-primary">{p.visits}회</b>
                     {p.minDaysPerPass > 0 && <> · 레벨마다 최소 <b className="text-primary">{p.minDaysPerPass}일</b></>}
                   </p>
-                  <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                     {r.autoAdvance
                       ? `출석을 채우면 자동 승급 · 레벨 ${r.lastLevel}(타이틀매치)만 ${whoLabel(r.titleAuthority)} 승인`
                       : `출석을 채우면 심사가 열리고 ${whoLabel(r.levelAuthority)}이 보고 승급 · 레벨 ${r.lastLevel}은 ${whoLabel(r.titleAuthority)} 승인`}
@@ -280,7 +280,7 @@ const GuideJourneyPage = () => {
       {/* ── 규칙 한눈에 ── */}
       <div className="mb-4 rounded-2xl border border-border bg-card p-4 shadow-elev-1">
         <p className="mb-2 text-label font-bold text-foreground">계산에 쓴 규칙</p>
-        <ul className="space-y-1.5 text-micro leading-relaxed text-muted-foreground">
+        <ul className="space-y-1.5 text-label leading-relaxed text-muted-foreground">
           <li>· 출석은 <b className="text-foreground">하루 1회</b>만 쌓여요 — 입구 얼굴 인식 또는 보드 QR.</li>
           <li>
             · 종료 버튼을 안 누르면 <b className="number-font text-foreground">{wr?.defaultMinutes ?? 50}분</b>으로 기록돼요.

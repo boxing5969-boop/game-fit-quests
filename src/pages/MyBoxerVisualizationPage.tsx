@@ -125,10 +125,8 @@ const MyBoxerVisualizationPage = () => {
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <div className="min-w-0">
-            <p className="text-micro font-black uppercase tracking-[0.45em] text-amber-300/70">MYBOXER 153</p>
-            <h1 className="text-title font-black leading-tight">153마인드셋</h1>
-          </div>
+          {/* 제목만 (2026-10-28 리디자인 — 꾸밈 머리말 뺌) */}
+          <h1 className="min-w-0 text-title font-black leading-tight">153마인드셋</h1>
         </div>
 
         <div data-tour="mindset-intro" className="rounded-2xl border-l-2 border-amber-400/70 bg-amber-500/5 px-4 py-3">
@@ -242,7 +240,7 @@ const MyBoxerVisualizationPage = () => {
         {/* 기록을 불러온 뒤에 그린다 — 빈 칸으로 먼저 열려서 저장된 목표를 지우지 않게 (2026-10-19 검수) */}
         {stats && <GoalCard key={`${stats.goal ?? ""}|${stats.cue ?? ""}`} goal={stats.goal ?? null} cue={stats.cue ?? null} />}
 
-        <p className="pb-2 text-center text-micro leading-relaxed text-amber-200/45">
+        <p className="pb-2 text-center text-label leading-relaxed text-amber-200/45">
           이어폰을 끼고, 눈을 감고 들으면 가장 좋아요.
           <br />
           기록은 내 계정에 남고 나만 볼 수 있어요.

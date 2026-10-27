@@ -44,11 +44,11 @@ export const CoachCornerCard = ({
           {hasNote ? <MessageCircle className="h-3.5 w-3.5" /> : <Heart className="h-3.5 w-3.5" />}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="text-label font-bold text-muted-foreground">
             오삼 코치님의 한마디
           </p>
           {createdAt && (
-            <p className="text-micro text-muted-foreground">
+            <p className="text-label text-muted-foreground">
               {new Date(createdAt).toLocaleDateString("ko-KR")}
             </p>
           )}

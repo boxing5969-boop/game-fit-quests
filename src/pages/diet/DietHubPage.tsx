@@ -242,7 +242,7 @@ const ComingSoon = () => (
 const OnboardingCTA = ({ onStart }: { onStart: () => void }) => (
   <div data-tour="diet-onboarding-cta" className="space-y-4">
     <div className="rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/10 to-transparent p-5">
-      <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+      <p className="text-label font-bold text-primary">
         153 DIET · 21 DAYS
       </p>
       <h2 className="mt-1 text-heading text-foreground leading-tight">
@@ -474,13 +474,13 @@ const ActiveHome = (p: ActiveHomeProps) => {
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-label font-bold text-primary">
               {p.stageLabel}
             </p>
             <h2 className="mt-0.5 text-heading text-foreground leading-tight">
               Day {p.currentDay} <span className="text-muted-foreground text-heading">/ 21</span>
             </h2>
-            <p className="mt-0.5 text-micro text-muted-foreground">
+            <p className="mt-0.5 text-label text-muted-foreground">
               {DIET_TRACK_LABEL[p.track]} · 시작 {p.startDate}
             </p>
           </div>
@@ -514,13 +514,13 @@ const ActiveHome = (p: ActiveHomeProps) => {
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-label font-bold text-primary">
               TODAY · 오늘의 미션
             </p>
             <p className="mt-0.5 text-label font-extrabold leading-tight text-foreground">
               오늘의 미션을 클릭하세요
             </p>
-            <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+            <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
               5가지 습관 체크 + 식단 사진 · 자가 기록 시 챔피언 머니 지급
             </p>
           </div>
@@ -544,7 +544,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
           <div className="flex items-center justify-between">
             <p
               className={cn(
-                "text-micro font-black uppercase tracking-[0.2em]",
+                "text-label font-bold",
                 questCardSummary.allDone ? "text-emerald-600" : "text-primary",
               )}
             >
@@ -570,7 +570,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
                   : "border-border",
               )}
             >
-              <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-label font-bold text-muted-foreground">
                 점수
               </p>
               <p
@@ -585,7 +585,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
               </p>
             </div>
             <div className="rounded-xl border border-border bg-background px-2 py-2 text-center">
-              <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-label font-bold text-muted-foreground">
                 완료
               </p>
               <p className="mt-0.5 text-label font-extrabold text-foreground">
@@ -593,7 +593,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
               </p>
             </div>
             <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-2 py-2 text-center">
-              <p className="text-micro font-bold uppercase tracking-wide text-emerald-600">
+              <p className="text-label font-bold text-emerald-600">
                 Perfect
               </p>
               <p className="mt-0.5 text-label font-extrabold text-emerald-700">
@@ -640,7 +640,7 @@ const ActiveHome = (p: ActiveHomeProps) => {
 
       {/* 하위 페이지 네비게이션은 상단 DietSubNav 로 통합 — 기존 타일 그리드 제거 */}
 
-      <p className="text-center text-micro text-muted-foreground">
+      <p className="text-center text-label text-muted-foreground">
         자가 기록 완료: <strong className="text-foreground">{p.approvedDays}</strong>일 / 21일
       </p>
 
@@ -682,7 +682,7 @@ const CheckinCta = ({
       )}
     >
       <div>
-        <p className="text-micro font-bold uppercase tracking-widest opacity-80">
+        <p className="text-label font-bold opacity-80">
           {tone}
         </p>
         <p className="text-body font-black">{label}</p>
@@ -783,7 +783,7 @@ const PostProgramEntryCard = ({
       <div className="flex items-center justify-between">
         <p
           className={cn(
-            "text-micro font-black uppercase tracking-[0.2em]",
+            "text-label font-bold",
             tone === "ready"
               ? "text-emerald-600"
               : tone === "soon"
@@ -807,7 +807,7 @@ const PostProgramEntryCard = ({
       >
         {title}
       </p>
-      <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-1 text-label leading-relaxed text-muted-foreground">
         {subtitle}
       </p>
       <Button

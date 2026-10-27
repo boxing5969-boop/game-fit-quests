@@ -47,7 +47,7 @@ const Challenge153LeaderboardCard = () => {
             <Trophy className="h-4 w-4" />
           </span>
           <div>
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+            <p className="text-label font-bold text-primary">
               153 챌린지 랭킹
             </p>
             <h3 className="mt-0.5 text-heading">회원 간 도전 점수</h3>
@@ -80,7 +80,7 @@ const Challenge153LeaderboardCard = () => {
       <div className="mb-3 rounded-card border border-primary/20 bg-primary/5 p-3">
         <div className="flex items-center justify-between">
           <p className="text-micro font-bold text-primary">내 순위</p>
-          <p className="text-micro text-muted-foreground">
+          <p className="text-label text-muted-foreground">
             참여자 {my?.total_participants ?? 0}명
           </p>
         </div>
@@ -89,7 +89,7 @@ const Challenge153LeaderboardCard = () => {
             <p className="number-font text-title font-black text-foreground">
               {my?.my_rank && my.my_rank > 0 ? `${my.my_rank}위` : "—"}
             </p>
-            <p className="mt-0.5 text-micro text-muted-foreground">
+            <p className="mt-0.5 text-label text-muted-foreground">
               {period === "weekly"
                 ? "최근 7일 누적"
                 : period === "monthly"
@@ -98,7 +98,7 @@ const Challenge153LeaderboardCard = () => {
             </p>
           </div>
           <div className="text-right">
-            <p className="text-micro font-bold uppercase tracking-wider text-reward">
+            <p className="text-label font-bold text-reward">
               QUEST XP
             </p>
             <p className="number-font mt-0.5 text-heading font-black text-reward">
@@ -110,13 +110,13 @@ const Challenge153LeaderboardCard = () => {
 
       {/* Top 리스트 */}
       {isLoading ? (
-        <p className="text-micro text-muted-foreground">불러오는 중…</p>
+        <p className="text-label text-muted-foreground">불러오는 중…</p>
       ) : list.length === 0 ? (
         <div className="rounded-card border border-dashed border-border bg-muted/30 px-3.5 py-4 text-center">
           <p className="text-label font-bold text-foreground">
             아직 이 기간 랭킹에 오른 회원이 없습니다
           </p>
-          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             복싱 IQ 퀴즈 / 챌린지 아레나 / 오늘 운동 한 줄로
             <br />
             QUEST XP 를 쌓으면 자동으로 랭킹에 반영됩니다.
@@ -157,7 +157,7 @@ const Challenge153LeaderboardCard = () => {
                     </span>
                   )}
                 </p>
-                <p className="truncate text-micro text-muted-foreground">
+                <p className="truncate text-label text-muted-foreground">
                   {r.branch_name}
                 </p>
               </div>
@@ -165,14 +165,14 @@ const Challenge153LeaderboardCard = () => {
                 <p className="number-font text-label font-black text-reward">
                   {r.score.toLocaleString()}
                 </p>
-                <p className="text-micro text-muted-foreground">QUEST XP</p>
+                <p className="text-label text-muted-foreground">QUEST XP</p>
               </div>
             </li>
           ))}
         </ol>
       )}
 
-      <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-3 text-label leading-relaxed text-muted-foreground">
         ※ 153 챌린지 랭킹은 보조 챌린지 QUEST XP 누적입니다. 공식 1~40 레벨업과
         공식 명예의 전당(랭킹) 과 별개입니다.
       </p>

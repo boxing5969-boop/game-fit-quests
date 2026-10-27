@@ -200,7 +200,7 @@ const Banner = ({
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-label font-bold text-foreground">{title}</p>
-        <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
           {body}
         </p>
       </div>

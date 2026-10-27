@@ -32,7 +32,7 @@ export const HabitScoreCard = ({
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
+          <p className="text-label font-bold text-muted-foreground">
             오늘 습관 점수
           </p>
           <p className="mt-0.5 flex items-baseline gap-1">
@@ -61,24 +61,24 @@ export const HabitScoreCard = ({
       {/* Mini stats */}
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-xl bg-muted/40 p-2.5">
-          <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
+          <p className="text-label font-bold text-muted-foreground">
             21일 완주율
           </p>
           <p className="mt-0.5 number-font text-body font-extrabold text-foreground">
             {completion}
-            <span className="text-micro font-bold text-muted-foreground">
+            <span className="text-label font-bold text-muted-foreground">
               %
             </span>
           </p>
         </div>
         <div className="rounded-xl bg-muted/40 p-2.5">
-          <p className="flex items-center gap-1 text-micro font-bold uppercase tracking-wide text-muted-foreground">
+          <p className="flex items-center gap-1 text-label font-bold text-muted-foreground">
             <Flame className="h-3 w-3 text-reward" />
             연속
           </p>
           <p className="mt-0.5 number-font text-body font-extrabold text-foreground">
             {streak}
-            <span className="text-micro font-bold text-muted-foreground">
+            <span className="text-label font-bold text-muted-foreground">
               일
             </span>
           </p>

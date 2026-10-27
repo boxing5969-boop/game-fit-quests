@@ -162,7 +162,7 @@ const King153Board = () => {
           <PartyPopper className="h-4 w-4 shrink-0 text-reward" />
           <div className="min-w-0 flex-1">
             <p className="text-label font-black text-foreground">153 마이복서 런칭 이벤트</p>
-            <p className="truncate text-micro text-muted-foreground">
+            <p className="truncate text-label text-muted-foreground">
               {eventQ.data ? launchEventLine(eventQ.data) : "기간 확인 중…"} · 사이니지 TV에 ①출석왕 ②앱활동왕 ③닉네임왕이 걸려요
             </p>
           </div>
@@ -194,13 +194,13 @@ const King153Board = () => {
               {summaryQ.isLoading ? (
                 <div className="mt-1 h-3 w-14 animate-pulse rounded bg-muted" />
               ) : summaryQ.isError ? (
-                <p className="mt-1 truncate text-micro text-muted-foreground">불러오기 실패</p>
+                <p className="mt-1 truncate text-label text-muted-foreground">불러오기 실패</p>
               ) : kingName ? (
                 <p className="mt-1 flex items-center gap-1 truncate text-micro font-bold text-reward">
                   <Crown className="h-3 w-3 shrink-0" /> <span className="truncate">{kingName}</span>
                 </p>
               ) : (
-                <p className="mt-1 truncate text-micro text-muted-foreground">
+                <p className="mt-1 truncate text-label text-muted-foreground">
                   {period === "event" && eventQ.data?.status === "upcoming" ? "시작 전" : "왕좌 비어 있음"}
                 </p>
               )}
@@ -224,7 +224,7 @@ const King153Board = () => {
 
       {/* 상세 — 왕좌를 눌렀을 때만 */}
       {!meta ? (
-        <p className="px-1 text-center text-micro text-muted-foreground">왕좌를 누르면 규칙과 순위가 보여요</p>
+        <p className="px-1 text-center text-label text-muted-foreground">왕좌를 누르면 규칙과 순위가 보여요</p>
       ) : (
         <div className="surface-card space-y-3 !p-4">
           <div className="flex items-start justify-between gap-2">
@@ -237,8 +237,8 @@ const King153Board = () => {
                   {board && board.scope === "all" ? " · 전체" : ""}
                 </span>
               </div>
-              <p className="mt-1.5 text-micro leading-relaxed text-foreground">{meta.what}</p>
-              <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">{meta.how}</p>
+              <p className="mt-1.5 text-label leading-relaxed text-foreground">{meta.what}</p>
+              <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">{meta.how}</p>
             </div>
             <button
               type="button"
@@ -256,12 +256,12 @@ const King153Board = () => {
               <div className="h-7 w-40 animate-pulse rounded bg-reward/20" />
             ) : boardQ.isError ? (
               <div>
-                <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">순위를 불러오지 못했어요</p>
+                <p className="text-label font-bold text-reward">순위를 불러오지 못했어요</p>
                 <p className="mt-0.5 text-label font-bold text-foreground">잠시 후 다시 눌러 주세요</p>
               </div>
             ) : eventUpcoming ? (
               <div>
-                <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">런칭 이벤트 시작 전</p>
+                <p className="text-label font-bold text-reward">런칭 이벤트 시작 전</p>
                 <p className="mt-0.5 text-label font-bold text-foreground">
                   {eventQ.data ? launchEventLine(eventQ.data) : ""} — 그날부터 기록이 쌓여요
                 </p>
@@ -269,20 +269,20 @@ const King153Board = () => {
             ) : king ? (
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">{eventEnded ? "최종" : "현재"} {meta.title}</p>
+                  <p className="text-label font-bold text-reward">{eventEnded ? "최종" : "현재"} {meta.title}</p>
                   <p className="mt-0.5 flex items-center gap-1.5 truncate text-body font-black text-foreground">
                     <Crown className="h-4 w-4 shrink-0 text-reward" />
                     <span className="truncate">{king.display_name}</span>
                   </p>
                   {board?.scope === "all" && (
-                    <p className="truncate text-micro text-muted-foreground">{shortBranch(king.branch_name)}</p>
+                    <p className="truncate text-label text-muted-foreground">{shortBranch(king.branch_name)}</p>
                   )}
                 </div>
                 <p className="shrink-0 text-title font-black tabular-nums text-reward">{formatKingScore(king.score, meta.key)}</p>
               </div>
             ) : (
               <div>
-                <p className="text-micro font-black uppercase tracking-[0.2em] text-reward">왕좌 비어 있음</p>
+                <p className="text-label font-bold text-reward">왕좌 비어 있음</p>
                 <p className="mt-0.5 text-label font-bold text-foreground">첫 기록이 곧 왕이 됩니다</p>
               </div>
             )}
@@ -329,7 +329,7 @@ const King153Board = () => {
                     {r.is_me && <span className="shrink-0 text-micro font-black text-primary">나</span>}
                   </span>
                   {board.scope === "all" && (
-                    <span className="shrink-0 text-micro text-muted-foreground">{shortBranch(r.branch_name)}</span>
+                    <span className="shrink-0 text-label text-muted-foreground">{shortBranch(r.branch_name)}</span>
                   )}
                   <span className="shrink-0 text-label font-black tabular-nums text-foreground">{formatKingScore(r.score, meta.key)}</span>
                 </li>
@@ -338,7 +338,7 @@ const King153Board = () => {
                 <li className="flex items-center gap-2.5 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2">
                   <span className="w-7 shrink-0 text-center text-label font-black tabular-nums">{me.rank}</span>
                   <span className="min-w-0 flex-1 truncate text-label font-bold text-foreground">
-                    나 <span className="text-micro text-muted-foreground">(10위 밖)</span>
+                    나 <span className="text-label text-muted-foreground">(10위 밖)</span>
                   </span>
                   <span className="shrink-0 text-label font-black tabular-nums text-foreground">{formatKingScore(me.score, meta.key)}</span>
                 </li>
@@ -357,7 +357,7 @@ const King153Board = () => {
             </button>
           )}
 
-          <p className="text-micro leading-relaxed text-muted-foreground">
+          <p className="text-label leading-relaxed text-muted-foreground">
             {meta.key === "nickname" ? "하트는 취소하기 전까지 계속 쌓여 있어요."
               : period === "event" ? (eventQ.data ? launchEventLine(eventQ.data) : KING_PERIOD_RESET.event)
               : meta.periodless ? "하루라도 빠지면 연속이 끊어져요." : KING_PERIOD_RESET[period]}

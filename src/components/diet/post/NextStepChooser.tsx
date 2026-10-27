@@ -146,7 +146,7 @@ export const NextStepChooser = ({
       aria-labelledby="next-step-title"
     >
       <div>
-        <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+        <p className="text-label font-bold text-primary">
           NEXT STEP · 21일 이후
         </p>
         <h2
@@ -190,14 +190,14 @@ export const NextStepChooser = ({
               : "border-border bg-muted/40",
         )}
       >
-        <p className="text-micro font-black uppercase tracking-widest text-muted-foreground">
+        <p className="text-label font-bold text-muted-foreground">
           추천
         </p>
         <p className="mt-0.5 font-extrabold text-foreground">
           {recommendationLabel(reco.path)}
         </p>
         {reco.reasons.length > 0 && (
-          <ul className="mt-1 space-y-0.5 text-micro text-muted-foreground">
+          <ul className="mt-1 space-y-0.5 text-label text-muted-foreground">
             {reco.reasons.map((r) => (
               <li key={r}>· {r}</li>
             ))}
@@ -207,7 +207,7 @@ export const NextStepChooser = ({
 
       {plan.coach_recommendation_note && (
         <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5 text-label leading-relaxed text-foreground">
-          <p className="text-micro font-black uppercase tracking-widest text-primary">
+          <p className="text-label font-bold text-primary">
             코치 한마디
           </p>
           <p className="mt-0.5">{plan.coach_recommendation_note}</p>
@@ -255,7 +255,7 @@ export const NextStepChooser = ({
           </div>
           {/* 오삼 코치 동적 피드백 — 입력값 기반 */}
           <div className="mt-2 rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-3 py-2">
-            <p className="text-micro font-black uppercase tracking-widest text-emerald-600">
+            <p className="text-label font-bold text-emerald-600">
               오삼 코치 한마디
             </p>
             <p className="mt-0.5 text-label leading-relaxed text-foreground">
@@ -326,7 +326,7 @@ export const NextStepChooser = ({
           </div>
           {/* 오삼 코치 동적 피드백 — 사이클·목표·현재 체중 기반 */}
           <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2">
-            <p className="text-micro font-black uppercase tracking-widest text-primary">
+            <p className="text-label font-bold text-primary">
               오삼 코치 한마디
             </p>
             <p className="mt-0.5 text-label leading-relaxed text-foreground">
@@ -354,12 +354,12 @@ export const NextStepChooser = ({
         </p>
       )}
       {selectMut.isPending && (
-        <p className="text-center text-micro text-muted-foreground">
+        <p className="text-center text-label text-muted-foreground">
           저장 중입니다...
         </p>
       )}
 
-      <p className="pt-1 text-center text-micro leading-relaxed text-muted-foreground">
+      <p className="pt-1 text-center text-label leading-relaxed text-muted-foreground">
         어느 쪽을 골라도 언제든 코치와 상담 후 경로를 바꿀 수 있습니다.
       </p>
     </section>
@@ -422,7 +422,7 @@ const PathCard = ({
         <h3 className="text-body font-extrabold leading-tight text-foreground">
           {title}
         </h3>
-        <p className="mt-0.5 text-micro text-muted-foreground">{subtitle}</p>
+        <p className="mt-0.5 text-label text-muted-foreground">{subtitle}</p>
       </div>
     </div>
     <ul className="mt-3 space-y-1 text-label text-foreground">
@@ -496,7 +496,7 @@ const LabeledInput = ({
   placeholder?: string;
   type?: "decimal" | "text";
 }) => (
-  <label className="flex flex-col gap-1 text-micro font-bold text-muted-foreground">
+  <label className="flex flex-col gap-1 text-label font-bold text-muted-foreground">
     {label}
     <input
       value={value}

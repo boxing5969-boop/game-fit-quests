@@ -22,13 +22,13 @@ const QuestCommunityPanel = ({ community }: Props) => {
 
   return (
     <div>
-      <p className="mb-2 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-2 text-label font-bold text-muted-foreground">
         커뮤니티 활동
       </p>
 
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-          <p className="flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="flex items-center gap-1 text-label font-bold text-muted-foreground">
             <Users className="h-3 w-3" />
             운동 짝꿍
           </p>
@@ -37,7 +37,7 @@ const QuestCommunityPanel = ({ community }: Props) => {
           </p>
         </div>
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-          <p className="flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="flex items-center gap-1 text-label font-bold text-muted-foreground">
             <Megaphone className="h-3 w-3" />
             응원 7일
           </p>
@@ -50,7 +50,7 @@ const QuestCommunityPanel = ({ community }: Props) => {
       {/* 짐 레이드 진척 */}
       {raids.length > 0 && (
         <div className="mt-3">
-          <p className="mb-1.5 flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="mb-1.5 flex items-center gap-1 text-label font-bold text-muted-foreground">
             <Flag className="h-3 w-3 text-primary" />
             우리 지점 목표
           </p>
@@ -77,7 +77,7 @@ const QuestCommunityPanel = ({ community }: Props) => {
                     style={{ width: `${Math.min(100, r.percentage)}%` }}
                   />
                 </div>
-                <p className="mt-1 text-micro text-muted-foreground">
+                <p className="mt-1 text-label text-muted-foreground">
                   {Math.round(r.current_value).toLocaleString()} /{" "}
                   {Math.round(r.target_value).toLocaleString()} ·{" "}
                   {new Date(r.end_date).toLocaleDateString("ko-KR")} 까지
@@ -92,7 +92,7 @@ const QuestCommunityPanel = ({ community }: Props) => {
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {topRespect.length > 0 && (
           <div className="rounded-card border border-border bg-background/40 p-3">
-            <p className="mb-1 flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1 flex items-center gap-1 text-label font-bold text-muted-foreground">
               <Trophy className="h-3 w-3" />
               상위 RP
             </p>
@@ -112,7 +112,7 @@ const QuestCommunityPanel = ({ community }: Props) => {
         )}
         {topContrib.length > 0 && (
           <div className="rounded-card border border-border bg-background/40 p-3">
-            <p className="mb-1 flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1 flex items-center gap-1 text-label font-bold text-muted-foreground">
               <Flag className="h-3 w-3" />
               레이드 기여자
             </p>

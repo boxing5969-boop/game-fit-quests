@@ -142,11 +142,11 @@ const TrainingLibraryPage = () => {
             <div key={ex.id} className={`rounded-2xl border border-border bg-card p-4 shadow-elev-1 ${!ex.is_active ? "opacity-50" : ""}`}>
               <button onClick={() => setSel(ex)} className="w-full text-left transition-all active:scale-[0.99]">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-body font-bold text-foreground">{ex.name}{!ex.is_active && <span className="ml-1 text-micro text-muted-foreground">(비활성)</span>}</span>
+                  <span className="text-body font-bold text-foreground">{ex.name}{!ex.is_active && <span className="ml-1 text-label text-muted-foreground">(비활성)</span>}</span>
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-micro font-bold ${DIFF_COLOR[ex.difficulty] || "bg-muted text-muted-foreground"}`}>{ex.difficulty}</span>
                 </div>
                 <p className="mt-1 text-label text-muted-foreground">{ex.summary}</p>
-                <div className="mt-2 flex items-center gap-2 text-micro text-muted-foreground">
+                <div className="mt-2 flex items-center gap-2 text-label text-muted-foreground">
                   <span className="rounded bg-muted px-1.5 py-0.5">{ex.category}</span>
                   {ex.target && <span className="flex items-center gap-0.5"><Target className="h-3 w-3" />{ex.target}</span>}
                   {ex.video_url && <span className="flex items-center gap-0.5 text-primary"><PlayCircle className="h-3 w-3" />영상</span>}

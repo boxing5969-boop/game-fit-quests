@@ -28,7 +28,7 @@ const QuestAtRiskMembersPanel = ({ members }: Props) => {
   if (members.length === 0) {
     return (
       <div>
-        <p className="mb-2 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="mb-2 text-label font-bold text-muted-foreground">
           복귀 필요 회원
         </p>
         <div className="rounded-card border border-emerald-400/30 bg-emerald-400/5 p-3">
@@ -42,7 +42,7 @@ const QuestAtRiskMembersPanel = ({ members }: Props) => {
 
   return (
     <div>
-      <p className="mb-2 flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-2 flex items-center gap-1 text-label font-bold text-muted-foreground">
         <AlertTriangle className="h-3 w-3 text-amber-500" />
         복귀 필요 회원 ({members.length}명)
       </p>
@@ -58,7 +58,7 @@ const QuestAtRiskMembersPanel = ({ members }: Props) => {
                 <p className="truncate text-label font-bold text-foreground">
                   {m.display_name}
                 </p>
-                <p className="mt-0.5 text-micro text-muted-foreground">
+                <p className="mt-0.5 text-label text-muted-foreground">
                   {RANK_LABELS[m.current_rank] ?? m.current_rank} Lv.
                   {toGlobalLevel(m.current_rank, m.current_level)} · 비활동 {m.inactive_days}일
                 </p>
@@ -72,7 +72,7 @@ const QuestAtRiskMembersPanel = ({ members }: Props) => {
         ))}
       </ul>
       {members.length > 10 && (
-        <p className="mt-1 text-micro text-muted-foreground">
+        <p className="mt-1 text-label text-muted-foreground">
           ... 외 {members.length - 10}명
         </p>
       )}

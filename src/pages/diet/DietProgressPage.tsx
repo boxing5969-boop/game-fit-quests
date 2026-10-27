@@ -87,14 +87,14 @@ const DietProgressPage = () => {
             <div className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+                  <p className="text-label font-bold text-primary">
                     {DIET_STAGES.find((s) => s.id === enrollment.current_stage)
                       ?.label ?? ""}
                   </p>
                   <h2 className="mt-0.5 text-heading text-foreground leading-tight">
                     Day {enrollment.current_day} / 21
                   </h2>
-                  <p className="mt-0.5 text-micro text-muted-foreground">
+                  <p className="mt-0.5 text-label text-muted-foreground">
                     시작 {enrollment.start_date}
                   </p>
                 </div>
@@ -155,7 +155,7 @@ const DietProgressPage = () => {
 };
 
 const Legend = () => (
-  <div className="mt-3 flex flex-wrap items-center gap-2 text-micro text-muted-foreground">
+  <div className="mt-3 flex flex-wrap items-center gap-2 text-label text-muted-foreground">
     <LegendDot tone="approved" label="기록" />
     <LegendDot tone="empty" label="미기록" />
   </div>
@@ -200,15 +200,15 @@ const WeekCard = ({
     <div className="rounded-xl border border-border bg-card p-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-micro font-black uppercase tracking-wider text-primary">
+          <p className="text-label font-bold text-primary">
             WEEK {weekIdx} · {stage?.label ?? ""}
           </p>
-          <p className="text-micro text-muted-foreground">
+          <p className="text-label text-muted-foreground">
             Day {stage?.dayRange[0]}~{stage?.dayRange[1]} · {stage?.tagline}
           </p>
         </div>
         <p className="number-font text-label font-extrabold text-foreground">
-          {approved} <span className="text-micro text-muted-foreground">/ {total}</span>
+          {approved} <span className="text-label text-muted-foreground">/ {total}</span>
         </p>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1.5 text-micro">

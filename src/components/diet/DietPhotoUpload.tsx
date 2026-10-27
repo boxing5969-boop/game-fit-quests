@@ -73,7 +73,7 @@ export const DietPhotoUpload = ({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="text-label font-bold text-muted-foreground">
         식단 사진 (선택)
       </p>
       <div className="grid grid-cols-2 gap-2">
@@ -97,7 +97,7 @@ export const DietPhotoUpload = ({
         })}
       </div>
       {disabled && (
-        <p className="text-micro text-muted-foreground">
+        <p className="text-label text-muted-foreground">
           체크인을 먼저 저장하면 사진 업로드가 열립니다.
         </p>
       )}

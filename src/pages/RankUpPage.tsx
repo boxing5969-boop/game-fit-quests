@@ -71,11 +71,20 @@ const RankUpPage = () => {
     // 2026-09-29 대표님: 앱 기본을 밝은 톤으로 — 랭크업도 회원이 고른 테마를 따른다 (예전엔 .dark 로 고정).
     // 라이트에서 빛바래던 금색 글자·잠긴 칸·마스터 카드는 라이트 전용 색(amber)으로 보정하고, 다크는 dark: 로 기존 그대로.
     <div className="mx-auto min-h-screen max-w-lg bg-background px-4 pb-24 pt-4 text-foreground">
-      <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-title font-extrabold tracking-tight text-foreground">랭크업</h1>
-        <button onClick={() => navigate("/mypage")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95">
-          <User className="h-5 w-5 text-secondary-foreground" />
+      {/* 2026-10-10 부터 아래 탭이 아니라 홈 카드에서 여는 화면 — 오른쪽 '내 정보' 대신 왼쪽 '뒤로' (2026-10-28 리디자인) */}
+      <div className="mb-5 flex items-center gap-3">
+        <button
+          onClick={() => {
+            const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+            if (idx > 0) navigate(-1);
+            else navigate("/home", { replace: true });
+          }}
+          aria-label="뒤로"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary transition-all active:scale-95"
+        >
+          <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
+        <h1 className="text-title font-extrabold tracking-tight text-foreground">랭크업</h1>
       </div>
 
       {/* Tab switcher */}
@@ -153,7 +162,7 @@ const RankUpPage = () => {
                             <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-label font-bold ${isReached ? "bg-primary text-primary-foreground" : "bg-border text-muted-foreground"}`}>{lv.level}</div>
                             <div>
                               <p className={`text-body ${isReached ? "text-foreground font-bold" : "text-muted-foreground"}`}>{lv.shortValueTitle}</p>
-                              <p className="text-micro text-muted-foreground">{lv.valueDescription}</p>
+                              <p className="text-label text-muted-foreground">{lv.valueDescription}</p>
                             </div>
                           </div>
                         );
@@ -223,10 +232,10 @@ const RankUpPage = () => {
                               : allDone && unlocked ? <CheckCircle2 className="h-4 w-4 text-amber-500 dark:text-status-complete" />
                               : unlocked ? <Star className={`h-4 w-4 ${isCurrent ? "text-emerald-600 dark:text-primary" : "text-muted-foreground"}`} />
                               : <Lock className="h-4 w-4 text-muted-foreground" />}
-                            <span className={`mt-0.5 text-micro font-bold ${isCurrent ? "text-emerald-700 dark:text-primary" : allDone ? "text-amber-700 dark:text-status-complete" : "text-muted-foreground"}`}>
+                            <span className={`mt-0.5 text-label font-bold ${isCurrent ? "text-emerald-700 dark:text-primary" : allDone ? "text-amber-700 dark:text-status-complete" : "text-muted-foreground"}`}>
                               {node.is_boss ? "BOSS" : `Lv.${toGlobalLevel(node.rank_name, node.level_number)}`}
                             </span>
-                            {total > 0 && unlocked && <span className="text-micro text-muted-foreground">{completed}/{total}</span>}
+                            {total > 0 && unlocked && <span className="text-label text-muted-foreground">{completed}/{total}</span>}
                           </button>
                         );
                       })}
@@ -272,7 +281,7 @@ const RankUpPage = () => {
                   <div className="relative mb-4 text-center">
                     <div className="mb-2 flex items-center justify-center gap-2">
                       <Sparkles className="h-5 w-5 text-amber-500 dark:text-reward" style={{ animation: "pulse 2s ease-in-out infinite" }} />
-                      <span className="text-label font-bold uppercase tracking-[0.2em] text-amber-700 dark:text-reward">Secret Mission</span>
+                      <span className="text-label font-bold text-amber-700 dark:text-reward">Secret Mission</span>
                       <Sparkles className="h-5 w-5 text-amber-500 dark:text-reward" style={{ animation: "pulse 2s ease-in-out infinite 0.5s" }} />
                     </div>
                     <h3 className="text-heading font-black text-amber-600 dark:text-reward">🏆 마스터 리그 최종 미션</h3>
@@ -301,7 +310,7 @@ const RankUpPage = () => {
                     })}
                   </div>
                   <div className="relative mt-4 rounded-2xl border border-reward/30 bg-reward/5 p-4">
-                    <p className="mb-3 text-center text-label font-bold uppercase tracking-wider text-amber-700 dark:text-reward">✨ 마스터 리그 달성 보상 ✨</p>
+                    <p className="mb-3 text-center text-label font-bold text-amber-700 dark:text-reward">✨ 마스터 리그 달성 보상 ✨</p>
                     <div className="space-y-2">
                       {FINAL_REWARDS.map((r, i) => (
                         <div key={i} className="flex items-center gap-2.5 rounded-xl bg-card/60 border border-border px-3 py-2">
@@ -514,9 +523,9 @@ const WhiteLv1ProgressionCard = () => {
         <div className="mb-3 flex gap-2">
           {RECOMMENDED_PATHS.map(path => (
             <div key={path.label} className="flex-1 rounded-xl bg-muted/30 p-2 text-center">
-              <p className="text-micro font-bold text-muted-foreground">{path.label}</p>
+              <p className="text-label font-bold text-muted-foreground">{path.label}</p>
               <p className="text-label font-bold text-foreground">{path.duration} · {path.sessions}</p>
-              <p className="text-micro text-muted-foreground">{path.frequency}</p>
+              <p className="text-label text-muted-foreground">{path.frequency}</p>
             </div>
           ))}
         </div>
@@ -530,7 +539,7 @@ const WhiteLv1ProgressionCard = () => {
             return (
               <div key={m.id} className="rounded-xl border border-border p-2.5">
                 <div className="mb-0.5 flex items-center justify-between">
-                  <span className="text-micro text-muted-foreground">{m.emoji} {m.label}</span>
+                  <span className="text-label text-muted-foreground">{m.emoji} {m.label}</span>
                   {done && <CheckCircle2 className="h-3 w-3 text-amber-500 dark:text-status-complete" />}
                 </div>
                 <p className="text-body font-bold text-foreground">{met?.current ?? 0}<span className="text-label text-muted-foreground">/{m.target}{m.unit}</span></p>
@@ -542,7 +551,7 @@ const WhiteLv1ProgressionCard = () => {
           })}
         </div>
 
-        <p className="mt-3 text-micro text-muted-foreground leading-relaxed">
+        <p className="mt-3 text-label text-muted-foreground leading-relaxed">
           화이트는 쉽지만 의미 없이 쉬운 단계가 아니라, 습관·기초체력·자세 유지력을 만드는 단계입니다
         </p>
       </div>

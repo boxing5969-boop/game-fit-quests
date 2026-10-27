@@ -162,7 +162,7 @@ export const MyMealPlan = ({
     <section className="space-y-3">
       {/* 식단 모드 탭 — 3가지 랜덤 식단 스타일 선택 */}
       <div className="rounded-2xl border border-border bg-card p-2">
-        <p className="px-1 pb-1 text-micro font-black uppercase tracking-wide text-muted-foreground">
+        <p className="px-1 pb-1 text-label font-bold text-muted-foreground">
           식단 스타일
         </p>
         <div className="grid grid-cols-3 gap-1.5">
@@ -185,7 +185,7 @@ export const MyMealPlan = ({
             onClick={() => handleModeChange("office_quick")}
           />
         </div>
-        <p className="mt-2 px-1 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-2 px-1 text-label leading-relaxed text-muted-foreground">
           {planMode === "home_korean"
             ? "가정에서 한식 위주로. 단백질 부족 시 식전 쉐이크로 보강합니다."
             : planMode === "office_quick"
@@ -198,7 +198,7 @@ export const MyMealPlan = ({
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
+            <p className="text-label font-bold text-muted-foreground">
               {mode === "maintenance" ? "MAINTENANCE MEAL PLAN" : "FAT LOSS MEAL PLAN"}
             </p>
             <p className="mt-0.5 text-label font-extrabold text-foreground">오늘의 식단</p>
@@ -218,7 +218,7 @@ export const MyMealPlan = ({
           <Stat label="단백질" value={`${plan.totals.proteinG}/${target.proteinG}g`} tone="neutral" />
           <Stat label="커버리지" value={`${kcalPct}%`} tone="neutral" />
         </div>
-        <p className="mt-2 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-2 text-label leading-relaxed text-muted-foreground">
           {proteinPct >= 85
             ? `단백질 ${proteinPct}% 확보. 감량기 근보존·포만감 OK.`
             : `단백질 ${proteinPct}% — 간식을 그릭요거트·삶은 달걀로 보강하면 좋아요.`}
@@ -229,7 +229,7 @@ export const MyMealPlan = ({
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
+            <p className="text-label font-bold text-muted-foreground">
               5대 영양소 + 프로바이오틱
             </p>
             <p className="mt-0.5 text-label font-extrabold text-foreground">
@@ -309,7 +309,7 @@ export const MyMealPlan = ({
             🥊
           </span>
           <div>
-            <p className="text-micro font-black uppercase tracking-wide text-primary">
+            <p className="text-label font-bold text-primary">
               오삼 코치 식단 도우미
             </p>
             <p className="text-label font-extrabold text-foreground">
@@ -365,10 +365,10 @@ export const MyMealPlan = ({
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-micro font-black uppercase tracking-wide text-muted-foreground">
+                    <p className="text-label font-bold text-muted-foreground">
                       {slotLabel}
                     </p>
-                    <span className="text-micro text-muted-foreground">
+                    <span className="text-label text-muted-foreground">
                       · 목표 {p.target.kcal} kcal
                     </span>
                   </div>
@@ -377,7 +377,7 @@ export const MyMealPlan = ({
                   </p>
                   {p.item && (
                     <>
-                      <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                      <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                         {p.item.note}
                       </p>
                       <div className="mt-1.5 flex flex-wrap gap-1.5 text-micro">
@@ -415,7 +415,7 @@ export const MyMealPlan = ({
         })}
       </div>
 
-      <p className="text-center text-micro leading-relaxed text-muted-foreground">
+      <p className="text-center text-label leading-relaxed text-muted-foreground">
         외식/자유식 끼니는 "교체"로 바꾸면 다음 끼니가 자동으로 가벼운 복귀 메뉴로 재선택됩니다.
       </p>
 
@@ -486,7 +486,7 @@ const Stat = ({
           : "border-border bg-background",
     )}
   >
-    <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+    <p className="text-label font-bold text-muted-foreground">{label}</p>
     <p className="mt-0.5 number-font text-label font-extrabold text-foreground">{value}</p>
   </div>
 );
@@ -523,7 +523,7 @@ const NutRow = ({
       )}
       <span className="font-bold text-foreground">{label}</span>
     </div>
-    <span className="text-micro text-muted-foreground">{detail}</span>
+    <span className="text-label text-muted-foreground">{detail}</span>
   </li>
 );
 

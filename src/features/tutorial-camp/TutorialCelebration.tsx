@@ -82,7 +82,7 @@ const TutorialCelebration = ({ step, onContinue }: TutorialCelebrationProps) => 
           <OsamMascot size={grand ? "xl" : "lg"} state="victory" />
         </div>
         <p
-          className="text-micro font-black uppercase tracking-[0.5em]"
+          className="text-label font-bold"
           style={{ color: COLOR_AMBER }}
         >
           {grand ? "GRADUATION" : `DAY ${step.day} CLEAR`}
@@ -94,7 +94,7 @@ const TutorialCelebration = ({ step, onContinue }: TutorialCelebrationProps) => 
 
         {grand && (
           <div className="mt-4 rounded-xl border-l-2 border-rose-500/60 bg-rose-950/15 px-4 py-3 text-left">
-            <p className="text-micro font-bold uppercase tracking-widest text-rose-300/80">
+            <p className="text-label font-bold text-rose-300/80">
               칭호
             </p>
             <p className="mt-0.5 text-label font-black text-rose-100">

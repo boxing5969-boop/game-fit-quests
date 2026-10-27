@@ -52,15 +52,15 @@ const TitleMatchFeedCard = () => {
           <Trophy className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-black uppercase tracking-[0.18em] text-reward">
+          <p className="text-label font-bold text-reward">
             타이틀매치 · 축하
           </p>
           <p className="mt-0.5 truncate text-label font-bold text-foreground">{title}</p>
-          <p className="mt-0.5 truncate text-micro text-muted-foreground">{subtitle}</p>
+          <p className="mt-0.5 truncate text-label text-muted-foreground">{subtitle}</p>
         </div>
         {unclapped > 0 && (
           <div className="shrink-0 text-right">
-            <p className="text-micro font-bold uppercase tracking-wider text-reward">
+            <p className="text-label font-bold text-reward">
               👏 {unclapped}
             </p>
           </div>

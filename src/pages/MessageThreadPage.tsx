@@ -137,12 +137,12 @@ const Bubble = ({
             )}
           </div>
           {v.groupEnd ? (
-            <span className="mt-1 px-1 text-micro text-muted-foreground">
+            <span className="mt-1 px-1 text-label text-muted-foreground">
               {dmBubbleTime(m.created_at)}
               {seen ? " · 읽음" : ""}
             </span>
           ) : seen ? (
-            <span className="mt-1 px-1 text-micro text-muted-foreground">읽음</span>
+            <span className="mt-1 px-1 text-label text-muted-foreground">읽음</span>
           ) : null}
         </div>
       </div>
@@ -544,7 +544,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                       </button>
                     </span>
                   ) : (
-                    <span className="mt-1 px-1 text-micro text-muted-foreground">보내는 중…</span>
+                    <span className="mt-1 px-1 text-label text-muted-foreground">보내는 중…</span>
                   )}
                 </div>
               ))}
@@ -689,7 +689,7 @@ const ThreadScreen = ({ threadId, toUserId }: { threadId: string | null; toUserI
                 </button>
               </div>
               {text.length > MAX_LEN - 100 && (
-                <p className="mt-1 text-right text-micro text-muted-foreground">
+                <p className="mt-1 text-right text-label text-muted-foreground">
                   {text.length}/{MAX_LEN}
                 </p>
               )}

@@ -58,7 +58,7 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
                   <ClipboardList className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+                  <p className="text-label font-bold text-primary">
                     성장 리포트 상세
                   </p>
                   <h2 className="mt-0.5 text-body font-bold text-foreground">
@@ -84,7 +84,7 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
                 <>
                   {/* 공식 */}
                   <div className="rounded-card border border-border bg-background/40 p-3">
-                    <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
+                    <p className="text-label font-bold text-muted-foreground">
                       공식 성장 (읽기 전용)
                     </p>
                     <ul className="mt-1.5 space-y-1 text-label text-foreground">
@@ -106,7 +106,7 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
 
                   {/* QUEST */}
                   <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
-                    <p className="text-micro font-black uppercase tracking-wider text-primary">
+                    <p className="text-label font-bold text-primary">
                       QUEST 성장 (보조)
                     </p>
                     <ul className="mt-1.5 space-y-1 text-label text-foreground">
@@ -146,7 +146,7 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
 
                   {/* 코멘트 + 학부모 */}
                   <div className="rounded-card border border-border bg-card p-3">
-                    <p className="text-micro font-black uppercase tracking-wider text-primary">
+                    <p className="text-label font-bold text-primary">
                       오삼 코치
                     </p>
                     <p className="mt-1 text-label leading-relaxed text-foreground">
@@ -154,7 +154,7 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
                     </p>
                   </div>
                   <div className="rounded-card border border-border bg-card p-3">
-                    <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
+                    <p className="text-label font-bold text-muted-foreground">
                       학부모 / 코치 한 줄
                     </p>
                     <p className="mt-1 text-label leading-relaxed text-foreground">
@@ -164,7 +164,7 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
 
                   {/* 면책 */}
                   <div className="rounded-card border border-amber-400/30 bg-amber-400/5 p-3">
-                    <ul className="space-y-1 text-micro leading-relaxed text-muted-foreground">
+                    <ul className="space-y-1 text-label leading-relaxed text-muted-foreground">
                       {GROWTH_REPORT_DISCLAIMERS.map((d) => (
                         <li key={d}>※ {d}</li>
                       ))}

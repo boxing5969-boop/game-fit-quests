@@ -39,7 +39,7 @@ export const ComebackButton = ({ className }: ComebackButtonProps) => {
             <p className="text-label font-bold text-foreground">
               오늘 조금 무너졌어요
             </p>
-            <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+            <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
               괜찮아요 · 1개만 해도 오늘은 복구 성공
             </p>
           </div>

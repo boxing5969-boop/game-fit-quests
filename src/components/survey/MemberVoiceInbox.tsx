@@ -186,7 +186,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-micro tabular-nums text-muted-foreground">{whenText(s.at)}</p>
+                      <p className="text-label tabular-nums text-muted-foreground">{whenText(s.at)}</p>
                       {s.avg != null && (
                         <p className="mt-0.5 inline-flex items-center gap-0.5 text-label font-bold tabular-nums text-foreground">
                           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" strokeWidth={1.8} /> {s.avg}
@@ -224,7 +224,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
                   <span className="rounded-full bg-secondary px-2 py-0.5 text-micro font-bold text-muted-foreground">
                     {VOICE_STATUS[v.status] ?? v.status}
                   </span>
-                  <span className="ml-auto shrink-0 text-micro tabular-nums text-muted-foreground">{whenText(v.at)}</span>
+                  <span className="ml-auto shrink-0 text-label tabular-nums text-muted-foreground">{whenText(v.at)}</span>
                 </div>
                 {v.rating != null && (
                   <div className="mt-2">
@@ -247,7 +247,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
         </ul>
       )}
 
-      <p className="px-1 pt-1 text-center text-micro leading-relaxed text-muted-foreground">
+      <p className="px-1 pt-1 text-center text-label leading-relaxed text-muted-foreground">
         일일경영리포트에 저장된 최근 6개월 응답이에요 (전체관리자만 볼 수 있어요). 처리 상태 바꾸기와 경품 추첨은 경영리포트에서 해요.
       </p>
     </div>

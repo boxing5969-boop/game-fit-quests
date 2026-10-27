@@ -103,7 +103,7 @@ export const ComebackMissionDialog = ({ open, onClose }: ComebackMissionDialogPr
         <div className="max-h-[70vh] overflow-y-auto px-5 py-4">
           {/* 오삼 코치 따뜻한 말 */}
           <div className="rounded-2xl border border-emerald-400/25 bg-emerald-400/5 p-3">
-            <p className="text-micro font-black uppercase tracking-[0.2em] text-emerald-500">
+            <p className="text-label font-bold text-emerald-500">
               COMEBACK · 끝이 아니라 쉼표
             </p>
             <p className="mt-1 text-label font-extrabold leading-snug text-foreground">
@@ -112,7 +112,7 @@ export const ComebackMissionDialog = ({ open, onClose }: ComebackMissionDialogPr
           </div>
 
           {/* 진행 요약 */}
-          <p className="mt-3 text-center text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-center text-label leading-relaxed text-muted-foreground">
             <strong className="text-foreground">{completedCount}</strong>개 완료 · 1개만 해도
             오늘은 복구 성공이에요.
           </p>
@@ -136,7 +136,7 @@ export const ComebackMissionDialog = ({ open, onClose }: ComebackMissionDialogPr
               <p className="mt-0.5 text-label font-extrabold text-emerald-600">
                 오늘, 다시 돌아왔어요
               </p>
-              <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+              <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                 복귀 속도가 진짜 힘입니다. 그걸 오늘 증명했어요.
               </p>
             </div>
@@ -198,7 +198,7 @@ const MissionRow = ({
         >
           {mission.label}
         </p>
-        <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
           {mission.hint}
         </p>
       </div>

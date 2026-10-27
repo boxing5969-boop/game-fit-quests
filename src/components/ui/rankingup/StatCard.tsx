@@ -58,7 +58,7 @@ export const StatCard = ({
       </div>
     )}
     <div className="min-w-0">
-      <p className="text-micro font-medium text-muted-foreground">{label}</p>
+      <p className="text-label font-medium text-muted-foreground">{label}</p>
       <p className="number-font mt-0.5 text-body font-bold leading-tight text-foreground break-keep">
         {typeof value === "number" ? value.toLocaleString() : value}
       </p>

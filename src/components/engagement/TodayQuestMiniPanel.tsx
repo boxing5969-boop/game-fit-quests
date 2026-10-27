@@ -60,18 +60,18 @@ const MiniCard = ({
       {icon}
     </span>
     <div className="min-w-0 flex-1">
-      <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
+      <p className="text-label font-bold text-primary">
         {badge}
       </p>
       <p className="mt-0.5 truncate text-label font-bold text-foreground">
         {title}
       </p>
-      <p className="mt-0.5 truncate text-micro text-muted-foreground">
+      <p className="mt-0.5 truncate text-label text-muted-foreground">
         {subtitle}
       </p>
     </div>
     <div className="shrink-0 text-right">
-      <p className="text-micro font-bold uppercase tracking-wider text-reward">
+      <p className="text-label font-bold text-reward">
         보상
       </p>
       <p className="mt-0.5 text-micro font-bold text-reward">{rewardPreview}</p>
@@ -148,7 +148,7 @@ const TodayQuestMiniPanel = ({
     >
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             오늘의 라운드
           </p>
           <h3 className="mt-0.5 text-heading">보조 퀘스트</h3>
@@ -160,7 +160,7 @@ const TodayQuestMiniPanel = ({
 
       <div className="space-y-2">{visible.map((k) => cardDefs[k])}</div>
 
-      <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-3 text-label leading-relaxed text-muted-foreground">
         ※ 보조 퀘스트는 공식 1~40 레벨업과 무관합니다. 공식 레벨업은 기존
         코치 승인 기준으로 진행됩니다.
       </p>

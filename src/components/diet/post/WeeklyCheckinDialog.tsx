@@ -125,7 +125,7 @@ export const WeeklyCheckinDialog = ({
           </div>
 
           <label className="block space-y-1">
-            <span className="text-micro font-bold text-muted-foreground">
+            <span className="text-label font-bold text-muted-foreground">
               이번 주 메모 (선택)
             </span>
             <textarea
@@ -176,7 +176,7 @@ const Row = ({
   placeholder?: string;
 }) => (
   <label className="block">
-    <span className="text-micro font-bold text-muted-foreground">{label}</span>
+    <span className="text-label font-bold text-muted-foreground">{label}</span>
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -199,7 +199,7 @@ const CounterRow = ({
   max: number;
 }) => (
   <div>
-    <span className="text-micro font-bold text-muted-foreground">{label}</span>
+    <span className="text-label font-bold text-muted-foreground">{label}</span>
     <div className="mt-0.5 flex items-center overflow-hidden rounded-lg border border-border bg-background">
       <button
         type="button"

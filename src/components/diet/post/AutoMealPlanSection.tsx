@@ -54,7 +54,7 @@ export const AutoMealPlanSection = ({ mode, preferPatterns }: AutoMealPlanSectio
             키·체중·성별·생년월일 중 하나가 비어 있어 칼로리를 계산할 수 없어요. 아래에서 채워주세요.
           </p>
           {!age && (
-            <p className="mt-1 text-micro text-muted-foreground">
+            <p className="mt-1 text-label text-muted-foreground">
               생년월일은 내정보 페이지에서 수정할 수 있어요.
             </p>
           )}

@@ -400,7 +400,7 @@ const StepIntro = ({ onNext }: { onNext: () => void }) => (
     </div>
 
     <div>
-      <p className="mb-2 text-label font-bold uppercase tracking-wide text-muted-foreground">
+      <p className="mb-2 text-label font-bold text-muted-foreground">
         매일 지킬 5 습관
       </p>
       <ul className="space-y-1.5">
@@ -414,7 +414,7 @@ const StepIntro = ({ onNext }: { onNext: () => void }) => (
             </span>
             <div>
               <p className="text-label font-bold text-foreground">{h.label}</p>
-              <p className="text-micro text-muted-foreground">{h.prompt}</p>
+              <p className="text-label text-muted-foreground">{h.prompt}</p>
             </div>
           </li>
         ))}
@@ -422,7 +422,7 @@ const StepIntro = ({ onNext }: { onNext: () => void }) => (
     </div>
 
     <div>
-      <p className="mb-2 text-label font-bold uppercase tracking-wide text-muted-foreground">
+      <p className="mb-2 text-label font-bold text-muted-foreground">
         3단계 × 7일 = 21일
       </p>
       <div className="grid grid-cols-3 gap-2">
@@ -431,10 +431,10 @@ const StepIntro = ({ onNext }: { onNext: () => void }) => (
             key={s.id}
             className="rounded-xl border border-border bg-card p-2.5 text-center"
           >
-            <p className="text-micro font-bold uppercase tracking-wide text-primary">
+            <p className="text-label font-bold text-primary">
               {s.label}
             </p>
-            <p className="mt-0.5 text-micro text-muted-foreground leading-tight">
+            <p className="mt-0.5 text-label text-muted-foreground leading-tight">
               Day {s.dayRange[0]}~{s.dayRange[1]}
             </p>
           </div>
@@ -472,7 +472,7 @@ const StepStages = ({
             <span className="rounded-md bg-primary/15 px-2 py-0.5 text-micro font-black uppercase tracking-wider text-primary">
               {s.label}
             </span>
-            <span className="text-micro text-muted-foreground">
+            <span className="text-label text-muted-foreground">
               Day {s.dayRange[0]}~{s.dayRange[1]}
             </span>
           </div>
@@ -721,7 +721,7 @@ const StepStart = ({
         {/* 트랙 표시 */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
+            <p className="text-label font-bold text-muted-foreground">
               배정된 트랙
             </p>
             <p className="mt-0.5 text-label font-bold text-foreground">
@@ -753,7 +753,7 @@ const StepStart = ({
           onChange={(e) => onChange({ startDate: e.target.value })}
           className="rounded-xl"
         />
-        <p className="text-micro text-muted-foreground">
+        <p className="text-label text-muted-foreground">
           선택한 날부터 Day 1 이 시작됩니다.
         </p>
       </div>
@@ -771,7 +771,7 @@ const FieldLabel = ({
   icon: React.ReactNode;
   label: string;
 }) => (
-  <Label className="mt-2 flex items-center gap-1.5 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+  <Label className="mt-2 flex items-center gap-1.5 text-label font-bold text-muted-foreground">
     {icon}
     {label}
   </Label>
@@ -801,7 +801,7 @@ const PickCard = ({
   >
     {control}
     <p className="text-label font-bold text-foreground">{title}</p>
-    <p className="mt-0.5 text-micro text-muted-foreground leading-relaxed">
+    <p className="mt-0.5 text-label text-muted-foreground leading-relaxed">
       {hint}
     </p>
   </label>

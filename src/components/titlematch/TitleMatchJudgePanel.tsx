@@ -129,14 +129,14 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
         <AttemptDots attempts={shownAttempts} max={max} />
       </div>
 
-      <p className="text-micro leading-relaxed text-foreground">
+      <p className="text-label leading-relaxed text-foreground">
         아래 동작을 <b>완벽한 자세로 3번 연속 성공</b> → 똑같은 동작을 <b>파트너에게 미트로 3번 받아주기</b>.
         한 번에 찍어 올려요 · 도전 {max}번까지
       </p>
       {moves.length > 0 && (
         <ol className="mt-1.5 space-y-0.5">
           {moves.map((m, i) => (
-            <li key={i} className="truncate text-micro text-muted-foreground">
+            <li key={i} className="truncate text-label text-muted-foreground">
               {i + 1}. {m}
             </li>
           ))}
@@ -176,7 +176,7 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
         clip ? (
           <div className="mt-3 space-y-2.5">
             <video src={clip.url} controls playsInline className="max-h-64 w-full rounded-xl bg-black" />
-            <div className="flex items-center justify-between text-micro text-muted-foreground">
+            <div className="flex items-center justify-between text-label text-muted-foreground">
               <span>
                 도전 {nextNo}/{max} 영상 · {formatMb(clip.blob.size)}
               </span>
@@ -285,7 +285,7 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
                 <FolderOpen className="h-4 w-4" /> 찍어 둔 영상
               </button>
             </div>
-            <p className="mt-1.5 text-center text-micro text-muted-foreground">
+            <p className="mt-1.5 text-center text-label text-muted-foreground">
               도전 {nextNo}/{max} · 앱 촬영은 작게 저장돼요 (찍어 둔 영상은 50MB까지)
             </p>
           </div>

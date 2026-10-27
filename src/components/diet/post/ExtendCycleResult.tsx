@@ -48,7 +48,7 @@ export const ExtendCycleResult = ({
       <div className="rounded-2xl border border-reward/30 bg-gradient-to-b from-reward/10 to-transparent p-5">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-[#F6C453]" />
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-[#F6C453]">
+          <p className="text-label font-bold text-[#F6C453]">
             EXTEND CYCLE DONE
           </p>
         </div>
@@ -126,7 +126,7 @@ export const ExtendCycleResult = ({
         </p>
       )}
 
-      <p className="pt-1 text-center text-micro leading-relaxed text-muted-foreground">
+      <p className="pt-1 text-center text-label leading-relaxed text-muted-foreground">
         언제든 코치와 상담 후 경로를 바꿀 수 있어요.
       </p>
     </section>
@@ -181,7 +181,7 @@ const ChoiceCard = ({
         <h3 className="text-body font-extrabold leading-tight text-foreground">
           {title}
         </h3>
-        <p className="mt-0.5 text-micro text-muted-foreground">{subtitle}</p>
+        <p className="mt-0.5 text-label text-muted-foreground">{subtitle}</p>
       </div>
       {tone === "good" && (
         <HeartHandshake className="ml-auto h-3 w-3 text-emerald-500 opacity-0" />

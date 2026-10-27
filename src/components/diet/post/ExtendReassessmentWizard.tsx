@@ -119,7 +119,7 @@ export const ExtendReassessmentWizard = ({
     <section className="space-y-4 rounded-2xl border border-primary/25 bg-card p-5">
       {/* 헤더 */}
       <div>
-        <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+        <p className="text-label font-bold text-primary">
           EXTEND · 재평가 {step} / 3
         </p>
         <h2 className="mt-1 text-heading font-extrabold leading-tight text-foreground">
@@ -220,7 +220,7 @@ export const ExtendReassessmentWizard = ({
 
           {/* 자동 패턴 프리뷰 */}
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-label leading-relaxed">
-            <p className="text-micro font-black uppercase tracking-widest text-primary">
+            <p className="text-label font-bold text-primary">
               예상 패턴
             </p>
             <p className="mt-1 font-bold text-foreground">{reasonLine}</p>
@@ -240,7 +240,7 @@ export const ExtendReassessmentWizard = ({
 
           {/* 사용자 override — 추가 체감 */}
           <div>
-            <p className="text-micro font-bold text-muted-foreground">
+            <p className="text-label font-bold text-muted-foreground">
               추가로 체감하는 패턴 (선택)
             </p>
             <div className="mt-1.5 grid grid-cols-2 gap-1.5">
@@ -276,7 +276,7 @@ export const ExtendReassessmentWizard = ({
                 );
               })}
             </div>
-            <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+            <p className="mt-1 text-label leading-relaxed text-muted-foreground">
               {PATTERN_HINT_KO[
                 (mergedTags[0] as ExtendPatternTag) ?? "weekend_crash"
               ]}
@@ -396,7 +396,7 @@ const Row = ({
   placeholder?: string;
 }) => (
   <label className="block">
-    <span className="text-micro font-bold text-muted-foreground">{label}</span>
+    <span className="text-label font-bold text-muted-foreground">{label}</span>
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -421,7 +421,7 @@ const CounterRow = ({
   suffix?: string;
 }) => (
   <div>
-    <span className="text-micro font-bold text-muted-foreground">{label}</span>
+    <span className="text-label font-bold text-muted-foreground">{label}</span>
     <div className="mt-0.5 flex items-center overflow-hidden rounded-lg border border-border bg-background">
       <button
         type="button"
@@ -433,7 +433,7 @@ const CounterRow = ({
       <span className="number-font px-2 text-label font-extrabold text-foreground">
         {value}
         {suffix && (
-          <span className="ml-0.5 text-micro text-muted-foreground">{suffix}</span>
+          <span className="ml-0.5 text-label text-muted-foreground">{suffix}</span>
         )}
       </span>
       <button
@@ -459,7 +459,7 @@ const SelectRow = ({
   options: { value: string; label: string }[];
 }) => (
   <label className="block">
-    <span className="text-micro font-bold text-muted-foreground">{label}</span>
+    <span className="text-label font-bold text-muted-foreground">{label}</span>
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}

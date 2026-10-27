@@ -86,7 +86,7 @@ export const CustomMealDialog = ({ slot, onClose, onSave }: CustomMealDialogProp
 
         <div className="max-h-[70vh] space-y-3 overflow-y-auto px-5 py-4">
           <label className="block">
-            <span className="text-micro font-bold text-muted-foreground">
+            <span className="text-label font-bold text-muted-foreground">
               메뉴 이름
             </span>
             <input
@@ -160,7 +160,7 @@ const Num = ({
   placeholder?: string;
 }) => (
   <label className="block">
-    <span className="text-micro font-bold text-muted-foreground">{label}</span>
+    <span className="text-label font-bold text-muted-foreground">{label}</span>
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}

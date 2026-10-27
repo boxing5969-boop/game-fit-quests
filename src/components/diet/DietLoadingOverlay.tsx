@@ -145,14 +145,14 @@ export const DietLoadingOverlay = ({
         </p>
         <p
           key={`by-${quoteIdx}`}
-          className="mt-2 animate-[quoteIn_620ms_ease-out] text-micro font-semibold tracking-wide text-muted-foreground"
+          className="mt-2 animate-[quoteIn_620ms_ease-out] text-label font-semibold tracking-wide text-muted-foreground"
         >
           — {line.by}
         </p>
       </div>
 
       {/* 진행 라인 — 리듬용 */}
-      <div className="mt-7 flex items-center gap-2 text-micro font-black uppercase tracking-[0.25em] text-emerald-500">
+      <div className="mt-7 flex items-center gap-2 text-label font-bold text-emerald-500">
         <span className="inline-block h-1 w-8 animate-pulse rounded-full bg-emerald-400/60" />
         DIET · 21 DAYS
         <span className="inline-block h-1 w-8 animate-pulse rounded-full bg-emerald-400/60" />

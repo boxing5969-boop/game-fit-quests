@@ -83,7 +83,7 @@ export const PostProgramRouter = ({
     return (
       <div className="space-y-4">
         <CompletionReportCard summary={plan.completion_summary} />
-        <div className="flex items-center justify-center gap-1.5 text-micro font-bold uppercase tracking-widest text-muted-foreground">
+        <div className="flex items-center justify-center gap-1.5 text-label font-bold text-muted-foreground">
           <ChevronDown className="h-3.5 w-3.5" />
           NEXT STEP
           <ChevronDown className="h-3.5 w-3.5" />

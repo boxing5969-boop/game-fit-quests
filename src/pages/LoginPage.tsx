@@ -473,7 +473,7 @@ const LoginPage = () => {
                   </li>
                 ))}
               </ol>
-              <p className="mt-2.5 text-micro leading-relaxed text-muted-foreground">
+              <p className="mt-2.5 text-label leading-relaxed text-muted-foreground">
                 이미 아이디로 쓰고 계시면 아래 아이디 로그인을 그대로 쓰세요
               </p>
             </section>
@@ -589,7 +589,7 @@ const LoginPage = () => {
             >
               🥊 처음 오셨나요? 신규 회원 가입 신청
             </button>
-            <p className="text-center text-micro leading-relaxed text-muted-foreground">
+            <p className="text-center text-label leading-relaxed text-muted-foreground">
               체육관 회원님은 위의 <b className="text-foreground">카카오로 시작하기</b>가 가장 쉬워요 · 카카오가 없으면 여기서 등록된 전화번호·이름으로 가입하면 결제 없이 끝나요
             </p>
             <div className="relative my-4">

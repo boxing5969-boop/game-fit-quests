@@ -114,7 +114,7 @@ export const MasterLevelCard = ({
             )}
           </div>
           {isBoss && (
-            <p className="mt-1 line-clamp-2 text-micro leading-snug text-muted-foreground">
+            <p className="mt-1 line-clamp-2 text-label leading-snug text-muted-foreground">
               {def.description}
             </p>
           )}

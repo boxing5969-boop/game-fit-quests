@@ -87,7 +87,7 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
               <h2 className="text-body font-extrabold text-foreground leading-tight">
                 홈 커스터마이즈
               </h2>
-              <p className="text-micro text-muted-foreground leading-tight">
+              <p className="text-label text-muted-foreground leading-tight">
                 표시 중:{" "}
                 <span className="number-font font-bold text-foreground">
                   {visibleCount}
@@ -110,7 +110,7 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
         <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
           {/* Primary 슬롯 — 상단 노출 */}
           <section>
-            <h3 className="mb-1.5 flex items-center gap-1.5 text-micro font-black uppercase tracking-[0.18em] text-primary">
+            <h3 className="mb-1.5 flex items-center gap-1.5 text-label font-bold text-primary">
               상단에 노출
               <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-micro font-bold text-primary">
                 위 {primaryOrdered.length}
@@ -141,7 +141,7 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
 
           {/* 더보기 안 — 토글로 노출, 같은 그룹 내에서만 순서 변경 */}
           <section>
-            <h3 className="mb-1.5 flex items-center gap-1.5 text-micro font-black uppercase tracking-[0.18em] text-muted-foreground">
+            <h3 className="mb-1.5 flex items-center gap-1.5 text-label font-bold text-muted-foreground">
               더보기 안에 노출
               <span className="rounded-md bg-muted px-1.5 py-0.5 text-micro font-bold text-muted-foreground">
                 {moreOrdered.length}
@@ -173,7 +173,7 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
 
         {/* 고정 영역 안내 */}
         <div className="mt-4 rounded-xl border border-border bg-muted/40 p-3">
-          <p className="text-micro font-black uppercase tracking-wider text-muted-foreground">
+          <p className="text-label font-bold text-muted-foreground">
             항상 표시 (고정)
           </p>
           <ul className="mt-1.5 space-y-0.5 text-micro text-foreground/85">
@@ -291,7 +291,7 @@ const WidgetRow = ({
             </span>
           )}
         </p>
-        <p className="mt-0.5 text-micro leading-snug text-muted-foreground">
+        <p className="mt-0.5 text-label leading-snug text-muted-foreground">
           {description}
         </p>
       </div>

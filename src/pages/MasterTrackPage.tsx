@@ -117,7 +117,7 @@ const MasterTrackPage = () => {
           <div className="relative">
             <div className="flex items-center gap-2">
               <Crown className="h-5 w-5 text-reward" />
-              <span className="text-micro font-bold uppercase tracking-wider text-reward">
+              <span className="text-label font-bold text-reward">
                 MASTER TRACK
               </span>
             </div>
@@ -136,7 +136,7 @@ const MasterTrackPage = () => {
           <div className="relative">
             <div className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-muted-foreground" />
-              <span className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+              <span className="text-label font-bold text-muted-foreground">
                 MASTER TRACK · 잠김
               </span>
             </div>
@@ -227,10 +227,10 @@ const MasterTrackPage = () => {
           return (
             <section key={section.title} className="space-y-2">
               <header className="flex items-center justify-between px-0.5">
-                <h2 className="text-label font-bold uppercase tracking-wider text-muted-foreground">
+                <h2 className="text-label font-bold text-muted-foreground">
                   {section.title}
                 </h2>
-                <span className="number-font text-micro font-semibold text-muted-foreground">
+                <span className="number-font text-label font-semibold text-muted-foreground">
                   {completed}/{levels.length}
                 </span>
               </header>

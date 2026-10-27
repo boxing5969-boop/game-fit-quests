@@ -155,7 +155,7 @@ const LevelUpHeadline = ({
           className="mb-2"
         >
           <div className="mx-auto inline-flex items-baseline gap-2 rounded-pill border border-reward/40 bg-foreground/40 px-5 py-2 backdrop-blur-sm">
-            <span className="text-label font-bold uppercase tracking-wider text-reward">
+            <span className="text-label font-bold text-reward">
               XP
             </span>
             <motion.span

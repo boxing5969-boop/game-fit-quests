@@ -181,10 +181,10 @@ const LevelStatusActionSheet = ({ open, onOpenChange, memberId, rank, level, cur
                         {STATUS_OPTIONS.find(s => s.value === h.new_status)?.label}
                       </p>
                       {h.change_reason && (
-                        <p className="text-micro text-muted-foreground italic">💬 {h.change_reason}</p>
+                        <p className="text-label text-muted-foreground italic">💬 {h.change_reason}</p>
                       )}
                     </div>
-                    <span className="text-micro text-muted-foreground shrink-0">
+                    <span className="text-label text-muted-foreground shrink-0">
                       {new Date(h.created_at).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
                     </span>
                   </div>

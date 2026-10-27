@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { User, Crown, Trophy, Flame, Medal } from "lucide-react";
+import { ChevronLeft, Crown, Trophy, Flame, Medal } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, useMyBadges, useXpLogs } from "@/hooks/useQuestData";
@@ -74,13 +74,19 @@ const RewardsPage = () => {
       header={
         <PageHeader
           title="보상"
-          rightAction={
+          // 오른쪽 '내 정보'(아래 탭과 같음) 대신 왼쪽 '뒤로' — 전체 메뉴에서 여는 화면 (2026-10-28 리디자인)
+          leftAction={
             <button
-              onClick={() => navigate("/mypage")}
-              aria-label="내 정보"
-              className="flex h-9 w-9 items-center justify-center rounded-pill bg-secondary active:scale-95"
+              type="button"
+              onClick={() => {
+                const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+                if (idx > 0) navigate(-1);
+                else navigate("/home", { replace: true });
+              }}
+              aria-label="뒤로"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary active:scale-95"
             >
-              <User className="h-4 w-4 text-secondary-foreground" />
+              <ChevronLeft className="h-5 w-5 text-secondary-foreground" />
             </button>
           }
           sticky

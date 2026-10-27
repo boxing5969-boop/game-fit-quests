@@ -47,7 +47,7 @@ const GymRaidCard = () => {
           <Flag className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
+          <p className="text-label font-bold text-primary">
             우리 지점 목표 · 함께 채워요
           </p>
           {isLoading ? (
@@ -74,7 +74,7 @@ const GymRaidCard = () => {
                   {featured.percentage}%
                 </span>
               </div>
-              <p className="mt-1 text-micro text-muted-foreground">
+              <p className="mt-1 text-label text-muted-foreground">
                 {getRaidTypeLabel(featured.raid_type)} · 내 기여 {featured.my_contribution}회
               </p>
             </>
@@ -82,11 +82,11 @@ const GymRaidCard = () => {
         </div>
         <div className="shrink-0 text-right">
           {claimableCount > 0 ? (
-            <p className="text-micro font-bold uppercase tracking-wider text-reward">
+            <p className="text-label font-bold text-reward">
               보상 {claimableCount}건
             </p>
           ) : raids.length > 1 ? (
-            <p className="text-micro font-bold uppercase tracking-wider text-primary">
+            <p className="text-label font-bold text-primary">
               총 {raids.length}건
             </p>
           ) : null}

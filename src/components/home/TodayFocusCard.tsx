@@ -143,7 +143,7 @@ const TodayFocusCard = () => {
           <Sparkles className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-black uppercase tracking-[0.3em] text-primary">
+          <p className="text-label font-bold text-primary">
             오늘의 한 가지
           </p>
           <p className="mt-0.5 text-label font-bold text-foreground">
@@ -185,7 +185,7 @@ const TodayFocusCard = () => {
               >
                 {item.label}
               </p>
-              <p className="mt-0.5 truncate text-micro text-muted-foreground">
+              <p className="mt-0.5 truncate text-label text-muted-foreground">
                 {item.detail}
               </p>
             </div>

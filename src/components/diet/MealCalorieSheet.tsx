@@ -136,14 +136,14 @@ export const MealCalorieSheet = ({
               <p className="text-label font-bold text-foreground">
                 사진을 읽고 있어요
               </p>
-              <p className="text-micro text-muted-foreground">보통 3~6초 걸립니다</p>
+              <p className="text-label text-muted-foreground">보통 3~6초 걸립니다</p>
             </div>
           )}
 
           {!loading && errorMessage && (
             <div className="rounded-2xl border border-border bg-card p-5 text-center">
               <p className="text-label font-bold text-foreground">{errorMessage}</p>
-              <p className="mt-1 text-micro text-muted-foreground">
+              <p className="mt-1 text-label text-muted-foreground">
                 사진은 저장됐어요. 잠시 뒤 다시 찍으면 칼로리도 같이 읽어드릴게요.
               </p>
             </div>
@@ -154,7 +154,7 @@ export const MealCalorieSheet = ({
               <p className="text-label font-bold text-foreground">
                 음식이 잘 안 보여요
               </p>
-              <p className="mt-1 text-micro text-muted-foreground">
+              <p className="mt-1 text-label text-muted-foreground">
                 접시가 화면에 다 들어오게 한 번만 다시 찍어주세요.
               </p>
             </div>
@@ -164,14 +164,14 @@ export const MealCalorieSheet = ({
             <>
               {/* 합계 — 이 화면의 주인공 숫자 하나 */}
               <div className="rounded-2xl border border-border bg-card px-4 py-4 text-center">
-                <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+                <p className="text-label font-bold text-muted-foreground">
                   이 끼니 추정
                 </p>
                 <p className="mt-0.5 text-display font-black leading-none tracking-tight text-primary">
                   ≈ {kcal.toLocaleString()}
                   <span className="ml-1 text-body font-bold">kcal</span>
                 </p>
-                <p className="mt-1.5 text-micro text-muted-foreground">
+                <p className="mt-1.5 text-label text-muted-foreground">
                   {range.low.toLocaleString()}~{range.high.toLocaleString()} kcal 사이 ·{" "}
                   {CONFIDENCE_LABEL[vision.confidence]}
                 </p>
@@ -183,7 +183,7 @@ export const MealCalorieSheet = ({
               </div>
 
               {/* 항목별 양 조절 */}
-              <p className="mb-1.5 mt-4 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+              <p className="mb-1.5 mt-4 text-label font-bold text-muted-foreground">
                 먹은 만큼 고쳐주세요
               </p>
               <div className="space-y-2">
@@ -197,13 +197,13 @@ export const MealCalorieSheet = ({
                         <p className="truncate text-label font-bold text-foreground">
                           {d.name}
                         </p>
-                        <p className="truncate text-micro text-muted-foreground">
+                        <p className="truncate text-label text-muted-foreground">
                           {portionLabel(d)}
                         </p>
                       </div>
                       <p className="shrink-0 text-label font-black text-foreground">
                         {itemKcal(d).toLocaleString()}
-                        <span className="ml-0.5 text-micro font-bold text-muted-foreground">
+                        <span className="ml-0.5 text-label font-bold text-muted-foreground">
                           kcal
                         </span>
                       </p>
@@ -234,7 +234,7 @@ export const MealCalorieSheet = ({
                       ))}
                     </div>
                     {itemProtein(d) > 0 && (
-                      <p className="mt-1.5 text-micro text-muted-foreground">
+                      <p className="mt-1.5 text-label text-muted-foreground">
                         단백질 {itemProtein(d)}g
                       </p>
                     )}
@@ -281,7 +281,7 @@ export const MealCalorieSheet = ({
                 </p>
               )}
 
-              <p className="mt-2 text-center text-micro leading-relaxed text-muted-foreground">
+              <p className="mt-2 text-center text-label leading-relaxed text-muted-foreground">
                 사진으로 잰 칼로리는 참고용 추정치예요. 매일 같은 방식으로 기록하면
                 숫자보다 흐름이 더 정확해집니다.
               </p>

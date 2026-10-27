@@ -90,7 +90,7 @@ export const NutritionOnboardingCard = ({
       <div>
         <div className="flex items-center gap-2">
           <Scale className="h-4 w-4 text-primary" />
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             AUTO MEAL PLAN · 자동 식단
           </p>
         </div>
@@ -109,7 +109,7 @@ export const NutritionOnboardingCard = ({
 
       {/* 성별 */}
       <div>
-        <p className="text-micro font-bold text-muted-foreground">성별</p>
+        <p className="text-label font-bold text-muted-foreground">성별</p>
         <div className="mt-1.5 grid grid-cols-2 gap-1.5">
           {(["male", "female"] as Sex[]).map((s) => (
             <button
@@ -140,7 +140,7 @@ export const NutritionOnboardingCard = ({
           placeholder="예: 64"
         />
         <div>
-          <p className="text-micro font-bold text-muted-foreground">하루 식사 수</p>
+          <p className="text-label font-bold text-muted-foreground">하루 식사 수</p>
           <div className="mt-1.5 flex gap-1">
             {([2, 3, 4] as const).map((n) => (
               <button
@@ -163,7 +163,7 @@ export const NutritionOnboardingCard = ({
 
       {/* 활동 수준 */}
       <div>
-        <p className="text-micro font-bold text-muted-foreground">활동 수준</p>
+        <p className="text-label font-bold text-muted-foreground">활동 수준</p>
         <div className="mt-1.5 space-y-1">
           {(Object.keys(ACTIVITY_LABEL_KO) as ActivityLevel[]).map((a) => (
             <button
@@ -185,7 +185,7 @@ export const NutritionOnboardingCard = ({
 
       {/* 식이 제한 */}
       <div>
-        <p className="text-micro font-bold text-muted-foreground">식이 제한 (선택)</p>
+        <p className="text-label font-bold text-muted-foreground">식이 제한 (선택)</p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {[
             ["vegetarian", "채식"],
@@ -239,7 +239,7 @@ export const NutritionOnboardingCard = ({
           저장에 실패했어요. 잠시 후 다시 시도해 주세요.
         </p>
       )}
-      <p className="text-center text-micro leading-relaxed text-muted-foreground">
+      <p className="text-center text-label leading-relaxed text-muted-foreground">
         입력 정보는 본인과 담당 코치만 볼 수 있어요. 공개 랭킹에 반영되지 않습니다.
       </p>
     </section>
@@ -258,7 +258,7 @@ const LabeledInput = ({
   placeholder?: string;
 }) => (
   <label className="block">
-    <span className="text-micro font-bold text-muted-foreground">{label}</span>
+    <span className="text-label font-bold text-muted-foreground">{label}</span>
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}

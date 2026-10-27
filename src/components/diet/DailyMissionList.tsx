@@ -184,7 +184,7 @@ export const DailyMissionList = ({
                 >
                   {m.label}
                 </p>
-                <p className="truncate text-micro text-muted-foreground">
+                <p className="truncate text-label text-muted-foreground">
                   {m.hint}
                 </p>
               </div>

@@ -38,7 +38,7 @@ export const CoachPostProgramPanel = () => {
     <section className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-micro font-bold uppercase tracking-wide text-muted-foreground">
+          <p className="text-label font-bold text-muted-foreground">
             POST-21 · 완주 후속
           </p>
           <p className="mt-0.5 text-label font-extrabold text-foreground">
@@ -76,11 +76,11 @@ export const CoachPostProgramPanel = () => {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-label font-bold text-foreground">
                     {r.member_name}
-                    <span className="ml-1 text-micro font-normal text-muted-foreground">
+                    <span className="ml-1 text-label font-normal text-muted-foreground">
                       {r.branch_name}
                     </span>
                   </p>
-                  <p className="mt-0.5 text-micro text-muted-foreground">
+                  <p className="mt-0.5 text-label text-muted-foreground">
                     {pathLabel(r.selected_path)}
                     {r.coach_recommended_path
                       ? ` · 코치 권장: ${shortReco(r.coach_recommended_path)}`
@@ -103,7 +103,7 @@ export const CoachPostProgramPanel = () => {
                         </span>
                       ))}
                       {r.pattern_tags.length > 3 && (
-                        <span className="text-micro font-bold text-muted-foreground">
+                        <span className="text-label font-bold text-muted-foreground">
                           +{r.pattern_tags.length - 3}
                         </span>
                       )}

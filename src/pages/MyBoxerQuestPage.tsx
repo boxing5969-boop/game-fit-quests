@@ -32,17 +32,11 @@ const MyBoxerQuestPage = () => {
         data-tour="challenge153-page"
         className="mx-auto w-full max-w-md md:max-w-xl space-y-5 px-4 py-5"
       >
-        {/* 헤더 — 메뉴 제목 + 부제 */}
-        <header data-tour="challenge153-header" className="space-y-1">
-          <p className="text-micro font-black uppercase tracking-[0.4em] text-amber-300/80">
-            MYBOXER 153
-          </p>
+        {/* 헤더 — 제목만 (2026-10-28 리디자인: 꾸밈 머리말 · 부제 뺌 — 왕좌를 누르면 규칙이 보인다) */}
+        <header data-tour="challenge153-header">
           <h1 className="text-title font-black leading-tight text-foreground">
             153 챌린지
           </h1>
-          <p className="text-label text-muted-foreground">
-            이번 주 왕좌는 누구? 버튼을 눌러 확인하세요
-          </p>
         </header>
 
         {/* 킹 보드 — 6개 왕좌 */}
@@ -51,9 +45,9 @@ const MyBoxerQuestPage = () => {
         {/* 안내 — 공식 레벨업과 무관 (한 줄) */}
         <p
           data-tour="challenge153-intro"
-          className="rounded-xl border-l-2 border-primary/40 bg-primary/5 px-3.5 py-2 text-micro leading-relaxed text-muted-foreground"
+          className="rounded-xl border-l-2 border-primary/40 bg-primary/5 px-3.5 py-2 text-label text-muted-foreground"
         >
-          153 챌린지 왕좌는 재미와 습관을 위한 순위예요. 공식 1~40 레벨업·명예의 전당 랭킹과는 별개입니다.
+          재미로 겨루는 순위예요 · 공식 레벨업 · 명예의 전당과는 별개
         </p>
 
         {/* 본문 — 개인 보조 챌린지 (일기는 153 커뮤니티 로 이관됨) */}

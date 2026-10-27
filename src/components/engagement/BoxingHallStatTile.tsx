@@ -38,7 +38,7 @@ const BoxingHallStatTile = ({
             {icon as React.ReactNode}
           </span>
         )}
-        <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="text-label font-bold text-muted-foreground">
           {label}
         </p>
       </div>
@@ -55,7 +55,7 @@ const BoxingHallStatTile = ({
         </p>
       )}
       {hint && !loading && (
-        <p className="mt-0.5 text-micro leading-tight text-muted-foreground">
+        <p className="mt-0.5 text-label leading-tight text-muted-foreground">
           {hint}
         </p>
       )}

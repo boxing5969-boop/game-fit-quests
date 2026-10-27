@@ -111,7 +111,7 @@ const StageTile = ({
           <Check className="h-2.5 w-2.5 text-reward-foreground" strokeWidth={3.5} />
         </span>
       )}
-      <span className="text-micro font-bold text-muted-foreground">레벨</span>
+      <span className="text-label font-bold text-muted-foreground">레벨</span>
       <span className="text-title font-black leading-none tabular-nums text-foreground">{stage.level}</span>
       <span className="mt-1.5 flex items-center gap-1 text-label font-bold text-foreground">
         <span aria-hidden className={cn("h-2 w-2 shrink-0 rounded-full", LEAGUE_DOT[stage.league])} />

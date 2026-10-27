@@ -49,7 +49,7 @@ const DietAfter21GuidePage = () => {
       <div data-tour="diet-page-after-21" className="space-y-5 pt-2">
         {/* Hero */}
         <section className="rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/10 to-transparent p-5">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             NEXT STEP · 21일 이후
           </p>
           <h2 className="mt-1 text-heading leading-tight text-foreground">
@@ -237,7 +237,7 @@ const DietAfter21GuidePage = () => {
           >
             오늘의 체크인 하러 가기
           </button>
-          <p className="text-center text-micro leading-relaxed text-muted-foreground">
+          <p className="text-center text-label leading-relaxed text-muted-foreground">
             21일 동안 오늘 하루에만 집중하면 충분해요. 그 다음 단계는 때가 되면 자동으로 열립니다.
           </p>
         </div>
@@ -297,7 +297,7 @@ const PathCard = ({
       </span>
       <div>
         <p className="text-label font-extrabold leading-tight text-foreground">{title}</p>
-        <p className="mt-0.5 text-micro text-muted-foreground">{subtitle}</p>
+        <p className="mt-0.5 text-label text-muted-foreground">{subtitle}</p>
       </div>
     </div>
     <ul className="mt-3 space-y-1 text-label text-foreground">
@@ -349,7 +349,7 @@ const CriteriaRow = ({
 const DetailItem = ({ label, hint }: { label: string; hint: string }) => (
   <li className="rounded-xl border border-border bg-card px-3 py-2.5">
     <p className="text-label font-bold text-foreground">{label}</p>
-    <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">{hint}</p>
+    <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">{hint}</p>
   </li>
 );
 
@@ -398,7 +398,7 @@ const BadgeRow = ({
     </span>
     <div>
       <p className="text-label font-extrabold text-foreground">{name}</p>
-      <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">{hint}</p>
+      <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">{hint}</p>
     </div>
   </div>
 );

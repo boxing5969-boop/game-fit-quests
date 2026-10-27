@@ -358,7 +358,7 @@ const TutorialActionSpotlight = () => {
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-micro font-black uppercase tracking-wider text-amber-300">
+                <p className="text-label font-bold text-amber-300">
                   오삼이 가이드
                 </p>
                 <p className="mt-0.5 text-body font-bold text-white">

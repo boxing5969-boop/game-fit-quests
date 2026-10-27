@@ -259,7 +259,7 @@ export const LetterModal = ({ open, letter, onClose }: { open: boolean; letter: 
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-500/10 shadow-[0_0_24px_rgba(246,196,83,0.25)]">
                   <Mail className="h-5 w-5 text-amber-300" />
                 </div>
-                <p className="mt-3 text-micro font-black uppercase tracking-[0.4em] text-amber-300">
+                <p className="mt-3 text-label font-bold text-amber-300">
                   {letter.eyebrow}
                 </p>
               </div>

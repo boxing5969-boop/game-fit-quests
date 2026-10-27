@@ -59,13 +59,13 @@ const MovesCard = ({ guide }: { guide: TitleMissionGuide }) => {
       {/* 머리 — 총 동작 수가 주인공 */}
       <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4">
         <div className="min-w-0">
-          <p className="text-micro font-bold text-muted-foreground">타이틀 미션 {guide.level} · 동작 외우기</p>
+          <p className="text-label font-bold text-muted-foreground">타이틀 미션 {guide.level} · 동작 외우기</p>
           <h3 id={headingId} className="mt-0.5 text-body font-black leading-snug text-foreground">
             {guide.headline}
           </h3>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-micro font-bold text-muted-foreground">총</p>
+          <p className="text-label font-bold text-muted-foreground">총</p>
           <p className="text-title font-black leading-none tabular-nums text-foreground">
             {total}
             <span className="ml-0.5 text-label font-black">동작</span>
@@ -75,7 +75,7 @@ const MovesCard = ({ guide }: { guide: TitleMissionGuide }) => {
 
       {/* 소리 내어 외우는 말 */}
       <div className="mx-4 rounded-xl bg-secondary/70 px-3.5 py-3">
-        <p className="text-micro font-black text-muted-foreground">소리 내어 외우는 말</p>
+        <p className="text-label font-black text-muted-foreground">소리 내어 외우는 말</p>
         <p className="mt-1 text-label font-bold leading-relaxed text-foreground">“{guide.chant}”</p>
       </div>
 
@@ -121,13 +121,13 @@ const CourseCard = ({ course }: { course: TitleMissionCourse }) => {
       {/* 머리 — 153 PB 통과 시간이 주인공 */}
       <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4">
         <div className="min-w-0">
-          <p className="text-micro font-bold text-muted-foreground">타이틀 미션 {course.level} · 도전 순서</p>
+          <p className="text-label font-bold text-muted-foreground">타이틀 미션 {course.level} · 도전 순서</p>
           <h3 id={headingId} className="mt-0.5 text-body font-black leading-snug text-foreground">
             {course.headline}
           </h3>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-micro font-bold text-muted-foreground">{course.hero.label}</p>
+          <p className="text-label font-bold text-muted-foreground">{course.hero.label}</p>
           <p className="text-title font-black leading-none tabular-nums text-foreground">
             {course.hero.value}
             <span className="ml-0.5 text-label font-black">{course.hero.unit}</span>
@@ -137,7 +137,7 @@ const CourseCard = ({ course }: { course: TitleMissionCourse }) => {
 
       {/* 한 줄로 외우기 */}
       <div className="mx-4 rounded-xl bg-secondary/70 px-3.5 py-3">
-        <p className="text-micro font-black text-muted-foreground">한 줄로 외우기</p>
+        <p className="text-label font-black text-muted-foreground">한 줄로 외우기</p>
         <p className="mt-1 text-label font-bold leading-relaxed text-foreground">“{course.chant}”</p>
       </div>
 

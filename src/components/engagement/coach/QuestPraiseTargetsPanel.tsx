@@ -28,7 +28,7 @@ const QuestPraiseTargetsPanel = ({ targets }: Props) => {
   if (targets.length === 0) {
     return (
       <div>
-        <p className="mb-2 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="mb-2 text-label font-bold text-muted-foreground">
           칭찬 대상 회원
         </p>
         <div className="rounded-card border border-border bg-background/40 p-3">
@@ -42,7 +42,7 @@ const QuestPraiseTargetsPanel = ({ targets }: Props) => {
 
   return (
     <div>
-      <p className="mb-2 flex items-center gap-1 text-micro font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-2 flex items-center gap-1 text-label font-bold text-muted-foreground">
         <Sparkles className="h-3 w-3 text-primary" />
         칭찬 대상 — 오늘 한마디 보내기
       </p>
@@ -58,12 +58,12 @@ const QuestPraiseTargetsPanel = ({ targets }: Props) => {
                 <p className="truncate text-label font-bold text-foreground">
                   {t.display_name}
                 </p>
-                <p className="mt-0.5 text-micro text-muted-foreground">
+                <p className="mt-0.5 text-label text-muted-foreground">
                   {RANK_LABELS[t.current_rank] ?? t.current_rank} Lv.
                   {toGlobalLevel(t.current_rank, t.current_level)}
                 </p>
                 <p className="mt-0.5 text-micro text-primary">{t.reason}</p>
-                <p className="mt-0.5 text-micro text-muted-foreground">
+                <p className="mt-0.5 text-label text-muted-foreground">
                   {t.metric}
                 </p>
               </div>

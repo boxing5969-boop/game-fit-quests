@@ -99,7 +99,7 @@ const GuidePage = () => {
               key={tab.id}
               data-tour={`guide-tab-${tab.id}`}
               onClick={() => handleTabClick(tab.id)}
-              className={`relative flex shrink-0 flex-1 items-center justify-center gap-1 rounded-xl px-2 py-2.5 text-label font-bold transition-all ${
+              className={`relative flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-xl px-3 py-2.5 text-label font-bold transition-all ${
                 activeTab === tab.id ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
               } ${
                 isNextHint
@@ -107,8 +107,9 @@ const GuidePage = () => {
                   : ""
               }`}
             >
-              <Icon className="h-3.5 w-3.5" />
-              <span className="hidden min-[400px]:inline">{tab.label}</span>
+              <Icon className="h-4 w-4" />
+              {/* 이름은 늘 보이게 — 그림만 있는 칸은 무엇인지 몰라 누르지 않는다 (2026-10-28 리디자인, 칸이 넘치면 옆으로 밀어서) */}
+              <span>{tab.label}</span>
               {isNextHint && (
                 <span className="absolute -top-1 -right-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-micro font-black text-amber-950 shadow-md">
                   👆 클릭
@@ -190,7 +191,7 @@ const ProgramTab = () => (
           <span className="text-heading">{league.emoji}</span>
           <div>
             <p className="text-body font-bold text-foreground">{league.label}</p>
-            <p className="text-micro text-muted-foreground">{league.levels}</p>
+            <p className="text-label text-muted-foreground">{league.levels}</p>
           </div>
         </div>
         <p className="mb-2 text-label font-bold text-primary">{league.theme}</p>
@@ -285,7 +286,7 @@ const LevelUpTab = () => {
         <span className="text-heading">⏱</span>
         <span className="min-w-0 flex-1">
           <span className="block text-body font-bold text-foreground">레벨 40까지 얼마나 걸릴까요?</span>
-          <span className="block text-micro text-muted-foreground">내 출석 페이스로 계산한 예상 기간 · 리그별 필요 출석</span>
+          <span className="block text-label text-muted-foreground">내 출석 페이스로 계산한 예상 기간 · 리그별 필요 출석</span>
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </button>
@@ -293,14 +294,14 @@ const LevelUpTab = () => {
       <div className="grid grid-cols-2 gap-2.5">
         <div className="rounded-2xl border border-border bg-card p-3.5 shadow-elev-1">
           <p className="mb-1.5 text-label font-bold text-primary">🚪 출석으로 저절로</p>
-          <p className="text-micro leading-relaxed text-muted-foreground">
+          <p className="text-label leading-relaxed text-muted-foreground">
             입구에서 얼굴 인식만 하면 출석이 쌓입니다. 리그 요건만큼 모이면 다음 레벨로
             자동 승급됩니다. 누를 버튼도 없습니다.
           </p>
         </div>
         <div className="rounded-2xl border border-reward/30 bg-reward/5 p-3.5 shadow-elev-1">
           <p className="mb-1.5 text-label font-bold text-reward-foreground">🥇 코치님 심사로</p>
-          <p className="text-micro leading-relaxed text-muted-foreground">
+          <p className="text-label leading-relaxed text-muted-foreground">
             <b className="text-foreground">레벨 10·20·30·40</b>은 출석을 다 채워도 자동으로
             오르지 않습니다. 코치님이 직접 보고 승인해야 넘어갑니다.
           </p>
@@ -316,7 +317,7 @@ const LevelUpTab = () => {
           <div className="mb-2 flex items-end gap-1.5">
             <span className="number-font text-title font-bold text-primary">{cur.toLocaleString()}</span>
             <span className="number-font text-body text-muted-foreground">/ {cycle.reqSessions}회</span>
-            <span className="ml-1 pb-0.5 text-micro text-muted-foreground">이번 레벨 진행도</span>
+            <span className="ml-1 pb-0.5 text-label text-muted-foreground">이번 레벨 진행도</span>
           </div>
           <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-muted">
             <div
@@ -324,7 +325,7 @@ const LevelUpTab = () => {
               style={{ width: `${Math.min(100, (cur / Math.max(1, cycle.reqSessions)) * 100)}%` }}
             />
           </div>
-          <p className="text-micro leading-relaxed text-muted-foreground">
+          <p className="text-label leading-relaxed text-muted-foreground">
             {mine.autoAdvance
               ? `이 리그는 출석 ${mine.visitsPerLevel}회를 채우면 자동으로 다음 레벨로 갑니다. 단, 레벨 ${mine.lastLevel}은 심사를 거칩니다.`
               : `이 리그는 출석을 채워도 자동으로 오르지 않습니다. ${mine.visitsPerLevel}회를 채우면 심사가 열리고, ${WHO[mine.levelAuthority]}이 보고 승급합니다.`}
@@ -349,7 +350,7 @@ const LevelUpTab = () => {
           <div key={r.rank} className="flex items-start gap-3 border-b border-border px-4 py-3 last:border-b-0">
             <div className="w-[68px] shrink-0">
               <p className="text-label font-bold text-foreground">{RANK_LABELS[r.rank] || r.rank}</p>
-              <p className="number-font text-micro text-muted-foreground">
+              <p className="number-font text-label text-muted-foreground">
                 Lv {r.firstLevel}~{r.lastLevel}
               </p>
             </div>
@@ -364,7 +365,7 @@ const LevelUpTab = () => {
                   </>
                 )}
               </p>
-              <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+              <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                 {r.autoAdvance
                   ? `출석만 채우면 자동 승급 · 레벨 ${r.lastLevel}만 심사`
                   : "출석을 채우면 심사가 열립니다 · 전 레벨 심사"}
@@ -380,7 +381,7 @@ const LevelUpTab = () => {
           <p className="text-label font-bold text-reward-foreground">🥇 타이틀매치 — 리그를 넘는 네 개의 문</p>
         </div>
         <div className="px-4 py-3">
-          <p className="mb-3 text-micro leading-relaxed text-muted-foreground">
+          <p className="mb-3 text-label leading-relaxed text-muted-foreground">
             레벨 10·20·30·40은 다음 리그로 넘어가는 문입니다. 출석을 다 채워도 자동으로
             열리지 않고, <b className="text-foreground">직접 보여드리고 승인을 받아야</b> 넘어갑니다.
           </p>
@@ -390,14 +391,14 @@ const LevelUpTab = () => {
                 <span className="number-font w-[52px] shrink-0 text-label font-bold text-foreground">
                   레벨 {r.lastLevel}
                 </span>
-                <span className="min-w-0 flex-1 text-micro text-muted-foreground">
+                <span className="min-w-0 flex-1 text-label text-muted-foreground">
                   {RANK_LABELS[r.rank] || r.rank} 마지막 관문
                 </span>
                 <span className="shrink-0 text-micro font-bold text-primary">{WHO[r.titleAuthority]}</span>
               </div>
             ))}
           </div>
-          <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-label leading-relaxed text-muted-foreground">
             위로 갈수록 승인하는 분이 달라집니다. 레벨 20을 넘으면 실제로 맞대는 스파링 구간이
             열리고, 레벨 30을 넘으면 다른 회원을 지도하는 리그에 들어가기 때문입니다.
           </p>
@@ -410,7 +411,7 @@ const LevelUpTab = () => {
           <p className="text-label font-bold text-foreground">⚡ 패스트 트랙 — 오래 다니신 회원</p>
         </div>
         <div className="px-4 py-3">
-          <p className="mb-3 text-micro leading-relaxed text-muted-foreground">
+          <p className="mb-3 text-label leading-relaxed text-muted-foreground">
             이미 오래 다니신 분께 1레벨부터 다시 밟게 하는 것은 맞지 않습니다. 그래서
             <b className="text-foreground"> 관문 직행권</b>을 드립니다. 타이틀매치를 통과하면
             다음 리그의 1레벨이 아니라 <b className="text-foreground">그 리그의 타이틀매치로 바로</b> 넘어갑니다.
@@ -428,7 +429,7 @@ const LevelUpTab = () => {
               </div>
             ))}
           </div>
-          <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-label leading-relaxed text-muted-foreground">
             기준을 <b className="text-foreground">기간이 아니라 출석</b>으로 잡은 이유가 있습니다.
             출석 80회는 정상 경로로 화이트(30회)와 블루(50회)를 통과하는 분량이라 그 자체가
             증명이 됩니다. 기간만 보면 129회 나오신 분이 82회 나오신 분보다 불리해지는
@@ -451,7 +452,7 @@ const LevelUpTab = () => {
             "부족한 항목이 있으면 '보완 요청'을 드립니다. 레벨이 내려가지는 않습니다.",
             "누가 어느 항목을 통과시켰는지 기록에 남습니다.",
           ].map((t, i) => (
-            <li key={i} className="relative pl-3.5 text-micro leading-relaxed text-muted-foreground">
+            <li key={i} className="relative pl-3.5 text-label leading-relaxed text-muted-foreground">
               <span className="absolute left-0 top-[7px] h-[3px] w-[3px] rounded-full bg-primary" />
               {t}
             </li>
@@ -464,7 +465,7 @@ const LevelUpTab = () => {
         {LEVELUP_FAQ.map((item, i) => (
           <div key={i} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
             <p className="mb-1.5 text-label font-bold text-foreground">❓ {item.q}</p>
-            <p className="text-micro leading-relaxed text-muted-foreground">{item.a}</p>
+            <p className="text-label leading-relaxed text-muted-foreground">{item.a}</p>
           </div>
         ))}
       </div>
@@ -589,7 +590,7 @@ const ValueMapTab = () => {
                 <span className="text-heading">{RANK_EMOJI[league]}</span>
                 <div>
                   <p className="text-body font-bold text-foreground">{RANK_LABEL[league]} 리그</p>
-                  <p className="text-micro text-muted-foreground">Lv {levels[0].level}~{levels[levels.length - 1].level}</p>
+                  <p className="text-label text-muted-foreground">Lv {levels[0].level}~{levels[levels.length - 1].level}</p>
                 </div>
               </div>
               <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
@@ -605,12 +606,12 @@ const ValueMapTab = () => {
                       <div className="mb-1 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           {isComplete ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : isLocked ? <Lock className="h-3.5 w-3.5 text-muted-foreground" /> : <div className="h-3.5 w-3.5 rounded-full bg-primary animate-pulse" />}
-                          <span className="text-micro font-bold text-muted-foreground">Lv.{lv.level}</span>
+                          <span className="text-label font-bold text-muted-foreground">Lv.{lv.level}</span>
                         </div>
                         <span className="rounded-full bg-reward/10 px-2 py-0.5 text-micro font-bold text-reward-foreground">🔓 {lv.unlockedBenefit}</span>
                       </div>
                       <p className="text-label font-bold text-foreground">{lv.shortValueTitle}</p>
-                      <p className="mt-0.5 text-micro text-muted-foreground">{lv.valueDescription}</p>
+                      <p className="mt-0.5 text-label text-muted-foreground">{lv.valueDescription}</p>
                     </div>
                   );
                 })}
@@ -646,7 +647,7 @@ const ExerciseTab = () => (
         </div>
         <div className="rounded-xl bg-reward/5 border border-reward/10 px-3 py-2">
           <p className="text-micro font-bold text-reward-foreground mb-0.5">✅ 초보자 체크포인트</p>
-          <p className="text-micro text-muted-foreground">{ex.beginnerCheckpoint}</p>
+          <p className="text-label text-muted-foreground">{ex.beginnerCheckpoint}</p>
         </div>
       </div>
     ))}

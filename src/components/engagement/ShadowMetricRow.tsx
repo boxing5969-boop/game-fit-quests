@@ -20,7 +20,7 @@ const ShadowMetricRow = ({ metric }: ShadowMetricRowProps) => {
       <span className="text-body">{getShadowMetricEmoji(metric.key)}</span>
       <div className="min-w-0 flex-1">
         <p className="text-label font-bold text-foreground">{metric.label}</p>
-        <p className="mt-0.5 text-micro text-muted-foreground">
+        <p className="mt-0.5 text-label text-muted-foreground">
           그림자 {metric.shadow} → 지금 {metric.current}
         </p>
       </div>

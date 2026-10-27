@@ -116,7 +116,7 @@ export const MasterProgressCard = ({
       {/* Upcoming reward preview */}
       {nextBossDef && !isGrand && (
         <div className="relative mt-3 border-t border-reward/20 pt-2.5">
-          <p className="mb-1.5 text-micro font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="mb-1.5 text-label font-semibold text-muted-foreground">
             다음 보스 보상
           </p>
           <MasterRewardStack def={nextBossDef} />

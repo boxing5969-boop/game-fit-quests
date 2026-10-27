@@ -115,7 +115,7 @@ export const DietApprovalCard = ({
             <p className="truncate text-label font-bold text-foreground">
               {nickname ?? "회원"}
             </p>
-            <p className="truncate text-micro text-muted-foreground">
+            <p className="truncate text-label text-muted-foreground">
               Day {log.day_number} · {stageLabel} · {log.log_date}
             </p>
           </div>
@@ -226,7 +226,7 @@ export const DietApprovalCard = ({
         </Button>
       </div>
 
-      <p className="text-micro text-muted-foreground">
+      <p className="text-label text-muted-foreground">
         <Flame className="inline h-3 w-3 text-primary" /> 회원은 자가 기록 + 즉시 보상 모드입니다. 코치는 응원·코칭 메시지만 보냅니다.
       </p>
     </div>

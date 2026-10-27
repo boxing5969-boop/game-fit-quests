@@ -306,7 +306,7 @@ const QrCheckinPage = () => {
         </button>
         <div>
           <h1 className="text-heading font-black leading-tight">QR 출석</h1>
-          <p className="text-micro text-muted-foreground">라이브보드 화면의 QR 을 찍으면 바로 반영돼요</p>
+          <p className="text-label text-muted-foreground">라이브보드 화면의 QR 을 찍으면 바로 반영돼요</p>
         </div>
       </div>
 
@@ -336,10 +336,10 @@ const QrCheckinPage = () => {
             <p className="flex items-center gap-1.5 text-body font-bold text-foreground">
               <QrCode className="h-4 w-4 text-primary" /> 보드의 QR 을 네모 안에 맞춰 주세요
             </p>
-            <p className="mt-1 text-micro text-muted-foreground">
+            <p className="mt-1 text-label text-muted-foreground">
               TV 에서 50cm~1m 거리가 가장 잘 잡혀요. 화면 반사가 심하면 비스듬히 찍어 보세요.
             </p>
-            <p className="mt-1 text-micro text-muted-foreground">
+            <p className="mt-1 text-label text-muted-foreground">
               입구 얼굴 인식은 그대로 하셔야 문이 열려요. QR 은 보드에 이름이 안 뜰 때 쓰는 보조 출석이에요.
             </p>
           </div>

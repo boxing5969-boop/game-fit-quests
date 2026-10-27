@@ -29,13 +29,13 @@ const BoxingIqLeagueCard = () => {
           <Brain className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-black uppercase tracking-[0.2em] text-primary">
+          <p className="text-label font-bold text-primary">
             복싱 IQ 리그
           </p>
           <h3 className="mt-0.5 text-body font-bold text-foreground">
             {gd.emoji} {grade}
           </h3>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             {gd.description}
           </p>
         </div>
@@ -43,36 +43,36 @@ const BoxingIqLeagueCard = () => {
 
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-          <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="text-label font-bold text-muted-foreground">
             정답 수
           </p>
           <p className="number-font mt-0.5 text-body font-black text-foreground">
             {isLoading ? "…" : data?.quiz_correct_count.toLocaleString() ?? 0}
           </p>
-          <p className="mt-0.5 text-micro text-muted-foreground">
+          <p className="mt-0.5 text-label text-muted-foreground">
             시도 {data?.quiz_attempt_count ?? 0}회 ·{" "}
             {data?.accuracy_rate?.toFixed(1) ?? "0.0"}%
           </p>
         </div>
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
-          <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="text-label font-bold text-muted-foreground">
             연속 정답
           </p>
           <p className="number-font mt-0.5 text-body font-black text-foreground">
             {isLoading ? "…" : data?.current_quiz_streak ?? 0}
           </p>
-          <p className="mt-0.5 text-micro text-muted-foreground">
+          <p className="mt-0.5 text-label text-muted-foreground">
             최고 {data?.best_quiz_streak ?? 0}연승
           </p>
         </div>
         <div className="col-span-2 rounded-card border border-border bg-background/40 px-3 py-2">
-          <p className="text-micro font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="text-label font-bold text-muted-foreground">
             이번 주 정답
           </p>
           <p className="number-font mt-0.5 text-body font-black text-foreground">
             {isLoading ? "…" : data?.week_correct_count ?? 0}회
           </p>
-          <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
             ※ 본 등급은 공식 레벨·리그와 분리된 보조 표시입니다.
           </p>
         </div>

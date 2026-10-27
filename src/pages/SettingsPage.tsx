@@ -28,6 +28,7 @@ import MileageSettingsCard from "@/components/admin/MileageSettingsCard";
 import LevelTestCard from "@/components/admin/LevelTestCard";
 import WelcomeLetterSettingsCard from "@/components/admin/WelcomeLetterSettingsCard";
 import PushOptInCard from "@/components/notifications/PushOptInCard";
+import TextScaleToggle from "@/components/profile/TextScaleToggle";
 import AccountDeleteDialog from "@/components/account/AccountDeleteDialog";
 
 // ── Home widget toggle helpers ──
@@ -343,7 +344,7 @@ const SettingsPage = () => {
         <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
-        <h1 className="text-heading text-foreground">설정</h1>
+        <h1 className="text-title text-foreground">설정</h1>
       </div>
 
       <div className="space-y-5">
@@ -356,7 +357,7 @@ const SettingsPage = () => {
             <div className="mb-4 flex items-start justify-between gap-3 rounded-xl bg-card p-3.5 ring-1 ring-border">
               <div className="min-w-0">
                 <p className="text-label font-black text-foreground">👀 회원으로 보기</p>
-                <p className="mt-0.5 text-micro leading-relaxed text-muted-foreground">
+                <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
                   켜면 앱 전체(홈 · 하단 탭 · 메뉴 · 랭킹 · 커뮤니티 · 내정보)가 아래 지점의 <b className="text-foreground">일반 회원 화면</b>으로 보여요.
                   관리자 버튼과 관리자 화면은 숨고, 화면 아래 띠를 누르면 바로 돌아와요. 이 폰에서만 켜져요.
                 </p>
@@ -372,7 +373,7 @@ const SettingsPage = () => {
               />
             </div>
             <h2 className="mb-1 text-body font-bold text-foreground">🧪 테스트 지점 바꾸기</h2>
-            <p className="mb-3 text-micro leading-relaxed text-muted-foreground">
+            <p className="mb-3 text-label leading-relaxed text-muted-foreground">
               지금 <b className="text-foreground">{profile.branch_name || "미지정"}</b> 소속으로 보고 있어요. 지점을 누르면 그 지점 회원 화면으로 바로 바뀌어요.
             </p>
             <div className="flex flex-wrap gap-2">
@@ -397,8 +398,8 @@ const SettingsPage = () => {
                 );
               })}
             </div>
-            {switchingBranch && <p className="mt-2 text-micro text-muted-foreground">바꾸는 중…</p>}
-            <p className="mt-2 text-micro text-muted-foreground">
+            {switchingBranch && <p className="mt-2 text-label text-muted-foreground">바꾸는 중…</p>}
+            <p className="mt-2 text-label text-muted-foreground">
               테스트가 끝나면 '153본사'를 눌러 원래대로 돌려 주세요. 전체관리자 계정은 회원 랭킹에 들어가지 않아요.
             </p>
           </div>
@@ -409,12 +410,12 @@ const SettingsPage = () => {
 
         {/* 65-O: 화면 모드 (다크/라이트) — next-themes 기반 */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1">
-          <h2 className="mb-1 text-body font-bold text-foreground">화면 모드</h2>
-          <p className="mb-3 text-micro text-muted-foreground">
-            다크는 밤·실내, 라이트는 낮·야외에서 보기 편해요.
-          </p>
+          <h2 className="mb-3 text-body font-bold text-foreground">화면 모드</h2>
           <ThemeToggle variant="segment" />
         </div>
+
+        {/* 글씨 크기 — 내정보와 같은 칸 (2026-10-28 리디자인 · lib/textScale) */}
+        <TextScaleToggle />
 
         {/* 📲 휴대폰 알림 — 이 기기 켜기 · 끄기 · 테스트 (2026-10-01) */}
         <PushOptInCard variant="settings" />
@@ -426,14 +427,14 @@ const SettingsPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-body font-medium text-foreground">리스타트 루틴</p>
-                <p className="text-micro text-muted-foreground">복귀 배너 표시 (5일+ 미활동 시)</p>
+                <p className="text-label text-muted-foreground">복귀 배너 표시 (5일+ 미활동 시)</p>
               </div>
               <Switch checked={widgetPrefs.showRestartRoutine} onCheckedChange={() => toggleWidget("showRestartRoutine")} />
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-body font-medium text-foreground">이번 주 추천</p>
-                <p className="text-micro text-muted-foreground">주간 처방 카드 표시</p>
+                <p className="text-label text-muted-foreground">주간 처방 카드 표시</p>
               </div>
               <Switch checked={widgetPrefs.showWeeklyPrescription} onCheckedChange={() => toggleWidget("showWeeklyPrescription")} />
             </div>
@@ -502,7 +503,7 @@ const SettingsPage = () => {
             <div className="space-y-2">
               <Label htmlFor="nickname" className="text-body text-muted-foreground">닉네임</Label>
               <Input id="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="닉네임을 입력하세요" maxLength={12} className="rounded-xl" />
-              <p className="text-micro text-muted-foreground">
+              <p className="text-label text-muted-foreground">
                 12자 이내 · 순위·라이센스·사이니지 TV에 이 이름이 보여요. 닉네임을 정하면 실명 대신 닉네임으로 보여요.
               </p>
             </div>
@@ -520,7 +521,7 @@ const SettingsPage = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-micro text-muted-foreground">
+                  <p className="text-label text-muted-foreground">
                     전체관리자는 바로 전환돼요 — 고른 지점의 회원 화면(커뮤니티·챌린지·라이브보드)을 그대로 체험할 수 있습니다.
                   </p>
                 </>
@@ -529,7 +530,7 @@ const SettingsPage = () => {
                   <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-body text-foreground">
                     {profile.branch_name || "미지정"}
                   </div>
-                  <p className="text-micro text-muted-foreground">지점 변경은 아래 '지점 이전 요청'을 이용해주세요</p>
+                  <p className="text-label text-muted-foreground">지점 변경은 아래 '지점 이전 요청'을 이용해주세요</p>
                 </>
               )}
             </div>
@@ -549,7 +550,7 @@ const SettingsPage = () => {
         {passkeyReady && (
           <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.03s" }}>
             <h2 className="mb-1 text-body font-bold text-foreground">지문·얼굴 로그인</h2>
-            <p className="mb-3 text-micro text-muted-foreground">
+            <p className="mb-3 text-label text-muted-foreground">
               이 기기를 등록해두면 다음부터 비밀번호나 카카오 없이 지문·얼굴만으로 바로 들어올 수 있어요.
               지문 정보는 기기 안에만 저장되고 서버로 전송되지 않습니다.
             </p>
@@ -575,7 +576,7 @@ const SettingsPage = () => {
         {/* 계정 연결 — 구글 로그인을 기존 아이디 계정에 연결 (Supabase identity linking) */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.04s" }}>
           <h2 className="mb-1 text-body font-bold text-foreground">계정 연결</h2>
-          <p className="mb-3 text-micro text-muted-foreground">
+          <p className="mb-3 text-label text-muted-foreground">
             구글 계정을 연결하면, 다음부터 로그인 화면의 구글 버튼으로도 지금 이 계정에 그대로 로그인할 수 있어요.
           </p>
           {googleLinked ? (
@@ -650,7 +651,7 @@ const SettingsPage = () => {
                 <div key={req.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
                   <div>
                     <p className="text-label text-foreground">{req.from_branch} → {req.to_branch}</p>
-                    <p className="text-micro text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ko-KR")}</p>
+                    <p className="text-label text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ko-KR")}</p>
                   </div>
                   <span className={`text-micro font-bold ${
                     req.status === "approved" ? "text-status-complete" :
@@ -673,7 +674,7 @@ const SettingsPage = () => {
               {branchTransfers.map((req: any) => (
                 <div key={req.id} className="rounded-xl border border-border bg-background p-3">
                   <p className="text-body font-medium text-foreground">{req.from_branch} → {req.to_branch}</p>
-                  <p className="text-micro text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ko-KR")}</p>
+                  <p className="text-label text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ko-KR")}</p>
                   <div className="mt-2 flex gap-2">
                     <button
                       onClick={() => approveTransferMut.mutate(req.id)}
@@ -709,7 +710,7 @@ const SettingsPage = () => {
         {isAdmin && (
           <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.15s" }}>
             <h2 className="mb-1 text-body font-bold text-foreground">지점 관리</h2>
-            <p className="mb-4 text-micro leading-relaxed text-muted-foreground">
+            <p className="mb-4 text-label leading-relaxed text-muted-foreground">
               스위치를 끈 지점은 랭킹 · 명예의 전당 · 지점 선택에서 안 보여요. 회원·출석 기록은 지워지지 않고, 켜면 바로 돌아와요.
             </p>
             <div className="mb-4 flex gap-2">
@@ -785,7 +786,7 @@ const SettingsPage = () => {
                 <span className="text-muted-foreground">🛠️</span>
                 <span className="min-w-0 text-left">
                   <span className="block text-body text-foreground">화면 커스텀 도구</span>
-                  <span className="block text-micro text-muted-foreground">튜토리얼 강조 위치 · 순서 편집 (내 계정 전용)</span>
+                  <span className="block text-label text-muted-foreground">튜토리얼 강조 위치 · 순서 편집 (내 계정 전용)</span>
                 </span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />

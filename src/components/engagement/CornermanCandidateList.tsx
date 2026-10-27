@@ -65,7 +65,7 @@ const CornermanCandidateList = ({
         <p className="text-label leading-relaxed text-foreground">
           {emptyText ?? "지금 매칭 가능한 같은 지점 회원이 없습니다."}
         </p>
-        <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-label leading-relaxed text-muted-foreground">
           {emptyHint ?? "신규 회원이 가입하거나 다른 회원의 짝꿍 관계가 끝나면 후보로 표시됩니다."}
         </p>
       </div>
@@ -97,7 +97,7 @@ const CornermanCandidateList = ({
                 <span className="block truncate text-label font-bold text-foreground">
                   {c.display_name}
                 </span>
-                <span className="mt-0.5 block text-micro leading-relaxed text-muted-foreground">
+                <span className="mt-0.5 block text-label leading-relaxed text-muted-foreground">
                   {notJoined ? (
                     <span className="font-semibold text-amber-700 dark:text-amber-300">아직 앱을 안 써요</span>
                   ) : (

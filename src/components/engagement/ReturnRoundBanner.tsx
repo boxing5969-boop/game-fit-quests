@@ -39,13 +39,13 @@ const ReturnRoundBanner = ({ onOpen }: Props) => {
         <Sparkles className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-micro font-black uppercase tracking-[0.18em] text-primary">
+        <p className="text-label font-bold text-primary">
           리턴 라운드 · {status.inactive_days}일 만의 복귀
         </p>
         <p className="mt-0.5 truncate text-label font-bold text-foreground">
           {copy.bannerHeadline}
         </p>
-        <p className="mt-0.5 truncate text-micro text-muted-foreground">
+        <p className="mt-0.5 truncate text-label text-muted-foreground">
           {claimed
             ? "오늘 보상은 이미 받았습니다. 기록은 계속 쌓입니다."
             : cooldown
@@ -54,7 +54,7 @@ const ReturnRoundBanner = ({ onOpen }: Props) => {
         </p>
       </div>
       <div className="shrink-0 text-right">
-        <p className="text-micro font-bold uppercase tracking-wider text-reward">
+        <p className="text-label font-bold text-reward">
           보상
         </p>
         <p className="mt-0.5 text-micro font-bold text-reward">

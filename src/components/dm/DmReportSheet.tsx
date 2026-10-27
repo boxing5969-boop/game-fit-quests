@@ -114,7 +114,7 @@ const DmReportSheet = ({ open, onClose, threadId, peerName, onDone }: Props) => 
         <span className="text-label font-semibold text-foreground">{peerName}님 차단도 하기</span>
       </label>
 
-      <p className="mt-3 px-1 text-micro leading-relaxed text-muted-foreground">
+      <p className="mt-3 px-1 text-label leading-relaxed text-muted-foreground">
         신고하면 이 대화의 최근 메시지 50개가 운영진에게 함께 전달돼요. 운영진이 확인한 뒤 메시지 보내기를 제한할 수 있어요.
       </p>
     </DmSheet>

@@ -101,7 +101,7 @@ const PromoBanner = () => {
             {open.coupon_code && (
               <div className="mt-4 flex items-center justify-between rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
                 <div>
-                  <p className="text-micro text-muted-foreground">쿠폰 코드</p>
+                  <p className="text-label text-muted-foreground">쿠폰 코드</p>
                   <p className="text-body font-black tracking-wider text-primary">{open.coupon_code}</p>
                 </div>
                 <button
