@@ -3,13 +3,14 @@
  *   홈 맨 아래(전체 메뉴 위) — 지점 회의실에 들어갈 수 있는 사람(그 지점 지도진 · 대표님)에게만 보인다.
  *   회원 화면에는 칸 자체가 없다(office_me 가 빈 목록 → 그리지 않음).
  *   한 줄: "지금 3명 사무실에 있어요 · 회의 진행 중"
+ *   회의 중이면 누르자마자 그 회의 화면(/office/room)으로 — 아니면 사무실(/office).
  */
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { isStaffProfile } from "@/lib/staffDisplay";
-import { useOfficeMe } from "@/services/officeService";
+import { saveOfficeBranch, useOfficeMe } from "@/services/officeService";
 import { useOfficeOnline } from "@/lib/officePresence";
 import { OFFICE_ART } from "@/lib/officeLayout";
 
@@ -30,7 +31,11 @@ const OfficeEntryCard = () => {
   return (
     <button
       type="button"
-      onClick={() => navigate("/office")}
+      onClick={() => {
+        if (!live) return navigate("/office");
+        saveOfficeBranch(office.branch);
+        navigate("/office/room");
+      }}
       className={cn(
         "flex w-full items-center gap-3 overflow-hidden rounded-2xl border bg-card px-3 py-3 text-left shadow-elev-1 transition-transform active:scale-[0.99]",
         live ? "border-primary/60" : "border-border",
