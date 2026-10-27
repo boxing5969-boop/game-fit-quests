@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/check-migrations.mjs && vite build",
+    "build": "node scripts/check-migrations.mjs && node scripts/check-font-sizes.mjs && vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",

@@ -47,7 +47,9 @@
     --secondary: 214 16% 95%;           /* Toss 연회색 fill #F1F3F5 */
     --secondary-foreground: 216 16% 24%;/* #333D4B */
     --muted: 214 16% 95%;
-    --muted-foreground: 213 11% 47%;    /* Toss #6B7684 — 보조 텍스트 */
+    /* 보조 텍스트 (2026-10-28 리디자인) — #6B7684 는 흰 카드 위 4.62:1 · 회색 바탕(#F2F4F6) 위 4.19:1 로 기준(4.5:1) 미달이라
+       한 톤 진하게: 흰 카드 5.32:1 · 회색 바탕 4.83:1 · 연회색 칸(#F1F3F5) 4.79:1 */
+    --muted-foreground: 213 11% 43%;    /* #626C7A */
     --accent: 165 70% 52%;
     --accent-foreground: 220 34% 7%;
     --reward: 42 90% 64%;               /* gold */
@@ -378,17 +380,17 @@
    * Disabled: spec hex via --btn-disabled-bg / --btn-disabled-fg;
    * .light-surface overrides swap them to the light palette values. */
   .primary-button {
-    @apply inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-button text-primary-foreground shadow-glow-soft transition-all;
+    @apply inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-body font-bold text-primary-foreground shadow-glow-soft transition-all;
     @apply hover:shadow-glow-primary active:scale-[0.98] active:bg-[hsl(165_70%_42%)];
     @apply disabled:pointer-events-none disabled:bg-[hsl(var(--btn-disabled-bg))] disabled:text-[hsl(var(--btn-disabled-fg))] disabled:shadow-none;
   }
   .secondary-button {
-    @apply inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-border bg-[hsl(var(--surface-2))] px-6 text-button text-foreground shadow-elev-1 transition-all;
+    @apply inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-border bg-[hsl(var(--surface-2))] px-6 text-body font-bold text-foreground shadow-elev-1 transition-all;
     @apply hover:shadow-elev-2 active:scale-[0.98];
     @apply disabled:pointer-events-none disabled:bg-[hsl(var(--btn-disabled-bg))] disabled:text-[hsl(var(--btn-disabled-fg))] disabled:border-transparent disabled:shadow-none;
   }
   .reward-button {
-    @apply inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-reward px-6 text-button text-reward-foreground shadow-glow-reward transition-all;
+    @apply inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-reward px-6 text-body font-bold text-reward-foreground shadow-glow-reward transition-all;
     @apply active:scale-[0.98];
     @apply disabled:pointer-events-none disabled:bg-[hsl(var(--btn-disabled-bg))] disabled:text-[hsl(var(--btn-disabled-fg))] disabled:shadow-none;
   }
@@ -408,7 +410,7 @@
     );
   }
   .badge-pill {
-    @apply inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-badge;
+    @apply inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-micro font-bold;
   }
 
   /* ── 153 글리프 (components/icons/GlyphTile) — 칸에서 살짝 떠 보이는 얕은 그림자 ── */
@@ -448,8 +450,8 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  /* 모바일 가독성 — 초소형 보조 글씨를 전 화면에서 상향(고객경험 최적화).
-     9~10px → 11px, 11px → 12px(모바일 최소 가독 기준). */
+  /* 모바일 가독성 — 아직 6단계로 옮기지 않은 관리자 · 지점장 · TV 화면의 초소형 글씨만 올린다.
+     9~10px → 11px, 11px → 12px. 회원 화면은 글씨 6단계(13px 이상)만 쓴다 (2026-10-28 리디자인). */
   .text-\[9px\],
   .text-\[10px\] {
     font-size: 11px !important;

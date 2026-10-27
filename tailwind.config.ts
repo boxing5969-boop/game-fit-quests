@@ -229,9 +229,19 @@ export default {
       // are intentionally named separately so Space Grotesk + tabular
       // digits can be pinned via the `.number-font` utility.
       fontSize: {
+        // ── 153 글씨 6단계 (2026-10-28 대표님 "위보고한 기준대로 전면 리디자인하자" · UX 보고서 「글씨 크기 표준」) ──
+        //   회원 화면은 이 6개 이름만 쓴다 — 크기 숫자(text-[11.5px])·옛 이름(text-xs · text-sm …)은 쓰지 않는다
+        //   (scripts/check-font-sizes.mjs 가 막는다 · 옛 크기를 옮길 때는 scripts/apply-type-scale.mjs).
+        //   rem 이라 나중에 '글씨 크게 보기'(html 글씨 크기) 하나로 앱 전체가 같이 커진다.
+        //   가장 작은 글씨는 13px — 13 아래는 없다. 굵기는 제목 · 숫자만 기본값이 있고 font-* 를 붙이면 그게 이긴다.
+        "micro":   ["0.8125rem", { lineHeight: "1.125rem" }],                    // 13/18 작은 글씨 — 배지 · 그래프 눈금
+        "label":   ["0.875rem",  { lineHeight: "1.25rem" }],                     // 14/20 보조 — 이름표 · 날짜 · 단위
+        "body":    ["1rem",      { lineHeight: "1.5rem" }],                      // 16/24 본문 — 읽는 글 · 목록 · 단추
+        "heading": ["1.1875rem", { lineHeight: "1.625rem", fontWeight: "700" }], // 19/26 카드 제목 · 중요한 한 줄
+        "title":   ["1.5rem",    { lineHeight: "2rem", fontWeight: "800" }],     // 24/32 화면 제목 · 카드 숫자
+        "display": ["2.5rem",    { lineHeight: "2.75rem", fontWeight: "900" }],  // 40/44 큰 숫자 — 화면 주인공 (한 화면에 하나)
+        // ── 아래는 옛 이름 — 관리자 · 지점장 · TV · 게임 화면만 아직 쓴다 (회원 화면은 위 6단계로 옮김) ──
         // 회원 가독성 — 기본 small 텍스트 상향 (text-xs 12→13, text-sm 14→15, 줄간격↑).
-        // ad-hoc text-xs(약 515곳)·text-sm(약 635곳) 에 앱 전역 일괄 적용.
-        // 큰 글자·숫자·뱃지 토큰(display-*, number-*, badge 등)은 그대로 둔다.
         "xs": ["13px", { lineHeight: "18px" }],
         "sm": ["15px", { lineHeight: "22px" }],
         "display-lg":  ["28px", { lineHeight: "36px", fontWeight: "800" }],

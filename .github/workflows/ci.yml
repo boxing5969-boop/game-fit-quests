@@ -2,7 +2,7 @@
 #
 # · 어느 계정이 어느 브랜치에 올리든 같은 검사를 돈다 — 두 계정의 수정이 합쳐져 앱이 깨지면 여기서 빨간불.
 # · 빨간불이면 GitHub 이 메일로 알린다. 배포(Cloudflare Pages)는 막지 않는다 — 다음 작업 전에 먼저 고친다.
-# · 순서: 마이그레이션 번호 겹침 → 타입 검사 → 테스트 → 빌드 (CLAUDE.md 「두 계정 동시 작업」)
+# · 순서: 마이그레이션 번호 겹침 → 회원 화면 글씨 6단계 → 타입 검사 → 테스트 → 빌드 (CLAUDE.md 「두 계정 동시 작업」)
 # · 공개 저장소라 로그가 공개된다 — 비밀값을 쓰지 않는다(빌드는 가짜 주소·키로).
 name: 앱 자동 검사
 
@@ -44,6 +44,11 @@ jobs:
         run: node scripts/check-migrations.mjs
         env:
           MIGRATIONS_STRICT: "1"
+
+      - name: 회원 화면 글씨 6단계
+        run: node scripts/check-font-sizes.mjs
+        env:
+          FONTS_STRICT: "1"
 
       - name: 타입 검사
         run: node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json
