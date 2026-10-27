@@ -137,6 +137,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 들어오는 사람: 그 지점 지도진(`_strategy_branch_staff`) + 대표님(`_strategy_hq`). 회의 열기 · 끝내기 · 정한 것 = `_strategy_can_direct`(대표님 · 지점장). 회원 · 다른 지점은 서버(`_office_role`)와 채널 정책(`_office_can_topic`)이 막는다.
 - 회의를 열면 지점 지도진 + 대표님에게 알림(`notifications` → 휴대폰 푸시, 링크 `/office/room` — 누르면 바로 회의 화면, 20261027185918). 회의 화면은 이 기기에 고른 지점에 회의가 없으면 회의가 열린 지점으로 연다. 신호에는 내용이 없고 화면이 함수로 다시 읽는다.
 - 다른 지점을 켜려면 `office_branches` 에 한 줄(채널 이름 = `'office:' || branches.code`). 3단계 회의록 → 전략 회의실 지시는 아직.
+- 줌 · 구글 미트 링크 (2026-10-27 대표님 "그렇게하자" — 지도진끼리는 앱 음성 회의, 바깥 분이 함께하는 회의는 기존 줌 · 미트 링크): `office_meetings.video_url` · `office_set_meeting_link`(대표님 · 지점장, 넣거나 빼면 채팅에 안내 한 줄) · `_office_video_url`(초대 글을 통째로 붙여 넣어도 첫 링크만, zoom.us · zoom.com · meet.google.com 만 — 화면 [src/lib/meetingLink.ts](src/lib/meetingLink.ts) 와 같은 규칙) · `office_state` 의 `meeting.video_url` · `last_video_url`(대표님 · 지점장에게만, 회의 열기 칸 '지난번 링크 쓰기') — 20261027204015. 회의 화면 그림 아래 '줌 회의 들어가기'(`MeetingLinkBar`, 아이폰 앱은 앱 안 사파리 창) · 넣기/바꾸기는 '바꾸기' 또는 안건 띠를 펼쳐서.
 
 #### 2단계 — 음성 · 카메라 회의 (2026-10-27 대표님 "다음 단계 작업하자" · Cloudflare RealtimeKit)
 
