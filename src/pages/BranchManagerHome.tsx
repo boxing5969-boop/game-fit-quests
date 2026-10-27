@@ -29,7 +29,7 @@ import { toast } from "sonner";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
 
-type FilterType = "all" | "staff" | "pending" | "active" | "boss_ready" | "unapproved" | "body_info";
+type FilterType = "all" | "staff" | "pending" | "active" | "boss_ready" | "unapproved" | "body_info" | "body_missing";
 
 /** 신체 정보를 넣은 회원 — 마지막으로 넣은 때 · 키/몸무게 여부 (값은 받지 않는다) */
 type BodyEntered = { at: string; height: boolean; weight: boolean };
@@ -185,8 +185,9 @@ const BranchManagerHome = () => {
 
   // 신체 정보 넣은 회원 (2026-10-28 대표님 "회원님들이 신체정보 입력했는지 안했는지 내가 확인할수는 없나?")
   //   서버 get_body_info_entered — 전체관리자 · 관리자 = 전 지점, 지점장 = 자기 지점 (회원 내정보와 같은 권한 · 같은 공개 기준)
+  //   안 넣음 (01:05 "입력안한건 안보이나?") — 앱에 들어온 적 있는 회원 중 아직 안 넣은 회원만 (명단으로만 만든 계정은 빼고)
   const canSeeBody = isSuperAdmin || role === "branch_manager";
-  const { data: bodyEntered } = useQuery({
+  const { data: bodyInfo } = useQuery({
     queryKey: ["body-info-entered", isSuperAdmin, branchName],
     enabled: canSeeBody,
     staleTime: 60_000,
@@ -195,12 +196,22 @@ const BranchManagerHome = () => {
       const { data, error } = await (supabase as any).rpc("get_body_info_entered");
       if (error) throw error;
       const rows: { user_id: string; at: string; height: boolean; weight: boolean }[] = Array.isArray(data?.rows) ? data.rows : [];
-      return new Map<string, BodyEntered>(rows.map((r) => [r.user_id, { at: r.at, height: !!r.height, weight: !!r.weight }]));
+      const missing: { user_id: string }[] = Array.isArray(data?.missing) ? data.missing : [];
+      return {
+        entered: new Map<string, BodyEntered>(rows.map((r) => [r.user_id, { at: r.at, height: !!r.height, weight: !!r.weight }])),
+        missing: new Set<string>(missing.map((r) => r.user_id)),
+      };
     },
   });
+  const bodyEntered = bodyInfo?.entered;
+  const bodyMissing = bodyInfo?.missing;
   const bodyCount = useMemo(
     () => (bodyEntered ? members?.filter((m) => bodyEntered.has(m.user_id)).length ?? 0 : 0),
     [members, bodyEntered],
+  );
+  const bodyMissingCount = useMemo(
+    () => (bodyMissing ? members?.filter((m) => bodyMissing.has(m.user_id)).length ?? 0 : 0),
+    [members, bodyMissing],
   );
 
   const filtered = useMemo(() => {
@@ -221,12 +232,13 @@ const BranchManagerHome = () => {
     else if (filter === "boss_ready") list = list.filter(m => m.prog?.current_level === 10);
     else if (filter === "active") list = list.filter(m => m.prog && m.prog.streak_days > 0);
     else if (filter === "body_info") list = list.filter(m => !!bodyEntered?.has(m.user_id));
+    else if (filter === "body_missing") list = list.filter(m => !!bodyMissing?.has(m.user_id));
 
     if (sort === "level_desc") list.sort((a, b) => b.globalLevel - a.globalLevel);
     else if (sort === "pending_count") list.sort((a, b) => b.pendingCount - a.pendingCount);
 
     return list;
-  }, [members, search, filter, sort, bodyEntered]);
+  }, [members, search, filter, sort, bodyEntered, bodyMissing]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -242,7 +254,12 @@ const BranchManagerHome = () => {
     { key: "pending", label: "미션대기" },
     { key: "boss_ready", label: "보스전 대기" },
     { key: "active", label: "최근 활동" },
-    ...(canSeeBody ? [{ key: "body_info" as FilterType, label: `신체 정보 넣음 (${bodyCount})` }] : []),
+    ...(canSeeBody
+      ? [
+          { key: "body_info" as FilterType, label: `신체 정보 넣음 (${bodyCount})` },
+          { key: "body_missing" as FilterType, label: `신체 정보 안 넣음 (${bodyMissingCount})` },
+        ]
+      : []),
   ];
 
   const handleApproveMember = async (userId: string, e: React.MouseEvent) => {
@@ -337,6 +354,13 @@ const BranchManagerHome = () => {
           </button>
         ))}
       </div>
+      {(filter === "body_info" || filter === "body_missing") && (
+        <p className="-mt-1 mb-3 px-1 text-[11px] leading-relaxed text-muted-foreground">
+          {filter === "body_info"
+            ? "키 · 몸무게를 넣은 회원이에요. 값은 회원을 눌러 '내정보'에서 봐요."
+            : "앱에 들어온 적 있는데 키 · 몸무게를 아직 안 넣은 회원이에요."}
+        </p>
+      )}
 
       {filter === "staff" ? (
         <StaffRosterPanel search={search} />
@@ -380,7 +404,13 @@ const BranchManagerHome = () => {
           <div className="rounded-2xl border border-dashed border-border p-8 text-center">
             <span className="text-3xl">👥</span>
             <p className="mt-2 text-sm text-muted-foreground">
-              {search ? "검색 결과가 없습니다" : filter === "body_info" ? "아직 신체 정보를 넣은 회원이 없어요" : "회원이 없습니다"}
+              {search
+                ? "검색 결과가 없습니다"
+                : filter === "body_info"
+                  ? "아직 신체 정보를 넣은 회원이 없어요"
+                  : filter === "body_missing"
+                    ? "앱을 쓰는 회원은 모두 신체 정보를 넣었어요"
+                    : "회원이 없습니다"}
             </p>
           </div>
         ) : (
