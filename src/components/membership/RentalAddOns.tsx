@@ -44,12 +44,13 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
         {mode === "addon" ? "운동복 · 락카도 같이 쓰실래요?" : "연장할 개월을 고르세요"}
       </p>
       <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
-        한 달 {won(unitPrice[kinds[0]] ?? 0)} ·{" "}
+        {/* 한 줄 (2026-10-28 리디자인) — 렌탈만 결제할 때는 가격만 */}
+        한 달 {won(unitPrice[kinds[0]] ?? 0)}
         {mode === "standalone"
-          ? "한 번에 결제하면 결제 링크도 하나예요"
+          ? ""
           : fixedMonths
-            ? `수강권과 같은 ${maxMonths}개월로 담겨요`
-            : "수강권과 같은 개월로 담기고, 줄일 수 있어요"}
+            ? ` · 수강권과 같은 ${maxMonths}개월로 담겨요`
+            : " · 수강권과 같은 개월로 담기고, 줄일 수 있어요"}
       </p>
 
       <div className="mt-2.5 space-y-2">

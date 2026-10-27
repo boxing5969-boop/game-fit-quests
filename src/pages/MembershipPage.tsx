@@ -262,10 +262,8 @@ const MembershipPage = () => {
         <button onClick={() => navigate(-1)} className="rounded-full bg-secondary p-2 active:scale-95">
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
-        <div className="min-w-0">
-          <h1 className="text-heading text-foreground">수강권</h1>
-          <p className="text-label text-muted-foreground">결제 · 양도 · 환불 · 홀딩</p>
-        </div>
+        {/* 제목만 — 결제 · 양도 · 환불 · 홀딩은 아래 단추가 말한다 (2026-10-28 리디자인) */}
+        <h1 className="min-w-0 text-title text-foreground">수강권</h1>
       </div>
 
       <div className="space-y-4">

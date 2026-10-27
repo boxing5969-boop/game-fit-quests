@@ -497,9 +497,6 @@ const MembershipProducts = () => {
             >
               {paying === "rental-cart" ? "이동 중..." : rentalPickTotal > 0 ? `${won(rentalPickTotal)} 결제하기` : "개월을 골라 주세요"}
             </button>
-            <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
-              수강권을 결제할 때 같이 담으면 수강권과 같은 개월로 한 번에 결제돼요.
-            </p>
           </div>
         )}
 
@@ -511,20 +508,22 @@ const MembershipProducts = () => {
             if (isMembership) {
               return (
                 <div key={p.id} className="rounded-2xl border border-border bg-background p-4">
-                  <div className="flex items-center justify-between gap-3">
+                  {/* 주인공은 결제 금액 하나 — 하루 값 · 정상가는 작은 글씨로 (2026-10-28 리디자인) */}
+                  <div className="flex items-end justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-heading font-black text-foreground">{months}개월</span>
-                        {off > 0 && <span className="text-body font-bold text-[#f97316]">{off}% OFF</span>}
+                        <span className="text-heading text-foreground">{months}개월</span>
+                        {off > 0 && <span className="text-label font-bold text-[#f97316]">{off}% OFF</span>}
                       </div>
-                      <p className="mt-1">
-                        {p.normal_price ? <span className="text-body text-muted-foreground line-through">{won(p.normal_price)}</span> : null}
-                        <span className="ml-1.5 text-body font-bold text-foreground">{won(p.price)}</span>
-                      </p>
+                      {perDay > 0 && (
+                        <p className="mt-0.5 text-label text-muted-foreground">하루 {perDay.toLocaleString("ko-KR")}원</p>
+                      )}
                     </div>
-                    <div className="shrink-0 whitespace-nowrap text-right leading-none">
-                      <span className="text-title font-black text-foreground">{perDay.toLocaleString("ko-KR")}</span>
-                      <span className="ml-0.5 text-body font-bold text-muted-foreground">원/일</span>
+                    <div className="shrink-0 whitespace-nowrap text-right">
+                      {p.normal_price && p.normal_price > p.price ? (
+                        <p className="text-label text-muted-foreground line-through">{won(p.normal_price)}</p>
+                      ) : null}
+                      <p className="text-title text-foreground">{won(p.price)}</p>
                     </div>
                   </div>
                   <button
@@ -559,7 +558,7 @@ const MembershipProducts = () => {
         </div>
 
         <p className="mt-3 text-label leading-relaxed text-muted-foreground">
-          결제하기를 누르면 안전한 결제창으로 이동합니다. 수강권은 결제 완료 시 기간이 자동 반영됩니다.
+          결제가 끝나면 기간이 바로 늘어나요
         </p>
         {phoneModalJsx}
         {checkout && (() => {

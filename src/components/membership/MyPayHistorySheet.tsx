@@ -61,7 +61,7 @@ const OrderCard = ({ o }: { o: PayOrder }) => {
         <span className={cn("rounded-full px-2 py-0.5 text-micro font-black", STATUS_STYLE[o.status])}>{PAY_STATUS_TEXT[o.status]}</span>
         <span className="text-label tabular-nums text-muted-foreground">{kstDateTimeText(o.paidAt || o.createdAt)}</span>
       </div>
-      <p className={cn("mt-1.5 text-label font-black leading-snug text-foreground", canceled && "text-muted-foreground line-through")}>{o.productName}</p>
+      <p className={cn("mt-1.5 text-body font-bold leading-snug text-foreground", canceled && "text-muted-foreground line-through")}>{o.productName}</p>
 
       {o.items.length > 0 && (
         <ul className="mt-2 space-y-1.5 rounded-xl bg-muted/40 px-3 py-2.5">
@@ -70,7 +70,7 @@ const OrderCard = ({ o }: { o: PayOrder }) => {
               <span className="min-w-0">
                 <span className="block font-bold text-foreground">{itemLabel(it)}</span>
                 {it.startDate && it.endDate && (
-                  <span className={cn("block text-micro tabular-nums text-muted-foreground", (canceled || it.reverted) && "line-through")}>
+                  <span className={cn("block text-label tabular-nums text-muted-foreground", (canceled || it.reverted) && "line-through")}>
                     {shortYmd(it.startDate)} ~ {shortYmd(it.endDate)}
                   </span>
                 )}
@@ -98,7 +98,7 @@ const OrderCard = ({ o }: { o: PayOrder }) => {
           <dt className="font-bold text-foreground">{o.status === "sent" ? "결제할 금액" : "결제 금액"}</dt>
           <dd className={cn("text-body font-black tabular-nums text-foreground", canceled && "text-muted-foreground line-through")}>{won(o.amount)}</dd>
         </div>
-        {o.card && o.status !== "sent" && <p className="text-right text-micro text-muted-foreground">{o.card}</p>}
+        {o.card && o.status !== "sent" && <p className="text-right text-label text-muted-foreground">{o.card}</p>}
       </dl>
 
       {canceled && (
@@ -140,18 +140,20 @@ const PayTab = ({ userId }: { userId: string }) => {
   const t = payTotals(orders);
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-2xl bg-primary/10 px-3.5 py-3">
-          <p className="text-micro font-bold text-muted-foreground">앱으로 결제한 금액</p>
-          <p className="mt-0.5 text-heading font-black tabular-nums text-foreground">{won(t.paid)}</p>
-          <p className="text-micro text-muted-foreground">결제 완료 {t.count}건</p>
+      {/* 결제가 하나도 없으면 0원 칸 두 개를 그리지 않는다 (2026-10-28 리디자인 — 빈 것은 그리지 않기) */}
+      {orders.length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-2xl bg-primary/10 px-3.5 py-3">
+            <p className="text-label font-bold text-muted-foreground">앱으로 결제</p>
+            <p className="mt-0.5 text-heading tabular-nums text-foreground">{won(t.paid)}</p>
+            <p className="text-label text-muted-foreground">{t.count}건</p>
+          </div>
+          <div className="rounded-2xl bg-amber-500/10 px-3.5 py-3">
+            <p className="text-label font-bold text-muted-foreground">마일리지로 아낌</p>
+            <p className="mt-0.5 text-heading tabular-nums text-foreground">{won(t.saved)}</p>
+          </div>
         </div>
-        <div className="rounded-2xl bg-amber-500/10 px-3.5 py-3">
-          <p className="text-micro font-bold text-muted-foreground">마일리지로 아낀 금액</p>
-          <p className="mt-0.5 text-heading font-black tabular-nums text-foreground">{won(t.saved)}</p>
-          <p className="text-micro text-muted-foreground">1점 = 1원</p>
-        </div>
-      </div>
+      )}
       {orders.length === 0 ? (
         <p className="rounded-2xl bg-muted/50 px-4 py-6 text-center text-label text-muted-foreground">아직 앱으로 결제한 내역이 없어요</p>
       ) : (
@@ -161,9 +163,7 @@ const PayTab = ({ userId }: { userId: string }) => {
           ))}
         </ul>
       )}
-      <p className="text-micro leading-relaxed text-muted-foreground">
-        앱에서 결제한 내역이에요. 데스크(지점)에서 결제한 내역은 지점장님께 물어봐 주세요.
-      </p>
+      <p className="text-label text-muted-foreground">데스크에서 결제한 내역은 지점장님께 물어봐 주세요</p>
     </div>
   );
 };
@@ -183,8 +183,8 @@ const MileageTab = ({ userId }: { userId: string }) => {
   return (
     <div className="space-y-3">
       <div className="rounded-2xl bg-amber-500/10 px-3.5 py-3">
-        <p className="flex items-center gap-1.5 text-micro font-bold text-muted-foreground">
-          <Coins className="h-3.5 w-3.5 text-amber-600" aria-hidden /> 지금 쓸 수 있는 153 마일리지
+        <p className="flex items-center gap-1.5 text-label font-bold text-muted-foreground">
+          <Coins className="h-4 w-4 text-amber-600" aria-hidden /> 지금 쓸 수 있는 마일리지
         </p>
         <p className="mt-0.5 text-title font-black tabular-nums text-foreground">
           {(mine?.balance ?? 0).toLocaleString("ko-KR")}
@@ -210,7 +210,7 @@ const MileageTab = ({ userId }: { userId: string }) => {
             <section key={m.key} aria-label={m.label}>
               <div className="flex items-baseline justify-between px-1">
                 <p className="text-label font-black text-foreground">{m.label}</p>
-                <p className="text-micro tabular-nums text-muted-foreground">
+                <p className="text-label tabular-nums text-muted-foreground">
                   {pts(m.plus)}
                   {m.minus < 0 ? ` · ${m.minus.toLocaleString("ko-KR")}` : ""}
                 </p>
@@ -220,14 +220,14 @@ const MileageTab = ({ userId }: { userId: string }) => {
                   const sub = mileageRowSub(r);
                   return (
                     <li key={r.id} className="flex items-center gap-2.5 py-2.5">
-                      <span className="w-9 shrink-0 text-micro tabular-nums text-muted-foreground">{md(r.at)}</span>
+                      <span className="w-11 shrink-0 text-label tabular-nums text-muted-foreground">{md(r.at)}</span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-label font-bold text-foreground">{mileageRowTitle(r)}</span>
-                        {sub && <span className="block truncate text-micro text-muted-foreground">{sub}</span>}
+                        <span className="block text-body font-semibold text-foreground">{mileageRowTitle(r)}</span>
+                        {sub && <span className="block truncate text-label text-muted-foreground">{sub}</span>}
                       </span>
                       <span
                         className={cn(
-                          "shrink-0 text-label font-black tabular-nums",
+                          "shrink-0 text-body font-bold tabular-nums",
                           r.amount >= 0 ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground",
                         )}
                       >
@@ -252,10 +252,8 @@ const MileageTab = ({ userId }: { userId: string }) => {
           )}
         </div>
       )}
-      <p className="text-micro leading-relaxed text-muted-foreground">
-        출석 · 레벨업 · 승급 때 쌓이고, 결제할 때 1점 = 1원으로 할인받아요(결제 금액의 10%까지, 1,000점 단위). 결제를 취소하면 쓴 마일리지는
-        돌려받아요.
-      </p>
+      {/* 한 줄 — 1,000점 단위 · 취소하면 돌려받는 것은 결제 창에서 다시 알려 준다 */}
+      <p className="text-label text-muted-foreground">결제할 때 1점 = 1원 · 결제 금액의 10%까지</p>
     </div>
   );
 };
@@ -282,10 +280,11 @@ const MyPayHistorySheet = ({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92vh]">
         <DrawerHeader className="pb-2 text-left">
-          <DrawerTitle className="flex items-center gap-1.5 text-body font-black">
-            <Receipt className="h-4 w-4 text-primary" aria-hidden /> 결제 · 마일리지 내역
+          <DrawerTitle className="flex items-center gap-1.5 text-heading">
+            <Receipt className="h-5 w-5 text-primary" aria-hidden /> 결제 · 마일리지 내역
           </DrawerTitle>
-          <DrawerDescription className="text-label">결제한 것 · 취소한 것 · 마일리지가 들어오고 나간 것을 모두 볼 수 있어요</DrawerDescription>
+          {/* 화면 읽기 도구용 설명만 — 눈에 보이는 설명 줄은 두지 않는다 */}
+          <DrawerDescription className="sr-only">결제한 것 · 취소한 것 · 마일리지가 들어오고 나간 것</DrawerDescription>
         </DrawerHeader>
         <div className="px-4">
           <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1" role="tablist" aria-label="내역 고르기">
@@ -302,7 +301,7 @@ const MyPayHistorySheet = ({
                 aria-selected={tab === k}
                 onClick={() => setTab(k)}
                 className={cn(
-                  "h-10 rounded-lg text-label font-bold transition-colors",
+                  "h-11 rounded-lg text-body font-bold transition-colors",
                   tab === k ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
                 )}
               >
