@@ -258,6 +258,11 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 악력은 회원도 내 신체 정보 선택 칸에서 넣는다(2026-10-25 대표님 — 체육관 코멧 악력계, 좌우 각 2번 중 가장 높은 값 · source 'me') — 칸 옆 '몸무게의 N%' = `relGripPct`(서버 rel_pct 와 같은 식). 같은 날 코치 값이 있으면 카드는 코치 값.
 - 백분위 · 체력 나이는 2단계(`get_my_fitness_profile` 키만 있고 null). TV(board_*)에는 체력 정보를 내보내지 않는다. 줄어든 것은 숫자로 말하지 않는다(잘한 것만).
 
+### 붕대 감기 9단계 설명서 (2026-10-27 대표님 "한눈에 9장 · 누르면 상세페이지처럼 · 사진에 시작 → 끝 방향 · 움직이는 사진으로")
+
+- /handwrap — 한눈에 9칸(작은 사진 + 방향 + 짧은 글) → 누르면 상세 `?step=N`(1~9, 뒤로 가기로 닫힘): 끝 장면에 방향이 그려짐 → 그 단계를 실제로 감는 움직이는 사진 → 반복. [HandWrapStepViewer](src/components/handwrap/HandWrapStepViewer.tsx) · 방향 그림 [HandWrapGuideDraw](src/components/handwrap/HandWrapGuideDraw.tsx)(시작 초록 → 노란 길 · 흰 점선 = 손바닥 쪽 → 끝 주황, 오른손은 거울).
+- 글 · 영상 · 방향 좌표는 [handWrapGuide.ts](src/data/handWrapGuide.ts) `HANDWRAP_STEPS` 한 곳. `guide` 좌표는 각 단계 영상의 **마지막 장면**(= `stepNN.webp`) 위 % — 영상을 다시 자르면 좌표도 끝 장면을 보고 다시 맞추고, 주소 끝 판 표시(`STEP_MEDIA_VERSION`)를 올린다. 파일 `public/handwrap/steps/stepNN.mp4 · .webp · _s.webp`(작은 사진).
+
 ### 창(모달·시트) 뒤 페이지 스크롤 잠금 (2026-10-19)
 
 - `useModalDismiss(open, onClose)` 또는 `lockBodyScroll()`([src/lib/scrollLock.ts](src/lib/scrollLock.ts))만 쓴다 — 잠금 개수를 세서 마지막 창이 닫힐 때만 푼다.
