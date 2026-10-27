@@ -542,13 +542,14 @@ const MyPage = () => {
                 aria-label="출석하면 커뮤니티에 알리기"
               />
             </label>
-            {/* 응원 알림 받기 — 끄면 알림함·휴대폰으로 안 오고 받은 응원함에만 쌓인다 (2026-10-16) */}
+            {/* 응원 알림 받기 — 끄면 알림함·휴대폰으로 안 오고 받은 응원함에만 쌓인다 (2026-10-16).
+                2026-10-27 커뮤니티 1단계: 같은 스위치로 153 · 댓글 알림도 켜고 끈다 (profiles.cheer_notify) */}
             <label className="flex w-full items-center justify-between border-b border-border px-4 py-4">
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">🔔</span>
                 <span className="min-w-0">
-                  <span className="block text-sm text-foreground">응원 알림 받기</span>
-                  <span className="block text-[11px] text-muted-foreground">동료가 응원을 보내면 알려 드려요 (휴대폰은 하루 3번까지)</span>
+                  <span className="block text-sm text-foreground">응원 · 153 · 댓글 알림 받기</span>
+                  <span className="block text-[11px] text-muted-foreground">동료가 응원 · 153 · 댓글을 보내면 알려 드려요 (휴대폰은 하루 3번까지 · 밤과 주말은 쉬어요)</span>
                 </span>
               </div>
               <Switch
@@ -566,7 +567,7 @@ const MyPage = () => {
                     setCheerNotifySaving(false);
                   }
                 }}
-                aria-label="응원 알림 받기"
+                aria-label="응원 · 153 · 댓글 알림 받기"
               />
             </label>
             <button onClick={() => navigate("/survey")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">

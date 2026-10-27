@@ -229,6 +229,20 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 코치·운영진 카드: `get_member_license` 의 `staff_title` 을 칭호로 보여 준다.
 - 남은 일(대시보드에서만 가능): Storage `community` 버킷의 'Community photos are public' 정책을 본인 폴더만 보게 바꾸기 — MCP 계정은 storage.objects 주인이 아니라 못 바꿈.
 
+### 커뮤니티 1단계 — 홈 띠 · 153/댓글 알림 · 받은 153 · 길게 눌러 응원 (2026-10-27 대표님 "니가 추천해주는대로 진행" · 「마이복서153 커뮤니티 탭 업그레이드 보고서」)
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261027231653_community_phase1.sql](supabase/migrations/20261027231653_community_phase1.sql) | `community_reactions.notified_at` · `community_notify_log` · `community_dispatch_153()`(10분마다 — 첫 153 은 30분 모아 한 번, 그 뒤 21시 요약 하나) · 댓글 알림 트리거 `_community_comment_notify` · `get_my_received_153`(보낸 사람별 + 돌려줄 카드) · `get_community_home_strip` · `community_weekly_metrics`(운영진) · `community_weekly_report()`(월 08:30 KST 전체관리자) · 예약 작업 `community-153-dispatch` · `community-weekly-report` |
+| [src/components/home/CommunityTodayStrip.tsx](src/components/home/CommunityTodayStrip.tsx) | 홈 내 카드 바로 아래 '오늘 우리 체육관' 띠 — 지금 운동 중 · 오늘 온 동료 · 새 소식(커뮤니티를 마지막으로 연 뒤, `markCommunityVisited`) · 오늘 받은 153. 숨긴 지점이면 안 보임 |
+| [src/components/engagement/Received153Sheet.tsx](src/components/engagement/Received153Sheet.tsx) | 받은 153 + '153 돌려주기'(그 동료의 가장 최근 카드) · 돌려줄 카드 없으면 '응원 보내기' — 커뮤니티 머리 '받은 153' · 알림 링크 `?received=1` |
+| [src/components/engagement/CommunityFeed.tsx](src/components/engagement/CommunityFeed.tsx) | 153 길게 누르기(0.45초) → 응원 시트 · 누르면 '+1' · 글씨 15px · 단추 40px+ · `?entry=<글>` 댓글 창 · 전 지점 보기 '커뮤니티 숫자'(지난주 · 이번 주) |
+
+- 스위치: `internal_sync_config` key `community_notify_since` = 켠 시각(ISO). 없거나 'off' 면 153 · 댓글 · 월요일 알림이 하나도 안 나간다(화면 기능은 그대로). 켠 뒤에 눌린 153 만 알림 대상.
+- 알림: 평일 08~22시만(쉬는 때 받은 153 은 다음 평일 아침 첫 알림으로 묶임) · 커뮤니티 휴대폰 알림은 하루 3번까지(넘으면 `pushed_at = now()` 로 알림함에만) · 회원 설정 `profiles.cheer_notify`('응원 · 153 · 댓글 알림 받기')를 같이 쓴다.
+- 핵심 숫자: 커뮤니티 활동 회원 비율 = 그 주 커뮤니티에서 누르거나 쓴 회원(글 · 153 · 댓글 · 응원 · 환영 · 하트) ÷ 그 주 출석 회원 — 선릉역점, 코치 · 운영진 · 체험 계정 제외. 목표 4주 15% · 8주 25% (2026-10 시작점 6~7%).
+- 미리보기(`preview/community`) 확인 뒤 main 에 합칠 때: 스위치 켜기 + 출석 알림(`attendance_base_xp_trg` 의 오삼코치 칭찬이 없는 갈래)에 커뮤니티 링크 — 기존 함수 동작이 바뀌므로 합칠 때 따로.
+
 ### 153마인드셋 — 시각화 훈련 (2026-10-19 전면 개편, 라우트 /myboxer/visualization)
 
 | 파일 | 역할 |

@@ -64,6 +64,7 @@ import SurveyNudgeCard from "@/components/survey/SurveyNudgeCard";
 import BirthdayCongratsCard from "@/components/home/BirthdayCongratsCard";
 import GrowthLessonCard from "@/components/home/GrowthLessonCard";
 import OfficeEntryCard from "@/components/office/OfficeEntryCard";
+import CommunityTodayStrip from "@/components/home/CommunityTodayStrip";
 import { useTodayBirthdays } from "@/services/birthdayService";
 import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
 import TitleMatchInvitePopup from "@/components/titlematch/TitleMatchInvitePopup";
@@ -610,6 +611,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         //     (2026-09-29 "첫 화면 = 전체 메뉴만" 결정은 이 결정으로 대체)
         <div className="space-y-5">
           {renderHero(true)}
+          {/* 👊 오늘 우리 체육관 — 커뮤니티 입구 한 줄 (2026-10-27 대표님 "니가 추천해주는대로 진행", 커뮤니티 보고서 1단계) */}
+          <CommunityTodayStrip />
           {/* 🎂 오늘 생일인 동료가 운동하러 왔거나 오늘 내 생일일 때만 보인다 (2026-10-16 대표님) */}
           <BirthdayCongratsCard />
           {/* 🌱 오늘의 1분 성장 교육 — 대표님이 공유한 글을 복싱에 옮긴 짧은 이야기 + 오늘의 방향 (2026-10-27 대표님) */}

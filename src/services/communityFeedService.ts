@@ -166,6 +166,97 @@ export const reportCommunityEntry = (entryId: string, reason: string) =>
 
 export const setCommunityAutoPost = (on: boolean) => rpc<{ success: boolean; on: boolean }>("set_community_auto_post", { p_on: on });
 
+/* ─── 커뮤니티 1단계 (2026-10-27 대표님 "니가 추천해주는대로 진행" — 20261027231653_community_phase1.sql) ─── */
+
+/** 받은 153 — 보낸 동료 한 명 (돌려줄 카드 = 그 동료의 가장 최근 카드, 없으면 null) */
+export interface Received153Sender {
+  userId: string;
+  nickname: string;
+  avatarUrl: string | null;
+  isStaff: boolean;
+  staffTitle: string | null;
+  branch: string | null;
+  league: string;
+  level: number;
+  count: number;
+  lastAt: string;
+  returnTarget: { type: ReactTarget; id: string; at: string } | null;
+  /** 돌려줄 카드에 내가 이미 153 을 눌렀나 */
+  returned: boolean;
+}
+
+export interface Received153 {
+  success: boolean;
+  days: number;
+  total: number;
+  today: number;
+  senders: Received153Sender[];
+}
+
+export const getMyReceived153 = (days = 7) => rpc<Received153>("get_my_received_153", { p_days: days });
+
+/** 홈 '오늘 우리 체육관' 띠 숫자 */
+export interface CommunityHomeStrip {
+  success: boolean;
+  reason?: string;
+  branch: string | null;
+  all_branches?: boolean;
+  /** 아직 앱에서 숨겨 둔 지점이면 false — 띠를 보이지 않는다 */
+  visible?: boolean;
+  working_now?: number;
+  today?: number;
+  new_count?: number;
+  received_today?: number;
+}
+
+export const getCommunityHomeStrip = (since: string | null) =>
+  rpc<CommunityHomeStrip>("get_community_home_strip", { p_since: since });
+
+/** 매주 볼 숫자 (운영진) — 핵심: 커뮤니티 활동 회원 비율 */
+export interface CommunityWeeklyMetrics {
+  success: boolean;
+  branch: string;
+  week_start: string;
+  week_end: string;
+  attendees: number;
+  active: number;
+  active_rate: number;
+  member_153: number;
+  posters: number;
+  posts: number;
+  comments: number;
+  cheers: number;
+  hearts: number;
+  welcomes: number;
+  attendees_30d: number;
+  app_30d: number;
+  app_rate_30d: number;
+}
+
+export const getCommunityWeeklyMetrics = (branch: string | null, weekStart: string | null) =>
+  rpc<CommunityWeeklyMetrics>("community_weekly_metrics", { p_branch: branch, p_week_start: weekStart });
+
+/** 커뮤니티를 마지막으로 연 때 — 홈 띠의 '새 소식'은 이 뒤에 올라온 것 (기기 · 계정별) */
+const lastVisitKey = (uid: string) => `myboxer.community.lastVisit:${uid}`;
+
+export function readCommunityLastVisit(uid: string | null | undefined): string | null {
+  if (!uid) return null;
+  try {
+    return localStorage.getItem(lastVisitKey(uid));
+  } catch {
+    return null;
+  }
+}
+
+export function markCommunityVisited(uid: string | null | undefined): void {
+  if (!uid) return;
+  try {
+    localStorage.setItem(lastVisitKey(uid), new Date().toISOString());
+  } catch {
+    /* 저장이 막힌 기기 — 새 소식은 최근 24시간 기준으로 센다 */
+  }
+}
+
 export const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
 
 /** 한 줄에 붙일 사진 — 가장 긴 변 1280px JPEG 로 줄여 community/{uid}/… 에 올리고 공개 주소를 돌려준다 */
