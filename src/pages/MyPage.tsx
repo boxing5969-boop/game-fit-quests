@@ -6,6 +6,7 @@ import RankBadge from "@/components/RankBadge";
 import MembershipCard from "@/components/MembershipCard";
 import AvatarUpload from "@/components/AvatarUpload";
 import DisplayModeToggle from "@/components/profile/DisplayModeToggle";
+import TextScaleToggle from "@/components/profile/TextScaleToggle";
 import TimeCrewCard from "@/components/engagement/TimeCrewCard";
 import AttendanceRecordCard from "@/components/profile/AttendanceRecordCard";
 import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
@@ -411,6 +412,8 @@ const MyPage = () => {
 
           {/* 라이센스 카드 표시 — 설정이라 계정 · 정보로 옮겼다 (2026-10-28 리디자인) */}
           <DisplayModeToggle />
+          {/* 글씨 크기 — 작게 · 보통 · 크게 (2026-10-28 UX 보고서 결정 4번) */}
+          <TextScaleToggle />
 
           {/* Info */}
           <div className="rounded-2xl border border-border bg-card shadow-elev-1">

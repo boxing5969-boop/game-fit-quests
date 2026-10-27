@@ -1,5 +1,5 @@
 import type { Enums } from "@/integrations/supabase/types";
-import { RANK_LABELS, formatRank } from "@/lib/rankLabels";
+import { RANK_LABELS, formatRank, toGlobalLevel } from "@/lib/rankLabels";
 import LeagueBadge from "@/components/badges/LeagueBadge";
 import NameBadge from "@/components/badges/NameBadge";
 
@@ -53,10 +53,12 @@ const RankBadge = ({ rank, level, size = "sm", isMaster }: RankBadgeProps) => {
   }
 
   return (
-    <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 ${rankColors[rank]}`}>
-      <LeagueBadge league={rank} className={isLg ? "h-6 w-6" : "h-4 w-4"} />
-      <span className={`font-bold ${isLg ? "text-body" : "text-label"}`}>
-        {formatRank(rank, level)}
+    // 한 줄로 — 글씨를 크게 해도 '레벨 7'의 숫자만 다음 줄로 꺾이지 않게 (2026-10-28 리디자인)
+    <div className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1 ${rankColors[rank]}`}>
+      <LeagueBadge league={rank} className={`shrink-0 ${isLg ? "h-6 w-6" : "h-4 w-4"}`} />
+      {/* '리그'는 옆 방패가 말한다 — '화이트 · 레벨 7'로 짧게 (화면 읽기 도구에는 전체 이름) */}
+      <span className={`truncate whitespace-nowrap font-bold ${isLg ? "text-body" : "text-label"}`} aria-label={formatRank(rank, level)}>
+        {RANK_LABELS[rank] ?? rank} · 레벨 {toGlobalLevel(rank, level)}
       </span>
     </div>
   );

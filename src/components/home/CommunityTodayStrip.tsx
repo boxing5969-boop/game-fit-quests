@@ -34,8 +34,9 @@ const CommunityTodayStrip = () => {
   const received = data.received_today ?? 0;
 
   const parts: string[] = [];
-  if (working > 0) parts.push(`지금 ${working}명 운동 중`);
-  if (today > 0) parts.push(`오늘 ${today}명 왔어요`);
+  // 짧게 — 제목이 '오늘 우리 체육관'이라 '지금 · 왔어요'는 빼도 뜻이 같다 (2026-10-28 리디자인 · 글씨 크게에서도 두 줄 안에)
+  if (working > 0) parts.push(`${working}명 운동 중`);
+  if (today > 0) parts.push(`오늘 ${today}명`);
   if (fresh > 0) parts.push(`새 소식 ${fresh}`);
   const line = parts.length > 0 ? parts.join(" · ") : "오늘 첫 소식을 기다리고 있어요";
 
@@ -55,15 +56,19 @@ const CommunityTodayStrip = () => {
           </span>
         )}
       </span>
+      {/* 받은 153 은 설명 줄 맨 앞에 민트 글씨로 — 제목 · 설명이 카드 폭을 다 쓰게 (글씨 크게에서도 안 잘리게) */}
       <span className="min-w-0 flex-1">
         <span className="block text-body font-extrabold text-foreground">오늘 우리 체육관</span>
-        <span className="mt-0.5 block text-label leading-snug text-muted-foreground">{line}</span>
-      </span>
-      {received > 0 && (
-        <span className="number-font shrink-0 rounded-pill border border-primary/50 bg-primary/10 px-2.5 py-1 text-label font-black text-primary">
-          받은 153 {received}
+        <span className="mt-0.5 block text-label leading-snug text-muted-foreground">
+          {received > 0 && (
+            <span className="number-font whitespace-nowrap font-bold text-primary">
+              받은 153 {received}
+              {parts.length > 0 ? " · " : ""}
+            </span>
+          )}
+          {received > 0 && parts.length === 0 ? null : line}
         </span>
-      )}
+      </span>
       <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
     </button>
   );

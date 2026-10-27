@@ -4,6 +4,7 @@ import "./index.css";
 import { stripEmoji } from "@/lib/emoji3d/core";
 import { captureInviteCodeFromUrl } from "@/lib/appInvite";
 import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
+import { applyTextScale, readTextScale } from "@/lib/textScale";
 
 // 설치형 앱(Capacitor)으로 켜면 랭킹앱 홈이 아니라 얼굴 키오스크로 진입한다 (안드로이드 키오스크 APK).
 // React Router 가 경로를 읽기 전에 바꿔야 하므로 렌더보다 먼저 실행.
@@ -36,5 +37,8 @@ for (const k of ["alert", "confirm", "prompt"] as const) {
 
 // 초대 링크(?inv=코드)로 들어왔으면 코드를 남긴다 — 로그인하러 카카오에 다녀와도 쓰게 (2026-10-19)
 captureInviteCodeFromUrl();
+
+// 글씨 크기(내정보 · 작게/보통/크게) — 첫 화면을 그리기 전에 반영해 글씨가 바뀌며 깜빡이지 않게 (2026-10-28 리디자인)
+applyTextScale(readTextScale());
 
 createRoot(document.getElementById("root")!).render(<App />);
