@@ -88,6 +88,11 @@ Main features to review:
 - Push notifications (APNs) for notices and attendance.
 - Sign in with Apple is offered next to Kakao and Google sign-in.
 
+Staff-only feature (not visible to member accounts such as the demo account): "지점 회의실" (branch office room) for gym coaches —
+a meeting chat with an optional voice/video meeting (Cloudflare RealtimeKit). The microphone and camera are used only after a coach
+taps "말하기" (speak) or the camera button during a meeting; meetings are never recorded. The microphone permission is also used when
+members record a workout video to upload. A meeting host can optionally make a 3-line AI summary of the meeting chat.
+
 User-generated content: posts and messages can be reported (⋯ > 신고하기), hidden, and users can be blocked in messages.
 Reports are reviewed by gym staff. Profanity filtering is applied to cheers.
 

@@ -42,9 +42,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>출석 QR 코드를 찍거나 프로필·운동 사진과 영상을 올릴 때 카메라를 사용합니다.</string>
+	<string>출석 QR 코드를 찍거나 프로필·운동 사진과 영상을 올릴 때, 지점 회의실 영상 회의에서 카메라를 켰을 때 카메라를 사용합니다.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>운동 영상을 찍어 올릴 때 소리를 함께 녹음합니다.</string>
+	<string>운동 영상을 찍어 올릴 때 소리를 함께 녹음하고, 지점 회의실 음성 회의에서 '말하기'를 눌렀을 때 내 목소리를 전달합니다(회의는 녹음하지 않습니다).</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>회원 카드·기록 이미지를 사진첩에 저장합니다.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

@@ -291,6 +291,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 심사 대응: AI 로 보내기 전 동의 `ensureAiConsent`([src/lib/aiConsent.ts](src/lib/aiConsent.ts), 5.1.2(i), 아이폰 앱에서만) · 앱 안 계정 삭제(설정 › 계정 삭제 → Edge Function `account-delete-request`: 기록 → 알림 끄기 → 전체관리자 알림 → 로그인 잠금, 7일 안에 회원 화면 '계정 삭제'로 마무리, 5.1.1(v)) · 고객지원 `/support/`.
 - 빌드: `.github/workflows/ios.yml` — ios-app/ 이 바뀌면 GitHub 맥 서버에서 빌드. 비밀값 `ASC_KEY_ID`·`ASC_ISSUER_ID`·`ASC_PRIVATE_KEY` 가 있으면 서명 → TestFlight 업로드(빌드 번호 = 실행 번호). 공개 저장소라 로그에 비밀값을 찍지 않는다.
 - 스토어 글·심사 메모·개인정보 항목: [ios-app/store/listing-ko.md](ios-app/store/listing-ko.md).
+- 권한 안내 문구(Info.plist, 2026-10-27): 카메라 = QR · 사진/영상 올리기 + 지점 회의실 영상 회의, 마이크 = 운동 영상 녹음 + 지점 회의실 음성 회의 '말하기'(녹음 안 함). 심사 메모에 코치 전용 지점 회의실 설명을 넣었다 — 새 기능이 마이크 · 카메라를 쓰면 문구도 같이 고친다.
 
 ### 153 체력 프로필 — 1단계 '내 체력 보기' (2026-10-25 대표님 · 「153 PB 체력 프로필 · 몰입 기능 설계 보고서」)
 
