@@ -19,11 +19,18 @@
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronLeft, ChevronUp, DoorOpen, Maximize2, Minimize2, Pin, Send } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronUp, DoorOpen, Maximize2, Minimize2, Pin, Send, Video } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import OfficeScene, { type SceneTalk } from "@/components/office/OfficeScene";
-import { Decisions, EndMeetingSheet, MessageList, MinutesSheet } from "@/components/office/OfficeMeeting";
+import {
+  Decisions,
+  EndMeetingSheet,
+  MeetingLinkBar,
+  MeetingLinkSheet,
+  MessageList,
+  MinutesSheet,
+} from "@/components/office/OfficeMeeting";
 import { OfficeCallBar, OfficeCallVideos } from "@/components/office/OfficeCallBar";
 import { sendOfficeTyping, useOfficeOnline, useOfficeTyping } from "@/lib/officePresence";
 import { endOfficeCallForAll, leaveOfficeCall, useOfficeCall } from "@/lib/officeCall";
@@ -275,6 +282,7 @@ const OfficeRoomPage = () => {
   const [full, setFull] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
   const [minutesId, setMinutesId] = useState<string | null>(null);
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -384,6 +392,13 @@ const OfficeRoomPage = () => {
         )}
       </div>
 
+      {/* 줌 · 구글 미트 — 바깥 분과 함께하는 회의 (키보드가 올라와 있으면 접는다) */}
+      {meeting?.video_url && !kb && (
+        <div className="shrink-0 border-b border-border/70 bg-card">
+          <MeetingLinkBar url={meeting.video_url} canEdit={host} onEdit={() => setLinkOpen(true)} />
+        </div>
+      )}
+
       {/* 음성 · 카메라 회의 (키보드가 올라와 있으면 접는다) */}
       {meeting && showCall && !kb && (
         <div className="shrink-0 border-b border-border/70 bg-card">
@@ -430,6 +445,15 @@ const OfficeRoomPage = () => {
                 </ol>
               )}
               <Decisions messages={messages} />
+              {host && !meeting.video_url && (
+                <button
+                  type="button"
+                  onClick={() => setLinkOpen(true)}
+                  className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-[12.5px] font-bold text-muted-foreground active:scale-95"
+                >
+                  <Video className="h-3.5 w-3.5" /> 줌 · 구글 미트 링크 넣기
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -551,6 +575,15 @@ const OfficeRoomPage = () => {
             void leaveOfficeCall();
             setMinutesId(meeting.id);
           }}
+        />
+      )}
+      {meeting && host && (
+        <MeetingLinkSheet
+          open={linkOpen}
+          onClose={() => setLinkOpen(false)}
+          meetingId={meeting.id}
+          current={meeting.video_url ?? null}
+          suggest={state?.last_video_url}
         />
       )}
       <MinutesSheet meetingId={minutesId} onClose={() => setMinutesId(null)} />

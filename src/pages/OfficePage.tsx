@@ -232,6 +232,7 @@ const OfficePage = () => {
           onClose={() => setOpenSheet(false)}
           branch={state.branch}
           label={state.label}
+          lastLink={state.last_video_url}
           onOpened={() => navigate("/office/room")}
         />
       )}
