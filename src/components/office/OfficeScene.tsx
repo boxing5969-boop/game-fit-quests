@@ -8,13 +8,15 @@
  *   · 대화 말풍선(talk): 회의 채팅에 쓴 말이 그 사람 머리 위에 몇 초 떴다 사라진다 — 진짜 회의처럼 (2026-10-27 대표님).
  *     옆사람 말풍선과 겹치면 먼저 한 말이 비키거나 위로 올라가 한 줄이 된다(lib/officeTalkLayout.ts). 말할 때 캐릭터가 살짝 들썩인다.
  *   · 입력 중(typing): 회의 채팅에 쓰고 있는 사람 머리 옆에 '…'.
+ *   · 음성 회의(voice, 2단계): 음성 회의 중인 사람 어깨에 헤드폰(듣는 중) · 마이크(마이크 켬) 표시,
+ *     말하고 있으면 표시가 반짝이고 캐릭터가 말하듯 들썩인다(말하는 중은 음성방에 들어간 사람만 안다).
  *   · view: 그림에서 보이는 영역 — 회의 화면은 회의실만 크게(OFFICE_VIEW_MEETING).
  *   · 캐릭터나 이름표를 누르면 그 사람 카드(openMemberCard).
  *   좌표: lib/officeLayout.ts · 그림: public/assets/office/office-153.webp
  */
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Pin } from "lucide-react";
+import { Headphones, Mic, Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getCharacterByHash, getCharacterImage } from "@/data/characterPresets";
 import { openMemberCard } from "@/lib/appEvents";
@@ -32,6 +34,7 @@ import {
 } from "@/lib/officeLayout";
 import { OFFICE_STATUS_LABEL, type OfficePerson, type OfficeState } from "@/services/officeService";
 import { layoutTalk, sameTalkLayout, type TalkBox, type TalkPlace } from "@/lib/officeTalkLayout";
+import type { OfficeCallMark } from "@/lib/officePresence";
 
 const charImage = (p: Pick<OfficePerson, "style" | "user_id">) =>
   p.style ? getCharacterImage(p.style) : getCharacterByHash(p.user_id).image;
@@ -71,10 +74,21 @@ interface Props {
   typing?: ReadonlySet<string>;
   /** 회의실 유리벽 위 '회의 중 · 안건' 띠 (기본 켬) */
   meetingLabel?: boolean;
+  /** 음성 회의 — 들어와 있는 사람(마이크 · 카메라) · 지금 말하는 사람 */
+  voice?: { calls: ReadonlyMap<string, OfficeCallMark>; speaking?: ReadonlySet<string> };
   className?: string;
 }
 
-const OfficeScene = ({ state, online, view = OFFICE_VIEW_ALL, talk, typing, meetingLabel = true, className }: Props) => {
+const OfficeScene = ({
+  state,
+  online,
+  view = OFFICE_VIEW_ALL,
+  talk,
+  typing,
+  meetingLabel = true,
+  voice,
+  className,
+}: Props) => {
   const me = state.me;
 
   // 대표 책상은 한 자리 — 대표님 계정이 여럿이면 들어와 있는 쪽(내가 대표님이면 나)
@@ -255,13 +269,17 @@ const OfficeScene = ({ state, online, view = OFFICE_VIEW_ALL, talk, typing, meet
             const at = (said && (place ?? lastPlace.current.get(said.id))) || null;
             const typingNow = !mine && !status && !!typing?.has(person.user_id);
             const bob = said ? 2.4 + (said.at % 9) * 0.03 : 0;
+            const vc = voice?.calls.get(person.user_id);
+            const talking = !!vc && !!voice?.speaking?.has(person.user_id);
             return (
               <motion.button
                 key={person.user_id}
                 type="button"
                 onClick={() => openMemberCard(person.user_id)}
-                aria-label={`${person.name} ${person.title}${status ? ` · ${OFFICE_STATUS_LABEL[status]}` : ""}`}
-                className={cn("absolute block", said ? "z-[6]" : typingNow ? "z-[5]" : "z-[4]")}
+                aria-label={`${person.name} ${person.title}${status ? ` · ${OFFICE_STATUS_LABEL[status]}` : ""}${
+                  vc ? ` · 음성 회의 중${talking ? " · 말하는 중" : ""}` : ""
+                }`}
+                className={cn("absolute block", said ? "z-[6]" : typingNow || talking ? "z-[5]" : "z-[4]")}
                 style={{ translateX: "-50%", translateY: "-100%" }}
                 initial={{ left: `${OFFICE_DOOR.x}%`, top: `${OFFICE_DOOR.y}%`, width: `${spot.w}%`, opacity: 0 }}
                 animate={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, opacity: 1 }}
@@ -367,10 +385,15 @@ const OfficeScene = ({ state, online, view = OFFICE_VIEW_ALL, talk, typing, meet
                 )}
                 {/* 캐릭터 — 아래쪽을 잘라 책상 · 탁자 뒤에 앉은 것처럼 */}
                 <span
-                  className={cn("relative block w-full overflow-hidden", mine && "drop-shadow-[0_0_6px_rgba(23,185,144,0.85)]")}
+                  className={cn(
+                    "relative block w-full overflow-hidden transition-[filter] duration-200",
+                    talking
+                      ? "drop-shadow-[0_0_7px_rgba(41,195,156,1)]"
+                      : mine && "drop-shadow-[0_0_6px_rgba(23,185,144,0.85)]",
+                  )}
                   style={{ aspectRatio: `${1 / spot.clip}` }}
                 >
-                  {/* 말할 때 살짝 들썩 (말마다 높이를 조금 달리해 다시 움직이게) */}
+                  {/* 채팅으로 말할 때 살짝 들썩 (말마다 높이를 조금 달리해 다시 움직이게) · 음성으로 말하는 동안은 계속 */}
                   <motion.img
                     src={charImage(person)}
                     alt=""
@@ -378,14 +401,52 @@ const OfficeScene = ({ state, online, view = OFFICE_VIEW_ALL, talk, typing, meet
                     loading="lazy"
                     decoding="async"
                     className="absolute left-0 top-0 block aspect-square w-full object-contain"
-                    animate={{ y: said ? [0, -bob, 0, -bob * 0.55, 0] : 0 }}
-                    transition={{ duration: 0.75, ease: "easeOut" }}
+                    animate={{ y: said ? [0, -bob, 0, -bob * 0.55, 0] : talking ? [0, -1.8, 0, -1, 0] : 0 }}
+                    transition={
+                      talking && !said
+                        ? { duration: 0.62, ease: "easeInOut", repeat: Infinity }
+                        : { duration: 0.75, ease: "easeOut" }
+                    }
                   />
                 </span>
+                {/* 음성 회의 (책상 자리) — 어깨에 헤드폰(듣는 중) · 마이크(마이크 켬), 말하고 있으면 반짝.
+                    회의실 탁자에서는 옆사람과 붙어 있어 발밑 이름표 안에 넣는다 (아래) */}
+                {vc && !inMeeting && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "pointer-events-none absolute -right-[4px] bottom-[4%] z-[3] flex h-[14px] w-[14px] items-center justify-center rounded-full shadow ring-1",
+                      talking
+                        ? "bg-primary text-primary-foreground ring-white"
+                        : vc.mic
+                          ? "bg-white text-primary ring-black/10"
+                          : "bg-white text-zinc-500 ring-black/10",
+                    )}
+                  >
+                    {talking && <span className="absolute inset-0 animate-ping rounded-full bg-primary/60" />}
+                    {vc.mic ? (
+                      <Mic className="relative h-[8px] w-[8px]" strokeWidth={3} />
+                    ) : (
+                      <Headphones className="relative h-[8px] w-[8px]" strokeWidth={3} />
+                    )}
+                  </span>
+                )}
                 {/* 회의실에서는 발밑에 이름 */}
                 {inMeeting && (
-                  <span className="absolute left-1/2 top-full z-[2] mt-[1px] max-w-[160%] -translate-x-1/2 truncate whitespace-nowrap rounded-[4px] bg-white/95 px-[3px] text-[7.5px] font-extrabold leading-[10px] text-zinc-800 shadow-sm">
-                    {mine ? `${person.name} (나)` : person.name}
+                  <span
+                    className={cn(
+                      "absolute left-1/2 top-full z-[2] mt-[1px] flex max-w-[160%] -translate-x-1/2 items-center gap-[1.5px] whitespace-nowrap rounded-[4px] px-[3px] text-[7.5px] font-extrabold leading-[10px] shadow-sm transition-colors duration-200",
+                      talking ? "bg-primary text-primary-foreground" : "bg-white/95 text-zinc-800",
+                    )}
+                  >
+                    {/* 음성 회의 — 헤드폰(듣는 중) · 마이크(마이크 켬), 말하는 동안 이름표가 민트색 */}
+                    {vc &&
+                      (vc.mic ? (
+                        <Mic className={cn("h-[7px] w-[7px] shrink-0", !talking && "text-primary")} strokeWidth={3} />
+                      ) : (
+                        <Headphones className="h-[7px] w-[7px] shrink-0 text-zinc-500" strokeWidth={3} />
+                      ))}
+                    <span className="truncate">{mine ? `${person.name} (나)` : person.name}</span>
                   </span>
                 )}
                 {mine && !inMeeting && (

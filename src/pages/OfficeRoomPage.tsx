@@ -9,6 +9,9 @@
  *   가운데 — 안건 · 정한 것(눌러서 펼침) · 채팅
  *   아래  — 입력창 (대표님 · 지점장은 '정한 것' 핀을 켜고 보내기)
  *
+ *   그림 아래 — 음성 · 카메라 회의 막대(2단계, OfficeCallBar · lib/officeCall). 들어가면 듣기만, 말할 때 '말하기'.
+ *           카메라를 켠 사람은 그림 왼쪽 아래 작은 화면. 이 화면을 떠나거나 회의가 끝나면 음성 회의에서도 나간다.
+ *
  *   들어오면 회의에 참석(office_join_meeting) — 나가기는 '나가기'(내 자리로), 대표님 · 지점장은 '끝내기'.
  *   화면 높이 = 100dvh. 키보드가 올라오면 보이는 높이(visualViewport)에 맞춰 줄인다 — 아이폰 · 안드로이드 크롬은 키보드가
  *   화면을 덮어 그대로 두면 위 그림이 밀려 올라간다. 그림을 보면서 쓰는 화면이라 그때는 안건 띠를 접는다.
@@ -21,7 +24,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import OfficeScene, { type SceneTalk } from "@/components/office/OfficeScene";
 import { Decisions, EndMeetingSheet, MessageList, MinutesSheet } from "@/components/office/OfficeMeeting";
+import { OfficeCallBar, OfficeCallVideos } from "@/components/office/OfficeCallBar";
 import { sendOfficeTyping, useOfficeOnline, useOfficeTyping } from "@/lib/officePresence";
+import { endOfficeCallForAll, leaveOfficeCall, useOfficeCall } from "@/lib/officeCall";
 import { OFFICE_VIEW_ALL, OFFICE_VIEW_MEETING, officeViewAspect } from "@/lib/officeLayout";
 import {
   officeDuration,
@@ -30,6 +35,7 @@ import {
   useJoinMeeting,
   useLeaveMeeting,
   useMarkDecision,
+  useOfficeCallReady,
   useOfficeMe,
   useOfficeMessages,
   useOfficeState,
@@ -118,6 +124,19 @@ const OfficeRoomPage = () => {
     s.add(state.me);
     return s;
   }, [presence.online, state]);
+
+  // ── 음성 · 카메라 회의 (2단계) — 설정이 끝났거나 누가 음성 회의 중일 때만 막대를 보인다 ──
+  const call = useOfficeCall();
+  const callReady = useOfficeCallReady(!!meeting).data === true;
+  const showCall = !!meeting && (callReady || presence.calls.size > 0 || call.status !== "idle");
+  const names = useMemo(() => new Map((state?.people ?? []).map((p) => [p.user_id, p.name] as const)), [state?.people]);
+  const voice = useMemo(() => ({ calls: presence.calls, speaking: call.speaking }), [presence.calls, call.speaking]);
+  // 이 화면을 떠나면 음성 회의에서도 나간다
+  useEffect(() => () => void leaveOfficeCall(), []);
+  // 회의가 끝나거나 다른 회의가 되면 음성 회의에서 나간다
+  useEffect(() => {
+    if (call.status !== "idle" && call.meetingId && call.meetingId !== meeting?.id) void leaveOfficeCall();
+  }, [call.status, call.meetingId, meeting?.id]);
 
   // ── 들어오면 회의에 참석 (회의마다 한 번) ──
   const joinTried = useRef<string | null>(null);
@@ -273,6 +292,7 @@ const OfficeRoomPage = () => {
   };
   const leaveRoom = () => {
     if (!meeting) return goOffice();
+    void leaveOfficeCall();
     leave.mutate(meeting.id, {
       onSuccess: () => navigate("/office", { replace: true }),
       onError: (e) => toast.error((e as Error).message),
@@ -344,8 +364,11 @@ const OfficeRoomPage = () => {
               view={full ? OFFICE_VIEW_ALL : OFFICE_VIEW_MEETING}
               talk={talk}
               typing={typing}
+              voice={voice}
               meetingLabel={false}
             />
+            {/* 아래 왼쪽 — 카메라를 켠 사람 */}
+            <OfficeCallVideos me={me} names={names} />
             {/* 아래 오른쪽 — 위쪽은 말풍선 자리 */}
             <button
               type="button"
@@ -360,6 +383,13 @@ const OfficeRoomPage = () => {
           <div className="w-full animate-pulse bg-secondary" style={{ aspectRatio: `${officeViewAspect(OFFICE_VIEW_MEETING)}` }} aria-hidden />
         )}
       </div>
+
+      {/* 음성 · 카메라 회의 (키보드가 올라와 있으면 접는다) */}
+      {meeting && showCall && !kb && (
+        <div className="shrink-0 border-b border-border/70 bg-card">
+          <OfficeCallBar meetingId={meeting.id} topic={state?.topic ?? null} me={me} calls={presence.calls} names={names} />
+        </div>
+      )}
 
       {/* 안건 · 정한 것 — 눌러서 펼침 (키보드가 올라와 있으면 접는다 — 그림 · 채팅 자리) */}
       {meeting && !kb && (
@@ -515,7 +545,12 @@ const OfficeRoomPage = () => {
           onClose={() => setEndOpen(false)}
           meetingId={meeting.id}
           summary={`${meeting.title} · ${officeDuration(meeting.opened_at, null)} · 참석 ${meeting.attendees.length}명 · 정한 것 ${decisions}개`}
-          onEnded={() => setMinutesId(meeting.id)}
+          onEnded={() => {
+            // 음성방도 닫는다 — 모두 내보내고 다시 못 들어오게
+            endOfficeCallForAll(meeting.id);
+            void leaveOfficeCall();
+            setMinutesId(meeting.id);
+          }}
         />
       )}
       <MinutesSheet meetingId={minutesId} onClose={() => setMinutesId(null)} />

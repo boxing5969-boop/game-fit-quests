@@ -5,6 +5,7 @@
  *   2. 앱을 닫거나 폰 화면을 끄면 30초 뒤 신호를 거둔다 → 캐릭터가 일어나 문으로 나간다(잠깐 전화 받을 때 깜빡이지 않게).
  *   3. 같은 채널로 '바뀜 신호'(회의 열림 · 채팅 · 상태)를 받아 회의실 화면을 다시 읽는다.
  *   4. 회의 채팅에 쓰는 중 신호(broadcast 'typing' {u, off?}, 내용 없음)를 주고받는다 → 캐릭터 옆 '…'.
+ *   5. 음성 회의(2단계)에 들어가 있나 · 마이크 · 카메라를 내 Presence 표시에 같이 싣는다(officePresence setOfficeSelfMeta).
  *
  *   채널: 비공개 'office:<지점 코드>' — 서버 정책(realtime.messages)이 그 지점 지도진 + 대표님만 들인다.
  *   회원 · 다른 지점 지도진은 office_me 가 빈 목록이라 아무것도 하지 않는다.
@@ -19,9 +20,12 @@ import { OFFICE_KEY, useOfficeMe } from "@/services/officeService";
 import {
   OFFICE_LEAVE_DELAY_MS,
   clearOfficeTopic,
+  getOfficeSelfMeta,
   markOfficeTyping,
+  officeCallsFromPresence,
   setOfficeSender,
   setOfficeTopicState,
+  setOfficeTracker,
 } from "@/lib/officePresence";
 
 /** 바뀜 신호 → 다시 읽을 것 */
@@ -63,7 +67,9 @@ const OfficePresenceBridge = () => {
       tracked = true;
       await Promise.all(
         channels.map((ch) =>
-          ch.state === "joined" ? ch.track({ at: Date.now() }).catch(() => undefined) : Promise.resolve(undefined),
+          ch.state === "joined"
+            ? ch.track({ at: Date.now(), ...getOfficeSelfMeta(ch.subTopic) }).catch(() => undefined)
+            : Promise.resolve(undefined),
         ),
       );
     };
@@ -83,7 +89,8 @@ const OfficePresenceBridge = () => {
       for (const topic of topics) {
         const ch = supabase.channel(topic, { config: { private: true, presence: { key: uid, enabled: true } } });
         ch.on("presence", { event: "sync" }, () => {
-          setOfficeTopicState(topic, { online: new Set(Object.keys(ch.presenceState())) });
+          const ps = ch.presenceState() as unknown as Record<string, ReadonlyArray<Record<string, unknown>>>;
+          setOfficeTopicState(topic, { online: new Set(Object.keys(ps)), calls: officeCallsFromPresence(ps) });
         })
           .on("broadcast", { event: "changed" }, (msg) => {
             const what = (msg?.payload as { t?: string } | undefined)?.t ?? "";
@@ -98,11 +105,15 @@ const OfficePresenceBridge = () => {
             setOfficeTopicState(topic, { connected: status === "SUBSCRIBED" });
             if (status === "SUBSCRIBED" && document.visibilityState !== "hidden") {
               tracked = true;
-              void ch.track({ at: Date.now() }).catch(() => undefined);
+              void ch.track({ at: Date.now(), ...getOfficeSelfMeta(topic) }).catch(() => undefined);
             }
           });
         setOfficeSender(topic, (event, payload) => {
           if (ch.state === "joined") void ch.send({ type: "broadcast", event, payload }).catch(() => undefined);
+        });
+        // 음성 회의 들어감 · 마이크 · 카메라가 바뀌면 내 표시를 다시 싣는다
+        setOfficeTracker(topic, (meta) => {
+          if (tracked && ch.state === "joined") void ch.track({ at: Date.now(), ...meta }).catch(() => undefined);
         });
         channels.push(ch);
       }
@@ -110,6 +121,8 @@ const OfficePresenceBridge = () => {
 
     const onVisibility = () => {
       if (document.visibilityState === "hidden") {
+        // 음성 회의 중이면 자리를 지킨다 (화면을 끄고 듣고 있을 수 있다)
+        if (topics.some((t) => getOfficeSelfMeta(t).call)) return;
         if (hideTimer) clearTimeout(hideTimer);
         hideTimer = setTimeout(() => void untrackAll(), OFFICE_LEAVE_DELAY_MS);
         return;
