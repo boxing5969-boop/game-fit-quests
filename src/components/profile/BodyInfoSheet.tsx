@@ -7,6 +7,8 @@
  *   · 성별 · 출생 연도는 지점 등록 정보가 있으면 미리 골라 둔다 — 그대로 두면 저장하지 않는다
  *   · '한 번 복싱 시간' 칸은 2026-10-22 없앴다 — 운동 시간은 두 번째 체크(얼굴 인식 · QR)로 실제로 잰다 (대표님)
  *   보는 사람 안내 문구는 넣지 않는다 (2026-10-22 대표님: "안내 문구를 아예 넣지 말자") · '지우기'는 두 번 눌러야 지운다.
+ *   → 2026-10-28 대표님 "공개 비공개 버튼 만들고 비공개 버튼 누르면 본인 외에는 아무도 못보는걸로" — 맨 위 '누가 볼 수 있나요?'
+ *     공개(운영진 · 코치님) · 비공개(나만, 코치님이 잰 153 PB 기록은 그대로). 누르면 바로 저장(set_my_body_info_private).
  *   칸 옆 '+15%' = 홈 '153과 함께하며' 정확도가 오르는 만큼 (lib/fitnessProfile153 ACCURACY_POINTS)
  *   + 맨 위 '153 체력 프로필' 카드(읽기 전용) · 아래 선택 칸 허리둘레 · 안정시 심박 (2026-10-25 대표님 — 체력 프로필 1단계)
  *     카드는 코치님이 잰 153 PB 공식 기록(실측)만 — 영역 5개 · PB · 처음보다 좋아진 정도 · 악력 · 다음 측정일.
@@ -18,7 +20,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Gauge, Loader2 } from "lucide-react";
+import { ChevronRight, Gauge, Loader2, Lock, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
@@ -29,6 +31,7 @@ import {
   useSaveBodyInfo,
   useSaveFitnessExtra,
   useSaveMyMeasures,
+  useSetBodyPrivacy,
 } from "@/hooks/useMyBodyInfo";
 import {
   DAILY_WORKOUT_CHOICES,
@@ -168,6 +171,17 @@ const BodyInfoSheet = ({
   const saveExtra = useSaveFitnessExtra();
   const saveMeasures = useSaveMyMeasures();
   const clear = useClearBodyInfo();
+  const privacy = useSetBodyPrivacy();
+  const isPrivate = current?.isPrivate ?? false;
+  const onPrivacy = async (next: boolean) => {
+    if (next === isPrivate || privacy.isPending) return;
+    try {
+      await privacy.mutateAsync(next);
+      toast.success(next ? "비공개로 바꿨어요. 이제 나만 볼 수 있어요" : "공개로 바꿨어요");
+    } catch {
+      toast.error("바꾸지 못했어요. 잠시 뒤 다시 해 주세요");
+    }
+  };
   const { data: extra } = useMyFitnessExtra(open);
   const { data: profile, isLoading: profileLoading } = useMyFitnessProfile(open);
   const [height, setHeight] = useState("");
@@ -388,6 +402,34 @@ const BodyInfoSheet = ({
           </DrawerDescription>
         </DrawerHeader>
         <div className="space-y-3 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
+          {/* 누가 볼 수 있나요? — 공개 · 비공개 (2026-10-28 대표님), 누르면 바로 저장 */}
+          <div>
+            <span className="text-[12px] font-bold text-muted-foreground">누가 볼 수 있나요?</span>
+            <div className="mt-1 grid grid-cols-2 gap-2" role="radiogroup" aria-label="신체 정보 공개 범위">
+              {([false, true] as const).map((p) => (
+                <button
+                  key={String(p)}
+                  type="button"
+                  role="radio"
+                  aria-checked={isPrivate === p}
+                  disabled={privacy.isPending}
+                  onClick={() => void onPrivacy(p)}
+                  className={cn(
+                    "flex h-12 items-center justify-center gap-1.5 rounded-xl border text-[15px] font-bold transition-transform active:scale-[0.98] disabled:opacity-60",
+                    isPrivate === p ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground",
+                  )}
+                >
+                  {p ? <Lock className="h-4 w-4" aria-hidden /> : <Users className="h-4 w-4" aria-hidden />}
+                  {p ? "비공개" : "공개"}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+              {isPrivate
+                ? "나만 볼 수 있어요. 코치님이 잰 153 PB 기록만 코치님도 봐요."
+                : "운영진과 코치님이 볼 수 있어요. 비공개로 하면 나만 봐요."}
+            </p>
+          </div>
           <ProfileCard
             profile={profile}
             loading={profileLoading}

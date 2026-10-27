@@ -21,7 +21,7 @@
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Clock, Flame, Ruler, Swords } from "lucide-react";
+import { ChevronRight, Clock, Flame, Lock, Ruler, Swords } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
 import { useMemberBodyInfo, useMyBodyInfo, useMyFitnessExtra } from "@/hooks/useMyBodyInfo";
@@ -321,7 +321,16 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
 
       {/* 신체 정보 — 본인은 넣기 · 고치기, 관리자 · 지점장은 보기만 (넣은 값이 있을 때) */}
       {staffView ? (
-        body && (body.heightCm != null || body.weightKg != null) ? (
+        body?.isPrivate ? (
+          // 회원이 비공개로 했으면 값은 오지 않는다 (2026-10-28 대표님)
+          <div className="mt-2 flex items-center gap-2.5 rounded-xl bg-muted/50 px-3.5 py-3">
+            <Lock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[12px] font-bold text-muted-foreground">회원 신체 정보</span>
+              <span className="block truncate text-[13px] font-bold text-foreground">회원이 비공개로 했어요</span>
+            </span>
+          </div>
+        ) : body && (body.heightCm != null || body.weightKg != null) ? (
           <div className="mt-2 flex items-center gap-2.5 rounded-xl bg-muted/50 px-3.5 py-3">
             <Ruler className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <span className="min-w-0 flex-1">
@@ -341,7 +350,9 @@ const AchievementCard = ({ className, userId }: { className?: string; userId?: s
         >
           <Ruler className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           <span className="min-w-0 flex-1">
-            <span className="block text-[12px] font-bold text-muted-foreground">내 신체 정보</span>
+            <span className="block text-[12px] font-bold text-muted-foreground">
+              내 신체 정보{body?.isPrivate ? " · 나만 보기" : ""}
+            </span>
             <span className="block truncate text-[13px] font-bold text-foreground">
               {body && (body.heightCm != null || body.weightKg != null) ? bodyLine(body) : "키 · 몸무게 넣기"}
             </span>

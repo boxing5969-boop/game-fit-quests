@@ -57,6 +57,27 @@ export function useMemberBodyInfo(userId: string | null | undefined, enabled = t
   });
 }
 
+/**
+ * 신체 정보 공개 · 비공개 (2026-10-28 대표님: "비공개 버튼 누르면 본인 외에는 아무도 못보는걸로")
+ *   서버: set_my_body_info_private (supabase/migrations/20261028011318_body_info_private.sql)
+ *   비공개면 대표님 · 지점장 · 코치 누구도 내가 넣은 값을 못 본다(코치님이 잰 153 PB 기록은 그대로).
+ */
+export function useSetBodyPrivacy() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation<boolean, unknown, boolean>({
+    mutationFn: async (isPrivate) => {
+      const { data, error } = await sb.rpc("set_my_body_info_private", { p_private: isPrivate });
+      if (error) throw error;
+      return (data as { private?: boolean } | null)?.private === true;
+    },
+    onSuccess: (isPrivate) => {
+      qc.setQueryData<BodyInfo>([...BODY_INFO_KEY, user?.id ?? "anon"], (prev) => (prev ? { ...prev, isPrivate } : prev));
+      void qc.invalidateQueries({ queryKey: [...BODY_INFO_KEY, user?.id ?? "anon"] });
+    },
+  });
+}
+
 export function useSaveBodyInfo() {
   const { user } = useAuth();
   const qc = useQueryClient();

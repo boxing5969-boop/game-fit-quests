@@ -193,6 +193,8 @@ export interface BodyInfo {
    *   운동하는지 본인이 넣을 수 있게" → 같은 칸을 '하루 평균 운동 시간'으로 다시 쓴다. 칼로리 · 펀치 계산에는 쓰지 않는다.
    */
   sessionMinutes: number | null;
+  /** 신체 정보 비공개 (2026-10-28 대표님) — 참이면 본인 말고 아무도 못 본다. 관리자가 볼 때 참이면 값 없이 온다 */
+  isPrivate: boolean;
 }
 
 /** 하루 평균 운동 시간 고르기 (분) — 서버 범위 20~240 안 */
@@ -228,6 +230,7 @@ export function normalizeBodyInfo(raw: unknown): BodyInfo {
     firstWeightOn: ymd(r.first_weight_on),
     count: Math.max(0, Math.trunc(num(r.count) ?? 0)),
     sessionMinutes: num(r.session_minutes),
+    isPrivate: r.private === true,
   };
 }
 

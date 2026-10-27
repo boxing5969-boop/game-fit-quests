@@ -358,7 +358,8 @@ const BranchManagerHome = () => {
         <p className="-mt-1 mb-3 px-1 text-[11px] leading-relaxed text-muted-foreground">
           {filter === "body_info"
             ? "키 · 몸무게를 넣은 회원이에요. 값은 회원을 눌러 '내정보'에서 봐요."
-            : "앱에 들어온 적 있는데 키 · 몸무게를 아직 안 넣은 회원이에요."}
+            : "앱에 들어온 적 있는데 키 · 몸무게를 아직 안 넣은 회원이에요."}{" "}
+          신체 정보를 비공개로 한 회원은 두 목록 모두에 나오지 않아요.
         </p>
       )}
 
