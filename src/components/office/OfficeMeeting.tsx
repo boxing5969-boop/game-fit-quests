@@ -170,7 +170,7 @@ export const MeetingSummaryCard = ({
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" /> 회의 중 · {officeDuration(meeting.opened_at, null)}째
         </span>
         <span className="truncate text-[11.5px] font-semibold text-muted-foreground">
-          {officeName(meeting.opened_by)} · {officeTime(meeting.opened_at)}
+          {meeting.scheduled ? "정기 회의" : officeName(meeting.opened_by)} · {officeTime(meeting.opened_at)}
         </span>
       </div>
       <h3 className="mt-2.5 text-[18px] font-black leading-snug text-foreground">{meeting.title}</h3>
@@ -203,8 +203,8 @@ export const MeetingSummaryCard = ({
 const peopleLine = (list: OfficeDisplay[], max = 3) =>
   list.slice(0, max).map(officeName).join(" · ") + (list.length > max ? ` 외 ${list.length - max}분` : "");
 
-/** 끝내면서 함께 할 것 한 줄 — 그림 · 제목 · 설명 · 스위치 (줄 어디를 눌러도 켜고 끈다) */
-const WrapOption = ({
+/** 끝내면서 함께 할 것 한 줄 — 그림 · 제목 · 설명 · 스위치 (줄 어디를 눌러도 켜고 끈다). 정기 회의 예약 시트도 쓴다 */
+export const WrapOption = ({
   icon,
   title,
   sub,
@@ -503,7 +503,7 @@ export const MeetingLinkSheet = ({
 };
 
 /** 링크 칸 — 줌 초대 글을 통째로 붙여 넣어도 링크만 골라 보여 준다. suggest = 지난번 링크(눌러야 들어간다) */
-const MeetingLinkField = ({
+export const MeetingLinkField = ({
   value,
   onChange,
   parsed,

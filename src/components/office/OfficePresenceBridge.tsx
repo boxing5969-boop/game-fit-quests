@@ -35,6 +35,7 @@ const KEYS_FOR: Record<string, string[]> = {
   attendees: ["state", "messages"],
   meeting: ["state", "me", "messages", "list"],
   recap: ["recap", "list"], // 3단계 — 요약 · 전략 회의실 지시 · 못 오신 분 알림
+  schedule: ["schedules", "me"], // 정기 회의 예약 — 사무실 '정기 회의' 칸 · 홈 카드 '다음 회의'
 };
 
 const OfficePresenceBridge = () => {

@@ -168,6 +168,17 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 알림 하나씩: 못 온 분(지점 지도진 + 대표님 중 한 번도 안 들어온 분)은 '못 오신 회의 요약 · <회의>'(→ 회의록)만, 나머지 지점 지도진은 '📌 새 지시'만. 회의 화면 신호 `recap`.
 - 개인정보 처리방침: 선택 항목 · Anthropic 위탁 줄 · 국외 이전에 '지점 회의실 회의 요약' 추가 (요약을 고를 때만 채팅이 간다, 앱에는 세 줄만).
 
+#### 정기 회의 예약 (2026-10-27 대표님 "다음 작업 진행하자")
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261027225255_office_schedules.sql](supabase/migrations/20261027225255_office_schedules.sql) | `office_schedules`(매주 요일 `weekdays` 0=일 또는 하루 `once_on` · `at_time` · `remind_min` 0/5/10/30/60 · `video_url` · `next_at` · `skip_at` · 취소 `canceled_at`) · `office_meetings.schedule_id` · `office_schedule_list`(지점 지도진 + 대표님) · `_save` · `_skip`(다음 한 번 쉬기) · `_cancel` · `_open_now`(대표님 · 지점장) · 매분 cron `office-schedule-tick` → `office_schedule_tick()` · `office_me` 의 `offices[].next` · `office_state` 의 `meeting.scheduled` · `office_meetings_list` 의 `scheduled` |
+| [src/components/office/OfficeSchedule.tsx](src/components/office/OfficeSchedule.tsx) · [src/lib/officeSchedule.ts](src/lib/officeSchedule.ts) | 사무실 '정기 회의' 칸(`ScheduleSection` — 1시간 안이면 '지금 열기') · 예약 시트(`ScheduleSheet` — 고칠 때 쉬기 · 취소) · 화면 글 · 날짜 계산(서버 `_office_next_at` · `_office_schedule_when` 과 같은 규칙, 한국 시간 고정) |
+
+- 매분(`office_schedule_tick`): ① 시작 N분 전 지점 지도진 + 대표님께 'N분 뒤 지점 회의가 있어요'(→ `/office`) ② 시작 시각에 회의를 연다(opened_by = 예약한 사람, 아무도 참석 처리 안 함, '지금 지점 회의가 열렸어요' → `/office/room`, 줌 · 미트 링크 그대로) — 열린 회의가 있으면 건너뛰고, 6시간 넘게 열려 있던 회의(끝내기를 잊은 회의)는 닫고 연다 · 30분 넘게 늦은 차례(cron 멈춤)는 열지 않음 ③ 정기 회의로 열렸는데 1시간 동안 아무도 안 들어온 회의는 닫는다. 쉬는 차례는 알림 · 열기 모두 건너뛴다. 한 번만 하는 회의는 열린 뒤 `active=false`.
+- '지도진에게 알리기'(새 예약은 켜짐 · 고치기는 꺼짐): 잡혔어요 · 바뀌었어요 · 쉬어요 · 다시 해요 · 취소됐어요 한 번씩(보낸 사람 빼고). 곧 시작하는 회의를 알리기로 잡으면 그 알림이 미리 알림을 대신한다. 지점마다 예약 10개까지. 화면 신호 `schedule`.
+- 2026-10-27 MCP 로 적용할 때 SQL 에 `delete` 가 든 쿼리는 승인 창이 떠서 '취소'됐다(대표님 자리 비움) → 예약 취소는 지우지 않고 남기는 방식(`office_schedule_cancel`)으로 만들고 조각으로 나눠 적용. 시험은 되돌리는 트랜잭션(한 문장 안에서는 STABLE 함수가 앞 스냅숏을 본다 — 확인은 문장을 나눠서).
+
 ### 이모지 → 153 입체 아이콘 (2026-10-16 대표님: "이모지는 모두 빼고 … 퀄리티있는 디자인")
 
 앱 화면에 시스템 이모지가 나오지 않는다. 글자 속 이모지는 그릴 때 자동으로 153 입체 아이콘(img.emo3d, 글자 크기 1.2em)이 된다 — 코드의 이모지 문자열을 고칠 필요가 없다.

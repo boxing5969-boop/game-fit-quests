@@ -4,6 +4,7 @@
  *   회원 화면에는 칸 자체가 없다(office_me 가 빈 목록 → 그리지 않음).
  *   한 줄: "지금 3명 사무실에 있어요 · 회의 진행 중"
  *   회의 중이면 누르자마자 그 회의 화면(/office/room)으로 — 아니면 사무실(/office).
+ *   정기 회의가 잡혀 있으면 "다음 회의 · 내일 오전 10:00 · 주간 지도진 회의" 한 줄 (office_me 의 next, 20261027225255)
  */
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
@@ -13,6 +14,7 @@ import { isStaffProfile } from "@/lib/staffDisplay";
 import { saveOfficeBranch, useOfficeMe } from "@/services/officeService";
 import { useOfficeOnline } from "@/lib/officePresence";
 import { OFFICE_ART } from "@/lib/officeLayout";
+import { nextLabel } from "@/lib/officeSchedule";
 
 const OfficeEntryCard = () => {
   const navigate = useNavigate();
@@ -55,6 +57,11 @@ const OfficeEntryCard = () => {
         </span>
         {live && (
           <span className="mt-0.5 block truncate text-[12.5px] font-bold text-primary">{office.meeting!.title}</span>
+        )}
+        {!live && office.next && (
+          <span className="mt-0.5 block truncate text-[12.5px] font-bold text-foreground/80">
+            다음 회의 · {nextLabel(office.next.at)} · {office.next.title}
+          </span>
         )}
       </span>
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />

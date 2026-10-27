@@ -9,6 +9,7 @@
  *   · 출입은 서버가 정한다(office_* 함수 · 비공개 실시간 채널) — 회원 화면에는 입구 자체가 없다.
  *   2단계 음성 · 카메라(Cloudflare RealtimeKit — 회의 화면) · 3단계 회의록 → 전략 회의실 지시 · 못 오신 분 요약(끝내기 시트 · 회의록)
  *   ?minutes=<회의> 로 오면 그 회의록을 바로 연다 (못 오신 회의 요약 알림 · 지시 카드 '회의록 보기')
+ *   정기 회의 예약(2026-10-27) — '정기 회의' 칸(OfficeSchedule): 미리 알림 · 시간에 회의가 저절로 열림 · 지금 열기
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import OfficeScene from "@/components/office/OfficeScene";
 import { MeetingSummaryCard, MinutesSheet, OpenMeetingSheet } from "@/components/office/OfficeMeeting";
+import { ScheduleSection } from "@/components/office/OfficeSchedule";
 import { useOfficeOnline } from "@/lib/officePresence";
 import {
   OFFICE_STATUS_LABEL,
@@ -209,6 +211,9 @@ const OfficePage = () => {
             </div>
           )}
 
+          {/* 정기 회의 예약 — 미리 알림 · 시간에 회의 열기 (2026-10-27) */}
+          <ScheduleSection state={state} />
+
           {/* 지난 회의록 */}
           <section>
             <h2 className="px-1 text-[15px] font-black text-foreground">지난 회의록</h2>
@@ -231,7 +236,7 @@ const OfficePage = () => {
                         <p className="truncate text-[14.5px] font-bold text-foreground">{m.title}</p>
                         <p className="mt-0.5 truncate text-[11.5px] text-muted-foreground">
                           {officeDateTime(m.opened_at)} · {officeDuration(m.opened_at, m.closed_at)} · 참석 {m.attendees}명
-                          {m.decisions > 0 ? ` · 정한 것 ${m.decisions}` : ""} · {officeName(m.opened_by)}
+                          {m.decisions > 0 ? ` · 정한 것 ${m.decisions}` : ""} · {m.scheduled ? "정기 회의" : officeName(m.opened_by)}
                         </p>
                       </div>
                       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />

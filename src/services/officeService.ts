@@ -17,6 +17,8 @@ export interface OfficeEntry {
   topic: string;
   role: OfficeRole;
   meeting: { id: string; title: string; opened_at: string } | null;
+  /** 다음 정기 회의 (쉬는 차례는 그다음) — 홈 카드 '다음 회의' (20261027225255) */
+  next?: { id: string; title: string; at: string } | null;
 }
 
 export interface OfficeMe {
@@ -57,6 +59,8 @@ export interface OfficeMeeting {
   opened_by: OfficeDisplay;
   /** 줌 · 구글 미트 링크 (없으면 null — 20261027204015) */
   video_url?: string | null;
+  /** 정기 회의 예약으로 열린 회의 (20261027225255) */
+  scheduled?: boolean;
   attendees: OfficeAttendee[];
 }
 
@@ -135,9 +139,50 @@ export interface OfficeMeetingSummary {
   opened_at: string;
   closed_at: string | null;
   opened_by: OfficeDisplay;
+  /** 정기 회의 예약으로 열린 회의 */
+  scheduled?: boolean;
   attendees: number;
   decisions: number;
   messages: number;
+}
+
+/** 정기 회의 예약 (20261027225255 office_schedule_list — 그 지점 지도진 + 대표님이 본다) */
+export interface OfficeSchedule {
+  id: string;
+  title: string;
+  agenda: string[];
+  /** 0=일 … 6=토 (매주). 한 번만이면 [] */
+  weekdays: number[];
+  /** 한 번만 하는 날 'YYYY-MM-DD' */
+  once_on: string | null;
+  /** 시작 'HH:MM' (한국 시간) */
+  at: string;
+  /** 미리 알림 0 · 5 · 10 · 30 · 60분 전 */
+  remind_min: number;
+  video_url: string | null;
+  /** 다음 시작 시각 */
+  next_at: string | null;
+  /** 다음 차례를 쉰다 — then_at = 그다음 차례 */
+  skip_next: boolean;
+  then_at: string | null;
+  created_by: OfficeDisplay;
+}
+
+export interface OfficeScheduleInput {
+  /** 고칠 때만 */
+  id?: string | null;
+  branch: string;
+  title: string;
+  agenda: string[];
+  /** 매주 요일 (한 번만이면 []) */
+  weekdays: number[];
+  /** 한 번만 하는 날 (매주면 null) */
+  onceOn: string | null;
+  at: string;
+  remindMin: number;
+  videoUrl: string | null;
+  /** '지점 회의가 잡혔어요 · 바뀌었어요' 알림 */
+  notify: boolean;
 }
 
 export const OFFICE_STATUS_LABEL: Record<OfficeStatus | "meeting", string> = {
@@ -207,6 +252,19 @@ export const useOfficeRecap = (meetingId: string | null | undefined, enabled = t
     enabled: enabled && !!meetingId,
     staleTime: 10_000,
     queryFn: () => call<OfficeRecap>("office_recap", { p_meeting: meetingId }, "회의 정리를 불러오지 못했어요"),
+  });
+
+/** 정기 회의 예약 목록 — 다음 시작이 가까운 순 */
+export const useOfficeSchedules = (branch: string | null, enabled = true) =>
+  useQuery({
+    queryKey: [...OFFICE_KEY, "schedules", branch],
+    enabled,
+    staleTime: 30_000,
+    refetchInterval: 120_000,
+    queryFn: async () => {
+      const d = await call<OfficeSchedule[] | null>("office_schedule_list", { p_branch: branch }, "정기 회의를 불러오지 못했어요");
+      return Array.isArray(d) ? d : [];
+    },
   });
 
 /** 음성 · 카메라 회의(2단계)를 켰나 — 영상 서비스 설정이 끝나야 회의 화면에 '음성 참여' 막대가 보인다 (실패하면 안 보임) */
@@ -294,6 +352,65 @@ export const useSetMeetingLink = () => {
   return useMutation({
     mutationFn: (v: { meetingId: string; url: string }) =>
       call<string | null>("office_set_meeting_link", { p_meeting: v.meetingId, p_url: v.url }, "링크를 넣지 못했어요"),
+    onSuccess: invalidate,
+  });
+};
+
+/* 정기 회의 예약 — 대표님 · 지점장 (서버가 다시 확인한다) */
+
+export const useSaveSchedule = () => {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (v: OfficeScheduleInput) =>
+      call<string>(
+        "office_schedule_save",
+        {
+          p_id: v.id ?? null,
+          p_branch: v.branch,
+          p_title: v.title,
+          p_agenda: v.agenda,
+          p_weekdays: v.onceOn ? [] : v.weekdays,
+          p_once_on: v.onceOn,
+          p_at: v.at,
+          p_remind_min: v.remindMin,
+          p_video_url: v.videoUrl ?? "",
+          p_notify: v.notify,
+        },
+        "회의를 예약하지 못했어요",
+      ),
+    onSuccess: invalidate,
+  });
+};
+
+/** 다음 한 번 쉬기 · 다시 하기 (매주 회의만) */
+export const useSkipSchedule = () => {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (v: { id: string; skip: boolean; notify: boolean }) =>
+      call<{ skip_at: string | null; then_at: string | null }>(
+        "office_schedule_skip",
+        { p_id: v.id, p_skip: v.skip, p_notify: v.notify },
+        "바꾸지 못했어요",
+      ),
+    onSuccess: invalidate,
+  });
+};
+
+/** 예약 취소 (지우지 않고 남긴다) */
+export const useCancelSchedule = () => {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (v: { id: string; notify: boolean }) =>
+      call<void>("office_schedule_cancel", { p_id: v.id, p_notify: v.notify }, "취소하지 못했어요"),
+    onSuccess: invalidate,
+  });
+};
+
+/** 정기 회의 지금 열기 — 시작 전에 모였을 때 (1시간 안의 차례는 이걸로 한 것으로) */
+export const useOpenScheduleNow = () => {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (id: string) => call<string>("office_schedule_open_now", { p_id: id }, "회의를 열지 못했어요"),
     onSuccess: invalidate,
   });
 };
