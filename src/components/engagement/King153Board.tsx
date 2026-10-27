@@ -18,6 +18,7 @@
 import UserLeagueBadge from "@/components/badges/UserLeagueBadge";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { Crown, ChevronUp, Info, PartyPopper } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -100,6 +101,16 @@ const King153Board = () => {
   const [selected, setSelected] = useState<KingCategory | null>(null);
   const [arena, setArena] = useState<{ open: boolean; code: string | null }>({ open: false, code: null });
   const [likeOpen, setLikeOpen] = useState(false);
+
+  // 알림에서 바로 하트 보낼 회원 목록 — '/myboxer/quest?hearts=1' (2026-10-27 코치·지점장 하트 안내 알림)
+  const [params, setParams] = useSearchParams();
+  useEffect(() => {
+    if (params.get("hearts") !== "1") return;
+    setLikeOpen(true);
+    const next = new URLSearchParams(params);
+    next.delete("hearts");
+    setParams(next, { replace: true });
+  }, [params, setParams]);
 
   const summaryQ = use153KingSummary(period, scope);
   const boardQ = use153KingBoard(selected, period, scope, 10);
