@@ -21,6 +21,7 @@
 - `external/naver-talktalk/*.js` — 스탠드얼론 스크립트
 - `supabase/functions/talktalk-chilgeum/` — 칠금점 봇 Edge Function
 - `supabase/functions/talktalk-webhook/` — 톡톡 웹훅 Edge Function
+- `supabase/functions/talktalk-ai/` — 톡톡 웹훅·카카오 스킬 앞단(2026-10-27): 지점 봇 서버(Deno Deploy `zippy-monkey-7321`)에 그대로 넘기고, 손님 말에 첫 인사 메뉴만 돌아올 때만 Claude Haiku 5.5 가 153OS `get_bot_config` 안내 자료 안에서 답한다(`ai_usage_log.feature='talktalk_ai'`, 끄기 시크릿 `TALKTALK_AI=off`)
 
 talktalk 변경은 별도 commit 으로 처리하고 prefix 는 `chore(talktalk):` 또는 `feat(talktalk):`.
 
