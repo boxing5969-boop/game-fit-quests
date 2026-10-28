@@ -26,11 +26,11 @@ const StoryObstacleBadge = ({
     return (
       <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-3">
         <div className="flex items-center gap-2">
-          <span className="text-xl">{emoji}</span>
-          <p className="text-sm font-bold text-rose-200">{label}</p>
+          <span className="text-heading">{emoji}</span>
+          <p className="text-body font-bold text-rose-200">{label}</p>
         </div>
         {showDescription && desc && (
-          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-micro leading-relaxed text-muted-foreground">
             {desc}
           </p>
         )}
@@ -39,7 +39,7 @@ const StoryObstacleBadge = ({
   }
 
   return (
-    <span className="inline-flex items-center gap-1 rounded-pill border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold text-rose-200">
+    <span className="inline-flex items-center gap-1 rounded-pill border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-micro font-bold text-rose-200">
       <span>{emoji}</span>
       <span>{label}</span>
     </span>

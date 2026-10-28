@@ -28,7 +28,7 @@ export interface StoryPlayerStatsHudProps {
 const StoryPlayerStatsHud = ({ stats, compact }: StoryPlayerStatsHudProps) => {
   if (!stats) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-gray-900/60 p-3 text-center text-[11px] text-muted-foreground">
+      <div className="rounded-2xl border border-white/10 bg-gray-900/60 p-3 text-center text-micro text-muted-foreground">
         세션 준비 중…
       </div>
     );
@@ -43,7 +43,7 @@ const StoryPlayerStatsHud = ({ stats, compact }: StoryPlayerStatsHudProps) => {
           const pct = max > 0 ? Math.max(0, Math.min(100, (cur / max) * 100)) : 0;
           return (
             <div key={m.key} className="flex flex-col gap-0.5">
-              <div className="flex items-center justify-between text-[10px] tabular-nums">
+              <div className="flex items-center justify-between text-micro tabular-nums">
                 <span className="text-muted-foreground">{m.label}</span>
                 <span className="font-bold text-foreground">
                   {cur}/{max}
@@ -59,7 +59,7 @@ const StoryPlayerStatsHud = ({ stats, compact }: StoryPlayerStatsHudProps) => {
           );
         })}
       </div>
-      <div className="mt-2 flex items-center justify-between border-t border-white/5 pt-2 text-[11px]">
+      <div className="mt-2 flex items-center justify-between border-t border-white/5 pt-2 text-micro">
         <span className="font-bold text-amber-300 tabular-nums">
           STORY XP {stats.story_xp.toLocaleString()}
         </span>

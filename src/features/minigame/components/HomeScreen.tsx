@@ -37,7 +37,7 @@ const HomeScreen = ({ onStart, onRanking, onBack }: HomeScreenProps) => {
         <button
           type="button"
           onClick={() => { audio.tap(); onBack(); }}
-          className="absolute left-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-20 flex h-9 items-center gap-1 rounded-full bg-card/80 px-3 text-[12px] font-bold text-foreground ring-1 ring-white/10 backdrop-blur-md active:scale-95"
+          className="absolute left-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-20 flex h-9 items-center gap-1 rounded-full bg-card/80 px-3 text-label font-bold text-foreground ring-1 ring-white/10 backdrop-blur-md active:scale-95"
         >
           <ArrowLeft className="h-4 w-4" /> 모드 선택
         </button>
@@ -60,7 +60,7 @@ const HomeScreen = ({ onStart, onRanking, onBack }: HomeScreenProps) => {
         <h1 className="font-display text-[46px] leading-none tracking-wide text-foreground">
           REACTION <span className="text-secondary">TRAINER</span>
         </h1>
-        <p className="mb-5 mt-1 text-[12.5px] font-semibold text-muted-foreground">복싱 반응속도 트레이너</p>
+        <p className="mb-5 mt-1 text-label font-semibold text-muted-foreground">복싱 반응속도 트레이너</p>
 
         {/* 프로필 — 랭킹업 아바타 + 이 기기의 최고 기록 */}
         {rankupUser && (
@@ -68,24 +68,24 @@ const HomeScreen = ({ onStart, onRanking, onBack }: HomeScreenProps) => {
             {avatarUrl ? (
               <Avatar className="h-12 w-12 shrink-0 ring-2 ring-primary/40">
                 <AvatarImage src={avatarUrl} alt={displayName || 'avatar'} />
-                <AvatarFallback className="bg-primary/20 font-display text-lg text-primary">{initial}</AvatarFallback>
+                <AvatarFallback className="bg-primary/20 font-display text-heading text-primary">{initial}</AvatarFallback>
               </Avatar>
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 font-display text-lg text-primary">{initial}</div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 font-display text-heading text-primary">{initial}</div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 truncate text-[15px] font-black text-foreground">
+              <div className="flex items-center gap-1.5 truncate text-body font-black text-foreground">
                 {displayName || '회원'}
-                <span className="rounded bg-primary/15 px-1.5 py-0.5 font-display text-[10px] tracking-widest text-primary">MEMBER</span>
+                <span className="rounded bg-primary/15 px-1.5 py-0.5 font-display text-micro tracking-widest text-primary">MEMBER</span>
               </div>
-              <div className="text-[12px] font-semibold text-muted-foreground">
+              <div className="text-label font-semibold text-muted-foreground">
                 {hasRecord ? `${stats!.totalGames}판 플레이 · 오늘 최고 ${stats!.todayBestScore.toLocaleString()}` : '첫 판을 기다리고 있어요'}
               </div>
             </div>
             {hasRecord && (
               <div className="shrink-0 text-right">
-                <div className="mg-num font-display text-xl leading-none text-secondary">{stats!.bestScore.toLocaleString()}</div>
-                <div className="font-display text-[10px] tracking-widest text-muted-foreground">BEST SCORE</div>
+                <div className="mg-num font-display text-heading leading-none text-secondary">{stats!.bestScore.toLocaleString()}</div>
+                <div className="font-display text-micro tracking-widest text-muted-foreground">BEST SCORE</div>
               </div>
             )}
           </div>
@@ -96,18 +96,18 @@ const HomeScreen = ({ onStart, onRanking, onBack }: HomeScreenProps) => {
           <div className="mb-3 grid grid-cols-3 gap-2">
             <div className="mg-card p-2.5 text-center">
               <div className="mb-0.5 flex justify-center"><Icon3D name="trophy" size={22} /></div>
-              <div className="mg-num font-display text-xl leading-none text-foreground">R{stats!.bestRound}</div>
-              <div className="font-display text-[10px] tracking-widest text-muted-foreground">BEST ROUND</div>
+              <div className="mg-num font-display text-heading leading-none text-foreground">R{stats!.bestRound}</div>
+              <div className="font-display text-micro tracking-widest text-muted-foreground">BEST ROUND</div>
             </div>
             <div className="mg-card p-2.5 text-center">
               <div className="mb-0.5 flex justify-center"><Icon3D name="stopwatch" size={22} /></div>
-              <div className="mg-num font-display text-xl leading-none text-foreground">{stats!.bestSurvivalSec}s</div>
-              <div className="font-display text-[10px] tracking-widest text-muted-foreground">SURVIVED</div>
+              <div className="mg-num font-display text-heading leading-none text-foreground">{stats!.bestSurvivalSec}s</div>
+              <div className="font-display text-micro tracking-widest text-muted-foreground">SURVIVED</div>
             </div>
             <div className="mg-card p-2.5 text-center">
               <div className="mb-0.5 flex justify-center"><Icon3D name="bolt" size={22} /></div>
-              <div className="mg-num font-display text-xl leading-none text-secondary">{stats!.totalPerfect.toLocaleString()}</div>
-              <div className="font-display text-[10px] tracking-widest text-muted-foreground">PERFECT</div>
+              <div className="mg-num font-display text-heading leading-none text-secondary">{stats!.totalPerfect.toLocaleString()}</div>
+              <div className="font-display text-micro tracking-widest text-muted-foreground">PERFECT</div>
             </div>
           </div>
         )}
@@ -116,9 +116,9 @@ const HomeScreen = ({ onStart, onRanking, onBack }: HomeScreenProps) => {
         <div className="mg-card mb-4 flex items-center gap-3 p-3 text-left">
           <Icon3D name="mitt" size={40} />
           <div className="min-w-0 flex-1">
-            <div className="font-display text-[11px] tracking-[0.25em] text-secondary">TIMING MASTER</div>
-            <p className="text-[12.5px] font-semibold text-foreground/90">미트 트레이닝의 타이밍을 게임으로 먼저 익혀요</p>
-            <p className="text-[11px] text-muted-foreground">게임 실력 = 미트 실력 · 매일 5분이 체육관을 바꿉니다</p>
+            <div className="font-display text-micro tracking-[0.25em] text-secondary">TIMING MASTER</div>
+            <p className="text-label font-semibold text-foreground/90">미트 트레이닝의 타이밍을 게임으로 먼저 익혀요</p>
+            <p className="text-micro text-muted-foreground">게임 실력 = 미트 실력 · 매일 5분이 체육관을 바꿉니다</p>
           </div>
         </div>
 
@@ -126,7 +126,7 @@ const HomeScreen = ({ onStart, onRanking, onBack }: HomeScreenProps) => {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => { audio.tap(); onStart(); }}
-            className="mg-btn-primary flex h-16 w-full items-center justify-center gap-2 rounded-2xl font-display text-[26px] tracking-widest"
+            className="mg-btn-primary flex h-16 w-full items-center justify-center gap-2 rounded-2xl font-display text-title tracking-widest"
           >
             <Play className="h-6 w-6 fill-current" /> START TRAINING
           </motion.button>
@@ -134,7 +134,7 @@ const HomeScreen = ({ onStart, onRanking, onBack }: HomeScreenProps) => {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => { audio.tap(); onRanking(); }}
-            className="mg-btn-ghost flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-display text-[18px] tracking-widest"
+            className="mg-btn-ghost flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-display text-heading tracking-widest"
           >
             <Icon3D name="trophy" size={22} /> RANKING
           </motion.button>

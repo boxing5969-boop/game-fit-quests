@@ -77,7 +77,7 @@ const ModeSelect = ({ onMode1, onMode2, onMode3, onEducation, onLeaderboard }: M
           <h1 className="font-display mt-1 text-[44px] leading-none tracking-wide text-foreground">
             BOXING <span className="text-primary">ARENA</span>
           </h1>
-          <p className="mt-1 text-[12.5px] font-semibold text-muted-foreground">
+          <p className="mt-1 text-label font-semibold text-muted-foreground">
             153 복싱 트레이닝 · 매일 5분, 타이밍이 달라져요
           </p>
         </div>
@@ -101,16 +101,16 @@ const ModeSelect = ({ onMode1, onMode2, onMode3, onEducation, onLeaderboard }: M
                 style={{ background: `radial-gradient(circle, ${m.glow}, transparent 70%)` }}
               />
               {m.tag && (
-                <span className="absolute right-3 top-3 rounded-md bg-primary px-1.5 py-0.5 font-display text-[11px] tracking-[0.2em] text-primary-foreground">
+                <span className="absolute right-3 top-3 rounded-md bg-primary px-1.5 py-0.5 font-display text-micro tracking-[0.2em] text-primary-foreground">
                   {m.tag}
                 </span>
               )}
               <div className="relative flex items-center gap-3.5">
                 <Icon3D name={m.icon} size={64} />
                 <div className="min-w-0 flex-1">
-                  <div className="font-display text-[12px] tracking-[0.25em] text-primary">{m.sub}</div>
-                  <div className="text-[17px] font-black leading-tight text-foreground">{m.title}</div>
-                  <div className="mt-0.5 text-[12.5px] text-muted-foreground">{m.desc}</div>
+                  <div className="font-display text-label tracking-[0.25em] text-primary">{m.sub}</div>
+                  <div className="text-body font-black leading-tight text-foreground">{m.title}</div>
+                  <div className="mt-0.5 text-label text-muted-foreground">{m.desc}</div>
                 </div>
                 <span
                   role="button"
@@ -143,8 +143,8 @@ const ModeSelect = ({ onMode1, onMode2, onMode3, onEducation, onLeaderboard }: M
                 style={{ background: 'radial-gradient(circle, hsl(43 83% 62% / 0.25), transparent 70%)' }}
               />
               <Icon3D name="trophy" size={48} />
-              <div className="mt-2 text-[15px] font-black text-foreground">랭킹</div>
-              <div className="font-display text-[11px] tracking-[0.25em] text-secondary">LEADERBOARD</div>
+              <div className="mt-2 text-body font-black text-foreground">랭킹</div>
+              <div className="font-display text-micro tracking-[0.25em] text-secondary">LEADERBOARD</div>
               <ChevronRight className="absolute bottom-4 right-3 h-4 w-4 text-muted-foreground/60" />
             </motion.button>
 
@@ -158,8 +158,8 @@ const ModeSelect = ({ onMode1, onMode2, onMode3, onEducation, onLeaderboard }: M
               className="mg-card relative flex flex-col items-start overflow-hidden p-4 text-left"
             >
               <Icon3D name="book" size={48} />
-              <div className="mt-2 text-[15px] font-black text-foreground">미트 트레이닝이란?</div>
-              <div className="font-display text-[11px] tracking-[0.25em] text-muted-foreground">LEARN</div>
+              <div className="mt-2 text-body font-black text-foreground">미트 트레이닝이란?</div>
+              <div className="font-display text-micro tracking-[0.25em] text-muted-foreground">LEARN</div>
               <ChevronRight className="absolute bottom-4 right-3 h-4 w-4 text-muted-foreground/60" />
             </motion.button>
           </div>

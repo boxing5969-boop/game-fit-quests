@@ -39,17 +39,17 @@ const StoryRouteCard = ({
       }`}
     >
       <div className="flex items-start gap-3">
-        <span className="text-2xl">{visual.emoji}</span>
+        <span className="text-title">{visual.emoji}</span>
         <div className="flex-1 min-w-0">
           <p
-            className={`text-[10px] font-black uppercase tracking-[0.2em] ${visual.accent}`}
+            className={`text-micro font-black uppercase tracking-[0.2em] ${visual.accent}`}
           >
             {route.subtitle ?? "복서의 길"}
           </p>
-          <h3 className="mt-0.5 text-base font-black text-foreground">
+          <h3 className="mt-0.5 text-body font-black text-foreground">
             {route.title}
           </h3>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
             {route.description}
           </p>
         </div>
@@ -59,7 +59,7 @@ const StoryRouteCard = ({
         type="button"
         onClick={() => onSelect(route)}
         disabled={isCurrent || loading}
-        className={`mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-pill border px-4 py-2 text-[12px] font-bold transition-all active:scale-[0.98] ${
+        className={`mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-pill border px-4 py-2 text-label font-bold transition-all active:scale-[0.98] ${
           isCurrent
             ? `${visual.chip} cursor-default`
             : "border-white/15 bg-gray-900/60 text-foreground hover:border-white/30"

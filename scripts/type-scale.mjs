@@ -61,12 +61,23 @@ export function nearestStep(px) {
  */
 export const EXCLUDE = [
   "components/liveBoard/", "pages/LiveBoardPage", "pages/TvBranchPicker", "pages/SignageBoardPage", "pages/FaceKioskPage",
-  "pages/CheckinBoardPage", "pages/MinigamePage", "features/minigame/", "components/story-rpg/", "pages/StoryRpgPage",
+  "pages/CheckinBoardPage",
 ];
 export const SCENE = ["components/office/OfficeScene"];
 
+/**
+ * 게임(미니게임 · 스토리 RPG) — 작은 글씨는 6단계(13 아래 없음), 큰 연출 글씨(GAME_BIG_PX 이상 — 카운트다운 · 점수 팝 ·
+ * 게임 오버 · 게임 제목)는 그대로 둔다. 게임은 큰 숫자가 재미의 일부라 화면 주인공 40px 로 줄이지 않는다.
+ */
+export const GAME = ["features/minigame/", "pages/MinigamePage", "components/story-rpg/", "pages/StoryRpgPage"];
+export const GAME_BIG_PX = 28;
+export const isGameFile = (rel) => GAME.some((p) => rel.startsWith(p));
+
 export const isMemberFile = (rel) =>
   rel.endsWith(".tsx") && !rel.endsWith(".test.tsx") && !EXCLUDE.some((p) => rel.startsWith(p)) && !SCENE.some((p) => rel.startsWith(p));
+
+/** 이 파일에서 이 크기(px)를 그대로 둬도 되나 — 게임의 큰 연출 글씨만 */
+export const keepSize = (rel, px) => isGameFile(rel) && px >= GAME_BIG_PX;
 
 const LEGACY_NAMES = Object.keys(LEGACY).sort((a, b) => b.length - a.length).map((n) => n.replace(/[-]/g, "\\-")).join("|");
 /** 크기 숫자 (text-[11.5px]) — 앞의 변형(sm: · hover: · !)은 그대로 둔다 */

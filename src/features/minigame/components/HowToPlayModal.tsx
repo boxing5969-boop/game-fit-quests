@@ -184,8 +184,8 @@ const HowToPlayModal = ({ open, mode, onClose }: HowToPlayModalProps) => {
               <div className="flex items-center gap-3 pr-10">
                 <Icon3D name={guide.icon} size={56} />
                 <div>
-                  <div className={`font-display text-[12px] tracking-[0.25em] ${guide.accent}`}>{guide.subtitle}</div>
-                  <h2 className="text-[20px] font-black leading-tight text-foreground">{guide.title}</h2>
+                  <div className={`font-display text-label tracking-[0.25em] ${guide.accent}`}>{guide.subtitle}</div>
+                  <h2 className="text-heading font-black leading-tight text-foreground">{guide.title}</h2>
                 </div>
               </div>
             </div>
@@ -194,21 +194,21 @@ const HowToPlayModal = ({ open, mode, onClose }: HowToPlayModalProps) => {
             <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
               {/* Goal */}
               <div className="rounded-2xl bg-white/[0.05] p-3 ring-1 ring-white/[0.06]">
-                <div className="mb-1 font-display text-[11px] tracking-widest text-muted-foreground">GOAL</div>
-                <div className="text-sm leading-relaxed text-foreground">{guide.goal}</div>
+                <div className="mb-1 font-display text-micro tracking-widest text-muted-foreground">GOAL</div>
+                <div className="text-body leading-relaxed text-foreground">{guide.goal}</div>
               </div>
 
               {/* Sections */}
               {guide.sections.map((sec) => (
                 <div key={sec.title}>
-                  <div className={`mb-2 font-display text-[12px] tracking-widest ${guide.accent}`}>
+                  <div className={`mb-2 font-display text-label tracking-widest ${guide.accent}`}>
                     {sec.title.toUpperCase()}
                   </div>
                   <div className="space-y-2">
                     {sec.items.map((it, i) => (
                       <div key={i} className="flex items-center gap-3 rounded-xl bg-white/[0.04] p-2.5 ring-1 ring-white/[0.05]">
                         <span className="shrink-0"><ItemIcon icon={it.icon} /></span>
-                        <div className="text-sm leading-relaxed text-foreground/90">{it.text}</div>
+                        <div className="text-body leading-relaxed text-foreground/90">{it.text}</div>
                       </div>
                     ))}
                   </div>
@@ -217,12 +217,12 @@ const HowToPlayModal = ({ open, mode, onClose }: HowToPlayModalProps) => {
 
               {/* Tips */}
               <div>
-                <div className="mb-2 flex items-center gap-1.5 font-display text-[12px] tracking-widest text-rating-lightning">
+                <div className="mb-2 flex items-center gap-1.5 font-display text-label tracking-widest text-rating-lightning">
                   <Lightbulb className="h-4 w-4" /> PRO TIPS
                 </div>
                 <ul className="space-y-1.5">
                   {guide.tips.map((t, i) => (
-                    <li key={i} className="flex gap-2 text-sm text-foreground/85">
+                    <li key={i} className="flex gap-2 text-body text-foreground/85">
                       <span className="shrink-0 text-rating-lightning">·</span>
                       <span>{t}</span>
                     </li>
@@ -236,7 +236,7 @@ const HowToPlayModal = ({ open, mode, onClose }: HowToPlayModalProps) => {
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { audio.tap(); onClose(); }}
-                className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-display text-lg tracking-widest ${
+                className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-display text-heading tracking-widest ${
                   mode === 'mitt' ? 'mg-btn-gold' : 'mg-btn-primary'
                 }`}
               >

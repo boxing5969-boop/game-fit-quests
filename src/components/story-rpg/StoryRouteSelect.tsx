@@ -69,10 +69,10 @@ const StoryRouteSelect = ({ routes, activeRouteId }: StoryRouteSelectProps) => {
     <section className="space-y-3">
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-amber-300">
             복서의 길 선택
           </p>
-          <h2 className="mt-0.5 text-base font-black text-foreground">
+          <h2 className="mt-0.5 text-body font-black text-foreground">
             나는 어떤 복서가 되고 싶은가
           </h2>
         </div>

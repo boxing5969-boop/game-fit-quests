@@ -241,7 +241,7 @@ const GameScreen = ({
               <div className="font-display text-7xl tracking-wider drop-shadow-lg">
                 {PUNCHES[currentPunch].nameEn}
               </div>
-              <div className="mt-1 text-2xl font-black opacity-80">
+              <div className="mt-1 text-title font-black opacity-80">
                 {PUNCHES[currentPunch].nameKo}
               </div>
             </div>
@@ -270,7 +270,7 @@ const GameScreen = ({
             style={{ color: p.color, textShadow: `0 0 20px ${p.color}, 0 0 40px ${p.color}` }}
           >
             {p.text}
-            {p.sub && <div className="mg-num mt-0.5 text-2xl text-foreground drop-shadow">{p.sub}</div>}
+            {p.sub && <div className="mg-num mt-0.5 text-title text-foreground drop-shadow">{p.sub}</div>}
           </div>
         ))}
       </div>
@@ -303,22 +303,22 @@ const GameScreen = ({
         <div className="flex items-stretch justify-between gap-2 pr-12">
           {/* Round */}
           <div className="mg-card min-w-[78px] rounded-2xl px-3 py-1.5">
-            <div className="font-display text-[10px] leading-none tracking-[0.25em] text-muted-foreground">ROUND</div>
-            <div className="mg-num mt-0.5 font-display text-2xl leading-none text-foreground">{round}</div>
-            <div className="mg-num mt-1 text-[10px] leading-none text-muted-foreground/70">BEST {bestRoundLive}</div>
+            <div className="font-display text-micro leading-none tracking-[0.25em] text-muted-foreground">ROUND</div>
+            <div className="mg-num mt-0.5 font-display text-title leading-none text-foreground">{round}</div>
+            <div className="mg-num mt-1 text-micro leading-none text-muted-foreground/70">BEST {bestRoundLive}</div>
           </div>
 
           {/* Score */}
           <div className="mg-card flex-1 rounded-2xl px-3 py-1.5 text-center">
-            <div className="font-display text-[10px] leading-none tracking-[0.25em] text-muted-foreground">SCORE</div>
-            <div className="mg-num mt-0.5 font-display text-2xl leading-none text-secondary">{currentScore.toLocaleString()}</div>
-            <div className="mg-num mt-1 text-[10px] leading-none text-muted-foreground/70">BEST {bestScoreLive.toLocaleString()}</div>
+            <div className="font-display text-micro leading-none tracking-[0.25em] text-muted-foreground">SCORE</div>
+            <div className="mg-num mt-0.5 font-display text-title leading-none text-secondary">{currentScore.toLocaleString()}</div>
+            <div className="mg-num mt-1 text-micro leading-none text-muted-foreground/70">BEST {bestScoreLive.toLocaleString()}</div>
           </div>
 
           {/* Time + Shield */}
           <div className="mg-card min-w-[78px] rounded-2xl px-3 py-1.5 text-right">
-            <div className="font-display text-[10px] leading-none tracking-[0.25em] text-muted-foreground">TIME</div>
-            <div className="mg-num mt-0.5 font-display text-xl leading-none text-foreground">{fmtTime(elapsedSec)}</div>
+            <div className="font-display text-micro leading-none tracking-[0.25em] text-muted-foreground">TIME</div>
+            <div className="mg-num mt-0.5 font-display text-heading leading-none text-foreground">{fmtTime(elapsedSec)}</div>
             <div className="mt-1 flex max-w-[80px] flex-wrap items-center justify-end gap-0.5">
               {Array.from({ length: Math.max(REACTION_CONFIG.maxShieldCount, shields) }).map((_, i) => (
                 <Icon3D key={i} name="shield" size={16} dim={i >= shields} />
@@ -337,11 +337,11 @@ const GameScreen = ({
           />
         </div>
         <div className="mt-1 flex items-center justify-between">
-          <span className="mg-num font-display text-[11px] tracking-[0.2em] text-muted-foreground">
+          <span className="mg-num font-display text-micro tracking-[0.2em] text-muted-foreground">
             {successesInRound} / {roundTarget} TO ROUND {round + 1}
           </span>
           {currentCombo >= 3 && (
-            <span className="mg-num flex items-center gap-1 font-display text-[12px] tracking-widest text-secondary">
+            <span className="mg-num flex items-center gap-1 font-display text-label tracking-widest text-secondary">
               <Icon3D name="fire" size={14} /> COMBO {currentCombo}
             </span>
           )}
@@ -386,10 +386,10 @@ const GameScreen = ({
               <div className={`font-display text-5xl ${judge.color} drop-shadow-lg`}>{judge.en}</div>
               {lastResult.correct && (
                 <div className="mg-num mt-2 font-display text-3xl text-foreground">
-                  {Math.round(lastResult.reactionMs)}<span className="text-lg text-muted-foreground">ms</span>
+                  {Math.round(lastResult.reactionMs)}<span className="text-heading text-muted-foreground">ms</span>
                 </div>
               )}
-              <div className={`mg-num mt-1 font-display text-2xl ${lastResult.points >= 0 ? 'text-secondary' : 'text-destructive'}`}>
+              <div className={`mg-num mt-1 font-display text-title ${lastResult.points >= 0 ? 'text-secondary' : 'text-destructive'}`}>
                 {lastResult.points >= 0 ? '+' : ''}{lastResult.points}
               </div>
             </motion.div>
@@ -413,7 +413,7 @@ const GameScreen = ({
             className={`punch-btn ${PUNCH_BG[type]} ${PUNCH_TEXT[type]} py-3 shadow-[0_10px_24px_hsl(0_0%_0%/0.45),inset_0_1px_0_hsl(0_0%_100%/0.35)] active:brightness-110`}
           >
             <PunchGlyph type={type} size={30} />
-            <span className="mt-1 font-display text-[15px] tracking-wider">{PUNCHES[type].nameEn}</span>
+            <span className="mt-1 font-display text-body tracking-wider">{PUNCHES[type].nameEn}</span>
           </motion.button>
         ))}
       </div>
@@ -434,7 +434,7 @@ const GameScreen = ({
                 initial={{ scale: 0.7 }}
                 animate={{ scale: [1, 1.06, 1] }}
                 transition={{ duration: 0.6, repeat: Infinity }}
-                className="flex items-center gap-1.5 font-display text-2xl tracking-widest text-rating-lightning drop-shadow-[0_0_12px_hsl(28_90%_60%)]"
+                className="flex items-center gap-1.5 font-display text-title tracking-widest text-rating-lightning drop-shadow-[0_0_12px_hsl(28_90%_60%)]"
               >
                 <Icon3D name="fire" size={24} /> FEVER x{REACTION_CONFIG.feverScoreMultiplier} <Icon3D name="fire" size={24} />
               </motion.div>
@@ -526,7 +526,7 @@ const GameScreen = ({
             restartNote={`현재 점수 ${currentScore.toLocaleString()}점 / 라운드 ${round}이 사라집니다`}
             quitLabel="모드 선택으로"
             help={
-              <ul className="space-y-2 text-[13.5px] text-foreground/90">
+              <ul className="space-y-2 text-label text-foreground/90">
                 <li className="flex gap-2"><span className="text-primary">·</span><span>화면에 펀치 이름이 뜨면 같은 색 버튼을 누르세요</span></li>
                 <li className="flex gap-2"><span className="text-primary">·</span><span>아주 빠르게 누르면 PERFECT (시간이 갈수록 더 빡빡해져요)</span></li>
                 <li className="flex gap-2"><span className="text-primary">·</span><span>PERFECT {REACTION_CONFIG.feverTriggerPerfectCount}연속이면 FEVER 모드</span></li>

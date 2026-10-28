@@ -37,7 +37,7 @@ const DefenseHome = ({ onStart, onExit }: Props) => {
       <button
         type="button"
         onClick={() => { audio.tap(); onExit(); }}
-        className="absolute left-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-20 flex h-9 items-center gap-1 rounded-full bg-card/80 px-3 text-[12px] font-bold text-foreground ring-1 ring-white/10 backdrop-blur-md active:scale-95"
+        className="absolute left-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-20 flex h-9 items-center gap-1 rounded-full bg-card/80 px-3 text-label font-bold text-foreground ring-1 ring-white/10 backdrop-blur-md active:scale-95"
       >
         <ArrowLeft className="h-4 w-4" /> 모드 선택
       </button>
@@ -58,7 +58,7 @@ const DefenseHome = ({ onStart, onExit }: Props) => {
         <h1 className="font-display text-[46px] leading-none tracking-wide text-foreground">
           DEFENSE <span className="text-primary">RUSH</span>
         </h1>
-        <p className="mt-1.5 text-[12.5px] font-semibold text-muted-foreground">좌우로 공격을 막고, 콤보를 쌓아 카운터!</p>
+        <p className="mt-1.5 text-label font-semibold text-muted-foreground">좌우로 공격을 막고, 콤보를 쌓아 카운터!</p>
       </motion.div>
 
       <motion.div
@@ -78,18 +78,18 @@ const DefenseHome = ({ onStart, onExit }: Props) => {
         <div className="mg-card p-3.5">
           <div className="mb-2 flex items-center gap-2">
             <Icon3D name="calendar" size={26} />
-            <div className="font-display text-[12px] tracking-[0.25em] text-secondary">TODAY'S MISSIONS</div>
+            <div className="font-display text-label tracking-[0.25em] text-secondary">TODAY'S MISSIONS</div>
           </div>
           <div className="space-y-2">
             {missions.map(m => (
-              <div key={m.id} className="flex items-center gap-2 text-[13.5px]">
+              <div key={m.id} className="flex items-center gap-2 text-label">
                 {m.done ? (
                   <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
                 ) : (
                   <Circle className="h-5 w-5 shrink-0 text-muted-foreground/40" />
                 )}
                 <span className={`flex-1 font-semibold ${m.done ? 'text-muted-foreground line-through' : 'text-foreground/90'}`}>{m.label}</span>
-                <span className="mg-num font-display text-[13px] text-muted-foreground">
+                <span className="mg-num font-display text-label text-muted-foreground">
                   {Math.min(m.current, m.goal)}/{m.goal}
                 </span>
               </div>
@@ -107,8 +107,8 @@ const DefenseHome = ({ onStart, onExit }: Props) => {
             <Info className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-black text-foreground">게임 설명서</div>
-            <div className="text-[12px] text-muted-foreground">조작법 · 공격 종류 · 카운터 / 보스 시스템</div>
+            <div className="text-label font-black text-foreground">게임 설명서</div>
+            <div className="text-label text-muted-foreground">조작법 · 공격 종류 · 카운터 / 보스 시스템</div>
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </button>
@@ -137,8 +137,8 @@ function StatCard({ label, value, accent, icon }: { label: string; value: number
   const colorClass = accent === 'primary' ? 'text-primary' : accent === 'secondary' ? 'text-secondary' : 'text-foreground';
   return (
     <div className="mg-card p-2.5 text-center">
-      <div className="font-display text-[10px] tracking-[0.25em] text-muted-foreground">{label}</div>
-      <div className={`mg-num flex items-center justify-center gap-1 font-display text-2xl leading-tight ${colorClass}`}>
+      <div className="font-display text-micro tracking-[0.25em] text-muted-foreground">{label}</div>
+      <div className={`mg-num flex items-center justify-center gap-1 font-display text-title leading-tight ${colorClass}`}>
         {icon && <Icon3D name={icon} size={20} />}{value}
       </div>
     </div>

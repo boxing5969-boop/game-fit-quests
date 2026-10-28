@@ -216,10 +216,10 @@ function OsamAdvicePopup({ line }: { line?: string }) {
     >
       <CharacterPortrait portraitKey="osam" emotion="happy" talking size="sm" />
       <div className="max-w-[180px] rounded-2xl border border-amber-400/60 bg-gray-950/95 p-2 shadow-lg">
-        <p className="text-[9px] font-black uppercase tracking-widest text-amber-300">
+        <p className="text-micro font-black uppercase tracking-widest text-amber-300">
           오삼이
         </p>
-        <p className="mt-1 text-[11px] leading-tight text-amber-100">
+        <p className="mt-1 text-micro leading-tight text-amber-100">
           {line ?? "이렇게 해보세요!"}
         </p>
       </div>

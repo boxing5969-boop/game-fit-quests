@@ -17,10 +17,10 @@ export interface DamagePopupProps {
 }
 
 const VARIANT_CLASS: Record<DamagePopupVariant, string> = {
-  normal: "text-white text-base",
-  weakness: "text-yellow-300 text-lg font-black drop-shadow-[0_0_6px_rgba(253,184,92,0.6)]",
-  crit: "text-rose-400 text-2xl font-black drop-shadow-[0_0_8px_rgba(228,30,40,0.7)]",
-  miss: "text-zinc-400 text-sm",
+  normal: "text-white text-body",
+  weakness: "text-yellow-300 text-heading font-black drop-shadow-[0_0_6px_rgba(253,184,92,0.6)]",
+  crit: "text-rose-400 text-title font-black drop-shadow-[0_0_8px_rgba(228,30,40,0.7)]",
+  miss: "text-zinc-400 text-body",
 };
 
 const DamagePopup = ({ x, y, value, variant = "normal" }: DamagePopupProps) => {

@@ -46,7 +46,7 @@ const CardUseEffect = ({ card, onComplete }: CardUseEffectProps) => {
         />
         {/* 카드 내용 */}
         <div className="relative z-10 flex h-full flex-col items-center justify-between p-3 text-center">
-          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-amber-200">
+          <p className="text-micro font-black uppercase tracking-[0.3em] text-amber-200">
             CARD
           </p>
           <div className="flex flex-col items-center gap-1">
@@ -54,9 +54,9 @@ const CardUseEffect = ({ card, onComplete }: CardUseEffectProps) => {
               <ellipse cx="30" cy="30" rx="22" ry="24" fill="#fdb85c" stroke="#7a4a1a" strokeWidth="2" />
               <text x="30" y="36" fontSize="22" textAnchor="middle" fill="#7a1a1a" fontWeight="900">★</text>
             </svg>
-            <p className="text-[12px] font-black text-amber-100">{card.name}</p>
+            <p className="text-label font-black text-amber-100">{card.name}</p>
           </div>
-          <p className="text-[10px] text-yellow-200">
+          <p className="text-micro text-yellow-200">
             {card.effect_label ?? card.code}
           </p>
         </div>
@@ -68,7 +68,7 @@ const CardUseEffect = ({ card, onComplete }: CardUseEffectProps) => {
         animate={{ y: -100, opacity: 1, scale: 1.2 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.7, delay: 0.5 }}
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 text-2xl font-black text-yellow-300 drop-shadow-[0_0_10px_rgba(253,184,92,0.8)]"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 text-title font-black text-yellow-300 drop-shadow-[0_0_10px_rgba(253,184,92,0.8)]"
       >
         ★ FIGHT
       </motion.p>

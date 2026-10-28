@@ -121,12 +121,12 @@ const DefenseGameOver = ({ stats, gemsEarned, onRetry, onHome }: Props) => {
             <Icon3D name={TIER_ICON[tier.key] as Icon3DName} size={88} />
           </motion.div>
           <div
-            className="font-display text-2xl tracking-widest text-foreground"
+            className="font-display text-title tracking-widest text-foreground"
             style={{ textShadow: `0 0 20px ${tier.glow}` }}
           >
             {tier.label}
           </div>
-          <div className="text-xs text-muted-foreground">{tier.ko}</div>
+          <div className="text-label text-muted-foreground">{tier.ko}</div>
         </div>
 
         {/* SURVIVED TIME — primary metric */}
@@ -136,7 +136,7 @@ const DefenseGameOver = ({ stats, gemsEarned, onRetry, onHome }: Props) => {
             boxShadow: isNewBest ? '0 0 40px rgba(239,201,76,0.35), 0 0 0 2px hsl(43 83% 62%)' : undefined,
           }}
         >
-          <div className="flex items-center justify-center gap-1 font-display text-[11px] tracking-[0.3em] text-muted-foreground"><Timer className="h-3.5 w-3.5" /> SURVIVED</div>
+          <div className="flex items-center justify-center gap-1 font-display text-micro tracking-[0.3em] text-muted-foreground"><Timer className="h-3.5 w-3.5" /> SURVIVED</div>
           <motion.div
             initial={{ scale: 0.5 }}
             animate={{ scale: 1 }}
@@ -146,7 +146,7 @@ const DefenseGameOver = ({ stats, gemsEarned, onRetry, onHome }: Props) => {
           >
             {fmtTime(stats.survivedMs)}
           </motion.div>
-          <div className="text-[10px] text-muted-foreground font-display tracking-widest">
+          <div className="text-micro text-muted-foreground font-display tracking-widest">
             BEST <span className="text-secondary">{fmtTime(bestSeconds * 1000)}</span>
             {previousBestSeconds > 0 && !isNewBest && (
               <span className="ml-2 text-muted-foreground/60">PREV {fmtTime(previousBestSeconds * 1000)}</span>
@@ -157,7 +157,7 @@ const DefenseGameOver = ({ stats, gemsEarned, onRetry, onHome }: Props) => {
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6, type: 'spring' }}
-              className="mg-btn-gold mt-3 inline-flex items-center gap-1.5 rounded-full px-4 py-1 font-display text-sm tracking-widest"
+              className="mg-btn-gold mt-3 inline-flex items-center gap-1.5 rounded-full px-4 py-1 font-display text-body tracking-widest"
             >
               <Icon3D name="medal_gold" size={18} /> NEW RECORD!
             </motion.div>
@@ -176,17 +176,17 @@ const DefenseGameOver = ({ stats, gemsEarned, onRetry, onHome }: Props) => {
         >
           <div className="flex items-center justify-around">
             <div>
-              <div className="text-[10px] font-display tracking-[0.3em] text-muted-foreground">ROUND</div>
+              <div className="text-micro font-display tracking-[0.3em] text-muted-foreground">ROUND</div>
               <div className="mg-num font-display text-4xl leading-none text-foreground">{stats.roundReached}</div>
             </div>
             <div className="w-px h-10 bg-border/60" />
             <div>
-              <div className="text-[10px] font-display tracking-[0.3em] text-muted-foreground">BEST</div>
+              <div className="text-micro font-display tracking-[0.3em] text-muted-foreground">BEST</div>
               <div className="mg-num font-display text-4xl leading-none text-secondary">{bestRound}</div>
             </div>
           </div>
           {isNewBestRound && (
-            <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-secondary/50 bg-secondary/20 px-3 py-0.5 font-display text-[11px] tracking-widest text-secondary">
+            <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-secondary/50 bg-secondary/20 px-3 py-0.5 font-display text-micro tracking-widest text-secondary">
               <Icon3D name="trophy" size={14} /> NEW BEST ROUND
             </div>
           )}
@@ -195,12 +195,12 @@ const DefenseGameOver = ({ stats, gemsEarned, onRetry, onHome }: Props) => {
         {/* Score chip */}
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div className="mg-card p-3 text-center">
-            <div className="font-display text-[11px] tracking-widest text-muted-foreground">SCORE</div>
-            <div className="mg-num font-display text-2xl text-foreground">{stats.score}</div>
+            <div className="font-display text-micro tracking-widest text-muted-foreground">SCORE</div>
+            <div className="mg-num font-display text-title text-foreground">{stats.score}</div>
           </div>
           <div className="mg-card p-3 text-center">
-            <div className="font-display text-[11px] tracking-widest text-muted-foreground">ACCURACY</div>
-            <div className="mg-num font-display text-2xl text-foreground">{accuracy}%</div>
+            <div className="font-display text-micro tracking-widest text-muted-foreground">ACCURACY</div>
+            <div className="mg-num font-display text-title text-foreground">{accuracy}%</div>
           </div>
         </div>
 
@@ -213,9 +213,9 @@ const DefenseGameOver = ({ stats, gemsEarned, onRetry, onHome }: Props) => {
         >
           <Icon3D name="gem" size={40} />
           <div className="flex-1">
-            <div className="font-display text-[11px] tracking-widest text-muted-foreground">젬 획득</div>
-            <div className="mg-num font-display text-2xl text-secondary">+{granted}</div>
-            {capped && <div className="text-[10px] text-muted-foreground">일일 상한 도달</div>}
+            <div className="font-display text-micro text-muted-foreground">젬 획득</div>
+            <div className="mg-num font-display text-title text-secondary">+{granted}</div>
+            {capped && <div className="text-micro text-muted-foreground">일일 상한 도달</div>}
           </div>
         </motion.div>
 
@@ -239,13 +239,13 @@ const DefenseGameOver = ({ stats, gemsEarned, onRetry, onHome }: Props) => {
           transition={{ delay: 0.6, type: 'spring' }}
           whileTap={{ scale: 0.95 }}
           onClick={() => { audio.tap(); onRetry(); }}
-          className="mg-btn-primary mb-2 flex w-full items-center justify-center gap-2 rounded-2xl py-5 font-display text-2xl tracking-widest"
+          className="mg-btn-primary mb-2 flex w-full items-center justify-center gap-2 rounded-2xl py-5 font-display text-title tracking-widest"
         >
           <RotateCcw className="h-6 w-6" strokeWidth={2.5} /> ONE MORE
         </motion.button>
         <button
           onClick={() => { audio.tap(); onHome(); }}
-          className="mg-btn-ghost flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-display text-[15px] tracking-widest"
+          className="mg-btn-ghost flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-display text-body tracking-widest"
         >
           <Home className="h-4 w-4" /> 모드 선택
         </button>
@@ -259,8 +259,8 @@ function Stat({ label, value, accent, icon }: { label: string; value: number; ac
   return (
     <div className="mg-card rounded-xl p-2 text-center">
       {icon && <div className="mb-0.5 flex justify-center"><Icon3D name={icon} size={20} /></div>}
-      <div className="font-display text-[10px] tracking-widest text-muted-foreground/80">{label}</div>
-      <div className={`mg-num font-display text-xl leading-tight ${color}`}>{value}</div>
+      <div className="font-display text-micro tracking-wide text-muted-foreground/80">{label}</div>
+      <div className={`mg-num font-display text-heading leading-tight ${color}`}>{value}</div>
     </div>
   );
 }

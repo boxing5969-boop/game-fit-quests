@@ -116,10 +116,10 @@ const StoryScenePlayer = ({
     };
     return (
       <div className="space-y-3 text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-300">
+        <p className="text-micro font-black uppercase tracking-[0.3em] text-rose-300">
           ⚔ 전투 시작
         </p>
-        <p className="whitespace-pre-line text-[13px] leading-relaxed text-foreground">
+        <p className="whitespace-pre-line text-label leading-relaxed text-foreground">
           {battlePayload.intro_line ?? "적이 등장합니다..."}
         </p>
       </div>
@@ -130,10 +130,10 @@ const StoryScenePlayer = ({
   if (scene.scene_type === "ending") {
     return (
       <div className="space-y-3 text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-300">
+        <p className="text-micro font-black uppercase tracking-[0.3em] text-amber-300">
           ✨ 엔딩
         </p>
-        <p className="text-[12px] text-muted-foreground">
+        <p className="text-label text-muted-foreground">
           마지막 라운드를 준비합니다...
         </p>
       </div>
@@ -205,11 +205,11 @@ function DialogueScene({
 
           <div className="flex items-center gap-1.5">
             <SpeakerIcon portraitKey={portraitKey} />
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-300">
+            <p className="text-micro font-black uppercase tracking-[0.25em] text-amber-300">
               {payload.speaker}
             </p>
           </div>
-          <p className="mt-2 min-h-[3.5em] whitespace-pre-line text-[13px] leading-relaxed text-foreground">
+          <p className="mt-2 min-h-[3.5em] whitespace-pre-line text-label leading-relaxed text-foreground">
             {typed}
             {!complete && (
               <motion.span
@@ -223,7 +223,7 @@ function DialogueScene({
       </div>
       {complete && canAdvance && (
         <motion.p
-          className="mt-3 text-center text-[10px] font-bold tracking-wider text-amber-300/70"
+          className="mt-3 text-center text-micro font-bold tracking-wider text-amber-300/70"
           animate={{ opacity: [0.3, 1, 0.3] }}
           transition={{ duration: 1, repeat: Infinity }}
         >
@@ -322,10 +322,10 @@ function NodeMoveScene({
       transition={{ duration: 0.6 }}
       className="flex flex-col items-center justify-center gap-2 py-8 text-center"
     >
-      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-300/70">
+      <p className="text-micro font-black uppercase tracking-[0.4em] text-amber-300/70">
         이동 중
       </p>
-      <p className="text-base font-bold text-foreground">
+      <p className="text-body font-bold text-foreground">
         {payload.transition_message ?? payload.to_node_code}
       </p>
     </motion.div>

@@ -75,14 +75,14 @@ const EducationScreen = ({ onBack }: EducationScreenProps) => {
           <button
             type="button"
             onClick={() => { audio.tap(); onBack(); }}
-            className="absolute left-0 top-0 flex h-9 items-center gap-1 rounded-full bg-card/80 px-3 text-[12px] font-bold text-foreground ring-1 ring-white/10 backdrop-blur-md active:scale-95"
+            className="absolute left-0 top-0 flex h-9 items-center gap-1 rounded-full bg-card/80 px-3 text-label font-bold text-foreground ring-1 ring-white/10 backdrop-blur-md active:scale-95"
           >
             <ArrowLeft className="h-4 w-4" /> 뒤로
           </button>
           <Icon3D name="book" size={72} className="mx-auto mb-1" />
-          <h2 className="text-[22px] font-black tracking-tight text-foreground">미트 트레이닝이란?</h2>
-          <p className="font-display text-[12px] tracking-[0.25em] text-primary">MITT TRAINING ACADEMY</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">5초마다 자동 전환 · 화면을 누르면 일시정지</p>
+          <h2 className="text-title font-black tracking-tight text-foreground">미트 트레이닝이란?</h2>
+          <p className="font-display text-label tracking-[0.25em] text-primary">MITT TRAINING ACADEMY</p>
+          <p className="mt-1 text-micro text-muted-foreground">5초마다 자동 전환 · 화면을 누르면 일시정지</p>
         </div>
 
         {/* Tabs */}
@@ -96,7 +96,7 @@ const EducationScreen = ({ onBack }: EducationScreenProps) => {
             <button
               key={t.key}
               onClick={() => { audio.tap(); handleSetTab(t.key); }}
-              className={`flex-1 rounded-full py-2 text-[13px] font-bold transition-colors ${
+              className={`flex-1 rounded-full py-2 text-label font-bold transition-colors ${
                 tab === t.key ? 'bg-foreground text-background' : 'text-muted-foreground'
               }`}
             >
@@ -118,29 +118,29 @@ const EducationScreen = ({ onBack }: EducationScreenProps) => {
             <motion.div key="basics" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
               {/* What is mitt training */}
               <div className="mg-card p-4">
-                <div className="mb-2 flex items-center gap-2 text-[15px] font-black text-foreground"><Icon3D name="mitt" size={26} /> 미트 트레이닝이란?</div>
-                <p className="text-sm text-foreground/80 leading-relaxed">
+                <div className="mb-2 flex items-center gap-2 text-body font-black text-foreground"><Icon3D name="mitt" size={26} /> 미트 트레이닝이란?</div>
+                <p className="text-body text-foreground/80 leading-relaxed">
                   트레이너가 들고 있는 미트(패드)를 정확한 타이밍에 치는 훈련입니다.
                   단순한 운동이 아닌 타이밍, 반응속도, 정확도를 동시에 키우는 복싱의 핵심 훈련입니다.
                 </p>
               </div>
 
               <div className="mg-card p-4">
-                <div className="mb-2 flex items-center gap-2 text-[15px] font-black text-foreground"><Icon3D name="bolt" size={26} /> 왜 미트인가?</div>
-                <ul className="space-y-2 text-sm text-foreground/80">
+                <div className="mb-2 flex items-center gap-2 text-body font-black text-foreground"><Icon3D name="bolt" size={26} /> 왜 미트인가?</div>
+                <ul className="space-y-2 text-body text-foreground/80">
                   <li>• 샌드백은 기다려주지만 미트는 움직입니다</li>
                   <li>• 살아있는 타이밍 감각은 미트에서만 만들어집니다</li>
                   <li>• 반복할수록 몸이 먼저 반응하는 근육기억이 생깁니다</li>
                 </ul>
                 <div className="mt-3 rounded-xl bg-primary/10 p-3 text-center ring-1 ring-primary/20">
-                  <p className="text-sm font-bold italic text-secondary">
+                  <p className="text-body font-bold italic text-secondary">
                     "샌드백 1000번보다 미트 100번이 실전에 가깝다"
                   </p>
                 </div>
               </div>
 
               <div className="mg-card p-4">
-                <div className="mb-2 flex items-center gap-2 text-[15px] font-black text-foreground"><Icon3D name="trophy" size={26} /> 타이밍 마스터 4단계</div>
+                <div className="mb-2 flex items-center gap-2 text-body font-black text-foreground"><Icon3D name="trophy" size={26} /> 타이밍 마스터 4단계</div>
                 <div className="space-y-2">
                   {[
                     { step: 1, text: '트레이너 미트 위치 인식' },
@@ -149,10 +149,10 @@ const EducationScreen = ({ onBack }: EducationScreenProps) => {
                     { step: 4, text: '반복으로 자동화' },
                   ].map(s => (
                     <div key={s.step} className="flex items-center gap-3">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/20 font-display text-sm text-primary">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/20 font-display text-body text-primary">
                         {s.step}
                       </div>
-                      <span className="text-sm text-foreground/80">{s.text}</span>
+                      <span className="text-body text-foreground/80">{s.text}</span>
                     </div>
                   ))}
                 </div>
@@ -161,11 +161,11 @@ const EducationScreen = ({ onBack }: EducationScreenProps) => {
               {/* Training tips */}
               {REST_TIPS.map((tip, i) => (
                 <div key={i} className="mg-card p-4">
-                  <div className="mb-2 flex items-center gap-2 font-display text-[12px] tracking-widest text-secondary">
+                  <div className="mb-2 flex items-center gap-2 font-display text-label font-bold text-secondary">
                     <Icon3D name={tip.icon} size={22} /> {tip.title}
                   </div>
                   {tip.lines.map((line, j) => (
-                    <p key={j} className="text-sm text-foreground/80 leading-relaxed">{line}</p>
+                    <p key={j} className="text-body text-foreground/80 leading-relaxed">{line}</p>
                   ))}
                 </div>
               ))}
@@ -181,17 +181,17 @@ const EducationScreen = ({ onBack }: EducationScreenProps) => {
                       <PunchGlyph type={type} size={24} />
                     </span>
                     <div>
-                      <div className="font-display text-xl text-foreground">{PUNCHES[type].nameEn}</div>
-                      <div className="text-sm text-muted-foreground">{PUNCHES[type].nameKo}</div>
+                      <div className="font-display text-heading text-foreground">{PUNCHES[type].nameEn}</div>
+                      <div className="text-body text-muted-foreground">{PUNCHES[type].nameKo}</div>
                     </div>
                   </div>
-                  <p className="flex items-start gap-1.5 text-sm text-foreground/80"><Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />{PUNCH_MITT_TIPS[type]}</p>
+                  <p className="flex items-start gap-1.5 text-body text-foreground/80"><Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />{PUNCH_MITT_TIPS[type]}</p>
                 </div>
               ))}
 
               <div className="mg-card p-4 ring-1 ring-primary/20">
-                <div className="mb-2 flex items-center gap-2 text-[15px] font-black text-foreground"><Icon3D name="stopwatch" size={26} /> 타이밍 존 가이드</div>
-                <div className="space-y-2 text-sm">
+                <div className="mb-2 flex items-center gap-2 text-body font-black text-foreground"><Icon3D name="stopwatch" size={26} /> 타이밍 존 가이드</div>
+                <div className="space-y-2 text-body">
                   <div><span className="text-rating-lightning font-bold">PERFECT</span> = 트레이너가 미트를 내밀 때 딱 맞추는 것</div>
                   <div><span className="text-rating-slow font-bold">TOO EARLY</span> = 미트가 오기 전에 쳐서 허공을 가르는 것</div>
                   <div><span className="text-rating-miss font-bold">TOO LATE</span> = 미트가 이미 지나간 후 치는 것</div>
@@ -207,8 +207,8 @@ const EducationScreen = ({ onBack }: EducationScreenProps) => {
                 <div key={combo.id} className="mg-card p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <div className="font-display text-lg text-foreground">{combo.name}</div>
-                      <div className="text-xs text-muted-foreground">{combo.nameKo}</div>
+                      <div className="font-display text-heading text-foreground">{combo.name}</div>
+                      <div className="text-label text-muted-foreground">{combo.nameKo}</div>
                     </div>
                     <div className="flex gap-1">
                       {[1, 2, 3].map(d => (
@@ -218,7 +218,7 @@ const EducationScreen = ({ onBack }: EducationScreenProps) => {
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     {combo.steps.map((step, i) => (
-                      <span key={i} className="flex items-center gap-1.5 rounded-lg bg-white/[0.06] px-2 py-1 text-sm">
+                      <span key={i} className="flex items-center gap-1.5 rounded-lg bg-white/[0.06] px-2 py-1 text-body">
                         <span className={`flex h-5 w-5 items-center justify-center rounded-full ${PUNCH_BG[step.punch]}`}>
                           <PunchGlyph type={step.punch} size={12} strokeWidth={3} />
                         </span>
@@ -238,13 +238,13 @@ const EducationScreen = ({ onBack }: EducationScreenProps) => {
                   <div className="mb-2 flex items-center gap-3">
                     <Icon3D name={TIER_ICON[t.key]} size={40} />
                     <div>
-                      <span className={`font-display text-xl tracking-wider text-tier-${t.key}`}>
+                      <span className={`font-display text-heading tracking-wider text-tier-${t.key}`}>
                         {t.nameEn.toUpperCase()}
                       </span>
-                      <span className={`text-sm text-tier-${t.key}/80 ml-2`}>{t.nameKo}</span>
+                      <span className={`text-body text-tier-${t.key}/80 ml-2`}>{t.nameKo}</span>
                     </div>
                   </div>
-                  <p className="text-sm text-foreground/80 whitespace-pre-line">{TIER_MITT_DESC[t.key]}</p>
+                  <p className="text-body text-foreground/80 whitespace-pre-line">{TIER_MITT_DESC[t.key]}</p>
                 </div>
               ))}
             </motion.div>
@@ -254,7 +254,7 @@ const EducationScreen = ({ onBack }: EducationScreenProps) => {
         <button
           type="button"
           onClick={() => { audio.tap(); onBack(); }}
-          className="mg-btn-ghost mt-8 flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-display text-lg tracking-widest"
+          className="mg-btn-ghost mt-8 flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-display text-heading tracking-widest"
         >
           <ArrowLeft className="h-4 w-4" /> BACK
         </button>

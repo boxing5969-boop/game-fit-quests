@@ -67,7 +67,7 @@ const VictoryFanfare = ({
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="relative z-10 text-[10px] font-black uppercase tracking-[0.5em] text-amber-300/80"
+        className="relative z-10 text-micro font-black uppercase tracking-[0.5em] text-amber-300/80"
       >
         VICTORY
       </motion.p>
@@ -80,7 +80,7 @@ const VictoryFanfare = ({
         승리!
       </motion.h2>
 
-      <div className="relative z-10 mt-2 flex flex-col items-center gap-1 text-[12px] text-amber-100">
+      <div className="relative z-10 mt-2 flex flex-col items-center gap-1 text-label text-amber-100">
         {typeof rewards?.story_xp === "number" && rewards.story_xp > 0 && (
           <p>
             <span className="text-amber-300">+{rewards.story_xp}</span> XP

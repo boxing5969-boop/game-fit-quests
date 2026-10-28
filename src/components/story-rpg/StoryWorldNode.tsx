@@ -59,13 +59,13 @@ const StoryWorldNode = ({ node, state = "neutral" }: StoryWorldNodeProps) => {
     >
       <div className="flex items-center gap-2">
         <Icon className="h-4 w-4 shrink-0" />
-        <p className="truncate text-[12px] font-black">{node.title}</p>
+        <p className="truncate text-label font-black">{node.title}</p>
       </div>
-      <p className="line-clamp-2 text-[10px] leading-snug text-muted-foreground">
+      <p className="line-clamp-2 text-micro leading-snug text-muted-foreground">
         {node.description}
       </p>
       {state === "current" && (
-        <span className="absolute -top-2 right-2 rounded-full bg-amber-400 px-2 py-0.5 text-[9px] font-black text-amber-950">
+        <span className="absolute -top-2 right-2 rounded-full bg-amber-400 px-2 py-0.5 text-micro font-black text-amber-950">
           지금 여기
         </span>
       )}

@@ -30,8 +30,8 @@ const TutorialOverlay = ({ onDismiss }: TutorialOverlayProps) => {
       <div className="w-full max-w-sm">
         <div className="mb-5 text-center">
           <div className="mb-2 flex justify-center"><Icon3D name="bolt" size={64} /></div>
-          <h2 className="text-[22px] font-black tracking-tight text-foreground">반응속도 트레이닝, 이렇게 해요</h2>
-          <p className="mt-1 text-sm text-muted-foreground">첫 판은 천천히 — 보고, 같은 버튼을 바로 누르기</p>
+          <h2 className="text-title font-black tracking-tight text-foreground">반응속도 트레이닝, 이렇게 해요</h2>
+          <p className="mt-1 text-body text-muted-foreground">첫 판은 천천히 — 보고, 같은 버튼을 바로 누르기</p>
         </div>
 
         <div className="mb-6 space-y-2.5">
@@ -45,8 +45,8 @@ const TutorialOverlay = ({ onDismiss }: TutorialOverlayProps) => {
                 </span>
               )}
               <div className="min-w-0">
-                <div className={`font-display text-lg tracking-wider ${z.color}`}>{z.label}</div>
-                <div className="text-[13px] leading-snug text-foreground/80">{z.desc}</div>
+                <div className={`font-display text-heading tracking-wider ${z.color}`}>{z.label}</div>
+                <div className="text-label leading-snug text-foreground/80">{z.desc}</div>
               </div>
             </div>
           ))}
@@ -55,7 +55,7 @@ const TutorialOverlay = ({ onDismiss }: TutorialOverlayProps) => {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={() => { audio.tap(); onDismiss(); }}
-          className="mg-btn-primary flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-display text-xl tracking-widest"
+          className="mg-btn-primary flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-display text-heading tracking-widest"
         >
           <Play className="h-5 w-5 fill-current" /> 이해했어요! 시작
         </motion.button>

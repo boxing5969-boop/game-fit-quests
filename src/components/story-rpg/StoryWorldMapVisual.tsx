@@ -77,13 +77,13 @@ const StoryWorldMapVisual = ({
   return (
     <section className="space-y-3">
       <div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">
+        <p className="text-micro font-black uppercase tracking-[0.2em] text-amber-300">
           월드맵
         </p>
-        <h2 className="mt-0.5 text-base font-black text-foreground">
+        <h2 className="mt-0.5 text-body font-black text-foreground">
           체육관의 풍경
         </h2>
-        <p className="mt-0.5 text-[11px] text-muted-foreground">
+        <p className="mt-0.5 text-micro text-muted-foreground">
           현재 위치를 탭하면 챕터 정보가 보여집니다.
         </p>
       </div>
@@ -169,10 +169,10 @@ const StoryWorldMapVisual = ({
                       : "border-white/10 bg-gray-900/70 opacity-70"
                 }`}
               >
-                <span className="text-[9px] font-black uppercase tracking-wider text-amber-200">
+                <span className="text-micro font-black uppercase tracking-wider text-amber-200">
                   {chapter.chapter_number}장
                 </span>
-                <span className="mt-0.5 line-clamp-1 max-w-[60px] text-center text-[10px] font-bold text-foreground">
+                <span className="mt-0.5 line-clamp-1 max-w-[60px] text-center text-micro font-bold text-foreground">
                   {node?.title ?? chapter.title}
                 </span>
                 {isCleared && (

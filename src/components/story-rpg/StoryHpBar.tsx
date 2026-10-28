@@ -45,7 +45,7 @@ const StoryHpBar = ({
   return (
     <div className="w-full">
       {(label || showNumbers) && (
-        <div className="flex items-center justify-between text-[10px] font-bold tabular-nums">
+        <div className="flex items-center justify-between text-micro font-bold tabular-nums">
           {label && (
             <span
               className={

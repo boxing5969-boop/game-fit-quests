@@ -9,7 +9,7 @@
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { EXEMPT_MARK, isMemberFile } from "./type-scale.mjs";
+import { EXEMPT_MARK, isGameFile, isMemberFile } from "./type-scale.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "src");
 const dry = process.argv.includes("--dry");
@@ -65,7 +65,8 @@ function fixClass(str) {
 }
 function check(abs) {
   const rel = relative(root, abs).replace(/\\/g, "/");
-  if (!isMemberFile(rel) || HAND_TUNED.some((p) => rel.startsWith(p))) return;
+  // 게임은 오락실 모양(영문 대문자 머리말 · 작은 표시)이 그 화면의 멋이라 건드리지 않는다 — 13px 아래만 없으면 된다 (2026-10-28 3단계)
+  if (!isMemberFile(rel) || isGameFile(rel) || HAND_TUNED.some((p) => rel.startsWith(p))) return;
   const src = readFileSync(abs, "utf8");
   let n = 0;
   const out = src

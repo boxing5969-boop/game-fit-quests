@@ -23,14 +23,14 @@ const StoryRpgPageHeader = () => {
         <ArrowLeft className="h-4 w-4" />
       </button>
       <div className="flex-1 min-w-0">
-        <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">
+        <p className="flex items-center gap-1.5 text-micro font-black uppercase tracking-[0.2em] text-amber-300">
           <Swords className="h-3 w-3" />
           {STORY_RPG_MENU_LABEL}
         </p>
-        <h1 className="mt-1 text-2xl font-black text-foreground">
+        <h1 className="mt-1 text-title font-black text-foreground">
           {STORY_RPG_PAGE_TITLE}
         </h1>
-        <p className="mt-1 text-[12px] text-muted-foreground">
+        <p className="mt-1 text-label text-muted-foreground">
           {STORY_RPG_PAGE_SUBTITLE}
         </p>
       </div>

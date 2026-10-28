@@ -77,19 +77,19 @@ const StoryCharacterPanel = ({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">
+          <p className="text-micro font-black uppercase tracking-[0.2em] text-amber-300">
             내 복서
           </p>
-          <p className="mt-0.5 truncate text-base font-black text-foreground">
+          <p className="mt-0.5 truncate text-body font-black text-foreground">
             {profile?.nickname || profile?.name || "이름 없는 복서"}
           </p>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
+          <p className="mt-0.5 text-label text-muted-foreground">
             {official?.current_rank ?? "-"} 리그 · Lv.{toGlobalLevel(official?.current_rank, level)}
           </p>
 
           {activeRoute && visual && (
             <p
-              className={`mt-2 inline-flex items-center gap-1 rounded-pill border px-2 py-0.5 text-[10px] font-bold ${visual.chip}`}
+              className={`mt-2 inline-flex items-center gap-1 rounded-pill border px-2 py-0.5 text-micro font-bold ${visual.chip}`}
             >
               {visual.emoji} {activeRoute.title}
             </p>
@@ -99,7 +99,7 @@ const StoryCharacterPanel = ({
 
       {activeProgress && (
         <div className="mt-3">
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+          <div className="flex items-center justify-between text-micro text-muted-foreground">
             <span>스토리 진행률</span>
             <span className="font-bold text-foreground tabular-nums">
               {completedCount}/6
@@ -114,7 +114,7 @@ const StoryCharacterPanel = ({
         </div>
       )}
 
-      <p className="mt-3 text-[11px] text-muted-foreground">
+      <p className="mt-3 text-micro text-muted-foreground">
         공식 리그/레벨은 마스터로드의 훈련으로만 변경됩니다. 여기서는 표시만 됩니다.
       </p>
     </section>

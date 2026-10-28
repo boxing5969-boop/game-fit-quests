@@ -119,20 +119,20 @@ const StoryEndingCutscene = ({
           className="mt-4 space-y-3 rounded-2xl border border-amber-400/50 bg-gradient-to-br from-amber-500/15 via-rose-500/10 to-transparent p-4"
         >
           <div className="text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-300">
+            <p className="text-micro font-black uppercase tracking-[0.3em] text-amber-300">
               엔딩
             </p>
-            <h2 className="mt-1 bg-gradient-to-r from-amber-300 via-yellow-200 to-rose-300 bg-clip-text text-2xl font-black text-transparent">
+            <h2 className="mt-1 bg-gradient-to-r from-amber-300 via-yellow-200 to-rose-300 bg-clip-text text-title font-black text-transparent">
               {payload.title}
             </h2>
             {payload.subtitle && (
-              <p className="mt-0.5 text-[12px] text-amber-100/80">
+              <p className="mt-0.5 text-label text-amber-100/80">
                 {payload.subtitle}
               </p>
             )}
           </div>
 
-          <ul className="grid gap-1.5 text-[12px]">
+          <ul className="grid gap-1.5 text-label">
             {typeof reward.story_xp === "number" && reward.story_xp > 0 && (
               <RewardRow label="STORY XP" value={`+${reward.story_xp}`} tone="amber" />
             )}
@@ -160,7 +160,7 @@ const StoryEndingCutscene = ({
             type="button"
             onClick={handleClaim}
             disabled={completeEnding.isPending}
-            className="flex w-full items-center justify-center gap-2 rounded-pill border border-amber-400/60 bg-gradient-to-r from-amber-500 to-rose-500 px-6 py-3 text-sm font-black uppercase tracking-wider text-amber-950 active:scale-[0.98] disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-pill border border-amber-400/60 bg-gradient-to-r from-amber-500 to-rose-500 px-6 py-3 text-body font-black uppercase tracking-wider text-amber-950 active:scale-[0.98] disabled:opacity-60"
           >
             {completeEnding.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             보상 받기
@@ -169,7 +169,7 @@ const StoryEndingCutscene = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground"
+              className="w-full text-center text-micro text-muted-foreground hover:text-foreground"
             >
               나중에 받기
             </button>
@@ -201,8 +201,8 @@ function RewardRow({
     <li
       className={`flex items-center justify-between rounded-xl border px-3 py-2 ${map[tone]}`}
     >
-      <span className="text-[11px] font-bold opacity-80">{label}</span>
-      <span className="text-[13px] font-black tabular-nums">{value}</span>
+      <span className="text-micro font-bold opacity-80">{label}</span>
+      <span className="text-label font-black tabular-nums">{value}</span>
     </li>
   );
 }
@@ -215,14 +215,14 @@ function CutsceneBlock({ block }: { block?: StoryEndingCutsceneBlock }) {
 
   if (type === "narration") {
     return (
-      <p className="text-center text-[13px] leading-relaxed text-foreground">
+      <p className="text-center text-label leading-relaxed text-foreground">
         {text}
       </p>
     );
   }
   if (type === "credits") {
     return (
-      <p className="text-center text-[11px] leading-relaxed text-amber-200/70">
+      <p className="text-center text-micro leading-relaxed text-amber-200/70">
         {text}
       </p>
     );
@@ -233,18 +233,18 @@ function CutsceneBlock({ block }: { block?: StoryEndingCutsceneBlock }) {
         <OsamMascot size="sm" state="idle" />
         <div className="flex-1">
           {speaker && (
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-300">
+            <p className="text-micro font-black uppercase tracking-[0.25em] text-amber-300">
               {speaker}
             </p>
           )}
-          <p className="mt-1 whitespace-pre-line text-[12px] leading-relaxed text-foreground">
+          <p className="mt-1 whitespace-pre-line text-label leading-relaxed text-foreground">
             {text}
           </p>
         </div>
       </div>
     );
   }
-  return <p className="text-center text-[12px]">{text}</p>;
+  return <p className="text-center text-label">{text}</p>;
 }
 
 export default StoryEndingCutscene;

@@ -59,7 +59,7 @@ const StoryInventoryPanel = ({
   return (
     <div className="rounded-2xl border border-amber-500/30 bg-gray-950/90 p-3">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-300">
+        <p className="text-micro font-black uppercase tracking-[0.25em] text-amber-300">
           내 카드 ({inventory.length})
         </p>
         {onClose && (
@@ -74,7 +74,7 @@ const StoryInventoryPanel = ({
         )}
       </div>
       {items.length === 0 ? (
-        <p className="mt-3 text-center text-[11px] text-muted-foreground">
+        <p className="mt-3 text-center text-micro text-muted-foreground">
           아직 카드가 없습니다.
         </p>
       ) : (
@@ -87,16 +87,16 @@ const StoryInventoryPanel = ({
                 key={card.code}
                 className={`relative rounded-xl border p-2 ${RARITY_BORDER[card.rarity]}`}
               >
-                <span className="absolute right-1.5 top-1.5 rounded-full bg-black/40 px-1.5 py-0.5 text-[9px] font-mono text-amber-100">
+                <span className="absolute right-1.5 top-1.5 rounded-full bg-black/40 px-1.5 py-0.5 text-micro font-mono text-amber-100">
                   ×{inv.count}
                 </span>
-                <span className="text-[8px] font-bold uppercase tracking-wider text-amber-200/80">
+                <span className="text-micro font-bold uppercase tracking-wider text-amber-200/80">
                   {RARITY_LABEL[card.rarity]}
                 </span>
-                <p className="mt-0.5 text-[12px] font-black text-foreground">
+                <p className="mt-0.5 text-label font-black text-foreground">
                   {card.name}
                 </p>
-                <p className="mt-1 line-clamp-3 text-[10px] leading-snug text-muted-foreground">
+                <p className="mt-1 line-clamp-3 text-micro leading-snug text-muted-foreground">
                   {card.description}
                 </p>
                 {mode === "battle" && (
@@ -104,7 +104,7 @@ const StoryInventoryPanel = ({
                     type="button"
                     onClick={() => usable && onUseCard?.(card.code)}
                     disabled={!usable}
-                    className="mt-2 w-full rounded-lg border border-amber-500/40 bg-amber-500/10 py-1 text-[10px] font-bold text-amber-100 transition-colors hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-2 w-full rounded-lg border border-amber-500/40 bg-amber-500/10 py-1 text-micro font-bold text-amber-100 transition-colors hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {card.is_consumable ? "사용" : "장식"}
                   </button>

@@ -84,7 +84,7 @@ const MittPad = ({
         <div className="absolute inset-2 rounded-full border-2 border-black/25" />
         <PunchGlyph type={punch} size={30} strokeWidth={2.8} className="relative" />
       </div>
-      <span className="mt-1.5 font-display text-[13px] tracking-wider text-foreground/90">
+      <span className="mt-1.5 font-display text-label tracking-wider text-foreground/90">
         {meta.nameEn}
       </span>
     </motion.button>
@@ -102,8 +102,8 @@ const StatBox = ({ label, value, tone = 'muted' }: { label: string; value: strin
         : 'bg-white/[0.05]'
     }`}
   >
-    <div className={`font-display text-[10px] tracking-[0.2em] ${tone === 'gold' ? 'text-secondary/80' : tone === 'red' ? 'text-destructive/80' : 'text-muted-foreground'}`}>{label}</div>
-    <div className={`mg-num font-display text-base ${tone === 'gold' ? 'text-secondary' : tone === 'red' ? 'text-destructive' : 'text-foreground'}`}>{value}</div>
+    <div className={`font-display text-micro tracking-[0.2em] ${tone === 'gold' ? 'text-secondary/80' : tone === 'red' ? 'text-destructive/80' : 'text-muted-foreground'}`}>{label}</div>
+    <div className={`mg-num font-display text-body ${tone === 'gold' ? 'text-secondary' : tone === 'red' ? 'text-destructive' : 'text-foreground'}`}>{value}</div>
   </div>
 );
 
@@ -260,8 +260,8 @@ const MittDrillScreen = ({
         {/* Energy bar (전면) */}
         <div className="px-3 pt-2">
           <div className="mb-1 flex items-center justify-between pr-11">
-            <span className="font-display text-[10px] tracking-[0.25em] text-muted-foreground">ENERGY</span>
-            <span className={`mg-num font-display text-[11px] ${energyLow ? 'text-destructive' : 'text-foreground/80'}`}>
+            <span className="font-display text-micro tracking-[0.25em] text-muted-foreground">ENERGY</span>
+            <span className={`mg-num font-display text-micro ${energyLow ? 'text-destructive' : 'text-foreground/80'}`}>
               {Math.round(energy)}
             </span>
           </div>
@@ -288,29 +288,29 @@ const MittDrillScreen = ({
         {/* Stats row */}
         <div className="flex items-center justify-between gap-2 px-3 py-2">
           <div className="flex min-w-0 shrink-0 flex-col">
-            <span className="font-display text-[10px] tracking-[0.25em] text-muted-foreground">ROUND</span>
-            <span className="mg-num font-display text-2xl leading-none text-primary">
+            <span className="font-display text-micro tracking-[0.25em] text-muted-foreground">ROUND</span>
+            <span className="mg-num font-display text-title leading-none text-primary">
               {currentStage}
             </span>
-            <span className="mg-num text-[10px] text-muted-foreground">BEST {highestCleared}</span>
+            <span className="mg-num text-micro text-muted-foreground">BEST {highestCleared}</span>
           </div>
           <div className="flex min-w-0 flex-1 flex-col items-center">
-            <span className="font-display text-[10px] tracking-[0.25em] text-muted-foreground">SCORE</span>
-            <span className="mg-num truncate font-display text-xl leading-none text-secondary">
+            <span className="font-display text-micro tracking-[0.25em] text-muted-foreground">SCORE</span>
+            <span className="mg-num truncate font-display text-heading leading-none text-secondary">
               {score.toLocaleString()}
             </span>
             {combo >= 3 && (
-              <span className="mg-num mt-0.5 flex items-center gap-1 font-display text-[11px] tracking-widest text-secondary">
+              <span className="mg-num mt-0.5 flex items-center gap-1 font-display text-micro tracking-widest text-secondary">
                 <Icon3D name="fire" size={12} /> x{combo}
               </span>
             )}
           </div>
           <div className="flex min-w-0 shrink-0 flex-col items-end">
-            <span className="font-display text-[10px] tracking-[0.25em] text-muted-foreground">TIME</span>
-            <span className={`mg-num font-display text-2xl leading-none ${
+            <span className="font-display text-micro tracking-[0.25em] text-muted-foreground">TIME</span>
+            <span className={`mg-num font-display text-title leading-none ${
               stageTime <= 5 ? 'animate-pulse text-destructive' : 'text-foreground'
             }`}>
-              {stageTime}<span className="text-xs text-muted-foreground">s</span>
+              {stageTime}<span className="text-label text-muted-foreground">s</span>
             </span>
           </div>
         </div>
@@ -341,11 +341,11 @@ const MittDrillScreen = ({
             className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none bg-background/55 backdrop-blur-sm"
           >
             <Icon3D name="bell" size={44} className="mb-2" />
-            <div className="mb-3 font-display text-xs tracking-[0.6em] text-muted-foreground">READY</div>
+            <div className="mb-3 font-display text-label tracking-[0.6em] text-muted-foreground">READY</div>
             <div className="mg-num font-display text-7xl leading-none text-primary drop-shadow-[0_0_30px_hsl(var(--primary)/0.7)]">
               ROUND {currentStage}
             </div>
-            <div className="text-[11px] text-muted-foreground mt-3 font-display tracking-widest">
+            <div className="text-micro text-muted-foreground mt-3 font-display tracking-widest">
               {cfg.durationSec}s · {cfg.spawnIntervalMs <= 700 ? 'FAST' : cfg.spawnIntervalMs <= 1100 ? 'STEADY' : 'EASY'}
             </div>
           </motion.div>
@@ -454,7 +454,7 @@ const MittDrillScreen = ({
               >
                 <PunchGlyph type={g.punch} size={28} strokeWidth={2.8} />
               </div>
-              <div className="mt-1 font-display text-[11px] tracking-wider text-foreground/70">
+              <div className="mt-1 font-display text-micro tracking-wider text-foreground/70">
                 {PUNCHES[g.punch].nameEn}
               </div>
             </div>
@@ -526,7 +526,7 @@ const MittDrillScreen = ({
               animate={{ opacity: 1, y: -34, scale: 1 }}
               exit={{ opacity: 0, y: -50 }}
               transition={{ duration: 0.7 }}
-              className="absolute pointer-events-none z-20 left-3 top-2 font-display text-sm text-secondary drop-shadow-[0_0_10px_hsl(var(--secondary)/0.8)]"
+              className="absolute pointer-events-none z-20 left-3 top-2 font-display text-body text-secondary drop-shadow-[0_0_10px_hsl(var(--secondary)/0.8)]"
             >
               +{energyFloat.delta}
             </motion.div>
@@ -583,7 +583,7 @@ const MittDrillScreen = ({
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: [0.5, 1.15, 1], opacity: 1 }}
                     transition={{ duration: 0.55 }}
-                    className="mg-btn-gold flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-[11px] tracking-widest"
+                    className="mg-btn-gold flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-micro tracking-widest"
                   >
                     <Icon3D name="trophy" size={14} /> NEW BEST
                   </motion.span>
@@ -593,7 +593,7 @@ const MittDrillScreen = ({
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: [0.5, 1.15, 1], opacity: 1 }}
                     transition={{ duration: 0.55, delay: 0.1 }}
-                    className="mg-btn-primary flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-[11px] tracking-widest"
+                    className="mg-btn-primary flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-micro tracking-widest"
                   >
                     <PartyPopper className="h-3 w-3" /> FIRST CLEAR
                   </motion.span>
@@ -603,7 +603,7 @@ const MittDrillScreen = ({
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: [0.5, 1.2, 1], opacity: 1 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
-                    className="mg-btn-gold flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-[11px] tracking-widest"
+                    className="mg-btn-gold flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-micro tracking-widest"
                   >
                     <Icon3D name="star" size={14} /> FIRST 3-STAR
                   </motion.span>
@@ -613,7 +613,7 @@ const MittDrillScreen = ({
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: [0.5, 1.15, 1], opacity: 1 }}
                     transition={{ duration: 0.55 }}
-                    className="mg-btn-gold flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-[11px] tracking-widest"
+                    className="mg-btn-gold flex items-center gap-1 rounded-full px-2.5 py-0.5 font-display text-micro tracking-widest"
                   >
                     <ArrowUp className="h-3 w-3" strokeWidth={3} /> STAR UP {roundOutcome.prevStars}→{roundOutcome.stars?.stars}
                   </motion.span>
@@ -622,7 +622,7 @@ const MittDrillScreen = ({
 
               <div className="mb-1 flex justify-center"><Icon3D name="mitt" size={56} /></div>
               <div className="font-display text-3xl tracking-widest text-secondary">ROUND CLEAR</div>
-              <div className="mg-num mb-3 text-[11px] text-muted-foreground">ROUND {roundOutcome.round}</div>
+              <div className="mg-num mb-3 text-micro text-muted-foreground">ROUND {roundOutcome.round}</div>
 
               {/* Stars */}
               {roundOutcome.stars && (
@@ -658,7 +658,7 @@ const MittDrillScreen = ({
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.1 }}
-                className="font-display text-xs tracking-widest text-secondary mb-3"
+                className="font-display text-label tracking-widest text-secondary mb-3"
               >
                 {roundOutcome.stars?.label}
               </motion.div>
@@ -677,7 +677,7 @@ const MittDrillScreen = ({
 
               {/* 다음 목표 힌트 */}
               {roundOutcome.stars && roundOutcome.stars.stars < 3 && (
-                <div className="mb-3 flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-left text-[12px] text-foreground/85 ring-1 ring-primary/30">
+                <div className="mb-3 flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-left text-label text-foreground/85 ring-1 ring-primary/30">
                   <Icon3D name="star" size={22} />
                   <span>
                     {roundOutcome.stars.stars === 1
@@ -693,20 +693,20 @@ const MittDrillScreen = ({
                 animate={{ scale: [1, 1.03, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
                 onClick={onNextRound}
-                className="mg-btn-primary mb-2 flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-display text-2xl tracking-widest active:brightness-110"
+                className="mg-btn-primary mb-2 flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-display text-title tracking-widest active:brightness-110"
               >
                 <Play className="h-6 w-6 fill-current" /> NEXT ROUND {roundOutcome.round + 1}
               </motion.button>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={onRetryRound}
-                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-[14px] tracking-widest active:scale-95"
+                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-label tracking-widest active:scale-95"
                 >
                   <RotateCcw className="h-4 w-4" /> {roundOutcome.stars && roundOutcome.stars.stars < 3 ? '별 3개 도전' : 'RETRY'}
                 </button>
                 <button
                   onClick={onEndSession}
-                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-[14px] tracking-widest active:scale-95"
+                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-label tracking-widest active:scale-95"
                 >
                   <Flag className="h-4 w-4" /> END
                 </button>
@@ -739,7 +739,7 @@ const MittDrillScreen = ({
                 <Icon3D name="glove_red" size={64} />
               </motion.div>
               <div className="font-display text-3xl tracking-widest text-destructive">K.O.</div>
-              <div className="mg-num mb-3 text-[11px] text-muted-foreground">
+              <div className="mg-num mb-3 text-micro text-muted-foreground">
                 ROUND {roundOutcome.round} ·{' '}
                 {roundOutcome.reason === 'ko-streak'
                   ? '연속 미스'
@@ -753,7 +753,7 @@ const MittDrillScreen = ({
                   {[1, 2, 3].map(i => (
                     <Icon3D key={i} name="star" size={26} dim={i > roundOutcome.prevStars} />
                   ))}
-                  <span className="ml-1 font-display text-[11px] text-muted-foreground">현재 기록</span>
+                  <span className="ml-1 font-display text-micro text-muted-foreground">현재 기록</span>
                 </div>
               )}
 
@@ -769,7 +769,7 @@ const MittDrillScreen = ({
               </div>
 
               {roundOutcome.failHint && (
-                <div className="mb-3 flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-left text-[12px] text-foreground/85 ring-1 ring-primary/30">
+                <div className="mb-3 flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-left text-label text-foreground/85 ring-1 ring-primary/30">
                   <Icon3D name="book" size={22} />
                   <span>{roundOutcome.failHint}</span>
                 </div>
@@ -789,13 +789,13 @@ const MittDrillScreen = ({
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={onEndSession}
-                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-[14px] tracking-widest active:scale-95"
+                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-label tracking-widest active:scale-95"
                 >
                   <BarChart3 className="h-4 w-4" /> 결과 보기
                 </button>
                 <button
                   onClick={onQuit}
-                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-[14px] tracking-widest active:scale-95"
+                  className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-label tracking-widest active:scale-95"
                 >
                   <Home className="h-4 w-4" /> HOME
                 </button>

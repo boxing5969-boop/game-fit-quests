@@ -111,7 +111,7 @@ const UnifiedLeaderboard = ({ onBack, currentUserId, initialMode = 'speed' }: Pr
           <button
             type="button"
             onClick={() => { audio.tap(); onBack(); }}
-            className="flex h-9 items-center gap-1 rounded-full bg-card/80 px-3 text-[12px] font-bold text-foreground ring-1 ring-white/10 backdrop-blur-md active:scale-95"
+            className="flex h-9 items-center gap-1 rounded-full bg-card/80 px-3 text-label font-bold text-foreground ring-1 ring-white/10 backdrop-blur-md active:scale-95"
           >
             <ArrowLeft className="h-4 w-4" /> 뒤로
           </button>
@@ -119,7 +119,7 @@ const UnifiedLeaderboard = ({ onBack, currentUserId, initialMode = 'speed' }: Pr
         <div className="mb-4 text-center">
           <Icon3D name="trophy" size={64} className="mx-auto" />
           <h1 className="font-display text-3xl tracking-[0.2em] text-foreground">LEADERBOARD</h1>
-          <p className="text-[11.5px] font-semibold text-muted-foreground">153 회원 TOP 50 · 회원마다 최고 기록</p>
+          <p className="text-micro font-semibold text-muted-foreground">153 회원 TOP 50 · 회원마다 최고 기록</p>
         </div>
 
         <div className="mb-3 grid grid-cols-3 gap-2">
@@ -135,8 +135,8 @@ const UnifiedLeaderboard = ({ onBack, currentUserId, initialMode = 'speed' }: Pr
                 }`}
               >
                 <Icon3D name={t.icon} size={32} />
-                <div className={`mt-1 font-display text-[12px] tracking-[0.2em] ${active ? 'text-primary' : 'text-muted-foreground'}`}>{t.sub}</div>
-                <div className="text-[11px] font-semibold text-foreground/80">{t.label}</div>
+                <div className={`mt-1 font-display text-label tracking-[0.2em] ${active ? 'text-primary' : 'text-muted-foreground'}`}>{t.sub}</div>
+                <div className="text-micro font-semibold text-foreground/80">{t.label}</div>
               </button>
             );
           })}
@@ -148,7 +148,7 @@ const UnifiedLeaderboard = ({ onBack, currentUserId, initialMode = 'speed' }: Pr
               key={r.key}
               type="button"
               onClick={() => { audio.tap(); setRange(r.key); }}
-              className={`flex-1 rounded-full py-2 font-display text-[12px] tracking-[0.2em] transition-colors ${
+              className={`flex-1 rounded-full py-2 font-display text-label tracking-[0.2em] transition-colors ${
                 range === r.key ? 'bg-foreground text-background' : 'text-muted-foreground'
               }`}
             >
@@ -168,18 +168,18 @@ const UnifiedLeaderboard = ({ onBack, currentUserId, initialMode = 'speed' }: Pr
             {loading ? (
               <div className="flex flex-col items-center py-16 text-muted-foreground">
                 <Loader2 className="mb-2 h-6 w-6 animate-spin" />
-                <div className="text-sm">기록 불러오는 중…</div>
+                <div className="text-body">기록 불러오는 중…</div>
               </div>
             ) : error ? (
               <div className="py-16 text-center">
                 <AlertTriangle className="mx-auto mb-2 h-8 w-8 text-destructive" />
-                <div className="text-sm text-destructive">{error}</div>
+                <div className="text-body text-destructive">{error}</div>
               </div>
             ) : rows.length === 0 ? (
               <div className="py-14 text-center text-muted-foreground">
                 <Icon3D name={tab.icon} size={64} className="mx-auto mb-3 opacity-80" />
-                <p className="text-sm font-semibold">아직 기록이 없어요</p>
-                <p className="mt-1 text-xs">첫 번째 챔피언이 되어 보세요!</p>
+                <p className="text-body font-semibold">아직 기록이 없어요</p>
+                <p className="mt-1 text-label">첫 번째 챔피언이 되어 보세요!</p>
               </div>
             ) : (
               <div className="space-y-1.5">
@@ -192,15 +192,15 @@ const UnifiedLeaderboard = ({ onBack, currentUserId, initialMode = 'speed' }: Pr
             {/* 내 순위 — 순위표 밖에 있을 때 */}
             {!loading && !error && mine && !myInList && (
               <div className="mt-3 flex items-center gap-3 rounded-2xl bg-primary/10 px-3 py-2.5 ring-1 ring-primary/40">
-                <div className="mg-num w-8 text-center font-display text-lg text-primary">{mine.rank}</div>
+                <div className="mg-num w-8 text-center font-display text-heading text-primary">{mine.rank}</div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 text-[14px] font-black text-foreground">
+                  <div className="flex items-center gap-1.5 text-label font-black text-foreground">
                     내 순위
-                    <span className="rounded bg-primary px-1.5 py-0.5 font-display text-[10px] tracking-widest text-primary-foreground">ME</span>
+                    <span className="rounded bg-primary px-1.5 py-0.5 font-display text-micro tracking-widest text-primary-foreground">ME</span>
                   </div>
-                  <div className="text-[11px] text-muted-foreground">{mine.total_players}명 중 {mine.rank}위</div>
+                  <div className="text-micro text-muted-foreground">{mine.total_players}명 중 {mine.rank}위</div>
                 </div>
-                <div className="mg-num font-display text-xl text-secondary">{fmtScore(game, mine.score)}</div>
+                <div className="mg-num font-display text-heading text-secondary">{fmtScore(game, mine.score)}</div>
               </div>
             )}
           </motion.div>
@@ -248,21 +248,21 @@ function RankRow({ rank, record, game, isMe, delay }: { rank: number; record: Ro
         {medal ? (
           <Icon3D name={medal} size={32} />
         ) : (
-          <span className="mg-num font-display text-lg text-muted-foreground">{rank}</span>
+          <span className="mg-num font-display text-heading text-muted-foreground">{rank}</span>
         )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="truncate text-[14px] font-black text-foreground">{record.player_name}</span>
+          <span className="truncate text-label font-black text-foreground">{record.player_name}</span>
           {isMe && (
-            <span className="rounded bg-primary px-1.5 py-0.5 font-display text-[10px] tracking-widest text-primary-foreground">ME</span>
+            <span className="rounded bg-primary px-1.5 py-0.5 font-display text-micro tracking-widest text-primary-foreground">ME</span>
           )}
         </div>
-        {subtitle && <div className="mg-num truncate text-[11px] text-muted-foreground">{subtitle}</div>}
+        {subtitle && <div className="mg-num truncate text-micro text-muted-foreground">{subtitle}</div>}
       </div>
       <div className="shrink-0 text-right">
-        <div className="mg-num font-display text-xl leading-none text-secondary">{fmtScore(game, record.score)}</div>
-        <div className="mt-0.5 text-[10px] text-muted-foreground">{new Date(record.played_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</div>
+        <div className="mg-num font-display text-heading leading-none text-secondary">{fmtScore(game, record.score)}</div>
+        <div className="mt-0.5 text-micro text-muted-foreground">{new Date(record.played_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</div>
       </div>
     </motion.div>
   );

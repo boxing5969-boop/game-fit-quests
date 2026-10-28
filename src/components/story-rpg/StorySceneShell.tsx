@@ -75,7 +75,7 @@ const StorySceneShell = ({
       )}
 
       {bgmHint && (
-        <span className="absolute right-3 top-2 z-20 text-[9px] font-mono uppercase tracking-[0.2em] text-amber-300/40">
+        <span className="absolute right-3 top-2 z-20 text-micro font-mono uppercase tracking-[0.2em] text-amber-300/40">
           ♪ {bgmHint}
         </span>
       )}

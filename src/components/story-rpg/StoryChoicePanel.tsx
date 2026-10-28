@@ -46,11 +46,11 @@ const StoryChoicePanel = ({
     <div className="space-y-3">
       <div>
         {payload.speaker && (
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-300">
+          <p className="text-micro font-black uppercase tracking-[0.25em] text-amber-300">
             {payload.speaker}
           </p>
         )}
-        <p className="mt-1 whitespace-pre-line text-[13px] leading-relaxed text-foreground">
+        <p className="mt-1 whitespace-pre-line text-label leading-relaxed text-foreground">
           {payload.prompt}
         </p>
       </div>
@@ -67,13 +67,13 @@ const StoryChoicePanel = ({
                 className="group flex w-full flex-col gap-1 rounded-2xl border border-amber-500/30 bg-gray-950/80 px-4 py-3 text-left transition-all hover:border-amber-400 active:scale-[0.99] disabled:opacity-60"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[13px] font-bold text-foreground">
+                  <span className="text-label font-bold text-foreground">
                     {c.label}
                   </span>
                   {isBusy && <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-300" />}
                 </div>
                 {(stats || c.hint) && (
-                  <span className="text-[10px] text-amber-200/70">
+                  <span className="text-micro text-amber-200/70">
                     {stats}
                     {stats && c.hint ? " · " : ""}
                     {c.hint}

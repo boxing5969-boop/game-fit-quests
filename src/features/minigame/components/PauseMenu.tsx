@@ -71,18 +71,18 @@ const PauseMenu = ({
             <Pause className="h-6 w-6 text-foreground" fill="currentColor" />
           </div>
           <h3 className="font-display text-3xl tracking-[0.2em] text-foreground">PAUSED</h3>
-          {summary && <p className="mt-1 text-[12px] font-semibold text-muted-foreground">{summary}</p>}
+          {summary && <p className="mt-1 text-label font-semibold text-muted-foreground">{summary}</p>}
         </div>
 
         <div className="mb-3 space-y-1 rounded-2xl bg-white/[0.04] p-2 ring-1 ring-white/[0.06]">
           <button type="button" onClick={toggleSound} className="flex w-full items-center justify-between rounded-xl px-2.5 py-2.5 active:bg-white/[0.05]">
-            <span className="flex items-center gap-2.5 text-[14px] font-bold text-foreground">
+            <span className="flex items-center gap-2.5 text-label font-bold text-foreground">
               {soundOn ? <Volume2 className="h-5 w-5 text-primary" /> : <VolumeX className="h-5 w-5 text-muted-foreground" />} 사운드
             </span>
             <Toggle on={soundOn} />
           </button>
           <button type="button" onClick={toggleVibration} className="flex w-full items-center justify-between rounded-xl px-2.5 py-2.5 active:bg-white/[0.05]">
-            <span className="flex items-center gap-2.5 text-[14px] font-bold text-foreground">
+            <span className="flex items-center gap-2.5 text-label font-bold text-foreground">
               {vibrationOn ? <Vibrate className="h-5 w-5 text-primary" /> : <VibrateOff className="h-5 w-5 text-muted-foreground" />} 진동
             </span>
             <Toggle on={vibrationOn} />
@@ -93,7 +93,7 @@ const PauseMenu = ({
           <button
             type="button"
             onClick={() => { audio.tap(); onResume(); }}
-            className="mg-btn-primary flex h-12 w-full items-center justify-center gap-2 rounded-2xl py-3.5 font-display text-xl tracking-widest"
+            className="mg-btn-primary flex h-12 w-full items-center justify-center gap-2 rounded-2xl py-3.5 font-display text-heading tracking-widest"
           >
             <Play className="h-5 w-5 fill-current" /> {resumeLabel}
           </button>
@@ -101,7 +101,7 @@ const PauseMenu = ({
             <button
               type="button"
               onClick={() => setShowHelp(true)}
-              className="mg-btn-ghost flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-display text-[15px] tracking-widest"
+              className="mg-btn-ghost flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-display text-body tracking-widest"
             >
               <BookOpen className="h-4 w-4" /> 게임 방법
             </button>
@@ -110,7 +110,7 @@ const PauseMenu = ({
             <button
               type="button"
               onClick={() => setConfirm('restart')}
-              className="mg-btn-ghost flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-display text-[15px] tracking-widest"
+              className="mg-btn-ghost flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-display text-body tracking-widest"
             >
               <RotateCcw className="h-4 w-4" /> 처음부터
             </button>
@@ -118,7 +118,7 @@ const PauseMenu = ({
           <button
             type="button"
             onClick={() => setConfirm('quit')}
-            className="mg-btn-danger flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-display text-[15px] tracking-widest"
+            className="mg-btn-danger flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-display text-body tracking-widest"
           >
             <LogOut className="h-4 w-4" /> {quitLabel}
           </button>
@@ -138,14 +138,14 @@ const PauseMenu = ({
               onClick={(e) => e.stopPropagation()}
               className="mg-card w-full max-w-sm p-5"
             >
-              <h4 className="mb-3 flex items-center justify-center gap-2 font-display text-xl tracking-widest text-foreground">
+              <h4 className="mb-3 flex items-center justify-center gap-2 font-display text-heading tracking-widest text-foreground">
                 <BookOpen className="h-5 w-5 text-primary" /> 게임 방법
               </h4>
               {help}
               <button
                 type="button"
                 onClick={() => setShowHelp(false)}
-                className="mg-btn-primary mt-4 h-11 w-full rounded-2xl font-display text-lg tracking-widest"
+                className="mg-btn-primary mt-4 h-11 w-full rounded-2xl font-display text-heading"
               >
                 확인
               </button>
@@ -168,18 +168,18 @@ const PauseMenu = ({
               <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06]">
                 {confirm === 'restart' ? <RotateCcw className="h-5 w-5 text-foreground" /> : <LogOut className="h-5 w-5 text-destructive" />}
               </div>
-              <h4 className="mb-1 font-display text-xl tracking-widest text-foreground">
+              <h4 className="mb-1 font-display text-heading tracking-widest text-foreground">
                 {confirm === 'restart' ? '처음부터?' : '정말 나갈까요?'}
               </h4>
-              <p className="mb-4 text-[12px] text-muted-foreground">
+              <p className="mb-4 text-label text-muted-foreground">
                 {confirm === 'restart' ? (restartNote ?? '지금 진행이 사라집니다') : (quitNote ?? '지금 진행은 저장되지 않습니다')}
               </p>
               <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setConfirm(null)} className="mg-btn-ghost h-11 rounded-xl font-display text-[15px] tracking-widest">취소</button>
+                <button type="button" onClick={() => setConfirm(null)} className="mg-btn-ghost h-11 rounded-xl font-display text-body">취소</button>
                 <button
                   type="button"
                   onClick={() => { const c = confirm; setConfirm(null); if (c === 'restart') onRestart?.(); else onQuit(); }}
-                  className={`h-11 rounded-xl font-display text-[15px] tracking-widest ${confirm === 'restart' ? 'mg-btn-primary' : 'bg-destructive text-destructive-foreground'}`}
+                  className={`h-11 rounded-xl font-display text-body tracking-widest ${confirm === 'restart' ? 'mg-btn-primary' : 'bg-destructive text-destructive-foreground'}`}
                 >
                   {confirm === 'restart' ? '다시' : '나가기'}
                 </button>

@@ -23,7 +23,7 @@ const CountdownScreen = ({ countdown, round }: CountdownScreenProps) => {
           transition: 'background 0.3s',
         }}
       />
-      <div className="relative mb-4 flex items-center gap-2 font-display text-2xl tracking-[0.3em] text-muted-foreground">
+      <div className="relative mb-4 flex items-center gap-2 font-display text-title tracking-[0.3em] text-muted-foreground">
         <Icon3D name="bell" size={28} /> ROUND {round}
       </div>
       <AnimatePresence mode="wait">

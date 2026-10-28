@@ -98,10 +98,10 @@ const StoryWorldOverview = ({
   return (
     <section className="space-y-3">
       <div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">
+        <p className="text-micro font-black uppercase tracking-[0.2em] text-amber-300">
           월드맵
         </p>
-        <h2 className="mt-0.5 text-base font-black text-foreground">
+        <h2 className="mt-0.5 text-body font-black text-foreground">
           복서의 길
         </h2>
       </div>
@@ -172,21 +172,21 @@ const StoryWorldOverview = ({
         {/* 4층: hover 카드 */}
         {hoveredChapter && (
           <div
-            className="pointer-events-none absolute z-30 -translate-x-1/2 rounded-xl border border-amber-500/30 bg-gray-950/95 px-3 py-2 text-[11px] shadow-lg"
+            className="pointer-events-none absolute z-30 -translate-x-1/2 rounded-xl border border-amber-500/30 bg-gray-950/95 px-3 py-2 text-micro shadow-lg"
             style={{
               left: CHAPTER_LAYOUT[hoveredChapter.code]?.x ?? "50%",
               top: `calc(${CHAPTER_LAYOUT[hoveredChapter.code]?.y ?? "50%"} - 56px)`,
               minWidth: 160,
             }}
           >
-            <p className="text-[9px] font-black uppercase tracking-widest text-amber-300">
+            <p className="text-micro font-black uppercase tracking-widest text-amber-300">
               {hoveredChapter.chapter_number}장
             </p>
             <p className="mt-0.5 font-bold text-foreground">
               {hoveredChapter.title}
             </p>
             {hoveredChapter.subtitle && (
-              <p className="mt-0.5 text-[10px] text-muted-foreground">
+              <p className="mt-0.5 text-micro text-muted-foreground">
                 {hoveredChapter.subtitle}
               </p>
             )}

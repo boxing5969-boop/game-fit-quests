@@ -68,7 +68,7 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
       {/* Skip button */}
       <button
         onClick={() => { audio.tap(); onComplete(); }}
-        className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex items-center gap-1 font-display text-sm tracking-wider text-muted-foreground"
+        className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex items-center gap-1 font-display text-body tracking-wider text-muted-foreground"
       >
         SKIP <ArrowRight className="h-3.5 w-3.5" />
       </button>
@@ -96,7 +96,7 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
         >
           <div className="mb-4 text-center">
             <div className="mb-2 flex justify-center"><Icon3D name={card.icon} size={64} /></div>
-            <h2 className="text-[22px] font-black tracking-tight text-foreground">
+            <h2 className="text-title font-black tracking-tight text-foreground">
               {card.title}
             </h2>
           </div>
@@ -106,7 +106,7 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
           {card.points && (
             <ul className="space-y-3 mb-4">
               {card.points.map((p, i) => (
-                <li key={i} className="flex gap-2 text-sm text-foreground/90">
+                <li key={i} className="flex gap-2 text-body text-foreground/90">
                   <span className="text-primary mt-0.5 shrink-0">•</span>
                   <span>{p}</span>
                 </li>
@@ -116,7 +116,7 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
 
           {card.highlight && (
             <div className="my-4 rounded-xl bg-primary/10 p-4 text-center ring-1 ring-primary/20">
-              <p className="text-sm font-bold italic text-secondary">
+              <p className="text-body font-bold italic text-secondary">
                 {card.highlight}
               </p>
             </div>
@@ -126,17 +126,17 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
             <div className="space-y-3 mb-4">
               {card.steps.map(s => (
                 <div key={s.step} className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 font-display text-lg text-primary">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 font-display text-heading text-primary">
                     {s.step}
                   </div>
-                  <span className="text-sm text-foreground/90">{s.text}</span>
+                  <span className="text-body text-foreground/90">{s.text}</span>
                 </div>
               ))}
             </div>
           )}
 
           {card.footer && (
-            <p className="text-xs text-muted-foreground text-center italic mt-4">
+            <p className="text-label text-muted-foreground text-center italic mt-4">
               {card.footer}
             </p>
           )}
@@ -148,7 +148,7 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => { audio.tap(); onComplete(); }}
-            className="mg-btn-primary flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-display text-xl tracking-widest"
+            className="mg-btn-primary flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-display text-heading tracking-widest"
           >
             <Play className="h-5 w-5 fill-current" /> 훈련 시작하기
           </motion.button>
@@ -156,7 +156,7 @@ const IntroSlider = ({ onComplete }: IntroSliderProps) => {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => { audio.tap(); setIndex(i => i + 1); }}
-            className="mg-btn-ghost flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-display text-xl tracking-widest"
+            className="mg-btn-ghost flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-display text-heading"
           >
             다음 <ArrowRight className="h-5 w-5" />
           </motion.button>

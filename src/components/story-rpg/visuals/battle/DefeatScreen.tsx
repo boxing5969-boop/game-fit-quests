@@ -30,7 +30,7 @@ const DefeatScreen = ({
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-400"
+        className="text-micro font-black uppercase tracking-[0.5em] text-zinc-400"
       >
         DEFEAT
       </motion.p>
@@ -49,7 +49,7 @@ const DefeatScreen = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="max-w-[260px] text-[11px] leading-relaxed text-zinc-400"
+        className="max-w-[260px] text-micro leading-relaxed text-zinc-400"
       >
         패배는 끝이 아니다. <br />
         호흡을 정비하고 다시 일어서자.
@@ -64,14 +64,14 @@ const DefeatScreen = ({
         <button
           type="button"
           onClick={onRetry}
-          className="rounded-pill border border-amber-500/50 bg-amber-500/15 px-6 py-2 text-[12px] font-black text-amber-100 active:scale-[0.98]"
+          className="rounded-pill border border-amber-500/50 bg-amber-500/15 px-6 py-2 text-label font-black text-amber-100 active:scale-[0.98]"
         >
           다시 도전
         </button>
         <button
           type="button"
           onClick={onWorldMap}
-          className="rounded-pill border border-white/15 bg-gray-900/50 px-6 py-2 text-[11px] font-bold text-zinc-200 active:scale-[0.98]"
+          className="rounded-pill border border-white/15 bg-gray-900/50 px-6 py-2 text-micro font-bold text-zinc-200 active:scale-[0.98]"
         >
           월드맵으로
         </button>

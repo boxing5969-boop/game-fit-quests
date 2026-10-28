@@ -39,7 +39,7 @@ const ChapterClearOverlay = ({ result, onClose }: ChapterClearOverlayProps) => {
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.4 }}
-            className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-300/80"
+            className="text-micro font-black uppercase tracking-[0.4em] text-amber-300/80"
           >
             CHAPTER CLEAR
           </motion.p>
@@ -56,7 +56,7 @@ const ChapterClearOverlay = ({ result, onClose }: ChapterClearOverlayProps) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="text-[11px] text-amber-100/70"
+              className="text-micro text-amber-100/70"
             >
               이미 완료된 챕터입니다 (보상 0)
             </motion.p>
@@ -65,7 +65,7 @@ const ChapterClearOverlay = ({ result, onClose }: ChapterClearOverlayProps) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="text-[12px] text-amber-100/90"
+              className="text-label text-amber-100/90"
             >
               <span className="text-amber-300">+{result.story_xp_granted}</span> XP
               <span className="mx-2 text-amber-400/60">·</span>
@@ -83,7 +83,7 @@ const ChapterClearOverlay = ({ result, onClose }: ChapterClearOverlayProps) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
-              className="text-[11px] font-bold text-yellow-300"
+              className="text-micro font-bold text-yellow-300"
             >
               🏆 {result.reward_title}
             </motion.p>
@@ -92,7 +92,7 @@ const ChapterClearOverlay = ({ result, onClose }: ChapterClearOverlayProps) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.0 }}
-            className="mt-2 text-[9px] uppercase tracking-widest text-white/40"
+            className="mt-2 text-micro uppercase tracking-widest text-white/40"
           >
             탭하여 건너뛰기
           </motion.p>

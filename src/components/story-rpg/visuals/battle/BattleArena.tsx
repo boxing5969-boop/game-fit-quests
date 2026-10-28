@@ -111,12 +111,12 @@ const BattleArena = ({
           </div>
           {/* 적 이름 라벨 */}
           <p
-            className="absolute -translate-x-1/2 whitespace-nowrap text-center text-[10px] font-black uppercase tracking-widest text-rose-200"
+            className="absolute -translate-x-1/2 whitespace-nowrap text-center text-micro font-black uppercase tracking-widest text-rose-200"
             style={{ left: ARENA_LAYOUT.enemy.x, top: 6 }}
           >
             {enemyName}
             {isBoss && (
-              <span className="ml-1.5 rounded-full bg-rose-500/30 px-1.5 py-0.5 text-[8px] font-bold text-rose-100">
+              <span className="ml-1.5 rounded-full bg-rose-500/30 px-1.5 py-0.5 text-micro font-bold text-rose-100">
                 BOSS
               </span>
             )}

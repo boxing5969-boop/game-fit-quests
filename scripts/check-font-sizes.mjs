@@ -8,7 +8,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ARBITRARY_RE, EXEMPT_MARK, LEGACY_RE, isMemberFile } from "./type-scale.mjs";
+import { ARBITRARY_RE, EXEMPT_MARK, LEGACY, LEGACY_RE, isMemberFile, keepSize } from "./type-scale.mjs";
 
 const env = process.env;
 const strict = env.FONTS_STRICT === "1" || (!!env.CLAUDECODE && !env.CF_PAGES && !env.CI);
@@ -31,7 +31,10 @@ try {
     const lines = readFileSync(abs, "utf8").split("\n");
     lines.forEach((line, i) => {
       if (line.includes(EXEMPT_MARK)) return;
-      const hits = [...line.matchAll(ARBITRARY_RE), ...line.matchAll(LEGACY_RE)].map((m) => m[0]);
+      const hits = [
+        ...[...line.matchAll(ARBITRARY_RE)].filter((m) => !keepSize(rel, Number(m[2]))),
+        ...[...line.matchAll(LEGACY_RE)].filter((m) => !keepSize(rel, LEGACY[m[2]])),
+      ].map((m) => m[0]);
       if (hits.length) bad.push(`    src/${rel}:${i + 1}  ${[...new Set(hits)].join(" ")}`);
     });
   }

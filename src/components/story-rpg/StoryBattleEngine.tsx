@@ -367,7 +367,7 @@ const StoryBattleEngine = ({
     return (
       <div className="flex flex-col items-center gap-2 py-12 text-center">
         <Loader2 className="h-6 w-6 animate-spin text-amber-300" />
-        <p className="text-[12px] text-muted-foreground">전투 준비 중…</p>
+        <p className="text-label text-muted-foreground">전투 준비 중…</p>
       </div>
     );
   }
@@ -450,7 +450,7 @@ const StoryBattleEngine = ({
       {/* HP 바 (적 + 플레이어) */}
       <div className="space-y-2">
         <div>
-          <div className="mb-1 flex items-center justify-between text-[10px] font-bold">
+          <div className="mb-1 flex items-center justify-between text-micro font-bold">
             <span className="text-rose-200">{enemy.name}</span>
             <span className="text-rose-300/70 tabular-nums">
               {enemyHp} / {enemyMaxHp}
@@ -568,11 +568,11 @@ function ActionButton({
       disabled={disabled}
       className={`flex flex-col items-start gap-1 rounded-2xl border px-3 py-2.5 text-left transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${tone}`}
     >
-      <span className="flex items-center gap-1.5 text-[12px] font-black">
+      <span className="flex items-center gap-1.5 text-label font-black">
         {icon}
         {label}
       </span>
-      <span className="text-[9px] opacity-80">{sub}</span>
+      <span className="text-micro opacity-80">{sub}</span>
     </button>
   );
 }

@@ -24,17 +24,17 @@ const StoryRpgEntryCard = () => {
         <Brain className="h-5 w-5" />
       </span>
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">
+        <p className="text-micro font-black uppercase tracking-[0.2em] text-amber-300">
           153 마인드셋
         </p>
-        <p className="mt-0.5 truncate text-sm font-bold text-foreground">
+        <p className="mt-0.5 truncate text-body font-bold text-foreground">
           오늘의 한 줄과 작은 마음 다짐을 챙기세요
         </p>
-        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+        <p className="mt-0.5 truncate text-micro text-muted-foreground">
           매일 짧게 — 자세, 태도, 호흡, 회복을 마음으로 먼저 다집니다
         </p>
       </div>
-      <span className="shrink-0 text-amber-300 text-lg">→</span>
+      <span className="shrink-0 text-amber-300 text-heading">→</span>
     </button>
   );
 };

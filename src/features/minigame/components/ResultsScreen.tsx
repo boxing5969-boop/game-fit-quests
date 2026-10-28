@@ -59,11 +59,11 @@ const ResultsScreen = ({ result, extras, onHome, onRanking, onRetry }: ResultsSc
 
   const Stat = ({ label, value, sub, accent, icon }: { label: string; value: string | number; sub?: string; accent?: boolean; icon?: Icon3DName }) => (
     <div className={`mg-card rounded-xl p-3 text-center ${accent ? 'ring-1 ring-secondary/40' : ''}`}>
-      <div className="flex items-center justify-center gap-1 font-display text-[11px] tracking-widest text-muted-foreground">
+      <div className="flex items-center justify-center gap-1 font-display text-micro tracking-widest text-muted-foreground">
         {icon && <Icon3D name={icon} size={14} />}{label}
       </div>
-      <div className={`mg-num font-display text-2xl ${accent ? 'text-secondary' : 'text-foreground'}`}>{value}</div>
-      {sub && <div className="mg-num mt-0.5 text-[10px] text-muted-foreground/80">{sub}</div>}
+      <div className={`mg-num font-display text-title ${accent ? 'text-secondary' : 'text-foreground'}`}>{value}</div>
+      {sub && <div className="mg-num mt-0.5 text-micro text-muted-foreground/80">{sub}</div>}
     </div>
   );
 
@@ -82,7 +82,7 @@ const ResultsScreen = ({ result, extras, onHome, onRanking, onRetry }: ResultsSc
           <div className="mb-3 text-center">
             <div className="mb-1 flex justify-center"><Icon3D name={TIER_ICON[tier.key]} size={76} /></div>
             <h2 className="font-display text-3xl tracking-[0.2em] text-foreground">GAME OVER</h2>
-            <p className="text-[12px] font-semibold text-muted-foreground">
+            <p className="text-label font-semibold text-muted-foreground">
               {result.playerName} · <span className={`text-tier-${tier.key}`}>{tier.nameKo}</span>
             </p>
           </div>
@@ -96,7 +96,7 @@ const ResultsScreen = ({ result, extras, onHome, onRanking, onRetry }: ResultsSc
               className="new-best-shine mb-3 rounded-2xl border-2 border-secondary-foreground/20 p-4 text-center text-secondary-foreground shadow-[0_8px_30px_hsl(var(--secondary)/0.5)]"
             >
               <div className="flex items-center justify-center gap-2 font-display text-3xl tracking-widest drop-shadow"><Icon3D name="trophy" size={30} /> NEW BEST!</div>
-              <div className="text-xs font-medium mt-1 opacity-90">
+              <div className="text-label font-medium mt-1 opacity-90">
                 {extras.newBestRound && `라운드 ${extras.bestRound} `}
                 {extras.newBestScore && `· ${extras.bestScore.toLocaleString()}점 `}
                 달성!
@@ -112,20 +112,20 @@ const ResultsScreen = ({ result, extras, onHome, onRanking, onRetry }: ResultsSc
           className="mg-card relative mb-3 overflow-hidden p-5 text-center ring-1 ring-primary/40"
           style={{ boxShadow: '0 0 40px hsl(var(--primary) / 0.15)' }}
         >
-          <div className="font-display text-[11px] tracking-widest text-muted-foreground">REACHED</div>
+          <div className="font-display text-micro tracking-widest text-muted-foreground">REACHED</div>
           <div className="mg-num mt-1 font-display text-7xl leading-none text-primary">
             ROUND {extras.reachedRound}
           </div>
-          <div className="mg-num mt-2 text-xs text-muted-foreground">
+          <div className="mg-num mt-2 text-label text-muted-foreground">
             BEST <span className="font-display text-secondary">{extras.bestRound}</span>
           </div>
         </motion.div>
 
         {/* Score */}
         <div className="mg-card mb-3 p-4 text-center">
-          <div className="font-display text-[11px] tracking-widest text-muted-foreground">SCORE</div>
+          <div className="font-display text-micro tracking-widest text-muted-foreground">SCORE</div>
           <div className="mg-num font-display text-5xl text-secondary">{result.score.toLocaleString()}</div>
-          <div className="mg-num mt-1 text-xs text-muted-foreground">
+          <div className="mg-num mt-1 text-label text-muted-foreground">
             BEST {extras.bestScore.toLocaleString()}
           </div>
         </div>
@@ -144,10 +144,10 @@ const ResultsScreen = ({ result, extras, onHome, onRanking, onRetry }: ResultsSc
         <div className="mb-4 flex items-center gap-3 rounded-2xl border border-secondary/30 bg-gradient-to-r from-secondary/15 to-primary/10 p-3">
           <Icon3D name="gem" size={40} />
           <div className="flex-1">
-            <div className="font-display text-[11px] tracking-widest text-muted-foreground">획득</div>
-            <div className="mg-num font-display text-2xl text-secondary">+{extras.gemsEarned}</div>
+            <div className="font-display text-micro text-muted-foreground">획득</div>
+            <div className="mg-num font-display text-title text-secondary">+{extras.gemsEarned}</div>
           </div>
-          <div className="mg-num text-right text-[11px] text-muted-foreground">보유 {extras.totalGems.toLocaleString()}</div>
+          <div className="mg-num text-right text-micro text-muted-foreground">보유 {extras.totalGems.toLocaleString()}</div>
         </div>
 
         {/* Actions — RETRY가 가장 크게 (거대 CTA) */}
@@ -165,7 +165,7 @@ const ResultsScreen = ({ result, extras, onHome, onRanking, onRetry }: ResultsSc
               <RotateCcw className="h-8 w-8" strokeWidth={2.5} />
               <div className="text-left">
                 <div className="text-4xl leading-none">RETRY</div>
-                <div className="mt-0.5 text-[11px] tracking-[0.3em] opacity-80">한 번 더!</div>
+                <div className="mt-0.5 text-micro opacity-80">한 번 더!</div>
               </div>
             </div>
             <motion.div
@@ -180,19 +180,19 @@ const ResultsScreen = ({ result, extras, onHome, onRanking, onRetry }: ResultsSc
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => { audio.tap(); onShare(); }}
-              className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-[14px] tracking-widest active:scale-95"
+              className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-label tracking-widest active:scale-95"
             >
               {shared ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />} {shared ? '복사됨' : '공유'}
             </button>
             <button
               onClick={() => { audio.tap(); onRanking(); }}
-              className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-[14px] tracking-widest active:scale-95"
+              className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-label tracking-widest active:scale-95"
             >
               <Icon3D name="trophy" size={18} /> 랭킹
             </button>
             <button
               onClick={() => { audio.tap(); onHome(); }}
-              className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-[14px] tracking-widest active:scale-95"
+              className="mg-btn-ghost flex h-11 items-center justify-center gap-1.5 rounded-xl font-display text-label tracking-widest active:scale-95"
             >
               <Home className="h-4 w-4" /> 홈
             </button>

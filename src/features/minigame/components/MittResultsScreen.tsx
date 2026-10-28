@@ -43,8 +43,8 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
 
   const Stat = ({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) => (
     <div className={`mg-card rounded-xl p-3 text-center ${accent ? 'ring-1 ring-secondary/40' : ''}`}>
-      <div className="font-display text-[11px] tracking-widest text-muted-foreground">{label}</div>
-      <div className={`mg-num font-display text-xl ${accent ? 'text-secondary' : 'text-foreground'}`}>{value}</div>
+      <div className="font-display text-micro tracking-widest text-muted-foreground">{label}</div>
+      <div className={`mg-num font-display text-heading ${accent ? 'text-secondary' : 'text-foreground'}`}>{value}</div>
     </div>
   );
 
@@ -63,7 +63,7 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
           <div className="mb-3 text-center">
             <div className="mb-1 flex justify-center"><Icon3D name="mitt" size={76} /></div>
             <h2 className="font-display text-3xl tracking-[0.2em] text-foreground">MITT DRILL</h2>
-            <p className="text-[12px] font-semibold text-muted-foreground">{result.playerName}</p>
+            <p className="text-label font-semibold text-muted-foreground">{result.playerName}</p>
           </div>
 
           {/* New Best banner */}
@@ -74,8 +74,8 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
               transition={{ duration: 0.55 }}
               className="new-best-shine mb-3 rounded-2xl border-2 border-secondary-foreground/20 p-3 text-center text-secondary-foreground shadow-[0_8px_30px_hsl(var(--secondary)/0.5)]"
             >
-              <div className="flex items-center justify-center gap-2 font-display text-2xl tracking-widest"><Icon3D name="trophy" size={26} /> NEW BEST ROUND</div>
-              <div className="text-xs opacity-90 mt-0.5">ROUND {extras.stagesCleared}까지 클리어!</div>
+              <div className="flex items-center justify-center gap-2 font-display text-title tracking-widest"><Icon3D name="trophy" size={26} /> NEW BEST ROUND</div>
+              <div className="text-label opacity-90 mt-0.5">ROUND {extras.stagesCleared}까지 클리어!</div>
             </motion.div>
           )}
 
@@ -87,11 +87,11 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
             className="mg-card relative mb-3 overflow-hidden p-5 text-center ring-1 ring-primary/40"
             style={{ boxShadow: '0 0 40px hsl(var(--primary) / 0.15)' }}
           >
-            <div className="font-display text-[11px] tracking-widest text-muted-foreground">CLEARED</div>
+            <div className="font-display text-micro tracking-widest text-muted-foreground">CLEARED</div>
             <div className="mg-num mt-1 font-display text-7xl leading-none text-primary">
               ROUND {extras.stagesCleared}
             </div>
-            <div className="mg-num mt-2 text-xs text-muted-foreground">
+            <div className="mg-num mt-2 text-label text-muted-foreground">
               도달 <span className="font-display text-secondary">ROUND {reachedRound}</span>
               {' · '}BEST <span className="font-display text-secondary">{highestCleared}</span>
             </div>
@@ -99,7 +99,7 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
 
           {/* Score */}
           <div className="mg-card mb-3 p-4 text-center">
-            <div className="font-display text-[11px] tracking-widest text-muted-foreground">TOTAL SCORE</div>
+            <div className="font-display text-micro tracking-widest text-muted-foreground">TOTAL SCORE</div>
             <div className="mg-num font-display text-5xl text-secondary">{result.score.toLocaleString()}</div>
           </div>
 
@@ -116,9 +116,9 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
           {/* Mastery (누적 별점) */}
           {highestCleared > 0 && (
             <div className="mg-card mb-3 p-3 text-center">
-              <div className="mb-1 font-display text-[11px] tracking-widest text-muted-foreground">MASTERY</div>
+              <div className="mb-1 font-display text-micro tracking-widest text-muted-foreground">MASTERY</div>
               <div className="mg-num flex items-center justify-center gap-1.5 font-display text-3xl text-secondary">
-                <Icon3D name="star" size={28} /> {totalStars}<span className="text-base text-muted-foreground"> / {maxStars}</span>
+                <Icon3D name="star" size={28} /> {totalStars}<span className="text-body text-muted-foreground"> / {maxStars}</span>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
                 <div
@@ -132,25 +132,25 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
           {/* Round breakdown — 별점 표시 추가 */}
           {extras.drillResults.length > 0 && (
             <div className="mg-card mb-3 p-3">
-              <div className="mb-2 font-display text-[11px] tracking-widest text-muted-foreground">ROUND 기록</div>
+              <div className="mb-2 font-display text-micro text-muted-foreground">ROUND 기록</div>
               <div className="max-h-40 space-y-1.5 overflow-y-auto">
                 {extras.drillResults.map((dr, i) => {
                   // 같은 라운드를 다시 하면 결과가 한 줄 더 쌓이므로 순번이 아니라 'ROUND N' 라벨에서 라운드를 읽는다
                   const roundNum = Number((dr.comboId.match(/\d+/) || [i + 1])[0]);
                   const stars = (starsByRound[roundNum] || 0) as 0 | 1 | 2 | 3;
                   return (
-                    <div key={i} className="flex items-center gap-2 text-xs">
+                    <div key={i} className="flex items-center gap-2 text-label">
                       {dr.completed ? (
                         <Check className="h-4 w-4 shrink-0 text-primary" strokeWidth={3} />
                       ) : (
                         <X className="h-4 w-4 shrink-0 text-destructive" strokeWidth={3} />
                       )}
-                      <span className="flex-1 font-display text-[13px] text-foreground/80">{dr.comboId}</span>
+                      <span className="flex-1 font-display text-label text-foreground/80">{dr.comboId}</span>
                       <span className="flex w-14 items-center justify-center gap-0.5" aria-label={`${stars} stars`}>
                         {stars > 0 ? Array.from({ length: stars }).map((_, k) => <Icon3D key={k} name="star" size={12} />) : <span className="text-muted-foreground">—</span>}
                       </span>
                       <span className="mg-num w-9 text-right text-muted-foreground">{dr.accuracy}%</span>
-                      <span className="mg-num w-14 text-right font-display text-[13px] text-foreground">
+                      <span className="mg-num w-14 text-right font-display text-label text-foreground">
                         {dr.completed ? `${dr.avgReaction}ms` : 'FAIL'}
                       </span>
                     </div>
@@ -163,9 +163,9 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
           {/* Mitt Report */}
           <div className="mg-card mb-4 p-3 text-center ring-1 ring-primary/20">
             <div className="flex justify-center"><Icon3D name={mitt.icon} size={36} /></div>
-            <div className="mb-1 mt-0.5 font-display text-base tracking-wider text-secondary">{mitt.title}</div>
+            <div className="mb-1 mt-0.5 font-display text-body tracking-wider text-secondary">{mitt.title}</div>
             {mitt.lines.map((line, i) => (
-              <p key={i} className="text-xs text-foreground/70 leading-relaxed">{line}</p>
+              <p key={i} className="text-label text-foreground/70 leading-relaxed">{line}</p>
             ))}
           </div>
 
@@ -184,7 +184,7 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
                 <RotateCcw className="h-8 w-8" strokeWidth={2.5} />
                 <div className="text-left">
                   <div className="text-4xl leading-none">RETRY</div>
-                  <div className="mt-0.5 text-[11px] tracking-[0.3em] opacity-80">ROUND 1부터</div>
+                  <div className="mt-0.5 text-micro opacity-80">ROUND 1부터</div>
                 </div>
               </div>
               <motion.div
@@ -198,7 +198,7 @@ const MittResultsScreen = ({ result, extras, onHome, onRetry }: MittResultsScree
             </motion.button>
             <button
               onClick={() => { audio.tap(); onHome(); }}
-              className="mg-btn-ghost flex h-12 items-center justify-center gap-2 rounded-xl font-display text-[15px] tracking-widest active:scale-95"
+              className="mg-btn-ghost flex h-12 items-center justify-center gap-2 rounded-xl font-display text-body tracking-widest active:scale-95"
             >
               <Home className="h-4 w-4" /> 메뉴로
             </button>

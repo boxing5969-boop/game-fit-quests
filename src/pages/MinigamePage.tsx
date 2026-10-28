@@ -172,14 +172,14 @@ const MinigamePage = () => {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
         <Icon3D name="hero_gloves" size={120} />
-        <h1 className="text-lg font-bold text-foreground">로그인이 필요합니다</h1>
-        <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+        <h1 className="text-heading font-bold text-foreground">로그인이 필요합니다</h1>
+        <p className="max-w-xs text-body leading-relaxed text-muted-foreground">
           복싱 트레이닝은 로그인 후 이용할 수 있어요. 점수는 내 계정에 연동됩니다.
         </p>
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="mt-2 rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-glow-soft active:scale-[0.98]"
+          className="mt-2 rounded-2xl bg-primary px-6 py-3 text-body font-bold text-primary-foreground shadow-glow-soft active:scale-[0.98]"
         >
           로그인 하러가기
         </button>
@@ -355,7 +355,7 @@ const MinigamePage = () => {
         <button
           type="button"
           onClick={() => { audio.tap(); navigate("/home"); }}
-          className="fixed left-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[55] flex h-9 items-center gap-1.5 rounded-full border border-white/10 bg-card/80 px-3 text-[12px] font-bold text-foreground shadow-lg backdrop-blur-md active:scale-95"
+          className="fixed left-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[55] flex h-9 items-center gap-1.5 rounded-full border border-white/10 bg-card/80 px-3 text-label font-bold text-foreground shadow-lg backdrop-blur-md active:scale-95"
           aria-label="홈으로 돌아가기"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -400,19 +400,19 @@ const IntroOverlay = ({
       <div className="relative mx-auto flex min-h-[88px] max-w-[320px] flex-col items-center justify-center text-center">
         <p
           key={`q-${quoteIdx}`}
-          className="animate-[mg-quoteIn_520ms_ease-out] text-[16px] font-extrabold leading-snug text-foreground"
+          className="animate-[mg-quoteIn_520ms_ease-out] text-body font-extrabold leading-snug text-foreground"
         >
           "{q.line}"
         </p>
         <p
           key={`by-${quoteIdx}`}
-          className="mt-2 animate-[mg-quoteIn_620ms_ease-out] text-[11px] font-semibold tracking-wide text-muted-foreground"
+          className="mt-2 animate-[mg-quoteIn_620ms_ease-out] text-micro font-semibold tracking-wide text-muted-foreground"
         >
           — {q.by}
         </p>
       </div>
 
-      <div className="mt-7 flex items-center gap-2 font-display text-[12px] tracking-[0.3em] text-primary">
+      <div className="mt-7 flex items-center gap-2 font-display text-label tracking-[0.3em] text-primary">
         <span className="inline-block h-1 w-8 animate-pulse rounded-full bg-primary/60" />
         153 BOXING ARENA
         <span className="inline-block h-1 w-8 animate-pulse rounded-full bg-primary/60" />

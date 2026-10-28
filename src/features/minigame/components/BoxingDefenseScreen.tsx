@@ -79,7 +79,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
 
           <div className="flex-1 text-center">
             {/* ROUND — primary metric */}
-            <div className="flex items-center justify-center gap-1 font-display text-[11px] tracking-[0.3em] text-muted-foreground"><Swords className="h-3 w-3" /> ROUND</div>
+            <div className="flex items-center justify-center gap-1 font-display text-micro tracking-[0.3em] text-muted-foreground"><Swords className="h-3 w-3" /> ROUND</div>
             <motion.div
               key={stats.roundReached}
               initial={{ scale: 1.4, color: 'hsl(45 100% 60%)' }}
@@ -89,10 +89,10 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
             >
               {stats.roundReached}
               {bestRound > 0 && (
-                <span className="text-xs text-muted-foreground ml-1.5 font-display tracking-widest">/ BEST {Math.max(bestRound, stats.roundReached)}</span>
+                <span className="text-label text-muted-foreground ml-1.5 font-display tracking-widest">/ BEST {Math.max(bestRound, stats.roundReached)}</span>
               )}
             </motion.div>
-            <div className="text-[9px] tracking-[0.3em] text-muted-foreground/70 mt-0.5 font-display flex items-center justify-center gap-1.5">
+            <div className="text-micro tracking-[0.3em] text-muted-foreground/70 mt-0.5 font-display flex items-center justify-center gap-1.5">
               <span>SCORE {stats.score}</span>
               <span>·</span>
               <span className="flex items-center gap-0.5"><Timer className="h-3 w-3" /> {eng.elapsedSec.toFixed(1)}s</span>
@@ -116,8 +116,8 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               ))}
             </div>
             <div>
-              <div className="text-[9px] tracking-[0.25em] text-muted-foreground font-display">COMBO</div>
-              <div className="font-display text-xl text-secondary leading-none tabular-nums drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">
+              <div className="text-micro tracking-[0.25em] text-muted-foreground font-display">COMBO</div>
+              <div className="font-display text-heading text-secondary leading-none tabular-nums drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">
                 {combo}
               </div>
             </div>
@@ -133,7 +133,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
             style={{ boxShadow: roundProgress > 75 ? '0 0 10px hsl(45 100% 60%)' : undefined }}
           />
         </div>
-        <div className="mt-1 flex items-center justify-between text-[10px] font-display tracking-widest">
+        <div className="mt-1 flex items-center justify-between text-micro font-display tracking-widest">
           <span className="text-muted-foreground">{stats.defenseInRound}/{DEFENSE_CONFIG.roundClearTarget} 방어</span>
           <span className="text-secondary">→ ROUND {stats.roundReached + 1}</span>
         </div>
@@ -154,7 +154,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
             />
           )}
         </div>
-        <div className="mt-0.5 flex items-center justify-between text-[9px] font-display tracking-widest">
+        <div className="mt-0.5 flex items-center justify-between text-micro font-display tracking-widest">
           <span className="text-muted-foreground/70">PERFECT x{DEFENSE_CONFIG.counterTriggerCombo}</span>
           <span className="flex items-center gap-1 text-secondary/80">→ <Icon3D name="bolt" size={12} /> COUNTER</span>
         </div>
@@ -208,7 +208,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               animate={{ opacity: 1, y: -50, scale: f.big ? 1.5 : 1.1 }}
               exit={{ opacity: 0, y: -90 }}
               transition={{ duration: 0.7, ease: 'easeOut' }}
-              className={`absolute top-1/3 ${f.side === 'L' ? 'left-[20%]' : f.side === 'R' ? 'right-[20%]' : 'left-1/2'} font-display ${f.big ? 'text-4xl' : 'text-2xl'} tracking-widest ${f.color} drop-shadow-[0_3px_10px_rgba(0,0,0,0.85)]`}
+              className={`absolute top-1/3 ${f.side === 'L' ? 'left-[20%]' : f.side === 'R' ? 'right-[20%]' : 'left-1/2'} font-display ${f.big ? 'text-4xl' : 'text-title'} tracking-widest ${f.color} drop-shadow-[0_3px_10px_rgba(0,0,0,0.85)]`}
               // 가운데 정렬은 framer 의 x 로 — Tailwind translate 클래스는 framer 가 쓰는 inline transform 에 덮여 사라진다
               style={{ x: f.side ? 0 : '-50%', textShadow: f.big ? '0 0 20px currentColor' : undefined }}
             >
@@ -236,7 +236,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               <div className={`font-display text-5xl tracking-widest ${bannerEvent.color} drop-shadow-[0_0_24px_currentColor]`}>
                 {bannerEvent.text}
               </div>
-              <div className="text-foreground/80 text-sm mt-1 font-medium">{bannerEvent.sub}</div>
+              <div className="text-foreground/80 text-body mt-1 font-medium">{bannerEvent.sub}</div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -265,7 +265,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.15 }}
-                className="mt-2 font-display text-2xl text-foreground tracking-widest"
+                className="mt-2 font-display text-title text-foreground tracking-widest"
               >
                 → ROUND {roundClearFx.round + 1}
               </motion.div>
@@ -299,7 +299,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               <div className={`mt-2 font-display text-4xl tracking-widest ${shieldFx.kind === 'save' ? 'text-secondary' : 'text-foreground'} drop-shadow-[0_0_18px_currentColor]`}>
                 {shieldFx.kind === 'save' ? 'SAVE!' : 'HEADGEAR +1'}
               </div>
-              <div className="text-foreground/70 text-xs mt-1 font-display tracking-widest">
+              <div className="text-foreground/70 text-label mt-1 font-display tracking-widest">
                 {shieldFx.kind === 'save' ? '한 번 더 살아남았다!' : '실수 1회 보호'}
               </div>
             </motion.div>
@@ -310,12 +310,12 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
         {(focusEndsAt || adrenalineEndsAt) && (
           <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[25] flex gap-1.5 pointer-events-none">
             {focusEndsAt && (
-              <div className="flex items-center gap-1 rounded-full border border-secondary/60 bg-secondary/30 px-2 py-0.5 font-display text-[11px] tracking-widest text-secondary backdrop-blur-md">
+              <div className="flex items-center gap-1 rounded-full border border-secondary/60 bg-secondary/30 px-2 py-0.5 font-display text-micro tracking-widest text-secondary backdrop-blur-md">
                 <Crosshair className="h-3 w-3" /> FOCUS
               </div>
             )}
             {adrenalineEndsAt && (
-              <div className="flex items-center gap-1 rounded-full border border-sky-400/60 bg-sky-500/30 px-2 py-0.5 font-display text-[11px] tracking-widest text-sky-200 backdrop-blur-md">
+              <div className="flex items-center gap-1 rounded-full border border-sky-400/60 bg-sky-500/30 px-2 py-0.5 font-display text-micro tracking-widest text-sky-200 backdrop-blur-md">
                 <Hourglass className="h-3 w-3" /> SLOW-MO
               </div>
             )}
@@ -351,7 +351,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               >
                 <Icon3D name="fire" size={64} /> FEVER!
               </motion.div>
-              <div className="mt-2 font-display text-xl text-foreground tracking-widest">2x SCORE · 4.5s</div>
+              <div className="mt-2 font-display text-heading text-foreground tracking-widest">2x SCORE · 4.5s</div>
             </motion.div>
           )}
           {itemPickupFx && (
@@ -360,7 +360,7 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
               initial={{ y: -20, opacity: 0, scale: 0.8 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: -10, opacity: 0 }}
-              className="absolute top-[18%] left-1/2 z-30 px-4 py-2 rounded-xl bg-card/90 border border-secondary/50 backdrop-blur-md font-display tracking-widest text-secondary text-sm shadow-[0_0_24px_rgba(250,204,21,0.5)] pointer-events-none"
+              className="absolute top-[18%] left-1/2 z-30 px-4 py-2 rounded-xl bg-card/90 border border-secondary/50 backdrop-blur-md font-display tracking-widest text-secondary text-body shadow-[0_0_24px_rgba(250,204,21,0.5)] pointer-events-none"
               style={{ x: '-50%' }}
             >
               {itemPickupFx.kind === 'focus' ? <span className="flex items-center gap-1"><Crosshair className="h-4 w-4" /> FOCUS +5s</span> : <span className="flex items-center gap-1"><Hourglass className="h-4 w-4" /> ADRENALINE +3s</span>}
@@ -378,11 +378,11 @@ function PlayView({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
             <SoundToggle />
             <button
               onClick={() => { audio.tap(); eng.togglePause(); }}
-              className="mg-btn-primary flex h-12 items-center gap-2 rounded-2xl px-10 py-3 font-display text-xl tracking-widest"
+              className="mg-btn-primary flex h-12 items-center gap-2 rounded-2xl px-10 py-3 font-display text-heading tracking-widest"
             >
               <Play className="h-5 w-5 fill-current" /> RESUME
             </button>
-            <button onClick={eng.goHome} className="text-sm text-muted-foreground underline">
+            <button onClick={eng.goHome} className="text-body text-muted-foreground underline">
               포기하고 홈으로
             </button>
           </div>
@@ -453,7 +453,7 @@ function AttackIndicator({ attack }: { attack: ReturnType<typeof useDefenseEngin
       // 접근 이동은 framer 의 x 값으로 — inline transform 은 framer 가 scale 을 쓰면서 덮어써 버린다 (2026-10-01 검수)
       style={{ x: xOffset }}
     >
-      <div className={`mb-1 rounded px-2 py-0.5 font-display text-[11px] tracking-widest text-white shadow-lg ${colorBg}`}>
+      <div className={`mb-1 rounded px-2 py-0.5 font-display text-micro tracking-widest text-white shadow-lg ${colorBg}`}>
         {label}
       </div>
       <motion.div
@@ -552,14 +552,14 @@ function CounterOverlay({ eng }: { eng: ReturnType<typeof useDefenseEngine> }) {
       >
         COUNTER
       </motion.div>
-      <div className="text-foreground/80 text-sm mb-3">탭! 탭! 탭!</div>
+      <div className="text-foreground/80 text-body mb-3">탭! 탭! 탭!</div>
       <motion.div
         key={eng.counterHits}
         initial={{ scale: 1.4 }}
         animate={{ scale: 1 }}
         className="text-secondary font-display text-5xl mb-3 tabular-nums drop-shadow-[0_0_18px_rgba(250,204,21,0.7)]"
       >
-        {eng.counterHits} <span className="text-2xl text-foreground/50">/ {eng.counterMaxHits}</span>
+        {eng.counterHits} <span className="text-title text-foreground/50">/ {eng.counterMaxHits}</span>
       </motion.div>
       <div className="w-52 h-2.5 bg-muted/50 rounded-full overflow-hidden border border-border/50">
         <div className="h-full bg-secondary" style={{ width: `${pct}%`, transition: 'width 60ms linear' }} />
@@ -597,14 +597,14 @@ function GuardButton({ side, onPress, phase, pressed }: { side: 'L' | 'R'; onPre
       <div className="mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
         <Icon3D name={isCounter ? 'glove_mint' : 'shield'} size={48} />
       </div>
-      <div className="text-xl">
+      <div className="text-heading">
         {isCounter ? 'PUNCH!' : (isLeft ? 'GUARD L' : 'GUARD R')}
       </div>
-      <div className={`absolute top-2 ${isLeft ? 'left-2' : 'right-2'} text-[11px] tracking-widest opacity-50`}>
+      <div className={`absolute top-2 ${isLeft ? 'left-2' : 'right-2'} text-micro tracking-widest opacity-50`}>
         {isLeft ? '< LEFT' : 'RIGHT >'}
       </div>
       {/* corner accent */}
-      <div className={`absolute bottom-1 ${isLeft ? 'left-1' : 'right-1'} font-display text-[10px] ${isLeft ? 'text-destructive/70' : 'text-sky-400/70'}`}>
+      <div className={`absolute bottom-1 ${isLeft ? 'left-1' : 'right-1'} font-display text-micro ${isLeft ? 'text-destructive/70' : 'text-sky-400/70'}`}>
         {isLeft ? 'RED CORNER' : 'BLUE CORNER'}
       </div>
     </motion.button>
@@ -616,7 +616,7 @@ function SoundToggle() {
   return (
     <button
       onClick={() => { const v = !on; audio.setEnabled(v); setOn(v); }}
-      className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-[12px] font-bold text-muted-foreground"
+      className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-label font-bold text-muted-foreground"
     >
       {on ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4" />}
       {on ? '사운드 ON' : '사운드 OFF'}

@@ -59,7 +59,7 @@ const ChapterTitleCard = ({ chapterCode, onComplete }: ChapterTitleCardProps) =>
           className="max-h-[80vh] max-w-[90vw] object-contain"
           style={PIXELATED_CSS}
         />
-        <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-widest text-white/40">
+        <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-micro uppercase tracking-widest text-white/40">
           탭하여 건너뛰기
         </p>
       </motion.div>

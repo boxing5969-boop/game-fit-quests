@@ -468,7 +468,7 @@ const StoryRpgPage = () => {
         {mode.kind === "loading" && (
           <div className="flex flex-col items-center gap-2 py-12 text-center">
             <Loader2 className="h-6 w-6 animate-spin text-amber-300" />
-            <p className="text-[12px] text-muted-foreground">세션 준비 중…</p>
+            <p className="text-label text-muted-foreground">세션 준비 중…</p>
           </div>
         )}
 
@@ -539,7 +539,7 @@ const StoryRpgPage = () => {
               <button
                 type="button"
                 onClick={() => setShowInventory((v) => !v)}
-                className="inline-flex items-center gap-1.5 rounded-pill border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-[12px] font-bold text-amber-100"
+                className="inline-flex items-center gap-1.5 rounded-pill border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-label font-bold text-amber-100"
               >
                 {showInventory ? "인벤토리 닫기" : "인벤토리 보기"}
               </button>
@@ -576,11 +576,11 @@ const StoryRpgPage = () => {
         {mode.kind === "ending_claimed" && (
           <StorySceneShell backgroundTheme="sunrise">
             <div className="space-y-3 text-center">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-300">
+              <p className="text-micro font-black uppercase tracking-[0.3em] text-amber-300">
                 보상 수령 완료
               </p>
-              <h2 className="text-xl font-black text-foreground">{mode.title}</h2>
-              <p className="text-[12px] text-muted-foreground">
+              <h2 className="text-heading font-black text-foreground">{mode.title}</h2>
+              <p className="text-label text-muted-foreground">
                 STORY XP +{mode.result.story_xp_granted} · 링 코인 +
                 {mode.result.ring_coins_granted}
                 {mode.result.real_gems_granted > 0
@@ -590,7 +590,7 @@ const StoryRpgPage = () => {
               <button
                 type="button"
                 onClick={() => setMode({ kind: "world" })}
-                className="rounded-pill border border-amber-500/40 bg-amber-500/15 px-4 py-2 text-[12px] font-bold text-amber-100"
+                className="rounded-pill border border-amber-500/40 bg-amber-500/15 px-4 py-2 text-label font-bold text-amber-100"
               >
                 월드맵으로
               </button>
@@ -603,7 +603,7 @@ const StoryRpgPage = () => {
           <button
             type="button"
             onClick={() => setMode({ kind: "world" })}
-            className="mx-auto flex items-center gap-1.5 rounded-pill border border-white/15 bg-gray-900/60 px-3 py-1.5 text-[11px] font-bold text-foreground"
+            className="mx-auto flex items-center gap-1.5 rounded-pill border border-white/15 bg-gray-900/60 px-3 py-1.5 text-micro font-bold text-foreground"
           >
             <ArrowLeft className="h-3 w-3" />
             월드맵으로
@@ -614,7 +614,7 @@ const StoryRpgPage = () => {
           <button
             type="button"
             onClick={() => setMode({ kind: "no_route" })}
-            className="mx-auto flex items-center gap-1.5 rounded-pill border border-white/10 bg-gray-900/40 px-3 py-1.5 text-[10px] text-muted-foreground"
+            className="mx-auto flex items-center gap-1.5 rounded-pill border border-white/10 bg-gray-900/40 px-3 py-1.5 text-micro text-muted-foreground"
           >
             <MapIcon className="h-3 w-3" />
             루트 변경
