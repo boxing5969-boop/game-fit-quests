@@ -77,6 +77,20 @@ export interface PartnerCall {
   joined: boolean;
   /** 저요한 사람 — 먼저 누른 순서 */
   joiners?: PartnerCallPerson[];
+  /* ── 2단계 (2026-10-28 미리보기 · get_partner_calls_v2) ── */
+  /** '지금' 모집 — expiresAt 까지(올린 뒤 30분) */
+  isNow?: boolean;
+  expiresAt?: string | null;
+  /** 코치님 모집 정원 (null = 제한 없음) · 다 찼나 */
+  capacity?: number | null;
+  full?: boolean;
+  /** 운동 시간이 됐나 ('같이 했어요'를 누를 수 있다) · 아직 저요할 수 있나 */
+  started?: boolean;
+  joinable?: boolean;
+  /** 내가 '같이 했어요'를 눌렀나 · 누른 사람들 · 짝이 된 수(올린 사람과 저요한 사람이 둘 다 누름) */
+  myDone?: boolean;
+  doneUsers?: string[];
+  pairs?: number;
 }
 
 export interface PartnerCallsResult {
@@ -91,13 +105,18 @@ export interface PartnerCallsResult {
   canSpar?: boolean;
   /** 닉네임이 없어 올리기 전에 먼저 정해야 하나 */
   needsNickname?: boolean;
+  /** 2단계: 정원을 정할 수 있나(코치님 · 운영진) · 3시간 안에 출석(체육관에 있음 → '지금' 칩) · 오늘 같이 운동한 짝 수 */
+  canCapacity?: boolean;
+  atGym?: boolean;
+  pairsToday?: number;
   calls: PartnerCall[];
 }
 
 export const EMPTY_PARTNER_CALLS: PartnerCallsResult = { success: true, calls: [] };
 
+// 2단계 미리보기 (2026-10-28) — '지금' 모집 · 정원 · 같이 했어요는 v2 함수 (1단계 함수는 지금 앱이 그대로 쓴다)
 export async function getPartnerCalls(): Promise<PartnerCallsResult> {
-  const res = await sbRpc<PartnerCallsResult>("get_partner_calls");
+  const res = await sbRpc<PartnerCallsResult>("get_partner_calls_v2");
   return unwrap(res, "모집 목록을 불러오지 못했습니다.");
 }
 
@@ -105,19 +124,38 @@ export async function createPartnerCall(
   purpose: PartnerPurpose,
   slotHour: number,
   note: string | null,
+  opts: { now?: boolean; capacity?: number | null } = {},
 ): Promise<{ success: boolean; call_id?: string }> {
-  const res = await sbRpc<{ success: boolean; call_id?: string }>("create_partner_call", {
+  const res = await sbRpc<{ success: boolean; call_id?: string }>("create_partner_call_v2", {
     p_purpose: purpose,
     p_slot_hour: slotHour,
     p_note: note ?? null,
+    p_now: !!opts.now,
+    p_capacity: opts.capacity ?? null,
   });
   return unwrap(res, "모집 글을 올리지 못했습니다.");
 }
 
 export async function joinPartnerCall(callId: string) {
   return unwrap(
-    await sbRpc<{ success: boolean }>("join_partner_call", { p_call_id: callId }),
+    await sbRpc<{ success: boolean }>("join_partner_call_v2", { p_call_id: callId }),
     "참여하지 못했습니다.",
+  );
+}
+
+/** '같이 했어요' — 올린 사람과 저요한 사람이 둘 다 누르면 서로 153 + 각자 챔피언 머니 +30(하루 1번) */
+export interface PartnerDoneResult {
+  success: boolean;
+  already?: boolean;
+  paired?: number;
+  reward?: number;
+  waiting?: boolean;
+}
+
+export async function partnerCallDone(callId: string): Promise<PartnerDoneResult> {
+  return unwrap(
+    await sbRpc<PartnerDoneResult>("partner_call_done", { p_call_id: callId }),
+    "기록하지 못했습니다.",
   );
 }
 

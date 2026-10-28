@@ -35,7 +35,9 @@ const PartnerCallCard = ({ onOpen }: Props) => {
 
   const myBranch = data?.branch ?? null;
   const allBranches = data?.all_branches === true;
-  const joinable = (c: (typeof calls)[number]) => !c.isMine && !c.joined && (!allBranches || c.branch === myBranch);
+  const joinable = (c: (typeof calls)[number]) =>
+    !c.isMine && !c.joined && c.joinable !== false && !c.full && (!allBranches || c.branch === myBranch);
+  const pairsToday = data?.pairsToday ?? 0;
   // 맨 앞: 내가 저요할 수 있는 모집 → 남의 모집 → 내 모집
   const first = calls.find(joinable) ?? calls.find((c) => !c.isMine) ?? calls[0];
   const openSheet = () => (onOpen ? onOpen() : setOpen(true));
@@ -74,9 +76,14 @@ const PartnerCallCard = ({ onOpen }: Props) => {
                   </span>
                 )}
               </span>
-              <span className="mt-0.5 block truncate text-label text-muted-foreground">
-                {formatHour(first.slotHour)} · {PURPOSE_LABEL[first.purpose]}
-                {first.joinCount > 0 ? ` · 저요 ${first.joinCount}명` : ""}
+              <span className="mt-0.5 flex items-center gap-1.5 text-label text-muted-foreground">
+                {first.isNow && (
+                  <span className="shrink-0 rounded-pill bg-primary px-2 py-0.5 text-micro font-bold text-primary-foreground">지금</span>
+                )}
+                <span className="truncate">
+                  {first.isNow ? PURPOSE_LABEL[first.purpose] : `${formatHour(first.slotHour)} · ${PURPOSE_LABEL[first.purpose]}`}
+                  {first.joinCount > 0 ? ` · 저요 ${first.joinCount}명` : ""}
+                </span>
               </span>
             </span>
           </button>
@@ -93,6 +100,10 @@ const PartnerCallCard = ({ onOpen }: Props) => {
             <span className="shrink-0 text-label font-bold text-primary">저요 했어요</span>
           ) : null}
         </div>
+        {/* 오늘 같이 운동한 짝 — 성사된 이야기가 다음 모집을 부른다 (2단계) */}
+        {pairsToday > 0 && (
+          <p className="mt-3 border-t border-border pt-3 text-label font-bold text-primary">오늘 같이 운동한 짝 {pairsToday}쌍</p>
+        )}
       </section>
 
       {sheet}

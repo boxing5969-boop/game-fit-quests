@@ -27,6 +27,7 @@ import {
   getTitleMatchFeed,
   joinPartnerCall,
   leavePartnerCall,
+  partnerCallDone,
   type GearCondition,
   type GearDeal,
   type GearKind,
@@ -61,15 +62,24 @@ export function usePartnerCallActions() {
   const invalidate = () => qc.invalidateQueries({ queryKey: PARTNER_CALLS_KEY });
 
   const create = useMutation({
-    mutationFn: (v: { purpose: PartnerPurpose; slotHour: number; note: string | null }) =>
-      createPartnerCall(v.purpose, v.slotHour, v.note),
+    mutationFn: (v: { purpose: PartnerPurpose; slotHour: number; note: string | null; now?: boolean; capacity?: number | null }) =>
+      createPartnerCall(v.purpose, v.slotHour, v.note, { now: v.now, capacity: v.capacity }),
     onSuccess: invalidate,
   });
   const join = useMutation({ mutationFn: joinPartnerCall, onSuccess: invalidate });
   const leave = useMutation({ mutationFn: leavePartnerCall, onSuccess: invalidate });
   const close = useMutation({ mutationFn: closePartnerCall, onSuccess: invalidate });
+  // '같이 했어요' (2단계) — 챔피언 머니가 바뀌니 지갑도 다시 읽는다
+  const done = useMutation({
+    mutationFn: partnerCallDone,
+    onSuccess: () => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+      qc.invalidateQueries({ queryKey: ["member-wallet"] });
+    },
+  });
 
-  return { create, join, leave, close };
+  return { create, join, leave, close, done };
 }
 
 /* ── 중고 장비 나눔 ── */

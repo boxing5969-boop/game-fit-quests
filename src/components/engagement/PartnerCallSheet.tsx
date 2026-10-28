@@ -11,6 +11,12 @@
  *     스파링은 코치님 · 운영진만(서버도 막는다) · 닉네임이 없으면 처음 한 번 정하고 올린다
  *   · 올리기 칸은 접어 두고 '모집 올리기' 단추 하나 — 모집이 있으면 '지금 운동 중인 동료'는 목록 아래로
  *
+ * 2단계 (미리보기 preview/partner-call — v2 함수):
+ *   · '지금' 모집 — 체육관에 있으면(3시간 안 출석) '지금' 칩이 먼저, 30분 동안만 보인다 (남은 분 표시)
+ *   · 코치님 · 운영진 모집 정원(제한 없음 · 4 · 6 · 8명) — 다 차면 '마감'
+ *   · 운동 시간이 되면 올린 사람 · 저요한 사람에게 '같이 했어요' — 둘 다 누르면 서로 153 + 각자 챔피언 머니 +30(하루 1번)
+ *   · 지난 모집 · 끝난 '지금' 모집에는 저요가 없다 (서버 join_partner_call_v2 도 막는다)
+ *
  * 안전 규칙: 하루에 한 사람이 한 건만(DB unique) — 다시 올리면 바뀐다. 지점 격리는 서버가 한다.
  */
 
@@ -63,7 +69,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
   const { profile } = useAuth();
 
   const { data, isLoading } = usePartnerCalls(open);
-  const { create, join, leave, close } = usePartnerCallActions();
+  const { create, join, leave, close, done } = usePartnerCallActions();
 
   const calls = data?.calls ?? [];
   const mine = calls.find((c) => c.isMine);
@@ -82,9 +88,19 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [nickOpen, setNickOpen] = useState(false);
   const postAfterNick = useRef(false);
+  // 2단계: '지금' 모집(30분) · 코치님 모집 정원
+  const [nowPick, setNowPick] = useState(false);
+  const [capacity, setCapacity] = useState<number | null>(null);
+  // '지금' 모집 남은 시간이 흐르게 — 시트가 열려 있는 동안 30초마다 다시 그린다
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setInterval(() => setTick((x) => x + 1), 30_000);
+    return () => window.clearInterval(t);
+  }, [open]);
 
   const now = kstHour();
-  // 시트를 열 때마다 처음 값 — 내 모집이 있으면 그 값, 없으면 미트 · 평소 시간
+  // 시트를 열 때마다 처음 값 — 내 모집이 있으면 그 값, 없으면 미트 · (체육관에 있으면 '지금', 아니면 평소 시간)
   const seededFor = useRef<string | null>(null);
   useEffect(() => {
     if (!open) {
@@ -97,6 +113,8 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
     seededFor.current = mine?.id ?? "none";
     setPurpose(mine && purposes.includes(mine.purpose) ? mine.purpose : "mitt");
     setHour(mine ? mine.slotHour : defaultHour(data.usualHour, kstHour()));
+    setNowPick(mine ? !!mine.isNow : !!data.atGym);
+    setCapacity(mine?.capacity ?? null);
     setNote(mine?.note ?? "");
   }, [open, data, mine, purposes]);
 
@@ -117,7 +135,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
   };
 
   const handleCreate = async () => {
-    if (hour == null) {
+    if (!nowPick && hour == null) {
       toast.error("오늘은 모집할 수 있는 시간이 지났어요");
       return;
     }
@@ -127,8 +145,14 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
       return;
     }
     try {
-      await create.mutateAsync({ purpose, slotHour: hour, note: note.trim() || null });
-      toast.success(mine ? "모집을 바꿨어요" : "모집을 올렸어요");
+      await create.mutateAsync({
+        purpose,
+        slotHour: nowPick ? kstHour() : (hour as number),
+        note: note.trim() || null,
+        now: nowPick,
+        capacity: data?.canCapacity ? capacity : null,
+      });
+      toast.success(nowPick ? "지금 모집을 올렸어요 — 30분 동안 보여요" : mine ? "모집을 바꿨어요" : "모집을 올렸어요");
       setFormOpen(false);
       setOtherOpen(false);
     } catch (err) {
@@ -167,6 +191,8 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
     // 운영진 전 지점 보기 — 다른 지점 모집에는 저요가 없다
     if (allBranches && c.branch && c.branch !== myBranch) return null;
     if (c.joined) {
+      // 운동이 시작된 뒤에는 취소 대신 아래 '같이 했어요'
+      if (c.started) return null;
       return (
         <button
           type="button"
@@ -178,6 +204,15 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         </button>
       );
     }
+    // 지난 모집 · 끝난 '지금' 모집에는 저요가 없다
+    if (c.joinable === false) return null;
+    if (c.full) {
+      return (
+        <button type="button" disabled className={`${base} border border-border text-muted-foreground`}>
+          마감
+        </button>
+      );
+    }
     return (
       <button
         type="button"
@@ -185,7 +220,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         onClick={() =>
           run(async () => {
             await join.mutateAsync(c.id);
-            toast.success(`저요 했어요 — ${formatHour(c.slotHour)}에 만나요`);
+            toast.success(c.isNow ? "저요 했어요 — 지금 체육관에서 만나요" : `저요 했어요 — ${formatHour(c.slotHour)}에 만나요`);
           }, c.id, "참여하지 못했어요")
         }
         className={`${base} bg-primary text-primary-foreground`}
@@ -200,11 +235,12 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
     if (c.joinCount === 0) {
       return c.isMine ? <p className="mt-3 text-label text-muted-foreground">아직 저요가 없어요</p> : null;
     }
+    const count = c.capacity ? `${c.joinCount}/${c.capacity}명` : `${c.joinCount}명`;
     // 내 모집 — 한 사람씩 이름과 메시지 단추
     if (c.isMine && people.length > 0) {
       return (
         <div className="mt-3 border-t border-border pt-3">
-          <p className="text-label font-bold text-foreground">저요한 사람 {c.joinCount}명</p>
+          <p className="text-label font-bold text-foreground">저요한 사람 {count}</p>
           <ul className="mt-2 space-y-2">
             {people.map((p) => (
               <li key={p.userId} className="flex items-center gap-3">
@@ -250,12 +286,51 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
           </span>
         )}
         <span className="min-w-0 truncate text-label font-semibold text-foreground">
-          {shown.length === 1 && c.joinCount === 1 ? `${shown[0].nickname}님 저요` : `${c.joinCount}명 저요`}
+          {shown.length === 1 && c.joinCount === 1 && !c.capacity ? `${shown[0].nickname}님 저요` : `${count} 저요`}
           {c.joined && <span className="font-normal text-muted-foreground"> · 나도</span>}
         </span>
       </div>
     );
   };
+
+  /** '같이 했어요' (2단계) — 운동 시간이 된 뒤 올린 사람 · 저요한 사람에게 */
+  const renderDone = (c: PartnerCall) => {
+    if (!(c.isMine || c.joined) || c.joinCount === 0 || !c.started) return null;
+    if (c.myDone) {
+      const paired = (c.pairs ?? 0) > 0 && (c.isMine || (c.userId != null && (c.doneUsers ?? []).includes(c.userId)));
+      return (
+        <p className="mt-3 border-t border-border pt-3 text-label font-bold text-primary">
+          같이 했어요{paired ? " — 서로 153을 보냈어요" : " — 상대가 누르면 서로 153이 가요"}
+        </p>
+      );
+    }
+    return (
+      <div className="mt-3 flex items-center gap-3 border-t border-border pt-3">
+        <span className="min-w-0 flex-1 text-label text-muted-foreground">둘 다 누르면 서로 153 · 머니 +30</span>
+        <button
+          type="button"
+          disabled={busyId === `done:${c.id}`}
+          onClick={() =>
+            run(async () => {
+              const r = await done.mutateAsync(c.id);
+              if ((r.paired ?? 0) > 0) {
+                toast.success(r.reward ? "같이 운동 완료! 서로 153 · 챔피언 머니 +30" : "같이 운동 완료! 서로 153을 보냈어요");
+              } else {
+                toast.success("기록했어요 — 상대도 누르면 서로 153이 가요");
+              }
+            }, `done:${c.id}`, "기록하지 못했어요")
+          }
+          className="inline-flex min-h-[40px] shrink-0 items-center rounded-pill bg-primary px-4 text-label font-bold text-primary-foreground active:scale-95 disabled:opacity-60"
+        >
+          같이 했어요
+        </button>
+      </div>
+    );
+  };
+
+  /** '지금' 모집 남은 분 — 끝났으면 0 */
+  const minutesLeft = (c: PartnerCall) =>
+    c.expiresAt ? Math.max(0, Math.ceil((new Date(c.expiresAt).getTime() - Date.now()) / 60_000)) : 0;
 
   const renderCall = (c: PartnerCall) => {
     const canOpenCard = !c.isMine && !!c.userId;
@@ -281,9 +356,16 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
                   <span className="number-font shrink-0 text-label text-muted-foreground">Lv.{c.level}</span>
                 ) : null}
               </span>
-              <span className="mt-0.5 block truncate text-label font-semibold text-muted-foreground">
-                {formatHour(c.slotHour)} · {PURPOSE_LABEL[c.purpose]}
-                {allBranches && c.branch ? ` · ${shortBranchName(c.branch)}` : ""}
+              <span className="mt-0.5 flex items-center gap-1.5 text-label font-semibold text-muted-foreground">
+                {c.isNow && (
+                  <span className="shrink-0 rounded-pill bg-primary px-2 py-0.5 text-micro font-bold text-primary-foreground">지금</span>
+                )}
+                <span className="truncate">
+                  {c.isNow
+                    ? `${PURPOSE_LABEL[c.purpose]} · ${minutesLeft(c) > 0 ? `${minutesLeft(c)}분 남음` : "끝남"}`
+                    : `${formatHour(c.slotHour)} · ${PURPOSE_LABEL[c.purpose]}`}
+                  {allBranches && c.branch ? ` · ${shortBranchName(c.branch)}` : ""}
+                </span>
               </span>
             </span>
           </button>
@@ -291,6 +373,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         </div>
         {c.note && <p className="mt-3 line-clamp-2 text-body text-foreground">“{c.note}”</p>}
         {renderJoiners(c)}
+        {renderDone(c)}
       </div>
     );
   };
@@ -341,8 +424,22 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
 
         <p className="mt-4 text-label font-bold text-foreground">몇 시에 오시나요</p>
         <div className="mt-2 flex flex-wrap gap-2">
+          {/* 체육관에 있으면(3시간 안 출석) '지금' — 30분 동안만 보이는 모집 (2단계) */}
+          {(data?.atGym || nowPick) && (
+            <button type="button" onClick={() => setNowPick(true)} className={chipCls(nowPick)}>
+              지금
+            </button>
+          )}
           {chips.map((h) => (
-            <button key={h} type="button" onClick={() => setHour(h)} className={chipCls(hour === h)}>
+            <button
+              key={h}
+              type="button"
+              onClick={() => {
+                setNowPick(false);
+                setHour(h);
+              }}
+              className={chipCls(!nowPick && hour === h)}
+            >
               {formatHour(h)}
             </button>
           ))}
@@ -350,10 +447,14 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
             다른 시간
           </button>
         </div>
+        {nowPick && <p className="mt-2 text-label text-muted-foreground">지금 체육관에 있는 동료에게 30분 동안 보여요</p>}
         {otherOpen && (
           <select
             value={hour ?? ""}
-            onChange={(e) => setHour(Number(e.target.value))}
+            onChange={(e) => {
+              setNowPick(false);
+              setHour(Number(e.target.value));
+            }}
             className="mt-2 h-12 w-full rounded-xl border border-border bg-card px-3 text-body font-bold text-foreground"
             aria-label="시간 고르기"
           >
@@ -363,6 +464,20 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
               </option>
             ))}
           </select>
+        )}
+
+        {/* 코치님 · 운영진 모집 정원 (2단계) — 다 차면 '마감' */}
+        {data?.canCapacity && (
+          <>
+            <p className="mt-4 text-label font-bold text-foreground">몇 명까지 받을까요</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[null, 4, 6, 8].map((n) => (
+                <button key={n ?? "none"} type="button" onClick={() => setCapacity(n)} className={chipCls(capacity === n)}>
+                  {n == null ? "제한 없음" : `${n}명`}
+                </button>
+              ))}
+            </div>
+          </>
         )}
 
         <input
@@ -379,7 +494,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         <button
           type="button"
           onClick={handleCreate}
-          disabled={create.isPending || hour == null}
+          disabled={create.isPending || (!nowPick && hour == null)}
           className="mt-3 h-12 w-full rounded-xl bg-primary text-body font-bold text-primary-foreground active:scale-[0.99] disabled:opacity-60"
         >
           {submitLabel}
