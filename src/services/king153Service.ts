@@ -171,6 +171,42 @@ export const launchEventLine = (w: LaunchEventWindow | null | undefined): string
   return w.status === "ended" ? `종료 · ${range} 최종 결과` : `진행 중 · ${range}`;
 };
 
+/** 띠·시트의 남은 날 — "D-12" / 마지막 날 "오늘 마감" / 시작 전 "D-3" / 끝나는 날이 없거나 끝났으면 "" */
+export const launchEventDday = (w: LaunchEventWindow | null | undefined): string => {
+  if (!w) return "";
+  if (w.status === "upcoming") return `D-${w.days_until_start}`;
+  if (w.status !== "active" || w.days_left == null) return "";
+  return w.days_left <= 0 ? "오늘 마감" : `D-${w.days_left}`;
+};
+
+/**
+ * 런칭 이벤트 자세히 보기(LaunchEventSheet)의 글 — 2026-10-28 회원 제안(선릉역점 봄 "공지 누르면 자세한 글").
+ * 오삼코치 FAQ rk-launch-event(src/data/osamiFaq.ts)와 같은 내용이어야 한다 — 한쪽을 고치면 같이.
+ * 서버 점수 정의: _king_scores v4(2026-10-15) · 기간: app_settings.launch_event(설정 화면 LaunchEventSettingsCard).
+ */
+export const LAUNCH_EVENT_PRIZE = {
+  amount: "50,000",
+  unit: "마일리지",
+  /** 대표님 확인 2026-10-15 (커밋 7d30222) — 지급 방식·시점은 아직 정하지 않음 */
+  note: "지급 방식과 시점은 끝난 뒤 공지로 알려 드려요",
+};
+
+/** 세 왕좌 한 줄 설명 (시트 안 한 줄 — 짧게). 자세한 규칙은 왕좌를 눌렀을 때 KING_META.what */
+export const LAUNCH_EVENT_BRIEF: Partial<Record<KingCategory, string>> = {
+  attendance: "얼굴 인식으로 출석한 날 수",
+  app: "앱 행동 종류마다 하루 1점",
+  nickname: "지금 받고 있는 하트 수",
+};
+
+/** 정하는 법 — 시작일은 화면에서 넣는다 */
+export const launchEventRules = (w: LaunchEventWindow | null | undefined): string[] => [
+  `${w ? fmtKstDate(w.start_date) : "시작일"}부터 쌓인 점수만 세요 (닉네임 하트는 그전 것도 포함)`,
+  "동점이면 그 점수에 먼저 닿은 사람이 앞서요",
+  "지점 회원만 순위에 올라요 — 코치님 · 운영진 · 테스트 계정은 빠져요",
+  "순위는 이 '이벤트' 탭과 지점 TV 2번 화면(지점별 Top 5)에서 봐요",
+  "세부 조건이 바뀌면 앱 공지로 알려 드려요",
+];
+
 type SbResult<T> = { data: T | null; error: { message: string } | null };
 
 async function sbRpc<T>(name: string, args?: Record<string, unknown>): Promise<SbResult<T>> {

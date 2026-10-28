@@ -16,18 +16,19 @@
  * 연속출석은 '지금 연속', 닉네임왕은 '누적' 배지 · 불러오기 실패를 빈 왕좌와 구분 · 320px 줄바꿈.
  */
 import UserLeagueBadge from "@/components/badges/UserLeagueBadge";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { Crown, ChevronUp, Info, PartyPopper } from "lucide-react";
+import { Crown, ChevronRight, ChevronUp, Info, PartyPopper } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { KING_153_KEY, use153KingBoard, use153KingSummary, useLaunchEventWindow } from "@/hooks/use153King";
 import {
-  KING_CATEGORIES, KING_META, KING_PERIOD_LABEL, KING_PERIOD_RESET, LAUNCH_EVENT_CATEGORIES, formatKingScore, launchEventLine,
+  KING_CATEGORIES, KING_META, KING_PERIOD_LABEL, KING_PERIOD_RESET, LAUNCH_EVENT_CATEGORIES, formatKingScore, launchEventDday, launchEventLine,
   type KingBoardRow, type KingCategory, type KingMeta, type KingPeriod, type KingScope,
 } from "@/services/king153Service";
 import FunChallengeArenaSheet from "./FunChallengeArenaSheet";
+import LaunchEventSheet from "./LaunchEventSheet";
 import NicknameLikeSheet from "./NicknameLikeSheet";
 
 const PERIODS: Array<{ key: KingPeriod; label: string }> = [
@@ -101,16 +102,43 @@ const King153Board = () => {
   const [selected, setSelected] = useState<KingCategory | null>(null);
   const [arena, setArena] = useState<{ open: boolean; code: string | null }>({ open: false, code: null });
   const [likeOpen, setLikeOpen] = useState(false);
+  // 런칭 이벤트 자세히 보기 (2026-10-28 회원 제안) — 띠를 누르거나 '/myboxer/quest?event=1'
+  const [eventOpen, setEventOpen] = useState(false);
+  const detailRef = useRef<HTMLDivElement>(null);
+  const [scrollToDetail, setScrollToDetail] = useState(false);
 
   // 알림에서 바로 하트 보낼 회원 목록 — '/myboxer/quest?hearts=1' (2026-10-27 코치·지점장 하트 안내 알림)
+  // 공지·알림에서 런칭 이벤트 자세히 — '/myboxer/quest?event=1' (2026-10-28)
   const [params, setParams] = useSearchParams();
   useEffect(() => {
-    if (params.get("hearts") !== "1") return;
-    setLikeOpen(true);
+    const hearts = params.get("hearts") === "1";
+    const event = params.get("event") === "1";
+    if (!hearts && !event) return;
+    if (hearts) setLikeOpen(true);
+    if (event) {
+      setPeriodTouched(true);
+      setPeriod("event");
+      setEventOpen(true);
+    }
     const next = new URLSearchParams(params);
     next.delete("hearts");
+    next.delete("event");
     setParams(next, { replace: true });
   }, [params, setParams]);
+
+  // 시트에서 왕좌를 고르면 — 시트를 닫고 그 왕좌의 규칙·순위로 내려간다
+  const pickFromEvent = (c: KingCategory) => {
+    setEventOpen(false);
+    setSelected(c);
+    setScrollToDetail(true);
+  };
+  useEffect(() => {
+    if (!scrollToDetail || !selected) return;
+    setScrollToDetail(false);
+    // 시트가 닫히며 스크롤 잠금이 풀린 다음에 내려간다
+    const t = window.setTimeout(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
+    return () => window.clearTimeout(t);
+  }, [scrollToDetail, selected]);
 
   const summaryQ = use153KingSummary(period, scope);
   const boardQ = use153KingBoard(selected, period, scope, 10);
@@ -156,17 +184,28 @@ const King153Board = () => {
         {hasBranch && <Segmented<KingScope> value={scope} options={SCOPES} onChange={chooseScope} ariaLabel="범위" />}
       </div>
 
-      {/* 런칭 이벤트 띠 — 이벤트 탭일 때만. 시작 전엔 D-day, 진행 중엔 기간, 종료 후엔 최종 결과 */}
+      {/* 런칭 이벤트 띠 — 이벤트 탭일 때만. 시작 전엔 D-day, 진행 중엔 기간, 종료 후엔 최종 결과.
+          누르면 자세히 보기 시트 (2026-10-28 회원 제안 — 예전엔 눌러도 반응이 없었다) */}
       {period === "event" && (
-        <div className="flex items-center gap-2 rounded-xl border border-reward/30 bg-reward/10 px-3 py-2">
+        <button
+          type="button"
+          onClick={() => setEventOpen(true)}
+          aria-haspopup="dialog"
+          className="flex w-full items-center gap-2 rounded-xl border border-reward/30 bg-reward/10 px-3 py-2.5 text-left transition-all active:scale-[0.99]"
+        >
           <PartyPopper className="h-4 w-4 shrink-0 text-reward" />
-          <div className="min-w-0 flex-1">
-            <p className="text-label font-black text-foreground">153 마이복서 런칭 이벤트</p>
-            <p className="truncate text-label text-muted-foreground">
-              {eventQ.data ? launchEventLine(eventQ.data) : "기간 확인 중…"} · 사이니지 TV에 ①출석왕 ②앱활동왕 ③닉네임왕이 걸려요
-            </p>
-          </div>
-        </div>
+          <span className="min-w-0 flex-1">
+            <span className="block text-label font-black text-foreground">153 마이복서 런칭 이벤트</span>
+            <span className="block truncate text-label text-muted-foreground">
+              {eventQ.data ? launchEventLine(eventQ.data) : "기간 확인 중…"}
+              {eventQ.data?.status === "active" && launchEventDday(eventQ.data) ? ` · ${launchEventDday(eventQ.data)}` : ""}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center text-label font-bold text-reward">
+            자세히
+            <ChevronRight className="h-4 w-4" aria-hidden />
+          </span>
+        </button>
       )}
 
       {/* 왕좌 버튼 8개 — 앞 세 개가 런칭 이벤트 ①②③. 튜토리얼 1일차 스포트라이트가 이 격자를 가리킨다. */}
@@ -226,7 +265,7 @@ const King153Board = () => {
       {!meta ? (
         <p className="px-1 text-center text-label text-muted-foreground">왕좌를 누르면 규칙과 순위가 보여요</p>
       ) : (
-        <div className="surface-card space-y-3 !p-4">
+        <div ref={detailRef} className="surface-card scroll-mt-20 space-y-3 !p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
@@ -369,6 +408,14 @@ const King153Board = () => {
 
       <FunChallengeArenaSheet open={arena.open} initialCode={arena.code} onClose={closeArena} />
       <NicknameLikeSheet open={likeOpen} onClose={closeLike} />
+      <LaunchEventSheet
+        open={eventOpen}
+        onClose={() => setEventOpen(false)}
+        win={eventQ.data}
+        items={period === "event" && summaryQ.data ? summaryQ.data.items : null}
+        scope={summaryQ.data?.scope ?? scope}
+        onPick={pickFromEvent}
+      />
     </section>
   );
 };
