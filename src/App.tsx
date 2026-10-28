@@ -190,17 +190,19 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// 역할을 다 읽을 때까지 기다린다 (userDataReady) — 예전엔 새로고침 · 알림 링크로 관리자 화면을 바로 열면
+// 역할을 읽기 전에 검사해서 홈으로 튕겼다 (2026-10-28)
 const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
-  const { role, loading } = useAuth();
-  if (loading) return <RouteLoader />;
+  const { role, loading, userDataReady } = useAuth();
+  if (loading || !userDataReady) return <RouteLoader />;
   if (!isManagerRole(role)) return <Navigate to="/home" replace />;
   return <>{children}</>;
 };
 
 // 153 스토리 RPG 미공개 — admin/super_admin 만 진입 (회원 직접 URL 접근 차단)
 const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
-  const { role, loading } = useAuth();
-  if (loading) return <RouteLoader />;
+  const { role, loading, userDataReady } = useAuth();
+  if (loading || !userDataReady) return <RouteLoader />;
   if (role !== "admin" && role !== "super_admin") {
     return <Navigate to="/home" replace />;
   }

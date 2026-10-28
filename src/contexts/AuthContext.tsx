@@ -24,6 +24,9 @@ interface AuthContextType {
   setViewAsMember: (on: boolean) => void;
   progress: Tables<"member_progress"> | null;
   loading: boolean;
+  /** 로그인한 계정의 프로필 · 역할을 다 읽었나 (로그아웃이면 true) — loading 은 세션만 보고 먼저 풀린다.
+   *  역할로 막는 화면(ManagerRoute 등)은 이것까지 기다린다 (2026-10-28: 관리자 화면을 새로고침하면 홈으로 튕겼다) */
+  userDataReady: boolean;
   refreshProgress: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   signUp: (email: string, password: string, name: string, nickname: string, phoneNumber: string, branchName: string, isCoach?: boolean, birthDate?: string) => Promise<{ error: Error | null }>;
@@ -46,6 +49,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole | null>(null);
   const [progress, setProgress] = useState<Tables<"member_progress"> | null>(null);
   const [loading, setLoading] = useState(true);
+  // 프로필 · 역할을 마지막으로 다 읽은 계정 — userDataReady
+  const [loadedUid, setLoadedUid] = useState<string | null>(null);
   // 👀 회원으로 보기 (2026-10-21 대표님) — 이 기기 · 이 계정에만 저장
   const [viewAsMemberRaw, setViewAsMemberRaw] = useState(false);
   // 공용 QueryClient — 로그아웃 시 이전 사용자의 React Query 캐시를 비워
@@ -53,21 +58,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
 
   const fetchUserData = useCallback(async (userId: string) => {
-    const [profileRes, roleRes, progressRes] = await Promise.all([
-      supabase.from("profiles").select("*").eq("user_id", userId).single(),
-      supabase.from("user_roles").select("role").eq("user_id", userId).single(),
-      supabase.from("member_progress").select("*").eq("user_id", userId).single(),
-    ]);
+    try {
+      const [profileRes, roleRes, progressRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("user_roles").select("role").eq("user_id", userId).single(),
+        supabase.from("member_progress").select("*").eq("user_id", userId).single(),
+      ]);
 
-    if (profileRes.data) {
-      // 65-E: 153 다이어트 기능을 전체 회원에게 ON.
-      //   DB 컬럼(diet_program_enabled)을 건드리지 않고 클라이언트에서 강제 true —
-      //   Supabase 권한 이슈 회피. 모든 소비처(BottomNav / DietHubPage / MyPage 등)가
-      //   profile.diet_program_enabled 를 읽으므로 여기 한 곳만 덮으면 전체 적용.
-      setProfile({ ...profileRes.data, diet_program_enabled: true });
+      if (profileRes.data) {
+        // 65-E: 153 다이어트 기능을 전체 회원에게 ON.
+        //   DB 컬럼(diet_program_enabled)을 건드리지 않고 클라이언트에서 강제 true —
+        //   Supabase 권한 이슈 회피. 모든 소비처(BottomNav / DietHubPage / MyPage 등)가
+        //   profile.diet_program_enabled 를 읽으므로 여기 한 곳만 덮으면 전체 적용.
+        setProfile({ ...profileRes.data, diet_program_enabled: true });
+      }
+      if (roleRes.data) setRole(roleRes.data.role);
+      if (progressRes.data) setProgress(progressRes.data);
+    } finally {
+      // 읽기에 실패해도 '다 읽음'으로 — 역할로 막는 화면이 로딩에서 멈추지 않게 (그때는 예전처럼 홈으로)
+      setLoadedUid(userId);
     }
-    if (roleRes.data) setRole(roleRes.data.role);
-    if (progressRes.data) setProgress(progressRes.data);
   }, []);
 
   const refreshProgress = useCallback(async () => {
@@ -231,7 +241,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider
       value={{
         user, session, profile, role: shownRole, realRole: role, canViewAsMember, viewAsMember, setViewAsMember,
-        progress, loading, refreshProgress, refreshProfile, signUp, signIn, signOut,
+        progress, loading, userDataReady: !user || loadedUid === user.id, refreshProgress, refreshProfile, signUp, signIn, signOut,
       }}
     >
       {children}
