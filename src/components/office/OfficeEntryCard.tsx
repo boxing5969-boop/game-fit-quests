@@ -49,17 +49,17 @@ const OfficeEntryCard = () => {
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
-          <span className="text-[15px] font-extrabold text-foreground">회의실 참석</span>
-          <span className="rounded-full bg-secondary px-1.5 py-[1px] text-[10.5px] font-bold text-muted-foreground">{office.label}</span>
+          <span className="text-body font-extrabold text-foreground">회의실 참석</span>
+          <span className="rounded-full bg-secondary px-1.5 py-[1px] text-micro font-bold text-muted-foreground">{office.label}</span>
         </span>
-        <span className="mt-0.5 block truncate text-[12.5px] text-muted-foreground">
+        <span className="mt-0.5 block truncate text-label text-muted-foreground">
           지금 {n}명 사무실에 있어요{live ? " · 회의 진행 중" : ""}
         </span>
         {live && (
-          <span className="mt-0.5 block truncate text-[12.5px] font-bold text-primary">{office.meeting!.title}</span>
+          <span className="mt-0.5 block truncate text-label font-bold text-primary">{office.meeting!.title}</span>
         )}
         {!live && office.next && (
-          <span className="mt-0.5 block truncate text-[12.5px] font-bold text-foreground/80">
+          <span className="mt-0.5 block truncate text-label font-bold text-foreground/80">
             다음 회의 · {nextLabel(office.next.at)} · {office.next.title}
           </span>
         )}

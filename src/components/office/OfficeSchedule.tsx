@@ -78,12 +78,12 @@ export const ScheduleSection = ({ state }: { state: OfficeState }) => {
   return (
     <section>
       <div className="flex items-center justify-between gap-2 px-1">
-        <h2 className="text-[15px] font-black text-foreground">정기 회의</h2>
+        <h2 className="text-body font-black text-foreground">정기 회의</h2>
         {host && list.length > 0 && (
           <button
             type="button"
             onClick={() => setSheet({ open: true, id: null })}
-            className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[12.5px] font-black text-foreground active:scale-95"
+            className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-label font-black text-foreground active:scale-95"
           >
             <Plus className="h-3.5 w-3.5" /> 예약
           </button>
@@ -99,8 +99,8 @@ export const ScheduleSection = ({ state }: { state: OfficeState }) => {
               <CalendarClock className="h-[18px] w-[18px] text-muted-foreground" />
             </span>
             <div className="min-w-0">
-              <p className="text-[14.5px] font-black text-foreground">매주 하는 회의를 잡아 두세요</p>
-              <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">
+              <p className="text-label font-black text-foreground">매주 하는 회의를 잡아 두세요</p>
+              <p className="mt-0.5 text-label leading-snug text-muted-foreground">
                 시작 10분 전에 지도진 휴대폰으로 알림이 가고, 그 시간이 되면 회의가 저절로 열려요.
               </p>
             </div>
@@ -108,7 +108,7 @@ export const ScheduleSection = ({ state }: { state: OfficeState }) => {
           <button
             type="button"
             onClick={() => setSheet({ open: true, id: null })}
-            className="mt-3.5 flex h-11 w-full items-center justify-center gap-1.5 rounded-2xl bg-secondary text-[14px] font-black text-foreground active:scale-[0.99]"
+            className="mt-3.5 flex h-11 w-full items-center justify-center gap-1.5 rounded-2xl bg-secondary text-label font-black text-foreground active:scale-[0.99]"
           >
             <CalendarClock className="h-4 w-4" /> 회의 예약하기
           </button>
@@ -182,26 +182,26 @@ const ScheduleRow = ({
           soon ? "bg-primary/10 text-primary" : "bg-secondary text-foreground",
         )}
       >
-        <span className="text-[10.5px] font-bold leading-none opacity-70">{ampm}</span>
-        <span className="mt-1 text-[16px] font-black leading-none tabular-nums">{clock}</span>
+        <span className="text-micro font-bold leading-none opacity-70">{ampm}</span>
+        <span className="mt-1 text-body font-black leading-none tabular-nums">{clock}</span>
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-1.5">
-          <span className="truncate text-[14.5px] font-bold text-foreground">{s.title}</span>
+          <span className="truncate text-label font-bold text-foreground">{s.title}</span>
           {s.video_url && (
-            <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-secondary px-1.5 py-[1px] text-[10.5px] font-bold text-muted-foreground">
+            <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-secondary px-1.5 py-[1px] text-micro font-bold text-muted-foreground">
               <Video className="h-3 w-3" />
               {MEETING_LINK_LABEL[meetingLinkKind(s.video_url)]}
             </span>
           )}
         </span>
-        <span className="mt-0.5 block truncate text-[11.5px] text-muted-foreground">
+        <span className="mt-0.5 block truncate text-label text-muted-foreground">
           {repeatLabel(s.weekdays, s.once_on)} · {remindLabel(s.remind_min)}
         </span>
         {nextText && (
           <span
             className={cn(
-              "mt-0.5 block truncate text-[11.5px] font-bold",
+              "mt-0.5 block truncate text-micro font-bold",
               soon ? "text-primary" : s.skip_next ? "text-muted-foreground" : "text-foreground/80",
             )}
           >
@@ -227,7 +227,7 @@ const ScheduleRow = ({
           type="button"
           disabled={opening}
           onClick={onOpen}
-          className="h-9 shrink-0 rounded-full bg-primary px-3.5 text-[12.5px] font-black text-primary-foreground active:scale-95 disabled:opacity-60"
+          className="h-9 shrink-0 rounded-full bg-primary px-3.5 text-label font-black text-primary-foreground active:scale-95 disabled:opacity-60"
         >
           지금 열기
         </button>
@@ -380,7 +380,7 @@ export const ScheduleSheet = ({
           type="button"
           onClick={submit}
           disabled={!!err || busy || parsedLink === "bad"}
-          className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-[15px] font-black text-primary-foreground active:scale-[0.99] disabled:opacity-40"
+          className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-body font-black text-primary-foreground active:scale-[0.99] disabled:opacity-40"
         >
           {save.isPending ? "저장하는 중…" : editing ? "저장" : "예약하기"}
         </button>
@@ -418,7 +418,7 @@ export const ScheduleSheet = ({
                   aria-pressed={on}
                   onClick={() => setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d]))}
                   className={cn(
-                    "h-10 min-w-0 flex-1 rounded-full border text-[13.5px] font-black transition-colors active:scale-95",
+                    "h-10 min-w-0 flex-1 rounded-full border text-label font-black transition-colors active:scale-95",
                     on ? "border-foreground bg-foreground text-background" : "border-border bg-background text-foreground",
                   )}
                 >
@@ -458,7 +458,7 @@ export const ScheduleSheet = ({
       <div className="space-y-2">
         {items.map((v, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="w-4 shrink-0 text-center text-[13px] font-black text-primary">{i + 1}</span>
+            <span className="w-4 shrink-0 text-center text-label font-black text-primary">{i + 1}</span>
             <input
               value={v}
               onChange={(e) => setItems((arr) => arr.map((x, j) => (j === i ? e.target.value : x)))}
@@ -482,7 +482,7 @@ export const ScheduleSheet = ({
           <button
             type="button"
             onClick={() => setItems((arr) => [...arr, ""])}
-            className="flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-[12.5px] font-bold text-muted-foreground active:scale-95"
+            className="flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-label font-bold text-muted-foreground active:scale-95"
           >
             <Plus className="h-3.5 w-3.5" /> 항목 더하기
           </button>
@@ -501,16 +501,16 @@ export const ScheduleSheet = ({
       <div className="mt-4 rounded-2xl bg-secondary/70 px-3.5 py-3">
         {shown ? (
           <>
-            <p className="text-[13.5px] font-black text-foreground">다음 회의 · {nextLabel(shown)}</p>
+            <p className="text-label font-black text-foreground">다음 회의 · {nextLabel(shown)}</p>
             {skippedAt && (
-              <p className="mt-0.5 text-[12px] font-bold text-muted-foreground">{nextLabel(skippedAt)} 회의는 쉬어요</p>
+              <p className="mt-0.5 text-label font-bold text-muted-foreground">{nextLabel(skippedAt)} 회의는 쉬어요</p>
             )}
-            <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">
+            <p className="mt-0.5 text-label leading-snug text-muted-foreground">
               {remind > 0 ? `${remindChip(remind)} 지도진 ${people}명 휴대폰에 알림 → ` : "알림 없이 "}그 시간에 회의가 저절로 열려요
             </p>
           </>
         ) : (
-          <p className="text-[12.5px] font-bold text-muted-foreground">{err}</p>
+          <p className="text-label font-bold text-muted-foreground">{err}</p>
         )}
       </div>
 
@@ -542,14 +542,14 @@ export const ScheduleSheet = ({
       {schedule &&
         (confirmCancel ? (
           <div className="mt-3 rounded-2xl border border-destructive/40 bg-destructive/5 p-3">
-            <p className="text-[13px] font-bold text-foreground">
+            <p className="text-label font-bold text-foreground">
               '{schedule.title}' 예약을 취소할까요? 다음부터 알림도 회의도 없어요.
             </p>
             <div className="mt-2.5 flex gap-2">
               <button
                 type="button"
                 onClick={() => setConfirmCancel(false)}
-                className="h-10 flex-1 rounded-2xl bg-secondary text-[13.5px] font-black text-foreground active:scale-[0.99]"
+                className="h-10 flex-1 rounded-2xl bg-secondary text-label font-black text-foreground active:scale-[0.99]"
               >
                 그대로 두기
               </button>
@@ -557,7 +557,7 @@ export const ScheduleSheet = ({
                 type="button"
                 disabled={busy}
                 onClick={doCancel}
-                className="h-10 flex-1 rounded-2xl bg-destructive text-[13.5px] font-black text-destructive-foreground active:scale-[0.99] disabled:opacity-60"
+                className="h-10 flex-1 rounded-2xl bg-destructive text-label font-black text-destructive-foreground active:scale-[0.99] disabled:opacity-60"
               >
                 {cancel.isPending ? "취소하는 중…" : "예약 취소"}
               </button>
@@ -567,7 +567,7 @@ export const ScheduleSheet = ({
           <button
             type="button"
             onClick={() => setConfirmCancel(true)}
-            className="mt-3 w-full py-2 text-center text-[13px] font-bold text-destructive active:opacity-70"
+            className="mt-3 w-full py-2 text-center text-label font-bold text-destructive active:opacity-70"
           >
             이 예약 취소
           </button>

@@ -300,9 +300,9 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
       >
         <ChevronLeft className="h-4 w-4 text-secondary-foreground" />
       </button>
-      <h3 className="flex-1 text-base font-bold text-foreground">⏱ {TEST153_NAME} 측정</h3>
+      <h3 className="flex-1 text-body font-bold text-foreground">⏱ {TEST153_NAME} 측정</h3>
       {run && !result && (
-        <button type="button" onClick={discard} className="rounded-full px-3 py-1.5 text-xs font-bold text-muted-foreground active:scale-95">
+        <button type="button" onClick={discard} className="rounded-full px-3 py-1.5 text-label font-bold text-muted-foreground active:scale-95">
           측정 버리기
         </button>
       )}
@@ -315,12 +315,12 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
       <section className="space-y-3">
         {header}
         <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-          <p className="text-sm font-bold text-foreground">1. 회원 고르기</p>
+          <p className="text-body font-bold text-foreground">1. 회원 고르기</p>
           {picked ? (
             <div className="flex items-center justify-between rounded-xl bg-primary/10 px-3 py-2.5">
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-foreground">{picked.name}</p>
-                {isSuperAdmin && <p className="text-xs text-muted-foreground">{shortBranch(picked.branch)}</p>}
+                <p className="truncate text-body font-bold text-foreground">{picked.name}</p>
+                {isSuperAdmin && <p className="text-label text-muted-foreground">{shortBranch(picked.branch)}</p>}
               </div>
               <button type="button" onClick={() => setPicked(null)} aria-label="다시 고르기" className="p-1 text-muted-foreground">
                 <X className="h-4 w-4" />
@@ -335,13 +335,13 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
               {q.trim() && (
                 <ul className="max-h-64 overflow-y-auto rounded-xl border border-border">
                   {candidates.length === 0 ? (
-                    <li className="px-3 py-3 text-sm text-muted-foreground">{isFetching ? "찾는 중…" : "찾는 회원이 없어요"}</li>
+                    <li className="px-3 py-3 text-body text-muted-foreground">{isFetching ? "찾는 중…" : "찾는 회원이 없어요"}</li>
                   ) : (
                     candidates.map((m, i) => (
                       <li key={m.id} className={i > 0 ? "border-t border-border" : ""}>
                         <button type="button" onClick={() => pick(m)} className="flex w-full items-center justify-between px-3 py-2.5 text-left active:bg-secondary/40">
-                          <span className="truncate text-sm font-semibold text-foreground">{m.name}</span>
-                          {isSuperAdmin && <span className="shrink-0 text-xs text-muted-foreground">{shortBranch(m.branch)}</span>}
+                          <span className="truncate text-body font-semibold text-foreground">{m.name}</span>
+                          {isSuperAdmin && <span className="shrink-0 text-label text-muted-foreground">{shortBranch(m.branch)}</span>}
                         </button>
                       </li>
                     ))
@@ -351,7 +351,7 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
             </>
           )}
 
-          <p className="pt-1 text-sm font-bold text-foreground">2. 부문</p>
+          <p className="pt-1 text-body font-bold text-foreground">2. 부문</p>
           <div className="grid grid-cols-2 gap-2">
             {(["starter", "open"] as const).map((d) => (
               <button
@@ -359,17 +359,17 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
                 type="button"
                 onClick={() => setDivision(d)}
                 className={cn(
-                  "rounded-xl border py-2.5 text-sm font-bold active:scale-95",
+                  "rounded-xl border py-2.5 text-body font-bold active:scale-95",
                   division === d ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground",
                 )}
               >
                 {DIVISION_LABEL[d]}
-                <span className="block text-[11px] font-medium opacity-80">{d === "starter" ? "개수 절반 · 처음이면" : "기본"}</span>
+                <span className="block text-micro font-medium opacity-80">{d === "starter" ? "개수 절반 · 처음이면" : "기본"}</span>
               </button>
             ))}
           </div>
 
-          <p className="pt-1 text-sm font-bold text-foreground">3. 성별 <span className="font-normal text-muted-foreground">(순위 나누기용)</span></p>
+          <p className="pt-1 text-body font-bold text-foreground">3. 성별 <span className="font-normal text-muted-foreground">(순위 나누기용)</span></p>
           <div className="grid grid-cols-2 gap-2">
             {(["남", "여"] as const).map((g) => (
               <button
@@ -377,7 +377,7 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
                 type="button"
                 onClick={() => setGender(gender === g ? null : g)}
                 className={cn(
-                  "rounded-xl border py-2 text-sm font-bold active:scale-95",
+                  "rounded-xl border py-2 text-body font-bold active:scale-95",
                   gender === g ? "border-primary bg-primary/15 text-primary" : "border-border bg-background text-foreground",
                 )}
               >
@@ -388,14 +388,14 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
         </div>
 
         <div className="rounded-2xl border border-border bg-muted/30 p-4">
-          <p className="mb-2 text-xs font-bold text-muted-foreground">순서 ({DIVISION_LABEL[division]}) · 매 라운드 셀트런 100m → 스테이션 · 타임캡 25:00</p>
-          <ol className="space-y-0.5 text-[13px] text-foreground">
+          <p className="mb-2 text-label font-bold text-muted-foreground">순서 ({DIVISION_LABEL[division]}) · 매 라운드 셀트런 100m → 스테이션 · 타임캡 25:00</p>
+          <ol className="space-y-0.5 text-label text-foreground">
             {segments
               .filter((s) => s.kind === "station")
               .map((s) => (
                 <li key={s.index}>
                   <span className="tabular-nums text-muted-foreground">{s.round}.</span> {s.label}
-                  {s.boxing && <span className="ml-1 text-[11px]">🥊</span>}
+                  {s.boxing && <span className="ml-1 text-micro">🥊</span>}
                 </li>
               ))}
           </ol>
@@ -405,7 +405,7 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
           type="button"
           disabled={!picked}
           onClick={start}
-          className="h-14 w-full rounded-2xl bg-primary text-lg font-black text-primary-foreground shadow-elev-1 active:scale-[0.98] disabled:opacity-40"
+          className="h-14 w-full rounded-2xl bg-primary text-heading font-black text-primary-foreground shadow-elev-1 active:scale-[0.98] disabled:opacity-40"
         >
           시작 ▶
         </button>
@@ -424,7 +424,7 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
       {header}
 
       <div className="rounded-2xl border border-border bg-card p-4">
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center justify-between text-body">
           <span className="font-bold text-foreground">{run.member.name}</span>
           <span className="text-muted-foreground">
             {DIVISION_LABEL[run.division]}
@@ -434,26 +434,26 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
 
         <p
           className={cn(
-            "mt-2 text-center text-6xl font-black tabular-nums tracking-tight",
+            "mt-2 text-center text-display font-black tabular-nums tracking-tight",
             running && left < 60000 ? "text-destructive" : "text-foreground",
           )}
         >
           {fmtMs(elapsed)}
         </p>
-        <p className="text-center text-xs text-muted-foreground tabular-nums">
+        <p className="text-center text-label text-muted-foreground tabular-nums">
           {running ? `타임캡까지 ${fmtMs(Math.max(0, left), false)}` : finished ? "완주!" : "타임캡 · 중단"}
         </p>
 
         {running && (
           <div className="mt-4 rounded-xl bg-primary/10 p-3">
-            <p className="text-xs font-bold text-primary">
+            <p className="text-label font-bold text-primary">
               {cur.index + 1} / {segments.length} · 라운드 {cur.round}
             </p>
-            <p className="mt-0.5 text-2xl font-black text-foreground">
+            <p className="mt-0.5 text-title font-black text-foreground">
               {cur.label} {cur.boxing && "🥊"}
             </p>
-            <p className="mt-1 text-[13px] leading-snug text-muted-foreground">{cur.standard}</p>
-            <p className="mt-1 text-right text-xs tabular-nums text-muted-foreground">이 구간 {fmtMs(segElapsed)}</p>
+            <p className="mt-1 text-label leading-snug text-muted-foreground">{cur.standard}</p>
+            <p className="mt-1 text-right text-label tabular-nums text-muted-foreground">이 구간 {fmtMs(segElapsed)}</p>
           </div>
         )}
       </div>
@@ -463,11 +463,11 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
           <button
             type="button"
             onClick={next}
-            className="h-24 w-full rounded-3xl bg-primary text-2xl font-black text-primary-foreground shadow-elev-1 active:scale-[0.98]"
+            className="h-24 w-full rounded-3xl bg-primary text-title font-black text-primary-foreground shadow-elev-1 active:scale-[0.98]"
           >
             {curIdx === segments.length - 1 ? "완주! 🏁" : `다음 구간 ▶`}
             {curIdx < segments.length - 1 && (
-              <span className="block text-sm font-bold opacity-80">다음: {segments[curIdx + 1].label}</span>
+              <span className="block text-body font-bold opacity-80">다음: {segments[curIdx + 1].label}</span>
             )}
           </button>
           <div className="grid grid-cols-2 gap-2">
@@ -475,14 +475,14 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
               type="button"
               disabled={run.marks.length === 0}
               onClick={undo}
-              className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-card text-sm font-bold text-foreground active:scale-95 disabled:opacity-40"
+              className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-card text-body font-bold text-foreground active:scale-95 disabled:opacity-40"
             >
               <RotateCcw className="h-4 w-4" /> 되돌리기
             </button>
             <button
               type="button"
               onClick={stopCap}
-              className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-destructive/40 bg-card text-sm font-bold text-destructive active:scale-95"
+              className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-destructive/40 bg-card text-body font-bold text-destructive active:scale-95"
             >
               <Flag className="h-4 w-4" /> 여기서 멈춤
             </button>
@@ -494,7 +494,7 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
         <div className="space-y-3 rounded-2xl border border-border bg-card p-4">
           {capped && (
             <div>
-              <p className="text-sm font-bold text-foreground">
+              <p className="text-body font-bold text-foreground">
                 {segments[curIdx]?.label} — 남은 개수
               </p>
               <div className="mt-2 flex items-center gap-2">
@@ -503,13 +503,13 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
                   value={leftInSegment}
                   onChange={(e) => setLeftInSegment(e.target.value.replace(/\D/g, ""))}
                   placeholder={`0 ~ ${segments[curIdx]?.reps ?? 0}`}
-                  className="w-28 text-center text-lg font-bold"
+                  className="w-28 text-center text-heading font-bold"
                 />
-                <span className="text-sm text-muted-foreground">개 + 뒤 구간 {laterReps}개</span>
+                <span className="text-body text-muted-foreground">개 + 뒤 구간 {laterReps}개</span>
               </div>
-              <p className="mt-2 text-sm text-foreground">
+              <p className="mt-2 text-body text-foreground">
                 기록: <b>25:00 + 남은 {remaining}개</b>
-                <span className="block text-xs text-muted-foreground">완주한 사람은 항상 이 기록보다 앞이에요. 셀트런 1구간 = 10개로 셉니다.</span>
+                <span className="block text-label text-muted-foreground">완주한 사람은 항상 이 기록보다 앞이에요. 셀트런 1구간 = 10개로 셉니다.</span>
               </p>
             </div>
           )}
@@ -519,7 +519,7 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
               type="button"
               disabled={capped ? !canResume : run.marks.length === 0}
               onClick={capped ? resume : undo}
-              className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-border px-4 text-sm font-bold text-foreground active:scale-95 disabled:opacity-40"
+              className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-border px-4 text-body font-bold text-foreground active:scale-95 disabled:opacity-40"
             >
               <RotateCcw className="h-4 w-4" />
               {capped ? "이어서" : "되돌리기"}
@@ -528,7 +528,7 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
               type="button"
               disabled={saving}
               onClick={save}
-              className="h-12 rounded-xl bg-primary text-base font-black text-primary-foreground active:scale-[0.98] disabled:opacity-50"
+              className="h-12 rounded-xl bg-primary text-body font-black text-primary-foreground active:scale-[0.98] disabled:opacity-50"
             >
               {saving ? "저장 중…" : "공식 기록으로 저장"}
             </button>
@@ -539,18 +539,18 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
       {result && (
         <div className={cn("rounded-2xl border p-4 text-center", result.is_pb ? "border-amber-400/60 bg-amber-400/10" : "border-border bg-card")}>
           {result.is_pb && <Trophy className="mx-auto h-8 w-8 text-amber-500" />}
-          <p className="mt-1 text-lg font-black text-foreground">
+          <p className="mt-1 text-heading font-black text-foreground">
             {result.is_pb ? (result.prev_pb_ms ? "개인 최고 기록 경신!" : "첫 공식 기록!") : "저장했어요"}
           </p>
           {result.prev_pb_ms != null && finished && result.prev_pb_ms > result.score_ms && result.prev_pb_ms <= TEST153_CAP_MS && (
-            <p className="text-sm text-muted-foreground">이전 최고 {fmtMs(result.prev_pb_ms)} → {fmtMs(result.score_ms)} ({((result.prev_pb_ms - result.score_ms) / 1000).toFixed(1)}초 단축)</p>
+            <p className="text-body text-muted-foreground">이전 최고 {fmtMs(result.prev_pb_ms)} → {fmtMs(result.score_ms)} ({((result.prev_pb_ms - result.score_ms) / 1000).toFixed(1)}초 단축)</p>
           )}
 
           {/* 이번 결과 한 장 — 회원과 함께 보며 이야기 (2026-10-25) */}
           {summary && (
             <div className="mt-3 rounded-xl bg-muted/50 p-3 text-left">
-              <p className="text-[12.5px] font-black text-foreground">이번 결과 한 장</p>
-              <p className="mt-1 text-[13px] text-foreground">
+              <p className="text-label font-black text-foreground">이번 결과 한 장</p>
+              <p className="mt-1 text-label text-foreground">
                 이번 <b className="tabular-nums">{summary.thisText}</b>
                 {summary.prevText && (
                   <span className="text-muted-foreground">
@@ -560,14 +560,14 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
                 )}
               </p>
               {summary.fasterMs != null && (
-                <p className="text-[12.5px] font-bold text-primary">지난번보다 {(summary.fasterMs / 1000).toFixed(1)}초 빨라졌어요</p>
+                <p className="text-label font-bold text-primary">지난번보다 {(summary.fasterMs / 1000).toFixed(1)}초 빨라졌어요</p>
               )}
               {summary.best && (
-                <p className="text-[12.5px] font-bold text-primary">
+                <p className="text-label font-bold text-primary">
                   가장 좋아진 영역 · {summary.best.label} +{formatPct(summary.best.pct)}%
                 </p>
               )}
-              <ul className="mt-2 space-y-1 text-[12px]">
+              <ul className="mt-2 space-y-1 text-label">
                 {summary.changes.map((c) => (
                   <li key={c.key} className="flex items-baseline justify-between gap-2">
                     <span className="shrink-0 text-muted-foreground">{c.label}</span>
@@ -579,14 +579,14 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
                 ))}
               </ul>
               {!summary.prevText && (
-                <p className="mt-1.5 text-[11.5px] text-muted-foreground">첫 기록이에요 — 다음 측정부터 지난번과 비교해 보여 드려요</p>
+                <p className="mt-1.5 text-label text-muted-foreground">첫 기록이에요 — 다음 측정부터 지난번과 비교해 보여 드려요</p>
               )}
             </div>
           )}
 
           {/* 악력 — 좌우 각 2번 중 가장 높은 값 (공식 기록과 같은 날 · 같은 코치) */}
           <div className="mt-3 rounded-xl border border-border p-3 text-left">
-            <p className="text-[12.5px] font-black text-foreground">
+            <p className="text-label font-black text-foreground">
               악력 (kg) <span className="font-normal text-muted-foreground">좌우 각 2번 중 가장 높은 값</span>
             </p>
             <div className="mt-2 flex gap-2">
@@ -596,24 +596,24 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
                 onChange={(e) => setGrip(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))}
                 placeholder="예: 42.5"
                 aria-label="악력 (kg)"
-                className="h-11 text-center text-lg font-bold tabular-nums"
+                className="h-11 text-center text-heading font-bold tabular-nums"
               />
               <button
                 type="button"
                 disabled={gripSaving || !grip.trim()}
                 onClick={() => void saveGrip()}
-                className="h-11 shrink-0 rounded-xl bg-foreground px-4 text-sm font-bold text-background active:scale-95 disabled:opacity-50"
+                className="h-11 shrink-0 rounded-xl bg-foreground px-4 text-body font-bold text-background active:scale-95 disabled:opacity-50"
               >
                 {gripSaving ? "저장 중…" : "악력 저장"}
               </button>
             </div>
-            {gripLine && <p className="mt-1.5 text-[12px] font-bold text-primary">최근 {gripLine}</p>}
+            {gripLine && <p className="mt-1.5 text-label font-bold text-primary">최근 {gripLine}</p>}
           </div>
 
           <button
             type="button"
             onClick={doneAndNext}
-            className="mt-3 h-12 w-full rounded-xl bg-primary text-base font-black text-primary-foreground active:scale-[0.98]"
+            className="mt-3 h-12 w-full rounded-xl bg-primary text-body font-black text-primary-foreground active:scale-[0.98]"
           >
             다음 회원 측정
           </button>
@@ -622,8 +622,8 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
 
       {splits.length > 0 && (
         <div className="rounded-2xl border border-border bg-card p-3">
-          <p className="mb-2 text-xs font-bold text-muted-foreground">구간 기록</p>
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-[13px]">
+          <p className="mb-2 text-label font-bold text-muted-foreground">구간 기록</p>
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-label">
             {splits.map((ms, i) => (
               <li key={i} className="flex justify-between gap-2">
                 <span className="truncate text-muted-foreground">

@@ -108,7 +108,7 @@ const DietMemberDetailPage = () => {
   if (detail.isLoading) {
     return (
       <Shell onBack={() => navigate("/coach/diet")}>
-        <div className="rounded-2xl border border-border bg-card p-6 text-center text-[13px] text-muted-foreground">
+        <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
           불러오는 중...
         </div>
       </Shell>
@@ -119,7 +119,7 @@ const DietMemberDetailPage = () => {
   if (!data || !data.enrollment) {
     return (
       <Shell onBack={() => navigate("/coach/diet")}>
-        <div className="rounded-2xl border border-border bg-card p-6 text-center text-[13px] text-muted-foreground">
+        <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
           해당 회원의 진행 중 프로그램을 찾지 못했어요.
         </div>
       </Shell>
@@ -137,7 +137,7 @@ const DietMemberDetailPage = () => {
         {/* 헤더 요약 */}
         <div className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent p-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-[14px] font-bold text-muted-foreground">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-label font-bold text-muted-foreground">
               {data.avatar_url ? (
                 <img
                   src={data.avatar_url}
@@ -149,16 +149,16 @@ const DietMemberDetailPage = () => {
               )}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="truncate text-[14px] font-bold text-foreground">
+              <p className="truncate text-label font-bold text-foreground">
                 {data.nickname ?? "회원"}
               </p>
-              <p className="truncate text-[11px] text-muted-foreground">
+              <p className="truncate text-label text-muted-foreground">
                 {data.branch_name ?? "-"} · {DIET_TRACK_LABEL[e.track]}
               </p>
             </div>
             <DietTrackBadge track={e.track} />
           </div>
-          <div className="mt-3 flex items-center gap-2 text-[11.5px] text-muted-foreground">
+          <div className="mt-3 flex items-center gap-2 text-label text-muted-foreground">
             <Calendar className="h-3.5 w-3.5" />
             Day {e.current_day} / 21 · {stageLabel} · 시작 {e.start_date}
           </div>
@@ -169,12 +169,12 @@ const DietMemberDetailPage = () => {
               {flagLabels.map((f) => (
                 <span
                   key={f}
-                  className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive"
+                  className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-micro font-bold text-destructive"
                 >
                   {f}
                 </span>
               ))}
-              <span className="text-[10.5px] text-muted-foreground ml-1">
+              <span className="text-label text-muted-foreground ml-1">
                 단식·식사 거르기 기능 비활성
               </span>
             </div>
@@ -187,16 +187,16 @@ const DietMemberDetailPage = () => {
             currentDay={e.current_day}
             statusByDay={statusByDay}
           />
-          <div className="mt-3 grid grid-cols-3 gap-1.5 text-[11px]">
+          <div className="mt-3 grid grid-cols-3 gap-1.5 text-micro">
             {weeklyApproval.map((w) => (
               <span
                 key={w.week}
                 className="rounded-lg border border-border bg-muted/40 px-2 py-1.5"
               >
-                <span className="block text-[10px] font-bold uppercase text-muted-foreground">
+                <span className="block text-label font-bold uppercase text-muted-foreground">
                   W{w.week}
                 </span>
-                <span className="block number-font text-[13px] font-extrabold text-foreground">
+                <span className="block number-font text-label font-extrabold text-foreground">
                   {w.approved}/{w.total}
                 </span>
               </span>
@@ -206,9 +206,9 @@ const DietMemberDetailPage = () => {
 
         {/* 코치 피드백 내역 */}
         <section className="space-y-2">
-          <h3 className="text-[13px] font-bold text-foreground">피드백 내역</h3>
+          <h3 className="text-label font-bold text-foreground">피드백 내역</h3>
           {data.coachNotes.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card p-3 text-[12px] text-muted-foreground">
+            <div className="rounded-xl border border-border bg-card p-3 text-label text-muted-foreground">
               아직 코치 노트가 없어요. 아래에서 첫 메시지를 보내볼까요?
             </div>
           ) : (
@@ -223,15 +223,15 @@ const DietMemberDetailPage = () => {
                       : "border-primary/25 bg-primary/5",
                   )}
                 >
-                  <div className="flex items-center justify-between text-[10.5px] text-muted-foreground">
+                  <div className="flex items-center justify-between text-label text-muted-foreground">
                     <span className="font-bold">{templateTypeLabel(n.template_type)}</span>
                     <span>{new Date(n.created_at).toLocaleDateString("ko-KR")}</span>
                   </div>
-                  <p className="mt-1 text-[12.5px] leading-relaxed text-foreground whitespace-pre-line">
+                  <p className="mt-1 text-label leading-relaxed text-foreground whitespace-pre-line">
                     {n.note_text}
                   </p>
                   {n.visibility === "private" && (
-                    <p className="mt-1 text-[10px] font-bold text-muted-foreground">
+                    <p className="mt-1 text-label font-bold text-muted-foreground">
                       내부 메모 (회원 비공개)
                     </p>
                   )}
@@ -243,7 +243,7 @@ const DietMemberDetailPage = () => {
 
         {/* 새 노트 작성 */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
-          <div className="flex items-center gap-1.5 text-[13px] font-bold text-foreground">
+          <div className="flex items-center gap-1.5 text-label font-bold text-foreground">
             <MessageSquarePlus className="h-4 w-4 text-primary" />
             한마디 보내기
           </div>
@@ -255,7 +255,7 @@ const DietMemberDetailPage = () => {
               setTplId(null);
             }}
             placeholder="회원에게 보낼 메시지를 입력해 주세요"
-            className="min-h-[80px] rounded-xl text-[13px]"
+            className="min-h-[80px] rounded-xl text-label"
           />
           <div className="flex gap-1.5">
             <Button
@@ -282,23 +282,23 @@ const DietMemberDetailPage = () => {
         {/* 유지 플랜 추천 (Day 18+) */}
         {e.current_day >= 18 && (
           <section className="space-y-2">
-            <h3 className="text-[13px] font-bold text-foreground">유지 플랜 추천</h3>
+            <h3 className="text-label font-bold text-foreground">유지 플랜 추천</h3>
             <ul className="space-y-1.5">
               {DIET_MAINTENANCE_VARIANTS.map((v) => (
                 <li
                   key={v.id}
                   className="rounded-xl border border-border bg-card p-3"
                 >
-                  <p className="text-[12.5px] font-bold text-foreground">
+                  <p className="text-label font-bold text-foreground">
                     {v.title}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-label text-muted-foreground">
                     {v.summary}
                   </p>
                 </li>
               ))}
             </ul>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-label text-muted-foreground">
               회원에게 가장 잘 맞는 한 가지를 골라 권유해 주세요.
             </p>
           </section>

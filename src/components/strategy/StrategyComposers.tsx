@@ -29,12 +29,12 @@ import {
 } from "@/services/strategyService";
 
 export const inputCls =
-  "w-full rounded-2xl border border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/60";
+  "w-full rounded-2xl border border-border bg-background px-3 py-2.5 text-label text-foreground outline-none focus:border-primary/60";
 
 export const Label = ({ children, hint }: { children: React.ReactNode; hint?: string }) => (
-  <p className="mb-1.5 mt-3 flex items-baseline gap-1.5 text-[12.5px] font-bold text-muted-foreground first:mt-0">
+  <p className="mb-1.5 mt-3 flex items-baseline gap-1.5 text-label font-bold text-muted-foreground first:mt-0">
     {children}
-    {hint && <span className="text-[11.5px] font-medium">{hint}</span>}
+    {hint && <span className="text-micro font-medium">{hint}</span>}
   </p>
 );
 
@@ -43,7 +43,7 @@ export const Chip = ({ on, onClick, children }: { on: boolean; onClick: () => vo
     type="button"
     onClick={onClick}
     className={cn(
-      "rounded-full border px-3 py-1.5 text-[13px] font-bold active:scale-95",
+      "rounded-full border px-3 py-1.5 text-label font-bold active:scale-95",
       on ? "border-foreground bg-foreground text-background" : "border-border bg-background text-foreground",
     )}
   >
@@ -56,7 +56,7 @@ const SubmitButton = ({ onClick, disabled, children }: { onClick: () => void; di
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-[15px] font-black text-primary-foreground active:scale-[0.99] disabled:opacity-50"
+    className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-body font-black text-primary-foreground active:scale-[0.99] disabled:opacity-50"
   >
     {children}
   </button>
@@ -197,7 +197,7 @@ export const PostComposer = ({
             <button
               type="button"
               onClick={() => setShowPolish((v) => !v)}
-              className="flex w-full items-center gap-1.5 text-left text-[13px] font-black text-amber-800 dark:text-amber-300"
+              className="flex w-full items-center gap-1.5 text-left text-label font-black text-amber-800 dark:text-amber-300"
             >
               <Sparkles className="h-4 w-4" /> 화가 난 채로 써도 돼요 — 오삼코치가 차분하게 정리해 드려요
             </button>
@@ -215,11 +215,11 @@ export const PostComposer = ({
                   type="button"
                   onClick={polish}
                   disabled={!raw.trim() || polishing}
-                  className="mt-2 h-10 w-full rounded-xl bg-amber-500 text-[13.5px] font-black text-white active:scale-[0.99] disabled:opacity-50"
+                  className="mt-2 h-10 w-full rounded-xl bg-amber-500 text-label font-black text-white active:scale-[0.99] disabled:opacity-50"
                 >
                   {polishing ? "정리하는 중…" : "4칸으로 정리하기"}
                 </button>
-                <p className="mt-1.5 text-[11.5px] text-amber-800/80 dark:text-amber-300/80">쓴 원문은 저장하지 않아요.</p>
+                <p className="mt-1.5 text-micro text-amber-800/80 dark:text-amber-300/80">쓴 원문은 저장하지 않아요.</p>
               </>
             )}
           </div>
@@ -412,11 +412,11 @@ export const ProgramComposer = ({
         {blocks.map((b, i) => (
           <li key={i} className="rounded-2xl border border-border bg-secondary/40 p-2.5">
             <div className="flex items-center gap-1.5">
-              <span className="w-5 text-center text-[12px] font-black text-muted-foreground">{i + 1}</span>
+              <span className="w-5 text-center text-label font-black text-muted-foreground">{i + 1}</span>
               <select
                 value={b.kind}
                 onChange={(e) => set(i, { kind: e.target.value as BlockKind })}
-                className="h-9 rounded-xl border border-border bg-background px-2 text-[13px] font-bold"
+                className="h-9 rounded-xl border border-border bg-background px-2 text-label font-bold"
                 aria-label="블록 종류"
               >
                 {BLOCK_KINDS.map((k) => (
@@ -432,10 +432,10 @@ export const ProgramComposer = ({
                 max={120}
                 value={b.minutes}
                 onChange={(e) => set(i, { minutes: Number(e.target.value) })}
-                className="h-9 w-16 rounded-xl border border-border bg-background px-2 text-right text-[13px] font-bold tabular-nums"
+                className="h-9 w-16 rounded-xl border border-border bg-background px-2 text-right text-label font-bold tabular-nums"
                 aria-label="분"
               />
-              <span className="text-[12.5px] font-bold text-muted-foreground">분</span>
+              <span className="text-label font-bold text-muted-foreground">분</span>
               <span className="flex-1" />
               <button type="button" onClick={() => move(i, -1)} aria-label="위로" className="flex h-8 w-8 items-center justify-center rounded-full active:bg-secondary">
                 <ArrowUp className="h-4 w-4" />
@@ -486,19 +486,19 @@ export const ProgramComposer = ({
       <button
         type="button"
         onClick={() => setBlocks((bs) => [...bs, { kind: "skill", title: "", minutes: 8 }])}
-        className="mt-2 flex h-10 w-full items-center justify-center gap-1 rounded-2xl border border-dashed border-border text-[13px] font-bold text-muted-foreground active:scale-[0.99]"
+        className="mt-2 flex h-10 w-full items-center justify-center gap-1 rounded-2xl border border-dashed border-border text-label font-bold text-muted-foreground active:scale-[0.99]"
       >
         <Plus className="h-4 w-4" /> 블록 더하기
       </button>
       {videos.length === 0 && (
-        <p className="mt-2 text-[12px] text-muted-foreground">'영상' 탭에서 드릴 영상을 올리면 블록에 붙일 수 있어요.</p>
+        <p className="mt-2 text-label text-muted-foreground">'영상' 탭에서 드릴 영상을 올리면 블록에 붙일 수 있어요.</p>
       )}
 
       <Label>코치님께 한마디 (선택)</Label>
       <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={1000} placeholder="예: 신규 회원이 많은 시간이라 스텝을 천천히" className={cn(inputCls, "resize-none")} />
       <Label>받는 코치</Label>
       <TargetPicker me={me} value={targets} onChange={setTargets} />
-      <label className="mt-3 flex items-center gap-2 text-[13.5px] font-bold text-foreground">
+      <label className="mt-3 flex items-center gap-2 text-label font-bold text-foreground">
         <input type="checkbox" checked={template} onChange={(e) => setTemplate(e.target.checked)} className="h-4 w-4" />
         자주 쓰는 프로그램으로 저장 (다음에 불러오기)
       </label>
@@ -630,7 +630,7 @@ export const ClassLogComposer = ({
         </div>
       </div>
       {staffIn.length > 0 && (
-        <p className="mt-1.5 text-[11.5px] text-muted-foreground">이날 그 시간까지 출근한 코치: {staffIn.join(" · ")}</p>
+        <p className="mt-1.5 text-label text-muted-foreground">이날 그 시간까지 출근한 코치: {staffIn.join(" · ")}</p>
       )}
 
       <Label>진행한 프로그램</Label>
@@ -666,7 +666,7 @@ export const ClassLogComposer = ({
       <textarea value={issues} onChange={(e) => setIssues(e.target.value)} rows={2} maxLength={600} placeholder="예: 처음 온 회원 2명, 스텝을 어려워함" className={cn(inputCls, "resize-none")} />
       <Label>다음 수업에 이어갈 것</Label>
       <textarea value={nextFocus} onChange={(e) => setNextFocus(e.target.value)} rows={2} maxLength={600} placeholder="예: 가드 자세 복습" className={cn(inputCls, "resize-none")} />
-      <p className="mt-3 rounded-2xl bg-secondary px-3 py-2 text-[11.5px] leading-snug text-muted-foreground">
+      <p className="mt-3 rounded-2xl bg-secondary px-3 py-2 text-micro leading-snug text-muted-foreground">
         회원의 건강·부상 같은 민감한 내용은 쓰지 말아 주세요. 코치진 모두가 보는 기록이에요.
       </p>
     </DmSheet>

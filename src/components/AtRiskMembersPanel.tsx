@@ -170,8 +170,8 @@ const AtRiskMembersPanel = () => {
               <div className={`mx-auto mb-1 flex h-8 w-8 items-center justify-center rounded-full ${cfg.bg} ${cfg.color}`}>
                 {cfg.icon}
               </div>
-              <p className={`text-lg font-bold ${cfg.color}`}>{counts[r]}</p>
-              <p className="text-[9px] text-muted-foreground">{cfg.label} ({cfg.minDays}일+)</p>
+              <p className={`text-heading font-bold ${cfg.color}`}>{counts[r]}</p>
+              <p className="text-label text-muted-foreground">{cfg.label} ({cfg.minDays}일+)</p>
             </button>
           );
         })}
@@ -180,8 +180,8 @@ const AtRiskMembersPanel = () => {
       {/* List */}
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <span className="text-3xl">✅</span>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <span className="text-title">✅</span>
+          <p className="mt-2 text-body text-muted-foreground">
             {filter === "all" ? "복귀 위험 회원이 없습니다" : "해당 등급의 위험 회원이 없습니다"}
           </p>
         </div>
@@ -196,7 +196,7 @@ const AtRiskMembersPanel = () => {
                   className="w-full p-3.5 text-left active:scale-[0.98] transition-all"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-lg">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-heading">
                       {m.avatar_url ? (
                         <img src={m.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
                       ) : (
@@ -205,12 +205,12 @@ const AtRiskMembersPanel = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-foreground truncate">{m.nickname}</span>
-                        <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${cfg.bg} ${cfg.color}`}>
+                        <span className="text-body font-bold text-foreground truncate">{m.nickname}</span>
+                        <span className={`rounded-full px-1.5 py-0.5 text-micro font-bold ${cfg.bg} ${cfg.color}`}>
                           {m.inactive_days}일 미활동
                         </span>
                       </div>
-                      <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <div className="mt-0.5 flex items-center gap-2 text-label text-muted-foreground">
                         {isSuperAdmin && <span className="font-medium text-primary/70">{m.branch_name}</span>}
                         <span>{formatRankShort(m.current_rank, m.current_level)}</span>
                         <span>·</span>
@@ -234,19 +234,19 @@ const AtRiskMembersPanel = () => {
                         value={quickNote.text}
                         onChange={e => setQuickNote({ ...quickNote, text: e.target.value })}
                         placeholder="한줄 메모 입력..."
-                        className="flex-1 rounded-lg bg-card px-2.5 py-1.5 text-xs outline-none border border-border"
+                        className="flex-1 rounded-lg bg-card px-2.5 py-1.5 text-label outline-none border border-border"
                         autoFocus
                         onKeyDown={e => e.key === "Enter" && handleQuickNote()}
                       />
-                      <button onClick={handleQuickNote} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground active:scale-95">
+                      <button onClick={handleQuickNote} className="rounded-lg bg-primary px-3 py-1.5 text-label font-bold text-primary-foreground active:scale-95">
                         저장
                       </button>
-                      <button onClick={() => setQuickNote(null)} className="text-xs text-muted-foreground">취소</button>
+                      <button onClick={() => setQuickNote(null)} className="text-label text-muted-foreground">취소</button>
                     </div>
                   ) : (
                     <button
                       onClick={() => setQuickNote({ userId: m.user_id, text: "" })}
-                      className="flex items-center gap-1 text-[10px] text-muted-foreground active:scale-95"
+                      className="flex items-center gap-1 text-label text-muted-foreground active:scale-95"
                     >
                       <MessageSquare className="h-3 w-3" /> 한줄 메모
                     </button>

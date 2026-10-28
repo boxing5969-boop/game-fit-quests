@@ -98,8 +98,8 @@ const DailyReportCard = ({
             <CalendarDays className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-foreground">오늘의 운영 리포트</p>
-            <p className="truncate text-[11px] text-muted-foreground">
+            <p className="text-body font-bold text-foreground">오늘의 운영 리포트</p>
+            <p className="truncate text-label text-muted-foreground">
               {isSuperAdmin ? "전체 지점" : branchName || "우리 지점"} · {todayLabel()}
             </p>
           </div>
@@ -140,24 +140,24 @@ const DailyReportCard = ({
         {!isLoading && broj && (
           <div className="mt-3 rounded-2xl border border-border bg-secondary/30 p-3">
             <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
+              <span className="flex items-center gap-1.5 text-micro font-bold text-foreground">
                 <DoorOpen className="h-3.5 w-3.5 text-primary" /> 브로제이 대조
               </span>
               {broj.total.updatedAt && (
-                <span className="text-[10px] text-muted-foreground">{kstTime(broj.total.updatedAt)} 기준</span>
+                <span className="text-label text-muted-foreground">{kstTime(broj.total.updatedAt)} 기준</span>
               )}
             </div>
-            <p className="text-sm font-bold text-foreground">
+            <p className="text-body font-bold text-foreground">
               입장 {broj.total.memberEntries}건 · 회원 {broj.total.memberPeople}명
               <span className="font-medium text-muted-foreground"> · 코치 {broj.total.staffPeople}명</span>
             </p>
-            <p className={`mt-0.5 text-[11px] leading-relaxed ${brojOk ? "text-primary" : "text-status-pending"}`}>
+            <p className={`mt-0.5 text-label leading-relaxed ${brojOk ? "text-primary" : "text-status-pending"}`}>
               {brojGapLine(broj.total)}
             </p>
             {broj.branches.length > 1 && (
               <ul className="mt-2 space-y-0.5 border-t border-border/60 pt-2">
                 {broj.branches.map((b) => (
-                  <li key={b.branchName} className="flex items-center justify-between gap-2 text-[11px]">
+                  <li key={b.branchName} className="flex items-center justify-between gap-2 text-micro">
                     <span className="truncate text-muted-foreground">{shortBranch(b.branchName)}</span>
                     <span className="shrink-0 tabular-nums text-foreground">
                       입장 {b.memberEntries} · 회원 {b.memberPeople} · 앱 {b.appMemberPeople}
@@ -172,7 +172,7 @@ const DailyReportCard = ({
         )}
 
         {/* Context line */}
-        <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <div className="mt-3 flex items-center gap-1.5 text-label text-muted-foreground">
           <Activity className="h-3.5 w-3.5 text-primary" />
           <span>
             최근 7일 출석 {weekCheckins}회
@@ -181,7 +181,7 @@ const DailyReportCard = ({
         </div>
 
         {/* Summary */}
-        <p className="mt-2 text-xs leading-relaxed text-foreground/80">{summary}</p>
+        <p className="mt-2 text-label leading-relaxed text-foreground/80">{summary}</p>
 
         {/* Footer actions */}
         {(onOpenOperations || onOpenLiveBoard) && (
@@ -189,7 +189,7 @@ const DailyReportCard = ({
             {onOpenOperations && (
               <button
                 onClick={onOpenOperations}
-                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-primary/10 py-2.5 text-xs font-bold text-primary transition-all active:scale-95"
+                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-primary/10 py-2.5 text-label font-bold text-primary transition-all active:scale-95"
               >
                 운영 보드 열기 <ChevronRight className="h-3.5 w-3.5" />
               </button>
@@ -197,7 +197,7 @@ const DailyReportCard = ({
             {onOpenLiveBoard && (
               <button
                 onClick={onOpenLiveBoard}
-                className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-border bg-card py-2.5 text-xs font-bold text-foreground transition-all active:scale-95"
+                className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-border bg-card py-2.5 text-label font-bold text-foreground transition-all active:scale-95"
               >
                 라이브보드 <ChevronRight className="h-3.5 w-3.5" />
               </button>
@@ -240,11 +240,11 @@ const MetricTile = ({
   >
     <div className="mb-1 flex items-center gap-1.5">
       {icon}
-      <span className="text-[11px] text-muted-foreground">{label}</span>
+      <span className="text-label text-muted-foreground">{label}</span>
       {onClick && <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground/70" />}
     </div>
-    <p className={`text-xl font-bold ${highlight ? "text-status-pending" : "text-foreground"}`}>{value}</p>
-    {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+    <p className={`text-heading font-bold ${highlight ? "text-status-pending" : "text-foreground"}`}>{value}</p>
+    {sub && <p className="text-label text-muted-foreground">{sub}</p>}
   </button>
 );
 

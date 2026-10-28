@@ -75,22 +75,22 @@ const LevelTestCard = () => {
 
   return (
     <div className="animate-slide-up rounded-2xl border border-primary/30 bg-card p-5 shadow-elev-1">
-      <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-foreground">
+      <h2 className="mb-1 flex items-center gap-2 text-body font-bold text-foreground">
         <FlaskConical className="h-4 w-4 text-primary" /> 레벨 테스트
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary">
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-micro font-black text-primary">
           {isTestAccount ? "체험용 계정" : "관리자"}
         </span>
       </h2>
-      <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mb-3 text-label leading-relaxed text-muted-foreground">
         이 계정의 레벨만 바꿔서 레벨마다 앱이 어떻게 열리고 움직이는지 확인해요. XP·젬·마일리지·출석은 그대로이고,
         승급 진행도는 바꾼 순간부터 새로 쌓여요.
         {isTestAccount ? " 체험용 계정은 다른 회원이 보는 순위·명예의 전당에 나오지 않아요." : ""}
       </p>
 
-      <div className="mb-3 rounded-xl border border-border bg-secondary/30 px-3 py-2 text-[12px]">
+      <div className="mb-3 rounded-xl border border-border bg-secondary/30 px-3 py-2 text-label">
         <p className="font-bold text-foreground">지금 · {stateQ.isLoading ? "확인 중…" : testPosLabel(st?.current)}</p>
         {st?.original && (
-          <p className="mt-0.5 text-[11px] text-muted-foreground">테스트 전 · {testPosLabel(st.original)}</p>
+          <p className="mt-0.5 text-label text-muted-foreground">테스트 전 · {testPosLabel(st.original)}</p>
         )}
       </div>
 
@@ -107,10 +107,10 @@ const LevelTestCard = () => {
                 active ? "border-primary bg-primary/10" : "border-border bg-card"
               }`}
             >
-              <p className={`text-sm font-black ${active ? "text-primary" : "text-foreground"}`}>
+              <p className={`text-body font-black ${active ? "text-primary" : "text-foreground"}`}>
                 {busy === p.key ? "바꾸는 중…" : p.label}
               </p>
-              <p className="text-[10.5px] leading-snug text-muted-foreground">{p.sub}</p>
+              <p className="text-label leading-snug text-muted-foreground">{p.sub}</p>
             </button>
           );
         })}
@@ -122,7 +122,7 @@ const LevelTestCard = () => {
           value={rank}
           onChange={(e) => setRank(e.target.value as TestRank)}
           aria-label="리그"
-          className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-card px-2 text-sm text-foreground"
+          className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-card px-2 text-body text-foreground"
         >
           {TEST_RANKS.map((r) => (
             <option key={r} value={r}>{TEST_RANK_KO[r]} 리그</option>
@@ -132,7 +132,7 @@ const LevelTestCard = () => {
           value={level}
           onChange={(e) => setLevel(Number(e.target.value))}
           aria-label="레벨"
-          className="h-10 w-24 rounded-xl border border-border bg-card px-2 text-sm text-foreground"
+          className="h-10 w-24 rounded-xl border border-border bg-card px-2 text-body text-foreground"
         >
           {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
             <option key={n} value={n}>레벨 {n}</option>
@@ -142,7 +142,7 @@ const LevelTestCard = () => {
           type="button"
           disabled={!!busy}
           onClick={() => apply("custom", rank, level)}
-          className="h-10 shrink-0 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-60"
+          className="h-10 shrink-0 rounded-xl bg-primary px-4 text-body font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-60"
         >
           {busy === "custom" ? "…" : "적용"}
         </button>
@@ -152,7 +152,7 @@ const LevelTestCard = () => {
         type="button"
         disabled={!!busy || !st?.original}
         onClick={restore}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border py-2.5 text-[13px] font-bold text-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border py-2.5 text-label font-bold text-foreground transition-all active:scale-[0.98] disabled:opacity-50"
       >
         <RotateCcw className="h-4 w-4" />
         {busy === "reset"

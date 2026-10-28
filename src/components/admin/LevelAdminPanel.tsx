@@ -232,10 +232,10 @@ const LevelAdminPanel = ({
             <Shield className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-700">
+            <p className="text-label font-bold text-amber-700">
               관리자 — 레벨 조정
             </p>
-            <p className="mt-0.5 truncate text-[12px] font-bold text-foreground">
+            <p className="mt-0.5 truncate text-label font-bold text-foreground">
               현재: {RANK_LABELS[currentRank] ?? currentRank} 리그 Lv.{toGlobalLevel(currentRank, currentLevel)}
             </p>
           </div>
@@ -247,21 +247,21 @@ const LevelAdminPanel = ({
             type="button"
             onClick={handleLevelUp}
             disabled={busy}
-            className="flex flex-col items-center justify-center gap-1 rounded-xl bg-primary py-2.5 text-[11px] font-bold text-primary-foreground transition-all active:scale-[0.97] disabled:opacity-50"
+            className="flex flex-col items-center justify-center gap-1 rounded-xl bg-primary py-2.5 text-micro font-bold text-primary-foreground transition-all active:scale-[0.97] disabled:opacity-50"
           >
             <ArrowUp className="h-4 w-4" />
             레벨업
-            <span className="text-[9px] opacity-80">Lv.{toGlobalLevel(currentRank, currentLevel) + 1}</span>
+            <span className="text-micro opacity-80">Lv.{toGlobalLevel(currentRank, currentLevel) + 1}</span>
           </button>
           <button
             type="button"
             onClick={handleLevelDown}
             disabled={busy || currentLevel <= 1}
-            className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border bg-card py-2.5 text-[11px] font-bold text-muted-foreground transition-all active:scale-[0.97] hover:border-destructive/40 hover:text-destructive disabled:opacity-50"
+            className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border bg-card py-2.5 text-micro font-bold text-muted-foreground transition-all active:scale-[0.97] hover:border-destructive/40 hover:text-destructive disabled:opacity-50"
           >
             <ArrowDown className="h-4 w-4" />
             레벨다운
-            <span className="text-[9px] opacity-80">
+            <span className="text-micro opacity-80">
               {currentLevel > 1 ? `Lv.${toGlobalLevel(currentRank, currentLevel) - 1}` : "—"}
             </span>
           </button>
@@ -269,11 +269,11 @@ const LevelAdminPanel = ({
             type="button"
             onClick={handlePassBoss}
             disabled={busy}
-            className="flex flex-col items-center justify-center gap-1 rounded-xl bg-reward py-2.5 text-[11px] font-bold text-reward-foreground transition-all active:scale-[0.97] disabled:opacity-50"
+            className="flex flex-col items-center justify-center gap-1 rounded-xl bg-reward py-2.5 text-micro font-bold text-reward-foreground transition-all active:scale-[0.97] disabled:opacity-50"
           >
             <Swords className="h-4 w-4" />
             보스전
-            <span className="text-[9px] opacity-80">합격</span>
+            <span className="text-micro opacity-80">합격</span>
           </button>
         </div>
 
@@ -287,7 +287,7 @@ const LevelAdminPanel = ({
               setSetLevelModal(true);
             }}
             disabled={busy}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-400/40 bg-amber-400/10 py-2.5 text-[11.5px] font-bold text-amber-700 transition-all active:scale-[0.98] hover:bg-amber-400/20 disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-400/40 bg-amber-400/10 py-2.5 text-micro font-bold text-amber-700 transition-all active:scale-[0.98] hover:bg-amber-400/20 disabled:opacity-50"
           >
             <Settings2 className="h-3.5 w-3.5" />
             리그/레벨 직접 설정
@@ -296,20 +296,15 @@ const LevelAdminPanel = ({
             type="button"
             onClick={() => setXpModal(true)}
             disabled={busy}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 py-2.5 text-[11.5px] font-bold text-emerald-700 transition-all active:scale-[0.98] hover:bg-emerald-500/20 disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 py-2.5 text-micro font-bold text-emerald-700 transition-all active:scale-[0.98] hover:bg-emerald-500/20 disabled:opacity-50"
           >
             <Banknote className="h-3.5 w-3.5" />
             XP 수동 지급
           </button>
         </div>
 
-        {!isCompact && (
-          <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
-            ※ 모든 변경은 공식 RPC (manual_level_up / manual_level_down /
-            set_member_level / pass_boss_battle / grant_manual_xp) 를 통해서만
-            처리됩니다. member_progress 직접 수정 0.
-          </p>
-        )}
+        {/* 예전 '※ 모든 변경은 공식 RPC (manual_level_up …)' 안내 — 개발 말이라 화면에서 뺐다 (2026-10-28 리디자인 3단계).
+            바꾸는 길은 그대로 manual_level_up · manual_level_down · set_member_level · pass_boss_battle · grant_manual_xp 뿐 */}
       </section>
 
       {/* ─── 직접 설정 모달 ─── */}
@@ -323,7 +318,7 @@ const LevelAdminPanel = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-base font-bold text-foreground">
+              <h3 className="text-body font-bold text-foreground">
                 리그 / 레벨 직접 설정
               </h3>
               <button
@@ -334,19 +329,19 @@ const LevelAdminPanel = ({
               </button>
             </div>
 
-            <p className="mb-3 text-[12px] text-muted-foreground">
+            <p className="mb-3 text-label text-muted-foreground">
               {memberName} 의 리그와 레벨을 직접 설정합니다.
             </p>
 
             {/* 리그 선택 */}
-            <p className="mb-1.5 text-[11px] font-bold text-foreground">리그</p>
+            <p className="mb-1.5 text-micro font-bold text-foreground">리그</p>
             <div className="mb-4 grid grid-cols-4 gap-1.5">
               {RANK_OPTIONS.map((r) => (
                 <button
                   key={r.value}
                   type="button"
                   onClick={() => setPickRank(r.value)}
-                  className={`rounded-xl py-2 text-[12px] font-bold transition-all active:scale-95 ${
+                  className={`rounded-xl py-2 text-label font-bold transition-all active:scale-95 ${
                     pickRank === r.value
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-secondary-foreground"
@@ -358,7 +353,7 @@ const LevelAdminPanel = ({
             </div>
 
             {/* 레벨 선택 */}
-            <p className="mb-1.5 text-[11px] font-bold text-foreground">
+            <p className="mb-1.5 text-micro font-bold text-foreground">
               레벨 ({toGlobalLevel(pickRank, 1)}~{toGlobalLevel(pickRank, 10)})
             </p>
             <div className="mb-4 flex flex-wrap gap-1.5">
@@ -367,7 +362,7 @@ const LevelAdminPanel = ({
                   key={lv}
                   type="button"
                   onClick={() => setPickLevel(lv)}
-                  className={`h-9 w-9 rounded-lg text-sm font-bold transition-all active:scale-95 ${
+                  className={`h-9 w-9 rounded-lg text-body font-bold transition-all active:scale-95 ${
                     pickLevel === lv
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-secondary-foreground"
@@ -382,14 +377,14 @@ const LevelAdminPanel = ({
               type="button"
               onClick={handleSetLevel}
               disabled={setLevel.isPending}
-              className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {setLevel.isPending
                 ? "설정 중..."
                 : `${RANK_LABELS[pickRank] ?? pickRank} Lv.${toGlobalLevel(pickRank, pickLevel)} 로 설정`}
             </button>
 
-            <p className="mt-2 text-[10.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-2 text-label leading-relaxed text-muted-foreground">
               ※ set_member_level RPC 호출. 공식 레벨 시스템 흐름을 따릅니다.
             </p>
           </div>
@@ -407,7 +402,7 @@ const LevelAdminPanel = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-base font-bold text-foreground">
+              <h3 className="text-body font-bold text-foreground">
                 XP 수동 지급
               </h3>
               <button
@@ -418,11 +413,11 @@ const LevelAdminPanel = ({
               </button>
             </div>
 
-            <p className="mb-3 text-[12px] text-muted-foreground">
+            <p className="mb-3 text-label text-muted-foreground">
               {memberName} 에게 공식 XP 를 지급합니다.
             </p>
 
-            <p className="mb-1.5 text-[11px] font-bold text-foreground">
+            <p className="mb-1.5 text-micro font-bold text-foreground">
               XP 수치
             </p>
             <div className="mb-3 flex flex-wrap gap-1.5">
@@ -431,7 +426,7 @@ const LevelAdminPanel = ({
                   key={preset}
                   type="button"
                   onClick={() => setXpAmount(preset)}
-                  className={`rounded-lg px-3 py-1.5 text-[12px] font-bold transition-all active:scale-95 ${
+                  className={`rounded-lg px-3 py-1.5 text-label font-bold transition-all active:scale-95 ${
                     xpAmount === preset
                       ? "bg-emerald-500 text-white"
                       : "bg-secondary text-secondary-foreground"
@@ -446,18 +441,18 @@ const LevelAdminPanel = ({
               value={xpAmount}
               onChange={(e) => setXpAmount(Number(e.target.value))}
               min={1}
-              className="mb-3 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+              className="mb-3 w-full rounded-xl border border-border bg-background px-3 py-2 text-body focus:border-primary focus:outline-none"
               placeholder="직접 입력"
             />
 
-            <p className="mb-1.5 text-[11px] font-bold text-foreground">
+            <p className="mb-1.5 text-micro font-bold text-foreground">
               사유 (선택)
             </p>
             <input
               type="text"
               value={xpReason}
               onChange={(e) => setXpReason(e.target.value.slice(0, 80))}
-              className="mb-4 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+              className="mb-4 w-full rounded-xl border border-border bg-background px-3 py-2 text-body focus:border-primary focus:outline-none"
               placeholder="예: 외부 자격 인정 / 특별 평가 보너스"
             />
 
@@ -465,12 +460,12 @@ const LevelAdminPanel = ({
               type="button"
               onClick={handleGrantXp}
               disabled={grantXp.isPending || xpAmount <= 0}
-              className="w-full rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full rounded-xl bg-emerald-500 py-3 text-body font-bold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {grantXp.isPending ? "지급 중..." : `+${xpAmount} XP 지급`}
             </button>
 
-            <p className="mt-2 text-[10.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-2 text-label leading-relaxed text-muted-foreground">
               ※ grant_manual_xp RPC 호출. 자동 레벨업이 발생할 수 있습니다.
             </p>
           </div>

@@ -190,7 +190,7 @@ const LiveBoardPickerPage = () => {
                   role="tab"
                   aria-selected={active}
                   onClick={() => pickBranch(b.code)}
-                  className={`h-9 rounded-lg text-[13px] font-bold transition-all active:scale-[0.97] ${
+                  className={`h-9 rounded-lg text-label font-bold transition-all active:scale-[0.97] ${
                     active ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
                   }`}
                 >
@@ -212,14 +212,14 @@ const LiveBoardPickerPage = () => {
               <div className="relative aspect-video bg-gradient-to-br from-[#0B0F14] to-[#16202A]">
                 {bd.art}
                 {/* 번호는 화면과 글 사이 이음새에 — 그림을 가리지 않는다 */}
-                <span className="absolute -bottom-3.5 left-3 grid h-7 min-w-[1.75rem] place-items-center rounded-lg bg-foreground px-1.5 text-[14px] font-black tabular-nums text-background ring-[3px] ring-card">
+                <span className="absolute -bottom-3.5 left-3 grid h-7 min-w-[1.75rem] place-items-center rounded-lg bg-foreground px-1.5 text-label font-black tabular-nums text-background ring-[3px] ring-card">
                   {bd.no}
                 </span>
               </div>
               <div className="px-3 pb-3 pt-5">
-                <p className="text-[15px] font-bold leading-tight text-foreground">라이브보드 {bd.no}</p>
-                <p className="mt-1 text-[12px] leading-snug text-muted-foreground">{bd.desc}</p>
-                <p className="mt-2 font-mono text-[11px] tabular-nums text-muted-foreground/80">
+                <p className="text-body font-bold leading-tight text-foreground">라이브보드 {bd.no}</p>
+                <p className="mt-1 text-label leading-snug text-muted-foreground">{bd.desc}</p>
+                <p className="mt-2 font-mono text-label tabular-nums text-muted-foreground/80">
                   {tvBoardPath(branch.short, bd.no)}
                 </p>
               </div>
@@ -227,8 +227,8 @@ const LiveBoardPickerPage = () => {
           ))}
         </div>
 
-        <div className="rounded-2xl bg-card p-4 text-[12.5px] leading-relaxed text-muted-foreground shadow-elev-1 ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
-          <p className="text-[13px] font-bold text-foreground">TV에 띄울 때</p>
+        <div className="rounded-2xl bg-card p-4 text-label leading-relaxed text-muted-foreground shadow-elev-1 ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+          <p className="text-label font-bold text-foreground">TV에 띄울 때</p>
           <p className="mt-1">
             TV 브라우저 시작 페이지에{" "}
             <span className="font-mono font-bold text-foreground">
@@ -241,12 +241,12 @@ const LiveBoardPickerPage = () => {
         </div>
 
         {tvKey && (
-          <div className="rounded-2xl bg-card p-4 text-[12.5px] leading-relaxed text-muted-foreground shadow-elev-1 ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
-            <p className="flex items-center gap-1.5 text-[13px] font-bold text-foreground">
+          <div className="rounded-2xl bg-card p-4 text-label leading-relaxed text-muted-foreground shadow-elev-1 ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+            <p className="flex items-center gap-1.5 text-label font-bold text-foreground">
               <KeyRound className="h-4 w-4 text-primary" />
               {branch.label} TV 열쇠 주소
               <span
-                className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                className={`ml-auto rounded-full px-2 py-0.5 text-micro font-bold ${
                   tvKey.locked ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                 }`}
               >
@@ -266,8 +266,8 @@ const LiveBoardPickerPage = () => {
                 const url = boardKeyUrl(DOMAIN, tvBoardPath(branch.short, n), tvKey.key);
                 return (
                   <li key={n} className="flex items-center gap-2 rounded-lg bg-muted px-2.5 py-2">
-                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-foreground text-[11px] font-black text-background">{n}</span>
-                    <span className="min-w-0 flex-1 select-all break-all font-mono text-[11.5px] text-foreground">{url}</span>
+                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-foreground text-micro font-black text-background">{n}</span>
+                    <span className="min-w-0 flex-1 select-all break-all font-mono text-micro text-foreground">{url}</span>
                     <button
                       type="button"
                       onClick={() => void copyText(`https://${url}`)}

@@ -56,31 +56,31 @@ const TransferApprovalCenter = () => {
   if (!transfers?.length) {
     return (
       <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-        <span className="text-3xl">🔄</span>
-        <p className="mt-2 text-sm text-muted-foreground">대기 중인 지점 이전 요청이 없습니다</p>
+        <span className="text-title">🔄</span>
+        <p className="mt-2 text-body text-muted-foreground">대기 중인 지점 이전 요청이 없습니다</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      <p className="text-sm font-bold text-foreground">지점 이전 요청 ({transfers.length}건)</p>
+      <p className="text-body font-bold text-foreground">지점 이전 요청 ({transfers.length}건)</p>
       {transfers.map(t => (
         <div key={t.id} className="rounded-2xl border border-border bg-card p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-body font-bold">
               {(t.profile as any)?.nickname?.charAt(0) || "?"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-foreground">{(t.profile as any)?.nickname || "회원"}</p>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+              <p className="text-body font-bold text-foreground">{(t.profile as any)?.nickname || "회원"}</p>
+              <div className="flex items-center gap-1.5 text-label text-muted-foreground mt-0.5">
                 <MapPin className="h-3 w-3" />
                 <span>{t.from_branch}</span>
                 <ArrowRight className="h-3 w-3" />
                 <span className="font-bold text-primary">{t.to_branch}</span>
               </div>
             </div>
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-label text-muted-foreground">
               {new Date(t.created_at).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
             </span>
           </div>
@@ -88,14 +88,14 @@ const TransferApprovalCenter = () => {
             <button
               onClick={() => approveMut.mutate(t.id)}
               disabled={approveMut.isPending}
-              className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-status-complete py-2 text-sm font-bold text-primary-foreground active:scale-95 disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-status-complete py-2 text-body font-bold text-primary-foreground active:scale-95 disabled:opacity-50"
             >
               <Check className="h-4 w-4" /> 승인
             </button>
             <button
               onClick={() => rejectMut.mutate(t.id)}
               disabled={rejectMut.isPending}
-              className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-destructive/10 py-2 text-sm font-bold text-destructive active:scale-95 disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-destructive/10 py-2 text-body font-bold text-destructive active:scale-95 disabled:opacity-50"
             >
               <X className="h-4 w-4" /> 반려
             </button>

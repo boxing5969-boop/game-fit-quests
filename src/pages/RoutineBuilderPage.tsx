@@ -114,33 +114,33 @@ const RoutineBuilderPage = () => {
     <div className="mx-auto min-h-screen max-w-lg bg-background px-4 pb-24 pt-4 text-foreground">
       <div className="mb-2 flex items-center gap-2">
         <button onClick={() => navigate(-1)} className="rounded-lg p-1.5 active:scale-95"><ArrowLeft className="h-5 w-5" /></button>
-        <h1 className="text-lg font-black">수업 루틴 빌더</h1>
-        <button onClick={newRoutine} className="ml-auto flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-bold text-primary-foreground active:scale-95">
+        <h1 className="text-heading font-black">수업 루틴 빌더</h1>
+        <button onClick={newRoutine} className="ml-auto flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-label font-bold text-primary-foreground active:scale-95">
           <Plus className="h-3.5 w-3.5" /> 새 루틴
         </button>
       </div>
-      <p className="mb-3 text-xs leading-relaxed text-muted-foreground">라이브러리 운동을 워밍업·본운동·마무리·쿨다운 4단계로 구성하세요. '자동 구성'으로 초안을 만든 뒤 다듬을 수 있어요.</p>
+      <p className="mb-3 text-label leading-relaxed text-muted-foreground">라이브러리 운동을 워밍업·본운동·마무리·쿨다운 4단계로 구성하세요. '자동 구성'으로 초안을 만든 뒤 다듬을 수 있어요.</p>
 
       {routines.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">아직 만든 루틴이 없습니다. '새 루틴'으로 시작하세요.</p>
+        <p className="py-10 text-center text-body text-muted-foreground">아직 만든 루틴이 없습니다. '새 루틴'으로 시작하세요.</p>
       ) : (
         <div className="space-y-2.5">
           {routines.map((r) => (
             <div key={r.id} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-base font-bold text-foreground">{r.name}</span>
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground"><Clock className="h-3 w-3" />{r.total_min}분</span>
+                <span className="text-body font-bold text-foreground">{r.name}</span>
+                <span className="flex items-center gap-1 text-label text-muted-foreground"><Clock className="h-3 w-3" />{r.total_min}분</span>
               </div>
-              {r.description && <p className="mt-0.5 text-xs text-muted-foreground">{r.description}</p>}
+              {r.description && <p className="mt-0.5 text-label text-muted-foreground">{r.description}</p>}
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {PHASE_META.map((m) => (
-                  <span key={m.key} className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-foreground">{m.emoji} {r.phases[m.key]?.length || 0}</span>
+                  <span key={m.key} className="rounded-full bg-muted px-2 py-0.5 text-micro text-foreground">{m.emoji} {r.phases[m.key]?.length || 0}</span>
                 ))}
-                {r.target_level && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">Lv.{r.target_level} 권장</span>}
+                {r.target_level && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-micro font-bold text-primary">Lv.{r.target_level} 권장</span>}
               </div>
               <div className="mt-2 flex gap-1.5 border-t border-border pt-2">
-                <button onClick={() => editRoutine(r)} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[11px] font-bold text-foreground active:scale-95"><Pencil className="h-3 w-3" />수정</button>
-                <button onClick={() => remove(r)} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[11px] font-bold text-destructive active:scale-95"><Trash2 className="h-3 w-3" />삭제</button>
+                <button onClick={() => editRoutine(r)} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-micro font-bold text-foreground active:scale-95"><Pencil className="h-3 w-3" />수정</button>
+                <button onClick={() => remove(r)} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-micro font-bold text-destructive active:scale-95"><Trash2 className="h-3 w-3" />삭제</button>
               </div>
             </div>
           ))}
@@ -152,44 +152,44 @@ const RoutineBuilderPage = () => {
         <div className="fixed inset-0 z-[80] flex flex-col bg-background pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <button onClick={() => setEdit(null)} className="rounded-lg p-1 active:scale-95"><X className="h-5 w-5" /></button>
-            <span className="text-base font-black">{edit.id ? "루틴 수정" : "새 루틴"}</span>
-            <span className="ml-auto flex items-center gap-1 text-xs font-bold text-muted-foreground"><Clock className="h-3.5 w-3.5" />{phasesTotal(edit.phases)}분</span>
+            <span className="text-body font-black">{edit.id ? "루틴 수정" : "새 루틴"}</span>
+            <span className="ml-auto flex items-center gap-1 text-label font-bold text-muted-foreground"><Clock className="h-3.5 w-3.5" />{phasesTotal(edit.phases)}분</span>
           </div>
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
             <input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder="루틴 이름 (예: 초급 기본기 50분)"
-              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
             <div className="flex gap-2">
               <input value={edit.target_level} onChange={(e) => setEdit({ ...edit, target_level: e.target.value })} placeholder="권장 레벨(선택)" type="number"
-                className="w-32 rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
-              <button onClick={auto} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2 text-sm font-bold text-primary active:scale-95">
+                className="w-32 rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
+              <button onClick={auto} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2 text-body font-bold text-primary active:scale-95">
                 <Sparkles className="h-4 w-4" /> 자동 구성
               </button>
             </div>
             <input value={edit.description} onChange={(e) => setEdit({ ...edit, description: e.target.value })} placeholder="설명(선택)"
-              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
 
             {PHASE_META.map((m) => (
               <div key={m.key} className="rounded-2xl border border-border bg-card p-3">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm font-bold text-foreground">{m.emoji} {m.label}</span>
-                  <button onClick={() => { setPicker(m.key); setPickerCat("전체"); }} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[11px] font-bold text-foreground active:scale-95">
+                  <span className="text-body font-bold text-foreground">{m.emoji} {m.label}</span>
+                  <button onClick={() => { setPicker(m.key); setPickerCat("전체"); }} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-micro font-bold text-foreground active:scale-95">
                     <Plus className="h-3 w-3" /> 운동 추가
                   </button>
                 </div>
                 {edit.phases[m.key].length === 0 ? (
-                  <p className="py-2 text-center text-[11px] text-muted-foreground">비어 있음</p>
+                  <p className="py-2 text-center text-label text-muted-foreground">비어 있음</p>
                 ) : (
                   <div className="space-y-1.5">
                     {edit.phases[m.key].map((it, idx) => (
                       <div key={idx} className="flex items-center gap-2 rounded-xl bg-background px-2.5 py-2">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-foreground">{it.name}</p>
+                          <p className="truncate text-body font-semibold text-foreground">{it.name}</p>
                           <input value={it.note} onChange={(e) => updItem(m.key, idx, "note", e.target.value)} placeholder="메모(선택)"
-                            className="mt-0.5 w-full bg-transparent text-[11px] text-muted-foreground placeholder:text-muted-foreground focus:outline-none" />
+                            className="mt-0.5 w-full bg-transparent text-micro text-muted-foreground placeholder:text-muted-foreground focus:outline-none" />
                         </div>
                         <input value={it.minutes} onChange={(e) => updItem(m.key, idx, "minutes", e.target.value)} type="number"
-                          className="w-12 rounded-lg border border-border bg-background px-1.5 py-1 text-center text-xs text-foreground" />
-                        <span className="text-[10px] text-muted-foreground">분</span>
+                          className="w-12 rounded-lg border border-border bg-background px-1.5 py-1 text-center text-label text-foreground" />
+                        <span className="text-label text-muted-foreground">분</span>
                         <button onClick={() => rmItem(m.key, idx)} className="rounded-lg p-1 text-destructive active:scale-95"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
                     ))}
@@ -199,7 +199,7 @@ const RoutineBuilderPage = () => {
             ))}
           </div>
           <div className="border-t border-border px-4 py-3">
-            <button onClick={save} disabled={saving} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-[0.98] disabled:opacity-50">
+            <button onClick={save} disabled={saving} className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground active:scale-[0.98] disabled:opacity-50">
               {saving ? "저장 중..." : "루틴 저장"}
             </button>
           </div>
@@ -211,12 +211,12 @@ const RoutineBuilderPage = () => {
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setPicker(null)}>
           <div className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-4 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-black text-foreground">운동 선택 → {PHASE_META.find((m) => m.key === picker)?.label}</span>
+              <span className="text-body font-black text-foreground">운동 선택 → {PHASE_META.find((m) => m.key === picker)?.label}</span>
               <button onClick={() => setPicker(null)} className="rounded-lg p-1 active:scale-95"><X className="h-5 w-5" /></button>
             </div>
             <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1">
               {libCats.map((c) => (
-                <button key={c} onClick={() => setPickerCat(c)} className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold active:scale-95 ${pickerCat === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{c}</button>
+                <button key={c} onClick={() => setPickerCat(c)} className={`shrink-0 rounded-full px-3 py-1 text-micro font-bold active:scale-95 ${pickerCat === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{c}</button>
               ))}
             </div>
             <div className="space-y-1.5">
@@ -224,13 +224,13 @@ const RoutineBuilderPage = () => {
                 <button key={e.id} onClick={() => { addItem(picker, e); toast.success(`${e.name} 추가`); }}
                   className="flex w-full items-center justify-between rounded-xl border border-border bg-background px-3 py-2 text-left active:scale-[0.99]">
                   <div>
-                    <p className="text-sm font-semibold text-foreground">{e.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{e.category} · {e.difficulty}{e.target ? ` · ${e.target}` : ""}</p>
+                    <p className="text-body font-semibold text-foreground">{e.name}</p>
+                    <p className="text-label text-muted-foreground">{e.category} · {e.difficulty}{e.target ? ` · ${e.target}` : ""}</p>
                   </div>
                   <Plus className="h-4 w-4 text-primary" />
                 </button>
               ))}
-              {pickerList.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">해당 카테고리에 운동이 없습니다.</p>}
+              {pickerList.length === 0 && <p className="py-6 text-center text-label text-muted-foreground">해당 카테고리에 운동이 없습니다.</p>}
             </div>
           </div>
         </div>

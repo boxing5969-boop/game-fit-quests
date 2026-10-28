@@ -30,7 +30,7 @@ interface Props {
   onSaved: () => void;
 }
 
-const inputCls = "w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm text-foreground";
+const inputCls = "w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-body text-foreground";
 
 const SessionTemplateEditor = ({ levelKey, levelLabel, initialBlocks, onClose, onSaved }: Props) => {
   const { user } = useAuth();
@@ -89,8 +89,8 @@ const SessionTemplateEditor = ({ levelKey, levelLabel, initialBlocks, onClose, o
       {/* 헤더 */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
-          <p className="text-[11px] text-muted-foreground">{levelLabel} · 수업 구성 편집</p>
-          <p className="text-sm font-bold text-foreground">
+          <p className="text-label text-muted-foreground">{levelLabel} · 수업 구성 편집</p>
+          <p className="text-body font-bold text-foreground">
             총 {totalMin}분 · {blocks.length}블록
           </p>
         </div>
@@ -105,8 +105,8 @@ const SessionTemplateEditor = ({ levelKey, levelLabel, initialBlocks, onClose, o
           <div key={b.id} className="rounded-2xl border border-border bg-card p-3">
             <div className="mb-2 flex items-center gap-2">
               <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <input value={b.emoji} onChange={(e) => patch(i, { emoji: e.target.value })} className="w-12 rounded-lg border border-border bg-background px-2 py-1.5 text-center text-base" />
-              <input value={b.title} onChange={(e) => patch(i, { title: e.target.value })} className="flex-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm font-bold text-foreground" placeholder="블록 제목" />
+              <input value={b.emoji} onChange={(e) => patch(i, { emoji: e.target.value })} className="w-12 rounded-lg border border-border bg-background px-2 py-1.5 text-center text-body" />
+              <input value={b.title} onChange={(e) => patch(i, { title: e.target.value })} className="flex-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-body font-bold text-foreground" placeholder="블록 제목" />
               <button onClick={() => move(i, -1)} disabled={i === 0} className="rounded-lg bg-muted p-1.5 text-muted-foreground active:scale-95 disabled:opacity-30"><ChevronUp className="h-4 w-4" /></button>
               <button onClick={() => move(i, 1)} disabled={i === blocks.length - 1} className="rounded-lg bg-muted p-1.5 text-muted-foreground active:scale-95 disabled:opacity-30"><ChevronDown className="h-4 w-4" /></button>
               <button onClick={() => removeBlock(i)} className="rounded-lg bg-muted p-1.5 text-destructive active:scale-95"><Trash2 className="h-4 w-4" /></button>
@@ -114,41 +114,41 @@ const SessionTemplateEditor = ({ levelKey, levelLabel, initialBlocks, onClose, o
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="mb-0.5 block text-[10px] text-muted-foreground">시간대</label>
+                <label className="mb-0.5 block text-label text-muted-foreground">시간대</label>
                 <input value={b.timeRange} onChange={(e) => patch(i, { timeRange: e.target.value })} className={inputCls} placeholder="0:00–5:00" />
               </div>
               <div>
-                <label className="mb-0.5 block text-[10px] text-muted-foreground">분</label>
+                <label className="mb-0.5 block text-label text-muted-foreground">분</label>
                 <input type="number" inputMode="numeric" value={b.durationMin} onChange={(e) => patch(i, { durationMin: Number(e.target.value) || 0 })} className={inputCls} />
               </div>
               <div>
-                <label className="mb-0.5 block text-[10px] text-muted-foreground">강도</label>
+                <label className="mb-0.5 block text-label text-muted-foreground">강도</label>
                 <select value={b.intensity} onChange={(e) => patch(i, { intensity: e.target.value as IntensityLevel })} className={inputCls}>
                   {INTENSITIES.map((it) => <option key={it} value={it}>{it}</option>)}
                 </select>
               </div>
               <div>
-                <label className="mb-0.5 block text-[10px] text-muted-foreground">RPE</label>
+                <label className="mb-0.5 block text-label text-muted-foreground">RPE</label>
                 <input value={b.rpe} onChange={(e) => patch(i, { rpe: e.target.value })} className={inputCls} placeholder="RPE 4–5" />
               </div>
             </div>
 
             <div className="mt-2">
-              <label className="mb-0.5 block text-[10px] text-muted-foreground">설명</label>
+              <label className="mb-0.5 block text-label text-muted-foreground">설명</label>
               <input value={b.description} onChange={(e) => patch(i, { description: e.target.value })} className={inputCls} placeholder="이 블록의 목적" />
             </div>
 
             {/* 드릴 */}
             <div className="mt-2">
               <div className="mb-1 flex items-center justify-between">
-                <label className="text-[10px] text-muted-foreground">드릴</label>
-                <button onClick={() => addDrill(i)} className="flex items-center gap-0.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-bold text-foreground active:scale-95"><Plus className="h-3 w-3" /> 드릴</button>
+                <label className="text-label text-muted-foreground">드릴</label>
+                <button onClick={() => addDrill(i)} className="flex items-center gap-0.5 rounded-md bg-muted px-1.5 py-0.5 text-micro font-bold text-foreground active:scale-95"><Plus className="h-3 w-3" /> 드릴</button>
               </div>
               <div className="space-y-1.5">
                 {b.drills.map((d, di) => (
                   <div key={di} className="flex items-center gap-1.5">
-                    <input value={d.name} onChange={(e) => patchDrill(i, di, { name: e.target.value })} className="flex-1 rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground" placeholder="드릴명" />
-                    <input value={d.detail ?? ""} onChange={(e) => patchDrill(i, di, { detail: e.target.value })} className="w-24 rounded-lg border border-border bg-background px-2 py-1 text-xs text-muted-foreground" placeholder="30초/10회" />
+                    <input value={d.name} onChange={(e) => patchDrill(i, di, { name: e.target.value })} className="flex-1 rounded-lg border border-border bg-background px-2 py-1 text-label text-foreground" placeholder="드릴명" />
+                    <input value={d.detail ?? ""} onChange={(e) => patchDrill(i, di, { detail: e.target.value })} className="w-24 rounded-lg border border-border bg-background px-2 py-1 text-label text-muted-foreground" placeholder="30초/10회" />
                     <button onClick={() => removeDrill(i, di)} className="rounded-md bg-muted p-1 text-destructive active:scale-95"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 ))}
@@ -156,23 +156,23 @@ const SessionTemplateEditor = ({ levelKey, levelLabel, initialBlocks, onClose, o
             </div>
 
             <div className="mt-2">
-              <label className="mb-0.5 block text-[10px] text-muted-foreground">초보자 대체 (선택)</label>
+              <label className="mb-0.5 block text-label text-muted-foreground">초보자 대체 (선택)</label>
               <input value={b.beginnerAlt ?? ""} onChange={(e) => patch(i, { beginnerAlt: e.target.value })} className={inputCls} placeholder="예: 에어 줄넘기로 대체" />
             </div>
           </div>
         ))}
 
-        <button onClick={addBlock} className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-primary/40 bg-primary/5 py-3 text-sm font-bold text-primary active:scale-[0.98]">
+        <button onClick={addBlock} className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-primary/40 bg-primary/5 py-3 text-body font-bold text-primary active:scale-[0.98]">
           <Plus className="h-4 w-4" /> 블록 추가
         </button>
       </div>
 
       {/* 저장 바 */}
       <div className="border-t border-border p-4">
-        <button onClick={save} disabled={saving} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
+        <button onClick={save} disabled={saving} className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
           {saving ? "저장 중..." : "저장하고 전체 회원에게 반영"}
         </button>
-        <p className="mt-2 text-center text-[11px] text-muted-foreground">합계가 50분(±)이 되도록 시간을 배분하세요. 저장 즉시 모든 회원의 수업 구성이 바뀝니다.</p>
+        <p className="mt-2 text-center text-label text-muted-foreground">합계가 50분(±)이 되도록 시간을 배분하세요. 저장 즉시 모든 회원의 수업 구성이 바뀝니다.</p>
       </div>
     </div>
   );

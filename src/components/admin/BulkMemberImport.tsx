@@ -159,7 +159,7 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-bold text-foreground">회원 엑셀 일괄 등록</h2>
+            <h2 className="text-heading font-bold text-foreground">회원 엑셀 일괄 등록</h2>
           </div>
           <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:scale-95">
             <X className="h-4 w-4" />
@@ -168,7 +168,7 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
 
         {/* 지점 */}
         <div className="mb-4">
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">등록 지점</label>
+          <label className="mb-1 block text-label font-medium text-muted-foreground">등록 지점</label>
           {isAdmin ? (
             <Select value={branch} onValueChange={setBranch}>
               <SelectTrigger className="rounded-xl">
@@ -181,8 +181,8 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
               </SelectContent>
             </Select>
           ) : (
-            <div className="rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm font-medium text-foreground">
-              {profile?.branch_name || "지점 정보 없음"} <span className="text-xs text-muted-foreground">(본인 지점 고정)</span>
+            <div className="rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-body font-medium text-foreground">
+              {profile?.branch_name || "지점 정보 없음"} <span className="text-label text-muted-foreground">(본인 지점 고정)</span>
             </div>
           )}
         </div>
@@ -191,7 +191,7 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
         <button
           onClick={() => fileRef.current?.click()}
           disabled={parsing}
-          className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 py-4 text-sm font-bold text-primary transition-all active:scale-[0.98] disabled:opacity-50"
+          className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 py-4 text-body font-bold text-primary transition-all active:scale-[0.98] disabled:opacity-50"
         >
           <Upload className="h-4 w-4" />
           {parsing ? "읽는 중..." : fileName ? `다시 선택 (${fileName})` : "브로제이 고객목록 .xlsx 선택"}
@@ -202,7 +202,7 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
           <>
             {/* 상태 필터 */}
             <div className="mb-3">
-              <p className="mb-1.5 text-xs font-medium text-muted-foreground">등록할 상태 선택 (총 {rows.length}명)</p>
+              <p className="mb-1.5 text-label font-medium text-muted-foreground">등록할 상태 선택 (총 {rows.length}명)</p>
               <div className="flex flex-wrap gap-1.5">
                 {ALL_STATUSES.map((s) => {
                   const on = statuses.includes(s);
@@ -211,7 +211,7 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
                     <button
                       key={s}
                       onClick={() => toggleStatus(s)}
-                      className={`rounded-full px-3 py-1 text-xs font-bold transition-all active:scale-95 ${
+                      className={`rounded-full px-3 py-1 text-label font-bold transition-all active:scale-95 ${
                         on ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                       }`}
                     >
@@ -224,32 +224,32 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
 
             {/* 미리보기 */}
             <div className="mb-3 rounded-xl border border-border bg-background">
-              <div className="border-b border-border px-3 py-2 text-xs font-bold text-foreground">
+              <div className="border-b border-border px-3 py-2 text-label font-bold text-foreground">
                 등록 대상 <span className="text-primary">{filtered.length}명</span> · 아이디·비번 = 전화번호 · 자동 승인
               </div>
               <div className="max-h-44 overflow-y-auto">
                 {filtered.slice(0, 30).map((m, i) => (
-                  <div key={i} className="flex items-center justify-between border-b border-border/50 px-3 py-1.5 text-xs last:border-0">
+                  <div key={i} className="flex items-center justify-between border-b border-border/50 px-3 py-1.5 text-label last:border-0">
                     <span className="font-medium text-foreground">{m.name || "(이름없음)"}</span>
                     <span className="text-muted-foreground">{m.phone}</span>
-                    <span className="text-[11px] text-muted-foreground">~{m.membership_end || "-"}</span>
+                    <span className="text-label text-muted-foreground">~{m.membership_end || "-"}</span>
                   </div>
                 ))}
                 {filtered.length > 30 && (
-                  <div className="px-3 py-1.5 text-center text-[11px] text-muted-foreground">외 {filtered.length - 30}명…</div>
+                  <div className="px-3 py-1.5 text-center text-label text-muted-foreground">외 {filtered.length - 30}명…</div>
                 )}
               </div>
             </div>
 
             {/* 결과 */}
             {result && (
-              <div className="mb-3 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+              <div className="mb-3 rounded-xl border border-border bg-muted/30 p-3 text-body">
                 <div className="flex items-center gap-2 font-bold text-status-complete">
                   <CheckCircle2 className="h-4 w-4" /> 신규 {result.created}명 · 갱신 {result.updated}명
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">실패 {result.failed.length}명 · 재업로드 시 기존 회원의 등록일·만료일·결제금액이 갱신됩니다.</p>
+                <p className="mt-1 text-label text-muted-foreground">실패 {result.failed.length}명 · 재업로드 시 기존 회원의 등록일·만료일·결제금액이 갱신됩니다.</p>
                 {result.failed.length > 0 && (
-                  <div className="mt-2 max-h-24 overflow-y-auto rounded-lg bg-destructive/5 p-2 text-[11px] text-destructive">
+                  <div className="mt-2 max-h-24 overflow-y-auto rounded-lg bg-destructive/5 p-2 text-micro text-destructive">
                     {result.failed.slice(0, 20).map((f, i) => (
                       <div key={i}>{f.name || f.phone}: {f.reason}</div>
                     ))}
@@ -262,11 +262,11 @@ const BulkMemberImport = ({ onClose }: { onClose: () => void }) => {
             <button
               onClick={handleImport}
               disabled={submitting || !filtered.length}
-              className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow-soft transition-all active:scale-[0.98] hover:shadow-glow-primary disabled:opacity-50"
+              className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft transition-all active:scale-[0.98] hover:shadow-glow-primary disabled:opacity-50"
             >
               {submitting ? "등록 중..." : `${filtered.length}명 일괄 등록 (자동 승인)`}
             </button>
-            <p className="mt-2 flex items-start gap-1 text-[11px] text-muted-foreground">
+            <p className="mt-2 flex items-start gap-1 text-label text-muted-foreground">
               <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
               이미 등록된 전화번호는 자동으로 건너뜁니다. 회원은 최초 로그인 시 아이디·비밀번호를 변경하도록 안내됩니다.
             </p>

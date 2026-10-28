@@ -209,7 +209,7 @@ const MissionManager = () => {
         <div className="flex gap-1.5 overflow-x-auto">
           {["all", ...RANK_ORDER].map(r => (
             <button key={r} onClick={() => setFilterRank(r)}
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-label font-bold transition-all ${
                 filterRank === r ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
               }`}>
               {r === "all" ? "전체" : `${RANK_ICONS[r]} ${RANK_LABELS[r]}`}
@@ -217,7 +217,7 @@ const MissionManager = () => {
           ))}
         </div>
         <button onClick={openCreate}
-          className="ml-2 flex shrink-0 items-center gap-1 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground active:scale-95">
+          className="ml-2 flex shrink-0 items-center gap-1 rounded-xl bg-primary px-3 py-2 text-label font-bold text-primary-foreground active:scale-95">
           <Plus className="h-3.5 w-3.5" /> 추가
         </button>
       </div>
@@ -227,8 +227,8 @@ const MissionManager = () => {
         [1, 2, 3].map(i => <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />)
       ) : !filteredMissions.length ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <span className="text-4xl">🥊</span>
-          <p className="mt-3 text-sm text-muted-foreground">등록된 미션이 없습니다</p>
+          <span className="text-display">🥊</span>
+          <p className="mt-3 text-body text-muted-foreground">등록된 미션이 없습니다</p>
         </div>
       ) : (
         filteredMissions.map((mission: any) => {
@@ -237,15 +237,15 @@ const MissionManager = () => {
             <div key={mission.id} className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-foreground truncate">{mission.title}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
+                  <p className="text-body font-bold text-foreground truncate">{mission.title}</p>
+                  <p className="mt-0.5 text-label text-muted-foreground">
                     {getLevelLabel(mission.level_id)}
                     {mission.category === "warmup" && (
-                      <span className="ml-1.5 rounded-md bg-reward/15 px-1.5 py-0.5 text-[10px] font-black text-reward">🔥 워밍업</span>
+                      <span className="ml-1.5 rounded-md bg-reward/15 px-1.5 py-0.5 text-micro font-black text-reward">🔥 워밍업</span>
                     )}
                   </p>
                   <div className="mt-1.5 flex items-center gap-2">
-                    <span className="text-xs font-bold text-primary">+{mission.xp_reward} XP</span>
+                    <span className="text-label font-bold text-primary">+{mission.xp_reward} XP</span>
                     <span className="flex items-center gap-0.5">
                       {Array.from({ length: 5 }, (_, i) => (
                         <div key={i} className={`h-1.5 w-2.5 rounded-full ${i < mission.difficulty ? "bg-primary" : "bg-border"}`} />
@@ -274,7 +274,7 @@ const MissionManager = () => {
           <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl max-h-[85vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg text-foreground">{editingId ? "✏️ 미션 수정" : "➕ 새 미션 추가"}</h3>
+              <h3 className="text-heading text-foreground">{editingId ? "✏️ 미션 수정" : "➕ 새 미션 추가"}</h3>
               <button onClick={() => setShowForm(false)} className="rounded-full bg-secondary p-2 active:scale-95">
                 <X className="h-4 w-4 text-secondary-foreground" />
               </button>
@@ -283,9 +283,9 @@ const MissionManager = () => {
             <div className="space-y-3">
               {/* Level select */}
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">레벨 *</label>
+                <label className="mb-1 block text-label text-muted-foreground">레벨 *</label>
                 <select value={form.level_id} onChange={e => setForm(f => ({ ...f, level_id: e.target.value }))}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none">
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground focus:border-primary focus:outline-none">
                   <option value="">레벨 선택</option>
                   {sortedLevels.map(l => (
                     <option key={l.id} value={l.id}>
@@ -297,34 +297,34 @@ const MissionManager = () => {
 
               {/* Title */}
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">미션 제목 *</label>
+                <label className="mb-1 block text-label text-muted-foreground">미션 제목 *</label>
                 <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                   placeholder="예: 기본 스탠스" className="rounded-xl" />
               </div>
 
               {/* Description */}
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">설명</label>
+                <label className="mb-1 block text-label text-muted-foreground">설명</label>
                 <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                   placeholder="미션 설명" rows={2}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
               </div>
 
               {/* Difficulty & XP */}
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="mb-1 block text-xs text-muted-foreground">난이도 (1-5)</label>
+                  <label className="mb-1 block text-label text-muted-foreground">난이도 (1-5)</label>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map(d => (
                       <button key={d} onClick={() => setForm(f => ({ ...f, difficulty: d }))}
-                        className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
+                        className={`flex-1 rounded-lg py-2 text-body font-bold transition-all ${
                           form.difficulty >= d ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
                         }`}>{d}</button>
                     ))}
                   </div>
                 </div>
                 <div className="w-24">
-                  <label className="mb-1 block text-xs text-muted-foreground">XP 보상</label>
+                  <label className="mb-1 block text-label text-muted-foreground">XP 보상</label>
                   <Input type="number" value={form.xp_reward}
                     onChange={e => setForm(f => ({ ...f, xp_reward: Number(e.target.value) }))}
                     className="rounded-xl" />
@@ -333,7 +333,7 @@ const MissionManager = () => {
 
               {/* Sort order */}
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">정렬 순서</label>
+                <label className="mb-1 block text-label text-muted-foreground">정렬 순서</label>
                 <Input type="number" value={form.sort_order}
                   onChange={e => setForm(f => ({ ...f, sort_order: Number(e.target.value) }))}
                   className="rounded-xl" />
@@ -341,7 +341,7 @@ const MissionManager = () => {
 
               {/* Key Points */}
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">핵심 포인트</label>
+                <label className="mb-1 block text-label text-muted-foreground">핵심 포인트</label>
                 <div className="space-y-2">
                   <Input value={form.key_point_1} onChange={e => setForm(f => ({ ...f, key_point_1: e.target.value }))}
                     placeholder="핵심 포인트 1" className="rounded-xl" />
@@ -354,23 +354,23 @@ const MissionManager = () => {
 
               {/* Video */}
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">🎬 영상</label>
+                <label className="mb-1 block text-label text-muted-foreground">🎬 영상</label>
                 <input ref={videoInputRef} type="file" accept="video/*" className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, "video"); }} />
                 <div className="flex gap-2">
                   <Input value={form.video_url} onChange={e => setForm(f => ({ ...f, video_url: e.target.value }))}
                     placeholder="URL 직접 입력 또는 파일 업로드" className="flex-1 rounded-xl" />
                   <button type="button" onClick={() => videoInputRef.current?.click()} disabled={uploadingVideo}
-                    className="flex shrink-0 items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground active:scale-95 disabled:opacity-50">
+                    className="flex shrink-0 items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-label font-bold text-secondary-foreground active:scale-95 disabled:opacity-50">
                     {uploadingVideo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                     {uploadingVideo ? "업로드중" : "업로드"}
                   </button>
                 </div>
                 {form.video_url && (
-                  <p className="mt-1 truncate text-[10px] text-status-complete">✅ 영상 설정됨</p>
+                  <p className="mt-1 truncate text-micro text-status-complete">✅ 영상 설정됨</p>
                 )}
                 {editingId && editingExtras.length > 0 && (
-                  <p className="mt-1 text-[10px] text-muted-foreground">
+                  <p className="mt-1 text-label text-muted-foreground">
                     🎨 {editingExtras.join(" · ")} 버전도 붙어 있어요 — 여기서 고치는 건 대표(실사) 영상이에요
                   </p>
                 )}
@@ -378,14 +378,14 @@ const MissionManager = () => {
 
               {/* Poster */}
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">🖼️ 포스터 이미지 (선택)</label>
+                <label className="mb-1 block text-label text-muted-foreground">🖼️ 포스터 이미지 (선택)</label>
                 <input ref={posterInputRef} type="file" accept="image/*" className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, "poster"); }} />
                 <div className="flex gap-2">
                   <Input value={form.poster_url} onChange={e => setForm(f => ({ ...f, poster_url: e.target.value }))}
                     placeholder="URL 직접 입력 또는 파일 업로드" className="flex-1 rounded-xl" />
                   <button type="button" onClick={() => posterInputRef.current?.click()} disabled={uploadingPoster}
-                    className="flex shrink-0 items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground active:scale-95 disabled:opacity-50">
+                    className="flex shrink-0 items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-label font-bold text-secondary-foreground active:scale-95 disabled:opacity-50">
                     {uploadingPoster ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
                     {uploadingPoster ? "업로드중" : "업로드"}
                   </button>
@@ -397,7 +397,7 @@ const MissionManager = () => {
 
               {/* Save */}
               <button onClick={handleSave} disabled={saving}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
                 {saving ? "저장 중..." : editingId ? "수정 완료" : "미션 추가"}
               </button>
             </div>

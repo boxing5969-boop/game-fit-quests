@@ -83,7 +83,7 @@ const LiveBoardPreviewPage = () => {
           style={{ width: STAGE_W, height: STAGE_H, transform: `scale(${scale})`, transformOrigin: "top left" }}
         />
         {loadedSrc !== src && (
-          <div className="absolute inset-0 grid place-items-center bg-gray-950 text-[13px] font-bold text-white/60">
+          <div className="absolute inset-0 grid place-items-center bg-gray-950 text-label font-bold text-white/60">
             라이브보드 {no} 여는 중…
           </div>
         )}
@@ -110,7 +110,7 @@ const LiveBoardPreviewPage = () => {
             aria-selected={n === no}
             aria-label={`라이브보드 ${n}`}
             onClick={() => n !== no && navigate(liveBoardPreviewPath(branch.code, n), { replace: true })}
-            className={`h-9 w-9 rounded-full text-[15px] font-black tabular-nums transition-all active:scale-95 ${
+            className={`h-9 w-9 rounded-full text-body font-black tabular-nums transition-all active:scale-95 ${
               n === no ? "bg-white text-black" : "text-white/70"
             }`}
           >
@@ -124,10 +124,10 @@ const LiveBoardPreviewPage = () => {
           className="absolute inset-x-0 px-6 text-center"
           style={{ top: top + stageH + 16 }}
         >
-          <p className="text-[15px] font-bold text-white">
+          <p className="text-body font-bold text-white">
             라이브보드 {no} · {branch.label}
           </p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-white/55">
+          <p className="mt-1 text-label leading-relaxed text-white/55">
             TV 화면을 그대로 줄여서 보여 드려요 · 가로로 돌리면 크게 보여요
           </p>
         </div>

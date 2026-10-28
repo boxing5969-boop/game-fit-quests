@@ -60,7 +60,7 @@ const ReportDetailSheet = ({ reportId, onClose }: { reportId: string | null; onC
               value={note}
               onChange={(e) => setNote(e.target.value.slice(0, 300))}
               placeholder="처리 메모 (선택 · 운영진만 봐요)"
-              className="w-full rounded-xl bg-secondary/70 px-3.5 py-2.5 text-[16px] text-foreground outline-none placeholder:text-muted-foreground"
+              className="w-full rounded-xl bg-secondary/70 px-3.5 py-2.5 text-body text-foreground outline-none placeholder:text-muted-foreground"
               aria-label="처리 메모"
             />
             <div className="grid grid-cols-3 gap-2">
@@ -68,7 +68,7 @@ const ReportDetailSheet = ({ reportId, onClose }: { reportId: string | null; onC
                 type="button"
                 onClick={() => act("dismiss")}
                 disabled={resolve.isPending}
-                className="h-11 rounded-xl bg-secondary text-[13px] font-bold text-foreground active:scale-[0.98] disabled:opacity-40"
+                className="h-11 rounded-xl bg-secondary text-label font-bold text-foreground active:scale-[0.98] disabled:opacity-40"
               >
                 문제 없음
               </button>
@@ -76,7 +76,7 @@ const ReportDetailSheet = ({ reportId, onClose }: { reportId: string | null; onC
                 type="button"
                 onClick={() => act("suspend7")}
                 disabled={resolve.isPending}
-                className="h-11 rounded-xl bg-amber-500 text-[13px] font-bold text-white active:scale-[0.98] disabled:opacity-40"
+                className="h-11 rounded-xl bg-amber-500 text-label font-bold text-white active:scale-[0.98] disabled:opacity-40"
               >
                 7일 제한
               </button>
@@ -84,7 +84,7 @@ const ReportDetailSheet = ({ reportId, onClose }: { reportId: string | null; onC
                 type="button"
                 onClick={() => act("suspend30")}
                 disabled={resolve.isPending}
-                className="h-11 rounded-xl bg-destructive text-[13px] font-bold text-white active:scale-[0.98] disabled:opacity-40"
+                className="h-11 rounded-xl bg-destructive text-label font-bold text-white active:scale-[0.98] disabled:opacity-40"
               >
                 30일 제한
               </button>
@@ -94,7 +94,7 @@ const ReportDetailSheet = ({ reportId, onClose }: { reportId: string | null; onC
                 type="button"
                 onClick={() => act("lift")}
                 disabled={resolve.isPending}
-                className="h-10 w-full rounded-xl text-[12.5px] font-bold text-primary active:scale-[0.99] disabled:opacity-40"
+                className="h-10 w-full rounded-xl text-label font-bold text-primary active:scale-[0.99] disabled:opacity-40"
               >
                 {dmUntilLabel(suspended)}까지 걸린 제한 풀기
               </button>
@@ -106,48 +106,48 @@ const ReportDetailSheet = ({ reportId, onClose }: { reportId: string | null; onC
       {isLoading ? (
         <div className="h-40 animate-pulse rounded-2xl bg-muted" />
       ) : isError || !data ? (
-        <p className="rounded-2xl bg-muted/50 px-4 py-8 text-center text-[13px] text-muted-foreground">신고를 열 수 없어요</p>
+        <p className="rounded-2xl bg-muted/50 px-4 py-8 text-center text-label text-muted-foreground">신고를 열 수 없어요</p>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-2xl bg-secondary/60 px-3.5 py-3">
-              <p className="text-[11px] font-bold text-muted-foreground">신고한 사람</p>
-              <p className="truncate text-[14px] font-bold text-foreground">{data.reporter.display}</p>
-              <p className="truncate text-[11.5px] text-muted-foreground">{shortBranch(data.reporter.branch)}</p>
+              <p className="text-label font-bold text-muted-foreground">신고한 사람</p>
+              <p className="truncate text-label font-bold text-foreground">{data.reporter.display}</p>
+              <p className="truncate text-label text-muted-foreground">{shortBranch(data.reporter.branch)}</p>
             </div>
             <div className="rounded-2xl bg-destructive/[0.07] px-3.5 py-3">
-              <p className="text-[11px] font-bold text-destructive">신고된 사람</p>
-              <p className="truncate text-[14px] font-bold text-foreground">{data.reported.display}</p>
-              <p className="truncate text-[11.5px] text-muted-foreground">
+              <p className="text-micro font-bold text-destructive">신고된 사람</p>
+              <p className="truncate text-label font-bold text-foreground">{data.reported.display}</p>
+              <p className="truncate text-label text-muted-foreground">
                 {shortBranch(data.reported.branch)}
                 {suspended ? ` · ${dmUntilLabel(suspended)}까지 제한 중` : ""}
               </p>
             </div>
           </div>
           {data.detail && (
-            <p className="mt-2 whitespace-pre-wrap rounded-2xl bg-secondary/40 px-3.5 py-3 text-[13px] leading-relaxed text-foreground">
+            <p className="mt-2 whitespace-pre-wrap rounded-2xl bg-secondary/40 px-3.5 py-3 text-label leading-relaxed text-foreground">
               “{data.detail}”
             </p>
           )}
-          {data.note && <p className="mt-2 px-1 text-[12px] text-muted-foreground">처리 메모: {data.note}</p>}
+          {data.note && <p className="mt-2 px-1 text-label text-muted-foreground">처리 메모: {data.note}</p>}
 
-          <h3 className="mb-2 mt-4 px-1 text-[12.5px] font-bold text-muted-foreground">
+          <h3 className="mb-2 mt-4 px-1 text-label font-bold text-muted-foreground">
             신고할 때 남긴 대화 {data.messages.length}개
           </h3>
           {data.messages.length === 0 ? (
-            <p className="rounded-2xl bg-muted/40 px-4 py-5 text-center text-[12.5px] text-muted-foreground">남은 메시지가 없어요</p>
+            <p className="rounded-2xl bg-muted/40 px-4 py-5 text-center text-label text-muted-foreground">남은 메시지가 없어요</p>
           ) : (
             <ul className="space-y-1.5 pb-2">
               {data.messages.map((m, i) => {
                 const reported = m.from === "reported";
                 return (
                   <li key={i} className={cn("flex flex-col", reported ? "items-start" : "items-end")}>
-                    <span className="mb-0.5 px-1 text-[10.5px] text-muted-foreground">
+                    <span className="mb-0.5 px-1 text-label text-muted-foreground">
                       {reported ? data.reported.display : data.reporter.display} · {whenLabel(m.at)}
                     </span>
                     <span
                       className={cn(
-                        "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[14px] leading-snug",
+                        "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-label leading-snug",
                         reported ? "bg-destructive/[0.08] text-foreground ring-1 ring-destructive/20" : "bg-secondary text-foreground",
                       )}
                     >
@@ -180,7 +180,7 @@ const DmAdminReports = () => {
             onClick={() => setStatus(s)}
             aria-pressed={status === s}
             className={cn(
-              "rounded-full px-3.5 py-1.5 text-[12.5px] font-bold transition-colors active:scale-95",
+              "rounded-full px-3.5 py-1.5 text-label font-bold transition-colors active:scale-95",
               status === s ? "bg-foreground text-background" : "bg-secondary text-muted-foreground",
             )}
           >
@@ -197,16 +197,16 @@ const DmAdminReports = () => {
         </div>
       ) : isError ? (
         <div className="rounded-2xl bg-card px-4 py-8 text-center shadow-elev-1">
-          <p className="text-[14px] font-bold text-foreground">신고 목록을 불러오지 못했어요</p>
-          <button type="button" onClick={() => refetch()} className="mt-3 rounded-full bg-secondary px-4 py-2 text-[13px] font-bold active:scale-95">
+          <p className="text-label font-bold text-foreground">신고 목록을 불러오지 못했어요</p>
+          <button type="button" onClick={() => refetch()} className="mt-3 rounded-full bg-secondary px-4 py-2 text-label font-bold active:scale-95">
             다시 불러오기
           </button>
         </div>
       ) : rows.length === 0 ? (
         <div className="rounded-2xl bg-card px-4 py-10 text-center shadow-elev-1">
           <ShieldAlert className="mx-auto h-7 w-7 text-muted-foreground/60" />
-          <p className="mt-2 text-[14px] font-bold text-foreground">{status === "open" ? "처리할 신고가 없어요 👏" : "처리한 신고가 없어요"}</p>
-          <p className="mt-1 text-[12.5px] text-muted-foreground">회원이 대화방에서 신고하면 여기로 와요</p>
+          <p className="mt-2 text-label font-bold text-foreground">{status === "open" ? "처리할 신고가 없어요 👏" : "처리한 신고가 없어요"}</p>
+          <p className="mt-1 text-label text-muted-foreground">회원이 대화방에서 신고하면 여기로 와요</p>
         </div>
       ) : (
         <ul className="space-y-2">
@@ -221,22 +221,22 @@ const DmAdminReports = () => {
                   <span className="flex items-center gap-1.5">
                     <span
                       className={cn(
-                        "shrink-0 rounded-md px-1.5 py-[1px] text-[10.5px] font-black",
+                        "shrink-0 rounded-md px-1.5 py-[1px] text-micro font-black",
                         r.status === "open" ? "bg-destructive text-white" : "bg-secondary text-muted-foreground",
                       )}
                     >
                       {dmReportReasonLabel(r.reason)}
                     </span>
-                    <span className="truncate text-[14px] font-bold text-foreground">
+                    <span className="truncate text-label font-bold text-foreground">
                       {r.reporter.display} → {r.reported.display}
                     </span>
                   </span>
-                  <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                  <span className="mt-0.5 block truncate text-label text-muted-foreground">
                     {shortBranch(r.reported.branch)} · {dmListTime(r.created_at)} · 대화 {r.message_count}개
                     {r.status === "resolved" && r.action ? ` · ${DM_ADMIN_ACTION_LABEL[r.action]}` : ""}
                     {r.reported.suspended_until ? ` · ${dmUntilLabel(r.reported.suspended_until)}까지 제한` : ""}
                   </span>
-                  {r.detail && <span className="mt-1 line-clamp-2 block text-[12.5px] text-foreground/80">“{r.detail}”</span>}
+                  {r.detail && <span className="mt-1 line-clamp-2 block text-label text-foreground/80">“{r.detail}”</span>}
                 </span>
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
               </button>
@@ -245,7 +245,7 @@ const DmAdminReports = () => {
         </ul>
       )}
 
-      <p className="mt-4 px-1 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-4 px-1 text-label leading-relaxed text-muted-foreground">
         운영진은 신고할 때 남긴 대화 사본만 볼 수 있어요. 신고되지 않은 대화는 운영진도 볼 수 없어요.
       </p>
 

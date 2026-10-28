@@ -45,11 +45,11 @@ const readSection = (): Section => {
 
 const Empty = ({ emoji, title, body }: { emoji: string; title: string; body: string }) => (
   <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-    <p className="text-[32px]" aria-hidden>
+    <p className="text-display" aria-hidden>
       {emoji}
     </p>
-    <p className="mt-2 text-[15px] font-bold text-foreground">{title}</p>
-    <p className="mt-1 whitespace-pre-line text-[12.5px] leading-relaxed text-muted-foreground">{body}</p>
+    <p className="mt-2 text-body font-bold text-foreground">{title}</p>
+    <p className="mt-1 whitespace-pre-line text-label leading-relaxed text-muted-foreground">{body}</p>
   </div>
 );
 
@@ -65,7 +65,7 @@ const ActionButton = ({ onClick, children }: { onClick: () => void; children: Re
   <button
     type="button"
     onClick={onClick}
-    className="flex h-12 w-full items-center justify-center gap-1.5 rounded-2xl bg-foreground text-[14.5px] font-black text-background active:scale-[0.99]"
+    className="flex h-12 w-full items-center justify-center gap-1.5 rounded-2xl bg-foreground text-label font-black text-background active:scale-[0.99]"
   >
     <Plus className="h-4 w-4" /> {children}
   </button>
@@ -117,8 +117,8 @@ const StrategyRoom = () => {
   if (meQ.isError) {
     return (
       <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-        <p className="text-[14px] font-bold text-foreground">전략 회의실을 불러오지 못했어요</p>
-        <button type="button" onClick={() => meQ.refetch()} className="mt-4 rounded-full bg-secondary px-4 py-2 text-[13px] font-bold active:scale-95">
+        <p className="text-label font-bold text-foreground">전략 회의실을 불러오지 못했어요</p>
+        <button type="button" onClick={() => meQ.refetch()} className="mt-4 rounded-full bg-secondary px-4 py-2 text-label font-bold active:scale-95">
           다시 불러오기
         </button>
       </div>
@@ -142,7 +142,7 @@ const StrategyRoom = () => {
         <select
           value={me.branch ?? ""}
           onChange={(e) => setBranch(e.target.value)}
-          className="w-full rounded-2xl border border-border bg-card px-3 py-2.5 text-[14px] font-bold"
+          className="w-full rounded-2xl border border-border bg-card px-3 py-2.5 text-label font-bold"
           aria-label="지점 고르기"
         >
           {(me.branches ?? []).map((x) => (
@@ -161,7 +161,7 @@ const StrategyRoom = () => {
             type="button"
             onClick={() => setSection(s.v)}
             className={cn(
-              "rounded-xl py-2 text-[12.5px] font-black transition-all active:scale-[0.98]",
+              "rounded-xl py-2 text-label font-black transition-all active:scale-[0.98]",
               section === s.v ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
             )}
           >
@@ -179,16 +179,16 @@ const StrategyRoom = () => {
             <>
               {principles.length > 0 && (
                 <section className="rounded-3xl bg-foreground p-4 text-background shadow-elev-1">
-                  <p className="text-[13px] font-black tracking-wide opacity-80">📏 우리 지점 운영 원칙</p>
+                  <p className="text-label font-black tracking-wide opacity-80">📏 우리 지점 운영 원칙</p>
                   <ol className="mt-2 space-y-2">
                     {principles.map((p) => (
                       <li key={p.id} className="flex items-start gap-2">
-                        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-background text-[12px] font-black text-foreground">
+                        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-background text-label font-black text-foreground">
                           {p.principle_no}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-[14.5px] font-bold leading-snug">{p.title}</span>
-                          {p.body && <span className="block whitespace-pre-wrap text-[12.5px] leading-relaxed opacity-75">{p.body}</span>}
+                          <span className="block text-label font-bold leading-snug">{p.title}</span>
+                          {p.body && <span className="block whitespace-pre-wrap text-label leading-relaxed opacity-75">{p.body}</span>}
                         </span>
                       </li>
                     ))}
@@ -202,7 +202,7 @@ const StrategyRoom = () => {
                           .then(() => toast.success("운영 원칙을 확인했어요"))
                           .catch((e) => toast.error((e as Error).message))
                       }
-                      className="mt-3 h-10 w-full rounded-xl bg-background text-[13.5px] font-black text-foreground active:scale-[0.99] disabled:opacity-60"
+                      className="mt-3 h-10 w-full rounded-xl bg-background text-label font-black text-foreground active:scale-[0.99] disabled:opacity-60"
                     >
                       ✓ 원칙 {unackedPrinciples.length}개 확인했어요
                     </button>
@@ -211,7 +211,7 @@ const StrategyRoom = () => {
                     <button
                       type="button"
                       onClick={() => setManagePrinciples((v) => !v)}
-                      className="mt-2 text-[12px] font-bold underline underline-offset-2 opacity-75"
+                      className="mt-2 text-label font-bold underline underline-offset-2 opacity-75"
                     >
                       {managePrinciples ? "원칙 관리 닫기" : "원칙 관리 (확인 현황 · 지우기)"}
                     </button>

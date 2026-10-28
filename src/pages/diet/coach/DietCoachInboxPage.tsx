@@ -97,7 +97,7 @@ const DietCoachInboxPage = () => {
           />
         </div>
 
-        <div className="flex items-center gap-2 text-[11.5px] text-muted-foreground">
+        <div className="flex items-center gap-2 text-label text-muted-foreground">
           <Filter className="h-3.5 w-3.5" />
           피드백 미전달 {items.length}건
         </div>
@@ -109,10 +109,10 @@ const DietCoachInboxPage = () => {
           <PlaceholderCard>
             <div className="flex flex-col items-center gap-1.5 py-4">
               <Inbox className="h-6 w-6 text-muted-foreground" />
-              <p className="text-[13px] font-bold text-foreground">
+              <p className="text-label font-bold text-foreground">
                 모든 회원에게 피드백을 남겼어요
               </p>
-              <p className="text-[11.5px] text-muted-foreground">
+              <p className="text-label text-muted-foreground">
                 자가 기록된 최근 체크인은 멤버 상세에서도 확인할 수 있어요.
               </p>
             </div>
@@ -163,7 +163,7 @@ const ToggleChip = ({
     type="button"
     onClick={onClick}
     className={cn(
-      "rounded-full border px-2.5 py-1 text-[11.5px] font-bold transition-colors",
+      "rounded-full border px-2.5 py-1 text-micro font-bold transition-colors",
       active
         ? "border-primary bg-primary/10 text-primary"
         : "border-border bg-card text-muted-foreground hover:border-primary/40",
@@ -174,7 +174,7 @@ const ToggleChip = ({
 );
 
 const PlaceholderCard = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-border bg-card p-6 text-center text-[13px] text-muted-foreground">
+  <div className="rounded-2xl border border-border bg-card p-6 text-center text-label text-muted-foreground">
     {children}
   </div>
 );

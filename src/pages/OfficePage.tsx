@@ -115,14 +115,14 @@ const OfficePage = () => {
         </div>
       ) : stateQ.isError || !state ? (
         <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-          <p className="text-[15px] font-bold text-foreground">지점 회의실에 들어올 수 없어요</p>
-          <p className="mt-1.5 whitespace-pre-line text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="text-body font-bold text-foreground">지점 회의실에 들어올 수 없어요</p>
+          <p className="mt-1.5 whitespace-pre-line text-label leading-relaxed text-muted-foreground">
             {(stateQ.error as Error | null)?.message ?? "우리 지점 코치님 · 지점장님만 들어올 수 있어요"}
           </p>
           <button
             type="button"
             onClick={() => void stateQ.refetch()}
-            className="mt-4 rounded-2xl bg-secondary px-4 py-2 text-[13px] font-bold text-foreground active:scale-95"
+            className="mt-4 rounded-2xl bg-secondary px-4 py-2 text-label font-bold text-foreground active:scale-95"
           >
             다시 불러오기
           </button>
@@ -138,7 +138,7 @@ const OfficePage = () => {
                   type="button"
                   onClick={() => setBranch(b)}
                   className={cn(
-                    "shrink-0 rounded-full border px-3 py-1.5 text-[13px] font-bold active:scale-95",
+                    "shrink-0 rounded-full border px-3 py-1.5 text-label font-bold active:scale-95",
                     b === state.branch
                       ? "border-foreground bg-foreground text-background"
                       : "border-border bg-background text-foreground",
@@ -154,7 +154,7 @@ const OfficePage = () => {
 
           {/* 내 상태 말풍선 */}
           <div className="rounded-3xl bg-card p-3.5 shadow-elev-1">
-            <p className="px-0.5 text-[12.5px] font-bold text-muted-foreground">내 자리 말풍선</p>
+            <p className="px-0.5 text-label font-bold text-muted-foreground">내 자리 말풍선</p>
             <div className="mt-2 grid grid-cols-3 gap-1.5">
               {STATUSES.map((s) => (
                 <button
@@ -166,7 +166,7 @@ const OfficePage = () => {
                     setStatus.mutate(s, { onError: (e) => toast.error((e as Error).message) })
                   }
                   className={cn(
-                    "h-10 rounded-2xl border text-[13px] font-black transition-colors active:scale-[0.98] disabled:opacity-70",
+                    "h-10 rounded-2xl border text-label font-black transition-colors active:scale-[0.98] disabled:opacity-70",
                     s === myStatus
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border bg-background text-foreground",
@@ -177,7 +177,7 @@ const OfficePage = () => {
               ))}
             </div>
             {!presence.connected && (
-              <p className="mt-2 px-0.5 text-[11.5px] text-muted-foreground">실시간 연결 중… 접속 표시가 조금 늦을 수 있어요</p>
+              <p className="mt-2 px-0.5 text-label text-muted-foreground">실시간 연결 중… 접속 표시가 조금 늦을 수 있어요</p>
             )}
           </div>
 
@@ -191,8 +191,8 @@ const OfficePage = () => {
                   <Users className="h-[18px] w-[18px] text-muted-foreground" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[15px] font-black text-foreground">지금은 열린 회의가 없어요</p>
-                  <p className="text-[12px] text-muted-foreground">
+                  <p className="text-body font-black text-foreground">지금은 열린 회의가 없어요</p>
+                  <p className="text-label text-muted-foreground">
                     {state.role === "host"
                       ? "회의를 열면 지도진에게 휴대폰 알림이 가요"
                       : "대표님이나 지점장님이 회의를 열면 알림이 와요"}
@@ -203,7 +203,7 @@ const OfficePage = () => {
                 <button
                   type="button"
                   onClick={() => setOpenSheet(true)}
-                  className="mt-3.5 flex h-12 w-full items-center justify-center gap-1.5 rounded-2xl bg-foreground text-[15px] font-black text-background active:scale-[0.99]"
+                  className="mt-3.5 flex h-12 w-full items-center justify-center gap-1.5 rounded-2xl bg-foreground text-body font-black text-background active:scale-[0.99]"
                 >
                   <Plus className="h-4 w-4" /> 회의 열기
                 </button>
@@ -216,11 +216,11 @@ const OfficePage = () => {
 
           {/* 지난 회의록 */}
           <section>
-            <h2 className="px-1 text-[15px] font-black text-foreground">지난 회의록</h2>
+            <h2 className="px-1 text-body font-black text-foreground">지난 회의록</h2>
             {list.isLoading ? (
               <div className="mt-2 h-16 animate-pulse rounded-3xl bg-card shadow-elev-1" />
             ) : pastMeetings.length === 0 ? (
-              <p className="mt-2 rounded-3xl bg-card px-4 py-5 text-center text-[12.5px] text-muted-foreground shadow-elev-1">
+              <p className="mt-2 rounded-3xl bg-card px-4 py-5 text-center text-label text-muted-foreground shadow-elev-1">
                 끝난 회의가 여기에 회의록으로 남아요
               </p>
             ) : (
@@ -233,8 +233,8 @@ const OfficePage = () => {
                       className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-secondary/60"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[14.5px] font-bold text-foreground">{m.title}</p>
-                        <p className="mt-0.5 truncate text-[11.5px] text-muted-foreground">
+                        <p className="truncate text-label font-bold text-foreground">{m.title}</p>
+                        <p className="mt-0.5 truncate text-label text-muted-foreground">
                           {officeDateTime(m.opened_at)} · {officeDuration(m.opened_at, m.closed_at)} · 참석 {m.attendees}명
                           {m.decisions > 0 ? ` · 정한 것 ${m.decisions}` : ""} · {m.scheduled ? "정기 회의" : officeName(m.opened_by)}
                         </p>

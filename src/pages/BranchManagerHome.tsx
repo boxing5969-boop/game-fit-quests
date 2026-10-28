@@ -26,6 +26,7 @@ import NotificationBellButton from "@/components/notifications/NotificationBellB
 import PushOptInCard from "@/components/notifications/PushOptInCard";
 import { ViewAsMemberButton } from "@/components/admin/ViewAsMember";
 import { toast } from "sonner";
+import { shortBranch } from "@/lib/dmPeople";
 
 const RANK_ORDER_MAP: Record<string, number> = { white: 0, blue: 1, red: 2, black: 3 };
 
@@ -346,7 +347,7 @@ const BranchManagerHome = () => {
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+            className={`shrink-0 rounded-full px-3 py-1.5 text-label font-bold transition-all active:scale-95 ${
               filter === f.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
             }`}
           >
@@ -355,7 +356,7 @@ const BranchManagerHome = () => {
         ))}
       </div>
       {(filter === "body_info" || filter === "body_missing") && (
-        <p className="-mt-1 mb-3 px-1 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="-mt-1 mb-3 px-1 text-label leading-relaxed text-muted-foreground">
           {filter === "body_info"
             ? "키 · 몸무게를 넣은 회원이에요. 값은 회원을 눌러 '내정보'에서 봐요."
             : "앱에 들어온 적 있는데 키 · 몸무게를 아직 안 넣은 회원이에요."}{" "}
@@ -376,7 +377,7 @@ const BranchManagerHome = () => {
           <button
             key={s.key}
             onClick={() => setSort(s.key)}
-            className={`rounded-lg px-2.5 py-1 text-[10px] font-medium transition-all ${
+            className={`rounded-lg px-2.5 py-1 text-micro font-medium transition-all ${
               sort === s.key ? "bg-primary/10 text-primary" : "text-muted-foreground"
             }`}
           >
@@ -387,9 +388,9 @@ const BranchManagerHome = () => {
 
       {/* 총 인원 + 페이지 */}
       <div className="mb-2 flex items-center justify-between px-1">
-        <span className="text-xs font-bold text-foreground">총 {filtered.length}명</span>
+        <span className="text-label font-bold text-foreground">총 {filtered.length}명</span>
         {filtered.length > PAGE_SIZE && (
-          <span className="text-[11px] text-muted-foreground">{safePage} / {totalPages} 페이지</span>
+          <span className="text-label text-muted-foreground">{safePage} / {totalPages} 페이지</span>
         )}
       </div>
 
@@ -399,12 +400,12 @@ const BranchManagerHome = () => {
           Array(5).fill(0).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />)
         ) : membersError ? (
           <div className="rounded-2xl border border-dashed border-destructive/40 p-8 text-center">
-            <p className="text-sm text-destructive">회원 목록을 불러오지 못했어요. 잠시 후 다시 열어 주세요.</p>
+            <p className="text-body text-destructive">회원 목록을 불러오지 못했어요. 잠시 후 다시 열어 주세요.</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-            <span className="text-3xl">👥</span>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <span className="text-title">👥</span>
+            <p className="mt-2 text-body text-muted-foreground">
               {search
                 ? "검색 결과가 없습니다"
                 : filter === "body_info"
@@ -433,7 +434,7 @@ const BranchManagerHome = () => {
                 className="w-full p-4 text-left active:scale-[0.98] transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-heading">
                     {m.avatar_url ? (
                       <img src={m.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
                     ) : (
@@ -442,19 +443,19 @@ const BranchManagerHome = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-bold text-foreground truncate">{m.nickname || m.name}</span>
+                      <span className="text-body font-bold text-foreground truncate">{m.nickname || m.name}</span>
                       {staff ? (
-                        <span className="shrink-0 rounded-full bg-reward/20 px-1.5 py-0.5 text-[9px] font-bold text-reward">{staffChampionLine(m)}</span>
+                        <span className="shrink-0 rounded-full bg-reward/20 px-1.5 py-0.5 text-micro font-bold text-reward">{staffChampionLine(m)}</span>
                       ) : (m as any).memberRole === "branch_manager" || (m as any).memberRole === "coach" ? (
-                        <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold text-primary">관장님</span>
+                        <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-micro font-bold text-primary">관장님</span>
                       ) : null}
                       {!isApproved && (
-                        <span className="shrink-0 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-bold text-amber-600">
+                        <span className="shrink-0 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-micro font-bold text-amber-600">
                           승인대기
                         </span>
                       )}
                       {isApproved && m.pendingCount > 0 && (
-                        <span className="shrink-0 rounded-full bg-status-pending/20 px-1.5 py-0.5 text-[9px] font-bold text-status-pending">
+                        <span className="shrink-0 rounded-full bg-status-pending/20 px-1.5 py-0.5 text-micro font-bold text-status-pending">
                           {m.pendingCount}건 대기
                         </span>
                       )}
@@ -463,49 +464,38 @@ const BranchManagerHome = () => {
                         const b = bodyEntered?.get(m.user_id);
                         if (!b) return null;
                         return (
-                          <span className="shrink-0 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:text-emerald-400">
+                          <span className="shrink-0 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-micro font-bold text-emerald-700 dark:text-emerald-400">
                             신체 정보 {kstMonthDay(b.at)}
                           </span>
                         );
                       })()}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                      {isSuperAdmin && m.branch_name && (
-                        <>
-                          <span className="font-medium text-primary/70">{m.branch_name}</span>
-                          <span>·</span>
-                        </>
-                      )}
-                      <span className="text-[10px]">{(m as any).signupProvider === "google" ? "Google" : (m as any).signupProvider === "apple" ? "Apple" : "일반"}</span>
-                      <span>·</span>
-                      {m.prog && (
-                        <>
-                          <span className="font-medium">{formatRank(m.prog.current_rank, m.prog.current_level)}</span>
-                          <span>·</span>
-                          <span>{m.globalLevel}/40</span>
-                        </>
-                      )}
-                      {m.phone_number && (
-                        <>
-                          <span>·</span>
-                          <span>{m.phone_number.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")}</span>
-                        </>
-                      )}
-                      {staff && (
-                        <>
-                          <span>·</span>
-                          <span className="font-medium text-reward">무제한</span>
-                        </>
-                      )}
-                      {memEnd && (
-                        <>
-                          <span>·</span>
-                          <span className={memDdays !== null && memDdays < 0 ? "font-medium text-destructive" : memDdays !== null && memDdays <= 7 ? "font-medium text-status-pending" : ""}>
+                    {/* 한 줄 정보 (2026-10-28 리디자인 3단계) — 레벨 · 남은 기간 · 전화. 칸이 모자라면 낱말째 다음 줄로
+                        (예전엔 한 줄에 억지로 넣어 '010-' '0000-' 처럼 글자가 세로로 쪼개졌다) · '18/40'은 레벨과 같은 숫자라 뺐다 ·
+                        가입 경로는 회원 상세에서 */}
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-label text-muted-foreground">
+                      {[
+                        isSuperAdmin && m.branch_name ? <span key="b" className="font-medium text-primary/70">{shortBranch(m.branch_name)}</span> : null,
+                        m.prog ? <span key="r" className="font-medium">{formatRank(m.prog.current_rank, m.prog.current_level)}</span> : null,
+                        staff ? <span key="s" className="font-medium text-reward">무제한</span> : null,
+                        memEnd ? (
+                          <span key="d" className={memDdays !== null && memDdays < 0 ? "font-medium text-destructive" : memDdays !== null && memDdays <= 7 ? "font-medium text-status-pending" : ""}>
                             {memDdays !== null && memDdays < 0 ? `D+${-memDdays}` : `D-${memDdays}`}
                           </span>
-                        </>
-                      )}
+                        ) : null,
+                      ]
+                        .filter(Boolean)
+                        .map((item, i) => (
+                          <span key={i} className="whitespace-nowrap">
+                            {i > 0 && <span className="mr-1.5">·</span>}
+                            {item}
+                          </span>
+                        ))}
                     </div>
+                    {/* 전화는 둘째 줄 — 한 줄에 다 넣으면 번호가 줄 앞 '·' 와 함께 꺾였다 */}
+                    {m.phone_number && (
+                      <p className="text-label tabular-nums text-muted-foreground">{m.phone_number.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")}</p>
+                    )}
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </div>
@@ -514,13 +504,13 @@ const BranchManagerHome = () => {
                 <div className="flex gap-2 border-t border-border px-4 py-2.5">
                   <button
                     onClick={(e) => handleApproveMember(m.user_id, e)}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-95"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary py-2.5 text-body font-bold text-primary-foreground transition-all active:scale-95"
                   >
                     <UserCheck className="h-4 w-4" /> 승인
                   </button>
                   <button
                     onClick={(e) => handleRejectMember(m.user_id, e)}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-destructive/10 py-2.5 text-sm font-bold text-destructive transition-all active:scale-95"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-destructive/10 py-2.5 text-body font-bold text-destructive transition-all active:scale-95"
                   >
                     <UserX className="h-4 w-4" /> 거절
                   </button>
@@ -537,15 +527,15 @@ const BranchManagerHome = () => {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={safePage <= 1}
-            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-all active:scale-95 disabled:opacity-40"
+            className="rounded-lg border border-border px-3 py-1.5 text-label font-medium text-foreground transition-all active:scale-95 disabled:opacity-40"
           >
             이전
           </button>
-          <span className="text-xs text-muted-foreground">{safePage} / {totalPages}</span>
+          <span className="text-label text-muted-foreground">{safePage} / {totalPages}</span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={safePage >= totalPages}
-            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-all active:scale-95 disabled:opacity-40"
+            className="rounded-lg border border-border px-3 py-1.5 text-label font-medium text-foreground transition-all active:scale-95 disabled:opacity-40"
           >
             다음
           </button>
@@ -562,10 +552,10 @@ const BranchManagerHome = () => {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">📺</span>
+              <span className="text-title">📺</span>
               <div>
-                <p className="text-sm font-bold text-foreground">라이브보드</p>
-                <p className="text-xs text-muted-foreground">TV 화면 1 · 2 · 3 · 4 골라서 바로 보기</p>
+                <p className="text-body font-bold text-foreground">라이브보드</p>
+                <p className="text-label text-muted-foreground">TV 화면 1 · 2 · 3 · 4 골라서 바로 보기</p>
               </div>
             </div>
             <ChevronRight className="h-5 w-5 text-primary" />
@@ -578,10 +568,10 @@ const BranchManagerHome = () => {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">📊</span>
+                <span className="text-title">📊</span>
                 <div>
-                  <p className="text-sm font-bold text-foreground">전체관리자 대시보드</p>
-                  <p className="text-xs text-muted-foreground">지점 비교 · 위험 회원 · 공지 · 이전 승인</p>
+                  <p className="text-body font-bold text-foreground">전체관리자 대시보드</p>
+                  <p className="text-label text-muted-foreground">지점 비교 · 위험 회원 · 공지 · 이전 승인</p>
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-reward-foreground" />
@@ -596,8 +586,8 @@ const BranchManagerHome = () => {
             <div className="flex items-center gap-3">
               <Download className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-bold text-foreground">회원 목록 CSV 내보내기</p>
-                <p className="text-xs text-muted-foreground">현재 필터 적용된 회원 목록 다운로드</p>
+                <p className="text-body font-bold text-foreground">회원 목록 CSV 내보내기</p>
+                <p className="text-label text-muted-foreground">현재 필터 적용된 회원 목록 다운로드</p>
               </div>
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
@@ -609,10 +599,10 @@ const BranchManagerHome = () => {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">📥</span>
+              <span className="text-title">📥</span>
               <div>
-                <p className="text-sm font-bold text-foreground">회원 엑셀 일괄 등록</p>
-                <p className="text-xs text-muted-foreground">브로제이 고객목록 .xlsx → 자동 승인</p>
+                <p className="text-body font-bold text-foreground">회원 엑셀 일괄 등록</p>
+                <p className="text-label text-muted-foreground">브로제이 고객목록 .xlsx → 자동 승인</p>
               </div>
             </div>
             <ChevronRight className="h-5 w-5 text-primary" />
@@ -624,10 +614,10 @@ const BranchManagerHome = () => {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">📱</span>
+              <span className="text-title">📱</span>
               <div>
-                <p className="text-sm font-bold text-foreground">회원 앱으로 보기</p>
-                <p className="text-xs text-muted-foreground">내 회원 화면 확인하기</p>
+                <p className="text-body font-bold text-foreground">회원 앱으로 보기</p>
+                <p className="text-label text-muted-foreground">내 회원 화면 확인하기</p>
               </div>
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
@@ -644,9 +634,9 @@ const BranchManagerHome = () => {
       return (
         <div className="flex h-full items-center justify-center text-center">
           <div>
-            <span className="text-5xl">👈</span>
-            <p className="mt-4 text-lg font-bold text-foreground">회원을 선택하세요</p>
-            <p className="mt-1 text-sm text-muted-foreground">좌측에서 회원을 클릭하면 상세 정보가 여기에 표시됩니다</p>
+            <span className="text-display">👈</span>
+            <p className="mt-4 text-heading font-bold text-foreground">회원을 선택하세요</p>
+            <p className="mt-1 text-body text-muted-foreground">좌측에서 회원을 클릭하면 상세 정보가 여기에 표시됩니다</p>
           </div>
         </div>
       );
@@ -672,17 +662,17 @@ const BranchManagerHome = () => {
         }}
       >
         <div className="flex items-center justify-between border-b border-border/40 bg-card/80 px-4 py-3 backdrop-blur-sm">
-          <p className="text-sm font-bold text-white">회원 상세</p>
+          <p className="text-body font-bold text-white">회원 상세</p>
           <div className="flex gap-2">
             <button
               onClick={() => navigate(`/manager/member/${selectedMemberId}/preview`)}
-              className="rounded-lg bg-primary/15 px-3 py-1.5 text-xs font-bold text-primary transition-all active:scale-95"
+              className="rounded-lg bg-primary/15 px-3 py-1.5 text-label font-bold text-primary transition-all active:scale-95"
             >
               📱 회원 앱 보기
             </button>
             <button
               onClick={() => navigate(`/manager/member/${selectedMemberId}`)}
-              className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground transition-all active:scale-95"
+              className="rounded-lg bg-primary px-4 py-1.5 text-label font-bold text-primary-foreground transition-all active:scale-95"
             >
               전체 화면 →
             </button>
@@ -697,11 +687,11 @@ const BranchManagerHome = () => {
 
           {/* ─── 안내 + 전체 화면 진입 ─── */}
           <div className="mx-auto max-w-md text-center">
-            <span className="text-4xl">🥊</span>
-            <p className="mt-3 text-sm font-bold text-white">
+            <span className="text-display">🥊</span>
+            <p className="mt-3 text-body font-bold text-white">
               회원 상세 정보 보기
             </p>
-            <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-white/60 mx-auto">
+            <p className="mt-1.5 max-w-xs text-label leading-relaxed text-white/60 mx-auto">
               상단 <strong className="text-primary">전체 화면 →</strong> 버튼 또는
               아래 버튼으로 상세 페이지로 이동하세요. 모바일 앱 화면을
               미리 보려면 <strong className="text-primary">📱 회원 앱 보기</strong>.
@@ -710,13 +700,13 @@ const BranchManagerHome = () => {
             <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <button
                 onClick={() => navigate(`/manager/member/${selectedMemberId}`)}
-                className="rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98] hover:brightness-110"
+                className="rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98] hover:brightness-110"
               >
                 회원 상세 열기
               </button>
               <button
                 onClick={() => navigate(`/manager/member/${selectedMemberId}/preview`)}
-                className="rounded-xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-primary transition-all active:scale-[0.98] hover:bg-primary/20"
+                className="rounded-xl border border-primary/40 bg-primary/10 py-3 text-body font-bold text-primary transition-all active:scale-[0.98] hover:bg-primary/20"
               >
                 회원 앱 미리보기
               </button>
@@ -734,8 +724,8 @@ const BranchManagerHome = () => {
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">{isSuperAdmin ? "전체 지점" : branchName}</p>
-            <h1 className="text-2xl text-foreground">{isSuperAdmin ? "전체 회원관리" : "우리 지점 회원관리"}</h1>
+            <p className="text-body text-muted-foreground">{isSuperAdmin ? "전체 지점" : branchName}</p>
+            <h1 className="text-title text-foreground">{isSuperAdmin ? "전체 회원관리" : "우리 지점 회원관리"}</h1>
           </div>
           <div className="flex items-center gap-2">
             {/* 👀 회원으로 보기 — 대표님 계정만 (2026-10-21) */}
@@ -780,10 +770,10 @@ const BranchManagerHome = () => {
           onClick={() => openTab("test153")}
           className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-left active:scale-[0.99]"
         >
-          <span className="text-2xl">⏱</span>
+          <span className="text-title">⏱</span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-black text-foreground">153 PB 측정</span>
-            <span className="block text-xs text-muted-foreground">셀트런 + 8종목 · 코치가 재는 공식 기록</span>
+            <span className="block text-body font-black text-foreground">153 PB 측정</span>
+            <span className="block text-label text-muted-foreground">셀트런 + 8종목 · 코치가 재는 공식 기록</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
@@ -794,10 +784,10 @@ const BranchManagerHome = () => {
           onClick={() => navigate("/messages?tab=strategy")}
           className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-foreground/15 bg-foreground/[0.03] px-4 py-3 text-left active:scale-[0.99]"
         >
-          <span className="text-2xl">🧠</span>
+          <span className="text-title">🧠</span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-black text-foreground">전략 회의실</span>
-            <span className="block text-xs text-muted-foreground">코치진 지시·운영 원칙 · 오늘 프로그램 · 수업 기록 · 드릴 영상</span>
+            <span className="block text-body font-black text-foreground">전략 회의실</span>
+            <span className="block text-label text-muted-foreground">코치진 지시·운영 원칙 · 오늘 프로그램 · 수업 기록 · 드릴 영상</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
@@ -808,10 +798,10 @@ const BranchManagerHome = () => {
             onClick={() => navigate("/messages?tab=broadcast")}
             className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left active:scale-[0.99]"
           >
-            <span className="text-2xl">📢</span>
+            <span className="text-title">📢</span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-black text-foreground">단체 메시지</span>
-              <span className="block text-xs text-muted-foreground">유효회원·전체·만료·PT 회원에게 DM 으로 한 번에</span>
+              <span className="block text-body font-black text-foreground">단체 메시지</span>
+              <span className="block text-label text-muted-foreground">유효회원·전체·만료·PT 회원에게 DM 으로 한 번에</span>
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -832,7 +822,7 @@ const BranchManagerHome = () => {
         <div data-manager-tabs className="mb-4 scroll-mt-4 flex gap-1.5 rounded-2xl border border-border bg-muted/30 p-1">
           <button
             onClick={() => setMainTab("members")}
-            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-body font-bold transition-all active:scale-95 ${
               mainTab === "members" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
@@ -841,21 +831,21 @@ const BranchManagerHome = () => {
           </button>
           <button
             onClick={() => setMainTab("inbox")}
-            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-body font-bold transition-all active:scale-95 ${
               mainTab === "inbox" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
             <Inbox className="h-4 w-4" />
             승인
             {stats?.pending_count && stats.pending_count > 0 ? (
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-status-pending px-1.5 text-[10px] font-bold text-white">
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-status-pending px-1.5 text-micro font-bold text-white">
                 {stats.pending_count}
               </span>
             ) : null}
           </button>
           <button
             onClick={() => setMainTab("level_review")}
-            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-body font-bold transition-all active:scale-95 ${
               mainTab === "level_review" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
@@ -863,7 +853,7 @@ const BranchManagerHome = () => {
           </button>
           <button
             onClick={() => setMainTab("operations")}
-            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-body font-bold transition-all active:scale-95 ${
               mainTab === "operations" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
@@ -871,7 +861,7 @@ const BranchManagerHome = () => {
           </button>
           <button
             onClick={() => setMainTab("at_risk")}
-            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl py-2.5 text-body font-bold transition-all active:scale-95 ${
               mainTab === "at_risk" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
             }`}
           >
@@ -907,8 +897,8 @@ const BranchManagerHome = () => {
           {/* Header */}
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">{isSuperAdmin ? "전체 지점" : branchName}</p>
-              <h1 className="text-xl text-foreground">{isSuperAdmin ? "전체 회원관리" : "회원관리"}</h1>
+              <p className="text-body text-muted-foreground">{isSuperAdmin ? "전체 지점" : branchName}</p>
+              <h1 className="text-heading text-foreground">{isSuperAdmin ? "전체 회원관리" : "회원관리"}</h1>
             </div>
             <div className="flex items-center gap-2">
               <ViewAsMemberButton />
@@ -945,10 +935,10 @@ const BranchManagerHome = () => {
             onClick={() => openTab("test153")}
             className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-left active:scale-[0.99]"
           >
-            <span className="text-2xl">⏱</span>
+            <span className="text-title">⏱</span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-black text-foreground">153 PB 측정</span>
-              <span className="block text-xs text-muted-foreground">셀트런 + 8종목 · 코치가 재는 공식 기록</span>
+              <span className="block text-body font-black text-foreground">153 PB 측정</span>
+              <span className="block text-label text-muted-foreground">셀트런 + 8종목 · 코치가 재는 공식 기록</span>
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -959,10 +949,10 @@ const BranchManagerHome = () => {
               onClick={() => navigate("/messages?tab=broadcast")}
               className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left active:scale-[0.99]"
             >
-              <span className="text-2xl">📢</span>
+              <span className="text-title">📢</span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-black text-foreground">유효회원 전체 메시지</span>
-                <span className="block text-xs text-muted-foreground">알림함·휴대폰 알림으로 한 번에 보내기</span>
+                <span className="block text-body font-black text-foreground">유효회원 전체 메시지</span>
+                <span className="block text-label text-muted-foreground">알림함·휴대폰 알림으로 한 번에 보내기</span>
               </span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -981,7 +971,7 @@ const BranchManagerHome = () => {
           <div data-manager-tabs className="mb-4 scroll-mt-4 flex gap-1.5 rounded-2xl border border-border bg-muted/30 p-1">
             <button
               onClick={() => setMainTab("members")}
-              className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold transition-all ${
+              className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-label font-bold transition-all ${
                 mainTab === "members" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
               }`}
             >
@@ -990,21 +980,21 @@ const BranchManagerHome = () => {
             </button>
             <button
               onClick={() => setMainTab("inbox")}
-              className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold transition-all ${
+              className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-label font-bold transition-all ${
                 mainTab === "inbox" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
               }`}
             >
               <Inbox className="h-3.5 w-3.5" />
               승인
               {stats?.pending_count && stats.pending_count > 0 ? (
-                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-status-pending px-1 text-[9px] font-bold text-white">
+                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-status-pending px-1 text-micro font-bold text-white">
                   {stats.pending_count}
                 </span>
               ) : null}
             </button>
             <button
               onClick={() => setMainTab("level_review")}
-              className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold transition-all ${
+              className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-label font-bold transition-all ${
                 mainTab === "level_review" ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground"
               }`}
             >
@@ -1044,10 +1034,10 @@ const BranchManagerHome = () => {
 const StatCard = ({ icon, label, value, highlight }: { icon: string; label: string; value: number | string; highlight?: boolean }) => (
   <div className={`rounded-2xl border p-3 ${highlight && typeof value === "number" && value > 0 ? "border-status-pending/30 bg-status-pending/5" : "border-border bg-card"}`}>
     <div className="flex items-center gap-2">
-      <span className="text-lg">{icon}</span>
+      <span className="text-heading">{icon}</span>
       <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className={`text-lg font-bold ${highlight && typeof value === "number" && value > 0 ? "text-status-pending" : "text-foreground"}`}>{value}</p>
+        <p className="text-label text-muted-foreground">{label}</p>
+        <p className={`text-heading font-bold ${highlight && typeof value === "number" && value > 0 ? "text-status-pending" : "text-foreground"}`}>{value}</p>
       </div>
     </div>
   </div>

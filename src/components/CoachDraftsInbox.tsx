@@ -210,12 +210,12 @@ const CoachDraftsInbox = () => {
   return (
     <section aria-label="오삼코치 오늘 메시지 검수" className="mb-5 rounded-2xl border border-primary/25 bg-primary/[0.04] p-4">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-bold text-foreground">🥊 오삼코치 오늘 메시지</h3>
-        <span className="shrink-0 text-[11px] text-muted-foreground">
+        <h3 className="text-body font-bold text-foreground">🥊 오삼코치 오늘 메시지</h3>
+        <span className="shrink-0 text-label text-muted-foreground">
           대기 {counts.ready} · 승인 {counts.approved} · 보냄 {counts.sent}
         </span>
       </div>
-      <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="mb-3 text-label leading-relaxed text-muted-foreground">
         승인한 것만 회원에게 가요. 오늘의 목표는 아침 8시(지났으면 5분 안에), 출석 칭찬은 그 회원이 출석할 때 출석 알림으로 가요.
         {!q.data?.enabled && " 지금은 오삼코치가 꺼져 있어요."}
         {/* 보낸 기록은 메시지 탭 '오삼코치' — 지점장·본사만 (2026-10-15) */}
@@ -232,7 +232,7 @@ const CoachDraftsInbox = () => {
           onClick={approveAll}
           disabled={!!busy}
           className={cn(
-            "mb-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl text-[13px] font-bold transition-transform active:scale-[0.98] disabled:opacity-60",
+            "mb-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl text-label font-bold transition-transform active:scale-[0.98] disabled:opacity-60",
             confirmAll ? "bg-status-pending text-white" : "bg-primary text-primary-foreground",
           )}
         >
@@ -248,7 +248,7 @@ const CoachDraftsInbox = () => {
           const canAct = it.status === "ready" || it.status === "approved";
           return (
             <div key={it.id} className={cn("rounded-xl border bg-card p-3", it.status === "ready" ? "border-border" : "border-border/60 opacity-90")}>
-              <div className="mb-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px]">
+              <div className="mb-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-micro">
                 <span className="rounded-full bg-secondary px-2 py-0.5 font-semibold text-foreground">{KIND[it.kind] ?? it.kind}</span>
                 <span className="font-semibold text-foreground">{it.member}</span>
                 {it.member_name && it.member_name !== it.member && <span className="text-muted-foreground">({it.member_name})</span>}
@@ -256,7 +256,7 @@ const CoachDraftsInbox = () => {
                 {it.state && STATE[it.state] && <span className="text-muted-foreground">· {STATE[it.state]}</span>}
                 <span
                   className={cn(
-                    "ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                    "ml-auto rounded-full px-1.5 py-0.5 text-micro font-bold",
                     it.source === "ai" ? "bg-primary/15 text-primary" : it.source === "edited" ? "bg-accent/20 text-foreground" : "bg-muted text-muted-foreground",
                   )}
                 >
@@ -268,7 +268,7 @@ const CoachDraftsInbox = () => {
                 <div className="space-y-1.5">
                   {(["title", "body", "detail"] as const).map((f) => (
                     <label key={f} className="block">
-                      <span className="flex justify-between text-[10.5px] text-muted-foreground">
+                      <span className="flex justify-between text-label text-muted-foreground">
                         <span>{f === "title" ? "알림 제목" : f === "body" ? "알림 본문" : "앱 문장 (내 카드)"}</span>
                         <span className={cn(chars(edit[f]) > LIMITS[f] && "font-bold text-destructive")}>
                           {chars(edit[f])}/{LIMITS[f]}
@@ -278,7 +278,7 @@ const CoachDraftsInbox = () => {
                         value={edit[f]}
                         rows={f === "title" ? 1 : 2}
                         onChange={(e) => setEdit({ ...edit, [f]: e.target.value })}
-                        className="mt-0.5 w-full resize-none rounded-lg border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground outline-none focus:border-primary"
+                        className="mt-0.5 w-full resize-none rounded-lg border border-border bg-background px-2.5 py-1.5 text-label text-foreground outline-none focus:border-primary"
                       />
                     </label>
                   ))}
@@ -287,14 +287,14 @@ const CoachDraftsInbox = () => {
                       type="button"
                       onClick={saveEdit}
                       disabled={busy === it.id}
-                      className="flex h-9 flex-1 items-center justify-center rounded-lg bg-primary text-[12.5px] font-bold text-primary-foreground active:scale-[0.98] disabled:opacity-60"
+                      className="flex h-9 flex-1 items-center justify-center rounded-lg bg-primary text-label font-bold text-primary-foreground active:scale-[0.98] disabled:opacity-60"
                     >
                       {busy === it.id ? "저장하는 중…" : "고쳐서 승인"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setEdit(null)}
-                      className="h-9 rounded-lg border border-border px-3 text-[12.5px] font-semibold text-muted-foreground active:bg-secondary"
+                      className="h-9 rounded-lg border border-border px-3 text-label font-semibold text-muted-foreground active:bg-secondary"
                     >
                       취소
                     </button>
@@ -302,18 +302,18 @@ const CoachDraftsInbox = () => {
                 </div>
               ) : (
                 <>
-                  <p className="text-[13.5px] font-bold leading-snug text-foreground">{it.title}</p>
-                  <p className="text-[13px] leading-snug text-foreground">{it.body}</p>
-                  <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">{it.detail}</p>
-                  {reason && <p className="mt-1 text-[11px] text-status-pending">AI 문구는 {reason} 기본 문구로 바꿨어요</p>}
+                  <p className="text-label font-bold leading-snug text-foreground">{it.title}</p>
+                  <p className="text-label leading-snug text-foreground">{it.body}</p>
+                  <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">{it.detail}</p>
+                  {reason && <p className="mt-1 text-micro text-status-pending">AI 문구는 {reason} 기본 문구로 바꿨어요</p>}
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <span className="mr-auto text-[11px] font-semibold text-muted-foreground">{statusLine(it)}</span>
+                    <span className="mr-auto text-label font-semibold text-muted-foreground">{statusLine(it)}</span>
                     {it.status === "ready" && (
                       <button
                         type="button"
                         onClick={() => act(it, "approve")}
                         disabled={!!busy}
-                        className="flex h-8 items-center gap-1 rounded-lg bg-primary px-2.5 text-[12px] font-bold text-primary-foreground active:scale-95 disabled:opacity-60"
+                        className="flex h-8 items-center gap-1 rounded-lg bg-primary px-2.5 text-label font-bold text-primary-foreground active:scale-95 disabled:opacity-60"
                       >
                         <Check className="h-3.5 w-3.5" /> 승인
                       </button>
@@ -323,7 +323,7 @@ const CoachDraftsInbox = () => {
                         type="button"
                         onClick={() => setEdit({ id: it.id, title: it.title, body: it.body, detail: it.detail })}
                         disabled={!!busy}
-                        className="flex h-8 items-center gap-1 rounded-lg border border-border px-2.5 text-[12px] font-semibold text-foreground active:bg-secondary disabled:opacity-60"
+                        className="flex h-8 items-center gap-1 rounded-lg border border-border px-2.5 text-label font-semibold text-foreground active:bg-secondary disabled:opacity-60"
                       >
                         <Pencil className="h-3.5 w-3.5" /> 고치기
                       </button>
@@ -333,7 +333,7 @@ const CoachDraftsInbox = () => {
                         type="button"
                         onClick={() => act(it, "fallback")}
                         disabled={!!busy}
-                        className="flex h-8 items-center gap-1 rounded-lg border border-border px-2.5 text-[12px] font-semibold text-foreground active:bg-secondary disabled:opacity-60"
+                        className="flex h-8 items-center gap-1 rounded-lg border border-border px-2.5 text-label font-semibold text-foreground active:bg-secondary disabled:opacity-60"
                       >
                         <RotateCcw className="h-3.5 w-3.5" /> 기본 문구로
                       </button>
@@ -343,7 +343,7 @@ const CoachDraftsInbox = () => {
                         type="button"
                         onClick={() => act(it, "unapprove")}
                         disabled={!!busy}
-                        className="h-8 rounded-lg px-2 text-[12px] font-semibold text-muted-foreground active:bg-secondary disabled:opacity-60"
+                        className="h-8 rounded-lg px-2 text-label font-semibold text-muted-foreground active:bg-secondary disabled:opacity-60"
                       >
                         승인 취소
                       </button>
@@ -353,7 +353,7 @@ const CoachDraftsInbox = () => {
                         type="button"
                         onClick={() => act(it, "skip")}
                         disabled={!!busy}
-                        className="flex h-8 items-center gap-1 rounded-lg px-2 text-[12px] font-semibold text-muted-foreground active:bg-secondary disabled:opacity-60"
+                        className="flex h-8 items-center gap-1 rounded-lg px-2 text-label font-semibold text-muted-foreground active:bg-secondary disabled:opacity-60"
                       >
                         <SkipForward className="h-3.5 w-3.5" /> 안 보내기
                       </button>
@@ -370,7 +370,7 @@ const CoachDraftsInbox = () => {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-lg text-[12.5px] font-semibold text-muted-foreground active:bg-secondary"
+          className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-lg text-label font-semibold text-muted-foreground active:bg-secondary"
         >
           {open ? (
             <>

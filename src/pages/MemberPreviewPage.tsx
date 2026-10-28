@@ -199,13 +199,13 @@ const MemberPreviewPage = () => {
                 <ArrowLeft className="h-4 w-4 text-primary-foreground" />
               </button>
               <div>
-                <p className="text-xs text-primary-foreground/60">회원 앱 미리보기</p>
-                <p className="text-sm font-bold text-primary-foreground">{p.nickname || p.name}</p>
+                <p className="text-label text-primary-foreground/60">회원 앱 미리보기</p>
+                <p className="text-body font-bold text-primary-foreground">{p.nickname || p.name}</p>
               </div>
             </div>
             {isStaffProfile(p) ? (
               // 지도진(코치님)은 챔피언 · Lv.77 (화면 전용)
-              <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] font-black text-yellow-300">{staffChampionLine(p)}</span>
+              <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-micro font-black text-yellow-300">{staffChampionLine(p)}</span>
             ) : (
               <RankBadge rank={prog.current_rank as Enums<"rank_name">} level={prog.current_level} size="sm" />
             )}
@@ -215,7 +215,7 @@ const MemberPreviewPage = () => {
             {pendingSubs.length > 0 && (
               <button
                 onClick={() => { setActiveTab("missions"); }}
-                className="shrink-0 rounded-full bg-status-pending/20 px-2.5 py-1 text-[10px] font-bold text-status-pending"
+                className="shrink-0 rounded-full bg-status-pending/20 px-2.5 py-1 text-micro font-bold text-status-pending"
               >
                 ⏳ 승인대기 {pendingSubs.length}건
               </button>
@@ -223,7 +223,7 @@ const MemberPreviewPage = () => {
             <button
               onClick={() => levelUpMut.mutate()}
               disabled={levelUpMut.isPending || prog.current_level >= 10}
-              className="shrink-0 rounded-full bg-status-complete/20 px-2.5 py-1 text-[10px] font-bold text-status-complete disabled:opacity-40"
+              className="shrink-0 rounded-full bg-status-complete/20 px-2.5 py-1 text-micro font-bold text-status-complete disabled:opacity-40"
             >
               <ChevronUp className="inline h-3 w-3" /> 레벨 완료
             </button>
@@ -231,14 +231,14 @@ const MemberPreviewPage = () => {
               <button
                 onClick={() => bossBattleMut.mutate()}
                 disabled={bossBattleMut.isPending}
-                className="shrink-0 rounded-full bg-reward/20 px-2.5 py-1 text-[10px] font-bold text-reward disabled:opacity-40"
+                className="shrink-0 rounded-full bg-reward/20 px-2.5 py-1 text-micro font-bold text-reward disabled:opacity-40"
               >
                 🏆 보스전 합격
               </button>
             )}
             <button
               onClick={() => setActiveTab("levelmap")}
-              className="shrink-0 rounded-full bg-primary/20 px-2.5 py-1 text-[10px] font-bold text-primary"
+              className="shrink-0 rounded-full bg-primary/20 px-2.5 py-1 text-micro font-bold text-primary"
             >
               🗺️ 로드맵 체크
             </button>
@@ -254,7 +254,7 @@ const MemberPreviewPage = () => {
             {/* Member info card */}
             <div className="rounded-2xl border border-border bg-card p-5 shadow-elev-1">
               <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-title">
                   {p.avatar_url ? (
                     <img src={p.avatar_url} alt="" className="h-16 w-16 rounded-full object-cover" />
                   ) : (
@@ -262,15 +262,15 @@ const MemberPreviewPage = () => {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-bold text-foreground">{p.nickname || p.name}</h2>
-                  <p className="text-sm text-muted-foreground">{formatRank(prog.current_rank, prog.current_level)}</p>
+                  <h2 className="text-heading font-bold text-foreground">{p.nickname || p.name}</h2>
+                  <p className="text-body text-muted-foreground">{formatRank(prog.current_rank, prog.current_level)}</p>
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-4 gap-2 text-center">
-                <div><p className="text-xs text-muted-foreground">총 XP</p><p className="text-sm font-bold text-foreground">{prog.total_xp}</p></div>
-                <div><p className="text-xs text-muted-foreground">출석</p><p className="text-sm font-bold text-foreground">{prog.streak_days}일</p></div>
-                <div><p className="text-xs text-muted-foreground">진행</p><p className="text-sm font-bold text-foreground">{globalLevel}/40</p></div>
-                <div><p className="text-xs text-muted-foreground">보스전</p><p className="text-sm font-bold text-foreground">{prog.bosses_cleared}회</p></div>
+                <div><p className="text-label text-muted-foreground">총 XP</p><p className="text-body font-bold text-foreground">{prog.total_xp}</p></div>
+                <div><p className="text-label text-muted-foreground">출석</p><p className="text-body font-bold text-foreground">{prog.streak_days}일</p></div>
+                <div><p className="text-label text-muted-foreground">진행</p><p className="text-body font-bold text-foreground">{globalLevel}/40</p></div>
+                <div><p className="text-label text-muted-foreground">보스전</p><p className="text-body font-bold text-foreground">{prog.bosses_cleared}회</p></div>
               </div>
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-xp-bg">
                 <div className="h-full rounded-full bg-xp-bar transition-all" style={{ width: `${(globalLevel / 40) * 100}%` }} />
@@ -279,12 +279,12 @@ const MemberPreviewPage = () => {
 
             {/* Recent missions */}
             <div>
-              <h3 className="mb-2 text-sm font-bold text-foreground">최근 미션 제출</h3>
+              <h3 className="mb-2 text-body font-bold text-foreground">최근 미션 제출</h3>
               {(missionSubs || []).slice(0, 5).map(sub => (
                 <div key={sub.id} className="mb-2 rounded-xl border border-border bg-card p-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-foreground">{sub.missions?.title || "미션"}</p>
-                    <span className={`text-xs font-bold ${
+                    <p className="text-body font-medium text-foreground">{sub.missions?.title || "미션"}</p>
+                    <span className={`text-label font-bold ${
                       sub.status === "approved" ? "text-status-complete" :
                       sub.status === "pending" ? "text-status-pending" :
                       sub.status === "rejected" ? "text-destructive" : "text-muted-foreground"
@@ -296,7 +296,7 @@ const MemberPreviewPage = () => {
                 </div>
               ))}
               {(!missionSubs || missionSubs.length === 0) && (
-                <p className="text-sm text-muted-foreground text-center py-4">제출된 미션이 없습니다</p>
+                <p className="text-body text-muted-foreground text-center py-4">제출된 미션이 없습니다</p>
               )}
             </div>
           </div>
@@ -305,13 +305,13 @@ const MemberPreviewPage = () => {
         {/* ── Missions Tab ── */}
         {activeTab === "missions" && (
           <div className="space-y-3">
-            <h2 className="text-lg font-bold text-foreground">미션 현황</h2>
+            <h2 className="text-heading font-bold text-foreground">미션 현황</h2>
             {(missionSubs || []).map(sub => (
               <div key={sub.id} className={`rounded-2xl border p-4 ${
                 sub.status === "pending" ? "border-status-pending/30 bg-status-pending/5" : "border-border bg-card"
               }`}>
-                <p className="text-sm font-bold text-foreground">{sub.missions?.title || "미션"}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="text-body font-bold text-foreground">{sub.missions?.title || "미션"}</p>
+                <p className="mt-1 text-label text-muted-foreground">
                   {new Date(sub.requested_at).toLocaleDateString("ko-KR")}
                   {sub.coach_note && <span className="ml-2 italic">💬 {sub.coach_note}</span>}
                 </p>
@@ -321,19 +321,19 @@ const MemberPreviewPage = () => {
                       value={actionNote}
                       onChange={e => setActionNote(e.target.value)}
                       placeholder="코멘트 (선택)"
-                      className="w-full rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground"
+                      className="w-full rounded-lg border border-border bg-card px-3 py-2 text-label text-foreground placeholder:text-muted-foreground"
                     />
                     <div className="flex gap-2">
                       <button onClick={() => approveMission.mutate(sub.id)} disabled={approveMission.isPending}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-status-complete py-2 text-xs font-bold text-primary-foreground active:scale-95 disabled:opacity-50">
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-status-complete py-2 text-label font-bold text-primary-foreground active:scale-95 disabled:opacity-50">
                         <Check className="h-3 w-3" /> 승인
                       </button>
                       <button onClick={() => revisionMission.mutate(sub.id)} disabled={revisionMission.isPending}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-xs font-bold text-white active:scale-95 disabled:opacity-50">
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-label font-bold text-white active:scale-95 disabled:opacity-50">
                         <Pencil className="h-3 w-3" /> 수정
                       </button>
                       <button onClick={() => rejectMission.mutate(sub.id)} disabled={rejectMission.isPending}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-destructive py-2 text-xs font-bold text-destructive-foreground active:scale-95 disabled:opacity-50">
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-destructive py-2 text-label font-bold text-destructive-foreground active:scale-95 disabled:opacity-50">
                         <X className="h-3 w-3" /> 반려
                       </button>
                     </div>
@@ -347,10 +347,10 @@ const MemberPreviewPage = () => {
         {/* ── Level Map Tab ── */}
         {activeTab === "levelmap" && (
           <div className="space-y-5">
-            <h2 className="text-lg font-bold text-foreground">🗺️ 로드맵 (회원 시점)</h2>
+            <h2 className="text-heading font-bold text-foreground">🗺️ 로드맵 (회원 시점)</h2>
             {RANK_ORDER_ARR.map((rank, ri) => (
               <div key={rank}>
-                <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-foreground">
+                <h3 className="mb-2 flex items-center gap-2 text-body font-bold text-foreground">
                   <span>{RANK_ICONS[rank]}</span> {RANK_LABELS[rank]} 리그
                 </h3>
                 <div className="grid grid-cols-5 gap-1.5">
@@ -369,8 +369,8 @@ const MemberPreviewPage = () => {
                           isCurrent ? "border-primary bg-primary/10 ring-2 ring-primary/30" : STATUS_COLORS[status] || ""
                         }`}
                       >
-                        <span className="text-[10px] font-bold text-foreground">{gLvl}</span>
-                        <span className="text-[10px]">{STATUS_EMOJI[status] || "🔒"}</span>
+                        <span className="text-micro font-bold text-foreground">{gLvl}</span>
+                        <span className="text-micro">{STATUS_EMOJI[status] || "🔒"}</span>
                       </button>
                     );
                   })}
@@ -388,11 +388,11 @@ const MemberPreviewPage = () => {
         {/* ── Rewards Tab ── */}
         {activeTab === "rewards" && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-foreground">🎁 보상 현황</h2>
+            <h2 className="text-heading font-bold text-foreground">🎁 보상 현황</h2>
             <div className="rounded-2xl border border-border bg-card p-4">
-              <p className="text-sm text-muted-foreground">총 XP: <span className="font-bold text-foreground">{prog.total_xp}</span></p>
-              <p className="text-sm text-muted-foreground">보스전 클리어: <span className="font-bold text-foreground">{prog.bosses_cleared}회</span></p>
-              <p className="text-sm text-muted-foreground">현재 랭크: <span className="font-bold text-foreground">{formatRank(prog.current_rank, prog.current_level)}</span></p>
+              <p className="text-body text-muted-foreground">총 XP: <span className="font-bold text-foreground">{prog.total_xp}</span></p>
+              <p className="text-body text-muted-foreground">보스전 클리어: <span className="font-bold text-foreground">{prog.bosses_cleared}회</span></p>
+              <p className="text-body text-muted-foreground">현재 랭크: <span className="font-bold text-foreground">{formatRank(prog.current_rank, prog.current_level)}</span></p>
             </div>
           </div>
         )}
@@ -405,7 +405,7 @@ const MemberPreviewPage = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-3 text-[10px] font-medium transition-colors ${
+              className={`flex flex-1 flex-col items-center gap-0.5 py-3 text-micro font-medium transition-colors ${
                 activeTab === tab.key ? "text-primary" : "text-muted-foreground"
               }`}
             >

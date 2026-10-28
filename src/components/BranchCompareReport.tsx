@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAllRows, inChunks } from "@/lib/supabasePaging";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { TrendingUp, Users, Trophy, Zap } from "lucide-react";
+import { shortBranch } from "@/lib/dmPeople";
 
 interface BranchStat {
   branch_name: string;
@@ -73,14 +74,15 @@ const BranchCompareReport = () => {
   if (!stats?.length) {
     return (
       <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-        <span className="text-3xl">📊</span>
-        <p className="mt-2 text-sm text-muted-foreground">지점 데이터가 없습니다</p>
+        <span className="text-title">📊</span>
+        <p className="mt-2 text-body text-muted-foreground">지점 데이터가 없습니다</p>
       </div>
     );
   }
 
   const chartData = stats.map((s, i) => ({
-    name: s.branch_name.length > 6 ? s.branch_name.slice(0, 6) + "…" : s.branch_name,
+    // 그래프 눈금은 지점 이름만 ('153복싱짐 선릉역점' → '선릉역점' — 예전엔 '153복싱짐…'만 보였다, 2026-10-28)
+    name: shortBranch(s.branch_name) || s.branch_name,
     회원수: s.total_members,
     주간XP: s.weekly_xp,
     평균레벨: s.avg_level,
@@ -94,26 +96,26 @@ const BranchCompareReport = () => {
         <div className="rounded-2xl border border-border bg-card p-3">
           <div className="flex items-center gap-2 mb-1">
             <Users className="h-4 w-4 text-primary" />
-            <span className="text-xs text-muted-foreground">전체 회원</span>
+            <span className="text-label text-muted-foreground">전체 회원</span>
           </div>
-          <p className="text-xl font-bold text-foreground">{stats.reduce((s, b) => s + b.total_members, 0)}</p>
+          <p className="text-heading font-bold text-foreground">{stats.reduce((s, b) => s + b.total_members, 0)}</p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-3">
           <div className="flex items-center gap-2 mb-1">
             <Zap className="h-4 w-4 text-primary" />
-            <span className="text-xs text-muted-foreground">주간 총 XP</span>
+            <span className="text-label text-muted-foreground">주간 총 XP</span>
           </div>
-          <p className="text-xl font-bold text-foreground">{stats.reduce((s, b) => s + b.weekly_xp, 0).toLocaleString()}</p>
+          <p className="text-heading font-bold text-foreground">{stats.reduce((s, b) => s + b.weekly_xp, 0).toLocaleString()}</p>
         </div>
       </div>
 
       {/* Chart: Members per branch */}
       <div className="rounded-2xl border border-border bg-card p-4">
-        <p className="mb-3 text-sm font-bold text-foreground">지점별 회원 수</p>
+        <p className="mb-3 text-body font-bold text-foreground">지점별 회원 수</p>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={chartData}>
-            <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-            <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+            <XAxis dataKey="name" tick={{ fontSize: 13, fill: "hsl(var(--muted-foreground))" }} />
+            <YAxis tick={{ fontSize: 13, fill: "hsl(var(--muted-foreground))" }} />
             <Tooltip />
             <Bar dataKey="회원수" radius={[6, 6, 0, 0]}>
               {chartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
@@ -124,11 +126,11 @@ const BranchCompareReport = () => {
 
       {/* Chart: Weekly XP per branch */}
       <div className="rounded-2xl border border-border bg-card p-4">
-        <p className="mb-3 text-sm font-bold text-foreground">지점별 주간 XP</p>
+        <p className="mb-3 text-body font-bold text-foreground">지점별 주간 XP</p>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={chartData}>
-            <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-            <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+            <XAxis dataKey="name" tick={{ fontSize: 13, fill: "hsl(var(--muted-foreground))" }} />
+            <YAxis tick={{ fontSize: 13, fill: "hsl(var(--muted-foreground))" }} />
             <Tooltip />
             <Bar dataKey="주간XP" radius={[6, 6, 0, 0]}>
               {chartData.map((_, i) => <Cell key={i} fill={COLORS[(i + 2) % COLORS.length]} />)}
@@ -142,29 +144,29 @@ const BranchCompareReport = () => {
         {stats.map(s => (
           <div key={s.branch_name} className="rounded-2xl border border-border bg-card p-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-bold text-foreground">{s.branch_name}</p>
+              <p className="text-body font-bold text-foreground">{s.branch_name}</p>
               {s.pending_count > 0 && (
-                <span className="rounded-full bg-status-pending/20 px-2 py-0.5 text-[10px] font-bold text-status-pending">
+                <span className="rounded-full bg-status-pending/20 px-2 py-0.5 text-micro font-bold text-status-pending">
                   {s.pending_count}건 대기
                 </span>
               )}
             </div>
             <div className="grid grid-cols-4 gap-2 text-center">
               <div>
-                <p className="text-lg font-bold text-foreground">{s.total_members}</p>
-                <p className="text-[9px] text-muted-foreground">회원</p>
+                <p className="text-heading font-bold text-foreground">{s.total_members}</p>
+                <p className="text-label text-muted-foreground">회원</p>
               </div>
               <div>
-                <p className="text-lg font-bold text-status-complete">{s.active_members}</p>
-                <p className="text-[9px] text-muted-foreground">활동중</p>
+                <p className="text-heading font-bold text-status-complete">{s.active_members}</p>
+                <p className="text-label text-muted-foreground">활동중</p>
               </div>
               <div>
-                <p className="text-lg font-bold text-primary">{s.weekly_xp}</p>
-                <p className="text-[9px] text-muted-foreground">주간 XP</p>
+                <p className="text-heading font-bold text-primary">{s.weekly_xp}</p>
+                <p className="text-label text-muted-foreground">주간 XP</p>
               </div>
               <div>
-                <p className="text-lg font-bold text-rank-blue">{s.avg_level}</p>
-                <p className="text-[9px] text-muted-foreground">평균 Lv</p>
+                <p className="text-heading font-bold text-rank-blue">{s.avg_level}</p>
+                <p className="text-label text-muted-foreground">평균 Lv</p>
               </div>
             </div>
           </div>

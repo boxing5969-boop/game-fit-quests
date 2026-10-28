@@ -99,28 +99,28 @@ const MileageSettingsCard = () => {
 
   return (
     <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.145s" }}>
-      <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-foreground">
+      <h2 className="mb-1 flex items-center gap-2 text-body font-bold text-foreground">
         <Coins className="h-4 w-4 text-reward" /> 마일리지 적립 규칙
       </h2>
-      <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mb-3 text-label leading-relaxed text-muted-foreground">
         회원 앱 MY복서의 마일리지 카드에 쌓여요. 지도진·관리자 계정은 적립되지 않아요.
         금액을 바꾸면 그 다음 적립부터 적용되고, 껐다가 다시 켜면 켠 시각부터 적립돼요(소급 없음).
       </p>
 
-      <div className="mb-3 rounded-xl border border-reward/30 bg-reward/10 px-3 py-2 text-[12px] font-bold text-foreground">
+      <div className="mb-3 rounded-xl border border-reward/30 bg-reward/10 px-3 py-2 text-label font-bold text-foreground">
         {statusLine}
       </div>
 
       <div className="mb-3 flex items-center justify-between rounded-xl border border-border px-3 py-2.5">
-        <Label htmlFor="mileage-enabled" className="text-sm font-bold text-foreground">마일리지 적립 사용</Label>
+        <Label htmlFor="mileage-enabled" className="text-body font-bold text-foreground">마일리지 적립 사용</Label>
         <Switch id="mileage-enabled" checked={enabled} onCheckedChange={setEnabled} disabled={!rules} />
       </div>
 
       <div className="space-y-3">
         {FIELDS.map(({ key, label, hint }) => (
           <div key={key} className="space-y-1.5">
-            <Label htmlFor={`mileage-${key}`} className="text-sm text-muted-foreground">
-              {label} <span className="text-[11px]">· {hint}</span>
+            <Label htmlFor={`mileage-${key}`} className="text-body text-muted-foreground">
+              {label} <span className="text-micro">· {hint}</span>
             </Label>
             <Input
               id={`mileage-${key}`}
@@ -138,7 +138,7 @@ const MileageSettingsCard = () => {
         ))}
       </div>
 
-      <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+      <p className="mt-3 text-label leading-relaxed text-muted-foreground">
         브로제이(데스크) 마일리지로 자동 이전은 아직 안 돼요 — 브로제이 공개 API에 마일리지 적립 기능이 없어서예요.
         적립 내역은 모두 보관하고 있어서, 기능이 생기면 그대로 옮길 수 있어요.
       </p>
@@ -147,7 +147,7 @@ const MileageSettingsCard = () => {
         type="button"
         onClick={onSave}
         disabled={save.isPending || !dirty}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
       >
         <Save className="h-4 w-4" />
         {save.isPending ? "저장 중..." : dirty ? "마일리지 규칙 저장" : "저장됨"}

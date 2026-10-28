@@ -105,14 +105,14 @@ const UseRow = ({ icon: Icon, label, value, end, today }: { icon: typeof Ticket;
       <div className="flex min-w-0 items-center gap-2.5">
         <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
         <div className="min-w-0">
-          <p className="text-[13px] font-bold text-foreground">
+          <p className="text-label font-bold text-foreground">
             {label}
             {value ? <span className="ml-1.5 font-semibold text-muted-foreground">{value}</span> : null}
           </p>
-          <p className="text-[12px] text-muted-foreground">{end ? `${dot(end)}까지` : "끝나는 날 없음"}</p>
+          <p className="text-label text-muted-foreground">{end ? `${dot(end)}까지` : "끝나는 날 없음"}</p>
         </div>
       </div>
-      {left != null && <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-black tabular-nums", stateCls(st))}>{leftText(left)}</span>}
+      {left != null && <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-micro font-black tabular-nums", stateCls(st))}>{leftText(left)}</span>}
     </div>
   );
 };
@@ -120,10 +120,10 @@ const UseRow = ({ icon: Icon, label, value, end, today }: { icon: typeof Ticket;
 const Section = ({ icon: Icon, title, note, children }: { icon: typeof Ticket; title: string; note?: string | null; children: ReactNode }) => (
   <section className="rounded-2xl border border-border bg-card">
     <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
-      <p className="flex items-center gap-1.5 text-[13px] font-black text-foreground">
+      <p className="flex items-center gap-1.5 text-label font-black text-foreground">
         <Icon className="h-4 w-4 text-primary" aria-hidden /> {title}
       </p>
-      {note ? <span className="min-w-0 truncate text-[11px] text-muted-foreground">{note}</span> : null}
+      {note ? <span className="min-w-0 truncate text-label text-muted-foreground">{note}</span> : null}
     </div>
     {children}
   </section>
@@ -222,7 +222,7 @@ const MemberPassPanel = ({ profile }: { profile: MemberProfile }) => {
       <Section icon={Ticket} title="지금 이용 중" note={profile.branch_name ?? null}>
         <div className="divide-y divide-border">
           {profile.is_staff ? (
-            <p className="px-4 py-3 text-[13px] text-muted-foreground">지도진 계정 — 무제한</p>
+            <p className="px-4 py-3 text-label text-muted-foreground">지도진 계정 — 무제한</p>
           ) : (
             <UseRow icon={Ticket} label="수강권" end={profile.membership_end ?? null} today={today} />
           )}
@@ -230,13 +230,13 @@ const MemberPassPanel = ({ profile }: { profile: MemberProfile }) => {
           <UseRow icon={Shirt} label="운동복" end={profile.sportswear_end ?? null} today={today} />
           {(ptLine || ptEnd) && (
             <div className="flex items-center justify-between gap-3 px-4 py-3">
-              <p className="text-[13px] font-bold text-foreground">
+              <p className="text-label font-bold text-foreground">
                 PT <span className="ml-1.5 font-semibold text-muted-foreground">{ptLine ?? "-"}</span>
               </p>
-              {ptEnd && <span className="shrink-0 text-[12px] text-muted-foreground">기한 {dot(ptEnd)}</span>}
+              {ptEnd && <span className="shrink-0 text-label text-muted-foreground">기한 {dot(ptEnd)}</span>}
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-[12px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-label text-muted-foreground">
             {profile.gym_reg_date && <span>등록 {dot(profile.gym_reg_date)}</span>}
             {profile.payment_total != null && profile.payment_total > 0 && <span>누적 결제(수강권) {won(profile.payment_total)}</span>}
           </div>
@@ -244,47 +244,47 @@ const MemberPassPanel = ({ profile }: { profile: MemberProfile }) => {
 
         {edit ? (
           <div className="space-y-2.5 border-t border-border px-4 py-3">
-            <label className="block text-[12px] font-bold text-muted-foreground">
+            <label className="block text-label font-bold text-muted-foreground">
               락카 번호
               <input
                 value={edit.label}
                 onChange={(e) => setEdit({ ...edit, label: e.target.value })}
                 placeholder="예: 12 · 개인락카 / 12 (비우면 지움)"
                 maxLength={40}
-                className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-body font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
             </label>
             <div className="grid grid-cols-2 gap-2">
-              <label className="block text-[12px] font-bold text-muted-foreground">
+              <label className="block text-label font-bold text-muted-foreground">
                 락카 끝나는 날
                 <input
                   type="date"
                   value={edit.lockerEnd}
                   onChange={(e) => setEdit({ ...edit, lockerEnd: e.target.value })}
-                  className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                  className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-2 text-body text-foreground focus:border-primary focus:outline-none"
                 />
               </label>
-              <label className="block text-[12px] font-bold text-muted-foreground">
+              <label className="block text-label font-bold text-muted-foreground">
                 운동복 끝나는 날
                 <input
                   type="date"
                   value={edit.swEnd}
                   onChange={(e) => setEdit({ ...edit, swEnd: e.target.value })}
-                  className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                  className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-2 text-body text-foreground focus:border-primary focus:outline-none"
                 />
               </label>
             </div>
-            <p className="text-[11px] leading-relaxed text-muted-foreground">날짜를 비우면 '끝나는 날 없음'이 돼요. 앱에서 결제하면 끝나는 날은 저절로 늘어나요.</p>
+            <p className="text-label leading-relaxed text-muted-foreground">날짜를 비우면 '끝나는 날 없음'이 돼요. 앱에서 결제하면 끝나는 날은 저절로 늘어나요.</p>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => save.mutate(edit)}
                 disabled={save.isPending}
-                className="h-10 flex-1 rounded-lg bg-primary text-sm font-bold text-primary-foreground active:scale-[0.98] disabled:opacity-50"
+                className="h-10 flex-1 rounded-lg bg-primary text-body font-bold text-primary-foreground active:scale-[0.98] disabled:opacity-50"
               >
                 {save.isPending ? "저장 중…" : "저장"}
               </button>
-              <button type="button" onClick={() => setEdit(null)} className="h-10 rounded-lg bg-muted px-4 text-sm font-bold text-muted-foreground active:scale-95">
+              <button type="button" onClick={() => setEdit(null)} className="h-10 rounded-lg bg-muted px-4 text-body font-bold text-muted-foreground active:scale-95">
                 취소
               </button>
             </div>
@@ -293,7 +293,7 @@ const MemberPassPanel = ({ profile }: { profile: MemberProfile }) => {
           <button
             type="button"
             onClick={() => setEdit({ label: profile.locker_label ?? "", lockerEnd: profile.locker_end ?? "", swEnd: profile.sportswear_end ?? "" })}
-            className="flex h-10 w-full items-center justify-center gap-1.5 border-t border-border text-[13px] font-bold text-primary active:bg-muted/40"
+            className="flex h-10 w-full items-center justify-center gap-1.5 border-t border-border text-label font-bold text-primary active:bg-muted/40"
           >
             <Pencil className="h-3.5 w-3.5" /> 락카 · 운동복 고치기
           </button>
@@ -303,33 +303,33 @@ const MemberPassPanel = ({ profile }: { profile: MemberProfile }) => {
       {/* 앱 결제 */}
       <Section icon={Receipt} title="앱 결제" note={unpaidLinks > 0 ? `링크만 만들고 안 낸 것 ${unpaidLinks}건` : null}>
         {orders.isLoading ? (
-          <p className="px-4 py-3 text-[13px] text-muted-foreground">불러오는 중…</p>
+          <p className="px-4 py-3 text-label text-muted-foreground">불러오는 중…</p>
         ) : orders.isError ? (
-          <p className="px-4 py-3 text-[13px] text-destructive">앱 결제를 불러오지 못했어요</p>
+          <p className="px-4 py-3 text-label text-destructive">앱 결제를 불러오지 못했어요</p>
         ) : ordersShown.length === 0 ? (
-          <p className="px-4 py-3 text-[13px] text-muted-foreground">앱으로 결제한 기록이 없어요</p>
+          <p className="px-4 py-3 text-label text-muted-foreground">앱으로 결제한 기록이 없어요</p>
         ) : (
           <div className="divide-y divide-border">
             {ordersShown.map((o) => (
               <div key={o.id} className="px-4 py-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[12px] text-muted-foreground">
+                    <p className="text-label text-muted-foreground">
                       {dot(kstDay(o.paid_at ?? o.created_at))}
-                      <span className={cn("ml-1.5 rounded px-1.5 py-0.5 text-[10.5px] font-bold", o.status === "paid" ? "bg-status-complete/15 text-status-complete" : "bg-destructive/15 text-destructive")}>
+                      <span className={cn("ml-1.5 rounded px-1.5 py-0.5 text-micro font-bold", o.status === "paid" ? "bg-status-complete/15 text-status-complete" : "bg-destructive/15 text-destructive")}>
                         {o.status === "paid" ? "결제 완료" : "취소"}
                       </span>
                     </p>
-                    <p className="mt-0.5 text-[13.5px] font-bold text-foreground">{o.product_name ?? "-"}</p>
+                    <p className="mt-0.5 text-label font-bold text-foreground">{o.product_name ?? "-"}</p>
                   </div>
-                  <span className={cn("shrink-0 text-[13.5px] font-black tabular-nums", o.status === "paid" ? "text-foreground" : "text-muted-foreground line-through")}>
+                  <span className={cn("shrink-0 text-label font-black tabular-nums", o.status === "paid" ? "text-foreground" : "text-muted-foreground line-through")}>
                     {won(o.amount ?? 0)}
                   </span>
                 </div>
                 {o.items.length > 0 && (
                   <ul className="mt-1.5 space-y-0.5">
                     {o.items.map((i, n) => (
-                      <li key={n} className="flex items-center justify-between gap-3 text-[12px] text-muted-foreground">
+                      <li key={n} className="flex items-center justify-between gap-3 text-label text-muted-foreground">
                         <span className="min-w-0 truncate">
                           {i.product_name}
                           {i.start_date && i.end_date ? ` · ${shortDay(i.start_date)}~${shortDay(i.end_date)}` : ""}
@@ -339,7 +339,7 @@ const MemberPassPanel = ({ profile }: { profile: MemberProfile }) => {
                       </li>
                     ))}
                     {(o.mileage_used ?? 0) > 0 && (
-                      <li className="flex items-center justify-between gap-3 text-[12px] text-muted-foreground">
+                      <li className="flex items-center justify-between gap-3 text-label text-muted-foreground">
                         <span>마일리지</span>
                         <span className="shrink-0 tabular-nums">-{(o.mileage_used ?? 0).toLocaleString("ko-KR")}점</span>
                       </li>
@@ -359,20 +359,20 @@ const MemberPassPanel = ({ profile }: { profile: MemberProfile }) => {
         note={m?.synced_at ? `${m.synced_at} 기준` : null}
       >
         {sales.isLoading ? (
-          <p className="px-4 py-3 text-[13px] text-muted-foreground">불러오는 중…</p>
+          <p className="px-4 py-3 text-label text-muted-foreground">불러오는 중…</p>
         ) : sales.isError ? (
-          <p className="px-4 py-3 text-[13px] text-destructive">매출 기록을 불러오지 못했어요</p>
+          <p className="px-4 py-3 text-label text-destructive">매출 기록을 불러오지 못했어요</p>
         ) : (
           <>
             {m?.by && m.by !== "none" && (
-              <p className="border-b border-border px-4 py-2 text-[11.5px] leading-relaxed text-muted-foreground">
+              <p className="border-b border-border px-4 py-2 text-micro leading-relaxed text-muted-foreground">
                 {m.src === "dagym"
                   ? "다짐 회원 번호(전화번호)로 찾았어요"
                   : `같은 지점 · 같은 이름(${m.name ?? "-"})으로 찾았어요${(m.same_name ?? 0) > 1 ? ` — 같은 이름 회원이 ${m.same_name}명이라 다른 분 기록이 섞일 수 있어요` : ""}`}
               </p>
             )}
             {salesRows.length === 0 ? (
-              <p className="px-4 py-3 text-[13px] text-muted-foreground">기록이 없어요</p>
+              <p className="px-4 py-3 text-label text-muted-foreground">기록이 없어요</p>
             ) : (
               <div className="divide-y divide-border">
                 {salesRows.map((s, n) => {
@@ -384,16 +384,16 @@ const MemberPassPanel = ({ profile }: { profile: MemberProfile }) => {
                   return (
                     <div key={n} className="flex items-start justify-between gap-3 px-4 py-2.5">
                       <div className="min-w-0">
-                        <p className="text-[12px] text-muted-foreground">
+                        <p className="text-label text-muted-foreground">
                           {dot(s.day)}
                           {cat ? ` · ${cat}` : ""}
                           {tag ? ` · ${tag}` : ""}
                           {refund ? " · 환불" : ""}
                           {s.method ? ` · ${s.method}` : ""}
                         </p>
-                        <p className="text-[13px] font-bold text-foreground">{s.product || "-"}</p>
+                        <p className="text-label font-bold text-foreground">{s.product || "-"}</p>
                       </div>
-                      <span className={cn("shrink-0 text-[13px] font-black tabular-nums", refund ? "text-destructive" : "text-foreground")}>{won(s.amount)}</span>
+                      <span className={cn("shrink-0 text-label font-black tabular-nums", refund ? "text-destructive" : "text-foreground")}>{won(s.amount)}</span>
                     </div>
                   );
                 })}
@@ -406,22 +406,22 @@ const MemberPassPanel = ({ profile }: { profile: MemberProfile }) => {
       {/* 출석 */}
       <Section icon={CalendarCheck} title="출석">
         {att.isLoading ? (
-          <p className="px-4 py-3 text-[13px] text-muted-foreground">불러오는 중…</p>
+          <p className="px-4 py-3 text-label text-muted-foreground">불러오는 중…</p>
         ) : att.isError || !att.data ? (
-          <p className="px-4 py-3 text-[13px] text-muted-foreground">출석 기록을 불러오지 못했어요</p>
+          <p className="px-4 py-3 text-label text-muted-foreground">출석 기록을 불러오지 못했어요</p>
         ) : (
           <div className="grid grid-cols-3 gap-2 px-4 py-3 text-center">
             <div>
-              <p className="text-[11px] text-muted-foreground">이번 달</p>
-              <p className="text-base font-black tabular-nums text-foreground">{att.data.month}회</p>
+              <p className="text-label text-muted-foreground">이번 달</p>
+              <p className="text-body font-black tabular-nums text-foreground">{att.data.month}회</p>
             </div>
             <div>
-              <p className="text-[11px] text-muted-foreground">지난달</p>
-              <p className="text-base font-black tabular-nums text-foreground">{att.data.lastMonth}회</p>
+              <p className="text-label text-muted-foreground">지난달</p>
+              <p className="text-body font-black tabular-nums text-foreground">{att.data.lastMonth}회</p>
             </div>
             <div>
-              <p className="text-[11px] text-muted-foreground">마지막 출석</p>
-              <p className="text-[13px] font-black tabular-nums text-foreground">{att.data.lastDay ? dot(att.data.lastDay) : "-"}</p>
+              <p className="text-label text-muted-foreground">마지막 출석</p>
+              <p className="text-label font-black tabular-nums text-foreground">{att.data.lastDay ? dot(att.data.lastDay) : "-"}</p>
             </div>
           </div>
         )}

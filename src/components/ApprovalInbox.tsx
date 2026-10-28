@@ -353,9 +353,9 @@ const ApprovalInbox = () => {
   if (!sorted.length) {
     return (
       <div className="rounded-2xl border border-dashed border-border p-12 text-center">
-        <span className="text-4xl">✅</span>
-        <p className="mt-3 text-sm font-bold text-foreground">모든 승인을 처리했습니다!</p>
-        <p className="mt-1 text-xs text-muted-foreground">대기 중인 제출이 없습니다</p>
+        <span className="text-display">✅</span>
+        <p className="mt-3 text-body font-bold text-foreground">모든 승인을 처리했습니다!</p>
+        <p className="mt-1 text-label text-muted-foreground">대기 중인 제출이 없습니다</p>
       </div>
     );
   }
@@ -369,16 +369,16 @@ const ApprovalInbox = () => {
             <Clock className="h-5 w-5 text-status-pending" />
           </div>
           <div>
-            <p className="text-sm font-bold text-foreground">대기 {sorted.length}건</p>
+            <p className="text-body font-bold text-foreground">대기 {sorted.length}건</p>
             {todayCount > 0 && (
-              <p className="text-[10px] text-status-pending font-medium">오늘 제출 {todayCount}건</p>
+              <p className="text-micro text-status-pending font-medium">오늘 제출 {todayCount}건</p>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setSortBy(sortBy === "today" ? "recent" : "today")}
-            className="rounded-lg bg-secondary px-2.5 py-1 text-[10px] font-medium text-secondary-foreground active:scale-95"
+            className="rounded-lg bg-secondary px-2.5 py-1 text-micro font-medium text-secondary-foreground active:scale-95"
           >
             {sortBy === "today" ? "📌 오늘 우선" : "🕐 최신순"}
           </button>
@@ -389,15 +389,15 @@ const ApprovalInbox = () => {
       {selected.size > 0 && (
         <div className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/5 p-3 shadow-md backdrop-blur-sm">
           <div className="flex items-center gap-2">
-            <button onClick={selectAll} className="text-xs text-primary font-bold active:scale-95">
+            <button onClick={selectAll} className="text-label text-primary font-bold active:scale-95">
               {selected.size === sorted.length ? "전체 해제" : "전체 선택"}
             </button>
-            <span className="text-xs text-muted-foreground">{selected.size}건 선택</span>
+            <span className="text-label text-muted-foreground">{selected.size}건 선택</span>
           </div>
           <button
             onClick={() => batchApproveMut.mutate([...selected])}
             disabled={batchApproveMut.isPending}
-            className="flex items-center gap-1 rounded-xl bg-status-complete px-4 py-2 text-xs font-bold text-white shadow active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1 rounded-xl bg-status-complete px-4 py-2 text-label font-bold text-white shadow active:scale-95 disabled:opacity-50"
           >
             <Check className="h-3 w-3" />
             일괄 승인
@@ -408,7 +408,7 @@ const ApprovalInbox = () => {
       {/* Select all toggle */}
       <button
         onClick={selectAll}
-        className="flex w-full items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground active:scale-[0.98]"
+        className="flex w-full items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-label text-muted-foreground active:scale-[0.98]"
       >
         {selected.size === sorted.length && sorted.length > 0 ? (
           <CheckSquare className="h-4 w-4 text-primary" />
@@ -444,7 +444,7 @@ const ApprovalInbox = () => {
               onClick={() => navigate(`/manager/member/${item.user_id}`)}
               className="flex min-w-0 flex-1 items-center gap-2 text-left active:opacity-70"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-body">
                 {item.avatar_url ? (
                   <img src={item.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
                 ) : (
@@ -453,8 +453,8 @@ const ApprovalInbox = () => {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-bold text-foreground truncate">{item.nickname}</span>
-                  <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+                  <span className="text-body font-bold text-foreground truncate">{item.nickname}</span>
+                  <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-micro font-bold ${
                     item.type === "mission"
                       ? "bg-primary/10 text-primary"
                       : item.type === "quest"
@@ -472,33 +472,33 @@ const ApprovalInbox = () => {
                       : "관장승인"}
                   </span>
                   {isToday(item.requested_at) && (
-                    <span className="shrink-0 rounded-full bg-status-pending/15 px-1.5 py-0.5 text-[9px] font-bold text-status-pending">
+                    <span className="shrink-0 rounded-full bg-status-pending/15 px-1.5 py-0.5 text-micro font-bold text-status-pending">
                       오늘
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground truncate">
+                <p className="text-label text-muted-foreground truncate">
                   {item.title}
                   {item.branch_name ? ` · ${item.branch_name}` : ""}
                 </p>
                 {item.signup_provider && (item.type === "member" || item.type === "coach_request") && (
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  <p className="mt-0.5 text-label text-muted-foreground">
                     가입방식: {item.signup_provider === "google" ? "Google" : item.signup_provider === "apple" ? "Apple" : item.signup_provider === "microsoft" ? "Microsoft" : "일반회원가입"}
                   </p>
                 )}
                 {item.phone_number && (
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">{item.phone_number}</p>
+                  <p className="mt-0.5 text-label text-muted-foreground">{item.phone_number}</p>
                 )}
               </div>
             </button>
 
             <div className="shrink-0 text-right">
               {item.xp_reward > 0 ? (
-                <p className="text-xs font-bold text-primary">+{item.xp_reward} XP</p>
+                <p className="text-label font-bold text-primary">+{item.xp_reward} XP</p>
               ) : (
-                <p className="text-xs font-bold text-muted-foreground">가입 요청</p>
+                <p className="text-label font-bold text-muted-foreground">가입 요청</p>
               )}
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-label text-muted-foreground">
                 {formatRank(item.rank, item.level)}
               </p>
             </div>
@@ -508,7 +508,7 @@ const ApprovalInbox = () => {
             <div className="mt-3 space-y-2">
               <button
                 onClick={() => setExpandedTemplate(expandedTemplate === item.id ? null : item.id)}
-                className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground active:scale-[0.98]"
+                className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1.5 text-label text-muted-foreground active:scale-[0.98]"
               >
                 <span>{commentMap[item.id] || "💬 코멘트 선택/입력..."}</span>
                 <ChevronDown className={`h-3 w-3 transition-transform ${expandedTemplate === item.id ? "rotate-180" : ""}`} />
@@ -521,7 +521,7 @@ const ApprovalInbox = () => {
                       <button
                         key={tc.label}
                         onClick={() => { setComment(item.id, tc.text); setExpandedTemplate(null); }}
-                        className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-medium text-secondary-foreground active:scale-95 hover:bg-primary/10"
+                        className="rounded-full bg-secondary px-2.5 py-1 text-micro font-medium text-secondary-foreground active:scale-95 hover:bg-primary/10"
                       >
                         {tc.label}
                       </button>
@@ -531,7 +531,7 @@ const ApprovalInbox = () => {
                     value={commentMap[item.id] || ""}
                     onChange={e => setComment(item.id, e.target.value)}
                     placeholder="직접 입력..."
-                    className="w-full rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+                    className="w-full rounded-lg border border-border bg-card px-3 py-1.5 text-label text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
                   />
                 </div>
               )}
@@ -543,7 +543,7 @@ const ApprovalInbox = () => {
             <button
               onClick={() => approveSingle.mutate({ item, note: commentMap[item.id] || null })}
               disabled={approveSingle.isPending}
-              className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-status-complete py-2 text-xs font-bold text-white active:scale-95 disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-status-complete py-2 text-label font-bold text-white active:scale-95 disabled:opacity-50"
             >
               <Check className="h-3 w-3" /> 승인
             </button>
@@ -551,7 +551,7 @@ const ApprovalInbox = () => {
               <button
                 onClick={() => revisionSingle.mutate({ item, note: commentMap[item.id] || "보완이 필요합니다" })}
                 disabled={revisionSingle.isPending}
-                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-xs font-bold text-white active:scale-95 disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-label font-bold text-white active:scale-95 disabled:opacity-50"
               >
                 <Pencil className="h-3 w-3" /> 수정요청
               </button>
@@ -559,7 +559,7 @@ const ApprovalInbox = () => {
             <button
               onClick={() => rejectSingle.mutate({ item, note: commentMap[item.id] || "다시 도전해보세요" })}
               disabled={rejectSingle.isPending}
-              className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-destructive py-2 text-xs font-bold text-destructive-foreground active:scale-95 disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-destructive py-2 text-label font-bold text-destructive-foreground active:scale-95 disabled:opacity-50"
             >
               <X className="h-3 w-3" /> 반려
             </button>

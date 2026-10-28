@@ -293,7 +293,7 @@ const CoachLevelReviewInbox = () => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-bold text-foreground">📋 레벨업 심사 인박스</h3>
+      <h3 className="text-body font-bold text-foreground">📋 레벨업 심사 인박스</h3>
 
       {/* Filters */}
       <div className="flex gap-1.5 overflow-x-auto">
@@ -301,7 +301,7 @@ const CoachLevelReviewInbox = () => {
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+            className={`shrink-0 rounded-full px-3 py-1.5 text-label font-bold transition-all active:scale-95 ${
               filter === f.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
             }`}
           >
@@ -313,12 +313,12 @@ const CoachLevelReviewInbox = () => {
       {/* Queue */}
       {isLoading ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <p className="text-sm text-muted-foreground">불러오는 중...</p>
+          <p className="text-body text-muted-foreground">불러오는 중...</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <span className="text-3xl">✅</span>
-          <p className="mt-2 text-sm text-muted-foreground">심사 대기 회원이 없습니다</p>
+          <span className="text-title">✅</span>
+          <p className="mt-2 text-body text-muted-foreground">심사 대기 회원이 없습니다</p>
         </div>
       ) : (
         <div className="space-y-2.5">
@@ -335,13 +335,13 @@ const CoachLevelReviewInbox = () => {
 
       {/* Quick feedback templates */}
       <div className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
-        <p className="mb-2 text-xs font-bold text-foreground">💬 빠른 피드백 템플릿</p>
+        <p className="mb-2 text-label font-bold text-foreground">💬 빠른 피드백 템플릿</p>
         <div className="flex flex-wrap gap-1.5">
           {QUICK_FEEDBACK.map((fb) => (
             <button
               key={fb}
               onClick={() => toggleFeedback(fb)}
-              className={`rounded-full border px-2.5 py-1 text-[10px] transition-all active:scale-95 ${
+              className={`rounded-full border px-2.5 py-1 text-micro transition-all active:scale-95 ${
                 selectedFeedback.includes(fb)
                   ? "border-primary bg-primary/10 text-primary font-bold"
                   : "border-border text-muted-foreground"
@@ -352,7 +352,7 @@ const CoachLevelReviewInbox = () => {
           ))}
         </div>
         {selectedFeedback.length > 0 && (
-          <p className="mt-2 text-[10px] text-muted-foreground">
+          <p className="mt-2 text-label text-muted-foreground">
             선택된 피드백은 승인/보완 처리 시 회원 알림에 함께 전송됩니다: {selectedFeedback.join(" / ")}
           </p>
         )}
@@ -423,34 +423,34 @@ const ReviewCard = ({ member, busy, onDecide }: {
       {/* 배지가 늘어도 좁은 폰에서 닉네임이 쪼개지지 않게 — 줄을 넘겨 쌓는다 */}
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="whitespace-nowrap text-sm font-bold text-foreground">{member.nickname}</span>
-          <span className="whitespace-nowrap text-[10px] text-muted-foreground">
+          <span className="whitespace-nowrap text-body font-bold text-foreground">{member.nickname}</span>
+          <span className="whitespace-nowrap text-label text-muted-foreground">
             {RANK_LABELS[member.rank] || member.rank} Lv.{toGlobalLevel(member.rank, member.level)}
           </span>
           {isTitleMatch && (
-            <span className="whitespace-nowrap rounded-full bg-reward/15 px-2 py-0.5 text-[9px] font-bold text-reward-foreground">
+            <span className="whitespace-nowrap rounded-full bg-reward/15 px-2 py-0.5 text-micro font-bold text-reward-foreground">
               타이틀매치
             </span>
           )}
           {isTitleMatch && (cl?.fastTrackGates ?? 0) > 0 && (
-            <span className="whitespace-nowrap rounded-full bg-primary/15 px-2 py-0.5 text-[9px] font-bold text-primary">
+            <span className="whitespace-nowrap rounded-full bg-primary/15 px-2 py-0.5 text-micro font-bold text-primary">
               ⚡ 패스트 트랙
             </span>
           )}
           {isTitleFlow && member.title?.requested && (
-            <span className="whitespace-nowrap rounded-full bg-primary/15 px-2 py-0.5 text-[9px] font-bold text-primary">
+            <span className="whitespace-nowrap rounded-full bg-primary/15 px-2 py-0.5 text-micro font-bold text-primary">
               🙋 신청 · 도전 {member.title.attemptsUsed}/{DEFAULT_MAX_ATTEMPTS}
             </span>
           )}
           {isTitleFlow && !member.title?.requested && member.title?.retryAt && (
-            <span className="whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-[9px] font-bold text-muted-foreground">
+            <span className="whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-micro font-bold text-muted-foreground">
               🔒 재도전 대기
             </span>
           )}
         </div>
         {/* 화이트 타이틀매치 카드는 위 배지·아래 영상 칸이 상태를 말한다 ('심사 가능'은 자동 신청 상태라 헷갈린다) */}
         {!isTitleFlow && (
-          <span className={`flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold ${color}`}>
+          <span className={`flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-micro font-bold ${color}`}>
             <Icon className="h-3 w-3" /> {STATUS_LABEL[member.status]}
           </span>
         )}
@@ -471,10 +471,10 @@ const ReviewCard = ({ member, busy, onDecide }: {
       {isTitleMatch && !isTitleFlow && cl && cl.total > 0 && (
         <div className="mb-3 rounded-xl border border-border bg-muted/20 p-3">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-[11px] font-bold text-foreground">
+            <p className="text-micro font-bold text-foreground">
               심사 항목 — 직접 보고 하나씩 확인
             </p>
-            <span className={`text-[10px] font-bold ${
+            <span className={`text-micro font-bold ${
               cl.passedCount >= cl.total ? "text-status-complete" : "text-muted-foreground"
             }`}>
               {cl.passedCount} / {cl.total}
@@ -492,7 +492,7 @@ const ReviewCard = ({ member, busy, onDecide }: {
                     it.passed ? "border-status-complete bg-status-complete/10" : "border-border bg-card"
                   }`}
                 >
-                  <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 text-[9px] font-bold ${
+                  <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 text-micro font-bold ${
                     it.passed
                       ? "border-status-complete bg-status-complete text-white"
                       : "border-muted-foreground/40 text-transparent"
@@ -500,12 +500,12 @@ const ReviewCard = ({ member, busy, onDecide }: {
                     ✓
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[11.5px] font-bold text-foreground">{t.name || it.title}</span>
-                    {t.sub && <span className="block text-[10px] text-muted-foreground">{t.sub}</span>}
+                    <span className="block text-micro font-bold text-foreground">{t.name || it.title}</span>
+                    {t.sub && <span className="block text-label text-muted-foreground">{t.sub}</span>}
                     {it.keyPoints && it.keyPoints.length > 0 && (
                       <span className="mt-1 block space-y-0.5">
                         {it.keyPoints.map((k, i) => (
-                          <span key={i} className="block text-[10px] text-muted-foreground">· {k}</span>
+                          <span key={i} className="block text-label text-muted-foreground">· {k}</span>
                         ))}
                       </span>
                     )}
@@ -514,27 +514,27 @@ const ReviewCard = ({ member, busy, onDecide }: {
               );
             })}
           </div>
-          <p className="mt-2 text-[9.5px] text-muted-foreground">
+          <p className="mt-2 text-label text-muted-foreground">
             누가 어느 항목을 통과시켰는지 기록에 남습니다 · {AUTHORITY_LABEL[cl.requiredAuthority]} 심사
           </p>
         </div>
       )}
 
       {member.status === "revision_requested" && (
-        <p className="mb-2 text-[10px] text-status-pending">
+        <p className="mb-2 text-micro text-status-pending">
           ⏰ 보완 마감: {dueDateStr(member)} (요청 +{REMEDIATION_DAYS}일)
         </p>
       )}
-      {member.note && <p className="mb-2 text-[10px] text-muted-foreground">📝 {member.note}</p>}
+      {member.note && <p className="mb-2 text-label text-muted-foreground">📝 {member.note}</p>}
       {isTitleMatch && (cl?.fastTrackGates ?? 0) > 0 && (
-        <p className="mb-2 rounded-lg bg-primary/10 px-2.5 py-1.5 text-[10px] leading-relaxed text-foreground">
+        <p className="mb-2 rounded-lg bg-primary/10 px-2.5 py-1.5 text-micro leading-relaxed text-foreground">
           ⚡ 오래 다니신 회원입니다 — 승인하면 다음 리그의 1레벨이 아니라{" "}
           <b>그 리그의 타이틀매치로 바로</b> 갑니다 (남은 직행권 {cl?.fastTrackGates}장).
           심사 기준은 다른 회원과 같습니다.
         </p>
       )}
       {blockReason && !isTitleFlow && (
-        <p className="mb-2 rounded-lg bg-muted/40 px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground">
+        <p className="mb-2 rounded-lg bg-muted/40 px-2.5 py-1.5 text-micro font-semibold text-muted-foreground">
           {blockReason}
         </p>
       )}
@@ -547,7 +547,7 @@ const ReviewCard = ({ member, busy, onDecide }: {
           <button
             onClick={() => onDecide("approved")}
             disabled={busy || !canApprove}
-            className="flex-1 rounded-xl bg-status-complete py-2.5 text-xs font-bold text-white transition-all active:scale-95 disabled:opacity-40"
+            className="flex-1 rounded-xl bg-status-complete py-2.5 text-label font-bold text-white transition-all active:scale-95 disabled:opacity-40"
           >
             ✅ 레벨업 승인
           </button>
@@ -556,7 +556,7 @@ const ReviewCard = ({ member, busy, onDecide }: {
           <button
             onClick={() => onDecide("revision_requested")}
             disabled={busy}
-            className="flex-1 rounded-xl bg-status-pending/20 py-2.5 text-xs font-bold text-status-pending transition-all active:scale-95 disabled:opacity-50"
+            className="flex-1 rounded-xl bg-status-pending/20 py-2.5 text-label font-bold text-status-pending transition-all active:scale-95 disabled:opacity-50"
           >
             🔄 보완 요청
           </button>
@@ -565,7 +565,7 @@ const ReviewCard = ({ member, busy, onDecide }: {
           onClick={() => onDecide("in_progress")}
           disabled={busy}
           title="심사 보류 — 진행중으로 되돌림"
-          className={`rounded-xl bg-muted px-3 py-2.5 text-xs font-bold text-muted-foreground transition-all active:scale-95 disabled:opacity-50 ${isTitleFlow ? "flex-1" : ""}`}
+          className={`rounded-xl bg-muted px-3 py-2.5 text-label font-bold text-muted-foreground transition-all active:scale-95 disabled:opacity-50 ${isTitleFlow ? "flex-1" : ""}`}
         >
           {isTitleFlow ? "⏸️ 심사함에서 잠시 빼기" : "⏸️"}
         </button>
@@ -577,8 +577,8 @@ const ReviewCard = ({ member, busy, onDecide }: {
 
 const MiniMetric = ({ label, value }: { label: string; value: string | number }) => (
   <div className="rounded-lg bg-muted/30 p-1.5 text-center">
-    <p className="text-xs font-bold text-foreground">{value}</p>
-    <p className="text-[8px] text-muted-foreground">{label}</p>
+    <p className="text-label font-bold text-foreground">{value}</p>
+    <p className="text-label text-muted-foreground">{label}</p>
   </div>
 );
 

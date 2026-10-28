@@ -104,13 +104,13 @@ const QuestManager = () => {
         <div className="flex gap-1.5 overflow-x-auto">
           {["all", "main", "sub", "weekly", "boss"].map(t => (
             <button key={t} onClick={() => setFilterType(t)}
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${filterType === t ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-label font-bold transition-all ${filterType === t ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
               {t === "all" ? "전체" : QUEST_TYPE_LABELS[t]}
             </button>
           ))}
         </div>
         <button onClick={() => { setEditingId(null); setForm(emptyForm); setShowForm(true); }}
-          className="ml-2 flex shrink-0 items-center gap-1 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground active:scale-95">
+          className="ml-2 flex shrink-0 items-center gap-1 rounded-xl bg-primary px-3 py-2 text-label font-bold text-primary-foreground active:scale-95">
           <Plus className="h-3.5 w-3.5" /> 추가
         </button>
       </div>
@@ -119,8 +119,8 @@ const QuestManager = () => {
         [1, 2, 3].map(i => <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />)
       ) : !filtered.length ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <span className="text-4xl">🥊</span>
-          <p className="mt-3 text-sm text-muted-foreground">등록된 퀘스트가 없습니다</p>
+          <span className="text-display">🥊</span>
+          <p className="mt-3 text-body text-muted-foreground">등록된 퀘스트가 없습니다</p>
         </div>
       ) : (
         filtered.map((q: any) => (
@@ -128,14 +128,14 @@ const QuestManager = () => {
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-micro font-bold text-primary">
                     {QUEST_TYPE_LABELS[q.quest_type] || q.quest_type}
                   </span>
-                  <p className="text-sm font-bold text-foreground truncate">{q.title}</p>
+                  <p className="text-body font-bold text-foreground truncate">{q.title}</p>
                 </div>
                 <div className="mt-1 flex items-center gap-2">
-                  <span className="text-xs font-bold text-primary">+{q.xp_reward} XP</span>
-                  {q.needs_coach_approval && <span className="text-[10px] text-muted-foreground">코치승인필요</span>}
+                  <span className="text-label font-bold text-primary">+{q.xp_reward} XP</span>
+                  {q.needs_coach_approval && <span className="text-label text-muted-foreground">코치승인필요</span>}
                 </div>
               </div>
               <div className="flex gap-1.5">
@@ -156,41 +156,41 @@ const QuestManager = () => {
           <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl max-h-[85vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg text-foreground">{editingId ? "✏️ 퀘스트 수정" : "➕ 새 퀘스트 추가"}</h3>
+              <h3 className="text-heading text-foreground">{editingId ? "✏️ 퀘스트 수정" : "➕ 새 퀘스트 추가"}</h3>
               <button onClick={() => setShowForm(false)} className="rounded-full bg-secondary p-2 active:scale-95">
                 <X className="h-4 w-4 text-secondary-foreground" />
               </button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">퀘스트 유형</label>
+                <label className="mb-1 block text-label text-muted-foreground">퀘스트 유형</label>
                 <div className="flex gap-2">
                   {(["main", "sub", "weekly", "boss"] as const).map(t => (
                     <button key={t} onClick={() => setForm(f => ({ ...f, quest_type: t }))}
-                      className={`flex-1 rounded-lg py-2 text-xs font-bold transition-all ${form.quest_type === t ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+                      className={`flex-1 rounded-lg py-2 text-label font-bold transition-all ${form.quest_type === t ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
                       {QUEST_TYPE_LABELS[t]}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">제목 *</label>
+                <label className="mb-1 block text-label text-muted-foreground">제목 *</label>
                 <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="퀘스트 제목" className="rounded-xl" />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">설명</label>
+                <label className="mb-1 block text-label text-muted-foreground">설명</label>
                 <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="퀘스트 설명" rows={2}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="mb-1 block text-xs text-muted-foreground">XP 보상</label>
+                  <label className="mb-1 block text-label text-muted-foreground">XP 보상</label>
                   <Input type="number" value={form.xp_reward} onChange={e => setForm(f => ({ ...f, xp_reward: Number(e.target.value) }))} className="rounded-xl" />
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1 block text-xs text-muted-foreground">연결 레벨 (선택)</label>
+                  <label className="mb-1 block text-label text-muted-foreground">연결 레벨 (선택)</label>
                   <select value={form.level_id} onChange={e => setForm(f => ({ ...f, level_id: e.target.value }))}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none">
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-body text-foreground focus:border-primary focus:outline-none">
                     <option value="">없음</option>
                     {sortedLevels.map(l => (
                       <option key={l.id} value={l.id}>{RANK_LABELS[l.rank_name]} Lv.{toGlobalLevel(l.rank_name, l.level_number)}</option>
@@ -198,14 +198,14 @@ const QuestManager = () => {
                   </select>
                 </div>
               </div>
-              <label className="flex items-center gap-2 text-sm text-foreground">
+              <label className="flex items-center gap-2 text-body text-foreground">
                 <input type="checkbox" checked={form.needs_coach_approval}
                   onChange={e => setForm(f => ({ ...f, needs_coach_approval: e.target.checked }))}
                   className="rounded" />
                 코치 승인 필요
               </label>
               <button onClick={handleSave} disabled={saving}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
                 {saving ? "저장 중..." : editingId ? "수정 완료" : "퀘스트 추가"}
               </button>
             </div>

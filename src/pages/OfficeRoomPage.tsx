@@ -329,8 +329,8 @@ const OfficeRoomPage = () => {
             <ChevronLeft className="h-5 w-5 text-secondary-foreground" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[15.5px] font-black leading-tight text-foreground">{meeting?.title ?? "지점 회의실"}</p>
-            <p className="truncate text-[11.5px] font-semibold text-muted-foreground">
+            <p className="truncate text-body font-black leading-tight text-foreground">{meeting?.title ?? "지점 회의실"}</p>
+            <p className="truncate text-label font-semibold text-muted-foreground">
               {state?.label ?? ""}
               {meeting
                 ? ` · ${hereCount}명 참석 · ${officeDuration(meeting.opened_at, null)}째`
@@ -344,7 +344,7 @@ const OfficeRoomPage = () => {
               type="button"
               disabled={leave.isPending}
               onClick={leaveRoom}
-              className="flex h-9 shrink-0 items-center gap-1 rounded-full bg-secondary px-3 text-[12.5px] font-black text-foreground active:scale-95 disabled:opacity-60"
+              className="flex h-9 shrink-0 items-center gap-1 rounded-full bg-secondary px-3 text-label font-black text-foreground active:scale-95 disabled:opacity-60"
               aria-label="회의 나가기 — 내 자리로"
             >
               <DoorOpen className="h-4 w-4" /> 나가기
@@ -354,7 +354,7 @@ const OfficeRoomPage = () => {
             <button
               type="button"
               onClick={() => setEndOpen(true)}
-              className="flex h-9 shrink-0 items-center rounded-full bg-foreground px-3 text-[12.5px] font-black text-background active:scale-95"
+              className="flex h-9 shrink-0 items-center rounded-full bg-foreground px-3 text-label font-black text-background active:scale-95"
             >
               끝내기
             </button>
@@ -381,7 +381,7 @@ const OfficeRoomPage = () => {
             <button
               type="button"
               onClick={() => setFull((v) => !v)}
-              className="absolute bottom-2 right-2 z-[8] flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur active:scale-95"
+              className="absolute bottom-2 right-2 z-[8] flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-micro font-bold text-white backdrop-blur active:scale-95"
             >
               {full ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
               {full ? "회의실 크게" : "사무실 전체"}
@@ -415,15 +415,15 @@ const OfficeRoomPage = () => {
             aria-expanded={infoOpen}
             className="flex w-full items-center gap-2 px-3.5 py-2 text-left"
           >
-            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-[2px] text-[11px] font-black text-primary">
+            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-[2px] text-micro font-black text-primary">
               안건 {meeting.agenda.length}
             </span>
             {decisions > 0 && (
-              <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-amber-100 px-2 py-[2px] text-[11px] font-black text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">
+              <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-amber-100 px-2 py-[2px] text-micro font-black text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">
                 <Pin className="h-3 w-3" /> 정한 것 {decisions}
               </span>
             )}
-            <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-muted-foreground">
+            <span className="min-w-0 flex-1 truncate text-label font-semibold text-muted-foreground">
               {meeting.agenda.length ? meeting.agenda.map((a, i) => `${i + 1}. ${a}`).join("  ") : meeting.title}
             </span>
             {infoOpen ? (
@@ -435,7 +435,7 @@ const OfficeRoomPage = () => {
           {infoOpen && (
             <div className="max-h-[32vh] space-y-2.5 overflow-y-auto px-3.5 pb-3">
               {meeting.agenda.length > 0 && (
-                <ol className="space-y-1 rounded-2xl bg-secondary/70 px-3 py-2.5 text-[13.5px] leading-relaxed text-foreground">
+                <ol className="space-y-1 rounded-2xl bg-secondary/70 px-3 py-2.5 text-label leading-relaxed text-foreground">
                   {meeting.agenda.map((item, i) => (
                     <li key={i} className="flex gap-2">
                       <span className="shrink-0 font-black text-primary">{i + 1}</span>
@@ -449,7 +449,7 @@ const OfficeRoomPage = () => {
                 <button
                   type="button"
                   onClick={() => setLinkOpen(true)}
-                  className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-[12.5px] font-bold text-muted-foreground active:scale-95"
+                  className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-label font-bold text-muted-foreground active:scale-95"
                 >
                   <Video className="h-3.5 w-3.5" /> 줌 · 구글 미트 링크 넣기
                 </button>
@@ -466,16 +466,16 @@ const OfficeRoomPage = () => {
         className="mx-auto min-h-0 w-full max-w-lg flex-1 overflow-y-auto overscroll-contain px-3.5 py-3"
       >
         {!state && stateQ.isError ? (
-          <p className="py-8 text-center text-[13px] text-muted-foreground">
+          <p className="py-8 text-center text-label text-muted-foreground">
             {(stateQ.error as Error | null)?.message ?? "회의실에 들어올 수 없어요"}
           </p>
         ) : !meeting ? (
           state && (
             <div className="py-8 text-center">
-              <p className="text-[15px] font-black text-foreground">
+              <p className="text-body font-black text-foreground">
                 {lastMeetingId.current ? "회의가 끝났어요" : "지금은 열린 회의가 없어요"}
               </p>
-              <p className="mt-1 text-[12.5px] text-muted-foreground">
+              <p className="mt-1 text-label text-muted-foreground">
                 {lastMeetingId.current ? "채팅 · 정한 것 · 참석이 회의록으로 남았어요" : "회의가 열리면 알림이 와요"}
               </p>
               <div className="mt-4 flex justify-center gap-2">
@@ -483,7 +483,7 @@ const OfficeRoomPage = () => {
                   <button
                     type="button"
                     onClick={() => setMinutesId(lastMeetingId.current)}
-                    className="rounded-2xl bg-foreground px-4 py-2.5 text-[13.5px] font-black text-background active:scale-95"
+                    className="rounded-2xl bg-foreground px-4 py-2.5 text-label font-black text-background active:scale-95"
                   >
                     회의록 보기
                   </button>
@@ -491,7 +491,7 @@ const OfficeRoomPage = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/office", { replace: true })}
-                  className="rounded-2xl bg-secondary px-4 py-2.5 text-[13.5px] font-black text-foreground active:scale-95"
+                  className="rounded-2xl bg-secondary px-4 py-2.5 text-label font-black text-foreground active:scale-95"
                 >
                   사무실로
                 </button>
@@ -507,7 +507,7 @@ const OfficeRoomPage = () => {
         ) : messages.length ? (
           <MessageList messages={messages} canPin={host} onPin={pin} />
         ) : (
-          <p className="py-6 text-center text-[13px] leading-relaxed text-muted-foreground">
+          <p className="py-6 text-center text-label leading-relaxed text-muted-foreground">
             첫 말을 남겨 회의를 시작해 보세요
             <br />
             쓴 말이 내 캐릭터 머리 위 말풍선으로 떠요
@@ -548,7 +548,7 @@ const OfficeRoomPage = () => {
               maxLength={1000}
               enterKeyHint="send"
               placeholder={asDecision ? "회의에서 정한 것을 한 줄로" : "말하기 — 머리 위 말풍선으로 떠요"}
-              className="max-h-28 min-h-[44px] flex-1 resize-none rounded-2xl border border-border bg-background px-3 py-2.5 text-[15px] text-foreground outline-none focus:border-primary/60"
+              className="max-h-28 min-h-[44px] flex-1 resize-none rounded-2xl border border-border bg-background px-3 py-2.5 text-body text-foreground outline-none focus:border-primary/60"
             />
             <button
               type="button"

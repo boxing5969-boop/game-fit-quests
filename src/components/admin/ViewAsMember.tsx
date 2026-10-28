@@ -53,7 +53,7 @@ export const ViewAsMemberBar = () => {
         type="button"
         onClick={turnOff}
         aria-label="회원으로 보기 끄기 — 관리자 화면으로"
-        className="pointer-events-auto flex h-9 max-w-full items-center gap-1.5 rounded-full bg-foreground/90 px-3.5 text-[12.5px] font-bold text-background shadow-elev-3 backdrop-blur transition-transform active:scale-95"
+        className="pointer-events-auto flex h-9 max-w-full items-center gap-1.5 rounded-full bg-foreground/90 px-3.5 text-label font-bold text-background shadow-elev-3 backdrop-blur transition-transform active:scale-95"
       >
         <Eye className="h-4 w-4 shrink-0" />
         <span className="truncate">회원 화면 · {viewBranchLabel(profile?.branch_name)}</span>

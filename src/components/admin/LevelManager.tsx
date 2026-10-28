@@ -108,13 +108,13 @@ const LevelManager = () => {
         <div className="flex gap-1.5 overflow-x-auto">
           {["all", ...RANK_ORDER].map(r => (
             <button key={r} onClick={() => setFilterRank(r)}
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${filterRank === r ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-label font-bold transition-all ${filterRank === r ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
               {r === "all" ? "전체" : `${RANK_ICONS[r]} ${RANK_LABELS[r]}`}
             </button>
           ))}
         </div>
         <button onClick={() => { setEditingId(null); setForm(emptyForm); setShowForm(true); }}
-          className="ml-2 flex shrink-0 items-center gap-1 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground active:scale-95">
+          className="ml-2 flex shrink-0 items-center gap-1 rounded-xl bg-primary px-3 py-2 text-label font-bold text-primary-foreground active:scale-95">
           <Plus className="h-3.5 w-3.5" /> 추가
         </button>
       </div>
@@ -123,8 +123,8 @@ const LevelManager = () => {
         [1, 2, 3].map(i => <div key={i} className="h-16 animate-pulse rounded-2xl bg-muted" />)
       ) : !filtered.length ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <span className="text-4xl">🗺️</span>
-          <p className="mt-3 text-sm text-muted-foreground">등록된 레벨이 없습니다</p>
+          <span className="text-display">🗺️</span>
+          <p className="mt-3 text-body text-muted-foreground">등록된 레벨이 없습니다</p>
         </div>
       ) : (
         filtered.map((l: any) => (
@@ -132,12 +132,12 @@ const LevelManager = () => {
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{RANK_ICONS[l.rank_name]}</span>
-                  <span className="text-xs font-bold text-muted-foreground">{RANK_LABELS[l.rank_name]} Lv.{toGlobalLevel(l.rank_name, l.level_number)}</span>
-                  {l.is_boss && <span className="rounded-full bg-reward/20 px-1.5 py-0.5 text-[9px] font-bold text-reward-foreground">BOSS</span>}
+                  <span className="text-body">{RANK_ICONS[l.rank_name]}</span>
+                  <span className="text-label font-bold text-muted-foreground">{RANK_LABELS[l.rank_name]} Lv.{toGlobalLevel(l.rank_name, l.level_number)}</span>
+                  {l.is_boss && <span className="rounded-full bg-reward/20 px-1.5 py-0.5 text-micro font-bold text-reward-foreground">BOSS</span>}
                 </div>
-                <p className="mt-0.5 text-sm font-bold text-foreground truncate">{l.title}</p>
-                <div className="mt-0.5 flex items-center gap-3 text-[10px] text-muted-foreground">
+                <p className="mt-0.5 text-body font-bold text-foreground truncate">{l.title}</p>
+                <div className="mt-0.5 flex items-center gap-3 text-label text-muted-foreground">
                   <span>필요 XP: {l.xp_required}</span>
                   {l.reward_name && <span>보상: {l.reward_name}</span>}
                 </div>
@@ -160,18 +160,18 @@ const LevelManager = () => {
           <div className="w-full max-w-lg animate-slide-up rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl max-h-[85vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg text-foreground">{editingId ? "✏️ 레벨 수정" : "➕ 새 레벨 추가"}</h3>
+              <h3 className="text-heading text-foreground">{editingId ? "✏️ 레벨 수정" : "➕ 새 레벨 추가"}</h3>
               <button onClick={() => setShowForm(false)} className="rounded-full bg-secondary p-2 active:scale-95">
                 <X className="h-4 w-4 text-secondary-foreground" />
               </button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">랭크</label>
+                <label className="mb-1 block text-label text-muted-foreground">랭크</label>
                 <div className="flex gap-2">
                   {RANK_ORDER.map(r => (
                     <button key={r} onClick={() => setForm(f => ({ ...f, rank_name: r }))}
-                      className={`flex-1 rounded-lg py-2 text-xs font-bold transition-all ${form.rank_name === r ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+                      className={`flex-1 rounded-lg py-2 text-label font-bold transition-all ${form.rank_name === r ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
                       {RANK_ICONS[r]} {RANK_LABELS[r]}
                     </button>
                   ))}
@@ -179,35 +179,35 @@ const LevelManager = () => {
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="mb-1 block text-xs text-muted-foreground">레벨 번호</label>
+                  <label className="mb-1 block text-label text-muted-foreground">레벨 번호</label>
                   <Input type="number" min={1} max={10} value={form.level_number}
                     onChange={e => setForm(f => ({ ...f, level_number: Number(e.target.value) }))} className="rounded-xl" />
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1 block text-xs text-muted-foreground">정렬 순서</label>
+                  <label className="mb-1 block text-label text-muted-foreground">정렬 순서</label>
                   <Input type="number" value={form.display_order}
                     onChange={e => setForm(f => ({ ...f, display_order: Number(e.target.value) }))} className="rounded-xl" />
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">제목 *</label>
+                <label className="mb-1 block text-label text-muted-foreground">제목 *</label>
                 <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="레벨 제목" className="rounded-xl" />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">필요 XP</label>
+                <label className="mb-1 block text-label text-muted-foreground">필요 XP</label>
                 <Input type="number" value={form.xp_required}
                   onChange={e => setForm(f => ({ ...f, xp_required: Number(e.target.value) }))} className="rounded-xl" />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">보상 (선택)</label>
+                <label className="mb-1 block text-label text-muted-foreground">보상 (선택)</label>
                 <Input value={form.reward_name} onChange={e => setForm(f => ({ ...f, reward_name: e.target.value }))} placeholder="보상명" className="rounded-xl" />
               </div>
-              <label className="flex items-center gap-2 text-sm text-foreground">
+              <label className="flex items-center gap-2 text-body text-foreground">
                 <input type="checkbox" checked={form.is_boss} onChange={e => setForm(f => ({ ...f, is_boss: e.target.checked }))} className="rounded" />
                 보스 레벨 (타이틀매치)
               </label>
               <button onClick={handleSave} disabled={saving}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+                className="w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
                 {saving ? "저장 중..." : editingId ? "수정 완료" : "레벨 추가"}
               </button>
             </div>

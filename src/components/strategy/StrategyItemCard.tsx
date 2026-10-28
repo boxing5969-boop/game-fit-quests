@@ -41,7 +41,7 @@ const KIND_TONE: Record<StrategyItem["kind"], string> = {
 const ackable = (k: StrategyItem["kind"]) => k !== "class_log";
 
 export const PersonLine = ({ name, title, time }: { name: string; title: string; time?: string }) => (
-  <p className="text-[12px] text-muted-foreground">
+  <p className="text-label text-muted-foreground">
     <span className="font-bold text-foreground">{name}</span> {title}
     {time && <span> · {time}</span>}
   </p>
@@ -49,7 +49,7 @@ export const PersonLine = ({ name, title, time }: { name: string; title: string;
 
 const Row = ({ label, text }: { label: string; text?: string | null }) =>
   text ? (
-    <div className="grid grid-cols-[3.6rem_1fr] gap-2 text-[13.5px] leading-relaxed">
+    <div className="grid grid-cols-[3.6rem_1fr] gap-2 text-label leading-relaxed">
       <span className="font-bold text-muted-foreground">{label}</span>
       <span className="whitespace-pre-wrap text-foreground">{text}</span>
     </div>
@@ -104,11 +104,11 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
       )}
     >
       <div className="mb-2 flex items-start gap-2">
-        <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-[11.5px] font-black", KIND_TONE[item.kind])}>
+        <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-micro font-black", KIND_TONE[item.kind])}>
           {item.kind === "principle" && item.principle_no ? `원칙 ${item.principle_no}` : KIND_LABEL[item.kind]}
         </span>
         {item.kind === "class_log" && item.starred && (
-          <span className="shrink-0 rounded-full bg-amber-400/20 px-2 py-0.5 text-[11.5px] font-black text-amber-700 dark:text-amber-300">
+          <span className="shrink-0 rounded-full bg-amber-400/20 px-2 py-0.5 text-micro font-black text-amber-700 dark:text-amber-300">
             ⭐ 추천 수업
           </span>
         )}
@@ -119,7 +119,7 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
-                className="rounded-full bg-secondary px-2.5 py-1 text-[11.5px] font-bold text-muted-foreground"
+                className="rounded-full bg-secondary px-2.5 py-1 text-micro font-bold text-muted-foreground"
               >
                 취소
               </button>
@@ -131,7 +131,7 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
                     onError: (e) => toast.error((e as Error).message),
                   })
                 }
-                className="rounded-full bg-destructive px-2.5 py-1 text-[11.5px] font-black text-destructive-foreground"
+                className="rounded-full bg-destructive px-2.5 py-1 text-micro font-black text-destructive-foreground"
               >
                 지우기
               </button>
@@ -150,19 +150,19 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
 
       {/* 제목 */}
       {item.kind === "class_log" ? (
-        <p className="text-[16px] font-black text-foreground">
+        <p className="text-body font-black text-foreground">
           {shortDate(item.event_date)} {d.hour != null ? `${d.hour}시` : ""} 수업
-          {d.attendees != null && <span className="ml-1.5 text-[13px] font-bold text-muted-foreground">· 입실 {d.attendees}명</span>}
+          {d.attendees != null && <span className="ml-1.5 text-label font-bold text-muted-foreground">· 입실 {d.attendees}명</span>}
         </p>
       ) : item.kind === "program" ? (
-        <p className="text-[16px] font-black text-foreground">
+        <p className="text-body font-black text-foreground">
           {item.title || "오늘 프로그램"}
-          <span className="ml-1.5 text-[13px] font-bold text-muted-foreground">
+          <span className="ml-1.5 text-label font-bold text-muted-foreground">
             {[shortDate(item.event_date), d.slot].filter(Boolean).join(" ")} · {programTotal(d.blocks)}분
           </span>
         </p>
       ) : (
-        item.title && <p className="text-[16px] font-black leading-snug text-foreground">{item.title}</p>
+        item.title && <p className="text-body font-black leading-snug text-foreground">{item.title}</p>
       )}
 
       {/* 본문 */}
@@ -189,15 +189,15 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
               const v = b.video_id ? videos?.get(b.video_id) : undefined;
               return (
                 <li key={i} className="flex items-start gap-2 rounded-2xl bg-secondary/60 px-3 py-2">
-                  <span className="mt-0.5 w-5 shrink-0 text-center text-[12px] font-black text-muted-foreground">{i + 1}</span>
+                  <span className="mt-0.5 w-5 shrink-0 text-center text-label font-black text-muted-foreground">{i + 1}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[13.5px] font-bold text-foreground">
-                      <span className="mr-1 text-[11.5px] font-black text-emerald-700 dark:text-emerald-300">{BLOCK_LABEL[b.kind] ?? b.kind}</span>
+                    <span className="block text-label font-bold text-foreground">
+                      <span className="mr-1 text-micro font-black text-emerald-700 dark:text-emerald-300">{BLOCK_LABEL[b.kind] ?? b.kind}</span>
                       {b.title || v?.title || "—"}
                     </span>
-                    {b.note && <span className="block whitespace-pre-wrap text-[12.5px] text-muted-foreground">{b.note}</span>}
+                    {b.note && <span className="block whitespace-pre-wrap text-label text-muted-foreground">{b.note}</span>}
                   </span>
-                  <span className="shrink-0 text-[12.5px] font-bold tabular-nums text-muted-foreground">{b.minutes}분</span>
+                  <span className="shrink-0 text-label font-bold tabular-nums text-muted-foreground">{b.minutes}분</span>
                   {v && onPlay && (
                     <button
                       type="button"
@@ -213,7 +213,7 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
             })}
           </ol>
         )}
-        {item.body && <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-foreground">{item.body}</p>}
+        {item.body && <p className="whitespace-pre-wrap text-label leading-relaxed text-foreground">{item.body}</p>}
       </div>
 
       <div className="mt-3">
@@ -227,32 +227,32 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
             type="button"
             disabled={ack.isPending}
             onClick={() => doAck("ack")}
-            className="flex h-10 items-center gap-1.5 rounded-full bg-primary px-4 text-[13.5px] font-black text-primary-foreground active:scale-95 disabled:opacity-60"
+            className="flex h-10 items-center gap-1.5 rounded-full bg-primary px-4 text-label font-black text-primary-foreground active:scale-95 disabled:opacity-60"
           >
             <Check className="h-4 w-4" /> 확인했어요
           </button>
         )}
         {!item.mine && ackable(item.kind) && acked && item.kind !== "program" && (
-          <span className="text-[12.5px] font-bold text-emerald-600 dark:text-emerald-400">✓ 확인함</span>
+          <span className="text-label font-bold text-emerald-600 dark:text-emerald-400">✓ 확인함</span>
         )}
         {item.kind === "program" && !item.mine && acked && !applied && (
           <button
             type="button"
             disabled={ack.isPending}
             onClick={() => doAck("applied")}
-            className="flex h-10 items-center gap-1.5 rounded-full bg-foreground px-4 text-[13.5px] font-black text-background active:scale-95 disabled:opacity-60"
+            className="flex h-10 items-center gap-1.5 rounded-full bg-foreground px-4 text-label font-black text-background active:scale-95 disabled:opacity-60"
           >
             🥊 수업에 적용했어요
           </button>
         )}
         {item.kind === "program" && !item.mine && applied && (
-          <span className="text-[12.5px] font-bold text-emerald-600 dark:text-emerald-400">✓ 수업에 적용함</span>
+          <span className="text-label font-bold text-emerald-600 dark:text-emerald-400">✓ 수업에 적용함</span>
         )}
         {ackable(item.kind) && item.targets > 0 && (
           <button
             type="button"
             onClick={() => setAckSheet(true)}
-            className="rounded-full bg-secondary px-3 py-1.5 text-[12px] font-bold text-muted-foreground active:scale-95"
+            className="rounded-full bg-secondary px-3 py-1.5 text-label font-bold text-muted-foreground active:scale-95"
           >
             확인 {item.acked}/{item.targets}
             {item.kind === "program" && item.applied > 0 ? ` · 적용 ${item.applied}` : ""}
@@ -269,7 +269,7 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
               )
             }
             className={cn(
-              "flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-bold active:scale-95",
+              "flex items-center gap-1 rounded-full px-3 py-1.5 text-label font-bold active:scale-95",
               item.starred ? "bg-amber-400/20 text-amber-700 dark:text-amber-300" : "bg-secondary text-muted-foreground",
             )}
           >
@@ -281,7 +281,7 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
           <button
             type="button"
             onClick={() => navigate(`/office?minutes=${meetingId}`)}
-            className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[12px] font-bold text-muted-foreground active:scale-95"
+            className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-label font-bold text-muted-foreground active:scale-95"
           >
             <FileText className="h-3.5 w-3.5" /> 회의록 보기
           </button>
@@ -290,7 +290,7 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
           <button
             type="button"
             onClick={() => onReuse(item)}
-            className="rounded-full bg-secondary px-3 py-1.5 text-[12px] font-bold text-muted-foreground active:scale-95"
+            className="rounded-full bg-secondary px-3 py-1.5 text-label font-bold text-muted-foreground active:scale-95"
           >
             복사해서 새로 보내기
           </button>
@@ -298,7 +298,7 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
         <button
           type="button"
           onClick={() => setOpenComments((v) => !v)}
-          className="ml-auto flex items-center gap-1 rounded-full px-2 py-1.5 text-[12.5px] font-bold text-muted-foreground active:bg-secondary"
+          className="ml-auto flex items-center gap-1 rounded-full px-2 py-1.5 text-label font-bold text-muted-foreground active:bg-secondary"
         >
           <MessageCircle className="h-4 w-4" />
           {item.kind === "class_log" ? "피드백" : "댓글"} {item.comments > 0 ? item.comments : ""}
@@ -329,7 +329,7 @@ const Comments = ({ itemId, placeholder }: { itemId: string; placeholder: string
   return (
     <div className="mt-3 space-y-2 border-t border-border/70 pt-3">
       {isLoading ? (
-        <p className="text-[12.5px] text-muted-foreground">불러오는 중…</p>
+        <p className="text-label text-muted-foreground">불러오는 중…</p>
       ) : (
         data.map((c) => (
           <div key={c.id} className="rounded-2xl bg-secondary/60 px-3 py-2">
@@ -339,13 +339,13 @@ const Comments = ({ itemId, placeholder }: { itemId: string; placeholder: string
                 <button
                   type="button"
                   onClick={() => del.mutate(c.id, { onError: (e) => toast.error((e as Error).message) })}
-                  className="ml-auto text-[11.5px] font-bold text-muted-foreground"
+                  className="ml-auto text-label font-bold text-muted-foreground"
                 >
                   지우기
                 </button>
               )}
             </div>
-            <p className="mt-0.5 whitespace-pre-wrap text-[13.5px] leading-relaxed text-foreground">{c.body}</p>
+            <p className="mt-0.5 whitespace-pre-wrap text-label leading-relaxed text-foreground">{c.body}</p>
           </div>
         ))
       )}
@@ -356,13 +356,13 @@ const Comments = ({ itemId, placeholder }: { itemId: string; placeholder: string
           placeholder={placeholder}
           rows={1}
           maxLength={1000}
-          className="min-h-[40px] flex-1 resize-none rounded-2xl border border-border bg-background px-3 py-2 text-[14px] outline-none"
+          className="min-h-[40px] flex-1 resize-none rounded-2xl border border-border bg-background px-3 py-2 text-label outline-none"
         />
         <button
           type="button"
           onClick={send}
           disabled={!text.trim() || add.isPending}
-          className="h-10 shrink-0 rounded-full bg-foreground px-4 text-[13px] font-black text-background active:scale-95 disabled:opacity-40"
+          className="h-10 shrink-0 rounded-full bg-foreground px-4 text-label font-black text-background active:scale-95 disabled:opacity-40"
         >
           남기기
         </button>
@@ -376,22 +376,22 @@ const AckSheet = ({ open, onClose, item }: { open: boolean; onClose: () => void;
   return (
     <DmSheet open={open} onClose={onClose} title="확인 현황" subtitle={item.title || KIND_LABEL[item.kind]}>
       {isLoading ? (
-        <p className="py-6 text-center text-[13px] text-muted-foreground">불러오는 중…</p>
+        <p className="py-6 text-center text-label text-muted-foreground">불러오는 중…</p>
       ) : (
         <ul className="divide-y divide-border/70">
           {data.map((r) => (
             <li key={r.user_id} className="flex items-center gap-3 py-2.5">
               <span className="min-w-0 flex-1">
-                <span className="block text-[14px] font-bold text-foreground">
-                  {r.name} <span className="text-[12px] font-medium text-muted-foreground">{r.title}</span>
+                <span className="block text-label font-bold text-foreground">
+                  {r.name} <span className="text-label font-medium text-muted-foreground">{r.title}</span>
                 </span>
               </span>
               {r.applied_at ? (
-                <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">적용 {strategyTime(r.applied_at)}</span>
+                <span className="text-label font-bold text-emerald-600 dark:text-emerald-400">적용 {strategyTime(r.applied_at)}</span>
               ) : r.acked_at ? (
-                <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">✓ {strategyTime(r.acked_at)}</span>
+                <span className="text-label font-bold text-emerald-600 dark:text-emerald-400">✓ {strategyTime(r.acked_at)}</span>
               ) : (
-                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11.5px] font-black text-primary">아직</span>
+                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-micro font-black text-primary">아직</span>
               )}
             </li>
           ))}

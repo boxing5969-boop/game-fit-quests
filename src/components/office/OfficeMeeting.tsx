@@ -51,7 +51,7 @@ const MessageRow = ({
 }) => {
   if (m.kind === "system") {
     return (
-      <p className="py-1 text-center text-[11px] font-semibold text-muted-foreground">
+      <p className="py-1 text-center text-label font-semibold text-muted-foreground">
         {m.body} · {officeTime(m.created_at)}
       </p>
     );
@@ -60,12 +60,12 @@ const MessageRow = ({
   return (
     <div className={cn("flex flex-col", m.mine ? "items-end" : "items-start")}>
       {!m.mine && (
-        <span className="mb-0.5 px-1 text-[11px] font-bold text-muted-foreground">{officeName(m.author)}</span>
+        <span className="mb-0.5 px-1 text-label font-bold text-muted-foreground">{officeName(m.author)}</span>
       )}
       <div className={cn("flex max-w-[86%] items-end gap-1", m.mine && "flex-row-reverse")}>
         <div
           className={cn(
-            "whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-[14px] leading-relaxed",
+            "whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-label leading-relaxed",
             decision
               ? "border border-amber-400/70 bg-amber-50 text-amber-950 dark:bg-amber-500/15 dark:text-amber-100"
               : m.mine
@@ -74,13 +74,13 @@ const MessageRow = ({
           )}
         >
           {decision && (
-            <span className="mb-0.5 flex items-center gap-1 text-[10.5px] font-black text-amber-700 dark:text-amber-300">
+            <span className="mb-0.5 flex items-center gap-1 text-micro font-black text-amber-700 dark:text-amber-300">
               <Pin className="h-3 w-3" /> 정한 것
             </span>
           )}
           {m.body}
         </div>
-        <span className="shrink-0 pb-0.5 text-[10px] text-muted-foreground">{officeTime(m.created_at)}</span>
+        <span className="shrink-0 pb-0.5 text-label text-muted-foreground">{officeTime(m.created_at)}</span>
         {canPin && onPin && (
           <button
             type="button"
@@ -123,10 +123,10 @@ export const Decisions = ({ messages }: { messages: OfficeMessage[] }) => {
   if (!list.length) return null;
   return (
     <div className="rounded-2xl border border-amber-400/60 bg-amber-50/80 p-3 dark:bg-amber-500/10">
-      <p className="flex items-center gap-1 text-[12.5px] font-black text-amber-800 dark:text-amber-200">
+      <p className="flex items-center gap-1 text-label font-black text-amber-800 dark:text-amber-200">
         <Pin className="h-3.5 w-3.5" /> 정한 것 {list.length}
       </p>
-      <ol className="mt-1.5 space-y-1 text-[13px] leading-relaxed text-amber-950 dark:text-amber-50">
+      <ol className="mt-1.5 space-y-1 text-label leading-relaxed text-amber-950 dark:text-amber-50">
         {list.map((m, i) => (
           <li key={m.id} className="flex gap-1.5">
             <span className="shrink-0 font-black">{i + 1}.</span>
@@ -166,16 +166,16 @@ export const MeetingSummaryCard = ({
   return (
     <div className="rounded-3xl border border-primary/40 bg-card p-4 shadow-elev-1">
       <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11.5px] font-black text-primary">
+        <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-micro font-black text-primary">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" /> 회의 중 · {officeDuration(meeting.opened_at, null)}째
         </span>
-        <span className="truncate text-[11.5px] font-semibold text-muted-foreground">
+        <span className="truncate text-label font-semibold text-muted-foreground">
           {meeting.scheduled ? "정기 회의" : officeName(meeting.opened_by)} · {officeTime(meeting.opened_at)}
         </span>
       </div>
-      <h3 className="mt-2.5 text-[18px] font-black leading-snug text-foreground">{meeting.title}</h3>
+      <h3 className="mt-2.5 text-heading font-black leading-snug text-foreground">{meeting.title}</h3>
       {meeting.agenda.length > 0 && (
-        <ol className="mt-2 space-y-1 rounded-2xl bg-secondary/70 px-3 py-2.5 text-[13.5px] leading-relaxed text-foreground">
+        <ol className="mt-2 space-y-1 rounded-2xl bg-secondary/70 px-3 py-2.5 text-label leading-relaxed text-foreground">
           {meeting.agenda.map((item, i) => (
             <li key={i} className="flex gap-2">
               <span className="shrink-0 font-black text-primary">{i + 1}</span>
@@ -184,14 +184,14 @@ export const MeetingSummaryCard = ({
           ))}
         </ol>
       )}
-      <p className="mt-3 text-[12px] font-bold text-muted-foreground">
+      <p className="mt-3 text-label font-bold text-muted-foreground">
         지금 회의실 {here.length}명{here.length ? ` · ${here.map((a) => people.get(a.user_id)!.name).join(" · ")}` : ""}
       </p>
       <button
         type="button"
         disabled={entering}
         onClick={onEnter}
-        className="mt-3 flex h-12 w-full items-center justify-center gap-1.5 rounded-2xl bg-primary text-[15px] font-black text-primary-foreground active:scale-[0.99] disabled:opacity-60"
+        className="mt-3 flex h-12 w-full items-center justify-center gap-1.5 rounded-2xl bg-primary text-body font-black text-primary-foreground active:scale-[0.99] disabled:opacity-60"
       >
         <LogIn className="h-4 w-4" /> {inRoom ? "회의실로 돌아가기" : "회의실 들어가기"}
       </button>
@@ -235,8 +235,8 @@ export const WrapOption = ({
       {icon}
     </span>
     <span className="min-w-0 flex-1">
-      <span className="block text-[14px] font-black leading-snug text-foreground">{title}</span>
-      <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">{sub}</span>
+      <span className="block text-label font-black leading-snug text-foreground">{title}</span>
+      <span className="mt-0.5 block text-label leading-snug text-muted-foreground">{sub}</span>
     </span>
     <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} aria-label={title} className="mt-1 shrink-0" />
   </label>
@@ -338,16 +338,16 @@ export const EndMeetingSheet = ({
           type="button"
           disabled={busy}
           onClick={() => void finish()}
-          className="flex h-12 w-full items-center justify-center rounded-2xl bg-foreground text-[15px] font-black text-background active:scale-[0.99] disabled:opacity-60"
+          className="flex h-12 w-full items-center justify-center rounded-2xl bg-foreground text-body font-black text-background active:scale-[0.99] disabled:opacity-60"
         >
           {END_LABEL[step]}
         </button>
       }
     >
-      <p className="text-[13.5px] leading-relaxed text-foreground">{summary}</p>
+      <p className="text-label leading-relaxed text-foreground">{summary}</p>
       {(recapQ.isLoading || r) && (
         <>
-          <p className="mb-2 mt-4 text-[12px] font-bold text-muted-foreground">끝내면서 함께 할 것</p>
+          <p className="mb-2 mt-4 text-label font-bold text-muted-foreground">끝내면서 함께 할 것</p>
           {recapQ.isLoading || !r ? (
             <div className="space-y-2" aria-hidden>
               {[0, 1].map((i) => (
@@ -376,7 +376,7 @@ export const EndMeetingSheet = ({
                   disabled={busy}
                 />
               ) : (
-                <p className="flex items-start gap-2 rounded-2xl bg-secondary/70 px-3 py-2.5 text-[12px] leading-snug text-muted-foreground">
+                <p className="flex items-start gap-2 rounded-2xl bg-secondary/70 px-3 py-2.5 text-label leading-snug text-muted-foreground">
                   <Pin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   정한 것이 없어 전략 회의실 지시는 보내지 않아요 — 회의 중 채팅 옆 핀을 누르면 정한 것으로 남아요
                 </p>
@@ -416,7 +416,7 @@ export const MeetingLinkBar = ({ url, canEdit, onEdit }: { url: string; canEdit:
         type="button"
         onClick={() => openMeetingLink(url)}
         className={cn(
-          "flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-4 text-[13.5px] font-black text-white active:scale-[0.99]",
+          "flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-4 text-label font-black text-white active:scale-[0.99]",
           kind === "meet" ? "bg-[#00897B]" : "bg-[#2D8CFF]",
         )}
       >
@@ -427,7 +427,7 @@ export const MeetingLinkBar = ({ url, canEdit, onEdit }: { url: string; canEdit:
         <button
           type="button"
           onClick={onEdit}
-          className="h-10 shrink-0 rounded-full bg-secondary px-3.5 text-[12.5px] font-black text-foreground active:scale-95"
+          className="h-10 shrink-0 rounded-full bg-secondary px-3.5 text-label font-black text-foreground active:scale-95"
         >
           바꾸기
         </button>
@@ -481,7 +481,7 @@ export const MeetingLinkSheet = ({
               type="button"
               disabled={setLink.isPending}
               onClick={() => save("")}
-              className="h-12 shrink-0 rounded-2xl bg-secondary px-4 text-[14px] font-black text-foreground active:scale-[0.99] disabled:opacity-60"
+              className="h-12 shrink-0 rounded-2xl bg-secondary px-4 text-label font-black text-foreground active:scale-[0.99] disabled:opacity-60"
             >
               링크 빼기
             </button>
@@ -490,7 +490,7 @@ export const MeetingLinkSheet = ({
             type="button"
             disabled={typeof parsed !== "string" || setLink.isPending}
             onClick={() => typeof parsed === "string" && save(parsed)}
-            className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-primary text-[15px] font-black text-primary-foreground active:scale-[0.99] disabled:opacity-40"
+            className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-primary text-body font-black text-primary-foreground active:scale-[0.99] disabled:opacity-40"
           >
             {setLink.isPending ? "넣는 중…" : "넣기"}
           </button>
@@ -529,14 +529,14 @@ export const MeetingLinkField = ({
       className={inputCls}
     />
     {parsed === "bad" ? (
-      <p className="mt-1.5 text-[12px] font-bold text-destructive">{MEETING_LINK_BAD}</p>
+      <p className="mt-1.5 text-label font-bold text-destructive">{MEETING_LINK_BAD}</p>
     ) : parsed && parsed !== value.trim() ? (
-      <p className="mt-1.5 break-all text-[11.5px] font-semibold text-muted-foreground">넣을 링크: {parsed}</p>
+      <p className="mt-1.5 break-all text-label font-semibold text-muted-foreground">넣을 링크: {parsed}</p>
     ) : suggest && !value.trim() ? (
       <button
         type="button"
         onClick={() => onChange(suggest)}
-        className="mt-2 flex max-w-full items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-[12.5px] font-bold text-foreground active:scale-95"
+        className="mt-2 flex max-w-full items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-label font-bold text-foreground active:scale-95"
       >
         <Video className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         <span className="truncate">지난번 {MEETING_LINK_LABEL[meetingLinkKind(suggest)]} 링크 쓰기</span>
@@ -613,7 +613,7 @@ export const OpenMeetingSheet = ({
           type="button"
           onClick={() => void submit()}
           disabled={!title.trim() || busy || parsedLink === "bad"}
-          className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-[15px] font-black text-primary-foreground active:scale-[0.99] disabled:opacity-40"
+          className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-body font-black text-primary-foreground active:scale-[0.99] disabled:opacity-40"
         >
           {busy ? "여는 중…" : "회의 열기"}
         </button>
@@ -631,7 +631,7 @@ export const OpenMeetingSheet = ({
       <div className="space-y-2">
         {items.map((v, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="w-4 shrink-0 text-center text-[13px] font-black text-primary">{i + 1}</span>
+            <span className="w-4 shrink-0 text-center text-label font-black text-primary">{i + 1}</span>
             <input
               value={v}
               onChange={(e) => setItems((arr) => arr.map((x, j) => (j === i ? e.target.value : x)))}
@@ -655,7 +655,7 @@ export const OpenMeetingSheet = ({
           <button
             type="button"
             onClick={() => setItems((arr) => [...arr, ""])}
-            className="flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-[12.5px] font-bold text-muted-foreground active:scale-95"
+            className="flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-label font-bold text-muted-foreground active:scale-95"
           >
             <Plus className="h-3.5 w-3.5" /> 항목 더하기
           </button>
@@ -691,7 +691,7 @@ const RecapSummary = ({ meetingId }: { meetingId: string }) => {
         type="button"
         onClick={run}
         disabled={make.isPending}
-        className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-primary/50 bg-primary/5 py-2.5 text-[13px] font-black text-primary active:scale-[0.99] disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-primary/50 bg-primary/5 py-2.5 text-label font-black text-primary active:scale-[0.99] disabled:opacity-60"
       >
         <Sparkles className="h-4 w-4" /> {make.isPending ? "오삼코치가 정리하는 중…" : "오삼코치 3줄 요약 만들기"}
       </button>
@@ -700,7 +700,7 @@ const RecapSummary = ({ meetingId }: { meetingId: string }) => {
   return (
     <div className="rounded-2xl border border-primary/30 bg-primary/5 p-3">
       <div className="flex items-center gap-2">
-        <p className="flex min-w-0 flex-1 items-center gap-1 text-[12.5px] font-black text-primary">
+        <p className="flex min-w-0 flex-1 items-center gap-1 text-label font-black text-primary">
           <Sparkles className="h-3.5 w-3.5 shrink-0" /> {r.summary_by === "ai" ? "오삼코치 3줄 요약" : "회의 요약"}
         </p>
         {r.host && (
@@ -708,13 +708,13 @@ const RecapSummary = ({ meetingId }: { meetingId: string }) => {
             type="button"
             onClick={run}
             disabled={make.isPending}
-            className="shrink-0 rounded-full bg-background px-2.5 py-1 text-[11.5px] font-bold text-muted-foreground active:scale-95 disabled:opacity-60"
+            className="shrink-0 rounded-full bg-background px-2.5 py-1 text-micro font-bold text-muted-foreground active:scale-95 disabled:opacity-60"
           >
             {make.isPending ? "정리하는 중…" : "다시 정리"}
           </button>
         )}
       </div>
-      <ul className="mt-1.5 space-y-1 text-[13.5px] leading-relaxed text-foreground">
+      <ul className="mt-1.5 space-y-1 text-label leading-relaxed text-foreground">
         {r.summary.map((line, i) => (
           <li key={i} className="flex gap-2">
             <span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-primary" />
@@ -748,15 +748,15 @@ const RecapFollowUp = ({ meetingId }: { meetingId: string }) => {
         onError: (e) => toast.error((e as Error).message),
       },
     );
-  const sendBtn = "flex w-full items-center justify-center gap-1.5 rounded-2xl border border-border bg-background py-2.5 text-[13px] font-black text-foreground active:scale-[0.99] disabled:opacity-60";
+  const sendBtn = "flex w-full items-center justify-center gap-1.5 rounded-2xl border border-border bg-background py-2.5 text-label font-black text-foreground active:scale-[0.99] disabled:opacity-60";
   const rows: ReactNode[] = [];
   if (r.directive) {
     rows.push(
       <div key="d" className="flex items-center gap-3 rounded-2xl bg-secondary/70 px-3 py-2.5">
         <ClipboardCheck className="h-4 w-4 shrink-0 text-primary" />
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-black text-foreground">전략 회의실 지시로 보냈어요</p>
-          <p className="text-[11.5px] font-semibold text-muted-foreground">
+          <p className="text-label font-black text-foreground">전략 회의실 지시로 보냈어요</p>
+          <p className="text-label font-semibold text-muted-foreground">
             확인 {r.directive.acked}/{r.directive.targets}
           </p>
         </div>
@@ -764,7 +764,7 @@ const RecapFollowUp = ({ meetingId }: { meetingId: string }) => {
           type="button"
           onClick={() => navigate("/messages?tab=strategy")}
           className={cn(
-            "h-9 shrink-0 rounded-full px-3.5 text-[12.5px] font-black active:scale-95",
+            "h-9 shrink-0 rounded-full px-3.5 text-label font-black active:scale-95",
             r.directive.to_ack ? "bg-primary text-primary-foreground" : "bg-background text-foreground",
           )}
         >
@@ -781,7 +781,7 @@ const RecapFollowUp = ({ meetingId }: { meetingId: string }) => {
   }
   if (r.recap_at && (r.recap_to ?? 0) > 0) {
     rows.push(
-      <p key="r" className="flex items-center gap-1.5 px-1 text-[12px] font-semibold text-muted-foreground">
+      <p key="r" className="flex items-center gap-1.5 px-1 text-label font-semibold text-muted-foreground">
         <BellRing className="h-3.5 w-3.5 shrink-0" /> 못 오신 {r.recap_to}분께 요약 알림을 보냈어요 · {officeTime(r.recap_at)}
       </p>,
     );
@@ -812,7 +812,7 @@ export const MinutesSheet = ({ meetingId, onClose }: { meetingId: string | null;
       }
     >
       {q.isError ? (
-        <p className="py-8 text-center text-[13px] leading-relaxed text-muted-foreground">
+        <p className="py-8 text-center text-label leading-relaxed text-muted-foreground">
           {(q.error as Error | null)?.message ?? "회의록을 불러오지 못했어요"}
         </p>
       ) : q.isLoading || !d ? (
@@ -824,7 +824,7 @@ export const MinutesSheet = ({ meetingId, onClose }: { meetingId: string | null;
       ) : (
         <div className="space-y-3">
           {d.meeting.agenda.length > 0 && (
-            <ol className="space-y-1 rounded-2xl bg-secondary/70 px-3 py-2.5 text-[13.5px] leading-relaxed text-foreground">
+            <ol className="space-y-1 rounded-2xl bg-secondary/70 px-3 py-2.5 text-label leading-relaxed text-foreground">
               {d.meeting.agenda.map((item, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="shrink-0 font-black text-primary">{i + 1}</span>
@@ -834,12 +834,12 @@ export const MinutesSheet = ({ meetingId, onClose }: { meetingId: string | null;
             </ol>
           )}
           <div>
-            <p className="text-[12px] font-bold text-muted-foreground">참석 {d.meeting.attendees.length}명</p>
+            <p className="text-label font-bold text-muted-foreground">참석 {d.meeting.attendees.length}명</p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {d.meeting.attendees.map((a) => (
                 <span
                   key={a.user_id}
-                  className="rounded-full border border-border bg-background px-2 py-[3px] text-[11.5px] font-bold text-foreground"
+                  className="rounded-full border border-border bg-background px-2 py-[3px] text-micro font-bold text-foreground"
                 >
                   {officeName(a)} <span className="font-semibold text-muted-foreground">{officeTime(a.first_joined_at)}</span>
                 </span>
@@ -853,7 +853,7 @@ export const MinutesSheet = ({ meetingId, onClose }: { meetingId: string | null;
             {messages.length ? (
               <MessageList messages={messages} />
             ) : (
-              <p className="py-4 text-center text-[13px] text-muted-foreground">남긴 말이 없어요</p>
+              <p className="py-4 text-center text-label text-muted-foreground">남긴 말이 없어요</p>
             )}
           </div>
         </div>

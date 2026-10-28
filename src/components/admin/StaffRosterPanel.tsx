@@ -63,14 +63,14 @@ const TitlePicker = ({
   preset, custom, onChange, onSave, onCancel, saving,
 }: { preset: string; custom: string; onChange: (p: string, c: string) => void; onSave: () => void; onCancel: () => void; saving: boolean }) => (
   <div className="mt-2 rounded-xl border border-border bg-muted/30 p-2.5">
-    <p className="mb-1.5 text-[11px] font-bold text-muted-foreground">직함 (화면에는 "OOO 코치님" 처럼 님을 붙여 보입니다)</p>
+    <p className="mb-1.5 text-label font-bold text-muted-foreground">직함 (화면에는 "OOO 코치님" 처럼 님을 붙여 보입니다)</p>
     <div className="flex flex-wrap gap-1.5">
       {[...TITLE_PRESETS, CUSTOM].map((t) => (
         <button
           key={t}
           type="button"
           onClick={() => onChange(t, custom)}
-          className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition-all active:scale-95 ${
+          className={`rounded-full px-2.5 py-1 text-micro font-bold transition-all active:scale-95 ${
             preset === t ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
           }`}
         >
@@ -84,7 +84,7 @@ const TitlePicker = ({
         onChange={(e) => onChange(preset, e.target.value)}
         placeholder="예: 수석코치 (20자 이내)"
         maxLength={20}
-        className="mt-2 h-9 rounded-lg text-sm"
+        className="mt-2 h-9 rounded-lg text-body"
       />
     )}
     <div className="mt-2 flex gap-1.5">
@@ -92,11 +92,11 @@ const TitlePicker = ({
         type="button"
         disabled={saving || !resolveTitle(preset, custom)}
         onClick={onSave}
-        className="flex-1 rounded-lg bg-primary py-2 text-xs font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
+        className="flex-1 rounded-lg bg-primary py-2 text-label font-bold text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
       >
         저장
       </button>
-      <button type="button" onClick={onCancel} className="rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground">
+      <button type="button" onClick={onCancel} className="rounded-lg bg-secondary px-3 py-2 text-label font-bold text-secondary-foreground">
         취소
       </button>
     </div>
@@ -225,13 +225,13 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
     <div className="space-y-3">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-1">
-        <span className="text-xs font-bold text-foreground">
+        <span className="text-label font-bold text-foreground">
           지도진 {filtered.length}명{isSuperAdmin && grouped.length > 1 ? ` · ${grouped.length}개 지점` : ""}
         </span>
         <button
           type="button"
           onClick={() => { setAdding((v) => !v); setAddPick(null); setAddQuery(""); }}
-          className="flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-[11px] font-bold text-primary transition-all active:scale-95"
+          className="flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-micro font-bold text-primary transition-all active:scale-95"
         >
           <UserPlus className="h-3.5 w-3.5" /> {adding ? "닫기" : "지도진 추가"}
         </button>
@@ -240,7 +240,7 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
       {/* 지도진 추가 */}
       {adding && (
         <div className="rounded-2xl border border-primary/30 bg-primary/5 p-3">
-          <p className="mb-2 text-xs font-bold text-foreground">회원 계정을 지도진으로 지정</p>
+          <p className="mb-2 text-label font-bold text-foreground">회원 계정을 지도진으로 지정</p>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -253,9 +253,9 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
           {addQ.length >= 2 && !addPick && (
             <div className="mt-2 space-y-1.5">
               {searching && !candidates ? (
-                <p className="px-1 text-[11px] text-muted-foreground">검색 중…</p>
+                <p className="px-1 text-label text-muted-foreground">검색 중…</p>
               ) : (candidates ?? []).length === 0 ? (
-                <p className="px-1 text-[11px] text-muted-foreground">일치하는 회원이 없습니다 (이미 지도진인 계정은 제외)</p>
+                <p className="px-1 text-label text-muted-foreground">일치하는 회원이 없습니다 (이미 지도진인 계정은 제외)</p>
               ) : (
                 (candidates ?? []).map((c) => (
                   <button
@@ -265,8 +265,8 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
                     className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-left transition-all active:scale-[0.99]"
                   >
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold text-foreground">{c.name || c.nickname}</span>
-                      <span className="block truncate text-[11px] text-muted-foreground">
+                      <span className="block truncate text-body font-bold text-foreground">{c.name || c.nickname}</span>
+                      <span className="block truncate text-label text-muted-foreground">
                         {c.branch_name}{c.phone_number ? ` · ${maskPhone(c.phone_number)}` : ""}
                       </span>
                     </span>
@@ -278,8 +278,8 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
           )}
           {addPick && (
             <div className="mt-2 rounded-xl border border-border bg-card px-3 py-2">
-              <p className="text-sm font-bold text-foreground">{addPick.row.name || addPick.row.nickname}</p>
-              <p className="text-[11px] text-muted-foreground">{addPick.row.branch_name} · 지정하면 이용권이 무제한으로 바뀌고 회원 목록에서 지도진으로 분리됩니다</p>
+              <p className="text-body font-bold text-foreground">{addPick.row.name || addPick.row.nickname}</p>
+              <p className="text-label text-muted-foreground">{addPick.row.branch_name} · 지정하면 이용권이 무제한으로 바뀌고 회원 목록에서 지도진으로 분리됩니다</p>
               <TitlePicker
                 preset={addPick.preset}
                 custom={addPick.custom}
@@ -298,14 +298,14 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
         Array(3).fill(0).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />)
       ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <span className="text-3xl">🥊</span>
-          <p className="mt-2 text-sm text-muted-foreground">{search ? "검색 결과가 없습니다" : "등록된 지도진이 없습니다"}</p>
+          <span className="text-title">🥊</span>
+          <p className="mt-2 text-body text-muted-foreground">{search ? "검색 결과가 없습니다" : "등록된 지도진이 없습니다"}</p>
         </div>
       ) : (
         grouped.map(([branch, rows]) => (
           <div key={branch}>
             {isSuperAdmin && (
-              <p className="mb-1.5 px-1 text-[11px] font-bold text-primary/70">{branch} · {rows.length}명</p>
+              <p className="mb-1.5 px-1 text-micro font-bold text-primary/70">{branch} · {rows.length}명</p>
             )}
             <div className="space-y-2">
               {rows.map((s) => {
@@ -318,22 +318,22 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
                       <button
                         type="button"
                         onClick={() => navigate(`/manager/member/${s.user_id}`)}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-reward/15 text-base font-black text-reward"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-reward/15 text-body font-black text-reward"
                         aria-label="상세 보기"
                       >
                         {s.avatar_url ? <img src={s.avatar_url} alt="" className="h-11 w-11 object-cover" /> : (s.name || s.nickname || "?").slice(0, 1)}
                       </button>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="truncate text-sm font-bold text-foreground">{staffDisplayName(s)}</span>
-                          <span className="shrink-0 rounded-full bg-yellow-500/15 px-1.5 py-0.5 text-[9px] font-black text-yellow-600 dark:text-yellow-400">
+                          <span className="truncate text-body font-bold text-foreground">{staffDisplayName(s)}</span>
+                          <span className="shrink-0 rounded-full bg-yellow-500/15 px-1.5 py-0.5 text-micro font-black text-yellow-600 dark:text-yellow-400">
                             {STAFF_CHAMPION_LINE}
                           </span>
-                          <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${fromOs ? "bg-reward/20 text-reward" : "bg-secondary text-secondary-foreground"}`}>
+                          <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-micro font-bold ${fromOs ? "bg-reward/20 text-reward" : "bg-secondary text-secondary-foreground"}`}>
                             {sourceLabel(s.staff_source)}
                           </span>
                         </div>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-muted-foreground">
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-label text-muted-foreground">
                           {s.phone_number && <span>{maskPhone(s.phone_number)}</span>}
                           <span>등록 {fmtDate(s.gym_reg_date || s.created_at)}</span>
                           <span className={att ? "font-medium text-primary" : ""}>{att ? `오늘 출석 ${fmtTime(att)}` : "오늘 미출석"}</span>
@@ -379,7 +379,7 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
                       />
                     )}
                     {fromOs && isEditing && (
-                      <p className="mt-1.5 px-1 text-[10px] text-muted-foreground">153OS 명단 지도진도 직함은 여기서 바꿀 수 있어요 (명단 동기화는 빈 직함만 채웁니다).</p>
+                      <p className="mt-1.5 px-1 text-label text-muted-foreground">153OS 명단 지도진도 직함은 여기서 바꿀 수 있어요 (명단 동기화는 빈 직함만 채웁니다).</p>
                     )}
                   </div>
                 );
@@ -389,7 +389,7 @@ const StaffRosterPanel = ({ search = "" }: Props) => {
         ))
       )}
 
-      <p className="px-1 text-[10px] leading-relaxed text-muted-foreground">
+      <p className="px-1 text-label leading-relaxed text-muted-foreground">
         153OS 직원 명단은 매시 25분 자동 반영됩니다. 명단에 있는 지도진은 153OS 명단에서 빼거나 비활성으로 바꾸면 그다음 25분 동기화 때
         자동 해제되고, 여기서 직접 지정한 지도진은 명단과 무관하게 유지됩니다. 지도진은 회원 리그 대신 &quot;{STAFF_CHAMPION_LINE}&quot; 과
         직함으로 표시되고(회원 순위·왕좌에는 들어가지 않아요) 이용권은 무제한입니다.

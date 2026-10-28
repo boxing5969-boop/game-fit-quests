@@ -11,7 +11,7 @@ import AchievementCard from "@/components/profile/AchievementCard";
 
 const MemberMyInfoView = ({ userId, name, onOpenAttendance }: { userId: string; name?: string | null; onOpenAttendance?: () => void }) => (
   <div className="space-y-3" aria-label="회원 내정보">
-    <p className="rounded-xl bg-primary/10 px-3.5 py-2.5 text-[12.5px] font-bold leading-snug text-foreground">
+    <p className="rounded-xl bg-primary/10 px-3.5 py-2.5 text-label font-bold leading-snug text-foreground">
       👤 {(name || "").trim() || "회원"}님이 내정보 &lsquo;내 기록&rsquo;에서 보는 화면이에요
     </p>
     <AttendanceSummaryCard userId={userId} audience="member" onOpenAll={onOpenAttendance} />

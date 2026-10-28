@@ -125,12 +125,12 @@ const SuperAdminDashboard = () => {
           <ArrowLeft className="h-5 w-5 text-secondary-foreground" />
         </button>
         <div className="flex-1">
-          <h1 className="text-xl text-foreground">전체관리자 대시보드</h1>
-          <p className="text-xs text-muted-foreground">모든 지점 통합 관리</p>
+          <h1 className="text-heading text-foreground">전체관리자 대시보드</h1>
+          <p className="text-label text-muted-foreground">모든 지점 통합 관리</p>
         </div>
         <button
           onClick={handleExportMembers}
-          className="flex items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground active:scale-95"
+          className="flex items-center gap-1 rounded-xl bg-secondary px-3 py-2 text-label font-bold text-secondary-foreground active:scale-95"
         >
           <Download className="h-3.5 w-3.5" /> CSV
         </button>
@@ -139,29 +139,29 @@ const SuperAdminDashboard = () => {
       {/* Global Stats */}
       <div className="mb-5 grid grid-cols-3 gap-2">
         <div className="rounded-2xl border border-border bg-card p-3 text-center">
-          <p className="text-xl font-bold text-foreground">{globalStats?.totalMembers ?? "-"}</p>
-          <p className="text-[9px] text-muted-foreground">전체 회원</p>
+          <p className="text-heading font-bold text-foreground">{globalStats?.totalMembers ?? "-"}</p>
+          <p className="text-label text-muted-foreground">전체 회원</p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-3 text-center">
-          <p className="text-xl font-bold text-primary">{globalStats?.totalBranches ?? "-"}</p>
-          <p className="text-[9px] text-muted-foreground">지점 수</p>
+          <p className="text-heading font-bold text-primary">{globalStats?.totalBranches ?? "-"}</p>
+          <p className="text-label text-muted-foreground">지점 수</p>
         </div>
         <div className={`rounded-2xl border p-3 text-center ${(globalStats?.pendingSubmissions || 0) > 0 ? "border-status-pending/30 bg-status-pending/5" : "border-border bg-card"}`}>
-          <p className={`text-xl font-bold ${(globalStats?.pendingSubmissions || 0) > 0 ? "text-status-pending" : "text-foreground"}`}>
+          <p className={`text-heading font-bold ${(globalStats?.pendingSubmissions || 0) > 0 ? "text-status-pending" : "text-foreground"}`}>
             {globalStats?.pendingSubmissions ?? "-"}
           </p>
-          <p className="text-[9px] text-muted-foreground">승인 대기</p>
+          <p className="text-label text-muted-foreground">승인 대기</p>
         </div>
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2">
         <div className={`rounded-2xl border p-3 text-center ${(globalStats?.unapproved || 0) > 0 ? "border-reward/30 bg-reward/5" : "border-border bg-card"}`}>
-          <p className="text-lg font-bold text-foreground">{globalStats?.unapproved ?? "-"}</p>
-          <p className="text-[9px] text-muted-foreground">미승인 회원</p>
+          <p className="text-heading font-bold text-foreground">{globalStats?.unapproved ?? "-"}</p>
+          <p className="text-label text-muted-foreground">미승인 회원</p>
         </div>
         <div className={`rounded-2xl border p-3 text-center ${(globalStats?.pendingTransfers || 0) > 0 ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
-          <p className="text-lg font-bold text-foreground">{globalStats?.pendingTransfers ?? "-"}</p>
-          <p className="text-[9px] text-muted-foreground">이전 대기</p>
+          <p className="text-heading font-bold text-foreground">{globalStats?.pendingTransfers ?? "-"}</p>
+          <p className="text-label text-muted-foreground">이전 대기</p>
         </div>
       </div>
 
@@ -171,7 +171,7 @@ const SuperAdminDashboard = () => {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+            className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-label font-bold transition-all active:scale-95 ${
               tab === t.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
             }`}
           >

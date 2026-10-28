@@ -58,7 +58,7 @@ export const OfficeCallBar = ({ meetingId, topic, me, calls, names, className }:
           aria-pressed={call.mic}
           aria-label={call.mic ? "마이크 끄기" : "말하기 — 마이크 켜기"}
           className={cn(
-            "flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-black transition-[transform,box-shadow] active:scale-95",
+            "flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-label font-black transition-[transform,box-shadow] active:scale-95",
             call.mic ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground",
             meTalking && "ring-4 ring-primary/30",
           )}
@@ -80,7 +80,7 @@ export const OfficeCallBar = ({ meetingId, topic, me, calls, names, className }:
             type="button"
             onClick={() => void muteAllOfficeCall()}
             aria-label="모두 마이크 끄기"
-            className={cn(ROUND, "flex-col gap-[2px] bg-secondary text-[9px] font-black leading-none text-foreground")}
+            className={cn(ROUND, "flex-col gap-[2px] bg-secondary text-micro font-black leading-none text-foreground")}
           >
             <MicOff className="h-3.5 w-3.5" />
             모두
@@ -91,18 +91,18 @@ export const OfficeCallBar = ({ meetingId, topic, me, calls, names, className }:
             <button
               type="button"
               onClick={resumeOfficeSound}
-              className="flex h-9 items-center gap-1 rounded-full bg-amber-100 px-3 text-[12.5px] font-black text-amber-900 active:scale-95 dark:bg-amber-500/20 dark:text-amber-200"
+              className="flex h-9 items-center gap-1 rounded-full bg-amber-100 px-3 text-label font-black text-amber-900 active:scale-95 dark:bg-amber-500/20 dark:text-amber-200"
             >
               <Volume2 className="h-4 w-4" /> 소리 켜기
             </button>
           ) : (
             <>
-              <p className="truncate text-[12.5px] font-black leading-tight text-foreground">
+              <p className="truncate text-label font-black leading-tight text-foreground">
                 {speakers.length ? `${officeCallNames(speakers)} 말하는 중` : `음성 ${call.peers.length + 1}명`}
               </p>
               <p
                 className={cn(
-                  "truncate text-[10.5px] font-semibold leading-tight",
+                  "truncate text-micro font-semibold leading-tight",
                   call.notice ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground",
                 )}
               >
@@ -136,13 +136,13 @@ export const OfficeCallBar = ({ meetingId, topic, me, calls, names, className }:
           <Loader2 className="h-[18px] w-[18px] animate-spin" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-black leading-tight text-foreground">음성 회의에 들어가는 중…</p>
-          <p className="truncate text-[10.5px] font-semibold leading-tight text-muted-foreground">마이크는 꺼진 채로 들어가요</p>
+          <p className="truncate text-label font-black leading-tight text-foreground">음성 회의에 들어가는 중…</p>
+          <p className="truncate text-label font-semibold leading-tight text-muted-foreground">마이크는 꺼진 채로 들어가요</p>
         </div>
         <button
           type="button"
           onClick={() => void leaveOfficeCall()}
-          className="h-9 shrink-0 rounded-full bg-secondary px-3.5 text-[12.5px] font-black text-foreground active:scale-95"
+          className="h-9 shrink-0 rounded-full bg-secondary px-3.5 text-label font-black text-foreground active:scale-95"
         >
           취소
         </button>
@@ -162,18 +162,18 @@ export const OfficeCallBar = ({ meetingId, topic, me, calls, names, className }:
       >
         <Headphones className="h-[18px] w-[18px]" />
         {inVoice.length > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-foreground px-1 text-[9.5px] font-black text-background">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-foreground px-1 text-micro font-black text-background">
             {inVoice.length}
           </span>
         )}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-black leading-tight text-foreground">
+        <p className="truncate text-label font-black leading-tight text-foreground">
           {inVoice.length ? `${officeCallNames(inVoice.map(nameOf))} 음성 회의 중` : "음성 회의"}
         </p>
         <p
           className={cn(
-            "truncate text-[10.5px] font-semibold leading-tight",
+            "truncate text-micro font-semibold leading-tight",
             call.notice ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground",
           )}
         >
@@ -184,7 +184,7 @@ export const OfficeCallBar = ({ meetingId, topic, me, calls, names, className }:
         type="button"
         // 누른 그 자리에서 불러야 아이폰이 소리를 켜 준다 (lib/officeCall)
         onClick={() => joinOfficeCall(meetingId, topic, me)}
-        className="flex h-9 shrink-0 items-center gap-1 rounded-full bg-primary px-3.5 text-[12.5px] font-black text-primary-foreground active:scale-95"
+        className="flex h-9 shrink-0 items-center gap-1 rounded-full bg-primary px-3.5 text-label font-black text-primary-foreground active:scale-95"
       >
         <Headphones className="h-4 w-4" /> 음성 참여
       </button>
@@ -228,7 +228,7 @@ const VideoTile = ({
       )}
     >
       <video ref={ref} autoPlay playsInline muted className={cn("absolute inset-0 h-full w-full object-cover", mine && "-scale-x-100")} />
-      <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/70 to-transparent px-1 pb-[3px] pt-3 text-center text-[8.5px] font-black leading-none text-white">
+      <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/70 to-transparent px-1 pb-[3px] pt-3 text-center text-micro font-black leading-none text-white">
         {mine ? "나" : name}
       </span>
     </button>
@@ -248,7 +248,7 @@ const BigVideo = ({ uid, mine, name, onClose }: { uid: string; mine: boolean; na
     >
       <video ref={ref} autoPlay playsInline muted className={cn("h-full w-full object-contain", mine && "-scale-x-100")} />
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent px-4 pb-8 pt-[calc(env(safe-area-inset-top)+12px)]">
-        <span className="truncate text-[15px] font-black text-white">{mine ? "나" : name}</span>
+        <span className="truncate text-body font-black text-white">{mine ? "나" : name}</span>
         <button
           type="button"
           onClick={onClose}

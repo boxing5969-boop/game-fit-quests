@@ -53,23 +53,20 @@ export function nearestStep(px) {
 }
 
 /**
- * 아직 6단계로 옮기지 않는 화면 (src/ 기준 경로 앞부분) — 관리자 · 지점장 · 코치 화면, TV · 키오스크, 게임.
- *   회원이 보는 휴대폰 화면만 먼저 바꾼다(1 · 2단계). 이 화면들은 3단계에서 따로 기준을 정한다.
+ * 3단계 (2026-10-28 대표님 "이어서하자") — 한눈에 많이 보는 화면은 기준을 따로 정한다 (UX 보고서 '고치는 순서' 3단계).
+ *   · 관리자 · 지점장 · 코치 화면 — 회원 화면과 같은 6단계(13 아래 없음). 대신 표 · 숫자 여러 개는 써도 된다.
+ *   · TV · 키오스크 · 게임 — 아래 EXCLUDE (옮기는 중)
+ *   · 그림 속 글씨(SCENE) — 사무실 그림 위 이름표 · 말풍선처럼 그림 크기(자리 사이 40px 남짓)에 맞춰 그리는 것.
+ *     글씨를 키우면 그림이 가려진다 — 크게 보기 · 아래 채팅 목록이 같은 글을 큰 글씨로 보여 준다.
  */
 export const EXCLUDE = [
-  "components/admin/", "components/liveBoard/", "components/strategy/", "components/office/", "components/manager/",
-  "components/dm/DmAdmin", "pages/Admin", "pages/SuperAdmin", "pages/BranchManagerHome", "pages/MemberDetail", "pages/MemberPreview",
-  "pages/LiveBoard", "pages/Office", "pages/CoachDashboard", "pages/diet/coach", "pages/RoutineBuilderPage", "pages/StoryRpgPage",
-  "pages/TvBranchPicker", "pages/SignageBoardPage", "pages/FaceKioskPage", "pages/CheckinBoardPage", "pages/MinigamePage",
-  "features/minigame/", "components/story-rpg/",
-  "components/test153/Test153MeasurePanel", "components/BranchCompareReport", "components/RegistrationReportPanel",
-  "components/AtRiskMembersPanel", "components/TransferApproval", "components/BroadcastNotification", "components/ApprovalInbox",
-  "components/CoachLevelReviewInbox", "components/DailyOperationsBoard", "components/DailyReportCard",
-  "components/MembershipRequestsInbox", "components/CoachDraftsInbox", "components/CoachSparringInbox", "components/MissionManager",
-  "components/PayssamInspectPanel", "components/SessionTemplateEditor",
+  "components/liveBoard/", "pages/LiveBoardPage", "pages/TvBranchPicker", "pages/SignageBoardPage", "pages/FaceKioskPage",
+  "pages/CheckinBoardPage", "pages/MinigamePage", "features/minigame/", "components/story-rpg/", "pages/StoryRpgPage",
 ];
+export const SCENE = ["components/office/OfficeScene"];
 
-export const isMemberFile = (rel) => rel.endsWith(".tsx") && !rel.endsWith(".test.tsx") && !EXCLUDE.some((p) => rel.startsWith(p));
+export const isMemberFile = (rel) =>
+  rel.endsWith(".tsx") && !rel.endsWith(".test.tsx") && !EXCLUDE.some((p) => rel.startsWith(p)) && !SCENE.some((p) => rel.startsWith(p));
 
 const LEGACY_NAMES = Object.keys(LEGACY).sort((a, b) => b.length - a.length).map((n) => n.replace(/[-]/g, "\\-")).join("|");
 /** 크기 숫자 (text-[11.5px]) — 앞의 변형(sm: · hover: · !)은 그대로 둔다 */

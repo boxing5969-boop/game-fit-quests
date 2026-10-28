@@ -122,14 +122,14 @@ const TodayListPanel = ({ kind, branchName, isSuperAdmin, onBack, onOpenApproval
         >
           <ChevronLeft className="h-4 w-4 text-secondary-foreground" />
         </button>
-        <h3 className="flex-1 text-base font-bold text-foreground">
+        <h3 className="flex-1 text-body font-bold text-foreground">
           {title} <span className="text-muted-foreground">{isLoading ? "" : `${rows.length}명`}</span>
         </h3>
         {pendingCount > 0 && onOpenApprovals && (
           <button
             type="button"
             onClick={onOpenApprovals}
-            className="rounded-full bg-status-pending/15 px-3 py-1.5 text-xs font-bold text-status-pending active:scale-95"
+            className="rounded-full bg-status-pending/15 px-3 py-1.5 text-label font-bold text-status-pending active:scale-95"
           >
             승인 대기 {pendingCount}건 처리 →
           </button>
@@ -143,7 +143,7 @@ const TodayListPanel = ({ kind, branchName, isSuperAdmin, onBack, onOpenApproval
           ))}
         </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-body text-muted-foreground">
           {kind === "new" ? "오늘 새로 가입한 회원이 아직 없어요" : "오늘 들어온 제출이 아직 없어요"}
         </div>
       ) : (
@@ -158,13 +158,13 @@ const TodayListPanel = ({ kind, branchName, isSuperAdmin, onBack, onOpenApproval
                   className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-secondary/40"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-foreground">{r.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="truncate text-body font-bold text-foreground">{r.name}</p>
+                    <p className="truncate text-label text-muted-foreground">
                       {fmtTime(r.at)}
                       {r.sub ? ` · ${r.sub}` : ""}
                     </p>
                   </div>
-                  {st && <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${st.cls}`}>{st.label}</span>}
+                  {st && <span className={`shrink-0 rounded-full px-2 py-0.5 text-micro font-bold ${st.cls}`}>{st.label}</span>}
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </button>
               </li>

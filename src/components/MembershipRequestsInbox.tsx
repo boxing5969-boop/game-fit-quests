@@ -198,10 +198,10 @@ const MembershipRequestsInbox = () => {
   return (
     <div className="mb-5 rounded-2xl border border-status-pending/30 bg-status-pending/5 p-4">
       <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-status-pending px-1.5 text-[11px] font-bold text-white">
+        <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-status-pending px-1.5 text-micro font-bold text-white">
           {reqs.length}
         </span>
-        <h3 className="text-sm font-bold text-foreground">수강권 홀딩·양도·환불 신청</h3>
+        <h3 className="text-body font-bold text-foreground">수강권 홀딩·양도·환불 신청</h3>
       </div>
       <div className="space-y-2">
         {reqs.map((r) => {
@@ -209,16 +209,16 @@ const MembershipRequestsInbox = () => {
           const expired = !!c?.end && c.end < today;
           return (
             <div key={r.id} className="rounded-xl border border-border bg-card p-3">
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-body font-semibold text-foreground">
                 {r.member_name || "회원"}
-                <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground">
+                <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-micro font-bold text-muted-foreground">
                   {typeChip(r)}
                 </span>
               </p>
 
               {/* 홀딩: 만료일·지난 홀딩 사용량 (계약서 표: 3~4개월 1회 15일 · 5~11개월 2회 30일 · 12개월+ 3회 60일) */}
               {c && (
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <p className="mt-1 text-label text-muted-foreground">
                   만료일 {c.end ?? "-"}
                   {expired && <span className="ml-1 font-bold text-destructive">(만료)</span>} · 지난 일반 홀딩 {c.regCount}회·{c.regDays}일 · 부상·질병 {c.medCount}회·{c.medDays}일
                 </p>
@@ -230,17 +230,17 @@ const MembershipRequestsInbox = () => {
                   <button
                     onClick={() => viewDoc(r)}
                     disabled={!r.doc_path || docBusy === r.id}
-                    className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-label font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
                   >
                     <FileText className="h-3.5 w-3.5" /> {docBusy === r.id ? "여는 중..." : "병원 서류 보기"}
                   </button>
-                  <span className="text-[11px] text-muted-foreground">진단 기간과 신청 일수를 확인하세요</span>
+                  <span className="text-label text-muted-foreground">진단 기간과 신청 일수를 확인하세요</span>
                 </div>
               )}
 
               {/* 양도: 양수인 정보 */}
               {r.type === "transfer" && (
-                <p className="mt-1 text-xs text-foreground">
+                <p className="mt-1 text-label text-foreground">
                   양수인 <span className="font-semibold">{r.transferee_name || "-"}</span>
                   {r.transferee_phone ? ` · ${r.transferee_phone}` : ""}
                   <span className="ml-1 text-muted-foreground">(수수료 {won(TRANSFER_FEE)} 안내)</span>
@@ -249,14 +249,14 @@ const MembershipRequestsInbox = () => {
 
               {/* 환불: 예상 환불액 */}
               {r.type === "refund" && r.est_refund != null && (
-                <p className="mt-1 text-xs text-foreground">
+                <p className="mt-1 text-label text-foreground">
                   예상 환불액 <span className="font-bold text-primary">{won(r.est_refund)}</span>
                   <span className="ml-1 text-muted-foreground">(최종 확정 필요)</span>
                 </p>
               )}
 
-              {r.reason && <p className="mt-1 text-xs text-muted-foreground">{r.reason}</p>}
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              {r.reason && <p className="mt-1 text-label text-muted-foreground">{r.reason}</p>}
+              <p className="mt-1 text-label text-muted-foreground">
                 {r.branch_name ? r.branch_name + " · " : ""}
                 {fmt(r.created_at)}
               </p>
@@ -264,14 +264,14 @@ const MembershipRequestsInbox = () => {
                 <button
                   onClick={() => act(r, true)}
                   disabled={busy === r.id}
-                  className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-status-complete py-2 text-xs font-bold text-white transition-all active:scale-95 disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-status-complete py-2 text-label font-bold text-white transition-all active:scale-95 disabled:opacity-50"
                 >
                   <Check className="h-3.5 w-3.5" /> 승인
                 </button>
                 <button
                   onClick={() => act(r, false)}
                   disabled={busy === r.id}
-                  className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-muted py-2 text-xs font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-muted py-2 text-label font-bold text-foreground transition-all active:scale-95 disabled:opacity-50"
                 >
                   <X className="h-3.5 w-3.5" /> 반려
                 </button>
@@ -280,7 +280,7 @@ const MembershipRequestsInbox = () => {
           );
         })}
       </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mt-2 text-label leading-relaxed text-muted-foreground">
         홀딩을 승인하면 앱 만료일이 바로 늘어나고, <b className="text-foreground">브로제이에도 같은 일수로 홀딩을 등록</b>해야 연장이 유지됩니다(등록하지 않으면 다음 회원 동기화 때 원래 날짜로 돌아갑니다). 부상·질병 홀딩은 일반 홀딩 횟수와 별도이며, 승인·반려하면 첨부 서류는 바로 삭제됩니다. 양도·환불 승인은 신청 기록만 처리되며, 실제 정산·명의 이전은 별도로 진행하세요.
       </p>
 
@@ -289,7 +289,7 @@ const MembershipRequestsInbox = () => {
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4" onClick={() => setDoc(null)}>
           <div className="w-full max-w-md rounded-2xl bg-card p-4" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
-              <h4 className="text-sm font-bold text-foreground">병원 서류</h4>
+              <h4 className="text-body font-bold text-foreground">병원 서류</h4>
               <button
                 onClick={() => setDoc(null)}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:scale-95"
@@ -304,11 +304,11 @@ const MembershipRequestsInbox = () => {
               href={doc.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground active:scale-[0.98]"
+              className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl bg-primary py-2.5 text-label font-bold text-primary-foreground active:scale-[0.98]"
             >
               <FileText className="h-3.5 w-3.5" /> {doc.inline ? "새 창에서 크게 보기" : "서류 열기"}
             </a>
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">링크는 5분 뒤 만료됩니다. 서류를 따로 저장하지 마세요.</p>
+            <p className="mt-2 text-center text-label text-muted-foreground">링크는 5분 뒤 만료됩니다. 서류를 따로 저장하지 마세요.</p>
           </div>
         </div>
       )}

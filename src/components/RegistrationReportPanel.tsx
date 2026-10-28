@@ -177,7 +177,7 @@ const RegistrationReportPanel = () => {
             <button
               key={p.key}
               onClick={() => setPeriod(p.key)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+              className={`shrink-0 rounded-full px-3 py-1.5 text-label font-bold transition-all active:scale-95 ${
                 period === p.key ? "bg-foreground text-background" : "bg-secondary text-secondary-foreground"
               }`}
             >
@@ -202,10 +202,10 @@ const RegistrationReportPanel = () => {
         </div>
       ) : error || !data ? (
         <div className="rounded-2xl border border-dashed border-border p-6 text-center">
-          <p className="text-sm text-muted-foreground">등록 내역을 불러오지 못했어요.</p>
+          <p className="text-body text-muted-foreground">등록 내역을 불러오지 못했어요.</p>
           <button
             onClick={() => refetch()}
-            className="mt-3 rounded-xl bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground active:scale-95"
+            className="mt-3 rounded-xl bg-secondary px-3 py-1.5 text-label font-bold text-secondary-foreground active:scale-95"
           >
             다시 불러오기
           </button>
@@ -214,17 +214,17 @@ const RegistrationReportPanel = () => {
         <>
           {/* 합계 */}
           <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-label text-muted-foreground">
               {rangeLabel(data.range.from, data.range.to)} · {branch === "all" ? "전 지점" : shortBranch(branch)}
             </p>
             <div className="mt-1 flex items-end justify-between gap-3">
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-title font-bold text-foreground">
                 {sums.count}
-                <span className="ml-0.5 text-sm font-medium text-muted-foreground">건</span>
+                <span className="ml-0.5 text-body font-medium text-muted-foreground">건</span>
               </p>
-              <p className="text-lg font-bold text-foreground">{won(sums.amount)}</p>
+              <p className="text-heading font-bold text-foreground">{won(sums.amount)}</p>
             </div>
-            <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+            <div className="mt-2 flex flex-wrap gap-1.5 text-micro">
               <span className={`rounded-full px-2 py-0.5 font-bold ${KIND.new.cls}`}>신규 {sums.new}</span>
               <span className={`rounded-full px-2 py-0.5 font-bold ${KIND.renew.cls}`}>재등록 {sums.renew}</span>
               {sums.daily > 0 && <span className={`rounded-full px-2 py-0.5 font-bold ${KIND.daily.cls}`}>일일권 {sums.daily}</span>}
@@ -240,7 +240,7 @@ const RegistrationReportPanel = () => {
           <div className="rounded-2xl border border-border bg-card">
             <button
               onClick={() => setBranch("all")}
-              className={`flex w-full items-center justify-between rounded-t-2xl px-4 py-2.5 text-left text-xs font-bold ${
+              className={`flex w-full items-center justify-between rounded-t-2xl px-4 py-2.5 text-left text-label font-bold ${
                 branch === "all" ? "bg-primary/5 text-primary" : "text-muted-foreground"
               }`}
             >
@@ -255,12 +255,12 @@ const RegistrationReportPanel = () => {
                   branch === b.branch ? "bg-primary/5" : ""
                 }`}
               >
-                <span className="w-16 shrink-0 text-sm font-bold text-foreground">{shortBranch(b.branch)}</span>
-                <span className="flex-1 text-[11px] text-muted-foreground">
+                <span className="w-16 shrink-0 text-body font-bold text-foreground">{shortBranch(b.branch)}</span>
+                <span className="flex-1 text-label text-muted-foreground">
                   {b.count}건 · 신규 {b.new} · 재등록 {b.renew}
                   {b.refunds > 0 ? ` · 환불 ${b.refunds}` : ""}
                 </span>
-                <span className="text-sm font-bold text-foreground">{won(b.amount)}</span>
+                <span className="text-body font-bold text-foreground">{won(b.amount)}</span>
               </button>
             ))}
           </div>
@@ -268,36 +268,36 @@ const RegistrationReportPanel = () => {
           {/* 날짜별 목록 */}
           {byDay.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-              <p className="text-sm text-muted-foreground">이 기간에 들어온 등록이 없어요.</p>
+              <p className="text-body text-muted-foreground">이 기간에 들어온 등록이 없어요.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {byDay.map(g => (
                 <div key={g.day} className="overflow-hidden rounded-2xl border border-border bg-card">
                   <div className="flex items-center justify-between bg-muted/40 px-4 py-2">
-                    <span className="text-xs font-bold text-foreground">{dayLabel(g.day)}</span>
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-label font-bold text-foreground">{dayLabel(g.day)}</span>
+                    <span className="text-label text-muted-foreground">
                       {g.count}건 · {won(g.amount)}
                     </span>
                   </div>
                   {g.rows.map(r => (
                     <div key={r.id} className="flex items-center gap-2.5 border-t border-border/60 px-4 py-2.5">
-                      <span className={`min-w-[42px] shrink-0 rounded-full px-1.5 py-0.5 text-center text-[10px] font-bold ${KIND[r.kind]?.cls ?? KIND.new.cls}`}>
+                      <span className={`min-w-[42px] shrink-0 rounded-full px-1.5 py-0.5 text-center text-micro font-bold ${KIND[r.kind]?.cls ?? KIND.new.cls}`}>
                         {KIND[r.kind]?.label ?? r.kind}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-bold text-foreground">
+                        <p className="truncate text-body font-bold text-foreground">
                           {r.member || "이름 없음"}
                           {branch === "all" && (
-                            <span className="ml-1.5 text-[10px] font-medium text-primary/70">{shortBranch(r.branch)}</span>
+                            <span className="ml-1.5 text-micro font-medium text-primary/70">{shortBranch(r.branch)}</span>
                           )}
                         </p>
-                        <p className="truncate text-[11px] text-muted-foreground">
+                        <p className="truncate text-label text-muted-foreground">
                           {r.product || "-"}
                           {r.method ? ` · ${r.method}` : ""}
                         </p>
                       </div>
-                      <span className={`shrink-0 text-sm font-bold ${r.kind === "refund" ? "text-destructive" : "text-foreground"}`}>
+                      <span className={`shrink-0 text-body font-bold ${r.kind === "refund" ? "text-destructive" : "text-foreground"}`}>
                         {won(Number(r.amount) || 0)}
                       </span>
                     </div>
@@ -305,7 +305,7 @@ const RegistrationReportPanel = () => {
                 </div>
               ))}
               {data.truncated && (
-                <p className="text-center text-[11px] text-muted-foreground">
+                <p className="text-center text-label text-muted-foreground">
                   너무 많아서 최근 3,000건까지만 보여 드려요. 기간을 줄여 보세요.
                 </p>
               )}
@@ -313,7 +313,7 @@ const RegistrationReportPanel = () => {
           )}
 
           {/* 기준 */}
-          <div className="space-y-1 rounded-2xl bg-muted/40 px-4 py-3 text-[11px] leading-relaxed text-muted-foreground">
+          <div className="space-y-1 rounded-2xl bg-muted/40 px-4 py-3 text-micro leading-relaxed text-muted-foreground">
             <p>
               {(data.sources ?? []).map((s, i) => (
                 <span key={s.branch}>

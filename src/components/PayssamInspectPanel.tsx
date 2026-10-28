@@ -114,41 +114,41 @@ const PayssamInspectPanel = () => {
   ].join("\n");
 
   const Row = ({ label, value }: { label: string; value?: string }) => (
-    <div className="flex items-center justify-between gap-2 border-t border-border/60 py-1.5 text-sm first:border-t-0">
+    <div className="flex items-center justify-between gap-2 border-t border-border/60 py-1.5 text-body first:border-t-0">
       <span className="text-muted-foreground">{label}</span>
       <span className="flex items-center gap-1.5">
-        <span className="font-mono text-xs font-semibold text-foreground">{value || "—"}</span>
+        <span className="font-mono text-label font-semibold text-foreground">{value || "—"}</span>
         {value && <button onClick={() => copy(value)} className="text-muted-foreground active:scale-90"><Copy className="h-3.5 w-3.5" /></button>}
       </span>
     </div>
   );
 
-  const btn = "inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold transition-all active:scale-95 disabled:opacity-50";
+  const btn = "inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-body font-bold transition-all active:scale-95 disabled:opacity-50";
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="mb-1 flex items-center gap-2">
         <ShieldCheck className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-bold text-foreground">결제선생 연동 검수 (관리자)</h3>
+        <h3 className="text-body font-bold text-foreground">결제선생 연동 검수 (관리자)</h3>
       </div>
-      <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mb-3 text-label leading-relaxed text-muted-foreground">
         샌드박스 테스트입니다. A청구서는 <b className="text-foreground">생성→결제→조회→승인취소</b>, B청구서는 <b className="text-foreground">생성→파기</b> 순서로 진행하면
         검수 5항목 BILL-ID가 모두 채워집니다.
       </p>
 
       {/* A: 결제승인·조회·승인취소 */}
       <div className="mb-2.5 rounded-xl border border-border bg-background p-3">
-        <p className="mb-2 text-xs font-bold text-foreground">① 결제승인 · 승인동기화 · 조회 · 승인취소</p>
+        <p className="mb-2 text-label font-bold text-foreground">① 결제승인 · 승인동기화 · 조회 · 승인취소</p>
         <div className="mb-2 flex items-center gap-2">
           <input value={priceA} onChange={(e) => setPriceA(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric"
-            className="w-24 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-foreground" placeholder="금액" />
+            className="w-24 rounded-lg border border-border bg-card px-2.5 py-1.5 text-body text-foreground" placeholder="금액" />
           <button disabled={!!busy} onClick={createA} className={`${btn} bg-primary text-primary-foreground`}>
             {busy === "A-생성" ? "생성 중…" : "테스트 청구서 생성"}
           </button>
         </div>
         {st.billA && (
           <div className="rounded-lg bg-muted/40 px-3 py-2">
-            <div className="flex items-center justify-between gap-2 text-xs">
+            <div className="flex items-center justify-between gap-2 text-label">
               <span className="font-mono font-semibold text-foreground">{st.billA}</span>
               <span className="text-muted-foreground">상태 {st.stateA || "-"}{st.canceled ? " · 취소됨" : ""}</span>
             </div>
@@ -165,24 +165,24 @@ const PayssamInspectPanel = () => {
                 <XCircle className="h-3.5 w-3.5" /> {busy === "A-승인취소" ? "취소 중…" : "승인취소"}
               </button>
             </div>
-            <p className="mt-1.5 text-[10px] text-muted-foreground">결제창에서 테스트카드로 결제 후 [조회]로 상태 F(결제완료) 확인 → [승인취소]</p>
+            <p className="mt-1.5 text-label text-muted-foreground">결제창에서 테스트카드로 결제 후 [조회]로 상태 F(결제완료) 확인 → [승인취소]</p>
           </div>
         )}
       </div>
 
       {/* B: 청구서 파기 */}
       <div className="mb-2.5 rounded-xl border border-border bg-background p-3">
-        <p className="mb-2 text-xs font-bold text-foreground">② 청구서 파기 (결제하지 않음)</p>
+        <p className="mb-2 text-label font-bold text-foreground">② 청구서 파기 (결제하지 않음)</p>
         <div className="mb-2 flex items-center gap-2">
           <input value={priceB} onChange={(e) => setPriceB(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric"
-            className="w-24 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-foreground" placeholder="금액" />
+            className="w-24 rounded-lg border border-border bg-card px-2.5 py-1.5 text-body text-foreground" placeholder="금액" />
           <button disabled={!!busy} onClick={createB} className={`${btn} bg-primary text-primary-foreground`}>
             {busy === "B-생성" ? "생성 중…" : "파기용 청구서 생성"}
           </button>
         </div>
         {st.billB && (
           <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 px-3 py-2">
-            <span className="font-mono text-xs font-semibold text-foreground">{st.billB}{st.destroyed ? " · 파기됨" : ""}</span>
+            <span className="font-mono text-label font-semibold text-foreground">{st.billB}{st.destroyed ? " · 파기됨" : ""}</span>
             <button disabled={!!busy} onClick={destroyB} className={`${btn} bg-secondary text-secondary-foreground`}>
               <Trash2 className="h-3.5 w-3.5" /> {busy === "B-파기" ? "파기 중…" : "파기"}
             </button>
@@ -194,7 +194,7 @@ const PayssamInspectPanel = () => {
       <div className="rounded-xl border border-primary/40 bg-primary/5 p-3">
         <div className="mb-1.5 flex items-center gap-1.5">
           <ClipboardCheck className="h-4 w-4 text-primary" />
-          <p className="text-xs font-bold text-foreground">검수 결과 (메일에 넣을 BILL-ID)</p>
+          <p className="text-label font-bold text-foreground">검수 결과 (메일에 넣을 BILL-ID)</p>
         </div>
         <Row label="결제승인" value={st.billA} />
         <Row label="승인취소" value={st.canceled ? st.billA : undefined} />
@@ -215,7 +215,7 @@ const PayssamInspectPanel = () => {
       {log.length > 0 && (
         <div className="mt-3 space-y-1">
           {log.map((l, i) => (
-            <div key={i} className="flex items-center gap-2 text-[11px]">
+            <div key={i} className="flex items-center gap-2 text-micro">
               <span className={l.ok ? "text-primary" : "text-destructive"}>{l.ok ? "✓" : "✕"}</span>
               <span className="font-semibold text-foreground">{l.t}</span>
               <span className="truncate text-muted-foreground">{l.msg}</span>

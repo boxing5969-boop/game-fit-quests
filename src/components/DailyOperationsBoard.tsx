@@ -190,30 +190,30 @@ const DailyOperationsBoard = () => {
       {/* Pending Queue */}
       {pendingVisitors.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-bold text-foreground">⏳ 코치 백업 필요 ({pendingVisitors.length}명)</h3>
+          <h3 className="mb-2 text-body font-bold text-foreground">⏳ 코치 백업 필요 ({pendingVisitors.length}명)</h3>
           <div className="space-y-2">
             {pendingVisitors.map((v) => (
               <div key={v.userId} className="rounded-2xl border border-status-pending/30 bg-card shadow-elev-1 overflow-hidden">
                 <div className="flex items-center gap-3 p-3.5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-body font-bold">
                     {v.nickname.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground">{v.nickname}</p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-body font-bold text-foreground">{v.nickname}</p>
+                    <p className="text-label text-muted-foreground">
                       {RANK_LABELS[v.currentRank] || v.currentRank} Lv.{toGlobalLevel(v.currentRank, v.currentLevel)}
                     </p>
                   </div>
                 </div>
 
-                {/* Quick actions */}
-                <div className="flex gap-1 border-t border-border px-2 py-2">
+                {/* Quick actions — 3칸 두 줄 (2026-10-28 리디자인 3단계: 한 줄 6칸은 13px 글씨가 칸을 넘었다) */}
+                <div className="grid grid-cols-3 gap-1.5 border-t border-border px-2 py-2">
                   {EXTENDED_ACTIONS.map((action) => (
                     <button
                       key={action.id}
                       onClick={() => handleQuickAction(v.userId, action.id)}
                       disabled={actionMut.isPending}
-                      className={`flex-1 rounded-lg py-1.5 text-[9px] font-bold text-white transition-all active:scale-95 disabled:opacity-50 ${action.color}`}
+                      className={`min-h-10 rounded-lg px-1 py-1.5 text-micro font-bold text-white transition-all active:scale-95 disabled:opacity-50 ${action.color}`}
                     >
                       {action.emoji} {action.label}
                     </button>
@@ -224,7 +224,7 @@ const DailyOperationsBoard = () => {
                 <div className="px-3 pb-3">
                   <button
                     onClick={() => setShowTagPicker(showTagPicker === v.userId ? null : v.userId)}
-                    className="text-[10px] text-muted-foreground flex items-center gap-1"
+                    className="text-label text-muted-foreground flex items-center gap-1"
                   >
                     🏷️ 태그 추가 <ChevronDown className={`h-3 w-3 transition-transform ${showTagPicker === v.userId ? "rotate-180" : ""}`} />
                   </button>
@@ -234,7 +234,7 @@ const DailyOperationsBoard = () => {
                         <button
                           key={tag}
                           onClick={() => toggleTag(tag)}
-                          className={`rounded-full px-2.5 py-1 text-[10px] font-bold transition-all ${
+                          className={`rounded-full px-2.5 py-1 text-micro font-bold transition-all ${
                             selectedTags.includes(tag) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                           }`}
                         >
@@ -253,33 +253,33 @@ const DailyOperationsBoard = () => {
       {/* Processed List */}
       {processedVisitors.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-bold text-foreground">✅ 처리 완료 ({processedVisitors.length}명)</h3>
+          <h3 className="mb-2 text-body font-bold text-foreground">✅ 처리 완료 ({processedVisitors.length}명)</h3>
           <div className="space-y-1.5">
             {processedVisitors.map((v) => {
               const style = STATUS_STYLE[v.status] || STATUS_STYLE.pending;
               return (
                 <div key={v.userId} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-label font-bold">
                     {v.nickname.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <p className="text-xs font-bold text-foreground">{v.nickname}</p>
-                      <span className="text-[9px] text-muted-foreground">{RANK_LABELS[v.currentRank]} Lv.{toGlobalLevel(v.currentRank, v.currentLevel)}</span>
+                      <p className="text-label font-bold text-foreground">{v.nickname}</p>
+                      <span className="text-label text-muted-foreground">{RANK_LABELS[v.currentRank]} Lv.{toGlobalLevel(v.currentRank, v.currentLevel)}</span>
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${style.bg} ${style.text}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-micro font-bold ${style.bg} ${style.text}`}>
                         {style.label}
                       </span>
                       {v.coachTags.length > 0 && (
-                        <span className="text-[9px] text-muted-foreground">
+                        <span className="text-label text-muted-foreground">
                           {v.coachTags.join(", ")}
                         </span>
                       )}
                     </div>
                   </div>
                   {v.selfChallengeComplete && (
-                    <span className="text-[9px] font-bold text-status-complete">오늘 도전</span>
+                    <span className="text-micro font-bold text-status-complete">오늘 도전</span>
                   )}
                 </div>
               );
@@ -290,12 +290,12 @@ const DailyOperationsBoard = () => {
 
       {isLoading ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <p className="text-sm text-muted-foreground">불러오는 중...</p>
+          <p className="text-body text-muted-foreground">불러오는 중...</p>
         </div>
       ) : visitors.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <span className="text-3xl">👥</span>
-          <p className="mt-2 text-sm text-muted-foreground">오늘 방문자가 없습니다</p>
+          <span className="text-title">👥</span>
+          <p className="mt-2 text-body text-muted-foreground">오늘 방문자가 없습니다</p>
         </div>
       ) : null}
     </div>
@@ -305,8 +305,8 @@ const DailyOperationsBoard = () => {
 const MetricCard = ({ icon, label, value, highlight }: { icon: React.ReactNode; label: string; value: number | string; highlight?: boolean }) => (
   <div className={`rounded-2xl border p-3 text-center ${highlight ? "border-status-pending/30 bg-status-pending/5" : "border-border bg-card"}`}>
     <div className="mx-auto mb-1 flex justify-center">{icon}</div>
-    <p className="text-lg font-bold text-foreground">{value}</p>
-    <p className="text-[9px] text-muted-foreground">{label}</p>
+    <p className="text-heading font-bold text-foreground">{value}</p>
+    <p className="text-label text-muted-foreground">{label}</p>
   </div>
 );
 

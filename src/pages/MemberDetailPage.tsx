@@ -409,20 +409,20 @@ const MemberDetailPage = () => {
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg text-foreground">{p.nickname || p.name}</h1>
+            <h1 className="text-heading text-foreground">{p.nickname || p.name}</h1>
             {isStaffProfile(p) ? (
               // 153OS 지도진 명단에 있는 코치님·지점장님 — 역할이 member 여도 회원이 아니다 (2026-09-23)
               // 대표님 지시: 코치님은 모두 챔피언 · Lv.77 (화면 전용)
-              <span className="rounded-full bg-reward/20 px-2 py-0.5 text-[10px] font-bold text-reward">{staffChampionLine(p)}</span>
+              <span className="rounded-full bg-reward/20 px-2 py-0.5 text-micro font-bold text-reward">{staffChampionLine(p)}</span>
             ) : member.memberRole === "branch_manager" || member.memberRole === "coach" ? (
-              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">관장님</span>
+              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-micro font-bold text-primary">관장님</span>
             ) : member.memberRole === "super_admin" || member.memberRole === "admin" ? (
-              <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-bold text-destructive">관리자</span>
+              <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-micro font-bold text-destructive">관리자</span>
             ) : (
-              <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground">회원</span>
+              <span className="rounded-full bg-secondary px-2 py-0.5 text-micro font-bold text-muted-foreground">회원</span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-label text-muted-foreground">
             {p.branch_name}
             {" · "}
             {member.signupProvider === "google" ? "Google 가입" : member.signupProvider === "apple" ? "Apple 가입" : "일반 가입"}
@@ -464,7 +464,7 @@ const MemberDetailPage = () => {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+            className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-label font-bold transition-all active:scale-95 ${
               activeTab === tab.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
             }`}
           >
@@ -483,7 +483,7 @@ const MemberDetailPage = () => {
             <button
               type="button"
               onClick={() => setActiveTab("myinfo")}
-              className="flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 text-[13.5px] font-bold text-primary transition-transform active:scale-[0.98]"
+              className="flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 text-label font-bold text-primary transition-transform active:scale-[0.98]"
             >
               <CircleUser className="h-4 w-4" /> 회원 내정보 보기 · 출석 · 지금까지 이룬 것
             </button>
@@ -502,13 +502,13 @@ const MemberDetailPage = () => {
           {/* 락카 — 회원 수강권 화면에 보인다 (2026-10-19) */}
           <div className="rounded-xl border border-border bg-card px-4 py-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm text-muted-foreground">락카</span>
+              <span className="text-body text-muted-foreground">락카</span>
               {lockerDraft === null && (
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="truncate text-sm font-medium text-foreground">{p.locker_label || "없음"}</span>
+                  <span className="truncate text-body font-medium text-foreground">{p.locker_label || "없음"}</span>
                   <button
                     onClick={() => setLockerDraft(p.locker_label ?? "")}
-                    className="shrink-0 rounded-lg bg-secondary px-2.5 py-1 text-xs font-bold text-secondary-foreground active:scale-95"
+                    className="shrink-0 rounded-lg bg-secondary px-2.5 py-1 text-label font-bold text-secondary-foreground active:scale-95"
                   >
                     {p.locker_label ? "바꾸기" : "넣기"}
                   </button>
@@ -524,24 +524,24 @@ const MemberDetailPage = () => {
                     onChange={(e) => setLockerDraft(e.target.value.slice(0, 30))}
                     onKeyDown={(e) => { if (e.key === "Enter" && !saveLocker.isPending) saveLocker.mutate(lockerDraft); }}
                     placeholder="예: 54 · 개인락카 / 54"
-                    className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-body text-foreground"
                   />
                   <button
                     disabled={saveLocker.isPending || !lockerDraft.trim()}
                     onClick={() => saveLocker.mutate(lockerDraft)}
-                    className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground active:scale-95 disabled:opacity-50"
+                    className="shrink-0 rounded-lg bg-primary px-3 py-2 text-label font-bold text-primary-foreground active:scale-95 disabled:opacity-50"
                   >
                     저장
                   </button>
                   <button
                     disabled={saveLocker.isPending}
                     onClick={() => setLockerDraft(null)}
-                    className="shrink-0 rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground active:scale-95"
+                    className="shrink-0 rounded-lg bg-secondary px-3 py-2 text-label font-bold text-secondary-foreground active:scale-95"
                   >
                     취소
                   </button>
                 </div>
-                <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                <div className="mt-1.5 flex items-center justify-between gap-2 text-label text-muted-foreground">
                   <span>본인과 지도진만 볼 수 있어요</span>
                   {p.locker_label && (
                     <button
@@ -575,13 +575,13 @@ const MemberDetailPage = () => {
 
           {/* Quick Actions */}
           <div className="space-y-2 pt-2">
-            <h3 className="text-sm font-bold text-foreground">빠른 액션</h3>
+            <h3 className="text-body font-bold text-foreground">빠른 액션</h3>
             <div className="grid grid-cols-2 gap-2">
               <ActionBtn label="승인대기 보기" onClick={() => setActiveTab("missions")} count={pendingSubs.length} />
               <ActionBtn label="로드맵 체크" onClick={() => setActiveTab("levelmap")} />
               <button
                 onClick={() => navigate(`/manager/member/${memberId}/preview`)}
-                className="col-span-2 flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-3 text-sm font-bold text-primary transition-all active:scale-[0.98]"
+                className="col-span-2 flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-3 text-body font-bold text-primary transition-all active:scale-[0.98]"
               >
                 <Eye className="h-4 w-4" /> 회원 앱으로 보기
               </button>
@@ -589,7 +589,7 @@ const MemberDetailPage = () => {
                 <button
                   onClick={() => bossBattleMut.mutate()}
                   disabled={bossBattleMut.isPending}
-                  className="col-span-2 rounded-xl bg-reward py-3 text-sm font-bold text-reward-foreground shadow transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="col-span-2 rounded-xl bg-reward py-3 text-body font-bold text-reward-foreground shadow transition-all active:scale-[0.98] disabled:opacity-50"
                 >
                   🏆 보스전 합격 처리
                 </button>
@@ -600,15 +600,15 @@ const MemberDetailPage = () => {
           {/* 153 마일리지 — 데스크 결제 할인 */}
           {canMileage && mileage && (
             <div className="space-y-2 pt-2 border-t border-border">
-              <h3 className="text-sm font-bold text-foreground">🪙 153 마일리지 · 데스크 결제 할인</h3>
+              <h3 className="text-body font-bold text-foreground">🪙 153 마일리지 · 데스크 결제 할인</h3>
               <div className="rounded-xl bg-amber-500/10 p-3 text-center">
-                <span className="text-2xl font-bold text-foreground">{mileage.balance.toLocaleString("ko-KR")}점</span>
-                <p className="mt-1 text-xs text-muted-foreground">1점 = 1원 · 결제 금액의 10%까지 · 1,000점 단위</p>
+                <span className="text-title font-bold text-foreground">{mileage.balance.toLocaleString("ko-KR")}점</span>
+                <p className="mt-1 text-label text-muted-foreground">1점 = 1원 · 결제 금액의 10%까지 · 1,000점 단위</p>
               </div>
               {(mileage.summary ?? []).length > 0 && (
                 <div className="flex flex-wrap gap-1.5" aria-label="마일리지 받은 곳 합계">
                   {(mileage.summary ?? []).map((sm) => (
-                    <span key={sm.kind} className="rounded-pill border border-border bg-card px-2.5 py-1 text-[11.5px] font-bold text-foreground">
+                    <span key={sm.kind} className="rounded-pill border border-border bg-card px-2.5 py-1 text-micro font-bold text-foreground">
                       {MILEAGE_KIND_LABEL[sm.kind] ?? sm.kind}{" "}
                       {sm.earned > 0 && <span className="text-amber-600">+{sm.earned.toLocaleString("ko-KR")}</span>}
                       {sm.spent < 0 && <span className="text-muted-foreground"> {sm.spent.toLocaleString("ko-KR")}</span>}
@@ -623,28 +623,28 @@ const MemberDetailPage = () => {
                   value={mlPay}
                   onChange={(e) => setMlPay(e.target.value)}
                   placeholder="결제 금액(원)"
-                  className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                  className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-body"
                 />
                 <input
                   inputMode="numeric"
                   value={mlUse}
                   onChange={(e) => setMlUse(e.target.value)}
                   placeholder={mlMax > 0 ? `사용 점수 (최대 ${mlMax.toLocaleString("ko-KR")})` : "사용 점수"}
-                  className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                  className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-body"
                 />
               </div>
               <input
                 value={mlMemo}
                 onChange={(e) => setMlMemo(e.target.value)}
                 placeholder="메모 (예: 3개월권 재등록)"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-body"
               />
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => mlMax > 0 && setMlUse(String(mlMax))}
                   disabled={mlMax <= 0}
-                  className="rounded-xl border border-border bg-card py-2.5 text-sm font-bold text-foreground active:scale-95 disabled:opacity-40"
+                  className="rounded-xl border border-border bg-card py-2.5 text-body font-bold text-foreground active:scale-95 disabled:opacity-40"
                 >
                   최대로 쓰기
                 </button>
@@ -652,32 +652,32 @@ const MemberDetailPage = () => {
                   type="button"
                   onClick={() => useMileageMut.mutate()}
                   disabled={useMileageMut.isPending || !mlUse || !mlPay}
-                  className="rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground active:scale-95 disabled:opacity-40"
+                  className="rounded-xl bg-primary py-2.5 text-body font-bold text-primary-foreground active:scale-95 disabled:opacity-40"
                 >
                   {useMileageMut.isPending ? "처리 중..." : "마일리지 사용"}
                 </button>
               </div>
-              <p className="text-[11px] leading-relaxed text-muted-foreground">
+              <p className="text-label leading-relaxed text-muted-foreground">
                 차감한 만큼 브로제이 결제 금액에서 직접 빼 주세요. 누가 언제 얼마를 썼는지 기록이 남아요.
               </p>
               {mileage.items.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="px-0.5 text-xs font-bold text-foreground">
+                  <p className="px-0.5 text-label font-bold text-foreground">
                     받은·쓴 기록 <span className="font-medium text-muted-foreground">· {(mileage.count ?? mileage.items.length).toLocaleString("ko-KR")}건</span>
                   </p>
                   <ul className="divide-y divide-border/60 rounded-xl border border-border bg-card px-3">
                     {(mlShowAll ? mileage.items : mileage.items.slice(0, 8)).map((it, i) => (
                       <li key={`${it.at}-${i}`} className="flex items-start gap-2 py-2">
-                        <span className="w-16 shrink-0 pt-0.5 text-[11px] text-muted-foreground">{fmtDay(it.at)}</span>
-                        <span className="min-w-0 flex-1 text-[12px] leading-snug text-foreground">
+                        <span className="w-16 shrink-0 pt-0.5 text-label text-muted-foreground">{fmtDay(it.at)}</span>
+                        <span className="min-w-0 flex-1 text-label leading-snug text-foreground">
                           {it.kind && (
-                            <span className="mr-1 rounded bg-secondary px-1 py-px text-[10px] font-bold text-muted-foreground">
+                            <span className="mr-1 rounded bg-secondary px-1 py-px text-micro font-bold text-muted-foreground">
                               {MILEAGE_KIND_LABEL[it.kind] ?? it.kind}
                             </span>
                           )}
                           {it.reason || "마일리지"}
                         </span>
-                        <span className={`shrink-0 pt-0.5 text-[12px] font-bold ${it.amount >= 0 ? "text-amber-600" : "text-muted-foreground"}`}>
+                        <span className={`shrink-0 pt-0.5 text-label font-bold ${it.amount >= 0 ? "text-amber-600" : "text-muted-foreground"}`}>
                           {it.amount > 0 ? "+" : ""}
                           {it.amount.toLocaleString("ko-KR")}
                         </span>
@@ -688,7 +688,7 @@ const MemberDetailPage = () => {
                     <button
                       type="button"
                       onClick={() => setMlShowAll((v) => !v)}
-                      className="w-full rounded-xl border border-border bg-card py-2 text-[12px] font-bold text-foreground active:scale-[0.99]"
+                      className="w-full rounded-xl border border-border bg-card py-2 text-label font-bold text-foreground active:scale-[0.99]"
                     >
                       {mlShowAll ? "접기" : `전체 ${mileage.items.length.toLocaleString("ko-KR")}건 보기`}
                     </button>
@@ -700,12 +700,12 @@ const MemberDetailPage = () => {
 
           {/* Fight Money Management */}
           <div className="space-y-2 pt-2 border-t border-border">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+            <h3 className="text-body font-bold text-foreground flex items-center gap-1.5">
               <Banknote className="h-4 w-4 text-reward" /> 챔피언 머니 관리
             </h3>
             <div className="rounded-xl bg-reward/10 p-3 text-center">
-              <span className="text-2xl font-bold text-reward-foreground">💵 {memberWallet.data?.gems_balance?.toLocaleString() || 0}</span>
-              <p className="text-xs text-muted-foreground mt-1">현재 보유 챔피언 머니</p>
+              <span className="text-title font-bold text-reward-foreground">💵 {memberWallet.data?.gems_balance?.toLocaleString() || 0}</span>
+              <p className="text-label text-muted-foreground mt-1">현재 보유 챔피언 머니</p>
             </div>
             <div className="flex gap-2">
               <input
@@ -713,14 +713,14 @@ const MemberDetailPage = () => {
                 value={gemAmount}
                 onChange={e => setGemAmount(e.target.value)}
                 placeholder="수량"
-                className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-body"
               />
               <input
                 type="text"
                 value={gemReason}
                 onChange={e => setGemReason(e.target.value)}
                 placeholder="사유"
-                className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-body"
               />
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -733,7 +733,7 @@ const MemberDetailPage = () => {
                   });
                 }}
                 disabled={grantGems.isPending}
-                className="rounded-xl bg-status-complete/20 py-2.5 text-sm font-bold text-status-complete active:scale-95 disabled:opacity-50"
+                className="rounded-xl bg-status-complete/20 py-2.5 text-body font-bold text-status-complete active:scale-95 disabled:opacity-50"
               >
                 💵 지급
               </button>
@@ -746,7 +746,7 @@ const MemberDetailPage = () => {
                   });
                 }}
                 disabled={grantGems.isPending}
-                className="rounded-xl bg-destructive/20 py-2.5 text-sm font-bold text-destructive active:scale-95 disabled:opacity-50"
+                className="rounded-xl bg-destructive/20 py-2.5 text-body font-bold text-destructive active:scale-95 disabled:opacity-50"
               >
                 💵 차감
               </button>
@@ -756,12 +756,12 @@ const MemberDetailPage = () => {
           {/* Super Admin: Bulk Complete */}
           {role === "super_admin" && (
             <div className="space-y-2 pt-2 border-t border-border">
-              <h3 className="text-sm font-bold text-destructive flex items-center gap-1.5">
+              <h3 className="text-body font-bold text-destructive flex items-center gap-1.5">
                 <Shield className="h-4 w-4" /> 전체관리자 전용
               </h3>
               <button
                 onClick={() => setShowBulkComplete(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-destructive/30 bg-destructive/5 py-3 text-sm font-bold text-destructive transition-all active:scale-[0.98] hover:bg-destructive/10"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-destructive/30 bg-destructive/5 py-3 text-body font-bold text-destructive transition-all active:scale-[0.98] hover:bg-destructive/10"
               >
                 <Crown className="h-4 w-4" /> 회원 전체 완료 처리
               </button>
@@ -772,12 +772,12 @@ const MemberDetailPage = () => {
                   }
                 }}
                 disabled={deleteUserMut.isPending}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-destructive py-3 text-sm font-bold text-destructive-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-destructive py-3 text-body font-bold text-destructive-foreground transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 <Trash2 className="h-4 w-4" />
                 {deleteUserMut.isPending ? "삭제 중..." : "계정 삭제"}
               </button>
-              <p className="text-center text-[10px] text-muted-foreground">모든 데이터가 영구 삭제됩니다</p>
+              <p className="text-center text-label text-muted-foreground">모든 데이터가 영구 삭제됩니다</p>
             </div>
           )}
         </div>
@@ -804,15 +804,15 @@ const MemberDetailPage = () => {
                 sub.status === "pending" ? "border-status-pending/30 bg-status-pending/5" : "border-border bg-card"
               }`}>
                 <div className="mb-2">
-                  <p className="text-sm font-bold text-foreground">{sub.missions?.title || "미션"}</p>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                  <p className="text-body font-bold text-foreground">{sub.missions?.title || "미션"}</p>
+                  <div className="mt-1 flex items-center gap-2 text-label text-muted-foreground">
                     <span>{new Date(sub.requested_at).toLocaleDateString("ko-KR")}</span>
                     <span className={`font-bold ${STATUS_LABELS[sub.status]?.color || ""}`}>
                       {STATUS_LABELS[sub.status]?.label || sub.status}
                     </span>
                   </div>
                   {sub.coach_note && (
-                    <p className="mt-1 text-xs text-muted-foreground italic">💬 {sub.coach_note}</p>
+                    <p className="mt-1 text-label text-muted-foreground italic">💬 {sub.coach_note}</p>
                   )}
                 </div>
 
@@ -834,19 +834,19 @@ const MemberDetailPage = () => {
                       value={actionNote}
                       onChange={e => setActionNote(e.target.value)}
                       placeholder="코멘트 (선택)"
-                      className="w-full rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground"
+                      className="w-full rounded-lg border border-border bg-card px-3 py-2 text-label text-foreground placeholder:text-muted-foreground"
                     />
                     <div className="flex gap-2">
                       <button onClick={() => approveMission.mutate(sub.id)} disabled={approveMission.isPending}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-status-complete py-2 text-xs font-bold text-primary-foreground active:scale-95 disabled:opacity-50">
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-status-complete py-2 text-label font-bold text-primary-foreground active:scale-95 disabled:opacity-50">
                         <Check className="h-3 w-3" /> 승인
                       </button>
                       <button onClick={() => revisionMission.mutate(sub.id)} disabled={revisionMission.isPending}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-xs font-bold text-white active:scale-95 disabled:opacity-50">
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-label font-bold text-white active:scale-95 disabled:opacity-50">
                         <Pencil className="h-3 w-3" /> 수정요청
                       </button>
                       <button onClick={() => rejectMission.mutate(sub.id)} disabled={rejectMission.isPending}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-destructive py-2 text-xs font-bold text-destructive-foreground active:scale-95 disabled:opacity-50">
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-destructive py-2 text-label font-bold text-destructive-foreground active:scale-95 disabled:opacity-50">
                         <X className="h-3 w-3" /> 반려
                       </button>
                     </div>
@@ -863,7 +863,7 @@ const MemberDetailPage = () => {
         <div className="space-y-5">
           {RANK_ORDER.map((rank, ri) => (
             <div key={rank}>
-              <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-foreground">
+              <h3 className="mb-2 flex items-center gap-2 text-body font-bold text-foreground">
                 <span>{RANK_ICONS[rank]}</span>
                 {RANK_LABELS[rank]} 리그
               </h3>
@@ -888,8 +888,8 @@ const MemberDetailPage = () => {
                         "border-border bg-card"
                       }`}
                     >
-                      <span className="text-[10px] font-bold text-foreground">{gLvl}</span>
-                      <span className={`text-[8px] font-medium ${statusInfo.color}`}>
+                      <span className="text-micro font-bold text-foreground">{gLvl}</span>
+                      <span className={`text-micro font-medium ${statusInfo.color}`}>
                         {status === "approved" ? "✅" : status === "boss_cleared" ? "🏆" : status === "pending" ? "⏳" : status === "revision_requested" ? "✏️" : status === "rejected" ? "❌" : status === "in_progress" ? "▶️" : "🔒"}
                       </span>
                     </button>
@@ -899,7 +899,7 @@ const MemberDetailPage = () => {
             </div>
           ))}
 
-          <p className="text-[10px] text-muted-foreground text-center">
+          <p className="text-label text-muted-foreground text-center">
             노드를 탭하면 상태 변경 액션시트가 열립니다. 변경 이력과 되돌리기가 가능합니다.
           </p>
 
@@ -922,14 +922,14 @@ const MemberDetailPage = () => {
         <div className="space-y-2">
           {isHq && (
             <>
-              <h3 className="px-1 pt-1 text-sm font-bold text-foreground">
+              <h3 className="px-1 pt-1 text-body font-bold text-foreground">
                 앱·커뮤니티 활동 <span className="text-muted-foreground">· 전체관리자만</span>
               </h3>
-              <p className="px-1 text-[11px] leading-relaxed text-muted-foreground">
+              <p className="px-1 text-label leading-relaxed text-muted-foreground">
                 글·댓글·153·응원·짝꿍·같이 운동·하트·퀴즈·컨디션·게임·챌린지·153 PB·레벨·설문 참여·마일리지. 메시지(DM) 내용과 설문 답변(익명)은 보이지 않아요.
               </p>
               {appActivityLoading ? (
-                <p className="px-1 py-3 text-xs text-muted-foreground">불러오는 중…</p>
+                <p className="px-1 py-3 text-label text-muted-foreground">불러오는 중…</p>
               ) : (appActivity ?? []).length === 0 ? (
                 <EmptyState text="앱·커뮤니티 활동이 없습니다" />
               ) : (
@@ -938,16 +938,16 @@ const MemberDetailPage = () => {
                     {(actShowAll ? appActivity ?? [] : (appActivity ?? []).slice(0, 30)).map((a, i) => (
                       <div key={`${a.type}-${a.at}-${i}`} className={`px-4 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}>
                         <div className="flex items-center gap-1.5">
-                          <span className="shrink-0 rounded bg-secondary px-1.5 py-px text-[10px] font-bold text-muted-foreground">
+                          <span className="shrink-0 rounded bg-secondary px-1.5 py-px text-micro font-bold text-muted-foreground">
                             {APP_ACTIVITY_LABEL[a.type] ?? a.type}
                           </span>
-                          <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{a.title}</p>
-                          <span className="shrink-0 text-[11px] text-muted-foreground">
+                          <p className="min-w-0 flex-1 truncate text-body font-medium text-foreground">{a.title}</p>
+                          <span className="shrink-0 text-label text-muted-foreground">
                             {fmtDay(a.at)} {fmtTime(a.at)}
                           </span>
                         </div>
                         {(a.detail || a.meta?.visibility === "partners" || a.meta?.visibility === "private" || a.meta?.hidden) && (
-                          <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] leading-relaxed text-muted-foreground">
+                          <p className="mt-1 whitespace-pre-wrap break-words text-label leading-relaxed text-muted-foreground">
                             {/* 공개 범위 — 전체 공개는 표시 안 함 (2026-10-18 친구만 · 나만 보기) */}
                             {a.meta?.visibility === "partners" && <span className="mr-1 font-bold">[친구만]</span>}
                             {a.meta?.visibility === "private" && <span className="mr-1 font-bold">[나만 보기]</span>}
@@ -965,7 +965,7 @@ const MemberDetailPage = () => {
                     <button
                       type="button"
                       onClick={() => setActShowAll((v) => !v)}
-                      className="w-full rounded-xl border border-border bg-card py-2 text-[12px] font-bold text-foreground active:scale-[0.99]"
+                      className="w-full rounded-xl border border-border bg-card py-2 text-label font-bold text-foreground active:scale-[0.99]"
                     >
                       {actShowAll ? "접기" : `전체 ${(appActivity ?? []).length}건 보기`}
                     </button>
@@ -974,17 +974,17 @@ const MemberDetailPage = () => {
               )}
             </>
           )}
-          <h3 className="px-1 pt-3 text-sm font-bold text-foreground">XP 기록</h3>
+          <h3 className="px-1 pt-3 text-body font-bold text-foreground">XP 기록</h3>
           {(xpLogs || []).length === 0 ? (
             <EmptyState text="활동 기록이 없습니다" />
           ) : (
             (xpLogs || []).map(log => (
               <div key={log.id} className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3">
                 <div>
-                  <p className="text-sm font-medium text-foreground">{log.reason}</p>
-                  <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")} {new Date(log.created_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}</p>
+                  <p className="text-body font-medium text-foreground">{log.reason}</p>
+                  <p className="text-label text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ko-KR")} {new Date(log.created_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}</p>
                 </div>
-                <span className={`text-xs font-bold ${log.amount > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                <span className={`text-label font-bold ${log.amount > 0 ? "text-primary" : "text-muted-foreground"}`}>
                   {log.amount > 0 ? "+" : ""}{log.amount} XP
                 </span>
               </div>
@@ -998,20 +998,20 @@ const MemberDetailPage = () => {
         <div className="space-y-4">
           {/* Add note */}
           <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="mb-2 text-xs font-semibold text-muted-foreground">
+            <p className="mb-2 text-label font-semibold text-muted-foreground">
               🔒 지점장·전체관리자만 봐요. 회원 본인과 다른 회원·코치님에게는 보이지 않아요.
             </p>
             <textarea
               value={noteContent}
               onChange={e => setNoteContent(e.target.value)}
               placeholder="예) 왼쪽 어깨 수술 이력 · 평일 저녁 7시 운동 · 다이어트 목표"
-              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground"
               rows={3}
             />
             <button
               onClick={() => noteContent.trim() && addNote.mutate()}
               disabled={!noteContent.trim() || addNote.isPending}
-              className="mt-2 w-full rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
+              className="mt-2 w-full rounded-xl bg-primary py-2.5 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
             >
               저장
             </button>
@@ -1022,21 +1022,21 @@ const MemberDetailPage = () => {
           {(notes || []).map(note => (
             <div key={note.id} className="rounded-xl border border-border bg-card p-3">
               <div className="mb-1 flex items-center gap-2">
-                <span className="text-[11px] font-bold text-foreground">{note.author}</span>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-micro font-bold text-foreground">{note.author}</span>
+                <span className="text-label text-muted-foreground">
                   {new Date(note.created_at).toLocaleDateString("ko-KR")}
                 </span>
                 {(note.manager_id === myId || role === "super_admin") && (
                   <button
                     onClick={() => deleteNote.mutate(note.id)}
                     disabled={deleteNote.isPending}
-                    className="ml-auto text-[11px] font-bold text-muted-foreground underline disabled:opacity-50"
+                    className="ml-auto text-label font-bold text-muted-foreground underline disabled:opacity-50"
                   >
                     지우기
                   </button>
                 )}
               </div>
-              <p className="whitespace-pre-wrap text-sm text-foreground">{note.content}</p>
+              <p className="whitespace-pre-wrap text-body text-foreground">{note.content}</p>
             </div>
           ))}
         </div>
@@ -1108,32 +1108,32 @@ const fmtTime = (iso: string) =>
 
 const MiniStat = ({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) => (
   <div>
-    <p className="text-[10px] text-muted-foreground">{label}</p>
-    <p className={`text-sm font-bold ${highlight ? "text-status-pending" : "text-foreground"}`}>{value}</p>
+    <p className="text-label text-muted-foreground">{label}</p>
+    <p className={`text-body font-bold ${highlight ? "text-status-pending" : "text-foreground"}`}>{value}</p>
   </div>
 );
 
 const InfoCard = ({ label, value }: { label: string; value: string }) => (
   <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
     {/* 이름 칸은 줄지 않게 — 값이 길면 'P/T' 처럼 두 줄로 쪼개지던 것 (2026-10-19) */}
-    <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">{label}</span>
-    <span className="min-w-0 text-right text-sm font-medium text-foreground">{value}</span>
+    <span className="shrink-0 whitespace-nowrap text-body text-muted-foreground">{label}</span>
+    <span className="min-w-0 text-right text-body font-medium text-foreground">{value}</span>
   </div>
 );
 
 const ActionBtn = ({ label, onClick, count }: { label: string; onClick: () => void; count?: number }) => (
-  <button onClick={onClick} className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-3 text-xs font-bold text-foreground transition-all active:scale-95">
+  <button onClick={onClick} className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-3 text-label font-bold text-foreground transition-all active:scale-95">
     {label}
     {count !== undefined && count > 0 && (
-      <span className="rounded-full bg-status-pending/20 px-1.5 py-0.5 text-[9px] font-bold text-status-pending">{count}</span>
+      <span className="rounded-full bg-status-pending/20 px-1.5 py-0.5 text-micro font-bold text-status-pending">{count}</span>
     )}
   </button>
 );
 
 const EmptyState = ({ text }: { text: string }) => (
   <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-    <span className="text-3xl">📋</span>
-    <p className="mt-2 text-sm text-muted-foreground">{text}</p>
+    <span className="text-title">📋</span>
+    <p className="mt-2 text-body text-muted-foreground">{text}</p>
   </div>
 );
 

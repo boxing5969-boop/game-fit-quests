@@ -47,7 +47,7 @@ export const VideoLibrary = ({
       <button
         type="button"
         onClick={() => setAdding(true)}
-        className="flex h-12 w-full items-center justify-center gap-1.5 rounded-2xl bg-foreground text-[14.5px] font-black text-background active:scale-[0.99]"
+        className="flex h-12 w-full items-center justify-center gap-1.5 rounded-2xl bg-foreground text-label font-black text-background active:scale-[0.99]"
       >
         <Plus className="h-4 w-4" /> 드릴 영상 올리기
       </button>
@@ -70,8 +70,8 @@ export const VideoLibrary = ({
       ) : shown.length === 0 ? (
         <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
           <Film className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-2 text-[15px] font-bold text-foreground">아직 올린 영상이 없어요</p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-body font-bold text-foreground">아직 올린 영상이 없어요</p>
+          <p className="mt-1 text-label leading-relaxed text-muted-foreground">
             코치님이 직접 시범 보인 드릴 영상을 올리면
             <br />
             오늘 프로그램에 붙여서 모두가 같은 기준으로 수업해요.
@@ -105,8 +105,8 @@ const VideoRow = ({ v, canDelete, onPlay }: { v: StrategyVideo; canDelete: boole
           <Play className="h-6 w-6" />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-black leading-snug text-foreground">{v.title}</p>
-          <p className="mt-0.5 text-[12px] font-bold text-muted-foreground">
+          <p className="text-body font-black leading-snug text-foreground">{v.title}</p>
+          <p className="mt-0.5 text-label font-bold text-muted-foreground">
             {VIDEO_CATEGORY_LABEL[v.category] ?? v.category}
             {v.minutes ? ` · ${v.minutes}분` : ""}
             {v.equipment ? ` · ${v.equipment}` : ""}
@@ -116,7 +116,7 @@ const VideoRow = ({ v, canDelete, onPlay }: { v: StrategyVideo; canDelete: boole
         {canDelete &&
           (confirm ? (
             <span className="flex shrink-0 gap-1">
-              <button type="button" onClick={() => setConfirm(false)} className="rounded-full bg-secondary px-2.5 py-1 text-[11.5px] font-bold text-muted-foreground">
+              <button type="button" onClick={() => setConfirm(false)} className="rounded-full bg-secondary px-2.5 py-1 text-micro font-bold text-muted-foreground">
                 취소
               </button>
               <button
@@ -127,7 +127,7 @@ const VideoRow = ({ v, canDelete, onPlay }: { v: StrategyVideo; canDelete: boole
                     onError: (e) => toast.error((e as Error).message),
                   })
                 }
-                className="rounded-full bg-destructive px-2.5 py-1 text-[11.5px] font-black text-destructive-foreground"
+                className="rounded-full bg-destructive px-2.5 py-1 text-micro font-black text-destructive-foreground"
               >
                 지우기
               </button>
@@ -146,7 +146,7 @@ const VideoRow = ({ v, canDelete, onPlay }: { v: StrategyVideo; canDelete: boole
       {v.points.length > 0 && (
         <ul className="mt-2.5 space-y-1 rounded-2xl bg-secondary/60 px-3 py-2">
           {v.points.map((p, i) => (
-            <li key={i} className="text-[13px] leading-relaxed text-foreground">
+            <li key={i} className="text-label leading-relaxed text-foreground">
               <span className="mr-1 font-black text-primary">{i + 1}.</span>
               {p}
             </li>
@@ -220,7 +220,7 @@ const VideoAddSheet = ({ open, onClose, branch }: { open: boolean; onClose: () =
           type="button"
           onClick={submit}
           disabled={!valid || add.isPending}
-          className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-[15px] font-black text-primary-foreground active:scale-[0.99] disabled:opacity-50"
+          className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-body font-black text-primary-foreground active:scale-[0.99] disabled:opacity-50"
         >
           {add.isPending ? (mode === "file" ? "영상 올리는 중… 화면을 닫지 마세요" : "저장하는 중…") : "올리기"}
         </button>
@@ -233,7 +233,7 @@ const VideoAddSheet = ({ open, onClose, branch }: { open: boolean; onClose: () =
             type="button"
             onClick={() => setMode(m)}
             className={cn(
-              "flex h-10 items-center justify-center gap-1.5 rounded-xl text-[13.5px] font-bold",
+              "flex h-10 items-center justify-center gap-1.5 rounded-xl text-label font-bold",
               mode === m ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
             )}
           >
@@ -248,11 +248,11 @@ const VideoAddSheet = ({ open, onClose, branch }: { open: boolean; onClose: () =
           <Label hint="50MB까지 · 1080p 30초~1분 정도">영상 파일</Label>
           <label className="flex min-h-[64px] cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-border bg-background px-4 py-3">
             <Film className="h-6 w-6 shrink-0 text-muted-foreground" />
-            <span className="min-w-0 flex-1 text-[13.5px]">
+            <span className="min-w-0 flex-1 text-label">
               {file ? (
                 <>
                   <span className="block truncate font-bold text-foreground">{file.name}</span>
-                  <span className={cn("block text-[12px]", tooBig ? "font-bold text-destructive" : "text-muted-foreground")}>
+                  <span className={cn("block text-label", tooBig ? "font-bold text-destructive" : "text-muted-foreground")}>
                     {(file.size / 1024 / 1024).toFixed(1)}MB{tooBig ? " — 50MB가 넘어요. 유튜브 링크로 올려 주세요" : ""}
                   </span>
                 </>
