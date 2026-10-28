@@ -37,6 +37,7 @@ import { useMyCornermanStatus } from "@/hooks/useCornerman";
 import { usePartnerCalls } from "@/hooks/useCommunityHub";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMyReceived153, markCommunityVisited } from "@/services/communityFeedService";
+import type { PartnerCallExample } from "@/lib/partnerCallExamples";
 
 type SheetKey = "journal" | "cheer" | "buddy" | "together" | "gear" | "goal" | null;
 
@@ -47,6 +48,8 @@ const MyBoxerCommunityPage = () => {
   const { data: calls } = usePartnerCalls();
   const buddyRequests = buddy?.pending_received.length ?? 0;
   const togetherCount = (calls?.calls ?? []).filter((c) => !c.isMine).length;
+  // 맨 위 카드의 예시에서 열면 올리기 칸을 그 예시로 채운다 (2026-10-28 — 모집 5개가 될 때까지 예시)
+  const [togetherExample, setTogetherExample] = useState<PartnerCallExample | null>(null);
 
   // 받은 153 (시트와 같은 캐시) · 응원 보내기(돌려줄 카드가 없는 동료)
   const { user } = useAuth();
@@ -154,7 +157,12 @@ const MyBoxerCommunityPage = () => {
         </button>
 
         {/* 오늘 같이 해요 — 오늘 모집이 있을 때만 피드 맨 위에 (2026-10-28 운동 모집 1단계) */}
-        <PartnerCallCard onOpen={() => setSheet("together")} />
+        <PartnerCallCard
+          onOpen={(ex) => {
+            setTogetherExample(ex ?? null);
+            setSheet("together");
+          }}
+        />
 
         {/* 모두의 피드 */}
         <CommunityFeed openEntryId={entryParam} onEntryHandled={clearEntryParam} />
@@ -174,7 +182,14 @@ const MyBoxerCommunityPage = () => {
       <ChampionJournalSheet open={sheet === "journal"} onClose={close} />
       <SecondCheerSheet open={sheet === "cheer"} onClose={close} />
       <CornermanSheet open={sheet === "buddy"} onClose={close} />
-      <PartnerCallSheet open={sheet === "together"} onClose={close} />
+      <PartnerCallSheet
+        open={sheet === "together"}
+        example={togetherExample}
+        onClose={() => {
+          close();
+          setTogetherExample(null);
+        }}
+      />
       <GearShareSheet open={sheet === "gear"} onClose={close} />
       <GymRaidSheet open={sheet === "goal"} onClose={close} />
       <Received153Sheet open={receivedOpen} onClose={() => setReceivedOpen(false)} onCheer={(t) => setCheerTarget(t)} />

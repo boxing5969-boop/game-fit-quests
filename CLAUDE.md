@@ -270,7 +270,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 핵심 숫자: 커뮤니티 활동 회원 비율 = 그 주 커뮤니티에서 누르거나 쓴 회원(글 · 153 · 댓글 · 응원 · 환영 · 하트) ÷ 그 주 출석 회원 — 선릉역점, 코치 · 운영진 · 체험 계정 제외. 목표 4주 15% · 8주 25% (시작점: 2026-10-19~25 주 4% — 출석 94명 중 4명).
 - 켬 (2026-10-27 자정 무렵 대표님 "올려" — 미리보기 `preview/community` 확인 뒤 main 에 합침 · [20261027235213_community_phase1_on.sql](supabase/migrations/20261027235213_community_phase1_on.sql)): 스위치 켬 + 출석 알림(`attendance_base_xp_trg` 의 오삼코치 칭찬이 없는 갈래)을 누르면 커뮤니티(`/myboxer/community` · '오늘 같이 운동한 동료에게 153을 보내 보세요'). 앱에서 숨겨 둔 지점(`branches.is_visible` false)은 예전 그대로(링크 없음 · 홈 안내). 끄기 = `community_notify_since` 를 'off'.
 
-### 운동 모집 '오늘 같이 해요' 1단계 (2026-10-28 대표님 "추천대로가자" · 보고서 「마이복서153 운동 모집 업그레이드 보고서」 https://claude.ai/artifact/PFthjPygKqpEoX9GH4EcWt)
+### 운동 모집 '오늘 같이 해요' 1 · 2단계 (2026-10-28 대표님 "추천대로가자" · "올려" · 보고서 「마이복서153 운동 모집 업그레이드 보고서」 https://claude.ai/artifact/PFthjPygKqpEoX9GH4EcWt)
 
 | 파일 | 역할 |
 |---|---|
@@ -278,10 +278,19 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 | [src/components/engagement/PartnerCallSheet.tsx](src/components/engagement/PartnerCallSheet.tsx) | 시트 — 카드(사진 · 이름 · Lv · 코치 → 회원 카드) · 저요한 사람(내 모집이면 한 사람씩 '메시지' → `/messages/to/<id>`) · 올리기 칸은 접어 두고 종류 미트 · 같이 운동(+스파링은 `canSpar`) · 시간 칩 · 닉네임 먼저(NicknameEditSheet 뒤 그대로 올림) |
 | [src/components/engagement/PartnerCallCard.tsx](src/components/engagement/PartnerCallCard.tsx) | 커뮤니티 피드 맨 위 카드 — 오늘 모집이 있을 때만 · 첫 모집에 바로 '저요' |
 | [src/lib/partnerCallTime.ts](src/lib/partnerCallTime.ts) | 시간 칩(평소 시간 앞뒤 1시간 세 칸 · 지난 시간 빼기 · 5~23시) · `formatHour`(서버 알림 글과 같은 말) · `kstHour` |
+| [supabase/migrations/20261028171328_partner_call_phase2.sql](supabase/migrations/20261028171328_partner_call_phase2.sql) | 2단계 — `boxing_partner_calls.expires_at · capacity` · `boxing_partner_call_done` · `get_partner_calls_v2`(+ isNow · expiresAt · capacity · full · started · joinable · myDone · pairs · `atGym`(3시간 안 출석) · `canCapacity` · `pairsToday`) · `create_partner_call_v2(…, p_now, p_capacity)` · `join_partner_call_v2`(줄 잠금 — 지난 시간 · 끝난 '지금' · 정원 막음) · `partner_call_done` · `_partner_mutual_153` · `_partner_reward` · `partner_call_tick` |
+| [supabase/migrations/20261028174825_partner_call_phase2_on.sql](supabase/migrations/20261028174825_partner_call_phase2_on.sql) | 켬 — 예약 작업 `partner-call-tick`(5분마다) · 홈 띠 calls 에서 30분 지난 '지금' 모집(저요 없음) 빼기 · `get_partner_calls_v2.branchPosts` |
+| [src/lib/partnerCallExamples.ts](src/lib/partnerCallExamples.ts) | '이렇게 올려 보세요' 예시 7개 · `showPartnerExamples`(모집 5개까지) · `examplesFor`(지금 올릴 수 있는 것 먼저 · 체육관에 없으면 '지금' 예시 빼기 · 날마다 순서 바꿈) |
 
 - 홈 '오늘 우리 체육관' 띠 맨 앞 민트 글씨 '같이 해요 N'(남의 모집) · 커뮤니티 `?together=1` 이면 시트가 열린다.
 - 줄넘기 칸은 뺐다(예전 모집은 이름 그대로 보임). 스파링은 회원 화면에 칸이 없고 서버도 막는다.
-- 2단계(미리보기 먼저): '지금' 모집(30분) · 코치님 모집(선릉역점 평일 저녁 하루 1건) · 1시간 전 알림 · '같이 했어요' → 서로 153 · 각자 +30(하루 1번) · TV 한 줄(이름 · 시간 · 종류 + QR). 3단계: 같은 시간대 동료 알림 · 정원 · 다시 부르기 · 다른 지점.
+- 2단계 (2026-10-28 18시 대표님 "올려" — 미리보기 `preview/partner-call` 확인 뒤 main): 화면은 `_v2` 함수만 부른다(1단계 함수는 그대로 남아 있음).
+  - '지금' 모집: 체육관에 온 지 3시간 안이면(`atGym`) '지금' 칩 → 30분(`expires_at`). 지난 시각 · 끝난 '지금' 모집에는 저요가 없다.
+  - 정원(2~30명): 코치님 · 운영진 모집만(`canCapacity`), 차면 '마감'. 코치님 모집(선릉역점 평일 저녁 하루 1건)은 코치님이 직접 올리는 약속 — 앱이 저절로 올리지 않는다.
+  - '같이 했어요': 운동 시간이 된 뒤 올린 사람 · 저요한 사람이 누른다(어제 모집까지). 둘 다 누른 짝마다 서로 153(그날 첫 출석 카드에) + 회원은 챔피언 머니 +30(하루 1번, '같이 운동 보상' — 코치님 · 운영진은 없음) + 먼저 누른 사람에게 알림. 맨 위 카드 '오늘 같이 운동한 짝 N쌍'.
+  - `partner-call-tick`(5분마다): ① 저요가 있는 모집 시작 60~5분 전 '⏰ 곧 같이 운동해요' ② 시작 1시간 뒤('지금' 모집은 끝나고 30분 뒤) 아직 안 누른 사람에게 '🤝 오늘 같이 운동했나요?' — 사람마다 한 번(`boxing_partner_call_notes` kind remind · ask), 07~21시만 휴대폰, 커뮤니티 스위치 · `cheer_notify` 따름. 끄기 `select cron.unschedule('partner-call-tick');`
+- 예시 (2026-10-28 대표님 "게시물5개 올라올때까지는 다양한 예시 넣어놓자"): 우리 지점에 지금까지 올라온 모집(`branchPosts`)이 5개가 될 때까지 시트에 '이렇게 올려 보세요'(모집이 없으면 4개 · 있으면 목록 아래 3개), 커뮤니티 맨 위는 오늘 모집이 없을 때 예시 하나. 점선 · '예시' 표시 · 사람 이름 없음 · 저요 없음 — 누르면 그 내용이 채워진 올리기 칸(올리는 것은 회원이 '모집 올리기'). 내 모집이 있으면 시트에는 안 보인다.
+- 남은 일: TV 한 줄(이름 · 시간 · 종류 + QR)은 리디자인 3단계(TV 글씨 단계) 합친 뒤. 3단계: 같은 시간대 동료 알림 · 다시 부르기 · 다른 지점.
 
 ### 153마인드셋 — 시각화 훈련 (2026-10-19 전면 개편, 라우트 /myboxer/visualization)
 

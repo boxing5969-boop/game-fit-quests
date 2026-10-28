@@ -3,6 +3,8 @@
  *
  * 오늘 모집이 있을 때만 보인다(화면 규칙 ③ 빈 것은 그리지 않기). 첫 모집의 사진 · 이름 · 시간 · 종류에 바로 '저요'.
  * 카드를 누르면 시트 — onOpen 을 주면 부모(커뮤니티 화면)의 시트를, 없으면 자기 시트를 연다.
+ * 우리 지점 모집이 5개가 될 때까지는(2026-10-28 대표님 "게시물5개 올라올때까지는 다양한 예시 넣어놓자") 오늘 모집이 없어도
+ * 오늘의 예시 하나를 '예시' 표시로 보인다 — '올리기'를 누르면 그 내용이 채워진 올리기 칸이 열린다.
  *
  * 보호 원칙:
  *   · 공식 1~40 레벨업과 무관 — XP·챔피언머니 지급 0
@@ -14,24 +16,82 @@ import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { usePartnerCallActions, usePartnerCalls } from "@/hooks/useCommunityHub";
-import { formatHour } from "@/lib/partnerCallTime";
+import { examplesFor, showPartnerExamples, type PartnerCallExample } from "@/lib/partnerCallExamples";
+import { formatHour, kstHour } from "@/lib/partnerCallTime";
 import { PURPOSE_LABEL } from "@/services/communityHubService";
 import PartnerCallSheet, { PartnerFace } from "./PartnerCallSheet";
 
 interface Props {
-  /** 부모가 가진 시트를 연다 (커뮤니티 화면) */
-  onOpen?: () => void;
+  /** 부모가 가진 시트를 연다 (커뮤니티 화면) — 예시에서 열면 그 예시를 넘긴다 */
+  onOpen?: (example?: PartnerCallExample) => void;
 }
 
 const PartnerCallCard = ({ onOpen }: Props) => {
   const [open, setOpen] = useState(false);
+  const [example, setExample] = useState<PartnerCallExample | null>(null);
   const [busy, setBusy] = useState(false);
   const { data } = usePartnerCalls();
   const { join } = usePartnerCallActions();
 
   const calls = data?.calls ?? [];
-  const sheet = onOpen ? null : <PartnerCallSheet open={open} onClose={() => setOpen(false)} />;
-  if (calls.length === 0) return sheet;
+  const sheet = onOpen ? null : (
+    <PartnerCallSheet
+      open={open}
+      example={example}
+      onClose={() => {
+        setOpen(false);
+        setExample(null);
+      }}
+    />
+  );
+  const openWith = (ex?: PartnerCallExample) => {
+    if (onOpen) onOpen(ex);
+    else {
+      setExample(ex ?? null);
+      setOpen(true);
+    }
+  };
+
+  if (calls.length === 0) {
+    // 우리 지점 모집이 5개가 될 때까지 — 오늘의 예시 하나 (진짜 모집처럼 보이지 않게 점선 · '예시')
+    if (!showPartnerExamples(data?.branchPosts)) return sheet;
+    const ex = examplesFor(1, { now: kstHour(), atGym: !!data?.atGym })[0];
+    if (!ex) return sheet;
+    return (
+      <>
+        <section className="rounded-2xl border border-dashed border-primary/40 bg-card p-4" aria-label="오늘 같이 해요 예시">
+          <button type="button" onClick={() => openWith()} className="flex w-full items-center justify-between gap-2">
+            <span className="text-label font-bold text-primary">오늘 같이 해요</span>
+            <span className="flex items-center text-label font-semibold text-muted-foreground">
+              예시 더 보기
+              <ChevronRight className="h-4 w-4" />
+            </span>
+          </button>
+          <div className="mt-3 flex items-center gap-3">
+            <button type="button" onClick={() => openWith(ex)} className="min-w-0 flex-1 text-left">
+              <span className="flex items-center gap-1.5">
+                <span className="shrink-0 rounded-pill border border-border px-2 py-0.5 text-micro font-bold text-muted-foreground">
+                  예시
+                </span>
+                <span className="truncate text-label font-semibold text-muted-foreground">
+                  {ex.hour == null ? "지금" : formatHour(ex.hour)} · {PURPOSE_LABEL[ex.purpose]}
+                </span>
+              </span>
+              <span className="mt-1 block truncate text-body text-foreground">“{ex.note}”</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => openWith(ex)}
+              className="inline-flex min-h-[40px] shrink-0 items-center rounded-pill bg-primary px-4 text-label font-bold text-primary-foreground active:scale-95"
+            >
+              올리기
+            </button>
+          </div>
+        </section>
+        {sheet}
+      </>
+    );
+  }
 
   const myBranch = data?.branch ?? null;
   const allBranches = data?.all_branches === true;
@@ -40,7 +100,7 @@ const PartnerCallCard = ({ onOpen }: Props) => {
   const pairsToday = data?.pairsToday ?? 0;
   // 맨 앞: 내가 저요할 수 있는 모집 → 남의 모집 → 내 모집
   const first = calls.find(joinable) ?? calls.find((c) => !c.isMine) ?? calls[0];
-  const openSheet = () => (onOpen ? onOpen() : setOpen(true));
+  const openSheet = () => openWith();
 
   const doJoin = async () => {
     setBusy(true);

@@ -109,6 +109,8 @@ export interface PartnerCallsResult {
   canCapacity?: boolean;
   atGym?: boolean;
   pairsToday?: number;
+  /** 우리 지점에 지금까지 올라온 모집 수 — 5개가 될 때까지 '이렇게 올려 보세요' 예시 (2026-10-28) */
+  branchPosts?: number;
   calls: PartnerCall[];
 }
 

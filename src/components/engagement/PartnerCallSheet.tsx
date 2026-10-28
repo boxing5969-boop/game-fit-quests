@@ -16,6 +16,8 @@
  *   · 코치님 · 운영진 모집 정원(제한 없음 · 4 · 6 · 8명) — 다 차면 '마감'
  *   · 운동 시간이 되면 올린 사람 · 저요한 사람에게 '같이 했어요' — 둘 다 누르면 서로 153 + 각자 챔피언 머니 +30(하루 1번)
  *   · 지난 모집 · 끝난 '지금' 모집에는 저요가 없다 (서버 join_partner_call_v2 도 막는다)
+ *   · 우리 지점에 모집이 5개 올라올 때까지 '이렇게 올려 보세요' 예시(점선 · '예시' 표시 · 이름 없음) — 누르면 올리기 칸이 채워진다
+ *     (2026-10-28 대표님 "게시물5개 올라올때까지는 다양한 예시 넣어놓자", src/lib/partnerCallExamples.ts)
  *
  * 안전 규칙: 하루에 한 사람이 한 건만(DB unique) — 다시 올리면 바뀐다. 지점 격리는 서버가 한다.
  */
@@ -32,6 +34,7 @@ import { usePartnerCallActions, usePartnerCalls } from "@/hooks/useCommunityHub"
 import NicknameEditSheet from "@/components/license/NicknameEditSheet";
 import { openMemberCard } from "@/lib/appEvents";
 import { defaultHour, formatHour, hourChips, kstHour, laterHours } from "@/lib/partnerCallTime";
+import { examplesFor, showPartnerExamples, type PartnerCallExample } from "@/lib/partnerCallExamples";
 import WorkingOutNowCard from "./WorkingOutNow";
 import {
   MEMBER_PURPOSES,
@@ -45,6 +48,8 @@ import {
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** 커뮤니티 맨 위 카드의 예시에서 열었으면 올리기 칸을 그 내용으로 채워 연다 */
+  example?: PartnerCallExample | null;
 }
 
 /** 사진 — 없으면 이름 첫 글자 (커뮤니티 맨 위 모집 카드도 같이 쓴다) */
@@ -63,7 +68,7 @@ export const PartnerFace = ({ name, url, size = 44, ring = false }: { name: stri
   </span>
 );
 
-const PartnerCallSheet = ({ open, onClose }: Props) => {
+const PartnerCallSheet = ({ open, onClose, example = null }: Props) => {
   useModalDismiss(open, onClose);
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -100,7 +105,28 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
   }, [open]);
 
   const now = kstHour();
+  const formRef = useRef<HTMLDivElement>(null);
+  // 예시 — 우리 지점 모집이 5개가 될 때까지, 내 모집이 없을 때만
+  const examplesOn = showPartnerExamples(data?.branchPosts) && !mine;
+
+  /** 예시를 누르면 올리기 칸을 그 내용으로 채운다 — 올리는 것은 본인이 '모집 올리기'를 눌러야 */
+  const applyExample = (ex: PartnerCallExample) => {
+    const t = kstHour();
+    setPurpose(ex.purpose);
+    setNote(ex.note);
+    setOtherOpen(false);
+    if (ex.hour == null && data?.atGym) {
+      setNowPick(true);
+    } else {
+      setNowPick(false);
+      setHour(ex.hour != null && laterHours(t).includes(ex.hour) ? ex.hour : defaultHour(data?.usualHour, t));
+    }
+    setFormOpen(true);
+    window.requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  };
+
   // 시트를 열 때마다 처음 값 — 내 모집이 있으면 그 값, 없으면 미트 · (체육관에 있으면 '지금', 아니면 평소 시간)
+  // 커뮤니티 맨 위 카드의 예시로 열었으면 그 예시로 채운다
   const seededFor = useRef<string | null>(null);
   useEffect(() => {
     if (!open) {
@@ -109,14 +135,17 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
       setOtherOpen(false);
       return;
     }
-    if (!data || seededFor.current === (mine?.id ?? "none")) return;
-    seededFor.current = mine?.id ?? "none";
+    const key = `${mine?.id ?? "none"}:${example?.id ?? ""}`;
+    if (!data || seededFor.current === key) return;
+    seededFor.current = key;
     setPurpose(mine && purposes.includes(mine.purpose) ? mine.purpose : "mitt");
     setHour(mine ? mine.slotHour : defaultHour(data.usualHour, kstHour()));
     setNowPick(mine ? !!mine.isNow : !!data.atGym);
     setCapacity(mine?.capacity ?? null);
     setNote(mine?.note ?? "");
-  }, [open, data, mine, purposes]);
+    if (example && !mine) applyExample(example);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, data, mine, purposes, example]);
 
   const chips = useMemo(() => {
     const base = hourChips(data?.usualHour, now);
@@ -412,7 +441,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
         on ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
       }`;
     return (
-      <div className="rounded-2xl border border-border bg-muted/20 p-4">
+      <div ref={formRef} className="rounded-2xl border border-border bg-muted/20 p-4">
         <p className="text-label font-bold text-foreground">무엇을 함께 하나요</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {purposes.map((p) => (
@@ -503,11 +532,52 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
     );
   };
 
+  /** '이렇게 올려 보세요' 예시 — 점선 · '예시' 표시 · 이름 없음, 누르면 올리기 칸이 채워진다 */
+  const renderExamples = (n: number) => (
+    <div>
+      <p className="text-label font-bold text-foreground">이렇게 올려 보세요</p>
+      <div className="mt-2 space-y-2">
+        {examplesFor(n, { now, atGym: !!data?.atGym }).map((ex) => (
+          <button
+            key={ex.id}
+            type="button"
+            onClick={() => applyExample(ex)}
+            className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-3 text-left active:scale-[0.99]"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1.5">
+                <span className="shrink-0 rounded-pill border border-border bg-card px-2 py-0.5 text-micro font-bold text-muted-foreground">
+                  예시
+                </span>
+                <span className="truncate text-label font-semibold text-muted-foreground">
+                  {ex.hour == null ? "지금" : formatHour(ex.hour)} · {PURPOSE_LABEL[ex.purpose]}
+                </span>
+              </span>
+              <span className="mt-1 block text-body text-foreground">“{ex.note}”</span>
+            </span>
+            <span className="shrink-0 text-label font-bold text-primary">쓰기</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   const renderBody = () => {
     if (isLoading) {
       return <p className="py-8 text-center text-label text-muted-foreground">불러오는 중…</p>;
     }
     if (calls.length === 0) {
+      // 우리 지점 모집이 5개가 될 때까지 — 빈 칸 대신 예시 (2026-10-28 대표님)
+      if (examplesOn) {
+        return (
+          <>
+            <p className="mb-3 text-body font-bold text-foreground">아직 오늘 모집이 없어요</p>
+            <div className="mb-4">{renderExamples(4)}</div>
+            {renderForm()}
+            <div className="mt-5">{working}</div>
+          </>
+        );
+      }
       return (
         <>
           <div className="mb-4">{working}</div>
@@ -524,6 +594,7 @@ const PartnerCallSheet = ({ open, onClose }: Props) => {
     return (
       <>
         <div className="space-y-3">{calls.map(renderCall)}</div>
+        {examplesOn && <div className="mt-5">{renderExamples(3)}</div>}
         <div className="mt-4">{renderForm()}</div>
         <div className="mt-5">{working}</div>
       </>
