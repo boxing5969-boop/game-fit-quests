@@ -115,7 +115,7 @@ const LiveSpotlightStage = ({
       {/* 무대 헤더 */}
       <div className="mb-2 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-yellow-400" />
-        <h3 className="text-sm font-black uppercase tracking-wider text-yellow-300">
+        <h3 className="text-tv-micro font-black uppercase tracking-wider text-yellow-300">
           오늘의 스포트라이트
         </h3>
         {totalPages > 1 && (

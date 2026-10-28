@@ -100,7 +100,7 @@ const LiveGymRaidStrip = ({ branchName, variant = "center" }: LiveGymRaidStripPr
         <Flag className={isSidebar ? "h-5 w-5 text-primary" : "h-7 w-7 text-primary"} />
         <h2
           className={`font-black tracking-wide text-primary ${
-            isSidebar ? "text-base" : "text-2xl"
+            isSidebar ? "text-tv-micro" : "text-tv-label"
           }`}
         >
           {isSidebar ? "우리 지점 목표" : "우리 지점 목표 — 함께 채워요"}
@@ -141,7 +141,7 @@ const LiveGymRaidStrip = ({ branchName, variant = "center" }: LiveGymRaidStripPr
               <div className={`${isSidebar ? "mb-1.5" : "mb-2"} flex items-center justify-between gap-2`}>
                 <p
                   className={`flex items-center gap-1 truncate font-black text-white ${
-                    isSidebar ? "text-sm" : "text-base gap-1.5"
+                    isSidebar ? "text-tv-micro" : "text-tv-micro gap-1.5"
                   }`}
                 >
                   <span>
@@ -151,7 +151,7 @@ const LiveGymRaidStrip = ({ branchName, variant = "center" }: LiveGymRaidStripPr
                 </p>
                 <p
                   className={`shrink-0 font-black tabular-nums ${
-                    isSidebar ? "text-sm" : "text-lg"
+                    isSidebar ? "text-tv-micro" : "text-tv-micro"
                   } ${completed ? "text-yellow-400" : "text-primary"}`}
                 >
                   {percentage}%
@@ -178,7 +178,7 @@ const LiveGymRaidStrip = ({ branchName, variant = "center" }: LiveGymRaidStripPr
 
               <p
                 className={`mt-1 text-gray-400 tabular-nums ${
-                  isSidebar ? "text-[10px]" : "mt-1.5 text-xs"
+                  isSidebar ? "text-tv-micro" : "mt-1.5 text-tv-micro"
                 }`}
               >
                 {Math.round(r.current_value).toLocaleString()} /{" "}

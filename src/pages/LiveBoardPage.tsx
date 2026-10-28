@@ -211,7 +211,7 @@ const MemberAvatar = ({
 }) => (
   <Avatar className={`${sizeClass} border-2 border-gray-700`}>
     {url ? <AvatarImage src={url} alt={name} /> : null}
-    <AvatarFallback className="bg-gray-800 text-white text-lg font-black">
+    <AvatarFallback className="bg-gray-800 text-white text-tv-micro font-black">
       {name.charAt(0)}
     </AvatarFallback>
   </Avatar>
@@ -1271,7 +1271,7 @@ const LiveBoardPage = () => {
     <div className="fixed inset-0 flex flex-col bg-gray-950 text-white overflow-hidden select-none">
       {/* 지점에 TV 열쇠가 걸렸는데 이 TV 에 없을 때 (2026-10-19 회원 정보 잠그기) */}
       {keyRequired && (
-        <div className="pointer-events-none fixed left-1/2 top-4 z-[70] -translate-x-1/2 rounded-full bg-amber-400 px-6 py-2.5 text-[16px] font-black text-gray-950 shadow-2xl">
+        <div className="pointer-events-none fixed left-1/2 top-4 z-[70] -translate-x-1/2 rounded-full bg-amber-400 px-6 py-2.5 text-tv-micro font-black text-gray-950 shadow-2xl">
           이 TV는 열쇠 주소로 열어야 회원이 보여요 · 관리자 앱 › 라이브보드에서 주소를 확인해 주세요
         </div>
       )}
@@ -1289,10 +1289,10 @@ const LiveBoardPage = () => {
           {/* 로고가 이미 "153 BOXING GYM" 을 담고 있어 같은 워드마크를 글자로 반복하지 않는다.
               남기는 건 앱 이름과 지점명 둘뿐 — 로고 높이(72)에 맞춰 2줄로 정렬한다. */}
           <div className="flex flex-col justify-center gap-1">
-            <h1 className="text-4xl font-black leading-none tracking-tight text-white">마이복서153</h1>
-            <p className="text-xl font-bold leading-none text-white/50">{branchName || "지점"}</p>
+            <h1 className="text-tv-heading font-black leading-none tracking-tight text-white">마이복서153</h1>
+            <p className="text-tv-micro font-bold leading-none text-white/50">{branchName || "지점"}</p>
             {only1 && onDutyStaff.length > 0 && (
-              <p className="flex items-center gap-2 text-base font-bold leading-none text-white/60">
+              <p className="flex items-center gap-2 text-tv-micro font-bold leading-none text-white/60">
                 <span className="inline-block h-2 w-2 rounded-full bg-primary" />
                 {onDutyStaff.map((c) => `${c.name} ${honorTitle(c.title)}`).join(" · ")}
               </p>
@@ -1302,17 +1302,17 @@ const LiveBoardPage = () => {
         <div className="flex items-center gap-8">
           {isSuperAdmin && branches.length > 0 && (
             <div className="relative">
-              <button onClick={() => setShowBranchSwitch(!showBranchSwitch)} className="flex items-center gap-2 rounded-lg bg-gray-800 px-4 py-2.5 text-base text-gray-300 hover:bg-gray-700 transition-colors">
+              <button onClick={() => setShowBranchSwitch(!showBranchSwitch)} className="flex items-center gap-2 rounded-lg bg-gray-800 px-4 py-2.5 text-tv-micro text-gray-300 hover:bg-gray-700 transition-colors">
                 <Building2 className="h-5 w-5" />
                 <span>지점 전환</span>
               </button>
               {showBranchSwitch && (
                 <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-xl bg-gray-800 border border-gray-700 shadow-2xl overflow-hidden">
-                  <div className="p-3 border-b border-gray-700"><p className="text-sm text-gray-400 px-2">지점 선택</p></div>
+                  <div className="p-3 border-b border-gray-700"><p className="text-tv-micro text-gray-400 px-2">지점 선택</p></div>
                   <div className="max-h-60 overflow-y-auto">
                     {branches.map(b => (
                       <button key={b.id} onClick={() => handleBranchSwitch(b.name)}
-                        className={`w-full px-5 py-3 text-left text-base hover:bg-gray-700 transition-colors ${b.name === branchName ? "text-primary font-bold bg-gray-700/50" : "text-gray-300"}`}>
+                        className={`w-full px-5 py-3 text-left text-tv-micro hover:bg-gray-700 transition-colors ${b.name === branchName ? "text-primary font-bold bg-gray-700/50" : "text-gray-300"}`}>
                         {b.name}{b.name === branchName && " ✓"}
                       </button>
                     ))}
@@ -1323,7 +1323,7 @@ const LiveBoardPage = () => {
           )}
           {/* Admin reset button */}
           {isBranchManager && (
-            <button onClick={handleResetActiveSessions} className="flex items-center gap-2 rounded-lg bg-gray-800 px-3 py-2 text-sm text-gray-400 hover:bg-gray-700 hover:text-red-400 transition-colors" title="현재 활동 중 초기화">
+            <button onClick={handleResetActiveSessions} className="flex items-center gap-2 rounded-lg bg-gray-800 px-3 py-2 text-tv-micro text-gray-400 hover:bg-gray-700 hover:text-red-400 transition-colors" title="현재 활동 중 초기화">
               <RotateCcw className="h-4 w-4" />
               <span className="hidden xl:inline">초기화</span>
             </button>
@@ -1332,19 +1332,19 @@ const LiveBoardPage = () => {
             {/* 숫자는 "활동 중" 하나만 남긴다 — 오늘 방문 누적치는 대표님 요청으로 화면에서 뺐다.
                 (방문이 적은 시간대에 작게 보이는 숫자가 오히려 썰렁해 보인다) */}
             <div className="text-center">
-              <p className="text-5xl font-black leading-none tabular-nums text-primary">{combinedMembers.length}</p>
-              <p className="mt-1.5 text-base font-bold text-white/40">활동 중</p>
+              <p className="text-tv-title font-black leading-none tabular-nums text-primary">{combinedMembers.length}</p>
+              <p className="mt-1.5 text-tv-micro font-bold text-white/40">활동 중</p>
             </div>
           </div>
           <div className="text-right">
             {/* 사이니지 기기는 공장 초기 표준시(UTC 등)로 놓인 경우가 많아 timeZone 을 못 박는다.
                 기기 시계만 맞으면 지역 설정이 틀려도 한국 시각으로 나온다. */}
-            <p className="text-lg font-bold leading-none text-white/40">
+            <p className="text-tv-micro font-bold leading-none text-white/40">
               {currentTime.toLocaleDateString("ko-KR", {
                 month: "long", day: "numeric", weekday: "long", timeZone: "Asia/Seoul",
               })}
             </p>
-            <p className="mt-1.5 text-3xl font-black leading-none tabular-nums text-white/70">
+            <p className="mt-1.5 text-tv-heading font-black leading-none tabular-nums text-white/70">
               {currentTime.toLocaleTimeString("ko-KR", {
                 hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul",
               })}
@@ -1353,7 +1353,7 @@ const LiveBoardPage = () => {
           {/* 내 레벨 보기 QR — 출석하고 이름·레벨이 뜬 회원이 그 자리에서 앱으로 (2026-10-10 대표님) */}
           <div className="flex shrink-0 flex-col items-center gap-1.5 rounded-xl bg-white p-2.5">
             <QRCodeSVG value="https://myboxer153.com/?from=tv" size={74} level="M" marginSize={0} />
-            <p className="text-[13px] font-black leading-none text-gray-900">📱 내 레벨 보기</p>
+            <p className="text-tv-micro font-black leading-none text-gray-900">📱 내 레벨 보기</p>
           </div>
           <div className={`h-4 w-4 rounded-full ${connected ? "bg-primary animate-pulse" : "bg-destructive"}`} />
         </div>
@@ -1386,8 +1386,8 @@ const LiveBoardPage = () => {
                 {popupRecords && !popupBirthday && (
                   <div className="bday-pop relative z-10 rounded-full p-[2px] record-gold-ring shadow-[0_0_40px_rgba(246,196,83,0.45)]">
                     <div className="flex items-center gap-3 rounded-full bg-gray-950/90 px-7 py-2.5">
-                      <span className="text-3xl">🏆</span>
-                      <span className="bday-gold-text text-3xl font-black tracking-[0.25em]">153 RECORD</span>
+                      <span className="text-tv-heading">🏆</span>
+                      <span className="bday-gold-text text-tv-heading font-black tracking-[0.25em]">153 RECORD</span>
                     </div>
                   </div>
                 )}
@@ -1497,7 +1497,7 @@ const LiveBoardPage = () => {
                   >
                     {(popupAvatarUrl || popupPartsJson) && (
                       <p
-                        className="text-4xl font-black text-white"
+                        className="text-tv-heading font-black text-white"
                         style={{ textShadow: "0 4px 20px rgba(0,0,0,0.8)" }}
                       >
                         {latestPopup.display_name_snapshot}
@@ -1507,40 +1507,40 @@ const LiveBoardPage = () => {
                     {popupBirthday ? (
                       <>
                         <p
-                          className="bday-pop bday-gold-text mt-1 text-6xl font-black tracking-tight"
+                          className="bday-pop bday-gold-text mt-1 text-tv-display font-black tracking-tight"
                           style={{ filter: "drop-shadow(0 4px 14px rgba(0,0,0,0.75))" }}
                         >
                           생일 축하합니다!
                         </p>
-                        <p className="mt-3 text-2xl font-black text-amber-100" style={{ textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>
+                        <p className="mt-3 text-tv-label font-black text-amber-100" style={{ textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>
                           🎉 오늘 생일이에요 · 다 같이 축하해 주세요! 👏
                         </p>
                         {/* 생일 + 153 레코드 — 생일 화면은 그대로, 기록 이름만 한 줄 더 (2026-10-19) */}
                         {popupRecords && (
-                          <p className="mt-2 text-xl font-black">
+                          <p className="mt-2 text-tv-micro font-black">
                             <span className="bday-gold-text tracking-[0.15em]">🏆 153 RECORD</span>
                             <span className="ml-2 text-amber-200">{popupRecords.join(" · ")}</span>
                           </p>
                         )}
                         {/* 앱 '축하하기' 안내 — 보낸 축하는 이 회원 카드에 '🎉 N'으로 쌓인다 */}
-                        <p className="mt-2 text-lg font-bold text-white/70">
+                        <p className="mt-2 text-tv-micro font-bold text-white/70">
                           📱 마이복서153 앱 홈에서 <span className="font-black text-amber-200">🎂 축하하기</span>를 눌러 주세요
                         </p>
                       </>
                     ) : popupRecords ? (
                       <>
                         <p
-                          className="bday-pop bday-gold-text mt-1 text-5xl font-black tracking-tight"
+                          className="bday-pop bday-gold-text mt-1 text-tv-title font-black tracking-tight"
                           style={{ filter: "drop-shadow(0 4px 14px rgba(0,0,0,0.75))" }}
                         >
                           {popupRecords.join(" · ")}
                         </p>
-                        <p className="mt-3 text-2xl font-black text-amber-100" style={{ textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>
+                        <p className="mt-3 text-tv-label font-black text-amber-100" style={{ textShadow: "0 3px 14px rgba(0,0,0,0.85)" }}>
                           153복싱짐 최초 기록 보유자 · 입실! Lv.{toGlobalLevel(latestPopup.league_snapshot, latestPopup.level_snapshot)}
                         </p>
                       </>
                     ) : (
-                      <p className="mt-1 text-xl font-bold text-primary">
+                      <p className="mt-1 text-tv-micro font-bold text-primary">
                         입실! · Lv.{toGlobalLevel(latestPopup.league_snapshot, latestPopup.level_snapshot)}
                       </p>
                     )}
@@ -1551,15 +1551,15 @@ const LiveBoardPage = () => {
               <div className="flex flex-1 flex-col">
                 <div className="mb-2 flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <h2 className="text-base font-black tracking-wide text-primary">
+                  <h2 className="text-tv-micro font-black tracking-wide text-primary">
                     지금 운동 중
                   </h2>
-                  <p className="number-font text-base font-black text-primary tabular-nums">
+                  <p className="number-font text-tv-micro font-black text-primary tabular-nums">
                     {combinedMembers.length}
-                    <span className="ml-1 text-xs text-primary/70">명</span>
+                    <span className="ml-1 text-tv-micro text-primary/70">명</span>
                   </p>
                   {mockMembers.length > 0 && (
-                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-black text-white/50">
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-tv-micro font-black text-white/50">
                       mock {mockMembers.length}
                     </span>
                   )}
@@ -1608,7 +1608,7 @@ const LiveBoardPage = () => {
             <div className="mx-4 mb-2 flex-shrink-0 overflow-hidden rounded-xl border border-gray-800/60 bg-gray-900/50 px-4 py-2.5">
               <div className="flex items-center gap-4">
                 {/* 인원수 배지는 대표님 요청으로 뺐다 — 이름만 흐르게 둔다 */}
-                <h2 className="flex-shrink-0 whitespace-nowrap text-base font-black tracking-wide text-white/50">
+                <h2 className="flex-shrink-0 whitespace-nowrap text-tv-micro font-black tracking-wide text-white/50">
                   오늘 다녀간 회원
                 </h2>
                 {/* 양 끝을 페이드 처리 — 안 하면 이름이 가장자리에서 뚝 잘려 보인다 */}
@@ -1637,7 +1637,7 @@ const LiveBoardPage = () => {
                                 <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" aria-hidden />
                               )}
                               <span
-                                className={`text-lg font-bold ${training ? "text-white" : "text-white/45"}`}
+                                className={`text-tv-micro font-bold ${training ? "text-white" : "text-white/45"}`}
                               >
                                 {v.display_name}
                               </span>
@@ -1645,7 +1645,7 @@ const LiveBoardPage = () => {
                               {birthdayIds.has(v.user_id) && (
                                 <img src={birthdayCake} alt="오늘 생일" draggable={false} className="h-6 w-6 shrink-0 select-none" />
                               )}
-                              <MedalMark animated userId={v.user_id} className="text-lg" />
+                              <MedalMark animated userId={v.user_id} className="text-tv-micro" />
                             </span>
                           );
                         })}
@@ -1665,7 +1665,7 @@ const LiveBoardPage = () => {
               <div className="flex items-center gap-3">
                 <div className="flex flex-shrink-0 items-center gap-1.5">
                   <Medal className="h-5 w-5 text-yellow-500" />
-                  <h2 className="text-base font-black text-yellow-400 tracking-widest whitespace-nowrap">
+                  <h2 className="text-tv-micro font-black text-yellow-400 tracking-widest whitespace-nowrap">
                     COACHING STAFF
                   </h2>
                 </div>
@@ -1677,10 +1677,10 @@ const LiveBoardPage = () => {
                       >
                         <MemberAvatar url={c.avatar_url} name={c.name} sizeClass="h-7 w-7" />
                         <div>
-                          <p className="text-sm font-black leading-tight text-yellow-100 whitespace-nowrap">
+                          <p className="text-tv-micro font-black leading-tight text-yellow-100 whitespace-nowrap">
                             {c.name} {honorTitle(c.title)} <MedalMark animated userId={c.user_id} />
                           </p>
-                          <p className="text-[10px] font-black uppercase tracking-wider text-yellow-500/80">
+                          <p className="text-tv-micro font-black uppercase tracking-wider text-yellow-500/80">
                             {/* 대표님 지시: 코치님은 모두 Lv.77 — 리그 표기 2026-09-23 챔피언 → 2026-10-19 블랙 */}
                             BLACK · LV.{STAFF_CHAMPION_LEVEL}
                           </p>
@@ -1699,9 +1699,9 @@ const LiveBoardPage = () => {
             <div className={`mx-4 mb-2 flex-shrink-0 rounded-xl p-[1.5px] record-gold-ring still ${only1 ? "mr-[35rem]" : ""}`}>
               <div className="flex items-center gap-4 overflow-hidden rounded-[11px] bg-gray-950/95 px-4 py-2.5">
                 <div className="flex flex-shrink-0 items-center gap-1.5">
-                  <span className="text-xl">🏆</span>
-                  <h2 className="bday-gold-text still whitespace-nowrap text-base font-black tracking-widest">153 RECORD</h2>
-                  <span className="whitespace-nowrap text-sm font-bold text-amber-100/70">오늘 온 최초 기록 보유자</span>
+                  <span className="text-tv-micro">🏆</span>
+                  <h2 className="bday-gold-text still whitespace-nowrap text-tv-micro font-black tracking-widest">153 RECORD</h2>
+                  <span className="whitespace-nowrap text-tv-micro font-bold text-amber-100/70">오늘 온 최초 기록 보유자</span>
                 </div>
                 <div
                   ref={recordBoxRef}
@@ -1719,8 +1719,8 @@ const LiveBoardPage = () => {
                   <div ref={recordMeasureRef} aria-hidden className="invisible absolute left-0 top-0 flex w-max items-center gap-6 whitespace-nowrap">
                     {recordHolders.map((h) => (
                       <span key={h.user_id} className="flex items-center gap-2">
-                        <span className="text-lg font-black">{h.name}</span>
-                        <span className="text-base font-bold">{h.records.join(" · ")}</span>
+                        <span className="text-tv-micro font-black">{h.name}</span>
+                        <span className="text-tv-micro font-bold">{h.records.join(" · ")}</span>
                       </span>
                     ))}
                   </div>
@@ -1732,8 +1732,8 @@ const LiveBoardPage = () => {
                       <div key={copy} className={`flex items-center gap-6 ${recordOverflow ? "pr-6" : ""}`} aria-hidden={copy === 1}>
                         {recordHolders.map((h) => (
                           <span key={`${copy}-${h.user_id}`} className="flex items-center gap-2">
-                            <span className="text-lg font-black text-white">{h.name}</span>
-                            <span className="text-base font-bold text-amber-200">{h.records.join(" · ")}</span>
+                            <span className="text-tv-micro font-black text-white">{h.name}</span>
+                            <span className="text-tv-micro font-bold text-amber-200">{h.records.join(" · ")}</span>
                           </span>
                         ))}
                       </div>
@@ -1752,7 +1752,7 @@ const LiveBoardPage = () => {
               <div className="flex items-center gap-3">
                 <div className="flex flex-shrink-0 items-center gap-1.5">
                   <Trophy className="h-5 w-5 text-primary" />
-                  <h2 className="whitespace-nowrap text-base font-black tracking-wide text-primary">
+                  <h2 className="whitespace-nowrap text-tv-micro font-black tracking-wide text-primary">
                     마이복서153 랭킹
                   </h2>
                 </div>
@@ -1764,16 +1764,16 @@ const LiveBoardPage = () => {
                         key={m.r_user_id}
                         className={`flex min-w-0 items-center gap-2 rounded-lg border px-2.5 py-1 ${tone.ring}`}
                       >
-                        <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-black ${tone.num}`}>
+                        <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-tv-micro font-black ${tone.num}`}>
                           {i + 1}
                         </span>
                         <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-7 w-7" />
                         <div className="min-w-0">
-                          <p className={`flex min-w-0 items-center gap-1 text-sm font-black leading-tight ${tone.name}`}>
+                          <p className={`flex min-w-0 items-center gap-1 text-tv-micro font-black leading-tight ${tone.name}`}>
                             <span className="truncate">{m.r_nickname}</span>
                             <MedalMark animated userId={m.r_user_id} />
                           </p>
-                          <p className="text-[10px] font-black uppercase tracking-wider text-white/50">
+                          <p className="text-tv-micro font-black uppercase tracking-wider text-white/50">
                             {RANK_LABELS[m.r_current_rank] ?? m.r_current_rank} · LV.{toGlobalLevel(m.r_current_rank, m.r_current_level)}
                           </p>
                         </div>
@@ -1794,11 +1794,11 @@ const LiveBoardPage = () => {
               <div className="flex items-center gap-3">
                 <div className="flex flex-shrink-0 items-center gap-1.5">
                   <Trophy className="h-5 w-5 text-yellow-500" />
-                  <h2 className="text-base font-black text-yellow-400 tracking-wide whitespace-nowrap">
+                  <h2 className="text-tv-micro font-black text-yellow-400 tracking-wide whitespace-nowrap">
                     명예의 전당
                   </h2>
                   {hallMembers.length > 0 && (
-                    <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] font-black text-yellow-300 tabular-nums">
+                    <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-tv-micro font-black text-yellow-300 tabular-nums">
                       {hallMembers.length}
                     </span>
                   )}
@@ -1812,17 +1812,17 @@ const LiveBoardPage = () => {
                       >
                         <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-7 w-7" />
                         <div>
-                          <p className="text-sm font-black text-yellow-200 leading-tight whitespace-nowrap">
+                          <p className="text-tv-micro font-black text-yellow-200 leading-tight whitespace-nowrap">
                             {m.r_nickname} <MedalMark animated userId={m.r_user_id} />
                           </p>
-                          <p className="text-[10px] text-yellow-500/80 font-black">MASTER 40</p>
+                          <p className="text-tv-micro text-yellow-500/80 font-black">MASTER 40</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-yellow-700/40 px-3 py-1.5">
-                    <p className="text-sm font-black text-yellow-500/70 whitespace-nowrap">
+                    <p className="text-tv-micro font-black text-yellow-500/70 whitespace-nowrap">
                       첫 마스터의 자리 · 블랙 리그 레벨 10 + 보스 4 달성
                     </p>
                   </div>
@@ -1841,11 +1841,11 @@ const LiveBoardPage = () => {
           <div className="flex-1 border-b border-gray-800/60 flex flex-col min-h-[28vh]">
             <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0">
               <span className="h-4 w-4 rounded-full bg-primary animate-pulse" />
-              <h2 className="text-2xl font-black text-primary">현재 활동 중 ({combinedMembers.length})</h2>
+              <h2 className="text-tv-label font-black text-primary">현재 활동 중 ({combinedMembers.length})</h2>
             </div>
             <div className="flex-1 overflow-y-auto px-3 pb-3">
               {combinedMembers.length === 0 ? (
-                <div className="text-center py-6 text-gray-600"><p className="text-xl">활동 중인 회원 없음</p></div>
+                <div className="text-center py-6 text-gray-600"><p className="text-tv-micro">활동 중인 회원 없음</p></div>
               ) : (
                 <div className="space-y-2">
                   {/* 🎂 생일 회원이 맨 위 (2026-10-16) — 나머지 순서는 그대로 (sort 는 안정 정렬) */}
@@ -1862,38 +1862,38 @@ const LiveBoardPage = () => {
                       <div className="flex-1 min-w-0">
                         {/* 이름 + 리그 버튼(모든 회원, 앱 라이센스 카드와 같은 버튼). PT 회원은 'PT' 글자 (2026-10-15 대표님) */}
                         <div className="flex min-w-0 items-center gap-1.5">
-                          <p className="min-w-0 text-2xl font-black text-white truncate leading-tight">{m.name}</p>
+                          <p className="min-w-0 text-tv-label font-black text-white truncate leading-tight">{m.name}</p>
                           {/* 생일이면 황금 버튼 + 케이크 (2026-10-16 대표님) */}
                           <NameBadge league={m.league} birthday={m.birthday} className="h-7 w-7" />
                           {m.birthday && (
                             <img src={birthdayCake} alt="오늘 생일" draggable={false} className="h-8 w-8 shrink-0 select-none" />
                           )}
                           {m.birthday && (m.birthdayCongrats ?? 0) > 0 && (
-                            <span className="shrink-0 rounded-full bg-amber-400/20 px-2 py-0.5 text-base font-black tabular-nums text-amber-200">
+                            <span className="shrink-0 rounded-full bg-amber-400/20 px-2 py-0.5 text-tv-micro font-black tabular-nums text-amber-200">
                               🎉 {m.birthdayCongrats}
                             </span>
                           )}
-                          <MedalMark animated userId={m.user_id} className="text-2xl" />
+                          <MedalMark animated userId={m.user_id} className="text-tv-label" />
                           {m.pt && (
-                            <span className="shrink-0 rounded-md border border-blue-400/50 bg-blue-500/20 px-2 py-0.5 text-base font-black tracking-wider text-blue-200">
+                            <span className="shrink-0 rounded-md border border-blue-400/50 bg-blue-500/20 px-2 py-0.5 text-tv-micro font-black tracking-wider text-blue-200">
                               PT
                             </span>
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className={`inline-flex px-2 py-0.5 rounded text-sm font-black ${RANK_BADGE_COLORS[m.league] || "bg-gray-700 text-gray-300"}`}>
+                          <span className={`inline-flex px-2 py-0.5 rounded text-tv-micro font-black ${RANK_BADGE_COLORS[m.league] || "bg-gray-700 text-gray-300"}`}>
                             {RANK_LABELS[m.league] || m.league} 리그
                           </span>
-                          <span className="text-lg text-gray-400 font-bold">레벨 {toGlobalLevel(m.league, m.level)}</span>
+                          <span className="text-tv-micro text-gray-400 font-bold">레벨 {toGlobalLevel(m.league, m.level)}</span>
                           <span className="text-gray-600">·</span>
                           <Clock className="h-4 w-4 text-gray-500 inline" />
-                          <span className="text-lg text-gray-500 font-bold">{elapsedMin(m.startedAt)}분</span>
+                          <span className="text-tv-micro text-gray-500 font-bold">{elapsedMin(m.startedAt)}분</span>
                         </div>
                       </div>
                       {isBranchManager && (
                         <button
                           onClick={() => handleForceExit(m.id, m.name)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity rounded-lg bg-red-600/20 px-3 py-2 text-xs font-bold text-red-400 hover:bg-red-600/40"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity rounded-lg bg-red-600/20 px-3 py-2 text-tv-micro font-bold text-red-400 hover:bg-red-600/40"
                           title="퇴장 처리"
                         >
                           <X className="h-4 w-4" />

@@ -468,8 +468,8 @@ const FaceKioskPage = () => {
   if (!kioskKey) {
     return (
       <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-4 bg-background p-8">
-        <p className="text-lg font-black text-foreground">🥊 153 얼굴 키오스크 설정</p>
-        <p className="text-sm text-muted-foreground">관리자에게 받은 키오스크 키를 입력하세요 (최초 1회)</p>
+        <p className="text-tv-micro font-black text-foreground">🥊 153 얼굴 키오스크 설정</p>
+        <p className="text-tv-micro text-muted-foreground">관리자에게 받은 키오스크 키를 입력하세요 (최초 1회)</p>
         <input
           type="password" placeholder="키오스크 키"
           className="w-full max-w-sm rounded-xl border border-border bg-card p-3 text-foreground"
@@ -480,7 +480,7 @@ const FaceKioskPage = () => {
             }
           }}
         />
-        <p className="text-xs text-muted-foreground">입력 후 Enter</p>
+        <p className="text-tv-micro text-muted-foreground">입력 후 Enter</p>
       </div>
     );
   }
@@ -511,26 +511,26 @@ const FaceKioskPage = () => {
 
       {/* 상단 안내 */}
       <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
-        <p className="rounded-full bg-black/60 px-4 py-2 text-sm font-black text-white">
+        <p className="rounded-full bg-black/60 px-4 py-2 text-tv-micro font-black text-white">
           🥊 {branchName || keyBranch || "153복싱짐"} · 얼굴 출석
           {keyBranch
             ? <span className="ml-2 font-medium text-white/70">🔑 {keyBranch}</span>
             : <span className="ml-2 font-medium text-white/70">(공용 키)</span>}
         </p>
-        {status && <p className="max-w-[58vw] rounded-2xl bg-black/70 px-4 py-2 text-xs leading-snug text-white break-words">{status}</p>}
+        {status && <p className="max-w-[58vw] rounded-2xl bg-black/70 px-4 py-2 text-tv-micro leading-snug text-white break-words">{status}</p>}
       </div>
 
       {/* 고장 안내(회원용) — 원인은 말하지 않는다. 회원이 할 수 있는 행동만 말한다. */}
       {down && (
         <div className="absolute inset-0 z-[85] flex flex-col items-center justify-center gap-3 bg-black/90 p-8 text-center">
-          <p className="text-3xl font-black text-white">{MSG_DOWN_TITLE}</p>
-          <p className="text-lg text-white/70">{MSG_DOWN_SUB}</p>
+          <p className="text-tv-heading font-black text-white">{MSG_DOWN_TITLE}</p>
+          <p className="text-tv-micro text-white/70">{MSG_DOWN_SUB}</p>
         </div>
       )}
 
       {/* 기술 정보(직원용) — 평소엔 숨김. 모서리 3번 탭으로 열고 닫는다. */}
       {showDiag && (
-        <div className="absolute inset-x-4 bottom-24 z-[95] rounded-xl bg-black/90 p-3 text-left text-[11px] leading-relaxed text-white/80">
+        <div className="absolute inset-x-4 bottom-24 z-[95] rounded-xl bg-black/90 p-3 text-left text-tv-micro leading-relaxed text-white/80">
           <p className="mb-1 font-bold text-white/50">진단 정보 (직원용 · 모서리 3번 탭으로 닫기)</p>
           <p className="break-words">{diag || "이상 없음"}</p>
         </div>
@@ -544,10 +544,10 @@ const FaceKioskPage = () => {
       {greet && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70 p-4">
           <div className="animate-bounce-in w-full max-w-lg rounded-3xl bg-card p-10 text-center shadow-elev-3">
-            <p className="text-6xl">{greetEmoji}</p>
-            <p className="mt-4 text-4xl font-black text-foreground">{greet.name}님</p>
-            <p className="mt-1.5 text-lg font-bold text-muted-foreground">{greet.timeLine}</p>
-            <p className={`mt-3 text-xl font-black ${
+            <p className="text-tv-display">{greetEmoji}</p>
+            <p className="mt-4 text-tv-heading font-black text-foreground">{greet.name}님</p>
+            <p className="mt-1.5 text-tv-micro font-bold text-muted-foreground">{greet.timeLine}</p>
+            <p className={`mt-3 text-tv-micro font-black ${
               greet.phase === "checking" ? "text-muted-foreground"
                 : greet.deny ? "text-status-pending"
                 : "text-primary"
@@ -555,7 +555,7 @@ const FaceKioskPage = () => {
               {greetStatus}
             </p>
             {greet.phase === "done" && !greet.deny && greet.daysLeft !== null && greet.daysLeft <= 7 && (
-              <p className="mt-3 rounded-xl bg-muted/50 px-3 py-2 text-sm font-bold text-status-pending">
+              <p className="mt-3 rounded-xl bg-muted/50 px-3 py-2 text-tv-micro font-bold text-status-pending">
                 {greet.daysLeft <= 1
                   ? "이용권이 오늘까지예요 — 데스크에서 연장해주세요"
                   : `이용권이 ${greet.daysLeft}일 남았어요 — 미리 연장해두면 편해요`}
@@ -573,13 +573,13 @@ const FaceKioskPage = () => {
           if (!next) { try { window.speechSynthesis?.cancel(); } catch { /* 무시 */ } }
           ensureAudio();
         }}
-        className="absolute bottom-4 left-4 rounded-full bg-black/60 px-4 py-2 text-xs text-white/70"
+        className="absolute bottom-4 left-4 rounded-full bg-black/60 px-4 py-2 text-tv-micro text-white/70"
       >{soundOn ? "🔊 소리 켜짐" : "🔇 무음"}</button>
 
       {/* 등록 버튼 (우하단 작게) */}
       <button
         onClick={() => setEnrollOpen(true)}
-        className="absolute bottom-4 right-4 rounded-full bg-black/60 px-4 py-2 text-xs text-white/70"
+        className="absolute bottom-4 right-4 rounded-full bg-black/60 px-4 py-2 text-tv-micro text-white/70"
       >얼굴 등록</button>
 
       {enrollOpen && (
@@ -696,7 +696,7 @@ const EnrollSheet = ({ osApi, video, onDone, onClose }: {
   return (
     <div className="absolute inset-0 z-10 flex items-end justify-center bg-black/70 p-4" onClick={onClose}>
       <div className="w-full max-w-md rounded-3xl bg-card p-5" onClick={(e) => e.stopPropagation()}>
-        <p className="text-lg font-black text-foreground">얼굴 등록 (시범)</p>
+        <p className="text-tv-micro font-black text-foreground">얼굴 등록 (시범)</p>
         {!member ? (
           <div className="mt-3 space-y-2">
             <input
@@ -708,10 +708,10 @@ const EnrollSheet = ({ osApi, video, onDone, onClose }: {
           </div>
         ) : (
           <div className="mt-3 space-y-3">
-            <p className="text-sm text-foreground">
+            <p className="text-tv-micro text-foreground">
               <b>{member.label}</b>님 {member.enrolled && <span className="text-muted-foreground">(기존 등록 있음 — 새로 덮어씁니다)</span>}
             </p>
-            <label className="flex items-start gap-2 rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground">
+            <label className="flex items-start gap-2 rounded-xl bg-muted/40 p-3 text-tv-micro text-muted-foreground">
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
               <span>
                 <b className="text-foreground">얼굴 특징값 수집·이용 동의 (필수)</b>
@@ -723,10 +723,10 @@ const EnrollSheet = ({ osApi, video, onDone, onClose }: {
             </label>
             {consent && (
               <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/40 px-3 py-2">
-                <p className="text-xs font-bold text-foreground">
+                <p className="text-tv-micro font-bold text-foreground">
                   {shots >= 3 ? "촬영 완료 — 저장을 눌러주세요" : SHOT_GUIDES[shots]}
                 </p>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${faceOk ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-tv-micro font-bold ${faceOk ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
                   {faceOk ? "● 얼굴 잡힘" : "○ 얼굴을 화면에"}
                 </span>
               </div>
@@ -743,8 +743,8 @@ const EnrollSheet = ({ osApi, video, onDone, onClose }: {
             </div>
           </div>
         )}
-        {msg && <p className="mt-2 text-sm text-primary">{msg}</p>}
-        <button onClick={onClose} className="mt-3 w-full rounded-xl border border-border py-2 text-sm text-muted-foreground">닫기</button>
+        {msg && <p className="mt-2 text-tv-micro text-primary">{msg}</p>}
+        <button onClick={onClose} className="mt-3 w-full rounded-xl border border-border py-2 text-tv-micro text-muted-foreground">닫기</button>
       </div>
     </div>
   );

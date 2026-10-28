@@ -76,13 +76,13 @@ const LiveBoardTestPanel = ({
           className="flex w-full items-center gap-2 rounded-t-2xl px-4 py-2.5 text-left hover:bg-purple-500/10 transition-colors"
         >
           <FlaskConical className="h-4 w-4 text-purple-400" />
-          <span className="text-sm font-black text-purple-300">
+          <span className="text-tv-micro font-black text-purple-300">
             테스트 모드
           </span>
-          <span className="text-[10px] font-bold text-purple-400/60 uppercase tracking-wider">
+          <span className="text-tv-micro font-bold text-purple-400/60 uppercase tracking-wider">
             (관리자 전용)
           </span>
-          <span className="ml-auto rounded-full bg-purple-500/20 px-2 py-0.5 text-xs font-black text-purple-300 tabular-nums">
+          <span className="ml-auto rounded-full bg-purple-500/20 px-2 py-0.5 text-tv-micro font-black text-purple-300 tabular-nums">
             mock {mockCount}
           </span>
           {expanded ? (
@@ -104,7 +104,7 @@ const LiveBoardTestPanel = ({
               <div className="space-y-3 p-3">
                 {/* 프리셋 행 */}
                 <div>
-                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  <p className="mb-1.5 text-tv-micro font-bold uppercase tracking-wider text-gray-400">
                     프리셋 — 즉시 N명 추가
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -112,7 +112,7 @@ const LiveBoardTestPanel = ({
                       <button
                         key={n}
                         onClick={() => onAdd(n)}
-                        className="rounded-lg bg-purple-600/20 px-2.5 py-1.5 text-xs font-black text-purple-200 hover:bg-purple-600/40 transition-colors"
+                        className="rounded-lg bg-purple-600/20 px-2.5 py-1.5 text-tv-micro font-black text-purple-200 hover:bg-purple-600/40 transition-colors"
                       >
                         +{n}명
                       </button>
@@ -123,14 +123,14 @@ const LiveBoardTestPanel = ({
                 {/* 실제 회원 미리보기 — 메달·사진·캐릭터가 실제로 어떻게 보이는지 (이 기기에서만) */}
                 {(onAddReal || onAddMedalSamples || onBirthdaySample || onRecordSample) && (
                   <div>
-                    <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    <p className="mb-1.5 text-tv-micro font-bold uppercase tracking-wider text-gray-400">
                       실제 모습 미리보기
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {onAddReal && (
                         <button
                           onClick={onAddReal}
-                          className="rounded-lg bg-amber-500/20 px-2.5 py-1.5 text-xs font-black text-amber-200 hover:bg-amber-500/40 transition-colors"
+                          className="rounded-lg bg-amber-500/20 px-2.5 py-1.5 text-tv-micro font-black text-amber-200 hover:bg-amber-500/40 transition-colors"
                           title="우리 지점 메달·사진·캐릭터 회원을 진짜 이름·모습으로 추가"
                         >
                           실제 회원 미리보기
@@ -139,7 +139,7 @@ const LiveBoardTestPanel = ({
                       {onAddMedalSamples && (
                         <button
                           onClick={onAddMedalSamples}
-                          className="rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-xs font-black text-amber-300 hover:bg-amber-500/30 transition-colors"
+                          className="rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-tv-micro font-black text-amber-300 hover:bg-amber-500/30 transition-colors"
                           title="가상 회원 3명에게 금 ×2 · 은 · 동 메달 예시"
                         >
                           메달 예시
@@ -148,7 +148,7 @@ const LiveBoardTestPanel = ({
                       {onBirthdaySample && (
                         <button
                           onClick={onBirthdaySample}
-                          className="rounded-lg bg-gradient-to-r from-emerald-500/25 via-violet-500/25 to-pink-500/25 px-2.5 py-1.5 text-xs font-black text-amber-100 hover:from-emerald-500/40 hover:via-violet-500/40 hover:to-pink-500/40 transition-colors"
+                          className="rounded-lg bg-gradient-to-r from-emerald-500/25 via-violet-500/25 to-pink-500/25 px-2.5 py-1.5 text-tv-micro font-black text-amber-100 hover:from-emerald-500/40 hover:via-violet-500/40 hover:to-pink-500/40 transition-colors"
                           title="생일 회원이 들어온 것처럼 — 생일 환영 화면 + 오로라·황금 버튼 카드"
                         >
                           🎂 생일 회원 입장
@@ -157,7 +157,7 @@ const LiveBoardTestPanel = ({
                       {onRecordSample && (
                         <button
                           onClick={onRecordSample}
-                          className="rounded-lg bg-gradient-to-r from-amber-300/25 via-yellow-500/25 to-amber-600/25 px-2.5 py-1.5 text-xs font-black text-amber-100 hover:from-amber-300/40 hover:via-yellow-500/40 hover:to-amber-600/40 transition-colors"
+                          className="rounded-lg bg-gradient-to-r from-amber-300/25 via-yellow-500/25 to-amber-600/25 px-2.5 py-1.5 text-tv-micro font-black text-amber-100 hover:from-amber-300/40 hover:via-yellow-500/40 hover:to-amber-600/40 transition-colors"
                           title="153 레코드 보유자가 들어온 것처럼 — 금색 환영 화면 10초 + 카드 금색 띠 + 아래 금색 띠"
                         >
                           🏆 153 레코드 회원 입장
@@ -169,13 +169,13 @@ const LiveBoardTestPanel = ({
 
                 {/* 단일 조작 */}
                 <div>
-                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  <p className="mb-1.5 text-tv-micro font-bold uppercase tracking-wider text-gray-400">
                     조정
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     <button
                       onClick={() => onAdd(1, true)}
-                      className="flex items-center gap-1 rounded-lg bg-emerald-600/20 px-2.5 py-1.5 text-xs font-black text-emerald-300 hover:bg-emerald-600/40 transition-colors"
+                      className="flex items-center gap-1 rounded-lg bg-emerald-600/20 px-2.5 py-1.5 text-tv-micro font-black text-emerald-300 hover:bg-emerald-600/40 transition-colors"
                       title="방금 입실 시뮬레이트 (NEW 배지)"
                     >
                       <Sparkles className="h-3 w-3" />
@@ -183,7 +183,7 @@ const LiveBoardTestPanel = ({
                     </button>
                     <button
                       onClick={() => onAdd(1)}
-                      className="flex items-center gap-1 rounded-lg bg-gray-700 px-2.5 py-1.5 text-xs font-black text-gray-300 hover:bg-gray-600 transition-colors"
+                      className="flex items-center gap-1 rounded-lg bg-gray-700 px-2.5 py-1.5 text-tv-micro font-black text-gray-300 hover:bg-gray-600 transition-colors"
                       title="일반 mock 1명 추가"
                     >
                       <Plus className="h-3 w-3" />
@@ -192,7 +192,7 @@ const LiveBoardTestPanel = ({
                     <button
                       onClick={onRemoveOne}
                       disabled={mockCount === 0}
-                      className="flex items-center gap-1 rounded-lg bg-gray-700 px-2.5 py-1.5 text-xs font-black text-gray-300 hover:bg-gray-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="flex items-center gap-1 rounded-lg bg-gray-700 px-2.5 py-1.5 text-tv-micro font-black text-gray-300 hover:bg-gray-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       title="mock 1명 제거"
                     >
                       <Minus className="h-3 w-3" />
@@ -206,7 +206,7 @@ const LiveBoardTestPanel = ({
                   <button
                     onClick={onTriggerLevelUp}
                     disabled={mockCount === 0}
-                    className="flex items-center gap-1 rounded-lg bg-yellow-500/20 px-2.5 py-1.5 text-xs font-black text-yellow-300 hover:bg-yellow-500/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1 rounded-lg bg-yellow-500/20 px-2.5 py-1.5 text-tv-micro font-black text-yellow-300 hover:bg-yellow-500/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     title="랜덤 mock 회원 레벨업 인터럽트 발동"
                   >
                     <Zap className="h-3 w-3" />
@@ -215,7 +215,7 @@ const LiveBoardTestPanel = ({
                   <button
                     onClick={onReset}
                     disabled={mockCount === 0}
-                    className="ml-auto flex items-center gap-1 rounded-lg bg-red-600/20 px-2.5 py-1.5 text-xs font-black text-red-300 hover:bg-red-600/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="ml-auto flex items-center gap-1 rounded-lg bg-red-600/20 px-2.5 py-1.5 text-tv-micro font-black text-red-300 hover:bg-red-600/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     title="모든 mock 회원 제거"
                   >
                     <Trash2 className="h-3 w-3" />
@@ -223,7 +223,7 @@ const LiveBoardTestPanel = ({
                   </button>
                 </div>
 
-                <p className="text-[10px] leading-relaxed text-gray-500">
+                <p className="text-tv-micro leading-relaxed text-gray-500">
                   ⚠️ mock 회원은 화면에만 표시되며 DB 에 저장되지 않습니다.
                   <br />
                   새로고침 시 모두 사라집니다.

@@ -60,10 +60,35 @@ export function nearestStep(px) {
  *     글씨를 키우면 그림이 가려진다 — 크게 보기 · 아래 채팅 목록이 같은 글을 큰 글씨로 보여 준다.
  */
 export const EXCLUDE = [
-  "components/liveBoard/", "pages/LiveBoardPage", "pages/TvBranchPicker", "pages/SignageBoardPage", "pages/FaceKioskPage",
+  // 경로가 없는 옛 화면 (App.tsx 에 연결 안 됨)
   "pages/CheckinBoardPage",
 ];
 export const SCENE = ["components/office/OfficeScene"];
+
+/**
+ * TV · 키오스크 — 멀리서 보는 화면 (2026-10-28 3단계). 글씨 단계를 따로 둔다: 1920×1080 무대 px, 가장 작은 글씨 20.
+ *   55인치 TV 에서 20px 은 글자 높이 약 1cm — 2~3m 앞에서 읽히는 가장 작은 크기. 이름 · 숫자는 24~48.
+ *   tailwind.config.ts 의 fontSize tv-micro … tv-display 와 같은 값이어야 한다 (px — TV 는 글씨 크기 설정을 따르지 않는다).
+ *   얼굴 키오스크(태블릿)도 1m 앞에서 보는 화면이라 같은 단계를 쓴다.
+ */
+export const TV_SCALE = [
+  { name: "tv-micro", px: 20 },
+  { name: "tv-label", px: 24 },
+  { name: "tv-body", px: 28 },
+  { name: "tv-heading", px: 36 },
+  { name: "tv-title", px: 48 },
+  { name: "tv-display", px: 72 },
+];
+export const TV = ["components/liveBoard/", "pages/LiveBoardPage", "pages/TvBranchPicker", "pages/SignageBoardPage", "pages/FaceKioskPage"];
+export const isTvFile = (rel) => rel.endsWith(".tsx") && !rel.endsWith(".test.tsx") && TV.some((p) => rel.startsWith(p));
+/** TV 단계로 — 작아지지 않게: 20 아래는 20, 그 위는 같거나 큰 가장 가까운 단계 (72 넘는 연출 글씨는 null = 그대로) */
+export function tvStepFor(px) {
+  for (const s of TV_SCALE) if (px <= s.px) return s.name;
+  return null;
+}
+/** 회원 6단계 이름 (TV 화면에서는 쓰지 않는다) · TV 단계 이름 (회원 화면에서는 쓰지 않는다) */
+export const MEMBER_TOKEN_RE = /(?<![\w-])(!?)text-(micro|label|body|heading|title|display)(?![\w-])/g;
+export const TV_TOKEN_RE = /(?<![\w-])(!?)text-tv-(micro|label|body|heading|title|display)(?![\w-])/g;
 
 /**
  * 게임(미니게임 · 스토리 RPG) — 작은 글씨는 6단계(13 아래 없음), 큰 연출 글씨(GAME_BIG_PX 이상 — 카운트다운 · 점수 팝 ·
@@ -74,7 +99,11 @@ export const GAME_BIG_PX = 28;
 export const isGameFile = (rel) => GAME.some((p) => rel.startsWith(p));
 
 export const isMemberFile = (rel) =>
-  rel.endsWith(".tsx") && !rel.endsWith(".test.tsx") && !EXCLUDE.some((p) => rel.startsWith(p)) && !SCENE.some((p) => rel.startsWith(p));
+  rel.endsWith(".tsx") &&
+  !rel.endsWith(".test.tsx") &&
+  !EXCLUDE.some((p) => rel.startsWith(p)) &&
+  !SCENE.some((p) => rel.startsWith(p)) &&
+  !TV.some((p) => rel.startsWith(p));
 
 /** 이 파일에서 이 크기(px)를 그대로 둬도 되나 — 게임의 큰 연출 글씨만 */
 export const keepSize = (rel, px) => isGameFile(rel) && px >= GAME_BIG_PX;

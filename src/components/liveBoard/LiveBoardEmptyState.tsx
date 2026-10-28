@@ -73,7 +73,7 @@ const LiveBoardEmptyState = ({
           {/* 153 공식 로고(심볼+워드마크). 원본 비율 그대로.
               로고가 브랜드를 이미 말하고 있어 같은 이름을 글자로 반복하지 않는다. */}
           <img src={logoWhite} alt="153 BOXING GYM" className="h-40 w-auto" draggable={false} />
-          <p className="text-lg font-bold text-white/40">{branchName} · 오늘도 복싱 레벨업 중</p>
+          <p className="text-tv-micro font-bold text-white/40">{branchName} · 오늘도 복싱 레벨업 중</p>
         </motion.div>
 
         {/* 시그니처 메시지 */}
@@ -83,11 +83,11 @@ const LiveBoardEmptyState = ({
           transition={{ duration: 0.8, delay: 0.4 }}
           className="space-y-3"
         >
-          <p className="text-3xl font-black text-white">
+          <p className="text-tv-heading font-black text-white">
             오늘 첫 라운드를{" "}
             <span className="text-reward">누가 시작할까요?</span>
           </p>
-          <p className="text-lg font-bold text-white/40">
+          <p className="text-tv-micro font-bold text-white/40">
             출석 체크 후 운동을 시작하면 이곳에 표시됩니다
           </p>
         </motion.div>
@@ -102,12 +102,12 @@ const LiveBoardEmptyState = ({
           >
             {hallOfFameCount > 0 && (
               <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-6 py-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-yellow-400">
+                <p className="text-tv-micro font-bold uppercase tracking-wider text-yellow-400">
                   명예의 전당
                 </p>
-                <p className="number-font mt-0.5 text-3xl font-black text-yellow-300 tabular-nums">
+                <p className="number-font mt-0.5 text-tv-heading font-black text-yellow-300 tabular-nums">
                   {hallOfFameCount}
-                  <span className="ml-1 text-base text-yellow-600">명</span>
+                  <span className="ml-1 text-tv-micro text-yellow-600">명</span>
                 </p>
               </div>
             )}

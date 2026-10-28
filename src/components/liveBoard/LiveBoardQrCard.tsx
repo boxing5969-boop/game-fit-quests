@@ -152,28 +152,28 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar", className = "" }: Pr
   );
   const text = (
     <div className={stacked ? "mt-3 w-full text-center" : "min-w-0 flex-1"}>
-      <p className={`flex items-center gap-1.5 text-base font-black tracking-wide text-primary ${stacked ? "justify-center" : ""}`}>
+      <p className={`flex items-center gap-1.5 text-tv-micro font-black tracking-wide text-primary ${stacked ? "justify-center" : ""}`}>
         <QrCode className="h-4 w-4" /> 앱에서 QR 출석
       </p>
-      <p className="mt-1.5 text-sm font-bold leading-snug text-white">{notice.main}</p>
-      <p className="mt-1 text-sm font-bold leading-snug text-white/80">{notice.sub}</p>
-      <p className="mt-1.5 text-xs font-bold leading-snug text-white/40">
+      <p className="mt-1.5 text-tv-micro font-bold leading-snug text-white">{notice.main}</p>
+      <p className="mt-1 text-tv-micro font-bold leading-snug text-white/80">{notice.sub}</p>
+      <p className="mt-1.5 text-tv-micro font-bold leading-snug text-white/40">
         마이복서153 → 홈 → 오늘의 시작 → QR 출석 · 폰 기본 카메라로 찍어도 돼요
       </p>
       {failed === "key" && (
-        <p className="mt-1 text-xs font-bold text-destructive/80">이 TV 는 보드 키 등록이 필요해요 — 관리자에게 문의</p>
+        <p className="mt-1 text-tv-micro font-bold text-destructive/80">이 TV 는 보드 키 등록이 필요해요 — 관리자에게 문의</p>
       )}
       {failed === "net" && !url && (
-        <p className="mt-1 text-xs font-bold text-destructive/80">QR 을 불러오지 못했어요 — 잠시 후 다시 시도합니다</p>
+        <p className="mt-1 text-tv-micro font-bold text-destructive/80">QR 을 불러오지 못했어요 — 잠시 후 다시 시도합니다</p>
       )}
     </div>
   );
   // 앱 받기 안내 — 금색 띠로 QR 바로 밑에 (오른쪽 패널: QR 아래 · 1번 화면 떠 있는 카드: QR·글 줄 아래 전체 폭)
   const appNote = (
     <div className="mt-3 w-full rounded-xl bg-reward px-3.5 py-2.5 text-center text-reward-foreground">
-      <p className="text-[26px] font-black leading-tight">{BOARD_APP_NOTICE_MAIN}</p>
-      <p className="mt-1 text-base font-bold leading-snug">{BOARD_APP_NOTICE_SUB}</p>
-      <p className="mt-0.5 text-[13px] font-bold leading-snug opacity-75">{BOARD_APP_NOTICE_HINT}</p>
+      <p className="text-tv-body font-black leading-tight">{BOARD_APP_NOTICE_MAIN}</p>
+      <p className="mt-1 text-tv-micro font-bold leading-snug">{BOARD_APP_NOTICE_SUB}</p>
+      <p className="mt-0.5 text-tv-micro font-bold leading-snug opacity-75">{BOARD_APP_NOTICE_HINT}</p>
     </div>
   );
   const body = stacked ? (

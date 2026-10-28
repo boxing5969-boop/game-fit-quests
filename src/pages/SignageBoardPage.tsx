@@ -139,10 +139,10 @@ const SignageBoardPage = () => {
 
       {alive.length === 0 && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 px-16 text-center">
-          <p className="text-6xl font-black" style={{ color: FALLBACK_INK }}>
+          <p className="text-tv-display font-black" style={{ color: FALLBACK_INK }}>
             153복싱짐
           </p>
-          <p className="text-3xl font-bold" style={{ color: FALLBACK_INK2 }}>
+          <p className="text-tv-heading font-bold" style={{ color: FALLBACK_INK2 }}>
             안내 화면을 불러오지 못했습니다
           </p>
         </div>
@@ -150,7 +150,7 @@ const SignageBoardPage = () => {
 
       {paused && (
         <div
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 rounded-full px-6 py-2.5 text-xl font-black"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 rounded-full px-6 py-2.5 text-tv-micro font-black"
           style={{ background: "rgba(17,22,26,.72)", color: "#F3F6F5" }}
         >
           일시정지 · 스페이스바로 다시 재생

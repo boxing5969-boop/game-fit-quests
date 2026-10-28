@@ -17,7 +17,7 @@ const SignageExitButton = ({ onExit, compact = false, style }: SignageExitButton
   <button
     type="button"
     onClick={onExit}
-    className={`fixed z-[100] flex h-11 items-center justify-center gap-1 rounded-full bg-black/65 text-[14px] font-bold text-white shadow-lg ring-1 ring-white/15 backdrop-blur-md transition-transform active:scale-95 ${
+    className={`fixed z-[100] flex h-11 items-center justify-center gap-1 rounded-full bg-black/65 text-tv-micro font-bold text-white shadow-lg ring-1 ring-white/15 backdrop-blur-md transition-transform active:scale-95 ${
       compact ? "w-11" : "pl-2.5 pr-4"
     }`}
     style={{ left: 12, top: "max(12px, env(safe-area-inset-top))", ...style }}

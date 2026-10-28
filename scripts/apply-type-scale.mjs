@@ -2,11 +2,23 @@
 //   · 11.5px 이하 → text-micro · 12~13.5px → text-label · 그 위는 가장 가까운 단계 (거리가 같으면 큰 쪽) — scripts/type-scale.mjs stepFor
 //   · 옛 이름(text-xs · text-sm · text-caption …)도 같은 규칙으로. 옛 토큰이 정하던 굵기는 같은 칸에 굵기가 없을 때만 붙인다
 //   · 몇 번을 돌려도 결과가 같다 — 다른 계정 수정과 합친 뒤 다시 돌려도 된다
-//   · TV · 키오스크 화면(EXCLUDE)은 건드리지 않는다 · 게임의 큰 연출 글씨(28px 이상)는 그대로 (keepSize)
+//   · TV · 키오스크(TV)는 멀리서 보는 tv 단계로 — 작아지지 않게, 가장 작은 20 (tvStepFor) · 게임의 큰 연출 글씨(28px 이상)는 그대로 (keepSize)
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ARBITRARY_RE, EXEMPT_MARK, LEGACY, LEGACY_RE, LEGACY_STEP, LEGACY_WEIGHT, isMemberFile, keepSize, stepFor } from "./type-scale.mjs";
+import {
+  ARBITRARY_RE,
+  EXEMPT_MARK,
+  LEGACY,
+  LEGACY_RE,
+  LEGACY_STEP,
+  LEGACY_WEIGHT,
+  isMemberFile,
+  isTvFile,
+  keepSize,
+  stepFor,
+  tvStepFor,
+} from "./type-scale.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "src");
 const dry = process.argv.includes("--dry");
@@ -29,7 +41,11 @@ let changedTokens = 0;
 const perFile = [];
 for (const abs of files) {
   const rel = relative(root, abs).replace(/\\/g, "/");
-  if (!isMemberFile(rel)) continue;
+  // TV · 키오스크는 멀리서 보는 tv 단계로 (작아지지 않게 · 가장 작은 20) — scripts/type-scale.mjs tvStepFor
+  const tv = isTvFile(rel);
+  if (!tv && !isMemberFile(rel)) continue;
+  const arbStep = (px) => (tv ? tvStepFor(px) : keepSize(rel, px) ? null : stepFor(px));
+  const legacyStep = (name) => (tv ? tvStepFor(LEGACY[name]) : keepSize(rel, LEGACY[name]) ? null : LEGACY_STEP[name] ?? stepFor(LEGACY[name]));
   const src = readFileSync(abs, "utf8");
   let count = 0;
   const out = src
@@ -39,15 +55,17 @@ for (const abs of files) {
       const inString = line.replace(STRING_RE, (str) => {
         let addWeight = null;
         let s = str.replace(ARBITRARY_RE, (m, bang, px) => {
-          if (keepSize(rel, Number(px))) return m;
+          const step = arbStep(Number(px));
+          if (!step) return m;
           count++;
-          return `${bang}text-${stepFor(Number(px))}`;
+          return `${bang}text-${step}`;
         });
         s = s.replace(LEGACY_RE, (m, bang, name) => {
-          if (keepSize(rel, LEGACY[name])) return m;
+          const step = legacyStep(name);
+          if (!step) return m;
           count++;
           if (LEGACY_WEIGHT[name] && !addWeight) addWeight = LEGACY_WEIGHT[name];
-          return `${bang}text-${LEGACY_STEP[name] ?? stepFor(LEGACY[name])}`;
+          return `${bang}text-${step}`;
         });
         if (addWeight && !WEIGHT_RE.test(s)) {
           // 문자열 끝 따옴표 바로 앞에 굵기를 붙인다
@@ -58,14 +76,16 @@ for (const abs of files) {
       // 여러 줄에 걸친 백틱 문자열 안 — 같은 규칙으로 크기만 옮긴다 (굵기는 그대로)
       return inString
         .replace(ARBITRARY_RE, (m, bang, px) => {
-          if (keepSize(rel, Number(px))) return m;
+          const step = arbStep(Number(px));
+          if (!step) return m;
           count++;
-          return `${bang}text-${stepFor(Number(px))}`;
+          return `${bang}text-${step}`;
         })
         .replace(LEGACY_RE, (m, bang, name) => {
-          if (keepSize(rel, LEGACY[name])) return m;
+          const step = legacyStep(name);
+          if (!step) return m;
           count++;
-          return `${bang}text-${LEGACY_STEP[name] ?? stepFor(LEGACY[name])}`;
+          return `${bang}text-${step}`;
         });
     })
     .join("\n");
@@ -78,4 +98,4 @@ for (const abs of files) {
 }
 perFile.sort((a, b) => b[0] - a[0]);
 for (const [n, rel] of perFile.slice(0, 25)) console.log(String(n).padStart(4), rel);
-console.log(`${dry ? "(미리 보기) " : ""}글씨 6단계로 옮김: 파일 ${changedFiles}개 · ${changedTokens}곳`);
+console.log(`${dry ? "(미리 보기) " : ""}글씨 단계로 옮김 (휴대폰 6단계 · TV 단계): 파일 ${changedFiles}개 · ${changedTokens}곳`);

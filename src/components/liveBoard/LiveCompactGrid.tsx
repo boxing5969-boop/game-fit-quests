@@ -133,7 +133,7 @@ const LiveCompactGrid = ({ members, getElapsedMinutes, showForceExit, onForceExi
       {/* 헤더 */}
       <div className="mb-2 flex flex-shrink-0 items-center gap-2">
         <Users className="h-4 w-4 text-emerald-400" />
-        <h3 className="text-sm font-black uppercase tracking-wider text-emerald-300">
+        <h3 className="text-tv-micro font-black uppercase tracking-wider text-emerald-300">
           함께 운동 중 ({totalCount})
         </h3>
         {shouldRotate && (

@@ -95,21 +95,21 @@ const LaunchEventBoard = ({ branchName }: Props) => {
       {/* 제목 줄 */}
       <div className="mb-3 flex flex-shrink-0 items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-black uppercase tracking-[0.35em] text-yellow-400/80">MYBOXER 153 · LAUNCH EVENT</p>
-          <h2 className="mt-1 text-4xl font-black leading-none text-white">
+          <p className="text-tv-micro font-black uppercase tracking-[0.35em] text-yellow-400/80">MYBOXER 153 · LAUNCH EVENT</p>
+          <h2 className="mt-1 text-tv-heading font-black leading-none text-white">
             153 마이복서 <span className="text-yellow-400">런칭 이벤트</span>
           </h2>
         </div>
         <div className="text-right">
           {!data ? (
             // 첫 응답 전 — "진행 중" 을 먼저 띄웠다가 D-day 로 바뀌는 깜빡임 방지
-            <p className="text-2xl font-black text-white/40">&nbsp;</p>
+            <p className="text-tv-label font-black text-white/40">&nbsp;</p>
           ) : upcoming ? (
-            <p className="text-3xl font-black text-yellow-400">D-{data.days_until_start}</p>
+            <p className="text-tv-heading font-black text-yellow-400">D-{data.days_until_start}</p>
           ) : (
-            <p className="text-2xl font-black text-white/90">{ended ? "최종 결과" : "진행 중"}</p>
+            <p className="text-tv-label font-black text-white/90">{ended ? "최종 결과" : "진행 중"}</p>
           )}
-          <p className="text-base font-bold text-gray-400">
+          <p className="text-tv-micro font-bold text-gray-400">
             {periodLine}{ended ? " · 순위 확정" : ""}{data ? " · 지점 회원만 (코치님 제외)" : ""}{stale ? " · 갱신 지연" : ""}
           </p>
         </div>
@@ -127,16 +127,16 @@ const LaunchEventBoard = ({ branchName }: Props) => {
               <div key={blk.label} className="flex items-center gap-5 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 px-6 py-4">
                 <Crown className="h-12 w-12 flex-shrink-0 text-yellow-400" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-black uppercase tracking-[0.25em] text-yellow-400/90">{blk.label}</p>
+                  <p className="text-tv-micro font-black uppercase tracking-[0.25em] text-yellow-400/90">{blk.label}</p>
                   {k ? (
                     <div className="mt-1 flex items-baseline justify-between gap-4">
-                      <p className="truncate text-4xl font-black text-white">{k.display_name}</p>
-                      <p className="flex-shrink-0 text-4xl font-black tabular-nums text-yellow-400">{fmt(k.score, "attendance")}</p>
+                      <p className="truncate text-tv-heading font-black text-white">{k.display_name}</p>
+                      <p className="flex-shrink-0 text-tv-heading font-black tabular-nums text-yellow-400">{fmt(k.score, "attendance")}</p>
                     </div>
                   ) : (
-                    <p className="mt-1 text-2xl font-black text-white/80">아직 기록이 없어요</p>
+                    <p className="mt-1 text-tv-label font-black text-white/80">아직 기록이 없어요</p>
                   )}
-                  <p className="mt-1 truncate text-base font-bold text-gray-400">
+                  <p className="mt-1 truncate text-tv-micro font-bold text-gray-400">
                     {blk.sub}
                     {blk.rows.length > 1 && ` · ${blk.rows.slice(1, 3).map((r) => `${r.rank}위 ${r.display_name} ${fmt(r.score, "attendance")}`).join(" · ")}`}
                   </p>
@@ -147,7 +147,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
         </div>
       )}
       {data && !upcoming && curAll[0] && (
-        <p className="mb-3 flex flex-shrink-0 items-center justify-center gap-2 text-lg font-bold text-gray-300">
+        <p className="mb-3 flex flex-shrink-0 items-center justify-center gap-2 text-tv-micro font-bold text-gray-300">
           <Crown className="h-5 w-5 text-yellow-400" />
           역대 출석왕 <span className="text-white">{curAll[0].display_name}</span> {fmt(curAll[0].score, "attendance")}
           {allSince ? ` (${allSince}부터)` : ""} · {monthLabel} 출석왕 <span className="text-white">{curMonth[0]?.display_name ?? "—"}</span>
@@ -155,7 +155,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
         </p>
       )}
       {data && upcoming && (
-        <p className="mb-3 flex-shrink-0 text-center text-xl font-black text-white/90">
+        <p className="mb-3 flex-shrink-0 text-center text-tv-micro font-black text-white/90">
           <span className="text-yellow-400">{fmtKstDate(data.start_date)}</span>부터 런칭 이벤트 왕좌 경쟁이 시작됩니다 — 지금 앱을 설치하고 설정에서 닉네임을 정해두세요
         </p>
       )}
@@ -173,15 +173,15 @@ const LaunchEventBoard = ({ branchName }: Props) => {
             // 칸 밖으로 넘친 줄이 아래 글 위에 겹쳐 그려지지 않게 칸 안에서 자른다 (2026-10-19)
             <div key={cat} className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-yellow-600/30 bg-gradient-to-b from-yellow-950/40 via-gray-900/70 to-gray-900/80 p-5">
               <div className="flex items-center gap-3">
-                <span className="text-3xl font-black text-yellow-400">{col.no}</span>
+                <span className="text-tv-heading font-black text-yellow-400">{col.no}</span>
                 <Icon className="h-7 w-7 text-yellow-400" />
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-2xl font-black text-white">{col.title}</h3>
-                  <p className="truncate text-base font-bold text-gray-400">{col.sub}</p>
+                  <h3 className="truncate text-tv-label font-black text-white">{col.title}</h3>
+                  <p className="truncate text-tv-micro font-bold text-gray-400">{col.sub}</p>
                 </div>
                 {/* 참가 인원 — 칸 맨 아래 줄에 있던 것을 머리줄 오른쪽으로 (아래 줄이 칸 밖으로 넘쳐 '참여 방법'과 겹쳤다) */}
                 {item && !upcoming && (
-                  <span className="flex-shrink-0 self-start rounded-full bg-white/10 px-3 py-1 text-base font-bold tabular-nums text-gray-300">
+                  <span className="flex-shrink-0 self-start rounded-full bg-white/10 px-3 py-1 text-tv-micro font-bold tabular-nums text-gray-300">
                     참가 {Number(item.total).toLocaleString("ko-KR")}명
                   </span>
                 )}
@@ -195,24 +195,24 @@ const LaunchEventBoard = ({ branchName }: Props) => {
                   <div className="flex items-center gap-3">
                     <Trophy className="h-8 w-8 text-yellow-500/60" />
                     <div>
-                      <p className="text-2xl font-black text-white/90">{fmtKstDate(data.start_date)} 개막</p>
-                      <p className="text-base font-bold text-gray-400">첫날 첫 기록이 첫 왕이 됩니다</p>
+                      <p className="text-tv-label font-black text-white/90">{fmtKstDate(data.start_date)} 개막</p>
+                      <p className="text-tv-micro font-bold text-gray-400">첫날 첫 기록이 첫 왕이 됩니다</p>
                     </div>
                   </div>
                 ) : king ? (
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
                       <Crown className="h-9 w-9 flex-shrink-0 text-yellow-400" />
-                      <p className="truncate text-4xl font-black text-white">{king.display_name}</p>
+                      <p className="truncate text-tv-heading font-black text-white">{king.display_name}</p>
                     </div>
-                    <p className="flex-shrink-0 text-4xl font-black tabular-nums text-yellow-400">{fmt(king.score, cat)}</p>
+                    <p className="flex-shrink-0 text-tv-heading font-black tabular-nums text-yellow-400">{fmt(king.score, cat)}</p>
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
                     <Trophy className="h-8 w-8 text-yellow-500/60" />
                     <div>
-                      <p className="text-2xl font-black text-white/90">왕좌가 비어 있어요</p>
-                      <p className="text-base font-bold text-gray-400">첫 기록이 곧 왕이 됩니다</p>
+                      <p className="text-tv-label font-black text-white/90">왕좌가 비어 있어요</p>
+                      <p className="text-tv-micro font-bold text-gray-400">첫 기록이 곧 왕이 됩니다</p>
                     </div>
                   </div>
                 )}
@@ -222,16 +222,16 @@ const LaunchEventBoard = ({ branchName }: Props) => {
               <ol className="mt-3 flex-1 space-y-1.5">
                 {rest.map((r) => (
                   <li key={`${cat}-${r.rank}`} className="flex items-center gap-3 rounded-xl bg-gray-800/50 px-4 py-2.5">
-                    <span className="w-8 text-center text-2xl font-black tabular-nums text-gray-400">{r.rank}</span>
-                    <span className="min-w-0 flex-1 truncate text-2xl font-bold text-white">{r.display_name}</span>
-                    <span className="flex-shrink-0 text-2xl font-black tabular-nums text-gray-200">{fmt(r.score, cat)}</span>
+                    <span className="w-8 text-center text-tv-label font-black tabular-nums text-gray-400">{r.rank}</span>
+                    <span className="min-w-0 flex-1 truncate text-tv-label font-bold text-white">{r.display_name}</span>
+                    <span className="flex-shrink-0 text-tv-label font-black tabular-nums text-gray-200">{fmt(r.score, cat)}</span>
                   </li>
                 ))}
                 {data && rest.length === 0 && king && (
-                  <li className="px-4 py-2 text-lg font-bold text-gray-500">다음 자리가 비어 있어요</li>
+                  <li className="px-4 py-2 text-tv-micro font-bold text-gray-500">다음 자리가 비어 있어요</li>
                 )}
                 {upcoming && (
-                  <li className="px-4 py-3 text-lg font-bold leading-relaxed text-gray-400">
+                  <li className="px-4 py-3 text-tv-micro font-bold leading-relaxed text-gray-400">
                     {cat === "attendance" && "얼굴 인식으로 들어온 날이 하루 1일씩 쌓입니다."}
                     {cat === "app" && "앱 열기·커뮤니티 글·댓글·153·응원·게임·하트 — 행동 종류마다 하루 1점."}
                     {cat === "nickname" && "랭킹·추천 복서에서 동료를 눌러 하트를 보내요. 회원마다 1개씩."}
@@ -246,7 +246,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
       {/* '이번 주 153왕' 띠는 뺐다 (2026-10-19 대표님: "화면이 겹쳐있어 이번주 153왕 빼줘") —
           아래 153 RECORD 띠가 생기면서 세 왕좌 칸이 짧아져 5위 줄 위에 겹쳐 그려졌다. 앱 커뮤니티의 153 기록은 그대로다. */}
       {/* 참여 방법 — 한 줄 */}
-      <p className="mt-3 flex-shrink-0 text-center text-lg font-bold text-gray-300">
+      <p className="mt-3 flex-shrink-0 text-center text-tv-micro font-bold text-gray-300">
         참여 방법 · 마이복서153 앱 설치 → 매일 앱 열기 → 랭킹·추천 복서에서 동료에게 하트 보내기
       </p>
     </section>

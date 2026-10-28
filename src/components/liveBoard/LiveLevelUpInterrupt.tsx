@@ -189,7 +189,7 @@ const LiveLevelUpInterrupt = ({
                         <AvatarImage src={event.avatar_url} alt={event.name} />
                       ) : null}
                       <AvatarFallback
-                        className="text-6xl font-black text-white"
+                        className="text-tv-display font-black text-white"
                         style={{
                           background: `linear-gradient(135deg, ${
                             rankKey === "blue"
@@ -218,7 +218,7 @@ const LiveLevelUpInterrupt = ({
               className="space-y-3"
             >
               <p
-                className="text-7xl font-black tracking-wider"
+                className="text-tv-display font-black tracking-wider"
                 style={{
                   background:
                     "linear-gradient(180deg, #F6C453 0%, #FBBF24 50%, #F59E0B 100%)",
@@ -230,16 +230,16 @@ const LiveLevelUpInterrupt = ({
                 LEVEL UP!
               </p>
               <p
-                className="text-4xl font-black text-white"
+                className="text-tv-heading font-black text-white"
                 style={{ textShadow: "0 4px 20px rgba(0,0,0,0.8)" }}
               >
                 {event.name}
               </p>
               <div className="flex items-center justify-center gap-5">
-                <span className="rounded-xl bg-white/10 px-4 py-2 text-2xl font-black text-gray-300">
+                <span className="rounded-xl bg-white/10 px-4 py-2 text-tv-label font-black text-gray-300">
                   Lv.{toGlobalLevel((event.oldLeague ?? event.league).toLowerCase(), event.oldLevel)}
                 </span>
-                <span className="text-5xl font-black text-yellow-400">
+                <span className="text-tv-title font-black text-yellow-400">
                   →
                 </span>
                 <motion.span
@@ -251,7 +251,7 @@ const LiveLevelUpInterrupt = ({
                     damping: 10,
                     stiffness: 200,
                   }}
-                  className="rounded-xl bg-yellow-500/20 border-2 border-yellow-400/50 px-5 py-2 text-3xl font-black text-yellow-300"
+                  className="rounded-xl bg-yellow-500/20 border-2 border-yellow-400/50 px-5 py-2 text-tv-heading font-black text-yellow-300"
                   style={{
                     boxShadow: "0 0 40px hsla(42, 90%, 64%, 0.5)",
                   }}
@@ -259,7 +259,7 @@ const LiveLevelUpInterrupt = ({
                   Lv.{toGlobalLevel(rankKey, event.newLevel)}
                 </motion.span>
               </div>
-              <p className="mt-2 text-xl font-bold text-gray-400">
+              <p className="mt-2 text-tv-micro font-bold text-gray-400">
                 {rankLabel} 리그
               </p>
             </motion.div>

@@ -240,6 +240,14 @@ export default {
         "heading": ["1.1875rem", { lineHeight: "1.625rem", fontWeight: "700" }], // 19/26 카드 제목 · 중요한 한 줄
         "title":   ["1.5rem",    { lineHeight: "2rem", fontWeight: "800" }],     // 24/32 화면 제목 · 카드 숫자
         "display": ["2.5rem",    { lineHeight: "2.75rem", fontWeight: "900" }],  // 40/44 큰 숫자 — 화면 주인공 (한 화면에 하나)
+        // ── TV · 키오스크 — 멀리서 보는 화면 (2026-10-28 3단계) · 1920×1080 무대 px, 가장 작은 글씨 20 ──
+        //   TV 는 글씨 크기 설정(rem)을 따르지 않으므로 px. 규칙은 scripts/type-scale.mjs TV_SCALE 과 같다.
+        "tv-micro":   ["20px", { lineHeight: "26px" }],                     // 배지 · 작은 이름표 (가장 작은 크기)
+        "tv-label":   ["24px", { lineHeight: "30px" }],                     // 이름표 · 칸 제목 · 띠 안 이름
+        "tv-body":    ["28px", { lineHeight: "36px" }],                     // 이름 · 목록 · 중요한 한 줄
+        "tv-heading": ["36px", { lineHeight: "42px", fontWeight: "800" }],  // 큰 제목 · 시각
+        "tv-title":   ["48px", { lineHeight: "52px", fontWeight: "900" }],  // 화면 제목 · 큰 숫자
+        "tv-display": ["72px", { lineHeight: "76px", fontWeight: "900" }],  // 환영 화면 이름 · 주인공 숫자
         // ── 아래는 옛 이름 — 관리자 · 지점장 · TV · 게임 화면만 아직 쓴다 (회원 화면은 위 6단계로 옮김) ──
         // 회원 가독성 — 기본 small 텍스트 상향 (text-xs 12→13, text-sm 14→15, 줄간격↑).
         "xs": ["13px", { lineHeight: "18px" }],
