@@ -214,6 +214,9 @@ const CommunityMetricsCard = () => {
     { label: "회원이 누른 153", a: `${last.member_153}번`, b: `${now.member_153}번` },
     { label: "글쓴이", a: `${last.posters}명`, b: `${now.posters}명` },
     { label: "댓글 · 응원", a: `${last.comments} · ${last.cheers}`, b: `${now.comments} · ${now.cheers}` },
+    // 운동 모집 (2026-10-28) — 모집 수 (저요가 붙은 모집) · 같이 운동한 쌍
+    { label: "운동 모집 (저요)", a: `${last.calls ?? 0} (${last.calls_joined ?? 0})`, b: `${now.calls ?? 0} (${now.calls_joined ?? 0})` },
+    { label: "같이 운동한 쌍", a: `${last.call_pairs ?? 0}쌍`, b: `${now.call_pairs ?? 0}쌍` },
   ];
   return (
     <div className="mt-3 rounded-xl border border-border bg-card p-3">

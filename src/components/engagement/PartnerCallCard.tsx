@@ -1,8 +1,8 @@
 /**
- * 오늘 파트너 구하기 — 진입 카드.
+ * 오늘 같이 해요 — 커뮤니티 맨 위 카드 (2026-10-28 운동 모집 1단계 — 대표님 "추천대로" · 보고서 「쓰이게 만드는 법」 3번 '이미 보는 곳에 걸기').
  *
- * 복싱은 짝이 필요한 운동인데, 혼자 와서 샌드백만 치고 가는 회원이 가장 많다.
- * 오늘 같은 지점에 올라온 모집만 보여준다(하루 지나면 자동으로 사라진다).
+ * 오늘 모집이 있을 때만 보인다(화면 규칙 ③ 빈 것은 그리지 않기). 첫 모집의 사진 · 이름 · 시간 · 종류에 바로 '저요'.
+ * 카드를 누르면 시트 — onOpen 을 주면 부모(커뮤니티 화면)의 시트를, 없으면 자기 시트를 연다.
  *
  * 보호 원칙:
  *   · 공식 1~40 레벨업과 무관 — XP·챔피언머니 지급 0
@@ -10,64 +10,92 @@
  */
 
 import { useState } from "react";
-import { Handshake } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 
-import { usePartnerCalls } from "@/hooks/useCommunityHub";
-import PartnerCallSheet from "./PartnerCallSheet";
+import { usePartnerCallActions, usePartnerCalls } from "@/hooks/useCommunityHub";
+import { formatHour } from "@/lib/partnerCallTime";
+import { PURPOSE_LABEL } from "@/services/communityHubService";
+import PartnerCallSheet, { PartnerFace } from "./PartnerCallSheet";
 
-const PartnerCallCard = () => {
+interface Props {
+  /** 부모가 가진 시트를 연다 (커뮤니티 화면) */
+  onOpen?: () => void;
+}
+
+const PartnerCallCard = ({ onOpen }: Props) => {
   const [open, setOpen] = useState(false);
-  const { data, isLoading } = usePartnerCalls();
+  const [busy, setBusy] = useState(false);
+  const { data } = usePartnerCalls();
+  const { join } = usePartnerCallActions();
 
   const calls = data?.calls ?? [];
-  const mine = calls.find((c) => c.isMine);
-  const others = calls.filter((c) => !c.isMine).length;
+  const sheet = onOpen ? null : <PartnerCallSheet open={open} onClose={() => setOpen(false)} />;
+  if (calls.length === 0) return sheet;
 
-  let title: string;
-  let subtitle: string;
-  if (isLoading) {
-    title = "오늘 같이 해요";
-    subtitle = "불러오는 중…";
-  } else if (others > 0) {
-    title = `오늘 ${others}명이 같이 할 사람을 찾고 있어요`;
-    subtitle = "미트·줄넘기·같이 운동 — 눌러서 '저요' 하면 됩니다";
-  } else if (mine) {
-    title = "내 모집이 올라가 있어요";
-    subtitle = `참여 ${mine.joinCount}명 — 아직 없으면 조금 기다려 주세요`;
-  } else {
-    title = "오늘 같이 해요";
-    subtitle = "미트 잡아줄 사람이 필요한 날, 한 줄 올려두세요";
-  }
+  const myBranch = data?.branch ?? null;
+  const allBranches = data?.all_branches === true;
+  const joinable = (c: (typeof calls)[number]) => !c.isMine && !c.joined && (!allBranches || c.branch === myBranch);
+  // 맨 앞: 내가 저요할 수 있는 모집 → 남의 모집 → 내 모집
+  const first = calls.find(joinable) ?? calls.find((c) => !c.isMine) ?? calls[0];
+  const openSheet = () => (onOpen ? onOpen() : setOpen(true));
+
+  const doJoin = async () => {
+    setBusy(true);
+    try {
+      await join.mutateAsync(first.id);
+      toast.success(`저요 했어요 — ${formatHour(first.slotHour)}에 만나요`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "참여하지 못했어요");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3 text-left transition-all active:scale-[0.99] hover:border-primary/40"
-        aria-label="오늘 같이 해요 열기"
-      >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Handshake className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-label font-bold text-primary">
-            오늘 같이 해요 · 같은 지점
-          </p>
-          <p className="mt-0.5 truncate text-label font-bold text-foreground">{title}</p>
-          <p className="mt-0.5 truncate text-label text-muted-foreground">{subtitle}</p>
+      <section className="rounded-2xl border border-primary/30 bg-card p-4" aria-label="오늘 같이 해요">
+        <button type="button" onClick={openSheet} className="flex w-full items-center justify-between gap-2">
+          <span className="text-label font-bold text-primary">오늘 같이 해요</span>
+          <span className="flex items-center text-label font-semibold text-muted-foreground">
+            {calls.length > 1 ? `${calls.length}건 모두 보기` : "자세히"}
+            <ChevronRight className="h-4 w-4" />
+          </span>
+        </button>
+        <div className="mt-3 flex items-center gap-3">
+          <button type="button" onClick={openSheet} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+            <PartnerFace name={first.nickname} url={first.avatarUrl} />
+            <span className="min-w-0">
+              <span className="flex items-center gap-1.5">
+                <span className="truncate text-body font-bold text-foreground">{first.isMine ? "내 모집" : first.nickname}</span>
+                {first.isStaff && (
+                  <span className="shrink-0 rounded-pill bg-primary/10 px-2 py-0.5 text-micro font-bold text-primary">
+                    {first.staffTitle || "코치"}
+                  </span>
+                )}
+              </span>
+              <span className="mt-0.5 block truncate text-label text-muted-foreground">
+                {formatHour(first.slotHour)} · {PURPOSE_LABEL[first.purpose]}
+                {first.joinCount > 0 ? ` · 저요 ${first.joinCount}명` : ""}
+              </span>
+            </span>
+          </button>
+          {joinable(first) ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={doJoin}
+              className="inline-flex min-h-[40px] shrink-0 items-center rounded-pill bg-primary px-4 text-label font-bold text-primary-foreground active:scale-95 disabled:opacity-60"
+            >
+              저요
+            </button>
+          ) : first.joined ? (
+            <span className="shrink-0 text-label font-bold text-primary">저요 했어요</span>
+          ) : null}
         </div>
-        {others > 0 && (
-          <div className="shrink-0 text-right">
-            <p className="text-label font-bold text-reward">
-              {others}건
-            </p>
-          </div>
-        )}
-        <span className="ml-1 shrink-0 text-micro font-bold text-primary">열기 →</span>
-      </button>
+      </section>
 
-      <PartnerCallSheet open={open} onClose={() => setOpen(false)} />
+      {sheet}
     </>
   );
 };

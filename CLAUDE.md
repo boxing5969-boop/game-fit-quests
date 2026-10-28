@@ -270,6 +270,19 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 핵심 숫자: 커뮤니티 활동 회원 비율 = 그 주 커뮤니티에서 누르거나 쓴 회원(글 · 153 · 댓글 · 응원 · 환영 · 하트) ÷ 그 주 출석 회원 — 선릉역점, 코치 · 운영진 · 체험 계정 제외. 목표 4주 15% · 8주 25% (시작점: 2026-10-19~25 주 4% — 출석 94명 중 4명).
 - 켬 (2026-10-27 자정 무렵 대표님 "올려" — 미리보기 `preview/community` 확인 뒤 main 에 합침 · [20261027235213_community_phase1_on.sql](supabase/migrations/20261027235213_community_phase1_on.sql)): 스위치 켬 + 출석 알림(`attendance_base_xp_trg` 의 오삼코치 칭찬이 없는 갈래)을 누르면 커뮤니티(`/myboxer/community` · '오늘 같이 운동한 동료에게 153을 보내 보세요'). 앱에서 숨겨 둔 지점(`branches.is_visible` false)은 예전 그대로(링크 없음 · 홈 안내). 끄기 = `community_notify_since` 를 'off'.
 
+### 운동 모집 '오늘 같이 해요' 1단계 (2026-10-28 대표님 "추천대로가자" · 보고서 「마이복서153 운동 모집 업그레이드 보고서」 https://claude.ai/artifact/PFthjPygKqpEoX9GH4EcWt)
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261028165026_partner_call_phase1.sql](supabase/migrations/20261028165026_partner_call_phase1.sql) | `get_partner_calls`(올린 사람 userId · 이름 = 닉네임 없으면 이름 · 사진 · 레벨 · 코치 여부 + `joiners` + `usualHour`(최근 60일 가장 많이 온 시각) · `canSpar` · `needsNickname`, 승인 전 계정은 빈 목록) · `create_partner_call`(스파링 = 코치님 · 운영진만 · 닉네임 없는 회원은 먼저 정하기) · `join_partner_call`(올린 사람 알림 '🙋 ○○님이 저요! 했어요' → `/myboxer/community?together=1`, 같은 모집 · 같은 사람은 한 번만 = `boxing_partner_call_notes`, 22~07시는 알림함에만, 커뮤니티 스위치 · `cheer_notify` 따름) · `get_community_home_strip.calls` · `community_weekly_metrics`(calls · calls_joined · call_pairs(둘 다 그날 출석) · member_calls) · 월요일 알림 한 줄 |
+| [src/components/engagement/PartnerCallSheet.tsx](src/components/engagement/PartnerCallSheet.tsx) | 시트 — 카드(사진 · 이름 · Lv · 코치 → 회원 카드) · 저요한 사람(내 모집이면 한 사람씩 '메시지' → `/messages/to/<id>`) · 올리기 칸은 접어 두고 종류 미트 · 같이 운동(+스파링은 `canSpar`) · 시간 칩 · 닉네임 먼저(NicknameEditSheet 뒤 그대로 올림) |
+| [src/components/engagement/PartnerCallCard.tsx](src/components/engagement/PartnerCallCard.tsx) | 커뮤니티 피드 맨 위 카드 — 오늘 모집이 있을 때만 · 첫 모집에 바로 '저요' |
+| [src/lib/partnerCallTime.ts](src/lib/partnerCallTime.ts) | 시간 칩(평소 시간 앞뒤 1시간 세 칸 · 지난 시간 빼기 · 5~23시) · `formatHour`(서버 알림 글과 같은 말) · `kstHour` |
+
+- 홈 '오늘 우리 체육관' 띠 맨 앞 민트 글씨 '같이 해요 N'(남의 모집) · 커뮤니티 `?together=1` 이면 시트가 열린다.
+- 줄넘기 칸은 뺐다(예전 모집은 이름 그대로 보임). 스파링은 회원 화면에 칸이 없고 서버도 막는다.
+- 2단계(미리보기 먼저): '지금' 모집(30분) · 코치님 모집(선릉역점 평일 저녁 하루 1건) · 1시간 전 알림 · '같이 했어요' → 서로 153 · 각자 +30(하루 1번) · TV 한 줄(이름 · 시간 · 종류 + QR). 3단계: 같은 시간대 동료 알림 · 정원 · 다시 부르기 · 다른 지점.
+
 ### 153마인드셋 — 시각화 훈련 (2026-10-19 전면 개편, 라우트 /myboxer/visualization)
 
 | 파일 | 역할 |

@@ -39,12 +39,33 @@ export const PURPOSE_LABEL: Record<PartnerPurpose, string> = {
   together: "같이 운동",
 };
 
-/** 스파링은 맞대는 구간이 열리는 레드 리그부터 — 서버에서도 같은 조건으로 막는다 */
-export const SPARRING_RANKS = ["red", "black"] as const;
+/**
+ * 올릴 때 고르는 종류 (2026-10-28 운동 모집 1단계 — 대표님 "추천대로").
+ *   회원: 미트 · 같이 운동 두 개(줄넘기는 '같이 운동'에 합침). 스파링은 코치님 · 운영진 모집으로만 — 서버(create_partner_call)도 같다.
+ *   예전에 올라온 '줄넘기' 모집은 이름 그대로 보인다.
+ */
+export const MEMBER_PURPOSES: PartnerPurpose[] = ["mitt", "together"];
+export const STAFF_PURPOSES: PartnerPurpose[] = ["mitt", "together", "sparring"];
+
+/** 저요한 사람 (같은 지점 회원에게 사진 · 이름이 보인다) */
+export interface PartnerCallPerson {
+  userId: string;
+  nickname: string;
+  avatarUrl: string | null;
+}
 
 export interface PartnerCall {
   id: string;
+  /** 올린 사람 — 사진 · 이름을 누르면 회원 카드 (2026-10-28) */
+  userId?: string;
+  /** 닉네임, 없으면 이름 (커뮤니티 피드와 같은 규칙) */
   nickname: string;
+  avatarUrl?: string | null;
+  /** 코치님 · 운영진이 연 모집 */
+  isStaff?: boolean;
+  staffTitle?: string | null;
+  /** 1~40 레벨 (피드와 같은 계산) */
+  level?: number;
   /** 글쓴 회원 지점 (2026-09-30 — 본사 계정 전 지점 보기용) */
   branch?: string | null;
   isMine: boolean;
@@ -54,13 +75,22 @@ export interface PartnerCall {
   rank: string;
   joinCount: number;
   joined: boolean;
+  /** 저요한 사람 — 먼저 누른 순서 */
+  joiners?: PartnerCallPerson[];
 }
 
 export interface PartnerCallsResult {
   success: boolean;
+  reason?: string;
   branch?: string;
   /** 본사(전체관리자·관리자) 계정 — 전 지점 모집을 본다 (참여는 같은 지점만) */
   all_branches?: boolean;
+  /** 내가 평소 오는 시각(최근 60일) — 시간 칩 기본값 */
+  usualHour?: number | null;
+  /** 스파링 모집을 열 수 있나 (코치님 · 운영진) */
+  canSpar?: boolean;
+  /** 닉네임이 없어 올리기 전에 먼저 정해야 하나 */
+  needsNickname?: boolean;
   calls: PartnerCall[];
 }
 

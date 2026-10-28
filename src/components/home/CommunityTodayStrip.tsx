@@ -32,7 +32,12 @@ const CommunityTodayStrip = () => {
   const today = data.today ?? 0;
   const fresh = data.new_count ?? 0;
   const received = data.received_today ?? 0;
+  const calls = data.calls ?? 0;
 
+  // 민트 글씨로 맨 앞: 받은 153 · 오늘 같이 해요(운동 모집 — 오늘 지나면 사라지는 소식, 2026-10-28 운동 모집 1단계)
+  const hot: string[] = [];
+  if (received > 0) hot.push(`받은 153 ${received}`);
+  if (calls > 0) hot.push(`같이 해요 ${calls}`);
   const parts: string[] = [];
   // 짧게 — 제목이 '오늘 우리 체육관'이라 '지금 · 왔어요'는 빼도 뜻이 같다 (2026-10-28 리디자인 · 글씨 크게에서도 두 줄 안에)
   if (working > 0) parts.push(`${working}명 운동 중`);
@@ -44,7 +49,7 @@ const CommunityTodayStrip = () => {
     <button
       type="button"
       onClick={() => navigate("/myboxer/community")}
-      aria-label={`오늘 우리 체육관 — ${line}${received > 0 ? ` · 오늘 받은 153 ${received}개` : ""}`}
+      aria-label={`오늘 우리 체육관 — ${[...hot, line].join(" · ")}`}
       className="flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-card px-4 py-3.5 text-left shadow-elev-1 transition-transform active:scale-[0.99]"
     >
       <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -60,13 +65,14 @@ const CommunityTodayStrip = () => {
       <span className="min-w-0 flex-1">
         <span className="block text-body font-extrabold text-foreground">오늘 우리 체육관</span>
         <span className="mt-0.5 block text-label leading-snug text-muted-foreground">
-          {received > 0 && (
-            <span className="number-font whitespace-nowrap font-bold text-primary">
-              받은 153 {received}
-              {parts.length > 0 ? " · " : ""}
+          {hot.map((h, i) => (
+            <span key={h} className="number-font font-bold text-primary">
+              <span className="whitespace-nowrap">{h}</span>
+              {i < hot.length - 1 || parts.length > 0 ? " · " : ""}
             </span>
-          )}
-          {received > 0 && parts.length === 0 ? null : line}
+          ))}
+          {/* 뒤쪽은 띄어쓰기에서 자연스럽게 줄을 바꿔 글씨 크게에서도 두 줄 안에 */}
+          {hot.length > 0 && parts.length === 0 ? null : line}
         </span>
       </span>
       <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />

@@ -15,6 +15,7 @@
  *   · 153 을 길게 누르면 한마디 응원(피드 안) · 글씨 · 단추 키우기
  *   · 들어올 때마다 '마지막으로 본 때'를 남긴다 — 홈 '오늘 우리 체육관' 띠의 새 소식 기준
  * 2026-10-28 리디자인(글 줄이기 · 글씨 6단계): 머리는 이름 + 받은 153 만 · 바로가기 글씨 14 · 글쓰기 단추 부제는 보상 한 줄
+ * 2026-10-28 운동 모집 1단계: 오늘 모집이 있으면 피드 맨 위에 '오늘 같이 해요' 카드(바로 저요) · 저요 알림 링크 ?together=1
  */
 
 import { useEffect, useState } from "react";
@@ -29,6 +30,7 @@ import SecondCheerSheet, { type CheerInitialTarget } from "@/components/engageme
 import Received153Sheet, { RECEIVED_153_KEY } from "@/components/engagement/Received153Sheet";
 import CornermanSheet from "@/components/engagement/CornermanSheet";
 import PartnerCallSheet from "@/components/engagement/PartnerCallSheet";
+import PartnerCallCard from "@/components/engagement/PartnerCallCard";
 import GearShareSheet from "@/components/engagement/GearShareSheet";
 import GymRaidSheet from "@/components/engagement/GymRaidSheet";
 import { useMyCornermanStatus } from "@/hooks/useCornerman";
@@ -54,16 +56,19 @@ const MyBoxerCommunityPage = () => {
   const received = useQuery({ queryKey: RECEIVED_153_KEY, queryFn: () => getMyReceived153(7), staleTime: 60_000, retry: false });
   const receivedTotal = received.data?.total ?? 0;
 
-  // 알림 링크 — ?received=1 받은 153 · ?entry=<글> 그 글의 댓글 창
+  // 알림 링크 — ?received=1 받은 153 · ?entry=<글> 그 글의 댓글 창 · ?together=1 오늘 같이 해요(저요 알림, 2026-10-28)
   const [params, setParams] = useSearchParams();
   const entryParam = params.get("entry");
   useEffect(() => {
-    if (params.get("received") === "1") {
-      setReceivedOpen(true);
-      const next = new URLSearchParams(params);
-      next.delete("received");
-      setParams(next, { replace: true });
-    }
+    const received = params.get("received") === "1";
+    const together = params.get("together") === "1";
+    if (!received && !together) return;
+    if (received) setReceivedOpen(true);
+    if (together) setSheet("together");
+    const next = new URLSearchParams(params);
+    next.delete("received");
+    next.delete("together");
+    setParams(next, { replace: true });
   }, [params, setParams]);
   const clearEntryParam = () => {
     const next = new URLSearchParams(params);
@@ -147,6 +152,9 @@ const MyBoxerCommunityPage = () => {
             <span className="block truncate text-label text-muted-foreground">오늘 첫 글 챔피언 머니 +50</span>
           </span>
         </button>
+
+        {/* 오늘 같이 해요 — 오늘 모집이 있을 때만 피드 맨 위에 (2026-10-28 운동 모집 1단계) */}
+        <PartnerCallCard onOpen={() => setSheet("together")} />
 
         {/* 모두의 피드 */}
         <CommunityFeed openEntryId={entryParam} onEntryHandled={clearEntryParam} />

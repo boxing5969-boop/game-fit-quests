@@ -207,6 +207,8 @@ export interface CommunityHomeStrip {
   today?: number;
   new_count?: number;
   received_today?: number;
+  /** 오늘 우리 지점에 올라온 남의 운동 모집 수 ('오늘 같이 해요', 2026-10-28) */
+  calls?: number;
 }
 
 export const getCommunityHomeStrip = (since: string | null) =>
@@ -231,6 +233,11 @@ export interface CommunityWeeklyMetrics {
   attendees_30d: number;
   app_30d: number;
   app_rate_30d: number;
+  /** 운동 모집 (2026-10-28) — 올라온 모집 · 저요가 붙은 모집 · 같이 운동한 쌍(둘 다 그날 출석) · 회원이 올린 모집 */
+  calls?: number;
+  calls_joined?: number;
+  call_pairs?: number;
+  member_calls?: number;
 }
 
 export const getCommunityWeeklyMetrics = (branch: string | null, weekStart: string | null) =>
