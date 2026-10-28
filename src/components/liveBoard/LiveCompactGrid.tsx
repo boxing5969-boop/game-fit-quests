@@ -10,6 +10,10 @@
  *   · 카드는 기본 크기(BASE_W)로 그린 뒤 같은 비율로 키우고 줄인다(zoom) — 사진·캐릭터·닉네임·리그·메달이 함께 커진다.
  *   · 화면 크기가 바뀌거나 사람이 들어오고 나가면 다시 계산한다.
  *   기획안: claude.ai 문서 '라이브보드 카드 자동 크기 기획안'
+ *
+ * 떠 있는 카드 피하기 (2026-10-28 리디자인 3단계 — TV 글씨를 키우며 1번 화면 우하단 QR 카드가 커졌다)
+ *   · avoid(선택자)로 준 떠 있는 카드(1번 화면 QR 출석 카드)가 카드 자리 오른쪽 아래를 덮으면, 그 구석에 걸리는 칸은 비운다.
+ *   · 비운 칸만큼 자리가 줄어든 것으로 계산해 카드 크기 · 칸 × 줄을 고른다 (예전엔 사람이 많으면 QR 카드 뒤에 회원 카드가 숨었다).
  */
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -17,57 +21,20 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Users } from "lucide-react";
 
 import LiveActiveMemberCard, { type LiveActiveMember } from "./LiveActiveMemberCard";
+import { BASE_W, GAP, computeGridLayout, type Reserve } from "@/lib/liveGridLayout";
 
 const ROTATE_INTERVAL_MS = 15_000;
-/** 카드를 그리는 기본 폭 — 예전 '작은 카드' 크기 */
-const BASE_W = 300;
-/** 카드 폭 최대·최소 (TV 1920×1080 기준 px) */
-const MAX_W = 560;
-const MIN_W = 250;
-const GAP = 10;
-const MAX_COLS = 8;
-/** 카드 높이를 아직 못 쟀을 때 쓰는 값 (기본 폭 300 일 때 작은 카드 높이) */
-const FALLBACK_H = 116;
 
 export interface LiveCompactGridProps {
   members: LiveActiveMember[];
   getElapsedMinutes: (startedAt: number) => number;
   showForceExit?: boolean;
   onForceExit?: (sessionId: string, name: string) => void;
+  /** 피할 떠 있는 카드 (CSS 선택자) — 1번 화면 QR 출석 카드 */
+  avoid?: string;
 }
 
-interface Layout {
-  cols: number;
-  rows: number;
-  scale: number;
-  pageSize: number;
-}
-
-/** 남은 공간(w×h)에 n명을 넣는 가장 큰 배치. 최소 크기보다 작아지면 최소 크기로 한 화면씩 */
-export function computeGridLayout(n: number, w: number, h: number, cardH: number): Layout {
-  const baseH = cardH > 0 ? cardH : FALLBACK_H;
-  if (n <= 0 || w <= 0 || h <= 0) return { cols: 1, rows: 1, scale: 1, pageSize: Math.max(1, n) };
-  const maxScale = MAX_W / BASE_W;
-  const minScale = MIN_W / BASE_W;
-  let best: Layout | null = null;
-  for (let cols = 1; cols <= Math.min(MAX_COLS, n); cols++) {
-    const rows = Math.ceil(n / cols);
-    const byW = (w - GAP * (cols - 1)) / cols / BASE_W;
-    const byH = (h - GAP * (rows - 1)) / rows / baseH;
-    const scale = Math.min(byW, byH, maxScale);
-    // 더 크면 바꾸고, 크기가 같으면(최대 크기에 걸린 경우 등) 줄이 적은 쪽 — 가로로 넓게
-    if (!best || scale > best.scale * 1.005 || (scale >= best.scale * 0.995 && rows < best.rows)) {
-      best = { cols, rows, scale, pageSize: n };
-    }
-  }
-  if (best && best.scale >= minScale) return best;
-  // 최소 크기로도 다 안 들어감 → 최소 크기로 한 화면에 들어가는 만큼씩 넘긴다
-  const cols = Math.max(1, Math.min(MAX_COLS, Math.floor((w + GAP) / (MIN_W + GAP))));
-  const rows = Math.max(1, Math.floor((h + GAP) / (baseH * minScale + GAP)));
-  return { cols, rows, scale: minScale, pageSize: Math.max(1, cols * rows) };
-}
-
-const LiveCompactGrid = ({ members, getElapsedMinutes, showForceExit, onForceExit }: LiveCompactGridProps) => {
+const LiveCompactGrid = ({ members, getElapsedMinutes, showForceExit, onForceExit, avoid }: LiveCompactGridProps) => {
   const totalCount = members.length;
   const hasMembers = totalCount > 0;
 
@@ -100,7 +67,44 @@ const LiveCompactGrid = ({ members, getElapsedMinutes, showForceExit, onForceExi
     return () => ro.disconnect();
   }, [hasMembers]);
 
-  const layout = useMemo(() => computeGridLayout(totalCount, area.w, area.h, cardH), [totalCount, area.w, area.h, cardH]);
+  // 떠 있는 카드가 카드 자리 오른쪽 아래를 얼마나 덮나 — 카드가 늦게 뜨거나 크기가 바뀌어도 따라가게 2초마다 다시 잰다
+  const [reserve, setReserve] = useState<Reserve | null>(null);
+  useLayoutEffect(() => {
+    if (!avoid) return;
+    const el = areaRef.current;
+    if (!el) return;
+    const measure = () => {
+      const target = document.querySelector<HTMLElement>(avoid);
+      const a = el.getBoundingClientRect();
+      const t = target?.getBoundingClientRect();
+      const w = t ? Math.round(a.right - t.left + GAP) : 0;
+      const h = t ? Math.round(a.bottom - t.top + GAP) : 0;
+      setReserve((prev) => {
+        if (w <= GAP || h <= GAP) return prev ? null : prev;
+        return prev && Math.abs(prev.w - w) < 2 && Math.abs(prev.h - h) < 2 ? prev : { w, h };
+      });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    const timer = window.setInterval(measure, 2000);
+    return () => {
+      ro.disconnect();
+      window.clearInterval(timer);
+    };
+  }, [avoid]);
+
+  const layout = useMemo(
+    () => computeGridLayout(totalCount, area.w, area.h, cardH, reserve),
+    [totalCount, area.w, area.h, cardH, reserve],
+  );
+  // 이 쪽에 들어갈 칸 — 비워 둘 칸은 건너뛴다
+  const freeCells = useMemo(() => {
+    const blocked = new Set(layout.blocked);
+    const out: { r: number; c: number }[] = [];
+    for (let i = 0; i < layout.cols * layout.rows; i++) if (!blocked.has(i)) out.push({ r: Math.floor(i / layout.cols), c: i % layout.cols });
+    return out;
+  }, [layout]);
   const totalPages = Math.max(1, Math.ceil(totalCount / layout.pageSize));
   const shouldRotate = totalPages > 1;
 
@@ -132,16 +136,16 @@ const LiveCompactGrid = ({ members, getElapsedMinutes, showForceExit, onForceExi
     <div className="mt-2 flex min-h-0 w-full flex-1 flex-col">
       {/* 헤더 */}
       <div className="mb-2 flex flex-shrink-0 items-center gap-2">
-        <Users className="h-4 w-4 text-emerald-400" />
-        <h3 className="text-tv-micro font-black uppercase tracking-wider text-emerald-300">
-          함께 운동 중 ({totalCount})
+        <Users className="h-6 w-6 text-emerald-400" />
+        <h3 className="text-tv-label font-black text-emerald-300">
+          함께 운동 중
         </h3>
         {shouldRotate && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {Array.from({ length: totalPages }).map((_, i) => (
               <span
                 key={i}
-                className={`h-1 rounded-full transition-all ${i === pageIndex ? "w-4 bg-emerald-400" : "w-1 bg-emerald-400/30"}`}
+                className={`h-2 rounded-full transition-all ${i === pageIndex ? "w-6 bg-emerald-400" : "w-2 bg-emerald-400/30"}`}
               />
             ))}
           </div>
@@ -169,8 +173,15 @@ const LiveCompactGrid = ({ members, getElapsedMinutes, showForceExit, onForceExi
               className="grid"
               style={{ gap: GAP, gridTemplateColumns: `repeat(${layout.cols}, ${cellW}px)` }}
             >
-              {currentPage.map((m) => (
-                <div key={m.user_id} style={{ width: cellW }}>
+              {currentPage.map((m, i) => (
+                <div
+                  key={m.user_id}
+                  style={{
+                    width: cellW,
+                    // 비워 둘 칸이 있을 때만 자리를 정해 준다 (없으면 예전처럼 차례로)
+                    ...(layout.blocked.length && freeCells[i] ? { gridRowStart: freeCells[i].r + 1, gridColumnStart: freeCells[i].c + 1 } : {}),
+                  }}
+                >
                   <div style={{ width: BASE_W, zoom: layout.scale } as React.CSSProperties}>
                     <LiveActiveMemberCard
                       member={m}

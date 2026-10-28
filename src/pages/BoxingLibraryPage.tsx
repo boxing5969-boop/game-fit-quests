@@ -27,6 +27,8 @@ import { extraVariantLabels } from "@/lib/missionVideos";
 import { toGlobalLevel } from "@/lib/rankLabels";
 
 // ───────────────────────── 스타일 (원본 153플레이 그대로) ─────────────────────────
+// 글씨 크기만 153 글씨 6단계로 (2026-10-28 리디자인 3단계) — .8125rem(13) · .875rem(14) · 1rem(16) · 1.1875rem(19) · 1.5rem(24) · 2.5rem(40).
+//   rem 이라 '글씨 크기' 설정(작게 · 보통 · 크게)도 따른다. px 로 적으면 scripts/check-font-sizes.mjs 가 알린다.
 
 const CSS = `
 .p153{--mint:#45E0CE;--gold:#E6B94D;--bg:#141414;--card:#1F1F1F;--line:#2E2E2E;
@@ -43,7 +45,7 @@ const CSS = `
 .p153 .nav.solid{background:var(--bg);box-shadow:0 1px 0 var(--line)}
 .p153 .navMenu{display:flex;gap:2px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}
 .p153 .navMenu::-webkit-scrollbar{display:none}
-.p153 .navMenu button{background:none;border:none;color:var(--sub);font-size:13px;font-weight:700;
+.p153 .navMenu button{background:none;border:none;color:var(--sub);font-size:.875rem;font-weight:700;
   padding:7px 5px;border-radius:8px;cursor:pointer;white-space:nowrap}
 .p153 .navMenu button.on{color:var(--txt);font-weight:900}
 .p153 .nav .ico{flex:none;background:none;border:none;cursor:pointer;padding:4px 3px;line-height:1;color:var(--txt)}
@@ -57,14 +59,14 @@ const CSS = `
 .p153 .bb .sh2{position:absolute;inset:0;
   background:linear-gradient(90deg,rgba(0,0,0,.7) 0%,rgba(0,0,0,.25) 45%,transparent 75%)}
 .p153 .bb .in{position:relative;z-index:2;padding:0 16px 22px;max-width:660px}
-.p153 .bbTag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:900;
+.p153 .bbTag{display:inline-flex;align-items:center;gap:6px;font-size:.8125rem;font-weight:900;
   letter-spacing:2px;color:var(--mint);margin-bottom:10px}
-.p153 .bbT{font-size:27px;font-weight:900;line-height:1.2;letter-spacing:-.6px;margin-bottom:10px;
+.p153 .bbT{font-size:1.5rem;font-weight:900;line-height:1.2;letter-spacing:-.6px;margin-bottom:10px;
   text-shadow:0 2px 14px rgba(0,0,0,.45)}
-.p153 .bbP{font-size:13.5px;line-height:1.6;color:var(--ink2);margin-bottom:16px;
+.p153 .bbP{font-size:.875rem;line-height:1.6;color:var(--ink2);margin-bottom:16px;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .p153 .bbB{display:flex;gap:9px;flex-wrap:wrap}
-.p153 .bbB button{border:none;border-radius:8px;padding:12px 22px;font-size:15px;font-weight:900;
+.p153 .bbB button{border:none;border-radius:8px;padding:12px 22px;font-size:1rem;font-weight:900;
   cursor:pointer;display:inline-flex;align-items:center;gap:7px}
 .p153 .bplay{background:var(--mint);color:#04211E}
 .p153 .binfo{background:rgba(120,124,128,.55);color:#fff}
@@ -73,8 +75,8 @@ const CSS = `
 .p153 .rows{padding-bottom:20px}
 .p153 .row{margin:0 0 26px;position:relative}
 .p153 .rowH{display:flex;align-items:baseline;gap:10px;padding:0 16px 9px}
-.p153 .rowH h3{font-size:16.5px;font-weight:900;letter-spacing:-.3px;display:flex;align-items:center;gap:7px;min-width:0}
-.p153 .rowH .more{background:none;border:none;color:var(--mint);font-size:12.5px;font-weight:800;
+.p153 .rowH h3{font-size:1rem;font-weight:900;letter-spacing:-.3px;display:flex;align-items:center;gap:7px;min-width:0}
+.p153 .rowH .more{background:none;border:none;color:var(--mint);font-size:.875rem;font-weight:800;
   cursor:pointer;padding:2px 4px;white-space:nowrap}
 .p153 .rail{display:flex;gap:8px;overflow-x:auto;padding:0 16px 6px;scroll-snap-type:x proximity;
   scroll-padding-left:16px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -86,21 +88,21 @@ const CSS = `
 .p153 .tile .th{position:relative;aspect-ratio:16/9;border-radius:5px;overflow:hidden;background:#000}
 .p153 .tile .th img{width:100%;height:100%;object-fit:cover;display:block}
 .p153 .tile .ig{display:flex;align-items:center;justify-content:center;gap:5px;height:100%;color:#fff;
-  font-weight:900;letter-spacing:2px;font-size:11px;background:linear-gradient(135deg,#FEDA75,#F58529,#DD2A7B,#8134AF)}
+  font-weight:900;letter-spacing:2px;font-size:.8125rem;background:linear-gradient(135deg,#FEDA75,#F58529,#DD2A7B,#8134AF)}
 .p153 .tile .dur{position:absolute;right:5px;bottom:5px;background:rgba(0,0,0,.8);color:#fff;
-  border-radius:4px;padding:2px 6px;font-size:10.5px;font-weight:800}
-.p153 .tile .lgb{position:absolute;left:5px;top:5px;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:900}
+  border-radius:4px;padding:2px 6px;font-size:.8125rem;font-weight:800}
+.p153 .tile .lgb{position:absolute;left:5px;top:5px;border-radius:4px;padding:2px 7px;font-size:.8125rem;font-weight:900}
 .p153 .tile .pg{position:absolute;left:0;bottom:0;height:3px;background:var(--mint)}
-.p153 .tile .tt{font-size:12.5px;font-weight:700;line-height:1.35;margin-top:7px;
+.p153 .tile .tt{font-size:.875rem;font-weight:700;line-height:1.35;margin-top:7px;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:34px}
-.p153 .tile .tm{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--dim);margin-top:3px;
+.p153 .tile .tm{display:flex;align-items:center;gap:4px;font-size:.8125rem;color:var(--dim);margin-top:3px;
   white-space:nowrap;overflow:hidden}
 .p153 .tile .tm .chn{overflow:hidden;text-overflow:ellipsis}
 .p153 .hidb{position:absolute;left:5px;bottom:5px;display:inline-flex;align-items:center;gap:3px;
   background:rgba(0,0,0,.82);color:#FFB4A2;border:1px solid rgba(255,180,162,.5);border-radius:5px;
-  padding:2px 6px;font-size:9.5px;font-weight:900}
+  padding:2px 6px;font-size:.8125rem;font-weight:900}
 .p153 .sv{position:absolute;right:5px;top:5px;width:24px;height:24px;border-radius:50%;border:1px solid rgba(255,255,255,.55);
-  background:rgba(0,0,0,.6);color:#fff;font-size:14px;font-weight:900;line-height:1;cursor:pointer;
+  background:rgba(0,0,0,.6);color:#fff;font-size:.875rem;font-weight:900;line-height:1;cursor:pointer;
   display:flex;align-items:center;justify-content:center;padding:0}
 .p153 .sv.on{background:var(--mint);border-color:var(--mint);color:#04211E}
 
@@ -108,30 +110,30 @@ const CSS = `
 .p153 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 8px;padding:0 16px}
 .p153 .grid .tile{width:auto;max-width:none}
 .p153 .moreBtn{display:block;margin:22px auto 0;background:var(--card);border:1px solid var(--line);
-  color:var(--txt);border-radius:10px;padding:13px 30px;font-size:14px;font-weight:900;cursor:pointer}
+  color:var(--txt);border-radius:10px;padding:13px 30px;font-size:.875rem;font-weight:900;cursor:pointer}
 
 /* 카테고리 */
 .p153 .catHead{padding:8px 16px 4px}
-.p153 .catHead h1{display:flex;align-items:center;gap:9px;font-size:26px;font-weight:900;letter-spacing:-.5px}
-.p153 .catHead .cs{font-size:13px;color:var(--sub);margin-top:5px}
+.p153 .catHead h1{display:flex;align-items:center;gap:9px;font-size:1.5rem;font-weight:900;letter-spacing:-.5px}
+.p153 .catHead .cs{font-size:.875rem;color:var(--sub);margin-top:5px}
 .p153 .catBar{display:flex;gap:7px;align-items:center;padding:12px 16px 6px;overflow-x:auto;scrollbar-width:none}
 .p153 .catBar::-webkit-scrollbar{display:none}
 .p153 .seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:9px;overflow:hidden;flex:none}
-.p153 .seg button{background:none;border:none;color:var(--sub);font-size:12.5px;font-weight:800;
+.p153 .seg button{background:none;border:none;color:var(--sub);font-size:.875rem;font-weight:800;
   padding:9px 13px;cursor:pointer;white-space:nowrap}
 .p153 .seg button.on{background:var(--mint);color:#04211E}
 
 /* 검색 */
 .p153 .sBox{padding:6px 16px 10px}
 .p153 .sInput{width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;
-  padding:14px 16px;color:var(--txt);font-size:16px;font-family:inherit;outline:none}
+  padding:14px 16px;color:var(--txt);font-size:1rem;font-family:inherit;outline:none}
 .p153 .sInput:focus{border-color:var(--mint)}
 .p153 .sInput::placeholder{color:var(--dim)}
-.p153 .sMeta{font-size:12.5px;color:var(--sub);padding:4px 16px 12px}
+.p153 .sMeta{font-size:.875rem;color:var(--sub);padding:4px 16px 12px}
 .p153 .sugg{display:flex;gap:6px;flex-wrap:wrap;padding:2px 16px 14px}
 .p153 .sugg button{background:var(--card);border:1px solid var(--line);color:var(--sub);border-radius:999px;
-  padding:7px 13px;font-size:12.5px;font-weight:800;cursor:pointer}
-.p153 .emptyS{text-align:center;color:var(--dim);padding:56px 20px;font-size:14px;line-height:1.8}
+  padding:7px 13px;font-size:.875rem;font-weight:800;cursor:pointer}
+.p153 .emptyS{text-align:center;color:var(--dim);padding:56px 20px;font-size:.875rem;line-height:1.8}
 
 /* 상세 모달 */
 .p153modal{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.82);overflow-y:auto;
@@ -143,37 +145,37 @@ const CSS = `
 .p153modal .mdBox{background:var(--bg);color:var(--txt);max-width:920px;margin:0 auto;
   border-radius:0 0 10px 10px;overflow:hidden;position:relative;min-height:100%}
 .p153modal .mdX{position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;z-index:110;width:38px;height:38px;border-radius:50%;
-  border:none;background:rgba(0,0,0,.72);color:#fff;font-size:19px;cursor:pointer}
+  border:none;background:rgba(0,0,0,.72);color:#fff;font-size:1.1875rem;cursor:pointer}
 .p153modal .mdVid{position:relative;aspect-ratio:16/9;background:#000}
 .p153modal .mdVid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .p153modal .mdVid video{position:absolute;inset:0;width:100%;height:100%;background:#000;object-fit:contain}
 .p153modal .mdVid.igr{aspect-ratio:9/16;max-width:340px;margin:0 auto}
 .p153modal .mdIn{padding:18px 18px 28px}
-.p153modal .mdT{font-size:20px;font-weight:900;line-height:1.35;letter-spacing:-.4px}
-.p153modal .mdM{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 4px;font-size:12.5px;color:var(--sub)}
-.p153modal .mdM .bdg{border-radius:5px;padding:3px 9px;font-size:11.5px;font-weight:900}
+.p153modal .mdT{font-size:1.1875rem;font-weight:900;line-height:1.35;letter-spacing:-.4px}
+.p153modal .mdM{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 4px;font-size:.875rem;color:var(--sub)}
+.p153modal .mdM .bdg{border-radius:5px;padding:3px 9px;font-size:.8125rem;font-weight:900}
 .p153modal .mdM .st{color:var(--gold);font-weight:900;display:inline-flex;align-items:center;gap:3px}
-.p153modal .mdCh{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--sub);margin-top:2px}
+.p153modal .mdCh{display:flex;align-items:center;gap:6px;font-size:.875rem;color:var(--sub);margin-top:2px}
 .p153modal .mdA{display:flex;gap:8px;margin:14px 0 4px;flex-wrap:wrap}
-.p153modal .mdA a,.p153modal .mdA button{border:none;border-radius:8px;padding:11px 17px;font-size:13.5px;
+.p153modal .mdA a,.p153modal .mdA button{border:none;border-radius:8px;padding:11px 17px;font-size:.875rem;
   font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .p153modal .mdA .p1{background:var(--mint);color:#04211E}
 .p153modal .mdA .p2{background:var(--card);color:var(--txt);border:1px solid var(--line)}
 .p153modal .mdSec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:13px}
-.p153modal .mdSec .lb{color:var(--mint);font-size:11.5px;font-weight:900;letter-spacing:1.5px;margin-bottom:9px}
-.p153modal .mdSec p{font-size:14px;line-height:1.7;color:var(--ink2)}
+.p153modal .mdSec .lb{color:var(--mint);font-size:.8125rem;font-weight:900;letter-spacing:1.5px;margin-bottom:9px}
+.p153modal .mdSec p{font-size:.875rem;line-height:1.7;color:var(--ink2)}
 .p153modal .cpr{display:flex;gap:10px;margin-bottom:10px}
 .p153modal .cpr:last-child{margin-bottom:0}
-.p153modal .cpr b{color:var(--mint);font-size:13.5px;flex:none}
-.p153modal .cpr span{font-size:13.5px;line-height:1.6;color:var(--ink2)}
+.p153modal .cpr b{color:var(--mint);font-size:.875rem;flex:none}
+.p153modal .cpr span{font-size:.875rem;line-height:1.6;color:var(--ink2)}
 .p153modal .mdTags{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
 .p153modal .mdTags span{background:var(--card);border:1px solid var(--line);color:var(--sub);
-  border-radius:6px;padding:4px 10px;font-size:11.5px;font-weight:800}
+  border-radius:6px;padding:4px 10px;font-size:.8125rem;font-weight:800}
 .p153modal .mdWarn{background:rgba(229,72,77,.12);border:1px solid rgba(229,72,77,.4);color:#E5484D;
-  border-radius:10px;padding:11px 13px;font-size:12.5px;font-weight:800;line-height:1.5;margin-top:10px}
+  border-radius:10px;padding:11px 13px;font-size:.875rem;font-weight:800;line-height:1.5;margin-top:10px}
 @media(min-width:900px){
   .p153 .bb{min-height:64vh}
-  .p153 .bbT{font-size:40px}
+  .p153 .bbT{font-size:2.5rem}
   .p153 .tile{width:22vw;max-width:270px}
   .p153 .grid{grid-template-columns:repeat(4,1fr)}
   .p153modal .mdBox{margin:34px auto;border-radius:10px;min-height:0}

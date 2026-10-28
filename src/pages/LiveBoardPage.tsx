@@ -1290,7 +1290,7 @@ const LiveBoardPage = () => {
               남기는 건 앱 이름과 지점명 둘뿐 — 로고 높이(72)에 맞춰 2줄로 정렬한다. */}
           <div className="flex flex-col justify-center gap-1">
             <h1 className="text-tv-heading font-black leading-none tracking-tight text-white">마이복서153</h1>
-            <p className="text-tv-micro font-bold leading-none text-white/50">{branchName || "지점"}</p>
+            <p className="text-tv-label font-bold leading-none text-white/60">{branchName || "지점"}</p>
             {only1 && onDutyStaff.length > 0 && (
               <p className="flex items-center gap-2 text-tv-micro font-bold leading-none text-white/60">
                 <span className="inline-block h-2 w-2 rounded-full bg-primary" />
@@ -1333,13 +1333,13 @@ const LiveBoardPage = () => {
                 (방문이 적은 시간대에 작게 보이는 숫자가 오히려 썰렁해 보인다) */}
             <div className="text-center">
               <p className="text-tv-title font-black leading-none tabular-nums text-primary">{combinedMembers.length}</p>
-              <p className="mt-1.5 text-tv-micro font-bold text-white/40">활동 중</p>
+              <p className="mt-1.5 text-tv-micro font-bold text-white/50">활동 중</p>
             </div>
           </div>
           <div className="text-right">
             {/* 사이니지 기기는 공장 초기 표준시(UTC 등)로 놓인 경우가 많아 timeZone 을 못 박는다.
                 기기 시계만 맞으면 지역 설정이 틀려도 한국 시각으로 나온다. */}
-            <p className="text-tv-micro font-bold leading-none text-white/40">
+            <p className="text-tv-micro font-bold leading-none text-white/50">
               {currentTime.toLocaleDateString("ko-KR", {
                 month: "long", day: "numeric", weekday: "long", timeZone: "Asia/Seoul",
               })}
@@ -1549,15 +1549,12 @@ const LiveBoardPage = () => {
               </div>
             ) : combinedMembers.length > 0 ? (
               <div className="flex flex-1 flex-col">
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <h2 className="text-tv-micro font-black tracking-wide text-primary">
+                <div className="mb-2 flex items-center gap-2.5">
+                  <span className="h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />
+                  {/* 인원수는 머리의 '활동 중' 큰 숫자 하나로 (같은 숫자는 한 화면에 한 번 — 2026-10-28 리디자인) */}
+                  <h2 className="text-tv-label font-black text-primary">
                     지금 운동 중
                   </h2>
-                  <p className="number-font text-tv-micro font-black text-primary tabular-nums">
-                    {combinedMembers.length}
-                    <span className="ml-1 text-tv-micro text-primary/70">명</span>
-                  </p>
                   {mockMembers.length > 0 && (
                     <span className="rounded-full bg-white/10 px-2 py-0.5 text-tv-micro font-black text-white/50">
                       mock {mockMembers.length}
@@ -1587,6 +1584,7 @@ const LiveBoardPage = () => {
                     }}
                     showForceExit={isBranchManager}
                     onForceExit={(sessionId, name) => handleForceExit(sessionId, name)}
+                    avoid={only1 ? "[data-board-float]" : undefined}
                   />
                 )}
               </div>
@@ -1608,7 +1606,7 @@ const LiveBoardPage = () => {
             <div className="mx-4 mb-2 flex-shrink-0 overflow-hidden rounded-xl border border-gray-800/60 bg-gray-900/50 px-4 py-2.5">
               <div className="flex items-center gap-4">
                 {/* 인원수 배지는 대표님 요청으로 뺐다 — 이름만 흐르게 둔다 */}
-                <h2 className="flex-shrink-0 whitespace-nowrap text-tv-micro font-black tracking-wide text-white/50">
+                <h2 className="flex-shrink-0 whitespace-nowrap text-tv-label font-black text-white/60">
                   오늘 다녀간 회원
                 </h2>
                 {/* 양 끝을 페이드 처리 — 안 하면 이름이 가장자리에서 뚝 잘려 보인다 */}
@@ -1634,18 +1632,18 @@ const LiveBoardPage = () => {
                           return (
                             <span key={`${copy}-${v.user_id}`} className="flex items-center gap-1.5">
                               {training && (
-                                <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" aria-hidden />
+                                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-primary" aria-hidden />
                               )}
                               <span
-                                className={`text-tv-micro font-bold ${training ? "text-white" : "text-white/45"}`}
+                                className={`text-tv-label font-bold ${training ? "text-white" : "text-white/50"}`}
                               >
                                 {v.display_name}
                               </span>
                               {/* 🎂 오늘 생일 (2026-10-16) */}
                               {birthdayIds.has(v.user_id) && (
-                                <img src={birthdayCake} alt="오늘 생일" draggable={false} className="h-6 w-6 shrink-0 select-none" />
+                                <img src={birthdayCake} alt="오늘 생일" draggable={false} className="h-7 w-7 shrink-0 select-none" />
                               )}
-                              <MedalMark animated userId={v.user_id} className="text-tv-micro" />
+                              <MedalMark animated userId={v.user_id} className="text-tv-label" />
                             </span>
                           );
                         })}
@@ -1663,9 +1661,9 @@ const LiveBoardPage = () => {
           {!only1 && onDutyStaff.length > 0 && (
             <div className="mx-4 mb-2 flex-shrink-0 rounded-xl border border-yellow-600/40 bg-gradient-to-r from-yellow-950/60 via-gray-900/80 to-yellow-950/60 px-4 py-2.5">
               <div className="flex items-center gap-3">
-                <div className="flex flex-shrink-0 items-center gap-1.5">
-                  <Medal className="h-5 w-5 text-yellow-500" />
-                  <h2 className="text-tv-micro font-black text-yellow-400 tracking-widest whitespace-nowrap">
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <Medal className="h-6 w-6 text-yellow-500" />
+                  <h2 className="whitespace-nowrap text-tv-label font-black tracking-wider text-yellow-400">
                     COACHING STAFF
                   </h2>
                 </div>
@@ -1673,18 +1671,16 @@ const LiveBoardPage = () => {
                   {onDutyStaff.map((c) => (
                       <div
                         key={c.user_id ?? `${c.name}-${c.checked_in_at}`}
-                        className="flex flex-shrink-0 items-center gap-2 rounded-lg border border-yellow-700/30 bg-yellow-900/20 px-2.5 py-1"
+                        className="flex flex-shrink-0 items-center gap-2.5 rounded-lg border border-yellow-700/30 bg-yellow-900/20 px-3 py-1"
                       >
-                        <MemberAvatar url={c.avatar_url} name={c.name} sizeClass="h-7 w-7" />
-                        <div>
-                          <p className="text-tv-micro font-black leading-tight text-yellow-100 whitespace-nowrap">
+                        <MemberAvatar url={c.avatar_url} name={c.name} sizeClass="h-9 w-9" />
+                        <p className="flex items-baseline gap-2 whitespace-nowrap">
+                          <span className="text-tv-label font-black text-yellow-100">
                             {c.name} {honorTitle(c.title)} <MedalMark animated userId={c.user_id} />
-                          </p>
-                          <p className="text-tv-micro font-black uppercase tracking-wider text-yellow-500/80">
-                            {/* 대표님 지시: 코치님은 모두 Lv.77 — 리그 표기 2026-09-23 챔피언 → 2026-10-19 블랙 */}
-                            BLACK · LV.{STAFF_CHAMPION_LEVEL}
-                          </p>
-                        </div>
+                          </span>
+                          {/* 대표님 지시: 코치님은 모두 Lv.77 — 리그 표기 2026-09-23 챔피언 → 2026-10-19 블랙 */}
+                          <span className="text-tv-micro font-black text-yellow-500/80">BLACK · LV.{STAFF_CHAMPION_LEVEL}</span>
+                        </p>
                       </div>
                   ))}
                 </div>
@@ -1696,11 +1692,11 @@ const LiveBoardPage = () => {
           {/* 랭킹 띠처럼 모든 화면에(1번 화면은 우하단 QR 카드를 피해 오른쪽을 비운다). 한 줄에 다 안 들어가면 오늘 다녀간 회원 띠처럼 천천히 흐른다 */}
           {recordHolders.length > 0 && (
             // 금빛 테두리·글자는 흐르지 않는 같은 그림(still) — TV 가 하루 종일 다시 칠하느라 끊기던 것 (2026-10-26)
-            <div className={`mx-4 mb-2 flex-shrink-0 rounded-xl p-[1.5px] record-gold-ring still ${only1 ? "mr-[35rem]" : ""}`}>
+            <div className={`mx-4 mb-2 flex-shrink-0 rounded-xl p-[1.5px] record-gold-ring still ${only1 ? "mr-[38rem]" : ""}`}>
               <div className="flex items-center gap-4 overflow-hidden rounded-[11px] bg-gray-950/95 px-4 py-2.5">
-                <div className="flex flex-shrink-0 items-center gap-1.5">
-                  <span className="text-tv-micro">🏆</span>
-                  <h2 className="bday-gold-text still whitespace-nowrap text-tv-micro font-black tracking-widest">153 RECORD</h2>
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <span className="text-tv-label">🏆</span>
+                  <h2 className="bday-gold-text still whitespace-nowrap text-tv-label font-black tracking-wider">153 RECORD</h2>
                   <span className="whitespace-nowrap text-tv-micro font-bold text-amber-100/70">오늘 온 최초 기록 보유자</span>
                 </div>
                 <div
@@ -1718,9 +1714,9 @@ const LiveBoardPage = () => {
                   {/* 길이 재기용 한 벌 (보이지 않음) — 넘치면 두 벌을 이어 흘린다 */}
                   <div ref={recordMeasureRef} aria-hidden className="invisible absolute left-0 top-0 flex w-max items-center gap-6 whitespace-nowrap">
                     {recordHolders.map((h) => (
-                      <span key={h.user_id} className="flex items-center gap-2">
-                        <span className="text-tv-micro font-black">{h.name}</span>
-                        <span className="text-tv-micro font-bold">{h.records.join(" · ")}</span>
+                      <span key={h.user_id} className="flex items-baseline gap-2">
+                        <span className="text-tv-label font-black">{h.name}</span>
+                        <span className="text-tv-label font-bold">{h.records.join(" · ")}</span>
                       </span>
                     ))}
                   </div>
@@ -1731,9 +1727,9 @@ const LiveBoardPage = () => {
                     {(recordOverflow ? [0, 1] : [0]).map((copy) => (
                       <div key={copy} className={`flex items-center gap-6 ${recordOverflow ? "pr-6" : ""}`} aria-hidden={copy === 1}>
                         {recordHolders.map((h) => (
-                          <span key={`${copy}-${h.user_id}`} className="flex items-center gap-2">
-                            <span className="text-tv-micro font-black text-white">{h.name}</span>
-                            <span className="text-tv-micro font-bold text-amber-200">{h.records.join(" · ")}</span>
+                          <span key={`${copy}-${h.user_id}`} className="flex items-baseline gap-2">
+                            <span className="text-tv-label font-black text-white">{h.name}</span>
+                            <span className="text-tv-label font-bold text-amber-200">{h.records.join(" · ")}</span>
                           </span>
                         ))}
                       </div>
@@ -1748,11 +1744,11 @@ const LiveBoardPage = () => {
           {/* 앱 랭킹 '전체'와 같은 순서: 레벨 → 보스 클리어 → 누적 XP. 순위가 없으면(새 지점) 띠를 접는다. */}
           {/* 1번 화면(운동 중만)에도 보인다 — 2026-10-15 대표님. 우하단 QR 카드(33rem)를 피해 오른쪽을 비운다 */}
           {topRank.length > 0 && (
-            <div className={`mx-4 mb-2 flex-shrink-0 rounded-xl border border-primary/30 ${only1 ? "mr-[35rem]" : ""} bg-gradient-to-r from-primary/10 via-gray-900/80 to-primary/10 px-4 py-2.5`}>
+            <div className={`mx-4 mb-2 flex-shrink-0 rounded-xl border border-primary/30 ${only1 ? "mr-[38rem]" : ""} bg-gradient-to-r from-primary/10 via-gray-900/80 to-primary/10 px-4 py-2.5`}>
               <div className="flex items-center gap-3">
-                <div className="flex flex-shrink-0 items-center gap-1.5">
-                  <Trophy className="h-5 w-5 text-primary" />
-                  <h2 className="whitespace-nowrap text-tv-micro font-black tracking-wide text-primary">
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <Trophy className="h-6 w-6 text-primary" />
+                  <h2 className="whitespace-nowrap text-tv-label font-black text-primary">
                     마이복서153 랭킹
                   </h2>
                 </div>
@@ -1762,21 +1758,21 @@ const LiveBoardPage = () => {
                     return (
                       <div
                         key={m.r_user_id}
-                        className={`flex min-w-0 items-center gap-2 rounded-lg border px-2.5 py-1 ${tone.ring}`}
+                        className={`flex min-w-0 items-center gap-2.5 rounded-lg border px-3 py-1 ${tone.ring}`}
                       >
-                        <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-tv-micro font-black ${tone.num}`}>
+                        <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-tv-micro font-black ${tone.num}`}>
                           {i + 1}
                         </span>
-                        <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-7 w-7" />
-                        <div className="min-w-0">
-                          <p className={`flex min-w-0 items-center gap-1 text-tv-micro font-black leading-tight ${tone.name}`}>
+                        <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-9 w-9" />
+                        <p className="flex min-w-0 items-baseline gap-2">
+                          <span className={`flex min-w-0 items-center gap-1 text-tv-label font-black ${tone.name}`}>
                             <span className="truncate">{m.r_nickname}</span>
                             <MedalMark animated userId={m.r_user_id} />
-                          </p>
-                          <p className="text-tv-micro font-black uppercase tracking-wider text-white/50">
-                            {RANK_LABELS[m.r_current_rank] ?? m.r_current_rank} · LV.{toGlobalLevel(m.r_current_rank, m.r_current_level)}
-                          </p>
-                        </div>
+                          </span>
+                          <span className="shrink-0 whitespace-nowrap text-tv-micro font-bold text-white/55">
+                            {RANK_LABELS[m.r_current_rank] ?? m.r_current_rank} · Lv.{toGlobalLevel(m.r_current_rank, m.r_current_level)}
+                          </span>
+                        </p>
                       </div>
                     );
                   })}
@@ -1792,9 +1788,9 @@ const LiveBoardPage = () => {
           {!only1 && (
             <div className="mx-4 mb-3 flex-shrink-0 rounded-xl border border-yellow-600/40 bg-gradient-to-r from-yellow-950/60 via-gray-900/80 to-yellow-950/60 px-4 py-2.5">
               <div className="flex items-center gap-3">
-                <div className="flex flex-shrink-0 items-center gap-1.5">
-                  <Trophy className="h-5 w-5 text-yellow-500" />
-                  <h2 className="text-tv-micro font-black text-yellow-400 tracking-wide whitespace-nowrap">
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <Trophy className="h-6 w-6 text-yellow-500" />
+                  <h2 className="whitespace-nowrap text-tv-label font-black text-yellow-400">
                     명예의 전당
                   </h2>
                   {hallMembers.length > 0 && (
@@ -1808,21 +1804,21 @@ const LiveBoardPage = () => {
                     {hallMembers.map((m) => (
                       <div
                         key={m.r_user_id}
-                        className="flex flex-shrink-0 items-center gap-2 rounded-lg border border-yellow-700/30 bg-yellow-900/20 px-2.5 py-1"
+                        className="flex flex-shrink-0 items-center gap-2.5 rounded-lg border border-yellow-700/30 bg-yellow-900/20 px-3 py-1"
                       >
-                        <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-7 w-7" />
-                        <div>
-                          <p className="text-tv-micro font-black text-yellow-200 leading-tight whitespace-nowrap">
+                        <MemberAvatar url={m.r_avatar_url} name={m.r_nickname} sizeClass="h-9 w-9" />
+                        <p className="flex items-baseline gap-2 whitespace-nowrap">
+                          <span className="text-tv-label font-black text-yellow-200">
                             {m.r_nickname} <MedalMark animated userId={m.r_user_id} />
-                          </p>
-                          <p className="text-tv-micro text-yellow-500/80 font-black">MASTER 40</p>
-                        </div>
+                          </span>
+                          <span className="text-tv-micro font-black text-yellow-500/80">MASTER 40</span>
+                        </p>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-yellow-700/40 px-3 py-1.5">
-                    <p className="text-tv-micro font-black text-yellow-500/70 whitespace-nowrap">
+                    <p className="whitespace-nowrap text-tv-micro font-black text-yellow-500/80">
                       첫 마스터의 자리 · 블랙 리그 레벨 10 + 보스 4 달성
                     </p>
                   </div>
@@ -1841,7 +1837,7 @@ const LiveBoardPage = () => {
           <div className="flex-1 border-b border-gray-800/60 flex flex-col min-h-[28vh]">
             <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0">
               <span className="h-4 w-4 rounded-full bg-primary animate-pulse" />
-              <h2 className="text-tv-label font-black text-primary">현재 활동 중 ({combinedMembers.length})</h2>
+              <h2 className="text-tv-label font-black text-primary">현재 활동 중</h2>
             </div>
             <div className="flex-1 overflow-y-auto px-3 pb-3">
               {combinedMembers.length === 0 ? (
@@ -1852,7 +1848,7 @@ const LiveBoardPage = () => {
                   {[...combinedMembers].sort((a, b) => Number(!!b.birthday) - Number(!!a.birthday)).map((m) => (
                     <div
                       key={m.user_id}
-                      className={`flex items-center gap-4 rounded-xl px-4 py-4 group ${
+                      className={`flex items-center gap-4 rounded-xl px-4 py-3 group ${
                         m.birthday
                           ? "bg-gradient-to-r from-emerald-500/15 via-violet-500/15 to-pink-500/15 ring-1 ring-inset ring-emerald-300/40"
                           : "bg-gray-800/40"
@@ -1884,10 +1880,9 @@ const LiveBoardPage = () => {
                           <span className={`inline-flex px-2 py-0.5 rounded text-tv-micro font-black ${RANK_BADGE_COLORS[m.league] || "bg-gray-700 text-gray-300"}`}>
                             {RANK_LABELS[m.league] || m.league} 리그
                           </span>
-                          <span className="text-tv-micro text-gray-400 font-bold">레벨 {toGlobalLevel(m.league, m.level)}</span>
-                          <span className="text-gray-600">·</span>
-                          <Clock className="h-4 w-4 text-gray-500 inline" />
-                          <span className="text-tv-micro text-gray-500 font-bold">{elapsedMin(m.startedAt)}분</span>
+                          <span className="text-tv-micro font-bold text-gray-300">레벨 {toGlobalLevel(m.league, m.level)}</span>
+                          <Clock className="ml-1 h-5 w-5 text-gray-400" />
+                          <span className="text-tv-micro font-bold text-gray-400">{elapsedMin(m.startedAt)}분</span>
                         </div>
                       </div>
                       {isBranchManager && (

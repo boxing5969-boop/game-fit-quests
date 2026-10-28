@@ -91,9 +91,9 @@ const LaunchEventBoard = ({ branchName }: Props) => {
         : `${fmtKstDate(data.start_date)}부터 진행 중`;
 
   return (
-    <section aria-label="153 마이복서 런칭 이벤트" className="flex h-full min-h-0 flex-col px-6 py-4">
+    <section aria-label="153 마이복서 런칭 이벤트" className="flex h-full min-h-0 flex-col px-6 py-3">
       {/* 제목 줄 */}
-      <div className="mb-3 flex flex-shrink-0 items-end justify-between gap-4">
+      <div className="mb-2 flex flex-shrink-0 items-end justify-between gap-4">
         <div>
           <p className="text-tv-micro font-black uppercase tracking-[0.35em] text-yellow-400/80">MYBOXER 153 · LAUNCH EVENT</p>
           <h2 className="mt-1 text-tv-heading font-black leading-none text-white">
@@ -171,7 +171,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
           const Icon = col.Icon;
           return (
             // 칸 밖으로 넘친 줄이 아래 글 위에 겹쳐 그려지지 않게 칸 안에서 자른다 (2026-10-19)
-            <div key={cat} className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-yellow-600/30 bg-gradient-to-b from-yellow-950/40 via-gray-900/70 to-gray-900/80 p-5">
+            <div key={cat} className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-yellow-600/30 bg-gradient-to-b from-yellow-950/40 via-gray-900/70 to-gray-900/80 p-4">
               <div className="flex items-center gap-3">
                 <span className="text-tv-heading font-black text-yellow-400">{col.no}</span>
                 <Icon className="h-7 w-7 text-yellow-400" />
@@ -188,7 +188,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
               </div>
 
               {/* 1위 */}
-              <div className="mt-4 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 px-5 py-4">
+              <div className="mt-3 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 px-5 py-3">
                 {!data ? (
                   <div className="h-12 animate-pulse rounded-lg bg-yellow-500/10" />
                 ) : upcoming ? (
@@ -219,9 +219,9 @@ const LaunchEventBoard = ({ branchName }: Props) => {
               </div>
 
               {/* 2~5위 */}
-              <ol className="mt-3 flex-1 space-y-1.5">
+              <ol className="mt-2 flex-1 space-y-1">
                 {rest.map((r) => (
-                  <li key={`${cat}-${r.rank}`} className="flex items-center gap-3 rounded-xl bg-gray-800/50 px-4 py-2.5">
+                  <li key={`${cat}-${r.rank}`} className="flex items-center gap-3 rounded-xl bg-gray-800/50 px-4 py-1.5">
                     <span className="w-8 text-center text-tv-label font-black tabular-nums text-gray-400">{r.rank}</span>
                     <span className="min-w-0 flex-1 truncate text-tv-label font-bold text-white">{r.display_name}</span>
                     <span className="flex-shrink-0 text-tv-label font-black tabular-nums text-gray-200">{fmt(r.score, cat)}</span>

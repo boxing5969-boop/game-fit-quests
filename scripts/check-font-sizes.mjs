@@ -13,6 +13,9 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ARBITRARY_RE, EXEMPT_MARK, LEGACY, LEGACY_RE, MEMBER_TOKEN_RE, TV_TOKEN_RE, isMemberFile, isTvFile, keepSize } from "./type-scale.mjs";
 
+/** CSS 글 안 px 글씨 크기 (font-size:13px) */
+const CSS_PX_RE = /font-size:\s*\d+(?:\.\d+)?px/g;
+
 const env = process.env;
 const strict = env.FONTS_STRICT === "1" || (!!env.CLAUDECODE && !env.CF_PAGES && !env.CI);
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "src");
@@ -42,6 +45,8 @@ try {
             ...[...line.matchAll(ARBITRARY_RE)].filter((m) => !keepSize(rel, Number(m[2]))),
             ...[...line.matchAll(LEGACY_RE)].filter((m) => !keepSize(rel, LEGACY[m[2]])),
             ...line.matchAll(TV_TOKEN_RE),
+            // 화면 안에 적은 CSS 글 (153플레이처럼) — px 대신 6단계 rem
+            ...line.matchAll(CSS_PX_RE),
           ];
       if (hits.length) (tv ? badTv : bad).push(`    src/${rel}:${i + 1}  ${[...new Set(hits.map((m) => m[0]))].join(" ")}`);
     });

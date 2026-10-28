@@ -194,7 +194,17 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 
 - 회원 화면(.tsx)은 이 6개 이름만 쓴다 — 크기 숫자(`text-[11.5px]`)·옛 이름(`text-xs` · `text-sm` · `text-caption` …)은 `scripts/check-font-sizes.mjs` 가 막는다(`bun run build` · GitHub 「앱 자동 검사」 · 클로드 세션에서는 빌드가 멈춤). 정말 필요한 줄만 같은 줄 주석에 `글씨예외`.
 - 옛 크기를 한꺼번에 옮기기: `node scripts/apply-type-scale.mjs` (가장 가까운 단계, 같으면 큰 쪽 · 몇 번을 돌려도 결과가 같다 — 다른 계정 수정과 합친 뒤 다시 돌려도 된다). 규칙 · 제외 화면 목록은 `scripts/type-scale.mjs` 한 곳.
-- 아직 옮기지 않은 화면(3단계): 관리자 · 지점장 · 코치 화면, TV · 키오스크, 게임(`features/minigame`) — `EXCLUDE`.
+- 3단계 (2026-10-28 대표님 "이어서하자") — 한눈에 많이 보는 화면은 기준을 따로 (`scripts/type-scale.mjs` 한 곳):
+  - 관리자 · 지점장 · 코치 화면: 회원 화면과 같은 6단계(13 아래 없음). 표 · 숫자 여러 개는 써도 된다.
+  - 게임(`features/minigame` · `components/story-rpg`, `GAME`): 작은 글씨는 6단계, 28px 넘는 연출 글씨(카운트다운 · 점수 팝 · 게임 제목)는 그대로(`keepSize`).
+  - 사무실 그림 속 글씨(`SCENE` — OfficeScene 이름표 · 말풍선): 그림 크기에 맞춘 숫자 크기 그대로(크게 보기 · 채팅 목록이 같은 글을 큰 글씨로).
+  - TV · 키오스크(`TV` — liveBoard · LiveBoardPage · TvBranchPicker · SignageBoardPage · FaceKioskPage): 멀리서 보는 tv 단계 — 1920×1080 무대 px, 가장 작은 글씨 20. `text-tv-micro` 20 · `tv-label` 24 · `tv-body` 28 · `tv-heading` 36 · `tv-title` 48 · `tv-display` 72 (px — TV 는 글씨 크기 설정을 따르지 않음). TV 파일에 휴대폰 6단계 · 크기 숫자 · 옛 이름, 휴대폰 화면에 tv 단계가 들어오면 검사기가 알린다.
+  - TV 띠(오늘 다녀간 회원 · COACHING STAFF · 153 RECORD · 랭킹 · 명예의 전당)는 한 줄 — 이름 24 + 덧붙임 20. 인원수는 머리의 '활동 중' 큰 숫자 하나(칸 제목에서 뺐다).
+  - 1번 화면 우하단 QR 카드(`data-board-float`, 36rem)를 회원 카드 그리드가 피한다 — `LiveCompactGrid avoid` → [src/lib/liveGridLayout.ts](src/lib/liveGridLayout.ts) `blockedCells`(가려지는 구석 칸은 비우고 그만큼 줄여 크기 계산). 예전엔 사람이 많으면 QR 카드 뒤에 카드가 숨었다.
+  - 153플레이(`BoxingLibraryPage`)처럼 화면 안에 CSS 글을 적으면 글씨는 6단계 rem 으로 — `font-size: Npx` 는 검사기가 알린다.
+  - index.css 의 9~11px 땜질은 뺐다(모든 화면이 이름 붙은 단계). 경로 없는 옛 화면 `CheckinBoardPage` 만 `EXCLUDE`.
+- **`cn()` 과 글씨 이름**: [src/lib/utils.ts](src/lib/utils.ts) 의 tailwind-merge 에 글씨 이름(6단계 · tv 단계 · 옛 이름)을 알려 둔다 — 안 알려 주면 `cn("text-label text-muted-foreground")` 가 크기를 색으로 보고 지운다(2026-10-28 찾아 고침, 그 전에는 cn 으로 합친 약 200곳이 부모 크기를 물려받았다). tailwind.config 에 글씨 크기 이름을 더하면 여기에도 더한다.
+- 관리자 · 지점장 화면 라우트(`ManagerRoute` · `AdminOnlyRoute`, App.tsx)는 `useAuth().userDataReady`(권한 · 프로필까지 읽은 뒤)를 기다린다 — 새로고침 · 알림 링크로 바로 열면 권한을 읽기 전에 홈으로 튕기던 것(2026-10-28).
 - 회색 글씨 `--muted-foreground` = #626C7A (흰 카드 5.32:1 · 회색 바탕 4.83:1). 회색 바탕 위에 회색 글씨를 쓸 때도 4.5:1 넘게.
 - 화면 규칙 7가지: ① 카드마다 주인공 하나(큰 숫자나 사진 하나 + 이름표 한 단어) ② 같은 숫자는 한 화면에 한 번 ③ 빈 것은 그리지 않기(0회 · 기록 없는 달 · 0원 줄 숨김, 그래프는 기록이 쌓이면) ④ 설명은 접기(? 단추 · '계산 방법' · 처음 한 번만) ⑤ 글씨 6단계만, 13px 아래 없음 ⑥ 회색 설명 줄은 카드 하나에 한 줄까지 ⑦ 카드 안 문장은 한 줄, 넘으면 '더 보기' · 단추 글 2~5자.
 - 카드 기본 모양: `rounded-2xl border bg-card p-5` · 카드 제목 `text-heading` · 맨 아래 '○○ 자세히 보기 ›' 한 줄(`h-14 border-t text-body font-bold`) · 머리글(`PageHeader`)에 꾸밈 부제 넣지 않기(정보가 있는 부제 — 지점 이름 등 — 만).

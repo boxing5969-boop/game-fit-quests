@@ -450,15 +450,7 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  /* 모바일 가독성 — 아직 6단계로 옮기지 않은 관리자 · 지점장 · TV 화면의 초소형 글씨만 올린다.
-     9~10px → 11px, 11px → 12px. 회원 화면은 글씨 6단계(13px 이상)만 쓴다 (2026-10-28 리디자인). */
-  .text-\[9px\],
-  .text-\[10px\] {
-    font-size: 11px !important;
-  }
-  .text-\[11px\] {
-    font-size: 12px !important;
-  }
+  /* (2026-10-28) 9~11px 를 11~12px 로 올리던 땜질은 뺐다 — 모든 화면이 이름 붙은 글씨 단계(휴대폰 6단계 · TV 단계)를 쓴다. */
   .animate-bounce-in {
     animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }

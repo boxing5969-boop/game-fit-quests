@@ -24,6 +24,10 @@
  * 2026-09-28 "QR 인식이 잘 안 된다" — TV 에서 QR 이 168px(55형 기준 약 10cm, 칸 하나 2mm 남짓)라 1m 밖에서는
  * 폰 카메라가 칸을 못 가렸다. 오른쪽 패널에서는 QR 을 위로 올려 크게(256px), 1번 화면 떠 있는 카드는 220px 로 키우고,
  * 둘레에 여백(quiet zone)을 규격대로 둔다. 내용·토큰 규칙은 그대로.
+ *
+ * 2026-10-28 리디자인 3단계 (TV 글씨 — 가장 작은 20px): 제목 24 · 안내 20 · 앱 받기 24.
+ *   1번 화면 떠 있는 카드는 36rem 로 넓혀 글이 덜 꺾이게 하고, data-board-float 로 표시해 회원 카드 그리드가 이 자리를 피한다.
+ *   길 안내 줄은 지금 앱에 맞게 — 홈 '오늘의 시작' 카드는 없어졌고 '내 운동' 카드의 'QR 출석' 단추로 간다.
  */
 
 import { useEffect, useState } from "react";
@@ -151,29 +155,27 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar", className = "" }: Pr
     </div>
   );
   const text = (
-    <div className={stacked ? "mt-3 w-full text-center" : "min-w-0 flex-1"}>
-      <p className={`flex items-center gap-1.5 text-tv-micro font-black tracking-wide text-primary ${stacked ? "justify-center" : ""}`}>
-        <QrCode className="h-4 w-4" /> 앱에서 QR 출석
+    <div className={`break-keep ${stacked ? "mt-3 w-full text-center" : "min-w-0 flex-1"}`}>
+      <p className={`flex items-center gap-2 text-tv-label font-black text-primary ${stacked ? "justify-center" : ""}`}>
+        <QrCode className="h-6 w-6" /> 앱에서 QR 출석
       </p>
-      <p className="mt-1.5 text-tv-micro font-bold leading-snug text-white">{notice.main}</p>
-      <p className="mt-1 text-tv-micro font-bold leading-snug text-white/80">{notice.sub}</p>
-      <p className="mt-1.5 text-tv-micro font-bold leading-snug text-white/40">
-        마이복서153 → 홈 → 오늘의 시작 → QR 출석 · 폰 기본 카메라로 찍어도 돼요
-      </p>
+      <p className="mt-1.5 text-tv-micro font-bold text-white">{notice.main}</p>
+      <p className="mt-1 text-tv-micro font-bold text-white/80">{notice.sub}</p>
+      <p className="mt-1.5 text-tv-micro font-bold text-white/50">앱 홈 ‘QR 출석’ · 폰 카메라로 찍어도 돼요</p>
       {failed === "key" && (
-        <p className="mt-1 text-tv-micro font-bold text-destructive/80">이 TV 는 보드 키 등록이 필요해요 — 관리자에게 문의</p>
+        <p className="mt-1 text-tv-micro font-bold text-destructive">이 TV 는 보드 키 등록이 필요해요 — 관리자에게 문의</p>
       )}
       {failed === "net" && !url && (
-        <p className="mt-1 text-tv-micro font-bold text-destructive/80">QR 을 불러오지 못했어요 — 잠시 후 다시 시도합니다</p>
+        <p className="mt-1 text-tv-micro font-bold text-destructive">QR 을 불러오지 못했어요 — 잠시 후 다시 시도해요</p>
       )}
     </div>
   );
   // 앱 받기 안내 — 금색 띠로 QR 바로 밑에 (오른쪽 패널: QR 아래 · 1번 화면 떠 있는 카드: QR·글 줄 아래 전체 폭)
   const appNote = (
-    <div className="mt-3 w-full rounded-xl bg-reward px-3.5 py-2.5 text-center text-reward-foreground">
-      <p className="text-tv-body font-black leading-tight">{BOARD_APP_NOTICE_MAIN}</p>
-      <p className="mt-1 text-tv-micro font-bold leading-snug">{BOARD_APP_NOTICE_SUB}</p>
-      <p className="mt-0.5 text-tv-micro font-bold leading-snug opacity-75">{BOARD_APP_NOTICE_HINT}</p>
+    <div className="mt-3 w-full break-keep rounded-xl bg-reward px-4 py-2.5 text-center text-reward-foreground">
+      <p className="text-tv-label font-black">{BOARD_APP_NOTICE_MAIN}</p>
+      <p className="mt-0.5 text-tv-micro font-bold">{BOARD_APP_NOTICE_SUB}</p>
+      <p className="text-tv-micro font-bold opacity-75">{BOARD_APP_NOTICE_HINT}</p>
     </div>
   );
   const body = stacked ? (
@@ -184,7 +186,7 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar", className = "" }: Pr
     </div>
   ) : (
     <div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         {qr}
         {text}
       </div>
@@ -195,7 +197,7 @@ const LiveBoardQrCard = ({ branchName, variant = "sidebar", className = "" }: Pr
   if (variant === "floating") {
     // 뒤 흐림(backdrop-blur)은 뺀다 — TV 가 카드 뒤를 매 순간 다시 흐리게 그리느라 1번 화면이 끊겼다. 바탕을 조금 더 진하게 (2026-10-26)
     return (
-      <div className="fixed bottom-5 right-5 z-40 w-[33rem] rounded-2xl border border-primary/30 bg-gray-950/95 p-4 shadow-2xl">
+      <div data-board-float className="fixed bottom-5 right-5 z-40 w-[36rem] rounded-2xl border border-primary/30 bg-gray-950/95 p-4 shadow-2xl">
         {body}
       </div>
     );

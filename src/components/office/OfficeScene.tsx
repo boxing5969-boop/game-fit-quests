@@ -40,7 +40,8 @@ const charImage = (p: Pick<OfficePerson, "style" | "user_id">) =>
   p.style ? getCharacterImage(p.style) : getCharacterByHash(p.user_id).image;
 
 /** 말풍선 글자 — 말풍선 · 한 줄 높이 재는 그림자(probe)가 같이 쓴다 */
-const TALK_TEXT_CLS = "whitespace-pre-wrap break-words text-left text-[11px] font-semibold leading-[1.35]";
+// 말풍선 글 — 예전 index.css 땜질(11px → 12px)로 그려지던 크기 그대로 12px (2026-10-28 땜질을 빼며 숫자로 옮김)
+const TALK_TEXT_CLS = "whitespace-pre-wrap break-words text-left text-[12px] font-semibold leading-[1.35]";
 
 const STATUS_CLS: Record<string, string> = {
   class: "bg-sky-500 text-white",
