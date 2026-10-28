@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ACCURACY_POINTS,
+  accuracyNote,
   bodyFatDrop,
   fitnessExtraInputError,
   normalizeFitnessExtra,
@@ -27,6 +28,37 @@ describe("정확도 — 넣을수록 올라간다 (2026-10-22 대표님)", () =>
     const a = reportAccuracy({ days: all, gender: "여", birthYear: 1995, heightCm: 160, weightKg: 55, bodyFatPct: 28 });
     expect(a.pct).toBe(100);
     expect(a.next).toBeNull();
+  });
+});
+
+describe("정확도 올리기 — 오삼코치 메시지 (2026-10-28 대표님 '카톡 메시지 같이')", () => {
+  const all = Array.from({ length: 4 }, () => ({ endSource: "checkout_scan" }));
+  it("두 가지 남았으면 이름을 부르고 · 조사를 맞추고 · 몇 %까지 오르는지", () => {
+    const a = reportAccuracy({ days: all, gender: "남", birthYear: null, heightCm: 176, weightKg: 72, bodyFatPct: null });
+    expect(a.pct).toBe(80);
+    const n = accuracyNote("지훈", a);
+    expect(n.target).toBe(100);
+    expect(n.lines).toEqual(["지훈님, 지금 정확도는 80%예요", "나이 · 체지방률을 넣으면 100%까지 올라가요", "나이에 맞게 비교해 드려요. 30초면 끝나요!"]);
+  });
+  it("받침 없는 말로 끝나면 '를' · 이름이 없으면 회원님", () => {
+    const a = reportAccuracy({ days: all, gender: "여", birthYear: 1995, heightCm: null, weightKg: 55, bodyFatPct: 24 });
+    const n = accuracyNote("  ", a);
+    expect(n.lines[0]).toBe("회원님, 지금 정확도는 95%예요");
+    expect(n.lines[1]).toBe("키를 넣으면 100%까지 올라가요");
+  });
+  it("넷 이상 남았으면 큰 것 둘 + 몇 가지 · 운동 끝 체크가 덜 됐으면 그만큼 빼고", () => {
+    const half = Array.from({ length: 20 }, (_, i) => ({ endSource: i % 2 ? "checkout_scan" : null }));
+    const a = reportAccuracy({ days: half, gender: null, birthYear: null, heightCm: null, weightKg: null, bodyFatPct: null });
+    const n = accuracyNote("지훈", a);
+    expect(n.lines[1]).toBe("몸무게 · 성별 등 5가지를 넣으면 95%까지 올라가요");
+    expect(n.lines[2]).toBe("칼로리 · 지방을 내 몸 기준으로 바꿔요. 30초면 끝나요!");
+  });
+  it("넣을 정보를 다 넣었으면 운동 끝 얼굴 인식 안내 · target 없음", () => {
+    const half = Array.from({ length: 20 }, (_, i) => ({ endSource: i % 2 ? "checkout_scan" : null }));
+    const a = reportAccuracy({ days: half, gender: "남", birthYear: 1990, heightCm: 175, weightKg: 70, bodyFatPct: 20 });
+    const n = accuracyNote("지훈", a);
+    expect(n.target).toBeNull();
+    expect(n.lines[1]).toContain("얼굴 인식");
   });
 });
 

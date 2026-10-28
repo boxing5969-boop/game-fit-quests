@@ -184,6 +184,38 @@ export function reportAccuracy(a: AccuracyInput): Accuracy {
   return { pct, items, next: missing[0] ?? null, missing };
 }
 
+/* ───────────── 정확도 올리기 — 오삼코치 메시지 ─────────────
+ * 2026-10-28 대표님: "정확도 80% 이라고만 표기되어있어서 사람들이 정보입력해야하는건지 모를것같아 —
+ *   클릭해서 정보입력하라는 카톡 메시지 같이 팝업". '153과 함께하며' 정확도 칩을 누르면 이 말풍선이 차례로 뜬다.
+ */
+
+/** 받침에 맞는 '을/를' — '나이를' · '체지방률을' */
+function eulReul(word: string): string {
+  const code = word.trim().slice(-1).charCodeAt(0) - 0xac00;
+  if (code < 0 || code > 11171) return "을(를)";
+  return code % 28 === 0 ? "를" : "을";
+}
+
+export interface AccuracyNote {
+  /** 말풍선 — 위에서부터 차례로 */
+  lines: string[];
+  /** 신체 정보를 다 넣으면 되는 정확도 · 더 넣을 정보가 없으면 null (그때는 운동 끝 얼굴 인식 안내) */
+  target: number | null;
+}
+
+export function accuracyNote(name: string | null | undefined, acc: Accuracy): AccuracyNote {
+  const who = name?.trim() ? `${name.trim()}님` : "회원님";
+  const first = `${who}, 지금 정확도는 ${acc.pct}%예요`;
+  if (!acc.missing.length) {
+    return { lines: [first, "운동이 끝나면 얼굴 인식을 한 번 더 해 주세요", "실제 운동 시간으로 계산해서 더 정확해져요"], target: null };
+  }
+  const target = Math.min(100, acc.pct + acc.missing.reduce((s, m) => s + (m.max - m.points), 0));
+  const labels = acc.missing.map((m) => m.label);
+  const what =
+    labels.length <= 3 ? `${labels.join(" · ")}${eulReul(labels[labels.length - 1])}` : `${labels[0]} · ${labels[1]} 등 ${labels.length}가지를`;
+  return { lines: [first, `${what} 넣으면 ${target}%까지 올라가요`, `${acc.missing[0].hint}. 30초면 끝나요!`], target };
+}
+
 /* ───────────── 입력 확인 ───────────── */
 
 /** 출생 연도 입력 — 빈칸 null · 숫자 4자리가 아니면 NaN */

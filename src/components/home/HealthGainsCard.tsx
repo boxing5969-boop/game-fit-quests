@@ -12,6 +12,9 @@
  *     · 막대마다 붙던 설명 · '한 번 올 때마다' 줄 · 정확도 칸은 '계산 방법' 안으로 접었다 (정확도는 머리의 칩)
  *     · 응원 한 줄은 '이번 주' 카드로 옮겼다 (같은 문장이 두 번 나오지 않게)
  *     · 홈에서는 뺐다 — 홈 '내 운동' 카드가 이번 달 펀치 · 칼로리를 한 줄로 보여 주고, 자세히는 '내 운동 기록'(여기)
+ *   2026-10-28 대표님 "정확도 80% 이라고만 표기되어있어서 사람들이 정보입력해야하는건지 모를것같아 — 버튼에 홀로그램 임펙트 효과 ·
+ *     클릭해서 정보입력하라는 카톡 메시지 같이 팝업": 넣을 정보가 남았으면 정확도 칩이 홀로그램(index.css holo-chip) + 안 읽은 '1'
+ *     → 누르면 오삼코치 카톡 메시지(BodyInfoCoachNote) → '지금 넣기' = 내 신체 정보. '1'은 남은 정보가 바뀔 때까지 이 기기에서 한 번만.
  *   숫자는 lib/healthGains153(효과 · 피드백) · lib/fitnessProfile153(정확도 · 남녀 평균) · lib/achievement153(펀치 · 칼로리) 한 곳.
  *   앱이 몸을 직접 재지 않으므로 '연구 평균으로 추정'을 늘 같이 쓰고, 153 PB · 인바디처럼 실제로 잰 기록이 있으면 그걸 먼저 보여 준다.
  *   잘한 것만 — 줄어든 것 · 손해 · 진단 · 의료 표현은 쓰지 않는다.
@@ -24,7 +27,7 @@ import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
 import { useMyBodyInfo, useMyFitnessExtra } from "@/hooks/useMyBodyInfo";
 import { bodyInfoEmpty, weightLost } from "@/lib/achievement153";
 import { kstToday } from "@/lib/attendanceCheer";
-import { bodyFatDrop, reportAccuracy, weightBasis } from "@/lib/fitnessProfile153";
+import { accuracyNote, bodyFatDrop, reportAccuracy, weightBasis } from "@/lib/fitnessProfile153";
 import {
   BODY_FAT_MAX_PP,
   CARDIO_MAX_PCT,
@@ -45,8 +48,25 @@ import {
 } from "@/lib/healthGains153";
 import { fetchTest153Summary } from "@/services/test153Service";
 import BodyInfoSheet from "@/components/profile/BodyInfoSheet";
-import BodyInfoInvite from "@/components/profile/BodyInfoInvite";
+import BodyInfoInvite, { BodyInfoCoachNote } from "@/components/profile/BodyInfoInvite";
 import { cn } from "@/lib/utils";
+
+/** 오삼코치 메시지를 읽었나 — 그때 남아 있던 정보(몸무게,나이 …)를 이 기기에 남긴다. 남은 정보가 바뀌면 다시 '1' */
+const noteSeenKey = (uid: string | undefined) => `153.accuracyNoteSeen:${uid ?? "anon"}`;
+const readNoteSeen = (uid: string | undefined): string | null => {
+  try {
+    return localStorage.getItem(noteSeenKey(uid));
+  } catch {
+    return null;
+  }
+};
+const writeNoteSeen = (uid: string | undefined, sig: string) => {
+  try {
+    localStorage.setItem(noteSeenKey(uid), sig);
+  } catch {
+    /* 저장이 막힌 기기 — '1'이 다시 보일 뿐 */
+  }
+};
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 /** 칸이 좁은 큰 숫자 — 1만 넘으면 '3.1만' (내림) */
@@ -100,7 +120,7 @@ const GainBar = ({ label, value, ratio, measured }: { label: string; value: stri
 };
 
 const HealthGainsCard = ({ className }: { className?: string }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data, isLoading, isError } = useAttendanceHistory(null);
   const { data: body } = useMyBodyInfo();
   const { data: extra } = useMyFitnessExtra();
@@ -114,6 +134,8 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
   });
   const [howOpen, setHowOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [, setSeenTick] = useState(0); // 읽음을 남긴 뒤 '1'을 바로 지우려고 다시 그린다
 
   // 불러오는 중 · 실패는 위 요약 카드가 알려 준다 — 여기는 조용히 둔다
   if (isLoading || isError || !data) return null;
@@ -144,6 +166,22 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
     weightKg: body?.weightKg,
     bodyFatPct: extra?.bodyFatPct,
   });
+  // 정확도 칩 — 넣을 정보가 남았으면 홀로그램 + 안 읽은 '1' · 누르면 오삼코치 메시지 (100%면 바로 내 신체 정보)
+  const note = accuracyNote(profile?.nickname || profile?.name, acc);
+  const canRaise = note.target != null;
+  const noteSig = acc.missing.map((m) => m.key).join(",");
+  const unread = canRaise && readNoteSeen(user?.id) !== noteSig;
+  const openNote = () => {
+    if (acc.pct >= 100) {
+      setSheetOpen(true);
+      return;
+    }
+    if (canRaise) {
+      writeNoteSeen(user?.id, noteSig);
+      setSeenTick((t) => t + 1);
+    }
+    setNoteOpen(true);
+  };
   const fatDrop = bodyFatDrop(extra);
   // 태운 지방 — 1kg 아래는 g 으로 (첫 운동 전이면 한 번 올 때 기준)
   const fatKg = has ? totals.kcal / KCAL_PER_FAT_KG : per.kcal / KCAL_PER_FAT_KG;
@@ -155,12 +193,34 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
         <h3 className="min-w-0 truncate text-heading text-foreground">153과 함께하며</h3>
         <button
           type="button"
-          onClick={() => setSheetOpen(true)}
-          className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-label font-bold tabular-nums text-foreground active:scale-95"
-          aria-label={`정확도 ${acc.pct}% — 내 정보 넣기`}
+          onClick={openNote}
+          aria-haspopup={acc.pct >= 100 ? undefined : "dialog"}
+          aria-label={
+            canRaise
+              ? `정확도 ${acc.pct}% — 올리는 법 보기${unread ? " (새 메시지)" : ""}`
+              : acc.pct >= 100
+                ? `정확도 ${acc.pct}% — 내 정보 보기`
+                : `정확도 ${acc.pct}% — 더 정확해지는 법 보기`
+          }
+          className="relative shrink-0 rounded-full transition-transform active:scale-95"
         >
-          <Gauge className="h-4 w-4 text-primary" aria-hidden />
-          정확도 {acc.pct}%
+          <span
+            className={cn(
+              "flex items-center gap-1 rounded-full px-3 py-1.5 text-label font-bold tabular-nums",
+              canRaise ? "holo-chip" : "bg-muted text-foreground",
+            )}
+          >
+            <Gauge className={cn("h-4 w-4", canRaise ? "text-violet-600" : "text-primary")} aria-hidden />
+            정확도 {acc.pct}%
+          </span>
+          {unread && (
+            <span
+              aria-hidden
+              className="absolute -right-1.5 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#FF3B30] px-1 text-micro font-bold leading-none text-white ring-2 ring-card"
+            >
+              1
+            </span>
+          )}
         </button>
       </div>
 
@@ -278,6 +338,15 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
         </ul>
       )}
 
+      <BodyInfoCoachNote
+        open={noteOpen}
+        note={note}
+        onClose={() => setNoteOpen(false)}
+        onFill={() => {
+          setNoteOpen(false);
+          setSheetOpen(true);
+        }}
+      />
       <BodyInfoSheet open={sheetOpen} onOpenChange={setSheetOpen} current={body ?? null} />
     </section>
   );
