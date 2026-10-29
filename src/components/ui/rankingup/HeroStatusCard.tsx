@@ -68,7 +68,7 @@ export const HeroStatusCard = ({
 }: HeroStatusCardProps) => {
   const streakText =
     streakLabel ??
-    (streakDays && streakDays > 0 ? `${streakDays}일 연속 출석 중` : null);
+    (streakDays && streakDays > 0 ? `출석 ${streakDays}일` : null);
 
   // 클릭 이펙트 상태 — 같은 애니메이션이 겹치지 않게 debounce.
   const [burst, setBurst] = useState<{ id: number; particles: BurstParticle[] } | null>(null);

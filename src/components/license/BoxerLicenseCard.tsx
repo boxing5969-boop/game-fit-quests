@@ -22,7 +22,7 @@
 
 import MedalMark from "@/components/MedalMark";
 import { motion } from "framer-motion";
-import { Camera, Crown, Flame, Heart, PenLine } from "lucide-react";
+import { CalendarCheck, Camera, Crown, Heart, PenLine } from "lucide-react";
 import type { ReactNode } from "react";
 import { STAFF_CHAMPION_LEVEL } from "@/lib/staffDisplay";
 import LeagueBadge from "@/components/badges/LeagueBadge";
@@ -150,7 +150,7 @@ export interface BoxerLicenseCardProps {
   userId?: string;
   /** 가입일/발급일 ISO 문자열 (profile.created_at 등) */
   issueDate?: string | null;
-  /** 연속 출석일 */
+  /** 출석 체크한 날 수 — member_progress.streak_days 는 누적이다(연속 아님, 2026-10-29) */
   streakDays?: number;
   /** XP (현재) */
   totalXp?: number;
@@ -718,14 +718,14 @@ const BoxerLicenseCard = ({
             </div>
             )}
 
-            {/* 메타 정보 (연속일 / 운동시간) — 지도진은 연속 출석을 세지 않는다 */}
+            {/* 메타 정보 (출석일 / 운동시간) — 지도진은 출석일을 세지 않는다 */}
             {!staff && (cfg.showStreak || elapsedMinutes !== undefined) && size !== "compact" && (
               <div className={`mt-2 flex flex-wrap items-center gap-2 ${cfg.metaText}`}>
                 {streakDays > 0 && cfg.showStreak && (
                   <span className="inline-flex items-center gap-1 text-orange-300">
-                    <Flame className="h-3 w-3" />
+                    <CalendarCheck className="h-3 w-3" />
                     <span className="number-font tabular-nums font-black">
-                      {streakDays}일 연속
+                      출석 {streakDays}일
                     </span>
                   </span>
                 )}

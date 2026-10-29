@@ -287,7 +287,7 @@ function buildPersonalContext(profile: any, progress: any, recentRejections: any
     lines.push(`- 닉네임: ${profile.nickname || profile.name}`);
     lines.push(`- 리그: ${rankLabel} 리그 · 레벨 ${progress.current_level} (총 XP: ${progress.total_xp})`);
     lines.push(`- 타이틀매치 통과: ${progress.bosses_cleared}회`);
-    lines.push(`- 연속 출석: ${progress.streak_days}일`);
+    lines.push(`- 출석 체크한 날(누적 · 연속 아님): ${progress.streak_days}일`);
     if (progress.current_level === 10) {
       lines.push(`- ⚡ 현재 레벨 10! 타이틀매치를 통과하면 다음 리그로 올라갈 수 있습니다`);
     }

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import type { MyRankingPositions } from "@/lib/rankingHelp";
 
 interface RankedMember {
   r_user_id: string;
@@ -148,7 +149,9 @@ export const useMonthlyRisers = (
     queryKey: ["monthly-risers", effective, limit],
     enabled: branchOverride !== undefined || !!profile?.branch_name,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_monthly_risers", {
+      // v2 (2026-10-29): 코치님 · 테스트 계정 빼기 + 이번 달 = 한국 1일 0시부터 (예전 것은 1일 오전 9시 · 코치님 포함)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("get_monthly_risers_v2", {
         _branch_name: effective as unknown as string,
         _limit: limit,
       });
@@ -280,6 +283,26 @@ export const useBranchesList = () => {
       return ((data || []) as { id: string; name: string; is_visible?: boolean }[])
         .filter((b) => b.is_visible !== false)
         .map((b) => ({ id: b.id, name: b.name }));
+    },
+  });
+};
+
+/**
+ * '내 순위' 카드 — 칩 5개마다 내 순위 · 바로 앞 사람 값 (get_my_ranking_positions, 2026-10-29).
+ * 예전엔 '전체' 50명 안에 들어야만 보였다. 코치님 · 운영진 · 테스트 계정은 {eligible:false}.
+ * 목록과 같은 캐시 키 갈래로 묶어 두어, 순위 목록을 새로 읽을 때 같이 새로 읽게 한다.
+ */
+export const useMyRankingPositions = (enabled = true) => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["my-ranking-positions", user?.id],
+    enabled: enabled && !!user?.id,
+    staleTime: 60_000,
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("get_my_ranking_positions", {});
+      if (error) throw error;
+      return (data ?? null) as MyRankingPositions | null;
     },
   });
 };

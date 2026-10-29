@@ -439,7 +439,7 @@ const MemberDetailPage = () => {
           <MiniStat label="총 XP" value={prog.total_xp.toLocaleString()} />
           {canAttendance
             ? <MiniStat label="총 운동" value={attHist.data ? `${minutesToHours(attHist.data.totalMinutes)}시간` : "…"} />
-            : <MiniStat label="연속일" value={`${prog.streak_days}일`} />}
+            : <MiniStat label="출석일" value={`${prog.streak_days}일`} />}
           {isStaffProfile(p)
             ? <MiniStat label={STAFF_CHAMPION_LABEL} value={`Lv.${STAFF_CHAMPION_LEVEL}`} />
             : <MiniStat label="진행" value={`${globalLevel}/40`} />}

@@ -459,7 +459,7 @@ const ReviewCard = ({ member, busy, onDecide }: {
       {/* Metrics — 서버 실측치 */}
       <div className="mb-3 grid grid-cols-4 gap-1.5">
         <MiniMetric label="총 XP" value={member.totalXp.toLocaleString()} />
-        <MiniMetric label="연속출석" value={`${member.streakDays}일`} />
+        <MiniMetric label="출석일" value={`${member.streakDays}일`} />
         <MiniMetric label="30일 출석" value={`${member.days30}일`} />
         <MiniMetric label="보스" value={`${member.bossesCleared}회`} />
       </div>
