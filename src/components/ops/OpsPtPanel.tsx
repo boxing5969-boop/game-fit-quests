@@ -69,12 +69,17 @@ const OpsPtPanel = ({
   summary,
   events,
   manage,
+  showPay,
 }: {
   summary: OpsPtSummary;
   /** 이 코치의 이번 달 차감 기록 (최근 먼저) */
   events: OpsPtEvent[];
+  /** 고치기(빼기 · 확인할 것) — 대표님 · 지점장 */
   manage: boolean;
+  /** 금액 — 대표님 · 회계매니저 · 그 코치 본인만 (2026-10-29 "다른 코치 버는 돈은 못 보게") */
+  showPay: boolean;
 }) => {
+  const money = showPay && summary.gross != null;
   const set = useOpsPtEventSet();
   const tax = summary.gross != null ? withholding33(summary.gross) : null;
   const toggle = (e: OpsPtEvent) =>
@@ -85,23 +90,23 @@ const OpsPtPanel = ({
 
   return (
     <div>
-      <div className={cn("grid gap-2", manage ? "grid-cols-2" : "grid-cols-1")}>
+      <div className={cn("grid gap-2", money ? "grid-cols-2" : "grid-cols-1")}>
         <div className="rounded-2xl border border-border p-4">
           <p className="text-label text-muted-foreground">이번 달 PT</p>
           <p className="mt-0.5 text-title font-black tabular-nums text-foreground">{summary.uses}회</p>
           <p className="text-label text-muted-foreground">회원 {summary.members.filter((m) => m.usedThisMonth > 0).length}명</p>
         </div>
-        {manage && (
+        {money && (
           <div className="rounded-2xl border border-border p-4">
-            <p className="text-label text-muted-foreground">PT 수당</p>
+            <p className="text-label text-muted-foreground">{manage ? "PT 수당" : "내 PT 수당"}</p>
             <p className="mt-1.5 whitespace-nowrap text-heading font-black tabular-nums text-foreground">{fmtWon(summary.gross ?? 0)}</p>
             <p className="text-label text-muted-foreground">3.3% 떼면 {fmtWon(tax?.net ?? 0)}</p>
           </div>
         )}
       </div>
-      {manage && summary.unpriced > 0 && (
+      {money && summary.unpriced > 0 && (
         <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-label font-bold text-amber-800">
-          수당표에 없는 수업권 {summary.unpriced}회 — 금액을 정해 주세요
+          {manage ? `수당표에 없는 수업권 ${summary.unpriced}회 — 금액을 정해 주세요` : `수당표에 없는 수업권 ${summary.unpriced}회 — 대표님이 금액을 정하면 더해져요`}
         </p>
       )}
 
@@ -133,7 +138,7 @@ const OpsPtPanel = ({
               </div>
               <div className="shrink-0 text-right">
                 <p className="text-body font-black tabular-nums text-foreground">{m.usedThisMonth > 0 ? `${m.usedThisMonth}회` : "—"}</p>
-                {manage && m.pay != null && m.pay > 0 && <p className="text-label tabular-nums text-muted-foreground">{fmtWon(m.pay)}</p>}
+                {money && m.pay != null && m.pay > 0 && <p className="text-label tabular-nums text-muted-foreground">{fmtWon(m.pay)}</p>}
               </div>
             </li>
           ))}

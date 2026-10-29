@@ -1,6 +1,8 @@
 /**
  * 153운영본부 · 근무 — 근무자 카드 (지점장 · 대표님 · 회계매니저)
  *   정보(형태 · 시급 · 앱 계정 · 기간 · 출근 확인) · 시간표(요일마다 구간 여러 개, 고른 날부터) · 이번 달(날짜를 누르면 고치기)
+ *   시급 · 월급 · 기본급은 대표님 · 회계매니저만(canPay) — 지점장은 급여 칸 없이 저장하고, 서버도 급여를 그대로 둔다 (2026-10-29).
+ *   본인 카드는 서버가 본인 금액을 보내 주므로 기본급이 보인다.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Plus, Trash2 } from "lucide-react";
@@ -32,6 +34,8 @@ interface Props {
   staff: OpsStaff | null; // null = 새 근무자
   rules: OpsRule[];
   summary: OpsMonthSummary | null;
+  /** 시급 · 월급을 보고 고치는가 — 대표님 · 회계매니저 */
+  canPay: boolean;
   onPickDay: (day: OpsDay) => void;
   /** PT 위탁 코치면 PT 탭 내용 (2026-10-29) */
   ptPanel?: ReactNode;
@@ -48,7 +52,7 @@ interface SegDraft {
   end: string;
 }
 
-const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, onPickDay, ptPanel }: Props) => {
+const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, canPay, onPickDay, ptPanel }: Props) => {
   const isNew = !staff;
   const today = kstToday();
   const [tab, setTab] = useState<Tab>("info");
@@ -168,19 +172,21 @@ const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, onPickDay
 
       {tab === "month" && summary && (
         <>
-          <div className="grid grid-cols-2 gap-2">
+          <div className={cn("grid gap-2", canPay || summary.basePay != null ? "grid-cols-2" : "grid-cols-1")}>
             <div className="rounded-2xl border border-border p-4">
               <p className="text-label text-muted-foreground">인정 시간</p>
               <p className="mt-0.5 text-title font-black tabular-nums text-foreground">{fmtHours(summary.creditedMin)}시간</p>
               <p className="text-label text-muted-foreground">근무 {summary.workDays}일</p>
             </div>
-            <div className="rounded-2xl border border-border p-4">
-              <p className="text-label text-muted-foreground">기본급</p>
-              <p className="mt-1.5 whitespace-nowrap text-heading font-black tabular-nums text-foreground">
-                {summary.basePay == null ? "—" : fmtWon(summary.basePay)}
-              </p>
-              <p className="text-label text-muted-foreground">주휴 · 공제 전</p>
-            </div>
+            {(canPay || summary.basePay != null) && (
+              <div className="rounded-2xl border border-border p-4">
+                <p className="text-label text-muted-foreground">기본급</p>
+                <p className="mt-1.5 whitespace-nowrap text-heading font-black tabular-nums text-foreground">
+                  {summary.basePay == null ? "—" : fmtWon(summary.basePay)}
+                </p>
+                <p className="text-label text-muted-foreground">주휴 · 공제 전</p>
+              </div>
+            )}
           </div>
           {notices.length > 0 && (
             <ul className="mt-2 space-y-1">
@@ -319,7 +325,19 @@ const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, onPickDay
             </p>
           )}
 
-          {form.kind !== "volunteer" && (
+          {form.kind !== "volunteer" && !canPay && (
+            <>
+              <OpsLabel>급여</OpsLabel>
+              <p className="rounded-xl bg-secondary/60 px-3 py-2.5 text-label text-muted-foreground">
+                시급 · 월급은 대표님만 보고 넣어요{isNew ? " — 추가하면 대표님이 급여를 넣어요" : ""}
+              </p>
+              <label className="mt-3 flex items-center gap-2 text-body text-foreground">
+                <input type="checkbox" checked={form.pt_freelancer} onChange={(e) => set("pt_freelancer", e.target.checked)} className="h-5 w-5" />
+                PT는 프리랜서(3.3%)로 따로 해요
+              </label>
+            </>
+          )}
+          {form.kind !== "volunteer" && canPay && (
             <>
               <OpsLabel>급여 방식</OpsLabel>
               <div className="flex gap-1.5">

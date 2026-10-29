@@ -4,9 +4,12 @@
  *   관리(대표님 · 지정된 지점장 · 회계매니저 — 서버 _ops_can_manage):
  *     지점 · 달 고르기 → 이번 달 인정 시간 합계(주인공) · 기본급 합계 → 확인할 것(연장 · 대타 승인, 출근 기록 없는 날, 시간표 밖 출근)
  *     → 근무자 목록(누르면 근무자 카드: 이번 달 · 시간표 · 정보) · 근무자 추가
- *   코치님(내 근무자 카드가 있는 분 — 시급은 서버가 안 보낸다):
- *     이번 달 내 근무 시간 · 얼굴 출근 안내 · 내 시간표 · (PT 위탁 코치) 내 PT 회원 · 날짜별(누르면 수업 대타 요청 · 연장 근무 신청) · 내 요청
- *   PT (2026-10-29): 브로제이 PT 차감 → 코치별 이번 달 PT · 회원별 남은 횟수 · 수당(관리자만) — OpsPtPanel · src/lib/opsPt.ts
+ *   돈(시급 · 월급 · 기본급 · PT 수당)은 대표님 · 회계매니저만(서버 _ops_can_see_pay → data.pay) — 지점장은 근무 관리만 하고
+ *     다른 사람 돈은 못 본다. 누구든 본인 카드 금액은 본다 (2026-10-29 대표님 "다른 코치님들 일하는 시간이랑 버는 돈 못 보게").
+ *   코치님(내 근무자 카드가 있는 분 — 서버가 본인 카드만 보낸다):
+ *     이번 달 내 근무 시간 · 내 예상 금액(공제 전) · 얼굴 출근 안내 · 내 시간표 · (PT 위탁 코치) 내 PT 회원 · 내 PT 수당
+ *     · 날짜별(누르면 수업 대타 요청 · 연장 근무 신청) · 내 요청
+ *   PT (2026-10-29): 브로제이 PT 차감 → 코치별 이번 달 PT · 회원별 남은 횟수 · 수당 — OpsPtPanel · src/lib/opsPt.ts
  *   계산은 src/lib/opsWork.ts 한 곳 — 서버는 자료만.
  */
 import { useEffect, useMemo, useState } from "react";
@@ -165,13 +168,16 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
   const ptCoaches = data.staff.filter((s) => s.pt_freelancer);
   const ptQ = useOpsPtMonth(data.branch, data.month, ptCoaches.length > 0);
   const pt = ptQ.data;
+  // 돈 = 대표님 · 회계매니저(data.pay). 예전 서버(pay 없음)는 관리자 = 돈
+  const canPay = data.pay ?? data.manage;
+  const ptPay = !!pt && (pt.pay ?? pt.manage) && canPay;
   const ptByCoach = useMemo(() => {
     const m = new Map<string, OpsPtSummary>();
     if (!pt) return m;
-    for (const c of ptCoaches) m.set(c.id, computePtMonth(pt.events, pt.members, pt.rates, c.id));
+    for (const c of ptCoaches) m.set(c.id, computePtMonth(pt.events, pt.members, ptPay ? pt.rates : null, c.id));
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pt, data.staff]);
+  }, [pt, data.staff, ptPay]);
   const ptGross = [...ptByCoach.values()].reduce((s, x) => s + (x.gross ?? 0), 0);
   const ptToCheck = pt ? pt.events.filter((e) => e.status === "check") : [];
 
@@ -212,9 +218,15 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
           {fmtHours(totalMin)}
           <span className="ml-1 text-heading">시간</span>
         </p>
-        <p className="mt-3 text-body font-bold tabular-nums text-foreground">기본급 {fmtWon(totalPay)}</p>
-        <p className="text-label text-muted-foreground">근무자 {active.length}명 · 주휴수당 · 공제 전</p>
-        {ptGross > 0 && (
+        {canPay ? (
+          <>
+            <p className="mt-3 text-body font-bold tabular-nums text-foreground">기본급 {fmtWon(totalPay)}</p>
+            <p className="text-label text-muted-foreground">근무자 {active.length}명 · 주휴수당 · 공제 전</p>
+          </>
+        ) : (
+          <p className="mt-3 text-label text-muted-foreground">근무자 {active.length}명 · 시급 · 급여는 대표님만 봐요</p>
+        )}
+        {canPay && ptGross > 0 && (
           <p className="mt-2 text-body font-bold tabular-nums text-foreground">
             PT 수당 {fmtWon(ptGross)} <span className="text-label font-normal text-muted-foreground">· 3.3% 전</span>
           </p>
@@ -342,15 +354,19 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
                       </p>
                       {s.pt_freelancer && ptByCoach.get(s.id) && (
                         <p className="mt-0.5 text-label font-bold tabular-nums text-primary">
-                          PT {ptByCoach.get(s.id)!.uses}회 · {fmtWon(ptByCoach.get(s.id)!.gross ?? 0)}
+                          PT {ptByCoach.get(s.id)!.uses}회
+                          {ptByCoach.get(s.id)!.gross != null ? ` · ${fmtWon(ptByCoach.get(s.id)!.gross ?? 0)}` : ""}
                         </p>
                       )}
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="text-body font-black tabular-nums text-foreground">{fmtHours(m?.creditedMin ?? 0)}시간</p>
-                      <p className="text-label tabular-nums text-muted-foreground">
-                        {m?.basePay == null ? "—" : s.pay_type === "none" ? "무급" : fmtWon(m.basePay)}
-                      </p>
+                      {/* 금액 — 돈을 보는 분이거나 본인 카드만 (지점장은 남의 시급을 받지 않아 basePay 가 비어 있다) */}
+                      {(canPay || m?.basePay != null) && (
+                        <p className="text-label tabular-nums text-muted-foreground">
+                          {m?.basePay == null ? "—" : s.pay_type === "none" ? "무급" : fmtWon(m.basePay)}
+                        </p>
+                      )}
                     </div>
                     <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                   </button>
@@ -391,6 +407,7 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
         staff={openStaff}
         rules={data.rules}
         summary={openStaff ? months.get(openStaff.id) ?? null : null}
+        canPay={canPay}
         onPickDay={(d) => openStaff && setDaySheet({ staffId: openStaff.id, date: d.date })}
         ptPanel={
           openStaff?.pt_freelancer && pt && ptByCoach.get(openStaff.id) ? (
@@ -398,6 +415,7 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
               summary={ptByCoach.get(openStaff.id)!}
               events={pt.events.filter((e) => e.coach_staff_id === openStaff.id)}
               manage
+              showPay={ptPay}
             />
           ) : undefined
         }
@@ -428,11 +446,12 @@ const CoachView = ({ data }: { data: OpsMonthData }) => {
   );
   const month = useMemo(() => (mine ? computeStaffMonth(mine, data.month, ctx) : null), [mine, data.month, ctx]);
   const [pick, setPick] = useState<string | null>(null);
-  // PT 위탁 코치 — 내 PT 회원 · 이번 달 차감 (금액은 관리자 화면에만)
+  // PT 위탁 코치 — 내 PT 회원 · 이번 달 차감 · 내 PT 수당(서버가 본인에게 수당표를 보낼 때만)
   const ptQ = useOpsPtMonth(data.branch, data.month, !!mine?.pt_freelancer);
+  const ptPay = !!ptQ.data?.pay && (ptQ.data?.rates.length ?? 0) > 0;
   const ptSummary = useMemo(
-    () => (ptQ.data && mine ? computePtMonth(ptQ.data.events, ptQ.data.members, null, mine.id) : null),
-    [ptQ.data, mine],
+    () => (ptQ.data && mine ? computePtMonth(ptQ.data.events, ptQ.data.members, ptPay ? ptQ.data.rates : null, mine.id) : null),
+    [ptQ.data, mine, ptPay],
   );
 
   if (!mine || !month) {
@@ -463,6 +482,18 @@ const CoachView = ({ data }: { data: OpsMonthData }) => {
           근무 {month.workDays}일{month.overtimeMin > 0 ? ` · 연장 ${fmtDuration(month.overtimeMin)}` : ""}
           {month.pending > 0 ? ` · 승인 대기 ${month.pending}` : ""}
         </p>
+        {/* 내 금액 — 본인 카드의 시급 · 월급만 서버가 보낸다 (2026-10-29 대표님 "본인 금액도 보여주기") */}
+        {month.basePay != null && mine.pay_type !== "none" && (
+          <div className="mt-3 rounded-xl bg-secondary/60 px-3 py-2.5">
+            <p className="text-body font-black tabular-nums text-foreground">
+              {mine.pay_type === "monthly" ? "월급" : "이번 달 예상"} {fmtWon(month.basePay)}
+            </p>
+            <p className="text-label text-muted-foreground">
+              {mine.pay_type === "hourly" && mine.hourly_wage ? `시급 ${fmtWon(mine.hourly_wage)} × 인정 시간 · ` : ""}
+              주휴 · 공제 전 · 확정은 월 마감 때
+            </p>
+          </div>
+        )}
       </section>
 
       {mine.checkin_required && (
@@ -489,7 +520,7 @@ const CoachView = ({ data }: { data: OpsMonthData }) => {
       {ptSummary && ptQ.data && (
         <section className={card}>
           <h2 className="mb-3 text-heading font-black text-foreground">PT</h2>
-          <OpsPtPanel summary={ptSummary} events={ptQ.data.events.filter((e) => e.coach_staff_id === mine.id)} manage={false} />
+          <OpsPtPanel summary={ptSummary} events={ptQ.data.events.filter((e) => e.coach_staff_id === mine.id)} manage={false} showPay={ptPay} />
         </section>
       )}
 

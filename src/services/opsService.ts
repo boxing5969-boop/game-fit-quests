@@ -33,6 +33,8 @@ export interface OpsMonthData {
   branch: string;
   month: string;
   manage: boolean;
+  /** 돈(시급 · 월급 · 합계)을 보는가 — 대표님 · 회계매니저만. 없으면(예전 서버) manage 와 같다 (2026-10-29) */
+  pay?: boolean;
   hq: boolean;
   today: string;
   now_hm: string;
@@ -174,10 +176,12 @@ export interface OpsPtMonthData {
   branch: string;
   month: string;
   manage: boolean;
+  /** 수당표(rates)를 받았는가 — 대표님 · 회계매니저 · PT 위탁 코치 본인 (2026-10-29) */
+  pay?: boolean;
   me_staff: string | null;
   members: OpsPtMember[];
   events: OpsPtEvent[];
-  /** 관리자만 — 코치 화면은 빈 배열 */
+  /** 대표님 · 회계매니저 · 그 코치 본인만 — 지점장 화면은 빈 배열 */
   rates: OpsPtRate[];
 }
 
