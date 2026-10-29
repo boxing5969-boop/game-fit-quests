@@ -446,7 +446,7 @@ begin
   if p_on then
     insert into public.ops_managers (user_id, branch_name, title, granted_by)
     values (p_user, nullif(p_branch, ''), coalesce(nullif(p_title, ''), '지점장'), v_uid)
-    on conflict (user_id, coalesce(branch_name, '*')) do update set title = excluded.title;
+    on conflict (user_id, (coalesce(branch_name, '*'))) do update set title = excluded.title;
   else
     delete from public.ops_managers where user_id = p_user and coalesce(branch_name, '*') = coalesce(nullif(p_branch, ''), '*');
   end if;
