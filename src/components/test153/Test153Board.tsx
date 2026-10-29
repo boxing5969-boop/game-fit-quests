@@ -49,7 +49,9 @@ const Point = ({ title, children }: { title: string; children: React.ReactNode }
   </li>
 );
 
-/** 시범 영상 — 누르면 재생 · 다시 누르면 멈춤 (무음 반복). preload none: 누르기 전엔 영상을 받지 않는다 */
+/** 시범 영상 — 누르면 재생 · 다시 누르면 멈춤 (무음 반복). preload none: 누르기 전엔 영상을 받지 않는다.
+ *  영상은 정사각(1080) — 위 56% 가 동작 화면(오른쪽 위 큰 횟수 카운터), 아래는 큰 글씨 안내 띠(이름·오픈/스타터·인정 기준).
+ *  오픈 기준 횟수를 끝까지 채운 영상이라 1~2분 — 재생 표시는 동작 화면 위에만 얹어 아래 글씨를 가리지 않는다. */
 const MoveVideo = ({ src, poster, name }: { src: string; poster: string; name: string }) => {
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -64,7 +66,7 @@ const MoveVideo = ({ src, poster, name }: { src: string; poster: string; name: s
       type="button"
       onClick={toggle}
       aria-label={`${name} 시범 영상 ${playing ? "멈추기" : "보기"}`}
-      className="relative mb-1.5 mt-2 block aspect-video w-full overflow-hidden rounded-lg bg-muted"
+      className="relative mb-1.5 mt-2 block aspect-square w-full overflow-hidden rounded-lg bg-muted"
     >
       <video
         ref={ref}
@@ -79,7 +81,7 @@ const MoveVideo = ({ src, poster, name }: { src: string; poster: string; name: s
         className="h-full w-full object-cover"
       />
       {!playing && (
-        <span className="absolute inset-0 flex items-center justify-center bg-black/15">
+        <span className="absolute inset-x-0 top-0 flex h-[56.3%] items-center justify-center bg-black/15">
           <span className="flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-label font-black text-[#191F28] shadow-md">
             <Play className="h-4 w-4 fill-current text-primary" /> 시범 영상
           </span>
