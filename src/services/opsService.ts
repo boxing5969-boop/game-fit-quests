@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
 import type { OpsCheckin, OpsEntry, OpsEntryKind, OpsKind, OpsPayType, OpsRule, OpsStaff } from "@/lib/opsWork";
+import type { OpsPtEvent, OpsPtMember, OpsPtRate, OpsPtStatus } from "@/lib/opsPt";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const rpc = (name: string, args?: Record<string, unknown>) => (supabase.rpc as any)(name, args);
@@ -164,6 +165,51 @@ export const useOpsEntryCancel = () => {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (id: string) => call<void>("ops_entry_cancel", { p_id: id }, "취소하지 못했어요"),
+    onSuccess: invalidate,
+  });
+};
+
+// ───────── PT (2026-10-29, DB 20261029130027_ops_pt.sql) ─────────
+export interface OpsPtMonthData {
+  branch: string;
+  month: string;
+  manage: boolean;
+  me_staff: string | null;
+  members: OpsPtMember[];
+  events: OpsPtEvent[];
+  /** 관리자만 — 코치 화면은 빈 배열 */
+  rates: OpsPtRate[];
+}
+
+/** 관리자 또는 그 지점 PT 위탁 코치만 — 그 밖은 서버가 막는다(enabled 로 미리 거른다) */
+export const useOpsPtMonth = (branch: string | null, month: string, enabled = true) =>
+  useQuery({
+    queryKey: [...OPS_KEY, "pt", branch, month],
+    enabled: enabled && !!branch,
+    staleTime: 30_000,
+    retry: false,
+    queryFn: async (): Promise<OpsPtMonthData> => {
+      const d = await call<OpsPtMonthData>("ops_pt_month", { p_branch: branch, p_month: month }, "PT 자료를 불러오지 못했어요");
+      return { ...d, members: d?.members ?? [], events: d?.events ?? [], rates: d?.rates ?? [] };
+    },
+  });
+
+export const useOpsPtEventSet = () => {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (v: { id: string; status?: OpsPtStatus; coach_staff_id?: string | null; used?: number; work_date?: string; note?: string }) => {
+      const { id, ...p } = v;
+      return call<void>("ops_pt_event_set", { p_id: id, p }, "저장하지 못했어요");
+    },
+    onSuccess: invalidate,
+  });
+};
+
+export const useOpsPtEventAdd = () => {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (p: { branch: string; member_user_id?: string | null; member_name: string; ticket_name?: string | null; used: number; work_date: string; coach_staff_id?: string | null; note?: string }) =>
+      call<string>("ops_pt_event_add", { p }, "저장하지 못했어요"),
     onSuccess: invalidate,
   });
 };

@@ -2,7 +2,7 @@
  * 153운영본부 · 근무 — 근무자 카드 (지점장 · 대표님 · 회계매니저)
  *   정보(형태 · 시급 · 앱 계정 · 기간 · 출근 확인) · 시간표(요일마다 구간 여러 개, 고른 날부터) · 이번 달(날짜를 누르면 고치기)
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,9 +33,11 @@ interface Props {
   rules: OpsRule[];
   summary: OpsMonthSummary | null;
   onPickDay: (day: OpsDay) => void;
+  /** PT 위탁 코치면 PT 탭 내용 (2026-10-29) */
+  ptPanel?: ReactNode;
 }
 
-type Tab = "info" | "schedule" | "month";
+type Tab = "info" | "schedule" | "month" | "pt";
 const KINDS: OpsKind[] = ["parttime", "intern", "employee", "freelancer", "volunteer"];
 /** 월요일부터 */
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -46,7 +48,7 @@ interface SegDraft {
   end: string;
 }
 
-const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, onPickDay }: Props) => {
+const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, onPickDay, ptPanel }: Props) => {
   const isNew = !staff;
   const today = kstToday();
   const [tab, setTab] = useState<Tab>("info");
@@ -136,13 +138,14 @@ const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, onPickDay
       sub={isNew ? undefined : `${OPS_KIND_LABEL[staff!.kind]}${staff!.pay_type === "hourly" && staff!.hourly_wage ? ` · 시급 ${fmtWon(staff!.hourly_wage)}` : ""}`}
     >
       {!isNew && (
-        <div role="tablist" className="mb-4 grid grid-cols-3 gap-1 rounded-xl bg-secondary/70 p-1">
+        <div role="tablist" className={cn("mb-4 grid gap-1 rounded-xl bg-secondary/70 p-1", ptPanel ? "grid-cols-4" : "grid-cols-3")}>
           {(
             [
               { v: "month", label: "이번 달" },
+              ...(ptPanel ? [{ v: "pt", label: "PT" }] : []),
               { v: "schedule", label: "시간표" },
               { v: "info", label: "정보" },
-            ] as const
+            ] as Array<{ v: Tab; label: string }>
           ).map((t) => (
             <button
               key={t.v}
@@ -160,6 +163,8 @@ const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, onPickDay
           ))}
         </div>
       )}
+
+      {tab === "pt" && ptPanel}
 
       {tab === "month" && summary && (
         <>

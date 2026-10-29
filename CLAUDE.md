@@ -193,6 +193,17 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 적용 (2026-10-29 대표님 「승인할게」 — MCP 승인 창이 휴대폰에 안 떠 크롬 SQL 편집기로, GitHub 파일 sha256 확인 뒤): 표 5 · 함수 15. 첫 자료는 DB 에서만 넣음(저장소 밖) — 선릉 근무자 8 · 칠금 1 · 시간표(10/1부터) · 지점장 2(선릉 · 칠금). 시간표를 모르는 분은 비워 둠(지점장이 앱에서). 공휴일은 아직 자동이 아니다 — '쉰 날'로 고치거나 다음 단계 '지점 쉬는 날'.
 - 2단계(남은 일): 월 마감(1일~말일 확정) · 주휴수당 · 공제 · 임금명세서(코치님은 앱에서) · 세무 주임님께 매달 5일 문자(LMS 내려받기 링크) · 주민번호 · 계좌 암호화 저장 · 근로계약서 · 회계매니저 지정 화면.
 
+#### PT 관리 (2026-10-29 대표님 "PT도 관리하자 브로제이랑 연동해서 … PT를 소진하면 어떤 사람 PT를 했고 몇 회 남았는지 · 월급 정산할 때 같이")
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261029130027_ops_pt.sql](supabase/migrations/20261029130027_ops_pt.sql) | `ops_pt_rates`(지점 · 팀 정원 · 수업권 횟수 → 1회 수당, 금액은 DB 에만) · `ops_pt_events`(차감 기록) · profiles 트리거 `ops_pt_capture`(pt_remaining 이 같은 수업권에서 줄면 used, 수업권이 남은 채 사라지면 ended → 확인) · `ops_pt_month` · `ops_pt_event_set` · `ops_pt_event_add` |
+| [src/lib/opsPt.ts](src/lib/opsPt.ts) | 수업권 이름 → 1:1 · n인 팀 · 횟수 · 1회 수당(팀은 차감된 팀원 1명당 = 팀 1회 ÷ 정원) · 3.3%(소득세 3% · 지방세 = 소득세의 10%, 10원 미만 버림) |
+| [src/components/ops/OpsPtPanel.tsx](src/components/ops/OpsPtPanel.tsx) | 근무자 카드 'PT' 탭(관리자: 수당 · 확인 · 빼기) · 코치 화면 'PT'(보기만, 금액 없음) |
+
+- 원본: 브로제이 PT 수업권 → 153OS 워커(회원마다 하루~이틀에 한 번) → sync-pt-members(매시 40분) → `profiles.pt_remaining`. 차감 날짜 = 앱이 알아챈 날이라 하루 이틀 늦을 수 있다(관리자가 날짜를 고칠 수 있음). 적용 전 차감은 남아 있지 않다(그날부터 쌓임).
+- 담당 코치 = 그 지점 PT 위탁 코치(`ops_staff.pt_freelancer`)가 한 명이면 자동, 아니면 비워 둔다. PT 는 근로가 아니라 위탁(3.3%) — 계약서 개정판 양식 C(Claude Docs https://claude.ai/artifact/8PMewu4bGcPcQzsh8vTVph).
+
 ### 회원 화면 리디자인 — 글씨 6단계 · 화면 규칙 7가지 (2026-10-28 대표님 "위보고한 기준대로 전면 리 디자인하자 · 많이 바뀌어도 되니까 가장 이상적인 방향으로")
 
 근거: Claude Docs 보고서 「마이복서153 글 줄이기 · 글씨 키우기 UX 보고서」(https://claude.ai/artifact/9ixgXrsgaAuPvgcPKbdzV9) — 회원 화면 글씨의 46%가 12px 이하 · 크기 36가지 · 회색 작은 글씨 1,225곳 · 같은 숫자 반복.

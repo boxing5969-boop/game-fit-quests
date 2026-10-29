@@ -5,7 +5,8 @@
  *     지점 · 달 고르기 → 이번 달 인정 시간 합계(주인공) · 기본급 합계 → 확인할 것(연장 · 대타 승인, 출근 기록 없는 날, 시간표 밖 출근)
  *     → 근무자 목록(누르면 근무자 카드: 이번 달 · 시간표 · 정보) · 근무자 추가
  *   코치님(내 근무자 카드가 있는 분 — 시급은 서버가 안 보낸다):
- *     이번 달 내 근무 시간 · 얼굴 출근 안내 · 내 시간표 · 날짜별(누르면 수업 대타 요청 · 연장 근무 신청) · 내 요청
+ *     이번 달 내 근무 시간 · 얼굴 출근 안내 · 내 시간표 · (PT 위탁 코치) 내 PT 회원 · 날짜별(누르면 수업 대타 요청 · 연장 근무 신청) · 내 요청
+ *   PT (2026-10-29): 브로제이 PT 차감 → 코치별 이번 달 PT · 회원별 남은 횟수 · 수당(관리자만) — OpsPtPanel · src/lib/opsPt.ts
  *   계산은 src/lib/opsWork.ts 한 곳 — 서버는 자료만.
  */
 import { useEffect, useMemo, useState } from "react";
@@ -32,10 +33,13 @@ import {
   useOpsEntryCancel,
   useOpsEntryDecide,
   useOpsMonth,
+  useOpsPtMonth,
   type OpsMe,
   type OpsMonthData,
 } from "@/services/opsService";
+import { computePtMonth, type OpsPtSummary } from "@/lib/opsPt";
 import OpsDaySheet from "./OpsDaySheet";
+import OpsPtPanel, { PtCheckItem } from "./OpsPtPanel";
 import OpsStaffSheet from "./OpsStaffSheet";
 import { DayRow, MonthSwitcher, OpsChip, StatusPill, fmtDay, kstToday, monthOf } from "./OpsParts";
 
@@ -157,6 +161,20 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
   const [daySheet, setDaySheet] = useState<{ staffId: string; date: string } | null>(null);
   const [showAll, setShowAll] = useState(false);
 
+  // PT — 브로제이 차감 기록 → 코치별 수당 (2026-10-29). PT 위탁 코치가 있는 지점만 읽는다
+  const ptCoaches = data.staff.filter((s) => s.pt_freelancer);
+  const ptQ = useOpsPtMonth(data.branch, data.month, ptCoaches.length > 0);
+  const pt = ptQ.data;
+  const ptByCoach = useMemo(() => {
+    const m = new Map<string, OpsPtSummary>();
+    if (!pt) return m;
+    for (const c of ptCoaches) m.set(c.id, computePtMonth(pt.events, pt.members, pt.rates, c.id));
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pt, data.staff]);
+  const ptGross = [...ptByCoach.values()].reduce((s, x) => s + (x.gross ?? 0), 0);
+  const ptToCheck = pt ? pt.events.filter((e) => e.status === "check") : [];
+
   const active = data.staff.filter((s) => s.active);
   const gone = data.staff.filter((s) => !s.active);
   const totalMin = active.reduce((s, x) => s + (months.get(x.id)?.creditedMin ?? 0), 0);
@@ -196,12 +214,24 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
         </p>
         <p className="mt-3 text-body font-bold tabular-nums text-foreground">기본급 {fmtWon(totalPay)}</p>
         <p className="text-label text-muted-foreground">근무자 {active.length}명 · 주휴수당 · 공제 전</p>
+        {ptGross > 0 && (
+          <p className="mt-2 text-body font-bold tabular-nums text-foreground">
+            PT 수당 {fmtWon(ptGross)} <span className="text-label font-normal text-muted-foreground">· 3.3% 전</span>
+          </p>
+        )}
       </section>
 
       {/* 확인할 것 */}
-      {(pending.length > 0 || flags.length > 0) && (
+      {(pending.length > 0 || flags.length > 0 || ptToCheck.length > 0) && (
         <section className={card}>
           <h2 className="text-heading font-black text-foreground">확인할 것</h2>
+          {ptToCheck.length > 0 && (
+            <ul className="mt-3 space-y-2">
+              {ptToCheck.map((e) => (
+                <PtCheckItem key={e.id} e={e} />
+              ))}
+            </ul>
+          )}
           {pending.length > 0 && (
             <ul className="mt-3 space-y-2">
               {pending.map((e) => {
@@ -310,6 +340,11 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
                         {(m?.missing ?? 0) > 0 && <span className="font-bold text-destructive">출근 없음 {m!.missing}일 · </span>}
                         {sched || "시간표를 넣어 주세요"}
                       </p>
+                      {s.pt_freelancer && ptByCoach.get(s.id) && (
+                        <p className="mt-0.5 text-label font-bold tabular-nums text-primary">
+                          PT {ptByCoach.get(s.id)!.uses}회 · {fmtWon(ptByCoach.get(s.id)!.gross ?? 0)}
+                        </p>
+                      )}
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="text-body font-black tabular-nums text-foreground">{fmtHours(m?.creditedMin ?? 0)}시간</p>
@@ -357,6 +392,15 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
         rules={data.rules}
         summary={openStaff ? months.get(openStaff.id) ?? null : null}
         onPickDay={(d) => openStaff && setDaySheet({ staffId: openStaff.id, date: d.date })}
+        ptPanel={
+          openStaff?.pt_freelancer && pt && ptByCoach.get(openStaff.id) ? (
+            <OpsPtPanel
+              summary={ptByCoach.get(openStaff.id)!}
+              events={pt.events.filter((e) => e.coach_staff_id === openStaff.id)}
+              manage
+            />
+          ) : undefined
+        }
       />
       <OpsDaySheet
         open={!!dayObj}
@@ -384,6 +428,12 @@ const CoachView = ({ data }: { data: OpsMonthData }) => {
   );
   const month = useMemo(() => (mine ? computeStaffMonth(mine, data.month, ctx) : null), [mine, data.month, ctx]);
   const [pick, setPick] = useState<string | null>(null);
+  // PT 위탁 코치 — 내 PT 회원 · 이번 달 차감 (금액은 관리자 화면에만)
+  const ptQ = useOpsPtMonth(data.branch, data.month, !!mine?.pt_freelancer);
+  const ptSummary = useMemo(
+    () => (ptQ.data && mine ? computePtMonth(ptQ.data.events, ptQ.data.members, null, mine.id) : null),
+    [ptQ.data, mine],
+  );
 
   if (!mine || !month) {
     return (
@@ -435,6 +485,13 @@ const CoachView = ({ data }: { data: OpsMonthData }) => {
         <h2 className="text-heading font-black text-foreground">내 시간표</h2>
         <p className="mt-1 text-body text-foreground">{sched || "아직 시간표가 없어요 — 지점장님이 넣어 줘요"}</p>
       </section>
+
+      {ptSummary && ptQ.data && (
+        <section className={card}>
+          <h2 className="mb-3 text-heading font-black text-foreground">PT</h2>
+          <OpsPtPanel summary={ptSummary} events={ptQ.data.events.filter((e) => e.coach_staff_id === mine.id)} manage={false} />
+        </section>
+      )}
 
       <section className="overflow-hidden rounded-2xl border border-border bg-card">
         <div className="px-5 pb-2 pt-5">
