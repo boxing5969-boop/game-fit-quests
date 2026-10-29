@@ -367,12 +367,12 @@ const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, onPickDay
           </div>
 
           <OpsLabel>메모 (관리자만)</OpsLabel>
-          <input value={form.note ?? ""} onChange={(e) => set("note", e.target.value.slice(0, 300))} className={opsInput} placeholder="예: 11월 30일까지 근무" />
+          <input value={form.note ?? ""} onChange={(e) => set("note", e.target.value.slice(0, 300))} className={opsInput} placeholder="예: 군 복무 중 · 12월 복귀" />
 
           {!isNew && (
             <label className="mt-3 flex items-center gap-2 text-body text-foreground">
               <input type="checkbox" checked={!form.active} onChange={(e) => set("active", !e.target.checked)} className="h-5 w-5" />
-              그만둔 근무자 (목록에서 아래로)
+              지금 근무 안 함 (군 복무 · 휴직 · 퇴사 — 사유는 메모 맨 앞에)
             </label>
           )}
 

@@ -326,17 +326,21 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
         )}
         {gone.length > 0 && (
           <details className="border-t border-border/70">
-            <summary className="cursor-pointer px-5 py-3 text-label font-bold text-muted-foreground">그만둔 근무자 {gone.length}명</summary>
+            <summary className="cursor-pointer px-5 py-3 text-label font-bold text-muted-foreground">지금 근무 안 함 {gone.length}명</summary>
             <ul className="divide-y divide-border/70">
               {gone.map((s) => (
                 <li key={s.id}>
                   <button
                     type="button"
                     onClick={() => setStaffSheet({ staff: s })}
-                    className="flex w-full items-center justify-between px-5 py-3 text-left active:bg-secondary/60"
+                    className="flex w-full items-center gap-3 px-5 py-3 text-left active:bg-secondary/60"
                   >
-                    <span className="text-body text-muted-foreground">{s.name}</span>
-                    <span className="text-label tabular-nums text-muted-foreground">{fmtHours(months.get(s.id)?.creditedMin ?? 0)}시간</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-body font-bold text-foreground">{s.name}</p>
+                      {/* 사유(군 복무 · 휴직 · 퇴사)는 메모 첫머리 — '그만둠'으로 단정하지 않는다 (2026-10-29 대표님) */}
+                      {s.note && <p className="truncate text-label text-muted-foreground">{s.note}</p>}
+                    </div>
+                    <span className="shrink-0 text-label tabular-nums text-muted-foreground">{fmtHours(months.get(s.id)?.creditedMin ?? 0)}시간</span>
                   </button>
                 </li>
               ))}
