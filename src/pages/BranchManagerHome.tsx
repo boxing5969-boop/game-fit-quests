@@ -796,7 +796,7 @@ const BranchManagerHome = () => {
         >
           <span className="text-2xl">🧠</span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-black text-foreground">지점 회의실 · 전략 회의</span>
+            <span className="block text-sm font-black text-foreground">153운영본부 · 전략 회의</span>
             <span className="block text-xs text-muted-foreground">코치진 지시·운영 원칙 · 오늘 프로그램 · 수업 기록 · 드릴 영상</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />

@@ -329,7 +329,7 @@ const OfficeRoomPage = () => {
             <ChevronLeft className="h-5 w-5 text-secondary-foreground" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[15.5px] font-black leading-tight text-foreground">{meeting?.title ?? "지점 회의실"}</p>
+            <p className="truncate text-[15.5px] font-black leading-tight text-foreground">{meeting?.title ?? "지점 회의"}</p>
             <p className="truncate text-[11.5px] font-semibold text-muted-foreground">
               {state?.label ?? ""}
               {meeting

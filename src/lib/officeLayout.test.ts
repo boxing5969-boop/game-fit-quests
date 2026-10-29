@@ -46,6 +46,11 @@ describe("전체 메뉴 — 지점 회의실 칸", () => {
     expect(paths.filter((p) => p === "/office")).toHaveLength(1);
   });
 
+  it("이름은 153운영본부 (2026-10-29)", () => {
+    const office = flatAppMenu({ diet: false, staff: true, office: true }).find((m) => m.path === "/office");
+    expect(office?.label).toBe("153운영본부");
+  });
+
   it("MY복서 바로 다음 칸이다", () => {
     const entries = buildAppMenu({ diet: false, staff: true, office: true });
     const idx = entries.findIndex((e) => "path" in e && e.path === "/myboxer");

@@ -16,6 +16,10 @@
  *   · /office?tab=strategy — 예전 주소 /messages?tab=strategy(서버 알림 링크)는 MessagesPage 가 여기로 넘긴다
  *   · 사무실이 아직 안 켜진 지점(office_me 에 없음)의 코치님은 전략 회의만 — 전체 메뉴 '지점 회의실' 칸은 코치진 모두에게
  *   · 서버(office_* · strategy_*)는 그대로 — 화면 입구만 하나로
+ *
+ *   153운영본부 (2026-10-29 대표님 "지점 회의실이란 이름 153운영본부라고 이름 바꾸고 … 근무 출석 출결 근태 … 시급 자동계산"):
+ *   · 이름 「지점 회의실」 → 「153운영본부」 · 탭 「근무」(?tab=work — OpsWorkTab: 선릉 · 칠금 근무자 · 시간표 · 이번 달 근무 · 대타 · 연장)
+ *   · 근무 탭은 서버 ops_me 가 정한다 — 관리(대표님 · 지정된 지점장 · 회계매니저) 또는 내 근무자 카드가 있는 분
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -29,6 +33,8 @@ import OfficeScene from "@/components/office/OfficeScene";
 import { MeetingSummaryCard, MinutesSheet, OpenMeetingSheet } from "@/components/office/OfficeMeeting";
 import { ScheduleSection } from "@/components/office/OfficeSchedule";
 import StrategyRoom from "@/components/strategy/StrategyRoom";
+import OpsWorkTab from "@/components/ops/OpsWorkTab";
+import { useOpsMe } from "@/services/opsService";
 import { useOfficeOnline } from "@/lib/officePresence";
 import { useStrategyBadge } from "@/services/strategyService";
 import {
@@ -47,7 +53,7 @@ import {
 
 const STATUSES: OfficeStatus[] = ["on", "class", "away"];
 
-type OfficeTab = "office" | "strategy";
+type OfficeTab = "office" | "strategy" | "work";
 
 const OfficePage = () => {
   const navigate = useNavigate();
@@ -62,6 +68,11 @@ const OfficePage = () => {
   const hasOffice = (officeMeQ.data?.offices.length ?? 0) > 0;
   const officeKnown = officeMeQ.isSuccess || officeMeQ.isError;
   const { data: strategyBadge = 0 } = useStrategyBadge(staff);
+  // 근무 탭 — 관리하는 지점이 있거나 내 근무자 카드가 있는 분 (서버 ops_me)
+  const opsMeQ = useOpsMe(staffKnown);
+  const opsMe = opsMeQ.data;
+  const hasWork = !!opsMe && (opsMe.manage.length > 0 || opsMe.mine.length > 0);
+  const opsKnown = opsMeQ.isSuccess || opsMeQ.isError;
 
   const [branch, setBranchState] = useState<string | null>(readOfficeBranch);
   const stateQ = useOfficeState(branch, hasOffice);
@@ -78,13 +89,20 @@ const OfficePage = () => {
     if (minutesParam && /^[0-9a-f-]{36}$/i.test(minutesParam)) setMinutesId(minutesParam);
   }, [minutesParam]);
 
-  // 탭 — ?tab=strategy 면 전략 회의. 사무실이 없는 지점 코치님은 늘 전략 회의
-  const tab: OfficeTab = params.get("tab") === "strategy" || (officeKnown && !hasOffice) ? "strategy" : "office";
+  // 탭 — ?tab=strategy 전략 회의 · ?tab=work 근무. 고른 탭이 없으면 사무실 → 전략 회의 → 근무 순서로
+  const tabs: Array<{ v: OfficeTab; label: string; badge: number }> = [
+    ...(hasOffice ? [{ v: "office" as const, label: "사무실", badge: 0 }] : []),
+    ...(staff ? [{ v: "strategy" as const, label: "전략 회의", badge: strategyBadge }] : []),
+    ...(hasWork ? [{ v: "work" as const, label: "근무", badge: 0 }] : []),
+  ];
+  const want = params.get("tab");
+  const wanted: OfficeTab = want === "strategy" ? "strategy" : want === "work" ? "work" : "office";
+  const tab: OfficeTab = tabs.some((t) => t.v === wanted) ? wanted : tabs[0]?.v ?? "strategy";
   const setTab = (t: OfficeTab) =>
     setParams(
       (p) => {
-        if (t === "strategy") p.set("tab", "strategy");
-        else p.delete("tab");
+        if (t === "office") p.delete("tab");
+        else p.set("tab", t);
         p.delete("minutes");
         return p;
       },
@@ -92,7 +110,7 @@ const OfficePage = () => {
     );
   // 회의록의 '확인하러 가기'(→ 전략 회의)로 탭이 바뀌면 열려 있던 회의록을 닫는다
   useEffect(() => {
-    if (tab === "strategy") setMinutesId(null);
+    if (tab !== "office") setMinutesId(null);
   }, [tab]);
   const closeMinutes = () => {
     setMinutesId(null);
@@ -134,9 +152,13 @@ const OfficePage = () => {
     <AppPage
       header={
         <PageHeader
-          title="지점 회의실"
+          title="153운영본부"
           subtitle={
-            tab === "office" && state ? `${state.label} · 지금 ${onlineCount}명 사무실에 있어요` : "코치님 · 지점장님 · 대표님만"
+            tab === "office" && state
+              ? `${state.label} · 지금 ${onlineCount}명 사무실에 있어요`
+              : tab === "work"
+                ? "근무 시간 · 시간표 · 대타 · 연장"
+                : "코치님 · 지점장님 · 대표님만"
           }
           sticky
           leftAction={
@@ -152,27 +174,26 @@ const OfficePage = () => {
         />
       }
     >
-      {!staffKnown || (staff && !officeKnown) ? (
+      {!staffKnown || (staff && !officeKnown) || (!staff && !opsKnown) || (want === "work" && !opsKnown) ? (
         <div className="space-y-3" aria-hidden>
           <div className="h-12 animate-pulse rounded-2xl bg-card shadow-elev-1" />
           <div className="aspect-[4/5] w-full animate-pulse rounded-3xl bg-card shadow-elev-1" />
         </div>
-      ) : !staff ? (
+      ) : !staff && !hasWork ? (
         <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-          <p className="text-body font-bold text-foreground">지점 회의실에 들어올 수 없어요</p>
+          <p className="text-body font-bold text-foreground">153운영본부에 들어올 수 없어요</p>
           <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">코치님 · 지점장님 · 대표님만 들어올 수 있어요</p>
         </div>
       ) : (
       <div className="space-y-4">
-        {/* 탭 — 사무실 · 전략 회의 (사무실이 없는 지점은 전략 회의만) */}
-        {hasOffice ? (
-          <div role="tablist" aria-label="지점 회의실" className="grid grid-cols-2 gap-1 rounded-2xl bg-secondary/70 p-1">
-            {(
-              [
-                { v: "office", label: "사무실", badge: 0 },
-                { v: "strategy", label: "전략 회의", badge: strategyBadge },
-              ] as const
-            ).map((t) => (
+        {/* 탭 — 사무실 · 전략 회의 · 근무 (보이는 것만) */}
+        {tabs.length > 1 && (
+          <div
+            role="tablist"
+            aria-label="153운영본부"
+            className={cn("grid gap-1 rounded-2xl bg-secondary/70 p-1", tabs.length === 3 ? "grid-cols-3" : "grid-cols-2")}
+          >
+            {tabs.map((t) => (
               <button
                 key={t.v}
                 type="button"
@@ -193,11 +214,14 @@ const OfficePage = () => {
               </button>
             ))}
           </div>
-        ) : (
+        )}
+        {!hasOffice && tab === "strategy" && (
           <p className="px-1 text-label text-muted-foreground">사무실 · 회의는 아직 우리 지점에 열리지 않았어요</p>
         )}
 
-      {tab === "strategy" ? (
+      {tab === "work" && opsMe ? (
+        <OpsWorkTab me={opsMe} />
+      ) : tab === "strategy" ? (
         <StrategyRoom />
       ) : stateQ.isLoading ? (
         <div className="space-y-3" aria-hidden>
@@ -206,7 +230,7 @@ const OfficePage = () => {
         </div>
       ) : stateQ.isError || !state ? (
         <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
-          <p className="text-[15px] font-bold text-foreground">지점 회의실에 들어올 수 없어요</p>
+          <p className="text-[15px] font-bold text-foreground">사무실에 들어올 수 없어요</p>
           <p className="mt-1.5 whitespace-pre-line text-[12.5px] leading-relaxed text-muted-foreground">
             {(stateQ.error as Error | null)?.message ?? "우리 지점 코치님 · 지점장님만 들어올 수 있어요"}
           </p>

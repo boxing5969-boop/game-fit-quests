@@ -123,7 +123,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 입구 (2026-10-29 대표님 "둘다 비슷한 기능이라 지점회의실에 전략 회의실 기능을 넣어주고 전략회의실은 메뉴에서 빼줘"): 지점 회의실 `/office?tab=strategy` 하나 — 탭 「사무실 · 전략 회의」(OfficePage, StrategyRoom 은 그대로 넣음). 전체 메뉴 '전략 회의실' 칸 · 메시지 '전략' 탭은 뺐다. 예전 주소 `/messages?tab=strategy`(서버 알림 링크 — strategy_save · strategy_comment_add · strategy_star · strategy_remind_unacked · office_wrap_up 이 아직 이 주소를 쓴다)는 MessagesPage 가 `/office?tab=strategy` 로 넘긴다 — 서버 링크는 바꾸지 않아도 된다. 지점 회의실 칸은 코치님·지점장·운영진 모두(`requires: "staff"`) — 사무실이 안 켜진 지점(office_me 에 없음, 지금 선릉역점만 켜짐)의 코치님은 전략 회의만 보인다. 칸 빨간 숫자 = 확인 안 한 지시(strategy_badge), 없으면 회의 중 빨간 점.
 '오삼코치 정리'는 chat-assistant `action:"polish-directive"` (Haiku, 하루 30회, `ai_usage_log.feature='directive_polish'`, 입력 저장 안 함).
 
-### 지점 회의실 — 지도진 가상 사무실 · 회의 채팅 (2026-10-27 1단계 · 「마이복서153 지점 회의실 상세 보고서」 추천안)
+### 지점 회의실(2026-10-29 부터 이름 153운영본부) — 지도진 가상 사무실 · 회의 채팅 (2026-10-27 1단계 · 「마이복서153 지점 회의실 상세 보고서」 추천안)
 
 | 파일 | 역할 |
 |---|---|
@@ -178,6 +178,19 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 매분(`office_schedule_tick`): ① 시작 N분 전 지점 지도진 + 대표님께 'N분 뒤 지점 회의가 있어요'(→ `/office`) ② 시작 시각에 회의를 연다(opened_by = 예약한 사람, 아무도 참석 처리 안 함, '지금 지점 회의가 열렸어요' → `/office/room`, 줌 · 미트 링크 그대로) — 열린 회의가 있으면 건너뛰고, 6시간 넘게 열려 있던 회의(끝내기를 잊은 회의)는 닫고 연다 · 30분 넘게 늦은 차례(cron 멈춤)는 열지 않음 ③ 정기 회의로 열렸는데 1시간 동안 아무도 안 들어온 회의는 닫는다. 쉬는 차례는 알림 · 열기 모두 건너뛴다. 한 번만 하는 회의는 열린 뒤 `active=false`.
 - '지도진에게 알리기'(새 예약은 켜짐 · 고치기는 꺼짐): 잡혔어요 · 바뀌었어요 · 쉬어요 · 다시 해요 · 취소됐어요 한 번씩(보낸 사람 빼고). 곧 시작하는 회의를 알리기로 잡으면 그 알림이 미리 알림을 대신한다. 지점마다 예약 10개까지. 화면 신호 `schedule`.
 - 2026-10-27 MCP 로 적용할 때 SQL 에 `delete` 가 든 쿼리는 승인 창이 떠서 '취소'됐다(대표님 자리 비움) → 예약 취소는 지우지 않고 남기는 방식(`office_schedule_cancel`)으로 만들고 조각으로 나눠 적용. 시험은 되돌리는 트랜잭션(한 문장 안에서는 STABLE 함수가 앞 스냅숏을 본다 — 확인은 문장을 나눠서).
+
+### 153운영본부 — 「근무」 탭 1단계 (2026-10-29 대표님 "지점 회의실이란 이름 153운영본부라고 이름 바꾸고 … 근무 시간 · 시급 자동계산" · Claude Docs 보고서 https://claude.ai/artifact/6drDZXLGs7L7VMaG6S4yDS)
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261029101624_ops_hq_work.sql](supabase/migrations/20261029101624_ops_hq_work.sql) | `ops_branches`(켠 지점 — 선릉역점 · 칠금점) · `ops_staff`(근무자 카드: 형태 · 시급/월급 · 앱 계정 · 출근 확인 · 기간) · `ops_shift_rules`(요일 · 시작 · 끝 · 언제부터) · `ops_day_entries`(adjust · off · overtime · cover) · `ops_managers`(지점장 · 회계매니저, 대표님이 지정) · RPC `ops_me` · `ops_month` · `ops_candidates` · `ops_staff_save` · `ops_schedule_save` · `ops_entry_save` · `ops_entry_decide` · `ops_entry_cancel` · `ops_manager_set/list` |
+| [src/lib/opsWork.ts](src/lib/opsWork.ts) | 인정 시간 계산 한 곳(서버는 자료만) — `computeDay` · `computeStaffMonth` · `scheduleSummary` · `laborNotices`(주 15시간 · 월 60시간) · 최저시급 |
+| [src/services/opsService.ts](src/services/opsService.ts) · [src/components/ops/](src/components/ops/) | `OpsWorkTab`(관리: 합계 · 확인할 것 · 근무자 / 코치님: 내 근무 · 내 시간표 · 날짜별 · 내 요청) · `OpsStaffSheet`(이번 달 · 시간표 · 정보) · `OpsDaySheet`(인정 시간 · 쉰 날 · 수업 대타 · 연장 근무) · `OpsParts` |
+
+- 이름: 전체 메뉴 · 머리글 「지점 회의실」 → **「153운영본부」**. 탭 사무실 · 전략 회의 · **근무**(`/office?tab=work`, 알림 링크도 여기). 근무 탭은 `ops_me` 가 정한다 — 관리하는 지점(manage)이 있거나 내 근무자 카드(mine)가 있는 분. DB 가 없거나 둘 다 비면 탭이 안 보인다.
+- 대표님 규칙(10-29): 출근 = 입구 얼굴 인식(`staff_duty_logs` — 앱 계정 또는 이름으로 맞춤), 안 찍은 날 0시간(누락) · 퇴근 = 시간표 끝 시각 자동 · 일찍 감 · 늦게 옴 = 지점장 · 대표님이 그날 인정 시간을 고침(지각은 표시만, 10분) · 연장 = 코치 신청 → 대표님만 승인 · 수업 대타 = 코치 요청 → 지점장 · 대표님 승인(PT 대타 없음) · 얼굴 출근 단말이 없는 지점은 근무자 카드 '시간표대로 자동'(`checkin_required=false`).
+- 시급 · 월급 · 메모는 관리자에게만 내려간다(`ops_month` 가 코치님에게는 null). 관리 = 대표님(`_strategy_hq`) 또는 `ops_managers` — 앱 권한 'branch_manager' 만으로는 안 된다(선릉은 코치님 몇 분에게도 앱 관리 권한이 있다). 근무자 실명 · 시급 등 실자료는 저장소에 넣지 않는다(DB 에서만).
+- 2단계(남은 일): 월 마감(1일~말일 확정) · 주휴수당 · 공제 · 임금명세서(코치님은 앱에서) · 세무 주임님께 매달 5일 문자(LMS 내려받기 링크) · 주민번호 · 계좌 암호화 저장 · 근로계약서 · 회계매니저 지정 화면.
 
 ### 회원 화면 리디자인 — 글씨 6단계 · 화면 규칙 7가지 (2026-10-28 대표님 "위보고한 기준대로 전면 리 디자인하자 · 많이 바뀌어도 되니까 가장 이상적인 방향으로")
 
