@@ -34,15 +34,21 @@ describe("지점 회의실 자리 좌표", () => {
 });
 
 describe("전체 메뉴 — 지점 회의실 칸", () => {
-  it("회의실이 켜진 사람에게만 보인다", () => {
+  it("코치진 모두에게 보인다 — 사무실이 없는 지점도 (전략 회의 탭, 2026-10-29)", () => {
     const paths = (office: boolean) => flatAppMenu({ diet: false, staff: true, office }).map((m) => m.path);
-    expect(paths(false)).not.toContain("/office");
+    expect(paths(false)).toContain("/office");
     expect(paths(true)).toContain("/office");
   });
 
-  it("전략 회의실 바로 옆에 있다", () => {
+  it("전략 회의실 칸은 없다 — 지점 회의실 '전략 회의' 탭으로 합침 (2026-10-29)", () => {
+    const paths = flatAppMenu({ diet: false, staff: true, office: true }).map((m) => m.path);
+    expect(paths.some((p) => p.includes("tab=strategy"))).toBe(false);
+    expect(paths.filter((p) => p === "/office")).toHaveLength(1);
+  });
+
+  it("MY복서 바로 다음 칸이다", () => {
     const entries = buildAppMenu({ diet: false, staff: true, office: true });
-    const idx = entries.findIndex((e) => "path" in e && e.path === "/messages?tab=strategy");
+    const idx = entries.findIndex((e) => "path" in e && e.path === "/myboxer");
     const next = entries[idx + 1];
     expect(next && "path" in next ? next.path : null).toBe("/office");
   });

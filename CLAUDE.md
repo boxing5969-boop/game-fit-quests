@@ -111,7 +111,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 미리보기(DB 에 안 씀): coach-build 에 body `{preview: 1~6}` → 문구·검사 결과·사용량을 바로 돌려준다.
 보낸 기록: 메시지 탭 '오삼코치' ([src/components/dm/CoachSentList.tsx](src/components/dm/CoachSentList.tsx) → `coach_sent_list()`, 지점장=자기 지점 · 본사=전체, 보기 전용).
 
-### 전략 회의실 (코치진 전용 — 메시지 탭 '전략', 2026-10-16)
+### 전략 회의 (코치진 전용 — 지점 회의실 '전략 회의' 탭, 2026-10-16 · 2026-10-29 메시지 탭에서 옮김)
 
 | 파일 | 역할 |
 |---|---|
@@ -120,7 +120,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 | [src/components/strategy/](src/components/strategy/) | `StrategyRoom`(4구역) · `StrategyItemCard` · `StrategyComposers` · `StrategyVideos` |
 
 보는 사람: `_dm_kind` 가 coach/hq 인 사람(코치님은 앱 권한이 '회원'이어도). 지시·원칙 쓰기: 본사 · 지점장(`_strategy_can_direct`).
-입구: 메시지 탭 '전략' + 전체 메뉴 2번째 칸 '전략 회의실'(코치님·지점장·운영진만, 회원에게는 칸 없음 — `appMenu.ts` `requires: "staff"`, 확인 안 한 지시 수 배지, 2026-10-19).
+입구 (2026-10-29 대표님 "둘다 비슷한 기능이라 지점회의실에 전략 회의실 기능을 넣어주고 전략회의실은 메뉴에서 빼줘"): 지점 회의실 `/office?tab=strategy` 하나 — 탭 「사무실 · 전략 회의」(OfficePage, StrategyRoom 은 그대로 넣음). 전체 메뉴 '전략 회의실' 칸 · 메시지 '전략' 탭은 뺐다. 예전 주소 `/messages?tab=strategy`(서버 알림 링크 — strategy_save · strategy_comment_add · strategy_star · strategy_remind_unacked · office_wrap_up 이 아직 이 주소를 쓴다)는 MessagesPage 가 `/office?tab=strategy` 로 넘긴다 — 서버 링크는 바꾸지 않아도 된다. 지점 회의실 칸은 코치님·지점장·운영진 모두(`requires: "staff"`) — 사무실이 안 켜진 지점(office_me 에 없음, 지금 선릉역점만 켜짐)의 코치님은 전략 회의만 보인다. 칸 빨간 숫자 = 확인 안 한 지시(strategy_badge), 없으면 회의 중 빨간 점.
 '오삼코치 정리'는 chat-assistant `action:"polish-directive"` (Haiku, 하루 30회, `ai_usage_log.feature='directive_polish'`, 입력 저장 안 함).
 
 ### 지점 회의실 — 지도진 가상 사무실 · 회의 채팅 (2026-10-27 1단계 · 「마이복서153 지점 회의실 상세 보고서」 추천안)
@@ -131,7 +131,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 | [src/services/officeService.ts](src/services/officeService.ts) | 훅 · 뮤테이션 (`["office", …]` 캐시) |
 | [src/components/office/OfficePresenceBridge.tsx](src/components/office/OfficePresenceBridge.tsx) | App 전체 — 앱을 열면 Presence 로 접속(자리에 앉음), 화면을 끄면 30초 뒤 거둠. 바뀜 신호(broadcast `changed`, payload `{t}`)로 캐시 새로 읽기 · 쓰는 중 신호(broadcast `typing` `{u, off?}`, 내용 없음) 주고받기 |
 | [src/lib/officePresence.ts](src/lib/officePresence.ts) · [src/lib/officeLayout.ts](src/lib/officeLayout.ts) | 접속 목록 · 쓰는 중(`useOfficeTyping` · `sendOfficeTyping`) 보관함 · 그림 위 자리 좌표(%) · 보이는 영역(`OFFICE_VIEW_ALL` · `OFFICE_VIEW_MEETING`) — 그림 `public/assets/office/office-153.webp` 를 바꾸면 좌표도 다시 |
-| [src/pages/OfficePage.tsx](src/pages/OfficePage.tsx) · [src/components/office/](src/components/office/) | `/office` — 사무실 그림(OfficeScene) · 내 말풍선 · 회의 요약 카드(MeetingSummaryCard → 회의실 들어가기) · 회의 열기(OpenMeetingSheet) · 회의록(MinutesSheet) · 홈 「회의실 참석」 카드(OfficeEntryCard — 회의 중이면 바로 회의 화면) · 전체 메뉴 '지점 회의실'(`requires: "office"`) |
+| [src/pages/OfficePage.tsx](src/pages/OfficePage.tsx) · [src/components/office/](src/components/office/) | `/office` — 사무실 그림(OfficeScene) · 내 말풍선 · 회의 요약 카드(MeetingSummaryCard → 회의실 들어가기) · 회의 열기(OpenMeetingSheet) · 회의록(MinutesSheet) · 홈 「회의실 참석」 카드(OfficeEntryCard — 회의 중이면 바로 회의 화면) · 전체 메뉴 '지점 회의실'(`requires: "staff"` — 탭 「사무실 · 전략 회의」, 사무실이 없는 지점은 전략 회의만, 2026-10-29) |
 | [src/pages/OfficeRoomPage.tsx](src/pages/OfficeRoomPage.tsx) · [src/lib/officeTalkLayout.ts](src/lib/officeTalkLayout.ts) | `/office/room` 회의 화면 (2026-10-27 대표님 "회의실 화면을 보면서 채팅 → 말풍선, 한 화면에") — 위 회의실 그림(크게 ↔ '사무실 전체') · 안건/정한 것 띠 · 채팅 · 입력창. 들어오면 참석, '나가기' = 내 자리로, '끝내기'(대표님 · 지점장). 채팅이 그 사람 머리 위 말풍선(4~9초) — 옆사람과 겹치면 최근 말이 머리 위, 먼저 한 말은 비키거나 위로 한 줄 + 이름표, 자리가 없으면 숨김(채팅엔 다 있음). 쓰는 사람 머리 옆 '…'. 키보드가 덮으면 visualViewport 높이로 줄여 그림 · 입력창이 같이 보이게(그때 안건 띠는 접음) |
 
 - 들어오는 사람: 그 지점 지도진(`_strategy_branch_staff`) + 대표님(`_strategy_hq`). 회의 열기 · 끝내기 · 정한 것 = `_strategy_can_direct`(대표님 · 지점장). 회원 · 다른 지점은 서버(`_office_role`)와 채널 정책(`_office_can_topic`)이 막는다.

@@ -36,11 +36,11 @@ export const isMenuFolder = (e: AppMenuEntry): e is AppMenuFolder => "items" in 
 export const APP_MENU: readonly AppMenuEntry[] = [
   // MY복서 — 예전 홈 화면(내 라이센스·오늘의 할 일·순위). 1번 자리 고정.
   { path: "/myboxer", label: "MY복서", glyph: "myboxer" },
-  // 전략 회의실 — 코치님·지점장·운영진만 (2026-10-19 대표님: "전략회의실 코치님들에게는 메뉴에 보이게 해줘 회원님들에게는 안보이고").
-  //   메시지 화면의 '전략' 칸으로 바로 간다. 회원에게는 칸 자체가 없다 (서버도 strategy_* 를 코치진만 받는다).
-  { path: "/messages?tab=strategy", label: "전략 회의실", glyph: "clipboard", requires: "staff" },
-  // 지점 회의실 — 지도진 가상 사무실 · 회의 채팅 (2026-10-27 보고서 '입구': 전략 회의실 옆 같은 칸). 지금은 선릉역점만.
-  { path: "/office", label: "지점 회의실", glyph: "chat", requires: "office" },
+  // 지점 회의실 — 코치님·지점장·운영진만 (회원에게는 칸 자체가 없다 · 서버도 office_* · strategy_* 를 코치진만 받는다).
+  //   탭 두 개: 사무실(지도진 가상 사무실 · 회의 채팅 — 사무실이 켜진 지점만, 지금은 선릉역점) · 전략 회의(지시·전략 · 오늘 프로그램 · 수업 기록 · 영상).
+  //   2026-10-29 대표님 "둘다 비슷한 기능이라 지점회의실에 전략 회의실 기능을 넣어주고 전략회의실은 메뉴에서 빼줘"
+  //   → 예전 '전략 회의실' 칸(/messages?tab=strategy)을 빼고, 이 칸을 코치진 모두에게(사무실이 없는 지점은 전략 회의만).
+  { path: "/office", label: "지점 회의실", glyph: "chat", requires: "staff" },
   // 영상 미션 — 153플레이(레벨 미션 영상, 월드 탭은 관리자만) + 타이틀매치(레벨 10·20·30·40 심사 동작 영상, 2026-10-01)
   {
     folder: "videos",

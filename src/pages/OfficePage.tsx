@@ -10,17 +10,27 @@
  *   2단계 음성 · 카메라(Cloudflare RealtimeKit — 회의 화면) · 3단계 회의록 → 전략 회의실 지시 · 못 오신 분 요약(끝내기 시트 · 회의록)
  *   ?minutes=<회의> 로 오면 그 회의록을 바로 연다 (못 오신 회의 요약 알림 · 지시 카드 '회의록 보기')
  *   정기 회의 예약(2026-10-27) — '정기 회의' 칸(OfficeSchedule): 미리 알림 · 시간에 회의가 저절로 열림 · 지금 열기
+ *
+ *   전략 회의실 합치기 (2026-10-29 대표님 "둘다 비슷한 기능이라 지점회의실에 전략 회의실 기능을 넣어주고 전략회의실은 메뉴에서 빼줘"):
+ *   · 탭 두 개 — 사무실(위 그대로) · 전략 회의(예전 메시지 '전략' 칸의 StrategyRoom 그대로: 지시·전략 · 오늘 프로그램 · 수업 기록 · 영상)
+ *   · /office?tab=strategy — 예전 주소 /messages?tab=strategy(서버 알림 링크)는 MessagesPage 가 여기로 넘긴다
+ *   · 사무실이 아직 안 켜진 지점(office_me 에 없음)의 코치님은 전략 회의만 — 전체 메뉴 '지점 회의실' 칸은 코치진 모두에게
+ *   · 서버(office_* · strategy_*)는 그대로 — 화면 입구만 하나로
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDmSummary } from "@/hooks/useDm";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import OfficeScene from "@/components/office/OfficeScene";
 import { MeetingSummaryCard, MinutesSheet, OpenMeetingSheet } from "@/components/office/OfficeMeeting";
 import { ScheduleSection } from "@/components/office/OfficeSchedule";
+import StrategyRoom from "@/components/strategy/StrategyRoom";
 import { useOfficeOnline } from "@/lib/officePresence";
+import { useStrategyBadge } from "@/services/strategyService";
 import {
   OFFICE_STATUS_LABEL,
   officeDateTime,
@@ -28,6 +38,7 @@ import {
   officeName,
   readOfficeBranch,
   saveOfficeBranch,
+  useOfficeMe,
   useOfficeMeetingsList,
   useOfficeSetStatus,
   useOfficeState,
@@ -36,10 +47,24 @@ import {
 
 const STATUSES: OfficeStatus[] = ["on", "class", "away"];
 
+type OfficeTab = "office" | "strategy";
+
 const OfficePage = () => {
   const navigate = useNavigate();
+  // 코치진 — 코치님(앱 권한이 '회원'이어도 서버가 코치로 본 사람) · 지점장 · 운영진. 전체 메뉴 칸과 같은 기준
+  const { role } = useAuth();
+  const dmQ = useDmSummary();
+  const adminRole = role === "branch_manager" || role === "super_admin" || role === "admin";
+  const staff = adminRole || dmQ.data?.kind === "coach" || dmQ.data?.kind === "hq";
+  const staffKnown = adminRole || dmQ.isSuccess || dmQ.isError;
+  // 사무실이 켜진 지점의 지도진 · 대표님만 사무실 탭 (서버 office_me)
+  const officeMeQ = useOfficeMe(staff);
+  const hasOffice = (officeMeQ.data?.offices.length ?? 0) > 0;
+  const officeKnown = officeMeQ.isSuccess || officeMeQ.isError;
+  const { data: strategyBadge = 0 } = useStrategyBadge(staff);
+
   const [branch, setBranchState] = useState<string | null>(readOfficeBranch);
-  const stateQ = useOfficeState(branch);
+  const stateQ = useOfficeState(branch, hasOffice);
   const state = stateQ.data;
   const presence = useOfficeOnline(state?.topic);
   const setStatus = useOfficeSetStatus();
@@ -52,6 +77,23 @@ const OfficePage = () => {
   useEffect(() => {
     if (minutesParam && /^[0-9a-f-]{36}$/i.test(minutesParam)) setMinutesId(minutesParam);
   }, [minutesParam]);
+
+  // 탭 — ?tab=strategy 면 전략 회의. 사무실이 없는 지점 코치님은 늘 전략 회의
+  const tab: OfficeTab = params.get("tab") === "strategy" || (officeKnown && !hasOffice) ? "strategy" : "office";
+  const setTab = (t: OfficeTab) =>
+    setParams(
+      (p) => {
+        if (t === "strategy") p.set("tab", "strategy");
+        else p.delete("tab");
+        p.delete("minutes");
+        return p;
+      },
+      { replace: true },
+    );
+  // 회의록의 '확인하러 가기'(→ 전략 회의)로 탭이 바뀌면 열려 있던 회의록을 닫는다
+  useEffect(() => {
+    if (tab === "strategy") setMinutesId(null);
+  }, [tab]);
   const closeMinutes = () => {
     setMinutesId(null);
     if (minutesParam)
@@ -93,7 +135,9 @@ const OfficePage = () => {
       header={
         <PageHeader
           title="지점 회의실"
-          subtitle={state ? `${state.label} · 지금 ${onlineCount}명 사무실에 있어요` : "코치님 · 지점장님 · 대표님만"}
+          subtitle={
+            tab === "office" && state ? `${state.label} · 지금 ${onlineCount}명 사무실에 있어요` : "코치님 · 지점장님 · 대표님만"
+          }
           sticky
           leftAction={
             <button
@@ -108,7 +152,54 @@ const OfficePage = () => {
         />
       }
     >
-      {stateQ.isLoading ? (
+      {!staffKnown || (staff && !officeKnown) ? (
+        <div className="space-y-3" aria-hidden>
+          <div className="h-12 animate-pulse rounded-2xl bg-card shadow-elev-1" />
+          <div className="aspect-[4/5] w-full animate-pulse rounded-3xl bg-card shadow-elev-1" />
+        </div>
+      ) : !staff ? (
+        <div className="rounded-3xl bg-card px-5 py-10 text-center shadow-elev-1">
+          <p className="text-body font-bold text-foreground">지점 회의실에 들어올 수 없어요</p>
+          <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">코치님 · 지점장님 · 대표님만 들어올 수 있어요</p>
+        </div>
+      ) : (
+      <div className="space-y-4">
+        {/* 탭 — 사무실 · 전략 회의 (사무실이 없는 지점은 전략 회의만) */}
+        {hasOffice ? (
+          <div role="tablist" aria-label="지점 회의실" className="grid grid-cols-2 gap-1 rounded-2xl bg-secondary/70 p-1">
+            {(
+              [
+                { v: "office", label: "사무실", badge: 0 },
+                { v: "strategy", label: "전략 회의", badge: strategyBadge },
+              ] as const
+            ).map((t) => (
+              <button
+                key={t.v}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.v}
+                onClick={() => tab !== t.v && setTab(t.v)}
+                className={cn(
+                  "flex h-11 items-center justify-center gap-1.5 rounded-xl text-body font-black transition-all active:scale-[0.98]",
+                  tab === t.v ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
+                )}
+              >
+                {t.label}
+                {t.badge > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-micro font-black tabular-nums text-destructive-foreground">
+                    {t.badge > 99 ? "99+" : t.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="px-1 text-label text-muted-foreground">사무실 · 회의는 아직 우리 지점에 열리지 않았어요</p>
+        )}
+
+      {tab === "strategy" ? (
+        <StrategyRoom />
+      ) : stateQ.isLoading ? (
         <div className="space-y-3" aria-hidden>
           <div className="aspect-[4/5] w-full animate-pulse rounded-3xl bg-card shadow-elev-1" />
           <div className="h-24 animate-pulse rounded-3xl bg-card shadow-elev-1" />
@@ -247,6 +338,8 @@ const OfficePage = () => {
             )}
           </section>
         </div>
+      )}
+      </div>
       )}
 
       {state && (

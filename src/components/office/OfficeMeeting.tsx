@@ -7,7 +7,7 @@
  *   · MinutesSheet     — 지난 회의록: 참석 · 정한 것 · 채팅 전부
  *   · MessageList · Decisions — 채팅 줄 · 정한 것 모음 (회의실 화면 · 회의록 공용)
  *   · MeetingLinkBar · MeetingLinkSheet — 줌 · 구글 미트 링크로 들어가기 · 넣기/바꾸기(대표님 · 지점장) (2026-10-27 대표님 "그렇게하자")
- *   · 3단계(2026-10-27 대표님 "다음단계진행할까?") — 끝내기 시트에서 오삼코치 3줄 요약 · 정한 것 → 전략 회의실 지시 · 못 오신 분께 요약 알림,
+ *   · 3단계(2026-10-27 대표님 "다음단계진행할까?") — 끝내기 시트에서 오삼코치 3줄 요약 · 정한 것 → 전략 회의 지시 · 못 오신 분께 요약 알림,
  *     회의록에 요약 · 지시 확인 n/n · 알림 현황 (끝낼 때 못 한 것은 회의록에서 대표님 · 지점장이 보낸다)
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -252,7 +252,7 @@ const END_LABEL: Record<EndStep, string> = {
 
 /**
  * 회의 끝내기 — 대표님 · 지점장 (3단계: 끝내면서 함께 할 것)
- *   ① 오삼코치 3줄 요약(이야기가 2줄 이상일 때) → ② 끝내기 → ③ 정한 것 → 전략 회의실 지시 · 못 오신 분께 요약 알림
+ *   ① 오삼코치 3줄 요약(이야기가 2줄 이상일 때) → ② 끝내기 → ③ 정한 것 → 전략 회의 지시 · 못 오신 분께 요약 알림
  *   요약이 늦거나 안 되면 요약 없이 끝낸다(회의는 꼭 끝난다). 못 한 것은 회의록에서 다시 할 수 있다.
  */
 export const EndMeetingSheet = ({
@@ -315,7 +315,7 @@ export const EndMeetingSheet = ({
       setStep("send");
       try {
         const res = await wrap.mutateAsync({ meetingId, directive: wantDirective, recap: wantRecap });
-        if (res.directive_new) done.push("전략 회의실에 지시를 보냈어요");
+        if (res.directive_new) done.push("전략 회의에 지시를 보냈어요");
         if (res.recap_new && res.recap_to > 0) done.push(`못 오신 ${res.recap_to}분께 요약을 보냈어요`);
       } catch (e) {
         toast.error(`회의는 끝냈어요 — ${(e as Error).message} (회의록에서 다시 보낼 수 있어요)`);
@@ -369,7 +369,7 @@ export const EndMeetingSheet = ({
               {decisions > 0 ? (
                 <WrapOption
                   icon={<ClipboardCheck className="h-4 w-4" />}
-                  title={`정한 것 ${decisions}가지 → 전략 회의실 지시`}
+                  title={`정한 것 ${decisions}가지 → 전략 회의 지시`}
                   sub="코치님들이 '확인했어요'를 눌러요 · 안 누르면 다음 날 아침 9시에 다시 알려요"
                   checked={toStrategy}
                   onChange={setToStrategy}
@@ -378,7 +378,7 @@ export const EndMeetingSheet = ({
               ) : (
                 <p className="flex items-start gap-2 rounded-2xl bg-secondary/70 px-3 py-2.5 text-[12px] leading-snug text-muted-foreground">
                   <Pin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  정한 것이 없어 전략 회의실 지시는 보내지 않아요 — 회의 중 채팅 옆 핀을 누르면 정한 것으로 남아요
+                  정한 것이 없어 전략 회의 지시는 보내지 않아요 — 회의 중 채팅 옆 핀을 누르면 정한 것으로 남아요
                 </p>
               )}
               {absent.length > 0 && (
@@ -726,7 +726,7 @@ const RecapSummary = ({ meetingId }: { meetingId: string }) => {
   );
 };
 
-/** 회의록 — 전략 회의실 지시(확인 n/n) · 못 오신 분 알림. 안 보냈으면 대표님 · 지점장이 여기서 보낸다 (회의마다 한 번) */
+/** 회의록 — 전략 회의 지시(확인 n/n) · 못 오신 분 알림. 안 보냈으면 대표님 · 지점장이 여기서 보낸다 (회의마다 한 번) */
 const RecapFollowUp = ({ meetingId }: { meetingId: string }) => {
   const { data: r } = useOfficeRecap(meetingId);
   const wrap = useWrapUpMeeting();
@@ -740,7 +740,7 @@ const RecapFollowUp = ({ meetingId }: { meetingId: string }) => {
         onSuccess: (res) =>
           toast.success(
             what === "directive"
-              ? "전략 회의실에 지시를 보냈어요"
+              ? "전략 회의에 지시를 보냈어요"
               : res.recap_to > 0
                 ? `못 오신 ${res.recap_to}분께 요약을 보냈어요`
                 : "못 오신 분이 없어요",
@@ -755,14 +755,14 @@ const RecapFollowUp = ({ meetingId }: { meetingId: string }) => {
       <div key="d" className="flex items-center gap-3 rounded-2xl bg-secondary/70 px-3 py-2.5">
         <ClipboardCheck className="h-4 w-4 shrink-0 text-primary" />
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-black text-foreground">전략 회의실 지시로 보냈어요</p>
+          <p className="text-[13px] font-black text-foreground">전략 회의 지시로 보냈어요</p>
           <p className="text-[11.5px] font-semibold text-muted-foreground">
             확인 {r.directive.acked}/{r.directive.targets}
           </p>
         </div>
         <button
           type="button"
-          onClick={() => navigate("/messages?tab=strategy")}
+          onClick={() => navigate("/office?tab=strategy")}
           className={cn(
             "h-9 shrink-0 rounded-full px-3.5 text-[12.5px] font-black active:scale-95",
             r.directive.to_ack ? "bg-primary text-primary-foreground" : "bg-background text-foreground",
@@ -775,7 +775,7 @@ const RecapFollowUp = ({ meetingId }: { meetingId: string }) => {
   } else if (r.host && r.closed && r.decisions > 0) {
     rows.push(
       <button key="d" type="button" disabled={!canSend} onClick={() => send("directive")} className={sendBtn}>
-        <ClipboardCheck className="h-4 w-4 text-primary" /> 정한 것 {r.decisions}가지를 전략 회의실 지시로 보내기
+        <ClipboardCheck className="h-4 w-4 text-primary" /> 정한 것 {r.decisions}가지를 전략 회의 지시로 보내기
       </button>,
     );
   }
