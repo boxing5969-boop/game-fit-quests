@@ -7,11 +7,12 @@
  *     이 방향성을 회원님들이 알 수 있도록 그 탭에 설명 자세히, 어떤 동작을 어떻게 하고 어떻게 평가하는지도")
  *     맨 위 '상대는 지난번의 나' 카드 → 맨 아래 안내(왜 하나요 · 진행 · 동작별 하는 법·인정 기준 · 평가 · 1초 당기는 법)
  *     내 기록에는 '다음 목표'(PB보다 1초 빠르게)를 보인다.
+ *   2026-10-29 대표님 "153 PB 영상 … 최근 업데이트한 UI 맞춰서" — 동작 카드마다 시범 영상(누르면 재생 · 무음 반복 · 안 누르면 안 받음).
  *   기록은 코치가 관리자 홈 '153 PB 측정'에서 잰 공식 기록만 (회원이 직접 넣는 길은 없다).
  */
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Gauge, PenLine, Timer, Trophy } from "lucide-react";
+import { ChevronDown, Gauge, PenLine, Play, Timer, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import MedalMark from "@/components/MedalMark";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -48,7 +49,47 @@ const Point = ({ title, children }: { title: string; children: React.ReactNode }
   </li>
 );
 
-/** 동작 카드 — 하는 법 · 인정 기준 · 요령 */
+/** 시범 영상 — 누르면 재생 · 다시 누르면 멈춤 (무음 반복). preload none: 누르기 전엔 영상을 받지 않는다 */
+const MoveVideo = ({ src, poster, name }: { src: string; poster: string; name: string }) => {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const toggle = () => {
+    const v = ref.current;
+    if (!v) return;
+    if (v.paused) void v.play().catch(() => setPlaying(false));
+    else v.pause();
+  };
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={`${name} 시범 영상 ${playing ? "멈추기" : "보기"}`}
+      className="relative mb-1.5 mt-2 block aspect-video w-full overflow-hidden rounded-lg bg-muted"
+    >
+      <video
+        ref={ref}
+        src={src}
+        poster={poster}
+        muted
+        loop
+        playsInline
+        preload="none"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        className="h-full w-full object-cover"
+      />
+      {!playing && (
+        <span className="absolute inset-0 flex items-center justify-center bg-black/15">
+          <span className="flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-label font-black text-[#191F28] shadow-md">
+            <Play className="h-4 w-4 fill-current text-primary" /> 시범 영상
+          </span>
+        </span>
+      )}
+    </button>
+  );
+};
+
+/** 동작 카드 — (시범 영상) · 하는 법 · 인정 기준 · 요령 */
 const MoveCard = ({
   no,
   name,
@@ -57,6 +98,7 @@ const MoveCard = ({
   standard,
   tip,
   boxing,
+  video,
 }: {
   no: string;
   name: string;
@@ -65,6 +107,7 @@ const MoveCard = ({
   standard: string;
   tip: string;
   boxing?: boolean;
+  video?: { src: string; poster: string };
 }) => (
   <li className="rounded-xl border border-border bg-background/60 p-3">
     <div className="flex items-baseline justify-between gap-2">
@@ -75,6 +118,7 @@ const MoveCard = ({
       </p>
       <p className="shrink-0 text-right text-label font-bold tabular-nums text-foreground">{reps}</p>
     </div>
+    {video && <MoveVideo src={video.src} poster={video.poster} name={name} />}
     <p className="mt-1 text-label leading-relaxed text-foreground/90">{howTo}</p>
     <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
       <span className="mr-1.5 rounded-md bg-primary/10 px-1.5 py-0.5 text-micro font-black text-primary">인정</span>
@@ -530,6 +574,7 @@ const Test153Board = ({ onOpenMember }: Props) => {
                     standard={s.standard}
                     tip={s.tip}
                     boxing={s.boxing}
+                    video={s.video}
                   />
                 ))}
               </ul>

@@ -28,12 +28,18 @@ export interface Test153Station {
   /** 회원 안내 — 기록을 당기는 요령 한 줄 */
   tip: string;
   boxing?: boolean;
+  /** 시범 영상 (2026-10-29 대표님 촬영 · public/test153/pbN.mp4 · 무음 · 누르면 재생) */
+  video?: { src: string; poster: string };
 }
+
+/** 시범 영상 경로 — 종목 순서(1~8)대로 */
+const pbVideo = (n: number) => ({ src: `/test153/pb${n}.mp4`, poster: `/test153/pb${n}.webp` });
 
 export const TEST153_STATIONS: readonly Test153Station[] = [
   {
     // 2026-10-18 대표님: "버피할 때 가슴이 바닥에 완전히 닿고 일어나서 원투 동작 — 복서 버피로 명명" (점프·박수 대신 원투)
     name: "복서 버피",
+    video: pbVideo(1),
     open: 30,
     unit: "회",
     standard: "가슴이 바닥에 완전히 닿음 → 일어나서 원투 (팔 끝까지 뻗고 가드 복귀)",
@@ -44,6 +50,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "원·투·쓰리 스텝",
+    video: pbVideo(2),
     open: 10,
     unit: "세트",
     standard: "1스텝·2스텝·3스텝 전진, 매번 뒷발이 시작 라인까지 복귀 = 1세트",
@@ -54,6 +61,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "스쿼트",
+    video: pbVideo(3),
     open: 50,
     unit: "회",
     standard: "엉덩이가 무릎보다 아래 → 무릎·엉덩이 완전히 폄",
@@ -62,6 +70,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "푸시업",
+    video: pbVideo(4),
     open: 30,
     unit: "회",
     standard: "가슴이 매트에 → 팔 완전히 폄, 몸 일직선 (스타터 무릎 허용)",
@@ -71,6 +80,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "복서 스텝 콤비",
+    video: pbVideo(5),
     open: 10,
     unit: "세트",
     standard: "스텝 원투 → 사이드 3번 → 원투 → 반대 사이드 3번 → 원투 = 1세트 (팔 끝까지·가드 복귀)",
@@ -81,6 +91,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   {
     // 2026-10-18 대표님: "싯업도 복서 싯업 — 등이 완전히 닿았다가 일어나서 원투가 한 동작으로, 복서 싯업으로 명명"
     name: "복서 싯업",
+    video: pbVideo(6),
     open: 40,
     unit: "회",
     standard: "등이 매트에 완전히 닿음 → 일어나서 원투 = 1회 (팔 끝까지 뻗고 가드 복귀)",
@@ -91,6 +102,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "런지",
+    video: pbVideo(7),
     open: 40,
     unit: "걸음",
     standard: "뒷무릎이 매트에 → 일어서며 엉덩이·무릎 폄 (양발 교대)",
@@ -100,6 +112,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "줄넘기",
+    video: pbVideo(8),
     open: 200,
     unit: "회",
     standard: "줄이 두 발 밑을 지난 횟수 (카운터 줄넘기)",
