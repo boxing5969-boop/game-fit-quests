@@ -351,7 +351,7 @@ const CoachDashboard = () => {
                     </div>
                     {prog && (
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>🔥 {prog.streak_days}일 연속</span>
+                        <span>출석 {prog.streak_days}일</span>
                         <span>🏆 보스 {prog.bosses_cleared}회</span>
                       </div>
                     )}
@@ -647,7 +647,7 @@ const MemberDetailModal = ({ member, onClose }: { member: any; onClose: () => vo
               <span className="text-sm font-bold text-foreground">{prog.total_xp} XP</span>
             </div>
             <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-              <span>🔥 {prog.streak_days}일 연속</span>
+              <span>출석 {prog.streak_days}일</span>
               <span>🏆 보스 {prog.bosses_cleared}회</span>
             </div>
           </div>

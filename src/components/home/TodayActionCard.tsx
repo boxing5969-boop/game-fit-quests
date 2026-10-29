@@ -30,7 +30,7 @@ export interface TodayActionCardProps {
   state: TodayActionState;
   /** 활동 세션 진행 시간 (분, "active_session" 만 사용) */
   activeMinutes?: number;
-  /** 연속 출석일 (체크인 후 표시) */
+  /** 출석 체크한 날 수 — 누적(연속 아님, 2026-10-29) */
   streakDays?: number;
   onClick: () => void;
 }
@@ -77,7 +77,7 @@ const TodayActionCard = ({
           icon: <Zap className="h-7 w-7" />,
           iconBg: "bg-emerald-500/15",
           iconColor: "text-emerald-600 dark:text-emerald-400",
-          badge: streakDays > 0 ? `${streakDays}일 연속 ✓` : "체크인 완료",
+          badge: streakDays > 0 ? `출석 ${streakDays}일 ✓` : "체크인 완료",
           badgeColor: "bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400",
           title: "오늘의 미션 시작",
           subtitle: "체력 쌓는 가장 빠른 길이에요",

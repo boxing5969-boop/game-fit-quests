@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Settings2, X, Trophy, Crown } from "lucide-react";
+import { Settings2, X, Trophy, Crown, CircleHelp, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,7 +13,16 @@ import {
   useBossConquerors,
   useSetRival,
   useBranchesList,
+  useMyRankingPositions,
 } from "@/hooks/useRankingData";
+import { useLevelupRules } from "@/hooks/useLevelupRules";
+import {
+  RANKING_TAB_LABEL,
+  myRankLine,
+  rankingHelp,
+  rankingResetLabel,
+  type RankingTabKey,
+} from "@/lib/rankingHelp";
 import { supabase } from "@/integrations/supabase/client";
 import { isHallOfFameMember, HALL_OF_FAME_DESCRIPTION, toGlobalLevel } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
@@ -36,7 +45,6 @@ import {
 } from "@/components/ui/rankingup";
 
 type TopTab = "ranking" | "halloffame" | "records" | "test153";
-type RankingTabKey = "weekly" | "streak" | "official" | "monthly" | "boss";
 
 const RANK_LABELS: Record<string, string> = {
   white: "화이트",
@@ -48,13 +56,10 @@ const RANK_LABELS: Record<string, string> = {
 // Order drives the visual position of chips. "official" sits first
 // because that's the default landing view — full branch roster sorted
 // by total XP, i.e. "우리 지점 전체 회원" at a glance.
-const RANKING_FILTERS: { value: RankingTabKey; label: string }[] = [
-  { value: "official", label: "전체" },
-  { value: "weekly", label: "이번 주" },
-  { value: "streak", label: "출석" },
-  { value: "monthly", label: "상승" },
-  { value: "boss", label: "보상" },
-];
+// 칩 이름 (2026-10-29 랭킹 설명 단추): '출석' → '출석일'(연속이 아니라 출석 체크한 날 수) · '보상' → '타이틀매치'(통과 수)
+const RANKING_FILTERS: { value: RankingTabKey; label: string }[] = (
+  ["official", "weekly", "streak", "monthly", "boss"] as RankingTabKey[]
+).map((value) => ({ value, label: RANKING_TAB_LABEL[value] }));
 
 // Podium tones — spec: 1위 #F6C453, 2위 #C9D1DC, 3위 #C8874A
 const PODIUM_TONE = {
@@ -139,8 +144,13 @@ const HallOfFamePage = () => {
   const { data: streakRanking } = useStreakRanking(10, branchFilter);
   const { data: bossRanking } = useBossConquerors(10, branchFilter);
 
-  const myPosition = officialRanking?.find((r) => r.r_user_id === user?.id)
-    ?.rank_position;
+  // 내 순위 — 지금 보는 칩 기준 · 50위 밖이어도 (get_my_ranking_positions, 2026-10-29)
+  //   전 지점/다른 지점을 보는 전체관리자는 그리지 않는다 (서버도 운영진은 eligible:false)
+  const { data: myPositions } = useMyRankingPositions(topTab === "ranking");
+  const myRank = branchFilter === undefined ? myRankLine(activeTab, myPositions) : null;
+  // 랭킹 설명 단추 — 펼치면 지금 칩의 기준 · 올리는 법 · 내려가는 때 · 다시 시작
+  const [helpOpen, setHelpOpen] = useState(false);
+  const { data: levelupRules } = useLevelupRules(helpOpen);
 
   const hallOfFameMembers = useMemo(
     () =>
@@ -224,18 +234,22 @@ const HallOfFamePage = () => {
         return `${Number(m.weekly_xp ?? 0).toLocaleString()} XP`;
       case "monthly":
         return `+${Number(m.monthly_xp ?? 0).toLocaleString()} XP`;
+      // 출석일 = 출석 체크한 날 수(누적) — 연속이 아니라 불꽃을 뺐다 (2026-10-29)
       case "streak":
-        return `${m.r_streak_days ?? 0}일 🔥`;
+        return `${m.r_streak_days ?? 0}일`;
       case "boss":
-        return `${m.r_bosses_cleared ?? 0}회 🏆`;
+        return `${m.r_bosses_cleared ?? 0}회`;
+      // '전체'는 레벨 순이라 점수 칸 = 레벨, XP 는 아래 작은 줄 (예전엔 XP 가 보여 'XP 더 많은데 왜 아래?'가 나왔다)
       case "official":
       default:
-        return `${Number(m.r_total_xp ?? 0).toLocaleString()} XP`;
+        return `Lv.${toGlobalLevel(m.r_current_rank, m.r_current_level)}`;
     }
   };
 
   const getMeta = (m: any) =>
-    `${RANK_LABELS[m.r_current_rank]} · Lv.${toGlobalLevel(m.r_current_rank, m.r_current_level)}`;
+    activeTab === "official"
+      ? `${RANK_LABELS[m.r_current_rank]} · ${Number(m.r_total_xp ?? 0).toLocaleString()} XP`
+      : `${RANK_LABELS[m.r_current_rank]} · Lv.${toGlobalLevel(m.r_current_rank, m.r_current_level)}`;
 
   const handleSetRival = (m: any) => {
     setRival.mutate(m.r_user_id);
@@ -313,8 +327,9 @@ const HallOfFamePage = () => {
               hideWhenEmpty
             />
 
-            {/* 내 순위 — 숫자 하나. 누르면 목록의 내 줄로 (레벨은 목록 · 내 카드에 있다) */}
-            {progress && myPosition && (
+            {/* 내 순위 — 숫자 하나 + 바로 앞 사람까지 한 줄. 지금 보는 칩 기준 · 50위 밖이어도 (2026-10-29)
+                목록 안에 내 줄이 있으면 누르면 그 줄로 */}
+            {myRank && (
               <button
                 type="button"
                 onClick={() =>
@@ -322,25 +337,55 @@ const HallOfFamePage = () => {
                 }
                 className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/5 px-5 py-4 text-left active:scale-[0.99]"
               >
-                <span>
-                  <span className="block text-label font-bold text-muted-foreground">내 순위</span>
+                <span className="shrink-0">
+                  <span className="block text-label font-bold text-muted-foreground">
+                    내 순위 · {RANKING_TAB_LABEL[activeTab]}
+                  </span>
                   <span className="number-font text-title text-primary">
-                    {myPosition}
-                    <span className="ml-0.5 text-heading">위</span>
+                    {myRank.pos != null ? (
+                      <>
+                        {myRank.pos.toLocaleString()}
+                        <span className="ml-0.5 text-heading">위</span>
+                      </>
+                    ) : (
+                      <span className="text-heading">아직 없어요</span>
+                    )}
                   </span>
                 </span>
-                <span className="number-font text-body font-bold text-foreground">
-                  {progress.total_xp.toLocaleString()} XP
-                </span>
+                <span className="min-w-0 break-keep text-right text-label font-bold text-foreground">{myRank.line}</span>
               </button>
             )}
 
-            {/* Sub-filter chips */}
-            <FilterChips<RankingTabKey>
-              value={activeTab}
-              onChange={(v) => setActiveTab(v as RankingTabKey)}
-              chips={RANKING_FILTERS}
-            />
+            {/* 칩 + 설명 단추(?) — 누르면 지금 칩이 무엇으로 줄을 세우는지 펼친다 (화면 규칙 ④ 설명은 접기) */}
+            <div className="flex items-center gap-2">
+              <FilterChips<RankingTabKey>
+                value={activeTab}
+                onChange={(v) => setActiveTab(v as RankingTabKey)}
+                chips={RANKING_FILTERS}
+                className="min-w-0 flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => setHelpOpen((v) => !v)}
+                aria-expanded={helpOpen}
+                aria-label="순위 정하는 법 보기"
+                className={cn(
+                  "-mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors active:scale-95",
+                  helpOpen ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+                )}
+              >
+                <CircleHelp className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
+
+            {helpOpen && (
+              <RankingHelpPanel
+                tab={activeTab}
+                rules={levelupRules}
+                onClose={() => setHelpOpen(false)}
+                onRoadmap={() => navigate("/rank-up")}
+              />
+            )}
 
             {/* Ranking content */}
             {officialLoading && activeTab === "official" ? (
@@ -748,6 +793,94 @@ const RankingList = ({
 };
 
 /* ──────────────────────────────────────────────────────────
+ *  RankingHelpPanel — 칩 줄 옆 ? 단추를 누르면 펼쳐지는 설명 (2026-10-29 대표님 · 「랭킹 설명 버튼 보고서」)
+ *  지금 보는 칩이 무엇으로 줄을 세우는지 · 올리는 법 · 내려가는 때 · 다시 시작까지. 칩을 바꾸면 내용도 바뀐다.
+ *  글은 src/lib/rankingHelp.ts 한 곳 — 숫자 규칙의 정본은 DB 함수.
+ * ────────────────────────────────────────────────────────── */
+
+const RankingHelpPanel = ({
+  tab,
+  rules,
+  onClose,
+  onRoadmap,
+}: {
+  tab: RankingTabKey;
+  rules?: Parameters<typeof rankingHelp>[1];
+  onClose: () => void;
+  onRoadmap: () => void;
+}) => {
+  const help = rankingHelp(tab, rules);
+  const reset = rankingResetLabel(tab);
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="flex items-start justify-between gap-2">
+        <p className="break-keep text-heading text-foreground">'{RANKING_TAB_LABEL[tab]}' 순위는 이렇게 정해져요</p>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="설명 닫기"
+          className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
+        >
+          <X className="h-5 w-5" aria-hidden />
+        </button>
+      </div>
+
+      <dl className="mt-3 space-y-4">
+        <div>
+          <dt className="text-label font-bold text-muted-foreground">기준</dt>
+          <dd className="mt-1 break-keep text-body text-foreground">{help.rule}</dd>
+          {help.order && (
+            <ol className="mt-1.5 space-y-1">
+              {help.order.map((line, i) => (
+                <li key={line} className="flex gap-2 break-keep text-body text-foreground">
+                  <span className="number-font w-5 shrink-0 font-bold text-primary">{i + 1}</span>
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+        <div>
+          <dt className="text-label font-bold text-muted-foreground">올리려면</dt>
+          <dd>
+            <ul className="mt-1 space-y-1">
+              {help.up.map((line) => (
+                <li key={line} className="flex gap-2 break-keep text-body text-foreground">
+                  <span aria-hidden className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-label font-bold text-muted-foreground">내려가는 때</dt>
+          <dd className="mt-1 break-keep text-body text-foreground">{help.down}</dd>
+        </div>
+      </dl>
+
+      {reset && (
+        <p className="mt-4 break-keep rounded-xl bg-primary/10 px-3 py-2.5 text-label font-bold text-primary">{reset}</p>
+      )}
+
+      <p className="mt-4 break-keep text-label text-muted-foreground">
+        우리 지점 회원끼리만 겨뤄요. 코치님 · 운영진은 순위에 없어요.
+      </p>
+
+      {tab === "official" && (
+        <button
+          type="button"
+          onClick={onRoadmap}
+          className="-mx-5 -mb-5 mt-4 flex h-14 w-[calc(100%+2.5rem)] items-center justify-center gap-1 border-t border-border text-body font-bold text-foreground"
+        >
+          레벨업 조건 자세히 보기 <ChevronRight className="h-4 w-4" aria-hidden />
+        </button>
+      )}
+    </div>
+  );
+};
+
+/* ──────────────────────────────────────────────────────────
  *  Empty state — per-tab motivational copy + CTA.
  * ────────────────────────────────────────────────────────── */
 
@@ -775,8 +908,8 @@ const RankingEmpty = ({
     },
     streak: {
       icon: "🔥",
-      title: "출석 연속 기록이 없어요",
-      description: "매일 체크인하면 연속 출석이 시작됩니다.",
+      title: "아직 출석일 기록이 없어요",
+      description: "앱 홈을 그날 처음 열면 출석 체크가 돼서 하루씩 쌓여요.",
       ctaText: "QR 체크인 하러가기",
       action: onCheckin,
     },
@@ -796,8 +929,8 @@ const RankingEmpty = ({
     },
     boss: {
       icon: "🥊",
-      title: "아직 보상 기록이 없어요",
-      description: "타이틀매치(보스전)를 클리어하면 보상 랭킹에 집계됩니다.",
+      title: "아직 타이틀매치 통과 기록이 없어요",
+      description: "리그 마지막 레벨에서 타이틀매치를 통과하면 이름이 올라가요.",
       ctaText: "로드맵 보기",
       action: onBoss,
     },

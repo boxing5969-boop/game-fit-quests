@@ -99,7 +99,7 @@ const GrowthReportDetailSheet = ({ open, onClose }: Props) => {
                         보스 클리어: <strong>{report.official.bossesCleared}회</strong>
                       </li>
                       <li>
-                        연속 출석: <strong>{report.official.streakDays}일</strong>
+                        출석일: <strong>{report.official.streakDays}일</strong>
                       </li>
                     </ul>
                   </div>
