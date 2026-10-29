@@ -20,6 +20,11 @@
  *   · 카메라를 고해상도(1280)로 연다 — 기본값(640×480)에선 멀리 있는 TV QR 의 칸이 뭉개졌다
  *   · 인식 네모를 화면의 80% 로 넓힌다 · 좌우 반전 탐색 생략(속도)
  *   · 줌을 지원하는 폰은 "2배 확대" 버튼 · 그래도 안 되면 "사진으로 인식"(폰 카메라 원본 해상도)
+ *
+ * 2026-10-29 칠금점 "QR 찍으면 오류 · 프로필 카드가 안 뜬다" — 10/28 회원 2명의 7번이 전부 '지난 QR'(bad_token)이었다.
+ *   · 서버가 지난 QR 이면 몇 분 · 몇 시간 전 QR 인지 알려 준다(사진 · 캡처 · 멈춘 TV 구분) → 그대로 보여 주고 한 줄 도움말.
+ *   · 폰 카메라로 들어온 주소(?b=&t=)는 한 번 보낸 뒤 주소에서 지운다 — 새로고침 · 앱 다시 열기 때 지난 QR 을 또 보내지 않게.
+ *   · 시도마다 결과는 서버 qr_checkin_attempts 에 남는다(20261029161500).
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -44,6 +49,8 @@ interface CheckinResult {
   staff?: boolean;
   method?: string;
   xp_granted?: number;
+  /** bad_token 이고 7일 안의 QR 이면 그 QR 이 나온 지 몇 분 (서버 qr_checkin_attempts 와 같은 값) */
+  token_age_min?: number;
 }
 
 /** 보드 QR 의 URL(https://myboxer153.com/qr-checkin?b=..&t=..)에서 지점·토큰을 꺼낸다.
@@ -92,6 +99,8 @@ const QrCheckinPage = () => {
   const [phase, setPhase] = useState<Phase>(deepB && deepT ? "submitting" : "scan");
   const [result, setResult] = useState<CheckinResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  /** 지난 QR 로 실패했을 때만 — 도움말 한 줄을 더 보여 준다 */
+  const [staleQr, setStaleQr] = useState(false);
   const [cameraMsg, setCameraMsg] = useState<string | null>(null);
   // html5-qrcode 는 같은 QR 을 초당 수 회 콜백한다 — state 는 stale closure 라 ref 로 막는다.
   const busyRef = useRef(false);
@@ -122,6 +131,7 @@ const QrCheckinPage = () => {
       busyRef.current = true;
       setPhase("submitting");
       setErrorMsg(null);
+      setStaleQr(false);
       await stopScanner();
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -134,6 +144,7 @@ const QrCheckinPage = () => {
         }
         if (!res.ok) {
           setErrorMsg(res.message || "출석 처리에 실패했어요");
+          setStaleQr(res.error === "bad_token");
           setPhase("error");
           return;
         }
@@ -156,9 +167,13 @@ const QrCheckinPage = () => {
   );
 
   // 딥링크(폰 카메라로 찍은 경우) — 카메라 없이 바로 제출. 로그인을 거쳐 왔으면 적어 둔 주소는 여기서 지운다.
+  //   보낸 뒤엔 주소에서 b·t 를 지운다 — 새로고침 · 앱 다시 열기 때 같은(이미 지난) QR 을 또 보내지 않게 (2026-10-29).
   useEffect(() => {
     clearPostLoginPath();
-    if (deepB && deepT) void submit(deepB, deepT);
+    if (deepB && deepT) {
+      navigate("/qr-checkin", { replace: true });
+      void submit(deepB, deepT);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 카메라 스캐너 — scan 단계에서만 켠다
@@ -400,11 +415,19 @@ const QrCheckinPage = () => {
         <div className="space-y-3">
           <div className="flex items-start gap-3 rounded-card border border-destructive/30 bg-destructive/10 px-4 py-4">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-            <p className="text-body font-bold text-foreground">{errorMsg}</p>
+            <div className="min-w-0">
+              <p className="text-body font-bold text-foreground">{errorMsg}</p>
+              {staleQr && (
+                <p className="mt-1 text-label text-muted-foreground">
+                  QR 은 5분마다 바뀌어요 — 사진 · 캡처한 QR 은 쓸 수 없어요. TV 의 QR 이 그대로 멈춰 있으면 코치님께 TV 새로고침을 부탁해 주세요.
+                </p>
+              )}
+            </div>
           </div>
           <button
             onClick={() => {
               setErrorMsg(null);
+              setStaleQr(false);
               setPhase("scan");
             }}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-body font-bold text-primary-foreground transition-all active:scale-95"
