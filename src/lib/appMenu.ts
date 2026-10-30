@@ -51,7 +51,7 @@ export const APP_MENU: readonly AppMenuEntry[] = [
       { path: "/title-match", label: "타이틀매치", glyph: "titlematch" },
     ],
   },
-  // 훈련 도구 — 복싱 트레이닝 · 붕대 감기(영상·집 연습 미션, 칸 그림 = 붕대 감은 주먹) · 훈련 라이브러리 · 수업 루틴
+  // 훈련 도구 — 복싱 트레이닝 · 붕대 감기(12단계 설명서·집 연습 미션, 칸 그림 = 붕대 감은 주먹) · 훈련 라이브러리 · 수업 루틴
   {
     folder: "training",
     label: "훈련 도구",

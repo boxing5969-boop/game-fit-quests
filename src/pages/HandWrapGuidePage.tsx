@@ -13,32 +13,28 @@
  *     → '한 단계씩' = 실제로 감는 장면(선명하게) · 속도 · 왼손/오른손(거울) · '한눈에 설명서' (HandWrapStepViewer)
  *   2026-10-27 10:01 대표님: "한눈에 9장 · 누르면 상세페이지처럼 · 사진에 방향과 어디서 시작해 어디로 · 움직이는 사진으로 · 한 단계씩"
  *     → '9단계 설명서' = 한눈에 9칸(사진 + 방향 + 짧은 글) → 누르면 상세(/handwrap?step=N): 움직이는 사진 → 끝 장면에 시작 → 끝 방향 → 반복
+ *   2026-10-30 대표님: 코팅 설명서 사진 "이사진이랑 동일하게 붕대 감기 탭에 고화질 애니메이션으로 제작해서 넣어줘"
+ *     → 맨 위가 '12단계 설명서'(그림 애니메이션 · 오른손/왼손) — 9단계와 대표님 10-20 영상 칸('영상으로 보기')은 내렸다.
+ *       훈련 라이브러리에 코치가 넣은 영상이 있으면 '코치 영상 보기' 단추만 남는다.
  *
  *   신규 회원 첫날: 코치님은 한 손만 빠르게 감아 주고, 다른 손은 회원이 영상을 보며 직접 감는다.
  *   그리고 집에서 혼자 감아 보는 미션(HandWrapPracticeCard) — 다음 수업 때 코치님이 회원 상세에서 기록을 본다.
  *
- *   · 영상: data/handWrapGuide HANDWRAP_ANGLES (public/handwrap/) + 훈련 라이브러리 '복싱 붕대 감기'에 코치가 넣은
- *     영상이 있으면 '코치 영상' 칸으로 하나 더.
- *   · 글: data/handWrapGuide.ts — 9단계(글 · 움직이는 사진 · 방향 좌표) · 흔한 실수 · 영상 핵심 포인트.
+ *   · 코치 영상: 훈련 라이브러리 '복싱 붕대 감기'에 코치가 넣은 영상 (있을 때만).
+ *   · 글 · 그림: data/handWrapGuide.ts — 12단계 + 완성(글 · 손마다 애니메이션) · 흔한 실수 · 핵심 포인트.
  */
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronLeft, FlipHorizontal2, Gauge, Play, X } from "lucide-react";
+import { Check, ChevronLeft, Play, X } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
-import VideoPlayer, { type PlayerVariant } from "@/components/VideoPlayer";
+import VideoPlayer from "@/components/VideoPlayer";
 import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
 import HandWrapStepViewer from "@/components/handwrap/HandWrapStepViewer";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useHandWrapVideo } from "@/hooks/useHandWrap";
 import { strictYoutubeId } from "@/lib/videoUrl";
-import {
-  HANDWRAP_ANGLES,
-  HANDWRAP_KEY_POINTS,
-  HANDWRAP_MISTAKES,
-  handWrapAngleIndex,
-  type HandWrapStep,
-} from "@/data/handWrapGuide";
+import { HANDWRAP_KEY_POINTS, HANDWRAP_MISTAKES, HANDWRAP_NUMBERED_STEPS } from "@/data/handWrapGuide";
 
 /** VideoPlayer 는 youtu.be·watch 주소만 embed 로 바꾼다 — shorts·embed 주소도 youtu.be 로 맞춰 넘긴다 (유튜브 호스트일 때만) */
 const playableUrl = (url: string) => {
@@ -46,32 +42,13 @@ const playableUrl = (url: string) => {
   return id ? `https://youtu.be/${id}` : url;
 };
 
-/** 플레이어를 어느 각도 · 몇 초로 열지 */
-type Opened = { variant: number; startAt?: number };
-
 const HandWrapGuidePage = () => {
   const navigate = useNavigate();
-  const [opened, setOpened] = useState<Opened | null>(null);
-  const closePlayer = useCallback(() => setOpened(null), []);
-  useModalDismiss(!!opened, closePlayer);
+  const [opened, setOpened] = useState(false);
+  const closePlayer = useCallback(() => setOpened(false), []);
+  useModalDismiss(opened, closePlayer);
   const coach = useHandWrapVideo();
-
-  // 각도 2개 + (있으면) 코치가 훈련 라이브러리에 넣은 영상
-  const variants = useMemo<PlayerVariant[]>(() => {
-    const list: PlayerVariant[] = HANDWRAP_ANGLES.map((a) => ({
-      label: a.label,
-      videoUrl: a.videoUrl,
-      posterUrl: a.posterUrl,
-      rotate180: a.rotate180,
-    }));
-    const extra = coach.data?.url;
-    if (extra && !HANDWRAP_ANGLES.some((a) => extra.endsWith(a.videoUrl))) {
-      list.push({ label: "코치 영상", videoUrl: playableUrl(extra), posterUrl: coach.data?.poster ?? null });
-    }
-    return list;
-  }, [coach.data]);
-
-  const watchStep = (step: HandWrapStep) => setOpened({ variant: handWrapAngleIndex(step.video.angle), startAt: step.video.at });
+  const coachUrl = coach.data?.url ? playableUrl(coach.data.url) : null;
 
   const goBack = () => {
     const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
@@ -103,69 +80,22 @@ const HandWrapGuidePage = () => {
         첫날엔 코치님이 한 손을 감아 드려요 · 다른 손은 보면서 직접 감아 봐요
       </p>
 
-      {/* ── 영상 — 두 각도 ── */}
-      <section aria-labelledby="handwrap-video-h" className="mt-4">
-        {/* '내 눈으로'가 가장 쉽다는 말은 영상 칸의 '추천' · 한 줄 설명이 한다 */}
-        <h2 id="handwrap-video-h" className="px-1 text-heading text-foreground">
-          영상으로 보기
-        </h2>
-        <div className="mt-2 grid grid-cols-2 gap-2.5">
-          {HANDWRAP_ANGLES.map((a, i) => (
-            <button
-              key={a.key}
-              type="button"
-              onClick={() => setOpened({ variant: i })}
-              aria-label={`붕대 감기 영상 ${a.label} 보기`}
-              className={`group block overflow-hidden rounded-2xl bg-card text-left shadow-elev-1 ring-1 ring-border/60 ${
-                i === 0 ? "col-span-2" : ""
-              }`}
-            >
-              <span className="relative block aspect-video w-full overflow-hidden bg-muted">
-                <img
-                  src={a.posterUrl}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  className={`h-full w-full object-cover ${a.rotate180 ? "rotate-180" : ""}`}
-                />
-                <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-                <span className="absolute inset-0 flex items-center justify-center">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm transition-transform group-active:scale-90">
-                    <Play className="ml-0.5 h-5 w-5 fill-white text-white" />
-                  </span>
-                </span>
-                <span className="absolute bottom-1.5 right-2 rounded bg-black/55 px-1.5 text-micro font-bold tabular-nums text-white">
-                  0:{String(a.seconds).padStart(2, "0")}
-                </span>
-              </span>
-              <span className="block px-3 py-2.5">
-                <span className="block text-label font-black text-foreground">
-                  {a.label} 보기
-                  {i === 0 && <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-px text-micro font-black text-primary">추천</span>}
-                </span>
-                <span className="block truncate text-label text-muted-foreground">{a.hint}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className="mt-2 flex flex-wrap gap-1.5 px-1">
-          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-micro font-bold text-muted-foreground">
-            <FlipHorizontal2 className="h-3.5 w-3.5" /> 거울 — 좌우를 뒤집어 거울 보듯
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-micro font-bold text-muted-foreground">
-            <Gauge className="h-3.5 w-3.5" /> 처음엔 0.75배 · 0.5배까지 천천히
-          </span>
-        </div>
-      </section>
-
-      {/* ── 9단계 설명서 — 한눈에 9칸 → 누르면 움직이는 사진 + 방향 + 자세한 설명 (2026-10-27 대표님) ── */}
-      <section aria-labelledby="handwrap-steps-h" className="mt-7">
-        {/* 점 색은 아래 표시(시작 · 끝 · 붕대 길)가, 오른손은 '오른손 (거울)' 단추가 말한다 */}
+      {/* ── 12단계 설명서 — 코팅 설명서와 같은 순서의 그림 애니메이션 (2026-10-30 대표님) ── */}
+      <section aria-labelledby="handwrap-steps-h" className="mt-4">
         <h2 id="handwrap-steps-h" className="px-1 text-heading text-foreground">
-          9단계 설명서
+          {HANDWRAP_NUMBERED_STEPS}단계 설명서
         </h2>
-        <p className="mt-0.5 px-1 text-label text-muted-foreground">사진을 누르면 감는 모습이 움직여요</p>
-        <HandWrapStepViewer onWatch={watchStep} className="mt-2" />
+        <p className="mt-0.5 px-1 text-label text-muted-foreground">그림을 누르면 붕대가 감기는 모습이 움직여요</p>
+        <HandWrapStepViewer className="mt-2" />
+        {coachUrl && (
+          <button
+            type="button"
+            onClick={() => setOpened(true)}
+            className="mt-2.5 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-card text-label font-bold text-primary shadow-elev-1 ring-1 ring-primary/40 transition-transform active:scale-[0.98]"
+          >
+            <Play className="h-3.5 w-3.5 fill-current" aria-hidden /> 코치 영상 보기
+          </button>
+        )}
       </section>
 
       {/* ── 집 연습 미션 ── */}
@@ -202,16 +132,13 @@ const HandWrapGuidePage = () => {
         감은 뒤 손이 저리거나 손목·손가락이 계속 아프면 운동을 멈추고 코치님께 말해 주세요.
       </p>
 
-      {/* 영상 플레이어 — body 로 띄워 어떤 부모 아래서도 화면 전체를 덮는다 */}
+      {/* 코치 영상 플레이어 — body 로 띄워 어떤 부모 아래서도 화면 전체를 덮는다 */}
       {opened &&
+        coachUrl &&
         createPortal(
           <VideoPlayer
-            key={`${opened.variant}-${opened.startAt ?? 0}`}
-            videoUrl={variants[0].videoUrl}
-            posterUrl={variants[0].posterUrl}
-            variants={variants}
-            initialVariant={opened.variant}
-            startAt={opened.startAt}
+            videoUrl={coachUrl}
+            posterUrl={coach.data?.poster ?? null}
             mirrorable
             initialSpeed={0.75}
             title="153 붕대 감기"

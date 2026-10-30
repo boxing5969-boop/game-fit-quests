@@ -244,7 +244,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - '내 순위' 카드 = 지금 보는 칩 기준 + 바로 앞 사람까지 한 줄 · 50위 밖이어도(`get_my_ranking_positions` — 코치님 · 운영진 · 테스트 계정은 eligible:false). 전체관리자가 다른 지점을 보면 안 그린다.
 - '상승' = `get_monthly_risers_v2`(코치님 · 테스트 계정 빼기 · 한국 1일 0시부터). 예전 `get_monthly_risers` 는 남아 있다(쓰는 화면 없음) — 20261029232024.
 - 2단계(남은 일): 어제보다 오르내린 표시 ▲▼ — 매일 밤 순위를 저장하는 표부터.
-- chat-assistant 개인 정보 줄 '연속 출석' → '출석 체크한 날(누적 · 연속 아님)'은 main 에 합칠 때 Edge Function 배포(배포본과 비교 뒤).
+- chat-assistant 개인 정보 줄 '연속 출석' → '출석 체크한 날(누적 · 연속 아님)' — Edge Function 배포함(v26, 2026-10-29 main 합칠 때 · 배포본과 비교 뒤).
 
 ### 이모지 → 153 입체 아이콘 (2026-10-16 대표님: "이모지는 모두 빼고 … 퀄리티있는 디자인")
 
@@ -429,10 +429,14 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 누가 신체 정보를 넣었나 (2026-10-28 대표님): 회원관리(`BranchManagerHome`) 필터 '신체 정보 넣음 (N)' · 회원 줄 '신체 정보 M/D' — `get_body_info_entered`(rows = 키 · 몸무게를 넣은 회원과 마지막 날짜만, 값은 회원 상세 '내정보'에서 · missing = 앱에 들어온 적 있는데 안 넣은 회원 → 필터 '신체 정보 안 넣음 (N)', 20261028010734 · 전체관리자/관리자 = 전 지점, 지점장 = 자기 지점 · `body_info_staff_since` 전에 '나만 볼 수 있어요'를 보고 넣은 값은 세지 않음) — 20261028003432.
 - 신체 정보 공개 · 비공개 (2026-10-28 대표님 "비공개 버튼 누르면 본인 외에는 아무도 못보는걸로"): '내 신체 정보' 맨 위 '누가 볼 수 있나요?'(누르면 바로 저장 · `set_my_body_info_private` → `member_body_privacy`, 기본 공개). 비공개면 `get_member_body_info` = {private:true}(값 없음, 회원 상세에 '회원이 비공개로 했어요') · `get_body_info_entered` 넣음/안 넣음 어디에도 없음 · `get_my_fitness_profile` 지도진 보기와 `member_fitness_measures` 읽기 권한에서 회원이 넣은 값(source 'me') · 몸무게 빠짐 — 코치님이 잰 153 PB · 측정(source 'coach')은 그대로. `_body_info_private(uid)` — 20261028011318.
 
-### 붕대 감기 9단계 설명서 (2026-10-27 대표님 "한눈에 9장 · 누르면 상세페이지처럼 · 사진에 시작 → 끝 방향 · 움직이는 사진으로")
+### 붕대 감기 12단계 설명서 — 그림 애니메이션 (2026-10-30 대표님: 코팅 설명서 사진 "이사진이랑 동일하게 … 고화질 애니메이션으로")
 
-- /handwrap — 한눈에 9칸(작은 사진 + 방향 + 짧은 글) → 누르면 상세 `?step=N`(1~9, 뒤로 가기로 닫힘): 끝 장면에 방향이 그려짐 → 그 단계를 실제로 감는 움직이는 사진 → 반복. [HandWrapStepViewer](src/components/handwrap/HandWrapStepViewer.tsx) · 방향 그림 [HandWrapGuideDraw](src/components/handwrap/HandWrapGuideDraw.tsx)(시작 초록 → 노란 길 · 흰 점선 = 손바닥 쪽 → 끝 주황, 오른손은 거울).
-- 글 · 영상 · 방향 좌표는 [handWrapGuide.ts](src/data/handWrapGuide.ts) `HANDWRAP_STEPS` 한 곳. `guide` 좌표는 각 단계 영상의 **마지막 장면**(= `stepNN.webp`) 위 % — 영상을 다시 자르면 좌표도 끝 장면을 보고 다시 맞추고, 주소 끝 판 표시(`STEP_MEDIA_VERSION`)를 올린다. 파일 `public/handwrap/steps/stepNN.mp4 · .webp · _s.webp`(작은 사진).
+- /handwrap 맨 위 = 12단계 + 완성(코팅 설명서와 같은 순서 · 글 `sheet`). 한눈에 12칸 + 완성 → 누르면 상세 `?step=N`(1~13, 13 = 완성, 뒤로 가기로 닫힘): 그림 손에 붕대가 차례로 감기는 애니메이션이 반복된다(누르면 멈춤). [HandWrapStepViewer](src/components/handwrap/HandWrapStepViewer.tsx).
+- 시작(초록) · 끝(주황) 점 · 바퀴 수 · 손바닥 쪽 길(남색 점선) · '손가락 사이로 넣어요' · '손바닥 쪽'(뒤집어 본 모습) 표시는 **그림 안에** 들어 있다 — 앱이 위에 그리지 않는다(예전 HandWrapGuideDraw 좌표 방식은 지움). 그래서 상세 그림 위 앱 표시(몇 단계 · 멈춤)는 아래쪽에만.
+- 손마다 따로 만든 그림: 오른손(기본) `stepNN.mp4 · .webp · _s.webp` · 왼손 `stepNN_l…` (거울로 뒤집지 않아 글자가 바르다). 손등에서 붕대는 처음부터 끝까지 엄지 쪽 → 새끼 쪽. 글 속 ↗ ↘ 는 오른손 기준(왼손이면 `mirrorArrows`).
+- 글 · 그림 주소는 [handWrapGuide.ts](src/data/handWrapGuide.ts) `HANDWRAP_STEPS` 한 곳. 그림을 다시 만들면 `STEP_MEDIA_VERSION` 을 올린다. 작은 그림 `_s.webp` = 끝 장면(위 글 띠 없이)을 손 쪽 정사각형으로.
+- 대표님 10-20 영상 칸('영상으로 보기' · 내 눈으로 / 옆에서 / 앞에서)과 9단계(실제 영상 장면)는 화면에서 내렸다. `public/handwrap/front · side` 파일은 되살리기 쉽게 남겨 둠. 훈련 라이브러리에 코치가 영상 주소를 넣으면 '코치 영상 보기' 단추만 붙는다.
+- 훈련 라이브러리 '복싱 붕대 감기' 글(DB)은 아직 '9단계 설명서'라고 적혀 있다 — 대표님 승인 뒤 고친다.
 
 ### 창(모달·시트) 뒤 페이지 스크롤 잠금 (2026-10-19)
 
