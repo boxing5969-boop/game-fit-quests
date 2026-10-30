@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, Inbox, Lightbulb, MessageCircle, MessageSquareHeart, Star, ThumbsUp, Gift, Check } from "lucide-react";
+import { ArrowLeft, ChevronRight, Inbox, Lightbulb, MessageCircle, MessageCircleReply, MessageSquareHeart, Star, ThumbsUp, Gift, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -12,8 +12,11 @@ import {
   claimSurveyReward,
   getBranchSurveyLinks,
   getFeedbackChannel,
+  getMySurveyReceipts,
   getMySurveyRewards,
   getPublicSurvey,
+  markMySurveyRepliesRead,
+  recordMySurveyReceipt,
   submitFeedback,
   submitSurvey,
   type FeedbackCategory,
@@ -27,8 +30,13 @@ import {
 // 참여 보상: 만족도 조사 +3,000 · 고객의 소리 +5,000 챔피언 머니 (종류별 한 달 한 번, 2026-10-16 대표님).
 // 2026-10-18 대표님: "회원님들이 보낸 것 자세히 볼 수 있게" → 본사(super_admin·admin)에게 '받은 설문·고객의 소리'
 // (components/survey/MemberVoiceInbox — 경영리포트에서 서버로 읽어 온다). 주소: /survey?inbox=1 (&tab=voice).
+// 2026-10-30 대표님 "만족도 조사에도 답변을 달 수 있도록 · 쓴 사람이 확인할 수 있게": 앱에서 낸 만족도 조사는 응답 번호를
+// 남겨 두고(recordMySurveyReceipt), 본사 답변은 첫 화면 '내가 보낸 만족도 조사'에 — 알림 주소 /survey?mine=1.
 
 type View = "hub" | "satisfaction" | "feedback" | "done" | "inbox";
+
+const shortDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" });
 
 const CATS: { key: FeedbackCategory; label: string; hint: string; Icon: typeof ThumbsUp; tone: string }[] = [
   { key: "coach_praise", label: "코치 칭찬", hint: "고마운 코치님이 있어요", Icon: ThumbsUp, tone: "text-emerald-500 bg-emerald-500/10" },
@@ -164,6 +172,18 @@ const SurveyPage = () => {
     enabled: !!links.data?.survey_slug,
     retry: 1,
   });
+  const mine = useQuery({ queryKey: ["my-survey-receipts"], queryFn: getMySurveyReceipts, retry: 1 });
+  const unreadReplies = (mine.data ?? []).filter((r) => r.reply && !r.read_at).length;
+  // 첫 화면에서 새 답변을 보여 준 뒤 읽음으로 — 이번 화면에서는 '새 답변' 표시를 그대로 둔다
+  useEffect(() => {
+    if (view === "hub" && unreadReplies > 0) void markMySurveyRepliesRead();
+  }, [view, unreadReplies]);
+  // 알림(/survey?mine=1)으로 들어오면 '내가 보낸 만족도 조사'로 내려간다
+  useEffect(() => {
+    if (params.get("mine") === "1" && view === "hub" && mine.data?.length) {
+      window.setTimeout(() => document.getElementById("my-surveys")?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+    }
+  }, [params, view, mine.data?.length]);
   const channel = useQuery({
     queryKey: ["feedback-channel", links.data?.feedback_slug],
     queryFn: () => getFeedbackChannel(links.data!.feedback_slug!),
@@ -211,7 +231,12 @@ const SurveyPage = () => {
     if (!links.data?.survey_slug || missing > 0) return;
     setBusy(true);
     try {
-      await submitSurvey(links.data.survey_slug, answers);
+      const responseId = await submitSurvey(links.data.survey_slug, answers);
+      // 보낸 사람 남기기 — 실패해도 제출은 끝난 것(답변 알림만 못 받는다)
+      if (responseId) {
+        await recordMySurveyReceipt(responseId, survey.data?.template.title ?? null).catch(() => undefined);
+        void qc.invalidateQueries({ queryKey: ["my-survey-receipts"] });
+      }
       await afterSubmit("satisfaction");
       setAnswers({});
     } catch (e) {
@@ -277,6 +302,9 @@ const SurveyPage = () => {
               💵 챔피언 머니 +{doneInfo.reward.toLocaleString()} 지급
             </p>
           )}
+          {doneInfo.kind === "satisfaction" && (
+            <p className="text-label text-muted-foreground">운영진이 답변하면 알림으로 알려 드려요</p>
+          )}
           {doneInfo.kind === "feedback" && (doneInfo.drawEntered || doneInfo.drawNote) && (
             <p className="text-label text-muted-foreground">
               {doneInfo.drawEntered ? "🎁 이번 달 경품 추첨에 응모됐어요" : doneInfo.drawNote}
@@ -304,7 +332,7 @@ const SurveyPage = () => {
           <p className="mt-10 text-center text-body text-muted-foreground">{(survey.error as Error).message}</p>
         ) : (
           <div className="space-y-3 pb-6">
-            <p className="px-1 text-label text-muted-foreground">🔒 익명으로 전달돼요. 이름·연락처는 함께 보내지 않습니다.</p>
+            <p className="px-1 text-label text-muted-foreground">🔒 익명으로 전달돼요 · 운영진 답변은 나만 볼 수 있어요</p>
             {survey.data!.questions.map((q, i) => (
               <QuestionBlock
                 key={q.id}
@@ -535,6 +563,40 @@ const SurveyPage = () => {
             참여 보상은 종류별로 한 달에 한 번 지급돼요.
           </p>
         </div>
+      )}
+
+      {/* 내가 보낸 만족도 조사 + 운영진 답변 (2026-10-30) — 앱에서 보낸 설문만, 나만 본다 */}
+      {(mine.data?.length ?? 0) > 0 && (
+        <section id="my-surveys" aria-labelledby="my-surveys-h" className="mt-7 scroll-mt-20">
+          <h2 id="my-surveys-h" className="px-1 text-heading text-foreground">
+            내가 보낸 만족도 조사
+          </h2>
+          <p className="mt-0.5 px-1 text-label text-muted-foreground">운영진 답변은 나만 볼 수 있어요</p>
+          <ul className="mt-2 space-y-2">
+            {mine.data!.map((r) => (
+              <li key={r.response_id} className="rounded-2xl bg-card p-4 shadow-elev-1 ring-1 ring-border/60">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="min-w-0 truncate text-label font-bold text-foreground">{r.survey_title}</p>
+                  <p className="shrink-0 text-label tabular-nums text-muted-foreground">{shortDate(r.submitted_at)}</p>
+                </div>
+                {r.reply ? (
+                  <div className="mt-2 rounded-xl bg-primary/5 px-3 py-2.5">
+                    <p className="flex items-center gap-1 text-micro font-bold text-primary">
+                      <MessageCircleReply className="h-3.5 w-3.5" /> 153복싱짐 운영진 답변
+                      {!r.read_at && (
+                        <span className="ml-1 rounded-pill bg-primary px-1.5 py-px text-micro font-bold text-primary-foreground">새 답변</span>
+                      )}
+                    </p>
+                    <p className="mt-1 whitespace-pre-line break-words text-label leading-relaxed text-foreground">{r.reply}</p>
+                    {r.replied_at && <p className="mt-1 text-micro text-muted-foreground">{shortDate(r.replied_at)}</p>}
+                  </div>
+                ) : (
+                  <p className="mt-1.5 text-label text-muted-foreground">답변을 기다리는 중이에요</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </AppPage>
   );

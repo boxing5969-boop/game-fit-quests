@@ -4,12 +4,17 @@
  *   · 데이터: Edge Function member-voice-inbox — 일일경영리포트(153OS)의 만족도 조사 응답 · 고객의 소리를 서버에서 읽어 온다 (최근 6개월).
  *   · 읽기 전용. 처리 상태 바꾸기·경품 추첨은 경영리포트에서. 연락처는 가운데를 가려서 보여 준다.
  *   · 주소: /survey?inbox=1 (고객의 소리부터: &tab=voice)
+ *   · 2026-10-30 대표님 "만족도 조사에도 답변을 달 수 있도록 · 쓴 사람이 확인할 수 있게" — 만족도 조사 카드마다 '답변 달기'.
+ *     앱에서 낸 설문이면 보낸 회원에게만 알림 · 설문 화면 '내가 보낸 만족도 조사'에 보인다(여기서는 계속 익명).
+ *     QR · 예전 설문은 보낸 사람을 몰라 답변은 저장만 된다. (memberSurveyService — survey_replies)
  */
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Gift, Loader2, RotateCcw, Star } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Gift, Loader2, MessageCircleReply, RotateCcw, Star } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { getSurveyReplies, replySurveyResponse, type SurveyReplyInfo } from "@/services/memberSurveyService";
 
 export interface SurveyInboxAnswer {
   q: string;
@@ -107,13 +112,121 @@ const AnswerValue = ({ a }: { a: SurveyInboxAnswer }) => {
   );
 };
 
+/** 만족도 조사 한 건의 답변 — 쓰기 · 고치기 · 지우기(빈 칸으로 저장) */
+const ReplyBox = ({ id, info }: { id: string; info: SurveyReplyInfo | undefined }) => {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(info?.reply ?? "");
+  const [busy, setBusy] = useState(false);
+  const fromApp = !!info?.from_app;
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      const r = await replySurveyResponse(id, text);
+      toast.success(r.deleted ? "답변을 지웠어요" : r.delivered ? "답변을 보냈어요 — 회원에게 알림이 갔어요" : "답변을 저장했어요");
+      setEditing(false);
+      void qc.invalidateQueries({ queryKey: ["survey-replies"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "답변을 저장하지 못했어요");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const who = fromApp ? "앱에서 보낸 설문 · 답변은 보낸 회원만 봐요" : "QR · 예전 설문 · 보낸 사람을 몰라 저장만 돼요";
+
+  if (editing) {
+    return (
+      <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={3}
+          maxLength={1000}
+          autoFocus
+          placeholder="회원님께 드릴 답변을 적어 주세요"
+          className="w-full resize-none rounded-xl border border-border bg-background p-3 text-body text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+        />
+        <p className="text-micro text-muted-foreground">{who}</p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setEditing(false);
+              setText(info?.reply ?? "");
+            }}
+            className="h-10 flex-1 rounded-xl bg-secondary text-label font-bold text-foreground active:scale-[0.98]"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={busy || (!text.trim() && !info?.reply)}
+            className="h-10 flex-[2] rounded-xl bg-primary text-label font-bold text-primary-foreground active:scale-[0.98] disabled:opacity-50"
+          >
+            {busy ? "저장 중…" : !text.trim() && info?.reply ? "답변 지우기" : fromApp ? "답변 보내기" : "답변 저장"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (info?.reply) {
+    return (
+      <div className="mt-3 border-t border-border/60 pt-3">
+        <div className="rounded-xl bg-primary/5 px-3 py-2.5">
+          <p className="flex items-center gap-1 text-micro font-bold text-primary">
+            <MessageCircleReply className="h-3.5 w-3.5" /> 운영진 답변
+            {fromApp && (
+              <span className="ml-auto font-medium text-muted-foreground">{info.read_at ? "회원이 읽었어요" : "아직 안 읽었어요"}</span>
+            )}
+          </p>
+          <p className="mt-1 whitespace-pre-line break-words text-label leading-relaxed text-foreground">{info.reply}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setText(info.reply ?? "");
+            setEditing(true);
+          }}
+          className="mt-2 text-label font-bold text-primary"
+        >
+          답변 고치기
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3">
+      <span className="min-w-0 text-micro text-muted-foreground">{who}</span>
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-primary/40 px-3 text-label font-bold text-primary active:scale-95"
+      >
+        <MessageCircleReply className="h-4 w-4" /> 답변 달기
+      </button>
+    </div>
+  );
+};
+
 type Tab = "surveys" | "voices";
 
 const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
   const inbox = useMemberVoiceInbox(true);
   const [tab, setTab] = useState<Tab>(initialTab);
-  const surveys = inbox.data?.surveys ?? [];
+  const surveys = useMemo(() => inbox.data?.surveys ?? [], [inbox.data?.surveys]);
   const voices = inbox.data?.voices ?? [];
+  const surveyIds = useMemo(() => surveys.map((x) => x.id), [surveys]);
+  const replies = useQuery({
+    queryKey: ["survey-replies", surveyIds],
+    enabled: surveyIds.length > 0,
+    staleTime: 30_000,
+    queryFn: () => getSurveyReplies(surveyIds),
+  });
   const avgAll = useMemo(() => {
     const xs = surveys.map((s) => s.avg).filter((n): n is number => typeof n === "number");
     return xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10 : null;
@@ -206,6 +319,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
                       </li>
                     ))}
                   </ol>
+                  <ReplyBox key={`${s.id}:${replies.data?.[s.id]?.replied_at ?? ""}`} id={s.id} info={replies.data?.[s.id]} />
                 </li>
               ))}
             </ul>
@@ -248,7 +362,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
       )}
 
       <p className="px-1 pt-1 text-center text-label leading-relaxed text-muted-foreground">
-        일일경영리포트에 저장된 최근 6개월 응답이에요 (전체관리자만 볼 수 있어요). 처리 상태 바꾸기와 경품 추첨은 경영리포트에서 해요.
+        일일경영리포트에 저장된 최근 6개월 응답이에요 (전체관리자만 볼 수 있어요). 만족도 조사 답변은 앱에서 보낸 회원에게만 보여요. 처리 상태 바꾸기와 경품 추첨은 경영리포트에서 해요.
       </p>
     </div>
   );

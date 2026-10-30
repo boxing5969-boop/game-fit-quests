@@ -439,6 +439,11 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 대표님 10-20 영상 칸('영상으로 보기' · 내 눈으로 / 옆에서 / 앞에서)과 9단계(실제 영상 장면)는 화면에서 내렸다. `public/handwrap/front · side` 파일은 되살리기 쉽게 남겨 둠. 훈련 라이브러리에 코치가 영상 주소를 넣으면 '코치 영상 보기' 단추만 붙는다.
 - 훈련 라이브러리 '복싱 붕대 감기' 글(DB)은 아직 '9단계 설명서'라고 적혀 있다 — 대표님 승인 뒤 고친다.
 
+### 만족도 조사 답변 (2026-10-30 대표님 "만족도 조사 설문조사에도 답변을 달 수 있도록" · 누가 보나요? "쓴 사람이 확인할 수 있게")
+- 응답은 예전처럼 153OS 에 익명 저장(본사 받은 설문함도 계속 익명). `submit_survey_response` 가 돌려주는 `response_id` 를 앱이 `record_my_survey_receipt` 로 남긴다(`survey_receipts` = 응답 번호 + 보낸 회원 · 답한 내용은 안 남김).
+- 본사(전체관리자 · 관리자): 받은 설문함(`/survey?inbox=1`) 만족도 조사 카드마다 '답변 달기 · 고치기 · 지우기(빈 칸)' → `reply_survey_response`(`survey_replies`). 앱에서 낸 설문이면 보낸 회원에게만 알림(`/survey?mine=1`) · '회원이 읽었어요' 표시. QR · 예전 설문은 보낸 사람을 몰라 저장만.
+- 회원: 설문 첫 화면 맨 아래 '내가 보낸 만족도 조사'(`get_my_survey_receipts` · 최근 20개) — 답변 · '새 답변' · 보면 읽음(`mark_my_survey_replies_read`). 두 표는 직접 읽기·쓰기 막음, 함수로만 — [20261030100752_survey_replies.sql](supabase/migrations/20261030100752_survey_replies.sql). 고객의 소리 답변은 아직 없다.
+
 ### 창(모달·시트) 뒤 페이지 스크롤 잠금 (2026-10-19)
 
 - `useModalDismiss(open, onClose)` 또는 `lockBodyScroll()`([src/lib/scrollLock.ts](src/lib/scrollLock.ts))만 쓴다 — 잠금 개수를 세서 마지막 창이 닫힐 때만 푼다.

@@ -5,7 +5,7 @@
  *   · 만족도 조사: 153-boxing-os Supabase RPC get_public_survey / submit_survey_response (anon 공개 함수)
  *   · 고객의 소리: 153-boxing-os API /api/feedback/ch/:slug · /api/feedback/submit (CORS: myboxer153.com 허용됨)
  * 지점별 주소(slug)는 마이복서153 DB branch_survey_links 에 둔다 — 새 지점 QR 을 만들면 그 표에 한 줄 추가.
- * 답변 내용은 마이복서153 DB 에 남기지 않는다(익명 유지). 여기에는 '이번 달 참여 보상'만 기록한다.
+ * 답변 내용은 마이복서153 DB 에 남기지 않는다(익명 유지). 여기에는 '이번 달 참여 보상'과 앱에서 낸 만족도 조사의 응답 번호(본사 답변을 받기 위해)만 기록한다.
  * 답변 형식은 CRM PublicSurveyPage 와 같아야 한다: rating=answer_score, 보기=answer_text+번호, 예/아니오=answer_text "예"|"아니오".
  */
 import { supabase } from "@/integrations/supabase/client";
@@ -84,7 +84,8 @@ export async function getPublicSurvey(slug: string): Promise<PublicSurvey> {
   };
 }
 
-export async function submitSurvey(slug: string, answers: Record<string, SurveyAnswer>): Promise<void> {
+/** 제출 — 153OS 응답 번호(response_id)를 돌려준다(앱 '내가 보낸 설문' · 본사 답변 연결용, 2026-10-30) */
+export async function submitSurvey(slug: string, answers: Record<string, SurveyAnswer>): Promise<string | null> {
   const payload = Object.entries(answers)
     .filter(([, a]) => a.answer_score != null || (a.answer_text ?? "").trim() !== "")
     .map(([question_id, a]) => ({
@@ -92,13 +93,73 @@ export async function submitSurvey(slug: string, answers: Record<string, SurveyA
       answer_text: a.answer_text?.trim() || null,
       answer_score: a.answer_score ?? null,
     }));
-  const r = await osRpc<{ success: boolean; error?: string }>("submit_survey_response", {
+  const r = await osRpc<{ success: boolean; error?: string; response_id?: string }>("submit_survey_response", {
     p_qr_slug: slug,
     p_answers: payload,
     p_member_id: null, // 익명 — QR 설문과 같다
     p_respondent_phone: null,
   });
   if (!r.success) throw new Error(SURVEY_ERR[r.error ?? ""] ?? "제출에 실패했어요. 잠시 후 다시 시도해주세요");
+  return r.response_id ?? null;
+}
+
+// ── 만족도 조사 답변 (2026-10-30 대표님 "답변을 달 수 있도록 · 쓴 사람이 확인할 수 있게") ──────────
+//   153OS 응답은 익명 그대로. 앱에서 낸 설문만 마이복서153 DB survey_receipts 에 '응답 번호 + 보낸 회원'을 남기고,
+//   본사가 받은 설문함에서 쓴 답변(survey_replies)은 보낸 회원에게만 보인다 — 20261030100752_survey_replies.sql
+
+/** 생성된 타입에 아직 없는 함수 — 이름 · 인자만 맞춰 부른다 */
+type LooseRpc = (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+const rpc: LooseRpc = (fn, args) => (supabase.rpc as unknown as LooseRpc)(fn, args);
+
+/** 앱에서 낸 설문을 내가 보냈다고 남긴다 — 실패해도 설문 제출은 그대로(답변만 못 받는다) */
+export async function recordMySurveyReceipt(responseId: string, title: string | null): Promise<void> {
+  await rpc("record_my_survey_receipt", { p_response_id: responseId, p_title: title });
+}
+
+export interface MySurveyReceipt {
+  response_id: string;
+  survey_title: string;
+  submitted_at: string;
+  reply: string | null;
+  replied_at: string | null;
+  read_at: string | null;
+}
+
+export async function getMySurveyReceipts(): Promise<MySurveyReceipt[]> {
+  const { data, error } = await rpc("get_my_survey_receipts");
+  if (error) throw error;
+  return (data ?? []) as MySurveyReceipt[];
+}
+
+export async function markMySurveyRepliesRead(): Promise<number> {
+  const { data } = await rpc("mark_my_survey_replies_read");
+  return Number(data ?? 0);
+}
+
+/** 본사 — 받은 설문함의 답변 (응답 번호별) */
+export interface SurveyReplyInfo {
+  response_id: string;
+  reply: string | null;
+  replied_at: string | null;
+  read_at: string | null;
+  /** 앱에서 낸 설문 = 답변이 보낸 회원에게 간다. false = QR · 예전 설문(보낸 사람을 몰라 저장만) */
+  from_app: boolean;
+}
+
+export async function getSurveyReplies(ids: string[]): Promise<Record<string, SurveyReplyInfo>> {
+  if (ids.length === 0) return {};
+  const { data, error } = await rpc("get_survey_replies", { p_ids: ids });
+  if (error) throw error;
+  const out: Record<string, SurveyReplyInfo> = {};
+  for (const r of (data ?? []) as SurveyReplyInfo[]) out[r.response_id] = r;
+  return out;
+}
+
+export async function replySurveyResponse(responseId: string, reply: string): Promise<{ delivered: boolean; deleted: boolean }> {
+  const { data, error } = await rpc("reply_survey_response", { p_response_id: responseId, p_reply: reply });
+  if (error) throw new Error(error.message || "답변을 저장하지 못했어요");
+  const d = (data ?? {}) as { delivered?: boolean; deleted?: boolean };
+  return { delivered: !!d.delivered, deleted: !!d.deleted };
 }
 
 // ── 고객의 소리 ─────────────────────────────────────────────
